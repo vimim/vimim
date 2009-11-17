@@ -14,7 +14,7 @@
 "      File: vimim.vim
 "    Author: vimim <vimim@googlegroups.com>
 "   License: GNU Lesser General Public License
-"    Latest: 20091116T152157
+"    Latest: 20091116T202125
 " -----------------------------------------------------------
 "    Readme: VimIM is a Vim plugin designed as an independent IM
 "            (Input Method) to support the input of multi-byte.
@@ -1753,11 +1753,21 @@ endfunction
 " ------------------------------------
 function! <SID>vimim_smart_backspace()
 " ------------------------------------
-    let key = '\<BS>'
-    if pumvisible() && s:chinese_input_mode>0
-        let key = '\<C-E>'
-        let s:trash_code_flag = 1
-        call g:vimim_reset_after_insert()
+    let key = ''
+    if s:chinese_input_mode > 0
+        if pumvisible()
+            let key = '\<C-E>'
+            let s:trash_code_flag = 1
+            call g:vimim_reset_after_insert()
+        else
+            let char_before = getline(".")[col(".")-2]
+            if char_before =~ s:valid_key
+                let s:trash_code_flag = -1
+                let key = '\<BS>'
+            endif
+        endif
+    else
+        let key = '\<BS>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1765,9 +1775,13 @@ endfunction
 " -------------------------------------
 function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
-    let key = '\<C-X>\<C-U>\<BS>'
-    if empty(s:chinese_input_mode)
-        let key = ''
+    let key = ''
+    if !pumvisible() && s:chinese_input_mode>0
+        if s:trash_code_flag < 0
+            let s:trash_code_flag = 0
+        else
+            let key = '\<C-X>\<C-U>\<BS>'
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2869,6 +2883,7 @@ function! s:vimim_initialize_datafile_pinyin()
         let s:vimim_fuzzy_search = 1
         let s:vimim_match_word_after_word = 1
         let s:vimim_save_input_history_frequency = 1
+        let s:vimim_seamless_english_input = 1
     endif
 endfunction
 
@@ -3286,7 +3301,8 @@ function! s:vimim_plug_n_play_www_sogou()
         endif
     endif
     " for Windows user who does not know how to set PATH
-    if has("win32") && empty(s:vimim_www_sogou)
+    if has("win32") || has("win32unix")
+    \&& empty(s:vimim_www_sogou)
         let wget = s:path . "wget.exe"
         if executable(wget)
             let s:vimim_www_sogou = 1
@@ -4097,4 +4113,3 @@ endfunction
 silent!call s:vimim_initialization()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
- 
