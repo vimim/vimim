@@ -18405,8 +18405,7 @@ gaoze 膏泽
 gaozhang 高涨
 gaozhangyuanzhi 高掌远蹠
 gaozhanyuanzhu 高瞻远瞩
-gaozhao 高招
-gaozhao 高着
+gaozhao 高招 高着
 gaozhentouzhuang 告枕头状
 gaozhenwuyou 高枕无忧
 gaozhi 告知 稿纸
