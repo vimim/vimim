@@ -14,7 +14,7 @@
 "      File: vimim.vim
 "    Author: vimim <vimim@googlegroups.com>
 "   License: GNU Lesser General Public License
-"    Latest: 20091117T105753
+"    Latest: 20091117T124015
 " -----------------------------------------------------------
 "    Readme: VimIM is a Vim plugin designed as an independent IM
 "            (Input Method) to support the input of multi-byte.
@@ -1793,7 +1793,6 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
             let key = '\<C-X>\<C-U>\<BS>'
         endif
     endif
-    let key = '\<BS>'
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
