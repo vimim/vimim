@@ -1039,8 +1039,8 @@ __ http://www.pkucn.com/viewthread.php?tid=230200
 
 ======================   ===============================
      不切换输入状态         VimIM 提供 `〖点石成金〗`_   
-     自创中文输入法         VimIM 样本 `山寨双码输入`_
-     云输入                 VimIM 尝试 VimIM `云输入`_
+     自创中文输入法         VimIM 试样 `山寨双码输入`_
+     云输入                 VimIM 涉足 `云输入`_
      中文盲打               VimIM 体验 `中文盲打`_
 ======================   ===============================
 
@@ -1062,9 +1062,9 @@ __ http://www.pkucn.com/viewthread.php?tid=230200
 
 【测试】
 
-+ 〖英文输入法〗 i have a dream.
-+ 〖拼音输入法〗 wo.you.yige.meng
-+ 〖拼音输入法〗 woyouyigeqiguaidemeilidemeng
++ 〖英文输入〗　i have a dream.
++ 〖拼音输入〗　wo.you.yige.meng
++ 〖云输入〗　　woyouyigeqiguaidemeilidemeng
 
 |
 |
@@ -1074,7 +1074,7 @@ __ http://www.pkucn.com/viewthread.php?tid=230200
 【无词库】
 
   -  不联网：利用 VimIM `内码输入`_
-  -  联网：　利用 VimIM `云输入`_ 完全靠云吃云
+  -  联网：　即插即用 VimIM `云输入`_ 
 
 【带词库】
 
@@ -1120,21 +1120,24 @@ chinese  中文    汉字
 | 您还可以创造您自己的个性输入法：任意组合多种输入法。
 | 玩多玩顺玩溜玩活，您就可以加入我们的 VimIM `骇客`_  团队。
 |
-| VimIM 对词库的设计是简单灵活，充分利用 vim 的编辑功夫。
+| VimIM 对词库的设计是简单灵活，充分利用vim的编辑功夫。
 |
-|   比方说，我们想使用 fcitx 的所有拼音词库:
+|   比方说，我们想混合使用拼音词库和英文词库：
 |
-|   第一步： vi vimim.pinyin.txt
-|   第二步:  :r fcitx.poem.pinyin.txt
-|   第三步:  :r fcitx.idiom.pinyin.txt
-|   第四步:  :r fcitx.phrase.pinyin.txt
-|   第五步:  :sort u
-|   第六步:  :wq
+|   第一步：下载 vimim.pinyin.txt__
+|   第二步：下载 vimim.english.txt__
+|   第三步：vim vimim.pinyin.txt
+|   第四步：　　:r  vimim.english.txt
+|   第五步：　　:sort u
+|   第六步：　　:wq
 |
 |   结果是我们做了一个新的词库: vimim.pinyin.txt
 |   也就是说，我们创造了一个我们自己的中文输入法。
 |
 |
+
+__ http://vimim.googlecode.com/files/vimim.pinyin.txt
+__ http://vimim.googlecode.com/files/vimim.english.txt
 
 
 私人信息
@@ -2538,4 +2541,5 @@ WHAT IS NEW
 #. [done] [seamless] make it beeter for PinYin: HAPPYwo and Happy<CR>wo
 #. [done] [OneKey] save keycode in @0 for checking if interested
 #. [todo] [<CR>] make smart enter reliable in Chinese Mode
+#. [todo] [onekey] mixture <BS> delete two
 
