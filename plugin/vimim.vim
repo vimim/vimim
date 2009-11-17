@@ -14,7 +14,7 @@
 "      File: vimim.vim
 "    Author: vimim <vimim@googlegroups.com>
 "   License: GNU Lesser General Public License
-"    Latest: 20091117
+"    Latest: 20091116T233413
 " -----------------------------------------------------------
 "    Readme: VimIM is a Vim plugin designed as an independent IM
 "            (Input Method) to support the input of multi-byte.
@@ -3757,8 +3757,8 @@ if a:start
 else
 
     " support one-key-correction
-    " OneKey: (d)elete in popup || ChineseMode: <BS>
-    " ----------------------------------------------
+    "   OneKey: (d)elete in popup || ChineseMode: <BS>
+    " ------------------------------------------------
     if s:trash_code_flag > 0
         let s:trash_code_flag = 0
         return [" "]
@@ -3770,13 +3770,18 @@ else
     endif
 
     let keyboard = a:keyboard
-
-    if str2nr(keyboard) != 0
+    if empty(str2nr(keyboard))
+        let msg = 'the input is alphabet only'
+    else
         let keyboard = s:keyboard_leading_zero
     endif
 
     if a:keyboard !~ '\p'
         let keyboard = ''
+    endif
+
+    if empty(s:chinese_input_mode)
+        let @0 = keyboard
     endif
 
     " hunt real easter egg ... vim<C-\>
