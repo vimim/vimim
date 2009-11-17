@@ -1209,10 +1209,13 @@ function! s:vimim_alphabet_auto_select()
         return
     endif
     " always do alphabet auto selection for static
+    let A = char2nr('A')
+    let Z = char2nr('Z')
     let a = char2nr('a')
     let z = char2nr('z')
-    let az_list = map(range(a,z),"nr2char(".'v:val'.")")
-    for char in az_list
+    let az_nr_list = extend(range(A,Z), range(a,z))
+    let az_char_list = map(az_nr_list,"nr2char(".'v:val'.")")
+    for char in az_char_list
         sil!exe 'inoremap <silent> ' . char . '
         \ <C-R>=pumvisible()?"\<lt>C-Y>":""<CR>'. char
      endfor
