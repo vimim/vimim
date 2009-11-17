@@ -14,7 +14,7 @@
 "      File: vimim.vim
 "    Author: vimim <vimim@googlegroups.com>
 "   License: GNU Lesser General Public License
-"    Latest: 20091116T224854
+"    Latest: 20091117
 " -----------------------------------------------------------
 "    Readme: VimIM is a Vim plugin designed as an independent IM
 "            (Input Method) to support the input of multi-byte.
@@ -2421,7 +2421,7 @@ function! s:vimim_save_datafile(lines)
         call writefile(a:lines, s:current_datafile)
     endif
     if empty(s:localization) && s:vimim_save_input_history_frequency > 0
-        let warning = 'performance hit if &encoding and datafile differs!'
+        let warning = 'performance hit if &encoding & datafile differs!'
     endif
 endfunction
 
@@ -3439,10 +3439,9 @@ function! s:vimim_initialize_debug()
     let s:vimim_www_sogou = 12
     let s:vimim_static_input_style = 0
     let s:vimim_shuangpin_abc = 0
-    let s:vimim_shuangpin_nature = 0
     let s:pinyin_flag = 1
-    let s:four_corner_flag = 1
     let s:english_flag = 1
+    let s:four_corner_flag = 1
     let s:vimim_tab_for_one_key = 1
     let s:vimim_diy_pinyin_4corner = 1
     let s:vimim_menu_extra_text = 1
