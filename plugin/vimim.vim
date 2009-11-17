@@ -14,7 +14,7 @@
 "      File: vimim.vim
 "    Author: vimim <vimim@googlegroups.com>
 "   License: GNU Lesser General Public License
-"    Latest: 20091116T202125
+"    Latest: 20091116T211717
 " -----------------------------------------------------------
 "    Readme: VimIM is a Vim plugin designed as an independent IM
 "            (Input Method) to support the input of multi-byte.
@@ -346,21 +346,21 @@ function! s:vimim_initialize_datafile_primary()
     endfor
     " --------------------------------------
     if filereadable(datafile)
-        if datafile =~? 'erbi'
+        if datafile =~# 'erbi'
             let s:erbi_flag = 1
-        elseif datafile =~? 'wubi'
+        elseif datafile =~# 'wubi'
             let s:wubi_flag = 1
-        elseif datafile =~? 'pinyin'
+        elseif datafile =~# 'pinyin'
             let s:pinyin_flag = 1
-        elseif datafile =~? 'english'
+        elseif datafile =~# 'english'
             let s:english_flag = 1
-        elseif datafile =~? '4corner'
+        elseif datafile =~# '4corner'
             let s:four_corner_flag = 2
-        elseif datafile =~? 'ctc'
+        elseif datafile =~# 'ctc'
             let s:four_corner_flag = 4
-        elseif datafile =~? '12345'
+        elseif datafile =~# '12345'
             let s:four_corner_flag = 5
-        elseif datafile =~? 'privates'
+        elseif datafile =~# 'privates'
             let s:privates_flag = 2
         endif
         let s:current_datafile = datafile
@@ -391,7 +391,7 @@ function! s:vimim_expand_character_class(character_class)
     let i = 0
     while i < 256
         let x = nr2char(i)
-        if x =~? a:character_class
+        if x =~# a:character_class
             let character_string .= x
         endif
         let i += 1
@@ -696,7 +696,7 @@ function! s:vimim_localization()
 " ------------------------------
     let localization = 0
     let datafile_fenc_chinese = 0
-    if s:current_datafile =~? "chinese"
+    if s:current_datafile =~# "chinese"
         let datafile_fenc_chinese = 1
     endif
     " ------------ ----------------- ----
@@ -3708,7 +3708,7 @@ if a:start
         endif
     endif
 
-    if s:chinese_input_mode > 1
+    if s:chinese_input_mode > 0
     \&& s:vimim_seamless_english_input > 0
     \&& len(s:seamless_positions) > 0
         let seamless_bufnum = s:seamless_positions[0]
@@ -3729,7 +3729,7 @@ if a:start
         endif
     endif
 
-    while start_column > 0 && char_before =~? s:valid_key
+    while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
         let char_before = current_line[start_column-1]
     endwhile
@@ -4028,9 +4028,14 @@ else
     " support seamless English input for OneKey
     " -----------------------------------------
     if match_start < 0
-        let narcissism = keyboard . ' ' . keyboard . '　'
-        let results = [narcissism]
-        return s:vimim_popupmenu_list(results)
+        if empty(s:chinese_input_mode)
+            let narcissism = keyboard . ' ' . keyboard . '　'
+            let results = [narcissism]
+            return s:vimim_popupmenu_list(results)
+        else
+            sil!call g:vimim_set_seamless()
+            return [keyboard]
+        endif
     endif
 
 endif
