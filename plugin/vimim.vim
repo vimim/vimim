@@ -3369,6 +3369,7 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
 " --------------------------------------------
     if empty(s:vimim_www_sogou)
     \|| empty(s:www_executable)
+    \|| empty(s:pinyin_flag)
     \|| empty(a:keyboard)
         return []
     endif
