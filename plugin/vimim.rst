@@ -2541,5 +2541,6 @@ WHAT IS NEW
 #. [done] [seamless] make it beeter for PinYin: HAPPYwo and Happy<CR>wo
 #. [done] [OneKey] save keycode in @0 for checking if interested
 #. [todo] [<CR>] make smart enter reliable in Chinese Mode
-#. [todo] [onekey] mixture <BS> delete two
+
+
 
