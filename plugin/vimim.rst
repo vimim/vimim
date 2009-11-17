@@ -2528,9 +2528,6 @@ WHAT IS NEW
 #. [done] [one-key-correction] in Chinese input mode => <BS>
 #. [done] [seamless] It becomes evil for Wubi! Let's close it for now.
 #. [done] [seamless] make it beeter for PinYin: HAPPYwo and Happy<CR>wo
-#. [done] [<CR>] make smart enter reliable in Chinese Mode
-#. [todo] [OneKey] save keycode in @0 for checking if interested
+#. [done] [OneKey] save keycode in @0 for checking if interested
+#. [todo] [<CR>] make smart enter reliable in Chinese Mode
 
-    if str2nr('eyboar') != 0
-    if str2nr('eyboar')=0
-    管理 manage
