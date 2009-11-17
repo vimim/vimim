@@ -14,7 +14,7 @@
 "      File: vimim.vim
 "    Author: vimim <vimim@googlegroups.com>
 "   License: GNU Lesser General Public License
-"    Latest: more svn 20091117T095725
+"    Latest: 20091117T105753
 " -----------------------------------------------------------
 "    Readme: VimIM is a Vim plugin designed as an independent IM
 "            (Input Method) to support the input of multi-byte.
@@ -192,7 +192,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_dynamic_mode_autocmd")
     call add(G, "g:vimim_do_search")
-    call add(G, "g:vimim_english_input_on_enter")
     call add(G, "g:vimim_first_candidate_fix")
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_match_dot_after_dot")
@@ -202,6 +201,9 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_save_new_entry")
     call add(G, "g:vimim_wubi_non_stop")
+    call add(G, "g:vimim_smart_enter")
+    call add(G, "g:vimim_smart_backspace")
+    call add(G, "g:vimim_smart_ctrl_h")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -265,8 +267,8 @@ function! s:vimim_initialize_session()
     let s:onekey_loaded_flag = 0
     let s:trash_code_flag = 0
     " --------------------------------
-    let s:space = 0
-    let s:backspace = 0
+    let s:smart_enter = 0
+    let s:smart_backspace = 0
     " --------------------------------
     let s:keyboard_leading_zero = 0
     let s:keyboard_counts = 0
@@ -1048,7 +1050,7 @@ function! g:vimim_smart_space_onekey()
         sil!exe 'sil!return "' . space . '"'
     else
         iunmap <Space>
-        let s:backspace = 0
+        let s:smart_backspace = 0
         if s:insert_without_popup_flag > 0
             let s:insert_without_popup_flag = 0
             let space = ""
@@ -1065,7 +1067,7 @@ function! g:vimim_smart_space_static()
         let space = s:vimim_keyboard_block_by_block()
         call g:vimim_reset_after_insert()
     else
-        let s:backspace = 0
+        let s:smart_backspace = 0
         let space = s:vimim_smart_punctuation(s:punctuations, space)
         if empty(space)
             let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
@@ -1130,7 +1132,7 @@ function! <SID>vimim_label(n)
             let label = counts . yes
         endif
     else
-        let s:backspace = 0
+        let s:smart_backspace = 0
         let s:seamless_positions = []
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -1259,6 +1261,8 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_insert_for_both_static_dynamic()
 " ------------------------------------------------
+    let s:smart_enter = 0
+    let s:smart_backspace = 0
     sil!call s:vimim_insert_setting_on()
     sil!call g:vimim_set_seamless()
     sil!call s:vimim_label_on()
@@ -1537,7 +1541,7 @@ function! s:vimim_smart_punctuation(punctuations, key)
     \&& has_key(a:punctuations, char_before)
         let replacement = a:punctuations[char_before]
         let key = "\<BS>" . replacement
-    elseif char_before !~ s:valid_key
+    elseif char_before !~# s:valid_key
         let key = a:key
     endif
     return key
@@ -1694,9 +1698,9 @@ function! g:vimim_bracket_backspace(offset)
     return delete_char
 endfunction
 
-" --------------------------
-function! <SID>smart_enter()
-" --------------------------
+" --------------------------------
+function! <SID>vimim_smart_enter()
+" --------------------------------
     let key = ''
     if s:vimim_do_search > 0 && empty(s:chinese_input_mode)
         " first check if line starting with / or ?
@@ -1716,21 +1720,21 @@ function! <SID>smart_enter()
     " do smart Enter for Chinese Input Mode
     sil!call g:vimim_set_seamless()
     if pumvisible()
+        let s:smart_enter = 0
         let key = "\<C-E>"
         if empty(s:vimim_seamless_english_input)
             let key .= " "
         endif
     else
         let char_before = getline(".")[col(".")-2]
-        if char_before =~ '\w'
-            let s:space += 1
+        if char_before =~# s:valid_key
+            let s:smart_enter += 1
         endif
-        "-- the 1st Enter: seamless Chinese input
-        "-- the 2nd Enter: Enter as is
-        if s:space == 1
+        if s:smart_enter == 1
+            " only if this is the first time to press <Enter>
             let key = '\<C-R>=g:vimim_set_seamless()\<CR>'
-        elseif s:space == 2
-            let s:space = 0
+        else
+            let s:smart_enter = 0
             let key = "\<CR>"
         endif
     endif
@@ -1744,21 +1748,22 @@ function! <SID>vimim_smart_ctrl_h()
     " first try maximum-match, after <C-H>, try minimum match
     let key = '\<BS>'
     if pumvisible() && empty(s:chinese_input_mode)
-        let s:backspace += 1
-        if s:backspace == 1
+        let s:smart_backspace += 1
+        if s:smart_backspace == 1
             let key = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        elseif s:backspace == 2
-            let s:backspace = 0
+        elseif s:smart_backspace == 2
+            let s:smart_backspace = 0
             let key = "\<C-E>"
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ------------------------------------
-function! <SID>vimim_smart_backspace()
-" ------------------------------------
+" ----------------------------------------
+function! <SID>vimim_backspace_trash_all()
+" ----------------------------------------
     let key = ''
+    let s:trash_code_flag = 0
     if s:chinese_input_mode > 0
         if pumvisible()
             let key = '\<C-E>'
@@ -1766,7 +1771,7 @@ function! <SID>vimim_smart_backspace()
             call g:vimim_reset_after_insert()
         else
             let char_before = getline(".")[col(".")-2]
-            if char_before =~ s:valid_key
+            if char_before =~# s:valid_key
                 let s:trash_code_flag = -1
                 let key = '\<BS>'
             endif
@@ -1788,6 +1793,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
             let key = '\<C-X>\<C-U>\<BS>'
         endif
     endif
+    let key = '\<BS>'
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -2236,7 +2242,7 @@ function! s:vimim_sentence_whole_match(lines, keyboard)
     while max > 2 && min < len(keyboard)
         let max -= 1
         let position = max
-        if s:backspace > 0
+        if s:smart_backspace > 0
             let min += 1
             let position = min
         endif
@@ -2266,7 +2272,7 @@ function! s:vimim_keyboard_block_by_block()
     if s:chinese_input_mode > 1
         return key
     endif
-    let s:backspace = 0
+    let s:smart_backspace = 0
     let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     return key
 endfunction
@@ -3727,7 +3733,7 @@ if a:start
             if snip !~ '\W' && len(snip) > 0
                 let s:start_column_before = seamless_column
                 let s:start_row_before = seamless_lnum
-                let s:space = 0
+                let s:smart_enter = 0
                 return seamless_column
             endif
         endif
@@ -4085,15 +4091,17 @@ function! s:vimim_initialize_mapping()
         endif
     endif
     " ----------------------------------------------------------
-    inoremap<silent><BS> <C-R>=<SID>vimim_smart_backspace()<CR>
-                        \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
+    if s:vimim_smart_backspace > 0
+        inoremap<silent><BS> <C-R>=<SID>vimim_backspace_trash_all()<CR>
+                            \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
+    endif
     " ----------------------------------------------------------
-    if !hasmapto('<C-H>', 'i')
+    if s:vimim_smart_ctrl_h > 0 && !hasmapto('<C-H>', 'i')
         inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
     endif
     " ----------------------------------------------------------
-    if s:vimim_english_input_on_enter > 0
-        inoremap<silent><expr> <CR> <SID>smart_enter()
+    if s:vimim_smart_enter > 0
+        inoremap<silent><expr> <CR> <SID>vimim_smart_enter()
     endif
     " ----------------------------------------------------------
 endfunction
