@@ -14,7 +14,7 @@
 "      File: vimim.vim
 "    Author: vimim <vimim@googlegroups.com>
 "   License: GNU Lesser General Public License
-"    Latest: 20091116T211717
+"    Latest: 20091116T224854
 " -----------------------------------------------------------
 "    Readme: VimIM is a Vim plugin designed as an independent IM
 "            (Input Method) to support the input of multi-byte.
@@ -1694,19 +1694,21 @@ endfunction
 " --------------------------
 function! <SID>smart_enter()
 " --------------------------
-    " first check if line starting with / or ?
-    let first_slash = s:vimim_first_char_current_line()
-    let key = 0
-    if len(first_slash) > 0
-        let key = '\<C-R>=g:vimim_slash_search()\<CR>'
-        let key .= first_slash . '\<CR>'
-    elseif empty(s:chinese_input_mode)
-        let key = '\<CR>'
-    endif
-    if empty(key)
-        let key = "\<CR>"
-    else
-        sil!exe 'sil!return "' . key . '"'
+    let key = ''
+    if s:vimim_do_search > 0 && empty(s:chinese_input_mode)
+        " first check if line starting with / or ?
+        let first_slash = s:vimim_first_char_current_line()
+        if len(first_slash) > 0
+            let key = '\<C-R>=g:vimim_slash_search()\<CR>'
+            let key .= first_slash . '\<CR>'
+        elseif empty(s:chinese_input_mode)
+            let key = '\<CR>'
+        endif
+        if empty(key)
+            let key = "\<CR>"
+        else
+            sil!exe 'sil!return "' . key . '"'
+        endif
     endif
     " do smart Enter for Chinese Input Mode
     sil!call g:vimim_set_seamless()
