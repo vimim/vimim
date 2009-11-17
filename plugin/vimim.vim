@@ -4097,3 +4097,4 @@ endfunction
 silent!call s:vimim_initialization()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
+ 
