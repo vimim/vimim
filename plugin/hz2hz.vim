@@ -1,6 +1,6 @@
 " ===============================================================
 "        File: hz2hz.vim
-"      Author: Xiangjiang Ma <maxiangjiang@yahoo.com>
+"      Author: vimim <vimim@googlegroups.com>
 "    Released: Sun 09/12/2004
 " Last Change: 20090128T220856
 " Description: To mimic what gu and gU do for ascii, I defined 
@@ -85,7 +85,7 @@
 " ===============================================================
 if exists("loaded_chinese_transfer") || &cp || &encoding != "utf-8"
    finish
-end
+endif
 let loaded_chinese_transfer = 1
 
 let s:datafile_loaded=0
