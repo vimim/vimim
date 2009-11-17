@@ -19237,7 +19237,7 @@ grateful 感谢 #
 gratitude 谢意 #
 grave 严肃 严重 #
 great 伟大 巨大 #
-greaterthan ＞ ≥
+greaterthan ＞ ≥ #
 greece 希腊 #
 greed 贪心 #
 green 绿色 #
@@ -19691,11 +19691,8 @@ guapian 瓜片
 guapimao 瓜皮帽
 guaping 挂屏
 guapoudoufen 瓜剖豆分
-guaqi 刮起
-guaqi 挂气
-guaqi 瓜期
-guaqian 挂欠
-guaqian 挂牵
+guaqi 刮起 挂气 瓜期
+guaqian 挂欠 挂牵
 guaqing 寡情
 guarantee 保证 包管 #
 guard 警卫 防守 #
@@ -19778,10 +19775,8 @@ gufang 古方 谷坊
 gufangzishang 孤芳自赏
 gufei 股匪
 gufeijinshou 古肥今瘠
-gufen 股份
-gufen 股分
-gufeng 古风
-gufeng 谷风
+gufen 股份 股分
+gufeng 古风 谷风
 gufengji 鼓风机
 gufenglu 鼓风炉
 gufengongsi 股份公司
@@ -19849,22 +19844,15 @@ guidingdongzuo 规定动作
 guidu 轨度
 guidui 归队
 guierjianmu 贵耳贱目
-guifan 规范
-guifan 轨范
-guifan 闺范
-guifang 柜房
-guifang 闺房
+guifan 规范 轨范 闺范
+guifang 闺房 柜房
 guifanhua 规范化
-guifei 硅肺
-guifei 贵妃
-guifu 归附
-guifu 规复
-guifu 龟趺
+guifei 贵妃 硅肺
+guifu 归附 规复 龟趺
 guifushengong 鬼斧神工
 guigan 贵干
 guigang 硅钢
-guige 规格
-guige 闺阁
+guige 规格 闺阁
 guigendaodi 归根到底
 guigeng 贵庚
 guigenjiedi 归根结底
@@ -20044,9 +20032,7 @@ gulaoye 姑老爷
 guleizuowu 谷类作物
 gulf 海湾 #
 guli 鼓励 孤立 股利 故里
-gulian 顾怜
-gulian 顾恋
-gulian 顾脸
+gulian 顾怜 顾恋 顾脸
 guliang 估量
 gulimu 孤立木
 guling 骨龄
@@ -20763,8 +20749,7 @@ hangtian 航天
 hangtianfeiji 航天飞机
 hanguaer 汗褂儿
 hanguan 涵管
-hanguang 寒光
-hanguang 浛洸
+hanguang 寒光 浛洸
 hanguanweiyi 汉官威仪
 hangwu 航务
 hangwu 行伍
@@ -30166,7 +30151,7 @@ leshi 乐事
 lesotho 莱索托 #
 less 更小 较小 #
 lesson 课 教训 #
-lessthan ＜ ≤
+lessthan ＜ ≤ #
 lest 免得 #
 lesuo 勒索
 let 让 允许 #
