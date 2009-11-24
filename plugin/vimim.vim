@@ -11,11 +11,11 @@
 
 " ====  VimIM Introduction    ==== {{{
 " ====================================
-"      File: vimim.vim
-"    Author: vimim <vimim@googlegroups.com>
-"   License: GNU Lesser General Public License
-"  Revision: $Revision$
-"      Date: $Date$
+"       File: vimim.vim
+"     Author: vimim <vimim@googlegroups.com>
+"    License: GNU Lesser General Public License
+"  $Revision$
+"      $Date$
 " -----------------------------------------------------------
 "    Readme: VimIM is a Vim plugin designed as an independent IM
 "            (Input Method) to support the input of multi-byte.
