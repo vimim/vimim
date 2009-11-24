@@ -4,7 +4,6 @@
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
 
-" Date:  20091123T202223
 " Group: http://groups.google.com/group/vimim
 " Data:  http://code.google.com/p/vimim/downloads/list
 " Demo:  http://vimim.googlecode.com/svn/vimim/vimim.html
@@ -16,7 +15,7 @@
 "    Author: vimim <vimim@googlegroups.com>
 "   License: GNU Lesser General Public License
 "  Revision: $Revision$
-"      Date: $LastChangedDate$
+"      Date: $Date$
 " -----------------------------------------------------------
 "    Readme: VimIM is a Vim plugin designed as an independent IM
 "            (Input Method) to support the input of multi-byte.
