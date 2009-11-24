@@ -6,7 +6,7 @@
 " $Revision$
 " $Date$
 
-" Group: http://groups.google.com/group/vimim      
+" Group: http://groups.google.com/group/vimim
 " Data:  http://code.google.com/p/vimim/downloads/list
 " Demo:  http://vimim.googlecode.com/svn/vimim/vimim.html
 " Url:   http://vim.sourceforge.net/scripts/script.php?script_id=2506
@@ -481,13 +481,9 @@ function! s:vimim_initialize_valid_keys()
         let s:current_datafile_has_dot = 1
         let key = "[a-z;,.'/]"
     elseif s:wubi_flag > 0
-        let key = '[a-zA-Z.]'
-    elseif s:pinyin_flag == 1
-        let key = '[0-9a-z.]'
-    elseif s:pinyin_flag == 2
-        let key = '[a-z;']'
-    elseif s:pinyin_flag == 3
-        let key = '[0-9a-zA-Z.]'
+        let key = "[a-z.]"
+    elseif s:pinyin_flag > 0
+        let key = "[0-9a-z'.]"
     endif
     " -----------------------------
     call s:vimim_set_valid_key(key)
@@ -844,6 +840,9 @@ function! <SID>vimim_onekey()
 " ---------------------------
     let s:sentence_match = 0
     let s:chinese_input_mode = 0
+    let s:punctuations['&']='※'
+    let s:punctuations['"']="“”"
+    let s:punctuations['\']="、"
     call s:vimim_resume_shuangpin()
     call s:vimim_hjkl_navigation_on()
     if s:vimim_tab_for_one_key > 0
@@ -1241,7 +1240,6 @@ endfunction
 function! s:vimim_initialize_punctuations()
 " -----------------------------------------
     let s:punctuations = {}
-    let s:punctuations['&']='※'
     let s:punctuations['&']='、'
     let s:punctuations['#']='＃'
     let s:punctuations['%']='％'
@@ -1293,6 +1291,11 @@ endfunction
 function! s:vimim_punctuation_on()
 " --------------------------------
     let punctuations  = s:punctuations
+    if s:chinese_input_mode > 0
+        let s:punctuations['&']='、'
+        unlet punctuations['"']
+        unlet punctuations['\']
+    endif
     if s:erbi_flag > 0
 	unlet punctuations[',']
 	unlet punctuations['.']
@@ -2301,6 +2304,7 @@ function! s:vimim_sentence_whole_match(lines, keyboard)
     let match_start = match(a:lines, pattern)
     if match_start < 0
         let msg = "let's try backward maximum match"
+        let msg = "assuming there is no single quote in datafile"
     else
         return []
     endif
@@ -3481,14 +3485,20 @@ endfunction
 " --------------------------------------------
 function! s:vimim_get_sogou_cloud_im(keyboard)
 " --------------------------------------------
+    let keyboard = a:keyboard
     if empty(s:vimim_www_sogou)
     \|| empty(s:www_executable)
     \|| empty(s:pinyin_flag)
-    \|| empty(a:keyboard)
+    \|| empty(keyboard)
         return []
     endif
     let sogou = 'http://web.pinyin.sogou.com/web_ime/get_ajax/'
-    let input = sogou . a:keyboard . '.key'
+    " to support ' as delimeter to remove any ambiguity:  pi'ao
+    " (1) [example] piao => pi'ao 皮袄  xian => xi'an 西安
+    " (2) let s:pinyin_flag = "[0-9a-z'.]"
+    " (3) add double quotes between keyboard
+    " (4) [test] xi'anmeimeidepi'aosuifengpiaoyang 西安妹妹的皮袄随风飘扬
+    let input = sogou . '"' . keyboard . '".key'
     let output = 0
     " --------------------------------------------------------------
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
@@ -3530,7 +3540,7 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
         let item_list = split(item, '：')
         if len(item_list) > 1
             let chinese = item_list[0]
-            let english = strpart(a:keyboard, 0, item_list[1])
+            let english = strpart(keyboard, 0, item_list[1])
             let new_item = english . " " . chinese
             call add(menu, new_item)
         endif
@@ -3712,6 +3722,7 @@ function! s:vimim_wildcard_search(keyboard, lines)
     let wildcard = match(a:keyboard, wildcard_pattern)
     if wildcard > 0
         let star = substitute(a:keyboard,'[*]','.*','g')
+        let star = substitute(a:keyboard,"[']",'.','g')
         let fuzzy = '^' . star . '\>'
         let results = filter(a:lines, 'v:val =~ fuzzy')
     endif
