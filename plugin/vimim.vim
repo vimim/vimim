@@ -4,7 +4,7 @@
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
 
-" Date:  20091123T184130
+" Date:  20091123T202223
 " Group: http://groups.google.com/group/vimim
 " Data:  http://code.google.com/p/vimim/downloads/list
 " Demo:  http://vimim.googlecode.com/svn/vimim/vimim.html
@@ -288,6 +288,15 @@ function! s:vimim_finalize_session()
     if s:four_corner_flag > 1
         let s:vimim_fuzzy_search = 0
         let s:vimim_static_input_style = 1
+    endif
+" ----------------------------------
+    if empty(s:current_datafile)
+    \&& empty(s:vimim_www_sogou)
+    \&& s:privates_flag == 2
+        let msg = 'no point to use VimIM'
+    else
+        set completeopt=menuone
+        set completefunc=VimIM
     endif
 endfunction
 
@@ -3812,8 +3821,6 @@ endfunction
 " ====  VimIM Core Engine     ==== {{{
 " ====================================
 
-set completeopt=menuone
-set completefunc=VimIM
 " ------------------------------
 function! VimIM(start, keyboard)
 " ------------------------------
