@@ -3487,7 +3487,7 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
         return []
     endif
     let sogou = 'http://web.pinyin.sogou.com/web_ime/get_ajax/'
-    " support ' as delimiter to remove any ambiguity:  pi'ao
+    " support apostrophe as delimiter to remove ambiguity.
     " (1) examples: piao => pi'ao 皮袄  xian => xi'an 西安
     " (2) let s:pinyin_flag = "[0-9a-z'.]"
     " (3) add double quotes between keyboard
