@@ -6,10 +6,11 @@
 " $Revision$
 " $Date$
 
-" Group: http://groups.google.com/group/vimim
-" Data:  http://code.google.com/p/vimim/downloads/list
-" Demo:  http://vimim.googlecode.com/svn/vimim/vimim.html
-" Url:   http://vim.sourceforge.net/scripts/script.php?script_id=2506
+" GROUP:  http://groups.google.com/group/vimim
+" Data:   http://code.google.com/p/vimim/downloads/list
+" MANUAL: http://vimim.googlecode.com/svn/vimim/vimim.html
+" HTML:   http://vimim.googlecode.com/svn/vimim/vimim.vim.html
+" URL:    http://vim.sourceforge.net/scripts/script.php?script_id=2506
 
 " ====  VimIM Introduction    ==== {{{
 " ====================================
