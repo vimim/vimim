@@ -1128,23 +1128,11 @@ function! s:vimim_chinese_mode_on()
     set cpo&vim
     let &l:iminsert=1
     let s:chinese_insert_flag = 1
-    if s:vimim_custom_lcursor_color > 0
-        highlight! lCursor guifg=bg guibg=green
-    endif
-    " --------------------------------------
-    if s:vimim_static_input_style > 0
-        let s:chinese_input_mode = 1 |" chinese mode static
-        " ============================
-        sil!call s:vimim_resume_shuangpin()
-        sil!call s:vimim_alphabet_auto_select()
-        " ----------------------------
-        inoremap<silent><Space> <C-R>=g:vimim_smart_space_static()<CR>
-        " ----------------------------
-    else
-        let s:chinese_input_mode = 2 |" chinese mode dynamic
-        " ============================
+    if empty(s:vimim_static_input_style)
+    " ------------------------------ chinese mode dynamic
+        let s:chinese_input_mode = 2 
+        " --------------------------
         inoremap<silent><Space> <C-R>=g:vimim_smart_space_dynamic()<CR>
-        " ----------------------------
         let valid_keys = copy(s:valid_keys)
         call remove(valid_keys, match(valid_keys,'[.]'))
         for char in valid_keys
@@ -1152,8 +1140,14 @@ function! s:vimim_chinese_mode_on()
             \ <C-R>=<SID>vimim_dynamic_End()<CR>'. char .
             \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
         endfor
+    else
+        " -------------------------- chinese mode static
+        let s:chinese_input_mode = 1 
+        " --------------------------
+        sil!call s:vimim_resume_shuangpin()
+        sil!call s:vimim_alphabet_auto_select()
+        inoremap<silent><Space> <C-R>=g:vimim_smart_space_static()<CR>
     endif
-    " --------------------------------------
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_insert_for_both_static_dynamic()
 endfunction
@@ -1163,6 +1157,9 @@ function! s:vimim_insert_for_both_static_dynamic()
 " ------------------------------------------------
     let s:smart_enter = 0
     let s:smart_backspace = 0
+    if s:vimim_custom_lcursor_color > 0
+        highlight! lCursor guifg=bg guibg=green
+    endif
     sil!call s:vimim_label_on()
     sil!call s:vimim_insert_setting_on()
     sil!call g:vimim_reset_after_insert()
@@ -1184,18 +1181,15 @@ function! s:vimim_chinese_mode_off()
     if s:vimim_custom_lcursor_color > 0
         highlight lCursor NONE
     endif
-    " ---------------------------------------------------
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
         sil!exe ':%y +'
     endif
     sil!call s:vimim_iunmap()
     sil!call s:vimim_insert_setting_off()
     sil!call s:vimim_one_key_mapping_on()
-    " ------------------------
     if exists('*Fixcp')
         sil!call FixAcp()
     endif
-    " ------------------------
 endfunction
 
 " --------------------------------
@@ -3493,11 +3487,11 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
         return []
     endif
     let sogou = 'http://web.pinyin.sogou.com/web_ime/get_ajax/'
-    " to support ' as delimeter to remove any ambiguity:  pi'ao
-    " (1) [example] piao => pi'ao 皮袄  xian => xi'an 西安
+    " support ' as delimiter to remove any ambiguity:  pi'ao
+    " (1) examples: piao => pi'ao 皮袄  xian => xi'an 西安
     " (2) let s:pinyin_flag = "[0-9a-z'.]"
     " (3) add double quotes between keyboard
-    " (4) [test] xi'anmeimeidepi'aosuifengpiaoyang 西安妹妹的皮袄随风飘扬
+    " (4) QA: xi'anmeimeidepi'aosuifengpiaoyang 西安妹妹的皮袄随风飘扬
     let input = sogou . '"' . keyboard . '".key'
     let output = 0
     " --------------------------------------------------------------
