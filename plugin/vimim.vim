@@ -6,8 +6,9 @@
 " $Revision$
 " $Date$
 
-" GROUP:  http://groups.google.com/group/vimim
+" BUG:    http://code.google.com/p/vimim/issues/entry 
 " Data:   http://code.google.com/p/vimim/downloads/list
+" GROUP:  http://groups.google.com/group/vimim
 " MANUAL: http://vimim.googlecode.com/svn/vimim/vimim.html
 " HTML:   http://vimim.googlecode.com/svn/vimim/vimim.vim.html
 " URL:    http://vim.sourceforge.net/scripts/script.php?script_id=2506
@@ -2990,6 +2991,19 @@ function! s:vimim_initialize_datafile_pinyin()
     endif
 endfunction
 
+" ------------------------------------
+function! s:vimim_apostrophe(keyboard)
+" ------------------------------------
+    let keyboard = a:keyboard
+    if s:pinyin_flag > 0
+    \&& empty(s:vimim_apostrophe_in_pinyin)
+        " if apostrophe is in the pinyin datafile
+        " ---------------------------------------
+        let keyboard = substitute(keyboard,"'",'','g')
+    endif
+    return keyboard
+endfunction
+
 " -------------------------------------------
 function! s:vimim_auto_spell(lines, keyboard)
 " -------------------------------------------
@@ -3006,6 +3020,7 @@ function! s:vimim_auto_spell(lines, keyboard)
     let match_start = match(a:lines, '^'.key)
     return match_start
 endfunction
+
 
 " -----------------------------------------
 function! s:vimim_auto_spell_rule(keyboard)
@@ -3963,21 +3978,22 @@ else
         if s:shuangpin_flag > 0
             let keyboard2 = s:vimim_shuangpin_transform(keyboard)
             if keyboard2 !=# keyboard
-                let keyboard = keyboard2
                 let s:shuangpin_flag = 0
+                let s:sentence_match = 1
+                let keyboard = keyboard2
+                let keyboard = s:vimim_apostrophe(keyboard)
                 let s:shuangpin_in_quanpin = keyboard
                 let s:keyboard_leading_zero = keyboard
-                let s:sentence_match = 1
             endif
         endif
     endif
 
     " VimIM "modeless" whole sentence input: 【我有一個夢】
     " ----------------------------------------------------
-    "    English Input Method: 　i have a dream.
-    "    PinYin Input Method:  　wo you yige meng.
-    "    Wubi Input Method:    　trde ggwh ssqu.
-    "    Cangjie Input Method: 　hqi kb m ol ddni.
+    "   English Input Method: 　i have a dream.
+    "   PinYin Input Method:  　wo you yige meng.
+    "   Wubi Input Method:    　trde ggwh ssqu.
+    "   Cangjie Input Method: 　hqi kb m ol ddni.
     " ----------------------------------------------------
     if empty(s:chinese_input_mode)
         if s:sentence_input > 0
@@ -4034,10 +4050,7 @@ else
 
     " support apostrophe in pinyin datafile
     " -------------------------------------
-    if s:pinyin_flag > 0
-    \&& empty(s:vimim_apostrophe_in_pinyin)
-        let keyboard = substitute(keyboard,"[']",'','g')
-    endif
+    let keyboard = s:vimim_apostrophe(keyboard)
 
     " datafile update: modify data in memory based on past usage
     " ----------------------------------------------------------
