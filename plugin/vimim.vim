@@ -1131,7 +1131,7 @@ function! s:vimim_chinese_mode_on()
     let s:chinese_insert_flag = 1
     if empty(s:vimim_static_input_style)
     " ------------------------------ chinese mode dynamic
-        let s:chinese_input_mode = 2 
+        let s:chinese_input_mode = 2
         " --------------------------
         inoremap<silent><Space> <C-R>=g:vimim_smart_space_dynamic()<CR>
         let valid_keys = copy(s:valid_keys)
@@ -1143,7 +1143,7 @@ function! s:vimim_chinese_mode_on()
         endfor
     else
         " -------------------------- chinese mode static
-        let s:chinese_input_mode = 1 
+        let s:chinese_input_mode = 1
         " --------------------------
         sil!call s:vimim_resume_shuangpin()
         sil!call s:vimim_alphabet_auto_select()
@@ -1166,7 +1166,7 @@ function! s:vimim_insert_for_both_static_dynamic()
     sil!call g:vimim_reset_after_insert()
     sil!call <SID>vimim_set_seamless()
     inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
-      \<C-R>=<SID>vimim_set_seamless()<CR>
+        \<C-R>=<SID>vimim_set_seamless()<CR>
     inoremap<silent><expr><C-\> <SID>vimim_toggle_punctuation()
     return  <SID>vimim_toggle_punctuation()
 endfunction
@@ -2229,14 +2229,13 @@ endfunction
 " --------------------------------------------------
 function! s:vimim_keyboard_analysis(lines, keyboard)
 " --------------------------------------------------
-    let keyboard = "enjoy.1010.2523.4498.7429.girl"
     let keyboard = a:keyboard
     if empty(a:lines)
     \|| s:chinese_input_mode > 1
     \|| s:current_datafile_has_dot > 0
     \|| s:privates_flag > 1
     \|| len(s:private_matches) > 0
-    \|| len(a:keyboard) < 4
+    \|| len(a:keyboard) < 7
         return keyboard
     endif
     if keyboard =~ '^\l\+\d\+\l\+\d\+$'
@@ -2249,6 +2248,7 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
         " ----------------------------------------------
         let blocks = s:vimim_keyboard_dot_by_dot(keyboard)
         if len(blocks) > 0
+            let msg = "enjoy.1010.2523.4498.7429.girl"
             let keyboard = remove(blocks, 0)
         endif
     endif
@@ -2301,7 +2301,6 @@ function! s:vimim_sentence_whole_match(lines, keyboard)
     let match_start = match(a:lines, pattern)
     if match_start < 0
         let msg = "let's try backward maximum match"
-        let msg = "assuming there is no single quote in datafile"
     else
         return []
     endif
@@ -2318,9 +2317,9 @@ function! s:vimim_sentence_whole_match(lines, keyboard)
         let max -= 1
         let position = max
         if s:smart_backspace > 0
-           " ----------------------
-           " wozuixihuandeliulanqi.
-           " ----------------------
+            " ----------------------
+            " wozuixihuandeliulanqi.
+            " ----------------------
             let min += 1
             let position = min
         endif
@@ -2378,8 +2377,8 @@ function! g:vimim_menu_select()
     if pumvisible()
         let select_not_insert = '\<C-P>\<Down>'
         if s:insert_without_popup_flag > 0
-           let s:insert_without_popup_flag = 0
-           let select_not_insert = '\<C-Y>'
+            let s:insert_without_popup_flag = 0
+            let select_not_insert = '\<C-Y>'
         endif
     endif
     sil!exe 'sil!return "' . select_not_insert . '"'
@@ -2912,8 +2911,10 @@ function! s:vimim_diy_keyboard2number(keyboard)
     endif
     let alphabet_length = 0
     if len(keyboard) == 5
+        let msg = 'asofo'
         let alphabet_length = 1
     elseif len(keyboard) == 6
+        let msg = 'zaskso'
         let alphabet_length = 2
     else
         return keyboard
@@ -3231,13 +3232,13 @@ function! s:vimim_shuangpin_abc(rule)
     " ---------------------------------------------------
     call extend(a:rule[0],{ "zh":"a","ch":"e","sh":"v" })
     call extend(a:rule[1],{
-                \"an":"j","ao":"k","ai":"l","ang":"h",
-                \"ong":"s","ou":"b",
-                \"en":"f","er":"r","ei":"q","eng":"g","ng":"g",
-                \"ia":"d","iu":"r","ie":"x","in":"c","ing":"y",
-                \"iao":"z","ian":"w","iang":"t","iong":"s",
-                \"un":"n","ua":"d","uo":"o","ue":"m","ui":"m",
-                \"uai":"c","uan":"p","uang":"t" } )
+        \"an":"j","ao":"k","ai":"l","ang":"h",
+        \"ong":"s","ou":"b",
+        \"en":"f","er":"r","ei":"q","eng":"g","ng":"g",
+        \"ia":"d","iu":"r","ie":"x","in":"c","ing":"y",
+        \"iao":"z","ian":"w","iang":"t","iong":"s",
+        \"un":"n","ua":"d","uo":"o","ue":"m","ui":"m",
+        \"uai":"c","uan":"p","uang":"t" } )
     return a:rule
 endfunction
 
@@ -3248,14 +3249,14 @@ function! s:vimim_shuangpin_microsoft(rule)
     " ------------------------------------
     call extend(a:rule[0],{ "zh":"v","ch":"i","sh":"u" })
     call extend(a:rule[1],{
-                \"an":"j","ao":"k","ai":"l","ang":"h",
-                \"ong":"s","ou":"b",
-                \"en":"f","er":"r","ei":"z","eng":"g","ng":"g",
-                \"ia":"w","iu":"q","ie":"x","in":"n","ing":";",
-                \"iao":"c","ian":"m","iang":"d","iong":"s",
-                \"un":"p","ua":"w","uo":"o","ue":"t","ui":"v",
-                \"uai":"y","uan":"r","uang":"d" ,
-                \"v":"y"} )
+        \"an":"j","ao":"k","ai":"l","ang":"h",
+        \"ong":"s","ou":"b",
+        \"en":"f","er":"r","ei":"z","eng":"g","ng":"g",
+        \"ia":"w","iu":"q","ie":"x","in":"n","ing":";",
+        \"iao":"c","ian":"m","iang":"d","iong":"s",
+        \"un":"p","ua":"w","uo":"o","ue":"t","ui":"v",
+        \"uai":"y","uan":"r","uang":"d" ,
+        \"v":"y"} )
     return a:rule
 endfunction
 
@@ -3266,13 +3267,13 @@ function! s:vimim_shuangpin_nature(rule)
     " -------------------------------
     call extend(a:rule[0],{ "zh":"v","ch":"i","sh":"u" })
     call extend(a:rule[1],{
-                \"an":"j","ao":"k","ai":"l","ang":"h",
-                \"ong":"s","ou":"b",
-                \"en":"f","er":"r","ei":"z","eng":"g","ng":"g",
-                \"ia":"w","iu":"q","ie":"x","in":"n","ing":"y",
-                \"iao":"c","ian":"m","iang":"d","iong":"s",
-                \"un":"p","ua":"w","uo":"o","ue":"t","ui":"v",
-                \"uai":"y","uan":"r","uang":"d" } )
+        \"an":"j","ao":"k","ai":"l","ang":"h",
+        \"ong":"s","ou":"b",
+        \"en":"f","er":"r","ei":"z","eng":"g","ng":"g",
+        \"ia":"w","iu":"q","ie":"x","in":"n","ing":"y",
+        \"iao":"c","ian":"m","iang":"d","iong":"s",
+        \"un":"p","ua":"w","uo":"o","ue":"t","ui":"v",
+        \"uai":"y","uan":"r","uang":"d" } )
     return a:rule
 endfunction
 
@@ -3281,13 +3282,13 @@ function! s:vimim_shuangpin_plusplus(rule)
 " ----------------------------------------
     call extend(a:rule[0],{ "zh":"v","ch":"u","sh":"i" })
     call extend(a:rule[1],{
-                \"an":"f","ao":"d","ai":"s","ang":"g",
-                \"ong":"y","ou":"p",
-                \"en":"r","er":"q","ei":"w","eng":"t","ng":"t",
-                \"ia":"b","iu":"n","ie":"m","in":"l","ing":"q",
-                \"iao":"k","ian":"j","iang":"h","iong":"y",
-                \"un":"z","ua":"b","uo":"o","ue":"x","ui":"v",
-                \"uai":"x","uan":"c","uang":"h" } )
+        \"an":"f","ao":"d","ai":"s","ang":"g",
+        \"ong":"y","ou":"p",
+        \"en":"r","er":"q","ei":"w","eng":"t","ng":"t",
+        \"ia":"b","iu":"n","ie":"m","in":"l","ing":"q",
+        \"iao":"k","ian":"j","iang":"h","iong":"y",
+        \"un":"z","ua":"b","uo":"o","ue":"x","ui":"v",
+        \"uai":"x","uan":"c","uang":"h" } )
     return a:rule
 endfunction
 
@@ -3296,13 +3297,13 @@ function! s:vimim_shuangpin_purple(rule)
 " --------------------------------------
     call extend(a:rule[0],{ "zh":"u","ch":"a","sh":"i" })
     call extend(a:rule[1],{
-                \"an":"r","ao":"q","ai":"p","ang":"s",
-                \"ong":"h","ou":"z",
-                \"en":"w","er":"j","ei":"k","eng":"t","ng":"t",
-                \"ia":"x","iu":"j","ie":"d","in":"y","ing":";",
-                \"iao":"b","ian":"f","iang":"g","iong":"h",
-                \"un":"m","ua":"x","uo":"o","ue":"n","ui":"n",
-                \"uai":"y","uan":"l","uang":"g"} )
+        \"an":"r","ao":"q","ai":"p","ang":"s",
+        \"ong":"h","ou":"z",
+        \"en":"w","er":"j","ei":"k","eng":"t","ng":"t",
+        \"ia":"x","iu":"j","ie":"d","in":"y","ing":";",
+        \"iao":"b","ian":"f","iang":"g","iong":"h",
+        \"un":"m","ua":"x","uo":"o","ue":"n","ui":"n",
+        \"uai":"y","uan":"l","uang":"g"} )
     return a:rule
 endfunction
 
