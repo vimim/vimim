@@ -3099,7 +3099,7 @@ function! s:vimim_shuangpin_transform(keyb)
             endif
             if has_key(s:shuangpin_table, sp1)
                 " the last odd shuangpin code are output as only shengmu
-                let output .= s:shuangpin_table[sp1]
+                let output .= s:shuangpin_table[sp1] . "'"
             else
                 " invalid shuangpin code are preserved
                 let output .= sp1
