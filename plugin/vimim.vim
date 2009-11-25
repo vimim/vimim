@@ -7,7 +7,7 @@
 " $Date$
 
 " BUG:    http://code.google.com/p/vimim/issues/entry 
-" Data:   http://code.google.com/p/vimim/downloads/list
+" DATA:   http://code.google.com/p/vimim/downloads/list
 " GROUP:  http://groups.google.com/group/vimim
 " MANUAL: http://vimim.googlecode.com/svn/vimim/vimim.html
 " HTML:   http://vimim.googlecode.com/svn/vimim/vimim.vim.html
@@ -2804,7 +2804,8 @@ function! s:vimim_search_vimim_privates(keyboard)
     if empty(len_privates_lines) || len(keyboard) < 3
         return []
     endif
-    let pattern = "\\C" . "^" . keyboard
+let g:ga=keyboard
+    let pattern = "\\C" . "^" . keyboard  . '\>'
     let matched = match(lines, pattern)
     let matches = []
     if matched < 0
@@ -3591,7 +3592,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_www_sogou = 11
+    let s:vimim_www_sogou = 13
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
     let s:vimim_reverse_pageup_pagedown = 1
@@ -4070,9 +4071,10 @@ else
 
     " first process private data, if existed
     " --------------------------------------
+let g:gb=keyboard
     if s:privates_flag == 1
     \&& len(s:privates_datafile) > 0
-    \&& keyboard !~ '[.?*]'
+    \&& keyboard !~ "['.?*]"
         let results = s:vimim_search_vimim_privates(keyboard)
         if len(results) > 0
             let s:private_matches = results
