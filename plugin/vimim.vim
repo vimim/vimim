@@ -28,10 +28,10 @@
 "            * Support five popular "Shuang Pin"
 "            * Support "Pin Yin", "Wu Bi", "Cang Jie", "4Corner", etc
 "            * Support "modeless" whole sentence input
-"            * Support "multi-byte search" using search key '/' or '?'.
+"            * Support "Chinese search" using search key '/' or '?'.
 "            * Support "fuzzy search" and "wildcard search"
 "            * Support popup menu navigation using "vi key" (hjkl)
-"            * Support direct "unicode input" using integer or hex
+"            * Support direct "UNICODE input" using integer or hex
 "            * Support direct "GBK input" and "Big5 input"
 "            * Support "non-stop-typing" for Wubi
 "            * Support "non-stop-typing" for 4Corner and Telegraph Code
@@ -457,7 +457,7 @@ function! s:vimim_initialize_valid_keys()
     " -----------------------------------
     if input_method =~ 'phonetic'
         let s:current_datafile_has_dot = 1
-        let key = "[0-9a-z.,;/\-]"
+        let key = "[-0-9a-z.,;/]"
     elseif input_method =~ 'array'
         let s:current_datafile_has_dot = 1
         let key = "[a-z.,;/]"
@@ -466,7 +466,7 @@ function! s:vimim_initialize_valid_keys()
     elseif input_method =~ 'yong'
         let key = "[a-z;'/]"
     elseif input_method =~ 'wu'
-        let key = "[a-z']"
+        let key = "[a-z'.]"
     elseif input_method =~ 'nature'
         let key = "[a-z'.]"
     elseif input_method =~ 'zhengma'
@@ -479,7 +479,7 @@ function! s:vimim_initialize_valid_keys()
         let key = "[0-9]"
     elseif s:erbi_flag > 0
         let s:current_datafile_has_dot = 1
-        let key = "[a-z;,.'/]"
+        let key = "[a-z'.,;/]"
     elseif s:wubi_flag > 0
         let key = "[a-z.]"
     elseif s:pinyin_flag > 0
@@ -1349,7 +1349,7 @@ function! <SID>vimim_punctuations_navigation(key)
             let hjkl  = '\<C-R>=g:vimim_search_forward()\<CR>'
         elseif a:key == "?"
             let hjkl  = '\<C-R>=g:vimim_search_backward()\<CR>'
-        elseif a:key =~ "[,.=\-]"
+        elseif a:key =~ "[-,=.]"
             if a:key == ',' || a:key == '-'
                 if s:vimim_reverse_pageup_pagedown > 0
                     let s:pageup_pagedown += 1
@@ -3716,7 +3716,6 @@ function! s:vimim_wildcard_search(keyboard, lines)
     let wildcard = match(a:keyboard, wildcard_pattern)
     if wildcard > 0
         let star = substitute(a:keyboard,'[*]','.*','g')
-        let star = substitute(a:keyboard,"[']",'.','g')
         let fuzzy = '^' . star . '\>'
         let results = filter(a:lines, 'v:val =~ fuzzy')
     endif
