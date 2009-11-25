@@ -160,6 +160,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_nature")
     call add(G, "g:vimim_shuangpin_plusplus")
     call add(G, "g:vimim_shuangpin_purple")
+    call add(G, "g:vimim_apostrophe_in_pinyin")
     call add(G, "g:vimim_dummy_shuangpin")
     call add(G, "g:vimim_fuzzy_search")
     call add(G, "g:vimim_latex_suite")
@@ -1262,7 +1263,7 @@ function! s:vimim_initialize_punctuations()
     let s:punctuations['?']='？'
     if empty(s:vimim_latex_suite)
         let s:punctuations["'"]="“”"
-        let s:punctuations['`']='‘’'
+        let s:punctuations['`']='“”'
     endif
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
@@ -1383,7 +1384,9 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
         let start_column = current_positions[2]-1
         let current_line = getline(current_positions[1])
         let char_before = current_line[start_column-1]
-        if char_before !~ '\w'
+        let english_punctuation_after_digit = '\d'
+        let english_punctuation_after_english = '\w'
+        if char_before !~ english_punctuation_after_digit
             let value = s:punctuations[value]
         endif
     endif
@@ -4025,6 +4028,13 @@ else
             let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
         endif
+    endif
+
+    " support apostrophe in pinyin datafile
+    " -------------------------------------
+    if s:pinyin_flag > 0
+    \&& empty(s:vimim_apostrophe_in_pinyin)
+        let keyboard = substitute(keyboard,"[']",'','g')
     endif
 
     " datafile update: modify data in memory based on past usage
