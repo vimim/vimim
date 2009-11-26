@@ -176,6 +176,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_english_punctuation")
+    call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_smart_punctuations")
     " -----------------------------------
@@ -191,7 +192,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_match_dot_after_dot")
     call add(G, "g:vimim_menu_label")
     call add(G, "g:vimim_one_key")
-    call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_custom_lcursor_color")
     call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_save_new_entry")
@@ -1321,6 +1321,7 @@ endfunction
 function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
     if empty(s:vimim_punctuation_navigation)
+    \&& s:chinese_input_mode > 0
         return
     endif
     let hjkl_list = split(',.=-;[]','\zs')
@@ -3070,6 +3071,7 @@ function! s:vimim_initialize_shuangpin()
     endif
     let s:pinyin_flag = 2
     let s:shuangpin_flag = 1
+    let s:vimim_fuzzy_search = 0
     let s:vimim_static_input_style = 1
     let rules = s:vimim_shuangpin_generic()
     if s:vimim_shuangpin_microsoft > 0
@@ -3092,6 +3094,7 @@ function! s:vimim_resume_shuangpin()
     if s:pinyin_flag == 2 && empty(s:shuangpin_flag)
         let s:shuangpin_flag = 1
         let s:shuangpin_in_quanpin = 0
+        let s:vimim_fuzzy_search = 0
     endif
 endfunction
 
@@ -4186,15 +4189,14 @@ let g:gb=keyboard
         return s:vimim_popupmenu_list(results)
     endif
 
-    " support seamless English input for static mode
-    " ----------------------------------------------
+    " support seamless English input for Chinese Input Mode
+    " -----------------------------------------------------
     if match_start < 0
         if empty(s:chinese_input_mode)
-            let msg = 'no seamless for OneKey'
+            let msg = 'no auto seamless for OneKey'
         else
             call <SID>vimim_set_seamless()
         endif
-call <SID>vimim_set_seamless()
         return []
     endif
 
