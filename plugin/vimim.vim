@@ -175,6 +175,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_tab_for_one_key")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
+    call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_smart_punctuations")
     " -----------------------------------
@@ -1385,9 +1386,11 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
         let start_column = current_positions[2]-1
         let current_line = getline(current_positions[1])
         let char_before = current_line[start_column-1]
-        let english_punctuation_after_digit = '\d'
-        let english_punctuation_after_english = '\w'
-        if char_before !~ english_punctuation_after_digit
+        let filter = '\w'     |" english_punctuation_after_english
+        if empty(s:vimim_english_punctuation)
+            let filter = '\d' |" english_punctuation_after_digit
+        endif
+        if char_before !~ filter
             let value = s:punctuations[value]
         endif
     endif
