@@ -7,7 +7,6 @@
 " $Date$
 
 " BUG:    http://code.google.com/p/vimim/issues/entry 
-" DATA:   http://code.google.com/p/vimim/downloads/list
 " GROUP:  http://groups.google.com/group/vimim
 " MANUAL: http://vimim.googlecode.com/svn/vimim/vimim.html
 " HTML:   http://vimim.googlecode.com/svn/vimim/vimim.vim.html
@@ -3982,7 +3981,6 @@ else
                 let s:shuangpin_flag = 0
                 let s:sentence_match = 1
                 let keyboard = keyboard2
-                let keyboard = s:vimim_apostrophe(keyboard)
                 let s:shuangpin_in_quanpin = keyboard
                 let s:keyboard_leading_zero = keyboard
             endif
@@ -4003,7 +4001,6 @@ else
         \&& empty(s:current_datafile_has_dot)
             let s:sentence_input = 0
             let keyboard = substitute(keyboard,'\s','.','g')
-            let s:keyboard_leading_zero = keyboard
         endif
     endif
     let s:sentence_input = 0
@@ -4052,6 +4049,7 @@ else
     " support apostrophe in pinyin datafile
     " -------------------------------------
     let keyboard = s:vimim_apostrophe(keyboard)
+    let s:keyboard_leading_zero = keyboard
 
     " datafile update: modify data in memory based on past usage
     " ----------------------------------------------------------
