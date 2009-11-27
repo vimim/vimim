@@ -131,10 +131,10 @@ function! s:vimim_initialization()
     call s:vimim_initialize_www_sogou()
     " -----------------------------------------
     call s:vimim_initialize_datafile_4corner()
+    call s:vimim_initialize_shuangpin()
     call s:vimim_initialize_datafile_pinyin()
     call s:vimim_initialize_diy_pinyin_digit()
     " -----------------------------------------
-    call s:vimim_initialize_shuangpin()
     call s:vimim_initialize_datafile_erbi()
     call s:vimim_initialize_datafile_wubi()
     call s:vimim_initialize_valid_keys()
@@ -237,10 +237,10 @@ function! s:vimim_initialize_session()
     let s:www_executable = 0
     let s:four_corner_flag = 0
     let s:diy_pinyin_4corner = 0
+    let s:vimim_static_input_style = 0
     " --------------------------------
     let s:pinyin_flag = 0
     let s:shuangpin_flag = 0
-    let s:i_am_shuangpin = 0
     let s:shuangpin_in_quanpin = 0
     let s:shuangpin_table = {}
     " --------------------------------
@@ -290,12 +290,12 @@ function! s:vimim_finalize_session()
     if s:vimim_english_in_datafile > 0
         let s:english_flag = 1
     endif
-    if s:vimim_www_sogou > 0
-        let s:vimim_static_input_style = 1
-    endif
     if s:four_corner_flag > 1
         let s:vimim_fuzzy_search = 0
         let s:vimim_static_input_style = 1
+    endif
+    if s:vimim_static_input_style < 0
+        let s:vimim_static_input_style = 0
     endif
 endfunction
 
@@ -2994,9 +2994,16 @@ endfunction
 function! s:vimim_initialize_datafile_pinyin()
 " --------------------------------------------
     if s:pinyin_flag > 0
-        let s:vimim_fuzzy_search = 1
-        let s:vimim_match_word_after_word = 1
-        let s:vimim_save_input_history_frequency = 1
+        if s:vimim_static_input_style < 0
+            let mes = 'user wants dynamic input'
+        else
+            let s:vimim_static_input_style = 1
+        endif
+        if s:pinyin_flag < 2
+            let s:vimim_fuzzy_search = 1
+            let s:vimim_match_word_after_word = 1
+            let s:vimim_save_input_history_frequency = 1
+        endif
     endif
 endfunction
 
@@ -3076,8 +3083,6 @@ function! s:vimim_initialize_shuangpin()
     endif
     let s:pinyin_flag = 2
     let s:shuangpin_flag = 1
-    let s:vimim_fuzzy_search = 0
-    let s:vimim_static_input_style = 1
     let rules = s:vimim_shuangpin_generic()
     if s:vimim_shuangpin_microsoft > 0
         let rules = s:vimim_shuangpin_microsoft(rules)
@@ -3602,19 +3607,19 @@ function! s:vimim_initialize_debug()
     endif
     " -------------------------------- debug
     let s:vimim_www_sogou = 13
+    let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
-    let s:vimim_reverse_pageup_pagedown = 1
     let s:pinyin_flag = 1
     let s:english_flag = 1
     let s:four_corner_flag = 1
     let s:vimim_wildcard_search = 1
+    let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
     let s:vimim_shuangpin_abc = 0
     let s:vimim_unicode_lookup = 0
     let s:vimim_number_as_navigation = 0
     let s:vimim_dummy_shuangpin = 0
-    let s:vimim_static_input_style = 0
     " ---------------------------------------
 endfunction
 
@@ -4018,22 +4023,20 @@ else
 
     " cloud-dependent whole sentence input:　woyouyigemeng
     " ----------------------------------------------------
-    if s:chinese_input_mode < 2
-        let keyboard2 = s:vimim_get_cloud_keyboard(keyboard)
-        if empty(keyboard2)
-            let msg = "who care about cloud?"
-        elseif s:no_internet_connection > 0
-            let msg = "oops, there is no internet connection."
+    let keyboard2 = s:vimim_get_cloud_keyboard(keyboard)
+    if empty(keyboard2)
+        let msg = "who care about cloud?"
+    elseif s:no_internet_connection > 0
+        let msg = "oops, there is no internet connection."
+    else
+        let results = s:vimim_get_sogou_cloud_im(keyboard2)
+        if empty(len(results))
+            let s:sentence_match = 0
+            let s:no_internet_connection = 1
         else
-            let results = s:vimim_get_sogou_cloud_im(keyboard2)
-            if empty(len(results))
-                let s:sentence_match = 0
-                let s:no_internet_connection = 1
-            else
-                let s:sentence_match = 1
-                let s:no_internet_connection = 0
-                return s:vimim_popupmenu_list(results)
-            endif
+            let s:sentence_match = 1
+            let s:no_internet_connection = 0
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
