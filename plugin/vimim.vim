@@ -3001,9 +3001,9 @@ function! s:vimim_initialize_datafile_pinyin()
         endif
         if s:pinyin_flag < 2
             let s:vimim_fuzzy_search = 1
-            let s:vimim_match_word_after_word = 1
             let s:vimim_save_input_history_frequency = 1
         endif
+        let s:vimim_match_word_after_word = 1
     endif
 endfunction
 
@@ -3606,7 +3606,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_www_sogou = 13
+    let s:vimim_www_sogou = 133
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
@@ -3616,7 +3616,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
-    let s:vimim_shuangpin_abc = 0
+    let s:vimim_shuangpin_abc = 1
     let s:vimim_unicode_lookup = 0
     let s:vimim_number_as_navigation = 0
     let s:vimim_dummy_shuangpin = 0
@@ -4021,24 +4021,24 @@ else
     endif
     let s:sentence_input = 0
 
-    " cloud-dependent whole sentence input:　woyouyigemeng
-    " ----------------------------------------------------
-    let keyboard2 = s:vimim_get_cloud_keyboard(keyboard)
-    if empty(keyboard2)
-        let msg = "who care about cloud?"
-    elseif s:no_internet_connection > 0
-        let msg = "oops, there is no internet connection."
-    else
-        let results = s:vimim_get_sogou_cloud_im(keyboard2)
-        if empty(len(results))
-            let s:sentence_match = 0
-            let s:no_internet_connection = 1
-        else
-            let s:sentence_match = 1
-            let s:no_internet_connection = 0
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
+"   " cloud-dependent whole sentence input:　woyouyigemeng
+"   " ----------------------------------------------------
+"   let keyboard2 = s:vimim_get_cloud_keyboard(keyboard)
+"   if empty(keyboard2)
+"       let msg = "who care about cloud?"
+"   elseif s:no_internet_connection > 0
+"       let msg = "oops, there is no internet connection."
+"   else
+"       let results = s:vimim_get_sogou_cloud_im(keyboard2)
+"       if empty(len(results))
+"           let s:sentence_match = 0
+"           let s:no_internet_connection = 1
+"       else
+"           let s:sentence_match = 1
+"           let s:no_internet_connection = 0
+"           return s:vimim_popupmenu_list(results)
+"       endif
+"   endif
 
     " [erbi] the first ,./;' is punctuation
     " -------------------------------------
