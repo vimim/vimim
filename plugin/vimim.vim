@@ -237,6 +237,7 @@ function! s:vimim_initialize_session()
     let s:www_executable = 0
     let s:four_corner_flag = 0
     let s:diy_pinyin_4corner = 0
+    let s:digit_keyboards = {}
     " --------------------------------
     let s:pinyin_flag = 0
     let s:shuangpin_flag = 0
@@ -2907,6 +2908,7 @@ function! s:vimim_diy_keyboard2number(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
     if empty(s:diy_pinyin_4corner)
+    \|| empty(s:digit_keyboards)
     \|| s:chinese_input_mode > 1
     \|| len(a:keyboard) < 5
     \|| len(a:keyboard) > 6
@@ -3605,7 +3607,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_www_sogou = 133
+    let s:vimim_www_sogou = 13
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
@@ -3615,7 +3617,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
-    let s:vimim_shuangpin_abc = 1
+    let s:vimim_shuangpin_abc = 0
     let s:vimim_unicode_lookup = 0
     let s:vimim_number_as_navigation = 0
     let s:vimim_dummy_shuangpin = 0
@@ -3631,7 +3633,6 @@ function! s:vimim_initialize_diy_pinyin_digit()
     if s:pinyin_flag == 2
         return
     endif
-    let s:digit_keyboards = {}
     let s:digit_keyboards['a']=1
     let s:digit_keyboards['s']=2
     let s:digit_keyboards['d']=3
