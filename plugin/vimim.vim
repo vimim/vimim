@@ -237,7 +237,6 @@ function! s:vimim_initialize_session()
     let s:www_executable = 0
     let s:four_corner_flag = 0
     let s:diy_pinyin_4corner = 0
-    let s:vimim_static_input_style = 0
     " --------------------------------
     let s:pinyin_flag = 0
     let s:shuangpin_flag = 0
@@ -4283,3 +4282,4 @@ endfunction
 silent!call s:vimim_initialization()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
+
