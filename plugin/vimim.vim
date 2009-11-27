@@ -4021,24 +4021,24 @@ else
     endif
     let s:sentence_input = 0
 
-"   " cloud-dependent whole sentence input:　woyouyigemeng
-"   " ----------------------------------------------------
-"   let keyboard2 = s:vimim_get_cloud_keyboard(keyboard)
-"   if empty(keyboard2)
-"       let msg = "who care about cloud?"
-"   elseif s:no_internet_connection > 0
-"       let msg = "oops, there is no internet connection."
-"   else
-"       let results = s:vimim_get_sogou_cloud_im(keyboard2)
-"       if empty(len(results))
-"           let s:sentence_match = 0
-"           let s:no_internet_connection = 1
-"       else
-"           let s:sentence_match = 1
-"           let s:no_internet_connection = 0
-"           return s:vimim_popupmenu_list(results)
-"       endif
-"   endif
+    " cloud-dependent whole sentence input:　woyouyigemeng
+    " ----------------------------------------------------
+    let keyboard2 = s:vimim_get_cloud_keyboard(keyboard)
+    if empty(keyboard2)
+        let msg = "who care about cloud?"
+    elseif s:no_internet_connection > 0
+        let msg = "oops, there is no internet connection."
+    else
+        let results = s:vimim_get_sogou_cloud_im(keyboard2)
+        if empty(len(results))
+            let s:sentence_match = 0
+            let s:no_internet_connection = 1
+        else
+            let s:sentence_match = 1
+            let s:no_internet_connection = 0
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
 
     " [erbi] the first ,./;' is punctuation
     " -------------------------------------
