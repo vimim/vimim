@@ -6,7 +6,7 @@
 " $Revision$
 " $Date$
 
-" BUG:    http://code.google.com/p/vimim/issues/entry 
+" BUG:    http://code.google.com/p/vimim/issues/entry
 " GROUP:  http://groups.google.com/group/vimim
 " MANUAL: http://vimim.googlecode.com/svn/vimim/vimim.html
 " HTML:   http://vimim.googlecode.com/svn/vimim/vimim.vim.html
@@ -240,6 +240,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:pinyin_flag = 0
     let s:shuangpin_flag = 0
+    let s:i_am_shuangpin = 0
     let s:shuangpin_in_quanpin = 0
     let s:shuangpin_table = {}
     " --------------------------------
@@ -486,12 +487,11 @@ function! s:vimim_initialize_valid_keys()
     elseif s:wubi_flag > 0
         let key = "[a-z.]"
     elseif s:pinyin_flag > 0
+        let key = "[0-9a-z'.]"
         if s:vimim_shuangpin_microsoft > 0
             let key = "[0-9a-z'.;]"
         elseif s:vimim_shuangpin_purple > 0
             let key = "[0-9a-z'.;]"
-        else
-            let key = "[0-9a-z'.]"
         endif
     endif
     " -----------------------------
@@ -2813,7 +2813,6 @@ function! s:vimim_search_vimim_privates(keyboard)
     if empty(len_privates_lines) || len(keyboard) < 3
         return []
     endif
-let g:ga=keyboard
     let pattern = "\\C" . "^" . keyboard  . '\>'
     let matched = match(lines, pattern)
     let matches = []
@@ -3100,7 +3099,6 @@ function! s:vimim_resume_shuangpin()
     if s:pinyin_flag == 2 && empty(s:shuangpin_flag)
         let s:shuangpin_flag = 1
         let s:shuangpin_in_quanpin = 0
-        let s:vimim_fuzzy_search = 0
     endif
 endfunction
 
@@ -3949,7 +3947,7 @@ else
 
     " hunt real easter egg ... vim<C-\>
     " ---------------------------------
-    if keyboard =~# "vim"
+    if keyboard ==# "vim"
         return s:vimim_easter_egg()
     endif
 
@@ -3983,9 +3981,10 @@ else
         if empty(s:shuangpin_in_quanpin)
             let msg = 'enter shuangpin for the first time'
         elseif match(s:shuangpin_in_quanpin, keyboard) < 0
-            let s:shuangpin_flag = 1
-        else
             let s:shuangpin_flag = 0
+        else
+            let s:shuangpin_flag = 1
+            let s:shuangpin_in_quanpin = 0
         endif
         if s:shuangpin_flag > 0
             let keyboard2 = s:vimim_shuangpin_transform(keyboard)
@@ -3993,7 +3992,7 @@ else
                 let s:shuangpin_flag = 0
                 let s:sentence_match = 1
                 let keyboard = keyboard2
-                let s:shuangpin_in_quanpin = keyboard
+                let s:shuangpin_in_quanpin = a:keyboard
                 let s:keyboard_leading_zero = keyboard
             endif
         endif
@@ -4081,7 +4080,6 @@ else
 
     " first process private data, if existed
     " --------------------------------------
-let g:gb=keyboard
     if s:privates_flag == 1
     \&& len(s:privates_datafile) > 0
     \&& keyboard !~ "['.?*]"
