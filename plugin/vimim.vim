@@ -3862,6 +3862,7 @@ if a:start
 
     let current_positions = getpos(".")
     let start_column = current_positions[2]-1
+    let start_column_save = start_column
     let start_row = current_positions[1]
     let current_line = getline(start_row)
     let char_before = current_line[start_column-1]
@@ -3890,6 +3891,21 @@ if a:start
         let start_column -= 1
         let char_before = current_line[start_column-1]
     endwhile
+
+    if s:pinyin_flag > 0
+        let char_current = current_line[start_column]
+        let char_after = current_line[start_column+1]
+        let char_after_column = start_column+1
+        if char_after =~# '\d'
+            while start_column < start_column_save && char_after =~# '\d'
+                let char_after = current_line[start_column+1]
+                let start_column += 1
+            endwhile
+        elseif char_current =~# '\d'
+            \&& char_after_column - start_column == 1
+            let start_column = char_after_column
+        endif
+    endif
 
     " utf-8 datafile update: get user's previous selection
     " ----------------------------------------------------
