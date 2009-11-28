@@ -2013,6 +2013,9 @@ function! s:vimim_popupmenu_list(matched_list)
         if tail =~ '\w'
             let chinese .=  tail
         endif
+let g:ga=tail
+let g:gb=chinese
+"xxx
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
         let label += 1
@@ -3607,6 +3610,8 @@ function! s:vimim_initialize_debug()
     endif
     " -------------------------------- debug
     let s:vimim_www_sogou = 13
+    let s:vimim_www_sogou = 0
+"xxx
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
@@ -3616,7 +3621,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
-    let s:vimim_shuangpin_abc = 0
+    let s:vimim_shuangpin_abc = 1
     let s:vimim_unicode_lookup = 0
     let s:vimim_number_as_navigation = 0
     let s:vimim_dummy_shuangpin = 0
@@ -4291,3 +4296,5 @@ endfunction
 silent!call s:vimim_initialization()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
+
+
