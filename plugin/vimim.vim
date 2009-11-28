@@ -3887,24 +3887,17 @@ if a:start
         endif
     endif
 
+    let last_seen_non_digit_column = start_column
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
+        if char_before !~# '\d'
+            let last_seen_non_digit_column = start_column
+        endif
         let char_before = current_line[start_column-1]
     endwhile
 
     if s:pinyin_flag > 0
-        let char_current = current_line[start_column]
-        let char_after = current_line[start_column+1]
-        let char_after_column = start_column+1
-        if char_after =~# '\d'
-            while start_column < start_column_save && char_after =~# '\d'
-                let char_after = current_line[start_column+1]
-                let start_column += 1
-            endwhile
-        elseif char_current =~# '\d'
-            \&& char_after_column - start_column == 1
-            let start_column = char_after_column
-        endif
+        let start_column = last_seen_non_digit_column
     endif
 
     " utf-8 datafile update: get user's previous selection
