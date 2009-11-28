@@ -128,6 +128,9 @@ function! s:vimim_initialization()
     " -----------------------------------------
     call s:vimim_initialize_datafile_primary()
     call s:vimim_initialize_datafile_privates()
+    " -----------------------------------------
+    call s:vimim_initialize_datafile_erbi()
+    call s:vimim_initialize_datafile_wubi()
     call s:vimim_initialize_www_sogou()
     " -----------------------------------------
     call s:vimim_initialize_datafile_4corner()
@@ -135,8 +138,6 @@ function! s:vimim_initialization()
     call s:vimim_initialize_datafile_pinyin()
     call s:vimim_initialize_diy_pinyin_digit()
     " -----------------------------------------
-    call s:vimim_initialize_datafile_erbi()
-    call s:vimim_initialize_datafile_wubi()
     call s:vimim_initialize_valid_keys()
     " -----------------------------------------
     call s:vimim_initialize_color()
@@ -256,11 +257,11 @@ function! s:vimim_initialize_session()
     let s:menu_reverse = 0
     " --------------------------------
     let s:ecdict = {}
+    let s:search_key_slash = 0
     let s:unicode_prefix = 'u'
     let s:chinese_insert_flag = 0
     let s:chinese_input_mode = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
-    let s:search_key_slash = 0
     " --------------------------------
     let s:insert_without_popup_flag = 0
     let s:sentence_input = 0
@@ -341,6 +342,7 @@ function! s:vimim_initialize_datafile_primary()
     call add(input_methods, "xinhua")
     call add(input_methods, "quick")
     call add(input_methods, "array30")
+    call add(input_methods, "wubi2pinyin")
     call add(input_methods, "wubi")
     call add(input_methods, "wubi98")
     call add(input_methods, "wubijd")
@@ -366,6 +368,8 @@ function! s:vimim_initialize_datafile_primary()
     if filereadable(datafile)
         if datafile =~# 'erbi'
             let s:erbi_flag = 1
+        elseif datafile =~# 'wubi2pinyin'
+            let s:wubi_flag = -1
         elseif datafile =~# 'wubi'
             let s:wubi_flag = 1
         elseif datafile =~# 'pinyin'
@@ -955,6 +959,11 @@ function! g:vimim_smart_space_dynamic()
         sil!call g:vimim_reset_after_insert()
         sil!exe 'sil!return "' . space . '"'
     else
+        if s:wubi_flag < 0
+            let s:vimim_www_sogou = 1
+            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+            sil!exe 'sil!return "' . space . '"'
+        endif
         let space = s:vimim_smart_punctuation(s:punctuations, space)
         if empty(space)
             let space = ' '
@@ -964,7 +973,7 @@ function! g:vimim_smart_space_dynamic()
             let space = " "
         endif
     endif
-    return space
+    sil!exe 'sil!return "' . space . '"'
 endfunction
 
 " --------------------------
@@ -1142,6 +1151,7 @@ function! s:vimim_chinese_mode_on()
         let s:chinese_input_mode = 2
         " --------------------------
         inoremap<silent><Space> <C-R>=g:vimim_smart_space_dynamic()<CR>
+                               \<C-R>=g:vimim_reset_after_insert()<CR>
         let valid_keys = copy(s:valid_keys)
         call remove(valid_keys, match(valid_keys,'[.]'))
         for char in valid_keys
@@ -1156,6 +1166,7 @@ function! s:vimim_chinese_mode_on()
         sil!call s:vimim_resume_shuangpin()
         sil!call s:vimim_alphabet_auto_select()
         inoremap<silent><Space> <C-R>=g:vimim_smart_space_static()<CR>
+                               \<C-R>=g:vimim_reset_after_insert()<CR>
     endif
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_insert_for_both_static_dynamic()
@@ -1284,6 +1295,9 @@ endfunction
 " ---------------------------------------
 function! <SID>vimim_toggle_punctuation()
 " ---------------------------------------
+    if s:vimim_chinese_punctuation < 0
+        return ""
+    endif
     let s:chinese_punctuation = (s:chinese_punctuation+1)%2
     sil!call s:vimim_punctuation_on()
     sil!call s:vimim_punctuation_navigation_on()
@@ -2079,6 +2093,10 @@ endfunction
 function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:seamless_positions = []
+    if s:wubi_flag < 0
+        let s:vimim_www_sogou = 888
+        call <SID>vimim_set_seamless()
+    endif
     let s:pageup_pagedown = 0
     let s:menu_reverse = 0
     let s:smart_enter = 0
@@ -3400,6 +3418,12 @@ function! s:vimim_initialize_datafile_wubi()
             let s:vimim_wubi_non_stop = 0
         endif
     endif
+    if s:wubi_flag < 0
+        let s:vimim_english_punctuation = 1
+        let s:vimim_chinese_punctuation = -1
+        let s:vimim_static_input_style = -1
+        let s:vimim_www_sogou = 888
+    endif
 endfunction
 
 " ------------------------------
@@ -3643,7 +3667,7 @@ function! s:vimim_initialize_debug()
     endif
     " -------------------------------- debug
     let s:vimim_www_sogou = 13
-    let s:vimim_static_input_style = -1
+    let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
     let s:pinyin_flag = 1
