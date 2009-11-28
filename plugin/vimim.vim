@@ -489,8 +489,7 @@ function! s:vimim_initialize_valid_keys()
     elseif s:pinyin_flag > 0
         let key = "[0-9a-z'.]"
         if s:vimim_shuangpin_microsoft > 0
-            let key = "[0-9a-z'.;]"
-        elseif s:vimim_shuangpin_purple > 0
+        \|| s:vimim_shuangpin_purple > 0
             let key = "[0-9a-z'.;]"
         endif
     endif
