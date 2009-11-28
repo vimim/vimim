@@ -1654,6 +1654,167 @@ function! s:vimim_initialize_e2c()
 endfunction
 
 " ================================ }}}
+" ====  VimIM Chinese2Pinyin  ==== {{{
+" ====================================
+
+" --------------------------------
+function! g:vimim_chinese2pinyin()
+" --------------------------------
+    " convert chinese to pinyin using pinyin datafile
+    " :call g:vimim_chinese2pinyin()
+    " --------------------------------------
+    " horse 马 馬儿 马馬儿   <= garbage in
+    " horse ma maer mamaer   => garbage out
+    " --------------------------------------
+    let line = 0
+    let space = ' '
+    while line < line("$")
+        let line += 1
+        let current_line = getline(line)
+        let current_line_list = split(current_line)
+        let new_line = get(current_line_list, 0)
+        for item in current_line_list
+            let chinese = substitute(item,'\s\+\|\w\|\n','','g')
+            let chinese_characters = split(chinese,'\zs')
+            let chinese_char = join(chinese_characters, ' ')
+            let cache_pinyin = s:vimim_build_reverse_cache(chinese_char, 1)
+            let items = s:vimim_make_one_entry(cache_pinyin, chinese)
+            let result = join(items,'')
+            let new_line .= space . result
+        endfor
+        call setline(line, new_line)
+    endwhile
+endfunction
+
+" ---------------------------------------
+function! s:vimim_reverse_lookup(chinese)
+" ---------------------------------------
+    let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
+    let chinese_characters = split(chinese,'\zs')
+    let chinese_char = join(chinese_characters, '   ')
+    " ------------------------------------------------
+    let result_unicode = ''
+    let items = []
+    if s:vimim_unicode_lookup > 0
+        for char in chinese_characters
+            let unicode = printf('%04x',char2nr(char))
+            call add(items, unicode)
+        endfor
+        let unicode = join(items, ' ')
+        let result_unicode = unicode. "\n" . chinese_char
+    endif
+    " ------------------------------------------------
+    let result_4corner = ''
+    if s:four_corner_flag > 0
+        let cache_4corner = s:vimim_build_4corner_cache(chinese)
+        let items = s:vimim_make_one_entry(cache_4corner, chinese)
+        let result_4corner = join(items,' ')."\n".chinese_char
+    endif
+    " ------------------------------------------------
+    let cache_pinyin = s:vimim_build_reverse_cache(chinese, 0)
+    let items = s:vimim_make_one_entry(cache_pinyin, chinese)
+    let result_pinyin = join(items,'')." ".chinese
+    " ------------------------------------------------
+    let result = ''
+    if len(result_unicode) > 0
+        let result .= "\n" . result_unicode
+    endif
+    if len(result_4corner) > 0
+        let result .= "\n" . result_4corner
+    endif
+    if result_pinyin =~ '\a'
+        let result .= "\n" .result_pinyin
+    endif
+    return result
+endfunction
+
+" -----------------------------------------------------
+function! s:vimim_build_reverse_cache(chinese, one2one)
+" -----------------------------------------------------
+    let lines = s:vimim_load_datafile(0)
+    if empty(lines)
+        return {}
+    endif
+    if empty(s:alphabet_lines)
+        let first_line_index = 0
+        let index = match(lines, '^a')
+        if index > -1
+            let first_line_index = index
+        endif
+        let last_line_index = len(lines) - 1
+        let s:alphabet_lines = lines[first_line_index : last_line_index]
+        if s:pinyin_flag > 0 |" one to many relationship
+            let pinyin_with_tone = '^\a\+\d\s\+'
+            call filter(s:alphabet_lines, 'v:val =~ pinyin_with_tone')
+        endif
+    endif
+    if empty(s:alphabet_lines)
+        return {}
+    endif
+    " ----------------------------------------
+    let alphabet_lines = []
+    if &encoding == "utf-8"
+        let alphabet_lines = copy(s:alphabet_lines)
+    else
+        for line in s:alphabet_lines
+            if line !~ '^v\d\s\+'
+                let line = s:vimim_i18n_read(line)
+            endif
+            call add(alphabet_lines, line)
+        endfor
+    endif
+    " ----------------------------------------
+    let characters = split(a:chinese,'\zs')
+    let character = join(characters,'\|')
+    call filter(alphabet_lines, 'v:val =~ character')
+    " ----------------------------------------
+    let cache = {}
+    for line in alphabet_lines
+        if empty(line)
+            continue
+        endif
+        let words = split(line)
+        if len(words) < 2
+            continue
+        endif
+        let menu = remove(words, 0)
+        if s:pinyin_flag > 0
+            let menu = substitute(menu,'\d','','g')
+        endif
+        for char in words
+            if match(characters, char) < 0
+                continue
+            endif
+            if has_key(cache,char) && menu!=cache[char]
+                if empty(a:one2one)
+                    let cache[char] = menu .'|'. cache[char]
+                endif
+            else
+                let cache[char] = menu
+            endif
+        endfor
+    endfor
+    return cache
+endfunction
+
+" ----------------------------------------------
+function! s:vimim_make_one_entry(cache, chinese)
+" ----------------------------------------------
+    if empty(a:chinese) || empty(a:cache)
+        return []
+    endif
+    let characters = split(a:chinese, '\zs')
+    let items = []
+    for char in characters
+        if has_key(a:cache, char)
+            let menu = a:cache[char]
+            call add(items, menu)
+        endif
+    endfor
+    return items
+endfunction
+
+" ================================ }}}
 " ====  VimIM Smart Keys      ==== {{{
 " ====================================
 
@@ -2651,132 +2812,6 @@ function! s:vimim_insert_entry(lines, entries)
     return lines
 endfunction
 
-" --------------------------------------------
-function! s:vimim_build_reverse_cache(chinese)
-" --------------------------------------------
-    let lines = s:vimim_load_datafile(0)
-    if empty(lines)
-        return {}
-    endif
-    if empty(s:alphabet_lines)
-        let first_line_index = 0
-        let index = match(lines, '^a')
-        if index > -1
-            let first_line_index = index
-        endif
-        let last_line_index = len(lines) - 1
-        let s:alphabet_lines = lines[first_line_index : last_line_index]
-        if s:pinyin_flag > 0 |" one to many relationship
-            let pinyin_with_tone = '^\a\+\d\s\+'
-            call filter(s:alphabet_lines, 'v:val =~ pinyin_with_tone')
-        endif
-    endif
-    if empty(s:alphabet_lines)
-        return {}
-    endif
-    " ----------------------------------------
-    let alphabet_lines = []
-    if &encoding == "utf-8"
-        let alphabet_lines = copy(s:alphabet_lines)
-    else
-        for line in s:alphabet_lines
-            if line !~ '^v\d\s\+'
-                let line = s:vimim_i18n_read(line)
-            endif
-            call add(alphabet_lines, line)
-        endfor
-    endif
-    " ----------------------------------------
-    let characters = split(a:chinese,'\zs')
-    let character = join(characters,'\|')
-    call filter(alphabet_lines, 'v:val =~ character')
-    " ----------------------------------------
-    let cache = {}
-    for line in alphabet_lines
-        if empty(line)
-            continue
-        endif
-        let words = split(line)
-        if len(words) < 2
-            continue
-        endif
-        let menu = remove(words, 0)
-        if s:pinyin_flag > 0
-            let menu = substitute(menu,'\d','','g')
-        endif
-        for char in words
-            if match(characters, char) < 0
-                continue
-            endif
-            if has_key(cache,char) && menu!=cache[char]
-                let cache[char] = menu .'|'. cache[char]
-            else
-                let cache[char] = menu
-            endif
-        endfor
-    endfor
-    return cache
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_make_one_entry(cache, chinese)
-" ----------------------------------------------
-    if empty(a:chinese) || empty(a:cache)
-        return []
-    endif
-    let characters = split(a:chinese, '\zs')
-    let items = []
-    for char in characters
-        if has_key(a:cache, char)
-            let menu = a:cache[char]
-            call add(items, menu)
-        endif
-    endfor
-    return items
-endfunction
-
-" ---------------------------------------
-function! s:vimim_reverse_lookup(chinese)
-" ---------------------------------------
-    let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
-    let chinese_characters = split(chinese,'\zs')
-    let chinese_char = join(chinese_characters, '   ')
-    " ------------------------------------------------
-    let result_unicode = ''
-    let items = []
-    if s:vimim_unicode_lookup > 0
-        for char in chinese_characters
-            let unicode = printf('%04x',char2nr(char))
-            call add(items, unicode)
-        endfor
-        let unicode = join(items, ' ')
-        let result_unicode = unicode. "\n" . chinese_char
-    endif
-    " ------------------------------------------------
-    let result_4corner = ''
-    if s:four_corner_flag > 0
-        let cache_4corner = s:vimim_build_4corner_cache(chinese)
-        let items = s:vimim_make_one_entry(cache_4corner, chinese)
-        let result_4corner = join(items,' ')."\n".chinese_char
-    endif
-    " ------------------------------------------------
-    let cache_pinyin = s:vimim_build_reverse_cache(chinese)
-    let items = s:vimim_make_one_entry(cache_pinyin, chinese)
-    let result_pinyin = join(items,'')." ".chinese
-    " ------------------------------------------------
-    let result = ''
-    if len(result_unicode) > 0
-        let result .= "\n" . result_unicode
-    endif
-    if len(result_4corner) > 0
-        let result .= "\n" . result_4corner
-    endif
-    if result_pinyin =~ '\a'
-        let result .= "\n" .result_pinyin
-    endif
-    return result
-endfunction
-
 " ================================ }}}
 " ====  VimIM Private Data    ==== {{{
 " ====================================
@@ -3038,7 +3073,6 @@ function! s:vimim_auto_spell(lines, keyboard)
     let match_start = match(a:lines, '^'.key)
     return match_start
 endfunction
-
 
 " -----------------------------------------
 function! s:vimim_auto_spell_rule(keyboard)
