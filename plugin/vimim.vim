@@ -179,6 +179,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_smart_punctuations")
+    call add(G, "g:vimim_diy_asdfghjklo")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -2907,6 +2908,7 @@ function! s:vimim_diy_keyboard2number(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
     if empty(s:diy_pinyin_4corner)
+    \|| empty(s:vimim_diy_asdfghjklo)
     \|| empty(s:digit_keyboards)
     \|| s:chinese_input_mode > 1
     \|| len(a:keyboard) < 5
@@ -3607,12 +3609,13 @@ function! s:vimim_initialize_debug()
     endif
     " -------------------------------- debug
     let s:vimim_www_sogou = 13
-    let s:vimim_static_input_style = -1+1
+    let s:vimim_static_input_style = -1
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
     let s:pinyin_flag = 1
     let s:english_flag = 1
     let s:four_corner_flag = 1
+    let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
@@ -3773,6 +3776,7 @@ function! s:vimim_diy_keyboard(keyboard)
 " --------------------------------------
     let keyboard = a:keyboard
     if empty(s:diy_pinyin_4corner)
+    \|| empty(s:vimim_diy_asdfghjklo)
     \|| s:chinese_input_mode > 1
     \|| len(keyboard) < 2
     \|| keyboard !~ '[0-9a-z]'
