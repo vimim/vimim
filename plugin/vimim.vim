@@ -2013,9 +2013,6 @@ function! s:vimim_popupmenu_list(matched_list)
         if tail =~ '\w'
             let chinese .=  tail
         endif
-let g:ga=tail
-let g:gb=chinese
-"xxx
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
         let label += 1
@@ -2248,7 +2245,7 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
     \|| s:current_datafile_has_dot > 0
     \|| s:privates_flag > 1
     \|| len(s:private_matches) > 0
-    \|| len(a:keyboard) < 7
+    \|| len(a:keyboard) < 2
         return keyboard
     endif
     if keyboard =~ '^\l\+\d\+\l\+\d\+$'
@@ -2306,7 +2303,7 @@ function! s:vimim_sentence_whole_match(lines, keyboard)
     if empty(s:vimim_match_word_after_word)
     \|| empty(a:lines)
     \|| a:keyboard =~ '\d'
-    \|| len(a:keyboard) < 5
+    \|| len(a:keyboard) < 4
         return []
     endif
     let keyboard = a:keyboard
@@ -3610,8 +3607,6 @@ function! s:vimim_initialize_debug()
     endif
     " -------------------------------- debug
     let s:vimim_www_sogou = 13
-    let s:vimim_www_sogou = 0
-"xxx
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
@@ -3621,7 +3616,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
-    let s:vimim_shuangpin_abc = 1
+    let s:vimim_shuangpin_abc = 0
     let s:vimim_unicode_lookup = 0
     let s:vimim_number_as_navigation = 0
     let s:vimim_dummy_shuangpin = 0
@@ -4147,22 +4142,10 @@ else
         endif
     endif
 
-    " word matching algorithm for Chinese word segmentation
-    " -----------------------------------------------------
+    " try "do it yourself" couple IM: pinyin+4corner
+    " ----------------------------------------------
     if match_start < 0
-        let keyboard2 = s:vimim_keyboard_analysis(lines, keyboard)
-        if keyboard2 !=# keyboard
-            let s:sentence_match = 1
-            let keyboard = keyboard2
-            let pattern = "\\C" . "^" . keyboard
-            let match_start = match(lines, pattern)
-        endif
-    endif
-
-    " try "do it yourself" couple input method: pinyin+4corner
-    " --------------------------------------------------------
-    if match_start < 0
-        if s:pinyin_flag > 0 && s:four_corner_flag == 1
+        if s:pinyin_flag == 1 && s:four_corner_flag == 1
             let s:diy_pinyin_4corner = 1
             let keyboard2 = s:vimim_diy_keyboard2number(keyboard)
             let keyboards = s:vimim_diy_keyboard(keyboard2)
@@ -4172,6 +4155,18 @@ else
             else
                 let s:diy_pinyin_4corner = 0
             endif
+        endif
+    endif
+
+    " word matching algorithm for Chinese word segmentation
+    " -----------------------------------------------------
+    if match_start < 0
+        let keyboard2 = s:vimim_keyboard_analysis(lines, keyboard)
+        if keyboard2 !=# keyboard
+            let s:sentence_match = 1
+            let keyboard = keyboard2
+            let pattern = "\\C" . "^" . keyboard
+            let match_start = match(lines, pattern)
         endif
     endif
 
@@ -4296,5 +4291,3 @@ endfunction
 silent!call s:vimim_initialization()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
-
-
