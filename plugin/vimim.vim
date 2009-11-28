@@ -3957,7 +3957,9 @@ if a:start
         let char_before = current_line[start_column-1]
     endwhile
 
-    if s:pinyin_flag > 0
+    if empty(s:chinese_input_mode)
+        let msg = 'OneKey needs play with digit input'
+    elseif s:pinyin_flag > 0
         let start_column = last_seen_non_digit_column
     endif
 
