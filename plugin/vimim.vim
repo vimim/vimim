@@ -23,17 +23,18 @@
 "            VimIM aims to complete the Vim as the greatest editor.
 " -----------------------------------------------------------
 "  Features: * "Plug & Play"
-"            * "Plug & Play": "Cloud Input" through SouGou
+"            * "Plug & Play": "Cloud Input" with Shuangpin
+"            * "Plug & Play": "Cloud Input" with Wubi
 "            * "Plug & Play": Pinyin and four_corner together
 "            * "Plug & Play": Pinyin and five_stroke together
-"            * Support five popular "Shuang Pin"
+"            * Support direct "UNICODE input" using integer or hex
+"            * Support direct "GBK input" and "Big5 input"
 "            * Support "Pin Yin", "Wu Bi", "Cang Jie", "4Corner", etc
+"            * Support five popular "Shuang Pin"
 "            * Support "modeless" whole sentence input
 "            * Support "Chinese search" using search key '/' or '?'.
 "            * Support "fuzzy search" and "wildcard search"
 "            * Support popup menu navigation using "vi key" (hjkl)
-"            * Support direct "UNICODE input" using integer or hex
-"            * Support direct "GBK input" and "Big5 input"
 "            * Support "non-stop-typing" for Wubi
 "            * Support "non-stop-typing" for 4Corner and Telegraph Code
 "            * Support "Do It Yourself" input method defined by users
@@ -43,7 +44,7 @@
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
-"   Install: (1) download a datafile of your choice from Data link above
+"   Install: (1) download a datafile of your choice from vimim.googlecode
 "            (2) drop vimim.vim and the datafile to the plugin directory
 " -----------------------------------------------------------
 " EasterEgg: (in Vim Insert Mode, type 4 chars:) vim<C-\>
