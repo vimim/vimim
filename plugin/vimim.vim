@@ -535,37 +535,61 @@ function! s:vimim_vim_easter_egg()
     return s:vimim_popupmenu_list(eggs)
 endfunction
 
-" -------------------------------
-function! s:vimim_vi_easter_egg()
-" -------------------------------
+" ----------------------------------
+function! s:vimim_vimim_easter_egg()
+" ----------------------------------
     let eggs = []
-    let option = "$VIM 环境　" . $VIM
+    let option = "$VIM 环境：　" . $VIM
     call add(eggs, option)
-    let option = "encoding 编码　" . &encoding
+    let option = "encoding 编码：　" . &encoding
     call add(eggs, option)
     let option = s:current_datafile
-    let option = strpart(s:current_datafile, len(s:path))
-    let option = "datafile 词库　" . option
-    call add(eggs, option)
+    if empty(option)
+        let msg = 'no primary datafile, might play cloud'
+    else
+        let option = strpart(option, len(s:path))
+        let option = "datafile 词库：　" . option
+        call add(eggs, option)
+    endif
+    let option = s:privates_flag
+    if empty(option)
+        let msg = 'no private datafile found'
+    else
+        let option = "privates.txt"
+        let option = "datafile 词库：　" . option
+        call add(eggs, option)
+    endif
     if s:four_corner_flag > 0
-    let eggs += ["4corner 四角号码"]
+        let option = "四角号码"
+        let option = "datafile 词库：　" . option
+        call add(eggs, option)
+    endif
+    if s:pinyin_flag > 0
+        let option = "拼音"
+        let option = "im 输入：　" . option
+        call add(eggs, option)
+    endif
+    if s:wubi_flag > 0
+        let option = "五笔"
+        let option = "im 输入：　" . option
+        call add(eggs, option)
     endif
     if s:pinyin_flag == 2
-        let option = "shuangpin "
+        let option = "shuangpin 双拼：　"
         if s:vimim_shuangpin_microsoft > 0
-            let option .= "微软双拼"
+            let option .= "微软"
         elseif s:vimim_shuangpin_abc > 0
-            let option .= "智能ABC双拼"
+            let option .= "智能ABC"
         elseif s:vimim_shuangpin_nature > 0
-            let option .= "自然码双拼"
+            let option .= "自然码"
         elseif s:vimim_shuangpin_purple > 0
-            let option .= "紫光双拼"
+            let option .= "紫光"
         elseif s:vimim_shuangpin_plusplus > 0
-            let option .= "拼音加加双拼"
+            let option .= "拼音加加"
         endif
         call add(eggs, option)
     endif
-    let option = "cloud 云　g:vimim_www_sogou=" . s:vimim_www_sogou
+    let option = "cloud 〖云〗　g:vimim_www_sogou=" . s:vimim_www_sogou
     call add(eggs, option)
     return s:vimim_popupmenu_list(eggs)
 endfunction
@@ -3714,7 +3738,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
-    let s:vimim_shuangpin_abc = 1
+    let s:vimim_shuangpin_abc = 0
     let s:vimim_unicode_lookup = 0
     let s:vimim_number_as_navigation = 0
     let s:vimim_dummy_shuangpin = 0
@@ -4067,8 +4091,8 @@ else
 
     " hunt easter egg ... vi<C-\>
     " ---------------------------
-    if keyboard ==# "vi"
-        return s:vimim_vi_easter_egg()
+    if keyboard ==# "vimim"
+        return s:vimim_vimim_easter_egg()
     endif
 
     " support direct internal code (unicode/gb/big5) input
