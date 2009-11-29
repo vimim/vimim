@@ -2432,6 +2432,10 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
         let msg = "[diy] ma7712li4002 => [mali,7712,4002]"
         return keyboard
     endif
+    let keyboard2 = s:vimim_diy_keyboard2number(keyboard)
+        if keyboard2 !=# keyboard
+        return keyboard
+    endif
     let blocks = []
     if keyboard =~ '[.]'
         " step 1: try to break up dot-separated sentence
@@ -2960,17 +2964,14 @@ endfunction
 function! s:vimim_diy_keyboard2number(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:diy_pinyin_4corner)
-    \|| empty(s:vimim_diy_asdfghjklo)
+    if empty(s:vimim_diy_asdfghjklo)
     \|| empty(s:digit_keyboards)
     \|| s:chinese_input_mode > 1
     \|| len(a:keyboard) < 5
     \|| len(a:keyboard) > 6
         return keyboard
     endif
-    if keyboard =~ '^\l\+\d\+\l\+\d\+$'
-        return keyboard
-    elseif a:keyboard =~ '\d'
+    if a:keyboard =~ '\d'
         return keyboard
     else
         let s:diy_pinyin_4corner = 4
@@ -4206,6 +4207,18 @@ else
         endif
     endif
 
+    " word matching algorithm for Chinese word segmentation
+    " -----------------------------------------------------
+    if match_start < 0
+        let keyboard2 = s:vimim_keyboard_analysis(lines, keyboard)
+        if keyboard2 !=# keyboard
+            let s:sentence_match = 1
+            let keyboard = keyboard2
+            let pattern = "\\C" . "^" . keyboard
+            let match_start = match(lines, pattern)
+        endif
+    endif
+
     " try "do it yourself" couple IM: pinyin+4corner
     " ----------------------------------------------
     if match_start < 0
@@ -4219,18 +4232,6 @@ else
             else
                 let s:diy_pinyin_4corner = 0
             endif
-        endif
-    endif
-
-    " word matching algorithm for Chinese word segmentation
-    " -----------------------------------------------------
-    if match_start < 0
-        let keyboard2 = s:vimim_keyboard_analysis(lines, keyboard)
-        if keyboard2 !=# keyboard
-            let s:sentence_match = 1
-            let keyboard = keyboard2
-            let pattern = "\\C" . "^" . keyboard
-            let match_start = match(lines, pattern)
         endif
     endif
 
