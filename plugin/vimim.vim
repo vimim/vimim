@@ -523,16 +523,51 @@ endfunction
 " ====  VimIM Easter Egg      ==== {{{
 " ====================================
 
-" ----------------------------
-function! s:vimim_easter_egg()
-" ----------------------------
-    let easter_eggs = []
-    let easter_eggs += ["vi    文本編輯器"]
-    let easter_eggs += ["vim   最牛文本編輯器"]
-    let easter_eggs += ["vim   精力"]
-    let easter_eggs += ["vim   生氣"]
-    let easter_eggs += ["vimim 中文輸入法"]
-    return s:vimim_popupmenu_list(easter_eggs)
+" --------------------------------
+function! s:vimim_vim_easter_egg()
+" --------------------------------
+    let eggs = []
+    let eggs += ["vi    文本編輯器"]
+    let eggs += ["vim   最牛文本編輯器"]
+    let eggs += ["vim   精力"]
+    let eggs += ["vim   生氣"]
+    let eggs += ["vimim 中文輸入法"]
+    return s:vimim_popupmenu_list(eggs)
+endfunction
+
+" -------------------------------
+function! s:vimim_vi_easter_egg()
+" -------------------------------
+    let eggs = []
+    let option = "$VIM 环境　" . $VIM
+    call add(eggs, option)
+    let option = "encoding 编码　" . &encoding
+    call add(eggs, option)
+    let option = s:current_datafile
+    let option = strpart(s:current_datafile, len(s:path))
+    let option = "datafile 词库　" . option
+    call add(eggs, option)
+    if s:four_corner_flag > 0
+    let eggs += ["4corner 四角号码"]
+    endif
+    if s:pinyin_flag == 2
+        let option = "shuangpin "
+        if s:vimim_shuangpin_microsoft > 0
+            let option .= "微软双拼"
+        elseif s:vimim_shuangpin_abc > 0
+            let option .= "智能ABC双拼"
+        elseif s:vimim_shuangpin_nature > 0
+            let option .= "自然码双拼"
+        elseif s:vimim_shuangpin_purple > 0
+            let option .= "紫光双拼"
+        elseif s:vimim_shuangpin_plusplus > 0
+            let option .= "拼音加加双拼"
+        endif
+        call add(eggs, option)
+    endif
+    let option = "cloud 云　g:vimim_www_sogou=" . s:vimim_www_sogou
+    call add(eggs, option)
+    return s:vimim_popupmenu_list(eggs)
 endfunction
 
 " ================================ }}}
@@ -3679,7 +3714,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
-    let s:vimim_shuangpin_abc = 0
+    let s:vimim_shuangpin_abc = 1
     let s:vimim_unicode_lookup = 0
     let s:vimim_number_as_navigation = 0
     let s:vimim_dummy_shuangpin = 0
@@ -4024,10 +4059,16 @@ else
         let @0 = keyboard
     endif
 
-    " hunt real easter egg ... vim<C-\>
-    " ---------------------------------
+    " hunt classic easter egg ... vim<C-\>
+    " ------------------------------------
     if keyboard ==# "vim"
-        return s:vimim_easter_egg()
+        return s:vimim_vim_easter_egg()
+    endif
+
+    " hunt easter egg ... vi<C-\>
+    " ---------------------------
+    if keyboard ==# "vi"
+        return s:vimim_vi_easter_egg()
     endif
 
     " support direct internal code (unicode/gb/big5) input
