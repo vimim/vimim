@@ -586,16 +586,16 @@ function! s:vimim_easter_egg_vimim()
         call add(eggs, option)
         if s:pinyin_flag == 2
             let option = "pinyin\t 双拼："
-            if s:vimim_shuangpin_microsoft > 0
-                let option .= "微软"
-            elseif s:vimim_shuangpin_abc > 0
+            if s:vimim_shuangpin_abc > 0
                 let option .= "智能ABC"
+            elseif s:vimim_shuangpin_microsoft > 0
+                let option .= "微软"
             elseif s:vimim_shuangpin_nature > 0
                 let option .= "自然码"
-            elseif s:vimim_shuangpin_purple > 0
-                let option .= "紫光"
             elseif s:vimim_shuangpin_plusplus > 0
                 let option .= "拼音加加"
+            elseif s:vimim_shuangpin_purple > 0
+                let option .= "紫光"
             endif
             call add(eggs, option)
         endif
@@ -3257,26 +3257,32 @@ function! s:vimim_initialize_shuangpin()
     if empty(s:pinyin_flag)
         return
     endif
-    if empty(s:vimim_shuangpin_microsoft)
-        \&& empty(s:vimim_shuangpin_purple)
-        \&& empty(s:vimim_shuangpin_abc)
-        \&& empty(s:vimim_shuangpin_nature)
-        \&& empty(s:vimim_shuangpin_plusplus)
+    if empty(s:vimim_shuangpin_abc)
+      \&& empty(s:vimim_shuangpin_microsoft)
+      \&& empty(s:vimim_shuangpin_nature)
+      \&& empty(s:vimim_shuangpin_plusplus)
+      \&& empty(s:vimim_shuangpin_purple)
         return
+    else
+        let abc =      'hkfgpyjxlisswovhqyyn'
+        let ms =       'hkfgp;jxlisswouhq;yp'
+        let nature =   'hkfgpyjxlisswouhqyyp'
+        let plusplus = 'hdftpqjmlisywoigqqyz'
+        let purple =   'hqftp;jdlishwoisq;ym'
     endif
     let s:pinyin_flag = 2
     let s:shuangpin_flag = 1
     let rules = s:vimim_shuangpin_generic()
-    if s:vimim_shuangpin_microsoft > 0
-        let rules = s:vimim_shuangpin_microsoft(rules)
-    elseif s:vimim_shuangpin_abc > 0
+    if s:vimim_shuangpin_abc > 0
         let rules = s:vimim_shuangpin_abc(rules)
+    elseif s:vimim_shuangpin_microsoft > 0
+        let rules = s:vimim_shuangpin_microsoft(rules)
     elseif s:vimim_shuangpin_nature > 0
         let rules = s:vimim_shuangpin_nature(rules)
-    elseif s:vimim_shuangpin_purple > 0
-        let rules = s:vimim_shuangpin_purple(rules)
     elseif s:vimim_shuangpin_plusplus > 0
         let rules = s:vimim_shuangpin_plusplus(rules)
+    elseif s:vimim_shuangpin_purple > 0
+        let rules = s:vimim_shuangpin_purple(rules)
     endif
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
 endfunction
