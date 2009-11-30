@@ -542,21 +542,18 @@ endfunction
 function! s:vimim_easter_egg_vimim()
 " ----------------------------------
     let eggs = []
-    let option = "console_"
-    if has("gui_running")
-        let option = "GUI_"
-    endif
     if has("win32unix")
-        let option .= "cygwin"
+        let option = "cygwin"
     elseif has("win32")
-        let option .= "Windows32"
+        let option = "Windows32"
     elseif has("win64")
-        let option .= "Windows64"
+        let option = "Windows64"
     elseif has("unix")
-        let option .= "unix"
+        let option = "unix"
     elseif has("macunix")
-        let option .= "macunix"
+        let option = "macunix"
     endif
+    let option .= "_" . &term 
     let option = "computer 电脑：" . option
     call add(eggs, option)
 " ----------------------------------
@@ -568,6 +565,9 @@ function! s:vimim_easter_egg_vimim()
     call add(eggs, option)
 " ----------------------------------
     let option = "encoding 编码：" . &encoding
+    call add(eggs, option)
+" ----------------------------------
+    let option = "fencs\t 编码：" . &fencs
     call add(eggs, option)
 " ----------------------------------
     if s:wubi_flag > 0
