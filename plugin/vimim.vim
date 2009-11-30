@@ -2210,7 +2210,6 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
-if empty(s:chinese_input_mode)
     let s:seamless_positions = []
     if s:wubi_flag < 0
         let s:vimim_www_sogou = 888
@@ -3811,6 +3810,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
+let s:vimim_chinese_punctuation = -1
     " ---------------------------------------
     let s:vimim_shuangpin_abc = 0
     let s:vimim_unicode_lookup = 0
