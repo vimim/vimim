@@ -540,6 +540,23 @@ endfunction
 function! s:vimim_easter_egg_vimim()
 " ----------------------------------
     let eggs = []
+    let option = "console_"
+    if has("gui_running")
+        let option = "GUI_"
+    endif
+    if has("win32unix")
+        let option .= "cygwin"
+    elseif has("win32")
+        let option .= "Windows32"
+    elseif has("win64")
+        let option .= "Windows64"
+    elseif has("unix")
+        let option .= "unix"
+    elseif has("macunix")
+        let option .= "macunix"
+    endif
+    let option = "computer 电脑：" . option
+    call add(eggs, option)
     let option = "$VIM\t 环境：" . $VIM
     call add(eggs, option)
     let option = get(split($VimIM),1)
