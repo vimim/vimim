@@ -412,12 +412,9 @@ function! s:vimim_get_seamless(current_positions)
     \|| empty(a:current_positions)
         return -1
     endif
-    let seamless_bufnum = s:seamless_positions[0]
-    let seamless_lnum = s:seamless_positions[1]
-    let seamless_off = s:seamless_positions[3]
-    if seamless_bufnum != a:current_positions[0]
-    \|| seamless_lnum != a:current_positions[1]
-    \|| seamless_off != a:current_positions[3]
+    let seamless_positions = copy(s:seamless_positions)
+    let seamless_positions[2] = a:current_positions[2]
+    if seamless_positions != a:current_positions
         return -1
     endif
     let seamless_column = s:seamless_positions[2]-1
@@ -436,7 +433,7 @@ function! s:vimim_get_seamless(current_positions)
         endif
     endfor
     let s:start_column_before = seamless_column
-    let s:start_row_before = seamless_lnum
+    let s:start_row_before = s:seamless_positions[1]
     let s:smart_enter = 0
     return seamless_column
 endfunction
@@ -3817,6 +3814,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
+    let s:vimim_menu_first_candidate = 1
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
@@ -4368,6 +4366,8 @@ else
             let keyboard = keyboard2
             let pattern = "\\C" . "^" . keyboard
             let match_start = match(lines, pattern)
+        else
+            let s:sentence_match = 0
         endif
     endif
 
