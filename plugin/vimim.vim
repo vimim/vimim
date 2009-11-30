@@ -183,6 +183,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_smart_punctuations")
     call add(G, "g:vimim_diy_asdfghjklo")
+    call add(G, "g:vimim_menu_first_candidate")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -553,7 +554,7 @@ function! s:vimim_easter_egg_vimim()
     elseif has("macunix")
         let option = "macunix"
     endif
-    let option .= "_" . &term 
+    let option .= "_" . &term
     let option = "computer 电脑：" . option
     call add(eggs, option)
 " ----------------------------------
@@ -1015,7 +1016,7 @@ function! <SID>vimim_label(n)
             let counts = ""
             let yes = ""
             if empty(s:vimim_number_as_navigation)
-                if empty(s:chinese_input_mode)
+                if empty(s:chinese_input_mode) && empty(s:sentence_match)
                     call s:vimim_insert_setting_off()
                 endif
                 if n > 1
@@ -1090,7 +1091,10 @@ function! g:vimim_d_delete_trash()
 " --------------------------------
     let d  = 'd'
     if pumvisible()
-        call g:vimim_reset_after_insert()
+        if empty(s:chinese_input_mode) && empty(s:sentence_match)
+            call s:vimim_insert_setting_off()
+        endif
+        sil!call g:vimim_reset_after_insert()
         let s:trash_code_flag = 1
         let d = '\<C-E>'
     endif
@@ -1117,8 +1121,8 @@ function! g:vimim_space_key_for_yes()
     let space = ''
     if pumvisible()
         let space = s:vimim_keyboard_block_by_block()
-        if empty(s:chinese_input_mode)
-            sil!call s:vimim_insert_setting_off()
+        if empty(s:chinese_input_mode) && empty(s:sentence_match)
+            call s:vimim_insert_setting_off()
         endif
         sil!call g:vimim_reset_after_insert()
     else
@@ -1133,7 +1137,9 @@ function! g:vimim_smart_space_onekey()
     let space = ' '
     if pumvisible()
         let space = s:vimim_keyboard_block_by_block()
-        sil!call s:vimim_insert_setting_off()
+        if empty(s:chinese_input_mode) && empty(s:sentence_match)
+            call s:vimim_insert_setting_off()
+        endif
         sil!call g:vimim_reset_after_insert()
         sil!exe 'sil!return "' . space . '"'
     else
@@ -2280,6 +2286,8 @@ function! s:vimim_popupmenu_list(matched_list)
     let popupmenu_list = []
     let menu = 0
     let keyboard = s:keyboard_leading_zero
+    let first_candidate = get(split(get(matched_list,0)),0)
+    let tail_default = strpart(keyboard, len(first_candidate))
     " ----------------------
     for pair in matched_list
     " ----------------------
@@ -2307,16 +2315,19 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["abbr"] = abbr
         endif
         let tail = ''
+        if empty(s:vimim_menu_first_candidate)
+            let tail_default = strpart(keyboard, len(menu))
+        endif
         if keyboard =~ '[.]'
             let dot = stridx(keyboard, '.')
             let dot_at_end = len(keyboard) - dot
             if dot_at_end == 1
-                let tail = strpart(keyboard, len(menu))
+                let tail = tail_default
             else
                 let tail = strpart(keyboard, dot+1)
             endif
         elseif s:sentence_match > 0
-            let tail = strpart(keyboard, len(menu))
+            let tail = tail_default
         endif
         if tail =~ '\w'
             let chinese .=  tail
@@ -2326,9 +2337,11 @@ function! s:vimim_popupmenu_list(matched_list)
         let label += 1
         call add(popupmenu_list, complete_items)
     endfor
-    let s:keyboards[0] = menu
-    if label == 2
-        let s:keyboards = ['','']
+    if empty(s:sentence_match)
+        let s:keyboards[0] = menu
+        if label == 2
+            let s:keyboards = ['','']
+        endif
     endif
     let s:pattern_not_found = 0
     return popupmenu_list
@@ -2682,6 +2695,9 @@ endfunction
 function! g:vimim_ctrl_x_ctrl_u()
 " -------------------------------
     let key = ''
+        if empty(s:chinese_input_mode) && empty(s:sentence_match)
+            call s:vimim_insert_setting_off()
+        endif
     let char_before = getline(".")[col(".")-2]
     if char_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
@@ -3801,7 +3817,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_www_sogou = 13
+    let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
