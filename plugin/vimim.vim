@@ -561,6 +561,10 @@ function! s:vimim_easter_egg_vimim()
     call add(eggs, option)
 " ----------------------------------
     let option = get(split($VimIM),1)
+    if option == 0
+        " This is not a SVN check out, revision number is not available.
+        let option = "n/a"
+    endif
     let option = "VimIM\t 版本：" . option
     call add(eggs, option)
 " ----------------------------------
