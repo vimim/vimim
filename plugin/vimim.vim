@@ -224,6 +224,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_initialize_settings()
 " -------------------------------------
+    let $VIMIM = " $Revision$ "
     let s:saved_cpo=&cpo
     let s:saved_lazyredraw=&lazyredraw
     let s:saved_hlsearch=&hlsearch
