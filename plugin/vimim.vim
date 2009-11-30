@@ -3,7 +3,7 @@
 " --------------------------------------------------
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
-" $Revision$
+let $VimIM = "$Revision$"
 " $Date$
 
 " BUG:    http://code.google.com/p/vimim/issues/entry
@@ -224,7 +224,6 @@ endfunction
 " -------------------------------------
 function! s:vimim_initialize_settings()
 " -------------------------------------
-    let $VIMIM = " $Revision$ "
     let s:saved_cpo=&cpo
     let s:saved_lazyredraw=&lazyredraw
     let s:saved_hlsearch=&hlsearch
@@ -542,6 +541,9 @@ function! s:vimim_easter_egg_vimim()
 " ----------------------------------
     let eggs = []
     let option = "$VIM\t 环境：" . $VIM
+    call add(eggs, option)
+    let option = get(split($VimIM),1)
+    let option = "$VimIM\t 版本：" . option
     call add(eggs, option)
     let option = "encoding 编码：" . &encoding
     call add(eggs, option)
