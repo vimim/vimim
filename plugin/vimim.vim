@@ -625,13 +625,13 @@ function! s:vimim_easter_egg_vimim()
         call add(eggs, option)
     endif
 " ----------------------------------
-    let option = s:vimim_www_sogou
-    if empty(option)
-        let option = "cloud\t 　云：晴天无云"
+    let option = "cloud\t 搜狗："
+    if empty(s:vimim_www_sogou)
+        let option .= "晴天无云"
     elseif option == 1
-        let option = "cloud\t 　云：全云输入"
+        let option .= "全云输入"
     else
-        let option = "cloud\t 　云：".option."朵云输入"
+        let option .= s:vimim_www_sogou . "朵云输入"
     endif
     call add(eggs, option)
 " ----------------------------------
