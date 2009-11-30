@@ -3,8 +3,8 @@
 " --------------------------------------------------
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
-let $VimIM = "$Revision$"
 " $Date$
+let $VimIM = "$Revision$"
 
 " BUG:    http://code.google.com/p/vimim/issues/entry
 " GROUP:  http://groups.google.com/group/vimim
