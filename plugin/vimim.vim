@@ -559,27 +559,23 @@ function! s:vimim_easter_egg_vimim()
     endif
     let option = "computer 电脑：" . option
     call add(eggs, option)
+" ----------------------------------
     let option = "Vim\t 版本：" . v:version
     call add(eggs, option)
+" ----------------------------------
     let option = get(split($VimIM),1)
     let option = "VimIM\t 版本：" . option
     call add(eggs, option)
+" ----------------------------------
     let option = "encoding 编码：" . &encoding
     call add(eggs, option)
-    let option = s:vimim_www_sogou
-    if empty(option)
-        let option = "cloud\t 　云：晴天无云"
-    elseif option == 1
-        let option = "cloud\t 　云：全云输入"
-    else
-        let option = "cloud\t 　云：>".option."　云输入"
-    endif
-    call add(eggs, option)
+" ----------------------------------
     if s:wubi_flag > 0
         let option = "五笔"
         let option = "im\t 输入：" . option
         call add(eggs, option)
     endif
+" ----------------------------------
     if s:pinyin_flag > 0
         let option = "拼音"
         let option = "im\t 输入：" . option
@@ -600,6 +596,7 @@ function! s:vimim_easter_egg_vimim()
             call add(eggs, option)
         endif
     endif
+" ----------------------------------
     let option = s:current_datafile
     if empty(option)
         let msg = 'no primary datafile, might play cloud'
@@ -608,6 +605,7 @@ function! s:vimim_easter_egg_vimim()
         let option = "datafile 词库：" . option
         call add(eggs, option)
     endif
+" ----------------------------------
     let option = s:privates_flag
     if empty(option)
         let msg = 'no private datafile found'
@@ -616,11 +614,23 @@ function! s:vimim_easter_egg_vimim()
         let option = "datafile 词库：" . option
         call add(eggs, option)
     endif
+" ----------------------------------
     if s:four_corner_flag > 0
         let option = "四角号码"
         let option = "datafile 词库：" . option
         call add(eggs, option)
     endif
+" ----------------------------------
+    let option = s:vimim_www_sogou
+    if empty(option)
+        let option = "cloud\t 　云：晴天无云"
+    elseif option == 1
+        let option = "cloud\t 　云：全云输入"
+    else
+        let option = "cloud\t 　云：".option."朵云输入"
+    endif
+    call add(eggs, option)
+" ----------------------------------
     if empty(s:G)
         let msg = 'no global variable is set'
     else
@@ -3779,21 +3789,21 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-"   let s:vimim_www_sogou = 13
-"   let s:vimim_static_input_style = -1+1
-"   let s:vimim_custom_skin = 1
-"   let s:vimim_tab_for_one_key = 1
-"   let s:pinyin_flag = 1
-"   let s:english_flag = 1
-"   let s:four_corner_flag = 1
-"   let s:vimim_diy_asdfghjklo = 1
-"   let s:vimim_wildcard_search = 1
-"   let s:vimim_reverse_pageup_pagedown = 1
-"   " ---------------------------------------
-"   let s:vimim_shuangpin_abc = 0
-"   let s:vimim_unicode_lookup = 0
-"   let s:vimim_number_as_navigation = 0
-"   let s:vimim_dummy_shuangpin = 0
+    let s:vimim_www_sogou = 13
+    let s:vimim_static_input_style = -1+1
+    let s:vimim_custom_skin = 1
+    let s:vimim_tab_for_one_key = 1
+    let s:pinyin_flag = 1
+    let s:english_flag = 1
+    let s:four_corner_flag = 1
+    let s:vimim_diy_asdfghjklo = 1
+    let s:vimim_wildcard_search = 1
+    let s:vimim_reverse_pageup_pagedown = 1
+    " ---------------------------------------
+    let s:vimim_shuangpin_abc = 0
+    let s:vimim_unicode_lookup = 0
+    let s:vimim_number_as_navigation = 0
+    let s:vimim_dummy_shuangpin = 0
     " ---------------------------------------
 endfunction
 
