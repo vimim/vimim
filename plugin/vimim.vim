@@ -272,12 +272,13 @@ function! s:vimim_initialize_session()
     let s:smart_enter = 0
     let s:smart_backspace = 0
     " --------------------------------
+    let s:keyboard_wubi = ''
     let s:no_internet_connection = 0
     let s:sentence_match = 0
     let s:keyboard_leading_zero = 0
     let s:keyboard_counts = 0
     let s:keyboards = ['', '']
-    let s:keyboard_wubi = ''
+    let s:popupmenu_matched_list = []
     " --------------------------------
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
@@ -524,7 +525,7 @@ endfunction
 " ====================================
 
 " --------------------------------
-function! s:vimim_vim_easter_egg()
+function! s:vimim_easter_egg_vim()
 " --------------------------------
     let eggs = []
     let eggs += ["vi    文本編輯器"]
@@ -536,19 +537,19 @@ function! s:vimim_vim_easter_egg()
 endfunction
 
 " ----------------------------------
-function! s:vimim_vimim_easter_egg()
+function! s:vimim_easter_egg_vimim()
 " ----------------------------------
     let eggs = []
-    let option = "$VIM 环境：　" . $VIM
+    let option = "$VIM\t 环境：" . $VIM
     call add(eggs, option)
-    let option = "encoding 编码：　" . &encoding
+    let option = "encoding 编码：" . &encoding
     call add(eggs, option)
     let option = s:current_datafile
     if empty(option)
         let msg = 'no primary datafile, might play cloud'
     else
         let option = strpart(option, len(s:path))
-        let option = "datafile 词库：　" . option
+        let option = "datafile 词库：" . option
         call add(eggs, option)
     endif
     let option = s:privates_flag
@@ -556,26 +557,26 @@ function! s:vimim_vimim_easter_egg()
         let msg = 'no private datafile found'
     else
         let option = "privates.txt"
-        let option = "datafile 词库：　" . option
+        let option = "datafile 词库：" . option
         call add(eggs, option)
     endif
     if s:four_corner_flag > 0
         let option = "四角号码"
-        let option = "datafile 词库：　" . option
+        let option = "datafile 词库：" . option
         call add(eggs, option)
     endif
     if s:pinyin_flag > 0
         let option = "拼音"
-        let option = "im 输入：　" . option
+        let option = "im\t 输入：" . option
         call add(eggs, option)
     endif
     if s:wubi_flag > 0
         let option = "五笔"
-        let option = "im 输入：　" . option
+        let option = "im\t 输入：" . option
         call add(eggs, option)
     endif
     if s:pinyin_flag == 2
-        let option = "shuangpin 双拼：　"
+        let option = "shuangpin 双拼："
         if s:vimim_shuangpin_microsoft > 0
             let option .= "微软"
         elseif s:vimim_shuangpin_abc > 0
@@ -589,7 +590,7 @@ function! s:vimim_vimim_easter_egg()
         endif
         call add(eggs, option)
     endif
-    let option = "cloud 〖云〗　g:vimim_www_sogou=" . s:vimim_www_sogou
+    let option = "cloud\t 〖云〗g:vimim_www_sogou=".s:vimim_www_sogou
     call add(eggs, option)
     return s:vimim_popupmenu_list(eggs)
 endfunction
@@ -939,103 +940,6 @@ function! <SID>vimim_onekey()
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" ------------------------------------
-function! s:vimim_hjkl_navigation_on()
-" ------------------------------------
-    if s:chinese_input_mode > 0
-        return
-    endif
-    " hjkl navigation for onekey, always
-    let hjkl_list = split('hjklegGycxd', '\zs')
-    for _ in hjkl_list
-        sil!exe 'inoremap<silent><expr> '._.'
-        \ <SID>vimim_hjkl("'._.'")'
-    endfor
-endfunction
-
-" -----------------------------------
-function! g:vimim_space_key_for_yes()
-" -----------------------------------
-    let space = ''
-    if pumvisible()
-        let space = s:vimim_keyboard_block_by_block()
-        if empty(s:chinese_input_mode)
-            sil!call s:vimim_insert_setting_off()
-        endif
-        sil!call g:vimim_reset_after_insert()
-    else
-        let space = ' '
-    endif
-    sil!exe 'sil!return "' . space . '"'
-endfunction
-
-" ------------------------------------
-function! g:vimim_smart_space_onekey()
-" ------------------------------------
-    let space = ' '
-    if pumvisible()
-        let space = s:vimim_keyboard_block_by_block()
-        sil!call s:vimim_insert_setting_off()
-        sil!call g:vimim_reset_after_insert()
-        sil!exe 'sil!return "' . space . '"'
-    else
-        iunmap <Space>
-        let s:smart_backspace = 0
-        if s:insert_without_popup_flag > 0
-            let s:insert_without_popup_flag = 0
-            let space = ""
-        endif
-    endif
-    return space
-endfunction
-
-" ------------------------------------
-function! g:vimim_smart_space_static()
-" ------------------------------------
-    let space = ' '
-    if pumvisible()
-        call g:vimim_reset_after_insert()
-        let space = s:vimim_keyboard_block_by_block()
-    else
-        let s:smart_backspace = 0
-        let space = s:vimim_smart_punctuation(s:punctuations, space)
-        if empty(space)
-            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        endif
-        if s:pattern_not_found > 0
-            let s:pattern_not_found = 0
-            let space = ' '
-        endif
-    endif
-    sil!exe 'sil!return "' . space . '"'
-endfunction
-
-" -------------------------------------
-function! g:vimim_smart_space_dynamic()
-" -------------------------------------
-    let space = ' '
-    if pumvisible()
-        let space = "\<C-Y>"
-        sil!call g:vimim_reset_after_insert()
-        sil!exe 'sil!return "' . space . '"'
-    else
-        if s:wubi_flag < 0
-            let s:vimim_www_sogou = 1
-            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-            sil!exe 'sil!return "' . space . '"'
-        endif
-        let space = s:vimim_smart_punctuation(s:punctuations, space)
-        if empty(space)
-            let space = ' '
-        endif
-        if s:pattern_not_found > 0
-            let s:pattern_not_found = 0
-            let space = " "
-        endif
-    endif
-    sil!exe 'sil!return "' . space . '"'
-endfunction
-
 " --------------------------
 function! s:vimim_label_on()
 " --------------------------
@@ -1080,6 +984,58 @@ function! <SID>vimim_label(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
+" ------------------------------------
+function! s:vimim_hjkl_navigation_on()
+" ------------------------------------
+    if s:chinese_input_mode > 0
+        return
+    endif
+    " hjkl navigation for onekey, always
+    let hjkl_list = split('hjklegGycxdp', '\zs')
+    for _ in hjkl_list
+        sil!exe 'inoremap<silent><expr> '._.'
+        \ <SID>vimim_hjkl("'._.'")'
+    endfor
+endfunction
+
+" ----------------------------
+function! <SID>vimim_hjkl(key)
+" ----------------------------
+    let hjkl = a:key
+    if pumvisible()
+        if a:key == 'e'
+            let hjkl  = '\<C-E>'
+        elseif a:key == 'y'
+            let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
+        elseif a:key == 'h'
+            let hjkl  = '\<PageUp>'
+        elseif a:key == 'j'
+            let hjkl  = '\<Down>'
+        elseif a:key == 'k'
+            let hjkl  = '\<Up>'
+        elseif a:key == 'l'
+            let hjkl  = '\<PageDown>'
+        elseif a:key == 'c'
+            let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_copy_popup_word()\<CR>'
+        elseif a:key == 'p'
+            let hjkl  = '\<C-R>=g:vimim_d_delete_trash()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_p_paste()\<CR>'
+        elseif a:key == 'd'
+            let hjkl  = '\<C-R>=g:vimim_d_delete_trash()\<CR>'
+            let hjkl .= '\<C-X>\<C-U>\<BS>'
+        elseif a:key ==? 'g'
+            let s:menu_reverse = 0
+            if a:key ==# 'G'
+                let s:menu_reverse = 1
+            endif
+            let s:pageup_pagedown = 0
+            let hjkl = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        endif
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
 " --------------------------------
 function! g:vimim_d_delete_trash()
 " --------------------------------
@@ -1092,11 +1048,67 @@ function! g:vimim_d_delete_trash()
     sil!exe 'sil!return "' . d . '"'
 endfunction
 
+" -------------------------
+function! g:vimim_p_paste()
+" -------------------------
+    let s:trash_code_flag = 0
+    let words = s:popupmenu_matched_list
+    let line = line(".")
+    call setline(line, words)
+    return s:vimim_clipboard_register(string(words))
+endfunction
+
+" -----------------------------------
+function! g:vimim_space_key_for_yes()
+" -----------------------------------
+    let space = ''
+    if pumvisible()
+        let space = s:vimim_keyboard_block_by_block()
+        if empty(s:chinese_input_mode)
+            sil!call s:vimim_insert_setting_off()
+        endif
+        sil!call g:vimim_reset_after_insert()
+    else
+        let space = ' '
+    endif
+    sil!exe 'sil!return "' . space . '"'
+endfunction
+
+" ------------------------------------
+function! g:vimim_smart_space_onekey()
+" ------------------------------------
+    let space = ' '
+    if pumvisible()
+        let space = s:vimim_keyboard_block_by_block()
+        sil!call s:vimim_insert_setting_off()
+        sil!call g:vimim_reset_after_insert()
+        sil!exe 'sil!return "' . space . '"'
+    else
+        iunmap <Space>
+        let s:smart_backspace = 0
+        if s:insert_without_popup_flag > 0
+            let s:insert_without_popup_flag = 0
+            let space = ""
+        endif
+    endif
+    return space
+endfunction
+
 " ---------------------------------
 function! g:vimim_copy_popup_word()
 " ---------------------------------
     let word = s:vimim_popup_word(s:start_column_before)
     return s:vimim_clipboard_register(word)
+endfunction
+
+" ----------------------------------------
+function! s:vimim_popup_word(column_start)
+" ----------------------------------------
+    let column_end = col('.') - 1
+    let range = column_end - a:column_start
+    let current_line = getline(".")
+    let word = strpart(current_line, a:column_start, range)
+    return word
 endfunction
 
 " ----------------------------------------
@@ -1110,16 +1122,6 @@ function! s:vimim_clipboard_register(word)
         endif
     endif
     return "\<Esc>"
-endfunction
-
-" ----------------------------------------
-function! s:vimim_popup_word(column_start)
-" ----------------------------------------
-    let column_end = col('.') - 1
-    let range = column_end - a:column_start
-    let current_line = getline(".")
-    let word = strpart(current_line, a:column_start, range)
-    return word
 endfunction
 
 " ================================ }}}
@@ -1163,41 +1165,6 @@ function! s:vimim_alphabet_auto_select()
         sil!exe 'inoremap <silent> ' . char . '
         \ <C-R>=pumvisible()?"\<lt>C-Y>":""<CR>'. char
      endfor
-endfunction
-
-" ----------------------------
-function! <SID>vimim_hjkl(key)
-" ----------------------------
-    let hjkl = a:key
-    if pumvisible()
-        if a:key == 'e'
-            let hjkl  = '\<C-E>'
-        elseif a:key == 'y'
-            let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
-        elseif a:key == 'h'
-            let hjkl  = '\<PageUp>'
-        elseif a:key == 'j'
-            let hjkl  = '\<Down>'
-        elseif a:key == 'k'
-            let hjkl  = '\<Up>'
-        elseif a:key == 'l'
-            let hjkl  = '\<PageDown>'
-        elseif a:key == 'c'
-            let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_copy_popup_word()\<CR>'
-        elseif a:key == 'd'
-            let hjkl  = '\<C-R>=g:vimim_d_delete_trash()\<CR>'
-            let hjkl .= '\<C-X>\<C-U>\<BS>'
-        elseif a:key ==? 'g'
-            let s:menu_reverse = 0
-            if a:key ==# 'G'
-                let s:menu_reverse = 1
-            endif
-            let s:pageup_pagedown = 0
-            let hjkl = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        endif
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
 " ---------------------------------
@@ -1285,6 +1252,53 @@ function! <SID>vimim_dynamic_End()
         endif
     endif
     sil!exe 'sil!return "' . end . '"'
+endfunction
+
+" ------------------------------------
+function! g:vimim_smart_space_static()
+" ------------------------------------
+    let space = ' '
+    if pumvisible()
+        call g:vimim_reset_after_insert()
+        let space = s:vimim_keyboard_block_by_block()
+    else
+        let s:smart_backspace = 0
+        let space = s:vimim_smart_punctuation(s:punctuations, space)
+        if empty(space)
+            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        endif
+        if s:pattern_not_found > 0
+            let s:pattern_not_found = 0
+            let space = ' '
+        endif
+    endif
+    sil!exe 'sil!return "' . space . '"'
+endfunction
+
+" -------------------------------------
+function! g:vimim_smart_space_dynamic()
+" -------------------------------------
+    let space = ' '
+    if pumvisible()
+        let space = "\<C-Y>"
+        sil!call g:vimim_reset_after_insert()
+        sil!exe 'sil!return "' . space . '"'
+    else
+        if s:wubi_flag < 0
+            let s:vimim_www_sogou = 1
+            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+            sil!exe 'sil!return "' . space . '"'
+        endif
+        let space = s:vimim_smart_punctuation(s:punctuations, space)
+        if empty(space)
+            let space = ' '
+        endif
+        if s:pattern_not_found > 0
+            let s:pattern_not_found = 0
+            let space = " "
+        endif
+    endif
+    sil!exe 'sil!return "' . space . '"'
 endfunction
 
 " ------------------------
@@ -2201,6 +2215,7 @@ function! s:vimim_popupmenu_list(matched_list)
     if empty(matched_list)
         return []
     endif
+    let s:popupmenu_matched_list = matched_list
     if s:menu_reverse > 0
         let matched_list = reverse(matched_list)
     endif
@@ -4086,13 +4101,9 @@ else
     " hunt classic easter egg ... vim<C-\>
     " ------------------------------------
     if keyboard ==# "vim"
-        return s:vimim_vim_easter_egg()
-    endif
-
-    " hunt easter egg ... vi<C-\>
-    " ---------------------------
-    if keyboard ==# "vimim"
-        return s:vimim_vimim_easter_egg()
+        return s:vimim_easter_egg_vim()
+    elseif keyboard ==# "vimim"
+        return s:vimim_easter_egg_vimim()
     endif
 
     " support direct internal code (unicode/gb/big5) input
