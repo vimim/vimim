@@ -557,10 +557,10 @@ function! s:vimim_easter_egg_vimim()
     endif
     let option = "computer 电脑：" . option
     call add(eggs, option)
-    let option = "$VIM\t 环境：" . $VIM
+    let option = "Vim\t 版本：" . v:version
     call add(eggs, option)
     let option = get(split($VimIM),1)
-    let option = "$VimIM\t 版本：" . option
+    let option = "VimIM\t 版本：" . option
     call add(eggs, option)
     let option = "encoding 编码：" . &encoding
     call add(eggs, option)
@@ -610,7 +610,14 @@ function! s:vimim_easter_egg_vimim()
         endif
         call add(eggs, option)
     endif
-    let option = "cloud\t 〖云〗g:vimim_www_sogou=".s:vimim_www_sogou
+    let option = s:vimim_www_sogou
+    if empty(option)
+        let option = "cloud\t 　云：晴天无云"
+    elseif option == 1
+        let option = "cloud\t 　云：全云输入"
+    else
+        let option = "cloud\t 　云：>".option."　云输入"
+    endif
     call add(eggs, option)
     return s:vimim_popupmenu_list(eggs)
 endfunction
