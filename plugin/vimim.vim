@@ -560,13 +560,13 @@ function! s:vimim_easter_egg_vimim()
     let option = "Vim\t 版本：" . v:version
     call add(eggs, option)
 " ----------------------------------
-    let option = get(split($VimIM),1)
-    if option == 0
-        " This is not a SVN check out, revision number is not available.
-        let option = "n/a"
+    let option = get(split($VimIM), 1)
+    if empty(option)
+        let msg = 'not a SVN check out, revision number not available'
+    else
+        let option = "VimIM\t 版本：" . option
+        call add(eggs, option)
     endif
-    let option = "VimIM\t 版本：" . option
-    call add(eggs, option)
 " ----------------------------------
     let option = "encoding 编码：" . &encoding
     call add(eggs, option)
@@ -1102,8 +1102,12 @@ function! g:vimim_p_paste()
 " -------------------------
     let s:trash_code_flag = 0
     let words = s:popupmenu_matched_list
+    let current_positions = getpos(".")
     let line = line(".")
     call setline(line, words)
+    let current_positions[1] = line + len(words) - 1
+    let current_positions[2] = 1
+    call setpos(".", current_positions)
     return s:vimim_clipboard_register(string(words))
 endfunction
 
