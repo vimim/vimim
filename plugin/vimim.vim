@@ -966,9 +966,7 @@ function! <SID>vimim_onekey()
     let s:punctuations['\']="、"
     call s:vimim_resume_shuangpin()
     call s:vimim_hjkl_navigation_on()
-    if s:vimim_tab_for_one_key > 0
-        call s:vimim_insert_setting_on()
-    endif
+    call s:vimim_insert_setting_on()
     if empty(s:onekey_loaded_flag)
         let s:onekey_loaded_flag = 1
         call s:vimim_label_on()
