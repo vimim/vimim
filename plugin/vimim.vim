@@ -4,7 +4,7 @@
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
 " $Date$
-let $VimIM = "$Revision$"
+let $VimIM = " $Revision$ "
 
 " BUG:    http://code.google.com/p/vimim/issues/entry
 " GROUP:  http://groups.google.com/group/vimim
@@ -152,7 +152,8 @@ endfunction
 " -----------------------------------
 function! s:vimim_initialize_global()
 " -----------------------------------
-    let G = []
+    let s:G = []
+    let   G = []
     call add(G, "g:vimim_auto_spell")
     call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_datafile")
@@ -212,11 +213,12 @@ function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
     for variable in a:options
         let s_variable = substitute(variable,"g:","s:",'')
-        if !exists(variable)
-            exe 'let '. s_variable . '=' . a:default
-        else
+        if exists(variable)
+            call add(s:G, variable .'='. eval(variable))
             exe 'let '. s_variable .'='. variable
             exe 'unlet! ' . variable
+        else
+            exe 'let '. s_variable . '=' . a:default
         endif
     endfor
 endfunction
@@ -564,6 +566,40 @@ function! s:vimim_easter_egg_vimim()
     call add(eggs, option)
     let option = "encoding 编码：" . &encoding
     call add(eggs, option)
+    let option = s:vimim_www_sogou
+    if empty(option)
+        let option = "cloud\t 　云：晴天无云"
+    elseif option == 1
+        let option = "cloud\t 　云：全云输入"
+    else
+        let option = "cloud\t 　云：>".option."　云输入"
+    endif
+    call add(eggs, option)
+    if s:wubi_flag > 0
+        let option = "五笔"
+        let option = "im\t 输入：" . option
+        call add(eggs, option)
+    endif
+    if s:pinyin_flag > 0
+        let option = "拼音"
+        let option = "im\t 输入：" . option
+        call add(eggs, option)
+        if s:pinyin_flag == 2
+            let option = "pinyin\t 双拼："
+            if s:vimim_shuangpin_microsoft > 0
+                let option .= "微软"
+            elseif s:vimim_shuangpin_abc > 0
+                let option .= "智能ABC"
+            elseif s:vimim_shuangpin_nature > 0
+                let option .= "自然码"
+            elseif s:vimim_shuangpin_purple > 0
+                let option .= "紫光"
+            elseif s:vimim_shuangpin_plusplus > 0
+                let option .= "拼音加加"
+            endif
+            call add(eggs, option)
+        endif
+    endif
     let option = s:current_datafile
     if empty(option)
         let msg = 'no primary datafile, might play cloud'
@@ -585,40 +621,14 @@ function! s:vimim_easter_egg_vimim()
         let option = "datafile 词库：" . option
         call add(eggs, option)
     endif
-    if s:pinyin_flag > 0
-        let option = "拼音"
-        let option = "im\t 输入：" . option
-        call add(eggs, option)
-    endif
-    if s:wubi_flag > 0
-        let option = "五笔"
-        let option = "im\t 输入：" . option
-        call add(eggs, option)
-    endif
-    if s:pinyin_flag == 2
-        let option = "shuangpin 双拼："
-        if s:vimim_shuangpin_microsoft > 0
-            let option .= "微软"
-        elseif s:vimim_shuangpin_abc > 0
-            let option .= "智能ABC"
-        elseif s:vimim_shuangpin_nature > 0
-            let option .= "自然码"
-        elseif s:vimim_shuangpin_purple > 0
-            let option .= "紫光"
-        elseif s:vimim_shuangpin_plusplus > 0
-            let option .= "拼音加加"
-        endif
-        call add(eggs, option)
-    endif
-    let option = s:vimim_www_sogou
-    if empty(option)
-        let option = "cloud\t 　云：晴天无云"
-    elseif option == 1
-        let option = "cloud\t 　云：全云输入"
+    if empty(s:G)
+        let msg = 'no global variable is set'
     else
-        let option = "cloud\t 　云：>".option."　云输入"
+        for item in s:G
+            let option = "VimIM\t 设置：" . item
+            call add(eggs, option)
+        endfor
     endif
-    call add(eggs, option)
     return s:vimim_popupmenu_list(eggs)
 endfunction
 
@@ -3769,21 +3779,21 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_www_sogou = 13
-    let s:vimim_static_input_style = -1+1
-    let s:vimim_custom_skin = 1
-    let s:vimim_tab_for_one_key = 1
-    let s:pinyin_flag = 1
-    let s:english_flag = 1
-    let s:four_corner_flag = 1
-    let s:vimim_diy_asdfghjklo = 1
-    let s:vimim_wildcard_search = 1
-    let s:vimim_reverse_pageup_pagedown = 1
-    " ---------------------------------------
-    let s:vimim_shuangpin_abc = 0
-    let s:vimim_unicode_lookup = 0
-    let s:vimim_number_as_navigation = 0
-    let s:vimim_dummy_shuangpin = 0
+"   let s:vimim_www_sogou = 13
+"   let s:vimim_static_input_style = -1+1
+"   let s:vimim_custom_skin = 1
+"   let s:vimim_tab_for_one_key = 1
+"   let s:pinyin_flag = 1
+"   let s:english_flag = 1
+"   let s:four_corner_flag = 1
+"   let s:vimim_diy_asdfghjklo = 1
+"   let s:vimim_wildcard_search = 1
+"   let s:vimim_reverse_pageup_pagedown = 1
+"   " ---------------------------------------
+"   let s:vimim_shuangpin_abc = 0
+"   let s:vimim_unicode_lookup = 0
+"   let s:vimim_number_as_navigation = 0
+"   let s:vimim_dummy_shuangpin = 0
     " ---------------------------------------
 endfunction
 
