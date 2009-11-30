@@ -23,8 +23,8 @@ let $VimIM = " $Revision$ "
 "            VimIM aims to complete the Vim as the greatest editor.
 " -----------------------------------------------------------
 "  Features: * "Plug & Play"
-"            * "Plug & Play": "Cloud Input" with Shuangpin
-"            * "Plug & Play": "Cloud Input" with Wubi
+"            * "Plug & Play": "Cloud Input" with five ShuangPin
+"            * "Plug & Play": "Cloud Input" with WuBi
 "            * "Plug & Play": Pinyin and four_corner together
 "            * "Plug & Play": Pinyin and five_stroke together
 "            * Support direct "UNICODE input" using integer or hex
@@ -968,7 +968,6 @@ function! <SID>vimim_onekey()
     let s:punctuations['\']="、"
     call s:vimim_resume_shuangpin()
     call s:vimim_hjkl_navigation_on()
-    call s:vimim_insert_setting_on()
     if empty(s:onekey_loaded_flag)
         let s:onekey_loaded_flag = 1
         call s:vimim_label_on()
@@ -1013,9 +1012,6 @@ function! <SID>vimim_label(n)
             let counts = ""
             let yes = ""
             if empty(s:vimim_number_as_navigation)
-                if empty(s:chinese_input_mode) && empty(s:sentence_match)
-                    call s:vimim_insert_setting_off()
-                endif
                 if n > 1
                     let n -= 1
                     let counts = repeat("\<Down>", n)
@@ -1088,9 +1084,6 @@ function! g:vimim_d_delete_trash()
 " --------------------------------
     let d  = 'd'
     if pumvisible()
-        if empty(s:chinese_input_mode) && empty(s:sentence_match)
-            call s:vimim_insert_setting_off()
-        endif
         sil!call g:vimim_reset_after_insert()
         let s:trash_code_flag = 1
         let d = '\<C-E>'
@@ -1118,9 +1111,6 @@ function! g:vimim_space_key_for_yes()
     let space = ''
     if pumvisible()
         let space = s:vimim_keyboard_block_by_block()
-        if empty(s:chinese_input_mode) && empty(s:sentence_match)
-            call s:vimim_insert_setting_off()
-        endif
         sil!call g:vimim_reset_after_insert()
     else
         let space = ' '
@@ -1134,13 +1124,11 @@ function! g:vimim_smart_space_onekey()
     let space = ' '
     if pumvisible()
         let space = s:vimim_keyboard_block_by_block()
-        if empty(s:chinese_input_mode) && empty(s:sentence_match)
-            call s:vimim_insert_setting_off()
-        endif
         sil!call g:vimim_reset_after_insert()
         sil!exe 'sil!return "' . space . '"'
     else
         iunmap <Space>
+        call s:vimim_insert_setting_off()
         let s:smart_backspace = 0
         if s:insert_without_popup_flag > 0
             let s:insert_without_popup_flag = 0
@@ -1258,13 +1246,13 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_insert_for_both_static_dynamic()
 " ------------------------------------------------
+    let s:sentence_match = 0
     let s:smart_enter = 0
     let s:smart_backspace = 0
     if s:vimim_custom_lcursor_color > 0
         highlight! lCursor guifg=bg guibg=green
     endif
     sil!call s:vimim_label_on()
-    sil!call s:vimim_insert_setting_on()
     sil!call g:vimim_reset_after_insert()
     sil!call <SID>vimim_set_seamless()
     inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
@@ -2222,6 +2210,7 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
+if empty(s:chinese_input_mode)
     let s:seamless_positions = []
     if s:wubi_flag < 0
         let s:vimim_www_sogou = 888
@@ -2692,9 +2681,6 @@ endfunction
 function! g:vimim_ctrl_x_ctrl_u()
 " -------------------------------
     let key = ''
-        if empty(s:chinese_input_mode) && empty(s:sentence_match)
-            call s:vimim_insert_setting_off()
-        endif
     let char_before = getline(".")[col(".")-2]
     if char_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
@@ -4135,7 +4121,7 @@ else
 
     " initialize omni completion function
     " -----------------------------------
-    let &pumheight=9
+    sil!call s:vimim_insert_setting_on()
     let s:diy_pinyin_4corner = 0
     let s:insert_without_popup_flag = 0
     let s:pattern_not_found = 1
