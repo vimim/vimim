@@ -2186,6 +2186,9 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
         endif
     endif
     let s:sentence_match = 0
+    if empty(s:chinese_input_mode)
+        call s:vimim_stop_space_onekey()
+    endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
