@@ -986,13 +986,12 @@ endfunction
 " --------------------------
 function! s:vimim_label_on()
 " --------------------------
-    if empty(s:vimim_menu_label)
+    if s:vimim_menu_label < 1
         return
     endif
     for _ in range(0,9)
-        sil!exe 'inoremap<silent> '._.'
-        \ <C-E><C-X><C-U><C-P>
-        \<C-R>=<SID>vimim_label("'._.'")<CR>'.
+        sil!exe'inoremap<silent> '._.'
+        \ <C-R>=<SID>vimim_label("'._.'")<CR>'.
         \'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
 endfunction
@@ -1003,12 +1002,20 @@ function! <SID>vimim_label(n)
     let n = a:n
     let label = a:n
     if pumvisible()
-        if n < 1
-            let label = '\<C-E>\<C-X>\<C-U>\<C-P>'
+        if empty(n)
+            call g:vimim_reset_after_insert()
+            let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         else
             let counts = ""
+            let yes = ""
             if empty(s:vimim_number_as_navigation)
-                let counts = repeat("\<Down>", n)
+                if empty(s:chinese_input_mode)
+                    call s:vimim_insert_setting_off()
+                endif
+                if n > 1
+                    let n -= 1
+                    let counts = repeat("\<Down>", n)
+                endif
             endif
             let yes = s:vimim_keyboard_block_by_block()
             let label = counts . yes
