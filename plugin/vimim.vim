@@ -183,7 +183,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_smart_punctuations")
     call add(G, "g:vimim_diy_asdfghjklo")
-    call add(G, "g:vimim_menu_first_candidate")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -278,6 +277,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:keyboard_wubi = ''
     let s:no_internet_connection = 0
+    let s:menu_from_cloud_flag = 0
     let s:sentence_match = 0
     let s:keyboard_leading_zero = 0
     let s:keyboard_counts = 0
@@ -2273,7 +2273,6 @@ function! s:vimim_popupmenu_list(matched_list)
     let menu = 0
     let keyboard = s:keyboard_leading_zero
     let first_candidate = get(split(get(matched_list,0)),0)
-    let tail_default = strpart(keyboard, len(first_candidate))
     " ----------------------
     for pair in matched_list
     " ----------------------
@@ -2301,8 +2300,9 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["abbr"] = abbr
         endif
         let tail = ''
-        if empty(s:vimim_menu_first_candidate)
-            let tail_default = strpart(keyboard, len(menu))
+        let tail_default = strpart(keyboard, len(menu))
+        if empty(s:menu_from_cloud_flag)
+            let tail_default = strpart(keyboard, len(first_candidate))
         endif
         if keyboard =~ '[.]'
             let dot = stridx(keyboard, '.')
@@ -3804,7 +3804,6 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_menu_first_candidate = 1
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
@@ -4131,6 +4130,7 @@ else
     " -----------------------------------
     sil!call s:vimim_insert_setting_on()
     let s:diy_pinyin_4corner = 0
+    let s:menu_from_cloud_flag = 0
     let s:insert_without_popup_flag = 0
     let s:pattern_not_found = 1
     let keyboards = []
@@ -4256,6 +4256,7 @@ else
         else
             let s:sentence_match = 1
             let s:no_internet_connection = 0
+            let s:menu_from_cloud_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
