@@ -3176,11 +3176,6 @@ function! s:vimim_initialize_datafile_pinyin()
         if empty(s:vimim_chinese_frequency)
             let s:vimim_chinese_frequency = 1
         endif
-        if s:vimim_static_input_style < 0
-            let mes = 'user wants dynamic input'
-        else
-            let s:vimim_static_input_style = 1
-        endif
         if s:pinyin_flag < 2
             let s:vimim_fuzzy_search = 1
         endif
@@ -3550,7 +3545,7 @@ function! s:vimim_initialize_datafile_wubi()
         if s:vimim_static_input_style > 0
             let s:vimim_wubi_non_stop = 0
         endif
-    endif
+    else
     if s:wubi_flag < 0
         let s:vimim_english_punctuation = 1
         let s:vimim_chinese_punctuation = -1
@@ -3805,6 +3800,7 @@ function! s:vimim_initialize_debug()
     " -------------------------------- debug
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
+    let s:vimim_shuangpin_abc = 0
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
     let s:pinyin_flag = 1
@@ -3814,11 +3810,10 @@ function! s:vimim_initialize_debug()
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
-    let s:vimim_first_candidate_fix=0
-    let s:vimim_shuangpin_abc = 0
     let s:vimim_unicode_lookup = 0
     let s:vimim_number_as_navigation = 0
     let s:vimim_dummy_shuangpin = 0
+    let s:vimim_first_candidate_fix=0
     " ---------------------------------------
 endfunction
 
@@ -4196,17 +4191,16 @@ else
     " --------------------------------------------
     if s:pinyin_flag == 2
         if s:chinese_input_mode > 1
-            if empty((1+len(keyboard))%2)
-                return
-            endif
-        endif
-        if empty(s:shuangpin_in_quanpin)
-            let msg = 'enter shuangpin for the first time'
-        elseif match(s:shuangpin_in_quanpin, keyboard) < 0
-            let s:shuangpin_flag = 0
-        else
             let s:shuangpin_flag = 1
-            let s:shuangpin_in_quanpin = 0
+        else
+            if empty(s:shuangpin_in_quanpin)
+                let msg = 'enter shuangpin for the first time'
+            elseif match(s:shuangpin_in_quanpin, keyboard) < 0
+                let s:shuangpin_flag = 0
+            else
+                let s:shuangpin_flag = 1
+                let s:shuangpin_in_quanpin = 0
+            endif
         endif
         if s:shuangpin_flag > 0
             let keyboard2 = s:vimim_shuangpin_transform(keyboard)
