@@ -963,8 +963,8 @@ endfunction
 " ---------------------------------
 function! <SID>vimim_start_onekey()
 " ---------------------------------
-    set &l:completefunc=VimIM
-    set &l:completeopt=menuone
+    let &l:completefunc='VimIM'
+    let &l:completeopt='menuone'
     let s:sentence_match = 0
     let s:chinese_input_mode = 0
     let s:punctuations['&']='※'
@@ -974,6 +974,7 @@ function! <SID>vimim_start_onekey()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_label_on()
     sil!call s:vimim_punctuation_navigation_on()
+    sil!call s:vimim_helper_mapping_on()
     let onekey = ""
     if pumvisible()
         let onekey = s:vimim_keyboard_block_by_block()
@@ -997,6 +998,7 @@ function! g:vimim_space_stop_onekey()
         sil!exe 'sil!return "' . space . '"'
     else
         sil!call s:vimim_stop_space_onekey()
+        sil!call s:vimim_helper_mapping_off()
         sil!call s:vimim_insert_setting_off()
         let s:smart_backspace = 0
         if s:insert_without_popup_flag > 0
@@ -1232,8 +1234,8 @@ function! s:vimim_chinese_mode_on()
 " ---------------------------------
     set cpo&vim
     let &l:iminsert=1
-    set &l:completeopt=menuone
-    set &l:completefunc=VimIM
+    let &l:completefunc='VimIM'
+    let &l:completeopt='menuone'
     " ------------------------------
     let s:chinese_insert_flag = 1
     if empty(s:vimim_static_input_style)
@@ -1272,6 +1274,7 @@ function! s:vimim_insert_for_both_static_dynamic()
         highlight! lCursor guifg=bg guibg=green
     endif
     sil!call s:vimim_label_on()
+    sil!call s:vimim_helper_mapping_on()
     sil!call g:vimim_reset_after_insert()
     sil!call <SID>vimim_set_seamless()
     inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
@@ -1294,6 +1297,7 @@ function! s:vimim_chinese_mode_off()
         sil!exe ':%y +'
     endif
     sil!call s:vimim_iunmap()
+    sil!call s:vimim_helper_mapping_off()
     sil!call s:vimim_insert_setting_off()
     sil!call s:vimim_one_key_mapping_on()
     if exists('*Fixcp')
@@ -1369,15 +1373,10 @@ function! s:vimim_iunmap()
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['<CR>', '<BS>', '<Space>'])
-    " ----------------------------
+    call extend(unmap_list, ['<CR>', '<Space>'])
     for _ in unmap_list
         sil!exe 'iunmap '. _
     endfor
-    " ----------------------------
-    if !hasmapto('<C-H>', 'i')
-        sil!exe 'iunmap '. '<C-H>'
-    endif
 endfunction
 
 " ================================ }}}
@@ -4472,7 +4471,6 @@ function! s:vimim_initialize_mapping()
     if s:vimim_chinese_input_mode > 0
         imap<silent> <C-^> <Plug>VimimChineseToggle
     endif
-    -----------------------------------------------
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
         if s:vimim_chinese_input_mode > 0
             imap<silent> <C-Space> <Plug>VimimChineseToggle
@@ -4481,6 +4479,13 @@ function! s:vimim_initialize_mapping()
         endif
     endif
     " ----------------------------------------------------------
+    call s:vimim_helper_mapping_on()
+    " ----------------------------------------------------------
+endfunction
+
+" -----------------------------------
+function! s:vimim_helper_mapping_on()
+" -----------------------------------
     if !hasmapto('<C-^>', 'v')
         xnoremap<silent><C-^> y:'>put=<SID>vimim_vCTRL6(@0)<CR>
     endif
@@ -4496,6 +4501,27 @@ function! s:vimim_initialize_mapping()
     if s:vimim_smart_backspace > 0
         inoremap<silent><BS> <C-R>=<SID>vimim_backspace_trash_all()<CR>
         \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
+    endif
+    " ----------------------------------------------------------
+endfunction
+
+" ------------------------------------
+function! s:vimim_helper_mapping_off()
+" ------------------------------------
+    if hasmapto('<C-^>', 'v')
+      " xunmap <C-^>
+    endif
+    " ------------------------------
+    if hasmapto('<C-\>', 'v')
+      " xunmap <C-\>
+    endif
+    " ------------------------------
+    if hasmapto('<C-H>', 'i')
+        iunmap <C-H>
+    endif
+    " ------------------------------
+    if hasmapto('<BS>', 'i')
+        iunmap <BS>
     endif
     " ----------------------------------------------------------
 endfunction
@@ -4520,9 +4546,9 @@ function! s:vimim_one_key_mapping_off()
     if empty(s:vimim_one_key)
         return
     endif
-    sil!iunmap <C-\>
+    iunmap <C-\>
     if s:vimim_tab_for_one_key > 0
-        sil!iunmap <Tab>
+        iunmap <Tab>
     endif
 endfunction
 
