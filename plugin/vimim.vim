@@ -583,7 +583,12 @@ function! s:vimim_easter_egg_vimim()
     if s:pinyin_flag > 0
         let option = "拼音"
         let option = "im\t 输入：" . option
-        call add(eggs, option)
+        if s:vimim_www_sogou == 888
+        \|| empty(s:vimim_www_sogou)
+            let msg = 'it looks like dummy pinyin'
+        else
+            call add(eggs, option)
+        endif
         if s:pinyin_flag == 2
             let option = "pinyin\t 双拼："
             if s:vimim_shuangpin_abc > 0
@@ -626,8 +631,10 @@ function! s:vimim_easter_egg_vimim()
     endif
 " ----------------------------------
     let option = "cloud\t 搜狗："
-    if s:vimim_www_sogou=888
+    if empty(s:vimim_www_sogou)
         let option .= "晴天无云"
+    elseif s:vimim_www_sogou == 888
+        let option .= "道是无云却有云"
     elseif option == 1
         let option .= "全云输入"
     else
@@ -3803,7 +3810,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
     let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
     " -------------------------------- debug
-    let s:vimim_www_sogou = 0
+    let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
