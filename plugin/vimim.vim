@@ -4192,6 +4192,11 @@ else
     " support 5 major ShuangPin with various rules
     " --------------------------------------------
     if s:pinyin_flag == 2
+        if s:chinese_input_mode > 1
+            if empty((1+len(keyboard))%2)
+                return
+            endif
+        endif
         if empty(s:shuangpin_in_quanpin)
             let msg = 'enter shuangpin for the first time'
         elseif match(s:shuangpin_in_quanpin, keyboard) < 0
