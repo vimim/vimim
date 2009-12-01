@@ -3813,7 +3813,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
     let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
     " -------------------------------- debug
-    let s:vimim_www_sogou = 0
+    let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
@@ -4459,6 +4459,7 @@ function! s:vimim_initialize_mapping()
     inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
     " ----------------------------------------------------------------
     call s:vimim_one_key_mapping_on()
+    call s:vimim_visual_mapping_on()
     " -------------------------------
     if s:vimim_chinese_input_mode > 0
         imap<silent> <C-^> <Plug>VimimChineseToggle
@@ -4474,7 +4475,7 @@ function! s:vimim_initialize_mapping()
 endfunction
 
 " -----------------------------------
-function! s:vimim_helper_mapping_on()
+function! s:vimim_visual_mapping_on()
 " -----------------------------------
     if !hasmapto('<C-^>', 'v')
         xnoremap<silent><C-^> y:'>put=<SID>vimim_vCTRL6(@0)<CR>
@@ -4483,7 +4484,11 @@ function! s:vimim_helper_mapping_on()
     if s:vimim_save_new_entry > 0 && !hasmapto('<C-\>', 'v')
         xnoremap<silent><C-\> :y<CR>:call <SID>vimim_save(@0)<CR>
     endif
-    " ----------------------------------------------------------
+endfunction
+
+" -----------------------------------
+function! s:vimim_helper_mapping_on()
+" -----------------------------------
     if s:vimim_smart_ctrl_h > 0 && !hasmapto('<C-H>', 'i')
         inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
     endif
@@ -4498,14 +4503,6 @@ endfunction
 " ------------------------------------
 function! s:vimim_helper_mapping_off()
 " ------------------------------------
-    if hasmapto('<C-^>', 'v')
-      " xunmap <C-^>
-    endif
-    " ------------------------------
-    if hasmapto('<C-\>', 'v')
-      " xunmap <C-\>
-    endif
-    " ------------------------------
     if hasmapto('<C-H>', 'i')
         iunmap <C-H>
     endif
