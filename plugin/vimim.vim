@@ -463,7 +463,7 @@ endfunction
 " ---------------------------------------
 function! s:vimim_initialize_valid_keys()
 " ---------------------------------------
-    let key = "[0-9a-z.]"
+    let key = "[0-9a-z,.]"
     let input_method = s:current_datafile
     " -----------------------------------
     if input_method =~ 'phonetic'
@@ -475,15 +475,15 @@ function! s:vimim_initialize_valid_keys()
     elseif input_method =~ 'cns11643'
         let key = "[0-9a-f]"
     elseif input_method =~ 'yong'
-        let key = "[a-z;'/]"
+        let key = "[a-z',.;/]"
     elseif input_method =~ 'wu'
-        let key = "[a-z'.]"
+        let key = "[a-z',.]"
     elseif input_method =~ 'nature'
-        let key = "[a-z'.]"
+        let key = "[a-z',.]"
     elseif input_method =~ 'zhengma'
-        let key = "[a-z.]"
+        let key = "[a-z,.]"
     elseif input_method =~ 'cangjie'
-        let key = "[a-z.]"
+        let key = "[a-z,.]"
     endif
     " -----------------------------------
     if s:four_corner_flag > 1 && empty(s:privates_flag)
@@ -492,12 +492,12 @@ function! s:vimim_initialize_valid_keys()
         let s:current_datafile_has_dot = 1
         let key = "[a-z'.,;/]"
     elseif s:wubi_flag > 0
-        let key = "[a-z.]"
+        let key = "[a-z,.]"
     elseif s:pinyin_flag > 0
-        let key = "[0-9a-z'.,]"
+        let key = "[0-9a-z',.]"
         if s:vimim_shuangpin_microsoft > 0
         \|| s:vimim_shuangpin_purple > 0
-            let key = "[0-9a-z'.;,]"
+            let key = "[0-9a-z',.;]"
         endif
     endif
     " -----------------------------
@@ -1402,7 +1402,7 @@ function! s:vimim_initialize_punctuations()
     endif
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
-        if has_key(s:punctuations, char) && char !~# [',.']
+        if has_key(s:punctuations, char) && char !~# "[,.]"
             unlet s:punctuations[char]
         endif
     endfor
@@ -1458,7 +1458,7 @@ function! s:vimim_punctuation_navigation_on()
     if empty(s:vimim_punctuation_navigation)
         return
     endif
-    let hjkl_list = split(',.=-;[]','\zs')
+    let hjkl_list = split('.,=-;[]','\zs')
     if s:search_key_slash < 0
         let msg = "search keys are reserved"
     else
@@ -1549,7 +1549,7 @@ function! s:vimim_smart_punctuation(punctuations, key)
         let space = ' '
         " when a valid key before, trigger the menu
         if char_before =~# s:valid_key
-        \&& char_before != !~# [',.']
+        \&& char_before !~# "[,.]"
             let space = ''
         endif
         return space
@@ -2102,7 +2102,7 @@ function! <SID>vimim_smart_enter()
         if char_before =~# s:valid_key
             let s:smart_enter += 1
         endif
-        if char_before =~# '[.,]'
+        if char_before =~# "[,.]"
             let s:smart_enter = 0
         endif
         if s:smart_enter == 1
@@ -3255,12 +3255,6 @@ function! s:vimim_initialize_shuangpin()
       \&& empty(s:vimim_shuangpin_plusplus)
       \&& empty(s:vimim_shuangpin_purple)
         return
-    else
-        let abc =      'hkfgpyjxlisswovhqyyn'
-        let ms =       'hkfgp;jxlisswouhq;yp'
-        let nature =   'hkfgpyjxlisswouhqyyp'
-        let plusplus = 'hdftpqjmlisywoigqqyz'
-        let purple =   'hqftp;jdlishwoisq;ym'
     endif
     let s:pinyin_flag = 2
     let s:shuangpin_flag = 1
@@ -3797,10 +3791,21 @@ function! s:vimim_initialize_debug()
     if empty(s:vimim_debug_flag)
         return
     endif
+    " -------------------------------- shuangpin
+    let s:vimim_shuangpin_abc       = str2nr('hkfgpyjxlisswovhqyyn')
+    let s:vimim_shuangpin_microsoft = str2nr('hkfgp;jxlisswouhq;yp')
+    let s:vimim_shuangpin_nature    = str2nr('hkfgpyjxlisswouhqyyp')
+    let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
+    let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
+    " -------------------------------- xxx issue 23
+    let s:vimim_www_sogou = 1
+    let s:vimim_static_input_style = 1
+    let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
-    let s:vimim_www_sogou = 14
+    let s:vimim_www_sogou = 0
     let s:vimim_static_input_style = -1+1
-    let s:vimim_shuangpin_abc = 0
+    let s:vimim_shuangpin_abc = str2nr('woybyigemg')
+    " -------------------------------- 
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
     let s:pinyin_flag = 1
@@ -4084,14 +4089,14 @@ if a:start
     let last_seen_nonsense_column = start_column
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
-        if char_before !~# '[0-9.,]'
+        if char_before !~# "[0-9,.]"
             let last_seen_nonsense_column = start_column
         endif
         let char_before = current_line[start_column-1]
     endwhile
 
     if empty(s:chinese_input_mode)
-        let msg = 'OneKey needs play with digit input'
+        let msg = 'OneKey needs play with digits, comma and dot'
     else
         let start_column = last_seen_nonsense_column
     endif
@@ -4204,6 +4209,10 @@ else
         endif
         if s:shuangpin_flag > 0
             let keyboard2 = s:vimim_shuangpin_transform(keyboard)
+            if s:vimim_debug_flag > 0
+                let g:shuangpin_in=keyboard
+                let g:shuangpin_out=keyboard2
+            endif
             if keyboard2 ==# keyboard
                 let s:shuangpin_keyboard = 0
             else
@@ -4255,11 +4264,11 @@ else
         endif
     endif
 
-    " [erbi] the first ,./;' is punctuation
+    " [erbi] the first .,/;' is punctuation
     " -------------------------------------
     if s:erbi_flag > 0
     \&& len(keyboard) == 1
-    \&& keyboard =~ "[,./;']"
+    \&& keyboard =~ "[.,/;']"
     \&& has_key(s:punctuations_all, keyboard)
         let value = s:punctuations_all[keyboard]
         return [value]
