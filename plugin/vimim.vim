@@ -3693,7 +3693,7 @@ function! s:vimim_get_cloud_keyboard(keyboard)
         return 0
     endif
     let cloud_length = len(keyboard)
-    if s:pinyin_flag == 2 
+    if s:pinyin_flag == 2
         let cloud_length = len(s:shuangpin_keyboard)
     endif
     let dot = strpart(keyboard, len(keyboard)-2)
@@ -3804,6 +3804,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
+    let s:vimim_chinese_punctuation = -1
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
@@ -4090,10 +4091,7 @@ if a:start
     let last_seen_non_digit_column = start_column
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
-        if char_before !~# '\d'
-            let last_seen_non_digit_column = start_column
-        endif
-        if char_before !~# '[.]' && s:vimim_chinese_punctuation<1
+        if char_before !~# '[0-9.]'
             let last_seen_non_digit_column = start_column
         endif
         let char_before = current_line[start_column-1]
