@@ -4465,9 +4465,9 @@ function! s:vimim_initialize_mapping()
 " ------------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
     inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
-    " ----------------------------------------------------------
+    " ----------------------------------------------------------------
     call s:vimim_one_key_mapping_on()
-    " ----------------------------------------------------------
+    " -------------------------------
     if s:vimim_chinese_input_mode > 0
         imap<silent> <C-^> <Plug>VimimChineseToggle
     endif
@@ -4478,9 +4478,7 @@ function! s:vimim_initialize_mapping()
             imap<silent> <C-Space> <Plug>VimimOneKey
         endif
     endif
-    " ----------------------------------------------------------
-    call s:vimim_helper_mapping_on()
-    " ----------------------------------------------------------
+    " ------------------------------
 endfunction
 
 " -----------------------------------
@@ -4523,7 +4521,6 @@ function! s:vimim_helper_mapping_off()
     if hasmapto('<BS>', 'i')
         iunmap <BS>
     endif
-    " ----------------------------------------------------------
 endfunction
 
 " ------------------------------------
@@ -4532,6 +4529,7 @@ function! s:vimim_one_key_mapping_on()
     if empty(s:vimim_one_key)
         return
     endif
+    " --------------------------------
     if empty(s:vimim_tab_for_one_key)
         imap<silent>     <C-\> <Plug>VimimOneKey
     else
