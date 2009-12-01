@@ -303,6 +303,9 @@ function! s:vimim_finalize_session()
     if s:vimim_static_input_style < 0
         let s:vimim_static_input_style = 0
     endif
+    if empty(s:vimim_www_sogou)
+        let s:vimim_www_sogou = 888
+    endif
 endfunction
 
 " ----------------------------------
@@ -623,7 +626,7 @@ function! s:vimim_easter_egg_vimim()
     endif
 " ----------------------------------
     let option = "cloud\t 搜狗："
-    if empty(s:vimim_www_sogou)
+    if s:vimim_www_sogou=888
         let option .= "晴天无云"
     elseif option == 1
         let option .= "全云输入"
@@ -2221,7 +2224,6 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:seamless_positions = []
     if s:wubi_flag < 0
-        let s:vimim_www_sogou = 888
         call <SID>vimim_set_seamless()
     endif
     let s:pageup_pagedown = 0
@@ -3551,7 +3553,6 @@ function! s:vimim_initialize_datafile_wubi()
         let s:vimim_english_punctuation = 1
         let s:vimim_chinese_punctuation = -1
         let s:vimim_static_input_style = -1
-        let s:vimim_www_sogou = 888
     endif
 endfunction
 
@@ -3618,8 +3619,6 @@ endfunction
 " ---------------------------------------
 function! s:vimim_plug_n_play_www_sogou()
 " ---------------------------------------
-    if s:vimim_www_sogou > 0
-        return
     endif
     if empty(s:current_datafile)
     \|| s:privates_flag == 2
@@ -3630,7 +3629,7 @@ function! s:vimim_plug_n_play_www_sogou()
     " support 'plug and play' (throw wget.exe to plugin directory)
     " for Windows user who does not know how to set PATH,
     if has("win32") || has("win32unix")
-    \&& empty(s:vimim_www_sogou)
+    \&& s:vimim_www_sogou == 888
         let wget = s:path . "wget.exe"
         if executable(wget)
             let s:vimim_www_sogou = 1
@@ -3643,7 +3642,7 @@ endfunction
 function! s:vimim_initialize_www_sogou()
 " --------------------------------------
     call s:vimim_plug_n_play_www_sogou()
-    if empty(s:vimim_www_sogou) || !exists('*system')
+    if !exists('*system')
         return
     endif
     " step 1: try to find wget
@@ -3682,8 +3681,7 @@ endfunction
 function! s:vimim_get_cloud_keyboard(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:vimim_www_sogou)
-    \|| keyboard =~ '\d\d\d\d'
+    if keyboard =~ '\d\d\d\d'
         let msg = "We play 4 corner by ourselves without Cloud."
         return 0
     endif
