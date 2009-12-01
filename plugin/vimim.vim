@@ -1125,7 +1125,8 @@ function! g:vimim_smart_space_onekey()
         sil!exe 'sil!return "' . space . '"'
     else
         iunmap <Space>
-        call s:vimim_insert_setting_off()
+        sil!call s:vimim_iunmap()
+        sil!call s:vimim_insert_setting_off()
         let s:smart_backspace = 0
         if s:insert_without_popup_flag > 0
             let s:insert_without_popup_flag = 0
@@ -1349,16 +1350,14 @@ function! s:vimim_iunmap()
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
     call extend(unmap_list, ['<CR>', '<BS>', '<Space>'])
+    " ----------------------------
     for _ in unmap_list
         sil!exe 'iunmap '. _
     endfor
-    " --------------------------------------------------
-    let unmap_list = ['<C-W>', '<C-U>', '<C-H>'])
-    for _ in unmap_list
-        if !hasmapto('_', 'i')
-            sil!exe 'iunmap '. _
-        endif
-    endfor
+    " ----------------------------
+    if !hasmapto('<C-H>', 'i')
+        sil!exe 'iunmap '. '<C-H>'
+    endif
 endfunction
 
 " ================================ }}}
