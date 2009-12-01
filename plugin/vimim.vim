@@ -247,6 +247,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:pinyin_flag = 0
     let s:shuangpin_flag = 0
+    let s:shuangpin_keyboard = 0
     let s:shuangpin_in_quanpin = 0
     let s:shuangpin_table = {}
     " --------------------------------
@@ -2828,8 +2829,7 @@ function! s:vimim_save_datafile(lines)
     if filewritable(s:current_datafile)
         call writefile(a:lines, s:current_datafile)
     endif
-    if empty(s:localization)
-    \&& s:vimim_save_input_history_frequency > 0
+    if s:vimim_save_input_history_frequency > 0
         let warning = 'performance hit if &encoding & datafile differs!'
     endif
 endfunction
@@ -3290,6 +3290,7 @@ function! s:vimim_resume_shuangpin()
 " ----------------------------------
     if s:pinyin_flag == 2 && empty(s:shuangpin_flag)
         let s:shuangpin_flag = 1
+        let s:shuangpin_keyboard = 0
         let s:shuangpin_in_quanpin = 0
     endif
 endfunction
@@ -3691,6 +3692,10 @@ function! s:vimim_get_cloud_keyboard(keyboard)
         let msg = "We play 4 corner by ourselves without Cloud."
         return 0
     endif
+    let cloud_length = len(keyboard)
+    if s:pinyin_flag == 2 
+        let cloud_length = len(s:shuangpin_keyboard)
+    endif
     let dot = strpart(keyboard, len(keyboard)-2)
     if dot ==# '..'
         " always do cloud when keyboard ends with two dots
@@ -3698,7 +3703,7 @@ function! s:vimim_get_cloud_keyboard(keyboard)
         let keyboard = strpart(keyboard, 0, len(keyboard)-2)
         let s:keyboard_leading_zero = keyboard
     elseif keyboard =~ '[.]'
-    \|| len(keyboard) < s:vimim_www_sogou
+    \|| cloud_length < s:vimim_www_sogou
         return 0
     endif
     return keyboard
@@ -3810,6 +3815,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
+    let s:vimim_first_candidate_fix=1
     " ---------------------------------------
     let s:vimim_shuangpin_abc = 0
     let s:vimim_unicode_lookup = 0
@@ -4096,7 +4102,7 @@ if a:start
 
     if empty(s:chinese_input_mode)
         let msg = 'OneKey needs play with digit input'
-    elseif s:pinyin_flag > 0
+    else
         let start_column = last_seen_non_digit_column
     endif
 
@@ -4204,12 +4210,15 @@ else
         endif
         if s:shuangpin_flag > 0
             let keyboard2 = s:vimim_shuangpin_transform(keyboard)
-            if keyboard2 !=# keyboard
+            if keyboard2 ==# keyboard
+                let s:shuangpin_keyboard = 0
+            else
                 let s:shuangpin_flag = 0
                 let s:sentence_match = 1
+                let s:shuangpin_keyboard = keyboard
                 let keyboard = keyboard2
                 let s:shuangpin_in_quanpin = a:keyboard
-                let s:keyboard_leading_zero = keyboard
+                let s:keyboard_leading_zero = keyboard2
             endif
         endif
     endif
