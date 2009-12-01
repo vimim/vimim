@@ -3223,7 +3223,7 @@ endfunction
 function! s:vimim_auto_spell_rule(keyboard)
 " -----------------------------------------
     " A demo rule for auto spelling
-    "    tign => tign
+    "    tign => ting
     "     yve => yue
     " --------------------------------
     let rules = {}
