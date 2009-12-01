@@ -168,7 +168,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_match_word_after_word")
     call add(G, "g:vimim_custom_skin")
-    call add(G, "g:vimim_number_as_navigation")
     call add(G, "g:vimim_reverse_pageup_pagedown")
     call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_sexy_input_style")
@@ -1040,20 +1039,14 @@ function! <SID>vimim_label(n)
     let n = a:n
     let label = a:n
     if pumvisible()
-        if empty(n)
+        if n < 1
             call g:vimim_reset_after_insert()
             let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         else
             let counts = ""
-            let yes = ""
-            if empty(s:vimim_number_as_navigation)
-                if empty(s:chinese_input_mode)
-"                   call s:vimim_insert_setting_off()
-                endif
-                if n > 1
-                    let n -= 1
-                    let counts = repeat("\<Down>", n)
-                endif
+            if n > 1
+                let n -= 1
+                let counts = repeat("\<Down>", n)
             endif
             let yes = s:vimim_keyboard_block_by_block()
             let label = counts . yes
@@ -2279,13 +2272,10 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:menu_reverse > 0
         let matched_list = reverse(matched_list)
     endif
-    let matched_list = s:vimim_pageup_pagedown(matched_list)
-    let label = 0
-    if empty(s:vimim_number_as_navigation)
-        let label = 1
-    endif
-    let popupmenu_list = []
     let menu = 0
+    let label = 1
+    let matched_list = s:vimim_pageup_pagedown(matched_list)
+    let popupmenu_list = []
     let keyboard = s:keyboard_leading_zero
     let first_candidate = get(split(get(matched_list,0)),0)
     " ----------------------
@@ -3814,15 +3804,11 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_nature    = str2nr('hkfgpyjxlisswouhqyyp')
     let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
     let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
-    " -------------------------------- xxx issue 23
-    let s:vimim_www_sogou = 1
-    let s:vimim_static_input_style = 1
-    let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
     let s:vimim_www_sogou = 0
     let s:vimim_static_input_style = -1+1
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
-    " -------------------------------- 
+    " --------------------------------
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
     let s:pinyin_flag = 1
@@ -3833,9 +3819,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
     let s:vimim_unicode_lookup = 0
-    let s:vimim_number_as_navigation = 0
     let s:vimim_dummy_shuangpin = 0
-    let s:vimim_first_candidate_fix=0
     " ---------------------------------------
 endfunction
 
