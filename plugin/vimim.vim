@@ -3810,7 +3810,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
-let s:vimim_chinese_punctuation = -1
     " ---------------------------------------
     let s:vimim_shuangpin_abc = 0
     let s:vimim_unicode_lookup = 0
@@ -4087,6 +4086,9 @@ if a:start
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
         if char_before !~# '\d'
+            let last_seen_non_digit_column = start_column
+        endif
+        if char_before !~# '[.]' && s:vimim_chinese_punctuation<1
             let last_seen_non_digit_column = start_column
         endif
         let char_before = current_line[start_column-1]
