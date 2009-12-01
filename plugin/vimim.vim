@@ -2106,7 +2106,10 @@ function! <SID>vimim_smart_enter()
         if char_before =~# s:valid_key
             let s:smart_enter += 1
         endif
-        if s:smart_enter == 1
+        if char_before =~# '[.]'
+            let s:smart_enter = 0
+        endif
+        if s:smart_enter == 1 
             let msg = "first time to press <Enter>"
         else
             let s:smart_enter = 0
@@ -3803,7 +3806,6 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_punctuation_navigation=0
     let s:vimim_chinese_punctuation = -1
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
