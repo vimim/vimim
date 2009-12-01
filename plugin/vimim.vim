@@ -172,7 +172,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_number_as_navigation")
     call add(G, "g:vimim_reverse_pageup_pagedown")
-    call add(G, "g:vimim_save_input_history_frequency")
+    call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_sexy_input_style")
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_tab_for_one_key")
@@ -662,7 +662,7 @@ function! s:vimim_initialize_encoding()
         endif
     endif
     if s:localization > 0
-        let s:vimim_save_input_history_frequency = 0
+        let s:vimim_chinese_frequency = -1
     endif
 endfunction
 
@@ -2800,7 +2800,7 @@ endfunction
 " -----------------------------------------
 function! s:vimim_save_input_history(lines)
 " -----------------------------------------
-    let frequency = s:vimim_save_input_history_frequency
+    let frequency = s:vimim_chinese_frequency
     if frequency > 1
         if s:keyboard_counts>0 && empty(s:keyboard_counts % frequency)
             call s:vimim_save_datafile(a:lines)
@@ -2819,7 +2819,7 @@ function! s:vimim_save_datafile(lines)
     if filewritable(s:current_datafile)
         call writefile(a:lines, s:current_datafile)
     endif
-    if s:vimim_save_input_history_frequency > 0
+    if s:vimim_chinese_frequency > 0
         let warning = 'performance hit if &encoding & datafile differs!'
     endif
 endfunction
@@ -3166,6 +3166,9 @@ endfunction
 function! s:vimim_initialize_datafile_pinyin()
 " --------------------------------------------
     if s:pinyin_flag > 0
+        if empty(s:vimim_chinese_frequency)
+            let s:vimim_chinese_frequency = 1
+        endif
         if s:vimim_static_input_style < 0
             let mes = 'user wants dynamic input'
         else
@@ -3793,8 +3796,6 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-"   let s:vimim_save_input_history_frequency = 2
-    let s:vimim_first_candidate_fix=0
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
@@ -3806,6 +3807,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
+    let s:vimim_first_candidate_fix=0
     let s:vimim_shuangpin_abc = 0
     let s:vimim_unicode_lookup = 0
     let s:vimim_number_as_navigation = 0
@@ -4094,8 +4096,7 @@ if a:start
 
     " utf-8 datafile update: get user's previous selection
     " ----------------------------------------------------
-    if s:vimim_save_input_history_frequency > 0
-    \&& start_row >= s:start_row_before
+    if s:vimim_chinese_frequency > 0 && start_row >= s:start_row_before
         let chinese = s:vimim_chinese_before(start_row, start_column)
         if char2nr(chinese) > 127 && len(get(s:keyboards,0)) > 0
             let s:keyboards[1] = chinese
@@ -4280,7 +4281,9 @@ else
 
     " datafile update: modify data in memory based on past usage
     " ----------------------------------------------------------
-    if s:vimim_save_input_history_frequency > 0
+    if s:vimim_chinese_frequency < 0
+        let msg = 'no chance to modify memory and disk'
+    else
         let lines = s:vimim_new_order_in_memory(s:keyboards)
         if empty(lines)
             let lines = s:vimim_load_datafile(0)
