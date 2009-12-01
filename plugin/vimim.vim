@@ -2808,7 +2808,6 @@ function! s:vimim_save_input_history(lines)
 " -----------------------------------------
     let frequency = s:vimim_save_input_history_frequency
     if frequency > 1
-        let frequency = (frequency<12) ? 12 : frequency
         if s:keyboard_counts>0 && empty(s:keyboard_counts % frequency)
             call s:vimim_save_datafile(a:lines)
         endif
