@@ -269,7 +269,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:insert_without_popup_flag = 0
     let s:sentence_input = 0
-    let s:onekey_loaded_flag = 0
     let s:trash_code_flag = 0
     " --------------------------------
     let s:smart_enter = 0
@@ -967,13 +966,10 @@ function! <SID>vimim_onekey()
     let s:punctuations['&']='※'
     let s:punctuations['"']="“”"
     let s:punctuations['\']="、"
-    call s:vimim_resume_shuangpin()
-    call s:vimim_hjkl_navigation_on()
-    if empty(s:onekey_loaded_flag)
-        let s:onekey_loaded_flag = 1
-        call s:vimim_label_on()
-        call s:vimim_punctuation_navigation_on()
-    endif
+    sil!call s:vimim_resume_shuangpin()
+    sil!call s:vimim_hjkl_navigation_on()
+    sil!call s:vimim_label_on()
+    sil!call s:vimim_punctuation_navigation_on()
     let onekey = ""
     if pumvisible()
         let onekey = s:vimim_keyboard_block_by_block()
@@ -1264,7 +1260,6 @@ function! s:vimim_chinese_mode_off()
 " ----------------------------------
     let &cpo=s:saved_cpo
     let &l:iminsert=0
-    let s:onekey_loaded_flag = 0
     let s:chinese_input_mode = 0
     let s:chinese_insert_flag = 0
     if s:vimim_custom_lcursor_color > 0
@@ -3178,7 +3173,6 @@ function! s:vimim_initialize_datafile_pinyin()
         endif
         if s:pinyin_flag < 2
             let s:vimim_fuzzy_search = 1
-            let s:vimim_save_input_history_frequency = 1
         endif
         let s:vimim_match_word_after_word = 1
     endif
@@ -3799,6 +3793,8 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
+"   let s:vimim_save_input_history_frequency = 2
+    let s:vimim_first_candidate_fix=0
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
@@ -3809,7 +3805,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
-    let s:vimim_first_candidate_fix=1
     " ---------------------------------------
     let s:vimim_shuangpin_abc = 0
     let s:vimim_unicode_lookup = 0
