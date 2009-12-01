@@ -634,7 +634,7 @@ function! s:vimim_easter_egg_vimim()
     if empty(s:vimim_www_sogou)
         let option .= "晴天无云"
     elseif s:vimim_www_sogou == 888
-        let option .= "道是无云却有云"
+        let option .= "想云就云"
     elseif option == 1
         let option .= "全云输入"
     else
@@ -3813,7 +3813,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
     let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
     " -------------------------------- debug
-    let s:vimim_www_sogou = 14
+    let s:vimim_www_sogou = 0
     let s:vimim_static_input_style = -1+1
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
