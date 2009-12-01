@@ -179,7 +179,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_english_punctuation")
-    call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_smart_punctuations")
     call add(G, "g:vimim_diy_asdfghjklo")
@@ -203,6 +202,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_smart_backspace")
     call add(G, "g:vimim_smart_ctrl_h")
     call add(G, "g:vimim_seamless_english_input")
+    call add(G, "g:vimim_punctuation_navigation")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -990,12 +990,13 @@ endfunction
 " --------------------------
 function! s:vimim_label_on()
 " --------------------------
-    if s:vimim_menu_label < 1
+    if empty(s:vimim_menu_label)
         return
     endif
     for _ in range(0,9)
-        sil!exe'inoremap<silent> '._.'
-        \ <C-R>=<SID>vimim_label("'._.'")<CR>'.
+        sil!exe 'inoremap<silent> '._.'
+        \ <C-E><C-X><C-U><C-P>
+        \<C-R>=<SID>vimim_label("'._.'")<CR>'.
         \'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
 endfunction
@@ -1006,17 +1007,12 @@ function! <SID>vimim_label(n)
     let n = a:n
     let label = a:n
     if pumvisible()
-        if empty(n)
-            call g:vimim_reset_after_insert()
-            let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        if n < 1
+            let label = '\<C-E>\<C-X>\<C-U>\<C-P>'
         else
             let counts = ""
-            let yes = ""
             if empty(s:vimim_number_as_navigation)
-                if n > 1
-                    let n -= 1
-                    let counts = repeat("\<Down>", n)
-                endif
+                let counts = repeat("\<Down>", n)
             endif
             let yes = s:vimim_keyboard_block_by_block()
             let label = counts . yes
@@ -1459,7 +1455,6 @@ endfunction
 function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
     if empty(s:vimim_punctuation_navigation)
-    \|| s:chinese_input_mode > 0
         return
     endif
     let hjkl_list = split(',.=-;[]','\zs')
@@ -2109,7 +2104,7 @@ function! <SID>vimim_smart_enter()
         if char_before =~# '[.]'
             let s:smart_enter = 0
         endif
-        if s:smart_enter == 1 
+        if s:smart_enter == 1
             let msg = "first time to press <Enter>"
         else
             let s:smart_enter = 0
@@ -3806,7 +3801,6 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_chinese_punctuation = -1
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_custom_skin = 1
@@ -4090,11 +4084,11 @@ if a:start
         endif
     endif
 
-    let last_seen_non_digit_column = start_column
+    let last_seen_nonsense_column = start_column
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
         if char_before !~# '[0-9.]'
-            let last_seen_non_digit_column = start_column
+            let last_seen_nonsense_column = start_column
         endif
         let char_before = current_line[start_column-1]
     endwhile
@@ -4102,7 +4096,7 @@ if a:start
     if empty(s:chinese_input_mode)
         let msg = 'OneKey needs play with digit input'
     else
-        let start_column = last_seen_non_digit_column
+        let start_column = last_seen_nonsense_column
     endif
 
     " utf-8 datafile update: get user's previous selection
