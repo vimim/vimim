@@ -1419,7 +1419,6 @@ function! <SID>vimim_toggle_punctuation()
     endif
     let s:chinese_punctuation = (s:chinese_punctuation+1)%2
     sil!call s:vimim_punctuation_on()
-    sil!call s:vimim_punctuation_navigation_on()
     return ""
 endfunction
 
@@ -1460,7 +1459,7 @@ endfunction
 function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
     if empty(s:vimim_punctuation_navigation)
-    \&& s:chinese_input_mode > 0
+    \|| s:chinese_input_mode > 0
         return
     endif
     let hjkl_list = split(',.=-;[]','\zs')
@@ -3804,6 +3803,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
+    let s:vimim_punctuation_navigation=0
     let s:vimim_chinese_punctuation = -1
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
