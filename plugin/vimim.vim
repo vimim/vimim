@@ -234,13 +234,14 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
+    sil!call s:vimim_start_omni()
+    " --------------------------------
     let s:wubi_flag = 0
     let s:erbi_flag = 0
     let s:privates_flag = 0
     let s:english_flag = 0
     let s:www_executable = 0
     let s:four_corner_flag = 0
-    let s:diy_pinyin_4corner = 0
     let s:digit_keyboards = {}
     " --------------------------------
     let s:pinyin_flag = 0
@@ -252,7 +253,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:start_row_before = 0
     let s:start_column_before = 1
-    let s:pattern_not_found = 0
     " --------------------------------
     let s:pageup_pagedown = 0
     let s:menu_reverse = 0
@@ -264,7 +264,6 @@ function! s:vimim_initialize_session()
     let s:chinese_input_mode = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
     " --------------------------------
-    let s:insert_without_popup_flag = 0
     let s:sentence_input = 0
     let s:trash_code_flag = 0
     " --------------------------------
@@ -274,7 +273,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:keyboard_wubi = ''
     let s:no_internet_connection = 0
-    let s:menu_from_cloud_flag = 0
     let s:sentence_match = 0
     let s:keyboard_counts = 0
     let s:keyboards = ['', '']
@@ -905,18 +903,15 @@ endfunction
 " ----------------------------
 function! s:vimim_start_omni()
 " ----------------------------
-    let &pumheight=9
-    set nolazyredraw
-    set hlsearch
     let s:diy_pinyin_4corner = 0
     let s:menu_from_cloud_flag = 0
     let s:insert_without_popup_flag = 0
     let s:pattern_not_found = 1
 endfunction
 
-" --------------------------
-function! <SID>vimim_start()
-" --------------------------
+" -----------------------
+function! s:vimim_start()
+" -----------------------
     let &l:completefunc='VimIM'
     let &l:completeopt='menuone'
     let s:smart_enter = 0
@@ -927,9 +922,9 @@ function! <SID>vimim_start()
     sil!call s:vimim_helper_mapping_on()
 endfunction
 
-" -------------------------
-function! <SID>vimim_stop()
-" -------------------------
+" --------------------
+function! s:vimim_stop()
+" --------------------
     sil!call s:vimim_i_unmap()
     sil!call s:vimim_helper_mapping_off()
     sil!call s:vimim_i_setting_off()
@@ -4168,6 +4163,9 @@ else
 
     " initialize omni completion function
     " -----------------------------------
+    let &pumheight=9
+    set nolazyredraw
+    set hlsearch
     sil!call s:vimim_start_omni()
 
     " support one-key-correction
