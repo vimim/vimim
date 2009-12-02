@@ -960,7 +960,8 @@ function! g:vimim_smart_space_onekey()
         sil!call g:vimim_reset_after_insert()
         sil!exe 'sil!return "' . space . '"'
     else
-        sil!call s:vimim_iunmap()
+        sil!call s:vimim_i_unmap()
+        sil!call s:vimim_helper_mapping_off()
         sil!call s:vimim_i_setting_off()
         if s:insert_without_popup_flag > 0
             let s:insert_without_popup_flag = 0
@@ -1237,7 +1238,8 @@ function! s:vimim_chinese_mode_off()
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
         sil!exe ':%y +'
     endif
-    sil!call s:vimim_iunmap()
+    sil!call s:vimim_i_unmap()
+    sil!call s:vimim_helper_mapping_off()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_one_key_mapping_on()
     if exists('*Fixcp')
@@ -1307,9 +1309,9 @@ function! g:vimim_smart_space_dynamic()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" ------------------------
-function! s:vimim_iunmap()
-" ------------------------
+" -------------------------
+function! s:vimim_i_unmap()
+" -------------------------
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
@@ -1319,6 +1321,11 @@ function! s:vimim_iunmap()
         sil!exe 'iunmap '. _
     endfor
     " ------------------------------
+endfunction
+
+" ------------------------------------
+function! s:vimim_helper_mapping_off()
+" ------------------------------------
     if hasmapto('<C-H>', 'i')
         iunmap <C-H>
     endif
@@ -3785,7 +3792,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 1
     let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
-    let s:vimim_www_sogou = 1
+    let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
@@ -4478,15 +4485,15 @@ function! s:vimim_helper_mapping_on()
     endif
     " ----------------------------------------------------------
     if s:vimim_smart_backspace > 0
-        inoremap<silent><BS> <C-R>=<SID>vimim_backspace_trash_all()<CR>
+        inoremap<silent><BS> <C-R>=<SID>vimim_bs_remove_all()<CR>
         \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
     endif
     " ----------------------------------------------------------
 endfunction
 
-" ----------------------------------------
-function! <SID>vimim_backspace_trash_all()
-" ----------------------------------------
+" ----------------------------------
+function! <SID>vimim_bs_remove_all()
+" ----------------------------------
     let key = ''
     let s:trash_code_flag = 0
     if pumvisible()
@@ -4497,7 +4504,10 @@ function! <SID>vimim_backspace_trash_all()
         let char_before = getline(".")[col(".")-2]
         if char_before =~# s:valid_key
             let s:trash_code_flag = -1
-            let key = '\<BS>'
+            let key  = '\<BS>'
+            if s:vimim_smart_backspace == 1
+                let key .= '\<C-X>\<C-U>\<C-P>'
+            endif
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -4507,9 +4517,7 @@ endfunction
 function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
     let key = ''
-    if pumvisible()
-        let msg = "support one-key-correction"
-    else
+    if s:vimim_smart_backspace == 2
         if s:trash_code_flag < 0
             let s:trash_code_flag = 0
         else
@@ -4518,7 +4526,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
     endif
     let s:sentence_match = 0
     if empty(s:chinese_input_mode)
-        call s:vimim_space_onekey_off()
+        call s:vimim_i_unmap()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
