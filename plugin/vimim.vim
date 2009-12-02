@@ -245,8 +245,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:pinyin_flag = 0
     let s:shuangpin_flag = 0
-    let s:shuangpin_keyboard = 0
-    let s:shuangpin_in_quanpin = 0
     let s:shuangpin_table = {}
     " --------------------------------
     let s:current_datafile = 0
@@ -277,7 +275,6 @@ function! s:vimim_initialize_session()
     let s:no_internet_connection = 0
     let s:menu_from_cloud_flag = 0
     let s:sentence_match = 0
-    let s:keyboard_leading_zero = 0
     let s:keyboard_counts = 0
     let s:keyboards = ['', '']
     let s:popupmenu_matched_list = []
@@ -287,6 +284,10 @@ function! s:vimim_initialize_session()
     let s:start_positions   = [0,0,1,0]
     let s:lines_datafile = []
     let s:alphabet_lines = []
+    " --------------------------------
+    let s:shuangpin_keyboard = 0
+    let s:shuangpin_in_quanpin = 0
+    let s:keyboard_leading_zero = 0
     " --------------------------------
 endfunction
 
@@ -403,6 +404,7 @@ function! <SID>vimim_set_seamless()
         let s:seamless_positions = getpos(".")
     endif
     let s:sentence_match = 0
+    sil!call s:vimim_resume_shuangpin()
     return ""
 endfunction
 
@@ -414,9 +416,12 @@ function! s:vimim_get_seamless(current_positions)
     \|| empty(a:current_positions)
         return -1
     endif
-    let seamless_positions = copy(s:seamless_positions)
-    let seamless_positions[2] = a:current_positions[2]
-    if seamless_positions != a:current_positions
+    let seamless_bufnum = s:seamless_positions[0]
+    let seamless_lnum = s:seamless_positions[1]
+    let seamless_off = s:seamless_positions[3]
+    if seamless_bufnum != a:current_positions[0]
+    \|| seamless_lnum != a:current_positions[1]
+    \|| seamless_off != a:current_positions[3]
         return -1
     endif
     let seamless_column = s:seamless_positions[2]-1
@@ -435,7 +440,7 @@ function! s:vimim_get_seamless(current_positions)
         endif
     endfor
     let s:start_column_before = seamless_column
-    let s:start_row_before = s:seamless_positions[1]
+    let s:start_row_before = seamless_lnum
     let s:smart_enter = 0
     return seamless_column
 endfunction
@@ -951,17 +956,21 @@ endfunction
 " ====  VimIM OneKey          ==== {{{
 " ====================================
 
-" -----------------------------------
-function! s:vimim_insert_setting_on()
-" -----------------------------------
+" ------------------------------
+function! s:vimim_i_setting_on()
+" ------------------------------
     let &pumheight=9
     set nolazyredraw
     set hlsearch
 endfunction
 
-" ------------------------------------
-function! s:vimim_insert_setting_off()
-" ------------------------------------
+" -------------------------------
+function! s:vimim_i_setting_off()
+" -------------------------------
+    let s:chinese_input_mode = 0
+    let s:chinese_insert_flag = 0
+    let s:smart_backspace = 0
+    let s:trash_code_flag = 0
     let &lazyredraw=s:saved_lazyredraw
     let &hlsearch=s:saved_hlsearch
     let &pumheight=s:saved_pumheight
@@ -988,7 +997,7 @@ function! <SID>vimim_start_onekey()
     if pumvisible()
         let onekey = s:vimim_keyboard_block_by_block()
     else
-        inoremap<silent><Space> <C-R>=g:vimim_space_stop_onekey()<CR>
+        inoremap<silent><Space> <C-R>=g:vimim_smart_space_onekey()<CR>
         let onekey = s:vimim_smart_punctuation(s:punctuations, "\t")
         if empty(onekey)
             let onekey = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
@@ -997,37 +1006,23 @@ function! <SID>vimim_start_onekey()
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" -----------------------------------
-function! g:vimim_space_stop_onekey()
-" -----------------------------------
+" ------------------------------------
+function! g:vimim_smart_space_onekey()
+" ------------------------------------
     let space = ' '
     if pumvisible()
         let space = s:vimim_keyboard_block_by_block()
         sil!call g:vimim_reset_after_insert()
         sil!exe 'sil!return "' . space . '"'
     else
-        sil!call s:vimim_stop_space_onekey()
-        sil!call s:vimim_helper_mapping_off()
-        sil!call s:vimim_insert_setting_off()
-        let s:smart_backspace = 0
+        sil!call s:vimim_iunmap()
+        sil!call s:vimim_i_setting_off()
         if s:insert_without_popup_flag > 0
             let s:insert_without_popup_flag = 0
             let space = ""
         endif
     endif
     return space
-endfunction
-
-" -----------------------------------
-function! s:vimim_stop_space_onekey()
-" -----------------------------------
-    let unmap_list = range(0,9)
-    call extend(unmap_list, s:valid_keys)
-    call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['<Space>'])
-    for _ in unmap_list
-        sil!exe 'iunmap '. _
-    endfor
 endfunction
 
 " --------------------------
@@ -1291,8 +1286,6 @@ function! s:vimim_chinese_mode_off()
 " ----------------------------------
     let &cpo=s:saved_cpo
     let &l:iminsert=0
-    let s:chinese_input_mode = 0
-    let s:chinese_insert_flag = 0
     if s:vimim_custom_lcursor_color > 0
         highlight lCursor NONE
     endif
@@ -1300,8 +1293,7 @@ function! s:vimim_chinese_mode_off()
         sil!exe ':%y +'
     endif
     sil!call s:vimim_iunmap()
-    sil!call s:vimim_helper_mapping_off()
-    sil!call s:vimim_insert_setting_off()
+    sil!call s:vimim_i_setting_off()
     sil!call s:vimim_one_key_mapping_on()
     if exists('*Fixcp')
         sil!call FixAcp()
@@ -1377,9 +1369,19 @@ function! s:vimim_iunmap()
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
     call extend(unmap_list, ['<CR>', '<Space>'])
+    " ------------------------------
     for _ in unmap_list
         sil!exe 'iunmap '. _
     endfor
+    " ------------------------------
+    if hasmapto('<C-H>', 'i')
+        iunmap <C-H>
+    endif
+    " ------------------------------
+    if hasmapto('<BS>', 'i')
+        iunmap <BS>
+    endif
+    " ------------------------------
 endfunction
 
 " ================================ }}}
@@ -2153,45 +2155,6 @@ function! <SID>vimim_smart_ctrl_h()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ----------------------------------------
-function! <SID>vimim_backspace_trash_all()
-" ----------------------------------------
-    let key = ''
-    let s:trash_code_flag = 0
-    if pumvisible()
-        let key = '\<C-E>'
-        let s:trash_code_flag = 1
-        call g:vimim_reset_after_insert()
-    else
-        let char_before = getline(".")[col(".")-2]
-        if char_before =~# s:valid_key
-            let s:trash_code_flag = -1
-            let key = '\<BS>'
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" -------------------------------------
-function! <SID>vimim_ctrl_x_ctrl_u_bs()
-" -------------------------------------
-    let key = ''
-    if pumvisible()
-        let msg = "support one-key-correction"
-    else
-        if s:trash_code_flag < 0
-            let s:trash_code_flag = 0
-        else
-            let key = '\<C-X>\<C-U>\<BS>'
-        endif
-    endif
-    let s:sentence_match = 0
-    if empty(s:chinese_input_mode)
-        call s:vimim_stop_space_onekey()
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 " ================================ }}}
 " ====  VimIM Popup Menu      ==== {{{
 " ====================================
@@ -2233,13 +2196,13 @@ endfunction
 function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:seamless_positions = []
-    if s:wubi_flag < 0
-        call <SID>vimim_set_seamless()
-    endif
     let s:pageup_pagedown = 0
     let s:menu_reverse = 0
     let s:smart_enter = 0
     let s:keyboard_wubi = ''
+    if s:wubi_flag < 0
+        call <SID>vimim_set_seamless()
+    endif
     return ""
 endfunction
 
@@ -3812,6 +3775,10 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_nature    = str2nr('hkfgpyjxlisswouhqyyp')
     let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
     let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
+    " -------------------------------- issue 23
+    let s:vimim_www_sogou = 5
+    let s:vimim_static_input_style = 1
+    let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
@@ -4132,7 +4099,7 @@ else
 
     " initialize omni completion function
     " -----------------------------------
-    sil!call s:vimim_insert_setting_on()
+    sil!call s:vimim_i_setting_on()
     let s:diy_pinyin_4corner = 0
     let s:menu_from_cloud_flag = 0
     let s:insert_without_popup_flag = 0
@@ -4224,11 +4191,15 @@ else
             endif
             if keyboard2 ==# keyboard
                 let s:shuangpin_keyboard = 0
+                let s:sentence_match = 0
             else
                 let s:shuangpin_flag = 0
                 let s:sentence_match = 1
                 let s:shuangpin_keyboard = keyboard
                 let keyboard = keyboard2
+let g:ga=s:shuangpin_keyboard
+let g:gb=keyboard2
+let g:gc=a:keyboard
                 let s:shuangpin_in_quanpin = a:keyboard
                 let s:keyboard_leading_zero = keyboard2
             endif
@@ -4256,12 +4227,19 @@ else
     " cloud-dependent whole sentence input:　woyouyigemeng
     " ----------------------------------------------------
     let keyboard2 = s:vimim_get_cloud_keyboard(keyboard)
+    if s:vimim_debug_flag > 0
+        let g:cloud_in=keyboard
+        let g:cloud_out=keyboard2
+    endif
     if empty(keyboard2)
         let msg = "who care about cloud?"
     elseif s:no_internet_connection > 0
         let msg = "oops, there is no internet connection."
     else
         let results = s:vimim_get_sogou_cloud_im(keyboard2)
+        if s:vimim_debug_flag > 0
+            let g:cloud_results=results
+        endif
         if empty(len(results))
             let s:sentence_match = 0
             let s:no_internet_connection = 1
@@ -4373,6 +4351,10 @@ else
     " -----------------------------------------------------
     if match_start < 0
         let keyboard2 = s:vimim_keyboard_analysis(lines, keyboard)
+        if s:vimim_debug_flag > 0
+            let g:no_cloud_in=keyboard
+            let g:no_cloud_out=keyboard2
+        endif
         if keyboard2 !=# keyboard
             let s:sentence_match = 1
             let keyboard = keyboard2
@@ -4500,16 +4482,43 @@ function! s:vimim_helper_mapping_on()
     " ----------------------------------------------------------
 endfunction
 
-" ------------------------------------
-function! s:vimim_helper_mapping_off()
-" ------------------------------------
-    if hasmapto('<C-H>', 'i')
-        iunmap <C-H>
+" ----------------------------------------
+function! <SID>vimim_backspace_trash_all()
+" ----------------------------------------
+    let key = ''
+    let s:trash_code_flag = 0
+    if pumvisible()
+        let key = '\<C-E>'
+        let s:trash_code_flag = 1
+        call g:vimim_reset_after_insert()
+    else
+        let char_before = getline(".")[col(".")-2]
+        if char_before =~# s:valid_key
+            let s:trash_code_flag = -1
+            let key = '\<BS>'
+        endif
     endif
-    " ------------------------------
-    if hasmapto('<BS>', 'i')
-        iunmap <BS>
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" -------------------------------------
+function! <SID>vimim_ctrl_x_ctrl_u_bs()
+" -------------------------------------
+    let key = ''
+    if pumvisible()
+        let msg = "support one-key-correction"
+    else
+        if s:trash_code_flag < 0
+            let s:trash_code_flag = 0
+        else
+            let key = '\<C-X>\<C-U>\<BS>'
+        endif
     endif
+    let s:sentence_match = 0
+    if empty(s:chinese_input_mode)
+        call s:vimim_space_onekey_off()
+    endif
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ------------------------------------
