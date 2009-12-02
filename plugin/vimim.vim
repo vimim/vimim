@@ -611,7 +611,7 @@ function! s:vimim_initialize_encoding()
     if &encoding == "utf-8"
         let s:multibyte = 3
         let s:max_ddddd = 40869
-        if s:chinese_input_mode < 2 
+        if s:chinese_input_mode < 2
         \&& s:four_corner_flag > 0
             let s:four_corner_unicode_flag = 1
         endif
@@ -911,17 +911,17 @@ function! s:vimim_start()
 " -----------------------
     let &l:completefunc='VimIM'
     let &l:completeopt='menuone'
-    let s:smart_enter = 0
-    let s:smart_ctrl_h = 0
-    let s:smart_backspace = s:vimim_smart_backspace
     let s:sentence_match = 0
+    let s:smart_ctrl_h = 0
+    let s:smart_enter = 0
+    let s:smart_backspace = s:vimim_smart_backspace
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
 endfunction
 
-" --------------------
+" ----------------------
 function! s:vimim_stop()
-" --------------------
+" ----------------------
     sil!call s:vimim_i_reset()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_i_unmap()
@@ -2211,28 +2211,15 @@ function! <SID>vimim_smart_ctrl_h()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ----------------------------------
-function! <SID>vimim_bs_remove_all()
-" ----------------------------------
-    if empty(s:smart_backspace)
-        return ""
-    endif
+" ------------------------------------
+function! <SID>vimim_dummy_backspace()
+" ------------------------------------
     let key = ''
-    let s:trash_code_flag = 0
+    if empty(s:smart_backspace)
+        return ''
+    endif
     if pumvisible()
         let key = '\<C-E>'
-        let s:trash_code_flag = 1
-        call g:vimim_reset_after_insert()
-    else
-        let char_before = getline(".")[col(".")-2]
-        if char_before =~# s:valid_key
-            let s:trash_code_flag = -1
-            let key  = '\<BS>'
-            if s:smart_backspace == 1
-            \&& s:chinese_input_mode > 1
-                let key .= '\<C-X>\<C-U>\<C-P>'
-            endif
-        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2240,18 +2227,23 @@ endfunction
 " -------------------------------------
 function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
+    let key = '\<BS>'
+    let s:sentence_match = 0
+    let s:trash_code_flag = 0
+    call g:vimim_reset_after_insert()
     if empty(s:smart_backspace)
-        return ""
-    endif
-    let key = ''
-    if s:smart_backspace == 2
-        if s:trash_code_flag < 0
-            let s:trash_code_flag = 0
-        else
+        let msg = 'this is dummy backspace'
+    elseif s:smart_backspace == 1
+        if s:chinese_input_mode > 1
+            let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        endif
+    elseif s:smart_backspace == 2
+        let char_before = getline(".")[col(".")-2]
+        if char_before =~# s:valid_key
+            let s:trash_code_flag = 1
             let key = '\<C-X>\<C-U>\<BS>'
         endif
     endif
-    let s:sentence_match = 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -3871,7 +3863,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
     let s:vimim_www_sogou = 14
-    let s:vimim_static_input_style = -1
+    let s:vimim_static_input_style = 0
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
     let s:vimim_custom_skin = 1
@@ -4557,15 +4549,13 @@ endfunction
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    if s:vimim_smart_ctrl_h > 0 
+    if s:vimim_smart_ctrl_h > 0
     \&& s:chinese_input_mode < 2
-    \&& !hasmapto('<C-H>', 'i')
         inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
     endif
     " ----------------------------------------------------------
-    if s:vimim_smart_backspace > 0 
-    \&& !hasmapto('<BS>', 'i')
-        inoremap<silent><BS> <C-R>=<SID>vimim_bs_remove_all()<CR>
+    if s:smart_backspace > 0
+        inoremap<silent><BS> <C-R>=<SID>vimim_dummy_backspace()<CR>
                             \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
     endif
     " ----------------------------------------------------------
