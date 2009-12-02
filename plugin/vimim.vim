@@ -235,6 +235,7 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     sil!call s:vimim_start_omni()
+    sil!call s:vimim_i_reset()
     " --------------------------------
     let s:wubi_flag = 0
     let s:erbi_flag = 0
@@ -260,16 +261,11 @@ function! s:vimim_initialize_session()
     let s:ecdict = {}
     let s:search_key_slash = 0
     let s:unicode_prefix = 'u'
-    let s:chinese_insert_flag = 0
-    let s:chinese_input_mode = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
     " --------------------------------
     let s:sentence_input = 0
-    let s:trash_code_flag = 0
     " --------------------------------
     let s:smart_enter = 0
-    let s:smart_ctrl_h = 0
-    let s:smart_backspace = 0
     " --------------------------------
     let s:keyboard_wubi = ''
     let s:no_internet_connection = 0
@@ -925,9 +921,30 @@ endfunction
 " --------------------
 function! s:vimim_stop()
 " --------------------
+    sil!call s:vimim_i_reset()
+    sil!call s:vimim_i_setting_off()
     sil!call s:vimim_i_unmap()
     sil!call s:vimim_helper_mapping_off()
-    sil!call s:vimim_i_setting_off()
+endfunction
+
+" -------------------------
+function! s:vimim_i_reset()
+" -------------------------
+    let s:chinese_input_mode = 0
+    let s:chinese_insert_flag = 0
+    let s:smart_ctrl_h = 0
+    let s:smart_backspace = 0
+    let s:trash_code_flag = 0
+endfunction
+
+" -------------------------------
+function! s:vimim_i_setting_off()
+" -------------------------------
+    let &lazyredraw=s:saved_lazyredraw
+    let &hlsearch=s:saved_hlsearch
+    let &pumheight=s:saved_pumheight
+    let &completeopt=s:completeopt
+    let &completefunc=s:completefunc
 endfunction
 
 " -------------------------
@@ -955,21 +972,6 @@ function! s:vimim_helper_mapping_off()
         iunmap <BS>
     endif
     " ------------------------------
-endfunction
-
-" -------------------------------
-function! s:vimim_i_setting_off()
-" -------------------------------
-    let s:chinese_input_mode = 0
-    let s:chinese_insert_flag = 0
-    let s:smart_ctrl_h = 0
-    let s:smart_backspace = 0
-    let s:trash_code_flag = 0
-    let &lazyredraw=s:saved_lazyredraw
-    let &hlsearch=s:saved_hlsearch
-    let &pumheight=s:saved_pumheight
-    let &completeopt=s:completeopt
-    let &completefunc=s:completefunc
 endfunction
 
 " ---------------------------------
@@ -3844,7 +3846,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 1
     let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
-    let s:vimim_www_sogou = 0
+    let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1+1
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
