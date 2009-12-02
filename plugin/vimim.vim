@@ -236,6 +236,7 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     sil!call s:vimim_start_omni()
     sil!call s:vimim_i_reset()
+    sil!call s:reset_after_insert()
     " --------------------------------
     let s:wubi_flag = 0
     let s:erbi_flag = 0
@@ -255,26 +256,18 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     " --------------------------------
-    let s:pageup_pagedown = 0
-    let s:menu_reverse = 0
-    " --------------------------------
     let s:ecdict = {}
     let s:search_key_slash = 0
     let s:unicode_prefix = 'u'
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
     " --------------------------------
-    let s:sentence_input = 0
-    " --------------------------------
-    let s:smart_enter = 0
-    " --------------------------------
-    let s:keyboard_wubi = ''
+    let s:sentence_with_space_input = 0
     let s:no_internet_connection = 0
     let s:sentence_match = 0
     let s:keyboard_counts = 0
     let s:keyboards = ['', '']
     let s:popupmenu_matched_list = []
     " --------------------------------
-    let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
     let s:start_positions   = [0,0,1,0]
     let s:lines_datafile = []
@@ -2290,15 +2283,21 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
+    call s:reset_after_insert()
+    if s:wubi_flag < 0
+        call <SID>vimim_set_seamless()
+    endif
+    return ""
+endfunction
+
+" ------------------------------
+function! s:reset_after_insert()
+" ------------------------------
     let s:seamless_positions = []
     let s:pageup_pagedown = 0
     let s:menu_reverse = 0
     let s:smart_enter = 0
     let s:keyboard_wubi = ''
-    if s:wubi_flag < 0
-        call <SID>vimim_set_seamless()
-    endif
-    return ""
 endfunction
 
 " ---------------------------------------------
@@ -4136,7 +4135,7 @@ if a:start
     \&& char_before_before != '.'
         let match_start = match(current_line, '\w\+\s\+\p\+\.$')
         if match_start > -1
-            let s:sentence_input = 1
+            let s:sentence_with_space_input = 1
             return match_start
         endif
     endif
@@ -4297,15 +4296,15 @@ else
     "   Cangjie Input Method: 　hqi kb m ol ddni.
     " ----------------------------------------------------
     if empty(s:chinese_input_mode)
-        if s:sentence_input > 0
+        if s:sentence_with_space_input > 0
         \&& keyboard =~ '\s'
         \&& len(keyboard) > 3
         \&& empty(s:current_datafile_has_dot)
-            let s:sentence_input = 0
+            let s:sentence_with_space_input = 0
             let keyboard = substitute(keyboard,'\s','.','g')
         endif
     endif
-    let s:sentence_input = 0
+    let s:sentence_with_space_input = 0
 
     " cloud-dependent whole sentence input:　woyouyigemeng
     " ----------------------------------------------------
