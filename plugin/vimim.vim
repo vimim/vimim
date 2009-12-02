@@ -397,61 +397,6 @@ function! s:vimim_initialize_datafile_primary()
     endif
 endfunction
 
-" ---------------------------------
-function! <SID>vimim_set_seamless()
-" ---------------------------------
-    if s:vimim_seamless_english_input > 0
-        let s:seamless_positions = getpos(".")
-    endif
-    let s:sentence_match = 0
-    sil!call s:vimim_resume_shuangpin()
-    return ""
-endfunction
-
-" -----------------------------------------------
-function! s:vimim_get_seamless(current_positions)
-" -----------------------------------------------
-    if empty(s:vimim_seamless_english_input)
-    \|| empty(s:seamless_positions)
-    \|| empty(a:current_positions)
-        return -1
-    endif
-    let seamless_bufnum = s:seamless_positions[0]
-    let seamless_lnum = s:seamless_positions[1]
-    let seamless_off = s:seamless_positions[3]
-    if seamless_bufnum != a:current_positions[0]
-    \|| seamless_lnum != a:current_positions[1]
-    \|| seamless_off != a:current_positions[3]
-        return -1
-    endif
-    let seamless_column = s:seamless_positions[2]-1
-    let start_column = a:current_positions[2]-1
-    let len = start_column - seamless_column
-    let start_row = a:current_positions[1]
-    let current_line = getline(start_row)
-    let snip = strpart(current_line, seamless_column, len)
-    if empty(len(snip))
-        return -1
-    endif
-    let snips = split(snip, '\zs')
-    for char in snips
-        if char !~# s:valid_key
-            return -1
-        endif
-    endfor
-    let s:start_column_before = seamless_column
-    let s:start_row_before = seamless_lnum
-    let s:smart_enter = 0
-    return seamless_column
-endfunction
-
-let s:translators = {}
-" ------------------------------------------
-function! s:translators.translate(line) dict
-" ------------------------------------------
-    return join(map(split(a:line),'get(self.dict,tolower(v:val),v:val)'))
-endfunction
-
 " -------------------------------------------------------
 function! s:vimim_expand_character_class(character_class)
 " -------------------------------------------------------
@@ -1385,6 +1330,69 @@ function! s:vimim_iunmap()
 endfunction
 
 " ================================ }}}
+" ====  VimIM Seamless join   ==== {{{
+" ====================================
+
+" -----------------------------------------------
+function! s:vimim_get_seamless(current_positions)
+" -----------------------------------------------
+    if empty(s:vimim_seamless_english_input)
+    \|| empty(s:seamless_positions)
+    \|| empty(a:current_positions)
+        return -1
+    endif
+    let seamless_bufnum = s:seamless_positions[0]
+    let seamless_lnum = s:seamless_positions[1]
+    let seamless_off = s:seamless_positions[3]
+    if seamless_bufnum != a:current_positions[0]
+    \|| seamless_lnum != a:current_positions[1]
+    \|| seamless_off != a:current_positions[3]
+        return -1
+    endif
+    let seamless_column = s:seamless_positions[2]-1
+    let start_column = a:current_positions[2]-1
+    let len = start_column - seamless_column
+    let start_row = a:current_positions[1]
+    let current_line = getline(start_row)
+    let snip = strpart(current_line, seamless_column, len)
+    if empty(len(snip))
+        return -1
+    endif
+    let snips = split(snip, '\zs')
+    for char in snips
+        if char !~# s:valid_key
+            return -1
+        endif
+    endfor
+    let s:start_column_before = seamless_column
+    let s:start_row_before = seamless_lnum
+    let s:smart_enter = 0
+    return seamless_column
+endfunction
+
+" ---------------------------------
+function! <SID>vimim_set_seamless()
+" ---------------------------------
+    if s:vimim_seamless_english_input > 0
+        let s:seamless_positions = getpos(".")
+    endif
+    let s:sentence_match = 0
+    let s:keyboard_leading_zero = 0
+    sil!call s:vimim_resume_shuangpin()
+    return ""
+endfunction
+
+" ----------------------------------
+function! s:vimim_resume_shuangpin()
+" ----------------------------------
+    if s:pinyin_flag == 2 && empty(s:shuangpin_flag)
+        let s:shuangpin_flag = 1
+        let s:shuangpin_keyboard = 0
+        let s:shuangpin_in_quanpin = 0
+    endif
+endfunction
+
+" ================================ }}}
 " ====  VimIM Punctuations    ==== {{{
 " ====================================
 
@@ -1747,6 +1755,13 @@ endfunction
 " ================================ }}}
 " ====  VimIM English2Chinese ==== {{{
 " ====================================
+
+let s:translators = {}
+" ------------------------------------------
+function! s:translators.translate(line) dict
+" ------------------------------------------
+    return join(map(split(a:line),'get(self.dict,tolower(v:val),v:val)'))
+endfunction
 
 " -----------------------------------
 function! s:vimim_translator(english)
@@ -3255,16 +3270,6 @@ function! s:vimim_initialize_shuangpin()
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
 endfunction
 
-" ----------------------------------
-function! s:vimim_resume_shuangpin()
-" ----------------------------------
-    if s:pinyin_flag == 2 && empty(s:shuangpin_flag)
-        let s:shuangpin_flag = 1
-        let s:shuangpin_keyboard = 0
-        let s:shuangpin_in_quanpin = 0
-    endif
-endfunction
-
 " -----------------------------------------
 function! s:vimim_shuangpin_transform(keyb)
 " -----------------------------------------
@@ -3780,7 +3785,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 1
     let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
-    let s:vimim_www_sogou = 14
+    let s:vimim_www_sogou = 1
     let s:vimim_static_input_style = -1+1
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
@@ -4197,9 +4202,6 @@ else
                 let s:sentence_match = 1
                 let s:shuangpin_keyboard = keyboard
                 let keyboard = keyboard2
-let g:ga=s:shuangpin_keyboard
-let g:gb=keyboard2
-let g:gc=a:keyboard
                 let s:shuangpin_in_quanpin = a:keyboard
                 let s:keyboard_leading_zero = keyboard2
             endif
