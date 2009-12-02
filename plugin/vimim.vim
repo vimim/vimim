@@ -1221,15 +1221,12 @@ endfunction
 " ------------------------------------
 function! s:vimim_start_chinese_mode()
 " ------------------------------------
-    set cpo&vim
-    let &l:iminsert=1
-    " ------------------------------
-    let s:chinese_insert_flag = 1
     if empty(s:vimim_static_input_style)
     " ------------------------------ chinese mode dynamic
         let s:chinese_input_mode = 2
         " --------------------------
         inoremap<silent><Space> <C-R>=g:vimim_smart_space_dynamic()<CR>
+                               \<C-R>=g:vimim_pattern_not_found()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
         let valid_keys = copy(s:valid_keys)
         call remove(valid_keys, match(valid_keys,'[.]'))
@@ -1245,6 +1242,7 @@ function! s:vimim_start_chinese_mode()
         sil!call s:vimim_resume_shuangpin()
         sil!call s:vimim_alphabet_auto_select()
         inoremap<silent><Space> <C-R>=g:vimim_smart_space_static()<CR>
+                               \<C-R>=g:vimim_pattern_not_found()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
     endif
     sil!call s:vimim_one_key_mapping_off()
@@ -1254,16 +1252,24 @@ endfunction
 " -------------------------------------------
 function! s:vimim_start_both_static_dynamic()
 " -------------------------------------------
+    set cpo&vim
+    let &l:iminsert=1
+    let s:chinese_insert_flag = 1
+    " ------------------------------
     if s:vimim_custom_lcursor_color > 0
         highlight! lCursor guifg=bg guibg=green
     endif
+    " ------------------------------
     sil!call s:vimim_start()
     sil!call g:vimim_reset_after_insert()
     sil!call <SID>vimim_set_seamless()
+    " ------------------------------
     inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
-        \<C-R>=<SID>vimim_set_seamless()<CR>
+                        \<C-R>=<SID>vimim_set_seamless()<CR>
+    " ------------------------------
     inoremap<silent><expr><C-\> <SID>vimim_toggle_punctuation()
-    return  <SID>vimim_toggle_punctuation()
+                         return <SID>vimim_toggle_punctuation()
+    " ------------------------------
 endfunction
 
 " -----------------------------------
@@ -1312,10 +1318,6 @@ function! g:vimim_smart_space_static()
         if empty(space)
             let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         endif
-        if s:pattern_not_found > 0
-            let s:pattern_not_found = 0
-            let space = ' '
-        endif
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
@@ -1338,9 +1340,20 @@ function! g:vimim_smart_space_dynamic()
         if empty(space)
             let space = ' '
         endif
+    endif
+    sil!exe 'sil!return "' . space . '"'
+endfunction
+
+" -----------------------------------
+function! g:vimim_pattern_not_found()
+" -----------------------------------
+    let space = ''
+    if pumvisible()
+        let msg = 'support double space'
+    else
         if s:pattern_not_found > 0
             let s:pattern_not_found = 0
-            let space = " "
+            let space = ' '
         endif
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -3841,14 +3854,14 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_nature    = str2nr('hkfgpyjxlisswouhqyyp')
     let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
     let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
-    " -------------------------------- issue 23
-    let s:vimim_www_sogou = 5
-    let s:vimim_static_input_style = 1
-    let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
-    let s:vimim_www_sogou = 14
+    let s:vimim_www_sogou = 1
     let s:vimim_static_input_style = -1+1
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
+    " -------------------------------- issue 23
+    let s:vimim_www_sogou = 1
+    let s:vimim_static_input_style = 1
+    let s:vimim_shuangpin_abc = 1
     " --------------------------------
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
