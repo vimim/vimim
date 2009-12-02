@@ -611,7 +611,8 @@ function! s:vimim_initialize_encoding()
     if &encoding == "utf-8"
         let s:multibyte = 3
         let s:max_ddddd = 40869
-        if s:chinese_input_mode < 2 && s:four_corner_flag > 0
+        if s:chinese_input_mode < 2 
+        \&& s:four_corner_flag > 0
             let s:four_corner_unicode_flag = 1
         endif
     endif
@@ -1362,11 +1363,10 @@ function! g:vimim_smart_space_static()
     else
         let s:smart_ctrl_h = 0
         let space = s:vimim_space_status()
-            if empty(space)
-                let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-            else
-                sil!call s:vimim_resume_shuangpin()
-            endif
+        if empty(space)
+            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        else
+            sil!call s:vimim_resume_shuangpin()
         endif
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -2199,7 +2199,7 @@ function! <SID>vimim_smart_ctrl_h()
     " support intelligent sentence match for wozuixihuandeliulanqi
     " first try maximum-match, after <C-H>, try minimum match
     let key = '\<BS>'
-    if pumvisible() && empty(s:chinese_input_mode)
+    if pumvisible()
         let s:smart_ctrl_h += 1
         if s:smart_ctrl_h == 1
             let key = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
@@ -3871,7 +3871,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
     let s:vimim_www_sogou = 14
-    let s:vimim_static_input_style = -1+1
+    let s:vimim_static_input_style = -1
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
     let s:vimim_custom_skin = 1
@@ -4557,13 +4557,16 @@ endfunction
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    if s:vimim_smart_ctrl_h > 0 && !hasmapto('<C-H>', 'i')
+    if s:vimim_smart_ctrl_h > 0 
+    \&& s:chinese_input_mode < 2
+    \&& !hasmapto('<C-H>', 'i')
         inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
     endif
     " ----------------------------------------------------------
-    if s:vimim_smart_backspace > 0 && !hasmapto('<BS>', 'i')
+    if s:vimim_smart_backspace > 0 
+    \&& !hasmapto('<BS>', 'i')
         inoremap<silent><BS> <C-R>=<SID>vimim_bs_remove_all()<CR>
-        \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
+                            \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
     endif
     " ----------------------------------------------------------
 endfunction
