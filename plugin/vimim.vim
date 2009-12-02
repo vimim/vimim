@@ -177,7 +177,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_www_sogou")
-    call add(G, "g:vimim_smart_punctuations")
     call add(G, "g:vimim_diy_asdfghjklo")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
@@ -192,6 +191,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_match_dot_after_dot")
     call add(G, "g:vimim_menu_label")
     call add(G, "g:vimim_one_key")
+    call add(G, "g:vimim_smart_punctuations")
     call add(G, "g:vimim_custom_lcursor_color")
     call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_save_new_entry")
@@ -990,12 +990,38 @@ function! <SID>vimim_start_onekey()
         let onekey = s:vimim_keyboard_block_by_block()
     else
         inoremap<silent><Space> <C-R>=g:vimim_smart_space_onekey()<CR>
-        let onekey = s:vimim_smart_punctuation(s:punctuations, "\t")
-        if empty(onekey)
-            let onekey = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        if empty(s:vimim_smart_punctuations)
+            let msg = 'who cares about chinese punctuation'
+        else
+            let onekey = s:vimim_smart_punctuation()
+            if empty(onekey)
+                let onekey = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+            endif
         endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+" -----------------------------------
+function! s:vimim_smart_punctuation()
+" -----------------------------------
+    let key = ''
+    let current_positions = getpos(".")
+    let start_column = current_positions[2]-1
+    let current_line = getline(current_positions[1])
+    let char_before = current_line[start_column-1]
+    let char_before_before = current_line[start_column-2]
+    if char_before == '.' && char_before_before == '.'
+        return key
+    endif
+    if (char_before_before =~ '\W' || char_before_before == '')
+    \&& has_key(s:punctuations, char_before)
+        let replacement = s:punctuations[char_before]
+        let key = "\<BS>" . replacement
+    elseif char_before !~# s:valid_key
+        let key = ' '
+    endif
+    return key
 endfunction
 
 " ------------------------------------
@@ -1317,7 +1343,8 @@ function! g:vimim_smart_space_dynamic()
             let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
             sil!exe 'sil!return "' . space . '"'
         endif
-        let space = s:vimim_smart_punctuation(s:punctuations, space)
+        sil!call s:vimim_resume_shuangpin()
+        let space = s:vimim_space_status()
         if empty(space)
             let space = ' '
         endif
@@ -1334,13 +1361,34 @@ function! g:vimim_smart_space_static()
         let space = s:vimim_keyboard_block_by_block()
     else
         let s:smart_ctrl_h = 0
-        let space = s:vimim_smart_punctuation(s:punctuations, space)
-        if empty(space)
-            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        endif
+        let space = s:vimim_space_status()
+            if empty(space)
+                let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+            else
+                sil!call s:vimim_resume_shuangpin()
+            endif
         endif
     endif
     sil!exe 'sil!return "' . space . '"'
+endfunction
+
+" ------------------------------
+function! s:vimim_space_status()
+" ------------------------------
+    let space = ""
+    let current_positions = getpos(".")
+    let start_column = current_positions[2]-1
+    let current_line = getline(current_positions[1])
+    let char_before = current_line[start_column-1]
+    let char_before_before = current_line[start_column-2]
+    if (char_before_before =~ '\W' || char_before_before == '')
+    \&& has_key(s:punctuations, char_before)
+        let replacement = s:punctuations[char_before]
+        let space = "\<BS>" . replacement
+    elseif char_before !~# s:valid_key
+        let space = ' '
+    endif
+    return space
 endfunction
 
 " -----------------------------------
@@ -1411,7 +1459,6 @@ function! <SID>vimim_set_seamless()
     return ""
 endfunction
 
-"xxx
 " ----------------------------------
 function! s:vimim_resume_shuangpin()
 " ----------------------------------
@@ -1590,42 +1637,6 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
         endif
     endif
     return value
-endfunction
-
-" ----------------------------------------------------
-function! s:vimim_smart_punctuation(punctuations, key)
-" ----------------------------------------------------
-    let key = ""
-    let current_positions = getpos(".")
-    let start_column = current_positions[2]-1
-    let current_line = getline(current_positions[1])
-    let char_before = current_line[start_column-1]
-    let char_before_before = current_line[start_column-2]
-    " -----------------------------------------------
-    if empty(s:vimim_smart_punctuations)
-    \&& s:chinese_input_mode > 0
-        if char_before =~# s:valid_key
-        \&& char_before !~# "[,.]"
-            let msg = 'when valid key before, space triggers menu'
-        else
-"xxx
-            let key = ' '
-            sil!call s:vimim_resume_shuangpin()
-        endif
-        return key
-    endif
-    " -----------------------------------------------
-    if char_before == '.' && char_before_before == '.'
-        return key
-    endif
-    if (char_before_before =~ '\W' || char_before_before == '')
-    \&& has_key(a:punctuations, char_before)
-        let replacement = a:punctuations[char_before]
-        let key = "\<BS>" . replacement
-    elseif char_before !~# s:valid_key
-        let key = a:key
-    endif
-    return key
 endfunction
 
 " ================================ }}}
@@ -3854,14 +3865,14 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_nature    = str2nr('hkfgpyjxlisswouhqyyp')
     let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
     let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
-    " -------------------------------- debug
-    let s:vimim_www_sogou = 1
-    let s:vimim_static_input_style = -1+1
-    let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " -------------------------------- issue 23
     let s:vimim_www_sogou = 1
     let s:vimim_static_input_style = 1
     let s:vimim_shuangpin_abc = 1
+    " -------------------------------- debug
+    let s:vimim_www_sogou = 14
+    let s:vimim_static_input_style = -1+1
+    let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
