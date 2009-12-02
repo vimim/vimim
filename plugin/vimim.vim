@@ -1226,7 +1226,6 @@ function! s:vimim_start_chinese_mode()
         let s:chinese_input_mode = 2
         " --------------------------
         inoremap<silent><Space> <C-R>=g:vimim_smart_space_dynamic()<CR>
-                               \<C-R>=g:vimim_pattern_not_found()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
         let valid_keys = copy(s:valid_keys)
         call remove(valid_keys, match(valid_keys,'[.]'))
@@ -1242,7 +1241,6 @@ function! s:vimim_start_chinese_mode()
         sil!call s:vimim_resume_shuangpin()
         sil!call s:vimim_alphabet_auto_select()
         inoremap<silent><Space> <C-R>=g:vimim_smart_space_static()<CR>
-                               \<C-R>=g:vimim_pattern_not_found()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
     endif
     sil!call s:vimim_one_key_mapping_off()
@@ -1305,23 +1303,6 @@ function! <SID>vimim_dynamic_End()
     sil!exe 'sil!return "' . end . '"'
 endfunction
 
-" ------------------------------------
-function! g:vimim_smart_space_static()
-" ------------------------------------
-    let space = ' '
-    if pumvisible()
-        call g:vimim_reset_after_insert()
-        let space = s:vimim_keyboard_block_by_block()
-    else
-        let s:smart_ctrl_h = 0
-        let space = s:vimim_smart_punctuation(s:punctuations, space)
-        if empty(space)
-            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        endif
-    endif
-    sil!exe 'sil!return "' . space . '"'
-endfunction
-
 " -------------------------------------
 function! g:vimim_smart_space_dynamic()
 " -------------------------------------
@@ -1344,12 +1325,30 @@ function! g:vimim_smart_space_dynamic()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
+" ------------------------------------
+function! g:vimim_smart_space_static()
+" ------------------------------------
+    let space = ' '
+    if pumvisible()
+        call g:vimim_reset_after_insert()
+        let space = s:vimim_keyboard_block_by_block()
+    else
+        let s:smart_ctrl_h = 0
+        let space = s:vimim_smart_punctuation(s:punctuations, space)
+        if empty(space)
+            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        endif
+        endif
+    endif
+    sil!exe 'sil!return "' . space . '"'
+endfunction
+
 " -----------------------------------
 function! g:vimim_pattern_not_found()
 " -----------------------------------
     let space = ''
     if pumvisible()
-        let msg = 'support double space'
+        let msg = 'click twice, space is space'
     else
         if s:pattern_not_found > 0
             let s:pattern_not_found = 0
@@ -1412,6 +1411,7 @@ function! <SID>vimim_set_seamless()
     return ""
 endfunction
 
+"xxx
 " ----------------------------------
 function! s:vimim_resume_shuangpin()
 " ----------------------------------
@@ -1604,15 +1604,15 @@ function! s:vimim_smart_punctuation(punctuations, key)
     " -----------------------------------------------
     if empty(s:vimim_smart_punctuations)
     \&& s:chinese_input_mode > 0
-        let msg = 'punctuation is better to be dummy'
-        " make dummy punctuations dummy
-        let space = ' '
-        " when a valid key before, trigger the menu
         if char_before =~# s:valid_key
         \&& char_before !~# "[,.]"
-            let space = ''
+            let msg = 'when valid key before, space triggers menu'
+        else
+"xxx
+            let key = ' '
+            sil!call s:vimim_resume_shuangpin()
         endif
-        return space
+        return key
     endif
     " -----------------------------------------------
     if char_before == '.' && char_before_before == '.'
