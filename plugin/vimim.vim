@@ -185,6 +185,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_chinese_punctuation")
+    call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_dynamic_mode_autocmd")
     call add(G, "g:vimim_first_candidate_fix")
     call add(G, "g:vimim_internal_code_input")
@@ -197,7 +198,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_save_new_entry")
     call add(G, "g:vimim_wubi_non_stop")
     call add(G, "g:vimim_seamless_english_input")
-    call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_smart_backspace")
     call add(G, "g:vimim_smart_ctrl_h")
     " -----------------------------------
@@ -981,7 +981,7 @@ function! <SID>vimim_start_onekey()
     let s:chinese_input_mode = 0
     let s:punctuations['&']='※'
     let s:punctuations['"']="“”"
-    let s:punctuations['\']="、"
+    let s:punctuations['\']='、'
     sil!call s:vimim_start()
     sil!call s:vimim_resume_shuangpin()
     sil!call s:vimim_hjkl_navigation_on()
@@ -1288,13 +1288,13 @@ function! s:vimim_start_both_static_dynamic()
     sil!call s:vimim_start()
     sil!call g:vimim_reset_after_insert()
     sil!call <SID>vimim_set_seamless()
-    " ------------------------------
+    " ---------------------------------------------------------
     inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
                         \<C-R>=<SID>vimim_set_seamless()<CR>
-    " ------------------------------
+    " ---------------------------------------------------------
     inoremap<silent><expr><C-\> <SID>vimim_toggle_punctuation()
                          return <SID>vimim_toggle_punctuation()
-    " ------------------------------
+    " ---------------------------------------------------------
 endfunction
 
 " -----------------------------------
@@ -1546,6 +1546,9 @@ function! s:vimim_punctuation_on()
         sil!exe 'inoremap<silent><expr> '._.'
         \ <SID>vimim_punctuation_mapping("'._.'")'
     endfor
+    if s:vimim_punctuation_navigation < 2
+        sil!call s:vimim_punctuation_navigation_on()
+    endif
 endfunction
 
 " -------------------------------------------
@@ -1562,7 +1565,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
-    if empty(s:vimim_punctuation_navigation)
+    if s:vimim_punctuation_navigation < 0
         return
     endif
     let hjkl_list = split('.,=-;[]','\zs')
@@ -3745,7 +3748,7 @@ function! s:vimim_get_cloud_keyboard(keyboard)
         let cloud_length = len(s:shuangpin_keyboard)
     endif
     let comma = strpart(keyboard, len(keyboard)-1)
-    if comma ==# ','
+    if comma ==# ',' && empty(s:chinese_input_mode)
         " always do cloud when keyboard ends with comma
         let s:no_internet_connection = 0
         let keyboard = strpart(keyboard, 0, len(keyboard)-1)
@@ -3875,6 +3878,9 @@ function! s:vimim_initialize_debug()
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ---------------------------------------
+    let s:vimim_english_punctuation=0
+    let s:vimim_chinese_punctuation=1
+    let s:vimim_punctuation_navigation=1
     let s:vimim_unicode_lookup = 0
     let s:vimim_dummy_shuangpin = 0
     " ---------------------------------------
