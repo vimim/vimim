@@ -1204,6 +1204,7 @@ function! s:vimim_clipboard_register(word)
             let @0 = a:word
         endif
     endif
+    sil!call s:vimim_stop()
     return "\<Esc>"
 endfunction
 
@@ -2101,24 +2102,6 @@ function! s:vimim_slash_register(chinese)
     else
         let @/ = a:chinese
     endif
-    return "\<Esc>"
-endfunction
-
-" ---------------------------------------
-function! s:vimim_remove_popup_word(word)
-" ---------------------------------------
-    if empty(a:word) || char2nr(a:word) < 127
-        return ""
-    endif
-    let repeat_times = len(a:word)/s:multibyte
-    let row_start = s:start_row_before
-    let row_end = line('.')
-    let delete_chars = ""
-    if repeat_times > 0 && row_end == row_start
-        let delete_chars = repeat("\<BS>", repeat_times)
-    endif
-    let slash = delete_chars . "\<Esc>"
-    sil!exe 'sil!return "' . slash . '"'
 endfunction
 
 " ------------------------------
@@ -2136,8 +2119,27 @@ function! g:vimim_slash_search()
         let column_start = match(current_line,'[/?]') + 1
         let word = s:vimim_popup_word(column_start)
         call s:vimim_slash_register(word)
+        sil!call s:vimim_stop()
         let slash = "\<End>\<C-U>\<Esc>"
     endif
+    sil!exe 'sil!return "' . slash . '"'
+endfunction
+
+" ---------------------------------------
+function! s:vimim_remove_popup_word(word)
+" ---------------------------------------
+    if empty(a:word) || char2nr(a:word) < 127
+        return ""
+    endif
+    let repeat_times = len(a:word)/s:multibyte
+    let row_start = s:start_row_before
+    let row_end = line('.')
+    let delete_chars = ""
+    if repeat_times > 0 && row_end == row_start
+        let delete_chars = repeat("\<BS>", repeat_times)
+    endif
+    let slash = delete_chars . "\<Esc>"
+    sil!call s:vimim_stop()
     sil!exe 'sil!return "' . slash . '"'
 endfunction
 
