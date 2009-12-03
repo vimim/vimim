@@ -996,28 +996,6 @@ function! <SID>vimim_start_onekey()
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" -----------------------------------
-function! s:vimim_smart_punctuation()
-" -----------------------------------
-    let key = ''
-    let current_positions = getpos(".")
-    let start_column = current_positions[2]-1
-    let current_line = getline(current_positions[1])
-    let char_before = current_line[start_column-1]
-    let char_before_before = current_line[start_column-2]
-    if char_before == '.' && char_before_before == '.'
-        return key
-    endif
-    if (char_before_before =~ '\W' || char_before_before == '')
-    \&& has_key(s:punctuations, char_before)
-        let replacement = s:punctuations[char_before]
-        let key = "\<BS>" . replacement
-    elseif char_before !~# s:valid_key
-        let key = ' '
-    endif
-    return key
-endfunction
-
 " ------------------------------------
 function! g:vimim_smart_space_onekey()
 " ------------------------------------
@@ -1633,6 +1611,28 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
         endif
     endif
     return value
+endfunction
+
+" -----------------------------------
+function! s:vimim_smart_punctuation()
+" -----------------------------------
+    let key = ''
+    let current_positions = getpos(".")
+    let start_column = current_positions[2]-1
+    let current_line = getline(current_positions[1])
+    let char_before = current_line[start_column-1]
+    let char_before_before = current_line[start_column-2]
+    if char_before == '.' && char_before_before == '.'
+        return key
+    endif
+    if (char_before_before =~ '\W' || char_before_before == '')
+    \&& has_key(s:punctuations, char_before)
+        let replacement = s:punctuations[char_before]
+        let key = "\<BS>" . replacement
+    elseif char_before !~# s:valid_key
+        let key = ' '
+    endif
+    return key
 endfunction
 
 " ================================ }}}
@@ -4523,12 +4523,14 @@ function! s:vimim_initialize_mapping()
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
     inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
     " ----------------------------------------------------------------
-    call s:vimim_one_key_mapping_on()
-    call s:vimim_visual_mapping_on()
+    sil!call s:vimim_one_key_mapping_on()
+    " -------------------------------
+    sil!call s:vimim_visual_mapping_on()
     " -------------------------------
     if s:vimim_chinese_input_mode > 0
         imap<silent> <C-^> <Plug>VimimChineseToggle
     endif
+    " -------------------------------
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
         if s:vimim_chinese_input_mode > 0
             imap<silent> <C-Space> <Plug>VimimChineseToggle
