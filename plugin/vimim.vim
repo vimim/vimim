@@ -1670,7 +1670,7 @@ function! s:vimim_smart_punctuation()
 endfunction
 
 " ================================ }}}
-" ====  VimIM Chinese number  ==== {{{
+" ====  VimIM Chinese Number  ==== {{{
 " ====================================
 
 " ----------------------------------------
@@ -2739,7 +2739,7 @@ function! s:vimim_sentence_whole_match(lines, keyboard)
     let block = ''
     let last_part = ''
     " -------------------------------------------
-    while max > 1 && min < len(keyboard)
+    while max > 2 && min < len(keyboard)
         let x = 'jiandaolaoshiwenshenghao.<OneKey><Space>...'
         let max -= 1
         let position = max
@@ -3907,6 +3907,9 @@ function! s:vimim_initialize_debug()
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
+    " --------------------------------
+    let s:vimim_first_candidate_fix=1
+    let s:vimim_chinese_frequency=0
     " ---------------------------------------
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
