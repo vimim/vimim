@@ -826,14 +826,14 @@ function! s:vimim_internal_code(keyboard)
     \|| strlen(a:keyboard) < 4
         return []
     endif
-    let &pumheight=0
     let s:unicode_menu_display_flag = 0
     let numbers = []
     let keyboard = a:keyboard
     let last_char = strpart(keyboard,len(keyboard)-1,1)
-    " support unicode popup menu, if ending with 'u'
-    " ----------------------------------------------
+    " support internal-code popup menu, if ending with 'u'
+    " ----------------------------------------------------
     if last_char == s:unicode_prefix
+        let &pumheight=16
         let keyboard = strpart(keyboard,0,len(keyboard)-1)
         if keyboard =~ '^\d\{4}$'        "| 2222u
             let digit_ranges = range(10)
@@ -2330,7 +2330,8 @@ endfunction
 function! s:reset_after_insert()
 " ------------------------------
     let s:seamless_positions = []
-    let s:pageup_pagedown = 0
+    let s:popupmenu_matched_list = []
+    let s:pageup_pagedown = ''
     let s:menu_reverse = 0
     let s:smart_enter = 0
     let s:keyboard_wubi = ''
@@ -4227,9 +4228,8 @@ else
     set hlsearch
     sil!call s:vimim_start_omni()
 
-    " support one-key-correction
-    "   OneKey: (d)elete in popup || ChineseMode: <BS>
-    " ------------------------------------------------
+    " one-key-correction: (d)elete in popup || ChineseMode: <BS>
+    " ----------------------------------------------------------
     if s:trash_code_flag > 0
         let s:trash_code_flag = 0
         return [" "]
@@ -4253,8 +4253,17 @@ else
         return
     endif
 
+    " use cached list when pageup/pagedown is used
+    " --------------------------------------------
     if empty(s:chinese_input_mode)
         let @0 = keyboard
+        if empty(len(s:pageup_pagedown))
+            let x = 'no pageup or pagedown is used'
+        elseif empty(s:popupmenu_matched_list)
+            let x = 'no popup matched list; let us build it'
+        else
+            return s:vimim_popupmenu_list(s:popupmenu_matched_list)
+        endif
     endif
 
     " hunt classic easter egg ... vim<C-\>
