@@ -514,9 +514,9 @@ function! s:vimim_easter_egg_vimim()
 " ----------------------------------
     let option = s:vimim_static_input_style
     if empty(option)
-        let option = '经典静态'
-    else
         let option = '经典动态'
+    else
+        let option = '经典静态'
     endif
     let option = "mode\t 风格：" . option
     call add(eggs, option)
@@ -3868,14 +3868,14 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_nature    = str2nr('hkfgpyjxlisswouhqyyp')
     let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
     let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
-    " -------------------------------- debug
-    let s:vimim_www_sogou = 14
-    let s:vimim_static_input_style = 0
-    let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " -------------------------------- issue 23
     let s:vimim_www_sogou = 1
     let s:vimim_static_input_style = 1
     let s:vimim_shuangpin_abc = 1
+    " -------------------------------- debug
+    let s:vimim_www_sogou = 14
+    let s:vimim_static_input_style = 0
+    let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
