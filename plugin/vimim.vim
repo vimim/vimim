@@ -484,14 +484,16 @@ function! s:vimim_easter_egg_vimimurl()
     call add(eggs, "VimIM 错误报告：" . option)
     let option='http://code.google.com/p/vimim/downloads/list'
     call add(eggs, "VimIM 词库下载：" . option)
-    let option='http://groups.google.com/group/vimim'
-    call add(eggs, "VimIM 新闻论坛：" . option)
     let option='http://vimim.googlecode.com/svn/vimim/vimim.html'
     call add(eggs, "VimIM 最新主页：" . option)
     let option='http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
     call add(eggs, "VimIM 最新程式：" . option)
+    let option='http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
+    call add(eggs, "VimIM 试用版本：" . option)
     let option='http://vim.sourceforge.net/scripts/script.php?script_id=2506'
     call add(eggs, "VimIM 官方网址：" . option)
+    let option='http://groups.google.com/group/vimim'
+    call add(eggs, "VimIM 新闻论坛：" . option)
 " -------------------------------------
     let eggs = map(eggs, 'v:val . "　"')
     return s:vimim_popupmenu_list(eggs)
