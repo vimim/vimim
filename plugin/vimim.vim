@@ -476,9 +476,9 @@ function! s:vimim_easter_egg_vim()
     return s:vimim_popupmenu_list(eggs)
 endfunction
 
-" -------------------------------------
-function! s:vimim_easter_egg_vimimurl()
-" -------------------------------------
+" --------------------------------------
+function! s:vimim_easter_egg_vimimhelp()
+" --------------------------------------
     let eggs = []
     let option='http://code.google.com/p/vimim/issues/entry'
     call add(eggs, "VimIM 错误报告：" . option)
@@ -1157,10 +1157,10 @@ function! g:vimim_p_paste()
     let words = s:popupmenu_matched_list
     let current_positions = getpos(".")
     let line = line(".")
-    call setline(line, words)
     let current_positions[1] = line + len(words) - 1
     let current_positions[2] = 1
     call setpos(".", current_positions)
+    call setline(line, words)
     return s:vimim_clipboard_register(string(words))
 endfunction
 
@@ -4261,8 +4261,8 @@ else
         return s:vimim_easter_egg_vim()
     elseif keyboard ==# "vimim"
         return s:vimim_easter_egg_vimim()
-    elseif keyboard ==# "vimimurl"
-        return s:vimim_easter_egg_vimimurl()
+    elseif keyboard ==# "vimimhelp"
+        return s:vimim_easter_egg_vimimhelp()
     endif
 
     " support direct internal code (unicode/gb/big5) input
