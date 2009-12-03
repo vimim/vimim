@@ -87,7 +87,6 @@ let $VimIM = " $Revision$ "
 "   VimIM "Chinese Input Mode"
 "   - [dynamic mode] show dynamic menu as one types
 "   - [static mode] <Space> => Chinese  <Enter> => English
-"   - <Esc> key is in consistence with Vim
 "   The default key is <C-^> (Vim Insert Mode)
 
 " ----------------
@@ -952,6 +951,7 @@ function! s:vimim_stop()
     sil!call s:vimim_i_reset()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_i_unmap()
+    sil!call s:reset_after_insert()
     sil!call s:vimim_helper_mapping_off()
 endfunction
 
@@ -987,6 +987,27 @@ function! s:vimim_i_unmap()
         sil!exe 'iunmap '. _
     endfor
     " ------------------------------
+endfunction
+
+" ------------------------------------
+function! g:vimim_reset_after_insert()
+" ------------------------------------
+    call s:reset_after_insert()
+    if s:wubi_flag < 0
+        call <SID>vimim_set_seamless()
+    endif
+    return ""
+endfunction
+
+" ------------------------------
+function! s:reset_after_insert()
+" ------------------------------
+    let s:seamless_positions = []
+    let s:popupmenu_matched_list = []
+    let s:pageup_pagedown = ''
+    let s:menu_reverse = 0
+    let s:smart_enter = 0
+    let s:keyboard_wubi = ''
 endfunction
 
 " ------------------------------------
@@ -2314,27 +2335,6 @@ function! s:vimim_pair_list(matched_list)
         endfor
     endfor
     return pair_matched_list
-endfunction
-
-" ------------------------------------
-function! g:vimim_reset_after_insert()
-" ------------------------------------
-    call s:reset_after_insert()
-    if s:wubi_flag < 0
-        call <SID>vimim_set_seamless()
-    endif
-    return ""
-endfunction
-
-" ------------------------------
-function! s:reset_after_insert()
-" ------------------------------
-    let s:seamless_positions = []
-    let s:popupmenu_matched_list = []
-    let s:pageup_pagedown = ''
-    let s:menu_reverse = 0
-    let s:smart_enter = 0
-    let s:keyboard_wubi = ''
 endfunction
 
 " ---------------------------------------------
