@@ -25,11 +25,12 @@ let VimIM = " ====  Introduction     ==== {{{"
 "            VimIM aims to complete the Vim as the greatest editor.
 " -----------------------------------------------------------
 "  Features: * "Plug & Play"
-"            * "Plug & Play": "Cloud Input"
+"            * "Plug & Play": "Cloud Input" without any datafile
 "            * "Plug & Play": "Cloud Input" with five ShuangPin
 "            * "Plug & Play": "Cloud Input" with WuBi
 "            * "Plug & Play": "Pinyin and four_corner" together
 "            * "Plug & Play": "Pinyin and five_stroke" together
+"            * Support "Cloud Input at will", independent of IM used
 "            * Support direct "UNICODE input" using integer or hex
 "            * Support direct "GBK input" and "Big5 input"
 "            * Support "Pin Yin", "Wu Bi", "Cang Jie", "4Corner", etc
