@@ -3,8 +3,8 @@
 " --------------------------------------------------
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
-let $VimIM = " $Date$"
-let $VimIM = " $Revision$"
+let $VimIM = "$Date$"
+let $VimIM = "$Revision$"
 
 let egg  = ["http://code.google.com/p/vimim/issues/entry                 "]
 let egg += ["http://code.google.com/p/vimim/downloads/list               "]
@@ -45,7 +45,7 @@ let egg += ["http://groups.google.com/group/vimim                        "]
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
-"   Install: (1) [optional] download a datafile from vimim.googlecode
+"   Install: (1) [optional] download a datafile from code.google.com
 "            (2) drop vimim.vim and the datafile to the plugin directory
 " -----------------------------------------------------------
 " EasterEgg: (in Vim Insert Mode, type 4 chars:) vim<C-\>
@@ -55,7 +55,7 @@ let egg += ["http://groups.google.com/group/vimim                        "]
 "            # to search: hit '/' or '?' from popup menu
 " -----------------------------------------------------------
 " Usage (2): [in Insert Mode] "to type Chinese continuously":
-"            # hit <C-^> to toggle to Chinese Input Mode:
+"            # hit <C-6> to toggle to Chinese Input Mode:
 "            # type any valid keycode and enjoy
 " -----------------------------------------------------------
 
@@ -67,6 +67,7 @@ let egg += ["http://groups.google.com/group/vimim                        "]
 " "Design Goal"
 " -------------
 " # Chinese can be input using Vim regardless of encoding
+" # Chinese can be input using Vim without local datafile
 " # Without negative impact to Vim when VimIM is not used
 " # No compromise for high speed and low memory usage
 " # Making the best use of Vim for popular input methods
@@ -88,7 +89,7 @@ let egg += ["http://groups.google.com/group/vimim                        "]
 "   VimIM "Chinese Input Mode"
 "   - [dynamic mode] show dynamic menu as one types
 "   - [static mode] <Space> => Chinese  <Enter> => English
-"   The default key is <C-^> (Vim Insert Mode)
+"   The default key is <C-6> (Vim Insert Mode)
 
 " ----------------
 " "VimIM Datafile"
@@ -219,36 +220,6 @@ function! s:vimim_set_global_default(options, default)
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
-endfunction
-
-" ------------------------------------
-function! s:vimim_initialize_session()
-" ------------------------------------
-    sil!call s:vimim_start_omni()
-    sil!call s:vimim_super_reset()
-    " --------------------------------
-    let s:wubi_flag = 0
-    let s:erbi_flag = 0
-    let s:privates_flag = 0
-    let s:english_flag = 0
-    let s:www_executable = 0
-    let s:four_corner_flag = 0
-    let s:digit_keyboards = {}
-    let s:pinyin_flag = 0
-    let s:shuangpin_flag = 0
-    let s:shuangpin_table = {}
-    let s:current_datafile = 0
-    let s:current_datafile_has_dot = 0
-    let s:ecdict = {}
-    let s:search_key_slash = 0
-    let s:unicode_prefix = 'u'
-    let s:sentence_with_space_input = 0
-    let s:no_internet_connection = 0
-    let s:keyboard_counts = 0
-    let s:keyboards = ['', '']
-    let s:lines_datafile = []
-    let s:alphabet_lines = []
-    " --------------------------------
 endfunction
 
 " ----------------------------------
@@ -465,6 +436,36 @@ function! s:vimim_i_setting_off()
     let &pumheight=s:saved_pumheight
     let &completeopt=s:completeopt
     let &completefunc=s:completefunc
+endfunction
+
+" ------------------------------------
+function! s:vimim_initialize_session()
+" ------------------------------------
+    sil!call s:vimim_start_omni()
+    sil!call s:vimim_super_reset()
+    " --------------------------------
+    let s:wubi_flag = 0
+    let s:erbi_flag = 0
+    let s:privates_flag = 0
+    let s:english_flag = 0
+    let s:www_executable = 0
+    let s:four_corner_flag = 0
+    let s:digit_keyboards = {}
+    let s:pinyin_flag = 0
+    let s:shuangpin_flag = 0
+    let s:shuangpin_table = {}
+    let s:current_datafile = 0
+    let s:current_datafile_has_dot = 0
+    let s:ecdict = {}
+    let s:search_key_slash = 0
+    let s:unicode_prefix = 'u'
+    let s:sentence_with_space_input = 0
+    let s:no_internet_connection = 0
+    let s:keyboard_counts = 0
+    let s:keyboards = ['', '']
+    let s:lines_datafile = []
+    let s:alphabet_lines = []
+    " --------------------------------
 endfunction
 
 " ----------------------------
