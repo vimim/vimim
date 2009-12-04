@@ -25,20 +25,19 @@ let egg += ["http://groups.google.com/group/vimim                        "]
 "            VimIM aims to complete the Vim as the greatest editor.
 " -----------------------------------------------------------
 "  Features: * "Plug & Play"
+"            * "Plug & Play": "Cloud Input"
 "            * "Plug & Play": "Cloud Input" with five ShuangPin
 "            * "Plug & Play": "Cloud Input" with WuBi
-"            * "Plug & Play": Pinyin and four_corner together
-"            * "Plug & Play": Pinyin and five_stroke together
+"            * "Plug & Play": "Pinyin and four_corner" together
+"            * "Plug & Play": "Pinyin and five_stroke" together
 "            * Support direct "UNICODE input" using integer or hex
 "            * Support direct "GBK input" and "Big5 input"
 "            * Support "Pin Yin", "Wu Bi", "Cang Jie", "4Corner", etc
-"            * Support five popular "Shuang Pin"
 "            * Support "modeless" whole sentence input
 "            * Support "Chinese search" using search key '/' or '?'.
 "            * Support "fuzzy search" and "wildcard search"
 "            * Support popup menu navigation using "vi key" (hjkl)
-"            * Support "non-stop-typing" for Wubi
-"            * Support "non-stop-typing" for 4Corner and Telegraph Code
+"            * Support "non-stop-typing" for Wubi, 4Corner & Telegraph
 "            * Support "Do It Yourself" input method defined by users
 "            * The "OneKey" can input Chinese without mode change.
 "            * The "static"  Chinese Input Mode smooths mixture input.
@@ -46,7 +45,7 @@ let egg += ["http://groups.google.com/group/vimim                        "]
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
-"   Install: (1) download a datafile of your choice from vimim.googlecode
+"   Install: (1) [optional] download a datafile from vimim.googlecode
 "            (2) drop vimim.vim and the datafile to the plugin directory
 " -----------------------------------------------------------
 " EasterEgg: (in Vim Insert Mode, type 4 chars:) vim<C-\>
@@ -57,7 +56,7 @@ let egg += ["http://groups.google.com/group/vimim                        "]
 " -----------------------------------------------------------
 " Usage (2): [in Insert Mode] "to type Chinese continuously":
 "            # hit <C-^> to toggle to Chinese Input Mode:
-"            # just type any valid keycode and enjoy
+"            # type any valid keycode and enjoy
 " -----------------------------------------------------------
 
 " ================================ }}}
@@ -77,7 +76,7 @@ let egg += ["http://groups.google.com/group/vimim                        "]
 " ---------------
 " "VimIM Options"
 " ---------------
-" Comprehensive usages of all options are from Demo URL above
+" Comprehensive usages of all options are from vimim.html
 
 "   VimIM "OneKey", without mode change
 "    - use OneKey to insert multi-byte candidates
@@ -512,7 +511,6 @@ function! s:reset_before_anything()
     let s:chinese_input_mode = 0
     let s:chinese_insert_flag = 0
     let s:sentence_match = 0
-    let s:smart_ctrl_h = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
     let s:smart_backspace = s:vimim_smart_backspace
     call s:vimim_reset_shuangpin()
@@ -530,6 +528,16 @@ function! s:reset_after_insert()
     let s:keyboard_wubi = ''
 endfunction
 
+" ------------------------------------
+function! g:vimim_reset_after_insert()
+" ------------------------------------
+    call s:reset_after_insert()
+    if s:wubi_flag < 0
+        call <SID>vimim_set_seamless()
+    endif
+    return ""
+endfunction
+
 " -------------------------
 function! s:vimim_i_unmap()
 " -------------------------
@@ -542,16 +550,6 @@ function! s:vimim_i_unmap()
         sil!exe 'iunmap '. _
     endfor
     " ------------------------------
-endfunction
-
-" ------------------------------------
-function! g:vimim_reset_after_insert()
-" ------------------------------------
-    call s:reset_after_insert()
-    if s:wubi_flag < 0
-        call <SID>vimim_set_seamless()
-    endif
-    return ""
 endfunction
 
 " ------------------------------------
@@ -1101,7 +1099,6 @@ function! <SID>vimim_label(n)
             let label = counts . yes
         endif
     else
-        let s:smart_ctrl_h = 0
         let s:seamless_positions = []
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -1365,7 +1362,6 @@ function! g:vimim_smart_space_dynamic()
     let space = ' '
     if pumvisible()
         let space = "\<C-Y>"
-        sil!call g:vimim_reset_after_insert()
         sil!exe 'sil!return "' . space . '"'
     else
         if s:wubi_flag < 0
@@ -1373,7 +1369,7 @@ function! g:vimim_smart_space_dynamic()
             let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
             sil!exe 'sil!return "' . space . '"'
         endif
-        sil!call s:vimim_resume_shuangpin()
+        call s:vimim_resume_shuangpin()
         let space = s:vimim_space_status()
         if empty(space)
             let space = ' '
@@ -1387,15 +1383,12 @@ function! g:vimim_smart_space_static()
 " ------------------------------------
     let space = ' '
     if pumvisible()
-        call g:vimim_reset_after_insert()
         let space = s:vimim_keyboard_block_by_block()
     else
-        let s:smart_ctrl_h = 0
+        call s:vimim_resume_shuangpin()
         let space = s:vimim_space_status()
         if empty(space)
             let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        else
-            sil!call s:vimim_resume_shuangpin()
         endif
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -2258,16 +2251,12 @@ endfunction
 function! <SID>vimim_smart_ctrl_h()
 " ---------------------------------
     " support intelligent sentence match for wozuixihuandeliulanqi
-    " first try maximum-match, after <C-H>, try minimum match
+    " if not found from maximum-match, do <C-H>, try minimum match
     let key = '\<BS>'
+    call g:vimim_reset_after_insert()
     if pumvisible()
-        let s:smart_ctrl_h += 1
-        if s:smart_ctrl_h == 1
-            let key = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        elseif s:smart_ctrl_h == 2
-            let s:smart_ctrl_h = 0
-            let key = "\<C-E>"
-        endif
+        let key = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        let s:vimim_smart_ctrl_h += 1
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2742,7 +2731,7 @@ function! s:vimim_sentence_whole_match(lines, keyboard)
         let x = 'jiandaolaoshiwenshenghao.<OneKey><Space>...'
         let max -= 1
         let position = max
-        if s:smart_ctrl_h > 0
+        if s:vimim_smart_ctrl_h > 1
             let x = 'wozuixihuandeliulanqi.<OneKey><Space>...<Ctrl-H>'
             let min += 1
             let position = min
@@ -2758,6 +2747,9 @@ function! s:vimim_sentence_whole_match(lines, keyboard)
         endif
     endwhile
     " -------------------------------------------
+    if s:vimim_smart_ctrl_h > 1
+        let s:vimim_smart_ctrl_h = 1
+    endif
     let blocks = []
     if !empty(block)
     \&& !empty(last_part)
@@ -2775,7 +2767,6 @@ function! s:vimim_keyboard_block_by_block()
     if s:chinese_input_mode > 1
         return key
     endif
-    let s:smart_ctrl_h = 0
     let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     return key
 endfunction
@@ -3893,7 +3884,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 1
     let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
-    let s:vimim_www_sogou = 14
+    let s:vimim_www_sogou = 0
     let s:vimim_static_input_style = 0
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
@@ -4596,8 +4587,7 @@ endfunction
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    if s:vimim_smart_ctrl_h > 0
-    \&& s:chinese_input_mode < 2
+    if s:vimim_smart_ctrl_h > 0 && s:chinese_input_mode < 2
         inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
     endif
     " ----------------------------------------------------------
