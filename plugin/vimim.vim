@@ -6,13 +6,13 @@
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 
-let egg  = ["http://code.google.com/p/vimim/issues/entry                 "]
-let egg += ["http://code.google.com/p/vimim/downloads/list               "]
-let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html            "]
-let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html        "]
-let egg += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim      "]
-let egg += ["http://vim.sourceforge.net/scripts/script.php?script_id=2506"]
-let egg += ["http://groups.google.com/group/vimim                        "]
+let egg  = [" http://code.google.com/p/vimim/issues/entry            "]
+let egg += [" http://code.google.com/p/vimim/downloads/list          "]
+let egg += [" http://vimim.googlecode.com/svn/vimim/vimim.html       "]
+let egg += [" http://vimim.googlecode.com/svn/vimim/vimim.vim.html   "]
+let egg += [" http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim "]
+let egg += [" http://vim.sf.net/scripts/script.php?script_id=2506    "]
+let egg += [" http://groups.google.com/group/vimim                   "]
 
 let VimIM = " ====  Introduction     ==== {{{"
 " ===========================================
