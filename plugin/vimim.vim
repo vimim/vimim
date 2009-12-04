@@ -460,7 +460,6 @@ function! s:vimim_initialize_session()
     let s:search_key_slash = 0
     let s:unicode_prefix = 'u'
     let s:sentence_with_space_input = 0
-    let s:no_internet_connection = 0
     let s:keyboard_counts = 0
     let s:keyboards = ['', '']
     let s:lines_datafile = []
@@ -508,6 +507,7 @@ endfunction
 " ---------------------------------
 function! s:reset_before_anything()
 " ---------------------------------
+    let s:no_internet_connection = 0
     let s:keyboard_leading_zero = 0
     let s:chinese_input_mode = 0
     let s:chinese_insert_flag = 0
@@ -3876,14 +3876,9 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_nature    = str2nr('hkfgpyjxlisswouhqyyp')
     let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
     let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
-    " -------------------------------- issue 23
-    let s:vimim_www_sogou = 1
-    let s:vimim_static_input_style = 1
-    let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
-    let s:vimim_www_sogou = 14
+    let s:vimim_www_sogou = 1
     let s:vimim_static_input_style = 0
-    let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
@@ -4354,7 +4349,9 @@ else
         endif
         if empty(len(results))
             let s:sentence_match = 0
-            let s:no_internet_connection = 1
+            if s:vimim_www_sogou > 2
+                let s:no_internet_connection = 1
+            endif
         else
             let s:sentence_match = 1
             let s:no_internet_connection = 0
