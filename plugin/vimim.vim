@@ -156,7 +156,6 @@ function! s:vimim_initialize_global()
     let   G = []
     call add(G, "g:vimim_apostrophe_in_pinyin")
     call add(G, "g:vimim_auto_spell")
-    call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
@@ -186,6 +185,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_auto_copy_clipboard")
+    call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_lcursor_color")
@@ -460,11 +460,14 @@ function! s:vimim_initialize_session()
     let s:search_key_slash = 0
     let s:unicode_prefix = 'u'
     let s:sentence_with_space_input = 0
-    let s:keyboard_counts = 0
-    let s:keyboards = ['','']
     let s:lines_datafile = []
     let s:alphabet_lines = []
     let s:www_executable = 0
+    let s:start_row_before = 0
+    let s:start_column_before = 1
+    let s:current_positions = [0,0,1,0]
+    let s:keyboards = ['','']
+    let s:keyboard_counts = 0
     " --------------------------------
 endfunction
 
@@ -505,9 +508,6 @@ endfunction
 " ---------------------------------
 function! s:reset_before_anything()
 " ---------------------------------
-    let s:start_row_before = 0
-    let s:start_column_before = 1
-    let s:current_positions = [0,0,1,0]
     let s:no_internet_connection = 0
     let s:keyboard_leading_zero = 0
     let s:chinese_input_mode = 0
@@ -744,6 +744,7 @@ function! s:vimim_initialize_encoding()
     endif
     if s:localization > 0
         let s:vimim_chinese_frequency = -1
+        let warning = 'performance hit if &encoding & datafile differs!'
     endif
 endfunction
 
@@ -2897,9 +2898,6 @@ function! s:vimim_save_datafile(lines)
     if filewritable(s:current_datafile)
         call writefile(a:lines, s:current_datafile)
     endif
-    if s:vimim_chinese_frequency > 0
-        let warning = 'performance hit if &encoding & datafile differs!'
-    endif
 endfunction
 
 " --------------------------------------
@@ -3244,9 +3242,6 @@ endfunction
 function! s:vimim_initialize_datafile_pinyin()
 " --------------------------------------------
     if s:pinyin_flag > 0
-        if empty(s:vimim_chinese_frequency)
-            let s:vimim_chinese_frequency = 1
-        endif
         if s:pinyin_flag < 2
             let s:vimim_fuzzy_search = 1
         endif
@@ -3902,9 +3897,6 @@ function! s:vimim_initialize_debug()
     " -------------------------------- debug
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = 0
-    " -------------------------------- issue 34
-    let s:vimim_shuangpin_abc =1
-    let s:vimim_static_input_style = 1
     " --------------------------------
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
@@ -3917,9 +3909,6 @@ function! s:vimim_initialize_debug()
     " --------------------------------
     let s:vimim_smart_backspace=1
     let s:vimim_smart_ctrl_h = 1
-    " --------------------------------
-    let s:vimim_first_candidate_fix=1
-    let s:vimim_chinese_frequency=0
     " ---------------------------------------
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
