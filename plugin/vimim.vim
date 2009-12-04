@@ -3344,6 +3344,46 @@ function! s:vimim_initialize_shuangpin()
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
 endfunction
 
+" ------------------------------------------------
+function! s:vimim_quanpin_from_shuangpin(keyboard)
+" ------------------------------------------------
+    let keyboard = a:keyboard
+    if s:pinyin_flag != 2
+        return keyboard
+    endif
+    if s:chinese_input_mode > 1
+        let s:shuangpin_flag = 1
+    else
+        if empty(s:shuangpin_in_quanpin)
+            let x = 'enter shuangpin for the first time'
+        elseif match(s:shuangpin_in_quanpin, keyboard) < 0
+            let s:shuangpin_flag = 0
+        else
+            let s:shuangpin_flag = 1
+            let s:shuangpin_in_quanpin = 0
+        endif
+    endif
+    if s:shuangpin_flag > 0
+        let keyboard2 = s:vimim_shuangpin_transform(keyboard)
+        if s:vimim_debug_flag > 0
+            let g:shuangpin_in=keyboard
+            let g:shuangpin_out=keyboard2
+        endif
+        if keyboard2 ==# keyboard
+            let s:shuangpin_keyboard = 0
+            let s:sentence_match = 0
+        else
+            let s:shuangpin_flag = 0
+            let s:sentence_match = 1
+            let s:shuangpin_keyboard = keyboard
+            let keyboard = keyboard2
+            let s:shuangpin_in_quanpin = a:keyboard
+            let s:keyboard_leading_zero = keyboard2
+        endif
+    endif
+    return keyboard
+endfunction
+
 " -----------------------------------------
 function! s:vimim_shuangpin_transform(keyb)
 " -----------------------------------------
@@ -3862,6 +3902,9 @@ function! s:vimim_initialize_debug()
     " -------------------------------- debug
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = 0
+    " -------------------------------- issue 34
+    let s:vimim_shuangpin_abc =1
+    let s:vimim_static_input_style = 1
     " --------------------------------
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
@@ -4036,7 +4079,6 @@ function! s:vimim_diy_keyboard(keyboard)
 " --------------------------------------
     let keyboard = a:keyboard
     if empty(s:diy_pinyin_4corner)
-    \|| empty(s:vimim_diy_asdfghjklo)
     \|| s:chinese_input_mode > 1
     \|| len(keyboard) < 2
     \|| keyboard !~ '[0-9a-z]'
@@ -4262,39 +4304,8 @@ else
     endif
 
     " support 5 major ShuangPin with various rules
-    " --------------------------------------------
-    if s:pinyin_flag == 2
-        if s:chinese_input_mode > 1
-            let s:shuangpin_flag = 1
-        else
-            if empty(s:shuangpin_in_quanpin)
-                let x = 'enter shuangpin for the first time'
-            elseif match(s:shuangpin_in_quanpin, keyboard) < 0
-                let s:shuangpin_flag = 0
-            else
-                let s:shuangpin_flag = 1
-                let s:shuangpin_in_quanpin = 0
-            endif
-        endif
-        if s:shuangpin_flag > 0
-            let keyboard2 = s:vimim_shuangpin_transform(keyboard)
-            if s:vimim_debug_flag > 0
-                let g:shuangpin_in=keyboard
-                let g:shuangpin_out=keyboard2
-            endif
-            if keyboard2 ==# keyboard
-                let s:shuangpin_keyboard = 0
-                let s:sentence_match = 0
-            else
-                let s:shuangpin_flag = 0
-                let s:sentence_match = 1
-                let s:shuangpin_keyboard = keyboard
-                let keyboard = keyboard2
-                let s:shuangpin_in_quanpin = a:keyboard
-                let s:keyboard_leading_zero = keyboard2
-            endif
-        endif
-    endif
+    " ----------------------------------------------------
+    let keyboard = s:vimim_quanpin_from_shuangpin(keyboard)
 
     " VimIM "modeless" whole sentence input: 【我有一個夢】
     " ----------------------------------------------------
@@ -4397,9 +4408,11 @@ else
         endif
      endif
 
-    " return nothing if no single datafile
-    " ------------------------------------
-    if empty(lines) && empty(s:private_matches)
+    " return nothing if no single datafile nor cloud
+    " ----------------------------------------------
+    if empty(lines)
+    \&& empty(s:private_matches)
+    \&& empty(s:www_executable)
         return
     endif
 
@@ -4461,9 +4474,13 @@ else
     " ----------------------------------------------
     let keyboards = []
     if match_start < 0
-        if s:pinyin_flag == 1 && s:four_corner_flag == 1
+        if s:pinyin_flag > 0 && s:four_corner_flag == 1
             let s:diy_pinyin_4corner = 1
             let keyboard2 = s:vimim_diy_keyboard2number(keyboard)
+            if s:vimim_debug_flag > 0
+                let g:pinyin_4corner_in=keyboard
+                let g:pinyin_4corner_out=keyboard2
+            endif
             let keyboards = s:vimim_diy_keyboard(keyboard2)
             let mixtures = s:vimim_diy_results(keyboards)
             if len(mixtures) > 0
