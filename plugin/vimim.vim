@@ -742,7 +742,7 @@ function! s:vimim_easter_egg_vimim()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Unicode          ==== {{{"
+let VimIM = " ====  Encoding_Unicode ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -904,7 +904,7 @@ function! CJK()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  GBK              ==== {{{"
+let VimIM = " ====  Encoding_GBK     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -1006,7 +1006,7 @@ function! s:vimim_internal_code(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  BIG5             ==== {{{"
+let VimIM = " ====  Encoding_BIG5    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -2292,7 +2292,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Popup_Menu       ==== {{{"
+let VimIM = " ====  Omni_Popup_Menu  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3123,8 +3123,9 @@ function! s:vimim_load_privates(reload_flag)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Four_Corner      ==== {{{"
+let VimIM = " ====  VimIM_4Corner    ==== {{{"
 " ===========================================
+call add(s:vimims, VimIM)
 
 " ---------------------------------------------
 function! s:vimim_initialize_datafile_4corner()
@@ -3266,7 +3267,7 @@ function! s:vimim_build_4corner_cache(chinese)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Pinyin_Special   ==== {{{"
+let VimIM = " ====  VimIM_Pinyin     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3338,8 +3339,9 @@ function! s:vimim_auto_spell_rule(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Shuang_Pin       ==== {{{"
+let VimIM = " ====  VimIM_Shuangpin  ==== {{{"
 " ===========================================
+call add(s:vimims, VimIM)
 
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
@@ -3647,7 +3649,7 @@ function! s:vimim_shuangpin_purple(rule)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Erbi_Special     ==== {{{"
+let VimIM = " ====  VimIM_Erbi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3662,7 +3664,7 @@ function! s:vimim_initialize_datafile_erbi()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Wubi_Special     ==== {{{"
+let VimIM = " ====  VimIM_Wubi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3738,7 +3740,7 @@ function! s:vimim_wubi_whole_match(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Sogou_Cloud      ==== {{{"
+let VimIM = " ====  VimIM_Cloud      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
