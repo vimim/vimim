@@ -1174,8 +1174,8 @@ function! g:vimim_p_paste()
         sil!exe 'sil!return "' . p . '"'
     else
         let words = s:popupmenu_matched_list
-        let current_positions = getpos(".")
         let line = line(".")
+        let current_positions = getpos(".")
         let current_positions[1] = line + len(words) - 1
         let current_positions[2] = 1
         call setpos(".", current_positions)
@@ -1365,10 +1365,6 @@ function! g:vimim_smart_space_dynamic()
             sil!exe 'sil!return "' . space . '"'
         endif
         call s:vimim_resume_shuangpin()
-        let space = s:vimim_space_status()
-        if empty(space)
-            let space = ' '
-        endif
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
@@ -1381,31 +1377,26 @@ function! g:vimim_smart_space_static()
         let space = s:vimim_keyboard_block_by_block()
     else
         call s:vimim_resume_shuangpin()
-        let space = s:vimim_space_status()
-        if empty(space)
+        let char_before = get(s:vimim_char_before(), 0)
+        if char_before =~# s:valid_key
             let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" ------------------------------
-function! s:vimim_space_status()
-" ------------------------------
-    let space = ""
+" -----------------------------
+function! s:vimim_char_before()
+" -----------------------------
     let current_positions = getpos(".")
     let start_column = current_positions[2]-1
     let current_line = getline(current_positions[1])
     let char_before = current_line[start_column-1]
     let char_before_before = current_line[start_column-2]
-    if (char_before_before =~ '\W' || char_before_before == '')
-    \&& has_key(s:punctuations, char_before)
-        let replacement = s:punctuations[char_before]
-        let space = "\<BS>" . replacement
-    elseif char_before !~# s:valid_key
-        let space = ' '
-    endif
-    return space
+    let chars= []
+    call add(chars, char_before)
+    call add(chars, char_before_before)
+    return chars
 endfunction
 
 " -----------------------------------
@@ -1650,10 +1641,7 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
     let value = a:english_punctuation
     if s:chinese_punctuation > 0
     \&& has_key(s:punctuations, value)
-        let current_positions = getpos(".")
-        let start_column = current_positions[2]-1
-        let current_line = getline(current_positions[1])
-        let char_before = current_line[start_column-1]
+        let char_before = get(s:vimim_char_before(), 0)
         let filter = '\w'     |" english_punctuation_after_english
         if empty(s:vimim_english_punctuation)
             let filter = '\d' |" english_punctuation_after_digit
@@ -1669,11 +1657,8 @@ endfunction
 function! s:vimim_smart_punctuation()
 " -----------------------------------
     let key = ''
-    let current_positions = getpos(".")
-    let start_column = current_positions[2]-1
-    let current_line = getline(current_positions[1])
-    let char_before = current_line[start_column-1]
-    let char_before_before = current_line[start_column-2]
+    let char_before = get(s:vimim_char_before(), 0)
+    let char_before_before = get(s:vimim_char_before(), 1)
     if char_before == '.' && char_before_before == '.'
         return key
     endif
