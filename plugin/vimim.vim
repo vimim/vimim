@@ -2266,23 +2266,19 @@ endfunction
 function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
     let key = '\<BS>'
-    if pumvisible()
-        let key = '\<C-E>'
-    else
-        let s:sentence_match = 0
-        call g:vimim_reset_after_insert()
-        if empty(s:smart_backspace)
-            let x = 'this is dummy backspace'
-        elseif s:smart_backspace == 1
-            if s:chinese_input_mode > 1
-                let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-            endif
-        elseif s:smart_backspace == 2
-            let char_before = getline(".")[col(".")-2]
-            if char_before =~# s:valid_key
-                let s:trash_code_flag = 1
-                let key = '\<C-X>\<C-U>\<BS>'
-            endif
+    let s:sentence_match = 0
+    call g:vimim_reset_after_insert()
+    if empty(s:smart_backspace)
+        let x = 'this is dummy backspace'
+    elseif s:smart_backspace == 1
+        if s:chinese_input_mode > 1
+            let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        endif
+    elseif s:smart_backspace == 2
+        let char_before = getline(".")[col(".")-2]
+        if char_before =~# s:valid_key
+            let s:trash_code_flag = 1
+            let key = '\<C-X>\<C-U>\<BS>'
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -3885,11 +3881,10 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 1
     let s:vimim_shuangpin_abc = 1
     " -------------------------------- debug
-    let s:vimim_www_sogou = 0
+    let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = 0
     let s:vimim_shuangpin_abc = str2nr('woybyigemg')
     " --------------------------------
-    let s:vimim_smart_ctrl_h = 1
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
     let s:pinyin_flag = 1
@@ -3898,6 +3893,9 @@ function! s:vimim_initialize_debug()
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
+    " --------------------------------
+    let s:vimim_smart_backspace=1
+    let s:vimim_smart_ctrl_h = 1
     " --------------------------------
     let s:vimim_first_candidate_fix=1
     let s:vimim_chinese_frequency=0
@@ -4593,8 +4591,8 @@ function! s:vimim_helper_mapping_on()
     endif
     " ----------------------------------------------------------
     if s:smart_backspace > 0
-        inoremap<silent><BS> <C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
-                            \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
+        inoremap<silent><BS> \<C-R>=pumvisible()?"\<lt>C-Y>":"\<lt>BS>"<CR>
+                             \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
     endif
     " ----------------------------------------------------------
 endfunction
