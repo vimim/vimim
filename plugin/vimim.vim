@@ -14,7 +14,7 @@ let egg += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim      "]
 let egg += ["http://vim.sourceforge.net/scripts/script.php?script_id=2506"]
 let egg += ["http://groups.google.com/group/vimim                        "]
 
-let VimIM = " ====   Introduction    ==== {{{"
+let VimIM = " ====  Introduction     ==== {{{"
 " ===========================================
 "       File: vimim.vim
 "     Author: vimim <vimim@googlegroups.com>
@@ -61,7 +61,7 @@ let VimIM = " ====   Introduction    ==== {{{"
 
 let s:vimims = [VimIM]
 " ======================================= }}}
-let VimIM = " ====   Instruction     ==== {{{"
+let VimIM = " ====  Instruction      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -110,7 +110,7 @@ call add(s:vimims, VimIM)
 " The 2nd and the 3rd column can be repeated without restriction.
 
 " ======================================= }}}
-let VimIM = " ====   Initialization  ==== {{{"
+let VimIM = " ====  Initialization   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 if exists("b:loaded_vimim") || &cp || v:version<700
@@ -411,7 +411,7 @@ function! s:vimim_set_valid_key(key)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Workflow        ==== {{{"
+let VimIM = " ====  Workflow         ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -575,7 +575,7 @@ function! s:vimim_helper_mapping_off()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Easter_Egg      ==== {{{"
+let VimIM = " ====  Easter_Egg       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -741,7 +741,7 @@ function! s:vimim_easter_egg_vimim()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Unicode         ==== {{{"
+let VimIM = " ====  Unicode          ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -903,7 +903,7 @@ function! CJK()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   GBK             ==== {{{"
+let VimIM = " ====  GBK              ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -1005,7 +1005,7 @@ function! s:vimim_internal_code(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   BIG5            ==== {{{"
+let VimIM = " ====  BIG5             ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -1040,7 +1040,7 @@ function! BIG5()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   OneKey          ==== {{{"
+let VimIM = " ====  OneKey           ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -1249,7 +1249,7 @@ function! s:vimim_clipboard_register(word)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Chinese_Mode    ==== {{{"
+let VimIM = " ====  Chinese_Mode     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -1436,7 +1436,7 @@ function! g:vimim_pattern_not_found()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Seamless        ==== {{{"
+let VimIM = " ====  Seamless         ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -1506,7 +1506,7 @@ function! s:vimim_reset_shuangpin()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Punctuations    ==== {{{"
+let VimIM = " ====  Punctuations     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -1696,7 +1696,7 @@ function! s:vimim_smart_punctuation()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Chinese_Number  ==== {{{"
+let VimIM = " ====  Chinese_Number   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -1851,7 +1851,7 @@ function! s:vimim_get_chinese_number(keyboards, i)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   English2Chinese ==== {{{"
+let VimIM = " ====  English2Chinese  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -1918,7 +1918,7 @@ function! s:vimim_initialize_e2c()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Chinese2Pinyin  ==== {{{"
+let VimIM = " ====  Chinese2Pinyin   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -2080,7 +2080,7 @@ function! s:vimim_make_one_entry(cache, chinese)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Smart_Keys      ==== {{{"
+let VimIM = " ====  Smart_Keys       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -2291,7 +2291,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Popup_Menu      ==== {{{"
+let VimIM = " ====  Popup_Menu       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -2639,7 +2639,7 @@ function! s:vimim_dummy_shuangpin(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Sentence_Match  ==== {{{"
+let VimIM = " ====  Sentence_Match   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -2804,7 +2804,7 @@ function! g:vimim_menu_select()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Datafile_Update ==== {{{"
+let VimIM = " ====  Datafile_Update  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3056,7 +3056,7 @@ function! s:vimim_insert_entry(lines, entries)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Private_Data    ==== {{{"
+let VimIM = " ====  Private_Data     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3265,7 +3265,7 @@ function! s:vimim_build_4corner_cache(chinese)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Pinyin_Special  ==== {{{"
+let VimIM = " ====  Pinyin_Special   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3646,7 +3646,7 @@ function! s:vimim_shuangpin_purple(rule)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Erbi_Special    ==== {{{"
+let VimIM = " ====  Erbi_Special     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3661,7 +3661,7 @@ function! s:vimim_initialize_datafile_erbi()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Wubi_Special    ==== {{{"
+let VimIM = " ====  Wubi_Special     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3737,7 +3737,7 @@ function! s:vimim_wubi_whole_match(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Sogou_Cloud     ==== {{{"
+let VimIM = " ====  Sogou_Cloud      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3902,7 +3902,7 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Do_It_Youself   ==== {{{"
+let VimIM = " ====  Do_It_Youself    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4181,7 +4181,7 @@ function! s:vimim_diy_results(keyboards)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Core_Engine     ==== {{{"
+let VimIM = " ====  Core_Engine      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4567,7 +4567,7 @@ endif
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Core_Drive      ==== {{{"
+let VimIM = " ====  Core_Drive       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
