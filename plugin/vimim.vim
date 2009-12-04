@@ -3,14 +3,15 @@
 " --------------------------------------------------
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
-" $Date$
-let $VimIM = " $Revision$ "
-
-" BUG:    http://code.google.com/p/vimim/issues/entry
-" GROUP:  http://groups.google.com/group/vimim
-" MANUAL: http://vimim.googlecode.com/svn/vimim/vimim.html
-" HTML:   http://vimim.googlecode.com/svn/vimim/vimim.vim.html
-" URL:    http://vim.sourceforge.net/scripts/script.php?script_id=2506
+let $VimIM = " $Date$"
+let $VimIM = " $Revision$"
+let egg  = ["http://code.google.com/p/vimim/issues/entry"]
+let egg += ["http://code.google.com/p/vimim/downloads/list"]
+let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
+let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
+let egg += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim"]
+let egg += ["http://vim.sourceforge.net/scripts/script.php?script_id=2506"]
+let egg += ["http://groups.google.com/group/vimim"]
 
 " ====  VimIM Introduction    ==== {{{
 " ====================================
@@ -112,6 +113,7 @@ if exists("b:loaded_vimim") || &cp || v:version<700
     finish
 endif
 let b:loaded_vimim=1
+let s:vimimhelp = egg
 let s:path=expand("<sfile>:p:h")."/"
 scriptencoding utf-8
 " --------------------------------
@@ -562,8 +564,7 @@ endfunction
 " --------------------------------
 function! s:vimim_easter_egg_vim()
 " --------------------------------
-    let eggs = []
-    let eggs += ["vi    文本編輯器"]
+    let eggs  = ["vi    文本編輯器"]
     let eggs += ["vim   最牛文本編輯器"]
     let eggs += ["vim   精力"]
     let eggs += ["vim   生氣"]
@@ -575,20 +576,13 @@ endfunction
 function! s:vimim_easter_egg_vimimhelp()
 " --------------------------------------
     let eggs = []
-    let option='http://code.google.com/p/vimim/issues/entry'
-    call add(eggs, "VimIM 错误报告：" . option)
-    let option='http://code.google.com/p/vimim/downloads/list'
-    call add(eggs, "VimIM 词库下载：" . option)
-    let option='http://vimim.googlecode.com/svn/vimim/vimim.html'
-    call add(eggs, "VimIM 最新主页：" . option)
-    let option='http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
-    call add(eggs, "VimIM 最新程式：" . option)
-    let option='http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
-    call add(eggs, "VimIM 试用版本：" . option)
-    let option='http://vim.sourceforge.net/scripts/script.php?script_id=2506'
-    call add(eggs, "VimIM 官方网址：" . option)
-    let option='http://groups.google.com/group/vimim'
-    call add(eggs, "VimIM 新闻论坛：" . option)
+    call add(eggs, "VimIM 错误报告：" . get(s:vimimhelp,0))
+    call add(eggs, "VimIM 词库下载：" . get(s:vimimhelp,1))
+    call add(eggs, "VimIM 最新主页：" . get(s:vimimhelp,2))
+    call add(eggs, "VimIM 最新程式：" . get(s:vimimhelp,3))
+    call add(eggs, "VimIM 试用版本：" . get(s:vimimhelp,4))
+    call add(eggs, "VimIM 官方网址：" . get(s:vimimhelp,5))
+    call add(eggs, "VimIM 新闻论坛：" . get(s:vimimhelp,6))
 " -------------------------------------
     let eggs = map(eggs, 'v:val . "　"')
     return s:vimim_popupmenu_list(eggs)
