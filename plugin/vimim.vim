@@ -268,6 +268,7 @@ function! s:vimim_initialize_datafile_primary()
     " --------------------------------------
     let input_methods = []
     call add(input_methods, "pinyin")
+    call add(input_methods, "pinyin_sogou")
     call add(input_methods, "pinyin_huge")
     call add(input_methods, "pinyin_fcitx")
     call add(input_methods, "pinyin_canton")
@@ -448,7 +449,6 @@ function! s:vimim_initialize_session()
     let s:erbi_flag = 0
     let s:privates_flag = 0
     let s:english_flag = 0
-    let s:www_executable = 0
     let s:four_corner_flag = 0
     let s:digit_keyboards = {}
     let s:pinyin_flag = 0
@@ -461,9 +461,10 @@ function! s:vimim_initialize_session()
     let s:unicode_prefix = 'u'
     let s:sentence_with_space_input = 0
     let s:keyboard_counts = 0
-    let s:keyboards = ['', '']
+    let s:keyboards = ['','']
     let s:lines_datafile = []
     let s:alphabet_lines = []
+    let s:www_executable = 0
     " --------------------------------
 endfunction
 
@@ -474,9 +475,6 @@ function! s:vimim_start_omni()
     let s:menu_from_cloud_flag = 0
     let s:insert_without_popup_flag = 0
     let s:pattern_not_found = 1
-    let s:start_row_before = 0
-    let s:start_column_before = 1
-    let s:current_positions = [0,0,1,0]
 endfunction
 
 " -----------------------------
@@ -507,6 +505,9 @@ endfunction
 " ---------------------------------
 function! s:reset_before_anything()
 " ---------------------------------
+    let s:start_row_before = 0
+    let s:start_column_before = 1
+    let s:current_positions = [0,0,1,0]
     let s:no_internet_connection = 0
     let s:keyboard_leading_zero = 0
     let s:chinese_input_mode = 0
@@ -1145,13 +1146,6 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'd'
             let hjkl  = '\<C-R>=g:vimim_d_delete_one_key_correction()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_d_delete_one_key_correction()\<CR>'
-        elseif a:key ==? 'g'
-            let s:menu_reverse = 0
-            if a:key ==# 'G'
-                let s:menu_reverse = 1
-            endif
-            let s:pageup_pagedown = 0
-            let hjkl = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -2330,14 +2324,13 @@ function! s:vimim_pageup_pagedown(matched_list)
         let page = 8
     endif
     if empty(s:pageup_pagedown) || len(matched_list) < page+2
-        let s:pageup_pagedown = 0
         return matched_list
     endif
     let shift = s:pageup_pagedown * page
     let length = len(matched_list)
     if length > page
         if shift >= length || shift*(-1) >= length
-            let s:pageup_pagedown = 0
+            let s:pageup_pagedown = ''
             return matched_list
         endif
         let partition = shift
@@ -3774,6 +3767,7 @@ function! s:vimim_get_cloud_keyboard(keyboard)
         let keyboard = strpart(keyboard, 0, len(keyboard)-1)
         let s:keyboard_leading_zero = keyboard
     elseif keyboard =~ '[.]'
+    \|| empty(s:vimim_www_sogou)
     \|| cloud_length < s:vimim_www_sogou
         return 0
     endif
@@ -3881,7 +3875,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
     let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
     " -------------------------------- debug
-    let s:vimim_www_sogou = 1
+    let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = 0
     " --------------------------------
     let s:vimim_custom_skin = 1
@@ -4374,6 +4368,20 @@ else
         return [value]
     endif
 
+    " datafile update: modify data in memory based on past usage
+    " ----------------------------------------------------------
+    if s:vimim_chinese_frequency < 0
+        let x = 'no chance to modify memory and disk'
+    else
+        let lines = s:vimim_new_order_in_memory(s:keyboards)
+        if empty(lines)
+            let lines = s:vimim_load_datafile(0)
+        else
+            call s:vimim_update_datafile(lines)
+            call s:vimim_save_input_history(lines)
+        endif
+    endif
+
     " support wubi non-stop input
     " ---------------------------
     if s:wubi_flag > 0
@@ -4388,20 +4396,6 @@ else
     " -------------------------------------
     let keyboard = s:vimim_apostrophe(keyboard)
     let s:keyboard_leading_zero = keyboard
-
-    " datafile update: modify data in memory based on past usage
-    " ----------------------------------------------------------
-    if s:vimim_chinese_frequency < 0
-        let x = 'no chance to modify memory and disk'
-    else
-        let lines = s:vimim_new_order_in_memory(s:keyboards)
-        if empty(lines)
-            let lines = s:vimim_load_datafile(0)
-        else
-            call s:vimim_update_datafile(lines)
-            call s:vimim_save_input_history(lines)
-        endif
-    endif
 
     " now only play with portion of datafile of interest
     " --------------------------------------------------
