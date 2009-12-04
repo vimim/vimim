@@ -238,6 +238,9 @@ function! s:vimim_finalize_session()
     if empty(s:vimim_www_sogou)
         let s:vimim_www_sogou = 888
     endif
+    if s:current_datafile =~# "pinyin_sogou"
+        let s:vimim_apostrophe_in_pinyin = 1
+    endif
 endfunction
 
 " ----------------------------------
