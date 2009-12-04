@@ -123,7 +123,7 @@ scriptencoding utf-8
 function! s:vimim_initialization()
 " --------------------------------
     call s:vimim_initialize_global()
-    call s:vimim_initialize_settings()
+    call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
     call s:vimim_initialize_debug()
     " -----------------------------------------
@@ -220,17 +220,6 @@ function! s:vimim_set_global_default(options, default)
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
-endfunction
-
-" -------------------------------------
-function! s:vimim_initialize_settings()
-" -------------------------------------
-    let s:saved_cpo=&cpo
-    let s:saved_lazyredraw=&lazyredraw
-    let s:saved_hlsearch=&hlsearch
-    let s:saved_pumheight=&pumheight
-    let s:completeopt=&completeopt
-    let s:completefunc=&completefunc
 endfunction
 
 " ------------------------------------
@@ -448,6 +437,37 @@ endfunction
 " ====  VimIM Workflow        ==== {{{
 " ====================================
 
+" --------------------------------------
+function! s:vimim_initialize_i_setting()
+" --------------------------------------
+    let s:saved_cpo=&cpo
+    let s:saved_lazyredraw=&lazyredraw
+    let s:saved_hlsearch=&hlsearch
+    let s:saved_pumheight=&pumheight
+    let s:completeopt=&completeopt
+    let s:completefunc=&completefunc
+endfunction
+
+" ------------------------------
+function! s:vimim_i_setting_on()
+" ------------------------------
+    let &l:completefunc='VimIM'
+    let &l:completeopt='menuone'
+    let &pumheight=9
+    set nolazyredraw
+    set hlsearch
+endfunction
+
+" -------------------------------
+function! s:vimim_i_setting_off()
+" -------------------------------
+    let &lazyredraw=s:saved_lazyredraw
+    let &hlsearch=s:saved_hlsearch
+    let &pumheight=s:saved_pumheight
+    let &completeopt=s:completeopt
+    let &completefunc=s:completefunc
+endfunction
+
 " ----------------------------
 function! s:vimim_start_omni()
 " ----------------------------
@@ -470,8 +490,7 @@ endfunction
 " -----------------------
 function! s:vimim_start()
 " -----------------------
-    let &l:completefunc='VimIM'
-    let &l:completeopt='menuone'
+    sil!call s:vimim_i_setting_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
@@ -480,8 +499,8 @@ endfunction
 " ----------------------
 function! s:vimim_stop()
 " ----------------------
-    sil!call s:vimim_super_reset()
     sil!call s:vimim_i_setting_off()
+    sil!call s:vimim_super_reset()
     sil!call s:vimim_helper_mapping_off()
     sil!call s:vimim_i_unmap()
 endfunction
@@ -509,16 +528,6 @@ function! s:reset_after_insert()
     let s:menu_reverse = 0
     let s:smart_enter = 0
     let s:keyboard_wubi = ''
-endfunction
-
-" -------------------------------
-function! s:vimim_i_setting_off()
-" -------------------------------
-    let &lazyredraw=s:saved_lazyredraw
-    let &hlsearch=s:saved_hlsearch
-    let &pumheight=s:saved_pumheight
-    let &completeopt=s:completeopt
-    let &completefunc=s:completefunc
 endfunction
 
 " -------------------------
@@ -1323,9 +1332,11 @@ function! s:vimim_stop_chinese_mode()
     if s:vimim_custom_lcursor_color > 0
         highlight lCursor NONE
     endif
+    " ------------------------------
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
         sil!exe ':%y +'
     endif
+    " ------------------------------
     sil!call s:vimim_stop()
     sil!call s:vimim_one_key_mapping_on()
     if exists('*Fixcp')
@@ -4209,12 +4220,6 @@ if a:start
     return start_column
 
 else
-
-    " initialize omni completion function
-    " -----------------------------------
-    let &pumheight=9
-    set nolazyredraw
-    set hlsearch
 
     " one-key-correction: (d)elete in popup || ChineseMode: <BS>
     " ----------------------------------------------------------
