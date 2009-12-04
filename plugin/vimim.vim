@@ -3122,7 +3122,7 @@ function! s:vimim_load_privates(reload_flag)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Four_Corner     ==== {{{"
+let VimIM = " ====  Four_Corner      ==== {{{"
 " ===========================================
 
 " ---------------------------------------------
@@ -3337,7 +3337,7 @@ function! s:vimim_auto_spell_rule(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====   Shuang_Pin      ==== {{{"
+let VimIM = " ====  Shuang_Pin       ==== {{{"
 " ===========================================
 
 " --------------------------------------
