@@ -3298,8 +3298,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_auto_spell(lines, keyboard)
 " -------------------------------------------
-    if empty(s:pinyin_flag)
-    \|| empty(s:vimim_auto_spell)
+    if empty(s:vimim_auto_spell)
     \|| empty(a:lines)
     \|| empty(a:keyboard)
         return -1
@@ -3837,16 +3836,15 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
     let keyboard = a:keyboard
     if empty(s:vimim_www_sogou)
     \|| empty(s:www_executable)
-    \|| empty(s:pinyin_flag)
     \|| empty(keyboard)
         return []
     endif
     let sogou = 'http://web.pinyin.sogou.com/web_ime/get_ajax/'
-    " support apostrophe as delimiter to remove ambiguity.
+    " support apostrophe as delimiter to remove ambiguity
     " (1) examples: piao => pi'ao 皮袄  xian => xi'an 西安
     " (2) let s:pinyin_flag = "[0-9a-z'.]"
     " (3) add double quotes between keyboard
-    " (4) QA: xi'anmeimeidepi'aosuifengpiaoyang 西安妹妹的皮袄随风飘扬
+    " (4) test: xi'anmeimeidepi'aosuifengpiaoyang
     let input = sogou . '"' . keyboard . '".key'
     let output = 0
     " --------------------------------------------------------------
@@ -3894,18 +3892,14 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
             call add(menu, new_item)
         endif
     endfor
-    if empty(menu)
-        return []
-    else
-        " ----------------------------
-        " ['woyouyigemeng 我有一个梦']
-        " ----------------------------
-        return menu
-    endif
+    " ----------------------------
+    " ['woyouyigemeng 我有一个梦']
+    " ----------------------------
+    return menu
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Do_It_Youself    ==== {{{"
+let VimIM = " ====  VimIM_DIY        ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
