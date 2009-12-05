@@ -184,6 +184,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_www_sogou")
+    call add(G, "g:vimim_insert_without_popup")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -1751,10 +1752,10 @@ function! s:vimim_date_time(keyboard)
         return []
     endif
     let time = 0
-    if a:keyboard ==? 'itoday'
+    if a:keyboard ==? ',today'
         " 2009 year February 22 day Wednesday
         let time = strftime("%Y year %B %d day %A")
-    elseif a:keyboard ==? 'inow'
+    elseif a:keyboard ==? ',now'
         " Sunday AM 8 hour 8 minute 8 second
         let time=strftime("%A %p %I hour %M minute %S second")
     endif
@@ -1777,12 +1778,8 @@ function! s:vimim_chinese_number(keyboard)
     if s:chinese_input_mode > 1
         return []
     endif
-    if empty(s:pinyin_flag)
-        return []
-    elseif s:pinyin_flag==2 && empty(s:vimim_shuangpin_abc)
-        return []
-    endif
     let keyboard = a:keyboard
+    let keyboard = substitute(keyboard,',','i','g')
     let ii = strpart(keyboard,0,2)
     if ii ==# 'ii'
         let keyboard = 'I' . strpart(keyboard,2)
@@ -2809,7 +2806,8 @@ function! g:vimim_menu_select()
     let select_not_insert = ''
     if pumvisible()
         let select_not_insert = '\<C-P>\<Down>'
-        if s:insert_without_popup_flag > 0
+        if s:vimim_insert_without_popup > 0
+        \&& s:insert_without_popup_flag > 0
             let s:insert_without_popup_flag = 0
             let select_not_insert = '\<C-Y>'
         endif
@@ -4333,7 +4331,16 @@ else
 
     " magic imode 'i': English number => Chinese number
     " -------------------------------------------------
-    if a:keyboard =~# '^i'
+    if keyboard =~# '^i'
+        if s:pinyin_flag > 0
+        \|| (s:pinyin_flag==2 && empty(s:vimim_shuangpin_abc))
+            let keyboard = substitute(keyboard,'i',',','g')
+        endif
+    endif
+
+    " universal imode using English comma
+    " -----------------------------------
+    if keyboard =~# '^,'
         let itoday_inow = s:vimim_date_time(keyboard)
         if len(itoday_inow) > 0
             return itoday_inow
