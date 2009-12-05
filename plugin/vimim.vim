@@ -204,7 +204,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_save_new_entry")
     call add(G, "g:vimim_seamless_english_input")
     call add(G, "g:vimim_smart_backspace")
-    call add(G, "g:vimim_smart_punctuations")
+    call add(G, "g:vimim_onekey_triple_play")
     call add(G, "g:vimim_wubi_non_stop")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
@@ -509,7 +509,6 @@ function! s:vimim_stop()
 " ----------------------
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_helper_mapping_off()
     sil!call s:vimim_i_unmap()
 endfunction
 
@@ -519,11 +518,12 @@ function! s:reset_before_anything()
     let s:no_internet_connection = 0
     let s:keyboard_leading_zero = 0
     let s:chinese_input_mode = 0
-    let s:chinese_insert_flag = 0
+    let s:chinese_mode_toggle_flag = 0
     let s:sentence_match = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
     let s:smart_backspace = s:vimim_smart_backspace
     call s:vimim_reset_shuangpin()
+    let s:smart_space = 0
 endfunction
 
 " ------------------------------
@@ -554,24 +554,11 @@ function! s:vimim_i_unmap()
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['<CR>', '<Space>'])
+    call extend(unmap_list, ['<CR>', '<BS>', '<C-H>', '<Space>'])
     " ------------------------------
     for _ in unmap_list
         sil!exe 'iunmap '. _
     endfor
-    " ------------------------------
-endfunction
-
-" ------------------------------------
-function! s:vimim_helper_mapping_off()
-" ------------------------------------
-    if hasmapto('<C-H>', 'i')
-        iunmap <C-H>
-    endif
-    " ------------------------------
-    if hasmapto('<BS>', 'i')
-        iunmap <BS>
-    endif
     " ------------------------------
 endfunction
 
@@ -1049,46 +1036,87 @@ call add(s:vimims, VimIM)
 function! <SID>vimim_start_onekey()
 " ---------------------------------
     let s:chinese_input_mode = 0
-    let s:punctuations['&']='※'
-    let s:punctuations['"']="“”"
-    let s:punctuations['\']='、'
     sil!call s:vimim_start()
-    sil!call s:vimim_resume_shuangpin()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
-    let onekey = ""
-    if pumvisible()
-        let onekey = s:vimim_keyboard_block_by_block()
+    if empty(s:vimim_onekey_triple_play)
+        let x = 'never mess up with <Space> key'
     else
-        inoremap<silent><Space> <C-R>=g:vimim_smart_space_onekey()<CR>
-        if empty(s:vimim_smart_punctuations)
-            let x = 'who cares about chinese punctuation'
-        else
-            let onekey = s:vimim_smart_punctuation()
-            if empty(onekey)
-                let onekey = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-            endif
-        endif
+        inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
+                         \<C-R>=g:vimim_reset_after_insert()<CR>
+        inoremap<silent><CR>  <C-R>=<SID>vimim_smart_enter()<CR>
+                            \<C-R>=<SID>vimim_set_seamless()<CR>
     endif
+    let onekey = s:vimim_tab_onekey()
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" ------------------------------------
-function! g:vimim_smart_space_onekey()
-" ------------------------------------
-    let space = ' '
+" ----------------------------
+function! s:vimim_tab_onekey()
+" ----------------------------
+    let onekey = "\t"
+    return s:vimim_onekey(onekey)
+endfunction
+
+" ----------------------------------
+function! <SID>:vimim_space_onekey()
+" ----------------------------------
+    let onekey = " "
+    return s:vimim_onekey(onekey)
+endfunction
+
+" ------------------------------
+function! s:vimim_onekey(onekey)
+" ------------------------------
+    let space = ''
+    " -----------------------------------------------
+    " <Space> multiple-play in OneKey Mode:
+    "   (1) after English (valid keys) => trigger menu
+    "   (2) after omni popup menu      => insert Chinese
+    "   (3) after English punctuation  => Chinese punctuation
+    "   (4) after Chinese              => reset
+    "   (5) after Pattern Not Found    => reset
+    "   (6) after Space                => reset
+    " -----------------------------------------------
     if pumvisible()
+        let s:smart_space = 0
         let space = s:vimim_keyboard_block_by_block()
-        sil!call g:vimim_reset_after_insert()
         sil!exe 'sil!return "' . space . '"'
-    else
-        sil!call s:vimim_stop()
-        if s:insert_without_popup_flag > 0
-            let s:insert_without_popup_flag = 0
-            let space = ""
-        endif
     endif
-    return space
+    " ---------------------------------------------------
+    let char_before = getline(".")[col(".")-2]
+    let char_before_before = getline(".")[col(".")-3]
+    " ---------------------------------------------------
+    if char_before =~# "[,.']" && char_before_before =~# "[,.']"
+        call s:vimim_stop()
+        return a:onekey
+    endif
+    " ---------------------------------------------------
+    if (char_before_before !~# '\w' || empty(char_before_before))
+    \&& has_key(s:punctuations, char_before)
+        let replacement = s:punctuations[char_before]
+        let space = "\<BS>" . replacement
+        sil!exe 'sil!return "' . space . '"'
+    elseif char_before !~# s:valid_key
+        call s:vimim_stop()
+        return a:onekey
+    endif
+    " ---------------------------------------------------
+    if empty(s:smart_space)
+        let s:smart_space += 1
+        call s:vimim_resume_shuangpin()
+        let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+    else
+        call s:vimim_stop()
+        return a:onekey
+    endif
+    " ---------------------------------------------------
+    if s:insert_without_popup_flag > 0
+        let s:insert_without_popup_flag = 0
+        let space = ""
+    endif
+    " ---------------------------------------------------
+    sil!exe 'sil!return "' . space . '"'
 endfunction
 
 " --------------------------
@@ -1166,16 +1194,16 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<C-R>=g:vimim_p_paste()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_p_paste()\<CR>'
         elseif a:key == 'd'
-            let hjkl  = '\<C-R>=g:vimim_d_delete_one_key_correction()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_d_delete_one_key_correction()\<CR>'
+            let hjkl  = '\<C-R>=g:vimim_d_one_key_correction()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_d_one_key_correction()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" ---------------------------------------------
-function! g:vimim_d_delete_one_key_correction()
-" ---------------------------------------------
+" --------------------------------------
+function! g:vimim_d_one_key_correction()
+" --------------------------------------
     let d  = 'd'
     if pumvisible()
         sil!call g:vimim_reset_after_insert()
@@ -1211,7 +1239,6 @@ function! g:vimim_space_key_for_yes()
     let space = ''
     if pumvisible()
         let space = s:vimim_keyboard_block_by_block()
-        sil!call g:vimim_reset_after_insert()
     else
         let space = ' '
     endif
@@ -1241,8 +1268,6 @@ function! s:vimim_clipboard_register(word)
     if len(a:word) > 0
         if s:vimim_auto_copy_clipboard>0 && has("gui_running")
             let @+ = a:word
-        else
-            let @0 = a:word
         endif
     endif
     sil!call s:vimim_stop()
@@ -1258,7 +1283,7 @@ call add(s:vimims, VimIM)
 function! <SID>vimim_toggle()
 " ---------------------------
     set nopaste
-    if s:chinese_insert_flag < 1
+    if s:chinese_mode_toggle_flag < 1
         sil!call s:vimim_start_chinese_mode()
     else
         sil!call s:vimim_stop_chinese_mode()
@@ -1299,33 +1324,36 @@ function! s:vimim_start_chinese_mode()
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_start()
     sil!call <SID>vimim_set_seamless()
-    " ---------------------------------------------------------
     if empty(s:vimim_static_input_style)
-    " ------------------------------ chinese mode dynamic
+       " ----------------------------------
+       " ----  chinese mode dynamic
+       " ----------------------------------
         let s:chinese_input_mode = 2
-        " --------------------------
-        inoremap<silent><Space> <C-R>=g:vimim_smart_space_dynamic()<CR>
+        " ----------------------------------
+        inoremap<silent><Space> <C-R>=g:vimim_space_dynamic()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
-        let valid_keys = copy(s:valid_keys)
-        call remove(valid_keys, match(valid_keys,'[.]'))
-        for char in valid_keys
+        " ----------------------------------
+        for char in s:valid_keys
+            if char !~# "[,.']"
             sil!exe 'inoremap<silent> ' . char . '
             \ <C-R>=<SID>vimim_dynamic_End()<CR>'. char .
             \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
         endfor
     else
-        " -------------------------- chinese mode static
+        " ----------------------------------
+        " ----  chinese mode static
+        " ----------------------------------
         let s:chinese_input_mode = 1
-        " --------------------------
+        " ----------------------------------
         sil!call s:vimim_alphabet_auto_select()
-        inoremap<silent><Space> <C-R>=g:vimim_smart_space_static()<CR>
+        inoremap<silent><Space> <C-R>=g:vimim_space_static()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
     endif
     " ---------------------------------------------------------
     set cpo&vim
     let &l:iminsert=1
-    let s:chinese_insert_flag = 1
-    " ------------------------------
+    let s:chinese_mode_toggle_flag = 1
+    " ----------------------------------
     if s:vimim_custom_lcursor_color > 0
         highlight! lCursor guifg=bg guibg=green
     endif
@@ -1351,11 +1379,12 @@ function! s:vimim_stop_chinese_mode()
         sil!exe ':%y +'
     endif
     " ------------------------------
-    sil!call s:vimim_stop()
-    sil!call s:vimim_one_key_mapping_on()
     if exists('*Fixcp')
         sil!call FixAcp()
     endif
+    " ------------------------------
+    sil!call s:vimim_stop()
+    sil!call s:vimim_one_key_mapping_on()
 endfunction
 
 " --------------------------------
@@ -1373,9 +1402,9 @@ function! <SID>vimim_dynamic_End()
     sil!exe 'sil!return "' . end . '"'
 endfunction
 
-" -------------------------------------
-function! g:vimim_smart_space_dynamic()
-" -------------------------------------
+" -------------------------------
+function! g:vimim_space_dynamic()
+" -------------------------------
     let space = ' '
     if pumvisible()
         let space = "\<C-Y>"
@@ -1391,34 +1420,20 @@ function! g:vimim_smart_space_dynamic()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" ------------------------------------
-function! g:vimim_smart_space_static()
-" ------------------------------------
+" ------------------------------
+function! g:vimim_space_static()
+" ------------------------------
     let space = ' '
     if pumvisible()
         let space = s:vimim_keyboard_block_by_block()
     else
-        call s:vimim_resume_shuangpin()
-        let char_before = get(s:vimim_char_before(), 0)
+        let char_before = getline(".")[col(".")-2]
         if char_before =~# s:valid_key
+            call s:vimim_resume_shuangpin()
             let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . space . '"'
-endfunction
-
-" -----------------------------
-function! s:vimim_char_before()
-" -----------------------------
-    let current_positions = getpos(".")
-    let start_column = current_positions[2]-1
-    let current_line = getline(current_positions[1])
-    let char_before = current_line[start_column-1]
-    let char_before_before = current_line[start_column-2]
-    let chars= []
-    call add(chars, char_before)
-    call add(chars, char_before_before)
-    return chars
 endfunction
 
 " -----------------------------------
@@ -1542,12 +1557,11 @@ function! s:vimim_initialize_punctuations()
     let s:punctuations['.']='。'
     let s:punctuations['?']='？'
     if empty(s:vimim_latex_suite)
-        let s:punctuations["'"]="“”"
         let s:punctuations['`']='“”'
     endif
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
-        if has_key(s:punctuations, char) && char !~# "[,.]"
+        if has_key(s:punctuations, char) && char !~# "[,.']"
             unlet s:punctuations[char]
         endif
     endfor
@@ -1569,9 +1583,9 @@ function! s:vimim_punctuation_on()
 " --------------------------------
     let punctuations = s:punctuations
     if s:chinese_input_mode > 0
-        let s:punctuations['&']='、'
-        unlet punctuations['"']
         unlet punctuations['\']
+        unlet punctuations['"']
+        unlet punctuations["'"]
     endif
     if s:erbi_flag > 0
 	unlet punctuations[',']
@@ -1627,6 +1641,7 @@ function! <SID>vimim_punctuations_navigation(key)
         if a:key == ";"
             let hjkl  = '\<C-E>\<C-X>\<C-U>\<Down>'
             let hjkl .= '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         elseif a:key == "["
             let hjkl  = '\<C-R>=g:vimim_left_bracket()\<CR>'
         elseif a:key == "]"
@@ -1665,7 +1680,7 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
     let value = a:english_punctuation
     if s:chinese_punctuation > 0
     \&& has_key(s:punctuations, value)
-        let char_before = get(s:vimim_char_before(), 0)
+        let char_before = getline(".")[col(".")-2]
         let filter = '\w'     |" english_punctuation_after_english
         if empty(s:vimim_english_punctuation)
             let filter = '\d' |" english_punctuation_after_digit
@@ -1675,25 +1690,6 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
         endif
     endif
     return value
-endfunction
-
-" -----------------------------------
-function! s:vimim_smart_punctuation()
-" -----------------------------------
-    let key = ''
-    let char_before = get(s:vimim_char_before(), 0)
-    let char_before_before = get(s:vimim_char_before(), 1)
-    if char_before == '.' && char_before_before == '.'
-        return key
-    endif
-    if (char_before_before =~ '\W' || char_before_before == '')
-    \&& has_key(s:punctuations, char_before)
-        let replacement = s:punctuations[char_before]
-        let key = "\<BS>" . replacement
-    elseif char_before !~# s:valid_key
-        let key = ' '
-    endif
-    return key
 endfunction
 
 " ======================================= }}}
@@ -1942,8 +1938,8 @@ function! g:vimim_chinese2pinyin()
         for item in current_line_list
             let chinese = substitute(item,'\s\+\|\w\|\n','','g')
             let chinese_characters = split(chinese,'\zs')
-            let chinese_char = join(chinese_characters, ' ')
-            let cache_pinyin = s:vimim_build_reverse_cache(chinese_char, 1)
+            let glyph = join(chinese_characters, ' ')
+            let cache_pinyin = s:vimim_build_reverse_cache(glyph, 1)
             let items = s:vimim_make_one_entry(cache_pinyin, chinese)
             let result = join(items,'')
             let new_line .= space . result
@@ -1957,7 +1953,7 @@ function! s:vimim_reverse_lookup(chinese)
 " ---------------------------------------
     let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
     let chinese_characters = split(chinese,'\zs')
-    let chinese_char = join(chinese_characters, '   ')
+    let glyph = join(chinese_characters, '   ')
     " ------------------------------------------------
     let result_unicode = ''
     let items = []
@@ -1967,14 +1963,14 @@ function! s:vimim_reverse_lookup(chinese)
             call add(items, unicode)
         endfor
         let unicode = join(items, ' ')
-        let result_unicode = unicode. "\n" . chinese_char
+        let result_unicode = unicode. "\n" . glyph
     endif
     " ------------------------------------------------
     let result_4corner = ''
     if s:four_corner_flag > 0
         let cache_4corner = s:vimim_build_4corner_cache(chinese)
         let items = s:vimim_make_one_entry(cache_4corner, chinese)
-        let result_4corner = join(items,' ')."\n".chinese_char
+        let result_4corner = join(items,' ') . "\n" . glyph
     endif
     " ------------------------------------------------
     let cache_pinyin = s:vimim_build_reverse_cache(chinese, 0)
@@ -2239,14 +2235,31 @@ function! <SID>vimim_smart_enter()
         let key = "\<C-E>"
     else
         let char_before = getline(".")[col(".")-2]
-        if char_before =~# s:valid_key
+        " -----------------------------------------------
+        " <Enter> double play in Chinese Mode:
+        "   (1) after English (valid keys)    => Seamless
+        "   (2) after Chinese or double Enter => Enter
+        " -----------------------------------------------
+        if char_before =~# "[,.']"
+            let s:smart_enter = 0
+        elseif char_before =~# s:valid_key
             let s:smart_enter += 1
         endif
-        if char_before =~# "[,.]"
-            let s:smart_enter = 0
+        " -----------------------------------------------
+        " <Enter> triple play in OneKey Mode:
+        "   (1) after English (valid keys)    => Seamless
+        "   (2) after Chinese or double Enter => Enter
+        "   (3) after English punctuation     => Space
+        " -----------------------------------------------
+        if empty(s:chinese_input_mode)
+            if has_key(s:punctuations, char_before)
+                let s:smart_enter += 1
+                let key = ' '
+            endif
         endif
+        " -----------------------------------------------
         if s:smart_enter == 1
-            let x = "first time to press <Enter>"
+            let x = "do seamless for the first time <Enter>"
         else
             let s:smart_enter = 0
             let key = "\<CR>"
@@ -3816,6 +3829,11 @@ function! s:vimim_get_cloud_keyboard(keyboard)
     if s:pinyin_flag == 2
         let cloud_length = len(s:shuangpin_keyboard)
     endif
+    " -----------------------------------------------
+    " <Comma> double play in OneKey Mode:
+    "   (1) after English (valid keys)    => Cloud at will
+    "   (2) before number                 => magic imode
+    " -----------------------------------------------
     let comma = strpart(keyboard, len(keyboard)-1)
     if comma ==# ',' && empty(s:chinese_input_mode)
         " always do cloud when keyboard ends with comma
@@ -3939,12 +3957,12 @@ function! s:vimim_initialize_debug()
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " --------------------------------
-    let s:vimim_smart_backspace=1
+    let s:vimim_smart_backspace = 1
     let s:vimim_smart_ctrl_h = 1
     " ---------------------------------------
-    let s:vimim_english_punctuation=0
-    let s:vimim_chinese_punctuation=1
-    let s:vimim_punctuation_navigation=1
+    let s:vimim_english_punctuation = 0
+    let s:vimim_chinese_punctuation = 1
+    let s:vimim_punctuation_navigation = 1
     let s:vimim_unicode_lookup = 0
     let s:vimim_dummy_shuangpin = 0
     " ---------------------------------------
