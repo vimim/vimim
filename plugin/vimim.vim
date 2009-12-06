@@ -185,6 +185,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_insert_without_popup")
+    call add(G, "g:vimim_chinese_number_imode")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -197,7 +198,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_dynamic_mode_autocmd")
     call add(G, "g:vimim_first_candidate_fix")
     call add(G, "g:vimim_internal_code_input")
-    call add(G, "g:vimim_chinese_number_imode")
     call add(G, "g:vimim_match_dot_after_dot")
     call add(G, "g:vimim_menu_label")
     call add(G, "g:vimim_one_key")
@@ -3286,11 +3286,13 @@ call add(s:vimims, VimIM)
 " --------------------------------------------
 function! s:vimim_initialize_datafile_pinyin()
 " --------------------------------------------
-    if s:pinyin_flag > 0
-        if s:pinyin_flag < 2
-            let s:vimim_fuzzy_search = 1
-        endif
-        let s:vimim_match_word_after_word = 1
+    if empty(s:pinyin_flag)
+        return
+    endif
+    let s:vimim_match_word_after_word = 1
+    if s:pinyin_flag < 2
+        let s:vimim_fuzzy_search = 1
+        let s:vimim_chinese_number_imode = 1
     endif
 endfunction
 
@@ -3372,6 +3374,7 @@ function! s:vimim_initialize_shuangpin()
     let rules = s:vimim_shuangpin_generic()
     if s:vimim_shuangpin_abc > 0
         let rules = s:vimim_shuangpin_abc(rules)
+        let s:vimim_chinese_number_imode = 1
     elseif s:vimim_shuangpin_microsoft > 0
         let rules = s:vimim_shuangpin_microsoft(rules)
     elseif s:vimim_shuangpin_nature > 0
@@ -4334,10 +4337,7 @@ else
     " magic imode 'i': English number => Chinese number
     " -------------------------------------------------
     if keyboard =~# '^i' && s:vimim_chinese_number_imode > 0
-        if s:pinyin_flag > 0
-        \|| (s:pinyin_flag==2 && empty(s:vimim_shuangpin_abc))
-            let keyboard = substitute(keyboard,'i',',','g')
-        endif
+        let keyboard = substitute(keyboard,'i',',','g')
     endif
 
     " universal imode using English comma
