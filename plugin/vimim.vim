@@ -160,7 +160,6 @@ function! s:vimim_initialize_global()
     let   G = []
     call add(G, "g:vimim_apostrophe_in_pinyin")
     call add(G, "g:vimim_auto_spell")
-    call add(G, "g:vimim_chinese_number_imode")
     call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
@@ -169,6 +168,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_english_in_datafile")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_fuzzy_search")
+    call add(G, "g:vimim_imode_pinyin")
+    call add(G, "g:vimim_imode_comma")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_match_word_after_word")
     call add(G, "g:vimim_privates_txt")
@@ -1038,6 +1039,7 @@ call add(s:vimims, VimIM)
 function! <SID>vimim_start_onekey()
 " ---------------------------------
     let s:chinese_input_mode = 0
+    let s:smart_space = -1
     sil!call s:vimim_start()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
@@ -1622,7 +1624,7 @@ function! s:vimim_punctuation_on()
         sil!exe 'inoremap<silent><expr> '._.'
         \ <SID>vimim_punctuation_mapping("'._.'")'
     endfor
-    if s:vimim_punctuation_navigation < 2
+    if s:vimim_punctuation_navigation > 0
         sil!call s:vimim_punctuation_navigation_on()
     endif
 endfunction
@@ -1725,7 +1727,8 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_quantifiers()
 " ----------------------------------------
     let s:quantifiers = {}
-    if empty(s:pinyin_flag)
+    if s:vimim_imode_comma < 1
+    \|| s:vimim_imode_pinyin < 1
         return
     endif
     let s:quantifiers['1'] = '一壹㈠①⒈⑴甲'
@@ -1791,19 +1794,24 @@ function! s:vimim_date_time(keyboard)
     return [time]
 endfunction
 
-" ----------------------------------------
-function! s:vimim_chinese_number(keyboard)
-" ----------------------------------------
+" ----------------------------------------------
+function! s:vimim_imode_number(keyboard, prefix)
+" ----------------------------------------------
     if s:chinese_input_mode > 1
         return []
     endif
-    let keyboard = substitute(a:keyboard,',','i','g')
+    let keyboard = a:keyboard
+    if a:prefix ==# ','
+        let keyboard = substitute(keyboard,',','i','g')
+    endif
+    " ------------------------------------
     let ii = strpart(keyboard,0,2)
     if ii ==# 'ii'
         let keyboard = 'I' . strpart(keyboard,2)
     endif
     let ii_keyboard = keyboard
     let keyboard = strpart(keyboard,1)
+    " ------------------------------------
     if keyboard !~ '^\d\+' && keyboard !~# '^[ds]'
     \&& len(substitute(keyboard,'\d','','')) > 1
         return []
@@ -1835,6 +1843,9 @@ function! s:vimim_chinese_number(keyboard)
     endif
     if len(numbers) == 1
         let s:insert_without_popup_flag = 1
+    endif
+    if len(numbers) > 0
+        call map(numbers, 'a:keyboard ." ". v:val')
     endif
     return numbers
 endfunction
@@ -3310,8 +3321,8 @@ function! s:vimim_initialize_datafile_pinyin()
         let s:vimim_fuzzy_search = 1
     endif
     let s:vimim_match_word_after_word = 1
-    if empty(s:vimim_chinese_number_imode)
-        let s:vimim_chinese_number_imode = 1
+    if empty(s:vimim_imode_pinyin)
+        let s:vimim_imode_pinyin = 1
     endif
 endfunction
 
@@ -3392,11 +3403,11 @@ function! s:vimim_initialize_shuangpin()
     endif
     let s:pinyin_flag = 2
     let s:shuangpin_flag = 1
-    let s:vimim_chinese_number_imode = -1
+    let s:vimim_imode_pinyin = -1
     let rules = s:vimim_shuangpin_generic()
     if s:vimim_shuangpin_abc > 0
         let rules = s:vimim_shuangpin_abc(rules)
-        let s:vimim_chinese_number_imode = 1
+        let s:vimim_imode_pinyin = 1
     elseif s:vimim_shuangpin_microsoft > 0
         let rules = s:vimim_shuangpin_microsoft(rules)
     elseif s:vimim_shuangpin_nature > 0
@@ -3693,7 +3704,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_datafile_erbi()
 " ------------------------------------------
     if s:erbi_flag > 0
-        let s:vimim_punctuation_navigation = 0
+        let s:vimim_punctuation_navigation = -1
         let s:search_key_slash = -1
         let s:wubi_flag = 1
     endif
@@ -3834,7 +3845,7 @@ function! s:vimim_initialize_www_sogou()
         return
     endif
     " step 3: make it ready for "cloud".
-    " ----------------------------------
+    " ---------------------------------- xxx
     if empty(s:current_datafile)
         let s:pinyin_flag = 1
     endif
@@ -3979,14 +3990,14 @@ function! s:vimim_initialize_debug()
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown
-    let s:vimim_chinese_number_imode = -1
+    let s:vimim_imode_pinyin = -1
+    let s:vimim_imode_comma = 1
     " --------------------------------
     let s:vimim_smart_backspace = 1
     let s:vimim_smart_ctrl_h = 1
     " ---------------------------------------
     let s:vimim_english_punctuation = 0
     let s:vimim_chinese_punctuation = 1
-    let s:vimim_punctuation_navigation = 1
     let s:vimim_unicode_lookup = 0
     let s:vimim_dummy_shuangpin = 0
     " ---------------------------------------
@@ -4357,24 +4368,26 @@ else
 
     " magic imode 'i': English number => Chinese number
     " -------------------------------------------------
-    if keyboard =~# '^i' && s:vimim_chinese_number_imode > 0
-        let keyboard = substitute(keyboard,'i',',','g')
+    if s:vimim_imode_pinyin > 0
+    \&& keyboard =~# '^i'
+        let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
+        if len(chinese_numbers) > 0
+            return s:vimim_popupmenu_list(chinese_numbers)
+        endif
     endif
 
-    " universal imode using English comma
-    " -----------------------------------
-    if keyboard =~# '^,'
-        if empty(s:chinese_input_mode)
-        \|| s:vimim_chinese_number_imode > 0
-            let itoday_inow = s:vimim_date_time(keyboard)
-            if len(itoday_inow) > 0
-                return itoday_inow
-            endif
-            let chinese_numbers = s:vimim_chinese_number(keyboard)
-            if len(chinese_numbers) > 0
-                call map(chinese_numbers, 'keyboard ." ". v:val')
-                return s:vimim_popupmenu_list(chinese_numbers)
-            endif
+    " universal imode ',': English number => Chinese number
+    " -----------------------------------------------------
+    if s:vimim_imode_comma > 0
+    \&& empty(s:chinese_input_mode) 
+    \&& keyboard =~# '^,'
+        let itoday_inow = s:vimim_date_time(keyboard)
+        if len(itoday_inow) > 0
+            return itoday_inow
+        endif
+        let chinese_numbers = s:vimim_imode_number(keyboard, ',')
+        if len(chinese_numbers) > 0
+            return s:vimim_popupmenu_list(chinese_numbers)
         endif
     endif
 
