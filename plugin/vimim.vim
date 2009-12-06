@@ -322,8 +322,7 @@ function! s:vimim_initialize_datafile_primary()
         elseif datafile =~# 'wubi'
             let s:wubi_flag = 1
         elseif datafile =~# 'pinyin'
-            let s:pinyin_flag = 1
-            let s:vimim_chinese_number_imode = 1
+            let s:pinyin_flag = 3
         elseif datafile =~# 'english'
             let s:english_flag = 1
         elseif datafile =~# '4corner'
@@ -1704,10 +1703,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_quantifiers()
 " ----------------------------------------
     let s:quantifiers = {}
-    if empty(s:pinyin_flag)
-        return
-    endif
-    if s:pinyin_flag == 2 && empty(s:vimim_shuangpin_abc)
+    if s:pinyin_flag < 3
         return
     endif
     let s:quantifiers['1'] = '一壹㈠①⒈⑴甲'
@@ -2004,7 +2000,7 @@ function! s:vimim_build_reverse_cache(chinese, one2one)
         endif
         let last_line_index = len(lines) - 1
         let s:alphabet_lines = lines[first_line_index : last_line_index]
-        if s:pinyin_flag > 0 |" one to many relationship
+        if s:pinyin_flag > 1 |" one to many relationship
             let pinyin_with_tone = '^\a\+\d\s\+'
             call filter(s:alphabet_lines, 'v:val =~ pinyin_with_tone')
         endif
@@ -2039,7 +2035,7 @@ function! s:vimim_build_reverse_cache(chinese, one2one)
             continue
         endif
         let menu = remove(words, 0)
-        if s:pinyin_flag > 0
+        if s:pinyin_flag > 1
             let menu = substitute(menu,'\d','','g')
         endif
         for char in words
@@ -2538,7 +2534,7 @@ function! s:vimim_exact_match(lines, keyboard, start)
         if len(keyboard) < quick_limit
         \|| list_length > words_limit*2
             let do_search_on_word = 1
-        elseif s:pinyin_flag > 0
+        elseif s:pinyin_flag > 1
             let chinese = join(a:lines[match_start : result],'')
             let chinese = substitute(chinese,'\p\+','','g')
             if len(chinese) > words_limit*4
@@ -2625,7 +2621,7 @@ endfunction
 function! s:vimim_dummy_shuangpin(keyboard)
 " ---------------------------------------------
     if empty(s:vimim_dummy_shuangpin)
-    \|| empty(s:pinyin_flag)
+    \|| s:pinyin_flag < 3
     \|| len(a:keyboard) < 4
         return 0
     endif
@@ -3148,7 +3144,7 @@ function! s:vimim_initialize_datafile_4corner()
     let s:four_corner_lines = []
     let s:four_corner_unicode_flag = 0
     let s:unicode_menu_display_flag = 0
-    if s:vimim_debug_flag > 0 || empty(s:pinyin_flag)
+    if s:vimim_debug_flag > 0 || s:pinyin_flag < 2
         return
     endif
     let datafile = s:path . "vimim.4corner.txt"
@@ -3287,12 +3283,15 @@ call add(s:vimims, VimIM)
 " --------------------------------------------
 function! s:vimim_initialize_datafile_pinyin()
 " --------------------------------------------
-    if empty(s:pinyin_flag)
+    if s:pinyin_flag < 2
         return
     endif
     let s:vimim_match_word_after_word = 1
-    if s:pinyin_flag < 2
+    if s:pinyin_flag == 3
         let s:vimim_fuzzy_search = 1
+        if empty(s:vimim_chinese_number_imode)
+            let s:vimim_chinese_number_imode = 1
+        endif
     endif
 endfunction
 
@@ -3359,7 +3358,7 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if empty(s:pinyin_flag)
+    if s:pinyin_flag < 2
         return
     endif
     if empty(s:vimim_shuangpin_abc)
@@ -3371,7 +3370,7 @@ function! s:vimim_initialize_shuangpin()
     endif
     let s:pinyin_flag = 2
     let s:shuangpin_flag = 1
-    let s:vimim_chinese_number_imode = 0
+    let s:vimim_chinese_number_imode = -1
     let rules = s:vimim_shuangpin_generic()
     if s:vimim_shuangpin_abc > 0
         let rules = s:vimim_shuangpin_abc(rules)
@@ -3763,8 +3762,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_plug_n_play_www_sogou()
 " ---------------------------------------
     endif
-    if empty(s:current_datafile)
-    \|| s:privates_flag == 2
+    if empty(s:current_datafile) || s:privates_flag == 2
         if (executable('wget') || executable('curl'))
             let s:vimim_www_sogou = 1
         endif
@@ -3815,7 +3813,7 @@ function! s:vimim_initialize_www_sogou()
     endif
     " step 3: make it ready for "cloud".
     " ----------------------------------
-    if empty(s:pinyin_flag)
+    if empty(s:current_datafile)
         let s:pinyin_flag = 1
     endif
 endfunction
@@ -3953,12 +3951,13 @@ function! s:vimim_initialize_debug()
     " --------------------------------
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
-    let s:pinyin_flag = 1
+    let s:pinyin_flag = 3
     let s:english_flag = 1
     let s:four_corner_flag = 1
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown
+    let s:vimim_chinese_number_imode = -1
     " --------------------------------
     let s:vimim_smart_backspace = 1
     let s:vimim_smart_ctrl_h = 1
@@ -4675,3 +4674,4 @@ endfunction
 silent!call s:vimim_initialization()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
+
