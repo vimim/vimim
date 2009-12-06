@@ -160,6 +160,7 @@ function! s:vimim_initialize_global()
     let   G = []
     call add(G, "g:vimim_apostrophe_in_pinyin")
     call add(G, "g:vimim_auto_spell")
+    call add(G, "g:vimim_chinese_number_imode")
     call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
@@ -185,7 +186,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_insert_without_popup")
-    call add(G, "g:vimim_chinese_number_imode")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -323,6 +323,7 @@ function! s:vimim_initialize_datafile_primary()
             let s:wubi_flag = 1
         elseif datafile =~# 'pinyin'
             let s:pinyin_flag = 1
+            let s:vimim_chinese_number_imode = 1
         elseif datafile =~# 'english'
             let s:english_flag = 1
         elseif datafile =~# '4corner'
@@ -3292,7 +3293,6 @@ function! s:vimim_initialize_datafile_pinyin()
     let s:vimim_match_word_after_word = 1
     if s:pinyin_flag < 2
         let s:vimim_fuzzy_search = 1
-        let s:vimim_chinese_number_imode = 1
     endif
 endfunction
 
@@ -3371,6 +3371,7 @@ function! s:vimim_initialize_shuangpin()
     endif
     let s:pinyin_flag = 2
     let s:shuangpin_flag = 1
+    let s:vimim_chinese_number_imode = 0
     let rules = s:vimim_shuangpin_generic()
     if s:vimim_shuangpin_abc > 0
         let rules = s:vimim_shuangpin_abc(rules)
@@ -3958,7 +3959,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown
-    let s:vimim_chinese_number_imode = 0
     " --------------------------------
     let s:vimim_smart_backspace = 1
     let s:vimim_smart_ctrl_h = 1
