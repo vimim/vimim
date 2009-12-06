@@ -322,7 +322,7 @@ function! s:vimim_initialize_datafile_primary()
         elseif datafile =~# 'wubi'
             let s:wubi_flag = 1
         elseif datafile =~# 'pinyin'
-            let s:pinyin_flag = 3
+            let s:pinyin_flag = 1
         elseif datafile =~# 'english'
             let s:english_flag = 1
         elseif datafile =~# '4corner'
@@ -1725,7 +1725,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_quantifiers()
 " ----------------------------------------
     let s:quantifiers = {}
-    if s:pinyin_flag < 3
+    if empty(s:pinyin_flag)
         return
     endif
     let s:quantifiers['1'] = '一壹㈠①⒈⑴甲'
@@ -2020,7 +2020,7 @@ function! s:vimim_build_reverse_cache(chinese, one2one)
         endif
         let last_line_index = len(lines) - 1
         let s:alphabet_lines = lines[first_line_index : last_line_index]
-        if s:pinyin_flag > 1 |" one to many relationship
+        if s:pinyin_flag > 0 |" one to many relationship
             let pinyin_with_tone = '^\a\+\d\s\+'
             call filter(s:alphabet_lines, 'v:val =~ pinyin_with_tone')
         endif
@@ -2055,7 +2055,7 @@ function! s:vimim_build_reverse_cache(chinese, one2one)
             continue
         endif
         let menu = remove(words, 0)
-        if s:pinyin_flag > 1
+        if s:pinyin_flag > 0
             let menu = substitute(menu,'\d','','g')
         endif
         for char in words
@@ -2554,7 +2554,7 @@ function! s:vimim_exact_match(lines, keyboard, start)
         if len(keyboard) < quick_limit
         \|| list_length > words_limit*2
             let do_search_on_word = 1
-        elseif s:pinyin_flag > 1
+        elseif s:pinyin_flag > 0
             let chinese = join(a:lines[match_start : result],'')
             let chinese = substitute(chinese,'\p\+','','g')
             if len(chinese) > words_limit*4
@@ -2637,11 +2637,11 @@ function! s:vimim_filter(results, keyboard, length)
     return results
 endfunction
 
-" ---------------------------------------------
+" -----------------------------------------
 function! s:vimim_dummy_shuangpin(keyboard)
-" ---------------------------------------------
+" -----------------------------------------
     if empty(s:vimim_dummy_shuangpin)
-    \|| s:pinyin_flag < 3
+    \|| s:pinyin_flag != 1
     \|| len(a:keyboard) < 4
         return 0
     endif
@@ -3164,7 +3164,7 @@ function! s:vimim_initialize_datafile_4corner()
     let s:four_corner_lines = []
     let s:four_corner_unicode_flag = 0
     let s:unicode_menu_display_flag = 0
-    if s:vimim_debug_flag > 0 || s:pinyin_flag < 2
+    if s:vimim_debug_flag > 0 || empty(s:pinyin_flag)
         return
     endif
     let datafile = s:path . "vimim.4corner.txt"
@@ -3303,15 +3303,15 @@ call add(s:vimims, VimIM)
 " --------------------------------------------
 function! s:vimim_initialize_datafile_pinyin()
 " --------------------------------------------
-    if s:pinyin_flag < 2
+    if empty(s:pinyin_flag)
         return
     endif
-    let s:vimim_match_word_after_word = 1
-    if s:pinyin_flag == 3
+    if s:pinyin_flag != 2
         let s:vimim_fuzzy_search = 1
-        if empty(s:vimim_chinese_number_imode)
-            let s:vimim_chinese_number_imode = 1
-        endif
+    endif
+    let s:vimim_match_word_after_word = 1
+    if empty(s:vimim_chinese_number_imode)
+        let s:vimim_chinese_number_imode = 1
     endif
 endfunction
 
@@ -3319,10 +3319,12 @@ endfunction
 function! s:vimim_apostrophe(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
-    if s:pinyin_flag > 0
-    \&& empty(s:vimim_apostrophe_in_pinyin)
-        " if apostrophe is in the pinyin datafile
-        " ---------------------------------------
+    if empty(s:pinyin_flag)
+        return keyboard
+    endif
+    if empty(s:vimim_apostrophe_in_pinyin)
+        let x = 'apostrophe is not in the pinyin datafile'
+    else
         let keyboard = substitute(keyboard,"'",'','g')
     endif
     return keyboard
@@ -3378,7 +3380,7 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if s:pinyin_flag < 2
+    if empty(s:pinyin_flag)
         return
     endif
     if empty(s:vimim_shuangpin_abc)
@@ -3971,7 +3973,7 @@ function! s:vimim_initialize_debug()
     " --------------------------------
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
-    let s:pinyin_flag = 3
+    let s:pinyin_flag = 1
     let s:english_flag = 1
     let s:four_corner_flag = 1
     let s:vimim_diy_asdfghjklo = 1
