@@ -1043,12 +1043,16 @@ function! <SID>vimim_start_onekey()
     sil!call s:vimim_punctuation_navigation_on()
     if empty(s:vimim_onekey_triple_play)
         let x = 'never mess up with <Space> key'
-    else
-        inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
-                         \<C-R>=g:vimim_reset_after_insert()<CR>
-        inoremap<silent><CR>  <C-R>=<SID>vimim_smart_enter()<CR>
-                            \<C-R>=<SID>vimim_set_seamless()<CR>
+        let onekey = g:vimim_space_static()
+        sil!exe 'sil!return "' . onekey . '"'
     endif
+    " ----------------------------------------------------------
+    inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
+                         \<C-R>=g:vimim_reset_after_insert()<CR>
+    " ----------------------------------------------------------
+    inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
+                       \<C-R>=<SID>vimim_set_seamless()<CR>
+    " ----------------------------------------------------------
     let onekey = s:vimim_tab_onekey()
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -1086,10 +1090,16 @@ function! s:vimim_onekey(onekey)
         sil!exe 'sil!return "' . space . '"'
     endif
     " ---------------------------------------------------
+    if s:insert_without_popup_flag > 0
+        let s:insert_without_popup_flag = 0
+        let space = ""
+    endif
+    " ---------------------------------------------------
     let char_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     " ---------------------------------------------------
-    if char_before =~# "[,.']" && char_before_before =~# "[,.']"
+    if char_before =~# "[,.']"
+    \&& char_before_before =~# "[,.']"
         call s:vimim_stop()
         return a:onekey
     endif
@@ -1099,26 +1109,38 @@ function! s:vimim_onekey(onekey)
         let replacement = s:punctuations[char_before]
         let space = "\<BS>" . replacement
         sil!exe 'sil!return "' . space . '"'
-    elseif char_before !~# s:valid_key
+    endif
+    " ---------------------------------------------------
+    if char_before !~# s:valid_key
         call s:vimim_stop()
         return a:onekey
     endif
     " ---------------------------------------------------
-    if empty(s:smart_space)
+""  let msg = 'Pattern not found'
+""  try
+""      call s:vimim_resume_shuangpin()
+""      let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+""    " let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+""    " exe '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+""    " sil!exe 'sil!return "' . space . '"'
+""    " sil!exe 'sil!call "' . space . '"'
+""      sil!exe 'sil!return "' . "\<C-X>\<C-U>" . '"'
+""  catch /.*/
+""      return a:onekey
+""  finally
+""      echo 'Oops'
+""  endtry
+    " --------------------------------------------------- xxx
+    if s:smart_space < 1
         let s:smart_space += 1
         call s:vimim_resume_shuangpin()
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-    else
-        call s:vimim_stop()
-        return a:onekey
+        sil!exe 'sil!return "' . space . '"'
     endif
     " ---------------------------------------------------
-    if s:insert_without_popup_flag > 0
-        let s:insert_without_popup_flag = 0
-        let space = ""
-    endif
+    call s:vimim_stop()
+    return a:onekey
     " ---------------------------------------------------
-    sil!exe 'sil!return "' . space . '"'
 endfunction
 
 " --------------------------
@@ -1750,10 +1772,10 @@ function! s:vimim_date_time(keyboard)
         return []
     endif
     let time = 0
-    if a:keyboard ==? ',today'
-        " 2009 year February 22 day Wednesday
+    if a:keyboard ==# ',today'
+        " 2009 year February 11 day Wednesday
         let time = strftime("%Y year %B %d day %A")
-    elseif a:keyboard ==? ',now'
+    elseif a:keyboard ==# ',now'
         " Sunday AM 8 hour 8 minute 8 second
         let time=strftime("%A %p %I hour %M minute %S second")
     endif
@@ -1762,8 +1784,7 @@ function! s:vimim_date_time(keyboard)
     endif
     let time = s:vimim_translator(time)
     let keyboards = split(time, '\ze')
-    let i = strpart(a:keyboard,0,1)
-    let time = s:vimim_get_chinese_number(keyboards, i)
+    let time = s:vimim_get_chinese_number(keyboards, 'i')
     if len(time) > 0
         let s:insert_without_popup_flag = 1
     endif
@@ -1776,8 +1797,7 @@ function! s:vimim_chinese_number(keyboard)
     if s:chinese_input_mode > 1
         return []
     endif
-    let keyboard = a:keyboard
-    let keyboard = substitute(keyboard,',','i','g')
+    let keyboard = substitute(a:keyboard,',','i','g')
     let ii = strpart(keyboard,0,2)
     if ii ==# 'ii'
         let keyboard = 'I' . strpart(keyboard,2)
@@ -4342,14 +4362,17 @@ else
     " universal imode using English comma
     " -----------------------------------
     if keyboard =~# '^,'
-        let itoday_inow = s:vimim_date_time(keyboard)
-        if len(itoday_inow) > 0
-            return itoday_inow
-        endif
-        let chinese_numbers = s:vimim_chinese_number(keyboard)
-        if len(chinese_numbers) > 0
-            call map(chinese_numbers, 'keyboard ." ". v:val')
-            return s:vimim_popupmenu_list(chinese_numbers)
+        if empty(s:chinese_input_mode)
+        \|| s:vimim_chinese_number_imode > 0
+            let itoday_inow = s:vimim_date_time(keyboard)
+            if len(itoday_inow) > 0
+                return itoday_inow
+            endif
+            let chinese_numbers = s:vimim_chinese_number(keyboard)
+            if len(chinese_numbers) > 0
+                call map(chinese_numbers, 'keyboard ." ". v:val')
+                return s:vimim_popupmenu_list(chinese_numbers)
+            endif
         endif
     endif
 
@@ -4674,4 +4697,3 @@ endfunction
 silent!call s:vimim_initialization()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
-
