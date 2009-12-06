@@ -197,6 +197,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_dynamic_mode_autocmd")
     call add(G, "g:vimim_first_candidate_fix")
     call add(G, "g:vimim_internal_code_input")
+    call add(G, "g:vimim_chinese_number_imode")
     call add(G, "g:vimim_match_dot_after_dot")
     call add(G, "g:vimim_menu_label")
     call add(G, "g:vimim_one_key")
@@ -3953,7 +3954,8 @@ function! s:vimim_initialize_debug()
     let s:four_corner_flag = 1
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
-    let s:vimim_reverse_pageup_pagedown = 1
+    let s:vimim_reverse_pageup_pagedown
+    let s:vimim_chinese_number_imode = 0
     " --------------------------------
     let s:vimim_smart_backspace = 1
     let s:vimim_smart_ctrl_h = 1
@@ -4331,7 +4333,7 @@ else
 
     " magic imode 'i': English number => Chinese number
     " -------------------------------------------------
-    if keyboard =~# '^i'
+    if keyboard =~# '^i' && s:vimim_chinese_number_imode > 0
         if s:pinyin_flag > 0
         \|| (s:pinyin_flag==2 && empty(s:vimim_shuangpin_abc))
             let keyboard = substitute(keyboard,'i',',','g')
