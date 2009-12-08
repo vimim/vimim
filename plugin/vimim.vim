@@ -533,7 +533,7 @@ function! s:reset_after_insert()
     let s:keyboard_wubi = ''
     let s:keyboard_shuangpin = 0
     let s:keyboard_leading_zero = 0
-    let s:trash_code_flag = 0
+    let s:one_key_correction = 0
     let s:menu_reverse = 0
     let s:smart_enter = 0
     let s:smart_space = 0
@@ -1207,7 +1207,7 @@ function! g:vimim_d_one_key_correction()
 " --------------------------------------
     let d  = 'd'
     if pumvisible()
-        let s:trash_code_flag = 1
+        let s:one_key_correction = 1
         let d = '\<C-E>'
     else
         let d = '\<C-X>\<C-U>\<BS>'
@@ -2273,7 +2273,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
     elseif s:smart_backspace == 2
         let char_before = getline(".")[col(".")-2]
         if char_before =~# s:valid_key
-            let s:trash_code_flag = 1
+            let s:one_key_correction = 1
             let key = '\<C-X>\<C-U>\<BS>'
         endif
     endif
@@ -3963,7 +3963,7 @@ function! s:vimim_initialize_debug()
     " -------------------------------- debug
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1
-    " -------------------------------- xxx
+    " --------------------------------
     let s:vimim_sexy_onekey = 0
     let s:vimim_imode_comma = 1
     let s:vimim_imode_pinyin = -1
@@ -4289,18 +4289,16 @@ if a:start
 
 else
 
-    " one-key-correction
-    " ------------------
-    if s:trash_code_flag > 0
-        let d = 'delete in omni popup menu'
-        let BS = 'delete in Chinese Mode'
-        let s:trash_code_flag = 0
-        return [" "]
-    endif
-
     if s:vimim_debug_flag > 0
         let g:keyboard_s=s:keyboard_leading_zero
         let g:keyboard_a=a:keyboard
+    endif
+
+    if s:one_key_correction > 0
+        let d = 'delete in omni popup menu'
+        let BS = 'delete in Chinese Mode'
+        let s:one_key_correction = 0
+        return [" "]
     endif
 
     let keyboard = a:keyboard
@@ -4310,13 +4308,13 @@ else
         let keyboard = s:keyboard_leading_zero
     endif
 
-    " ingnore non-sense keyboard characters
-    " -------------------------------------
+    " ignore non-sense keyboard inputs
+    " --------------------------------
     if empty(keyboard)
     \|| keyboard !~# s:valid_key
         return
     endif
-    " -------------------------------------
+    " --------------------------------
     if empty(s:vimim_sexy_onekey)
     \&& len(keyboard) == 1
     \&& keyboard !~# '\w'
@@ -4507,8 +4505,8 @@ else
         return
     endif
 
-    " do wildcard search: explicit fuzzy search
-    " -----------------------------------------
+    " [wildcard search] explicit fuzzy search
+    " ----------------------------------------
     if s:vimim_wildcard_search > 0
         let results = s:vimim_wildcard_search(keyboard, lines)
         if len(results) > 0
@@ -4534,8 +4532,8 @@ else
         let match_start = s:vimim_auto_spell(lines, keyboard)
     endif
 
-    " assume it is hex unicode if no match for 4 corner
-    " -------------------------------------------------
+    " [unicode] assume hex unicode if no match for 4 corner
+    " -----------------------------------------------------
     if match_start < 0
         let results = s:vimim_hex_unicode(keyboard)
         if len(results) > 0
@@ -4558,8 +4556,8 @@ else
         endif
     endif
 
-    " try "do it yourself" couple IM: pinyin+4corner
-    " ----------------------------------------------
+    " [DIY] "Do It Yourself" couple IM: pinyin+4corner
+    " ------------------------------------------------
     let keyboards = []
     if match_start < 0
         if s:pinyin_flag > 0 && s:four_corner_flag == 1
@@ -4606,8 +4604,8 @@ else
         endif
     endif
 
-    " do fuzzy search: implicit wildcard search
-    " -----------------------------------------
+    " [fuzzy search] implicit wildcard search
+    " ---------------------------------------
     if match_start < 0 && s:vimim_fuzzy_search > 0
         let results = s:vimim_fuzzy_match(lines, keyboard)
         if len(results) > 0
@@ -4616,15 +4614,15 @@ else
         endif
     endif
 
-    " only return matches from private datafile
-    " -----------------------------------------
+    " [private] only return matches from private datafile
+    " ---------------------------------------------------
     if match_start < 0 && len(s:private_matches) > 0
         let results = s:vimim_pair_list([])
         return s:vimim_popupmenu_list(results)
     endif
 
-    " support seamless English input for Chinese Input Mode
-    " -----------------------------------------------------
+    " [seamless] support seamless English input
+    " -----------------------------------------
     if match_start < 0
         if empty(s:chinese_input_mode)
             let x = 'no auto seamless for OneKey'
