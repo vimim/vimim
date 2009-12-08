@@ -1713,7 +1713,7 @@ function! s:vimim_initialize_quantifiers()
 " ----------------------------------------
     let s:quantifiers = {}
     if s:vimim_imode_comma < 1
-    \|| s:vimim_imode_pinyin < 1
+    \&& s:vimim_imode_pinyin < 1
         return
     endif
     let s:quantifiers['1'] = '一壹㈠①⒈⑴甲'
@@ -4054,6 +4054,8 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = -1
     " -------------------------------- xxx
     let s:vimim_sexy_onekey = 0
+    let s:vimim_imode_comma = 1
+    let s:vimim_imode_pinyin = -1
     let s:vimim_custom_skin = 1
     let s:vimim_tab_for_one_key = 1
     let s:pinyin_flag = 1
@@ -4062,8 +4064,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_diy_asdfghjklo = 1
     let s:vimim_wildcard_search = 1
     let s:vimim_reverse_pageup_pagedown
-    let s:vimim_imode_pinyin = -1
-    let s:vimim_imode_comma = 1
     " --------------------------------
     let s:vimim_smart_backspace = 1
     let s:vimim_smart_ctrl_h = 1
@@ -4412,6 +4412,18 @@ else
         return 
     endif
 
+    " [eggs] hunt classic easter egg ... vim<C-\>
+    " -------------------------------------------
+    if keyboard ==# "vim"
+        return s:vimim_easter_egg_vim()
+    elseif keyboard ==# "vimim"
+        return s:vimim_easter_egg_vimim()
+    elseif keyboard ==# "vimims"
+        return s:vimim_easter_egg_vimims()
+    elseif keyboard ==# "vimimhelp"
+        return s:vimim_easter_egg_vimimhelp()
+    endif
+
     " use cached list when pageup/pagedown is used
     " --------------------------------------------
     if empty(s:chinese_input_mode)
@@ -4423,18 +4435,6 @@ else
         else
             return s:vimim_popupmenu_list(s:popupmenu_matched_list)
         endif
-    endif
-
-    " [eggs] hunt classic easter egg ... vim<C-\>
-    " -------------------------------------------
-    if keyboard ==# "vim"
-        return s:vimim_easter_egg_vim()
-    elseif keyboard ==# "vimim"
-        return s:vimim_easter_egg_vimim()
-    elseif keyboard ==# "vimims"
-        return s:vimim_easter_egg_vimims()
-    elseif keyboard ==# "vimimhelp"
-        return s:vimim_easter_egg_vimimhelp()
     endif
 
     " support direct internal code (unicode/gb/big5) input
