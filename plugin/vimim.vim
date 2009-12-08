@@ -463,7 +463,6 @@ function! s:vimim_initialize_session()
     let s:four_corner_flag = 0
     let s:digit_keyboards = {}
     let s:pinyin_flag = 0
-    let s:shuangpin_table = {}
     let s:current_datafile = 0
     let s:current_datafile_has_dot = 0
     let s:ecdict = {}
@@ -472,6 +471,7 @@ function! s:vimim_initialize_session()
     let s:sentence_with_space_input = 0
     let s:lines_datafile = []
     let s:alphabet_lines = []
+    let s:shuangpin_table = {}
     let s:www_executable = 0
     let s:start_row_before = 0
     let s:start_column_before = 1
@@ -522,7 +522,6 @@ function! s:reset_before_anything()
     let s:chinese_mode_toggle_flag = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
     let s:smart_backspace = s:vimim_smart_backspace
-    call s:vimim_reset_shuangpin()
 endfunction
 
 " ------------------------------
@@ -531,18 +530,13 @@ function! s:reset_after_insert()
     let s:seamless_positions = []
     let s:popupmenu_matched_list = []
     let s:pageup_pagedown = ''
+    let s:keyboard_wubi = ''
+    let s:keyboard_shuangpin = 0
+    let s:keyboard_leading_zero = 0
     let s:trash_code_flag = 0
     let s:menu_reverse = 0
     let s:smart_enter = 0
     let s:smart_space = 0
-    let s:keyboard_wubi = ''
-    let s:keyboard_shuangpin = 0
-    let s:keyboard_leading_zero = 0
-"--------------------------------------- trash
-""  let s:sentence_match = 0
-""  let s:shuangpin_flag = 0
-    let s:sentence_match = 0
-    sil!call s:vimim_resume_shuangpin()
 "---------------------------------------
 endfunction
 
@@ -663,7 +657,7 @@ function! s:vimim_easter_egg_vimim()
         let option = "im\t 输入：" . option
         call add(eggs, option)
     endif
-" ---------------------------------- 
+" ----------------------------------
     if s:pinyin_flag > 0
         let option = "拼音"
         let option = "im\t 输入：" . option
@@ -1046,7 +1040,6 @@ function! <SID>vimim_start_onekey()
     sil!call s:vimim_start()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
-    sil!call s:vimim_resume_shuangpin()
     " ----------------------------------------------------------
     if s:vimim_sexy_onekey > 0
         let x = 'never mess up with <Space> and <Enter>'
@@ -1101,12 +1094,6 @@ function! s:vimim_onekey(onekey)
     " ---------------------------------------------------
     let char_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
-""  " --------------------------------------------------- trash
-""  if char_before =~# "[,.']"
-""  \&& char_before_before =~# "[,.']"
-""      call s:vimim_stop()
-""      return a:onekey
-""  endif
     " ---------------------------------------------------
     if (char_before_before !~# '\w' || empty(char_before_before))
     \&& has_key(s:punctuations, char_before)
@@ -1129,9 +1116,6 @@ function! s:vimim_onekey(onekey)
     " ---------------------------------------------------
     call s:vimim_stop()
     return a:onekey
-    " --------------------------------------------------- trash
-""  let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-""  sil!exe 'sil!return "' . space . '"'
     " ---------------------------------------------------
 endfunction
 
@@ -1510,26 +1494,8 @@ function! <SID>vimim_set_seamless()
         let s:seamless_positions = getpos(".")
     endif
     let s:smart_space = 0
-    let s:sentence_match = 0
     let s:keyboard_leading_zero = 0
-    sil!call s:vimim_resume_shuangpin()
     return ""
-endfunction
-
-" ---------------------------------- trash
-function! s:vimim_resume_shuangpin()
-" ----------------------------------
-    if s:pinyin_flag == 2 && empty(s:shuangpin_flag)
-        let s:shuangpin_flag = 1
-        call s:vimim_reset_shuangpin()
-    endif
-endfunction
-
-" --------------------------------- trash
-function! s:vimim_reset_shuangpin()
-" ---------------------------------
-    let s:keyboard_shuangpin = 0
-    let s:shuangpin_in_quanpin = 0
 endfunction
 
 " ======================================= }}}
@@ -2297,7 +2263,6 @@ endfunction
 function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
     let key = '\<BS>'
-    let s:sentence_match = 0
     call s:reset_after_insert()
     if empty(s:smart_backspace)
         let x = 'this is dummy backspace'
@@ -2444,14 +2409,6 @@ function! s:vimim_popupmenu_list(matched_list)
         if keyboard =~ '[.]'
             let dot = stridx(keyboard, '.')
             let tail = strpart(keyboard, dot+1)
-     " ------------------------------------------------- trash
-     "" elseif keyboard =~ "[']"
-     ""     let apostrophe = stridx(keyboard, "'")
-     "" "   let tail = strpart(keyboard, apostrophe+1)
-     "" elseif s:sentence_match > 0
-    let g:ggaga=s:sentence_match
-    let g:ggbgb=tail_default
-    let g:ggcgc=tail
      " -------------------------------------------------
         else
             let tail = tail_default
@@ -3409,7 +3366,6 @@ function! s:vimim_initialize_shuangpin()
         return
     endif
     let s:pinyin_flag = 2
-    let s:shuangpin_flag = 1
     let s:vimim_imode_pinyin = -1
     let rules = s:vimim_shuangpin_generic()
     if s:vimim_shuangpin_abc > 0
@@ -3439,49 +3395,6 @@ function! s:vimim_quanpin_from_shuangpin(keyboard)
     else
         return keyboard
     endif
-"" ----------------------------------------------------- trash
-"   if s:pinyin_flag == 2 && empty(s:shuangpin_flag)
-"       let s:shuangpin_flag = 1
-""""""" let s:keyboard_shuangpin = 0
-"       let s:shuangpin_in_quanpin = 0
-"   endif
-let g:ggaa=s:sentence_match
-let g:ggbb=s:keyboard_shuangpin
-let g:ggcc=s:keyboard_leading_zero
-""" g:ggaa=0
-""" g:ggbb=0
-""" g:ggcc='li''song''wo''shang''qing''yun'
-"" -----------------------------------------------------
-"    let shuangpin_flag = 0
-"   if empty(s:keyboard_shuangpin)
-"   \&& empty(s:sentence_match)
-"   \&& empty(s:keyboard_leading_zero)
-"        let shuangpin_flag = 1
-"    endif
-"" -----------------------------------------------------
-"    if s:chinese_input_mode > 1
-"        if empty(s:keyboard_shuangpin)
-"            let shuangpin_flag = 1
-"            let x = 'enter shuangpin for the first time'
-"        elseif len(s:keyboard_leading_zero) < len(s:keyboard_shuangpin)
-" """"""""   let s:shuangpin_flag = 0
-"        endif
-"    endif
-"" -----------------------------------------------------
-""""    let keyboard2 = s:vimim_shuangpin_transform(keyboard)
-""""    if keyboard2 ==# keyboard
-""""        let s:shuangpin_flag = 1
-""""        let s:sentence_match = 0
-""""        let s:keyboard_shuangpin = 0
-""""    else
-""""        let s:shuangpin_flag = 0
-""""        let s:sentence_match = 1
-""""        let s:keyboard_shuangpin = keyboard
-""""        let s:shuangpin_in_quanpin = a:keyboard
-""""        let s:keyboard_leading_zero = keyboard2
-""""        let keyboard = keyboard2
-""""    endif
-
     let keyboard2 = s:vimim_shuangpin_transform(keyboard)
     if keyboard2 ==# keyboard
         let x = 'no point to do transform'
@@ -3496,7 +3409,9 @@ endfunction
 " -----------------------------------------
 function! s:vimim_shuangpin_transform(keyb)
 " -----------------------------------------
-    if empty(s:shuangpin_flag)
+    if empty(s:keyboard_shuangpin)
+        let x = 'start the magic shuangpin transform'
+    else
         return a:keyb
     endif
     let size = strlen(a:keyb)
@@ -4039,10 +3954,6 @@ function! s:vimim_initialize_debug()
     if empty(s:vimim_debug_flag)
         return
     endif
-    " -------------------------------- issue 23
-    let s:vimim_www_sogou = 1
-    let s:vimim_static_input_style = 1
-    let s:vimim_shuangpin_abc = 1
     " -------------------------------- shuangpin
     let s:vimim_shuangpin_abc       = str2nr('hkfgpyjxlisswovhqyyn')
     let s:vimim_shuangpin_microsoft = str2nr('hkfgp;jxlisswouhq;yp')
@@ -4401,7 +4312,7 @@ else
 
     " ingnore non-sense keyboard characters
     " -------------------------------------
-    if empty(keyboard) 
+    if empty(keyboard)
     \|| keyboard !~# s:valid_key
         return
     endif
@@ -4409,7 +4320,7 @@ else
     if empty(s:vimim_sexy_onekey)
     \&& len(keyboard) == 1
     \&& keyboard !~# '\w'
-        return 
+        return
     endif
 
     " [eggs] hunt classic easter egg ... vim<C-\>
@@ -4524,12 +4435,10 @@ else
             let g:cloud_out_results=results
         endif
         if empty(len(results))
-            let s:sentence_match = 0
             if s:vimim_www_sogou > 2
                 let s:no_internet_connection = 1
             endif
         else
-            let s:sentence_match = 1
             let s:no_internet_connection = 0
             let s:menu_from_cloud_flag = 1
             return s:vimim_popupmenu_list(results)
@@ -4643,12 +4552,9 @@ else
             let g:no_cloud_out=keyboard2
         endif
         if keyboard2 !=# keyboard
-            let s:sentence_match = 1
             let keyboard = keyboard2
             let pattern = "\\C" . "^" . keyboard
             let match_start = match(lines, pattern)
-        else
-            let s:sentence_match = 0
         endif
     endif
 
