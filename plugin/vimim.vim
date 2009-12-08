@@ -4399,10 +4399,17 @@ else
         let keyboard = s:keyboard_leading_zero
     endif
 
-    " reset if non-sense keyboard characters
-    " --------------------------------------
-    if empty(keyboard) || keyboard !~# s:valid_key
+    " ingnore non-sense keyboard characters
+    " -------------------------------------
+    if empty(keyboard) 
+    \|| keyboard !~# s:valid_key
         return
+    endif
+    " -------------------------------------
+    if empty(s:vimim_sexy_onekey)
+    \&& len(keyboard) == 1
+    \&& keyboard !~# '\w'
+        return 
     endif
 
     " use cached list when pageup/pagedown is used
