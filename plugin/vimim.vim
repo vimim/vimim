@@ -247,6 +247,9 @@ function! s:vimim_finalize_session()
     if empty(s:vimim_www_sogou)
         let s:vimim_www_sogou = 888
     endif
+    if s:current_datafile =~# "quote"
+        let s:vimim_apostrophe_in_pinyin = 1
+    endif
 endfunction
 
 " ----------------------------------
@@ -277,7 +280,7 @@ function! s:vimim_initialize_datafile_primary()
     " --------------------------------------
     let input_methods = []
     call add(input_methods, "pinyin")
-    call add(input_methods, "pinyin_sogou")
+    call add(input_methods, "pinyin_quote_sogou")
     call add(input_methods, "pinyin_huge")
     call add(input_methods, "pinyin_fcitx")
     call add(input_methods, "pinyin_canton")
@@ -3199,7 +3202,7 @@ endfunction
 function! s:vimim_apostrophe(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
-    if empty(s:vimim_apostrophe_in_pinyin)
+    if s:vimim_apostrophe_in_pinyin < 1
         let keyboard = substitute(keyboard,"'",'','g')
     else
         let msg = "apostrophe is in the datafile"
@@ -3849,8 +3852,8 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_shuangpin_abc=1
-    let s:vimim_static_input_style=1
+    let s:vimim_shuangpin_abc=0
+    let s:vimim_static_input_style=-1
     let s:vimim_www_sogou=14
     " --------------------------------
     let s:vimim_sexy_onekey=1
@@ -4555,10 +4558,9 @@ else
         return
     endif
 
-    " [pinyin_sogou] try exact one-line match
-    " ---------------------------------------
-    if s:current_datafile =~# "pinyin_sogou"
-        let s:vimim_apostrophe_in_pinyin = 1
+    " [pinyin_quote_sogou] try exact one-line match
+    " ---------------------------------------------
+    if s:current_datafile =~# "pinyin_quote_sogou"
         let pattern = '^' . keyboard . '\> '
         let match_start = match(lines, pattern)
         let results = lines[match_start : match_start]
