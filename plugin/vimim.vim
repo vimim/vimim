@@ -1199,6 +1199,7 @@ function! s:vimim_start_chinese_mode()
     if empty(s:vimim_static_input_style)
         let msg = " ### chinese mode dynamic ### "
         let s:chinese_input_mode = 2
+        call <SID>vimim_set_seamless()
         call s:vimim_dynamic_alphabet_trigger()
         " ------------------------------------------------------------
         inoremap<silent><Space> <C-R>=g:vimim_space_dynamic()<CR>
@@ -3848,8 +3849,8 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_shuangpin_abc=0
-    let s:vimim_static_input_style=-1
+    let s:vimim_shuangpin_abc=1
+    let s:vimim_static_input_style=1
     let s:vimim_www_sogou=14
     " --------------------------------
     let s:vimim_sexy_onekey=1
@@ -4191,7 +4192,6 @@ function! s:vimim_start()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
-    sil!call <SID>vimim_set_seamless()
 endfunction
 
 " ----------------------
