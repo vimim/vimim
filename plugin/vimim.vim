@@ -584,6 +584,18 @@ let VimIM = " ====  Easter_Egg       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" ----------------------------
+function! s:vimim_egg_vimegg()
+" ----------------------------
+    let eggs = []
+    call add(eggs, "经典　vim")
+    call add(eggs, "环境　vimim")
+    call add(eggs, "程式　vimimvim")
+    call add(eggs, "设置　vimimdefaults")
+    call add(eggs, "帮助　vimimhelp")
+    return map(eggs,  '"VimIM 彩蛋：" . v:val . "　"')
+endfunction
+
 " ----------------------------------------
 function! s:vimim_easter_chidren(keyboard)
 " ----------------------------------------
@@ -594,21 +606,23 @@ function! s:vimim_easter_chidren(keyboard)
         return []
     endif
     if egg ==# "vim"
-        return s:vimim_easter_egg_vim()
+        return s:vimim_egg_vim()
     elseif egg ==# "vimim"
-        return s:vimim_easter_egg_vimim()
-    elseif egg ==# "vimims"
-        return s:vimim_easter_egg_vimims()
+        return s:vimim_egg_vimim()
+    elseif egg ==# "vimimvim"
+        return s:vimim_egg_vimimvim()
     elseif egg ==# "vimimhelp"
-        return s:vimim_easter_egg_vimimhelp()
+        return s:vimim_egg_vimimhelp()
     elseif egg ==# "vimimdefaults"
-        return s:vimim_easter_egg_vimimdefaults()
+        return s:vimim_egg_vimimdefaults()
+    elseif egg ==# "vimegg"
+        return s:vimim_egg_vimegg()
     endif
 endfunction
 
-" --------------------------------
-function! s:vimim_easter_egg_vim()
-" --------------------------------
+" -------------------------
+function! s:vimim_egg_vim()
+" -------------------------
     let eggs  = ["vi　  文本編輯器"]
     let eggs += ["vim   最牛文本編輯器"]
     let eggs += ["vim   精力"]
@@ -617,16 +631,16 @@ function! s:vimim_easter_egg_vim()
     return eggs
 endfunction
 
-" -----------------------------------
-function! s:vimim_easter_egg_vimims()
-" -----------------------------------
+" ------------------------------
+function! s:vimim_egg_vimimvim()
+" ------------------------------
     let egg = "strpart(" . 'v:val' . ", 0, 28)"
     return map(s:vimims, egg)
 endfunction
 
-" -----------------------------------------
-function! s:vimim_easter_egg_vimimdefaults()
-" -----------------------------------------
+" -----------------------------------
+function! s:vimim_egg_vimimdefaults()
+" -----------------------------------
     let eggs  = []
     for option in s:global_defaults
         call add(eggs, option)
@@ -634,9 +648,9 @@ function! s:vimim_easter_egg_vimimdefaults()
     return map(eggs,  '"VimIM  " . v:val . "　"')
 endfunction
 
-" --------------------------------------
-function! s:vimim_easter_egg_vimimhelp()
-" --------------------------------------
+" -------------------------------
+function! s:vimim_egg_vimimhelp()
+" -------------------------------
     let eggs = []
     call add(eggs, "VimIM 错误报告：" . get(s:vimimhelp,0))
     call add(eggs, "VimIM 词库下载：" . get(s:vimimhelp,1))
@@ -649,9 +663,9 @@ function! s:vimim_easter_egg_vimimhelp()
     return map(eggs, 'v:val . "　"')
 endfunction
 
-" ----------------------------------
-function! s:vimim_easter_egg_vimim()
-" ----------------------------------
+" ---------------------------
+function! s:vimim_egg_vimim()
+" ---------------------------
     let eggs = []
     if has("win32unix")
         let option = "cygwin"
@@ -687,35 +701,35 @@ function! s:vimim_easter_egg_vimim()
 " ----------------------------------
     let option = s:vimim_static_input_style
     if empty(option)
-        let option = '经典动态'
+        let option = 'CTRL-6　经典动态'
     else
-        let option = '经典静态'
+        let option = 'CTRL-6　经典静态'
     endif
     let option = "mode\t 风格：" . option
     call add(eggs, option)
 " ----------------------------------
     if s:wubi_flag > 0
-        let option = "五笔"
+        let option = "五笔: trdeggwhssqu"
         let option = "im\t 输入：" . option
         call add(eggs, option)
     endif
 " ----------------------------------
     if s:pinyin_flag > 0
-        let option = "拼音"
+        let option = "拼音: woyouyigemeng"
         let option = "im\t 输入：" . option
         call add(eggs, option)
         if s:pinyin_flag == 2
             let option = "pinyin\t 双拼："
             if s:vimim_shuangpin_abc > 0
-                let option .= "智能ABC"
+                let option .= "智能ABC: hkfgpyjxlisswovhqyyn"
             elseif s:vimim_shuangpin_microsoft > 0
-                let option .= "微软"
+                let option .= "微软: hkfgp;jxlisswouhq;yp"
             elseif s:vimim_shuangpin_nature > 0
-                let option .= "自然码"
+                let option .= "自然码: hkfgpyjxlisswouhqyyp"
             elseif s:vimim_shuangpin_plusplus > 0
-                let option .= "拼音加加"
+                let option .= "拼音加加: hdftpqjmlisywoigqqyz"
             elseif s:vimim_shuangpin_purple > 0
-                let option .= "紫光"
+                let option .= "紫光: hqftp;jdlishwoisq;ym"
             endif
             call add(eggs, option)
         endif
@@ -740,7 +754,7 @@ function! s:vimim_easter_egg_vimim()
     endif
 " ----------------------------------
     if s:four_corner_flag > 0
-        let option = "四角号码"
+        let option = "四角号码: 6021272260021762"
         let option = "datafile 词库：" . option
         call add(eggs, option)
     endif
@@ -753,7 +767,15 @@ function! s:vimim_easter_egg_vimim()
     elseif option == 1
         let option .= "全云输入"
     else
-        let option .= s:vimim_www_sogou . "朵云输入"
+        let number = s:vimim_www_sogou
+        if len(s:quantifiers) > 10
+            let numbers = split(number,'\zs')
+            if len(numbers) == 2
+                let numbers = insert(numbers, 's', 1)
+            endif
+            let number = s:vimim_get_chinese_number(numbers, 'i')
+        endif
+        let option .= number . "朵云输入"
     endif
     call add(eggs, option)
 " ----------------------------------
@@ -3605,10 +3627,8 @@ endfunction
 " -----------------------------------
 function! s:vimim_shuangpin_abc(rule)
 " -----------------------------------
-    " vtpc         => shuang pin       => double pinyin
-    " womfdbzlaeli => womendouzaizheli => we are all here
-    " woybyigemg   => woyouyigemeng    => i have a dream
-    " ---------------------------------------------------
+    " vtpc => shuang pin => double pinyin
+    " -----------------------------------
     call extend(a:rule[0],{ "zh":"a","ch":"e","sh":"v" })
     call extend(a:rule[1],{
         \"an":"j","ao":"k","ai":"l","ang":"h",
@@ -3769,9 +3789,6 @@ function! s:vimim_wubi_whole_match(keyboard)
     \|| !empty((a:keyboard)%4)
         return []
     endif
-    " -------------------------------------
-    " [wubi] trdeggwhssqu => i have a dream
-    " -------------------------------------
     let keyboards = split(a:keyboard,'\(.\{4}\)\zs')
     return keyboards
 endfunction
@@ -4002,35 +4019,30 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style=1
     let s:vimim_www_sogou=1
     let s:vimim_punctuation_navigation=-1
-    " -------------------------------- shuangpin
-    let s:vimim_shuangpin_abc       = str2nr('hkfgpyjxlisswovhqyyn')
-    let s:vimim_shuangpin_microsoft = str2nr('hkfgp;jxlisswouhq;yp')
-    let s:vimim_shuangpin_nature    = str2nr('hkfgpyjxlisswouhqyyp')
-    let s:vimim_shuangpin_plusplus  = str2nr('hdftpqjmlisywoigqqyz')
-    let s:vimim_shuangpin_purple    = str2nr('hqftp;jdlishwoisq;ym')
     " -------------------------------- debug
-    let s:vimim_www_sogou = 14
-    let s:vimim_static_input_style = -1
+    let s:vimim_shuangpin_abc=1
+    let s:vimim_www_sogou=14
+    let s:vimim_static_input_style=-1
     " --------------------------------
-    let s:vimim_sexy_onekey = 0
-    let s:vimim_imode_comma = 1
-    let s:vimim_imode_pinyin = -1
-    let s:vimim_custom_skin = 1
-    let s:vimim_tab_for_one_key = 1
-    let s:pinyin_flag = 1
-    let s:english_flag = 1
-    let s:four_corner_flag = 1
-    let s:vimim_diy_asdfghjklo = 1
-    let s:vimim_wildcard_search = 1
+    let s:vimim_sexy_onekey=0
+    let s:vimim_imode_comma=1
+    let s:vimim_imode_pinyin=-1
+    let s:vimim_custom_skin=1
+    let s:vimim_tab_for_one_key=1
+    let s:pinyin_flag=1
+    let s:english_flag=1
+    let s:four_corner_flag=1
+    let s:vimim_diy_asdfghjklo=1
+    let s:vimim_wildcard_search=1
     let s:vimim_reverse_pageup_pagedown
     " --------------------------------
-    let s:vimim_smart_backspace = 1
-    let s:vimim_smart_ctrl_h = 1
+    let s:vimim_smart_backspace=1
+    let s:vimim_smart_ctrl_h=1
     " ---------------------------------------
-    let s:vimim_english_punctuation = 0
-    let s:vimim_chinese_punctuation = 1
-    let s:vimim_unicode_lookup = 0
-    let s:vimim_dummy_shuangpin = 0
+    let s:vimim_english_punctuation=0
+    let s:vimim_chinese_punctuation=1
+    let s:vimim_unicode_lookup=0
+    let s:vimim_dummy_shuangpin=0
     " ---------------------------------------
 endfunction
 
@@ -4465,7 +4477,7 @@ else
     endif
 
     " [cloud] to make cloud come true for woyouyigemeng
-    " ----------------------------------------------------
+    " -------------------------------------------------
     let cloud = s:vimim_to_cloud_or_not_to_cloud(keyboard)
     if empty(cloud)
         let msg = "Who cares about cloud?"
