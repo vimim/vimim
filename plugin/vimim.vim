@@ -156,7 +156,6 @@ endfunction
 " -----------------------------------
 function! s:vimim_initialize_global()
 " -----------------------------------
-    let s:G = []
     let   G = []
     call add(G, "g:vimim_apostrophe_in_pinyin")
     call add(G, "g:vimim_auto_spell")
@@ -188,6 +187,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_sexy_onekey")
     " -----------------------------------
+    let s:global_defaults = []
+    let s:global_customized = []
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
@@ -218,9 +219,10 @@ endfunction
 function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
     for variable in a:options
+        call add(s:global_defaults, variable .'='. a:default)
         let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
-            call add(s:G, variable .'='. eval(variable))
+            call add(s:global_customized, variable .'='. eval(variable))
             exe 'let '. s_variable .'='. variable
             exe 'unlet! ' . variable
         else
@@ -591,6 +593,17 @@ function! s:vimim_easter_egg_vimims()
     return s:vimim_popupmenu_list(eggs)
 endfunction
 
+" -----------------------------------------
+function! s:vimim_easter_egg_vimimdefaults()
+" -----------------------------------------
+    let eggs  = []
+    for option in s:global_defaults
+        call add(eggs, option)
+    endfor
+    call map(eggs,  '"VimIM  " . v:val . "　"')
+    return s:vimim_popupmenu_list(eggs)
+endfunction
+
 " --------------------------------------
 function! s:vimim_easter_egg_vimimhelp()
 " --------------------------------------
@@ -715,10 +728,10 @@ function! s:vimim_easter_egg_vimim()
     endif
     call add(eggs, option)
 " ----------------------------------
-    if empty(s:G)
+    if empty(s:global_customized)
         let x = 'no global variable is set'
     else
-        for item in s:G
+        for item in s:global_customized
             let option = "VimIM\t 设置：" . item
             call add(eggs, option)
         endfor
@@ -1054,7 +1067,6 @@ function! <SID>vimim_start_onekey()
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-
 " ----------------------------
 function! s:vimim_tab_onekey()
 " ----------------------------
@@ -1229,7 +1241,8 @@ function! g:vimim_p_paste()
         call setpos(".", current_positions)
         let current_positions[1] = line + len(words) - 1
         call setline(line, words)
-        return s:vimim_clipboard_register(string(words))
+        sil!call s:vimim_stop()
+        return "\<Esc>"
     endif
 endfunction
 
@@ -4331,6 +4344,8 @@ else
         return s:vimim_easter_egg_vimims()
     elseif keyboard ==# "vimimhelp"
         return s:vimim_easter_egg_vimimhelp()
+    elseif keyboard ==# "vimimdefaults"
+        return s:vimim_easter_egg_vimimdefaults()
     endif
 
     " use cached list when pageup/pagedown is used
