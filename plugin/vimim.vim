@@ -417,169 +417,6 @@ function! s:vimim_set_valid_key(key)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Workflow         ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" --------------------------------------
-function! s:vimim_initialize_i_setting()
-" --------------------------------------
-    let s:saved_cpo=&cpo
-    let s:saved_lazyredraw=&lazyredraw
-    let s:saved_hlsearch=&hlsearch
-    let s:saved_pumheight=&pumheight
-    let s:completeopt=&completeopt
-    let s:completefunc=&completefunc
-endfunction
-
-" ------------------------------
-function! s:vimim_i_setting_on()
-" ------------------------------
-    let &l:completefunc='VimIM'
-    let &l:completeopt='menuone'
-    let &pumheight=9
-    set nolazyredraw
-    set hlsearch
-endfunction
-
-" -------------------------------
-function! s:vimim_i_setting_off()
-" -------------------------------
-    let &lazyredraw=s:saved_lazyredraw
-    let &hlsearch=s:saved_hlsearch
-    let &pumheight=s:saved_pumheight
-    let &completeopt=s:completeopt
-    let &completefunc=s:completefunc
-endfunction
-
-" ------------------------------------
-function! s:vimim_initialize_session()
-" ------------------------------------
-    sil!call s:vimim_start_omni()
-    sil!call s:vimim_super_reset()
-    " --------------------------------
-    let s:wubi_flag = 0
-    let s:erbi_flag = 0
-    let s:privates_flag = 0
-    let s:english_flag = 0
-    let s:four_corner_flag = 0
-    let s:digit_keyboards = {}
-    let s:pinyin_flag = 0
-    let s:current_datafile = 0
-    let s:current_datafile_has_dot = 0
-    let s:ecdict = {}
-    let s:search_key_slash = 0
-    let s:unicode_prefix = 'u'
-    let s:sentence_with_space_input = 0
-    let s:lines_datafile = []
-    let s:alphabet_lines = []
-    let s:shuangpin_table = {}
-    let s:www_executable = 0
-    let s:start_row_before = 0
-    let s:start_column_before = 1
-    let s:current_positions = [0,0,1,0]
-    let s:keyboards = ['','']
-    let s:keyboard_counts = 0
-    " --------------------------------
-endfunction
-
-" ----------------------------
-function! s:vimim_start_omni()
-" ----------------------------
-    let s:diy_pinyin_4corner = 0
-    let s:menu_from_cloud_flag = 0
-    let s:insert_without_popup_flag = 0
-    let s:pattern_not_found = 1
-endfunction
-
-" -----------------------------
-function! s:vimim_super_reset()
-" -----------------------------
-    sil!call s:reset_before_anything()
-    sil!call s:reset_after_insert()
-endfunction
-
-" -----------------------
-function! s:vimim_start()
-" -----------------------
-    sil!call s:vimim_i_setting_on()
-    sil!call s:vimim_super_reset()
-    sil!call s:vimim_label_on()
-    sil!call s:vimim_helper_mapping_on()
-endfunction
-
-" ----------------------
-function! s:vimim_stop()
-" ----------------------
-    sil!call s:vimim_i_setting_off()
-    sil!call s:vimim_super_reset()
-    sil!call s:vimim_i_unmap()
-endfunction
-
-" ---------------------------------
-function! s:reset_before_anything()
-" ---------------------------------
-    let s:no_internet_connection = 0
-    let s:chinese_input_mode = 0
-    let s:chinese_mode_toggle_flag = 0
-    let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
-    let s:smart_backspace = s:vimim_smart_backspace
-endfunction
-
-" ------------------------------
-function! s:reset_after_insert()
-" ------------------------------
-    let s:seamless_positions = []
-    let s:popupmenu_matched_list = []
-    let s:pageup_pagedown = ''
-    let s:keyboard_wubi = ''
-    let s:keyboard_shuangpin = 0
-    let s:keyboard_leading_zero = 0
-    let s:one_key_correction = 0
-    let s:menu_reverse = 0
-    let s:smart_enter = 0
-    let s:smart_space = 0
-"---------------------------------------
-endfunction
-
-" ------------------------------------------
-function! <SID>alphabet_reset_after_insert()
-" ------------------------------------------
-    let char_before = getline(".")[col(".")-2]
-    if char_before =~# s:valid_key
-        call s:reset_after_insert()
-    endif
-    return ''
-endfunction
-
-" ------------------------------------
-function! g:vimim_reset_after_insert()
-" ------------------------------------
-    if empty(s:vimim_sexy_onekey)
-    \&& empty(s:chinese_input_mode)
-        call s:vimim_stop()
-    endif
-    if s:wubi_flag < 0
-        let s:vimim_www_sogou = 0
-    endif
-    return ""
-endfunction
-
-" -------------------------
-function! s:vimim_i_unmap()
-" -------------------------
-    let unmap_list = range(0,9)
-    call extend(unmap_list, s:valid_keys)
-    call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['<CR>', '<BS>', '<C-H>', '<Space>'])
-    " ------------------------------
-    for _ in unmap_list
-        sil!exe 'iunmap '. _
-    endfor
-    " ------------------------------
-endfunction
-
-" ======================================= }}}
 let VimIM = " ====  Easter_Egg       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
@@ -4271,6 +4108,169 @@ function! s:vimim_diy_results(keyboards)
     let hash_2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     let results = s:vimim_diy_double_menu(hash_0, hash_1, hash_2)
     return results
+endfunction
+
+" ======================================= }}}
+let VimIM = " ====  Core_Workflow    ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" --------------------------------------
+function! s:vimim_initialize_i_setting()
+" --------------------------------------
+    let s:saved_cpo=&cpo
+    let s:saved_lazyredraw=&lazyredraw
+    let s:saved_hlsearch=&hlsearch
+    let s:saved_pumheight=&pumheight
+    let s:completeopt=&completeopt
+    let s:completefunc=&completefunc
+endfunction
+
+" ------------------------------
+function! s:vimim_i_setting_on()
+" ------------------------------
+    let &l:completefunc='VimIM'
+    let &l:completeopt='menuone'
+    let &pumheight=9
+    set nolazyredraw
+    set hlsearch
+endfunction
+
+" -------------------------------
+function! s:vimim_i_setting_off()
+" -------------------------------
+    let &lazyredraw=s:saved_lazyredraw
+    let &hlsearch=s:saved_hlsearch
+    let &pumheight=s:saved_pumheight
+    let &completeopt=s:completeopt
+    let &completefunc=s:completefunc
+endfunction
+
+" ------------------------------------
+function! s:vimim_initialize_session()
+" ------------------------------------
+    sil!call s:vimim_start_omni()
+    sil!call s:vimim_super_reset()
+    " --------------------------------
+    let s:wubi_flag = 0
+    let s:erbi_flag = 0
+    let s:privates_flag = 0
+    let s:english_flag = 0
+    let s:four_corner_flag = 0
+    let s:digit_keyboards = {}
+    let s:pinyin_flag = 0
+    let s:current_datafile = 0
+    let s:current_datafile_has_dot = 0
+    let s:ecdict = {}
+    let s:search_key_slash = 0
+    let s:unicode_prefix = 'u'
+    let s:sentence_with_space_input = 0
+    let s:lines_datafile = []
+    let s:alphabet_lines = []
+    let s:shuangpin_table = {}
+    let s:www_executable = 0
+    let s:start_row_before = 0
+    let s:start_column_before = 1
+    let s:current_positions = [0,0,1,0]
+    let s:keyboards = ['','']
+    let s:keyboard_counts = 0
+    " --------------------------------
+endfunction
+
+" ----------------------------
+function! s:vimim_start_omni()
+" ----------------------------
+    let s:diy_pinyin_4corner = 0
+    let s:menu_from_cloud_flag = 0
+    let s:insert_without_popup_flag = 0
+    let s:pattern_not_found = 1
+endfunction
+
+" -----------------------------
+function! s:vimim_super_reset()
+" -----------------------------
+    sil!call s:reset_before_anything()
+    sil!call s:reset_after_insert()
+endfunction
+
+" -----------------------
+function! s:vimim_start()
+" -----------------------
+    sil!call s:vimim_i_setting_on()
+    sil!call s:vimim_super_reset()
+    sil!call s:vimim_label_on()
+    sil!call s:vimim_helper_mapping_on()
+endfunction
+
+" ----------------------
+function! s:vimim_stop()
+" ----------------------
+    sil!call s:vimim_i_setting_off()
+    sil!call s:vimim_super_reset()
+    sil!call s:vimim_i_unmap()
+endfunction
+
+" ---------------------------------
+function! s:reset_before_anything()
+" ---------------------------------
+    let s:no_internet_connection = 0
+    let s:chinese_input_mode = 0
+    let s:chinese_mode_toggle_flag = 0
+    let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
+    let s:smart_backspace = s:vimim_smart_backspace
+endfunction
+
+" ------------------------------
+function! s:reset_after_insert()
+" ------------------------------
+    let s:seamless_positions = []
+    let s:popupmenu_matched_list = []
+    let s:pageup_pagedown = ''
+    let s:keyboard_wubi = ''
+    let s:keyboard_shuangpin = 0
+    let s:keyboard_leading_zero = 0
+    let s:one_key_correction = 0
+    let s:menu_reverse = 0
+    let s:smart_enter = 0
+    let s:smart_space = 0
+"---------------------------------------
+endfunction
+
+" ------------------------------------------
+function! <SID>alphabet_reset_after_insert()
+" ------------------------------------------
+    let char_before = getline(".")[col(".")-2]
+    if char_before =~# s:valid_key
+        call s:reset_after_insert()
+    endif
+    return ''
+endfunction
+
+" ------------------------------------
+function! g:vimim_reset_after_insert()
+" ------------------------------------
+    if empty(s:vimim_sexy_onekey)
+    \&& empty(s:chinese_input_mode)
+        call s:vimim_stop()
+    endif
+    if s:wubi_flag < 0
+        let s:vimim_www_sogou = 0
+    endif
+    return ""
+endfunction
+
+" -------------------------
+function! s:vimim_i_unmap()
+" -------------------------
+    let unmap_list = range(0,9)
+    call extend(unmap_list, s:valid_keys)
+    call extend(unmap_list, keys(s:punctuations))
+    call extend(unmap_list, ['<CR>', '<BS>', '<C-H>', '<Space>'])
+    " ------------------------------
+    for _ in unmap_list
+        sil!exe 'iunmap '. _
+    endfor
+    " ------------------------------
 endfunction
 
 " ======================================= }}}
