@@ -247,9 +247,6 @@ function! s:vimim_finalize_session()
     if empty(s:vimim_www_sogou)
         let s:vimim_www_sogou = 888
     endif
-    if s:current_datafile =~# "pinyin_sogou"
-        let s:vimim_apostrophe_in_pinyin = 1
-    endif
 endfunction
 
 " ----------------------------------
@@ -558,7 +555,7 @@ function! s:vimim_egg_vimim()
         if s:pinyin_flag == 2
             let option = "pinyin\t 双拼："
             if s:vimim_shuangpin_abc > 0
-                let option .= "智能ABC: hkfgpyjxlisswovhqyyn"
+                let option .= "智能ABC: woybyigemg"
             elseif s:vimim_shuangpin_microsoft > 0
                 let option .= "微软: hkfgp;jxlisswouhq;yp"
             elseif s:vimim_shuangpin_nature > 0
@@ -2201,9 +2198,6 @@ function! s:vimim_pair_list(matched_list)
     endif
     let pair_matched_list = []
     let maximum_list = 100
-    if s:current_datafile =~# "pinyin_sogou"
-        let maximum_list = maximum_list/5
-    endif
     if len(matched_list) > maximum_list
         let matched_list = matched_list[0 : maximum_list]
     endif
@@ -2403,6 +2397,7 @@ function! s:vimim_search_boundary(lines, keyboard)
     return ranges
 endfunction
 
+
 " ---------------------------------------------------
 function! s:vimim_exact_match(lines, keyboard, start)
 " ---------------------------------------------------
@@ -2412,11 +2407,11 @@ function! s:vimim_exact_match(lines, keyboard, start)
     \|| keyboard !=# tolower(keyboard)
         return []
     endif
-    let words_limit = 128
     let match_start = a:start
     let match_end = match_start+1
     let patterns = '^\(' . keyboard. '\)\@!'
     let result = match(a:lines, patterns, match_start)-1
+    let words_limit = 128
     if result - match_start < 1
         return a:lines[match_start : match_end]
     endif
@@ -3852,11 +3847,6 @@ function! s:vimim_initialize_debug()
     if empty(s:vimim_debug_flag)
         return
     endif
-    " -------------------------------- issue 23
-    let s:vimim_shuangpin_abc=1
-    let s:vimim_static_input_style=1
-    let s:vimim_www_sogou=1
-    let s:vimim_punctuation_navigation=-1
     " -------------------------------- debug
     let s:vimim_shuangpin_abc=1
     let s:vimim_www_sogou=14
@@ -4535,11 +4525,6 @@ else
         endif
     endif
 
-    " [apostrophe] in pinyin datafile
-    " -------------------------------
-    let keyboard = s:vimim_apostrophe(keyboard)
-    let s:keyboard_leading_zero = keyboard
-
     " now only play with portion of datafile of interest
     " --------------------------------------------------
     let lines = s:vimim_datafile_range(keyboard)
@@ -4562,6 +4547,24 @@ else
     \&& empty(s:www_executable)
         return
     endif
+
+    " [pinyin_sogou] try exact one-line match
+    " ---------------------------------------
+    if s:current_datafile =~# "pinyin_sogou"
+        let s:vimim_apostrophe_in_pinyin = 1
+        let pattern = '^' . keyboard . '\> '
+        let match_start = match(lines, pattern)
+        let results = lines[match_start : match_start]
+        if len(results) > 0
+            let results = s:vimim_pair_list(results)
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
+    " [apostrophe] in pinyin datafile
+    " -------------------------------
+    let keyboard = s:vimim_apostrophe(keyboard)
+    let s:keyboard_leading_zero = keyboard
 
     " [wildcard search] explicit fuzzy search
     " ----------------------------------------
@@ -4638,8 +4641,8 @@ else
     " do fuzzy search for 4 corner
     " ----------------------------
     if match_start > -1
-        let results = []
         let has_digit = match(keyboard, '\d\+')
+        let results = []
         if has_digit > -1
         \&& len(keyboards) > 1
         \&& s:four_corner_flag > 0
@@ -4655,7 +4658,7 @@ else
     " ----------------------------------------
     if match_start > -1
         let s:keyboards[0] = keyboard
-        let results = s:vimim_exact_match(lines, keyboard, match_start)
+        let results = s:vimim_exact_match(lines,keyboard,match_start)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
