@@ -90,8 +90,8 @@ call add(s:vimims, VimIM)
 "   The default key is <C-\> (Vim Insert Mode)
 
 "   VimIM "Chinese Input Mode"
-"   - [dynamic mode] show dynamic menu as one types
-"   - [static mode] <Space> => Chinese  <Enter> => English
+"   - [dynamic_mode] show omni popup menu as one types
+"   - [static_mode]  <Space> => Chinese  <Enter> => English
 "   The default key is <C-6> (Vim Insert Mode)
 
 " ----------------
@@ -347,9 +347,9 @@ function! s:vimim_expand_character_class(character_class)
     let character_string = ""
     let i = 0
     while i < 256
-        let msg = nr2char(i)
-        if x =~# a:character_class
-            let character_string .= x
+        let char = nr2char(i)
+        if char =~# a:character_class
+            let character_string .= char
         endif
         let i += 1
     endwhile
@@ -1216,9 +1216,10 @@ function! s:vimim_start_chinese_mode()
         " ------------------------------------------------------------
         for char in s:valid_keys
             if char !~# "[0-9,.']"
-            sil!exe 'inoremap<silent> ' . char . '
-            \ <C-R>=<SID>vimim_pumvisible_ctrl_e()<CR>'. char .
-            \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
+                sil!exe 'inoremap<silent> ' . char . '
+                \ <C-R>=<SID>vimim_pumvisible_ctrl_e()<CR>'. char .
+                \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
+            endif
         endfor
     else
         " ---------------------------------------
@@ -3859,7 +3860,7 @@ function! s:vimim_initialize_debug()
     " -------------------------------- debug
     let s:vimim_shuangpin_abc=1
     let s:vimim_www_sogou=14
-    let s:vimim_static_input_style=-1
+    let s:vimim_static_input_style=1
     " --------------------------------
     let s:vimim_sexy_onekey=0
     let s:vimim_imode_comma=1
