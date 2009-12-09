@@ -542,6 +542,16 @@ function! s:reset_after_insert()
 "---------------------------------------
 endfunction
 
+" ------------------------------------------
+function! <SID>alphabet_reset_after_insert()
+" ------------------------------------------
+    let char_before = getline(".")[col(".")-2]
+    if char_before =~# s:valid_key
+        call s:reset_after_insert()
+    endif
+    return ''
+endfunction
+
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
@@ -1356,9 +1366,7 @@ function! s:vimim_start_chinese_mode()
         let msg = " === chinese mode static === "
         let s:chinese_input_mode = 1
         " ---------------------------------------
-        if s:pinyin_flag != 2
-            sil!call s:vimim_alphabet_auto_select()
-        endif
+        sil!call s:vimim_alphabet_auto_select()
         inoremap<silent><Space> <C-R>=g:vimim_space_static()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
     endif
@@ -1458,57 +1466,12 @@ function! s:vimim_alphabet_auto_select()
     let z = char2nr('z')
     let az_nr_list = extend(range(A,Z), range(a,z))
     let az_char_list = map(az_nr_list,"nr2char(".'v:val'.")")
-    for char in az_char_list
-        sil!exe 'inoremap <silent> ' . char . '
-        \ <C-R>=pumvisible()?"\<lt>C-Y>":""<CR>'. char
-     endfor
+    for _ in az_char_list
+        sil!exe 'inoremap <silent> ' ._. '
+        \ <C-R>=pumvisible()?"\<lt>C-Y>":""<CR>'. _
+        \ . '<C-R>=<SID>alphabet_reset_after_insert()<CR>'
+    endfor
 endfunction
-
-" -------------------------------------------------- issue 23
-" VimIM    设置：g:vimim_shuangpin_abc=1
-" VimIM    设置：g:vimim_static_input_style=1
-" VimIM    设置：g:vimim_www_sogou=5
-" VimIM    设置：g:vimim_punctuation_navigation=-1　
-" -------------------------------------------------- issue 23
-" found a new testcase:
-" 进入 vim, i, <C-6>
-" jdlilm<space>jr<space>
-" 注意这里的第一个 <space> 出菜单之后，直接按后面的jr，使用任意键上屏
-" 功能上屏，然后后面的无翻译。 
-"--------------------------------------------------------- trash
-""""    sil!exe 'inoremap<silent><expr> '._.'
-""""    \ s:vimim_ctrl_y_ctrl_x_ctrl_u()' . '_'
-""      \ <SID>vimim_alphabet_auto_select_mapping("'._.'")'
-""      \ . '_'
-"       \'\<C-R>=g:vimim_reset_after_insert()\<CR>'
-"---------------------------------------------------------
-"       sil!exe 'inoremap <silent> ' . _ . '
-"       \ <C-R>=pumvisible()?"\<lt>C-Y>":""<CR>' . _
-"       \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
-"---------------------------------------------------------
-""      inoremap<silent>_   <C-R>=g:vimim_space_static()<CR>
-""                         \<C-R>=g:vimim_reset_after_insert()<CR>
-""      inoremap<silent>_   <C-R>=g:vimim_space_static()<CR>
-""                         \<C-R>=g:vimim_reset_after_insert()<CR>
-"---------------------------------------------------------
-"       sil!exe 'imap <silent> ' ._. ' <Space> ' . '_'
-" " ----------------------------------------------------
-" function! <SID>vimim_alphabet_auto_select_mapping(key)
-" " ----------------------------------------------------
-"     let key = ' '
-"     if pumvisible()
-"         let key = s:vimim_ctrl_y_ctrl_x_ctrl_u()
-"     else
-"         let char_before = getline(".")[col(".")-2]
-"         if char_before =~# s:valid_key
-"             let key = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-"         endif
-"     endif
-"     sil!exe 'sil!return "' . space . '"'
-" endfunction
-" " ----------------------------------------------------
-
-
 
 " -----------------------------------
 function! g:vimim_pattern_not_found()
@@ -1652,8 +1615,9 @@ function! s:vimim_punctuation_on()
 	unlet punctuations["'"]
     endif
     for _ in keys(punctuations)
-        sil!exe 'inoremap<silent><expr> '._.'
-        \ <SID>vimim_punctuation_mapping("'._.'")'
+        sil!exe 'inoremap <silent> '._.'
+        \    <C-R>=<SID>vimim_punctuation_mapping("'._.'")<CR>'
+        \ . '<C-R>=<SID>alphabet_reset_after_insert()<CR>'
     endfor
     if s:vimim_punctuation_navigation > 0
         sil!call s:vimim_punctuation_navigation_on()
@@ -1663,7 +1627,6 @@ endfunction
 " -------------------------------------------
 function! <SID>vimim_punctuation_mapping(key)
 " -------------------------------------------
-    call g:vimim_reset_after_insert()
     let value = s:vimim_get_chinese_punctuation(a:key)
     if pumvisible()
         let value = "\<C-Y>" . value
@@ -4034,6 +3997,11 @@ function! s:vimim_initialize_debug()
     if empty(s:vimim_debug_flag)
         return
     endif
+    " -------------------------------- issue 23
+    let s:vimim_shuangpin_abc=1
+    let s:vimim_static_input_style=1
+    let s:vimim_www_sogou=1
+    let s:vimim_punctuation_navigation=-1
     " -------------------------------- shuangpin
     let s:vimim_shuangpin_abc       = str2nr('hkfgpyjxlisswovhqyyn')
     let s:vimim_shuangpin_microsoft = str2nr('hkfgp;jxlisswouhq;yp')
@@ -4043,10 +4011,6 @@ function! s:vimim_initialize_debug()
     " -------------------------------- debug
     let s:vimim_www_sogou = 14
     let s:vimim_static_input_style = -1
-    " -------------------------------- issue 23
-    let s:vimim_shuangpin_abc=1
-    let s:vimim_static_input_style=1
-    let s:vimim_www_sogou=1
     " --------------------------------
     let s:vimim_sexy_onekey = 0
     let s:vimim_imode_comma = 1
@@ -4607,7 +4571,7 @@ else
     let pattern = "\\C" . "^" . keyboard
     let match_start = match(lines, pattern)
 
-    " to support auto_spell, if needed
+    " to support auto spell, if needed
     " --------------------------------
     if match_start < 0
         let match_start = s:vimim_auto_spell(lines, keyboard)
