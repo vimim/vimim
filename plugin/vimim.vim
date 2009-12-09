@@ -163,7 +163,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_diy_asdfghjklo")
-    call add(G, "g:vimim_dummy_shuangpin")
     call add(G, "g:vimim_english_in_datafile")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_fuzzy_search")
@@ -173,6 +172,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_privates_txt")
     call add(G, "g:vimim_reverse_pageup_pagedown")
     call add(G, "g:vimim_sexy_input_style")
+    call add(G, "g:vimim_shuangpin_dummy")
     call add(G, "g:vimim_shuangpin_abc")
     call add(G, "g:vimim_shuangpin_microsoft")
     call add(G, "g:vimim_shuangpin_nature")
@@ -939,12 +939,6 @@ function! <SID>vimim_start_onekey()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
     " ----------------------------------------------------------
-    if s:vimim_sexy_onekey > 0
-        let msg = "never mess up with <Space> and <Enter>"
-        inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
-                           \<C-R>=<SID>vimim_set_seamless()<CR>
-    endif
-    " ----------------------------------------------------------
     inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
                          \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
@@ -1059,7 +1053,7 @@ function! s:vimim_hjkl_navigation_on()
         return
     endif
     " hjkl navigation for onekey, always
-    let hjkl_list = split('hjklegGycxdp', '\zs')
+    let hjkl_list = split('hjkleycdp', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap<silent><expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
@@ -1202,42 +1196,31 @@ function! s:vimim_start_chinese_mode()
 " ------------------------------------
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_start()
-    sil!call <SID>vimim_set_seamless()
     if empty(s:vimim_static_input_style)
-       " -----------------------------------------
-        let msg = " === chinese mode dynamic === "
+        let msg = " ### chinese mode dynamic ### "
         let s:chinese_input_mode = 2
-       " -----------------------------------------
+        call s:vimim_dynamic_alphabet_trigger()
+        " ------------------------------------------------------------
         inoremap<silent><Space> <C-R>=g:vimim_space_dynamic()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
-        for char in s:valid_keys
-            if char !~# "[0-9,.']"
-                sil!exe 'inoremap<silent> ' . char . '
-                \ <C-R>=<SID>vimim_pumvisible_ctrl_e()<CR>'. char .
-                \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
-            endif
-        endfor
     else
-        " ---------------------------------------
-        let msg = " === chinese mode static === "
+        let msg = " ### chinese mode static ### "
         let s:chinese_input_mode = 1
-        " ---------------------------------------
-        sil!call s:vimim_alphabet_auto_select()
+        sil!call s:vimim_static_alphabet_auto_select()
+        " ------------------------------------------------------------
         inoremap<silent><Space> <C-R>=g:vimim_space_static()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
+        " ------------------------------------------------------------
     endif
-    " ----------------------------------------------------------------
+    " ---------------------------------------------------------
     set cpo&vim
     let &l:iminsert=1
     let s:chinese_mode_toggle_flag = 1
-    " ----------------------------------
+    " ---------------------------------------------------------
     if s:vimim_custom_lcursor_color > 0
         highlight! lCursor guifg=bg guibg=green
     endif
-    " ---------------------------------------------------------
-    inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
-                        \<C-R>=<SID>vimim_set_seamless()<CR>
     " ---------------------------------------------------------
     inoremap<silent><expr><C-\> <SID>vimim_toggle_punctuation()
                          return <SID>vimim_toggle_punctuation()
@@ -1310,9 +1293,9 @@ function! g:vimim_space_static()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" --------------------------------------
-function! s:vimim_alphabet_auto_select()
-" --------------------------------------
+" ---------------------------------------------
+function! s:vimim_static_alphabet_auto_select()
+" ---------------------------------------------
     if s:chinese_input_mode != 1
         return
     endif
@@ -1323,10 +1306,27 @@ function! s:vimim_alphabet_auto_select()
     let z = char2nr('z')
     let az_nr_list = extend(range(A,Z), range(a,z))
     let az_char_list = map(az_nr_list,"nr2char(".'v:val'.")")
+    " -----------------------------------------
     for _ in az_char_list
         sil!exe 'inoremap <silent> ' ._. '
         \ <C-R>=pumvisible()?"\<lt>C-Y>":""<CR>'. _
         \ . '<C-R>=<SID>alphabet_reset_after_insert()<CR>'
+    endfor
+endfunction
+
+" ------------------------------------------
+function! s:vimim_dynamic_alphabet_trigger()
+" ------------------------------------------
+    if s:chinese_input_mode != 2
+        return
+    endif
+    " --------------------------------------
+    for char in s:valid_keys
+        if char !~# "[0-9,.']"
+            sil!exe 'inoremap<silent> ' . char . '
+            \ <C-R>=<SID>vimim_pumvisible_ctrl_e()<CR>'. char .
+            \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
+        endif
     endfor
 endfunction
 
@@ -2468,7 +2468,7 @@ function! s:vimim_fuzzy_pattern(keyboard)
 " ---------------------------------------
     let keyboard = a:keyboard
     let fuzzy = '\l\+'
-    if s:vimim_dummy_shuangpin(keyboard) > 0
+    if s:vimim_shuangpin_dummy(keyboard) > 0
         let fuzzy = '.*'
     endif
     if strpart(keyboard,len(keyboard)-1,1) ==# '.'
@@ -2492,7 +2492,7 @@ function! s:vimim_filter(results, keyboard, length)
         return results
     endif
     if empty(filter_length)
-        if s:vimim_dummy_shuangpin(a:keyboard) > 0
+        if s:vimim_shuangpin_dummy(a:keyboard) > 0
             let filter_length = length/2 |" 4_char => 2_chinese
         elseif length < 5                |" 4_char => 4_chinese
             let filter_length = length
@@ -2506,9 +2506,9 @@ function! s:vimim_filter(results, keyboard, length)
 endfunction
 
 " -----------------------------------------
-function! s:vimim_dummy_shuangpin(keyboard)
+function! s:vimim_shuangpin_dummy(keyboard)
 " -----------------------------------------
-    if empty(s:vimim_dummy_shuangpin)
+    if empty(s:vimim_shuangpin_dummy)
     \|| s:pinyin_flag != 1
     \|| len(a:keyboard) < 4
         return 0
@@ -2685,7 +2685,7 @@ function! g:vimim_ctrl_x_ctrl_u()
     if char_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
         if s:chinese_input_mode > 1
-            call s:reset_after_insert()
+            call s:alphabet_reset_after_insert()
         endif
         if empty(s:vimim_sexy_input_style)
             let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
@@ -3848,11 +3848,11 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_shuangpin_abc=1
+    let s:vimim_shuangpin_abc=0
+    let s:vimim_static_input_style=-1
     let s:vimim_www_sogou=14
-    let s:vimim_static_input_style=1
     " --------------------------------
-    let s:vimim_sexy_onekey=0
+    let s:vimim_sexy_onekey=1
     let s:vimim_imode_comma=1
     let s:vimim_imode_pinyin=-1
     let s:vimim_custom_skin=1
@@ -3870,7 +3870,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
     let s:vimim_unicode_lookup=0
-    let s:vimim_dummy_shuangpin=0
+    let s:vimim_shuangpin_dummy=0
     " ---------------------------------------
 endfunction
 
@@ -4148,8 +4148,8 @@ function! s:vimim_initialize_session()
     let s:privates_flag = 0
     let s:english_flag = 0
     let s:four_corner_flag = 0
-    let s:digit_keyboards = {}
     let s:pinyin_flag = 0
+    let s:digit_keyboards = {}
     let s:current_datafile = 0
     let s:current_datafile_has_dot = 0
     let s:ecdict = {}
@@ -4191,6 +4191,7 @@ function! s:vimim_start()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
+    sil!call <SID>vimim_set_seamless()
 endfunction
 
 " ----------------------
@@ -4215,6 +4216,12 @@ endfunction
 function! s:reset_after_insert()
 " ------------------------------
     let s:seamless_positions = []
+    call s:reset_after_auto_insert()
+endfunction
+
+" -----------------------------------
+function! s:reset_after_auto_insert()
+" -----------------------------------
     let s:popupmenu_matched_list = []
     let s:pageup_pagedown = ''
     let s:keyboard_wubi = ''
@@ -4232,7 +4239,7 @@ function! <SID>alphabet_reset_after_insert()
 " ------------------------------------------
     let char_before = getline(".")[col(".")-2]
     if char_before =~# s:valid_key
-        call s:reset_after_insert()
+        call s:reset_after_auto_insert()
     endif
     return ''
 endfunction
@@ -4742,6 +4749,11 @@ function! s:vimim_helper_mapping_on()
 " -----------------------------------
     if s:vimim_smart_ctrl_h > 0 && s:chinese_input_mode < 2
         inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
+    endif
+    " ----------------------------------------------------------
+    if s:vimim_sexy_onekey > 0 || s:chinese_input_mode > 0
+        inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
+                           \<C-R>=<SID>vimim_set_seamless()<CR>
     endif
     " ----------------------------------------------------------
     if s:smart_backspace > 0
