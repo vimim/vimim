@@ -574,7 +574,7 @@ function! s:vimim_egg_vimim()
     endif
 " ----------------------------------
     let option = "cloud\t 搜狗："
-    if empty(s:vimim_www_sogou)
+    if s:vimim_www_sogou < 0
         let option .= "晴天无云"
     elseif s:vimim_www_sogou == 888
         let option .= "想云就云"
@@ -3663,19 +3663,21 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_plug_n_play_www_sogou()
 " ---------------------------------------
-    endif
     if empty(s:current_datafile) || s:privates_flag == 2
         if (executable('wget') || executable('curl'))
-            let s:vimim_www_sogou = 1
+            if empty(s:vimim_www_sogou)
+                let s:vimim_www_sogou = 1
+                return
+            endif
         endif
     endif
-    " support 'plug and play' (throw wget.exe to plugin directory)
-    " for Windows user who does not know how to set PATH,
+    " Windows 'plug and play' (throw wget.exe to plugin directory)
     if has("win32") || has("win32unix")
-    \&& s:vimim_www_sogou == 888
         let wget = s:path . "wget.exe"
         if executable(wget)
-            let s:vimim_www_sogou = 1
+            if empty(s:vimim_www_sogou)
+                let s:vimim_www_sogou = 1
+            endif
             let s:www_executable = wget
         endif
     endif
@@ -3711,7 +3713,6 @@ function! s:vimim_initialize_www_sogou()
     endif
     if empty(s:www_executable)
         let s:vimim_www_sogou = 0
-        return
     endif
 endfunction
 
@@ -3787,7 +3788,7 @@ endfunction
 function! s:vimim_get_sogou_cloud_im(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:vimim_www_sogou)
+    if s:vimim_www_sogou < 1
     \|| empty(s:www_executable)
     \|| empty(keyboard)
         return []
