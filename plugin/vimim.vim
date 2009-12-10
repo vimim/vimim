@@ -425,36 +425,12 @@ call add(s:vimims, VimIM)
 function! s:vimim_egg_vimegg()
 " ----------------------------
     let eggs = []
+    call add(eggs, "经典　vim")
+    call add(eggs, "环境　vimim")
+    call add(eggs, "程式　vimimvim")
     call add(eggs, "帮助　vimimhelp")
     call add(eggs, "设置　vimimdefaults")
-    call add(eggs, "程式　vimimvim")
-    call add(eggs, "环境　vimim")
-    call add(eggs, "经典　vim")
     return map(eggs,  '"VimIM 彩蛋：" . v:val . "　"')
-endfunction
-
-" ----------------------------------------
-function! s:vimim_easter_chidren(keyboard)
-" ----------------------------------------
-    let egg = a:keyboard
-    if egg =~# '\l' && len(egg) < 24
-        let msg = "hunt easter egg ... vim<C-\>"
-    else
-        return []
-    endif
-    if egg ==# "vim"
-        return s:vimim_egg_vim()
-    elseif egg ==# "vimim"
-        return s:vimim_egg_vimim()
-    elseif egg ==# "vimegg"
-        return s:vimim_egg_vimegg()
-    elseif egg ==# "vimimvim"
-        return s:vimim_egg_vimimvim()
-    elseif egg ==# "vimimhelp"
-        return s:vimim_egg_vimimhelp()
-    elseif egg ==# "vimimdefaults"
-        return s:vimim_egg_vimimdefaults()
-    endif
 endfunction
 
 " -------------------------
@@ -628,6 +604,30 @@ function! s:vimim_egg_vimim()
 " ----------------------------------
     call map(eggs, 'v:val . "　"')
     return eggs
+endfunction
+
+" ----------------------------------------
+function! s:vimim_easter_chicken(keyboard)
+" ----------------------------------------
+    let egg = a:keyboard
+    if egg =~# '\l' && len(egg) < 24
+        let msg = "hunt easter egg ... vim<C-\>"
+    else
+        return []
+    endif
+    if egg ==# "vim"
+        return s:vimim_egg_vim()
+    elseif egg ==# "vimim"
+        return s:vimim_egg_vimim()
+    elseif egg ==# "vimegg"
+        return s:vimim_egg_vimegg()
+    elseif egg ==# "vimimvim"
+        return s:vimim_egg_vimimvim()
+    elseif egg ==# "vimimhelp"
+        return s:vimim_egg_vimimhelp()
+    elseif egg ==# "vimimdefaults"
+        return s:vimim_egg_vimimdefaults()
+    endif
 endfunction
 
 " ======================================= }}}
@@ -4409,7 +4409,7 @@ else
     " [eggs] hunt classic easter egg ... vim<C-\>
     " -------------------------------------------
     if keyboard =~# "^vim"
-        let results = s:vimim_easter_chidren(keyboard)
+        let results = s:vimim_easter_chicken(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
         endif
