@@ -425,11 +425,11 @@ call add(s:vimims, VimIM)
 function! s:vimim_egg_vimegg()
 " ----------------------------
     let eggs = []
-    call add(eggs, "经典　vim")
-    call add(eggs, "环境　vimim")
-    call add(eggs, "程式　vimimvim")
-    call add(eggs, "设置　vimimdefaults")
     call add(eggs, "帮助　vimimhelp")
+    call add(eggs, "设置　vimimdefaults")
+    call add(eggs, "程式　vimimvim")
+    call add(eggs, "环境　vimim")
+    call add(eggs, "经典　vim")
     return map(eggs,  '"VimIM 彩蛋：" . v:val . "　"')
 endfunction
 
@@ -446,14 +446,14 @@ function! s:vimim_easter_chidren(keyboard)
         return s:vimim_egg_vim()
     elseif egg ==# "vimim"
         return s:vimim_egg_vimim()
+    elseif egg ==# "vimegg"
+        return s:vimim_egg_vimegg()
     elseif egg ==# "vimimvim"
         return s:vimim_egg_vimimvim()
     elseif egg ==# "vimimhelp"
         return s:vimim_egg_vimimhelp()
     elseif egg ==# "vimimdefaults"
         return s:vimim_egg_vimimdefaults()
-    elseif egg ==# "vimegg"
-        return s:vimim_egg_vimegg()
     endif
 endfunction
 
@@ -471,33 +471,34 @@ endfunction
 " ------------------------------
 function! s:vimim_egg_vimimvim()
 " ------------------------------
+    let eggs = s:vimims
     let egg = "strpart(" . 'v:val' . ", 0, 28)"
-    return map(s:vimims, egg)
+    call map(eggs, egg)
+    return eggs
 endfunction
 
 " -----------------------------------
 function! s:vimim_egg_vimimdefaults()
 " -----------------------------------
-    let eggs  = []
-    for option in s:global_defaults
-        call add(eggs, option)
-    endfor
-    return map(eggs,  '"VimIM  " . v:val . "　"')
+    let eggs = s:global_defaults
+    let egg = '"VimIM  " . v:val . "　"'
+    call map(eggs, egg)
+    return eggs
 endfunction
 
 " -------------------------------
 function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
-    call add(eggs, "VimIM 错误报告：" . get(s:vimimhelp,0))
-    call add(eggs, "VimIM 词库下载：" . get(s:vimimhelp,1))
-    call add(eggs, "VimIM 最新主页：" . get(s:vimimhelp,2))
-    call add(eggs, "VimIM 最新程式：" . get(s:vimimhelp,3))
-    call add(eggs, "VimIM 试用版本：" . get(s:vimimhelp,4))
-    call add(eggs, "VimIM 官方网址：" . get(s:vimimhelp,5))
-    call add(eggs, "VimIM 新闻论坛：" . get(s:vimimhelp,6))
+    call add(eggs, "错误报告：" . get(s:vimimhelp,0))
+    call add(eggs, "词库下载：" . get(s:vimimhelp,1))
+    call add(eggs, "最新主页：" . get(s:vimimhelp,2))
+    call add(eggs, "最新程式：" . get(s:vimimhelp,3))
+    call add(eggs, "试用版本：" . get(s:vimimhelp,4))
+    call add(eggs, "官方网址：" . get(s:vimimhelp,5))
+    call add(eggs, "新闻论坛：" . get(s:vimimhelp,6))
 " -------------------------------------
-    return map(eggs, 'v:val . "　"')
+    return map(eggs, '"VimIM " .v:val . "　"')
 endfunction
 
 " ---------------------------
@@ -937,7 +938,6 @@ call add(s:vimims, VimIM)
 function! <SID>vimim_start_onekey()
 " ---------------------------------
     let s:chinese_input_mode = 0
-    let s:smart_space = -1
     sil!call s:vimim_start()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
@@ -1056,7 +1056,7 @@ function! s:vimim_hjkl_navigation_on()
         return
     endif
     " hjkl navigation for onekey, always
-    let hjkl_list = split('hjkleycdp', '\zs')
+    let hjkl_list = split('hjklcpedxy', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap<silent><expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
@@ -1069,6 +1069,8 @@ function! <SID>vimim_hjkl(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == 'e'
+            let hjkl  = '\<C-E>'
+        elseif a:key == 'x'
             let hjkl  = '\<C-E>'
             let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         elseif a:key == 'y'
@@ -1116,7 +1118,21 @@ function! g:vimim_p_paste()
         let p = '\<C-E>'
         sil!exe 'sil!return "' . p . '"'
     else
-        let words = s:popupmenu_matched_list
+        let words = copy(s:popupmenu_matched_list)
+        let pastes = []
+        for item in words
+            let pairs = split(item)
+            let yin = get(pairs, 0)
+            if yin =~ ',,,'
+                let yang = get(pairs, 1)
+                call add(pastes, yang)
+            else
+                break
+            endif
+        endfor
+        if len(pastes) == len(words)
+            let words = copy(pastes)
+        endif
         let line = line(".")
         let current_positions = getpos(".")
         let current_positions[2] = 1
@@ -2168,13 +2184,16 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
     let key = '\<BS>'
     call s:reset_after_insert()
-    if empty(s:smart_backspace)
+    if empty(s:vimim_smart_backspace)
         let msg = "this is dummy backspace"
-    elseif s:smart_backspace == 1
+    elseif s:vimim_smart_backspace == 1
+        if empty(s:chinese_input_mode)
+            call s:vimim_stop()
+        endif
         if s:chinese_input_mode > 1
             let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         endif
-    elseif s:smart_backspace == 2
+    elseif s:vimim_smart_backspace == 2
         let char_before = getline(".")[col(".")-2]
         if char_before =~# s:valid_key
             let s:one_key_correction = 1
@@ -2293,6 +2312,9 @@ function! s:vimim_popupmenu_list(matched_list)
                 let unicode = printf('u%04x', char2nr(chinese))
                 let extra_text = menu.'　'.unicode
             endif
+            if extra_text =~# '[.,]'
+                let extra_text = ''
+            endif
             let complete_items["menu"] = extra_text
         endif
         " -------------------------------------------------
@@ -2310,14 +2332,18 @@ function! s:vimim_popupmenu_list(matched_list)
         if keyboard =~ '[.]'
             let dot = stridx(keyboard, '.')
             let tail = strpart(keyboard, dot+1)
-     " -------------------------------------------------
+        " -------------------------------------------------
         else
             let tail = tail_default
         endif
         " -------------------------------------------------
-     "" if tail =~ '\w'
+        if keyboard =~? 'vim'
+            let tail = ''
+        endif
+        " -------------------------------------------------
+        if tail =~ '\w'
             let chinese .=  tail
-     "" endif
+        endif
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
         let label += 1
@@ -2400,7 +2426,6 @@ function! s:vimim_search_boundary(lines, keyboard)
     endif
     return ranges
 endfunction
-
 
 " ---------------------------------------------------
 function! s:vimim_exact_match(lines, keyboard, start)
@@ -4212,7 +4237,6 @@ function! s:reset_before_anything()
     let s:chinese_input_mode = 0
     let s:chinese_mode_toggle_flag = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
-    let s:smart_backspace = s:vimim_smart_backspace
 endfunction
 
 " ------------------------------
@@ -4511,7 +4535,6 @@ else
         return [value]
     endif
 
-
     " [pinyin_quote_sogou] try exact one-line match
     " ---------------------------------------------
     let lines = s:vimim_load_datafile(0)
@@ -4762,8 +4785,8 @@ function! s:vimim_helper_mapping_on()
                            \<C-R>=<SID>vimim_set_seamless()<CR>
     endif
     " ----------------------------------------------------------
-    if s:smart_backspace > 0
-        inoremap<silent><BS> \<C-R>=pumvisible()?"\<lt>C-Y>":"\<lt>BS>"<CR>
+    if s:vimim_smart_backspace > 0
+        inoremap<silent><BS> \<C-R>=pumvisible()?"\<lt>C-E>":"\<lt>BS>"<CR>
                              \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
                              \<C-R>=g:vimim_reset_after_insert()<CR>
     endif
