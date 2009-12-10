@@ -4511,6 +4511,22 @@ else
         return [value]
     endif
 
+
+    " [pinyin_quote_sogou] try exact one-line match
+    " ---------------------------------------------
+    let lines = s:vimim_load_datafile(0)
+    if s:current_datafile =~# "pinyin_quote_sogou"
+        let pattern = '^' . keyboard . '\> '
+        let match_start = match(lines, pattern)
+        if  match_start > 0
+            let results = lines[match_start : match_start]
+            if len(results) > 0
+                let results = s:vimim_pair_list(results)
+                return s:vimim_popupmenu_list(results)
+            endif
+        endif
+    endif
+
     " [datafile update] modify data in memory based on past usage
     " -----------------------------------------------------------
     if s:vimim_chinese_frequency < 0
@@ -4556,18 +4572,6 @@ else
     \&& empty(s:private_matches)
     \&& empty(s:www_executable)
         return
-    endif
-
-    " [pinyin_quote_sogou] try exact one-line match
-    " ---------------------------------------------
-    if s:current_datafile =~# "pinyin_quote_sogou"
-        let pattern = '^' . keyboard . '\> '
-        let match_start = match(lines, pattern)
-        let results = lines[match_start : match_start]
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
-        endif
     endif
 
     " [apostrophe] in pinyin datafile
