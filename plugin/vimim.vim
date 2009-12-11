@@ -934,21 +934,6 @@ let VimIM = " ====  OneKey           ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------
-function! <SID>vimim_start_onekey()
-" ---------------------------------
-    let s:chinese_input_mode = 0
-    sil!call s:vimim_start()
-    sil!call s:vimim_hjkl_navigation_on()
-    sil!call s:vimim_punctuation_navigation_on()
-    " ----------------------------------------------------------
-    inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
-                         \<C-R>=g:vimim_reset_after_insert()<CR>
-    " ----------------------------------------------------------
-    let onekey = s:vimim_tab_onekey()
-    sil!exe 'sil!return "' . onekey . '"'
-endfunction
-
 " ----------------------------
 function! s:vimim_tab_onekey()
 " ----------------------------
@@ -961,6 +946,32 @@ function! <SID>:vimim_space_onekey()
 " ----------------------------------
     let onekey = " "
     return s:vimim_onekey(onekey)
+endfunction
+
+" ---------------------------------
+function! <SID>vimim_start_onekey()
+" ---------------------------------
+    let s:chinese_input_mode = 0
+    sil!call s:vimim_start()
+    sil!call s:vimim_hjkl_navigation_on()
+    sil!call s:vimim_punctuation_navigation_on()
+    " ----------------------------------------------------------
+    inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
+                         \<C-R>=g:vimim_reset_after_insert()<CR>
+    " ----------------------------------------------------------
+    let onekey = "\t"
+    " -----------------------------------------------
+    " <OneKey> double play
+    "   (1) after English (valid keys)    => trigger omni popup
+    "   (2) after omni popup window       => disable itself
+    " -----------------------------------------------
+    if pumvisible()
+        call s:vimim_stop()
+        let onekey = ""
+    else
+        let onekey = s:vimim_tab_onekey()
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 " ------------------------------
@@ -2152,6 +2163,9 @@ function! <SID>vimim_smart_enter()
             if has_key(s:punctuations, char_before)
                 let s:smart_enter += 1
                 let key = ' '
+            endif
+            if char_before =~ ' '
+                let key = "\<CR>"
             endif
         endif
         " -----------------------------------------------
