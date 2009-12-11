@@ -3173,12 +3173,22 @@ function! s:vimim_build_4corner_cache(chinese)
         return {}
     endif
     if empty(s:four_corner_lines)
-        let first_non_digit_line = 0
-        let index = match(lines, '^\D')
-        if index > -1
-            let first_non_digit_line = index
+        let first_digit = 0
+        let line_index = match(lines, '^\d')
+        if line_index > -1
+            let first_digit = line_index
         endif
-        let s:four_corner_lines = lines[0 : first_non_digit_line-1]
+        let first_alpha = len(lines)-1
+        let first_alpha = 0
+        let line_index = match(lines, '^\D', first_digit)
+        if line_index > -1
+            let first_alpha = line_index
+        endif
+        if first_digit < first_alpha
+            let s:four_corner_lines = lines[first_digit : first_alpha-1]
+        else
+            return {}
+        endif
     endif
     if empty(s:four_corner_lines)
         return {}
