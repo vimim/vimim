@@ -1150,6 +1150,14 @@ function! g:vimim_p_paste()
         call setpos(".", current_positions)
         let current_positions[1] = line + len(words) - 1
         call setline(line, words)
+        if s:vimim_auto_copy_clipboard>0 && has("gui_running")
+            let string_words = ''
+            for line in words
+                let string_words .= line
+                let string_words .= "\n"
+            endfor
+            let @+ = string_words
+        endif
         sil!call s:vimim_stop()
         return "\<Esc>"
     endif
