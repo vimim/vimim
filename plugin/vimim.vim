@@ -561,7 +561,7 @@ function! s:vimim_egg_vimim()
     let option = s:privates_flag
     if empty(option)
         let msg = "no private datafile found"
-    else
+    elseif s:current_datafile !~# "privates"
         let option = "privates.txt"
         let option = "datafile 词库：" . option
         call add(eggs, option)
@@ -1507,9 +1507,9 @@ function! s:vimim_punctuation_on()
         \    <C-R>=<SID>vimim_punctuation_mapping("'._.'")<CR>'
         \ . '<C-R>=<SID>alphabet_reset_after_insert()<CR>'
     endfor
-    if s:vimim_punctuation_navigation > 0
-        sil!call s:vimim_punctuation_navigation_on()
-    endif
+    " --------------------------------------
+    call s:vimim_punctuation_navigation_on()
+    " --------------------------------------
 endfunction
 
 " -------------------------------------------
@@ -3924,7 +3924,7 @@ function! s:vimim_initialize_debug()
     let s:four_corner_flag=1
     let s:vimim_diy_asdfghjklo=1
     let s:vimim_wildcard_search=1
-    let s:vimim_reverse_pageup_pagedown
+    let s:vimim_reverse_pageup_pagedown=1
     " --------------------------------
     let s:vimim_smart_backspace=1
     let s:vimim_smart_ctrl_h=1
@@ -4270,6 +4270,7 @@ function! s:reset_before_anything()
     let s:chinese_input_mode = 0
     let s:chinese_mode_toggle_flag = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
+    let s:pageup_pagedown = ''
 endfunction
 
 " ------------------------------
@@ -4283,7 +4284,6 @@ endfunction
 function! s:reset_after_auto_insert()
 " -----------------------------------
     let s:popupmenu_matched_list = []
-    let s:pageup_pagedown = ''
     let s:keyboard_wubi = ''
     let s:keyboard_shuangpin = 0
     let s:keyboard_leading_zero = 0
@@ -4307,6 +4307,8 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
+    let s:pageup_pagedown = ''
+    " --------------------------------
     if empty(s:vimim_sexy_onekey)
     \&& empty(s:chinese_input_mode)
         call s:vimim_stop()
@@ -4438,6 +4440,10 @@ else
     \&& keyboard !~# '\w'
         return
     endif
+    " --------------------------------
+    if empty(s:chinese_input_mode)
+        let @0 = keyboard
+    endif
 
     " [eggs] hunt classic easter egg ... vim<C-\>
     " -------------------------------------------
@@ -4450,8 +4456,7 @@ else
 
     " use cached list when pageup/pagedown is used
     " --------------------------------------------
-    if empty(s:chinese_input_mode)
-        let @0 = keyboard
+    if s:vimim_punctuation_navigation > 0
         if empty(len(s:pageup_pagedown))
             let msg = "no pageup or pagedown is used"
         elseif empty(s:popupmenu_matched_list)
