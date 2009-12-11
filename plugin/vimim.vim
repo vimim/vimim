@@ -3754,7 +3754,7 @@ function! s:vimim_magic_tail(keyboard)
         "   (1) after English (valid keys)    => non-cloud at will
         "   (2) vimim_keyboard_dot_by_dot     => sentence match
         " -----------------------------------------------
-        let s:no_internet_connection = 1
+        let s:no_internet_connection = 2
     else
         return 0
     endif
@@ -3771,7 +3771,7 @@ endfunction
 function! s:vimim_to_cloud_or_not_to_cloud(keyboard)
 " --------------------------------------------------
     let do_cloud = 1
-    if s:no_internet_connection > 0
+    if s:no_internet_connection > 1
         let msg = "oops, there is no internet connection."
         return 0
     elseif s:no_internet_connection < 0
@@ -4527,7 +4527,7 @@ else
         endif
         if empty(len(results))
             if s:vimim_www_sogou > 2
-                let s:no_internet_connection = 1
+                let s:no_internet_connection += 1
             endif
         else
             let s:no_internet_connection = 0
