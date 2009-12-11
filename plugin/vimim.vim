@@ -2451,7 +2451,7 @@ function! s:vimim_exact_match(lines, keyboard, start)
         return []
     endif
     let match_start = a:start
-    let match_end = match_start+1
+    let match_end = match_start
     let patterns = '^\(' . keyboard. '\)\@!'
     let result = match(a:lines, patterns, match_start)-1
     let words_limit = 128
