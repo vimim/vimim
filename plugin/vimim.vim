@@ -2182,7 +2182,7 @@ endfunction
 " ---------------------------------
 function! <SID>vimim_smart_ctrl_h()
 " ---------------------------------
-    " support intelligent sentence match for wozuixihuandeliulanqi
+    " support intelligent sentence match for wozuixihuandeliulanqi.
     " if not found from maximum-match, do <C-H>, try minimum match
     let key = '\<BS>'
     call s:reset_after_insert()
@@ -3735,6 +3735,14 @@ function! s:vimim_initialize_www_sogou()
             let s:www_executable = "curl -s "
         endif
     endif
+    " step 3: test if native Windows dll can be used
+    " ----------------------------------------------
+    if has("win32")
+        let wget = "rundll32.exe url.dll,FileProtocolHandler "
+        let www_executable = wget
+        let vimim_www_sogou = 1
+    endif
+    " -------------------------------------
     if empty(s:www_executable)
         let s:vimim_www_sogou = 0
     endif
