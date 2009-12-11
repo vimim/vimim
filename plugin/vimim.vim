@@ -2244,9 +2244,6 @@ function! s:vimim_pair_list(matched_list)
         if len(line) < 2
             continue
         endif
-        if s:english_flag > 0
-            let line = substitute(line,'#',' ','g')
-        endif
         if s:localization > 0
             let line = s:vimim_i18n_read(line)
         endif
@@ -2318,6 +2315,9 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["menu"] = menu
         endif
         let chinese = get(pairs, 1)
+        if chinese =~ '#'
+            continue
+        endif
         " -------------------------------------------------
         if s:vimim_custom_skin < 2
             let extra_text = menu
@@ -3920,7 +3920,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_custom_skin=1
     let s:vimim_tab_for_one_key=1
     let s:pinyin_flag=1
-    let s:english_flag=1
+    let s:vimim_english_in_datafile=1
     let s:four_corner_flag=1
     let s:vimim_diy_asdfghjklo=1
     let s:vimim_wildcard_search=1
