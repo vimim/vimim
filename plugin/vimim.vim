@@ -1535,7 +1535,7 @@ function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
     let hjkl_list = split('.,=-;[]','\zs')
     if s:vimim_punctuation_navigation < 1
-        let hjkl_list = split('=-','\zs')
+        let hjkl_list = split('=-;[]','\zs')
     endif
     if s:search_key_slash < 0
         let msg = "search keys are reserved"
