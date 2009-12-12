@@ -1533,10 +1533,10 @@ endfunction
 " -------------------------------------------
 function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
-    if s:vimim_punctuation_navigation < 0
-        return
-    endif
     let hjkl_list = split('.,=-;[]','\zs')
+    if s:vimim_punctuation_navigation < 1
+        let hjkl_list = split('=-','\zs')
+    endif
     if s:search_key_slash < 0
         let msg = "search keys are reserved"
     else
@@ -4464,7 +4464,7 @@ else
 
     " use cached list when pageup/pagedown is used
     " --------------------------------------------
-    if s:vimim_punctuation_navigation > 0
+    if s:vimim_punctuation_navigation > -1
         if empty(len(s:pageup_pagedown))
             let msg = "no pageup or pagedown is used"
         elseif empty(s:popupmenu_matched_list)
