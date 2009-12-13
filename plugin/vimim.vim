@@ -962,8 +962,8 @@ function! <SID>vimim_start_onekey()
     let onekey = "\t"
     " -----------------------------------------------
     " <OneKey> double play
-    "   (1) after English (valid keys)    => trigger omni popup
-    "   (2) after omni popup window       => disable itself
+    "   (1) after English (valid keys) => trigger omni popup
+    "   (2) after omni popup window    => disable itself
     " -----------------------------------------------
     if pumvisible()
         call s:vimim_stop()
@@ -1000,7 +1000,8 @@ function! s:vimim_onekey(onekey)
     let char_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     " ---------------------------------------------------
-    if (char_before_before !~# '\w' || empty(char_before_before))
+    if (char_before_before !~# "[0-9a-z,.']"
+       \|| empty(char_before_before))
     \&& has_key(s:punctuations, char_before)
     \&& s:vimim_sexy_onekey > 0
         let replacement = s:punctuations[char_before]
@@ -1125,20 +1126,24 @@ endfunction
 " -------------------------
 function! g:vimim_p_paste()
 " -------------------------
+    let show_me_not_pattern = ',,,'
     if pumvisible()
         let p = '\<C-E>'
         sil!exe 'sil!return "' . p . '"'
     else
-        let words = copy(s:popupmenu_matched_list)
+        let matched_list = copy(s:popupmenu_matched_list)
         let pastes = []
-        for item in words
+        let words = []
+        for item in matched_list
             let pairs = split(item)
             let yin = get(pairs, 0)
-            if yin =~ ',,,'
-                let yang = get(pairs, 1)
+            let yang = get(pairs, 1)
+            if yang =~ '#'
+                continue
+            endif
+            call add(words, item)
+            if yin =~ show_me_not_pattern
                 call add(pastes, yang)
-            else
-                break
             endif
         endfor
         if len(pastes) == len(words)
@@ -3774,15 +3779,15 @@ function! s:vimim_magic_tail(keyboard)
     if magic_tail ==# ','
         " -----------------------------------------------
         " <comma> double play in OneKey Mode:
-        "   (1) after English (valid keys)    => all-cloud at will
-        "   (2) before number                 => magic imode
+        "   (1) after English (valid keys) => all-cloud at will
+        "   (2) before number              => magic imode
         " -----------------------------------------------
         let s:no_internet_connection = -1
     elseif magic_tail ==# '.'
         " -----------------------------------------------
         " <dot> double play in OneKey Mode:
-        "   (1) after English (valid keys)    => non-cloud at will
-        "   (2) vimim_keyboard_dot_by_dot     => sentence match
+        "   (1) after English (valid keys) => non-cloud at will
+        "   (2) vimim_keyboard_dot_by_dot  => sentence match
         " -----------------------------------------------
         let s:no_internet_connection = 2
     else
@@ -3920,23 +3925,22 @@ function! s:vimim_initialize_debug()
     " -------------------------------- debug
     let s:vimim_shuangpin_abc=0
     let s:vimim_static_input_style=-1
-    let s:vimim_www_sogou=14
+    let s:vimim_www_sogou=13
     " --------------------------------
     let s:vimim_sexy_onekey=1
     let s:vimim_imode_comma=1
+    " --------------------------------
     let s:vimim_imode_pinyin=-1
-    let s:vimim_custom_skin=1
     let s:vimim_tab_for_one_key=1
+    let s:vimim_custom_skin=1
     let s:pinyin_flag=1
     let s:vimim_english_in_datafile=1
     let s:four_corner_flag=1
     let s:vimim_diy_asdfghjklo=1
     let s:vimim_wildcard_search=1
     let s:vimim_reverse_pageup_pagedown=1
-    " --------------------------------
     let s:vimim_smart_backspace=1
     let s:vimim_smart_ctrl_h=1
-    " ---------------------------------------
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
     let s:vimim_unicode_lookup=0
@@ -4447,6 +4451,13 @@ else
     \&& len(keyboard) == 1
     \&& keyboard !~# '\w'
         return
+    endif
+    " --------------------------------
+    if keyboard !~# '\w'
+        if keyboard =~# "^[,.'][,.']"
+        \&& keyboard =~# "[,.'][,.']$"
+             return
+        endif
     endif
     " --------------------------------
     if empty(s:chinese_input_mode)
