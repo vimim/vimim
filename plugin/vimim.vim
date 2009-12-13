@@ -955,6 +955,7 @@ function! <SID>vimim_start_onekey()
     sil!call s:vimim_start()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
+    sil!call s:vimim_onekey_punctuation_on()
     " ----------------------------------------------------------
     inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
                          \<C-R>=g:vimim_reset_after_insert()<CR>
@@ -1000,12 +1001,24 @@ function! s:vimim_onekey(onekey)
     let char_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     " ---------------------------------------------------
-    if (char_before_before !~# "[0-9a-z,.']"
-       \|| empty(char_before_before))
+    if char_before_before !~# "[0-9a-z]"
     \&& has_key(s:punctuations, char_before)
     \&& s:vimim_sexy_onekey > 0
-        let replacement = s:punctuations[char_before]
-        let space = "\<BS>" . replacement
+        let space = ""
+        for char in keys(s:punctuations_all)
+            if char_before_before ==# char
+                let space = a:onekey
+                break
+            else
+                continue
+            endif
+        endfor
+        if empty(space)
+            let replacement = s:punctuations[char_before]
+            let space = "\<BS>" . replacement
+        else
+            let msg = "too smart is not smart"
+        endif
         sil!exe 'sil!return "' . space . '"'
     endif
     " ---------------------------------------------------
@@ -1451,7 +1464,6 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_punctuations()
 " -----------------------------------------
     let s:punctuations = {}
-    let s:punctuations['&']='、'
     let s:punctuations['#']='＃'
     let s:punctuations['%']='％'
     let s:punctuations['$']='￥'
@@ -1478,11 +1490,12 @@ function! s:vimim_initialize_punctuations()
     let s:punctuations['.']='。'
     let s:punctuations['?']='？'
     if empty(s:vimim_latex_suite)
-        let s:punctuations['`']='“”'
+        let s:punctuations["'"]='‘’'
+        call s:vimim_onekey_punctuation_on()
     endif
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
-        if has_key(s:punctuations, char) && char !~# "[,.']"
+        if has_key(s:punctuations, char) && char !~# "[*,.']"
             unlet s:punctuations[char]
         endif
     endfor
@@ -1499,11 +1512,21 @@ function! <SID>vimim_toggle_punctuation()
     return ""
 endfunction
 
+" ---------------------------------------
+function! s:vimim_onekey_punctuation_on()
+" ---------------------------------------
+        let s:punctuations['&']='※'
+        let s:punctuations['\']='、'
+        let s:punctuations["'"]='‘’'
+        let s:punctuations['"']='“”'
+endfunction
+
 " --------------------------------
 function! s:vimim_punctuation_on()
 " --------------------------------
     let punctuations = s:punctuations
     if s:chinese_input_mode > 0
+        let s:punctuations['&']='、'
         unlet punctuations['\']
         unlet punctuations['"']
         unlet punctuations["'"]
@@ -2161,7 +2184,7 @@ function! <SID>vimim_smart_enter()
         "   (1) after English (valid keys)    => Seamless
         "   (2) after Chinese or double Enter => Enter
         " -----------------------------------------------
-        if char_before =~# "[,.']"
+        if char_before =~# "[*,.']"
             let s:smart_enter = 0
         elseif char_before =~# s:valid_key
             let s:smart_enter += 1
@@ -4451,13 +4474,6 @@ else
     \&& len(keyboard) == 1
     \&& keyboard !~# '\w'
         return
-    endif
-    " --------------------------------
-    if keyboard !~# '\w'
-        if keyboard =~# "^[,.'][,.']"
-        \&& keyboard =~# "[,.'][,.']$"
-             return
-        endif
     endif
     " --------------------------------
     if empty(s:chinese_input_mode)
