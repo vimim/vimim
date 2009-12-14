@@ -250,6 +250,7 @@ function! s:vimim_finalize_session()
     endif
     if s:current_datafile =~# "quote"
         let s:vimim_apostrophe_in_pinyin = 1
+        let s:vimim_chinese_frequency = -1
     endif
 endfunction
 
@@ -2652,14 +2653,17 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
     \|| len(a:keyboard) < 2
         return keyboard
     endif
-    if keyboard =~ '^\l\+\d\+\l\+\d\+$'
+    " --------------------------------------------------
+    if keyboard =~ '^\l\+\d\+' && keyboard =~ '\l\+\d\=$'
         let msg = "[diy] ma7712li4002 => [mali,7712,4002]"
         return keyboard
     endif
+    " --------------------------------------------------
     let keyboard2 = s:vimim_diy_keyboard2number(keyboard)
         if keyboard2 !=# keyboard
         return keyboard
     endif
+    " --------------------------------------------------
     let blocks = []
     if keyboard =~ '[.]'
         " step 1: try to break up dot-separated sentence
@@ -4144,7 +4148,7 @@ function! s:vimim_diy_keyboard(keyboard)
     if empty(s:diy_pinyin_4corner)
     \|| s:chinese_input_mode > 1
     \|| len(keyboard) < 2
-    \|| keyboard !~ '\w'
+    \|| keyboard !~# s:valid_key
         return []
     endif
     " --------------------------------------------
@@ -4153,7 +4157,9 @@ function! s:vimim_diy_keyboard(keyboard)
     " let mali = "ma7712li4002"          |" [mali,7712,4002]
     " let keyboards = split(mali,'\d\+') |" => ['ma', 'li']
     " let keyboards = split(mali,'\l\+') |" => 7712', '4002']
-    if keyboard =~ '^\l\+\d\+\l\+\d\=$'  |" yun0mu yn0mu
+    if keyboard =~ '^\l\+\d\+'           |" yun0mu
+    \&& keyboard =~ '\l\+\d\=$'          |" yu0mu for ABC
+        let keyboard = substitute(keyboard,"'",'','g')
         let keyboards = split(keyboard, '\d\+')
         let alpha_string = join(keyboards)
         let keyboards = split(keyboard, '\l\+')
@@ -4648,21 +4654,6 @@ else
         return [value]
     endif
 
-    " [pinyin_quote_sogou] try exact one-line match
-    " ---------------------------------------------
-    let lines = s:vimim_load_datafile(0)
-    if s:current_datafile =~# "pinyin_quote_sogou"
-        let pattern = '^' . keyboard . '\> '
-        let match_start = match(lines, pattern)
-        if  match_start > 0
-            let results = lines[match_start : match_start]
-            if len(results) > 0
-                let results = s:vimim_pair_list(results)
-                return s:vimim_popupmenu_list(results)
-            endif
-        endif
-    endif
-
     " [datafile update] modify data in memory based on past usage
     " -----------------------------------------------------------
     if s:vimim_chinese_frequency < 0
@@ -4755,7 +4746,7 @@ else
     " -----------------------------------------------------
     if match_start < 0
         let keyboard2 = s:vimim_keyboard_analysis(lines, keyboard)
-        if s:vimim_debug_flag > 0
+        if s:vimim_debug_flag > -1
             let g:no_cloud_in=keyboard
             let g:no_cloud_out=keyboard2
         endif
@@ -4773,7 +4764,7 @@ else
         if s:pinyin_flag > 0 && s:four_corner_flag == 1
             let s:diy_pinyin_4corner = 1
             let keyboard2 = s:vimim_diy_keyboard2number(keyboard)
-            if s:vimim_debug_flag > 0
+            if s:vimim_debug_flag > -1
                 let g:pinyin_4corner_in=keyboard
                 let g:pinyin_4corner_out=keyboard2
             endif
@@ -4800,6 +4791,21 @@ else
         if len(results) > 0
             let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
+    " [pinyin_quote_sogou] try exact one-line match
+    " ---------------------------------------------
+    if match_start > -1
+    \&& s:current_datafile =~# "pinyin_quote_sogou"
+        let pattern = '^' . keyboard . '\> '
+        let whole_match = match(lines, pattern)
+        if  whole_match > 0
+            let results = lines[whole_match : whole_match]
+            if len(results) > 0
+                let results = s:vimim_pair_list(results)
+                return s:vimim_popupmenu_list(results)
+            endif
         endif
     endif
 
