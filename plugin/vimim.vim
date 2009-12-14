@@ -1252,6 +1252,8 @@ function! s:vimim_start_chinese_mode()
 " ------------------------------------
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_start()
+    let s:chinese_mode_toggle_flag = 1
+    " ---------------------------------------------------------
     if empty(s:vimim_static_input_style)
         let msg = " ### chinese mode dynamic ### "
         let s:chinese_input_mode = 2
@@ -1271,10 +1273,6 @@ function! s:vimim_start_chinese_mode()
         " ------------------------------------------------------------
     endif
     " ---------------------------------------------------------
-    set cpo&vim
-    let &l:iminsert=1
-    let s:chinese_mode_toggle_flag = 1
-    " ---------------------------------------------------------
     if s:vimim_custom_lcursor_color > 0
         highlight! lCursor guifg=bg guibg=green
     endif
@@ -1287,8 +1285,6 @@ endfunction
 " -----------------------------------
 function! s:vimim_stop_chinese_mode()
 " -----------------------------------
-    let &cpo=s:saved_cpo
-    let &l:iminsert=0
     if s:vimim_custom_lcursor_color > 0
         highlight lCursor NONE
     endif
@@ -4208,31 +4204,35 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_i_setting()
 " --------------------------------------
     let s:saved_cpo=&cpo
+    let s:completefunc=&completefunc
+    let s:completeopt=&completeopt
     let s:saved_lazyredraw=&lazyredraw
     let s:saved_hlsearch=&hlsearch
+    let s:saved_iminsert=&iminsert
     let s:saved_pumheight=&pumheight
-    let s:completeopt=&completeopt
-    let s:completefunc=&completefunc
 endfunction
 
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
-    let &l:completefunc='VimIM'
-    let &l:completeopt='menuone'
-    let &pumheight=9
+    set completefunc=VimIM
+    set completeopt=menuone
     set nolazyredraw
     set hlsearch
+    set iminsert=1
+    set pumheight=9
 endfunction
 
 " -------------------------------
 function! s:vimim_i_setting_off()
 " -------------------------------
+    let &cpo=s:saved_cpo
+    let &completefunc=s:completefunc
+    let &completeopt=s:completeopt
     let &lazyredraw=s:saved_lazyredraw
     let &hlsearch=s:saved_hlsearch
+    let &iminsert=s:saved_iminsert
     let &pumheight=s:saved_pumheight
-    let &completeopt=s:completeopt
-    let &completefunc=s:completefunc
 endfunction
 
 " ------------------------------------
@@ -4302,11 +4302,11 @@ endfunction
 " ---------------------------------
 function! s:reset_before_anything()
 " ---------------------------------
-    let s:no_internet_connection = 0
-    let s:chinese_input_mode = 0
     let s:chinese_mode_toggle_flag = 0
+    let s:chinese_input_mode = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
     let s:pageup_pagedown = ''
+    let s:no_internet_connection = 0
 endfunction
 
 " ------------------------------
