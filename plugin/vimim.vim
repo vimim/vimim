@@ -523,6 +523,7 @@ function! s:vimim_egg_vimim()
     let option = "mode\t 风格：" . option
     call add(eggs, option)
 " ----------------------------------
+    let option = s:vimim_initialize_im_statusline()
     call add(eggs, option)
 " ----------------------------------
     let option = s:current_datafile
@@ -3966,7 +3967,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_shuangpin_abc=0
+    let s:vimim_shuangpin_abc=1
     let s:vimim_static_input_style=-1
     let s:vimim_www_sogou=13
     " --------------------------------
@@ -4152,7 +4153,7 @@ function! s:vimim_diy_keyboard(keyboard)
     " let mali = "ma7712li4002"          |" [mali,7712,4002]
     " let keyboards = split(mali,'\d\+') |" => ['ma', 'li']
     " let keyboards = split(mali,'\l\+') |" => 7712', '4002']
-    if keyboard =~ '^\l\+\d\+\l\+\d\=$'
+    if keyboard =~ '^\l\+\d\+\l\+\d\=$'  |" yun0mu yn0mu
         let keyboards = split(keyboard, '\d\+')
         let alpha_string = join(keyboards)
         let keyboards = split(keyboard, '\l\+')
