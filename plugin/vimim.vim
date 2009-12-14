@@ -1227,11 +1227,44 @@ let VimIM = " ====  Chinese_Mode     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" ---------------------------------
+function! s:vimim_set_keymap_name()
+" ---------------------------------
+" TODO: We have more IMs than these.
+    if s:wubi_flag > 0
+        let keymap_name = "五笔"
+    elseif s:pinyin_flag > 0
+        let keymap_name = "拼音"
+        if s:pinyin_flag == 2
+            let keymap_name = "双拼："
+            if s:vimim_shuangpin_abc > 0
+                let keymap_name .= "智能ABC"
+            elseif s:vimim_shuangpin_microsoft > 0
+                let keymap_name .= "微软"
+            elseif s:vimim_shuangpin_nature > 0
+                let keymap_name .= "自然码"
+            elseif s:vimim_shuangpin_plusplus > 0
+                let keymap_name .= "拼音加加"
+            elseif s:vimim_shuangpin_purple > 0
+                let keymap_name .= "紫光"
+            endif
+        endif
+    elseif s:four_corner_flag > 0
+        let keymap_name = "四角号码"
+    endif
+
+    let b:keymap_name = keymap_name
+endfunction
+
 " ---------------------------
 function! <SID>vimim_toggle()
 " ---------------------------
     set nopaste
     if s:chinese_mode_toggle_flag < 1
+	" FIXME: When should we call the following function?
+	"        It works only with more than one windows right now, I don't
+	"        know why.
+        sil!call s:vimim_set_keymap_name()
         sil!call s:vimim_start_chinese_mode()
     else
         sil!call s:vimim_stop_chinese_mode()
