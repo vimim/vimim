@@ -4143,18 +4143,16 @@ function! s:vimim_diy_keyboard(keyboard)
     if empty(s:diy_pinyin_4corner)
     \|| s:chinese_input_mode > 1
     \|| len(keyboard) < 2
-    \|| keyboard !~ "[0-9a-z]"
-    \|| keyboard =~ "[.]"
+    \|| keyboard !~ '\w'
         return []
     endif
     " --------------------------------------------
     " do diy couple input method for 2-char phrase
     " --------------------------------------------
     " let mali = "ma7712li4002"          |" [mali,7712,4002]
-    " let keyboards = split(mali,'\d\+') |" ['ma', 'li']
-    " let mali = "ma7712li4002"
-    " let keyboards = split(mali,'\l\+') |" 7712', '4002']
-    if keyboard =~ '^\l\+\d\+\l\+\d\+$'
+    " let keyboards = split(mali,'\d\+') |" => ['ma', 'li']
+    " let keyboards = split(mali,'\l\+') |" => 7712', '4002']
+    if keyboard =~ '^\l\+\d\+\l\+\d\=$'
         let keyboards = split(keyboard, '\d\+')
         let alpha_string = join(keyboards)
         let keyboards = split(keyboard, '\l\+')
