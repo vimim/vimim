@@ -145,6 +145,7 @@ function! s:vimim_initialization()
     " -----------------------------------------
     call s:vimim_initialize_valid_keys()
     " -----------------------------------------
+    call s:vimim_initialize_im_statusline()
     call s:vimim_initialize_color()
     call s:vimim_initialize_encoding()
     call s:vimim_initialize_punctuations()
@@ -522,7 +523,6 @@ function! s:vimim_egg_vimim()
     let option = "mode\t 风格：" . option
     call add(eggs, option)
 " ----------------------------------
-    let option = s:vimim_input_method_laststatus()
     call add(eggs, option)
 " ----------------------------------
     let option = s:current_datafile
@@ -582,9 +582,33 @@ function! s:vimim_egg_vimim()
     return eggs
 endfunction
 
-" -----------------------------------------
-function! s:vimim_input_method_laststatus()
-" -----------------------------------------
+" ----------------------------------------
+function! s:vimim_easter_chicken(keyboard)
+" ----------------------------------------
+    let egg = a:keyboard
+    if egg =~# '\l' && len(egg) < 24
+        let msg = "hunt easter egg ... vim<C-\>"
+    else
+        return []
+    endif
+    if egg ==# "vim"
+        return s:vimim_egg_vim()
+    elseif egg ==# "vimim"
+        return s:vimim_egg_vimim()
+    elseif egg ==# "vimegg"
+        return s:vimim_egg_vimegg()
+    elseif egg ==# "vimimvim"
+        return s:vimim_egg_vimimvim()
+    elseif egg ==# "vimimhelp"
+        return s:vimim_egg_vimimhelp()
+    elseif egg ==# "vimimdefaults"
+        return s:vimim_egg_vimimdefaults()
+    endif
+endfunction
+
+" ------------------------------------------
+function! s:vimim_initialize_im_statusline()
+" ------------------------------------------
     let im  = ''
     let option  = ''
   " -------------------------------------
@@ -628,31 +652,6 @@ function! s:vimim_input_method_laststatus()
   " -------------------------------------
     return option
   " -------------------------------------
-endfunction
-
-
-" ----------------------------------------
-function! s:vimim_easter_chicken(keyboard)
-" ----------------------------------------
-    let egg = a:keyboard
-    if egg =~# '\l' && len(egg) < 24
-        let msg = "hunt easter egg ... vim<C-\>"
-    else
-        return []
-    endif
-    if egg ==# "vim"
-        return s:vimim_egg_vim()
-    elseif egg ==# "vimim"
-        return s:vimim_egg_vimim()
-    elseif egg ==# "vimegg"
-        return s:vimim_egg_vimegg()
-    elseif egg ==# "vimimvim"
-        return s:vimim_egg_vimimvim()
-    elseif egg ==# "vimimhelp"
-        return s:vimim_egg_vimimhelp()
-    elseif egg ==# "vimimdefaults"
-        return s:vimim_egg_vimimdefaults()
-    endif
 endfunction
 
 " ======================================= }}}
@@ -1252,48 +1251,11 @@ let VimIM = " ====  Chinese_Mode     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" --------------------------------- xxx
-function! s:vimim_set_keymap_name()
-" --------------------------------- to be removed
-" TODO: We have more IMs than these.
-    if s:wubi_flag > 0
-        let keymap_name = "五笔"
-    elseif s:pinyin_flag > 0
-        let keymap_name = "拼音"
-        if s:pinyin_flag == 2
-            let keymap_name = "双拼："
-            if s:vimim_shuangpin_abc > 0
-                let keymap_name .= "智能ABC"
-            elseif s:vimim_shuangpin_microsoft > 0
-                let keymap_name .= "微软"
-            elseif s:vimim_shuangpin_nature > 0
-                let keymap_name .= "自然码"
-            elseif s:vimim_shuangpin_plusplus > 0
-                let keymap_name .= "拼音加加"
-            elseif s:vimim_shuangpin_purple > 0
-                let keymap_name .= "紫光"
-            endif
-        endif
-    elseif s:four_corner_flag > 0
-        let keymap_name = "四角号码"
-    endif
-    let b:keymap_name = keymap_name
-endfunction
-
 " ---------------------------
 function! <SID>vimim_toggle()
 " ---------------------------
     if s:chinese_mode_toggle_flag < 1
-	" ----------------------------------------------------------------------
-	" FIXME: It works only with more than one windows right now, why?
-	" set laststatus=2  ==> status line always on (from :help laststatus)
-	" It includes b: management, another interesting area with challenges
-        " the purpose of s:vimim_input_method_laststatus()
-        "  (1) to combine s:vimim_set_keymap_name() and part vimimegg()
-        "  (2) the idea is to try to keep one source one place
-	" ----------------------------------------------------------------------
         sil!call s:vimim_start_chinese_mode()
-        sil!call s:vimim_input_method_laststatus()
     else
         sil!call s:vimim_stop_chinese_mode()
     endif
@@ -4004,7 +3966,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_shuangpin_abc=1
+    let s:vimim_shuangpin_abc=0
     let s:vimim_static_input_style=-1
     let s:vimim_www_sogou=13
     " --------------------------------
@@ -4271,6 +4233,7 @@ function! s:vimim_initialize_i_setting()
     let s:saved_hlsearch=&hlsearch
     let s:saved_iminsert=&iminsert
     let s:saved_pumheight=&pumheight
+    let s:saved_statusline=&statusline
 endfunction
 
 " ------------------------------
@@ -4283,6 +4246,20 @@ function! s:vimim_i_setting_on()
     set iminsert=1
     set pumheight=9
     set nopaste
+    " ----------------------------------------------
+  " [NOTE] without split windows, one possilbe way is to define statusline
+  " [NOTE] (1) try to hard-coded in vimrc first
+  " [NOTE] (2) if it works, then hard-coded one line below
+  " [NOTE] (3) if it works, then replace hard value with b:keymap_name
+  " [NOTE] (4) if it works, then beer
+  " b:keymap_name is ready and can be used here ...
+  " set statusline=xxx
+  " -- examples from :help statusline
+  " set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+  " set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
+  " set statusline=%<%f%=\ [%1*%M%*%n%R%H]\ %-19(%3l,%02c%03V%)%O'%02b'
+  " set statusline=...%r%{VarExists('b:gzflag','\ [GZ]')}%h...
+    " ----------------------------------------------
 endfunction
 
 " -------------------------------
@@ -4295,6 +4272,7 @@ function! s:vimim_i_setting_off()
     let &hlsearch=s:saved_hlsearch
     let &iminsert=s:saved_iminsert
     let &pumheight=s:saved_pumheight
+    let &statusline=s:saved_statusline
 endfunction
 
 " ------------------------------------
