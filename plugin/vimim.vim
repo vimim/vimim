@@ -522,32 +522,8 @@ function! s:vimim_egg_vimim()
     let option = "mode\t 风格：" . option
     call add(eggs, option)
 " ----------------------------------
-    if s:wubi_flag > 0
-        let option = "五笔: trdeggwhssqu"
-        let option = "im\t 输入：" . option
-        call add(eggs, option)
-    endif
-" ----------------------------------
-    if s:pinyin_flag > 0
-        let option = "拼音: woyouyigemeng"
-        let option = "im\t 输入：" . option
-        call add(eggs, option)
-        if s:pinyin_flag == 2
-            let option = "pinyin\t 双拼："
-            if s:vimim_shuangpin_abc > 0
-                let option .= "智能ABC: woybyigemg"
-            elseif s:vimim_shuangpin_microsoft > 0
-                let option .= "微软: hkfgp;jxlisswouhq;yp"
-            elseif s:vimim_shuangpin_nature > 0
-                let option .= "自然码: hkfgpyjxlisswouhqyyp"
-            elseif s:vimim_shuangpin_plusplus > 0
-                let option .= "拼音加加: hdftpqjmlisywoigqqyz"
-            elseif s:vimim_shuangpin_purple > 0
-                let option .= "紫光: hqftp;jdlishwoisq;ym"
-            endif
-            call add(eggs, option)
-        endif
-    endif
+    let option = s:vimim_input_method_laststatus()
+    call add(eggs, option)
 " ----------------------------------
     let option = s:current_datafile
     if empty(option)
@@ -605,6 +581,55 @@ function! s:vimim_egg_vimim()
     call map(eggs, 'v:val . "　"')
     return eggs
 endfunction
+
+" -----------------------------------------
+function! s:vimim_input_method_laststatus()
+" -----------------------------------------
+    let im  = ''
+    let option  = ''
+  " -------------------------------------
+    if s:wubi_flag > 0
+        let im = "五笔"
+        let option = im . ": trdeggwhssqu"
+        let option = "im\t 输入：" . option
+  " -------------------------------------
+    elseif s:pinyin_flag == 1
+        let im = "拼音"
+        let option = im . ": woyouyigemeng"
+        let option = "im\t 输入：" . option
+  " -------------------------------------
+    elseif s:pinyin_flag == 2
+        let im = "双拼："
+        let option = "im\t 输入：" . im
+        if s:vimim_shuangpin_abc > 0
+            let im = "智能ABC"
+            let option .= im . " (woybyigemg)"
+        elseif s:vimim_shuangpin_microsoft > 0
+            let im = "微软"
+            let option .= im . " (hkfgp;jxlisswouhq;yp)"
+        elseif s:vimim_shuangpin_nature > 0
+            let im = "自然码"
+            let option .= im . " (hkfgpyjxlisswouhqyyp)"
+        elseif s:vimim_shuangpin_plusplus > 0
+            let im = "拼音加加"
+            let option .= im . " (hdftpqjmlisywoigqqyz)"
+        elseif s:vimim_shuangpin_purple > 0
+            let im = "紫光"
+            let option .= im . " (hqftp;jdlishwoisq;ym)"
+        endif
+        let im .= "双拼"
+    endif
+  " -------------------------------------
+    if s:four_corner_flag > 0
+        let im .= "＋四角号码"
+    endif
+  " -------------------------------------
+    let b:keymap_name = im
+  " -------------------------------------
+    return option
+  " -------------------------------------
+endfunction
+
 
 " ----------------------------------------
 function! s:vimim_easter_chicken(keyboard)
@@ -1227,9 +1252,9 @@ let VimIM = " ====  Chinese_Mode     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------
+" --------------------------------- xxx
 function! s:vimim_set_keymap_name()
-" ---------------------------------
+" --------------------------------- to be removed
 " TODO: We have more IMs than these.
     if s:wubi_flag > 0
         let keymap_name = "五笔"
@@ -1252,20 +1277,23 @@ function! s:vimim_set_keymap_name()
     elseif s:four_corner_flag > 0
         let keymap_name = "四角号码"
     endif
-
     let b:keymap_name = keymap_name
 endfunction
 
 " ---------------------------
 function! <SID>vimim_toggle()
 " ---------------------------
-    set nopaste
     if s:chinese_mode_toggle_flag < 1
-	" FIXME: When should we call the following function?
-	"        It works only with more than one windows right now, I don't
-	"        know why.
-        sil!call s:vimim_set_keymap_name()
+	" ----------------------------------------------------------------------
+	" FIXME: It works only with more than one windows right now, why?
+	" set laststatus=2  ==> status line always on (from :help laststatus)
+	" It includes b: management, another interesting area with challenges
+        " the purpose of s:vimim_input_method_laststatus()
+        "  (1) to combine s:vimim_set_keymap_name() and part vimimegg()
+        "  (2) the idea is to try to keep one source one place
+	" ----------------------------------------------------------------------
         sil!call s:vimim_start_chinese_mode()
+        sil!call s:vimim_input_method_laststatus()
     else
         sil!call s:vimim_stop_chinese_mode()
     endif
@@ -3976,7 +4004,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " -------------------------------- debug
-    let s:vimim_shuangpin_abc=0
+    let s:vimim_shuangpin_abc=1
     let s:vimim_static_input_style=-1
     let s:vimim_www_sogou=13
     " --------------------------------
@@ -4254,6 +4282,7 @@ function! s:vimim_i_setting_on()
     set hlsearch
     set iminsert=1
     set pumheight=9
+    set nopaste
 endfunction
 
 " -------------------------------
