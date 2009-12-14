@@ -197,7 +197,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_lcursor_color")
-    call add(G, "g:vimim_dynamic_mode_autocmd")
+    call add(G, "g:vimim_esc_autocmd")
     call add(G, "g:vimim_first_candidate_fix")
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_match_dot_after_dot")
@@ -960,12 +960,16 @@ function! <SID>vimim_start_onekey()
     inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
                          \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
+    if s:vimim_esc_autocmd > 0 && has("autocmd")
+        sil!autocmd InsertLeave sil!call s:vimim_stop()
+    endif
+    " ----------------------------------------------------------
     let onekey = "\t"
-    " -----------------------------------------------
+    " ---------------
     " <OneKey> double play
     "   (1) after English (valid keys) => trigger omni popup
     "   (2) after omni popup window    => disable itself
-    " -----------------------------------------------
+    " ----------------------------------------------------------
     if pumvisible()
         call s:vimim_stop()
         let onekey = ""
@@ -1236,12 +1240,12 @@ function! <SID>vimim_toggle()
     else
         sil!call s:vimim_stop_chinese_mode()
     endif
-    if s:vimim_dynamic_mode_autocmd > 0 && has("autocmd")
+    if s:vimim_esc_autocmd > 0 && has("autocmd")
         if !exists("s:dynamic_mode_autocmd_loaded")
             let s:dynamic_mode_autocmd_loaded = 1
-            sil!au InsertEnter sil!call s:vimim_start_chinese_mode()
-            sil!au InsertLeave sil!call s:vimim_stop_chinese_mode()
-            sil!au BufUnload   autocmd! InsertEnter,InsertLeave
+            sil!autocmd InsertEnter sil!call s:vimim_start_chinese_mode()
+            sil!autocmd InsertLeave sil!call s:vimim_stop_chinese_mode()
+            sil!autocmd BufUnload   autocmd! InsertEnter,InsertLeave
         endif
     endif
     sil!return "\<C-O>:redraw\<CR>"
@@ -2237,7 +2241,8 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
     if empty(s:vimim_smart_backspace)
         let msg = "this is dummy backspace"
     elseif s:vimim_smart_backspace == 1
-        if empty(s:chinese_input_mode)
+        if empty(s:vimim_sexy_onekey)
+        \&& empty(s:chinese_input_mode)
             call s:vimim_stop()
         endif
         if s:chinese_input_mode > 1
