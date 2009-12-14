@@ -960,10 +960,6 @@ function! <SID>vimim_start_onekey()
     inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
                          \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
-    if s:vimim_esc_autocmd > 0 && has("autocmd")
-        sil!autocmd InsertLeave sil!call s:vimim_stop()
-    endif
-    " ----------------------------------------------------------
     let onekey = "\t"
     " ---------------
     " <OneKey> double play
@@ -4883,6 +4879,12 @@ function! s:vimim_one_key_mapping_on()
     else
         imap<silent>     <Tab> <Plug>VimimOneKey
         inoremap<silent> <C-\> <Tab>
+    endif
+    " --------------------------------
+    if s:vimim_sexy_onekey > 1
+    \&& !exists("s:onekey_autocmd_loaded")
+        let s:onekey_autocmd_loaded = 1
+        sil!autocmd InsertLeave sil!call s:vimim_stop()
     endif
 endfunction
 
