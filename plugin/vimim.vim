@@ -2487,7 +2487,7 @@ function! s:vimim_popupmenu_list(matched_list)
     return popupmenu_list
 endfunction
 
-" ----------------------------------------
+" ---------------------------------------- xxx
 function! s:vimim_datafile_range(keyboard)
 " ----------------------------------------
     let lines = s:vimim_load_datafile(0)
@@ -2643,12 +2643,16 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_filter(results, keyboard, length)
 " -------------------------------------------------
-    let filter_length = a:length
     let results = a:results
+    let filter_length = a:length
+    if filter_length < 0
+        return results
+    endif
     let length = len((substitute(a:keyboard,'\A','','')))
     if empty(length) || &encoding != "utf-8"
         return results
     endif
+    " ---------------------------------------------
     if empty(filter_length)
         if s:vimim_shuangpin_dummy(a:keyboard) > 0
             let filter_length = length/2 |" 4_char => 2_chinese
@@ -2656,6 +2660,7 @@ function! s:vimim_filter(results, keyboard, length)
             let filter_length = length
         endif
     endif
+    " ---------------------------------------------
     if filter_length > 0
         let patterns = '\s\+.\{'. filter_length .'}$'
         call filter(results, 'v:val =~ patterns')
@@ -2968,7 +2973,7 @@ function! s:vimim_load_datafile(reload_flag)
             if len(s:lines_4corner_datafile) > 1
             \&& len(s:lines_datafile) > 1
                 call extend(s:lines_datafile, s:lines_4corner_datafile, 0)
-                let s:diy_pinyin_4corner = 999
+                let s:pinyin_and_4corner = 999
             endif
         endif
     endif
@@ -2991,7 +2996,7 @@ function! s:vimim_save_datafile(lines)
 " ------------------------------------
     if empty(a:lines)
     \|| empty(s:lines_datafile)
-    \|| s:diy_pinyin_4corner == 999
+    \|| s:pinyin_and_4corner == 999
         return
     endif
     if filewritable(s:current_datafile)
@@ -3778,6 +3783,13 @@ function! s:vimim_wubi_whole_match(keyboard)
     return keyboards
 endfunction
 
+" --------------------------- xxx
+function! s:wubi_and_pinyin()
+" ---------------------------
+    let detect = "wubi pinyin"
+    let z = "mark"
+endfunction
+
 " ======================================= }}}
 let VimIM = " ====  VimIM_Cloud      ==== {{{"
 " ===========================================
@@ -3992,7 +4004,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_diy_pinyin_digit()
 " ---------------------------------------------
     if s:pinyin_flag > 0 && s:four_corner_flag == 1
-        let s:diy_pinyin_4corner = 1
+        let s:pinyin_and_4corner = 1
     endif
     if s:pinyin_flag == 2
         return
@@ -4066,29 +4078,30 @@ endfunction
 function! s:vimim_quick_fuzzy_search(keyboard, filter)
 " ----------------------------------------------------
     let keyboard = a:keyboard
+    let filter_length = a:filter
     let results = s:vimim_datafile_range(keyboard)
     if empty(results)
         return []
     endif
-    let pattern = keyboard
+    let pattern = '^' .  keyboard
     let has_digit = match(keyboard, '^\d\+')
     " ------------------------------------------------
     if has_digit < 0
-        let pattern = '^' .  keyboard . '\>'
-        if len(keyboard) == 2 && a:filter == 2
+        if filter_length == 1
+            if len(keyboard) > 1
+                let pattern .= '\>'
+                let filter_length = -1
+            endif
+        elseif len(keyboard) == 2 && filter_length == 2
+            let pattern .= '\>'
             let pattern = s:vimim_fuzzy_pattern(keyboard)
         endif
-        " --------------------------------------
-        call filter(results, 'v:val =~ pattern')
-        " --------------------------------------
         if s:english_flag > 0
             call filter(results, 'v:val !~ "#$"')
         endif
-        " -------------------------------------------------------
-        let results = s:vimim_filter(results, keyboard, a:filter)
-        " -------------------------------------------------------
-    else
+    else |" ------------------------------------------
         let msg = "leave room to play with digits"
+        let filter_length = -1
         if s:four_corner_flag == 1001
             let msg = "another choice: top-left & bottom-right"
             let char_first = strpart(keyboard, 0, 1)
@@ -4100,9 +4113,14 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
             let char_last  = strpart(keyboard, len(keyboard)-2)
             let pattern = '^' .  char_first . "\d\d" . char_last
         endif
-        call filter(results, 'v:val =~ pattern')
     endif
+    " --------------------------------------
+    call filter(results, 'v:val =~ pattern')
+    " -----------------------------------------------------------
+    let results = s:vimim_filter(results, keyboard, filter_length)
+    " -----------------------------------------------------------
     return s:vimim_i18n_read_list(results)
+    " --------------------------------------
 endfunction
 
 " ------------------------------------------------
@@ -4138,7 +4156,7 @@ endfunction
 function! s:vimim_diy_keyboard(keyboard)
 " --------------------------------------
     let keyboard = a:keyboard
-    if empty(s:diy_pinyin_4corner)
+    if empty(s:pinyin_and_4corner)
     \|| s:chinese_input_mode > 1
     \|| len(keyboard) < 2
     \|| keyboard !~# s:valid_key
@@ -4223,11 +4241,11 @@ function! s:vimim_diy_keyboard2number(keyboard)
 endfunction
 
 " -------------------------------------------
-function! s:vimim_diy_pinyin_4corer(keyboard)
+function! s:vimim_pinyin_and_4corer(keyboard)
 " -------------------------------------------
     if s:pinyin_flag > 0 && s:four_corner_flag == 1
         let msg = " plug and play <=> pinyin and 4corner "
-        let s:diy_pinyin_4corner = 1
+        let s:pinyin_and_4corner = 1
     else
         return []
     endif
@@ -4253,17 +4271,17 @@ endfunction
 function! s:vimim_diy_results(keyboards)
 " --------------------------------------
     let keyboards = a:keyboards
-    if empty(s:diy_pinyin_4corner)
+    if empty(s:pinyin_and_4corner)
     \|| s:chinese_input_mode > 1
     \|| len(keyboards) < 2
     \|| len(keyboards) > 3
         return []
     endif
-    " ----------------------------------
-    let a = get(keyboards, 0)  |"    ma  mali  mali  ml
-    let b = get(keyboards, 1)  |"  7712  7712  7712  77
-    let c = get(keyboards, 2)  |"        ""    4002  40
-    " ----------------------------------
+    " --------------------------------------------------------
+    let a = get(keyboards, 0) |"   ma mali   ma_li  ma_li  ml
+    let b = get(keyboards, 1) |" 7712 7712   7712   7712   77
+    let c = get(keyboards, 2) |"              ""    4002   40
+    " --------------------------------------------------------
     let fuzzy_lines = []
     if len(keyboards) == 2
         let fuzzy_lines = s:vimim_quick_fuzzy_search(a, 1)
@@ -4286,7 +4304,7 @@ function! s:vimim_diy_results(keyboards)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  VimIM_Debug      ==== {{{"
+let VimIM = " ====  Debug_Framework  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4472,7 +4490,7 @@ function! s:vimim_start_omni()
 " ----------------------------
     let s:menu_from_cloud_flag = 0
     let s:insert_without_popup_flag = 0
-    let s:diy_pinyin_4corner = 0
+    let s:pinyin_and_4corner = 0
     let s:pattern_not_found = 1
 endfunction
 
@@ -4915,25 +4933,10 @@ else
         endif
     endif
 
-    " [4corner] do fuzzy search if all digits
-    " ---------------------------------------
-    if match_start > -1
-        let results = []
-        let has_digit = match(keyboard, '^\d\+')
-        if s:four_corner_flag > 0
-        \&& keyboard !~# '\D'
-        \&& has_digit > -1
-            let results = s:vimim_quick_fuzzy_search(keyboard, 1)
-        endif
-        if len(results) > 0
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     " [DIY] "Do It Yourself" couple IM: pinyin+4corner
     " ------------------------------------------------
     if match_start < 0
-        let results = s:vimim_diy_pinyin_4corer(keyboard)
+        let results = s:vimim_pinyin_and_4corer(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
         endif
