@@ -129,18 +129,20 @@ function! s:vimim_initialization()
     call s:vimim_initialize_global()
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
+    " -----------------------------------------
+    call s:vimim_initialize_datafile_debug()
     call s:vimim_initialize_debug()
     " -----------------------------------------
-    call s:vimim_initialize_datafile_primary()
+    call s:vimim_initialize_datafile_plugin()
     call s:vimim_initialize_datafile_privates()
+    call s:vimim_initialize_im_flag()
+    " -----------------------------------------
+    call s:vimim_initialize_shuangpin()
+    call s:vimim_initialize_datafile_pinyin()
     " -----------------------------------------
     call s:vimim_initialize_datafile_erbi()
     call s:vimim_initialize_datafile_wubi()
-    call s:vimim_initialize_www_sogou()
-    " -----------------------------------------
     call s:vimim_initialize_datafile_4corner()
-    call s:vimim_initialize_shuangpin()
-    call s:vimim_initialize_datafile_pinyin()
     call s:vimim_initialize_diy_pinyin_digit()
     " -----------------------------------------
     call s:vimim_initialize_valid_keys()
@@ -150,6 +152,8 @@ function! s:vimim_initialization()
     call s:vimim_initialize_encoding()
     call s:vimim_initialize_punctuations()
     call s:vimim_initialize_quantifiers()
+    call s:vimim_initialize_www_sogou()
+    " -----------------------------------------
     call s:vimim_finalize_session()
     " -----------------------------------------
 endfunction
@@ -163,14 +167,17 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
+    call add(G, "g:vimim_datafile_private")
+    call add(G, "g:vimim_datafile_4corner")
+    call add(G, "g:vimim_datafile_has_pinyin")
+    call add(G, "g:vimim_datafile_has_4corner")
+    call add(G, "g:vimim_datafile_has_english")
     call add(G, "g:vimim_diy_asdfghjklo")
-    call add(G, "g:vimim_english_in_datafile")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_fuzzy_search")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_imode_comma")
     call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_privates_txt")
     call add(G, "g:vimim_reverse_pageup_pagedown")
     call add(G, "g:vimim_sexy_input_style")
     call add(G, "g:vimim_shuangpin_dummy")
@@ -187,6 +194,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_sexy_onekey")
+    call add(G, "g:vimimdebug")
     " -----------------------------------
     let s:global_defaults = []
     let s:global_customized = []
@@ -235,23 +243,33 @@ endfunction
 " ----------------------------------
 function! s:vimim_finalize_session()
 " ----------------------------------
-    if s:vimim_english_in_datafile > 0
+    if s:vimim_datafile_has_english > 0
         let s:english_flag = 1
     endif
+    " ------------------------------
+    if s:vimim_datafile_has_pinyin > 0
+    \&& s:vimim_datafile_has_4corner > 0
+        let s:vimim_diy_asdfghjklo = 1
+    endif
+    " ------------------------------
     if s:four_corner_flag > 1
         let s:vimim_fuzzy_search = 0
         let s:vimim_static_input_style = 1
     endif
+    " ------------------------------
     if s:vimim_static_input_style < 0
         let s:vimim_static_input_style = 0
     endif
+    " ------------------------------
     if empty(s:vimim_www_sogou)
         let s:vimim_www_sogou = 888
     endif
+    " ------------------------------
     if s:current_datafile =~# "quote"
         let s:vimim_apostrophe_in_pinyin = 1
         let s:vimim_chinese_frequency = -1
     endif
+    " ------------------------------
 endfunction
 
 " ----------------------------------
@@ -270,16 +288,16 @@ function! s:vimim_initialize_color()
     endif
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_initialize_datafile_primary()
-" ---------------------------------------------
+" --------------------------------------------
+function! s:vimim_initialize_datafile_plugin()
+" --------------------------------------------
     let datafile = s:current_datafile
     if empty(datafile)
         let msg = "no user-specified datafile"
     else
         return
     endif
-    " --------------------------------------
+    " -----------------------------------------
     let input_methods = []
     call add(input_methods, "pinyin")
     call add(input_methods, "pinyin_quote_sogou")
@@ -308,8 +326,7 @@ function! s:vimim_initialize_datafile_primary()
     call add(input_methods, "12345")
     call add(input_methods, "hangul")
     call map(input_methods, '"vimim." . v:val . ".txt"')
-    call add(input_methods, "privates.txt")
-    " --------------------------------------
+    " -------------------------------
     for file in input_methods
         let datafile = s:path . file
         if filereadable(datafile)
@@ -318,7 +335,21 @@ function! s:vimim_initialize_datafile_primary()
             continue
         endif
     endfor
-    " --------------------------------------
+    " -------------------------------
+    if filereadable(datafile)
+        let s:current_datafile = datafile
+    endif
+    " -------------------------------
+endfunction
+
+" ------------------------------------
+function! s:vimim_initialize_im_flag()
+" ------------------------------------
+    let datafile = s:current_datafile
+    if empty(datafile)
+        let msg = "no datafile anywhere"
+        return
+    endif
     if filereadable(datafile)
         if datafile =~# 'erbi'
             let s:erbi_flag = 1
@@ -326,20 +357,19 @@ function! s:vimim_initialize_datafile_primary()
             let s:wubi_flag = -1
         elseif datafile =~# 'wubi'
             let s:wubi_flag = 1
-        elseif datafile =~# 'pinyin'
-            let s:pinyin_flag = 1
         elseif datafile =~# 'english'
             let s:english_flag = 1
         elseif datafile =~# '4corner'
+        \&& empty(s:four_corner_flag)
             let s:four_corner_flag = 2
         elseif datafile =~# 'ctc'
             let s:four_corner_flag = 4
         elseif datafile =~# '12345'
             let s:four_corner_flag = 5
-        elseif datafile =~# 'privates'
-            let s:privates_flag = 2
+        elseif datafile =~# 'pinyin'
+        \&& empty(s:pinyin_flag)
+            let s:pinyin_flag = 1
         endif
-        let s:current_datafile = datafile
     endif
 endfunction
 
@@ -431,6 +461,7 @@ function! s:vimim_egg_vimegg()
     call add(eggs, "环境　vimim")
     call add(eggs, "程式　vimimvim")
     call add(eggs, "帮助　vimimhelp")
+    call add(eggs, "测试　vimimdebug")
     call add(eggs, "设置　vimimdefaults")
     return map(eggs,  '"VimIM 彩蛋：" . v:val . "　"')
 endfunction
@@ -517,21 +548,22 @@ function! s:vimim_egg_vimim()
 " ----------------------------------
     let option = s:vimim_static_input_style
     if empty(option)
-        let option = 'CTRL-6　经典动态'
+        let option = 'i_CTRL-^　经典动态'
     else
-        let option = 'CTRL-6　经典静态'
+        let option = 'i_CTRL-^　经典静态'
     endif
     let option = "mode\t 风格：" . option
     call add(eggs, option)
 " ----------------------------------
     let option = s:vimim_initialize_im_statusline()
-    call add(eggs, option)
+    if !empty(option)
+        call add(eggs, option)
+    endif
 " ----------------------------------
     let option = s:current_datafile
     if empty(option)
         let msg = "no primary datafile, might play cloud"
     else
-        let option = strpart(option, len(s:path))
         let option = "datafile 词库：" . option
         call add(eggs, option)
     endif
@@ -539,13 +571,16 @@ function! s:vimim_egg_vimim()
     let option = s:privates_flag
     if empty(option)
         let msg = "no private datafile found"
-    elseif s:current_datafile !~# "privates"
+    else
         let option = "privates.txt"
         let option = "datafile 词库：" . option
         call add(eggs, option)
     endif
 " ----------------------------------
-    if s:four_corner_flag > 0
+    let option = s:four_corner_flag
+    if empty(option)
+        let msg = "no 4corner datafile found"
+    else
         let option = "四角号码: 6021272260021762"
         let option = "datafile 词库：" . option
         call add(eggs, option)
@@ -590,6 +625,8 @@ function! s:vimim_easter_chicken(keyboard)
     let egg = a:keyboard
     if egg =~# '\l' && len(egg) < 24
         let msg = "hunt easter egg ... vim<C-\>"
+    elseif egg ==# ",," && s:vimimdebug > 0
+        let msg = 'quick dirty lazy debugging'
     else
         return []
     endif
@@ -605,6 +642,8 @@ function! s:vimim_easter_chicken(keyboard)
         return s:vimim_egg_vimimhelp()
     elseif egg ==# "vimimdefaults"
         return s:vimim_egg_vimimdefaults()
+    elseif egg ==# "vimimdebug" || egg ==# ",,"
+        return s:vimim_egg_vimimdebug()
     endif
 endfunction
 
@@ -1030,6 +1069,7 @@ function! s:vimim_onekey(onekey)
     if char_before_before !~# "[0-9a-z]"
     \&& has_key(s:punctuations, char_before)
     \&& s:vimim_sexy_onekey > 0
+        " -----------------------------------------------
         let space = ""
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
@@ -1039,13 +1079,22 @@ function! s:vimim_onekey(onekey)
                 continue
             endif
         endfor
+        " -----------------------------------------------
         if empty(space)
             let replacement = s:punctuations[char_before]
             let space = "\<BS>" . replacement
         else
             let msg = "too smart is not smart"
         endif
-        sil!exe 'sil!return "' . space . '"'
+        " -----------------------------------------------
+        if s:vimimdebug > 0
+        \&& char_before ==# ","
+        \&& char_before ==# char_before_before
+            let msg = 'make double comma ",," for debugging'
+        else
+            sil!exe 'sil!return "' . space . '"'
+        endif
+        " -----------------------------------------------
     endif
     " ---------------------------------------------------
     if char_before !~# s:valid_key
@@ -1710,7 +1759,7 @@ endfunction
 " -----------------------------------
 function! s:vimim_date_time(keyboard)
 " -----------------------------------
-    if empty(s:vimim_debug_flag)
+    if s:vimimdebug < 1
         return []
     endif
     let time = 0
@@ -1832,6 +1881,9 @@ function! s:vimim_translator(english)
     endif
     if empty(s:ecdict)
         call s:vimim_initialize_e2c()
+        if empty(s:ecdict)
+            return ''
+        endif
     endif
     let english = substitute(a:english, '\A', ' & ', 'g')
     let chinese = substitute(english, '.', '&\n', 'g')
@@ -2416,6 +2468,11 @@ function! s:vimim_popupmenu_list(matched_list)
         if tail =~ '\w'
             let chinese .=  tail
         endif
+        " -------------------------------------------------
+        if s:vimimdebug > 3
+            call s:debugs('tail', tail)
+        endif
+        " -------------------------------------------------
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
         let label += 1
@@ -2553,8 +2610,8 @@ function! s:vimim_fuzzy_match(lines, keyboard)
     if empty(keyboard) || empty(a:lines)
         return []
     endif
-    let patterns = s:vimim_fuzzy_pattern(keyboard)
-    let results = filter(a:lines, 'v:val =~ patterns')
+    let pattern = s:vimim_fuzzy_pattern(keyboard)
+    let results = filter(a:lines, 'v:val =~ pattern')
     if s:english_flag > 0
         call filter(results, 'v:val !~ "#$"')
     endif
@@ -2648,20 +2705,21 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
     if empty(a:lines)
     \|| s:chinese_input_mode > 1
     \|| s:current_datafile_has_dot > 0
-    \|| s:privates_flag > 1
     \|| len(s:private_matches) > 0
     \|| len(a:keyboard) < 2
-        return keyboard
+        return 0
     endif
     " --------------------------------------------------
-    if keyboard =~ '^\l\+\d\+' && keyboard =~ '\l\+\d\=$'
+    if keyboard =~ '^\l\+\d\+'
         let msg = "[diy] ma7712li4002 => [mali,7712,4002]"
-        return keyboard
+        return 0
     endif
     " --------------------------------------------------
-    let keyboard2 = s:vimim_diy_keyboard2number(keyboard)
-        if keyboard2 !=# keyboard
-        return keyboard
+    let keyboards = s:vimim_diy_keyboard2number(keyboard)
+    if empty(keyboards)
+        let msg = " mjads.xdhao.jdaaa "
+    else
+        return 0
     endif
     " --------------------------------------------------
     let blocks = []
@@ -2922,7 +2980,7 @@ function! s:vimim_save_input_history(lines)
 " -----------------------------------------
     let frequency = s:vimim_chinese_frequency
     if frequency > 1
-        if s:keyboard_counts>0 && empty(s:keyboard_counts % frequency)
+        if s:keyboard_count>0 && empty(s:keyboard_count % frequency)
             call s:vimim_save_datafile(a:lines)
         endif
     endif
@@ -3078,13 +3136,14 @@ function! s:vimim_initialize_datafile_privates()
     let s:privates_datafile = 0
     let s:lines_privates_datafile = []
     let s:private_matches = []
-    if s:privates_flag > 1
+    if s:vimimdebug > 1
+        let msg = "no privacy during debug"
         return
     endif
     let datafile = s:path . "privates.txt"
-    if !empty(s:vimim_privates_txt)
-    \&& filereadable(s:vimim_privates_txt)
-        let s:privates_datafile = s:vimim_privates_txt
+    if !empty(s:vimim_datafile_private)
+    \&& filereadable(s:vimim_datafile_private)
+        let s:privates_datafile = s:vimim_datafile_private
     elseif filereadable(datafile)
         let s:privates_datafile = datafile
     endif
@@ -3146,11 +3205,20 @@ function! s:vimim_initialize_datafile_4corner()
     let s:four_corner_lines = []
     let s:four_corner_unicode_flag = 0
     let s:unicode_menu_display_flag = 0
-    if s:vimim_debug_flag > 0 || empty(s:pinyin_flag)
-        return
+    " -----------------------------------------
+    if empty(s:four_corner_flag)
+        if s:vimim_datafile_has_4corner > 0
+            let s:four_corner_flag = 1
+            return
+        endif
     endif
+    " -----------------------------------------
     let datafile = s:path . "vimim.4corner.txt"
-    if filereadable(datafile)
+    if !empty(s:vimim_datafile_4corner)
+    \&& filereadable(s:vimim_datafile_4corner)
+        let datafile = s:vimim_datafile_4corner
+    elseif filereadable(datafile)
+    \&& s:four_corner_flag != 2
         let msg = "we want to play with four corner"
     else
         let datafile = s:path . "vimim.12345.txt"
@@ -3160,14 +3228,20 @@ function! s:vimim_initialize_datafile_4corner()
             return
         endif
     endif
-    let s:four_corner_flag = 1
+    " -----------------------------------
     let s:four_corner_datafile = datafile
+    " -----------------------------------
+    if empty(s:four_corner_datafile)
+        return
+    else
+        let s:four_corner_flag = 1
+    endif
 endfunction
 
 " ------------------------------
 function! s:vimim_load_4corner()
 " ------------------------------
-    if s:vimim_debug_flag > 0 || empty(s:four_corner_flag)
+    if s:vimim_datafile_has_4corner > 0
         return []
     endif
     if empty(s:lines_4corner_datafile)
@@ -3193,51 +3267,6 @@ function! s:vimim_4corner_whole_match(keyboard)
     " -------------------------------
     let keyboards = split(a:keyboard, '\(.\{4}\)\zs')
     return keyboards
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_diy_keyboard2number(keyboard)
-" ---------------------------------------------
-    let keyboard = a:keyboard
-    if empty(s:vimim_diy_asdfghjklo)
-    \|| empty(s:digit_keyboards)
-    \|| s:chinese_input_mode > 1
-    \|| len(a:keyboard) < 5
-    \|| len(a:keyboard) > 6
-        return keyboard
-    endif
-    if a:keyboard =~ '\d'
-        return keyboard
-    else
-        let s:diy_pinyin_4corner = 4
-    endif
-    let alphabet_length = 0
-    if len(keyboard) == 5
-        let msg = "asofo"
-        let alphabet_length = 1
-    elseif len(keyboard) == 6
-        let msg = "zaskso"
-        let alphabet_length = 2
-    else
-        return keyboard
-    endif
-    let result = strpart(keyboard, 0, alphabet_length)
-    if result !~ '\l'
-        return keyboard
-    endif
-    let four_corner = strpart(keyboard, alphabet_length)
-    if four_corner !~ '\D'
-        return keyboard
-    endif
-    for char in split(four_corner, '\zs')
-        if has_key(s:digit_keyboards, char)
-            let digit = s:digit_keyboards[char]
-            let result .= digit
-        else
-            return keyboard
-        endif
-    endfor
-    return result
 endfunction
 
 " --------------------------------------------
@@ -3296,7 +3325,11 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_datafile_pinyin()
 " --------------------------------------------
     if empty(s:pinyin_flag)
-        return
+        if s:vimim_datafile_has_pinyin > 0
+            let s:pinyin_flag = 1
+        else
+            return
+        endif
     endif
     " -----------------------------------
     if s:pinyin_flag != 2
@@ -3306,6 +3339,7 @@ function! s:vimim_initialize_datafile_pinyin()
     if empty(s:vimim_imode_pinyin)
         let s:vimim_imode_pinyin = 1
     endif
+    " -----------------------------------
 endfunction
 
 " ------------------------------------
@@ -3395,9 +3429,9 @@ function! s:vimim_initialize_shuangpin()
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_quanpin_from_shuangpin(keyboard)
-" ------------------------------------------------
+" ----------------------------------------------------
+function! s:vimim_get_quanpin_from_shuangpin(keyboard)
+" ----------------------------------------------------
     let keyboard = a:keyboard
     if s:pinyin_flag != 2
         return keyboard
@@ -3408,6 +3442,10 @@ function! s:vimim_quanpin_from_shuangpin(keyboard)
         return keyboard
     endif
     let keyboard2 = s:vimim_shuangpin_transform(keyboard)
+    if s:vimimdebug > 0 && s:pinyin_flag == 2
+        call s:debugs('shuangpin_in', keyboard)
+        call s:debugs('shuangpin_out', keyboard2)
+    endif
     if keyboard2 ==# keyboard
         let msg = "no point to do transform"
     else
@@ -3748,7 +3786,7 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_plug_n_play_www_sogou()
 " ---------------------------------------
-    if empty(s:current_datafile) || s:privates_flag == 2
+    if empty(s:current_datafile)
         if (executable('wget') || executable('curl'))
             if empty(s:vimim_www_sogou)
                 let s:vimim_www_sogou = 1
@@ -3942,9 +3980,6 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
     " ----------------------------
     " ['woyouyigemeng 我有一个梦']
     " ----------------------------
-    if s:vimim_debug_flag > 0
-        let g:cloud_results=menu
-    endif
     return menu
 endfunction
 
@@ -3952,49 +3987,6 @@ endfunction
 let VimIM = " ====  VimIM_DIY        ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
-
-" ----------------------------------
-function! s:vimim_initialize_debug()
-" ----------------------------------
-    let s:vimim_debug_flag = 0
-    let debug_datafile = s:path . "vimim.txt"
-    let global_datafile = s:vimim_datafile
-    " -------------------------------------------
-    if !empty(global_datafile)
-    \&& filereadable(global_datafile)
-        let s:current_datafile = global_datafile
-    elseif filereadable(debug_datafile)
-        let s:current_datafile = debug_datafile
-        let s:vimim_debug_flag = 1
-    endif
-    if empty(s:vimim_debug_flag)
-        return
-    endif
-    " -------------------------------- debug
-    let s:vimim_shuangpin_abc=1
-    let s:vimim_static_input_style=-1
-    let s:vimim_www_sogou=13
-    " --------------------------------
-    let s:vimim_sexy_onekey=1
-    let s:vimim_imode_comma=1
-    " --------------------------------
-    let s:vimim_imode_pinyin=-1
-    let s:vimim_tab_for_one_key=1
-    let s:vimim_custom_skin=1
-    let s:pinyin_flag=1
-    let s:vimim_english_in_datafile=1
-    let s:four_corner_flag=1
-    let s:vimim_diy_asdfghjklo=1
-    let s:vimim_wildcard_search=1
-    let s:vimim_reverse_pageup_pagedown=1
-    let s:vimim_smart_backspace=1
-    let s:vimim_smart_ctrl_h=1
-    let s:vimim_english_punctuation=0
-    let s:vimim_chinese_punctuation=1
-    let s:vimim_unicode_lookup=0
-    let s:vimim_shuangpin_dummy=0
-    " ---------------------------------------
-endfunction
 
 " ---------------------------------------------
 function! s:vimim_initialize_diy_pinyin_digit()
@@ -4070,30 +4062,31 @@ function! s:vimim_diy_double_menu(hash_0, hash_1, hash_2)
     return sort(values)
 endfunction
 
-" --------------------------------------------
-function! s:vimim_quick_fuzzy_search(keyboard)
-" --------------------------------------------
+" ----------------------------------------------------
+function! s:vimim_quick_fuzzy_search(keyboard, filter)
+" ----------------------------------------------------
     let keyboard = a:keyboard
     let results = s:vimim_datafile_range(keyboard)
     if empty(results)
         return []
     endif
-    let pattern = "^" .  keyboard
+    let pattern = keyboard
     let has_digit = match(keyboard, '^\d\+')
+    " ------------------------------------------------
     if has_digit < 0
-        let length = s:diy_pinyin_4corner
-        if length == 1 || length == 2
-            if length == 2
-                let pattern = substitute(keyboard,' ','.*','')
-            endif
-            call filter(results, 'v:val =~ pattern')
-            if s:english_flag > 0
-                call filter(results, 'v:val !~ "#$"')
-            endif
-            let results = s:vimim_filter(results, keyboard, length)
-        elseif s:vimim_fuzzy_search > 0
-            let results = s:vimim_fuzzy_match(results, keyboard)
+        let pattern = '^' .  keyboard . '\>'
+        if len(keyboard) == 2 && a:filter == 2
+            let pattern = s:vimim_fuzzy_pattern(keyboard)
         endif
+        " --------------------------------------
+        call filter(results, 'v:val =~ pattern')
+        " --------------------------------------
+        if s:english_flag > 0
+            call filter(results, 'v:val !~ "#$"')
+        endif
+        " -------------------------------------------------------
+        let results = s:vimim_filter(results, keyboard, a:filter)
+        " -------------------------------------------------------
     else
         let msg = "leave room to play with digits"
         if s:four_corner_flag == 1001
@@ -4149,59 +4142,111 @@ function! s:vimim_diy_keyboard(keyboard)
     \|| s:chinese_input_mode > 1
     \|| len(keyboard) < 2
     \|| keyboard !~# s:valid_key
+    \|| keyboard =~# '^\d'
         return []
     endif
-    " --------------------------------------------
-    " do diy couple input method for 2-char phrase
-    " --------------------------------------------
-    " let mali = "ma7712li4002"          |" [mali,7712,4002]
-    " let keyboards = split(mali,'\d\+') |" => ['ma', 'li']
-    " let keyboards = split(mali,'\l\+') |" => 7712', '4002']
-    if keyboard =~ '^\l\+\d\+'           |" yun0mu
-    \&& keyboard =~ '\l\+\d\=$'          |" yu0mu for ABC
-        let keyboard = substitute(keyboard,"'",'','g')
-        let keyboards = split(keyboard, '\d\+')
-        let alpha_string = join(keyboards)
-        let keyboards = split(keyboard, '\l\+')
-        call insert(keyboards, alpha_string)
-        let s:diy_pinyin_4corner = 2
-        return keyboards
+    let keyboards = []
+    " ---------------------------------------
+    " free style pinyin+4corner for zi and ci
+    " ---------------------------------------
+    let zi = "ma7712"
+    let ci = "ma7712li4002 ma7712li"
+    " --------------------------------------------------------------
+    let alpha_keyboards = split(keyboard, '\d\+') |" => ['ma', 'li']
+    let digit_keyboards = split(keyboard, '\D\+') |" => ['77', '40']
+    " --------------------------------------------------------------
+    let keyboards = copy(digit_keyboards)
+    let alpha_string = join(alpha_keyboards, '')
+    call insert(keyboards, alpha_string) |" ma77li40=>['mali',77,40]
+    if len(alpha_keyboards) > 1 && len(digit_keyboards) < 2
+        call add(keyboards, "") |" ma7712li => ['mali', '7712', '']
     endif
-    " -------------------------------------------
-    " do diy couple input method (pinyin+4corner)
-    " -------------------------------------------
-    let lines = s:vimim_load_datafile(0)
-    let pattern = '^' . keyboard . '\>'
-    let match_start = match(lines, pattern)
-    if  match_start > -1
+    " --------------------------------------------------------------
+    if len(keyboards) < 2
+        let keyboards = []
+    endif
+    return keyboards
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_diy_keyboard2number(keyboard)
+" ---------------------------------------------
+    let keyboard = a:keyboard
+    if empty(s:vimim_diy_asdfghjklo)
+    \|| empty(s:digit_keyboards)
+    \|| s:chinese_input_mode > 1
+    \|| len(a:keyboard) < 5
+    \|| len(a:keyboard) > 6
         return []
     endif
-    " ----------------------------------
-    let alpha = match(keyboard, '\a\+')
-    let digit = match(keyboard, '\d\+')
-    if digit < 0 || alpha < 0
+    if a:keyboard =~ '\d'
+    \|| a:keyboard !~ '\l'
         return []
     endif
-    " ---------------------------------
-    let break_into_three = '' |" mljjfo => ml7140 => ['ml','71','40']
-    let alpha_string = strpart(keyboard, 0, digit)
-    let digit_string = strpart(keyboard, digit)
-    " ----------------------------------
-    if s:diy_pinyin_4corner == 4
-        if alpha > 0
-            let alpha_string = strpart(keyboard, alpha)
-            let digit_string = strpart(keyboard, 0, alpha)
-        elseif len(alpha_string) == 2
-            let digit_string = strpart(keyboard, digit, 2)
-            let break_into_three = strpart(keyboard, digit+2)
-        elseif len(alpha_string) > 1
-            \&& len(split(digit_string,'\zs')) < 2
-            \&& digit_string !~ '[1-4]' |" if ma3, pinyin tone 1,2,3,4
+    let alphabet_length = 1
+    " -----------------------------------------
+    if len(keyboard) == 5
+        let zi = "mljjfo => ml7140 => ['ml', 71, 40]"
+    elseif len(keyboard) == 6
+        let ci = "mjjas  => m7712  => ['m', 7712]"
+        let alphabet_length = 2
+    else
+        return []
+    endif
+    " -----------------------------------------
+    let keyboards = []
+    let head = strpart(keyboard, 0, alphabet_length)
+    call add(keyboards, head)
+    " -----------------------------------------
+    let tail = ''
+    let four_corner = strpart(keyboard, alphabet_length)
+    for char in split(four_corner, '\zs')
+        if has_key(s:digit_keyboards, char)
+            let digit = s:digit_keyboards[char]
+            let tail .= digit
+        else
             return []
         endif
+    endfor
+    if len(tail) != 4
+        return []
     endif
-    let keyboards = [alpha_string, digit_string, break_into_three]
+    " -----------------------------------------
+    if alphabet_length == 1
+        call add(keyboards, tail)
+    elseif alphabet_length == 2
+        call add(keyboards, strpart(tail,0,2))
+        call add(keyboards, strpart(tail,2,2))
+    endif
+    " -----------------------------------------
     return keyboards
+endfunction
+
+" -------------------------------------------
+function! s:vimim_diy_pinyin_4corer(keyboard)
+" -------------------------------------------
+    if s:pinyin_flag > 0 && s:four_corner_flag == 1
+        let msg = " plug and play <=> pinyin and 4corner "
+        let s:diy_pinyin_4corner = 1
+    else
+        return []
+    endif
+    let keyboard = a:keyboard
+    let keyboards = s:vimim_diy_keyboard2number(keyboard)
+    if empty(keyboards)
+        let keyboards = s:vimim_diy_keyboard(keyboard)
+        if s:vimimdebug > 0
+            call s:debugs('diy_keyboard', keyboard)
+            call s:debugs('diy_keyboards', s:debug_list(keyboards))
+        endif
+    else
+        if s:vimimdebug > 0
+            call s:debugs('diy_keyboard', keyboard)
+            call s:debugs('diy_keyboard2number', s:debug_list(keyboards))
+        endif
+    endif
+    let results = s:vimim_diy_results(keyboards)
+    return results
 endfunction
 
 " --------------------------------------
@@ -4209,18 +4254,140 @@ function! s:vimim_diy_results(keyboards)
 " --------------------------------------
     let keyboards = a:keyboards
     if empty(s:diy_pinyin_4corner)
-    \|| empty(keyboards)
     \|| s:chinese_input_mode > 1
+    \|| len(keyboards) < 2
+    \|| len(keyboards) > 3
         return []
     endif
-    let fuzzy_lines = s:vimim_quick_fuzzy_search(get(keyboards,0))
+    " ----------------------------------
+    let a = get(keyboards, 0)  |"    ma  mali  mali  ml
+    let b = get(keyboards, 1)  |"  7712  7712  7712  77
+    let c = get(keyboards, 2)  |"        ""    4002  40
+    " ----------------------------------
+    let fuzzy_lines = []
+    if len(keyboards) == 2
+        let fuzzy_lines = s:vimim_quick_fuzzy_search(a, 1)
+    elseif len(keyboards) == 3
+        let fuzzy_lines = s:vimim_quick_fuzzy_search(a, 2)
+    endif
     let hash_0 = s:vimim_diy_lines_to_hash(fuzzy_lines)
-    let fuzzy_lines = s:vimim_quick_fuzzy_search(get(keyboards,1))
+    " ----------------------------------
+    let fuzzy_lines = s:vimim_quick_fuzzy_search(b, 1)
     let hash_1 = s:vimim_diy_lines_to_hash(fuzzy_lines)
-    let fuzzy_lines = s:vimim_quick_fuzzy_search(get(keyboards,2))
-    let hash_2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
+    " ----------------------------------
+    let hash_2 = {}
+    if len(keyboards) > 2
+        let fuzzy_lines = s:vimim_quick_fuzzy_search(c, 1)
+        let hash_2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
+    endif
+    " ----------------------------------
     let results = s:vimim_diy_double_menu(hash_0, hash_1, hash_2)
     return results
+endfunction
+
+" ======================================= }}}
+let VimIM = " ====  VimIM_Debug      ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" -------------------------------------------
+function! s:vimim_initialize_datafile_debug()
+" -------------------------------------------
+    if s:vimimdebug < 0
+        return
+    endif
+    " ---------------------------------------
+    let global_datafile = s:vimim_datafile
+    let debug_datafile = s:path . "vimim.txt"
+    " ---------------------------------------
+    if !empty(global_datafile)
+    \&& filereadable(global_datafile)
+        let s:current_datafile = global_datafile
+    elseif s:vimimdebug < 2
+    \&& filereadable(debug_datafile)
+        let s:current_datafile = debug_datafile
+        let s:vimim_datafile_has_english = 1
+        let s:vimim_datafile_has_pinyin = 1
+        let s:vimim_datafile_has_4corner = 1
+        let s:vimimdebug = 1
+    endif
+endfunction
+
+" ----------------------------------
+function! s:vimim_initialize_debug()
+" ----------------------------------
+    if s:vimimdebug < 0
+        return
+    endif
+    " ------------------------------
+    if s:vimimdebug > 0
+        let s:vimim_tab_for_one_key=1
+        let s:vimim_custom_skin=1
+        let s:vimim_sexy_onekey=1
+    endif
+    " ------------------------------ debug
+    let s:vimim_www_sogou=13
+    let s:vimim_static_input_style=-1
+    " ------------------------------
+    let s:vimim_imode_comma=1
+    let s:vimim_imode_pinyin=-1
+    let s:vimim_wildcard_search=1
+    let s:vimim_reverse_pageup_pagedown=1
+    let s:vimim_smart_backspace=1
+    let s:vimim_smart_ctrl_h=1
+    let s:vimim_english_punctuation=0
+    let s:vimim_chinese_punctuation=1
+    let s:vimim_unicode_lookup=0
+    " ------------------------------
+endfunction
+
+" --------------------------------
+function! s:vimim_egg_vimimdebug()
+" --------------------------------
+    let eggs = []
+    for item in s:debugs
+        let egg = ",,, "
+        let egg .= item
+        let egg .= "　"
+        call add(eggs, egg)
+    endfor
+    if empty(eggs)
+        let eggs = s:vimim_egg_vimimdefaults()
+    endif
+    return eggs
+endfunction
+
+" ----------------------------
+function! s:debugs(key, value)
+" ----------------------------
+    let item = '['
+    let item .= s:debug_count
+    let item .= ']'
+    let item .= a:key
+    let item .= '='
+    let item .= a:value
+    call add(s:debugs, item)
+endfunction
+
+" -----------------------------
+function! s:debug_list(results)
+" -----------------------------
+    let string_in = string(a:results)
+    let length = 5
+    let delimiter = ":"
+    let string_out = join(split(string_in)[0 : length], delimiter)
+    return string_out
+endfunction
+
+" -----------------------------
+function! s:vimim_debug_reset()
+" -----------------------------
+    if s:vimimdebug > 0
+        let max = 512
+        if s:debug_count > max
+            let s:debugs = s:debugs[0 : max]
+        endif
+    endif
 endfunction
 
 " ======================================= }}}
@@ -4251,20 +4418,6 @@ function! s:vimim_i_setting_on()
     set iminsert=1
     set pumheight=9
     set nopaste
-    " ----------------------------------------------
-  " [NOTE] without split windows, one possilbe way is to define statusline
-  " [NOTE] (1) try to hard-coded in vimrc first
-  " [NOTE] (2) if it works, then hard-coded one line below
-  " [NOTE] (3) if it works, then replace hard value with b:keymap_name
-  " [NOTE] (4) if it works, then beer
-  " b:keymap_name is ready and can be used here ...
-  " set statusline=xxx
-  " -- examples from :help statusline
-  " set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
-  " set statusline=%<%f%h%m%r%=%b\ 0x%B\ \ %l,%c%V\ %P
-  " set statusline=%<%f%=\ [%1*%M%*%n%R%H]\ %-19(%3l,%02c%03V%)%O'%02b'
-  " set statusline=...%r%{VarExists('b:gzflag','\ [GZ]')}%h...
-    " ----------------------------------------------
 endfunction
 
 " -------------------------------
@@ -4288,10 +4441,11 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:wubi_flag = 0
     let s:erbi_flag = 0
-    let s:privates_flag = 0
-    let s:english_flag = 0
-    let s:four_corner_flag = 0
     let s:pinyin_flag = 0
+    let s:english_flag = 0
+    let s:privates_flag = 0
+    let s:four_corner_flag = 0
+    " --------------------------------
     let s:digit_keyboards = {}
     let s:current_datafile = 0
     let s:current_datafile_has_dot = 0
@@ -4307,16 +4461,18 @@ function! s:vimim_initialize_session()
     let s:start_column_before = 1
     let s:current_positions = [0,0,1,0]
     let s:keyboards = ['','']
-    let s:keyboard_counts = 0
+    let s:keyboard_count = 0
+    let s:debugs = []
+    let s:debug_count = 0
     " --------------------------------
 endfunction
 
 " ----------------------------
 function! s:vimim_start_omni()
 " ----------------------------
-    let s:diy_pinyin_4corner = 0
     let s:menu_from_cloud_flag = 0
     let s:insert_without_popup_flag = 0
+    let s:diy_pinyin_4corner = 0
     let s:pattern_not_found = 1
 endfunction
 
@@ -4341,6 +4497,7 @@ function! s:vimim_stop()
 " ----------------------
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_super_reset()
+    sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_unmap()
 endfunction
 
@@ -4476,7 +4633,7 @@ if a:start
         let chinese = s:vimim_chinese_before(start_row, start_column)
         if char2nr(chinese) > 127 && len(get(s:keyboards,0)) > 0
             let s:keyboards[1] = chinese
-            let s:keyboard_counts += 1
+            let s:keyboard_count += 1
         endif
     endif
 
@@ -4490,9 +4647,12 @@ if a:start
 
 else
 
-    if s:vimim_debug_flag > 0
-        let g:keyboard_s=s:keyboard_leading_zero
-        let g:keyboard_a=a:keyboard
+    if s:vimimdebug > 0
+        let s:debug_count += 1
+        call s:debugs('keyboard', s:keyboard_leading_zero)
+        if s:vimimdebug > 2
+            call s:debugs('keyboard_a', a:keyboard)
+        endif
     endif
 
     if s:one_key_correction > 0
@@ -4528,7 +4688,7 @@ else
 
     " [eggs] hunt classic easter egg ... vim<C-\>
     " -------------------------------------------
-    if keyboard =~# "^vim"
+    if keyboard =~# "^vim" || keyboard ==# ",,"
         let results = s:vimim_easter_chicken(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
@@ -4567,8 +4727,8 @@ else
         endif
     endif
 
-    " [imode] magic ',': English number => Chinese number
-    " ---------------------------------------------------
+    " [imode] magic comma: English number => Chinese number
+    " -----------------------------------------------------
     if s:vimim_imode_comma > 0
     \&& empty(s:chinese_input_mode)
     \&& keyboard =~# '^,'
@@ -4607,18 +4767,14 @@ else
     " ----------------------------------------------------
     let keyboard2 = s:vimim_magic_tail(keyboard)
     if empty(keyboard2)
-        let msg = "Who cares about such a magic?"
+        let msg = "who cares about such a magic?"
     else
         let keyboard = keyboard2
     endif
 
     " [shuangpin] support 5 major shuangpin with various rules
     " ----------------------------------------------------
-    let keyboard = s:vimim_quanpin_from_shuangpin(keyboard)
-    if s:vimim_debug_flag > 0
-        let g:shuangpin_in=keyboard
-        let g:shuangpin_out=keyboard2
-    endif
+    let keyboard = s:vimim_get_quanpin_from_shuangpin(keyboard)
 
     " [cloud] to make cloud come true for woyouyigemeng
     " -------------------------------------------------
@@ -4629,9 +4785,9 @@ else
         let msg = "Cloud limits valid cloud keycodes only"
     else
         let results = s:vimim_get_sogou_cloud_im(keyboard)
-        if s:vimim_debug_flag > 0
-            let g:cloud_in_keyboard=keyboard
-            let g:cloud_out_results=results
+        if s:vimimdebug > 0
+            call s:debugs('cloud_stone', keyboard)
+            call s:debugs('cloud_gold', s:debug_list(results))
         endif
         if empty(len(results))
             if s:vimim_www_sogou > 2
@@ -4684,7 +4840,7 @@ else
 
     " first process private data, if existed
     " --------------------------------------
-    if s:privates_flag == 1
+    if s:privates_flag > 0
     \&& len(s:privates_datafile) > 0
     \&& keyboard !~ "['.?*]"
         let results = s:vimim_search_vimim_privates(keyboard)
@@ -4746,50 +4902,39 @@ else
     " -----------------------------------------------------
     if match_start < 0
         let keyboard2 = s:vimim_keyboard_analysis(lines, keyboard)
-        if s:vimim_debug_flag > -1
-            let g:no_cloud_in=keyboard
-            let g:no_cloud_out=keyboard2
-        endif
-        if keyboard2 !=# keyboard
+        if empty(keyboard2)
+            let msg = 'sell keyboard as is'
+        else
+            if s:vimimdebug > 0
+                call s:debugs('keyboard_in', keyboard)
+                call s:debugs('keyboard_out', keyboard2)
+            endif
             let keyboard = keyboard2
             let pattern = "\\C" . "^" . keyboard
             let match_start = match(lines, pattern)
         endif
     endif
 
-    " [DIY] "Do It Yourself" couple IM: pinyin+4corner
-    " ------------------------------------------------
-    let keyboards = []
-    if match_start < 0
-        if s:pinyin_flag > 0 && s:four_corner_flag == 1
-            let s:diy_pinyin_4corner = 1
-            let keyboard2 = s:vimim_diy_keyboard2number(keyboard)
-            if s:vimim_debug_flag > -1
-                let g:pinyin_4corner_in=keyboard
-                let g:pinyin_4corner_out=keyboard2
-            endif
-            let keyboards = s:vimim_diy_keyboard(keyboard2)
-            let mixtures = s:vimim_diy_results(keyboards)
-            if len(mixtures) > 0
-                return s:vimim_popupmenu_list(mixtures)
-            else
-                let s:diy_pinyin_4corner = 0
-            endif
+    " [4corner] do fuzzy search if all digits
+    " ---------------------------------------
+    if match_start > -1
+        let results = []
+        let has_digit = match(keyboard, '^\d\+')
+        if s:four_corner_flag > 0
+        \&& keyboard !~# '\D'
+        \&& has_digit > -1
+            let results = s:vimim_quick_fuzzy_search(keyboard, 1)
+        endif
+        if len(results) > 0
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
-    " do fuzzy search for 4 corner
-    " ----------------------------
-    if match_start > -1
-        let has_digit = match(keyboard, '\d\+')
-        let results = []
-        if has_digit > -1
-        \&& len(keyboards) > 1
-        \&& s:four_corner_flag > 0
-            let results = s:vimim_quick_fuzzy_search(keyboard)
-        endif
+    " [DIY] "Do It Yourself" couple IM: pinyin+4corner
+    " ------------------------------------------------
+    if match_start < 0
+        let results = s:vimim_diy_pinyin_4corer(keyboard)
         if len(results) > 0
-            let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
