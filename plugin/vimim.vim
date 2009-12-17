@@ -695,7 +695,7 @@ function! s:vimim_initialize_im_statusline()
     let option  = ''
   " -------------------------------------
     if s:wubi_sleep_with_pinyin > 0
-        let option = "五笔　CTRL-6　拼音"
+        let option = "五笔　i_CTRL-^　拼音"
         let option = "im\t 输入：" . option
   " -------------------------------------
     elseif s:wubi_flag > 0
