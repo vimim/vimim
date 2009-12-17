@@ -110,6 +110,7 @@ call add(s:vimims, VimIM)
 " The <value>, separated by spaces, is what will be inserted.
 " The 2nd and the 3rd column can be repeated without restriction.
 
+
 " ======================================= }}}
 let VimIM = " ====  Initialization   ==== {{{"
 " ===========================================
@@ -121,7 +122,6 @@ let b:loaded_vimim=1
 let s:vimimhelp = egg
 let s:path=expand("<sfile>:p:h")."/"
 scriptencoding utf-8
-" --------------------------------
 
 " --------------------------------
 function! s:vimim_initialization()
@@ -145,8 +145,7 @@ function! s:vimim_initialization()
     " -----------------------------------------
     call s:vimim_initialize_valid_keys()
     " -----------------------------------------
-    call s:vimim_initialize_im_statusline()
-    call s:vimim_initialize_color()
+    call s:vimim_initialize_skin()
     call s:vimim_initialize_encoding()
     call s:vimim_initialize_punctuations()
     call s:vimim_initialize_quantifiers()
@@ -155,6 +154,12 @@ function! s:vimim_initialization()
     call s:vimim_finalize_session()
     " -----------------------------------------
 endfunction
+
+
+" ======================================= }}}
+let VimIM = " ====  Customization    ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
 
 " -----------------------------------
 function! s:vimim_initialize_global()
@@ -279,20 +284,28 @@ function! s:vimim_finalize_session()
     " ------------------------------
 endfunction
 
-" ----------------------------------
-function! s:vimim_initialize_color()
-" ----------------------------------
-    if s:vimim_custom_skin > 0
-        highlight! link PmenuSel  Title
-        highlight! Pmenu          NONE
-        highlight! PmenuSbar	  NONE
-        highlight! PmenuThumb	  NONE
-        if s:vimim_custom_skin > 2
-            highlight! clear
-            highlight! PmenuSbar  NONE
-            highlight! PmenuThumb NONE
-        endif
+" ---------------------------------
+function! s:vimim_initialize_skin()
+" ---------------------------------
+    if s:vimim_custom_skin < 1
+        return
     endif
+    " --------------------------
+    highlight! link PmenuSel   Title
+    highlight!      Pmenu      NONE
+    highlight!      PmenuSbar  NONE
+    highlight!      PmenuThumb NONE
+    " --------------------------
+    if s:vimim_custom_skin == 2
+        highlight!      StatusLine NONE
+    else
+        highlight! link StatusLine Title
+    endif
+    " --------------------------
+    if s:vimim_custom_skin < 3
+        let msg = "no extra_text on menu"
+    endif
+    " --------------------------
 endfunction
 
 " -----------------------------------
@@ -558,25 +571,30 @@ function! s:vimim_egg_vimim()
     elseif has("macunix")
         let option = "macunix"
     endif
+" ----------------------------------
+    let ciku = "datafile 词库："
+    let versions = "\t 版本："
+    let encoding = "编码："
+" ----------------------------------
     let option .= "_" . &term
     let option = "computer 电脑：" . option
     call add(eggs, option)
 " ----------------------------------
-    let option = "Vim\t 版本：" . v:version
+    let option = "Vim" . versions . v:version
     call add(eggs, option)
 " ----------------------------------
     let option = get(split($VimIM), 1)
     if empty(option)
         let msg = "not a SVN check out, revision number not available"
     else
-        let option = "VimIM\t 版本：" . option
+        let option = "VimIM" . versions . option
         call add(eggs, option)
     endif
 " ----------------------------------
-    let option = "encoding 编码：" . &encoding
+    let option = "encoding " . encoding . &encoding
     call add(eggs, option)
 " ----------------------------------
-    let option = "fencs\t 编码：" . &fencs
+    let option = "fencs\t "  . encoding . &fencs
     call add(eggs, option)
 " ----------------------------------
     let option = s:vimim_static_input_style
@@ -588,7 +606,8 @@ function! s:vimim_egg_vimim()
     let option = "mode\t 风格：" . option
     call add(eggs, option)
 " ----------------------------------
-    let option = s:vimim_initialize_im_statusline()
+    let im_option = s:vimim_get_im_statusline()
+    let option = get(im_option, 1)
     if !empty(option)
         call add(eggs, option)
     endif
@@ -597,7 +616,7 @@ function! s:vimim_egg_vimim()
     if empty(option)
         let msg = "no primary datafile, might play cloud"
     else
-        let option = "datafile 词库：" . option
+        let option = ciku . option
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -605,7 +624,7 @@ function! s:vimim_egg_vimim()
     if option < 1
         let msg = "no secondary pinyin datafile for wubi"
     else
-        let option = "datafile 词库：" . s:datafile_secondary
+        let option = ciku . s:datafile_secondary
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -614,7 +633,7 @@ function! s:vimim_egg_vimim()
         let msg = "no private datafile found"
     else
         let option = "privates.txt"
-        let option = "datafile 词库：" . option
+        let option = ciku . option
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -622,18 +641,18 @@ function! s:vimim_egg_vimim()
     if option < 1
         let msg = "no 4corner datafile found"
     else
-        let option = "四角号码: 6021272260021762"
-        let option = "datafile 词库：" . option
+        let option = "〖四角号码〗6021272260021762"
+        let option = ciku . option
         call add(eggs, option)
     endif
 " ----------------------------------
     let option = "cloud\t 搜狗："
     if s:vimim_www_sogou < 0
-        let option .= "晴天无云"
+        let option .= "〖晴天无云〗"
     elseif s:vimim_www_sogou == 888
-        let option .= "想云就云"
+        let option .= "〖想云就云〗"
     elseif option == 1
-        let option .= "全云输入"
+        let option .= "〖全云输入〗"
     else
         let number = s:vimim_www_sogou
         if len(s:quantifiers) > 10
@@ -688,56 +707,71 @@ function! s:vimim_easter_chicken(keyboard)
     endif
 endfunction
 
-" ------------------------------------------
-function! s:vimim_initialize_im_statusline()
-" ------------------------------------------
+" -----------------------------------
+function! s:vimim_get_im_statusline()
+" -----------------------------------
     let im  = ''
     let option  = ''
-  " -------------------------------------
+    let input = "输入："
+    let wubi = "〖五笔〗"
+    let erbi = "〖二笔〗"
+    let pinyin = "〖拼音〗"
+    let shuangpin = "〖双拼〗"
+    let toggle = "i_CTRL-^"
+  " ---------------------------------
     if s:wubi_sleep_with_pinyin > 0
-        let option = "五笔　i_CTRL-^　拼音"
-        let option = "im\t 输入：" . option
-  " -------------------------------------
-    elseif s:wubi_flag > 0
-        let im = "五笔"
-        let option = im . ": trdeggwhssqu"
-        let option = "im\t 输入：" . option
-  " -------------------------------------
-    elseif s:pinyin_flag > 0
-        let im = "拼音"
-        let option = im . ": woyouyigemeng"
-        let option = "im\t 输入：" . option
-  " -------------------------------------
-    elseif s:shuangpin_flag > 0
-        let im = "双拼："
-        let option = "im\t 输入：" . im
-        if s:vimim_shuangpin_abc > 0
-            let im = "智能ABC"
-            let option .= im . " (woybyigemg)"
-        elseif s:vimim_shuangpin_microsoft > 0
-            let im = "微软"
-            let option .= im . " (hkfgp;jxlisswouhq;yp)"
-        elseif s:vimim_shuangpin_nature > 0
-            let im = "自然码"
-            let option .= im . " (hkfgpyjxlisswouhqyyp)"
-        elseif s:vimim_shuangpin_plusplus > 0
-            let im = "拼音加加"
-            let option .= im . " (hdftpqjmlisywoigqqyz)"
-        elseif s:vimim_shuangpin_purple > 0
-            let im = "紫光"
-            let option .= im . " (hqftp;jdlishwoisq;ym)"
+        let option = wubi . toggle . pinyin
+        let option = "im\t " . input . option
+        if empty(s:ctrl_6_count%2)
+            let im = pinyin . toggle . wubi
+        else
+            let im = wubi . toggle . pinyin
         endif
-        let im .= "双拼"
+        return [im, option]
     endif
-  " -------------------------------------
-    if s:four_corner_flag > 0
-        let im .= "＋四角号码"
+  " --------------------------------- xxx
+    if s:wubi_flag > 0
+        let im = wubi
+        let option = im . ": trdeggwhssqu"
+        let option = "im\t " . input . option
+    elseif s:erbi_flag > 0
+        let im = erbi
+        let option = "im\t " . input . im
+    else
+  " ---------------------------------
+        if s:pinyin_flag > 0
+            let im = pinyin
+            let option = im . ": woyouyigemeng"
+            let option = "im\t " . input . option
+       " ----------------------------
+        elseif s:shuangpin_flag > 0
+            let im = shuangpin . "："
+            let option = "im\t " . input . im
+            if s:vimim_shuangpin_abc > 0
+                let im = "智能ABC"
+                let option .= im . " (woybyigemg)"
+            elseif s:vimim_shuangpin_microsoft > 0
+                let im = "微软"
+                let option .= im . " (hkfgp;jxlisswouhq;yp)"
+            elseif s:vimim_shuangpin_nature > 0
+                let im = "自然码"
+                let option .= im . " (hkfgpyjxlisswouhqyyp)"
+            elseif s:vimim_shuangpin_plusplus > 0
+                let im = "拼音加加"
+                let option .= im . " (hdftpqjmlisywoigqqyz)"
+            elseif s:vimim_shuangpin_purple > 0
+                let im = "紫光"
+                let option .= im . " (hqftp;jdlishwoisq;ym)"
+            endif
+            let im .= shuangpin
+        endif
+       " ----------------------------
+        if s:four_corner_flag > 0
+            let im .= "＋〖四角号码〗"
+        endif
     endif
-  " -------------------------------------
-    let b:keymap_name = im
-  " -------------------------------------
-    return option
-  " -------------------------------------
+  " ---------------------------------
+    return [im, option]
 endfunction
 
 " ======================================= }}}
@@ -1370,7 +1404,7 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_start_chinese_mode()
-" ------------------------------------
+" ------------------------------------ xxx
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_start()
     let s:chinese_mode_toggle_flag = 1
@@ -2478,7 +2512,7 @@ function! s:vimim_popupmenu_list(matched_list)
             continue
         endif
         " -------------------------------------------------
-        if s:vimim_custom_skin < 2
+        if s:vimim_custom_skin < 3
             let extra_text = menu
             if s:four_corner_unicode_flag > 0
             \&& empty(match(extra_text, '^\d\{4}$'))
@@ -3763,7 +3797,7 @@ call add(s:vimims, VimIM)
 
 " ---------------------------------
 function! s:vimim_initialize_erbi()
-" ---------------------------------
+" --------------------------------- xxx
     if empty(s:erbi_flag)
         return
     endif
@@ -4462,7 +4496,7 @@ function! s:vimim_initialize_debug()
     " ------------------------------
     if s:vimimdebug > 0
         let s:vimim_tab_for_one_key=1
-        let s:vimim_custom_skin=1
+        let s:vimim_custom_skin=2
         let s:vimim_sexy_onekey=1
     endif
     " ------------------------------
@@ -4548,23 +4582,28 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_i_setting()
 " --------------------------------------
     let s:saved_cpo=&cpo
+    let s:saved_iminsert=&iminsert
     let s:completefunc=&completefunc
     let s:completeopt=&completeopt
     let s:saved_lazyredraw=&lazyredraw
     let s:saved_hlsearch=&hlsearch
-    let s:saved_iminsert=&iminsert
     let s:saved_pumheight=&pumheight
     let s:saved_statusline=&statusline
+    let s:saved_laststatus=&laststatus
 endfunction
 
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
+    let im_option = s:vimim_get_im_statusline()
+    let b:keymap_name = get(im_option, 0)
+    set laststatus=2
+    set iminsert=1
+    set imdisable
     set completefunc=VimIM
     set completeopt=menuone
     set nolazyredraw
     set hlsearch
-    set iminsert=1
     set pumheight=9
 endfunction
 
@@ -4572,13 +4611,14 @@ endfunction
 function! s:vimim_i_setting_off()
 " -------------------------------
     let &cpo=s:saved_cpo
+    let &iminsert=s:saved_iminsert
     let &completefunc=s:completefunc
     let &completeopt=s:completeopt
     let &lazyredraw=s:saved_lazyredraw
     let &hlsearch=s:saved_hlsearch
-    let &iminsert=s:saved_iminsert
     let &pumheight=s:saved_pumheight
     let &statusline=s:saved_statusline
+    let &laststatus=s:saved_laststatus
 endfunction
 
 " ------------------------------------
@@ -4619,8 +4659,10 @@ function! s:vimim_initialize_session()
     let s:start_column_before = 1
     let s:current_positions = [0,0,1,0]
     let s:keyboards = ['','']
+    " --------------------------------
     let s:debugs = []
     let s:debug_count = 0
+    " --------------------------------
     let s:keyboard_count = 0
     let s:ctrl_6_count = 1
     " --------------------------------
