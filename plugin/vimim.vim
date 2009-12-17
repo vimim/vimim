@@ -292,17 +292,12 @@ function! s:vimim_initialize_skin()
     endif
     " --------------------------
     highlight! link PmenuSel   Title
+    highlight! link StatusLine Title
     highlight!      Pmenu      NONE
     highlight!      PmenuSbar  NONE
     highlight!      PmenuThumb NONE
     " --------------------------
-    if s:vimim_custom_skin == 2
-        highlight!      StatusLine NONE
-    else
-        highlight! link StatusLine Title
-    endif
-    " --------------------------
-    if s:vimim_custom_skin < 3
+    if s:vimim_custom_skin > 1
         let msg = "no extra_text on menu"
     endif
     " --------------------------
@@ -2512,7 +2507,7 @@ function! s:vimim_popupmenu_list(matched_list)
             continue
         endif
         " -------------------------------------------------
-        if s:vimim_custom_skin < 3
+        if s:vimim_custom_skin < 2
             let extra_text = menu
             if s:four_corner_unicode_flag > 0
             \&& empty(match(extra_text, '^\d\{4}$'))
@@ -4496,7 +4491,7 @@ function! s:vimim_initialize_debug()
     " ------------------------------
     if s:vimimdebug > 0
         let s:vimim_tab_for_one_key=1
-        let s:vimim_custom_skin=2
+        let s:vimim_custom_skin=1
         let s:vimim_sexy_onekey=1
     endif
     " ------------------------------
