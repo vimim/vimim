@@ -1148,7 +1148,7 @@ function! s:vimim_onekey(onekey)
     " ---------------------------------------------------
     if char_before_before !~# "[0-9a-z]"
     \&& has_key(s:punctuations, char_before)
-    \&& s:vimim_sexy_onekey > 0
+"   \&& s:vimim_sexy_onekey > 0
         " -----------------------------------------------
         let space = ""
         for char in keys(s:punctuations_all)
@@ -4510,7 +4510,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_www_sogou=122
+    let s:vimim_www_sogou=12
     let s:vimim_static_input_style=-1
     " ------------------------------
     let s:vimim_fuzzy_search = 1
