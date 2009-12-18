@@ -193,7 +193,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_tab_for_one_key")
     call add(G, "g:vimim_unicode_lookup")
-    call add(G, "g:vimim_pinyin_4corner_zi")
     call add(G, "g:vimim_fuzzy_search")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_www_sogou")
@@ -4219,36 +4218,44 @@ function! s:vimim_diy_lines_to_hash(fuzzy_lines)
     return chinese_to_keyboard_hash
 endfunction
 
-" -------------------------------------------------------
-function! s:vimim_diy_double_menu(hash_0, hash_1, hash_2)
-" -------------------------------------------------------
-    if empty(a:hash_0)  |" {'马力':'mali','名流':'mingliu'}
-    \|| empty(a:hash_1) |" {'马':'7712'}
+" ---------------------------------------------------------
+function! s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
+" ---------------------------------------------------------
+    if empty(a:h_0)  |" {'马力':'mali','名流':'mingliu'}
+    \|| empty(a:h_1) |" {'马':'7712'}
         return []       |" {'力':'4002'}
     endif
     let values = []
-    for key in keys(a:hash_0)
+    for key in keys(a:h_0)
         let char_first = key
         let char_last = key
         if len(key) > 1
             let char_first = strpart(key, 0, s:multibyte)
             let char_last = strpart(key, len(key)-s:multibyte)
         endif
-        let first_or_last = char_first
-        if empty(s:vimim_pinyin_4corner_zi)
-            let first_or_last = char_last
-        endif
-        if empty(a:hash_2)
-        \&& has_key(a:hash_1, first_or_last)        |" ml77
-            let menu_vary = a:hash_0[key]           |" mali
-            let menu_fix  = a:hash_1[first_or_last] |" 7712
+        " --------------------------------------------
+        if empty(a:h_2)
+        \&& len(a:keyboards) == 2
+        \&& has_key(a:h_1, char_last)               |" mali4002
+            let menu_vary = a:h_0[key]              |" mali
+            let menu_fix  = a:h_1[char_last]        |" 4002
+            let menu = menu_fix.'　'.menu_vary      |" 4002 mali
+            call add(values, menu." ".key)
+        " --------------------------------------------
+        elseif empty(a:h_2)
+        \&& len(a:keyboards) == 3
+        \&& has_key(a:h_1, char_first)              |" ma7712li
+            let menu_vary = a:h_0[key]              |" mali
+            let menu_fix  = a:h_1[char_first]       |" 7712
             let menu = menu_fix.'　'.menu_vary      |" 7712 mali
             call add(values, menu." ".key)
-        elseif has_key(a:hash_1, char_first)
-        \&& has_key(a:hash_2, char_last)
-            let menu_vary = a:hash_0[key]           |" ml7740
-            let menu_fix1 = a:hash_1[char_first]    |" 7712
-            let menu_fix2 = a:hash_2[char_last]     |" 4002
+        " --------------------------------------------
+        elseif has_key(a:h_1, char_first)
+        \&& len(a:h_2) > 0
+        \&& has_key(a:h_2, char_last)
+            let menu_vary = a:h_0[key]              |" ml7740
+            let menu_fix1 = a:h_1[char_first]       |" 7712
+            let menu_fix2 = a:h_2[char_last]        |" 4002
             let menu_fix = menu_fix1.'　'.menu_fix2 |" 7712 4002
             let menu = menu_fix.'　'.menu_vary      |" 7712 4002 mali
             call add(values, menu." ".key)
@@ -4471,18 +4478,18 @@ function! s:vimim_diy_results(keyboards)
     elseif len(keyboards) == 3
         let fuzzy_lines = s:vimim_quick_fuzzy_search(a, 2)
     endif
-    let hash_0 = s:vimim_diy_lines_to_hash(fuzzy_lines)
+    let h_0 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     " ----------------------------------
     let fuzzy_lines = s:vimim_quick_fuzzy_search(b, 1)
-    let hash_1 = s:vimim_diy_lines_to_hash(fuzzy_lines)
+    let h_1 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     " ----------------------------------
-    let hash_2 = {}
+    let h_2 = {}
     if len(keyboards) > 2
         let fuzzy_lines = s:vimim_quick_fuzzy_search(c, 1)
-        let hash_2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
+        let h_2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     endif
     " ----------------------------------
-    let results = s:vimim_diy_double_menu(hash_0, hash_1, hash_2)
+    let results = s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
     return results
 endfunction
 
@@ -4537,7 +4544,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_fuzzy_search = 1
     let s:vimim_wildcard_search=1
     " ------------------------------
-    let s:vimim_pinyin_4corner_zi=0
     let s:vimim_imode_comma=1
     let s:vimim_imode_pinyin=-1
     " ------------------------------
