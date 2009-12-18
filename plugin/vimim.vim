@@ -193,6 +193,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_tab_for_one_key")
     call add(G, "g:vimim_unicode_lookup")
+    call add(G, "g:vimim_pinyin_4corner_zi")
     call add(G, "g:vimim_fuzzy_search")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_www_sogou")
@@ -2719,8 +2720,8 @@ function! s:vimim_fuzzy_pattern(keyboard)
     let start = '^'
     let fuzzies = join(split(keyboard,'\ze'), fuzzy)
     let end = fuzzy . '\d\=' . '\>'
-    let patterns = start . fuzzies . end
-    return patterns
+    let pattern = start . fuzzies . end
+    return pattern
 endfunction
 
 " -------------------------------------------------
@@ -2731,6 +2732,7 @@ function! s:vimim_filter(results, keyboard, length)
     if filter_length < 0
         return results
     endif
+    " ---------------------------------------------
     let length = len((substitute(a:keyboard,'\A','','')))
     if empty(length) || &encoding != "utf-8"
         return results
@@ -2745,8 +2747,8 @@ function! s:vimim_filter(results, keyboard, length)
     endif
     " ---------------------------------------------
     if filter_length > 0
-        let patterns = '\s\+.\{'. filter_length .'}$'
-        call filter(results, 'v:val =~ patterns')
+        let pattern = '\s\+.\{'. filter_length .'}$'
+        call filter(results, 'v:val =~ pattern')
     endif
     return results
 endfunction
@@ -4185,8 +4187,8 @@ function! s:vimim_diy_lines_to_hash(fuzzy_lines)
     endif
     let chinese_to_keyboard_hash = {}
     for line in a:fuzzy_lines
-        let words = split(line)
-        let menu = get(words,0)
+        let words = split(line)  |" shishi 事实 诗史
+        let menu = get(words,0)  |" shishi
         for word in words
             if word != menu
                 let chinese_to_keyboard_hash[word] = menu
@@ -4211,10 +4213,14 @@ function! s:vimim_diy_double_menu(hash_0, hash_1, hash_2)
             let char_first = strpart(key, 0, s:multibyte)
             let char_last = strpart(key, len(key)-s:multibyte)
         endif
+        let first_or_last = char_first
+        if empty(s:vimim_pinyin_4corner_zi)
+            let first_or_last = char_last
+        endif
         if empty(a:hash_2)
-        \&& has_key(a:hash_1, char_first)           |" ml77
+        \&& has_key(a:hash_1, first_or_last)        |" ml77
             let menu_vary = a:hash_0[key]           |" mali
-            let menu_fix  = a:hash_1[char_first]    |" 7712
+            let menu_fix  = a:hash_1[first_or_last] |" 7712
             let menu = menu_fix.'　'.menu_vary      |" 7712 mali
             call add(values, menu." ".key)
         elseif has_key(a:hash_1, char_first)
@@ -4504,13 +4510,14 @@ function! s:vimim_initialize_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_www_sogou=12
+    let s:vimim_www_sogou=122
     let s:vimim_static_input_style=-1
     " ------------------------------
     let s:vimim_fuzzy_search = 1
     let s:vimim_wildcard_search=1
     " ------------------------------
     let s:vimim_imode_comma=1
+    let s:vimim_pinyin_4corner_zi=1
     let s:vimim_imode_pinyin=-1
     " ------------------------------
     let s:vimim_smart_backspace=1
