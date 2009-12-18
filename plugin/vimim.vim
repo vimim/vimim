@@ -1117,6 +1117,11 @@ endfunction
 function! <SID>vimim_start_onekey()
 " ---------------------------------
     let s:chinese_input_mode = 0
+    " -----------------------------
+    if s:vimim_sexy_onekey > 0
+        set noruler
+    endif
+    " -----------------------------
     sil!call s:vimim_start()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
@@ -1426,10 +1431,7 @@ function! s:vimim_start_chinese_mode()
 " ------------------------------------ xxx
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_start()
-    set laststatus=2
-    let s:ctrl_6_count += 1
-    let s:wubi_pinyin_flag = s:ctrl_6_count%2
-    let s:chinese_mode_toggle_flag = 1
+    sil!call s:vimim_i_chinese_mode_setting_on()
     " ---------------------------------------------------------
     if empty(s:vimim_static_input_style)
         let msg = " ### chinese mode dynamic ### "
@@ -4616,19 +4618,29 @@ function! s:vimim_initialize_i_setting()
     let s:saved_pumheight=&pumheight
     let s:saved_statusline=&statusline
     let s:saved_laststatus=&laststatus
+    let s:saved_ruler=&ruler
 endfunction
 
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
-    let b:keymap_name = get(s:vimim_statusline(),0)
-    set iminsert=1
-    set imdisable
     set completefunc=VimIM
     set completeopt=menuone
     set nolazyredraw
     set hlsearch
     set pumheight=9
+endfunction
+
+" -------------------------------------------
+function! s:vimim_i_chinese_mode_setting_on()
+" -------------------------------------------
+    set laststatus=2
+    set iminsert=1
+    set imdisable
+    let b:keymap_name = get(s:vimim_statusline(),0)
+    let s:ctrl_6_count += 1
+    let s:wubi_pinyin_flag = s:ctrl_6_count%2
+    let s:chinese_mode_toggle_flag = 1
 endfunction
 
 " -------------------------------
@@ -4643,6 +4655,7 @@ function! s:vimim_i_setting_off()
     let &pumheight=s:saved_pumheight
     let &statusline=s:saved_statusline
     let &laststatus=s:saved_laststatus
+    let &ruler=s:saved_ruler
 endfunction
 
 " ------------------------------------
@@ -5277,18 +5290,11 @@ function! s:vimim_one_key_mapping_on()
     if empty(s:vimim_one_key)
         return
     endif
-    " --------------------------------
     if empty(s:vimim_tab_for_one_key)
-        imap<silent>     <C-\> <Plug>VimimOneKey
+        imap<silent> <C-\> <Plug>VimimOneKey
     else
-        imap<silent>     <Tab> <Plug>VimimOneKey
+        imap<silent> <Tab> <Plug>VimimOneKey
         inoremap<silent> <C-\> <Tab>
-    endif
-    " --------------------------------
-    if s:vimim_sexy_onekey > 1
-    \&& !exists("s:onekey_autocmd_loaded")
-        let s:onekey_autocmd_loaded = 1
-        sil!autocmd InsertLeave sil!call s:vimim_stop()
     endif
 endfunction
 
