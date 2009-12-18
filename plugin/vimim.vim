@@ -575,14 +575,15 @@ function! s:vimim_egg_vimim()
     let option = "computer 电脑：" . option
     call add(eggs, option)
 " ----------------------------------
-    let option = "Vim" . versions . v:version
+    let option = v:progname . "　"
+    let option = "Vim" . versions  . option . v:version
     call add(eggs, option)
 " ----------------------------------
     let option = get(split($VimIM), 1)
     if empty(option)
         let msg = "not a SVN check out, revision number not available"
     else
-        let option = "VimIM" . versions . option
+        let option = "VimIM" . versions . "vimim.vim　" . option
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -590,6 +591,9 @@ function! s:vimim_egg_vimim()
     call add(eggs, option)
 " ----------------------------------
     let option = "fencs\t "  . encoding . &fencs
+    call add(eggs, option)
+" ----------------------------------
+    let option = "lc_time\t " . encoding . v:lc_time
     call add(eggs, option)
 " ----------------------------------
     let option = s:vimim_static_input_style
@@ -1402,9 +1406,10 @@ function! s:vimim_start_chinese_mode()
 " ------------------------------------ xxx
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_start()
-    let s:chinese_mode_toggle_flag = 1
+    set laststatus=2
     let s:ctrl_6_count += 1
     let s:wubi_pinyin_flag = s:ctrl_6_count%2
+    let s:chinese_mode_toggle_flag = 1
     " ---------------------------------------------------------
     if empty(s:vimim_static_input_style)
         let msg = " ### chinese mode dynamic ### "
@@ -4591,7 +4596,6 @@ endfunction
 function! s:vimim_i_setting_on()
 " ------------------------------
     let b:keymap_name = get(s:vimim_statusline(),0)
-    set laststatus=2
     set iminsert=1
     set imdisable
     set completefunc=VimIM
