@@ -601,8 +601,7 @@ function! s:vimim_egg_vimim()
     let option = "mode\t 风格：" . option
     call add(eggs, option)
 " ----------------------------------
-    let im_option = s:vimim_get_im_statusline()
-    let option = get(im_option, 1)
+    let option = get(s:vimim_statusline(),1)
     if !empty(option)
         call add(eggs, option)
     endif
@@ -702,9 +701,9 @@ function! s:vimim_easter_chicken(keyboard)
     endif
 endfunction
 
-" -----------------------------------
-function! s:vimim_get_im_statusline()
-" -----------------------------------
+" ----------------------------
+function! s:vimim_statusline()
+" ----------------------------
     let im  = ''
     let option  = ''
     let input = "输入："
@@ -1389,9 +1388,10 @@ function! <SID>vimim_toggle()
     if s:vimim_esc_autocmd > 0 && has("autocmd")
         if !exists("s:dynamic_mode_autocmd_loaded")
             let s:dynamic_mode_autocmd_loaded = 1
+            sil!autocmd BufEnter * let &statusline=get(s:vimim_statusline(),0)
             sil!autocmd InsertEnter sil!call s:vimim_start_chinese_mode()
             sil!autocmd InsertLeave sil!call s:vimim_stop_chinese_mode()
-            sil!autocmd BufUnload   autocmd! InsertEnter,InsertLeave
+            sil!autocmd BufUnload autocmd! InsertEnter,InsertLeave,BufEnter
         endif
     endif
     sil!return "\<C-O>:redraw\<CR>"
@@ -4590,8 +4590,7 @@ endfunction
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
-    let im_option = s:vimim_get_im_statusline()
-    let b:keymap_name = get(im_option, 0)
+    let b:keymap_name = get(s:vimim_statusline(),0)
     set laststatus=2
     set iminsert=1
     set imdisable
