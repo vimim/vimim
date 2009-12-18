@@ -368,51 +368,48 @@ function! s:vimim_initialize_plugin()
             let s:wubi_sleep_with_pinyin = 1
         endif
     endif
-    " -------------------------------
 endfunction
 
 " ------------------------------------
 function! s:vimim_initialize_im_flag()
 " ------------------------------------
-    let datafile = s:current_datafile
-    " --------------------------------
-    if datafile =~# 'erbi'
-        let s:erbi_flag = 1
-    elseif datafile =~# 'wubi2pinyin'
-        let s:wubi_flag = -1
-    elseif datafile =~# 'wubi'
-        let s:wubi_flag = 1
-    elseif datafile =~# 'english'
-        let s:english_flag = 1
-    elseif datafile =~# '4corner'
-    \&& empty(s:four_corner_flag)
-        let s:four_corner_flag = 2
-    elseif datafile =~# 'ctc'
-        let s:four_corner_flag = 4
-    elseif datafile =~# '12345'
-        let s:four_corner_flag = 5
-    elseif datafile =~# 'pinyin'
-    \&& empty(s:pinyin_flag)
-        let s:pinyin_flag = 1
+    if empty(s:current_datafile)
+    \|| !filereadable(s:current_datafile)
+        let msg = "no datafile anywhere"
+        return
+    else
+        let s:datafile_primary = s:current_datafile
     endif
     " ------------------------------
-    if datafile =~# "quote"
+    if s:current_datafile =~# "quote"
         let s:vimim_datafile_has_apostrophe = 1
         let s:chinese_frequency = -1
     endif
     " --------------------------------
-    if datafile =~# "chinese"
+    if s:current_datafile =~# "chinese"
         let s:vimim_datafile_is_not_utf8 = 1
     endif
-    " ------------------------------
-    let datafile = s:current_datafile
-    if empty(datafile) || !filereadable(datafile)
-        let msg = "no datafile anywhere"
-        return
-    else
-        let s:datafile_primary = datafile
-    endif
     " --------------------------------
+    if s:current_datafile =~# 'erbi'
+        let s:erbi_flag = 1
+    elseif s:current_datafile =~# 'wubi2pinyin'
+        let s:wubi_flag = -1
+    elseif s:current_datafile =~# 'wubi'
+        let s:wubi_flag = 1
+    elseif s:current_datafile =~# 'english'
+        let s:english_flag = 1
+    elseif s:current_datafile =~# '4corner'
+    \&& empty(s:four_corner_flag)
+        let s:four_corner_flag = 2
+    elseif s:current_datafile =~# 'ctc'
+        let s:four_corner_flag = 4
+    elseif s:current_datafile =~# '12345'
+        let s:four_corner_flag = 5
+    elseif s:current_datafile =~# 'pinyin'
+    \&& empty(s:pinyin_flag)
+        let s:pinyin_flag = 1
+    endif
+    " ------------------------------
 endfunction
 
 " -------------------------------------------------------
@@ -434,25 +431,24 @@ endfunction
 function! s:vimim_initialize_valid_keys()
 " ---------------------------------------
     let key = "[0-9a-z',.]"
-    let input_method = s:current_datafile
     " -----------------------------------
-    if input_method =~ 'phonetic'
+    if s:current_datafile =~# 'phonetic'
         let s:datafile_has_period = 1
         let key = "[-0-9a-z.,;/]"
-    elseif input_method =~ 'array'
+    elseif s:current_datafile =~# 'array'
         let s:datafile_has_period = 1
         let key = "[a-z.,;/]"
-    elseif input_method =~ 'cns11643'
+    elseif s:current_datafile =~# 'cns11643'
         let key = "[0-9a-f]"
-    elseif input_method =~ 'yong'
+    elseif s:current_datafile =~# 'yong'
         let key = "[a-z',.;/]"
-    elseif input_method =~ 'wu'
+    elseif s:current_datafile =~# 'wu'
         let key = "[a-z',.]"
-    elseif input_method =~ 'nature'
+    elseif s:current_datafile =~# 'nature'
         let key = "[a-z',.]"
-    elseif input_method =~ 'zhengma'
+    elseif s:current_datafile =~# 'zhengma'
         let key = "[a-z,.]"
-    elseif input_method =~ 'cangjie'
+    elseif s:current_datafile =~# 'cangjie'
         let key = "[a-z,.]"
     endif
     " -----------------------------------
@@ -713,11 +709,10 @@ function! s:vimim_statusline()
     let option  = ''
     let input = "输入："
     let wubi = "〖五笔〗"
-    let erbi = "〖二笔〗"
     let pinyin = "〖拼音〗"
     let shuangpin = "〖双拼〗"
     let toggle = "i_CTRL-^"
-  " ---------------------------------
+  " ------------------------------------------------------------
     if s:wubi_sleep_with_pinyin > 0
         let option = wubi . toggle . pinyin
         let option = "im\t " . input . option
@@ -728,21 +723,46 @@ function! s:vimim_statusline()
         endif
         return [im, option]
     endif
-  " --------------------------------- xxx
+  " ------------------------------------------------------------
     if s:wubi_flag > 0
         let im = wubi
         let option = im . ": trdeggwhssqu"
         let option = "im\t " . input . option
     elseif s:erbi_flag > 0
-        let im = erbi
+        let im = "〖二笔〗"
         let option = "im\t " . input . im
+    elseif s:current_datafile =~# 'yong'
+        let im = "〖永码〗"
+        let option = "im\t " . input . im
+    elseif s:current_datafile =~# 'nature'
+        let im = "〖自然〗"
+        let option = "im\t " . input . im
+    elseif s:current_datafile =~# 'zhengma'
+        let im = "〖郑码〗"
+        let option = "im\t " . input . im
+    elseif s:current_datafile =~# 'quick'
+        let im = "〖速成〗"
+        let option = "im\t " . input . im
+    elseif s:current_datafile =~# 'wu'
+        let im = "〖吴语〗"
+        let option = "im\t " . input . im
+    elseif s:current_datafile =~# 'array'
+        let im = "〖行列〗"
+        let option = "im\t " . input . im
+    elseif s:current_datafile =~# 'phonetic'
+        let im = "〖注音〗"
+        let option = "im\t " . input . im
+    elseif s:current_datafile =~# 'cangjie'
+        let im = "〖仓颉〗"
+        let option = im . ": hqi kb m ol ddni"
+        let option = "im\t " . input . option
     else
-  " ---------------------------------
+  " ------------------------------------------------------------
         if s:pinyin_flag > 0
             let im = pinyin
             let option = im . ": woyouyigemeng"
             let option = "im\t " . input . option
-       " ----------------------------
+       " -------------------------------------------------------
         elseif s:shuangpin_flag > 0
             let im = shuangpin . "："
             let option = "im\t " . input . im
@@ -764,12 +784,12 @@ function! s:vimim_statusline()
             endif
             let im .= shuangpin
         endif
-       " ----------------------------
+       " -------------------------------------------------------
         if s:four_corner_flag > 0
             let im .= "＋〖四角号码〗"
         endif
     endif
-  " ---------------------------------
+  " ------------------------------------------------------------
     return [im, option]
 endfunction
 
@@ -1148,7 +1168,6 @@ function! s:vimim_onekey(onekey)
     " ---------------------------------------------------
     if char_before_before !~# "[0-9a-z]"
     \&& has_key(s:punctuations, char_before)
-"   \&& s:vimim_sexy_onekey > 0
         " -----------------------------------------------
         let space = ""
         for char in keys(s:punctuations_all)
@@ -4516,8 +4535,8 @@ function! s:vimim_initialize_debug()
     let s:vimim_fuzzy_search = 1
     let s:vimim_wildcard_search=1
     " ------------------------------
+    let s:vimim_pinyin_4corner_zi=0
     let s:vimim_imode_comma=1
-    let s:vimim_pinyin_4corner_zi=1
     let s:vimim_imode_pinyin=-1
     " ------------------------------
     let s:vimim_smart_backspace=1
@@ -4952,7 +4971,6 @@ else
     "   English Input Method: 　i have a dream.
     "   PinYin Input Method:  　wo you yige meng.
     "   Wubi Input Method:    　trde ggwh ssqu.
-    "   Cangjie Input Method: 　hqi kb m ol ddni.
     " ----------------------------------------------------
     if empty(s:chinese_input_mode)
         if s:sentence_with_space_input > 0
