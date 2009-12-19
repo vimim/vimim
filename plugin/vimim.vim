@@ -167,6 +167,7 @@ function! s:vimim_initialize_global()
     let   G = []
     call add(G, "g:vimim_auto_spell")
     call add(G, "g:vimim_custom_skin")
+    call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_private")
     call add(G, "g:vimim_datafile_4corner")
@@ -201,7 +202,6 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_auto_copy_clipboard")
-    call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_lcursor_color")
     call add(G, "g:vimim_custom_laststatus")
@@ -3163,13 +3163,13 @@ function! s:vimim_new_order_in_memory(keyboards)
     let lines = s:vimim_load_datafile(0)
     if empty(lines)
     \|| char2nr(chinese) < 127
-    \|| keyboard !~ s:valid_key
+    \|| keyboard !~# s:valid_key
         return []
     endif
     " ------------------------------------------
     """ step 1/6: modify datafile in memory based on usage
-    let patterns = '^' . keyboard . '\>'
-    let matched = match(lines, patterns)
+    let pattern = '^' . keyboard . '\>'
+    let matched = match(lines, pattern)
     if matched < 0
         return []
     endif
@@ -3178,6 +3178,9 @@ function! s:vimim_new_order_in_memory(keyboards)
     """ step 2/6: save the first item which is to be set fixed
     let first_matched_line = get(lines, matched)
     let first_fixed_item = get(split(first_matched_line),1)
+    if empty(first_fixed_item)
+        return []
+    endif
     " ------------------------------------------
     """ step 3/6: remove all entries matching key from datafile
     let one_line_chinese_list = []
@@ -3185,8 +3188,11 @@ function! s:vimim_new_order_in_memory(keyboards)
         let old_item = remove(lines, matched)
         let values = split(old_item)
         call extend(one_line_chinese_list, values[1:])
-        let matched = match(lines, patterns, insert_index)
+        let matched = match(lines, pattern, insert_index)
     endwhile
+    if empty(one_line_chinese_list)
+        return []
+    endif
     " ------------------------------------------
     """ step 4/6: make a new order list
     let results = []
@@ -3238,9 +3244,9 @@ endfunction
 " -----------------------------------------
 function! s:vimim_save_input_history(lines)
 " -----------------------------------------
-    let frequency = s:chinese_frequency
-    if frequency > 1
-        if s:keyboard_count>0 && empty(s:keyboard_count % frequency)
+    if s:chinese_frequency > 1
+        if s:keyboard_count>0 
+        \&& empty(s:keyboard_count % s:chinese_frequency)
             call s:vimim_save_datafile(a:lines)
         endif
     endif
@@ -4673,6 +4679,7 @@ function! s:vimim_initialize_plugin_debug()
     " ------------------------------ debug
     let s:vimim_www_sogou=13
     let s:vimim_static_input_style=-1
+    let s:vimim_chinese_frequency=1
     " ------------------------------
     let s:vimim_fuzzy_search=1
     let s:vimim_wildcard_search=1
@@ -5138,7 +5145,7 @@ else
 
     " [datafile] update data in memory based on past usage
     " ----------------------------------------------------
-    if s:chinese_frequency < 0
+    if s:chinese_frequency < 1
         let msg = "no chance to modify memory and disk"
     else
         let lines = s:vimim_new_order_in_memory(s:keyboards)
