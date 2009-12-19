@@ -135,11 +135,13 @@ function! s:vimim_initialization()
     call s:vimim_initialize_plugin()
     call s:vimim_initialize_datafile_privates()
     call s:vimim_initialize_datafile_4corner()
+    " -----------------------------------------
     call s:vimim_initialize_im_flag()
+    call s:vimim_plug_play_xiangma_pinyin()
     " -----------------------------------------
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_wubi()
-    call s:vimim_initialize_cangjie()
+    " -----------------------------------------
     call s:vimim_initialize_shuangpin()
     call s:vimim_initialize_pinyin()
     " -----------------------------------------
@@ -264,13 +266,12 @@ function! s:vimim_finalize_session()
         let s:vimim_static_input_style = 1
     endif
     " ------------------------------
-    if s:wubi_flag < 1
-        let s:vimim_wubi_non_stop = 0
-        let s:wubi_sleep_with_pinyin = 0
-    endif
-    " ------------------------------
     if s:vimim_static_input_style < 0
         let s:vimim_static_input_style = 0
+    endif
+    " ------------------------------
+    if s:wubi_flag < 1
+        let s:vimim_wubi_non_stop = 0
     endif
     " ------------------------------
     if empty(s:vimim_www_sogou)
@@ -345,18 +346,13 @@ function! s:vimim_initialize_plugin()
             continue
         endif
     endfor
-
-let g:g111=datafile
-let g:g112=s:current_datafile
     " -------------------------------
     if filereadable(datafile) && len(datafile) > 1
         if empty(s:current_datafile)
             let s:current_datafile = datafile
-let g:g11=s:cangjie_flag
         elseif empty(s:pinyin_flag) && datafile =~# 'pinyin'
-let g:g12=s:wubi_sleep_with_pinyin
             let s:datafile_secondary = datafile
-            let s:wubi_sleep_with_pinyin = 1
+            let s:xingma_sleep_with_pinyin = 1
         endif
     endif
 endfunction
@@ -403,6 +399,18 @@ function! s:vimim_initialize_im_flag()
         let s:pinyin_flag = 1
     endif
     " ------------------------------
+endfunction
+
+" ------------------------------------------
+function! s:vimim_plug_play_xiangma_pinyin()
+" ------------------------------------------
+    if empty(s:cangjie_flag)
+    \&& empty(s:wubi_flag)
+    \&& empty(s:erbi_flag)
+        return
+    endif
+    let msg = "plug and play  <=> xingma and pinyin"
+    call s:vimim_initialize_plugin()
 endfunction
 
 " -------------------------------------------------------
@@ -608,7 +616,7 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
 " ----------------------------------
-    let option = s:wubi_sleep_with_pinyin
+    let option = s:xingma_sleep_with_pinyin
     if option < 1
         let msg = "no secondary pinyin datafile for wubi"
     else
@@ -706,6 +714,36 @@ function! s:vimim_statusline()
     let shuangpin = "〖双拼〗"
     let toggle = "i_CTRL-^"
   " ------------------------------------------------------------
+    if s:pinyin_flag > 0
+        let im = pinyin
+        let option = im . ": woyouyigemeng"
+        let option = "im\t " . input . option
+    elseif s:shuangpin_flag > 0
+        let im = shuangpin . "："
+        let option = "im\t " . input . im
+        if s:vimim_shuangpin_abc > 0
+            let im = "智能ABC"
+            let option .= im . " (woybyigemg)"
+        elseif s:vimim_shuangpin_microsoft > 0
+            let im = "微软"
+            let option .= im . " (hkfgp;jxlisswouhq;yp)"
+        elseif s:vimim_shuangpin_nature > 0
+            let im = "自然码"
+            let option .= im . " (hkfgpyjxlisswouhqyyp)"
+        elseif s:vimim_shuangpin_plusplus > 0
+            let im = "拼音加加"
+            let option .= im . " (hdftpqjmlisywoigqqyz)"
+        elseif s:vimim_shuangpin_purple > 0
+            let im = "紫光"
+            let option .= im . " (hqftp;jdlishwoisq;ym)"
+        endif
+        let im .= shuangpin
+    endif
+  " ------------------------------------------------------------
+    if s:four_corner_flag > 0
+        let im .= "＋〖四角号码〗"
+    endif
+  " ------------------------------------------------------------
     if s:cangjie_flag > 0
         let im = "〖仓颉〗"
         let option = im . ": hqi kb m ol ddni"
@@ -738,41 +776,9 @@ function! s:vimim_statusline()
     elseif s:current_datafile =~# 'phonetic'
         let im = "〖注音〗"
         let option = "im\t " . input . im
-    else
-  " ------------------------------------------------------------
-        if s:pinyin_flag > 0
-            let im = pinyin
-            let option = im . ": woyouyigemeng"
-            let option = "im\t " . input . option
-       " -------------------------------------------------------
-        elseif s:shuangpin_flag > 0
-            let im = shuangpin . "："
-            let option = "im\t " . input . im
-            if s:vimim_shuangpin_abc > 0
-                let im = "智能ABC"
-                let option .= im . " (woybyigemg)"
-            elseif s:vimim_shuangpin_microsoft > 0
-                let im = "微软"
-                let option .= im . " (hkfgp;jxlisswouhq;yp)"
-            elseif s:vimim_shuangpin_nature > 0
-                let im = "自然码"
-                let option .= im . " (hkfgpyjxlisswouhqyyp)"
-            elseif s:vimim_shuangpin_plusplus > 0
-                let im = "拼音加加"
-                let option .= im . " (hdftpqjmlisywoigqqyz)"
-            elseif s:vimim_shuangpin_purple > 0
-                let im = "紫光"
-                let option .= im . " (hqftp;jdlishwoisq;ym)"
-            endif
-            let im .= shuangpin
-        endif
-       " -------------------------------------------------------
-        if s:four_corner_flag > 0
-            let im .= "＋〖四角号码〗"
-        endif
     endif
   " ------------------------------------------------------------
-    if s:wubi_sleep_with_pinyin > 0
+    if s:xingma_sleep_with_pinyin > 0
         let option = im . toggle . pinyin
         let option = "im\t " . input . option
         if empty(s:ctrl_6_count%2)
@@ -3861,21 +3867,6 @@ function! s:vimim_shuangpin_purple(rule)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  VimIM_Cangjie    ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" ------------------------------------
-function! s:vimim_initialize_cangjie()
-" ------------------------------------
-    if s:cangjie_flag > 0
-        let msg = "plug and play  <=> cangjie and pinyin"
-        call s:vimim_initialize_plugin()
-    endif
-endfunction
-
-
-" ======================================= }}}
 let VimIM = " ====  VimIM_Erbi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
@@ -3918,10 +3909,7 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_wubi()
 " ---------------------------------
-    if s:wubi_flag > 0
-        let msg = "plug and play  <=> wubi and pinyin"
-        call s:vimim_initialize_plugin()
-    elseif s:wubi_flag < 0
+    if s:wubi_flag < 0
         let s:vimim_english_punctuation = 1
         let s:vimim_chinese_punctuation = -1
         let s:vimim_static_input_style = -1
@@ -3952,14 +3940,12 @@ endfunction
 function! s:vimim_toggle_wubi_pinyin()
 " ------------------------------------
     if empty(s:xingma_pinyin_flag)
-"       let s:cangjie_flag = 1
         let s:wubi_flag = 1
         let s:pinyin_flag = 0
         let s:chinese_frequency = s:vimim_chinese_frequency
     else
         let s:pinyin_flag = 1
         let s:wubi_flag = 0
-"       let s:cangjie_flag = 0
         let s:chinese_frequency = -1
     endif
     " --------------------------------
@@ -3984,7 +3970,9 @@ endfunction
 function! s:vimim_wubi(keyboard)
 " ------------------------------
     let keyboard = a:keyboard
-    if empty(s:wubi_flag) || empty(keyboard)
+    if empty(s:wubi_flag)
+    \|| empty(keyboard)
+    \|| s:cangjie_flag > 0
         return []
     endif
     " ----------------------------
@@ -4722,11 +4710,11 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_start_omni()
     sil!call s:vimim_super_reset()
     " --------------------------------
-    let s:wubi_flag = 0
     let s:xingma_pinyin_flag = 0
-    let s:wubi_sleep_with_pinyin = 0
+    let s:xingma_sleep_with_pinyin = 0
     let s:chinese_frequency = s:vimim_chinese_frequency
     " --------------------------------
+    let s:wubi_flag = 0
     let s:pinyin_flag = 0
     let s:shuangpin_flag = 0
     let s:english_flag = 0
@@ -5069,7 +5057,7 @@ else
 
     " [wubi][erbi] sleeps with pinyin in harmony
     " ------------------------------------------
-    if s:wubi_sleep_with_pinyin > 0
+    if s:xingma_sleep_with_pinyin > 0
         call s:vimim_toggle_wubi_pinyin()
     endif
 
