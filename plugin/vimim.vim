@@ -1105,6 +1105,7 @@ function! <SID>vimim_start_onekey()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_onekey_punctuation_on()
+    sil!call s:vimim_helper_mapping_on()
     " ----------------------------------------------------------
     inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
                          \<C-R>=g:vimim_reset_after_insert()<CR>
@@ -1235,9 +1236,6 @@ endfunction
 " ------------------------------------
 function! s:vimim_hjkl_navigation_on()
 " ------------------------------------
-    if s:chinese_input_mode > 0
-        return
-    endif
     " hjkl navigation for onekey, always
     let hjkl_list = split('hjklcpedxy', '\zs')
     for _ in hjkl_list
@@ -1410,7 +1408,7 @@ function! s:vimim_start_chinese_mode()
 " ------------------------------------
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_start()
-    sil!call s:vimim_i_chinese_mode_setting_on()
+    sil!call s:vimim_i_chinese_mode_on()
     " ---------------------------------------------------------
     if empty(s:vimim_static_input_style)
         let msg = " ### chinese mode dynamic ### "
@@ -1430,10 +1428,9 @@ function! s:vimim_start_chinese_mode()
                                \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
     endif
-    " ---------------------------------------------------------
-    if s:vimim_custom_lcursor_color > 0
-        highlight! lCursor guifg=bg guibg=green
-    endif
+    " --------------------------------------------------------- xxx
+    sil!call s:vimim_i_lcursor_color(1)
+    sil!call s:vimim_helper_mapping_on()
     " ---------------------------------------------------------
     inoremap<silent><expr><C-\> <SID>vimim_toggle_punctuation()
                          return <SID>vimim_toggle_punctuation()
@@ -1443,10 +1440,6 @@ endfunction
 " -----------------------------------
 function! s:vimim_stop_chinese_mode()
 " -----------------------------------
-    if s:vimim_custom_lcursor_color > 0
-        highlight lCursor NONE
-    endif
-    " ------------------------------
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
         sil!exe ':%y +'
     endif
@@ -1456,6 +1449,7 @@ function! s:vimim_stop_chinese_mode()
     endif
     " ------------------------------
     sil!call s:vimim_stop()
+    sil!call s:vimim_i_lcursor_color(0)
     sil!call s:vimim_one_key_mapping_on()
 endfunction
 
@@ -1592,9 +1586,9 @@ function! s:vimim_onekey_status_on()
     endif
 endfunction
 
-" -------------------------------------------
-function! s:vimim_i_chinese_mode_setting_on()
-" -------------------------------------------
+" -----------------------------------
+function! s:vimim_i_chinese_mode_on()
+" -----------------------------------
     set imdisable
     set iminsert=1
     let b:keymap_name = get(s:vimim_statusline(),0)
@@ -1611,6 +1605,19 @@ function! s:vimim_i_laststatus_on()
         let msg = "never touch the laststatus"
     else
         set laststatus=2
+    endif
+endfunction
+
+" ---------------------------------------
+function! s:vimim_i_lcursor_color(switch)
+" ---------------------------------------
+    if s:vimim_custom_lcursor_color < 1
+        return
+    endif
+    if empty(a:switch)
+        highlight! lCursor NONE
+    else
+        highlight! lCursor guifg=bg guibg=green
     endif
 endfunction
 
@@ -4702,7 +4709,6 @@ function! s:vimim_start()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
-    sil!call s:vimim_helper_mapping_on()
 endfunction
 
 " ----------------------
@@ -4790,13 +4796,13 @@ function! s:vimim_helper_mapping_on()
         inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
     endif
     " ----------------------------------------------------------
-    if s:vimim_sexy_onekey > 0 || s:chinese_input_mode > 0
+    if s:chinese_input_mode > 0 || s:vimim_sexy_onekey > 0
         inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
-                           \<C-R>=<SID>vimim_set_seamless()<CR>
+                            \<C-R>=<SID>vimim_set_seamless()<CR>
     endif
     " ----------------------------------------------------------
     if s:vimim_smart_backspace > 0
-        inoremap<silent><BS> \<C-R>=pumvisible()?"\<lt>C-E>":"\<lt>BS>"<CR>
+        inoremap<silent><BS>  <C-R>=pumvisible()?"\<lt>C-E>":"\<lt>BS>"<CR>
                              \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
                              \<C-R>=g:vimim_reset_after_insert()<CR>
     endif
