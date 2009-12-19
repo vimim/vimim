@@ -131,6 +131,7 @@ function! s:vimim_initialization()
         return
     endif
     " -------------------------------
+    call s:vimim_initialize_global()
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
     call s:vimim_initialize_datafile_in_vimrc()
@@ -158,6 +159,82 @@ function! s:vimim_initialization()
     " -----------------------------------------
     call s:vimim_finalize_session()
     " -----------------------------------------
+endfunction
+
+" -----------------------------------
+function! s:vimim_initialize_global()
+" -----------------------------------
+    let   G = []
+    call add(G, "g:vimim_auto_spell")
+    call add(G, "g:vimim_custom_skin")
+    call add(G, "g:vimim_datafile")
+    call add(G, "g:vimim_datafile_private")
+    call add(G, "g:vimim_datafile_4corner")
+    call add(G, "g:vimim_datafile_has_apostrophe")
+    call add(G, "g:vimim_datafile_has_pinyin")
+    call add(G, "g:vimim_datafile_has_4corner")
+    call add(G, "g:vimim_datafile_has_english")
+    call add(G, "g:vimim_datafile_is_not_utf8")
+    call add(G, "g:vimim_diy_keyboard_asdfghjklo")
+    call add(G, "g:vimim_english_punctuation")
+    call add(G, "g:vimim_imode_pinyin")
+    call add(G, "g:vimim_imode_comma")
+    call add(G, "g:vimim_latex_suite")
+    call add(G, "g:vimim_reverse_pageup_pagedown")
+    call add(G, "g:vimim_sexy_input_style")
+    call add(G, "g:vimim_shuangpin_dummy")
+    call add(G, "g:vimim_shuangpin_abc")
+    call add(G, "g:vimim_shuangpin_microsoft")
+    call add(G, "g:vimim_shuangpin_nature")
+    call add(G, "g:vimim_shuangpin_plusplus")
+    call add(G, "g:vimim_shuangpin_purple")
+    call add(G, "g:vimim_smart_ctrl_h")
+    call add(G, "g:vimim_static_input_style")
+    call add(G, "g:vimim_unicode_lookup")
+    call add(G, "g:vimim_fuzzy_search")
+    call add(G, "g:vimim_wildcard_search")
+    call add(G, "g:vimim_insert_without_popup")
+    call add(G, "g:vimim_www_sogou")
+    call add(G, "g:vimim_sexy_onekey")
+    " -----------------------------------
+    call s:vimim_set_global_default(G, 0)
+    " -----------------------------------
+    let G = []
+    call add(G, "g:vimim_auto_copy_clipboard")
+    call add(G, "g:vimim_chinese_frequency")
+    call add(G, "g:vimim_chinese_punctuation")
+    call add(G, "g:vimim_custom_lcursor_color")
+    call add(G, "g:vimim_custom_laststatus")
+    call add(G, "g:vimim_esc_autocmd")
+    call add(G, "g:vimim_first_candidate_fix")
+    call add(G, "g:vimim_internal_code_input")
+    call add(G, "g:vimim_match_dot_after_dot")
+    call add(G, "g:vimim_match_word_after_word")
+    call add(G, "g:vimim_menu_label")
+    call add(G, "g:vimim_punctuation_navigation")
+    call add(G, "g:vimim_quick_key")
+    call add(G, "g:vimim_seamless_english_input")
+    call add(G, "g:vimim_smart_backspace")
+    call add(G, "g:vimim_wubi_non_stop")
+    " -----------------------------------
+    call s:vimim_set_global_default(G, 1)
+    " -----------------------------------
+endfunction
+
+" ----------------------------------------------------
+function! s:vimim_set_global_default(options, default)
+" ----------------------------------------------------
+    for variable in a:options
+        call add(s:global_defaults, variable .'='. a:default)
+        let s_variable = substitute(variable,"g:","s:",'')
+        if exists(variable)
+            call add(s:global_customized, variable .'='. eval(variable))
+            exe 'let '. s_variable .'='. variable
+            exe 'unlet! ' . variable
+        else
+            exe 'let '. s_variable . '=' . a:default
+        endif
+    endfor
 endfunction
 
 " --------------------------------------
@@ -545,6 +622,7 @@ function! s:vimim_egg_vimim()
         let option = "macunix"
     endif
 " ----------------------------------
+    let input = "输入："
     let ciku = "datafile 词库："
     let versions = "\t 版本："
     let encoding = "编码："
@@ -588,6 +666,13 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
 " ----------------------------------
+    let option = s:four_corner_flag
+    if option > 0
+        let option = "〖四角号码〗 => 6021272260021762"
+        let option = "im\t " . input . option
+        call add(eggs, option)
+    endif
+" ----------------------------------
     let option = s:current_datafile
     if empty(option)
         let msg = "no primary datafile, might play cloud"
@@ -596,29 +681,27 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
 " ----------------------------------
-    let option = s:xingma_sleep_with_pinyin
-    if option < 1
-        let msg = "no secondary pinyin datafile for wubi"
-    else
-        let option = ciku . s:datafile_secondary
-        call add(eggs, option)
-    endif
-" ----------------------------------
-    let option = s:privates_flag
-    if option < 1
-        let msg = "no private datafile found"
-    else
-        let option = "privates.txt"
-        let option = ciku . option
-        call add(eggs, option)
-    endif
-" ----------------------------------
-    let option = s:four_corner_flag
-    if option < 1
+    let option = s:four_corner_datafile
+    if empty(option)
         let msg = "no 4corner datafile found"
     else
-        let option = "〖四角号码〗6021272260021762"
+        let option = "im\t " . input . option
+        call add(eggs, option)
+    endif
+" ----------------------------------
+    let option = s:privates_datafile
+    if empty(option)
+        let msg = "no private datafile found"
+    else
         let option = ciku . option
+        call add(eggs, option)
+    endif
+" ----------------------------------
+    let option = s:datafile_secondary
+    if empty(option)
+        let msg = "no secondary pinyin to sleep with"
+    else
+        let option = ciku . s:datafile_secondary
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -696,26 +779,26 @@ function! s:vimim_statusline()
   " --------------------------------------------------
     if s:pinyin_flag > 0
         let im = pinyin
-        let option = im . ": woyouyigemeng"
+        let option = im . " => woyouyigemeng"
         let option = "im\t " . input . option
     elseif s:shuangpin_flag > 0
         let im = shuangpin . "："
         let option = "im\t " . input . im
         if s:vimim_shuangpin_abc > 0
             let im = "智能ABC"
-            let option .= im . " (woybyigemg)"
+            let option .= im . " => woybyigemg"
         elseif s:vimim_shuangpin_microsoft > 0
             let im = "微软"
-            let option .= im . " (hkfgp;jxlisswouhq;yp)"
+            let option .= im . " => hkfgp;jxlisswouhq;yp"
         elseif s:vimim_shuangpin_nature > 0
             let im = "自然码"
-            let option .= im . " (hkfgpyjxlisswouhqyyp)"
+            let option .= im . " => hkfgpyjxlisswouhqyyp"
         elseif s:vimim_shuangpin_plusplus > 0
             let im = "拼音加加"
-            let option .= im . " (hdftpqjmlisywoigqqyz)"
+            let option .= im . " => hdftpqjmlisywoigqqyz"
         elseif s:vimim_shuangpin_purple > 0
             let im = "紫光"
-            let option .= im . " (hqftp;jdlishwoisq;ym)"
+            let option .= im . " => hqftp;jdlishwoisq;ym"
         endif
         let im .= shuangpin
     endif
@@ -1409,7 +1492,7 @@ function! s:vimim_start_chinese_mode()
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_start()
     sil!call s:vimim_i_chinese_mode_on()
-    " ---------------------------------------------------------
+    " --------------------------------
     if empty(s:vimim_static_input_style)
         let msg = " ### chinese mode dynamic ### "
         let s:chinese_input_mode = 2
@@ -1428,7 +1511,7 @@ function! s:vimim_start_chinese_mode()
                                \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
     endif
-    " --------------------------------------------------------- xxx
+    " ---------------------------------
     sil!call s:vimim_i_lcursor_color(1)
     sil!call s:vimim_helper_mapping_on()
     " ---------------------------------------------------------
@@ -4562,6 +4645,7 @@ function! s:vimim_initialize_debug()
     " ---------------------------------------
     if s:vimimdebug > 1
         let s:vimim_tab_for_one_key = 1
+        return
     endif
     " ---------------------------------------
     let debug_datafile = s:path . "vimim.txt"
@@ -5229,88 +5313,23 @@ let VimIM = " ====  Core_Drive       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------
-function! s:vimim_initialize_global()
-" -----------------------------------
-    let   G = []
-    call add(G, "g:vimim_auto_spell")
-    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
-    call add(G, "g:vimim_custom_skin")
-    call add(G, "g:vimim_datafile")
-    call add(G, "g:vimim_datafile_private")
-    call add(G, "g:vimim_datafile_4corner")
-    call add(G, "g:vimim_datafile_has_apostrophe")
-    call add(G, "g:vimim_datafile_has_pinyin")
-    call add(G, "g:vimim_datafile_has_4corner")
-    call add(G, "g:vimim_datafile_has_english")
-    call add(G, "g:vimim_datafile_is_not_utf8")
-    call add(G, "g:vimim_diy_keyboard_asdfghjklo")
-    call add(G, "g:vimim_english_punctuation")
-    call add(G, "g:vimim_imode_pinyin")
-    call add(G, "g:vimim_imode_comma")
-    call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_reverse_pageup_pagedown")
-    call add(G, "g:vimim_sexy_input_style")
-    call add(G, "g:vimim_shuangpin_dummy")
-    call add(G, "g:vimim_shuangpin_abc")
-    call add(G, "g:vimim_shuangpin_microsoft")
-    call add(G, "g:vimim_shuangpin_nature")
-    call add(G, "g:vimim_shuangpin_plusplus")
-    call add(G, "g:vimim_shuangpin_purple")
-    call add(G, "g:vimim_smart_ctrl_h")
-    call add(G, "g:vimim_static_input_style")
-    call add(G, "g:vimim_unicode_lookup")
-    call add(G, "g:vimim_fuzzy_search")
-    call add(G, "g:vimim_wildcard_search")
-    call add(G, "g:vimim_insert_without_popup")
-    call add(G, "g:vimim_www_sogou")
-    call add(G, "g:vimim_sexy_onekey")
-    call add(G, "g:vimim_tab_for_one_key")
-    call add(G, "g:vimimdebug")
-    " -----------------------------------
+" -------------------------------------
+function! s:vimim_define_mapping_keys()
+" -------------------------------------
     let s:global_defaults = []
     let s:global_customized = []
+    " -----------------------------------
+    let G = []
+    call add(G, "g:vimim_tab_for_one_key")
+    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
+    call add(G, "g:vimimdebug")
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
-    call add(G, "g:vimim_auto_copy_clipboard")
-    call add(G, "g:vimim_chinese_frequency")
-    call add(G, "g:vimim_chinese_input_mode")
-    call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_custom_lcursor_color")
-    call add(G, "g:vimim_custom_laststatus")
-    call add(G, "g:vimim_esc_autocmd")
-    call add(G, "g:vimim_first_candidate_fix")
-    call add(G, "g:vimim_internal_code_input")
-    call add(G, "g:vimim_match_dot_after_dot")
-    call add(G, "g:vimim_match_word_after_word")
-    call add(G, "g:vimim_menu_label")
     call add(G, "g:vimim_one_key")
-    call add(G, "g:vimim_punctuation_navigation")
-    call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_save_new_entry")
-    call add(G, "g:vimim_seamless_english_input")
-    call add(G, "g:vimim_smart_backspace")
-    call add(G, "g:vimim_wubi_non_stop")
-    " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
-endfunction
-
-" ----------------------------------------------------
-function! s:vimim_set_global_default(options, default)
-" ----------------------------------------------------
-    for variable in a:options
-        call add(s:global_defaults, variable .'='. a:default)
-        let s_variable = substitute(variable,"g:","s:",'')
-        if exists(variable)
-            call add(s:global_customized, variable .'='. eval(variable))
-            exe 'let '. s_variable .'='. variable
-            exe 'unlet! ' . variable
-        else
-            exe 'let '. s_variable . '=' . a:default
-        endif
-    endfor
 endfunction
 
 " ------------------------------------
@@ -5320,21 +5339,14 @@ function! s:vimim_initialize_mapping()
     inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
     " ----------------------------------------------------------------
     sil!call s:vimim_one_key_mapping_on()
-    " -------------------------------
+    " -----------------------------------------
     sil!call s:vimim_visual_mapping_on()
-    " -------------------------------
-    if s:vimim_chinese_input_mode > 0
-        imap<silent> <C-^> <Plug>VimimChineseToggle
-    endif
-    " -------------------------------
+    " -----------------------------------------
+    imap<silent> <C-^> <Plug>VimimChineseToggle
+    " -----------------------------------------
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
-        if s:vimim_chinese_input_mode > 0
-            imap<silent> <C-Space> <Plug>VimimChineseToggle
-        elseif s:vimim_one_key > 0
-            imap<silent> <C-Space> <Plug>VimimOneKey
-        endif
+        imap<silent> <C-Space> <Plug>VimimChineseToggle
     endif
-    " ------------------------------
 endfunction
 
 " -----------------------------------
@@ -5375,7 +5387,7 @@ function! s:vimim_one_key_mapping_off()
     endif
 endfunction
 
-silent!call s:vimim_initialize_global()
+silent!call s:vimim_define_mapping_keys()
 silent!call s:vimim_initialize_debug()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
