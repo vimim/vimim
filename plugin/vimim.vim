@@ -110,7 +110,6 @@ call add(s:vimims, VimIM)
 " The <value>, separated by spaces, is what will be inserted.
 " The 2nd and the 3rd column can be repeated without restriction.
 
-
 " ======================================= }}}
 let VimIM = " ====  Initialization   ==== {{{"
 " ===========================================
@@ -154,7 +153,6 @@ function! s:vimim_initialization()
     call s:vimim_finalize_session()
     " -----------------------------------------
 endfunction
-
 
 " ======================================= }}}
 let VimIM = " ====  Customization    ==== {{{"
@@ -210,6 +208,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_lcursor_color")
+    call add(G, "g:vimim_custom_laststatus")
     call add(G, "g:vimim_esc_autocmd")
     call add(G, "g:vimim_first_candidate_fix")
     call add(G, "g:vimim_internal_code_input")
@@ -282,25 +281,6 @@ function! s:vimim_finalize_session()
         let s:vimim_www_sogou = 888
     endif
     " ------------------------------
-endfunction
-
-" ---------------------------------
-function! s:vimim_initialize_skin()
-" ---------------------------------
-    if s:vimim_custom_skin < 1
-        return
-    endif
-    " --------------------------
-    highlight! link PmenuSel   Title
-    highlight! link StatusLine Title
-    highlight!      Pmenu      NONE
-    highlight!      PmenuSbar  NONE
-    highlight!      PmenuThumb NONE
-    " --------------------------
-    if s:vimim_custom_skin > 1
-        let msg = "no extra_text on menu"
-    endif
-    " --------------------------
 endfunction
 
 " -----------------------------------
@@ -1117,11 +1097,8 @@ function! <SID>vimim_start_onekey()
 " ---------------------------------
     let s:chinese_input_mode = 0
     " -----------------------------
-    if s:vimim_sexy_onekey > 0
-        set noruler
-    endif
-    " -----------------------------
     sil!call s:vimim_start()
+    sil!call s:vimim_onekey_status_on()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_onekey_punctuation_on()
@@ -1574,6 +1551,66 @@ function! g:vimim_pattern_not_found()
         endif
     endif
     sil!exe 'sil!return "' . space . '"'
+endfunction
+
+" ======================================= }}}
+let VimIM = " ====  Skin             ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" ---------------------------------
+function! s:vimim_initialize_skin()
+" ---------------------------------
+    if s:vimim_custom_skin < 1
+        return
+    endif
+    " --------------------------
+    highlight! link PmenuSel   Title
+    highlight! link StatusLine Title
+    highlight!      Pmenu      NONE
+    highlight!      PmenuSbar  NONE
+    highlight!      PmenuThumb NONE
+    " --------------------------
+    if s:vimim_custom_skin > 1
+        let msg = "no extra_text on menu"
+    endif
+    " --------------------------
+endfunction
+
+" ---------------------------------
+function! s:vimim_i_laststatus_on()
+" ---------------------------------
+    if s:vimim_custom_laststatus < 1
+        let msg = "don't touch the laststatus"
+    elseif s:vimim_custom_laststatus > 1
+        set laststatus=2
+    else
+        if empty(s:chinese_input_mode)
+            let msg = "OneKey does not set it by default"
+        else
+            set laststatus=2
+        endif
+    endif
+endfunction
+
+" ----------------------------------
+function! s:vimim_onekey_status_on()
+" ----------------------------------
+    if s:vimim_sexy_onekey > 0
+    \&& s:vimim_custom_laststatus < 2
+        set noruler
+    endif
+endfunction
+
+" -------------------------------------------
+function! s:vimim_i_chinese_mode_setting_on()
+" -------------------------------------------
+    set iminsert=1
+    set imdisable
+    let b:keymap_name = get(s:vimim_statusline(),0)
+    let s:ctrl_6_count += 1
+    let s:wubi_pinyin_flag = s:ctrl_6_count%2
+    let s:chinese_mode_toggle_flag = 1
 endfunction
 
 " ======================================= }}}
@@ -4529,9 +4566,9 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     if s:vimimdebug > 0
-        let s:vimim_tab_for_one_key=1
         let s:vimim_custom_skin=1
         let s:vimim_sexy_onekey=1
+        let s:vimim_tab_for_one_key=1
     endif
     " ------------------------------
     if s:vimimdebug > 1
@@ -4637,18 +4674,6 @@ function! s:vimim_i_setting_on()
     set pumheight=9
 endfunction
 
-" -------------------------------------------
-function! s:vimim_i_chinese_mode_setting_on()
-" -------------------------------------------
-    set laststatus=2
-    set iminsert=1
-    set imdisable
-    let b:keymap_name = get(s:vimim_statusline(),0)
-    let s:ctrl_6_count += 1
-    let s:wubi_pinyin_flag = s:ctrl_6_count%2
-    let s:chinese_mode_toggle_flag = 1
-endfunction
-
 " -------------------------------
 function! s:vimim_i_setting_off()
 " -------------------------------
@@ -4730,6 +4755,7 @@ endfunction
 " -----------------------
 function! s:vimim_start()
 " -----------------------
+    sil!call s:vimim_i_laststatus_on()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
