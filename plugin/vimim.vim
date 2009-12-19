@@ -137,8 +137,8 @@ function! s:vimim_initialization()
     call s:vimim_initialize_datafile_4corner()
     call s:vimim_initialize_im_flag()
     " -----------------------------------------
-    call s:vimim_initialize_wubi()
     call s:vimim_initialize_erbi()
+    call s:vimim_initialize_wubi()
     call s:vimim_initialize_shuangpin()
     call s:vimim_initialize_pinyin()
     " -----------------------------------------
@@ -290,11 +290,19 @@ function! s:vimim_initialize_plugin()
     if empty(datafile)
         let msg = "no user-specified datafile"
     elseif empty(s:pinyin_flag)
-        let msg = "wubi wants to flirt with pinyin"
+        let msg = "xingma wants to flirt with pinyin"
     else
         return
     endif
     let input_methods = []
+    " ----------------------------------------
+    if empty(s:cangjie_flag)
+        call add(input_methods, "cangjie")
+    endif
+    " ----------------------------------------
+    if empty(s:erbi_flag)
+        call add(input_methods, "erbi")
+    endif
     " ----------------------------------------
     if empty(s:wubi_flag)
         call add(input_methods, "wubi2pinyin")
@@ -312,7 +320,6 @@ function! s:vimim_initialize_plugin()
         call add(input_methods, "pinyin_hongkong")
     endif
     " ----------------------------------------
-    call add(input_methods, "cangjie")
     call add(input_methods, "4corner")
     call add(input_methods, "ctc")
     call add(input_methods, "phonetic")
@@ -320,7 +327,6 @@ function! s:vimim_initialize_plugin()
     call add(input_methods, "yong")
     call add(input_methods, "nature")
     call add(input_methods, "zhengma")
-    call add(input_methods, "erbi")
     call add(input_methods, "xinhua")
     call add(input_methods, "quick")
     call add(input_methods, "array30")
@@ -340,7 +346,7 @@ function! s:vimim_initialize_plugin()
     endfor
     " -------------------------------
     if filereadable(datafile) && len(datafile) > 1
-        if empty(s:wubi_flag)
+        if empty(s:current_datafile)
             let s:current_datafile = datafile
         elseif empty(s:pinyin_flag) && datafile =~# 'pinyin'
             let s:datafile_secondary = datafile
@@ -369,7 +375,9 @@ function! s:vimim_initialize_im_flag()
         let s:vimim_datafile_is_not_utf8 = 1
     endif
     " --------------------------------
-    if s:current_datafile =~# 'erbi'
+    if s:current_datafile =~# 'canjie'
+        let s:canjie_flag = 1
+    elseif s:current_datafile =~# 'erbi'
         let s:erbi_flag = 1
     elseif s:current_datafile =~# 'wubi2pinyin'
         let s:wubi_flag = -1
@@ -427,12 +435,12 @@ function! s:vimim_initialize_valid_keys()
         let key = "[a-z',.]"
     elseif s:current_datafile =~# 'zhengma'
         let key = "[a-z,.]"
-    elseif s:current_datafile =~# 'cangjie'
-        let key = "[a-z,.]"
     endif
     " -----------------------------------
     if s:four_corner_flag > 1 && empty(s:privates_flag)
         let key = "[0-9',.]"
+    elseif s:cangjie_flag > 0
+        let key = "[a-z,.]"
     elseif s:erbi_flag > 0
         let s:datafile_has_period = 1
         let key = "[a-z'.,;/]"
@@ -692,23 +700,16 @@ function! s:vimim_statusline()
     let shuangpin = "〖双拼〗"
     let toggle = "i_CTRL-^"
   " ------------------------------------------------------------
-    if s:wubi_sleep_with_pinyin > 0
-        let option = wubi . toggle . pinyin
-        let option = "im\t " . input . option
-        if empty(s:ctrl_6_count%2)
-            let im = pinyin . toggle . wubi
-        else
-            let im = wubi . toggle . pinyin
-        endif
-        return [im, option]
-    endif
-  " ------------------------------------------------------------
     if s:erbi_flag > 0
         let im = "〖二笔〗"
         let option = "im\t " . input . im
     elseif s:wubi_flag > 0
         let im = wubi
         let option = im . ": trdeggwhssqu"
+        let option = "im\t " . input . option
+    elseif s:cangjie_flag > 0
+        let im = "〖仓颉〗"
+        let option = im . ": hqi kb m ol ddni"
         let option = "im\t " . input . option
     elseif s:current_datafile =~# 'yong'
         let im = "〖永码〗"
@@ -731,10 +732,6 @@ function! s:vimim_statusline()
     elseif s:current_datafile =~# 'phonetic'
         let im = "〖注音〗"
         let option = "im\t " . input . im
-    elseif s:current_datafile =~# 'cangjie'
-        let im = "〖仓颉〗"
-        let option = im . ": hqi kb m ol ddni"
-        let option = "im\t " . input . option
     else
   " ------------------------------------------------------------
         if s:pinyin_flag > 0
@@ -766,6 +763,16 @@ function! s:vimim_statusline()
        " -------------------------------------------------------
         if s:four_corner_flag > 0
             let im .= "＋〖四角号码〗"
+        endif
+    endif
+  " ------------------------------------------------------------
+    if s:wubi_sleep_with_pinyin > 0
+        let option = im . toggle . pinyin
+        let option = "im\t " . input . option
+        if empty(s:ctrl_6_count%2)
+            let im = pinyin . toggle . im
+        else
+            let im = im . toggle . pinyin
         endif
     endif
   " ------------------------------------------------------------
@@ -1404,7 +1411,7 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_start_chinese_mode()
-" ------------------------------------ xxx
+" ------------------------------------
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_start()
     sil!call s:vimim_i_chinese_mode_setting_on()
@@ -3853,16 +3860,14 @@ call add(s:vimims, VimIM)
 
 " ---------------------------------
 function! s:vimim_initialize_erbi()
-" --------------------------------- xxx
+" ---------------------------------
     if empty(s:erbi_flag)
         return
     endif
     let s:wubi_flag = 1
     let s:vimim_punctuation_navigation = -1
     let s:search_key_slash = -1
-"   let s:wubi_sleep_with_pinyin = 1
-"xxx
-"   let s:vimim_wildcard_search = -1
+    let s:vimim_wildcard_search = -1
 endfunction
 
 " ------------------------------------------------
@@ -4704,6 +4709,7 @@ function! s:vimim_initialize_session()
     let s:privates_flag = 0
     let s:four_corner_flag = 0
     let s:erbi_flag = 0
+    let s:canjie_flag = 0
     " --------------------------------
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
@@ -5038,8 +5044,8 @@ else
         let keyboard = keyboard2
     endif
 
-    " [wubi] sleeps with pinyin in harmony
-    " ------------------------------------
+    " [wubi][erbi] sleeps with pinyin in harmony
+    " ------------------------------------------
     if s:wubi_sleep_with_pinyin > 0
         call s:vimim_toggle_wubi_pinyin()
     endif
