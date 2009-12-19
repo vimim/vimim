@@ -154,11 +154,6 @@ function! s:vimim_initialization()
     " -----------------------------------------
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Customization    ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
 " -----------------------------------
 function! s:vimim_initialize_global()
 " -----------------------------------
@@ -282,6 +277,11 @@ function! s:vimim_finalize_session()
     endif
     " ------------------------------
 endfunction
+
+" ======================================= }}}
+let VimIM = " ====  Customization    ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
 
 " -----------------------------------
 function! s:vimim_initialize_plugin()
@@ -703,13 +703,13 @@ function! s:vimim_statusline()
         return [im, option]
     endif
   " ------------------------------------------------------------
-    if s:wubi_flag > 0
+    if s:erbi_flag > 0
+        let im = "〖二笔〗"
+        let option = "im\t " . input . im
+    elseif s:wubi_flag > 0
         let im = wubi
         let option = im . ": trdeggwhssqu"
         let option = "im\t " . input . option
-    elseif s:erbi_flag > 0
-        let im = "〖二笔〗"
-        let option = "im\t " . input . im
     elseif s:current_datafile =~# 'yong'
         let im = "〖永码〗"
         let option = "im\t " . input . im
@@ -1582,14 +1582,8 @@ function! s:vimim_i_laststatus_on()
 " ---------------------------------
     if s:vimim_custom_laststatus < 1
         let msg = "don't touch the laststatus"
-    elseif s:vimim_custom_laststatus > 1
-        set laststatus=2
     else
-        if empty(s:chinese_input_mode)
-            let msg = "OneKey does not set it by default"
-        else
-            set laststatus=2
-        endif
+        set laststatus=2
     endif
 endfunction
 
@@ -1600,13 +1594,16 @@ function! s:vimim_onekey_status_on()
     \&& s:vimim_custom_laststatus < 2
         set noruler
     endif
+    if s:vimim_custom_laststatus > 1
+        set laststatus=2
+    endif
 endfunction
 
 " -------------------------------------------
 function! s:vimim_i_chinese_mode_setting_on()
 " -------------------------------------------
-    set iminsert=1
     set imdisable
+    set iminsert=1
     let b:keymap_name = get(s:vimim_statusline(),0)
     let s:ctrl_6_count += 1
     let s:wubi_pinyin_flag = s:ctrl_6_count%2
@@ -3863,8 +3860,9 @@ function! s:vimim_initialize_erbi()
     let s:wubi_flag = 1
     let s:vimim_punctuation_navigation = -1
     let s:search_key_slash = -1
-    let s:wubi_sleep_with_pinyin = -1
-    let s:vimim_wildcard_search = -1
+"   let s:wubi_sleep_with_pinyin = 1
+"xxx
+"   let s:vimim_wildcard_search = -1
 endfunction
 
 " ------------------------------------------------
@@ -4755,8 +4753,8 @@ endfunction
 " -----------------------
 function! s:vimim_start()
 " -----------------------
-    sil!call s:vimim_i_laststatus_on()
     sil!call s:vimim_i_setting_on()
+    sil!call s:vimim_i_laststatus_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
