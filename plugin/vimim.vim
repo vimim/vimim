@@ -139,6 +139,7 @@ function! s:vimim_initialization()
     " -----------------------------------------
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_wubi()
+    call s:vimim_initialize_cangjie()
     call s:vimim_initialize_shuangpin()
     call s:vimim_initialize_pinyin()
     " -----------------------------------------
@@ -344,11 +345,16 @@ function! s:vimim_initialize_plugin()
             continue
         endif
     endfor
+
+let g:g111=datafile
+let g:g112=s:current_datafile
     " -------------------------------
     if filereadable(datafile) && len(datafile) > 1
         if empty(s:current_datafile)
             let s:current_datafile = datafile
+let g:g11=s:cangjie_flag
         elseif empty(s:pinyin_flag) && datafile =~# 'pinyin'
+let g:g12=s:wubi_sleep_with_pinyin
             let s:datafile_secondary = datafile
             let s:wubi_sleep_with_pinyin = 1
         endif
@@ -375,8 +381,8 @@ function! s:vimim_initialize_im_flag()
         let s:vimim_datafile_is_not_utf8 = 1
     endif
     " --------------------------------
-    if s:current_datafile =~# 'canjie'
-        let s:canjie_flag = 1
+    if s:current_datafile =~# 'cangjie'
+        let s:cangjie_flag = 1
     elseif s:current_datafile =~# 'erbi'
         let s:erbi_flag = 1
     elseif s:current_datafile =~# 'wubi2pinyin'
@@ -700,16 +706,16 @@ function! s:vimim_statusline()
     let shuangpin = "〖双拼〗"
     let toggle = "i_CTRL-^"
   " ------------------------------------------------------------
-    if s:erbi_flag > 0
+    if s:cangjie_flag > 0
+        let im = "〖仓颉〗"
+        let option = im . ": hqi kb m ol ddni"
+        let option = "im\t " . input . option
+    elseif s:erbi_flag > 0
         let im = "〖二笔〗"
         let option = "im\t " . input . im
     elseif s:wubi_flag > 0
         let im = wubi
         let option = im . ": trdeggwhssqu"
-        let option = "im\t " . input . option
-    elseif s:cangjie_flag > 0
-        let im = "〖仓颉〗"
-        let option = im . ": hqi kb m ol ddni"
         let option = "im\t " . input . option
     elseif s:current_datafile =~# 'yong'
         let im = "〖永码〗"
@@ -1584,16 +1590,6 @@ function! s:vimim_initialize_skin()
     " --------------------------
 endfunction
 
-" ---------------------------------
-function! s:vimim_i_laststatus_on()
-" ---------------------------------
-    if s:vimim_custom_laststatus < 1
-        let msg = "don't touch the laststatus"
-    else
-        set laststatus=2
-    endif
-endfunction
-
 " ----------------------------------
 function! s:vimim_onekey_status_on()
 " ----------------------------------
@@ -1613,8 +1609,19 @@ function! s:vimim_i_chinese_mode_setting_on()
     set iminsert=1
     let b:keymap_name = get(s:vimim_statusline(),0)
     let s:ctrl_6_count += 1
-    let s:wubi_pinyin_flag = s:ctrl_6_count%2
+    let s:xingma_pinyin_flag = s:ctrl_6_count%2
     let s:chinese_mode_toggle_flag = 1
+    sil!call s:vimim_i_laststatus_on()
+endfunction
+
+" ---------------------------------
+function! s:vimim_i_laststatus_on()
+" ---------------------------------
+    if s:vimim_custom_laststatus < 1
+        let msg = "don't touch the laststatus"
+    else
+        set laststatus=2
+    endif
 endfunction
 
 " ======================================= }}}
@@ -3854,6 +3861,21 @@ function! s:vimim_shuangpin_purple(rule)
 endfunction
 
 " ======================================= }}}
+let VimIM = " ====  VimIM_Cangjie    ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" ------------------------------------
+function! s:vimim_initialize_cangjie()
+" ------------------------------------
+    if s:cangjie_flag > 0
+        let msg = "plug and play  <=> cangjie and pinyin"
+        call s:vimim_initialize_plugin()
+    endif
+endfunction
+
+
+" ======================================= }}}
 let VimIM = " ====  VimIM_Erbi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
@@ -3929,17 +3951,19 @@ endfunction
 " ------------------------------------
 function! s:vimim_toggle_wubi_pinyin()
 " ------------------------------------
-    if empty(s:wubi_pinyin_flag)
+    if empty(s:xingma_pinyin_flag)
+"       let s:cangjie_flag = 1
         let s:wubi_flag = 1
         let s:pinyin_flag = 0
         let s:chinese_frequency = s:vimim_chinese_frequency
     else
         let s:pinyin_flag = 1
         let s:wubi_flag = 0
+"       let s:cangjie_flag = 0
         let s:chinese_frequency = -1
     endif
     " --------------------------------
-    if s:wubi_flag > 0
+    if empty(s:xingma_pinyin_flag)
         if empty(s:lines_datafile_primary)
             let s:current_datafile = s:datafile_primary
             let s:lines_datafile_primary = s:vimim_load_datafile(1)
@@ -4699,7 +4723,7 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_super_reset()
     " --------------------------------
     let s:wubi_flag = 0
-    let s:wubi_pinyin_flag = 0
+    let s:xingma_pinyin_flag = 0
     let s:wubi_sleep_with_pinyin = 0
     let s:chinese_frequency = s:vimim_chinese_frequency
     " --------------------------------
@@ -4760,7 +4784,6 @@ endfunction
 function! s:vimim_start()
 " -----------------------
     sil!call s:vimim_i_setting_on()
-    sil!call s:vimim_i_laststatus_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
