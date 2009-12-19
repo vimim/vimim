@@ -4709,7 +4709,7 @@ function! s:vimim_initialize_session()
     let s:privates_flag = 0
     let s:four_corner_flag = 0
     let s:erbi_flag = 0
-    let s:canjie_flag = 0
+    let s:cangjie_flag = 0
     " --------------------------------
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
