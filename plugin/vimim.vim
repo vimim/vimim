@@ -137,7 +137,7 @@ function! s:vimim_initialization()
     call s:vimim_initialize_datafile_4corner()
     " -----------------------------------------
     call s:vimim_initialize_im_flag()
-    call s:vimim_plug_play_xiangma_pinyin()
+    call s:vimim_xiangma_sleep_with_pinyin()
     " -----------------------------------------
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_wubi()
@@ -401,16 +401,15 @@ function! s:vimim_initialize_im_flag()
     " ------------------------------
 endfunction
 
-" ------------------------------------------
-function! s:vimim_plug_play_xiangma_pinyin()
-" ------------------------------------------
-    if empty(s:cangjie_flag)
-    \&& empty(s:wubi_flag)
-    \&& empty(s:erbi_flag)
-        return
+" -------------------------------------------
+function! s:vimim_xiangma_sleep_with_pinyin()
+" -------------------------------------------
+    if s:cangjie_flag > 0
+    \|| s:wubi_flag > 0
+    \|| s:erbi_flag > 0
+        let msg = "plug and play <=> xingma and pinyin"
+        call s:vimim_initialize_plugin()
     endif
-    let msg = "plug and play  <=> xingma and pinyin"
-    call s:vimim_initialize_plugin()
 endfunction
 
 " -------------------------------------------------------
@@ -3972,6 +3971,7 @@ function! s:vimim_wubi(keyboard)
     let keyboard = a:keyboard
     if empty(s:wubi_flag)
     \|| empty(keyboard)
+    \|| s:pinyin_flag > 0
     \|| s:cangjie_flag > 0
         return []
     endif
