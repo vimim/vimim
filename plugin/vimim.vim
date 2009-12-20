@@ -192,6 +192,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_fuzzy_search")
+    call add(G, "g:vimim_frequency_first_fix")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_www_sogou")
@@ -206,7 +207,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_lcursor_color")
     call add(G, "g:vimim_custom_laststatus")
     call add(G, "g:vimim_esc_autocmd")
-    call add(G, "g:vimim_first_candidate_fix")
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_match_dot_after_dot")
     call add(G, "g:vimim_match_word_after_word")
@@ -258,9 +258,10 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_start_omni()
     sil!call s:vimim_super_reset()
     " --------------------------------
-    let s:xingma_pinyin_flag = 0
-    let s:xingma_sleep_with_pinyin = 0
     let s:chinese_frequency = 0
+    let s:xingma_sleep_with_pinyin = 0
+    let s:xingma_pinyin_flag = 0
+    let s:pinyin_and_4corner = 0
     " --------------------------------
     let s:wubi_flag = 0
     let s:pinyin_flag = 0
@@ -270,30 +271,28 @@ function! s:vimim_initialize_session()
     let s:four_corner_flag = 0
     let s:erbi_flag = 0
     let s:cangjie_flag = 0
-    " --------------------------------
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
-    let s:lines_datafile_primary = []
-    let s:lines_datafile_secondary = []
     " --------------------------------
-    let s:datafile_has_period = 0
-    let s:diy_keyboard_asdfghjklo = {}
-    let s:ecdict = {}
     let s:search_key_slash = 0
-    let s:unicode_prefix = 'u'
+    let s:datafile_has_period = 0
     let s:sentence_with_space_input = 0
-    let s:lines_datafile = []
-    let s:alphabet_lines = []
-    let s:shuangpin_table = {}
     let s:www_executable = 0
     let s:start_row_before = 0
     let s:start_column_before = 1
+    " --------------------------------
+    let s:diy_keyboard_asdfghjklo = {}
+    let s:ecdict = {}
+    let s:shuangpin_table = {}
+    " --------------------------------
     let s:current_positions = [0,0,1,0]
-    " --------------------------------
+    let s:lines_datafile_primary = []
+    let s:lines_datafile_secondary = []
+    let s:lines_datafile = []
+    let s:alphabet_lines = []
     let s:debugs = []
-    let s:debug_count = 0
     " --------------------------------
-    let s:matched_list = []
+    let s:debug_count = 0
     let s:keyboard_count = 0
     let s:ctrl_6_count = 1
     " --------------------------------
@@ -417,13 +416,12 @@ function! s:vimim_initialize_datafile_plugin()
         if empty(s:current_datafile)
             let s:current_datafile = datafile
         endif
+        if empty(s:datafile_primary)
+            let s:datafile_primary = s:current_datafile
+        endif
+        return datafile
     endif
     " -------------------------------
-    if empty(s:datafile_primary)
-        let s:datafile_primary = s:current_datafile
-    endif
-    " -------------------------------
-    return datafile
 endfunction
 
 " ------------------------------------
@@ -985,7 +983,7 @@ function! s:vimim_hex_unicode(keyboard)
         return []
     endif
     let unicode = nr2char(dddd)
-    let menu = s:unicode_prefix . a:keyboard .'　'. dddd
+    let menu = 'u' . a:keyboard .'　'. dddd
     return [menu.' '.unicode]
 endfunction
 
@@ -1087,10 +1085,11 @@ function! s:vimim_internal_code(keyboard)
     let s:unicode_menu_display_flag = 0
     let numbers = []
     let keyboard = a:keyboard
+    let unicode_prefix = 'u'
     let last_char = strpart(keyboard,len(keyboard)-1,1)
     " support internal-code popup menu, if ending with 'u'
     " ----------------------------------------------------
-    if last_char == s:unicode_prefix
+    if last_char == unicode_prefix
         let &pumheight=16
         let keyboard = strpart(keyboard,0,len(keyboard)-1)
         if keyboard =~ '^\d\{4}$'        "| 2222u
@@ -1117,9 +1116,9 @@ function! s:vimim_internal_code(keyboard)
             let four_hex   = match(keyboard, '^\x\{4}$')
             let four_digit = match(keyboard, '^\d\{4}$')
             if empty(four_hex) && four_digit < 0
-                let keyboard = s:unicode_prefix . keyboard
+                let keyboard = unicode_prefix . keyboard
             endif
-            if strpart(keyboard,0,1) == s:unicode_prefix
+            if strpart(keyboard,0,1) == unicode_prefix
                 let keyboard = strpart(keyboard,1)
             else
                 return []
@@ -1376,7 +1375,7 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'd'
             let hjkl  = '\<C-R>=g:vimim_d_one_key_correction()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_d_one_key_correction()\<CR>'
-            let hjkl .= '\<C-R>=g:alphabet_reset_after_insert()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -1386,6 +1385,7 @@ endfunction
 function! g:vimim_d_one_key_correction()
 " --------------------------------------
     let d  = ''
+    let s:matched_list = []
     if pumvisible()
         let s:one_key_correction = 1
         let d = '\<C-E>'
@@ -1464,6 +1464,9 @@ endfunction
 " ----------------------------------------
 function! s:vimim_popup_word(column_start)
 " ----------------------------------------
+    if pumvisible()
+        return ""
+    endif
     let column_end = col('.') - 1
     let range = column_end - a:column_start
     let current_line = getline(".")
@@ -1479,6 +1482,7 @@ function! s:vimim_clipboard_register(word)
             let @+ = a:word
         endif
     endif
+    sil!call g:vimim_reset_after_insert()
     sil!call s:vimim_stop()
     return "\<Esc>"
 endfunction
@@ -1620,7 +1624,7 @@ function! s:vimim_static_alphabet_auto_select()
     for _ in az_char_list
         sil!exe 'inoremap <silent> ' ._. '
         \ <C-R>=pumvisible()?"\<lt>C-Y>":""<CR>'. _
-        \ . '<C-R>=g:alphabet_reset_after_insert()<CR>'
+        \ . '<C-R>=<SID>alphabet_reset_after_insert()<CR>'
     endfor
 endfunction
 
@@ -1865,7 +1869,7 @@ function! s:vimim_punctuation_on()
     for _ in keys(punctuations)
         sil!exe 'inoremap <silent> '._.'
         \    <C-R>=<SID>vimim_punctuation_mapping("'._.'")<CR>'
-        \ . '<C-R>=g:alphabet_reset_after_insert()<CR>'
+        \ . '<C-R>=<SID>alphabet_reset_after_insert()<CR>'
     endfor
     " --------------------------------------
     call s:vimim_punctuation_navigation_on()
@@ -2573,6 +2577,7 @@ endfunction
 function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
     let d = '\<BS>'
+    let s:matched_list = []
     if s:vimim_smart_backspace == 1
         if empty(s:vimim_sexy_onekey)
         \&& empty(s:chinese_input_mode)
@@ -2763,7 +2768,6 @@ function! s:vimim_datafile_range(keyboard)
         if empty(ranges)
             return
         else
-            let s:lines_datafile = lines
             call s:vimim_save_datafile(lines)
         endif
     endif
@@ -2828,8 +2832,8 @@ function! s:vimim_exact_match(lines, keyboard, start)
     endif
     let match_start = a:start
     let match_end = match_start
-    let patterns = '^\(' . keyboard. '\)\@!'
-    let result = match(a:lines, patterns, match_start)-1
+    let pattern = '^\(' . keyboard. '\)\@!'
+    let result = match(a:lines, pattern, match_start)-1
     let words_limit = 128
     if result - match_start < 1
         return a:lines[match_start : match_end]
@@ -2849,8 +2853,8 @@ function! s:vimim_exact_match(lines, keyboard, start)
             endif
         endif
         if do_search_on_word > 0
-            let patterns = '^\(' . keyboard . '\>\)\@!'
-            let result = match(a:lines, patterns, match_start)-1
+            let pattern = '^\(' . keyboard . '\>\)\@!'
+            let result = match(a:lines, pattern, match_start)-1
         endif
     endif
     if empty(result)
@@ -3114,7 +3118,7 @@ function! g:vimim_ctrl_x_ctrl_u()
     if char_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
         if s:chinese_input_mode > 1
-            call g:alphabet_reset_after_insert()
+            call <SID>alphabet_reset_after_insert()
         endif
         if empty(s:vimim_sexy_input_style)
             let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
@@ -3157,83 +3161,129 @@ function! s:vimim_initialize_datafile_in_vimrc()
     endif
 endfunction
 
-" --------------------------------------------
-function! s:vimim_update_frequence_in_memory()
-" -------------------------------------------- xxx
+" ------------------------------------
+function! s:vimim_get_new_order_list()
+" ------------------------------------
     if empty(s:matched_list)
         return []
     endif
-    " ------------------------------------------
-    let matched_one_line = get(s:matched_list, 0)
-    let matched_one_list = split(matched_one_line)
-    if len(matched_one_list) < 3
+    " --------------------------------
+    let one_line_list = split(get(s:matched_list,0))
+    let keyboard = get(one_line_list,0)
+    let first_fix_candidate = get(one_line_list,1)
+    if len(one_line_list) < 3
+    \|| keyboard !~# s:valid_key
+    \|| char2nr(first_fix_candidate) < 127
         return []
     endif
-    " ------------------------------------------
-    let keyboard = get(matched_one_list, 0)
-    if keyboard !~# s:valid_key
-        return []
-    endif
-    " ------------------------------------------
-    let msg = "update data in memory based on past usage"
-    let lines = s:vimim_load_datafile(0)
-    if empty(lines)
-        return []
-    endif
-    " ------------------------------------------
-    let pattern = '^' . keyboard . '\>'
-    let matched = match(lines, pattern)
-    if matched < 0
-        return []
-    endif
-    let insert_index = matched
-    " ------------------------------------------
-    let msg = "remove all entries matching key from datafile"
-    let one_line_chinese_list = []
-    while matched > -1
-        let old_item = remove(lines, matched)
-        let values = split(old_item)
-        call extend(one_line_chinese_list, values[1:])
-        let matched = match(lines, pattern, insert_index)
-    endwhile
-    if empty(one_line_chinese_list)
-        return []
-    endif
-let g:gg=s:matched_list
-let g:ga=keyboard
-let g:gb=matched_one_list
-let g:gc=len(lines)
-let g:gd=one_line_chinese_list
-    " ------------------------------------------
-    let msg = "make a new order list"
+    " --------------------------------
     let chinese = s:vimim_popup_word(s:start_column_before)
     if char2nr(chinese) < 127
         return []
     endif
-    let used = match(one_line_chinese_list, chinese)
-    if used > -1
-        let head = remove(one_line_chinese_list, used)
-        call insert(one_line_chinese_list, head)
-    endif
-    if empty(one_line_chinese_list)
+    " --------------------------------
+    if first_fix_candidate ==# chinese
         return []
     endif
-let g:ge=one_line_chinese_list
-    " ------------------------------------------
-    if s:vimim_first_candidate_fix > 0
-        let first_candidate_fix = get(matched_one_list, 1)
-        let index = match(one_line_chinese_list, first_candidate_fix)
-        let first_candidate_fix = remove(one_line_chinese_list, index)
-        call insert(one_line_chinese_list, first_candidate_fix)
+    " --------------------------------
+    let new_order_list = []
+    let new_match_list = []
+    for item in s:matched_list
+        let one_line_list = split(item)
+        let tail = get(one_line_list,-1)
+        if tail == "#"
+            continue
+        endif
+        let menu = get(one_line_list,0)
+        if keyboard ==# menu
+            let new_match_candidate = get(one_line_list,1)
+            call add(new_match_list, new_match_candidate)
+            call extend(new_order_list, one_line_list[1:])
+        endif
+    endfor
+    if len(new_order_list) < 2
+        let msg = "too short for new order list based on input"
+        return []
     endif
-let g:gf=one_line_chinese_list
+    " --------------------------------
+    let insert_index = 0
+    if s:vimim_frequency_first_fix > 0
+        let insert_index = 1
+    endif
+    " --------------------------------
+    let used = match(new_order_list, chinese)
+    if used < 0
+        return []
+    else
+        let head = remove(new_order_list, used)
+        call insert(new_order_list, head, insert_index)
+    endif
+    " -----------------------------------
+    call insert(new_order_list, keyboard)
+    " -----------------------------------
+    return [new_order_list, new_match_list]
+endfunction
+
+" --------------------------------------------
+function! s:vimim_update_frequence_in_memory()
+" --------------------------------------------
+    let both_list = s:vimim_get_new_order_list()
+    let new_list = get(both_list,0)
+    if empty(new_list)
+        let s:matched_list = []
+        return []
+    endif
+    " update data in memory based on past usage
+    " -----------------------------------------
+    let datafile = s:vimim_load_datafile(0)
+    if empty(datafile)
+        return []
+    endif
+    " no update if the same old order
+    " -------------------------------
+    let keyboard = get(new_list,0)
+    let first = get(new_list,1)
+    let second = get(new_list,2)
+    let pattern = keyboard . '\s\+' . first . '\s\+' . second
+    let same_old = match(datafile, pattern)
+    if same_old < 0
+        let msg = "walk through to update with new order"
+    else
+        return []
+    endif
+    " (1/4) delete all but one matching lines
+    " ---------------------------------------
+    let match_list = get(both_list,1)
+    if empty(match_list)
+        return []
+    elseif len(match_list) < 2
+        let msg = "only one matching line"
+    else
+        for item in match_list
+            let pattern = '^' . keyboard . '\s\+' . item
+            let remove_index = match(datafile, pattern)
+            if remove_index < 0
+                let msg = "nothing to remove"
+            else
+                call remove(datafile, remove_index)
+            endif
+        endfor
+    endif
+    " (2/4) locate new order line based on user input
+    " -----------------------------------------------
+    let pattern = '^' . keyboard . '\>'
+    let insert_index = match(datafile, pattern)
+    if insert_index < 0
+        return []
+    endif
+    " (3/4) insert new order list by replacement
     " ------------------------------------------
-    let msg = "insert the new order list into memory"
-    let new_item = keyboard .' '. join(one_line_chinese_list)
-    call insert(lines, new_item, insert_index)
-let g:gh=one_line_chinese_list
-    return lines
-    " ------------------------------------------
+    let new_order_line = join(new_list)
+    let datafile[insert_index] = new_order_line
+    " (4/4) update the new order in memory
+    " ------------------------------------
+    let s:lines_datafile = datafile
+    return ['new order']
 endfunction
 
 " ------------------------------------------
@@ -3242,8 +3292,8 @@ function! s:vimim_update_frequence_on_disk()
     if s:chinese_frequency < 2
         return
     endif
-    if s:keyboard_count > 0
-    \&& empty(s:keyboard_count % s:chinese_frequency)
+    let s:keyboard_count += 1
+    if empty(s:keyboard_count % s:chinese_frequency)
         call s:vimim_save_datafile(s:lines_datafile)
     endif
 endfunction
@@ -3251,19 +3301,19 @@ endfunction
 " ------------------------------------------
 function! s:vimim_load_datafile(reload_flag)
 " ------------------------------------------
-    if empty(s:current_datafile) || a:reload_flag > 0
-        if len(s:current_datafile) > 1
+    if empty(s:lines_datafile) || a:reload_flag > 0
+        if len(s:current_datafile) > 0
         \&& filereadable(s:current_datafile)
             let s:lines_datafile = readfile(s:current_datafile)
-            " ------------------------------
-            if s:four_corner_flag > 0
-                if empty(s:lines_4corner_datafile)
-                    let s:lines_4corner_datafile = s:vimim_load_4corner()
-                elseif len(s:lines_4corner_datafile) > 1
-                \&& len(s:lines_datafile) > 1
-                    call extend(s:lines_datafile, s:lines_4corner_datafile, 0)
-                    let s:pinyin_and_4corner = 999
-                endif
+        endif
+        " ----------------------------------
+        if s:four_corner_flag > 0
+            if empty(s:lines_4corner_datafile)
+                let s:lines_4corner_datafile = s:vimim_load_4corner()
+            endif
+            if len(s:lines_4corner_datafile) > 1
+            \&& len(s:lines_datafile) > 1
+                call extend(s:lines_datafile, s:lines_4corner_datafile, 0)
             endif
         endif
     endif
@@ -3275,9 +3325,10 @@ function! s:vimim_save_datafile(lines)
 " ------------------------------------
     if empty(a:lines)
     \|| empty(s:lines_datafile)
-    \|| s:pinyin_and_4corner == 999
+    \|| len(s:lines_4corner_datafile) > 1
         return
     endif
+    let s:lines_datafile = a:lines
     if filewritable(s:current_datafile)
         call writefile(a:lines, s:current_datafile)
     endif
@@ -3312,7 +3363,6 @@ function! <SID>vimim_save(entry)
         call add(entries, line)
     endfor
     let lines = s:vimim_insert_entry(s:vimim_load_datafile(1), entries)
-    let s:lines_datafile = lines
     call s:vimim_save_datafile(lines)
 endfunction
 
@@ -4578,10 +4628,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_pinyin_and_4corer(keyboard)
 " -------------------------------------------
-    if s:pinyin_flag > 0 && s:four_corner_flag == 1
-        let msg = " plug and play <=> pinyin and 4corner "
-        let s:pinyin_and_4corner = 1
-    else
+    if empty(s:pinyin_and_4corner)
         return []
     endif
     let keyboard = a:keyboard
@@ -4681,7 +4728,8 @@ function! s:vimim_initialize_plugin_debug()
     let s:vimim_www_sogou=13
     let s:vimim_static_input_style=-1
     let s:vimim_chinese_frequency=1
-    " ------------------------------
+    let s:vimim_frequency_first_fix=0
+    " ------------------------------ xxx
     let s:vimim_fuzzy_search=1
     let s:vimim_wildcard_search=1
     " ------------------------------
@@ -4783,7 +4831,6 @@ function! s:vimim_start_omni()
 " ----------------------------
     let s:menu_from_cloud_flag = 0
     let s:insert_without_popup_flag = 0
-    let s:pinyin_and_4corner = 0
     let s:pattern_not_found = 1
 endfunction
 
@@ -4815,6 +4862,7 @@ endfunction
 " ---------------------------------
 function! s:reset_before_anything()
 " ---------------------------------
+    let s:matched_list = []
     let s:chinese_input_mode = 0
     let s:no_internet_connection = 0
     let s:chinese_mode_toggle_flag = 0
@@ -4843,9 +4891,9 @@ function! s:reset_after_auto_insert()
 "---------------------------------------
 endfunction
 
-" ---------------------------------------
-function! g:alphabet_reset_after_insert()
-" ---------------------------------------
+" ------------------------------------------
+function! <SID>alphabet_reset_after_insert()
+" ------------------------------------------
     let char_before = getline(".")[col(".")-2]
     if char_before =~# s:valid_key
         call s:reset_after_auto_insert()
@@ -4855,30 +4903,31 @@ endfunction
 
 " ------------------------------------
 function! g:vimim_reset_after_insert()
-" ------------------------------------ xxx
+" ------------------------------------ 
+    if pumvisible()
+        return ""
+    endif
+    " --------------------------------
     if s:chinese_frequency > 0
         let lines = s:vimim_update_frequence_in_memory()
-        if empty(lines)
-            let s:matched_list = []
-        else
-            let s:keyboard_count += 1
-            let s:lines_datafile = lines
+        if len(lines) > 0
             if s:chinese_frequency > 1
                 call s:vimim_update_frequence_on_disk()
             endif
         endif
     endif
     " --------------------------------
+    if s:wubi_flag < 0
+        let s:vimim_www_sogou = 0
+    endif
+    " -------------------------------- 
+    let s:matched_list = []
+    let s:pageup_pagedown = ''
+    " --------------------------------
     if empty(s:vimim_sexy_onekey)
     \&& empty(s:chinese_input_mode)
         call s:vimim_stop()
     endif
-    " --------------------------------
-    if s:wubi_flag < 0
-        let s:vimim_www_sogou = 0
-    endif
-    " --------------------------------
-    let s:pageup_pagedown = ''
     " --------------------------------
     return ""
 endfunction
@@ -4912,7 +4961,7 @@ function! s:vimim_helper_mapping_on()
     if s:vimim_smart_backspace > 0
         inoremap<silent><BS>  <C-R>=<SID>vimim_bs_pumvisible()<CR>
                              \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
-                             \<C-R>=g:alphabet_reset_after_insert()<CR>
+                             \<C-R>=g:vimim_reset_after_insert()<CR>
     endif
     " ----------------------------------------------------------
 endfunction
