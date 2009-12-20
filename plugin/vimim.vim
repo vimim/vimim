@@ -182,7 +182,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_reverse_pageup_pagedown")
     call add(G, "g:vimim_sexy_input_style")
-    call add(G, "g:vimim_shuangpin_dummy")
     call add(G, "g:vimim_shuangpin_abc")
     call add(G, "g:vimim_shuangpin_microsoft")
     call add(G, "g:vimim_shuangpin_nature")
@@ -2891,9 +2890,6 @@ function! s:vimim_fuzzy_pattern(keyboard)
 " ---------------------------------------
     let keyboard = a:keyboard
     let fuzzy = '\l\+'
-    if s:vimim_shuangpin_dummy(keyboard) > 0
-        let fuzzy = '.*'
-    endif
     if strpart(keyboard,len(keyboard)-1,1) ==# '.'
         let keyboard = strpart(keyboard,0,len(keyboard)-1)
         let fuzzy = '.*'
@@ -2920,9 +2916,7 @@ function! s:vimim_filter(results, keyboard, length)
     endif
     " ---------------------------------------------
     if empty(filter_length)
-        if s:vimim_shuangpin_dummy(a:keyboard) > 0
-            let filter_length = length/2 |" 4_char => 2_chinese
-        elseif length < 5                |" 4_char => 4_chinese
+        if length < 5
             let filter_length = length
         endif
     endif
@@ -2932,36 +2926,6 @@ function! s:vimim_filter(results, keyboard, length)
         call filter(results, 'v:val =~ pattern')
     endif
     return results
-endfunction
-
-" -----------------------------------------
-function! s:vimim_shuangpin_dummy(keyboard)
-" -----------------------------------------
-    if empty(s:vimim_shuangpin_dummy)
-    \|| s:shuangpin_flag > 0
-    \|| len(a:keyboard) < 4
-        return 0
-    endif
-    let sheng_mu = "[aeiouv]"
-    let dummy_shuangpin = 0
-    let keyboards = split(a:keyboard, '\(..\)\zs')
-    for key in keyboards
-        if len(key) < 2
-            continue
-        endif
-        let char = get(split(key,'\zs'),0)
-        if char =~ sheng_mu
-            let dummy_shuangpin = 0
-            break
-        endif
-        let char = get(split(key,'\zs'),1)
-        if char !~ sheng_mu
-            let dummy_shuangpin = 0
-            break
-        endif
-        let dummy_shuangpin = 1
-    endfor
-    return dummy_shuangpin
 endfunction
 
 " ======================================= }}}
