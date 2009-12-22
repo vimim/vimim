@@ -5164,12 +5164,6 @@ else
     let pattern = "\\C" . "^" . keyboard
     let match_start = match(lines, pattern)
 
-    " to support auto spell, if needed
-    " --------------------------------
-    if match_start < 0
-        let match_start = s:vimim_auto_spell(lines, keyboard)
-    endif
-
     " [unicode] assume hex unicode if no match for 4 corner
     " -----------------------------------------------------
     if match_start < 0
