@@ -25,12 +25,10 @@ let VimIM = " ====  Introduction     ==== {{{"
 "            VimIM aims to complete the Vim as the greatest editor.
 " -----------------------------------------------------------
 "  Features: * "Plug & Play"
-"            * "Plug & Play": "Cloud Input" without any datafile
-"            * "Plug & Play": "Cloud Input" with five ShuangPin
-"            * "Plug & Play": "Cloud Input" with WuBi
-"            * "Plug & Play": "Pinyin and four_corner" together
-"            * "Plug & Play": "Pinyin and five_stroke" together
-"            * Support "Cloud Input at will", independent of IM used
+"            * "Plug & Play": "Cloud Input at will" for all
+"            * "Plug & Play": "Cloud Input" with five Shuangpin
+"            * "Plug & Play": "Wubi and Pinyin" dynamic switch
+"            * "Plug & Play": "Pinyin and 4Corner" in harmony
 "            * Support direct "UNICODE input" using integer or hex
 "            * Support direct "GBK input" and "Big5 input"
 "            * Support "Pin Yin", "Wu Bi", "Cang Jie", "4Corner", etc
@@ -122,9 +120,9 @@ let s:vimimhelp = egg
 let s:path=expand("<sfile>:p:h")."/"
 scriptencoding utf-8
 
-" --------------------------------
-function! s:vimim_initialization()
-" --------------------------------
+" -------------------------------------
+function! s:vimim_initialization_once()
+" -------------------------------------
     if empty(s:initialization_loaded)
         let s:initialization_loaded=1
     else
@@ -134,28 +132,27 @@ function! s:vimim_initialization()
     call s:vimim_initialize_global()
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
+    " -------------------------------
+    call s:vimim_dictionary_shuangpin()
+    call s:vimim_dictionary_im()
+    call s:vimim_dictionary_punctuation()
+    " -------------------------------
+    call s:vimim_initialize_vimim_txt_debug()
     call s:vimim_initialize_datafile_in_vimrc()
-    call s:vimim_initialize_plugin_debug()
     " -----------------------------------------
-    call s:vimim_initialize_datafile_plugin()
-    call s:vimim_initialize_datafile_privates()
-    call s:vimim_initialize_datafile_4corner()
-    " -----------------------------------------
-    call s:vimim_initialize_im_flag()
-    call s:vimim_xiangma_sleep_with_pinyin()
+    call s:vimim_scan_plugin_to_invoke_im()
+    call s:vimim_scan_plugin_for_more_im()
     " -----------------------------------------
     call s:vimim_initialize_erbi()
-    call s:vimim_initialize_wubi()
     call s:vimim_initialize_shuangpin()
     call s:vimim_initialize_pinyin()
     " -----------------------------------------
-    call s:vimim_initialize_valid_keys()
-    " -----------------------------------------
+    call s:vimim_initialize_keycode()
     call s:vimim_initialize_skin()
     call s:vimim_initialize_encoding()
-    call s:vimim_initialize_punctuations()
     call s:vimim_initialize_quantifiers()
     call s:vimim_initialize_www_sogou()
+    call s:vimim_initialize_datafile_privates()
     " -----------------------------------------
     call s:vimim_finalize_session()
     " -----------------------------------------
@@ -175,7 +172,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_datafile_has_4corner")
     call add(G, "g:vimim_datafile_has_english")
     call add(G, "g:vimim_datafile_is_not_utf8")
-    call add(G, "g:vimim_diy_keyboard_asdfghjklo")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_imode_comma")
@@ -258,20 +254,19 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_super_reset()
     " --------------------------------
     let s:chinese_frequency = 0
+    let s:toggle_xiangma_pinyin = 0
     let s:xingma_sleep_with_pinyin = 0
-    let s:xingma_pinyin_flag = 0
-    let s:pinyin_and_4corner = 0
     " --------------------------------
-    let s:wubi_flag = 0
-    let s:pinyin_flag = 0
-    let s:shuangpin_flag = 0
-    let s:english_flag = 0
-    let s:privates_flag = 0
-    let s:four_corner_flag = 0
-    let s:erbi_flag = 0
-    let s:cangjie_flag = 0
-    let s:datafile_primary = 0
+    let s:pinyin_and_4corner = 0
+    let s:four_corner_lines = []
+    let s:unicode_menu_display_flag = 0
+    " --------------------------------
+    let s:im_primary = 0
+    let s:im_secondary = 0
+    let s:datafile_current = 0
     let s:datafile_secondary = 0
+    " --------------------------------
+    let s:privates_flag = 0
     " --------------------------------
     let s:search_key_slash = 0
     let s:datafile_has_period = 0
@@ -280,7 +275,7 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     " --------------------------------
-    let s:diy_keyboard_asdfghjklo = {}
+    let s:im = {}
     let s:ecdict = {}
     let s:shuangpin_table = {}
     " --------------------------------
@@ -301,41 +296,156 @@ endfunction
 function! s:vimim_finalize_session()
 " ----------------------------------
     let s:chinese_frequency = s:vimim_chinese_frequency
-    " ------------------------------
-    if s:vimim_datafile_has_pinyin > 0
-    \&& s:vimim_datafile_has_4corner > 0
-        let s:vimim_diy_keyboard_asdfghjklo = 1
+    " ----------------------------------------
+    if empty(s:datafile_current)
+        let s:datafile_current = copy(s:datafile_primary)
     endif
-    if s:vimim_diy_keyboard_asdfghjklo > 0
-        call s:initialize_asdfghjklo()
-    endif
-    " ------------------------------
-    if s:vimim_datafile_has_english > 0
-        let s:english_flag = 1
+    " --------------------------------
+    if s:datafile_primary =~# "chinese"
+        let s:vimim_datafile_is_not_utf8 = 1
     endif
     " ------------------------------
-    if s:pinyin_flag > 0
-    \&& s:four_corner_flag == 1
-        let s:pinyin_and_4corner = 1
+    if s:datafile_primary =~# "quote"
+    \|| s:datafile_secondary =~# "quote"
+        let s:vimim_datafile_has_apostrophe = 1
+        let s:chinese_frequency = -1
     endif
     " ------------------------------
-    if s:four_corner_flag > 1
+    if s:shuangpin_flag > 0
+        let s:im_primary = 'pinyin'
+        let s:im['pinyin'][0] = 1
+    endif
+    " ------------------------------
+    if get(s:im['4corner'],0) > 1
+    \&& empty(get(s:im['pinyin'],0))
         let s:vimim_fuzzy_search = 0
         let s:vimim_static_input_style = 1
+    endif
+    " ------------------------------
+    if empty(s:vimim_www_sogou)
+        let s:vimim_www_sogou = 888
+    elseif s:vimim_www_sogou == 1
+        let s:chinese_frequency = -1
+    endif
+    " ------------------------------
+    if empty(get(s:im['wubi'],0))
+        let s:vimim_wubi_non_stop = 0
     endif
     " ------------------------------
     if s:vimim_static_input_style < 0
         let s:vimim_static_input_style = 0
     endif
     " ------------------------------
-    if s:wubi_flag < 1
-        let s:vimim_wubi_non_stop = 0
+    if s:vimimdebug > 0
+        call s:debugs('im_1st', s:im_primary)
+        call s:debugs('im_2nd', s:im_secondary)
+        call s:debugs('datafile_1st', s:datafile_primary)
+        call s:debugs('datafile_2nd', s:datafile_secondary)
+        call s:debugs('xingma_pinyin', s:xingma_sleep_with_pinyin)
+        call s:debugs('pinyin_4corner', s:pinyin_and_4corner)
     endif
     " ------------------------------
-    if empty(s:vimim_www_sogou)
-        let s:vimim_www_sogou = 888
-    endif
-    " ------------------------------
+endfunction
+
+" -------------------------------
+function! s:vimim_dictionary_im()
+" -------------------------------
+    let key = 'cloud'
+    let loaded = 0
+    let im = '云输入'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'wubi'
+    let im = '五笔'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = '4corner'
+    let im = '四角号码'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = '12345'
+    let im = '五笔划'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'ctc'
+    let im = '中文电码'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'cns11643'
+    let im = '交換碼'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'english'
+    let im = '英文'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'hangul'
+    let im = '韩文'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'xinhua'
+    let im = '新华'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'pinyin'
+    let im = '拼音'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'cangjie'
+    let im = '仓颉'
+    let keycode = "[a-z,.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'erbi'
+    let im = '二笔'
+    let keycode = "[a-z'.,;/]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'yong'
+    let im = '永码'
+    let keycode = "[a-z',.;/]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'nature'
+    let im = '自然'
+    let keycode = "[a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'zhengma'
+    let im = '郑码'
+    let keycode = "[a-z,.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'quick'
+    let im = '速成'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'wu'
+    let im = '吴语'
+    let keycode = "[a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'array30'
+    let im = '行列'
+    let keycode = "[a-z.,;/]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
+    let key = 'phonetic'
+    let im = '注音'
+    let keycode = "[0-9a-z.,;/]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
 endfunction
 
 " ======================================= }}}
@@ -343,41 +453,43 @@ let VimIM = " ====  Customization    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" --------------------------------------------
-function! s:vimim_initialize_datafile_plugin()
-" --------------------------------------------
+" ------------------------------------------
+function! s:vimim_scan_plugin_to_invoke_im()
+" ------------------------------------------
+    if s:vimimdebug > 0
+    \|| s:pinyin_and_4corner > 1
+        return 0
+    endif
+    " ----------------------------------------
     if len(s:datafile_primary) > 1
     \&& len(s:datafile_secondary) > 1
         return 0
     endif
     " ----------------------------------------
-    let datafile = s:current_datafile
-    if empty(datafile)
-        let msg = "no user-specified datafile"
-    elseif empty(s:datafile_secondary)
-        let msg = "xingma wants to flirt with pinyin"
-    else
-        return 0
-    endif
-    " ----------------------------------------
     let input_methods = []
     " ----------------------------------------
-    if empty(s:cangjie_flag)
-        call add(input_methods, "cangjie")
+    let key = 'cangjie'
+    if empty(get(s:im[key],0))
+        call add(input_methods, key)
     endif
     " ----------------------------------------
-    if empty(s:erbi_flag)
-        call add(input_methods, "erbi")
+    let key = 'erbi'
+    if empty(get(s:im[key],0))
+        call add(input_methods, key)
     endif
     " ----------------------------------------
-    if empty(s:wubi_flag)
-        call add(input_methods, "wubi2pinyin")
+    if empty(get(s:im['wubi'],0))
         call add(input_methods, "wubi")
         call add(input_methods, "wubi98")
         call add(input_methods, "wubijd")
     endif
     " ----------------------------------------
-    if empty(s:pinyin_flag)
+    if empty(get(s:im['4corner'],0))
+        call add(input_methods, "4corner")
+        call add(input_methods, "12345")
+    endif
+    " ----------------------------------------
+    if empty(get(s:im['pinyin'],0))
         call add(input_methods, "pinyin")
         call add(input_methods, "pinyin_quote_sogou")
         call add(input_methods, "pinyin_huge")
@@ -386,23 +498,21 @@ function! s:vimim_initialize_datafile_plugin()
         call add(input_methods, "pinyin_hongkong")
     endif
     " ----------------------------------------
-    call add(input_methods, "4corner")
-    call add(input_methods, "ctc")
     call add(input_methods, "phonetic")
-    call add(input_methods, "wu")
-    call add(input_methods, "yong")
+    call add(input_methods, "array30")
     call add(input_methods, "nature")
     call add(input_methods, "zhengma")
     call add(input_methods, "xinhua")
     call add(input_methods, "quick")
-    call add(input_methods, "array30")
-    call add(input_methods, "english")
-    call add(input_methods, "cns11643")
-    call add(input_methods, "12345")
+    call add(input_methods, "wu")
+    call add(input_methods, "yong")
     call add(input_methods, "hangul")
-    call map(input_methods, '"vimim." . v:val . ".txt"')
-    " -------------------------------
-    for file in input_methods
+    call add(input_methods, "cns11643")
+    call add(input_methods, "ctc")
+    call add(input_methods, "english")
+    " ----------------------------------------
+    for im in input_methods
+        let file = "vimim." . im . ".txt"
         let datafile = s:path . file
         if filereadable(datafile)
             break
@@ -410,81 +520,57 @@ function! s:vimim_initialize_datafile_plugin()
             continue
         endif
     endfor
-    " -------------------------------
-    if filereadable(datafile) && len(datafile) > 1
-        if empty(s:current_datafile)
-            let s:current_datafile = datafile
-        endif
-        if empty(s:datafile_primary)
-            let s:datafile_primary = s:current_datafile
-        endif
-        return datafile
+    " ----------------------------------------
+    if filereadable(datafile)
+        let msg = "plugin ciku was found"
+    else
+        return 0
     endif
-    " -------------------------------
+    " ----------------------------------------
+    let msg = " [setter] for im-loaded-flag "
+    if im =~# '^wubi'
+        let im = 'wubi'
+    elseif im =~# '^pinyin'
+        let im = 'pinyin'
+    elseif im =~# '^\d'
+        let im = '4corner'
+    endif
+    let s:im[im][0] = 1
+    " ----------------------------------------
+    if empty(s:datafile_primary)
+        let s:datafile_primary = datafile
+        let s:im_primary = im
+    elseif empty(s:datafile_secondary)
+        let s:datafile_secondary = datafile
+        let s:im_secondary = im
+    endif
+    " ----------------------------------------
+    return im
 endfunction
 
-" ------------------------------------
-function! s:vimim_initialize_im_flag()
-" ------------------------------------
-    if empty(s:current_datafile)
-    \|| !filereadable(s:current_datafile)
-        let msg = "no datafile anywhere"
-        return
-    endif
-    " ------------------------------
-    if s:current_datafile =~# "quote"
-        let s:vimim_datafile_has_apostrophe = 1
-        let s:chinese_frequency = -1
-    endif
-    " --------------------------------
-    if s:current_datafile =~# "chinese"
-        let s:vimim_datafile_is_not_utf8 = 1
-    endif
-    " --------------------------------
-    if s:current_datafile =~# 'cangjie'
-        let s:cangjie_flag = 1
-    elseif s:current_datafile =~# 'erbi'
-        let s:erbi_flag = 1
-    elseif s:current_datafile =~# 'wubi2pinyin'
-        let s:wubi_flag = -1
-    elseif s:current_datafile =~# 'wubi'
-        let s:wubi_flag = 1
-    elseif s:current_datafile =~# 'english'
-        let s:english_flag = 1
-    elseif s:current_datafile =~# '4corner'
-    \&& empty(s:four_corner_flag)
-        let s:four_corner_flag = 2
-    elseif s:current_datafile =~# 'ctc'
-        let s:four_corner_flag = 4
-    elseif s:current_datafile =~# '12345'
-        let s:four_corner_flag = 5
-    elseif s:current_datafile =~# 'pinyin'
-    \&& empty(s:pinyin_flag)
-        let s:pinyin_flag = 1
-    endif
-    " ------------------------------
-endfunction
-
-" -------------------------------------------
-function! s:vimim_xiangma_sleep_with_pinyin()
-" -------------------------------------------
+" -----------------------------------------
+function! s:vimim_scan_plugin_for_more_im()
+" -----------------------------------------
     if empty(s:datafile_primary)
         return
     endif
-    " ----------------------------------------
-    let datafile = 0
-    if empty(s:xingma_sleep_with_pinyin)
-    \|| s:cangjie_flag > 0
-    \|| s:wubi_flag > 0
-    \|| s:erbi_flag > 0
+    " -------------------------------------
+    let im = 0
+    if get(s:im['cangjie'],0) > 0
+    \|| get(s:im['erbi'],0) > 0
+    \|| get(s:im['wubi'],0) > 0
+    \|| get(s:im['4corner'],0) > 0
         let msg = "plug and play <=> xingma and pinyin"
-        let datafile = s:vimim_initialize_datafile_plugin()
+        let im = s:vimim_scan_plugin_to_invoke_im()
     endif
-    if empty(datafile)
-        return
+    " -------------------------------------
+    if empty(im) || s:pinyin_and_4corner > 1
+        let msg = "only play with one plugin datafile"
+    elseif get(s:im['4corner'],0) > 0
+        let s:pinyin_and_4corner = 1
+    else
+        let s:xingma_sleep_with_pinyin = 1
     endif
-    let s:datafile_secondary = datafile
-    let s:xingma_sleep_with_pinyin = 1
 endfunction
 
 " -------------------------------------------------------
@@ -502,63 +588,40 @@ function! s:vimim_expand_character_class(character_class)
     return character_string
 endfunction
 
-" ---------------------------------------
-function! s:vimim_initialize_valid_keys()
-" ---------------------------------------
-    let key = "[0-9a-z',.]"
-    " -----------------------------------
-    if s:current_datafile =~# 'phonetic'
-        let s:datafile_has_period = 1
-        let key = "[-0-9a-z.,;/]"
-    elseif s:current_datafile =~# 'array'
-        let s:datafile_has_period = 1
-        let key = "[a-z.,;/]"
-    elseif s:current_datafile =~# 'cns11643'
-        let key = "[0-9a-f]"
-    elseif s:current_datafile =~# 'yong'
-        let key = "[a-z',.;/]"
-    elseif s:current_datafile =~# 'wu'
-        let key = "[a-z',.]"
-    elseif s:current_datafile =~# 'nature'
-        let key = "[a-z',.]"
-    elseif s:current_datafile =~# 'zhengma'
-        let key = "[a-z,.]"
+" ------------------------------------
+function! s:vimim_initialize_keycode()
+" ------------------------------------
+    let keycode = s:vimim_get_keycode()
+    " --------------------------------
+    if empty(keycode)
+        let keycode = "[0-9a-z',.]"
     endif
-    " -----------------------------------
-    if s:four_corner_flag > 1 && empty(s:privates_flag)
-        let key = "[0-9',.]"
-    elseif s:cangjie_flag > 0
-        let key = "[a-z,.]"
-    elseif s:erbi_flag > 0
-        let s:datafile_has_period = 1
-        let key = "[a-z'.,;/]"
-    elseif s:wubi_flag > 0
-        let key = "[a-z',.]"
-    elseif s:pinyin_flag > 0
-        let key = "[0-9a-z',.]"
-        if s:vimim_shuangpin_microsoft > 0
-        \|| s:vimim_shuangpin_purple > 0
-            let key = "[0-9a-z',.;]"
-        endif
+    " --------------------------------
+    if s:shuangpin_flag > 0
+        let keycode = s:im['shuangpin'][2]
     endif
-    " -----------------------------
-    call s:vimim_set_valid_key(key)
-    " -----------------------------
+    " --------------------------------
+    let s:valid_key = copy(keycode)
+    let keycode = s:vimim_expand_character_class(keycode)
+    let s:valid_keys = split(keycode, '\zs')
 endfunction
 
-" ----------------------------------
-function! s:vimim_set_valid_key(key)
-" ----------------------------------
-    let key = a:key
-    if s:vimim_wildcard_search > 0 && empty(s:wubi_flag)
-        let wildcard = '[*]'
-        let key_valid = strpart(key, 1, len(key)-2)
-        let key_wildcard = strpart(wildcard, 1, len(wildcard)-2)
-        let key = '[' . key_valid . key_wildcard . ']'
+" -----------------------------
+function! s:vimim_get_keycode()
+" -----------------------------
+    if empty(s:im_primary)
+        return 0
     endif
-    let s:valid_key = key
-    let key = s:vimim_expand_character_class(key)
-    let s:valid_keys = split(key, '\zs')
+    let keycode = get(s:im[s:im_primary],2)
+    if s:vimim_wildcard_search > 0
+    \&& empty(get(s:im['wubi'],0))
+    \&& len(keycode) > 1
+        let wildcard = '[*]'
+        let key_valid = strpart(keycode, 1, len(keycode)-2)
+        let key_wildcard = strpart(wildcard, 1, len(wildcard)-2)
+        let keycode = '[' . key_valid . key_wildcard . ']'
+    endif
+    return keycode
 endfunction
 
 " ======================================= }}}
@@ -678,37 +741,23 @@ function! s:vimim_egg_vimim()
     let option = "mode\t 风格：" . option
     call add(eggs, option)
 " ----------------------------------
-    let option = get(s:vimim_statusline(),1)
-    if !empty(option)
+    let im = s:vimim_statusline()
+    if !empty(im)
+        let option = "im\t " . input . im
         call add(eggs, option)
     endif
 " ----------------------------------
-    let option = s:four_corner_flag
-    if option > 0
-        let option = "〖四角号码〗 => 6021272260021762"
-        let option = "im\t " . input . option
+    let option = s:shuangpin_flag
+    if empty(option)
+        let msg = "no shuangpin is used"
+    else
+        let option = "im\t " . input . get(s:im['shuangpin'],1)
         call add(eggs, option)
     endif
 " ----------------------------------
-    let option = s:current_datafile
+    let option = s:datafile_primary
     if empty(option)
         let msg = "no primary datafile, might play cloud"
-    else
-        let option = ciku . option
-        call add(eggs, option)
-    endif
-" ----------------------------------
-    let option = s:four_corner_datafile
-    if empty(option)
-        let msg = "no 4corner datafile found"
-    else
-        let option = "im\t " . input . option
-        call add(eggs, option)
-    endif
-" ----------------------------------
-    let option = s:privates_datafile
-    if empty(option)
-        let msg = "no private datafile found"
     else
         let option = ciku . option
         call add(eggs, option)
@@ -719,6 +768,14 @@ function! s:vimim_egg_vimim()
         let msg = "no secondary pinyin to sleep with"
     else
         let option = ciku . s:datafile_secondary
+        call add(eggs, option)
+    endif
+" ----------------------------------
+    let option = s:privates_datafile
+    if empty(option)
+        let msg = "no private datafile found"
+    else
+        let option = ciku . option
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -738,7 +795,7 @@ function! s:vimim_egg_vimim()
             endif
             let number = s:vimim_get_chinese_number(numbers, 'i')
         endif
-        let option .= number . "朵云输入"
+        let option .= number . "朵" . get(s:im['cloud'],1)
     endif
     call add(eggs, option)
 " ----------------------------------
@@ -783,98 +840,6 @@ function! s:vimim_easter_chicken(keyboard)
     endif
 endfunction
 
-" ----------------------------
-function! s:vimim_statusline()
-" ----------------------------
-    let im  = ''
-    let option  = ''
-    let input = "输入："
-    let wubi = "〖五笔〗"
-    let pinyin = "〖拼音〗"
-    let shuangpin = "〖双拼〗"
-    let toggle = "i_CTRL-^"
-  " --------------------------------------------------
-    if s:pinyin_flag > 0
-        let im = pinyin
-        let option = im . " => woyouyigemeng"
-        let option = "im\t " . input . option
-    elseif s:shuangpin_flag > 0
-        let im = shuangpin . "："
-        let option = "im\t " . input . im
-        if s:vimim_shuangpin_abc > 0
-            let im = "智能ABC"
-            let option .= im . " => woybyigemg"
-        elseif s:vimim_shuangpin_microsoft > 0
-            let im = "微软"
-            let option .= im . " => hkfgp;jxlisswouhq;yp"
-        elseif s:vimim_shuangpin_nature > 0
-            let im = "自然码"
-            let option .= im . " => hkfgpyjxlisswouhqyyp"
-        elseif s:vimim_shuangpin_plusplus > 0
-            let im = "拼音加加"
-            let option .= im . " => hdftpqjmlisywoigqqyz"
-        elseif s:vimim_shuangpin_purple > 0
-            let im = "紫光"
-            let option .= im . " => hqftp;jdlishwoisq;ym"
-        endif
-        let im .= shuangpin
-    endif
-  " --------------------------------------------------
-    if s:four_corner_flag > 0
-        let im .= "＋〖四角号码〗"
-    endif
-  " --------------------------------------------------
-    if s:cangjie_flag > 0
-        let im = "〖仓颉〗"
-        let option = im . ": hqi kb m ol ddni"
-        let option = "im\t " . input . option
-    elseif s:erbi_flag > 0
-        let im = "〖二笔〗"
-        let option = "im\t " . input . im
-    elseif s:wubi_flag > 0
-        let im = wubi
-        let option = im . ": trdeggwhssqu"
-        let option = "im\t " . input . option
-    elseif s:current_datafile =~# 'yong'
-        let im = "〖永码〗"
-        let option = "im\t " . input . im
-    elseif s:current_datafile =~# 'nature'
-        let im = "〖自然〗"
-        let option = "im\t " . input . im
-    elseif s:current_datafile =~# 'zhengma'
-        let im = "〖郑码〗"
-        let option = "im\t " . input . im
-    elseif s:current_datafile =~# 'quick'
-        let im = "〖速成〗"
-        let option = "im\t " . input . im
-    elseif s:current_datafile =~# 'wu'
-        let im = "〖吴语〗"
-        let option = "im\t " . input . im
-    elseif s:current_datafile =~# 'array'
-        let im = "〖行列〗"
-        let option = "im\t " . input . im
-    elseif s:current_datafile =~# 'phonetic'
-        let im = "〖注音〗"
-        let option = "im\t " . input . im
-    endif
-  " --------------------------------------------------
-    if s:xingma_sleep_with_pinyin > 0
-        let option = im . toggle . pinyin
-        let option = "im\t " . input . option
-        if empty(s:ctrl_6_count%2)
-            let im = pinyin . toggle . im
-        else
-            let im = im . toggle . pinyin
-        endif
-    endif
-  " --------------------------------------------------
-    if empty(im) && s:vimim_www_sogou > 0
-        let im = "〖云输入〗"
-    endif
-  " --------------------------------------------------
-    return [im, option]
-endfunction
-
 " ======================================= }}}
 let VimIM = " ====  Encoding_Unicode ==== {{{"
 " ===========================================
@@ -889,13 +854,8 @@ function! s:vimim_initialize_encoding()
     if &encoding == "utf-8"
         let s:multibyte = 3
         let s:max_ddddd = 40869
-        if s:chinese_input_mode < 2
-        \&& s:four_corner_flag > 0
-            let s:four_corner_unicode_flag = 1
-        endif
     endif
     if s:localization > 0
-        let s:chinese_frequency = -1
         let warning = 'performance hit if &encoding & datafile differs!'
     endif
 endfunction
@@ -973,7 +933,8 @@ endfunction
 " -------------------------------------
 function! s:vimim_hex_unicode(keyboard)
 " -------------------------------------
-    if s:four_corner_unicode_flag < 1
+    if s:chinese_input_mode > 1
+    \|| s:pinyin_and_4corner < 2
     \|| match(a:keyboard, '^\d\{4}$') != 0
         return []
     endif
@@ -1107,7 +1068,7 @@ function! s:vimim_internal_code(keyboard)
             endfor
         endif
         let msg = "support direct unicode insert by 22221 or u808f"
-    elseif s:four_corner_flag < 4
+    elseif get(s:im['4corner'],0) < 4
     " -----------------------------------------------------
         if keyboard =~ '^\d\{5}$'     "| 32911
             let numbers = [str2nr(keyboard)]
@@ -1502,7 +1463,7 @@ function! <SID>vimim_toggle()
     if s:vimim_esc_autocmd > 0 && has("autocmd")
         if !exists("s:dynamic_mode_autocmd_loaded")
             let s:dynamic_mode_autocmd_loaded = 1
-            sil!autocmd BufEnter * let &statusline=get(s:vimim_statusline(),0)
+            sil!autocmd BufEnter * let &statusline=s:vimim_statusline()
             sil!autocmd InsertEnter sil!call s:vimim_start_chinese_mode()
             sil!autocmd InsertLeave sil!call s:vimim_stop_chinese_mode()
             sil!autocmd BufUnload autocmd! InsertEnter,InsertLeave,BufEnter
@@ -1568,7 +1529,7 @@ function! <SID>vimim_pumvisible_ctrl_e()
     if pumvisible()
         let end = "\<C-E>"
         if s:vimim_wubi_non_stop > 0
-        \&& empty(s:pinyin_flag)
+        \&& empty(get(s:im['pinyin'],0))
         \&& empty(len(s:keyboard_wubi)%4)
             let end = "\<C-Y>"
         endif
@@ -1582,11 +1543,6 @@ function! g:vimim_space_dynamic()
     let space = ' '
     if pumvisible()
         let space = "\<C-Y>"
-    else
-        if s:wubi_flag < 0
-            let s:vimim_www_sogou = 1
-            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        endif
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
@@ -1699,10 +1655,10 @@ function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
     set imdisable
     set iminsert=1
-    let b:keymap_name = get(s:vimim_statusline(),0)
-    let s:ctrl_6_count += 1
-    let s:xingma_pinyin_flag = s:ctrl_6_count%2
     let s:chinese_mode_toggle_flag = 1
+    let s:ctrl_6_count += 1
+    let s:toggle_xiangma_pinyin = s:ctrl_6_count%2
+    let b:keymap_name = s:vimim_statusline()
     sil!call s:vimim_i_laststatus_on()
 endfunction
 
@@ -1727,6 +1683,51 @@ function! s:vimim_i_lcursor_color(switch)
     else
         highlight! lCursor guifg=bg guibg=green
     endif
+endfunction
+
+" ----------------------------
+function! s:vimim_statusline()
+" ----------------------------
+    let im = ''
+    let plus = ['〖' ,'〗', '＋']
+    let plus2 = plus[1] . plus[2] . plus[0]
+  " --------------------------
+    let key  = s:im_primary
+    if has_key(s:im, key)
+        let im = get(s:im[key],1)
+    endif
+  " --------------------------
+    let pinyin = get(s:im['pinyin'],1)
+    if s:shuangpin_flag > 0
+        let pinyin = get(s:im['shuangpin'],0)
+        let im = pinyin
+    endif
+  " --------------------------
+    if s:pinyin_and_4corner > 0
+        let im_digit = get(s:im['4corner'],1)
+        if s:datafile_primary =~ '12345'
+            let im_digit = get(s:im['12345'],1)
+        endif
+        let im = pinyin . plus2 . im_digit
+    endif
+  " --------------------------
+    if s:xingma_sleep_with_pinyin > 0
+        let im_1 = get(s:im[s:im_primary],1)
+        let im_2 = get(s:im[s:im_secondary],1)
+        if empty(s:toggle_xiangma_pinyin)
+            let im = im_1 . plus2 . im_2
+        else
+            let im = im_2 . plus2 . im_1
+        endif
+    endif
+  " --------------------------
+    if empty(im) && s:vimim_www_sogou > 0
+        let im = get(s:im['cloud'],1)
+    endif
+  " --------------------------
+    let im  = plus[0] . im . plus[1]
+  " --------------------------
+    return im
 endfunction
 
 " ======================================= }}}
@@ -1787,9 +1788,9 @@ let VimIM = " ====  Punctuations     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------------
-function! s:vimim_initialize_punctuations()
-" -----------------------------------------
+" ----------------------------------------
+function! s:vimim_dictionary_punctuation()
+" ----------------------------------------
     let s:punctuations = {}
     let s:punctuations['#']='＃'
     let s:punctuations['%']='％'
@@ -1858,7 +1859,7 @@ function! s:vimim_punctuation_on()
         unlet punctuations['"']
         unlet punctuations["'"]
     endif
-    if s:erbi_flag > 0
+    if get(s:im['erbi'],0) > 0
 	unlet punctuations[',']
 	unlet punctuations['.']
 	unlet punctuations['/']
@@ -2153,7 +2154,8 @@ endfunction
 " --------------------------------
 function! s:vimim_initialize_e2c()
 " --------------------------------
-    if empty(s:english_flag) || len(s:ecdict) > 1
+    if empty(s:vimim_datafile_has_english)
+    \|| len(s:ecdict) > 1
         return ''
     endif
     let lines = s:vimim_load_datafile(0)
@@ -2241,7 +2243,7 @@ function! s:vimim_reverse_lookup(chinese)
     endif
     " ------------------------------------------------
     let result_4corner = ''
-    if s:four_corner_flag > 0
+    if get(s:im['4corner'],0) > 0
         let cache_4corner = s:vimim_build_4corner_cache(chinese)
         let items = s:vimim_make_one_entry(cache_4corner, chinese)
         let result_4corner = join(items,' ') . "\n" . glyph
@@ -2279,7 +2281,7 @@ function! s:vimim_build_reverse_cache(chinese, one2one)
         endif
         let last_line_index = len(lines) - 1
         let s:alphabet_lines = lines[first_line_index : last_line_index]
-        if s:pinyin_flag > 0 |" one to many relationship
+        if get(s:im['pinyin'],0) > 0 |" one to many relationship
             let pinyin_with_tone = '^\a\+\d\s\+'
             call filter(s:alphabet_lines, 'v:val =~ pinyin_with_tone')
         endif
@@ -2314,7 +2316,7 @@ function! s:vimim_build_reverse_cache(chinese, one2one)
             continue
         endif
         let menu = remove(words, 0)
-        if s:pinyin_flag > 0
+        if get(s:im['pinyin'],0) > 0
             let menu = substitute(menu,'\d','','g')
         endif
         for char in words
@@ -2700,7 +2702,7 @@ function! s:vimim_popupmenu_list(matched_list)
         " -------------------------------------------------
         if s:vimim_custom_skin < 2
             let extra_text = menu
-            if s:four_corner_unicode_flag > 0
+            if s:pinyin_and_4corner > 1
             \&& empty(match(extra_text, '^\d\{4}$'))
                 let unicode = printf('u%04x', char2nr(chinese))
                 let extra_text = menu.'　'.unicode
@@ -2844,7 +2846,7 @@ function! s:vimim_exact_match(lines, keyboard, start)
         if len(keyboard) < quick_limit
         \|| list_length > words_limit*2
             let do_search_on_word = 1
-        elseif s:pinyin_flag > 0
+        elseif get(s:im['pinyin'],0) > 0
             let chinese = join(a:lines[match_start : result],'')
             let chinese = substitute(chinese,'\p\+','','g')
             if len(chinese) > words_limit*4
@@ -2876,7 +2878,7 @@ function! s:vimim_fuzzy_match(lines, keyboard)
     endif
     let pattern = s:vimim_fuzzy_pattern(keyboard)
     let results = filter(a:lines, 'v:val =~ pattern')
-    if s:english_flag > 0
+    if s:vimim_datafile_has_english > 0
         call filter(results, 'v:val !~ "#$"')
     endif
     if s:chinese_input_mode < 2
@@ -2964,16 +2966,16 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
         let blocks = s:vimim_keyboard_dot_by_dot(keyboard)
         if len(blocks) > 0
             let msg = "enjoy.1010.2523.4498.7429.girl"
-            let keyboard = remove(blocks, 0)
+            let keyboard = get(blocks, 0)
         endif
     endif
     let match_start = match(a:lines, '^'.keyboard)
     if match_start < 0
         " step 2: try to match 4-char set wubi or 4corner
         " --------------------------------------------------
-        if s:wubi_flag > 0
+        if get(s:im['wubi'],0) > 0
             let blocks = s:vimim_wubi_whole_match(keyboard)
-        elseif s:four_corner_flag > 0
+        elseif get(s:im['4corner'],0) > 0
             let blocks = s:vimim_4corner_whole_match(keyboard)
         endif
         " --------------------------------------------------
@@ -3116,13 +3118,29 @@ call add(s:vimims, VimIM)
 " ----------------------------------------------
 function! s:vimim_initialize_datafile_in_vimrc()
 " ----------------------------------------------
-    let global_datafile = s:vimim_datafile
-    " -----------------------------------
-    if !empty(global_datafile)
-    \&& filereadable(global_datafile)
-        let s:current_datafile = global_datafile
-        let s:datafile_primary = global_datafile
+    let datafile = s:vimim_datafile
+    if !empty(datafile) && filereadable(datafile)
+        let s:datafile_primary = copy(datafile)
     endif
+    " ------------------------------------------
+    let datafile = s:vimim_datafile_4corner
+    if !empty(datafile) && filereadable(datafile)
+        if s:datafile_primary =~# 'pinyin'
+            let s:datafile_secondary = copy(s:datafile_primary)
+            let s:datafile_primary = copy(datafile)
+            let s:pinyin_and_4corner = 1
+        else
+            let s:datafile_secondary = copy(datafile)
+        endif
+    endif
+    " ------------------------------------------
+    if s:vimim_datafile_has_pinyin > 0
+    \&& s:vimim_datafile_has_4corner > 0
+        let s:pinyin_and_4corner = 2
+        let s:im['4corner'][0] = 1
+        let s:im['pinyin'][0] = 1
+    endif
+    " ------------------------------------------
 endfunction
 
 " ------------------------------------
@@ -3266,20 +3284,20 @@ endfunction
 function! s:vimim_load_datafile(reload_flag)
 " ------------------------------------------
     if empty(s:lines_datafile) || a:reload_flag > 0
-        if len(s:current_datafile) > 0
-        \&& filereadable(s:current_datafile)
-            let s:lines_datafile = readfile(s:current_datafile)
+        if len(s:datafile_current) > 0
+        \&& filereadable(s:datafile_current)
+            let s:lines_datafile = readfile(s:datafile_current)
         endif
         " ----------------------------------
-        if s:four_corner_flag > 0
-            if empty(s:lines_4corner_datafile)
-                let s:lines_4corner_datafile = s:vimim_load_4corner()
-            endif
-            if len(s:lines_4corner_datafile) > 1
-            \&& len(s:lines_datafile) > 1
-                call extend(s:lines_datafile, s:lines_4corner_datafile, 0)
+        if s:pinyin_and_4corner == 1
+            let pinyin = s:vimim_load_pinyin_and_4corner()
+            if empty(pinyin)
+                let msg = "single digital ciku was used"
+            else
+                call extend(s:lines_datafile, pinyin, 0)
             endif
         endif
+        " ----------------------------------
     endif
     return s:lines_datafile
 endfunction
@@ -3289,12 +3307,13 @@ function! s:vimim_save_datafile(lines)
 " ------------------------------------
     if empty(a:lines)
     \|| empty(s:lines_datafile)
-    \|| len(s:lines_4corner_datafile) > 1
+    \|| s:pinyin_and_4corner == 1
         return
     endif
+    " --------------------------------
     let s:lines_datafile = a:lines
-    if filewritable(s:current_datafile)
-        call writefile(a:lines, s:current_datafile)
+    if filewritable(s:datafile_current)
+        call writefile(a:lines, s:datafile_current)
     endif
 endfunction
 
@@ -3425,7 +3444,7 @@ function! s:vimim_initialize_datafile_privates()
     let s:lines_privates_datafile = []
     let s:private_matches = []
     if s:vimimdebug > 1
-        let msg = "no privacy during debug"
+        let msg = "hide privacy during debug"
         return
     endif
     let datafile = s:path . "privates.txt"
@@ -3485,56 +3504,12 @@ let VimIM = " ====  VimIM_4Corner    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------------------
-function! s:vimim_initialize_datafile_4corner()
-" ---------------------------------------------
-    let s:four_corner_datafile = 0
-    let s:lines_4corner_datafile = []
-    let s:four_corner_lines = []
-    let s:four_corner_unicode_flag = 0
-    let s:unicode_menu_display_flag = 0
-    " -----------------------------------------
-    if empty(s:four_corner_flag)
-        if s:vimim_datafile_has_4corner > 0
-            let s:four_corner_flag = 1
-            return
-        endif
-    endif
-    " -----------------------------------------
-    let datafile = s:path . "vimim.4corner.txt"
-    if !empty(s:vimim_datafile_4corner)
-    \&& filereadable(s:vimim_datafile_4corner)
-        let datafile = s:vimim_datafile_4corner
-    elseif filereadable(datafile)
-    \&& s:four_corner_flag != 2
-        let msg = "we want to play with four corner"
-    else
-        let datafile = s:path . "vimim.12345.txt"
-        if filereadable(datafile)
-            let msg = "we want to play with 5 strokes"
-        else
-            return
-        endif
-    endif
-    " -----------------------------------
-    let s:four_corner_datafile = datafile
-    " -----------------------------------
-    if empty(s:four_corner_datafile)
-        return
-    else
-        let s:four_corner_flag = 1
-    endif
-endfunction
-
-" ------------------------------
-function! s:vimim_load_4corner()
-" ------------------------------
-    if s:vimim_datafile_has_4corner > 0
-        return []
-    endif
+" -----------------------------------------
+function! s:vimim_load_pinyin_and_4corner()
+" -----------------------------------------
     let lines = []
-    let datafile = s:four_corner_datafile
-    if !empty(datafile) && filereadable(datafile)
+    let datafile = s:datafile_secondary
+    if filereadable(datafile)
         let lines = readfile(datafile)
     endif
     return lines
@@ -3545,7 +3520,6 @@ function! s:vimim_4corner_whole_match(keyboard)
 " ---------------------------------------------
     if s:chinese_input_mode > 1
     \|| a:keyboard !~ '\d'
-    \|| s:four_corner_flag > 4
     \|| len(a:keyboard)%4 != 0
         return []
     endif
@@ -3611,9 +3585,9 @@ call add(s:vimims, VimIM)
 " -----------------------------------
 function! s:vimim_initialize_pinyin()
 " -----------------------------------
-    if empty(s:pinyin_flag)
+    if empty(get(s:im['pinyin'],0))
         if s:vimim_datafile_has_pinyin > 0
-            let s:pinyin_flag = 1
+            let s:im['pinyin'][0] = 1
         else
             return
         endif
@@ -3629,7 +3603,7 @@ endfunction
 function! s:vimim_apostrophe(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
-    if s:vimim_datafile_has_apostrophe < 1
+    if empty(s:vimim_datafile_has_apostrophe)
         let keyboard = substitute(keyboard,"'",'','g')
     else
         let msg = "apostrophe is in the datafile"
@@ -3685,18 +3659,38 @@ let VimIM = " ====  VimIM_Shuangpin  ==== {{{"
 call add(s:vimims, VimIM)
 
 " --------------------------------------
+function! s:vimim_dictionary_shuangpin()
+" --------------------------------------
+    let s:shuangpin_flag = 1
+    let key = 'shuangpin'
+    let loaded = '双拼'
+    let im = loaded . '：'
+    let keycode = "[0-9a-z',.]"
+    if s:vimim_shuangpin_abc > 0
+        let im .= '智能ABC'
+    elseif s:vimim_shuangpin_microsoft > 0
+        let im .= '微软'
+        let keycode = "[0-9a-z',.;]"
+    elseif s:vimim_shuangpin_nature > 0
+        let im .= "自然码"
+    elseif s:vimim_shuangpin_plusplus > 0
+        let im .= "拼音加加"
+    elseif s:vimim_shuangpin_purple > 0
+        let im .= "紫光"
+        let keycode = "[0-9a-z',.;]"
+    else
+        let s:shuangpin_flag = 0
+    endif
+    let s:im[key]=[loaded, im, keycode]
+endfunction
+
+" --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if empty(s:vimim_shuangpin_abc)
-      \&& empty(s:vimim_shuangpin_microsoft)
-      \&& empty(s:vimim_shuangpin_nature)
-      \&& empty(s:vimim_shuangpin_plusplus)
-      \&& empty(s:vimim_shuangpin_purple)
+    if empty(s:shuangpin_flag)
         return
     endif
     " ----------------------------------
-    let s:pinyin_flag = 2
-    let s:shuangpin_flag = 1
     let s:vimim_fuzzy_search = 0
     let s:vimim_imode_pinyin = -1
     let rules = s:vimim_shuangpin_generic()
@@ -3986,10 +3980,10 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_erbi()
 " ---------------------------------
-    if empty(s:erbi_flag)
+    if empty(get(s:im['erbi'],0))
         return
     endif
-    let s:wubi_flag = 1
+    let s:im['wubi'][0] = 1
     let s:vimim_punctuation_navigation = -1
     let s:search_key_slash = -1
     let s:vimim_wildcard_search = -1
@@ -3999,7 +3993,7 @@ endfunction
 function! s:vimim_first_punctuation_erbi(keyboard)
 " ------------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:erbi_flag)
+    if empty(get(s:im['erbi'],0))
         return 0
     endif
     " [erbi] the first .,/;' is punctuation
@@ -4018,22 +4012,11 @@ let VimIM = " ====  VimIM_Wubi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------
-function! s:vimim_initialize_wubi()
-" ---------------------------------
-    if s:wubi_flag < 0
-        let s:vimim_english_punctuation = 1
-        let s:vimim_chinese_punctuation = -1
-        let s:vimim_static_input_style = -1
-    endif
-endfunction
-
 " --------------------------------------------
 function! s:vimim_wubi_z_as_wildcard(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    if s:wubi_flag < 1
-    \|| s:vimim_wildcard_search < 1
+    if s:vimim_wildcard_search < 1
     \|| s:chinese_input_mode > 1
         return 0
     endif
@@ -4051,21 +4034,21 @@ endfunction
 " ------------------------------------
 function! s:vimim_toggle_wubi_pinyin()
 " ------------------------------------
-    if empty(s:xingma_pinyin_flag)
-        let s:wubi_flag = 1
-        let s:pinyin_flag = 0
+    if empty(s:toggle_xiangma_pinyin)
+        let s:im['wubi'][0] = 1
+        let s:im['pinyin'][0] = 0
         if empty(s:lines_datafile_primary)
-            let s:current_datafile = s:datafile_primary
+            let s:datafile_current = copy(s:datafile_primary)
             let s:lines_datafile_primary = s:vimim_load_datafile(1)
         endif
         let s:lines_datafile = s:lines_datafile_primary
     " --------------------------------
     else
     " --------------------------------
-        let s:pinyin_flag = 1
-        let s:wubi_flag = 0
+        let s:im['pinyin'][0] = 1
+        let s:im['wubi'][0] = 0
         if empty(s:lines_datafile_secondary)
-            let s:current_datafile = s:datafile_secondary
+            let s:datafile_current = copy(s:datafile_secondary)
             let s:lines_datafile_secondary = s:vimim_load_datafile(1)
         endif
         let s:lines_datafile = s:lines_datafile_secondary
@@ -4076,10 +4059,10 @@ endfunction
 function! s:vimim_wubi(keyboard)
 " ------------------------------
     let keyboard = a:keyboard
-    if empty(s:wubi_flag)
+    if empty(get(s:im['wubi'],0))
     \|| empty(keyboard)
-    \|| s:xingma_pinyin_flag > 0
-    \|| s:pinyin_flag > 0
+    \|| s:toggle_xiangma_pinyin > 0
+    \|| get(s:im['pinyin'],0) > 0
         return []
     endif
     " ----------------------------
@@ -4097,7 +4080,7 @@ function! s:vimim_wubi(keyboard)
     " support wubi non-stop typing
     " ----------------------------
     if s:vimim_wubi_non_stop > 0
-    \&& empty(s:pinyin_flag)
+    \&& empty(get(s:im['pinyin'],0))
     \&& s:chinese_input_mode > 1
         if len(keyboard) > 4
             let start = 4*((len(keyboard)-1)/4)
@@ -4119,7 +4102,7 @@ function! s:vimim_wubi_whole_match(keyboard)
 " ------------------------------------------
     if s:chinese_input_mode > 1
     \|| a:keyboard !~# '\l'
-    \|| !empty((a:keyboard)%4)
+    \|| len(a:keyboard)%4 != 0
         return []
     endif
     let keyboards = split(a:keyboard,'\(.\{4}\)\zs')
@@ -4134,7 +4117,7 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_plug_n_play_www_sogou()
 " ---------------------------------------
-    if empty(s:current_datafile)
+    if empty(s:datafile_primary)
         if (executable('wget') || executable('curl'))
             if empty(s:vimim_www_sogou)
                 let s:vimim_www_sogou = 1
@@ -4274,9 +4257,8 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
     let sogou = 'http://web.pinyin.sogou.com/web_ime/get_ajax/'
     " support apostrophe as delimiter to remove ambiguity
     " (1) examples: piao => pi'ao 皮袄  xian => xi'an 西安
-    " (2) let s:pinyin_flag = "[0-9a-z'.]"
-    " (3) add double quotes between keyboard
-    " (4) test: xi'anmeimeidepi'aosuifengpiaoyang
+    " (2) add double quotes between keyboard
+    " (3) test: xi'anmeimeidepi'aosuifengpiaoyang
     let input = sogou . '"' . keyboard . '".key'
     let output = 0
     " --------------------------------------------------------------
@@ -4334,29 +4316,6 @@ endfunction
 let VimIM = " ====  VimIM_DIY        ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
-
-" ---------------------------------
-function! s:initialize_asdfghjklo()
-" ---------------------------------
-    if s:shuangpin_flag > 0
-        return
-    endif
-    if s:vimim_diy_keyboard_asdfghjklo < 1
-        return
-    endif
-    " ------------------------------------
-    let s:diy_keyboard_asdfghjklo['a'] = 1
-    let s:diy_keyboard_asdfghjklo['s'] = 2
-    let s:diy_keyboard_asdfghjklo['d'] = 3
-    let s:diy_keyboard_asdfghjklo['f'] = 4
-    let s:diy_keyboard_asdfghjklo['g'] = 5
-    let s:diy_keyboard_asdfghjklo['h'] = 6
-    let s:diy_keyboard_asdfghjklo['j'] = 7
-    let s:diy_keyboard_asdfghjklo['k'] = 8
-    let s:diy_keyboard_asdfghjklo['l'] = 9
-    let s:diy_keyboard_asdfghjklo['o'] = 0
-    " ------------------------------------
-endfunction
 
 " ----------------------------------------------
 function! s:vimim_diy_lines_to_hash(fuzzy_lines)
@@ -4433,9 +4392,21 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
         return []
     endif
     let pattern = '^' .  keyboard
-    let has_digit = match(keyboard, '^\d\+')
     " ------------------------------------------------
+    let has_digit = match(keyboard, '^\d\+')
     if has_digit < 0
+        " --------------------------------------------
+        if s:vimim_datafile_has_apostrophe > 0
+            let pattern = '^' . keyboard . '\> '
+            let whole_match = match(results, pattern)
+            if  whole_match > 0
+                let results = results[whole_match : whole_match]
+                if len(results) > 0
+                    return s:vimim_pair_list(results)
+                endif
+            endif
+        endif
+        " --------------------------------------------
         if filter_length == 1
             if len(keyboard) > 1
                 let pattern .= '\>'
@@ -4445,18 +4416,18 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
             let pattern .= '\>'
             let pattern = s:vimim_fuzzy_pattern(keyboard)
         endif
-        if s:english_flag > 0
+        if s:vimim_datafile_has_english > 0
             call filter(results, 'v:val !~ "#$"')
         endif
     else |" ------------------------------------------
         let msg = "leave room to play with digits"
         let filter_length = -1
-        if s:four_corner_flag == 1001
+        if get(s:im['4corner'],0) == 1001
             let msg = "another choice: top-left & bottom-right"
             let char_first = strpart(keyboard, 0, 1)
             let char_last  = strpart(keyboard, len(keyboard)-1)
             let pattern = '^' .  char_first . "\d\d" . char_last
-        elseif s:four_corner_flag == 1289
+        elseif get(s:im['4corner'],0) == 1289
             let msg = "for 5 stokes: first two and last two"
             let char_first = strpart(keyboard, 0, 2)
             let char_last  = strpart(keyboard, len(keyboard)-2)
@@ -4522,8 +4493,14 @@ function! s:vimim_diy_keyboard(keyboard)
     let alpha_keyboards = split(keyboard, '\d\+') |" => ['ma', 'li']
     let digit_keyboards = split(keyboard, '\D\+') |" => ['77', '40']
     " --------------------------------------------------------------
+    let apostrophe = ""
+    if s:vimim_datafile_has_apostrophe > 0
+    \&& empty(s:shuangpin_flag)
+        let apostrophe = "'"
+    endif
+    let alpha_string = join(alpha_keyboards, apostrophe)
+    " --------------------------------------------------------------
     let keyboards = copy(digit_keyboards)
-    let alpha_string = join(alpha_keyboards, '')
     call insert(keyboards, alpha_string) |" ma77li40=>['mali',77,40]
     if len(alpha_keyboards) > 1 && len(digit_keyboards) < 2
         call add(keyboards, "") |" ma7712li => ['mali', '7712', '']
@@ -4539,19 +4516,19 @@ endfunction
 function! s:vimim_diy_keyboard2number(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
-    if s:vimim_diy_keyboard_asdfghjklo < 1
-    \|| empty(s:diy_keyboard_asdfghjklo)
+    if empty(s:vimimdebug)
     \|| s:chinese_input_mode > 1
+    \|| s:shuangpin_flag > 0
     \|| len(a:keyboard) < 5
     \|| len(a:keyboard) > 6
         return []
     endif
-    if a:keyboard =~ '\d'
-    \|| a:keyboard !~ '\l'
+    " -----------------------------------------
+    if a:keyboard =~ '\d' || a:keyboard !~ '\l'
         return []
     endif
-    let alphabet_length = 1
     " -----------------------------------------
+    let alphabet_length = 1
     if len(keyboard) == 5
         let zi = "mljjfo => ml7140 => ['ml', 71, 40]"
     elseif len(keyboard) == 6
@@ -4562,14 +4539,26 @@ function! s:vimim_diy_keyboard2number(keyboard)
     endif
     " -----------------------------------------
     let keyboards = []
+    let tail = ''
     let head = strpart(keyboard, 0, alphabet_length)
     call add(keyboards, head)
+    " ------------------------------------
+    let diy_keyboard_asdfghjklo = {}
+    let diy_keyboard_asdfghjklo['a'] = 1
+    let diy_keyboard_asdfghjklo['s'] = 2
+    let diy_keyboard_asdfghjklo['d'] = 3
+    let diy_keyboard_asdfghjklo['f'] = 4
+    let diy_keyboard_asdfghjklo['g'] = 5
+    let diy_keyboard_asdfghjklo['h'] = 6
+    let diy_keyboard_asdfghjklo['j'] = 7
+    let diy_keyboard_asdfghjklo['k'] = 8
+    let diy_keyboard_asdfghjklo['l'] = 9
+    let diy_keyboard_asdfghjklo['o'] = 0
     " -----------------------------------------
-    let tail = ''
     let four_corner = strpart(keyboard, alphabet_length)
     for char in split(four_corner, '\zs')
-        if has_key(s:diy_keyboard_asdfghjklo, char)
-            let digit = s:diy_keyboard_asdfghjklo[char]
+        if has_key(diy_keyboard_asdfghjklo, char)
+            let digit = diy_keyboard_asdfghjklo[char]
             let tail .= digit
         else
             return []
@@ -4657,7 +4646,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let s:current_datafile = 0
+    let s:datafile_primary = 0
     let s:initialization_loaded = 0
     let s:chinese_mode_toggle_flag = 0
     " ---------------------------------------
@@ -4666,18 +4655,18 @@ function! s:vimim_initialize_debug()
         return
     endif
     " ---------------------------------------
-    let debug_datafile = s:path . "vimim.txt"
-    if filereadable(debug_datafile)
+    let datafile_debug = s:path . "vimim.txt"
+    if filereadable(datafile_debug)
         let msg = "open backdoor for debugging"
         let s:vimimdebug = 1
         let s:vimim_tab_for_one_key = 1
-        let s:current_datafile = debug_datafile
+        let s:datafile_primary = datafile_debug
     endif
 endfunction
 
-" -----------------------------------------
-function! s:vimim_initialize_plugin_debug()
-" -----------------------------------------
+" --------------------------------------------
+function! s:vimim_initialize_vimim_txt_debug()
+" --------------------------------------------
     if s:vimimdebug == 1
         let msg = "open more backdoor"
         let s:vimim_custom_skin=1
@@ -4692,11 +4681,11 @@ function! s:vimim_initialize_plugin_debug()
     let s:vimim_www_sogou=13
     let s:vimim_static_input_style=-1
     let s:vimim_chinese_frequency=1
-    let s:vimim_frequency_first_fix=0
-    " ------------------------------ xxx
-    let s:vimim_fuzzy_search=1
-    let s:vimim_wildcard_search=1
     " ------------------------------
+    let s:vimim_fuzzy_search=1
+    let s:vimim_frequency_first_fix=0
+    " ------------------------------
+    let s:vimim_wildcard_search=1
     let s:vimim_imode_comma=1
     let s:vimim_imode_pinyin=-1
     " ------------------------------
@@ -4808,7 +4797,7 @@ endfunction
 " -----------------------
 function! s:vimim_start()
 " -----------------------
-    sil!call s:vimim_initialization()
+    sil!call s:vimim_initialization_once()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
@@ -4867,7 +4856,7 @@ endfunction
 
 " ------------------------------------
 function! g:vimim_reset_after_insert()
-" ------------------------------------ 
+" ------------------------------------
     if pumvisible()
         return ""
     endif
@@ -4881,10 +4870,6 @@ function! g:vimim_reset_after_insert()
         endif
     endif
     " --------------------------------
-    if s:wubi_flag < 0
-        let s:vimim_www_sogou = 0
-    endif
-    " -------------------------------- 
     let s:matched_list = []
     let s:pageup_pagedown = ''
     " --------------------------------
@@ -5120,8 +5105,8 @@ else
         let keyboard = keyboard2
     endif
 
-    " [wubi][erbi] sleeps with pinyin in harmony
-    " ------------------------------------------
+    " [wubi][erbi] plays with pinyin in harmony
+    " -----------------------------------------
     if s:xingma_sleep_with_pinyin > 0
         call s:vimim_toggle_wubi_pinyin()
     endif
@@ -5156,7 +5141,7 @@ else
 
     " [erbi] special meaning of the first punctuation
     " -----------------------------------------------
-    if s:erbi_flag > 0
+    if s:im['erbi'][0] > 0
         let punctuation = s:vimim_first_punctuation_erbi(keyboard)
         if !empty(punctuation)
             return [punctuation]
@@ -5165,7 +5150,7 @@ else
 
     " [wubi] support wubi non-stop input
     " ----------------------------------
-    if s:wubi_flag > 0
+    if get(s:im['wubi'],0) > 0
         let results = s:vimim_wubi(keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
@@ -5266,7 +5251,7 @@ else
     " [pinyin_quote_sogou] try exact one-line match
     " ---------------------------------------------
     if match_start > -1
-    \&& s:pinyin_flag > 0
+    \&& get(s:im['pinyin'],0) > 0
     \&& s:vimim_datafile_has_apostrophe > 0
         let pattern = '^' . keyboard . '\> '
         let whole_match = match(lines, pattern)
