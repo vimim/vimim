@@ -362,6 +362,12 @@ function! s:vimim_dictionary_im()
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------
+    let key = 'mycloud'
+    let loaded = 0
+    let im = '自己的云'
+    let keycode = "[0-9a-z',.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
     let key = 'wubi'
     let im = '五笔'
     let keycode = "[0-9a-z',.]"
@@ -1728,6 +1734,10 @@ function! s:vimim_statusline()
   " --------------------------
     if empty(im) && s:vimim_www_sogou > 0
         let im = get(s:im['cloud'],1)
+    endif
+  " --------------------------
+    if len(s:vimim_my_cloud) > 1
+        let im = get(s:im['mycloud'],1)
     endif
   " --------------------------
     let im  = plus[0] . im . plus[1]
