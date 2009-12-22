@@ -205,6 +205,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_match_dot_after_dot")
     call add(G, "g:vimim_match_word_after_word")
     call add(G, "g:vimim_menu_label")
+    call add(G, "g:vimim_p_register_for_recording")
     call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_seamless_english_input")
@@ -333,6 +334,10 @@ function! s:vimim_finalize_session()
     " ------------------------------
     if s:vimim_static_input_style < 0
         let s:vimim_static_input_style = 0
+    endif
+    " ------------------------------
+    if s:vimim_p_register_for_recording > 0
+        let @p = @_
     endif
     " ------------------------------
     if s:vimimdebug > 0
@@ -815,7 +820,7 @@ endfunction
 function! s:vimim_easter_chicken(keyboard)
 " ----------------------------------------
     let egg = a:keyboard
-    if egg =~# '\l' && len(egg) < 24
+    if egg =~# s:valid_key
         let msg = "hunt easter egg ... vim<C-\>"
     elseif egg ==# ",," && s:vimimdebug > 0
         let msg = 'quick dirty lazy debugging'
@@ -2958,46 +2963,31 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
     endif
     " --------------------------------------------------
     let blocks = []
-    if keyboard =~ '[.]'
-        " step 1: try to break up dot-separated sentence
-        " ----------------------------------------------
-        let blocks = s:vimim_keyboard_dot_by_dot(keyboard)
-        if len(blocks) > 0
-            let msg = "enjoy.1010.2523.4498.7429.girl"
-            let keyboard = get(blocks, 0)
-        endif
+    if get(s:im['wubi'],0) > 0
+        let blocks = s:vimim_wubi_whole_match(keyboard)
+    elseif get(s:im['4corner'],0) > 0
+        let blocks = s:vimim_4corner_whole_match(keyboard)
     endif
-    let match_start = match(a:lines, '^'.keyboard)
-    if match_start < 0
-        " step 2: try to match 4-char set wubi or 4corner
-        " --------------------------------------------------
-        if get(s:im['wubi'],0) > 0
-            let blocks = s:vimim_wubi_whole_match(keyboard)
-        elseif get(s:im['4corner'],0) > 0
-            let blocks = s:vimim_4corner_whole_match(keyboard)
-        endif
-        " --------------------------------------------------
-        if empty(blocks)
-            " step 3: try to break up long whole sentence
-            let blocks = s:vimim_sentence_whole_match(a:lines, keyboard)
-        endif
-        " --------------------------------------------------
-        if !empty(blocks)
-            let keyboard = get(blocks, 0)
-        endif
+    " --------------------------------------------------
+    if empty(blocks)
+        " step 3: try to break up long whole sentence
+        let blocks = s:vimim_sentence_whole_match(a:lines, keyboard)
     endif
+    " --------------------------------------------------
+    if !empty(blocks)
+        let keyboard = get(blocks, 0)
+    endif
+    " --------------------------------------------------
     return keyboard
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_keyboard_dot_by_dot(keyboard)
-" ---------------------------------------------
+" ------------------------------------------------
+function! s:vimim_keyboard_dot_after_dot(keyboard)
+" ------------------------------------------------
     if empty(s:vimim_match_dot_after_dot)
         return []
     endif
-    " ---------------------------------------------------
-    " meet.teacher.say.hello.sssjj.zdolo.hhyy.sloso.nfofo
-    " ---------------------------------------------------
+    " --------------------------------------------
     let keyboards = split(a:keyboard, '[.]')
     return keyboards
 endfunction
@@ -4610,12 +4600,12 @@ function! s:vimim_initialize_debug()
         return
     endif
     " ---------------------------------------
-    let datafile_debug = s:path . "vimim.txt"
-    if filereadable(datafile_debug)
+    let datafile_backdoor = s:path . "vimim.txt"
+    if filereadable(datafile_backdoor)
         let msg = "open backdoor for debugging"
         let s:vimimdebug = 1
         let s:vimim_tab_for_one_key = 1
-        let s:datafile_primary = datafile_debug
+        let s:datafile_primary = datafile_backdoor
     endif
 endfunction
 
@@ -4893,8 +4883,8 @@ if a:start
     let char_before_before = current_line[start_column-2]
 
     if empty(s:chinese_input_mode)
-    \&& char_before ==# "[.]"
-    \&& char_before_before !~# "[0-9a-z]"
+    \&& char_before ==# "."
+    \&& char_before_before =~# "[0-9a-z]"
         let match_start = match(current_line, '\w\+\s\+\p\+\.$')
         if match_start > -1
             let s:sentence_with_space_input = 1
@@ -4966,13 +4956,10 @@ else
     endif
     " --------------------------------
     if empty(s:vimim_sexy_onekey)
-    \&& len(keyboard) == 1
-    \&& keyboard !~# '\w'
-        return
-    endif
-    " --------------------------------
-    if empty(s:chinese_input_mode)
-        let @0 = keyboard
+        if len(keyboard) == 1
+        \&& keyboard !~# '\w'
+            return
+        endif
     endif
 
     " [eggs] hunt classic easter egg ... vim<C-\>
@@ -5031,23 +5018,18 @@ else
         endif
     endif
 
-    " [modeless] whole sentence input: 【我有一個夢】
-    " ----------------------------------------------------
-    "   English Input Method: 　i have a dream.
-    "   PinYin Input Method:  　wo you yige meng.
-    "   Wubi Input Method:    　trde ggwh ssqu.
-    " ----------------------------------------------------
+    " [modeless] english sentence input =>  i have a dream.
+    " -----------------------------------------------------
     if empty(s:chinese_input_mode)
         if s:sentence_with_space_input > 0
-        \&& keyboard =~ '\s'
-        \&& len(keyboard) > 3
-        \&& empty(s:datafile_has_period)
+            if keyboard =~ '\s'
+            \&& empty(s:datafile_has_period)
+            \&& len(keyboard) > 3
+                let keyboard = substitute(keyboard, '\s\+', '.', 'g')
+            endif
             let s:sentence_with_space_input = 0
-            let dot = '.'
-            let keyboard = substitute(keyboard, '\s', dot, 'g')
         endif
     endif
-    let s:sentence_with_space_input = 0
 
     " process magic english comma and dot at the end
     " (1) english comma for always cloud
@@ -5136,11 +5118,6 @@ else
         return
     endif
 
-    " [apostrophe] in pinyin datafile
-    " -------------------------------
-    let keyboard = s:vimim_apostrophe(keyboard)
-    let s:keyboard_leading_zero = keyboard
-
     " [wildcard search] explicit fuzzy search
     " ----------------------------------------
     if s:vimim_wildcard_search > 0
@@ -5151,10 +5128,31 @@ else
         endif
     endif
 
-    " escape literal dot if Array/Phonetic/Erbi
-    " -----------------------------------------
+    " escape literal dot if [array][phonetic][erbi]
+    " ---------------------------------------------
     if s:datafile_has_period > 0
         let keyboard = substitute(keyboard,'\.','\\.','g')
+    endif
+
+    " [apostrophe] in pinyin datafile
+    " -------------------------------
+    let keyboard = s:vimim_apostrophe(keyboard)
+    let s:keyboard_leading_zero = keyboard
+
+    " break up dot-separated sentence
+    " -------------------------------
+    if keyboard =~ '[.]'
+        let blocks = s:vimim_keyboard_dot_after_dot(keyboard)
+        if len(blocks) > 0
+            let msg = "enjoy.1010.2523.4498.7429.girl"
+            let keyboard = get(blocks, 0)
+        endif
+    endif
+
+    " [record] keep track of what we type
+    " -----------------------------------
+    if s:vimim_p_register_for_recording > 0
+        let @P = keyboard . "."
     endif
 
     " now it is time to do regular expression matching
