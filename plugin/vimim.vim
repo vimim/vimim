@@ -128,15 +128,15 @@ function! s:vimim_initialization_once()
     else
         return
     endif
-    " -------------------------------
+    " -----------------------------------------
     call s:vimim_initialize_global()
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
-    " -------------------------------
+    " -----------------------------------------
     call s:vimim_dictionary_shuangpin()
     call s:vimim_dictionary_im()
     call s:vimim_dictionary_punctuation()
-    " -------------------------------
+    " -----------------------------------------
     call s:vimim_initialize_vimim_txt_debug()
     call s:vimim_initialize_datafile_in_vimrc()
     " -----------------------------------------
@@ -1634,7 +1634,6 @@ function! s:vimim_initialize_skin()
     if s:vimim_custom_skin > 1
         let msg = "no extra_text on menu"
     endif
-    " --------------------------
 endfunction
 
 " ----------------------------------
@@ -4298,7 +4297,7 @@ function! s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
 " ---------------------------------------------------------
     if empty(a:h_0)  |" {'马力':'mali','名流':'mingliu'}
     \|| empty(a:h_1) |" {'马':'7712'}
-        return []       |" {'力':'4002'}
+        return []    |" {'力':'4002'}
     endif
     let values = []
     for key in keys(a:h_0)
@@ -4397,7 +4396,6 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
     let results = s:vimim_filter(results, keyboard, filter_length)
     " -----------------------------------------------------------
     return s:vimim_i18n_read_list(results)
-    " --------------------------------------
 endfunction
 
 " ------------------------------------------------
@@ -4625,7 +4623,7 @@ endfunction
 function! s:vimim_initialize_vimim_txt_debug()
 " --------------------------------------------
     if s:vimimdebug == 1
-        let msg = "open more backdoor"
+        let msg = "open backdoor wider"
         let s:vimim_custom_skin=1
         let s:vimim_sexy_onekey=1
         let s:vimim_datafile_has_english = 1
@@ -4635,7 +4633,7 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_www_sogou=13
+    let s:vimim_www_sogou=14
     let s:vimim_static_input_style=-1
     let s:vimim_chinese_frequency=1
     " ------------------------------
