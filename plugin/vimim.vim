@@ -162,7 +162,6 @@ endfunction
 function! s:vimim_initialize_global()
 " -----------------------------------
     let   G = []
-    call add(G, "g:vimim_auto_spell")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_private")
@@ -3609,48 +3608,6 @@ function! s:vimim_apostrophe(keyboard)
         let msg = "apostrophe is in the datafile"
     endif
     return keyboard
-endfunction
-
-" -------------------------------------------
-function! s:vimim_auto_spell(lines, keyboard)
-" -------------------------------------------
-    if empty(s:vimim_auto_spell)
-    \|| empty(a:lines)
-    \|| empty(a:keyboard)
-        return -1
-    endif
-    " ------------------------------------------
-    " to guess user's intention using auto_spell
-    " ------------------------------------------
-    let key = s:vimim_auto_spell_rule(a:keyboard)
-    let match_start = match(a:lines, '^'.key)
-    return match_start
-endfunction
-
-" -----------------------------------------
-function! s:vimim_auto_spell_rule(keyboard)
-" -----------------------------------------
-    " A demo rule for auto spelling
-    "    tign => ting
-    "     yve => yue
-    " --------------------------------
-    let rules = {}
-    let rules['ign'] = 'ing'
-    let rules['iou'] = 'iu'
-    let rules['uei'] = 'ui'
-    let rules['uen'] = 'un'
-    let rules['mg']  = 'ng'
-    let rules['ve']  = 'ue'
-    " --------------------------------
-    let pattern = a:keyboard
-    for key in keys(rules)
-        let new_key = rules[key]
-        if pattern =~ key
-            let pattern = substitute(pattern, key, new_key, '')
-            break
-        endif
-    endfor
-    return pattern
 endfunction
 
 " ======================================= }}}
