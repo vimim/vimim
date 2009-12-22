@@ -152,6 +152,7 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_encoding()
     call s:vimim_initialize_quantifiers()
     call s:vimim_initialize_www_sogou()
+    call s:vimim_initialize_my_cloud()
     call s:vimim_initialize_datafile_privates()
     " -----------------------------------------
     call s:vimim_finalize_session()
@@ -190,6 +191,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_www_sogou")
+    call add(G, "g:vimim_my_cloud")
     call add(G, "g:vimim_sexy_onekey")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
@@ -271,9 +273,9 @@ function! s:vimim_initialize_session()
     let s:search_key_slash = 0
     let s:datafile_has_period = 0
     let s:sentence_with_space_input = 0
-    let s:www_executable = 0
     let s:start_row_before = 0
     let s:start_column_before = 1
+    let s:www_executable = 0
     " --------------------------------
     let s:im = {}
     let s:ecdict = {}
@@ -4232,7 +4234,7 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
     if empty(output)
         return []
     endif
-    " now, let's support Could for gb and big5
+    " now, let's support Cloud for gb and big5
     " ----------------------------------------
     if empty(s:localization)
         let msg = "both vim and datafile are UTF-8 encoding"
@@ -4255,6 +4257,72 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
     " ----------------------------
     " ['woyouyigemeng 我有一个梦']
     " ----------------------------
+    return menu
+endfunction
+
+" ======================================= }}}
+let VimIM = " ====  VimIM_My_Cloud   ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" -------------------------------------
+function! s:vimim_initialize_my_cloud()
+" -------------------------------------
+    if executable('python')
+        let msg = 'python is free to use'
+    else
+        return
+    endif
+    " ---------------------------------
+    let cloud = s:vimim_my_cloud
+    if !empty(cloud) && filereadable(cloud)
+        let msg = 'my cloud seems ready"
+        return
+    else
+        let s:vimim_my_cloud = 0
+    endif
+    " ---------------------------------
+    let cloud = s:path . 'pcloud/qptest'
+    if filereadable(cloud)
+        let s:vimim_my_cloud = cloud
+    endif
+endfunction
+
+" --------------------------------------
+function! s:vimim_get_my_cloud(keyboard)
+" --------------------------------------
+    if empty(s:vimim_my_cloud)
+        return []
+    endif
+    let cloud = 'python ' .  s:vimim_my_cloud
+    let input = a:keyboard
+    let output = 0
+    " ----------------------------------
+    try
+        let output = system(cloud . ' ' . input)
+    catch /.*/
+        let output = 0
+    endtry
+    if empty(output)
+        return []
+    endif
+    " ----------------------------------------
+    if empty(s:localization)
+        let msg = "both vim and datafile are UTF-8 encoding"
+    else
+        let output = s:vimim_i18n_read(output)
+    endif
+    " ---------------------------------
+    " chunmeng => 春梦	8	'50 44'
+    " ---------------------------------
+    let menu = []
+    for item in split(output, '\n')
+        let item_list = split(item, '\t')
+        let chinese = item_list[0]
+        let english = strpart(a:keyboard, 0, item_list[1])
+        let new_item = english . " " . chinese
+        call add(menu, new_item)
+    endfor
     return menu
 endfunction
 
@@ -4622,6 +4690,9 @@ function! s:vimim_initialize_vimim_txt_debug()
     else
         return
     endif
+    " ------------------------------
+    let s:vimim_my_cloud = 'C:/home/vimim/pcloud/qptest'
+    let s:vimim_my_cloud = 0
     " ------------------------------ debug
     let s:vimim_www_sogou=14
     let s:vimim_static_input_style=-1
@@ -4990,6 +5061,23 @@ else
         if len(unicodes) > 0
             let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(unicodes)
+        endif
+    endif
+
+    " [cloud] to make private cloud out of chunmeng
+    " ---------------------------------------------
+    if empty(s:vimim_my_cloud)
+        let msg = "Private cloud is still a dream."
+    else
+        let results = s:vimim_get_my_cloud(keyboard)
+        if s:vimimdebug > 0
+            call s:debugs('my_cloud_stone', keyboard)
+            call s:debugs('my_cloud_gold', s:debug_list(results))
+        endif
+        if empty(len(results))
+            let s:vimim_my_cloud = 0
+        else
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
