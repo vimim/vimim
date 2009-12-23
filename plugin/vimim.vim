@@ -320,11 +320,15 @@ function! s:vimim_finalize_session()
         let s:im['pinyin'][0] = 1
     endif
     " ------------------------------
-    if s:im_primary =~# '^\d'
+    if s:im_primary =~# '^\d\w\+'
     \&& empty(get(s:im['pinyin'],0))
+        let s:only_4corner_or_12345 = 1
         let s:vimim_fuzzy_search = 0
         let s:vimim_static_input_style = 1
-        let s:only_4corner_or_12345 = 1
+    endif
+    " ------------------------------
+    if s:vimim_static_input_style < 0
+        let s:vimim_static_input_style = 0
     endif
     " ------------------------------
     if empty(s:vimim_www_sogou)
@@ -335,10 +339,6 @@ function! s:vimim_finalize_session()
     " ------------------------------
     if empty(get(s:im['wubi'],0))
         let s:vimim_wubi_non_stop = 0
-    endif
-    " ------------------------------
-    if s:vimim_static_input_style < 0
-        let s:vimim_static_input_style = 0
     endif
     " ------------------------------
     if s:vimim_p_register_for_recording > 0
