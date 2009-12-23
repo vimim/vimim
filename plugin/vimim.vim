@@ -207,8 +207,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_laststatus")
     call add(G, "g:vimim_esc_autocmd")
     call add(G, "g:vimim_internal_code_input")
-    call add(G, "g:vimim_match_dot_after_dot")
-    call add(G, "g:vimim_match_word_after_word")
     call add(G, "g:vimim_menu_label")
     call add(G, "g:vimim_p_register_for_recording")
     call add(G, "g:vimim_punctuation_navigation")
@@ -3010,27 +3008,15 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
     return keyboard
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_keyboard_dot_after_dot(keyboard)
-" ------------------------------------------------
-    if empty(s:vimim_match_dot_after_dot)
-        return []
-    endif
-    " --------------------------------------------
-    let keyboards = split(a:keyboard, '[.]')
-    return keyboards
-endfunction
-
 " -----------------------------------------------------
 function! s:vimim_sentence_whole_match(lines, keyboard)
 " -----------------------------------------------------
-    if empty(s:vimim_match_word_after_word)
-    \|| empty(a:lines)
-    \|| a:keyboard =~ '\d'
-    \|| len(a:keyboard) < 4
+    let keyboard = a:keyboard
+    if empty(a:lines)
+    \|| keyboard =~ '\d'
+    \|| len(keyboard) < 4
         return []
     endif
-    let keyboard = a:keyboard
     let pattern = '^' . keyboard . '\>'
     let match_start = match(a:lines, pattern)
     if match_start < 0
@@ -5260,11 +5246,11 @@ else
 
     " break up dot-separated sentence
     " -------------------------------
-    if keyboard =~ '[.]'
-        let blocks = s:vimim_keyboard_dot_after_dot(keyboard)
-        if len(blocks) > 0
+    if keyboard =~# '[.]'
+        let keyboards = split(keyboard, '[.]')
+        if len(keyboards) > 0
             let msg = "enjoy.1010.2523.4498.7429.girl"
-            let keyboard = get(blocks, 0)
+            let keyboard = get(keyboards, 0)
         endif
     endif
 
