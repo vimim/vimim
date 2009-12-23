@@ -4017,9 +4017,8 @@ endfunction
 function! s:vimim_wubi(keyboard)
 " ------------------------------
     let keyboard = a:keyboard
-    if empty(get(s:im['wubi'],0))
-    \|| empty(keyboard)
-    \|| s:toggle_xiangma_pinyin > 0
+    if empty(keyboard)
+    \|| get(s:im['wubi'],0) < 1
     \|| get(s:im['pinyin'],0) > 0
         return []
     endif
