@@ -3335,8 +3335,9 @@ function! <SID>vimim_save(entry)
     if empty(a:entry)
         return
     endif
-    call s:vimim_start()
-    " --------------------------
+    " --------------------------------
+    call s:vimim_initialization_once()
+    " --------------------------------
     let entries = []
     let entry_split_list = split(a:entry,'\n')
     for entry in entry_split_list
@@ -3349,7 +3350,7 @@ function! <SID>vimim_save(entry)
             continue
         endif
         let menu = remove(words, 0)
-        if menu !~ s:valid_key
+        if menu !~# "[0-9a-z]"
             continue
         endif
         if char2nr(get(words,0)) < 128
@@ -4505,7 +4506,9 @@ function! <SID>vimim_vCTRL6(chinglish)
     if empty(a:chinglish)
         return ''
     endif
+    " --------------------------------
     call s:vimim_initialization_once()
+    " --------------------------------
     if a:chinglish !~ '\p'
         return s:vimim_reverse_lookup(a:chinglish)
     endif
