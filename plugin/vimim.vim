@@ -1708,6 +1708,14 @@ function! s:vimim_statusline()
         let im = get(s:im[key],1)
     endif
   " --------------------------
+    if key =~# 'wubi'
+        if s:datafile_primary =~# 'wubi98'
+            let im .= '98' 
+        elseif s:datafile_primary =~# 'wubijd'
+            let im = '极点' . im 
+        endif
+    endif
+  " --------------------------
     let pinyin = get(s:im['pinyin'],1)
     if s:shuangpin_flag > 0
         let pinyin = get(s:im['shuangpin'],0)
@@ -2857,7 +2865,10 @@ function! s:vimim_exact_match(lines, keyboard, start)
     if s:vimim_quick_key > 0
         let list_length = result - match_start
         let do_search_on_word = 0
-        let quick_limit = 2
+        let quick_limit = 4
+        if get(s:im['pinyin'],0) > 0
+            let quick_limit = 3
+        endif
         if len(keyboard) < quick_limit
         \|| list_length > words_limit*2
             let do_search_on_word = 1
