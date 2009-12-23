@@ -4330,9 +4330,8 @@ function! s:vimim_get_my_cloud(keyboard)
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
         let extra_text = get(item_list,2)
-        let extra_text = substitute(extra_text,' ','_','g')
         let english = strpart(a:keyboard, 0, get(item_list,1))
-        let english .= extra_text
+        let english .= '_' . extra_text
         let new_item = english . " " . chinese
         call add(menu, new_item)
     endfor
