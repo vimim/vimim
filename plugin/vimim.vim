@@ -144,8 +144,8 @@ function! s:vimim_initialization_once()
     call s:vimim_scan_plugin_for_more_im()
     " -----------------------------------------
     call s:vimim_initialize_erbi()
-    call s:vimim_initialize_shuangpin()
     call s:vimim_initialize_pinyin()
+    call s:vimim_initialize_shuangpin()
     " -----------------------------------------
     call s:vimim_initialize_keycode()
     call s:vimim_initialize_skin()
@@ -3599,10 +3599,10 @@ function! s:vimim_initialize_pinyin()
         endif
     endif
     " -------------------------------
+    let s:vimim_fuzzy_search = 1
     if empty(s:vimim_imode_pinyin)
         let s:vimim_imode_pinyin = 1
     endif
-    " -------------------------------
 endfunction
 
 " ------------------------------------
@@ -4714,9 +4714,8 @@ function! s:vimim_initialize_vimim_txt_debug()
     " ------------------------------ debug
     let s:vimim_www_sogou=14
     let s:vimim_static_input_style=-1
-    let s:vimim_chinese_frequency=1
     " ------------------------------
-    let s:vimim_fuzzy_search=1
+    let s:vimim_chinese_frequency=1
     let s:vimim_frequency_first_fix=0
     " ------------------------------
     let s:vimim_wildcard_search=1
