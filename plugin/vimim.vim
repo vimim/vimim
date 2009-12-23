@@ -4258,8 +4258,8 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
     for item in split(output, '\t+')
         let item_list = split(item, '：')
         if len(item_list) > 1
-            let chinese = item_list[0]
-            let english = strpart(keyboard, 0, item_list[1])
+            let chinese = get(item_list,0)
+            let english = strpart(keyboard, 0, get(item_list,1))
             let new_item = english . " " . chinese
             call add(menu, new_item)
         endif
@@ -4328,8 +4328,11 @@ function! s:vimim_get_my_cloud(keyboard)
     let menu = []
     for item in split(output, '\n')
         let item_list = split(item, '\t')
-        let chinese = item_list[0]
-        let english = strpart(a:keyboard, 0, item_list[1])
+        let chinese = get(item_list,0)
+        let extra_text = get(item_list,2)
+        let extra_text = substitute(extra_text,' ','_','g')
+        let english = strpart(a:keyboard, 0, get(item_list,1))
+        let english .= extra_text
         let new_item = english . " " . chinese
         call add(menu, new_item)
     endfor
@@ -4701,8 +4704,8 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------
-    let s:vimim_my_cloud = 'C:/home/vimim/pcloud/qptest'
     let s:vimim_my_cloud = 0
+    let s:vimim_my_cloud = 'C:/home/vimim/pcloud/qptest'
     " ------------------------------ debug
     let s:vimim_www_sogou=14
     let s:vimim_static_input_style=-1
