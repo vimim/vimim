@@ -312,7 +312,6 @@ function! s:vimim_finalize_session()
     if s:datafile_primary =~# "quote"
     \|| s:datafile_secondary =~# "quote"
         let s:vimim_datafile_has_apostrophe = 1
-        let s:chinese_frequency = -1
     endif
     " ------------------------------
     if s:shuangpin_flag > 0
