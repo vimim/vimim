@@ -3068,11 +3068,6 @@ function! s:vimim_ctrl_y_ctrl_x_ctrl_u()
         return key
     endif
     let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-    if empty(s:vimim_sexy_onekey)
-    \&& empty(s:chinese_input_mode)
-        let key = "\<C-Y>"
-        call s:vimim_stop()
-    endif
     return key
 endfunction
 
@@ -4703,8 +4698,8 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------
-    let s:vimim_my_cloud = 0
     let s:vimim_my_cloud = 'C:/home/vimim/pcloud/qptest'
+    let s:vimim_my_cloud = 0
     " ------------------------------ debug
     let s:vimim_www_sogou=14
     let s:vimim_static_input_style=-1
