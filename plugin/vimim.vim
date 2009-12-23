@@ -259,6 +259,7 @@ function! s:vimim_initialize_session()
     let s:toggle_xiangma_pinyin = 0
     let s:xingma_sleep_with_pinyin = 0
     " --------------------------------
+    let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
     let s:four_corner_lines = []
     let s:unicode_menu_display_flag = 0
@@ -318,8 +319,7 @@ function! s:vimim_finalize_session()
         let s:im['pinyin'][0] = 1
     endif
     " ------------------------------
-    if get(s:im['4corner'],0) > 1
-    \&& empty(get(s:im['pinyin'],0))
+    let s:only_4corner_or_12345 > 0
         let s:vimim_fuzzy_search = 0
         let s:vimim_static_input_style = 1
     endif
@@ -577,7 +577,7 @@ function! s:vimim_scan_plugin_for_more_im()
     endif
     " -------------------------------------
     if empty(im) || s:pinyin_and_4corner > 1
-        let msg = "only play with one plugin datafile"
+        let s:only_4corner_or_12345 = 1
     elseif get(s:im['4corner'],0) > 0
         let s:pinyin_and_4corner = 1
     else
@@ -1080,7 +1080,7 @@ function! s:vimim_internal_code(keyboard)
             endfor
         endif
         let msg = "support direct unicode insert by 22221 or u808f"
-    elseif get(s:im['4corner'],0) < 4
+    else
     " -----------------------------------------------------
         if keyboard =~ '^\d\{5}$'     "| 32911
             let numbers = [str2nr(keyboard)]
@@ -1578,6 +1578,7 @@ endfunction
 function! s:vimim_static_alphabet_auto_select()
 " ---------------------------------------------
     if s:chinese_input_mode != 1
+    \|| if s:only_4corner_or_12345 > 0
         return
     endif
     " always do alphabet auto selection for static mode
@@ -1710,9 +1711,9 @@ function! s:vimim_statusline()
   " --------------------------
     if key =~# 'wubi'
         if s:datafile_primary =~# 'wubi98'
-            let im .= '98' 
+            let im .= '98'
         elseif s:datafile_primary =~# 'wubijd'
-            let im = '极点' . im 
+            let im = '极点' . im
         endif
     endif
   " --------------------------
@@ -5000,6 +5001,8 @@ if a:start
 
     if empty(s:chinese_input_mode)
         let msg = "OneKey needs play with digits, comma and dot"
+    elseif s:only_4corner_or_12345 > 0
+        let msg = "need to build the best digial input method"
     else
         let start_column = last_seen_nonsense_column
     endif
@@ -5290,6 +5293,7 @@ else
             let match_start = match(lines, pattern)
         endif
     endif
+
 
     " [DIY] "Do It Yourself" couple IM: pinyin+4corner
     " ------------------------------------------------
