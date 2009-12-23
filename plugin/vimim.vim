@@ -3332,6 +3332,8 @@ function! <SID>vimim_save(entry)
     if empty(a:entry)
         return
     endif
+    call s:vimim_start()
+    " --------------------------
     let entries = []
     let entry_split_list = split(a:entry,'\n')
     for entry in entry_split_list
@@ -4500,6 +4502,7 @@ function! <SID>vimim_vCTRL6(chinglish)
     if empty(a:chinglish)
         return ''
     endif
+    call s:vimim_initialization_once()
     if a:chinglish !~ '\p'
         return s:vimim_reverse_lookup(a:chinglish)
     endif
