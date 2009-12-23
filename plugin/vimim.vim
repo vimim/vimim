@@ -5333,6 +5333,17 @@ else
         return s:vimim_popupmenu_list(results)
     endif
 
+    " [cloud] never give up for whole cloud
+    " -------------------------------------
+    if s:vimim_www_sogou == 1
+        let results = s:vimim_get_sogou_cloud_im(keyboard)
+        if empty(len(results))
+            return []
+        else
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
     " [seamless] support seamless English input
     " -----------------------------------------
     if match_start < 0
