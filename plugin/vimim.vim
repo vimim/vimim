@@ -135,7 +135,6 @@ function! s:vimim_initialization_once()
     " -----------------------------------------
     call s:vimim_dictionary_shuangpin()
     call s:vimim_dictionary_im()
-    call s:vimim_dictionary_punctuation()
     " -----------------------------------------
     call s:vimim_initialize_vimim_txt_debug()
     call s:vimim_initialize_datafile_in_vimrc()
@@ -148,12 +147,16 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_shuangpin()
     " -----------------------------------------
     call s:vimim_initialize_keycode()
-    call s:vimim_initialize_skin()
-    call s:vimim_initialize_encoding()
+    call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
+    " -----------------------------------------
+    call s:vimim_initialize_encoding()
+    call s:vimim_initialize_skin()
+    " -----------------------------------------
+    call s:vimim_initialize_datafile_privates()
+    " -----------------------------------------
     call s:vimim_initialize_www_sogou()
     call s:vimim_initialize_my_cloud()
-    call s:vimim_initialize_datafile_privates()
     " -----------------------------------------
     call s:vimim_finalize_session()
     " -----------------------------------------
@@ -1815,7 +1818,7 @@ let VimIM = " ====  Punctuations     ==== {{{"
 call add(s:vimims, VimIM)
 
 " ----------------------------------------
-function! s:vimim_dictionary_punctuation()
+function! s:vimim_initialize_punctuation()
 " ----------------------------------------
     let s:punctuations = {}
     let s:punctuations['#']='＃'
