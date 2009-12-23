@@ -319,9 +319,11 @@ function! s:vimim_finalize_session()
         let s:im['pinyin'][0] = 1
     endif
     " ------------------------------
-    let s:only_4corner_or_12345 > 0
+    if s:im_primary =~# '^\d'
+    \&& empty(get(s:im['pinyin'],0))
         let s:vimim_fuzzy_search = 0
         let s:vimim_static_input_style = 1
+        let s:only_4corner_or_12345 = 1
     endif
     " ------------------------------
     if empty(s:vimim_www_sogou)
@@ -577,7 +579,7 @@ function! s:vimim_scan_plugin_for_more_im()
     endif
     " -------------------------------------
     if empty(im) || s:pinyin_and_4corner > 1
-        let s:only_4corner_or_12345 = 1
+        let msg = "only play with one plugin datafile"
     elseif get(s:im['4corner'],0) > 0
         let s:pinyin_and_4corner = 1
     else
