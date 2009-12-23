@@ -2225,12 +2225,11 @@ call add(s:vimims, VimIM)
 " --------------------------------
 function! g:vimim_chinese2pinyin()
 " --------------------------------
-    " convert chinese to pinyin using pinyin datafile
-    " :call g:vimim_chinese2pinyin()
-    " --------------------------------------
-    " horse 马 馬儿 马馬儿   <= garbage in
-    " horse ma maer mamaer   => garbage out
-    " --------------------------------------
+    " [purpose] convert Chinese to pinyin in datafile
+    " [usage]   :call g:vimim_chinese2pinyin()
+    " [example] garbage in  => horse 马 馬儿 马馬儿
+    "           garbage out => horse ma maer mamaer
+    " ---------------------------------------------
     let line = 0
     let space = ' '
     while line < line("$")
@@ -4700,9 +4699,9 @@ function! s:vimim_initialize_vimim_txt_debug()
         let msg = "open backdoor wider"
         let s:vimim_custom_skin=1
         let s:vimim_sexy_onekey=1
-        let s:vimim_datafile_has_english = 1
-        let s:vimim_datafile_has_pinyin = 1
-        let s:vimim_datafile_has_4corner = 1
+        let s:vimim_datafile_has_english=1
+        let s:vimim_datafile_has_pinyin=1
+        let s:vimim_datafile_has_4corner=1
     else
         return
     endif
@@ -5358,11 +5357,7 @@ else
     " [seamless] support seamless English input
     " -----------------------------------------
     if match_start < 0
-        if empty(s:chinese_input_mode)
-            let msg = "no auto seamless for OneKey"
-        else
-            call <SID>vimim_set_seamless()
-        endif
+        call <SID>vimim_set_seamless()
         return []
     endif
 
