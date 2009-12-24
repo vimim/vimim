@@ -300,6 +300,11 @@ function! s:vimim_finalize_session()
 " ----------------------------------
     let s:chinese_frequency = s:vimim_chinese_frequency
     " ------------------------------
+    if s:pinyin_and_4corner == 1
+    \&& s:chinese_frequency > 1
+        let s:chinese_frequency = 1
+    endif
+    " ------------------------------
     if empty(s:vimim_www_sogou)
         let s:vimim_www_sogou = 888
     elseif s:vimim_www_sogou == 1
@@ -3284,7 +3289,6 @@ endfunction
 function! s:vimim_save_to_disk(lines)
 " ------------------------------------
     if empty(a:lines)
-    \|| s:pinyin_and_4corner == 1
         return
     endif
     " --------------------------------
@@ -4705,8 +4709,8 @@ function! s:vimim_initialize_vimim_txt_debug()
     let s:vimim_www_sogou=14
     let s:vimim_static_input_style=-1
     " ------------------------------
-    let s:vimim_chinese_frequency=12
-    let s:vimim_frequency_first_fix=0
+    let s:vimim_chinese_frequency=14
+    let s:vimim_frequency_first_fix=1
     " ------------------------------
     let s:vimim_wildcard_search=1
     let s:vimim_imode_comma=1
