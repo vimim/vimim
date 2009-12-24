@@ -267,9 +267,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:im_primary = 0
     let s:im_secondary = 0
-    let s:datafile_current = 0
-    let s:datafile_secondary = 0
-    " --------------------------------
     let s:privates_flag = 0
     " --------------------------------
     let s:search_key_slash = 0
@@ -284,9 +281,6 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     " --------------------------------
     let s:current_positions = [0,0,1,0]
-    let s:lines_datafile_primary = []
-    let s:lines_datafile_secondary = []
-    let s:lines_datafile = []
     let s:alphabet_lines = []
     let s:debugs = []
     " --------------------------------
@@ -294,12 +288,30 @@ function! s:vimim_initialize_session()
     let s:keyboard_count = 0
     let s:ctrl_6_count = 1
     " --------------------------------
+    let s:lines = []
+    let s:datafile_current = 0
+    let s:lines_primary = []
+    let s:lines_secondary = []
+    " --------------------------------
 endfunction
 
 " ----------------------------------
 function! s:vimim_finalize_session()
 " ----------------------------------
     let s:chinese_frequency = s:vimim_chinese_frequency
+    " ------------------------------
+    if s:xingma_sleep_with_pinyin == 1
+    \|| s:pinyin_and_4corner == 1
+        if s:chinese_frequency > 0
+            let s:chinese_frequency = 1
+        endif
+    endif
+    " ------------------------------
+    if empty(s:vimim_www_sogou)
+        let s:vimim_www_sogou = 888
+    elseif s:vimim_www_sogou == 1
+        let s:chinese_frequency = -1
+    endif
     " ----------------------------------------
     if empty(s:datafile_current)
         let s:datafile_current = copy(s:datafile_primary)
@@ -328,12 +340,6 @@ function! s:vimim_finalize_session()
     " ------------------------------
     if s:vimim_static_input_style < 0
         let s:vimim_static_input_style = 0
-    endif
-    " ------------------------------
-    if empty(s:vimim_www_sogou)
-        let s:vimim_www_sogou = 888
-    elseif s:vimim_www_sogou == 1
-        let s:chinese_frequency = -1
     endif
     " ------------------------------
     if empty(get(s:im['wubi'],0))
@@ -3142,10 +3148,6 @@ endfunction
 " ------------------------------------
 function! s:vimim_get_new_order_list()
 " ------------------------------------
-    if empty(s:matched_list)
-        return []
-    endif
-    " --------------------------------
     let one_line_list = split(get(s:matched_list,0))
     let keyboard = get(one_line_list,0)
     let first_fix_candidate = get(one_line_list,1)
@@ -3203,7 +3205,7 @@ function! s:vimim_get_new_order_list()
 endfunction
 
 " --------------------------------------------
-function! s:vimim_update_frequence_in_memory()
+function! s:vimim_update_frequency_in_memory()
 " --------------------------------------------
     let both_list = s:vimim_get_new_order_list()
     let new_list = get(both_list,0)
@@ -3213,8 +3215,8 @@ function! s:vimim_update_frequence_in_memory()
     endif
     " update data in memory based on past usage
     " -----------------------------------------
-    let datafile = s:vimim_load_datafile(0)
-    if empty(datafile)
+    let lines = s:vimim_load_datafile(0)
+    if empty(lines)
         return []
     endif
     " no update if the same old order
@@ -3223,7 +3225,7 @@ function! s:vimim_update_frequence_in_memory()
     let first = get(new_list,1)
     let second = get(new_list,2)
     let pattern = keyboard . '\s\+' . first . '\s\+' . second
-    let same_old = match(datafile, pattern)
+    let same_old = match(lines, pattern)
     if same_old < 0
         let msg = "walk through to update with new order"
     else
@@ -3239,50 +3241,50 @@ function! s:vimim_update_frequence_in_memory()
     else
         for item in match_list
             let pattern = '^' . keyboard . '\s\+' . item
-            let remove_index = match(datafile, pattern)
+            let remove_index = match(lines, pattern)
             if remove_index < 0
                 let msg = "nothing to remove"
             else
-                call remove(datafile, remove_index)
+                call remove(lines, remove_index)
             endif
         endfor
     endif
     " (2/4) locate new order line based on user input
     " -----------------------------------------------
     let pattern = '^' . keyboard . '\>'
-    let insert_index = match(datafile, pattern)
+    let insert_index = match(lines, pattern)
     if insert_index < 0
         return []
     endif
     " (3/4) insert new order list by replacement
     " ------------------------------------------
     let new_order_line = join(new_list)
-    let datafile[insert_index] = new_order_line
+    let lines[insert_index] = new_order_line
     " (4/4) update the new order in memory
     " ------------------------------------
-    let s:lines_datafile = datafile
-    return ['new order']
+    let s:lines = lines
+    return ['update', 'frequency', 'on disk']
 endfunction
 
 " ------------------------------------------
-function! s:vimim_update_frequence_on_disk()
+function! s:vimim_update_frequency_on_disk()
 " ------------------------------------------
     if s:chinese_frequency < 2
         return
     endif
-    let s:keyboard_count += 1
-    if empty(s:keyboard_count % s:chinese_frequency)
-        call s:vimim_save_datafile(s:lines_datafile)
+    let auto_save = s:keyboard_count % s:chinese_frequency
+    if empty(auto_save)
+        call s:vimim_save_datafile(s:lines)
     endif
 endfunction
 
 " ------------------------------------------
 function! s:vimim_load_datafile(reload_flag)
 " ------------------------------------------
-    if empty(s:lines_datafile) || a:reload_flag > 0
+    if empty(s:lines) || a:reload_flag > 0
         if len(s:datafile_current) > 0
         \&& filereadable(s:datafile_current)
-            let s:lines_datafile = readfile(s:datafile_current)
+            let s:lines = readfile(s:datafile_current)
         endif
         " ----------------------------------
         if s:pinyin_and_4corner == 1
@@ -3290,24 +3292,24 @@ function! s:vimim_load_datafile(reload_flag)
             if empty(pinyin)
                 let msg = "single digital ciku was used"
             else
-                call extend(s:lines_datafile, pinyin, 0)
+                call extend(s:lines, pinyin, 0)
             endif
         endif
         " ----------------------------------
     endif
-    return s:lines_datafile
+    return s:lines
 endfunction
 
 " ------------------------------------
 function! s:vimim_save_datafile(lines)
 " ------------------------------------
     if empty(a:lines)
-    \|| empty(s:lines_datafile)
+    \|| empty(s:lines)
     \|| s:pinyin_and_4corner == 1
         return
     endif
     " --------------------------------
-    let s:lines_datafile = a:lines
+    let s:lines = a:lines
     if filewritable(s:datafile_current)
         call writefile(a:lines, s:datafile_current)
     endif
@@ -3994,21 +3996,21 @@ function! s:vimim_toggle_wubi_pinyin()
     if empty(s:toggle_xiangma_pinyin)
         let s:im['wubi'][0] = 1
         let s:im['pinyin'][0] = 0
-        if empty(s:lines_datafile_primary)
+        if empty(s:lines_primary)
             let s:datafile_current = copy(s:datafile_primary)
-            let s:lines_datafile_primary = s:vimim_load_datafile(1)
+            let s:lines_primary = s:vimim_load_datafile(1)
         endif
-        let s:lines_datafile = s:lines_datafile_primary
+        let s:lines = s:lines_primary
     " --------------------------------
     else
     " --------------------------------
         let s:im['pinyin'][0] = 1
         let s:im['wubi'][0] = 0
-        if empty(s:lines_datafile_secondary)
+        if empty(s:lines_secondary)
             let s:datafile_current = copy(s:datafile_secondary)
-            let s:lines_datafile_secondary = s:vimim_load_datafile(1)
+            let s:lines_secondary = s:vimim_load_datafile(1)
         endif
-        let s:lines_datafile = s:lines_datafile_secondary
+        let s:lines = s:lines_secondary
     endif
 endfunction
 
@@ -4673,14 +4675,16 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_debug()
 " ----------------------------------
     let s:datafile_primary = 0
+    let s:datafile_secondary = 0
+    " ------------------------------
     let s:initialization_loaded = 0
     let s:chinese_mode_toggle_flag = 0
-    " ---------------------------------------
+    " ------------------------------
     if s:vimimdebug > 1
         let s:vimim_tab_for_one_key = 1
         return
     endif
-    " ---------------------------------------
+    " ------------------------------
     let datafile_backdoor = s:path . "vimim.txt"
     if filereadable(datafile_backdoor)
         let msg = "open backdoor for debugging"
@@ -4890,10 +4894,10 @@ function! g:vimim_reset_after_insert()
     endif
     " --------------------------------
     if s:chinese_frequency > 0
-        let lines = s:vimim_update_frequence_in_memory()
-        if len(lines) > 0
+        let lines = s:vimim_update_frequency_in_memory()
+        if len(lines) > 1
             if s:chinese_frequency > 1
-                call s:vimim_update_frequence_on_disk()
+                call s:vimim_update_frequency_on_disk()
             endif
         endif
     endif
@@ -5027,6 +5031,7 @@ else
     endif
 
     let keyboard = a:keyboard
+    let s:keyboard_count += 1
     if empty(str2nr(keyboard))
         let msg = "the input is alphabet only"
     else
