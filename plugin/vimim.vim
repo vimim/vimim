@@ -299,12 +299,6 @@ endfunction
 function! s:vimim_finalize_session()
 " ----------------------------------
     let s:chinese_frequency = s:vimim_chinese_frequency
-    " ------------------------------ xxx
-    if s:xingma_sleep_with_pinyin == 1
-        if s:chinese_frequency > 0
-"           let s:chinese_frequency = 1
-        endif
-    endif
     " ------------------------------
     if empty(s:vimim_www_sogou)
         let s:vimim_www_sogou = 888
@@ -3146,7 +3140,7 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_get_new_order_list()
-" ------------------------------------ xxx
+" ------------------------------------
     if empty(s:matched_list)
         return []
     endif
@@ -3154,20 +3148,12 @@ function! s:vimim_get_new_order_list()
     let one_line_list = split(get(s:matched_list,0))
     let keyboard = get(one_line_list,0)
     let first_fix_candidate = get(one_line_list,1)
-    if len(one_line_list) < 3
-    \|| keyboard !~# s:valid_key
-    \|| char2nr(first_fix_candidate) < 127
-        return []
-    endif
-    " --------------------------------
     let chinese = s:vimim_popup_word(s:start_column_before)
-    if char2nr(chinese) < 127
-        return []
-    endif
     " --------------------------------
-let g:ga1=first_fix_candidate
-let g:ga2=chinese
-    if first_fix_candidate ==# chinese
+    if keyboard !~# s:valid_key
+    \|| char2nr(chinese) < 127
+    \|| char2nr(first_fix_candidate) < 127
+    \|| first_fix_candidate ==# chinese
         return []
     endif
     " --------------------------------
@@ -3219,50 +3205,47 @@ function! s:vimim_update_chinese_frequency_usage()
         return
     endif
     " update data in memory based on past usage
-    " ----------------------------------------- xxx
-    let lines = s:vimim_reload_datafile(0)
-    if empty(lines)
+    " (1/4) locate new order line based on user input
+    " -----------------------------------------------
+    let match_list = get(both_list,1)
+    if empty(match_list) || empty(s:lines)
         return
     endif
-    " (1/4) delete all but one matching lines
-    " ---------------------------------------
-    let match_list = get(both_list,1)
     let keyboard = get(new_list,0)
-    if empty(match_list)
+    let pattern = '^' . keyboard . '\>'
+    let insert_index = match(s:lines, pattern)
+    if insert_index < 0
         return
-    elseif len(match_list) < 2
+    endif
+    " (2/4) delete all but one matching lines
+    " ---------------------------------------
+    if len(match_list) < 2
         let msg = "only one matching line"
     else
         for item in match_list
             let pattern = '^' . keyboard . '\s\+' . item
-            let remove_index = match(lines, pattern)
-            if remove_index < 0
+            let remove_index = match(s:lines, pattern)
+            if remove_index<0 || remove_index==insert_index
                 let msg = "nothing to remove"
             else
-                call remove(lines, remove_index)
+                call remove(s:lines, remove_index)
             endif
         endfor
-    endif
-    " (2/4) locate new order line based on user input
-    " -----------------------------------------------
-    let pattern = '^' . keyboard . '\>'
-    let insert_index = match(lines, pattern)
-    if insert_index < 0
-        return
     endif
     " (3/4) insert new order list by replacement
     " ------------------------------------------
     let new_order_line = join(new_list)
-    let lines[insert_index] = new_order_line
+    let s:lines[insert_index] = new_order_line
     " (4/4) sync datafile in memory to datafile on disk
     " -------------------------------------------------
     if s:chinese_frequency < 2
         return
     endif
-"   let auto_save = s:keyboard_count % s:chinese_frequency
-"   if auto_save > 0
-        call s:vimim_save_to_disk(lines)
-"   endif
+    let s:keyboard_count += 1
+    let auto_save = s:keyboard_count % s:chinese_frequency
+    if auto_save > 0
+        call s:vimim_save_to_disk(s:lines)
+    endif
 endfunction
 
 " --------------------------------------------
@@ -3309,9 +3292,9 @@ function! s:vimim_save_to_disk(lines)
     " --------------------------------
     if s:xingma_sleep_with_pinyin > 0
         if empty(s:toggle_xiangma_pinyin)
-            let s:lines_primary = a:lines 
+            let s:lines_primary = a:lines
         else
-            let s:lines_secondary = a:lines  
+            let s:lines_secondary = a:lines
         endif
     endif
     " --------------------------------
@@ -4292,7 +4275,6 @@ function! s:vimim_initialize_my_cloud()
     endif
 endfunction
 
-
 " --------------------------------------
 function! s:vimim_get_my_cloud(keyboard)
 " --------------------------------------
@@ -4709,7 +4691,7 @@ function! s:vimim_initialize_vimim_txt_debug()
     let s:vimim_my_cloud = 'C:/home/vimim/pcloud/qptest'
     let s:vimim_my_cloud = 0
     " ------------------------------ debug
-    let s:vimim_chinese_frequency=2
+    let s:vimim_chinese_frequency=3
     let s:vimim_frequency_first_fix=0
     " ------------------------------
     let s:vimim_www_sogou=14
@@ -4831,15 +4813,27 @@ function! s:vimim_start()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
+    sil!call s:vimim_reload_datafile(1)
 endfunction
 
 " ----------------------
 function! s:vimim_stop()
 " ----------------------
+    sil!call s:vimim_datafile_save_onto_disk()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_unmap()
+endfunction
+
+" -----------------------------------------
+function! s:vimim_datafile_save_onto_disk()
+" -----------------------------------------
+    if s:chinese_frequency < 2
+    \|| len(s:lines) < 2
+        return
+    endif
+    call s:vimim_save_to_disk(s:lines)
 endfunction
 
 " ---------------------------------
@@ -5024,7 +5018,6 @@ else
     endif
 
     let keyboard = a:keyboard
-    let s:keyboard_count += 1
     if empty(str2nr(keyboard))
         let msg = "the input is alphabet only"
     else
@@ -5285,7 +5278,6 @@ else
             let match_start = match(lines, pattern)
         endif
     endif
-
 
     " [DIY] "Do It Yourself" couple IM: pinyin+4corner
     " ------------------------------------------------
