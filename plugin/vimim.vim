@@ -2872,9 +2872,9 @@ function! s:vimim_exact_match(lines, keyboard, start)
     if s:vimim_quick_key > 0
         let list_length = result - match_start
         let do_search_on_word = 0
-        let quick_limit = 4
+        let quick_limit = 3
         if get(s:im['pinyin'],0) > 0
-            let quick_limit = 3
+            let quick_limit = 2
         endif
         if len(keyboard) < quick_limit
         \|| list_length > words_limit*2
