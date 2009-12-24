@@ -1285,6 +1285,8 @@ function! s:vimim_onekey(onekey)
         let s:smart_space += 1
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         sil!exe 'sil!return "' . space . '"'
+    else
+        let s:smart_space = 0
     endif
     " ---------------------------------------------------
     if !has("autocmd")
@@ -5383,6 +5385,7 @@ else
     " -----------------------------------------
     if match_start < 0
         call <SID>vimim_set_seamless()
+        let s:smart_space += 1
         return []
     endif
 
