@@ -1275,7 +1275,7 @@ function! s:vimim_onekey(onekey)
     endif
     " ---------------------------------------------------
     if char_before !~# s:valid_key
-        if !has("autocmd")
+        if !has("autocmd") || a:onekey ==# "\t"
             call s:vimim_stop()
         endif
         return a:onekey
@@ -1289,7 +1289,7 @@ function! s:vimim_onekey(onekey)
         let s:smart_space = 0
     endif
     " ---------------------------------------------------
-    if !has("autocmd")
+    if !has("autocmd") || a:onekey ==# "\t"
         call s:vimim_stop()
     endif
     return a:onekey
