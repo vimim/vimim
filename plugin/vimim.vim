@@ -831,7 +831,7 @@ function! s:vimim_easter_chicken(keyboard)
     let egg = a:keyboard
     if egg =~# s:valid_key
         let msg = "hunt easter egg ... vim<C-\>"
-    elseif egg ==# ".," && s:vimimdebug > 0
+    elseif egg ==# ",," && s:vimimdebug > 0
         let msg = 'quick dirty lazy debugging'
     else
         return []
@@ -848,7 +848,7 @@ function! s:vimim_easter_chicken(keyboard)
         return s:vimim_egg_vimimhelp()
     elseif egg ==# "vimimdefaults"
         return s:vimim_egg_vimimdefaults()
-    elseif egg ==# "vimimdebug" || egg ==# ".,"
+    elseif egg ==# "vimimdebug" || egg ==# ",,"
         return s:vimim_egg_vimimdebug()
     endif
 endfunction
@@ -1246,12 +1246,10 @@ function! s:vimim_onekey(onekey)
             let msg = "too smart is not smart"
         endif
         " -----------------------------------------------
-        if char_before ==# ","
-            if char_before_before ==# ","
-                let msg = 'double comma ",," for jianpin whole cloud'
-            elseif char_before_before ==# "."
-                let msg = 'make dot comma ".," for debugging'
-            endif
+        if s:vimimdebug > 0
+        \&& char_before ==# ","
+        \&& char_before ==# char_before_before
+            let msg = 'make double comma ",," for debugging'
         else
             sil!exe 'sil!return "' . space . '"'
         endif
@@ -4122,7 +4120,7 @@ function! s:vimim_magic_tail(keyboard)
     if s:chinese_input_mode > 0
         return 0
     endif
-    if len(keyboard) < 2
+    if len(keyboard) < 3
         return 0
     endif
     if keyboard =~ '\d\d\d\d'
@@ -4130,11 +4128,22 @@ function! s:vimim_magic_tail(keyboard)
         return 0
     endif
     let magic_tail = strpart(keyboard, len(keyboard)-1)
+    let magic_tail_last_but_one = strpart(keyboard,len(keyboard)-2,1)
+    let magic_tail_last_but_two = strpart(keyboard,len(keyboard)-3,1)
+    if magic_tail_last_but_one ==# ',' 
+    \&& magic_tail_last_but_two =~# '\l'
+    \&& magic_tail =~# '\l'
+        let keyboard = strpart(keyboard, 0, len(keyboard)-2)
+        let keyboard = substitute(keyboard,'.',"&'",'g')
+        let keyboard .= magic_tail . ','
+        let magic_tail = ','
+    endif
+        " -----------------------------------------------
     if magic_tail ==# ','
         " -----------------------------------------------
         " <comma> double play in OneKey Mode:
-        "   (1) after English (valid keys) => all-cloud at will
-        "   (2) after English and comma    => all-cloud jianpin
+        "   (1) after English (valid keys) => cloud at will
+        "   (2) right before last English  => cloud and all-jianpin
         "   (3) before number              => magic imode
         " -----------------------------------------------
         let s:no_internet_connection = -1
@@ -4150,10 +4159,7 @@ function! s:vimim_magic_tail(keyboard)
     endif
     let keyboard = strpart(keyboard, 0, len(keyboard)-1)
     let magic_tail = strpart(keyboard, len(keyboard)-1)
-    if magic_tail ==# ","
-        let keyboard = substitute(keyboard,'.',"&'",'g')
-        let keyboard = strpart(keyboard, 0, len(keyboard)-3)
-    elseif magic_tail !~# "[0-9a-z]"
+    if magic_tail !~# "[0-9a-z]"
         return 0
     endif
     let s:keyboard_leading_zero = keyboard
@@ -5046,7 +5052,7 @@ else
 
     " [eggs] hunt classic easter egg ... vim<C-\>
     " -------------------------------------------
-    if keyboard =~# "^vim" || keyboard ==# ".,"
+    if keyboard =~# "^vim" || keyboard ==# ",,"
         let results = s:vimim_easter_chicken(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
