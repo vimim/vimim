@@ -289,7 +289,7 @@ function! s:vimim_initialize_session()
     let s:ctrl_6_count = 1
     " --------------------------------
     let s:lines = []
-    let s:datafile_current = 0
+    let s:datafile = 0
     let s:lines_primary = []
     let s:lines_secondary = []
     " --------------------------------
@@ -299,9 +299,8 @@ endfunction
 function! s:vimim_finalize_session()
 " ----------------------------------
     let s:chinese_frequency = s:vimim_chinese_frequency
-    " ------------------------------
+    " ------------------------------ xxx
     if s:xingma_sleep_with_pinyin == 1
-    \|| s:pinyin_and_4corner == 1
         if s:chinese_frequency > 0
             let s:chinese_frequency = 1
         endif
@@ -313,8 +312,8 @@ function! s:vimim_finalize_session()
         let s:chinese_frequency = -1
     endif
     " ----------------------------------------
-    if empty(s:datafile_current)
-        let s:datafile_current = copy(s:datafile_primary)
+    if empty(s:datafile)
+        let s:datafile = copy(s:datafile_primary)
     endif
     " --------------------------------
     if s:datafile_primary =~# "chinese"
@@ -3282,9 +3281,9 @@ endfunction
 function! s:vimim_load_datafile(reload_flag)
 " ------------------------------------------
     if empty(s:lines) || a:reload_flag > 0
-        if len(s:datafile_current) > 0
-        \&& filereadable(s:datafile_current)
-            let s:lines = readfile(s:datafile_current)
+        if len(s:datafile) > 0
+        \&& filereadable(s:datafile)
+            let s:lines = readfile(s:datafile)
         endif
         " ----------------------------------
         if s:pinyin_and_4corner == 1
@@ -3310,8 +3309,8 @@ function! s:vimim_save_datafile(lines)
     endif
     " --------------------------------
     let s:lines = a:lines
-    if filewritable(s:datafile_current)
-        call writefile(a:lines, s:datafile_current)
+    if filewritable(s:datafile)
+        call writefile(a:lines, s:datafile)
     endif
 endfunction
 
@@ -3997,9 +3996,9 @@ function! s:vimim_toggle_wubi_pinyin()
         let s:im['wubi'][0] = 1
         let s:im['pinyin'][0] = 0
         if empty(s:lines_primary)
-            let s:datafile_current = copy(s:datafile_primary)
             let s:lines_primary = s:vimim_load_datafile(1)
         endif
+        let s:datafile = copy(s:datafile_primary)
         let s:lines = s:lines_primary
     " --------------------------------
     else
@@ -4007,9 +4006,9 @@ function! s:vimim_toggle_wubi_pinyin()
         let s:im['pinyin'][0] = 1
         let s:im['wubi'][0] = 0
         if empty(s:lines_secondary)
-            let s:datafile_current = copy(s:datafile_secondary)
             let s:lines_secondary = s:vimim_load_datafile(1)
         endif
+        let s:datafile = copy(s:datafile_secondary)
         let s:lines = s:lines_secondary
     endif
 endfunction
