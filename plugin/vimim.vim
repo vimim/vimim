@@ -4130,7 +4130,7 @@ function! s:vimim_magic_tail(keyboard)
     let magic_tail = strpart(keyboard, len(keyboard)-1)
     let magic_tail_last_but_one = strpart(keyboard,len(keyboard)-2,1)
     let magic_tail_last_but_two = strpart(keyboard,len(keyboard)-3,1)
-    if magic_tail_last_but_one ==# ',' 
+    if magic_tail_last_but_one ==# ','
     \&& magic_tail_last_but_two =~# '\l'
     \&& magic_tail =~# '\l'
         let keyboard = strpart(keyboard, 0, len(keyboard)-2)
@@ -4699,15 +4699,14 @@ function! s:vimim_initialize_vimim_txt_debug()
     else
         return
     endif
-    " ------------------------------
-    let s:vimim_my_cloud = 'C:/home/vimim/pcloud/qptest'
-    let s:vimim_my_cloud = 0
     " ------------------------------ debug
-    let s:vimim_chinese_frequency=3
-    let s:vimim_frequency_first_fix=0
+    let s:vimim_my_cloud = 0
     " ------------------------------
     let s:vimim_www_sogou=14
     let s:vimim_static_input_style=-1
+    " ------------------------------
+    let s:vimim_chinese_frequency=12
+    let s:vimim_frequency_first_fix=0
     " ------------------------------
     let s:vimim_wildcard_search=1
     let s:vimim_imode_comma=1
