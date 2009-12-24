@@ -302,7 +302,7 @@ function! s:vimim_finalize_session()
     " ------------------------------ xxx
     if s:xingma_sleep_with_pinyin == 1
         if s:chinese_frequency > 0
-            let s:chinese_frequency = 1
+"           let s:chinese_frequency = 1
         endif
     endif
     " ------------------------------
@@ -3161,10 +3161,6 @@ function! s:vimim_get_new_order_list()
         return []
     endif
     " --------------------------------
-    if first_fix_candidate ==# chinese
-        return []
-    endif
-    " --------------------------------
     let new_order_list = []
     let new_match_list = []
     for item in s:matched_list
@@ -3207,6 +3203,7 @@ endfunction
 function! s:vimim_update_frequency_in_memory()
 " --------------------------------------------
     let both_list = s:vimim_get_new_order_list()
+let g:g1=both_list
     let new_list = get(both_list,0)
     if empty(new_list)
         let s:matched_list = []
@@ -3218,21 +3215,10 @@ function! s:vimim_update_frequency_in_memory()
     if empty(lines)
         return []
     endif
-    " no update if the same old order
-    " -------------------------------
-    let keyboard = get(new_list,0)
-    let first = get(new_list,1)
-    let second = get(new_list,2)
-    let pattern = keyboard . '\s\+' . first . '\s\+' . second
-    let same_old = match(lines, pattern)
-    if same_old < 0
-        let msg = "walk through to update with new order"
-    else
-        return []
-    endif
     " (1/4) delete all but one matching lines
     " ---------------------------------------
     let match_list = get(both_list,1)
+    let keyboard = get(new_list,0)
     if empty(match_list)
         return []
     elseif len(match_list) < 2
@@ -3261,19 +3247,18 @@ function! s:vimim_update_frequency_in_memory()
     let lines[insert_index] = new_order_line
     " (4/4) update the new order in memory
     " ------------------------------------
-    let s:lines = lines
-    return ['update', 'frequency', 'on disk']
+    return lines
 endfunction
 
-" ------------------------------------------
-function! s:vimim_update_frequency_on_disk()
-" ------------------------------------------
+" -----------------------------------------------
+function! s:vimim_update_frequency_on_disk(lines)
+" -----------------------------------------------
     if s:chinese_frequency < 2
         return
     endif
     let auto_save = s:keyboard_count % s:chinese_frequency
     if empty(auto_save)
-        call s:vimim_save_datafile(s:lines)
+        call s:vimim_save_datafile(a:lines)
     endif
 endfunction
 
@@ -3303,12 +3288,20 @@ endfunction
 function! s:vimim_save_datafile(lines)
 " ------------------------------------
     if empty(a:lines)
-    \|| empty(s:lines)
     \|| s:pinyin_and_4corner == 1
         return
     endif
     " --------------------------------
     let s:lines = a:lines
+    " --------------------------------
+    if s:xingma_sleep_with_pinyin > 0
+        if empty(s:toggle_xiangma_pinyin)
+            let s:lines_primary = s:lines 
+        else
+            let s:lines_secondary = s:lines  
+        endif
+    endif
+    " --------------------------------
     if filewritable(s:datafile)
         call writefile(a:lines, s:datafile)
     endif
@@ -3995,20 +3988,20 @@ function! s:vimim_toggle_wubi_pinyin()
     if empty(s:toggle_xiangma_pinyin)
         let s:im['wubi'][0] = 1
         let s:im['pinyin'][0] = 0
+        let s:datafile = copy(s:datafile_primary)
         if empty(s:lines_primary)
             let s:lines_primary = s:vimim_load_datafile(1)
         endif
-        let s:datafile = copy(s:datafile_primary)
         let s:lines = s:lines_primary
     " --------------------------------
     else
     " --------------------------------
         let s:im['pinyin'][0] = 1
         let s:im['wubi'][0] = 0
+        let s:datafile = copy(s:datafile_secondary)
         if empty(s:lines_secondary)
             let s:lines_secondary = s:vimim_load_datafile(1)
         endif
-        let s:datafile = copy(s:datafile_secondary)
         let s:lines = s:lines_secondary
     endif
 endfunction
@@ -4896,7 +4889,7 @@ function! g:vimim_reset_after_insert()
         let lines = s:vimim_update_frequency_in_memory()
         if len(lines) > 1
             if s:chinese_frequency > 1
-                call s:vimim_update_frequency_on_disk()
+                call s:vimim_update_frequency_on_disk(lines)
             endif
         endif
     endif
