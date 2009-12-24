@@ -5106,7 +5106,7 @@ else
     " [cloud] to make private cloud out of chunmeng
     " ---------------------------------------------
     if empty(s:vimim_my_cloud)
-        let msg = "Private cloud is still a dream."
+        let msg = "Private cloud seems not perfect yet."
     else
         let results = s:vimim_get_my_cloud(keyboard)
         if s:vimimdebug > 0
@@ -5142,19 +5142,6 @@ else
         let chinese_numbers = s:vimim_imode_number(keyboard, ',')
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
-        endif
-    endif
-
-    " [modeless] english sentence input =>  i have a dream.
-    " -----------------------------------------------------
-    if empty(s:chinese_input_mode)
-        if s:sentence_with_space_input > 0
-            if keyboard =~ '\s'
-            \&& empty(s:datafile_has_period)
-            \&& len(keyboard) > 3
-                let keyboard = substitute(keyboard, '\s\+', '.', 'g')
-            endif
-            let s:sentence_with_space_input = 0
         endif
     endif
 
@@ -5259,6 +5246,19 @@ else
     " ---------------------------------------------
     if s:datafile_has_period > 0
         let keyboard = substitute(keyboard,'\.','\\.','g')
+    endif
+
+    " [modeless] english sentence input =>  i have a dream.
+    " -----------------------------------------------------
+    if empty(s:chinese_input_mode)
+        if s:sentence_with_space_input > 0
+            if keyboard =~ '\s'
+            \&& empty(s:datafile_has_period)
+            \&& len(keyboard) > 3
+                let keyboard = substitute(keyboard, '\s\+', '.', 'g')
+            endif
+            let s:sentence_with_space_input = 0
+        endif
     endif
 
     " [apostrophe] in pinyin datafile
