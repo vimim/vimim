@@ -205,7 +205,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_custom_lcursor_color")
     call add(G, "g:vimim_custom_laststatus")
-    call add(G, "g:vimim_esc_autocmd")
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_menu_label")
     call add(G, "g:vimim_p_register_for_recording")
@@ -1175,6 +1174,19 @@ function! <SID>:vimim_space_onekey()
     return s:vimim_onekey(onekey)
 endfunction
 
+" --------------------------------
+function! s:vimim_onekey_autocmd()
+" --------------------------------
+    if s:vimim_sexy_onekey > 0 && has("autocmd")
+        augroup onekey_mode_autocmd
+            autocmd!
+            if hasmapto('<Space>', 'i')
+                sil!autocmd InsertLeave * sil!call s:vimim_stop()
+            endif
+        augroup END
+    endif
+endfunction
+
 " ---------------------------------
 function! <SID>vimim_start_onekey()
 " ---------------------------------
@@ -1186,6 +1198,7 @@ function! <SID>vimim_start_onekey()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_onekey_punctuation_on()
     sil!call s:vimim_helper_mapping_on()
+    sil!call s:vimim_onekey_autocmd()
     " ----------------------------------------------------------
     inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
                          \<C-R>=g:vimim_reset_after_insert()<CR>
@@ -1262,7 +1275,9 @@ function! s:vimim_onekey(onekey)
     endif
     " ---------------------------------------------------
     if char_before !~# s:valid_key
-        call s:vimim_stop()
+        if !has("autocmd")
+            call s:vimim_stop()
+        endif
         return a:onekey
     endif
     " ---------------------------------------------------
@@ -1272,7 +1287,9 @@ function! s:vimim_onekey(onekey)
         sil!exe 'sil!return "' . space . '"'
     endif
     " ---------------------------------------------------
-    call s:vimim_stop()
+    if !has("autocmd")
+        call s:vimim_stop()
+    endif
     return a:onekey
     " ---------------------------------------------------
 endfunction
@@ -1478,15 +1495,6 @@ function! <SID>vimim_toggle()
     else
         sil!call s:vimim_stop_chinese_mode()
     endif
-    if s:vimim_esc_autocmd > 0 && has("autocmd")
-        if !exists("s:dynamic_mode_autocmd_loaded")
-            let s:dynamic_mode_autocmd_loaded = 1
-            sil!autocmd BufEnter * let &statusline=s:vimim_statusline()
-            sil!autocmd InsertEnter sil!call s:vimim_start_chinese_mode()
-            sil!autocmd InsertLeave sil!call s:vimim_stop_chinese_mode()
-            sil!autocmd BufUnload autocmd! InsertEnter,InsertLeave,BufEnter
-        endif
-    endif
     sil!return "\<C-O>:redraw\<CR>"
 endfunction
 
@@ -1496,6 +1504,7 @@ function! s:vimim_start_chinese_mode()
     sil!call s:vimim_one_key_mapping_off()
     sil!call s:vimim_start()
     sil!call s:vimim_i_chinese_mode_on()
+    sil!call s:vimim_i_chinese_mode_autocmd_on()
     " --------------------------------
     if empty(s:vimim_static_input_style)
         let msg = " ### chinese mode dynamic ### "
@@ -1678,6 +1687,17 @@ function! s:vimim_i_chinese_mode_on()
     let s:toggle_xiangma_pinyin = s:ctrl_6_count%2
     let b:keymap_name = s:vimim_statusline()
     sil!call s:vimim_i_laststatus_on()
+endfunction
+
+" -------------------------------------------
+function! s:vimim_i_chinese_mode_autocmd_on()
+" -------------------------------------------
+    if has("autocmd")
+        augroup chinese_mode_autocmd
+            autocmd!
+            autocmd BufEnter * let &statusline=s:vimim_statusline()
+        augroup END
+    endif
 endfunction
 
 " ---------------------------------
@@ -4710,7 +4730,7 @@ function! s:vimim_initialize_vimim_txt_debug()
     let s:vimim_static_input_style=-1
     " ------------------------------
     let s:vimim_chinese_frequency=14
-    let s:vimim_frequency_first_fix=1
+    let s:vimim_frequency_first_fix=0
     " ------------------------------
     let s:vimim_wildcard_search=1
     let s:vimim_imode_comma=1
@@ -4834,6 +4854,8 @@ endfunction
 " ----------------------
 function! s:vimim_stop()
 " ----------------------
+    sil!autocmd! chinese_mode_autocmd
+    sil!autocmd! onekey_mode_autocmd
     sil!call s:vimim_datafile_save_onto_disk()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_super_reset()
