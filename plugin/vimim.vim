@@ -2189,7 +2189,7 @@ function! s:vimim_initialize_e2c()
     \|| len(s:ecdict) > 1
         return ''
     endif
-    let lines = s:vimim_load_datafile(0)
+    let lines = s:vimim_reload_datafile(0)
     if empty(lines)
         return ''
     endif
@@ -2299,7 +2299,7 @@ endfunction
 " -----------------------------------------------------
 function! s:vimim_build_reverse_cache(chinese, one2one)
 " -----------------------------------------------------
-    let lines = s:vimim_load_datafile(0)
+    let lines = s:vimim_reload_datafile(0)
     if empty(lines)
         return {}
     endif
@@ -2787,7 +2787,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_datafile_range(keyboard)
 " ----------------------------------------
-    let lines = s:vimim_load_datafile(0)
+    let lines = s:vimim_reload_datafile(0)
     if empty(lines) || empty(a:keyboard)
         return []
     endif
@@ -2799,7 +2799,7 @@ function! s:vimim_datafile_range(keyboard)
         if empty(ranges)
             return
         else
-            call s:vimim_save_datafile(lines)
+            call s:vimim_save_to_disk(lines)
         endif
     endif
     let results = lines[get(ranges,0) : get(ranges,1)]
@@ -3146,7 +3146,11 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_get_new_order_list()
-" ------------------------------------
+" ------------------------------------ xxx
+    if empty(s:matched_list)
+        return []
+    endif
+    " --------------------------------
     let one_line_list = split(get(s:matched_list,0))
     let keyboard = get(one_line_list,0)
     let first_fix_candidate = get(one_line_list,1)
@@ -3158,6 +3162,12 @@ function! s:vimim_get_new_order_list()
     " --------------------------------
     let chinese = s:vimim_popup_word(s:start_column_before)
     if char2nr(chinese) < 127
+        return []
+    endif
+    " --------------------------------
+let g:ga1=first_fix_candidate
+let g:ga2=chinese
+    if first_fix_candidate ==# chinese
         return []
     endif
     " --------------------------------
@@ -3199,28 +3209,27 @@ function! s:vimim_get_new_order_list()
     return [new_order_list, new_match_list]
 endfunction
 
-" --------------------------------------------
-function! s:vimim_update_frequency_in_memory()
-" --------------------------------------------
+" ------------------------------------------------
+function! s:vimim_update_chinese_frequency_usage()
+" ------------------------------------------------
     let both_list = s:vimim_get_new_order_list()
-let g:g1=both_list
     let new_list = get(both_list,0)
     if empty(new_list)
         let s:matched_list = []
-        return []
+        return
     endif
     " update data in memory based on past usage
-    " -----------------------------------------
-    let lines = s:vimim_load_datafile(0)
+    " ----------------------------------------- xxx
+    let lines = s:vimim_reload_datafile(0)
     if empty(lines)
-        return []
+        return
     endif
     " (1/4) delete all but one matching lines
     " ---------------------------------------
     let match_list = get(both_list,1)
     let keyboard = get(new_list,0)
     if empty(match_list)
-        return []
+        return
     elseif len(match_list) < 2
         let msg = "only one matching line"
     else
@@ -3239,53 +3248,57 @@ let g:g1=both_list
     let pattern = '^' . keyboard . '\>'
     let insert_index = match(lines, pattern)
     if insert_index < 0
-        return []
+        return
     endif
     " (3/4) insert new order list by replacement
     " ------------------------------------------
     let new_order_line = join(new_list)
     let lines[insert_index] = new_order_line
-    " (4/4) update the new order in memory
-    " ------------------------------------
-    return lines
-endfunction
-
-" -----------------------------------------------
-function! s:vimim_update_frequency_on_disk(lines)
-" -----------------------------------------------
+    " (4/4) sync datafile in memory to datafile on disk
+    " -------------------------------------------------
     if s:chinese_frequency < 2
         return
     endif
-    let auto_save = s:keyboard_count % s:chinese_frequency
-    if empty(auto_save)
-        call s:vimim_save_datafile(a:lines)
-    endif
+"   let auto_save = s:keyboard_count % s:chinese_frequency
+"   if auto_save > 0
+        call s:vimim_save_to_disk(lines)
+"   endif
 endfunction
 
-" ------------------------------------------
-function! s:vimim_load_datafile(reload_flag)
-" ------------------------------------------
+" --------------------------------------------
+function! s:vimim_reload_datafile(reload_flag)
+" --------------------------------------------
     if empty(s:lines) || a:reload_flag > 0
-        if len(s:datafile) > 0
-        \&& filereadable(s:datafile)
-            let s:lines = readfile(s:datafile)
-        endif
-        " ----------------------------------
+        " ---------------------------------------------
+        let s:lines = s:vimim_load_datafile(s:datafile)
+        " ---------------------------------------------
         if s:pinyin_and_4corner == 1
-            let pinyin = s:vimim_load_pinyin_and_4corner()
-            if empty(pinyin)
+            let pinyin = s:datafile_secondary
+            let lines = s:vimim_load_datafile(pinyin)
+            if empty(lines)
                 let msg = "single digital ciku was used"
             else
-                call extend(s:lines, pinyin, 0)
+                call extend(s:lines, lines, 0)
             endif
         endif
-        " ----------------------------------
+        " ---------------------------------------------
     endif
     return s:lines
 endfunction
 
+" -----------------------------------------
+function! s:vimim_load_datafile(datafile)
+" -----------------------------------------
+    let lines = []
+    if len(a:datafile) > 0
+    \&& filereadable(a:datafile)
+        let lines = readfile(a:datafile)
+    endif
+    return lines
+endfunction
+
 " ------------------------------------
-function! s:vimim_save_datafile(lines)
+function! s:vimim_save_to_disk(lines)
 " ------------------------------------
     if empty(a:lines)
     \|| s:pinyin_and_4corner == 1
@@ -3296,9 +3309,9 @@ function! s:vimim_save_datafile(lines)
     " --------------------------------
     if s:xingma_sleep_with_pinyin > 0
         if empty(s:toggle_xiangma_pinyin)
-            let s:lines_primary = s:lines 
+            let s:lines_primary = a:lines 
         else
-            let s:lines_secondary = s:lines  
+            let s:lines_secondary = a:lines  
         endif
     endif
     " --------------------------------
@@ -3338,8 +3351,8 @@ function! <SID>vimim_save(entry)
         let line = s:vimim_i18n_write(line)
         call add(entries, line)
     endfor
-    let lines = s:vimim_insert_entry(s:vimim_load_datafile(1), entries)
-    call s:vimim_save_datafile(lines)
+    let lines = s:vimim_insert_entry(s:vimim_reload_datafile(1), entries)
+    call s:vimim_save_to_disk(lines)
 endfunction
 
 " --------------------------------------------
@@ -3497,17 +3510,6 @@ let VimIM = " ====  VimIM_4Corner    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------------
-function! s:vimim_load_pinyin_and_4corner()
-" -----------------------------------------
-    let lines = []
-    let datafile = s:datafile_secondary
-    if filereadable(datafile)
-        let lines = readfile(datafile)
-    endif
-    return lines
-endfunction
-
 " ---------------------------------------------
 function! s:vimim_4corner_whole_match(keyboard)
 " ---------------------------------------------
@@ -3526,7 +3528,7 @@ endfunction
 " --------------------------------------------
 function! s:vimim_build_4corner_cache(chinese)
 " --------------------------------------------
-    let lines = s:vimim_load_datafile(0)
+    let lines = s:vimim_reload_datafile(0)
     if empty(lines)
         return {}
     endif
@@ -3990,7 +3992,7 @@ function! s:vimim_toggle_wubi_pinyin()
         let s:im['pinyin'][0] = 0
         let s:datafile = copy(s:datafile_primary)
         if empty(s:lines_primary)
-            let s:lines_primary = s:vimim_load_datafile(1)
+            let s:lines_primary = s:vimim_reload_datafile(1)
         endif
         let s:lines = s:lines_primary
     " --------------------------------
@@ -4000,7 +4002,7 @@ function! s:vimim_toggle_wubi_pinyin()
         let s:im['wubi'][0] = 0
         let s:datafile = copy(s:datafile_secondary)
         if empty(s:lines_secondary)
-            let s:lines_secondary = s:vimim_load_datafile(1)
+            let s:lines_secondary = s:vimim_reload_datafile(1)
         endif
         let s:lines = s:lines_secondary
     endif
@@ -4290,9 +4292,13 @@ function! s:vimim_initialize_my_cloud()
     endif
 endfunction
 
+
 " --------------------------------------
 function! s:vimim_get_my_cloud(keyboard)
 " --------------------------------------
+    let cloud = "http://pim-cloud.appspot.com/qp/"
+    let cloud = "http://pim-cloud.appspot.com/sp_abc/"
+    " ----------------------------------
     if empty(s:vimim_my_cloud)
         return []
     endif
@@ -4703,11 +4709,11 @@ function! s:vimim_initialize_vimim_txt_debug()
     let s:vimim_my_cloud = 'C:/home/vimim/pcloud/qptest'
     let s:vimim_my_cloud = 0
     " ------------------------------ debug
+    let s:vimim_chinese_frequency=2
+    let s:vimim_frequency_first_fix=0
+    " ------------------------------
     let s:vimim_www_sogou=14
     let s:vimim_static_input_style=-1
-    " ------------------------------
-    let s:vimim_chinese_frequency=1
-    let s:vimim_frequency_first_fix=0
     " ------------------------------
     let s:vimim_wildcard_search=1
     let s:vimim_imode_comma=1
@@ -4886,12 +4892,7 @@ function! g:vimim_reset_after_insert()
     endif
     " --------------------------------
     if s:chinese_frequency > 0
-        let lines = s:vimim_update_frequency_in_memory()
-        if len(lines) > 1
-            if s:chinese_frequency > 1
-                call s:vimim_update_frequency_on_disk(lines)
-            endif
-        endif
+        call s:vimim_update_chinese_frequency_usage()
     endif
     " --------------------------------
     let s:matched_list = []
