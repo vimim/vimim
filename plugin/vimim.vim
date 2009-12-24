@@ -1207,14 +1207,9 @@ function! <SID>vimim_start_onekey()
     " ---------------
     " <OneKey> double play
     "   (1) after English (valid keys) => trigger omni popup
-    "   (2) after omni popup window    => disable itself
+    "   (2) after omni popup window    => same as <Space>
     " ----------------------------------------------------------
-    if pumvisible()
-        call s:vimim_stop()
-        let onekey = ""
-    else
-        let onekey = s:vimim_tab_onekey()
-    endif
+    let onekey = s:vimim_tab_onekey()
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
