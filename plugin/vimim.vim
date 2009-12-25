@@ -1276,11 +1276,11 @@ function! s:vimim_onekey(onekey)
         return a:onekey
     endif
     " ---------------------------------------------------
-    if s:smart_space < 1
+    if s:pattern_not_found < 1
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         sil!exe 'sil!return "' . space . '"'
     else
-        let s:smart_space = 0
+        let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
     if !has("autocmd") || a:onekey ==# "\t"
@@ -1575,7 +1575,11 @@ function! g:vimim_space_static()
     else
         let char_before = getline(".")[col(".")-2]
         if char_before =~# s:valid_key
-            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+            if s:pattern_not_found < 1
+                let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+            else
+                let s:pattern_not_found = 0
+            endif
         endif
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -1617,21 +1621,6 @@ function! s:vimim_dynamic_alphabet_trigger()
             \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
         endif
     endfor
-endfunction
-
-" -----------------------------------
-function! g:vimim_pattern_not_found()
-" -----------------------------------
-    let space = ''
-    if pumvisible()
-        let msg = "click twice, space is space"
-    else
-        if s:pattern_not_found > 0
-            let s:pattern_not_found = 0
-            let space = ' '
-        endif
-    endif
-    sil!exe 'sil!return "' . space . '"'
 endfunction
 
 " ======================================= }}}
@@ -2790,7 +2779,6 @@ function! s:vimim_popupmenu_list(matched_list)
         call add(popupmenu_list, complete_items)
         " -------------------------------------------------
     endfor
-    let s:pattern_not_found = 0
     return popupmenu_list
 endfunction
 
@@ -4826,7 +4814,6 @@ function! s:vimim_start_omni()
 " ----------------------------
     let s:menu_from_cloud_flag = 0
     let s:insert_without_popup = 0
-    let s:pattern_not_found = 1
 endfunction
 
 " -----------------------------
@@ -4876,7 +4863,7 @@ function! s:reset_before_anything()
     let s:no_internet_connection = 0
     let s:chinese_mode_toggle_flag = 0
     let s:pageup_pagedown = ''
-    let s:smart_space = 0
+    let s:pattern_not_found = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
@@ -5387,7 +5374,7 @@ else
     " -----------------------------------------
     if match_start < 0
         call <SID>vimim_set_seamless()
-        let s:smart_space += 1
+        let s:pattern_not_found += 1
         return []
     endif
 
