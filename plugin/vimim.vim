@@ -1344,6 +1344,7 @@ function! <SID>vimim_hjkl(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == 'e'
+            let s:smart_space = 0
             let hjkl  = '\<C-E>'
         elseif a:key == 'y'
             let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
@@ -1375,6 +1376,7 @@ function! g:vimim_d_one_key_correction()
 " --------------------------------------
     let d  = ''
     let s:matched_list = []
+    let s:smart_space = 0
     if pumvisible()
         let s:one_key_correction = 1
         let d = '\<C-E>'
