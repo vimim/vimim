@@ -4679,9 +4679,8 @@ function! s:vimim_initialize_debug()
     let datafile_backdoor = s:path . "vimim.txt"
     if filereadable(datafile_backdoor)
         let msg = "open backdoor for debugging"
-        let s:vimimdebug = 1
+        let s:vimimdebug=1
         let s:vimim_sexy_onekey=2
-        let s:vimim_tab_for_one_key = 2
         let s:datafile_primary = datafile_backdoor
     endif
 endfunction
@@ -5381,8 +5380,8 @@ function! s:vimim_define_map_keys()
     let s:global_customized = []
     " -----------------------------------
     let G = []
-    call add(G, "g:vimim_tab_for_one_key")
     call add(G, "g:vimim_sexy_onekey")
+    call add(G, "g:vimim_tab_for_one_key")
     call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimimdebug")
     call s:vimim_set_global_default(G, 0)
@@ -5398,21 +5397,22 @@ endfunction
 function! s:vimim_initialize_mapping()
 " ------------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
-    inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
     " ----------------------------------------------------------------
-    sil!call s:vimim_one_key_mapping_on()
-    " -----------------------------------------
-    sil!call s:vimim_visual_mapping_on()
-    " -----------------------------------------
     if s:vimim_sexy_onekey == 2
         imap<silent> <C-^> <Plug>VimimOneKey
         nmap<silent> <C-^> bea<C-^>
-    else |" -----------------------------------
+    endif
+    " -----------------------------------------
+    if s:vimim_sexy_onekey < 2
+        sil!call s:vimim_one_key_mapping_on()
+        inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
         imap<silent> <C-^> <Plug>VimimChineseToggle
         if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
             imap<silent> <C-Space> <Plug>VimimChineseToggle
         endif
     endif
+    " -----------------------------------------
+    sil!call s:vimim_visual_mapping_on()
     " -----------------------------------------
 endfunction
 
