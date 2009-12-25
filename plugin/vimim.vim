@@ -206,8 +206,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_custom_lcursor_color")
     call add(G, "g:vimim_custom_laststatus")
+    call add(G, "g:vimim_custom_menu_label")
     call add(G, "g:vimim_internal_code_input")
-    call add(G, "g:vimim_menu_label")
     call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_seamless_english_input")
@@ -1290,7 +1290,7 @@ endfunction
 " --------------------------
 function! s:vimim_label_on()
 " --------------------------
-    if s:vimim_menu_label < 1
+    if s:vimim_custom_menu_label < 1
         return
     endif
     for _ in range(0,9)
@@ -2738,7 +2738,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["menu"] = extra_text
         endif
         " -------------------------------------------------
-        if s:vimim_menu_label > 0
+        if s:vimim_custom_menu_label > 0
             let abbr = printf('%2s',label) . "\t" . chinese
             let complete_items["abbr"] = abbr
         endif
