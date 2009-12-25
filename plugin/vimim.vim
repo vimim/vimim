@@ -5412,14 +5412,15 @@ function! s:vimim_initialize_mapping()
     " -----------------------------------------
 endfunction
 
-" ------------------------------------
+" -----------------------------------------
 function! s:vimim_chinese_mode_mapping_on()
+" -----------------------------------------
     inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
-    imap<silent> <C-^> <Plug>VimimChineseToggle
+    imap    <silent> <C-^><Plug>VimimChineseToggle
+    " -------------------------------------
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
         imap<silent> <C-Space> <Plug>VimimChineseToggle
     endif
-" ------------------------------------
 endfunction
 
 " -----------------------------------
@@ -5442,7 +5443,7 @@ function! s:vimim_one_key_mapping_on()
     endif
     if empty(s:vimim_tab_for_one_key)
         imap<silent> <C-\> <Plug>VimimOneKey
-    else s:vimim_tab_for_one_key > 0
+    else
         imap<silent> <Tab> <Plug>VimimOneKey
         inoremap<silent> <C-\> <Tab>
     endif
@@ -5454,8 +5455,9 @@ function! s:vimim_one_key_mapping_off()
     if empty(s:vimim_one_key)
         return
     endif
-    iunmap <C-\>
-    if s:vimim_tab_for_one_key > 0
+    if empty(s:vimim_tab_for_one_key)
+        iunmap <C-\>
+    else
         iunmap <Tab>
     endif
 endfunction
