@@ -1941,8 +1941,7 @@ function! <SID>vimim_punctuations_navigation(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == ";"
-            let hjkl  = '\<C-E>\<C-X>\<C-U>\<Down>'
-            let hjkl .= '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
+            let hjkl  = '\<Down>\<C-Y>'
             let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         elseif a:key == "["
             let hjkl  = '\<C-R>=g:vimim_left_bracket()\<CR>'
