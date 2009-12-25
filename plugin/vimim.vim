@@ -1228,7 +1228,6 @@ function! s:vimim_onekey(onekey)
     "   (6) after Space                => reset
     " -----------------------------------------------
     if pumvisible()
-        let s:smart_space = 0
         let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
         sil!exe 'sil!return "' . space . '"'
     endif
@@ -1278,7 +1277,6 @@ function! s:vimim_onekey(onekey)
     endif
     " ---------------------------------------------------
     if s:smart_space < 1
-        let s:smart_space += 1
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         sil!exe 'sil!return "' . space . '"'
     else
@@ -1344,7 +1342,6 @@ function! <SID>vimim_hjkl(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == 'e'
-            let s:smart_space = 0
             let hjkl  = '\<C-E>'
         elseif a:key == 'y'
             let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
@@ -1376,7 +1373,6 @@ function! g:vimim_d_one_key_correction()
 " --------------------------------------
     let d  = ''
     let s:matched_list = []
-    let s:smart_space = 0
     if pumvisible()
         let s:one_key_correction = 1
         let d = '\<C-E>'
@@ -1824,7 +1820,6 @@ function! <SID>vimim_set_seamless()
     if s:vimim_seamless_english_input > 0
         let s:seamless_positions = getpos(".")
     endif
-    let s:smart_space = 0
     let s:keyboard_leading_zero = 0
     return ""
 endfunction
@@ -4349,8 +4344,8 @@ function! s:vimim_rot13(keyboard)
 " -------------------------------
     let rot13 = a:keyboard
     let a = "abcdefghijklm"
-    let b = "nopqrstuvwxyz"
-    let rot13 = tr(rot13, a.b, b.a)
+    let z = "nopqrstuvwxyz"
+    let rot13 = tr(rot13, a.z, z.a)
     return rot13
 endfunction
 
@@ -4881,6 +4876,7 @@ function! s:reset_before_anything()
     let s:no_internet_connection = 0
     let s:chinese_mode_toggle_flag = 0
     let s:pageup_pagedown = ''
+    let s:smart_space = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
@@ -4901,7 +4897,6 @@ function! s:reset_after_auto_insert()
     let s:one_key_correction = 0
     let s:menu_reverse = 0
     let s:smart_enter = 0
-    let s:smart_space = 0
 "---------------------------------------
 endfunction
 
