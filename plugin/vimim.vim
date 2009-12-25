@@ -196,7 +196,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_mycloud_www")
     call add(G, "g:vimim_mycloud_local")
-    call add(G, "g:vimim_sexy_onekey")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -1161,6 +1160,9 @@ call add(s:vimims, VimIM)
 function! s:vimim_tab_onekey()
 " ----------------------------
     let onekey = "\t"
+    if s:vimim_sexy_onekey == 2
+        let onekey = ""
+    endif
     return s:vimim_onekey(onekey)
 endfunction
 
@@ -4674,16 +4676,12 @@ function! s:vimim_initialize_debug()
     let s:initialization_loaded = 0
     let s:chinese_mode_toggle_flag = 0
     " ------------------------------
-    if s:vimimdebug > 1
-        let s:vimim_tab_for_one_key = 1
-        return
-    endif
-    " ------------------------------
     let datafile_backdoor = s:path . "vimim.txt"
     if filereadable(datafile_backdoor)
         let msg = "open backdoor for debugging"
         let s:vimimdebug = 1
-        let s:vimim_tab_for_one_key = 1
+        let s:vimim_sexy_onekey=2
+        let s:vimim_tab_for_one_key = 2
         let s:datafile_primary = datafile_backdoor
     endif
 endfunction
@@ -4694,7 +4692,6 @@ function! s:vimim_initialize_vimim_txt_debug()
     if s:vimimdebug == 1
         let msg = "open backdoor wider"
         let s:vimim_custom_skin=1
-        let s:vimim_sexy_onekey=1
         let s:vimim_datafile_has_english=1
         let s:vimim_datafile_has_pinyin=1
         let s:vimim_datafile_has_4corner=1
@@ -5385,6 +5382,7 @@ function! s:vimim_define_map_keys()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_tab_for_one_key")
+    call add(G, "g:vimim_sexy_onekey")
     call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimimdebug")
     call s:vimim_set_global_default(G, 0)
@@ -5406,11 +5404,16 @@ function! s:vimim_initialize_mapping()
     " -----------------------------------------
     sil!call s:vimim_visual_mapping_on()
     " -----------------------------------------
-    imap<silent> <C-^> <Plug>VimimChineseToggle
-    " -----------------------------------------
-    if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
-        imap<silent> <C-Space> <Plug>VimimChineseToggle
+    if s:vimim_sexy_onekey == 2
+        imap<silent> <C-^> <Plug>VimimOneKey
+        nmap<silent> <C-^> bea<C-^>
+    else |" -----------------------------------
+        imap<silent> <C-^> <Plug>VimimChineseToggle
+        if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
+            imap<silent> <C-Space> <Plug>VimimChineseToggle
+        endif
     endif
+    " -----------------------------------------
 endfunction
 
 " -----------------------------------
@@ -5433,7 +5436,7 @@ function! s:vimim_one_key_mapping_on()
     endif
     if empty(s:vimim_tab_for_one_key)
         imap<silent> <C-\> <Plug>VimimOneKey
-    else
+    else s:vimim_tab_for_one_key > 0
         imap<silent> <Tab> <Plug>VimimOneKey
         inoremap<silent> <C-\> <Tab>
     endif
