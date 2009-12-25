@@ -4346,6 +4346,16 @@ function! s:vimim_get_mycloud_local(keyboard)
     return menu
 endfunction
 
+" -------------------------------
+function! s:vimim_rot13(keyboard)
+" -------------------------------
+    let rot13 = a:keyboard
+    let a = "abcdefghijklm"
+    let b = "nopqrstuvwxyz"
+    let rot13 = tr(rot13, a.b, b.a)
+    return rot13
+endfunction
+
 " ======================================= }}}
 let VimIM = " ====  VimIM_DIY        ==== {{{"
 " ===========================================
