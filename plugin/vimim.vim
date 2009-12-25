@@ -210,7 +210,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_quick_key")
-    call add(G, "g:vimim_seamless_english_input")
     call add(G, "g:vimim_smart_backspace")
     call add(G, "g:vimim_wubi_non_stop")
     " -----------------------------------
@@ -1766,8 +1765,7 @@ call add(s:vimims, VimIM)
 " -----------------------------------------------
 function! s:vimim_get_seamless(current_positions)
 " -----------------------------------------------
-    if empty(s:vimim_seamless_english_input)
-    \|| empty(s:seamless_positions)
+    if empty(s:seamless_positions)
     \|| empty(a:current_positions)
         return -1
     endif
@@ -1803,9 +1801,7 @@ endfunction
 " ---------------------------------
 function! <SID>vimim_set_seamless()
 " ---------------------------------
-    if s:vimim_seamless_english_input > 0
-        let s:seamless_positions = getpos(".")
-    endif
+    let s:seamless_positions = getpos(".")
     let s:keyboard_leading_zero = 0
     return ""
 endfunction
@@ -4974,6 +4970,8 @@ if a:start
     let char_before = current_line[start_column-1]
     let char_before_before = current_line[start_column-2]
 
+    " support natural sentence input with space
+    " -----------------------------------------
     if empty(s:chinese_input_mode)
     \&& char_before ==# "."
     \&& char_before_before =~# "[0-9a-z]"
@@ -4984,13 +4982,13 @@ if a:start
         endif
     endif
 
-    if s:vimim_seamless_english_input > 0
-        let seamless_column = s:vimim_get_seamless(current_positions)
-        if seamless_column < 0
-            let msg = "no need to set seamless"
-        else
-            return seamless_column
-        endif
+    " take care of seamless english/chinese input
+    " -------------------------------------------
+    let seamless_column = s:vimim_get_seamless(current_positions)
+    if seamless_column < 0
+        let msg = "no need to set seamless"
+    else
+        return seamless_column
     endif
 
     let last_seen_nonsense_column = start_column
