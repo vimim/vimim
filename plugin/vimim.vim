@@ -1231,8 +1231,8 @@ function! s:vimim_onekey(onekey)
         let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
         sil!exe 'sil!return "' . space . '"'
     endif
-    if s:insert_without_popup_flag > 0
-        let s:insert_without_popup_flag = 0
+    if s:insert_without_popup > 0
+        let s:insert_without_popup = 0
         let space = ""
     endif
     " ---------------------------------------------------
@@ -1273,21 +1273,17 @@ function! s:vimim_onekey(onekey)
         if !has("autocmd") || a:onekey ==# "\t"
             call s:vimim_stop()
         endif
-        return a:onekey
-    endif
-    " ---------------------------------------------------
-    if s:smart_space < 1
-        let s:smart_space += 1
-        let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        sil!exe 'sil!return "' . space . '"'
+        let space = a:onekey
     else
-        let s:smart_space = 0
+        if s:smart_space < 1
+            let s:smart_space += 1
+            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        else
+            let s:smart_space = 0
+        endif
     endif
     " ---------------------------------------------------
-    if !has("autocmd") || a:onekey ==# "\t"
-        call s:vimim_stop()
-    endif
-    return a:onekey
+    sil!exe 'sil!return "' . space . '"'
     " ---------------------------------------------------
 endfunction
 
@@ -2082,7 +2078,7 @@ function! s:vimim_date_time(keyboard)
     let keyboards = split(time, '\ze')
     let time = s:vimim_get_chinese_number(keyboards, 'i')
     if len(time) > 0
-        let s:insert_without_popup_flag = 1
+        let s:insert_without_popup = 1
     endif
     return [time]
 endfunction
@@ -2135,7 +2131,7 @@ function! s:vimim_imode_number(keyboard, prefix)
         endif
     endif
     if len(numbers) == 1
-        let s:insert_without_popup_flag = 1
+        let s:insert_without_popup = 1
     endif
     if len(numbers) > 0
         call map(numbers, 'a:keyboard ." ". v:val')
@@ -3119,8 +3115,8 @@ function! g:vimim_menu_select()
     if pumvisible()
         let select_not_insert = '\<C-P>\<Down>'
         if s:vimim_insert_without_popup > 0
-        \&& s:insert_without_popup_flag > 0
-            let s:insert_without_popup_flag = 0
+        \&& s:insert_without_popup > 0
+            let s:insert_without_popup = 0
             let select_not_insert = '\<C-Y>'
         endif
     endif
@@ -4827,7 +4823,7 @@ endfunction
 function! s:vimim_start_omni()
 " ----------------------------
     let s:menu_from_cloud_flag = 0
-    let s:insert_without_popup_flag = 0
+    let s:insert_without_popup = 0
     let s:pattern_not_found = 1
 endfunction
 
