@@ -208,7 +208,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_laststatus")
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_menu_label")
-    call add(G, "g:vimim_p_register_for_recording")
     call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_seamless_english_input")
@@ -288,10 +287,12 @@ function! s:vimim_initialize_session()
     let s:keyboard_count = 0
     let s:ctrl_6_count = 1
     " --------------------------------
-    let s:lines = []
     let s:datafile = 0
+    let s:lines = []
     let s:lines_primary = []
     let s:lines_secondary = []
+    " --------------------------------
+    let g:vimim = ""
     " --------------------------------
 endfunction
 
@@ -342,10 +343,6 @@ function! s:vimim_finalize_session()
     " ------------------------------
     if empty(get(s:im['wubi'],0))
         let s:vimim_wubi_non_stop = 0
-    endif
-    " ------------------------------
-    if s:vimim_p_register_for_recording > 0
-        let @p = @_
     endif
     " ------------------------------
     if s:vimimdebug > 0
@@ -3208,7 +3205,7 @@ function! s:vimim_update_chinese_frequency_usage()
         return
     endif
     " update data in memory based on past usage
-    " (1/4) locate new order line based on user input
+    " (1/5) locate new order line based on user input
     " -----------------------------------------------
     let match_list = get(both_list,1)
     if empty(match_list) || empty(s:lines)
@@ -3220,7 +3217,7 @@ function! s:vimim_update_chinese_frequency_usage()
     if insert_index < 0
         return
     endif
-    " (2/4) delete all but one matching lines
+    " (2/5) delete all but one matching lines
     " ---------------------------------------
     if len(match_list) < 2
         let msg = "only one matching line"
@@ -3235,11 +3232,14 @@ function! s:vimim_update_chinese_frequency_usage()
             endif
         endfor
     endif
-    " (3/4) insert new order list by replacement
+    " (3/5) insert new order list by replacement
     " ------------------------------------------
     let new_order_line = join(new_list)
     let s:lines[insert_index] = new_order_line
-    " (4/4) sync datafile in memory to datafile on disk
+    " (4/5) [record] keep track of all valid inputs
+    " ---------------------------------------------
+    let g:vimim .=  keyboard . "."
+    " (5/5) sync datafile in memory to datafile on disk
     " -------------------------------------------------
     if s:chinese_frequency < 2
         return
@@ -3432,7 +3432,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_datafile_privates()
 " ----------------------------------------------
     let s:privates_datafile = 0
-    let s:lines_privates_datafile = []
+    let s:lines_privates = []
     let s:private_matches = []
     if s:vimimdebug > 1
         let msg = "hide privacy during debug"
@@ -3481,13 +3481,13 @@ function! s:vimim_load_privates(reload_flag)
     if empty(s:privates_flag)
         return []
     endif
-    if empty(s:lines_privates_datafile) || a:reload_flag > 0
+    if empty(s:lines_privates) || a:reload_flag > 0
         let datafile = s:privates_datafile
         if filereadable(datafile)
-            let s:lines_privates_datafile = readfile(datafile)
+            let s:lines_privates = readfile(datafile)
         endif
     endif
-    return s:lines_privates_datafile
+    return s:lines_privates
 endfunction
 
 " ======================================= }}}
@@ -4288,14 +4288,14 @@ function! s:vimim_get_mycloud_local(keyboard)
 " -------------------------------------------
     let cloud = "http://pim-cloud.appspot.com/qp/"
     let cloud = "http://pim-cloud.appspot.com/sp_abc/"
-    " ----------------------------------
+    " ---------------------------------------
     if empty(s:vimim_mycloud_local)
         return []
     endif
     let cloud = 'python ' .  svimim_mycloud_local:
     let input = a:keyboard
     let output = 0
-    " ----------------------------------
+    " ---------------------------------------
     try
         let output = system(cloud . ' ' . input)
     catch /.*/
@@ -4304,7 +4304,7 @@ function! s:vimim_get_mycloud_local(keyboard)
     if empty(output)
         return []
     endif
-    " ----------------------------------------
+    " ---------------------------------------
     if empty(s:localization)
         let msg = "both vim and datafile are UTF-8 encoding"
     else
@@ -4330,8 +4330,8 @@ endfunction
 function! s:vimim_rot13(keyboard)
 " -------------------------------
     let rot13 = a:keyboard
-    let a = "abcdefghijklm"
-    let z = "nopqrstuvwxyz"
+    let a = "12345abcdefghijklmABCDEFGHIJKLM"
+    let z = "98760nopqrstuvwxyzNOPQRSTUVWXYZ"
     let rot13 = tr(rot13, a.z, z.a)
     return rot13
 endfunction
@@ -5267,12 +5267,6 @@ else
             let msg = "enjoy.1010.2523.4498.7429.girl"
             let keyboard = get(keyboards, 0)
         endif
-    endif
-
-    " [record] keep track of what we type
-    " -----------------------------------
-    if s:vimim_p_register_for_recording > 0
-        let @P = keyboard . "."
     endif
 
     " now it is time to do regular expression matching
