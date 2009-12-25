@@ -155,8 +155,8 @@ function! s:vimim_initialization_once()
     " -----------------------------------------
     call s:vimim_initialize_datafile_privates()
     " -----------------------------------------
-    call s:vimim_initialize_www_sogou()
-    call s:vimim_initialize_my_cloud()
+    call s:vimim_initialize_cloud()
+    call s:vimim_initialize_mycloud_local()
     " -----------------------------------------
     call s:vimim_finalize_session()
     " -----------------------------------------
@@ -194,7 +194,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_www_sogou")
-    call add(G, "g:vimim_my_cloud")
+    call add(G, "g:vimim_mycloud_www")
+    call add(G, "g:vimim_mycloud_local")
     call add(G, "g:vimim_sexy_onekey")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
@@ -1273,17 +1274,21 @@ function! s:vimim_onekey(onekey)
         if !has("autocmd") || a:onekey ==# "\t"
             call s:vimim_stop()
         endif
-        let space = a:onekey
-    else
-        if s:smart_space < 1
-            let s:smart_space += 1
-            let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        else
-            let s:smart_space = 0
-        endif
+        return a:onekey
     endif
     " ---------------------------------------------------
-    sil!exe 'sil!return "' . space . '"'
+    if s:smart_space < 1
+        let s:smart_space += 1
+        let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        sil!exe 'sil!return "' . space . '"'
+    else
+        let s:smart_space = 0
+    endif
+    " ---------------------------------------------------
+    if !has("autocmd") || a:onekey ==# "\t"
+        call s:vimim_stop()
+    endif
+    return a:onekey
     " ---------------------------------------------------
 endfunction
 
@@ -1764,7 +1769,7 @@ function! s:vimim_statusline()
         let im = get(s:im['cloud'],1)
     endif
   " --------------------------
-    if len(s:vimim_my_cloud) > 1
+    if len(s:vimim_mycloud_local) > 1
         let im = get(s:im['mycloud'],1)
     endif
   " --------------------------
@@ -4089,9 +4094,9 @@ function! s:vimim_plug_n_play_www_sogou()
     endif
 endfunction
 
-" --------------------------------------
-function! s:vimim_initialize_www_sogou()
-" --------------------------------------
+" ----------------------------------
+function! s:vimim_initialize_cloud()
+" ----------------------------------
     call s:vimim_plug_n_play_www_sogou()
     if !exists('*system')
         return
@@ -4117,16 +4122,10 @@ function! s:vimim_initialize_www_sogou()
             let s:www_executable = "curl -s "
         endif
     endif
-    " step 3: test if native Windows dll can be used
-    " ----------------------------------------------
-    if has("win32")
-        let wget = "rundll32.exe url.dll,FileProtocolHandler "
-        let www_executable = wget
-        let vimim_www_sogou = 1
-    endif
     " -------------------------------------
     if empty(s:www_executable)
         let s:vimim_www_sogou = 0
+        let s:vimim_mycloud_www = 0
     endif
 endfunction
 
@@ -4281,39 +4280,39 @@ let VimIM = " ====  VimIM_My_Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -------------------------------------
-function! s:vimim_initialize_my_cloud()
-" -------------------------------------
+" ------------------------------------------
+function! s:vimim_initialize_mycloud_local()
+" ------------------------------------------
     if executable('python')
         let msg = 'python is free to use'
     else
         return
     endif
     " ---------------------------------
-    let cloud = s:vimim_my_cloud
+    let cloud = svimim_mycloud_local:
     if !empty(cloud) && filereadable(cloud)
         let msg = 'my cloud seems ready"
         return
     else
-        let s:vimim_my_cloud = 0
+        let s:vimim_mycloud_local = 0
     endif
     " ---------------------------------
     let cloud = s:path . 'pcloud/qptest'
     if filereadable(cloud)
-        let s:vimim_my_cloud = cloud
+        let s:vimim_mycloud_local = cloud
     endif
 endfunction
 
-" --------------------------------------
-function! s:vimim_get_my_cloud(keyboard)
-" --------------------------------------
+" ------------------------------------------- xxx
+function! s:vimim_get_mycloud_local(keyboard)
+" -------------------------------------------
     let cloud = "http://pim-cloud.appspot.com/qp/"
     let cloud = "http://pim-cloud.appspot.com/sp_abc/"
     " ----------------------------------
-    if empty(s:vimim_my_cloud)
+    if empty(s:vimim_mycloud_local)
         return []
     endif
-    let cloud = 'python ' .  s:vimim_my_cloud
+    let cloud = 'python ' .  svimim_mycloud_local:
     let input = a:keyboard
     let output = 0
     " ----------------------------------
@@ -4717,7 +4716,7 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_my_cloud = 0
+    let s:vimim_mycloud_local = 0
     " ------------------------------
     let s:vimim_www_sogou=14
     let s:vimim_static_input_style=-1
@@ -5099,18 +5098,14 @@ else
         endif
     endif
 
-    " [cloud] to make private cloud out of chunmeng
-    " ---------------------------------------------
-    if empty(s:vimim_my_cloud)
-        let msg = "Private cloud seems not perfect yet."
+    " [mycloud] get chunmeng from local mycloud
+    " -----------------------------------------
+    if empty(s:vimim_mycloud_local)
+        let msg = "keep local mycloud code for the future."
     else
-        let results = s:vimim_get_my_cloud(keyboard)
-        if s:vimimdebug > 0
-            call s:debugs('my_cloud_stone', keyboard)
-            call s:debugs('my_cloud_gold', s:debug_list(results))
-        endif
+        let results = s:vimim_get_mycloud_local(keyboard)
         if empty(len(results))
-            let s:vimim_my_cloud = 0
+            let s:vimim_mycloud_local = 0
         else
             return s:vimim_popupmenu_list(results)
         endif
@@ -5161,6 +5156,19 @@ else
     " [shuangpin] support 5 major shuangpin with various rules
     " ----------------------------------------------------
     let keyboard = s:vimim_get_quanpin_from_shuangpin(keyboard)
+
+    " [mycloud] get chunmeng from www mycloud
+    " ---------------------------------------
+    if empty(s:vimim_mycloud_www)
+        let msg = "keep www mycloud code for the future."
+    else
+        let results = s:vimim_get_mycloud_local(keyboard)
+        if empty(len(results))
+            let s:vimim_mycloud_www = 0
+        else
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
 
     " [cloud] to make cloud come true for woyouyigemeng
     " -------------------------------------------------
