@@ -5399,21 +5399,27 @@ function! s:vimim_initialize_mapping()
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
     " ----------------------------------------------------------------
     if s:vimim_sexy_onekey == 2
-        imap<silent> <C-^> <Plug>VimimOneKey
-        nmap<silent> <C-^> bea<C-^>
+        imap<silent><C-^> <Plug>VimimOneKey
+        nmap<silent><C-^> bea<C-^>
+        xmap<silent><C-^> y:'>put=<SID>vimim_vCTRL6(@0)<CR>
     endif
     " -----------------------------------------
     if s:vimim_sexy_onekey < 2
         sil!call s:vimim_one_key_mapping_on()
-        inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
-        imap<silent> <C-^> <Plug>VimimChineseToggle
-        if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
-            imap<silent> <C-Space> <Plug>VimimChineseToggle
-        endif
+        sil!call s:vimim_visual_mapping_on()
+        sil!call s:vimim_chinese_mode_mapping_on()
     endif
     " -----------------------------------------
-    sil!call s:vimim_visual_mapping_on()
-    " -----------------------------------------
+endfunction
+
+" ------------------------------------
+function! s:vimim_chinese_mode_mapping_on()
+    inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
+    imap<silent> <C-^> <Plug>VimimChineseToggle
+    if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
+        imap<silent> <C-Space> <Plug>VimimChineseToggle
+    endif
+" ------------------------------------
 endfunction
 
 " -----------------------------------
