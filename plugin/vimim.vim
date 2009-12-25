@@ -1331,8 +1331,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_hjkl_navigation_on()
 " ------------------------------------
-    " hjkl navigation for onekey, always
-    let hjkl_list = split('hjklcpedxy', '\zs')
+    let hjkl_list = split('hjklcpedy', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap<silent><expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
@@ -1346,9 +1345,6 @@ function! <SID>vimim_hjkl(key)
     if pumvisible()
         if a:key == 'e'
             let hjkl  = '\<C-E>'
-        elseif a:key == 'x'
-            let hjkl  = '\<C-E>'
-            let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         elseif a:key == 'y'
             let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
         elseif a:key == 'h'
