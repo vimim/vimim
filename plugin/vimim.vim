@@ -168,21 +168,28 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
+    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
-    call add(G, "g:vimim_datafile_private")
     call add(G, "g:vimim_datafile_4corner")
-    call add(G, "g:vimim_datafile_has_apostrophe")
-    call add(G, "g:vimim_datafile_has_pinyin")
     call add(G, "g:vimim_datafile_has_4corner")
+    call add(G, "g:vimim_datafile_has_apostrophe")
     call add(G, "g:vimim_datafile_has_english")
+    call add(G, "g:vimim_datafile_has_pinyin")
     call add(G, "g:vimim_datafile_is_not_utf8")
+    call add(G, "g:vimim_datafile_private")
     call add(G, "g:vimim_english_punctuation")
-    call add(G, "g:vimim_imode_pinyin")
+    call add(G, "g:vimim_frequency_first_fix")
+    call add(G, "g:vimim_fuzzy_search")
     call add(G, "g:vimim_imode_comma")
+    call add(G, "g:vimim_imode_pinyin")
+    call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_latex_suite")
+    call add(G, "g:vimim_mycloud_local")
+    call add(G, "g:vimim_mycloud_www")
     call add(G, "g:vimim_reverse_pageup_pagedown")
     call add(G, "g:vimim_sexy_input_style")
+    call add(G, "g:vimim_sexy_onekey")
     call add(G, "g:vimim_shuangpin_abc")
     call add(G, "g:vimim_shuangpin_microsoft")
     call add(G, "g:vimim_shuangpin_nature")
@@ -190,35 +197,28 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_purple")
     call add(G, "g:vimim_smart_ctrl_h")
     call add(G, "g:vimim_static_input_style")
-    call add(G, "g:vimim_unicode_lookup")
-    call add(G, "g:vimim_fuzzy_search")
-    call add(G, "g:vimim_frequency_first_fix")
-    call add(G, "g:vimim_wildcard_search")
-    call add(G, "g:vimim_insert_without_popup")
-    call add(G, "g:vimim_www_sogou")
-    call add(G, "g:vimim_mycloud_www")
-    call add(G, "g:vimim_mycloud_local")
-    call add(G, "g:vimim_sexy_onekey")
     call add(G, "g:vimim_tab_for_one_key")
-    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
+    call add(G, "g:vimim_unicode_lookup")
+    call add(G, "g:vimim_wildcard_search")
+    call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_auto_copy_clipboard")
-    call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_chinese_frequency")
-    call add(G, "g:vimim_custom_lcursor_color")
+    call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_laststatus")
+    call add(G, "g:vimim_custom_lcursor_color")
     call add(G, "g:vimim_custom_menu_label")
     call add(G, "g:vimim_internal_code_input")
+    call add(G, "g:vimim_one_key")
     call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_quick_key")
+    call add(G, "g:vimim_save_new_entry")
     call add(G, "g:vimim_smart_backspace")
     call add(G, "g:vimim_wubi_non_stop")
-    call add(G, "g:vimim_one_key")
-    call add(G, "g:vimim_save_new_entry")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -758,6 +758,9 @@ function! s:vimim_egg_vimim()
         let option = 'i_CTRL-^　经典动态'
     else
         let option = 'i_CTRL-^　经典静态'
+    endif
+    if s:vimim_sexy_onekey == 2
+        let option = 'i_CTRL-^　点石成金'
     endif
     let option = "mode\t 风格：" . option
     call add(eggs, option)
@@ -4713,7 +4716,6 @@ function! s:vimim_initialize_vimim_txt_debug()
     let s:vimim_mycloud_local = 0
     " ------------------------------
     let s:vimim_www_sogou=14
-    let s:vimim_static_input_style=-1
     " ------------------------------
     let s:vimim_chinese_frequency=14
     let s:vimim_frequency_first_fix=0
