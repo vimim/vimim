@@ -4315,7 +4315,7 @@ function! s:vimim_get_mycloud_www(keyboard)
     let cloud = "http://pim-cloud.appspot.com/qp/"
     let input = keyboard
     if s:vimim_mycloud_rot13 > 0
-        let input = s:vimim_rot13(keyboard)
+        let input = s:vimim_rot13(input)
     endif
     let input = cloud . input
     let output = 0
