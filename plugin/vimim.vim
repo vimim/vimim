@@ -433,6 +433,11 @@ function! s:vimim_dictionary_im()
     let keycode = "[a-z,.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------
+    let key = 'zhengma'
+    let im = '郑码'
+    let keycode = "[a-z,.]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------
     let key = 'erbi'
     let im = '二笔'
     let keycode = "[a-z'.,;/]"
@@ -446,11 +451,6 @@ function! s:vimim_dictionary_im()
     let key = 'nature'
     let im = '自然'
     let keycode = "[a-z',.]"
-    let s:im[key]=[loaded, im, keycode]
-" -------------------------------
-    let key = 'zhengma'
-    let im = '郑码'
-    let keycode = "[a-z,.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------
     let key = 'quick'
@@ -496,6 +496,11 @@ function! s:vimim_scan_plugin_to_invoke_im()
     let input_methods = []
     " ----------------------------------------
     let key = 'cangjie'
+    if empty(get(s:im[key],0))
+        call add(input_methods, key)
+    endif
+    " ----------------------------------------
+    let key = 'zhengma'
     if empty(get(s:im[key],0))
         call add(input_methods, key)
     endif
@@ -584,6 +589,7 @@ function! s:vimim_scan_plugin_for_more_im()
     " -------------------------------------
     let im = 0
     if get(s:im['cangjie'],0) > 0
+    \|| get(s:im['zhengma'],0) > 0
     \|| get(s:im['erbi'],0) > 0
     \|| get(s:im['wubi'],0) > 0
     \|| get(s:im['4corner'],0) > 0
