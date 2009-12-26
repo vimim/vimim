@@ -129,7 +129,6 @@ function! s:vimim_initialization_once()
         return
     endif
     " -----------------------------------------
-    call s:vimim_initialize_global()
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
     " -----------------------------------------
@@ -165,7 +164,10 @@ endfunction
 " -----------------------------------
 function! s:vimim_initialize_global()
 " -----------------------------------
-    let   G = []
+    let s:global_defaults = []
+    let s:global_customized = []
+    " -------------------------------
+    let G = []
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_private")
@@ -196,6 +198,10 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_www_sogou")
     call add(G, "g:vimim_mycloud_www")
     call add(G, "g:vimim_mycloud_local")
+    call add(G, "g:vimim_sexy_onekey")
+    call add(G, "g:vimim_tab_for_one_key")
+    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
+    call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -211,6 +217,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_smart_backspace")
     call add(G, "g:vimim_wubi_non_stop")
+    call add(G, "g:vimim_one_key")
+    call add(G, "g:vimim_save_new_entry")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -4267,7 +4275,7 @@ function! s:vimim_initialize_mycloud_local()
         return
     endif
     " ---------------------------------
-    let cloud = svimim_mycloud_local:
+    let cloud = s:vimim_mycloud_local
     if !empty(cloud) && filereadable(cloud)
         let msg = 'my cloud seems ready"
         return
@@ -4290,7 +4298,7 @@ function! s:vimim_get_mycloud_local(keyboard)
     if empty(s:vimim_mycloud_local)
         return []
     endif
-    let cloud = 'python ' .  svimim_mycloud_local:
+    let cloud = 'python ' .  s:vimim_mycloud_local
     let input = a:keyboard
     let output = 0
     " ---------------------------------------
@@ -4483,7 +4491,7 @@ endfunction
 
 " ------------------------------------
 function! <SID>vimim_vCTRL6(chinglish)
-" ------------------------------------
+" ------------------------------------ xxx
     call s:vimim_initialization_once()
     " --------------------------------
     if empty(a:chinglish)
@@ -4675,7 +4683,12 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
+    let s:datafile_primary = 0
+    let s:datafile_secondary = 0
+    let s:initialization_loaded = 0
+    let s:chinese_mode_toggle_flag = 0
     let datafile_backdoor = s:path . "vimim.txt"
+    " ------------------------------
     if filereadable(datafile_backdoor)
         let msg = "open backdoor for debugging"
         let s:vimimdebug=1
@@ -5372,39 +5385,15 @@ let VimIM = " ====  Core_Drive       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------
-function! s:vimim_define_map_keys()
-" ---------------------------------
-    let s:global_defaults = []
-    let s:global_customized = []
-    " -----------------------------------
-    let G = []
-    call add(G, "g:vimim_sexy_onekey")
-    call add(G, "g:vimim_tab_for_one_key")
-    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
-    call add(G, "g:vimimdebug")
-    call s:vimim_set_global_default(G, 0)
-    " -----------------------------------
-    let G = []
-    call add(G, "g:vimim_one_key")
-    call add(G, "g:vimim_save_new_entry")
-    call s:vimim_set_global_default(G, 1)
-    " -----------------------------------
-endfunction
-
 " ------------------------------------
 function! s:vimim_initialize_mapping()
 " ------------------------------------
-    let s:datafile_primary = 0
-    let s:datafile_secondary = 0
-    let s:initialization_loaded = 0
-    let s:chinese_mode_toggle_flag = 0
-    " ------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
     " ---------------------------------------------------------------
     if s:vimim_sexy_onekey == 2
         imap<silent><C-^> <Plug>VimimOneKey
         nmap<silent><C-^> bea<C-^>
+        xmap<silent><C-^> y:call  <SID>vimim_vCTRL6(@0)<CR>
         xmap<silent><C-^> y:'>put=<SID>vimim_vCTRL6(@0)<CR>
     endif
     " -----------------------------------------
@@ -5465,7 +5454,7 @@ function! s:vimim_one_key_mapping_off()
     endif
 endfunction
 
-silent!call s:vimim_define_map_keys()
+silent!call s:vimim_initialize_global()
 silent!call s:vimim_initialize_debug()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
