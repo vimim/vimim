@@ -352,6 +352,10 @@ function! s:vimim_finalize_session()
         let s:vimim_wubi_non_stop = 0
     endif
     " ------------------------------
+    if s:vimim_ctrl_6_as_onekey > 0
+        let s:vimim_sexy_onekey = 1
+    endif
+    " ------------------------------
     if s:vimimdebug > 0
         call s:debugs('im_1st', s:im_primary)
         call s:debugs('im_2nd', s:im_secondary)
@@ -4715,7 +4719,6 @@ function! s:vimim_initialize_debug()
     if filereadable(datafile_backdoor)
         let msg = "open backdoor for debugging"
         let s:vimimdebug=1
-        let s:vimim_sexy_onekey=1
         let s:vimim_ctrl_6_as_onekey=2
         let s:datafile_primary = datafile_backdoor
     endif
@@ -4733,7 +4736,7 @@ function! s:vimim_initialize_vimim_txt_debug()
     else
         return
     endif
-    " ------------------------------ ebug
+    " ------------------------------ debug
     let s:vimim_mycloud_local = 0
     " ------------------------------
     let s:vimim_www_sogou=14
