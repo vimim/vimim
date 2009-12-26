@@ -4280,36 +4280,37 @@ call add(s:vimims, VimIM)
 " ------------------------------------------
 function! s:vimim_initialize_mycloud_local()
 " ------------------------------------------
+    if empty(s:vimim_mycloud_local)
+        return []
+    endif
+    " ---------------------------------
     if executable('python')
         let msg = 'python is free to use'
     else
         return
     endif
     " ---------------------------------
-    let cloud = s:vimim_mycloud_local
-    if !empty(cloud) && filereadable(cloud)
+    if filereadable(s:vimim_mycloud_local)
         let msg = 'my cloud seems ready"
         return
-    else
-        let s:vimim_mycloud_local = 0
     endif
     " ---------------------------------
+    let path = 'C:/home/vimim/'
     let cloud = s:path . 'pcloud/qptest'
     if filereadable(cloud)
         let s:vimim_mycloud_local = cloud
+    else
+        let s:vimim_mycloud_local = 0
     endif
 endfunction
 
-" ------------------------------------------- xxx
-function! s:vimim_get_mycloud_local(keyboard)
 " -------------------------------------------
-    let cloud = "http://pim-cloud.appspot.com/qp/"
-    let cloud = "http://pim-cloud.appspot.com/sp_abc/"
-    " ---------------------------------------
+function! s:vimim_get_mycloud_local(keyboard)
+" ------------------------------------------- xxx
     if empty(s:vimim_mycloud_local)
         return []
     endif
-    let cloud = 'python ' .  s:vimim_mycloud_local
+    let cloud = 'python ' . s:vimim_mycloud_local
     let input = a:keyboard
     let output = 0
     " ---------------------------------------
