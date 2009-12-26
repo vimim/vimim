@@ -27,6 +27,7 @@ let VimIM = " ====  Introduction     ==== {{{"
 "  Features: * "Plug & Play"
 "            * "Plug & Play": "Cloud Input at will" for all
 "            * "Plug & Play": "Cloud Input" with five Shuangpin
+"            * "Plug & Play": "Cloud" from Sogou or from MyCloud
 "            * "Plug & Play": "Wubi and Pinyin" dynamic switch
 "            * "Plug & Play": "Pinyin and 4Corner" in harmony
 "            * Support direct "UNICODE input" using integer or hex
@@ -3234,7 +3235,7 @@ function! s:vimim_update_chinese_frequency_usage()
     " ------------------------------------------
     let new_order_line = join(new_list)
     let s:lines[insert_index] = new_order_line
-    " (5/4) sync datafile in memory to datafile on disk
+    " (4/4) sync datafile in memory to datafile on disk
     " -------------------------------------------------
     if s:chinese_frequency < 2
         return
