@@ -480,6 +480,16 @@ let VimIM = " ====  Customization    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" -----------------------------------------
+function! s:vimim_add_im_if_empty(ims, key)
+" -----------------------------------------
+    let input_methods = a:ims
+    let key = a:key
+    if empty(get(s:im[key],0))
+        call add(input_methods, key)
+    endif
+endfunction
+
 " ------------------------------------------
 function! s:vimim_scan_plugin_to_invoke_im()
 " ------------------------------------------
@@ -495,20 +505,12 @@ function! s:vimim_scan_plugin_to_invoke_im()
     " ----------------------------------------
     let input_methods = []
     " ----------------------------------------
-    let key = 'cangjie'
-    if empty(get(s:im[key],0))
-        call add(input_methods, key)
-    endif
-    " ----------------------------------------
-    let key = 'zhengma'
-    if empty(get(s:im[key],0))
-        call add(input_methods, key)
-    endif
-    " ----------------------------------------
-    let key = 'erbi'
-    if empty(get(s:im[key],0))
-        call add(input_methods, key)
-    endif
+    call s:vimim_add_im_if_empty(input_methods, 'cangjie')
+    call s:vimim_add_im_if_empty(input_methods, 'zhengma')
+    call s:vimim_add_im_if_empty(input_methods, 'quick')
+    call s:vimim_add_im_if_empty(input_methods, 'array30')
+    call s:vimim_add_im_if_empty(input_methods, 'xinhua')
+    call s:vimim_add_im_if_empty(input_methods, 'erbi')
     " ----------------------------------------
     if empty(get(s:im['wubi'],0))
         call add(input_methods, "wubi")
@@ -531,13 +533,9 @@ function! s:vimim_scan_plugin_to_invoke_im()
     endif
     " ----------------------------------------
     call add(input_methods, "phonetic")
-    call add(input_methods, "array30")
-    call add(input_methods, "nature")
-    call add(input_methods, "zhengma")
-    call add(input_methods, "xinhua")
-    call add(input_methods, "quick")
     call add(input_methods, "wu")
     call add(input_methods, "yong")
+    call add(input_methods, "nature")
     call add(input_methods, "hangul")
     call add(input_methods, "cns11643")
     call add(input_methods, "ctc")
@@ -590,7 +588,10 @@ function! s:vimim_scan_plugin_for_more_im()
     let im = 0
     if get(s:im['cangjie'],0) > 0
     \|| get(s:im['zhengma'],0) > 0
+    \|| get(s:im['quick'],0) > 0
+    \|| get(s:im['array30'],0) > 0
     \|| get(s:im['erbi'],0) > 0
+    \|| get(s:im['xinhua'],0) > 0
     \|| get(s:im['wubi'],0) > 0
     \|| get(s:im['4corner'],0) > 0
         let msg = "plug and play <=> xingma and pinyin"
