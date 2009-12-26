@@ -2700,8 +2700,13 @@ function! s:vimim_popupmenu_list(matched_list)
     let label = 1
     let matched_list = s:vimim_pageup_pagedown(matched_list)
     let popupmenu_list = []
-    let keyboard = s:keyboard_leading_zero
     let first_candidate = get(split(get(matched_list,0)),0)
+    let keyboard = s:keyboard_leading_zero
+    let matched = match(keyboard, first_candidate)
+    if matched > 0
+        let msg = "............zuorichongxian"
+        let keyboard = strpart(keyboard, matched)
+    endif
     " ----------------------
     for pair in matched_list
     " ----------------------
@@ -2738,21 +2743,17 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         " -------------------------------------------------
         let tail = ''
-        let tail_default = strpart(keyboard, len(menu))
-        if empty(s:menu_from_cloud_flag)
-            let tail_default = strpart(keyboard, len(first_candidate))
-        endif
-        " -------------------------------------------------
-        if keyboard =~ '[.]'
-            let dot = stridx(keyboard, '.')
-            let tail = strpart(keyboard, dot+1)
-        " -------------------------------------------------
-        else
-            let tail = tail_default
-        endif
-        " -------------------------------------------------
         if keyboard =~? 'vim'
             let tail = ''
+        elseif keyboard =~ '[.]'
+            let dot = match(keyboard, '[.]')
+            let tail = strpart(keyboard, dot+1)
+        else
+            let candidate = menu
+            if empty(s:menu_from_cloud_flag)
+                let candidate = first_candidate
+            endif
+            let tail = strpart(keyboard, len(candidate))
         endif
         " -------------------------------------------------
         if tail =~ '\w'
@@ -4172,10 +4173,17 @@ function! s:vimim_to_cloud_or_not(keyboard, cloud)
     elseif s:no_internet_connection < 0
         return 1
     endif
-    if empty(s:chinese_input_mode) && a:keyboard =~ '[.]'
+    " --------------------------------------------
+    let keyboard = a:keyboard
+    if empty(s:chinese_input_mode) && keyboard =~ '[.]'
         return 0
     endif
-    let cloud_length = len(a:keyboard)
+    if keyboard =~# "[^a-z']"
+        let msg = "cloud limits to valid cloud keycodes only"
+        return 0
+    endif
+    " --------------------------------------------
+    let cloud_length = len(keyboard)
     if s:shuangpin_flag > 0
         let cloud_length = len(s:keyboard_shuangpin)
     endif
@@ -4778,7 +4786,7 @@ function! s:vimim_initialize_vimim_txt_debug()
     let s:vimim_mycloud_www = 0
     let s:vimim_mycloud_rot13 = 0
     " ------------------------------
-    let s:vimim_www_sogou=14
+    let s:vimim_www_sogou=12
     " ------------------------------
     let s:vimim_chinese_frequency=14
     let s:vimim_frequency_first_fix=0
@@ -5234,8 +5242,6 @@ else
     let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
     if empty(cloud)
         let msg = "Who cares about cloud?"
-    elseif keyboard =~# "[^a-z']"
-        let msg = "Cloud limits valid cloud keycodes only"
     else
         let results = s:vimim_get_cloud_sogou(keyboard)
         if s:vimimdebug > 0
