@@ -2265,40 +2265,41 @@ function! s:vimim_reverse_lookup(chinese)
     let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
     let chinese_characters = split(chinese,'\zs')
     let glyph = join(chinese_characters, '   ')
-    " ------------------------------------------------
-    let result_unicode = ''
     let items = []
+    " ------------------------------------------------
+    let results_unicode = []
     if s:vimim_unicode_lookup > 0
         for char in chinese_characters
             let unicode = printf('%04x',char2nr(char))
             call add(items, unicode)
         endfor
-        let unicode = join(items, ' ')
-        let result_unicode = unicode. "\n" . glyph
+        call add(results_unicode, join(items, ' '))
+        call add(results_unicode, glyph)
     endif
     " ------------------------------------------------
-    let result_4corner = ''
+    let results_4corner = []
     if get(s:im['4corner'],0) > 0
         let cache_4corner = s:vimim_build_4corner_cache(chinese)
         let items = s:vimim_make_one_entry(cache_4corner, chinese)
-        let result_4corner = join(items,' ') . "\n" . glyph
+        call add(results_4corner, join(items,' '))
+        call add(results_4corner, glyph)
     endif
     " ------------------------------------------------
     let cache_pinyin = s:vimim_build_reverse_cache(chinese, 0)
     let items = s:vimim_make_one_entry(cache_pinyin, chinese)
     let result_pinyin = join(items,'')." ".chinese
     " ------------------------------------------------
-    let result = ''
-    if len(result_unicode) > 0
-        let result .= "\n" . result_unicode
+    let results = []
+    if len(results_unicode) > 0
+        call extend(results, results_unicode)
     endif
-    if len(result_4corner) > 0
-        let result .= "\n" . result_4corner
+    if len(results_4corner) > 0
+        call extend(results, results_4corner)
     endif
     if result_pinyin =~ '\a'
-        let result .= "\n" .result_pinyin
+        call add(results, result_pinyin)
     endif
-    return result
+    return results
 endfunction
 
 " -----------------------------------------------------
@@ -3346,18 +3347,20 @@ function! <SID>vimim_save(entry)
         let line = s:vimim_i18n_write(line)
         call add(entries, line)
     endfor
-    let lines = s:vimim_insert_entry(s:vimim_reload_datafile(1), entries)
-    call s:vimim_save_to_disk(lines)
+    call s:vimim_save_to_disk(s:vimim_insert_entry(entries))
 endfunction
 
-" --------------------------------------------
-function! s:vimim_insert_entry(lines, entries)
-" --------------------------------------------
-    let lines = a:lines
-    let len_lines = len(a:lines)
-    if empty(lines) || empty(a:entries)
+" -------------------------------------
+function! s:vimim_insert_entry(entries)
+" -------------------------------------
+    if empty(a:entries)
         return []
     endif
+    let lines = s:vimim_reload_datafile(0)
+    if empty(lines)
+        return []
+    endif
+    let len_lines = len(lines)
     let sort_before_save = 0
     let position = -1
     for entry in a:entries
@@ -4493,44 +4496,40 @@ function! s:vimim_wildcard_search(keyboard, lines)
     return results
 endfunction
 
-" ------------------------------------
-function! <SID>vimim_vCTRL6(chinglish)
-" ------------------------------------ xxx
+" -----------------------------------
+function! <SID>vimim_vCTRL6(keyboard)
+" -----------------------------------
+    let keyboard = a:keyboard
+    if empty(keyboard)
+        return
+    endif
+    " --------------------------------
     call s:vimim_initialization_once()
     " --------------------------------
-    if empty(a:chinglish)
-       if s:vimim_ctrl_6_as_onekey > 0
-           let current_line = getline(".")
-           call <SID>vimim_save(current_line)
+    if s:vimim_ctrl_6_as_onekey > 0
+        if keyboard =~ '\S'
+            let msg = 'kill two birds with one stone'
         else
-           return ''
-       endif
+            let current_line = getline("'<")
+            call <SID>vimim_save(current_line)
+            return
+        endif
     endif
     " --------------------------------
-    let lookup = ''
-    if a:chinglish !~ '\p'
-        let lookup = s:vimim_reverse_lookup(a:chinglish)
+    let results = []
+    if keyboard !~ '\p'
+        let results = s:vimim_reverse_lookup(keyboard)
     else
-        let lookup = s:vimim_translator(a:chinglish)
+        call add(results, s:vimim_translator(keyboard))
     endif
-    return lookup
-" ------------------------------------ xxx
-"       let line = line(".")
-"       let current_positions = getpos(".")
-"       let current_positions[2] = 1
-"       call setpos(".", current_positions)
-"       let current_positions[1] = line + len(words) - 1
-"       call setline(line, words)
-"       if s:vimim_auto_copy_clipboard>0 && has("gui_running")
-"           let string_words = ''
-"           for line in words
-"               let string_words .= line
-"               let string_words .= "\n"
-"           endfor
-"           let @+ = string_words
-"       endif
-"   " set
-" ------------------------------------ xxx
+" ------------------------------------
+    let line = line(".")
+    call setline(line, results)
+    let new_positions = getpos(".")
+    let new_positions[1] = line + len(results) - 1
+    let new_positions[2] = len(get(split(get(results,-1)),0))+1
+    call setpos(".", new_positions)
+" ------------------------------------
 endfunction
 
 " --------------------------------------
@@ -4734,7 +4733,7 @@ function! s:vimim_initialize_vimim_txt_debug()
     else
         return
     endif
-    " ------------------------------ debug
+    " ------------------------------ ebug
     let s:vimim_mycloud_local = 0
     " ------------------------------
     let s:vimim_www_sogou=14
@@ -5413,18 +5412,30 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_mapping()
 " ------------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
+    sil!call s:vimim_visual_mapping_on()
     " -----------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         sil!call s:vimim_one_key_mapping_on()
-        sil!call s:vimim_visual_mapping_on()
         sil!call s:vimim_chinese_mode_mapping_on()
     else
         imap<silent><C-^> <Plug>VimimOneKey
         nmap<silent><C-^> bea<C-^>
-        xmap<silent><C-^> y:call  <SID>vimim_vCTRL6(@0)<CR>
-        xmap<silent><C-^> y:'>put=<SID>vimim_vCTRL6(@0)<CR>
     endif
     " -----------------------------------------
+endfunction
+
+" -----------------------------------
+function! s:vimim_visual_mapping_on()
+" -----------------------------------
+    if !hasmapto('<C-^>', 'v')
+        xnoremap<silent><C-^> y:call <SID>vimim_vCTRL6(@0)<CR>
+    endif
+    " -------------------------------
+    if s:vimim_save_new_entry > 0
+    \&& !hasmapto('<C-\>', 'v')
+    \&& empty(s:vimim_ctrl_6_as_onekey)
+        xnoremap<silent><C-\> :y<CR>:call <SID>vimim_save(@0)<CR>
+    endif
 endfunction
 
 " -----------------------------------------
@@ -5434,18 +5445,6 @@ function! s:vimim_chinese_mode_mapping_on()
     imap <silent><C-^>    <Plug>VimimChineseToggle
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
         imap<silent> <C-Space> <Plug>VimimChineseToggle
-    endif
-endfunction
-
-" -----------------------------------
-function! s:vimim_visual_mapping_on()
-" -----------------------------------
-    if !hasmapto('<C-^>', 'v')
-        xnoremap<silent><C-^> y:'>put=<SID>vimim_vCTRL6(@0)<CR>
-    endif
-    " ----------------------------------------------------------
-    if s:vimim_save_new_entry > 0 && !hasmapto('<C-\>', 'v')
-        xnoremap<silent><C-\> :y<CR>:call <SID>vimim_save(@0)<CR>
     endif
 endfunction
 
