@@ -3146,10 +3146,15 @@ function! s:vimim_get_new_order_list()
     if keyboard !~# s:valid_key
     \|| char2nr(chinese) < 127
     \|| char2nr(first_fix_candidate) < 127
-    \|| first_fix_candidate ==# chinese
         return []
     endif
-    " --------------------------------
+    " ----------------------------------------
+    " [record] keep track of all valid inputs
+    let g:vimim .=  keyboard . "."
+    " ----------------------------------------
+    if first_fix_candidate ==# chinese
+        return []
+    endif
     let new_order_list = []
     let new_match_list = []
     for item in s:matched_list
@@ -3198,7 +3203,7 @@ function! s:vimim_update_chinese_frequency_usage()
         return
     endif
     " update data in memory based on past usage
-    " (1/5) locate new order line based on user input
+    " (1/4) locate new order line based on user input
     " -----------------------------------------------
     let match_list = get(both_list,1)
     if empty(match_list) || empty(s:lines)
@@ -3210,7 +3215,7 @@ function! s:vimim_update_chinese_frequency_usage()
     if insert_index < 0
         return
     endif
-    " (2/5) delete all but one matching lines
+    " (2/4) delete all but one matching lines
     " ---------------------------------------
     if len(match_list) < 2
         let msg = "only one matching line"
@@ -3225,14 +3230,11 @@ function! s:vimim_update_chinese_frequency_usage()
             endif
         endfor
     endif
-    " (3/5) insert new order list by replacement
+    " (3/4) insert new order list by replacement
     " ------------------------------------------
     let new_order_line = join(new_list)
     let s:lines[insert_index] = new_order_line
-    " (4/5) [record] keep track of all valid inputs
-    " ---------------------------------------------
-    let g:vimim .=  keyboard . "."
-    " (5/5) sync datafile in memory to datafile on disk
+    " (5/4) sync datafile in memory to datafile on disk
     " -------------------------------------------------
     if s:chinese_frequency < 2
         return
