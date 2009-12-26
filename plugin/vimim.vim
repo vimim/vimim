@@ -3150,10 +3150,7 @@ function! s:vimim_get_new_order_list()
     \|| char2nr(first_fix_candidate) < 127
         return []
     endif
-    " ----------------------------------------
-    " [record] keep track of all valid inputs
-    let g:vimim .=  keyboard . "."
-    " ----------------------------------------
+    " --------------------------------
     if first_fix_candidate ==# chinese
         return []
     endif
@@ -5134,6 +5131,10 @@ else
             return
         endif
     endif
+
+    " [record] keep track of all valid inputs
+    " ---------------------------------------
+    let g:vimim .=  keyboard . "."
 
     " [eggs] hunt classic easter egg ... vim<C-\>
     " -------------------------------------------
