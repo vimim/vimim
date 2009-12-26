@@ -4484,11 +4484,16 @@ endfunction
 " ------------------------------------
 function! <SID>vimim_vCTRL6(chinglish)
 " ------------------------------------
-    if empty(a:chinglish)
-        return ''
-    endif
-    " --------------------------------
     call s:vimim_initialization_once()
+    " --------------------------------
+    if empty(a:chinglish)
+       if s:vimim_sexy_onekey == 2
+           let current_line = getline(".")
+           call <SID>vimim_save(current_line)
+        else
+           return ''
+       endif
+    endif
     " --------------------------------
     if a:chinglish !~ '\p'
         return s:vimim_reverse_lookup(a:chinglish)
@@ -4670,12 +4675,6 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let s:datafile_primary = 0
-    let s:datafile_secondary = 0
-    " ------------------------------
-    let s:initialization_loaded = 0
-    let s:chinese_mode_toggle_flag = 0
-    " ------------------------------
     let datafile_backdoor = s:path . "vimim.txt"
     if filereadable(datafile_backdoor)
         let msg = "open backdoor for debugging"
@@ -5396,8 +5395,13 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_mapping()
 " ------------------------------------
+    let s:datafile_primary = 0
+    let s:datafile_secondary = 0
+    let s:initialization_loaded = 0
+    let s:chinese_mode_toggle_flag = 0
+    " ------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
-    " ----------------------------------------------------------------
+    " ---------------------------------------------------------------
     if s:vimim_sexy_onekey == 2
         imap<silent><C-^> <Plug>VimimOneKey
         nmap<silent><C-^> bea<C-^>
@@ -5416,8 +5420,7 @@ endfunction
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
     inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
-    imap    <silent> <C-^><Plug>VimimChineseToggle
-    " -------------------------------------
+    imap <silent><C-^>    <Plug>VimimChineseToggle
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
         imap<silent> <C-Space> <Plug>VimimChineseToggle
     endif
