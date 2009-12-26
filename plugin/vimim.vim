@@ -808,6 +808,12 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
 " ----------------------------------
+    let option = "cloud\t 私云："
+    if s:vimim_mycloud_www > 0
+        let option .= "〖自己的云〗"
+        call add(eggs, option)
+    endif
+" ----------------------------------
     let option = "cloud\t 搜狗："
     if s:vimim_www_sogou < 0
         let option .= "〖晴天无云〗"
@@ -4179,10 +4185,12 @@ function! s:vimim_magic_tail(keyboard)
     return keyboard
 endfunction
 
-" --------------------------------------------------
-function! s:vimim_to_cloud_or_not_to_cloud(keyboard)
-" --------------------------------------------------
-    let do_cloud = 1
+" ------------------------------------------------
+function! s:vimim_to_cloud_or_not(keyboard, cloud)
+" ------------------------------------------------
+    if a:cloud < 1
+        return 0
+    endif
     if s:no_internet_connection > 1
         let msg = "oops, there is no internet connection."
         return 0
@@ -4192,34 +4200,32 @@ function! s:vimim_to_cloud_or_not_to_cloud(keyboard)
     if empty(s:chinese_input_mode) && a:keyboard =~ '[.]'
         return 0
     endif
-    if s:vimim_www_sogou < 1
-        return 0
-    endif
     let cloud_length = len(a:keyboard)
     if s:shuangpin_flag > 0
         let cloud_length = len(s:keyboard_shuangpin)
     endif
-    if cloud_length < s:vimim_www_sogou
+    let do_cloud = 1
+    if cloud_length < a:cloud
         let do_cloud = 0
     endif
     return do_cloud
 endfunction
 
-" --------------------------------------------
-function! s:vimim_get_sogou_cloud_im(keyboard)
-" --------------------------------------------
+" -----------------------------------------
+function! s:vimim_get_cloud_sogou(keyboard)
+" -----------------------------------------
     let keyboard = a:keyboard
     if s:vimim_www_sogou < 1
     \|| empty(s:www_executable)
     \|| empty(keyboard)
         return []
     endif
-    let sogou = 'http://web.pinyin.sogou.com/web_ime/get_ajax/'
+    let cloud = 'http://web.pinyin.sogou.com/web_ime/get_ajax/'
     " support apostrophe as delimiter to remove ambiguity
     " (1) examples: piao => pi'ao 皮袄  xian => xi'an 西安
     " (2) add double quotes between keyboard
     " (3) test: xi'anmeimeidepi'aosuifengpiaoyang
-    let input = sogou . '"' . keyboard . '".key'
+    let input = cloud . '"' . keyboard . '".key'
     let output = 0
     " --------------------------------------------------------------
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
@@ -4240,8 +4246,7 @@ function! s:vimim_get_sogou_cloud_im(keyboard)
     let second = match(output, '"', 0, 2)
     if first > 0 && second > 0
         let output = strpart(output, first+1, second-first-1)
-        let output = substitute(output, '%\(\x\x\)',
-                    \ '\=eval(''"\x''.submatch(1).''"'')','g')
+        let output = s:vimim_xx_to_chinese(output)
     endif
     if empty(output)
         return []
@@ -4306,7 +4311,7 @@ endfunction
 
 " -------------------------------------------
 function! s:vimim_get_mycloud_local(keyboard)
-" ------------------------------------------- xxx
+" -------------------------------------------
     if empty(s:vimim_mycloud_local)
         return []
     endif
@@ -4322,19 +4327,66 @@ function! s:vimim_get_mycloud_local(keyboard)
     if empty(output)
         return []
     endif
-    " ---------------------------------------
-    if empty(s:localization)
-        let msg = "both vim and datafile are UTF-8 encoding"
-    else
-        let output = s:vimim_i18n_read(output)
+    return s:vimim_process_mycloud_output(input, output)
+endfunction
+
+" -----------------------------------------
+function! s:vimim_get_mycloud_www(keyboard)
+" -----------------------------------------
+    let keyboard = a:keyboard
+    if s:vimim_mycloud_www < 1
+    \|| empty(s:www_executable)
+    \|| empty(keyboard)
+        return []
     endif
-    " ---------------------------------
-    " chunmeng => 春梦	8	'50 44'
-    " ---------------------------------
+    let cloud = "http://pim-cloud.appspot.com/sp_abc/"
+    let cloud = "http://pim-cloud.appspot.com/qp/"
+    let input = keyboard
+    if s:vimim_mycloud_rot13 > 0
+        let input = s:vimim_rot13(keyboard)
+    endif
+    let input = cloud . input
+    let output = 0
+    " ----------------------------------------
+    " http://pim-cloud.appspot.com/qp/chunmeng
+    " ----------------------------------------
+    try
+        let output = system(s:www_executable . input)
+    catch /.*/
+        let output = 0
+    endtry
+    if empty(output)
+        return []
+    endif
+    return s:vimim_process_mycloud_output(keyboard, output)
+endfunction
+
+" --------------------------------------------------------
+function! s:vimim_process_mycloud_output(keyboard, output)
+" --------------------------------------------------------
+    let output = a:output
+    if empty(output) || empty(a:keyboard)
+        return []
+    endif
+    " ---------------------------------------
+    " %E6%98%A5%E6%A2%A6	8	50_44
+    " ---------------------------------------
     let menu = []
     for item in split(output, '\n')
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
+        if s:vimim_mycloud_www > 0
+            if s:vimim_mycloud_rot13 > 0
+                let chinese = s:vimim_rot13(chinese)
+            endif
+            let chinese = s:vimim_xx_to_chinese(chinese)
+        endif
+        if s:localization > 0
+            let chinese = s:vimim_i18n_read(chinese)
+        endif
+        if empty(chinese)
+            continue
+        endif
         let extra_text = get(item_list,2)
         let english = strpart(a:keyboard, 0, get(item_list,1))
         let english .= '_' . extra_text
@@ -4342,6 +4394,15 @@ function! s:vimim_get_mycloud_local(keyboard)
         call add(menu, new_item)
     endfor
     return menu
+endfunction
+
+" ---------------------------------
+function! s:vimim_xx_to_chinese(xx)
+" ---------------------------------
+    let input = a:xx
+    let output = substitute(input, '%\(\x\x\)',
+                \ '\=eval(''"\x''.submatch(1).''"'')','g')
+    return output
 endfunction
 
 " -------------------------------
@@ -4739,6 +4800,8 @@ function! s:vimim_initialize_vimim_txt_debug()
     endif
     " ------------------------------ debug
     let s:vimim_mycloud_local = 0
+    let s:vimim_mycloud_www = 0
+    let s:vimim_mycloud_rot13 = 0
     " ------------------------------
     let s:vimim_www_sogou=14
     " ------------------------------
@@ -5120,7 +5183,7 @@ else
         endif
     endif
 
-    " [mycloud] get chunmeng from local mycloud
+    " [mycloud] get chunmeng from mycloud local
     " -----------------------------------------
     if empty(s:vimim_mycloud_local)
         let msg = "keep local mycloud code for the future."
@@ -5129,6 +5192,17 @@ else
         if empty(len(results))
             let s:vimim_mycloud_local = 0
         else
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
+    " [mycloud] get chunmeng from mycloud www
+    " ---------------------------------------
+    let cloud = s:vimim_mycloud_www
+    let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
+    if cloud > 0
+        let results = s:vimim_get_mycloud_www(keyboard)
+        if len(results) > 0
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5179,28 +5253,16 @@ else
     " ----------------------------------------------------
     let keyboard = s:vimim_get_quanpin_from_shuangpin(keyboard)
 
-    " [mycloud] get chunmeng from www mycloud
-    " ---------------------------------------
-    if empty(s:vimim_mycloud_www)
-        let msg = "keep www mycloud code for the future."
-    else
-        let results = s:vimim_get_mycloud_local(keyboard)
-        if empty(len(results))
-            let s:vimim_mycloud_www = 0
-        else
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     " [cloud] to make cloud come true for woyouyigemeng
     " -------------------------------------------------
-    let cloud = s:vimim_to_cloud_or_not_to_cloud(keyboard)
+    let cloud = s:vimim_www_sogou
+    let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
     if empty(cloud)
         let msg = "Who cares about cloud?"
     elseif keyboard =~# "[^a-z']"
         let msg = "Cloud limits valid cloud keycodes only"
     else
-        let results = s:vimim_get_sogou_cloud_im(keyboard)
+        let results = s:vimim_get_cloud_sogou(keyboard)
         if s:vimimdebug > 0
             call s:debugs('cloud_stone', keyboard)
             call s:debugs('cloud_gold', s:debug_list(results))
@@ -5388,7 +5450,7 @@ else
     " [cloud] never give up for whole cloud
     " -------------------------------------
     if s:vimim_www_sogou == 1
-        let results = s:vimim_get_sogou_cloud_im(keyboard)
+        let results = s:vimim_get_cloud_sogou(keyboard)
         if empty(len(results))
             return []
         else
