@@ -2241,34 +2241,6 @@ let VimIM = " ====  Chinese2Pinyin   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" --------------------------------
-function! g:vimim_chinese2pinyin()
-" --------------------------------
-    " [purpose] convert Chinese to pinyin in datafile
-    " [usage]   :call g:vimim_chinese2pinyin()
-    " [example] garbage in  => horse 马 馬儿 马馬儿
-    "           garbage out => horse ma maer mamaer
-    " ---------------------------------------------
-    let line = 0
-    let space = ' '
-    while line < line("$")
-        let line += 1
-        let current_line = getline(line)
-        let current_line_list = split(current_line)
-        let new_line = get(current_line_list, 0)
-        for item in current_line_list
-            let chinese = substitute(item,'\s\+\|\w\|\n','','g')
-            let chinese_characters = split(chinese,'\zs')
-            let glyph = join(chinese_characters, ' ')
-            let cache_pinyin = s:vimim_build_reverse_cache(glyph, 1)
-            let items = s:vimim_make_one_entry(cache_pinyin, chinese)
-            let result = join(items,'')
-            let new_line .= space . result
-        endfor
-        call setline(line, new_line)
-    endwhile
-endfunction
-
 " ---------------------------------------
 function! s:vimim_reverse_lookup(chinese)
 " ---------------------------------------
