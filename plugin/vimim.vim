@@ -168,6 +168,7 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
+    call add(G, "g:vimim_ctrl_6_as_onekey")
     call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
@@ -759,7 +760,7 @@ function! s:vimim_egg_vimim()
     else
         let option = 'i_CTRL-^　经典静态'
     endif
-    if s:vimim_sexy_onekey == 2
+    if s:vimim_ctrl_6_as_onekey > 0
         let option = 'i_CTRL-^　点石成金'
     endif
     let option = "mode\t 风格：" . option
@@ -1171,7 +1172,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_tab_onekey()
 " ----------------------------
     let onekey = "\t"
-    if s:vimim_sexy_onekey == 2
+    if s:vimim_ctrl_6_as_onekey > 0
         let onekey = ""
     endif
     return s:vimim_onekey(onekey)
@@ -4498,7 +4499,7 @@ function! <SID>vimim_vCTRL6(chinglish)
     call s:vimim_initialization_once()
     " --------------------------------
     if empty(a:chinglish)
-       if s:vimim_sexy_onekey == 2
+       if s:vimim_ctrl_6_as_onekey > 0
            let current_line = getline(".")
            call <SID>vimim_save(current_line)
         else
@@ -4506,10 +4507,30 @@ function! <SID>vimim_vCTRL6(chinglish)
        endif
     endif
     " --------------------------------
+    let lookup = ''
     if a:chinglish !~ '\p'
-        return s:vimim_reverse_lookup(a:chinglish)
+        let lookup = s:vimim_reverse_lookup(a:chinglish)
+    else
+        let lookup = s:vimim_translator(a:chinglish)
     endif
-    return s:vimim_translator(a:chinglish)
+    return lookup
+" ------------------------------------ xxx
+"       let line = line(".")
+"       let current_positions = getpos(".")
+"       let current_positions[2] = 1
+"       call setpos(".", current_positions)
+"       let current_positions[1] = line + len(words) - 1
+"       call setline(line, words)
+"       if s:vimim_auto_copy_clipboard>0 && has("gui_running")
+"           let string_words = ''
+"           for line in words
+"               let string_words .= line
+"               let string_words .= "\n"
+"           endfor
+"           let @+ = string_words
+"       endif
+"   " set
+" ------------------------------------ xxx
 endfunction
 
 " --------------------------------------
@@ -4695,7 +4716,8 @@ function! s:vimim_initialize_debug()
     if filereadable(datafile_backdoor)
         let msg = "open backdoor for debugging"
         let s:vimimdebug=1
-        let s:vimim_sexy_onekey=2
+        let s:vimim_sexy_onekey=1
+        let s:vimim_ctrl_6_as_onekey=2
         let s:datafile_primary = datafile_backdoor
     endif
 endfunction
@@ -5391,18 +5413,16 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_mapping()
 " ------------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
-    " ---------------------------------------------------------------
-    if s:vimim_sexy_onekey == 2
+    " -----------------------------------------
+    if empty(s:vimim_ctrl_6_as_onekey)
+        sil!call s:vimim_one_key_mapping_on()
+        sil!call s:vimim_visual_mapping_on()
+        sil!call s:vimim_chinese_mode_mapping_on()
+    else
         imap<silent><C-^> <Plug>VimimOneKey
         nmap<silent><C-^> bea<C-^>
         xmap<silent><C-^> y:call  <SID>vimim_vCTRL6(@0)<CR>
         xmap<silent><C-^> y:'>put=<SID>vimim_vCTRL6(@0)<CR>
-    endif
-    " -----------------------------------------
-    if s:vimim_sexy_onekey < 2
-        sil!call s:vimim_one_key_mapping_on()
-        sil!call s:vimim_visual_mapping_on()
-        sil!call s:vimim_chinese_mode_mapping_on()
     endif
     " -----------------------------------------
 endfunction
