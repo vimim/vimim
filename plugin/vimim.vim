@@ -97,17 +97,13 @@ call add(s:vimims, VimIM)
 " "VimIM Datafile"
 " ----------------
 " The datafile is assumed to be in order, otherwise, it is auto sorted.
-" The basic datafile format is simple and flexible:
+" The datafile format is both simple and flexible:
 "
-"     +------+--+-------+
-"     |<key> |  |<value>|
-"     |======|==|=======|
-"     | mali |  |  馬力 |
-"     +------+--+-------+
-"
-" The <key> is what is typed in alphabet, ready to be replaced.
-" The <value>, separated by spaces, is what will be inserted.
-" The 2nd and the 3rd column can be repeated without restriction.
+"             +------+--+-------+
+"             |<key> |  |<value>|
+"             |======|==|=======|
+"             | mali |  |  馬力 |
+"             +------+--+-------+
 
 " ======================================= }}}
 let VimIM = " ====  Initialization   ==== {{{"
@@ -376,103 +372,103 @@ function! s:vimim_dictionary_im()
     let im = '云输入'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'mycloud'
     let loaded = 0
     let im = '自己的云'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'wubi'
     let im = '五笔'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = '4corner'
     let im = '四角号码'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = '12345'
     let im = '五笔划'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'ctc'
     let im = '中文电码'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'cns11643'
     let im = '交換碼'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'english'
     let im = '英文'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'hangul'
     let im = '韩文'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'xinhua'
     let im = '新华'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'pinyin'
     let im = '拼音'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'cangjie'
     let im = '仓颉'
     let keycode = "[a-z,.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'zhengma'
     let im = '郑码'
     let keycode = "[a-z,.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'erbi'
     let im = '二笔'
     let keycode = "[a-z'.,;/]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'yong'
     let im = '永码'
     let keycode = "[a-z',.;/]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'nature'
     let im = '自然'
     let keycode = "[a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'quick'
     let im = '速成'
     let keycode = "[0-9a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'wu'
     let im = '吴语'
     let keycode = "[a-z',.]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'array30'
     let im = '行列'
     let keycode = "[a-z.,;/]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
     let key = 'phonetic'
     let im = '注音'
     let keycode = "[0-9a-z.,;/]"
     let s:im[key]=[loaded, im, keycode]
-" -------------------------------
+" -------------------------------------
 endfunction
 
 " ======================================= }}}
