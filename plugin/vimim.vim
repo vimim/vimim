@@ -195,7 +195,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_purple")
     call add(G, "g:vimim_smart_ctrl_h")
     call add(G, "g:vimim_static_input_style")
-    call add(G, "g:vimim_tab_for_one_key")
+    call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_www_sogou")
@@ -1189,23 +1189,6 @@ let VimIM = " ====  OneKey           ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ----------------------------
-function! s:vimim_tab_onekey()
-" ----------------------------
-    let onekey = "\t"
-    if s:vimim_ctrl_6_as_onekey > 0
-        let onekey = ""
-    endif
-    return s:vimim_onekey(onekey)
-endfunction
-
-" ----------------------------------
-function! <SID>:vimim_space_onekey()
-" ----------------------------------
-    let onekey = " "
-    return s:vimim_onekey(onekey)
-endfunction
-
 " --------------------------------
 function! s:vimim_onekey_autocmd()
 " --------------------------------
@@ -1217,6 +1200,13 @@ function! s:vimim_onekey_autocmd()
             endif
         augroup END
     endif
+endfunction
+
+" ---------------------------------
+function! <SID>vimim_space_onekey()
+" ---------------------------------
+    let onekey = " "
+    return s:vimim_onekey(onekey)
 endfunction
 
 " ---------------------------------
@@ -1232,16 +1222,19 @@ function! <SID>vimim_start_onekey()
     sil!call s:vimim_helper_mapping_on()
     sil!call s:vimim_onekey_autocmd()
     " ----------------------------------------------------------
-    inoremap<silent><Space> <C-R>=<SID>:vimim_space_onekey()<CR>
-                         \<C-R>=g:vimim_reset_after_insert()<CR>
+    inoremap<silent><Space> <C-R>=<SID>vimim_space_onekey()<CR>
+                           \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
-    let onekey = "\t"
-    " ---------------
+    let onekey = ""
+    if s:vimim_tab_as_onekey > 0
+        let onekey = "\t"
+    endif
+    " ---------------------------
     " <OneKey> double play
     "   (1) after English (valid keys) => trigger omni popup
     "   (2) after omni popup window    => same as <Space>
     " ----------------------------------------------------------
-    let onekey = s:vimim_tab_onekey()
+    let onekey = s:vimim_onekey(onekey)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
@@ -1301,7 +1294,9 @@ function! s:vimim_onekey(onekey)
     endif
     " ---------------------------------------------------
     if char_before !~# s:valid_key
-        if !has("autocmd") || a:onekey ==# "\t"
+        if !has("autocmd") 
+        \|| a:onekey ==# "\t"
+        \|| empty(s:vimim_ctrl_6_as_onekey)
             call s:vimim_stop()
         endif
         return a:onekey
@@ -1314,9 +1309,6 @@ function! s:vimim_onekey(onekey)
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
-    if !has("autocmd") || a:onekey ==# "\t"
-        call s:vimim_stop()
-    endif
     return a:onekey
     " ---------------------------------------------------
 endfunction
@@ -1391,17 +1383,17 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<C-R>=g:vimim_p_paste()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_p_paste()\<CR>'
         elseif a:key == 'd'
-            let hjkl  = '\<C-R>=g:vimim_d_one_key_correction()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_d_one_key_correction()\<CR>'
+            let hjkl  = '\<C-R>=g:vimim_d_onekey_correction()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_d_onekey_correction()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" --------------------------------------
-function! g:vimim_d_one_key_correction()
-" --------------------------------------
+" -------------------------------------
+function! g:vimim_d_onekey_correction()
+" -------------------------------------
     let d  = ''
     let s:matched_list = []
     if pumvisible()
@@ -1524,7 +1516,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_start_chinese_mode()
 " ------------------------------------
-    sil!call s:vimim_one_key_mapping_off()
+    sil!call s:vimim_onekey_mapping_off()
     sil!call s:vimim_start()
     sil!call s:vimim_i_chinese_mode_on()
     sil!call s:vimim_i_chinese_mode_autocmd_on()
@@ -1569,7 +1561,7 @@ function! s:vimim_stop_chinese_mode()
     " ------------------------------
     sil!call s:vimim_stop()
     sil!call s:vimim_i_lcursor_color(0)
-    sil!call s:vimim_one_key_mapping_on()
+    sil!call s:vimim_onekey_mapping_on()
 endfunction
 
 " --------------------------------------
@@ -4761,9 +4753,9 @@ let VimIM = " ====  Debug_Framework  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------
-function! s:vimim_initialize_debug()
-" ----------------------------------
+" -------------------------------------
+function! s:vimim_initialize_backdoor()
+" -------------------------------------
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
     let s:initialization_loaded = 0
@@ -4771,10 +4763,10 @@ function! s:vimim_initialize_debug()
     let datafile_backdoor = s:path . "vimim.txt"
     " ------------------------------
     if filereadable(datafile_backdoor)
-        let msg = "open backdoor for debugging"
-        let s:vimimdebug=1
-        let s:vimim_ctrl_6_as_onekey=2
         let s:datafile_primary = datafile_backdoor
+        let s:vimimdebug=1
+        let s:vimim_tab_as_onekey=1
+        let s:vimim_ctrl_6_as_onekey=2
     endif
 endfunction
 
@@ -4782,7 +4774,7 @@ endfunction
 function! s:vimim_initialize_vimim_txt_debug()
 " --------------------------------------------
     if s:vimimdebug == 1
-        let msg = "open backdoor wider"
+        let msg = "open backdoor for debugging"
         let s:vimim_custom_skin=1
         let s:vimim_datafile_has_english=1
         let s:vimim_datafile_has_pinyin=1
@@ -5475,17 +5467,23 @@ function! s:vimim_initialize_mapping()
 " ------------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
     sil!call s:vimim_visual_mapping_on()
-    " -----------------------------------------
+    " --------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
-        sil!call s:vimim_one_key_mapping_on()
+        sil!call s:vimim_onekey_mapping_on()
         sil!call s:vimim_chinese_mode_mapping_on()
     else
+    " --------------------------------
         imap<silent><C-^> <Plug>VimimOneKey
+    " --------------------------------
+        if s:vimim_tab_as_onekey > 0
+            imap<silent><Tab> <C-^>
+        endif
+    " --------------------------------
         if s:vimim_ctrl_6_as_onekey == 2
             nmap<silent><C-^> bEa<C-^>
         endif
+    " --------------------------------
     endif
-    " -----------------------------------------
 endfunction
 
 " -----------------------------------
@@ -5512,10 +5510,10 @@ function! s:vimim_chinese_mode_mapping_on()
     endif
 endfunction
 
-" ------------------------------------
-function! s:vimim_one_key_mapping_on()
-" ------------------------------------
-    if empty(s:vimim_tab_for_one_key)
+" -----------------------------------
+function! s:vimim_onekey_mapping_on()
+" -----------------------------------
+    if empty(s:vimim_tab_as_onekey)
         imap<silent> <C-\> <Plug>VimimOneKey
     else
         imap<silent> <Tab> <Plug>VimimOneKey
@@ -5523,10 +5521,10 @@ function! s:vimim_one_key_mapping_on()
     endif
 endfunction
 
-" -------------------------------------
-function! s:vimim_one_key_mapping_off()
-" -------------------------------------
-    if empty(s:vimim_tab_for_one_key)
+" ------------------------------------
+function! s:vimim_onekey_mapping_off()
+" ------------------------------------
+    if empty(s:vimim_tab_as_onekey)
         iunmap <C-\>
     else
         iunmap <Tab>
@@ -5534,6 +5532,6 @@ function! s:vimim_one_key_mapping_off()
 endfunction
 
 silent!call s:vimim_initialize_global()
-silent!call s:vimim_initialize_debug()
+silent!call s:vimim_initialize_backdoor()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
