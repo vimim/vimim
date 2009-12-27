@@ -4168,6 +4168,7 @@ function! s:vimim_to_cloud_or_not(keyboard, cloud)
     if a:cloud < 1
         return 0
     endif
+    " --------------------------------------------
     if s:no_internet_connection > 1
         let msg = "oops, there is no internet connection."
         return 0
@@ -5247,9 +5248,7 @@ else
     " -------------------------------------------------
     let cloud = s:vimim_www_sogou
     let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
-    if empty(cloud)
-        let msg = "Who cares about cloud?"
-    else
+    if cloud > 0
         let results = s:vimim_get_cloud_sogou(keyboard)
         if s:vimimdebug > 0
             call s:debugs('cloud_stone', keyboard)
@@ -5435,13 +5434,11 @@ else
         return s:vimim_popupmenu_list(results)
     endif
 
-    " [cloud] never give up for whole cloud
-    " -------------------------------------
+    " [cloud] never give up trying whole cloud
+    " ----------------------------------------
     if s:vimim_www_sogou == 1
         let results = s:vimim_get_cloud_sogou(keyboard)
-        if empty(len(results))
-            return []
-        else
+        if len(results) > 0
             return s:vimim_popupmenu_list(results)
         endif
     endif
