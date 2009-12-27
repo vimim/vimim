@@ -211,7 +211,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_lcursor_color")
     call add(G, "g:vimim_custom_menu_label")
     call add(G, "g:vimim_internal_code_input")
-    call add(G, "g:vimim_one_key")
     call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_save_new_entry")
@@ -5510,9 +5509,6 @@ endfunction
 " ------------------------------------
 function! s:vimim_one_key_mapping_on()
 " ------------------------------------
-    if empty(s:vimim_one_key)
-        return
-    endif
     if empty(s:vimim_tab_for_one_key)
         imap<silent> <C-\> <Plug>VimimOneKey
     else
@@ -5524,9 +5520,6 @@ endfunction
 " -------------------------------------
 function! s:vimim_one_key_mapping_off()
 " -------------------------------------
-    if empty(s:vimim_one_key)
-        return
-    endif
     if empty(s:vimim_tab_for_one_key)
         iunmap <C-\>
     else
