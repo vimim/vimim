@@ -196,7 +196,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
-    call add(G, "g:vimim_cloud_local")
+    call add(G, "g:vimim_cloud_python")
     call add(G, "g:vimim_cloud_pim")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimimdebug")
@@ -1775,7 +1775,7 @@ function! s:vimim_statusline()
         let im = get(s:im['cloud'],1)
     endif
   " --------------------------
-    if len(s:vimim_cloud_local) > 1
+    if len(s:vimim_cloud_python) > 1
         let im = get(s:im['mycloud'],1)
     endif
   " --------------------------
@@ -4270,7 +4270,7 @@ call add(s:vimims, VimIM)
 " ------------------------------------------
 function! s:vimim_initialize_mycloud_local()
 " ------------------------------------------
-    if empty(s:vimim_cloud_local)
+    if empty(s:vimim_cloud_python)
         return []
     endif
     " ---------------------------------
@@ -4280,7 +4280,7 @@ function! s:vimim_initialize_mycloud_local()
         return
     endif
     " ---------------------------------
-    if filereadable(s:vimim_cloud_local)
+    if filereadable(s:vimim_cloud_python)
         let msg = 'my cloud seems ready"
         return
     endif
@@ -4288,16 +4288,16 @@ function! s:vimim_initialize_mycloud_local()
     let path = 'C:/home/vimim/'
     let cloud = s:path . 'pcloud/qptest'
     if filereadable(cloud)
-        let s:vimim_cloud_local = cloud
+        let s:vimim_cloud_python = cloud
     else
-        let s:vimim_cloud_local = 0
+        let s:vimim_cloud_python = 0
     endif
 endfunction
 
 " -------------------------------------------
 function! s:vimim_get_mycloud_local(keyboard)
 " -------------------------------------------
-    if empty(s:vimim_cloud_local)
+    if empty(s:vimim_cloud_python)
         return []
     endif
     let cloud = 'python ' . svimim_cloud_local:
@@ -4784,7 +4784,7 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_cloud_local = 0
+    let s:vimim_cloud_python = 0
     let s:vimim_cloud_pim = 0
     let s:vimim_mycloud_rot13 = 0
     " ------------------------------
@@ -5176,12 +5176,12 @@ else
 
     " [mycloud] get chunmeng from mycloud local
     " -----------------------------------------
-    if empty(s:vimim_cloud_local)
+    if empty(s:vimim_cloud_python)
         let msg = "keep local mycloud code for the future."
     else
         let results = s:vimim_get_mycloud_local(keyboard)
         if empty(len(results))
-            let s:vimim_cloud_local = 0
+            let s:vimim_cloud_python = 0
         else
             return s:vimim_popupmenu_list(results)
         endif
