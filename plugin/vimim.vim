@@ -4164,6 +4164,8 @@ function! s:vimim_magic_tail(keyboard)
     if magic_tail !~# "[0-9a-z]"
         return 0
     endif
+    " dynamically set N, the length to start cloud
+    let s:vimim_mycloud_www = len(keyboard)
     let s:keyboard_leading_zero = keyboard
     return keyboard
 endfunction
@@ -5144,7 +5146,9 @@ else
 
     " [record] keep track of all valid inputs
     " ---------------------------------------
-    let g:vimim .=  keyboard . "."
+    if keyboard !~ '\s'
+        let g:vimim .=  keyboard . "."
+    endif
 
     " [eggs] hunt classic easter egg ... vim<C-\>
     " -------------------------------------------
