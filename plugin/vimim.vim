@@ -585,15 +585,23 @@ function! s:vimim_scan_plugin_for_more_im()
         return
     endif
     " -------------------------------------
+    if empty(s:vimim_ctrl_6_as_onekey)
+        let msg = "use CTRL-6 to toggle"
+    elseif get(s:im['4corner'],0) > 0
+        let msg = "pinyin and 4corner are in harmony"
+    else
+        return
+    endif
+    " -------------------------------------
     let im = 0
-    if get(s:im['cangjie'],0) > 0
-    \|| get(s:im['zhengma'],0) > 0
+    if get(s:im['4corner'],0) > 0
+    \|| get(s:im['cangjie'],0) > 0
+    \|| get(s:im['erbi'],0) > 0
+    \|| get(s:im['wubi'],0) > 0
     \|| get(s:im['quick'],0) > 0
     \|| get(s:im['array30'],0) > 0
-    \|| get(s:im['erbi'],0) > 0
     \|| get(s:im['xinhua'],0) > 0
-    \|| get(s:im['wubi'],0) > 0
-    \|| get(s:im['4corner'],0) > 0
+    \|| get(s:im['zhengma'],0) > 0
         let msg = "plug and play <=> xingma and pinyin"
         let im = s:vimim_scan_plugin_to_invoke_im()
     endif
