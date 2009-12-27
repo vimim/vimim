@@ -5477,7 +5477,9 @@ function! s:vimim_initialize_mapping()
         sil!call s:vimim_chinese_mode_mapping_on()
     else
         imap<silent><C-^> <Plug>VimimOneKey
-        nmap<silent><C-^> bea<C-^>
+        if s:vimim_ctrl_6_as_onekey == 2
+            nmap<silent><C-^> bEa<C-^>
+        endif
     endif
     " -----------------------------------------
 endfunction
