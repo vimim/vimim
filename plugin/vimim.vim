@@ -183,8 +183,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_mycloud_local")
-    call add(G, "g:vimim_mycloud_www")
     call add(G, "g:vimim_reverse_pageup_pagedown")
     call add(G, "g:vimim_sexy_input_style")
     call add(G, "g:vimim_sexy_onekey")
@@ -198,7 +196,9 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
-    call add(G, "g:vimim_www_sogou")
+    call add(G, "g:vimim_cloud_local")
+    call add(G, "g:vimim_cloud_pim")
+    call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
@@ -309,9 +309,9 @@ function! s:vimim_finalize_session()
         let s:chinese_frequency = 1
     endif
     " ------------------------------
-    if empty(s:vimim_www_sogou)
-        let s:vimim_www_sogou = 888
-    elseif s:vimim_www_sogou == 1
+    if empty(s:vimim_cloud_sogou)
+        let s:vimim_cloud_sogou = 888
+    elseif s:vimim_cloud_sogou == 1
         let s:chinese_frequency = -1
     endif
     " ----------------------------------------
@@ -820,20 +820,20 @@ function! s:vimim_egg_vimim()
     endif
 " ----------------------------------
     let option = "cloud\t 私云："
-    if s:vimim_mycloud_www > 0
+    if s:vimim_cloud_pim > 0
         let option .= "〖自己的云〗"
         call add(eggs, option)
     endif
 " ----------------------------------
     let option = "cloud\t 搜狗："
-    if s:vimim_www_sogou < 0
+    if s:vimim_cloud_sogou < 0
         let option .= "〖晴天无云〗"
-    elseif s:vimim_www_sogou == 888
+    elseif s:vimim_cloud_sogou == 888
         let option .= "〖想云就云〗"
-    elseif s:vimim_www_sogou == 1
+    elseif s:vimim_cloud_sogou == 1
         let option .= "〖全云输入〗"
     else
-        let number = s:vimim_www_sogou
+        let number = s:vimim_cloud_sogou
         if len(s:quantifiers) > 10
             let numbers = split(number,'\zs')
             if len(numbers) == 2
@@ -1771,11 +1771,11 @@ function! s:vimim_statusline()
         endif
     endif
   " --------------------------
-    if empty(im) && s:vimim_www_sogou > 0
+    if empty(im) && s:vimim_cloud_sogou > 0
         let im = get(s:im['cloud'],1)
     endif
   " --------------------------
-    if len(s:vimim_mycloud_local) > 1
+    if len(s:vimim_cloud_local) > 1
         let im = get(s:im['mycloud'],1)
     endif
   " --------------------------
@@ -4054,8 +4054,8 @@ function! s:vimim_plug_n_play_www_sogou()
 " ---------------------------------------
     if empty(s:datafile_primary)
         if (executable('wget') || executable('curl'))
-            if empty(s:vimim_www_sogou)
-                let s:vimim_www_sogou = 1
+            if empty(s:vimim_cloud_sogou)
+                let s:vimim_cloud_sogou = 1
                 return
             endif
         endif
@@ -4064,8 +4064,8 @@ function! s:vimim_plug_n_play_www_sogou()
     if has("win32") || has("win32unix")
         let wget = s:path . "wget.exe"
         if executable(wget)
-            if empty(s:vimim_www_sogou)
-                let s:vimim_www_sogou = 1
+            if empty(s:vimim_cloud_sogou)
+                let s:vimim_cloud_sogou = 1
             endif
             let s:www_executable = wget
         endif
@@ -4102,8 +4102,8 @@ function! s:vimim_initialize_cloud()
     endif
     " -------------------------------------
     if empty(s:www_executable)
-        let s:vimim_www_sogou = 0
-        let s:vimim_mycloud_www = 0
+        let s:vimim_cloud_sogou = 0
+        let s:vimim_cloud_pim = 0
     endif
 endfunction
 
@@ -4157,7 +4157,7 @@ function! s:vimim_magic_tail(keyboard)
         return 0
     endif
     " dynamically set N, the length to start cloud
-    let s:vimim_mycloud_www = len(keyboard)
+    let s:vimim_cloud_sogou = len(keyboard)
     let s:keyboard_leading_zero = keyboard
     return keyboard
 endfunction
@@ -4200,7 +4200,7 @@ endfunction
 function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
     let keyboard = a:keyboard
-    if s:vimim_www_sogou < 1
+    if s:vimim_cloud_sogou < 1
     \|| empty(s:www_executable)
     \|| empty(keyboard)
         return []
@@ -4270,7 +4270,7 @@ call add(s:vimims, VimIM)
 " ------------------------------------------
 function! s:vimim_initialize_mycloud_local()
 " ------------------------------------------
-    if empty(s:vimim_mycloud_local)
+    if empty(s:vimim_cloud_local)
         return []
     endif
     " ---------------------------------
@@ -4280,7 +4280,7 @@ function! s:vimim_initialize_mycloud_local()
         return
     endif
     " ---------------------------------
-    if filereadable(s:vimim_mycloud_local)
+    if filereadable(s:vimim_cloud_local)
         let msg = 'my cloud seems ready"
         return
     endif
@@ -4288,19 +4288,19 @@ function! s:vimim_initialize_mycloud_local()
     let path = 'C:/home/vimim/'
     let cloud = s:path . 'pcloud/qptest'
     if filereadable(cloud)
-        let s:vimim_mycloud_local = cloud
+        let s:vimim_cloud_local = cloud
     else
-        let s:vimim_mycloud_local = 0
+        let s:vimim_cloud_local = 0
     endif
 endfunction
 
 " -------------------------------------------
 function! s:vimim_get_mycloud_local(keyboard)
 " -------------------------------------------
-    if empty(s:vimim_mycloud_local)
+    if empty(s:vimim_cloud_local)
         return []
     endif
-    let cloud = 'python ' . s:vimim_mycloud_local
+    let cloud = 'python ' . svimim_cloud_local:
     let input = a:keyboard
     let output = 0
     " ---------------------------------------
@@ -4319,7 +4319,7 @@ endfunction
 function! s:vimim_get_mycloud_www(keyboard)
 " -----------------------------------------
     let keyboard = a:keyboard
-    if s:vimim_mycloud_www < 1
+    if s:vimim_cloud_pim < 1
     \|| empty(s:www_executable)
     \|| empty(keyboard)
         return []
@@ -4360,7 +4360,7 @@ function! s:vimim_process_mycloud_output(keyboard, output)
     for item in split(output, '\n')
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
-        if s:vimim_mycloud_www > 0
+        if s:vimim_cloud_pim > 0
             if s:vimim_mycloud_rot13 > 0
                 let chinese = s:vimim_rot13(chinese)
             endif
@@ -4784,11 +4784,11 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_mycloud_local = 0
-    let s:vimim_mycloud_www = 0
+    let s:vimim_cloud_local = 0
+    let s:vimim_cloud_pim = 0
     let s:vimim_mycloud_rot13 = 0
     " ------------------------------
-    let s:vimim_www_sogou=12
+    let s:vimim_cloud_sogou=12
     " ------------------------------
     let s:vimim_chinese_frequency=14
     let s:vimim_frequency_first_fix=0
@@ -5176,12 +5176,12 @@ else
 
     " [mycloud] get chunmeng from mycloud local
     " -----------------------------------------
-    if empty(s:vimim_mycloud_local)
+    if empty(s:vimim_cloud_local)
         let msg = "keep local mycloud code for the future."
     else
         let results = s:vimim_get_mycloud_local(keyboard)
         if empty(len(results))
-            let s:vimim_mycloud_local = 0
+            let s:vimim_cloud_local = 0
         else
             return s:vimim_popupmenu_list(results)
         endif
@@ -5189,7 +5189,7 @@ else
 
     " [mycloud] get chunmeng from mycloud www
     " ---------------------------------------
-    let cloud = s:vimim_mycloud_www
+    let cloud = s:vimim_cloud_pim
     let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
     if cloud > 0
         let results = s:vimim_get_mycloud_www(keyboard)
@@ -5246,7 +5246,7 @@ else
 
     " [cloud] to make cloud come true for woyouyigemeng
     " -------------------------------------------------
-    let cloud = s:vimim_www_sogou
+    let cloud = s:vimim_cloud_sogou
     let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
     if cloud > 0
         let results = s:vimim_get_cloud_sogou(keyboard)
@@ -5255,7 +5255,7 @@ else
             call s:debugs('cloud_gold', s:debug_list(results))
         endif
         if empty(len(results))
-            if s:vimim_www_sogou > 2
+            if s:vimim_cloud_sogou > 2
                 let s:no_internet_connection += 1
             endif
         else
@@ -5436,7 +5436,7 @@ else
 
     " [cloud] never give up trying whole cloud
     " ----------------------------------------
-    if s:vimim_www_sogou == 1
+    if s:vimim_cloud_sogou == 1
         let results = s:vimim_get_cloud_sogou(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
