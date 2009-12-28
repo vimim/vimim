@@ -4774,7 +4774,7 @@ function! s:vimim_initialize_vimim_txt_debug()
     endif
     " ------------------------------ debug
     let s:vimim_cloud_plugin=0
-    let g:vimim_cloud_pim=0
+    let s:vimim_cloud_pim=0
     let s:vimim_cloud_sogou=12
     " ------------------------------
     let s:vimim_chinese_frequency=12
