@@ -199,7 +199,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud_plugin")
     call add(G, "g:vimim_cloud_pim")
     call add(G, "g:vimim_cloud_sogou")
-    call add(G, "g:vimim_mycloud_rot13")
     call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
@@ -4328,9 +4327,7 @@ function! s:vimim_get_mycloud_www(keyboard)
     let cloud = "http://pim-cloud.appspot.com/sp_abc/"
     let cloud = "http://pim-cloud.appspot.com/qp/"
     let input = keyboard
-    if s:vimim_mycloud_rot13 > 0
-        let input = s:vimim_rot13(input)
-    endif
+    let input = s:vimim_rot13(input)
     let input = cloud . input
     let output = 0
     " ----------------------------------------
@@ -4362,9 +4359,7 @@ function! s:vimim_process_mycloud_output(keyboard, output)
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
         if s:vimim_cloud_pim > 0
-            if s:vimim_mycloud_rot13 > 0
-                let chinese = s:vimim_rot13(chinese)
-            endif
+            let chinese = s:vimim_rot13(chinese)
             let chinese = s:vimim_xx_to_chinese(chinese)
         endif
         if s:localization > 0
@@ -4787,7 +4782,8 @@ function! s:vimim_initialize_vimim_txt_debug()
     " ------------------------------ debug
     let s:vimim_cloud_plugin = 0
     let s:vimim_cloud_plugin="C:/home/vimim/mycloud/mycloud"
-    let s:vimim_cloud_pim = 0
+    let g:vimim_cloud_pim = 0
+    let g:vimim_mycloud_rot13 = 1
     " ------------------------------
     let s:vimim_cloud_sogou=12
     " ------------------------------
