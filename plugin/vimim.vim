@@ -4295,13 +4295,13 @@ function! s:vimim_initialize_mycloud_local()
     endif
 endfunction
 
-" -------------------------------------------
-function! s:vimim_get_mycloud_local(keyboard)
-" -------------------------------------------
+" --------------------------------------------
+function! s:vimim_get_mycloud_plugin(keyboard)
+" --------------------------------------------
     if empty(s:vimim_cloud_plugin)
         return []
     endif
-    let cloud = 'python ' . svimim_cloud_local:
+    let cloud = 'python ' . s:vimim_cloud_plugin
     let input = a:keyboard
     let output = 0
     " ---------------------------------------
@@ -4786,6 +4786,7 @@ function! s:vimim_initialize_vimim_txt_debug()
     endif
     " ------------------------------ debug
     let s:vimim_cloud_plugin = 0
+    let s:vimim_cloud_plugin="C:/home/vimim/mycloud/mycloud"
     let s:vimim_cloud_pim = 0
     " ------------------------------
     let s:vimim_cloud_sogou=12
@@ -5179,7 +5180,7 @@ else
     if empty(s:vimim_cloud_plugin)
         let msg = "keep local mycloud code for the future."
     else
-        let results = s:vimim_get_mycloud_local(keyboard)
+        let results = s:vimim_get_mycloud_plugin(keyboard)
         if empty(len(results))
             let s:vimim_cloud_plugin = 0
         else
