@@ -834,14 +834,8 @@ function! s:vimim_egg_vimim()
         let option .= "〖全云输入〗"
     else
         let number = s:vimim_cloud_sogou
-        if len(s:quantifiers) > 10
-            let numbers = split(number,'\zs')
-            if len(numbers) == 2
-                let numbers = insert(numbers, 's', 1)
-            endif
-            let number = s:vimim_get_chinese_number(numbers, 'i')
-        endif
-        let option .= number . "朵" . get(s:im['cloud'],1)
+        let option .= "每超过" . number . "个字符就开始"
+        let option .= get(s:im['cloud'],1)
     endif
     call add(eggs, option)
 " ----------------------------------
