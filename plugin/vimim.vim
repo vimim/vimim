@@ -825,16 +825,16 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
 " ----------------------------------
+    let cloud = s:vimim_cloud_sogou
     let option = "cloud\t 搜狗："
-    if s:vimim_cloud_sogou < 0
+    if cloud < 0
         let option .= "〖晴天无云〗"
-    elseif s:vimim_cloud_sogou == 888
+    elseif cloud == 888
         let option .= "〖想云就云〗"
-    elseif s:vimim_cloud_sogou == 1
+    elseif cloud == 1
         let option .= "〖全云输入〗"
     else
-        let number = s:vimim_cloud_sogou
-        let option .= "每超过" . number . "个字符就开始"
+        let option .= "每超过" . cloud . "个字符就开始"
         let option .= get(s:im['cloud'],1)
     endif
     call add(eggs, option)
@@ -4150,8 +4150,6 @@ function! s:vimim_magic_tail(keyboard)
     if magic_tail !~# "[0-9a-z]"
         return 0
     endif
-    " dynamically set N, the length to start cloud
-    let s:vimim_cloud_sogou = len(keyboard)
     let s:keyboard_leading_zero = keyboard
     return keyboard
 endfunction
@@ -4775,12 +4773,11 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_cloud_plugin = 0
-    let g:vimim_cloud_pim = 0
-    " ------------------------------
+    let s:vimim_cloud_plugin=0
+    let g:vimim_cloud_pim=0
     let s:vimim_cloud_sogou=12
     " ------------------------------
-    let s:vimim_chinese_frequency=14
+    let s:vimim_chinese_frequency=12
     let s:vimim_frequency_first_fix=0
     " ------------------------------
     let s:vimim_wildcard_search=1
