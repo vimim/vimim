@@ -4285,8 +4285,9 @@ function! s:vimim_initialize_mycloud_local()
         return
     endif
     " ---------------------------------
-    let path = 'C:/home/vimim/'
-    let cloud = s:path . 'pcloud/qptest'
+    let path = "C:/home/vimim/"
+    let cloud= "C:/home/vimim/mycloud/mycloud"
+    let cloud = s:path . "mycloud/mycloud"
     if filereadable(cloud)
         let s:vimim_cloud_plugin = cloud
     else
@@ -4781,9 +4782,7 @@ function! s:vimim_initialize_vimim_txt_debug()
     endif
     " ------------------------------ debug
     let s:vimim_cloud_plugin = 0
-    let s:vimim_cloud_plugin="C:/home/vimim/mycloud/mycloud"
     let g:vimim_cloud_pim = 0
-    let g:vimim_mycloud_rot13 = 1
     " ------------------------------
     let s:vimim_cloud_sogou=12
     " ------------------------------
