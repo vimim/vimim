@@ -199,6 +199,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud_plugin")
     call add(G, "g:vimim_cloud_pim")
     call add(G, "g:vimim_cloud_sogou")
+    call add(G, "g:vimim_mycloud_rot13")
     call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
@@ -4786,7 +4787,6 @@ function! s:vimim_initialize_vimim_txt_debug()
     " ------------------------------ debug
     let s:vimim_cloud_plugin = 0
     let s:vimim_cloud_pim = 0
-    let s:vimim_mycloud_rot13 = 0
     " ------------------------------
     let s:vimim_cloud_sogou=12
     " ------------------------------
