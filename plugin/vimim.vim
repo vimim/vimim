@@ -3234,7 +3234,6 @@ function! s:vimim_update_chinese_frequency_usage()
     if s:chinese_frequency < 2
         return
     endif
-    let s:keyboard_count += 1
     let auto_save = s:keyboard_count % s:chinese_frequency
     if auto_save > 0
         call s:vimim_save_to_disk(s:lines)
@@ -4755,8 +4754,7 @@ function! s:vimim_initialize_backdoor()
     if filereadable(datafile_backdoor)
         let s:datafile_primary = datafile_backdoor
         let s:vimimdebug=1
-        let s:vimim_tab_as_onekey=1
-        let s:vimim_ctrl_6_as_onekey=2
+        let s:vimim_ctrl_6_as_onekey=3
     endif
 endfunction
 
@@ -4929,6 +4927,7 @@ function! s:reset_before_anything()
     let s:chinese_mode_toggle_flag = 0
     let s:pageup_pagedown = ''
     let s:pattern_not_found = 0
+    let s:keyboard_count += 1
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
@@ -5459,11 +5458,15 @@ function! s:vimim_initialize_mapping()
     " --------------------------------
         imap<silent><C-^> <Plug>VimimOneKey
     " --------------------------------
+        if s:vimim_ctrl_6_as_onekey > 1
+            let s:vimim_tab_as_onekey = 1
+        endif
+    " --------------------------------
         if s:vimim_tab_as_onekey > 0
             imap<silent><Tab> <C-^>
         endif
     " --------------------------------
-        if s:vimim_ctrl_6_as_onekey == 2
+        if s:vimim_ctrl_6_as_onekey > 2
             nmap<silent><C-^> bEa<C-^>
         endif
     " --------------------------------
