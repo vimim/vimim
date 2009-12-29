@@ -1774,7 +1774,7 @@ function! s:vimim_statusline()
     endif
   " --------------------------
     if len(s:vimim_cloud_plugin) > 1
-        let im = get(s:im['mycloud'],1)
+        let im = get(s:im['mycloud'],1) ."：". get(s:im['mycloud'],0)
     endif
   " --------------------------
     let im  = plus[0] . im . plus[1]
