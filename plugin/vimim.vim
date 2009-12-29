@@ -679,7 +679,7 @@ function! s:vimim_egg_vimegg()
     call add(eggs, "程式　vimimvim")
     call add(eggs, "帮助　vimimhelp")
     call add(eggs, "测试　vimimdebug")
-    call add(eggs, "速度　vimimspeed")
+    call add(eggs, "速度　vimimstat")
     call add(eggs, "设置　vimimdefaults")
     return map(eggs,  '"VimIM 彩蛋：" . v:val . "　"')
 endfunction
@@ -695,9 +695,9 @@ function! s:vimim_egg_vim()
     return eggs
 endfunction
 
-" --------------------------------
-function! s:vimim_egg_vimimspeed()
-" --------------------------------
+" -------------------------------
+function! s:vimim_egg_vimimstat()
+" -------------------------------
     let eggs = []
     " -----------------------------------------------
     if empty(get(g:vimim,0)) || empty(get(g:vimim,1))
@@ -713,7 +713,7 @@ function! s:vimim_egg_vimimspeed()
     if gold > 0
         let gold_per_stone = stone*1.0/gold
     endif
-    let stat = "平均码长：". gold_per_stone
+    let stat = "平均码长：". string(gold_per_stone)
     call add(eggs, stat)
     " ------------------------
     let duration =  g:vimim[3]/60
@@ -912,8 +912,8 @@ function! s:vimim_easter_chicken(keyboard)
         return s:vimim_egg_vimimvim()
     elseif egg ==# "vimimhelp"
         return s:vimim_egg_vimimhelp()
-    elseif egg ==# "vimimspeed"
-        return s:vimim_egg_vimimspeed()
+    elseif egg ==# "vimimstat"
+        return s:vimim_egg_vimimstat()
     elseif egg ==# "vimimdefaults"
         return s:vimim_egg_vimimdefaults()
     elseif egg ==# "vimimdebug" || egg ==# ",,"
