@@ -152,7 +152,7 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_datafile_privates()
     " -----------------------------------------
     call s:vimim_initialize_cloud()
-    call s:vimim_initialize_mycloud_local()
+    call s:vimim_initialize_mycloud_plugin()
     " -----------------------------------------
     call s:vimim_finalize_session()
     " -----------------------------------------
@@ -194,6 +194,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_smart_ctrl_h")
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_tab_as_onekey")
+    call add(G, "g:vimim_smart_ctrl_p")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_cloud_plugin")
@@ -281,6 +282,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:im = {}
     let s:inputs = {}
+    let s:inputs_all = {}
     let s:ecdict = {}
     let s:shuangpin_table = {}
     " --------------------------------
@@ -2572,6 +2574,58 @@ function! <SID>vimim_smart_ctrl_n()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+" ----------------------------------------------------
+function! s:vimim_get_list_from_smart_ctrl_n(keyboard)
+" ----------------------------------------------------
+    let keyboard = a:keyboard
+    if s:smart_ctrl_n < 1
+        return []
+    endif
+    let s:smart_ctrl_n = 0
+    if keyboard =~# s:valid_key && len(keyboard) == 1
+        let msg = 'try to find any previous valid input'
+    else
+        return []
+    endif
+    let matched_list = []
+    if has_key(s:inputs, keyboard)
+        let matched_list = s:inputs[keyboard]
+    endif
+    return matched_list
+endfunction
+
+" ---------------------------------
+function! <SID>vimim_smart_ctrl_p()
+" ---------------------------------
+    let s:smart_ctrl_p += 1
+    let key = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" ----------------------------------------------------
+function! s:vimim_get_list_from_smart_ctrl_p(keyboard)
+" ----------------------------------------------------
+    let keyboard = a:keyboard
+    if s:smart_ctrl_p < 1
+        return []
+    endif
+    let s:smart_ctrl_p = 0
+    if keyboard =~# s:valid_key
+        let msg = 'try to find all previous valid input'
+    else
+        return []
+    endif
+    let pattern = s:vimim_fuzzy_pattern(keyboard)
+    let matched = match(keys(s:inputs_all), pattern)
+    if matched < 0
+        let msg = "nothing matched previous user input"
+    else
+        let keyboard = get(keys(s:inputs_all), matched)
+    endif
+    let matched_list = s:inputs_all[keyboard]
+    return matched_list
+endfunction
+
 " ---------------------------------
 function! <SID>vimim_smart_ctrl_h()
 " ---------------------------------
@@ -2702,7 +2756,10 @@ function! s:vimim_popupmenu_list(matched_list)
     let first_candidate = get(split(get(matched_list,0)),0)
     if s:vimim_smart_ctrl_n > 0
         let key = strpart(first_candidate,0,1)
-        let s:inputs[key]=matched_list
+        let s:inputs[key] = matched_list
+    endif
+    if s:vimim_smart_ctrl_p > 0
+        let s:inputs_all[first_candidate] = matched_list
     endif
     "-----------------------------------------
     let s:popupmenu_matched_list = matched_list
@@ -4275,9 +4332,9 @@ let VimIM = " ====  VimIM_My_Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ------------------------------------------
-function! s:vimim_initialize_mycloud_local()
-" ------------------------------------------
+" -------------------------------------------
+function! s:vimim_initialize_mycloud_plugin()
+" -------------------------------------------
     if empty(s:vimim_cloud_plugin)
         return []
     endif
@@ -4816,9 +4873,11 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
+    let s:vimim_cloud_plugin='python C:/home/vimim/mycloud/mycloud'
     let s:vimim_cloud_plugin=0
     let s:vimim_cloud_pim=0
     let s:vimim_cloud_sogou=12
+    let s:vimim_smart_ctrl_p=1
     " ------------------------------
     let s:vimim_chinese_frequency=12
     let s:vimim_frequency_first_fix=0
@@ -4993,6 +5052,7 @@ function! s:reset_after_auto_insert()
     let s:one_key_correction = 0
     let s:menu_reverse = 0
     let s:smart_ctrl_n = 0
+    let s:smart_ctrl_p = 0
     let s:smart_enter = 0
 "---------------------------------------
 endfunction
@@ -5035,7 +5095,8 @@ function! s:vimim_i_map_off()
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['<CR>', '<BS>', '<C-H>', '<C-N>', '<Space>'])
+    call extend(unmap_list, ['<CR>', '<BS>', '<Space>'])
+    call extend(unmap_list, ['<C-N>', '<C-P>', '<C-H>'])
     " ------------------------------
     for _ in unmap_list
         sil!exe 'iunmap '. _
@@ -5052,6 +5113,10 @@ function! s:vimim_helper_mapping_on()
     " ----------------------------------------------------------
     if s:vimim_smart_ctrl_n > 0 && s:chinese_input_mode < 2
         inoremap<silent><C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
+    endif
+    " ----------------------------------------------------------
+    if s:vimim_smart_ctrl_p > 0 && s:chinese_input_mode < 2
+        inoremap<silent><C-P> <C-R>=<SID>vimim_smart_ctrl_p()<CR>
     endif
     " ----------------------------------------------------------
     if s:chinese_input_mode > 0 || s:vimim_sexy_onekey > 0
@@ -5185,12 +5250,18 @@ else
     " use cached list when input-memory is used
     " -----------------------------------------
     if s:smart_ctrl_n > 0
-        let s:smart_ctrl_n = 0
-        if len(keyboard) == 1 && keyboard =~# s:valid_key
-            if has_key(s:inputs, keyboard)
-                let matched_list = s:inputs[keyboard]
-                return s:vimim_popupmenu_list(matched_list)
-            endif
+        let results = s:vimim_get_list_from_smart_ctrl_n(keyboard)
+        if !empty(results)
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
+    " use all cached list when input-memory is used
+    " ---------------------------------------------
+    if s:smart_ctrl_p > 0
+        let results = s:vimim_get_list_from_smart_ctrl_p(keyboard)
+        if !empty(results)
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
