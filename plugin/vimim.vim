@@ -299,7 +299,7 @@ function! s:vimim_initialize_session()
     let s:lines_primary = []
     let s:lines_secondary = []
     " --------------------------------
-    let g:vimim = ""
+    let g:vimim = ["",0,"start",0]
     " --------------------------------
 endfunction
 
@@ -679,6 +679,7 @@ function! s:vimim_egg_vimegg()
     call add(eggs, "程式　vimimvim")
     call add(eggs, "帮助　vimimhelp")
     call add(eggs, "测试　vimimdebug")
+    call add(eggs, "速度　vimimspeed")
     call add(eggs, "设置　vimimdefaults")
     return map(eggs,  '"VimIM 彩蛋：" . v:val . "　"')
 endfunction
@@ -691,6 +692,40 @@ function! s:vimim_egg_vim()
     let eggs += ["vim   精力"]
     let eggs += ["vim   生氣"]
     let eggs += ["vimim 中文輸入法"]
+    return eggs
+endfunction
+
+" --------------------------------
+function! s:vimim_egg_vimimspeed()
+" --------------------------------
+    let eggs = []
+    " -----------------------------------------------
+    if empty(get(g:vimim,0)) || empty(get(g:vimim,1))
+        let msg = "statistics not available"
+    endif
+    " ------------------------
+    let gold = g:vimim[1]
+    let stat = "输入总字数：". gold ." 汉字"
+    call add(eggs, stat)
+    " ------------------------
+    let stone = len(join(split(g:vimim[0],'[.]')))
+    let gold_per_stone = 0
+    if gold > 0
+        let gold_per_stone = stone*1.0/gold
+    endif
+    let stat = "平均码长：". gold_per_stone
+    call add(eggs, stat)
+    " ------------------------
+    let duration =  g:vimim[3]/60
+    let rate = 0
+    if duration > 0
+        let rate = gold/duration
+    endif
+    let stat = "打字速度：". rate ." 汉字/分钟"
+    call add(eggs, stat)
+    " ------------------------
+    let egg = '"stat  " . v:val . "　"'
+    call map(eggs, egg)
     return eggs
 endfunction
 
@@ -877,6 +912,8 @@ function! s:vimim_easter_chicken(keyboard)
         return s:vimim_egg_vimimvim()
     elseif egg ==# "vimimhelp"
         return s:vimim_egg_vimimhelp()
+    elseif egg ==# "vimimspeed"
+        return s:vimim_egg_vimimspeed()
     elseif egg ==# "vimimdefaults"
         return s:vimim_egg_vimimdefaults()
     elseif egg ==# "vimimdebug" || egg ==# ",,"
@@ -3203,9 +3240,9 @@ function! s:vimim_initialize_datafile_in_vimrc()
     " ------------------------------------------
 endfunction
 
-" ------------------------------------
-function! s:vimim_get_new_order_list()
-" ------------------------------------
+" -------------------------------------------
+function! s:vimim_get_new_order_list(chinese)
+" -------------------------------------------
     if empty(s:matched_list)
         return []
     endif
@@ -3213,15 +3250,14 @@ function! s:vimim_get_new_order_list()
     let one_line_list = split(get(s:matched_list,0))
     let keyboard = get(one_line_list,0)
     let first_fix_candidate = get(one_line_list,1)
-    let chinese = s:vimim_popup_word(s:start_column_before)
     " --------------------------------
     if keyboard !~# s:valid_key
-    \|| char2nr(chinese) < 127
+    \|| char2nr(a:chinese) < 127
     \|| char2nr(first_fix_candidate) < 127
         return []
     endif
     " --------------------------------
-    if first_fix_candidate ==# chinese
+    if first_fix_candidate ==# a:chinese
         return []
     endif
     let new_order_list = []
@@ -3249,7 +3285,7 @@ function! s:vimim_get_new_order_list()
         let insert_index = 1
     endif
     " --------------------------------
-    let used = match(new_order_list, chinese)
+    let used = match(new_order_list, a:chinese)
     if used < 0
         return []
     else
@@ -3262,11 +3298,10 @@ function! s:vimim_get_new_order_list()
     return [new_order_list, new_match_list]
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_update_chinese_frequency_usage()
-" ------------------------------------------------
-    let both_list = s:vimim_get_new_order_list()
-    let new_list = get(both_list,0)
+" ---------------------------------------------------------
+function! s:vimim_update_chinese_frequency_usage(both_list)
+" ---------------------------------------------------------
+    let new_list = get(a:both_list,0)
     if empty(new_list)
         let s:matched_list = []
         return
@@ -3274,7 +3309,7 @@ function! s:vimim_update_chinese_frequency_usage()
     " update data in memory based on past usage
     " (1/4) locate new order line based on user input
     " -----------------------------------------------
-    let match_list = get(both_list,1)
+    let match_list = get(a:both_list,1)
     if empty(match_list) || empty(s:lines)
         return
     endif
@@ -4337,17 +4372,28 @@ function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
     if empty(s:vimim_cloud_plugin)
         " when nothing set, we do plug-n-play
-
-        " by default, posix system uses shebang to indicate the executable
         let cloud = s:path . "mycloud/mycloud"
+        " -----------------------------------------------------------
+        " note:  It is pain to let gVim do system
+        " note:  I have to avoid it whenever possible
+        " note:  Otherwise, I found flash dos box the first time I used VimIM
+        " note:  Unless it is absolute necessary, gVim should not call external
+        " -----------------------------------
+        if has("unix")
+            let mes = "unix is free to run system()"
+        elseif !filereadable(cloud)
+            return
+        endif
+        " -----------------------------------
+        " by default, posix system uses shebang to indicate executable
         " if the shebang not work, we do python
         if !executable(cloud)
             if !executable("python")
                 return
             endif
-            let cloud = "python " . s:path . "mycloud/mycloud"
+            let cloud = "python " . cloud
         endif
-
+        " -----------------------------------
         let ret = system(cloud . " __isvalid")
         if split(ret, "\t")[0] == "True"
             let s:vimim_cloud_plugin = cloud
@@ -4364,18 +4410,23 @@ function! s:vimim_initialize_mycloud_plugin()
             return
         endif
     endif
+    " -----------------------------------------------------------
+    " note:  one purpose of s:vimim_dictionary_im()
+    " note:  is to set Chinese in one place
+    " note:  as I don't like mix Chinese together with code everywhere
+    " note:  please check if the change works or not
+    " -----------------------------------------------------------
     let key = 'mycloud'
     let ret = system(s:vimim_cloud_plugin . " __getname")
     let loaded = split(ret, "\t")[0]
-    let im = '自己的云'
     let ret = system(s:vimim_cloud_plugin . " __getkeychars")
     let keycode = split(ret, "\t")[0]
     if empty(keycode)
         let s:vimim_cloud_plugin = 0
     else
-        let s:im[key]=[loaded, im, keycode]
+        let s:im[key][0] = loaded
+        let s:im[key][2] = keycode
     endif
-    " ---------------------------------
 endfunction
 
 " --------------------------------------------
@@ -4988,6 +5039,7 @@ function! s:vimim_start()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_reload_datafile(1)
+    let g:vimim[2] = reltime()[0]
 endfunction
 
 " ----------------------
@@ -5000,6 +5052,8 @@ function! s:vimim_stop()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
+    let duration =  reltime()[0] - g:vimim[2]
+    let g:vimim[3] .= duration
 endfunction
 
 " -----------------------------------------
@@ -5064,8 +5118,11 @@ function! g:vimim_reset_after_insert()
         return ""
     endif
     " --------------------------------
+    let chinese = s:vimim_popup_word(s:start_column_before)
+    let g:vimim[1] += len(chinese)/s:multibyte
     if s:chinese_frequency > 0
-        call s:vimim_update_chinese_frequency_usage()
+        let both_list = s:vimim_get_new_order_list(chinese)
+        call s:vimim_update_chinese_frequency_usage(both_list)
     endif
     " --------------------------------
     let s:matched_list = []
@@ -5258,7 +5315,7 @@ else
     " [record] keep track of all valid inputs
     " ---------------------------------------
     if keyboard !~ '\s'
-        let g:vimim .=  keyboard . "."
+        let g:vimim[0] .=  keyboard . "."
     endif
 
     " [eggs] hunt classic easter egg ... vim<C-\>
