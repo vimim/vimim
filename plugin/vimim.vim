@@ -4396,7 +4396,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     if empty(output)
         return []
     endif
-    return s:vimim_process_mycloud_output(input, output)
+    return s:vimim_process_mycloud_output(a:keyboard, output)
 endfunction
 
 " -----------------------------------------
