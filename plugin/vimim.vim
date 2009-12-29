@@ -205,6 +205,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_auto_copy_clipboard")
+    call add(G, "g:vimim_smart_ctrl_n")
     call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_laststatus")
@@ -279,6 +280,7 @@ function! s:vimim_initialize_session()
     let s:www_executable = 0
     " --------------------------------
     let s:im = {}
+    let s:inputs = {}
     let s:ecdict = {}
     let s:shuangpin_table = {}
     " --------------------------------
@@ -1288,7 +1290,7 @@ function! s:vimim_onekey(onekey)
     endif
     " ---------------------------------------------------
     if char_before !~# s:valid_key
-        if !has("autocmd") 
+        if !has("autocmd")
         \|| a:onekey ==# "\t"
         \|| empty(s:vimim_ctrl_6_as_onekey)
             call s:vimim_stop()
@@ -2563,6 +2565,14 @@ function! <SID>vimim_smart_enter()
 endfunction
 
 " ---------------------------------
+function! <SID>vimim_smart_ctrl_n()
+" ---------------------------------
+    let s:smart_ctrl_n += 1
+    let key = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" ---------------------------------
 function! <SID>vimim_smart_ctrl_h()
 " ---------------------------------
     " support intelligent sentence match for wozuixihuandeliulanqi.
@@ -2688,6 +2698,13 @@ function! s:vimim_popupmenu_list(matched_list)
     if empty(matched_list)
         return []
     endif
+    "-----------------------------------------
+    let first_candidate = get(split(get(matched_list,0)),0)
+    if s:vimim_smart_ctrl_n > 0
+        let key = strpart(first_candidate,0,1)
+        let s:inputs[key]=matched_list
+    endif
+    "-----------------------------------------
     let s:popupmenu_matched_list = matched_list
     if s:menu_reverse > 0
         let matched_list = reverse(matched_list)
@@ -2696,9 +2713,9 @@ function! s:vimim_popupmenu_list(matched_list)
     let label = 1
     let matched_list = s:vimim_pageup_pagedown(matched_list)
     let popupmenu_list = []
-    let first_candidate = get(split(get(matched_list,0)),0)
     let keyboard = s:keyboard_leading_zero
     let matched = match(keyboard, first_candidate)
+    "-----------------------------------------
     if matched > 0
         let msg = "............zuorichongxian"
         let keyboard = strpart(keyboard, matched)
@@ -4905,7 +4922,7 @@ function! s:vimim_stop()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
-    sil!call s:vimim_i_unmap()
+    sil!call s:vimim_i_map_off()
 endfunction
 
 " -----------------------------------------
@@ -4947,6 +4964,7 @@ function! s:reset_after_auto_insert()
     let s:keyboard_leading_zero = 0
     let s:one_key_correction = 0
     let s:menu_reverse = 0
+    let s:smart_ctrl_n = 0
     let s:smart_enter = 0
 "---------------------------------------
 endfunction
@@ -4983,13 +5001,13 @@ function! g:vimim_reset_after_insert()
     return ""
 endfunction
 
-" -------------------------
-function! s:vimim_i_unmap()
-" -------------------------
+" ---------------------------
+function! s:vimim_i_map_off()
+" ---------------------------
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['<CR>', '<BS>', '<C-H>', '<Space>'])
+    call extend(unmap_list, ['<CR>', '<BS>', '<C-H>', '<C-N>', '<Space>'])
     " ------------------------------
     for _ in unmap_list
         sil!exe 'iunmap '. _
@@ -5002,6 +5020,10 @@ function! s:vimim_helper_mapping_on()
 " -----------------------------------
     if s:vimim_smart_ctrl_h > 0 && s:chinese_input_mode < 2
         inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
+    endif
+    " ----------------------------------------------------------
+    if s:vimim_smart_ctrl_n > 0 && s:chinese_input_mode < 2
+        inoremap<silent><C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
     endif
     " ----------------------------------------------------------
     if s:chinese_input_mode > 0 || s:vimim_sexy_onekey > 0
@@ -5038,6 +5060,15 @@ if a:start
     let current_line = getline(start_row)
     let char_before = current_line[start_column-1]
     let char_before_before = current_line[start_column-2]
+
+    " get one char when input-memory is used
+    " --------------------------------------
+    if s:smart_ctrl_n > 0
+        if start_column > 0
+            let start_column -= 1
+            return start_column
+        endif
+    endif
 
     " support natural sentence input with space
     " -----------------------------------------
@@ -5120,6 +5151,18 @@ else
         if len(keyboard) == 1
         \&& keyboard !~# '\w'
             return
+        endif
+    endif
+
+    " use cached list when input-memory is used
+    " -----------------------------------------
+    if s:smart_ctrl_n > 0
+        let s:smart_ctrl_n = 0
+        if len(keyboard) == 1 && keyboard =~# s:valid_key
+            if has_key(s:inputs, keyboard)
+                let matched_list = s:inputs[keyboard]
+                return s:vimim_popupmenu_list(matched_list)
+            endif
         endif
     endif
 
