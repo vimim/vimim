@@ -4282,25 +4282,53 @@ function! s:vimim_initialize_mycloud_local()
         return []
     endif
     " ---------------------------------
-    if executable('python')
-        let msg = 'python is free to use'
-    else
-        return
-    endif
+    " python is *not* mandatory, we should check what user specified
+    "if executable('python')
+    "    let msg = 'python is free to use'
+    "else
+    "    return
+    "endif
     " ---------------------------------
-    if filereadable(s:vimim_cloud_plugin)
-        let msg = 'my cloud seems ready"
-        return
+    let sp = split(s:vimim_cloud_plugin, " ")
+    if len(sp) == 1
+        if executable(sp[0])
+            let msg = 'my cloud seems ready"
+            return
+        endif
+    elseif len(sp) == 2
+        if executable(sp[0]) && filereadable(sp[1])
+            let msg = 'my cloud seems ready"
+            return
+        endif
     endif
     " ---------------------------------
     let path = "C:/home/vimim/"
     let cloud= "C:/home/vimim/mycloud/mycloud"
-    let cloud = s:path . "mycloud/mycloud"
-    if filereadable(cloud)
-        let s:vimim_cloud_plugin = cloud
+    if has("win32") && !has("win32unix")
+        " by default, windows use python
+        let cloud = "python " . s:path . "mycloud/mycloud"
     else
+        " by default, posix system uses shebang to indicate the executable
+        let cloud = s:path . "mycloud/mycloud"
+    endif
+    let sp = split(cloud, " ")
+    if len(sp) == 1
+        if executable(sp[0])
+            let s:vimim_cloud_plugin = cloud
+        else
+            let s:vimim_cloud_plugin = 0
+        endif
+    elseif len(sp) == 2
+        if executable(sp[0]) && filereadable(sp[1])
+            let s:vimim_cloud_plugin = cloud
+        else
+            let s:vimim_cloud_plugin = 0
+        endif
+    else
+        " there are more spaces than expected, we leave this as exception
         let s:vimim_cloud_plugin = 0
     endif
+
 endfunction
 
 " --------------------------------------------
@@ -4309,8 +4337,8 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     if empty(s:vimim_cloud_plugin)
         return []
     endif
-    let cloud = 'python ' . s:vimim_cloud_plugin
-    let input = a:keyboard
+    let cloud = s:vimim_cloud_plugin
+    let input = shellescape(a:keyboard)
     let output = 0
     " ---------------------------------------
     try
@@ -4333,7 +4361,7 @@ function! s:vimim_get_mycloud_www(keyboard)
     \|| empty(keyboard)
         return []
     endif
-    let cloud = "http://pim-cloud.appspot.com/sp_abc/"
+    let cloud = "http://pim-cloud.appspot.com/abc/"
     let cloud = "http://pim-cloud.appspot.com/qp/"
     let input = keyboard
     let input = s:vimim_rot13(input)
