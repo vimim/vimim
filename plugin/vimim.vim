@@ -4336,56 +4336,46 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
     if empty(s:vimim_cloud_plugin)
-        return []
-    endif
-    " ---------------------------------
-    " python is *not* mandatory, we should check what user specified
-    "if executable('python')
-    "    let msg = 'python is free to use'
-    "else
-    "    return
-    "endif
-    " ---------------------------------
-    let sp = split(s:vimim_cloud_plugin, " ")
-    if len(sp) == 1
-        if executable(sp[0])
-            let msg = 'my cloud seems ready"
-            return
-        endif
-    elseif len(sp) == 2
-        if executable(sp[0]) && filereadable(sp[1])
-            let msg = 'my cloud seems ready"
-            return
-        endif
-    endif
-    " ---------------------------------
-    let path = "C:/home/vimim/"
-    let cloud= "C:/home/vimim/mycloud/mycloud"
-    if has("win32") && !has("win32unix")
-        " by default, windows use python
-        let cloud = "python " . s:path . "mycloud/mycloud"
-    else
+        " when nothing set, we do plug-n-play
+
         " by default, posix system uses shebang to indicate the executable
         let cloud = s:path . "mycloud/mycloud"
-    endif
-    let sp = split(cloud, " ")
-    if len(sp) == 1
-        if executable(sp[0])
-            let s:vimim_cloud_plugin = cloud
-        else
-            let s:vimim_cloud_plugin = 0
+        " if the shebang not work, we do python
+        if !executable(cloud)
+            if !executable("python")
+                return
+            endif
+            let cloud = "python " . s:path . "mycloud/mycloud"
         endif
-    elseif len(sp) == 2
-        if executable(sp[0]) && filereadable(sp[1])
+
+        let ret = system(cloud . " __isvalid")
+        if split(ret, "\t")[0] == "True"
             let s:vimim_cloud_plugin = cloud
         else
-            let s:vimim_cloud_plugin = 0
+            return
         endif
     else
-        " there are more spaces than expected, we leave this as exception
-        let s:vimim_cloud_plugin = 0
+        " something set, we do set-and-play
+        let ret = system(s:vimim_cloud_plugin . " __isvalid")
+        if split(ret, "\t")[0] == "True"
+            let s:vimim_cloud_plugin = cloud
+        else
+            let s:vimim_cloud_plugin = 0
+            return
+        endif
     endif
-
+    let key = 'mycloud'
+    let ret = system(s:vimim_cloud_plugin . " __getname")
+    let loaded = split(ret, "\t")[0]
+    let im = '自己的云'
+    let ret = system(s:vimim_cloud_plugin . " __getkeychars")
+    let keycode = split(ret, "\t")[0]
+    if empty(keycode)
+        let s:vimim_cloud_plugin = 0
+    else
+        let s:im[key]=[loaded, im, keycode]
+    endif
+    " ---------------------------------
 endfunction
 
 " --------------------------------------------
