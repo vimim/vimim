@@ -299,7 +299,7 @@ function! s:vimim_initialize_session()
     let s:lines_primary = []
     let s:lines_secondary = []
     " --------------------------------
-    let g:vimim = ["",0,"start",0]
+    let g:vimim = ["",0,0,"start",0]
     " --------------------------------
 endfunction
 
@@ -700,15 +700,15 @@ function! s:vimim_egg_vimimstat()
 " -------------------------------
     let eggs = []
     " -----------------------------------------------
-    if empty(get(g:vimim,0)) || empty(get(g:vimim,1))
+    if empty(get(g:vimim,1)) || empty(get(g:vimim,2))
         let msg = "statistics not available"
     endif
     " ------------------------
-    let gold = g:vimim[1]
-    let stat = "输入总字数：". gold ." 汉字"
+    let gold = g:vimim[2]
+    let stat = "总计输入：". gold ." 个汉字"
     call add(eggs, stat)
     " ------------------------
-    let stone = len(join(split(g:vimim[0],'[.]')))
+    let stone = g:vimim[1]
     let gold_per_stone = 0
     if gold > 0
         let gold_per_stone = stone*1.0/gold
@@ -716,12 +716,12 @@ function! s:vimim_egg_vimimstat()
     let stat = "平均码长：". string(gold_per_stone)
     call add(eggs, stat)
     " ------------------------
-    let duration =  g:vimim[3]/60
+    let duration =  g:vimim[4]
     let rate = 0
     if duration > 0
-        let rate = gold/duration
+        let rate = gold*60/duration
     endif
-    let stat = "打字速度：". rate ." 汉字/分钟"
+    let stat = "打字速度：". string(rate) ." 汉字/分钟"
     call add(eggs, stat)
     " ------------------------
     let egg = '"stat  " . v:val . "　"'
@@ -5039,7 +5039,7 @@ function! s:vimim_start()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_reload_datafile(1)
-    let g:vimim[2] = reltime()[0]
+    let g:vimim[3] = reltime()
 endfunction
 
 " ----------------------
@@ -5052,8 +5052,8 @@ function! s:vimim_stop()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
-    let duration =  reltime()[0] - g:vimim[2]
-    let g:vimim[3] .= duration
+    let duration =  reltime(g:vimim[3])[1]/1000000
+    let g:vimim[4] += duration
 endfunction
 
 " -----------------------------------------
@@ -5119,7 +5119,7 @@ function! g:vimim_reset_after_insert()
     endif
     " --------------------------------
     let chinese = s:vimim_popup_word(s:start_column_before)
-    let g:vimim[1] += len(chinese)/s:multibyte
+    let g:vimim[2] += len(chinese)/s:multibyte
     if s:chinese_frequency > 0
         let both_list = s:vimim_get_new_order_list(chinese)
         call s:vimim_update_chinese_frequency_usage(both_list)
@@ -5316,6 +5316,7 @@ else
     " ---------------------------------------
     if keyboard !~ '\s'
         let g:vimim[0] .=  keyboard . "."
+        let g:vimim[1] +=  len(keyboard)
     endif
 
     " [eggs] hunt classic easter egg ... vim<C-\>
