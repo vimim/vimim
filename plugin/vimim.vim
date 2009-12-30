@@ -5648,34 +5648,21 @@ call add(s:vimims, VimIM)
 " ------------------------------------
 function! s:vimim_initialize_mapping()
 " ------------------------------------
-    inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
-    sil!call s:vimim_visual_mapping_on()
-    " --------------------------------
+    sil!call s:vimim_visual_map_on()
+    " ------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
-        sil!call s:vimim_onekey_mapping_on()
-        sil!call s:vimim_chinese_mode_mapping_on()
-    else
-    " --------------------------------
-        imap<silent><C-^> <Plug>VimimOneKey
-    " --------------------------------
-        if s:vimim_ctrl_6_as_onekey > 1
-            let s:vimim_tab_as_onekey = 1
-        endif
-    " --------------------------------
-        if s:vimim_tab_as_onekey > 0
-            imap<silent><Tab> <Plug>VimimOneKey
-        endif
-    " --------------------------------
-        if s:vimim_ctrl_6_as_onekey > 2
-            nmap<silent><C-^> bEa<C-^>
-        endif
-    " --------------------------------
+        sil!call s:vimim_chinese_mode_map_on()
+    elseif s:vimim_ctrl_6_as_onekey > 1
+        let s:vimim_tab_as_onekey = 1
     endif
+    " ------------------------------
+    sil!call s:vimim_onekey_map_on()
+    " ------------------------------
 endfunction
 
-" -----------------------------------
-function! s:vimim_visual_mapping_on()
-" -----------------------------------
+" -------------------------------
+function! s:vimim_visual_map_on()
+" -------------------------------
     if !hasmapto('<C-^>', 'v')
         xnoremap<silent><C-^> y:call <SID>vimim_vCTRL6(@0)<CR>
     endif
@@ -5687,24 +5674,40 @@ function! s:vimim_visual_mapping_on()
     endif
 endfunction
 
-" -----------------------------------------
-function! s:vimim_chinese_mode_mapping_on()
-" -----------------------------------------
+" -------------------------------------
+function! s:vimim_chinese_mode_map_on()
+" -------------------------------------
     inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
-    imap <silent><C-^>    <Plug>VimimChineseToggle
+    " ----------------------------------------------------------------
+    imap <silent><C-^> <Plug>VimimChineseToggle
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
         imap<silent> <C-Space> <Plug>VimimChineseToggle
     endif
 endfunction
 
-" -----------------------------------
-function! s:vimim_onekey_mapping_on()
-" -----------------------------------
-    if empty(s:vimim_tab_as_onekey)
-        imap<silent> <C-\> <Plug>VimimOneKey
+" -------------------------------
+function! s:vimim_onekey_map_on()
+" -------------------------------
+    inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
+    " ---------------------------------------------------------------
+    if empty(s:vimim_ctrl_6_as_onekey)
+        if empty(s:vimim_tab_as_onekey)
+            imap<silent> <C-\> <Plug>VimimOneKey
+        else
+            imap<silent> <Tab> <Plug>VimimOneKey
+            inoremap<silent> <C-\> <Tab>
+        endif
+    " --------------------------------------
     else
-        imap<silent> <Tab> <Plug>VimimOneKey
-        inoremap<silent> <C-\> <Tab>
+    " --------------------------------------
+        imap<silent><C-^> <Plug>VimimOneKey
+        if s:vimim_tab_as_onekey > 0
+            imap<silent> <Tab> <C-^>
+        endif
+        if s:vimim_ctrl_6_as_onekey > 2
+            nmap<silent><C-^> bEa<C-^>
+        endif
+    " --------------------------------------
     endif
 endfunction
 
