@@ -989,7 +989,7 @@ function! s:vimim_i18n_read(line)
 endfunction
 
 " --------------------------------
-function! s:vimim_i18n_write(line)
+function! s:vimim_i18n_iconv(line)
 " --------------------------------
     let line = a:line
     if s:localization == 1
@@ -2293,13 +2293,13 @@ function! s:vimim_reverse_lookup(chinese)
     " ------------------------------------------------
     let results_4corner = []
     if get(s:im['4corner'],0) > 0
-        let cache_4corner = s:vimim_build_4corner_cache(chinese)
+        let cache_4corner = s:vimim_build_reverse_4corner_cache(chinese)
         let items = s:vimim_make_one_entry(cache_4corner, chinese)
         call add(results_4corner, join(items,' '))
         call add(results_4corner, glyph)
     endif
     " ------------------------------------------------
-    let cache_pinyin = s:vimim_build_reverse_cache(chinese, 0)
+    let cache_pinyin = s:vimim_build_reverse_pinyin_cache(chinese, 0)
     let items = s:vimim_make_one_entry(cache_pinyin, chinese)
     let result_pinyin = join(items,'')." ".chinese
     " ------------------------------------------------
@@ -2316,21 +2316,21 @@ function! s:vimim_reverse_lookup(chinese)
     return results
 endfunction
 
-" -----------------------------------------------------
-function! s:vimim_build_reverse_cache(chinese, one2one)
-" -----------------------------------------------------
-    let lines = s:vimim_reload_datafile(0)
-    if empty(lines)
+" ------------------------------------------------------------
+function! s:vimim_build_reverse_pinyin_cache(chinese, one2one)
+" ------------------------------------------------------------
+    call s:vimim_reload_datafile(0)
+    if empty(s:lines)
         return {}
     endif
     if empty(s:alphabet_lines)
         let first_line_index = 0
-        let index = match(lines, '^a')
+        let index = match(s:lines, '^a')
         if index > -1
             let first_line_index = index
         endif
-        let last_line_index = len(lines) - 1
-        let s:alphabet_lines = lines[first_line_index : last_line_index]
+        let last_line_index = len(s:lines) - 1
+        let s:alphabet_lines = s:lines[first_line_index : last_line_index]
         if get(s:im['pinyin'],0) > 0 |" one to many relationship
             let pinyin_with_tone = '^\a\+\d\s\+'
             call filter(s:alphabet_lines, 'v:val =~ pinyin_with_tone')
@@ -2904,23 +2904,22 @@ endfunction
 " ----------------------------------------
 function! s:vimim_datafile_range(keyboard)
 " ----------------------------------------
-    let lines = s:vimim_reload_datafile(0)
-    if empty(lines) || empty(a:keyboard)
+    call s:vimim_reload_datafile(0)
+    if empty(s:lines) || empty(a:keyboard)
         return []
     endif
-    let ranges = s:vimim_search_boundary(lines, a:keyboard)
+    let ranges = s:vimim_search_boundary(s:lines, a:keyboard)
     if empty(ranges)
         return []
     elseif len(ranges) == 1
-        let ranges = s:vimim_search_boundary(sort(lines), a:keyboard)
+        let ranges = s:vimim_search_boundary(sort(s:lines), a:keyboard)
         if empty(ranges)
             return
         else
-            call s:vimim_save_to_disk(lines)
+            call s:vimim_save_to_disk(s:lines)
         endif
     endif
-    let results = lines[get(ranges,0) : get(ranges,1)]
-    return results
+    return s:lines[get(ranges,0) : get(ranges,1)]
 endfunction
 
 " ------------------------------------------------
@@ -2964,7 +2963,7 @@ function! s:vimim_search_boundary(lines, keyboard)
     endif
     call add(ranges, match_next)
     if match_start > match_next
-        let ranges = ['the_datafile_is_not_sorted_well']
+        let ranges = ['datafile_is_not_sorted']
     endif
     return ranges
 endfunction
@@ -3391,9 +3390,9 @@ function! s:vimim_reload_datafile(reload_flag)
     return s:lines
 endfunction
 
-" -----------------------------------------
+" ---------------------------------------
 function! s:vimim_load_datafile(datafile)
-" -----------------------------------------
+" ---------------------------------------
     let lines = []
     if len(a:datafile) > 0
     \&& filereadable(a:datafile)
@@ -3402,15 +3401,14 @@ function! s:vimim_load_datafile(datafile)
     return lines
 endfunction
 
-" ------------------------------------
+" -----------------------------------
 function! s:vimim_save_to_disk(lines)
-" ------------------------------------
+" -----------------------------------
     if empty(a:lines)
         return
     endif
-    " --------------------------------
     let s:lines = a:lines
-    " --------------------------------
+    " -------------------------------
     if s:xingma_sleep_with_pinyin > 0
         if empty(s:toggle_xiangma_pinyin)
             let s:lines_primary = a:lines
@@ -3418,7 +3416,7 @@ function! s:vimim_save_to_disk(lines)
             let s:lines_secondary = a:lines
         endif
     endif
-    " --------------------------------
+    " -------------------------------
     if filewritable(s:datafile)
         call writefile(a:lines, s:datafile)
     endif
@@ -3430,9 +3428,6 @@ function! <SID>vimim_save_new_entry(entry)
     if empty(a:entry)
         return
     endif
-    " --------------------------------
-    call s:vimim_initialization_once()
-    " --------------------------------
     let entries = []
     let entry_split_list = split(a:entry,'\n')
     for entry in entry_split_list
@@ -3452,9 +3447,12 @@ function! <SID>vimim_save_new_entry(entry)
             continue
         endif
         let line = menu .' '. join(words, ' ')
-        let line = s:vimim_i18n_write(line)
+        let line = s:vimim_i18n_iconv(line)
         call add(entries, line)
     endfor
+    if empty(entries)
+        return
+    endif
     call s:vimim_save_to_disk(s:vimim_insert_entry(entries))
 endfunction
 
@@ -3464,7 +3462,10 @@ function! s:vimim_insert_entry(entries)
     if empty(a:entries)
         return []
     endif
+    " --------------------------------
+    call s:vimim_initialization_once()
     let lines = s:vimim_reload_datafile(0)
+    " --------------------------------
     if empty(lines)
         return []
     endif
@@ -3631,9 +3632,9 @@ function! s:vimim_4corner_whole_match(keyboard)
     return keyboards
 endfunction
 
-" --------------------------------------------
-function! s:vimim_build_4corner_cache(chinese)
-" --------------------------------------------
+" ----------------------------------------------------
+function! s:vimim_build_reverse_4corner_cache(chinese)
+" ----------------------------------------------------
     let lines = s:vimim_reload_datafile(0)
     if empty(lines)
         return {}
@@ -3659,12 +3660,10 @@ function! s:vimim_build_4corner_cache(chinese)
     if empty(s:four_corner_lines)
         return {}
     endif
-    " --------------------------------------
-    let lines = copy(s:four_corner_lines)
-    let characters = split(a:chinese, '\zs')
-    " --------------------------------------
+    " ------------------------------------------------
     let cache = {}
-    for line in lines
+    let characters = split(a:chinese, '\zs')
+    for line in s:four_corner_lines
         let line = s:vimim_i18n_read(line)
         let words = split(line)
         let value = remove(words, 0)
@@ -4710,14 +4709,13 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     else
         call add(results, s:vimim_translator(keyboard))
     endif
-" ------------------------------------
+    " --------------------------------
     let line = line(".")
     call setline(line, results)
     let new_positions = getpos(".")
     let new_positions[1] = line + len(results) - 1
     let new_positions[2] = len(get(split(get(results,-1)),0))+1
     call setpos(".", new_positions)
-" ------------------------------------
 endfunction
 
 " --------------------------------------
@@ -5050,25 +5048,17 @@ endfunction
 " ----------------------
 function! s:vimim_stop()
 " ----------------------
-    sil!autocmd! chinese_mode_autocmd
-    sil!autocmd! onekey_mode_autocmd
-    sil!call s:vimim_datafile_save_onto_disk()
+    if empty(s:chinese_input_mode)
+        sil!autocmd! onekey_mode_autocmd
+    else
+        sil!autocmd! chinese_mode_autocmd
+    endif
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
     let duration = localtime() - get(g:vimim,3)
     let g:vimim[4] += duration
-endfunction
-
-" -----------------------------------------
-function! s:vimim_datafile_save_onto_disk()
-" -----------------------------------------
-    if s:chinese_frequency < 2
-    \|| len(s:lines) < 2
-        return
-    endif
-    call s:vimim_save_to_disk(s:lines)
 endfunction
 
 " ---------------------------------
