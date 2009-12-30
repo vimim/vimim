@@ -2666,15 +2666,12 @@ function! <SID>vimim_smart_ctrl_h()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ---------------------------------
+" ----------------------------------
 function! <SID>vimim_bs_pumvisible()
 " ----------------------------------
     let d  = ''
     if pumvisible()
-        let d  = '\<C-E>'
-        if s:vimim_smart_backspace == 2
-            let s:one_key_correction = 1
-        endif
+        let d = '\<C-E>'
     endif
     sil!exe 'sil!return "' . d . '"'
 endfunction
@@ -2684,7 +2681,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
     let d = '\<BS>'
     let s:matched_list = []
-    if s:vimim_smart_backspace == 1
+    if s:vimim_smart_backspace > 0
         if empty(s:vimim_sexy_onekey)
         \&& empty(s:chinese_input_mode)
             call s:vimim_stop()
@@ -2692,12 +2689,19 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
         if s:chinese_input_mode > 1
             let d = '\<BS>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         endif
-    elseif s:vimim_smart_backspace == 2
-        let char_before = getline(".")[col(".")-2]
-        if s:one_key_correction > 0
-        \&& char_before =~# s:valid_key
-            let d = '\<C-X>\<C-U>\<BS>'
-        endif
+    endif
+    sil!exe 'sil!return "' . d . '"'
+endfunction
+
+" -------------------------------------------
+function! <SID>vimim_esc_one_key_correction()
+" -------------------------------------------
+    let d = '\<Esc>'
+    let s:matched_list = []
+    let char_before = getline(".")[col(".")-2]
+    if char_before =~# s:valid_key
+        let s:one_key_correction = 1
+        let d = '\<C-X>\<C-U>\<BS>'
     endif
     sil!exe 'sil!return "' . d . '"'
 endfunction
@@ -5116,7 +5120,7 @@ function! s:vimim_i_map_off()
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['<CR>', '<BS>', '<Space>'])
+    call extend(unmap_list, ['<CR>', '<BS>', '<Esc>', '<Space>'])
     call extend(unmap_list, ['<C-N>', '<C-P>', '<C-H>'])
     " ------------------------------
     for _ in unmap_list
@@ -5150,6 +5154,10 @@ function! s:vimim_helper_mapping_on()
                              \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
                              \<C-R>=g:vimim_reset_after_insert()<CR>
     endif
+    " ----------------------------------------------------------
+    inoremap<silent><Esc>  <C-R>=<SID>vimim_bs_pumvisible()<CR>
+                          \<C-R>=<SID>vimim_esc_one_key_correction()<CR>
+                          \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
 endfunction
 
