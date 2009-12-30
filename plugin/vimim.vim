@@ -191,10 +191,10 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_nature")
     call add(G, "g:vimim_shuangpin_plusplus")
     call add(G, "g:vimim_shuangpin_purple")
-    call add(G, "g:vimim_smart_ctrl_h")
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_smart_ctrl_p")
+    call add(G, "g:vimim_smart_ctrl_h")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_cloud_plugin")
@@ -207,6 +207,7 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_smart_ctrl_n")
+    call add(G, "g:vimim_smart_backspace")
     call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_laststatus")
@@ -2687,7 +2688,16 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
         sil!exe 'sil!return "' . d . '"'
     endif
     " ---------------------------------
+    if empty(s:vimim_sexy_onekey)
+    \&& empty(s:chinese_input_mode)
+        call s:vimim_stop()
+    endif
+    " ---------------------------------
     let d = '\<BS>'
+    if empty(s:vimim_smart_backspace)
+        sil!exe 'sil!return "' . d . '"'
+    endif
+    " ---------------------------------
     let char_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     " ---------------------------------
@@ -2699,16 +2709,11 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
         let s:smart_backspace = 0
     endif
     " ---------------------------------
-    if  s:smart_backspace > 0
+    if s:smart_backspace > 0
     \&& char_before !~ '\w'
         let d = ''
         let s:smart_backspace = 0
         sleep
-    endif
-    " ---------------------------------
-    if empty(s:vimim_sexy_onekey)
-    \&& empty(s:chinese_input_mode)
-        call s:vimim_stop()
     endif
     sil!exe 'sil!return "' . d . '"'
 endfunction
