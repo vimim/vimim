@@ -1970,7 +1970,9 @@ function! s:vimim_punctuation_navigation_on()
         let msg = "search keys are reserved"
     else
         call add(hjkl_list, '/')
-        call add(hjkl_list, '?')
+        if empty(s:chinese_input_mode)
+            call add(hjkl_list, '?')
+        endif
     endif
     for _ in hjkl_list
         sil!exe 'inoremap<silent><expr> '._.'
@@ -2689,7 +2691,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
     let char_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     " ---------------------------------
-    if char_before =~ '\w' 
+    if char_before =~ '\w'
     \&& char_before_before !~ '\w'
         let s:smart_backspace = 1
     endif
@@ -2701,7 +2703,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
     \&& char_before !~ '\w'
         let d = ''
         let s:smart_backspace = 0
-        sleep 
+        sleep
     endif
     " ---------------------------------
     if empty(s:vimim_sexy_onekey)
@@ -5171,7 +5173,7 @@ function! s:vimim_helper_mapping_on()
                          \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
                          \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
-    if s:chinese_input_mode > 0 
+    if s:chinese_input_mode > 0
     inoremap<silent><Esc>  <C-R>=<SID>vimim_bs_pumvisible()<CR>
                           \<C-R>=<SID>vimim_esc_one_key_correction()<CR>
                           \<C-R>=g:vimim_reset_after_insert()<CR>
