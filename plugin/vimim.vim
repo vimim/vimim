@@ -5155,9 +5155,11 @@ function! s:vimim_helper_mapping_on()
                              \<C-R>=g:vimim_reset_after_insert()<CR>
     endif
     " ----------------------------------------------------------
+    if s:chinese_input_mode > 0 
     inoremap<silent><Esc>  <C-R>=<SID>vimim_bs_pumvisible()<CR>
                           \<C-R>=<SID>vimim_esc_one_key_correction()<CR>
                           \<C-R>=g:vimim_reset_after_insert()<CR>
+    endif
     " ----------------------------------------------------------
 endfunction
 
