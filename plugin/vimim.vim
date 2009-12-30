@@ -4360,22 +4360,14 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
     if empty(s:vimim_cloud_plugin)
-        " when nothing set, we do plug-n-play
-        let cloud = s:path . "mycloud/mycloud"
-        " -----------------------------------------------------------
-        " note:  It is pain to let gVim do system
-        " note:  I have to avoid it whenever possible
-        " note:  Otherwise, I found flash dos box the first time I used VimIM
-        " note:  Unless it is absolute necessary, gVim should not call external
         " -----------------------------------
-        if has("unix")
-            let mes = "unix is free to run system()"
-        elseif !filereadable(cloud)
+        if has("unix") && !has("win32unix")
+            let mes = "on linux, we do plug-n-play"
+        else
             return
         endif
         " -----------------------------------
-        " by default, posix system uses shebang to indicate executable
-        " if the shebang not work, we do python
+        let cloud = s:path . "mycloud/mycloud"
         if !executable(cloud)
             if !executable("python")
                 return
@@ -4390,7 +4382,7 @@ function! s:vimim_initialize_mycloud_plugin()
             return
         endif
     else
-        " something set, we do set-and-play
+        " we do set-and-play on all systems
         let ret = system(s:vimim_cloud_plugin . " __isvalid")
         if split(ret, "\t")[0] == "True"
             let s:vimim_cloud_plugin = cloud
@@ -4399,13 +4391,6 @@ function! s:vimim_initialize_mycloud_plugin()
             return
         endif
     endif
-    " -----------------------------------------------------------
-    " note:  one purpose of s:vimim_dictionary_im()
-    " note:  is to set Chinese in one place
-    " note:  as I don't like mix Chinese together with code everywhere
-    " note:  please check if the change works or not
-    " -----------------------------------------------------------
-    let key = 'mycloud'
     let ret = system(s:vimim_cloud_plugin . " __getname")
     let loaded = split(ret, "\t")[0]
     let ret = system(s:vimim_cloud_plugin . " __getkeychars")
@@ -4413,8 +4398,8 @@ function! s:vimim_initialize_mycloud_plugin()
     if empty(keycode)
         let s:vimim_cloud_plugin = 0
     else
-        let s:im[key][0] = loaded
-        let s:im[key][2] = keycode
+        let s:im['mycloud'][0] = loaded
+        let s:im['mycloud'][2] = keycode
     endif
 endfunction
 
