@@ -1407,17 +1407,17 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<C-R>=g:vimim_p_paste()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_p_paste()\<CR>'
         elseif a:key == 'd'
-            let hjkl  = '\<C-R>=g:vimim_d_onekey_correction()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_d_onekey_correction()\<CR>'
+            let hjkl  = '\<C-R>=g:vimim_d_one_key_correction()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_d_one_key_correction()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" -------------------------------------
-function! g:vimim_d_onekey_correction()
-" -------------------------------------
+" --------------------------------------
+function! g:vimim_d_one_key_correction()
+" --------------------------------------
     let d  = ''
     let s:matched_list = []
     if pumvisible()
