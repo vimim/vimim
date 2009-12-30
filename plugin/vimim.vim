@@ -3795,27 +3795,28 @@ function! s:vimim_get_quanpin_from_shuangpin(keyboard)
     return keyboard
 endfunction
 
-" -----------------------------------------
-function! s:vimim_shuangpin_transform(keyb)
-" -----------------------------------------
+" ---------------------------------------------
+function! s:vimim_shuangpin_transform(keyboard)
+" ---------------------------------------------
+    let keyboard = a:keyboard
     if empty(s:keyboard_shuangpin)
         let msg = "start the magic shuangpin transform"
     else
-        return a:keyb
+        return keyboard
     endif
-    let size = strlen(a:keyb)
+    let size = strlen(keyboard)
     let ptr = 0
     let output = ""
     while ptr < size
-        if a:keyb[ptr] !~ "[a-z;]"
+        if keyboard[ptr] !~ "[a-z;]"
             " bypass all non-characters, i.e. 0-9 and A-Z are bypassed
-            let output .= a:keyb[ptr]
+            let output .= keyboard[ptr]
             let ptr += 1
         else
-            if a:keyb[ptr+1] =~ "[a-z;]"
-                let sp1 = a:keyb[ptr].a:keyb[ptr+1]
+            if keyboard[ptr+1] =~ "[a-z;]"
+                let sp1 = keyboard[ptr].keyboard[ptr+1]
             else
-                let sp1 = a:keyb[ptr]
+                let sp1 = keyboard[ptr]
             endif
             if has_key(s:shuangpin_table, sp1)
                 " the last odd shuangpin code are output as only shengmu
@@ -4918,24 +4919,17 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_cloud_plugin='python C:/home/vimim/mycloud/mycloud'
-    let s:vimim_cloud_plugin=0
-    let s:vimim_cloud_pim=0
     let s:vimim_cloud_sogou=12
-    let s:vimim_smart_ctrl_p=1
-    " ------------------------------
     let s:vimim_chinese_frequency=12
-    let s:vimim_frequency_first_fix=0
     " ------------------------------
+    let s:vimim_cloud_pim=0
     let s:vimim_wildcard_search=1
     let s:vimim_imode_comma=1
     let s:vimim_imode_pinyin=-1
-    " ------------------------------
+    let s:vimim_smart_ctrl_p=1
     let s:vimim_smart_ctrl_h=1
-    " ------------------------------
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
-    " ------------------------------
     let s:vimim_reverse_pageup_pagedown=1
     let s:vimim_unicode_lookup=0
     " ------------------------------
@@ -5140,11 +5134,11 @@ function! s:vimim_i_map_off()
     call extend(unmap_list, keys(s:punctuations))
     call extend(unmap_list, ['<CR>', '<BS>', '<Esc>', '<Space>'])
     call extend(unmap_list, ['<C-N>', '<C-P>', '<C-H>'])
-    " ------------------------------
+    " -----------------------
     for _ in unmap_list
         sil!exe 'iunmap '. _
     endfor
-    " ------------------------------
+    " -----------------------
 endfunction
 
 " -----------------------------------
@@ -5402,7 +5396,7 @@ else
     " process magic english comma and dot at the end
     " (1) english comma for always cloud
     " (2) english period for always non-cloud
-    " ----------------------------------------------------
+    " ----------------------------------------------
     let keyboard2 = s:vimim_magic_tail(keyboard)
     if empty(keyboard2)
         let msg = "who cares about such a magic?"
@@ -5417,7 +5411,7 @@ else
     endif
 
     " [shuangpin] support 5 major shuangpin with various rules
-    " ----------------------------------------------------
+    " --------------------------------------------------------
     let keyboard = s:vimim_get_quanpin_from_shuangpin(keyboard)
 
     " [cloud] to make cloud come true for woyouyigemeng
