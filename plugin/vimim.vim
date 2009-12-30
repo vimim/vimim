@@ -1242,7 +1242,6 @@ function! <SID>vimim_start_onekey()
     sil!call s:vimim_onekey_status_on()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
-    sil!call s:vimim_onekey_punctuation_on()
     sil!call s:vimim_helper_mapping_on()
     sil!call s:vimim_onekey_autocmd()
     " ----------------------------------------------------------
@@ -1867,6 +1866,7 @@ function! s:vimim_initialize_punctuation()
 " ----------------------------------------
     let s:punctuations = {}
     let s:punctuations['#']='＃'
+    let s:punctuations['&']='※'
     let s:punctuations['%']='％'
     let s:punctuations['$']='￥'
     let s:punctuations['!']='！'
@@ -1893,7 +1893,7 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations['?']='？'
     if empty(s:vimim_latex_suite)
         let s:punctuations["'"]='‘’'
-        call s:vimim_onekey_punctuation_on()
+        call s:vimim_punctuation_bslash_double_quote_on()
     endif
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
@@ -1914,31 +1914,28 @@ function! <SID>vimim_toggle_punctuation()
     return ""
 endfunction
 
-" ---------------------------------------
-function! s:vimim_onekey_punctuation_on()
-" ---------------------------------------
-        let s:punctuations['&']='※'
+" ----------------------------------------------------
+function! s:vimim_punctuation_bslash_double_quote_on()
+" ----------------------------------------------------
+    if empty(s:chinese_input_mode)
         let s:punctuations['\']='、'
-        let s:punctuations["'"]='‘’'
         let s:punctuations['"']='“”'
+    else
+        inoremap <Bslash> 、
+        inoremap " “”
+    endif
 endfunction
 
 " --------------------------------
 function! s:vimim_punctuation_on()
 " --------------------------------
     let punctuations = s:punctuations
-    if s:chinese_input_mode > 0
-        let s:punctuations['&']='、'
-        unlet punctuations['\']
-        unlet punctuations['"']
-        unlet punctuations["'"]
-    endif
     if get(s:im['erbi'],0) > 0
-	unlet punctuations[',']
-	unlet punctuations['.']
-	unlet punctuations['/']
-	unlet punctuations[';']
-	unlet punctuations["'"]
+        unlet punctuations[',']
+        unlet punctuations['.']
+        unlet punctuations['/']
+        unlet punctuations[';']
+        unlet punctuations["'"]
     endif
     for _ in keys(punctuations)
         sil!exe 'inoremap <silent> '._.'
@@ -1979,6 +1976,9 @@ function! s:vimim_punctuation_navigation_on()
         sil!exe 'inoremap<silent><expr> '._.'
         \ <SID>vimim_punctuations_navigation("'._.'")'
     endfor
+    " ---------------------------------------------------
+    sil!call s:vimim_punctuation_bslash_double_quote_on()
+    " ---------------------------------------------------
 endfunction
 
 " -----------------------------------------------
