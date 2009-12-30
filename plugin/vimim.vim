@@ -3424,9 +3424,9 @@ function! s:vimim_save_to_disk(lines)
     endif
 endfunction
 
-" ------------------------------
-function! <SID>vimim_save(entry)
-" ------------------------------
+" ----------------------------------------
+function! <SID>vimim_save_new_entry(entry)
+" ----------------------------------------
     if empty(a:entry)
         return
     endif
@@ -4684,9 +4684,9 @@ function! s:vimim_wildcard_search(keyboard, lines)
     return results
 endfunction
 
-" -----------------------------------
-function! <SID>vimim_vCTRL6(keyboard)
-" -----------------------------------
+" ------------------------------------------
+function! <SID>vimim_visual_ctrl_6(keyboard)
+" ------------------------------------------
     let keyboard = a:keyboard
     if empty(keyboard)
         return
@@ -4699,7 +4699,7 @@ function! <SID>vimim_vCTRL6(keyboard)
             let msg = 'kill two birds with one stone'
         else
             let current_line = getline("'<")
-            call <SID>vimim_save(current_line)
+            call <SID>vimim_save_new_entry(current_line)
             return
         endif
     endif
@@ -5664,13 +5664,13 @@ endfunction
 function! s:vimim_visual_map_on()
 " -------------------------------
     if !hasmapto('<C-^>', 'v')
-        xnoremap<silent><C-^> y:call <SID>vimim_vCTRL6(@0)<CR>
+        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
-    " -------------------------------
+    " ---------------------------
     if s:vimim_save_new_entry > 0
     \&& !hasmapto('<C-\>', 'v')
     \&& empty(s:vimim_ctrl_6_as_onekey)
-        xnoremap<silent><C-\> :y<CR>:call <SID>vimim_save(@0)<CR>
+        xnoremap<silent><C-\> :y<CR>:call <SID>vimim_save_new_entry(@0)<CR>
     endif
 endfunction
 
