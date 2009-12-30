@@ -216,7 +216,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_save_new_entry")
-    call add(G, "g:vimim_smart_backspace")
     call add(G, "g:vimim_wubi_non_stop")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
@@ -2679,16 +2678,35 @@ endfunction
 " -------------------------------------
 function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
-    let d = '\<BS>'
     let s:matched_list = []
-    if s:vimim_smart_backspace > 0
-        if empty(s:vimim_sexy_onekey)
-        \&& empty(s:chinese_input_mode)
-            call s:vimim_stop()
-        endif
-        if s:chinese_input_mode > 1
-            let d = '\<BS>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        endif
+    " ---------------------------------
+    if s:chinese_input_mode > 1
+        let d = '\<BS>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        sil!exe 'sil!return "' . d . '"'
+    endif
+    " ---------------------------------
+    let d = '\<BS>'
+    let char_before = getline(".")[col(".")-2]
+    let char_before_before = getline(".")[col(".")-3]
+    " ---------------------------------
+    if char_before =~ '\w' 
+    \&& char_before_before !~ '\w'
+        let s:smart_backspace = 1
+    endif
+    if char_before =~ '\s'
+        let s:smart_backspace = 0
+    endif
+    " ---------------------------------
+    if  s:smart_backspace > 0
+    \&& char_before !~ '\w'
+        let d = ''
+        let s:smart_backspace = 0
+        sleep 
+    endif
+    " ---------------------------------
+    if empty(s:vimim_sexy_onekey)
+    \&& empty(s:chinese_input_mode)
+        call s:vimim_stop()
     endif
     sil!exe 'sil!return "' . d . '"'
 endfunction
@@ -4905,7 +4923,6 @@ function! s:vimim_initialize_vimim_txt_debug()
     let s:vimim_imode_comma=1
     let s:vimim_imode_pinyin=-1
     " ------------------------------
-    let s:vimim_smart_backspace=1
     let s:vimim_smart_ctrl_h=1
     " ------------------------------
     let s:vimim_english_punctuation=0
@@ -5076,6 +5093,7 @@ function! s:reset_after_auto_insert()
     let s:smart_ctrl_n = 0
     let s:smart_ctrl_p = 0
     let s:smart_enter = 0
+    let s:smart_backspace = 0
 "---------------------------------------
 endfunction
 
@@ -5149,11 +5167,9 @@ function! s:vimim_helper_mapping_on()
                             \<C-R>=<SID>vimim_set_seamless()<CR>
     endif
     " ----------------------------------------------------------
-    if s:vimim_smart_backspace > 0
-        inoremap<silent><BS>  <C-R>=<SID>vimim_bs_pumvisible()<CR>
-                             \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
-                             \<C-R>=g:vimim_reset_after_insert()<CR>
-    endif
+    inoremap<silent><BS>  <C-R>=<SID>vimim_bs_pumvisible()<CR>
+                         \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
+                         \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
     if s:chinese_input_mode > 0 
     inoremap<silent><Esc>  <C-R>=<SID>vimim_bs_pumvisible()<CR>
