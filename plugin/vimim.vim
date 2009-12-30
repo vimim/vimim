@@ -299,7 +299,7 @@ function! s:vimim_initialize_session()
     let s:lines_primary = []
     let s:lines_secondary = []
     " --------------------------------
-    let g:vimim = ["",0,0,"start",0]
+    let g:vimim = ["",1,1,localtime(),1]
     " --------------------------------
 endfunction
 
@@ -699,28 +699,17 @@ endfunction
 function! s:vimim_egg_vimimstat()
 " -------------------------------
     let eggs = []
-    " -----------------------------------------------
-    if empty(get(g:vimim,1)) || empty(get(g:vimim,2))
-        let msg = "statistics not available"
-    endif
+    let stone = get(g:vimim,1)
+    let gold = get(g:vimim,2)
     " ------------------------
-    let gold = g:vimim[2]
     let stat = "总计输入：". gold ." 个汉字"
     call add(eggs, stat)
     " ------------------------
-    let stone = g:vimim[1]
-    let gold_per_stone = 0
-    if gold > 0
-        let gold_per_stone = stone*1.0/gold
-    endif
-    let stat = "平均码长：". string(gold_per_stone)
+    let stat = "平均码长：". string(stone*1.0/gold)
     call add(eggs, stat)
     " ------------------------
-    let duration =  g:vimim[4]
-    let rate = 0
-    if duration > 0
-        let rate = gold*60/duration
-    endif
+    let duration = get(g:vimim,4)
+    let rate = gold*60/duration
     let stat = "打字速度：". string(rate) ." 汉字/分钟"
     call add(eggs, stat)
     " ------------------------
@@ -5039,7 +5028,7 @@ function! s:vimim_start()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_reload_datafile(1)
-    let g:vimim[3] = reltime()
+    let g:vimim[3] = localtime()
 endfunction
 
 " ----------------------
@@ -5052,7 +5041,7 @@ function! s:vimim_stop()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
-    let duration =  reltime(g:vimim[3])[1]/1000000
+    let duration = localtime() - get(g:vimim,3)
     let g:vimim[4] += duration
 endfunction
 
