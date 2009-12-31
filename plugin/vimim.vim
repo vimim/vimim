@@ -128,8 +128,6 @@ function! s:vimim_initialization_once()
     " -----------------------------------------
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
-    " -----------------------------------------
-    call s:vimim_dictionary_shuangpin()
     call s:vimim_dictionary_im()
     " -----------------------------------------
     call s:vimim_initialize_vimim_txt_debug()
@@ -3745,6 +3743,8 @@ endfunction
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
+    call s:vimim_dictionary_shuangpin()
+    " ----------------------------------
     if empty(s:shuangpin_flag)
         return
     endif
@@ -5183,10 +5183,7 @@ function! VimIM(start, keyboard)
 " ------------------------------
 if a:start
 
-    " -----------------------
     call s:vimim_start_omni()
-    " -----------------------
-
     let current_positions = getpos(".")
     let start_column = current_positions[2]-1
     let start_column_save = start_column
