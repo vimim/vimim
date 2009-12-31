@@ -2063,7 +2063,7 @@ function! s:vimim_initialize_quantifiers()
     let s:quantifiers['9'] = '九玖㈨⑨⒐⑼壬'
     let s:quantifiers['0'] = '〇零㈩⑩⒑⑽癸十拾'
     let s:quantifiers['a'] = '秒'
-    let s:quantifiers['b'] = '百佰把班包杯本笔部'
+    let s:quantifiers['b'] = '百佰步把包杯本笔部班'
     let s:quantifiers['c'] = '厘次餐场串处'
     let s:quantifiers['d'] = '第度点袋道滴碟顶栋堆对朵堵顿'
     let s:quantifiers['e'] = '亿'
