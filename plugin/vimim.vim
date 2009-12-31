@@ -1345,6 +1345,13 @@ function! s:vimim_label_on()
         \  <C-R>=<SID>vimim_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
+    " ----------------------
+    let hjkl_list = split('abcdefghi', '\zs')
+    for _ in hjkl_list
+        sil!exe'inoremap<silent> '._.'
+        \  <C-R>=<SID>vimim_label("'._.'")<CR>'
+        \.'<C-R>=g:vimim_reset_after_insert()<CR>'
+    endfor
 endfunction
 
 " ---------------------------
@@ -1352,6 +1359,12 @@ function! <SID>vimim_label(n)
 " ---------------------------
     let n = a:n
     let label = a:n
+    " -----------------------
+    if n =~# '\l'
+        let abcdefghi = char2nr('a') - 1
+        let n = char2nr(n) - abcdefghi
+    endif
+    " -----------------------
     if pumvisible()
         if n < 1
             let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
@@ -1373,7 +1386,8 @@ endfunction
 " ------------------------------------
 function! s:vimim_hjkl_navigation_on()
 " ------------------------------------
-    let hjkl_list = split('hjklcpedy', '\zs')
+    let hjkl_list = split('hjklpcde', '\zs')
+    let hjkl_list = split('qsxujklp', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap<silent><expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
@@ -1385,11 +1399,11 @@ function! <SID>vimim_hjkl(key)
 " ----------------------------
     let hjkl = a:key
     if pumvisible()
-        if a:key == 'e'
+        if a:key == 'x'
             let hjkl  = '\<C-E>'
         elseif a:key == 'y'
             let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
-        elseif a:key == 'h'
+        elseif a:key == 'u'
             let hjkl  = '\<PageUp>'
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
@@ -1397,24 +1411,24 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
             let hjkl  = '\<PageDown>'
-        elseif a:key == 'c'
+        elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_copy_popup_word()\<CR>'
         elseif a:key == 'p'
             let hjkl  = '\<C-R>=g:vimim_p_paste()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_p_paste()\<CR>'
-        elseif a:key == 'd'
-            let hjkl  = '\<C-R>=g:vimim_d_one_key_correction()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_d_one_key_correction()\<CR>'
+        elseif a:key == 'q'
+            let hjkl  = '\<C-R>=g:vimim_one_key_correction()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" --------------------------------------
-function! g:vimim_d_one_key_correction()
-" --------------------------------------
+" ------------------------------------
+function! g:vimim_one_key_correction()
+" ------------------------------------
     let d  = ''
     let s:matched_list = []
     if pumvisible()
@@ -2863,6 +2877,11 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         " -------------------------------------------------
         if s:vimim_custom_menu_label > 0
+            if empty(s:chinese_input_mode)
+                let abcdefghi = char2nr('a') + (label-1)%26
+                let underscore = len(label)>1?"_":"__"
+                let label .= underscore . nr2char(abcdefghi)
+            endif
             let abbr = printf('%2s',label) . "\t" . chinese
             let complete_items["abbr"] = abbr
         endif
