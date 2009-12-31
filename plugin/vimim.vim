@@ -297,7 +297,7 @@ function! s:vimim_initialize_session()
     let s:lines_primary = []
     let s:lines_secondary = []
     " --------------------------------
-    let g:vimim = ["",1,1,localtime(),1]
+    let g:vimim = ["",1,1,1,localtime()]
     " --------------------------------
 endfunction
 
@@ -706,7 +706,7 @@ function! s:vimim_egg_vimimstat()
     let stat = "平均码长：". string(stone*1.0/gold)
     call add(eggs, stat)
     " ------------------------
-    let duration = get(g:vimim,4)
+    let duration = get(g:vimim,3)
     let rate = gold*60/duration
     let stat = "打字速度：". string(rate) ." 汉字/分钟"
     call add(eggs, stat)
@@ -1840,7 +1840,6 @@ function! s:vimim_get_seamless(current_positions)
             return -1
         endif
     endfor
-    let s:start_column_before = seamless_column
     let s:start_row_before = seamless_lnum
     let s:smart_enter = 0
     return seamless_column
@@ -5036,7 +5035,7 @@ function! s:vimim_start()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_reload_datafile(1)
-    let g:vimim[3] = localtime()
+    let g:vimim[4] = localtime()
 endfunction
 
 " ----------------------
@@ -5051,8 +5050,8 @@ function! s:vimim_stop()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
-    let duration = localtime() - get(g:vimim,3)
-    let g:vimim[4] += duration
+    let duration = localtime() - get(g:vimim,4)
+    let g:vimim[3] += duration
 endfunction
 
 " ---------------------------------
@@ -5075,22 +5074,6 @@ function! s:reset_after_insert()
     call s:reset_after_auto_insert()
 endfunction
 
-" -----------------------------------
-function! s:reset_after_auto_insert()
-" -----------------------------------
-    let s:popupmenu_matched_list = []
-    let s:keyboard_wubi = ''
-    let s:keyboard_shuangpin = 0
-    let s:keyboard_leading_zero = 0
-    let s:one_key_correction = 0
-    let s:menu_reverse = 0
-    let s:smart_ctrl_n = 0
-    let s:smart_ctrl_p = 0
-    let s:smart_enter = 0
-    let s:smart_backspace = 0
-"---------------------------------------
-endfunction
-
 " ------------------------------------------
 function! <SID>alphabet_reset_after_insert()
 " ------------------------------------------
@@ -5101,6 +5084,31 @@ function! <SID>alphabet_reset_after_insert()
     return ''
 endfunction
 
+" -----------------------------------
+function! s:reset_after_auto_insert()
+" -----------------------------------
+    let s:keyboard_leading_zero = 0
+    let s:popupmenu_matched_list = []
+    let s:keyboard_shuangpin = 0
+    call s:vimim_popup_word_stat()
+endfunction
+
+" ---------------------------------
+function! s:vimim_popup_word_stat()
+" ---------------------------------
+    let s:keyboard_wubi = ''
+    let s:menu_reverse = 0
+    let s:smart_ctrl_n = 0
+    let s:smart_ctrl_p = 0
+    let s:smart_enter = 0
+    let s:smart_backspace = 0
+    let s:one_key_correction = 0
+    " -------------------------------
+    let chinese = s:vimim_popup_word(s:start_column_before)
+    let g:vimim[2] += len(chinese)/s:multibyte
+    return chinese
+endfunction
+
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
@@ -5108,8 +5116,7 @@ function! g:vimim_reset_after_insert()
         return ""
     endif
     " --------------------------------
-    let chinese = s:vimim_popup_word(s:start_column_before)
-    let g:vimim[2] += len(chinese)/s:multibyte
+    let chinese = s:vimim_popup_word_stat()
     if s:chinese_frequency > 0
         let both_list = s:vimim_get_new_order_list(chinese)
         call s:vimim_update_chinese_frequency_usage(both_list)
@@ -5197,6 +5204,7 @@ if a:start
     if s:smart_ctrl_n > 0
         if start_column > 0
             let start_column -= 1
+            let s:start_column_before = start_column
             return start_column
         endif
     endif
@@ -5219,6 +5227,7 @@ if a:start
     if seamless_column < 0
         let msg = "no need to set seamless"
     else
+        let s:start_column_before = seamless_column
         return seamless_column
     endif
 
@@ -5240,11 +5249,11 @@ if a:start
     endif
 
     let s:start_row_before = start_row
-    let s:start_column_before = start_column
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
     let s:keyboard_leading_zero = strpart(current_line,start_column,len)
 
+    let s:start_column_before = start_column
     return start_column
 
 else
