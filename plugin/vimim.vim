@@ -2739,10 +2739,18 @@ function! <SID>vimim_esc_one_key_correction()
     let key = '\<Esc>'
     let s:matched_list = []
     let s:popupmenu_matched_list = []
+    " --------------------------------
+    if empty(s:chinese_input_mode)
+    \&& empty(s:vimim_sexy_onekey)
+        call s:vimim_stop()
+    endif
+    " --------------------------------
     let char_before = getline(".")[col(".")-2]
     if char_before =~# s:valid_key
         let s:one_key_correction = 1
         let key = '\<C-X>\<C-U>\<BS>'
+    elseif empty(s:chinese_input_mode)
+        call s:vimim_stop()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
