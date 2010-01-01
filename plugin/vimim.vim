@@ -2637,11 +2637,12 @@ function! s:vimim_get_list_from_smart_ctrl_p(keyboard)
     let matched = match(keys(s:inputs_all), pattern)
     if matched < 0
         let msg = "nothing matched previous user input"
+        return []
     else
         let keyboard = get(keys(s:inputs_all), matched)
+        let matched_list = s:inputs_all[keyboard]
+        return matched_list
     endif
-    let matched_list = s:inputs_all[keyboard]
-    return matched_list
 endfunction
 
 " ---------------------------------
