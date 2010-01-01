@@ -2564,7 +2564,7 @@ function! <SID>vimim_smart_enter()
                 let s:smart_enter += 1
                 let key = ' '
             endif
-            if char_before =~ ' '
+            if char_before =~ '\s' || empty(char_before)
                 let key = "\<CR>"
             endif
         endif
