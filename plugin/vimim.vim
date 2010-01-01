@@ -1523,9 +1523,9 @@ let VimIM = " ====  Chinese_Mode     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------
-function! <SID>vimim_toggle()
-" ---------------------------
+" ----------------------------------
+function! <SID>vimim_toggle_ctrl_6()
+" ----------------------------------
     if s:chinese_mode_toggle_flag < 1
         sil!call s:vimim_start_chinese_mode()
     else
@@ -4337,7 +4337,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
     let second = match(output, '"', 0, 2)
     if first > 0 && second > 0
         let output = strpart(output, first+1, second-first-1)
-        let output = s:vimim_xx_to_chinese(output)
+        let output = s:vimim_url_xx_to_chinese(output)
     endif
     if empty(output)
         return []
@@ -4486,7 +4486,7 @@ function! s:vimim_process_mycloud_output(keyboard, output)
         let chinese = get(item_list,0)
         if s:vimim_cloud_pim > 0
             let chinese = s:vimim_rot13(chinese)
-            let chinese = s:vimim_xx_to_chinese(chinese)
+            let chinese = s:vimim_url_xx_to_chinese(chinese)
         endif
         if s:localization > 0
             let chinese = s:vimim_i18n_read(chinese)
@@ -4503,9 +4503,9 @@ function! s:vimim_process_mycloud_output(keyboard, output)
     return menu
 endfunction
 
-" ---------------------------------
-function! s:vimim_xx_to_chinese(xx)
-" ---------------------------------
+" -------------------------------------
+function! s:vimim_url_xx_to_chinese(xx)
+" -------------------------------------
     let input = a:xx
     let output = substitute(input, '%\(\x\x\)',
                 \ '\=eval(''"\x''.submatch(1).''"'')','g')
@@ -5650,8 +5650,8 @@ endfunction
 " -------------------------------------
 function! s:vimim_chinese_mode_map_on()
 " -------------------------------------
-    inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle()
-    " ----------------------------------------------------------------
+    inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle_ctrl_6()
+    " -----------------------------------------------------------------------
     imap <silent><C-^> <Plug>VimimChineseToggle
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
         imap<silent> <C-Space> <Plug>VimimChineseToggle
