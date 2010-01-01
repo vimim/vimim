@@ -1286,7 +1286,6 @@ function! s:vimim_onekey(onekey)
     " ---------------------------------------------------
     if char_before_before !~# "[0-9a-z]"
     \&& has_key(s:punctuations, char_before)
-        " -----------------------------------------------
         let space = ""
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
@@ -1311,7 +1310,6 @@ function! s:vimim_onekey(onekey)
         else
             sil!exe 'sil!return "' . space . '"'
         endif
-        " -----------------------------------------------
     endif
     " ---------------------------------------------------
     if char_before !~# s:valid_key
@@ -1331,7 +1329,6 @@ function! s:vimim_onekey(onekey)
     endif
     " ---------------------------------------------------
     return a:onekey
-    " ---------------------------------------------------
 endfunction
 
 " --------------------------
@@ -1369,8 +1366,6 @@ function! <SID>vimim_label(n)
             let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
             let label = counts . yes
         endif
-    else
-        let s:seamless_positions = []
     endif
     sil!exe 'sil!return "' . label . '"'
 endfunction
@@ -2576,6 +2571,8 @@ function! <SID>vimim_smart_enter()
         " -----------------------------------------------
         if s:smart_enter == 1
             let msg = "do seamless for the first time <Enter>"
+            let s:seamless_positions = getpos(".")
+            let s:keyboard_leading_zero = 0
         else
             let s:smart_enter = 0
             let key = "\<CR>"
@@ -5101,25 +5098,25 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
-    if pumvisible()
-        return ""
-    endif
-    " --------------------------------
-    let chinese = s:vimim_popup_word_stat()
-    if s:chinese_frequency > 0
-        let both_list = s:vimim_get_new_order_list(chinese)
-        call s:vimim_update_chinese_frequency_usage(both_list)
-    endif
-    " --------------------------------
-    let s:matched_list = []
-    let s:pageup_pagedown = ''
-    " --------------------------------
-    if empty(s:vimim_sexy_onekey)
-    \&& empty(s:chinese_input_mode)
-        call s:vimim_stop()
-    endif
-    " --------------------------------
-    return ""
+   if pumvisible()
+       return ""
+   endif
+   " --------------------------------
+   let chinese = s:vimim_popup_word_stat()
+   if s:chinese_frequency > 0
+       let both_list = s:vimim_get_new_order_list(chinese)
+       call s:vimim_update_chinese_frequency_usage(both_list)
+   endif
+   " --------------------------------
+   let s:matched_list = []
+   let s:pageup_pagedown = ''
+   " --------------------------------
+   if empty(s:vimim_sexy_onekey)
+   \&& empty(s:chinese_input_mode)
+       call s:vimim_stop()
+   endif
+   " --------------------------------
+   return ""
 endfunction
 
 " ---------------------------
@@ -5154,7 +5151,6 @@ function! s:vimim_helper_mapping_on()
     " ----------------------------------------------------------
     if s:chinese_input_mode > 0 || s:vimim_sexy_onekey > 0
         inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
-                            \<C-R>=<SID>vimim_set_seamless()<CR>
     endif
     " ----------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
