@@ -1402,7 +1402,7 @@ function! <SID>vimim_hjkl(key)
         if a:key == 'x'
             let hjkl  = '\<C-E>'
         elseif a:key == 'y'
-            let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
         elseif a:key == 'u'
             let hjkl  = '\<PageUp>'
         elseif a:key == 'j'
@@ -1412,15 +1412,14 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'l'
             let hjkl  = '\<PageDown>'
         elseif a:key == 's'
-            let hjkl  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_copy_popup_word()\<CR>'
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
         elseif a:key == 'p'
-            let hjkl  = '\<C-R>=g:vimim_p_paste()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_p_paste()\<CR>'
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_pumvisible_p_paste()\<CR>'
         elseif a:key == 'q'
-            let hjkl  = '\<C-R>=g:vimim_one_key_correction()\<CR>'
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -1429,79 +1428,79 @@ endfunction
 " ------------------------------------
 function! g:vimim_one_key_correction()
 " ------------------------------------
-    let d  = ''
+    let key = '\<Esc>'
     let s:matched_list = []
-    if pumvisible()
-        let s:one_key_correction = 1
-        let d = '\<C-E>'
+    let s:popupmenu_matched_list = []
+    " --------------------------------
+    if empty(s:chinese_input_mode)
+    \&& empty(s:vimim_sexy_onekey)
+        call s:vimim_stop()
     else
-        if s:one_key_correction > 0
-            let d = '\<C-X>\<C-U>\<BS>'
+        let char_before = getline(".")[col(".")-2]
+        if char_before =~# s:valid_key
+            let s:one_key_correction = 1
+            let key = '\<C-X>\<C-U>\<BS>'
         endif
     endif
-    sil!exe 'sil!return "' . d . '"'
+    " --------------------------------
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" -------------------------
-function! g:vimim_p_paste()
-" -------------------------
+" ------------------------------------
+function! g:vimim_pumvisible_p_paste()
+" ------------------------------------
     let show_me_not_pattern = ',,,'
-    if pumvisible()
-        let p = '\<C-E>'
-        sil!exe 'sil!return "' . p . '"'
-    else
-        let matched_list = copy(s:popupmenu_matched_list)
-        let pastes = []
-        let words = []
-        for item in matched_list
-            let pairs = split(item)
-            let yin = get(pairs, 0)
-            let yang = get(pairs, 1)
-            if yang =~ '#'
-                continue
-            endif
-            call add(words, item)
-            if yin =~ show_me_not_pattern
-                call add(pastes, yang)
-            endif
+    let matched_list = copy(s:popupmenu_matched_list)
+    let pastes = []
+    let words = []
+    for item in matched_list
+        let pairs = split(item)
+        let yin = get(pairs, 0)
+        let yang = get(pairs, 1)
+        if yang =~ '#'
+            continue
+        endif
+        call add(words, item)
+        if yin =~ show_me_not_pattern
+            call add(pastes, yang)
+        endif
+    endfor
+    if len(pastes) == len(words)
+        let words = copy(pastes)
+    endif
+    let line = line(".")
+    let current_positions = getpos(".")
+    let current_positions[2] = 1
+    call setpos(".", current_positions)
+    let current_positions[1] = line + len(words) - 1
+    call setline(line, words)
+    if s:vimim_auto_copy_clipboard>0 && has("gui_running")
+        let string_words = ''
+        for line in words
+            let string_words .= line
+            let string_words .= "\n"
         endfor
-        if len(pastes) == len(words)
-            let words = copy(pastes)
-        endif
-        let line = line(".")
-        let current_positions = getpos(".")
-        let current_positions[2] = 1
-        call setpos(".", current_positions)
-        let current_positions[1] = line + len(words) - 1
-        call setline(line, words)
-        if s:vimim_auto_copy_clipboard>0 && has("gui_running")
-            let string_words = ''
-            for line in words
-                let string_words .= line
-                let string_words .= "\n"
-            endfor
-            let @+ = string_words
-        endif
-        sil!call s:vimim_stop()
-        return "\<Esc>"
+        let @+ = string_words
     endif
+    sil!call s:vimim_stop()
+    return "\<Esc>"
 endfunction
 
-" -----------------------------------
-function! g:vimim_space_key_for_yes()
-" -----------------------------------
-    let space = ''
+" ----------------------------------
+function! g:vimim_pumvisible_y_yes()
+" ----------------------------------
+    let key = ''
     if pumvisible()
-        let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
+        let key = s:vimim_ctrl_y_ctrl_x_ctrl_u()
     else
-        let space = ' '
+        let key = ' '
     endif
-    sil!exe 'sil!return "' . space . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ---------------------------------
-function! g:vimim_copy_popup_word()
-" ---------------------------------
+" ------------------------------------
+function! g:vimim_pumvisible_putclip()
+" ------------------------------------
     let word = s:vimim_popup_word(s:start_column_before)
     return s:vimim_clipboard_register(word)
 endfunction
@@ -1599,21 +1598,6 @@ function! s:vimim_stop_chinese_mode()
     sil!call s:vimim_onekey_mapping_on()
 endfunction
 
-" --------------------------------------
-function! <SID>vimim_pumvisible_ctrl_e()
-" --------------------------------------
-    let end = ""
-    if pumvisible()
-        let end = "\<C-E>"
-        if s:vimim_wubi_non_stop > 0
-        \&& empty(get(s:im['pinyin'],0))
-        \&& empty(len(s:keyboard_wubi)%4)
-            let end = "\<C-Y>"
-        endif
-    endif
-    sil!exe 'sil!return "' . end . '"'
-endfunction
-
 " -------------------------------
 function! g:vimim_space_dynamic()
 " -------------------------------
@@ -1675,7 +1659,7 @@ function! s:vimim_dynamic_alphabet_trigger()
     for char in s:valid_keys
         if char !~# "[0-9,.']"
             sil!exe 'inoremap<silent> ' . char . '
-            \ <C-R>=<SID>vimim_pumvisible_ctrl_e()<CR>'. char .
+            \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
             \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
         endif
     endfor
@@ -2435,7 +2419,7 @@ function! s:vimim_search(key)
 " ---------------------------
     let slash = ""
     if pumvisible()
-        let slash  = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
+        let slash  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
         let slash .= '\<C-R>=g:vimim_slash_search()\<CR>'
         let slash .= a:key . '\<CR>'
     endif
@@ -2532,7 +2516,7 @@ function! s:vimim_square_bracket(key)
             let right = "\<Right>"
         endif
         let backspace = '\<C-R>=g:vimim_bracket_backspace('.i.')\<CR>'
-        let yes = '\<C-R>=g:vimim_space_key_for_yes()\<CR>'
+        let yes = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
         let bracket = yes . left . backspace . right
     endif
     sil!exe 'sil!return "' . bracket . '"'
@@ -2682,14 +2666,19 @@ function! <SID>vimim_smart_ctrl_h()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" --------------------------------------
-function! <SID>vimim_pumvisible_ctrl_e()
-" --------------------------------------
-    let e  = ''
+" -----------------------------------
+function! g:vimim_pumvisible_ctrl_e()
+" -----------------------------------
+    let key = ""
     if pumvisible()
-        let e = '\<C-E>'
+        let key = "\<C-E>"
+        if s:vimim_wubi_non_stop > 0
+        \&& empty(get(s:im['pinyin'],0))
+        \&& empty(len(s:keyboard_wubi)%4)
+            let key = "\<C-Y>"
+        endif
     endif
-    sil!exe 'sil!return "' . e . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " -------------------------------------
@@ -2729,28 +2718,6 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
         let key = ''
         let s:smart_backspace = 0
         sleep
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" -------------------------------------------
-function! <SID>vimim_esc_one_key_correction()
-" -------------------------------------------
-    let key = '\<Esc>'
-    let s:matched_list = []
-    let s:popupmenu_matched_list = []
-    " --------------------------------
-    if empty(s:chinese_input_mode)
-    \&& empty(s:vimim_sexy_onekey)
-        call s:vimim_stop()
-    endif
-    " --------------------------------
-    let char_before = getline(".")[col(".")-2]
-    if char_before =~# s:valid_key
-        let s:one_key_correction = 1
-        let key = '\<C-X>\<C-U>\<BS>'
-    elseif empty(s:chinese_input_mode)
-        call s:vimim_stop()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5180,16 +5147,16 @@ endfunction
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    if s:vimim_smart_ctrl_h > 0 && s:chinese_input_mode < 2
-        inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
-    endif
-    " ----------------------------------------------------------
-    if s:vimim_smart_ctrl_n > 0 && s:chinese_input_mode < 2
-        inoremap<silent><C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
-    endif
-    " ----------------------------------------------------------
-    if s:vimim_smart_ctrl_p > 0 && s:chinese_input_mode < 2
-        inoremap<silent><C-P> <C-R>=<SID>vimim_smart_ctrl_p()<CR>
+    if s:chinese_input_mode < 2
+        if s:vimim_smart_ctrl_h > 0
+            inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
+        endif
+        if s:vimim_smart_ctrl_n > 0
+            inoremap<silent><C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
+        endif
+        if s:vimim_smart_ctrl_p > 0
+            inoremap<silent><C-P> <C-R>=<SID>vimim_smart_ctrl_p()<CR>
+        endif
     endif
     " ----------------------------------------------------------
     if s:chinese_input_mode > 0 || s:vimim_sexy_onekey > 0
@@ -5197,11 +5164,13 @@ function! s:vimim_helper_mapping_on()
                             \<C-R>=<SID>vimim_set_seamless()<CR>
     endif
     " ----------------------------------------------------------
-    inoremap<silent><BS>  <C-R>=<SID>vimim_pumvisible_ctrl_e()<CR>
-                         \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
+    if empty(s:vimim_ctrl_6_as_onekey)
+        inoremap<silent><Esc>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                              \<C-R>=g:vimim_one_key_correction()<CR>
+    endif
     " ----------------------------------------------------------
-    inoremap<silent><Esc>  <C-R>=<SID>vimim_pumvisible_ctrl_e()<CR>
-                          \<C-R>=<SID>vimim_esc_one_key_correction()<CR>
+    inoremap<silent><BS>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                         \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
     " ----------------------------------------------------------
 endfunction
 
