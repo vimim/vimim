@@ -1340,13 +1340,8 @@ function! s:vimim_label_on()
     if s:vimim_custom_menu_label < 1
         return
     endif
-    for _ in range(0,9)
-        sil!exe'inoremap<silent> '._.'
-        \  <C-R>=<SID>vimim_label("'._.'")<CR>'
-        \.'<C-R>=g:vimim_reset_after_insert()<CR>'
-    endfor
-    " ----------------------
     let hjkl_list = split('abcdefghi', '\zs')
+    call extend(hjkl_list, range(0,9), 0)
     for _ in hjkl_list
         sil!exe'inoremap<silent> '._.'
         \  <C-R>=<SID>vimim_label("'._.'")<CR>'
@@ -1357,14 +1352,11 @@ endfunction
 " ---------------------------
 function! <SID>vimim_label(n)
 " ---------------------------
-    let n = a:n
     let label = a:n
-    " -----------------------
+    let n = a:n
     if n =~# '\l'
-        let abcdefghi = char2nr('a') - 1
-        let n = char2nr(n) - abcdefghi
+        let n = char2nr(n) - char2nr('a') + 1
     endif
-    " -----------------------
     if pumvisible()
         if n < 1
             let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
