@@ -1337,9 +1337,10 @@ function! s:vimim_label_on()
     if s:vimim_custom_menu_label < 1
         return
     endif
-    let hjkl_list = split('abcdefghiz', '\zs')
-    call extend(hjkl_list, range(0,9), 0)
-    for _ in hjkl_list
+    let labels = range(0,9)
+    let abcdefghi = split('abcdefghiz', '\zs')
+    call extend(labels, abcdefghi)
+    for _ in labels
         sil!exe'inoremap<silent> '._.'
         \  <C-R>=<SID>vimim_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
@@ -1353,9 +1354,10 @@ function! <SID>vimim_label(n)
     let n = a:n
     if a:n =~# '\l'
         let n = char2nr(n) - char2nr('a') + 1
+        let msg = "double label: abcdefghiz and 1234567890"
     endif
     if pumvisible()
-        " -----------------------------------------------------
+        " -------------------------------------------
         if n < 1 || a:n ==# 'z'
             let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         else
@@ -1367,14 +1369,15 @@ function! <SID>vimim_label(n)
             let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
             let label = counts . yes
         endif
-        " -----------------------------------------------------
+        " -------------------------------------------
         if empty(s:chinese_input_mode)
         \&& s:pinyin_and_4corner > 0
         \&& a:n =~# '\d'
+            let msg = "give 1234567890 label new meaning"
             let s:menu_4corner_filter = a:n
-            let label = '\<C-E>\<C-X>\<C-U>'
+            let label = '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
         endif
-        " -----------------------------------------------------
+        " -------------------------------------------
     endif
     sil!exe 'sil!return "' . label . '"'
 endfunction
@@ -2007,7 +2010,7 @@ function! <SID>vimim_punctuations_navigation(key)
                     let s:pageup_pagedown += 1
                 endif
             endif
-            let hjkl = '\<C-E>\<C-X>\<C-U>'
+            let hjkl = '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
         endif
     else
         if s:chinese_input_mode > 0
@@ -2871,12 +2874,21 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         " -------------------------------------------------
         if s:vimim_custom_menu_label > 0
+            let labeling = label
             if empty(s:chinese_input_mode)
+                if s:pinyin_and_4corner > 0
+                    let s:vimim_custom_menu_label = 3
+                endif
                 let abcdefghi = char2nr('a') + (label-1)%26
-                let underscore = len(label)>1?"_":"__"
-                let label .= underscore . nr2char(abcdefghi)
+                if s:vimim_custom_menu_label > 2
+                    let labeling = nr2char(abcdefghi)
+                else
+                    let pat = "_"
+                    let underscore = len(label)>1 ? pat : pat.pat
+                    let labeling .= underscore . nr2char(abcdefghi)
+                endif
             endif
-            let abbr = printf('%2s',label) . "\t" . chinese
+            let abbr = printf('%2s',labeling)."\t".chinese
             if len(matched_list) > 1
                 let complete_items["abbr"] = abbr
             endif
