@@ -2630,7 +2630,7 @@ function! s:vimim_get_list_from_smart_ctrl_p(keyboard)
     else
         return []
     endif
-    let pattern = s:vimim_fuzzy_pattern(keyboard)
+    let pattern = s:vimim_free_fuzzy_pattern(keyboard)
     let matched = match(keys(s:inputs_all), pattern)
     if matched < 0
         let msg = "nothing matched previous user input"
@@ -3008,7 +3008,7 @@ function! s:vimim_fuzzy_match(lines, keyboard)
     if empty(keyboard) || empty(a:lines)
         return []
     endif
-    let pattern = s:vimim_fuzzy_pattern(keyboard)
+    let pattern = s:vimim_free_fuzzy_pattern(keyboard)
     let results = filter(a:lines, 'v:val =~ pattern')
     if s:vimim_datafile_has_english > 0
         call filter(results, 'v:val !~ "#$"')
@@ -3019,19 +3019,12 @@ function! s:vimim_fuzzy_match(lines, keyboard)
     return results
 endfunction
 
-" ---------------------------------------
-function! s:vimim_fuzzy_pattern(keyboard)
-" ---------------------------------------
-    let keyboard = a:keyboard
-    let fuzzy = '\l\+'
-    if strpart(keyboard,len(keyboard)-1,1) ==# '.'
-        let keyboard = strpart(keyboard,0,len(keyboard)-1)
-        let fuzzy = '.*'
-    endif
-    let start = '^'
-    let fuzzies = join(split(keyboard,'\ze'), fuzzy)
-    let end = fuzzy . '\d\=' . '\>'
-    let pattern = start . fuzzies . end
+" --------------------------------------------
+function! s:vimim_free_fuzzy_pattern(keyboard)
+" --------------------------------------------
+    let fuzzy = '.*'
+    let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
+    let pattern = '^' . fuzzies
     return pattern
 endfunction
 
@@ -4624,7 +4617,7 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
             endif
         elseif len(keyboard) == 2 && filter == 2
             let pattern .= '\>'
-            let pattern = s:vimim_fuzzy_pattern(keyboard)
+            let pattern = s:vimim_free_fuzzy_pattern(keyboard)
         endif
         if s:vimim_datafile_has_english > 0
             call filter(results, 'v:val !~ "#$"')
@@ -4648,7 +4641,7 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
     let results_pattern = filter(copy(results), 'v:val =~ pattern')
     if empty(results_pattern)
         let msg = "use 4corner as a filter for super jianpin"
-        let pattern = s:vimim_fuzzy_pattern(keyboard)
+        let pattern = s:vimim_free_fuzzy_pattern(keyboard)
         let results_pattern = filter(results, 'v:val =~ pattern')
     endif
     " -----------------------------------------------------------
