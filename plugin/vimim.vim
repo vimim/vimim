@@ -4596,7 +4596,7 @@ endfunction
 function! s:vimim_quick_fuzzy_search(keyboard, filter)
 " ----------------------------------------------------
     let keyboard = a:keyboard
-    let filter_length = a:filter
+    let filter = a:filter
     let results = s:vimim_datafile_range(keyboard)
     if empty(results)
         return []
@@ -4617,12 +4617,12 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
             endif
         endif
         " --------------------------------------------
-        if filter_length == 1
+        if filter == 1
             if len(keyboard) > 1
                 let pattern .= '\>'
-                let filter_length = -1
+                let filter = -1
             endif
-        elseif len(keyboard) == 2 && filter_length == 2
+        elseif len(keyboard) == 2 && filter == 2
             let pattern .= '\>'
             let pattern = s:vimim_fuzzy_pattern(keyboard)
         endif
@@ -4631,7 +4631,7 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
         endif
     else |" ------------------------------------------
         let msg = "leave room to play with digits"
-        let filter_length = -1
+        let filter = -1
         if get(s:im['4corner'],0) == 1001
             let msg = "another choice: top-left & bottom-right"
             let char_first = strpart(keyboard, 0, 1)
@@ -4644,12 +4644,17 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
             let pattern = '^' .  char_first . "\d\d" . char_last
         endif
     endif
-    " --------------------------------------
-    call filter(results, 'v:val =~ pattern')
     " -----------------------------------------------------------
-    let results = s:vimim_filter(results, keyboard, filter_length)
+    let results_pattern = filter(copy(results), 'v:val =~ pattern')
+    if empty(results_pattern)
+        let msg = "use 4corner as a filter for super jianpin"
+        let pattern = s:vimim_fuzzy_pattern(keyboard)
+        let results_pattern = filter(results, 'v:val =~ pattern')
+    endif
     " -----------------------------------------------------------
-    return s:vimim_i18n_read_list(results)
+    let results_length = s:vimim_filter(results_pattern, keyboard, filter)
+    " -----------------------------------------------------------
+    return s:vimim_i18n_read_list(results_length)
 endfunction
 
 " ------------------------------------------------
