@@ -2850,7 +2850,9 @@ function! s:vimim_popupmenu_list(matched_list)
                 let label .= underscore . nr2char(abcdefghi)
             endif
             let abbr = printf('%2s',label) . "\t" . chinese
-            let complete_items["abbr"] = abbr
+            if len(matched_list) > 1
+                let complete_items["abbr"] = abbr
+            endif
         endif
         " -------------------------------------------------
         let tail = ''
@@ -4902,8 +4904,8 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_cloud_sogou=12
-    let s:vimim_chinese_frequency=12
+    let s:vimim_cloud_sogou=0
+    let s:vimim_chinese_frequency=14
     " ------------------------------
     let s:vimim_cloud_pim=0
     let s:vimim_wildcard_search=1
