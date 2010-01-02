@@ -1351,12 +1351,12 @@ function! <SID>vimim_label(n)
 " ---------------------------
     let label = a:n
     let n = a:n
-    if n =~# '\l'
+    if a:n =~# '\l'
         let n = char2nr(n) - char2nr('a') + 1
     endif
     if pumvisible()
+        " -----------------------------------------------------
         if n < 1 || a:n ==# 'z'
-            let s:pageup_pagedown = 0
             let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         else
             let counts = ""
@@ -1367,6 +1367,14 @@ function! <SID>vimim_label(n)
             let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
             let label = counts . yes
         endif
+        " -----------------------------------------------------
+        if empty(s:chinese_input_mode)
+        \&& s:pinyin_and_4corner > 0
+        \&& a:n =~# '\d'
+            let s:menu_4corner_filter = a:n
+            let label = '\<C-E>\<C-X>\<C-U>'
+        endif
+        " -----------------------------------------------------
     endif
     sil!exe 'sil!return "' . label . '"'
 endfunction
@@ -1417,8 +1425,7 @@ endfunction
 function! g:vimim_one_key_correction()
 " ------------------------------------
     let key = '\<Esc>'
-    let s:matched_list = []
-    let s:popupmenu_matched_list = []
+    call s:reset_matched_list()
     " --------------------------------
     if empty(s:chinese_input_mode)
     \&& empty(s:vimim_sexy_onekey)
@@ -1437,10 +1444,13 @@ endfunction
 " ------------------------------------
 function! g:vimim_pumvisible_p_paste()
 " ------------------------------------
-    let show_me_not_pattern = ',,,'
     let matched_list = copy(s:popupmenu_matched_list)
+    if empty(matched_list)
+        return "\<Esc>"
+    endif
     let pastes = []
     let words = []
+    let show_me_not_pattern = ',,,'
     for item in matched_list
         let pairs = split(item)
         let yin = get(pairs, 0)
@@ -1997,7 +2007,7 @@ function! <SID>vimim_punctuations_navigation(key)
                     let s:pageup_pagedown += 1
                 endif
             endif
-            let hjkl = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+            let hjkl = '\<C-E>\<C-X>\<C-U>'
         endif
     else
         if s:chinese_input_mode > 0
@@ -2675,8 +2685,7 @@ endfunction
 " -------------------------------------
 function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
-    let s:matched_list = []
-    let s:popupmenu_matched_list = []
+    call s:reset_matched_list()
     " ---------------------------------
     if s:chinese_input_mode > 1
         let key = '\<BS>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
@@ -2731,7 +2740,7 @@ function! s:vimim_pair_list(matched_list)
         return []
     endif
     let pair_matched_list = []
-    let maximum_list = 100
+    let maximum_list = 200
     if len(matched_list) > maximum_list
         let matched_list = matched_list[0 : maximum_list]
     endif
@@ -2753,6 +2762,23 @@ function! s:vimim_pair_list(matched_list)
     return pair_matched_list
 endfunction
 
+" -------------------------------------------------
+function! s:vimim_menu_4corner_filter(matched_list)
+" -------------------------------------------------
+    if empty(s:chinese_input_mode)
+    \&& s:pinyin_and_4corner > 0
+    \&& s:menu_4corner_filter > -1
+        let msg = "make 4corner as a filter to omni menu"
+    else
+        return a:matched_list
+    endif
+    let keyboard = get(split(get(a:matched_list,0)),0)
+    let keyboard = strpart(keyboard, match(keyboard,'\l'))
+    let keyboards = [keyboard, s:menu_4corner_filter]
+    let results = s:vimim_diy_results(keyboards, a:matched_list)
+    return results
+endfunction
+
 " ---------------------------------------------
 function! s:vimim_pageup_pagedown(matched_list)
 " ---------------------------------------------
@@ -2768,7 +2794,7 @@ function! s:vimim_pageup_pagedown(matched_list)
     let length = len(matched_list)
     if length > page
         if shift >= length || shift*(-1) >= length
-            let s:pageup_pagedown = ''
+            let s:pageup_pagedown = 0
             return matched_list
         endif
         let partition = shift
@@ -2799,14 +2825,10 @@ function! s:vimim_popupmenu_list(matched_list)
         let s:inputs_all[first_candidate] = matched_list
     endif
     "-----------------------------------------
-    let s:popupmenu_matched_list = matched_list
-    if s:menu_reverse > 0
-        let matched_list = reverse(matched_list)
-    endif
-    let menu = 0
-    let label = 1
+    let s:popupmenu_matched_list = copy(matched_list)
+    let matched_list = s:vimim_menu_4corner_filter(matched_list)
     let matched_list = s:vimim_pageup_pagedown(matched_list)
-    let popupmenu_list = []
+    "-----------------------------------------
     let keyboard = s:keyboard_leading_zero
     let matched = match(keyboard, first_candidate)
     "-----------------------------------------
@@ -2814,6 +2836,10 @@ function! s:vimim_popupmenu_list(matched_list)
         let msg = "............zuorichongxian"
         let keyboard = strpart(keyboard, matched)
     endif
+    " ----------------------
+    let menu = 0
+    let label = 1
+    let popupmenu_list = []
     " ----------------------
     for pair in matched_list
     " ----------------------
@@ -3176,6 +3202,7 @@ endfunction
 function! g:vimim_ctrl_x_ctrl_u()
 " -------------------------------
     let key = ''
+    call s:reset_matched_list()
     let char_before = getline(".")[col(".")-2]
     if char_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
@@ -4831,13 +4858,13 @@ function! s:vimim_pinyin_and_4corer(keyboard)
             call s:debugs('diy_keyboard2number', s:debug_list(keyboards))
         endif
     endif
-    let results = s:vimim_diy_results(keyboards)
+    let results = s:vimim_diy_results(keyboards, [])
     return results
 endfunction
 
-" --------------------------------------
-function! s:vimim_diy_results(keyboards)
-" --------------------------------------
+" --------------------------------------------------
+function! s:vimim_diy_results(keyboards, cache_list)
+" --------------------------------------------------
     let keyboards = a:keyboards
     if empty(s:pinyin_and_4corner)
     \|| s:chinese_input_mode > 1
@@ -4850,9 +4877,12 @@ function! s:vimim_diy_results(keyboards)
     let b = get(keyboards, 1) |" 7712 7712   7712   7712   77
     let c = get(keyboards, 2) |"              ""    4002   40
     " --------------------------------------------------------
-    let fuzzy_lines = []
-    if len(keyboards) == 2
-        let fuzzy_lines = s:vimim_quick_fuzzy_search(a, 1)
+    let fuzzy_lines = []      |" ['mali 馬力']
+    if len(keyboards) == 2    |" ['mali', '40']
+        let fuzzy_lines = a:cache_list
+        if empty(fuzzy_lines)
+            let fuzzy_lines = s:vimim_quick_fuzzy_search(a, 1)
+        endif
     elseif len(keyboards) == 3
         let fuzzy_lines = s:vimim_quick_fuzzy_search(a, 2)
     endif
@@ -5044,14 +5074,22 @@ endfunction
 " ---------------------------------
 function! s:reset_before_anything()
 " ---------------------------------
-    let s:matched_list = []
+    call s:reset_matched_list()
     let s:chinese_input_mode = 0
     let s:no_internet_connection = 0
     let s:chinese_mode_toggle_flag = 0
-    let s:pageup_pagedown = ''
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
+endfunction
+
+" ------------------------------
+function! s:reset_matched_list()
+" ------------------------------
+    let s:matched_list = []
+    let s:menu_4corner_filter = -1
+    let s:pageup_pagedown = 0
+    let s:popupmenu_matched_list = []
 endfunction
 
 " ------------------------------
@@ -5075,7 +5113,6 @@ endfunction
 function! s:reset_after_auto_insert()
 " -----------------------------------
     let s:keyboard_leading_zero = 0
-    let s:popupmenu_matched_list = []
     let s:keyboard_shuangpin = 0
     call s:vimim_popup_word_stat()
 endfunction
@@ -5084,7 +5121,6 @@ endfunction
 function! s:vimim_popup_word_stat()
 " ---------------------------------
     let s:keyboard_wubi = ''
-    let s:menu_reverse = 0
     let s:smart_ctrl_n = 0
     let s:smart_ctrl_p = 0
     let s:smart_enter = 0
@@ -5099,25 +5135,24 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
-   if pumvisible()
-       return ""
-   endif
-   " --------------------------------
-   let chinese = s:vimim_popup_word_stat()
-   if s:chinese_frequency > 0
-       let both_list = s:vimim_get_new_order_list(chinese)
-       call s:vimim_update_chinese_frequency_usage(both_list)
-   endif
-   " --------------------------------
-   let s:matched_list = []
-   let s:pageup_pagedown = ''
-   " --------------------------------
-   if empty(s:vimim_sexy_onekey)
-   \&& empty(s:chinese_input_mode)
-       call s:vimim_stop()
-   endif
-   " --------------------------------
-   return ""
+    if pumvisible()
+        return ""
+    endif
+    " --------------------------------
+    let chinese = s:vimim_popup_word_stat()
+    if s:chinese_frequency > 0
+        let both_list = s:vimim_get_new_order_list(chinese)
+        call s:vimim_update_chinese_frequency_usage(both_list)
+    endif
+    " --------------------------------
+    call s:reset_matched_list()
+    " --------------------------------
+    if empty(s:vimim_sexy_onekey)
+    \&& empty(s:chinese_input_mode)
+        call s:vimim_stop()
+    endif
+    " --------------------------------
+    return ""
 endfunction
 
 " ---------------------------
@@ -5312,12 +5347,10 @@ else
         endif
     endif
 
-    " use cached list when pageup/pagedown is used
-    " --------------------------------------------
+    " use cached list when pageup/pagedown or 4corner is used
+    " -------------------------------------------------------
     if s:vimim_punctuation_navigation > -1
-        if empty(len(s:pageup_pagedown))
-            let msg = "no pageup or pagedown is used"
-        elseif empty(s:popupmenu_matched_list)
+        if empty(s:popupmenu_matched_list)
             let msg = "no popup matched list; let us build it"
         else
             return s:vimim_popupmenu_list(s:popupmenu_matched_list)
