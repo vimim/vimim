@@ -1337,7 +1337,7 @@ function! s:vimim_label_on()
     if s:vimim_custom_menu_label < 1
         return
     endif
-    let hjkl_list = split('abcdefghi', '\zs')
+    let hjkl_list = split('abcdefghiz', '\zs')
     call extend(hjkl_list, range(0,9), 0)
     for _ in hjkl_list
         sil!exe'inoremap<silent> '._.'
@@ -1355,7 +1355,8 @@ function! <SID>vimim_label(n)
         let n = char2nr(n) - char2nr('a') + 1
     endif
     if pumvisible()
-        if n < 1
+        if n < 1 || a:n ==# 'z'
+            let s:pageup_pagedown = 0
             let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         else
             let counts = ""
@@ -4904,8 +4905,8 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_cloud_sogou=0
-    let s:vimim_chinese_frequency=14
+    let s:vimim_cloud_sogou=12
+    let s:vimim_chinese_frequency=12
     " ------------------------------
     let s:vimim_cloud_pim=0
     let s:vimim_wildcard_search=1
