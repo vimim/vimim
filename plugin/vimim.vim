@@ -677,7 +677,7 @@ function! s:vimim_egg_vimegg()
     call add(eggs, "程式　vimimvim")
     call add(eggs, "帮助　vimimhelp")
     call add(eggs, "测试　vimimdebug")
-    call add(eggs, "速度　vimimstat")
+    call add(eggs, "统计　vimimstat")
     call add(eggs, "设置　vimimdefaults")
     return map(eggs,  '"VimIM 彩蛋：" . v:val . "　"')
 endfunction
