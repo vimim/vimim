@@ -2538,45 +2538,40 @@ endfunction
 function! <SID>vimim_smart_enter()
 " --------------------------------
     let key = ''
-    if pumvisible()
+    let char_before = getline(".")[col(".")-2]
+    " -----------------------------------------------
+    " <Enter> double play in Chinese Mode:
+    "   (1) after English (valid keys)    => Seamless
+    "   (2) after Chinese or double Enter => Enter
+    " -----------------------------------------------
+    if char_before =~# "[*,.']"
         let s:smart_enter = 0
-        let key = "\<C-E>"
-    else
-        let char_before = getline(".")[col(".")-2]
-        " -----------------------------------------------
-        " <Enter> double play in Chinese Mode:
-        "   (1) after English (valid keys)    => Seamless
-        "   (2) after Chinese or double Enter => Enter
-        " -----------------------------------------------
-        if char_before =~# "[*,.']"
-            let s:smart_enter = 0
-        elseif char_before =~# s:valid_key
+    elseif char_before =~# s:valid_key
+        let s:smart_enter += 1
+    endif
+    " -----------------------------------------------
+    " <Enter> triple play in OneKey Mode:
+    "   (1) after English (valid keys)    => Seamless
+    "   (2) after Chinese or double Enter => Enter
+    "   (3) after English punctuation     => Space
+    " -----------------------------------------------
+    if empty(s:chinese_input_mode)
+        if has_key(s:punctuations, char_before)
             let s:smart_enter += 1
+            let key = ' '
         endif
-        " -----------------------------------------------
-        " <Enter> triple play in OneKey Mode:
-        "   (1) after English (valid keys)    => Seamless
-        "   (2) after Chinese or double Enter => Enter
-        "   (3) after English punctuation     => Space
-        " -----------------------------------------------
-        if empty(s:chinese_input_mode)
-            if has_key(s:punctuations, char_before)
-                let s:smart_enter += 1
-                let key = ' '
-            endif
-            if char_before =~ '\s' || empty(char_before)
-                let key = "\<CR>"
-            endif
-        endif
-        " -----------------------------------------------
-        if s:smart_enter == 1
-            let msg = "do seamless for the first time <Enter>"
-            let s:seamless_positions = getpos(".")
-            let s:keyboard_leading_zero = 0
-        else
-            let s:smart_enter = 0
+        if char_before =~ '\s' || empty(char_before)
             let key = "\<CR>"
         endif
+    endif
+    " -----------------------------------------------
+    if s:smart_enter == 1
+        let msg = "do seamless for the first time <Enter>"
+        let s:seamless_positions = getpos(".")
+        let s:keyboard_leading_zero = 0
+    else
+        let s:smart_enter = 0
+        let key = "\<CR>"
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5118,7 +5113,6 @@ function! g:reset_after_auto_insert()
     return ""
 endfunction
 
-
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
@@ -5175,7 +5169,8 @@ function! s:vimim_helper_mapping_on()
     endif
     " ----------------------------------------------------------
     if s:chinese_input_mode > 0 || s:vimim_sexy_onekey > 0
-        inoremap<silent><CR> <C-R>=<SID>vimim_smart_enter()<CR>
+        inoremap<silent><CR>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                              \<C-R>=<SID>vimim_smart_enter()<CR>
     endif
     " ----------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
