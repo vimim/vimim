@@ -1240,7 +1240,7 @@ function! <SID>vimim_start_onekey()
     " -----------------------------
     sil!call s:vimim_start()
     sil!call s:vimim_onekey_status_on()
-    sil!call s:vimim_label_4corner_filter_on()
+    sil!call s:vimim_label_1234567890_filter_on()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
@@ -1377,24 +1377,26 @@ function! <SID>vimim_label(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
-" -----------------------------------------
-function! s:vimim_label_4corner_filter_on()
-" -----------------------------------------
+" --------------------------------------------
+function! s:vimim_label_1234567890_filter_on()
+" --------------------------------------------
     if s:vimim_custom_menu_label < 1
+    \|| empty(s:pinyin_and_4corner)
         return
     endif
     let labels = range(0,9)
-    if s:pinyin_and_4corner > 0
-        for _ in labels
-            sil!exe'inoremap<silent> '._.'
-            \  <C-R>=<SID>vimim_label_4corner_filter("'._.'")<CR>'
-        endfor
+    if get(s:im['12345'],0) > 0
+        let labels = range(1,5)
     endif
+    for _ in labels
+        sil!exe'inoremap<silent> '._.'
+        \  <C-R>=<SID>vimim_label_1234567890_filter("'._.'")<CR>'
+    endfor
 endfunction
 
-" ------------------------------------------
-function! <SID>vimim_label_4corner_filter(n)
-" ------------------------------------------
+" ---------------------------------------------
+function! <SID>vimim_label_1234567890_filter(n)
+" ---------------------------------------------
     let label = a:n
     if pumvisible()
         if s:pinyin_and_4corner > 0
@@ -1802,6 +1804,7 @@ function! s:vimim_statusline()
         let im_digit = get(s:im['4corner'],1)
         if s:datafile_primary =~ '12345'
             let im_digit = get(s:im['12345'],1)
+            let s:im['12345'][0] = 1
         endif
         let im = pinyin . plus2 . im_digit
     endif
