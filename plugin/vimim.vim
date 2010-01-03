@@ -1240,6 +1240,7 @@ function! <SID>vimim_start_onekey()
     " -----------------------------
     sil!call s:vimim_start()
     sil!call s:vimim_onekey_status_on()
+    sil!call s:vimim_label_4corner_filter_on()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
@@ -1344,20 +1345,11 @@ function! s:vimim_label_on()
         let abcdefghi = split('abcdefghiz', '\zs')
         call extend(labels, abcdefghi)
     endif
-    " ----------------------
     for _ in labels
         sil!exe'inoremap<silent> '._.'
         \  <C-R>=<SID>vimim_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
-    " ----------------------
-    if empty(s:chinese_input_mode)
-    \&& s:pinyin_and_4corner > 0
-        for _ in range(0,9)
-            sil!exe'inoremap<silent> '._.'
-            \  <C-R>=<SID>vimim_label_4corner_filter("'._.'")<CR>'
-        endfor
-    endif
 endfunction
 
 " ---------------------------
@@ -1383,6 +1375,21 @@ function! <SID>vimim_label(n)
         endif
     endif
     sil!exe 'sil!return "' . label . '"'
+endfunction
+
+" -----------------------------------------
+function! s:vimim_label_4corner_filter_on()
+" -----------------------------------------
+    if s:vimim_custom_menu_label < 1
+        return
+    endif
+    let labels = range(0,9)
+    if s:pinyin_and_4corner > 0
+        for _ in labels
+            sil!exe'inoremap<silent> '._.'
+            \  <C-R>=<SID>vimim_label_4corner_filter("'._.'")<CR>'
+        endfor
+    endif
 endfunction
 
 " ------------------------------------------
