@@ -297,7 +297,7 @@ function! s:vimim_initialize_session()
     let s:lines_primary = []
     let s:lines_secondary = []
     " --------------------------------
-    let g:vimim = ["",1,1,1,localtime()]
+    let g:vimim = ["",0,0,1,localtime()]
     " --------------------------------
 endfunction
 
@@ -703,8 +703,10 @@ function! s:vimim_egg_vimimstat()
     let stat = "总计输入：". gold ." 个汉字"
     call add(eggs, stat)
     " ------------------------
-    let stat = "平均码长：". string(stone*1.0/gold)
-    call add(eggs, stat)
+    if gold > 0
+        let stat = "平均码长：". string(stone*1.0/gold)
+        call add(eggs, stat)
+    endif
     " ------------------------
     let duration = get(g:vimim,3)
     let rate = gold*60/duration
@@ -1338,10 +1340,12 @@ function! s:vimim_label_on()
         return
     endif
     let labels = range(0,9)
-    let abcdefghi = split('abcdefghiz', '\zs')
-    call extend(abcdefghi, labels, 0)
+    if empty(s:chinese_input_mode)
+        let abcdefghi = split('abcdefghiz', '\zs')
+        call extend(labels, abcdefghi)
+    endif
     " ----------------------
-    for _ in abcdefghi
+    for _ in labels
         sil!exe'inoremap<silent> '._.'
         \  <C-R>=<SID>vimim_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
@@ -1349,7 +1353,7 @@ function! s:vimim_label_on()
     " ----------------------
     if empty(s:chinese_input_mode)
     \&& s:pinyin_and_4corner > 0
-        for _ in labels
+        for _ in range(0,9)
             sil!exe'inoremap<silent> '._.'
             \  <C-R>=<SID>vimim_label_4corner_filter("'._.'")<CR>'
         endfor
@@ -1386,9 +1390,7 @@ function! <SID>vimim_label_4corner_filter(n)
 " ------------------------------------------
     let label = a:n
     if pumvisible()
-        if empty(s:chinese_input_mode)
-        \&& s:pinyin_and_4corner > 0
-        \&& a:n =~# '\d'
+        if s:pinyin_and_4corner > 0
             let msg = "give 1234567890 label new meaning"
             let s:menu_4corner_filter = a:n
             let label = '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
@@ -3193,7 +3195,7 @@ function! g:vimim_ctrl_x_ctrl_u()
     if char_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
         if s:chinese_input_mode > 1
-            call g:reset_after_auto_insert() 
+            call g:reset_after_auto_insert()
         endif
         if empty(s:vimim_sexy_input_style)
             let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
@@ -5097,23 +5099,15 @@ function! g:reset_after_auto_insert()
 " -----------------------------------
     let s:keyboard_leading_zero = 0
     let s:keyboard_shuangpin = 0
-    call s:vimim_popup_word_stat()
-endfunction
-
-" ---------------------------------
-function! s:vimim_popup_word_stat()
-" ---------------------------------
     let s:keyboard_wubi = ''
     let s:smart_ctrl_n = 0
     let s:smart_ctrl_p = 0
     let s:smart_enter = 0
     let s:smart_backspace = 0
     let s:one_key_correction = 0
-    " -------------------------------
-    let chinese = s:vimim_popup_word()
-    let g:vimim[2] += len(chinese)/s:multibyte
-    return chinese
+    return ""
 endfunction
+
 
 " ------------------------------------
 function! g:vimim_reset_after_insert()
@@ -5122,13 +5116,15 @@ function! g:vimim_reset_after_insert()
         return ""
     endif
     " --------------------------------
-    let chinese = s:vimim_popup_word_stat()
+    let chinese = s:vimim_popup_word()
+    let g:vimim[2] += (len(chinese)/s:multibyte)
     if s:chinese_frequency > 0
         let both_list = s:vimim_get_new_order_list(chinese)
         call s:vimim_update_chinese_frequency_usage(both_list)
     endif
     " --------------------------------
     call s:reset_matched_list()
+    call g:reset_after_auto_insert()
     " --------------------------------
     if empty(s:vimim_sexy_onekey)
     \&& empty(s:chinese_input_mode)
