@@ -1596,7 +1596,7 @@ function! s:vimim_stop_chinese_mode()
     " ------------------------------
     sil!call s:vimim_stop()
     sil!call s:vimim_i_lcursor_color(0)
-    sil!call s:vimim_onekey_mapping_on()
+    sil!call s:vimim_onekey_map_on()
 endfunction
 
 " -------------------------------
