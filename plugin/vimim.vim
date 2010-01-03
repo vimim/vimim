@@ -1621,7 +1621,7 @@ function! s:vimim_stop_chinese_mode()
     " ------------------------------
     sil!call s:vimim_stop()
     sil!call s:vimim_i_lcursor_color(0)
-    sil!call s:vimim_onekey_map_on()
+    sil!call s:vimim_onekey_mapping_on()
 endfunction
 
 " -------------------------------
@@ -5641,21 +5641,21 @@ call add(s:vimims, VimIM)
 " ------------------------------------
 function! s:vimim_initialize_mapping()
 " ------------------------------------
-    sil!call s:vimim_visual_map_on()
-    " ------------------------------
+    sil!call s:vimim_visual_mapping_on()
+    " ----------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
-        sil!call s:vimim_chinese_mode_map_on()
+        sil!call s:vimim_chinese_mode_mapping_on()
     elseif s:vimim_ctrl_6_as_onekey > 1
         let s:vimim_tab_as_onekey = 1
     endif
-    " ------------------------------
-    sil!call s:vimim_onekey_map_on()
-    " ------------------------------
+    " ----------------------------------
+    sil!call s:vimim_onekey_mapping_on()
+    " ----------------------------------
 endfunction
 
-" -------------------------------
-function! s:vimim_visual_map_on()
-" -------------------------------
+" -----------------------------------
+function! s:vimim_visual_mapping_on()
+" -----------------------------------
     if !hasmapto('<C-^>', 'v')
         xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
@@ -5667,9 +5667,9 @@ function! s:vimim_visual_map_on()
     endif
 endfunction
 
-" -------------------------------------
-function! s:vimim_chinese_mode_map_on()
-" -------------------------------------
+" -----------------------------------------
+function! s:vimim_chinese_mode_mapping_on()
+" -----------------------------------------
     inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle_ctrl_6()
     " -----------------------------------------------------------------------
     imap <silent><C-^> <Plug>VimimChineseToggle
@@ -5678,9 +5678,9 @@ function! s:vimim_chinese_mode_map_on()
     endif
 endfunction
 
-" -------------------------------
-function! s:vimim_onekey_map_on()
-" -------------------------------
+" -----------------------------------
+function! s:vimim_onekey_mapping_on()
+" -----------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
     " ---------------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
