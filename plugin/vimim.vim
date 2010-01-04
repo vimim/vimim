@@ -2864,7 +2864,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 if s:vimim_custom_menu_label > 2
                     let labeling = nr2char(abcdefghi)
                 else
-                    let pad = "_"
+                    let pad = ""
                     let underscore = len(label)>1 ? pad : pad.pad
                     let labeling .= underscore . nr2char(abcdefghi)
                 endif
