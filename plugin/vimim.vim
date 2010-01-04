@@ -4659,7 +4659,7 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
     let keyboard = a:keyboard
     let filter = a:filter
     let results = s:vimim_datafile_range(keyboard)
-    if empty(results)
+    if empty(keyboard) || empty(results)
         return []
     endif
     let pattern = '^' .  keyboard
@@ -4679,8 +4679,8 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
         endif
         " --------------------------------------------
         if filter == 1
+            let pattern .= '\>'
             if len(keyboard) > 1
-                let pattern .= '\>'
                 let filter = -1
             endif
         elseif len(keyboard) == 2 && filter == 2
