@@ -1408,7 +1408,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_hjkl_navigation_on()
 " ------------------------------------
-    let hjkl_list = split('qsxujklp', '\zs')
+    let hjkl_list = split('qrsxujklp', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap<silent><expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
@@ -1432,6 +1432,9 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
             let hjkl  = '\<PageDown>'
+        elseif a:key == 'r'
+            let s:pumvisible_reverse += 1
+            let hjkl = '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
@@ -2757,7 +2760,7 @@ function! s:vimim_pair_list(matched_list)
         return []
     endif
     let pair_matched_list = []
-    let maximum_list = 200
+    let maximum_list = 288
     if len(matched_list) > maximum_list
         let matched_list = matched_list[0 : maximum_list]
     endif
@@ -5118,6 +5121,7 @@ function! s:reset_before_anything()
     let s:chinese_mode_toggle_flag = 0
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
+    let s:pumvisible_reverse = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
@@ -5378,20 +5382,25 @@ else
     " use cached list when pageup/pagedown or 4corner is used
     " -------------------------------------------------------
     if s:vimim_punctuation_navigation > -1
-        if empty(s:popupmenu_matched_list)
+        let results = s:popupmenu_matched_list
+        if empty(results)
             let msg = "no popup matched list; let us build it"
         else
-            return s:vimim_popupmenu_list(s:popupmenu_matched_list)
+            if s:pumvisible_reverse > 0
+                let s:pumvisible_reverse = 0
+                let results = reverse(results)
+            endif
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
     if s:vimim_internal_code_input > 0
-        let unicodes = s:vimim_internal_code(keyboard)
-        if len(unicodes) > 0
+        let results = s:vimim_internal_code(keyboard)
+        if len(results) > 0
             let s:unicode_menu_display_flag = 1
-            return s:vimim_popupmenu_list(unicodes)
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
