@@ -1342,7 +1342,7 @@ function! s:vimim_label_on()
     endif
     let labels = range(0,9)
     if empty(s:chinese_input_mode)
-        let abcdefghi = split('abcdefghiz', '\zs')
+        let abcdefghi = split("`abcdefghiz", '\zs')
         call extend(labels, abcdefghi)
     endif
     for _ in labels
@@ -1357,19 +1357,15 @@ function! <SID>vimim_label(n)
 " ---------------------------
     let label = a:n
     let n = a:n
-    if a:n =~# '\l'
+    if a:n !~ '\d'
         let n = char2nr(n) - char2nr('a') + 1
-        let msg = "double label: abcdefghiz and 1234567890"
+        let msg = "double label: abcdefghi and 123456789"
     endif
     if pumvisible()
-        if n < 1 || a:n ==# 'z'
+        if a:n ==# 'z'
             let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         else
-            let counts = ""
-            if n > 1
-                let n -= 1
-                let counts = repeat("\<Down>", n)
-            endif
+            let counts = repeat("\<Down>", n)
             let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
             let label = counts . yes
         endif
@@ -2837,7 +2833,7 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     " ----------------------
     let menu = 0
-    let label = 1
+    let label = 0
     let popupmenu_list = []
     " ----------------------
     for pair in matched_list
@@ -2875,13 +2871,14 @@ function! s:vimim_popupmenu_list(matched_list)
                 if s:pinyin_and_4corner > 0
                     let s:vimim_custom_menu_label = 3
                 endif
-                let abcdefghi = char2nr('a') + (label-1)%26
+                let abcdefghi = char2nr('a')-1+label%26
                 if s:vimim_custom_menu_label > 2
                     let labeling = nr2char(abcdefghi)
                 else
-                    let pad = ""
-                    let underscore = len(label)>1 ? pad : pad.pad
-                    let labeling .= underscore . nr2char(abcdefghi)
+                    let labeling .= nr2char(abcdefghi)
+                endif
+                if empty(label) || empty(abcdefghi)
+                    let labeling = "_"
                 endif
             endif
             let abbr = printf('%2s',labeling)."\t".chinese
@@ -5027,7 +5024,7 @@ function! s:vimim_i_setting_on()
     set completeopt=menuone
     set nolazyredraw
     set hlsearch
-    set pumheight=9
+    set pumheight=10
 endfunction
 
 " -------------------------------
