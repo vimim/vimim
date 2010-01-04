@@ -2872,12 +2872,16 @@ function! s:vimim_popupmenu_list(matched_list)
                     let s:vimim_custom_menu_label = 3
                 endif
                 let abcdefghi = char2nr('a')-1+label%26
-                if s:vimim_custom_menu_label > 2
-                    let labeling = nr2char(abcdefghi)
-                else
-                    let labeling .= nr2char(abcdefghi)
+                let label2 = nr2char(abcdefghi)
+                if empty(abcdefghi%96)
+                    let label2 = "z"
                 endif
-                if empty(label) || empty(abcdefghi)
+                if s:vimim_custom_menu_label > 2
+                    let labeling = label2
+                else
+                    let labeling .= label2
+                endif
+                if empty(label)
                     let labeling = "_"
                 endif
             endif
