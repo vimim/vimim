@@ -2867,6 +2867,9 @@ function! s:vimim_popupmenu_list(matched_list)
         " -------------------------------------------------
         if s:vimim_custom_menu_label > 0
             let labeling = label
+            if label == 10
+                let labeling = 0
+            endif
             if empty(s:chinese_input_mode)
                 if s:pinyin_and_4corner > 0
                     let s:vimim_custom_menu_label = 3
