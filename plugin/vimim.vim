@@ -1735,6 +1735,13 @@ function! s:vimim_i_chinese_mode_on()
     set iminsert=1
     let s:chinese_mode_toggle_flag = 1
     let s:ctrl_6_count += 1
+    if s:vimim_cloud_sogou == 1 && empty(s:lines)
+        if empty(s:ctrl_6_count%2)
+            let s:vimim_static_input_style = 0
+        else
+            let s:vimim_static_input_style = 1
+        endif
+    endif
     let s:toggle_xiangma_pinyin = s:ctrl_6_count%2
     let b:keymap_name = s:vimim_statusline()
     sil!call s:vimim_i_laststatus_on()
@@ -1821,6 +1828,14 @@ function! s:vimim_statusline()
   " --------------------------
     if empty(im) && s:vimim_cloud_sogou > 0
         let im = get(s:im['cloud'],1)
+        if s:vimim_cloud_sogou == 1
+            let im = "全" . im . "★经典"
+            if s:vimim_static_input_style < 1
+                let im .= "动态"
+            else
+                let im .= "静态"
+            endif
+        endif
     endif
   " --------------------------
     if len(s:vimim_cloud_plugin) > 1
