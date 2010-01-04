@@ -1731,7 +1731,7 @@ function! s:vimim_i_chinese_mode_on()
     set iminsert=1
     let s:chinese_mode_toggle_flag = 1
     let s:ctrl_6_count += 1
-    if s:vimim_cloud_sogou == 1 && empty(s:lines)
+    if s:vimim_cloud_sogou == 1 && s:vimimdebug > 0
         if empty(s:ctrl_6_count%2)
             let s:vimim_static_input_style = 0
         else
