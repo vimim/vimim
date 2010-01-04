@@ -167,13 +167,13 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
-    call add(G, "g:vimim_datafile_4corner")
+    call add(G, "g:vimim_datafile_digital")
+    call add(G, "g:vimim_datafile_private")
     call add(G, "g:vimim_datafile_has_4corner")
     call add(G, "g:vimim_datafile_has_apostrophe")
     call add(G, "g:vimim_datafile_has_english")
     call add(G, "g:vimim_datafile_has_pinyin")
     call add(G, "g:vimim_datafile_is_not_utf8")
-    call add(G, "g:vimim_datafile_private")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
     call add(G, "g:vimim_fuzzy_search")
@@ -3239,7 +3239,7 @@ function! s:vimim_initialize_datafile_in_vimrc()
         let s:datafile_primary = copy(datafile)
     endif
     " ------------------------------------------
-    let datafile = s:vimim_datafile_4corner
+    let datafile = s:vimim_datafile_digital
     if !empty(datafile) && filereadable(datafile)
         if s:datafile_primary =~# 'pinyin'
             let s:datafile_secondary = copy(s:datafile_primary)
@@ -3635,26 +3635,32 @@ endfunction
 " ----------------------------------------------------
 function! s:vimim_build_reverse_4corner_cache(chinese)
 " ----------------------------------------------------
-    let lines = s:vimim_reload_datafile(0)
-    if empty(lines)
-        return {}
-    endif
-    if empty(s:four_corner_lines)
-        let first_digit = 0
-        let line_index = match(lines, '^\d')
-        if line_index > -1
-            let first_digit = line_index
-        endif
-        let first_alpha = len(lines)-1
-        let first_alpha = 0
-        let line_index = match(lines, '^\D', first_digit)
-        if line_index > -1
-            let first_alpha = line_index
-        endif
-        if first_digit < first_alpha
-            let s:four_corner_lines = lines[first_digit : first_alpha-1]
-        else
+    if s:only_4corner_or_12345 > 0
+    \|| s:pinyin_and_4corner == 1
+        let datafile = copy(s:datafile_primary)
+        let s:four_corner_lines = s:vimim_load_datafile(datafile)
+    elseif s:pinyin_and_4corner == 2
+        let lines = s:vimim_reload_datafile(0)
+        if empty(lines)
             return {}
+        endif
+        if empty(s:four_corner_lines)
+            let first_digit = 0
+            let line_index = match(lines, '^\d')
+            if line_index > -1
+                let first_digit = line_index
+            endif
+            let first_alpha = len(lines)-1
+            let first_alpha = 0
+            let line_index = match(lines, '^\D', first_digit)
+            if line_index > -1
+                let first_alpha = line_index
+            endif
+            if first_digit < first_alpha
+                let s:four_corner_lines = lines[first_digit : first_alpha-1]
+            else
+                return {}
+            endif
         endif
     endif
     if empty(s:four_corner_lines)
