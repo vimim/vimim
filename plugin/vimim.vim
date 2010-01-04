@@ -1120,7 +1120,6 @@ function! s:vimim_internal_code(keyboard)
     " support internal-code popup menu, if ending with 'u'
     " ----------------------------------------------------
     if last_char == unicode_prefix
-        let &pumheight=16
         let keyboard = strpart(keyboard,0,len(keyboard)-1)
         if keyboard =~ '^\d\{4}$'        "| 2222u
             let digit_ranges = range(10)
@@ -2772,13 +2771,12 @@ endfunction
 function! s:vimim_pageup_pagedown(matched_list)
 " ---------------------------------------------
     let matched_list = a:matched_list
-    let page = &pumheight
-    if empty(s:pageup_pagedown) || len(matched_list) < page+1
+    if empty(s:pageup_pagedown)
         return matched_list
     endif
-    let shift = s:pageup_pagedown * page
     let length = len(matched_list)
-    if length > page
+    if length > &pumheight
+        let shift = s:pageup_pagedown * &pumheight
         if shift >= length || shift*(-1) >= length
             let s:pageup_pagedown = 0
             return matched_list
