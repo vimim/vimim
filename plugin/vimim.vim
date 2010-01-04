@@ -5164,8 +5164,8 @@ function! s:vimim_i_map_off()
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['<CR>', '<BS>', '<Esc>', '<Space>'])
-    call extend(unmap_list, ['<C-N>', '<C-P>', '<C-H>'])
+    call extend(unmap_list, ['`', '<CR>', '<BS>', '<Space>'])
+    call extend(unmap_list, ['<Esc>', '<C-N>', '<C-P>', '<C-H>'])
     " -----------------------
     for _ in unmap_list
         sil!exe 'iunmap '. _
