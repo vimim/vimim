@@ -2778,11 +2778,8 @@ endfunction
 function! s:vimim_pageup_pagedown(matched_list)
 " ---------------------------------------------
     let matched_list = a:matched_list
-    let page = &pumheight-1
-    if page < 1
-        let page = 8
-    endif
-    if empty(s:pageup_pagedown) || len(matched_list) < page+2
+    let page = &pumheight
+    if empty(s:pageup_pagedown) || len(matched_list) < page+1
         return matched_list
     endif
     let shift = s:pageup_pagedown * page
