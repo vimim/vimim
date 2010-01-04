@@ -1358,14 +1358,17 @@ function! <SID>vimim_label(n)
     let label = a:n
     let n = a:n
     if a:n !~ '\d'
-        let n = char2nr(n) - char2nr('a') + 1
+        let n = char2nr(n) - char2nr('a') + 2
         let msg = "double label: abcdefghi and 123456789"
     endif
     if pumvisible()
         if a:n ==# 'z'
             let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         else
-            let counts = repeat("\<Down>", n)
+            if n < 1
+                let n = 10
+            endif
+            let counts = repeat("\<Down>", n-1)
             let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
             let label = counts . yes
         endif
@@ -2830,7 +2833,7 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     " ----------------------
     let menu = 0
-    let label = 0
+    let label = 1
     let popupmenu_list = []
     " ----------------------
     for pair in matched_list
@@ -2868,18 +2871,18 @@ function! s:vimim_popupmenu_list(matched_list)
                 if s:pinyin_and_4corner > 0
                     let s:vimim_custom_menu_label = 3
                 endif
-                let abcdefghi = char2nr('a')-1+label%26
+                let abcdefghi = char2nr('a')-1+(label-1)%26
                 let label2 = nr2char(abcdefghi)
                 if empty(abcdefghi%96)
                     let label2 = "z"
+                    if label < 2
+                        let label2 = "_"
+                    endif
                 endif
                 if s:vimim_custom_menu_label > 2
                     let labeling = label2
                 else
                     let labeling .= label2
-                endif
-                if empty(label)
-                    let labeling = "_"
                 endif
             endif
             let abbr = printf('%2s',labeling)."\t".chinese
