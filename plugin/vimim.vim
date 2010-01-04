@@ -549,7 +549,7 @@ function! s:vimim_scan_plugin_to_invoke_im()
     endfor
     " ----------------------------------------
     if filereadable(datafile)
-        let msg = "plugin ciku was found"
+        let msg = "plugin datafile was found"
     else
         return 0
     endif
@@ -1526,7 +1526,14 @@ endfunction
 function! g:vimim_pumvisible_putclip()
 " ------------------------------------
     let chinese = s:vimim_popup_word()
-    return s:vimim_clipboard_register(chinese)
+    if len(chinese) > 0
+        if s:vimim_auto_copy_clipboard>0 && has("gui_running")
+            let @+ = chinese
+        endif
+    endif
+    sil!call g:vimim_reset_after_insert()
+    sil!call s:vimim_stop()
+    return "\<Esc>"
 endfunction
 
 " ----------------------------
@@ -1541,19 +1548,6 @@ function! s:vimim_popup_word()
     let current_line = getline(".")
     let word = strpart(current_line, column_start, range)
     return word
-endfunction
-
-" ----------------------------------------
-function! s:vimim_clipboard_register(word)
-" ----------------------------------------
-    if len(a:word) > 0
-        if s:vimim_auto_copy_clipboard>0 && has("gui_running")
-            let @+ = a:word
-        endif
-    endif
-    sil!call g:vimim_reset_after_insert()
-    sil!call s:vimim_stop()
-    return "\<Esc>"
 endfunction
 
 " ======================================= }}}
@@ -1943,12 +1937,11 @@ endfunction
 " ---------------------------------------
 function! <SID>vimim_toggle_punctuation()
 " ---------------------------------------
-    if s:vimim_chinese_punctuation < 0
-        return ""
+    if s:vimim_chinese_punctuation > -1
+        let s:chinese_punctuation = (s:chinese_punctuation+1)%2
+        sil!call s:vimim_punctuation_on()
     endif
-    let s:chinese_punctuation = (s:chinese_punctuation+1)%2
-    sil!call s:vimim_punctuation_on()
-    return ""
+    return ''
 endfunction
 
 " --------------------------------
@@ -2933,7 +2926,7 @@ function! s:vimim_datafile_range(keyboard)
     elseif len(ranges) == 1
         let ranges = s:vimim_search_boundary(sort(s:lines), a:keyboard)
         if empty(ranges)
-            return
+            return []
         else
             call s:vimim_save_to_disk(s:lines)
         endif
@@ -5130,14 +5123,14 @@ function! g:reset_after_auto_insert()
     let s:smart_enter = 0
     let s:smart_backspace = 0
     let s:one_key_correction = 0
-    return ""
+    return ''
 endfunction
 
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
     if pumvisible()
-        return ""
+        return ''
     endif
     " --------------------------------
     let chinese = s:vimim_popup_word()
@@ -5155,7 +5148,7 @@ function! g:vimim_reset_after_insert()
         call s:vimim_stop()
     endif
     " --------------------------------
-    return ""
+    return ''
 endfunction
 
 " ---------------------------
