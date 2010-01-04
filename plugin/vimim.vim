@@ -1359,7 +1359,6 @@ function! <SID>vimim_label(n)
     let n = a:n
     if a:n !~ '\d'
         let n = char2nr(n) - char2nr('a') + 2
-        let msg = "double label: _abcdefghi and 1234567890"
     endif
     if pumvisible()
         if a:n ==# 'z'
@@ -1410,7 +1409,6 @@ endfunction
 " ------------------------------------
 function! s:vimim_hjkl_navigation_on()
 " ------------------------------------
-    let hjkl_list = split('hjklpcde', '\zs')
     let hjkl_list = split('qsxujklp', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap<silent><expr> '._.'
@@ -2870,12 +2868,12 @@ function! s:vimim_popupmenu_list(matched_list)
             if label == 10
                 let labeling = 0
             endif
-            if empty(s:chinese_input_mode)
+            if empty(s:chinese_input_mode) && label < 11
                 if s:pinyin_and_4corner > 0
                     let s:vimim_custom_menu_label = 3
                 endif
-                let abcdefghi = char2nr('a')-1+(label-1)%26
-                let label2 = nr2char(abcdefghi)
+                let _abcdefghi = char2nr('a')-1+(label-1)%26
+                let label2 = nr2char(_abcdefghi)
                 if label < 2
                     let label2 = "_"
                 endif
@@ -2883,9 +2881,6 @@ function! s:vimim_popupmenu_list(matched_list)
                     let labeling = label2
                 else
                     let labeling .= label2
-                endif
-                if label > 10
-                    let labeling = label
                 endif
             endif
             let abbr = printf('%2s',labeling)."\t".chinese
