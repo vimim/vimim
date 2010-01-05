@@ -2886,6 +2886,10 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["menu"] = extra_text
         endif
         " -------------------------------------------------
+        if len(s:vimim_cloud_plugin) > 1
+            let menu = get(split(menu,"_"),0)
+        endif
+        " -------------------------------------------------
         if s:vimim_custom_menu_label > 0
             let labeling = label
             if label == 10
