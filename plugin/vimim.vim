@@ -1239,9 +1239,10 @@ function! <SID>vimim_start_onekey()
     " -----------------------------
     sil!call s:vimim_start()
     sil!call s:vimim_onekey_status_on()
-    sil!call s:vimim_label_1234567890_filter_on()
+    sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_punctuation_navigation_on()
+    sil!call s:vimim_hjkl_label_on()
     sil!call s:vimim_helper_mapping_on()
     sil!call s:vimim_onekey_autocmd()
     " ----------------------------------------------------------
@@ -1374,9 +1375,9 @@ function! <SID>vimim_label(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
-" --------------------------------------------
-function! s:vimim_label_1234567890_filter_on()
-" --------------------------------------------
+" --------------------------------------
+function! s:vimim_1234567890_filter_on()
+" --------------------------------------
     if s:vimim_custom_menu_label < 1
     \|| empty(s:pinyin_and_4corner)
         return
@@ -1550,6 +1551,50 @@ function! s:vimim_popup_word()
     let current_line = getline(".")
     let word = strpart(current_line, column_start, range)
     return word
+endfunction
+
+" -------------------------------
+function! s:vimim_hjkl_label_on()
+" -------------------------------
+    if s:vimim_custom_menu_label == 2
+        set pumheight=5
+        let labels = split("hjkl'", '\zs')
+        for _ in labels
+            sil!exe'inoremap<silent> '._.'
+            \  <C-R>=<SID>vimim_hjkl_label("'._.'")<CR>'
+            \.'<C-R>=g:vimim_reset_after_insert()<CR>'
+        endfor
+    endif
+endfunction
+" --------------------------------
+function! <SID>vimim_hjkl_label(n)
+" --------------------------------
+    let label = a:n
+    if pumvisible()
+        let counts = ""
+        if a:n ==# 'h'
+            let counts = "\<Up>\<Up>"
+        elseif a:n ==# 'k'
+            let counts = "\<Up>"
+        elseif a:n ==# 'j'
+            let counts = "\<Down>"
+        elseif a:n ==# 'l'
+            let counts = "\<Down>\<Down>"
+        endif
+        let yes = s:vimim_pumvisible_yes()
+        let label = counts . yes
+    endif
+    sil!exe 'sil!return "' . label . '"'
+endfunction
+" --------------------------------
+function! s:vimim_pumvisible_yes()
+" -------------------------------- 
+    let key = ''
+    if pumvisible()
+        call s:reset_popupmenu_matched_list()
+        let key = "\<C-Y>"
+    endif
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ======================================= }}}
@@ -2896,15 +2941,31 @@ function! s:vimim_popupmenu_list(matched_list)
                 let labeling = 0
             endif
             if empty(s:chinese_input_mode) && label < 11
-                if s:pinyin_and_4corner > 0
-                    let s:vimim_custom_menu_label = 3
-                endif
                 let _abcdefghi = char2nr('a')-1+(label-1)%26
                 let label2 = nr2char(_abcdefghi)
                 if label < 2
                     let label2 = "_"
                 endif
-                if s:vimim_custom_menu_label > 2
+                " -----------------------------------------
+                if s:vimim_custom_menu_label == 2
+                    if label%5 == 1
+                        let label2 = 'h'
+                    elseif label%5 == 2
+                        let label2 = 'k'
+                    elseif label%5 == 3
+                        let label2 = '_'
+                    elseif label%5 == 4
+                        let label2 = 'j'
+                    elseif label%5 == 0
+                        let label2 = 'l'
+                    endif
+                endif
+                " ----------------------------------------- xxx
+                if s:vimim_custom_menu_label == 2
+                    " ,. <Down><Down>
+                endif
+                " -----------------------------------------
+                if s:pinyin_and_4corner > 0
                     let labeling = label2
                 else
                     let labeling .= label2
@@ -3263,6 +3324,11 @@ function! g:vimim_menu_select()
             let s:insert_without_popup = 0
             let select_not_insert = '\<C-Y>'
         endif
+        " -------------------------------------------
+        if s:vimim_custom_menu_label == 2
+            let select_not_insert .= '\<Down>\<Down>'
+        endif
+        " -------------------------------------------
     endif
     sil!exe 'sil!return "' . select_not_insert . '"'
 endfunction
@@ -4980,6 +5046,7 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
+    let s:vimim_custom_menu_label=2
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=12
     " ------------------------------
