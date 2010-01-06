@@ -2985,7 +2985,8 @@ function! s:vimim_popupmenu_list(matched_list)
         let tail = ''
         if keyboard =~? 'vim'
             let tail = ''
-        elseif keyboard =~ '[.]'
+        elseif keyboard =~ '[.]' 
+        \&& empty(s:vimim_cloud_plugin)
             let dot = match(keyboard, '[.]')
             let tail = strpart(keyboard, dot+1)
         else
@@ -5051,7 +5052,7 @@ function! s:vimim_initialize_vimim_txt_debug()
         return
     endif
     " ------------------------------ debug
-    let s:vimim_custom_menu_label=2
+    let s:vimim_custom_menu_label=1
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=12
     " ------------------------------
