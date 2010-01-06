@@ -196,6 +196,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_cloud_plugin")
+    call add(G, "g:vimim_cloud_plugin_ip")
     call add(G, "g:vimim_cloud_pim")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimimdebug")
@@ -4513,48 +4514,130 @@ let VimIM = " ====  VimIM_My_Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -------------------------------------------
-function! s:vimim_initialize_mycloud_plugin()
-" -------------------------------------------
-    if empty(s:vimim_cloud_plugin)
-        " -----------------------------------
-        if has("unix") && !has("win32unix")
-            let mes = "on linux, we do plug-n-play"
+" ------------------------------------------------
+function! s:vimim_access_mycloud_plugin(cloud, cmd)
+" ------------------------------------------------
+"  use the same function to access mycloud by libcall() or system()
+    if s:vimim_cloud_plugin_mode == "libcall"
+        if empty(s:vimim_cloud_plugin_ip)
+            return libcall(a:cloud, "do_getlocal", a:cmd)
         else
-            return
+            return libcall(a:cloud, "do_getlocal", s:vimim_cloud_plugin_ip." ".a:cmd)
         endif
+    elseif s:vimim_cloud_plugin_mode == "system"
+        return system(a:cloud." ".shellescape(a:cmd))
+    endif
+    return ""
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_check_mycloud_plugin()
+" ------------------------------------------------
+    if empty(s:vimim_cloud_plugin)
+        " we do plug-n-play for libcall(), not for system()
+        let cloud = s:path . "libmycloud.so"
+        let s:vimim_cloud_plugin_mode = "libcall"
+        if !exists(s:vimim_cloud_plugin_ip)
+            s:vimim_cloud_plugin_ip = ""
+        endif
+        if filereadable(cloud) && !has("gui_win32")
+            " in POSIX system, we could use lib*.so for libcall
+            try
+                let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+                if split(ret, "\t")[0] == "True"
+                    return cloud
+                endif
+            catch /.*/
+                let mes = "libcall mycloud fail"
+            endtry
+        endif
+        if filereadable(s:path. "mycloud.dll") && has("win32")
+            " in win32 system, we could use *.dll for libcall
+            cloud = s:path. "mycloud"
+            try
+                let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+                if split(ret, "\t")[0] == "True"
+                    return cloud
+                endif
+            catch /.*/
+                let mes = "libcall mycloud fail"
+            endtry
+        endif
+        " libcall check failed, we now check system()
+        " -----------------------------------
+        if has("gui_win32")
+            return 0
+        endif
+        let mes = "on linux, we do plug-n-play"
         " -----------------------------------
         let cloud = s:path . "mycloud/mycloud"
         if !executable(cloud)
             if !executable("python")
-                return
+                return 0
             endif
             let cloud = "python " . cloud
         endif
         " -----------------------------------
-        let ret = system(cloud . " __isvalid")
+        " in POSIX system, we can use system() for mycloud
+        let s:vimim_cloud_plugin_mode = "system"
+        let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
         if split(ret, "\t")[0] == "True"
-            let s:vimim_cloud_plugin = cloud
-        else
-            return
+            return cloud
         endif
     else
         " we do set-and-play on all systems
-        let ret = system(s:vimim_cloud_plugin . " __isvalid")
-        if split(ret, "\t")[0] == "True"
-            let s:vimim_cloud_plugin = cloud
-        else
-            let s:vimim_cloud_plugin = 0
-            return
+        if !exists(s:vimim_cloud_plugin_ip)
+            s:vimim_cloud_plugin_ip = ""
+        endif
+        let cloud = s:vimim_cloud_plugin
+        if stridx(cloud, " ") < 0
+            " only check libcall when there's no argument
+            if filereadable(cloud)
+                let s:vimim_cloud_plugin_mode = "libcall"
+                " strip off the ending .dll suffix
+                if cloud[-4:] ==? ".dll"
+                    cloud = cloud[:-4]
+                endif
+                try
+                    let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+                    if split(ret, "\t")[0] == "True"
+                        return cloud
+                    endif
+                catch /.*/
+                    let mes = "libcall mycloud fail"
+                endtry
+            endif
+        endif
+
+        if !has("gui_win32")
+            " in POSIX system, we can use system() for mycloud
+            if executable(split(cloud, " ")[0])
+                let s:vimim_cloud_plugin_mode = "system"
+                let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+                if split(ret, "\t")[0] == "True"
+                    return cloud
+                endif
+            endif
         endif
     endif
-    let ret = system(s:vimim_cloud_plugin . " __getname")
+    return 0
+endfunction
+
+" -------------------------------------------
+function! s:vimim_initialize_mycloud_plugin()
+" -------------------------------------------
+    let cloud = s:vimim_check_mycloud_plugin()
+    if empty(cloud)
+        return
+    endif
+    let ret = s:vimim_access_mycloud_plugin(cloud,"__getname")
     let loaded = split(ret, "\t")[0]
-    let ret = system(s:vimim_cloud_plugin . " __getkeychars")
+    let ret = s:vimim_access_mycloud_plugin(cloud,"__getkeychars")
     let keycode = split(ret, "\t")[0]
     if empty(keycode)
         let s:vimim_cloud_plugin = 0
     else
+        let s:vimim_cloud_plugin = cloud
         let s:im['mycloud'][0] = loaded
         let s:im['mycloud'][2] = keycode
     endif
@@ -4567,11 +4650,11 @@ function! s:vimim_get_mycloud_plugin(keyboard)
         return []
     endif
     let cloud = s:vimim_cloud_plugin
-    let input = shellescape(a:keyboard)
+    let input = a:keyboard
     let output = 0
     " ---------------------------------------
     try
-        let output = system(cloud . ' ' . input)
+        let output = s:vimim_access_mycloud_plugin(cloud, input)
     catch /.*/
         let output = 0
     endtry
