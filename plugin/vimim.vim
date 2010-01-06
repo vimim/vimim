@@ -1340,7 +1340,10 @@ function! s:vimim_label_on()
     if s:vimim_custom_menu_label < 1
         return
     endif
-    let labels = range(0,9)
+    let labels = range(10)
+    if &pumheight > 0 && &pumheight != 10
+        let labels = range(1, &pumheight)
+    endif
     if empty(s:chinese_input_mode)
         let _abcdefghi = split("`abcdefghiz", '\zs')
         call extend(labels, _abcdefghi)
@@ -1397,11 +1400,9 @@ function! <SID>vimim_label_1234567890_filter(n)
 " ---------------------------------------------
     let label = a:n
     if pumvisible()
-        if s:pinyin_and_4corner > 0
-            let msg = "give 1234567890 label new meaning"
-            let s:menu_4corner_filter = a:n
-            let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        endif
+        let msg = "give 1234567890 label new meaning"
+        let s:menu_4corner_filter = a:n
+        let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
     endif
     sil!exe 'sil!return "' . label . '"'
 endfunction
@@ -1557,7 +1558,7 @@ endfunction
 function! s:vimim_hjkl_label_on()
 " -------------------------------
     if s:vimim_custom_menu_label == 2
-        set pumheight=5
+        let &pumheight=5
         let labels = split("hjkl'", '\zs')
         for _ in labels
             sil!exe'inoremap<silent> '._.'
@@ -1594,7 +1595,7 @@ endfunction
 
 " --------------------------------
 function! s:vimim_pumvisible_yes()
-" -------------------------------- 
+" --------------------------------
     let key = ''
     if pumvisible()
         call s:reset_popupmenu_matched_list()
@@ -2957,7 +2958,7 @@ function! s:vimim_popupmenu_list(matched_list)
             if label == 10
                 let labeling = 0
             endif
-            if empty(s:chinese_input_mode) && label < 11
+            if empty(s:chinese_input_mode) && label < &pumheight+1
                 let _abcdefghi = char2nr('a')-1+(label-1)%26
                 let label2 = nr2char(_abcdefghi)
                 if label < 2
@@ -2984,7 +2985,7 @@ function! s:vimim_popupmenu_list(matched_list)
         let tail = ''
         if keyboard =~? 'vim'
             let tail = ''
-        elseif keyboard =~ '[.]' 
+        elseif keyboard =~ '[.]'
         \&& empty(s:vimim_cloud_plugin)
             let dot = match(keyboard, '[.]')
             let tail = strpart(keyboard, dot+1)
