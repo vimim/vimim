@@ -3848,19 +3848,19 @@ function! s:vimim_dictionary_shuangpin()
     let s:shuangpin_flag = 1
     let key = 'shuangpin'
     let loaded = '双拼'
-    let im = loaded . '：'
+    let im = loaded
     let keycode = "[0-9a-z',.]"
     if s:vimim_shuangpin_abc > 0
-        let im .= '智能ABC'
+        let im = '智能双打'
     elseif s:vimim_shuangpin_microsoft > 0
-        let im .= '微软'
+        let im = '微软'.im
         let keycode = "[0-9a-z',.;]"
     elseif s:vimim_shuangpin_nature > 0
-        let im .= "自然码"
+        let im = "自然码".im
     elseif s:vimim_shuangpin_plusplus > 0
-        let im .= "拼音加加"
+        let im = "拼音加加".im
     elseif s:vimim_shuangpin_purple > 0
-        let im .= "紫光"
+        let im = "紫光".im
         let keycode = "[0-9a-z',.;]"
     else
         let s:shuangpin_flag = 0
