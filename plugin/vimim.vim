@@ -668,9 +668,9 @@ let VimIM = " ====  Easter_Egg       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ----------------------------
-function! s:vimim_egg_vimegg()
-" ----------------------------
+" ------------------------------
+function! s:vimim_egg_vimimegg()
+" ------------------------------
     let eggs = []
     call add(eggs, "经典　vim")
     call add(eggs, "环境　vimim")
@@ -901,8 +901,8 @@ function! s:vimim_easter_chicken(keyboard)
         return s:vimim_egg_vim()
     elseif egg ==# "vimim"
         return s:vimim_egg_vimim()
-    elseif egg ==# "vimegg"
-        return s:vimim_egg_vimegg()
+    elseif egg ==# "vimimegg"
+        return s:vimim_egg_vimimegg()
     elseif egg ==# "vimimvim"
         return s:vimim_egg_vimimvim()
     elseif egg ==# "vimimhelp"
