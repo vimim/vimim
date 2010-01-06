@@ -2874,18 +2874,24 @@ function! s:vimim_pageup_pagedown(matched_list)
     endif
     let length = len(matched_list)
     if length > &pumheight
-        let shift = s:pageup_pagedown * &pumheight
-        if shift >= length || shift*(-1) >= length
-            let s:pageup_pagedown = 0
-            return matched_list
+        let page = s:pageup_pagedown * &pumheight
+        if page < 0
+            let msg = "no more PageUp after the first page"
+            let s:pageup_pagedown += 1
+            let first_page = &pumheight-1
+            let matched_list = matched_list[0 : first_page]
+        elseif page >= length 
+            let msg = "no more PageDown after the last page"
+            let s:pageup_pagedown -= 1
+            let last_page = len(matched_list) / &pumheight
+            if empty((len(matched_list) % &pumheight))
+                let last_page -= 1
+            endif
+            let last_page = last_page * &pumheight
+            let matched_list = matched_list[last_page : -1]
+        else
+            let matched_list = matched_list[page :]
         endif
-        let partition = shift
-        if shift < 0
-            let partition = length + shift
-        endif
-        let A = matched_list[: partition-1]
-        let B = matched_list[partition :]
-        let matched_list = B + A
     endif
     return matched_list
 endfunction
@@ -2946,7 +2952,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 let unicode = printf('u%04x', char2nr(chinese))
                 let extra_text = menu.'　'.unicode
             endif
-            if extra_text =~# '[.,]'
+            if extra_text =~# '[.,]' || len(extra_text) < 2
                 let extra_text = ''
             endif
             let complete_items["menu"] = extra_text
@@ -2980,9 +2986,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 endif
             endif
             let abbr = printf('%2s',labeling)."\t".chinese
-            if len(matched_list) > 1
-                let complete_items["abbr"] = abbr
-            endif
+            let complete_items["abbr"] = abbr
         endif
         " -------------------------------------------------
         let tail = ''
