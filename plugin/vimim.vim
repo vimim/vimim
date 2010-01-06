@@ -1116,11 +1116,11 @@ function! s:vimim_internal_code(keyboard)
     let numbers = []
     let keyboard = a:keyboard
     let unicode_prefix = 'u'
-    let last_char = strpart(keyboard,len(keyboard)-1,1)
+    let last_char = keyboard[-1:]
     " support internal-code popup menu, if ending with 'u'
     " ----------------------------------------------------
     if last_char == unicode_prefix
-        let keyboard = strpart(keyboard,0,len(keyboard)-1)
+        let keyboard = keyboard[:-2]
         if keyboard =~ '^\d\{4}$'        "| 2222u
             let digit_ranges = range(10)
             for i in digit_ranges
@@ -2223,8 +2223,7 @@ function! s:vimim_imode_number(keyboard, prefix)
         let keyboard = substitute(keyboard,',','i','g')
     endif
     " ------------------------------------
-    let ii = strpart(keyboard,0,2)
-    if ii ==# 'ii'
+    if strpart(keyboard,0,2) ==# 'ii'
         let keyboard = 'I' . strpart(keyboard,2)
     endif
     let ii_keyboard = keyboard
@@ -2237,16 +2236,16 @@ function! s:vimim_imode_number(keyboard, prefix)
     " ------------------------------------
     let digit_alpha = keyboard
     if keyboard =~# '^\d*\l\{1}$'
-        let digit_alpha = strpart(keyboard,0,len(keyboard)-1)
+        let digit_alpha = keyboard[:-2]
     endif
     let keyboards = split(digit_alpha, '\ze')
-    let i = strpart(ii_keyboard,0,1)
+    let i = ii_keyboard[:0]
     let number = s:vimim_get_chinese_number(keyboards, i)
     if empty(number)
         return []
     endif
     let numbers = [number]
-    let last_char = strpart(keyboard, len(keyboard)-1, 1)
+    let last_char = keyboard[-1:]
     if !empty(last_char) && has_key(s:quantifiers, last_char)
         let quantifier = s:quantifiers[last_char]
         let quantifiers = split(quantifier, '\zs')
@@ -2897,7 +2896,7 @@ function! s:vimim_popupmenu_list(matched_list)
     "-----------------------------------------
     let first_candidate = get(split(get(matched_list,0)),0)
     if s:vimim_smart_ctrl_n > 0
-        let key = strpart(first_candidate,0,1)
+        let key = first_candidate[:0]
         let s:inputs[key] = matched_list
     endif
     if s:vimim_smart_ctrl_p > 0
@@ -3041,7 +3040,7 @@ function! s:vimim_search_boundary(lines, keyboard)
     if empty(a:lines) || empty(a:keyboard)
         return []
     endif
-    let first_char_typed = strpart(a:keyboard,0,1)
+    let first_char_typed = a:keyboard[:0]
     if s:datafile_has_period > 0 && first_char_typed == "."
         let first_char_typed = '\.'
     endif
@@ -3064,7 +3063,7 @@ function! s:vimim_search_boundary(lines, keyboard)
         let last_line = a:lines[len_lines]
         let solid_last_line = substitute(last_line,'\s','','g')
     endwhile
-    let first_char_last_line = strpart(last_line,0,1)
+    let first_char_last_line = last_line[:0]
     if first_char_typed == first_char_last_line
         let match_next = len(a:lines)-1
     else
@@ -3603,7 +3602,7 @@ function! s:vimim_insert_entry(entries)
             let matched = match(lines, '^'.one_less)
             if matched < 0
                 if length < 1
-                    let only_char = strpart(one_less, 0, 1)
+                    let only_char = one_less[:0]
                     let char = char2nr(only_char)
                     while (char >= char2nr('a') && char < char2nr('z'))
                         let patterns = '^' . nr2char(char)
@@ -4207,7 +4206,7 @@ function! s:vimim_wubi_z_as_wildcard(keyboard)
     let fuzzy_search_pattern = 0
     if match(keyboard,'z') > 0
         let fuzzies = keyboard
-        if strpart(keyboard,0,2) != 'zz'
+        if keyboard[:1] != 'zz'
             let fuzzies = substitute(keyboard,'z','.','g')
         endif
         let fuzzy_search_pattern = '^' . fuzzies . '\>'
@@ -4369,13 +4368,11 @@ function! s:vimim_magic_tail(keyboard)
         let msg = "We play 4 corner by ourselves without Cloud."
         return 0
     endif
-    let magic_tail = strpart(keyboard, len(keyboard)-1)
-    let magic_tail_last_but_one = strpart(keyboard,len(keyboard)-2,1)
-    let magic_tail_last_but_two = strpart(keyboard,len(keyboard)-3,1)
-    if magic_tail_last_but_one ==# ','
-    \&& magic_tail_last_but_two =~# '\l'
-    \&& magic_tail =~# '\l'
-        let keyboard = strpart(keyboard, 0, len(keyboard)-2)
+    let magic_tail = keyboard[-1:]
+    if magic_tail =~# '\l'
+    \&& keyboard[-2:-2] ==# ','
+    \&& keyboard[-3:-3] =~# '\l'
+        let keyboard = keyboard[:-3]
         let keyboard = substitute(keyboard,'.',"&'",'g')
         let keyboard .= magic_tail . ','
         let magic_tail = ','
@@ -4399,8 +4396,8 @@ function! s:vimim_magic_tail(keyboard)
     else
         return 0
     endif
-    let keyboard = strpart(keyboard, 0, len(keyboard)-1)
-    let magic_tail = strpart(keyboard, len(keyboard)-1)
+    let keyboard = keyboard[:-2]
+    let magic_tail = keyboard[-1:]
     if magic_tail !~# "[0-9a-z]"
         return 0
     endif
