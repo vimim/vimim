@@ -883,6 +883,12 @@ endfunction
 " ----------------------------------------
 function! s:vimim_easter_chicken(keyboard)
 " ----------------------------------------
+    if empty(s:chinese_input_mode)
+        let msg = "easter eggs hidden in OneKey only"
+    else
+        return
+    endif
+    " ------------------------------------
     let egg = a:keyboard
     if egg =~# s:valid_key
         let msg = "hunt easter egg ... vim<C-\>"
