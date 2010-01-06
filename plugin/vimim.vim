@@ -5127,7 +5127,9 @@ function! s:vimim_i_setting_on()
     set completeopt=menuone
     set nolazyredraw
     set hlsearch
-    set pumheight=10
+    if empty(&pumheight)
+        let &pumheight=10
+    endif
 endfunction
 
 " -------------------------------
