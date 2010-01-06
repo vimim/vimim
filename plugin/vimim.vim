@@ -1241,8 +1241,8 @@ function! <SID>vimim_start_onekey()
     sil!call s:vimim_onekey_status_on()
     sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_hjkl_navigation_on()
-    sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_hjkl_label_on()
+    sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
     sil!call s:vimim_onekey_autocmd()
     " ----------------------------------------------------------
@@ -1400,7 +1400,7 @@ function! <SID>vimim_label_1234567890_filter(n)
         if s:pinyin_and_4corner > 0
             let msg = "give 1234567890 label new meaning"
             let s:menu_4corner_filter = a:n
-            let label = '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
+            let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         endif
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -1435,7 +1435,7 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<PageDown>'
         elseif a:key == 'r'
             let s:pumvisible_reverse += 1
-            let hjkl = '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
@@ -1566,6 +1566,7 @@ function! s:vimim_hjkl_label_on()
         endfor
     endif
 endfunction
+
 " --------------------------------
 function! <SID>vimim_hjkl_label(n)
 " --------------------------------
@@ -1573,12 +1574,16 @@ function! <SID>vimim_hjkl_label(n)
     if pumvisible()
         let counts = ""
         if a:n ==# 'h'
+            let counts = repeat("\<Down>", 1)
             let counts = "\<Up>\<Up>"
         elseif a:n ==# 'k'
+            let counts = repeat("\<Down>", 2)
             let counts = "\<Up>"
         elseif a:n ==# 'j'
+            let counts = repeat("\<Down>", 3)
             let counts = "\<Down>"
         elseif a:n ==# 'l'
+            let counts = repeat("\<Down>", 4)
             let counts = "\<Down>\<Down>"
         endif
         let yes = s:vimim_pumvisible_yes()
@@ -1586,6 +1591,7 @@ function! <SID>vimim_hjkl_label(n)
     endif
     sil!exe 'sil!return "' . label . '"'
 endfunction
+
 " --------------------------------
 function! s:vimim_pumvisible_yes()
 " -------------------------------- 
@@ -2090,7 +2096,7 @@ function! <SID>vimim_punctuations_navigation(key)
                     let s:pageup_pagedown += 1
                 endif
             endif
-            let hjkl = '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
+            let hjkl = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         endif
     else
         if s:chinese_input_mode > 0
@@ -2098,6 +2104,18 @@ function! <SID>vimim_punctuations_navigation(key)
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
+" --------------------------------------
+function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
+" --------------------------------------
+    let e = '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
+    " ----------------------------------
+    if s:vimim_custom_menu_label == 2
+        let e .= '\<Down>\<Down>'
+    endif
+    " ----------------------------------
+    return e
 endfunction
 
 " ------------------------------------------------------------
@@ -2948,21 +2966,8 @@ function! s:vimim_popupmenu_list(matched_list)
                 endif
                 " -----------------------------------------
                 if s:vimim_custom_menu_label == 2
-                    if label%5 == 1
-                        let label2 = 'h'
-                    elseif label%5 == 2
-                        let label2 = 'k'
-                    elseif label%5 == 3
-                        let label2 = '_'
-                    elseif label%5 == 4
-                        let label2 = 'j'
-                    elseif label%5 == 0
-                        let label2 = 'l'
-                    endif
-                endif
-                " ----------------------------------------- xxx
-                if s:vimim_custom_menu_label == 2
-                    " ,. <Down><Down>
+                    let n = (label-1) % 5
+                    let label2 = 'hk_jl'[n : n]
                 endif
                 " -----------------------------------------
                 if s:pinyin_and_4corner > 0
