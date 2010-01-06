@@ -877,6 +877,13 @@ function! s:vimim_egg_vimim()
         endfor
     endif
 " ----------------------------------
+    let option = s:vimimdebug
+    if option > 0
+        let option = "g:vimimdebug=" . option
+        let option = "debug\t 测试：" . option
+        call add(eggs, option)
+    endif
+" ----------------------------------
     call map(eggs, 'v:val . "　"')
     return eggs
 endfunction
@@ -893,7 +900,7 @@ function! s:vimim_easter_chicken(keyboard)
     let egg = a:keyboard
     if egg =~# s:valid_key
         let msg = "hunt easter egg ... vim<C-\>"
-    elseif egg ==# ",," && s:vimimdebug > 0
+    elseif egg ==# ",," && s:vimimdebug == 9
         let msg = 'quick dirty lazy debugging'
     else
         return []
@@ -1313,7 +1320,7 @@ function! s:vimim_onekey(onekey)
             let msg = "too smart is not smart"
         endif
         " -----------------------------------------------
-        if s:vimimdebug > 0
+        if s:vimimdebug == 9
         \&& char_before ==# ","
         \&& char_before ==# char_before_before
             let msg = 'make double comma ",," for debugging'
@@ -1787,7 +1794,7 @@ function! s:vimim_i_chinese_mode_on()
     set iminsert=1
     let s:chinese_mode_toggle_flag = 1
     let s:ctrl_6_count += 1
-    if s:vimim_cloud_sogou == 1 && s:vimimdebug > 0
+    if s:vimim_cloud_sogou == 1 && s:vimimdebug == 9
         if empty(s:ctrl_6_count%2)
             let s:vimim_static_input_style = 0
         else
@@ -3008,10 +3015,6 @@ function! s:vimim_popupmenu_list(matched_list)
             let chinese .=  tail
         endif
         " -------------------------------------------------
-        if s:vimimdebug > 3
-            call s:debugs('tail', tail)
-        endif
-        " -------------------------------------------------
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
         let label += 1
@@ -3680,7 +3683,7 @@ function! s:vimim_initialize_datafile_privates()
     let s:privates_datafile = 0
     let s:lines_privates = []
     let s:private_matches = []
-    if s:vimimdebug > 1
+    if s:vimimdebug > 9
         let msg = "hide privacy during debug"
         return
     endif
@@ -5121,7 +5124,7 @@ function! s:vimim_initialize_backdoor()
     " ------------------------------
     if filereadable(datafile_backdoor)
         let s:datafile_primary = datafile_backdoor
-        let s:vimimdebug=1
+        let s:vimimdebug=9
         let s:vimim_ctrl_6_as_onekey=3
     endif
 endfunction
@@ -5129,7 +5132,7 @@ endfunction
 " --------------------------------------------
 function! s:vimim_initialize_vimim_txt_debug()
 " --------------------------------------------
-    if s:vimimdebug == 1
+    if s:vimimdebug == 9
         let msg = "open backdoor for debugging"
         let s:vimim_custom_skin=1
         let s:vimim_datafile_has_english=1
