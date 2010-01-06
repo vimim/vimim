@@ -2655,21 +2655,6 @@ function! <SID>vimim_smart_enter()
         let s:smart_enter += 1
     endif
     " -----------------------------------------------
-    " <Enter> triple play in OneKey Mode:
-    "   (1) after English (valid keys)    => Seamless
-    "   (2) after Chinese or double Enter => Enter
-    "   (3) after English punctuation     => Space
-    " -----------------------------------------------
-    if empty(s:chinese_input_mode)
-        if has_key(s:punctuations, char_before)
-            let s:smart_enter += 1
-            let key = ' '
-        endif
-        if char_before =~ '\s' || empty(char_before)
-            let key = "\<CR>"
-        endif
-    endif
-    " -----------------------------------------------
     if s:smart_enter == 1
         let msg = "do seamless for the first time <Enter>"
         let s:seamless_positions = getpos(".")
@@ -2677,6 +2662,17 @@ function! <SID>vimim_smart_enter()
     else
         let s:smart_enter = 0
         let key = "\<CR>"
+    endif
+    " -----------------------------------------------
+    " <Enter> double play in OneKey Mode:
+    "   (1) after non-Space => Space
+    "   (2) after Space => Enter
+    " -----------------------------------------------
+    if empty(s:chinese_input_mode)
+        let key = ' '
+        if char_before =~ '\s' || empty(char_before)
+            let key = "\<CR>"
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
