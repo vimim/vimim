@@ -2880,7 +2880,7 @@ function! s:vimim_pageup_pagedown(matched_list)
             let s:pageup_pagedown += 1
             let first_page = &pumheight-1
             let matched_list = matched_list[0 : first_page]
-        elseif page >= length 
+        elseif page >= length
             let msg = "no more PageDown after the last page"
             let s:pageup_pagedown -= 1
             let last_page = len(matched_list) / &pumheight
@@ -5364,6 +5364,10 @@ function! s:vimim_i_map_off()
     for _ in unmap_list
         sil!exe 'iunmap '. _
     endfor
+    " -----------------------
+    iunmap <Bslash>
+    iunmap '
+    iunmap "
     " -----------------------
 endfunction
 
