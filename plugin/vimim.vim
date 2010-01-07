@@ -172,6 +172,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_datafile_has_english")
     call add(G, "g:vimim_datafile_has_pinyin")
     call add(G, "g:vimim_datafile_is_not_utf8")
+    call add(G, "g:vimim_pinyin_lenovo")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
     call add(G, "g:vimim_fuzzy_search")
@@ -3159,7 +3160,11 @@ function! s:vimim_exact_match(lines, match_start)
         return []
     endif
     " ----------------------------------------
-    let pattern = '^\(' . keyboard . '\>\)\@!'
+    let pattern = '^\(' . keyboard
+    if empty(s:vimim_pinyin_lenovo)
+        let pattern .=  '\>'
+    endif
+    let pattern .=  '\)\@!'
     " ----------------------------------------
     let result = match(a:lines, pattern, match_start)-1
     let words_limit = 128
@@ -4609,11 +4614,19 @@ function! s:vimim_check_mycloud_plugin()
             let cloud = s:path . "mycloud.dll"
         endif
         let s:vimim_cloud_plugin_mode = "libcall"
-        if exists(g:vimim_cloud_plugin_ip)
-            let s:vimim_cloud_plugin_ip = g:vimim_cloud_plugin_ip
-        else
-            let s:vimim_cloud_plugin_ip = ""
-        endif
+
+        " [todo] to_be_deleted 
+        " this gave me E121 error
+        " Undefined variable: g:vimim_cloud_plugin_ip
+        " [reason] upto here, no more g:vimim_cloud_plugin_ip
+        " it is s:vimim_cloud_plugin_ip which is initialized as zero
+        " ------------------------------------------------
+      " if exists(g:vimim_cloud_plugin_ip)
+      "     let s:vimim_cloud_plugin_ip = g:vimim_cloud_plugin_ip
+      " else
+      "     let s:vimim_cloud_plugin_ip = ""
+      " endif
+        " ------------------------------------------------
 
         if filereadable(cloud)
             if has("gui_win32")
@@ -4650,10 +4663,14 @@ function! s:vimim_check_mycloud_plugin()
             return cloud
         endif
     else
+"" " [todo] to_be_deleted 
+" no need to do this, as it is zero here
+" --------------------------------------
+"" if !exists(s:vimim_cloud_plugin_ip)
+""     s:vimim_cloud_plugin_ip = ""
+"" endif
+" --------------------------------------
         " we do set-and-play on all systems
-        if !exists(s:vimim_cloud_plugin_ip)
-            s:vimim_cloud_plugin_ip = ""
-        endif
         let cloud = s:vimim_cloud_plugin
         if stridx(cloud, " ") < 0
             " only check libcall when there's no argument
@@ -5192,6 +5209,7 @@ function! s:vimim_initialize_vimim_txt_debug()
     let s:vimim_ctrl_6_as_onekey=9
     let s:vimim_tab_as_onekey=1
     let s:vimim_sexy_onekey = 1
+    let s:vimim_pinyin_lenovo=1
     " ------------------------------ debug
     let s:vimim_custom_menu_label=1
     let s:vimim_cloud_sogou=12
