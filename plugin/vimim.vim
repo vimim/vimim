@@ -129,8 +129,6 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
     call s:vimim_dictionary_im()
-    " -----------------------------------------
-    call s:vimim_initialize_vimim_txt_debug()
     call s:vimim_initialize_datafile_in_vimrc()
     " -----------------------------------------
     call s:vimim_scan_plugin_to_invoke_im()
@@ -5181,28 +5179,19 @@ function! s:vimim_initialize_backdoor()
     let s:initialization_loaded = 0
     let s:chinese_mode_toggle_flag = 0
     let datafile_backdoor = s:path . "vimim.txt"
-    " ------------------------------
     if filereadable(datafile_backdoor)
         let s:datafile_primary = datafile_backdoor
-        let s:vimimdebug=9
-        let s:vimim_ctrl_6_as_onekey=9
-        let s:vimim_tab_as_onekey=1
-        let s:vimim_sexy_onekey = 1
+        call s:vimim_initialize_vimim_txt_debug()
     endif
 endfunction
 
 " --------------------------------------------
 function! s:vimim_initialize_vimim_txt_debug()
 " --------------------------------------------
-    if s:vimimdebug == 9
-        let msg = "open backdoor for debugging"
-        let s:vimim_custom_skin=1
-        let s:vimim_datafile_has_english=1
-        let s:vimim_datafile_has_pinyin=1
-        let s:vimim_datafile_has_4corner=1
-    else
-        return
-    endif
+    let s:vimimdebug=9
+    let s:vimim_ctrl_6_as_onekey=9
+    let s:vimim_tab_as_onekey=1
+    let s:vimim_sexy_onekey = 1
     " ------------------------------ debug
     let s:vimim_custom_menu_label=1
     let s:vimim_cloud_sogou=12
@@ -5218,6 +5207,10 @@ function! s:vimim_initialize_vimim_txt_debug()
     let s:vimim_chinese_punctuation=1
     let s:vimim_reverse_pageup_pagedown=1
     let s:vimim_unicode_lookup=0
+    let s:vimim_custom_skin=1
+    let s:vimim_datafile_has_english=1
+    let s:vimim_datafile_has_pinyin=1
+    let s:vimim_datafile_has_4corner=1
     " ------------------------------
 endfunction
 
