@@ -2912,6 +2912,10 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     "-----------------------------------------
     let first_candidate = get(split(get(matched_list,0)),0)
+    if len(s:vimim_cloud_plugin) > 1
+        let first_candidate = get(split(first_candidate,"_"),0)
+    endif
+    "-----------------------------------------
     if s:vimim_smart_ctrl_n > 0
         let key = first_candidate[:0]
         let s:inputs[key] = matched_list
@@ -3006,7 +3010,7 @@ function! s:vimim_popupmenu_list(matched_list)
         else
             let candidate = menu
             if empty(s:menu_from_cloud_flag)
-                let candidate = first_candidate
+            "   let candidate = first_candidate
             endif
             let tail = strpart(keyboard, len(candidate))
         endif
@@ -5642,6 +5646,7 @@ else
         if empty(len(results))
             let s:vimim_cloud_plugin = 0
         else
+            let s:menu_from_cloud_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5653,6 +5658,7 @@ else
     if cloud > 0
         let results = s:vimim_get_mycloud_www(keyboard)
         if len(results) > 0
+            let s:menu_from_cloud_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
