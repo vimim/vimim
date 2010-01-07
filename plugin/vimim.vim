@@ -3092,6 +3092,41 @@ function! s:vimim_search_boundary(lines, keyboard)
 endfunction
 
 " ---------------------------------------------------
+function! s:vimim_ctrl_h_whole_match(lines, keyboard)
+" --------------------------------------------------- xxx
+    let keyboard = a:keyboard
+    if empty(a:lines) || empty(keyboard)
+        return ''
+    endif
+    " --------------------------------------------
+    let position = len(keyboard)
+    let block = keyboard
+    let match_start = 0
+    " --------------------------------------------
+    while position > 2
+        let block = strpart(keyboard, 0, position)
+        let pattern = '^' . block . '\>'
+        let match_start = match(a:lines, pattern)
+        if  match_start < 0
+            let position -= 1
+            let msg = "continue until match is found"
+        elseif s:vimim_smart_ctrl_h > 1
+            "   let position -= 1
+        else
+             break
+        endif
+    endwhile
+    " --------------------------------------------
+    if s:vimim_smart_ctrl_h > 1
+        let s:vimim_smart_ctrl_h = 1
+    endif
+    " --------------------------------------------
+    let matches = s:vimim_exact_match(a:lines, block, match_start)
+    " --------------------------------------------
+    return matches
+endfunction
+
+" ---------------------------------------------------
 function! s:vimim_exact_match(lines, keyboard, start)
 " ---------------------------------------------------
     let keyboard = a:keyboard
@@ -5811,9 +5846,10 @@ else
     endif
 
     " do exact match search on sorted datafile
-    " ----------------------------------------
+    " ---------------------------------------- xxx
     if match_start > -1
-        let results = s:vimim_exact_match(lines,keyboard,match_start)
+        let results = s:vimim_exact_match(lines, keyboard, match_start)
+"""     let results = s:vimim_ctrl_h_whole_match(lines, keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
