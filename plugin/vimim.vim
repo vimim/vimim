@@ -4540,6 +4540,13 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_check_mycloud_plugin()
 " ------------------------------------------------
+    " -------------------------------------------------- xxx
+    " [note]
+    " need to initialize this variable
+    " it has to be initized, because I found E486 error
+    " suggest to use one default
+    let s:vimim_cloud_plugin_mode = "libcall"
+    " --------------------------------------------------
     if empty(s:vimim_cloud_plugin)
         " we do plug-n-play for libcall(), not for system()
         let cloud = s:path . "libmycloud.so"
