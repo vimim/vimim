@@ -4599,25 +4599,24 @@ function! s:vimim_check_mycloud_plugin()
 " ------------------------------------------------
     if empty(s:vimim_cloud_plugin)
         " we do plug-n-play for libcall(), not for system()
-        let cloud = s:path . "libmycloud.so"
+        if has("win32unix")
+            let cloud = s:path . "cygmycloud.dll"
+        elseif has("unix")
+            let cloud = s:path . "libmycloud.so"
+        elseif has("gui_win32")
+            let cloud = s:path . "mycloud.dll"
+        endif
         let s:vimim_cloud_plugin_mode = "libcall"
-        if !exists(s:vimim_cloud_plugin_ip)
+        if exists(g:vimim_cloud_plugin_ip)
+            let s:vimim_cloud_plugin_ip = g:vimim_cloud_plugin_ip
+        else
             let s:vimim_cloud_plugin_ip = ""
         endif
-        if filereadable(cloud) && !has("gui_win32")
-            " in POSIX system, we could use lib*.so for libcall
-            try
-                let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
-                if split(ret, "\t")[0] == "True"
-                    return cloud
-                endif
-            catch /.*/
-                let mes = "libcall mycloud fail"
-            endtry
-        endif
-        if filereadable(s:path. "mycloud.dll") && has("win32")
-            " in win32 system, we could use *.dll for libcall
-            cloud = s:path. "mycloud"
+
+        if filereadable(cloud)
+            if has("gui_win32")
+                cloud = cloud[:-4]
+            endif
             try
                 let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
                 if split(ret, "\t")[0] == "True"
@@ -4658,8 +4657,8 @@ function! s:vimim_check_mycloud_plugin()
             " only check libcall when there's no argument
             if filereadable(cloud)
                 let s:vimim_cloud_plugin_mode = "libcall"
-                " strip off the ending .dll suffix
-                if cloud[-4:] ==? ".dll"
+                " strip off the ending .dll suffix, only required for win32
+                if has("gui_win32") && cloud[-4:] ==? ".dll"
                     cloud = cloud[:-4]
                 endif
                 try
