@@ -205,7 +205,6 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_smart_ctrl_n")
-    call add(G, "g:vimim_smart_backspace")
     call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_laststatus")
@@ -266,6 +265,7 @@ function! s:vimim_initialize_session()
     let s:pinyin_and_4corner = 0
     let s:four_corner_lines = []
     let s:unicode_menu_display_flag = 0
+    let s:pumvisible_ctrl_e = 0
     " --------------------------------
     let s:im_primary = 0
     let s:im_secondary = 0
@@ -2765,11 +2765,14 @@ function! g:vimim_pumvisible_ctrl_e()
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
+        let s:pumvisible_ctrl_e = 1
         if s:vimim_wubi_non_stop > 0
         \&& empty(get(s:im['pinyin'],0))
         \&& empty(len(s:keyboard_wubi)%4)
             let key = "\<C-Y>"
         endif
+    else
+        let s:pumvisible_ctrl_e = 0
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2778,9 +2781,11 @@ endfunction
 function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
     call s:reset_matched_list()
+    let key = '\<BS>'
     " ---------------------------------
-    if s:chinese_input_mode > 1
-        let key = '\<BS>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+    if s:pumvisible_ctrl_e > 0
+        let s:pumvisible_ctrl_e = 0
+        let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         sil!exe 'sil!return "' . key . '"'
     endif
     " ---------------------------------
@@ -2788,30 +2793,33 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
     \&& empty(s:chinese_input_mode)
         call s:vimim_stop()
     endif
-    " ---------------------------------
-    let key = '\<BS>'
-    if empty(s:vimim_smart_backspace)
-        sil!exe 'sil!return "' . key . '"'
-    endif
-    " ---------------------------------
-    let char_before = getline(".")[col(".")-2]
-    let char_before_before = getline(".")[col(".")-3]
-    " ---------------------------------
-    if char_before =~ '\w'
-    \&& char_before_before !~ '\w'
-        let s:smart_backspace = 1
-    endif
-    if char_before =~ '\s'
-        let s:smart_backspace = 0
-    endif
-    " ---------------------------------
-    if s:smart_backspace > 0
-    \&& char_before !~ '\w'
-        let key = ''
-        let s:smart_backspace = 0
-        sleep
-    endif
     sil!exe 'sil!return "' . key . '"'
+" ---------------------------------
+" to_be_deleted
+" ---------------------------------
+""""""""   call add(G, "g:vimim_smart_backspace")
+""  if empty(s:vimim_smart_backspace)
+""      sil!exe 'sil!return "' . key . '"'
+""  endif
+""  " ---------------------------------
+""  let char_before = getline(".")[col(".")-2]
+""  let char_before_before = getline(".")[col(".")-3]
+""  " ---------------------------------
+""  if char_before =~ '\w'
+""  \&& char_before_before !~ '\w'
+""      let s:smart_backspace = 1
+""  endif
+""  if char_before =~ '\s'
+""      let s:smart_backspace = 0
+""  endif
+""  " ---------------------------------
+""  if s:smart_backspace > 0
+""  \&& char_before !~ '\w'
+""      let key = ''
+""      let s:smart_backspace = 0
+""      sleep
+""  endif
+""  sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ======================================= }}}
@@ -3153,7 +3161,6 @@ function! s:vimim_exact_match(lines, match_start)
     endif
     " ------------------------------------------
     let match_start = a:match_start
-    let match_end = match_start
     " ------------------------------------------
     let keyboard = get(split(get(a:lines,match_start)),0)
     if empty(keyboard) || keyboard !~ s:valid_key
@@ -3167,11 +3174,11 @@ function! s:vimim_exact_match(lines, match_start)
     let pattern .=  '\)\@!'
     " ----------------------------------------
     let result = match(a:lines, pattern, match_start)-1
-    let words_limit = 128
     if result - match_start < 1
-        return a:lines[match_start : match_end]
+        return a:lines[match_start : match_start]
     endif
     " ----------------------------------------
+    let words_limit = 128
   " if s:vimim_quick_key > 0
   "     let list_length = result - match_start
   "     let do_search_on_word = 0
@@ -3195,11 +3202,13 @@ function! s:vimim_exact_match(lines, match_start)
   "     endif
   " endif
     " ----------------------------------------
+    let match_end = match_start
     if empty(result)
         let match_end = match_start
     elseif result > 0 && result > match_start
         let match_end = result
-    elseif match_end - match_start > words_limit
+    endif
+    if match_end - match_start > words_limit
         let match_end = match_start + words_limit -1
     endif
     let results = a:lines[match_start : match_end]
