@@ -1621,7 +1621,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! <SID>vimim_toggle_ctrl_6()
 " ----------------------------------
-    if s:chinese_mode_toggle_flag < 1
+    if empty(g:vimim_chinese_mode_flag)
         sil!call s:vimim_start_chinese_mode()
     else
         sil!call s:vimim_stop_chinese_mode()
@@ -1791,7 +1791,7 @@ function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
     set imdisable
     set iminsert=1
-    let s:chinese_mode_toggle_flag = 1
+    let g:vimim_chinese_mode_flag = 1
     let s:ctrl_6_count += 1
     if s:vimim_cloud_sogou == 1 && s:vimimdebug == 9
         if empty(s:ctrl_6_count%2)
@@ -4624,7 +4624,7 @@ function! s:vimim_check_mycloud_plugin()
         endif
         let s:vimim_cloud_plugin_mode = "libcall"
 
-        " [todo] to_be_deleted 
+        " [todo] to_be_deleted
         " this gave me E121 error
         " Undefined variable: g:vimim_cloud_plugin_ip
         " [reason] upto here, no more g:vimim_cloud_plugin_ip
@@ -4672,7 +4672,7 @@ function! s:vimim_check_mycloud_plugin()
             return cloud
         endif
     else
-"" " [todo] to_be_deleted 
+"" " [todo] to_be_deleted
 " no need to do this, as it is zero here
 " --------------------------------------
 "" if !exists(s:vimim_cloud_plugin_ip)
@@ -5203,7 +5203,7 @@ function! s:vimim_initialize_backdoor()
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
     let s:initialization_loaded = 0
-    let s:chinese_mode_toggle_flag = 0
+    let g:vimim_chinese_mode_flag = 0
     let datafile_backdoor = s:path . "vimim.txt"
     if filereadable(datafile_backdoor)
         let s:datafile_primary = datafile_backdoor
@@ -5367,9 +5367,9 @@ endfunction
 function! s:reset_before_anything()
 " ---------------------------------
     call s:reset_matched_list()
+    let g:vimim_chinese_mode_flag = 0
     let s:chinese_input_mode = 0
     let s:no_internet_connection = 0
-    let s:chinese_mode_toggle_flag = 0
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
     let s:pumvisible_reverse = 0
@@ -5977,11 +5977,21 @@ function! s:vimim_chinese_mode_mapping_on()
     if empty(s:vimim_ctrl_6_as_onekey)
         imap <silent><C-^> <Plug>VimimChineseToggle
     else
-        imap <silent><C-\> <Plug>VimimChineseToggle
+           imap<silent><C-\> <Plug>VimimChineseToggle
+        noremap<silent><C-\> :call <SID>vimim_ctrl_bslash_as_esc()<CR>
     endif
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
         imap<silent> <C-Space> <Plug>VimimChineseToggle
     endif
+endfunction
+
+" ---------------------------------------
+function! <SID>vimim_ctrl_bslash_as_esc()
+" ---------------------------------------
+   if g:vimim_chinese_mode_flag > 0
+      let g:vimim_chinese_mode_flag = 0
+      sil!call s:vimim_stop_chinese_mode()
+   endif
 endfunction
 
 " -----------------------------------
@@ -6017,3 +6027,5 @@ silent!call s:vimim_initialize_global()
 silent!call s:vimim_initialize_backdoor()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
+
+
