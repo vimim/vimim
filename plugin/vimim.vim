@@ -1622,7 +1622,6 @@ call add(s:vimims, VimIM)
 function! <SID>vimim_chinese_mode()
 " ---------------------------------
     if g:vimim_chinese_mode_flag < 1
-        :startinsert
         sil!call s:vimim_start_chinese_mode()
     else
         sil!call s:vimim_stop_chinese_mode()
@@ -5976,10 +5975,9 @@ function! s:vimim_chinese_mode_mapping_on()
     inoremap<expr><Plug>VimimChineseMode <SID>vimim_chinese_mode()
     " ------------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
-        imap <silent><C-^> <Plug>VimimChineseMode
+        imap<silent><C-^> <Plug>VimimChineseMode
     else
-           imap<silent><C-\> <Plug>VimimChineseMode
-        noremap<silent><C-\> :call <SID>vimim_chinese_mode()<CR>
+        imap<silent><C-\> <Plug>VimimChineseMode
     endif
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
         imap<silent> <C-Space> <Plug>VimimChineseMode
