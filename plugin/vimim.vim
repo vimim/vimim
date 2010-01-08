@@ -5978,6 +5978,7 @@ function! s:vimim_chinese_mode_mapping_on()
         imap<silent><C-^> <Plug>VimimChineseMode
     else
         imap<silent><C-\> <Plug>VimimChineseMode
+     noremap<silent><C-\> :call <SID>vimim_chinese_mode()<CR>
     endif
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
         imap<silent> <C-Space> <Plug>VimimChineseMode
