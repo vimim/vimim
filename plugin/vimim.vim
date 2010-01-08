@@ -161,7 +161,6 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
-    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_digital")
@@ -202,6 +201,7 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
+    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_ctrl_6_as_onekey")
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_smart_ctrl_n")
