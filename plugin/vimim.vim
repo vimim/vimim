@@ -161,7 +161,6 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
-    call add(G, "g:vimim_ctrl_6_as_onekey")
     call add(G, "g:vimim_ctrl_space_as_ctrl_6")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
@@ -203,6 +202,7 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
+    call add(G, "g:vimim_ctrl_6_as_onekey")
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_smart_ctrl_n")
     call add(G, "g:vimim_chinese_frequency")
@@ -1238,12 +1238,12 @@ endfunction
 function! <SID>vimim_space_onekey()
 " ---------------------------------
     let onekey = " "
-    return s:vimim_onekey(onekey)
+    return s:vimim_onekey_action(onekey)
 endfunction
 
-" ---------------------------------
-function! <SID>vimim_start_onekey()
-" ---------------------------------
+" ---------------------------
+function! <SID>vimim_onekey()
+" ---------------------------
     let s:chinese_input_mode = 0
     " -----------------------------
     sil!call s:vimim_start()
@@ -1267,13 +1267,13 @@ function! <SID>vimim_start_onekey()
     "   (1) after English (valid keys) => trigger omni popup
     "   (2) after omni popup window    => same as <Space>
     " ----------------------------------------------------------
-    let onekey = s:vimim_onekey(onekey)
+    let onekey = s:vimim_onekey_action(onekey)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" ------------------------------
-function! s:vimim_onekey(onekey)
-" ------------------------------
+" -------------------------------------
+function! s:vimim_onekey_action(onekey)
+" -------------------------------------
     let space = ''
     " -----------------------------------------------
     " <Space> multiple-play in OneKey Mode:
@@ -1618,10 +1618,11 @@ let VimIM = " ====  Chinese_Mode     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------
-function! <SID>vimim_toggle_ctrl_6()
-" ----------------------------------
-    if empty(g:vimim_chinese_mode_flag)
+" ---------------------------------
+function! <SID>vimim_chinese_mode()
+" ---------------------------------
+    if g:vimim_chinese_mode_flag < 1
+        :startinsert
         sil!call s:vimim_start_chinese_mode()
     else
         sil!call s:vimim_stop_chinese_mode()
@@ -1791,8 +1792,8 @@ function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
     set imdisable
     set iminsert=1
-    let g:vimim_chinese_mode_flag = 1
     let s:ctrl_6_count += 1
+    let g:vimim_chinese_mode_flag = 1
     if s:vimim_cloud_sogou == 1 && s:vimimdebug == 9
         if empty(s:ctrl_6_count%2)
             let s:vimim_static_input_style = 0
@@ -5972,33 +5973,24 @@ endfunction
 " -----------------------------------------
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
-    inoremap<silent><expr><Plug>VimimChineseToggle <SID>vimim_toggle_ctrl_6()
-    " -----------------------------------------------------------------------
+    inoremap<expr><Plug>VimimChineseMode <SID>vimim_chinese_mode()
+    " ------------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
-        imap <silent><C-^> <Plug>VimimChineseToggle
+        imap <silent><C-^> <Plug>VimimChineseMode
     else
-           imap<silent><C-\> <Plug>VimimChineseToggle
-        noremap<silent><C-\> :call <SID>vimim_ctrl_bslash_as_esc()<CR>
+           imap<silent><C-\> <Plug>VimimChineseMode
+        noremap<silent><C-\> :call <SID>vimim_chinese_mode()<CR>
     endif
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
-        imap<silent> <C-Space> <Plug>VimimChineseToggle
+        imap<silent> <C-Space> <Plug>VimimChineseMode
     endif
-endfunction
-
-" ---------------------------------------
-function! <SID>vimim_ctrl_bslash_as_esc()
-" ---------------------------------------
-   if g:vimim_chinese_mode_flag > 0
-      let g:vimim_chinese_mode_flag = 0
-      sil!call s:vimim_stop_chinese_mode()
-   endif
 endfunction
 
 " -----------------------------------
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
-    inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_start_onekey()
-    " ---------------------------------------------------------------
+    inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_onekey()
+    " ---------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         imap<silent><C-\> <Plug>VimimOneKey
     else
@@ -6027,5 +6019,3 @@ silent!call s:vimim_initialize_global()
 silent!call s:vimim_initialize_backdoor()
 silent!call s:vimim_initialize_mapping()
 " ====================================== }}}
-
-
