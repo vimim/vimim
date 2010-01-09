@@ -145,8 +145,6 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_encoding()
     call s:vimim_initialize_skin()
     " -----------------------------------------
-    call s:vimim_initialize_datafile_privates()
-    " -----------------------------------------
     call s:vimim_initialize_cloud()
     call s:vimim_initialize_mycloud_plugin()
     " -----------------------------------------
@@ -166,7 +164,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_digital")
-    call add(G, "g:vimim_datafile_private")
     call add(G, "g:vimim_datafile_has_4corner")
     call add(G, "g:vimim_datafile_has_apostrophe")
     call add(G, "g:vimim_datafile_has_english")
@@ -269,7 +266,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:im_primary = 0
     let s:im_secondary = 0
-    let s:privates_flag = 0
     " --------------------------------
     let s:search_key_slash = 0
     let s:datafile_has_period = 0
@@ -832,14 +828,6 @@ function! s:vimim_egg_vimim()
         let msg = "no secondary pinyin to sleep with"
     else
         let option = ciku . s:datafile_secondary
-        call add(eggs, option)
-    endif
-" ----------------------------------
-    let option = s:privates_datafile
-    if empty(option)
-        let msg = "no private datafile found"
-    else
-        let option = ciku . option
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -1491,6 +1479,9 @@ function! g:vimim_pumvisible_p_paste()
     let title = s:keyboard_leading_zero . " =>"
     let words = [title]
     let show_me_not_pattern = ',,,'
+    if title =~ show_me_not_pattern
+        let words = []
+    endif
     for item in matched_list
         let pairs = split(item)
         let yin = get(pairs, 0)
@@ -2833,10 +2824,6 @@ function! s:vimim_pair_list(matched_list)
 " ---------------------------------------
     let s:matched_list = copy(a:matched_list)
     let matched_list = a:matched_list
-    if len(s:private_matches) > 0
-        call extend(matched_list, s:private_matches, 0)
-        let s:private_matches = []
-    endif
     if empty(matched_list)
         return []
     endif
@@ -3282,7 +3269,6 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
     if empty(a:lines)
     \|| s:chinese_input_mode > 1
     \|| s:datafile_has_period > 0
-    \|| len(s:private_matches) > 0
     \|| len(a:keyboard) < 2
         return 0
     endif
@@ -3744,73 +3730,6 @@ function! s:vimim_insert_entry(entries)
         call sort(lines)
     endif
     return lines
-endfunction
-
-" ======================================= }}}
-let VimIM = " ====  Private_Data     ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" ----------------------------------------------
-function! s:vimim_initialize_datafile_privates()
-" ----------------------------------------------
-    let s:privates_datafile = 0
-    let s:lines_privates = []
-    let s:private_matches = []
-    if s:vimimdebug > 9
-        let msg = "hide privacy during debug"
-        return
-    endif
-    let datafile = s:path . "privates.txt"
-    if !empty(s:vimim_datafile_private)
-    \&& filereadable(s:vimim_datafile_private)
-        let s:privates_datafile = s:vimim_datafile_private
-    elseif filereadable(datafile)
-        let s:privates_datafile = datafile
-    endif
-    if empty(s:privates_datafile)
-        return
-    else
-        let s:privates_flag = 1
-    endif
-endfunction
-
-" -----------------------------------------------
-function! s:vimim_search_vimim_privates(keyboard)
-" -----------------------------------------------
-    let lines = s:vimim_load_privates(0)
-    let len_privates_lines = len(lines)
-    let keyboard = a:keyboard
-    if empty(len_privates_lines) || len(keyboard) < 3
-        return []
-    endif
-    let matches = []
-    let pattern = "^" . keyboard  . '\>'
-    let match_start = match(lines, pattern)
-    if match_start < 0
-        return []
-    else
-        let matches = s:vimim_exact_match(lines, match_start)
-    endif
-    if len(lines) < len_privates_lines
-        call s:vimim_load_privates(1)
-    endif
-    return matches
-endfunction
-
-" ------------------------------------------
-function! s:vimim_load_privates(reload_flag)
-" ------------------------------------------
-    if empty(s:privates_flag)
-        return []
-    endif
-    if empty(s:lines_privates) || a:reload_flag > 0
-        let datafile = s:privates_datafile
-        if filereadable(datafile)
-            let s:lines_privates = readfile(datafile)
-        endif
-    endif
-    return s:lines_privates
 endfunction
 
 " ======================================= }}}
@@ -5780,22 +5699,9 @@ else
     " --------------------------------------------------
     let lines = s:vimim_datafile_range(keyboard)
 
-    " first process private data, if existed
-    " --------------------------------------
-    if s:privates_flag > 0
-    \&& len(s:privates_datafile) > 0
-    \&& keyboard !~ "['.?*]"
-        let results = s:vimim_search_vimim_privates(keyboard)
-        if len(results) > 0
-            let s:private_matches = results
-        endif
-     endif
-
     " return nothing if no single datafile nor cloud
     " ----------------------------------------------
-    if empty(lines)
-    \&& empty(s:private_matches)
-    \&& empty(s:www_executable)
+    if empty(lines) && empty(s:www_executable)
         return
     endif
 
@@ -5918,13 +5824,6 @@ else
             let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
         endif
-    endif
-
-    " [private] only return matches from private datafile
-    " ---------------------------------------------------
-    if match_start < 0 && len(s:private_matches) > 0
-        let results = s:vimim_pair_list([])
-        return s:vimim_popupmenu_list(results)
     endif
 
     " [cloud] never give up trying whole cloud
