@@ -255,6 +255,7 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_super_reset()
     " --------------------------------
     let s:chinese_frequency = 0
+    let s:vimim_do_cloud_sogou = 0
     let s:toggle_xiangma_pinyin = 0
     let s:xingma_sleep_with_pinyin = 0
     " --------------------------------
@@ -1227,6 +1228,14 @@ function! <SID>vimim_space_onekey()
 " ---------------------------------
     let onekey = " "
     return s:vimim_onekey_action(onekey)
+endfunction
+
+" ---------------------------------
+function! <SID>vimim_onekey_cloud()
+" --------------------------------- xxx
+    let onekey = <SID>vimim_onekey()
+    let s:vimim_do_cloud_sogou = 1
+    return onekey
 endfunction
 
 " ---------------------------
@@ -5138,8 +5147,8 @@ function! s:vimim_initialize_vimim_txt_debug()
     let s:vimim_sexy_onekey = 1
     let s:vimim_pinyin_lenovo=1
     " ------------------------------ debug
-    let s:vimim_custom_menu_label=1
     let s:vimim_cloud_sogou=12
+    let s:vimim_custom_menu_label=1
     let s:vimim_chinese_frequency=12
     " ------------------------------
     let s:vimim_cloud_pim=0
@@ -5652,7 +5661,14 @@ else
     " [cloud] to make cloud come true for woyouyigemeng
     " -------------------------------------------------
     let cloud = s:vimim_cloud_sogou
+let g:gc=cloud
     let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
+let g:gb=cloud
+    if s:vimim_do_cloud_sogou > 0
+        let s:vimim_do_cloud_sogou = 0
+        let cloud = 1
+    endif
+let g:ga=cloud
     if cloud > 0
         let results = s:vimim_get_cloud_sogou(keyboard)
         if s:vimimdebug > 0
@@ -5887,9 +5903,12 @@ endfunction
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_onekey()
+    inoremap<silent><expr><Plug>VimimCloud <SID>vimim_onekey_cloud()
     " ---------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         imap<silent><C-\> <Plug>VimimOneKey
+    elseif s:vimim_tab_as_onekey > 0
+        imap<silent><C-^> <Plug>VimimCloud
     else
         imap<silent><C-^> <Plug>VimimOneKey
     endif
