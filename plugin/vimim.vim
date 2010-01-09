@@ -1406,7 +1406,7 @@ endfunction
 
 " ---------------------------------------------
 function! <SID>vimim_label_1234567890_filter(n)
-" ---------------------------------------------
+" --------------------------------------------- xxx
     let label = a:n
     if pumvisible()
         let msg = "give 1234567890 label new meaning"
@@ -1488,7 +1488,8 @@ function! g:vimim_pumvisible_p_paste()
         return "\<Esc>"
     endif
     let pastes = []
-    let words = []
+    let title = s:keyboard_leading_zero . " =>"
+    let words = [title]
     let show_me_not_pattern = ',,,'
     for item in matched_list
         let pairs = split(item)
@@ -2124,7 +2125,7 @@ endfunction
 function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
 " --------------------------------------
     let e = '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
-    " ----------------------------------
+    " ---------------------------------- xxx
     if s:vimim_custom_menu_label == 2
         let e .= '\<Down>\<Down>'
     endif
@@ -2174,7 +2175,7 @@ function! s:vimim_initialize_quantifiers()
     let s:quantifiers['9'] = '九玖㈨⑨⒐⑼壬'
     let s:quantifiers['0'] = '〇零㈩⑩⒑⑽癸十拾'
     let s:quantifiers['a'] = '秒'
-    let s:quantifiers['b'] = '百佰步把包杯本笔部班'
+    let s:quantifiers['b'] = '百佰步倍包杯本部班笔把'
     let s:quantifiers['c'] = '厘次餐场串处'
     let s:quantifiers['d'] = '第度点袋道滴碟顶栋堆对朵堵顿'
     let s:quantifiers['e'] = '亿'
@@ -3168,7 +3169,7 @@ function! s:vimim_exact_match(lines, match_start)
     endif
     " ----------------------------------------
     let pattern = '^\(' . keyboard
-    if empty(s:vimim_pinyin_lenovo)
+    if empty(s:vimim_pinyin_lenovo) || len(keyboard) < 2
         let pattern .=  '\>'
     endif
     let pattern .=  '\)\@!'
@@ -4466,7 +4467,7 @@ function! s:vimim_magic_tail(keyboard)
         " -----------------------------------------------
         " <comma> double play in OneKey Mode:
         "   (1) after English (valid keys) => cloud at will
-        "   (2) right before last English  => cloud and all-jianpin
+        "   (2) right before last English  => cloud and superjianpin
         "   (3) before number              => magic imode
         " -----------------------------------------------
         let s:no_internet_connection = -1
@@ -4875,6 +4876,10 @@ function! s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
             let char_first = strpart(key, 0, s:multibyte)
             let char_last = strpart(key, len(key)-s:multibyte)
         endif
+        " -------------------------------------------- xxx
+        if s:menu_4corner_filter > 0
+            let char_last = char_first
+        endif
         " --------------------------------------------
         if empty(a:h_2)
         \&& len(a:keyboards) == 2
@@ -4961,7 +4966,7 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
     " -----------------------------------------------------------
     let results_pattern = filter(copy(results), 'v:val =~ pattern')
     if empty(results_pattern)
-        let msg = "use 4corner as a filter for super jianpin"
+        let msg = "use 4corner as a filter for superjianpin"
         let pattern = s:vimim_free_fuzzy_pattern(keyboard)
         let results_pattern = filter(results, 'v:val =~ pattern')
     endif
