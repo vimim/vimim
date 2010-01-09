@@ -161,6 +161,8 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
+    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
+    call add(G, "g:vimim_ctrl_6_as_onekey")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_digital")
@@ -201,8 +203,6 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
-    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
-    call add(G, "g:vimim_ctrl_6_as_onekey")
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_smart_ctrl_n")
     call add(G, "g:vimim_chinese_frequency")
@@ -2181,7 +2181,7 @@ function! s:vimim_initialize_quantifiers()
     let s:quantifiers['e'] = '亿'
     let s:quantifiers['f'] = '分份发封付副幅峰方服'
     let s:quantifiers['g'] = '个根股管'
-    let s:quantifiers['h'] = '时毫行盒壶户回'
+    let s:quantifiers['h'] = '时毫行盒壶户回号'
     let s:quantifiers['i'] = '毫'
     let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
     let s:quantifiers['k'] = '克口块棵颗捆孔'
@@ -3785,10 +3785,10 @@ function! s:vimim_search_vimim_privates(keyboard)
         return []
     endif
     let matches = []
-    let pattern = "\\C" . "^" . keyboard  . '\>'
+    let pattern = "^" . keyboard  . '\>'
     let match_start = match(lines, pattern)
     if match_start < 0
-        let matches = s:vimim_fuzzy_match(lines, keyboard)
+        return []
     else
         let matches = s:vimim_exact_match(lines, match_start)
     endif
