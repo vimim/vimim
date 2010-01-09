@@ -4363,13 +4363,8 @@ function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode > 0
-        return 0
-    endif
-    if len(keyboard) < 3
-        return 0
-    endif
-    if keyboard =~ '\d\d\d\d'
-        let msg = "We play 4 corner by ourselves without Cloud."
+    \|| len(keyboard) < 3
+    \|| keyboard =~ '\d\d\d\d'
         return 0
     endif
     let magic_tail = keyboard[-1:]
@@ -4381,7 +4376,6 @@ function! s:vimim_magic_tail(keyboard)
         let keyboard .= magic_tail . ','
         let magic_tail = ','
     endif
-        " -----------------------------------------------
     if magic_tail ==# ','
         " -----------------------------------------------
         " <comma> double play in OneKey Mode:
