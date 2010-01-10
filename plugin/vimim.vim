@@ -1230,14 +1230,6 @@ function! <SID>vimim_space_onekey()
     return s:vimim_onekey_action(onekey)
 endfunction
 
-" ---------------------------------
-function! <SID>vimim_onekey_cloud()
-" ---------------------------------
-    let onekey = <SID>vimim_onekey()
-    let s:vimim_do_cloud_sogou = 1
-    return onekey
-endfunction
-
 " ---------------------------
 function! <SID>vimim_onekey()
 " ---------------------------
@@ -2646,9 +2638,9 @@ function! g:vimim_bracket_backspace(offset)
     return delete_char
 endfunction
 
-" --------------------------------
-function! <SID>vimim_smart_enter()
-" --------------------------------
+" --------------------------------- to_be_deleted
+function! <SID>vimim_smart_enter2()
+" --------------------------------- xxx
     let key = ''
     let char_before = getline(".")[col(".")-2]
     " -----------------------------------------------
@@ -2680,6 +2672,48 @@ function! <SID>vimim_smart_enter()
         if char_before =~ '\s' || empty(char_before)
             let key = "\<CR>"
         endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" --------------------------------
+function! <SID>vimim_smart_enter()
+" --------------------------------
+    let key = ''
+    let char_before = getline(".")[col(".")-2]
+    " -----------------------------------------------
+    " <Enter> double play in Chinese Mode:
+    "   (1) after English (valid keys)    => Seamless
+    "   (2) after Chinese or double Enter => Enter
+    " -----------------------------------------------
+    if char_before =~# "[*,.']"
+        let s:smart_enter = 0
+    elseif char_before =~# s:valid_key
+        let s:smart_enter += 1
+    endif
+    " -----------------------------------------------
+    " <Enter> triple play in OneKey Mode:
+    "   (1) after English (valid keys)    => Seamless
+    "   (2) after Chinese or double Enter => Enter
+    "   (3) after English punctuation     => Space
+    " -----------------------------------------------
+    if empty(s:chinese_input_mode)
+        if has_key(s:punctuations, char_before)
+            let s:smart_enter += 1
+            let key = ' '
+        endif
+        if char_before =~ '\s' || empty(char_before)
+            let key = "\<CR>"
+        endif
+    endif
+    " -----------------------------------------------
+    if s:smart_enter == 1
+        let msg = "do seamless for the first time <Enter>"
+        let s:seamless_positions = getpos(".")
+        let s:keyboard_leading_zero = 0
+    else
+        let s:smart_enter = 0
+        let key = "\<CR>"
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5135,17 +5169,17 @@ function! s:vimim_initialize_backdoor()
     let datafile_backdoor = s:path . "vimim.txt"
     if filereadable(datafile_backdoor)
         let s:datafile_primary = datafile_backdoor
-        call s:vimim_initialize_backdoor()
+        call s:vimim_initialize_backdoor_setting()
     endif
 endfunction
 
-" -------------------------------------
-function! s:vimim_initialize_backdoor()
-" -------------------------------------
+" ---------------------------------------------
+function! s:vimim_initialize_backdoor_setting()
+" ---------------------------------------------
     let s:vimimdebug=9
     let s:vimim_ctrl_6_as_onekey=9
     let s:vimim_tab_as_onekey=1
-    let s:vimim_sexy_onekey = 1
+    let s:vimim_sexy_onekey=1
     let s:vimim_pinyin_lenovo=1
     " ------------------------------ debug
     let s:vimim_cloud_sogou=12
@@ -5886,7 +5920,7 @@ function! s:vimim_chinese_mode_mapping_on()
     " ------------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         imap<silent><C-^> <Plug>VimimChineseMode
-    else
+    elseif s:vimim_ctrl_6_as_onekey < 2
         imap<silent><C-\> <Plug>VimimChineseMode
      noremap<silent><C-\> :call <SID>vimim_chinese_mode()<CR>
     endif
@@ -5899,12 +5933,11 @@ endfunction
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_onekey()
-    inoremap<silent><expr><Plug>VimimCloud <SID>vimim_onekey_cloud()
     " ---------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         imap<silent><C-\> <Plug>VimimOneKey
     elseif s:vimim_tab_as_onekey > 0
-        imap<silent><C-^> <Plug>VimimCloud
+    "   imap<silent><C-^> <Plug>VimimCloud
     else
         imap<silent><C-^> <Plug>VimimOneKey
     endif
