@@ -1682,8 +1682,6 @@ function! s:vimim_stop_chinese_mode()
     " ------------------------------
     sil!call s:vimim_stop()
     sil!call s:vimim_i_lcursor_color(0)
-"   sil!call s:vimim_onekey_mapping_on()
-    "xxx
 endfunction
 
 " -------------------------------
@@ -5278,11 +5276,8 @@ endfunction
 " ----------------------
 function! s:vimim_stop()
 " ----------------------
-    if empty(s:chinese_input_mode)
-        sil!autocmd! onekey_mode_autocmd
-    else
-        sil!autocmd! chinese_mode_autocmd
-    endif
+    sil!autocmd! onekey_mode_autocmd
+    sil!autocmd! chinese_mode_autocmd
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
