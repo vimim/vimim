@@ -1223,18 +1223,16 @@ function! s:vimim_onekey_autocmd()
     endif
 endfunction
 
-" ---------------------------------
-function! <SID>vimim_space_onekey()
-" ---------------------------------
-    let onekey = " "
-    return s:vimim_onekey_action(onekey)
-endfunction
-
-" ---------------------------
-function! <SID>vimim_onekey()
-" ---------------------------
+" ------------------------------
+function! s:vimim_start_onekey()
+" ------------------------------
     let s:chinese_input_mode = 0
-    " -----------------------------
+    " ----------------------------------------------------------
+    " <OneKey> triple play
+    "   (1) after English (valid keys)   => trigger omni popup
+    "   (2) after omni popup window      => same as <Space>
+    "   (3) after Chinese (invalid keys) => out of OneKey mode
+    " ----------------------------------------------------------
     sil!call s:vimim_start()
     sil!call s:vimim_onekey_status_on()
     sil!call s:vimim_1234567890_filter_on()
@@ -1247,17 +1245,29 @@ function! <SID>vimim_onekey()
     inoremap<silent><Space> <C-R>=<SID>vimim_space_onekey()<CR>
                            \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
+endfunction
+
+" ---------------------------------
+function! <SID>vimim_space_onekey()
+" ---------------------------------
+    let onekey = " "
+    sil!return s:vimim_onekey_action(onekey)
+endfunction
+
+" ---------------------------
+function! <SID>vimim_tabkey()
+" ---------------------------
+    let onekey = "\t"
+    sil!call s:vimim_start_onekey()
+    sil!return s:vimim_onekey_action(onekey)
+endfunction
+
+" ---------------------------
+function! <SID>vimim_onekey()
+" ---------------------------
     let onekey = ""
-    if s:vimim_tab_as_onekey > 0
-        let onekey = "\t"
-    endif
-    " ---------------------------
-    " <OneKey> double play
-    "   (1) after English (valid keys) => trigger omni popup
-    "   (2) after omni popup window    => same as <Space>
-    " ----------------------------------------------------------
-    let onekey = s:vimim_onekey_action(onekey)
-    sil!exe 'sil!return "' . onekey . '"'
+    sil!call s:vimim_start_onekey()
+    sil!return s:vimim_onekey_action(onekey)
 endfunction
 
 " -------------------------------------
@@ -1265,13 +1275,10 @@ function! s:vimim_onekey_action(onekey)
 " -------------------------------------
     let space = ''
     " -----------------------------------------------
-    " <Space> multiple-play in OneKey Mode:
+    " <Space> triple play in OneKey Mode:
     "   (1) after English (valid keys) => trigger menu
     "   (2) after omni popup menu      => insert Chinese
     "   (3) after English punctuation  => Chinese punctuation
-    "   (4) after Chinese              => reset
-    "   (5) after Pattern Not Found    => reset
-    "   (6) after Space                => reset
     " -----------------------------------------------
     if pumvisible()
         let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
@@ -1314,22 +1321,17 @@ function! s:vimim_onekey_action(onekey)
     endif
     " ---------------------------------------------------
     if char_before !~# s:valid_key
-        if !has("autocmd")
-        \|| a:onekey ==# "\t"
-        \|| s:vimim_ctrl_6_as_onekey < 2
-            call s:vimim_stop()
-        endif
         return a:onekey
     endif
     " ---------------------------------------------------
     if s:pattern_not_found < 1
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        sil!exe 'sil!return "' . space . '"'
     else
+        let space = a:onekey
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
-    return a:onekey
+    sil!exe 'sil!return "' . space . '"'
 endfunction
 
 " --------------------------
@@ -1754,13 +1756,13 @@ function! s:vimim_initialize_skin()
     if s:vimim_custom_skin < 1
         return
     endif
-    " --------------------------
+    " -----------------------------
     highlight! link PmenuSel   Title
     highlight! link StatusLine Title
     highlight!      Pmenu      NONE
     highlight!      PmenuSbar  NONE
     highlight!      PmenuThumb NONE
-    " --------------------------
+    " -----------------------------
     if s:vimim_custom_skin > 1
         let msg = "no extra_text on menu"
     endif
@@ -5920,12 +5922,13 @@ function! s:vimim_chinese_mode_mapping_on()
     " ------------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         imap<silent><C-^> <Plug>VimimChineseMode
-    elseif s:vimim_ctrl_6_as_onekey < 2
+    elseif s:vimim_ctrl_6_as_onekey == 1
+    \&& empty(s:vimim_sexy_onekey)
         imap<silent><C-\> <Plug>VimimChineseMode
-     noremap<silent><C-\> :call <SID>vimim_chinese_mode()<CR>
+        noremap<silent><C-\> :call <SID>vimim_chinese_mode()<CR>
     endif
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
-        imap<silent> <C-Space> <Plug>VimimChineseMode
+        imap<silent><C-Space> <Plug>VimimChineseMode
     endif
 endfunction
 
@@ -5933,16 +5936,22 @@ endfunction
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_onekey()
+    inoremap<silent><expr><Plug>VimimTabKey <SID>vimim_tabkey()
     " ---------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         imap<silent><C-\> <Plug>VimimOneKey
-    elseif s:vimim_ctrl_6_as_onekey < 2
+    else
         imap<silent><C-^> <Plug>VimimOneKey
     endif
     " --------------------------------------
-    if s:vimim_tab_as_onekey > 0
-        imap<silent><Tab> <Plug>VimimOneKey
+    if s:vimim_sexy_onekey > 0
+        set pastetoggle=<C-Bslash>
     endif
+    " --------------------------------------
+    if s:vimim_tab_as_onekey > 0
+        imap<silent><Tab> <Plug>VimimTabKey
+    endif
+    " --------------------------------------
 endfunction
 
 " ------------------------------------
@@ -5950,7 +5959,7 @@ function! s:vimim_onekey_mapping_off()
 " ------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         iunmap <C-\>
-    elseif s:vimim_ctrl_6_as_onekey < 2
+    else
         iunmap <C-^>
     endif
     if s:vimim_tab_as_onekey > 0
