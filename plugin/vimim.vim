@@ -1682,7 +1682,8 @@ function! s:vimim_stop_chinese_mode()
     " ------------------------------
     sil!call s:vimim_stop()
     sil!call s:vimim_i_lcursor_color(0)
-    sil!call s:vimim_onekey_mapping_on()
+"   sil!call s:vimim_onekey_mapping_on()
+    "xxx
 endfunction
 
 " -------------------------------
@@ -5286,6 +5287,7 @@ function! s:vimim_stop()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
+    sil!call s:vimim_initialize_mapping()
     let duration = localtime() - get(g:vimim,4)
     let g:vimim[3] += duration
 endfunction
@@ -5661,14 +5663,11 @@ else
     " [cloud] to make cloud come true for woyouyigemeng
     " -------------------------------------------------
     let cloud = s:vimim_cloud_sogou
-let g:gc=cloud
     let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
-let g:gb=cloud
     if s:vimim_do_cloud_sogou > 0
         let s:vimim_do_cloud_sogou = 0
         let cloud = 1
     endif
-let g:ga=cloud
     if cloud > 0
         let results = s:vimim_get_cloud_sogou(keyboard)
         if s:vimimdebug > 0
@@ -5931,7 +5930,7 @@ function! s:vimim_onekey_mapping_off()
     endif
 endfunction
 
-silent!call s:vimim_initialize_global()
-silent!call s:vimim_initialize_backdoor()
-silent!call s:vimim_initialize_mapping()
+sil!call s:vimim_initialize_global()
+sil!call s:vimim_initialize_backdoor()
+sil!call s:vimim_initialize_mapping()
 " ====================================== }}}
