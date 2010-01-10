@@ -5936,9 +5936,7 @@ function! s:vimim_onekey_mapping_on()
     " ---------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         imap<silent><C-\> <Plug>VimimOneKey
-    elseif s:vimim_tab_as_onekey > 0
-    "   imap<silent><C-^> <Plug>VimimCloud
-    else
+    elseif s:vimim_ctrl_6_as_onekey < 2
         imap<silent><C-^> <Plug>VimimOneKey
     endif
     " --------------------------------------
@@ -5952,7 +5950,7 @@ function! s:vimim_onekey_mapping_off()
 " ------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         iunmap <C-\>
-    else
+    elseif s:vimim_ctrl_6_as_onekey < 2
         iunmap <C-^>
     endif
     if s:vimim_tab_as_onekey > 0
