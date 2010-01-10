@@ -1232,7 +1232,7 @@ endfunction
 
 " ---------------------------------
 function! <SID>vimim_onekey_cloud()
-" --------------------------------- xxx
+" ---------------------------------
     let onekey = <SID>vimim_onekey()
     let s:vimim_do_cloud_sogou = 1
     return onekey
@@ -4349,7 +4349,7 @@ function! s:vimim_initialize_cloud()
     if empty(wget)
         let msg = "wget is not available"
     else
-        let wget_option = " -qO - --timeout 12 -t 4 "
+        let wget_option = " -qO - --timeout 20 -t 10 "
         let s:www_executable = wget . wget_option
     endif
     " step 2: try to find curl if no wget
@@ -4392,6 +4392,7 @@ function! s:vimim_magic_tail(keyboard)
         "   (3) before number              => magic imode
         " -----------------------------------------------
         let s:no_internet_connection = -1
+        let s:vimim_do_cloud_sogou = 1
     elseif magic_tail ==# '.'
         " -----------------------------------------------
         " <dot> double play in OneKey Mode:
@@ -4399,6 +4400,7 @@ function! s:vimim_magic_tail(keyboard)
         "   (2) vimim_keyboard_dot_by_dot  => sentence match
         " -----------------------------------------------
         let s:no_internet_connection = 2
+        let s:vimim_do_cloud_sogou = -1
     else
         return 0
     endif
@@ -5133,13 +5135,13 @@ function! s:vimim_initialize_backdoor()
     let datafile_backdoor = s:path . "vimim.txt"
     if filereadable(datafile_backdoor)
         let s:datafile_primary = datafile_backdoor
-        call s:vimim_initialize_vimim_txt_debug()
+        call s:vimim_initialize_backdoor()
     endif
 endfunction
 
-" --------------------------------------------
-function! s:vimim_initialize_vimim_txt_debug()
-" --------------------------------------------
+" -------------------------------------
+function! s:vimim_initialize_backdoor()
+" -------------------------------------
     let s:vimimdebug=9
     let s:vimim_ctrl_6_as_onekey=9
     let s:vimim_tab_as_onekey=1
@@ -5659,9 +5661,9 @@ else
     " -------------------------------------------------
     let cloud = s:vimim_cloud_sogou
     let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
-    if s:vimim_do_cloud_sogou > 0
+    if s:vimim_do_cloud_sogou != 0
+        let cloud = s:vimim_do_cloud_sogou
         let s:vimim_do_cloud_sogou = 0
-        let cloud = 1
     endif
     if cloud > 0
         let results = s:vimim_get_cloud_sogou(keyboard)
