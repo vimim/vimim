@@ -1654,10 +1654,10 @@ function! s:vimim_start_chinese_mode()
     sil!call s:vimim_i_lcursor_color(1)
     sil!call s:vimim_helper_mapping_on()
     " ---------------------------------------------------------
-    if empty(s:vimim_ctrl_6_as_onekey)
-        inoremap<silent><expr><C-\> <SID>vimim_toggle_punctuation()
-    else
+    if s:vimim_ctrl_6_as_onekey > 0
         inoremap<silent><expr><C-^> <SID>vimim_toggle_punctuation()
+    elseif s:vimim_sexy_onekey < 2
+        inoremap<silent><expr><C-\> <SID>vimim_toggle_punctuation()
     endif
     " ---------------------------------------------------------
     return <SID>vimim_toggle_punctuation()
@@ -5180,10 +5180,10 @@ function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
     let s:vimim_ctrl_6_as_onekey=9
+    let s:vimim_sexy_onekey=2
     let s:vimim_tab_as_onekey=1
-    let s:vimim_sexy_onekey=1
-    let s:vimim_pinyin_lenovo=1
     " ------------------------------ debug
+    let s:vimim_pinyin_lenovo=1
     let s:vimim_cloud_sogou=12
     let s:vimim_custom_menu_label=1
     let s:vimim_chinese_frequency=12
@@ -5314,6 +5314,8 @@ endfunction
 " ----------------------
 function! s:vimim_stop()
 " ----------------------
+    let duration = localtime() - get(g:vimim,4)
+    let g:vimim[3] += duration
     sil!autocmd! onekey_mode_autocmd
     sil!autocmd! chinese_mode_autocmd
     sil!call s:vimim_i_setting_off()
@@ -5321,8 +5323,6 @@ function! s:vimim_stop()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_initialize_mapping()
-    let duration = localtime() - get(g:vimim,4)
-    let g:vimim[3] += duration
 endfunction
 
 " ---------------------------------
@@ -5922,8 +5922,7 @@ function! s:vimim_chinese_mode_mapping_on()
     " ------------------------------------------------------------
     if empty(s:vimim_ctrl_6_as_onekey)
         imap<silent><C-^> <Plug>VimimChineseMode
-    elseif s:vimim_ctrl_6_as_onekey == 1
-    \&& empty(s:vimim_sexy_onekey)
+    elseif s:vimim_sexy_onekey < 2
         imap<silent><C-\> <Plug>VimimChineseMode
         noremap<silent><C-\> :call <SID>vimim_chinese_mode()<CR>
     endif
@@ -5938,14 +5937,14 @@ function! s:vimim_onekey_mapping_on()
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_onekey()
     inoremap<silent><expr><Plug>VimimTabKey <SID>vimim_tabkey()
     " ---------------------------------------------------------
-    if empty(s:vimim_ctrl_6_as_onekey)
-        imap<silent><C-\> <Plug>VimimOneKey
-    else
+    if s:vimim_ctrl_6_as_onekey > 0
         imap<silent><C-^> <Plug>VimimOneKey
-    endif
-    " --------------------------------------
-    if s:vimim_sexy_onekey > 0
-        set pastetoggle=<C-Bslash>
+    else
+        if s:vimim_sexy_onekey > 1
+            set pastetoggle=<C-Bslash>
+        else
+            imap<silent><C-\> <Plug>VimimOneKey
+        endif
     endif
     " --------------------------------------
     if s:vimim_tab_as_onekey > 0
@@ -5957,10 +5956,12 @@ endfunction
 " ------------------------------------
 function! s:vimim_onekey_mapping_off()
 " ------------------------------------
-    if empty(s:vimim_ctrl_6_as_onekey)
-        iunmap <C-\>
-    else
+    if s:vimim_ctrl_6_as_onekey > 0
         iunmap <C-^>
+    else
+        if s:vimim_sexy_onekey < 2
+            iunmap <C-\>
+        endif
     endif
     if s:vimim_tab_as_onekey > 0
         iunmap <Tab>
