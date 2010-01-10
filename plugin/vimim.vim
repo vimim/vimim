@@ -5939,12 +5939,12 @@ function! s:vimim_onekey_mapping_on()
     " ---------------------------------------------------------
     if s:vimim_ctrl_6_as_onekey > 0
         imap<silent><C-^> <Plug>VimimOneKey
-    else
-        if s:vimim_sexy_onekey > 1
-            set pastetoggle=<C-Bslash>
-        else
-            imap<silent><C-\> <Plug>VimimOneKey
-        endif
+    endif
+    " --------------------------------------
+    if s:vimim_sexy_onekey > 1
+        set pastetoggle=<C-Bslash>
+    elseif empty(s:vimim_ctrl_6_as_onekey)
+        imap<silent><C-\> <Plug>VimimOneKey
     endif
     " --------------------------------------
     if s:vimim_tab_as_onekey > 0
