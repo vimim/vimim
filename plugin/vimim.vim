@@ -2715,7 +2715,11 @@ function! <SID>vimim_smart_enter()
         let s:keyboard_leading_zero = 0
     else
         let s:smart_enter = 0
-        let key = "\<CR>"
+        if s:smart_enter == 2
+            let key = " "
+        else
+            let key = "\<CR>"
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
