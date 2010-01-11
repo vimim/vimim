@@ -4688,9 +4688,9 @@ function! s:vimim_initialize_mycloud_plugin()
     " let g:vimim_mycloud_plugin_url = "dll:/home/vimim/plugin/libmycloud.so:192.168.0.1"
     " let g:vimim_mycloud_plugin_url = "dll:/home/vimim/plugin/libmyplugin.so:arg:func"
     " let g:vimim_mycloud_plugin_url = "dll:".$HOME."/plugin/cygmycloud.dll"
-    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot/qp/"
-    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot/abc/"
-    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot/ms/"
+    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot.com/qp/"
+    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot.com/abc/"
+    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot.com/ms/"
     let cloud = s:vimim_check_mycloud_plugin()
     if empty(cloud)
         let s:vimim_cloud_plugin = 0
