@@ -2640,44 +2640,6 @@ function! g:vimim_bracket_backspace(offset)
     return delete_char
 endfunction
 
-" --------------------------------- to_be_deleted
-function! <SID>vimim_smart_enter2()
-" --------------------------------- xxx
-    let key = ''
-    let char_before = getline(".")[col(".")-2]
-    " -----------------------------------------------
-    " <Enter> double play in Chinese Mode:
-    "   (1) after English (valid keys)    => Seamless
-    "   (2) after Chinese or double Enter => Enter
-    " -----------------------------------------------
-    if char_before =~# "[*,.']"
-        let s:smart_enter = 0
-    elseif char_before =~# s:valid_key
-        let s:smart_enter += 1
-    endif
-    " -----------------------------------------------
-    if s:smart_enter == 1
-        let msg = "do seamless for the first time <Enter>"
-        let s:seamless_positions = getpos(".")
-        let s:keyboard_leading_zero = 0
-    else
-        let s:smart_enter = 0
-        let key = "\<CR>"
-    endif
-    " -----------------------------------------------
-    " <Enter> double play in OneKey Mode:
-    "   (1) after non-Space => Space
-    "   (2) after Space => Enter
-    " -----------------------------------------------
-    if empty(s:chinese_input_mode)
-        let key = ' '
-        if char_before =~ '\s' || empty(char_before)
-            let key = "\<CR>"
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 " --------------------------------
 function! <SID>vimim_smart_enter()
 " --------------------------------
