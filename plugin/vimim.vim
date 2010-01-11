@@ -190,9 +190,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_smart_ctrl_h")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
-    call add(G, "g:vimim_cloud_plugin")
-    call add(G, "g:vimim_cloud_plugin_ip")
-    call add(G, "g:vimim_cloud_pim")
+    call add(G, "g:vimim_cloud_plugin_url")
+    "call add(G, "g:vimim_cloud_pim")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimimdebug")
     " -----------------------------------
@@ -831,11 +830,11 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
 " ----------------------------------
-    let option = "cloud\t 私云："
-    if s:vimim_cloud_pim > 0
-        let option .= "〖自己的云〗"
-        call add(eggs, option)
-    endif
+    "let option = "cloud\t 私云："
+    "if s:vimim_cloud_pim > 0
+    "    let option .= "〖自己的云〗"
+    "    call add(eggs, option)
+    "endif
 " ----------------------------------
     let cloud = s:vimim_cloud_sogou
     let option = "cloud\t 搜狗："
@@ -4359,7 +4358,6 @@ function! s:vimim_initialize_cloud()
     " -------------------------------------
     if empty(s:www_executable)
         let s:vimim_cloud_sogou = 0
-        let s:vimim_cloud_pim = 0
     endif
 endfunction
 
@@ -4519,13 +4517,13 @@ call add(s:vimims, VimIM)
 function! s:vimim_access_mycloud_plugin(cloud, cmd)
 " ------------------------------------------------
 "  use the same function to access mycloud by libcall() or system()
-    if s:vimim_cloud_plugin_mode == "libcall"
-        if empty(s:vimim_cloud_plugin_ip)
-            return libcall(a:cloud, "do_getlocal", a:cmd)
+    if s:cloud_plugin_mode == "libcall"
+        if empty(s:cloud_plugin_arg)
+            return libcall(a:cloud, s:cloud_plugin_func, a:cmd)
         else
-            return libcall(a:cloud, "do_getlocal", s:vimim_cloud_plugin_ip." ".a:cmd)
+            return libcall(a:cloud, s:cloud_plugin_func, s:cloud_plugin_arg." ".a:cmd)
         endif
-    elseif s:vimim_cloud_plugin_mode == "system"
+    elseif s:cloud_plugin_mode == "system"
         return system(a:cloud." ".shellescape(a:cmd))
     endif
     return ""
@@ -4534,7 +4532,7 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_check_mycloud_plugin()
 " ------------------------------------------------
-    if empty(s:vimim_cloud_plugin)
+    if empty(s:vimim_cloud_plugin_url)
         " we do plug-n-play for libcall(), not for system()
         if has("win32unix")
             let cloud = s:path . "cygmycloud.dll"
@@ -4543,20 +4541,9 @@ function! s:vimim_check_mycloud_plugin()
         elseif has("gui_win32")
             let cloud = s:path . "mycloud.dll"
         endif
-        let s:vimim_cloud_plugin_mode = "libcall"
-
-        " [todo] to_be_deleted
-        " this gave me E121 error
-        " Undefined variable: g:vimim_cloud_plugin_ip
-        " [reason] upto here, no more g:vimim_cloud_plugin_ip
-        " it is s:vimim_cloud_plugin_ip which is initialized as zero
-        " ------------------------------------------------
-      " if exists(g:vimim_cloud_plugin_ip)
-      "     let s:vimim_cloud_plugin_ip = g:vimim_cloud_plugin_ip
-      " else
-      "     let s:vimim_cloud_plugin_ip = ""
-      " endif
-        " ------------------------------------------------
+        let s:cloud_plugin_mode = "libcall"
+        let s:cloud_plugin_arg = ""
+        let s:cloud_plugin_func = 'do_getlocal'
 
         if filereadable(cloud)
             if has("gui_win32")
@@ -4587,25 +4574,63 @@ function! s:vimim_check_mycloud_plugin()
         endif
         " -----------------------------------
         " in POSIX system, we can use system() for mycloud
-        let s:vimim_cloud_plugin_mode = "system"
+        let s:cloud_plugin_mode = "system"
         let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
         if split(ret, "\t")[0] == "True"
             return cloud
         endif
     else
-"" " [todo] to_be_deleted
-" no need to do this, as it is zero here
-" --------------------------------------
-"" if !exists(s:vimim_cloud_plugin_ip)
-""     s:vimim_cloud_plugin_ip = ""
-"" endif
-" --------------------------------------
         " we do set-and-play on all systems
-        let cloud = s:vimim_cloud_plugin
-        if stridx(cloud, " ") < 0
-            " only check libcall when there's no argument
+        part = split(s:vimim_cloud_plugin_url, ':')
+        lenpart = len(part)
+        if lenpart <= 1:
+            " invalid url
+        elseif part[0] == 'app'
+            if !has("gui_win32")
+                " strip the first root if contains ":"
+                if lenpart == 3
+                    if part[1][0] == '/'
+                        cloud = part[1][1:] + ':' +  part[2]
+                    else
+                        cloud = part[1] + ':' + part[2]
+                    endif
+                elseif lenpart == 2
+                    cloud = part[1]
+                endif
+                " in POSIX system, we can use system() for mycloud
+                if executable(split(cloud, " ")[0])
+                    let s:cloud_plugin_mode = "system"
+                    let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+                    if split(ret, "\t")[0] == "True"
+                        return cloud
+                    endif
+                endif
+            endif
+        elseif part[0] == "dll"
+            if len(part[1]) == 1
+                let base = 1
+            else
+                let base = 0
+            " provide function name
+            if lenpart >= base+4
+                let s:cloud_plugin_func = part[base+3]
+            else
+                let s:cloud_plugin_func = 'do_getlocal'
+            endif
+            " provide argument
+            if lenpart >= base+3
+                let s:cloud_plugin_arg = part[base+2]
+            else
+                let s:cloud_plugin_arg = ''
+            endif
+            " provide the dll 
+            if base == 1
+                let cloud = part[1] + ':' + part[2]
+            else
+                let cloud = part[1]
+            endif
             if filereadable(cloud)
-                let s:vimim_cloud_plugin_mode = "libcall"
+                let s:cloud_plugin_mode = "libcall"
                 " strip off the ending .dll suffix, only required for win32
                 if has("gui_win32") && cloud[-4:] ==? ".dll"
                     cloud = cloud[:-4]
@@ -4619,17 +4644,11 @@ function! s:vimim_check_mycloud_plugin()
                     let mes = "libcall mycloud fail"
                 endtry
             endif
-        endif
 
-        if !has("gui_win32")
-            " in POSIX system, we can use system() for mycloud
-            if executable(split(cloud, " ")[0])
-                let s:vimim_cloud_plugin_mode = "system"
-                let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
-                if split(ret, "\t")[0] == "True"
-                    return cloud
-                endif
-            endif
+        elseif part[0] == "http"
+        elseif part[0] == "https"
+        else
+            let msg = "invalid url"
         endif
     endif
     return 0
@@ -4640,6 +4659,7 @@ function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
     let cloud = s:vimim_check_mycloud_plugin()
     if empty(cloud)
+        let s:vimim_cloud_plugin = 0
         return
     endif
     let ret = s:vimim_access_mycloud_plugin(cloud,"__getname")
@@ -5581,31 +5601,32 @@ else
         endif
     endif
 
-    " [mycloud] get chunmeng from mycloud local
+    " [mycloud] get chunmeng from mycloud local or www
     " -----------------------------------------
     if empty(s:vimim_cloud_plugin)
         let msg = "keep local mycloud code for the future."
     else
         let results = s:vimim_get_mycloud_plugin(keyboard)
+        let s:menu_from_cloud_flag = 1
         if empty(len(results))
-            let s:vimim_cloud_plugin = 0
+            " return empty list if the result is empty
+            return
         else
-            let s:menu_from_cloud_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
 
     " [mycloud] get chunmeng from mycloud www
     " ---------------------------------------
-    let cloud = s:vimim_cloud_pim
-    let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
-    if cloud > 0
-        let results = s:vimim_get_mycloud_www(keyboard)
-        if len(results) > 0
-            let s:menu_from_cloud_flag = 1
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
+    "let cloud = s:vimim_cloud_pim
+    "let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
+    "if cloud > 0
+    "    let results = s:vimim_get_mycloud_www(keyboard)
+    "    if len(results) > 0
+    "        let s:menu_from_cloud_flag = 1
+    "        return s:vimim_popupmenu_list(results)
+    "    endif
+    "endif
 
     " [imode] magic 'i': English number => Chinese number
     " ---------------------------------------------------
