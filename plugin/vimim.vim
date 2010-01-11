@@ -191,7 +191,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_cloud_plugin_url")
-    "call add(G, "g:vimim_cloud_pim")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimimdebug")
     " -----------------------------------
@@ -830,12 +829,6 @@ function! s:vimim_egg_vimim()
         let option = ciku . s:datafile_secondary
         call add(eggs, option)
     endif
-" ----------------------------------
-    "let option = "cloud\t 私云："
-    "if s:vimim_cloud_pim > 0
-    "    let option .= "〖自己的云〗"
-    "    call add(eggs, option)
-    "endif
 " ----------------------------------
     let cloud = s:vimim_cloud_sogou
     let option = "cloud\t 搜狗："
@@ -4526,6 +4519,10 @@ call add(s:vimims, VimIM)
 function! s:vimim_access_mycloud_plugin(cloud, cmd)
 " ------------------------------------------------
 "  use the same function to access mycloud by libcall() or system()
+    if s:vimimdebug > 0
+        call s:debugs("cloud", a:cloud)
+        call s:debugs("cmd", a:cmd)
+    endif
     if s:cloud_plugin_mode == "libcall"
         if empty(s:cloud_plugin_arg)
             return libcall(a:cloud, s:cloud_plugin_func, a:cmd)
@@ -4534,6 +4531,12 @@ function! s:vimim_access_mycloud_plugin(cloud, cmd)
         endif
     elseif s:cloud_plugin_mode == "system"
         return system(a:cloud." ".shellescape(a:cmd))
+    elseif s:cloud_plugin_mode == "www"
+        let input = s:vimim_rot13(a:cmd)
+        let ret = system(s:www_executable . a:cloud . input)
+        let output = s:vimim_rot13(ret)
+        let ret = s:vimim_url_xx_to_chinese(output)
+        return ret
     endif
     return ""
 endfunction
@@ -4564,7 +4567,9 @@ function! s:vimim_check_mycloud_plugin()
                     return cloud
                 endif
             catch /.*/
-                let mes = "libcall mycloud fail"
+                if s:vimimdebug > 0
+                    call s:debugs("libcall_mycloud", "fail")
+                endif
             endtry
         endif
         " libcall check failed, we now check system()
@@ -4590,21 +4595,22 @@ function! s:vimim_check_mycloud_plugin()
         endif
     else
         " we do set-and-play on all systems
-        part = split(s:vimim_cloud_plugin_url, ':')
-        lenpart = len(part)
-        if lenpart <= 1:
-            " invalid url
-        elseif part[0] == 'app'
+        let part = split(s:vimim_cloud_plugin_url, ':')
+        " vimimdebug
+        let lenpart = len(part)
+        if lenpart <= 1
+            call s:debugs("invalid_cloud_plugin_url","")
+        elseif part[0] ==# 'app'
             if !has("gui_win32")
                 " strip the first root if contains ":"
                 if lenpart == 3
                     if part[1][0] == '/'
-                        cloud = part[1][1:] + ':' +  part[2]
+                        let cloud = part[1][1:] + ':' +  part[2]
                     else
-                        cloud = part[1] + ':' + part[2]
+                        let cloud = part[1] + ':' + part[2]
                     endif
                 elseif lenpart == 2
-                    cloud = part[1]
+                    let cloud = part[1]
                 endif
                 " in POSIX system, we can use system() for mycloud
                 if executable(split(cloud, " ")[0])
@@ -4615,11 +4621,12 @@ function! s:vimim_check_mycloud_plugin()
                     endif
                 endif
             endif
-        elseif part[0] == "dll"
+        elseif part[0] ==# "dll"
             if len(part[1]) == 1
                 let base = 1
             else
                 let base = 0
+            endif
             " provide function name
             if lenpart >= base+4
                 let s:cloud_plugin_func = part[base+3]
@@ -4642,7 +4649,7 @@ function! s:vimim_check_mycloud_plugin()
                 let s:cloud_plugin_mode = "libcall"
                 " strip off the ending .dll suffix, only required for win32
                 if has("gui_win32") && cloud[-4:] ==? ".dll"
-                    cloud = cloud[:-4]
+                    let cloud = cloud[:-4]
                 endif
                 try
                     let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
@@ -4650,14 +4657,22 @@ function! s:vimim_check_mycloud_plugin()
                         return cloud
                     endif
                 catch /.*/
-                    let mes = "libcall mycloud fail"
+                    if s:vimimdebug > 0
+                        call s:debugs("libcall_mycloud", "fail")
+                    endif
                 endtry
             endif
-
-        elseif part[0] == "http"
-        elseif part[0] == "https"
+        elseif part[0] ==# "http" || part[0] ==# "https"
+            let cloud = s:vimim_cloud_plugin_url
+            if !empty(s:www_executable)
+                let s:cloud_plugin_mode = "www"
+                let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+                if split(ret, "\t")[0] == "True"
+                    return cloud
+                endif
+            endif
         else
-            let msg = "invalid url"
+            call s:debugs("invalid_cloud_plugin_url","")
         endif
     endif
     return 0
@@ -4666,6 +4681,16 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
+    " sample url:
+    " let g:vimim_mycloud_plugin_url = "app:".$HOME."/src/mycloud/mycloud"
+    " let g:vimim_mycloud_plugin_url = "app:python d:/mycloud/mycloud.py"
+    " let g:vimim_mycloud_plugin_url = "dll:".$HOME."/plugin/libmycloud.so"
+    " let g:vimim_mycloud_plugin_url = "dll:/home/vimim/plugin/libmycloud.so:192.168.0.1"
+    " let g:vimim_mycloud_plugin_url = "dll:/home/vimim/plugin/libmyplugin.so:arg:func"
+    " let g:vimim_mycloud_plugin_url = "dll:".$HOME."/plugin/cygmycloud.dll"
+    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot/qp/"
+    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot/abc/"
+    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot/ms/"
     let cloud = s:vimim_check_mycloud_plugin()
     if empty(cloud)
         let s:vimim_cloud_plugin = 0
@@ -4705,35 +4730,6 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     return s:vimim_process_mycloud_output(a:keyboard, output)
 endfunction
 
-" -----------------------------------------
-function! s:vimim_get_mycloud_www(keyboard)
-" -----------------------------------------
-    let keyboard = a:keyboard
-    if s:vimim_cloud_pim < 1
-    \|| empty(s:www_executable)
-    \|| empty(keyboard)
-        return []
-    endif
-    let cloud = "http://pim-cloud.appspot.com/abc/"
-    let cloud = "http://pim-cloud.appspot.com/qp/"
-    let input = keyboard
-    let input = s:vimim_rot13(input)
-    let input = cloud . input
-    let output = 0
-    " ----------------------------------------
-    " http://pim-cloud.appspot.com/qp/chunmeng
-    " ----------------------------------------
-    try
-        let output = system(s:www_executable . input)
-    catch /.*/
-        let output = 0
-    endtry
-    if empty(output)
-        return []
-    endif
-    return s:vimim_process_mycloud_output(keyboard, output)
-endfunction
-
 " --------------------------------------------------------
 function! s:vimim_process_mycloud_output(keyboard, output)
 " --------------------------------------------------------
@@ -4748,10 +4744,6 @@ function! s:vimim_process_mycloud_output(keyboard, output)
     for item in split(output, '\n')
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
-        if s:vimim_cloud_pim > 0
-            let chinese = s:vimim_rot13(chinese)
-            let chinese = s:vimim_url_xx_to_chinese(chinese)
-        endif
         if s:localization > 0
             let chinese = s:vimim_i18n_read(chinese)
         endif
@@ -5177,7 +5169,6 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_custom_menu_label=1
     let s:vimim_chinese_frequency=12
     " ------------------------------
-    let s:vimim_cloud_pim=0
     let s:vimim_wildcard_search=1
     let s:vimim_imode_comma=1
     let s:vimim_imode_pinyin=-1
@@ -5624,18 +5615,6 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     endif
-
-    " [mycloud] get chunmeng from mycloud www
-    " ---------------------------------------
-    "let cloud = s:vimim_cloud_pim
-    "let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
-    "if cloud > 0
-    "    let results = s:vimim_get_mycloud_www(keyboard)
-    "    if len(results) > 0
-    "        let s:menu_from_cloud_flag = 1
-    "        return s:vimim_popupmenu_list(results)
-    "    endif
-    "endif
 
     " [imode] magic 'i': English number => Chinese number
     " ---------------------------------------------------
