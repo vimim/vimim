@@ -2714,12 +2714,12 @@ function! <SID>vimim_smart_enter()
         let s:seamless_positions = getpos(".")
         let s:keyboard_leading_zero = 0
     else
-        let s:smart_enter = 0
         if s:smart_enter == 2
             let key = " "
         else
             let key = "\<CR>"
         endif
+        let s:smart_enter = 0
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
