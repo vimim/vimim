@@ -2786,6 +2786,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
     let key = '\<BS>'
     " ---------------------------------
     if s:pumvisible_ctrl_e > 0
+    \&& s:chinese_input_mode > 1
         let s:pumvisible_ctrl_e = 0
         let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         sil!exe 'sil!return "' . key . '"'
@@ -2798,7 +2799,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
     sil!exe 'sil!return "' . key . '"'
 " ---------------------------------
 " to_be_deleted
-" ---------------------------------
+" --------------------------------- xxx
 """"""""   call add(G, "g:vimim_smart_backspace")
 ""  if empty(s:vimim_smart_backspace)
 ""      sil!exe 'sil!return "' . key . '"'
