@@ -5591,16 +5591,6 @@ else
         endif
     endif
 
-    " support direct internal code (unicode/gb/big5) input
-    " ----------------------------------------------------
-    if s:vimim_internal_code_input > 0
-        let results = s:vimim_internal_code(keyboard)
-        if len(results) > 0
-            let s:unicode_menu_display_flag = 1
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     " [mycloud] get chunmeng from mycloud local or www
     " -----------------------------------------
     if empty(s:vimim_cloud_plugin)
@@ -5610,8 +5600,18 @@ else
         let s:menu_from_cloud_flag = 1
         if empty(len(results))
             " return empty list if the result is empty
-            return
+            return []
         else
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
+    " support direct internal code (unicode/gb/big5) input
+    " ----------------------------------------------------
+    if s:vimim_internal_code_input > 0
+        let results = s:vimim_internal_code(keyboard)
+        if len(results) > 0
+            let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
