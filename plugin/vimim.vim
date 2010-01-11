@@ -169,7 +169,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_datafile_has_english")
     call add(G, "g:vimim_datafile_has_pinyin")
     call add(G, "g:vimim_datafile_is_not_utf8")
-    call add(G, "g:vimim_pinyin_lenovo")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
     call add(G, "g:vimim_fuzzy_search")
@@ -1787,13 +1786,6 @@ function! s:vimim_i_chinese_mode_on()
     set iminsert=1
     let s:ctrl_6_count += 1
     let g:vimim_chinese_mode_flag = 1
-    if s:vimim_cloud_sogou == 1 && s:vimimdebug == 9
-        if empty(s:ctrl_6_count%2)
-            let s:vimim_static_input_style = 0
-        else
-            let s:vimim_static_input_style = 1
-        endif
-    endif
     let s:toggle_xiangma_pinyin = s:ctrl_6_count%2
     let b:keymap_name = s:vimim_statusline()
     sil!call s:vimim_i_laststatus_on()
@@ -3167,8 +3159,10 @@ function! s:vimim_exact_match(lines, match_start)
     endif
     " ----------------------------------------
     let pattern = '^\(' . keyboard
-    if empty(s:vimim_pinyin_lenovo) || len(keyboard) < 2
+    if len(keyboard) < 2
         let pattern .=  '\>'
+    else
+        let pattern .=  '\d\=\>'
     endif
     let pattern .=  '\)\@!'
     " ----------------------------------------
@@ -5150,7 +5144,6 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_sexy_onekey=2
     let s:vimim_tab_as_onekey=1
     " ------------------------------ debug
-    let s:vimim_pinyin_lenovo=1
     let s:vimim_cloud_sogou=12
     let s:vimim_custom_menu_label=1
     let s:vimim_chinese_frequency=12
