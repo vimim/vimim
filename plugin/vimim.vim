@@ -285,7 +285,8 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:debug_count = 0
     let s:keyboard_count = 0
-    let s:ctrl_6_count = 1
+    let s:chinese_mode_count = 1
+    let s:onekey_mode_count = 1
     " --------------------------------
     let s:datafile = 0
     let s:lines = []
@@ -1225,6 +1226,7 @@ endfunction
 function! s:vimim_start_onekey()
 " ------------------------------
     let s:chinese_input_mode = 0
+    let s:onekey_mode_count += 1
     " ----------------------------------------------------------
     " <OneKey> triple play
     "   (1) after English (valid keys)   => trigger omni popup
@@ -1277,6 +1279,13 @@ function! s:vimim_onekey_action(onekey)
     "   (1) after English (valid keys) => trigger menu
     "   (2) after omni popup menu      => insert Chinese
     "   (3) after English punctuation  => Chinese punctuation
+    " -----------------------------------------------
+    let msg = "why not use OneKey as a toggle?"
+    if empty(s:onekey_mode_count%2)
+    \&& s:vimim_sexy_onekey > 0
+    "   call s:vimim_stop()
+    "   return a:onekey
+    endif
     " -----------------------------------------------
     if pumvisible()
         let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
@@ -1783,9 +1792,9 @@ function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
     set imdisable
     set iminsert=1
-    let s:ctrl_6_count += 1
+    let s:chinese_mode_count += 1
     let g:vimim_chinese_mode_flag = 1
-    let s:toggle_xiangma_pinyin = s:ctrl_6_count%2
+    let s:toggle_xiangma_pinyin = s:chinese_mode_count%2
     let b:keymap_name = s:vimim_statusline()
     sil!call s:vimim_i_laststatus_on()
 endfunction
@@ -5908,7 +5917,11 @@ function! s:vimim_chinese_mode_mapping_on()
         noremap<silent><C-\> :call <SID>vimim_chinese_mode()<CR>
     endif
     if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
-        imap<silent><C-Space> <Plug>VimimChineseMode
+        if s:vimim_sexy_onekey < 2
+            imap<silent><C-Space> <Plug>VimimChineseMode
+        else
+            imap<silent><C-Space> <Plug>VimimOneKey
+        endif
     endif
 endfunction
 
