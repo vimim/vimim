@@ -1294,13 +1294,13 @@ function! s:vimim_onekey_action(onekey)
         return a:onekey
     endif
     " ---------------------------------------------------
-    if s:pattern_not_found < 1
+    if s:pattern_not_found < 1 || char_before =~ '[,.]'
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     else
         let space = a:onekey
-        let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
+    let s:pattern_not_found = 0
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
@@ -5122,7 +5122,7 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
-    let s:vimim_sexy_onekey=1
+    let s:vimim_sexy_onekey=2
     let s:vimim_tab_as_onekey=1
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=12
