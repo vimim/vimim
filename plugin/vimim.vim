@@ -12,6 +12,7 @@ let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html      "]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html  "]
 let egg += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506   "]
+let egg += ["http://pim-cloud.appspot.com                          "]
 let egg += ["http://groups.google.com/group/vimim                  "]
 
 let VimIM = " ====  Introduction     ==== {{{"
