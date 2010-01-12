@@ -4516,7 +4516,12 @@ function! s:vimim_check_mycloud_plugin()
         let s:cloud_plugin_func = 'do_getlocal'
         if filereadable(cloud)
             if has("gui_win32")
-                cloud = cloud[:-4]
+                " NOTE: --------------------------- please remove NOTE
+                " NOTE: cloud = cloud[:-4]
+	        " NOTE: cloud[:-4]" remove last 3 bytes
+	        " NOTE: (it looks you want to remove .dll)
+                " NOTE: ---------------------------
+                cloud = cloud[:-5]
             endif
             try
                 let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
