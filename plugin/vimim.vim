@@ -1982,9 +1982,21 @@ function! s:vimim_punctuation_on()
     endif
     " ----------------------------
     if s:chinese_punctuation > 0
-        inoremap <Bslash> 、
-        inoremap ' ‘’<Left>
-        inoremap " “”<Left>
+        if empty(s:vimim_cloud_plugin)
+            inoremap <Bslash> 、
+            inoremap ' ‘’<Left>
+            inoremap " “”<Left>
+        else
+            if index(s:valid_keys, '\') < 0
+                inoremap <Bslash> 、
+            endif
+            if index(s:valid_keys, "'") < 0
+                inoremap ' ‘’<Left>
+            endif
+            if index(s:valid_keys, '"') < 0
+                inoremap " “”<Left>
+            endif
+        endif
     else
         iunmap <Bslash>
         iunmap '
