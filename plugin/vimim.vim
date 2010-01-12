@@ -4684,11 +4684,11 @@ endfunction
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
     " sample url:
-    " let g:vimim_mycloud_url = "app:".$HOME."/src/mycloud/mycloud"
+    " let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
     " let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
     " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libmycloud.so"
-    " let g:vimim_mycloud_url = "dll:/home/vimim/plugin/libmycloud.so:192.168.0.1"
-    " let g:vimim_mycloud_url = "dll:/home/vimim/plugin/libmyplugin.so:arg:func"
+    " let g:vimim_mycloud_url = "dll:/data/libmycloud.so:192.168.0.1"
+    " let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
     " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygmycloud.dll"
     " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
