@@ -704,26 +704,23 @@ function! s:vimim_egg_vimimstat()
     call add(eggs, stat)
     " ------------------------
     let egg = '"stat  " . v:val . "　"'
-    call map(eggs, egg)
-    return eggs
+    return map(eggs, egg)
 endfunction
 
 " ------------------------------
 function! s:vimim_egg_vimimvim()
 " ------------------------------
-    let eggs = s:vimims
+    let eggs = copy(s:vimims)
     let egg = "strpart(" . 'v:val' . ", 0, 28)"
-    call map(eggs, egg)
-    return eggs
+    return map(eggs, egg)
 endfunction
 
 " -----------------------------------
 function! s:vimim_egg_vimimdefaults()
 " -----------------------------------
-    let eggs = s:global_defaults
+    let eggs = copy(s:global_defaults)
     let egg = '"VimIM  " . v:val . "　"'
-    call map(eggs, egg)
-    return eggs
+    return map(eggs, egg)
 endfunction
 
 " -------------------------------
