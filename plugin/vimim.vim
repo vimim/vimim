@@ -186,8 +186,9 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_purple")
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_tab_as_onekey")
-    call add(G, "g:vimim_smart_ctrl_p")
     call add(G, "g:vimim_smart_ctrl_h")
+    call add(G, "g:vimim_smart_ctrl_p")
+    call add(G, "g:vimim_smart_ctrl_n")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_mycloud_url")
@@ -198,7 +199,6 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_auto_copy_clipboard")
-    call add(G, "g:vimim_smart_ctrl_n")
     call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_laststatus")
@@ -5133,8 +5133,9 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_wildcard_search=1
     let s:vimim_imode_comma=1
     let s:vimim_imode_pinyin=-1
-    let s:vimim_smart_ctrl_p=1
     let s:vimim_smart_ctrl_h=1
+    let s:vimim_smart_ctrl_p=1
+    let s:vimim_smart_ctrl_n=1
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
     let s:vimim_reverse_pageup_pagedown=1
