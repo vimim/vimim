@@ -190,7 +190,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_smart_ctrl_h")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
-    call add(G, "g:vimim_cloud_plugin_url")
+    call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimimdebug")
     " -----------------------------------
@@ -4515,9 +4515,9 @@ let VimIM = " ====  VimIM_My_Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ------------------------------------------------
+" -------------------------------------------------
 function! s:vimim_access_mycloud_plugin(cloud, cmd)
-" ------------------------------------------------
+" -------------------------------------------------
 "  use the same function to access mycloud by libcall() or system()
     if s:vimimdebug > 0
         call s:debugs("cloud", a:cloud)
@@ -4541,10 +4541,10 @@ function! s:vimim_access_mycloud_plugin(cloud, cmd)
     return ""
 endfunction
 
-" ------------------------------------------------
+" --------------------------------------
 function! s:vimim_check_mycloud_plugin()
-" ------------------------------------------------
-    if empty(s:vimim_cloud_plugin_url)
+" --------------------------------------
+    if empty(s:vimim_mycloud_url)
         " we do plug-n-play for libcall(), not for system()
         if has("win32unix")
             let cloud = s:path . "cygmycloud.dll"
@@ -4595,7 +4595,7 @@ function! s:vimim_check_mycloud_plugin()
         endif
     else
         " we do set-and-play on all systems
-        let part = split(s:vimim_cloud_plugin_url, ':')
+        let part = split(s:vimim_mycloud_url, ':')
         " vimimdebug
         let lenpart = len(part)
         if lenpart <= 1
@@ -4639,7 +4639,7 @@ function! s:vimim_check_mycloud_plugin()
             else
                 let s:cloud_plugin_arg = ''
             endif
-            " provide the dll 
+            " provide the dll
             if base == 1
                 let cloud = part[1] + ':' + part[2]
             else
@@ -4663,7 +4663,7 @@ function! s:vimim_check_mycloud_plugin()
                 endtry
             endif
         elseif part[0] ==# "http" || part[0] ==# "https"
-            let cloud = s:vimim_cloud_plugin_url
+            let cloud = s:vimim_mycloud_url
             if !empty(s:www_executable)
                 let s:cloud_plugin_mode = "www"
                 let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
@@ -4682,15 +4682,15 @@ endfunction
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
     " sample url:
-    " let g:vimim_mycloud_plugin_url = "app:".$HOME."/src/mycloud/mycloud"
-    " let g:vimim_mycloud_plugin_url = "app:python d:/mycloud/mycloud.py"
-    " let g:vimim_mycloud_plugin_url = "dll:".$HOME."/plugin/libmycloud.so"
-    " let g:vimim_mycloud_plugin_url = "dll:/home/vimim/plugin/libmycloud.so:192.168.0.1"
-    " let g:vimim_mycloud_plugin_url = "dll:/home/vimim/plugin/libmyplugin.so:arg:func"
-    " let g:vimim_mycloud_plugin_url = "dll:".$HOME."/plugin/cygmycloud.dll"
-    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot.com/qp/"
-    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot.com/abc/"
-    " let g:vimim_mycloud_plugin_url = "http://pim-cloud.appspot.com/ms/"
+    " let g:vimim_mycloud_url = "app:".$HOME."/src/mycloud/mycloud"
+    " let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
+    " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libmycloud.so"
+    " let g:vimim_mycloud_url = "dll:/home/vimim/plugin/libmycloud.so:192.168.0.1"
+    " let g:vimim_mycloud_url = "dll:/home/vimim/plugin/libmyplugin.so:arg:func"
+    " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygmycloud.dll"
+    " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+    " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
+    " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
     let cloud = s:vimim_check_mycloud_plugin()
     if empty(cloud)
         let s:vimim_cloud_plugin = 0
