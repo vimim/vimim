@@ -139,15 +139,15 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_pinyin()
     call s:vimim_initialize_shuangpin()
     " -----------------------------------------
+    call s:vimim_initialize_cloud()
+    call s:vimim_initialize_mycloud_plugin()
+    " -----------------------------------------
     call s:vimim_initialize_keycode()
     call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
     " -----------------------------------------
     call s:vimim_initialize_encoding()
     call s:vimim_initialize_skin()
-    " -----------------------------------------
-    call s:vimim_initialize_cloud()
-    call s:vimim_initialize_mycloud_plugin()
     " -----------------------------------------
     call s:vimim_finalize_session()
     " -----------------------------------------
@@ -628,7 +628,7 @@ function! s:vimim_initialize_keycode()
         let keycode = "[0-9a-z',.]"
     endif
     " --------------------------------
-    if s:shuangpin_flag > 0
+    if s:shuangpin_flag > 0 && empty(s:vimim_cloud_plugin)
         let keycode = s:im['shuangpin'][2]
     endif
     " --------------------------------
@@ -1876,7 +1876,7 @@ function! s:vimim_statusline()
         endif
     endif
   " --------------------------
-    if len(s:vimim_cloud_plugin) > 1
+    if !empty(s:vimim_cloud_plugin)
         let im = get(s:im['mycloud'],1) ."：". get(s:im['mycloud'],0)
     endif
   " --------------------------
@@ -1943,7 +1943,7 @@ function! s:vimim_initialize_punctuation()
 " ----------------------------------------
     let s:punctuations = {}
     let s:punctuations['#']='＃'
-    let s:punctuations['&']='※'
+    let s:punctuations['&']='＆'
     let s:punctuations['%']='％'
     let s:punctuations['$']='￥'
     let s:punctuations['!']='！'
@@ -1968,6 +1968,7 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations[',']='，'
     let s:punctuations['.']='。'
     let s:punctuations['?']='？'
+    let s:punctuations['`']='、'
     if empty(s:vimim_latex_suite)
         let s:punctuations['\']='、'
         let s:punctuations["'"]='‘’'
@@ -1976,7 +1977,7 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
         if has_key(s:punctuations, char)
-            if s:vimim_mycloud_url > 0
+            if !empty(s:vimim_cloud_plugin)
                 unlet s:punctuations[char]
             elseif char !~# "[*,.']"
                 unlet s:punctuations[char]
@@ -4530,7 +4531,7 @@ function! s:vimim_access_mycloud_plugin(cloud, cmd)
         return system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        let ret = system(s:www_executable . a:cloud . input)
+        let ret = system(s:www_executable . shellescape(a:cloud . input))
         let output = s:vimim_rot13(ret)
         let ret = s:vimim_url_xx_to_chinese(output)
         return ret
@@ -4703,6 +4704,7 @@ function! s:vimim_initialize_mycloud_plugin()
         let s:vimim_cloud_plugin = cloud
         let s:im['mycloud'][0] = loaded
         let s:im['mycloud'][2] = keycode
+        let s:im_primary = 'mycloud'
     endif
 endfunction
 
