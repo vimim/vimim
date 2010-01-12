@@ -249,8 +249,10 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_start_omni()
     sil!call s:vimim_super_reset()
     " --------------------------------
-    let s:chinese_frequency = 0
     let s:vimim_do_cloud_sogou = 0
+    let s:vimim_cloud_plugin = 0
+    " --------------------------------
+    let s:chinese_frequency = 0
     let s:toggle_xiangma_pinyin = 0
     let s:xingma_sleep_with_pinyin = 0
     " --------------------------------
@@ -2867,7 +2869,7 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     "-----------------------------------------
     let first_candidate = get(split(get(matched_list,0)),0)
-    if len(s:vimim_cloud_plugin) > 1
+    if !empty(s:vimim_cloud_plugin)
         let first_candidate = get(split(first_candidate,"_"),0)
     endif
     "-----------------------------------------
@@ -2924,7 +2926,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["menu"] = extra_text
         endif
         " -------------------------------------------------
-        if len(s:vimim_cloud_plugin) > 1
+        if !empty(s:vimim_cloud_plugin)
             let menu = get(split(menu,"_"),0)
         endif
         " -------------------------------------------------
@@ -4512,7 +4514,6 @@ function! s:vimim_check_mycloud_plugin()
         let s:cloud_plugin_mode = "libcall"
         let s:cloud_plugin_arg = ""
         let s:cloud_plugin_func = 'do_getlocal'
-
         if filereadable(cloud)
             if has("gui_win32")
                 cloud = cloud[:-4]
