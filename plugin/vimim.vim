@@ -878,8 +878,6 @@ function! s:vimim_easter_chicken(keyboard)
     let egg = a:keyboard
     if egg =~# s:valid_key
         let msg = "hunt easter egg ... vim<C-\>"
-    elseif egg ==# ",," && s:vimimdebug == 9
-        let msg = 'quick dirty lazy debugging'
     else
         return []
     endif
@@ -897,7 +895,7 @@ function! s:vimim_easter_chicken(keyboard)
         return s:vimim_egg_vimimstat()
     elseif egg ==# "vimimdefaults"
         return s:vimim_egg_vimimdefaults()
-    elseif egg ==# "vimimdebug" || egg ==# ",,"
+    elseif egg ==# "vimimdebug"
         return s:vimim_egg_vimimdebug()
     endif
 endfunction
@@ -1312,14 +1310,7 @@ function! s:vimim_onekey_action(onekey)
         else
             let msg = "too smart is not smart"
         endif
-        " -----------------------------------------------
-        if s:vimimdebug == 9
-        \&& char_before ==# ","
-        \&& char_before ==# char_before_before
-            let msg = 'make double comma ",," for debugging'
-        else
-            sil!exe 'sil!return "' . space . '"'
-        endif
+        sil!exe 'sil!return "' . space . '"'
     endif
     " ---------------------------------------------------
     if char_before !~# s:valid_key
@@ -5196,7 +5187,7 @@ function! s:vimim_egg_vimimdebug()
 " --------------------------------
     let eggs = []
     for item in s:debugs
-        let egg = ",,, "
+        let egg = "> "
         let egg .= item
         let egg .= "　"
         call add(eggs, egg)
@@ -5575,7 +5566,7 @@ else
 
     " [eggs] hunt classic easter egg ... vim<C-\>
     " -------------------------------------------
-    if keyboard =~# "^vim" || keyboard ==# ",,"
+    if keyboard ==# "vim" || keyboard =~# "^vimim"
         let results = s:vimim_easter_chicken(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
