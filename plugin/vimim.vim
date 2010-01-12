@@ -49,14 +49,14 @@ let VimIM = " ====  Introduction     ==== {{{"
 "   Install: (1) [optional] download a datafile from code.google.com
 "            (2) drop vimim.vim and the datafile to the plugin directory
 " -----------------------------------------------------------
-" EasterEgg: (in Vim Insert Mode, type 4 chars:) vim<C-\>
+" EasterEgg: (in Vim Insert Mode, type 4 chars:) vim<C-6>
 " -----------------------------------------------------------
 " Usage (1): [in Insert Mode] "to insert/search Chinese ad hoc":
-"            # to insert: type keycode and hit <C-\> to trigger
+"            # to insert: type keycode and hit <C-6> to trigger
 "            # to search: hit '/' or '?' from popup menu
 " -----------------------------------------------------------
 " Usage (2): [in Insert Mode] "to type Chinese continuously":
-"            # hit <C-6> to toggle to Chinese Input Mode:
+"            # hit <C-Bslash> to toggle to Chinese Input Mode:
 "            # type any valid keycode and enjoy
 " -----------------------------------------------------------
 
@@ -87,12 +87,12 @@ call add(s:vimims, VimIM)
 "    - use OneKey to search multi-byte using "/" or "?"
 "    - use OneKey to insert Unicode/GBK/Big5, integer or hex
 "    - use OneKey to input Chinese sentence as we do for English
-"   The default key is <C-\> (Vim Insert Mode)
+"   The default key is <C-6> (Vim Insert Mode)
 
 "   VimIM "Chinese Input Mode"
 "   - [dynamic_mode] show omni popup menu as one types
 "   - [static_mode]  <Space> => Chinese  <Enter> => English
-"   The default key is <C-6> (Vim Insert Mode)
+"   The default key is <C-^> (Vim Insert Mode)
 
 " ----------------
 " "VimIM Datafile"
@@ -139,15 +139,15 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_pinyin()
     call s:vimim_initialize_shuangpin()
     " -----------------------------------------
-    call s:vimim_initialize_cloud()
-    call s:vimim_initialize_mycloud_plugin()
-    " -----------------------------------------
     call s:vimim_initialize_keycode()
     call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
     " -----------------------------------------
     call s:vimim_initialize_encoding()
     call s:vimim_initialize_skin()
+    " -----------------------------------------
+    call s:vimim_initialize_cloud()
+    call s:vimim_initialize_mycloud_plugin()
     " -----------------------------------------
     call s:vimim_finalize_session()
     " -----------------------------------------
@@ -160,8 +160,7 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
-    call add(G, "g:vimim_ctrl_space_as_ctrl_6")
-    call add(G, "g:vimim_ctrl_6_as_onekey")
+    call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_digital")
@@ -208,7 +207,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_quick_key")
-    call add(G, "g:vimim_save_new_entry")
     call add(G, "g:vimim_wubi_non_stop")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
@@ -574,8 +572,8 @@ function! s:vimim_scan_plugin_for_more_im()
         return
     endif
     " -------------------------------------
-    if s:vimim_ctrl_6_as_onekey < 2
-        let msg = "use CTRL-6 to toggle"
+    if s:vimimdebug < 9
+        let msg = "always scan the 2nd plugin ciku"
     elseif get(s:im['4corner'],0) > 0
         let msg = "pinyin and 4corner are in harmony"
     else
@@ -628,7 +626,7 @@ function! s:vimim_initialize_keycode()
         let keycode = "[0-9a-z',.]"
     endif
     " --------------------------------
-    if s:shuangpin_flag > 0 && empty(s:vimim_cloud_plugin)
+    if s:shuangpin_flag > 0
         let keycode = s:im['shuangpin'][2]
     endif
     " --------------------------------
@@ -796,7 +794,7 @@ function! s:vimim_egg_vimim()
     else
         let option = 'i_CTRL-^　经典静态'
     endif
-    if s:vimim_ctrl_6_as_onekey > 1
+    if s:vimim_sexy_onekey > 0
         let option = 'i_CTRL-^　点石成金'
     endif
     let option = "mode\t 风格：" . option
@@ -877,7 +875,7 @@ function! s:vimim_easter_chicken(keyboard)
     " ------------------------------------
     let egg = a:keyboard
     if egg =~# s:valid_key
-        let msg = "hunt easter egg ... vim<C-\>"
+        let msg = "hunt easter egg ... vim<C-6>"
     else
         return []
     endif
@@ -1273,13 +1271,6 @@ function! s:vimim_onekey_action(onekey)
     "   (2) after omni popup menu      => insert Chinese
     "   (3) after English punctuation  => Chinese punctuation
     " -----------------------------------------------
-    let msg = "why not use OneKey as a toggle?"
-    if empty(s:onekey_mode_count%2)
-    \&& s:vimim_sexy_onekey > 0
-    "   call s:vimim_stop()
-    "   return a:onekey
-    endif
-    " -----------------------------------------------
     if pumvisible()
         let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
         sil!exe 'sil!return "' . space . '"'
@@ -1609,7 +1600,7 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! <SID>vimim_chinese_mode()
 " ---------------------------------
-    if g:vimim_chinese_mode_flag < 1
+    if s:vimim_chinese_mode_flag < 1
         sil!call s:vimim_start_chinese_mode()
     else
         sil!call s:vimim_stop_chinese_mode()
@@ -1647,10 +1638,8 @@ function! s:vimim_start_chinese_mode()
     sil!call s:vimim_i_lcursor_color(1)
     sil!call s:vimim_helper_mapping_on()
     " ---------------------------------------------------------
-    if s:vimim_ctrl_6_as_onekey > 0
+    if empty(s:vimim_sexy_onekey)
         inoremap<silent><expr><C-^> <SID>vimim_toggle_punctuation()
-    elseif s:vimim_sexy_onekey < 2
-        inoremap<silent><expr><C-\> <SID>vimim_toggle_punctuation()
     endif
     " ---------------------------------------------------------
     return <SID>vimim_toggle_punctuation()
@@ -1779,7 +1768,7 @@ function! s:vimim_i_chinese_mode_on()
     set imdisable
     set iminsert=1
     let s:chinese_mode_count += 1
-    let g:vimim_chinese_mode_flag = 1
+    let s:vimim_chinese_mode_flag = 1
     let s:toggle_xiangma_pinyin = s:chinese_mode_count%2
     let b:keymap_name = s:vimim_statusline()
     sil!call s:vimim_i_laststatus_on()
@@ -1876,7 +1865,7 @@ function! s:vimim_statusline()
         endif
     endif
   " --------------------------
-    if !empty(s:vimim_cloud_plugin)
+    if len(s:vimim_cloud_plugin) > 1
         let im = get(s:im['mycloud'],1) ."：". get(s:im['mycloud'],0)
     endif
   " --------------------------
@@ -1943,7 +1932,7 @@ function! s:vimim_initialize_punctuation()
 " ----------------------------------------
     let s:punctuations = {}
     let s:punctuations['#']='＃'
-    let s:punctuations['&']='＆'
+    let s:punctuations['&']='※'
     let s:punctuations['%']='％'
     let s:punctuations['$']='￥'
     let s:punctuations['!']='！'
@@ -1968,7 +1957,6 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations[',']='，'
     let s:punctuations['.']='。'
     let s:punctuations['?']='？'
-    let s:punctuations['`']='、'
     if empty(s:vimim_latex_suite)
         let s:punctuations['\']='、'
         let s:punctuations["'"]='‘’'
@@ -1977,7 +1965,7 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
         if has_key(s:punctuations, char)
-            if !empty(s:vimim_cloud_plugin)
+            if s:vimim_mycloud_url > 0
                 unlet s:punctuations[char]
             elseif char !~# "[*,.']"
                 unlet s:punctuations[char]
@@ -2788,32 +2776,6 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
         call s:vimim_stop()
     endif
     sil!exe 'sil!return "' . key . '"'
-" ---------------------------------
-" to_be_deleted
-" --------------------------------- xxx
-""""""""   call add(G, "g:vimim_smart_backspace")
-""  if empty(s:vimim_smart_backspace)
-""      sil!exe 'sil!return "' . key . '"'
-""  endif
-""  " ---------------------------------
-""  let char_before = getline(".")[col(".")-2]
-""  let char_before_before = getline(".")[col(".")-3]
-""  " ---------------------------------
-""  if char_before =~ '\w'
-""  \&& char_before_before !~ '\w'
-""      let s:smart_backspace = 1
-""  endif
-""  if char_before =~ '\s'
-""      let s:smart_backspace = 0
-""  endif
-""  " ---------------------------------
-""  if s:smart_backspace > 0
-""  \&& char_before !~ '\w'
-""      let key = ''
-""      let s:smart_backspace = 0
-""      sleep
-""  endif
-""  sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ======================================= }}}
@@ -4531,7 +4493,7 @@ function! s:vimim_access_mycloud_plugin(cloud, cmd)
         return system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        let ret = system(s:www_executable . shellescape(a:cloud . input))
+        let ret = system(s:www_executable . a:cloud . input)
         let output = s:vimim_rot13(ret)
         let ret = s:vimim_url_xx_to_chinese(output)
         return ret
@@ -4704,7 +4666,6 @@ function! s:vimim_initialize_mycloud_plugin()
         let s:vimim_cloud_plugin = cloud
         let s:im['mycloud'][0] = loaded
         let s:im['mycloud'][2] = keycode
-        let s:im_primary = 'mycloud'
     endif
 endfunction
 
@@ -4943,14 +4904,12 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     " --------------------------------
     call s:vimim_initialization_once()
     " --------------------------------
-    if s:vimim_ctrl_6_as_onekey > 1
-        if keyboard =~ '\S'
-            let msg = 'kill two birds with one stone'
-        else
-            let current_line = getline("'<")
-            call <SID>vimim_save_new_entry(current_line)
-            return
-        endif
+    if keyboard =~ '\S'
+        let msg = 'kill two birds with one stone'
+    else
+        let current_line = getline("'<")
+        call <SID>vimim_save_new_entry(current_line)
+        return
     endif
     " --------------------------------
     let results = []
@@ -5148,7 +5107,7 @@ function! s:vimim_initialize_backdoor()
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
     let s:initialization_loaded = 0
-    let g:vimim_chinese_mode_flag = 0
+    let s:vimim_chinese_mode_flag = 0
     let datafile_backdoor = s:path . "vimim.txt"
     if filereadable(datafile_backdoor)
         let s:datafile_primary = datafile_backdoor
@@ -5160,7 +5119,6 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
-    let s:vimim_ctrl_6_as_onekey=9
     let s:vimim_sexy_onekey=2
     let s:vimim_tab_as_onekey=1
     " ------------------------------ debug
@@ -5308,7 +5266,7 @@ endfunction
 function! s:reset_before_anything()
 " ---------------------------------
     call s:reset_matched_list()
-    let g:vimim_chinese_mode_flag = 0
+    let s:vimim_chinese_mode_flag = 0
     let s:chinese_input_mode = 0
     let s:no_internet_connection = 0
     let s:pattern_not_found = 0
@@ -5417,7 +5375,7 @@ function! s:vimim_helper_mapping_on()
                               \<C-R>=<SID>vimim_smart_enter()<CR>
     endif
     " ----------------------------------------------------------
-    if empty(s:vimim_ctrl_6_as_onekey)
+    if empty(s:vimim_sexy_onekey)
         inoremap<silent><Esc>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                               \<C-R>=g:vimim_one_key_correction()<CR>
     endif
@@ -5566,7 +5524,7 @@ else
         let g:vimim[1] +=  len(keyboard)
     endif
 
-    " [eggs] hunt classic easter egg ... vim<C-\>
+    " [eggs] hunt classic easter egg ... vim<C-6>
     " -------------------------------------------
     if keyboard ==# "vim" || keyboard =~# "^vimim"
         let results = s:vimim_easter_chicken(keyboard)
@@ -5867,6 +5825,7 @@ function! s:vimim_initialize_mapping()
     sil!call s:vimim_visual_mapping_on()
     sil!call s:vimim_chinese_mode_mapping_on()
     sil!call s:vimim_onekey_mapping_on()
+    sil!call s:vimim_ctrl_space_mapping_on()
 endfunction
 
 " -----------------------------------
@@ -5875,12 +5834,6 @@ function! s:vimim_visual_mapping_on()
     if !hasmapto('<C-^>', 'v')
         xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
-    " ---------------------------
-    if s:vimim_save_new_entry > 0
-    \&& !hasmapto('<C-\>', 'v')
-    \&& empty(s:vimim_ctrl_6_as_onekey)
-        xnoremap<silent><C-\> :y<CR>:call <SID>vimim_save_new_entry(@0)<CR>
-    endif
 endfunction
 
 " -----------------------------------------
@@ -5888,18 +5841,9 @@ function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
     inoremap<expr><Plug>VimimChineseMode <SID>vimim_chinese_mode()
     " ------------------------------------------------------------
-    if empty(s:vimim_ctrl_6_as_onekey)
-        imap<silent><C-^> <Plug>VimimChineseMode
-    elseif s:vimim_sexy_onekey < 2
-        imap<silent><C-\> <Plug>VimimChineseMode
-        noremap<silent><C-\> :call <SID>vimim_chinese_mode()<CR>
-    endif
-    if s:vimim_ctrl_space_as_ctrl_6 > 0 && has("gui_running")
-        if s:vimim_sexy_onekey < 2
-            imap<silent><C-Space> <Plug>VimimChineseMode
-        else
-            imap<silent><C-Space> <Plug>VimimOneKey
-        endif
+    if s:vimim_sexy_onekey < 2
+        imap<silent><C-Bslash> <Plug>VimimChineseMode
+        noremap<silent><C-Bslash> :call <SID>vimim_chinese_mode()<CR>
     endif
 endfunction
 
@@ -5909,14 +5853,10 @@ function! s:vimim_onekey_mapping_on()
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_onekey()
     inoremap<silent><expr><Plug>VimimTabKey <SID>vimim_tabkey()
     " ---------------------------------------------------------
-    if s:vimim_ctrl_6_as_onekey > 0
-        imap<silent><C-^> <Plug>VimimOneKey
-    endif
+    imap<silent><C-^> <Plug>VimimOneKey
     " --------------------------------------
     if s:vimim_sexy_onekey > 1
         set pastetoggle=<C-Bslash>
-    elseif empty(s:vimim_ctrl_6_as_onekey)
-        imap<silent><C-\> <Plug>VimimOneKey
     endif
     " --------------------------------------
     if s:vimim_tab_as_onekey > 0
@@ -5925,16 +5865,22 @@ function! s:vimim_onekey_mapping_on()
     " --------------------------------------
 endfunction
 
+" ---------------------------------------
+function! s:vimim_ctrl_space_mapping_on()
+" ---------------------------------------
+    if s:vimim_ctrl_space_to_toggle > 0 && has("gui_running")
+        if empty(s:vimim_sexy_onekey)
+            imap<silent><C-Space> <Plug>VimimChineseMode
+        else
+            imap<silent><C-Space> <Plug>VimimOneKey
+        endif
+    endif
+endfunction
+
 " ------------------------------------
 function! s:vimim_onekey_mapping_off()
 " ------------------------------------
-    if s:vimim_ctrl_6_as_onekey > 0
-        iunmap <C-^>
-    else
-        if s:vimim_sexy_onekey < 2
-            iunmap <C-\>
-        endif
-    endif
+    iunmap <C-^>
     if s:vimim_tab_as_onekey > 0
         iunmap <Tab>
     endif
