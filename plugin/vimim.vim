@@ -879,23 +879,11 @@ function! s:vimim_easter_chicken(keyboard)
     else
         return []
     endif
-    if egg ==# "vim"
-        return s:vimim_egg_vim()
-    elseif egg ==# "vimim"
-        return s:vimim_egg_vimim()
-    elseif egg ==# "vimimegg"
-        return s:vimim_egg_vimimegg()
-    elseif egg ==# "vimimvim"
-        return s:vimim_egg_vimimvim()
-    elseif egg ==# "vimimhelp"
-        return s:vimim_egg_vimimhelp()
-    elseif egg ==# "vimimstat"
-        return s:vimim_egg_vimimstat()
-    elseif egg ==# "vimimdefaults"
-        return s:vimim_egg_vimimdefaults()
-    elseif egg ==# "vimimdebug"
-        return s:vimim_egg_vimimdebug()
-    endif
+    try
+        return eval("<SID>vimim_egg_".egg."()")
+    catch
+        return []
+    endtry
 endfunction
 
 " ======================================= }}}
@@ -4698,7 +4686,7 @@ function! s:vimim_process_mycloud_output(keyboard, output)
         return []
     endif
     " ---------------------------------------
-    " %E6%98%A5%E6%A2%A6	8	50_44
+    " 春梦	8	4420
     " ---------------------------------------
     let menu = []
     for item in split(output, '\n')
