@@ -1984,8 +1984,12 @@ function! s:vimim_initialize_punctuation()
     endif
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
-        if has_key(s:punctuations, char) && char !~# "[*,.']"
-            unlet s:punctuations[char]
+        if has_key(s:punctuations, char)
+            if s:vimim_mycloud_url > 0
+                unlet s:punctuations[char]
+            elseif char !~# "[*,.']"
+                unlet s:punctuations[char]
+            endif
         endif
     endfor
 endfunction
