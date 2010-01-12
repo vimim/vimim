@@ -738,7 +738,8 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "最新程式：" . get(s:vimimhelp,3))
     call add(eggs, "试用版本：" . get(s:vimimhelp,4))
     call add(eggs, "官方网址：" . get(s:vimimhelp,5))
-    call add(eggs, "新闻论坛：" . get(s:vimimhelp,6))
+    call add(eggs, "自己的云：" . get(s:vimimhelp,6))
+    call add(eggs, "新闻论坛：" . get(s:vimimhelp,7))
 " -------------------------------------
     return map(eggs, '"VimIM " .v:val . "　"')
 endfunction
