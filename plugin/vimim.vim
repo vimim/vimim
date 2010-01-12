@@ -202,7 +202,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_laststatus")
-    call add(G, "g:vimim_custom_lcursor_color")
     call add(G, "g:vimim_custom_menu_label")
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_punctuation_navigation")
@@ -1210,7 +1209,7 @@ function! s:vimim_start_onekey()
     "   (3) after Chinese (invalid keys) => out of OneKey mode
     " ----------------------------------------------------------
     sil!call s:vimim_start()
-    sil!call s:vimim_onekey_status_on()
+    sil!call s:vimim_i_laststatus_on()
     sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_hjkl_navigation_on()
     sil!call s:vimim_hjkl_label_on()
@@ -1735,14 +1734,16 @@ function! s:vimim_initialize_skin()
     endif
 endfunction
 
-" ----------------------------------
-function! s:vimim_onekey_status_on()
-" ----------------------------------
+" ---------------------------------
+function! s:vimim_i_laststatus_on()
+" ---------------------------------
     if s:vimim_sexy_onekey > 0
-    \&& s:vimim_custom_laststatus < 2
         set noruler
     endif
-    if s:vimim_custom_laststatus > 1
+    " -----------------------------
+    if s:vimim_custom_laststatus < 1
+        let msg = "never touch the laststatus"
+    else
         set laststatus=2
     endif
 endfunction
@@ -1770,22 +1771,19 @@ function! s:vimim_i_chinese_mode_autocmd_on()
     endif
 endfunction
 
-" ---------------------------------
-function! s:vimim_i_laststatus_on()
-" ---------------------------------
-    if s:vimim_custom_laststatus < 1
-        let msg = "never touch the laststatus"
+" --------------------------------------
+function! s:vimim_i_cursor_color(switch)
+" --------------------------------------
+    if empty(a:switch)
+        highlight Cursor guifg=bg guibg=fg
     else
-        set laststatus=2
+        highlight Cursor guibg=green
     endif
 endfunction
 
-" ---------------------------------------
+" --------------------------------------- to_be_removed
 function! s:vimim_i_lcursor_color(switch)
-" ---------------------------------------
-    if s:vimim_custom_lcursor_color < 1
-        return
-    endif
+" --------------------------------------- xxx
     if empty(a:switch)
         highlight! lCursor NONE
     else
@@ -5118,12 +5116,13 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
-    let s:vimim_sexy_onekey=2
+    let s:vimim_sexy_onekey=1
     let s:vimim_tab_as_onekey=1
-    " ------------------------------ debug
     let s:vimim_cloud_sogou=12
-    let s:vimim_custom_menu_label=1
     let s:vimim_chinese_frequency=12
+    " ------------------------------ debug
+    let s:vimim_custom_laststatus=0
+    let s:vimim_custom_menu_label=1
     " ------------------------------
     let s:vimim_wildcard_search=1
     let s:vimim_imode_comma=1
@@ -5241,6 +5240,7 @@ function! s:vimim_start()
 " -----------------------
     sil!call s:vimim_initialization_once()
     sil!call s:vimim_i_setting_on()
+    sil!call s:vimim_i_cursor_color(1)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_reload_datafile(1)
@@ -5255,6 +5255,7 @@ function! s:vimim_stop()
     sil!autocmd! onekey_mode_autocmd
     sil!autocmd! chinese_mode_autocmd
     sil!call s:vimim_i_setting_off()
+    sil!call s:vimim_i_cursor_color(0)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
