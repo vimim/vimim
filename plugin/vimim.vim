@@ -1310,14 +1310,12 @@ function! s:vimim_label_on()
     if s:vimim_custom_menu_label < 1
         return
     endif
+    " ----------------------
     let labels = range(10)
     if &pumheight > 0 && &pumheight != 10
         let labels = range(1, &pumheight)
     endif
-    if empty(s:chinese_input_mode)
-        let _abcdefghi = split("`abcdefghiz", '\zs')
-        call extend(labels, _abcdefghi)
-    endif
+    " ----------------------
     for _ in labels
         sil!exe'inoremap<silent> '._.'
         \  <C-R>=<SID>vimim_label("'._.'")<CR>'
@@ -1348,6 +1346,54 @@ function! <SID>vimim_label(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
+" -------------------------------
+function! s:vimim_hjkl_label_on()
+" -------------------------------
+    let _abcdefghi = "'abcdefghiz"
+    let labels = split(_abcdefghi, '\zs')
+    for _ in labels
+        sil!exe'inoremap<silent> '._.'
+        \  <C-R>=<SID>vimim_hjkl_label("'._.'")<CR>'
+        \.'<C-R>=g:vimim_reset_after_insert()<CR>'
+    endfor
+endfunction
+
+" --------------------------------  xxx
+function! <SID>vimim_hjkl_label(n)
+" --------------------------------
+    let label = a:n
+    if pumvisible()
+        let counts = ""
+        if a:n ==# "'"
+            let counts = repeat("\<Down>", 0)
+        elseif a:n ==# 'a'
+            let counts = repeat("\<Down>", 1)
+        elseif a:n ==# 'b'
+            let counts = repeat("\<Down>", 2)
+        elseif a:n ==# 'c'
+            let counts = repeat("\<Down>", 3)
+        elseif a:n ==# 'd'
+            let counts = repeat("\<Down>", 4)
+        elseif a:n ==# 'e'
+            let counts = repeat("\<Down>", 5)
+        elseif a:n ==# 'f'
+            let counts = repeat("\<Down>", 6)
+        elseif a:n ==# 'g'
+            let counts = repeat("\<Down>", 7)
+        elseif a:n ==# 'h'
+            let counts = repeat("\<Down>", 8)
+        elseif a:n ==# 'i'
+            let counts = repeat("\<Down>", 9)
+        endif
+        let yes = s:vimim_pumvisible_yes()
+        let label = counts . yes
+        if a:n ==# 'z'
+            let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        endif
+    endif
+    sil!exe 'sil!return "' . label . '"'
+endfunction
+
 " --------------------------------------
 function! s:vimim_1234567890_filter_on()
 " --------------------------------------
@@ -1367,7 +1413,7 @@ endfunction
 
 " ---------------------------------------------
 function! <SID>vimim_label_1234567890_filter(n)
-" --------------------------------------------- xxx
+" ---------------------------------------------
     let label = a:n
     if pumvisible()
         let msg = "give 1234567890 label new meaning"
@@ -1528,45 +1574,6 @@ function! s:vimim_popup_word()
     return word
 endfunction
 
-" -------------------------------
-function! s:vimim_hjkl_label_on()
-" -------------------------------
-    if s:vimim_custom_menu_label == 2
-        let &pumheight=5
-        let labels = split("hjkl'", '\zs')
-        for _ in labels
-            sil!exe'inoremap<silent> '._.'
-            \  <C-R>=<SID>vimim_hjkl_label("'._.'")<CR>'
-            \.'<C-R>=g:vimim_reset_after_insert()<CR>'
-        endfor
-    endif
-endfunction
-
-" --------------------------------
-function! <SID>vimim_hjkl_label(n)
-" --------------------------------
-    let label = a:n
-    if pumvisible()
-        let counts = ""
-        if a:n ==# 'h'
-            let counts = repeat("\<Down>", 1)
-            let counts = "\<Up>\<Up>"
-        elseif a:n ==# 'k'
-            let counts = repeat("\<Down>", 2)
-            let counts = "\<Up>"
-        elseif a:n ==# 'j'
-            let counts = repeat("\<Down>", 3)
-            let counts = "\<Down>"
-        elseif a:n ==# 'l'
-            let counts = repeat("\<Down>", 4)
-            let counts = "\<Down>\<Down>"
-        endif
-        let yes = s:vimim_pumvisible_yes()
-        let label = counts . yes
-    endif
-    sil!exe 'sil!return "' . label . '"'
-endfunction
-
 " --------------------------------
 function! s:vimim_pumvisible_yes()
 " --------------------------------
@@ -1621,7 +1628,7 @@ function! s:vimim_start_chinese_mode()
         " ------------------------------------------------------------
     endif
     " ---------------------------------
-    sil!call s:vimim_i_lcursor_color(1)
+"   sil!call s:vimim_i_lcursor_color(1)
     sil!call s:vimim_helper_mapping_on()
     " ---------------------------------------------------------
     if empty(s:vimim_sexy_onekey)
@@ -1641,9 +1648,9 @@ function! s:vimim_stop_chinese_mode()
     if exists('*Fixcp')
         sil!call FixAcp()
     endif
-    " ------------------------------
+    " ------------------------------ xxx
     sil!call s:vimim_stop()
-    sil!call s:vimim_i_lcursor_color(0)
+"   sil!call s:vimim_i_lcursor_color(0)
 endfunction
 
 " -------------------------------
@@ -1753,8 +1760,8 @@ endfunction
 " -----------------------------------
 function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
-    set imdisable
-    set iminsert=1
+"   set imdisable
+"   set iminsert=1
     let s:chinese_mode_count += 1
     let s:vimim_chinese_mode_flag = 1
     let s:toggle_xiangma_pinyin = s:chinese_mode_count%2
@@ -2094,13 +2101,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
 " --------------------------------------
-    let e = '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
-    " ---------------------------------- xxx
-    if s:vimim_custom_menu_label == 2
-        let e .= '\<Down>\<Down>'
-    endif
-    " ----------------------------------
-    return e
+    return '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
 endfunction
 
 " ------------------------------------------------------------
@@ -2936,15 +2937,12 @@ function! s:vimim_popupmenu_list(matched_list)
                 let labeling = 0
             endif
             if empty(s:chinese_input_mode) && label < &pumheight+1
-                let _abcdefghi = char2nr('a')-1+(label-1)%26
-                let label2 = nr2char(_abcdefghi)
+                " -----------------------------------------
+                let _abcdefghi = "'abcdefghiz"
+                let label2 = _abcdefghi[label-1 : label-1]
+                " -----------------------------------------
                 if label < 2
                     let label2 = "_"
-                endif
-                " -----------------------------------------
-                if s:vimim_custom_menu_label == 2
-                    let n = (label-1) % 5
-                    let label2 = 'hk_jl'[n : n]
                 endif
                 " -----------------------------------------
                 if s:pinyin_and_4corner > 0
@@ -2952,6 +2950,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 else
                     let labeling .= label2
                 endif
+                " -----------------------------------------
             endif
             let abbr = printf('%2s',labeling)."\t".chinese
             let complete_items["abbr"] = abbr
@@ -3103,7 +3102,7 @@ function! s:vimim_exact_whole_match(lines, keyboard)
     return results
 endfunction
 
-" ----------------------------------------------- xxx
+" ----------------------------------------------- 
 function! s:vimim_exact_match(lines, match_start)
 " -----------------------------------------------
     if empty(a:lines) || a:match_start < 0
@@ -3365,11 +3364,6 @@ function! g:vimim_menu_select()
             let s:insert_without_popup = 0
             let select_not_insert = '\<C-Y>'
         endif
-        " -------------------------------------------
-        if s:vimim_custom_menu_label == 2
-            let select_not_insert .= '\<Down>\<Down>'
-        endif
-        " -------------------------------------------
     endif
     sil!exe 'sil!return "' . select_not_insert . '"'
 endfunction
@@ -5349,7 +5343,7 @@ function! s:vimim_i_map_off()
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['`', '<CR>', '<BS>', '<Space>'])
+    call extend(unmap_list, ['<CR>', '<BS>', '<Space>'])
     call extend(unmap_list, ['<Esc>', '<C-N>', '<C-P>', '<C-H>'])
     " -----------------------
     for _ in unmap_list
