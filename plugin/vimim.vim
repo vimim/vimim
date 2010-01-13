@@ -2611,11 +2611,6 @@ function! <SID>vimim_smart_enter()
     "   (1) after English (valid keys)    => Seamless
     "   (2) after Chinese or double Enter => Enter
     " -----------------------------------------------
-    if s:pumvisible_ctrl_e > 0
-        let s:pumvisible_ctrl_e = 0
-        let s:smart_enter = 0
-    endif
-    " -----------------------------------------------
     if char_before =~# "[*,.']"
         let s:smart_enter = 0
     elseif char_before =~# s:valid_key
@@ -2728,13 +2723,6 @@ function! <SID>vimim_smart_ctrl_h()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" --------------------------------------
-function! g:vimim_pumvisible_ctrl_e_on()
-" --------------------------------------
-    let s:pumvisible_ctrl_e = 1
-    return g:vimim_pumvisible_ctrl_e()
-endfunction
-
 " -----------------------------------
 function! g:vimim_pumvisible_ctrl_e()
 " -----------------------------------
@@ -2748,6 +2736,13 @@ function! g:vimim_pumvisible_ctrl_e()
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" --------------------------------------
+function! g:vimim_pumvisible_ctrl_e_on()
+" --------------------------------------
+    let s:pumvisible_ctrl_e = 1
+    return g:vimim_pumvisible_ctrl_e()
 endfunction
 
 " -------------------------------------
@@ -5374,7 +5369,7 @@ function! s:vimim_helper_mapping_on()
     endif
     " ----------------------------------------------------------
     if s:chinese_input_mode > 0 || s:vimim_sexy_onekey > 0
-        inoremap<silent><CR>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
+        inoremap<silent><CR>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                               \<C-R>=<SID>vimim_smart_enter()<CR>
     endif
     " ----------------------------------------------------------
