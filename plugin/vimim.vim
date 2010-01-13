@@ -1213,8 +1213,8 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_start()
     sil!call s:vimim_i_laststatus_on()
     sil!call s:vimim_1234567890_filter_on()
-    sil!call s:vimim_hjkl_navigation_on()
-    sil!call s:vimim_hjkl_label_on()
+    sil!call s:vimim_navigation_label_on()
+    sil!call s:vimim_action_label_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
     sil!call s:vimim_onekey_autocmd()
@@ -1346,21 +1346,21 @@ function! <SID>vimim_label(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
-" -------------------------------
-function! s:vimim_hjkl_label_on()
-" -------------------------------
-    let _abcdefghi = "'abcdefghiz"
+" ---------------------------------
+function! s:vimim_action_label_on()
+" ---------------------------------
+    let _abcdefghi = "'abcdefghi"
     let labels = split(_abcdefghi, '\zs')
     for _ in labels
         sil!exe'inoremap<silent> '._.'
-        \  <C-R>=<SID>vimim_hjkl_label("'._.'")<CR>'
+        \  <C-R>=<SID>vimim_action_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
 endfunction
 
-" --------------------------------  xxx
-function! <SID>vimim_hjkl_label(n)
-" --------------------------------
+" ----------------------------------
+function! <SID>vimim_action_label(n)
+" ----------------------------------
     let label = a:n
     if pumvisible()
         let counts = ""
@@ -1387,11 +1387,54 @@ function! <SID>vimim_hjkl_label(n)
         endif
         let yes = s:vimim_pumvisible_yes()
         let label = counts . yes
-        if a:n ==# 'z'
-            let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        endif
     endif
     sil!exe 'sil!return "' . label . '"'
+endfunction
+
+" -------------------------------------
+function! s:vimim_navigation_label_on()
+" -------------------------------------
+    let hjkl_list = split('qrsujklpxyz', '\zs')
+    for _ in hjkl_list
+        sil!exe 'inoremap<silent><expr> '._.'
+        \ <SID>vimim_hjkl("'._.'")'
+    endfor
+endfunction
+
+" ----------------------------
+function! <SID>vimim_hjkl(key)
+" ----------------------------
+    let hjkl = a:key
+    if pumvisible()
+        if a:key == 'x'
+            let hjkl  = '\<C-E>'
+        elseif a:key == 'u'
+            let hjkl  = '\<PageUp>'
+        elseif a:key == 'j'
+            let hjkl  = '\<Down>'
+        elseif a:key == 'k'
+            let hjkl  = '\<Up>'
+        elseif a:key == 'l'
+            let hjkl  = '\<PageDown>'
+        elseif a:key == 'y'
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
+        elseif a:key == 'z'
+            let hjkl = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        elseif a:key == 'r'
+            let s:pumvisible_reverse += 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == 's'
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
+        elseif a:key == 'p'
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_pumvisible_p_paste()\<CR>'
+        elseif a:key == 'q'
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
+        endif
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
 " --------------------------------------
@@ -1421,50 +1464,6 @@ function! <SID>vimim_label_1234567890_filter(n)
         let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
     endif
     sil!exe 'sil!return "' . label . '"'
-endfunction
-
-" ------------------------------------
-function! s:vimim_hjkl_navigation_on()
-" ------------------------------------
-    let hjkl_list = split('qrsxujklp', '\zs')
-    for _ in hjkl_list
-        sil!exe 'inoremap<silent><expr> '._.'
-        \ <SID>vimim_hjkl("'._.'")'
-    endfor
-endfunction
-
-" ----------------------------
-function! <SID>vimim_hjkl(key)
-" ----------------------------
-    let hjkl = a:key
-    if pumvisible()
-        if a:key == 'x'
-            let hjkl  = '\<C-E>'
-        elseif a:key == 'y'
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
-        elseif a:key == 'u'
-            let hjkl  = '\<PageUp>'
-        elseif a:key == 'j'
-            let hjkl  = '\<Down>'
-        elseif a:key == 'k'
-            let hjkl  = '\<Up>'
-        elseif a:key == 'l'
-            let hjkl  = '\<PageDown>'
-        elseif a:key == 'r'
-            let s:pumvisible_reverse += 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 's'
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
-        elseif a:key == 'p'
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_pumvisible_p_paste()\<CR>'
-        elseif a:key == 'q'
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
-        endif
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
 " ------------------------------------
@@ -1647,7 +1646,7 @@ function! s:vimim_stop_chinese_mode()
     if exists('*Fixcp')
         sil!call FixAcp()
     endif
-    " ------------------------------ xxx
+    " ------------------------------
     sil!call s:vimim_stop()
 endfunction
 
@@ -3088,7 +3087,7 @@ function! s:vimim_exact_whole_match(lines, keyboard)
     return results
 endfunction
 
-" ----------------------------------------------- 
+" -----------------------------------------------
 function! s:vimim_exact_match(lines, match_start)
 " -----------------------------------------------
     if empty(a:lines) || a:match_start < 0
@@ -4760,7 +4759,7 @@ function! s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
             let char_first = strpart(key, 0, s:multibyte)
             let char_last = strpart(key, len(key)-s:multibyte)
         endif
-        " -------------------------------------------- xxx
+        " --------------------------------------------
         if s:menu_4corner_filter > 0
             let char_last = char_first
         endif
