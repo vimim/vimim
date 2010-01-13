@@ -4645,6 +4645,7 @@ function! s:vimim_initialize_mycloud_plugin()
         let s:vimim_cloud_plugin = 0
     else
         let s:vimim_cloud_plugin = cloud
+        let s:vimim_cloud_sogou = -1
         let s:im['mycloud'][0] = loaded
         let s:im['mycloud'][2] = keycode
         let s:im_primary = 'mycloud'
