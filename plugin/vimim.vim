@@ -260,7 +260,6 @@ function! s:vimim_initialize_session()
     let s:pinyin_and_4corner = 0
     let s:four_corner_lines = []
     let s:unicode_menu_display_flag = 0
-    let s:pumvisible_ctrl_e = 0
     " --------------------------------
     let s:im_primary = 0
     let s:im_secondary = 0
@@ -287,9 +286,6 @@ function! s:vimim_initialize_session()
     let s:chinese_mode_count = 1
     let s:onekey_mode_count = 1
     let s:abcdefghi = "'abcdefghi"
-    " --------------------------------
-    let s:smart_single_quote = 1
-    let s:smart_double_quote = 1
     " --------------------------------
     let s:datafile = 0
     let s:lines = []
@@ -5225,6 +5221,7 @@ function! s:vimim_super_reset()
 " -----------------------------
     sil!call s:reset_before_anything()
     sil!call s:reset_after_insert()
+    sil!call s:reset_before_stop()
 endfunction
 
 " -----------------------
@@ -5242,18 +5239,26 @@ endfunction
 " ----------------------
 function! s:vimim_stop()
 " ----------------------
-    let s:smart_single_quote = 1
-    let s:smart_double_quote = 1
     let duration = localtime() - get(g:vimim,4)
     let g:vimim[3] += duration
     sil!autocmd! onekey_mode_autocmd
     sil!autocmd! chinese_mode_autocmd
+    sil!call s:reset_before_stop()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_i_cursor_color(0)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_initialize_mapping()
+endfunction
+
+" -----------------------------
+function! s:reset_before_stop()
+" -----------------------------
+    let s:smart_enter = 0
+    let s:smart_single_quote = 1
+    let s:smart_double_quote = 1
+    let s:pumvisible_ctrl_e = 0
 endfunction
 
 " ---------------------------------
@@ -5299,7 +5304,6 @@ function! g:reset_after_auto_insert()
     let s:keyboard_wubi = ''
     let s:smart_ctrl_n = 0
     let s:smart_ctrl_p = 0
-    let s:smart_enter = 0
     let s:smart_backspace = 0
     let s:one_key_correction = 0
     return ''
