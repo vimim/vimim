@@ -1482,7 +1482,8 @@ function! g:vimim_pumvisible_p_paste()
     let pastes = []
     let title = s:keyboard_leading_zero . " =>"
     let words = [title]
-    let show_me_not_pattern = ',,,'
+    let msg = "resever ii/oo/vv for pretty print "
+    let show_me_not_pattern = "ii\\|oo\\|vv"
     if title =~ show_me_not_pattern
         let words = []
     endif
