@@ -286,6 +286,7 @@ function! s:vimim_initialize_session()
     let s:keyboard_count = 0
     let s:chinese_mode_count = 1
     let s:onekey_mode_count = 1
+    let s:abcdefghi = "'abcdefghi"
     " --------------------------------
     let s:smart_single_quote = 1
     let s:smart_double_quote = 1
@@ -1362,8 +1363,7 @@ endfunction
 " ---------------------------------
 function! s:vimim_action_label_on()
 " ---------------------------------
-    let _abcdefghi = "'abcdefghi"
-    let labels = split(_abcdefghi, '\zs')
+    let labels = split(s:abcdefghi, '\zs')
     for _ in labels
         sil!exe'inoremap<silent> '._.'
         \  <C-R>=<SID>vimim_action_label("'._.'")<CR>'
@@ -1376,28 +1376,8 @@ function! <SID>vimim_action_label(n)
 " ----------------------------------
     let label = a:n
     if pumvisible()
-        let counts = ""
-        if a:n ==# "'"
-            let counts = repeat("\<Down>", 0)
-        elseif a:n ==# 'a'
-            let counts = repeat("\<Down>", 1)
-        elseif a:n ==# 'b'
-            let counts = repeat("\<Down>", 2)
-        elseif a:n ==# 'c'
-            let counts = repeat("\<Down>", 3)
-        elseif a:n ==# 'd'
-            let counts = repeat("\<Down>", 4)
-        elseif a:n ==# 'e'
-            let counts = repeat("\<Down>", 5)
-        elseif a:n ==# 'f'
-            let counts = repeat("\<Down>", 6)
-        elseif a:n ==# 'g'
-            let counts = repeat("\<Down>", 7)
-        elseif a:n ==# 'h'
-            let counts = repeat("\<Down>", 8)
-        elseif a:n ==# 'i'
-            let counts = repeat("\<Down>", 9)
-        endif
+        let n = match(s:abcdefghi, label)
+        let counts = repeat("\<Down>", n)
         let yes = s:vimim_pumvisible_yes()
         let label = counts . yes
     endif
@@ -2948,9 +2928,7 @@ function! s:vimim_popupmenu_list(matched_list)
             endif
             if empty(s:chinese_input_mode) && label < &pumheight+1
                 " -----------------------------------------
-                let _abcdefghi = "'abcdefghiz"
-                let label2 = _abcdefghi[label-1 : label-1]
-                " -----------------------------------------
+                let label2 = s:abcdefghi[label-1 : label-1]
                 if label < 2
                     let label2 = "_"
                 endif
