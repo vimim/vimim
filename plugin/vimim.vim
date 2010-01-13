@@ -1628,7 +1628,6 @@ function! s:vimim_start_chinese_mode()
         " ------------------------------------------------------------
     endif
     " ---------------------------------
-"   sil!call s:vimim_i_lcursor_color(1)
     sil!call s:vimim_helper_mapping_on()
     " ---------------------------------------------------------
     if empty(s:vimim_sexy_onekey)
@@ -1650,7 +1649,6 @@ function! s:vimim_stop_chinese_mode()
     endif
     " ------------------------------ xxx
     sil!call s:vimim_stop()
-"   sil!call s:vimim_i_lcursor_color(0)
 endfunction
 
 " -------------------------------
@@ -1760,8 +1758,6 @@ endfunction
 " -----------------------------------
 function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
-"   set imdisable
-"   set iminsert=1
     let s:chinese_mode_count += 1
     let s:vimim_chinese_mode_flag = 1
     let s:toggle_xiangma_pinyin = s:chinese_mode_count%2
@@ -1787,16 +1783,6 @@ function! s:vimim_i_cursor_color(switch)
         highlight Cursor guifg=bg guibg=fg
     else
         highlight Cursor guibg=green
-    endif
-endfunction
-
-" --------------------------------------- to_be_removed
-function! s:vimim_i_lcursor_color(switch)
-" --------------------------------------- xxx
-    if empty(a:switch)
-        highlight! lCursor NONE
-    else
-        highlight! lCursor guifg=bg guibg=green
     endif
 endfunction
 
