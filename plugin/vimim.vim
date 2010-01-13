@@ -1962,9 +1962,27 @@ function! <SID>vimim_toggle_punctuation()
     return ''
 endfunction
 
-" --------------------------------
-function! s:vimim_punctuation_on()
-" --------------------------------
+" ----------------------------------
+function! s:vimim_get_single_quote()
+" ----------------------------------
+    let pair = "‘’"
+    let pairs = split(pair,'\zs')
+    let s:smart_single_quote += 1
+    return get(pairs, s:smart_single_quote % 2)
+endfunction
+
+" ----------------------------------
+function! s:vimim_get_double_quote()
+" ----------------------------------
+    let pair = "“”"
+    let pairs = split(pair,'\zs')
+    let s:smart_double_quote += 1
+    return get(pairs, s:smart_double_quote % 2)
+endfunction
+
+" -----------------------------------
+function! <SID>vimim_punctuation_on()
+" -----------------------------------
     if s:chinese_input_mode > 0
         unlet s:punctuations['\']
         unlet s:punctuations["'"]
@@ -1974,8 +1992,8 @@ function! s:vimim_punctuation_on()
     if s:chinese_punctuation > 0
         if empty(s:vimim_cloud_plugin)
             inoremap <Bslash> 、
-            inoremap ' ‘’<Left>
-            inoremap " “”<Left>
+            inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
+            inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
         else
             if index(s:valid_keys, '\') < 0
                 inoremap <Bslash> 、
@@ -5260,6 +5278,8 @@ function! s:reset_before_anything()
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
     let s:pumvisible_reverse = 0
+    let s:smart_double_quote = 1
+    let s:smart_single_quote = 1
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
