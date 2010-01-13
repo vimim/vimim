@@ -2615,6 +2615,11 @@ function! <SID>vimim_smart_enter()
     "   (1) after English (valid keys)    => Seamless
     "   (2) after Chinese or double Enter => Enter
     " -----------------------------------------------
+    if s:pumvisible_ctrl_e > 0
+        let s:pumvisible_ctrl_e = 0
+        let s:smart_enter = 0
+    endif
+    " -----------------------------------------------
     if char_before =~# "[*,.']"
         let s:smart_enter = 0
     elseif char_before =~# s:valid_key
@@ -2648,6 +2653,7 @@ function! <SID>vimim_smart_enter()
         endif
         let s:smart_enter = 0
     endif
+    " -----------------------------------------------
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -2726,20 +2732,24 @@ function! <SID>vimim_smart_ctrl_h()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+" --------------------------------------
+function! g:vimim_pumvisible_ctrl_e_on()
+" --------------------------------------
+    let s:pumvisible_ctrl_e = 1
+    return g:vimim_pumvisible_ctrl_e()
+endfunction
+
 " -----------------------------------
 function! g:vimim_pumvisible_ctrl_e()
 " -----------------------------------
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
-        let s:pumvisible_ctrl_e = 1
         if s:vimim_wubi_non_stop > 0
         \&& empty(get(s:im['pinyin'],0))
         \&& empty(len(s:keyboard_wubi)%4)
             let key = "\<C-Y>"
         endif
-    else
-        let s:pumvisible_ctrl_e = 0
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5354,17 +5364,17 @@ function! s:vimim_helper_mapping_on()
         endif
     endif
     " ----------------------------------------------------------
-    if s:chinese_input_mode > 0 || s:vimim_sexy_onekey > 0
-        inoremap<silent><CR>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                              \<C-R>=<SID>vimim_smart_enter()<CR>
-    endif
-    " ----------------------------------------------------------
     if empty(s:vimim_sexy_onekey)
         inoremap<silent><Esc>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                               \<C-R>=g:vimim_one_key_correction()<CR>
     endif
     " ----------------------------------------------------------
-    inoremap<silent><BS>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+    if s:chinese_input_mode > 0 || s:vimim_sexy_onekey > 0
+        inoremap<silent><CR>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
+                              \<C-R>=<SID>vimim_smart_enter()<CR>
+    endif
+    " ----------------------------------------------------------
+    inoremap<silent><BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
                          \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
     " ----------------------------------------------------------
 endfunction
