@@ -4520,11 +4520,6 @@ function! s:vimim_check_mycloud_plugin()
         let s:cloud_plugin_func = 'do_getlocal'
         if filereadable(cloud)
             if has("gui_win32")
-                " TODO: --------------------------- please remove TODO
-                " TODO: cloud = cloud[:-4]
-	        " TODO: cloud[:-4]" remove last 3 bytes
-	        " TODO: (it looks you want to remove .dll)
-                " TODO: ---------------------------
                 cloud = cloud[:-5]
             endif
             try
@@ -4562,7 +4557,6 @@ function! s:vimim_check_mycloud_plugin()
     else
         " we do set-and-play on all systems
         let part = split(s:vimim_mycloud_url, ':')
-        " vimimdebug
         let lenpart = len(part)
         if lenpart <= 1
             call s:debugs("invalid_cloud_plugin_url","")
@@ -4615,7 +4609,7 @@ function! s:vimim_check_mycloud_plugin()
                 let s:cloud_plugin_mode = "libcall"
                 " strip off the ending .dll suffix, only required for win32
                 if has("gui_win32") && cloud[-4:] ==? ".dll"
-                    let cloud = cloud[:-4]
+                    let cloud = cloud[:-5]
                 endif
                 try
                     let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
