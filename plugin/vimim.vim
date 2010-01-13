@@ -627,7 +627,7 @@ function! s:vimim_initialize_keycode()
         let keycode = "[0-9a-z',.]"
     endif
     " --------------------------------
-    if s:shuangpin_flag > 0 && empty(s:vimim_cloud_plugin)
+    if s:shuangpin_flag > 0
         let keycode = s:im['shuangpin'][2]
     endif
     " --------------------------------
@@ -4646,6 +4646,7 @@ function! s:vimim_initialize_mycloud_plugin()
     else
         let s:vimim_cloud_plugin = cloud
         let s:vimim_cloud_sogou = -1
+        let s:shuangpin_flag = 0
         let s:im['mycloud'][0] = loaded
         let s:im['mycloud'][2] = keycode
         let s:im_primary = 'mycloud'
