@@ -1284,10 +1284,10 @@ function! s:vimim_onekey_action(onekey)
                 continue
             endif
         endfor
-        " -----------------------------------------------
         if empty(space)
+        \&& (s:vimim_chinese_punctuation>1 || s:vimim_sexy_onekey>0)
+            let msg = "OneKey to transform punctuations from english to chinese"
             let replacement = s:punctuations[char_before]
-            " -------------------------------------------
             if s:vimim_sexy_onekey > 0
                 let msg = " do smart quote for OneKey mode "
                 if char_before ==# "'"
@@ -1296,12 +1296,9 @@ function! s:vimim_onekey_action(onekey)
                     let replacement = <SID>vimim_get_double_quote()
                 endif
             endif
-            " -------------------------------------------
             let space = "\<BS>" . replacement
-        else
-            let msg = "too smart is not smart"
+            sil!exe 'sil!return "' . space . '"'
         endif
-        sil!exe 'sil!return "' . space . '"'
     endif
     " ---------------------------------------------------
     if char_before !~# s:valid_key
@@ -2154,10 +2151,10 @@ function! s:vimim_initialize_quantifiers()
     let s:quantifiers['q'] = '千仟群'
     let s:quantifiers['r'] = '日'
     let s:quantifiers['s'] = '十拾时升艘扇首双所束手'
-    let s:quantifiers['t'] = '吨条头通堂台套桶筒贴趟'
+    let s:quantifiers['t'] = '吨条头通堂台天套桶筒贴趟'
     let s:quantifiers['u'] = '微'
     let s:quantifiers['w'] = '万位味碗窝'
-    let s:quantifiers['x'] = '升席些项'
+    let s:quantifiers['x'] = '升席些项箱'
     let s:quantifiers['y'] = '月亿叶'
     let s:quantifiers['z'] = '兆只张株支枝指盏座阵桩尊则种站幢宗'
 endfunction
