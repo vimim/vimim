@@ -1990,20 +1990,16 @@ function! <SID>vimim_punctuation_on()
     endif
     " ----------------------------
     if s:chinese_punctuation > 0
-        if empty(s:vimim_cloud_plugin)
+        " TODO: should we follow valid_keys rule even when no mycloud?
+        "       if so, we should remove those from || 
+        if index(s:valid_keys, '\') < 0 || empty(s:vimim_cloud_plugin)
             inoremap <Bslash> 、
+        endif
+        if index(s:valid_keys, "'") < 0 || empty(s:vimim_cloud_plugin)
             inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
+        endif
+        if index(s:valid_keys, '"') < 0 || empty(s:vimim_cloud_plugin)
             inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
-        else
-            if index(s:valid_keys, '\') < 0
-                inoremap <Bslash> 、
-            endif
-            if index(s:valid_keys, "'") < 0
-                inoremap ' ‘’<Left>
-            endif
-            if index(s:valid_keys, '"') < 0
-                inoremap " “”<Left>
-            endif
         endif
     else
         iunmap <Bslash>
