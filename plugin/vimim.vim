@@ -287,6 +287,9 @@ function! s:vimim_initialize_session()
     let s:chinese_mode_count = 1
     let s:onekey_mode_count = 1
     " --------------------------------
+    let s:smart_single_quote = 1
+    let s:smart_double_quote = 1
+    " --------------------------------
     let s:datafile = 0
     let s:lines = []
     let s:lines_primary = []
@@ -1283,6 +1286,16 @@ function! s:vimim_onekey_action(onekey)
         " -----------------------------------------------
         if empty(space)
             let replacement = s:punctuations[char_before]
+            " -------------------------------------------
+            if s:vimim_sexy_onekey > 0
+                let msg = " do smart quote for OneKey mode "
+                if char_before ==# "'"
+                    let replacement = <SID>vimim_get_single_quote()
+                elseif char_before ==# '"'
+                    let replacement = <SID>vimim_get_double_quote()
+                endif
+            endif
+            " -------------------------------------------
             let space = "\<BS>" . replacement
         else
             let msg = "too smart is not smart"
@@ -1990,8 +2003,6 @@ function! <SID>vimim_punctuation_on()
     endif
     " ----------------------------
     if s:chinese_punctuation > 0
-        " TODO: should we follow valid_keys rule even when no mycloud?
-        "       if so, we should remove those from || 
         if index(s:valid_keys, '\') < 0 || empty(s:vimim_cloud_plugin)
             inoremap <Bslash> 、
         endif
@@ -2009,10 +2020,10 @@ function! <SID>vimim_punctuation_on()
     " ----------------------------
     let punctuations = s:punctuations
     if get(s:im['erbi'],0) > 0
-        unlet punctuations[',']
         unlet punctuations['.']
-        unlet punctuations['/']
         unlet punctuations[';']
+        unlet punctuations['/']
+        unlet punctuations[',']
         unlet punctuations["'"]
     endif
     " ----------------------------
@@ -4509,11 +4520,11 @@ function! s:vimim_check_mycloud_plugin()
         let s:cloud_plugin_func = 'do_getlocal'
         if filereadable(cloud)
             if has("gui_win32")
-                " NOTE: --------------------------- please remove NOTE
-                " NOTE: cloud = cloud[:-4]
-	        " NOTE: cloud[:-4]" remove last 3 bytes
-	        " NOTE: (it looks you want to remove .dll)
-                " NOTE: ---------------------------
+                " TODO: --------------------------- please remove TODO
+                " TODO: cloud = cloud[:-4]
+	        " TODO: cloud[:-4]" remove last 3 bytes
+	        " TODO: (it looks you want to remove .dll)
+                " TODO: ---------------------------
                 cloud = cloud[:-5]
             endif
             try
@@ -5252,6 +5263,8 @@ endfunction
 " ----------------------
 function! s:vimim_stop()
 " ----------------------
+    let s:smart_single_quote = 1
+    let s:smart_double_quote = 1
     let duration = localtime() - get(g:vimim,4)
     let g:vimim[3] += duration
     sil!autocmd! onekey_mode_autocmd
@@ -5274,8 +5287,6 @@ function! s:reset_before_anything()
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
     let s:pumvisible_reverse = 0
-    let s:smart_double_quote = 1
-    let s:smart_single_quote = 1
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
