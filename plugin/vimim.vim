@@ -172,7 +172,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
     call add(G, "g:vimim_fuzzy_search")
-    call add(G, "g:vimim_imode_comma")
+    call add(G, "g:vimim_imode_apostrophe")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_latex_suite")
@@ -364,93 +364,88 @@ function! s:vimim_dictionary_im()
     let key = 'cloud'
     let loaded = 0
     let im = '云输入'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'mycloud'
     let loaded = 0
     let im = '自己的云'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'wubi'
     let im = '五笔'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = '4corner'
     let im = '四角号码'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = '12345'
     let im = '五笔划'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'ctc'
     let im = '中文电码'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'cns11643'
     let im = '交換碼'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'english'
     let im = '英文'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'hangul'
     let im = '韩文'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'xinhua'
     let im = '新华'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'pinyin'
     let im = '拼音'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'cangjie'
     let im = '仓颉'
-    let keycode = "[a-z,.]"
+    let keycode = "[a-z.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'zhengma'
     let im = '郑码'
-    let keycode = "[a-z,.]"
-    let s:im[key]=[loaded, im, keycode]
-" -------------------------------------
-    let key = 'erbi'
-    let im = '二笔'
-    let keycode = "[a-z'.,;/]"
+    let keycode = "[a-z.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'yong'
     let im = '永码'
-    let keycode = "[a-z',.;/]"
+    let keycode = "[a-z'.;/]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'nature'
     let im = '自然'
-    let keycode = "[a-z',.]"
+    let keycode = "[a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'quick'
     let im = '速成'
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'wu'
     let im = '吴语'
-    let keycode = "[a-z',.]"
+    let keycode = "[a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'array30'
@@ -461,6 +456,11 @@ function! s:vimim_dictionary_im()
     let key = 'phonetic'
     let im = '注音'
     let keycode = "[0-9a-z.,;/]"
+    let s:im[key]=[loaded, im, keycode]
+" -------------------------------------
+    let key = 'erbi'
+    let im = '二笔'
+    let keycode = "[a-z'.,;/]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
 endfunction
@@ -626,7 +626,7 @@ function! s:vimim_initialize_keycode()
     let keycode = s:vimim_get_keycode()
     " --------------------------------
     if empty(keycode)
-        let keycode = "[0-9a-z',.]"
+        let keycode = "[0-9a-z'.]"
     endif
     " --------------------------------
     if s:shuangpin_flag > 0
@@ -1685,7 +1685,7 @@ function! s:vimim_dynamic_alphabet_trigger()
         return
     endif
     for char in s:valid_keys
-        if char !~# "[0-9,.']"
+        if char !~# "[0-9.']"
             sil!exe 'inoremap<silent> ' . char . '
             \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
             \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
@@ -1921,7 +1921,7 @@ function! s:vimim_initialize_punctuation()
         if has_key(s:punctuations, char)
             if !empty(s:vimim_cloud_plugin)
                 unlet s:punctuations[char]
-            elseif char !~# "[*,.']"
+            elseif char !~# "[*.']"
                 unlet s:punctuations[char]
             endif
         endif
@@ -2104,7 +2104,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_quantifiers()
 " ----------------------------------------
     let s:quantifiers = {}
-    if s:vimim_imode_comma < 1
+    if s:vimim_imode_apostrophe < 1
     \&& s:vimim_imode_pinyin < 1
         return
     endif
@@ -2152,10 +2152,10 @@ function! s:vimim_date_time(keyboard)
         return []
     endif
     let time = 0
-    if a:keyboard ==# ',today'
+    if a:keyboard ==# "'today"
         " 2009 year February 11 day Wednesday
         let time = strftime("%Y year %B %d day %A")
-    elseif a:keyboard ==# ',now'
+    elseif a:keyboard ==# "'now"
         " Sunday AM 8 hour 8 minute 8 second
         let time=strftime("%A %p %I hour %M minute %S second")
     endif
@@ -2178,8 +2178,8 @@ function! s:vimim_imode_number(keyboard, prefix)
         return []
     endif
     let keyboard = a:keyboard
-    if a:prefix ==# ','
-        let keyboard = substitute(keyboard,',','i','g')
+    if a:prefix ==# "'"
+        let keyboard = substitute(keyboard,"'",'i','g')
     endif
     " ------------------------------------
     if strpart(keyboard,0,2) ==# 'ii'
@@ -2601,7 +2601,7 @@ function! <SID>vimim_smart_enter()
     "   (1) after English (valid keys)    => Seamless
     "   (2) after Chinese or double Enter => Enter
     " -----------------------------------------------
-    if char_before =~# "[*,.']"
+    if char_before =~# "[*.']"
         let s:smart_enter = 0
     elseif char_before =~# s:valid_key
         let s:smart_enter += 1
@@ -2936,7 +2936,8 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         " -------------------------------------------------
         let tail = ''
-        if keyboard =~? 'vim' || !empty(s:vimim_cloud_plugin)
+        if keyboard =~? 'vim' 
+        \|| !empty(s:vimim_cloud_plugin)
             let tail = ''
         elseif keyboard =~ '[.]'
         \&& empty(s:vimim_cloud_plugin)
@@ -3786,19 +3787,19 @@ function! s:vimim_dictionary_shuangpin()
     let key = 'shuangpin'
     let loaded = '双拼'
     let im = loaded
-    let keycode = "[0-9a-z',.]"
+    let keycode = "[0-9a-z'.]"
     if s:vimim_shuangpin_abc > 0
         let im = '智能双打'
     elseif s:vimim_shuangpin_microsoft > 0
         let im = '微软'.im
-        let keycode = "[0-9a-z',.;]"
+        let keycode = "[0-9a-z'.;]"
     elseif s:vimim_shuangpin_nature > 0
         let im = "自然码".im
     elseif s:vimim_shuangpin_plusplus > 0
         let im = "拼音加加".im
     elseif s:vimim_shuangpin_purple > 0
         let im = "紫光".im
-        let keycode = "[0-9a-z',.;]"
+        let keycode = "[0-9a-z'.;]"
     else
         let s:shuangpin_flag = 0
     endif
@@ -5090,7 +5091,7 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_custom_menu_label=1
     " ------------------------------
     let s:vimim_wildcard_search=1
-    let s:vimim_imode_comma=1
+    let s:vimim_imode_apostrophe=1
     let s:vimim_imode_pinyin=-1
     let s:vimim_smart_ctrl_h=1
     let s:vimim_smart_ctrl_p=1
@@ -5415,9 +5416,9 @@ if a:start
     let last_seen_nonsense_column = start_column
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
-        " ----------------------------- xxx
+        " ----------------------------- TODO xxx 
         " how to make 88ma ,ma work in Onekey?
-        if char_before !~# "[0-9,.]"
+        if char_before !~# "[0-9.]"
             let last_seen_nonsense_column = start_column
         endif
         let char_before = current_line[start_column-1]
@@ -5561,16 +5562,16 @@ else
         endif
     endif
 
-    " [imode] magic comma: English number => Chinese number
-    " -----------------------------------------------------
-    if s:vimim_imode_comma > 0
+    " [imode] magic apostrophe: English number => Chinese number
+    " ----------------------------------------------------------
+    if s:vimim_imode_apostrophe > 0
     \&& empty(s:chinese_input_mode)
-    \&& keyboard =~# '^,'
+    \&& keyboard =~# "^'"
         let itoday_inow = s:vimim_date_time(keyboard)
         if len(itoday_inow) > 0
             return itoday_inow
         endif
-        let chinese_numbers = s:vimim_imode_number(keyboard, ',')
+        let chinese_numbers = s:vimim_imode_number(keyboard, "'")
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
         endif
