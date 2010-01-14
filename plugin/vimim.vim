@@ -4467,12 +4467,12 @@ function! s:vimim_check_mycloud_plugin()
 " --------------------------------------
     if empty(s:vimim_mycloud_url)
         " we do plug-n-play for libcall(), not for system()
-        if has("win32unix")
-            let cloud = s:path . "cygmycloud.dll"
+        if has("win32") || has("win32unix")
+            let cloud = s:path . "libmycloud.dll"
         elseif has("unix")
             let cloud = s:path . "libmycloud.so"
-        elseif has("gui_win32")
-            let cloud = s:path . "mycloud.dll"
+        else
+            return 0
         endif
         let s:cloud_plugin_mode = "libcall"
         let s:cloud_plugin_arg = ""
