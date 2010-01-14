@@ -2861,7 +2861,7 @@ function! s:vimim_popupmenu_list(matched_list)
     "-----------------------------------------
     let first_candidate = get(split(get(matched_list,0)),0)
     if !empty(s:vimim_cloud_plugin)
-        let first_candidate = get(split(first_candidate,"_"),0)
+        let first_candidate = "_"
     endif
     "-----------------------------------------
     if s:vimim_smart_ctrl_n > 0
