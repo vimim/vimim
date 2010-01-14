@@ -251,6 +251,8 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:vimim_do_cloud_sogou = 0
     let s:vimim_cloud_plugin = 0
+    let s:smart_single_quote = 1
+    let s:smart_double_quote = 1
     " --------------------------------
     let s:chinese_frequency = 0
     let s:toggle_xiangma_pinyin = 0
@@ -4313,21 +4315,8 @@ function! s:vimim_magic_tail(keyboard)
         return 0
     endif
     let magic_tail = keyboard[-1:]
-    if magic_tail =~# '\l'
-    \&& keyboard[-2:-2] ==# ','
-    \&& keyboard[-3:-3] =~# '\l'
-        let keyboard = keyboard[:-3]
-        let keyboard = substitute(keyboard,'.',"&'",'g')
-        let keyboard .= magic_tail . ','
-        let magic_tail = ','
-    endif
-    if magic_tail ==# ','
-        " -----------------------------------------------
-        " <comma> double play in OneKey Mode:
-        "   (1) after English (valid keys) => cloud at will
-        "   (2) right before last English  => cloud and superjianpin
-        "   (3) before number              => magic imode
-        " -----------------------------------------------
+    if magic_tail ==# "'"
+        let msg = "after English (valid keys) => cloud at will"
         let s:no_internet_connection = -1
         let s:vimim_do_cloud_sogou = 1
     elseif magic_tail ==# '.'
@@ -5238,6 +5227,8 @@ function! s:vimim_stop()
 " ----------------------
     let duration = localtime() - get(g:vimim,4)
     let g:vimim[3] += duration
+    let s:smart_single_quote = 1
+    let s:smart_double_quote = 1
     sil!autocmd! onekey_mode_autocmd
     sil!autocmd! chinese_mode_autocmd
     sil!call s:reset_before_stop()
@@ -5253,8 +5244,6 @@ endfunction
 function! s:reset_before_stop()
 " -----------------------------
     let s:smart_enter = 0
-    let s:smart_single_quote = 1
-    let s:smart_double_quote = 1
     let s:pumvisible_ctrl_e = 0
 endfunction
 
