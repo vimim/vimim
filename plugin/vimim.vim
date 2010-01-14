@@ -1281,7 +1281,6 @@ function! s:vimim_onekey_action(onekey)
             endif
         endfor
         if empty(space)
-        \&& (s:vimim_chinese_punctuation>1 || s:vimim_sexy_onekey>0)
             let msg = "OneKey to transform punctuations from english to chinese"
             let replacement = s:punctuations[char_before]
             if s:vimim_sexy_onekey > 0
