@@ -1684,7 +1684,6 @@ function! s:vimim_dynamic_alphabet_trigger()
     if s:chinese_input_mode < 2
         return
     endif
-    " --------------------------------------
     for char in s:valid_keys
         if char !~# "[0-9,.']"
             sil!exe 'inoremap<silent> ' . char . '
@@ -4305,22 +4304,25 @@ function! s:vimim_magic_tail(keyboard)
         return 0
     endif
     let magic_tail = keyboard[-1:]
-    if magic_tail ==# "'"
+    if magic_tail != "'"
+        return 0
+    endif
+    " ----------------------------------------------------
+    " <apostrophe> double play in OneKey Mode:
+    "   (1) English (valid keys) . '  => non-cloud at will
+    "   (2) English (valid keys)   '  =>     cloud at will
+    " ----------------------------------------------------
+    let last_but_one =  keyboard[-2:-2]
+    if  last_but_one ==# "."
+        let s:no_internet_connection = 2
+        let s:vimim_do_cloud_sogou = -1
+        let keyboard = keyboard[:-3]
+    else
         let msg = "after English (valid keys) => cloud at will"
         let s:no_internet_connection = -1
         let s:vimim_do_cloud_sogou = 1
-    elseif magic_tail ==# '.'
-        " -----------------------------------------------
-        " <dot> double play in OneKey Mode:
-        "   (1) after English (valid keys) => non-cloud at will
-        "   (2) vimim_keyboard_dot_by_dot  => sentence match
-        " -----------------------------------------------
-        let s:no_internet_connection = 2
-        let s:vimim_do_cloud_sogou = -1
-    else
-        return 0
+        let keyboard = keyboard[:-2]
     endif
-    let keyboard = keyboard[:-2]
     let magic_tail = keyboard[-1:]
     if magic_tail !~# "[0-9a-z]"
         return 0
@@ -5413,6 +5415,8 @@ if a:start
     let last_seen_nonsense_column = start_column
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
+        " ----------------------------- xxx
+        " how to make 88ma ,ma work in Onekey?
         if char_before !~# "[0-9,.]"
             let last_seen_nonsense_column = start_column
         endif
