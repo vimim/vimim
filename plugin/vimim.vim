@@ -1283,7 +1283,7 @@ function! s:vimim_onekey_action(onekey)
             endif
         endfor
         if empty(space)
-            let msg = "OneKey to transform punctuations from english to chinese"
+            let msg = "transform punctuation from english to chinese"
             let replacement = s:punctuations[char_before]
             if s:vimim_sexy_onekey > 0
                 let msg = " do smart quote for OneKey mode "
@@ -1372,7 +1372,7 @@ function! <SID>vimim_action_label(n)
     if pumvisible()
         let n = match(s:abcdefghi, label)
         let counts = repeat("\<Down>", n)
-        let yes = s:vimim_pumvisible_yes()
+        let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
         let label = counts . yes
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -1559,17 +1559,6 @@ function! s:vimim_popup_word()
     let current_line = getline(".")
     let word = strpart(current_line, column_start, range)
     return word
-endfunction
-
-" --------------------------------
-function! s:vimim_pumvisible_yes()
-" --------------------------------
-    let key = ''
-    if pumvisible()
-        call s:reset_popupmenu_matched_list()
-        let key = "\<C-Y>"
-    endif
-    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ======================================= }}}
