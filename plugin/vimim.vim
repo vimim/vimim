@@ -2947,7 +2947,7 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         " -------------------------------------------------
         let tail = ''
-        if keyboard =~? 'vim'
+        if keyboard =~? 'vim' || !empty(s:vimim_cloud_plugin)
             let tail = ''
         elseif keyboard =~ '[.]'
         \&& empty(s:vimim_cloud_plugin)
@@ -4677,13 +4677,13 @@ function! s:vimim_process_mycloud_output(keyboard, output)
         if s:localization > 0
             let chinese = s:vimim_i18n_read(chinese)
         endif
-        if empty(chinese)
+        if empty(chinese) || get(item_list,1,-1)<0
+            " bypass the debug line which have -1
             continue
         endif
         let extra_text = get(item_list,2)
-        let english = strpart(a:keyboard, 0, get(item_list,1))
-        let english .= '_' . extra_text
-        let new_item = english . " " . chinese
+        let english = a:keyboard[get(item_list,1):]
+        let new_item = extra_text . " " . chinese . english
         call add(menu, new_item)
     endfor
     return menu
