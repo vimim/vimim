@@ -2816,6 +2816,9 @@ function! s:vimim_menu_4corner_filter(matched_list)
     let keyboard = strpart(keyboard, match(keyboard,'\l'))
     let keyboards = [keyboard, s:menu_4corner_filter]
     let results = s:vimim_diy_results(keyboards, a:matched_list)
+    if empty(results)
+        let results = a:matched_list
+    endif
     return results
 endfunction
 
@@ -2823,9 +2826,6 @@ endfunction
 function! s:vimim_pageup_pagedown(matched_list)
 " ---------------------------------------------
     let matched_list = a:matched_list
-    if empty(s:pageup_pagedown)
-        return matched_list
-    endif
     let length = len(matched_list)
     if length > &pumheight
         let page = s:pageup_pagedown * &pumheight
@@ -2873,7 +2873,9 @@ function! s:vimim_popupmenu_list(matched_list)
     "-----------------------------------------
     let s:popupmenu_matched_list = copy(matched_list)
     let matched_list = s:vimim_menu_4corner_filter(matched_list)
-    let matched_list = s:vimim_pageup_pagedown(matched_list)
+    if s:pageup_pagedown > 0
+        let matched_list = s:vimim_pageup_pagedown(matched_list)
+    endif
     "-----------------------------------------
     let keyboard = s:keyboard_leading_zero
     let matched = match(keyboard, first_candidate)
