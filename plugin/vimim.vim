@@ -1298,11 +1298,11 @@ function! s:vimim_onekey_action(onekey)
         endif
     endif
     " ---------------------------------------------------
-    if char_before !~# s:valid_key
+    if char_before !~# s:valid_key || char_before =~ "[,]"
         return a:onekey
     endif
     " ---------------------------------------------------
-    if s:pattern_not_found < 1 || char_before =~ '[,.]'
+    if s:pattern_not_found < 1 || char_before =~ "[.']"
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     else
         let space = a:onekey
