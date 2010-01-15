@@ -5244,8 +5244,6 @@ function! s:vimim_stop()
 " ----------------------
     let duration = localtime() - get(g:vimim,4)
     let g:vimim[3] += duration
-    let s:smart_single_quote = 1
-    let s:smart_double_quote = 1
     sil!autocmd! onekey_mode_autocmd
     sil!autocmd! chinese_mode_autocmd
     sil!call s:reset_before_stop()
