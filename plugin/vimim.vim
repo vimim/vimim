@@ -977,23 +977,6 @@ function! s:vimim_i18n_iconv(line)
     return line
 endfunction
 
-" -------------------------------------
-function! s:vimim_hex_unicode(keyboard)
-" -------------------------------------
-    if s:chinese_input_mode > 1
-    \|| s:pinyin_and_4corner < 2
-    \|| match(a:keyboard, '^\d\{4}$') != 0
-        return []
-    endif
-    let dddd = str2nr(a:keyboard, 16)
-    if dddd > s:max_ddddd || dddd < 256
-        return []
-    endif
-    let unicode = nr2char(dddd)
-    let menu = 'u' . a:keyboard .'　'. dddd
-    return [menu.' '.unicode]
-endfunction
-
 " ------------------
 function! CJK16(...)
 " ------------------
@@ -5773,15 +5756,6 @@ else
     " ------------------------------------------------
     let pattern = "\\C" . "^" . keyboard
     let match_start = match(lines, pattern)
-
-    " [unicode] assume hex unicode if no match for 4 corner
-    " -----------------------------------------------------
-    if match_start < 0
-        let results = s:vimim_hex_unicode(keyboard)
-        if len(results) > 0
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
 
     " word matching algorithm for Chinese word segmentation
     " -----------------------------------------------------
