@@ -2867,17 +2867,10 @@ function! s:vimim_popupmenu_list(matched_list)
         let matched_list = s:vimim_pageup_pagedown(matched_list)
     endif
     "-----------------------------------------
-    let keyboard = s:keyboard_leading_zero
-    let matched = match(keyboard, first_candidate)
-    "-----------------------------------------
-    if matched > 0
-        let msg = "............zuorichongxian"
-        let keyboard = strpart(keyboard, matched)
-    endif
-    " ----------------------
     let menu = 0
     let label = 1
     let popupmenu_list = []
+    let keyboard = s:keyboard_leading_zero
     " ----------------------
     for pair in matched_list
     " ----------------------
