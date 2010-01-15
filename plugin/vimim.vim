@@ -169,7 +169,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_datafile_has_english")
     call add(G, "g:vimim_datafile_has_pinyin")
     call add(G, "g:vimim_datafile_is_not_utf8")
-    call add(G, "g:vimim_datafile_virtual")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
     call add(G, "g:vimim_fuzzy_search")
@@ -1147,9 +1146,9 @@ function! s:vimim_internal_codes(numbers)
     return internal_codes
 endfunction
 
-" -------------------------------------------
-function! s:vimim_internal_datafile(keyboard)
-" -------------------------------------------
+" ------------------------------------------
+function! s:vimim_without_datafile(keyboard)
+" ------------------------------------------
     let keyboard = a:keyboard
     if  keyboard =~ '\l' && len(keyboard) == 1
         let msg = "make abcdefghijklmnopqrst alive"
@@ -1162,29 +1161,29 @@ function! s:vimim_internal_datafile(keyboard)
     let start = 19968
     if  s:encoding ==# "chinese"
         let start = 0xB0A1
-        let gbk['a'] = 0xB0A1  
-        let gbk['b'] = 0xB0C5  
-        let gbk['c'] = 0xB2C1  
-        let gbk['d'] = 0xB4EE  
-        let gbk['e'] = 0xB6EA  
-        let gbk['f'] = 0xB7A2  
-        let gbk['g'] = 0xB8C1  
-        let gbk['h'] = 0xB9FE  
-        let gbk['j'] = 0xBBF7  
-        let gbk['k'] = 0xBFA6  
-        let gbk['l'] = 0xC0AC  
-        let gbk['m'] = 0xC2E8  
-        let gbk['n'] = 0xC4C3  
-        let gbk['o'] = 0xC5B6  
-        let gbk['p'] = 0xC5BE  
-        let gbk['q'] = 0xC6DA  
-        let gbk['r'] = 0xC8BB  
-        let gbk['s'] = 0xC8F6  
-        let gbk['t'] = 0xCBFA  
-        let gbk['w'] = 0xCDDA  
-        let gbk['x'] = 0xCEF4  
-        let gbk['y'] = 0xD1B9  
-        let gbk['z'] = 0xD4D1  
+        let gbk['a'] = 0xB0A1
+        let gbk['b'] = 0xB0C5
+        let gbk['c'] = 0xB2C1
+        let gbk['d'] = 0xB4EE
+        let gbk['e'] = 0xB6EA
+        let gbk['f'] = 0xB7A2
+        let gbk['g'] = 0xB8C1
+        let gbk['h'] = 0xBAA1
+        let gbk['j'] = 0xBBF7
+        let gbk['k'] = 0xBFA6
+        let gbk['l'] = 0xC0AC
+        let gbk['m'] = 0xC2E8
+        let gbk['n'] = 0xC4C3
+        let gbk['o'] = 0xC5B6
+        let gbk['p'] = 0xC5BE
+        let gbk['q'] = 0xC6DA
+        let gbk['r'] = 0xC8BB
+        let gbk['s'] = 0xC8F6
+        let gbk['t'] = 0xCBFA
+        let gbk['w'] = 0xCDDA
+        let gbk['x'] = 0xCEF4
+        let gbk['y'] = 0xD1B9
+        let gbk['z'] = 0xD4D1
     elseif  s:encoding ==# "taiwan"
         let start = 42048
     endif
@@ -1200,6 +1199,9 @@ function! s:vimim_internal_datafile(keyboard)
     if  s:encoding ==# "chinese" && has_key(gbk, keyboard)
         let start = gbk[keyboard]
         let next_char = nr2char(char2nr(keyboard)+1)
+        if !has_key(gbk, next_char)
+            let next_char = nr2char(char2nr(keyboard)+2)
+        endif
         if has_key(gbk, next_char)
             let end = gbk[next_char] - 1
         else
@@ -5205,7 +5207,6 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=12
     " ------------------------------ debug
-    let s:vimim_datafile_virtual=1
     let s:vimim_custom_laststatus=0
     let s:vimim_custom_menu_label=1
     " ------------------------------
@@ -5650,10 +5651,24 @@ else
         endif
     endif
 
-    " play with super light-weight internal-code
-    " ------------------------------------------
-    if s:vimim_datafile_virtual > 0
-        let results = s:vimim_internal_datafile(keyboard)
+    " only play with portion of datafile of interest
+    " ----------------------------------------------
+    let lines = s:vimim_datafile_range(keyboard)
+
+    " try super-internal-code if no single datafile nor cloud
+    " -------------------------------------------------------
+    let use_virtual_datafile = 0
+    if empty(lines) && empty(s:www_executable)
+        let use_virtual_datafile = 1
+    elseif s:vimimdebug == 9
+    \&& len(keyboard) == 2
+    \&& keyboard[0:0] ==# 'u'
+        let keyboard = keyboard[-1:-1]
+        let use_virtual_datafile = 1
+    endif
+    if use_virtual_datafile > 0
+        let msg = " play with super light-weight internal-code "
+        let results = s:vimim_without_datafile(keyboard)
         if len(results) > 0
             let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
@@ -5783,20 +5798,6 @@ else
         let results = s:vimim_wubi(keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " now only play with portion of datafile of interest
-    " --------------------------------------------------
-    let lines = s:vimim_datafile_range(keyboard)
-
-    " try super-internal-code if no single datafile nor cloud
-    " -------------------------------------------------------
-    if empty(lines) && empty(s:www_executable)
-        let results = s:vimim_internal_datafile(keyboard)
-        if len(results) > 0
-            let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
