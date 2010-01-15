@@ -1505,12 +1505,16 @@ function! g:vimim_pumvisible_p_paste()
     if len(pastes) == len(words)
         let words = copy(pastes)
     endif
-    let line = line(".")
-    let current_positions = getpos(".")
-    let current_positions[2] = 1
-    call setpos(".", current_positions)
-    let current_positions[1] = line + len(words) - 1
-    call setline(line, words)
+    if s:vimimdebug < 9
+        put=words
+    else
+        let line = line(".")
+        let current_positions = getpos(".")
+        let current_positions[2] = 1
+        call setpos(".", current_positions)
+        let current_positions[1] = line + len(words) - 1
+        call setline(line, words)
+    endif
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
         let string_words = ''
         for line in words
