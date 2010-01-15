@@ -5523,19 +5523,29 @@ else
     endif
 
     let keyboard = a:keyboard
+    if empty(s:keyboard_leading_zero)
+        let s:keyboard_leading_zero = keyboard
+    endif
     if empty(str2nr(keyboard))
         let msg = "the input is alphabet only"
     else
         let keyboard = s:keyboard_leading_zero
     endif
 
-    " ignore non-sense keyboard inputs
-    " --------------------------------
+    " ignore all-zeroes keyboard inputs
+    " ---------------------------------
     if empty(s:keyboard_leading_zero)
-    \|| keyboard !~# s:valid_key
         return
     endif
+
+    " ignore non-sense keyboard inputs
     " --------------------------------
+    if keyboard !~# s:valid_key
+        return
+    endif
+
+    " ignore non-sense one char input
+    " -------------------------------
     if empty(s:vimim_sexy_onekey)
     \&& len(keyboard) == 1
     \&& keyboard !~# '\w'
