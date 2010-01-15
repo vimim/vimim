@@ -4256,7 +4256,6 @@ function! s:vimim_plug_n_play_www_sogou()
             if empty(s:vimim_cloud_sogou)
                 let s:vimim_cloud_sogou = 1
             endif
-            let s:www_executable = wget
         endif
     endif
 endfunction
@@ -4268,19 +4267,36 @@ function! s:vimim_initialize_cloud()
     if !exists('*system')
         return
     endif
+    " step 0: try to find libmycloud
+    " ------------------------
+    if has("win32") || has("win32unix")
+        let cloud = s:path . "libmycloud.dll"
+    else
+        let cloud = s:path . "libmycloud.so"
+    endif
+    let s:www_libcall = 0
+    if filereadable(cloud)
+        let ret = libcall(cloud, "do_geturl", "__isvalid")
+        if ret ==# "True"
+            s:www_executable = cloud
+            s:www_libcall = 1
+        endif
+    endif
     " step 1: try to find wget
     " ------------------------
-    let wget = 0
-    if s:www_executable =~ "wget.exe"
-        let wget = s:www_executable
-    elseif executable('wget')
-        let wget = "wget"
-    endif
-    if empty(wget)
-        let msg = "wget is not available"
-    else
-        let wget_option = " -qO - --timeout 20 -t 10 "
-        let s:www_executable = wget . wget_option
+    if empty(s:www_executable)
+        let wget = 0
+        if executable(s:path."wget.exe")
+            let wget = s:path."wget.exe"
+        elseif executable('wget')
+            let wget = "wget"
+        endif
+        if empty(wget)
+            let msg = "wget is not available"
+        else
+            let wget_option = " -qO - --timeout 20 -t 10 "
+            let s:www_executable = wget . wget_option
+        endif
     endif
     " step 2: try to find curl if no wget
     " -----------------------------------
@@ -4386,7 +4402,11 @@ function! s:vimim_get_cloud_sogou(keyboard)
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     " --------------------------------------------------------------
     try
-        let output = system(s:www_executable . input)
+        if s:www_libcall
+            let output = libcall(s:www_executable, "do_geturl", keyboard)
+        else
+            let output = system(s:www_executable . input)
+        endif
     catch /.*/
         let msg = "it looks like sogou has trouble with its cloud?"
         let output = 0
@@ -4455,7 +4475,11 @@ function! s:vimim_access_mycloud_plugin(cloud, cmd)
         return system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        let ret = system(s:www_executable . shellescape(a:cloud . input))
+        if s:www_libcall
+            let ret = libcall(s:www_executable, "do_geturl", input)
+        else
+            let ret = system(s:www_executable . shellescape(a:cloud . input))
+        endif
         let output = s:vimim_rot13(ret)
         let ret = s:vimim_url_xx_to_chinese(output)
         return ret
