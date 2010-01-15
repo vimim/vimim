@@ -4256,6 +4256,7 @@ function! s:vimim_plug_n_play_www_sogou()
             if empty(s:vimim_cloud_sogou)
                 let s:vimim_cloud_sogou = 1
             endif
+            let s:www_executable = wget
         endif
     endif
 endfunction
@@ -4267,36 +4268,19 @@ function! s:vimim_initialize_cloud()
     if !exists('*system')
         return
     endif
-    " step 0: try to find libmycloud
-    " ------------------------
-    if has("win32") || has("win32unix")
-        let cloud = s:path . "libmycloud.dll"
-    else
-        let cloud = s:path . "libmycloud.so"
-    endif
-    let s:www_libcall = 0
-    if filereadable(cloud)
-        let ret = libcall(cloud, "do_geturl", "__isvalid")
-        if ret ==# "True"
-            s:www_executable = cloud
-            s:www_libcall = 1
-        endif
-    endif
     " step 1: try to find wget
     " ------------------------
-    if empty(s:www_executable)
-        let wget = 0
-        if executable(s:path."wget.exe")
-            let wget = s:path."wget.exe"
-        elseif executable('wget')
-            let wget = "wget"
-        endif
-        if empty(wget)
-            let msg = "wget is not available"
-        else
-            let wget_option = " -qO - --timeout 20 -t 10 "
-            let s:www_executable = wget . wget_option
-        endif
+    let wget = 0
+    if s:www_executable =~ "wget.exe"
+        let wget = s:www_executable
+    elseif executable('wget')
+        let wget = "wget"
+    endif
+    if empty(wget)
+        let msg = "wget is not available"
+    else
+        let wget_option = " -qO - --timeout 20 -t 10 "
+        let s:www_executable = wget . wget_option
     endif
     " step 2: try to find curl if no wget
     " -----------------------------------
@@ -4402,11 +4386,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     " --------------------------------------------------------------
     try
-        if s:www_libcall
-            let output = libcall(s:www_executable, "do_geturl", keyboard)
-        else
-            let output = system(s:www_executable . input)
-        endif
+        let output = system(s:www_executable . input)
     catch /.*/
         let msg = "it looks like sogou has trouble with its cloud?"
         let output = 0
@@ -4475,11 +4455,7 @@ function! s:vimim_access_mycloud_plugin(cloud, cmd)
         return system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        if s:www_libcall
-            let ret = libcall(s:www_executable, "do_geturl", input)
-        else
-            let ret = system(s:www_executable . shellescape(a:cloud . input))
-        endif
+        let ret = system(s:www_executable . shellescape(a:cloud . input))
         let output = s:vimim_rot13(ret)
         let ret = s:vimim_url_xx_to_chinese(output)
         return ret
@@ -5438,43 +5414,30 @@ if a:start
     endif
 
     let last_seen_nonsense_column = start_column
+    let all_digit = 1
 
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
         if char_before !~# "[0-9.]"
             let last_seen_nonsense_column = start_column
         endif
+        if char_before =~# '\l' && all_digit > 0
+            let all_digit = 0
+        endif
         let char_before = current_line[start_column-1]
     endwhile
 
-    let start_column = last_seen_nonsense_column
+    if all_digit < 1
+        let start_column = last_seen_nonsense_column
+    endif
 
-" we want all digits work also ... HOW?
-" ------------------------------------------------------- trash
-""  let digital_start_column = start_column
-""  while digital_start_column > 0 && char_before =~# s:valid_key
-""      let digital_start_column -= 1
-""      if char_before =~# "\l"
-""          let last_seen_nonsense_column = digital_start_column
-""      endif
-""      let char_before = current_line[digital_start_column-1]
-""  endwhile
-" -------------------------------------------------------
-        " TODO: above logic solve:
-        "        we want ma7712 work
-        "        we do not want  .ma work
-        "        we do not want 7712ma work!!!
-        " ------------------------------------- to be deleted!!!
-        " we  want 7712   work!!!
-        " ------------------------------------- xxx 
- "  if empty(s:chinese_input_mode)
- "      let msg = "OneKey needs play with digits"
- "  elseif s:only_4corner_or_12345 > 0
- "      let msg = "need to build the best digial input method"
- "  else
- "      let start_column = last_seen_nonsense_column
- "  endif
-" -------------------------------------------------------
+    " HOW is done!  Any other cases?   
+    " ------------------------------------------------- TODO
+    "  assert ma7712  =>  马
+    "  assert .ma     =>  .馬
+    "  assert 7712ma  =>  7712馬
+    "  assert 7712    =>  马
+    " ------------------------------------------------- to_be_removed
 
     let s:start_row_before = start_row
     let s:current_positions = current_positions
