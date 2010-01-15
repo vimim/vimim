@@ -1067,61 +1067,55 @@ endfunction
 " ---------------------------------------
 function! s:vimim_internal_code(keyboard)
 " ---------------------------------------
+    let keyboard = a:keyboard
     if s:chinese_input_mode > 1
-    \|| strlen(a:keyboard) > 5
-    \|| strlen(a:keyboard) < 4
+    \|| strlen(keyboard) != 5
+        return []
+    endif
+    if keyboard =~# '^\d\{5}$'
+    \|| keyboard =~# '^u\x\{4}$'
+        let msg = "limit two ways of playing internal code"
+    else
         return []
     endif
     let s:unicode_menu_display_flag = 0
     let numbers = []
-    let keyboard = a:keyboard
-    let unicode_prefix = 'u'
-    let last_char = keyboard[-1:]
-    " support internal-code popup menu, if ending with 'u'
-    " ----------------------------------------------------
-    if last_char == unicode_prefix
-        let keyboard = keyboard[:-2]
-        if keyboard =~ '^\d\{4}$'        "| 2222u
-            let digit_ranges = range(10)
-            for i in digit_ranges
-                let keyboard = strpart(keyboard,0,4) . i
-                let digit = str2nr(keyboard)
-                call add(numbers, digit)
-            endfor
-        elseif keyboard =~ '^\x\{3}$'    "| 808u
+    let first_char = keyboard[0:0]
+    let last_char = keyboard[-1:-1]
+    " --------------------------------------------------
+    if last_char ==# '0'
+        let digit_without_zero = keyboard[:-2]
+        if first_char ==# 'u'
+            let msg = " do hex internal-code popup menu, eg: u8080"
+            let digit_without_zero = digit_without_zero[1:]
             let hex_ranges = extend(range(10),['a','b','c','d','e','f'])
             for i in hex_ranges
-                let keyboard = strpart(keyboard,0,3) . i
-                let digit = str2nr(keyboard, 16)
+                let digit = str2nr(digit_without_zero.i, 16)
+                call add(numbers, digit)
+            endfor
+        else
+            let msg = " do decimal internal-code popup menu, eg: 22220"
+            for i in range(10)
+                let digit = str2nr(digit_without_zero.i)
                 call add(numbers, digit)
             endfor
         endif
-        let msg = "support direct unicode insert by 22221 or u808f"
     else
-    " -----------------------------------------------------
-        if keyboard =~ '^\d\{5}$'     "| 32911
-            let numbers = [str2nr(keyboard)]
-        elseif keyboard =~ '\x\{4}$'  "| 808f
-            let four_hex   = match(keyboard, '^\x\{4}$')
-            let four_digit = match(keyboard, '^\d\{4}$')
-            if empty(four_hex) && four_digit < 0
-                let keyboard = unicode_prefix . keyboard
-            endif
-            if strpart(keyboard,0,1) == unicode_prefix
-                let keyboard = strpart(keyboard,1)
-            else
-                return []
-            endif
-            let ddddd = str2nr(keyboard, 16)
-            if ddddd > s:max_ddddd
+        if first_char ==# 'u'
+            let msg = " direct hex unicode insert, eg: u808f"
+            let dddd = str2nr(keyboard[1:], 16)
+            if dddd > s:max_ddddd
                 return []
             else
-                let numbers = [ddddd]
+                let numbers = [dddd]
             endif
         else
-            return []
+            let msg = " direct decimal unicode insert, eg: 22221"
+            let ddddd = str2nr(keyboard, 10)
+            let numbers = [ddddd]
         endif
     endif
+    " --------------------------------------------------
     let internal_codes = []
     for digit in numbers
         let hex = printf('%04x', digit)
