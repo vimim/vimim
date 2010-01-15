@@ -2927,7 +2927,7 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         " -------------------------------------------------
         let tail = ''
-        if keyboard =~? 'vim' 
+        if keyboard =~? 'vim'
         \|| !empty(s:vimim_cloud_plugin)
             let tail = ''
         elseif keyboard =~ '[.]'
@@ -5436,9 +5436,13 @@ if a:start
     let last_seen_nonsense_column = start_column
     let all_digit = 1
 
+    let nonsense_patter = "[0-9.']"
+    if get(s:im['pinyin'],0) > 0
+        let nonsense_patter = "[0-9.]"
+    endif
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
-        if char_before !~# "[0-9.]"
+        if char_before !~# nonsense_patter
             let last_seen_nonsense_column = start_column
         endif
         if char_before =~# '\l' && all_digit > 0
@@ -5451,7 +5455,7 @@ if a:start
         let start_column = last_seen_nonsense_column
     endif
 
-    " HOW is done!  Any other cases?   
+    " HOW is done!  Any other cases?
     " ------------------------------------------------- TODO
     "  assert ma7712  =>  马
     "  assert .ma     =>  .馬
@@ -5604,7 +5608,7 @@ else
         endif
     endif
 
-    " [cloud] magic trailing apostrophe to control cloud or not cloud 
+    " [cloud] magic trailing apostrophe to control cloud or not cloud
     " ---------------------------------------------------------------
     let keyboard2 = s:vimim_magic_tail(keyboard)
     if empty(keyboard2)
