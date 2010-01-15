@@ -191,6 +191,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_smart_ctrl_n")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
+    call add(G, "g:vimim_wget_dll")
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimimdebug")
@@ -4236,6 +4237,17 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_plug_n_play_www_sogou()
 " ---------------------------------------
+    " Windows 'set and play' interal wget: libmycloud.dll
+    " ---------------------------------------------------
+    if has("win32") || has("win32unix")
+        if empty(s:vimim_wget_dll)
+            let msg = " libmycloud.dll is not set by user"
+        else
+            let s:vimim_cloud_sogou = 1
+            return
+        endif
+    endif
+    " -----------------------------------
     if empty(s:datafile_primary)
         if (executable('wget') || executable('curl'))
             if empty(s:vimim_cloud_sogou)
@@ -4245,6 +4257,7 @@ function! s:vimim_plug_n_play_www_sogou()
         endif
     endif
     " Windows 'plug and play' (throw wget.exe to plugin directory)
+    " ------------------------------------------------------------
     if has("win32") || has("win32unix")
         let wget = s:path . "wget.exe"
         if executable(wget)
@@ -4263,9 +4276,13 @@ function! s:vimim_initialize_cloud()
         return
     endif
     " step 0: try to find libmycloud
-    " ------------------------
+    " ------------------------------
     if has("win32") || has("win32unix")
-        let cloud = s:path . "libmycloud.dll"
+        if empty(s:vimim_wget_dll)
+            let cloud = s:vimim_wget_dll
+        else
+            let cloud = s:path . "libmycloud.dll"
+        endif
     else
         let cloud = s:path . "libmycloud.so"
     endif
@@ -5111,6 +5128,7 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=12
     " ------------------------------ debug
+    let s:vimim_wget_dll="C:/home/vimim/mycloud/client/libmycloud.dll"
     let s:vimim_custom_laststatus=0
     let s:vimim_custom_menu_label=1
     " ------------------------------
