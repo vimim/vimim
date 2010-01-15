@@ -4278,8 +4278,8 @@ function! s:vimim_initialize_cloud()
     if filereadable(cloud)
         let ret = libcall(cloud, "do_geturl", "__isvalid")
         if ret ==# "True"
-            s:www_executable = cloud
-            s:www_libcall = 1
+            let s:www_executable = cloud
+            let s:www_libcall = 1
         endif
     endif
     " step 1: try to find wget
@@ -4396,15 +4396,16 @@ function! s:vimim_get_cloud_sogou(keyboard)
     " (1) examples: piao => pi'ao 皮袄  xian => xi'an 西安
     " (2) add double quotes between keyboard
     " (3) test: xi'anmeimeidepi'aosuifengpiaoyang
-    let input = cloud . '"' . keyboard . '".key'
     let output = 0
     " --------------------------------------------------------------
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     " --------------------------------------------------------------
     try
         if s:www_libcall
-            let output = libcall(s:www_executable, "do_geturl", keyboard)
+            let input = cloud . keyboard . '".key'
+            let output = libcall(s:www_executable, "do_geturl", input)
         else
+            let input = cloud . '"' . keyboard . '".key'
             let output = system(s:www_executable . input)
         endif
     catch /.*/
@@ -4476,7 +4477,7 @@ function! s:vimim_access_mycloud_plugin(cloud, cmd)
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
         if s:www_libcall
-            let ret = libcall(s:www_executable, "do_geturl", input)
+            let ret = libcall(s:www_executable, "do_geturl", a:cloud . input)
         else
             let ret = system(s:www_executable . shellescape(a:cloud . input))
         endif
@@ -4709,9 +4710,13 @@ endfunction
 " -------------------------------------
 function! s:vimim_url_xx_to_chinese(xx)
 " -------------------------------------
-    let input = a:xx
-    let output = substitute(input, '%\(\x\x\)',
-                \ '\=eval(''"\x''.submatch(1).''"'')','g')
+    if s:www_libcall
+        let output = libcall(s:www_executable, "do_unquote", a:xx)
+    else
+        let input = a:xx
+        let output = substitute(input, '%\(\x\x\)',
+                    \ '\=eval(''"\x''.submatch(1).''"'')','g')
+    endif
     return output
 endfunction
 
