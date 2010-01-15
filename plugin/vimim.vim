@@ -986,7 +986,7 @@ function! s:vimim_hex_unicode(keyboard)
         return []
     endif
     let dddd = str2nr(a:keyboard, 16)
-    if dddd > s:max_ddddd
+    if dddd > s:max_ddddd || dddd < 256
         return []
     endif
     let unicode = nr2char(dddd)
@@ -4304,7 +4304,7 @@ function! s:vimim_initialize_cloud()
             " NOTE: if we come here, it means wget_dll is used
             " NOTE: No need to used wget.exe or curl.exe
             " NOTE: add return below
-            " NOTE: need to make sure s:www_executable from DLL is consistent 
+            " NOTE: need to make sure s:www_executable from DLL is consistent
             " --------------------------------------------------
             return
         endif
@@ -5531,16 +5531,15 @@ else
 
     " ignore non-sense keyboard inputs
     " --------------------------------
-    if empty(keyboard)
+    if empty(s:keyboard_leading_zero)
     \|| keyboard !~# s:valid_key
         return
     endif
     " --------------------------------
     if empty(s:vimim_sexy_onekey)
-        if len(keyboard) == 1
-        \&& keyboard !~# '\w'
-            return
-        endif
+    \&& len(keyboard) == 1
+    \&& keyboard !~# '\w'
+        return
     endif
 
     " use cached list when input-memory is used
@@ -5619,8 +5618,7 @@ else
 
     " [imode] magic 'i': English number => Chinese number
     " ---------------------------------------------------
-    if s:vimim_imode_pinyin > 0
-    \&& keyboard =~# '^i'
+    if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
         let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
