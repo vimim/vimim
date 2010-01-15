@@ -4948,9 +4948,9 @@ function! s:vimim_diy_keyboard2number(keyboard)
     " -----------------------------------------
     let alphabet_length = 1
     if len(keyboard) == 5
-        let zi = "mljjfo => ml7140 => ['ml', 71, 40]"
+        let zi = "mjjas  => m7712  => ['m', 7712]"
     elseif len(keyboard) == 6
-        let ci = "mjjas  => m7712  => ['m', 7712]"
+        let ci = "mljjfo => ml7140 => ['ml', 71, 40]"
         let alphabet_length = 2
     else
         return []
@@ -5414,23 +5414,43 @@ if a:start
     endif
 
     let last_seen_nonsense_column = start_column
+
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
-        " ----------------------------- TODO xxx 
-        " how to make 88ma ,ma work in Onekey?
         if char_before !~# "[0-9.]"
             let last_seen_nonsense_column = start_column
         endif
         let char_before = current_line[start_column-1]
     endwhile
 
-    if empty(s:chinese_input_mode)
-        let msg = "OneKey needs play with digits, comma and dot"
-    elseif s:only_4corner_or_12345 > 0
-        let msg = "need to build the best digial input method"
-    else
-        let start_column = last_seen_nonsense_column
-    endif
+    let start_column = last_seen_nonsense_column
+
+" we want all digits work also ... HOW?
+" ------------------------------------------------------- trash
+""  let digital_start_column = start_column
+""  while digital_start_column > 0 && char_before =~# s:valid_key
+""      let digital_start_column -= 1
+""      if char_before =~# "\l"
+""          let last_seen_nonsense_column = digital_start_column
+""      endif
+""      let char_before = current_line[digital_start_column-1]
+""  endwhile
+" -------------------------------------------------------
+        " TODO: above logic solve:
+        "        we want ma7712 work
+        "        we do not want  .ma work
+        "        we do not want 7712ma work!!!
+        " ------------------------------------- to be deleted!!!
+        " we  want 7712   work!!!
+        " ------------------------------------- xxx 
+ "  if empty(s:chinese_input_mode)
+ "      let msg = "OneKey needs play with digits"
+ "  elseif s:only_4corner_or_12345 > 0
+ "      let msg = "need to build the best digial input method"
+ "  else
+ "      let start_column = last_seen_nonsense_column
+ "  endif
+" -------------------------------------------------------
 
     let s:start_row_before = start_row
     let s:current_positions = current_positions
@@ -5562,8 +5582,8 @@ else
         endif
     endif
 
-    " [imode] magic apostrophe: English number => Chinese number
-    " ----------------------------------------------------------
+    " [imode] magic leading apostrophe: universal imode
+    " -------------------------------------------------
     if s:vimim_imode_apostrophe > 0
     \&& empty(s:chinese_input_mode)
     \&& keyboard =~# "^'"
@@ -5577,10 +5597,8 @@ else
         endif
     endif
 
-    " process magic english comma and dot at the end
-    " (1) english comma for always cloud
-    " (2) english period for always non-cloud
-    " ----------------------------------------------
+    " [cloud] magic trailing apostrophe to control cloud or not cloud 
+    " ---------------------------------------------------------------
     let keyboard2 = s:vimim_magic_tail(keyboard)
     if empty(keyboard2)
         let msg = "who cares about such a magic?"
@@ -5688,7 +5706,9 @@ else
 
     " break up dot-separated sentence
     " -------------------------------
-    if keyboard =~# '[.]'
+    if keyboard =~ '[.]'
+    \&& keyboard[0:0] != '.'
+    \&& keyboard[-1:-1] != '.'
         let keyboards = split(keyboard, '[.]')
         if len(keyboards) > 0
             let msg = "enjoy.1010.2523.4498.7429.girl"
