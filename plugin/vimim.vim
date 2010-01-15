@@ -1206,6 +1206,9 @@ function! s:vimim_start_onekey()
 " ------------------------------
     let s:chinese_input_mode = 0
     let s:onekey_mode_count += 1
+    if s:vimim_sexy_onekey > 0
+        set noruler
+    endif
     " ----------------------------------------------------------
     " <OneKey> triple play
     "   (1) after English (valid keys)   => trigger omni popup
@@ -1213,7 +1216,6 @@ function! s:vimim_start_onekey()
     "   (3) after Chinese (invalid keys) => out of OneKey mode
     " ----------------------------------------------------------
     sil!call s:vimim_start()
-    sil!call s:vimim_i_laststatus_on()
     sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_navigation_label_on()
     sil!call s:vimim_action_label_on()
@@ -1719,10 +1721,6 @@ endfunction
 " ---------------------------------
 function! s:vimim_i_laststatus_on()
 " ---------------------------------
-    if s:vimim_sexy_onekey > 0
-        set noruler
-    endif
-    " -----------------------------
     if s:vimim_custom_laststatus < 1
         let msg = "never touch the laststatus"
     else
