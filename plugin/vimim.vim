@@ -169,6 +169,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_datafile_has_english")
     call add(G, "g:vimim_datafile_has_pinyin")
     call add(G, "g:vimim_datafile_is_not_utf8")
+    call add(G, "g:vimim_datafile_virtual")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
     call add(G, "g:vimim_fuzzy_search")
@@ -262,7 +263,6 @@ function! s:vimim_initialize_session()
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
     let s:four_corner_lines = []
-    let s:unicode_menu_display_flag = 0
     " --------------------------------
     let s:im_primary = 0
     let s:im_secondary = 0
@@ -895,6 +895,7 @@ call add(s:vimims, VimIM)
 " -------------------------------------
 function! s:vimim_initialize_encoding()
 " -------------------------------------
+    call s:vimim_set_encoding()
     let s:localization = s:vimim_localization()
     let s:multibyte = 2
     let s:max_ddddd = 64928
@@ -904,6 +905,24 @@ function! s:vimim_initialize_encoding()
     endif
     if s:localization > 0
         let warning = 'performance hit if &encoding & datafile differs!'
+    endif
+endfunction
+
+" ------------------------------
+function! s:vimim_set_encoding()
+" ------------------------------
+    let s:encoding = "utf8"
+    if  &encoding == "chinese"
+    \|| &encoding == "cp936"
+    \|| &encoding == "gb2312"
+    \|| &encoding == "gbk"
+    \|| &encoding == "euc-cn"
+        let s:encoding = "chinese"
+    elseif  &encoding == "taiwan"
+    \|| &encoding == "cp950"
+    \|| &encoding == "big5"
+    \|| &encoding == "euc-tw"
+        let s:encoding = "taiwan"
     endif
 endfunction
 
@@ -1043,11 +1062,7 @@ function! GBK()
 "   decimal  hex    GBK
 "   49901    c2ed    马
 " ----------------------------- gbk=883+21003=21886
-    if  &encoding == "chinese"
-    \|| &encoding == "cp936"
-    \|| &encoding == "gb2312"
-    \|| &encoding == "gbk"
-    \|| &encoding == "euc-cn"
+    if  s:encoding ==# "chinese"
         let start = str2nr('8140',16) "| 33088 丂
         for i in range(125)
             for j in range(start, start+190)
@@ -1078,7 +1093,6 @@ function! s:vimim_internal_code(keyboard)
     else
         return []
     endif
-    let s:unicode_menu_display_flag = 0
     let numbers = []
     let first_char = keyboard[0:0]
     let last_char = keyboard[-1:-1]
@@ -1115,15 +1129,49 @@ function! s:vimim_internal_code(keyboard)
             let numbers = [ddddd]
         endif
     endif
-    " --------------------------------------------------
+    " ------------------------------------
+    return s:vimim_internal_codes(numbers)
+    " ------------------------------------
+endfunction
+
+" ---------------------------------------
+function! s:vimim_internal_codes(numbers)
+" ---------------------------------------
     let internal_codes = []
-    for digit in numbers
+    for digit in a:numbers
         let hex = printf('%04x', digit)
         let menu = '　' . hex .'　'. digit
         let internal_code = menu.' '.nr2char(digit)
         call add(internal_codes, internal_code)
     endfor
     return internal_codes
+endfunction
+
+" -------------------------------------------
+function! s:vimim_internal_datafile(keyboard)
+" -------------------------------------------
+    let keyboard = a:keyboard
+    if  keyboard =~ '\l' && len(keyboard) == 1
+        let msg = "make abcdefghijklmnopqrst alive"
+    else
+        return []
+    endif
+    let numbers = []
+    " ---------------------------------------
+    let start = 19968
+        if  s:encoding ==# "chinese"
+            let start = 19968
+        elseif  s:encoding ==# "taiwan"
+            let start = 19968
+        endif
+    " ---------------------------------------
+    let end = start + 16*16
+    for i in range(start, end)
+        call add(numbers, str2nr(i))
+    endfor
+    " ------------------------------------
+    return s:vimim_internal_codes(numbers)
+    " ------------------------------------
 endfunction
 
 " ======================================= }}}
@@ -1139,10 +1187,7 @@ function! BIG5()
 "   decimal  hex    BIG5
 "   45224    b0a8    馬
 " ----------------------------- big5=408+5401+7652=13461
-    if  &encoding == "taiwan"
-    \|| &encoding == "cp950"
-    \|| &encoding == "big5"
-    \|| &encoding == "euc-tw"
+    if  s:encoding ==# "taiwan"
         let start = str2nr('A440',16) "| 42048  一
         for i in range(86)
             for j in range(start, start+(4*16)-2)
@@ -5120,6 +5165,7 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=12
     " ------------------------------ debug
+    let s:vimim_datafile_virtual=1
     let s:vimim_custom_laststatus=0
     let s:vimim_custom_menu_label=1
     " ------------------------------
@@ -5226,6 +5272,7 @@ function! s:vimim_start_omni()
 " ----------------------------
     let s:menu_from_cloud_flag = 0
     let s:insert_without_popup = 0
+    let s:unicode_menu_display_flag = 0
 endfunction
 
 " -----------------------------
@@ -5563,6 +5610,16 @@ else
         endif
     endif
 
+    " play with super light-weight internal-code
+    " ------------------------------------------
+    if s:vimim_datafile_virtual > 0
+        let results = s:vimim_internal_datafile(keyboard)
+        if len(results) > 0
+            let s:unicode_menu_display_flag = 1
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
     " use cached list when pageup/pagedown or 4corner is used
     " -------------------------------------------------------
     if s:vimim_punctuation_navigation > -1
@@ -5694,10 +5751,14 @@ else
     " --------------------------------------------------
     let lines = s:vimim_datafile_range(keyboard)
 
-    " return nothing if no single datafile nor cloud
-    " ----------------------------------------------
+    " try super-internal-code if no single datafile nor cloud
+    " -------------------------------------------------------
     if empty(lines) && empty(s:www_executable)
-        return
+        let results = s:vimim_internal_datafile(keyboard)
+        if len(results) > 0
+            let s:unicode_menu_display_flag = 1
+            return s:vimim_popupmenu_list(results)
+        endif
     endif
 
     " [wildcard search] explicit fuzzy search
