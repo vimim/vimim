@@ -4242,7 +4242,7 @@ function! s:vimim_plug_n_play_www_sogou()
     if has("win32") || has("win32unix")
         if empty(s:vimim_wget_dll)
             let msg = " libmycloud.dll is not set by user"
-        else
+        elseif filereadable(s:vimim_wget_dll)
             let s:vimim_cloud_sogou = 1
             return
         endif
@@ -4272,12 +4272,22 @@ endfunction
 function! s:vimim_initialize_cloud()
 " ----------------------------------
     call s:vimim_plug_n_play_www_sogou()
+    " --------------------------------------------------
+    " NOTE: move s:www_libcall before return
+    " NOTE: this prevents cannot-be-found error in rare cases
+    " --------------------------------------------------
+    let s:www_libcall = 0
     if !exists('*system')
         return
     endif
     " step 0: try to find libmycloud
     " ------------------------------
     let cloud = s:vimim_wget_dll
+    " --------------------------------------------------
+    " NOTE: move cloud variable above
+    " NOTE: this makes sure cloud is always initialized
+    " NOTE: could is set when it goes to => if filereadable(cloud)
+    " --------------------------------------------------
     if has("win32") || has("win32unix")
         if empty(s:vimim_wget_dll)
             let cloud = s:path . "libmycloud.dll"
@@ -4285,12 +4295,18 @@ function! s:vimim_initialize_cloud()
     else
         let cloud = s:path . "libmycloud.so"
     endif
-    let s:www_libcall = 0
     if filereadable(cloud)
         let ret = libcall(cloud, "do_geturl", "__isvalid")
         if ret ==# "True"
             let s:www_executable = cloud
             let s:www_libcall = 1
+            " --------------------------------------------------
+            " NOTE: if we come here, it means wget_dll is used
+            " NOTE: No need to used wget.exe or curl.exe
+            " NOTE: add return below
+            " NOTE: need to make sure s:www_executable from DLL is consistent 
+            " --------------------------------------------------
+            return
         endif
     endif
     " step 1: try to find wget
@@ -5127,7 +5143,6 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=12
     " ------------------------------ debug
-    let s:vimim_wget_dll="C:/home/vimim/mycloud/client/libmycloud.dll"
     let s:vimim_custom_laststatus=0
     let s:vimim_custom_menu_label=1
     " ------------------------------
