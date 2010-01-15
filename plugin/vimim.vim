@@ -1298,11 +1298,11 @@ function! s:vimim_onekey_action(onekey)
         endif
     endif
     " ---------------------------------------------------
-    if char_before !~# s:valid_key || char_before =~ "[,]"
+    if char_before !~# s:valid_key
         return a:onekey
     endif
     " ---------------------------------------------------
-    if s:pattern_not_found < 1 || char_before =~ "[.']"
+    if s:pattern_not_found < 1
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     else
         let space = a:onekey
@@ -2601,7 +2601,7 @@ function! <SID>vimim_smart_enter()
     "   (1) after English (valid keys)    => Seamless
     "   (2) after Chinese or double Enter => Enter
     " -----------------------------------------------
-    if char_before =~# "[*.']"
+    if char_before =~# "[*']"
         let s:smart_enter = 0
     elseif char_before =~# s:valid_key
         let s:smart_enter += 1
