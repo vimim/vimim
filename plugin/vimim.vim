@@ -4277,10 +4277,9 @@ function! s:vimim_initialize_cloud()
     endif
     " step 0: try to find libmycloud
     " ------------------------------
+    let cloud = s:vimim_wget_dll
     if has("win32") || has("win32unix")
         if empty(s:vimim_wget_dll)
-            let cloud = s:vimim_wget_dll
-        else
             let cloud = s:path . "libmycloud.dll"
         endif
     else
