@@ -1086,7 +1086,7 @@ function! s:vimim_internal_code(keyboard)
     if last_char ==# '0'
         let digit_without_zero = keyboard[:-2]
         if first_char ==# 'u'
-            let msg = " do hex internal-code popup menu, eg: u8080"
+            let msg = " do hex internal-code popup menu, eg, u8080"
             let digit_without_zero = digit_without_zero[1:]
             let hex_ranges = extend(range(10),['a','b','c','d','e','f'])
             for i in hex_ranges
@@ -1094,7 +1094,7 @@ function! s:vimim_internal_code(keyboard)
                 call add(numbers, digit)
             endfor
         else
-            let msg = " do decimal internal-code popup menu, eg: 22220"
+            let msg = " do decimal internal-code popup menu, eg, 22220"
             for i in range(10)
                 let digit = str2nr(digit_without_zero.i)
                 call add(numbers, digit)
@@ -1102,7 +1102,7 @@ function! s:vimim_internal_code(keyboard)
         endif
     else
         if first_char ==# 'u'
-            let msg = " direct hex unicode insert, eg: u808f"
+            let msg = " direct hex unicode insert, eg, u808f"
             let dddd = str2nr(keyboard[1:], 16)
             if dddd > s:max_ddddd
                 return []
@@ -1110,7 +1110,7 @@ function! s:vimim_internal_code(keyboard)
                 let numbers = [dddd]
             endif
         else
-            let msg = " direct decimal unicode insert, eg: 22221"
+            let msg = " direct decimal unicode insert, eg, 22221"
             let ddddd = str2nr(keyboard, 10)
             let numbers = [ddddd]
         endif
