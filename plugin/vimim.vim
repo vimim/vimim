@@ -1,5 +1,5 @@
 ﻿" ==================================================
-"              " VimIM —— Vim 中文输入法 "
+"              " VimIM —— Vim 中文輸入法 "
 " --------------------------------------------------
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
@@ -363,33 +363,33 @@ function! s:vimim_dictionary_im()
 " -------------------------------
     let key = 'cloud'
     let loaded = 0
-    let im = '云输入'
+    let im = '雲輸入'
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'mycloud'
     let loaded = 0
-    let im = '自己的云'
+    let im = '自己的雲'
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'wubi'
-    let im = '五笔'
+    let im = '五筆'
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = '4corner'
-    let im = '四角号码'
+    let im = '四角號碼'
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = '12345'
-    let im = '五笔划'
+    let im = '五筆劃'
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'ctc'
-    let im = '中文电码'
+    let im = '中文電碼'
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
@@ -404,12 +404,12 @@ function! s:vimim_dictionary_im()
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'hangul'
-    let im = '韩文'
+    let im = '韓文'
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'xinhua'
-    let im = '新华'
+    let im = '新華'
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
@@ -419,17 +419,17 @@ function! s:vimim_dictionary_im()
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'cangjie'
-    let im = '仓颉'
+    let im = '倉頡'
     let keycode = "[a-z.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'zhengma'
-    let im = '郑码'
+    let im = '鄭碼'
     let keycode = "[a-z.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'yong'
-    let im = '永码'
+    let im = '永碼'
     let keycode = "[a-z'.;/]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
@@ -444,7 +444,7 @@ function! s:vimim_dictionary_im()
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'wu'
-    let im = '吴语'
+    let im = '吳語'
     let keycode = "[a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
@@ -459,7 +459,7 @@ function! s:vimim_dictionary_im()
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'erbi'
-    let im = '二笔'
+    let im = '二筆'
     let keycode = "[a-z'.,;/]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
@@ -665,13 +665,13 @@ call add(s:vimims, VimIM)
 function! s:vimim_egg_vimimegg()
 " ------------------------------
     let eggs = []
-    call add(eggs, "经典　vim")
-    call add(eggs, "环境　vimim")
+    call add(eggs, "經典　vim")
+    call add(eggs, "環境　vimim")
     call add(eggs, "程式　vimimvim")
-    call add(eggs, "帮助　vimimhelp")
-    call add(eggs, "测试　vimimdebug")
-    call add(eggs, "统计　vimimstat")
-    call add(eggs, "设置　vimimdefaults")
+    call add(eggs, "幫助　vimimhelp")
+    call add(eggs, "測試　vimimdebug")
+    call add(eggs, "統計　vimimstat")
+    call add(eggs, "設置　vimimdefaults")
     return map(eggs,  '"VimIM 彩蛋：" . v:val . "　"')
 endfunction
 
@@ -693,17 +693,17 @@ function! s:vimim_egg_vimimstat()
     let stone = get(g:vimim,1)
     let gold = get(g:vimim,2)
     " ------------------------
-    let stat = "总计输入：". gold ." 个汉字"
+    let stat = "總計輸入：". gold ." 個漢字"
     call add(eggs, stat)
     " ------------------------
     if gold > 0
-        let stat = "平均码长：". string(stone*1.0/gold)
+        let stat = "平均碼長：". string(stone*1.0/gold)
         call add(eggs, stat)
     endif
     " ------------------------
     let duration = get(g:vimim,3)
     let rate = gold*60/duration
-    let stat = "打字速度：". string(rate) ." 汉字/分钟"
+    let stat = "打字速度：". string(rate) ." 漢字/分鐘"
     call add(eggs, stat)
     " ------------------------
     let egg = '"stat  " . v:val . "　"'
@@ -730,14 +730,14 @@ endfunction
 function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
-    call add(eggs, "错误报告：" . get(s:vimimhelp,0))
-    call add(eggs, "词库下载：" . get(s:vimimhelp,1))
-    call add(eggs, "最新主页：" . get(s:vimimhelp,2))
+    call add(eggs, "錯誤報告：" . get(s:vimimhelp,0))
+    call add(eggs, "詞庫下載：" . get(s:vimimhelp,1))
+    call add(eggs, "最新主頁：" . get(s:vimimhelp,2))
     call add(eggs, "最新程式：" . get(s:vimimhelp,3))
-    call add(eggs, "试用版本：" . get(s:vimimhelp,4))
-    call add(eggs, "官方网址：" . get(s:vimimhelp,5))
-    call add(eggs, "自己的云：" . get(s:vimimhelp,6))
-    call add(eggs, "新闻论坛：" . get(s:vimimhelp,7))
+    call add(eggs, "試用版本：" . get(s:vimimhelp,4))
+    call add(eggs, "官方網址：" . get(s:vimimhelp,5))
+    call add(eggs, "自己的雲：" . get(s:vimimhelp,6))
+    call add(eggs, "新聞論壇：" . get(s:vimimhelp,7))
 " -------------------------------------
     return map(eggs, '"VimIM " .v:val . "　"')
 endfunction
@@ -758,13 +758,13 @@ function! s:vimim_egg_vimim()
         let option = "macunix"
     endif
 " ----------------------------------
-    let input = "输入："
-    let ciku = "datafile 词库："
+    let input = "輸入："
+    let ciku = "datafile 詞庫："
     let versions = "\t 版本："
-    let encoding = "编码："
+    let encoding = "編碼："
 " ----------------------------------
     let option .= "_" . &term
-    let option = "computer 电脑：" . option
+    let option = "computer 電腦：" . option
     call add(eggs, option)
 " ----------------------------------
     let option = v:progname . "　"
@@ -790,14 +790,14 @@ function! s:vimim_egg_vimim()
 " ----------------------------------
     let option = s:vimim_static_input_style
     if empty(option)
-        let option = 'i_CTRL-^　经典动态'
+        let option = 'i_CTRL-^　經典動態'
     else
-        let option = 'i_CTRL-^　经典静态'
+        let option = 'i_CTRL-^　經典靜態'
     endif
     if s:vimim_sexy_onekey > 0
-        let option = 'i_CTRL-^　点石成金'
+        let option = 'i_CTRL-^　點石成金'
     endif
-    let option = "mode\t 风格：" . option
+    let option = "mode\t 風格：" . option
     call add(eggs, option)
 " ----------------------------------
     let im = s:vimim_statusline()
@@ -833,13 +833,13 @@ function! s:vimim_egg_vimim()
     let cloud = s:vimim_cloud_sogou
     let option = "cloud\t 搜狗："
     if cloud < 0
-        let option .= "〖晴天无云〗"
+        let option .= "《晴天無雲》"
     elseif cloud == 888
-        let option .= "〖想云就云〗"
+        let option .= "《想雲就雲》"
     elseif cloud == 1
-        let option .= "〖全云输入〗"
+        let option .= "《全雲輸入》"
     else
-        let option .= "每超过" . cloud . "个字符就开始"
+        let option .= "每超過" . cloud . "個字符就開始"
         let option .= get(s:im['cloud'],1)
     endif
     call add(eggs, option)
@@ -848,7 +848,7 @@ function! s:vimim_egg_vimim()
         let msg = "no global variable is set"
     else
         for item in s:global_customized
-            let option = "VimIM\t 设置：" . item
+            let option = "VimIM\t 設置：" . item
             call add(eggs, option)
         endfor
     endif
@@ -856,7 +856,7 @@ function! s:vimim_egg_vimim()
     let option = s:vimimdebug
     if option > 0
         let option = "g:vimimdebug=" . option
-        let option = "debug\t 测试：" . option
+        let option = "debug\t 測試：" . option
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -1059,7 +1059,7 @@ function! GBK()
 " This function outputs GBK as:
 " ----------------------------- gb=6763
 "   decimal  hex    GBK
-"   49901    c2ed    马
+"   49901    c2ed    馬
 " ----------------------------- gbk=883+21003=21886
     if  s:encoding ==# "chinese"
         let start = str2nr('8140',16) "| 33088 丂
@@ -1832,7 +1832,7 @@ endfunction
 function! s:vimim_statusline()
 " ----------------------------
     let im = ''
-    let plus = ['〖' ,'〗', '＋']
+    let plus = ['《' ,'》', '＋']
     let plus2 = plus[1] . plus[2] . plus[0]
   " --------------------------
     let key  = s:im_primary
@@ -1844,7 +1844,7 @@ function! s:vimim_statusline()
         if s:datafile_primary =~# 'wubi98'
             let im .= '98'
         elseif s:datafile_primary =~# 'wubijd'
-            let im = '极点' . im
+            let im = '極點' . im
         endif
     endif
   " --------------------------
@@ -1876,11 +1876,11 @@ function! s:vimim_statusline()
     if empty(im) && s:vimim_cloud_sogou > 0
         let im = get(s:im['cloud'],1)
         if s:vimim_cloud_sogou == 1
-            let im = "全" . im . "★经典"
+            let im = "全" . im . "★經典"
             if s:vimim_static_input_style < 1
-                let im .= "动态"
+                let im .= "動態"
             else
-                let im .= "静态"
+                let im .= "靜態"
             endif
         endif
     endif
@@ -2176,40 +2176,40 @@ function! s:vimim_initialize_quantifiers()
         return
     endif
     let s:quantifiers['1'] = '一壹㈠①⒈⑴甲'
-    let s:quantifiers['2'] = '二贰㈡②⒉⑵乙'
-    let s:quantifiers['3'] = '三叁㈢③⒊⑶丙'
+    let s:quantifiers['2'] = '二貳㈡②⒉⑵乙'
+    let s:quantifiers['3'] = '三三㈢③⒊⑶丙'
     let s:quantifiers['4'] = '四肆㈣④⒋⑷丁'
     let s:quantifiers['5'] = '五伍㈤⑤⒌⑸戊'
-    let s:quantifiers['6'] = '六陆㈥⑥⒍⑹己'
+    let s:quantifiers['6'] = '六陸㈥⑥⒍⑹己'
     let s:quantifiers['7'] = '七柒㈦⑦⒎⑺庚'
     let s:quantifiers['8'] = '八捌㈧⑧⒏⑻辛'
     let s:quantifiers['9'] = '九玖㈨⑨⒐⑼壬'
     let s:quantifiers['0'] = '〇零㈩⑩⒑⑽癸十拾'
     let s:quantifiers['a'] = '秒'
-    let s:quantifiers['b'] = '百佰步倍包杯本部班笔把'
-    let s:quantifiers['c'] = '厘次餐场串处'
-    let s:quantifiers['d'] = '第度点袋道滴碟顶栋堆对朵堵顿'
-    let s:quantifiers['e'] = '亿'
-    let s:quantifiers['f'] = '分份发封付副幅峰方服'
-    let s:quantifiers['g'] = '个根股管'
-    let s:quantifiers['h'] = '时毫行盒壶户回号'
+    let s:quantifiers['b'] = '百佰步倍包杯本部班筆把'
+    let s:quantifiers['c'] = '厘次餐場串處'
+    let s:quantifiers['d'] = '第度點袋道滴碟頂棟堆對朵堵頓'
+    let s:quantifiers['e'] = '億'
+    let s:quantifiers['f'] = '分份發封付副幅峰方服'
+    let s:quantifiers['g'] = '個根股管'
+    let s:quantifiers['h'] = '時毫行盒壺戶回號'
     let s:quantifiers['i'] = '毫'
-    let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
-    let s:quantifiers['k'] = '克口块棵颗捆孔'
-    let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
-    let s:quantifiers['m'] = '米名枚面门'
+    let s:quantifiers['j'] = '斤家具架間件節劑具捲卷莖記'
+    let s:quantifiers['k'] = '克口塊棵顆捆孔'
+    let s:quantifiers['l'] = '裡粒類輛列輪厘升領縷'
+    let s:quantifiers['m'] = '米名枚面門'
     let s:quantifiers['n'] = '年'
     let s:quantifiers['o'] = '度'
-    let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
+    let s:quantifiers['p'] = '磅盆瓶排盤盆匹片篇撇噴'
     let s:quantifiers['q'] = '千仟群'
     let s:quantifiers['r'] = '日'
-    let s:quantifiers['s'] = '十拾时升艘扇首双所束手'
-    let s:quantifiers['t'] = '吨条头通堂台天套桶筒贴趟'
+    let s:quantifiers['s'] = '十拾時升艘扇首雙所束手'
+    let s:quantifiers['t'] = '噸條頭通堂台天套桶筒貼趟'
     let s:quantifiers['u'] = '微'
-    let s:quantifiers['w'] = '万位味碗窝'
-    let s:quantifiers['x'] = '升席些项箱'
-    let s:quantifiers['y'] = '月亿叶'
-    let s:quantifiers['z'] = '兆只张株支枝指盏座阵桩尊则种站幢宗'
+    let s:quantifiers['w'] = '萬位味碗窩'
+    let s:quantifiers['x'] = '升席些項箱'
+    let s:quantifiers['y'] = '月億葉'
+    let s:quantifiers['z'] = '兆隻張株支枝指盞座陣樁尊則種站幢宗'
 endfunction
 
 " -----------------------------------
@@ -2361,7 +2361,7 @@ function! s:vimim_initialize_e2c()
     endif
     " --------------------------------------------------
     " VimIM rule for entry of English Chinese dictionary
-    " obama 奥巴马 欧巴马 #
+    " obama 奧巴馬 歐巴馬 #
     " --------------------------------------------------
     let english_pattern = "#$"
     let matched_english_lines = match(lines, english_pattern)
@@ -2397,7 +2397,7 @@ function! g:vimim_chinese2pinyin()
 " --------------------------------
     " [purpose] convert Chinese to pinyin in datafile
     " [usage]   :call g:vimim_chinese2pinyin()
-    " [example] garbage in  => 马 馬儿 马馬儿
+    " [example] garbage in  => 馬 馬兒 馬馬兒
     "           garbage out => ma maer mamaer
     " ----------------------------
     let line = 0
@@ -3845,16 +3845,16 @@ function! s:vimim_dictionary_shuangpin()
 " --------------------------------------
     let s:shuangpin_flag = 1
     let key = 'shuangpin'
-    let loaded = '双拼'
+    let loaded = '雙拼'
     let im = loaded
     let keycode = "[0-9a-z'.]"
     if s:vimim_shuangpin_abc > 0
-        let im = '智能双打'
+        let im = '智能雙打'
     elseif s:vimim_shuangpin_microsoft > 0
-        let im = '微软'.im
+        let im = '微軟'.im
         let keycode = "[0-9a-z'.;]"
     elseif s:vimim_shuangpin_nature > 0
-        let im = "自然码".im
+        let im = "自然碼".im
     elseif s:vimim_shuangpin_plusplus > 0
         let im = "拼音加加".im
     elseif s:vimim_shuangpin_purple > 0
@@ -4484,7 +4484,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
     endif
     let cloud = 'http://web.pinyin.sogou.com/web_ime/get_ajax/'
     " support apostrophe as delimiter to remove ambiguity
-    " (1) examples: piao => pi'ao 皮袄  xian => xi'an 西安
+    " (1) examples: piao => pi'ao 皮襖  xian => xi'an 西安
     " (2) add double quotes between keyboard
     " (3) test: xi'anmeimeidepi'aosuifengpiaoyang
     let output = 0
@@ -4526,7 +4526,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
         let output = s:vimim_i18n_read(output)
     endif
     " ---------------------------
-    " output='我有一个梦：13	+
+    " output='我有一個夢：13	+
     " ---------------------------
     let menu = []
     for item in split(output, '\t+')
@@ -4539,7 +4539,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
         endif
     endfor
     " ----------------------------
-    " ['woyouyigemeng 我有一个梦']
+    " ['woyouyigemeng 我有一個夢']
     " ----------------------------
     return menu
 endfunction
@@ -4777,7 +4777,7 @@ function! s:vimim_process_mycloud_output(keyboard, output)
         return []
     endif
     " ---------------------------------------
-    " 春梦	8	4420
+    " 春夢	8	4420
     " ---------------------------------------
     let menu = []
     for item in split(output, '\n')
@@ -4834,7 +4834,7 @@ function! s:vimim_diy_lines_to_hash(fuzzy_lines)
     endif
     let chinese_to_keyboard_hash = {}
     for line in a:fuzzy_lines
-        let words = split(line)  |" shishi 事实 诗史
+        let words = split(line)  |" shishi 事實 詩史
         let menu = get(words,0)  |" shishi
         for word in words
             if word != menu
@@ -4848,8 +4848,8 @@ endfunction
 " ---------------------------------------------------------
 function! s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
 " ---------------------------------------------------------
-    if empty(a:h_0)  |" {'马力':'mali','名流':'mingliu'}
-    \|| empty(a:h_1) |" {'马':'7712'}
+    if empty(a:h_0)  |" {'馬力':'mali','名流':'mingliu'}
+    \|| empty(a:h_1) |" {'馬':'7712'}
         return []    |" {'力':'4002'}
     endif
     let values = []
@@ -5556,10 +5556,10 @@ if a:start
 
     " HOW is done!  Any other cases?
     " ------------------------------------------------- TODO
-    "  assert ma7712  =>  马
+    "  assert ma7712  =>  馬
     "  assert .ma     =>  .馬
     "  assert 7712ma  =>  7712馬
-    "  assert 7712    =>  马
+    "  assert 7712    =>  馬
     " ------------------------------------------------- to_be_removed
 
     let s:start_row_before = start_row
