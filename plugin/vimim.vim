@@ -1157,17 +1157,57 @@ function! s:vimim_internal_datafile(keyboard)
         return []
     endif
     let numbers = []
+    let gbk = {}
     " ---------------------------------------
     let start = 19968
-        if  s:encoding ==# "chinese"
-            let start = 19968
-        elseif  s:encoding ==# "taiwan"
-            let start = 19968
-        endif
+    if  s:encoding ==# "chinese"
+        let start = 0xB0A1
+        let gbk['a'] = 0xB0A1  
+        let gbk['b'] = 0xB0C5  
+        let gbk['c'] = 0xB2C1  
+        let gbk['d'] = 0xB4EE  
+        let gbk['e'] = 0xB6EA  
+        let gbk['f'] = 0xB7A2  
+        let gbk['g'] = 0xB8C1  
+        let gbk['h'] = 0xB9FE  
+        let gbk['j'] = 0xBBF7  
+        let gbk['k'] = 0xBFA6  
+        let gbk['l'] = 0xC0AC  
+        let gbk['m'] = 0xC2E8  
+        let gbk['n'] = 0xC4C3  
+        let gbk['o'] = 0xC5B6  
+        let gbk['p'] = 0xC5BE  
+        let gbk['q'] = 0xC6DA  
+        let gbk['r'] = 0xC8BB  
+        let gbk['s'] = 0xC8F6  
+        let gbk['t'] = 0xCBFA  
+        let gbk['w'] = 0xCDDA  
+        let gbk['x'] = 0xCEF4  
+        let gbk['y'] = 0xD1B9  
+        let gbk['z'] = 0xD4D1  
+    elseif  s:encoding ==# "taiwan"
+        let start = 42048
+    endif
     " ---------------------------------------
-    let end = start + 16*16
+    " every abcdefghijklmnopqrstuvwxy shows different menu
+    " every char displays 16*16*3=768 glyph in omni menu
+    " the total number of glyphs is 16*16*3*26=19968
+    " ---------------------------------------
+    let label = char2nr(keyboard)-char2nr('a')
+    let block = 16*16*3
+    let start += label*block
+    let end = start + block
+    if  s:encoding ==# "chinese" && has_key(gbk, keyboard)
+        let start = gbk[keyboard]
+        let next_char = nr2char(char2nr(keyboard)+1)
+        if has_key(gbk, next_char)
+            let end = gbk[next_char] - 1
+        else
+            let end = start + block
+        endif
+    endif
     for i in range(start, end)
-        call add(numbers, str2nr(i))
+        call add(numbers, str2nr(i,10))
     endfor
     " ------------------------------------
     return s:vimim_internal_codes(numbers)
