@@ -80,26 +80,23 @@ call add(s:vimims, VimIM)
 " ---------------
 " "VimIM Options"
 " ---------------
-" Comprehensive usages of all options are from vimim.html
+" Comprehensive usages of all options can be found from vimim.html.
 
 "   VimIM "OneKey", without mode change
 "    - use OneKey to insert multi-byte candidates
 "    - use OneKey to search multi-byte using "/" or "?"
-"    - use OneKey to insert Unicode/GBK/Big5, integer or hex
-"    - use OneKey to input Chinese sentence as we do for English
 "   The default key is <C-6> (Vim Insert Mode)
 
 "   VimIM "Chinese Input Mode"
 "   - [dynamic_mode] show omni popup menu as one types
-"   - [static_mode]  <Space> => Chinese  <Enter> => English
-"   The default key is <C-^> (Vim Insert Mode)
+"   - [static_mode]  <Space>=>Chinese  <Enter>=>English
+"   The default key is <Ctrl-Bslash> (Vim Insert Mode)
 
 " ----------------
 " "VimIM Datafile"
 " ----------------
 " The datafile is assumed to be in order, otherwise, it is auto sorted.
-" The datafile format is both simple and flexible:
-"
+" The format of datafile is simple and flexible:
 "             +------+--+-------+
 "             |<key> |  |<value>|
 "             |======|==|=======|
@@ -148,7 +145,6 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
     call s:vimim_initialize_skin()
-    " -----------------------------------------
     call s:vimim_finalize_session()
     " -----------------------------------------
 endfunction
@@ -278,21 +274,19 @@ function! s:vimim_initialize_session()
     let s:inputs_all = {}
     let s:ecdict = {}
     let s:shuangpin_table = {}
+    let s:debugs = []
+    let s:lines = []
+    let s:lines_primary = []
+    let s:lines_secondary = []
     " --------------------------------
     let s:current_positions = [0,0,1,0]
     let s:alphabet_lines = []
-    let s:debugs = []
-    " --------------------------------
     let s:debug_count = 0
     let s:keyboard_count = 0
     let s:chinese_mode_count = 1
     let s:onekey_mode_count = 1
     let s:abcdefghi = "'abcdefghi"
-    " --------------------------------
     let s:datafile = 0
-    let s:lines = []
-    let s:lines_primary = []
-    let s:lines_secondary = []
     " --------------------------------
     let g:vimim = ["",0,0,1,localtime()]
     " --------------------------------
