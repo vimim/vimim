@@ -377,7 +377,7 @@ function! s:vimim_dictionary_chinese()
 " ------------------------------------
     let s:chinese = {}
     let s:chinese['vim1'] = ['文本编辑器','文本編輯器']
-    let s:chinese['vim2'] = ['最牛','最牛']
+    let s:chinese['vim2'] = ['最牛']
     let s:chinese['vim3'] = ['精力']
     let s:chinese['vim4'] = ['生气','生氣']
     let s:chinese['vim5'] = ['中文输入法','中文輸入法']
@@ -410,11 +410,13 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['classic'] = ['经典','經典']
     let s:chinese['static'] = ['静态','靜態']
     let s:chinese['dynamic'] = ['动态','動態']
+    let s:chinese['internal'] = ['内码','內碼']
     let s:chinese['onekey'] = ['点石成金','點石成金']
     let s:chinese['style'] = ['风格','風格']
     let s:chinese['sogou'] = ['搜狗']
     let s:chinese['cloud_no'] = ['晴天无云','晴天無雲']
     let s:chinese['all'] = ['全']
+    let s:chinese['star'] = ['★']
     let s:chinese['cloud_atwill'] = ['想云想云','想雲就雲']
     let s:chinese['shezhi'] = ['设置','設置']
     let s:chinese['test'] = ['测试','測試']
@@ -1887,18 +1889,25 @@ function! s:vimim_statusline()
         endif
     endif
   " ------------------------------------
-    if empty(im) && s:vimim_cloud_sogou > 0
-        let im = get(s:im['cloud'],1)
-        if s:vimim_cloud_sogou == 1
-            let classic = s:vimim_get_chinese('classic')
-            let all = s:vimim_get_chinese('all')
-            let im = all . im . "★" . classic
-            let style = s:vimim_get_chinese('static')
-            if empty(s:vimim_static_input_style)
-                let style = s:vimim_get_chinese('dynamic')
-            endif
-            let im .= style
+    if empty(im)
+        let classic = s:vimim_get_chinese('classic')
+        let style = s:vimim_get_chinese('static')
+        if empty(s:vimim_static_input_style)
+            let style = s:vimim_get_chinese('dynamic')
         endif
+        let style = classic . style
+        let star = s:vimim_get_chinese('star')
+        let im = s:vimim_get_chinese('internal')
+        let im .= s:vimim_get_chinese('input')
+        " ------------------------------
+        if s:vimim_cloud_sogou > 0
+            if s:vimim_cloud_sogou == 1
+                let all = s:vimim_get_chinese('all')
+                let cloud = get(s:im['cloud'],1)
+                let im = all . cloud
+            endif
+        endif
+        let im = im . star . style
     endif
   " ------------------------------------
     if !empty(s:vimim_cloud_plugin)
@@ -4359,7 +4368,7 @@ function! s:vimim_initialize_cloud()
     " NOTE: this prevents cannot-be-found error in rare cases
     " --------------------------------------------------
     let s:www_libcall = 0
-    if !exists('*system')
+    if !exists('*system') || s:vimim_cloud_sogou < 0
         return
     endif
     " step 0: try to find libmycloud
