@@ -854,7 +854,7 @@ function! s:vimim_egg_vimim()
     else
         for item in s:global_customized
             let shezhi = s:vimim_get_chinese('shezhi')
-            let option = "VimIM\t " . shenzhi . "：" . item
+            let option = "VimIM\t " . shezhi . "：" . item
             call add(eggs, option)
         endfor
     endif
@@ -889,8 +889,32 @@ function! s:vimim_easter_chicken(keyboard)
     try
         return eval("<SID>vimim_egg_".egg."()")
     catch
+        if s:vimimdebug > 0
+            call s:debugs('egg::exception=', v:exception)
+        endif
         return []
     endtry
+    " ------------------------------------
+" NOTE: I may roll back to the following stupid but reliable block
+" NOTE: It seems easy to debug
+    " ------------------------------------
+"   if egg ==# "vim"
+"       return s:vimim_egg_vim()
+"   elseif egg ==# "vimim"
+"       return s:vimim_egg_vimim()
+"   elseif egg ==# "vimimegg"
+"       return s:vimim_egg_vimimegg()
+"   elseif egg ==# "vimimvim"
+"       return s:vimim_egg_vimimvim()
+"   elseif egg ==# "vimimhelp"
+"       return s:vimim_egg_vimimhelp()
+"   elseif egg ==# "vimimstat"
+"       return s:vimim_egg_vimimstat()
+"   elseif egg ==# "vimimdefaults"
+"       return s:vimim_egg_vimimdefaults()
+"   elseif egg ==# "vimimdebug"
+"       return s:vimim_egg_vimimdebug()
+"   endif
 endfunction
 
 " ======================================= }}}
@@ -4520,8 +4544,11 @@ function! s:vimim_get_cloud_sogou(keyboard)
             let input = cloud . '"' . keyboard . '".key'
             let output = system(s:www_executable . input)
         endif
-    catch /.*/
+    catch
         let msg = "it looks like sogou has trouble with its cloud?"
+        if s:vimimdebug > 0
+            call s:debugs('sogou::exception=', v:exception)
+        endif
         let output = 0
     endtry
     if empty(output)
@@ -4624,9 +4651,26 @@ function! s:vimim_check_mycloud_plugin()
                 if split(ret, "\t")[0] == "True"
                     return cloud
                 endif
-            catch /.*/
+            catch
+"NOTE: ------------------------------------------------------------
+"NOTE: (It took me a while to figure out try/catch error in eggs: issue 60)
+"NOTE: Therefore, we should add v:exception for debugging everywhere
+"NOTE:
+"NOTE:  Question: I found several try/catch block in mycloud
+"NOTE:  Do we need all of them?
+"NOTE:  Is it possible to consolidate try/catch block?
+"NOTE:
+"NOTE:  Vim scripting seems not as friendly as OO to do try/catch
+"NOTE:  Vim scripting is actually "hard" to debug when things go big
+"NOTE:
+"NOTE: catch       catch everything
+"NOTE: catch /.*/" catch everything
+"NOTE: it is helpful to get the error msg, which is v:exception
+"NOTE: I found two blocks of try-catch, marked by A/B for now?
+"NOTE: feel free to change, so that it is helpful to debug
+"NOTE: ------------------------------------------------------------
                 if s:vimimdebug > 0
-                    call s:debugs("libcall_mycloud", "fail")
+                    call s:debugs('libcall_mycloud2::error=',v:exception)
                 endif
             endtry
         endif
@@ -4713,9 +4757,9 @@ function! s:vimim_check_mycloud_plugin()
                     if split(ret, "\t")[0] == "True"
                         return cloud
                     endif
-                catch /.*/
+                catch
                     if s:vimimdebug > 0
-                        call s:debugs("libcall_mycloud", "fail")
+                        call s:debugs('libcall_mycloud1::error=',v:exception)
                     endif
                 endtry
             endif
@@ -4781,8 +4825,11 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     " ---------------------------------------
     try
         let output = s:vimim_access_mycloud_plugin(cloud, input)
-    catch /.*/
+    catch
         let output = 0
+        if s:vimimdebug > 0
+            call s:debugs('mycloud::error=',v:exception)
+        endif
     endtry
     if empty(output)
         return []
