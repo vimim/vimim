@@ -4321,33 +4321,31 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_plug_n_play_www_sogou()
 " ---------------------------------------
-    " Windows 'set and play' interal wget: libmycloud.dll
-    " ---------------------------------------------------
-    if has("win32") || has("win32unix")
-        if empty(s:vimim_wget_dll)
-            let msg = " libmycloud.dll is not set by user"
-        elseif filereadable(s:vimim_wget_dll)
-            let s:vimim_cloud_sogou = 1
-            return
-        endif
-    endif
-    " -----------------------------------
+    let msg = "if no datafile, try best to do cloud"
+    let plug_n_play_www_sogou = 0
     if empty(s:datafile_primary)
         if (executable('wget') || executable('curl'))
-            if empty(s:vimim_cloud_sogou)
-                let s:vimim_cloud_sogou = 1
-                return
-            endif
+            let plug_n_play_www_sogou = 1
         endif
     endif
-    " Windows 'plug and play' (throw wget.exe to plugin directory)
-    " ------------------------------------------------------------
+    " Windows 'play and play' && 'set and play'
+    " -----------------------------------------
     if has("win32") || has("win32unix")
-        let wget = s:path . "wget.exe"
-        if executable(wget)
-            if empty(s:vimim_cloud_sogou)
-                let s:vimim_cloud_sogou = 1
+        if empty(s:vimim_wget_dll)
+            let msg = " Windows (wget.exe) plug and play"
+            let wget = s:path . "wget.exe"
+            if executable(wget)
+                let plug_n_play_www_sogou = 1
             endif
+        elseif filereadable(s:vimim_wget_dll)
+            let msg = " Windows (libmycloud.dll) set and play"
+            let plug_n_play_www_sogou = 1
+        endif
+    endif
+    " -----------------------------------------
+    if plug_n_play_www_sogou > 0
+        if empty(s:vimim_cloud_sogou)
+            let s:vimim_cloud_sogou = 1
         endif
     endif
 endfunction
