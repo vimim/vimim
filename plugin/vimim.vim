@@ -128,6 +128,7 @@ function! s:vimim_initialization_once()
     endif
     " -----------------------------------------
     call s:vimim_initialize_i_setting()
+    call s:vimim_initialize_encoding()
     call s:vimim_initialize_session()
     call s:vimim_dictionary_im()
     call s:vimim_initialize_datafile_in_vimrc()
@@ -145,8 +146,6 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_keycode()
     call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
-    " -----------------------------------------
-    call s:vimim_initialize_encoding()
     call s:vimim_initialize_skin()
     " -----------------------------------------
     call s:vimim_finalize_session()
@@ -363,38 +362,39 @@ function! s:vimim_dictionary_im()
 " -------------------------------
     let key = 'cloud'
     let loaded = 0
-    let im = '雲輸入'
+    let im = s:gb2312?"云输入":"雲輸入"
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'mycloud'
     let loaded = 0
-    let im = '自己的雲'
+    let CLOUD = s:gb2312?"云":"雲"
+    let im = '自己的' . CLOUD
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'wubi'
-    let im = '五筆'
+    let im = s:gb2312?"五笔":"五筆"
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = '4corner'
-    let im = '四角號碼'
+    let im = s:gb2312?"四角号码":"四角號碼"
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = '12345'
-    let im = '五筆劃'
+    let im = s:gb2312?"五笔划":"五筆劃"
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'ctc'
-    let im = '中文電碼'
+    let im = s:gb2312?"中文电码":"中文電碼"
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'cns11643'
-    let im = '交換碼'
+    let im = s:gb2312?"交换码":"交換碼"
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
@@ -404,12 +404,12 @@ function! s:vimim_dictionary_im()
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'hangul'
-    let im = '韓文'
+    let im = s:gb2312?"韩文":"韓文"
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'xinhua'
-    let im = '新華'
+    let im = s:gb2312?"新华":"新華"
     let keycode = "[0-9a-z'.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
@@ -419,17 +419,17 @@ function! s:vimim_dictionary_im()
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'cangjie'
-    let im = '倉頡'
+    let im = s:gb2312?"仓颉":"倉頡"
     let keycode = "[a-z.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'zhengma'
-    let im = '鄭碼'
+    let im = s:gb2312?"郑码":"鄭碼"
     let keycode = "[a-z.]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'yong'
-    let im = '永碼'
+    let im = s:gb2312?"永码":"永碼"
     let keycode = "[a-z'.;/]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
@@ -459,7 +459,7 @@ function! s:vimim_dictionary_im()
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
     let key = 'erbi'
-    let im = '二筆'
+    let im = s:gb2312?"二笔":"二筆"
     let keycode = "[a-z'.,;/]"
     let s:im[key]=[loaded, im, keycode]
 " -------------------------------------
@@ -678,11 +678,17 @@ endfunction
 " -------------------------
 function! s:vimim_egg_vim()
 " -------------------------
-    let eggs  = ["vi　  文本編輯器"]
-    let eggs += ["vim   最牛文本編輯器"]
-    let eggs += ["vim   精力"]
-    let eggs += ["vim   生氣"]
-    let eggs += ["vimim 中文輸入法"]
+    let vim1 = s:gb2312?"文本编辑器":"文本編輯器"
+    let vim2 = "最牛" . vim1
+    let vim3 = "精力"
+    let vim4 = s:gb2312?"生气":"生氣"
+    let vim5 = s:gb2312?"中文输入法":"中文輸入法"
+    " -------------------------------------------
+    let eggs  = ["vi　  " . vim1 ]
+    let eggs += ["vim   " . vim2 ]
+    let eggs += ["vim   " . vim3 ]
+    let eggs += ["vim   " . vim4 ]
+    let eggs += ["vimim " . vim5 ]
     return eggs
 endfunction
 
@@ -758,13 +764,18 @@ function! s:vimim_egg_vimim()
         let option = "macunix"
     endif
 " ----------------------------------
-    let input = "輸入："
-    let ciku = "datafile 詞庫："
-    let versions = "\t 版本："
-    let encoding = "編碼："
+    let input = s:gb2312?"输":"輸"
+    let input .= "入："
+    let ciku = s:gb2312?"词库":"詞庫"
+    let ciku = "datafile " . ciku .  "："
+    let versions = s:gb2312?"詞庫":"词库"
+    let versions = "\t " . version . "："
+    let encoding = s:gb2312?"编码":"編碼"
+    let encoding .= "："
 " ----------------------------------
     let option .= "_" . &term
-    let option = "computer 電腦：" . option
+    let computer = s:gb2312?"电脑":"電腦"
+    let option = "computer " . computer . "：" . option
     call add(eggs, option)
 " ----------------------------------
     let option = v:progname . "　"
@@ -789,15 +800,15 @@ function! s:vimim_egg_vimim()
     call add(eggs, option)
 " ----------------------------------
     let option = s:vimim_static_input_style
+    let style = s:gb2312?"经典静态":"經典靜態"
     if empty(option)
-        let option = 'i_CTRL-^　經典動態'
-    else
-        let option = 'i_CTRL-^　經典靜態'
+        let style = s:gb2312?"经典动态":"經典動態"
     endif
     if s:vimim_sexy_onekey > 0
-        let option = 'i_CTRL-^　點石成金'
+        let style = s:gb2312?"点石成金":"點石成金"
     endif
-    let option = "mode\t 風格：" . option
+    let option = s:gb2312?"风格":"風格"
+    let option = "mode\t " . option . "：" . "i_CTRL-^　" . style
     call add(eggs, option)
 " ----------------------------------
     let im = s:vimim_statusline()
@@ -832,23 +843,23 @@ function! s:vimim_egg_vimim()
 " ----------------------------------
     let cloud = s:vimim_cloud_sogou
     let option = "cloud\t 搜狗："
+    let CLOUD = "start_to_use_cloud_after_" .  cloud . "_characters"
     if cloud < 0
-        let option .= "《晴天無雲》"
+        let CLOUD = s:gb2312?"晴天无云":"晴天無雲"
     elseif cloud == 888
-        let option .= "《想雲就雲》"
+        let CLOUD = s:gb2312?"想天想云":"想雲就雲"
     elseif cloud == 1
-        let option .= "《全雲輸入》"
-    else
-        let option .= "每超過" . cloud . "個字符就開始"
-        let option .= get(s:im['cloud'],1)
+        let CLOUD = s:gb2312?"全云输入":"全雲輸入"
     endif
+    let option .= "《" . CLOUD . "》"
     call add(eggs, option)
 " ----------------------------------
     if empty(s:global_customized)
         let msg = "no global variable is set"
     else
         for item in s:global_customized
-            let option = "VimIM\t 設置：" . item
+            let shezhi = s:gb2312?"设置":"設置"
+            let option = "VimIM\t " . shenzhi . "：" . item
             call add(eggs, option)
         endfor
     endif
@@ -856,7 +867,8 @@ function! s:vimim_egg_vimim()
     let option = s:vimimdebug
     if option > 0
         let option = "g:vimimdebug=" . option
-        let option = "debug\t 測試：" . option
+        let test = s:gb2312?"测试":"設置"
+        let option = "debug\t " . test . "：" . option
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -910,6 +922,11 @@ endfunction
 " ------------------------------
 function! s:vimim_set_encoding()
 " ------------------------------
+    let s:gb2312 = 0
+    if v:lc_time =~ "2312"
+        let s:gb2312 = 1
+    endif
+    " --------------------------
     let s:encoding = "utf8"
     if  &encoding == "chinese"
     \|| &encoding == "cp936"
@@ -1800,6 +1817,8 @@ endfunction
 " -----------------------------------
 function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
+    set imdisable
+    set iminsert=1
     let s:chinese_mode_count += 1
     let s:vimim_chinese_mode_flag = 1
     let s:toggle_xiangma_pinyin = s:chinese_mode_count%2
@@ -1834,26 +1853,27 @@ function! s:vimim_statusline()
     let im = ''
     let plus = ['《' ,'》', '＋']
     let plus2 = plus[1] . plus[2] . plus[0]
-  " --------------------------
+  " ------------------------------------
     let key  = s:im_primary
     if has_key(s:im, key)
         let im = get(s:im[key],1)
     endif
-  " --------------------------
+  " ------------------------------------
     if key =~# 'wubi'
         if s:datafile_primary =~# 'wubi98'
             let im .= '98'
         elseif s:datafile_primary =~# 'wubijd'
-            let im = '極點' . im
+            let jidian = s:gb2312?"极点":"極點"
+            let im = jidian . im
         endif
     endif
-  " --------------------------
+  " ------------------------------------
     let pinyin = get(s:im['pinyin'],1)
     if s:shuangpin_flag > 0
         let pinyin = get(s:im['shuangpin'],0)
         let im = pinyin
     endif
-  " --------------------------
+  " ------------------------------------
     if s:pinyin_and_4corner > 0
         let im_digit = get(s:im['4corner'],1)
         if s:datafile_primary =~ '12345'
@@ -1862,7 +1882,7 @@ function! s:vimim_statusline()
         endif
         let im = pinyin . plus2 . im_digit
     endif
-  " --------------------------
+  " ------------------------------------
     if s:xingma_sleep_with_pinyin > 0
         let im_1 = get(s:im[s:im_primary],1)
         let im_2 = get(s:im[s:im_secondary],1)
@@ -1872,25 +1892,26 @@ function! s:vimim_statusline()
             let im = im_2 . plus2 . im_1
         endif
     endif
-  " --------------------------
+  " ------------------------------------
     if empty(im) && s:vimim_cloud_sogou > 0
         let im = get(s:im['cloud'],1)
         if s:vimim_cloud_sogou == 1
-            let im = "全" . im . "★經典"
-            if s:vimim_static_input_style < 1
-                let im .= "動態"
-            else
-                let im .= "靜態"
+            let classic = s:gb2312?"经典":"經典"
+            let im = "全" . im . "★" . classic
+            let style = s:gb2312?"静态":"靜態"
+            if empty(s:vimim_static_input_style)
+                let style = s:gb2312?"动态":"動態"
             endif
+            let im .= style
         endif
     endif
-  " --------------------------
+  " ------------------------------------
     if !empty(s:vimim_cloud_plugin)
         let im = get(s:im['mycloud'],1) ."：". get(s:im['mycloud'],0)
     endif
-  " --------------------------
+  " ------------------------------------
     let im  = plus[0] . im . plus[1]
-  " --------------------------
+  " ------------------------------------
     return im
 endfunction
 
@@ -3845,20 +3866,22 @@ function! s:vimim_dictionary_shuangpin()
 " --------------------------------------
     let s:shuangpin_flag = 1
     let key = 'shuangpin'
-    let loaded = '雙拼'
+    let shuang = s:gb2312?"双":"雙"
+    let loaded = shuang . "拼"
     let im = loaded
     let keycode = "[0-9a-z'.]"
     if s:vimim_shuangpin_abc > 0
-        let im = '智能雙打'
+        let im = '智能' . shuang . '打'
     elseif s:vimim_shuangpin_microsoft > 0
-        let im = '微軟'.im
+        let microsoft = s:gb2312?"微软:"微軟"
+        let im = microsoft . im
         let keycode = "[0-9a-z'.;]"
     elseif s:vimim_shuangpin_nature > 0
-        let im = "自然碼".im
+        let im = "自然" . im
     elseif s:vimim_shuangpin_plusplus > 0
-        let im = "拼音加加".im
+        let im = "拼音加加" . im
     elseif s:vimim_shuangpin_purple > 0
-        let im = "紫光".im
+        let im = "紫光" . im
         let keycode = "[0-9a-z'.;]"
     else
         let s:shuangpin_flag = 0
