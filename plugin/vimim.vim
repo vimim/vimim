@@ -1297,9 +1297,7 @@ function! s:vimim_stop_onekey()
     set ruler
     set nopaste
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
-        let cursor_positions = getpos(".")
-        exe 'normal "+yap'
-        call setpos(".", cursor_positions)
+        let @+ = getline(".")
     endif
 endfunction
 
