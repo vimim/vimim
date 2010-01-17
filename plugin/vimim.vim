@@ -1845,8 +1845,6 @@ endfunction
 " -----------------------------------
 function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
-    set imdisable
-    set iminsert=1
     let s:chinese_mode_count += 1
     let s:vimim_chinese_mode_flag = 1
     let s:toggle_xiangma_pinyin = s:chinese_mode_count%2
@@ -5377,6 +5375,7 @@ function! s:vimim_i_setting_on()
     set completeopt=menuone
     set nolazyredraw
     set hlsearch
+    set iminsert=1
     if empty(&pumheight)
         let &pumheight=10
     endif
