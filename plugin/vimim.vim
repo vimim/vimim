@@ -1308,11 +1308,10 @@ function! s:vimim_start_onekey()
 " ------------------------------
     let s:chinese_input_mode = 0
     " --------------------------
-    if empty(&ruler)
-        return
-    endif
-    " --------------------------
     if s:vimim_sexy_onekey > 0
+        if empty(&ruler)
+            return
+        endif
         set noruler
     endif
     " ----------------------------------------------------------
