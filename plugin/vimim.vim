@@ -4452,29 +4452,32 @@ function! s:vimim_magic_tail(keyboard)
         return 0
     endif
     let magic_tail = keyboard[-1:]
-    if magic_tail != "'"
+    let last_but_one =  keyboard[-2:-2]
+    if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
+        let g:msg = " play with magic trailing char "
+    else
         return 0
+    endif
+    " ----------------------------------------------------
+    " <dot> double play in OneKey Mode:
+    "   (1) magic trailing dot => forced-non-cloud
+    "   (2) as word partition  => match dot by dot
+    " ----------------------------------------------------
+    if  magic_tail ==# "."
+        let msg = " trailing dot => forced-non-cloud"
+        let s:no_internet_connection = 2
+        let s:vimim_do_cloud_sogou = -1
+    elseif  magic_tail ==# "'"
+        let msg = " trailing apostrophe => forced-cloud "
+        let s:no_internet_connection = -1
+        let s:vimim_do_cloud_sogou = 1
     endif
     " ----------------------------------------------------
     " <apostrophe> double play in OneKey Mode:
-    "   (1) English (valid keys) . '  => non-cloud at will
-    "   (2) English (valid keys)   '  =>     cloud at will
+    "   (1) magic trailing apostrophe => cloud at will
+    "   (2) magic leading  apostrophe => universal imode
     " ----------------------------------------------------
-    let last_but_one =  keyboard[-2:-2]
-    if  last_but_one ==# "."
-        let s:no_internet_connection = 2
-        let s:vimim_do_cloud_sogou = -1
-        let keyboard = keyboard[:-3]
-    else
-        let msg = "after English (valid keys) => cloud at will"
-        let s:no_internet_connection = -1
-        let s:vimim_do_cloud_sogou = 1
-        let keyboard = keyboard[:-2]
-    endif
-    let magic_tail = keyboard[-1:]
-    if magic_tail !~# "[0-9a-z]"
-        return 0
-    endif
+    let keyboard = keyboard[:-2]
     let s:keyboard_leading_zero = keyboard
     return keyboard
 endfunction
@@ -5604,13 +5607,13 @@ if a:start
     let last_seen_nonsense_column = start_column
     let all_digit = 1
 
-    let nonsense_patter = "[0-9.']"
+    let nonsense_pattern = "[0-9.']"
     if get(s:im['pinyin'],0) > 0
-        let nonsense_patter = "[0-9.]"
+        let nonsense_pattern = "[0-9.]"
     endif
     while start_column > 0 && char_before =~# s:valid_key
         let start_column -= 1
-        if char_before !~# nonsense_patter
+        if char_before !~# nonsense_pattern
             let last_seen_nonsense_column = start_column
         endif
         if char_before =~# '\l' && all_digit > 0
@@ -5994,7 +5997,7 @@ else
 
     " [cloud] last try cloud before giving up
     " ---------------------------------------
-    if s:vimim_cloud_sogou > 0
+    if s:vimim_cloud_sogou == 1
         let results = s:vimim_get_cloud_sogou(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
