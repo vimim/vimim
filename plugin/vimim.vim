@@ -1342,7 +1342,14 @@ function! <SID>vimim_tabkey()
 " ---------------------------
     let onekey = "\t"
     let char_before = getline(".")[col(".")-2]
-    if char_before =~# '\s' || empty(char_before)
+    if pumvisible()
+        if &ruler
+            let onekey = "\<C-N>\<C-Y>"
+            sil!exe 'sil!return "' . onekey . '"'
+        endif
+    elseif empty(char_before)
+    \|| char_before =~# '\s'
+    \|| char2nr(char_before) > 127
         return onekey
     endif
     sil!call s:vimim_start_onekey()
