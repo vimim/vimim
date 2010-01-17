@@ -2044,16 +2044,14 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
         if has_key(s:punctuations, char)
-          " ----------------------------------
-          " if !empty(s:vimim_cloud_plugin)
-          "     unlet s:punctuations[char]
-          " elseif s:datafile_has_dot > 0
-          "     unlet s:punctuations["."]
-          " elseif char !~# "[*.']"
-          " endif
-          " xxx  TODO to re-evaluate below for all cases
-          " ----------------------------------
-          unlet s:punctuations[char]
+            " ----------------------------------
+            if !empty(s:vimim_cloud_plugin)
+            \|| s:datafile_has_dot > 0
+                unlet s:punctuations[char]
+            elseif char !~# "[*.']"
+                unlet s:punctuations[char]
+            endif
+            " ----------------------------------
         endif
     endfor
 endfunction
