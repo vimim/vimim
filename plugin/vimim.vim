@@ -262,8 +262,7 @@ function! s:vimim_initialize_session()
     let s:im_primary = 0
     let s:im_secondary = 0
     " --------------------------------
-    let s:search_key_slash = 0
-    let s:datafile_has_period = 0
+    let s:datafile_has_dot = 0
     let s:sentence_with_space_input = 0
     let s:start_row_before = 0
     let s:start_column_before = 1
@@ -629,6 +628,17 @@ function! s:vimim_initialize_keycode()
     let s:valid_key = copy(keycode)
     let keycode = s:vimim_expand_character_class(keycode)
     let s:valid_keys = split(keycode, '\zs')
+    " --------------------------------
+    if get(s:im['erbi'],0) > 0
+    \|| get(s:im['wu'],0) > 0
+    \|| get(s:im['yong'],0) > 0
+    \|| get(s:im['nature'],0) > 0
+    \|| get(s:im['array'],0) > 0
+    \|| get(s:im['phonetic'],0) > 0
+        let msg = "need to find a better way to handle real valid keycode"
+        let s:datafile_has_dot = 1
+    endif
+    " --------------------------------
 endfunction
 
 " -----------------------------
@@ -1786,8 +1796,13 @@ function! s:vimim_dynamic_alphabet_trigger()
     if s:chinese_input_mode < 2
         return
     endif
+    let not_used_valid_keys = "[0-9.']"
+    if s:datafile_has_dot > 0
+        let not_used_valid_keys = "[0-9]"
+    endif
+    " --------------------------------------
     for char in s:valid_keys
-        if char !~# "[0-9.']"
+        if char !~# not_used_valid_keys
             sil!exe 'inoremap<silent> ' . char . '
             \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
             \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
@@ -2029,11 +2044,16 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
         if has_key(s:punctuations, char)
-            if !empty(s:vimim_cloud_plugin)
-                unlet s:punctuations[char]
-            elseif char !~# "[*.']"
-                unlet s:punctuations[char]
-            endif
+          " ----------------------------------
+          " if !empty(s:vimim_cloud_plugin)
+          "     unlet s:punctuations[char]
+          " elseif s:datafile_has_dot > 0
+          "     unlet s:punctuations["."]
+          " elseif char !~# "[*.']"
+          " endif
+          " xxx  TODO to re-evaluate below for all cases
+          " ----------------------------------
+          unlet s:punctuations[char]
         endif
     endfor
 endfunction
@@ -2071,18 +2091,26 @@ function! <SID>vimim_punctuation_on()
 " -----------------------------------
     if s:chinese_input_mode > 0
         unlet s:punctuations['\']
-        unlet s:punctuations["'"]
         unlet s:punctuations['"']
+        unlet s:punctuations["'"]
     endif
     " ----------------------------
     if s:chinese_punctuation > 0
-        if index(s:valid_keys, '\') < 0 || empty(s:vimim_cloud_plugin)
+" ==================================================
+" NOTE: I found I have to change || to && below to make erbi work
+" NOTE: The purpose is to map quote, only if it is NOT in s:valid_keys
+" NOTE: For erbi, apostrophe is a real valid keycode
+" NOTE:           Thereofore, it should not be mapped
+" NOTE: For pinyin, not sure
+" NOTE: For others, not sure, as apostrophe is used as a fake validcode
+" ==================================================
+        if index(s:valid_keys, '\') < 0 && empty(s:vimim_cloud_plugin)
             inoremap <Bslash> 、
         endif
-        if index(s:valid_keys, "'") < 0 || empty(s:vimim_cloud_plugin)
+        if index(s:valid_keys, "'") < 0 && empty(s:vimim_cloud_plugin)
             inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
         endif
-        if index(s:valid_keys, '"') < 0 || empty(s:vimim_cloud_plugin)
+        if index(s:valid_keys, '"') < 0 && empty(s:vimim_cloud_plugin)
             inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
         endif
     else
@@ -2091,16 +2119,7 @@ function! <SID>vimim_punctuation_on()
         iunmap "
     endif
     " ----------------------------
-    let punctuations = s:punctuations
-    if get(s:im['erbi'],0) > 0
-        unlet punctuations['.']
-        unlet punctuations[';']
-        unlet punctuations['/']
-        unlet punctuations[',']
-        unlet punctuations["'"]
-    endif
-    " ----------------------------
-    for _ in keys(punctuations)
+    for _ in keys(s:punctuations)
         sil!exe 'inoremap <silent> '._.'
         \    <C-R>=<SID>vimim_punctuation_mapping("'._.'")<CR>'
         \ . '<C-R>=g:reset_after_auto_insert()<CR>'
@@ -2123,18 +2142,22 @@ endfunction
 " -------------------------------------------
 function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
-    let hjkl_list = split('.,=-;[]','\zs')
+    let hjkl_list = split('.,=-;[]/','\zs')
     if s:vimim_punctuation_navigation < 1
         let hjkl_list = split('=-;[]','\zs')
     endif
-    if s:search_key_slash < 0
-        let msg = "search keys are reserved"
-    else
-        call add(hjkl_list, '/')
-        if empty(s:chinese_input_mode)
-            call add(hjkl_list, '?')
-        endif
+    if empty(s:chinese_input_mode)
+        call add(hjkl_list, '?')
     endif
+    " ---------------------------------------
+    let msg = "we should never map valid keycode"
+    for char in s:valid_keys
+	let i = index(hjkl_list, char)
+	if i > -1
+            unlet hjkl_list[i]
+        endif
+    endfor
+    " ---------------------------------------
     for _ in hjkl_list
         sil!exe 'inoremap<silent><expr> '._.'
         \ <SID>vimim_punctuations_navigation("'._.'")'
@@ -3043,6 +3066,7 @@ function! s:vimim_popupmenu_list(matched_list)
         \|| !empty(s:vimim_cloud_plugin)
             let tail = ''
         elseif keyboard =~ '[.]'
+        \&& s:datafile_has_dot < 1
         \&& empty(s:vimim_cloud_plugin)
             let dot = match(keyboard, '[.]')
             let tail = strpart(keyboard, dot+1)
@@ -3095,7 +3119,7 @@ function! s:vimim_search_boundary(lines, keyboard)
         return []
     endif
     let first_char_typed = a:keyboard[:0]
-    if s:datafile_has_period > 0 && first_char_typed == "."
+    if s:datafile_has_dot > 0 && first_char_typed == "."
         let first_char_typed = '\.'
     endif
     let patterns = '^' . first_char_typed
@@ -3314,7 +3338,7 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
     let keyboard = a:keyboard
     if empty(a:lines)
     \|| s:chinese_input_mode > 1
-    \|| s:datafile_has_period > 0
+    \|| s:datafile_has_dot > 0
     \|| len(a:keyboard) < 2
         return 0
     endif
@@ -4217,7 +4241,6 @@ function! s:vimim_initialize_erbi()
     endif
     let s:im['wubi'][0] = 1
     let s:vimim_punctuation_navigation = -1
-    let s:search_key_slash = -1
     let s:vimim_wildcard_search = -1
 endfunction
 
@@ -5677,6 +5700,15 @@ else
         return
     endif
 
+    " [erbi] special meaning of the first punctuation
+    " -----------------------------------------------
+    if s:im['erbi'][0] > 0
+        let punctuation = s:vimim_first_punctuation_erbi(keyboard)
+        if !empty(punctuation)
+            return [punctuation]
+        endif
+    endif
+
     " ignore non-sense one char input
     " -------------------------------
     if empty(s:vimim_sexy_onekey)
@@ -5851,15 +5883,6 @@ else
         endif
     endif
 
-    " [erbi] special meaning of the first punctuation
-    " -----------------------------------------------
-    if s:im['erbi'][0] > 0
-        let punctuation = s:vimim_first_punctuation_erbi(keyboard)
-        if !empty(punctuation)
-            return [punctuation]
-        endif
-    endif
-
     " [wubi] support wubi non-stop input
     " ----------------------------------
     if get(s:im['wubi'],0) > 0
@@ -5882,7 +5905,7 @@ else
 
     " escape literal dot if [array][phonetic][erbi]
     " ---------------------------------------------
-    if s:datafile_has_period > 0
+    if s:datafile_has_dot > 0
         let keyboard = substitute(keyboard,'\.','\\.','g')
     endif
 
@@ -5891,7 +5914,7 @@ else
     if empty(s:chinese_input_mode)
         if s:sentence_with_space_input > 0
             if keyboard =~ '\s'
-            \&& empty(s:datafile_has_period)
+            \&& empty(s:datafile_has_dot)
             \&& len(keyboard) > 3
                 let keyboard = substitute(keyboard, '\s\+', '.', 'g')
             endif
