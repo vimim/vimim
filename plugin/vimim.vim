@@ -144,7 +144,6 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_keycode()
     call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
-    call s:vimim_initialize_skin()
     call s:vimim_finalize_session()
     " -----------------------------------------
 endfunction
@@ -1817,19 +1816,11 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_skin()
 " ---------------------------------
-    if s:vimim_custom_skin < 1
-        return
-    endif
-    " -----------------------------
     highlight! link PmenuSel   Title
     highlight! link StatusLine Title
     highlight!      Pmenu      NONE
     highlight!      PmenuSbar  NONE
     highlight!      PmenuThumb NONE
-    " -----------------------------
-    if s:vimim_custom_skin > 1
-        let msg = "no extra_text on menu"
-    endif
 endfunction
 
 " ---------------------------------
@@ -1869,7 +1860,7 @@ function! s:vimim_i_cursor_color(switch)
     if empty(a:switch)
         highlight Cursor guifg=bg guibg=fg
     else
-        highlight Cursor guibg=green
+	highlight Cursor guifg=NONE guibg=Green
     endif
 endfunction
 
@@ -5279,10 +5270,16 @@ function! s:vimim_initialize_backdoor()
     let s:initialization_loaded = 0
     let s:vimim_chinese_mode_flag = 0
     let datafile_backdoor = s:path . "vimim.txt"
+    " -----------------------------------------
     if filereadable(datafile_backdoor)
         let s:datafile_primary = datafile_backdoor
         call s:vimim_initialize_backdoor_setting()
     endif
+    " -----------------------------------------
+    if s:vimim_custom_skin > 0
+        call s:vimim_initialize_skin()
+    endif
+    " -----------------------------------------
 endfunction
 
 " ---------------------------------------------
