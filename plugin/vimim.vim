@@ -1854,7 +1854,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_quantifiers()
 " ----------------------------------------
     let s:quantifiers = {}
-    if s:vimim_imode_comma < 1
+    if s:vimim_imode_universal < 1
     \&& s:vimim_imode_pinyin < 1
         return
     endif
