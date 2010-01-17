@@ -279,12 +279,13 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:current_positions = [0,0,1,0]
     let s:alphabet_lines = []
+    let s:datafile = 0
     let s:debug_count = 0
     let s:keyboard_count = 0
     let s:chinese_mode_count = 1
     let s:onekey_mode_count = 1
     let s:abcdefghi = "'abcdefghi"
-    let s:datafile = 0
+    let s:show_me_not_pattern = "^ii\\|^oo"
     " --------------------------------
     let g:vimim = ["",0,0,1,localtime()]
     " --------------------------------
@@ -1591,8 +1592,7 @@ function! g:vimim_pumvisible_p_paste()
     let title = s:keyboard_leading_zero . " =>"
     let words = [title]
     let msg = "resever ii/oo/vv for pretty print "
-    let show_me_not_pattern = "ii\\|oo\\|vv"
-    if title =~ show_me_not_pattern
+    if title =~ s:show_me_not_pattern
         let words = []
     endif
     for item in matched_list
@@ -1603,7 +1603,7 @@ function! g:vimim_pumvisible_p_paste()
             continue
         endif
         call add(words, item)
-        if yin =~ show_me_not_pattern
+        if yin =~ s:show_me_not_pattern
             call add(pastes, yang)
         endif
     endfor
@@ -3025,7 +3025,8 @@ function! s:vimim_popupmenu_list(matched_list)
                 let unicode = printf('u%04x', char2nr(chinese))
                 let extra_text = menu.'　'.unicode
             endif
-            if extra_text =~# '[.,]' || len(extra_text) < 2
+            if extra_text =~ s:show_me_not_pattern
+            \|| len(extra_text) < 2
                 let extra_text = ''
             endif
             let complete_items["menu"] = extra_text
