@@ -320,7 +320,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['erbi'] = ['二笔','二筆']
     let s:chinese['input'] = ['输入','輸入']
     let s:chinese['ciku'] = ['词库','詞庫']
-    let s:chinese['versions'] = ['版本','版本']
+    let s:chinese['myversion'] = ['版本','版本']
     let s:chinese['encoding'] = ['编码','編碼']
     let s:chinese['computer'] = ['电脑','電腦']
     let s:chinese['classic'] = ['经典','經典']
@@ -770,8 +770,8 @@ function! s:vimim_egg_vimim()
     let input = s:vimim_get_chinese('input') . "："
     let ciku = s:vimim_get_chinese('ciku')
     let ciku = "datafile " . ciku .  "："
-    let versions = s:vimim_get_chinese('versions')
-    let versions = "\t " . versions . "："
+    let myversion = s:vimim_get_chinese('myversion')
+    let myversion = "\t " . myversion . "："
     let encoding = s:vimim_get_chinese('encoding') . "："
 " ----------------------------------
     let option .= "_" . &term
@@ -780,14 +780,14 @@ function! s:vimim_egg_vimim()
     call add(eggs, option)
 " ----------------------------------
     let option = v:progname . "　"
-    let option = "Vim" . versions  . option . v:version
+    let option = "Vim" . myversion  . option . v:version
     call add(eggs, option)
 " ----------------------------------
     let option = get(split($VimIM), 1)
     if empty(option)
         let msg = "not a SVN check out, revision number not available"
     else
-        let option = "VimIM" . versions . "vimim.vim　" . option
+        let option = "VimIM" . myversion . "vimim.vim　" . option
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -2581,9 +2581,9 @@ function! <SID>vimim_label(n)
             if n < 1
                 let n = 10
             endif
-            let counts = repeat("\<Down>", n-1)
+            let mycount = repeat("\<Down>", n-1)
             let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
-            let label = counts . yes
+            let label = mycount . yes
         endif
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -2606,9 +2606,9 @@ function! <SID>vimim_action_label(n)
     let label = a:n
     if pumvisible()
         let n = match(s:abcdefghi, label)
-        let counts = repeat("\<Down>", n)
+        let mycount = repeat("\<Down>", n)
         let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
-        let label = counts . yes
+        let label = mycount . yes
     endif
     sil!exe 'sil!return "' . label . '"'
 endfunction
