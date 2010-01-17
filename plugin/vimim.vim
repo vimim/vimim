@@ -5673,6 +5673,13 @@ else
         return
     endif
 
+    " ignore multiple non-sense dots
+    " ------------------------------
+    if keyboard =~# '^[\.\.\+]'
+        let s:pattern_not_found += 1
+        return
+    endif
+
     " [erbi] special meaning of the first punctuation
     " -----------------------------------------------
     if s:im['erbi'][0] > 0
