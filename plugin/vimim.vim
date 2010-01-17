@@ -802,6 +802,7 @@ function! s:vimim_egg_vimim()
 " ----------------------------------
     let option = s:vimim_static_input_style
     let style = s:vimim_get_chinese('classic')
+    let toggle = "i_CTRL-Bslash"
     if empty(option)
         let style .= s:vimim_get_chinese('dynamic')
     else
@@ -809,9 +810,11 @@ function! s:vimim_egg_vimim()
     endif
     if s:vimim_sexy_onekey > 0
         let style = s:vimim_get_chinese('onekey')
+        let toggle = "i_CTRL-^"
     endif
+    let toggle .= "　"
     let option = s:vimim_get_chinese('style')
-    let option = "mode\t " . option . "：" . "i_CTRL-^　" . style
+    let option = "mode\t " . option . "：" . toggle . style
     call add(eggs, option)
 " ----------------------------------
     let im = s:vimim_statusline()
