@@ -1341,6 +1341,10 @@ endfunction
 function! <SID>vimim_tabkey()
 " ---------------------------
     let onekey = "\t"
+    let char_before = getline(".")[col(".")-2]
+    if char_before =~# '\s' || empty(char_before)
+        return onekey
+    endif
     sil!call s:vimim_start_onekey()
     sil!return s:vimim_onekey_action(onekey)
 endfunction
