@@ -3126,345 +3126,6 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Back_End         ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" ----------------------------------------
-function! s:vimim_datafile_range(keyboard)
-" ----------------------------------------
-    call s:vimim_reload_datafile(0)
-    if empty(s:lines) || empty(a:keyboard)
-        return []
-    endif
-    let ranges = s:vimim_search_boundary(s:lines, a:keyboard)
-    if empty(ranges)
-        return []
-    elseif len(ranges) == 1
-        let ranges = s:vimim_search_boundary(sort(s:lines), a:keyboard)
-        if empty(ranges)
-            return []
-        else
-            call s:vimim_save_to_disk(s:lines)
-        endif
-    endif
-    return s:lines[get(ranges,0) : get(ranges,1)]
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_search_boundary(lines, keyboard)
-" ------------------------------------------------
-    if empty(a:lines) || empty(a:keyboard)
-        return []
-    endif
-    let first_char_typed = a:keyboard[:0]
-    if s:datafile_has_dot > 0 && first_char_typed == "."
-        let first_char_typed = '\.'
-    endif
-    let patterns = '^' . first_char_typed
-    let match_start = match(a:lines, patterns)
-    if match_start < 0
-        return []
-    endif
-    " add boundary to datafile search by exact one letter
-    " ---------------------------------------------------
-    let ranges = []
-    call add(ranges, match_start)
-    let match_next = match_start
-    " allow empty lines at the end of datafile
-    let last_line = a:lines[-1]
-    let len_lines = len(a:lines)
-    let solid_last_line = substitute(last_line,'\s','','g')
-    while empty(solid_last_line)
-        let len_lines -= 1
-        let last_line = a:lines[len_lines]
-        let solid_last_line = substitute(last_line,'\s','','g')
-    endwhile
-    let first_char_last_line = last_line[:0]
-    if first_char_typed == first_char_last_line
-        let match_next = len(a:lines)-1
-    else
-        let pattern_next = '^[^' . first_char_typed . ']'
-        let result = match(a:lines, pattern_next, match_start)
-        if result > 0
-            let match_next = result
-        endif
-    endif
-    call add(ranges, match_next)
-    if match_start > match_next
-        let ranges = ['datafile_is_not_sorted']
-    endif
-    return ranges
-endfunction
-
-" ---------------------------------------------------
-function! s:vimim_ctrl_h_whole_match(lines, keyboard)
-" ---------------------------------------------------
-    let keyboard = a:keyboard
-    if empty(a:lines) || empty(keyboard)
-        return ''
-    endif
-    " --------------------------------------------
-    let position = len(keyboard)
-    let block = keyboard
-    let match_start = 0
-    " --------------------------------------------
-    while position > 2
-        let block = strpart(keyboard, 0, position)
-        let pattern = '^' . block . '\>'
-        let match_start = match(a:lines, pattern)
-        if  match_start < 0
-            let position -= 1
-            let msg = "continue until match is found"
-        elseif s:vimim_smart_ctrl_h > 1
-            let position -= 1
-        else
-             break
-        endif
-    endwhile
-    " --------------------------------------------
-    if s:vimim_smart_ctrl_h > 1
-        let s:vimim_smart_ctrl_h = 1
-    endif
-    " --------------------------------------------
-    let matches = s:vimim_exact_match(a:lines, match_start)
-    " --------------------------------------------
-    " todo: find another round of results
-    " --------------------------------------------
-    return matches
-endfunction
-
-" -------------------------------------------------- xxx
-function! s:vimim_exact_whole_match(lines, keyboard)
-" --------------------------------------------------
-    if empty(a:keyboard) || empty(a:lines)
-        return []
-    endif
-    let results = []
-    let pattern = '^' . a:keyboard . '\>'
-    let whole_match = match(a:lines, pattern)
-    if  whole_match > 0
-        let results = a:lines[whole_match : whole_match]
-    endif
-    return results
-endfunction
-
-" -----------------------------------------------
-function! s:vimim_exact_match(lines, match_start)
-" -----------------------------------------------
-    if empty(a:lines) || a:match_start < 0
-        return []
-    endif
-    " ------------------------------------------
-    let match_start = a:match_start
-    " ------------------------------------------
-    let keyboard = get(split(get(a:lines,match_start)),0)
-    if empty(keyboard) || keyboard !~ s:valid_key
-        return []
-    endif
-    " ----------------------------------------
-    let pattern = '^\(' . keyboard
-    if len(keyboard) < 2
-        let pattern .=  '\>'
-    else
-        let pattern .=  '\d\=\>'
-    endif
-    let pattern .=  '\)\@!'
-    " ----------------------------------------
-    let result = match(a:lines, pattern, match_start)-1
-    if result - match_start < 1
-        return a:lines[match_start : match_start]
-    endif
-    " ----------------------------------------
-    let words_limit = 128
-  " if s:vimim_quick_key > 0
-  "     let list_length = result - match_start
-  "     let do_search_on_word = 0
-  "     let quick_limit = 3
-  "     if get(s:im['pinyin'],0) > 0
-  "         let quick_limit = 2
-  "     endif
-  "     if len(keyboard) < quick_limit
-  "     \|| list_length > words_limit*2
-  "         let do_search_on_word = 1
-  "     elseif get(s:im['pinyin'],0) > 0
-  "         let chinese = join(a:lines[match_start : result],'')
-  "         let chinese = substitute(chinese,'\p\+','','g')
-  "         if len(chinese) > words_limit*4
-  "             let do_search_on_word = 1
-  "         endif
-  "     endif
-  "     if do_search_on_word > 0
-  "         let pattern = '^\(' . keyboard . '\>\)\@!'
-  "         let result = match(a:lines, pattern, match_start)-1
-  "     endif
-  " endif
-    " ----------------------------------------
-    let match_end = match_start
-    if empty(result)
-        let match_end = match_start
-    elseif result > 0 && result > match_start
-        let match_end = result
-    endif
-    if match_end - match_start > words_limit
-        let match_end = match_start + words_limit -1
-    endif
-    let results = a:lines[match_start : match_end]
-    return results
-endfunction
-
-" --------------------------------------------
-function! s:vimim_fuzzy_match(lines, keyboard)
-" --------------------------------------------
-    let keyboard = a:keyboard
-    if empty(keyboard) || empty(a:lines)
-        return []
-    endif
-    let pattern = s:vimim_free_fuzzy_pattern(keyboard)
-    let results = filter(a:lines, 'v:val =~ pattern')
-    if s:vimim_datafile_has_english > 0
-        call filter(results, 'v:val !~ "#$"')
-    endif
-    if s:chinese_input_mode < 2
-        let results = s:vimim_filter(results, keyboard, 0)
-    endif
-    return results
-endfunction
-
-" --------------------------------------------
-function! s:vimim_free_fuzzy_pattern(keyboard)
-" --------------------------------------------
-    let fuzzy = '.*'
-    let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
-    let pattern = '^' . fuzzies
-    return pattern
-endfunction
-
-" -------------------------------------------------
-function! s:vimim_filter(results, keyboard, length)
-" -------------------------------------------------
-    let results = a:results
-    let filter_length = a:length
-    if filter_length < 0
-        return results
-    endif
-    " ---------------------------------------------
-    let length = len((substitute(a:keyboard,'\A','','')))
-    if empty(length) || &encoding != "utf-8"
-        return results
-    endif
-    " ---------------------------------------------
-    if empty(filter_length)
-        if length < 5
-            let filter_length = length
-        endif
-    endif
-    " ---------------------------------------------
-    if filter_length > 0
-        let pattern = '\s\+.\{'. filter_length .'}$'
-        call filter(results, 'v:val =~ pattern')
-    endif
-    return results
-endfunction
-
-" --------------------------------------------------
-function! s:vimim_keyboard_analysis(lines, keyboard)
-" --------------------------------------------------
-    let keyboard = a:keyboard
-    if empty(a:lines)
-    \|| s:chinese_input_mode > 1
-    \|| s:datafile_has_dot > 0
-    \|| len(a:keyboard) < 2
-        return 0
-    endif
-    " --------------------------------------------------
-    if keyboard =~ '^\l\+\d\+'
-        let msg = "[diy] ma7712li4002 => [mali,7712,4002]"
-        return 0
-    endif
-    " --------------------------------------------------
-    let keyboards = s:vimim_diy_keyboard2number(keyboard)
-    if empty(keyboards)
-        let msg = " mjads.xdhao.jdaaa "
-    else
-        return 0
-    endif
-    " --------------------------------------------------
-    let blocks = []
-    if get(s:im['wubi'],0) > 0
-        let blocks = s:vimim_wubi_whole_match(keyboard)
-    elseif get(s:im['4corner'],0) > 0
-        let blocks = s:vimim_4corner_whole_match(keyboard)
-    endif
-    " --------------------------------------------------
-    if empty(blocks)
-        " step 3: try to break up long whole sentence
-        let blocks = s:vimim_sentence_match(a:lines, keyboard)
-    endif
-    " --------------------------------------------------
-    if !empty(blocks)
-        let keyboard = get(blocks, 0)
-    endif
-    " --------------------------------------------------
-    return keyboard
-endfunction
-
-" -----------------------------------------------
-function! s:vimim_sentence_match(lines, keyboard)
-" -----------------------------------------------
-    let keyboard = a:keyboard
-    if empty(a:lines)
-    \|| keyboard =~ '\d'
-    \|| len(keyboard) < 4
-        return []
-    endif
-    let pattern = '^' . keyboard . '\>'
-    let match_start = match(a:lines, pattern)
-    if match_start < 0
-        let msg = "now try backward maximum match"
-    else
-        return []
-    endif
-    " --------------------------------------------
-    let min = 1
-    let max = len(keyboard)
-    let block = ''
-    let last_part = ''
-    " --------------------------------------------
-    while max > 2 && min < len(keyboard)
-        let msg = "jiandaolaoshiwenshenghao.<OneKey><Space>..."
-        let max -= 1
-        let position = max
-        if s:vimim_smart_ctrl_h > 1
-            let msg = "wozuixihuandeliulanqi.<OneKey><Space>...<Ctrl-H>"
-            let min += 1
-            let position = min
-        endif
-        let block = strpart(keyboard, 0, position)
-        let pattern = '^' . block . '\>'
-        let match_start = match(a:lines, pattern)
-        if  match_start < 0
-            let msg = "continue until match is found"
-        else
-            let last_part = strpart(keyboard, position)
-            break
-        endif
-    endwhile
-    " --------------------------------------------
-    if s:vimim_smart_ctrl_h > 1
-        let s:vimim_smart_ctrl_h = 1
-    endif
-    let blocks = []
-    if !empty(block)
-    \&& !empty(last_part)
-    \&& block.last_part ==# keyboard
-        call add(blocks, block)
-        call add(blocks, last_part)
-    endif
-    return blocks
-endfunction
-
-" ======================================= }}}
 let VimIM = " ====  Datafile_Update  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
@@ -5260,6 +4921,345 @@ function! s:vimim_diy_results(keyboards, cache_list)
     " ----------------------------------
     let results = s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
     return results
+endfunction
+
+" ======================================= }}}
+let VimIM = " ====  Back_End         ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" ----------------------------------------
+function! s:vimim_datafile_range(keyboard)
+" ----------------------------------------
+    call s:vimim_reload_datafile(0)
+    if empty(s:lines) || empty(a:keyboard)
+        return []
+    endif
+    let ranges = s:vimim_search_boundary(s:lines, a:keyboard)
+    if empty(ranges)
+        return []
+    elseif len(ranges) == 1
+        let ranges = s:vimim_search_boundary(sort(s:lines), a:keyboard)
+        if empty(ranges)
+            return []
+        else
+            call s:vimim_save_to_disk(s:lines)
+        endif
+    endif
+    return s:lines[get(ranges,0) : get(ranges,1)]
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_search_boundary(lines, keyboard)
+" ------------------------------------------------
+    if empty(a:lines) || empty(a:keyboard)
+        return []
+    endif
+    let first_char_typed = a:keyboard[:0]
+    if s:datafile_has_dot > 0 && first_char_typed == "."
+        let first_char_typed = '\.'
+    endif
+    let patterns = '^' . first_char_typed
+    let match_start = match(a:lines, patterns)
+    if match_start < 0
+        return []
+    endif
+    " add boundary to datafile search by exact one letter
+    " ---------------------------------------------------
+    let ranges = []
+    call add(ranges, match_start)
+    let match_next = match_start
+    " allow empty lines at the end of datafile
+    let last_line = a:lines[-1]
+    let len_lines = len(a:lines)
+    let solid_last_line = substitute(last_line,'\s','','g')
+    while empty(solid_last_line)
+        let len_lines -= 1
+        let last_line = a:lines[len_lines]
+        let solid_last_line = substitute(last_line,'\s','','g')
+    endwhile
+    let first_char_last_line = last_line[:0]
+    if first_char_typed == first_char_last_line
+        let match_next = len(a:lines)-1
+    else
+        let pattern_next = '^[^' . first_char_typed . ']'
+        let result = match(a:lines, pattern_next, match_start)
+        if result > 0
+            let match_next = result
+        endif
+    endif
+    call add(ranges, match_next)
+    if match_start > match_next
+        let ranges = ['datafile_is_not_sorted']
+    endif
+    return ranges
+endfunction
+
+" ---------------------------------------------------
+function! s:vimim_ctrl_h_whole_match(lines, keyboard)
+" ---------------------------------------------------
+    let keyboard = a:keyboard
+    if empty(a:lines) || empty(keyboard)
+        return ''
+    endif
+    " --------------------------------------------
+    let position = len(keyboard)
+    let block = keyboard
+    let match_start = 0
+    " --------------------------------------------
+    while position > 2
+        let block = strpart(keyboard, 0, position)
+        let pattern = '^' . block . '\>'
+        let match_start = match(a:lines, pattern)
+        if  match_start < 0
+            let position -= 1
+            let msg = "continue until match is found"
+        elseif s:vimim_smart_ctrl_h > 1
+            let position -= 1
+        else
+             break
+        endif
+    endwhile
+    " --------------------------------------------
+    if s:vimim_smart_ctrl_h > 1
+        let s:vimim_smart_ctrl_h = 1
+    endif
+    " --------------------------------------------
+    let matches = s:vimim_exact_match(a:lines, match_start)
+    " --------------------------------------------
+    " todo: find another round of results
+    " --------------------------------------------
+    return matches
+endfunction
+
+" -------------------------------------------------- xxx
+function! s:vimim_exact_whole_match(lines, keyboard)
+" --------------------------------------------------
+    if empty(a:keyboard) || empty(a:lines)
+        return []
+    endif
+    let results = []
+    let pattern = '^' . a:keyboard . '\>'
+    let whole_match = match(a:lines, pattern)
+    if  whole_match > 0
+        let results = a:lines[whole_match : whole_match]
+    endif
+    return results
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_exact_match(lines, match_start)
+" -----------------------------------------------
+    if empty(a:lines) || a:match_start < 0
+        return []
+    endif
+    " ------------------------------------------
+    let match_start = a:match_start
+    " ------------------------------------------
+    let keyboard = get(split(get(a:lines,match_start)),0)
+    if empty(keyboard) || keyboard !~ s:valid_key
+        return []
+    endif
+    " ----------------------------------------
+    let pattern = '^\(' . keyboard
+    if len(keyboard) < 2
+        let pattern .=  '\>'
+    else
+        let pattern .=  '\d\=\>'
+    endif
+    let pattern .=  '\)\@!'
+    " ----------------------------------------
+    let result = match(a:lines, pattern, match_start)-1
+    if result - match_start < 1
+        return a:lines[match_start : match_start]
+    endif
+    " ----------------------------------------
+    let words_limit = 128
+  " if s:vimim_quick_key > 0
+  "     let list_length = result - match_start
+  "     let do_search_on_word = 0
+  "     let quick_limit = 3
+  "     if get(s:im['pinyin'],0) > 0
+  "         let quick_limit = 2
+  "     endif
+  "     if len(keyboard) < quick_limit
+  "     \|| list_length > words_limit*2
+  "         let do_search_on_word = 1
+  "     elseif get(s:im['pinyin'],0) > 0
+  "         let chinese = join(a:lines[match_start : result],'')
+  "         let chinese = substitute(chinese,'\p\+','','g')
+  "         if len(chinese) > words_limit*4
+  "             let do_search_on_word = 1
+  "         endif
+  "     endif
+  "     if do_search_on_word > 0
+  "         let pattern = '^\(' . keyboard . '\>\)\@!'
+  "         let result = match(a:lines, pattern, match_start)-1
+  "     endif
+  " endif
+    " ----------------------------------------
+    let match_end = match_start
+    if empty(result)
+        let match_end = match_start
+    elseif result > 0 && result > match_start
+        let match_end = result
+    endif
+    if match_end - match_start > words_limit
+        let match_end = match_start + words_limit -1
+    endif
+    let results = a:lines[match_start : match_end]
+    return results
+endfunction
+
+" --------------------------------------------
+function! s:vimim_fuzzy_match(lines, keyboard)
+" --------------------------------------------
+    let keyboard = a:keyboard
+    if empty(keyboard) || empty(a:lines)
+        return []
+    endif
+    let pattern = s:vimim_free_fuzzy_pattern(keyboard)
+    let results = filter(a:lines, 'v:val =~ pattern')
+    if s:vimim_datafile_has_english > 0
+        call filter(results, 'v:val !~ "#$"')
+    endif
+    if s:chinese_input_mode < 2
+        let results = s:vimim_filter(results, keyboard, 0)
+    endif
+    return results
+endfunction
+
+" --------------------------------------------
+function! s:vimim_free_fuzzy_pattern(keyboard)
+" --------------------------------------------
+    let fuzzy = '.*'
+    let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
+    let pattern = '^' . fuzzies
+    return pattern
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_filter(results, keyboard, length)
+" -------------------------------------------------
+    let results = a:results
+    let filter_length = a:length
+    if filter_length < 0
+        return results
+    endif
+    " ---------------------------------------------
+    let length = len((substitute(a:keyboard,'\A','','')))
+    if empty(length) || &encoding != "utf-8"
+        return results
+    endif
+    " ---------------------------------------------
+    if empty(filter_length)
+        if length < 5
+            let filter_length = length
+        endif
+    endif
+    " ---------------------------------------------
+    if filter_length > 0
+        let pattern = '\s\+.\{'. filter_length .'}$'
+        call filter(results, 'v:val =~ pattern')
+    endif
+    return results
+endfunction
+
+" --------------------------------------------------
+function! s:vimim_keyboard_analysis(lines, keyboard)
+" --------------------------------------------------
+    let keyboard = a:keyboard
+    if empty(a:lines)
+    \|| s:chinese_input_mode > 1
+    \|| s:datafile_has_dot > 0
+    \|| len(a:keyboard) < 2
+        return 0
+    endif
+    " --------------------------------------------------
+    if keyboard =~ '^\l\+\d\+'
+        let msg = "[diy] ma7712li4002 => [mali,7712,4002]"
+        return 0
+    endif
+    " --------------------------------------------------
+    let keyboards = s:vimim_diy_keyboard2number(keyboard)
+    if empty(keyboards)
+        let msg = " mjads.xdhao.jdaaa "
+    else
+        return 0
+    endif
+    " --------------------------------------------------
+    let blocks = []
+    if get(s:im['wubi'],0) > 0
+        let blocks = s:vimim_wubi_whole_match(keyboard)
+    elseif get(s:im['4corner'],0) > 0
+        let blocks = s:vimim_4corner_whole_match(keyboard)
+    endif
+    " --------------------------------------------------
+    if empty(blocks)
+        " step 3: try to break up long whole sentence
+        let blocks = s:vimim_sentence_match(a:lines, keyboard)
+    endif
+    " --------------------------------------------------
+    if !empty(blocks)
+        let keyboard = get(blocks, 0)
+    endif
+    " --------------------------------------------------
+    return keyboard
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_sentence_match(lines, keyboard)
+" -----------------------------------------------
+    let keyboard = a:keyboard
+    if empty(a:lines)
+    \|| keyboard =~ '\d'
+    \|| len(keyboard) < 4
+        return []
+    endif
+    let pattern = '^' . keyboard . '\>'
+    let match_start = match(a:lines, pattern)
+    if match_start < 0
+        let msg = "now try backward maximum match"
+    else
+        return []
+    endif
+    " --------------------------------------------
+    let min = 1
+    let max = len(keyboard)
+    let block = ''
+    let last_part = ''
+    " --------------------------------------------
+    while max > 2 && min < len(keyboard)
+        let msg = "jiandaolaoshiwenshenghao.<OneKey><Space>..."
+        let max -= 1
+        let position = max
+        if s:vimim_smart_ctrl_h > 1
+            let msg = "wozuixihuandeliulanqi.<OneKey><Space>...<Ctrl-H>"
+            let min += 1
+            let position = min
+        endif
+        let block = strpart(keyboard, 0, position)
+        let pattern = '^' . block . '\>'
+        let match_start = match(a:lines, pattern)
+        if  match_start < 0
+            let msg = "continue until match is found"
+        else
+            let last_part = strpart(keyboard, position)
+            break
+        endif
+    endwhile
+    " --------------------------------------------
+    if s:vimim_smart_ctrl_h > 1
+        let s:vimim_smart_ctrl_h = 1
+    endif
+    let blocks = []
+    if !empty(block)
+    \&& !empty(last_part)
+    \&& block.last_part ==# keyboard
+        call add(blocks, block)
+        call add(blocks, last_part)
+    endif
+    return blocks
 endfunction
 
 " ======================================= }}}
