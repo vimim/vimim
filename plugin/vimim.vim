@@ -206,7 +206,6 @@ function! s:vimim_initialize_session()
     let s:debug_count = 0
     let s:keyboard_count = 0
     let s:chinese_mode_count = 1
-    let s:onekey_mode_count = 1
     let s:abcdefghi = "'abcdefghi"
     let s:show_me_not_pattern = "^ii\\|^oo"
     " --------------------------------
@@ -1308,7 +1307,11 @@ endfunction
 function! s:vimim_start_onekey()
 " ------------------------------
     let s:chinese_input_mode = 0
-    let s:onekey_mode_count += 1
+    " --------------------------
+    if empty(&ruler)
+        return
+    endif
+    " --------------------------
     if s:vimim_sexy_onekey > 0
         set noruler
     endif
@@ -1316,7 +1319,7 @@ function! s:vimim_start_onekey()
     " <OneKey> triple play
     "   (1) after English (valid keys)   => trigger omni popup
     "   (2) after omni popup window      => same as <Space>
-    "   (3) after Chinese (invalid keys) => out of OneKey mode
+    "   (3) after Chinese (invalid keys) => <Tab> or nothing
     " ----------------------------------------------------------
     sil!call s:vimim_start()
     sil!call s:vimim_1234567890_filter_on()
@@ -1422,12 +1425,13 @@ function! s:vimim_onekey_action(onekey)
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
-    if s:pattern_not_found < 1
+    if s:pattern_not_found < 1 && empty(s:smart_enter)
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     else
         let space = a:onekey
     endif
     " ---------------------------------------------------
+    let s:smart_enter = 0
     let s:pattern_not_found = 0
     sil!exe 'sil!return "' . space . '"'
 endfunction
