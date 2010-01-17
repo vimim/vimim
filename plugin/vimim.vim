@@ -633,7 +633,7 @@ function! s:vimim_initialize_keycode()
     \|| get(s:im['wu'],0) > 0
     \|| get(s:im['yong'],0) > 0
     \|| get(s:im['nature'],0) > 0
-    \|| get(s:im['array'],0) > 0
+    \|| get(s:im['array30'],0) > 0
     \|| get(s:im['phonetic'],0) > 0
         let msg = "need to find a better way to handle real valid keycode"
         let s:datafile_has_dot = 1
