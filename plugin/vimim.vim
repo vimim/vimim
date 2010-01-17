@@ -2737,15 +2737,14 @@ function! g:vimim_pumvisible_p_paste()
     if len(pastes) == len(words)
         let words = copy(pastes)
     endif
+    let cursor_positions = getpos(".")
+    let cursor_positions[2] = 1
     if s:vimimdebug < 9
         put=words
     else
-        let line = line(".")
-        let cursor_positions = getpos(".")
-        let cursor_positions[2] = 1
-        call setpos(".", cursor_positions)
-        call setline(line, words)
+        call setline(line("."), words)
     endif
+    call setpos(".", cursor_positions)
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
         let string_words = ''
         for line in words
@@ -5629,15 +5628,14 @@ if a:start
 
     if all_digit < 1
         let start_column = last_seen_nonsense_column
-        if s:vimim_imode_universal > 0
-            let char_1st = current_line[start_column]
-            let char_2nd = current_line[start_column+1]
-            if char_1st ==# "'"
-                if char_2nd =~# "[0-9ds']"
-                    let msg = "free staring apostrophe as much as possible"
-                else
-                    let start_column += 1
-                endif
+        let char_1st = current_line[start_column]
+        let char_2nd = current_line[start_column+1]
+        if char_1st ==# "'"
+            if s:vimim_imode_universal > 0
+            \&& char_2nd =~# "[0-9ds']"
+                let msg = "free staring apostrophe as much as possible"
+            else
+                let start_column += 1
             endif
         endif
     endif
