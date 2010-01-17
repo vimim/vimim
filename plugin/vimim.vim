@@ -1424,7 +1424,8 @@ function! s:vimim_onekey_action(onekey)
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
-    if s:pattern_not_found < 1 && empty(s:smart_enter)
+    if s:pattern_not_found < 1
+    \&& s:seamless_positions != getpos(".")
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     else
         let space = a:onekey
@@ -2954,6 +2955,7 @@ endfunction
 function! <SID>vimim_smart_enter()
 " --------------------------------
     let key = ''
+    let enter = "\<CR>"
     let char_before = getline(".")[col(".")-2]
     " -----------------------------------------------
     " <Enter> double play in Chinese Mode:
@@ -2966,18 +2968,19 @@ function! <SID>vimim_smart_enter()
         let s:smart_enter += 1
     endif
     " -----------------------------------------------
-    " <Enter> triple play in OneKey Mode:
+    " <Enter> multiple play in OneKey Mode:
     "   (1) after English (valid keys)    => Seamless
-    "   (2) after Chinese or double Enter => Enter
-    "   (3) after English punctuation     => Space
+    "   (2) after English punctuation     => <Space>
+    "   (3) after Chinese or double Enter => <Enter>
+    "   (4) after empty line              => <Enter> with invisible <Space>
     " -----------------------------------------------
     if empty(s:chinese_input_mode)
         if has_key(s:punctuations, char_before)
             let s:smart_enter += 1
             let key = ' '
         endif
-        if char_before =~ '\s' || empty(char_before)
-            let key = "\<CR>"
+        if char_before =~ '\s'
+            let key = enter
         endif
     endif
     " -----------------------------------------------
@@ -2989,9 +2992,15 @@ function! <SID>vimim_smart_enter()
         if s:smart_enter == 2
             let key = " "
         else
-            let key = "\<CR>"
+            let key = enter
         endif
         let s:smart_enter = 0
+    endif
+    " -----------------------------------------------
+    if empty(s:chinese_input_mode)
+        if empty(char_before)
+            let key = "　" . enter
+        endif
     endif
     " -----------------------------------------------
     sil!exe 'sil!return "' . key . '"'
