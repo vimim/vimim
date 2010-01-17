@@ -1388,6 +1388,10 @@ function! s:vimim_onekey_action(onekey)
         return a:onekey
     endif
     " ---------------------------------------------------
+    if char_before ==# "'"
+        let s:pattern_not_found = 0
+    endif
+    " ---------------------------------------------------
     if s:pattern_not_found < 1
         let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     else
@@ -3212,6 +3216,7 @@ function! s:vimim_ctrl_h_whole_match(lines, keyboard)
     " --------------------------------------------
     return matches
 endfunction
+
 " -------------------------------------------------- xxx
 function! s:vimim_exact_whole_match(lines, keyboard)
 " --------------------------------------------------
@@ -5987,9 +5992,9 @@ else
         endif
     endif
 
-    " [cloud] never give up trying whole cloud
-    " ----------------------------------------
-    if s:vimim_cloud_sogou == 1
+    " [cloud] last try cloud before giving up
+    " ---------------------------------------
+    if s:vimim_cloud_sogou > 0
         let results = s:vimim_get_cloud_sogou(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
