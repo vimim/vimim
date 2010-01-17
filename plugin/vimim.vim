@@ -3448,7 +3448,7 @@ function! s:vimim_insert_entry(entries)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  VimIM_4Corner    ==== {{{"
+let VimIM = " ====  Input_4Corner    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3519,7 +3519,7 @@ function! s:vimim_build_reverse_4corner_cache(chinese)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  VimIM_Pinyin     ==== {{{"
+let VimIM = " ====  Input_Pinyin     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3553,7 +3553,7 @@ function! s:vimim_apostrophe(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  VimIM_Shuangpin  ==== {{{"
+let VimIM = " ====  Input_Shuangpin  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3879,7 +3879,7 @@ function! s:vimim_shuangpin_purple(rule)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  VimIM_Erbi       ==== {{{"
+let VimIM = " ====  Input_Erbi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3913,7 +3913,7 @@ function! s:vimim_first_punctuation_erbi(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  VimIM_Wubi       ==== {{{"
+let VimIM = " ====  Input_Wubi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4014,7 +4014,7 @@ function! s:vimim_wubi_whole_match(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  VimIM_Cloud      ==== {{{"
+let VimIM = " ====  Input_Cloud      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4269,7 +4269,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  VimIM_My_Cloud   ==== {{{"
+let VimIM = " ====  Input_my_Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4566,7 +4566,7 @@ function! s:vimim_rot13(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  VimIM_DIY        ==== {{{"
+let VimIM = " ====  Input_DIY        ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
