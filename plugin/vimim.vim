@@ -237,7 +237,6 @@ function! s:vimim_initialize_i_setting()
     let s:saved_pumheight=&pumheight
     let s:saved_statusline=&statusline
     let s:saved_laststatus=&laststatus
-    let s:saved_ruler=&ruler
 endfunction
 
 " ------------------------------------
@@ -1315,9 +1314,6 @@ function! s:vimim_start_onekey()
 " ------------------------------
     let s:chinese_input_mode = 0
     let s:onekey_mode_count += 1
-    if s:vimim_sexy_onekey > 0
-        set noruler
-    endif
     " ----------------------------------------------------------
     " <OneKey> triple play
     "   (1) after English (valid keys)   => trigger omni popup
@@ -5293,8 +5289,8 @@ endfunction
 " ---------------------------------------------
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
-    let s:vimim_sexy_onekey=1
     let s:vimimdebug=9
+    let s:vimim_sexy_onekey=2
     let s:vimim_tab_as_onekey=1
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=12
@@ -5397,7 +5393,6 @@ function! s:vimim_i_setting_off()
     let &pumheight=s:saved_pumheight
     let &statusline=s:saved_statusline
     let &laststatus=s:saved_laststatus
-    let &ruler=s:saved_ruler
 endfunction
 
 " ----------------------------
