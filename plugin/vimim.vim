@@ -601,7 +601,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
     call add(G, "g:vimim_fuzzy_search")
-    call add(G, "g:vimim_imode_apostrophe")
+    call add(G, "g:vimim_imode_universal")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_latex_suite")
@@ -701,21 +701,22 @@ function! s:vimim_egg_vimimstat()
     let stone = get(g:vimim,1)
     let gold = get(g:vimim,2)
     " ------------------------
-    let stat = "總計輸入：". gold ." 個漢字"
+    let stat = "总计输入：". gold ." 个汉字"
     call add(eggs, stat)
     " ------------------------
     if gold > 0
-        let stat = "平均碼長：". string(stone*1.0/gold)
+        let stat = "平均码长：". string(stone*1.0/gold)
         call add(eggs, stat)
     endif
     " ------------------------
     let duration = get(g:vimim,3)
     let rate = gold*60/duration
-    let stat = "打字速度：". string(rate) ." 漢字/分鐘"
+    let stat = "打字速度：". string(rate) ." 汉字/分钟"
     call add(eggs, stat)
     " ------------------------
     let egg = '"stat  " . v:val . "　"'
-    return map(eggs, egg)
+    call map(eggs, egg)
+    return eggs
 endfunction
 
 " ------------------------------
@@ -738,15 +739,15 @@ endfunction
 function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
-    call add(eggs, "錯誤報告：" . get(s:vimimhelp,0))
-    call add(eggs, "詞庫下載：" . get(s:vimimhelp,1))
-    call add(eggs, "最新主頁：" . get(s:vimimhelp,2))
+    " -----------------------------------------------
+    call add(eggs, "错误报告：" . get(s:vimimhelp,0))
+    call add(eggs, "词库下载：" . get(s:vimimhelp,1))
+    call add(eggs, "最新主页：" . get(s:vimimhelp,2))
     call add(eggs, "最新程式：" . get(s:vimimhelp,3))
-    call add(eggs, "試用版本：" . get(s:vimimhelp,4))
-    call add(eggs, "官方網址：" . get(s:vimimhelp,5))
-    call add(eggs, "自己的雲：" . get(s:vimimhelp,6))
-    call add(eggs, "新聞論壇：" . get(s:vimimhelp,7))
-" -------------------------------------
+    call add(eggs, "试用版本：" . get(s:vimimhelp,4))
+    call add(eggs, "官方网址：" . get(s:vimimhelp,5))
+    call add(eggs, "新闻论坛：" . get(s:vimimhelp,6))
+    " -----------------------------------------------
     return map(eggs, '"VimIM " .v:val . "　"')
 endfunction
 
@@ -1851,71 +1852,45 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_quantifiers()
 " ----------------------------------------
     let s:quantifiers = {}
-    if s:vimim_imode_apostrophe < 1
+    if s:vimim_imode_comma < 1
     \&& s:vimim_imode_pinyin < 1
         return
     endif
     let s:quantifiers['1'] = '一壹㈠①⒈⑴甲'
-    let s:quantifiers['2'] = '二貳㈡②⒉⑵乙'
-    let s:quantifiers['3'] = '三三㈢③⒊⑶丙'
+    let s:quantifiers['2'] = '二贰㈡②⒉⑵乙'
+    let s:quantifiers['3'] = '三叁㈢③⒊⑶丙'
     let s:quantifiers['4'] = '四肆㈣④⒋⑷丁'
     let s:quantifiers['5'] = '五伍㈤⑤⒌⑸戊'
-    let s:quantifiers['6'] = '六陸㈥⑥⒍⑹己'
+    let s:quantifiers['6'] = '六陆㈥⑥⒍⑹己'
     let s:quantifiers['7'] = '七柒㈦⑦⒎⑺庚'
     let s:quantifiers['8'] = '八捌㈧⑧⒏⑻辛'
     let s:quantifiers['9'] = '九玖㈨⑨⒐⑼壬'
     let s:quantifiers['0'] = '〇零㈩⑩⒑⑽癸十拾'
     let s:quantifiers['a'] = '秒'
-    let s:quantifiers['b'] = '百佰步倍包杯本部班筆把'
-    let s:quantifiers['c'] = '厘次餐場串處'
-    let s:quantifiers['d'] = '第度點袋道滴碟頂棟堆對朵堵頓'
-    let s:quantifiers['e'] = '億'
-    let s:quantifiers['f'] = '分份發封付副幅峰方服'
-    let s:quantifiers['g'] = '個根股管'
-    let s:quantifiers['h'] = '時毫行盒壺戶回號'
+    let s:quantifiers['b'] = '百佰步把包杯本笔部班'
+    let s:quantifiers['c'] = '厘次餐场串处'
+    let s:quantifiers['d'] = '第度点袋道滴碟顶栋堆对朵堵顿'
+    let s:quantifiers['e'] = '亿'
+    let s:quantifiers['f'] = '分份发封付副幅峰方服'
+    let s:quantifiers['g'] = '个根股管'
+    let s:quantifiers['h'] = '时毫行盒壶户回'
     let s:quantifiers['i'] = '毫'
-    let s:quantifiers['j'] = '斤家具架間件節劑具捲卷莖記'
-    let s:quantifiers['k'] = '克口塊棵顆捆孔'
-    let s:quantifiers['l'] = '裡粒類輛列輪厘升領縷'
-    let s:quantifiers['m'] = '米名枚面門'
+    let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
+    let s:quantifiers['k'] = '克口块棵颗捆孔'
+    let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
+    let s:quantifiers['m'] = '米名枚面门秒'
     let s:quantifiers['n'] = '年'
     let s:quantifiers['o'] = '度'
-    let s:quantifiers['p'] = '磅盆瓶排盤盆匹片篇撇噴'
+    let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
     let s:quantifiers['q'] = '千仟群'
     let s:quantifiers['r'] = '日'
-    let s:quantifiers['s'] = '十拾時升艘扇首雙所束手'
-    let s:quantifiers['t'] = '噸條頭通堂台天套桶筒貼趟'
+    let s:quantifiers['s'] = '十拾时升艘扇首双所束手'
+    let s:quantifiers['t'] = '吨条头通堂台套桶筒贴趟'
     let s:quantifiers['u'] = '微'
-    let s:quantifiers['w'] = '萬位味碗窩'
-    let s:quantifiers['x'] = '升席些項箱'
-    let s:quantifiers['y'] = '月億葉'
-    let s:quantifiers['z'] = '兆隻張株支枝指盞座陣樁尊則種站幢宗'
-endfunction
-
-" -----------------------------------
-function! s:vimim_date_time(keyboard)
-" -----------------------------------
-    if s:vimimdebug < 1
-        return []
-    endif
-    let time = 0
-    if a:keyboard ==# "'today"
-        " 2009 year February 11 day Wednesday
-        let time = strftime("%Y year %B %d day %A")
-    elseif a:keyboard ==# "'now"
-        " Sunday AM 8 hour 8 minute 8 second
-        let time=strftime("%A %p %I hour %M minute %S second")
-    endif
-    if empty(time)
-        return []
-    endif
-    let time = s:vimim_translator(time)
-    let keyboards = split(time, '\ze')
-    let time = s:vimim_get_chinese_number(keyboards, 'i')
-    if len(time) > 0
-        let s:insert_without_popup = 1
-    endif
-    return [time]
+    let s:quantifiers['w'] = '万位味碗窝'
+    let s:quantifiers['x'] = '升席些项'
+    let s:quantifiers['y'] = '月亿叶'
+    let s:quantifiers['z'] = '兆只张株支枝指盏座阵桩尊则种站幢宗'
 endfunction
 
 " ----------------------------------------------
@@ -1925,21 +1900,22 @@ function! s:vimim_imode_number(keyboard, prefix)
         return []
     endif
     let keyboard = a:keyboard
+    " ------------------------------------------
     if a:prefix ==# "'"
         let keyboard = substitute(keyboard,"'",'i','g')
     endif
-    " ------------------------------------
+    " ------------------------------------------
     if strpart(keyboard,0,2) ==# 'ii'
         let keyboard = 'I' . strpart(keyboard,2)
     endif
     let ii_keyboard = keyboard
     let keyboard = strpart(keyboard,1)
-    " ------------------------------------
+    " ------------------------------------------
     if keyboard !~ '^\d\+' && keyboard !~# '^[ds]'
     \&& len(substitute(keyboard,'\d','','')) > 1
         return []
     endif
-    " ------------------------------------
+    " ------------------------------------------
     let digit_alpha = keyboard
     if keyboard =~# '^\d*\l\{1}$'
         let digit_alpha = keyboard[:-2]
@@ -4143,7 +4119,7 @@ function! s:vimim_magic_tail(keyboard)
     let magic_tail = keyboard[-1:]
     let last_but_one =  keyboard[-2:-2]
     if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
-        let g:msg = " play with magic trailing char "
+        let msg = " play with magic trailing char "
     else
         return 0
     endif
@@ -4871,9 +4847,9 @@ function! s:vimim_diy_keyboard2number(keyboard)
     return keyboards
 endfunction
 
-" -------------------------------------------
-function! s:vimim_pinyin_and_4corer(keyboard)
-" -------------------------------------------
+" --------------------------------------------
+function! s:vimim_pinyin_and_4corner(keyboard)
+" --------------------------------------------
     if empty(s:pinyin_and_4corner)
         return []
     endif
@@ -5311,7 +5287,7 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_custom_menu_label=1
     " ------------------------------
     let s:vimim_wildcard_search=1
-    let s:vimim_imode_apostrophe=1
+    let s:vimim_imode_universal=1
     let s:vimim_imode_pinyin=-1
     let s:vimim_smart_ctrl_h=1
     let s:vimim_smart_ctrl_p=1
@@ -5653,14 +5629,25 @@ if a:start
 
     if all_digit < 1
         let start_column = last_seen_nonsense_column
+        if s:vimim_imode_universal > 0
+            let char_1st = current_line[start_column]
+            let char_2nd = current_line[start_column+1]
+            if char_1st ==# "'"
+                if char_2nd =~# "[0-9ds']"
+                    let msg = "free staring apostrophe as much as possible"
+                else
+                    let start_column += 1
+                endif
+            endif
+        endif
     endif
 
     " HOW is done!  Any other cases?
     " ------------------------------------------------- TODO
-    "  assert ma7712  =>  馬
-    "  assert .ma     =>  .馬
-    "  assert 7712ma  =>  7712馬
-    "  assert 7712    =>  馬
+    "  assert ma7712  =>  马
+    "  assert .ma     =>  .马
+    "  assert 7712ma  =>  7712马
+    "  assert 7712    =>  马
     " ------------------------------------------------- to_be_removed
 
     let s:start_row_before = start_row
@@ -5843,13 +5830,9 @@ else
 
     " [imode] magic leading apostrophe: universal imode
     " -------------------------------------------------
-    if s:vimim_imode_apostrophe > 0
+    if s:vimim_imode_universal > 0
     \&& empty(s:chinese_input_mode)
     \&& keyboard =~# "^'"
-        let itoday_inow = s:vimim_date_time(keyboard)
-        if len(itoday_inow) > 0
-            return itoday_inow
-        endif
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
@@ -5981,7 +5964,7 @@ else
     " [DIY] "Do It Yourself" couple IM: pinyin+4corner
     " ------------------------------------------------
     if match_start < 0
-        let results = s:vimim_pinyin_and_4corer(keyboard)
+        let results = s:vimim_pinyin_and_4corner(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
         endif
