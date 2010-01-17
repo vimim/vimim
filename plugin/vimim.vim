@@ -1288,11 +1288,29 @@ function! s:vimim_onekey_autocmd()
     endif
 endfunction
 
+" -----------------------------
+function! s:vimim_stop_onekey()
+" -----------------------------
+    if s:vimim_sexy_onekey < 1
+        return
+    endif
+    set ruler
+    set nopaste
+    if s:vimim_auto_copy_clipboard>0 && has("gui_running")
+        let cursor_positions = getpos(".")
+        exe 'normal "+yap'
+        call setpos(".", cursor_positions)
+    endif
+endfunction
+
 " ------------------------------
 function! s:vimim_start_onekey()
 " ------------------------------
     let s:chinese_input_mode = 0
     let s:onekey_mode_count += 1
+    if s:vimim_sexy_onekey > 0
+        set noruler
+    endif
     " ----------------------------------------------------------
     " <OneKey> triple play
     "   (1) after English (valid keys)   => trigger omni popup
@@ -2736,10 +2754,9 @@ function! g:vimim_pumvisible_p_paste()
         put=words
     else
         let line = line(".")
-        let current_positions = getpos(".")
-        let current_positions[2] = 1
-        call setpos(".", current_positions)
-        let current_positions[1] = line + len(words) - 1
+        let cursor_positions = getpos(".")
+        let cursor_positions[2] = 1
+        call setpos(".", cursor_positions)
         call setline(line, words)
     endif
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
@@ -5417,6 +5434,7 @@ function! s:vimim_stop()
     sil!autocmd! chinese_mode_autocmd
     sil!call s:reset_before_stop()
     sil!call s:vimim_i_setting_off()
+    sil!call s:vimim_stop_onekey()
     sil!call s:vimim_i_cursor_color(0)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
