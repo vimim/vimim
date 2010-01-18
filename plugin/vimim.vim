@@ -199,6 +199,7 @@ function! s:vimim_initialize_session()
     let s:lines = []
     let s:lines_primary = []
     let s:lines_secondary = []
+    let s:seamless_positions = []
     " --------------------------------
     let s:current_positions = [0,0,1,0]
     let s:alphabet_lines = []
@@ -1275,46 +1276,14 @@ let VimIM = " ====  OneKey           ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" --------------------------------
-function! s:vimim_onekey_autocmd()
-" --------------------------------
-    if s:vimim_sexy_onekey > 0 && has("autocmd")
-        augroup onekey_mode_autocmd
-            autocmd!
-            if hasmapto('<Space>', 'i')
-                sil!autocmd InsertLeave * sil!call s:vimim_stop()
-            endif
-        augroup END
-    endif
-endfunction
-
-" -----------------------------
-function! s:vimim_stop_onekey()
-" -----------------------------
-    if empty(s:vimim_sexy_onekey)
-        return
-    endif
-    set ruler
-    if s:vimim_auto_copy_clipboard>0 && has("gui_running")
-        let @+ = getline(".")
-    endif
-endfunction
-
 " ------------------------------
 function! s:vimim_start_onekey()
 " ------------------------------
     let s:chinese_input_mode = 0
-    " --------------------------
-    if s:vimim_sexy_onekey > 0
-        if empty(&ruler)
-            return
-        endif
-        set noruler
-    endif
     " ----------------------------------------------------------
-    " <OneKey> triple play
+    " default <OneKey> triple play
     "   (1) after English (valid keys)   => trigger omni popup
-    "   (2) after omni popup window      => same as <Space>
+    "   (2) after omni popup window      => <Space> or nothing
     "   (3) after Chinese (invalid keys) => <Tab> or nothing
     " ----------------------------------------------------------
     sil!call s:vimim_start()
@@ -1330,6 +1299,95 @@ function! s:vimim_start_onekey()
     " ----------------------------------------------------------
 endfunction
 
+" --------------------------------
+function! s:vimim_onekey_autocmd()
+" --------------------------------
+    if s:vimim_sexy_onekey > 0 && has("autocmd")
+        augroup onekey_mode_autocmd
+            autocmd!
+            if hasmapto('<Space>', 'i')
+                sil!autocmd InsertLeave * sil!call s:vimim_stop_sexy_onekey()
+            endif
+        augroup END
+    endif
+endfunction
+
+" ----------------------------------
+function! s:vimim_stop_sexy_onekey()
+" ----------------------------------
+    if s:vimim_sexy_onekey > 0
+        set ruler
+        let @+ = getline(".")
+        sil!call s:vimim_stop()
+        sil!call <SID>vimim_set_seamless()
+    endif
+    return ""
+endfunction
+
+" -------------------------------
+function! s:vimim_toggle_onekey()
+" -------------------------------
+" sexy <OneKey> double play
+"  (1) <OneKey> => start sexy OneKey mode
+"  (2) <OneKey> => stop  sexy OneKey mode
+" ----------------------------------------
+    if s:vimim_sexy_onekey > 0
+        if pumvisible()
+            let msg = "do nothing over omni menu"
+        else
+            if empty(&ruler)
+                call s:vimim_stop_sexy_onekey()
+                return 1
+            else
+                set noruler
+            endif
+        endif
+    endif
+    return 0
+endfunction
+
+" ---------------------------
+function! <SID>vimim_onekey()
+" ---------------------------
+    let onekey = ""
+    " ----------------------------------
+    let toggle = s:vimim_toggle_onekey()
+    " ----------------------------------
+    if empty(toggle)
+        sil!call s:vimim_start_onekey()
+        sil!return s:vimim_onekey_action(onekey)
+    endif
+    return onekey
+endfunction
+
+" ---------------------------
+function! <SID>vimim_tabkey()
+" ---------------------------
+    let onekey = "\t"
+    " -----------------------
+    if &ruler
+        let char_before = getline(".")[col(".")-2]
+        if pumvisible()
+            let msg = "do nothing over omni menu"
+        elseif empty(char_before)
+        \|| char_before =~ '\s'
+        \|| char2nr(char_before) > 127
+            return onekey
+        endif
+    endif
+    " ----------------------------------
+    let toggle = s:vimim_toggle_onekey()
+    " ----------------------------------
+    if empty(toggle)
+        sil!call s:vimim_start_onekey()
+        sil!return s:vimim_onekey_action(onekey)
+    endif
+    if empty(&ruler)
+        return onekey
+    endif
+    return ""
+endfunction
+
 " ---------------------------------
 function! <SID>vimim_space_onekey()
 " ---------------------------------
@@ -1337,37 +1395,10 @@ function! <SID>vimim_space_onekey()
     sil!return s:vimim_onekey_action(onekey)
 endfunction
 
-" ---------------------------
-function! <SID>vimim_tabkey()
-" ---------------------------
-    let onekey = "\t"
-    let char_before = getline(".")[col(".")-2]
-    if pumvisible()
-        if &ruler
-            let onekey = "\<C-N>\<C-Y>"
-            sil!exe 'sil!return "' . onekey . '"'
-        endif
-    elseif empty(char_before)
-    \|| char_before =~# '\s'
-    \|| char2nr(char_before) > 127
-        return onekey
-    endif
-    sil!call s:vimim_start_onekey()
-    sil!return s:vimim_onekey_action(onekey)
-endfunction
-
-" ---------------------------
-function! <SID>vimim_onekey()
-" ---------------------------
-    let onekey = ""
-    sil!call s:vimim_start_onekey()
-    sil!return s:vimim_onekey_action(onekey)
-endfunction
-
 " -------------------------------------
 function! s:vimim_onekey_action(onekey)
 " -------------------------------------
-    let space = ''
+    let onekey = ''
     " -----------------------------------------------
     " <Space> triple play in OneKey Mode:
     "   (1) after English (valid keys) => trigger menu
@@ -1375,12 +1406,16 @@ function! s:vimim_onekey_action(onekey)
     "   (3) after English punctuation  => Chinese punctuation
     " -----------------------------------------------
     if pumvisible()
-        let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
-        sil!exe 'sil!return "' . space . '"'
+        if a:onekey == " " || empty(s:vimim_sexy_onekey)
+            let onekey = s:vimim_ctrl_y_ctrl_x_ctrl_u()
+        else
+            let onekey = "\<C-E>"
+        endif
+        sil!exe 'sil!return "' . onekey . '"'
     endif
     if s:insert_without_popup > 0
         let s:insert_without_popup = 0
-        let space = ""
+        let onekey = ""
     endif
     " ---------------------------------------------------
     let char_before = getline(".")[col(".")-2]
@@ -1388,16 +1423,16 @@ function! s:vimim_onekey_action(onekey)
     " ---------------------------------------------------
     if char_before_before !~# "[0-9a-z]"
     \&& has_key(s:punctuations, char_before)
-        let space = ""
+        let onekey = ""
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
-                let space = a:onekey
+                let onekey = a:onekey
                 break
             else
                 continue
             endif
         endfor
-        if empty(space)
+        if empty(onekey)
             let msg = "transform punctuation from english to chinese"
             let replacement = s:punctuations[char_before]
             if s:vimim_sexy_onekey > 0
@@ -1408,8 +1443,8 @@ function! s:vimim_onekey_action(onekey)
                     let replacement = <SID>vimim_get_double_quote()
                 endif
             endif
-            let space = "\<BS>" . replacement
-            sil!exe 'sil!return "' . space . '"'
+            let onekey = "\<BS>" . replacement
+            sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
     " ---------------------------------------------------
@@ -1423,14 +1458,14 @@ function! s:vimim_onekey_action(onekey)
     " ---------------------------------------------------
     if s:pattern_not_found < 1
     \&& s:seamless_positions != getpos(".")
-        let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        let onekey = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     else
-        let space = a:onekey
+        let onekey = a:onekey
     endif
     " ---------------------------------------------------
     let s:smart_enter = 0
     let s:pattern_not_found = 0
-    sil!exe 'sil!return "' . space . '"'
+    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 " ======================================= }}}
@@ -3668,7 +3703,7 @@ function! s:vimim_quanpin_transform(keyboard)
         endif
         for i in range(6,1,-1)
             " NOTE: remove the space after index will cause syntax error
-            let tmp = item[index : ] 
+            let tmp = item[index : ]
 
             if len(tmp) < i
                 continue
@@ -3677,7 +3712,7 @@ function! s:vimim_quanpin_transform(keyboard)
             let matchstr = item[index : end-1]
             if has_key(qptable, matchstr)
                 let tempstr = item[end-1 : end]
-                " special case for fanguo, which should be fan'guo 
+                " special case for fanguo, which should be fan'guo
                 if tempstr == "gu" || tempstr == "nu" || tempstr == "ni"
                     if has_key(qptable, matchstr[:-2])
                         let i -= 1
@@ -4368,7 +4403,7 @@ function! s:vimim_check_mycloud_plugin()
         let s:cloud_plugin_arg = ""
         let s:cloud_plugin_func = 'do_getlocal'
         if filereadable(cloud)
-            if has("win32") 
+            if has("win32")
                 " we don't need to strip ".dll" for "win32unix".
                 cloud = cloud[:-5]
             endif
@@ -5443,7 +5478,7 @@ function! s:vimim_super_reset()
 " -----------------------------
     sil!call s:reset_before_anything()
     sil!call s:reset_after_insert()
-    sil!call s:reset_before_stop()
+    sil!call s:vimim_reset_before_stop()
 endfunction
 
 " -----------------------
@@ -5465,9 +5500,8 @@ function! s:vimim_stop()
     let g:vimim[3] += duration
     sil!autocmd! onekey_mode_autocmd
     sil!autocmd! chinese_mode_autocmd
-    sil!call s:reset_before_stop()
+    sil!call s:vimim_reset_before_stop()
     sil!call s:vimim_i_setting_off()
-    sil!call s:vimim_stop_onekey()
     sil!call s:vimim_i_cursor_color(0)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
@@ -5475,9 +5509,9 @@ function! s:vimim_stop()
     sil!call s:vimim_initialize_mapping()
 endfunction
 
-" -----------------------------
-function! s:reset_before_stop()
-" -----------------------------
+" -----------------------------------
+function! s:vimim_reset_before_stop()
+" -----------------------------------
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
 endfunction
@@ -5513,7 +5547,9 @@ endfunction
 " ------------------------------
 function! s:reset_after_insert()
 " ------------------------------
-    let s:seamless_positions = []
+    if empty(s:vimim_sexy_onekey)
+        let s:seamless_positions = []
+    endif
     call g:reset_after_auto_insert()
 endfunction
 
