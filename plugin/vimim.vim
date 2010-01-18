@@ -3556,6 +3556,89 @@ function! s:vimim_apostrophe(keyboard)
     return keyboard
 endfunction
 
+" -------------------------------------------------
+function! s:vimim_get_pinyin_from_quanpin(keyboard)
+" -------------------------------------------------
+    let keyboard = a:keyboard
+    if s:shuangpin_flag > 0
+        return keyboard
+    endif
+    let keyboard2 = s:vimim_quanpin_transform(keyboard)
+    if s:vimimdebug > 0
+        call s:debugs('quanpin_in', keyboard)
+        call s:debugs('quanpin_out', keyboard2)
+    endif
+    return keyboard2
+endfunction
+
+" -------------------------------------------
+function! s:vimim_quanpin_transform(keyboard)
+" -------------------------------------------
+    let qptable = s:quanpin_table
+    let item = a:keyboard
+    let pinyinstr = ""      " output string
+    let index = 0
+    let lenitem = len(item)
+    while index < lenitem
+        if item[index] !~ "[a-z]"
+            let index += 1
+            continue
+        endif
+        for i in range(6,1,-1)
+            " NOTE: remove the space after index will cause syntax error
+            let tmp = item[index : ]
+            if len(tmp) < i
+                continue
+            endif
+            let end = index+i
+            let matchstr = item[index : end-1]
+            if has_key(qptable, matchstr)
+                let tempstr = item[end-1 : end]
+                " special case for fanguo, which should be fan'guo
+                if tempstr == "gu" || tempstr == "nu" || tempstr == "ni"
+                    if has_key(qptable, matchstr[:-2])
+                        let i -= 1
+                        let matchstr = matchstr[:-2]
+                    endif
+                endif
+                let pinyinstr .= "'" . qptable[matchstr]
+                let index += i
+                break
+            elseif i == 1
+                let pinyinstr .= "'" . item[index]
+                let index += 1
+                break
+            else
+                continue
+            endif
+        endfor
+    endwhile
+    if pinyinstr[0] == "'"
+        return pinyinstr[1:]
+    else
+        return pinyinstr
+    endif
+endfunction
+
+" --------------------------------------
+function! s:vimim_create_quanpin_table()
+" --------------------------------------
+    let pinyin_list = s:vimim_get_pinyin_table()
+    let table = {}
+    for key in pinyin_list
+        if key[0] == "'"
+            let table[key[1:]] = key[1:]
+        else
+            let table[key] = key
+        endif
+    endfor
+    for shengmu in ["b", "p", "m", "f", "d", "t", "l", "n", "g", "k", "h",
+                \"j", "q", "x", "zh", "ch", "sh", "r", "z", "c", "s", "y", "w"]
+        let table[shengmu] = shengmu
+    endfor
+    return table
+endfunction
+
 " ======================================= }}}
 let VimIM = " ====  Input_Shuangpin  ==== {{{"
 " ===========================================
@@ -3687,63 +3770,11 @@ function! s:vimim_shuangpin_transform(keyboard)
     endif
 endfunction
 
-" --------------------------------------------
-function! s:vimim_quanpin_transform(keyboard)
-" --------------------------------------------
-    let qptable = s:quanpin_table
-    let item = a:keyboard
-    let pinyinstr = ""      " output string
-
-    let index = 0
-    let lenitem = len(item)
-    while index < lenitem
-        if item[index] !~ "[a-z]"
-            let index += 1
-            continue
-        endif
-        for i in range(6,1,-1)
-            " NOTE: remove the space after index will cause syntax error
-            let tmp = item[index : ]
-
-            if len(tmp) < i
-                continue
-            endif
-            let end = index+i
-            let matchstr = item[index : end-1]
-            if has_key(qptable, matchstr)
-                let tempstr = item[end-1 : end]
-                " special case for fanguo, which should be fan'guo
-                if tempstr == "gu" || tempstr == "nu" || tempstr == "ni"
-                    if has_key(qptable, matchstr[:-2])
-                        let i -= 1
-                        let matchstr = matchstr[:-2]
-                    endif
-                endif
-                let pinyinstr .= "'" . qptable[matchstr]
-
-                let index += i
-                break
-            elseif i == 1
-                let pinyinstr .= "'" . item[index]
-                let index += 1
-                break
-            else
-                continue
-            endif
-        endfor
-    endwhile
-    if pinyinstr[0] == "'"
-        return pinyinstr[1:]
-    else
-        return pinyinstr
-    endif
-endfunction
-
-" --------------------------------------------
+"-----------------------------------
 function! s:vimim_get_pinyin_table()
-" --------------------------------------------
+"-----------------------------------
 " List of all valid pinyin
-" NOTE: Don't change this function and do NOT remove the spaces after commas.
+" NOTE: Don't change this function nor remove the spaces after commas.
 return [
     \"'a", "'ai", "'an", "'ang", "'ao", 'ba', 'bai', 'ban', 'bang', 'bao',
     \'bei', 'ben', 'beng', 'bi', 'bian', 'biao', 'bie', 'bin', 'bing', 'bo',
@@ -3787,25 +3818,6 @@ return [
     \'zhe', 'zhen', 'zheng', 'zhi', 'zhong', 'zhou', 'zhu', 'zhua', 'zhuai',
     \'zhuan', 'zhuang', 'zhui', 'zhun', 'zhuo', 'zi', 'zong', 'zou', 'zu',
         \'zuan', 'zui', 'zun', 'zuo']
-endfunction
-
-" --------------------------------------------
-function! s:vimim_create_quanpin_table()
-" --------------------------------------------
-    let pinyin_list = s:vimim_get_pinyin_table()
-    let table = {}
-    for key in pinyin_list
-        if key[0] == "'"
-            let table[key[1:]] = key[1:]
-        else
-            let table[key] = key
-        endif
-    endfor
-    for shengmu in ["b", "p", "m", "f", "d", "t", "l", "n", "g", "k", "h",
-                \"j", "q", "x", "zh", "ch", "sh", "r", "z", "c", "s", "y", "w"]
-        let table[shengmu] = shengmu
-    endfor
-    return table
 endfunction
 
 " --------------------------------------------
