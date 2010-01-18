@@ -1291,11 +1291,10 @@ endfunction
 " -----------------------------
 function! s:vimim_stop_onekey()
 " -----------------------------
-    if s:vimim_sexy_onekey < 1
+    if empty(s:vimim_sexy_onekey)
         return
     endif
     set ruler
-    set nopaste
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
         let @+ = getline(".")
     endif
@@ -5354,7 +5353,7 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
-    let s:vimim_sexy_onekey=2
+    let s:vimim_sexy_onekey=1
     let s:vimim_tab_as_onekey=1
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=12
@@ -6129,10 +6128,8 @@ function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
     inoremap<expr><Plug>VimimChineseMode <SID>vimim_chinese_mode()
     " ------------------------------------------------------------
-    if s:vimim_sexy_onekey < 2
-        imap<silent><C-Bslash> <Plug>VimimChineseMode
-        noremap<silent><C-Bslash> :call <SID>vimim_chinese_mode()<CR>
-    endif
+       imap<silent><C-Bslash> <Plug>VimimChineseMode
+    noremap<silent><C-Bslash> :call <SID>vimim_chinese_mode()<CR>
 endfunction
 
 " -----------------------------------
@@ -6142,10 +6139,6 @@ function! s:vimim_onekey_mapping_on()
     inoremap<silent><expr><Plug>VimimTabKey <SID>vimim_tabkey()
     " ---------------------------------------------------------
     imap<silent><C-^> <Plug>VimimOneKey
-    " --------------------------------------
-    if s:vimim_sexy_onekey > 1
-        set pastetoggle=<C-Bslash>
-    endif
     " --------------------------------------
     if s:vimim_tab_as_onekey > 0
         imap<silent><Tab> <Plug>VimimTabKey
