@@ -1635,7 +1635,6 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations['!']='！'
     let s:punctuations['~']='～'
     let s:punctuations['+']='＋'
-    let s:punctuations['*']='﹡'
     let s:punctuations['@']='・'
     let s:punctuations[':']='：'
     let s:punctuations['(']='（'
@@ -1655,6 +1654,9 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations['.']='。'
     let s:punctuations['?']='？'
     let s:punctuations['`']='、'
+    if empty(s:vimim_wildcard_search)
+        let s:punctuations['*']='﹡'
+    endif
     if empty(s:vimim_latex_suite)
         let s:punctuations['\']='、'
         let s:punctuations["'"]='‘’'
@@ -3148,6 +3150,7 @@ function! s:vimim_initialize_datafile_in_vimrc()
     if s:vimim_datafile_has_pinyin > 0
     \&& s:vimim_datafile_has_4corner > 0
         let s:pinyin_and_4corner = 2
+        let s:im_primary = 'pinyin'
         let s:im['4corner'][0] = 1
         let s:im['pinyin'][0] = 1
     endif
