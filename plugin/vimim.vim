@@ -4318,7 +4318,8 @@ function! s:vimim_check_mycloud_plugin()
         let s:cloud_plugin_arg = ""
         let s:cloud_plugin_func = 'do_getlocal'
         if filereadable(cloud)
-            if has("gui_win32")
+            if has("win32") 
+                " we don't need to strip ".dll" for "win32unix".
                 cloud = cloud[:-5]
             endif
             try
@@ -4327,23 +4328,6 @@ function! s:vimim_check_mycloud_plugin()
                     return cloud
                 endif
             catch
-"NOTE: ------------------------------------------------------------
-"NOTE: (It took me a while to figure out try/catch error in eggs: issue 60)
-"NOTE: Therefore, we should add v:exception for debugging everywhere
-"NOTE:
-"NOTE:  Question: I found several try/catch block in mycloud
-"NOTE:  Do we need all of them?
-"NOTE:  Is it possible to consolidate try/catch block?
-"NOTE:
-"NOTE:  Vim scripting seems not as friendly as OO to do try/catch
-"NOTE:  Vim scripting is actually "hard" to debug when things go big
-"NOTE:
-"NOTE: catch       catch everything
-"NOTE: catch /.*/" catch everything
-"NOTE: it is helpful to get the error msg, which is v:exception
-"NOTE: I found two blocks of try-catch, marked by A/B for now?
-"NOTE: feel free to change, so that it is helpful to debug
-"NOTE: ------------------------------------------------------------
                 if s:vimimdebug > 0
                     call s:debugs('libcall_mycloud2::error=',v:exception)
                 endif
@@ -4424,7 +4408,7 @@ function! s:vimim_check_mycloud_plugin()
             if filereadable(cloud)
                 let s:cloud_plugin_mode = "libcall"
                 " strip off the ending .dll suffix, only required for win32
-                if has("gui_win32") && cloud[-4:] ==? ".dll"
+                if has("win32") && cloud[-4:] ==? ".dll"
                     let cloud = cloud[:-5]
                 endif
                 try
