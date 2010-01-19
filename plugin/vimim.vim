@@ -343,8 +343,8 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['nature'] = ['自然']
     let s:chinese['plusplus'] = ['拼音加加']
     let s:chinese['purple'] = ['紫光']
-    let s:chinese['bracket_l'] = ['【','《']
-    let s:chinese['bracket_r'] = ['】','》']
+    let s:chinese['bracket_l'] = ['《','【']
+    let s:chinese['bracket_r'] = ['》','】']
 endfunction
 
 " -------------------------------
