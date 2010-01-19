@@ -4161,7 +4161,7 @@ function! s:vimim_plug_n_play_www_sogou()
                 let plug_n_play_www_sogou = 1
             endif
         elseif filereadable(s:vimim_wget_dll)
-            let msg = " Windows (libmycloud.dll) set and play"
+            let msg = " Windows (libvimim.dll) set and play"
             let plug_n_play_www_sogou = 1
         endif
     endif
@@ -4185,7 +4185,7 @@ function! s:vimim_initialize_cloud()
     if !exists('*system') || s:vimim_cloud_sogou < 0
         return
     endif
-    " step 0: try to find libmycloud
+    " step 0: try to find libvimim
     " ------------------------------
     let cloud = s:vimim_wget_dll
     " --------------------------------------------------
@@ -4195,10 +4195,10 @@ function! s:vimim_initialize_cloud()
     " --------------------------------------------------
     if has("win32") || has("win32unix")
         if empty(s:vimim_wget_dll)
-            let cloud = s:path . "libmycloud.dll"
+            let cloud = s:path . "libvimim.dll"
         endif
     else
-        let cloud = s:path . "libmycloud.so"
+        let cloud = s:path . "libvimim.so"
     endif
     if filereadable(cloud)
         " in win32, strip the .dll suffix
@@ -4436,9 +4436,9 @@ function! s:vimim_check_mycloud_plugin()
     if empty(s:vimim_mycloud_url)
         " we do plug-n-play for libcall(), not for system()
         if has("win32") || has("win32unix")
-            let cloud = s:path . "libmycloud.dll"
+            let cloud = s:path . "libvimim.dll"
         elseif has("unix")
-            let cloud = s:path . "libmycloud.so"
+            let cloud = s:path . "libvimim.so"
         else
             return 0
         endif
@@ -4572,10 +4572,10 @@ function! s:vimim_initialize_mycloud_plugin()
     " sample url:
     " let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
     " let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
-    " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libmycloud.so"
-    " let g:vimim_mycloud_url = "dll:/data/libmycloud.so:192.168.0.1"
+    " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
+    " let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
     " let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
-    " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygmycloud.dll"
+    " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
     " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
     " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
