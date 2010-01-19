@@ -1495,7 +1495,7 @@ function! s:vimim_start_chinese_mode()
     sil!call s:vimim_i_chinese_mode_autocmd_on()
     " --------------------------------
     if empty(s:vimim_static_input_style)
-        let msg = " ### chinese mode dynamic ### "
+        let msg = " ___ chinese mode dynamic ___ "
         let s:chinese_input_mode = 2
         call <SID>vimim_set_seamless()
         call s:vimim_dynamic_alphabet_trigger()
@@ -1504,7 +1504,7 @@ function! s:vimim_start_chinese_mode()
                                \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
     else
-        let msg = " ### chinese mode static ### "
+        let msg = " ___ chinese mode static ___ "
         let s:chinese_input_mode = 1
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------------
@@ -2052,7 +2052,7 @@ function! s:vimim_initialize_e2c()
     " VimIM rule for entry of English Chinese dictionary
     " obama 奧巴馬 歐巴馬 #
     " --------------------------------------------------
-    let english_pattern = "#$"
+    let english_pattern = " #$"
     let matched_english_lines = match(lines, english_pattern)
     if matched_english_lines < 0
         return ''
@@ -2339,7 +2339,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["menu"] = menu
         endif
         let chinese = get(pairs, 1)
-        if chinese =~ '#'
+        if chinese =~ "#"
             continue
         endif
         " -------------------------------------------------
@@ -2730,7 +2730,7 @@ function! g:vimim_pumvisible_p_paste()
         let pairs = split(item)
         let yin = get(pairs, 0)
         let yang = get(pairs, 1)
-        if yang =~ '#'
+        if yang =~ "#"
             continue
         endif
         call add(words, item)
@@ -3576,7 +3576,7 @@ endfunction
 " --------------------------------------------------
 function! s:vimim_apostrophe_fuzzy_pattern(keyboard)
 " --------------------------------------------------
-    let fuzzy = ".*'"
+    let fuzzy = "\\l\\+'"
     let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
     let pattern = '^' . fuzzies
     return pattern
@@ -4784,7 +4784,7 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
             let pattern = s:vimim_free_fuzzy_pattern(keyboard)
         endif
         if s:vimim_datafile_has_english > 0
-            call filter(results, 'v:val !~ "#$"')
+            call filter(results, 'v:val !~ " #$"')
         endif
     else |" ------------------------------------------
         let msg = "leave room to play with digits"
@@ -5231,11 +5231,10 @@ function! s:vimim_fuzzy_match(lines, keyboard)
     let pattern = s:vimim_free_fuzzy_pattern(keyboard)
     let results = filter(a:lines, 'v:val =~ pattern')
     if s:vimim_datafile_has_english > 0
-        call filter(results, 'v:val !~ "#$"')
+        call filter(results, 'v:val !~ " #$"')
     endif
     if s:chinese_input_mode < 2
         let results = s:vimim_pinyin_filter(results, keyboard)
-        let results = s:vimim_length_filter(results, keyboard, 0)
     endif
     return results
 endfunction
@@ -5405,7 +5404,7 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_sexy_onekey=1
     let s:vimim_tab_as_onekey=1
     let s:vimim_cloud_sogou=12
-    let s:vimim_chinese_frequency=12
+    let s:vimim_chinese_frequency=14
     " ------------------------------ debug
     let s:vimim_custom_laststatus=0
     let s:vimim_custom_menu_label=1
