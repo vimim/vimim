@@ -343,6 +343,8 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['nature'] = ['自然']
     let s:chinese['plusplus'] = ['拼音加加']
     let s:chinese['purple'] = ['紫光']
+    let s:chinese['bracket_l'] = ['【','《']
+    let s:chinese['bracket_r'] = ['】','》']
 endfunction
 
 " -------------------------------
@@ -859,7 +861,7 @@ function! s:vimim_egg_vimim()
         let CLOUD = s:vimim_get_chinese('all')
         let CLOUD .= s:vimim_get_chinese('cloud')
     endif
-    let option .= "《" . CLOUD . "》"
+    let option .= s:vimim_get_chinese('bracket_l') . CLOUD . s:vimim_get_chinese('bracket_r')
     call add(eggs, option)
 " ----------------------------------
     if empty(s:global_customized)
@@ -2472,7 +2474,7 @@ endfunction
 function! s:vimim_statusline()
 " ----------------------------
     let im = ''
-    let plus = ['《' ,'》', '＋']
+    let plus = [s:vimim_get_chinese('bracket_l'), s:vimim_get_chinese('bracket_r'), '＋']
     let plus2 = plus[1] . plus[2] . plus[0]
   " ------------------------------------
     let key  = s:im_primary
