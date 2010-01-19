@@ -3550,16 +3550,16 @@ function! s:vimim_apostrophe(keyboard)
     return keyboard
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_pinyin_filter(results, keyboard)
-" ------------------------------------------------
+" -------------------------------------------------
+function! s:vimim_pinyin_filter(results, keyboards)
+" -------------------------------------------------
     if get(s:im['pinyin'],0) < 1
     \|| empty(a:results)
-    \|| empty(a:keyboard)
+    \|| empty(a:keyboards)
         return a:results
     endif
     let new_results = []
-    let pattern = s:vimim_apostrophe_fuzzy_pattern(a:keyboard)
+    let pattern = s:vimim_apostrophe_fuzzy_pattern(a:keyboards)
     for item in a:results
         let keyboard = get(split(item), 0)
         let keyboard2 = s:vimim_get_pinyin_from_quanpin(keyboard)
@@ -3573,13 +3573,23 @@ function! s:vimim_pinyin_filter(results, keyboard)
     return new_results
 endfunction
 
-" --------------------------------------------------
-function! s:vimim_apostrophe_fuzzy_pattern(keyboard)
-" --------------------------------------------------
-    let lowercase = "\\l\\+"
-    let fuzzy = lowercase . "'"
-    let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
-    let pattern = '^' . fuzzies . lowercase . '$'
+" ---------------------------------------------------
+function! s:vimim_apostrophe_fuzzy_pattern(keyboards)
+" ---------------------------------------------------
+    let keyboard = get(a:keyboards,0)
+    let pattern = keyboard
+    if len(a:keyboards) > 1
+        let lowercase = "\\l*"
+        let fuzzy = lowercase . "'"
+        let keyboard2 = get(a:keyboards,1)
+        let pattern = keyboard . fuzzy . keyboard2 . lowercase
+    else
+        let lowercase = "\\l\\+"
+        let fuzzy = lowercase . "'"
+        let fuzzies = join(split(keyboard,'\ze'), fuzzy)
+        let pattern = fuzzies . lowercase
+    endif
+    let pattern = '^' . pattern . '$'
     return pattern
 endfunction
 
@@ -4750,20 +4760,18 @@ function! s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
     return sort(values)
 endfunction
 
-" ----------------------------------------------------
-function! s:vimim_quick_fuzzy_search(keyboard, filter)
-" ----------------------------------------------------
+" --------------------------------------------
+function! s:vimim_quick_fuzzy_search(keyboard)
+" --------------------------------------------
     let keyboard = a:keyboard
-    let filter = a:filter
     let results = s:vimim_datafile_range(keyboard)
     if empty(keyboard) || empty(results)
         return []
     endif
     let pattern = '^' .  keyboard
-    " ------------------------------------------------
     let has_digit = match(keyboard, '^\d\+')
+    " ------------------------------------------------
     if has_digit < 0
-        " --------------------------------------------
         if s:vimim_datafile_has_apostrophe > 0
             let pattern = '^' . keyboard . '\> '
             let whole_match = match(results, pattern)
@@ -4775,44 +4783,16 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
             endif
         endif
         " --------------------------------------------
-        if filter == 1
-            let pattern .= '\>'
-            if len(keyboard) > 1
-                let filter = -1
-            endif
-        elseif len(keyboard) == 2 && filter == 2
-            let pattern .= '\>'
-            let pattern = s:vimim_free_fuzzy_pattern(keyboard)
-        endif
         if s:vimim_datafile_has_english > 0
             call filter(results, 'v:val !~ " #$"')
         endif
-    else |" ------------------------------------------
-        let msg = "leave room to play with digits"
-        let filter = -1
-        if get(s:im['4corner'],0) == 1001
-            let msg = "another choice: top-left & bottom-right"
-            let char_first = strpart(keyboard, 0, 1)
-            let char_last  = strpart(keyboard, len(keyboard)-1)
-            let pattern = '^' .  char_first . "\d\d" . char_last
-        elseif get(s:im['4corner'],0) == 1289
-            let msg = "for 5 stokes: first two and last two"
-            let char_first = strpart(keyboard, 0, 2)
-            let char_last  = strpart(keyboard, len(keyboard)-2)
-            let pattern = '^' .  char_first . "\d\d" . char_last
-        endif
+        let keyboards = split(keyboard, "'")
+        let results = s:vimim_pinyin_filter(results, keyboards)
+    else
+        let results = filter(results, 'v:val =~ pattern')
     endif
     " -----------------------------------------------------------
-    let output = filter(copy(results), 'v:val =~ pattern')
-    if empty(output)
-        let msg = "use 4corner as a filter for superjianpin"
-        let pattern = s:vimim_free_fuzzy_pattern(keyboard)
-        let output = filter(results, 'v:val =~ pattern')
-    endif
-    " -----------------------------------------------------------
-    let gold = s:vimim_length_filter(output, keyboard, filter)
-    " -----------------------------------------------------------
-    return s:vimim_i18n_read_list(gold)
+    return s:vimim_i18n_read_list(results)
 endfunction
 
 " ------------------------------------------------
@@ -4879,20 +4859,13 @@ function! s:vimim_diy_keyboard(keyboard)
     let keyboards = []
     " ---------------------------------------
     " free style pinyin+4corner for zi and ci
-    " ---------------------------------------
-    let zi = "ma7712"
-    let ci = "ma7712li4002 ma7712li"
+    " let zi = "ma7712"
+    " let ci = "ma7712li4002 ma7712li"
     " --------------------------------------------------------------
     let alpha_keyboards = split(keyboard, '\d\+') |" => ['ma', 'li']
     let digit_keyboards = split(keyboard, '\D\+') |" => ['77', '40']
     " --------------------------------------------------------------
-    let apostrophe = ""
-    if s:vimim_datafile_has_apostrophe > 0
-    \&& empty(s:shuangpin_flag)
-        let apostrophe = "'"
-    endif
-    let alpha_string = join(alpha_keyboards, apostrophe)
-    " --------------------------------------------------------------
+    let alpha_string = join(alpha_keyboards, "'")
     let keyboards = copy(digit_keyboards)
     call insert(keyboards, alpha_string) |" ma77li40=>['mali',77,40]
     if len(alpha_keyboards) > 1 && len(digit_keyboards) < 2
@@ -5010,23 +4983,18 @@ function! s:vimim_diy_results(keyboards, cache_list)
     let b = get(keyboards, 1) |" 7712 7712   7712   7712   77
     let c = get(keyboards, 2) |"              ""    4002   40
     " --------------------------------------------------------
-    let fuzzy_lines = []      |" ['mali 馬力']
-    if len(keyboards) == 2    |" ['mali', '40']
-        let fuzzy_lines = a:cache_list
-        if empty(fuzzy_lines)
-            let fuzzy_lines = s:vimim_quick_fuzzy_search(a, 1)
-        endif
-    elseif len(keyboards) == 3
-        let fuzzy_lines = s:vimim_quick_fuzzy_search(a, 2)
+    let fuzzy_lines = a:cache_list
+    if empty(fuzzy_lines)
+        let fuzzy_lines = s:vimim_quick_fuzzy_search(a)
     endif
     let h_0 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     " ----------------------------------
-    let fuzzy_lines = s:vimim_quick_fuzzy_search(b, 1)
+    let fuzzy_lines = s:vimim_quick_fuzzy_search(b)
     let h_1 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     " ----------------------------------
     let h_2 = {}
     if len(keyboards) > 2
-        let fuzzy_lines = s:vimim_quick_fuzzy_search(c, 1)
+        let fuzzy_lines = s:vimim_quick_fuzzy_search(c)
         let h_2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     endif
     " ----------------------------------
@@ -5225,17 +5193,16 @@ endfunction
 " --------------------------------------------
 function! s:vimim_fuzzy_match(lines, keyboard)
 " --------------------------------------------
-    let keyboard = a:keyboard
-    if empty(keyboard) || empty(a:lines)
+    if empty(a:keyboard) || empty(a:lines)
         return []
     endif
-    let pattern = s:vimim_free_fuzzy_pattern(keyboard)
+    let pattern = s:vimim_free_fuzzy_pattern(a:keyboard)
     let results = filter(a:lines, 'v:val =~ pattern')
     if s:vimim_datafile_has_english > 0
         call filter(results, 'v:val !~ " #$"')
     endif
     if s:chinese_input_mode < 2
-        let results = s:vimim_pinyin_filter(results, keyboard)
+        let results = s:vimim_pinyin_filter(results, [a:keyboard])
     endif
     return results
 endfunction
@@ -5247,33 +5214,6 @@ function! s:vimim_free_fuzzy_pattern(keyboard)
     let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
     let pattern = '^' . fuzzies
     return pattern
-endfunction
-
-" --------------------------------------------------------
-function! s:vimim_length_filter(results, keyboard, length)
-" --------------------------------------------------------
-    let results = a:results
-    let filter_length = a:length
-    if filter_length < 0
-        return results
-    endif
-    " ---------------------------------------------
-    let length = len((substitute(a:keyboard,'\A','','')))
-    if empty(length) || &encoding != "utf-8"
-        return results
-    endif
-    " ---------------------------------------------
-    if empty(filter_length)
-        if length < 4
-            let filter_length = length
-        endif
-    endif
-    " ---------------------------------------------
-    if filter_length > 0
-        let pattern = '\s\+.\{'. filter_length .'}$'
-        call filter(results, 'v:val =~ pattern')
-    endif
-    return results
 endfunction
 
 " --------------------------------------------------
