@@ -812,7 +812,7 @@ function! s:vimim_egg_vimim()
     endif
     if s:vimim_sexy_onekey > 0
         let style = s:vimim_get_chinese('onekey')
-        let toggle = "i_CTRL-^"
+        let toggle = "i_CTRL-6"
     endif
     let toggle .= "　"
     let option = s:vimim_get_chinese('style')
@@ -861,7 +861,7 @@ function! s:vimim_egg_vimim()
         let CLOUD = s:vimim_get_chinese('all')
         let CLOUD .= s:vimim_get_chinese('cloud')
     endif
-    let option .= s:vimim_get_chinese('bracket_l') . CLOUD . s:vimim_get_chinese('bracket_r')
+    let option .= CLOUD
     call add(eggs, option)
 " ----------------------------------
     if empty(s:global_customized)
