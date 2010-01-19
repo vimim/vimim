@@ -3576,9 +3576,10 @@ endfunction
 " --------------------------------------------------
 function! s:vimim_apostrophe_fuzzy_pattern(keyboard)
 " --------------------------------------------------
-    let fuzzy = "\\l\\+'"
+    let lowercase = "\\l\\+"
+    let fuzzy = lowercase . "'"
     let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
-    let pattern = '^' . fuzzies
+    let pattern = '^' . fuzzies . lowercase . '$'
     return pattern
 endfunction
 
