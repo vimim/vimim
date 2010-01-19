@@ -5265,7 +5265,7 @@ function! s:vimim_length_filter(results, keyboard, length)
     endif
     " ---------------------------------------------
     if empty(filter_length)
-        if length < 5
+        if length < 4
             let filter_length = length
         endif
     endif
