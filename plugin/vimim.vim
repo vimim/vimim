@@ -1447,6 +1447,11 @@ function! s:vimim_onekey_action(onekey)
     else
         let onekey = a:onekey
     endif
+    " --------------------------------------------------- xxx
+    let msg = "sexy OneKey stops here" 
+""  if a:onekey == " "
+""      call s:vimim_stop_sexy_onekey()
+""  endif
     " ---------------------------------------------------
     let s:smart_enter = 0
     let s:pattern_not_found = 0
@@ -5549,6 +5554,7 @@ function! g:vimim_reset_after_insert()
     call s:reset_matched_list()
     call g:reset_after_auto_insert()
     " --------------------------------
+    let msg = "OneKey stops here" 
     if empty(s:vimim_sexy_onekey)
     \&& empty(s:chinese_input_mode)
         call s:vimim_stop()
@@ -6100,13 +6106,13 @@ endfunction
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
     inoremap<silent><expr><Plug>VimimChineseMode <SID>vimim_chinese_mode()
-    inoremap<silent><expr><Plug>VimimOneKeyMode  <SID>vimim_onekey_mode()
+    inoremap<silent><expr><Plug>VimimSexyMode    <SID>vimim_onekey_mode()
     " ------------------------------------------------------------
     if empty(s:vimim_sexy_onekey)
            imap<silent><C-Bslash> <Plug>VimimChineseMode
         noremap<silent><C-Bslash> :call <SID>vimim_chinese_mode()<CR>
     else
-           imap<silent><C-Bslash> <Plug>VimimOneKeyMode
+           imap<silent><C-Bslash> <Plug>VimimSexyMode
         noremap<silent><C-Bslash> :call <SID>vimim_onekey_mode()<CR>
     endif
 endfunction
@@ -6114,9 +6120,9 @@ endfunction
 " -----------------------------------
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
-    inoremap<silent><expr><Plug>VimimOneKey  <SID>vimim_onekey()
-    inoremap<silent><expr><Plug>VimimTabKey  <SID>vimim_tabkey()
-    " ----------------------------------------------------------
+    inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_onekey()
+    inoremap<silent><expr><Plug>VimimTabKey <SID>vimim_tabkey()
+    " ---------------------------------------------------------
     imap<silent><C-^> <Plug>VimimOneKey
     " --------------------------------------
     if s:vimim_tab_as_onekey > 0
@@ -6131,7 +6137,7 @@ function! s:vimim_ctrl_space_mapping_on()
         if empty(s:vimim_sexy_onekey)
             imap<silent><C-Space> <Plug>VimimChineseMode
         else
-            imap<silent><C-Space> <Plug>VimimOneKeyMode
+            imap<silent><C-Space> <Plug>VimimSexyMode
         endif
     endif
 endfunction
