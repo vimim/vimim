@@ -2852,7 +2852,6 @@ function! g:vimim_menu_select()
     sil!exe 'sil!return "' . select_not_insert . '"'
 endfunction
 
-
 " --------------------------------
 function! g:vimim_search_forward()
 " --------------------------------
@@ -3556,6 +3555,38 @@ function! s:vimim_apostrophe(keyboard)
     return keyboard
 endfunction
 
+" ------------------------------------------------
+function! s:vimim_pinyin_filter(results, keyboard)
+" ------------------------------------------------
+    if get(s:im['pinyin'],0) < 1
+    \|| empty(a:results)
+    \|| empty(a:keyboard)
+        return a:results
+    endif
+    let new_results = []
+    let pattern = s:vimim_apostrophe_fuzzy_pattern(a:keyboard)
+    for item in a:results
+        let keyboard = get(split(item), 0)
+        let keyboard2 = s:vimim_get_pinyin_from_quanpin(keyboard)
+        if !empty(matchstr(keyboard2, pattern))
+            call add(new_results, item)
+        endif
+    endfor
+    if empty(new_results)
+        let new_results = a:results
+    endif
+    return new_results
+endfunction
+
+" --------------------------------------------------
+function! s:vimim_apostrophe_fuzzy_pattern(keyboard)
+" --------------------------------------------------
+    let fuzzy = ".*'"
+    let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
+    let pattern = '^' . fuzzies
+    return pattern
+endfunction
+
 " -------------------------------------------------
 function! s:vimim_get_pinyin_from_quanpin(keyboard)
 " -------------------------------------------------
@@ -4022,7 +4053,7 @@ function! s:vimim_wubi_z_as_wildcard(keyboard)
         return 0
     endif
     let fuzzy_search_pattern = 0
-    if match(keyboard,'z') > 0
+    if match(keyboard, 'z') > 0
         let fuzzies = keyboard
         if keyboard[:1] != 'zz'
             let fuzzies = substitute(keyboard,'z','.','g')
@@ -4772,16 +4803,16 @@ function! s:vimim_quick_fuzzy_search(keyboard, filter)
         endif
     endif
     " -----------------------------------------------------------
-    let results_pattern = filter(copy(results), 'v:val =~ pattern')
-    if empty(results_pattern)
+    let output = filter(copy(results), 'v:val =~ pattern')
+    if empty(output)
         let msg = "use 4corner as a filter for superjianpin"
         let pattern = s:vimim_free_fuzzy_pattern(keyboard)
-        let results_pattern = filter(results, 'v:val =~ pattern')
+        let output = filter(results, 'v:val =~ pattern')
     endif
     " -----------------------------------------------------------
-    let results_length = s:vimim_filter(results_pattern, keyboard, filter)
+    let gold = s:vimim_length_filter(output, keyboard, filter)
     " -----------------------------------------------------------
-    return s:vimim_i18n_read_list(results_length)
+    return s:vimim_i18n_read_list(gold)
 endfunction
 
 " ------------------------------------------------
@@ -5204,7 +5235,8 @@ function! s:vimim_fuzzy_match(lines, keyboard)
         call filter(results, 'v:val !~ "#$"')
     endif
     if s:chinese_input_mode < 2
-        let results = s:vimim_filter(results, keyboard, 0)
+        let results = s:vimim_pinyin_filter(results, keyboard)
+        let results = s:vimim_length_filter(results, keyboard, 0)
     endif
     return results
 endfunction
@@ -5218,9 +5250,9 @@ function! s:vimim_free_fuzzy_pattern(keyboard)
     return pattern
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_filter(results, keyboard, length)
-" -------------------------------------------------
+" --------------------------------------------------------
+function! s:vimim_length_filter(results, keyboard, length)
+" --------------------------------------------------------
     let results = a:results
     let filter_length = a:length
     if filter_length < 0
