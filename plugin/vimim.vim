@@ -1749,21 +1749,14 @@ function! <SID>vimim_punctuation_on()
     endif
     " ----------------------------
     if s:chinese_punctuation > 0
-" ==================================================
-" NOTE: I found I have to change || to && below to make erbi work
-" NOTE: The purpose is to map quote, only if it is NOT in s:valid_keys
-" NOTE: For erbi, apostrophe is a real valid keycode
-" NOTE:           Thereofore, it should not be mapped
-" NOTE: For pinyin, not sure
-" NOTE: For others, not sure, as apostrophe is used as a fake validcode
-" ==================================================
-        if index(s:valid_keys, '\') < 0 && empty(s:vimim_cloud_plugin)
+        " NOTE: if we use s:valid_keys there's no need to check mycloud
+        if index(s:valid_keys, '\') < 0
             inoremap <Bslash> 、
         endif
-        if index(s:valid_keys, "'") < 0 && empty(s:vimim_cloud_plugin)
+        if index(s:valid_keys, "'") < 0
             inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
         endif
-        if index(s:valid_keys, '"') < 0 && empty(s:vimim_cloud_plugin)
+        if index(s:valid_keys, '"') < 0
             inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
         endif
     else
@@ -3805,7 +3798,7 @@ endfunction
 function! s:vimim_get_pinyin_table()
 "-----------------------------------
 " List of all valid pinyin
-" NOTE: Don't change this function nor remove the spaces after commas.
+" NOTE: Don't change this function or remove the spaces after commas.
 return [
     \"'a", "'ai", "'an", "'ang", "'ao", 'ba', 'bai', 'ban', 'bang', 'bao',
     \'bei', 'ben', 'beng', 'bi', 'bian', 'biao', 'bie', 'bin', 'bing', 'bo',
@@ -4205,6 +4198,10 @@ function! s:vimim_initialize_cloud()
         let cloud = s:path . "libmycloud.so"
     endif
     if filereadable(cloud)
+        " in win32, strip the .dll suffix
+        if has("win32") && cloud[-4:] ==? ".dll"
+            let cloud = cloud[:-5]
+        endif
         let ret = libcall(cloud, "do_geturl", "__isvalid")
         if ret ==# "True"
             let s:www_executable = cloud
