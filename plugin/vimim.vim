@@ -617,6 +617,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_purple")
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_tab_as_onekey")
+    call add(G, "g:vimim_f6_as_onekey")
     call add(G, "g:vimim_smart_ctrl_h")
     call add(G, "g:vimim_smart_ctrl_p")
     call add(G, "g:vimim_smart_ctrl_n")
@@ -1319,7 +1320,9 @@ function! s:vimim_stop_sexy_onekey()
 " ----------------------------------
     if s:vimim_sexy_onekey > 0
         set ruler
-        let @+ = getline(".")
+        if s:vimim_auto_copy_clipboard>0 && has("gui_running")
+            let @+ = getline(".")
+        endif
         sil!call s:vimim_stop()
         sil!call <SID>vimim_set_seamless()
     endif
@@ -5342,8 +5345,9 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
+    let s:vimim_tab_as_onekey=0
+    let s:vimim_f6_as_onekey=1
     let s:vimim_sexy_onekey=1
-    let s:vimim_tab_as_onekey=1
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=14
     " ------------------------------ debug
@@ -5530,7 +5534,7 @@ endfunction
 " ------------------------------
 function! s:reset_after_insert()
 " ------------------------------
-    if empty(s:vimim_sexy_onekey)
+    if empty(s:vimim_f6_as_onekey)
         let s:seamless_positions = []
     endif
     call g:reset_after_auto_insert()
@@ -6129,6 +6133,10 @@ function! s:vimim_onekey_mapping_on()
     inoremap<silent><expr><Plug>VimimTabKey <SID>vimim_tabkey()
     " ---------------------------------------------------------
     imap<silent><C-^> <Plug>VimimOneKey
+    " --------------------------------------
+    if s:vimim_f6_as_onekey > 0
+        imap<silent><F6> <C-^>
+    endif
     " --------------------------------------
     if s:vimim_tab_as_onekey > 0
         imap<silent><Tab> <Plug>VimimTabKey
