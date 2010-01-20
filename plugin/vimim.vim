@@ -1309,13 +1309,13 @@ function! s:vimim_onekey_autocmd()
         augroup onekey_mode_autocmd
             autocmd!
             if hasmapto('<Space>', 'i')
-                sil!autocmd InsertLeave * sil!call s:vimim_stop_sexy_onekey()
+                sil!autocmd InsertLeave * sil!call s:vimim_stop()
             endif
         augroup END
     endif
 endfunction
 
-" ----------------------------------
+" ---------------------------------- xxx
 function! s:vimim_stop_sexy_onekey()
 " ----------------------------------
     if empty(s:onekey_hit_and_run) && s:vimim_sexy_onekey > 0
@@ -1323,10 +1323,7 @@ function! s:vimim_stop_sexy_onekey()
         if s:vimim_auto_copy_clipboard>0 && has("gui_running")
             let @+ = getline(".")
         endif
-        sil!call s:vimim_stop()
-        sil!call <SID>vimim_set_seamless()
     endif
-    return ""
 endfunction
 
 " ----------------------------
@@ -1341,10 +1338,11 @@ function! <SID>VimimSexyMode()
             let msg = "do nothing over omni menu"
         else
             if empty(&ruler)
-                call s:vimim_stop_sexy_onekey()
+                call s:vimim_stop()
             else
                 set noruler
-                call s:vimim_start_onekey()
+                sil!call s:vimim_start_onekey()
+                sil!call <SID>vimim_set_seamless()
             endif
         endif
     endif
@@ -2721,6 +2719,7 @@ function! g:vimim_pumvisible_p_paste()
         call setline(line("."), words)
     endif
     call setpos(".", cursor_positions)
+    sil!call s:vimim_stop()
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
         let string_words = ''
         for line in words
@@ -2729,7 +2728,6 @@ function! g:vimim_pumvisible_p_paste()
         endfor
         let @+ = string_words
     endif
-    sil!call s:vimim_stop()
     return "\<Esc>"
 endfunction
 
@@ -2749,13 +2747,12 @@ endfunction
 function! g:vimim_pumvisible_putclip()
 " ------------------------------------
     let chinese = s:vimim_popup_word()
+    sil!call s:vimim_stop()
     if len(chinese) > 0
         if s:vimim_auto_copy_clipboard>0 && has("gui_running")
             let @+ = chinese
         endif
     endif
-    sil!call g:vimim_reset_after_insert()
-    sil!call s:vimim_stop()
     return "\<Esc>"
 endfunction
 
@@ -5477,6 +5474,7 @@ function! s:vimim_stop()
     sil!call s:vimim_i_cursor_color(0)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
+    sil!call s:vimim_stop_sexy_onekey()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_initialize_mapping()
 endfunction
@@ -6121,8 +6119,12 @@ endfunction
 function! s:vimim_ctrl_space_mapping_on()
 " ---------------------------------------
     if s:vimim_ctrl_space_to_toggle > 0 && has("gui_running")
-        imap<silent><C-Space> <C-Bslash>
         nmap<silent><C-Space> <C-Bslash>
+        if empty(s:vimim_sexy_onekey)
+            imap<silent><C-Space> <C-Bslash>
+        else
+            imap<silent><C-Space> <C-Bslash><Space>
+        endif
     endif
 endfunction
 
