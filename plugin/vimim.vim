@@ -1335,7 +1335,7 @@ function! <SID>vimim_onekey_mode()
 "  (1) <OneKey> => start sexy OneKey mode
 "  (2) <OneKey> => stop  sexy OneKey mode
 " ----------------------------------------
-    if s:vimim_sexy_onekey > 0
+    if empty(s:onekey_hit_and_run) || s:vimim_sexy_onekey > 0
         if pumvisible()
             let msg = "do nothing over omni menu"
         else
@@ -6091,7 +6091,7 @@ endfunction
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
     inoremap<silent><expr><Plug>VimimChineseMode <SID>vimim_chinese_mode()
-    inoremap<silent><expr><Plug>VimimSexyMode    <SID>vimim_onekey_mode()
+    inoremap<silent><expr><Plug>VimimSexyMode <SID>vimim_onekey_mode()
     " ------------------------------------------------------------
     if empty(s:vimim_sexy_onekey)
            imap<silent><C-Bslash> <Plug>VimimChineseMode
