@@ -4842,7 +4842,6 @@ function! s:vimim_diy_keyboard(keyboard)
     \|| keyboard =~# '^\d'
         return []
     endif
-    let keyboards = []
     " ---------------------------------------
     " free style pinyin+4corner for zi and ci
     " let zi = "ma7712"
@@ -4852,15 +4851,19 @@ function! s:vimim_diy_keyboard(keyboard)
     let digit_keyboards = split(keyboard, '\D\+') |" => ['77', '40']
     " --------------------------------------------------------------
     let alpha_string = join(alpha_keyboards, "'")
-    let keyboards = copy(digit_keyboards)
-    call insert(keyboards, alpha_string) |" ma77li40=>['mali',77,40]
-    if len(alpha_keyboards) > 1 && len(digit_keyboards) < 2
-        call add(keyboards, "") |" ma7712li => ['mali', '7712', '']
-    endif
+    let digit_string = join(digit_keyboards, "'")
+    let keyboards = [alpha_string, digit_string]
+    " -------------------------------------------------------------- xxx
+ """let keyboards = copy(digit_keyboards)
+ """call insert(keyboards, alpha_string) |" ma77li40=>["ma'li",77,40]
+ """if len(alpha_keyboards) > 1 && len(digit_keyboards) < 2
+ """    call add(keyboards, "") |" ma7712li => ['mali', '7712', '']
+ """endif
     " --------------------------------------------------------------
     if len(keyboards) < 2
         let keyboards = []
     endif
+    " --------------------------------------------------------------
     return keyboards
 endfunction
 
@@ -4882,18 +4885,14 @@ function! s:vimim_diy_keyboard2number(keyboard)
     " -----------------------------------------
     let alphabet_length = 1
     if len(keyboard) == 5
-        let zi = "mjjas  => m7712  => ['m', 7712]"
+        " zi => "mjjas  => m7712  => ['m', 7712]
     elseif len(keyboard) == 6
-        let ci = "mljjfo => ml7140 => ['ml', 71, 40]"
+        " ci => "mljjfo => ml7140 => ["m'l", "71'40"]
         let alphabet_length = 2
     else
         return []
     endif
-    " -----------------------------------------
-    let keyboards = []
     let tail = ''
-    let head = strpart(keyboard, 0, alphabet_length)
-    call add(keyboards, head)
     " ------------------------------------
     let diy_keyboard_asdfghjklo = {}
     let diy_keyboard_asdfghjklo['a'] = 1
@@ -4920,11 +4919,13 @@ function! s:vimim_diy_keyboard2number(keyboard)
         return []
     endif
     " -----------------------------------------
+    let keyboards = []
     if alphabet_length == 1
+        call add(keyboards, keyboard[0:0])
         call add(keyboards, tail)
     elseif alphabet_length == 2
-        call add(keyboards, strpart(tail,0,2))
-        call add(keyboards, strpart(tail,2,2))
+        call add(keyboards, keyboard[0:0]."'".keyboard[1:1])
+        call add(keyboards, strpart(tail,0,2)."'".strpart(tail,2,2))
     endif
     " -----------------------------------------
     return keyboards
@@ -4936,22 +4937,11 @@ function! s:vimim_pinyin_and_4corner(keyboard)
     if empty(s:pinyin_and_4corner)
         return []
     endif
-    let keyboard = a:keyboard
-    let keyboards = s:vimim_diy_keyboard2number(keyboard)
+    let keyboards = s:vimim_diy_keyboard2number(a:keyboard)
     if empty(keyboards)
-        let keyboards = s:vimim_diy_keyboard(keyboard)
-        if s:vimimdebug > 0
-            call s:debugs('diy_keyboard', keyboard)
-            call s:debugs('diy_keyboards', s:debug_list(keyboards))
-        endif
-    else
-        if s:vimimdebug > 0
-            call s:debugs('diy_keyboard', keyboard)
-            call s:debugs('diy_keyboard2number', s:debug_list(keyboards))
-        endif
+        let keyboards = s:vimim_diy_keyboard(a:keyboard)
     endif
-    let results = s:vimim_diy_results(keyboards, [])
-    return results
+    return s:vimim_diy_results(keyboards, [])
 endfunction
 
 " --------------------------------------------------
@@ -4965,9 +4955,10 @@ function! s:vimim_diy_results(keyboards, cache_list)
         return []
     endif
     " --------------------------------------------------------
-    let a = get(keyboards, 0) |"   ma mali   ma_li  ma_li  ml
-    let b = get(keyboards, 1) |" 7712 7712   7712   7712   77
-    let c = get(keyboards, 2) |"              ""    4002   40
+    let a = get(keyboards, 0)  |" ["m'l", "77'40"]
+    let digits = split(get(keyboards,1), "'")
+    let b = get(digits, 0)
+    let c = get(digits, 1)
     " --------------------------------------------------------
     let fuzzy_lines = a:cache_list
     if empty(fuzzy_lines)
@@ -4978,11 +4969,8 @@ function! s:vimim_diy_results(keyboards, cache_list)
     let fuzzy_lines = s:vimim_quick_fuzzy_search(b)
     let h_1 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     " ----------------------------------
-    let h_2 = {}
-    if len(keyboards) > 2
-        let fuzzy_lines = s:vimim_quick_fuzzy_search(c)
-        let h_2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
-    endif
+    let fuzzy_lines = s:vimim_quick_fuzzy_search(c)
+    let h_2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     " ----------------------------------
     let results = s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
     return results
