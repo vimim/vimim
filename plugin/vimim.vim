@@ -1315,9 +1315,9 @@ function! s:vimim_onekey_autocmd()
     endif
 endfunction
 
-" ---------------------------------- xxx
-function! s:vimim_stop_sexy_onekey()
-" ----------------------------------
+" --------------------------------
+function! s:vimim_stop_sexy_mode()
+" --------------------------------
     if empty(s:onekey_hit_and_run) && s:vimim_sexy_onekey > 0
         set ruler
         if s:vimim_auto_copy_clipboard>0 && has("gui_running")
@@ -1330,9 +1330,9 @@ endfunction
 function! <SID>VimimSexyMode()
 " ----------------------------
 " sexy <OneKey> double play
-"  (1) <OneKey> => start sexy OneKey mode
-"  (2) <OneKey> => stop  sexy OneKey mode
-" ----------------------------------------
+"  (1) <OneKey> => start sexy OneKey mode and start to play
+"  (2) <OneKey> => stop  sexy OneKey mode and stop to play
+" ----------------------------------------------------------
     if empty(s:onekey_hit_and_run) && s:vimim_sexy_onekey > 0
         if pumvisible()
             let msg = "do nothing over omni menu"
@@ -1342,26 +1342,29 @@ function! <SID>VimimSexyMode()
             else
                 set noruler
                 sil!call s:vimim_start_onekey()
-                sil!call <SID>vimim_set_seamless()
+                sil!return s:vimim_onekey_action("")
             endif
         endif
     endif
     return ""
 endfunction
 
+" --------------------------
+function! <SID>VimimOnekey()
+" --------------------------
+    if empty(&ruler)
+        let msg = "no ruler marks sexy onekey"
+    else
+        sil!call s:vimim_start_onekey()
+    endif
+    let s:onekey_hit_and_run = 1
+    sil!return s:vimim_onekey_action("")
+endfunction
+
 " ---------------------------------
 function! <SID>VimimSpaceInOnekey()
 " ---------------------------------
     let onekey = " "
-    sil!return s:vimim_onekey_action(onekey)
-endfunction
-
-" --------------------------
-function! <SID>VimimOnekey()
-" --------------------------
-    let onekey = ""
-    sil!call s:vimim_start_onekey()
-    let s:onekey_hit_and_run = 1
     sil!return s:vimim_onekey_action(onekey)
 endfunction
 
@@ -5471,7 +5474,7 @@ function! s:vimim_stop()
     sil!call s:vimim_i_cursor_color(0)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
-    sil!call s:vimim_stop_sexy_onekey()
+    sil!call s:vimim_stop_sexy_mode()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_initialize_mapping()
 endfunction
@@ -6085,8 +6088,8 @@ function! s:vimim_initialize_mapping()
 " ------------------------------------
     sil!call s:vimim_visual_mapping_on()
     sil!call s:vimim_chinese_mode_mapping_on()
-    sil!call s:vimim_ctrl_space_mapping_on()
     sil!call s:vimim_onekey_mapping_on()
+    sil!call s:vimim_ctrl_space_mapping_on()
 endfunction
 
 " -----------------------------------
@@ -6116,12 +6119,8 @@ endfunction
 function! s:vimim_ctrl_space_mapping_on()
 " ---------------------------------------
     if s:vimim_ctrl_space_to_toggle > 0 && has("gui_running")
-        nmap<silent><C-Space> <C-Bslash>
-        if empty(s:vimim_sexy_onekey)
-            imap<silent><C-Space> <C-Bslash>
-        else
-            imap<silent><C-Space> <C-Bslash><Space>
-        endif
+        nmap<C-Space> <C-Bslash>
+        imap<C-Space> <C-Bslash>
     endif
 endfunction
 
