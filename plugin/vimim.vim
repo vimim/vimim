@@ -5517,9 +5517,7 @@ endfunction
 " ------------------------------
 function! s:reset_after_insert()
 " ------------------------------
-    if empty(s:vimim_sexy_onekey)
-        let s:seamless_positions = []
-    endif
+    let s:seamless_positions = []
     call g:reset_after_auto_insert()
 endfunction
 
