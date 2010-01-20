@@ -3532,37 +3532,38 @@ function! s:vimim_pinyin_filter(results, keyboards)
         let keyboard = get(split(item), 0)
         let chinese = get(split(item), 1)
         let gold = len(chinese)/s:multibyte
-        let stone = len(get(a:keyboards,0))
-        " assume it is chaojijianpin: ggy <=> 3 chinese-char
-        if gold == stone
-            " filter out fake chinese phrase using pinyin theory
-            let keyboard2 = s:vimim_get_pinyin_from_quanpin(keyboard)
-            if match(keyboard2, pattern) > -1
-                call add(new_results, item)
-            endif
+        " filter out fake chinese phrase using pinyin theory
+        let keyboard2 = s:vimim_get_pinyin_from_quanpin(keyboard)
+        if match(keyboard2, pattern) > -1
+            call add(new_results, item)
         endif
     endfor
+     if empty(new_results)
+         let new_results = a:results
+     endif
     return new_results
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_apostrophe_fuzzy_pattern(keyboards)
-" ---------------------------------------------------
-    let keyboard = get(a:keyboards,0)
-    let pattern = keyboard
-    if len(a:keyboards) > 1
-        let lowercase = "\\l*"
-        let fuzzy = lowercase . "'"
-        let keyboard2 = get(a:keyboards,1)
-        let pattern = keyboard . fuzzy . keyboard2 . lowercase
-    else
-        let lowercase = "\\l\\+"
-        let fuzzy = lowercase . "'"
-        let fuzzies = join(split(keyboard,'\ze'), fuzzy)
-        let pattern = fuzzies . lowercase
+" ----------------------------------------------
+function! s:vimim_length_filter(results, length)
+" ---------------------------------------------- xxx
+    let results = a:results
+    let filter_length = a:length
+    if filter_length < 0
+        return results
     endif
-    let pattern = '^\<' . pattern . '\>'
-    return pattern
+    " ---------------------------------------------
+    if empty(filter_length)
+        if length < 4
+            let filter_length = length
+        endif
+    endif
+    " ---------------------------------------------
+    if filter_length > 0
+        let pattern = '\s\+.\{'. filter_length .'}$'
+        call filter(results, 'v:val =~ pattern')
+    endif
+    return results
 endfunction
 
 " -------------------------------------------------
@@ -4759,6 +4760,8 @@ function! s:vimim_quick_fuzzy_search(keyboard)
             call filter(results, 'v:val !~ " #$"')
         endif
         let keyboards = split(keyboard, "'")
+        let xxx = " need to consider all free-style combination"
+        let results = s:vimim_length_filter(results, len(keyboards))
         let results = s:vimim_pinyin_filter(results, keyboards)
     else
         let results = filter(results, 'v:val =~ pattern')
@@ -5024,7 +5027,7 @@ function! s:vimim_search_boundary(lines, keyboard)
         let pattern_next = '^[^' . first_char_typed . ']'
         let result = match(a:lines, pattern_next, match_start)
         if result > 0
-            let match_next = result
+            let match_next = result-1
         endif
     endif
     call add(ranges, match_next)
@@ -5163,6 +5166,8 @@ function! s:vimim_fuzzy_match(lines, keyboard)
         call filter(results, 'v:val !~ " #$"')
     endif
     if s:chinese_input_mode < 2
+        let xxx = " need to consider all fuzzy match case "
+        let results = s:vimim_length_filter(results, len(a:keyboard))
         let results = s:vimim_pinyin_filter(results, [a:keyboard])
     endif
     return results
