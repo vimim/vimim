@@ -183,6 +183,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:im_primary = 0
     let s:im_secondary = 0
+    let s:onekey_hit_and_run = 0
     " --------------------------------
     let s:datafile_has_dot = 0
     let s:sentence_with_space_input = 0
