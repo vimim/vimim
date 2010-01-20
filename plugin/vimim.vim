@@ -1350,13 +1350,6 @@ function! <SID>vimim_onekey_mode()
     return ""
 endfunction
 
-" ---------------------------
-function! <SID>vimim_onekey()
-" ---------------------------
-    sil!call s:vimim_start_onekey()
-    sil!return s:vimim_onekey_action("")
-endfunction
-
 " ---------------------------------
 function! <SID>vimim_space_onekey()
 " ---------------------------------
@@ -1365,9 +1358,19 @@ function! <SID>vimim_space_onekey()
 endfunction
 
 " ---------------------------
+function! <SID>vimim_onekey()
+" ---------------------------
+    let onekey = ""
+    sil!call s:vimim_start_onekey()
+    let s:onekey_hit_and_run = 1
+    sil!return s:vimim_onekey_action(onekey)
+endfunction
+
+" ---------------------------
 function! <SID>vimim_tabkey()
 " ---------------------------
     let onekey = "\t"
+    let s:onekey_hit_and_run = 1
     " -----------------------
     let char_before = getline(".")[col(".")-2]
     if empty(char_before)
@@ -1447,11 +1450,6 @@ function! s:vimim_onekey_action(onekey)
     else
         let onekey = a:onekey
     endif
-    " --------------------------------------------------- xxx
-    let msg = "sexy OneKey stops here" 
-""  if a:onekey == " "
-""      call s:vimim_stop_sexy_onekey()
-""  endif
     " ---------------------------------------------------
     let s:smart_enter = 0
     let s:pattern_not_found = 0
@@ -5099,7 +5097,8 @@ function! s:vimim_ctrl_h_whole_match(lines, keyboard)
     return matches
 endfunction
 
-" -------------------------------------------------- xxx
+" TODO: re-consider how match is done
+" --------------------------------------------------
 function! s:vimim_exact_whole_match(lines, keyboard)
 " --------------------------------------------------
     if empty(a:keyboard) || empty(a:lines)
@@ -5471,7 +5470,6 @@ function! s:vimim_stop()
     let g:vimim[3] += duration
     sil!autocmd! onekey_mode_autocmd
     sil!autocmd! chinese_mode_autocmd
-    sil!call s:vimim_reset_before_stop()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_i_cursor_color(0)
     sil!call s:vimim_super_reset()
@@ -5484,6 +5482,7 @@ endfunction
 function! s:vimim_reset_before_stop()
 " -----------------------------------
     let s:smart_enter = 0
+    let s:onekey_hit_and_run = 0
     let s:pumvisible_ctrl_e = 0
 endfunction
 
@@ -5554,9 +5553,8 @@ function! g:vimim_reset_after_insert()
     call s:reset_matched_list()
     call g:reset_after_auto_insert()
     " --------------------------------
-    let msg = "OneKey stops here" 
-    if empty(s:vimim_sexy_onekey)
-    \&& empty(s:chinese_input_mode)
+    if empty(s:chinese_input_mode)
+    \&& s:onekey_hit_and_run > 0
         call s:vimim_stop()
     endif
     " --------------------------------
@@ -6040,9 +6038,10 @@ else
     endif
 
     " do exact match search on sorted datafile
-    " ---------------------------------------- xxx
+    " ----------------------------------------
     if match_start > -1
         let results = s:vimim_exact_match(lines, match_start)
+""" todo: can this function be removed?
 """     let results = s:vimim_ctrl_h_whole_match(lines, keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
