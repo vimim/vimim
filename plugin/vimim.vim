@@ -6120,7 +6120,7 @@ function! s:vimim_onekey_mapping_on()
     " ---------------------------------------------------------
     imap<silent><C-^> <Plug>VimimOneKey
     if s:vimim_tab_as_onekey > 0
-        imap <Tab> <C-^>
+        imap<silent><Tab> <Plug>VimimOneKey
     endif
 endfunction
 
