@@ -1787,7 +1787,7 @@ function! s:vimim_punctuation_navigation_on()
     let msg = "we should never map valid keycode"
     for char in s:valid_keys
 	let i = index(hjkl_list, char)
-	if i > -1
+	if i > -1 && char != "."
             unlet hjkl_list[i]
         endif
     endfor
