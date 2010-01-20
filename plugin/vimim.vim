@@ -1366,23 +1366,6 @@ function! <SID>vimim_onekey()
     sil!return s:vimim_onekey_action(onekey)
 endfunction
 
-" ---------------------------
-function! <SID>vimim_tabkey()
-" ---------------------------
-    let onekey = "\t"
-    let s:onekey_hit_and_run = 1
-    " -----------------------
-    let char_before = getline(".")[col(".")-2]
-    if empty(char_before)
-    \|| char_before =~ '\s'
-    \|| char2nr(char_before) > 127
-        return onekey
-    endif
-    " -----------------------
-    sil!call s:vimim_start_onekey()
-    sil!return s:vimim_onekey_action(onekey)
-endfunction
-
 " -------------------------------------
 function! s:vimim_onekey_action(onekey)
 " -------------------------------------
@@ -5318,7 +5301,6 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
-    let s:vimim_tab_as_onekey=0
     let s:vimim_sexy_onekey=1
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=14
@@ -6107,12 +6089,10 @@ endfunction
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
     inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_onekey()
-    inoremap<silent><expr><Plug>VimimTabKey <SID>vimim_tabkey()
     " ---------------------------------------------------------
     imap<silent><C-^> <Plug>VimimOneKey
-    " --------------------------------------
     if s:vimim_tab_as_onekey > 0
-        imap<silent><Tab> <Plug>VimimTabKey
+        imap <Tab> <C-^>
     endif
 endfunction
 
