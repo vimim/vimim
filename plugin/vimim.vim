@@ -592,7 +592,6 @@ function! s:vimim_initialize_global()
     " -------------------------------
     let G = []
     call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_f5_as_super_onekey")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_digital")
@@ -805,15 +804,16 @@ function! s:vimim_egg_vimim()
 " ----------------------------------
     let option = s:vimim_static_input_style
     let style = s:vimim_get_chinese('classic')
+    let dynamic = s:vimim_get_chinese('dynamic')
+    let static = s:vimim_get_chinese('static')
     let toggle = "i_CTRL-Bslash"
     if empty(option)
-        let style .= s:vimim_get_chinese('dynamic')
+        let style .= dynamic
     else
-        let style .= s:vimim_get_chinese('static')
+        let style .= static
     endif
     if s:vimim_sexy_onekey > 0
-        let style = s:vimim_get_chinese('onekey')
-        let toggle = "i_CTRL-6"
+        let style = "Sexy" . static
     endif
     let toggle .= "　"
     let option = s:vimim_get_chinese('style')
@@ -2436,7 +2436,7 @@ function! s:vimim_i_cursor_color(switch)
     if empty(a:switch)
         highlight Cursor guifg=bg guibg=fg
     else
-	highlight Cursor guifg=NONE guibg=Green
+	highlight Cursor guibg=Green
     endif
 endfunction
 
@@ -2444,8 +2444,10 @@ endfunction
 function! s:vimim_statusline()
 " ----------------------------
     let im = ''
-    let plus = [s:vimim_get_chinese('bracket_l'), s:vimim_get_chinese('bracket_r'), '＋']
-    let plus2 = plus[1] . plus[2] . plus[0]
+    let bracket_l = s:vimim_get_chinese('bracket_l')
+    let bracket_r = s:vimim_get_chinese('bracket_r')
+    let plus = '＋'
+    let plus = bracket_r . plus . bracket_l
   " ------------------------------------
     let key  = s:im_primary
     if has_key(s:im, key)
@@ -2473,16 +2475,16 @@ function! s:vimim_statusline()
             let im_digit = get(s:im['12345'],1)
             let s:im['12345'][0] = 1
         endif
-        let im = pinyin . plus2 . im_digit
+        let im = pinyin . plus . im_digit
     endif
   " ------------------------------------
     if s:xingma_sleep_with_pinyin > 0
         let im_1 = get(s:im[s:im_primary],1)
         let im_2 = get(s:im[s:im_secondary],1)
         if empty(s:toggle_xiangma_pinyin)
-            let im = im_1 . plus2 . im_2
+            let im = im_1 . plus . im_2
         else
-            let im = im_2 . plus2 . im_1
+            let im = im_2 . plus . im_1
         endif
     endif
   " ------------------------------------
@@ -2511,7 +2513,7 @@ function! s:vimim_statusline()
         let im = get(s:im['mycloud'],1) ."：". get(s:im['mycloud'],0)
     endif
   " ------------------------------------
-    let im  = plus[0] . im . plus[1]
+    let im  = bracket_l . im . bracket_r
   " ------------------------------------
     return im
 endfunction
@@ -5331,7 +5333,7 @@ function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
     let s:vimim_sexy_onekey=1
-    let s:vimim_f5_as_super_onekey=1
+    let s:vimim_ctrl_space_to_toggle=1
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=14
     " ------------------------------ debug
@@ -6088,9 +6090,8 @@ function! s:vimim_initialize_mapping()
 " ------------------------------------
     sil!call s:vimim_visual_mapping_on()
     sil!call s:vimim_chinese_mode_mapping_on()
-    sil!call s:vimim_onekey_mapping_on()
     sil!call s:vimim_ctrl_space_mapping_on()
-    sil!call s:vimim_super_f5_mapping_on()
+    sil!call s:vimim_onekey_mapping_on()
 endfunction
 
 " -----------------------------------
@@ -6116,6 +6117,15 @@ function! s:vimim_chinese_mode_mapping_on()
     endif
 endfunction
 
+" ---------------------------------------
+function! s:vimim_ctrl_space_mapping_on()
+" ---------------------------------------
+    if s:vimim_ctrl_space_to_toggle > 0 && has("gui_running")
+        imap<silent><C-Space> <C-Bslash>
+        nmap<silent><C-Space> <C-Bslash>
+    endif
+endfunction
+
 " -----------------------------------
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
@@ -6124,28 +6134,6 @@ function! s:vimim_onekey_mapping_on()
     imap<silent><C-^> <Plug>VimimOneKey
     if s:vimim_tab_as_onekey > 0
         imap<silent><Tab> <Plug>VimimOneKey
-    endif
-endfunction
-
-" -------------------------------------
-function! s:vimim_super_f5_mapping_on()
-" -------------------------------------
-    if s:vimim_f5_as_super_onekey > 0
-        xmap<silent><F5> c<Space><C-R>"<F5>
-        imap<silent><F5> <C-Bslash><Space>
-        nmap<silent><F5> bea<F5>
-    endif
-endfunction
-
-" ---------------------------------------
-function! s:vimim_ctrl_space_mapping_on()
-" ---------------------------------------
-    if s:vimim_ctrl_space_to_toggle > 0 && has("gui_running")
-        if empty(s:vimim_sexy_onekey)
-            imap<silent><C-Space> <Plug>VimimChineseMode
-        else
-            imap<silent><C-Space> <Plug>VimimSexyMode
-        endif
     endif
 endfunction
 
