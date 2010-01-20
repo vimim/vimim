@@ -255,10 +255,6 @@ function! s:vimim_finalize_session()
         let s:vimim_static_input_style = 1
     endif
     " ------------------------------
-    if s:vimim_static_input_style < 0
-        let s:vimim_static_input_style = 0
-    endif
-    " ------------------------------
     if empty(get(s:im['wubi'],0))
         let s:vimim_wubi_non_stop = 0
     endif
@@ -807,9 +803,9 @@ function! s:vimim_egg_vimim()
     let dynamic = s:vimim_get_chinese('dynamic')
     let static = s:vimim_get_chinese('static')
     let toggle = "i_CTRL-Bslash"
-    if empty(option)
+    if option < 1
         let style .= dynamic
-    else
+    elseif option == 1
         let style .= static
     endif
     if s:vimim_sexy_onekey > 0
@@ -1465,7 +1461,7 @@ function! s:vimim_start_chinese_mode()
     sil!call s:vimim_i_chinese_mode_on()
     sil!call s:vimim_i_chinese_mode_autocmd_on()
     " --------------------------------
-    if empty(s:vimim_static_input_style)
+    if s:vimim_static_input_style < 1
         let msg = " ___ chinese mode dynamic ___ "
         let s:chinese_input_mode = 2
         call <SID>vimim_set_seamless()
@@ -1474,7 +1470,7 @@ function! s:vimim_start_chinese_mode()
         inoremap<silent><Space> <C-R>=g:VimimSpaceInDynamicMode()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
-    else
+    elseif s:vimim_static_input_style == 1
         let msg = " ___ chinese mode static ___ "
         let s:chinese_input_mode = 1
         sil!call s:vimim_static_alphabet_auto_select()
@@ -2492,7 +2488,7 @@ function! s:vimim_statusline()
     if empty(im)
         let classic = s:vimim_get_chinese('classic')
         let style = s:vimim_get_chinese('static')
-        if empty(s:vimim_static_input_style)
+        if s:vimim_static_input_style < 1
             let style = s:vimim_get_chinese('dynamic')
         endif
         let style = classic . style
