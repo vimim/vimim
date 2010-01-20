@@ -592,6 +592,7 @@ function! s:vimim_initialize_global()
     " -------------------------------
     let G = []
     call add(G, "g:vimim_ctrl_space_to_toggle")
+    call add(G, "g:vimim_f5_as_super_onekey")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_digital")
@@ -1296,7 +1297,7 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_helper_mapping_on()
     sil!call s:vimim_onekey_autocmd()
     " ----------------------------------------------------------
-    inoremap<silent><Space> <C-R>=<SID>vimim_space_onekey()<CR>
+    inoremap<silent><Space> <C-R>=<SID>VimimSpaceInOnekey()<CR>
                            \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
 endfunction
@@ -1317,7 +1318,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_stop_sexy_onekey()
 " ----------------------------------
-    if s:vimim_sexy_onekey > 0
+    if empty(s:onekey_hit_and_run) && s:vimim_sexy_onekey > 0
         set ruler
         if s:vimim_auto_copy_clipboard>0 && has("gui_running")
             let @+ = getline(".")
@@ -1328,14 +1329,14 @@ function! s:vimim_stop_sexy_onekey()
     return ""
 endfunction
 
-" --------------------------------
-function! <SID>vimim_onekey_mode()
-" --------------------------------
+" ----------------------------
+function! <SID>VimimSexyMode()
+" ----------------------------
 " sexy <OneKey> double play
 "  (1) <OneKey> => start sexy OneKey mode
 "  (2) <OneKey> => stop  sexy OneKey mode
 " ----------------------------------------
-    if empty(s:onekey_hit_and_run) || s:vimim_sexy_onekey > 0
+    if empty(s:onekey_hit_and_run) && s:vimim_sexy_onekey > 0
         if pumvisible()
             let msg = "do nothing over omni menu"
         else
@@ -1351,15 +1352,15 @@ function! <SID>vimim_onekey_mode()
 endfunction
 
 " ---------------------------------
-function! <SID>vimim_space_onekey()
+function! <SID>VimimSpaceInOnekey()
 " ---------------------------------
     let onekey = " "
     sil!return s:vimim_onekey_action(onekey)
 endfunction
 
-" ---------------------------
-function! <SID>vimim_onekey()
-" ---------------------------
+" --------------------------
+function! <SID>VimimOnekey()
+" --------------------------
     let onekey = ""
     sil!call s:vimim_start_onekey()
     let s:onekey_hit_and_run = 1
@@ -1444,9 +1445,9 @@ let VimIM = " ====  Chinese_Mode     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------
-function! <SID>vimim_chinese_mode()
-" ---------------------------------
+" -------------------------------
+function! <SID>VimimChineseMode()
+" -------------------------------
     if s:vimim_chinese_mode_flag < 1
         sil!call s:vimim_start_chinese_mode()
     else
@@ -1469,7 +1470,7 @@ function! s:vimim_start_chinese_mode()
         call <SID>vimim_set_seamless()
         call s:vimim_dynamic_alphabet_trigger()
         " ------------------------------------------------------------
-        inoremap<silent><Space> <C-R>=g:vimim_space_dynamic()<CR>
+        inoremap<silent><Space> <C-R>=g:VimimSpaceInDynamicMode()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
     else
@@ -1477,7 +1478,7 @@ function! s:vimim_start_chinese_mode()
         let s:chinese_input_mode = 1
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------------
-        inoremap<silent><Space> <C-R>=g:vimim_space_static()<CR>
+        inoremap<silent><Space> <C-R>=g:VimimSpaceInStaticMode()<CR>
                                \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
     endif
@@ -1505,9 +1506,9 @@ function! s:vimim_stop_chinese_mode()
     sil!call s:vimim_stop()
 endfunction
 
-" -------------------------------
-function! g:vimim_space_dynamic()
-" -------------------------------
+" -----------------------------------
+function! g:VimimSpaceInDynamicMode()
+" -----------------------------------
     let space = ' '
     if pumvisible()
         let space = "\<C-Y>"
@@ -1515,9 +1516,9 @@ function! g:vimim_space_dynamic()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" ------------------------------
-function! g:vimim_space_static()
-" ------------------------------
+" ----------------------------------
+function! g:VimimSpaceInStaticMode()
+" ----------------------------------
     let space = ' '
     if pumvisible()
         let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
@@ -5330,6 +5331,7 @@ function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
     let s:vimim_sexy_onekey=1
+    let s:vimim_f5_as_super_onekey=1
     let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=14
     " ------------------------------ debug
@@ -6088,6 +6090,7 @@ function! s:vimim_initialize_mapping()
     sil!call s:vimim_chinese_mode_mapping_on()
     sil!call s:vimim_onekey_mapping_on()
     sil!call s:vimim_ctrl_space_mapping_on()
+    sil!call s:vimim_super_f5_mapping_on()
 endfunction
 
 " -----------------------------------
@@ -6101,26 +6104,36 @@ endfunction
 " -----------------------------------------
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
-    inoremap<silent><expr><Plug>VimimChineseMode <SID>vimim_chinese_mode()
-    inoremap<silent><expr><Plug>VimimSexyMode <SID>vimim_onekey_mode()
+    inoremap<silent><expr><Plug>VimimChineseMode <SID>VimimChineseMode()
+    inoremap<silent><expr><Plug>VimimSexyMode <SID>VimimSexyMode()
     " ------------------------------------------------------------
     if empty(s:vimim_sexy_onekey)
            imap<silent><C-Bslash> <Plug>VimimChineseMode
-        noremap<silent><C-Bslash> :call <SID>vimim_chinese_mode()<CR>
+        noremap<silent><C-Bslash> :call <SID>VimimChineseMode()<CR>
     else
            imap<silent><C-Bslash> <Plug>VimimSexyMode
-        noremap<silent><C-Bslash> :call <SID>vimim_onekey_mode()<CR>
+        noremap<silent><C-Bslash> :call <SID>VimimSexyMode()<CR>
     endif
 endfunction
 
 " -----------------------------------
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
-    inoremap<silent><expr><Plug>VimimOneKey <SID>vimim_onekey()
-    " ---------------------------------------------------------
+    inoremap<silent><expr><Plug>VimimOneKey <SID>VimimOnekey()
+    " --------------------------------------------------------
     imap<silent><C-^> <Plug>VimimOneKey
     if s:vimim_tab_as_onekey > 0
         imap<silent><Tab> <Plug>VimimOneKey
+    endif
+endfunction
+
+" -------------------------------------
+function! s:vimim_super_f5_mapping_on()
+" -------------------------------------
+    if s:vimim_f5_as_super_onekey > 0
+        xmap<silent><F5> c<Space><C-R>"<F5>
+        imap<silent><F5> <C-Bslash><Space>
+        nmap<silent><F5> bea<F5>
     endif
 endfunction
 
