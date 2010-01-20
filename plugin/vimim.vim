@@ -3531,9 +3531,16 @@ function! s:vimim_pinyin_filter(results, keyboards)
     let pattern = s:vimim_apostrophe_fuzzy_pattern(a:keyboards)
     for item in a:results
         let keyboard = get(split(item), 0)
-        let keyboard2 = s:vimim_get_pinyin_from_quanpin(keyboard)
-        if !empty(matchstr(keyboard2, pattern))
-            call add(new_results, item)
+        let chinese = get(split(item), 1)
+        let gold = len(chinese)/s:multibyte
+        let stone = len(get(a:keyboards,0))
+        " assume it is chaojijianpin: ggy <=> 3 chinese-char
+        if gold == stone
+            " filter out fake chinese phrase using pinyin theory
+            let keyboard2 = s:vimim_get_pinyin_from_quanpin(keyboard)
+            if match(keyboard2, pattern) > -1
+                call add(new_results, item)
+            endif
         endif
     endfor
     if empty(new_results)
@@ -3558,7 +3565,7 @@ function! s:vimim_apostrophe_fuzzy_pattern(keyboards)
         let fuzzies = join(split(keyboard,'\ze'), fuzzy)
         let pattern = fuzzies . lowercase
     endif
-    let pattern = '^' . pattern . '$'
+    let pattern = '^\<' . pattern . '\>'
     return pattern
 endfunction
 
@@ -5170,7 +5177,28 @@ function! s:vimim_free_fuzzy_pattern(keyboard)
 " --------------------------------------------
     let fuzzy = '.*'
     let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
-    let pattern = '^' . fuzzies
+    let pattern = fuzzies  . fuzzy
+    let pattern = '^\<' . pattern . '\>'
+    return pattern
+endfunction
+
+" ---------------------------------------------------
+function! s:vimim_apostrophe_fuzzy_pattern(keyboards)
+" ---------------------------------------------------
+    let keyboard = get(a:keyboards,0)
+    let pattern = keyboard
+    if len(a:keyboards) > 1
+        let lowercase = "\\l*"
+        let fuzzy = lowercase . "'"
+        let keyboard2 = get(a:keyboards,1)
+        let pattern = keyboard . fuzzy . keyboard2 . lowercase
+    else
+        let lowercase = "\\l\\+"
+        let fuzzy = lowercase . "'"
+        let fuzzies = join(split(keyboard,'\ze'), fuzzy)
+        let pattern = fuzzies . lowercase
+    endif
+    let pattern = '^\<' . pattern . '\>'
     return pattern
 endfunction
 
@@ -5225,7 +5253,7 @@ function! s:vimim_sentence_match(lines, keyboard)
     \|| len(keyboard) < 4
         return []
     endif
-    let pattern = '^' . keyboard . '\>'
+    let pattern = '^\<' . keyboard . '\>'
     let match_start = match(a:lines, pattern)
     if match_start < 0
         let msg = "now try backward maximum match"
