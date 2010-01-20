@@ -3543,9 +3543,6 @@ function! s:vimim_pinyin_filter(results, keyboards)
             endif
         endif
     endfor
-    if empty(new_results)
-        let new_results = a:results
-    endif
     return new_results
 endfunction
 
