@@ -4951,6 +4951,9 @@ function! s:vimim_diy_results(keyboards, cache_list)
     let digits = split(get(keyboards,1), "'")
     let b = get(digits, 0)
     let c = get(digits, 1)
+    if empty(c)
+        call add(keyboards, "")
+    endif
     " --------------------------------------------------------
     let fuzzy_lines = a:cache_list
     if empty(fuzzy_lines)
