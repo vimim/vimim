@@ -1474,6 +1474,8 @@ function! s:vimim_start_chinese_mode()
     elseif s:vimim_static_input_style==1
         let msg = " ___ chinese mode static ___ "
         let s:chinese_input_mode = 1
+        " in static mode we must ensure , and . input Chinese ， and 。
+        let s:vimim_punctuation_navigation = 0
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------------
         inoremap  <Space> <C-R>=g:VimimSpaceInStaticMode()<CR>
