@@ -1335,11 +1335,11 @@ function! <SID>Sexymode()
             let msg = "do nothing over omni menu"
         else
             if empty(s:vimim_chinese_mode_flag%2)
+                call s:vimim_stop()
+            else
                 set noruler
                 sil!call s:vimim_start_onekey()
                 sil!return s:vimim_onekey_action("")
-            else
-                call s:vimim_stop()
             endif
         endif
     endif
@@ -1442,13 +1442,13 @@ call add(s:vimims, VimIM)
 " --------------------------
 function! <SID>Chinesemode()
 " --------------------------
-    let s:vimim_chinese_mode_flag += 1
-    if s:vimim_chinese_mode_flag > 2
+    if s:vimim_chinese_mode_flag > 0
         call s:vimim_stop_chinese_mode()
     endif
     if empty(s:vimim_chinese_mode_flag%2)
         call s:vimim_start_chinese_mode()
     endif
+    let s:vimim_chinese_mode_flag += 1
     sil!return "\<C-O>:redraw\<CR>"
 endfunction
 
@@ -5282,7 +5282,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_backdoor()
 " -------------------------------------
     let g:vimim = ["",0,0,1,localtime()]
-    let s:vimim_chinese_mode_flag = 1
+    let s:vimim_chinese_mode_flag = 0
     let s:initialization_loaded = 0
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
