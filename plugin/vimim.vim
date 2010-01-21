@@ -1459,7 +1459,6 @@ endfunction
 function! s:vimim_start_chinese_mode()
 " ------------------------------------
     sil!call s:vimim_stop()
-    sil!call s:vimim_initialize_mapping()
     sil!call s:vimim_start()
     sil!call s:vimim_i_chinese_mode_on()
     sil!call s:vimim_i_chinese_mode_autocmd_on()
@@ -5452,6 +5451,7 @@ function! s:vimim_stop()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_stop_sexy_mode()
     sil!call s:vimim_i_map_off()
+    sil!call s:vimim_initialize_mapping()
 endfunction
 
 " -----------------------------------
