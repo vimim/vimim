@@ -2219,9 +2219,7 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_menu_4corner_filter(matched_list)
 " -------------------------------------------------
-    if empty(s:chinese_input_mode)
-    \&& s:pinyin_and_4corner > 0
-    \&& s:menu_4corner_filter > -1
+    if empty(s:chinese_input_mode) && s:menu_4corner_filter > -1
         let msg = "make 4corner as a filter to omni menu"
     else
         return a:matched_list
@@ -2638,7 +2636,9 @@ endfunction
 " --------------------------------------
 function! s:vimim_1234567890_filter_on()
 " --------------------------------------
-    if s:vimim_custom_menu_label < 1
+    if !empty(s:vimim_cloud_plugin)
+        let msg = 'support filter for mycloud'
+    elseif s:vimim_custom_menu_label < 1
     \|| empty(s:pinyin_and_4corner)
         return
     endif
@@ -5320,7 +5320,7 @@ function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
     let s:vimim_cloud_sogou=12
-    let s:vimim_static_input_style=2
+    let s:vimim_static_input_style=1
     let s:vimim_ctrl_space_to_toggle=1
     let s:vimim_chinese_frequency=14
     " ------------------------------ debug
