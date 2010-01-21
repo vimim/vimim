@@ -211,8 +211,6 @@ function! s:vimim_initialize_session()
     let s:abcdefghi = "'abcdefghi"
     let s:show_me_not_pattern = "^ii\\|^oo"
     " --------------------------------
-    let g:vimim = ["",0,0,1,localtime()]
-    " --------------------------------
 endfunction
 
 " ----------------------------------
@@ -1332,15 +1330,16 @@ function! <SID>Sexymode()
 " ----------------------------------------------------------
     if empty(s:onekey_hit_and_run)
     \&& s:vimim_static_input_style==2
+        let s:vimim_chinese_mode_flag += 1
         if pumvisible()
             let msg = "do nothing over omni menu"
         else
-            if empty(&ruler)
-                call s:vimim_stop()
-            else
+            if empty(s:vimim_chinese_mode_flag%2)
                 set noruler
                 sil!call s:vimim_start_onekey()
                 sil!return s:vimim_onekey_action("")
+            else
+                call s:vimim_stop()
             endif
         endif
     endif
@@ -1350,11 +1349,7 @@ endfunction
 " ---------------------
 function! <SID>Onekey()
 " ---------------------
-    if empty(&ruler)
-        let msg = "no ruler marks sexy onekey"
-    else
-        sil!call s:vimim_start_onekey()
-    endif
+    sil!call s:vimim_start_onekey()
     let s:onekey_hit_and_run = 1
     sil!return s:vimim_onekey_action("")
 endfunction
@@ -1448,7 +1443,9 @@ call add(s:vimims, VimIM)
 function! <SID>Chinesemode()
 " --------------------------
     let s:vimim_chinese_mode_flag += 1
-    call s:vimim_stop_chinese_mode()
+    if s:vimim_chinese_mode_flag > 2
+        call s:vimim_stop_chinese_mode()
+    endif
     if empty(s:vimim_chinese_mode_flag%2)
         call s:vimim_start_chinese_mode()
     endif
@@ -1474,7 +1471,10 @@ function! s:vimim_start_chinese_mode()
     elseif s:vimim_static_input_style==1
         let msg = " ___ chinese mode static ___ "
         let s:chinese_input_mode = 1
-        " in static mode we must ensure , and . input Chinese ， and 。
+        " in static mode we must ensure , and . input Chinese , and .
+        " todo: confirm that comma should not be an issue
+        " todo: fix dot case by case, as dot is used as a valid keycode
+        " todo: need to make sure that punctuation toggle <C-6> works
         let s:vimim_punctuation_navigation = 0
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------------
@@ -5281,6 +5281,7 @@ call add(s:vimims, VimIM)
 " -------------------------------------
 function! s:vimim_initialize_backdoor()
 " -------------------------------------
+    let g:vimim = ["",0,0,1,localtime()]
     let s:vimim_chinese_mode_flag = 1
     let s:initialization_loaded = 0
     let s:datafile_primary = 0
@@ -5388,7 +5389,6 @@ function! s:vimim_i_setting_on()
     set completefunc=VimIM
     set completeopt=menuone
     set nolazyredraw
-    set ruler
     set hlsearch
     set iminsert=1
     if empty(&pumheight)
@@ -6070,7 +6070,7 @@ endfunction
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
     if !hasmapto('<Plug>VimimChinesemode', 'i')
-	inoremap <unique> <expr> <Plug>VimimChinesemode <SID>Chinesemode()
+        inoremap <unique> <expr> <Plug>VimimChinesemode <SID>Chinesemode()
     endif
     if !hasmapto('<Plug>VimimSexymode', 'i')
         inoremap <unique> <expr> <Plug>VimimSexymode  <SID>Sexymode()
@@ -6104,6 +6104,18 @@ function! s:vimim_ctrl_space_mapping_on()
         nmap <C-Space> <C-Bslash>
         imap <C-Space> <C-Bslash>
     endif
+endfunction
+
+" ----------------------------
+function! s:vimim_mini_vimrc()
+" ----------------------------
+    set nocompatible
+    set encoding=utf-8
+    set termencoding=utf8
+    set fileencodings=ucs-bom,utf8,chinese,taiwan
+    set guifontwide=NSimSun-18030,GulimChe,GungsuhChe,MS_Mincho,SimHei
+    set noloadplugins
+    runtime! plugin/vimim.vim
 endfunction
 
 sil!call s:vimim_initialize_global()
