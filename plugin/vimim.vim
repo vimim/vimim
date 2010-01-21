@@ -1293,8 +1293,8 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_helper_mapping_on()
     sil!call s:vimim_onekey_autocmd()
     " ----------------------------------------------------------
-    inoremap<silent><Space> <C-R>=<SID>VimimSpaceInOnekey()<CR>
-                           \<C-R>=g:vimim_reset_after_insert()<CR>
+    inoremap <Space> <C-R>=<SID>VimimSpaceInOnekey()<CR>
+                    \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
 endfunction
 
@@ -1323,9 +1323,9 @@ function! s:vimim_stop_sexy_mode()
     endif
 endfunction
 
-" ----------------------------
-function! <SID>VimimSexyMode()
-" ----------------------------
+" -----------------------
+function! <SID>Sexymode()
+" -----------------------
 " sexy <OneKey> double play
 "  (1) <OneKey> => start sexy OneKey mode and start to play
 "  (2) <OneKey> => stop  sexy OneKey mode and stop to play
@@ -1347,9 +1347,9 @@ function! <SID>VimimSexyMode()
     return ""
 endfunction
 
-" --------------------------
-function! <SID>VimimOnekey()
-" --------------------------
+" ---------------------
+function! <SID>Onekey()
+" ---------------------
     if empty(&ruler)
         let msg = "no ruler marks sexy onekey"
     else
@@ -1444,13 +1444,13 @@ let VimIM = " ====  Chinese_Mode     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -------------------------------
-function! <SID>VimimChineseMode()
-" -------------------------------
-    if s:vimim_chinese_mode_flag < 1
-        sil!call s:vimim_start_chinese_mode()
-    else
-        sil!call s:vimim_stop_chinese_mode()
+" --------------------------
+function! <SID>Chinesemode()
+" --------------------------
+    let s:vimim_chinese_mode_flag += 1
+    call s:vimim_stop_chinese_mode()
+    if empty(s:vimim_chinese_mode_flag%2)
+        call s:vimim_start_chinese_mode()
     endif
     sil!return "\<C-O>:redraw\<CR>"
 endfunction
@@ -1458,7 +1458,6 @@ endfunction
 " ------------------------------------
 function! s:vimim_start_chinese_mode()
 " ------------------------------------
-    sil!call s:vimim_stop()
     sil!call s:vimim_start()
     sil!call s:vimim_i_chinese_mode_on()
     sil!call s:vimim_i_chinese_mode_autocmd_on()
@@ -1469,23 +1468,23 @@ function! s:vimim_start_chinese_mode()
         call <SID>vimim_set_seamless()
         call s:vimim_dynamic_alphabet_trigger()
         " ------------------------------------------------------------
-        inoremap<silent><Space> <C-R>=g:VimimSpaceInDynamicMode()<CR>
-                               \<C-R>=g:vimim_reset_after_insert()<CR>
+        inoremap <Space> <C-R>=g:VimimSpaceInDynamicMode()<CR>
+                      \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
     elseif s:vimim_static_input_style==1
         let msg = " ___ chinese mode static ___ "
         let s:chinese_input_mode = 1
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------------
-        inoremap<silent><Space> <C-R>=g:VimimSpaceInStaticMode()<CR>
-                               \<C-R>=g:vimim_reset_after_insert()<CR>
+        inoremap  <Space> <C-R>=g:VimimSpaceInStaticMode()<CR>
+                         \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
     endif
     " ---------------------------------
     sil!call s:vimim_helper_mapping_on()
     " ---------------------------------------------------------
     if s:vimim_static_input_style < 2
-        inoremap<silent><expr><C-^> <SID>vimim_toggle_punctuation()
+        inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
     endif
     " ---------------------------------------------------------
     return <SID>vimim_toggle_punctuation()
@@ -1569,7 +1568,7 @@ function! s:vimim_dynamic_alphabet_trigger()
     " --------------------------------------
     for char in s:valid_keys
         if char !~# not_used_valid_keys
-            sil!exe 'inoremap<silent> ' . char . '
+            sil!exe 'inoremap <silent>  ' . char . '
             \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
             \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
         endif
@@ -1776,7 +1775,7 @@ function! s:vimim_punctuation_navigation_on()
     endfor
     " ---------------------------------------
     for _ in hjkl_list
-        sil!exe 'inoremap<silent><expr> '._.'
+        sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_punctuations_navigation("'._.'")'
     endfor
 endfunction
@@ -2410,7 +2409,6 @@ endfunction
 function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
     let s:chinese_mode_count += 1
-    let s:vimim_chinese_mode_flag = 1
     let s:toggle_xiangma_pinyin = s:chinese_mode_count%2
     let b:keymap_name = s:vimim_statusline()
     sil!call s:vimim_i_laststatus_on()
@@ -2533,7 +2531,7 @@ function! s:vimim_label_on()
     endif
     " ----------------------
     for _ in labels
-        sil!exe'inoremap<silent> '._.'
+        sil!exe'inoremap <silent>  '._.'
         \  <C-R>=<SID>vimim_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
@@ -2567,7 +2565,7 @@ function! s:vimim_action_label_on()
 " ---------------------------------
     let labels = split(s:abcdefghi, '\zs')
     for _ in labels
-        sil!exe'inoremap<silent> '._.'
+        sil!exe'inoremap <silent>  '._.'
         \  <C-R>=<SID>vimim_action_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
@@ -2591,7 +2589,7 @@ function! s:vimim_navigation_label_on()
 " -------------------------------------
     let hjkl_list = split('qrsujklpxyz', '\zs')
     for _ in hjkl_list
-        sil!exe 'inoremap<silent><expr> '._.'
+        sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
     endfor
 endfunction
@@ -2646,7 +2644,7 @@ function! s:vimim_1234567890_filter_on()
         let labels = range(1,5)
     endif
     for _ in labels
-        sil!exe'inoremap<silent> '._.'
+        sil!exe'inoremap <silent>  '._.'
         \  <C-R>=<SID>vimim_label_1234567890_filter("'._.'")<CR>'
     endfor
 endfunction
@@ -4736,7 +4734,7 @@ function! s:vimim_quick_fuzzy_search(keyboard)
             call filter(results, 'v:val !~ " #$"')
         endif
         let keyboards = split(keyboard, "'")
-        let xxx = " need to consider all free-style combination"
+        let todo = " need to consider all free-style combination"
         let results = s:vimim_length_filter(results, len(keyboards))
         let results = s:vimim_pinyin_filter(results, keyboards)
     else
@@ -5047,7 +5045,7 @@ function! s:vimim_ctrl_h_whole_match(lines, keyboard)
     return matches
 endfunction
 
-" TODO: re-consider how match is done
+" todo: re-consider how match is done
 " --------------------------------------------------
 function! s:vimim_exact_whole_match(lines, keyboard)
 " --------------------------------------------------
@@ -5139,7 +5137,7 @@ function! s:vimim_fuzzy_match(lines, keyboard)
         call filter(results, 'v:val !~ " #$"')
     endif
     if s:chinese_input_mode < 2
-        let xxx = " need to consider all fuzzy match case "
+        let todo = " need to consider all fuzzy match case "
         let results = s:vimim_length_filter(results, len(a:keyboard))
         let results = s:vimim_pinyin_filter(results, [a:keyboard])
     endif
@@ -5281,11 +5279,11 @@ call add(s:vimims, VimIM)
 " -------------------------------------
 function! s:vimim_initialize_backdoor()
 " -------------------------------------
+    let s:vimim_chinese_mode_flag = 1
     let s:initialization_loaded = 0
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
     let s:onekey_hit_and_run = 0
-    let s:vimim_chinese_mode_flag = 0
     let datafile_backdoor = s:path . "vimim.txt"
     " -----------------------------------------
     if filereadable(datafile_backdoor)
@@ -5466,7 +5464,6 @@ endfunction
 function! s:reset_before_anything()
 " ---------------------------------
     call s:reset_matched_list()
-    let s:vimim_chinese_mode_flag = 0
     let s:chinese_input_mode = 0
     let s:no_internet_connection = 0
     let s:pattern_not_found = 0
@@ -5559,28 +5556,28 @@ function! s:vimim_helper_mapping_on()
 " -----------------------------------
     if s:chinese_input_mode < 2
         if s:vimim_smart_ctrl_h > 0
-            inoremap<silent><C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
+            inoremap <C-H> <C-R>=<SID>vimim_smart_ctrl_h()<CR>
         endif
         if s:vimim_smart_ctrl_n > 0
-            inoremap<silent><C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
+            inoremap <C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
         endif
         if s:vimim_smart_ctrl_p > 0
-            inoremap<silent><C-P> <C-R>=<SID>vimim_smart_ctrl_p()<CR>
+            inoremap <C-P> <C-R>=<SID>vimim_smart_ctrl_p()<CR>
         endif
     endif
     " ----------------------------------------------------------
     if s:vimim_static_input_style < 2
-        inoremap<silent><Esc>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                              \<C-R>=g:vimim_one_key_correction()<CR>
+        inoremap  <Esc>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                        \<C-R>=g:vimim_one_key_correction()<CR>
     endif
     " ----------------------------------------------------------
     if s:vimim_static_input_style==2 || s:chinese_input_mode > 0
-        inoremap<silent><CR>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                              \<C-R>=<SID>vimim_smart_enter()<CR>
+        inoremap <CR>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                      \<C-R>=<SID>vimim_smart_enter()<CR>
     endif
     " ----------------------------------------------------------
-    inoremap<silent><BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
-                         \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
+    inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
+                  \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
     " ----------------------------------------------------------
 endfunction
 
@@ -5666,14 +5663,6 @@ if a:start
             endif
         endif
     endif
-
-    " HOW is done!  Any other cases?
-    " ------------------------------------------------- TODO
-    "  assert ma7712  =>  马
-    "  assert .ma     =>  .马
-    "  assert 7712ma  =>  7712马
-    "  assert 7712    =>  马
-    " ------------------------------------------------- to_be_removed
 
     let s:start_row_before = start_row
     let s:current_positions = current_positions
@@ -6071,22 +6060,38 @@ endfunction
 function! s:vimim_visual_mapping_on()
 " -----------------------------------
     if !hasmapto('<C-^>', 'v')
-        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
+        xnoremap <C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
 endfunction
 
 " -----------------------------------------
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
-    inoremap<silent><expr><Plug>VimimChineseMode <SID>VimimChineseMode()
-    inoremap<silent><expr><Plug>VimimSexyMode <SID>VimimSexyMode()
-    " ------------------------------------------------------------
+    if !hasmapto('<Plug>VimimChinesemode', 'i')
+	inoremap <unique> <expr> <Plug>VimimChinesemode <SID>Chinesemode()
+    endif
+    if !hasmapto('<Plug>VimimSexymode', 'i')
+        inoremap <unique> <expr> <Plug>VimimSexymode  <SID>Sexymode()
+    endif
+    " ----------------------------------------------------------------------
     if s:vimim_static_input_style < 2
-           imap<silent><C-Bslash> <Plug>VimimChineseMode
-        noremap<silent><C-Bslash> :call <SID>VimimChineseMode()<CR>
+           imap <C-Bslash> <Plug>VimimChinesemode
+        noremap <C-Bslash> :call <SID>Chinesemode()<CR>
     elseif s:vimim_static_input_style==2
-           imap<silent><C-Bslash> <Plug>VimimSexyMode
-        noremap<silent><C-Bslash> :call <SID>VimimSexyMode()<CR>
+           imap <C-Bslash> <Plug>VimimSexymode
+        noremap <C-Bslash> :call <SID>Sexymode()<CR>
+    endif
+endfunction
+
+" -----------------------------------
+function! s:vimim_onekey_mapping_on()
+" -----------------------------------
+    if !hasmapto('<Plug>VimimOnekey', 'i')
+        inoremap <unique> <expr> <Plug>VimimOnekey <SID>Onekey()
+    endif
+    imap <C-^> <Plug>VimimOnekey
+    if s:vimim_tab_as_onekey > 0
+        imap <Tab> <Plug>VimimOnekey
     endif
 endfunction
 
@@ -6094,19 +6099,8 @@ endfunction
 function! s:vimim_ctrl_space_mapping_on()
 " ---------------------------------------
     if s:vimim_ctrl_space_to_toggle > 0 && has("gui_running")
-        nmap<C-Space> <C-Bslash>
-        imap<C-Space> <C-Bslash>
-    endif
-endfunction
-
-" -----------------------------------
-function! s:vimim_onekey_mapping_on()
-" -----------------------------------
-    inoremap<silent><expr><Plug>VimimOneKey <SID>VimimOnekey()
-    " --------------------------------------------------------
-    imap<silent><C-^> <Plug>VimimOneKey
-    if s:vimim_tab_as_onekey > 0
-        imap<silent><Tab> <Plug>VimimOneKey
+        nmap <C-Space> <C-Bslash>
+        imap <C-Space> <C-Bslash>
     endif
 endfunction
 
