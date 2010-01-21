@@ -1375,6 +1375,8 @@ function! s:vimim_onekey_action(onekey)
         if a:onekey == " " || s:vimim_static_input_style < 2
             let onekey = s:vimim_ctrl_y_ctrl_x_ctrl_u()
         else
+            let onekey = g:vimim_pumvisible_p_paste()
+            let onekey = "\<C-E>\<C-R>=g:vimim_pumvisible_p_paste()\<CR>"
             let onekey = "\<C-E>"
         endif
         sil!exe 'sil!return "' . onekey . '"'
@@ -2291,16 +2293,17 @@ endfunction
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
     let matched_list = a:matched_list
+    let s:popupmenu_matched_list = copy(matched_list)
     if empty(matched_list)
         return []
     endif
-    "-----------------------------------------
+    " ----------------------------------------
     if empty(s:vimim_cloud_plugin)
         let first_candidate = get(split(get(matched_list,0)),0)
     else
         let first_candidate = '_'
     endif
-    "-----------------------------------------
+    " ----------------------------------------
     if s:vimim_smart_ctrl_n > 0
         let key = first_candidate[:0]
         let s:inputs[key] = matched_list
@@ -2308,8 +2311,7 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:vimim_smart_ctrl_p > 0
         let s:inputs_all[first_candidate] = matched_list
     endif
-    "-----------------------------------------
-    let s:popupmenu_matched_list = copy(matched_list)
+    " ----------------------------------------
     if empty(s:vimim_cloud_plugin)
         let matched_list = s:vimim_menu_4corner_filter(matched_list)
     else
@@ -2318,7 +2320,7 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:pageup_pagedown > 0
         let matched_list = s:vimim_pageup_pagedown(matched_list)
     endif
-    "-----------------------------------------
+    " ----------------------------------------
     let menu = 0
     let label = 1
     let popupmenu_list = []
@@ -2716,8 +2718,7 @@ endfunction
 " ------------------------------------
 function! g:vimim_pumvisible_p_paste()
 " ------------------------------------
-    let matched_list = copy(s:popupmenu_matched_list)
-    if empty(matched_list)
+    if empty(s:popupmenu_matched_list)
         return "\<Esc>"
     endif
     let pastes = []
@@ -2727,7 +2728,7 @@ function! g:vimim_pumvisible_p_paste()
     if title =~ s:show_me_not_pattern
         let words = []
     endif
-    for item in matched_list
+    for item in s:popupmenu_matched_list
         let pairs = split(item)
         let yin = get(pairs, 0)
         let yang = get(pairs, 1)
