@@ -3549,21 +3549,10 @@ endfunction
 
 " ----------------------------------------------
 function! s:vimim_length_filter(results, length)
-" ---------------------------------------------- xxx
+" ----------------------------------------------
     let results = a:results
-    let filter_length = a:length
-    if filter_length < 0
-        return results
-    endif
-    " ---------------------------------------------
-    if empty(filter_length)
-        if length < 4
-            let filter_length = length
-        endif
-    endif
-    " ---------------------------------------------
-    if filter_length > 0
-        let pattern = '\s\+.\{'. filter_length .'}$'
+    if a:length > 0
+        let pattern = '\s\+.\{'. a:length .'}$'
         call filter(results, 'v:val =~ pattern')
     endif
     return results
@@ -4845,12 +4834,6 @@ function! s:vimim_diy_keyboard(keyboard)
     let alpha_string = join(alpha_keyboards, "'")
     let digit_string = join(digit_keyboards, "'")
     let keyboards = [alpha_string, digit_string]
-    " -------------------------------------------------------------- xxx
- """let keyboards = copy(digit_keyboards)
- """call insert(keyboards, alpha_string) |" ma77li40=>["ma'li",77,40]
- """if len(alpha_keyboards) > 1 && len(digit_keyboards) < 2
- """    call add(keyboards, "") |" ma7712li => ['mali', '7712', '']
- """endif
     " --------------------------------------------------------------
     if len(keyboards) < 2
         let keyboards = []
