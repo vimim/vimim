@@ -1489,6 +1489,8 @@ function! s:vimim_start_chinese_mode()
         inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
     endif
     " ---------------------------------------------------------
+    sil!call s:vimim_1234567890_filter_on()
+    " ------------------------------------- xxx
     return <SID>vimim_toggle_punctuation()
 endfunction
 
@@ -2219,7 +2221,7 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_menu_4corner_filter(matched_list)
 " -------------------------------------------------
-    if empty(s:chinese_input_mode) && s:menu_4corner_filter > -1
+    if s:menu_4corner_filter > -1
         let msg = "make 4corner as a filter to omni menu"
     else
         return a:matched_list
@@ -2228,6 +2230,29 @@ function! s:vimim_menu_4corner_filter(matched_list)
     let keyboard = strpart(keyboard, match(keyboard,'\l'))
     let keyboards = [keyboard, s:menu_4corner_filter]
     let results = s:vimim_diy_results(keyboards, a:matched_list)
+    if empty(results)
+        let results = a:matched_list
+    endif
+    return results
+endfunction
+
+" ----------------------------------------------------
+function! s:vimim_menu_1234567890_filter(matched_list)
+" ----------------------------------------------------
+    if s:menu_4corner_filter > -1
+        let msg = "make mycloud label as a filter to omni menu"
+    else
+        return a:matched_list
+    endif
+    " mycloud a:matched_list = ['4742 妈', '7712 马', '_ 媽']
+    let results = []
+    for item in a:matched_list
+        let pattern = "^" . s:menu_4corner_filter
+        let matched_number = match(item, pattern)
+        if matched_number > -1
+            call add(results, item)
+        endif
+    endfor
     if empty(results)
         let results = a:matched_list
     endif
@@ -2285,7 +2310,11 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     "-----------------------------------------
     let s:popupmenu_matched_list = copy(matched_list)
-    let matched_list = s:vimim_menu_4corner_filter(matched_list)
+    if empty(s:vimim_cloud_plugin)
+        let matched_list = s:vimim_menu_4corner_filter(matched_list)
+    else
+        let matched_list = s:vimim_menu_1234567890_filter(matched_list)
+    endif
     if s:pageup_pagedown > 0
         let matched_list = s:vimim_pageup_pagedown(matched_list)
     endif
@@ -2342,6 +2371,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 endif
                 " -----------------------------------------
                 if s:pinyin_and_4corner > 0
+                \|| !empty(s:vimim_cloud_plugin)
                     let labeling = label2
                 else
                     let labeling .= label2
