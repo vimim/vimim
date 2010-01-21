@@ -533,7 +533,6 @@ endfunction
 function! s:vimim_initialize_keycode()
 " ------------------------------------
     let keycode = s:vimim_get_keycode()
-    " --------------------------------
     if empty(keycode)
         let keycode = "[0-9a-z'.]"
     endif
@@ -1459,7 +1458,8 @@ endfunction
 " ------------------------------------
 function! s:vimim_start_chinese_mode()
 " ------------------------------------
-    sil!call s:vimim_onekey_mapping_off()
+    sil!call s:vimim_stop()
+    sil!call s:vimim_initialize_mapping()
     sil!call s:vimim_start()
     sil!call s:vimim_i_chinese_mode_on()
     sil!call s:vimim_i_chinese_mode_autocmd_on()
@@ -4151,23 +4151,14 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_cloud()
 " ----------------------------------
-    call s:vimim_plug_n_play_www_sogou()
-    " --------------------------------------------------
-    " NOTE: move s:www_libcall before return
-    " NOTE: this prevents cannot-be-found error in rare cases
-    " --------------------------------------------------
     let s:www_libcall = 0
+    call s:vimim_plug_n_play_www_sogou()
     if !exists('*system') || s:vimim_cloud_sogou < 0
         return
     endif
-    " step 0: try to find libvimim
-    " ------------------------------
+    " step 1: try to find libvimim
+    " ----------------------------
     let cloud = s:vimim_wget_dll
-    " --------------------------------------------------
-    " NOTE: move cloud variable above
-    " NOTE: this makes sure cloud is always initialized
-    " NOTE: could is set when it goes to => if filereadable(cloud)
-    " --------------------------------------------------
     if has("win32") || has("win32unix")
         if empty(s:vimim_wget_dll)
             let cloud = s:path . "libvimim.dll"
@@ -4184,16 +4175,10 @@ function! s:vimim_initialize_cloud()
         if ret ==# "True"
             let s:www_executable = cloud
             let s:www_libcall = 1
-            " --------------------------------------------------
-            " NOTE: if we come here, it means wget_dll is used
-            " NOTE: No need to used wget.exe or curl.exe
-            " NOTE: add return below
-            " NOTE: need to make sure s:www_executable from DLL is consistent
-            " --------------------------------------------------
             return
         endif
     endif
-    " step 1: try to find wget
+    " step 2: try to find wget
     " ------------------------
     if empty(s:www_executable)
         let wget = 0
@@ -4209,14 +4194,13 @@ function! s:vimim_initialize_cloud()
             let s:www_executable = wget . wget_option
         endif
     endif
-    " step 2: try to find curl if no wget
+    " step 3: try to find curl if no wget
     " -----------------------------------
     if empty(s:www_executable)
         if executable('curl')
             let s:www_executable = "curl -s "
         endif
     endif
-    " -------------------------------------
     if empty(s:www_executable)
         let s:vimim_cloud_sogou = 0
     endif
@@ -4437,12 +4421,12 @@ function! s:vimim_check_mycloud_plugin()
             endtry
         endif
         " libcall check failed, we now check system()
-        " -----------------------------------
+        " -------------------------------------------
         if has("gui_win32")
             return 0
         endif
         let mes = "on linux, we do plug-n-play"
-        " -----------------------------------
+        " -------------------------------------
         let cloud = s:path . "mycloud/mycloud"
         if !executable(cloud)
             if !executable("python")
@@ -4450,7 +4434,6 @@ function! s:vimim_check_mycloud_plugin()
             endif
             let cloud = "python " . cloud
         endif
-        " -----------------------------------
         " in POSIX system, we can use system() for mycloud
         let s:cloud_plugin_mode = "system"
         let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
@@ -4459,6 +4442,7 @@ function! s:vimim_check_mycloud_plugin()
         endif
     else
         " we do set-and-play on all systems
+        " ---------------------------------
         let part = split(s:vimim_mycloud_url, ':')
         let lenpart = len(part)
         if lenpart <= 1
@@ -4544,7 +4528,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
-    " sample url:
+    " mycloud sample url:
     " let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
     " let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
     " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
@@ -4554,6 +4538,7 @@ function! s:vimim_initialize_mycloud_plugin()
     " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
     " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
+    " --------------------------------------------------------------
     let cloud = s:vimim_check_mycloud_plugin()
     if empty(cloud)
         let s:vimim_cloud_plugin = 0
@@ -5297,10 +5282,10 @@ call add(s:vimims, VimIM)
 " -------------------------------------
 function! s:vimim_initialize_backdoor()
 " -------------------------------------
+    let s:initialization_loaded = 0
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
     let s:onekey_hit_and_run = 0
-    let s:initialization_loaded = 0
     let s:vimim_chinese_mode_flag = 0
     let datafile_backdoor = s:path . "vimim.txt"
     " -----------------------------------------
@@ -5320,7 +5305,7 @@ function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
     let s:vimim_cloud_sogou=12
-    let s:vimim_static_input_style=1
+    let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=1
     let s:vimim_chinese_frequency=14
     " ------------------------------ debug
@@ -5404,6 +5389,7 @@ function! s:vimim_i_setting_on()
     set completefunc=VimIM
     set completeopt=menuone
     set nolazyredraw
+    set ruler
     set hlsearch
     set iminsert=1
     if empty(&pumheight)
@@ -5466,7 +5452,6 @@ function! s:vimim_stop()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_stop_sexy_mode()
     sil!call s:vimim_i_map_off()
-    sil!call s:vimim_initialize_mapping()
 endfunction
 
 " -----------------------------------
@@ -6122,15 +6107,6 @@ function! s:vimim_onekey_mapping_on()
     imap<silent><C-^> <Plug>VimimOneKey
     if s:vimim_tab_as_onekey > 0
         imap<silent><Tab> <Plug>VimimOneKey
-    endif
-endfunction
-
-" ------------------------------------
-function! s:vimim_onekey_mapping_off()
-" ------------------------------------
-    iunmap <C-^>
-    if s:vimim_tab_as_onekey > 0
-        iunmap <Tab>
     endif
 endfunction
 
