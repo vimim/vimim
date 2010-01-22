@@ -5608,6 +5608,7 @@ if a:start
     " support http/https/ftp using libvimim.dll
     " -----------------------------------------
     if empty(s:chinese_input_mode)
+    \&& len(s:www_libcall) > 7
         let msg = "wget supports HTTP, HTTPS, and FTP protocols"
         let ftp = "\\<ftp://"
         let http = "\\<http://"
@@ -5615,9 +5616,7 @@ if a:start
         let or = "\\|"
         let wget = "\\c" . ftp . or . http . or  . https
         let match_start = match(current_line, wget)
-        if empty(s:www_libcall)
-            let msg = "no point to play with wget"
-        elseif match_start > -1
+        if match_start > -1
             let s:play_with_wget_dll = 1
             return match_start
         endif
