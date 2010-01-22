@@ -2542,9 +2542,15 @@ function! s:vimim_label_on()
     endif
     " ----------------------
     for _ in labels
-        sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_label("'._.'")<CR>'
-        \.'<C-R>=g:vimim_reset_after_insert()<CR>'
+        if !empty(s:vimim_mycloud_url) && s:chinese_input_mode > 1
+            let msg = " play with mycloud dynamic mode "
+            sil!exe'inoremap <silent>  '._.'
+            \  <C-R>=<SID>vimim_mycloud_dynamic_number("'._.'")<CR>'
+        else
+            sil!exe'inoremap <silent>  '._.'
+            \  <C-R>=<SID>vimim_label("'._.'")<CR>'
+            \.'<C-R>=g:vimim_reset_after_insert()<CR>'
+        endif
     endfor
 endfunction
 
@@ -4363,6 +4369,14 @@ endfunction
 let VimIM = " ====  Input_my_Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
+
+" --------------------------------------------
+function! <SID>vimim_mycloud_dynamic_number(n)
+" --------------------------------------------
+    sil!exe 'inoremap <silent>  ' . a:n . '
+    \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. a:n .
+    \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
+endfunction
 
 " -------------------------------------------------
 function! s:vimim_access_mycloud_plugin(cloud, cmd)
