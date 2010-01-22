@@ -629,6 +629,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_laststatus")
     call add(G, "g:vimim_custom_menu_label")
     call add(G, "g:vimim_internal_code_input")
+    call add(G, "g:vimim_onekey_double_ctrl6")
     call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_wubi_non_stop")
@@ -1353,7 +1354,7 @@ function! <SID>Onekey()
     let s:onekey_hit_and_run = 1
     let onekey = ""
     let onekey = s:vimim_onekey_action("")
-    if pumvisible() && s:vimim_static_input_style==2
+    if pumvisible() && s:vimim_onekey_double_ctrl6
         let onekey  = "\<C-E>\<C-X>\<C-U>\<C-E>"
         let onekey .= "\<C-R>=g:vimim_pumvisible_p_paste()\<CR>"
     endif
@@ -5305,7 +5306,7 @@ function! s:vimim_initialize_backdoor()
     " -----------------------------------------
     if filereadable(datafile_backdoor)
         let s:vimim_custom_skin=1
-        if empty(s:vimim_cloud_plugin)
+        if empty(s:vimim_mycloud_url)
             let s:datafile_primary = datafile_backdoor
             call s:vimim_initialize_backdoor_setting()
         endif
