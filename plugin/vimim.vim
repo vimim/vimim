@@ -1333,7 +1333,7 @@ function! <SID>Sexymode()
     \&& s:vimim_static_input_style==2
         let s:vimim_chinese_mode_flag += 1
         if pumvisible()
-            let msg = "do nothing over omni menu"
+            let msg = "<C-\> does nothing over omni menu"
         else
             if empty(s:vimim_chinese_mode_flag%2)
                 set noruler
@@ -1459,10 +1459,10 @@ function! <SID>Chinesemode()
         if s:vimim_static_input_style < 1
             let space = "\<C-O>:redraw\<CR>"
         else
-            let space = s:vimim_static_action("")
             if pumvisible()
-              " let space = "\<C-E>\<C-X>\<C-U>\<C-Y>"
-              " xxx do nothing when menu is on?
+                let msg = "<C-\> does nothing over omni menu"
+            else
+                let space = s:vimim_static_action("")
             endif
         endif
     endif
