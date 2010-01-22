@@ -2574,16 +2574,12 @@ function! <SID>vimim_label(n)
         let n = char2nr(n) - char2nr('a') + 2
     endif
     if pumvisible()
-        if a:n ==# 'z'
-            let label = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        else
-            if n < 1
-                let n = 10
-            endif
-            let mycount = repeat("\<Down>", n-1)
-            let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
-            let label = mycount . yes
+        if n < 1
+            let n = 10
         endif
+        let mycount = repeat("\<Down>", n-1)
+        let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
+        let label = mycount . yes
     endif
     sil!exe 'sil!return "' . label . '"'
 endfunction
@@ -2797,12 +2793,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_ctrl_y_ctrl_x_ctrl_u()
 " --------------------------------------
-    let key = "\<C-Y>"
-    if s:chinese_input_mode > 1
-        return key
-    endif
-    let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-    return key
+    return '\<C-Y>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
 endfunction
 
 " -------------------------------
@@ -5313,8 +5304,11 @@ function! s:vimim_initialize_backdoor()
     let datafile_backdoor = s:path . "vimim.txt"
     " -----------------------------------------
     if filereadable(datafile_backdoor)
-        let s:datafile_primary = datafile_backdoor
-        call s:vimim_initialize_backdoor_setting()
+        let s:vimim_custom_skin=1
+        if empty(s:vimim_cloud_plugin)
+            let s:datafile_primary = datafile_backdoor
+            call s:vimim_initialize_backdoor_setting()
+        endif
     endif
     " -----------------------------------------
     if s:vimim_custom_skin > 0
@@ -5345,7 +5339,6 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_chinese_punctuation=1
     let s:vimim_reverse_pageup_pagedown=1
     let s:vimim_unicode_lookup=0
-    let s:vimim_custom_skin=1
     let s:vimim_datafile_has_english=1
     let s:vimim_datafile_has_pinyin=1
     let s:vimim_datafile_has_4corner=1
