@@ -1573,7 +1573,7 @@ function! s:vimim_dynamic_alphabet_trigger()
     if s:datafile_has_dot > 0
         let not_used_valid_keys = "[0-9]"
     endif
-    if !empty(s:vimim_mycloud_url) 
+    if !empty(s:vimim_cloud_plugin) 
         let not_used_valid_keys = "_"
     endif
     " --------------------------------------
@@ -2539,7 +2539,7 @@ function! s:vimim_label_on()
         return
     endif
     " ----------------------
-    if !empty(s:vimim_mycloud_url) 
+    if !empty(s:vimim_cloud_plugin) 
     \&& s:chinese_input_mode > 1
         return
     endif
