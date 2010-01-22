@@ -1573,6 +1573,9 @@ function! s:vimim_dynamic_alphabet_trigger()
     if s:datafile_has_dot > 0
         let not_used_valid_keys = "[0-9]"
     endif
+    if !empty(s:vimim_mycloud_url) 
+        let not_used_valid_keys = "_"
+    endif
     " --------------------------------------
     for char in s:valid_keys
         if char !~# not_used_valid_keys
@@ -2536,21 +2539,20 @@ function! s:vimim_label_on()
         return
     endif
     " ----------------------
+    if !empty(s:vimim_mycloud_url) 
+    \&& s:chinese_input_mode > 1
+        return
+    endif
+    " ----------------------
     let labels = range(10)
     if &pumheight > 0 && &pumheight != 10
         let labels = range(1, &pumheight)
     endif
     " ----------------------
     for _ in labels
-        if !empty(s:vimim_mycloud_url) && s:chinese_input_mode > 1
-            let msg = " play with mycloud dynamic mode "
-            sil!exe'inoremap <silent>  '._.'
-            \  <C-R>=<SID>vimim_mycloud_dynamic_number("'._.'")<CR>'
-        else
-            sil!exe'inoremap <silent>  '._.'
-            \  <C-R>=<SID>vimim_label("'._.'")<CR>'
-            \.'<C-R>=g:vimim_reset_after_insert()<CR>'
-        endif
+        sil!exe'inoremap <silent>  '._.'
+        \  <C-R>=<SID>vimim_label("'._.'")<CR>'
+        \.'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
 endfunction
 
@@ -4369,14 +4371,6 @@ endfunction
 let VimIM = " ====  Input_my_Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
-
-" --------------------------------------------
-function! <SID>vimim_mycloud_dynamic_number(n)
-" --------------------------------------------
-    sil!exe 'inoremap <silent>  ' . a:n . '
-    \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. a:n .
-    \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
-endfunction
 
 " -------------------------------------------------
 function! s:vimim_access_mycloud_plugin(cloud, cmd)
