@@ -1573,9 +1573,6 @@ function! s:vimim_dynamic_alphabet_trigger()
     if s:datafile_has_dot > 0
         let not_used_valid_keys = "[0-9]"
     endif
-    if !empty(s:vimim_cloud_plugin) 
-        let not_used_valid_keys = "_"
-    endif
     " --------------------------------------
     for char in s:valid_keys
         if char !~# not_used_valid_keys
@@ -2536,11 +2533,6 @@ call add(s:vimims, VimIM)
 function! s:vimim_label_on()
 " --------------------------
     if s:vimim_custom_menu_label < 1
-        return
-    endif
-    " ----------------------
-    if !empty(s:vimim_cloud_plugin) 
-    \&& s:chinese_input_mode > 1
         return
     endif
     " ----------------------
