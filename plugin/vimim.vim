@@ -4414,7 +4414,7 @@ function! s:vimim_check_mycloud_plugin()
         if filereadable(cloud)
             if has("win32")
                 " we don't need to strip ".dll" for "win32unix".
-                cloud = cloud[:-5]
+                let cloud = cloud[:-5]
             endif
             try
                 let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
