@@ -1291,7 +1291,7 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_helper_mapping_on()
     sil!call s:vimim_onekey_autocmd()
     " ----------------------------------------------------------
-    inoremap <Space> <C-R>=<SID>VimimSpaceInOnekey()<CR>
+    inoremap <Space> <C-R>=<SID>vimim_space_onekey()<CR>
                     \<C-R>=g:vimim_reset_after_insert()<CR>
     " ----------------------------------------------------------
 endfunction
@@ -1335,11 +1335,11 @@ function! <SID>Sexymode()
             let msg = "do nothing over omni menu"
         else
             if empty(s:vimim_chinese_mode_flag%2)
-                call s:vimim_stop()
-            else
                 set noruler
                 sil!call s:vimim_start_onekey()
                 sil!return s:vimim_onekey_action("")
+            else
+                call s:vimim_stop()
             endif
         endif
     endif
@@ -1361,7 +1361,7 @@ function! <SID>Onekey()
 endfunction
 
 " ---------------------------------
-function! <SID>VimimSpaceInOnekey()
+function! <SID>vimim_space_onekey()
 " ---------------------------------
     let onekey = " "
     sil!return s:vimim_onekey_action(onekey)
@@ -1448,14 +1448,24 @@ call add(s:vimims, VimIM)
 " --------------------------
 function! <SID>Chinesemode()
 " --------------------------
-    if s:vimim_chinese_mode_flag > 0
+    let s:vimim_chinese_mode_flag += 1
+    if s:vimim_chinese_mode_flag > 2
         call s:vimim_stop_chinese_mode()
     endif
+    let space = ""
     if empty(s:vimim_chinese_mode_flag%2)
         call s:vimim_start_chinese_mode()
+        if s:vimim_static_input_style < 1
+            let space = "\<C-O>:redraw\<CR>"
+        else
+            let space = s:vimim_static_action("")
+            if pumvisible()
+              " let space = "\<C-E>\<C-X>\<C-U>\<C-Y>"
+              " xxx do nothing when menu is on?
+            endif
+        endif
     endif
-    let s:vimim_chinese_mode_flag += 1
-    sil!return "\<C-O>:redraw\<CR>"
+    sil!exe 'sil!return "' . space . '"'
 endfunction
 
 " ------------------------------------
@@ -1471,7 +1481,7 @@ function! s:vimim_start_chinese_mode()
         call <SID>vimim_set_seamless()
         call s:vimim_dynamic_alphabet_trigger()
         " ------------------------------------------------------------
-        inoremap <Space> <C-R>=g:VimimSpaceInDynamicMode()<CR>
+        inoremap <Space> <C-R>=<SID>vimim_space_dynamic()<CR>
                       \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
     elseif s:vimim_static_input_style==1
@@ -1484,7 +1494,7 @@ function! s:vimim_start_chinese_mode()
         let s:vimim_punctuation_navigation = 0
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------------
-        inoremap  <Space> <C-R>=g:VimimSpaceInStaticMode()<CR>
+        inoremap  <Space> <C-R>=<SID>vimim_space_static()<CR>
                          \<C-R>=g:vimim_reset_after_insert()<CR>
         " ------------------------------------------------------------
     endif
@@ -1512,9 +1522,9 @@ function! s:vimim_stop_chinese_mode()
     sil!call s:vimim_stop()
 endfunction
 
-" -----------------------------------
-function! g:VimimSpaceInDynamicMode()
-" -----------------------------------
+" ----------------------------------
+function! <SID>vimim_space_dynamic()
+" ----------------------------------
     let space = ' '
     if pumvisible()
         let space = "\<C-Y>"
@@ -1522,10 +1532,17 @@ function! g:VimimSpaceInDynamicMode()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" ----------------------------------
-function! g:VimimSpaceInStaticMode()
-" ----------------------------------
-    let space = ' '
+" ---------------------------------
+function! <SID>vimim_space_static()
+" ---------------------------------
+    let space = " "
+    sil!return s:vimim_static_action(space)
+endfunction
+
+" ------------------------------------
+function! s:vimim_static_action(space)
+" ------------------------------------
+    let space = a:space
     if pumvisible()
         let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
     else
@@ -2272,10 +2289,10 @@ endfunction
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
     let matched_list = a:matched_list
-    let s:popupmenu_matched_list = copy(matched_list)
     if empty(matched_list)
         return []
     endif
+    let s:popupmenu_matched_list = copy(matched_list)
     " ----------------------------------------
     if empty(s:vimim_cloud_plugin)
         let first_candidate = get(split(get(matched_list,0)),0)
@@ -5288,7 +5305,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_backdoor()
 " -------------------------------------
     let g:vimim = ["",0,0,1,localtime()]
-    let s:vimim_chinese_mode_flag = 0
+    let s:vimim_chinese_mode_flag = 1
     let s:initialization_loaded = 0
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
