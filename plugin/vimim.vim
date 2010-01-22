@@ -4130,32 +4130,10 @@ let VimIM = " ====  Input_Cloud      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------------
-function! s:vimim_plug_n_play_www_sogou()
-" ---------------------------------------
-    let msg = "if no datafile, try best to do cloud"
-    let plug_n_play_www_sogou = 0
+" -----------------------------------------
+function! s:vimim_do_cloud_if_no_datafile()
+" -----------------------------------------
     if empty(s:datafile_primary)
-        if (executable('wget') || executable('curl'))
-            let plug_n_play_www_sogou = 1
-        endif
-    endif
-    " Windows 'play and play' && 'set and play'
-    " -----------------------------------------
-    if has("win32") || has("win32unix")
-        if empty(s:vimim_wget_dll)
-            let msg = " Windows (wget.exe) plug and play"
-            let wget = s:path . "wget.exe"
-            if executable(wget)
-                let plug_n_play_www_sogou = 1
-            endif
-        elseif filereadable(s:vimim_wget_dll)
-            let msg = " Windows (libvimim.dll) set and play"
-            let plug_n_play_www_sogou = 1
-        endif
-    endif
-    " -----------------------------------------
-    if plug_n_play_www_sogou > 0
         if empty(s:vimim_cloud_sogou)
             let s:vimim_cloud_sogou = 1
         endif
@@ -4165,21 +4143,17 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_cloud()
 " ----------------------------------
-    let s:www_libcall = 0
-    call s:vimim_plug_n_play_www_sogou()
-    if !exists('*system') || s:vimim_cloud_sogou < 0
-        return
-    endif
     " step 1: try to find libvimim
     " ----------------------------
     let cloud = s:vimim_wget_dll
     if has("win32") || has("win32unix")
-        if empty(s:vimim_wget_dll)
+        if empty(cloud)
             let cloud = s:path . "libvimim.dll"
         endif
     else
         let cloud = s:path . "libvimim.so"
     endif
+    let s:www_libcall = 0
     if filereadable(cloud)
         " in win32, strip the .dll suffix
         if has("win32") && cloud[-4:] ==? ".dll"
@@ -4189,6 +4163,7 @@ function! s:vimim_initialize_cloud()
         if ret ==# "True"
             let s:www_executable = cloud
             let s:www_libcall = 1
+            call s:vimim_do_cloud_if_no_datafile()
             return
         endif
     endif
@@ -4217,6 +4192,8 @@ function! s:vimim_initialize_cloud()
     endif
     if empty(s:www_executable)
         let s:vimim_cloud_sogou = 0
+    else
+        call s:vimim_do_cloud_if_no_datafile()
     endif
 endfunction
 
