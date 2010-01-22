@@ -1495,8 +1495,6 @@ function! s:vimim_start_chinese_mode()
         inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
     endif
     " ---------------------------------------------------------
-    sil!call s:vimim_1234567890_filter_on()
-    " ------------------------------------- xxx
     return <SID>vimim_toggle_punctuation()
 endfunction
 
