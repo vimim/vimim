@@ -1353,7 +1353,7 @@ function! <SID>Onekey()
     let s:onekey_hit_and_run = 1
     let onekey = ""
     let onekey = s:vimim_onekey_action("")
-    if pumvisible()
+    if pumvisible() && s:vimim_static_input_style==2
         let onekey  = "\<C-E>\<C-X>\<C-U>\<C-E>"
         let onekey .= "\<C-R>=g:vimim_pumvisible_p_paste()\<CR>"
     endif
