@@ -1351,7 +1351,13 @@ function! <SID>Onekey()
 " ---------------------
     sil!call s:vimim_start_onekey()
     let s:onekey_hit_and_run = 1
-    sil!return s:vimim_onekey_action("")
+    let onekey = ""
+    let onekey = s:vimim_onekey_action("")
+    if pumvisible()
+        let onekey  = "\<C-E>\<C-X>\<C-U>\<C-E>"
+        let onekey .= "\<C-R>=g:vimim_pumvisible_p_paste()\<CR>"
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 " ---------------------------------
@@ -1375,8 +1381,6 @@ function! s:vimim_onekey_action(onekey)
         if a:onekey == " " || s:vimim_static_input_style < 2
             let onekey = s:vimim_ctrl_y_ctrl_x_ctrl_u()
         else
-            let onekey = g:vimim_pumvisible_p_paste()
-            let onekey = "\<C-E>\<C-R>=g:vimim_pumvisible_p_paste()\<CR>"
             let onekey = "\<C-E>"
         endif
         sil!exe 'sil!return "' . onekey . '"'
