@@ -5405,6 +5405,7 @@ endfunction
 " ----------------------------
 function! s:vimim_start_omni()
 " ----------------------------
+    let s:play_with_wget_dll = 0
     let s:menu_from_cloud_flag = 0
     let s:insert_without_popup = 0
     let s:unicode_menu_display_flag = 0
@@ -5604,6 +5605,24 @@ if a:start
         endif
     endif
 
+    " support http/https/ftp using libvimim.dll
+    " -----------------------------------------
+    if empty(s:chinese_input_mode)
+        let msg = "wget supports HTTP, HTTPS, and FTP protocols"
+        let ftp = "\\<ftp://"
+        let http = "\\<http://"
+        let https = "\\<https://"
+        let or = "\\|"
+        let wget = "\\c" . ftp . or . http . or  . https
+        let match_start = match(current_line, wget)
+        if empty(s:www_libcall)
+            let msg = "no point to play with wget"
+        elseif match_start > -1
+            let s:play_with_wget_dll = 1
+            return match_start
+        endif
+    endif
+
     " support natural sentence input with space
     " -----------------------------------------
     if empty(s:chinese_input_mode)
@@ -5697,6 +5716,13 @@ else
     " ---------------------------------
     if empty(s:keyboard_leading_zero)
         return
+    endif
+
+    if s:play_with_wget_dll > 0
+        let input = keyboard
+        let output = libcall(s:www_libcall, "do_geturl", input)
+        let dump = [keyboard, output]
+        return dump
     endif
 
     " ignore non-sense keyboard inputs
