@@ -4145,13 +4145,12 @@ function! s:vimim_initialize_cloud()
 " ----------------------------------
     " step 1: try to find libvimim
     " ----------------------------
-    let cloud = s:vimim_wget_dll
+    let cloud = s:path . "libvimim.so"
     if has("win32") || has("win32unix")
+        let cloud = s:vimim_wget_dll
         if empty(cloud)
             let cloud = s:path . "libvimim.dll"
         endif
-    else
-        let cloud = s:path . "libvimim.so"
     endif
     let s:www_libcall = 0
     if filereadable(cloud)
@@ -4161,8 +4160,7 @@ function! s:vimim_initialize_cloud()
         endif
         let ret = libcall(cloud, "do_geturl", "__isvalid")
         if ret ==# "True"
-            let s:www_executable = cloud
-            let s:www_libcall = 1
+            let s:www_libcall = cloud
             call s:vimim_do_cloud_if_no_datafile()
             return
         endif
@@ -4290,12 +4288,12 @@ function! s:vimim_get_cloud_sogou(keyboard)
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     " --------------------------------------------------------------
     try
-        if s:www_libcall
-            let input = cloud . keyboard . '".key'
-            let output = libcall(s:www_executable, "do_geturl", input)
-        else
+        if empty(s:www_libcall)
             let input = cloud . '"' . keyboard . '".key'
             let output = system(s:www_executable . input)
+        else
+            let input = cloud . keyboard . '".key'
+            let output = libcall(s:www_libcall, "do_geturl", input)
         endif
     catch
         let msg = "it looks like sogou has trouble with its cloud?"
@@ -4368,10 +4366,10 @@ function! s:vimim_access_mycloud_plugin(cloud, cmd)
         return system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        if s:www_libcall
-            let ret = libcall(s:www_executable, "do_geturl", a:cloud . input)
-        else
+        if empty(s:www_libcall)
             let ret = system(s:www_executable . shellescape(a:cloud . input))
+        else
+            let ret = libcall(s:www_libcall, "do_geturl", a:cloud . input)
         endif
         let output = s:vimim_rot13(ret)
         let ret = s:vimim_url_xx_to_chinese(output)
@@ -4607,12 +4605,12 @@ endfunction
 " -------------------------------------
 function! s:vimim_url_xx_to_chinese(xx)
 " -------------------------------------
-    if s:www_libcall
-        let output = libcall(s:www_executable, "do_unquote", a:xx)
-    else
+    if empty(s:www_libcall)
         let input = a:xx
         let output = substitute(input, '%\(\x\x\)',
                     \ '\=eval(''"\x''.submatch(1).''"'')','g')
+    else
+        let output = libcall(s:www_libcall, "do_unquote", a:xx)
     endif
     return output
 endfunction
