@@ -1136,20 +1136,22 @@ function! s:vimim_internal_code(keyboard)
         endif
     else
         if first_char ==# 'u'
-            let msg = " direct hex unicode insert, eg, u808f"
-            let dddd = str2nr(keyboard[1:], 16)
-            if dddd > s:max_ddddd
+            let msg = " hex unicode insert, eg, u808f"
+            let xxxx = keyboard[1:]
+            let ddddd = str2nr(xxxx, 16)
+            if ddddd > s:max_ddddd
                 return []
             else
-                let numbers = [dddd]
+                let numbers = []
+                for i in range(16*16)
+                    let digit = str2nr(ddddd+i)
+                    call add(numbers, digit)
+                endfor
             endif
         else
+            let msg = " direct hex unicode insert, eg, 22221"
             let ddddd = str2nr(keyboard, 10)
-            let numbers = []
-            for i in range(16*16)
-                let digit = str2nr(ddddd+i)
-                call add(numbers, digit)
-            endfor
+            let numbers = [ddddd]
         endif
     endif
     " ------------------------------------
@@ -1434,7 +1436,8 @@ function! s:vimim_onekey_action(onekey)
             let start = s:multibyte + 1
             let char_before = getline(".")[col(".")-start : col(".")-2]
             let ddddd = char2nr(char_before)
-            let onekey = ddddd . trigger
+            let xxxx = s:vimim_decimal2hex(ddddd)
+            let onekey = "u" . xxxx . trigger
         endif
         sil!exe 'sil!return "' . onekey . '"'
     endif
@@ -1453,6 +1456,18 @@ function! s:vimim_onekey_action(onekey)
     let s:smart_enter = 0
     let s:pattern_not_found = 0
     sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+" ------------------------------------
+function! s:vimim_decimal2hex(decimal)
+" ------------------------------------
+    let n = a:decimal
+    let hex = ""
+    while n
+        let hex = '0123456789abcdef'[n%16].hex
+        let n = n/16
+    endwhile
+    return hex
 endfunction
 
 " ======================================= }}}
