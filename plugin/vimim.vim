@@ -1208,7 +1208,7 @@ function! s:vimim_without_datafile(keyboard)
         let az .= " bbf7 bfa6 c0ac c2e8 c4c3 c5b6 c5be c6da c8bb "
         let az .= " c8f6 cbfa cdda cdda cdda cef4 d1b9 d4d1"
         let gb_code_orders = split(az)
-        for xxxx in az_list 
+        for xxxx in az_list
             let gbk[nr2char(xxxx)] = "0x" . get(gb_code_orders, xxxx-a)
         endfor
     elseif  s:encoding ==# "taiwan"
@@ -1329,10 +1329,10 @@ function! <SID>Sexymode()
 " ----------------------------------------------------------
     if empty(s:onekey_hit_and_run)
     \&& s:vimim_static_input_style==2
-        let s:vimim_chinese_mode_flag += 1
         if pumvisible()
             let msg = "<C-\> does nothing over omni menu"
         else
+            let s:vimim_chinese_mode_flag += 1
             if empty(s:vimim_chinese_mode_flag%2)
                 set noruler
                 sil!call s:vimim_start_onekey()
@@ -5470,8 +5470,11 @@ endfunction
 function! s:vimim_reset_before_stop()
 " -----------------------------------
     let s:smart_enter = 0
-    let s:onekey_hit_and_run = 0
     let s:pumvisible_ctrl_e = 0
+    let s:onekey_hit_and_run = 0
+    if s:vimim_static_input_style==2
+        let s:vimim_chinese_mode_flag += 1
+    endif
 endfunction
 
 " ---------------------------------
