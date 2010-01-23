@@ -669,6 +669,7 @@ function! s:vimim_egg_vimimegg()
     call add(eggs, "幫助　vimimhelp")
     call add(eggs, "測試　vimimdebug")
     call add(eggs, "統計　vimimstat")
+    call add(eggs, "內碼　vimimunicode")
     call add(eggs, "設置　vimimdefaults")
     return map(eggs,  '"VimIM 彩蛋：" . v:val . "　"')
 endfunction
@@ -885,6 +886,7 @@ endfunction
 function! s:vimim_easter_chicken(keyboard)
 " ----------------------------------------
     if empty(s:chinese_input_mode)
+    \|| s:vimim_static_input_style==2
         let msg = "easter eggs hidden in OneKey only"
     else
         return
@@ -1067,6 +1069,30 @@ function! CJK()
         endfor
     endif
     return ''
+endfunction
+
+" ----------------------------------
+function! s:vimim_egg_vimimunicode()
+" ----------------------------------
+    let msg = "Unicode 中文部首起始碼位表【康熙字典】"
+    let unicode  = "一丨丶丿乙亅二亠人儿入八冂冖冫几凵刀力勹匕匚匸十"
+    let unicode .= "卜卩厂厶又口囗土士夂夊夕大女子宀寸小尢尸屮山巛工"
+    let unicode .= "己巾干幺广廴廾弋弓彐彡彳心戈戶手支攴文斗斤方无日"
+    let unicode .= "曰月木欠止歹殳毋比毛氏气水火爪父爻爿片牙牛犬玄玉"
+    let unicode .= "瓜瓦甘生用田疋疒癶白皮皿目矛矢石示禸禾穴立竹米糸"
+    let unicode .= "缶网羊羽老而耒耳聿肉臣自至臼舌舛舟艮色艸虍虫血行"
+    let unicode .= "衣襾見角言谷豆豕豸貝赤走足身車辛辰辵邑酉釆里金長"
+    let unicode .= "門阜隶隹雨靑非面革韋韭音頁風飛食首香馬骨高髟鬥鬯"
+    let unicode .= "鬲鬼魚鳥鹵鹿麥麻黃黍黑黹黽鼎鼓鼠鼻齊齒龍龜龠"
+    let unicodes = split(unicode, '\zs')
+    let eggs = []
+    for char in unicodes
+        let ddddd = char2nr(char)
+        let xxxx = s:vimim_decimal2hex(ddddd)
+        let display = xxxx . " " . char
+        call add(eggs, display)
+    endfor
+    return eggs
 endfunction
 
 " ======================================= }}}
