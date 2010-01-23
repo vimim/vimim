@@ -1197,57 +1197,36 @@ function! s:vimim_without_datafile(keyboard)
     endif
     let numbers = []
     let gbk = {}
+    let a = char2nr('a')
+    let z = char2nr('z')
+    let az_list = range(a, z)
     " ---------------------------------------
     let start = 19968
     if  s:encoding ==# "chinese"
-        let start = 0xB0A1
-        let gbk['a'] = 0xB0A1
-        let gbk['b'] = 0xB0C5
-        let gbk['c'] = 0xB2C1
-        let gbk['d'] = 0xB4EE
-        let gbk['e'] = 0xB6EA
-        let gbk['f'] = 0xB7A2
-        let gbk['g'] = 0xB8C1
-        let gbk['h'] = 0xBAA1
-        let gbk['j'] = 0xBBF7
-        let gbk['k'] = 0xBFA6
-        let gbk['l'] = 0xC0AC
-        let gbk['m'] = 0xC2E8
-        let gbk['n'] = 0xC4C3
-        let gbk['o'] = 0xC5B6
-        let gbk['p'] = 0xC5BE
-        let gbk['q'] = 0xC6DA
-        let gbk['r'] = 0xC8BB
-        let gbk['s'] = 0xC8F6
-        let gbk['t'] = 0xCBFA
-        let gbk['w'] = 0xCDDA
-        let gbk['x'] = 0xCEF4
-        let gbk['y'] = 0xD1B9
-        let gbk['z'] = 0xD4D1
+        let start = 0xb0a1
+        let az  = " b0a1 b0c5 b2c1 b4ee b6ea b7a2 b8c1 baa1 bbf7 "
+        let az .= " bbf7 bfa6 c0ac c2e8 c4c3 c5b6 c5be c6da c8bb "
+        let az .= " c8f6 cbfa cdda cdda cdda cef4 d1b9 d4d1"
+        let gb_code_orders = split(az)
+        for xxxx in az_list 
+            let gbk[nr2char(xxxx)] = "0x" . get(gb_code_orders, xxxx-a)
+        endfor
     elseif  s:encoding ==# "taiwan"
         let start = 42048
     endif
-    " ---------------------------------------
-    " every abcdefghijklmnopqrstuvwxy shows different menu
-    " every char displays 16*16*3=768 glyph in omni menu
-    " the total number of glyphs is 16*16*3*26=19968
-    " ---------------------------------------
-    let label = char2nr(keyboard)-char2nr('a')
+    " ----------------------------------------------------------
+    " [purpose] to input Chinese without datafile nor internet
+    "  (1) every abcdefghijklmnopqrstuvwxy shows different menu
+    "  (2) every char displays 16*16*3=768 glyph in omni menu
+    "  (3) the total number of glyphs is 16*16*3*26=19968
+    " ----------------------------------------------------------
+    let label = char2nr(keyboard) - a
     let block = 16*16*3
     let start += label*block
-    let end = start + block
     if  s:encoding ==# "chinese" && has_key(gbk, keyboard)
         let start = gbk[keyboard]
-        let next_char = nr2char(char2nr(keyboard)+1)
-        if !has_key(gbk, next_char)
-            let next_char = nr2char(char2nr(keyboard)+2)
-        endif
-        if has_key(gbk, next_char)
-            let end = gbk[next_char] - 1
-        else
-            let end = start + block
-        endif
     endif
+    let end = start + block
     for i in range(start, end)
         call add(numbers, str2nr(i,10))
     endfor
