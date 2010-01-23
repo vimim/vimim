@@ -1107,61 +1107,49 @@ function! s:vimim_internal_code(keyboard)
     \|| strlen(keyboard) != 5
         return []
     endif
-    if keyboard =~# '^\d\{5}$'
-    \|| keyboard =~# '^u\x\{4}$'
-        let msg = "limit two ways of playing internal code"
-    else
-        return []
-    endif
     let numbers = []
-    let first_char = keyboard[0:0]
-    let last_char = keyboard[-1:-1]
-    " --------------------------------------------------
-    if last_char ==# '0'
-        let digit_without_zero = keyboard[:-2]
-        if first_char ==# 'u'
-            let msg = " do hex internal-code popup menu, eg, u8080"
-            let digit_without_zero = digit_without_zero[1:]
-            let hex_ranges = extend(range(10),['a','b','c','d','e','f'])
-            for i in hex_ranges
-                let digit = str2nr(digit_without_zero.i, 16)
-                call add(numbers, digit)
-            endfor
+    " -------------------------
+    if keyboard =~# '^u\x\{4}$'
+    " -------------------------
+        let msg = "do hex internal-code popup menu, eg, u808f"
+        let pumheight = 100
+        let xxxx = keyboard[1:]
+        let ddddd = str2nr(xxxx, 16)
+        if ddddd > s:max_ddddd
+            return []
         else
-            let msg = " do decimal internal-code popup menu, eg, 22220"
-            for i in range(10)
-                let digit = str2nr(digit_without_zero.i)
+            let numbers = []
+            for i in range(pumheight)
+                let digit = str2nr(ddddd+i)
                 call add(numbers, digit)
             endfor
         endif
-    else
-        if first_char ==# 'u'
-            let msg = " hex unicode insert, eg, u808f"
-            let xxxx = keyboard[1:]
-            let ddddd = str2nr(xxxx, 16)
-            if ddddd > s:max_ddddd
-                return []
-            else
-                let numbers = []
-                for i in range(16*16)
-                    let digit = str2nr(ddddd+i)
-                    call add(numbers, digit)
-                endfor
-            endif
+    " ----------------------------
+    elseif keyboard =~# '^\d\{5}$'
+    " ----------------------------
+        let last_char = keyboard[-1:-1]
+        if last_char ==# '0'
+            let msg = " do decimal internal-code popup menu, eg, 22220"
+            let dddd = keyboard[:-2]
+            for i in range(10)
+                let digit = str2nr(dddd.i)
+                call add(numbers, digit)
+            endfor
         else
-            let msg = " direct hex unicode insert, eg, 22221"
+            let msg = "do direct decimal internal-code insert, eg, 22221"
             let ddddd = str2nr(keyboard, 10)
             let numbers = [ddddd]
         endif
     endif
-    " ------------------------------------
     return s:vimim_internal_codes(numbers)
-    " ------------------------------------
 endfunction
 
 " ---------------------------------------
 function! s:vimim_internal_codes(numbers)
 " ---------------------------------------
+    if empty(a:numbers)
+        return []
+    endif
     let internal_codes = []
     for digit in a:numbers
         let hex = printf('%04x', digit)
