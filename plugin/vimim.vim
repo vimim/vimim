@@ -5281,10 +5281,8 @@ function! s:vimim_initialize_backdoor()
     " -----------------------------------------
     if filereadable(datafile_backdoor)
         let s:vimim_custom_skin=1
-        if empty(s:vimim_mycloud_url)
-            let s:datafile_primary = datafile_backdoor
-            call s:vimim_initialize_backdoor_setting()
-        endif
+        let s:datafile_primary = datafile_backdoor
+        call s:vimim_initialize_backdoor_setting()
     endif
     " -----------------------------------------
     if s:vimim_custom_skin > 0
