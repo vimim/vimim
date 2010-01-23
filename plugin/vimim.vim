@@ -1089,7 +1089,7 @@ function! s:vimim_egg_vimimunicode()
     for char in unicodes
         let ddddd = char2nr(char)
         let xxxx = s:vimim_decimal2hex(ddddd)
-        let display = xxxx . " " . char
+        let display = "U+" .  xxxx . " " . char
         call add(eggs, display)
     endfor
     return eggs
@@ -5844,7 +5844,7 @@ else
     endif
 
     " [mycloud] get chunmeng from mycloud local or www
-    " -----------------------------------------
+    " ------------------------------------------------
     if empty(s:vimim_cloud_plugin)
         let msg = "keep local mycloud code for the future."
     else
