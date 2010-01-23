@@ -1431,7 +1431,8 @@ function! s:vimim_onekey_action(onekey)
         let onekey = a:onekey
         if empty(a:onekey)
             let msg = "[unicode] OneKey to trigger Chinese with omni menu"
-            let char_before = getline(".")[col(".")-4 : col(".")-2]
+            let start = s:multibyte + 1
+            let char_before = getline(".")[col(".")-start : col(".")-2]
             let ddddd = char2nr(char_before)
             let onekey = ddddd . trigger
         endif
