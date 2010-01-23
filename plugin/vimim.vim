@@ -1144,9 +1144,12 @@ function! s:vimim_internal_code(keyboard)
                 let numbers = [dddd]
             endif
         else
-            let msg = " direct decimal unicode insert, eg, 22221"
             let ddddd = str2nr(keyboard, 10)
-            let numbers = [ddddd]
+            let numbers = []
+            for i in range(16*16)
+                let digit = str2nr(ddddd+i)
+                call add(numbers, digit)
+            endfor
         endif
     endif
     " ------------------------------------
@@ -1373,10 +1376,11 @@ function! s:vimim_onekey_action(onekey)
 " -------------------------------------
     let onekey = ''
     " -----------------------------------------------
-    " <Space> triple play in OneKey Mode:
-    "   (1) after English (valid keys) => trigger menu
+    " <Space> multiple play in OneKey Mode:
+    "   (1) after English (valid keys) => trigger keycode menu
     "   (2) after omni popup menu      => insert Chinese
     "   (3) after English punctuation  => Chinese punctuation
+    "   (4) after Chinese              => trigger unicode menu
     " -----------------------------------------------
     if pumvisible()
         if a:onekey == " " || s:vimim_static_input_style < 2
@@ -1391,11 +1395,11 @@ function! s:vimim_onekey_action(onekey)
         let onekey = ""
     endif
     " ---------------------------------------------------
-    let char_before = getline(".")[col(".")-2]
+    let byte_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     " ---------------------------------------------------
     if char_before_before !~# "[0-9a-z]"
-    \&& has_key(s:punctuations, char_before)
+    \&& has_key(s:punctuations, byte_before)
         let onekey = ""
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
@@ -1407,12 +1411,12 @@ function! s:vimim_onekey_action(onekey)
         endfor
         if empty(onekey)
             let msg = "transform punctuation from english to chinese"
-            let replacement = s:punctuations[char_before]
+            let replacement = s:punctuations[byte_before]
             if s:vimim_static_input_style==2
                 let msg = " play sexy quote in sexy mode "
-                if char_before ==# "'"
+                if byte_before ==# "'"
                     let replacement = <SID>vimim_get_single_quote()
-                elseif char_before ==# '"'
+                elseif byte_before ==# '"'
                     let replacement = <SID>vimim_get_double_quote()
                 endif
             endif
@@ -1420,18 +1424,27 @@ function! s:vimim_onekey_action(onekey)
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
-    " ---------------------------------------------------
-    if char_before !~# s:valid_key
-        return a:onekey
+    " -------------------------------------------------
+    let trigger = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+    " -------------------------------------------------
+    if byte_before !~# s:valid_key
+        let onekey = a:onekey
+        if empty(a:onekey)
+            let msg = "[unicode] OneKey to trigger Chinese with omni menu"
+            let char_before = getline(".")[col(".")-4 : col(".")-2]
+            let ddddd = char2nr(char_before)
+            let onekey = ddddd . trigger
+        endif
+        sil!exe 'sil!return "' . onekey . '"'
     endif
     " ---------------------------------------------------
-    if char_before ==# "'"
+    if byte_before ==# "'"
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
     if s:pattern_not_found < 1
     \&& s:seamless_positions != getpos(".")
-        let onekey = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        let onekey = trigger
     else
         let onekey = a:onekey
     endif
@@ -1547,8 +1560,8 @@ function! s:vimim_static_action(space)
     if pumvisible()
         let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
     else
-        let char_before = getline(".")[col(".")-2]
-        if char_before =~# s:valid_key
+        let byte_before = getline(".")[col(".")-2]
+        if byte_before =~# s:valid_key
             if s:pattern_not_found < 1
                 let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
             else
@@ -1858,12 +1871,12 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
     let value = a:english_punctuation
     if s:chinese_punctuation > 0
     \&& has_key(s:punctuations, value)
-        let char_before = getline(".")[col(".")-2]
+        let byte_before = getline(".")[col(".")-2]
         let filter = '\w'     |" english_punctuation_after_english
         if empty(s:vimim_english_punctuation)
             let filter = '\d' |" english_punctuation_after_digit
         endif
-        if char_before !~ filter
+        if byte_before !~ filter
             let value = s:punctuations[value]
         endif
     endif
@@ -2694,8 +2707,8 @@ function! g:vimim_one_key_correction()
     \&& s:vimim_static_input_style < 2
         call s:vimim_stop()
     else
-        let char_before = getline(".")[col(".")-2]
-        if char_before =~# s:valid_key
+        let byte_before = getline(".")[col(".")-2]
+        if byte_before =~# s:valid_key
             let s:one_key_correction = 1
             let key = '\<C-X>\<C-U>\<BS>'
         endif
@@ -2802,8 +2815,8 @@ function! g:vimim_ctrl_x_ctrl_u()
 " -------------------------------
     let key = ''
     call s:reset_popupmenu_matched_list()
-    let char_before = getline(".")[col(".")-2]
-    if char_before =~# s:valid_key
+    let byte_before = getline(".")[col(".")-2]
+    if byte_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
         if s:chinese_input_mode > 1
             call g:reset_after_auto_insert()
@@ -2940,15 +2953,15 @@ function! <SID>vimim_smart_enter()
 " --------------------------------
     let key = ''
     let enter = "\<CR>"
-    let char_before = getline(".")[col(".")-2]
+    let byte_before = getline(".")[col(".")-2]
     " -----------------------------------------------
     " <Enter> double play in Chinese Mode:
     "   (1) after English (valid keys)    => Seamless
     "   (2) after Chinese or double Enter => Enter
     " -----------------------------------------------
-    if char_before =~# "[*']"
+    if byte_before =~# "[*']"
         let s:smart_enter = 0
-    elseif char_before =~# s:valid_key
+    elseif byte_before =~# s:valid_key
         let s:smart_enter += 1
     endif
     " -----------------------------------------------
@@ -2959,11 +2972,11 @@ function! <SID>vimim_smart_enter()
     "   (4) after empty line              => <Enter> with invisible <Space>
     " -----------------------------------------------
     if empty(s:chinese_input_mode)
-        if has_key(s:punctuations, char_before)
+        if has_key(s:punctuations, byte_before)
             let s:smart_enter += 1
             let key = ' '
         endif
-        if char_before =~ '\s'
+        if byte_before =~ '\s'
             let key = enter
         endif
     endif
@@ -2982,7 +2995,7 @@ function! <SID>vimim_smart_enter()
     endif
     " -----------------------------------------------
     if empty(s:chinese_input_mode)
-        if empty(char_before)
+        if empty(byte_before)
             let key = "　" . enter
         endif
     endif
@@ -5589,7 +5602,7 @@ if a:start
     let start_column_save = start_column
     let start_row = current_positions[1]
     let current_line = getline(start_row)
-    let char_before = current_line[start_column-1]
+    let byte_before = current_line[start_column-1]
     let char_before_before = current_line[start_column-2]
 
     " get one char when input-memory is used
@@ -5605,7 +5618,7 @@ if a:start
     " support natural sentence input with space
     " -----------------------------------------
     if empty(s:chinese_input_mode)
-    \&& char_before ==# "."
+    \&& byte_before ==# "."
     \&& char_before_before =~# "[0-9a-z]"
         let match_start = match(current_line, '\w\+\s\+\p\+\.$')
         if match_start > -1
@@ -5631,15 +5644,15 @@ if a:start
     if get(s:im['pinyin'],0) > 0
         let nonsense_pattern = "[0-9.]"
     endif
-    while start_column > 0 && char_before =~# s:valid_key
+    while start_column > 0 && byte_before =~# s:valid_key
         let start_column -= 1
-        if char_before !~# nonsense_pattern
+        if byte_before !~# nonsense_pattern
             let last_seen_nonsense_column = start_column
         endif
-        if char_before =~# '\l' && all_digit > 0
+        if byte_before =~# '\l' && all_digit > 0
             let all_digit = 0
         endif
-        let char_before = current_line[start_column-1]
+        let byte_before = current_line[start_column-1]
     endwhile
 
     if all_digit < 1
@@ -5996,8 +6009,8 @@ else
     " ----------------------------------------
     if match_start > -1
         let results = s:vimim_exact_match(lines, match_start)
-""" todo: can this function be removed?
-"""     let results = s:vimim_ctrl_h_whole_match(lines, keyboard)
+""" todo:  can this function be removed?
+""" let results = s:vimim_ctrl_h_whole_match(lines, keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
