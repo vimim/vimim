@@ -2243,12 +2243,6 @@ function! s:vimim_pair_list(matched_list)
         return []
     endif
     " -----------------------------------
-    let first_pair = split(get(matched_list,0))
-    let first_gold = join(first_pair[1:], " ")
-    if  first_gold =~# '\w'
-        return matched_list
-    endif
-    " -----------------------------------
     let pair_matched_list = []
     let maximum_list = 288
     if len(matched_list) > maximum_list
@@ -2329,20 +2323,6 @@ function! s:vimim_popupmenu_list(matched_list)
     " ----------------------------------------
     let first_pair = split(get(matched_list,0))
     let first_stone = get(first_pair, 0)
-    let first_gold = join(first_pair[1:], " ")
-"todo
-    if  first_gold =~ '\w'
-        let keyboard = s:keyboard_leading_zero
-        let tail = strpart(keyboard, len(first_stone))
-        let complete_items = {}
-        let complete_items["menu"] = first_stone
-        let complete_items["word"] = first_gold . tail
-let abbr = "\t".first_gold
-let complete_items["abbr"] = abbr
-        let popupmenu_list = [complete_items]
-        return popupmenu_list
-    endif
-    " ----------------------------------------
     if s:vimim_smart_ctrl_n > 0
         let key = first_stone[:0]
         let s:inputs[key] = matched_list
@@ -2358,15 +2338,14 @@ let complete_items["abbr"] = abbr
         let matched_list = s:vimim_pageup_pagedown(matched_list)
     endif
     " ----------------------------------------
-    " [{'word': '马', 'menu': 'ma', 'abbr': ' _	马', 'dup': 1} ...]
-    let popupmenu_list = s:vimim_popupmenu_chinese(matched_list)
+    let popupmenu_list = s:vimim_build_popupmenu(matched_list)
     " ----------------------------------------
     return popupmenu_list
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_popupmenu_chinese(matched_list)
-" -----------------------------------------------
+" ---------------------------------------------
+function! s:vimim_build_popupmenu(matched_list)
+" ---------------------------------------------
     let matched_list = a:matched_list
     let menu = 0
     let label = 1
@@ -2845,20 +2824,7 @@ endfunction
 function! g:vimim_ctrl_x_ctrl_u()
 " -------------------------------
     let key = ''
-    let first_pair = split(get(s:popupmenu_matched_list,0))
-    let first_gold = join(first_pair[1:], " ")
-    if  empty(first_gold)
-        let msg = "nothing from cache; nothing needs to be done"
-    else
-        let msg = "support English candidate, in addition to Chinese"
-        if  first_gold =~# '\w'
-"todo
-            return <SID>vimim_set_seamless()
-        else
-            call s:reset_popupmenu_matched_list()
-        endif
-    endif
-    " ---------------------------
+    call s:reset_popupmenu_matched_list()
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
