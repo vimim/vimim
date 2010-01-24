@@ -1074,6 +1074,9 @@ endfunction
 " ----------------------------------
 function! s:vimim_egg_vimimunicode()
 " ----------------------------------
+    if s:encoding != "utf8"
+        return []
+    endif
     let msg = "Unicode 中文部首起始碼位表【康熙字典】"
     let unicode  = "一丨丶丿乙亅二亠人儿入八冂冖冫几凵刀力勹匕匚匸十"
     let unicode .= "卜卩厂厶又口囗土士夂夊夕大女子宀寸小尢尸屮山巛工"
@@ -1443,7 +1446,7 @@ function! s:vimim_onekey_action(onekey)
     \&& s:seamless_positions != getpos(".")
         let onekey = trigger
     else
-        let onekey = a:onekey
+        let onekey = ""
     endif
     " ---------------------------------------------------
     let s:smart_enter = 0
@@ -1512,8 +1515,8 @@ function! s:vimim_start_chinese_mode()
         let s:chinese_input_mode = 1
         " in static mode we must ensure , and . input Chinese , and .
         " todo: confirm that comma should not be an issue
-        " todo: fix dot case by case, as dot is used as a valid keycode
-        " todo: need to make sure that punctuation toggle <C-6> works
+        "     : fix dot case by case, as dot is used as a valid keycode
+        "     : need to make sure that punctuation toggle <C-6> works
         let s:vimim_punctuation_navigation = 0
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------------
@@ -2239,6 +2242,13 @@ function! s:vimim_pair_list(matched_list)
     if empty(matched_list)
         return []
     endif
+    " -----------------------------------
+    let first_pair = split(get(matched_list,0))
+    let first_gold = join(first_pair[1:], " ")
+    if  first_gold =~# '\w'
+        return matched_list
+    endif
+    " -----------------------------------
     let pair_matched_list = []
     let maximum_list = 288
     if len(matched_list) > maximum_list
@@ -2317,18 +2327,28 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     let s:popupmenu_matched_list = copy(matched_list)
     " ----------------------------------------
-    if empty(s:vimim_cloud_plugin)
-        let first_candidate = get(split(get(matched_list,0)),0)
-    else
-        let first_candidate = '_'
+    let first_pair = split(get(matched_list,0))
+    let first_stone = get(first_pair, 0)
+    let first_gold = join(first_pair[1:], " ")
+"todo
+    if  first_gold =~ '\w'
+        let keyboard = s:keyboard_leading_zero
+        let tail = strpart(keyboard, len(first_stone))
+        let complete_items = {}
+        let complete_items["menu"] = first_stone
+        let complete_items["word"] = first_gold . tail
+let abbr = "\t".first_gold
+let complete_items["abbr"] = abbr
+        let popupmenu_list = [complete_items]
+        return popupmenu_list
     endif
     " ----------------------------------------
     if s:vimim_smart_ctrl_n > 0
-        let key = first_candidate[:0]
+        let key = first_stone[:0]
         let s:inputs[key] = matched_list
     endif
     if s:vimim_smart_ctrl_p > 0
-        let s:inputs_all[first_candidate] = matched_list
+        let s:inputs_all[first_stone] = matched_list
     endif
     " ----------------------------------------
     if empty(s:vimim_cloud_plugin)
@@ -2338,6 +2358,16 @@ function! s:vimim_popupmenu_list(matched_list)
         let matched_list = s:vimim_pageup_pagedown(matched_list)
     endif
     " ----------------------------------------
+    " [{'word': '马', 'menu': 'ma', 'abbr': ' _	马', 'dup': 1} ...]
+    let popupmenu_list = s:vimim_popupmenu_chinese(matched_list)
+    " ----------------------------------------
+    return popupmenu_list
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_popupmenu_chinese(matched_list)
+" -----------------------------------------------
+    let matched_list = a:matched_list
     let menu = 0
     let label = 1
     let popupmenu_list = []
@@ -2389,8 +2419,7 @@ function! s:vimim_popupmenu_list(matched_list)
                     let label2 = "_"
                 endif
                 " -----------------------------------------
-                if s:pinyin_and_4corner > 0
-                \|| !empty(s:vimim_cloud_plugin)
+                if s:pinyin_and_4corner > 0 && empty(s:vimim_cloud_plugin)
                     let labeling = label2
                 else
                     let labeling .= label2
@@ -2401,25 +2430,18 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["abbr"] = abbr
         endif
         " -------------------------------------------------
-        let tail = ''
-        if keyboard =~? 'vim'
-        \|| !empty(s:vimim_cloud_plugin)
+        if empty(s:vimim_cloud_plugin)
             let tail = ''
-        elseif keyboard =~ '[.]'
-        \&& s:datafile_has_dot < 1
-        \&& empty(s:vimim_cloud_plugin)
-            let dot = match(keyboard, '[.]')
-            let tail = strpart(keyboard, dot+1)
-        else
-            let candidate = menu
-            if empty(s:menu_from_cloud_flag)
-            "   let candidate = first_candidate
+            if keyboard =~ '[.]'
+            \&& s:datafile_has_dot < 1
+                let dot = match(keyboard, '[.]')
+                let tail = strpart(keyboard, dot+1)
+            elseif keyboard !~? 'vim'
+                let tail = strpart(keyboard, len(menu))
             endif
-            let tail = strpart(keyboard, len(candidate))
-        endif
-        " -------------------------------------------------
-        if tail =~ '\w'
-            let chinese .=  tail
+            if tail =~ '\w'
+                let chinese .=  tail
+            endif
         endif
         " -------------------------------------------------
         let complete_items["word"] = chinese
@@ -2823,7 +2845,20 @@ endfunction
 function! g:vimim_ctrl_x_ctrl_u()
 " -------------------------------
     let key = ''
-    call s:reset_popupmenu_matched_list()
+    let first_pair = split(get(s:popupmenu_matched_list,0))
+    let first_gold = join(first_pair[1:], " ")
+    if  empty(first_gold)
+        let msg = "nothing from cache; nothing needs to be done"
+    else
+        let msg = "support English candidate, in addition to Chinese"
+        if  first_gold =~# '\w'
+"todo
+            return <SID>vimim_set_seamless()
+        else
+            call s:reset_popupmenu_matched_list()
+        endif
+    endif
+    " ---------------------------
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
