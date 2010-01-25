@@ -3097,9 +3097,9 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
     endif
     " ---------------------------------
     if empty(s:chinese_input_mode)
-    \|| s:chinese_input_mode=~ 'sexy'
         call s:vimim_stop()
     endif
+    " ---------------------------------
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
