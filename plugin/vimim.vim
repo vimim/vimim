@@ -1412,17 +1412,14 @@ function! s:vimim_onekey_action(onekey)
     if empty(s:chinese_input_mode)
     \&& !empty(byte_before)
     \&& byte_before !~# s:valid_key
-        let ddddd = 0
         if empty(a:onekey)
-            let msg = "[unicode] OneKey to trigger Chinese with omni menu"
-            let start = s:multibyte + 1
-            let char_before = getline(".")[col(".")-start : col(".")-2]
-            let ddddd = char2nr(char_before)
-        endif
-        if ddddd > 127
-            let xxxx = s:vimim_decimal2hex(ddddd)
-            let onekey = 'u' . xxxx . trigger
-            sil!exe 'sil!return "' . onekey . '"'
+            let xxxx = s:vimim_get_char_before_internal_code()
+            if empty(xxxx)
+                let msg = "char-before is not multibyte"
+            else
+                let onekey = xxxx . trigger
+                sil!exe 'sil!return "' . onekey . '"'
+            endif
         endif
     endif
     " ---------------------------------------------------
@@ -1445,6 +1442,25 @@ function! s:vimim_onekey_action(onekey)
     let s:smart_enter = 0
     let s:pattern_not_found = 0
     sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_get_char_before_internal_code()
+" -----------------------------------------------
+     let xxxx = 0
+     let byte_before = getline(".")[col(".")-2]
+     if empty(byte_before) || byte_before =~# s:valid_key
+         return 0
+     endif
+     let msg = "[unicode] OneKey to trigger Chinese with omni menu"
+     let start = s:multibyte + 1
+     let char_before = getline(".")[col(".")-start : col(".")-2]
+     let ddddd = char2nr(char_before)
+     if ddddd > 127
+         let xxxx = s:vimim_decimal2hex(ddddd)
+         let xxxx = 'u' . xxxx
+     endif
+     return xxxx
 endfunction
 
 " ------------------------------------
@@ -3000,9 +3016,14 @@ endfunction
 " ---------------------------------
 function! <SID>vimim_smart_ctrl_n()
 " ---------------------------------
-    let s:smart_ctrl_n += 1
-    let key = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-    sil!exe 'sil!return "' . key . '"'
+    let trigger = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+    let xxxx = s:vimim_get_char_before_internal_code()
+    if empty(xxxx)
+        let s:smart_ctrl_n += 1
+    else
+        let trigger = xxxx . trigger
+    endif
+    sil!exe 'sil!return "' . trigger . '"'
 endfunction
 
 " ----------------------------------------------------
@@ -5484,7 +5505,7 @@ function! s:vimim_i_map_off()
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
     call extend(unmap_list, ['<CR>', '<BS>', '<Space>'])
-    call extend(unmap_list, ['<Esc>', '<C-N>', '<C-P>', '<C-H>'])
+    call extend(unmap_list, ['<Esc>', '<C-N>', '<C-P>'])
     " -----------------------
     for _ in unmap_list
         sil!exe 'iunmap '. _
