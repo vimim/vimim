@@ -595,8 +595,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_purple")
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_tab_as_onekey")
-    call add(G, "g:vimim_smart_ctrl_p")
-    call add(G, "g:vimim_smart_ctrl_n")
     call add(G, "g:vimim_unicode_lookup")
     call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_wget_dll")
@@ -2320,14 +2318,13 @@ function! s:vimim_popupmenu_list(matched_list)
         return []
     endif
     let s:popupmenu_matched_list = copy(matched_list)
-    " ----------------------------------------
     let first_pair = split(get(matched_list,0))
     let first_stone = get(first_pair, 0)
-    if s:vimim_smart_ctrl_n > 0
+    " ----------------------------------------
+    if s:chinese_input_mode=~ 'sexy'
+        let msg = " smart <C-N> and <C-P> "
         let key = first_stone[:0]
         let s:inputs[key] = matched_list
-    endif
-    if s:vimim_smart_ctrl_p > 0
         let s:inputs_all[first_stone] = matched_list
     endif
     " ----------------------------------------
@@ -5260,8 +5257,6 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_wildcard_search=1
     let s:vimim_imode_universal=1
     let s:vimim_imode_pinyin=-1
-    let s:vimim_smart_ctrl_p=1
-    let s:vimim_smart_ctrl_n=1
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
     let s:vimim_reverse_pageup_pagedown=1
@@ -5504,16 +5499,12 @@ endfunction
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    if s:chinese_input_mode !~ 'dynamic'
-        if s:vimim_smart_ctrl_n > 0
-            inoremap <C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
-        endif
-        if s:vimim_smart_ctrl_p > 0
-            inoremap <C-P> <C-R>=<SID>vimim_smart_ctrl_p()<CR>
-        endif
+    if s:vimim_static_input_style == 2
+        inoremap <C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
+        inoremap <C-P> <C-R>=<SID>vimim_smart_ctrl_p()<CR>
     endif
     " ----------------------------------------------------------
-    if s:chinese_input_mode =~ 'static'
+    if s:vimim_static_input_style == 1
         inoremap  <Esc>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                         \<C-R>=g:vimim_one_key_correction()<CR>
     endif
