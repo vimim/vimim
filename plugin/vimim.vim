@@ -1784,19 +1784,22 @@ function! <SID>vimim_punctuation_on()
     " ----------------------------
     if s:chinese_punctuation > 0
         " NOTE: if we use s:valid_keys there's no need to check mycloud
-        if index(s:valid_keys, '\') < 0
-            inoremap <Bslash> 、
-        endif
-        if index(s:valid_keys, "'") < 0
+        if get(s:im['erbi'],0) > 0
+        \|| get(s:im['pinyin'],0) > 0
+            let msg = " apostrophe is over-loaded for cloud at will "
+        else
             inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
         endif
         if index(s:valid_keys, '"') < 0
             inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
         endif
+        if index(s:valid_keys, '\') < 0
+            inoremap <Bslash> 、
+        endif
     else
-        iunmap <Bslash>
         iunmap '
         iunmap "
+        iunmap <Bslash>
     endif
     " ----------------------------
     for _ in keys(s:punctuations)
