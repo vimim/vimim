@@ -1120,6 +1120,8 @@ function! s:vimim_internal_code(keyboard)
     \|| s:chinese_input_mode =~ 'static'
     \|| strlen(keyboard) != 5
         return []
+    else
+        let msg = " support <C-6> to trigger multibyte "
     endif
     let numbers = []
     " -------------------------
@@ -1129,7 +1131,7 @@ function! s:vimim_internal_code(keyboard)
         let pumheight = 16*16*2
         let xxxx = keyboard[1:]
         let ddddd = str2nr(xxxx, 16)
-        if ddddd > s:max_ddddd
+        if ddddd > 0xffff
             return []
         else
             let numbers = []
@@ -1413,15 +1415,18 @@ function! s:vimim_onekey_action(onekey)
     if empty(s:chinese_input_mode)
     \&& !empty(byte_before)
     \&& byte_before !~# s:valid_key
+        let ddddd = 0
         if empty(a:onekey)
             let msg = "[unicode] OneKey to trigger Chinese with omni menu"
             let start = s:multibyte + 1
             let char_before = getline(".")[col(".")-start : col(".")-2]
             let ddddd = char2nr(char_before)
-            let xxxx = s:vimim_decimal2hex(ddddd)
-            let onekey = "u" . xxxx . trigger
         endif
-        sil!exe 'sil!return "' . onekey . '"'
+        if ddddd > 127
+            let xxxx = s:vimim_decimal2hex(ddddd)
+            let onekey = 'u' . xxxx . trigger
+            sil!exe 'sil!return "' . onekey . '"'
+        endif
     endif
     " ---------------------------------------------------
     if byte_before ==# "'"
@@ -5363,9 +5368,9 @@ endfunction
 " ----------------------------
 function! s:vimim_start_omni()
 " ----------------------------
+    let s:unicode_menu_display_flag = 0
     let s:menu_from_cloud_flag = 0
     let s:insert_without_popup = 0
-    let s:unicode_menu_display_flag = 0
 endfunction
 
 " -----------------------------
@@ -5711,6 +5716,7 @@ else
     " ----------------------------------------------
     let lines = s:vimim_datafile_range(keyboard)
 
+let g:ggb=keyboard
     " use cached list when pageup/pagedown or 4corner is used
     " -------------------------------------------------------
     if s:vimim_punctuation_navigation > -1
