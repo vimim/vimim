@@ -1117,7 +1117,6 @@ function! s:vimim_internal_code(keyboard)
 " ---------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
-    \|| s:chinese_input_mode =~ 'static'
     \|| strlen(keyboard) != 5
         return []
     else
@@ -2700,7 +2699,8 @@ function! g:vimim_one_key_correction()
     let key = '\<Esc>'
     call s:reset_matched_list()
     " --------------------------------
-    if empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'sexy'
+    if empty(s:chinese_input_mode)
+    \|| s:chinese_input_mode=~ 'sexy'
         call s:vimim_stop()
     else
         let byte_before = getline(".")[col(".")-2]
@@ -3096,7 +3096,8 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
         sil!exe 'sil!return "' . key . '"'
     endif
     " ---------------------------------
-    if empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'sexy'
+    if empty(s:chinese_input_mode)
+    \|| s:chinese_input_mode=~ 'sexy'
         call s:vimim_stop()
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -4199,6 +4200,7 @@ function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
+    \|| s:chinese_input_mode =~ 'static'
     \|| len(keyboard) < 3
     \|| keyboard =~ '\d\d\d\d'
         return 0
@@ -4211,7 +4213,7 @@ function! s:vimim_magic_tail(keyboard)
         return 0
     endif
     " ----------------------------------------------------
-    " <dot> double play in OneKey Mode:
+    " <dot> double play in OneKey mode:
     "   (1) magic trailing dot => forced-non-cloud
     "   (2) as word partition  => match dot by dot
     " ----------------------------------------------------
