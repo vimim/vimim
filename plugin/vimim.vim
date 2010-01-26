@@ -1523,14 +1523,19 @@ function! s:vimim_start_chinese_mode()
         " ---------------------------------------------------
         inoremap <Space> <C-R>=<SID>vimim_space_dynamic()<CR>
                       \<C-R>=g:vimim_reset_after_insert()<CR>
-        " ---------------------------------------------------
+        " --------------------------------------------------- fuck
     elseif s:vimim_static_input_style == 1
         let s:chinese_input_mode = 'static'
-        " in static mode we must ensure , and . input Chinese , and .
-        " todo: confirm that comma should not be an issue
-        "     : fix dot case by case, as dot is used as a valid keycode
-        "     : need to make sure that punctuation toggle <C-6> works
-        let s:vimim_punctuation_navigation = 0
+        " ---------------------------------------------------------
+        " NOTES: to-be-removed
+        " NOTES: in static mode we must ensure , and . input Chinese , and .
+        " NOTES: ---------------------------------------------------------
+        " NOTES: todo: confirm that comma should not be an issue
+        " NOTES:     : fix dot case by case, as dot is used as a valid keycode
+        " NOTES:     : need to make sure that punctuation toggle <C-6> works
+        " NOTES: I commmented out the following line, please confirm
+        " let s:vimim_punctuation_navigation = 0
+        " ---------------------------------------------------------
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------
         inoremap  <Space> <C-R>=<SID>vimim_space_static()<CR>
@@ -1823,11 +1828,20 @@ endfunction
 
 " -------------------------------------------
 function! s:vimim_punctuation_navigation_on()
-" -------------------------------------------
-    let hjkl_list = split('.,=-;[]/','\zs')
+" ------------------------------------------- fuck
+    let punctuation = ".,=-;[]/"
     if s:vimim_punctuation_navigation < 1
-        let hjkl_list = split('=-;[]','\zs')
+        let punctuation = "=-;[]"
     endif
+    " ---------------------------------------------------------
+    " NOTES: to-be-removed
+    " NOTES: in static mode we must ensure , and . input Chinese , and .
+    " NOTES: please confirm the folloing 3 lines
+    " ---------------------------------------------------------
+    if s:chinese_input_mode =~ 'static'
+        let punctuation = "=-[]"
+    endif
+    let hjkl_list = split(punctuation,'\zs')
     if empty(s:chinese_input_mode)
         call add(hjkl_list, '?')
     endif
@@ -2482,6 +2496,7 @@ function! s:vimim_i_chinese_mode_autocmd_on()
         augroup chinese_mode_autocmd
             autocmd!
             autocmd BufEnter * let &statusline=s:vimim_statusline()
+            autocmd BufLeave * let &statusline=s:saved_statusline
         augroup END
     endif
 endfunction
@@ -5748,7 +5763,6 @@ else
     " ----------------------------------------------
     let lines = s:vimim_datafile_range(keyboard)
 
-let g:ggb=keyboard
     " use cached list when pageup/pagedown or 4corner is used
     " -------------------------------------------------------
     if s:vimim_punctuation_navigation > -1
