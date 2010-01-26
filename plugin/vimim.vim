@@ -2293,7 +2293,7 @@ function! s:vimim_menu_4corner_filter(matched_list)
     endif
     let keyboard = get(split(get(a:matched_list,0)),0)
     let keyboard = strpart(keyboard, match(keyboard,'\l'))
-    let keyboards = [keyboard, s:menu_4corner_filter]
+    let keyboards = [keyboard, s:menu_4corner_filter, "", ""]
     let results = s:vimim_diy_results(keyboards, a:matched_list)
     if empty(results)
         let results = a:matched_list
@@ -2501,7 +2501,7 @@ endfunction
 function! IMName()
 " ----------------
 " when user has defined 'stl', we should not overwrite their 'stl'.
-" instead, we provide a function for user-defined 'stl' 
+" instead, we provide a function for user-defined 'stl'
     if s:initialization_loaded
         if empty(s:chinese_input_mode)
             if pumvisible()
@@ -3587,7 +3587,7 @@ function! s:vimim_pinyin_filter(results, keyboards)
         let chinese = get(split(item), 1)
         let gold = len(chinese)/s:multibyte
         " filter out fake chinese phrase using pinyin theory
-        let keyboard2 = s:vimim_get_pinyin_from_quanpin(keyboard)
+        let keyboard2 = s:vimim_get_pinyin_from_pinyin(keyboard)
         if match(keyboard2, pattern) > -1
             call add(new_results, item)
         endif
@@ -3609,17 +3609,18 @@ function! s:vimim_length_filter(results, length)
     return results
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_get_pinyin_from_quanpin(keyboard)
-" -------------------------------------------------
-    let keyboard = a:keyboard
-    if s:shuangpin_flag > 0
-        return keyboard
+" ------------------------------------------------
+function! s:vimim_get_pinyin_from_pinyin(keyboard)
+" ------------------------------------------------
+    if s:shuangpin_flag > 0 || s:im['pinyin'][0] < 1
+        return a:keyboard
+    else
+        let msg = "pinyin breakdown: pinyin => pin'yin "
     endif
-    let keyboard2 = s:vimim_quanpin_transform(keyboard)
+    let keyboard2 = s:vimim_quanpin_transform(a:keyboard)
     if s:vimimdebug > 0
-        call s:debugs('quanpin_in', keyboard)
-        call s:debugs('quanpin_out', keyboard2)
+        call s:debugs('pinyin_in', a:keyboard)
+        call s:debugs('pinyin_out', keyboard2)
     endif
     return keyboard2
 endfunction
@@ -4680,7 +4681,7 @@ function! s:vimim_diy_lines_to_hash(fuzzy_lines)
     endif
     let chinese_to_keyboard_hash = {}
     for line in a:fuzzy_lines
-        let words = split(line)  |" shishi 事實 詩史
+        let words = split(line)  |" shishi 事实 诗史
         let menu = get(words,0)  |" shishi
         for word in words
             if word != menu
@@ -4691,91 +4692,46 @@ function! s:vimim_diy_lines_to_hash(fuzzy_lines)
     return chinese_to_keyboard_hash
 endfunction
 
-" ---------------------------------------------------------
-function! s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
-" ---------------------------------------------------------
-    if empty(a:h_0)  |" {'馬力':'mali','名流':'mingliu'}
-    \|| empty(a:h_1) |" {'馬':'7712'}
-        return []    |" {'力':'4002'}
+" -------------------------------------------------
+function! s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
+" -------------------------------------------------
+    if empty(a:h_ac) || (empty(a:h_d1) && empty(a:h_d2))
+        return []
     endif
     let values = []
-    for key in keys(a:h_0)
+    for key in keys(a:h_ac)
         let char_first = key
         let char_last = key
         if len(key) > 1
             let char_first = strpart(key, 0, s:multibyte)
             let char_last = strpart(key, len(key)-s:multibyte)
         endif
-        " --------------------------------------------
-        if s:menu_4corner_filter > 0
-            let char_last = char_first
-        endif
-        " --------------------------------------------
-        if empty(a:h_2)
-        \&& len(a:keyboards) == 2
-        \&& has_key(a:h_1, char_last)               |" mali4002
-            let menu_vary = a:h_0[key]              |" mali
-            let menu_fix  = a:h_1[char_last]        |" 4002
-            let menu = menu_fix.'　'.menu_vary      |" 4002 mali
-            call add(values, menu." ".key)
-        " --------------------------------------------
-        elseif empty(a:h_2)
-        \&& len(a:keyboards) == 3
-        \&& has_key(a:h_1, char_first)              |" ma7712li
-            let menu_vary = a:h_0[key]              |" mali
-            let menu_fix  = a:h_1[char_first]       |" 7712
-            let menu = menu_fix.'　'.menu_vary      |" 7712 mali
-            call add(values, menu." ".key)
-        " --------------------------------------------
-        elseif has_key(a:h_1, char_first)
-        \&& len(a:h_2) > 0
-        \&& has_key(a:h_2, char_last)
-            let menu_vary = a:h_0[key]              |" ml7740
-            let menu_fix1 = a:h_1[char_first]       |" 7712
-            let menu_fix2 = a:h_2[char_last]        |" 4002
-            let menu_fix = menu_fix1.'　'.menu_fix2 |" 7712 4002
-            let menu = menu_fix.'　'.menu_vary      |" 7712 4002 mali
+       if empty(a:h_d2)
+       \&& has_key(a:h_d1, char_first)
+        " -----------------------------------------|" ma7132li
+           let menu_vary = a:h_ac[key]             |" mali
+           let menu_fix  = a:h_d1[char_first]      |" 7132
+           let menu = menu_fix.'　'.menu_vary      |" 7132 mali
+           call add(values, menu." ".key)
+       elseif empty(a:h_d1)
+       \&& has_key(a:h_d2, char_last)
+        " -----------------------------------------|" mali4002
+           let menu_vary = a:h_ac[key]             |" mali
+           let menu_fix  = a:h_d2[char_last]       |" 4002
+           let menu = menu_fix.'　'.menu_vary      |" 4002 mali
+           call add(values, menu." ".key)
+        elseif has_key(a:h_d1, char_first)
+        \&& has_key(a:h_d2, char_last)
+        " ------------------------------------------|" ma7li4
+            let menu_vary = a:h_ac[key]             |" mali
+            let menu_fix1 = a:h_d1[char_first]      |" 7132
+            let menu_fix2 = a:h_d2[char_last]       |" 4002
+            let menu_fix = menu_fix1.'　'.menu_fix2 |" 7132 4002
+            let menu = menu_fix.'　'.menu_vary      |" 7132 4002 mali
             call add(values, menu." ".key)
         endif
     endfor
     return sort(values)
-endfunction
-
-" --------------------------------------------
-function! s:vimim_quick_fuzzy_search(keyboard)
-" --------------------------------------------
-    let keyboard = a:keyboard
-    let results = s:vimim_datafile_range(keyboard)
-    if empty(keyboard) || empty(results)
-        return []
-    endif
-    let pattern = '^' .  keyboard
-    let has_digit = match(keyboard, '^\d\+')
-    " ------------------------------------------------
-    if has_digit < 0
-        if s:vimim_datafile_has_apostrophe > 0
-            let pattern = '^' . keyboard . '\> '
-            let whole_match = match(results, pattern)
-            if  whole_match > 0
-                let results = results[whole_match : whole_match]
-                if len(results) > 0
-                    return s:vimim_pair_list(results)
-                endif
-            endif
-        endif
-        " --------------------------------------------
-        if s:vimim_datafile_has_english > 0
-            call filter(results, 'v:val !~ " #$"')
-        endif
-        let keyboards = split(keyboard, "'")
-        let todo = " need to consider all free-style combination"
-        let results = s:vimim_length_filter(results, len(keyboards))
-        let results = s:vimim_pinyin_filter(results, keyboards)
-    else
-        let results = filter(results, 'v:val =~ pattern')
-    endif
-    " -----------------------------------------------------------
-    return s:vimim_i18n_read_list(results)
 endfunction
 
 " ------------------------------------------------
@@ -4828,63 +4784,24 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     call setpos(".", new_positions)
 endfunction
 
-" --------------------------------------
-function! s:vimim_diy_keyboard(keyboard)
-" --------------------------------------
-    let keyboard = a:keyboard
-    if s:chinese_input_mode =~ 'dynamic'
-    \|| empty(s:pinyin_and_4corner)
-    \|| len(keyboard) < 2
-    \|| keyboard !~# s:valid_key
-    \|| keyboard =~# '^\d'
-        return []
-    endif
-    " ---------------------------------------
-    " free style pinyin+4corner for zi and ci
-    " let zi = "ma7712"
-    " let ci = "ma7712li4002 ma7712li"
-    " --------------------------------------------------------------
-    let alpha_keyboards = split(keyboard, '\d\+') |" => ['ma', 'li']
-    let digit_keyboards = split(keyboard, '\D\+') |" => ['77', '40']
-    " --------------------------------------------------------------
-    let alpha_string = join(alpha_keyboards, "'")
-    let digit_string = join(digit_keyboards, "'")
-    let keyboards = [alpha_string, digit_string]
-    " --------------------------------------------------------------
-    if len(keyboards) < 2
-        let keyboards = []
-    endif
-    " --------------------------------------------------------------
-    return keyboards
-endfunction
-
 " ---------------------------------------------
 function! s:vimim_diy_keyboard2number(keyboard)
 " ---------------------------------------------
-    let keyboard = a:keyboard
-    if empty(s:vimimdebug)
-    \|| s:chinese_input_mode =~ 'dynamic'
+    if s:vimimdebug < 9
+    \|| empty(s:pinyin_and_4corner)
     \|| s:shuangpin_flag > 0
-    \|| len(a:keyboard) < 5
-    \|| len(a:keyboard) > 6
+        return []
+    endif
+    let keyboard = a:keyboard
+    " -----------------------------------------
+    if keyboard =~ '\d' || keyboard !~ '\l'
         return []
     endif
     " -----------------------------------------
-    if a:keyboard =~ '\d' || a:keyboard !~ '\l'
+    if len(keyboard) < 5 || len(keyboard) > 6
         return []
     endif
     " -----------------------------------------
-    let alphabet_length = 1
-    if len(keyboard) == 5
-        " zi => "mjjas  => m7712  => ['m', 7712]
-    elseif len(keyboard) == 6
-        " ci => "mljjfo => ml7140 => ["m'l", "71'40"]
-        let alphabet_length = 2
-    else
-        return []
-    endif
-    let tail = ''
-    " ------------------------------------
     let diy_keyboard_asdfghjklo = {}
     let diy_keyboard_asdfghjklo['a'] = 1
     let diy_keyboard_asdfghjklo['s'] = 2
@@ -4897,26 +4814,31 @@ function! s:vimim_diy_keyboard2number(keyboard)
     let diy_keyboard_asdfghjklo['l'] = 9
     let diy_keyboard_asdfghjklo['o'] = 0
     " -----------------------------------------
+    let digits = []
+    let alphabet_length = len(keyboard) - 4
     let four_corner = strpart(keyboard, alphabet_length)
     for char in split(four_corner, '\zs')
         if has_key(diy_keyboard_asdfghjklo, char)
             let digit = diy_keyboard_asdfghjklo[char]
-            let tail .= digit
+            call add(digits, digit)
         else
             return []
         endif
     endfor
-    if len(tail) != 4
+    if len(digits) < 4
         return []
     endif
     " -----------------------------------------
-    let keyboards = []
-    if alphabet_length == 1
-        call add(keyboards, keyboard[0:0])
-        call add(keyboards, tail)
-    elseif alphabet_length == 2
-        call add(keyboards, keyboard[0:0]."'".keyboard[1:1])
-        call add(keyboards, strpart(tail,0,2)."'".strpart(tail,2,2))
+    let keyboards = ["", "", "", ""]
+    let keyboards[0] = keyboard[0:0]
+    if len(keyboard) == 5
+        " zi: mjjas => m7712 => ['m', 7712]
+        let keyboards[1] = join(digits,"")
+    elseif len(keyboard) == 6
+        " ci: mljjfo => ml7140 => ["m'l", 71'40]
+        let keyboards[1] = join(digits[0:1],"")
+        let keyboards[2] = keyboard[1:1]
+        let keyboards[3] = join(digits[2:3],"")
     endif
     " -----------------------------------------
     return keyboards
@@ -4926,6 +4848,7 @@ endfunction
 function! s:vimim_pinyin_and_4corner(keyboard)
 " --------------------------------------------
     if empty(s:pinyin_and_4corner)
+    \|| s:chinese_input_mode =~ 'dynamic'
         return []
     endif
     let keyboards = s:vimim_diy_keyboard2number(a:keyboard)
@@ -4935,39 +4858,112 @@ function! s:vimim_pinyin_and_4corner(keyboard)
     return s:vimim_diy_results(keyboards, [])
 endfunction
 
+" --------------------------------------
+function! s:vimim_diy_keyboard(keyboard)
+" --------------------------------------
+    let keyboard = a:keyboard
+    if empty(s:pinyin_and_4corner)
+    \|| len(keyboard) < 2
+    \|| keyboard =~# '^\d'
+    \|| keyboard !~# '\d'
+    \|| keyboard !~# '\l'
+        return []
+    endif
+    " ---------------------------------------
+    " free style pinyin+4corner for zi and ci
+    " let zi = "ma7712" li4002
+    " let ci = "ma7712li4002 ma7712li mali4002"
+    " --------------------------------------------------------------
+    let alpha_keyboards = ["", ""]
+    let digit_keyboards = ["", ""]
+    let alpha_keyboards = split(keyboard, '\d\+') |" => ['ma', 'li']
+    let digit_keyboards = split(keyboard, '\D\+') |" => ['77', '40']
+    " --------------------------------------------------------------
+    if len(alpha_keyboards) < 2
+        let alpha_string = get(alpha_keyboards,0)
+        let alpha_string = s:vimim_get_pinyin_from_pinyin(alpha_string)
+        let pin_yin = split(alpha_string,"'")
+        if len(pin_yin) > 1
+            let alpha_keyboards = copy(pin_yin)
+            call insert(digit_keyboards, "")
+        endif
+    endif
+    " --------------------------------------------------------------
+    let keyboards = ["", "", "", ""]
+    let keyboards[0] = get(alpha_keyboards,0)
+    let keyboards[1] = get(digit_keyboards,0)
+    let keyboards[2] = get(alpha_keyboards,1)
+    let keyboards[3] = get(digit_keyboards,1)
+    " --------------------------------------------------------------
+    return keyboards
+endfunction
+
 " --------------------------------------------------
 function! s:vimim_diy_results(keyboards, cache_list)
 " --------------------------------------------------
     let keyboards = a:keyboards
-    if empty(s:pinyin_and_4corner)
-    \|| s:chinese_input_mode =~ 'dynamic'
-    \|| len(keyboards) < 2
-    \|| len(keyboards) > 3
+    if len(keyboards) != 4
         return []
     endif
-    " --------------------------------------------------------
-    let a = get(keyboards, 0)  |" ["m'l", "77'40"]
-    let digits = split(get(keyboards,1), "'")
-    let b = get(digits, 0)
-    let c = get(digits, 1)
-    if empty(c)
-        call add(keyboards, "")
+    " ----------------------------------------------
+    let a = get(keyboards, 0)  |" ma
+    let b = get(keyboards, 1)  |" 7
+    let c = get(keyboards, 2)  |" li
+    let d = get(keyboards, 3)  |" 4
+    if !empty(c)
+        let a = a . "'" . c
     endif
-    " --------------------------------------------------------
+    " ----------------------------------------------
     let fuzzy_lines = a:cache_list
     if empty(fuzzy_lines)
         let fuzzy_lines = s:vimim_quick_fuzzy_search(a)
     endif
-    let h_0 = s:vimim_diy_lines_to_hash(fuzzy_lines)
+    let h_ac = s:vimim_diy_lines_to_hash(fuzzy_lines)
     " ----------------------------------
     let fuzzy_lines = s:vimim_quick_fuzzy_search(b)
-    let h_1 = s:vimim_diy_lines_to_hash(fuzzy_lines)
+    let h_d1 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     " ----------------------------------
-    let fuzzy_lines = s:vimim_quick_fuzzy_search(c)
-    let h_2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
+    let fuzzy_lines = s:vimim_quick_fuzzy_search(d)
+    let h_d2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     " ----------------------------------
-    let results = s:vimim_diy_double_menu(h_0, h_1, h_2, keyboards)
+    let results = s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
     return results
+endfunction
+
+" --------------------------------------------
+function! s:vimim_quick_fuzzy_search(keyboard)
+" --------------------------------------------
+    let keyboard = a:keyboard
+    let results = s:vimim_datafile_range(keyboard)
+    if empty(keyboard) || empty(results)
+        return []
+    endif
+    let pattern = '^' .  keyboard
+    let has_digit = match(keyboard, '^\d\+')
+    " ------------------------------------------------
+    if has_digit < 0
+        if s:vimim_datafile_has_apostrophe > 0
+            let pattern = '^' . keyboard . '\> '
+            let whole_match = match(results, pattern)
+            if  whole_match > 0
+                let results = results[whole_match : whole_match]
+                if len(results) > 0
+                    return s:vimim_pair_list(results)
+                endif
+            endif
+        endif
+        " --------------------------------------------
+        if s:vimim_datafile_has_english > 0
+            call filter(results, 'v:val !~ " #$"')
+        endif
+        let keyboards = split(keyboard, "'")
+        let results = s:vimim_length_filter(results, len(keyboards))
+        let results = s:vimim_pinyin_filter(results, keyboards)
+    else
+        let results = filter(results, 'v:val =~ pattern')
+    endif
+    " -----------------------------------------------------------
+    return s:vimim_i18n_read_list(results)
 endfunction
 
 " ======================================= }}}
@@ -5637,7 +5633,7 @@ if a:start
         if char_1st ==# "'"
             if s:vimim_imode_universal > 0
             \&& char_2nd =~# "[0-9ds']"
-                let msg = "free staring apostrophe as much as possible"
+                let msg = "sharing apostrophe as much as possible"
             else
                 let start_column += 1
             endif
@@ -5848,6 +5844,13 @@ let g:ggb=keyboard
     if s:xingma_sleep_with_pinyin > 0
         call s:vimim_toggle_wubi_pinyin()
     endif
+
+    " [pinyin] breakdown quanpin: pinyin => pin'yin
+    " ---------------------------------------------
+    let keyboard2 = s:vimim_get_pinyin_from_pinyin(keyboard)
+    " xiangjiang => 'xiang''jiang'
+    " laystbz => 'la''y''s''t''b''z'
+    let todo = "play with cloud: trigger cloud by zi"
 
     " [shuangpin] support 5 major shuangpin with various rules
     " --------------------------------------------------------
