@@ -279,7 +279,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['vim4'] = ['生气','生氣']
     let s:chinese['vim5'] = ['中文输入法','中文輸入法']
     let s:chinese['cloud'] = ['云输入','雲輸入']
-    let s:chinese['mycloud'] = ['自己的云','自己的雲']
+    let s:chinese['mycloud'] = ['私云','私雲']
     let s:chinese['wubi'] = ['五笔','五筆']
     let s:chinese['4corner'] = ['四角号码','四角號碼']
     let s:chinese['12345'] = ['五笔划','五筆劃']
@@ -2479,7 +2479,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_i_chinese_mode_autocmd_on()
 " -------------------------------------------
-    if has("autocmd")
+    if has("autocmd") && empty(&statusline)
         augroup chinese_mode_autocmd
             autocmd!
             autocmd BufEnter * let &statusline=s:vimim_statusline()
@@ -2494,6 +2494,26 @@ function! s:vimim_i_cursor_color(switch)
         highlight Cursor guifg=bg guibg=fg
     else
 	highlight Cursor guibg=Green
+    endif
+endfunction
+
+" ----------------
+function! IMName()
+" ----------------
+" when user has defined 'stl', we should not overwrite their 'stl'.
+" instead, we provide a function for user-defined 'stl' 
+    if s:initialization_loaded
+        if empty(s:chinese_input_mode)
+            if pumvisible()
+                return s:vimim_statusline()
+            else
+                return ""
+            endif
+        else
+            return s:vimim_statusline()
+        endif
+    else
+        return ""
     endif
 endfunction
 
@@ -2545,6 +2565,10 @@ function! s:vimim_statusline()
         endif
     endif
   " ------------------------------------
+    if !empty(s:vimim_cloud_plugin)
+        let im = get(s:im['mycloud'],1) ."：". get(s:im['mycloud'],0)
+    endif
+  " ------------------------------------
     if empty(im)
         if s:vimim_cloud_sogou > 0
             if s:vimim_cloud_sogou == 1
@@ -2556,10 +2580,6 @@ function! s:vimim_statusline()
             let im = s:vimim_get_chinese('internal')
             let im .= s:vimim_get_chinese('input')
         endif
-    endif
-  " ------------------------------------
-    if !empty(s:vimim_cloud_plugin)
-        let im = get(s:im['mycloud'],1) ."：". get(s:im['mycloud'],0)
     endif
   " ------------------------------------
     let im  = bracket_l . im . bracket_r
@@ -6040,10 +6060,10 @@ function! s:vimim_chinese_mode_mapping_on()
     " ----------------------------------------------------------------------
     if s:vimim_static_input_style < 2
            imap <C-Bslash> <Plug>VimimChinesemode
-        noremap <C-Bslash> :call <SID>Chinesemode()<CR>
+        noremap <silent> <C-Bslash> :call <SID>Chinesemode()<CR>
     elseif s:vimim_static_input_style==2
            imap <C-Bslash> <Plug>VimimSexymode
-        noremap <C-Bslash> :call <SID>Sexymode()<CR>
+        noremap <silent> <C-Bslash> :call <SID>Sexymode()<CR>
     endif
 endfunction
 
