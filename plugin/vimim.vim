@@ -1491,15 +1491,14 @@ call add(s:vimims, VimIM)
 function! <SID>Chinesemode()
 " --------------------------
     let s:vimim_chinese_mode_flag += 1
+    let space = ""
     if s:vimim_chinese_mode_flag > 2
         call s:vimim_stop_chinese_mode()
+        let space = "\<C-O>:redraw\<CR>"
     endif
-    let space = ""
     if empty(s:vimim_chinese_mode_flag%2)
         call s:vimim_start_chinese_mode()
-        if s:vimim_static_input_style < 1
-            let space = "\<C-O>:redraw\<CR>"
-        else
+        if s:vimim_static_input_style > 0
             if pumvisible()
                 let msg = "<C-\> does nothing over omni menu"
             else
