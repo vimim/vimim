@@ -1523,7 +1523,7 @@ function! s:vimim_start_chinese_mode()
         " ---------------------------------------------------
         inoremap <Space> <C-R>=<SID>vimim_space_dynamic()<CR>
                       \<C-R>=g:vimim_reset_after_insert()<CR>
-        " --------------------------------------------------- fuck
+        " --------------------------------------------------- 
     elseif s:vimim_static_input_style == 1
         let s:chinese_input_mode = 'static'
         " ---------------------------------------------------------
@@ -1828,7 +1828,7 @@ endfunction
 
 " -------------------------------------------
 function! s:vimim_punctuation_navigation_on()
-" ------------------------------------------- fuck
+" -------------------------------------------
     let punctuation = ".,=-;[]/"
     if s:vimim_punctuation_navigation < 1
         let punctuation = "=-;[]"
