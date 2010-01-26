@@ -4837,18 +4837,26 @@ endfunction
 " --------------------------------------------
 function! s:vimim_fuzzy_match(lines, keyboard)
 " --------------------------------------------
-    if empty(a:keyboard) || empty(a:lines)
+    let keyboard = a:keyboard
+    if empty(keyboard) 
+    \|| empty(a:lines)
+    \|| s:chinese_input_mode =~ 'dynamic'
+    \|| s:vimim_fuzzy_search < 1
         return []
     endif
-    let pattern = s:vimim_free_fuzzy_pattern(a:keyboard)
-    let results = filter(a:lines, 'v:val =~ pattern')
     if s:vimim_datafile_has_english > 0
-        call filter(results, 'v:val !~ " #$"')
+        let results = filter(a:lines, 'v:val !~ " #$"')
     endif
-    if s:chinese_input_mode !~ 'dynamic'
-        let todo = " need to consider all fuzzy match case "
-        let results = s:vimim_length_filter(results, len(a:keyboard))
-        let results = s:vimim_pinyin_filter(results, [a:keyboard])
+    let keyboards = split(keyboard, "'")
+    if len(keyboards) < 2
+        let pattern = s:vimim_free_fuzzy_pattern(keyboard)
+        let results = filter(a:lines, 'v:val =~ pattern')
+        let results = s:vimim_length_filter(results, len(keyboard))
+        let results = s:vimim_pinyin_filter(results, [keyboard])
+    else
+        let msg = "keyboard has apostrophe: ma'li from mali4"
+        let results = s:vimim_length_filter(results, len(keyboards))
+        let results = s:vimim_pinyin_filter(results, keyboards)
     endif
     return results
 endfunction
@@ -5238,36 +5246,31 @@ endfunction
 function! s:vimim_quick_fuzzy_search(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    let results = s:vimim_datafile_range(keyboard)
-    if empty(keyboard) || empty(results)
+    let lines = s:vimim_datafile_range(keyboard)
+    if empty(keyboard) || empty(lines)
         return []
     endif
     let pattern = '^' .  keyboard
     let has_digit = match(keyboard, '^\d\+')
-    " ------------------------------------------------
     if has_digit < 0
+        " ------------------------------------
         if s:vimim_datafile_has_apostrophe > 0
             let pattern = '^' . keyboard . '\> '
-            let whole_match = match(results, pattern)
+            let whole_match = match(lines, pattern)
             if  whole_match > 0
-                let results = results[whole_match : whole_match]
-                if len(results) > 0
-                    return s:vimim_pair_list(results)
+                let lines = lines[whole_match : whole_match]
+                if len(lines) > 0
+                    return s:vimim_pair_list(lines)
                 endif
             endif
         endif
-        " --------------------------------------------
-        if s:vimim_datafile_has_english > 0
-            call filter(results, 'v:val !~ " #$"')
-        endif
-        let keyboards = split(keyboard, "'")
-        let results = s:vimim_length_filter(results, len(keyboards))
-        let results = s:vimim_pinyin_filter(results, keyboards)
+        " ------------------------------------
+        let lines = s:vimim_fuzzy_match(lines, keyboard)
     else
-        let results = filter(results, 'v:val =~ pattern')
+        let lines = filter(lines, 'v:val =~ pattern')
     endif
     " -----------------------------------------------------------
-    return s:vimim_i18n_read_list(results)
+    return s:vimim_i18n_read_list(lines)
 endfunction
 
 " ======================================= }}}
@@ -6010,7 +6013,7 @@ else
 
     " [fuzzy search] implicit wildcard search
     " ---------------------------------------
-    if match_start < 0 && s:vimim_fuzzy_search > 0
+    if match_start < 0
         let results = s:vimim_fuzzy_match(lines, keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
