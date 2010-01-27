@@ -279,7 +279,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['vim4'] = ['生气','生氣']
     let s:chinese['vim5'] = ['中文输入法','中文輸入法']
     let s:chinese['cloud'] = ['云输入','雲輸入']
-    let s:chinese['mycloud'] = ['私云','私雲']
+    let s:chinese['mycloud'] = ['自己的云','自己的雲']
     let s:chinese['wubi'] = ['五笔','五筆']
     let s:chinese['4corner'] = ['四角号码','四角號碼']
     let s:chinese['12345'] = ['五笔划','五筆劃']
@@ -832,7 +832,9 @@ function! s:vimim_egg_vimim()
     let sogou = s:vimim_get_chinese('sogou')
     let option = "cloud\t " . sogou ."："
     let CLOUD = "start_to_use_cloud_after_" .  cloud . "_characters"
-    if cloud < 0
+    if cloud == -777
+        let CLOUD = s:vimim_get_chinese('mycloud')
+    elseif cloud < 0
         let CLOUD = s:vimim_get_chinese('cloud_no')
     elseif cloud == 888
         let CLOUD = s:vimim_get_chinese('cloud_atwill')
@@ -1777,7 +1779,6 @@ function! <SID>vimim_punctuation_on()
     endif
     " ----------------------------
     if s:chinese_punctuation > 0
-        " NOTE: if we use s:valid_keys there's no need to check mycloud
         if get(s:im['erbi'],0) > 0
         \|| get(s:im['pinyin'],0) > 0
             let msg = " apostrophe is over-loaded for cloud at will "
@@ -2572,7 +2573,7 @@ function! s:vimim_statusline()
     endif
   " ------------------------------------
     if !empty(s:vimim_cloud_plugin)
-        let im = get(s:im['mycloud'],1) ."：". get(s:im['mycloud'],0)
+        let im = get(s:im['mycloud'],0)
     endif
   " ------------------------------------
     if empty(im)
@@ -4578,6 +4579,9 @@ function! s:vimim_initialize_mycloud_plugin()
     " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
     " --------------------------------------------------------------
     let cloud = s:vimim_check_mycloud_plugin()
+    " this variable should not be used after initialization
+    unlet s:vimim_mycloud_url
+
     if empty(cloud)
         let s:vimim_cloud_plugin = 0
         return
@@ -4590,7 +4594,7 @@ function! s:vimim_initialize_mycloud_plugin()
         let s:vimim_cloud_plugin = 0
     else
         let s:vimim_cloud_plugin = cloud
-        let s:vimim_cloud_sogou = -1
+        let s:vimim_cloud_sogou = -777
         let s:shuangpin_flag = 0
         let s:im['mycloud'][0] = loaded
         let s:im['mycloud'][2] = keycode
