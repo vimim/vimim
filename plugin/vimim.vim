@@ -2255,9 +2255,6 @@ call add(s:vimims, VimIM)
 
 " ---------------------------------------
 function! s:vimim_pair_list(matched_list)
-" --------------------------------------- 
-"todo 
-" let g:g1= copy(a:matched_list) ['mali 馬力 马里 马力 玛丽 麻利']
 " ---------------------------------------
     let s:matched_list = copy(a:matched_list)
     let matched_list = a:matched_list
@@ -2285,9 +2282,7 @@ function! s:vimim_pair_list(matched_list)
             call add(pair_matched_list, menu .' '. chinese)
         endfor
     endfor
-"todo 
-" let g:g2= pair_matched_list
-" g:g2=['mali 馬力', 'mali 马里', 'mali 马力', 'mali 玛丽', 'mali 麻利']
+"todo
     return pair_matched_list
 endfunction
 
@@ -5208,7 +5203,9 @@ function! s:vimim_diy_keyboard(keyboard)
     if len(alpha_keyboards) > 1
         let keyboards[2] = get(alpha_keyboards,1)
     endif
-    let keyboards[3] = get(digit_keyboards,1)
+    if len(digit_keyboards) > 1
+        let keyboards[3] = get(digit_keyboards,1)
+    endif
     " --------------------------------------------------------------
     return keyboards
 endfunction
@@ -5241,8 +5238,7 @@ function! s:vimim_diy_results(keyboards, cache_list)
     let fuzzy_lines = s:vimim_quick_fuzzy_search(d)
     let h_d2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
     " ----------------------------------
-    let results = s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
-    return results
+    return s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
 endfunction
 
 " --------------------------------------------
@@ -5256,18 +5252,23 @@ function! s:vimim_quick_fuzzy_search(keyboard)
     let pattern = '^' .  keyboard
     let has_digit = match(keyboard, '^\d\+')
     if has_digit < 0
-        " ------------------------------------
-        if s:vimim_datafile_has_apostrophe > 0
-            let pattern = '^' . keyboard . '\> '
-            let whole_match = match(lines, pattern)
-            if  whole_match > 0
-                let lines = lines[whole_match : whole_match]
-                if len(lines) > 0
-                    return s:vimim_pair_list(lines)
-                endif
+        let msg = "step 1/2: try whole exact match"
+        " -----------------------------------------
+        let pattern = '^' . keyboard . '\> '
+        let whole_match = match(lines, pattern)
+        if  whole_match > -1
+            let results = []
+            if s:vimim_datafile_has_apostrophe > 0
+                let results = lines[whole_match : whole_match]
+            else
+                let results = s:vimim_exact_match(lines, whole_match)
+            endif
+            if len(results) > 0
+                return s:vimim_pair_list(results)
             endif
         endif
-        " ------------------------------------
+        let msg = "step 2/2: try fuzzy match"
+        " -----------------------------------
         let lines = s:vimim_fuzzy_match(lines, keyboard)
     else
         let lines = filter(lines, 'v:val =~ pattern')
