@@ -310,6 +310,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['internal'] = ['内码','內碼']
     let s:chinese['onekey'] = ['点石成金','點石成金']
     let s:chinese['style'] = ['风格','風格']
+    let s:chinese['scheme'] = ['方案','方案']
     let s:chinese['sogou'] = ['搜狗']
     let s:chinese['cloud_no'] = ['晴天无云','晴天無雲']
     let s:chinese['all'] = ['全']
@@ -808,7 +809,8 @@ function! s:vimim_egg_vimim()
     if empty(option)
         let msg = "no shuangpin is used"
     else
-        let option = "im\t " . input . get(s:im['shuangpin'],1)
+        let scheme = s:vimim_get_chinese('scheme')
+        let option = "scheme\t " . scheme . '：' . get(s:im['shuangpin'],1)
         call add(eggs, option)
     endif
 " ----------------------------------
