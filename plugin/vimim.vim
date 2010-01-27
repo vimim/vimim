@@ -5006,20 +5006,15 @@ function! s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
             let char_last = key[-s:multibyte :]
         endif
        if empty(a:h_d2)
-       \&& has_key(a:h_d1, char_last)
-        " -----------------------------------------|"
-           let menu_vary = a:h_ac[key]             |"
-           let menu_fix  = a:h_d1[char_last]       |"
-       elseif empty(a:h_d2)
        \&& has_key(a:h_d1, char_first)
         " -----------------------------------------|" ma7li
            let menu_vary = a:h_ac[key]             |" mali
            let menu_fix  = a:h_d1[char_first]      |" 7132
        elseif empty(a:h_d1)
        \&& has_key(a:h_d2, char_last)
-        " -----------------------------------------|" mali4
-           let menu_vary = a:h_ac[key]             |" mali
-           let menu_fix  = a:h_d2[char_last]       |" 4002
+        " -----------------------------------------|" mali4   ggy1
+           let menu_vary = a:h_ac[key]             |" mali    guigongyu
+           let menu_fix  = a:h_d2[char_last]       |" 4002    1040
         elseif has_key(a:h_d1, char_first)
         \&& has_key(a:h_d2, char_last)
         " ------------------------------------------|" ma7li4
@@ -5029,8 +5024,8 @@ function! s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
             let menu_fix = menu_fix1.'　'.menu_fix2 |" 7132 4002
         endif
         if !empty(menu_fix) && !empty(menu_vary)
-        let menu = menu_fix.'　'.menu_vary
-        call add(values, menu." ".key)
+            let menu = menu_fix.'　'.menu_vary
+            call add(values, menu." ".key)
         endif
     endfor
     return sort(values)
@@ -5175,7 +5170,7 @@ function! s:vimim_diy_keyboard(keyboard)
     " free style pinyin+4corner for zi and ci
     " let zi = "ma7712" li4002
     " let ci = "ma7712li4002 ma7712li mali4002"
-    " let ci = "ggy1 => ['ggy', 1, '', '']
+    " let ci = "ggy1 => ['ggy', '', '', 1]
     " --------------------------------------------------------------
     let alpha_keyboards = ["", ""]
     let digit_keyboards = ["", ""]
@@ -5187,11 +5182,9 @@ function! s:vimim_diy_keyboard(keyboard)
         let alpha_string2 = s:vimim_get_pinyin_from_pinyin(alpha_string)
         let pin_yin = split(alpha_string2,"'")
         if len(pin_yin) > 1
+            call insert(digit_keyboards, "")
             if len(pin_yin) == 2
                 let alpha_keyboards = copy(pin_yin)
-                call insert(digit_keyboards, "")
-            else
-                call add(digit_keyboards, "")
             endif
         endif
     endif
@@ -5204,7 +5197,6 @@ function! s:vimim_diy_keyboard(keyboard)
     endif
     let keyboards[3] = get(digit_keyboards,1)
     " --------------------------------------------------------------
-let g:g1=  keyboards
     return keyboards
 endfunction
 
