@@ -2370,13 +2370,11 @@ function! s:vimim_build_standard_pinyin_menu(matched_list)
     " garbage_out => ['mali 馬力', 'mali 麻利', 'ma 馬', 'ma 麻']
     let matched_list = a:matched_list
     if len(matched_list) > 20
+    \|| match(matched_list, "vim") > -1
         return matched_list
     endif
     if s:vimim_datafile_has_english > 0
-        let hash_sign = match(matched_list, "#")
-        if hash_sign < 0
-            let msg = "making sure no english/private entries"
-        else
+        if match(matched_list, "#") > -1
             return matched_list
         endif
     endif
