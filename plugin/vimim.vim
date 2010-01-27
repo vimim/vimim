@@ -1397,7 +1397,7 @@ function! s:vimim_onekey_action(onekey)
         if empty(onekey)
             let msg = "transform punctuation from english to chinese"
             let replacement = s:punctuations[byte_before]
-            if s:vimim_static_input_style==2
+            if s:vimim_static_input_style == 2
                 let msg = " play sexy quote in sexy mode "
                 if byte_before ==# "'"
                     let replacement = <SID>vimim_get_single_quote()
@@ -5348,9 +5348,9 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
-    let s:vimim_ctrl_space_to_toggle=1
-    let s:vimim_cloud_sogou=12
     let s:vimim_static_input_style=2
+    let s:vimim_ctrl_space_to_toggle=2
+    let s:vimim_cloud_sogou=12
     let s:vimim_chinese_frequency=14
     " ------------------------------ debug
     let s:vimim_custom_laststatus=0
@@ -6100,8 +6100,9 @@ function! s:vimim_initialize_mapping()
 " ------------------------------------
     sil!call s:vimim_visual_mapping_on()
     sil!call s:vimim_chinese_mode_mapping_on()
-    sil!call s:vimim_onekey_mapping_on()
+    sil!call s:vimim_sexy_mode_mapping_on()
     sil!call s:vimim_ctrl_space_mapping_on()
+    sil!call s:vimim_onekey_mapping_on()
 endfunction
 
 " -----------------------------------
@@ -6115,17 +6116,26 @@ endfunction
 " -----------------------------------------
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
+    if s:vimim_static_input_style > 1
+        return
+    endif
     if !hasmapto('<Plug>VimimChinesemode', 'i')
         inoremap <unique> <expr> <Plug>VimimChinesemode <SID>Chinesemode()
+    endif
+       imap <silent> <C-Bslash> <Plug>VimimChinesemode
+    noremap <silent> <C-Bslash> :call <SID>Chinesemode()<CR>
+endfunction
+
+" --------------------------------------
+function! s:vimim_sexy_mode_mapping_on()
+" --------------------------------------
+    if s:vimim_static_input_style != 2
+        return
     endif
     if !hasmapto('<Plug>VimimSexymode', 'i')
         inoremap <unique> <expr> <Plug>VimimSexymode <SID>Sexymode()
     endif
-    " ----------------------------------------------------------------------
-    if s:vimim_static_input_style < 2
-           imap <silent> <C-Bslash> <Plug>VimimChinesemode
-        noremap <silent> <C-Bslash> :call <SID>Chinesemode()<CR>
-    elseif s:vimim_static_input_style==2
+    if s:vimim_ctrl_space_to_toggle < 2
            imap <silent> <C-Bslash> <Plug>VimimSexymode
         noremap <silent> <C-Bslash> :call <SID>Sexymode()<CR>
     endif
@@ -6134,13 +6144,19 @@ endfunction
 " ---------------------------------------
 function! s:vimim_ctrl_space_mapping_on()
 " ---------------------------------------
-    if s:vimim_ctrl_space_to_toggle > 0 
+    if s:vimim_ctrl_space_to_toggle == 1
         if has("gui_running")
             nmap <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
         elseif has("win32unix")
             nmap <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
+        endif
+    elseif s:vimim_ctrl_space_to_toggle == 2
+        if has("gui_running")
+            imap <silent> <C-Space> <Plug>VimimSexymode
+        elseif has("win32unix")
+            imap <silent> <C-@> <Plug>VimimSexymode
         endif
     endif
 endfunction
