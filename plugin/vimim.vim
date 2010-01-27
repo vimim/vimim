@@ -1526,16 +1526,6 @@ function! s:vimim_start_chinese_mode()
         " ---------------------------------------------------
     elseif s:vimim_static_input_style == 1
         let s:chinese_input_mode = 'static'
-        " ---------------------------------------------------------
-        " NOTES: to-be-removed
-        " NOTES: in static mode we must ensure , and . input Chinese , and .
-        " NOTES: ---------------------------------------------------------
-        " NOTES: todo: confirm that comma should not be an issue
-        " NOTES:     : fix dot case by case, as dot is used as a valid keycode
-        " NOTES:     : need to make sure that punctuation toggle <C-6> works
-        " NOTES: I commmented out the following line, please confirm
-        " let s:vimim_punctuation_navigation = 0
-        " ---------------------------------------------------------
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------
         inoremap  <Space> <C-R>=<SID>vimim_space_static()<CR>
@@ -1833,11 +1823,7 @@ function! s:vimim_punctuation_navigation_on()
     if s:vimim_punctuation_navigation < 1
         let punctuation = "=-;[]"
     endif
-    " ---------------------------------------------------------
-    " NOTES: to-be-removed
-    " NOTES: in static mode we must ensure , and . input Chinese , and .
-    " NOTES: please confirm the folloing 3 lines
-    " ---------------------------------------------------------
+    " ---------------------------------------
     if s:chinese_input_mode =~ 'static'
         let punctuation = "=-[]"
     endif
