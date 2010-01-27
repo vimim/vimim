@@ -2362,10 +2362,43 @@ function! s:vimim_popupmenu_list(matched_list)
     return popupmenu_list
 endfunction
 
+" --------------------------------------------------------
+function! s:vimim_build_standard_pinyin_menu(matched_list)
+" -------------------------------------------------------- TODO
+    let msg = "make standstard popup menu layout"
+    " garbage_in =>  ['mali 馬力', 'mali 麻利']
+    " garbage_out => ['mali 馬力', 'mali 麻利', 'ma 馬', 'ma 麻']
+    let matched_list = a:matched_list
+    if len(matched_list) > 20
+        return matched_list
+    endif
+    let keyboard = get(split(get(matched_list,0)),0)
+    let keyboard2 = s:vimim_get_pinyin_from_pinyin(keyboard)
+    let keyboards = split(keyboard2, "'")
+    if len(keyboards) < 2
+        return matched_list
+    endif
+    let sub_keyboard = get(keyboards, 0)
+    for pair in copy(matched_list)
+        let pairs = split(pair)
+        let menu = get(pairs, 0)
+        let chinese = get(pairs, 1)
+        let char_first = chinese[: s:multibyte-1]
+        let new_pair = sub_keyboard . ' ' . char_first
+        if new_pair != get(matched_list, -1)
+            call add(matched_list, new_pair)
+        endif
+    endfor
+    return matched_list
+endfunction
+
 " ---------------------------------------------
 function! s:vimim_build_popupmenu(matched_list)
 " ---------------------------------------------
     let matched_list = a:matched_list
+    if get(s:im['pinyin'],0) > 0
+        let matched_list = s:vimim_build_standard_pinyin_menu(matched_list)
+    endif
     let menu = 0
     let label = 1
     let popupmenu_list = []
@@ -6011,21 +6044,6 @@ else
         let results = s:vimim_exact_match(lines, match_start)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
-            if get(s:im['pinyin'],0) > 0
-                " ---------------------------------------- TODO
-                let msg = "make standstard menu layout"
-                let keyboard2 = s:vimim_get_pinyin_from_pinyin(keyboard)
-                let keyboards = split(keyboard2, "'")
-                if len(keyboards) > 1
-                    let sub_keyboard = get(keyboards, 0)
-                    let pattern = '^' . sub_keyboard . '\> '
-                    let whole_match = match(lines, pattern)
-                    if whole_match > -1
-                        let results2 = s:vimim_exact_match(lines, whole_match)
-                        call extend(results, results2)
-                    endif
-                endif
-            endif
             return s:vimim_popupmenu_list(results)
         endif
     endif
