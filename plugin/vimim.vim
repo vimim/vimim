@@ -2372,19 +2372,26 @@ function! s:vimim_build_standard_pinyin_menu(matched_list)
     if len(matched_list) > 20
         return matched_list
     endif
-    let keyboard = get(split(get(matched_list,0)),0)
-    let keyboard2 = s:vimim_get_pinyin_from_pinyin(keyboard)
-    let keyboards = split(keyboard2, "'")
-    if len(keyboards) < 2
-        return matched_list
+    if s:vimim_datafile_has_english > 0
+        let hash_sign = match(matched_list, "#")
+        if hash_sign < 0
+            let msg = "making sure no english/private entries"
+        else
+            return matched_list
+        endif
     endif
-    let sub_keyboard = get(keyboards, 0)
     for pair in copy(matched_list)
         let pairs = split(pair)
-        let menu = get(pairs, 0)
+        let keyboard = get(pairs, 0)
+        let keyboard2 = s:vimim_get_pinyin_from_pinyin(keyboard)
+        let keyboards = split(keyboard2, "'")
+        if len(keyboards) < 2
+            break
+        endif
         let chinese = get(pairs, 1)
+        let menu_first = get(keyboards, 0)
         let char_first = chinese[: s:multibyte-1]
-        let new_pair = sub_keyboard . ' ' . char_first
+        let new_pair = menu_first . ' ' . char_first
         if new_pair != get(matched_list, -1)
             call add(matched_list, new_pair)
         endif
