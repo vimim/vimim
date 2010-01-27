@@ -5348,9 +5348,9 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
+    let s:vimim_ctrl_space_to_toggle=1
     let s:vimim_cloud_sogou=12
     let s:vimim_static_input_style=2
-    let s:vimim_ctrl_space_to_toggle=1
     let s:vimim_chinese_frequency=14
     " ------------------------------ debug
     let s:vimim_custom_laststatus=0
@@ -6119,15 +6119,29 @@ function! s:vimim_chinese_mode_mapping_on()
         inoremap <unique> <expr> <Plug>VimimChinesemode <SID>Chinesemode()
     endif
     if !hasmapto('<Plug>VimimSexymode', 'i')
-        inoremap <unique> <expr> <Plug>VimimSexymode  <SID>Sexymode()
+        inoremap <unique> <expr> <Plug>VimimSexymode <SID>Sexymode()
     endif
     " ----------------------------------------------------------------------
     if s:vimim_static_input_style < 2
-           imap <C-Bslash> <Plug>VimimChinesemode
+           imap <silent> <C-Bslash> <Plug>VimimChinesemode
         noremap <silent> <C-Bslash> :call <SID>Chinesemode()<CR>
     elseif s:vimim_static_input_style==2
-           imap <C-Bslash> <Plug>VimimSexymode
+           imap <silent> <C-Bslash> <Plug>VimimSexymode
         noremap <silent> <C-Bslash> :call <SID>Sexymode()<CR>
+    endif
+endfunction
+
+" ---------------------------------------
+function! s:vimim_ctrl_space_mapping_on()
+" ---------------------------------------
+    if s:vimim_ctrl_space_to_toggle > 0 
+        if has("gui_running")
+            nmap <C-Space> <C-Bslash>
+            imap <C-Space> <C-Bslash>
+        elseif has("win32unix")
+            nmap <C-@> <C-Bslash>
+            imap <C-@> <C-Bslash>
+        endif
     endif
 endfunction
 
@@ -6137,18 +6151,9 @@ function! s:vimim_onekey_mapping_on()
     if !hasmapto('<Plug>VimimOnekey', 'i')
         inoremap <unique> <expr> <Plug>VimimOnekey <SID>Onekey()
     endif
-    imap <C-^> <Plug>VimimOnekey
+    imap <silent> <C-^> <Plug>VimimOnekey
     if s:vimim_tab_as_onekey > 0
-        imap <Tab> <Plug>VimimOnekey
-    endif
-endfunction
-
-" ---------------------------------------
-function! s:vimim_ctrl_space_mapping_on()
-" ---------------------------------------
-    if s:vimim_ctrl_space_to_toggle > 0 && has("gui_running")
-        nmap <C-Space> <C-Bslash>
-        imap <C-Space> <C-Bslash>
+        imap <silent> <Tab> <Plug>VimimOnekey
     endif
 endfunction
 
