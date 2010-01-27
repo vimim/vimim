@@ -2282,7 +2282,6 @@ function! s:vimim_pair_list(matched_list)
             call add(pair_matched_list, menu .' '. chinese)
         endfor
     endfor
-"todo
     return pair_matched_list
 endfunction
 
@@ -2364,7 +2363,7 @@ endfunction
 
 " --------------------------------------------------------
 function! s:vimim_build_standard_pinyin_menu(matched_list)
-" -------------------------------------------------------- TODO
+" --------------------------------------------------------
     let msg = "make standstard popup menu layout"
     " garbage_in =>  ['mali 馬力', 'mali 麻利']
     " garbage_out => ['mali 馬力', 'mali 麻利', 'ma 馬', 'ma 麻']
@@ -4785,7 +4784,6 @@ function! s:vimim_search_boundary(lines, keyboard)
     return ranges
 endfunction
 
-" todo: re-consider how match is done
 " --------------------------------------------------
 function! s:vimim_exact_whole_match(lines, keyboard)
 " --------------------------------------------------
@@ -4807,7 +4805,6 @@ function! s:vimim_exact_match(lines, match_start)
     if empty(a:lines) || a:match_start < 0
         return []
     endif
-    " ------------------------------------------
     let match_start = a:match_start
     " ------------------------------------------
     let keyboard = get(split(get(a:lines,match_start)),0)
@@ -4818,47 +4815,26 @@ function! s:vimim_exact_match(lines, match_start)
     let pattern = '^\(' . keyboard
     if len(keyboard) < 2
         let pattern .=  '\>'
-    else
+    elseif get(s:im['pinyin'],0) > 0
         let pattern .=  '\d\=\>'
+    else
+        let pattern .=  '\>'
     endif
     let pattern .=  '\)\@!'
     " ----------------------------------------
-    let result = match(a:lines, pattern, match_start)-1
-    if result - match_start < 1
+    let matched = match(a:lines, pattern, match_start)-1
+    if matched - match_start < 1
         return a:lines[match_start : match_start]
     endif
-    let words_limit = 128
-    " ----------------------------------------
-  " todo: consider to remove the following logic
-  " if s:vimim_quick_key > 0
-  "     let list_length = result - match_start
-  "     let do_search_on_word = 0
-  "     let quick_limit = 3
-  "     if get(s:im['pinyin'],0) > 0
-  "         let quick_limit = 2
-  "     endif
-  "     if len(keyboard) < quick_limit
-  "     \|| list_length > words_limit*2
-  "         let do_search_on_word = 1
-  "     elseif get(s:im['pinyin'],0) > 0
-  "         let chinese = join(a:lines[match_start : result],'')
-  "         let chinese = substitute(chinese,'\p\+','','g')
-  "         if len(chinese) > words_limit*4
-  "             let do_search_on_word = 1
-  "         endif
-  "     endif
-  "     if do_search_on_word > 0
-  "         let pattern = '^\(' . keyboard . '\>\)\@!'
-  "         let result = match(a:lines, pattern, match_start)-1
-  "     endif
-  " endif
     " ----------------------------------------
     let match_end = match_start
-    if empty(result)
+    if empty(matched)
         let match_end = match_start
-    elseif result > 0 && result > match_start
-        let match_end = result
+    elseif matched > 0 && matched > match_start
+        let match_end = matched
     endif
+    " ----------------------------------------
+    let words_limit = 128
     if match_end - match_start > words_limit
         let match_end = match_start + words_limit -1
     endif
@@ -6032,14 +6008,10 @@ else
     if match_start > -1
     \&& get(s:im['pinyin'],0) > 0
     \&& s:vimim_datafile_has_apostrophe > 0
-        let pattern = '^' . keyboard . '\> '
-        let whole_match = match(lines, pattern)
-        if  whole_match > 0
-            let results = lines[whole_match : whole_match]
-            if len(results) > 0
-                let results = s:vimim_pair_list(results)
-                return s:vimim_popupmenu_list(results)
-            endif
+        let results = s:vimim_exact_whole_match(lines, keyboard)
+        if len(results) > 0
+            let results = s:vimim_pair_list(results)
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
