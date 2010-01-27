@@ -2252,6 +2252,9 @@ call add(s:vimims, VimIM)
 
 " ---------------------------------------
 function! s:vimim_pair_list(matched_list)
+" --------------------------------------- 
+"todo 
+" let g:g1= copy(a:matched_list) ['mali 馬力 马里 马力 玛丽 麻利']
 " ---------------------------------------
     let s:matched_list = copy(a:matched_list)
     let matched_list = a:matched_list
@@ -2279,6 +2282,9 @@ function! s:vimim_pair_list(matched_list)
             call add(pair_matched_list, menu .' '. chinese)
         endfor
     endfor
+"todo 
+" let g:g2= pair_matched_list
+" g:g2=['mali 馬力', 'mali 马里', 'mali 马力', 'mali 玛丽', 'mali 麻利']
     return pair_matched_list
 endfunction
 
@@ -4782,8 +4788,9 @@ function! s:vimim_exact_match(lines, match_start)
     if result - match_start < 1
         return a:lines[match_start : match_start]
     endif
-    " ----------------------------------------
     let words_limit = 128
+    " ----------------------------------------
+  " todo: consider to remove the following logic
   " if s:vimim_quick_key > 0
   "     let list_length = result - match_start
   "     let do_search_on_word = 0
@@ -5997,6 +6004,21 @@ else
         let results = s:vimim_exact_match(lines, match_start)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
+            if get(s:im['pinyin'],0) > 0
+                " ---------------------------------------- TODO
+                let msg = "make standstard menu layout"
+                let keyboard2 = s:vimim_get_pinyin_from_pinyin(keyboard)
+                let keyboards = split(keyboard2, "'")
+                if len(keyboards) > 1
+                    let sub_keyboard = get(keyboards, 0)
+                    let pattern = '^' . sub_keyboard . '\> '
+                    let whole_match = match(lines, pattern)
+                    if whole_match > -1
+                        let results2 = s:vimim_exact_match(lines, whole_match)
+                        call extend(results, results2)
+                    endif
+                endif
+            endif
             return s:vimim_popupmenu_list(results)
         endif
     endif
