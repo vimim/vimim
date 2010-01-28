@@ -157,8 +157,8 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:vimim_do_cloud_sogou = 0
     let s:vimim_cloud_plugin = 0
-    let s:smart_single_quote = 1
-    let s:smart_double_quote = 1
+    let s:smart_single_quotes = 1
+    let s:smart_double_quotes = 1
     " --------------------------------
     let s:chinese_frequency = 0
     let s:toggle_xiangma_pinyin = 0
@@ -1756,8 +1756,8 @@ function! s:vimim_get_single_quote()
 " ----------------------------------
     let pair = "‘’"
     let pairs = split(pair,'\zs')
-    let s:smart_single_quote += 1
-    return get(pairs, s:smart_single_quote % 2)
+    let s:smart_single_quotes += 1
+    return get(pairs, s:smart_single_quotes % 2)
 endfunction
 
 " ----------------------------------
@@ -1765,8 +1765,8 @@ function! s:vimim_get_double_quote()
 " ----------------------------------
     let pair = "“”"
     let pairs = split(pair,'\zs')
-    let s:smart_double_quote += 1
-    return get(pairs, s:smart_double_quote % 2)
+    let s:smart_double_quotes += 1
+    return get(pairs, s:smart_double_quotes % 2)
 endfunction
 
 " -----------------------------------
