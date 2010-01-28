@@ -2380,9 +2380,8 @@ function! s:vimim_build_standard_pinyin_menu(matched_list)
     for pair in copy(matched_list)
         let pairs = split(pair)
         let keyboard = get(pairs, 0)
-        let keyboard2 = s:vimim_get_pinyin_from_pinyin(keyboard)
-        let keyboards = split(keyboard2, "'")
-        if len(keyboards) < 2
+        let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
+        if empty(keyboards)
             break
         endif
         let chinese = get(pairs, 1)
@@ -3628,8 +3627,8 @@ function! s:vimim_pinyin_filter(results, keyboards)
         let chinese = get(split(item), 1)
         let gold = len(chinese)/s:multibyte
         " filter out fake chinese phrase using pinyin theory
-        let keyboard2 = s:vimim_get_pinyin_from_pinyin(keyboard)
-        if match(keyboard2, pattern) > -1
+        let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
+        if match(join(keyboards,"'"), pattern) > -1
             call add(new_results, item)
         endif
     endfor
@@ -3654,16 +3653,20 @@ endfunction
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
 " ------------------------------------------------
     if s:shuangpin_flag > 0 || s:im['pinyin'][0] < 1
-        return a:keyboard
+        return []
     else
-        let msg = "pinyin breakdown: pinyin => pin'yin "
+        let msg = "pinyin breakdown: pinyin=>pin'yin "
     endif
     let keyboard2 = s:vimim_quanpin_transform(a:keyboard)
     if s:vimimdebug > 0
         call s:debugs('pinyin_in', a:keyboard)
         call s:debugs('pinyin_out', keyboard2)
     endif
-    return keyboard2
+    let results = split(keyboard2,"'")
+    if len(results) > 1
+        return results
+    endif
+    return []
 endfunction
 
 " -------------------------------------------
@@ -5201,12 +5204,11 @@ function! s:vimim_diy_keyboard(keyboard)
     " --------------------------------------------------------------
     if len(alpha_keyboards) < 2
         let alpha_string = get(alpha_keyboards,0)
-        let alpha_string2 = s:vimim_get_pinyin_from_pinyin(alpha_string)
-        let pin_yin = split(alpha_string2,"'")
-        if len(pin_yin) > 1
+        let pinyin_keyboards = s:vimim_get_pinyin_from_pinyin(alpha_string)
+        if len(pinyin_keyboards) > 0
             call insert(digit_keyboards, "")
-            if len(pin_yin) == 2
-                let alpha_keyboards = copy(pin_yin)
+            if len(pinyin_keyboards) == 2
+                let alpha_keyboards = copy(pinyin_keyboards)
             endif
         endif
     endif
@@ -5882,9 +5884,10 @@ else
 
     " [pinyin] breakdown quanpin: pinyin => pin'yin
     " ---------------------------------------------
-    let keyboard2 = s:vimim_get_pinyin_from_pinyin(keyboard)
-    " xiangjiang => 'xiang''jiang'
-    " laystbz => 'la''y''s''t''b''z'
+    let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
+    if len(keyboards) > 4
+        let msg = " assume it is cjjp: laystbz=>la''y''s''t''b''z "
+    endif
     let todo = "play with cloud: trigger cloud by zi"
 
     " [shuangpin] support 5 major shuangpin with various rules
