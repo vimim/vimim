@@ -4856,13 +4856,13 @@ endfunction
 function! s:vimim_fuzzy_match(lines, keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
+    let results = a:lines
     if empty(keyboard)
-    \|| empty(a:lines)
+    \|| empty(results)
     \|| s:chinese_input_mode =~ 'dynamic'
     \|| s:vimim_fuzzy_search < 1
         return []
     endif
-    let results = copy(a:lines)
     if s:vimim_datafile_has_english > 0
         let results = filter(results, 'v:val !~ " #$"')
     endif
@@ -5282,7 +5282,6 @@ function! s:vimim_quick_fuzzy_search(keyboard)
         let pattern = '^' . keyboard . '\> '
         let whole_match = match(lines, pattern)
         if  whole_match > -1
-            let results = []
             if s:vimim_datafile_has_apostrophe > 0
                 let results = lines[whole_match : whole_match]
             else
@@ -5294,7 +5293,7 @@ function! s:vimim_quick_fuzzy_search(keyboard)
         endif
         let msg = "step 2/2: try fuzzy match"
         " -----------------------------------
-        let results = s:vimim_fuzzy_match(copy(lines), keyboard)
+        let results = s:vimim_fuzzy_match(lines, keyboard)
     else
         let results = filter(lines, 'v:val =~ pattern')
     endif
@@ -5892,9 +5891,8 @@ else
     " ---------------------------------------------
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
     if len(keyboards) > 4
-        let msg = " assume it is cjjp: laystbz=>la''y''s''t''b''z "
+        let todo = " assume it is cjjp: laystbz=>la''y''s''t''b''z "
     endif
-    let todo = "play with cloud: trigger cloud by zi"
 
     " [shuangpin] support 5 major shuangpin with various rules
     " --------------------------------------------------------
@@ -6037,7 +6035,7 @@ else
     " [fuzzy search] implicit wildcard search
     " ---------------------------------------
     if match_start < 0
-        let results = s:vimim_fuzzy_match(copy(lines), keyboard)
+        let results = s:vimim_fuzzy_match(lines, keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
