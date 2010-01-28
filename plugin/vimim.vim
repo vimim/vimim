@@ -614,7 +614,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_onekey_double_ctrl6")
     call add(G, "g:vimim_punctuation_navigation")
-    call add(G, "g:vimim_quick_key")
     call add(G, "g:vimim_wubi_non_stop")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
@@ -2410,15 +2409,28 @@ function! s:vimim_build_popupmenu(matched_list)
             let menu = get(split(menu,"_"),0)
         endif
         " -------------------------------------------------
+        if empty(s:vimim_cloud_plugin)
+            let tail = ''
+            if keyboard =~ '[.]' && s:datafile_has_dot < 1
+                let dot = match(keyboard, '[.]')
+                let tail = strpart(keyboard, dot+1)
+            elseif keyboard !~? '^vim'
+                let tail = strpart(keyboard, len(menu))
+            endif
+            if tail =~ '\w'
+                let chinese .=  tail
+            endif
+        endif
+        " -------------------------------------------------
+        let labeling = label
         if s:vimim_custom_menu_label > 0
-            let labeling = label
             if label == 10
                 let labeling = 0
             endif
             if label < &pumheight+1
             \&& (empty(s:chinese_input_mode)
             \|| s:chinese_input_mode=~ 'sexy')
-                " -----------------------------------------
+                " ----------------------------------------- todo
                 let label2 = s:abcdefghi[label-1 : label-1]
                 if label < 2
                     let label2 = "_"
@@ -2433,20 +2445,6 @@ function! s:vimim_build_popupmenu(matched_list)
             endif
             let abbr = printf('%2s',labeling)."\t".chinese
             let complete_items["abbr"] = abbr
-        endif
-        " -------------------------------------------------
-        if empty(s:vimim_cloud_plugin)
-            let tail = ''
-            if keyboard =~ '[.]'
-            \&& s:datafile_has_dot < 1
-                let dot = match(keyboard, '[.]')
-                let tail = strpart(keyboard, dot+1)
-            elseif keyboard !~? 'vim'
-                let tail = strpart(keyboard, len(menu))
-            endif
-            if tail =~ '\w'
-                let chinese .=  tail
-            endif
         endif
         " -------------------------------------------------
         let complete_items["word"] = chinese
@@ -3565,6 +3563,7 @@ function! s:vimim_initialize_pinyin()
     " -------------------------------
     let s:vimim_fuzzy_search = 1
     if empty(s:vimim_imode_pinyin)
+    \&& empty(s:vimim_imode_universal)
         let s:vimim_imode_pinyin = 1
     endif
 endfunction
@@ -5335,18 +5334,15 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
     let s:vimim_cloud_sogou=12
-    let s:vimim_chinese_frequency=14
     " ------------------------------ debug
+    let s:vimim_chinese_frequency=14
     let s:vimim_custom_laststatus=0
-    let s:vimim_custom_menu_label=1
-    " ------------------------------
     let s:vimim_wildcard_search=1
     let s:vimim_imode_universal=1
-    let s:vimim_imode_pinyin=-1
+    let s:vimim_unicode_lookup=1
+    let s:vimim_reverse_pageup_pagedown=1
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
-    let s:vimim_reverse_pageup_pagedown=1
-    let s:vimim_unicode_lookup=0
     let s:vimim_datafile_has_english=1
     let s:vimim_datafile_has_pinyin=1
     let s:vimim_datafile_has_4corner=1
