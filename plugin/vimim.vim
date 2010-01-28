@@ -1821,23 +1821,30 @@ endfunction
 " -------------------------------------------
 function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
-    let punctuation = ".,=-;[]/"
+    let default = "=-[]"
+    let semicolon = ";"
+    let period = "."
+    let comma = ","
+    let slash = "/"
+    let question_mark = "?"
+    " ---------------------------------------
+    let punctuation = default . semicolon . period . comma . slash
     if s:vimim_punctuation_navigation < 1
-        let punctuation = "=-;[]"
+        let punctuation = default . semicolon
+    endif
+    if s:chinese_input_mode =~ 'static'
+        let punctuation = default
     endif
     " ---------------------------------------
-    if s:chinese_input_mode =~ 'static'
-        let punctuation = "=-[]"
-    endif
     let hjkl_list = split(punctuation,'\zs')
     if empty(s:chinese_input_mode)
-        call add(hjkl_list, '?')
+        call add(hjkl_list, question_mark)
     endif
     " ---------------------------------------
     let msg = "we should never map valid keycode"
     for char in s:valid_keys
 	let i = index(hjkl_list, char)
-	if i > -1 && char != "."
+	if i > -1 && char != period
             unlet hjkl_list[i]
         endif
     endfor
