@@ -2370,18 +2370,14 @@ endfunction
 " --------------------------------------------------------
 function! s:vimim_build_standard_pinyin_menu(matched_list)
 " --------------------------------------------------------
-    let msg = "make standstard popup menu layout"
+    let msg = "make standard popup menu layout"
     " garbage_in =>  ['mali 馬力', 'mali 麻利']
     " garbage_out => ['mali 馬力', 'mali 麻利', 'ma 馬', 'ma 麻']
     let matched_list = a:matched_list
+    let filter = "vim\\|#\\|　"
     if len(matched_list) > 20
-    \|| match(matched_list, "vim") > -1
+    \|| match(matched_list, filter) > -1
         return matched_list
-    endif
-    if s:vimim_datafile_has_english > 0
-        if match(matched_list, "#") > -1
-            return matched_list
-        endif
     endif
     for pair in copy(matched_list)
         let pairs = split(pair)
