@@ -1272,7 +1272,7 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_action_label_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
-    sil!call s:vimim_onekey_autocmd()
+    sil!call s:vimim_sexy_autocmd()
     " ----------------------------------------------------------
     " default <OneKey> triple play
     "   (1) after English (valid keys)   => trigger omni popup
@@ -1284,9 +1284,9 @@ function! s:vimim_start_onekey()
     " ----------------------------------------------------------
 endfunction
 
-" --------------------------------
-function! s:vimim_onekey_autocmd()
-" --------------------------------
+" ------------------------------
+function! s:vimim_sexy_autocmd()
+" ------------------------------
     if s:vimim_static_input_style==2 && has("autocmd")
         augroup onekey_mode_autocmd
             autocmd!
@@ -1301,8 +1301,8 @@ endfunction
 function! s:vimim_stop_sexy_mode()
 " --------------------------------
     if s:chinese_input_mode =~ 'sexy'
-        let s:vimim_chinese_mode_flag += 1
         set ruler
+        let s:chinese_mode_switch = 1
         if s:vimim_auto_copy_clipboard>0 && has("gui_running")
             let @+ = getline(".")
         endif
@@ -1319,14 +1319,13 @@ function! <SID>Sexymode()
     if pumvisible()
         let msg = "<C-\> does nothing over omni menu"
     else
-        let s:vimim_chinese_mode_flag += 1
-        if empty(s:vimim_chinese_mode_flag%2)
+        let s:chinese_mode_switch += 1
+        if empty(s:chinese_mode_switch%2)
             sil!call s:vimim_start_onekey()
             set noruler
             let s:chinese_input_mode = 'sexy'
             sil!return s:vimim_onekey_action("")
         else
-            let s:vimim_chinese_mode_flag += 1
             call s:vimim_stop()
         endif
     endif
@@ -1494,13 +1493,13 @@ call add(s:vimims, VimIM)
 " --------------------------
 function! <SID>Chinesemode()
 " --------------------------
-    let s:vimim_chinese_mode_flag += 1
     let space = ""
-    if s:vimim_chinese_mode_flag > 2
+    let s:chinese_mode_switch += 1
+    if s:chinese_mode_switch > 2
         call s:vimim_stop_chinese_mode()
         let space = "\<C-O>:redraw\<CR>"
     endif
-    if empty(s:vimim_chinese_mode_flag%2)
+    if empty(s:chinese_mode_switch%2)
         call s:vimim_start_chinese_mode()
         if s:vimim_static_input_style > 0
             if pumvisible()
@@ -5302,7 +5301,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_backdoor()
 " -------------------------------------
     let g:vimim = ["",0,0,1,localtime()]
-    let s:vimim_chinese_mode_flag = 1
+    let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
