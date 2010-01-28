@@ -1944,7 +1944,7 @@ function! s:vimim_initialize_quantifiers()
     let s:quantifiers['0'] = '〇零㈩⑩⒑⑽癸十拾'
     let s:quantifiers['a'] = '秒'
     let s:quantifiers['b'] = '百佰步把包杯本笔部班'
-    let s:quantifiers['c'] = '厘次餐场串处'
+    let s:quantifiers['c'] = '厘次餐场串处床'
     let s:quantifiers['d'] = '第度点袋道滴碟顶栋堆对朵堵顿'
     let s:quantifiers['e'] = '亿'
     let s:quantifiers['f'] = '分份发封付副幅峰方服'
@@ -3611,7 +3611,7 @@ function! s:vimim_length_filter(results, length)
 " ----------------------------------------------
     let results = a:results
     if a:length > 0
-        let pattern = '\s\+.\{'. a:length .'}$'
+        let pattern = '^\w\+\s\+\S\{'. a:length .'}\>'
         call filter(results, 'v:val =~ pattern')
     endif
     return results
@@ -4804,16 +4804,16 @@ function! s:vimim_exact_match(lines, match_start)
         let match_end = matched
     endif
     " ----------------------------------------
-    let words_limit = 20*2
+    let words_limit = 20+10
     if match_end - match_start > words_limit
         let match_end = match_start + words_limit
     endif
     let results = a:lines[match_start : match_end]
     " ----------------------------------------
     if len(results) < 10
-       let more_results = s:vimim_pinyin_more_match_list(a:lines, keyboard, results)
-       if len(more_results) > 0
-           call extend(results, more_results)
+       let extras = s:vimim_pinyin_more_match_list(a:lines, keyboard, results)
+       if len(extras) > 0
+           call extend(results, extras)
        endif
     endif
     " ----------------------------------------
@@ -4862,20 +4862,21 @@ function! s:vimim_fuzzy_match(lines, keyboard)
     \|| s:vimim_fuzzy_search < 1
         return []
     endif
+    let results = copy(a:lines)
     if s:vimim_datafile_has_english > 0
-        let results = filter(a:lines, 'v:val !~ " #$"')
+        let results = filter(results, 'v:val !~ " #$"')
     endif
     let keyboards = split(keyboard, "'")
     if len(keyboards) < 2
+        let todo = "make special rule for cjjp => c'j'j'p "
+        let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
         let pattern = s:vimim_free_fuzzy_pattern(keyboard)
-        let results = filter(a:lines, 'v:val =~ pattern')
-        let results = s:vimim_length_filter(results, len(keyboard))
-        let results = s:vimim_pinyin_filter(results, [keyboard])
+        let results = filter(results, 'v:val =~ pattern')
     else
         let msg = "keyboard has apostrophe: ma'li from mali4"
-        let results = s:vimim_length_filter(results, len(keyboards))
-        let results = s:vimim_pinyin_filter(results, keyboards)
     endif
+    let results = s:vimim_length_filter(results, len(keyboards))
+    let results = s:vimim_pinyin_filter(results, keyboards)
     return results
 endfunction
 
@@ -5274,6 +5275,7 @@ function! s:vimim_quick_fuzzy_search(keyboard)
     endif
     let pattern = '^' .  keyboard
     let has_digit = match(keyboard, '^\d\+')
+    let results = []
     if has_digit < 0
         let msg = "step 1/2: try whole exact match"
         " -----------------------------------------
@@ -5292,12 +5294,12 @@ function! s:vimim_quick_fuzzy_search(keyboard)
         endif
         let msg = "step 2/2: try fuzzy match"
         " -----------------------------------
-        let lines = s:vimim_fuzzy_match(lines, keyboard)
+        let results = s:vimim_fuzzy_match(copy(lines), keyboard)
     else
-        let lines = filter(lines, 'v:val =~ pattern')
+        let results = filter(lines, 'v:val =~ pattern')
     endif
     " -----------------------------------------------------------
-    return s:vimim_i18n_read_list(lines)
+    return s:vimim_i18n_read_list(results)
 endfunction
 
 " ======================================= }}}
@@ -5331,9 +5333,9 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
+    let s:vimim_cloud_sogou=0
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
-    let s:vimim_cloud_sogou=12
     " ------------------------------ debug
     let s:vimim_chinese_frequency=14
     let s:vimim_custom_laststatus=0
@@ -6035,7 +6037,7 @@ else
     " [fuzzy search] implicit wildcard search
     " ---------------------------------------
     if match_start < 0
-        let results = s:vimim_fuzzy_match(lines, keyboard)
+        let results = s:vimim_fuzzy_match(copy(lines), keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
