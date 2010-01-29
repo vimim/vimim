@@ -155,7 +155,6 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_start_omni()
     sil!call s:vimim_super_reset()
     " --------------------------------
-    let s:vimim_do_cloud_sogou = 0
     let s:vimim_cloud_plugin = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -3097,7 +3096,7 @@ function! s:vimim_get_list_from_smart_ctrl_p(keyboard)
     else
         return []
     endif
-    let pattern = s:vimim_free_fuzzy_pattern(keyboard, '.*')
+    let pattern = s:vimim_free_fuzzy_pattern(keyboard)
     let matched = match(keys(s:inputs_all), pattern)
     if matched < 0
         let msg = "nothing matched previous user input"
@@ -3590,6 +3589,8 @@ function! s:vimim_pinyin_filter(results, keyboards)
     endif
     let new_results = []
     let pattern = s:vimim_apostrophe_fuzzy_pattern(a:keyboards)
+let g:gp=pattern
+let g:gpp=a:keyboards
     for item in a:results
         let keyboard = get(split(item), 0)
         let chinese = get(split(item), 1)
@@ -3769,9 +3770,9 @@ function! s:vimim_initialize_shuangpin()
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
 endfunction
 
-" ----------------------------------------------------
-function! s:vimim_get_quanpin_from_shuangpin(keyboard)
-" ----------------------------------------------------
+" ---------------------------------------------------
+function! s:vimim_get_pinyin_from_shuangpin(keyboard)
+" ---------------------------------------------------
     let keyboard = a:keyboard
     if empty(s:shuangpin_flag)
         return keyboard
@@ -3800,11 +3801,6 @@ endfunction
 function! s:vimim_shuangpin_transform(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:keyboard_shuangpin)
-        let msg = "start the magic shuangpin transform"
-    else
-        return keyboard
-    endif
     let size = strlen(keyboard)
     let ptr = 0
     let output = ""
@@ -4257,15 +4253,16 @@ function! s:vimim_magic_tail(keyboard)
     \|| s:chinese_input_mode =~ 'static'
     \|| len(keyboard) < 3
     \|| keyboard =~ '\d\d\d\d'
-        return 0
+        return []
     endif
     let magic_tail = keyboard[-1:]
     let last_but_one =  keyboard[-2:-2]
     if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
         let msg = " play with magic trailing char "
     else
-        return 0
+        return []
     endif
+    let keyboards = []
     " ----------------------------------------------------
     " <dot> double play in OneKey mode:
     "   (1) magic trailing dot => forced-non-cloud
@@ -4274,11 +4271,11 @@ function! s:vimim_magic_tail(keyboard)
     if  magic_tail ==# "."
         let msg = " trailing dot => forced-non-cloud"
         let s:no_internet_connection = 2
-        let s:vimim_do_cloud_sogou = -1
+        call add(keyboards, -1)
     elseif  magic_tail ==# "'"
         let msg = " trailing apostrophe => forced-cloud "
         let s:no_internet_connection = -1
-        let s:vimim_do_cloud_sogou = 1
+        call add(keyboards, 1)
     endif
     " ----------------------------------------------------
     " <apostrophe> double play in OneKey Mode:
@@ -4286,14 +4283,19 @@ function! s:vimim_magic_tail(keyboard)
     "   (2) magic leading  apostrophe => universal imode
     " ----------------------------------------------------
     let keyboard = keyboard[:-2]
-    let s:keyboard_leading_zero = keyboard
-    return keyboard
+    call insert(keyboards, keyboard)
+    return keyboards
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_to_cloud_or_not(keyboard, cloud)
-" ------------------------------------------------
-    if a:cloud < 1
+" --------------------------------------------------
+function! s:vimim_to_cloud_or_not(keyboards, clouds)
+" --------------------------------------------------
+    let do_cloud = get(a:clouds, 1)
+    if do_cloud > 0
+        return 1
+    endif
+    " --------------------------------------------
+    if s:vimim_cloud_sogou < 1
         return 0
     endif
     " --------------------------------------------
@@ -4304,7 +4306,7 @@ function! s:vimim_to_cloud_or_not(keyboard, cloud)
         return 1
     endif
     " --------------------------------------------
-    let keyboard = a:keyboard
+    let keyboard = join(a:keyboards,"")
     if empty(s:chinese_input_mode) && keyboard =~ '[.]'
         return 0
     endif
@@ -4312,21 +4314,13 @@ function! s:vimim_to_cloud_or_not(keyboard, cloud)
         let msg = "cloud limits to valid cloud keycodes only"
         return 0
     endif
-    " -------------------------------------------- todo
-    let cloud_length = len(keyboard)
-    if s:shuangpin_flag > 0
-        let cloud_length = len(s:keyboard_shuangpin)
-    endif
     " --------------------------------------------
-    let msg = ' auto cloud if zi is more than user-setting'
-    let keyboards = split(keyboard, "'")
-    let cloud_length = len(keyboards)
-    " --------------------------------------------
-    let do_cloud = 1
-    if cloud_length < a:cloud
-        let do_cloud = 0
+    let msg = "auto cloud if number of zi > threshold"
+    let cloud_length = len(a:keyboards)
+    if cloud_length < s:vimim_cloud_sogou
+        return 0
     endif
-    return do_cloud
+    return 1
 endfunction
 
 " -----------------------------------------
@@ -4763,9 +4757,13 @@ endfunction
 " --------------------------------------------
 function! s:vimim_whole_match(lines, keyboard)
 " --------------------------------------------
-    if empty(a:keyboard) || empty(a:lines)
+    if empty(a:lines)
+    \|| empty(a:keyboard)
+    \|| get(s:im['pinyin'],0) < 1
         return []
     endif
+    " [pinyin_quote_sogou] try exact one-line match
+    " ---------------------------------------------
     let results = []
     let pattern = '^' . a:keyboard . '\>'
     let whole_match = match(a:lines, pattern)
@@ -4803,12 +4801,12 @@ function! s:vimim_exact_match(lines, match_start)
     if matched - match_start < 1
         let results = a:lines[match_start : match_start]
     endif
-    " ---------------------------------------- todo
+    " ----------------------------------------
     let match_end = match_start
     if matched > 0 && matched > match_start
         let match_end = matched
     endif
-    " ----------------------------------------
+    " ---------------------------------------- todo
     let words_limit = 20+10
     if match_end - match_start > words_limit
         let match_end = match_start + words_limit
@@ -4862,37 +4860,42 @@ function! s:vimim_fuzzy_match(lines, keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
     let results = a:lines
-    if empty(keyboard)
-    \|| empty(results)
+    if s:vimim_fuzzy_search < 1
     \|| s:chinese_input_mode =~ 'dynamic'
-    \|| s:vimim_fuzzy_search < 1
+    \|| empty(keyboard)
+    \|| empty(results)
         return []
     endif
     if s:vimim_datafile_has_english > 0
         let results = filter(results, 'v:val !~ " #$"')
     endif
     let keyboards = split(keyboard, "'")
+    let filter_length = len(keyboards)
     if len(keyboards) < 2
-        let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
-        let pattern = s:vimim_free_fuzzy_pattern(keyboard, '.*')
-        let results = filter(results, 'v:val =~ pattern')
-    elseif len(keyboard)==len(keyboards)*2-1
-        let msg = "make special rule for cjjp => c'j'j'p "
+        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+        if len(keyboard) - len(pinyins) < 2
+            " make special rule for cjjp => c'j'j'p
+            let filter_length = len(keyboard)
+        else
+            return []
+        endif
+    else
+        " keyboard has apostrophe: ma'li from mali4
         let keyboard = join(keyboards,"")
-        let pattern = s:vimim_free_fuzzy_pattern(keyboard, "\\l\\+")
-        let results = filter(results, 'v:val =~ pattern')
     endif
-    let msg = "keyboard has apostrophe: ma'li from mali4"
-    let results = s:vimim_length_filter(results, len(keyboards))
+    let pattern = s:vimim_free_fuzzy_pattern(keyboard)
+    let results = filter(results, 'v:val =~ pattern')
+    let results = s:vimim_length_filter(results, filter_length)
     let results = s:vimim_pinyin_filter(results, keyboards)
     return results
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_free_fuzzy_pattern(keyboard, fuzzy)
-" ---------------------------------------------------
-    let fuzzies = join(split(a:keyboard,'\ze'), a:fuzzy)
-    let pattern = fuzzies  . a:fuzzy
+" --------------------------------------------
+function! s:vimim_free_fuzzy_pattern(keyboard)
+" --------------------------------------------
+    let fuzzy =  '.*'
+    let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
+    let pattern = fuzzies  . fuzzy
     let pattern = '^\<' . pattern . '\>'
     return pattern
 endfunction
@@ -4900,20 +4903,16 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_apostrophe_fuzzy_pattern(keyboards)
 " ---------------------------------------------------
-    let keyboard = get(a:keyboards,0)
-    let pattern = keyboard
-    if len(a:keyboards) > 1
-        let lowercase = "\\l*"
-        let fuzzy = lowercase . "'"
-        let keyboard2 = get(a:keyboards,1)
-        let pattern = keyboard . fuzzy . keyboard2 . lowercase
-    else
-        let lowercase = "\\l\\+"
-        let fuzzy = lowercase . "'"
-        let fuzzies = join(split(keyboard,'\ze'), fuzzy)
-        let pattern = fuzzies . lowercase
+    let more = "*"
+    let keyboards = a:keyboards
+    if len(keyboards) == 1
+        let more = "+"
+        let keyboards = split(get(a:keyboards,0), '\ze')
     endif
-    let pattern = '^\<' . pattern . '\>'
+    let lowercase = "\\l\\" . more
+    let fuzzy = lowercase . "'"
+    let fuzzies = join(keyboards, fuzzy)
+    let pattern = '^\<' . fuzzies . lowercase . '\>'
     return pattern
 endfunction
 
@@ -4925,19 +4924,19 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
     \|| s:chinese_input_mode =~ 'dynamic'
     \|| s:datafile_has_dot > 0
     \|| len(keyboard) < 2
-        return 0
+        return []
     endif
     " --------------------------------------------------
     if keyboard =~ '^\l\+\d\+'
         let msg = "[diy] ma7712li4002 => [mali,7712,4002]"
-        return 0
+        return []
     endif
     " --------------------------------------------------
     let keyboards = s:vimim_diy_keyboard2number(keyboard)
     if empty(keyboards)
         let msg = " mjads.xdhao.jdaaa "
     else
-        return 0
+        return []
     endif
     " --------------------------------------------------
     let blocks = []
@@ -4948,15 +4947,16 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
     endif
     " --------------------------------------------------
     if empty(blocks)
-        " step 3: try to break up long whole sentence
-        let blocks = s:vimim_sentence_match(a:lines, keyboard)
+        " [pinyin] cjjp breakdown: pinyin => pin'yin "
+        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+        let cloud = s:vimim_to_cloud_or_not(pinyins, [])
+        if empty(cloud)
+            " [sentence input]: break up long whole sentence
+            let blocks = s:vimim_sentence_match(a:lines, keyboard)
+        endif
     endif
     " --------------------------------------------------
-    if !empty(blocks)
-        let keyboard = get(blocks, 0)
-    endif
-    " --------------------------------------------------
-    return keyboard
+    return blocks
 endfunction
 
 " -----------------------------------------------
@@ -4971,17 +4971,15 @@ function! s:vimim_sentence_match(lines, keyboard)
     let pattern = '^\<' . keyboard . '\>'
     let match_start = match(a:lines, pattern)
     if match_start < 0
-        let msg = "jiandaolaoshiwenshenghao.<OneKey><Space>..."
+        let msg = "jiandaolaoshiwenshenghao.<C-6><Space>"
     else
         return []
     endif
     " --------------------------------------------
-    let min = 1
     let max = len(keyboard)
     let block = ''
     let last_part = ''
-    " --------------------------------------------
-    while max > 2 && min < len(keyboard)
+    while max > 2 && len(keyboard) > 1
         let max -= 1
         let position = max
         let block = strpart(keyboard, 0, position)
@@ -5859,6 +5857,28 @@ else
         endif
     endif
 
+    " [wubi][erbi] plays with pinyin in harmony
+    " -----------------------------------------
+    if s:xingma_sleep_with_pinyin > 0
+        call s:vimim_toggle_wubi_pinyin()
+    endif
+
+    " escape literal dot if [array][phonetic][erbi]
+    " ---------------------------------------------
+    if s:datafile_has_dot > 0
+        let keyboard = substitute(keyboard,'\.','\\.','g')
+    endif
+
+    " [wubi] support wubi non-stop input
+    " ----------------------------------
+    if get(s:im['wubi'],0) > 0
+        let results = s:vimim_wubi(keyboard)
+        if len(results) > 0
+            let results = s:vimim_pair_list(results)
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
     " [imode] magic 'i': English number => Chinese number
     " ---------------------------------------------------
     if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
@@ -5879,68 +5899,6 @@ else
         endif
     endif
 
-    " [cloud] magic trailing apostrophe to control cloud or not cloud
-    " ---------------------------------------------------------------
-    let keyboard2 = s:vimim_magic_tail(keyboard)
-    if empty(keyboard2)
-        let msg = "who cares about such a magic?"
-    else
-        let keyboard = keyboard2
-    endif
-
-    " [wubi][erbi] plays with pinyin in harmony
-    " -----------------------------------------
-    if s:xingma_sleep_with_pinyin > 0
-        call s:vimim_toggle_wubi_pinyin()
-    endif
-
-    " [pinyin] breakdown quanpin: pinyin => pin'yin
-    " ---------------------------------------------
-    let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
-    if len(keyboard)-len(keyboards) < 2
-        let msg = " assume it is cjjp: laystbz=>la''y''s''t''b''z "
-        let keyboard = join(split(keyboard,'\zs'),"'")
-    endif
-
-    " [shuangpin] support 5 major shuangpin with various rules
-    " --------------------------------------------------------
-    let keyboard = s:vimim_get_quanpin_from_shuangpin(keyboard)
-
-    " [cloud] to make cloud come true for woyouyigemeng
-    " -------------------------------------------------
-    let cloud = s:vimim_cloud_sogou
-    let cloud = s:vimim_to_cloud_or_not(keyboard, cloud)
-    if s:vimim_do_cloud_sogou != 0
-        let cloud = s:vimim_do_cloud_sogou
-        let s:vimim_do_cloud_sogou = 0
-    endif
-    if cloud > 0
-        let results = s:vimim_get_cloud_sogou(keyboard)
-        if s:vimimdebug > 0
-            call s:debugs('cloud_stone', keyboard)
-            call s:debugs('cloud_gold', s:debug_list(results))
-        endif
-        if empty(len(results))
-            if s:vimim_cloud_sogou > 2
-                let s:no_internet_connection += 1
-            endif
-        else
-            let s:no_internet_connection = 0
-            let s:menu_from_cloud_flag = 1
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " [wubi] support wubi non-stop input
-    " ----------------------------------
-    if get(s:im['wubi'],0) > 0
-        let results = s:vimim_wubi(keyboard)
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     " [wildcard search] explicit fuzzy search
     " ----------------------------------------
     if s:vimim_wildcard_search > 0
@@ -5951,11 +5909,16 @@ else
         endif
     endif
 
-    " escape literal dot if [array][phonetic][erbi]
-    " ---------------------------------------------
-    if s:datafile_has_dot > 0
-        let keyboard = substitute(keyboard,'\.','\\.','g')
+    " [cloud] magic trailing apostrophe to control cloud or not cloud
+    " ---------------------------------------------------------------
+    let clouds = s:vimim_magic_tail(keyboard)
+    if len(clouds) > 0
+        let keyboard = get(clouds, 0)
     endif
+
+    " [shuangpin] support 5 major shuangpin with various rules
+    " --------------------------------------------------------
+    let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
 
     " [modeless] english sentence input =>  i have a dream.
     " -----------------------------------------------------
@@ -5971,10 +5934,9 @@ else
     endif
 
     " [apostrophe] in pinyin datafile
-    " -------------------------------
-"   let keyboard = s:vimim_apostrophe(keyboard)
-"   let s:keyboard_leading_zero = keyboard
-"fuck
+    " ------------------------------- todo
+    let keyboard = s:vimim_apostrophe(keyboard)
+    let s:keyboard_leading_zero = keyboard
 
     " break up dot-separated sentence
     " -------------------------------
@@ -5985,6 +5947,7 @@ else
         if len(periods) > 0
             let msg = "enjoy.1010.2523.4498.7429.girl"
             let keyboard = get(periods, 0)
+            let clouds = []
         endif
     endif
 
@@ -5995,16 +5958,13 @@ else
 
     " word matching algorithm for Chinese word segmentation
     " -----------------------------------------------------
-    if match_start < 0
-        let keyboard2 = s:vimim_keyboard_analysis(lines, keyboard)
-        if empty(keyboard2)
-            let msg = 'sell keyboard as is'
+    let cloud = 0
+    if match_start < 0 && empty(clouds)
+        let keyboards = s:vimim_keyboard_analysis(lines, keyboard)
+        if empty(keyboards)
+            let msg = "sell the keyboard as is, without modification"
         else
-            if s:vimimdebug > 0
-                call s:debugs('keyboard_in', keyboard)
-                call s:debugs('keyboard_out', keyboard2)
-            endif
-            let keyboard = keyboard2
+            let keyboard = get(keyboards, 0)
             let pattern = "\\C" . "^" . keyboard
             let match_start = match(lines, pattern)
         endif
@@ -6012,39 +5972,57 @@ else
 
     " [DIY] "Do It Yourself" couple IM: pinyin+4corner
     " ------------------------------------------------
-    if match_start < 0
+    if match_start < 0 && empty(cloud)
         let results = s:vimim_pinyin_and_4corner(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
         endif
     endif
 
-    " [pinyin_quote_sogou] try exact one-line match
-    " ---------------------------------------------
-    if match_start > -1
-    \&& get(s:im['pinyin'],0) > 0
-    \&& s:vimim_datafile_has_apostrophe > 0
-        let results = s:vimim_whole_match(lines, keyboard)
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " do exact match search on sorted datafile
-    " ----------------------------------------
-    if match_start > -1
-        let results = s:vimim_exact_match(lines, match_start)
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " [fuzzy search] implicit wildcard search
-    " ---------------------------------------
+    " [cloud] to make cloud come true for woyouyigemeng
+    " -------------------------------------------------
     if match_start < 0
+        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+        let cloud = s:vimim_to_cloud_or_not(pinyins, clouds)
+        if cloud > 0
+            if len(keyboard) - len(pinyins) < 2
+                let msg = " do cjjp: laystbz=>l'a'y's't'b'z "
+                let keyboard = join(split(keyboard,'\zs'),"'")
+            endif
+            let results = s:vimim_get_cloud_sogou(keyboard)
+            if s:vimimdebug > 0
+                call s:debugs('cloud_stone', keyboard)
+                call s:debugs('cloud_gold', s:debug_list(results))
+            endif
+            if empty(len(results))
+                if s:vimim_cloud_sogou > 2
+                    let s:no_internet_connection += 1
+                endif
+            else
+                let s:no_internet_connection = 0
+                let s:menu_from_cloud_flag = 1
+                return s:vimim_popupmenu_list(results)
+            endif
+        endif
+    endif
+
+    if match_start < 0
+        " [fuzzy search] implicit wildcard search
+        " ---------------------------------------
         let results = s:vimim_fuzzy_match(lines, keyboard)
+        if len(results) > 0
+            let results = s:vimim_pair_list(results)
+            return s:vimim_popupmenu_list(results)
+        endif
+    else
+        " [exact match] search on the sorted datafile
+        " -------------------------------------------
+        let results = s:vimim_whole_match(lines, keyboard)
+        if s:vimim_datafile_has_apostrophe > 0
+            let results = s:vimim_whole_match(lines, keyboard)
+        else
+            let results = s:vimim_exact_match(lines, match_start)
+        endif
         if len(results) > 0
             let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
