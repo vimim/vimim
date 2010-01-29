@@ -2506,8 +2506,7 @@ endfunction
 " ----------------
 function! IMName()
 " ----------------
-" when user has defined 'stl', we should not overwrite their 'stl'.
-" instead, we provide a function for user-defined 'stl'
+" This function is for user-defined 'statusline'
     if s:initialization_loaded
         if empty(s:chinese_input_mode)
             if pumvisible()
@@ -2518,9 +2517,8 @@ function! IMName()
         else
             return s:vimim_statusline()
         endif
-    else
-        return ""
     endif
+    return ""
 endfunction
 
 " ----------------------------
@@ -2531,12 +2529,12 @@ function! s:vimim_statusline()
     let bracket_r = s:vimim_get_chinese('bracket_r')
     let plus = '＋'
     let plus = bracket_r . plus . bracket_l
-  " ------------------------------------
+    " ------------------------------------
     let key  = s:im_primary
     if has_key(s:im, key)
         let im = get(s:im[key],1)
     endif
-  " ------------------------------------
+    " ------------------------------------
     if key =~# 'wubi'
         if s:datafile_primary =~# 'wubi98'
             let im .= '98'
@@ -2545,13 +2543,13 @@ function! s:vimim_statusline()
             let im = jidian . im
         endif
     endif
-  " ------------------------------------
+    " ------------------------------------
     let pinyin = get(s:im['pinyin'],1)
     if s:shuangpin_flag > 0
         let pinyin = get(s:im['shuangpin'],0)
         let im = pinyin
     endif
-  " ------------------------------------
+    " ------------------------------------
     if s:pinyin_and_4corner > 0
         let im_digit = get(s:im['4corner'],1)
         if s:datafile_primary =~ '12345'
@@ -2560,7 +2558,7 @@ function! s:vimim_statusline()
         endif
         let im = pinyin . plus . im_digit
     endif
-  " ------------------------------------
+    " ------------------------------------
     if s:xingma_sleep_with_pinyin > 0
         let im_1 = get(s:im[s:im_primary],1)
         let im_2 = get(s:im[s:im_secondary],1)
@@ -2570,11 +2568,11 @@ function! s:vimim_statusline()
             let im = im_2 . plus . im_1
         endif
     endif
-  " ------------------------------------
+    " ------------------------------------
     if !empty(s:vimim_cloud_plugin)
         let im = get(s:im['mycloud'],0)
     endif
-  " ------------------------------------
+    " ------------------------------------
     if empty(im)
         if s:vimim_cloud_sogou > 0
             if s:vimim_cloud_sogou == 1
@@ -2587,9 +2585,9 @@ function! s:vimim_statusline()
             let im .= s:vimim_get_chinese('input')
         endif
     endif
-  " ------------------------------------
+    " ----------------------------------
     let im  = bracket_l . im . bracket_r
-  " ------------------------------------
+    " ----------------------------------
     return im
 endfunction
 
@@ -3922,7 +3920,7 @@ function! s:vimim_create_shuangpin_table(rule)
     if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0)
         call extend(sptable, {"jv":"ju","qv":"qu","xv":"xu","yv":"yu"})
     elseif s:vimim_shuangpin_microsoft > 0
-        call extend(sptable, {"jv":"jue","qv":"que","xv":"xue","yv":"yue"} )
+        call extend(sptable, {"jv":"jue","qv":"que","xv":"xue","yv":"yue"})
     endif
     " generate table for shengmu-only match
     for [key, value] in items(rules[0])
@@ -4411,10 +4409,11 @@ function! s:vimim_access_mycloud_plugin(cloud, cmd)
         call s:debugs("cmd", a:cmd)
     endif
     if s:cloud_plugin_mode == "libcall"
-        if empty(s:cloud_plugin_arg)
+        let arg = s:cloud_plugin_arg
+        if empty(arg)
             return libcall(a:cloud, s:cloud_plugin_func, a:cmd)
         else
-            return libcall(a:cloud, s:cloud_plugin_func, s:cloud_plugin_arg." ".a:cmd)
+            return libcall(a:cloud, s:cloud_plugin_func, arg." ".a:cmd)
         endif
     elseif s:cloud_plugin_mode == "system"
         return system(a:cloud." ".shellescape(a:cmd))
@@ -4585,7 +4584,6 @@ function! s:vimim_initialize_mycloud_plugin()
     let cloud = s:vimim_check_mycloud_plugin()
     " this variable should not be used after initialization
     unlet s:vimim_mycloud_url
-
     if empty(cloud)
         let s:vimim_cloud_plugin = 0
         return
@@ -4637,9 +4635,9 @@ function! s:vimim_process_mycloud_output(keyboard, output)
     if empty(output) || empty(a:keyboard)
         return []
     endif
-    " ---------------------------------------
+    " ----------------------
     " 春夢	8	4420
-    " ---------------------------------------
+    " ----------------------
     let menu = []
     for item in split(output, '\n')
         let item_list = split(item, '\t')
