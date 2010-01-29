@@ -3097,7 +3097,7 @@ function! s:vimim_get_list_from_smart_ctrl_p(keyboard)
     else
         return []
     endif
-    let pattern = s:vimim_free_fuzzy_pattern(keyboard)
+    let pattern = s:vimim_free_fuzzy_pattern(keyboard, '.*')
     let matched = match(keys(s:inputs_all), pattern)
     if matched < 0
         let msg = "nothing matched previous user input"
@@ -4312,11 +4312,16 @@ function! s:vimim_to_cloud_or_not(keyboard, cloud)
         let msg = "cloud limits to valid cloud keycodes only"
         return 0
     endif
-    " --------------------------------------------
+    " -------------------------------------------- todo
     let cloud_length = len(keyboard)
     if s:shuangpin_flag > 0
         let cloud_length = len(s:keyboard_shuangpin)
     endif
+    " --------------------------------------------
+    let msg = ' auto cloud if zi is more than user-setting'
+    let keyboards = split(keyboard, "'")
+    let cloud_length = len(keyboards)
+    " --------------------------------------------
     let do_cloud = 1
     if cloud_length < a:cloud
         let do_cloud = 0
@@ -4868,24 +4873,26 @@ function! s:vimim_fuzzy_match(lines, keyboard)
     endif
     let keyboards = split(keyboard, "'")
     if len(keyboards) < 2
-        let todo = "make special rule for cjjp => c'j'j'p "
         let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
-        let pattern = s:vimim_free_fuzzy_pattern(keyboard)
+        let pattern = s:vimim_free_fuzzy_pattern(keyboard, '.*')
         let results = filter(results, 'v:val =~ pattern')
-    else
-        let msg = "keyboard has apostrophe: ma'li from mali4"
+    elseif len(keyboard)==len(keyboards)*2-1
+        let msg = "make special rule for cjjp => c'j'j'p "
+        let keyboard = join(keyboards,"")
+        let pattern = s:vimim_free_fuzzy_pattern(keyboard, "\\l\\+")
+        let results = filter(results, 'v:val =~ pattern')
     endif
+    let msg = "keyboard has apostrophe: ma'li from mali4"
     let results = s:vimim_length_filter(results, len(keyboards))
     let results = s:vimim_pinyin_filter(results, keyboards)
     return results
 endfunction
 
-" --------------------------------------------
-function! s:vimim_free_fuzzy_pattern(keyboard)
-" --------------------------------------------
-    let fuzzy = '.*'
-    let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
-    let pattern = fuzzies  . fuzzy
+" ---------------------------------------------------
+function! s:vimim_free_fuzzy_pattern(keyboard, fuzzy)
+" ---------------------------------------------------
+    let fuzzies = join(split(a:keyboard,'\ze'), a:fuzzy)
+    let pattern = fuzzies  . a:fuzzy
     let pattern = '^\<' . pattern . '\>'
     return pattern
 endfunction
@@ -5332,7 +5339,7 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
-    let s:vimim_cloud_sogou=0
+    let s:vimim_cloud_sogou=5
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
     " ------------------------------ debug
@@ -5890,8 +5897,9 @@ else
     " [pinyin] breakdown quanpin: pinyin => pin'yin
     " ---------------------------------------------
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
-    if len(keyboards) > 4
-        let todo = " assume it is cjjp: laystbz=>la''y''s''t''b''z "
+    if len(keyboard)-len(keyboards) < 2
+        let msg = " assume it is cjjp: laystbz=>la''y''s''t''b''z "
+        let keyboard = join(split(keyboard,'\zs'),"'")
     endif
 
     " [shuangpin] support 5 major shuangpin with various rules
@@ -5964,18 +5972,19 @@ else
 
     " [apostrophe] in pinyin datafile
     " -------------------------------
-    let keyboard = s:vimim_apostrophe(keyboard)
-    let s:keyboard_leading_zero = keyboard
+"   let keyboard = s:vimim_apostrophe(keyboard)
+"   let s:keyboard_leading_zero = keyboard
+"fuck
 
     " break up dot-separated sentence
     " -------------------------------
     if keyboard =~ '[.]'
     \&& keyboard[0:0] != '.'
     \&& keyboard[-1:-1] != '.'
-        let keyboards = split(keyboard, '[.]')
-        if len(keyboards) > 0
+        let periods = split(keyboard, '[.]')
+        if len(periods) > 0
             let msg = "enjoy.1010.2523.4498.7429.girl"
-            let keyboard = get(keyboards, 0)
+            let keyboard = get(periods, 0)
         endif
     endif
 
