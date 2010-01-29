@@ -3587,8 +3587,6 @@ function! s:vimim_pinyin_filter(results, keyboards)
     endif
     let new_results = []
     let pattern = s:vimim_apostrophe_fuzzy_pattern(a:keyboards)
-let g:gp=pattern
-let g:gpp=a:keyboards
     for item in a:results
         let keyboard = get(split(item), 0)
         let chinese = get(split(item), 1)
@@ -5943,9 +5941,8 @@ else
     \&& keyboard[-1:-1] != '.'
         let periods = split(keyboard, '[.]')
         if len(periods) > 0
-            let msg = "enjoy.1010.2523.4498.7429.girl"
+            let msg = "enjoy.girl.1010.2523.4498.7429"
             let keyboard = get(periods, 0)
-            let clouds = []
         endif
     endif
 
@@ -5956,7 +5953,6 @@ else
 
     " word matching algorithm for Chinese word segmentation
     " -----------------------------------------------------
-    let cloud = 0
     if match_start < 0 && empty(clouds)
         let keyboards = s:vimim_keyboard_analysis(lines, keyboard)
         if empty(keyboards)
@@ -5966,11 +5962,8 @@ else
             let pattern = "\\C" . "^" . keyboard
             let match_start = match(lines, pattern)
         endif
-    endif
-
-    " [DIY] "Do It Yourself" couple IM: pinyin+4corner
-    " ------------------------------------------------
-    if match_start < 0 && empty(cloud)
+        " [DIY] "Do It Yourself" couple IM: pinyin+4corner
+        " ------------------------------------------------
         let results = s:vimim_pinyin_and_4corner(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
@@ -5979,11 +5972,11 @@ else
 
     " [cloud] to make cloud come true for woyouyigemeng
     " -------------------------------------------------
-    if match_start < 0
+    if match_start < 0 || get(clouds,1) > 0
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
         let cloud = s:vimim_to_cloud_or_not(pinyins, clouds)
         if cloud > 0
-            if len(keyboard) - len(pinyins) < 2
+            if len(keyboard)-len(pinyins)<2 && len(keyboard)>4
                 let msg = " do cjjp: laystbz=>l'a'y's't'b'z "
                 let keyboard = join(split(keyboard,'\zs'),"'")
             endif
