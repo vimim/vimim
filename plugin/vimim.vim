@@ -2506,17 +2506,16 @@ endfunction
 " ----------------
 function! IMName()
 " ----------------
-" This function is for user-defined 'statusline'
-    if s:initialization_loaded
-        if empty(s:chinese_input_mode)
-            if pumvisible()
-                return s:vimim_statusline()
-            else
-                return ""
-            endif
-        else
+" This function is for user-defined 'stl' 'statusline'
+    call s:vimim_initialization_once()
+    if empty(s:chinese_input_mode)
+        if pumvisible()
             return s:vimim_statusline()
+        else
+            return ""
         endif
+    else
+        return s:vimim_statusline()
     endif
     return ""
 endfunction
