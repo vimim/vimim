@@ -4960,20 +4960,13 @@ function! s:vimim_sentence_match(lines, keyboard)
     let keyboard = a:keyboard
     if empty(a:lines)
     \|| keyboard =~ '\d'
-    \|| len(keyboard) < 4
+    \|| len(keyboard) < 5
         return []
     endif
     let pattern = '^\<' . keyboard . '\>'
-    let match_start = match(a:lines, pattern)
-    if match_start < 0
-        let msg = "jiandaolaoshiwenshenghao.<C-6><Space>"
-    else
-        return []
-    endif
-    " --------------------------------------------
+    let match_start = -1
     let max = len(keyboard)
-    let block = ''
-    let last_part = ''
+    " -------------------------------------------
     while max > 2 && len(keyboard) > 1
         let max -= 1
         let position = max
@@ -4983,17 +4976,15 @@ function! s:vimim_sentence_match(lines, keyboard)
         if  match_start < 0
             let msg = "continue until match is found"
         else
-            let last_part = strpart(keyboard, position)
             break
         endif
     endwhile
-    " --------------------------------------------
+    " -------------------------------------------
     let blocks = []
-    if !empty(block)
-    \&& !empty(last_part)
-    \&& block.last_part ==# keyboard
-        call add(blocks, block)
-        call add(blocks, last_part)
+    if match_start > 0
+        let matched_part = strpart(keyboard, 0, max)
+        let trailing_part = strpart(keyboard, max)
+        let blocks = [matched_part, trailing_part]
     endif
     return blocks
 endfunction
