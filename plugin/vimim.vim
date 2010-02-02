@@ -2496,10 +2496,12 @@ endfunction
 " --------------------------------------
 function! s:vimim_i_cursor_color(switch)
 " --------------------------------------
-    if empty(a:switch)
-        highlight Cursor guifg=bg guibg=fg
-    else
-	highlight Cursor guibg=Green
+    if !empty(s:chinese_input_mode)
+        if empty(a:switch)
+            highlight! Cursor guifg=bg guibg=fg
+        else
+            highlight! Cursor guifg=bg guibg=Green
+        endif
     endif
 endfunction
 
@@ -4058,7 +4060,7 @@ function! s:vimim_first_punctuation_erbi(keyboard)
     " -------------------------------------
     let chinese_punctuatoin = 0
     if len(keyboard) == 1
-    \&& keyboard =~ "[.,/;']"
+    \&& keyboard =~ "[.,/;]"
     \&& has_key(s:punctuations_all, keyboard)
         let chinese_punctuatoin = s:punctuations_all[keyboard]
     endif
@@ -4245,9 +4247,8 @@ function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
-    \|| s:chinese_input_mode =~ 'static'
-    \|| len(keyboard) < 3
     \|| keyboard =~ '\d\d\d\d'
+    \|| len(keyboard) < 3
         return []
     endif
     let magic_tail = keyboard[-1:]
@@ -4761,8 +4762,9 @@ function! s:vimim_whole_match(lines, keyboard)
     " ---------------------------------------------
     let results = []
     let pattern = '^' . a:keyboard . '\>'
+    let pattern = '^' . a:keyboard
     let whole_match = match(a:lines, pattern)
-    if  whole_match > 0
+    if  whole_match >= 0
         let results = a:lines[whole_match : whole_match]
     endif
     return results
@@ -5323,7 +5325,7 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
-    let s:vimim_cloud_sogou=5
+    let s:vimim_cloud_sogou=6
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
     " ------------------------------ debug
@@ -5415,8 +5417,10 @@ function! s:vimim_i_setting_on()
     set completefunc=VimIM
     set completeopt=menuone
     set nolazyredraw
-    set hlsearch
-    set iminsert=1
+    if !empty(s:chinese_input_mode)
+        set hlsearch
+        set iminsert=1
+    endif
     if empty(&pumheight)
         let &pumheight=10
     endif
