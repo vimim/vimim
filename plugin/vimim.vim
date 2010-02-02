@@ -4759,7 +4759,6 @@ function! s:vimim_whole_match(lines, keyboard)
     " ---------------------------------------------
     let results = []
     let pattern = '^' . a:keyboard . '\>'
-    let pattern = '^' . a:keyboard
     let whole_match = match(a:lines, pattern)
     if  whole_match >= 0
         let results = a:lines[whole_match : whole_match]
