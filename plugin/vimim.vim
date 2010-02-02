@@ -3876,7 +3876,7 @@ return [
     \'zao', 'ze', 'zei', 'zen', 'zeng', 'zha', 'zhai', 'zhan', 'zhang', 'zhao',
     \'zhe', 'zhen', 'zheng', 'zhi', 'zhong', 'zhou', 'zhu', 'zhua', 'zhuai',
     \'zhuan', 'zhuang', 'zhui', 'zhun', 'zhuo', 'zi', 'zong', 'zou', 'zu',
-        \'zuan', 'zui', 'zun', 'zuo']
+    \'zuan', 'zui', 'zun', 'zuo']
 endfunction
 
 " --------------------------------------------
@@ -3938,8 +3938,8 @@ function! s:vimim_shuangpin_generic()
 " -----------------------------------
 " generate the default value of shuangpin table
     let shengmu_list = {}
-    for shengmu in ["b","p","m","f","d","t","l","n",
-                \"g","k","h","j","q","x","r","z","c","s","y","w"]
+    for shengmu in ["b","p","m","f","d","t","l","n","g",
+                \"k","h","j","q","x","r","z","c","s","y","w"]
         let shengmu_list[shengmu] = shengmu
     endfor
     let shengmu_list["'"] = "o"
@@ -4057,7 +4057,6 @@ function! s:vimim_first_punctuation_erbi(keyboard)
         return 0
     endif
     " [erbi] the first .,/;' is punctuation
-    " -------------------------------------
     let chinese_punctuatoin = 0
     if len(keyboard) == 1
     \&& keyboard =~ "[.,/;]"
@@ -4102,9 +4101,7 @@ function! s:vimim_toggle_wubi_pinyin()
             let s:lines_primary = s:vimim_reload_datafile(1)
         endif
         let s:lines = s:lines_primary
-    " --------------------------------
     else
-    " --------------------------------
         let s:im['pinyin'][0] = 1
         let s:im['wubi'][0] = 0
         let s:datafile = copy(s:datafile_secondary)
@@ -4803,7 +4800,7 @@ function! s:vimim_exact_match(lines, match_start)
     if matched > 0 && matched > match_start
         let match_end = matched
     endif
-    " ---------------------------------------- todo
+    " ----------------------------------------
     let words_limit = 20+10
     if match_end - match_start > words_limit
         let match_end = match_start + words_limit
