@@ -1777,9 +1777,8 @@ function! <SID>vimim_punctuation_on()
         unlet s:punctuations["'"]
     endif
     " ----------------------------
-    if s:chinese_punctuation > 0
-        if get(s:im['erbi'],0) > 0
-        \|| get(s:im['pinyin'],0) > 0
+    if s:chinese_punctuation>0 && s:vimim_latex_suite>1
+        if get(s:im['erbi'],0)>0 || get(s:im['pinyin'],0)>0
             let msg = " apostrophe is over-loaded for cloud at will "
         else
             inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
