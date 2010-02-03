@@ -3665,6 +3665,22 @@ function! s:vimim_quanpin_transform(keyboard)
                         let matchstr = matchstr[:-2]
                     endif
                 endif
+                " follow ibus' rule
+                let tempstr2 = item[end-2 : end+1]
+                let tempstr3 = item[end-1 : end+1]
+                let tempstr4 = item[end-1 : end+2]
+                if (tempstr == "ge" && tempstr3 != "ger")
+                            \ || (tempstr == "ne" && tempstr3 != "ner")
+                            \ || (tempstr4 == "gong" || tempstr3 == "gou")
+                            \ || (tempstr4 == "nong" || tempstr3 == "nou")
+                            \ || (tempstr == "ga" || tempstr == "na")
+                            \ || tempstr2 == "ier"
+
+                    if has_key(qptable, matchstr[:-2])
+                        let i -= 1
+                        let matchstr = matchstr[:-2]
+                    endif
+                endif
                 let pinyinstr .= "'" . qptable[matchstr]
                 let index += i
                 break
