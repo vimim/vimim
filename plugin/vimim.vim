@@ -3932,9 +3932,11 @@ function! s:vimim_create_shuangpin_table(rule)
     endfor
     " the jxqy+v special case handling
     if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0)
-        call extend(sptable, {"jv":"ju","qv":"qu","xv":"xu","yv":"yu"})
+        call extend(sptable, 
+                    \ {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"})
     elseif s:vimim_shuangpin_microsoft > 0
-        call extend(sptable, {"jv":"jue","qv":"que","xv":"xue","yv":"yue"})
+        call extend(sptable, 
+                    \ {"jv" : "jue", "qv" : "que", "xv" : "xue", "yv" : "yue"})
     endif
     " generate table for shengmu-only match
     for [key, value] in items(rules[0])
@@ -3953,13 +3955,13 @@ function! s:vimim_shuangpin_generic()
 " -----------------------------------
 " generate the default value of shuangpin table
     let shengmu_list = {}
-    for shengmu in ["b","p","m","f","d","t","l","n","g",
-                \"k","h","j","q","x","r","z","c","s","y","w"]
+    for shengmu in ["b", "p", "m", "f", "d", "t", "l", "n", "g",
+                \"k", "h", "j", "q", "x", "r", "z", "c", "s", "y", "w"]
         let shengmu_list[shengmu] = shengmu
     endfor
     let shengmu_list["'"] = "o"
     let yunmu_list = {}
-    for yunmu in ["a","o","e","i","u","v"]
+    for yunmu in ["a", "o", "e", "i", "u", "v"]
         let yunmu_list[yunmu] = yunmu
     endfor
     let s:shuangpin_rule = [shengmu_list, yunmu_list]
@@ -3971,15 +3973,15 @@ function! s:vimim_shuangpin_abc(rule)
 " -----------------------------------
     " vtpc => shuang pin => double pinyin
     " -----------------------------------
-    call extend(a:rule[0],{ "zh":"a","ch":"e","sh":"v" })
+    call extend(a:rule[0],{ "zh" : "a", "ch" : "e", "sh" : "v" })
     call extend(a:rule[1],{
-        \"an":"j","ao":"k","ai":"l","ang":"h",
-        \"ong":"s","ou":"b",
-        \"en":"f","er":"r","ei":"q","eng":"g","ng":"g",
-        \"ia":"d","iu":"r","ie":"x","in":"c","ing":"y",
-        \"iao":"z","ian":"w","iang":"t","iong":"s",
-        \"un":"n","ua":"d","uo":"o","ue":"m","ui":"m",
-        \"uai":"c","uan":"p","uang":"t" } )
+        \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
+        \"ong": "s", "ou" : "b",
+        \"en" : "f", "er" : "r", "ei" : "q", "eng": "g", "ng" : "g",
+        \"ia" : "d", "iu" : "r", "ie" : "x", "in" : "c", "ing": "y",
+        \"iao": "z", "ian": "w", "iang": "t", "iong" : "s",
+        \"un" : "n", "ua" : "d", "uo" : "o", "ue" : "m", "ui" : "m",
+        \"uai": "c", "uan": "p", "uang": "t" } )
     return a:rule
 endfunction
 
@@ -3988,16 +3990,16 @@ function! s:vimim_shuangpin_microsoft(rule)
 " -----------------------------------------
     " vi=>zhi ii=>chi ui=>shi keng=>keneng
     " ------------------------------------
-    call extend(a:rule[0],{ "zh":"v","ch":"i","sh":"u" })
+    call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
-        \"an":"j","ao":"k","ai":"l","ang":"h",
-        \"ong":"s","ou":"b",
-        \"en":"f","er":"r","ei":"z","eng":"g","ng":"g",
-        \"ia":"w","iu":"q","ie":"x","in":"n","ing":";",
-        \"iao":"c","ian":"m","iang":"d","iong":"s",
-        \"un":"p","ua":"w","uo":"o","ue":"t","ui":"v",
-        \"uai":"y","uan":"r","uang":"d" ,
-        \"v":"y"} )
+        \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
+        \"ong": "s", "ou" : "b",
+        \"en" : "f", "er" : "r", "ei" : "z", "eng": "g", "ng" : "g",
+        \"ia" : "w", "iu" : "q", "ie" : "x", "in" : "n", "ing": ";",
+        \"iao": "c", "ian": "m", "iang" : "d", "iong" : "s",
+        \"un" : "p", "ua" : "w", "uo" : "o", "ue" : "t", "ui" : "v",
+        \"uai": "y", "uan": "r", "uang" : "d" ,
+        \"v" : "y"} )
     return a:rule
 endfunction
 
@@ -4006,45 +4008,45 @@ function! s:vimim_shuangpin_nature(rule)
 " --------------------------------------
     " goal: 'woui' => wo shi => i am
     " -------------------------------
-    call extend(a:rule[0],{ "zh":"v","ch":"i","sh":"u" })
+    call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
-        \"an":"j","ao":"k","ai":"l","ang":"h",
-        \"ong":"s","ou":"b",
-        \"en":"f","er":"r","ei":"z","eng":"g","ng":"g",
-        \"ia":"w","iu":"q","ie":"x","in":"n","ing":"y",
-        \"iao":"c","ian":"m","iang":"d","iong":"s",
-        \"un":"p","ua":"w","uo":"o","ue":"t","ui":"v",
-        \"uai":"y","uan":"r","uang":"d" } )
+        \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
+        \"ong": "s", "ou" : "b",
+        \"en" : "f", "er" : "r", "ei" : "z", "eng": "g", "ng" : "g",
+        \"ia" : "w", "iu" : "q", "ie" : "x", "in" : "n", "ing": "y",
+        \"iao": "c", "ian": "m", "iang" : "d", "iong" : "s",
+        \"un" : "p", "ua" : "w", "uo" : "o", "ue" : "t", "ui" : "v",
+        \"uai": "y", "uan": "r", "uang" : "d" } )
     return a:rule
 endfunction
 
 " ----------------------------------------
 function! s:vimim_shuangpin_plusplus(rule)
 " ----------------------------------------
-    call extend(a:rule[0],{ "zh":"v","ch":"u","sh":"i" })
+    call extend(a:rule[0],{ "zh" : "v", "ch" : "u", "sh" : "i" })
     call extend(a:rule[1],{
-        \"an":"f","ao":"d","ai":"s","ang":"g",
-        \"ong":"y","ou":"p",
-        \"en":"r","er":"q","ei":"w","eng":"t","ng":"t",
-        \"ia":"b","iu":"n","ie":"m","in":"l","ing":"q",
-        \"iao":"k","ian":"j","iang":"h","iong":"y",
-        \"un":"z","ua":"b","uo":"o","ue":"x","ui":"v",
-        \"uai":"x","uan":"c","uang":"h" } )
+        \"an" : "f", "ao" : "d", "ai" : "s", "ang": "g",
+        \"ong": "y", "ou" : "p",
+        \"en" : "r", "er" : "q", "ei" : "w", "eng": "t", "ng" : "t",
+        \"ia" : "b", "iu" : "n", "ie" : "m", "in" : "l", "ing": "q",
+        \"iao": "k", "ian": "j", "iang" : "h", "iong" : "y",
+        \"un" : "z", "ua" : "b", "uo" : "o", "ue" : "x", "ui" : "v",
+        \"uai": "x", "uan": "c", "uang" : "h" } )
     return a:rule
 endfunction
 
 " --------------------------------------
 function! s:vimim_shuangpin_purple(rule)
 " --------------------------------------
-    call extend(a:rule[0],{ "zh":"u","ch":"a","sh":"i" })
+    call extend(a:rule[0],{ "zh" : "u", "ch" : "a", "sh" : "i" })
     call extend(a:rule[1],{
-        \"an":"r","ao":"q","ai":"p","ang":"s",
-        \"ong":"h","ou":"z",
-        \"en":"w","er":"j","ei":"k","eng":"t","ng":"t",
-        \"ia":"x","iu":"j","ie":"d","in":"y","ing":";",
-        \"iao":"b","ian":"f","iang":"g","iong":"h",
-        \"un":"m","ua":"x","uo":"o","ue":"n","ui":"n",
-        \"uai":"y","uan":"l","uang":"g"} )
+        \"an" : "r", "ao" : "q", "ai" : "p", "ang": "s",
+        \"ong": "h", "ou" : "z",
+        \"en" : "w", "er" : "j", "ei" : "k", "eng": "t", "ng" : "t",
+        \"ia" : "x", "iu" : "j", "ie" : "d", "in" : "y", "ing": ";",
+        \"iao": "b", "ian": "f", "iang" : "g", "iong" : "h",
+        \"un" : "m", "ua" : "x", "uo" : "o", "ue" : "n", "ui" : "n",
+        \"uai": "y", "uan": "l", "uang" : "g"} )
     return a:rule
 endfunction
 
