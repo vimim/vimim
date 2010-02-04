@@ -2493,12 +2493,10 @@ endfunction
 " --------------------------------------
 function! s:vimim_i_cursor_color(switch)
 " --------------------------------------
-    if !empty(s:chinese_input_mode)
-        if empty(a:switch)
-            highlight! Cursor guifg=bg guibg=fg
-        else
-            highlight! Cursor guifg=bg guibg=Green
-        endif
+    if empty(a:switch)
+        highlight! Cursor guifg=bg guibg=fg
+    else
+        highlight! Cursor guifg=bg guibg=Green
     endif
 endfunction
 
@@ -3929,11 +3927,11 @@ function! s:vimim_create_shuangpin_table(rule)
     endfor
     " the jxqy+v special case handling
     if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0)
-        call extend(sptable, 
-                    \ {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"})
+        let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
+        call extend(sptable, jxqy)
     elseif s:vimim_shuangpin_microsoft > 0
-        call extend(sptable, 
-                    \ {"jv" : "jue", "qv" : "que", "xv" : "xue", "yv" : "yue"})
+        let jxqy = {"jv" : "jue", "qv" : "que", "xv" : "xue", "yv" : "yue"}
+        call extend(sptable, jxqy)
     endif
     " generate table for shengmu-only match
     for [key, value] in items(rules[0])
@@ -5427,13 +5425,11 @@ function! s:vimim_i_setting_on()
     set completefunc=VimIM
     set completeopt=menuone
     set nolazyredraw
-    if !empty(s:chinese_input_mode)
-        set hlsearch
-        set iminsert=1
-    endif
     if empty(&pumheight)
         let &pumheight=10
     endif
+    set hlsearch
+    set iminsert=1
 endfunction
 
 " -------------------------------
