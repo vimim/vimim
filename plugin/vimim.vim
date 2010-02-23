@@ -4501,9 +4501,9 @@ function! s:vimim_check_mycloud_plugin()
                 " strip the first root if contains ":"
                 if lenpart == 3
                     if part[1][0] == '/'
-                        let cloud = part[1][1:] + ':' +  part[2]
+                        let cloud = part[1][1:] . ':' .  part[2]
                     else
-                        let cloud = part[1] + ':' + part[2]
+                        let cloud = part[1] . ':' . part[2]
                     endif
                 elseif lenpart == 2
                     let cloud = part[1]
@@ -4537,7 +4537,7 @@ function! s:vimim_check_mycloud_plugin()
             endif
             " provide the dll
             if base == 1
-                let cloud = part[1] + ':' + part[2]
+                let cloud = part[1] . ':' . part[2]
             else
                 let cloud = part[1]
             endif
