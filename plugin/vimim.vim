@@ -1838,8 +1838,8 @@ function! s:vimim_punctuation_navigation_on()
     " ---------------------------------------
     let msg = "we should never map valid keycode"
     for char in s:valid_keys
-	let i = index(hjkl_list, char)
-	if i > -1 && char != period
+        let i = index(hjkl_list, char)
+        if i > -1 && char != period
             unlet hjkl_list[i]
         endif
     endfor
@@ -2481,11 +2481,10 @@ endfunction
 " -------------------------------------------
 function! s:vimim_i_chinese_mode_autocmd_on()
 " -------------------------------------------
-    if has("autocmd") && empty(&statusline)
+    if has("autocmd")
         augroup chinese_mode_autocmd
             autocmd!
-            autocmd BufEnter * let &statusline=s:vimim_statusline()
-            autocmd BufLeave * let &statusline=s:saved_statusline
+            " nothing here
         augroup END
     endif
 endfunction
@@ -4384,7 +4383,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
         let output = s:vimim_i18n_read(output)
     endif
     " ---------------------------
-    " output='我有一個夢：13	+
+    " output='我有一個夢：13    +
     " ---------------------------
     let menu = []
     for item in split(output, '\t+')
@@ -4643,7 +4642,7 @@ function! s:vimim_process_mycloud_output(keyboard, output)
         return []
     endif
     " ----------------------
-    " 春夢	8	4420
+    " 春夢      8       4420
     " ----------------------
     let menu = []
     for item in split(output, '\n')
@@ -5415,7 +5414,6 @@ function! s:vimim_initialize_i_setting()
     let s:saved_lazyredraw=&lazyredraw
     let s:saved_hlsearch=&hlsearch
     let s:saved_pumheight=&pumheight
-    let s:saved_statusline=&statusline
     let s:saved_laststatus=&laststatus
 endfunction
 
@@ -5430,6 +5428,15 @@ function! s:vimim_i_setting_on()
     endif
     set hlsearch
     set iminsert=1
+    if empty(&statusline)
+        set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
+    elseif &statusline =~ 'IMName'
+        " nothing, because it is already in the statusline
+    elseif &statusline =~ '\V\^%!'
+        let &statusline .= '.IMName()'
+    else
+        let &statusline .= '%{IMName()}'
+    endif
 endfunction
 
 " -------------------------------
@@ -5442,7 +5449,6 @@ function! s:vimim_i_setting_off()
     let &lazyredraw=s:saved_lazyredraw
     let &hlsearch=s:saved_hlsearch
     let &pumheight=s:saved_pumheight
-    let &statusline=s:saved_statusline
     let &laststatus=s:saved_laststatus
 endfunction
 
