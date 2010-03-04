@@ -2481,13 +2481,13 @@ endfunction
 " -------------------------------------------
 function! s:vimim_i_chinese_mode_autocmd_on()
 " -------------------------------------------
-    if has("autocmd")
-	augroup chinese_mode_autocmd
-	    autocmd!
-	    autocmd BufEnter * let s:saved_statusline=&statusline | let &statusline.=s:vimim_statusline()
-	    autocmd BufLeave * let &statusline=s:saved_statusline
-	augroup END
-   endif
+    if has("autocmd") && empty(&statusline)
+        augroup chinese_mode_autocmd
+            autocmd!
+            autocmd BufEnter * let &statusline=s:vimim_statusline()
+            autocmd BufLeave * let &statusline=s:saved_statusline
+        augroup END
+    endif
 endfunction
 
 " --------------------------------------
@@ -5430,7 +5430,6 @@ function! s:vimim_i_setting_on()
     endif
     set hlsearch
     set iminsert=1
-    let s:saved_statusline=&statusline | let &statusline.=s:vimim_statusline()
 endfunction
 
 " -------------------------------
