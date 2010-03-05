@@ -1539,6 +1539,40 @@ function! s:vimim_start_chinese_mode()
     return <SID>vimim_toggle_punctuation()
 endfunction
 
+fun! s:utility_fix_get_acp_sid() "{{{
+    " Get the output of ":scriptnames" in the scriptnames_output variable.
+    let scriptnames_output = ''
+    redir => scriptnames_output
+    silent scriptnames
+    redir END
+    
+    " Split the output into lines and parse each line.	Add an entry to the
+    " "scripts" dictionary.
+    let scripts = {}
+    for line in split(scriptnames_output, "\n")
+      "we'll use autoload/acp.vim
+      if line =~ 'autoload/acp.vim'
+	" Get the first number in the line.
+	let nr = matchstr(line, '\d\+')
+	return nr
+      endif
+    endfor
+endfun "}}}
+let s:acp_sid=s:utility_fix_get_acp_sid()
+let s:keysMappingDriven = [
+			\ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+			\ 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+			\ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+			\ 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+			\ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+			\ '-', '_', '~', '^', '.', ',', ':', '!', '#', '=', '%', '$', '@', '<', '>', '/', '\',
+			\ '<Space>', '<C-h>', '<BS>', ]
+function! FixAcp()
+ " call s:unmapForMappingDriven()
+ for key in s:keysMappingDriven
+   execute printf('inoremap <silent> <buffer> %s %s<C-r>=<SNR>'.s:acp_sid.'_feedPopup() <CR>', key, key)
+ endfor
+endfunction
 " -----------------------------------
 function! s:vimim_stop_chinese_mode()
 " -----------------------------------
@@ -1546,7 +1580,7 @@ function! s:vimim_stop_chinese_mode()
         sil!exe ':%y +'
     endif
     " ------------------------------
-    if exists('*Fixcp')
+    if exists('g:loaded_acp')
         sil!call FixAcp()
     endif
     " ------------------------------
@@ -2493,9 +2527,9 @@ endfunction
 function! s:vimim_i_cursor_color(switch)
 " --------------------------------------
     if empty(a:switch)
-        highlight! Cursor guifg=bg guibg=fg
+        highlight! lCursor guifg=bg guibg=fg
     else
-        highlight! Cursor guifg=bg guibg=Green
+        highlight! lCursor guifg=bg guibg=Green
     endif
 endfunction
 
