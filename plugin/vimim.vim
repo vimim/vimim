@@ -3959,7 +3959,7 @@ function! s:vimim_create_shuangpin_table(rule)
         endif
     endfor
     " the jxqy+v special case handling
-    if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0)
+    if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0) || (s:vimim_shuangpin_nature>0)
         let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
         call extend(sptable, jxqy)
     elseif s:vimim_shuangpin_microsoft > 0
