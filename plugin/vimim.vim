@@ -208,7 +208,7 @@ function! s:vimim_finalize_session()
     endif
     " ------------------------------
     if empty(s:vimim_cloud_sogou)
-        let s:vimim_cloud_sogou = 888
+        let s:vimim_cloud_sogou = -1
     elseif s:vimim_cloud_sogou == 1
         let s:chinese_frequency = -1
     endif
