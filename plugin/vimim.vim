@@ -6,7 +6,8 @@
 " For the impatient:
 " (1) throw this script into your vim plugin directory
 " (2) open your vim and enter insert mode
-" (3) type:  vimimhelp<C-6><C-6>
+" (3) type:  vim<C-6>
+" (4) type:  vimimhelp<C-6><C-6>
 " --------------------------------------------------
 
 " -------------------------------------------------------------------
