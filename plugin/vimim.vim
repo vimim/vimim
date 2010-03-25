@@ -1568,28 +1568,33 @@ endfunction
 
 let s:acp_sid = s:getsid('autoload/acp.vim')
 let s:supertab_sid = s:getsid('plugin/supertab.vim')
-
-if !empty(s:acp_sid)
-    let s:keysMappingDriven = [
-        \ 'a','b','c','d','e','f','g','h','i','j','k','l','m',
-        \ 'n','o','p','q','r','s','t','u','v','w','x','y','z',
-        \ 'A','B','C','D','E','F','G','H','I','J','K','L','M',
-        \ 'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-        \ '0','1','2','3','4','5','6','7','8','9',
-        \ '-','_','~','^','.',',',':','!','#','=','%','$','@','<','>','/','\',
-        \ '<Space>', '<C-h>', '<BS>', '<Enter>',]
-endif
-
-" --------------------
-function! s:fix_stop()
-" --------------------
+" -------------------------------
+function! s:vimim_acp_fix_start()
+" -------------------------------
     if !empty(s:acp_sid)
-        for key in s:keysMappingDriven
+        AcpDisable
+    endif
+endfunction
+
+" ------------------------------
+function! s:vimim_acp_fix_stop()
+" ------------------------------
+    if !empty(s:acp_sid)
+        let s:ACPkeysMappingDriven = [
+            \ 'a','b','c','d','e','f','g','h','i','j','k','l','m',
+            \ 'n','o','p','q','r','s','t','u','v','w','x','y','z',
+            \ 'A','B','C','D','E','F','G','H','I','J','K','L','M',
+            \ 'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+            \ '0','1','2','3','4','5','6','7','8','9',
+            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
+            \ '<','>','/','\','<Space>', '<C-h>', '<BS>', '<Enter>',]
+        for key in s:ACPkeysMappingDriven
             exe printf('iu <silent> %s', key)
             exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp_sid)
         endfor
         AcpEnable
     endif
+    " -------------------------------------------------------------
     if !empty(s:supertab_sid)
         if g:SuperTabMappingForward =~ '^<tab>$'
             exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", s:supertab_sid)
@@ -1602,21 +1607,12 @@ function! s:fix_stop()
     endif
 endfunction
 
-" ---------------------
-function! s:fix_start()
-" ---------------------
-    if !empty(s:acp_sid)
-        AcpDisable
-    endif
-endfunction
-
 " -----------------------------------
 function! s:vimim_stop_chinese_mode()
 " -----------------------------------
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
         sil!exe ':%y +'
     endif
-    " ------------------------------
     sil!call s:vimim_stop()
 endfunction
 
@@ -2560,9 +2556,9 @@ endfunction
 function! s:vimim_i_cursor_color(switch)
 " --------------------------------------
     if empty(a:switch)
-        highlight! lCursor guifg=bg guibg=fg
+        highlight! Cursor guifg=bg guibg=fg
     else
-        highlight! lCursor guifg=bg guibg=Green
+        highlight! Cursor guifg=bg guibg=Green
     endif
 endfunction
 
@@ -5582,8 +5578,7 @@ endfunction
 " -----------------------
 function! s:vimim_start()
 " ---------------------------------------------------
-    sil!call s:fix_start()
-" -----------------------
+    sil!call s:vimim_acp_fix_start()
     sil!call s:vimim_initialization_once()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_i_cursor_color(1)
@@ -5607,8 +5602,7 @@ function! s:vimim_stop()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_initialize_mapping()
-    " ------------------------------
-    sil!call s:fix_stop()
+    sil!call s:vimim_acp_fix_stop()
 endfunction
 
 " -----------------------------------
