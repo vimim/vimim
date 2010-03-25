@@ -3,7 +3,7 @@
 " --------------------------------------------------
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
-" For impatient:
+" For the impatient:
 " (1) throw this script into your vim plugin directory
 " (2) open your vim and enter insert mode
 " (3) type:  vimimhelp<C-6><C-6>
