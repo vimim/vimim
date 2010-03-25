@@ -3,9 +3,14 @@
 " --------------------------------------------------
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
+" For impatient: 
+" (1) throw this script into your vim plugin directory
+" (2) open vim and enter "Insert mode"
+" (3) type:  vimimhelp<C-6><C-6>
+" -------------------------------------------------------------------
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
-
+" -------------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry           "]
 let egg += ["http://vimim-data.googlecode.com                      "]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html      "]
@@ -14,6 +19,7 @@ let egg += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506   "]
 let egg += ["http://pim-cloud.appspot.com                          "]
 let egg += ["http://groups.google.com/group/vimim                  "]
+" -------------------------------------------------------------------
 
 let VimIM = " ====  Introduction     ==== {{{"
 " ===========================================
