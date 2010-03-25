@@ -1539,49 +1539,82 @@ function! s:vimim_start_chinese_mode()
     return <SID>vimim_toggle_punctuation()
 endfunction
 
-fun! s:utility_fix_get_acp_sid() "{{{
+" frederick.zou: I intended to fix these plugins: supertab, autocomplpop(acp)
+" supertab[http://www.vim.org/scripts/script.php?script_id=1643]
+" autocomplpop(acp)[lhttp://www.vim.org/scripts/script.php?script_id=1879]
+let s:scriptnames_output = 0
+" -----------------------------
+function!  s:getsid(scriptname)
+" -----------------------------
+    "use s:getsid to return a script sid, translate <SID> to <SNR>N_ style
+    let l:scriptname = a:scriptname
     " Get the output of ":scriptnames" in the scriptnames_output variable.
-    let scriptnames_output = ''
-    redir => scriptnames_output
-    silent scriptnames
-    redir END
-    
-    " Split the output into lines and parse each line.	Add an entry to the
-    " "scripts" dictionary.
-    let scripts = {}
-    for line in split(scriptnames_output, "\n")
-      "we'll use autoload/acp.vim
-      if line =~ 'autoload/acp.vim'
-	" Get the first number in the line.
-	let nr = matchstr(line, '\d\+')
-	return nr
-      endif
+    " let scriptnames_output = ''
+    if empty(s:scriptnames_output)
+        redir => s:scriptnames_output
+        silent scriptnames
+        redir END
+    endif
+    for line in split(s:scriptnames_output, "\n")
+        " Only do non-blank lines
+        if line =~ l:scriptname
+            " Get the first number in the line.
+            let nr = matchstr(line, '\d\+')
+            return nr
+        endif
     endfor
-endfun "}}}
-let s:acp_sid=s:utility_fix_get_acp_sid()
-let s:keysMappingDriven = [
-			\ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-			\ 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-			\ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-			\ 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-			\ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-			\ '-', '_', '~', '^', '.', ',', ':', '!', '#', '=', '%', '$', '@', '<', '>', '/', '\',
-			\ '<Space>', '<C-h>', '<BS>', ]
-function! FixAcp()
- " call s:unmapForMappingDriven()
- for key in s:keysMappingDriven
-   execute printf('inoremap <silent> <buffer> %s %s<C-r>=<SNR>'.s:acp_sid.'_feedPopup() <CR>', key, key)
- endfor
+    return 0
 endfunction
+
+let s:acp_sid         = s:getsid('autoload/acp.vim')
+let s:supertab_sid    = s:getsid('plugin/supertab.vim')
+
+if !empty(s:acp_sid)
+    let s:keysMappingDriven = [
+        \ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+        \ 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+        \ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+        \ 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        \ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        \ '-', '_', '~', '^', '.', ',', ':', '!', '#', '=', '%', '$', '@', '<', '>', '/', '\',
+        \ '<Space>', '<C-h>', '<BS>', '<Enter>',]
+endif
+
+" --------------------
+function! s:fix_stop()
+" --------------------
+    if !empty(s:acp_sid)
+        for key in s:keysMappingDriven
+            exe printf('iu <silent> %s', key)
+            exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp_sid)
+        endfor
+        AcpEnable
+    endif
+    if !empty(s:supertab_sid)
+        if g:SuperTabMappingForward =~ '^<tab>$'
+            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", s:supertab_sid)
+        endif
+        if g:SuperTabMappingBackward =~ '^<s-tab>$'
+            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", s:supertab_sid)
+            " inoremap <silent> <Tab> <C-n>
+            " inoremap <silent> <s-Tab> <C-p>
+        endif
+    endif
+endfunction
+
+" ---------------------
+function! s:fix_start()
+" ---------------------
+    if !empty(s:acp_sid)
+        AcpDisable
+    endif
+endfunction
+
 " -----------------------------------
 function! s:vimim_stop_chinese_mode()
 " -----------------------------------
     if s:vimim_auto_copy_clipboard>0 && has("gui_running")
         sil!exe ':%y +'
-    endif
-    " ------------------------------
-    if exists('g:loaded_acp')
-        sil!call FixAcp()
     endif
     " ------------------------------
     sil!call s:vimim_stop()
@@ -5548,6 +5581,8 @@ endfunction
 
 " -----------------------
 function! s:vimim_start()
+" ---------------------------------------------------
+    sil!call s:fix_start()
 " -----------------------
     sil!call s:vimim_initialization_once()
     sil!call s:vimim_i_setting_on()
@@ -5572,6 +5607,8 @@ function! s:vimim_stop()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_initialize_mapping()
+    " ------------------------------
+    sil!call s:fix_stop()
 endfunction
 
 " -----------------------------------
