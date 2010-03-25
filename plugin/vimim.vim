@@ -3,13 +3,15 @@
 " --------------------------------------------------
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
-" For impatient: 
+" For impatient:
 " (1) throw this script into your vim plugin directory
-" (2) open vim and enter "Insert mode"
+" (2) open your vim and enter insert mode
 " (3) type:  vimimhelp<C-6><C-6>
+" --------------------------------------------------
+
 " -------------------------------------------------------------------
-let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
+let $VimIM = "$Date$"
 " -------------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry           "]
 let egg += ["http://vimim-data.googlecode.com                      "]
