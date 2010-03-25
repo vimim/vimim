@@ -208,7 +208,7 @@ function! s:vimim_finalize_session()
     endif
     " ------------------------------
     if empty(s:vimim_cloud_sogou)
-        let s:vimim_cloud_sogou = -1
+        let s:vimim_cloud_sogou = 888
     elseif s:vimim_cloud_sogou == 1
         let s:chinese_frequency = -1
     endif
@@ -4242,6 +4242,7 @@ function! s:vimim_initialize_cloud()
         endif
     endif
     let s:www_libcall = 0
+    let s:vimim_sogou_key = 0
     if filereadable(cloud)
         " in win32, strip the .dll suffix
         if has("win32") && cloud[-4:] ==? ".dll"
@@ -4251,13 +4252,7 @@ function! s:vimim_initialize_cloud()
         if ret ==# "True"
             let s:www_executable = cloud
             let s:www_libcall = 1
-            let s:vimim_sogou_key = s:vimim_get_cloud_sogou_key()
-            " only use sogou when we get a valid key
-            if empty(s:vimim_sogou_key)
-                let s:vimim_cloud_sogou = 0
-            else
-                call s:vimim_do_cloud_if_no_datafile()
-            endif
+            call s:vimim_do_cloud_if_no_datafile()
             return
         endif
     endif
@@ -4287,13 +4282,7 @@ function! s:vimim_initialize_cloud()
     if empty(s:www_executable)
         let s:vimim_cloud_sogou = 0
     else
-        let s:vimim_sogou_key = s:vimim_get_cloud_sogou_key()
-        " only use sogou when we get a valid key
-        if empty(s:vimim_sogou_key)
-            let s:vimim_cloud_sogou = 0
-        else
-            call s:vimim_do_cloud_if_no_datafile()
-        endif
+        call s:vimim_do_cloud_if_no_datafile()
     endif
 endfunction
 
@@ -4377,7 +4366,6 @@ endfunction
 " -----------------------------------------
 function! s:vimim_get_cloud_sogou_key()
 " -----------------------------------------
-    let keyboard = a:keyboard
     if empty(s:www_executable)
         return 0
     endif
@@ -4416,6 +4404,12 @@ function! s:vimim_get_cloud_sogou(keyboard)
     \|| empty(keyboard)
         return []
     endif
+
+    " only use sogou when we get a valid key
+    if empty(s:vimim_sogou_key)
+        let s:vimim_sogou_key = s:vimim_get_cloud_sogou_key()
+    endif
+
     let cloud = 'http://web.pinyin.sogou.com/api/py?key='. s:vimim_sogou_key .'&query='
     " support apostrophe as delimiter to remove ambiguity
     " (1) examples: piao => pi'ao (cloth)  xian => xi'an (city)
