@@ -3844,6 +3844,7 @@ function! s:vimim_shuangpin_transform(keyboard)
     let size = strlen(keyboard)
     let ptr = 0
     let output = ""
+    let bchar = "" " work-around for sogou
     while ptr < size
         if keyboard[ptr] !~ "[a-z;]"
             " bypass all non-characters, i.e. 0-9 and A-Z are bypassed
@@ -3857,7 +3858,7 @@ function! s:vimim_shuangpin_transform(keyboard)
             endif
             if has_key(s:shuangpin_table, sp1)
                 " the last odd shuangpin code are output as only shengmu
-                let output .= "'" . s:shuangpin_table[sp1]
+                let output .= bchar . s:shuangpin_table[sp1]
             else
                 " invalid shuangpin code are preserved
                 let output .= sp1
@@ -4250,7 +4251,13 @@ function! s:vimim_initialize_cloud()
         if ret ==# "True"
             let s:www_executable = cloud
             let s:www_libcall = 1
-            call s:vimim_do_cloud_if_no_datafile()
+            let s:vimim_sogou_key = s:vimim_get_cloud_sogou_key()
+            " only use sogou when we get a valid key
+            if empty(s:vimim_sogou_key)
+                let s:vimim_cloud_sogou = 0
+            else
+                call s:vimim_do_cloud_if_no_datafile()
+            endif
             return
         endif
     endif
@@ -4280,7 +4287,13 @@ function! s:vimim_initialize_cloud()
     if empty(s:www_executable)
         let s:vimim_cloud_sogou = 0
     else
-        call s:vimim_do_cloud_if_no_datafile()
+        let s:vimim_sogou_key = s:vimim_get_cloud_sogou_key()
+        " only use sogou when we get a valid key
+        if empty(s:vimim_sogou_key)
+            let s:vimim_cloud_sogou = 0
+        else
+            call s:vimim_do_cloud_if_no_datafile()
+        endif
     endif
 endfunction
 
@@ -4362,29 +4375,23 @@ function! s:vimim_to_cloud_or_not(keyboards, clouds)
 endfunction
 
 " -----------------------------------------
-function! s:vimim_get_cloud_sogou(keyboard)
+function! s:vimim_get_cloud_sogou_key()
 " -----------------------------------------
     let keyboard = a:keyboard
-    if s:vimim_cloud_sogou < 1
-    \|| empty(s:www_executable)
-    \|| empty(keyboard)
-        return []
+    if empty(s:www_executable)
+        return 0
     endif
-    let cloud = 'http://web.pinyin.sogou.com/web_ime/get_ajax/'
-    " support apostrophe as delimiter to remove ambiguity
-    " (1) examples: piao => pi'ao (cloth)  xian => xi'an (city)
-    " (2) add double quotes between keyboard
-    " (3) test: xi'anmeimeidepi'aosuifengpiaoyang
+    let cloud = 'http://web.pinyin.sogou.com/web_ime/patch.php'
     let output = 0
     " --------------------------------------------------------------
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     " --------------------------------------------------------------
     try
         if s:www_libcall
-            let input = cloud . keyboard . '".key'
+            let input = cloud
             let output = libcall(s:www_executable, "do_geturl", input)
         else
-            let input = cloud . '"' . keyboard . '".key'
+            let input = cloud
             let output = system(s:www_executable . input)
         endif
     catch
@@ -4395,10 +4402,53 @@ function! s:vimim_get_cloud_sogou(keyboard)
         let output = 0
     endtry
     if empty(output)
+        return 0
+    endif
+    return get(split(output, '"'), 1)
+endfunction
+
+" -----------------------------------------
+function! s:vimim_get_cloud_sogou(keyboard)
+" -----------------------------------------
+    let keyboard = a:keyboard
+    if s:vimim_cloud_sogou < 1
+    \|| empty(s:www_executable)
+    \|| empty(keyboard)
+        return []
+    endif
+    let cloud = 'http://web.pinyin.sogou.com/api/py?key='. s:vimim_sogou_key .'&query='
+    " support apostrophe as delimiter to remove ambiguity
+    " (1) examples: piao => pi'ao (cloth)  xian => xi'an (city)
+    " (2) add double quotes between keyboard
+    " (3) test: xi'anmeimeidepi'aosuifengpiaoyang
+    let output = 0
+    " --------------------------------------------------------------
+    " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
+    " --------------------------------------------------------------
+    try
+        if s:www_libcall
+            let input = cloud . keyboard
+            let output = libcall(s:www_executable, "do_geturl", input)
+        else
+            let input = '"' . cloud . keyboard . '"'
+            let output = system(s:www_executable . input)
+        endif
+    catch
+        let msg = "it looks like sogou has trouble with its cloud?"
+        if s:vimimdebug > 0
+            call s:debugs('sogou::exception=', v:exception)
+        endif
+        let output = 0
+    endtry
+    call s:debugs('sogou::outputquery=', output)
+    if empty(output)
         return []
     endif
     " --------------------------------------------------------
+    " old:
     " ime_query_res="%E6%88%91";ime_query_key="woyouyigemeng";
+    " new:
+    " ime_callback("%E6%88%91%EF%BC%9A2%09+%E5%96%94%EF%BC%9A2%09+%E6%8F%A1%EF%BC%9A2%09+%E7%AA%9D%EF%BC%9A2%09+%E5%8D%A7%EF%BC%9A2%09+%E6%B2%83%EF%BC%9A2%09+%E7%A1%AA%EF%BC%9A2%09+%E5%80%AD%EF%BC%9A2%09+%E6%B6%A1%EF%BC%9A2%09+%E8%9C%97%EF%BC%9A2%09+%E6%B8%A5%EF%BC%9A2%09+%E6%96%A1%EF%BC%9A2%09+%E9%BE%8C%EF%BC%9A2%09+%E6%8C%9D%EF%BC%9A2%09+%E8%82%9F%EF%BC%9A2%09+%E6%BF%84%EF%BC%9A2%09+%E5%81%93%EF%BC%9A2%09+%E5%B9%84%EF%BC%9A2%09+%E8%8E%B4%EF%BC%9A2%09+%E6%A5%83%EF%BC%9A2","wo",0);
     " --------------------------------------------------------
     let first = match(output, '"', 0)
     let second = match(output, '"', 0, 2)
