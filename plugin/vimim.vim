@@ -133,6 +133,8 @@ function! s:vimim_initialization_once()
         return
     endif
     " -----------------------------------------
+    highlight lCursor guifg=bg guibg=Green
+    " -----------------------------------------
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
     call s:vimim_initialize_encoding()
