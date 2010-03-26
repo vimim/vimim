@@ -1577,22 +1577,21 @@ function!  s:getsid(scriptname)
     return 0
 endfunction
 
-if &ssl
-	let s:acp_sid = s:getsid('autoload/acp.vim')
-	let s:supertab_sid = s:getsid('plugin/supertab.vim')
-else
-	if has("win32") || has("win64")
-    	let s:acp_sid = s:getsid('autoload\\acp.vim')
-		let s:supertab_sid = s:getsid('plugin\\supertab.vim')
-	else
-		let s:acp_sid = s:getsid('autoload/acp.vim')
-		let s:supertab_sid = s:getsid('plugin/supertab.vim')
-
-    endif
-endif
 " -------------------------------
 function! s:vimim_acp_fix_start()
 " -------------------------------
+    if &shellslash
+        let s:acp_sid = s:getsid('autoload/acp.vim')
+        let s:supertab_sid = s:getsid('plugin/supertab.vim')
+    else
+        if has("win32") || has("win64")
+            let s:acp_sid = s:getsid('autoload\\acp.vim')
+            s:supertab_sid = s:getsid('plugin\\supertab.vim')
+        else
+            let s:acp_sid = s:getsid('autoload/acp.vim')
+            let s:supertab_sid = s:getsid('plugin/supertab.vim')
+        endif
+    endif
     if !empty(s:acp_sid)
         AcpDisable
     endif
@@ -5599,7 +5598,7 @@ endfunction
 
 " -----------------------
 function! s:vimim_start()
-" ---------------------------------------------------
+" -----------------------
     sil!call s:vimim_acp_fix_start()
     sil!call s:vimim_initialization_once()
     sil!call s:vimim_i_setting_on()
