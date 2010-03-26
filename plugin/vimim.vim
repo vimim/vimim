@@ -133,8 +133,6 @@ function! s:vimim_initialization_once()
         return
     endif
     " -----------------------------------------
-    highlight lCursor guifg=bg guibg=Green
-    " -----------------------------------------
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
     call s:vimim_initialize_encoding()
@@ -2576,6 +2574,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_i_cursor_color(switch)
 " --------------------------------------
+    highlight! lCursor guifg=bg guibg=Green
     if empty(a:switch)
         highlight! Cursor guifg=bg guibg=fg
     else
