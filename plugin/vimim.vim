@@ -183,6 +183,7 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:www_executable = 0
+    let s:scriptnames_output = 0
     " --------------------------------
     let s:im = {}
     let s:inputs = {}
@@ -1554,7 +1555,6 @@ endfunction
 " -----------------------------------
 function!  s:vimim_getsid(scriptname)
 " -----------------------------------
-    let s:scriptnames_output = 0
     "use s:getsid to return a script sid, translate <SID> to <SNR>N_ style
     let l:scriptname = a:scriptname
     " Get the output of ":scriptnames" in the scriptnames_output variable.
@@ -5594,8 +5594,8 @@ endfunction
 " -----------------------
 function! s:vimim_start()
 " -----------------------
-    sil!call s:vimim_plugins_fix_start()
     sil!call s:vimim_initialization_once()
+	sil!call s:vimim_plugins_fix_start()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_i_cursor_color(1)
     sil!call s:vimim_super_reset()
