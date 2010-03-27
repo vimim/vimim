@@ -1552,17 +1552,20 @@ endfunction
 " supertab[http://www.vim.org/scripts/script.php?script_id=1643]
 " autocomplpop(acp)[lhttp://www.vim.org/scripts/script.php?script_id=1879]
 let s:scriptnames_output = 0
-" -----------------------------
-function!  s:getsid(scriptname)
-" -----------------------------
+" -----------------------------------
+function!  s:vimim_getsid(scriptname)
+" -----------------------------------
     "use s:getsid to return a script sid, translate <SID> to <SNR>N_ style
     let l:scriptname = a:scriptname
     " Get the output of ":scriptnames" in the scriptnames_output variable.
     " let scriptnames_output = ''
     if empty(s:scriptnames_output)
+        let saved_shellslash=&shellslash
+        set shellslash
         redir => s:scriptnames_output
         silent scriptnames
         redir END
+        let &shellslash=saved_shellslash
     endif
     for line in split(s:scriptnames_output, "\n")
         " Only do non-blank lines
@@ -1575,29 +1578,19 @@ function!  s:getsid(scriptname)
     return 0
 endfunction
 
-" -------------------------------
-function! s:vimim_acp_fix_start()
-" -------------------------------
-    if &shellslash
-        let s:acp_sid = s:getsid('autoload/acp.vim')
-        let s:supertab_sid = s:getsid('plugin/supertab.vim')
-    else
-        if has("win32") || has("win64")
-            let s:acp_sid = s:getsid('autoload\\acp.vim')
-            s:supertab_sid = s:getsid('plugin\\supertab.vim')
-        else
-            let s:acp_sid = s:getsid('autoload/acp.vim')
-            let s:supertab_sid = s:getsid('plugin/supertab.vim')
-        endif
-    endif
+" -----------------------------------
+function! s:vimim_plugins_fix_start()
+" -----------------------------------
+    let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+    let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
     if !empty(s:acp_sid)
         AcpDisable
     endif
 endfunction
 
-" ------------------------------
-function! s:vimim_acp_fix_stop()
-" ------------------------------
+" ----------------------------------
+function! s:vimim_plugins_fix_stop()
+" ----------------------------------
     if !empty(s:acp_sid)
         let s:ACPkeysMappingDriven = [
             \ 'a','b','c','d','e','f','g','h','i','j','k','l','m',
@@ -5598,7 +5591,7 @@ endfunction
 " -----------------------
 function! s:vimim_start()
 " -----------------------
-    sil!call s:vimim_acp_fix_start()
+    sil!call s:vimim_plugins_fix_start()
     sil!call s:vimim_initialization_once()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_i_cursor_color(1)
@@ -5622,7 +5615,7 @@ function! s:vimim_stop()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_initialize_mapping()
-    sil!call s:vimim_acp_fix_stop()
+    sil!call s:vimim_plugins_fix_stop()
 endfunction
 
 " -----------------------------------
