@@ -183,6 +183,7 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:www_executable = 0
+    let s:scriptnames_output = 0
     " --------------------------------
     let s:im = {}
     let s:inputs = {}
@@ -1548,10 +1549,9 @@ function! s:vimim_start_chinese_mode()
     return <SID>vimim_toggle_punctuation()
 endfunction
 
-" frederick.zou: I intended to fix these plugins: supertab, autocomplpop(acp)
+" frederick.zou fixes these plugins: supertab, autocomplpop(acp)
 " supertab[http://www.vim.org/scripts/script.php?script_id=1643]
 " autocomplpop(acp)[lhttp://www.vim.org/scripts/script.php?script_id=1879]
-let s:scriptnames_output = 0
 " -----------------------------------
 function!  s:vimim_getsid(scriptname)
 " -----------------------------------
