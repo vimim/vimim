@@ -1585,7 +1585,7 @@ function! s:vimim_plugins_fix_start()
     endif
     if !exists('s:supertab_sid')
         let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
-	endif
+    endif
     if !empty(s:acp_sid)
         AcpDisable
     endif
@@ -5595,7 +5595,7 @@ endfunction
 function! s:vimim_start()
 " -----------------------
     sil!call s:vimim_initialization_once()
-	sil!call s:vimim_plugins_fix_start()
+    sil!call s:vimim_plugins_fix_start()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_i_cursor_color(1)
     sil!call s:vimim_super_reset()
