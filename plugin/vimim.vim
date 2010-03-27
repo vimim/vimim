@@ -1559,7 +1559,7 @@ function!  s:vimim_getsid(scriptname)
     let l:scriptname = a:scriptname
     " Get the output of ":scriptnames" in the scriptnames_output variable.
     " let scriptnames_output = ''
-    if empty(s:scriptnames_output)
+    if !exists('s:scriptnames_output')
         let saved_shellslash=&shellslash
         set shellslash
         redir => s:scriptnames_output
@@ -1581,8 +1581,10 @@ endfunction
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
-    let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
-    let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    if !exists('s:acp_sid')
+        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    endif
     if !empty(s:acp_sid)
         AcpDisable
     endif
