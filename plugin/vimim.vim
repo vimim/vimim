@@ -11,8 +11,8 @@
 " --------------------------------------------------
 
 " -------------------------------------------------------------------
-let $VimIM = "$Revision$"
 let $VimIM = "$Date$"
+let $VimIM = "$Revision$"
 " -------------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry           "]
 let egg += ["http://vimim-data.googlecode.com                      "]
