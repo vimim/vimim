@@ -3,22 +3,22 @@
 " --------------------------------------------------
 "  VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ==================================================
+let $VimIM = "$Date$"
+let $VimIM = "$Revision$"
+" -------------------------------------------------------------------
+
 " For the impatient:
 " (1) throw this script into your vim plugin directory
 " (2) open your vim and enter insert mode
 " (3) type:  vim<C-6>
 " (4) type:  vimimhelp<C-6><C-6>
-" --------------------------------------------------
-
 " -------------------------------------------------------------------
-let $VimIM = "$Date$"
-let $VimIM = "$Revision$"
-" -------------------------------------------------------------------
-let egg  = ["http://code.google.com/p/vimim/issues/entry           "]
+let egg  = ["http://code.google.com/p/vimim/wiki/QuickStart        "]
+let egg += ["http://code.google.com/p/vimim/wiki/ChangeLog         "]
+let egg += ["http://code.google.com/p/vimim/issues/entry           "]
 let egg += ["http://vimim-data.googlecode.com                      "]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html      "]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html  "]
-let egg += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506   "]
 let egg += ["http://pim-cloud.appspot.com                          "]
 let egg += ["http://groups.google.com/group/vimim                  "]
@@ -55,8 +55,10 @@ let VimIM = " ====  Introduction     ==== {{{"
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
-"   Install: (1) [optional] download a datafile from code.google.com
+" Install:   (1) [optional] download a datafile from code.google.com
 "            (2) drop vimim.vim and the datafile to the plugin directory
+" -----------------------------------------------------------
+" Latest:    http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim
 " -----------------------------------------------------------
 " EasterEgg: (in Vim Insert Mode, type 4 chars:) vim<C-6>
 " -----------------------------------------------------------
@@ -727,14 +729,15 @@ function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
     " -------------------------------------------
-    call add(eggs, "错误报告：" . s:vimimhelp[0])
-    call add(eggs, "民间词库：" . s:vimimhelp[1])
-    call add(eggs, "最新主页：" . s:vimimhelp[2])
-    call add(eggs, "最新程式：" . s:vimimhelp[3])
-    call add(eggs, "试用版本：" . s:vimimhelp[4])
-    call add(eggs, "官方网址：" . s:vimimhelp[5])
-    call add(eggs, "自己的云：" . s:vimimhelp[6])
-    call add(eggs, "新闻论坛：" . s:vimimhelp[7])
+    call add(eggs, "快速指南：" . s:vimimhelp[0])
+    call add(eggs, "变更记录：" . s:vimimhelp[1])
+    call add(eggs, "错误报告：" . s:vimimhelp[2])
+    call add(eggs, "民间词库：" . s:vimimhelp[3])
+    call add(eggs, "最新主页：" . s:vimimhelp[4])
+    call add(eggs, "最新程式：" . s:vimimhelp[5])
+    call add(eggs, "官方网址：" . s:vimimhelp[6])
+    call add(eggs, "自己的云：" . s:vimimhelp[7])
+    call add(eggs, "新闻论坛：" . s:vimimhelp[8])
     " -------------------------------------------
     return map(eggs, '"VimIM " .v:val . "　"')
 endfunction
