@@ -6213,6 +6213,7 @@ function! s:vimim_chinese_mode_mapping_on()
     endif
        imap <silent> <C-Bslash> <Plug>VimimChinesemode
     noremap <silent> <C-Bslash> :call <SID>Chinesemode()<CR>
+    vmap <silent> <C-Bslash> :call <SID>Chinesemode()<CR>gv
 endfunction
 
 " --------------------------------------
@@ -6235,10 +6236,10 @@ function! s:vimim_ctrl_space_mapping_on()
 " ---------------------------------------
     if s:vimim_ctrl_space_to_toggle == 1
         if has("gui_running")
-            nmap <C-Space> <C-Bslash>
+            map <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
         elseif has("win32unix")
-            nmap <C-@> <C-Bslash>
+            map <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
         endif
     elseif s:vimim_ctrl_space_to_toggle == 2
