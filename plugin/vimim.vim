@@ -660,7 +660,6 @@ function! s:vimim_egg_vimimegg()
     call add(eggs, "程式　vimimvim")
     call add(eggs, "幫助　vimimhelp")
     call add(eggs, "測試　vimimdebug")
-    call add(eggs, "統計　vimimstat")
     call add(eggs, "內碼　vimimunicode")
     call add(eggs, "設置　vimimdefaults")
     return map(eggs,  '"VimIM 彩蛋：" . v:val . "　"')
@@ -680,31 +679,6 @@ function! s:vimim_egg_vim()
     let eggs += ["vim   " . vim3 ]
     let eggs += ["vim   " . vim4 ]
     let eggs += ["vimim " . vim5 ]
-    return eggs
-endfunction
-
-" -------------------------------
-function! s:vimim_egg_vimimstat()
-" -------------------------------
-    let eggs = []
-    let stone = get(g:vimim,1)
-    let gold = get(g:vimim,2)
-    " ------------------------
-    let stat = "总计输入：". gold ." 个汉字"
-    call add(eggs, stat)
-    " ------------------------
-    if gold > 0
-        let stat = "平均码长：". string(stone*1.0/gold)
-        call add(eggs, stat)
-    endif
-    " ------------------------
-    let duration = get(g:vimim,3)
-    let rate = gold*60/duration
-    let stat = "打字速度：". string(rate) ." 汉字/分钟"
-    call add(eggs, stat)
-    " ------------------------
-    let egg = '"stat  " . v:val . "　"'
-    call map(eggs, egg)
     return eggs
 endfunction
 
@@ -5464,7 +5438,6 @@ call add(s:vimims, VimIM)
 " -------------------------------------
 function! s:vimim_initialize_backdoor()
 " -------------------------------------
-    let g:vimim = ["",0,0,1,localtime()]
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
     let s:datafile_primary = 0
@@ -5635,14 +5608,11 @@ function! s:vimim_start()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_reload_datafile(1)
-    let g:vimim[4] = localtime()
 endfunction
 
 " ----------------------
 function! s:vimim_stop()
 " ----------------------
-    let duration = localtime() - get(g:vimim,4)
-    let g:vimim[3] += duration
     sil!autocmd! onekey_mode_autocmd
     sil!autocmd! chinese_mode_autocmd
     sil!call s:vimim_stop_sexy_mode()
@@ -5710,7 +5680,6 @@ function! g:vimim_reset_after_insert()
     endif
     " --------------------------------
     let chinese = s:vimim_popup_word()
-    let g:vimim[2] += (len(chinese)/s:multibyte)
     if s:chinese_frequency > 0
         let both_list = s:vimim_get_new_order_list(chinese)
         call s:vimim_update_chinese_frequency_usage(both_list)
@@ -5936,13 +5905,6 @@ else
         if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
-    endif
-
-    " [record] keep track of all valid inputs
-    " ---------------------------------------
-    if keyboard !~ '\s'
-        let g:vimim[0] .=  keyboard . "."
-        let g:vimim[1] +=  len(keyboard)
     endif
 
     " [eggs] hunt classic easter egg ... vim<C-6>
