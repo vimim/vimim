@@ -592,10 +592,10 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_datafile_is_not_utf8")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
+    call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_fuzzy_search")
     call add(G, "g:vimim_imode_universal")
     call add(G, "g:vimim_imode_pinyin")
-    call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_reverse_pageup_pagedown")
     call add(G, "g:vimim_sexy_input_style")
@@ -2413,6 +2413,32 @@ function! s:vimim_pageup_pagedown(matched_list)
     return matched_list
 endfunction
 
+" ------------------------------------------
+function! s:vimim_no_popupmenu_list(periods)
+" ------------------------------------------
+    " for example: enjoy.girl.1010.2523.4498.7429
+    if empty(a:periods)
+        return ""
+    endif
+    call s:vimim_reload_datafile(0)
+    let no_popupmenu_result = ""
+    for keyboard in a:periods
+        let pattern = "^" . keyboard
+        let match_start = match(s:lines, pattern)
+        if  match_start > -1
+            let matched_list = s:vimim_exact_match(s:lines, match_start)
+            if len(matched_list) > 0
+                let first_pair = get(matched_list,0)
+                let first_stone = get(split(first_pair," "),1)
+                let no_popupmenu_result .= first_stone
+            endif
+        else
+            continue
+        endif
+    endfor
+    return no_popupmenu_result
+endfunction
+
 " --------------------------------------------
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
@@ -2951,8 +2977,11 @@ function! g:vimim_menu_select()
         let select_not_insert = '\<C-P>\<Down>'
         if s:vimim_insert_without_popup > 0
         \&& s:insert_without_popup > 0
-            let s:insert_without_popup = 0
             let select_not_insert = '\<C-Y>'
+            if s:insert_without_popup > 1
+                let select_not_insert .= '\<Esc>'
+            endif
+            let s:insert_without_popup = 0
         endif
     endif
     sil!exe 'sil!return "' . select_not_insert . '"'
@@ -5461,6 +5490,8 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_cloud_sogou=6
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
+    let s:vimim_frequency_first_fix=1
+    let s:vimim_insert_without_popup=1
     " ------------------------------ debug
     let s:vimim_chinese_frequency=14
     let s:vimim_custom_laststatus=0
@@ -6068,15 +6099,22 @@ else
     let keyboard = s:vimim_apostrophe(keyboard)
     let s:keyboard_leading_zero = keyboard
 
-    " break up dot-separated sentence
+    " break up dot-separated sentence:
     " -------------------------------
     if keyboard =~ '[.]'
     \&& keyboard[0:0] != '.'
     \&& keyboard[-1:-1] != '.'
         let periods = split(keyboard, '[.]')
         if len(periods) > 0
-            let msg = "enjoy.girl.1010.2523.4498.7429"
-            let keyboard = get(periods, 0)
+            if s:vimim_insert_without_popup > 0
+                " no popup, one-to-one translation with fault-tolerance
+                let s:insert_without_popup = 2
+                let results = [s:vimim_no_popupmenu_list(periods)]
+                return results
+            else
+                " always do popup as one-to-many translation
+                let keyboard = get(periods, 0)
+            endif
         endif
     endif
 
