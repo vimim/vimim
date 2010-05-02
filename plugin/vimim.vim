@@ -4461,7 +4461,8 @@ function! s:vimim_get_cloud_sogou(keyboard)
         let s:vimim_sogou_key = s:vimim_get_cloud_sogou_key()
     endif
 
-    let cloud = 'http://web.pinyin.sogou.com/api/py?key='. s:vimim_sogou_key .'&query='
+    let cloud = 'http://web.pinyin.sogou.com/api/py?key='
+    let cloud = cloud . s:vimim_sogou_key .'&query='
     " support apostrophe as delimiter to remove ambiguity
     " (1) examples: piao => pi'ao (cloth)  xian => xi'an (city)
     " (2) add double quotes between keyboard
@@ -4489,11 +4490,6 @@ function! s:vimim_get_cloud_sogou(keyboard)
     if empty(output)
         return []
     endif
-    " --------------------------------------------------------
-    " old:
-    " ime_query_res="%E6%88%91";ime_query_key="woyouyigemeng";
-    " new:
-    " ime_callback("%E6%88%91%EF%BC%9A2%09+%E5%96%94%EF%BC%9A2%09+%E6%8F%A1%EF%BC%9A2%09+%E7%AA%9D%EF%BC%9A2%09+%E5%8D%A7%EF%BC%9A2%09+%E6%B2%83%EF%BC%9A2%09+%E7%A1%AA%EF%BC%9A2%09+%E5%80%AD%EF%BC%9A2%09+%E6%B6%A1%EF%BC%9A2%09+%E8%9C%97%EF%BC%9A2%09+%E6%B8%A5%EF%BC%9A2%09+%E6%96%A1%EF%BC%9A2%09+%E9%BE%8C%EF%BC%9A2%09+%E6%8C%9D%EF%BC%9A2%09+%E8%82%9F%EF%BC%9A2%09+%E6%BF%84%EF%BC%9A2%09+%E5%81%93%EF%BC%9A2%09+%E5%B9%84%EF%BC%9A2%09+%E8%8E%B4%EF%BC%9A2%09+%E6%A5%83%EF%BC%9A2","wo",0);
     " --------------------------------------------------------
     let first = match(output, '"', 0)
     let second = match(output, '"', 0, 2)
@@ -5460,7 +5456,7 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
-    let s:vimim_cloud_sogou=6
+    let s:vimim_cloud_sogou=888
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
     let s:vimim_frequency_first_fix=1
