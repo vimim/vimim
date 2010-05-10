@@ -198,7 +198,6 @@ function! s:vimim_initialize_session()
     let s:lines_secondary = []
     let s:seamless_positions = []
     " --------------------------------
-    let s:boshiamy_list = split("[]',.",'\zs')
     let s:current_positions = [0,0,1,0]
     let s:alphabet_lines = []
     let s:datafile = 0
@@ -1862,9 +1861,11 @@ function! <SID>vimim_punctuation_on()
         iunmap <Bslash>
     endif
     if get(s:im['boshiamy'],0) > 0
-        for char in s:boshiamy_list
-            iunmap char
-        endfor
+        iunmap '
+        iunmap "
+        iunmap .
+        iunmap [
+        iunmap ]
     endif
     " ----------------------------
     for _ in keys(s:punctuations)
