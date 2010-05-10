@@ -36,7 +36,7 @@ let VimIM = " ====  Introduction     ==== {{{"
 " -----------------------------------------------------------
 "  Features: * "Plug & Play"
 "            * "Plug & Play": "Cloud Input at will" for all
-"            * "Plug & Play": "Cloud Input" with five Shuangpin
+"            * "Plug & Play": "Cloud Input" with six Shuangpin
 "            * "Plug & Play": "Cloud" from Sogou or from MyCloud
 "            * "Plug & Play": "Wubi and Pinyin" dynamic switch
 "            * "Plug & Play": "Pinyin and 4Corner" in harmony
@@ -198,6 +198,7 @@ function! s:vimim_initialize_session()
     let s:lines_secondary = []
     let s:seamless_positions = []
     " --------------------------------
+    let s:boshiamy_list = split("[]',.",'\zs')
     let s:current_positions = [0,0,1,0]
     let s:alphabet_lines = []
     let s:datafile = 0
@@ -241,6 +242,12 @@ function! s:vimim_finalize_session()
     if s:shuangpin_flag > 0
         let s:im_primary = 'pinyin'
         let s:im['pinyin'][0] = 1
+    endif
+    " ------------------------------
+    if get(s:im['boshiamy'],0) > 0
+        let s:vimim_datafile_has_apostrophe = 1
+        let s:vimim_chinese_punctuation = -1
+        let s:im['pinyin'][0] = 0
     endif
     " ------------------------------
     if s:im_primary =~# '^\d\w\+'
@@ -335,6 +342,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['nature'] = ['自然']
     let s:chinese['plusplus'] = ['拼音加加']
     let s:chinese['purple'] = ['紫光']
+    let s:chinese['flypy'] = ['小鹤','小鶴']
     let s:chinese['bracket_l'] = ['《','【']
     let s:chinese['bracket_r'] = ['》','】']
 endfunction
@@ -1372,6 +1380,7 @@ function! s:vimim_onekey_action(onekey)
     " ---------------------------------------------------
     if char_before_before !~# "[0-9a-z]"
     \&& has_key(s:punctuations, byte_before)
+    \&& get(s:im['boshiamy'],0) < 1
         let onekey = ""
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
@@ -1414,7 +1423,7 @@ function! s:vimim_onekey_action(onekey)
         endif
     endif
     " ---------------------------------------------------
-    if byte_before ==# "'"
+    if byte_before ==# "'" && get(s:im['boshiamy'],0)<1
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
@@ -1852,6 +1861,11 @@ function! <SID>vimim_punctuation_on()
         iunmap "
         iunmap <Bslash>
     endif
+    if get(s:im['boshiamy'],0) > 0
+        for char in s:boshiamy_list
+            iunmap char
+        endfor
+    endif
     " ----------------------------
     for _ in keys(s:punctuations)
         sil!exe 'inoremap <silent> '._.'
@@ -1876,6 +1890,10 @@ endfunction
 " -------------------------------------------
 function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
+    if s:vimim_chinese_punctuation < 0
+        return
+    endif
+    " ---------------------------------------
     let default = "=-[]"
     let semicolon = ";"
     let period = "."
@@ -2033,7 +2051,7 @@ function! s:vimim_imode_number(keyboard, prefix)
     endif
     let keyboard = a:keyboard
     " ------------------------------------------
-    if a:prefix ==# "'"
+    if a:prefix ==# "'" && get(s:im['boshiamy'],0)<1
         let keyboard = substitute(keyboard,"'",'i','g')
     endif
     " ------------------------------------------
@@ -2493,13 +2511,18 @@ function! s:vimim_build_popupmenu(matched_list)
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             let tail = ''
-            if keyboard =~ '[.]' && s:datafile_has_dot < 1
+            if keyboard =~ '[.]'
+            \&& s:datafile_has_dot < 1
+            \&& get(s:im['boshiamy'],0) < 1
                 let dot = match(keyboard, '[.]')
                 let tail = strpart(keyboard, dot+1)
             elseif keyboard !~? '^vim'
                 let tail = strpart(keyboard, len(menu))
             endif
             if tail =~ '\w'
+                let chinese .=  tail
+            endif
+            if tail =~# s:valid_key && get(s:im['boshiamy'],0)>0
                 let chinese .=  tail
             endif
         endif
@@ -4021,7 +4044,7 @@ function! s:vimim_create_shuangpin_table(rule)
         endif
     endfor
     " the jxqy+v special case handling
-    if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0) 
+    if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0)
         || (s:vimim_shuangpin_nature>0) || (s:vimim_shuangpin_flypy>0)
         let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
         call extend(sptable, jxqy)
@@ -4154,8 +4177,9 @@ function! s:vimim_shuangpin_purple(rule)
     return a:rule
 endfunction
 
-" --------------------------------------
+" -------------------------------------
 function! s:vimim_shuangpin_flypy(rule)
+" -------------------------------------
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "c", "ai" : "d", "ang": "h",
@@ -4380,6 +4404,7 @@ function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
+    \|| get(s:im['boshiamy'],0) > 0
     \|| keyboard =~ '\d\d\d\d'
     \|| len(keyboard) < 3
         return []
@@ -5842,7 +5867,7 @@ if a:start
         let start_column = last_seen_nonsense_column
         let char_1st = current_line[start_column]
         let char_2nd = current_line[start_column+1]
-        if char_1st ==# "'"
+        if char_1st ==# "'" && get(s:im['boshiamy'],0)<1
             if s:vimim_imode_universal > 0
             \&& char_2nd =~# "[0-9ds']"
                 let msg = "sharing apostrophe as much as possible"
@@ -5901,7 +5926,7 @@ else
 
     " ignore multiple non-sense dots
     " ------------------------------
-    if keyboard =~# '^[\.\.\+]'
+    if keyboard =~# '^[\.\.\+]' && get(s:im['boshiamy'],0)<1
         let s:pattern_not_found += 1
         return
     endif
@@ -5918,6 +5943,7 @@ else
     " ignore non-sense one char input
     " -------------------------------
     if s:vimim_static_input_style < 2
+    \&& get(s:im['boshiamy'],0) < 1
     \&& len(keyboard) == 1
     \&& keyboard !~# '\w'
         return
@@ -6048,6 +6074,7 @@ else
     " [imode] magic leading apostrophe: universal imode
     " -------------------------------------------------
     if s:vimim_imode_universal > 0
+    \&& get(s:im['boshiamy'],0) < 1
     \&& keyboard =~# "^'"
     \&& (empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'sexy')
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
@@ -6098,6 +6125,7 @@ else
     " break up dot-separated sentence:
     " -------------------------------
     if keyboard =~ '[.]'
+    \&& get(s:im['boshiamy'],0) < 1
     \&& keyboard[0:0] != '.'
     \&& keyboard[-1:-1] != '.'
         let periods = split(keyboard, '[.]')
