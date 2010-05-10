@@ -300,6 +300,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['xinhua'] = ['新华','新華']
     let s:chinese['pinyin'] = ['拼音']
     let s:chinese['cangjie'] = ['仓颉','倉頡']
+    let s:chinese['boshiamy'] = ['呒虾米','嘸蝦米']
     let s:chinese['zhengma'] = ['郑码','鄭碼']
     let s:chinese['yong'] = ['永码','永碼']
     let s:chinese['nature'] = ['自然']
@@ -354,6 +355,7 @@ function! s:vimim_dictionary_im()
     call add(key_keycode, ['xinhua', "[0-9a-z'.]"])
     call add(key_keycode, ['pinyin', "[0-9a-z'.]"])
     call add(key_keycode, ['cangjie', "[a-z'.]"])
+    call add(key_keycode, ['boshiamy', "[][a-z'.,]"])
     call add(key_keycode, ['zhengma', "[a-z'.]"])
     call add(key_keycode, ['yong', "[a-z'.;/]"])
     call add(key_keycode, ['nature', "[a-z'.]"])
@@ -399,6 +401,7 @@ function! s:vimim_scan_plugin_to_invoke_im()
     let input_methods = []
     " ----------------------------------------
     call s:vimim_add_im_if_empty(input_methods, 'cangjie')
+    call s:vimim_add_im_if_empty(input_methods, 'boshiamy')
     call s:vimim_add_im_if_empty(input_methods, 'zhengma')
     call s:vimim_add_im_if_empty(input_methods, 'quick')
     call s:vimim_add_im_if_empty(input_methods, 'array30')
@@ -489,6 +492,7 @@ function! s:vimim_scan_plugin_for_more_im()
     let im = 0
     if get(s:im['4corner'],0) > 0
     \|| get(s:im['cangjie'],0) > 0
+    \|| get(s:im['boshiamy'],0) > 0
     \|| get(s:im['erbi'],0) > 0
     \|| get(s:im['wubi'],0) > 0
     \|| get(s:im['quick'],0) > 0
