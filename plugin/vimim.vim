@@ -608,6 +608,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_nature")
     call add(G, "g:vimim_shuangpin_plusplus")
     call add(G, "g:vimim_shuangpin_purple")
+    call add(G, "g:vimim_shuangpin_flypy")
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_unicode_lookup")
@@ -3830,6 +3831,9 @@ function! s:vimim_dictionary_shuangpin()
         let purple = s:vimim_get_chinese('purple')
         let im = purple . im
         let keycode = "[0-9a-z'.;]"
+    elseif s:vimim_shuangpin_flypy > 0
+        let nature = s:vimim_get_chinese('flypy')
+        let im = nature . im
     else
         let s:shuangpin_flag = 0
     endif
@@ -3861,6 +3865,8 @@ function! s:vimim_initialize_shuangpin()
         let rules = s:vimim_shuangpin_plusplus(rules)
     elseif s:vimim_shuangpin_purple > 0
         let rules = s:vimim_shuangpin_purple(rules)
+    elseif s:vimim_shuangpin_flypy > 0
+        let rules = s:vimim_shuangpin_flypy(rules)
     endif
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
 endfunction
@@ -4015,12 +4021,26 @@ function! s:vimim_create_shuangpin_table(rule)
         endif
     endfor
     " the jxqy+v special case handling
-    if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0) || (s:vimim_shuangpin_nature>0)
+    if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0) 
+        || (s:vimim_shuangpin_nature>0) || (s:vimim_shuangpin_flypy>0)
         let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
         call extend(sptable, jxqy)
     elseif s:vimim_shuangpin_microsoft > 0
         let jxqy = {"jv" : "jue", "qv" : "que", "xv" : "xue", "yv" : "yue"}
         call extend(sptable, jxqy)
+    endif
+    " the flypy 小鹤双拼 special case handling
+    if s:vimim_shuangpin_flypy>0
+        let flypy = {"aa" : "a", "oo" : "o", "ee" : "e",
+                    \"an" : "an", "ao" : "ao", "ai" : "ai", "ah": "ang",
+                    \"os" : "ong","ou" : "ou",
+                    \"en" : "en", "er" : "er", "ei" : "ei", "eg": "eng" }
+        call extend(sptable, flypy)
+    endif
+    " the nature 自然码 special case handling
+    if s:vimim_shuangpin_nature>0
+        let nature = {"aa" : "a", "oo" : "o", "ee" : "e" }
+        call extend(sptable, nature)
     endif
     " generate table for shengmu-only match
     for [key, value] in items(rules[0])
@@ -4131,6 +4151,20 @@ function! s:vimim_shuangpin_purple(rule)
         \"iao": "b", "ian": "f", "iang" : "g", "iong" : "h",
         \"un" : "m", "ua" : "x", "uo" : "o", "ue" : "n", "ui" : "n",
         \"uai": "y", "uan": "l", "uang" : "g"} )
+    return a:rule
+endfunction
+
+" --------------------------------------
+function! s:vimim_shuangpin_flypy(rule)
+    call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
+    call extend(a:rule[1],{
+        \"an" : "j", "ao" : "c", "ai" : "d", "ang": "h",
+        \"ong": "s", "ou" : "z",
+        \"en" : "f", "er" : "r", "ei" : "w", "eng": "g", "ng" : "g",
+        \"ia" : "x", "iu" : "q", "ie" : "p", "in" : "b", "ing": "k",
+        \"iao": "n", "ian": "m", "iang" : "l", "iong" : "s",
+        \"un" : "y", "ua" : "x", "uo" : "o", "ue" : "t", "ui" : "v",
+        \"uai": "k", "uan": "r", "uang" : "l" } )
     return a:rule
 endfunction
 
