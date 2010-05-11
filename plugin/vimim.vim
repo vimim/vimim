@@ -245,7 +245,13 @@ function! s:vimim_finalize_session()
     " ------------------------------
     if get(s:im['boshiamy'],0) > 0
         let s:vimim_chinese_punctuation = -1
+        let s:vimim_punctuation_navigation = -1
         let s:im['pinyin'][0] = 0
+    endif
+    " ------------------------------
+    if get(s:im['phonetic'],0) > 0
+        let s:vimim_fuzzy_search = 0
+        let s:vimim_static_input_style = 1
     endif
     " ------------------------------
     if s:im_primary =~# '^\d\w\+'
@@ -361,13 +367,13 @@ function! s:vimim_dictionary_im()
     call add(key_keycode, ['xinhua', "[0-9a-z'.]"])
     call add(key_keycode, ['pinyin', "[0-9a-z'.]"])
     call add(key_keycode, ['cangjie', "[a-z'.]"])
-    call add(key_keycode, ['boshiamy', "[][a-z'.,]"])
     call add(key_keycode, ['zhengma', "[a-z'.]"])
     call add(key_keycode, ['yong', "[a-z'.;/]"])
     call add(key_keycode, ['nature', "[a-z'.]"])
     call add(key_keycode, ['quick', "[0-9a-z'.]"])
     call add(key_keycode, ['wu', "[a-z'.]"])
     call add(key_keycode, ['array30', "[a-z.,;/]"])
+    call add(key_keycode, ['boshiamy', "[][a-z'.,]"])
     call add(key_keycode, ['phonetic', "[0-9a-z.,;/]"])
     call add(key_keycode, ['erbi', "[a-z'.,;/]"])
     " ------------------------------------
@@ -498,18 +504,20 @@ function! s:vimim_scan_plugin_for_more_im()
     let im = 0
     if get(s:im['4corner'],0) > 0
     \|| get(s:im['cangjie'],0) > 0
-    \|| get(s:im['boshiamy'],0) > 0
     \|| get(s:im['erbi'],0) > 0
     \|| get(s:im['wubi'],0) > 0
     \|| get(s:im['quick'],0) > 0
-    \|| get(s:im['array30'],0) > 0
     \|| get(s:im['xinhua'],0) > 0
     \|| get(s:im['zhengma'],0) > 0
         let msg = "plug and play <=> xingma and pinyin"
         let im = s:vimim_scan_plugin_to_invoke_im()
     endif
     " -------------------------------------
-    if empty(im) || s:pinyin_and_4corner > 1
+    if empty(im)
+    \|| s:pinyin_and_4corner > 1
+    \|| get(s:im['boshiamy'],0) < 1
+    \|| get(s:im['array30'],0) < 1
+    \|| get(s:im['phonetic) < 1
         let msg = "only play with one plugin datafile"
     elseif get(s:im['4corner'],0) > 0
         let s:pinyin_and_4corner = 1
@@ -2514,15 +2522,14 @@ function! s:vimim_build_popupmenu(matched_list)
             if keyboard =~ '[.]'
             \&& s:datafile_has_dot < 1
             \&& get(s:im['boshiamy'],0) < 1
+            \&& get(s:im['phonetic'],0) < 1
                 let dot = match(keyboard, '[.]')
                 let tail = strpart(keyboard, dot+1)
             elseif keyboard !~? '^vim'
                 let tail = strpart(keyboard, len(menu))
             endif
             if tail =~ '\w'
-                let chinese .=  tail
-            endif
-            if tail =~# s:valid_key && get(s:im['boshiamy'],0)>0
+            \|| (tail =~# s:valid_key && get(s:im['boshiamy'],0)>0)
                 let chinese .=  tail
             endif
         endif
@@ -2742,6 +2749,9 @@ endfunction
 " ---------------------------------
 function! s:vimim_action_label_on()
 " ---------------------------------
+    if s:vimim_custom_menu_label < 1
+        return
+    endif
     let labels = split(s:abcdefghi, '\zs')
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
@@ -2830,6 +2840,9 @@ endfunction
 function! <SID>vimim_label_1234567890_filter(n)
 " ---------------------------------------------
     let label = a:n
+    if s:vimim_custom_menu_label < 1
+        return a:n
+    endif
     if pumvisible()
         let msg = "give 1234567890 label new meaning"
         let s:menu_4corner_filter = a:n
@@ -4405,6 +4418,7 @@ function! s:vimim_magic_tail(keyboard)
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
     \|| get(s:im['boshiamy'],0) > 0
+    \|| get(s:im['phonetic'],0) > 0
     \|| keyboard =~ '\d\d\d\d'
     \|| len(keyboard) < 3
         return []
@@ -5851,7 +5865,10 @@ if a:start
     let nonsense_pattern = "[0-9.']"
     if get(s:im['pinyin'],0) > 0
         let nonsense_pattern = "[0-9.]"
+    elseif get(s:im['phonetic'],0) > 0
+        let nonsense_pattern = "[.]"
     endif
+
     while start_column > 0 && byte_before =~# s:valid_key
         let start_column -= 1
         if byte_before !~# nonsense_pattern
@@ -5926,7 +5943,9 @@ else
 
     " ignore multiple non-sense dots
     " ------------------------------
-    if keyboard =~# '^[\.\.\+]' && get(s:im['boshiamy'],0)<1
+    if keyboard =~# '^[\.\.\+]'
+    \&& get(s:im['boshiamy'],0) < 1
+    \&& get(s:im['phonetic'],0) < 1
         let s:pattern_not_found += 1
         return
     endif
@@ -5944,6 +5963,7 @@ else
     " -------------------------------
     if s:vimim_static_input_style < 2
     \&& get(s:im['boshiamy'],0) < 1
+    \&& get(s:im['phonetic'],0) < 1
     \&& len(keyboard) == 1
     \&& keyboard !~# '\w'
         return
@@ -6126,6 +6146,7 @@ else
     " -------------------------------
     if keyboard =~ '[.]'
     \&& get(s:im['boshiamy'],0) < 1
+    \&& get(s:im['phonetic'],0) < 1
     \&& keyboard[0:0] != '.'
     \&& keyboard[-1:-1] != '.'
         let periods = split(keyboard, '[.]')
