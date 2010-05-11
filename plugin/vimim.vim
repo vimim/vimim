@@ -2513,10 +2513,6 @@ function! s:vimim_build_popupmenu(matched_list)
             let complete_items["menu"] = extra_text
         endif
         " -------------------------------------------------
-        if !empty(s:vimim_cloud_plugin)
-            let menu = get(split(menu,"_"),0)
-        endif
-        " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             let tail = ''
             if keyboard =~ '[.]'
@@ -2534,6 +2530,8 @@ function! s:vimim_build_popupmenu(matched_list)
             if tail =~# s:valid_key && get(s:im['boshiamy'],0)>0
                 let chinese .=  tail
             endif
+        else
+            let menu = get(split(menu,"_"),0)
         endif
         " -------------------------------------------------
         let labeling = label
@@ -5012,12 +5010,15 @@ function! s:vimim_exact_match(lines, match_start)
         let match_end = matched
     endif
     " ----------------------------------------
-    let words_limit = 20+10
-    if match_end - match_start > words_limit
-        let match_end = match_start + words_limit
+    let menu_maximum = 20+10
+    let menu_minimum = 1
+    if match_end - match_start > menu_maximum
+    \|| match_end - match_start < menu_minimum
+        let match_end = match_start + menu_maximum
     endif
+    " --------------------------------------------
     let results = a:lines[match_start : match_end]
-    " ----------------------------------------
+    " --------------------------------------------
     if len(results) < 10
        let extras = s:vimim_pinyin_more_match_list(a:lines, keyboard, results)
        if len(extras) > 0
@@ -5880,10 +5881,12 @@ if a:start
     endwhile
 
     if all_digit < 1
+    \&& get(s:im['boshiamy'],0) < 1
+    \&& get(s:im['phonetic'],0) < 1
         let start_column = last_seen_nonsense_column
         let char_1st = current_line[start_column]
         let char_2nd = current_line[start_column+1]
-        if char_1st ==# "'" && get(s:im['boshiamy'],0)<1
+        if char_1st ==# "'"
             if s:vimim_imode_universal > 0
             \&& char_2nd =~# "[0-9ds']"
                 let msg = "sharing apostrophe as much as possible"
@@ -5944,7 +5947,6 @@ else
     " ------------------------------
     if keyboard =~# '^[\.\.\+]'
     \&& get(s:im['boshiamy'],0) < 1
-    \&& get(s:im['phonetic'],0) < 1
         let s:pattern_not_found += 1
         return
     endif
@@ -5962,7 +5964,6 @@ else
     " -------------------------------
     if s:vimim_static_input_style < 2
     \&& get(s:im['boshiamy'],0) < 1
-    \&& get(s:im['phonetic'],0) < 1
     \&& len(keyboard) == 1
     \&& keyboard !~# '\w'
         return
