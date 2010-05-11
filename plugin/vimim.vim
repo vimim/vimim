@@ -244,7 +244,6 @@ function! s:vimim_finalize_session()
     endif
     " ------------------------------
     if get(s:im['boshiamy'],0) > 0
-        let s:vimim_datafile_has_apostrophe = 1
         let s:vimim_chinese_punctuation = -1
         let s:im['pinyin'][0] = 0
     endif
