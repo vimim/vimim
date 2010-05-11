@@ -2529,7 +2529,9 @@ function! s:vimim_build_popupmenu(matched_list)
                 let tail = strpart(keyboard, len(menu))
             endif
             if tail =~ '\w'
-            \|| (tail =~# s:valid_key && get(s:im['boshiamy'],0)>0)
+                let chinese .=  tail
+            endif
+            if tail =~# s:valid_key && get(s:im['boshiamy'],0)>0
                 let chinese .=  tail
             endif
         endif
@@ -2840,9 +2842,6 @@ endfunction
 function! <SID>vimim_label_1234567890_filter(n)
 " ---------------------------------------------
     let label = a:n
-    if s:vimim_custom_menu_label < 1
-        return a:n
-    endif
     if pumvisible()
         let msg = "give 1234567890 label new meaning"
         let s:menu_4corner_filter = a:n
