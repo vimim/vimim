@@ -517,7 +517,7 @@ function! s:vimim_scan_plugin_for_more_im()
     \|| s:pinyin_and_4corner > 1
     \|| get(s:im['boshiamy'],0) < 1
     \|| get(s:im['array30'],0) < 1
-    \|| get(s:im['phonetic) < 1
+    \|| get(s:im['phonetic'],0) < 1
         let msg = "only play with one plugin datafile"
     elseif get(s:im['4corner'],0) > 0
         let s:pinyin_and_4corner = 1
