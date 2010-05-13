@@ -563,6 +563,7 @@ function! s:vimim_initialize_keycode()
     \|| get(s:im['nature'],0) > 0
     \|| get(s:im['array30'],0) > 0
     \|| get(s:im['phonetic'],0) > 0
+    \|| get(s:im['boshiamy'],0) > 0
         let msg = "need to find a better way to handle real valid keycode"
         let s:datafile_has_dot = 1
     endif
@@ -1867,13 +1868,6 @@ function! <SID>vimim_punctuation_on()
         iunmap "
         iunmap <Bslash>
     endif
-    if get(s:im['boshiamy'],0) > 0
-        iunmap '
-        iunmap "
-        iunmap .
-        iunmap [
-        iunmap ]
-    endif
     " ----------------------------
     for _ in keys(s:punctuations)
         sil!exe 'inoremap <silent> '._.'
@@ -2517,17 +2511,12 @@ function! s:vimim_build_popupmenu(matched_list)
             let tail = ''
             if keyboard =~ '[.]'
             \&& s:datafile_has_dot < 1
-            \&& get(s:im['boshiamy'],0) < 1
-            \&& get(s:im['phonetic'],0) < 1
                 let dot = match(keyboard, '[.]')
                 let tail = strpart(keyboard, dot+1)
             elseif keyboard !~? '^vim'
                 let tail = strpart(keyboard, len(menu))
             endif
             if tail =~ '\w'
-                let chinese .=  tail
-            endif
-            if tail =~# s:valid_key && get(s:im['boshiamy'],0)>0
                 let chinese .=  tail
             endif
         else
@@ -5017,6 +5006,7 @@ function! s:vimim_exact_match(lines, match_start)
     " ----------------------------------------
     let menu_maximum = 20+10
     let menu_minimum = 1
+    " always do popup as one-to-many translation
     if match_end - match_start > menu_maximum
     \|| match_end - match_start < menu_minimum
         let match_end = match_start + menu_maximum
@@ -5889,7 +5879,6 @@ if a:start
     endwhile
 
     if all_digit < 1
-    \&& get(s:im['boshiamy'],0) < 1
     \&& get(s:im['phonetic'],0) < 1
         let start_column = last_seen_nonsense_column
         let char_1st = current_line[start_column]
@@ -6098,7 +6087,6 @@ else
     " [imode] magic leading apostrophe: universal imode
     " -------------------------------------------------
     if s:vimim_imode_universal > 0
-    \&& get(s:im['boshiamy'],0) < 1
     \&& keyboard =~# "^'"
     \&& (empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'sexy')
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
@@ -6149,8 +6137,7 @@ else
     " break up dot-separated sentence:
     " -------------------------------
     if keyboard =~ '[.]'
-    \&& get(s:im['boshiamy'],0) < 1
-    \&& get(s:im['phonetic'],0) < 1
+    \&& s:datafile_has_dot < 1
     \&& keyboard[0:0] != '.'
     \&& keyboard[-1:-1] != '.'
         let periods = split(keyboard, '[.]')
