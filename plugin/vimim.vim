@@ -4961,9 +4961,9 @@ function! s:vimim_search_boundary(lines, keyboard)
     return ranges
 endfunction
 
-" --------------------------------------------
-function! s:vimim_whole_match(lines, keyboard)
-" --------------------------------------------
+" ----------------------------------------------
+function! s:vimim_oneline_match(lines, keyboard)
+" ----------------------------------------------
     if empty(a:lines)
     \|| empty(a:keyboard)
     \|| get(s:im['pinyin'],0) < 1
@@ -4973,9 +4973,9 @@ function! s:vimim_whole_match(lines, keyboard)
     " ---------------------------------------------
     let results = []
     let pattern = '^' . a:keyboard . '\>'
-    let whole_match = match(a:lines, pattern)
-    if  whole_match >= 0
-        let results = a:lines[whole_match : whole_match]
+    let oneline_match = match(a:lines, pattern)
+    if  oneline_match >= 0
+        let results = a:lines[oneline_match : oneline_match]
     endif
     return results
 endfunction
@@ -5059,7 +5059,7 @@ function! s:vimim_pinyin_more_match_list(lines, keyboard, results)
     endif
     let matched_list = []
     for keyboard in candidates
-        let results = s:vimim_whole_match(a:lines, keyboard)
+        let results = s:vimim_oneline_match(a:lines, keyboard)
         call extend(matched_list, results)
     endfor
     return matched_list
@@ -5486,12 +5486,12 @@ function! s:vimim_quick_fuzzy_search(keyboard)
         let msg = "step 1/2: try whole exact match"
         " -----------------------------------------
         let pattern = '^' . keyboard . '\> '
-        let whole_match = match(lines, pattern)
-        if  whole_match > -1
+        let oneline_match = match(lines, pattern)
+        if  oneline_match > -1
             if s:vimim_datafile_has_apostrophe > 0
-                let results = lines[whole_match : whole_match]
+                let results = lines[oneline_match : oneline_match]
             else
-                let results = s:vimim_exact_match(lines, whole_match)
+                let results = s:vimim_exact_match(lines, oneline_match)
             endif
             if len(results) > 0
                 return s:vimim_pair_list(results)
@@ -6227,11 +6227,11 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     else
-        " [exact match] search on the sorted datafile
-        " -------------------------------------------
-        let results = s:vimim_whole_match(lines, keyboard)
+        " [no-magic match] search on the sorted datafile
+        " ----------------------------------------------
         if s:vimim_datafile_has_apostrophe > 0
-            let results = s:vimim_whole_match(lines, keyboard)
+        \|| (keyboard =~ "^oo" && s:vimimdebug == 9)
+            let results = s:vimim_oneline_match(lines, keyboard)
         else
             let results = s:vimim_exact_match(lines, match_start)
         endif
