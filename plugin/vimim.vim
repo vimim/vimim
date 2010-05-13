@@ -4898,6 +4898,9 @@ function! s:vimim_datafile_range(keyboard)
     if empty(s:lines) || empty(a:keyboard)
         return []
     endif
+    if s:shuangpin_flag > 0
+        return s:lines
+    endif
     let ranges = s:vimim_search_boundary(s:lines, a:keyboard)
     if empty(ranges)
         return []
