@@ -3679,6 +3679,7 @@ function! s:vimim_initialize_pinyin()
     let s:vimim_fuzzy_search = 1
     if empty(s:vimim_imode_pinyin)
     \&& empty(s:vimim_imode_universal)
+    \&& s:shuangpin_flag < 1
         let s:vimim_imode_pinyin = 1
     endif
 endfunction
@@ -3865,8 +3866,8 @@ function! s:vimim_dictionary_shuangpin()
         let im = purple . im
         let keycode = "[0-9a-z'.;]"
     elseif s:vimim_shuangpin_flypy > 0
-        let nature = s:vimim_get_chinese('flypy')
-        let im = nature . im
+        let flypy = s:vimim_get_chinese('flypy')
+        let im = flypy . im
     else
         let s:shuangpin_flag = 0
     endif
@@ -6052,7 +6053,7 @@ else
 
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
-    if s:vimim_internal_code_input > 0
+    if s:vimim_internal_code_input > 0 && s:shuangpin_flag < 1
         let results = s:vimim_internal_code(keyboard)
         if len(results) > 0
             let s:unicode_menu_display_flag = 1
@@ -6120,7 +6121,7 @@ else
         let keyboard = get(clouds, 0)
     endif
 
-    " [shuangpin] support 5 major shuangpin with various rules
+    " [shuangpin] support 6 major shuangpin with various rules
     " --------------------------------------------------------
     let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
 
