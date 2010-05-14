@@ -2416,24 +2416,26 @@ endfunction
 " ------------------------------------------
 function! s:vimim_no_popupmenu_list(periods)
 " ------------------------------------------
-    " for example: enjoy.girl.1010.2523.4498.7429
     if empty(a:periods)
         return ""
     endif
     call s:vimim_reload_datafile(0)
     let no_popupmenu_result = ""
     for keyboard in a:periods
+        let results = []
         let pattern = "^" . keyboard
         let match_start = match(s:lines, pattern)
         if  match_start > -1
-            let matched_list = s:vimim_exact_match(s:lines, match_start)
-            if len(matched_list) > 0
-                let first_pair = get(matched_list,0)
-                let first_stone = get(split(first_pair," "),1)
-                let no_popupmenu_result .= first_stone
-            endif
+            " for example: enjoy.girl.1010.2523.4498.7429
+            let results = s:vimim_exact_match(s:lines, match_start)
         else
-            continue
+            " for example: mjads.xdhao.jdaaa
+            let results = s:vimim_pinyin_and_4corner(keyboard)
+        endif
+        if len(results) > 0
+            let first_pair = get(results,0)
+            let first_stone = get(split(first_pair," "),1)
+            let no_popupmenu_result .= first_stone
         endif
     endfor
     return no_popupmenu_result
@@ -2510,8 +2512,7 @@ function! s:vimim_build_popupmenu(matched_list)
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             let tail = ''
-            if keyboard =~ '[.]'
-            \&& s:datafile_has_dot < 1
+            if keyboard =~ '[.]' && s:datafile_has_dot < 1
                 let dot = match(keyboard, '[.]')
                 let tail = strpart(keyboard, dot+1)
             elseif keyboard !~? '^vim'
@@ -5869,8 +5870,8 @@ if a:start
         let nonsense_pattern = "[.]"
     endif
 
-    while start_column > 0 
-        if  byte_before =~# s:valid_key 
+    while start_column > 0
+        if  byte_before =~# s:valid_key
             let start_column -= 1
             if byte_before !~# nonsense_pattern
                 let last_seen_nonsense_column = start_column
