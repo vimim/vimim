@@ -241,6 +241,7 @@ function! s:vimim_finalize_session()
     if s:shuangpin_flag > 0
         let s:im_primary = 'pinyin'
         let s:im['pinyin'][0] = 1
+        let s:vimim_datafile_has_english = 0
     endif
     " ------------------------------
     if get(s:im['boshiamy'],0) > 0
@@ -254,15 +255,15 @@ function! s:vimim_finalize_session()
         let s:vimim_static_input_style = 1
     endif
     " ------------------------------
+    if empty(get(s:im['wubi'],0))
+        let s:vimim_wubi_non_stop = 0
+    endif
+    " ------------------------------
     if s:im_primary =~# '^\d\w\+'
     \&& empty(get(s:im['pinyin'],0))
         let s:only_4corner_or_12345 = 1
         let s:vimim_fuzzy_search = 0
         let s:vimim_static_input_style = 2
-    endif
-    " ------------------------------
-    if empty(get(s:im['wubi'],0))
-        let s:vimim_wubi_non_stop = 0
     endif
     " ------------------------------
     if s:vimimdebug > 0
