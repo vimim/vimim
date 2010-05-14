@@ -13,9 +13,7 @@ let $VimIM = "$Revision$"
 " (3) type:  vim<C-6>
 " (4) type:  vimimhelp<C-6><C-6>
 " -------------------------------------------------------------------
-let egg  = ["http://code.google.com/p/vimim/wiki/QuickStart        "]
-let egg += ["http://code.google.com/p/vimim/wiki/ChangeLog         "]
-let egg += ["http://code.google.com/p/vimim/issues/entry           "]
+let egg  = ["http://code.google.com/p/vimim/issues/entry           "]
 let egg += ["http://vimim-data.googlecode.com                      "]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html      "]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html  "]
@@ -725,15 +723,13 @@ function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
     " -------------------------------------------
-    call add(eggs, "快速指南：" . s:vimimhelp[0])
-    call add(eggs, "变更记录：" . s:vimimhelp[1])
-    call add(eggs, "错误报告：" . s:vimimhelp[2])
-    call add(eggs, "民间词库：" . s:vimimhelp[3])
-    call add(eggs, "最新主页：" . s:vimimhelp[4])
-    call add(eggs, "最新程式：" . s:vimimhelp[5])
-    call add(eggs, "官方网址：" . s:vimimhelp[6])
-    call add(eggs, "自己的云：" . s:vimimhelp[7])
-    call add(eggs, "新闻论坛：" . s:vimimhelp[8])
+    call add(eggs, "错误报告：" . s:vimimhelp[0])
+    call add(eggs, "民间词库：" . s:vimimhelp[1])
+    call add(eggs, "最新主页：" . s:vimimhelp[2])
+    call add(eggs, "最新程式：" . s:vimimhelp[3])
+    call add(eggs, "官方网址：" . s:vimimhelp[4])
+    call add(eggs, "自己的云：" . s:vimimhelp[5])
+    call add(eggs, "新闻论坛：" . s:vimimhelp[6])
     " -------------------------------------------
     return map(eggs, '"VimIM " .v:val . "　"')
 endfunction
