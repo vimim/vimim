@@ -600,6 +600,7 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
+    call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
@@ -5858,6 +5859,7 @@ if a:start
     endif
 
     let last_seen_nonsense_column = start_column
+    let last_seen_backslash_column = start_column
     let all_digit = 1
 
     let nonsense_pattern = "[0-9.']"
@@ -5867,19 +5869,25 @@ if a:start
         let nonsense_pattern = "[.]"
     endif
 
-    while start_column > 0 && byte_before =~# s:valid_key
-        let start_column -= 1
-        if byte_before !~# nonsense_pattern
-            let last_seen_nonsense_column = start_column
-        endif
-        if byte_before =~# '\l' && all_digit > 0
-            let all_digit = 0
+    while start_column > 0 
+        if  byte_before =~# s:valid_key 
+            let start_column -= 1
+            if byte_before !~# nonsense_pattern
+                let last_seen_nonsense_column = start_column
+            endif
+            if byte_before =~# '\l' && all_digit > 0
+                let all_digit = 0
+            endif
+        elseif byte_before=='\' && s:vimim_backslash_close_pinyin>0
+            " do nothing for pinyin with leading backslash
+            return last_seen_backslash_column
+        else
+            break
         endif
         let byte_before = current_line[start_column-1]
     endwhile
 
-    if all_digit < 1
-    \&& get(s:im['phonetic'],0) < 1
+    if all_digit < 1 && get(s:im['phonetic'],0) < 1
         let start_column = last_seen_nonsense_column
         let char_1st = current_line[start_column]
         let char_2nd = current_line[start_column+1]
