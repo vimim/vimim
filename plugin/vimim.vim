@@ -1538,15 +1538,16 @@ function! s:vimim_start_chinese_mode()
     return <SID>vimim_toggle_punctuation()
 endfunction
 
-" frederick.zou fixes these plugins: supertab, autocomplpop(acp)
-" supertab[http://www.vim.org/scripts/script.php?script_id=1643]
-" autocomplpop(acp)[lhttp://www.vim.org/scripts/script.php?script_id=1879]
+" frederick.zou fixes these plugins:
+" supertab          [http://www.vim.org/scripts/script.php?script_id=1643]
+" autocomplpop(acp) [http://www.vim.org/scripts/script.php?script_id=1879]
+" word_complete     [http://www.vim.org/scripts/script.php?script_id=73]
 " -----------------------------------
 function!  s:vimim_getsid(scriptname)
 " -----------------------------------
-    "use s:getsid to return a script sid, translate <SID> to <SNR>N_ style
+    " use s:getsid to return a script sid, translate <SID> to <SNR>N_ style
     let l:scriptname = a:scriptname
-    " Get the output of ":scriptnames" in the scriptnames_output variable.
+    " get the output of ":scriptnames" in the scriptnames_output variable.
     if empty(s:scriptnames_output)
         let saved_shellslash=&shellslash
         set shellslash
@@ -1556,9 +1557,9 @@ function!  s:vimim_getsid(scriptname)
         let &shellslash=saved_shellslash
     endif
     for line in split(s:scriptnames_output, "\n")
-        " Only do non-blank lines
+        " only do non-blank lines
         if line =~ l:scriptname
-            " Get the first number in the line.
+            " get the first number in the line.
             let nr = matchstr(line, '\d\+')
             return nr
         endif
@@ -1569,21 +1570,27 @@ endfunction
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
-    if !exists('s:acp_sid')
-        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+    if !exists('s:acp')
+        let s:acp = s:vimim_getsid('autoload/acp.vim')
+        if !empty(s:acp)
+            AcpDisable
+        endif
     endif
-    if !exists('s:supertab_sid')
-        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    if !exists('s:supertab')
+        let s:supertab = s:vimim_getsid('plugin/supertab.vim')
     endif
-    if !empty(s:acp_sid)
-        AcpDisable
+    if !exists('s:word_complete')
+        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
+        if !empty(s:word_complete)
+            call EndWordComplete()
+        endif
     endif
 endfunction
 
 " ----------------------------------
 function! s:vimim_plugins_fix_stop()
 " ----------------------------------
-    if !empty(s:acp_sid)
+    if !empty(s:acp)
         let s:ACPkeysMappingDriven = [
             \ 'a','b','c','d','e','f','g','h','i','j','k','l','m',
             \ 'n','o','p','q','r','s','t','u','v','w','x','y','z',
@@ -1594,20 +1601,25 @@ function! s:vimim_plugins_fix_stop()
             \ '<','>','/','\','<Space>', '<C-h>', '<BS>', '<Enter>',]
         for key in s:ACPkeysMappingDriven
             exe printf('iu <silent> %s', key)
-            exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp_sid)
+            exe printf('im <silent> %s
+            \ %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp)
         endfor
         AcpEnable
     endif
     " -------------------------------------------------------------
-    if !empty(s:supertab_sid)
+    if !empty(s:supertab)
         if g:SuperTabMappingForward =~ '^<tab>$'
-            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", s:supertab_sid)
+            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", s:supertab)
         endif
         if g:SuperTabMappingBackward =~ '^<s-tab>$'
-            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", s:supertab_sid)
+            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", s:supertab)
             " inoremap <silent> <Tab> <C-n>
             " inoremap <silent> <s-Tab> <C-p>
         endif
+    endif
+    " -------------------------------------------------------------
+    if !empty(s:word_complete)
+    "   call DoWordComplete()
     endif
 endfunction
 
