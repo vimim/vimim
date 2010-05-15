@@ -9,7 +9,7 @@ let $VimIM = "$Revision$"
 
 " For the impatient:
 " (1) throw this script into your vim plugin directory
-" (2) open your vim and enter insert mode
+" (2) open your vim and enter Insert mode
 " (3) type:  vim<C-6>
 " (4) type:  vimimhelp<C-6><C-6>
 " -------------------------------------------------------------------
@@ -25,6 +25,7 @@ let VimIM = " ====  Introduction     ==== {{{"
 "       File: vimim.vim
 "     Author: vimim <vimim@googlegroups.com>
 "    License: GNU Lesser General Public License
+"   Official: http://vim.sf.net/scripts/script.php?script_id=2506
 " -----------------------------------------------------------
 "    Readme: VimIM is a Vim plugin designed as an independent IM
 "            (Input Method) to support the input of multi-byte.
@@ -51,17 +52,12 @@ let VimIM = " ====  Introduction     ==== {{{"
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
-" Install:   (1) [optional] download a datafile from code.google.com
-"            (2) drop vimim.vim and the datafile to the plugin directory
-" -----------------------------------------------------------
-" Latest:    http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim
-" -----------------------------------------------------------
-" EasterEgg: (in Vim Insert Mode, type 4 chars:) vim<C-6>
+" Install:   (1) download datafile from http://vimim-data.googlecode.com
+"            (2) drop this file and the datafile to the plugin directory
 " -----------------------------------------------------------
 " Usage (1): [in Insert Mode] "to insert/search Chinese ad hoc":
 "            # to insert: type keycode and hit <C-6> to trigger
 "            # to search: hit '/' or '?' from popup menu
-" -----------------------------------------------------------
 " Usage (2): [in Insert Mode] "to type Chinese continuously":
 "            # hit <C-Bslash> to toggle to Chinese Input Mode:
 "            # type any valid keycode and enjoy
@@ -102,7 +98,8 @@ call add(s:vimims, VimIM)
 " ----------------
 " "VimIM Datafile"
 " ----------------
-" The datafile is assumed to be in order, otherwise, it is auto sorted.
+" The datafile is assumed to be in order.
+" To sort the datafile, Vim command can be used: :sort u<CR>
 " The format of datafile is simple and flexible:
 "             +------+--+-------+
 "             |<key> |  |<value>|
@@ -6019,6 +6016,7 @@ else
     elseif s:vimimdebug == 9
     \&& len(keyboard) == 2
     \&& keyboard[0:0] ==# 'u'
+    \&& s:shuangpin_flag < 1
         let keyboard = keyboard[-1:-1]
         let use_virtual_datafile = 1
     endif
