@@ -1787,12 +1787,13 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations[',']='，'
     let s:punctuations['.']='。'
     let s:punctuations['?']='？'
-    let s:punctuations['`']='、'
     if empty(s:vimim_wildcard_search)
         let s:punctuations['*']='﹡'
     endif
-    if empty(s:vimim_latex_suite)
+    if empty(s:vimim_backslash_close_pinyin)
         let s:punctuations['\']='、'
+    endif
+    if empty(s:vimim_latex_suite)
         let s:punctuations["'"]='‘’'
         let s:punctuations['"']='“”'
     endif
