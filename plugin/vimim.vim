@@ -39,7 +39,7 @@ let VimIM = " ====  Introduction     ==== {{{"
 "            * "Plug & Play": "Pinyin and 4Corner" in harmony
 "            * Support direct "UNICODE input" using integer or hex
 "            * Support direct "GBK input" and "Big5 input"
-"            * Support "Pin Yin", "Wu Bi", "Cang Jie", "4Corner", etc
+"            * Support "boshiamy", "Cang Jie", "Erbi", etc
 "            * Support "modeless" whole sentence input
 "            * Support "Chinese search" using search key '/' or '?'.
 "            * Support "fuzzy search" and "wildcard search"
@@ -254,9 +254,9 @@ function! s:vimim_finalize_session()
     " ------------------------------
     if s:im_primary =~# '^\d\w\+'
     \&& empty(get(s:im['pinyin'],0))
-        let s:only_4corner_or_12345 = 1
         let s:vimim_fuzzy_search = 0
-        let s:vimim_static_input_style = 2
+        let s:only_4corner_or_12345 = 1
+        let s:vimim_static_input_style = 1
     endif
     " ------------------------------
     if s:vimimdebug > 0
@@ -509,9 +509,9 @@ function! s:vimim_scan_plugin_for_more_im()
     " -------------------------------------
     if empty(im)
     \|| s:pinyin_and_4corner > 1
-    \|| get(s:im['boshiamy'],0) < 1
-    \|| get(s:im['array30'],0) < 1
-    \|| get(s:im['phonetic'],0) < 1
+    \|| get(s:im['array30'],0) > 1
+    \|| get(s:im['boshiamy'],0) > 1
+    \|| get(s:im['phonetic'],0) > 1
         let msg = "only play with one plugin datafile"
     elseif get(s:im['4corner'],0) > 0
         let s:pinyin_and_4corner = 1
@@ -558,7 +558,7 @@ function! s:vimim_initialize_keycode()
     \|| get(s:im['array30'],0) > 0
     \|| get(s:im['phonetic'],0) > 0
     \|| get(s:im['boshiamy'],0) > 0
-        let msg = "need to find a better way to handle real valid keycode"
+        let msg = "how to handle real valid keycode for dot"
         let s:datafile_has_dot = 1
     endif
     " --------------------------------
@@ -1843,17 +1843,21 @@ function! <SID>vimim_punctuation_on()
         unlet s:punctuations["'"]
     endif
     " ----------------------------
-    if s:chinese_punctuation>0 && s:vimim_latex_suite>1
-        if get(s:im['erbi'],0)>0 || get(s:im['pinyin'],0)>0
-            let msg = " apostrophe is over-loaded for cloud at will "
-        else
-            inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
+    if s:chinese_punctuation > 0
+        if empty(s:vimim_latex_suite)
+            if get(s:im['erbi'],0)>0 || get(s:im['pinyin'],0)>0
+                let msg = "apostrophe is over-loaded for cloud at will"
+            else
+                inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
+            endif
+            if index(s:valid_keys, '"') < 0
+                inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
+            endif
         endif
-        if index(s:valid_keys, '"') < 0
-            inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
-        endif
-        if index(s:valid_keys, '\') < 0
-            inoremap <Bslash> 、
+        if empty(s:vimim_backslash_close_pinyin)
+            if index(s:valid_keys, '\') < 0
+                inoremap <Bslash> 、
+            endif
         endif
     else
         iunmap '
@@ -4400,6 +4404,7 @@ function! s:vimim_magic_tail(keyboard)
     if s:chinese_input_mode =~ 'dynamic'
     \|| get(s:im['boshiamy'],0) > 0
     \|| get(s:im['phonetic'],0) > 0
+    \|| get(s:im['erbi'],0) > 0
     \|| keyboard =~ '\d\d\d\d'
     \|| len(keyboard) < 3
         return []
@@ -4997,12 +5002,14 @@ function! s:vimim_exact_match(lines, match_start)
         let match_end = matched
     endif
     " ----------------------------------------
-    let menu_maximum = 20+10
-    let menu_minimum = 1
     " always do popup as one-to-many translation
+    let menu_maximum = 20+10
     if match_end - match_start > menu_maximum
-    \|| match_end - match_start < menu_minimum
         let match_end = match_start + menu_maximum
+    endif
+    let menu_minimum = 1
+    if match_end - match_start < menu_minimum
+        let match_end = match_start + 20
     endif
     " --------------------------------------------
     let results = a:lines[match_start : match_end]
@@ -5524,7 +5531,7 @@ endfunction
 function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
-    let s:vimim_cloud_sogou=888
+    let s:vimim_cloud_sogou=0
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
     let s:vimim_frequency_first_fix=1
