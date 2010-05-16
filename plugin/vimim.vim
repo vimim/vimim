@@ -200,6 +200,13 @@ function! s:vimim_initialize_session()
     let s:abcdefghi = "'abcdefghi"
     let s:show_me_not_pattern = "^ii\\|^oo"
     " --------------------------------
+    let A = char2nr('A')
+    let Z = char2nr('Z')
+    let a = char2nr('a')
+    let z = char2nr('z')
+    let a2z_nr_list = extend(range(A,Z), range(a,z))
+    let s:a2z_char_list = map(a2z_nr_list,"nr2char(".'v:val'.")")
+    " --------------------------------
 endfunction
 
 " ----------------------------------
@@ -1184,7 +1191,7 @@ function! s:vimim_without_datafile(keyboard)
     let gbk = {}
     let a = char2nr('a')
     let z = char2nr('z')
-    let az_list = range(a, z)
+    let az_range = range(a, z)
     " ---------------------------------------
     let start = 19968
     if  s:encoding ==# "chinese"
@@ -1193,7 +1200,7 @@ function! s:vimim_without_datafile(keyboard)
         let az .= " bbf7 bfa6 c0ac c2e8 c4c3 c5b6 c5be c6da c8bb "
         let az .= " c8f6 cbfa cdda cdda cdda cef4 d1b9 d4d1"
         let gb_code_orders = split(az)
-        for xxxx in az_list
+        for xxxx in az_range
             let gbk[nr2char(xxxx)] = "0x" . get(gb_code_orders, xxxx-a)
         endfor
     elseif  s:encoding ==# "taiwan"
@@ -1411,13 +1418,8 @@ function! s:vimim_onekey_action(onekey)
     \&& !empty(byte_before)
     \&& byte_before !~# s:valid_key
         if empty(a:onekey)
-            let xxxx = s:vimim_get_char_before_internal_code()
-            if empty(xxxx)
-                let msg = "char-before is not multibyte"
-            else
-                let onekey = xxxx . trigger
-                sil!exe 'sil!return "' . onekey . '"'
-            endif
+            let s:smart_ctrl_n = 0
+            return <SID>vimim_smart_ctrl_n()
         endif
     endif
     " ---------------------------------------------------
@@ -1591,15 +1593,12 @@ endfunction
 function! s:vimim_plugins_fix_stop()
 " ----------------------------------
     if !empty(s:acp)
-        let s:ACPkeysMappingDriven = [
-            \ 'a','b','c','d','e','f','g','h','i','j','k','l','m',
-            \ 'n','o','p','q','r','s','t','u','v','w','x','y','z',
-            \ 'A','B','C','D','E','F','G','H','I','J','K','L','M',
-            \ 'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-            \ '0','1','2','3','4','5','6','7','8','9',
+        let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
-            \ '<','>','/','\','<Space>', '<C-h>', '<BS>', '<Enter>',]
-        for key in s:ACPkeysMappingDriven
+            \ '<','>','/','\','<Space>','<C-h>','<BS>','<Enter>',]
+        call extend(ACPMappingDrivenkeys, range(10))
+        call extend(ACPMappingDrivenkeys, s:a2z_char_list)
+        for key in ACPMappingDrivenkeys
             exe printf('iu <silent> %s', key)
             exe printf('im <silent> %s
             \ %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp)
@@ -1675,14 +1674,7 @@ function! s:vimim_static_alphabet_auto_select()
         return
     endif
     " always do alphabet auto selection for static mode
-    let A = char2nr('A')
-    let Z = char2nr('Z')
-    let a = char2nr('a')
-    let z = char2nr('z')
-    let az_nr_list = extend(range(A,Z), range(a,z))
-    let az_char_list = map(az_nr_list,"nr2char(".'v:val'.")")
-    " -----------------------------------------
-    for _ in az_char_list
+    for _ in s:a2z_char_list
         sil!exe 'inoremap <silent> ' ._. '
         \ <C-R>=pumvisible()?"\<lt>C-Y>":""<CR>'. _
         \ . '<C-R>=g:reset_after_auto_insert()<CR>'
