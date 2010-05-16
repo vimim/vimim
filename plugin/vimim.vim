@@ -1411,14 +1411,11 @@ function! s:vimim_onekey_action(onekey)
         endif
     endif
     " -------------------------------------------------
-    let trigger = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-    " -------------------------------------------------
     let onekey = a:onekey
     if empty(s:chinese_input_mode)
     \&& !empty(byte_before)
     \&& byte_before !~# s:valid_key
         if empty(a:onekey)
-            let s:smart_ctrl_n = 0
             return <SID>vimim_smart_ctrl_n()
         endif
     endif
@@ -1429,7 +1426,7 @@ function! s:vimim_onekey_action(onekey)
     " ---------------------------------------------------
     if s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
-        let onekey = trigger
+        let onekey = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     else
         let onekey = ""
     endif
@@ -1445,7 +1442,7 @@ function! s:vimim_onekey_action(onekey)
 endfunction
 
 " -----------------------------------------------
-function! s:vimim_get_char_before_internal_code()
+function! s:vimim_get_internal_code_char_before()
 " -----------------------------------------------
      let xxxx = 0
      let byte_before = getline(".")[col(".")-2]
@@ -3152,7 +3149,7 @@ endfunction
 function! <SID>vimim_smart_ctrl_n()
 " ---------------------------------
     let trigger = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-    let xxxx = s:vimim_get_char_before_internal_code()
+    let xxxx = s:vimim_get_internal_code_char_before()
     if empty(xxxx)
         let s:smart_ctrl_n += 1
     else
