@@ -204,8 +204,8 @@ function! s:vimim_initialize_session()
     let Z = char2nr('Z')
     let a = char2nr('a')
     let z = char2nr('z')
-    let a2z_nr_list = extend(range(A,Z), range(a,z))
-    let s:a2z_char_list = map(a2z_nr_list,"nr2char(".'v:val'.")")
+    let az_nr_list = extend(range(A,Z), range(a,z))
+    let s:az_char_list = map(az_nr_list,"nr2char(".'v:val'.")")
     " --------------------------------
 endfunction
 
@@ -1597,7 +1597,7 @@ function! s:vimim_plugins_fix_stop()
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
             \ '<','>','/','\','<Space>','<C-h>','<BS>','<Enter>',]
         call extend(ACPMappingDrivenkeys, range(10))
-        call extend(ACPMappingDrivenkeys, s:a2z_char_list)
+        call extend(ACPMappingDrivenkeys, s:az_char_list)
         for key in ACPMappingDrivenkeys
             exe printf('iu <silent> %s', key)
             exe printf('im <silent> %s
@@ -1674,7 +1674,7 @@ function! s:vimim_static_alphabet_auto_select()
         return
     endif
     " always do alphabet auto selection for static mode
-    for _ in s:a2z_char_list
+    for _ in s:az_char_list
         sil!exe 'inoremap <silent> ' ._. '
         \ <C-R>=pumvisible()?"\<lt>C-Y>":""<CR>'. _
         \ . '<C-R>=g:reset_after_auto_insert()<CR>'
