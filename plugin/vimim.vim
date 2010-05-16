@@ -5532,11 +5532,11 @@ function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
     let s:vimim_cloud_sogou=0
+    " ------------------------------ debug
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
     let s:vimim_frequency_first_fix=1
     let s:vimim_insert_without_popup=1
-    " ------------------------------ debug
     let s:vimim_chinese_frequency=14
     let s:vimim_custom_laststatus=0
     let s:vimim_wildcard_search=1
