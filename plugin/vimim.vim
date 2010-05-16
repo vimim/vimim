@@ -1595,7 +1595,7 @@ function! s:vimim_plugins_fix_stop()
     if !empty(s:acp)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
-            \ '<','>','/','\','<Space>','<C-h>','<BS>','<Enter>',]
+            \ '<','>','/','\','<Space>','<C-H>','<BS>','<Enter>',]
         call extend(ACPMappingDrivenkeys, range(10))
         call extend(ACPMappingDrivenkeys, s:az_char_list)
         for key in ACPMappingDrivenkeys
@@ -1608,12 +1608,12 @@ function! s:vimim_plugins_fix_stop()
     " -------------------------------------------------------------
     if !empty(s:supertab)
         if g:SuperTabMappingForward =~ '^<tab>$'
-            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", s:supertab)
+            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>",s:supertab)
         endif
         if g:SuperTabMappingBackward =~ '^<s-tab>$'
-            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", s:supertab)
-            " inoremap <silent> <Tab> <C-n>
-            " inoremap <silent> <s-Tab> <C-p>
+            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>",s:supertab)
+            " inoremap <silent> <Tab> <C-N>
+            " inoremap <silent> <s-Tab> <C-P>
         endif
     endif
     " -------------------------------------------------------------
@@ -3110,10 +3110,10 @@ function! <SID>vimim_smart_enter()
     endif
     " -----------------------------------------------
     " <Enter> multiple play in OneKey Mode:
-    "   (1) after English (valid keys)    => Seamless
-    "   (2) after English punctuation     => <Space>
-    "   (3) after Chinese or double Enter => <Enter>
-    "   (4) after empty line              => <Enter> with invisible <Space>
+    " (1) after English (valid keys)    => Seamless
+    " (2) after English punctuation     => <Space>
+    " (3) after Chinese or double Enter => <Enter>
+    " (4) after empty line              => <Enter> with invisible <Space>
     " -----------------------------------------------
     if empty(s:chinese_input_mode)
         if has_key(s:punctuations, byte_before)
@@ -3624,7 +3624,7 @@ function! s:vimim_build_reverse_4corner_cache(chinese)
                 let first_alpha = line_index
             endif
             if first_digit < first_alpha
-                let s:four_corner_lines = lines[first_digit : first_alpha-1]
+                let s:four_corner_lines=lines[first_digit : first_alpha-1]
             else
                 return {}
             endif
@@ -3778,11 +3778,11 @@ function! s:vimim_quanpin_transform(keyboard)
                 let tempstr3 = item[end-1 : end+1]
                 let tempstr4 = item[end-1 : end+2]
                 if (tempstr == "ge" && tempstr3 != "ger")
-                            \ || (tempstr == "ne" && tempstr3 != "ner")
-                            \ || (tempstr4 == "gong" || tempstr3 == "gou")
-                            \ || (tempstr4 == "nong" || tempstr3 == "nou")
-                            \ || (tempstr == "ga" || tempstr == "na")
-                            \ || tempstr2 == "ier"
+                       \ || (tempstr == "ne" && tempstr3 != "ner")
+                       \ || (tempstr4 == "gong" || tempstr3 == "gou")
+                       \ || (tempstr4 == "nong" || tempstr3 == "nou")
+                       \ || (tempstr == "ga" || tempstr == "na")
+                       \ || tempstr2 == "ier"
                     if has_key(qptable, matchstr[:-2])
                         let i -= 1
                         let matchstr = matchstr[:-2]
@@ -3820,7 +3820,7 @@ function! s:vimim_create_quanpin_table()
         endif
     endfor
     for shengmu in ["b", "p", "m", "f", "d", "t", "l", "n", "g", "k", "h",
-                \"j", "q", "x", "zh", "ch", "sh", "r", "z", "c", "s", "y", "w"]
+        \"j", "q", "x", "zh", "ch", "sh", "r", "z", "c", "s", "y", "w"]
         let table[shengmu] = shengmu
     endfor
     return table
@@ -3964,48 +3964,48 @@ function! s:vimim_get_pinyin_table()
 " List of all valid pinyin
 " NOTE: Don't change this function or remove the spaces after commas.
 return [
-    \"'a", "'ai", "'an", "'ang", "'ao", 'ba', 'bai', 'ban', 'bang', 'bao',
-    \'bei', 'ben', 'beng', 'bi', 'bian', 'biao', 'bie', 'bin', 'bing', 'bo',
-    \'bu', 'ca', 'cai', 'can', 'cang', 'cao', 'ce', 'cen', 'ceng', 'cha',
-    \'chai', 'chan', 'chang', 'chao', 'che', 'chen', 'cheng', 'chi', 'chong',
-    \'chou', 'chu', 'chua', 'chuai', 'chuan', 'chuang', 'chui', 'chun', 'chuo',
-    \'ci', 'cong', 'cou', 'cu', 'cuan', 'cui', 'cun', 'cuo', 'da', 'dai',
-    \'dan', 'dang', 'dao', 'de', 'dei', 'deng', 'di', 'dia', 'dian', 'diao',
-    \'die', 'ding', 'diu', 'dong', 'dou', 'du', 'duan', 'dui', 'dun', 'duo',
-    \"'e", "'ei", "'en", "'er", 'fa', 'fan', 'fang', 'fe', 'fei', 'fen',
-    \'feng', 'fiao', 'fo', 'fou', 'fu', 'ga', 'gai', 'gan', 'gang', 'gao',
-    \'ge', 'gei', 'gen', 'geng', 'gong', 'gou', 'gu', 'gua', 'guai', 'guan',
-    \'guang', 'gui', 'gun', 'guo', 'ha', 'hai', 'han', 'hang', 'hao', 'he',
-    \'hei', 'hen', 'heng', 'hong', 'hou', 'hu', 'hua', 'huai', 'huan', 'huang',
-    \'hui', 'hun', 'huo', "'i", 'ji', 'jia', 'jian', 'jiang', 'jiao', 'jie',
-    \'jin', 'jing', 'jiong', 'jiu', 'ju', 'juan', 'jue', 'jun', 'ka', 'kai',
-    \'kan', 'kang', 'kao', 'ke', 'ken', 'keng', 'kong', 'kou', 'ku', 'kua',
-    \'kuai', 'kuan', 'kuang', 'kui', 'kun', 'kuo', 'la', 'lai', 'lan', 'lang',
-    \'lao', 'le', 'lei', 'leng', 'li', 'lia', 'lian', 'liang', 'liao', 'lie',
-    \'lin', 'ling', 'liu', 'long', 'lou', 'lu', 'luan', 'lue', 'lun', 'luo',
-    \'lv', 'ma', 'mai', 'man', 'mang', 'mao', 'me', 'mei', 'men', 'meng', 'mi',
-    \'mian', 'miao', 'mie', 'min', 'ming', 'miu', 'mo', 'mou', 'mu', 'na',
-    \'nai', 'nan', 'nang', 'nao', 'ne', 'nei', 'nen', 'neng', "'ng", 'ni',
-    \'nian', 'niang', 'niao', 'nie', 'nin', 'ning', 'niu', 'nong', 'nou', 'nu',
-    \'nuan', 'nue', 'nuo', 'nv', "'o", "'ou", 'pa', 'pai', 'pan', 'pang',
-    \'pao', 'pei', 'pen', 'peng', 'pi', 'pian', 'piao', 'pie', 'pin', 'ping',
-    \'po', 'pou', 'pu', 'qi', 'qia', 'qian', 'qiang', 'qiao', 'qie', 'qin',
-    \'qing', 'qiong', 'qiu', 'qu', 'quan', 'que', 'qun', 'ran', 'rang', 'rao',
-    \'re', 'ren', 'reng', 'ri', 'rong', 'rou', 'ru', 'ruan', 'rui', 'run',
-    \'ruo', 'sa', 'sai', 'san', 'sang', 'sao', 'se', 'sen', 'seng', 'sha',
-    \'shai', 'shan', 'shang', 'shao', 'she', 'shei', 'shen', 'sheng', 'shi',
-    \'shou', 'shu', 'shua', 'shuai', 'shuan', 'shuang', 'shui', 'shun', 'shuo',
-    \'si', 'song', 'sou', 'su', 'suan', 'sui', 'sun', 'suo', 'ta', 'tai',
-    \'tan', 'tang', 'tao', 'te', 'teng', 'ti', 'tian', 'tiao', 'tie', 'ting',
-    \'tong', 'tou', 'tu', 'tuan', 'tui', 'tun', 'tuo', "'u", "'v", 'wa', 'wai',
-    \'wan', 'wang', 'wei', 'wen', 'weng', 'wo', 'wu', 'xi', 'xia', 'xian',
-    \'xiang', 'xiao', 'xie', 'xin', 'xing', 'xiong', 'xiu', 'xu', 'xuan',
-    \'xue', 'xun', 'ya', 'yan', 'yang', 'yao', 'ye', 'yi', 'yin', 'ying', 'yo',
-    \'yong', 'you', 'yu', 'yuan', 'yue', 'yun', 'za', 'zai', 'zan', 'zang',
-    \'zao', 'ze', 'zei', 'zen', 'zeng', 'zha', 'zhai', 'zhan', 'zhang', 'zhao',
-    \'zhe', 'zhen', 'zheng', 'zhi', 'zhong', 'zhou', 'zhu', 'zhua', 'zhuai',
-    \'zhuan', 'zhuang', 'zhui', 'zhun', 'zhuo', 'zi', 'zong', 'zou', 'zu',
-    \'zuan', 'zui', 'zun', 'zuo']
+\"'a", "'ai", "'an", "'ang", "'ao", 'ba', 'bai', 'ban', 'bang', 'bao',
+\'bei', 'ben', 'beng', 'bi', 'bian', 'biao', 'bie', 'bin', 'bing', 'bo',
+\'bu', 'ca', 'cai', 'can', 'cang', 'cao', 'ce', 'cen', 'ceng', 'cha',
+\'chai', 'chan', 'chang', 'chao', 'che', 'chen', 'cheng', 'chi', 'chong',
+\'chou', 'chu', 'chua', 'chuai', 'chuan', 'chuang', 'chui', 'chun', 'chuo',
+\'ci', 'cong', 'cou', 'cu', 'cuan', 'cui', 'cun', 'cuo', 'da', 'dai',
+\'dan', 'dang', 'dao', 'de', 'dei', 'deng', 'di', 'dia', 'dian', 'diao',
+\'die', 'ding', 'diu', 'dong', 'dou', 'du', 'duan', 'dui', 'dun', 'duo',
+\"'e", "'ei", "'en", "'er", 'fa', 'fan', 'fang', 'fe', 'fei', 'fen',
+\'feng', 'fiao', 'fo', 'fou', 'fu', 'ga', 'gai', 'gan', 'gang', 'gao',
+\'ge', 'gei', 'gen', 'geng', 'gong', 'gou', 'gu', 'gua', 'guai', 'guan',
+\'guang', 'gui', 'gun', 'guo', 'ha', 'hai', 'han', 'hang', 'hao', 'he',
+\'hei', 'hen', 'heng', 'hong', 'hou', 'hu', 'hua', 'huai', 'huan', 'huang',
+\'hui', 'hun', 'huo', "'i", 'ji', 'jia', 'jian', 'jiang', 'jiao', 'jie',
+\'jin', 'jing', 'jiong', 'jiu', 'ju', 'juan', 'jue', 'jun', 'ka', 'kai',
+\'kan', 'kang', 'kao', 'ke', 'ken', 'keng', 'kong', 'kou', 'ku', 'kua',
+\'kuai', 'kuan', 'kuang', 'kui', 'kun', 'kuo', 'la', 'lai', 'lan', 'lang',
+\'lao', 'le', 'lei', 'leng', 'li', 'lia', 'lian', 'liang', 'liao', 'lie',
+\'lin', 'ling', 'liu', 'long', 'lou', 'lu', 'luan', 'lue', 'lun', 'luo',
+\'lv', 'ma', 'mai', 'man', 'mang', 'mao', 'me', 'mei', 'men', 'meng', 'mi',
+\'mian', 'miao', 'mie', 'min', 'ming', 'miu', 'mo', 'mou', 'mu', 'na',
+\'nai', 'nan', 'nang', 'nao', 'ne', 'nei', 'nen', 'neng', "'ng", 'ni',
+\'nian', 'niang', 'niao', 'nie', 'nin', 'ning', 'niu', 'nong', 'nou', 'nu',
+\'nuan', 'nue', 'nuo', 'nv', "'o", "'ou", 'pa', 'pai', 'pan', 'pang',
+\'pao', 'pei', 'pen', 'peng', 'pi', 'pian', 'piao', 'pie', 'pin', 'ping',
+\'po', 'pou', 'pu', 'qi', 'qia', 'qian', 'qiang', 'qiao', 'qie', 'qin',
+\'qing', 'qiong', 'qiu', 'qu', 'quan', 'que', 'qun', 'ran', 'rang', 'rao',
+\'re', 'ren', 'reng', 'ri', 'rong', 'rou', 'ru', 'ruan', 'rui', 'run',
+\'ruo', 'sa', 'sai', 'san', 'sang', 'sao', 'se', 'sen', 'seng', 'sha',
+\'shai', 'shan', 'shang', 'shao', 'she', 'shei', 'shen', 'sheng', 'shi',
+\'shou', 'shu', 'shua', 'shuai', 'shuan', 'shuang', 'shui', 'shun', 'shuo',
+\'si', 'song', 'sou', 'su', 'suan', 'sui', 'sun', 'suo', 'ta', 'tai',
+\'tan', 'tang', 'tao', 'te', 'teng', 'ti', 'tian', 'tiao', 'tie', 'ting',
+\'tong', 'tou', 'tu', 'tuan', 'tui', 'tun', 'tuo', "'u", "'v", 'wa', 'wai',
+\'wan', 'wang', 'wei', 'wen', 'weng', 'wo', 'wu', 'xi', 'xia', 'xian',
+\'xiang', 'xiao', 'xie', 'xin', 'xing', 'xiong', 'xiu', 'xu', 'xuan',
+\'xue', 'xun', 'ya', 'yan', 'yang', 'yao', 'ye', 'yi', 'yin', 'ying', 'yo',
+\'yong', 'you', 'yu', 'yuan', 'yue', 'yun', 'za', 'zai', 'zan', 'zang',
+\'zao', 'ze', 'zei', 'zen', 'zeng', 'zha', 'zhai', 'zhan', 'zhang', 'zhao',
+\'zhe', 'zhen', 'zheng', 'zhi', 'zhong', 'zhou', 'zhu', 'zhua', 'zhuai',
+\'zhuan', 'zhuang', 'zhui', 'zhun', 'zhuo', 'zi', 'zong', 'zou', 'zu',
+\'zuan', 'zui', 'zun', 'zuo']
 endfunction
 
 " --------------------------------------------
@@ -4481,9 +4481,9 @@ function! s:vimim_to_cloud_or_not(keyboards, clouds)
     return 1
 endfunction
 
-" -----------------------------------------
+" -------------------------------------
 function! s:vimim_get_cloud_sogou_key()
-" -----------------------------------------
+" -------------------------------------
     if empty(s:www_executable)
         return 0
     endif
@@ -4522,12 +4522,10 @@ function! s:vimim_get_cloud_sogou(keyboard)
     \|| empty(keyboard)
         return []
     endif
-
     " only use sogou when we get a valid key
     if empty(s:vimim_sogou_key)
         let s:vimim_sogou_key = s:vimim_get_cloud_sogou_key()
     endif
-
     let cloud = 'http://web.pinyin.sogou.com/api/py?key='
     let cloud = cloud . s:vimim_sogou_key .'&query='
     " support apostrophe as delimiter to remove ambiguity
@@ -4598,9 +4596,9 @@ let VimIM = " ====  Input_my_Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -------------------------------------------------
-function! s:vimim_access_mycloud_plugin(cloud, cmd)
-" -------------------------------------------------
+" ------------------------------------------
+function! s:vimim_access_mycloud(cloud, cmd)
+" ------------------------------------------
 "  use the same function to access mycloud by libcall() or system()
     if s:vimimdebug > 0
         call s:debugs("cloud", a:cloud)
@@ -4618,9 +4616,9 @@ function! s:vimim_access_mycloud_plugin(cloud, cmd)
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
         if s:www_libcall
-            let ret = libcall(s:www_executable, "do_geturl", a:cloud . input)
+            let ret = libcall(s:www_executable, "do_geturl", a:cloud.input)
         else
-            let ret = system(s:www_executable . shellescape(a:cloud . input))
+            let ret = system(s:www_executable . shellescape(a:cloud.input))
         endif
         let output = s:vimim_rot13(ret)
         let ret = s:vimim_url_xx_to_chinese(output)
@@ -4650,7 +4648,7 @@ function! s:vimim_check_mycloud_plugin()
                 let cloud = cloud[:-5]
             endif
             try
-                let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+                let ret = s:vimim_access_mycloud(cloud, "__isvalid")
                 if split(ret, "\t")[0] == "True"
                     return cloud
                 endif
@@ -4676,7 +4674,7 @@ function! s:vimim_check_mycloud_plugin()
         endif
         " in POSIX system, we can use system() for mycloud
         let s:cloud_plugin_mode = "system"
-        let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+        let ret = s:vimim_access_mycloud(cloud, "__isvalid")
         if split(ret, "\t")[0] == "True"
             return cloud
         endif
@@ -4702,7 +4700,7 @@ function! s:vimim_check_mycloud_plugin()
                 " in POSIX system, we can use system() for mycloud
                 if executable(split(cloud, " ")[0])
                     let s:cloud_plugin_mode = "system"
-                    let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+                    let ret = s:vimim_access_mycloud(cloud, "__isvalid")
                     if split(ret, "\t")[0] == "True"
                         return cloud
                     endif
@@ -4734,18 +4732,19 @@ function! s:vimim_check_mycloud_plugin()
             endif
             if filereadable(cloud)
                 let s:cloud_plugin_mode = "libcall"
-                " strip off the ending .dll suffix, only required for win32
+                " strip off the .dll suffix, only required for win32
                 if has("win32") && cloud[-4:] ==? ".dll"
                     let cloud = cloud[:-5]
                 endif
                 try
-                    let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+                    let ret = s:vimim_access_mycloud(cloud, "__isvalid")
                     if split(ret, "\t")[0] == "True"
                         return cloud
                     endif
                 catch
                     if s:vimimdebug > 0
-                        call s:debugs('libcall_mycloud1::error=',v:exception)
+                        let key = 'libcall_mycloud1::error='
+                        call s:debugs(key, v:exception)
                     endif
                 endtry
             endif
@@ -4753,7 +4752,7 @@ function! s:vimim_check_mycloud_plugin()
             let cloud = s:vimim_mycloud_url
             if !empty(s:www_executable)
                 let s:cloud_plugin_mode = "www"
-                let ret = s:vimim_access_mycloud_plugin(cloud,"__isvalid")
+                let ret = s:vimim_access_mycloud(cloud, "__isvalid")
                 if split(ret, "\t")[0] == "True"
                     return cloud
                 endif
@@ -4768,17 +4767,17 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
-    " mycloud sample url:
-    " let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
-    " let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
-    " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
-    " let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
-    " let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
-    " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
-    " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
-    " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
-    " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
-    " --------------------------------------------------------------
+" mycloud sample url:
+" let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
+" let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
+" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
+" let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
+" let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
+" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
+" --------------------------------------------------------------
     let cloud = s:vimim_check_mycloud_plugin()
     " this variable should not be used after initialization
     unlet s:vimim_mycloud_url
@@ -4786,9 +4785,9 @@ function! s:vimim_initialize_mycloud_plugin()
         let s:vimim_cloud_plugin = 0
         return
     endif
-    let ret = s:vimim_access_mycloud_plugin(cloud,"__getname")
+    let ret = s:vimim_access_mycloud(cloud, "__getname")
     let loaded = split(ret, "\t")[0]
-    let ret = s:vimim_access_mycloud_plugin(cloud,"__getkeychars")
+    let ret = s:vimim_access_mycloud(cloud, "__getkeychars")
     let keycode = split(ret, "\t")[0]
     if empty(keycode)
         let s:vimim_cloud_plugin = 0
@@ -4813,7 +4812,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     let output = 0
     " ---------------------------------------
     try
-        let output = s:vimim_access_mycloud_plugin(cloud, input)
+        let output = s:vimim_access_mycloud(cloud, input)
     catch
         let output = 0
         if s:vimimdebug > 0
@@ -5019,7 +5018,7 @@ function! s:vimim_exact_match(lines, match_start)
     let results = a:lines[match_start : match_end]
     " --------------------------------------------
     if len(results) < 10
-       let extras = s:vimim_pinyin_more_match_list(a:lines, keyboard, results)
+       let extras = s:vimim_pinyin_more_matches(a:lines, keyboard, results)
        if len(extras) > 0
            call extend(results, extras)
        endif
@@ -5028,9 +5027,9 @@ function! s:vimim_exact_match(lines, match_start)
     return results
 endfunction
 
-" ----------------------------------------------------------------
-function! s:vimim_pinyin_more_match_list(lines, keyboard, results)
-" ----------------------------------------------------------------
+" -------------------------------------------------------------
+function! s:vimim_pinyin_more_matches(lines, keyboard, results)
+" -------------------------------------------------------------
     let filter = "vim\\|#\\|　"
     if match(a:results, filter) > -1
         return []
@@ -5244,14 +5243,14 @@ function! s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
         endif
        if empty(a:h_d2)
        \&& has_key(a:h_d1, char_first)
-        " -----------------------------------------|" ma7li
-           let menu_vary = a:h_ac[key]             |" mali
-           let menu_fix  = a:h_d1[char_first]      |" 7132
+        " ------------------------------------------|" ma7li
+           let menu_vary = a:h_ac[key]              |" mali
+           let menu_fix  = a:h_d1[char_first]       |" 7132
        elseif empty(a:h_d1)
        \&& has_key(a:h_d2, char_last)
-        " -----------------------------------------|" mali4   ggy1
-           let menu_vary = a:h_ac[key]             |" mali    guigongyu
-           let menu_fix  = a:h_d2[char_last]       |" 4002    1040
+        " ------------------------------------------|" mali4   ggy1
+           let menu_vary = a:h_ac[key]              |" mali    guigongyu
+           let menu_fix  = a:h_d2[char_last]        |" 4002    1040
         elseif has_key(a:h_d1, char_first)
         \&& has_key(a:h_d2, char_last)
         " ------------------------------------------|" ma7li4
