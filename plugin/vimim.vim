@@ -12,13 +12,13 @@ let $VimIM = "$Revision$"
 " (2) open your vim and enter Insert mode
 " (3) type:  vim<C-6>
 " (4) type:  vimimhelp<C-6><C-6>
-" -------------------------------------------------------------------
-let egg  = ["http://code.google.com/p/vimim/issues/entry           "]
-let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506   "]
-let egg += ["http://vimim-data.googlecode.com                      "]
-let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html      "]
-let egg += ["http://groups.google.com/group/vimim                  "]
-" -------------------------------------------------------------------
+" -----------------------------------------------------------------
+let egg  = ["http://code.google.com/p/vimim/issues/entry         "]
+let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506 "]
+let egg += ["http://vimim-data.googlecode.com                    "]
+let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html    "]
+let egg += ["http://groups.google.com/group/vimim                "]
+" -----------------------------------------------------------------
 
 let VimIM = " ====  Introduction     ==== {{{"
 " ===========================================
@@ -6362,5 +6362,3 @@ sil!call s:vimim_initialize_backdoor()
 sil!call s:vimim_initialize_mapping()
 " ====================================== }}}
  
-" test
-" hg push https://user:passwd@vimim.googlecode.com/hg/plugin/vimim
