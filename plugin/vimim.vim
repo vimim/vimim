@@ -251,6 +251,7 @@ function! s:vimim_finalize_session()
     endif
     " ------------------------------
     if get(s:im['phonetic'],0) > 0
+    \|| get(s:im['array30'],0) > 0
         let s:vimim_fuzzy_search = 0
         let s:vimim_static_input_style = 1
     endif
@@ -319,8 +320,8 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['quick'] = ['速成']
     let s:chinese['yong'] = ['永码','永碼']
     let s:chinese['wu'] = ['吴语','吳語']
-    let s:chinese['array30'] = ['行列']
     let s:chinese['phonetic'] = ['注音']
+    let s:chinese['array30'] = ['行列']
     let s:chinese['erbi'] = ['二笔','二筆']
     let s:chinese['input'] = ['输入','輸入']
     let s:chinese['ciku'] = ['词库','詞庫']
@@ -370,12 +371,12 @@ function! s:vimim_dictionary_im()
     call add(key_keycode, ['cangjie', "[a-z'.]"])
     call add(key_keycode, ['zhengma', "[a-z'.]"])
     call add(key_keycode, ['yong', "[a-z'.;/]"])
+    call add(key_keycode, ['wu', "[a-z'.]"])
     call add(key_keycode, ['nature', "[a-z'.]"])
     call add(key_keycode, ['quick', "[0-9a-z'.]"])
-    call add(key_keycode, ['wu', "[a-z'.]"])
-    call add(key_keycode, ['array30', "[a-z.,;/]"])
     call add(key_keycode, ['boshiamy', "[][a-z'.,]"])
     call add(key_keycode, ['phonetic', "[0-9a-z.,;/]"])
+    call add(key_keycode, ['array30', "[0-9a-z.,;/]"])
     call add(key_keycode, ['erbi', "[a-z'.,;/]"])
     " ------------------------------------
     let loaded = 0
@@ -417,6 +418,7 @@ function! s:vimim_scan_plugin_to_invoke_im()
     call s:vimim_add_im_if_empty(input_methods, 'boshiamy')
     call s:vimim_add_im_if_empty(input_methods, 'zhengma')
     call s:vimim_add_im_if_empty(input_methods, 'quick')
+    call s:vimim_add_im_if_empty(input_methods, 'phonetic')
     call s:vimim_add_im_if_empty(input_methods, 'array30')
     call s:vimim_add_im_if_empty(input_methods, 'xinhua')
     call s:vimim_add_im_if_empty(input_methods, 'erbi')
@@ -441,7 +443,6 @@ function! s:vimim_scan_plugin_to_invoke_im()
         call add(input_methods, "pinyin_hongkong")
     endif
     " ----------------------------------------
-    call add(input_methods, "phonetic")
     call add(input_methods, "wu")
     call add(input_methods, "yong")
     call add(input_methods, "nature")
@@ -516,9 +517,9 @@ function! s:vimim_scan_plugin_for_more_im()
     " -------------------------------------
     if empty(im)
     \|| s:pinyin_and_4corner > 1
-    \|| get(s:im['array30'],0) > 1
-    \|| get(s:im['boshiamy'],0) > 1
-    \|| get(s:im['phonetic'],0) > 1
+    \|| get(s:im['boshiamy'],0) > 0
+    \|| get(s:im['phonetic'],0) > 0
+    \|| get(s:im['array30'],0) > 0
         let msg = "only play with one plugin datafile"
     elseif get(s:im['4corner'],0) > 0
         let s:pinyin_and_4corner = 1
@@ -562,8 +563,8 @@ function! s:vimim_initialize_keycode()
     \|| get(s:im['wu'],0) > 0
     \|| get(s:im['yong'],0) > 0
     \|| get(s:im['nature'],0) > 0
-    \|| get(s:im['array30'],0) > 0
     \|| get(s:im['phonetic'],0) > 0
+    \|| get(s:im['array30'],0) > 0
     \|| get(s:im['boshiamy'],0) > 0
         let msg = "how to handle real valid keycode for dot"
         let s:datafile_has_dot = 1
@@ -1684,9 +1685,11 @@ function! s:vimim_dynamic_alphabet_trigger()
     if s:chinese_input_mode !~ 'dynamic'
         return
     endif
-    let not_used_valid_keys = "[0-9.']"
+    let not_used_valid_keys = "'"
     if s:datafile_has_dot > 0
         let not_used_valid_keys = "[0-9]"
+    elseif get(s:im['pinyin'],0) > 0
+        let not_used_valid_keys = "[0-9.']"
     endif
     " --------------------------------------
     for char in s:valid_keys
@@ -5867,6 +5870,7 @@ if a:start
     if get(s:im['pinyin'],0) > 0
         let nonsense_pattern = "[0-9.]"
     elseif get(s:im['phonetic'],0) > 0
+    \|| get(s:im['array30'],0) > 0
         let nonsense_pattern = "[.]"
     endif
 
@@ -5876,7 +5880,10 @@ if a:start
             if byte_before !~# nonsense_pattern
                 let last_seen_nonsense_column = start_column
             endif
-            if byte_before =~# '\l' && all_digit > 0
+            if byte_before =~# '\l'
+            \&& all_digit > 0
+            \&& get(s:im['phonetic'],0) < 1
+            \&& get(s:im['array30'],0) < 1
                 let all_digit = 0
             endif
         elseif byte_before=='\' && s:vimim_backslash_close_pinyin>0
@@ -5888,7 +5895,7 @@ if a:start
         let byte_before = current_line[start_column-1]
     endwhile
 
-    if all_digit < 1 && get(s:im['phonetic'],0) < 1
+    if all_digit < 1
         let start_column = last_seen_nonsense_column
         let char_1st = current_line[start_column]
         let char_2nd = current_line[start_column+1]
