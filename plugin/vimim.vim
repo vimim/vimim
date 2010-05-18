@@ -4978,14 +4978,14 @@ function! s:vimim_exact_match(lines, match_start)
         return []
     endif
     " ----------------------------------------
-    let pinyin_tone = '\d\='
     let pattern = '^\(' . keyboard
     if len(keyboard) < 2
-        let pattern .=  '\>'
+        let pattern .= '\>'
     elseif get(s:im['pinyin'],0) > 0
-        let pattern .=  pinyin_tone . '\>'
+        let pinyin_tone = '\d\='
+        let pattern .= pinyin_tone . '\>'
     else
-        let pattern .=  '\>'
+        let pattern .= '\>'
     endif
     let pattern .=  '\)\@!'
     " ----------------------------------------
@@ -5000,13 +5000,17 @@ function! s:vimim_exact_match(lines, match_start)
     endif
     " ----------------------------------------
     " always do popup as one-to-many translation
-    let menu_maximum = 20+10
+    let menu_maximum = 10+20
     if match_end - match_start > menu_maximum
         let match_end = match_start + menu_maximum
     endif
-    let menu_minimum = 1
-    if match_end - match_start < menu_minimum
-        let match_end = match_start + 20
+    " --------------------------------------------
+    if match_end == match_start
+        let popup = 5-1
+        if get(s:im['pinyin'],0) > 0
+            let popup = 20
+        endif
+        let match_end = match_start + popup
     endif
     " --------------------------------------------
     let results = a:lines[match_start : match_end]
@@ -5606,6 +5610,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_i_setting()
 " --------------------------------------
     let s:saved_cpo=&cpo
+    let s:saved_magic=&magic
     let s:saved_iminsert=&iminsert
     let s:completefunc=&completefunc
     let s:completeopt=&completeopt
@@ -5624,6 +5629,9 @@ function! s:vimim_i_setting_on()
     if empty(&pumheight)
         let &pumheight=10
     endif
+    if s:datafile_has_dot > 0
+        set nomagic
+    endif
     set hlsearch
     set iminsert=1
     if empty(&statusline)
@@ -5641,6 +5649,7 @@ endfunction
 function! s:vimim_i_setting_off()
 " -------------------------------
     let &cpo=s:saved_cpo
+    let &magic=s:saved_magic
     let &iminsert=s:saved_iminsert
     let &completefunc=s:completefunc
     let &completeopt=s:completeopt
@@ -6062,6 +6071,12 @@ else
     " -----------------------------------------
     if s:xingma_sleep_with_pinyin > 0
         call s:vimim_toggle_wubi_pinyin()
+    endif
+
+    " escape literal dot if [array][phonetic][erbi]
+    " ---------------------------------------------
+    if s:datafile_has_dot > 0
+    "   let keyboard = substitute(keyboard,'\.','\\.','g')
     endif
 
     " [wubi] support wubi non-stop input
