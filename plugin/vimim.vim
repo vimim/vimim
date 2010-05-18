@@ -2423,7 +2423,7 @@ function! s:vimim_no_popupmenu_list(periods)
         let match_start = match(s:lines, pattern)
         if  match_start > -1
             " for example: enjoy.girl.1010.2523.4498.7429
-            let results = s:vimim_exact_match(s:lines, match_start)
+            let results = s:vimim_exact_match(s:lines, keyboard, match_start)
         else
             " for example: mjads.xdhao.jdaaa
             let results = s:vimim_pinyin_and_4corner(keyboard)
@@ -3365,7 +3365,7 @@ function! s:vimim_update_chinese_frequency_usage(both_list)
         return
     endif
     let keyboard = get(new_list,0)
-    let pattern = '^' . keyboard . '\>'
+    let pattern = '\M^' . keyboard . '\>'
     let insert_index = match(s:lines, pattern)
     if insert_index < 0
         return
@@ -3376,7 +3376,7 @@ function! s:vimim_update_chinese_frequency_usage(both_list)
         let msg = "only one matching line"
     else
         for item in match_list
-            let pattern = '^' . keyboard . '\s\+' . item
+            let pattern = '^\M' . keyboard . '\s\+' . item
             let remove_index = match(s:lines, pattern)
             if remove_index<0 || remove_index==insert_index
                 let msg = "nothing to remove"
@@ -4303,10 +4303,10 @@ function! s:vimim_wubi(keyboard)
         endif
         let s:keyboard_wubi = keyboard
     endif
-    let pattern = '^' . keyboard
+    let pattern = '\M^' . keyboard
     let match_start = match(s:lines, pattern)
     if  match_start > -1
-        let results = s:vimim_exact_match(s:lines, match_start)
+        let results = s:vimim_exact_match(s:lines, keyboard, match_start)
     endif
     return results
 endfunction
@@ -4421,7 +4421,7 @@ function! s:vimim_magic_tail(keyboard)
     "   (1) magic trailing dot => forced-non-cloud
     "   (2) as word partition  => match dot by dot
     " ----------------------------------------------------
-    if  magic_tail ==# "."
+    if  magic_tail ==# "." && s:datafile_has_dot < 1
         let msg = " trailing dot => forced-non-cloud"
         let s:no_internet_connection = 2
         call add(keyboards, -1)
@@ -4965,20 +4965,16 @@ function! s:vimim_oneline_match(lines, keyboard)
     return results
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_exact_match(lines, match_start)
-" -----------------------------------------------
+" ---------------------------------------------------------
+function! s:vimim_exact_match(lines, keyboard, match_start)
+" ---------------------------------------------------------
     if empty(a:lines) || a:match_start < 0
         return []
     endif
     let match_start = a:match_start
-    " ------------------------------------------
-    let keyboard = get(split(get(a:lines,match_start)),0)
-    if empty(keyboard) || keyboard !~ s:valid_key
-        return []
-    endif
+    let keyboard = a:keyboard
     " ----------------------------------------
-    let pattern = '^\(' . keyboard
+    let pattern = '\M^\(' . keyboard
     if len(keyboard) < 2
         let pattern .= '\>'
     elseif get(s:im['pinyin'],0) > 0
@@ -5005,7 +5001,7 @@ function! s:vimim_exact_match(lines, match_start)
         let match_end = match_start + menu_maximum
     endif
     " --------------------------------------------
-    if match_end == match_start
+    if match_end - match_start < 1
         let popup = 5-1
         if get(s:im['pinyin'],0) > 0
             let popup = 20
@@ -5480,12 +5476,12 @@ function! s:vimim_quick_fuzzy_search(keyboard)
         let msg = "step 1/2: try one-line match"
         " --------------------------------------
         let pattern = '^' . keyboard . '\> '
-        let oneline_match = match(s:lines, pattern)
-        if  oneline_match > -1
+        let line_match = match(s:lines, pattern)
+        if  line_match > -1
             if s:vimim_datafile_has_apostrophe > 0
-                let results = s:lines[oneline_match : oneline_match]
+                let results = s:lines[line_match : line_match]
             else
-                let results = s:vimim_exact_match(s:lines, oneline_match)
+                let results = s:vimim_exact_match(s:lines, keyboard, line_match)
             endif
             if len(results) > 0
                 return s:vimim_pair_list(results)
@@ -6073,12 +6069,6 @@ else
         call s:vimim_toggle_wubi_pinyin()
     endif
 
-    " escape literal dot if [array][phonetic][erbi]
-    " ---------------------------------------------
-    if s:datafile_has_dot > 0
-    "   let keyboard = substitute(keyboard,'\.','\\.','g')
-    endif
-
     " [wubi] support wubi non-stop input
     " ----------------------------------
     if get(s:im['wubi'],0) > 0
@@ -6170,7 +6160,7 @@ else
 
     " now it is time to do regular expression matching
     " ------------------------------------------------
-    let pattern = "\\C" . "^" . keyboard
+    let pattern = '\M^' . keyboard
     let match_start = match(s:lines, pattern)
 
     " word matching algorithm for Chinese word segmentation
@@ -6234,7 +6224,7 @@ else
         \|| (keyboard =~ "^oo" && s:vimimdebug == 9)
             let results = s:vimim_oneline_match(s:lines, keyboard)
         else
-            let results = s:vimim_exact_match(s:lines, match_start)
+            let results = s:vimim_exact_match(s:lines, keyboard, match_start)
         endif
         if len(results) > 0
             let results = s:vimim_pair_list(results)
