@@ -2514,7 +2514,7 @@ function! s:vimim_build_popupmenu(matched_list)
             if keyboard =~ '[.]' && s:datafile_has_dot < 1
                 let dot = match(keyboard, '[.]')
                 let tail = strpart(keyboard, dot+1)
-            elseif keyboard !~? '^vim'
+            elseif keyboard !~? '^vim' && keyboard !~ "[']"
                 let tail = strpart(keyboard, len(menu))
             endif
             if tail =~ '\w'
@@ -3677,11 +3677,17 @@ endfunction
 " ------------------------------------
 function! s:vimim_apostrophe(keyboard)
 " ------------------------------------
-    let keyboard = a:keyboard
     if empty(s:vimim_datafile_has_apostrophe)
-        let keyboard = substitute(keyboard,"'",'','g')
+        return a:keyboard
+    endif
+    let keyboard = a:keyboard
+    if keyboard =~ "[']"
+    \&& keyboard[0:0] != "'"
+    \&& keyboard[-1:-1] != "'"
+        let msg = "valid apostrophe is typed"
     else
-        let msg = "apostrophe is in the datafile"
+        let zero_or_one = "'\\="
+        let keyboard = join(split(keyboard,'\ze'), zero_or_one)
     endif
     return keyboard
 endfunction
@@ -6141,9 +6147,9 @@ else
     endif
 
     " [apostrophe] in pinyin datafile
-    " ------------------------------- todo
-    let keyboard = s:vimim_apostrophe(keyboard)
+    " -------------------------------
     let s:keyboard_leading_zero = keyboard
+    let keyboard = s:vimim_apostrophe(keyboard)
 
     " break up dot-separated sentence
     " -------------------------------
@@ -6225,10 +6231,10 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     else
-        " [no-magic match] search on the sorted datafile
-        " ----------------------------------------------
+        " [nomagic match] search on the sorted datafile
+        " ---------------------------------------------
         if s:vimim_datafile_has_apostrophe > 0
-        \|| (keyboard =~ "^oo" && s:vimimdebug == 9)
+        \|| (keyboard =~ s:show_me_not_pattern && s:vimimdebug == 9)
             let results = s:vimim_oneline_match(s:lines, keyboard)
         else
             let results = s:vimim_exact_match(s:lines, keyboard, match_start)
