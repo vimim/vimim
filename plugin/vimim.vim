@@ -374,10 +374,10 @@ function! s:vimim_dictionary_im()
     call add(key_keycode, ['wu', "[a-z'.]"])
     call add(key_keycode, ['nature', "[a-z'.]"])
     call add(key_keycode, ['quick', "[0-9a-z'.]"])
+    call add(key_keycode, ['erbi', "[a-z'.,;/]"])
     call add(key_keycode, ['boshiamy', "[][a-z'.,]"])
     call add(key_keycode, ['phonetic', "[0-9a-z.,;/]"])
     call add(key_keycode, ['array30', "[0-9a-z.,;/]"])
-    call add(key_keycode, ['erbi', "[a-z'.,;/]"])
     " ------------------------------------
     let loaded = 0
     for pairs in key_keycode
