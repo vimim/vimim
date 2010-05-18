@@ -4403,9 +4403,7 @@ function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
-    \|| get(s:im['boshiamy'],0) > 0
-    \|| get(s:im['phonetic'],0) > 0
-    \|| get(s:im['erbi'],0) > 0
+    \|| s:datafile_has_dot > 0
     \|| keyboard =~ '\d\d\d\d'
     \|| len(keyboard) < 3
         return []
@@ -4885,8 +4883,7 @@ function! s:vimim_datafile_range(keyboard)
     call s:vimim_reload_datafile(0)
     if empty(s:lines) || empty(a:keyboard)
         return []
-    endif
-    if s:shuangpin_flag > 0
+    elseif s:shuangpin_flag > 0
         return s:lines
     endif
     let ranges = s:vimim_search_boundary(s:lines, a:keyboard)
@@ -6065,12 +6062,6 @@ else
     " -----------------------------------------
     if s:xingma_sleep_with_pinyin > 0
         call s:vimim_toggle_wubi_pinyin()
-    endif
-
-    " escape literal dot if [array][phonetic][erbi]
-    " ---------------------------------------------
-    if s:datafile_has_dot > 0
-        let keyboard = substitute(keyboard,'\.','\\.','g')
     endif
 
     " [wubi] support wubi non-stop input
