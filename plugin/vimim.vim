@@ -6361,3 +6361,6 @@ sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_backdoor()
 sil!call s:vimim_initialize_mapping()
 " ====================================== }}}
+ 
+" test
+" hg push https://user:passwd@vimim.googlecode.com/hg/plugin/vimim
