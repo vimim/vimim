@@ -602,6 +602,7 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
+    call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
@@ -614,7 +615,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_datafile_is_not_utf8")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
-    call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_fuzzy_search")
     call add(G, "g:vimim_imode_universal")
     call add(G, "g:vimim_imode_pinyin")
@@ -5533,10 +5533,10 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimimdebug=9
     let s:vimim_cloud_sogou=0
     " ------------------------------ debug
+    let s:vimim_insert_without_popup=1
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
     let s:vimim_frequency_first_fix=1
-    let s:vimim_insert_without_popup=1
     let s:vimim_chinese_frequency=14
     let s:vimim_custom_laststatus=0
     let s:vimim_wildcard_search=1
@@ -6145,10 +6145,10 @@ else
     let keyboard = s:vimim_apostrophe(keyboard)
     let s:keyboard_leading_zero = keyboard
 
-    " break up dot-separated sentence:
+    " break up dot-separated sentence
     " -------------------------------
-    if keyboard =~ '[.]'
-    \&& s:datafile_has_dot < 1
+    if empty(s:chinese_input_mode)
+    \&& keyboard =~ '[.]'
     \&& keyboard[0:0] != '.'
     \&& keyboard[-1:-1] != '.'
         let periods = split(keyboard, '[.]')
