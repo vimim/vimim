@@ -6352,7 +6352,7 @@ function! s:vimim_mini_vimrc()
     set encoding=utf-8
     set termencoding=utf8
     set fileencodings=ucs-bom,utf8,chinese,taiwan
-    set guifontwide=NSimSun-18030,GulimChe,GungsuhChe,MS_Mincho,SimHei
+    set guifontwide=NSimSun-18030,GulimChe,MS_Mincho,SimHei
     set noloadplugins
     runtime! plugin/vimim.vim
 endfunction
@@ -6361,4 +6361,3 @@ sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_backdoor()
 sil!call s:vimim_initialize_mapping()
 " ====================================== }}}
- 
