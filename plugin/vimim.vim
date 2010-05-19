@@ -3093,6 +3093,16 @@ function! g:vimim_bracket_backspace(offset)
     return delete_char
 endfunction
 
+" -------------------------------------------
+function! <SID>vimim_smart_enter_pumvisible()
+" -------------------------------------------
+    let key = ""
+    if pumvisible()
+        let key = "\<C-E>"
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
 " --------------------------------
 function! <SID>vimim_smart_enter()
 " --------------------------------
@@ -5778,11 +5788,11 @@ function! s:vimim_helper_mapping_on()
     endif
     " ----------------------------------------------------------
     if s:vimim_static_input_style == 1
-        inoremap  <Esc>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                        \<C-R>=g:vimim_one_key_correction()<CR>
+        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                      \<C-R>=g:vimim_one_key_correction()<CR>
     endif
     " ----------------------------------------------------------
-    inoremap <CR>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+    inoremap <CR>  <C-R>=<SID>vimim_smart_enter_pumvisible()<CR>
                   \<C-R>=<SID>vimim_smart_enter()<CR>
     " ----------------------------------------------------------
     inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
