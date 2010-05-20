@@ -493,14 +493,7 @@ endfunction
 function! s:vimim_scan_plugin_for_more_im()
 " -----------------------------------------
     if empty(s:datafile_primary)
-        return
-    endif
-    " -------------------------------------
-    if s:vimimdebug < 9
-        let msg = "always scan the 2nd plugin ciku"
-    elseif get(s:im['4corner'],0) > 0
-        let msg = "pinyin and 4corner are in harmony"
-    else
+    \|| s:vimimdebug >= 9
         return
     endif
     " -------------------------------------
@@ -516,11 +509,13 @@ function! s:vimim_scan_plugin_for_more_im()
         let im = s:vimim_scan_plugin_to_invoke_im()
     endif
     " -------------------------------------
-    if empty(im) || s:pinyin_and_4corner > 1
+    if empty(im)
         let msg = "only play with one plugin datafile"
     elseif get(s:im['4corner'],0) > 0
+        let msg = "pinyin and 4corner are in harmony"
         let s:pinyin_and_4corner = 1
     else
+        let msg = "pinyin and xingma are in harmony"
         let s:xingma_sleep_with_pinyin = 1
     endif
 endfunction
