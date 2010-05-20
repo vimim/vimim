@@ -516,11 +516,7 @@ function! s:vimim_scan_plugin_for_more_im()
         let im = s:vimim_scan_plugin_to_invoke_im()
     endif
     " -------------------------------------
-    if empty(im)
-    \|| s:pinyin_and_4corner > 1
-    \|| get(s:im['boshiamy'],0) > 0
-    \|| get(s:im['phonetic'],0) > 0
-    \|| get(s:im['array30'],0) > 0
+    if empty(im) || s:pinyin_and_4corner > 1
         let msg = "only play with one plugin datafile"
     elseif get(s:im['4corner'],0) > 0
         let s:pinyin_and_4corner = 1
@@ -2533,7 +2529,7 @@ function! s:vimim_build_popupmenu(matched_list)
             if label < &pumheight+1
             \&& (empty(s:chinese_input_mode)
             \|| s:chinese_input_mode=~ 'sexy')
-                " ----------------------------------------- todo
+                " -----------------------------------------
                 let label2 = s:abcdefghi[label-1 : label-1]
                 if label < 2
                     let label2 = "_"
