@@ -1565,14 +1565,14 @@ endfunction
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
-    if !exists('s:acp')
-        let s:acp = s:vimim_getsid('autoload/acp.vim')
-        if !empty(s:acp)
+    if !exists('s:acp_sid')
+        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+        if !empty(s:acp_sid)
             AcpDisable
         endif
     endif
-    if !exists('s:supertab')
-        let s:supertab = s:vimim_getsid('plugin/supertab.vim')
+    if !exists('s:supertab_sid')
+        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
     endif
     if !exists('s:word_complete')
         let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
@@ -1585,7 +1585,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_plugins_fix_stop()
 " ----------------------------------
-    if !empty(s:acp)
+    if !empty(s:acp_sid)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
             \ '<','>','/','\','<Space>','<C-H>','<BS>','<Enter>',]
@@ -1594,13 +1594,13 @@ function! s:vimim_plugins_fix_stop()
         for key in ACPMappingDrivenkeys
             exe printf('iu <silent> %s', key)
             exe printf('im <silent> %s
-            \ %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp)
+            \ %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp_sid)
         endfor
         AcpEnable
     endif
     " -------------------------------------------------------------
-    if !empty(s:supertab)
-        let tab = s:supertab
+    if !empty(s:supertab_sid)
+        let tab = s:supertab_sid
         if g:SuperTabMappingForward =~ '^<tab>$'
             exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
         endif
