@@ -371,12 +371,14 @@ function! s:vimim_dictionary_im()
     call add(key_keycode, ['pinyin', "[0-9a-z'.]"])
     call add(key_keycode, ['cangjie', "[a-z'.]"])
     call add(key_keycode, ['zhengma', "[a-z'.]"])
-    call add(key_keycode, ['yong', "[a-z'.;/]"])
-    call add(key_keycode, ['wu', "[a-z'.]"])
-    call add(key_keycode, ['nature', "[a-z'.]"])
     call add(key_keycode, ['quick', "[0-9a-z'.]"])
+    " ----------------------------- datafile_has_dot
     call add(key_keycode, ['erbi', "[a-z'.,;/]"])
+    call add(key_keycode, ['wu', "[a-z'.]"])
+    call add(key_keycode, ['yong', "[a-z'.;/]"])
+    call add(key_keycode, ['nature', "[a-z'.]"])
     call add(key_keycode, ['boshiamy', "[][a-z'.,]"])
+    " ----------------------------- static
     call add(key_keycode, ['phonetic', "[0-9a-z.,;/]"])
     call add(key_keycode, ['array30', "[0-9a-z.,;/]"])
     " ------------------------------------
@@ -416,13 +418,14 @@ function! s:vimim_scan_plugin_to_invoke_im()
     let input_methods = []
     " ----------------------------------------
     call s:vimim_add_im_if_empty(input_methods, 'cangjie')
-    call s:vimim_add_im_if_empty(input_methods, 'boshiamy')
     call s:vimim_add_im_if_empty(input_methods, 'zhengma')
     call s:vimim_add_im_if_empty(input_methods, 'quick')
-    call s:vimim_add_im_if_empty(input_methods, 'phonetic')
-    call s:vimim_add_im_if_empty(input_methods, 'array30')
     call s:vimim_add_im_if_empty(input_methods, 'xinhua')
     call s:vimim_add_im_if_empty(input_methods, 'erbi')
+    call s:vimim_add_im_if_empty(input_methods, 'boshiamy')
+    " ----------------------------------------
+    call s:vimim_add_im_if_empty(input_methods, 'phonetic')
+    call s:vimim_add_im_if_empty(input_methods, 'array30')
     " ----------------------------------------
     if empty(get(s:im['wubi'],0))
         call add(input_methods, "wubi")
@@ -555,9 +558,9 @@ function! s:vimim_initialize_keycode()
     \|| get(s:im['wu'],0) > 0
     \|| get(s:im['yong'],0) > 0
     \|| get(s:im['nature'],0) > 0
+    \|| get(s:im['boshiamy'],0) > 0
     \|| get(s:im['phonetic'],0) > 0
     \|| get(s:im['array30'],0) > 0
-    \|| get(s:im['boshiamy'],0) > 0
         let msg = "how to handle real valid keycode for dot"
         let s:datafile_has_dot = 1
     endif
@@ -1678,12 +1681,9 @@ function! s:vimim_dynamic_alphabet_trigger()
     if s:chinese_input_mode !~ 'dynamic'
         return
     endif
-    let not_used_valid_keys = "'"
+    let not_used_valid_keys = "[0-9.']"
     if s:datafile_has_dot > 0
         let not_used_valid_keys = "[0-9]"
-    elseif s:xingma_sleep_with_pinyin > 0
-    \|| get(s:im['pinyin'],0) > 0
-        let not_used_valid_keys = "[0-9.']"
     endif
     " --------------------------------------
     for char in s:valid_keys
