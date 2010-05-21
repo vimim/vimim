@@ -1140,14 +1140,14 @@ function! s:vimim_internal_code(keyboard)
     " ----------------------------
         let last_char = keyboard[-1:-1]
         if last_char ==# '0'
-            let msg = " do decimal internal-code popup menu, eg, 22220"
+            let msg = " do decimal internal-code popup menu: 22220"
             let dddd = keyboard[:-2]
             for i in range(10)
                 let digit = str2nr(dddd.i)
                 call add(numbers, digit)
             endfor
         else
-            let msg = "do direct decimal internal-code insert, eg, 22221"
+            let msg = "do direct decimal internal-code insert: 22221"
             let ddddd = str2nr(keyboard, 10)
             let numbers = [ddddd]
         endif
@@ -1537,9 +1537,9 @@ endfunction
 " -----------------------------------
 function!  s:vimim_getsid(scriptname)
 " -----------------------------------
-    " use s:getsid to return a script sid, translate <SID> to <SNR>N_ style
+    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
     let l:scriptname = a:scriptname
-    " get the output of ":scriptnames" in the scriptnames_output variable.
+    " get the output of ":scriptnames" in the scriptnames_output variable
     if empty(s:scriptnames_output)
         let saved_shellslash=&shellslash
         set shellslash
@@ -1597,11 +1597,12 @@ function! s:vimim_plugins_fix_stop()
     endif
     " -------------------------------------------------------------
     if !empty(s:supertab)
+        let tab = s:supertab
         if g:SuperTabMappingForward =~ '^<tab>$'
-            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>",s:supertab)
+            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
         endif
         if g:SuperTabMappingBackward =~ '^<s-tab>$'
-            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>",s:supertab)
+            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
             " inoremap <silent> <Tab> <C-N>
             " inoremap <silent> <s-Tab> <C-P>
         endif
@@ -1664,10 +1665,10 @@ function! s:vimim_static_alphabet_auto_select()
         return
     endif
     " always do alphabet auto selection for static mode
-    for _ in s:az_char_list
-        sil!exe 'inoremap <silent> ' ._. '
-        \ <C-R>=pumvisible()?"\<lt>C-Y>":""<CR>'. _
-        \ . '<C-R>=g:reset_after_auto_insert()<CR>'
+    for char in s:az_char_list
+        sil!exe 'inoremap <silent> ' . char . '
+        \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
+        \'<C-R>=g:reset_after_auto_insert()<CR>'
     endfor
 endfunction
 
@@ -1680,14 +1681,15 @@ function! s:vimim_dynamic_alphabet_trigger()
     let not_used_valid_keys = "'"
     if s:datafile_has_dot > 0
         let not_used_valid_keys = "[0-9]"
-    elseif get(s:im['pinyin'],0) > 0
+    elseif s:xingma_sleep_with_pinyin > 0
+    \|| get(s:im['pinyin'],0) > 0
         let not_used_valid_keys = "[0-9.']"
     endif
     " --------------------------------------
     for char in s:valid_keys
         if char !~# not_used_valid_keys
-            sil!exe 'inoremap <silent>  ' . char . '
-            \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
+            sil!exe 'inoremap <silent> ' . char . '
+            \ <C-R>=g:vimim_pumvisible_ctrl_e_ctrl_y()<CR>'. char .
             \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
         endif
     endfor
@@ -2418,7 +2420,7 @@ function! s:vimim_no_popupmenu_list(periods)
         let match_start = match(s:lines, pattern)
         if  match_start > -1
             " for example: enjoy.girl.1010.2523.4498.7429
-            let results = s:vimim_exact_match(s:lines, keyboard, match_start)
+            let results = s:vimim_exact_match(s:lines,keyboard,match_start)
         else
             " for example: mjads.xdhao.jdaaa
             let results = s:vimim_pinyin_and_4corner(keyboard)
@@ -2502,15 +2504,17 @@ function! s:vimim_build_popupmenu(matched_list)
         endif
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
-            let tail = ''
-            if keyboard =~ '[.]' && s:datafile_has_dot < 1
-                let dot = match(keyboard, '[.]')
-                let tail = strpart(keyboard, dot+1)
-            elseif keyboard !~? '^vim' && keyboard !~ "[']"
-                let tail = strpart(keyboard, len(menu))
-            endif
-            if tail =~ '\w'
-                let chinese .=  tail
+            if get(s:im['pinyin'],0) > 0
+                let tail = ''
+                if keyboard =~ '[.]' && s:datafile_has_dot < 1
+                    let dot = match(keyboard, '[.]')
+                    let tail = strpart(keyboard, dot+1)
+                elseif keyboard !~? '^vim' && keyboard !~ "[']"
+                    let tail = strpart(keyboard, len(menu))
+                endif
+                if tail =~ '\w'
+                    let chinese .=  tail
+                endif
             endif
         else
             let menu = get(split(menu,"_"),0)
@@ -3084,16 +3088,6 @@ function! g:vimim_bracket_backspace(offset)
     return delete_char
 endfunction
 
-" -------------------------------------------
-function! <SID>vimim_smart_enter_pumvisible()
-" -------------------------------------------
-    let key = ""
-    if pumvisible()
-        let key = "\<C-E>"
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 " --------------------------------
 function! <SID>vimim_smart_enter()
 " --------------------------------
@@ -3216,17 +3210,28 @@ function! s:vimim_get_list_from_smart_ctrl_p(keyboard)
     endif
 endfunction
 
+" ------------------------------------------
+function! g:vimim_pumvisible_ctrl_e_ctrl_y()
+" ------------------------------------------
+    let key = ""
+    if pumvisible()
+        let key = "\<C-E>"
+        if s:vimim_wubi_non_stop > 0
+        \&& get(s:im['wubi'],0) > 0
+        \&& get(s:im['pinyin'],0) < 1
+        \&& empty(len(s:keyboard_wubi)%4)
+            let key = "\<C-Y>"
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
 " -----------------------------------
 function! g:vimim_pumvisible_ctrl_e()
 " -----------------------------------
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
-        if s:vimim_wubi_non_stop > 0
-        \&& empty(get(s:im['pinyin'],0))
-        \&& empty(len(s:keyboard_wubi)%4)
-            let key = "\<C-Y>"
-        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -4232,26 +4237,24 @@ call add(s:vimims, VimIM)
 " --------------------------------------------
 function! s:vimim_wubi_z_as_wildcard(keyboard)
 " --------------------------------------------
-    let keyboard = a:keyboard
-    if s:chinese_input_mode =~ 'dynamic'
-    \|| s:vimim_wildcard_search < 1
+    if s:vimim_wildcard_search < 1
         return []
     endif
     let fuzzy_search_pattern = 0
-    if match(keyboard, 'z') > 0
-        let fuzzies = keyboard
-        if keyboard[:1] != 'zz'
-            let fuzzies = substitute(keyboard,'z','.','g')
+    if match(a:keyboard, 'z') > 0
+        let fuzzies = a:keyboard
+        if a:keyboard[:1] != 'zz'
+            let fuzzies = substitute(a:keyboard,'z','.','g')
         endif
         let fuzzy_search_pattern = '^' . fuzzies . '\>'
     endif
     let lines = []
     if !empty(fuzzy_search_pattern)
-        let lines = s:vimim_datafile_range(keyboard)
+        let lines = s:vimim_datafile_range(a:keyboard)
         if empty(lines)
             return []
         endif
-        call filter(lines, 'v:val =~ pattern')
+        call filter(lines, 'v:val =~ fuzzy_search_pattern')
     endif
     return lines
 endfunction
@@ -4288,7 +4291,7 @@ function! s:vimim_wubi(keyboard)
         return []
     endif
     let results = s:vimim_wubi_z_as_wildcard(keyboard)
-    if !empty(results)
+    if len(results) > 0
         return results
     endif
     " ----------------------------
@@ -4296,7 +4299,6 @@ function! s:vimim_wubi(keyboard)
     " ----------------------------
     if s:chinese_input_mode =~ 'dynamic'
     \&& s:vimim_wubi_non_stop > 0
-    \&& empty(get(s:im['pinyin'],0))
         if len(keyboard) > 4
             let start = 4*((len(keyboard)-1)/4)
             let keyboard = strpart(keyboard, start)
@@ -4305,7 +4307,10 @@ function! s:vimim_wubi(keyboard)
     endif
     let pattern = '\M^' . keyboard
     let match_start = match(s:lines, pattern)
-    if  match_start > -1
+    if  match_start < 0
+        let results = []
+        let s:keyboard_wubi = ''
+    else
         let results = s:vimim_exact_match(s:lines, keyboard, match_start)
     endif
     return results
@@ -5231,9 +5236,9 @@ function! s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
            let menu_fix  = a:h_d1[char_first]       |" 7132
        elseif empty(a:h_d1)
        \&& has_key(a:h_d2, char_last)
-        " ------------------------------------------|" mali4   ggy1
-           let menu_vary = a:h_ac[key]              |" mali    guigongyu
-           let menu_fix  = a:h_d2[char_last]        |" 4002    1040
+        " ------------------------------------------|" mali4 ggy1
+           let menu_vary = a:h_ac[key]              |" mali  guigongyu
+           let menu_fix  = a:h_d2[char_last]        |" 4002  1040
         elseif has_key(a:h_d1, char_first)
         \&& has_key(a:h_d2, char_last)
         " ------------------------------------------|" ma7li4
@@ -5465,12 +5470,12 @@ function! s:vimim_quick_fuzzy_search(keyboard)
         let msg = "step 1/2: try one-line match"
         " --------------------------------------
         let pattern = '^' . keyboard . '\> '
-        let line_match = match(s:lines, pattern)
-        if  line_match > -1
+        let line = match(s:lines, pattern)
+        if  line > -1
             if s:vimim_datafile_has_apostrophe > 0
-                let results = s:lines[line_match : line_match]
+                let results = s:lines[line : line]
             else
-                let results = s:vimim_exact_match(s:lines, keyboard, line_match)
+                let results = s:vimim_exact_match(s:lines, keyboard, line)
             endif
             if len(results) > 0
                 return s:vimim_pair_list(results)
@@ -5724,7 +5729,6 @@ function! g:reset_after_auto_insert()
     let s:keyboard_wubi = ''
     let s:smart_ctrl_n = 0
     let s:smart_ctrl_p = 0
-    let s:smart_backspace = 0
     let s:one_key_correction = 0
     return ''
 endfunction
@@ -5783,7 +5787,7 @@ function! s:vimim_helper_mapping_on()
                       \<C-R>=g:vimim_one_key_correction()<CR>
     endif
     " ----------------------------------------------------------
-    inoremap <CR>  <C-R>=<SID>vimim_smart_enter_pumvisible()<CR>
+    inoremap <CR>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                   \<C-R>=<SID>vimim_smart_enter()<CR>
     " ----------------------------------------------------------
     inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
@@ -6211,7 +6215,7 @@ else
         \|| (keyboard =~ s:show_me_not_pattern && s:vimimdebug == 9)
             let results = s:vimim_oneline_match(s:lines, keyboard)
         else
-            let results = s:vimim_exact_match(s:lines, keyboard, match_start)
+            let results = s:vimim_exact_match(s:lines,keyboard,match_start)
         endif
         if len(results) > 0
             let results = s:vimim_pair_list(results)
