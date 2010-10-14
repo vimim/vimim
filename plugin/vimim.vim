@@ -4759,15 +4759,15 @@ endfunction
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
 " mycloud sample url:
-" let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
-" let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
 " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
 " let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
 " let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
 " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
+" let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
+" let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
 " --------------------------------------------------------------
     let cloud = s:vimim_check_mycloud_plugin()
     " this variable should not be used after initialization
@@ -5522,6 +5522,7 @@ function! s:vimim_initialize_backdoor_setting()
 " ---------------------------------------------
     let s:vimimdebug=9
     let s:vimim_cloud_sogou=0
+"   let s:vimim_mycloud_url='http://pim-cloud.appspot.com/qp/'
     " ------------------------------ debug
     let s:vimim_insert_without_popup=1
     let s:vimim_static_input_style=2
@@ -5532,12 +5533,12 @@ function! s:vimim_initialize_backdoor_setting()
     let s:vimim_wildcard_search=1
     let s:vimim_imode_universal=1
     let s:vimim_unicode_lookup=1
-    let s:vimim_reverse_pageup_pagedown=1
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
     let s:vimim_datafile_has_english=1
     let s:vimim_datafile_has_pinyin=1
     let s:vimim_datafile_has_4corner=1
+    let s:vimim_reverse_pageup_pagedown=1
     " ------------------------------
 endfunction
 
