@@ -2497,7 +2497,6 @@ function! s:vimim_build_popupmenu(matched_list)
                 let extra_text = menu.'　'.unicode
             endif
             if extra_text =~ s:show_me_not_pattern
-            \|| len(extra_text) < 2
                 let extra_text = ''
             endif
             let complete_items["menu"] = extra_text
