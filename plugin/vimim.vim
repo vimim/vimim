@@ -3709,7 +3709,6 @@ function! s:vimim_initialize_pinyin()
             return
         endif
     endif
-    let s:vimim_fuzzy_search = 1
     if empty(s:vimim_imode_pinyin)
     \&& empty(s:vimim_imode_universal)
     \&& s:shuangpin_flag < 1
@@ -5120,11 +5119,13 @@ endfunction
 function! s:vimim_fuzzy_match(keyboard)
 " -------------------------------------
     let keyboard = a:keyboard
-    let lines = s:vimim_datafile_range(keyboard)
     if s:vimim_fuzzy_search < 1
     \|| s:chinese_input_mode =~ 'dynamic'
     \|| empty(keyboard)
-    \|| empty(lines)
+        return []
+    endif
+    let lines = s:vimim_datafile_range(keyboard)
+    if empty(lines)
         return []
     endif
     if s:vimim_datafile_has_english > 0
@@ -5592,6 +5593,7 @@ function! s:vimim_initialize_backdoor_debug()
 " -------------------------------------------
     let s:vimimdebug=9
     let s:vimim_cloud_sogou=0
+    let s:vimim_fuzzy_search=0
     let s:vimim_insert_without_popup=1
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
@@ -6127,6 +6129,7 @@ else
     " [vimim_datafile_directory] let key be the filename
     " ---------------------------------------------------
     if len(s:vimim_datafile_directory) > 1
+    \&& len(s:datafile_primary) < 2
         let results = s:vimim_get_data_from_directory(keyboard)
         if empty(len(results))
             return []
@@ -6304,9 +6307,20 @@ else
         endif
     endif
 
+    " [vimim_datafile_directory] last try without external process
+    " ------------------------------------------------------------
+    if match_start < 0
+    \&& len(s:vimim_datafile_directory) > 1
+        let results = s:vimim_get_data_from_directory(keyboard)
+        if len(results) > 0
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
     " [cloud] last try cloud before giving up
     " ---------------------------------------
-    if s:vimim_cloud_sogou == 1
+    if match_start < 0
+    \&& s:vimim_cloud_sogou == 1
         let results = s:vimim_get_cloud_sogou(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
