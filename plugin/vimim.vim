@@ -5590,6 +5590,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_backdoor_debug()
 " -------------------------------------------
+    let s:vimimdebug=9
     let s:vimim_cloud_sogou=0
     let s:vimim_insert_without_popup=1
     let s:vimim_static_input_style=2
