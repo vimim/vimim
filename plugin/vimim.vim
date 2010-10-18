@@ -3318,25 +3318,27 @@ endfunction
 " ----------------------------------------------------------
 function! g:vimim_make_datafiles_in_directory(datafile, dir)
 " ----------------------------------------------------------
-" :call g:vimim_make_datafiles_in_directory("vimim.pinyin.txt","pinyin")
+" (1) :cd $VIM/vimfiles/plugin/
+" (2) :call g:vimim_make_datafiles_in_directory("vimim.pinyin.txt","pinyin")
     if !exists(a:dir)
-        call mkdir(a:dir, ".")
+        call mkdir(a:dir)
     endif
-    if filereadable(a:datafile)
-        let lines = readfile(a:datafile)
-        for line in lines
-            let entries = split(line)
-            let key = get(entries,0) 
-            let key_as_filename = a:dir . "/" . key
-            let value = join(entries[1:])
-            let chinese_list = [value]
-          " if filereadable(key_as_filename)
-          "     let first_line_chinese_list = readfile(key_as_filename)
-          "     call extend(first_line_chinese_list, chinese_list)
-          " endif
-            call writefile(chinese_list, key_as_filename)
-        endfor
+    if !filereadable(a:datafile)
+        return
     endif
+    let lines = readfile(a:datafile)
+    for line in lines
+        let entries = split(line)
+        let key = get(entries,0) 
+        let key_as_filename = a:dir . "/" . key
+        let value = join(entries[1:])
+        let chinese_list = [value]
+        if filereadable(key_as_filename)
+            let first_line_chinese_list = readfile(key_as_filename)
+            call extend(first_line_chinese_list, chinese_list)
+        endif
+        call writefile(chinese_list, key_as_filename)
+    endfor
 endfunction
 
 " -------------------------------------------
