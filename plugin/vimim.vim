@@ -172,6 +172,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:im_primary = 0
     let s:im_secondary = 0
+    let s:datafile_directory = 0
     " --------------------------------
     let s:datafile_has_dot = 0
     let s:sentence_with_space_input = 0
@@ -408,7 +409,7 @@ function! s:vimim_scan_plugin_to_invoke_im()
     let directory = "pinyin"
     let datafile = s:path . directory
     if isdirectory(datafile)
-         let s:vimim_datafile_directory = datafile
+         let s:datafile_directory = datafile
          let im = directory
          let s:im[im][0] = 1
          let s:im_primary = im
@@ -506,7 +507,7 @@ endfunction
 function! s:vimim_scan_plugin_for_more_im()
 " -----------------------------------------
     if empty(s:datafile_primary)
-    \|| len(s:vimim_datafile_directory) > 1
+    \|| len(s:datafile_directory) > 1
     \|| s:vimimdebug >= 9
         return
     endif
@@ -613,7 +614,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
-    call add(G, "g:vimim_datafile_directory")
     call add(G, "g:vimim_datafile_digital")
     call add(G, "g:vimim_datafile_has_4corner")
     call add(G, "g:vimim_datafile_has_apostrophe")
@@ -3285,11 +3285,11 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_datafile_in_vimrc()
 " ----------------------------------------------
     let datafile = s:vimim_datafile
-    if !empty(datafile) 
+    if !empty(datafile)
         if filereadable(datafile)
             let s:datafile_primary = copy(datafile)
         elseif isdirectory(datafile)
-            let s:vimim_datafile_directory = datafile
+            let s:datafile_directory = datafile
         endif
     endif
     " ------------------------------------------
@@ -3328,7 +3328,7 @@ function! g:vimim_make_datafiles_in_directory(datafile, dir)
     let lines = readfile(a:datafile)
     for line in lines
         let entries = split(line)
-        let key = get(entries,0) 
+        let key = get(entries,0)
         let key_as_filename = a:dir . "/" . key
         let value = join(entries[1:])
         let chinese_list = [value]
@@ -3709,6 +3709,7 @@ function! s:vimim_initialize_pinyin()
             return
         endif
     endif
+    let s:vimim_fuzzy_search = 1
     if empty(s:vimim_imode_pinyin)
     \&& empty(s:vimim_imode_universal)
     \&& s:shuangpin_flag < 1
@@ -3720,7 +3721,7 @@ endfunction
 function! s:vimim_get_data_from_directory(keyboard)
 " -------------------------------------------------
     let key = a:keyboard
-    let datafile = s:vimim_datafile_directory . "/" . key
+    let datafile = s:datafile_directory . "/" . key
     let results = []
     if filereadable(datafile)
         let lines = readfile(datafile)
@@ -4822,7 +4823,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
-    if len(s:vimim_datafile_directory) > 1
+    if len(s:datafile_directory) > 1
         return
     endif
 " -------------------
@@ -5593,7 +5594,6 @@ function! s:vimim_initialize_backdoor_debug()
 " -------------------------------------------
     let s:vimimdebug=9
     let s:vimim_cloud_sogou=0
-    let s:vimim_fuzzy_search=0
     let s:vimim_insert_without_popup=1
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
@@ -6081,8 +6081,8 @@ else
     " try super-internal-code if no single datafile nor cloud
     " -------------------------------------------------------
     let use_virtual_datafile = 0
-    if empty(s:lines) 
-    \&& empty(s:vimim_datafile_directory)
+    if empty(s:lines)
+    \&& empty(s:datafile_directory)
     \&& empty(s:www_executable)
         let use_virtual_datafile = 1
     elseif s:vimimdebug == 9
@@ -6126,9 +6126,9 @@ else
         endif
     endif
 
-    " [vimim_datafile_directory] let key be the filename
+    " [datafile_directory] let the key to be the filename
     " ---------------------------------------------------
-    if len(s:vimim_datafile_directory) > 1
+    if len(s:datafile_directory) > 1
     \&& len(s:datafile_primary) < 2
         let results = s:vimim_get_data_from_directory(keyboard)
         if empty(len(results))
@@ -6290,6 +6290,10 @@ else
         let results = s:vimim_fuzzy_match(keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
+            if len(s:datafile_directory) > 1
+                let results2 = s:vimim_get_data_from_directory(keyboard)
+                call extend(results, results2)
+            endif
             return s:vimim_popupmenu_list(results)
         endif
     else
@@ -6307,10 +6311,9 @@ else
         endif
     endif
 
-    " [vimim_datafile_directory] last try without external process
-    " ------------------------------------------------------------
-    if match_start < 0
-    \&& len(s:vimim_datafile_directory) > 1
+    " [datafile_directory] last try without external process
+    " ------------------------------------------------------
+    if len(s:datafile_directory) > 1
         let results = s:vimim_get_data_from_directory(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
@@ -6319,8 +6322,7 @@ else
 
     " [cloud] last try cloud before giving up
     " ---------------------------------------
-    if match_start < 0
-    \&& s:vimim_cloud_sogou == 1
+    if s:vimim_cloud_sogou == 1
         let results = s:vimim_get_cloud_sogou(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
