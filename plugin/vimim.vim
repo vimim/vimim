@@ -415,6 +415,17 @@ function! s:vimim_scan_plugin_to_invoke_im()
         return 0
     endif
     " ----------------------------------------
+    let directory = "pinyin"
+        let datafile = s:path . directory
+        if isdirectory(datafile)
+             let s:vimim_datafile_directory = datafile
+             let im = directory
+             let s:im[im][0] = 1
+             let s:im_primary = im
+             return 0
+        endif
+    endfor
+    " ----------------------------------------
     let input_methods = []
     " ----------------------------------------
     call s:vimim_add_im_if_empty(input_methods, 'cangjie')
@@ -496,6 +507,7 @@ endfunction
 function! s:vimim_scan_plugin_for_more_im()
 " -----------------------------------------
     if empty(s:datafile_primary)
+    \|| len(s:vimim_datafile_directory) > 1
     \|| s:vimimdebug >= 9
         return
     endif
@@ -602,6 +614,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile")
+    call add(G, "g:vimim_datafile_directory")
     call add(G, "g:vimim_datafile_digital")
     call add(G, "g:vimim_datafile_has_4corner")
     call add(G, "g:vimim_datafile_has_apostrophe")
@@ -651,6 +664,7 @@ endfunction
 " ----------------------------------------------------
 function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
+let g:g4=g:vimim_datafile
     for variable in a:options
         call add(s:global_defaults, variable .'='. a:default)
         let s_variable = substitute(variable,"g:","s:",'')
@@ -662,6 +676,7 @@ function! s:vimim_set_global_default(options, default)
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
+let g:g5=s:vimim_datafile
 endfunction
 
 " ======================================= }}}
@@ -3271,8 +3286,12 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_datafile_in_vimrc()
 " ----------------------------------------------
     let datafile = s:vimim_datafile
-    if !empty(datafile) && filereadable(datafile)
-        let s:datafile_primary = copy(datafile)
+    if !empty(datafile) 
+        if filereadable(datafile)
+            let s:datafile_primary = copy(datafile)
+        elseif isdirectory(datafile)
+            let s:vimim_datafile_directory = datafile
+        endif
     endif
     " ------------------------------------------
     let datafile = s:vimim_datafile_digital
@@ -3294,6 +3313,30 @@ function! s:vimim_initialize_datafile_in_vimrc()
         let s:im['pinyin'][0] = 1
     endif
     " ------------------------------------------
+endfunction
+
+" ----------------------------------------------------------
+function! g:vimim_make_datafiles_in_directory(datafile, dir)
+" ----------------------------------------------------------
+" :call g:vimim_make_datafiles_in_directory("vimim.pinyin.txt","pinyin")
+    if !exists(a:dir)
+        call mkdir(a:dir, ".")
+    endif
+    if filereadable(a:datafile)
+        let lines = readfile(a:datafile)
+        for line in lines
+            let entries = split(line)
+            let key = get(entries,0) 
+            let key_as_filename = a:dir . "/" . key
+            let value = join(entries[1:])
+            let chinese_list = [value]
+            if filereadable(key_as_filename)
+                let first_line_chinese_list = readfile(key_as_filename)
+                call extend(first_line_chinese_list, chinese_list)
+            endif
+            call writefile(chinese_list, key_as_filename)
+        endfor
+    endif
 endfunction
 
 " -------------------------------------------
@@ -3671,6 +3714,27 @@ function! s:vimim_initialize_pinyin()
     \&& s:shuangpin_flag < 1
         let s:vimim_imode_pinyin = 1
     endif
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_get_data_from_directory(keyboard)
+" -------------------------------------------------
+    let key = a:keyboard
+    let datafile = s:vimim_datafile_directory . "/" . key
+    let results = []
+    if filereadable(datafile)
+        let lines = readfile(datafile)
+        for line in lines
+            for chinese in split(line)
+                if s:localization > 0
+                    let chinese = s:vimim_i18n_read(chinese)
+                endif
+                let menu = key . " " . chinese
+                call add(results, menu)
+            endfor
+        endfor
+    endif
+    return results
 endfunction
 
 " ------------------------------------
@@ -4758,7 +4822,12 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
+    if len(s:vimim_datafile_directory) > 1
+        return
+    endif
+" -------------------
 " mycloud sample url:
+" --------------------------------------------------------------
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
@@ -5503,12 +5572,20 @@ function! s:vimim_initialize_backdoor()
     let s:initialization_loaded = 0
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
-    let datafile_backdoor = s:path . "vimim.txt"
     " -----------------------------------------
-    if filereadable(datafile_backdoor)
-        let s:vimim_custom_skin=1
-        let s:datafile_primary = datafile_backdoor
-        call s:vimim_initialize_backdoor_setting()
+    if len(s:vimim_datafile) > 1
+        return
+    endif
+    " -----------------------------------------
+    let backdoor_directory = s:path . "vimim"
+    let backdoor_datafile = backdoor_directory . ".txt"
+    if isdirectory(backdoor_directory)
+        let s:vimim_datafile_directory = backdoor_directory
+    elseif filereadable(backdoor_datafile)
+        let s:datafile_primary = backdoor_datafile
+    endif
+    let s:vimim_custom_skin=1
+    call s:vimim_initialize_backdoor_debug()
     endif
     " -----------------------------------------
     if s:vimim_custom_skin > 0
@@ -5517,13 +5594,10 @@ function! s:vimim_initialize_backdoor()
     " -----------------------------------------
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_initialize_backdoor_setting()
-" ---------------------------------------------
-    let s:vimimdebug=9
+" -------------------------------------------
+function! s:vimim_initialize_backdoor_debug()
+" -------------------------------------------
     let s:vimim_cloud_sogou=0
-"   let s:vimim_mycloud_url='http://pim-cloud.appspot.com/qp/'
-    " ------------------------------ debug
     let s:vimim_insert_without_popup=1
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
@@ -6011,7 +6085,9 @@ else
     " try super-internal-code if no single datafile nor cloud
     " -------------------------------------------------------
     let use_virtual_datafile = 0
-    if empty(s:lines) && empty(s:www_executable)
+    if empty(s:lines) 
+    \&& empty(s:vimim_datafile_directory)
+    \&& empty(s:www_executable)
         let use_virtual_datafile = 1
     elseif s:vimimdebug == 9
     \&& len(keyboard) == 2
@@ -6050,6 +6126,17 @@ else
         let results = s:vimim_internal_code(keyboard)
         if len(results) > 0
             let s:unicode_menu_display_flag = 1
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
+    " [vimim_datafile_directory] let key be the filename
+    " ---------------------------------------------------
+    if len(s:vimim_datafile_directory) > 1
+        let results = s:vimim_get_data_from_directory(keyboard)
+        if empty(len(results))
+            return []
+        else
             return s:vimim_popupmenu_list(results)
         endif
     endif
