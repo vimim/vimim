@@ -406,15 +406,14 @@ endfunction
 function! s:vimim_scan_plugin_to_invoke_im()
 " ------------------------------------------
     let directory = "pinyin"
-        let datafile = s:path . directory
-        if isdirectory(datafile)
-             let s:vimim_datafile_directory = datafile
-             let im = directory
-             let s:im[im][0] = 1
-             let s:im_primary = im
-             return 0
-        endif
-    endfor
+    let datafile = s:path . directory
+    if isdirectory(datafile)
+         let s:vimim_datafile_directory = datafile
+         let im = directory
+         let s:im[im][0] = 1
+         let s:im_primary = im
+         return 0
+    endif
     " ----------------------------------------
     if s:vimimdebug > 0
     \|| s:pinyin_and_4corner > 1
@@ -3319,7 +3318,7 @@ endfunction
 function! g:vimim_make_datafiles_in_directory(datafile, dir)
 " ----------------------------------------------------------
 " (1) :cd $VIM/vimfiles/plugin/
-" (2) :call g:vimim_make_datafiles_in_directory("vimim.pinyin.txt","pinyin")
+" (2) :call g:vimim_make_datafiles_in_directory("pinyin.txt","pinyin")
     if !exists(a:dir)
         call mkdir(a:dir)
     endif
