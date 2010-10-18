@@ -405,16 +405,6 @@ endfunction
 " ------------------------------------------
 function! s:vimim_scan_plugin_to_invoke_im()
 " ------------------------------------------
-    if s:vimimdebug > 0
-    \|| s:pinyin_and_4corner > 1
-        return 0
-    endif
-    " ----------------------------------------
-    if len(s:datafile_primary) > 1
-    \&& len(s:datafile_secondary) > 1
-        return 0
-    endif
-    " ----------------------------------------
     let directory = "pinyin"
         let datafile = s:path . directory
         if isdirectory(datafile)
@@ -425,6 +415,16 @@ function! s:vimim_scan_plugin_to_invoke_im()
              return 0
         endif
     endfor
+    " ----------------------------------------
+    if s:vimimdebug > 0
+    \|| s:pinyin_and_4corner > 1
+        return 0
+    endif
+    " ----------------------------------------
+    if len(s:datafile_primary) > 1
+    \&& len(s:datafile_secondary) > 1
+        return 0
+    endif
     " ----------------------------------------
     let input_methods = []
     " ----------------------------------------
@@ -3330,10 +3330,10 @@ function! g:vimim_make_datafiles_in_directory(datafile, dir)
             let key_as_filename = a:dir . "/" . key
             let value = join(entries[1:])
             let chinese_list = [value]
-            if filereadable(key_as_filename)
-                let first_line_chinese_list = readfile(key_as_filename)
-                call extend(first_line_chinese_list, chinese_list)
-            endif
+          " if filereadable(key_as_filename)
+          "     let first_line_chinese_list = readfile(key_as_filename)
+          "     call extend(first_line_chinese_list, chinese_list)
+          " endif
             call writefile(chinese_list, key_as_filename)
         endfor
     endif
@@ -5573,19 +5573,11 @@ function! s:vimim_initialize_backdoor()
     let s:datafile_primary = 0
     let s:datafile_secondary = 0
     " -----------------------------------------
-    if len(s:vimim_datafile) > 1
-        return
-    endif
-    " -----------------------------------------
-    let backdoor_directory = s:path . "vimim"
-    let backdoor_datafile = backdoor_directory . ".txt"
-    if isdirectory(backdoor_directory)
-        let s:vimim_datafile_directory = backdoor_directory
-    elseif filereadable(backdoor_datafile)
+    let backdoor_datafile = s:path . "vimim.txt"
+    if filereadable(backdoor_datafile)
         let s:datafile_primary = backdoor_datafile
-    endif
-    let s:vimim_custom_skin=1
-    call s:vimim_initialize_backdoor_debug()
+        let s:vimim_custom_skin=1
+        call s:vimim_initialize_backdoor_debug()
     endif
     " -----------------------------------------
     if s:vimim_custom_skin > 0
