@@ -663,7 +663,6 @@ endfunction
 " ----------------------------------------------------
 function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
-let g:g4=g:vimim_datafile
     for variable in a:options
         call add(s:global_defaults, variable .'='. a:default)
         let s_variable = substitute(variable,"g:","s:",'')
@@ -675,7 +674,6 @@ let g:g4=g:vimim_datafile
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
-let g:g5=s:vimim_datafile
 endfunction
 
 " ======================================= }}}
@@ -6128,13 +6126,11 @@ else
 
     " [datafile_directory] let the key to be the filename
     " ---------------------------------------------------
+    let results2 = []
     if len(s:datafile_directory) > 1
-    \&& len(s:datafile_primary) < 2
-        let results = s:vimim_get_data_from_directory(keyboard)
-        if empty(len(results))
-            return []
-        else
-            return s:vimim_popupmenu_list(results)
+        let results2 = s:vimim_get_data_from_directory(keyboard)
+        if len(s:datafile_primary) < 2 && len(results2) > 0
+            return s:vimim_popupmenu_list(results2)
         endif
     endif
 
@@ -6240,7 +6236,7 @@ else
 
     " word matching algorithm for Chinese word segmentation
     " -----------------------------------------------------
-    if match_start < 0 && empty(clouds)
+    if match_start < 0 && empty(clouds) && empty(results2)
         let keyboards = s:vimim_keyboard_analysis(s:lines, keyboard)
         if empty(keyboards)
             let msg = "sell the keyboard as is, without modification"
@@ -6290,8 +6286,7 @@ else
         let results = s:vimim_fuzzy_match(keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
-            if len(s:datafile_directory) > 1
-                let results2 = s:vimim_get_data_from_directory(keyboard)
+            if len(results2) > 0
                 call extend(results, results2)
             endif
             return s:vimim_popupmenu_list(results)
@@ -6313,11 +6308,8 @@ else
 
     " [datafile_directory] last try without external process
     " ------------------------------------------------------
-    if len(s:datafile_directory) > 1
-        let results = s:vimim_get_data_from_directory(keyboard)
-        if len(results) > 0
-            return s:vimim_popupmenu_list(results)
-        endif
+    if len(results2) > 0
+        return s:vimim_popupmenu_list(results2)
     endif
 
     " [cloud] last try cloud before giving up
