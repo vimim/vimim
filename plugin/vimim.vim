@@ -54,6 +54,7 @@ let VimIM = " ====  Introduction     ==== {{{"
 " -----------------------------------------------------------
 " Install:   (1) download datafile from http://vimim-data.googlecode.com
 "            (2) drop this file and the datafile to the plugin directory
+"            (3) [option] make directory database: plugin/vimim/pinyin/
 " -----------------------------------------------------------
 " Usage (1): [in Insert Mode] "to insert/search Chinese ad hoc":
 "            # to insert: type keycode and hit <C-6> to trigger
@@ -98,14 +99,18 @@ call add(s:vimims, VimIM)
 " ----------------
 " "VimIM Datafile"
 " ----------------
-" The datafile is assumed to be in order.
-" To sort the datafile, Vim command can be used: :sort u<CR>
-" The format of datafile is simple and flexible:
+" (1) The datafile is assumed to be in order.
+"     To sort the datafile, Vim command can be used: :sort u<CR>
+"     The format of datafile is simple and flexible:
 "             +------+--+-------+
 "             |<key> |  |<value>|
 "             |======|==|=======|
 "             | mali |  |  馬力 |
 "             +------+--+-------+
+" (2) The directory database can be huge without impact speed
+"     + plugin/vimim/pinyin/
+"     + plugin/vimim/chinese_pinyin/
+"     + plugin/vimim/chinese_4corner/
 
 " ======================================= }}}
 let VimIM = " ====  Initialization   ==== {{{"
@@ -115,8 +120,9 @@ if exists("b:loaded_vimim") || &cp || v:version<700
     finish
 endif
 let b:loaded_vimim=1
-let s:vimimhelp = egg
+let s:vimimhelp=egg
 let s:path=expand("<sfile>:p:h")."/"
+let s:path2=s:path."vimim/"
 scriptencoding utf-8
 
 " -------------------------------------
@@ -135,6 +141,7 @@ function! s:vimim_initialization_once()
     call s:vimim_dictionary_im()
     call s:vimim_initialize_datafile_in_vimrc()
     " -----------------------------------------
+    call s:vimim_scan_pinyin_data_directory()
     call s:vimim_scan_plugin_to_invoke_im()
     call s:vimim_scan_plugin_for_more_im()
     " -----------------------------------------
@@ -172,7 +179,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:im_primary = 0
     let s:im_secondary = 0
-    let s:datafile_directory = 0
+    let s:pinyin_data_directory = 0
     " --------------------------------
     let s:datafile_has_dot = 0
     let s:sentence_with_space_input = 0
@@ -406,16 +413,6 @@ endfunction
 " ------------------------------------------
 function! s:vimim_scan_plugin_to_invoke_im()
 " ------------------------------------------
-    let directory = "pinyin"
-    let datafile = s:path . directory
-    if isdirectory(datafile)
-         let s:datafile_directory = datafile
-         let im = directory
-         let s:im[im][0] = 1
-         let s:im_primary = im
-         return 0
-    endif
-    " ----------------------------------------
     if s:vimimdebug > 0
     \|| s:pinyin_and_4corner > 1
         return 0
@@ -507,7 +504,7 @@ endfunction
 function! s:vimim_scan_plugin_for_more_im()
 " -----------------------------------------
     if empty(s:datafile_primary)
-    \|| len(s:datafile_directory) > 1
+    \|| len(s:pinyin_data_directory) > 1
     \|| s:vimimdebug >= 9
         return
     endif
@@ -3275,7 +3272,72 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Datafile_Update  ==== {{{"
+let VimIM = " ====  Data_Directory   === {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" --------------------------------------------
+function! s:vimim_scan_pinyin_data_directory()
+" --------------------------------------------
+    let directory = "pinyin"
+    let datafile = s:path2 . directory
+    if isdirectory(datafile)
+         let s:pinyin_data_directory = datafile
+         let im = directory
+         let s:im[im][0] = 1
+         let s:im_primary = im
+    endif
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_get_data_from_directory(keyboard)
+" -------------------------------------------------
+    let key = a:keyboard
+    let datafile = s:pinyin_data_directory . "/" . key
+    let results = []
+    if filereadable(datafile)
+        let lines = readfile(datafile)
+        for line in lines
+            for chinese in split(line)
+                if s:localization > 0
+                    let chinese = s:vimim_i18n_read(chinese)
+                endif
+                let menu = key . " " . chinese
+                call add(results, menu)
+            endfor
+        endfor
+    endif
+    return results
+endfunction
+
+" ----------------------------------------------------------
+function! g:vimim_make_datafiles_in_directory(datafile, dir)
+" ----------------------------------------------------------
+" (1) :cd $VIM/vimfiles/plugin/vimim
+" (2) :call g:vimim_make_datafiles_in_directory("pinyin.txt","pinyin")
+    if !exists(a:dir)
+        call mkdir(a:dir)
+    endif
+    if !filereadable(a:datafile)
+        return
+    endif
+    let lines = readfile(a:datafile)
+    for line in lines
+        let entries = split(line)
+        let key = get(entries,0)
+        let key_as_filename = a:dir . "/" . key
+        let value = join(entries[1:])
+        let chinese_list = [value]
+        if filereadable(key_as_filename)
+            let first_line_chinese_list = readfile(key_as_filename)
+            call extend(first_line_chinese_list, chinese_list)
+        endif
+        call writefile(chinese_list, key_as_filename)
+    endfor
+endfunction
+
+" ======================================= }}}
+let VimIM = " ====  Data_Update      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3287,7 +3349,7 @@ function! s:vimim_initialize_datafile_in_vimrc()
         if filereadable(datafile)
             let s:datafile_primary = copy(datafile)
         elseif isdirectory(datafile)
-            let s:datafile_directory = datafile
+            let s:pinyin_data_directory = datafile
         endif
     endif
     " ------------------------------------------
@@ -3310,32 +3372,6 @@ function! s:vimim_initialize_datafile_in_vimrc()
         let s:im['pinyin'][0] = 1
     endif
     " ------------------------------------------
-endfunction
-
-" ----------------------------------------------------------
-function! g:vimim_make_datafiles_in_directory(datafile, dir)
-" ----------------------------------------------------------
-" (1) :cd $VIM/vimfiles/plugin/
-" (2) :call g:vimim_make_datafiles_in_directory("pinyin.txt","pinyin")
-    if !exists(a:dir)
-        call mkdir(a:dir)
-    endif
-    if !filereadable(a:datafile)
-        return
-    endif
-    let lines = readfile(a:datafile)
-    for line in lines
-        let entries = split(line)
-        let key = get(entries,0)
-        let key_as_filename = a:dir . "/" . key
-        let value = join(entries[1:])
-        let chinese_list = [value]
-        if filereadable(key_as_filename)
-            let first_line_chinese_list = readfile(key_as_filename)
-            call extend(first_line_chinese_list, chinese_list)
-        endif
-        call writefile(chinese_list, key_as_filename)
-    endfor
 endfunction
 
 " -------------------------------------------
@@ -3713,27 +3749,6 @@ function! s:vimim_initialize_pinyin()
     \&& s:shuangpin_flag < 1
         let s:vimim_imode_pinyin = 1
     endif
-endfunction
-
-" -------------------------------------------------
-function! s:vimim_get_data_from_directory(keyboard)
-" -------------------------------------------------
-    let key = a:keyboard
-    let datafile = s:datafile_directory . "/" . key
-    let results = []
-    if filereadable(datafile)
-        let lines = readfile(datafile)
-        for line in lines
-            for chinese in split(line)
-                if s:localization > 0
-                    let chinese = s:vimim_i18n_read(chinese)
-                endif
-                let menu = key . " " . chinese
-                call add(results, menu)
-            endfor
-        endfor
-    endif
-    return results
 endfunction
 
 " ------------------------------------
@@ -4821,7 +4836,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
-    if len(s:datafile_directory) > 1
+    if len(s:pinyin_data_directory) > 1
         return
     endif
 " -------------------
@@ -6080,7 +6095,7 @@ else
     " -------------------------------------------------------
     let use_virtual_datafile = 0
     if empty(s:lines)
-    \&& empty(s:datafile_directory)
+    \&& empty(s:pinyin_data_directory)
     \&& empty(s:www_executable)
         let use_virtual_datafile = 1
     elseif s:vimimdebug == 9
@@ -6127,7 +6142,7 @@ else
     " [datafile_directory] let the key to be the filename
     " ---------------------------------------------------
     let results2 = []
-    if len(s:datafile_directory) > 1
+    if len(s:pinyin_data_directory) > 1
         let results2 = s:vimim_get_data_from_directory(keyboard)
         if len(s:datafile_primary) < 2 && len(results2) > 0
             return s:vimim_popupmenu_list(results2)
