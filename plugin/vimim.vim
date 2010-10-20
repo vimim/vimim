@@ -3743,7 +3743,6 @@ function! s:vimim_initialize_pinyin()
             return
         endif
     endif
-    let s:vimim_fuzzy_search = 1
     if empty(s:vimim_imode_pinyin)
     \&& empty(s:vimim_imode_universal)
     \&& s:shuangpin_flag < 1
@@ -5607,6 +5606,7 @@ function! s:vimim_initialize_backdoor_debug()
 " -------------------------------------------
     let s:vimimdebug=9
     let s:vimim_cloud_sogou=0
+    let s:vimim_fuzzy_search=1
     let s:vimim_insert_without_popup=1
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
@@ -6295,6 +6295,12 @@ else
         endif
     endif
 
+    " [datafile_directory] last try without external process
+    " ------------------------------------------------------
+    if match_start < 0 && len(results2) > 0
+        return s:vimim_popupmenu_list(results2)
+    endif
+
     if match_start < 0
         " [fuzzy search] implicit wildcard search
         " ---------------------------------------
@@ -6319,12 +6325,6 @@ else
             let results = s:vimim_pair_list(results)
             return s:vimim_popupmenu_list(results)
         endif
-    endif
-
-    " [datafile_directory] last try without external process
-    " ------------------------------------------------------
-    if len(results2) > 0
-        return s:vimim_popupmenu_list(results2)
     endif
 
     " [cloud] last try cloud before giving up
