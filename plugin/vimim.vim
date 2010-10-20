@@ -109,8 +109,10 @@ call add(s:vimims, VimIM)
 "             +------+--+-------+
 " (2) The directory database can be huge without impact speed
 "     + plugin/vimim/pinyin/
-"     + plugin/vimim/chinese_pinyin/
-"     + plugin/vimim/chinese_4corner/
+"     + plugin/vimim/4corner/
+"     + plugin/vimim/unihan/
+"          + plugin/vimim/chinese_pinyin/
+"          + plugin/vimim/chinese_4corner/
 
 " ======================================= }}}
 let VimIM = " ====  Initialization   ==== {{{"
@@ -3310,7 +3312,7 @@ function! s:vimim_get_data_from_directory(keyboard)
     return results
 endfunction
 
-" ----------------------------------------------------------
+" ---------------------------------------------------------- todo
 function! g:vimim_make_datafiles_in_directory(datafile, dir)
 " ----------------------------------------------------------
 " (1) :cd $VIM/vimfiles/plugin/vimim
@@ -6145,7 +6147,8 @@ else
     if len(s:pinyin_data_directory) > 1
         let results2 = s:vimim_get_data_from_directory(keyboard)
         if len(s:datafile_primary) < 2 && len(results2) > 0
-            return s:vimim_popupmenu_list(results2)
+            let results = s:vimim_pair_list(results2)
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
@@ -6298,7 +6301,8 @@ else
     " [datafile_directory] last try without external process
     " ------------------------------------------------------
     if match_start < 0 && len(results2) > 0
-        return s:vimim_popupmenu_list(results2)
+        let results = s:vimim_pair_list(results2)
+        return s:vimim_popupmenu_list(results)
     endif
 
     if match_start < 0
@@ -6307,9 +6311,6 @@ else
         let results = s:vimim_fuzzy_match(keyboard)
         if len(results) > 0
             let results = s:vimim_pair_list(results)
-            if len(results2) > 0
-                call extend(results, results2)
-            endif
             return s:vimim_popupmenu_list(results)
         endif
     else
