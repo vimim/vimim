@@ -3337,12 +3337,13 @@ endfunction
 function! g:vimim_make_directory_datafiles()
 " ------------------------------------------
 " Goal: creating directory xxx and adding files, based on xxx.txt
-" Support:  pinyin.txt 4corner.txt unihan.txt
+" Support:  pinyin.txt unihan_pinyin 4corner.txt unihan_4corner.txt
 " Example: one   input:  pinyin.txt  (the master file)
 "          many output: pinyin/ma3  (one sample slave file)
 " (1) :cd $VIM/vimfiles/plugin/vimim/
 " (2) :vim pinyin.txt
 " (3) :call g:vimim_make_directory_datafiles()
+" ------------------------------------------
     let dir = expand("%:t:r")
     if !exists(dir)
         call mkdir(dir,"p")
@@ -3351,6 +3352,7 @@ function! g:vimim_make_directory_datafiles()
     for line in lines
         let entries = split(line)
         let key = get(entries, 0)
+        let key = substitute(key,"'",'','g')
         let key_as_filename = dir . "/" . key
         let value = join(entries[1:])
         let chinese_list = [value]
