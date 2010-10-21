@@ -110,7 +110,6 @@ call add(s:vimims, VimIM)
 " (2) The "directory database" can be huge without impacting speed
 "         + plugin/vimim/pinyin/
 "         + plugin/vimim/4corner/
-"         + plugin/vimim/unihan_pinyin/
 
 " ======================================= }}}
 let VimIM = " ====  Initialization   ==== {{{"
@@ -180,8 +179,6 @@ function! s:vimim_initialize_session()
     let s:im_secondary = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_4corner = 0
-    let s:data_directory_unihan_pinyin = 0
-    let s:data_directory_unihan_4corner = 0
     " --------------------------------
     let s:datafile_has_dot = 0
     let s:sentence_with_space_input = 0
@@ -3297,12 +3294,6 @@ function! s:vimim_scan_plugin_data_directory()
     if isdirectory(datafile)
         let s:data_directory_4corner = datafile
     endif
-    " ----------------------------------------
-    let directory = "unihan_pinyin"
-    let datafile = s:data_directory ."/". directory
-    if isdirectory(datafile)
-        let s:data_directory_unihan_pinyin = datafile
-    endif
 endfunction
 
 " -------------------------------------------------
@@ -3330,7 +3321,7 @@ endfunction
 function! g:vimim_make_directory_datafiles()
 " ------------------------------------------
 " Goal: creating directory xxx and adding files, based on xxx.txt
-" Support:  pinyin.txt unihan_pinyin 4corner.txt
+" Support:  pinyin.txt 4corner.txt
 " Example: one   input:  pinyin.txt  (the master file)
 "          many output: pinyin/ma3  (one sample slave file)
 " (1) :cd $VIM/vimfiles/plugin/vimim/
