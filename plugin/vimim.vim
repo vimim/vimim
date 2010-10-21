@@ -101,18 +101,17 @@ call add(s:vimims, VimIM)
 " ----------------
 " (1) The datafile is assumed to be in order.
 "     To sort the datafile, Vim command can be used: :sort u<CR>
-"     The format of datafile is simple and flexible:
-"             +------+--+-------+
-"             |<key> |  |<value>|
-"             |======|==|=======|
-"             | mali |  |  馬力 |
-"             +------+--+-------+
-" (2) The directory database can be huge without impact speed
-"     + plugin/vimim/pinyin/
-"     + plugin/vimim/4corner/
-"     + plugin/vimim/unihan/
-"          + plugin/vimim/chinese_pinyin/
-"          + plugin/vimim/chinese_4corner/
+"     The datafile format is simple and flexible:
+"         +------+--+-------+
+"         |<key> |  |<value>|
+"         |======|==|=======|
+"         | mali |  |  馬力 |
+"         +------+--+-------+
+" (2) The "directory database" can be huge without impacting speed
+"         + plugin/vimim/pinyin/
+"         + plugin/vimim/4corner/
+"         + plugin/vimim/unihan_pinyin/
+"         + plugin/vimim/unihan_4corner/
 
 " ======================================= }}}
 let VimIM = " ====  Initialization   ==== {{{"
@@ -142,7 +141,7 @@ function! s:vimim_initialization_once()
     call s:vimim_dictionary_im()
     call s:vimim_initialize_datafile_in_vimrc()
     " -----------------------------------------
-    call s:vimim_scan_pinyin_data_directory()
+    call s:vimim_scan_plugin_data_directory()
     call s:vimim_scan_plugin_to_invoke_im()
     call s:vimim_scan_plugin_for_more_im()
     " -----------------------------------------
@@ -180,7 +179,10 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:im_primary = 0
     let s:im_secondary = 0
-    let s:pinyin_data_directory = 0
+    let s:data_directory_pinyin = 0
+    let s:data_directory_4corner = 0
+    let s:data_directory_unihan_pinyin = 0
+    let s:data_directory_unihan_4corner = 0
     " --------------------------------
     let s:datafile_has_dot = 0
     let s:sentence_with_space_input = 0
@@ -506,7 +508,7 @@ endfunction
 function! s:vimim_scan_plugin_for_more_im()
 " -----------------------------------------
     if empty(s:datafile_primary)
-    \|| len(s:pinyin_data_directory) > 1
+    \|| len(s:data_directory_pinyin) > 1
     \|| s:vimimdebug >= 9
         return
     endif
@@ -3280,15 +3282,33 @@ let VimIM = " ====  Data_Directory   === {{{"
 call add(s:vimims, VimIM)
 
 " --------------------------------------------
-function! s:vimim_scan_pinyin_data_directory()
+function! s:vimim_scan_plugin_data_directory()
 " --------------------------------------------
     let directory = "pinyin"
     let datafile = s:data_directory ."/". directory
     if isdirectory(datafile)
-         let s:pinyin_data_directory = datafile
-         let im = directory
-         let s:im[im][0] = 1
-         let s:im_primary = im
+        let s:data_directory_pinyin = datafile
+        let im = directory
+        let s:im[im][0] = 1
+        let s:im_primary = im
+    endif
+    " ----------------------------------------
+    let directory = "4corner"
+    let datafile = s:data_directory ."/". directory
+    if isdirectory(datafile)
+        let s:data_directory_4corner = datafile
+    endif
+    " ----------------------------------------
+    let directory = "unihan_pinyin"
+    let datafile = s:data_directory ."/". directory
+    if isdirectory(datafile)
+        let s:data_directory_unihan_pinyin = datafile
+    endif
+    " ----------------------------------------
+    let directory = "unihan_4corner"
+    let datafile = s:data_directory ."/". directory
+    if isdirectory(datafile)
+        let s:data_directory_unihan_4corner = datafile
     endif
 endfunction
 
@@ -3296,7 +3316,7 @@ endfunction
 function! s:vimim_get_data_from_directory(keyboard)
 " -------------------------------------------------
     let key = a:keyboard
-    let datafile = s:pinyin_data_directory . "/" . key
+    let datafile = s:data_directory_pinyin . "/" . key
     let results = []
     if filereadable(datafile)
         let lines = readfile(datafile)
@@ -4844,7 +4864,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
-    if len(s:pinyin_data_directory) > 1
+    if len(s:data_directory_pinyin) > 1
         return
     endif
 " -------------------
@@ -6104,7 +6124,7 @@ else
     " -------------------------------------------------------
     let use_virtual_datafile = 0
     if empty(s:lines)
-    \&& empty(s:pinyin_data_directory)
+    \&& empty(s:data_directory_pinyin)
     \&& empty(s:www_executable)
         let use_virtual_datafile = 1
     elseif s:vimimdebug == 9
@@ -6151,7 +6171,7 @@ else
     " [datafile_directory] let the key to be the filename
     " ---------------------------------------------------
     let results2 = []
-    if len(s:pinyin_data_directory) > 1
+    if len(s:data_directory_pinyin) > 1
         let results2 = s:vimim_get_data_from_directory(keyboard)
         if len(s:datafile_primary) < 2 && len(results2) > 0
             let results = s:vimim_pair_list(results2)
