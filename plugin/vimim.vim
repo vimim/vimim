@@ -3317,17 +3317,17 @@ function! s:vimim_get_data_from_directory(keyboard)
     return results
 endfunction
 
-" ------------------------------------------
-function! g:vimim_make_directory_datafiles()
-" ------------------------------------------
+" -------------------------
+function! g:vimim_makedir()
+" -------------------------
 " Goal: creating directory xxx and adding files, based on xxx.txt
 " Support:  pinyin.txt 4corner.txt
 " Example: one   input:  pinyin.txt  (the master file)
-"          many output: pinyin/ma3  (one sample slave file)
+"          many output: pinyin/ma3   (one sample slave file)
 " (1) :cd $VIM/vimfiles/plugin/vimim/
 " (2) :vim pinyin.txt
-" (3) :call g:vimim_make_directory_datafiles()
-" ------------------------------------------
+" (3) :call g:vimim_makedir()
+" -------------------------
     let dir = expand("%:t:r")
     if !exists(dir)
         call mkdir(dir,"p")
@@ -6262,7 +6262,9 @@ else
 
     " now it is time to do regular expression matching
     " ------------------------------------------------
-    let pattern = '\M^' . keyboard
+    let pattern = '\M^' . keyboard 
+    let pattern = '\M^' . keyboard . '\>'
+" todo
     let match_start = match(s:lines, pattern)
 
     " word matching algorithm for Chinese word segmentation
