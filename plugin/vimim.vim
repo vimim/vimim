@@ -111,7 +111,6 @@ call add(s:vimims, VimIM)
 "         + plugin/vimim/pinyin/
 "         + plugin/vimim/4corner/
 "         + plugin/vimim/unihan_pinyin/
-"         + plugin/vimim/unihan_4corner/
 
 " ======================================= }}}
 let VimIM = " ====  Initialization   ==== {{{"
@@ -3304,12 +3303,6 @@ function! s:vimim_scan_plugin_data_directory()
     if isdirectory(datafile)
         let s:data_directory_unihan_pinyin = datafile
     endif
-    " ----------------------------------------
-    let directory = "unihan_4corner"
-    let datafile = s:data_directory ."/". directory
-    if isdirectory(datafile)
-        let s:data_directory_unihan_4corner = datafile
-    endif
 endfunction
 
 " -------------------------------------------------
@@ -3337,7 +3330,7 @@ endfunction
 function! g:vimim_make_directory_datafiles()
 " ------------------------------------------
 " Goal: creating directory xxx and adding files, based on xxx.txt
-" Support:  pinyin.txt unihan_pinyin 4corner.txt unihan_4corner.txt
+" Support:  pinyin.txt unihan_pinyin 4corner.txt
 " Example: one   input:  pinyin.txt  (the master file)
 "          many output: pinyin/ma3  (one sample slave file)
 " (1) :cd $VIM/vimfiles/plugin/vimim/
