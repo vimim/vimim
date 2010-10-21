@@ -124,7 +124,6 @@ endif
 let b:loaded_vimim=1
 let s:vimimhelp=egg
 let s:path=expand("<sfile>:p:h")."/"
-let s:path2=s:path."vimim/"
 scriptencoding utf-8
 
 " -------------------------------------
@@ -205,6 +204,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:current_positions = [0,0,1,0]
     let s:datafile = 0
+    let s:data_directory = 0
     let s:debug_count = 0
     let s:keyboard_count = 0
     let s:chinese_mode_count = 1
@@ -612,6 +612,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
+    call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_digital")
     call add(G, "g:vimim_datafile_has_4corner")
@@ -3282,7 +3283,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_scan_pinyin_data_directory()
 " --------------------------------------------
     let directory = "pinyin"
-    let datafile = s:path2 . directory
+    let datafile = s:data_directory ."/". directory
     if isdirectory(datafile)
          let s:pinyin_data_directory = datafile
          let im = directory
@@ -3349,13 +3350,16 @@ call add(s:vimims, VimIM)
 " ----------------------------------------------
 function! s:vimim_initialize_datafile_in_vimrc()
 " ----------------------------------------------
+    let datafile = s:vimim_data_directory
+    if empty(datafile)
+        let s:data_directory = s:path . "vimim"
+    elseif isdirectory(datafile)
+        let s:data_directory = datafile
+    endif
+    " ------------------------------------------
     let datafile = s:vimim_datafile
-    if !empty(datafile)
-        if filereadable(datafile)
-            let s:datafile_primary = copy(datafile)
-        elseif isdirectory(datafile)
-            let s:pinyin_data_directory = datafile
-        endif
+    if !empty(datafile) && filereadable(datafile)
+        let s:datafile_primary = copy(datafile)
     endif
     " ------------------------------------------
     let datafile = s:vimim_datafile_digital
