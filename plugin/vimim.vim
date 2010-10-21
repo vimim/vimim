@@ -3312,22 +3312,25 @@ function! s:vimim_get_data_from_directory(keyboard)
     return results
 endfunction
 
-" ---------------------------------------------------------- todo
-function! g:vimim_make_datafiles_in_directory(datafile, dir)
-" ----------------------------------------------------------
-" (1) :cd $VIM/vimfiles/plugin/vimim
-" (2) :call g:vimim_make_datafiles_in_directory("pinyin.txt","pinyin")
-    if !exists(a:dir)
-        call mkdir(a:dir)
+" ------------------------------------------
+function! g:vimim_make_directory_datafiles()
+" ------------------------------------------
+" Goal: creating directory xxx and adding files, based on xxx.txt
+" Support:  pinyin.txt 4corner.txt unihan.txt
+" Example: one   input:  pinyin.txt  (the master file)
+"          many output: pinyin/ma3  (one sample slave file)
+" (1) :cd $VIM/vimfiles/plugin/vimim/
+" (2) :vim pinyin.txt
+" (3) :call g:vimim_make_directory_datafiles()
+    let dir = expand("%:t:r")
+    if !exists(dir)
+        call mkdir(dir,"p")
     endif
-    if !filereadable(a:datafile)
-        return
-    endif
-    let lines = readfile(a:datafile)
+    let lines = readfile(bufname("%"))
     for line in lines
         let entries = split(line)
-        let key = get(entries,0)
-        let key_as_filename = a:dir . "/" . key
+        let key = get(entries, 0)
+        let key_as_filename = dir . "/" . key
         let value = join(entries[1:])
         let chinese_list = [value]
         if filereadable(key_as_filename)
