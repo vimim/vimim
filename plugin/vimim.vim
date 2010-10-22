@@ -283,7 +283,10 @@ function! s:vimim_finalize_session()
         call s:debugs('xingma_pinyin', s:xingma_sleep_with_pinyin)
         call s:debugs('pinyin_4corner', s:pinyin_and_4corner)
     endif
-    " ------------------------------
+    " ------------------------------ todo
+let s:vimim_fuzzy_search = 0
+let s:only_4corner_or_12345 = 0
+let s:pinyin_and_4corner = 0
 endfunction
 
 " ------------------------------------
@@ -611,7 +614,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_datafile")
-    call add(G, "g:vimim_datafile_digital")
     call add(G, "g:vimim_datafile_has_apostrophe")
     call add(G, "g:vimim_datafile_is_not_utf8")
     call add(G, "g:vimim_english_punctuation")
@@ -2129,118 +2131,6 @@ let VimIM = " ====  Chinese2Pinyin   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------------
-function! s:vimim_reverse_lookup(chinese)
-" ---------------------------------------
-    let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
-    let chinese_characters = split(chinese,'\zs')
-    let glyph = join(chinese_characters, '   ')
-    let items = []
-    " ------------------------------------------------
-    let results_unicode = []
-    if s:vimim_unicode_lookup > 0
-        for char in chinese_characters
-            let unicode = printf('%04x',char2nr(char))
-            call add(items, unicode)
-        endfor
-        call add(results_unicode, join(items, ' '))
-        call add(results_unicode, glyph)
-    endif
-    " ------------------------------------------------
-    let results_4corner = []
-    if get(s:im['4corner'],0) > 0
-        let cache_4corner = s:vimim_build_reverse_4corner_cache(chinese)
-        let items = s:vimim_make_one_entry(cache_4corner, chinese)
-        call add(results_4corner, join(items,' '))
-        call add(results_4corner, glyph)
-    endif
-    " ------------------------------------------------
-    let cache_pinyin = s:vimim_build_reverse_pinyin_cache(chinese, 0)
-    let items = s:vimim_make_one_entry(cache_pinyin, chinese)
-    let result_pinyin = join(items,'')." ".chinese
-    " ------------------------------------------------
-    let results = []
-    if len(results_unicode) > 0
-        call extend(results, results_unicode)
-    endif
-    if len(results_4corner) > 0
-        call extend(results, results_4corner)
-    endif
-    if result_pinyin =~ '\a'
-        call add(results, result_pinyin)
-    endif
-    return results
-endfunction
-
-" ------------------------------------------------------------
-function! s:vimim_build_reverse_pinyin_cache(chinese, one2one)
-" ------------------------------------------------------------
-    call s:vimim_reload_datafile(0)
-    if empty(s:lines)
-        return {}
-    endif
-    if empty(s:alphabet_lines)
-        let first_line_index = 0
-        let index = match(s:lines, '^a')
-        if index > -1
-            let first_line_index = index
-        endif
-        let last_line_index = len(s:lines) - 1
-        let s:alphabet_lines = s:lines[first_line_index : last_line_index]
-        if get(s:im['pinyin'],0) > 0 |" one to many relationship
-            let pinyin_with_tone = '^\a\+\d\s\+'
-            call filter(s:alphabet_lines, 'v:val =~ pinyin_with_tone')
-        endif
-    endif
-    if empty(s:alphabet_lines)
-        return {}
-    endif
-    " ----------------------------------------
-    let alphabet_lines = []
-    if &encoding == "utf-8"
-        let alphabet_lines = copy(s:alphabet_lines)
-    else
-        for line in s:alphabet_lines
-            if line !~ '^v\d\s\+'
-                let line = s:vimim_i18n_read(line)
-            endif
-            call add(alphabet_lines, line)
-        endfor
-    endif
-    " ----------------------------------------
-    let characters = split(a:chinese,'\zs')
-    let character = join(characters,'\|')
-    call filter(alphabet_lines, 'v:val =~ character')
-    " ----------------------------------------
-    let cache = {}
-    for line in alphabet_lines
-        if empty(line)
-            continue
-        endif
-        let words = split(line)
-        if len(words) < 2
-            continue
-        endif
-        let menu = remove(words, 0)
-        if get(s:im['pinyin'],0) > 0
-            let menu = substitute(menu,'\d','','g')
-        endif
-        for char in words
-            if match(characters, char) < 0
-                continue
-            endif
-            if has_key(cache,char) && menu!=cache[char]
-                if empty(a:one2one)
-                    let cache[char] = menu .'|'. cache[char]
-                endif
-            else
-                let cache[char] = menu
-            endif
-        endfor
-    endfor
-    return cache
-endfunction
-
 " ----------------------------------------------
 function! s:vimim_make_one_entry(cache, chinese)
 " ----------------------------------------------
@@ -3219,6 +3109,14 @@ function! s:vimim_scan_plugin_data_directory()
     if isdirectory(datafile)
         let s:data_directory_4corner = datafile
     endif
+    " ------------------------------------------ todo
+"   if len(s:data_directory_pinyin) > 1
+"   \&& len(s:data_directory_4corner) > 1
+"       let s:pinyin_and_4corner = 2
+"       let s:im_primary = 'pinyin'
+"       let s:im['4corner'][0] = 1
+"       let s:im['pinyin'][0] = 1
+"   endif
 endfunction
 
 " ------------------------------------------------------
@@ -3299,30 +3197,10 @@ function! s:vimim_initialize_datafile_in_vimrc()
         let s:data_directory = datafile
     endif
     " ------------------------------------------
-    if len(s:data_directory_pinyin) > 1
-    \&& len(s:data_directory_4corner) > 1
-        let s:pinyin_and_4corner = 2
-        let s:im_primary = 'pinyin'
-        let s:im['4corner'][0] = 1
-        let s:im['pinyin'][0] = 1
-    endif
-    " ------------------------------------------
     let datafile = s:vimim_datafile
     if !empty(datafile) && filereadable(datafile)
         let s:datafile_primary = copy(datafile)
     endif
-    " ------------------------------------------
-    let datafile = s:vimim_datafile_digital
-    if !empty(datafile) && filereadable(datafile)
-        if s:datafile_primary =~# 'pinyin'
-            let s:datafile_secondary = copy(s:datafile_primary)
-            let s:datafile_primary = copy(datafile)
-            let s:pinyin_and_4corner = 1
-        else
-            let s:datafile_secondary = copy(datafile)
-        endif
-    endif
-    " ------------------------------------------
 endfunction
 
 " -------------------------------------------
@@ -3630,7 +3508,7 @@ endfunction
 
 " ----------------------------------------------------
 function! s:vimim_build_reverse_4corner_cache(chinese)
-" ----------------------------------------------------
+" ---------------------------------------------------- todo
     if s:only_4corner_or_12345 > 0
     \|| s:pinyin_and_4corner == 1
         let datafile = copy(s:datafile_primary)
@@ -5303,7 +5181,7 @@ function! s:vimim_wildcard_search(keyboard, lines)
     return results
 endfunction
 
-" ------------------------------------------
+" ------------------------------------------ todo
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
     let keyboard = a:keyboard
@@ -5323,7 +5201,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     " --------------------------------
     let results = []
     if keyboard !~ '\p'
-        let results = s:vimim_reverse_lookup(keyboard)
+"       let results = s:vimim_reverse_lookup(keyboard)
     else
         call add(results, s:vimim_translator(keyboard))
     endif
@@ -6022,19 +5900,19 @@ else
     endif
 
     " use cached list when pageup/pagedown or 4corner is used
-    " -------------------------------------------------------
-    if s:vimim_punctuation_navigation > -1
-        let results = s:popupmenu_matched_list
-        if empty(results)
-            let msg = "no popup matched list; let us build it"
-        else
-            if s:pumvisible_reverse > 0
-                let s:pumvisible_reverse = 0
-                let results = reverse(results)
-            endif
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
+    " ------------------------------------------------------- todo
+"   if s:vimim_punctuation_navigation > -1
+"       let results = s:popupmenu_matched_list
+"       if empty(results)
+"           let msg = "no popup matched list; let us build it"
+"       else
+"           if s:pumvisible_reverse > 0
+"               let s:pumvisible_reverse = 0
+"               let results = reverse(results)
+"           endif
+"           return s:vimim_popupmenu_list(results)
+"       endif
+"   endif
 
     " try super-internal-code if no single datafile nor cloud
     " -------------------------------------------------------
@@ -6060,19 +5938,19 @@ else
     endif
 
     " [mycloud] get chunmeng from mycloud local or www
-    " ------------------------------------------------
-    if empty(s:vimim_cloud_plugin)
-        let msg = "keep local mycloud code for the future."
-    else
-        let results = s:vimim_get_mycloud_plugin(keyboard)
-        let s:menu_from_cloud_flag = 1
-        if empty(len(results))
-            " return empty list if the result is empty
-            return []
-        else
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
+    " ------------------------------------------------ todo
+"   if empty(s:vimim_cloud_plugin)
+"       let msg = "keep local mycloud code for the future."
+"   else
+"       let results = s:vimim_get_mycloud_plugin(keyboard)
+"       let s:menu_from_cloud_flag = 1
+"       if empty(len(results))
+"           " return empty list if the result is empty
+"           return []
+"       else
+"           return s:vimim_popupmenu_list(results)
+"       endif
+"   endif
 
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
@@ -6099,7 +5977,9 @@ else
     let results2 = []
     if !empty(dir)
         let results2 = s:vimim_get_data_from_directory(keyboard, dir)
-        if len(results2) > 0 && len(s:datafile_primary) < 2
+        if len(results2) > 0
+" todo
+"       \&& len(s:datafile_primary) < 2
             let results = s:vimim_pair_list(results2)
             return s:vimim_popupmenu_list(results)
         endif
@@ -6236,11 +6116,11 @@ else
             let match_start = match(s:lines, pattern)
         endif
         " [DIY] "Do It Yourself" couple IM: pinyin+4corner
-        " ------------------------------------------------
-        let results = s:vimim_pinyin_and_4corner(keyboard)
-        if len(results) > 0
-            return s:vimim_popupmenu_list(results)
-        endif
+        " ------------------------------------------------ todo
+"       let results = s:vimim_pinyin_and_4corner(keyboard)
+"       if len(results) > 0
+"           return s:vimim_popupmenu_list(results)
+"       endif
     endif
 
     " [datafile_directory] last try without external process
