@@ -3120,15 +3120,18 @@ function! g:vimim_mkdir()
 " -----------------------
 " Goal: creating directory xxx and adding files, based on xxx.txt
 " Support:  pinyin.txt 4corner.txt
+" Sample file A: ~/vim/vimfiles/plugin/vimim/pinyin/m
+" Sample file B: ~/vim/vimfiles/plugin/vimim/4corner/7132
+" -----------------------
 " Example: one   input:  pinyin.txt  (the master file)
 "          many output: pinyin/ma3   (one sample slave file)
 " (1) :cd $VIM/vimfiles/plugin/vimim/
 " (2) :vim pinyin.txt
 " (3) :call g:vimim_mkdir()
-" -------------------------
+" -----------------------
     let dir = expand("%:t:r")
-    if !exists(dir)
-        call mkdir(dir,"p")
+    if !exists(dir) && !isdirectory(dir)
+        call mkdir(dir, "p")
     endif
     let lines = readfile(bufname("%"))
     for line in lines
@@ -3141,8 +3144,9 @@ function! g:vimim_mkdir()
         let value = join(entries[1:])
         let chinese_list = [value]
         if filereadable(key_as_filename)
-            let first_line_chinese_list = readfile(key_as_filename)
-            call extend(first_line_chinese_list, chinese_list)
+            let first_chinese_list = split(join(readfile(key_as_filename)))
+            call extend(first_chinese_list, split(join(chinese_list)))
+            let chinese_list = copy([join(first_chinese_list)])
         endif
         call writefile(chinese_list, key_as_filename)
     endfor
