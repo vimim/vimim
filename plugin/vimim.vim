@@ -3299,8 +3299,8 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_get_data_from_directory(keyboard)
 " -------------------------------------------------
-    let key = a:keyboard
-    let datafile = s:data_directory_pinyin . "/" . key
+    let menu = a:keyboard
+    let datafile = s:data_directory_pinyin . "/" . menu
     let results = []
     if filereadable(datafile)
         let lines = readfile(datafile)
@@ -3309,7 +3309,7 @@ function! s:vimim_get_data_from_directory(keyboard)
                 if s:localization > 0
                     let chinese = s:vimim_i18n_read(chinese)
                 endif
-                let menu = key . " " . chinese
+                let menu = menu . " " . chinese
                 call add(results, menu)
             endfor
         endfor
@@ -6260,11 +6260,25 @@ else
         endif
     endif
 
+    " first try whole world match: WYSIWYG
+    " ------------------------------------------------
+    let pattern = '\M^' . keyboard . '\>'
+    let match_start = match(s:lines, pattern)
+
+    " [datafile_directory] results from datafile first
+    " ------------------------------------------------
+    if match_start > -1
+        let results = s:vimim_oneline_match(s:lines, keyboard)
+        let results = s:vimim_pair_list(results)
+        if len(results2) > 0
+            call extend(results, results2)
+        endif
+        return s:vimim_popupmenu_list(results)
+    endif
+
     " now it is time to do regular expression matching
     " ------------------------------------------------
     let pattern = '\M^' . keyboard 
-    let pattern = '\M^' . keyboard . '\>'
-" todo
     let match_start = match(s:lines, pattern)
 
     " word matching algorithm for Chinese word segmentation
@@ -6284,6 +6298,13 @@ else
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
         endif
+    endif
+
+    " [datafile_directory] last try without external process
+    " ------------------------------------------------------
+    if match_start < 0 && len(results2) > 0
+        let results = s:vimim_pair_list(results2)
+        return s:vimim_popupmenu_list(results)
     endif
 
     " [cloud] to make cloud come true for woyouyigemeng
@@ -6311,13 +6332,6 @@ else
                 return s:vimim_popupmenu_list(results)
             endif
         endif
-    endif
-
-    " [datafile_directory] last try without external process
-    " ------------------------------------------------------
-    if match_start < 0 && len(results2) > 0
-        let results = s:vimim_pair_list(results2)
-        return s:vimim_popupmenu_list(results)
     endif
 
     if match_start < 0
