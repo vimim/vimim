@@ -3336,7 +3336,9 @@ function! g:vimim_mkdir()
     for line in lines
         let entries = split(line)
         let key = get(entries, 0)
-        let key = substitute(key,"'",'','g')
+        if match(key, "'") > -1
+            let key = substitute(key,"'",'','g')
+        endif
         let key_as_filename = dir . "/" . key
         let value = join(entries[1:])
         let chinese_list = [value]
