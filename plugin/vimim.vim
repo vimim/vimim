@@ -169,7 +169,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:chinese_frequency = 0
     let s:toggle_xiangma_pinyin = 0
-    let s:xingma_sleep_with_pinyin = 0
     " --------------------------------
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
@@ -243,7 +242,6 @@ function! s:vimim_finalize_session()
     endif
     " ------------------------------
     if s:datafile_primary =~# "quote"
-    \|| s:datafile_secondary =~# "quote"
         let s:vimim_datafile_has_apostrophe = 1
     endif
     " ------------------------------
@@ -276,17 +274,9 @@ function! s:vimim_finalize_session()
     endif
     " ------------------------------
     if s:vimimdebug > 0
-        call s:debugs('im_1st', s:im_primary)
-        call s:debugs('im_2nd', s:im_secondary)
         call s:debugs('datafile_1st', s:datafile_primary)
-        call s:debugs('datafile_2nd', s:datafile_secondary)
-        call s:debugs('xingma_pinyin', s:xingma_sleep_with_pinyin)
         call s:debugs('pinyin_4corner', s:pinyin_and_4corner)
     endif
-    " ------------------------------ todo
-let s:vimim_fuzzy_search = 0
-let s:only_4corner_or_12345 = 0
-let s:pinyin_and_4corner = 0
 endfunction
 
 " ------------------------------------
@@ -421,7 +411,6 @@ function! s:vimim_scan_plugin_to_invoke_im()
     endif
     " ----------------------------------------
     if len(s:datafile_primary) > 1
-    \&& len(s:datafile_secondary) > 1
         return 0
     endif
     " ----------------------------------------
@@ -494,9 +483,6 @@ function! s:vimim_scan_plugin_to_invoke_im()
     if empty(s:datafile_primary)
         let s:datafile_primary = datafile
         let s:im_primary = im
-    elseif empty(s:datafile_secondary)
-        let s:datafile_secondary = datafile
-        let s:im_secondary = im
     endif
     " ----------------------------------------
     return im
@@ -528,9 +514,6 @@ function! s:vimim_scan_plugin_for_more_im()
     elseif get(s:im['4corner'],0) > 0
         let msg = "pinyin and 4corner are in harmony"
         let s:pinyin_and_4corner = 1
-    else
-        let msg = "pinyin and xingma are in harmony"
-        let s:xingma_sleep_with_pinyin = 1
     endif
 endfunction
 
@@ -824,14 +807,6 @@ function! s:vimim_egg_vimim()
         let msg = "no primary datafile, might play cloud"
     else
         let option = ciku . option
-        call add(eggs, option)
-    endif
-" ----------------------------------
-    let option = s:datafile_secondary
-    if empty(option)
-        let msg = "no secondary pinyin to sleep with"
-    else
-        let option = ciku . s:datafile_secondary
         call add(eggs, option)
     endif
 " ----------------------------------
@@ -2316,11 +2291,12 @@ function! s:vimim_build_popupmenu(matched_list)
         " -------------------------------------------------
         if s:vimim_custom_skin < 2
             let extra_text = menu
-            if s:pinyin_and_4corner > 1
-            \&& empty(match(extra_text, '^\d\{4}$'))
-                let unicode = printf('u%04x', char2nr(chinese))
-                let extra_text = menu.'　'.unicode
-            endif
+        " -------------------------------done
+        "   if s:pinyin_and_4corner > 1
+        "   \&& empty(match(extra_text, '^\d\{4}$'))
+        "       let unicode = printf('u%04x', char2nr(chinese))
+        "       let extra_text = menu.'　'.unicode
+        "   endif
             if extra_text =~ s:show_me_not_pattern
                 let extra_text = ''
             endif
@@ -2479,16 +2455,6 @@ function! s:vimim_statusline()
             let s:im['12345'][0] = 1
         endif
         let im = pinyin . plus . im_digit
-    endif
-    " ------------------------------------
-    if s:xingma_sleep_with_pinyin > 0
-        let im_1 = get(s:im[s:im_primary],1)
-        let im_2 = get(s:im[s:im_secondary],1)
-        if empty(s:toggle_xiangma_pinyin)
-            let im = im_1 . plus . im_2
-        else
-            let im = im_2 . plus . im_1
-        endif
     endif
     " ------------------------------------
     if !empty(s:vimim_cloud_plugin)
@@ -3321,15 +3287,6 @@ function! s:vimim_reload_datafile(reload_flag)
 " --------------------------------------------
     if empty(s:lines) || a:reload_flag > 0
         let s:lines = s:vimim_load_datafile(s:datafile)
-        if s:pinyin_and_4corner == 1
-            let pinyin = s:datafile_secondary
-            let lines = s:vimim_load_datafile(pinyin)
-            if empty(lines)
-                let msg = "single digital ciku was used"
-            else
-                call extend(s:lines, lines, 0)
-            endif
-        endif
     endif
     return s:lines
 endfunction
@@ -3351,13 +3308,6 @@ function! s:vimim_save_to_disk(lines)
         return
     endif
     let s:lines = a:lines
-    if s:xingma_sleep_with_pinyin > 0
-        if empty(s:toggle_xiangma_pinyin)
-            let s:lines_primary = a:lines
-        else
-            let s:lines_secondary = a:lines
-        endif
-    endif
     if filewritable(s:datafile)
         call writefile(a:lines, s:datafile)
     endif
@@ -4170,19 +4120,14 @@ function! s:vimim_toggle_wubi_pinyin()
     if empty(s:toggle_xiangma_pinyin)
         let s:im['wubi'][0] = 1
         let s:im['pinyin'][0] = 0
-        let s:datafile = copy(s:datafile_primary)
-        if empty(s:lines_primary)
-            let s:lines_primary = s:vimim_reload_datafile(1)
-        endif
-        let s:lines = s:lines_primary
+    "   let s:datafile = copy(s:datafile_primary)
+    "   if empty(s:lines_primary)
+    "       let s:lines_primary = s:vimim_reload_datafile(1)
+    "   endif
+    "   let s:lines = s:lines_primary
     else
         let s:im['pinyin'][0] = 1
         let s:im['wubi'][0] = 0
-        let s:datafile = copy(s:datafile_secondary)
-        if empty(s:lines_secondary)
-            let s:lines_secondary = s:vimim_reload_datafile(1)
-        endif
-        let s:lines = s:lines_secondary
     endif
 endfunction
 
@@ -5412,7 +5357,6 @@ function! s:vimim_initialize_backdoor()
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
     let s:datafile_primary = 0
-    let s:datafile_secondary = 0
     " -----------------------------------------
     let backdoor_datafile = s:path . "vimim.txt"
     if filereadable(backdoor_datafile)
@@ -5900,19 +5844,19 @@ else
     endif
 
     " use cached list when pageup/pagedown or 4corner is used
-    " ------------------------------------------------------- todo
-"   if s:vimim_punctuation_navigation > -1
-"       let results = s:popupmenu_matched_list
-"       if empty(results)
-"           let msg = "no popup matched list; let us build it"
-"       else
-"           if s:pumvisible_reverse > 0
-"               let s:pumvisible_reverse = 0
-"               let results = reverse(results)
-"           endif
-"           return s:vimim_popupmenu_list(results)
-"       endif
-"   endif
+    " ------------------------------------------------------- 
+    if s:vimim_punctuation_navigation > -1
+        let results = s:popupmenu_matched_list
+        if empty(results)
+            let msg = "no popup matched list; let us build it"
+        else
+            if s:pumvisible_reverse > 0
+                let s:pumvisible_reverse = 0
+                let results = reverse(results)
+            endif
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
 
     " try super-internal-code if no single datafile nor cloud
     " -------------------------------------------------------
@@ -5938,19 +5882,19 @@ else
     endif
 
     " [mycloud] get chunmeng from mycloud local or www
-    " ------------------------------------------------ todo
-"   if empty(s:vimim_cloud_plugin)
-"       let msg = "keep local mycloud code for the future."
-"   else
-"       let results = s:vimim_get_mycloud_plugin(keyboard)
-"       let s:menu_from_cloud_flag = 1
-"       if empty(len(results))
-"           " return empty list if the result is empty
-"           return []
-"       else
-"           return s:vimim_popupmenu_list(results)
-"       endif
-"   endif
+    " ------------------------------------------------ 
+    if empty(s:vimim_cloud_plugin)
+        let msg = "keep local mycloud code for the future."
+    else
+        let results = s:vimim_get_mycloud_plugin(keyboard)
+        let s:menu_from_cloud_flag = 1
+        if empty(len(results))
+            " return empty list if the result is empty
+            return []
+        else
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
 
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
@@ -5977,19 +5921,17 @@ else
     let results2 = []
     if !empty(dir)
         let results2 = s:vimim_get_data_from_directory(keyboard, dir)
-        if len(results2) > 0
-" todo
-"       \&& len(s:datafile_primary) < 2
+        if len(results2) > 0 && len(s:datafile_primary) < 2
             let results = s:vimim_pair_list(results2)
             return s:vimim_popupmenu_list(results)
         endif
     endif
 
     " [wubi][erbi] plays with pinyin in harmony
-    " -----------------------------------------
-    if s:xingma_sleep_with_pinyin > 0
-        call s:vimim_toggle_wubi_pinyin()
-    endif
+    " ----------------------------------------- done
+"   if s:xingma_sleep_with_pinyin > 0
+"       call s:vimim_toggle_wubi_pinyin()
+"   endif
 
     " [wubi] support wubi non-stop input
     " ----------------------------------
@@ -6117,10 +6059,10 @@ else
         endif
         " [DIY] "Do It Yourself" couple IM: pinyin+4corner
         " ------------------------------------------------ todo
-"       let results = s:vimim_pinyin_and_4corner(keyboard)
-"       if len(results) > 0
-"           return s:vimim_popupmenu_list(results)
-"       endif
+        let results = s:vimim_pinyin_and_4corner(keyboard)
+        if len(results) > 0
+            return s:vimim_popupmenu_list(results)
+        endif
     endif
 
     " [datafile_directory] last try without external process
