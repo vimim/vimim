@@ -250,7 +250,6 @@ function! s:vimim_finalize_session()
     if s:shuangpin_flag > 0
         let s:im_primary = 'pinyin'
         let s:im['pinyin'][0] = 1
-        let s:vimim_datafile_has_english = 0
     endif
     " ------------------------------
     if get(s:im['boshiamy'],0) > 0
@@ -613,10 +612,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_digital")
-    call add(G, "g:vimim_datafile_has_4corner")
     call add(G, "g:vimim_datafile_has_apostrophe")
-    call add(G, "g:vimim_datafile_has_english")
-    call add(G, "g:vimim_datafile_has_pinyin")
     call add(G, "g:vimim_datafile_is_not_utf8")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
@@ -2129,77 +2125,6 @@ function! s:vimim_get_chinese_number(keyboards, i)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  English2Chinese  ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-let s:translators = {}
-" ------------------------------------------
-function! s:translators.translate(line) dict
-" ------------------------------------------
-    return join(map(split(a:line),'get(self.dict,tolower(v:val),v:val)'))
-endfunction
-
-" -----------------------------------
-function! s:vimim_translator(english)
-" -----------------------------------
-    if a:english !~ '\p'
-        return ''
-    endif
-    if empty(s:ecdict)
-        call s:vimim_initialize_e2c()
-        if empty(s:ecdict)
-            return ''
-        endif
-    endif
-    let english = substitute(a:english, '\A', ' & ', 'g')
-    let chinese = substitute(english, '.', '&\n', 'g')
-    let chinese = s:ecdict.translate(english)
-    let chinese = substitute(chinese, "[ ']", '', 'g')
-    let chinese = substitute(chinese, '\a\+', ' & ', 'g')
-    return chinese
-endfunction
-
-" --------------------------------
-function! s:vimim_initialize_e2c()
-" --------------------------------
-    if empty(s:vimim_datafile_has_english)
-    \|| len(s:ecdict) > 1
-        return ''
-    endif
-    let lines = s:vimim_reload_datafile(0)
-    if empty(lines)
-        return ''
-    endif
-    " --------------------------------------------------
-    " VimIM rule for entry of English Chinese dictionary
-    " obama 奧巴馬 歐巴馬 #
-    " --------------------------------------------------
-    let english_pattern = " #$"
-    let matched_english_lines = match(lines, english_pattern)
-    if matched_english_lines < 0
-        return ''
-    endif
-    let dictionary_lines = filter(copy(lines),'v:val=~english_pattern')
-    if empty(dictionary_lines)
-        return ''
-    endif
-    let s:ecdict = copy(s:translators)
-    let s:ecdict.dict = {}
-    for line in dictionary_lines
-        if empty(line)
-            continue
-        endif
-        let line = s:vimim_i18n_read(line)
-        let words = split(line)
-        if len(words) < 2
-            continue
-        endif
-        let s:ecdict.dict[words[0]] = words[1]
-    endfor
-endfunction
-
-" ======================================= }}}
 let VimIM = " ====  Chinese2Pinyin   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
@@ -3374,6 +3299,14 @@ function! s:vimim_initialize_datafile_in_vimrc()
         let s:data_directory = datafile
     endif
     " ------------------------------------------
+    if len(s:data_directory_pinyin) > 1
+    \&& len(s:data_directory_4corner) > 1
+        let s:pinyin_and_4corner = 2
+        let s:im_primary = 'pinyin'
+        let s:im['4corner'][0] = 1
+        let s:im['pinyin'][0] = 1
+    endif
+    " ------------------------------------------
     let datafile = s:vimim_datafile
     if !empty(datafile) && filereadable(datafile)
         let s:datafile_primary = copy(datafile)
@@ -3388,14 +3321,6 @@ function! s:vimim_initialize_datafile_in_vimrc()
         else
             let s:datafile_secondary = copy(datafile)
         endif
-    endif
-    " ------------------------------------------
-    if s:vimim_datafile_has_pinyin > 0
-    \&& s:vimim_datafile_has_4corner > 0
-        let s:pinyin_and_4corner = 2
-        let s:im_primary = 'pinyin'
-        let s:im['4corner'][0] = 1
-        let s:im['pinyin'][0] = 1
     endif
     " ------------------------------------------
 endfunction
@@ -3763,7 +3688,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_pinyin()
 " -----------------------------------
     if empty(get(s:im['pinyin'],0))
-        if s:vimim_datafile_has_pinyin > 0
+        if len(s:data_directory_pinyin) > 1
             let s:im['pinyin'][0] = 1
         else
             return
@@ -5167,9 +5092,6 @@ function! s:vimim_fuzzy_match(keyboard)
     if empty(lines)
         return []
     endif
-    if s:vimim_datafile_has_english > 0
-        let lines = filter(lines, 'v:val !~ " #$"')
-    endif
     let keyboards = split(keyboard, "'")
     let filter_length = len(keyboards)
     if len(keyboards) < 2
@@ -5644,9 +5566,6 @@ function! s:vimim_initialize_backdoor_debug()
     let s:vimim_unicode_lookup=1
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
-    let s:vimim_datafile_has_english=1
-    let s:vimim_datafile_has_pinyin=1
-    let s:vimim_datafile_has_4corner=1
     let s:vimim_reverse_pageup_pagedown=1
     " ------------------------------
 endfunction
