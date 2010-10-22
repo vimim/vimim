@@ -137,11 +137,10 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_encoding()
     call s:vimim_dictionary_chinese()
     call s:vimim_dictionary_im()
-    call s:vimim_initialize_datafile_in_vimrc()
     " -----------------------------------------
+    call s:vimim_set_datafile_in_vimrc()
     call s:vimim_scan_plugin_data_directory()
     call s:vimim_scan_plugin_to_invoke_im()
-    call s:vimim_scan_plugin_for_more_im()
     " -----------------------------------------
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_pinyin()
@@ -272,11 +271,6 @@ function! s:vimim_finalize_session()
         let s:only_4corner_or_12345 = 1
         let s:vimim_static_input_style = 1
     endif
-    " ------------------------------
-    if s:vimimdebug > 0
-        call s:debugs('datafile_1st', s:datafile_primary)
-        call s:debugs('pinyin_4corner', s:pinyin_and_4corner)
-    endif
 endfunction
 
 " ------------------------------------
@@ -392,60 +386,36 @@ function! s:vimim_dictionary_im()
     " ------------------------------------
 endfunction
 
-" -----------------------------------------
-function! s:vimim_add_im_if_empty(ims, key)
-" -----------------------------------------
-    let input_methods = a:ims
-    let key = a:key
-    if empty(get(s:im[key],0))
-        call add(input_methods, key)
-    endif
-endfunction
-
 " ------------------------------------------
 function! s:vimim_scan_plugin_to_invoke_im()
 " ------------------------------------------
     if s:vimimdebug > 0
-    \|| s:pinyin_and_4corner > 1
-        return 0
-    endif
-    " ----------------------------------------
-    if len(s:datafile_primary) > 1
+    \|| len(s:datafile_primary) > 1
         return 0
     endif
     " ----------------------------------------
     let input_methods = []
     " ----------------------------------------
-    call s:vimim_add_im_if_empty(input_methods, 'cangjie')
-    call s:vimim_add_im_if_empty(input_methods, 'zhengma')
-    call s:vimim_add_im_if_empty(input_methods, 'quick')
-    call s:vimim_add_im_if_empty(input_methods, 'xinhua')
-    call s:vimim_add_im_if_empty(input_methods, 'erbi')
-    call s:vimim_add_im_if_empty(input_methods, 'boshiamy')
-    " ----------------------------------------
-    call s:vimim_add_im_if_empty(input_methods, 'phonetic')
-    call s:vimim_add_im_if_empty(input_methods, 'array30')
-    " ----------------------------------------
-    if empty(get(s:im['wubi'],0))
-        call add(input_methods, "wubi")
-        call add(input_methods, "wubi98")
-        call add(input_methods, "wubijd")
-    endif
-    " ----------------------------------------
-    if empty(get(s:im['4corner'],0))
-        call add(input_methods, "4corner")
-        call add(input_methods, "12345")
-    endif
-    " ----------------------------------------
-    if empty(get(s:im['pinyin'],0))
-        call add(input_methods, "pinyin")
-        call add(input_methods, "pinyin_quote_sogou")
-        call add(input_methods, "pinyin_huge")
-        call add(input_methods, "pinyin_fcitx")
-        call add(input_methods, "pinyin_canton")
-        call add(input_methods, "pinyin_hongkong")
-    endif
-    " ----------------------------------------
+    call add(input_methods, "pinyin")
+    call add(input_methods, "pinyin_quote_sogou")
+    call add(input_methods, "pinyin_huge")
+    call add(input_methods, "pinyin_fcitx")
+    call add(input_methods, "pinyin_canton")
+    call add(input_methods, "pinyin_hongkong")
+    call add(input_methods, "4corner")
+    call add(input_methods, "12345")
+    call add(input_methods, "wubi")
+    call add(input_methods, "wubi98")
+    call add(input_methods, "wubijd")
+    call add(input_methods, "wubi2000")
+    call add(input_methods, 'cangjie')
+    call add(input_methods, 'zhengma')
+    call add(input_methods, 'quick')
+    call add(input_methods, 'xinhua')
+    call add(input_methods, 'erbi')
+    call add(input_methods, 'boshiamy')
+    call add(input_methods, 'phonetic')
+    call add(input_methods, 'array30')
     call add(input_methods, "wu")
     call add(input_methods, "yong")
     call add(input_methods, "nature")
@@ -486,35 +456,6 @@ function! s:vimim_scan_plugin_to_invoke_im()
     endif
     " ----------------------------------------
     return im
-endfunction
-
-" -----------------------------------------
-function! s:vimim_scan_plugin_for_more_im()
-" -----------------------------------------
-    if empty(s:datafile_primary)
-    \|| len(s:data_directory_pinyin) > 1
-    \|| s:vimimdebug >= 9
-        return
-    endif
-    " -------------------------------------
-    let im = 0
-    if get(s:im['4corner'],0) > 0
-    \|| get(s:im['cangjie'],0) > 0
-    \|| get(s:im['erbi'],0) > 0
-    \|| get(s:im['wubi'],0) > 0
-    \|| get(s:im['quick'],0) > 0
-    \|| get(s:im['xinhua'],0) > 0
-    \|| get(s:im['zhengma'],0) > 0
-        let msg = "plug and play <=> xingma and pinyin"
-        let im = s:vimim_scan_plugin_to_invoke_im()
-    endif
-    " -------------------------------------
-    if empty(im)
-        let msg = "only play with one plugin datafile"
-    elseif get(s:im['4corner'],0) > 0
-        let msg = "pinyin and 4corner are in harmony"
-        let s:pinyin_and_4corner = 1
-    endif
 endfunction
 
 " -------------------------------------------------------
@@ -2291,12 +2232,12 @@ function! s:vimim_build_popupmenu(matched_list)
         " -------------------------------------------------
         if s:vimim_custom_skin < 2
             let extra_text = menu
-        " -------------------------------done
-        "   if s:pinyin_and_4corner > 1
-        "   \&& empty(match(extra_text, '^\d\{4}$'))
-        "       let unicode = printf('u%04x', char2nr(chinese))
-        "       let extra_text = menu.'　'.unicode
-        "   endif
+        " ------------------------------- todo
+            if s:pinyin_and_4corner > 1
+            \&& empty(match(extra_text, '^\d\{4}$'))
+                let unicode = printf('u%04x', char2nr(chinese))
+                let extra_text = menu.'　'.unicode
+            endif
             if extra_text =~ s:show_me_not_pattern
                 let extra_text = ''
             endif
@@ -3076,13 +3017,19 @@ function! s:vimim_scan_plugin_data_directory()
         let s:data_directory_4corner = datafile
     endif
     " ------------------------------------------ todo
-"   if len(s:data_directory_pinyin) > 1
-"   \&& len(s:data_directory_4corner) > 1
-"       let s:pinyin_and_4corner = 2
-"       let s:im_primary = 'pinyin'
-"       let s:im['4corner'][0] = 1
-"       let s:im['pinyin'][0] = 1
-"   endif
+    if len(s:data_directory_4corner) > 1
+        if len(s:data_directory_pinyin) > 1
+            let s:pinyin_and_4corner = 2
+            let s:im_primary = 'pinyin'
+            let s:im['4corner'][0] = 1
+            let s:im['pinyin'][0] = 1
+        else
+            let s:pinyin_and_4corner = 1
+            let s:im_primary = '4corner'
+            let s:im['4corner'][0] = 1
+            let s:im['pinyin'][0] = 0
+        endif
+    endif
 endfunction
 
 " ------------------------------------------------------
@@ -3157,9 +3104,9 @@ let VimIM = " ====  Data_Update      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------------------
-function! s:vimim_initialize_datafile_in_vimrc()
-" ----------------------------------------------
+" ---------------------------------------
+function! s:vimim_set_datafile_in_vimrc()
+" ---------------------------------------
     let datafile = s:vimim_data_directory
     if empty(datafile)
         let s:data_directory = s:path . "vimim"
@@ -5848,7 +5795,7 @@ else
     endif
 
     " use cached list when pageup/pagedown or 4corner is used
-    " ------------------------------------------------------- 
+    " -------------------------------------------------------
     if s:vimim_punctuation_navigation > -1
         let results = s:popupmenu_matched_list
         if empty(results)
@@ -5886,7 +5833,7 @@ else
     endif
 
     " [mycloud] get chunmeng from mycloud local or www
-    " ------------------------------------------------ 
+    " ------------------------------------------------
     if empty(s:vimim_cloud_plugin)
         let msg = "keep local mycloud code for the future."
     else
