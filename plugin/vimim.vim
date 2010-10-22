@@ -3299,8 +3299,8 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_get_data_from_directory(keyboard)
 " -------------------------------------------------
-    let menu = a:keyboard
-    let datafile = s:data_directory_pinyin . "/" . menu
+    let key = a:keyboard
+    let datafile = s:data_directory_pinyin . "/" . key
     let results = []
     if filereadable(datafile)
         let lines = readfile(datafile)
@@ -3309,7 +3309,7 @@ function! s:vimim_get_data_from_directory(keyboard)
                 if s:localization > 0
                     let chinese = s:vimim_i18n_read(chinese)
                 endif
-                let menu = menu . " " . chinese
+                let menu = key . " " . chinese
                 call add(results, menu)
             endfor
         endfor
@@ -6159,7 +6159,7 @@ else
     let results2 = []
     if len(s:data_directory_pinyin) > 1
         let results2 = s:vimim_get_data_from_directory(keyboard)
-        if len(s:datafile_primary) < 2 && len(results2) > 0
+        if len(results2) > 0 && len(s:datafile_primary) < 2
             let results = s:vimim_pair_list(results2)
             return s:vimim_popupmenu_list(results)
         endif
@@ -6260,25 +6260,28 @@ else
         endif
     endif
 
-    " first try whole world match: WYSIWYG
+    " try whole match first
     " ------------------------------------------------
     let pattern = '\M^' . keyboard . '\>'
     let match_start = match(s:lines, pattern)
 
     " [datafile_directory] results from datafile first
     " ------------------------------------------------
-    if match_start > -1
-        let results = s:vimim_oneline_match(s:lines, keyboard)
-        let results = s:vimim_pair_list(results)
-        if len(results2) > 0
-            call extend(results, results2)
+    if len(results2) > 0
+        let debug="/home/xma/vim/vimfiles/plugin/vimim/pinyin/m"
+        if match_start < 0
+            let results = s:vimim_pair_list(results2)
+        else
+           let results = s:vimim_oneline_match(s:lines, keyboard)
+           let results = s:vimim_pair_list(results)
+           call extend(results, results2)
         endif
         return s:vimim_popupmenu_list(results)
     endif
 
     " now it is time to do regular expression matching
     " ------------------------------------------------
-    let pattern = '\M^' . keyboard 
+    let pattern = '\M^' . keyboard
     let match_start = match(s:lines, pattern)
 
     " word matching algorithm for Chinese word segmentation
