@@ -3317,16 +3317,16 @@ function! s:vimim_get_data_from_directory(keyboard)
     return results
 endfunction
 
-" -------------------------
-function! g:vimim_makedir()
-" -------------------------
+" -----------------------
+function! g:vimim_mkdir()
+" -----------------------
 " Goal: creating directory xxx and adding files, based on xxx.txt
 " Support:  pinyin.txt 4corner.txt
 " Example: one   input:  pinyin.txt  (the master file)
 "          many output: pinyin/ma3   (one sample slave file)
 " (1) :cd $VIM/vimfiles/plugin/vimim/
 " (2) :vim pinyin.txt
-" (3) :call g:vimim_makedir()
+" (3) :call g:vimim_mkdir()
 " -------------------------
     let dir = expand("%:t:r")
     if !exists(dir)
