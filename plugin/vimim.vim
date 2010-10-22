@@ -3296,11 +3296,20 @@ function! s:vimim_scan_plugin_data_directory()
     endif
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_get_data_from_directory(keyboard)
-" -------------------------------------------------
+" ------------------------------------------------------
+function! s:vimim_get_data_from_directory(keyboard, dir)
+" ------------------------------------------------------
+    let datafile = a:dir
+    if a:dir =~ "pinyin"
+        let datafile = s:data_directory_pinyin
+    elseif a:dir =~ "4corner"
+        let datafile = s:data_directory_4corner
+    endif
+    if empty(datafile)
+        return []
+    endif
     let key = a:keyboard
-    let datafile = s:data_directory_pinyin . "/" . key
+    let datafile = datafile . "/" . key
     let results = []
     if filereadable(datafile)
         let lines = readfile(datafile)
@@ -6158,9 +6167,19 @@ else
 
     " [datafile_directory] let the key to be the filename
     " ---------------------------------------------------
-    let results2 = []
+    let dir = 0
     if len(s:data_directory_pinyin) > 1
-        let results2 = s:vimim_get_data_from_directory(keyboard)
+        let dir = "pinyin"
+    endif
+    if len(keyboard) == 4
+    \&& keyboard =~ '\d\d\d\d'
+    \&& len(s:data_directory_4corner) > 1
+        let dir = "4corner"
+    endif
+    " ---------------------------------
+    let results2 = []
+    if !empty(dir)
+        let results2 = s:vimim_get_data_from_directory(keyboard, dir)
         if len(results2) > 0 && len(s:datafile_primary) < 2
             let results = s:vimim_pair_list(results2)
             return s:vimim_popupmenu_list(results)
