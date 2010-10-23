@@ -5846,27 +5846,6 @@ else
         endif
     endif
 
-    " [datafile_directory] let the key to be the filename
-    " ---------------------------------------------------
-    let dir = 0
-    if len(s:data_directory_pinyin) > 1
-        let dir = "pinyin"
-    endif
-    if len(keyboard) == 4
-    \&& keyboard =~ '\d\d\d\d'
-    \&& len(s:data_directory_4corner) > 1
-        let dir = "4corner"
-    endif
-    " ---------------------------------
-    let results2 = []
-    if !empty(dir)
-        let results2 = s:vimim_get_data_from_directory(keyboard, dir)
-        if len(results2) > 0 && len(s:datafile_primary) < 2
-            let results = s:vimim_pair_list(results2)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     " [wubi][erbi] plays with pinyin in harmony
     " ----------------------------------------- done
 "   if s:xingma_sleep_with_pinyin > 0
@@ -5900,16 +5879,6 @@ else
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
-        endif
-    endif
-
-    " [wildcard search] explicit fuzzy search
-    " ----------------------------------------
-    if s:vimim_wildcard_search > 0
-        let results = s:vimim_wildcard_search(keyboard, s:lines)
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
         endif
     endif
 
@@ -5962,8 +5931,39 @@ else
         endif
     endif
 
+    " [datafile_directory] let the key to be the filename
+    " ---------------------------------------------------
+    let dir = 0
+    if len(s:data_directory_pinyin) > 1
+        let dir = "pinyin"
+    endif
+    if len(keyboard) == 4
+    \&& keyboard =~ '\d\d\d\d'
+    \&& len(s:data_directory_4corner) > 1
+        let dir = "4corner"
+    endif
+    " ---------------------------------
+    let results2 = []
+    if !empty(dir)
+        let results2 = s:vimim_get_data_from_directory(keyboard, dir)
+        if len(results2) > 0 && len(s:datafile_primary) < 2
+            let results = s:vimim_pair_list(results2)
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
+    " [wildcard search] explicit fuzzy search
+    " ---------------------------------------- todo
+    if s:vimim_wildcard_search > 0
+        let results = s:vimim_wildcard_search(keyboard, s:lines)
+        if len(results) > 0
+            let results = s:vimim_pair_list(results)
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
     " try whole match first
-    " ------------------------------------------------
+    " ------------------------------------------------ todo
     let pattern = '\M^' . keyboard . '\>'
     let match_start = match(s:lines, pattern)
 
