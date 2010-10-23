@@ -6167,19 +6167,23 @@ function! s:vimim_onekey_mapping_on()
     endif
 endfunction
 
-" ----------------------------
-function! s:vimim_mini_vimrc()
-" ----------------------------
-    set nocompatible
-    set encoding=utf-8
-    set termencoding=utf8
-    set fileencodings=ucs-bom,utf8,chinese,taiwan
-    set guifontwide=NSimSun-18030,GulimChe,MS_Mincho,SimHei
-    set noloadplugins
-    runtime! plugin/vimim.vim
-endfunction
-
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
+
+" ======================================= }}}
+let VimIM = " ====  ~/.vimrc         ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" -------------------------------------
+" Sample mini .vimrc to display Chinese
+" -------------------------------------
+"   set nocompatible
+"   set encoding=utf-8
+"   set termencoding=utf8
+"   set fileencodings=ucs-bom,utf8,chinese,taiwan
+"   set guifontwide=NSimSun-18030,GulimChe,MS_Mincho,SimHei
+"   set noloadplugins
+"   runtime! plugin/vimim.vim
 " ====================================== }}}
