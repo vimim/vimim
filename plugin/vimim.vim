@@ -40,7 +40,6 @@ let VimIM = " ====  Introduction     ==== {{{"
 "            * Support direct "UNICODE input" using integer or hex
 "            * Support direct "GBK input" and "Big5 input"
 "            * Support "boshiamy", "Cang Jie", "Erbi", etc
-"            * Support "modeless" whole sentence input
 "            * Support "Chinese search" using search key '/' or '?'.
 "            * Support "fuzzy search" and "wildcard search"
 "            * Support popup menu navigation using "vi key" (hjkl)
@@ -180,7 +179,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:im_primary = 0
     let s:datafile_has_dot = 0
-    let s:sentence_with_space_input = 0
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:www_executable = 0
@@ -5610,18 +5608,6 @@ if a:start
         endif
     endif
 
-    " support natural sentence input with space
-    " -----------------------------------------
-    if empty(s:chinese_input_mode)
-    \&& byte_before ==# "."
-    \&& char_before_before =~# "[0-9a-z]"
-        let match_start = match(current_line, '\w\+\s\+\p\+\.$')
-        if match_start > -1
-            let s:sentence_with_space_input = 1
-            return match_start
-        endif
-    endif
-
     " take care of seamless english/chinese input
     " -------------------------------------------
     let seamless_column = s:vimim_get_seamless(current_positions)
@@ -5888,19 +5874,6 @@ else
     " [shuangpin] support 6 major shuangpin with various rules
     " --------------------------------------------------------
     let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
-
-    " [modeless] english sentence input =>  i have a dream.
-    " -----------------------------------------------------
-    if empty(s:chinese_input_mode)
-        if s:sentence_with_space_input > 0
-            if keyboard =~ '\s'
-            \&& empty(s:datafile_has_dot)
-            \&& len(keyboard) > 3
-                let keyboard = substitute(keyboard, '\s\+', '.', 'g')
-            endif
-            let s:sentence_with_space_input = 0
-        endif
-    endif
 
     " [apostrophe] in pinyin datafile
     " -------------------------------
