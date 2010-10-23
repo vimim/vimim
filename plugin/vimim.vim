@@ -219,6 +219,10 @@ endfunction
 " ----------------------------------
 function! s:vimim_finalize_session()
 " ----------------------------------
+    if s:vimim_custom_skin > 0
+        call s:vimim_initialize_skin()
+    endif
+    " -----------------------------------------
     let s:chinese_frequency = s:vimim_chinese_frequency
     " ------------------------------
     if s:pinyin_and_4corner == 1
@@ -3067,8 +3071,8 @@ function! g:vimim_mkdir()
 " -----------------------
 " Goal: creating directory xxx and adding files, based on xxx.txt
 " Support:  pinyin.txt 4corner.txt
-" Sample file A: ~/vim/vimfiles/plugin/vimim/pinyin/m
-" Sample file B: ~/vim/vimfiles/plugin/vimim/4corner/7132
+" Sample file A: ~/vim/vimfiles/plugin/vimim/4corner/7132
+" Sample file B: ~/vim/vimfiles/plugin/vimim/pinyin/jjjj
 " -----------------------
 " Example: one   input:  pinyin.txt  (the master file)
 "          many output: pinyin/ma3   (one sample slave file)
@@ -5302,30 +5306,16 @@ let VimIM = " ====  Debug_Framework  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -------------------------------------
-function! s:vimim_initialize_backdoor()
-" -------------------------------------
-    let s:chinese_mode_switch = 1
+" ----------------------------------
+function! s:vimim_initialize_debug()
+" ----------------------------------
     let s:initialization_loaded = 0
     let s:datafile_primary = 0
-    " -----------------------------------------
-    let backdoor_datafile = s:path . "vimim.txt"
-    if filereadable(backdoor_datafile)
-        let s:datafile_primary = backdoor_datafile
-        let s:vimim_custom_skin=1
-        call s:vimim_initialize_backdoor_debug()
+    let s:chinese_mode_switch = 1
+    if s:vimimdebug < 9
+        return
     endif
-    " -----------------------------------------
-    if s:vimim_custom_skin > 0
-        call s:vimim_initialize_skin()
-    endif
-    " -----------------------------------------
-endfunction
-
-" -------------------------------------------
-function! s:vimim_initialize_backdoor_debug()
-" -------------------------------------------
-    let s:vimimdebug=9
+    let s:vimim_custom_skin=1
     let s:vimim_cloud_sogou=0
     let s:vimim_fuzzy_search=1
     let s:vimim_insert_without_popup=1
@@ -5340,7 +5330,6 @@ function! s:vimim_initialize_backdoor_debug()
     let s:vimim_english_punctuation=0
     let s:vimim_chinese_punctuation=1
     let s:vimim_reverse_pageup_pagedown=1
-    " ------------------------------
 endfunction
 
 " --------------------------------
@@ -6195,6 +6184,6 @@ function! s:vimim_mini_vimrc()
 endfunction
 
 sil!call s:vimim_initialize_global()
-sil!call s:vimim_initialize_backdoor()
+sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 " ====================================== }}}
