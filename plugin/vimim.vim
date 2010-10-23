@@ -162,6 +162,11 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_start_omni()
     sil!call s:vimim_super_reset()
     " --------------------------------
+    let s:datafile = 0
+    let s:data_directory = 0
+    let s:data_directory_pinyin = 0
+    let s:data_directory_4corner = 0
+    " --------------------------------
     let s:vimim_cloud_plugin = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -174,9 +179,6 @@ function! s:vimim_initialize_session()
     let s:four_corner_lines = []
     " --------------------------------
     let s:im_primary = 0
-    let s:data_directory_pinyin = 0
-    let s:data_directory_4corner = 0
-    " --------------------------------
     let s:datafile_has_dot = 0
     let s:sentence_with_space_input = 0
     let s:start_row_before = 0
@@ -2994,20 +2996,23 @@ call add(s:vimims, VimIM)
 " --------------------------------------------
 function! s:vimim_scan_plugin_data_directory()
 " --------------------------------------------
-    let directory = "pinyin"
-    let datafile = s:data_directory ."/". directory
-    if isdirectory(datafile)
-        let s:data_directory_pinyin = datafile
-        let im = directory
+    let dir = "pinyin"
+    let dir = s:data_directory ."/". dir
+    if isdirectory(dir)
+        let s:data_directory_pinyin = dir
+        let im = dir
         let s:im[im][0] = 1
         let s:im_primary = im
     endif
     " ----------------------------------------
-    let directory = "4corner"
-    let datafile = s:data_directory ."/". directory
-    if isdirectory(datafile)
-        let s:data_directory_4corner = datafile
+    let dir = "4corner"
+    let dir = s:data_directory ."/". dir
+    if isdirectory(dir)
+        let s:data_directory_4corner = dir
     endif
+let g:ga = s:data_directory
+let g:gb = s:data_directory_4corner
+let g:gc = s:data_directory_pinyin
     " ------------------------------------------ todo
     if len(s:data_directory_4corner) > 1
         if len(s:data_directory_pinyin) > 1
@@ -3027,20 +3032,20 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_get_data_from_directory(keyboard, dir)
 " ------------------------------------------------------
-    let datafile = a:dir
-    if a:dir =~ "pinyin"
-        let datafile = s:data_directory_pinyin
-    elseif a:dir =~ "4corner"
-        let datafile = s:data_directory_4corner
+    let dir = a:dir
+    if dir =~ "pinyin"
+        let dir = s:data_directory_pinyin
+    elseif dir =~ "4corner"
+        let dir = s:data_directory_4corner
     endif
-    if empty(datafile)
+    if empty(dir)
         return []
     endif
     let key = a:keyboard
-    let datafile = datafile . "/" . key
+    let dir = dir . "/" . key
     let results = []
-    if filereadable(datafile)
-        let lines = readfile(datafile)
+    if filereadable(dir)
+        let lines = readfile(dir)
         for line in lines
             for chinese in split(line)
                 if s:localization > 0
@@ -5297,13 +5302,11 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let s:datafile = 0
-    let s:data_directory = 0
     let s:initialization_loaded = 0
     let s:chinese_mode_switch = 1
-    let dir="/home/vimim/vimim/"
+    let dir="/home/vimim/vimim"
     if isdirectory(dir)
-        let s:data_directory = dir
+        let s:vimim_data_directory = dir
     else
         return
     endif
