@@ -174,7 +174,6 @@ function! s:vimim_initialize_session()
     let s:four_corner_lines = []
     " --------------------------------
     let s:im_primary = 0
-    let s:im_secondary = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_4corner = 0
     " --------------------------------
@@ -199,8 +198,6 @@ function! s:vimim_initialize_session()
     let s:alphabet_lines = []
     " --------------------------------
     let s:current_positions = [0,0,1,0]
-    let s:datafile = 0
-    let s:data_directory = 0
     let s:debug_count = 0
     let s:keyboard_count = 0
     let s:chinese_mode_count = 1
@@ -235,16 +232,12 @@ function! s:vimim_finalize_session()
     elseif s:vimim_cloud_sogou == 1
         let s:chinese_frequency = -1
     endif
-    " ----------------------------------------
-    if empty(s:datafile)
-        let s:datafile = copy(s:datafile_primary)
-    endif
     " --------------------------------
-    if s:datafile_primary =~# "chinese"
+    if s:datafile =~# "chinese"
         let s:vimim_datafile_is_not_utf8 = 1
     endif
     " ------------------------------
-    if s:datafile_primary =~# "quote"
+    if s:datafile =~# "quote"
         let s:vimim_datafile_has_apostrophe = 1
     endif
     " ------------------------------
@@ -393,11 +386,9 @@ endfunction
 " ------------------------------------------
 function! s:vimim_scan_plugin_to_invoke_im()
 " ------------------------------------------
-    if s:vimimdebug > 0
-    \|| len(s:datafile_primary) > 1
+    if s:vimimdebug > 0 || len(s:datafile) > 1
         return 0
     endif
-    " ----------------------------------------
     let input_methods = []
     " ----------------------------------------
     call add(input_methods, "pinyin")
@@ -454,11 +445,8 @@ function! s:vimim_scan_plugin_to_invoke_im()
     endif
     let s:im[im][0] = 1
     " ----------------------------------------
-    if empty(s:datafile_primary)
-        let s:datafile_primary = datafile
-        let s:im_primary = im
-    endif
-    " ----------------------------------------
+    let s:datafile = datafile
+    let s:im_primary = im
     return im
 endfunction
 
@@ -747,7 +735,7 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
 " ----------------------------------
-    let option = s:datafile_primary
+    let option = s:datafile
     if empty(option)
         let msg = "no primary datafile, might play cloud"
     else
@@ -2379,9 +2367,9 @@ function! s:vimim_statusline()
     endif
     " ------------------------------------
     if key =~# 'wubi'
-        if s:datafile_primary =~# 'wubi98'
+        if s:datafile =~# 'wubi98'
             let im .= '98'
-        elseif s:datafile_primary =~# 'wubijd'
+        elseif s:datafile =~# 'wubijd'
             let jidian = s:vimim_get_chinese('jidian')
             let im = jidian . im
         endif
@@ -2395,7 +2383,7 @@ function! s:vimim_statusline()
     " ------------------------------------
     if s:pinyin_and_4corner > 0
         let im_digit = get(s:im['4corner'],1)
-        if s:datafile_primary =~ '12345'
+        if s:datafile =~ '12345'
             let im_digit = get(s:im['12345'],1)
             let s:im['12345'][0] = 1
         endif
@@ -3111,16 +3099,16 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_set_datafile_in_vimrc()
 " ---------------------------------------
-    let datafile = s:vimim_data_directory
-    if empty(datafile)
+    let dir = s:vimim_data_directory
+    if empty(dir)
         let s:data_directory = s:path . "vimim"
-    elseif isdirectory(datafile)
-        let s:data_directory = datafile
+    elseif isdirectory(dir)
+        let s:data_directory = dir
     endif
     " ------------------------------------------
     let datafile = s:vimim_datafile
     if !empty(datafile) && filereadable(datafile)
-        let s:datafile_primary = copy(datafile)
+        let s:datafile = copy(datafile)
     endif
 endfunction
 
@@ -3416,7 +3404,7 @@ function! s:vimim_build_reverse_4corner_cache(chinese)
 " ---------------------------------------------------- todo
     if s:only_4corner_or_12345 > 0
     \|| s:pinyin_and_4corner == 1
-        let datafile = copy(s:datafile_primary)
+        let datafile = copy(s:datafile)
         let s:four_corner_lines = s:vimim_load_datafile(datafile)
     elseif s:pinyin_and_4corner == 2
         let lines = s:vimim_reload_datafile(0)
@@ -4075,7 +4063,7 @@ function! s:vimim_toggle_wubi_pinyin()
     if empty(s:toggle_xiangma_pinyin)
         let s:im['wubi'][0] = 1
         let s:im['pinyin'][0] = 0
-    "   let s:datafile = copy(s:datafile_primary)
+    "   let s:datafile = copy(s:datafile)
     "   if empty(s:lines_primary)
     "       let s:lines_primary = s:vimim_reload_datafile(1)
     "   endif
@@ -4141,7 +4129,7 @@ call add(s:vimims, VimIM)
 " -----------------------------------------
 function! s:vimim_do_cloud_if_no_datafile()
 " -----------------------------------------
-    if empty(s:datafile_primary)
+    if empty(s:datafile)
         if empty(s:vimim_cloud_sogou)
             let s:vimim_cloud_sogou = 1
         endif
@@ -5309,12 +5297,17 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
+    let s:datafile = 0
+    let s:data_directory = 0
     let s:initialization_loaded = 0
-    let s:datafile_primary = 0
     let s:chinese_mode_switch = 1
-    if s:vimimdebug < 9
+    let dir="/home/vimim/vimim/"
+    if isdirectory(dir)
+        let s:data_directory = dir
+    else
         return
     endif
+    let s:vimimdebug=9
     let s:vimim_custom_skin=1
     let s:vimim_cloud_sogou=0
     let s:vimim_fuzzy_search=1
@@ -5946,7 +5939,7 @@ else
     let results2 = []
     if !empty(dir)
         let results2 = s:vimim_get_data_from_directory(keyboard, dir)
-        if len(results2) > 0 && len(s:datafile_primary) < 2
+        if len(results2) > 0 && len(s:datafile) < 2
             let results = s:vimim_pair_list(results2)
             return s:vimim_popupmenu_list(results)
         endif
