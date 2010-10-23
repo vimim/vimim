@@ -3060,6 +3060,24 @@ endfunction
 " -----------------------
 function! g:vimim_mkdir()
 " -----------------------
+    call s:vimim_mkdir(0)
+endfunction
+
+" ------------------------------
+function! g:vimim_mkdir_insert()
+" ------------------------------
+    call s:vimim_mkdir(1)
+endfunction
+
+" -------------------------------
+function! g:vimim_mkdir_replace()
+" -------------------------------
+    call s:vimim_mkdir(2)
+endfunction
+
+" -----------------------------
+function! s:vimim_mkdir(option)
+" -----------------------------
 " Goal: creating directory xxx and adding files, based on xxx.txt
 " Support:  pinyin.txt 4corner.txt
 " Sample file A: ~/vim/vimfiles/plugin/vimim/4corner/7132
@@ -3083,12 +3101,22 @@ function! g:vimim_mkdir()
             let key = substitute(key,"'",'','g')
         endif
         let key_as_filename = dir . "/" . key
-        let value = join(entries[1:])
-        let chinese_list = [value]
-        if filereadable(key_as_filename)
-            let first_chinese_list = split(join(readfile(key_as_filename)))
-            call extend(first_chinese_list, split(join(chinese_list)))
-            let chinese_list = copy([join(first_chinese_list)])
+     "  let value = join(entries[1:])
+     "  let chinese_list = split(join([value]))
+        let chinese_list = entries[1:]
+        let first_list = []
+        let second_list = []
+        if a:option < 2 && filereadable(key_as_filename)
+            let filename_list = split(join(readfile(key_as_filename)))
+            if empty(a:option)
+                let first_list = filename_list
+                let second_list = chinese_list
+            elseif a:option == 1
+                let first_list = chinese_list
+                let second_list = filename_list
+            endif
+            call extend(first_list, second_list)
+            let chinese_list = [join(first_list)]
         endif
         call writefile(chinese_list, key_as_filename)
     endfor
