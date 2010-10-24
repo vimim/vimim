@@ -135,11 +135,12 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_session()
     call s:vimim_initialize_encoding()
     call s:vimim_dictionary_chinese()
-    call s:vimim_dictionary_im()
+    call s:vimim_build_im_keycode()
+    call s:vimim_build_im_input_methods()
     " -----------------------------------------
     call s:vimim_set_datafile_in_vimrc()
     call s:vimim_scan_plugin_data_directory()
-    call s:vimim_scan_plugin_to_invoke_im()
+    call s:vimim_scan_plugin_datafile()
     " -----------------------------------------
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_pinyin()
@@ -165,6 +166,7 @@ function! s:vimim_initialize_session()
     let s:data_directory = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_4corner = 0
+    let s:data_directory_xingma = 0
     " --------------------------------
     let s:vimim_cloud_plugin = 0
     let s:smart_single_quotes = 1
@@ -195,6 +197,7 @@ function! s:vimim_initialize_session()
     let s:lines_secondary = []
     let s:seamless_positions = []
     let s:alphabet_lines = []
+    let s:input_methods = []
     " --------------------------------
     let s:current_positions = [0,0,1,0]
     let s:debug_count = 0
@@ -344,9 +347,47 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['bracket_r'] = ['》','】']
 endfunction
 
-" -------------------------------
-function! s:vimim_dictionary_im()
-" -------------------------------
+" ----------------------------------------
+function! s:vimim_build_im_input_methods()
+" ----------------------------------------
+    if !empty(s:input_methods)
+        return
+    endif
+    " ------------------------------------
+    let input_methods = []
+    call add(input_methods, "pinyin")
+    call add(input_methods, "pinyin_quote_sogou")
+    call add(input_methods, "pinyin_huge")
+    call add(input_methods, "pinyin_fcitx")
+    call add(input_methods, "pinyin_canton")
+    call add(input_methods, "pinyin_hongkong")
+    call add(input_methods, "4corner")
+    call add(input_methods, "12345")
+    call add(input_methods, "wubi")
+    call add(input_methods, "wubi98")
+    call add(input_methods, "wubijd")
+    call add(input_methods, "wubi2000")
+    call add(input_methods, 'cangjie')
+    call add(input_methods, 'zhengma')
+    call add(input_methods, 'quick')
+    call add(input_methods, 'xinhua')
+    call add(input_methods, 'erbi')
+    call add(input_methods, 'boshiamy')
+    call add(input_methods, 'phonetic')
+    call add(input_methods, 'array30')
+    call add(input_methods, "wu")
+    call add(input_methods, "yong")
+    call add(input_methods, "nature")
+    call add(input_methods, "hangul")
+    call add(input_methods, "cns11643")
+    call add(input_methods, "ctc")
+    call add(input_methods, "english")
+    let s:input_methods = input_methods
+endfunction
+
+" ----------------------------------
+function! s:vimim_build_im_keycode()
+" ----------------------------------
     let key_keycode = []
     call add(key_keycode, ['cloud', "[0-9a-z'.]"])
     call add(key_keycode, ['mycloud', "[0-9a-z'.]"])
@@ -382,43 +423,17 @@ function! s:vimim_dictionary_im()
     " ------------------------------------
 endfunction
 
-" ------------------------------------------
-function! s:vimim_scan_plugin_to_invoke_im()
-" ------------------------------------------
-    if s:vimimdebug > 0 || len(s:datafile) > 1
-        return 0
+" --------------------------------------
+function! s:vimim_scan_plugin_datafile()
+" --------------------------------------
+    if s:vimimdebug > 0
+    \|| len(s:data_directory) > 1
+    \|| len(s:datafile) > 1
+    \|| empty(s:input_methods)
+        return
     endif
-    let input_methods = []
-    " ----------------------------------------
-    call add(input_methods, "pinyin")
-    call add(input_methods, "pinyin_quote_sogou")
-    call add(input_methods, "pinyin_huge")
-    call add(input_methods, "pinyin_fcitx")
-    call add(input_methods, "pinyin_canton")
-    call add(input_methods, "pinyin_hongkong")
-    call add(input_methods, "4corner")
-    call add(input_methods, "12345")
-    call add(input_methods, "wubi")
-    call add(input_methods, "wubi98")
-    call add(input_methods, "wubijd")
-    call add(input_methods, "wubi2000")
-    call add(input_methods, 'cangjie')
-    call add(input_methods, 'zhengma')
-    call add(input_methods, 'quick')
-    call add(input_methods, 'xinhua')
-    call add(input_methods, 'erbi')
-    call add(input_methods, 'boshiamy')
-    call add(input_methods, 'phonetic')
-    call add(input_methods, 'array30')
-    call add(input_methods, "wu")
-    call add(input_methods, "yong")
-    call add(input_methods, "nature")
-    call add(input_methods, "hangul")
-    call add(input_methods, "cns11643")
-    call add(input_methods, "ctc")
-    call add(input_methods, "english")
-    " ----------------------------------------
-    for im in input_methods
+    let datafile = ""
+    for im in s:input_methods
         let file = "vimim." . im . ".txt"
         let datafile = s:path . file
         if filereadable(datafile)
@@ -431,7 +446,7 @@ function! s:vimim_scan_plugin_to_invoke_im()
     if filereadable(datafile)
         let msg = "plugin datafile was found"
     else
-        return 0
+        return
     endif
     " ----------------------------------------
     let msg = " [setter] for im-loaded-flag "
@@ -446,7 +461,6 @@ function! s:vimim_scan_plugin_to_invoke_im()
     " ----------------------------------------
     let s:datafile = datafile
     let s:im_primary = im
-    return im
 endfunction
 
 " -------------------------------------------------------
@@ -552,13 +566,13 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_wget_dll")
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
+    call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_auto_copy_clipboard")
-    call add(G, "g:vimim_chinese_frequency")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_laststatus")
     call add(G, "g:vimim_custom_menu_label")
@@ -2990,26 +3004,58 @@ let VimIM = " ====  Data_Directory   === {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" ---------------------------------------
+function! s:vimim_set_datafile_in_vimrc()
+" ---------------------------------------
+    let dir = s:vimim_data_directory
+    if empty(dir)
+        let s:data_directory = s:path . "vimim"
+    elseif isdirectory(dir)
+        let s:data_directory = copy(dir)
+    endif
+    " ------------------------------------------
+    if empty(s:data_directory)
+        let datafile = s:vimim_datafile
+        if !empty(datafile) && filereadable(datafile)
+            let s:datafile = copy(datafile)
+        endif
+    else
+        let s:vimim_datafile = 0
+    endif
+endfunction
+
+" ------------------------------------------
+function! s:vimim_data_directory_setter(dir)
+" ------------------------------------------
+    let dir = s:data_directory ."/". a:dir
+    if isdirectory(dir)
+        let s:im[dir][0] = 1
+        let s:im_primary = dir
+        return dir
+    else
+        return 0
+    endif
+endfunction
+
 " --------------------------------------------
 function! s:vimim_scan_plugin_data_directory()
 " --------------------------------------------
+    if empty(s:input_methods)
+    \|| empty(s:data_directory)
+        return
+    endif
+    " ----------------------------------------
     let dir = "pinyin"
-    let dir = s:data_directory ."/". dir
-    if isdirectory(dir)
+    let dir = s:vimim_data_directory_setter(dir)
+    if !empty(dir)
         let s:data_directory_pinyin = dir
-        let im = dir
-        let s:im[im][0] = 1
-        let s:im_primary = im
     endif
     " ----------------------------------------
     let dir = "4corner"
-    let dir = s:data_directory ."/". dir
-    if isdirectory(dir)
+    let dir = s:vimim_data_directory_setter(dir)
+    if !empty(dir)
         let s:data_directory_4corner = dir
     endif
-let g:ga = s:data_directory
-let g:gb = s:data_directory_4corner
-let g:gc = s:data_directory_pinyin
     " ------------------------------------------ todo
     if len(s:data_directory_4corner) > 1
         if len(s:data_directory_pinyin) > 1
@@ -3023,6 +3069,20 @@ let g:gc = s:data_directory_pinyin
             let s:im['4corner'][0] = 1
             let s:im['pinyin'][0] = 0
         endif
+    endif
+    " ----------------------------------------
+    let dir = "zhengma"
+    let dir = s:vimim_data_directory_setter(dir)
+    if !empty(dir)
+        let s:data_directory_xingma = dir
+        return
+    endif
+    " ----------------------------------------
+    let dir = "wubi"
+    let dir = s:vimim_data_directory_setter(dir)
+    if !empty(dir)
+        let s:data_directory_xingma = dir
+        return
     endif
 endfunction
 
@@ -3143,22 +3203,6 @@ endfunction
 let VimIM = " ====  Data_Update      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
-
-" ---------------------------------------
-function! s:vimim_set_datafile_in_vimrc()
-" ---------------------------------------
-    let dir = s:vimim_data_directory
-    if empty(dir)
-        let s:data_directory = s:path . "vimim"
-    elseif isdirectory(dir)
-        let s:data_directory = dir
-    endif
-    " ------------------------------------------
-    let datafile = s:vimim_datafile
-    if !empty(datafile) && filereadable(datafile)
-        let s:datafile = copy(datafile)
-    endif
-endfunction
 
 " -------------------------------------------
 function! s:vimim_get_new_order_list(chinese)
@@ -3453,7 +3497,7 @@ function! s:vimim_build_reverse_4corner_cache(chinese)
     if s:pinyin_and_4corner == 1
     let cache = {}
     let characters = split(a:chinese, '\zs')
-    let four_corner_lines = ["todo"]   
+    let four_corner_lines = ["todo"]
     for line in four_corner_lines
         let line = s:vimim_i18n_read(line)
         let words = split(line)
@@ -4576,15 +4620,15 @@ function! s:vimim_initialize_mycloud_plugin()
 " -------------------
 " mycloud sample url:
 " --------------------------------------------------------------
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
-" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
-" let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
-" let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
-" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
-" let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
-" let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
+" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
+" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
+" :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
+" :let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
+" :let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
+" :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
+" :let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
+" :let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
 " --------------------------------------------------------------
     let cloud = s:vimim_check_mycloud_plugin()
     " this variable should not be used after initialization
@@ -5315,9 +5359,10 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
+    let dir="I am debuging!"
+    let dir="/home/vimim/vimim"
     let s:initialization_loaded = 0
     let s:chinese_mode_switch = 1
-    let dir="/home/vimim/vimim"
     if isdirectory(dir)
         let s:vimim_data_directory = dir
     else
@@ -5327,11 +5372,11 @@ function! s:vimim_initialize_debug()
     let s:vimim_custom_skin=1
     let s:vimim_cloud_sogou=0
     let s:vimim_fuzzy_search=1
+    let s:vimim_chinese_frequency=0
     let s:vimim_insert_without_popup=1
     let s:vimim_static_input_style=2
     let s:vimim_ctrl_space_to_toggle=2
     let s:vimim_frequency_first_fix=1
-    let s:vimim_chinese_frequency=14
     let s:vimim_custom_laststatus=0
     let s:vimim_wildcard_search=1
     let s:vimim_imode_universal=1
