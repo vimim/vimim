@@ -175,7 +175,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
-    let s:four_corner_lines = []
     " --------------------------------
     let s:im_primary = 0
     let s:datafile_has_dot = 0
@@ -185,9 +184,9 @@ function! s:vimim_initialize_session()
     let s:scriptnames_output = 0
     " --------------------------------
     let s:im = {}
+    let s:ecdict = {}
     let s:inputs = {}
     let s:inputs_all = {}
-    let s:ecdict = {}
     let s:shuangpin_table = {}
     " --------------------------------
     let s:debugs = []
@@ -3110,8 +3109,34 @@ function! s:vimim_mkdir(option)
             call extend(first_list, second_list)
             let chinese_list = [join(first_list)]
         endif
-        call writefile(chinese_list, key_as_filename)
+        let results = s:vimim_remove_duplication(chinese_list)
+        if !empty(results)
+            call writefile(results, key_as_filename)
+        endif
     endfor
+endfunction
+
+" -------------------------------------------
+function! s:vimim_remove_duplication(chinese)
+" -------------------------------------------
+    if empty(a:chinese)
+        return []
+    endif
+    let cache = {}
+    let results = []
+    for line in a:chinese
+        let characters = split(line)
+        for char in characters
+            if has_key(cache, char)
+                continue
+            else
+                let cache[char] = char
+                call add(results, char)
+            endif
+        endfor
+    endfor
+    let one_line_results = [join(results)]
+    return one_line_results
 endfunction
 
 " ======================================= }}}
@@ -3425,41 +3450,11 @@ endfunction
 " ----------------------------------------------------
 function! s:vimim_build_reverse_4corner_cache(chinese)
 " ---------------------------------------------------- todo
-    if s:only_4corner_or_12345 > 0
-    \|| s:pinyin_and_4corner == 1
-        let datafile = copy(s:datafile)
-        let s:four_corner_lines = s:vimim_load_datafile(datafile)
-    elseif s:pinyin_and_4corner == 2
-        let lines = s:vimim_reload_datafile(0)
-        if empty(lines)
-            return {}
-        endif
-        if empty(s:four_corner_lines)
-            let first_digit = 0
-            let line_index = match(lines, '^\d')
-            if line_index > -1
-                let first_digit = line_index
-            endif
-            let first_alpha = len(lines)-1
-            let first_alpha = 0
-            let line_index = match(lines, '^\D', first_digit)
-            if line_index > -1
-                let first_alpha = line_index
-            endif
-            if first_digit < first_alpha
-                let s:four_corner_lines=lines[first_digit : first_alpha-1]
-            else
-                return {}
-            endif
-        endif
-    endif
-    if empty(s:four_corner_lines)
-        return {}
-    endif
-    " ------------------------------------------------
+    if s:pinyin_and_4corner == 1
     let cache = {}
     let characters = split(a:chinese, '\zs')
-    for line in s:four_corner_lines
+    let four_corner_lines = ["todo"]   
+    for line in four_corner_lines
         let line = s:vimim_i18n_read(line)
         let words = split(line)
         let value = remove(words, 0)
