@@ -3060,19 +3060,13 @@ endfunction
 " -----------------------
 function! g:vimim_mkdir()
 " -----------------------
-    call s:vimim_mkdir(0)
+    call s:vimim_mkdir('append')
 endfunction
 
 " ------------------------------
 function! g:vimim_mkdir_insert()
 " ------------------------------
-    call s:vimim_mkdir(1)
-endfunction
-
-" -------------------------------
-function! g:vimim_mkdir_replace()
-" -------------------------------
-    call s:vimim_mkdir(2)
+    call s:vimim_mkdir('prepend')
 endfunction
 
 " -----------------------------
@@ -3101,17 +3095,15 @@ function! s:vimim_mkdir(option)
             let key = substitute(key,"'",'','g')
         endif
         let key_as_filename = dir . "/" . key
-     "  let value = join(entries[1:])
-     "  let chinese_list = split(join([value]))
         let chinese_list = entries[1:]
         let first_list = []
         let second_list = []
-        if a:option < 2 && filereadable(key_as_filename)
+        if filereadable(key_as_filename)
             let filename_list = split(join(readfile(key_as_filename)))
-            if empty(a:option)
+            if a:option =~ 'append'
                 let first_list = filename_list
                 let second_list = chinese_list
-            elseif a:option == 1
+            elseif a:option =~ 'prepend'
                 let first_list = chinese_list
                 let second_list = filename_list
             endif
