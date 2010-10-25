@@ -2101,7 +2101,7 @@ endfunction
 
 " -------------------------------------------------
 function! s:vimim_menu_4corner_filter(matched_list)
-" -------------------------------------------------
+" ------------------------------------------------- TODO
     if s:menu_4corner_filter > -1
         let msg = "make 4corner as a filter to omni menu"
     else
@@ -2194,6 +2194,7 @@ function! s:vimim_popupmenu_list(matched_list)
     if empty(s:vimim_cloud_plugin)
         let matched_list = s:vimim_menu_4corner_filter(matched_list)
     endif
+    " ----------------------------------------
     if s:pageup_pagedown > 0
         let matched_list = s:vimim_pageup_pagedown(matched_list)
     endif
@@ -3029,10 +3030,9 @@ endfunction
 
 " --------------------------------------
 function! s:vimim_get_data_directory(im)
-" -------------------------------------- TODO
+" --------------------------------------
     let im = a:im
-    if empty(im)
-    \|| empty(s:data_directory_root)
+    if empty(im) || empty(s:data_directory_root)
         return 0
     endif
     let dir = s:data_directory_root ."/". im
@@ -3191,7 +3191,7 @@ function! s:vimim_mkdir(option)
                 let second_list = filename_list
             endif
             call extend(first_list, second_list)
-            let chinese_list = [join(first_list)]
+            let chinese_list = first_list
         endif
         let results = s:vimim_remove_duplication(chinese_list)
         if !empty(results)
@@ -3203,12 +3203,13 @@ endfunction
 " -------------------------------------------
 function! s:vimim_remove_duplication(chinese)
 " -------------------------------------------
-    if empty(a:chinese)
+    let chinese = a:chinese
+    if empty(chinese)
         return []
     endif
     let cache = {}
     let results = []
-    for line in a:chinese
+    for line in chinese
         let characters = split(line)
         for char in characters
             if has_key(cache, char)
@@ -3219,8 +3220,7 @@ function! s:vimim_remove_duplication(chinese)
             endif
         endfor
     endfor
-    let one_line_results = [join(results)]
-    return one_line_results
+    return results
 endfunction
 
 " ======================================= }}}
