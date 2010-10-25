@@ -3160,13 +3160,13 @@ function! s:vimim_mkdir(option)
 " Sample file A: ~/vim/vimfiles/plugin/vimim/4corner/7132
 " Sample file B: ~/vim/vimfiles/plugin/vimim/pinyin/jjjj
 " -----------------------
-" Example: one   input:  pinyin.txt  (the master file)
-"          many output: pinyin/ma3   (one sample slave file)
+" Example: one   input: vimim.pinyin.txt  (the master file)
+"          many output: pinyin/ma3        (one sample slave file)
 " (1) :cd $VIM/vimfiles/plugin/vimim/
-" (2) :vim pinyin.txt
+" (2) :vim vimim.pinyin.txt
 " (3) :call g:vimim_mkdir()
 " -----------------------
-    let dir = expand("%:t:r")
+    let dir = expand("%:e:e:r")
     if !exists(dir) && !isdirectory(dir)
         call mkdir(dir, "p")
     endif
