@@ -3031,7 +3031,8 @@ endfunction
 function! s:vimim_get_data_directory(im)
 " -------------------------------------- TODO
     let im = a:im
-    if empty(s:data_directory_root)
+    if empty(im)
+    \|| empty(s:data_directory_root)
         return 0
     endif
     let dir = s:data_directory_root ."/". im
@@ -3113,9 +3114,13 @@ endfunction
 " -----------------------------------------------------
 function! s:vimim_get_data_from_directory(keyboard, im)
 " -----------------------------------------------------
-    let dir = s:vimim_get_data_directory(a:im)
     let key = a:keyboard
-    if empty(dir) || empty(key)
+    let im = a:im
+    if empty(key) || empty(im)
+        return []
+    endif
+    let dir = s:vimim_get_data_directory(im)
+    if empty(dir)
         return []
     endif
     let filename = dir . '/' . key
@@ -3526,11 +3531,11 @@ function! s:vimim_get_reverse_cache(chinese, im)
     let characters = split(chinese, '\zs')
     for char in characters
         let key = printf('u%x',char2nr(char))
-        let results2 = s:vimim_get_data_from_directory(key, im)
-        if empty(results2)
+        let results = s:vimim_get_data_from_directory(key, im)
+        if empty(results)
             continue
         else
-            let value = get(split(get(results2,0)),1)
+            let value = get(split(get(results,0)),1)
             let cache[char] = value
         endif
     endfor
@@ -5146,6 +5151,7 @@ endfunction
 function! s:vimim_wildcard_search(keyboard, lines)
 " ------------------------------------------------
     if s:chinese_input_mode =~ 'dynamic'
+    \|| empty(a:lines)
         return []
     endif
     let results = []
@@ -5890,8 +5896,6 @@ else
         endif
     endif
 
-let g:g2= s:data_directory_pinyin
-let g:g1= s:data_directory
     " [mycloud] get chunmeng from mycloud local or www
     " ------------------------------------------------
     if empty(s:vimim_cloud_plugin)
@@ -5989,16 +5993,9 @@ let g:g1= s:data_directory
         endif
     endif
 
-    " [datafile_directory] let the key to be the filename
-    " ---------------------------------------------------
-    let im = 0
-    if len(s:data_directory_pinyin) > 1
-        let im = "pinyin"
-    endif
-    " --------------------------------- TODO
-    if !empty(s:data_directory)
-"       let im = s:data_directory
-    endif
+    " [datafile_directory] directory are first-class citizen
+    " ------------------------------------------------------
+    let im = s:im_primary
     " ---------------------------------
     if len(keyboard) == 4
     \&& keyboard =~ '\d\d\d\d'
@@ -6007,13 +6004,26 @@ let g:g1= s:data_directory
     endif
     " ---------------------------------
     let results2 = s:vimim_get_data_from_directory(keyboard, im)
-    if len(results2) > 0 && len(s:datafile) < 2
+    if len(results2) > 0
         let results = s:vimim_pair_list(results2)
         return s:vimim_popupmenu_list(results)
     endif
 
+    " [cloud] when there is no datafile
+    " ---------------------------------
+    if empty(s:lines)
+        if s:vimim_cloud_sogou > 0
+            let results = s:vimim_get_cloud_sogou(keyboard)
+            if len(results) > 0
+                return s:vimim_popupmenu_list(results)
+            endif
+        else
+            return []
+        endif
+    endif
+
     " [wildcard search] explicit fuzzy search
-    " ---------------------------------------- todo
+    " ---------------------------------------
     if s:vimim_wildcard_search > 0
         let results = s:vimim_wildcard_search(keyboard, s:lines)
         if len(results) > 0
@@ -6022,33 +6032,14 @@ let g:g1= s:data_directory
         endif
     endif
 
-    " try whole match first
-    " ------------------------------------------------ todo
-    let pattern = '\M^' . keyboard . '\>'
-    let match_start = match(s:lines, pattern)
-
-    " [datafile_directory] results from datafile first
-    " ------------------------------------------------
-    if len(results2) > 0
-        let debug="/home/xma/vim/vimfiles/plugin/vimim/pinyin/m"
-        if match_start < 0
-            let results = s:vimim_pair_list(results2)
-        else
-           let results = s:vimim_oneline_match(s:lines, keyboard)
-           let results = s:vimim_pair_list(results)
-           call extend(results, results2)
-        endif
-        return s:vimim_popupmenu_list(results)
-    endif
-
-    " now it is time to do regular expression matching
-    " ------------------------------------------------
+    " [datafile] datafile is also supported for now
+    " ---------------------------------------------
     let pattern = '\M^' . keyboard
     let match_start = match(s:lines, pattern)
 
     " word matching algorithm for Chinese word segmentation
     " -----------------------------------------------------
-    if match_start < 0 && empty(clouds) && empty(results2)
+    if match_start < 0 && empty(clouds)
         let keyboards = s:vimim_keyboard_analysis(s:lines, keyboard)
         if empty(keyboards)
             let msg = "sell the keyboard as is, without modification"
@@ -6063,13 +6054,6 @@ let g:g1= s:data_directory
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
         endif
-    endif
-
-    " [datafile_directory] last try without external process
-    " ------------------------------------------------------
-    if match_start < 0 && len(results2) > 0
-        let results = s:vimim_pair_list(results2)
-        return s:vimim_popupmenu_list(results)
     endif
 
     " [cloud] to make cloud come true for woyouyigemeng
