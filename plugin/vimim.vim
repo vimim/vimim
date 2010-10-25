@@ -3146,9 +3146,9 @@ function! g:vimim_mkdir()
     call s:vimim_mkdir('append')
 endfunction
 
-" ------------------------------
-function! g:vimim_mkdir_insert()
-" ------------------------------
+" ------------------------
+function! g:vimim_mkdir2()
+" ------------------------
     call s:vimim_mkdir('prepend')
 endfunction
 
@@ -3156,7 +3156,6 @@ endfunction
 function! s:vimim_mkdir(option)
 " -----------------------------
 " Goal: creating directory xxx and adding files, based on xxx.txt
-" Support:  pinyin.txt 4corner.txt
 " Sample file A: ~/vim/vimfiles/plugin/vimim/4corner/7132
 " Sample file B: ~/vim/vimfiles/plugin/vimim/pinyin/jjjj
 " -----------------------
@@ -6009,8 +6008,8 @@ else
         return s:vimim_popupmenu_list(results)
     endif
 
-    " [cloud] when there is no datafile
-    " ---------------------------------
+    " [cloud] try cloud when no directory nor datafile
+    " ------------------------------------------------
     if empty(s:lines)
         if s:vimim_cloud_sogou > 0
             let results = s:vimim_get_cloud_sogou(keyboard)
@@ -6038,7 +6037,7 @@ else
     let match_start = match(s:lines, pattern)
 
     " word matching algorithm for Chinese word segmentation
-    " -----------------------------------------------------
+    " ----------------------------------------------------- TODO
     if match_start < 0 && empty(clouds)
         let keyboards = s:vimim_keyboard_analysis(s:lines, keyboard)
         if empty(keyboards)
@@ -6049,7 +6048,7 @@ else
             let match_start = match(s:lines, pattern)
         endif
         " [DIY] "Do It Yourself" couple IM: pinyin+4corner
-        " ------------------------------------------------ todo
+        " ------------------------------------------------ TODO
         let results = s:vimim_pinyin_and_4corner(keyboard)
         if len(results) > 0
             return s:vimim_popupmenu_list(results)
