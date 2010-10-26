@@ -3114,17 +3114,18 @@ endfunction
 " -----------------------------------------------------
 function! s:vimim_get_data_from_directory(keyboard, im)
 " -----------------------------------------------------
-    let key = a:keyboard
+    let keyboard = a:keyboard
     let im = a:im
-    if empty(key) || empty(im)
+    if empty(keyboard) || empty(im)
         return []
     endif
     let dir = s:vimim_get_data_directory(im)
     if empty(dir)
         return []
     endif
-    let filename = dir . '/' . key
+    " ----------------------------------------
     let results = []
+    let filename = dir . '/' . keyboard
     if filereadable(filename)
         let lines = readfile(filename)
         for line in lines
@@ -3132,12 +3133,69 @@ function! s:vimim_get_data_from_directory(keyboard, im)
                 if s:localization > 0
                     let chinese = s:vimim_i18n_read(chinese)
                 endif
-                let menu = key . " " . chinese
+                let menu = keyboard . " " . chinese
                 call add(results, menu)
             endfor
         endfor
     endif
     return results
+endfunction
+
+" ------------------------------------------------------
+function! s:vimim_sentence_match_directory(keyboard, im)
+" ------------------------------------------------------
+    let keyboard = a:keyboard
+    let im = a:im
+    if empty(keyboard) || empty(im)
+        return []
+    endif
+    let dir = s:vimim_get_data_directory(im)
+    " ----------------------------------------
+    let filename = dir . '/' . keyboard
+    if filereadable(filename)
+        return [keyboard]
+    endif
+    " ----------------------------------------
+    let key = ''
+    let max = len(keyboard)
+    while max > 2 && len(keyboard) > 1
+        let max -= 1
+        let key = strpart(keyboard, 0, max)
+        let filename = dir . '/' . key
+        if filereadable(filename)
+            break
+        endif
+    endwhile
+    " ----------------------------------------
+    let blocks = []
+    let filename = dir . '/' . key
+    if filereadable(filename)
+        let matched_part = strpart(keyboard, 0, max)
+        let trailing_part = strpart(keyboard, max)
+        let blocks = [matched_part, trailing_part]
+    endif
+    return blocks
+ "  " -------------------------------------------------- TODO
+ "  " let results = s:vimim_pinyin_and_4corner(keyboard)
+ "  " --------------------------------------------------
+ "  if keyboard =~ '^\l\+\d\+'
+ "      let msg = "[diy] ma7712li4002 => [mali,7712,4002]"
+ "      return []
+ "  endif
+ "  " --------------------------------------------------
+ "  let keyboards = s:vimim_diy_keyboard2number(keyboard)
+ "  if empty(keyboards)
+ "      let msg = " mjads.xdhao.jdaaa "
+ "  else
+ "      return []
+ "  endif
+ "  " --------------------------------------------------
+ "  let blocks = []
+ "  if get(s:im['4corner'],0) > 0
+ "      let blocks = s:vimim_4corner_sentence(keyboard)
+ "  endif
+ "  " --------------------------------------------------
+ "  return blocks
 endfunction
 
 " -----------------------
@@ -5002,9 +5060,9 @@ function! s:vimim_apostrophe_fuzzy_pattern(keyboards)
     return pattern
 endfunction
 
-" --------------------------------------------------
-function! s:vimim_keyboard_analysis(lines, keyboard)
-" --------------------------------------------------
+" --------------------------------------------------------
+function! s:vimim_sentence_match_datafile(lines, keyboard)
+" --------------------------------------------------------
     let keyboard = a:keyboard
     if empty(a:lines)
     \|| s:chinese_input_mode =~ 'dynamic'
@@ -5012,18 +5070,13 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
     \|| len(keyboard) < 2
         return []
     endif
-    " --------------------------------------------------
-    if keyboard =~ '^\l\+\d\+'
-        let msg = "[diy] ma7712li4002 => [mali,7712,4002]"
-        return []
-    endif
-    " --------------------------------------------------
-    let keyboards = s:vimim_diy_keyboard2number(keyboard)
-    if empty(keyboards)
-        let msg = " mjads.xdhao.jdaaa "
-    else
-        return []
-    endif
+ "" " --------------------------------------------------
+ "" let keyboards = s:vimim_diy_keyboard2number(keyboard)
+ "" if empty(keyboards)
+ ""     let msg = " mjads.xdhao.jdaaa "
+ "" else
+ ""     return []
+ "" endif
     " --------------------------------------------------
     let blocks = []
     if get(s:im['wubi'],0) > 0
@@ -5038,16 +5091,16 @@ function! s:vimim_keyboard_analysis(lines, keyboard)
         let cloud = s:vimim_to_cloud_or_not(pinyins, [])
         if empty(cloud)
             " [sentence input]: break up long whole sentence
-            let blocks = s:vimim_sentence_match(a:lines, keyboard)
+            let blocks = s:vimim_sentence_datafile_match(a:lines, keyboard)
         endif
     endif
     " --------------------------------------------------
     return blocks
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_sentence_match(lines, keyboard)
-" -----------------------------------------------
+" --------------------------------------------------------
+function! s:vimim_sentence_datafile_match(lines, keyboard)
+" --------------------------------------------------------
     let keyboard = a:keyboard
     if empty(a:lines)
     \|| keyboard =~ '\d'
@@ -5057,6 +5110,7 @@ function! s:vimim_sentence_match(lines, keyboard)
     let pattern = '^\<' . keyboard . '\>'
     let match_start = -1
     let max = len(keyboard)
+    " word matching algorithm for Chinese word segmentation
     " -------------------------------------------
     while max > 2 && len(keyboard) > 1
         let max -= 1
@@ -6001,11 +6055,17 @@ else
     \&& len(s:data_directory_4corner) > 1
         let im = "4corner"
     endif
-    " ---------------------------------
-    let results2 = s:vimim_get_data_from_directory(keyboard, im)
-    if len(results2) > 0
-        let results = s:vimim_pair_list(results2)
-        return s:vimim_popupmenu_list(results)
+    " --------------------------------- TODO
+    let keyboards = s:vimim_sentence_match_directory(keyboard, im)
+    if empty(keyboards)
+        let msg = "sell the keyboard as is for directory database"
+    else
+        let keyboard = get(keyboards, 0)
+        let results2 = s:vimim_get_data_from_directory(keyboard, im)
+        if len(results2) > 0
+            let results = s:vimim_pair_list(results2)
+            return s:vimim_popupmenu_list(results)
+        endif
     endif
 
     " [cloud] try cloud when no directory nor datafile
@@ -6036,10 +6096,10 @@ else
     let pattern = '\M^' . keyboard
     let match_start = match(s:lines, pattern)
 
-    " word matching algorithm for Chinese word segmentation
+    " sentence match for datafile only
     " ----------------------------------------------------- TODO
     if match_start < 0 && empty(clouds)
-        let keyboards = s:vimim_keyboard_analysis(s:lines, keyboard)
+        let keyboards = s:vimim_sentence_match_datafile(s:lines, keyboard)
         if empty(keyboards)
             let msg = "sell the keyboard as is, without modification"
         else
