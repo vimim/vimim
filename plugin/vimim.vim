@@ -5110,7 +5110,7 @@ endfunction
 
 " --------------------------------------------
 function! s:vimim_pinyin_and_4corner(keyboard)
-" --------------------------------------------
+" -------------------------------------------- TODO
     let keyboard = a:keyboard
     if empty(s:pinyin_and_4corner)
     \|| empty(keyboard)
@@ -5118,10 +5118,7 @@ function! s:vimim_pinyin_and_4corner(keyboard)
     \|| s:chinese_input_mode =~ 'dynamic'
         return []
     endif
-    let keyboards = s:vimim_diy_keyboard2number(keyboard)
-    if empty(keyboards)
-        let keyboards = s:vimim_diy_keyboard(keyboard)
-    endif
+    let keyboards = s:vimim_diy_keyboard(keyboard)
     return s:vimim_pinyin_4corner(keyboards)
 endfunction
 
@@ -5152,60 +5149,6 @@ function! s:vimim_pinyin_4corner(keyboards)
     let h_d2 = s:vimim_chinese_menu_hash(cache_list)
     " ----------------------------------
     return s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_diy_keyboard2number(keyboard)
-" ---------------------------------------------
-    let keyboard = a:keyboard
-    if s:vimimdebug < 9
-    \|| keyboard =~ '\d'
-    \|| keyboard !~ '\l'
-    \|| len(keyboard) < 5
-    \|| len(keyboard) > 6
-        return []
-    endif
-    " -----------------------------------------
-    let diy_keyboard_asdfghjklo = {}
-    let diy_keyboard_asdfghjklo['a'] = 1
-    let diy_keyboard_asdfghjklo['s'] = 2
-    let diy_keyboard_asdfghjklo['d'] = 3
-    let diy_keyboard_asdfghjklo['f'] = 4
-    let diy_keyboard_asdfghjklo['g'] = 5
-    let diy_keyboard_asdfghjklo['h'] = 6
-    let diy_keyboard_asdfghjklo['j'] = 7
-    let diy_keyboard_asdfghjklo['k'] = 8
-    let diy_keyboard_asdfghjklo['l'] = 9
-    let diy_keyboard_asdfghjklo['o'] = 0
-    " -----------------------------------------
-    let digits = []
-    let alphabet_length = len(keyboard) - 4
-    let four_corner = strpart(keyboard, alphabet_length)
-    for char in split(four_corner, '\zs')
-        if has_key(diy_keyboard_asdfghjklo, char)
-            let digit = diy_keyboard_asdfghjklo[char]
-            call add(digits, digit)
-        else
-            return []
-        endif
-    endfor
-    if len(digits) < 4
-        return []
-    endif
-    " -----------------------------------------
-    let keyboards = ["", "", "", ""]
-    let keyboards[0] = keyboard[0:0]
-    if len(keyboard) == 5
-        " zi: mjjas => m7712 => ['m', 7712]
-        let keyboards[1] = join(digits,"")
-    elseif len(keyboard) == 6
-        " ci: mljjfo => ml7140 => ["m'l", 71'40]
-        let keyboards[1] = join(digits[0:1],"")
-        let keyboards[2] = keyboard[1:1]
-        let keyboards[3] = join(digits[2:3],"")
-    endif
-    " -----------------------------------------
-    return keyboards
 endfunction
 
 " --------------------------------------
@@ -5332,7 +5275,8 @@ function! s:vimim_mkdir(option)
 " (2) :vim vimim.pinyin.txt
 " (3) :call g:vimim_mkdir()
 " -----------------------
-    let dir = expand("%:e:e:r")
+    let root = expand("%:p:h")
+    let dir = root . "/" . expand("%:e:e:r")
     if !exists(dir) && !isdirectory(dir)
         call mkdir(dir, "p")
     endif
