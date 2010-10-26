@@ -3004,283 +3004,6 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Data_Directory   === {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" ---------------------------------------
-function! s:vimim_get_datafile_in_vimrc()
-" ---------------------------------------
-    let dir = s:vimim_data_directory
-    if empty(dir)
-        let s:data_directory_root = s:path . "vimim"
-    elseif isdirectory(dir)
-        let s:data_directory_root = copy(dir)
-    endif
-    " ------------------------------------------
-    if empty(s:data_directory_root)
-        let datafile = s:vimim_datafile
-        if !empty(datafile) && filereadable(datafile)
-            let s:datafile = copy(datafile)
-        endif
-    else
-        let s:vimim_datafile = 0
-    endif
-endfunction
-
-" --------------------------------------
-function! s:vimim_get_data_directory(im)
-" --------------------------------------
-    let im = a:im
-    if empty(im) || empty(s:data_directory_root)
-        return 0
-    endif
-    let dir = s:data_directory_root ."/". im
-    if isdirectory(dir)
-        return dir
-    else
-        return 0
-    endif
-endfunction
-
-" --------------------------------------
-function! s:vimim_set_data_directory(im)
-" --------------------------------------
-    let im = a:im
-    let dir = s:vimim_get_data_directory(im)
-    if empty(dir)
-        return 0
-    else
-        let s:im[im][0] = 1
-        let s:im_primary = im
-        return dir
-    endif
-endfunction
-
-" --------------------------------------------
-function! s:vimim_scan_plugin_data_directory()
-" --------------------------------------------
-    if empty(s:data_directory_root)
-        return
-    endif
-    " ----------------------------------------
-    let im = "wubi"
-    let dir = s:vimim_set_data_directory(im)
-    if !empty(dir)
-        let s:data_directory_wubi = dir
-        let s:xingma_sleep_with_pinyin = 1
-        let s:im_secondary = im
-        let s:vimim_cloud_sogou = -1
-    endif
-    " ----------------------------------------
-    let im = "zhengma"
-    let dir = s:vimim_set_data_directory(im)
-    if !empty(dir)
-        let s:data_directory_zhengma = dir
-        let s:xingma_sleep_with_pinyin = 1
-        let s:im_secondary = im
-        let s:vimim_cloud_sogou = -1
-    endif
-    " ----------------------------------------
-    " ----------------------------------------
-    " ----------------------------------------
-    let im = "4corner"
-    let dir = s:vimim_set_data_directory(im)
-    if !empty(dir)
-        let s:data_directory_4corner = dir
-    endif
-    " ----------------------------------------
-    let im = "pinyin"
-    let dir = s:vimim_set_data_directory(im)
-    if !empty(dir)
-        let s:data_directory_pinyin = dir
-    endif
-    " ------------------------------------------
-    if len(s:data_directory_4corner) > 1
-        if len(s:data_directory_pinyin) > 1
-            let s:pinyin_and_4corner = 1
-            let s:im_primary = 'pinyin'
-            let s:im['4corner'][0] = 1
-            let s:im['pinyin'][0] = 1
-        else
-            let s:only_4corner_or_12345 = 1
-            let s:im_primary = '4corner'
-            let s:im['4corner'][0] = 1
-            let s:im['pinyin'][0] = 0
-        endif
-    endif
-endfunction
-
-" -----------------------------------------------------
-function! s:vimim_get_data_from_directory(keyboard, im)
-" -----------------------------------------------------
-    let keyboard = a:keyboard
-    let im = a:im
-    if empty(keyboard) || empty(im)
-        return []
-    endif
-    let dir = s:vimim_get_data_directory(im)
-    if empty(dir)
-        return []
-    endif
-    " ----------------------------------------
-    let results = []
-    let filename = dir . '/' . keyboard
-    if filereadable(filename)
-        let lines = readfile(filename)
-        for line in lines
-            for chinese in split(line)
-                if s:localization > 0
-                    let chinese = s:vimim_i18n_read(chinese)
-                endif
-                let menu = keyboard . " " . chinese
-                call add(results, menu)
-            endfor
-        endfor
-    endif
-    return results
-endfunction
-
-" ------------------------------------------------------
-function! s:vimim_sentence_match_directory(keyboard, im)
-" ------------------------------------------------------
-    let keyboard = a:keyboard
-    let im = a:im
-    if empty(keyboard) || empty(im)
-        return []
-    endif
-    let dir = s:vimim_get_data_directory(im)
-    " ----------------------------------------
-    let filename = dir . '/' . keyboard
-    if filereadable(filename)
-        return [keyboard]
-    endif
-    " ----------------------------------------
-    let key = ''
-    let max = len(keyboard)
-    while max > 2 && len(keyboard) > 1
-        let max -= 1
-        let key = strpart(keyboard, 0, max)
-        let filename = dir . '/' . key
-        if filereadable(filename)
-            break
-        endif
-    endwhile
-    " ----------------------------------------
-    let blocks = []
-    let filename = dir . '/' . key
-    if filereadable(filename)
-        let matched_part = strpart(keyboard, 0, max)
-        let trailing_part = strpart(keyboard, max)
-        let blocks = [matched_part, trailing_part]
-    endif
-    return blocks
- "  " -------------------------------------------------- TODO
- "  " let results = s:vimim_pinyin_and_4corner(keyboard)
- "  " --------------------------------------------------
- "  if keyboard =~ '^\l\+\d\+'
- "      let msg = "[diy] ma7712li4002 => [mali,7712,4002]"
- "      return []
- "  endif
- "  " --------------------------------------------------
- "  let keyboards = s:vimim_diy_keyboard2number(keyboard)
- "  if empty(keyboards)
- "      let msg = " mjads.xdhao.jdaaa "
- "  else
- "      return []
- "  endif
- "  " --------------------------------------------------
- "  let blocks = []
- "  if get(s:im['4corner'],0) > 0
- "      let blocks = s:vimim_4corner_sentence(keyboard)
- "  endif
- "  " --------------------------------------------------
- "  return blocks
-endfunction
-
-" -----------------------
-function! g:vimim_mkdir()
-" -----------------------
-    call s:vimim_mkdir('append')
-endfunction
-
-" ------------------------
-function! g:vimim_mkdir2()
-" ------------------------
-    call s:vimim_mkdir('prepend')
-endfunction
-
-" -----------------------------
-function! s:vimim_mkdir(option)
-" -----------------------------
-" Goal: creating directory xxx and adding files, based on xxx.txt
-" Sample file A: ~/vim/vimfiles/plugin/vimim/4corner/7132
-" Sample file B: ~/vim/vimfiles/plugin/vimim/pinyin/jjjj
-" -----------------------
-" Example: one   input: vimim.pinyin.txt  (the master file)
-"          many output: pinyin/ma3        (one sample slave file)
-" (1) :cd $VIM/vimfiles/plugin/vimim/
-" (2) :vim vimim.pinyin.txt
-" (3) :call g:vimim_mkdir()
-" -----------------------
-    let dir = expand("%:e:e:r")
-    if !exists(dir) && !isdirectory(dir)
-        call mkdir(dir, "p")
-    endif
-    let lines = readfile(bufname("%"))
-    for line in lines
-        let entries = split(line)
-        let key = get(entries, 0)
-        if match(key, "'") > -1
-            let key = substitute(key,"'",'','g')
-        endif
-        let key_as_filename = dir . "/" . key
-        let chinese_list = entries[1:]
-        let first_list = []
-        let second_list = []
-        if filereadable(key_as_filename)
-            let filename_list = split(join(readfile(key_as_filename)))
-            if a:option =~ 'append'
-                let first_list = filename_list
-                let second_list = chinese_list
-            elseif a:option =~ 'prepend'
-                let first_list = chinese_list
-                let second_list = filename_list
-            endif
-            call extend(first_list, second_list)
-            let chinese_list = first_list
-        endif
-        let results = s:vimim_remove_duplication(chinese_list)
-        if !empty(results)
-            call writefile(results, key_as_filename)
-        endif
-    endfor
-endfunction
-
-" -------------------------------------------
-function! s:vimim_remove_duplication(chinese)
-" -------------------------------------------
-    let chinese = a:chinese
-    if empty(chinese)
-        return []
-    endif
-    let cache = {}
-    let results = []
-    for line in chinese
-        let characters = split(line)
-        for char in characters
-            if has_key(cache, char)
-                continue
-            else
-                let cache[char] = char
-                call add(results, char)
-            endif
-        endfor
-    endfor
-    return results
-endfunction
-
-" ======================================= }}}
 let VimIM = " ====  Data_Update      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
@@ -5070,19 +4793,10 @@ function! s:vimim_sentence_match_datafile(lines, keyboard)
     \|| len(keyboard) < 2
         return []
     endif
- "" " --------------------------------------------------
- "" let keyboards = s:vimim_diy_keyboard2number(keyboard)
- "" if empty(keyboards)
- ""     let msg = " mjads.xdhao.jdaaa "
- "" else
- ""     return []
- "" endif
     " --------------------------------------------------
     let blocks = []
     if get(s:im['wubi'],0) > 0
         let blocks = s:vimim_wubi_whole_match(keyboard)
-    elseif get(s:im['4corner'],0) > 0
-        let blocks = s:vimim_4corner_sentence(keyboard)
     endif
     " --------------------------------------------------
     if empty(blocks)
@@ -5127,15 +4841,436 @@ function! s:vimim_sentence_datafile_match(lines, keyboard)
     " -------------------------------------------
     let blocks = []
     if match_start > 0
-        let matched_part = strpart(keyboard, 0, max)
-        let trailing_part = strpart(keyboard, max)
-        let blocks = [matched_part, trailing_part]
+        let blocks = s:vimim_get_sentence_blocks(keyboard, max)
     endif
     return blocks
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Back_End_DIY     ==== {{{"
+let VimIM = " ====  Back_End_DIR     ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" ---------------------------------------
+function! s:vimim_get_datafile_in_vimrc()
+" ---------------------------------------
+    let dir = s:vimim_data_directory
+    if empty(dir)
+        let s:data_directory_root = s:path . "vimim"
+    elseif isdirectory(dir)
+        let s:data_directory_root = copy(dir)
+    endif
+    " ------------------------------------------
+    if empty(s:data_directory_root)
+        let datafile = s:vimim_datafile
+        if !empty(datafile) && filereadable(datafile)
+            let s:datafile = copy(datafile)
+        endif
+    else
+        let s:vimim_datafile = 0
+    endif
+endfunction
+
+" --------------------------------------
+function! s:vimim_get_data_directory(im)
+" --------------------------------------
+    let im = a:im
+    if empty(im) || empty(s:data_directory_root)
+        return 0
+    endif
+    let dir = s:data_directory_root ."/". im
+    if isdirectory(dir)
+        return dir
+    else
+        return 0
+    endif
+endfunction
+
+" --------------------------------------
+function! s:vimim_set_data_directory(im)
+" --------------------------------------
+    let im = a:im
+    let dir = s:vimim_get_data_directory(im)
+    if empty(dir)
+        return 0
+    else
+        let s:im[im][0] = 1
+        let s:im_primary = im
+        return dir
+    endif
+endfunction
+
+" --------------------------------------------
+function! s:vimim_scan_plugin_data_directory()
+" --------------------------------------------
+    if empty(s:data_directory_root)
+        return
+    endif
+    " ----------------------------------------
+    let im = "wubi"
+    let dir = s:vimim_set_data_directory(im)
+    if !empty(dir)
+        let s:data_directory_wubi = dir
+        let s:xingma_sleep_with_pinyin = 1
+        let s:im_secondary = im
+        let s:vimim_cloud_sogou = -1
+    endif
+    " ----------------------------------------
+    let im = "zhengma"
+    let dir = s:vimim_set_data_directory(im)
+    if !empty(dir)
+        let s:data_directory_zhengma = dir
+        let s:xingma_sleep_with_pinyin = 1
+        let s:im_secondary = im
+        let s:vimim_cloud_sogou = -1
+    endif
+    " ----------------------------------------
+    let im = "4corner"
+    let dir = s:vimim_set_data_directory(im)
+    if !empty(dir)
+        let s:data_directory_4corner = dir
+    endif
+    " ----------------------------------------
+    let im = "pinyin"
+    let dir = s:vimim_set_data_directory(im)
+    if !empty(dir)
+        let s:data_directory_pinyin = dir
+    endif
+    " ------------------------------------------
+    if len(s:data_directory_4corner) > 1
+        if len(s:data_directory_pinyin) > 1
+            let s:pinyin_and_4corner = 1
+            let s:im_primary = 'pinyin'
+            let s:im['4corner'][0] = 1
+            let s:im['pinyin'][0] = 1
+        else
+            let s:only_4corner_or_12345 = 1
+            let s:im_primary = '4corner'
+            let s:im['4corner'][0] = 1
+            let s:im['pinyin'][0] = 0
+        endif
+    endif
+endfunction
+
+" -----------------------------------------------------
+function! s:vimim_get_data_from_directory(keyboard, im)
+" -----------------------------------------------------
+    let keyboard = a:keyboard
+    let im = a:im
+    if empty(keyboard) || empty(im)
+        return []
+    endif
+    let dir = s:vimim_get_data_directory(im)
+    if empty(dir)
+        return []
+    endif
+    " ----------------------------------------
+    let results = []
+    let filename = dir . '/' . keyboard
+    if filereadable(filename)
+        let lines = readfile(filename)
+        for line in lines
+            for chinese in split(line)
+                if s:localization > 0
+                    let chinese = s:vimim_i18n_read(chinese)
+                endif
+                let menu = keyboard . " " . chinese
+                call add(results, menu)
+            endfor
+        endfor
+    endif
+    return results
+endfunction
+
+" --------------------------------------------------
+function! s:vimim_get_sentence_blocks(keyboard, max)
+" --------------------------------------------------
+    let keyboard = a:keyboard
+    let max = a:max
+    if empty(keyboard) || empty(max)
+        return []
+    endif
+    let matched_part = strpart(keyboard, 0, max)
+    let trailing_part = strpart(keyboard, max)
+    let blocks = [matched_part, trailing_part]
+    return blocks
+endfunction
+
+" ------------------------------------------------------
+function! s:vimim_sentence_match_directory(keyboard, im)
+" ------------------------------------------------------
+    let keyboard = a:keyboard
+    let im = a:im
+    if empty(keyboard) || empty(im)
+        return []
+    endif
+    let dir = s:vimim_get_data_directory(im)
+    " ----------------------------------------
+    let filename = dir . '/' . keyboard
+    if filereadable(filename)
+        return [keyboard]
+    endif
+    let blocks = []
+    " --------------------------------------------------
+    if keyboard =~ '\d\d\d\d'
+    \&& len(s:data_directory_4corner) > 1
+        return s:vimim_4corner_sentence(keyboard)
+    endif
+    " ----------------------------------------
+    let key = ''
+    let max = len(keyboard)
+    while max > 2 && len(keyboard) > 1
+        let max -= 1
+        let key = strpart(keyboard, 0, max)
+        let filename = dir . '/' . key
+        if filereadable(filename)
+            break
+        endif
+    endwhile
+    " ----------------------------------------
+    let filename = dir . '/' . key
+    if filereadable(filename)
+        let blocks = s:vimim_get_sentence_blocks(keyboard, max)
+    endif
+    return blocks
+endfunction
+
+" --------------------------------------------
+function! s:vimim_pinyin_and_4corner(keyboard)
+" --------------------------------------------
+    if empty(s:pinyin_and_4corner)
+    \|| s:chinese_input_mode =~ 'dynamic'
+        return []
+    endif
+    let keyboards = s:vimim_diy_keyboard2number(a:keyboard)
+    if empty(keyboards)
+        let keyboards = s:vimim_diy_keyboard(a:keyboard)
+    endif
+    return s:vimim_diy_results(keyboards, [])
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_diy_keyboard2number(keyboard)
+" ---------------------------------------------
+    if s:vimimdebug < 9
+    \|| empty(s:pinyin_and_4corner)
+    \|| s:shuangpin_flag > 0
+        return []
+    endif
+    let keyboard = a:keyboard
+    " -----------------------------------------
+    if keyboard =~ '\d' || keyboard !~ '\l'
+        return []
+    endif
+    " -----------------------------------------
+    if len(keyboard) < 5 || len(keyboard) > 6
+        return []
+    endif
+    " -----------------------------------------
+    let diy_keyboard_asdfghjklo = {}
+    let diy_keyboard_asdfghjklo['a'] = 1
+    let diy_keyboard_asdfghjklo['s'] = 2
+    let diy_keyboard_asdfghjklo['d'] = 3
+    let diy_keyboard_asdfghjklo['f'] = 4
+    let diy_keyboard_asdfghjklo['g'] = 5
+    let diy_keyboard_asdfghjklo['h'] = 6
+    let diy_keyboard_asdfghjklo['j'] = 7
+    let diy_keyboard_asdfghjklo['k'] = 8
+    let diy_keyboard_asdfghjklo['l'] = 9
+    let diy_keyboard_asdfghjklo['o'] = 0
+    " -----------------------------------------
+    let digits = []
+    let alphabet_length = len(keyboard) - 4
+    let four_corner = strpart(keyboard, alphabet_length)
+    for char in split(four_corner, '\zs')
+        if has_key(diy_keyboard_asdfghjklo, char)
+            let digit = diy_keyboard_asdfghjklo[char]
+            call add(digits, digit)
+        else
+            return []
+        endif
+    endfor
+    if len(digits) < 4
+        return []
+    endif
+    " -----------------------------------------
+    let keyboards = ["", "", "", ""]
+    let keyboards[0] = keyboard[0:0]
+    if len(keyboard) == 5
+        " zi: mjjas => m7712 => ['m', 7712]
+        let keyboards[1] = join(digits,"")
+    elseif len(keyboard) == 6
+        " ci: mljjfo => ml7140 => ["m'l", 71'40]
+        let keyboards[1] = join(digits[0:1],"")
+        let keyboards[2] = keyboard[1:1]
+        let keyboards[3] = join(digits[2:3],"")
+    endif
+    " -----------------------------------------
+    return keyboards
+endfunction
+
+" --------------------------------------
+function! s:vimim_diy_keyboard(keyboard)
+" --------------------------------------
+    let keyboard = a:keyboard
+    if empty(s:pinyin_and_4corner)
+    \|| len(keyboard) < 2
+    \|| keyboard =~# '^\d'
+    \|| keyboard !~# '\d'
+    \|| keyboard !~# '\l'
+        return []
+    endif
+    " ---------------------------------------
+    " free style pinyin+4corner for zi and ci
+    " let zi = 'ma7712' li4002
+    " let ci = 'ma7712li4002 ma7712li mali4002'
+    " let ci = "ggy1 => ['ggy', '', '', 1]
+    " --------------------------------------------------------------
+    let alpha_keyboards = ["", ""]
+    let digit_keyboards = ["", ""]
+    let alpha_keyboards = split(keyboard, '\d\+') |" => ['ma', 'li']
+    let digit_keyboards = split(keyboard, '\D\+') |" => ['77', '40']
+    " --------------------------------------------------------------
+    if len(alpha_keyboards) < 2
+        let alpha_string = get(alpha_keyboards,0)
+        let pinyin_keyboards = s:vimim_get_pinyin_from_pinyin(alpha_string)
+        if len(pinyin_keyboards) > 0
+            call insert(digit_keyboards, "")
+            if len(pinyin_keyboards) == 2
+                let alpha_keyboards = copy(pinyin_keyboards)
+            endif
+        endif
+    endif
+    " --------------------------------------------------------------
+    let keyboards = ["", "", "", ""]
+    let keyboards[0] = get(alpha_keyboards,0)
+    let keyboards[1] = get(digit_keyboards,0)
+    if len(alpha_keyboards) > 1
+        let keyboards[2] = get(alpha_keyboards,1)
+    endif
+    if len(digit_keyboards) > 1
+        let keyboards[3] = get(digit_keyboards,1)
+    endif
+    " --------------------------------------------------------------
+    return keyboards
+endfunction
+
+" --------------------------------------------------
+function! s:vimim_diy_results(keyboards, cache_list)
+" --------------------------------------------------
+    let keyboards = a:keyboards
+    if len(keyboards) != 4
+        return []
+    endif
+    " ----------------------------------------------
+    let a = get(keyboards, 0)  |" ma
+    let b = get(keyboards, 1)  |" 7
+    let c = get(keyboards, 2)  |" li
+    let d = get(keyboards, 3)  |" 4
+    if !empty(c)
+        let a = a . "'" . c
+    endif
+    " ----------------------------------------------
+    let fuzzy_lines = a:cache_list
+    if empty(fuzzy_lines)
+        let fuzzy_lines = s:vimim_quick_fuzzy_search(a)
+    endif
+    let h_ac = s:vimim_diy_lines_to_hash(fuzzy_lines)
+    " ----------------------------------
+    let fuzzy_lines = s:vimim_quick_fuzzy_search(b)
+    let h_d1 = s:vimim_diy_lines_to_hash(fuzzy_lines)
+    " ----------------------------------
+    let fuzzy_lines = s:vimim_quick_fuzzy_search(d)
+    let h_d2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
+    " ----------------------------------
+    return s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
+endfunction
+
+" -----------------------
+function! g:vimim_mkdir()
+" -----------------------
+    call s:vimim_mkdir('append')
+endfunction
+
+" ------------------------
+function! g:vimim_mkdir2()
+" ------------------------
+    call s:vimim_mkdir('prepend')
+endfunction
+
+" -----------------------------
+function! s:vimim_mkdir(option)
+" -----------------------------
+" Goal: creating directory xxx and adding files, based on xxx.txt
+" Sample file A: ~/vim/vimfiles/plugin/vimim/4corner/7132
+" Sample file B: ~/vim/vimfiles/plugin/vimim/pinyin/jjjj
+" -----------------------
+" Example: one   input: vimim.pinyin.txt  (the master file)
+"          many output: pinyin/ma3        (one sample slave file)
+" (1) :cd $VIM/vimfiles/plugin/vimim/
+" (2) :vim vimim.pinyin.txt
+" (3) :call g:vimim_mkdir()
+" -----------------------
+    let dir = expand("%:e:e:r")
+    if !exists(dir) && !isdirectory(dir)
+        call mkdir(dir, "p")
+    endif
+    let lines = readfile(bufname("%"))
+    for line in lines
+        let entries = split(line)
+        let key = get(entries, 0)
+        if match(key, "'") > -1
+            let key = substitute(key,"'",'','g')
+        endif
+        let key_as_filename = dir . "/" . key
+        let chinese_list = entries[1:]
+        let first_list = []
+        let second_list = []
+        if filereadable(key_as_filename)
+            let filename_list = split(join(readfile(key_as_filename)))
+            if a:option =~ 'append'
+                let first_list = filename_list
+                let second_list = chinese_list
+            elseif a:option =~ 'prepend'
+                let first_list = chinese_list
+                let second_list = filename_list
+            endif
+            call extend(first_list, second_list)
+            let chinese_list = first_list
+        endif
+        let results = s:vimim_remove_duplication(chinese_list)
+        if !empty(results)
+            call writefile(results, key_as_filename)
+        endif
+    endfor
+endfunction
+
+" -------------------------------------------
+function! s:vimim_remove_duplication(chinese)
+" -------------------------------------------
+    let chinese = a:chinese
+    if empty(chinese)
+        return []
+    endif
+    let cache = {}
+    let results = []
+    for line in chinese
+        let characters = split(line)
+        for char in characters
+            if has_key(cache, char)
+                continue
+            else
+                let cache[char] = char
+                call add(results, char)
+            endif
+        endfor
+    endfor
+    return results
+endfunction
+
+
+" ======================================= }}}
+let VimIM = " ====  Back_End_FILE    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -5249,157 +5384,6 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     let new_positions[1] = line + len(results) - 1
     let new_positions[2] = len(get(split(get(results,-1)),0))+1
     call setpos(".", new_positions)
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_diy_keyboard2number(keyboard)
-" ---------------------------------------------
-    if s:vimimdebug < 9
-    \|| empty(s:pinyin_and_4corner)
-    \|| s:shuangpin_flag > 0
-        return []
-    endif
-    let keyboard = a:keyboard
-    " -----------------------------------------
-    if keyboard =~ '\d' || keyboard !~ '\l'
-        return []
-    endif
-    " -----------------------------------------
-    if len(keyboard) < 5 || len(keyboard) > 6
-        return []
-    endif
-    " -----------------------------------------
-    let diy_keyboard_asdfghjklo = {}
-    let diy_keyboard_asdfghjklo['a'] = 1
-    let diy_keyboard_asdfghjklo['s'] = 2
-    let diy_keyboard_asdfghjklo['d'] = 3
-    let diy_keyboard_asdfghjklo['f'] = 4
-    let diy_keyboard_asdfghjklo['g'] = 5
-    let diy_keyboard_asdfghjklo['h'] = 6
-    let diy_keyboard_asdfghjklo['j'] = 7
-    let diy_keyboard_asdfghjklo['k'] = 8
-    let diy_keyboard_asdfghjklo['l'] = 9
-    let diy_keyboard_asdfghjklo['o'] = 0
-    " -----------------------------------------
-    let digits = []
-    let alphabet_length = len(keyboard) - 4
-    let four_corner = strpart(keyboard, alphabet_length)
-    for char in split(four_corner, '\zs')
-        if has_key(diy_keyboard_asdfghjklo, char)
-            let digit = diy_keyboard_asdfghjklo[char]
-            call add(digits, digit)
-        else
-            return []
-        endif
-    endfor
-    if len(digits) < 4
-        return []
-    endif
-    " -----------------------------------------
-    let keyboards = ["", "", "", ""]
-    let keyboards[0] = keyboard[0:0]
-    if len(keyboard) == 5
-        " zi: mjjas => m7712 => ['m', 7712]
-        let keyboards[1] = join(digits,"")
-    elseif len(keyboard) == 6
-        " ci: mljjfo => ml7140 => ["m'l", 71'40]
-        let keyboards[1] = join(digits[0:1],"")
-        let keyboards[2] = keyboard[1:1]
-        let keyboards[3] = join(digits[2:3],"")
-    endif
-    " -----------------------------------------
-    return keyboards
-endfunction
-
-" --------------------------------------------
-function! s:vimim_pinyin_and_4corner(keyboard)
-" --------------------------------------------
-    if empty(s:pinyin_and_4corner)
-    \|| s:chinese_input_mode =~ 'dynamic'
-        return []
-    endif
-    let keyboards = s:vimim_diy_keyboard2number(a:keyboard)
-    if empty(keyboards)
-        let keyboards = s:vimim_diy_keyboard(a:keyboard)
-    endif
-    return s:vimim_diy_results(keyboards, [])
-endfunction
-
-" --------------------------------------
-function! s:vimim_diy_keyboard(keyboard)
-" --------------------------------------
-    let keyboard = a:keyboard
-    if empty(s:pinyin_and_4corner)
-    \|| len(keyboard) < 2
-    \|| keyboard =~# '^\d'
-    \|| keyboard !~# '\d'
-    \|| keyboard !~# '\l'
-        return []
-    endif
-    " ---------------------------------------
-    " free style pinyin+4corner for zi and ci
-    " let zi = 'ma7712' li4002
-    " let ci = 'ma7712li4002 ma7712li mali4002'
-    " let ci = "ggy1 => ['ggy', '', '', 1]
-    " --------------------------------------------------------------
-    let alpha_keyboards = ["", ""]
-    let digit_keyboards = ["", ""]
-    let alpha_keyboards = split(keyboard, '\d\+') |" => ['ma', 'li']
-    let digit_keyboards = split(keyboard, '\D\+') |" => ['77', '40']
-    " --------------------------------------------------------------
-    if len(alpha_keyboards) < 2
-        let alpha_string = get(alpha_keyboards,0)
-        let pinyin_keyboards = s:vimim_get_pinyin_from_pinyin(alpha_string)
-        if len(pinyin_keyboards) > 0
-            call insert(digit_keyboards, "")
-            if len(pinyin_keyboards) == 2
-                let alpha_keyboards = copy(pinyin_keyboards)
-            endif
-        endif
-    endif
-    " --------------------------------------------------------------
-    let keyboards = ["", "", "", ""]
-    let keyboards[0] = get(alpha_keyboards,0)
-    let keyboards[1] = get(digit_keyboards,0)
-    if len(alpha_keyboards) > 1
-        let keyboards[2] = get(alpha_keyboards,1)
-    endif
-    if len(digit_keyboards) > 1
-        let keyboards[3] = get(digit_keyboards,1)
-    endif
-    " --------------------------------------------------------------
-    return keyboards
-endfunction
-
-" --------------------------------------------------
-function! s:vimim_diy_results(keyboards, cache_list)
-" --------------------------------------------------
-    let keyboards = a:keyboards
-    if len(keyboards) != 4
-        return []
-    endif
-    " ----------------------------------------------
-    let a = get(keyboards, 0)  |" ma
-    let b = get(keyboards, 1)  |" 7
-    let c = get(keyboards, 2)  |" li
-    let d = get(keyboards, 3)  |" 4
-    if !empty(c)
-        let a = a . "'" . c
-    endif
-    " ----------------------------------------------
-    let fuzzy_lines = a:cache_list
-    if empty(fuzzy_lines)
-        let fuzzy_lines = s:vimim_quick_fuzzy_search(a)
-    endif
-    let h_ac = s:vimim_diy_lines_to_hash(fuzzy_lines)
-    " ----------------------------------
-    let fuzzy_lines = s:vimim_quick_fuzzy_search(b)
-    let h_d1 = s:vimim_diy_lines_to_hash(fuzzy_lines)
-    " ----------------------------------
-    let fuzzy_lines = s:vimim_quick_fuzzy_search(d)
-    let h_d2 = s:vimim_diy_lines_to_hash(fuzzy_lines)
-    " ----------------------------------
-    return s:vimim_diy_double_menu(h_ac, h_d1, h_d2)
 endfunction
 
 " --------------------------------------------
@@ -6050,8 +6034,7 @@ else
     " ------------------------------------------------------
     let im = s:im_primary
     " ---------------------------------
-    if len(keyboard) == 4
-    \&& keyboard =~ '\d\d\d\d'
+    if keyboard =~ '\d\d\d\d'
     \&& len(s:data_directory_4corner) > 1
         let im = "4corner"
     endif
@@ -6064,6 +6047,12 @@ else
         let results2 = s:vimim_get_data_from_directory(keyboard, im)
         if len(results2) > 0
             let results = s:vimim_pair_list(results2)
+            return s:vimim_popupmenu_list(results)
+        endif
+        " ------------------------------------------------ TODO
+        " [DIY] "Do It Yourself" couple IM: pinyin+4corner
+        let results = s:vimim_pinyin_and_4corner(keyboard)
+        if len(results) > 0
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -6106,12 +6095,6 @@ else
             let keyboard = get(keyboards, 0)
             let pattern = "\\C" . "^" . keyboard
             let match_start = match(s:lines, pattern)
-        endif
-        " [DIY] "Do It Yourself" couple IM: pinyin+4corner
-        " ------------------------------------------------ TODO
-        let results = s:vimim_pinyin_and_4corner(keyboard)
-        if len(results) > 0
-            return s:vimim_popupmenu_list(results)
         endif
     endif
 
