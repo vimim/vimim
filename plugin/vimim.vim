@@ -118,6 +118,7 @@ if exists("b:loaded_vimim") || &cp || v:version<700
     finish
 endif
 scriptencoding utf-8
+let s:path = expand("<sfile>:p:h")."/"
 
 " -------------------------------------
 function! s:vimim_initialization_once()
@@ -386,7 +387,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_scan_plugin_datafile()
 " --------------------------------------
-    if s:vimimdebug > 0
+    if s:vimimdebug > 8
     \|| len(s:datafile) > 1
         return
     endif
@@ -5234,7 +5235,6 @@ function! s:vimim_initialize_debug()
         let s:path2 = dir
     endif
     " ------------------------------
-    let s:path = expand("<sfile>:p:h")."/"
     let dir = s:path . "vimim"
     if isdirectory(dir)
         let s:path2 = dir
