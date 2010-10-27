@@ -395,7 +395,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_scan_plugin_datafile()
 " --------------------------------------
-    if s:vimimdebug > 8
+    if s:vimim_debug > 8
     \|| len(s:datafile) > 1
         return
     endif
@@ -566,6 +566,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_chinese_frequency")
+    call add(G, "g:vimim_debug")
     call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
@@ -2584,7 +2585,7 @@ function! g:vimim_pumvisible_p_paste()
     endif
     let cursor_positions = getpos(".")
     let cursor_positions[2] = 1
-    if s:vimimdebug < 9
+    if s:vimim_debug < 9
         put=words
     else
         call setline(line("."), words)
@@ -2952,7 +2953,8 @@ function! s:vimim_get_new_order_list(chinese)
         return []
     endif
     " --------------------------------
-    if len(keyboard) == 1 && s:vimimdebug > 0
+    if len(keyboard) == 1 
+    \&& s:vimim_debug > 0
         return []
     endif
     " --------------------------------
@@ -5255,7 +5257,7 @@ function! s:vimim_initialize_debug()
         let s:backend = "directory"
     endif
     " ------------------------------
-    let s:vimimdebug = 9
+    let s:vimim_debug = 9
     let s:vimim_cloud_sogou = -1
     let s:vimim_static_input_style = 2
     let s:vimim_ctrl_space_to_toggle = 2
