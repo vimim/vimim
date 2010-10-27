@@ -2896,39 +2896,6 @@ function! s:vimim_get_list_from_smart_ctrl_n(keyboard)
     return matched_list
 endfunction
 
-" ---------------------------------
-function! <SID>vimim_smart_ctrl_p()
-" ---------------------------------
-    let s:smart_ctrl_p += 1
-    let key = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ----------------------------------------------------
-function! s:vimim_get_list_from_smart_ctrl_p(keyboard)
-" ----------------------------------------------------
-    let keyboard = a:keyboard
-    if s:smart_ctrl_p < 1
-        return []
-    endif
-    let s:smart_ctrl_p = 0
-    if keyboard =~# s:valid_key
-        let msg = 'try to find from all previous valid inputs'
-    else
-        return []
-    endif
-    let pattern = s:vimim_free_fuzzy_pattern(keyboard)
-    let matched = match(keys(s:inputs_all), pattern)
-    if matched < 0
-        let msg = "nothing matched previous user input"
-        return []
-    else
-        let keyboard = get(keys(s:inputs_all), matched)
-        let matched_list = s:inputs_all[keyboard]
-        return matched_list
-    endif
-endfunction
-
 " ------------------------------------------
 function! g:vimim_pumvisible_ctrl_e_ctrl_y()
 " ------------------------------------------
@@ -4782,7 +4749,7 @@ function! s:vimim_pinyin_more_matches(lines, keyboard, results)
     return matched_list
 endfunction
 
-" -------------------------------------
+" ------------------------------------- TODO
 function! s:vimim_fuzzy_match(keyboard)
 " -------------------------------------
     let keyboard = a:keyboard
@@ -5502,7 +5469,6 @@ function! g:reset_after_auto_insert()
     let s:keyboard_shuangpin = 0
     let s:keyboard_wubi = ''
     let s:smart_ctrl_n = 0
-    let s:smart_ctrl_p = 0
     let s:one_key_correction = 0
     return ''
 endfunction
@@ -5553,7 +5519,6 @@ function! s:vimim_helper_mapping_on()
 " -----------------------------------
     if s:vimim_static_input_style == 2
         inoremap <C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
-        inoremap <C-P> <C-R>=<SID>vimim_smart_ctrl_p()<CR>
     endif
     " ----------------------------------------------------------
     if s:vimim_static_input_style == 1
@@ -5732,15 +5697,6 @@ else
     " -----------------------------------------
     if s:smart_ctrl_n > 0
         let results = s:vimim_get_list_from_smart_ctrl_n(keyboard)
-        if !empty(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " use all cached list when input-memory is used
-    " ---------------------------------------------
-    if s:smart_ctrl_p > 0
-        let results = s:vimim_get_list_from_smart_ctrl_p(keyboard)
         if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
@@ -5939,13 +5895,13 @@ else
         endif
     endif
 
-    " [datafile] datafile is also supported for now
-    " ---------------------------------------------
+    " [datafile] datafile is used as another backend
+    " ----------------------------------------------
     let pattern = '\M^' . keyboard
     let match_start = match(s:lines, pattern)
 
     " sentence match for datafile only
-    " ----------------------------------------------------- TODO
+    " ----------------------------------------------
     if match_start < 0 && empty(clouds)
         let keyboards = s:vimim_sentence_match_datafile(s:lines, keyboard)
         if empty(keyboards)
