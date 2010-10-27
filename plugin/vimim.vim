@@ -10,8 +10,14 @@ let $VimIM = "$Revision$"
 " For the impatient:
 " (1) throw this script into your vim plugin directory
 " (2) open your vim and enter Insert mode
-" (3) type: vim<C-6>
-" (4) type: vimimhelp<C-6><C-6>
+" (3) play with various easter eggs:
+"     - VimIM 經典, type:  vim<C-6><C-6>
+"     - VimIM 環境, type:  vimim<C-6><C-6>
+"     - VimIM 程式, type:  vimimvim<C-6><C-6>
+"     - VimIM 幫助, type:  vimimhelp<C-6><C-6>
+"     - VimIM 測試, type:  vimimdebug<C-6><C-6>
+"     - VimIM 內碼, type:  vimimunicode<C-6><C-6>
+"     - VimIM 設置, type:  vimimdefaults<C-6><C-6>
 " -----------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry         "]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506 "]
@@ -118,6 +124,8 @@ if exists("b:loaded_vimim") || &cp || v:version<700
     finish
 endif
 scriptencoding utf-8
+let b:loaded_vimim = 1
+let s:vimimhelp = egg
 let s:path = expand("<sfile>:p:h")."/"
 
 " -------------------------------------
@@ -435,6 +443,7 @@ function! s:vimim_scan_plugin_datafile()
     if filereadable(datafile)
         let msg = "datafile is used first over directory database"
         let s:path2 = 0
+        let s:backend = "datafile"
     else
         let s:datafile = 0
         return
@@ -1093,9 +1102,9 @@ function! s:vimim_internal_codes(numbers)
     return internal_codes
 endfunction
 
-" ------------------------------------------
-function! s:vimim_without_datafile(keyboard)
-" ------------------------------------------
+" -----------------------------------------
+function! s:vimim_without_backend(keyboard)
+" -----------------------------------------
     let keyboard = a:keyboard
     if  keyboard =~ '\l' && len(keyboard) == 1
         let msg = "make abcdefghijklmnopqrst alive"
@@ -3347,9 +3356,6 @@ endfunction
 " ------------------------------------
 function! s:vimim_apostrophe(keyboard)
 " ------------------------------------
-    if empty(s:vimim_datafile_has_apostrophe)
-        return a:keyboard
-    endif
     let keyboard = a:keyboard
     if keyboard =~ "[']"
     \&& keyboard[0:0] != "'"
@@ -4857,12 +4863,14 @@ function! s:vimim_get_datafile_in_vimrc()
     let dir = s:vimim_data_directory
     if !empty(dir) && isdirectory(dir)
         let s:path2 = copy(dir)
+        let s:backend = "directory"
     endif
     " -----------------------------------
     if empty(s:path2)
         let datafile = s:vimim_datafile
         if !empty(datafile) && filereadable(datafile)
             let s:datafile = copy(datafile)
+            let s:backend = "datafile"
         endif
     endif
 endfunction
@@ -4901,6 +4909,8 @@ function! s:vimim_scan_plugin_data_directory()
 " -------------------------------------------- TODO
     if empty(s:path2)
         return
+    else
+        let s:backend = "directory"
     endif
     " ----------------------------------------
     let im = "wubi"
@@ -5159,7 +5169,6 @@ function! s:vimim_remove_duplication(chinese)
     return results
 endfunction
 
-
 " ======================================= }}}
 let VimIM = " ====  Back_End_FILE    ==== {{{"
 " ===========================================
@@ -5224,10 +5233,9 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let s:initialization_loaded = 0
+    let s:backend = 0
     let s:chinese_mode_switch = 1
-    let b:loaded_vimim = 1
-    let s:vimimhelp = egg
+    let s:initialization_loaded = 0
     " ------------------------------
     let s:path2 = 0
     let dir = "/home/vimim/vimim"
@@ -5243,6 +5251,8 @@ function! s:vimim_initialize_debug()
     " ------------------------------
     if empty(s:path2)
         return
+    else
+        let s:backend = "directory"
     endif
     " ------------------------------
     let s:vimimdebug = 9
@@ -5306,7 +5316,12 @@ function! s:vimim_debug_reset()
     if s:vimimdebug > 0
         let max = 512
         if s:debug_count > max
-            let s:debugs = s:debugs[0 : max]
+            let begin = len(s:debugs) - max
+            if begin < 0
+                let begin = 0
+            endif
+            let end = len(s:debugs) - 1
+            let s:debugs = s:debugs[begin : end]
         endif
     endif
 endfunction
@@ -5705,29 +5720,6 @@ else
         endif
     endif
 
-    " try super-internal-code if no single datafile nor cloud
-    " -------------------------------------------------------
-    let use_virtual_datafile = 0
-    if empty(s:lines)
-    \&& empty(s:data_directory_pinyin)
-    \&& empty(s:www_executable)
-        let use_virtual_datafile = 1
-    elseif s:vimimdebug == 9
-    \&& len(keyboard) == 2
-    \&& keyboard[0:0] ==# 'u'
-    \&& s:shuangpin_flag < 1
-        let keyboard = keyboard[-1:-1]
-        let use_virtual_datafile = 1
-    endif
-    if use_virtual_datafile > 0
-        let msg = " play with super light-weight internal-code "
-        let results = s:vimim_without_datafile(keyboard)
-        if len(results) > 0
-            let s:unicode_menu_display_flag = 1
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     " [mycloud] get chunmeng from mycloud local or www
     " ------------------------------------------------
     if empty(s:vimim_cloud_plugin)
@@ -5743,9 +5735,21 @@ else
         endif
     endif
 
+    " try super-internal-code if no backend nor cloud
+    " -----------------------------------------------
+    if empty(s:backend) && empty(s:www_executable)
+        let msg = " usage: a<C-6> b<C-6> ... z<C-6> "
+        let results = s:vimim_without_backend(keyboard)
+        if len(results) > 0
+            let s:unicode_menu_display_flag = 1
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
-    if s:vimim_internal_code_input > 0 && s:shuangpin_flag < 1
+    if s:vimim_internal_code_input > 0
+        let msg = "usage: u808f<C-6> 32911<C-6> 32910<C-6>"
         let results = s:vimim_internal_code(keyboard)
         if len(results) > 0
             let s:unicode_menu_display_flag = 1
@@ -5754,8 +5758,9 @@ else
     endif
 
     " [wubi][erbi] plays with pinyin in harmony
-    " ----------------------------------------- done
-    if s:xingma_sleep_with_pinyin > 0
+    " ----------------------------------------- todo
+    if s:backend =~ 'directory'
+    \&& s:xingma_sleep_with_pinyin > 0
         call s:vimim_toggle_wubi_pinyin()
     endif
 
@@ -5783,6 +5788,7 @@ else
     if s:vimim_imode_universal > 0
     \&& keyboard =~# "^'"
     \&& (empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'sexy')
+        let msg = "usage: '88<C-6> ''88<C-6> '1g<C-6> 'sw8ql "
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
@@ -5793,6 +5799,7 @@ else
     " ---------------------------------------------------------------
     let clouds = s:vimim_magic_tail(keyboard)
     if len(clouds) > 0
+        let msg = "usage: woyouyigemeng'<C-6> "
         let keyboard = get(clouds, 0)
     endif
 
@@ -5803,11 +5810,13 @@ else
     " [apostrophe] in pinyin datafile
     " -------------------------------
     let s:keyboard_leading_zero = keyboard
-    let keyboard = s:vimim_apostrophe(keyboard)
+    if s:vimim_datafile_has_apostrophe > 0
+        let keyboard = s:vimim_apostrophe(keyboard)
+    endif
 
     " [cloud] try cloud when no directory nor datafile
     " ------------------------------------------------
-    if empty(s:lines) && empty(s:path2)
+    if empty(s:backend)
         if s:vimim_cloud_sogou > 0
             let results = s:vimim_get_cloud_sogou(keyboard)
             if len(results) > 0
@@ -5912,10 +5921,7 @@ else
     else
         " [nomagic match] search on the sorted datafile
         " ---------------------------------------------
-        if s:vimim_datafile_has_apostrophe > 0
-        \|| (keyboard =~ s:show_me_not_pattern && s:vimimdebug == 9)
-            let results = s:vimim_oneline_match(s:lines, keyboard)
-        else
+        if empty(s:vimim_datafile_has_apostrophe)
             let results = s:vimim_exact_match(s:lines,keyboard,match_start)
         endif
         if len(results) > 0
@@ -6038,7 +6044,7 @@ sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 
 " ======================================= }}}
-let VimIM = " ====  ~/.vimrc         ==== {{{"
+let VimIM = " ====  Mini_vimrc       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
