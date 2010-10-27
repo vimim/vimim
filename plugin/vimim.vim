@@ -47,7 +47,6 @@ let VimIM = " ====  Introduction     ==== {{{"
 "            * Support direct "GBK input" and "Big5 input"
 "            * Support "boshiamy", "Cang Jie", "Erbi", etc
 "            * Support "Chinese search" using search key '/' or '?'.
-"            * Support "fuzzy search" and "wildcard search"
 "            * Support popup menu navigation using "vi key" (hjkl)
 "            * Support "non-stop-typing" for Wubi, 4Corner & Telegraph
 "            * Support "Do It Yourself" input method defined by users
@@ -261,7 +260,6 @@ function! s:vimim_finalize_session()
     " ------------------------------
     if get(s:im['phonetic'],0) > 0
     \|| get(s:im['array30'],0) > 0
-        let s:vimim_fuzzy_search = 0
         let s:vimim_static_input_style = 1
     endif
     " ------------------------------
@@ -271,7 +269,6 @@ function! s:vimim_finalize_session()
     " ------------------------------
     if s:im_primary =~# '^\d\w\+'
     \&& empty(get(s:im['pinyin'],0))
-        let s:vimim_fuzzy_search = 0
         let s:only_4corner_or_12345 = 1
         let s:vimim_static_input_style = 1
     endif
@@ -544,7 +541,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_datafile_is_not_utf8")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_frequency_first_fix")
-    call add(G, "g:vimim_fuzzy_search")
     call add(G, "g:vimim_imode_universal")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_latex_suite")
@@ -3349,7 +3345,7 @@ function! s:vimim_pinyin_filter(results, keyboards)
         return a:results
     endif
     let new_results = []
-    let pattern = s:vimim_apostrophe_fuzzy_pattern(a:keyboards)
+    let pattern = s:vimim_apostrophe_wildcard(a:keyboards)
     for item in a:results
         let keyboard = get(split(item), 0)
         let chinese = get(split(item), 1)
@@ -3364,6 +3360,21 @@ function! s:vimim_pinyin_filter(results, keyboards)
          let new_results = a:results
      endif
     return new_results
+endfunction
+
+" ----------------------------------------------
+function! s:vimim_apostrophe_wildcard(keyboards)
+" ----------------------------------------------
+    let more = "*"
+    let keyboards = a:keyboards
+    if len(keyboards) == 1
+        let more = "+"
+        let keyboards = split(get(a:keyboards,0), '\ze')
+    endif
+    let lowercase = "\\l\\" . more
+    let wildcard = join(keyboards, lowercase . "'")
+    let pattern = '^\<' . wildcard . lowercase . '\>'
+    return pattern
 endfunction
 
 " ----------------------------------------------
@@ -3528,7 +3539,6 @@ function! s:vimim_initialize_shuangpin()
         return
     endif
     " ----------------------------------
-    let s:vimim_fuzzy_search = 0
     let s:vimim_imode_pinyin = -1
     let rules = s:vimim_shuangpin_generic()
     " ----------------------------------
@@ -3885,25 +3895,21 @@ call add(s:vimims, VimIM)
 " --------------------------------------------
 function! s:vimim_wubi_z_as_wildcard(keyboard)
 " --------------------------------------------
+    let keyboard = a:keyboard
     if s:vimim_wildcard_search < 1
+    \|| len(keyboard) < 2
+    \|| match(keyboard, 'z') < 1
         return []
     endif
-    let fuzzy_search_pattern = 0
-    if match(a:keyboard, 'z') > 0
-        let fuzzies = a:keyboard
-        if a:keyboard[:1] != 'zz'
-            let fuzzies = substitute(a:keyboard,'z','.','g')
-        endif
-        let fuzzy_search_pattern = '^' . fuzzies . '\>'
+    let lines = s:vimim_datafile_range(keyboard)
+    if empty(lines)
+        return []
     endif
-    let lines = []
-    if !empty(fuzzy_search_pattern)
-        let lines = s:vimim_datafile_range(a:keyboard)
-        if empty(lines)
-            return []
-        endif
-        call filter(lines, 'v:val =~ fuzzy_search_pattern')
+    if a:keyboard[:1] != 'zz'
+        let keyboard = substitute(a:keyboard,'z','.','g')
     endif
+    let pattern = '^' . keyboard . '\>'
+    call filter(lines, 'v:val =~ pattern')
     return lines
 endfunction
 
@@ -4698,69 +4704,6 @@ function! s:vimim_pinyin_more_matches(lines, keyboard, results)
     return matched_list
 endfunction
 
-" ------------------------------------- TODO
-function! s:vimim_fuzzy_match(keyboard)
-" -------------------------------------
-    let keyboard = a:keyboard
-    if s:vimim_fuzzy_search < 1
-    \|| s:chinese_input_mode =~ 'dynamic'
-    \|| empty(keyboard)
-        return []
-    endif
-    let lines = s:vimim_datafile_range(keyboard)
-    if empty(lines)
-        return []
-    endif
-    let keyboards = split(keyboard, "'")
-    let filter_length = len(keyboards)
-    if len(keyboards) < 2
-        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        if len(keyboard) - len(pinyins) < 2
-            " make special rule for cjjp => c'j'j'p
-            let filter_length = len(keyboard)
-        else
-            return []
-        endif
-    else
-        " keyboard has apostrophe: ma'li from mali4
-        let keyboard = join(keyboards, "")
-    endif
-    let pattern = s:vimim_free_fuzzy_pattern(keyboard)
-    let lines = filter(lines, 'v:val =~ pattern')
-    let lines = s:vimim_length_filter(lines, filter_length)
-    let lines = s:vimim_pinyin_filter(lines, keyboards)
-    return lines
-endfunction
-
-" --------------------------------------------
-function! s:vimim_free_fuzzy_pattern(keyboard)
-" --------------------------------------------
-    let fuzzy =  '.*'
-    if a:keyboard =~ '[\*\+]'
-        let fuzzy =  ''
-    endif
-    let fuzzies = join(split(a:keyboard,'\ze'), fuzzy)
-    let pattern = fuzzies  . fuzzy
-    let pattern = '^\<' . pattern . '\>'
-    return pattern
-endfunction
-
-" ---------------------------------------------------
-function! s:vimim_apostrophe_fuzzy_pattern(keyboards)
-" ---------------------------------------------------
-    let more = "*"
-    let keyboards = a:keyboards
-    if len(keyboards) == 1
-        let more = "+"
-        let keyboards = split(get(a:keyboards,0), '\ze')
-    endif
-    let lowercase = "\\l\\" . more
-    let fuzzy = lowercase . "'"
-    let fuzzies = join(keyboards, fuzzy)
-    let pattern = '^\<' . fuzzies . lowercase . '\>'
-    return pattern
-endfunction
-
 " --------------------------------------------------------
 function! s:vimim_sentence_match_datafile(lines, keyboard)
 " --------------------------------------------------------
@@ -5158,8 +5101,8 @@ function! s:vimim_wildcard_search(keyboard, lines)
     let wildcard = match(a:keyboard, wildcard_pattern)
     if wildcard > 0
         let star = substitute(a:keyboard,'[*]','.*','g')
-        let fuzzy = '^' . star . '\>'
-        let results = filter(a:lines, 'v:val =~ fuzzy')
+        let wildcard = '^' . star . '\>'
+        let results = filter(a:lines, 'v:val =~ wildcard')
     endif
     return results
 endfunction
@@ -5232,7 +5175,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 2
     let s:vimim_ctrl_space_to_toggle = 2
     let s:vimim_custom_skin = 1
-    let s:vimim_fuzzy_search = 1
     let s:vimim_chinese_frequency = 0
     let s:vimim_frequency_first_fix = 1
     let s:vimim_custom_laststatus = 0
@@ -5803,8 +5745,8 @@ else
         endif
     endif
 
-    " [wildcard search] explicit fuzzy search
-    " ---------------------------------------
+    " [wildcard search] play with magic star
+    " --------------------------------------
     if s:vimim_wildcard_search > 0
         let results = s:vimim_wildcard_search(keyboard, s:lines)
         if len(results) > 0
@@ -5859,17 +5801,11 @@ else
     endif
 
     if match_start < 0
-        " [fuzzy search] implicit wildcard search
-        " ---------------------------------------
-        let results = s:vimim_fuzzy_match(keyboard)
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
-        endif
+        let msg = "fuzzy search was done here"
     else
-        " [nomagic match] search on the sorted datafile
-        " ---------------------------------------------
-        if empty(s:vimim_datafile_has_apostrophe)
+        if s:vimim_datafile_has_apostrophe > 0
+            let results = s:vimim_oneline_match(s:lines, keyboard)
+        else
             let results = s:vimim_exact_match(s:lines,keyboard,match_start)
         endif
         if len(results) > 0
