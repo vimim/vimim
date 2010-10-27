@@ -566,6 +566,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_chinese_frequency")
+    call add(G, "g:vimim_super_internal_input")
     call add(G, "g:vimim_debug")
     call add(G, "g:vimimdebug")
     " -----------------------------------
@@ -4435,7 +4436,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
-    if len(s:data_directory_pinyin) > 1
+    if !empty(s:backend)
         return
     endif
 " -------------------
@@ -5737,22 +5738,22 @@ else
         endif
     endif
 
-    " try super-internal-code if no backend nor cloud
-    " -----------------------------------------------
-    if empty(s:backend) && empty(s:www_executable)
-        let msg = " usage: a<C-6> b<C-6> ... z<C-6> "
-        let results = s:vimim_without_backend(keyboard)
+    " support direct internal code (unicode/gb/big5) input
+    " ----------------------------------------------------
+    if s:vimim_internal_code_input > 0
+        let msg = "usage: u808f<C-6> 32911<C-6> 32910<C-6>"
+        let results = s:vimim_internal_code(keyboard)
         if len(results) > 0
             let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
 
-    " support direct internal code (unicode/gb/big5) input
-    " ----------------------------------------------------
-    if s:vimim_internal_code_input > 0
-        let msg = "usage: u808f<C-6> 32911<C-6> 32910<C-6>"
-        let results = s:vimim_internal_code(keyboard)
+    " try super-internal-code if no backend nor cloud
+    " -----------------------------------------------
+    if s:vimim_super_internal_input > 0
+        let msg = " usage: a<C-6> b<C-6> ... z<C-6> "
+        let results = s:vimim_without_backend(keyboard)
         if len(results) > 0
             let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
