@@ -11,13 +11,13 @@ let $VimIM = "$Revision$"
 " (1) throw this script into your vim plugin directory
 " (2) open your vim and enter Insert mode
 " (3) play with various easter eggs:
-"     - VimIM 經典, type:  vim<C-6><C-6>
-"     - VimIM 環境, type:  vimim<C-6><C-6>
-"     - VimIM 程式, type:  vimimvim<C-6><C-6>
-"     - VimIM 幫助, type:  vimimhelp<C-6><C-6>
-"     - VimIM 測試, type:  vimimdebug<C-6><C-6>
-"     - VimIM 內碼, type:  vimimunicode<C-6><C-6>
-"     - VimIM 設置, type:  vimimdefaults<C-6><C-6>
+"     -  VimIM 經典:  type:  vim<C-6><C-6>
+"     -  VimIM 環境:  type:  vimim<C-6><C-6>
+"     -  VimIM 程式:  type:  vimimvim<C-6><C-6>
+"     -  VimIM 幫助:  type:  vimimhelp<C-6><C-6>
+"     -  VimIM 測試:  type:  vimimdebug<C-6><C-6>
+"     -  VimIM 內碼:  type:  vimimunicode<C-6><C-6>
+"     -  VimIM 設置:  type:  vimimdefaults<C-6><C-6>
 " -----------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry         "]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506 "]
@@ -195,8 +195,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:im = {}
     let s:ecdict = {}
-    let s:inputs = {}
-    let s:inputs_all = {}
     let s:shuangpin_table = {}
     " --------------------------------
     let s:debugs = []
@@ -1342,7 +1340,7 @@ function! s:vimim_onekey_action(onekey)
     \&& !empty(byte_before)
     \&& byte_before !~# s:valid_key
         if empty(a:onekey)
-            return <SID>vimim_smart_ctrl_n()
+            return <SID>vimim_get_unicode_menu()
         endif
     endif
     " ---------------------------------------------------
@@ -2146,13 +2144,6 @@ function! s:vimim_popupmenu_list(matched_list)
     let first_pair = split(get(matched_list,0))
     let first_stone = get(first_pair, 0)
     " ----------------------------------------
-    if s:chinese_input_mode=~ 'sexy'
-        let msg = " smart <C-N> and <C-P> "
-        let key = first_stone[:0]
-        let s:inputs[key] = matched_list
-        let s:inputs_all[first_stone] = matched_list
-    endif
-    " ----------------------------------------
     if empty(s:vimim_cloud_plugin)
         let matched_list = s:vimim_menu_4corner_filter(matched_list)
     endif
@@ -2845,37 +2836,15 @@ function! <SID>vimim_smart_enter()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ---------------------------------
-function! <SID>vimim_smart_ctrl_n()
-" ---------------------------------
+" -------------------------------------
+function! <SID>vimim_get_unicode_menu()
+" -------------------------------------
     let trigger = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
     let xxxx = s:vimim_get_internal_code_char_before()
-    if empty(xxxx)
-        let s:smart_ctrl_n += 1
-    else
+    if !empty(xxxx)
         let trigger = xxxx . trigger
+        sil!exe 'sil!return "' . trigger . '"'
     endif
-    sil!exe 'sil!return "' . trigger . '"'
-endfunction
-
-" ----------------------------------------------------
-function! s:vimim_get_list_from_smart_ctrl_n(keyboard)
-" ----------------------------------------------------
-    let keyboard = a:keyboard
-    if s:smart_ctrl_n < 1
-        return []
-    endif
-    let s:smart_ctrl_n = 0
-    if keyboard =~# s:valid_key && len(keyboard) == 1
-        let msg = 'try to find from previous valid inputs'
-    else
-        return []
-    endif
-    let matched_list = []
-    if has_key(s:inputs, keyboard)
-        let matched_list = s:inputs[keyboard]
-    endif
-    return matched_list
 endfunction
 
 " ------------------------------------------
@@ -2954,7 +2923,7 @@ function! s:vimim_get_new_order_list(chinese)
         return []
     endif
     " --------------------------------
-    if len(keyboard) == 1 
+    if len(keyboard) == 1
     \&& s:vimim_debug > 0
         return []
     endif
@@ -5465,7 +5434,6 @@ function! g:reset_after_auto_insert()
     let s:keyboard_leading_zero = 0
     let s:keyboard_shuangpin = 0
     let s:keyboard_wubi = ''
-    let s:smart_ctrl_n = 0
     let s:one_key_correction = 0
     return ''
 endfunction
@@ -5514,10 +5482,6 @@ endfunction
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    if s:vimim_static_input_style == 2
-        inoremap <C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
-    endif
-    " ----------------------------------------------------------
     if s:vimim_static_input_style == 1
         inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                       \<C-R>=g:vimim_one_key_correction()<CR>
@@ -5549,16 +5513,6 @@ if a:start
     let current_line = getline(start_row)
     let byte_before = current_line[start_column-1]
     let char_before_before = current_line[start_column-2]
-
-    " get one char when input-memory is used
-    " --------------------------------------
-    if s:smart_ctrl_n > 0
-        if start_column > 0
-            let start_column -= 1
-            let s:start_column_before = start_column
-            return start_column
-        endif
-    endif
 
     " take care of seamless english/chinese input
     " -------------------------------------------
@@ -5688,15 +5642,6 @@ else
     \&& len(keyboard) == 1
     \&& keyboard !~# '\w'
         return
-    endif
-
-    " use cached list when input-memory is used
-    " -----------------------------------------
-    if s:smart_ctrl_n > 0
-        let results = s:vimim_get_list_from_smart_ctrl_n(keyboard)
-        if !empty(results)
-            return s:vimim_popupmenu_list(results)
-        endif
     endif
 
     " [eggs] hunt classic easter egg ... vim<C-6>
