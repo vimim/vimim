@@ -3336,58 +3336,6 @@ function! s:vimim_apostrophe(keyboard)
     return keyboard
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_pinyin_filter(results, keyboards)
-" -------------------------------------------------
-    if get(s:im['pinyin'],0) < 1
-    \|| empty(a:results)
-    \|| empty(a:keyboards)
-        return a:results
-    endif
-    let new_results = []
-    let pattern = s:vimim_apostrophe_wildcard(a:keyboards)
-    for item in a:results
-        let keyboard = get(split(item), 0)
-        let chinese = get(split(item), 1)
-        let gold = len(chinese)/s:multibyte
-        " filter out fake chinese phrase using pinyin theory
-        let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
-        if match(join(keyboards,"'"), pattern) > -1
-            call add(new_results, item)
-        endif
-    endfor
-     if empty(new_results)
-         let new_results = a:results
-     endif
-    return new_results
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_apostrophe_wildcard(keyboards)
-" ----------------------------------------------
-    let more = "*"
-    let keyboards = a:keyboards
-    if len(keyboards) == 1
-        let more = "+"
-        let keyboards = split(get(a:keyboards,0), '\ze')
-    endif
-    let lowercase = "\\l\\" . more
-    let wildcard = join(keyboards, lowercase . "'")
-    let pattern = '^\<' . wildcard . lowercase . '\>'
-    return pattern
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_length_filter(results, length)
-" ----------------------------------------------
-    let results = a:results
-    if a:length > 0
-        let pattern = '^\w\+\s\+\S\{'. a:length .'}\>'
-        call filter(results, 'v:val =~ pattern')
-    endif
-    return results
-endfunction
-
 " ------------------------------------------------
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
 " ------------------------------------------------
