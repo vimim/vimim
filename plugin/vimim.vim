@@ -117,16 +117,13 @@ call add(s:vimims, VimIM)
 if exists("b:loaded_vimim") || &cp || v:version<700
     finish
 endif
-let b:loaded_vimim=1
-let s:vimimhelp=egg
-let s:path=expand("<sfile>:p:h")."/"
 scriptencoding utf-8
 
 " -------------------------------------
 function! s:vimim_initialization_once()
 " -------------------------------------
     if empty(s:initialization_loaded)
-        let s:initialization_loaded=1
+        let s:initialization_loaded = 1
     else
         return
     endif
@@ -138,8 +135,8 @@ function! s:vimim_initialization_once()
     call s:vimim_build_im_keycode()
     " -----------------------------------------
     call s:vimim_get_datafile_in_vimrc()
-    call s:vimim_scan_plugin_data_directory()
     call s:vimim_scan_plugin_datafile()
+    call s:vimim_scan_plugin_data_directory()
     " -----------------------------------------
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_pinyin()
@@ -163,7 +160,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:datafile = 0
     let s:data_directory = 0
-    let s:data_directory_root = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_4corner = 0
     let s:data_directory_wubi = 0
@@ -391,7 +387,6 @@ endfunction
 function! s:vimim_scan_plugin_datafile()
 " --------------------------------------
     if s:vimimdebug > 0
-    \|| len(s:data_directory_root) > 1
     \|| len(s:datafile) > 1
         return
     endif
@@ -425,7 +420,7 @@ function! s:vimim_scan_plugin_datafile()
     call add(input_methods, "ctc")
     call add(input_methods, "english")
     " ------------------------------------
-    let datafile = ""
+    let datafile = 0
     for im in input_methods
         let file = "vimim." . im . ".txt"
         let datafile = s:path . file
@@ -437,8 +432,10 @@ function! s:vimim_scan_plugin_datafile()
     endfor
     " ----------------------------------------
     if filereadable(datafile)
-        let msg = "plugin datafile was found"
+        let msg = "datafile is used first over directory database"
+        let s:path2 = 0
     else
+        let s:datafile = 0
         return
     endif
     " ----------------------------------------
@@ -530,7 +527,6 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
-    call add(G, "g:vimim_insert_without_popup")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
@@ -2127,31 +2123,6 @@ function! s:vimim_pageup_pagedown(matched_list)
     return matched_list
 endfunction
 
-" ------------------------------------------
-function! s:vimim_no_popupmenu_list(periods)
-" ------------------------------------------
-    if empty(a:periods)
-        return ""
-    endif
-    call s:vimim_reload_datafile(0)
-    let no_popupmenu_result = ""
-    for keyboard in a:periods
-        let results = []
-        let pattern = "^" . keyboard
-        let match_start = match(s:lines, pattern)
-        if  match_start < -1
-            " for example: enjoy.girl.1010.2523.4498.7429
-            let results = s:vimim_exact_match(s:lines,keyboard,match_start)
-        endif
-        if len(results) > 0
-            let first_pair = get(results,0)
-            let first_stone = get(split(first_pair," "),1)
-            let no_popupmenu_result .= first_stone
-        endif
-    endfor
-    return no_popupmenu_result
-endfunction
-
 " --------------------------------------------
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
@@ -2692,8 +2663,7 @@ function! g:vimim_menu_select()
     let select_not_insert = ''
     if pumvisible()
         let select_not_insert = '\<C-P>\<Down>'
-        if s:vimim_insert_without_popup > 0
-        \&& s:insert_without_popup > 0
+        if s:insert_without_popup > 0
             let select_not_insert = '\<C-Y>'
             if s:insert_without_popup > 1
                 let select_not_insert .= '\<Esc>'
@@ -4884,19 +4854,15 @@ call add(s:vimims, VimIM)
 function! s:vimim_get_datafile_in_vimrc()
 " ---------------------------------------
     let dir = s:vimim_data_directory
-    if empty(dir)
-        let s:data_directory_root = s:path . "vimim"
-    elseif isdirectory(dir)
-        let s:data_directory_root = copy(dir)
+    if !empty(dir) && isdirectory(dir)
+        let s:path2 = copy(dir)
     endif
-    " ------------------------------------------
-    if empty(s:data_directory_root)
+    " -----------------------------------
+    if empty(s:path2)
         let datafile = s:vimim_datafile
         if !empty(datafile) && filereadable(datafile)
             let s:datafile = copy(datafile)
         endif
-    else
-        let s:vimim_datafile = 0
     endif
 endfunction
 
@@ -4904,10 +4870,10 @@ endfunction
 function! s:vimim_get_data_directory(im)
 " --------------------------------------
     let im = a:im
-    if empty(im) || empty(s:data_directory_root)
+    if empty(im) || empty(s:path2)
         return 0
     endif
-    let dir = s:data_directory_root ."/". im
+    let dir = s:path2 ."/". im
     if isdirectory(dir)
         return dir
     else
@@ -4931,8 +4897,8 @@ endfunction
 
 " --------------------------------------------
 function! s:vimim_scan_plugin_data_directory()
-" --------------------------------------------
-    if empty(s:data_directory_root)
+" -------------------------------------------- TODO
+    if empty(s:path2)
         return
     endif
     " ----------------------------------------
@@ -5257,23 +5223,36 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let dir = "/home/vimim/vimim"
     let s:initialization_loaded = 0
     let s:chinese_mode_switch = 1
+    let b:loaded_vimim = 1
+    let s:vimimhelp = egg
+    " ------------------------------
+    let s:path2 = 0
+    let dir = "/home/vimim/vimim"
     if isdirectory(dir)
-        let s:vimim_data_directory = dir
-    else
+        let s:path2 = dir
+    endif
+    " ------------------------------
+    let s:path = expand("<sfile>:p:h")."/"
+    let dir = s:path . "vimim"
+    if isdirectory(dir)
+        let s:path2 = dir
         return
     endif
-    let s:vimim_cloud_sogou = -1
+    " ------------------------------
+    if empty(s:path2)
+        return
+    endif
+    " ------------------------------
     let s:vimimdebug = 9
+    let s:vimim_cloud_sogou = -1
     let s:vimim_static_input_style = 2
     let s:vimim_ctrl_space_to_toggle = 2
     let s:vimim_custom_skin = 1
     let s:vimim_fuzzy_search = 1
     let s:vimim_chinese_frequency = 0
     let s:vimim_frequency_first_fix = 1
-    let s:vimim_insert_without_popup = 1
     let s:vimim_custom_laststatus = 0
     let s:vimim_wildcard_search = 1
     let s:vimim_imode_universal = 1
@@ -5826,55 +5805,9 @@ else
     let s:keyboard_leading_zero = keyboard
     let keyboard = s:vimim_apostrophe(keyboard)
 
-    " break up dot-separated sentence
-    " -------------------------------
-    if empty(s:chinese_input_mode)
-    \&& keyboard =~ '[.]'
-    \&& keyboard[0:0] != '.'
-    \&& keyboard[-1:-1] != '.'
-        let periods = split(keyboard, '[.]')
-        if len(periods) > 0
-            if s:vimim_insert_without_popup > 0
-                " no popup, one-to-one translation with fault-tolerance
-                let s:insert_without_popup = 2
-                let results = [s:vimim_no_popupmenu_list(periods)]
-                return results
-            else
-                " always do popup as one-to-many translation
-                let keyboard = get(periods, 0)
-            endif
-        endif
-    endif
-
-    " [datafile_directory] directory are first-class citizen
-    " ------------------------------------------------------
-    let im = s:im_primary
-    " ---------------------------------
-    if keyboard =~ '\d\d\d\d'
-    \&& len(s:data_directory_4corner) > 1
-        let im = "4corner"
-    endif
-    " ---------------------------------
-    let keyboards = s:vimim_sentence_match_directory(keyboard, im)
-    if empty(keyboards)
-        let msg = "sell the keyboard as is for directory database"
-    else
-        let keyboard = get(keyboards, 0)
-        let results2 = s:vimim_get_data_from_directory(keyboard, im)
-        if len(results2) > 0
-            let results = s:vimim_pair_list(results2)
-            return s:vimim_popupmenu_list(results)
-        endif
-        " -------------------------------------------------
-        let results = s:vimim_pinyin_with_4corner(keyboard)
-        if len(results) > 0
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     " [cloud] try cloud when no directory nor datafile
     " ------------------------------------------------
-    if empty(s:lines)
+    if empty(s:lines) && empty(s:path2)
         if s:vimim_cloud_sogou > 0
             let results = s:vimim_get_cloud_sogou(keyboard)
             if len(results) > 0
@@ -5882,6 +5815,34 @@ else
             endif
         else
             return []
+        endif
+    endif
+
+    " [datafile_directory] directory are first-class citizen
+    " ------------------------------------------------------
+    if len(s:path2) > 1
+        let im = s:im_primary
+        " ---------------------------------
+        if keyboard =~ '\d\d\d\d'
+        \&& len(s:data_directory_4corner) > 1
+            let im = "4corner"
+        endif
+        " ---------------------------------
+        let keyboards = s:vimim_sentence_match_directory(keyboard, im)
+        if empty(keyboards)
+            let msg = "sell the keyboard as is for directory database"
+        else
+            let keyboard = get(keyboards, 0)
+            let results2 = s:vimim_get_data_from_directory(keyboard, im)
+            if len(results2) > 0
+                let results = s:vimim_pair_list(results2)
+                return s:vimim_popupmenu_list(results)
+            endif
+            " -------------------------------------------------
+            let results = s:vimim_pinyin_with_4corner(keyboard)
+            if len(results) > 0
+                return s:vimim_popupmenu_list(results)
+            endif
         endif
     endif
 
