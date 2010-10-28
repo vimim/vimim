@@ -143,6 +143,7 @@ function! s:vimim_initialization_once()
     call s:vimim_build_im_keycode()
     " -----------------------------------------
     call s:vimim_get_datafile_in_vimrc()
+    call s:vimim_add_input_methods()
     call s:vimim_scan_plugin_datafile()
     call s:vimim_scan_plugin_data_directory()
     " -----------------------------------------
@@ -168,10 +169,9 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:datafile = 0
     let s:data_directory = 0
+    let s:data_directory_wubi = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_4corner = 0
-    let s:data_directory_wubi = 0
-    let s:data_directory_zhengma = 0
     " --------------------------------
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
@@ -387,6 +387,40 @@ function! s:vimim_build_im_keycode()
     " ------------------------------------
 endfunction
 
+" -----------------------------------
+function! s:vimim_add_input_methods()
+" -----------------------------------
+    let ims = []
+    call add(ims, "pinyin")
+    call add(ims, "pinyin_quote_sogou")
+    call add(ims, "pinyin_huge")
+    call add(ims, "pinyin_fcitx")
+    call add(ims, "pinyin_canton")
+    call add(ims, "pinyin_hongkong")
+    call add(ims, "4corner")
+    call add(ims, "12345")
+    call add(ims, "wubi")
+    call add(ims, "wubi98")
+    call add(ims, "wubijd")
+    call add(ims, "wubi2000")
+    call add(ims, 'cangjie')
+    call add(ims, 'zhengma')
+    call add(ims, 'quick')
+    call add(ims, 'xinhua')
+    call add(ims, 'erbi')
+    call add(ims, 'boshiamy')
+    call add(ims, 'phonetic')
+    call add(ims, 'array30')
+    call add(ims, "wu")
+    call add(ims, "yong")
+    call add(ims, "nature")
+    call add(ims, "hangul")
+    call add(ims, "cns11643")
+    call add(ims, "ctc")
+    call add(ims, "english")
+    let s:input_methods = ims
+endfunction
+
 " --------------------------------------
 function! s:vimim_scan_plugin_datafile()
 " --------------------------------------
@@ -395,37 +429,8 @@ function! s:vimim_scan_plugin_datafile()
         return
     endif
     " ------------------------------------
-    let input_methods = []
-    call add(input_methods, "pinyin")
-    call add(input_methods, "pinyin_quote_sogou")
-    call add(input_methods, "pinyin_huge")
-    call add(input_methods, "pinyin_fcitx")
-    call add(input_methods, "pinyin_canton")
-    call add(input_methods, "pinyin_hongkong")
-    call add(input_methods, "4corner")
-    call add(input_methods, "12345")
-    call add(input_methods, "wubi")
-    call add(input_methods, "wubi98")
-    call add(input_methods, "wubijd")
-    call add(input_methods, "wubi2000")
-    call add(input_methods, 'cangjie')
-    call add(input_methods, 'zhengma')
-    call add(input_methods, 'quick')
-    call add(input_methods, 'xinhua')
-    call add(input_methods, 'erbi')
-    call add(input_methods, 'boshiamy')
-    call add(input_methods, 'phonetic')
-    call add(input_methods, 'array30')
-    call add(input_methods, "wu")
-    call add(input_methods, "yong")
-    call add(input_methods, "nature")
-    call add(input_methods, "hangul")
-    call add(input_methods, "cns11643")
-    call add(input_methods, "ctc")
-    call add(input_methods, "english")
-    " ------------------------------------
     let datafile = 0
-    for im in input_methods
+    for im in s:input_methods
         let file = "vimim." . im . ".txt"
         let datafile = s:path . file
         if filereadable(datafile)
@@ -3863,21 +3868,20 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_toggle_wubi_pinyin()
-" ------------------------------------
-    let dir = "pinyin"
+" ------------------------------------ TODO
+    let im = "pinyin"
     if empty(s:toggle_xiangma_pinyin)
-        let dir = "pinyin"
+        let im = "pinyin"
         let s:im_primary = "pinyin"
         let s:im_secondary = "zhengma"
-        let s:data_directory = s:data_directory_pinyin
     else
-        let dir = "wubi"
-        let dir = "zhengma"
+        let im = "wubi"
+        let im = "zhengma"
         let s:im_primary = "wubi"
         let s:im_primary = "zhengma"
         let s:im_secondary = "pinyin"
-        let s:data_directory = s:data_directory_zhengma
     endif
+    let s:data_directory = s:path2 . "/" . im
     call s:vimim_initialize_keycode()
 endfunction
 
@@ -4769,43 +4773,55 @@ endfunction
 
 " --------------------------------------------
 function! s:vimim_scan_plugin_data_directory()
-" -------------------------------------------- TODO
+" --------------------------------------------
     if empty(s:path2)
         return
+    endif
+    " ----------------------------------------
+    let directoires = []
+    for im in s:input_methods
+        let dir = s:vimim_get_data_directory(im)
+        if empty(dir)
+            continue
+        else
+            call add(directoires, im)
+        endif
+    endfor
+    " ----------------------------------------
+    if empty(directoires)
+        return
     else
+        " ['pinyin', '4corner', 'wubi', 'wubi98', 'zhengma']
         let s:backend = "directory"
     endif
-    " ----------------------------------------
-    let im = "wubi"
-    let dir = s:vimim_set_data_directory(im)
-    if !empty(dir)
-        let s:data_directory_wubi = dir
-        let s:xingma_sleep_with_pinyin = 1
-        let s:im_secondary = im
-        let s:vimim_cloud_sogou = -1
+    " ------------------------------------
+    for directory in directoires
+        let dir = s:vimim_get_data_directory(directory)
+        if empty(dir)
+            continue
+        elseif directory =~# '^pinyin'
+            let im = 'pinyin'
+            let s:data_directory_pinyin = dir
+        elseif directory =~# '^\d'
+            let im = '4corner'
+            let s:data_directory_4corner = dir
+        elseif directory =~# '^wubi'
+            let im = 'wubi'
+            let s:data_directory_wubi = dir
+        else
+            let im = directory
+        endif
+    endfor
+    " ------------------------------------
+    if len(s:data_directory_pinyin) > 1
+        let s:im_primary = 'pinyin'
+        if len(s:data_directory_wubi) > 1
+            let s:im_secondary = 'wubi'
+        endif
+    elseif len(s:data_directory_wubi) > 1
+        let s:im_primary = 'wubi'
     endif
-    " ----------------------------------------
-    let im = "zhengma"
-    let dir = s:vimim_set_data_directory(im)
-    if !empty(dir)
-        let s:data_directory_zhengma = dir
-        let s:xingma_sleep_with_pinyin = 1
-        let s:im_secondary = im
-        let s:vimim_cloud_sogou = -1
-    endif
-    " ----------------------------------------
-    let im = "4corner"
-    let dir = s:vimim_set_data_directory(im)
-    if !empty(dir)
-        let s:data_directory_4corner = dir
-    endif
-    " ----------------------------------------
-    let im = "pinyin"
-    let dir = s:vimim_set_data_directory(im)
-    if !empty(dir)
-        let s:data_directory_pinyin = dir
-    endif
-    " ------------------------------------------
+    " ------------------------------------
     if len(s:data_directory_4corner) > 1
         if len(s:data_directory_pinyin) > 1
             let s:pinyin_and_4corner = 1
@@ -4819,6 +4835,7 @@ function! s:vimim_scan_plugin_data_directory()
             let s:im['pinyin'][0] = 0
         endif
     endif
+    " ------------------------------------
 endfunction
 
 " -----------------------------------------------------
