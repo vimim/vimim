@@ -1452,8 +1452,7 @@ function! s:vimim_start_chinese_mode()
     sil!call s:vimim_helper_mapping_on()
     " ------------------------------------------
     if s:vimim_wubi_sleep_with_pinyin > 0
-      " inoremap <expr> <C-N> <SID>vimim_smart_ctrl_n()
-        inoremap  <C-N> <C-R>=<SID>vimim_smart_ctrl_n()<CR>
+        inoremap <expr> <C-N> <SID>vimim_smart_ctrl_n()
     endif
     " ---------------------------------------------------
     inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
@@ -4823,20 +4822,19 @@ function! s:vimim_scan_plugin_data_directory()
         \&& len(s:data_directory_wubi) > 1
             let s:im_primary = 'pinyin'
             let s:im_secondary = 'wubi'
-        else
-            let s:vimim_wubi_sleep_with_pinyin = 0
         endif
-    endfor
+    endif
     " ------------------------------------
     if len(s:data_directory_4corner) > 1
-        let s:im['4corner'][0] = 1
         if len(s:data_directory_pinyin) > 1
             let s:pinyin_and_4corner = 1
             let s:im_primary = 'pinyin'
+            let s:im['4corner'][0] = 1
             let s:im['pinyin'][0] = 1
         else
             let s:only_4corner_or_12345 = 1
             let s:im_primary = '4corner'
+            let s:im['4corner'][0] = 1
             let s:im['pinyin'][0] = 0
         endif
     endif
