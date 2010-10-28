@@ -7,17 +7,19 @@ let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 " -------------------------------------------------------------------
 
+" ------------------
 " For the impatient:
+" ------------------
 " (1) throw this script into your vim plugin directory
 " (2) open your vim and enter Insert mode
-" (3) play with various easter eggs:
-"     -  VimIM 經典:  type:  vim<C-6><C-6>
-"     -  VimIM 環境:  type:  vimim<C-6><C-6>
-"     -  VimIM 程式:  type:  vimimvim<C-6><C-6>
-"     -  VimIM 幫助:  type:  vimimhelp<C-6><C-6>
-"     -  VimIM 測試:  type:  vimimdebug<C-6><C-6>
-"     -  VimIM 內碼:  type:  vimimunicode<C-6><C-6>
-"     -  VimIM 設置:  type:  vimimdefaults<C-6><C-6>
+" (3) play with various eggs:
+"     -  VimIM 經典:  type:   vim<C-6><C-6>
+"     -  VimIM 環境:  type:   vimim<C-6><C-6>
+"     -  VimIM 程式:  type:   vimimvim<C-6><C-6>
+"     -  VimIM 幫助:  type:   vimimhelp<C-6><C-6>
+"     -  VimIM 測試:  type:   vimimdebug<C-6><C-6>
+"     -  VimIM 內碼:  type:   vimimunicode<C-6><C-6>
+"     -  VimIM 設置:  type:   vimimdefaults<C-6><C-6>
 " -----------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry         "]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506 "]
