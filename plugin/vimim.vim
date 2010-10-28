@@ -418,47 +418,6 @@ function! s:vimim_add_input_methods()
     let s:input_methods = ims
 endfunction
 
-" --------------------------------------
-function! s:vimim_scan_plugin_datafile()
-" --------------------------------------
-    if s:vimim_debug > 8 || len(s:datafile) > 1
-        return
-    endif
-    " ------------------------------------
-    let datafile = 0
-    for im in s:input_methods
-        let file = "vimim." . im . ".txt"
-        let datafile = s:path . file
-        if filereadable(datafile)
-            break
-        else
-            continue
-        endif
-    endfor
-    " ----------------------------------------
-    if filereadable(datafile)
-        let msg = "datafile is used first over directory database"
-        let s:path2 = 0
-        let s:backend = "datafile"
-    else
-        let s:datafile = 0
-        return
-    endif
-    " ----------------------------------------
-    let msg = " [setter] for im-loaded-flag "
-    if im =~# '^wubi'
-        let im = 'wubi'
-    elseif im =~# '^pinyin'
-        let im = 'pinyin'
-    elseif im =~# '^\d'
-        let im = '4corner'
-    endif
-    let s:im[im][0] = 1
-    " ----------------------------------------
-    let s:datafile = datafile
-    let s:im_primary = im
-endfunction
-
 " -------------------------------------------------------
 function! s:vimim_expand_character_class(character_class)
 " -------------------------------------------------------
@@ -2055,28 +2014,6 @@ function! s:vimim_get_chinese_number(keyboards, i)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Chinese2Pinyin   ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" ----------------------------------------------
-function! s:vimim_make_one_entry(cache, chinese)
-" ----------------------------------------------
-    if empty(a:chinese) || empty(a:cache)
-        return []
-    endif
-    let characters = split(a:chinese, '\zs')
-    let items = []
-    for char in characters
-        if has_key(a:cache, char)
-            let menu = a:cache[char]
-            call add(items, menu)
-        endif
-    endfor
-    return items
-endfunction
-
-" ======================================= }}}
 let VimIM = " ====  Omni_Popup_Menu  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
@@ -2192,7 +2129,6 @@ function! s:vimim_build_popupmenu(matched_list)
         " -------------------------------------------------
         if s:vimim_custom_skin < 2
             let extra_text = menu
-        " ------------------------------- todo
             if s:pinyin_and_4corner > 0
             \&& empty(match(extra_text, '^\d\{4}$'))
                 let unicode = printf('u%04x', char2nr(chinese))
@@ -3056,129 +2992,6 @@ function! s:vimim_save_to_disk(lines)
     endif
 endfunction
 
-" ----------------------------------------
-function! <SID>vimim_save_new_entry(entry)
-" ----------------------------------------
-    if empty(a:entry)
-        return
-    endif
-    let entries = []
-    let entry_split_list = split(a:entry,'\n')
-    for entry in entry_split_list
-        let has_space = match(entry, '\s')
-        if has_space < 0
-            continue
-        endif
-        let words = split(entry)
-        if len(words) < 2
-            continue
-        endif
-        let menu = remove(words, 0)
-        if menu !~# "[0-9a-z]"
-            continue
-        endif
-        if char2nr(get(words,0)) < 128
-            continue
-        endif
-        let line = menu .' '. join(words, ' ')
-        let line = s:vimim_i18n_iconv(line)
-        call add(entries, line)
-    endfor
-    if empty(entries)
-        return
-    endif
-    call s:vimim_save_to_disk(s:vimim_insert_entry(entries))
-endfunction
-
-" -------------------------------------
-function! s:vimim_insert_entry(entries)
-" -------------------------------------
-    if empty(a:entries)
-        return []
-    endif
-    " --------------------------------
-    call s:vimim_initialization_once()
-    let lines = s:vimim_reload_datafile(0)
-    " --------------------------------
-    if empty(lines)
-        return []
-    endif
-    let len_lines = len(lines)
-    let sort_before_save = 0
-    let position = -1
-    for entry in a:entries
-        let pattern = '^' . entry . '$'
-        let matched = match(lines, pattern)
-        if matched > -1
-            continue
-        endif
-        let menu = get(split(entry),0)
-        let length = len(menu)
-        while length > 0
-            let one_less = strpart(menu, 0, length)
-            let length -= 1
-            let matched = match(lines, '^'.one_less)
-            if matched < 0
-                if length < 1
-                    let only_char = one_less[:0]
-                    let char = char2nr(only_char)
-                    while (char >= char2nr('a') && char < char2nr('z'))
-                        let patterns = '^' . nr2char(char)
-                        let position = match(lines, patterns)
-                        let char -= 1
-                        if position > -1
-                            let pattern = '^\('.nr2char(char+1).'\)\@!'
-                            let matched = position
-                            let position = match(lines, pattern, matched)
-                            if position > -1
-                                break
-                            endif
-                        endif
-                    endwhile
-                endif
-                continue
-            else
-                if length+1 == len(menu)
-                    let patterns = '^' . menu . '.\>'
-                    let next = match(lines, patterns, matched)
-                    if next > -1
-                        for i in reverse(range(matched, next))
-                            let position = i
-                            if position<len_lines && entry<lines[position]
-                                break
-                            endif
-                        endfor
-                        if position > matched
-                            break
-                        endif
-                    endif
-                endif
-                let patterns = '^\(' . one_less . '\)\@!'
-                let position = match(lines, patterns, matched)
-                if position > -1
-                    break
-                else
-                    let position = matched+1
-                    break
-                endif
-            endif
-        endwhile
-        if position < 0
-        \|| (position-1<len_lines && lines[position-1]>entry)
-        \|| (position-1<len_lines && entry>lines[position+1])
-            let sort_before_save = 1
-        endif
-        call insert(lines, entry, position)
-    endfor
-    if len(lines) < len_lines
-        return []
-    endif
-    if sort_before_save > 0
-        call sort(lines)
-    endif
-    return lines
-endfunction
-
 " ======================================= }}}
 let VimIM = " ====  Input_4Corner    ==== {{{"
 " ===========================================
@@ -3197,6 +3010,119 @@ function! s:vimim_4corner_sentence(keyboard)
     " -------------------------------
     let keyboards = split(a:keyboard, '\(.\{4}\)\zs')
     return keyboards
+endfunction
+
+" ------------------------------------------
+function! <SID>vimim_visual_ctrl_6(keyboard)
+" ------------------------------------------
+     " [input]  马力
+     " [output] 9a6c 529b     -- unicode
+     "          马   力 
+     "          7712 4002     -- 4corner
+     "          马   力 
+     "          ma3li4 马力   -- pinyin
+     "          ml 马力       -- cjjp
+    " --------------------------------
+    let keyboard = a:keyboard
+    if empty(keyboard) || empty(s:path2)
+        return
+    endif
+    " --------------------------------
+    call s:vimim_initialization_once()
+    " --------------------------------
+    if keyboard =~ '\S'
+        let msg = 'kill two birds with one stone'
+    else
+        let current_line = getline("'<")
+        call <SID>vimim_save_new_entry(current_line)
+        return
+    endif
+    " --------------------------------
+    let results = []
+    if keyboard !~ '\p'
+        let results = s:vimim_reverse_lookup(keyboard)
+    endif
+    " --------------------------------
+    let line = line(".")
+    call setline(line, results)
+    let new_positions = getpos(".")
+    let new_positions[1] = line + len(results) - 1
+    let new_positions[2] = len(get(split(get(results,-1)),0))+1
+    call setpos(".", new_positions)
+endfunction
+
+" ---------------------------------------
+function! s:vimim_reverse_lookup(chinese)
+" ---------------------------------------
+    let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
+    let chinese_characters = split(chinese,'\zs')
+    let glyph = join(chinese_characters, '   ')
+    let items = []
+    " ------------------------------------------------
+    let results_unicode = []  |" 马力 => 9a6c 529b
+    if s:vimim_unicode_lookup > 0
+        for char in chinese_characters
+            let unicode = printf('%04x',char2nr(char))
+            call add(items, unicode)
+        endfor
+        call add(results_unicode, join(items))
+        call add(results_unicode, glyph)
+    endif
+    " ------------------------------------------------
+    let results_4corner = []  |" 马力 => 7712 4002
+    if get(s:im['4corner'],0) > 0
+    \&& len(s:data_directory_4corner) > 1
+        let im = '4corner'
+        let cache = s:vimim_get_reverse_cache(chinese, im)
+        let items = s:vimim_reverse_one_entry(cache, chinese)
+        call add(results_4corner, join(items))
+        call add(results_4corner, glyph)
+    endif
+    " ------------------------------------------------
+    let result_pinyin = ""    |" 马力 => ma3 li2
+    let result_cjjp = ""      |" 马力 => ml
+    if len(s:data_directory_pinyin) > 1
+        let im = 'pinyin'
+        let cache = s:vimim_get_reverse_cache(chinese, im)
+        let items = s:vimim_reverse_one_entry(cache, chinese)
+        let result_pinyin = join(items)
+        for pinyin in items
+            let result_cjjp .= pinyin[0:0]
+        endfor
+        let result_cjjp .= " ".chinese
+    endif
+    " ------------------------------------------------
+    let results = []
+    if len(results_unicode) > 0
+        call extend(results, results_unicode)
+    endif
+    if len(results_4corner) > 0
+        call extend(results, results_4corner)
+    endif
+    if result_pinyin =~ '\a'
+        call add(results, result_pinyin)
+    endif
+    if result_cjjp =~ '\a'
+        call add(results, result_cjjp)
+    endif
+    return results
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_reverse_one_entry(cache, chinese)
+" -------------------------------------------------
+    if empty(a:cache) || empty(a:chinese)
+        return []
+    endif
+    let characters = split(a:chinese, '\zs')
+    let items = []
+    for char in characters
+        if has_key(a:cache, char)
+            let menu = a:cache[char]
+            call add(items, menu)
+        endif
+    endfor
+    return items
 endfunction
 
 " ----------------------------------------------
@@ -4488,9 +4414,50 @@ function! s:vimim_rot13(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Back_End_Common  ==== {{{"
+let VimIM = " ====  Back_End_FILE    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
+
+" --------------------------------------
+function! s:vimim_scan_plugin_datafile()
+" --------------------------------------
+    if s:vimim_debug > 8 || len(s:datafile) > 1
+        return
+    endif
+    " ------------------------------------
+    let datafile = 0
+    for im in s:input_methods
+        let file = "vimim." . im . ".txt"
+        let datafile = s:path . file
+        if filereadable(datafile)
+            break
+        else
+            continue
+        endif
+    endfor
+    " ----------------------------------------
+    if filereadable(datafile)
+        let msg = "datafile is used first over directory database"
+        let s:path2 = 0
+        let s:backend = "datafile"
+    else
+        let s:datafile = 0
+        return
+    endif
+    " ----------------------------------------
+    let msg = " [setter] for im-loaded-flag "
+    if im =~# '^wubi'
+        let im = 'wubi'
+    elseif im =~# '^pinyin'
+        let im = 'pinyin'
+    elseif im =~# '^\d'
+        let im = '4corner'
+    endif
+    let s:im[im][0] = 1
+    " ----------------------------------------
+    let s:datafile = datafile
+    let s:im_primary = im
+endfunction
 
 " ----------------------------------------
 function! s:vimim_datafile_range(keyboard)
@@ -4556,6 +4523,24 @@ function! s:vimim_search_boundary(lines, keyboard)
         let ranges = ['datafile_is_not_sorted']
     endif
     return ranges
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_wildcard_search(keyboard, lines)
+" ------------------------------------------------
+    if s:chinese_input_mode =~ 'dynamic'
+    \|| empty(a:lines)
+        return []
+    endif
+    let results = []
+    let wildcard_pattern = "[*]"
+    let wildcard = match(a:keyboard, wildcard_pattern)
+    if wildcard > 0
+        let star = substitute(a:keyboard,'[*]','.*','g')
+        let wildcard = '^' . star . '\>'
+        let results = filter(a:lines, 'v:val =~ wildcard')
+    endif
+    return results
 endfunction
 
 " ----------------------------------------------
@@ -4733,53 +4718,6 @@ let VimIM = " ====  Back_End_DIR     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------------
-function! s:vimim_get_datafile_in_vimrc()
-" ---------------------------------------
-    let dir = s:vimim_data_directory
-    if !empty(dir) && isdirectory(dir)
-        let s:path2 = copy(dir)
-        let s:backend = "directory"
-    endif
-    " -----------------------------------
-    if empty(s:path2)
-        let datafile = s:vimim_datafile
-        if !empty(datafile) && filereadable(datafile)
-            let s:datafile = copy(datafile)
-            let s:backend = "datafile"
-        endif
-    endif
-endfunction
-
-" --------------------------------------
-function! s:vimim_get_data_directory(im)
-" --------------------------------------
-    let im = a:im
-    if empty(im) || empty(s:path2)
-        return 0
-    endif
-    let dir = s:path2 ."/". im
-    if isdirectory(dir)
-        return dir
-    else
-        return 0
-    endif
-endfunction
-
-" --------------------------------------
-function! s:vimim_set_data_directory(im)
-" --------------------------------------
-    let im = a:im
-    let dir = s:vimim_get_data_directory(im)
-    if empty(dir)
-        return 0
-    else
-        let s:im[im][0] = 1
-        let s:im_primary = im
-        return dir
-    endif
-endfunction
-
 " --------------------------------------------
 function! s:vimim_scan_plugin_data_directory()
 " --------------------------------------------
@@ -4843,6 +4781,53 @@ function! s:vimim_scan_plugin_data_directory()
         endif
     endif
     " ------------------------------------
+endfunction
+
+" ---------------------------------------
+function! s:vimim_get_datafile_in_vimrc()
+" ---------------------------------------
+    let dir = s:vimim_data_directory
+    if !empty(dir) && isdirectory(dir)
+        let s:path2 = copy(dir)
+        let s:backend = "directory"
+    endif
+    " -----------------------------------
+    if empty(s:path2)
+        let datafile = s:vimim_datafile
+        if !empty(datafile) && filereadable(datafile)
+            let s:datafile = copy(datafile)
+            let s:backend = "datafile"
+        endif
+    endif
+endfunction
+
+" --------------------------------------
+function! s:vimim_get_data_directory(im)
+" --------------------------------------
+    let im = a:im
+    if empty(im) || empty(s:path2)
+        return 0
+    endif
+    let dir = s:path2 ."/". im
+    if isdirectory(dir)
+        return dir
+    else
+        return 0
+    endif
+endfunction
+
+" --------------------------------------
+function! s:vimim_set_data_directory(im)
+" --------------------------------------
+    let im = a:im
+    let dir = s:vimim_get_data_directory(im)
+    if empty(dir)
+        return 0
+    else
+        let s:im[im][0] = 1
+        let s:im_primary = im
+        return dir
+    endif
 endfunction
 
 " -----------------------------------------------------
@@ -4973,16 +4958,27 @@ function! s:vimim_get_directory_data(keyboard, im)
     return results
 endfunction
 
-" -----------------------
-function! g:vimim_mkdir()
-" -----------------------
-    call s:vimim_mkdir('append')
+" ---------------------------------------
+function! <SID>vimim_save_new_entry(line)
+" ---------------------------------------
+    let line = a:line
+    if empty(line) || empty(s:path2)
+        return
+    endif
+    let line = s:vimim_i18n_iconv(line)
+    " call g:vimim_mkdir2()
 endfunction
 
 " ------------------------
 function! g:vimim_mkdir2()
 " ------------------------
     call s:vimim_mkdir('prepend')
+endfunction
+
+" -----------------------
+function! g:vimim_mkdir()
+" -----------------------
+    call s:vimim_mkdir('append')
 endfunction
 
 " -----------------------------
@@ -5054,62 +5050,6 @@ function! s:vimim_remove_duplication(chinese)
         endfor
     endfor
     return results
-endfunction
-
-" ======================================= }}}
-let VimIM = " ====  Back_End_FILE    ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" ------------------------------------------------
-function! s:vimim_wildcard_search(keyboard, lines)
-" ------------------------------------------------
-    if s:chinese_input_mode =~ 'dynamic'
-    \|| empty(a:lines)
-        return []
-    endif
-    let results = []
-    let wildcard_pattern = "[*]"
-    let wildcard = match(a:keyboard, wildcard_pattern)
-    if wildcard > 0
-        let star = substitute(a:keyboard,'[*]','.*','g')
-        let wildcard = '^' . star . '\>'
-        let results = filter(a:lines, 'v:val =~ wildcard')
-    endif
-    return results
-endfunction
-
-" ------------------------------------------ todo
-function! <SID>vimim_visual_ctrl_6(keyboard)
-" ------------------------------------------
-    let keyboard = a:keyboard
-    if empty(keyboard)
-        return
-    endif
-    " --------------------------------
-    call s:vimim_initialization_once()
-    " --------------------------------
-    if keyboard =~ '\S'
-        let msg = 'kill two birds with one stone'
-    else
-        let current_line = getline("'<")
-        call <SID>vimim_save_new_entry(current_line)
-        return
-    endif
-    " --------------------------------
-    let results = []
-    if keyboard !~ '\p'
-"       let results = s:vimim_reverse_lookup(keyboard)
-    else
-        call add(results, s:vimim_translator(keyboard))
-    endif
-    " --------------------------------
-    let line = line(".")
-    call setline(line, results)
-    let new_positions = getpos(".")
-    let new_positions[1] = line + len(results) - 1
-    let new_positions[2] = len(get(split(get(results,-1)),0))+1
-    call setpos(".", new_positions)
 endfunction
 
 " ======================================= }}}
