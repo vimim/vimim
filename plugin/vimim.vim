@@ -263,10 +263,6 @@ function! s:vimim_finalize_session()
         let s:vimim_static_input_style = 1
     endif
     " ------------------------------
-    if empty(get(s:im['wubi'],0))
-        let s:vimim_wubi_non_stop = 0
-    endif
-    " ------------------------------
     if s:im_primary =~# '^\d\w\+'
     \&& empty(get(s:im['pinyin'],0))
         let s:only_4corner_or_12345 = 1
@@ -579,7 +575,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_onekey_double_ctrl6")
     call add(G, "g:vimim_punctuation_navigation")
-    call add(G, "g:vimim_wubi_non_stop")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -1462,6 +1457,90 @@ function! s:vimim_start_chinese_mode()
     return <SID>vimim_toggle_punctuation()
 endfunction
 
+" -----------------------------------
+function! s:vimim_stop_chinese_mode()
+" -----------------------------------
+    if s:vimim_auto_copy_clipboard>0 && has("gui_running")
+        sil!exe ':%y +'
+    endif
+    sil!call s:vimim_stop()
+endfunction
+
+" ----------------------------------
+function! <SID>vimim_space_dynamic()
+" ----------------------------------
+    let space = ' '
+    if pumvisible()
+        let space = "\<C-Y>"
+    endif
+    sil!exe 'sil!return "' . space . '"'
+endfunction
+
+" ---------------------------------
+function! <SID>vimim_space_static()
+" ---------------------------------
+    let space = " "
+    sil!return s:vimim_static_action(space)
+endfunction
+
+" ------------------------------------
+function! s:vimim_static_action(space)
+" ------------------------------------
+    let space = a:space
+    if pumvisible()
+        let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
+    else
+        let byte_before = getline(".")[col(".")-2]
+        if byte_before =~# s:valid_key
+            if s:pattern_not_found < 1
+                let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+            else
+                let s:pattern_not_found = 0
+            endif
+        endif
+    endif
+    sil!exe 'sil!return "' . space . '"'
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_static_alphabet_auto_select()
+" ---------------------------------------------
+    if s:chinese_input_mode !~ 'static'
+        return
+    endif
+    " always do alphabet auto selection for static mode
+    for char in s:az_char_list
+        sil!exe 'inoremap <silent> ' . char . '
+        \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
+        \'<C-R>=g:reset_after_auto_insert()<CR>'
+    endfor
+endfunction
+
+" ------------------------------------------
+function! s:vimim_dynamic_alphabet_trigger()
+" ------------------------------------------
+    if s:chinese_input_mode !~ 'dynamic'
+        return
+    endif
+    let not_used_valid_keys = "[0-9.']"
+    if s:datafile_has_dot > 0
+        let not_used_valid_keys = "[0-9]"
+    endif
+    " --------------------------------------
+    for char in s:valid_keys
+        if char !~# not_used_valid_keys
+            sil!exe 'inoremap <silent> ' . char . '
+            \ <C-R>=g:vimim_pumvisible_ctrl_e_ctrl_y()<CR>'. char .
+            \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
+        endif
+    endfor
+endfunction
+
+" ======================================= }}}
+let VimIM = " ====  Plugin_Conflict  ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
 " frederick.zou fixes these plugins:
 " supertab          http://www.vim.org/scripts/script.php?script_id=1643
 " autocomplpop(acp) http://www.vim.org/scripts/script.php?script_id=1879
@@ -1543,85 +1622,6 @@ function! s:vimim_plugins_fix_stop()
     if !empty(s:word_complete)
     "   call DoWordComplete()
     endif
-endfunction
-
-" -----------------------------------
-function! s:vimim_stop_chinese_mode()
-" -----------------------------------
-    if s:vimim_auto_copy_clipboard>0 && has("gui_running")
-        sil!exe ':%y +'
-    endif
-    sil!call s:vimim_stop()
-endfunction
-
-" ----------------------------------
-function! <SID>vimim_space_dynamic()
-" ----------------------------------
-    let space = ' '
-    if pumvisible()
-        let space = "\<C-Y>"
-    endif
-    sil!exe 'sil!return "' . space . '"'
-endfunction
-
-" ---------------------------------
-function! <SID>vimim_space_static()
-" ---------------------------------
-    let space = " "
-    sil!return s:vimim_static_action(space)
-endfunction
-
-" ------------------------------------
-function! s:vimim_static_action(space)
-" ------------------------------------
-    let space = a:space
-    if pumvisible()
-        let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
-    else
-        let byte_before = getline(".")[col(".")-2]
-        if byte_before =~# s:valid_key
-            if s:pattern_not_found < 1
-                let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-            else
-                let s:pattern_not_found = 0
-            endif
-        endif
-    endif
-    sil!exe 'sil!return "' . space . '"'
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_static_alphabet_auto_select()
-" ---------------------------------------------
-    if s:chinese_input_mode !~ 'static'
-        return
-    endif
-    " always do alphabet auto selection for static mode
-    for char in s:az_char_list
-        sil!exe 'inoremap <silent> ' . char . '
-        \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
-        \'<C-R>=g:reset_after_auto_insert()<CR>'
-    endfor
-endfunction
-
-" ------------------------------------------
-function! s:vimim_dynamic_alphabet_trigger()
-" ------------------------------------------
-    if s:chinese_input_mode !~ 'dynamic'
-        return
-    endif
-    let not_used_valid_keys = "[0-9.']"
-    if s:datafile_has_dot > 0
-        let not_used_valid_keys = "[0-9]"
-    endif
-    " --------------------------------------
-    for char in s:valid_keys
-        if char !~# not_used_valid_keys
-            sil!exe 'inoremap <silent> ' . char . '
-            \ <C-R>=g:vimim_pumvisible_ctrl_e_ctrl_y()<CR>'. char .
-            \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
-        endif
-    endfor
 endfunction
 
 " ======================================= }}}
@@ -2854,8 +2854,7 @@ function! g:vimim_pumvisible_ctrl_e_ctrl_y()
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
-        if s:vimim_wubi_non_stop > 0
-        \&& get(s:im['wubi'],0) > 0
+        if get(s:im['wubi'],0) > 0
         \&& get(s:im['pinyin'],0) < 1
         \&& empty(len(s:keyboard_wubi)%4)
             let key = "\<C-Y>"
@@ -3871,17 +3870,16 @@ function! s:vimim_toggle_wubi_pinyin()
 " ------------------------------------ TODO
     let im = "pinyin"
     if empty(s:toggle_xiangma_pinyin)
-        let im = "pinyin"
         let s:im_primary = "pinyin"
-        let s:im_secondary = "zhengma"
+        let s:im_secondary = "wubi"
+        let s:im['4corner'][0] = 1
+        let s:im['pinyin'][0] = 0
     else
-        let im = "wubi"
-        let im = "zhengma"
         let s:im_primary = "wubi"
-        let s:im_primary = "zhengma"
         let s:im_secondary = "pinyin"
+        let s:im['4corner'][0] = 0
+        let s:im['pinyin'][0] = 1
     endif
-    let s:data_directory = s:path2 . "/" . im
     call s:vimim_initialize_keycode()
 endfunction
 
@@ -3889,11 +3887,6 @@ endfunction
 function! s:vimim_wubi(keyboard)
 " ------------------------------
     let keyboard = a:keyboard
-    if empty(keyboard)
-    \|| get(s:im['wubi'],0) < 1
-    \|| get(s:im['pinyin'],0) > 0
-        return []
-    endif
     let results = s:vimim_wubi_z_as_wildcard(keyboard)
     if len(results) > 0
         return results
@@ -3902,20 +3895,25 @@ function! s:vimim_wubi(keyboard)
     " support wubi non-stop typing
     " ----------------------------
     if s:chinese_input_mode =~ 'dynamic'
-    \&& s:vimim_wubi_non_stop > 0
         if len(keyboard) > 4
             let start = 4*((len(keyboard)-1)/4)
             let keyboard = strpart(keyboard, start)
         endif
         let s:keyboard_wubi = keyboard
     endif
-    let pattern = '\M^' . keyboard
-    let match_start = match(s:lines, pattern)
-    if  match_start < 0
-        let results = []
-        let s:keyboard_wubi = ''
-    else
-        let results = s:vimim_exact_match(s:lines, keyboard, match_start)
+    " ----------------------------
+    if empty(s:path2)
+        let pattern = '\M^' . keyboard
+        let match_start = match(s:lines, pattern)
+        if  match_start < 0
+            let results = []
+            let s:keyboard_wubi = ''
+        else
+            let results = s:vimim_exact_match(s:lines, keyboard, match_start)
+        endif
+    elseif len(s:data_directory_wubi) > 1
+        let im = s:im_primary
+        let results = s:vimim_get_data_from_directory(keyboard, im)
     endif
     return results
 endfunction
@@ -4822,6 +4820,11 @@ function! s:vimim_scan_plugin_data_directory()
         let s:im_primary = 'wubi'
     endif
     " ------------------------------------
+    if len(s:im_secondary) > 0
+        let msg = "pinyin and xingma are in harmony"
+        let s:xingma_sleep_with_pinyin = 1
+    endif
+    " ------------------------------------
     if len(s:data_directory_4corner) > 1
         if len(s:data_directory_pinyin) > 1
             let s:pinyin_and_4corner = 1
@@ -5127,6 +5130,8 @@ function! s:vimim_initialize_debug()
     if isdirectory(dir)
         let s:path2 = dir
         return
+    elseif filereadable(dir)
+        return
     endif
     " ------------------------------
     if empty(s:path2)
@@ -5136,8 +5141,8 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     let s:vimim_debug = 9
-    let s:vimim_cloud_sogou = -1
     let s:vimim_static_input_style = 2
+    let s:vimim_cloud_sogou = -1
     let s:vimim_ctrl_space_to_toggle = 2
     let s:vimim_custom_skin = 1
     let s:vimim_chinese_frequency = 0
