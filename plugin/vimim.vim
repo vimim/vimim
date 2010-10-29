@@ -169,7 +169,8 @@ function! s:vimim_initialize_session()
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
     " --------------------------------
-    let s:sogou_cloud_is_accessed = 0
+    let s:www_libcall = 0
+    let s:vimim_sogou_key = 0
     let s:vimim_cloud_plugin = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -696,7 +697,7 @@ function! s:vimim_egg_vimim()
     let CLOUD = "start_to_use_cloud_after_" .  cloud . "_characters"
     if cloud == -777
         let CLOUD = s:vimim_get_chinese('mycloud')
-    elseif cloud < 0
+    elseif cloud < -1
         let CLOUD = s:vimim_get_chinese('cloud_no')
     elseif cloud == 888
         let CLOUD = s:vimim_get_chinese('cloud_atwill')
@@ -1896,7 +1897,7 @@ function! s:vimim_build_popupmenu(matched_list)
         endif
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
-            if get(s:im['pinyin'],0) > 0 || s:sogou_cloud_is_accessed > 0
+            if get(s:im['pinyin'],0) > 0 || s:menu_from_cloud_flag > 0
                 let tail = ''
                 if keyboard =~ '[.]' && s:datafile_has_dot < 1
                     let dot = match(keyboard, '[.]')
@@ -3877,13 +3878,8 @@ function! s:vimim_sentence_match_datafile(lines, keyboard)
     endif
     " --------------------------------------------------
     if empty(blocks)
-        " [pinyin] cjjp breakdown: pinyin => pin'yin "
-        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        let cloud = s:vimim_to_cloud_or_not(pinyins, [])
-        if empty(cloud)
-            " [sentence input]: break up long whole sentence
-            let blocks = s:vimim_sentence_datafile_match(a:lines, keyboard)
-        endif
+        " [sentence input]: break up long whole sentence
+        let blocks = s:vimim_sentence_datafile_match(a:lines, keyboard)
     endif
     " --------------------------------------------------
     return blocks
@@ -4278,7 +4274,8 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_cloud()
 " ----------------------------------
-    if s:vimim_cloud_sogou < 0
+    " to shut down cloud without condition
+    if s:vimim_cloud_sogou < -1
         return
     endif
     " step 1: try to find libvimim
@@ -4290,8 +4287,6 @@ function! s:vimim_initialize_cloud()
             let cloud = s:path . "libvimim.dll"
         endif
     endif
-    let s:www_libcall = 0
-    let s:vimim_sogou_key = 0
     if filereadable(cloud)
         " in win32, strip the .dll suffix
         if has("win32") && cloud[-4:] ==? ".dll"
@@ -4352,7 +4347,6 @@ function! s:vimim_magic_tail(keyboard)
     if s:chinese_input_mode =~ 'dynamic'
     \|| s:datafile_has_dot > 0
     \|| keyboard =~ '\d\d\d\d'
-    \|| len(keyboard) < 3
         return []
     endif
     let magic_tail = keyboard[-1:]
@@ -4387,15 +4381,12 @@ function! s:vimim_magic_tail(keyboard)
     return keyboards
 endfunction
 
-" --------------------------------------------------
-function! s:vimim_to_cloud_or_not(keyboards, clouds)
-" --------------------------------------------------
+" -------------------------------------------------
+function! s:vimim_to_cloud_or_not(keyboard, clouds)
+" -------------------------------------------------
     let do_cloud = get(a:clouds, 1)
     if do_cloud > 0
         return 1
-    endif
-    if s:vimim_cloud_sogou < 1
-        return 0
     endif
     if s:no_internet_connection > 1
         let msg = "oops, there is no internet connection."
@@ -4403,7 +4394,10 @@ function! s:vimim_to_cloud_or_not(keyboards, clouds)
     elseif s:no_internet_connection < 0
         return 1
     endif
-    let keyboard = join(a:keyboards,"")
+    if s:vimim_cloud_sogou < 1
+        return 0
+    endif
+    let keyboard = a:keyboard
     if empty(s:chinese_input_mode) && keyboard =~ '[.]'
         return 0
     endif
@@ -4412,7 +4406,8 @@ function! s:vimim_to_cloud_or_not(keyboards, clouds)
         return 0
     endif
     let msg = "auto cloud if number of zi > threshold"
-    let cloud_length = len(a:keyboards)
+    let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+    let cloud_length = len(pinyins)
     if cloud_length < s:vimim_cloud_sogou
         return 0
     endif
@@ -4451,13 +4446,14 @@ function! s:vimim_get_cloud_sogou_key()
     return get(split(output, '"'), 1)
 endfunction
 
-" -----------------------------------------
-function! s:vimim_get_cloud_sogou(keyboard)
-" -----------------------------------------
+" ------------------------------------------------
+function! s:vimim_get_cloud_sogou(keyboard, force)
+" ------------------------------------------------
     let keyboard = a:keyboard
-    if s:vimim_cloud_sogou < 1
-    \|| empty(s:www_executable)
-    \|| empty(keyboard)
+    if empty(s:www_executable) || empty(keyboard)
+        return []
+    endif
+    if s:vimim_cloud_sogou < 1 && a:force < 1
         return []
     endif
     " only use sogou when we get a valid key
@@ -4827,6 +4823,7 @@ function! s:vimim_initialize_debug()
     let s:backend = 0
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
+    let s:vimim_static_input_style = 0
     " ------------------------------
     let s:path2 = 0
     let dir = "/home/vimim/vimim"
@@ -4849,7 +4846,7 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     let s:vimim_debug = 9
-    let s:vimim_cloud_sogou = 0
+    let s:vimim_cloud_sogou = -1
     let s:vimim_static_input_style = 2
     let s:vimim_ctrl_space_to_toggle = 2
     let s:vimim_custom_skin = 1
@@ -5370,11 +5367,11 @@ else
         let msg = "keep local mycloud code for the future."
     else
         let results = s:vimim_get_mycloud_plugin(keyboard)
-        let s:menu_from_cloud_flag = 1
         if empty(len(results))
             " return empty list if the result is empty
             return []
         else
+            let s:menu_from_cloud_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5451,6 +5448,22 @@ else
         let keyboard = s:vimim_apostrophe(keyboard)
     endif
 
+    " [cloud] to make cloud come true for woyouyigemeng
+    " -------------------------------------------------
+    let cloud = s:vimim_to_cloud_or_not(keyboard, clouds)
+    if cloud > 0
+        let results = s:vimim_get_cloud_sogou(keyboard, cloud)
+        if empty(len(results))
+            if s:vimim_cloud_sogou > 2
+                let s:no_internet_connection += 1
+            endif
+        else
+            let s:no_internet_connection = 0
+            let s:menu_from_cloud_flag = 1
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
     " [datafile_directory] directory are first-class citizen
     " ------------------------------------------------------
     if len(s:path2) > 1
@@ -5477,20 +5490,6 @@ else
                 return s:vimim_popupmenu_list(results)
             endif
         endif
-    endif
-
-    " [cloud] try cloud when no directory nor datafile
-    " ------------------------------------------------
-    if empty(s:backend) || s:vimim_cloud_sogou > 0
-        let results = s:vimim_get_cloud_sogou(keyboard)
-        if len(results) > 0
-            let s:sogou_cloud_is_accessed = 1
-            return s:vimim_popupmenu_list(results)
-        else
-            let s:sogou_cloud_is_accessed = 0
-        endif
-    else
-        return []
     endif
 
     " [wildcard search] play with magic star
@@ -5521,33 +5520,6 @@ else
         endif
     endif
 
-    " [cloud] to make cloud come true for woyouyigemeng
-    " -------------------------------------------------
-    if match_start < 0 || get(clouds,1) > 0
-        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        let cloud = s:vimim_to_cloud_or_not(pinyins, clouds)
-        if cloud > 0
-            if len(keyboard)-len(pinyins)<2 && len(keyboard)>4
-                let msg = " do cjjp: laystbz=>l'a'y's't'b'z "
-                let keyboard = join(split(keyboard,'\zs'),"'")
-            endif
-            let results = s:vimim_get_cloud_sogou(keyboard)
-            if s:vimimdebug > 0
-                call s:debugs('cloud_stone', keyboard)
-                call s:debugs('cloud_gold', s:debug_list(results))
-            endif
-            if empty(len(results))
-                if s:vimim_cloud_sogou > 2
-                    let s:no_internet_connection += 1
-                endif
-            else
-                let s:no_internet_connection = 0
-                let s:menu_from_cloud_flag = 1
-                return s:vimim_popupmenu_list(results)
-            endif
-        endif
-    endif
-
     if match_start < 0
         let msg = "fuzzy search could be done here, if needed"
     else
@@ -5565,8 +5537,9 @@ else
     " [cloud] last try cloud before giving up
     " ---------------------------------------
     if s:vimim_cloud_sogou == 1
-        let results = s:vimim_get_cloud_sogou(keyboard)
+        let results = s:vimim_get_cloud_sogou(keyboard, 1)
         if len(results) > 0
+            let s:menu_from_cloud_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
