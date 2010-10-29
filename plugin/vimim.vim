@@ -1751,6 +1751,7 @@ endfunction
 function! <SID>vimim_ctrl_x_ctrl_u_bs()
 " -------------------------------------
     call s:reset_matched_list()
+    let s:pattern_not_found = 0
     let key = '\<BS>'
     " ---------------------------------
     if s:pumvisible_ctrl_e > 0
