@@ -163,13 +163,13 @@ function! s:vimim_initialize_session()
     let s:datafile_has_dot = 0
     let s:lines = []
     " --------------------------------
+    let s:im = {}
+    let s:im_primary = 0
+    " --------------------------------
     let s:data_directory_wubi = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_4corner = 0
     let s:toggle_xiangma_pinyin = 0
-    " --------------------------------
-    let s:im_primary = 0
-    let s:im_secondary = 0
     " --------------------------------
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
@@ -1216,17 +1216,6 @@ function! s:vimim_statusline()
             let s:im['12345'][0] = 1
         endif
         let im = pinyin . plus . im_digit
-    endif
-    " ------------------------------------
-    if s:vimim_wubi_sleep_with_pinyin > 0
-    \&& has_key(s:im, s:im_secondary)
-        let im_1 = get(s:im[s:im_primary],1)
-        let im_2 = get(s:im[s:im_secondary],1)
-        if empty(s:toggle_xiangma_pinyin%2)
-            let im = im_1 . plus . im_2
-        else
-            let im = im_2 . plus . im_1
-        endif
     endif
     " ------------------------------------
     if !empty(s:vimim_cloud_plugin)
@@ -3175,19 +3164,16 @@ call add(s:vimims, VimIM)
 function! <SID>vimim_smart_ctrl_n()
 " ---------------------------------
     if s:backend =~ 'directory'
-        let msg = "pinyin and wubi sleeps in harddisk"
+        let msg = "pinyin and wubi sleep well in hard disk"
     else
         return ''
     endif
     let s:toggle_xiangma_pinyin += 1
     let s:im_primary = "wubi"
-    let s:im_secondary = "pinyin"
     if empty(s:toggle_xiangma_pinyin%2)
         let s:im_primary = "pinyin"
-        let s:im_secondary = "wubi"
     endif
     let s:im[s:im_primary][0] = 1
-    let s:im[s:im_secondary][0] = 0
     " -----------------------------
     let im = s:vimim_initialize_keycode()
     let b:keymap_name = s:vimim_statusline()
@@ -3879,14 +3865,6 @@ function! s:vimim_scan_plugin_data_directory()
             let s:data_directory_wubi = dir
         endif
     endfor
-    " ------------------------------------
-    if s:vimim_wubi_sleep_with_pinyin > 0
-        if len(s:data_directory_pinyin) > 1
-        \&& len(s:data_directory_wubi) > 1
-            let s:im_primary = 'pinyin'
-            let s:im_secondary = 'wubi'
-        endif
-    endif
     " ------------------------------------
     if len(s:data_directory_4corner) > 1
         if len(s:data_directory_pinyin) > 1
