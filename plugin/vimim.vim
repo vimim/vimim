@@ -169,6 +169,7 @@ function! s:vimim_initialize_session()
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
     " --------------------------------
+    let s:sogou_cloud_is_accessed = 0
     let s:vimim_cloud_plugin = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -1863,6 +1864,7 @@ function! s:vimim_build_popupmenu(matched_list)
     let label = 1
     let popupmenu_list = []
     let keyboard = s:keyboard_leading_zero
+let g:gg=keyboard
     " ----------------------
     for pair in matched_list
     " ----------------------
@@ -1894,7 +1896,7 @@ function! s:vimim_build_popupmenu(matched_list)
         endif
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
-            if get(s:im['pinyin'],0) > 0
+            if get(s:im['pinyin'],0) > 0 || s:sogou_cloud_is_accessed > 0
                 let tail = ''
                 if keyboard =~ '[.]' && s:datafile_has_dot < 1
                     let dot = match(keyboard, '[.]')
@@ -4273,16 +4275,6 @@ let VimIM = " ====  Backend_Cloud    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------------
-function! s:vimim_do_cloud_if_no_datafile()
-" -----------------------------------------
-    if empty(s:datafile)
-        if empty(s:vimim_cloud_sogou)
-            let s:vimim_cloud_sogou = 1
-        endif
-    endif
-endfunction
-
 " ----------------------------------
 function! s:vimim_initialize_cloud()
 " ----------------------------------
@@ -4309,7 +4301,7 @@ function! s:vimim_initialize_cloud()
         if ret ==# "True"
             let s:www_executable = cloud
             let s:www_libcall = 1
-            call s:vimim_do_cloud_if_no_datafile()
+            call s:vimim_do_cloud_if_no_backend()
             return
         endif
     endif
@@ -4317,8 +4309,8 @@ function! s:vimim_initialize_cloud()
     " ------------------------
     if empty(s:www_executable)
         let wget = 0
-        if executable(s:path."wget.exe")
-            let wget = s:path."wget.exe"
+        if executable(s:path .  "wget.exe")
+            let wget = s:path . "wget.exe"
         elseif executable('wget')
             let wget = "wget"
         endif
@@ -4339,7 +4331,17 @@ function! s:vimim_initialize_cloud()
     if empty(s:www_executable)
         let s:vimim_cloud_sogou = 0
     else
-        call s:vimim_do_cloud_if_no_datafile()
+        call s:vimim_do_cloud_if_no_backend()
+    endif
+endfunction
+
+" ----------------------------------------
+function! s:vimim_do_cloud_if_no_backend()
+" ----------------------------------------
+    if empty(s:backend)
+        if empty(s:vimim_cloud_sogou)
+            let s:vimim_cloud_sogou = 1
+        endif
     endif
 endfunction
 
@@ -5454,7 +5456,10 @@ else
     if empty(s:backend) || s:vimim_cloud_sogou > 0
         let results = s:vimim_get_cloud_sogou(keyboard)
         if len(results) > 0
+            let s:sogou_cloud_is_accessed = 1
             return s:vimim_popupmenu_list(results)
+        else
+            let s:sogou_cloud_is_accessed = 0
         endif
     else
         return []
