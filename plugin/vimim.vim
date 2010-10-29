@@ -4846,9 +4846,9 @@ function! s:vimim_initialize_debug()
         let s:backend = "directory"
     endif
     " ------------------------------
+    let s:vimim_cloud_sogou = 1
     let s:vimim_debug = 9
     let s:vimim_static_input_style = 2
-    let s:vimim_cloud_sogou = -1
     let s:vimim_ctrl_space_to_toggle = 2
     let s:vimim_custom_skin = 1
     let s:vimim_custom_laststatus = 0
@@ -5399,16 +5399,6 @@ else
         endif
     endif
 
-    " [wubi] support wubi non-stop input
-    " ----------------------------------
-    if get(s:im['wubi'],0) > 0
-        let results = s:vimim_wubi(keyboard)
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     " [imode] magic 'i': English number => Chinese number
     " ---------------------------------------------------
     if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
@@ -5427,6 +5417,16 @@ else
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
+        endif
+    endif
+
+    " [wubi] support wubi non-stop input
+    " ----------------------------------
+    if get(s:im['wubi'],0) > 0
+        let results = s:vimim_wubi(keyboard)
+        if len(results) > 0
+            let results = s:vimim_pair_list(results)
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
@@ -5451,15 +5451,13 @@ else
 
     " [cloud] try cloud when no directory nor datafile
     " ------------------------------------------------
-    if empty(s:backend)
-        if s:vimim_cloud_sogou > 0
-            let results = s:vimim_get_cloud_sogou(keyboard)
-            if len(results) > 0
-                return s:vimim_popupmenu_list(results)
-            endif
-        else
-            return []
+    if empty(s:backend) || s:vimim_cloud_sogou > 0
+        let results = s:vimim_get_cloud_sogou(keyboard)
+        if len(results) > 0
+            return s:vimim_popupmenu_list(results)
         endif
+    else
+        return []
     endif
 
     " [datafile_directory] directory are first-class citizen
