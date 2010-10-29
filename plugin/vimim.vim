@@ -1865,7 +1865,6 @@ function! s:vimim_build_popupmenu(matched_list)
     let label = 1
     let popupmenu_list = []
     let keyboard = s:keyboard_leading_zero
-let g:gg=keyboard
     " ----------------------
     for pair in matched_list
     " ----------------------
@@ -4849,8 +4848,8 @@ function! s:vimim_initialize_debug()
         let s:backend = "directory"
     endif
     " ------------------------------
-    let s:vimim_cloud_sogou = 1
     let s:vimim_debug = 9
+    let s:vimim_cloud_sogou = 0
     let s:vimim_static_input_style = 2
     let s:vimim_ctrl_space_to_toggle = 2
     let s:vimim_custom_skin = 1
@@ -5452,20 +5451,6 @@ else
         let keyboard = s:vimim_apostrophe(keyboard)
     endif
 
-    " [cloud] try cloud when no directory nor datafile
-    " ------------------------------------------------
-    if empty(s:backend) || s:vimim_cloud_sogou > 0
-        let results = s:vimim_get_cloud_sogou(keyboard)
-        if len(results) > 0
-            let s:sogou_cloud_is_accessed = 1
-            return s:vimim_popupmenu_list(results)
-        else
-            let s:sogou_cloud_is_accessed = 0
-        endif
-    else
-        return []
-    endif
-
     " [datafile_directory] directory are first-class citizen
     " ------------------------------------------------------
     if len(s:path2) > 1
@@ -5492,6 +5477,20 @@ else
                 return s:vimim_popupmenu_list(results)
             endif
         endif
+    endif
+
+    " [cloud] try cloud when no directory nor datafile
+    " ------------------------------------------------
+    if empty(s:backend) || s:vimim_cloud_sogou > 0
+        let results = s:vimim_get_cloud_sogou(keyboard)
+        if len(results) > 0
+            let s:sogou_cloud_is_accessed = 1
+            return s:vimim_popupmenu_list(results)
+        else
+            let s:sogou_cloud_is_accessed = 0
+        endif
+    else
+        return []
     endif
 
     " [wildcard search] play with magic star
