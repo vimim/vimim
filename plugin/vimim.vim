@@ -40,10 +40,10 @@ let VimIM = " ====  Introduction     ==== {{{"
 "            (Input Method) to support the input of multi-byte.
 "            VimIM aims to complete the Vim as the greatest editor.
 " -----------------------------------------------------------
-"  Features: * "Plug & Play"
-"            * "Plug & Play": "Cloud Input" with 6 Shuangpin
-"            * "Plug & Play": "myCloud"
-"            * "Plug & Play": "Pinyin and 4Corner" in harmony
+"  Features: * "Plug & Play": as a client to "Cloud Input"
+"            * "Plug & Play": as a client to "myCloud"
+"            * "Plug & Play": pinyin (quanpin plus 6 Shuangpin)
+"            * "Plug & Play": Pinyin and 4Corner in harmony
 "            * Play "UNICODE input" using integer or hex
 "            * Play "GBK input" and "Big5 input"
 "            * Support "boshiamy", "Cang Jie", "Erbi", etc
