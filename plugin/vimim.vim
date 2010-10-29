@@ -1966,7 +1966,7 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations['!']='！'
     let s:punctuations['~']='～'
     let s:punctuations['+']='＋'
-    let s:punctuations['@']='・'
+    let s:punctuations['@']='　'
     let s:punctuations[':']='：'
     let s:punctuations['(']='（'
     let s:punctuations[')']='）'
