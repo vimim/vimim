@@ -24,6 +24,7 @@ let $VimIM = "$Revision$"
 let egg  = ["http://code.google.com/p/vimim/issues/entry         "]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506 "]
 let egg += ["http://vimim-data.googlecode.com                    "]
+let egg += ["http://pim-cloud.appspot.com                        "]
 let egg += ["http://groups.google.com/group/vimim                "]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html    "]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
@@ -558,9 +559,10 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "错误报告：" . s:vimimhelp[0])
     call add(eggs, "官方网址：" . s:vimimhelp[1])
     call add(eggs, "民间词库：" . s:vimimhelp[2])
+    call add(eggs, "自己的云：" . s:vimimhelp[3])
     call add(eggs, "新闻论坛：" . s:vimimhelp[4])
-    call add(eggs, "最新主页：" . s:vimimhelp[3])
-    call add(eggs, "最新程式：" . s:vimimhelp[5])
+    call add(eggs, "最新主页：" . s:vimimhelp[5])
+    call add(eggs, "最新程式：" . s:vimimhelp[6])
     " -------------------------------------------
     return map(eggs, '"VimIM " .v:val . "　"')
 endfunction
@@ -4076,13 +4078,13 @@ function! s:vimim_mkdir(option)
 " Goal: creating directory xxx and adding files, based on xxx.txt
 " Sample file A: $VIM/vimfiles/plugin/vimim/4corner/7132
 " Sample file B: $VIM/vimfiles/plugin/vimim/pinyin/jjjj
-" -----------------------
+" -----------------------------
 " Example: one   input: vimim.pinyin.txt  (the master file)
 "          many output: pinyin/ma3        (one sample slave file)
 " (1) :cd $VIM/vimfiles/plugin/vimim/
 " (2) :vim vimim.pinyin.txt
 " (3) :call g:vimim_mkdir()
-" -----------------------
+" -----------------------------
     let root = expand("%:p:h")
     let dir = root . "/" . expand("%:e:e:r")
     if !exists(dir) && !isdirectory(dir)
