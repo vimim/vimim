@@ -2395,7 +2395,7 @@ function! s:vimim_reverse_lookup(chinese)
     let cache = {}
     let characters = split(chinese, '\zs')
     for char in characters
-        let unicode = printf('%04x',char2nr(char))
+        let unicode = printf('u%04x',char2nr(char))
         let cache[char] = unicode
     endfor
     let items = s:vimim_reverse_one_entry(cache, chinese)
@@ -2434,11 +2434,11 @@ function! s:vimim_reverse_lookup(chinese)
     let results_pinyin = copy(results)
     " ------------------------------------------------
     let results = []
-    if len(results_unicode) > 0
-        call extend(results, results_unicode)
-    endif
     if len(results_4corner) > 0
         call extend(results, results_4corner)
+    endif
+    if len(results_unicode) > 0
+        call extend(results, results_unicode)
     endif
     if len(results_pinyin) > 0
         call extend(results, results_pinyin)
@@ -5462,7 +5462,7 @@ endfunction
 function! s:vimim_visual_mapping_on()
 " -----------------------------------
     if !hasmapto('<C-^>', 'v')
-        xnoremap <C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
+        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
 endfunction
 
