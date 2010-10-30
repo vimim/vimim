@@ -4145,7 +4145,8 @@ function! s:vimim_remove_duplication(chinese)
     for line in chinese
         let characters = split(line)
         for char in characters
-            if has_key(cache, char)
+            let char = substitute(char,'\p','','g')
+            if has_key(cache, char) || empty(char)
                 continue
             else
                 let cache[char] = char
