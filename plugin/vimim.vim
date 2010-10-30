@@ -4145,7 +4145,8 @@ function! s:vimim_remove_duplication(chinese)
     for line in chinese
         let characters = split(line)
         for char in characters
-            let char = substitute(char,'\p','','g')
+            " allow :: ## added to the source datafile
+            let char = substitute(char,':\+\|#\+','','g')
             if has_key(cache, char) || empty(char)
                 continue
             else
