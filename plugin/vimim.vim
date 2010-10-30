@@ -621,12 +621,15 @@ function! s:vimim_egg_vimim()
     let dynamic = s:vimim_get_chinese('dynamic')
     let static = s:vimim_get_chinese('static')
     let toggle = "i_CTRL-Bslash"
+    if hasmapto('<Plug>VimimSexymode', 'i')
+        let toggle = "i_CTRL-Space"
+    endif
     if option < 1
         let classic .= dynamic
     elseif option == 1
         let classic .= static
     elseif option == 2
-        let classic = "Sexy" . static
+        let classic = "VimIM " . static
     endif
     let toggle .= "　"
     let style = s:vimim_get_chinese('style')
