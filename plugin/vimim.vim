@@ -2392,7 +2392,7 @@ function! s:vimim_reverse_lookup(chinese)
     let chinese_characters = split(chinese,'\zs')
     let items = []
     " -----------------------------------
-    let results = [] 
+    let results = []
     " -----------------------------------
     let cache = {}
     let characters = split(chinese, '\zs')
@@ -2502,9 +2502,9 @@ function! s:vimim_get_reverse_cache(chinese, im)
             continue
         else
             let value = char
-            if a:im =~ '4corner'  
+            if a:im =~ '4corner'
                 let value = get(split(get(results,0)),1)
-            elseif a:im =~ 'pinyin'  
+            elseif a:im =~ 'pinyin'
                 let value = get(split(get(results,1)),1)
             endif
             let cache[char] = value
@@ -4073,30 +4073,52 @@ function! s:vimim_get_directory_data(keyboard, im)
     return results
 endfunction
 
-" ------------------------
-function! g:vimim_mkdir2()
-" ------------------------
-    call s:vimim_mkdir('prepend')
-endfunction
-
 " -----------------------
 function! g:vimim_mkdir()
 " -----------------------
+    " within one line, new item is appeneded
+    " (1) existed order:  key  value_1 value_2
+    " (2) new items:      key  value_2 value_3
+    " (3) new order:      key  value_1 value_2 value_3
     call s:vimim_mkdir('append')
+endfunction
+
+" ------------------------
+function! g:vimim_mkdir2()
+" ------------------------
+    " within one line, new item is inserted first
+    " (1) existed order:  key  value_1 value_2
+    " (2) new items:      key  value_2 value_3
+    " (3) new order:      key  value_2 value_3 value_1
+    call s:vimim_mkdir('prepend')
+endfunction
+
+" ------------------------
+function! g:vimim_mkdir3()
+" ------------------------
+    " replace the existed content with new items
+    " (1) existed order:  key  value_1 value_2
+    " (2) new items:      key  value_2 value_3
+    " (3) new order:      key  value_2 value_3
+    call s:vimim_mkdir('replace')
 endfunction
 
 " -----------------------------
 function! s:vimim_mkdir(option)
 " -----------------------------
-" Goal: creating directory xxx and adding files, based on xxx.txt
+" Goal: creating directory xxx and adding files, based on vimim.xxx.txt
 " Sample file A: $VIM/vimfiles/plugin/vimim/4corner/7132
 " Sample file B: $VIM/vimfiles/plugin/vimim/pinyin/jjjj
-" -----------------------------
+" ----------------------------- vim
 " Example: one   input: vimim.pinyin.txt  (the master file)
 "          many output: pinyin/ma3        (one sample slave file)
-" (1) :cd $VIM/vimfiles/plugin/vimim/
-" (2) :vim vimim.pinyin.txt
-" (3) :call g:vimim_mkdir()
+" (1) $cd $VIM/vimfiles/plugin/vimim/
+" (2) $vi vimim.pinyin.txt
+"         :call g:vimim_mkdir()
+" ----------------------------- bash
+" vimimmkdir()  { vi -E -n "+call g:vimim_mkdir()"  +x vimim.$1.txt; }
+" vimimmkdir2() { vi -E -n "+call g:vimim_mkdir2()" +x vimim.$1.txt; }
+" vimimmkdir3() { vi -E -n "+call g:vimim_mkdir3()" +x vimim.$1.txt; }
 " -----------------------------
     let root = expand("%:p:h")
     let dir = root . "/" . expand("%:e:e:r")
@@ -4104,6 +4126,7 @@ function! s:vimim_mkdir(option)
         call mkdir(dir, "p")
     endif
     let lines = readfile(bufname("%"))
+    let option = a:option
     for line in lines
         let entries = split(line)
         let key = get(entries, 0)
@@ -4115,13 +4138,16 @@ function! s:vimim_mkdir(option)
         let first_list = []
         let second_list = []
         if filereadable(key_as_filename)
-            let filename_list = split(join(readfile(key_as_filename)))
-            if a:option =~ 'append'
-                let first_list = filename_list
+            let contents = split(join(readfile(key_as_filename)))
+            if option =~ 'append'
+                let first_list = contents
                 let second_list = chinese_list
-            elseif a:option =~ 'prepend'
+            elseif option =~ 'prepend'
                 let first_list = chinese_list
-                let second_list = filename_list
+                let second_list = contents
+            elseif option =~ 'replace'
+                let first_list = chinese_list
+                let option = 'append'
             endif
             call extend(first_list, second_list)
             let chinese_list = first_list
