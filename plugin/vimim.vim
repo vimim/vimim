@@ -194,7 +194,7 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     " --------------------------------
     let s:keyboard_count = 0
-    let s:abcdefghi = "'abcdefghi"
+    let s:abcdefg = "'abcdefg"
     let s:show_me_not_pattern = "^ii\\|^oo"
     " --------------------------------
     let A = char2nr('A')
@@ -1229,8 +1229,8 @@ function! s:vimim_label_on()
         return
     endif
     " ----------------------
-    let labels = range(10)
-    if &pumheight > 0 && &pumheight != 10
+    let labels = range(8)
+    if &pumheight > 0 && &pumheight != 8
         let labels = range(1, &pumheight)
     endif
     " ----------------------
@@ -1266,7 +1266,7 @@ function! s:vimim_action_label_on()
     if s:vimim_custom_menu_label < 1
         return
     endif
-    let labels = split(s:abcdefghi, '\zs')
+    let labels = split(s:abcdefg, '\zs')
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
         \  <C-R>=<SID>vimim_action_label("'._.'")<CR>'
@@ -1279,7 +1279,7 @@ function! <SID>vimim_action_label(n)
 " ----------------------------------
     let label = a:n
     if pumvisible()
-        let n = match(s:abcdefghi, label)
+        let n = match(s:abcdefg, label)
         let mycount = repeat("\<Down>", n)
         let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
         let label = mycount . yes
@@ -1290,7 +1290,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_navigation_label_on()
 " -------------------------------------
-    let hjkl_list = split('qrsujklpxyz', '\zs')
+    let hjkl_list = split('hjklqrspxyz', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
@@ -1304,14 +1304,14 @@ function! <SID>vimim_hjkl(key)
     if pumvisible()
         if a:key == 'x'
             let hjkl  = '\<C-E>'
-        elseif a:key == 'u'
-            let hjkl  = '\<PageUp>'
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
+        elseif a:key == 'h'
+            let hjkl  = '\<C-R>=g:vimim_hjkl_h()\<CR>'
         elseif a:key == 'l'
-            let hjkl  = '\<PageDown>'
+            let hjkl  = '\<C-R>=g:vimim_hjkl_l()\<CR>'
         elseif a:key == 'y'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
         elseif a:key == 'z'
@@ -1556,6 +1556,18 @@ function! g:vimim_slash_search()
     let slash = delete_chars . "\<Esc>"
     sil!call s:vimim_stop()
     sil!exe 'sil!return "' . slash . '"'
+endfunction
+
+" ------------------------------
+function! g:vimim_hjkl_h()
+" ------------------------------
+    return s:vimim_hjkl_l("[")
+endfunction
+
+" ------------------------------
+function! g:vimim_hjkl_l()
+" ------------------------------
+    return s:vimim_square_bracket("[")
 endfunction
 
 " ------------------------------
@@ -1881,14 +1893,14 @@ function! s:vimim_build_popupmenu(matched_list)
         " -------------------------------------------------
         let labeling = label
         if s:vimim_custom_menu_label > 0
-            if label == 10
+            if label == 8
                 let labeling = 0
             endif
             if label < &pumheight+1
             \&& (empty(s:chinese_input_mode)
             \|| s:chinese_input_mode=~ 'sexy')
                 " -----------------------------------------
-                let label2 = s:abcdefghi[label-1 : label-1]
+                let label2 = s:abcdefg[label-1 : label-1]
                 if label < 2
                     let label2 = "_"
                 endif
@@ -3454,7 +3466,7 @@ function! s:vimim_internal_code(keyboard)
     if keyboard =~# '^u\x\{4}$'
     " -------------------------
         let msg = "do hex internal-code popup menu, eg, u808f"
-        let pumheight = 16*16*2
+        let pumheight = 16*16
         let xxxx = keyboard[1:]
         let ddddd = str2nr(xxxx, 16)
         if ddddd > 0xffff
@@ -4956,7 +4968,7 @@ function! s:vimim_i_setting_on()
     set completeopt=menuone
     set nolazyredraw
     if empty(&pumheight)
-        let &pumheight=10
+        let &pumheight=8
     endif
     set hlsearch
     set iminsert=1
