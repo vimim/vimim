@@ -4772,7 +4772,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_ctrl_space_to_toggle = 2
     let s:vimim_custom_skin = 1
     let s:vimim_custom_laststatus = 0
-    let s:vimim_wildcard_search = 1
     let s:vimim_imode_universal = 1
     let s:vimim_english_punctuation = 0
     let s:vimim_chinese_punctuation = 1
