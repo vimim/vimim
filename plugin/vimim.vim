@@ -881,9 +881,12 @@ function! s:vimim_onekey_action(onekey)
     " -------------------------------------------------
     let onekey = a:onekey
     if empty(s:chinese_input_mode)
-    \&& !empty(byte_before)
     \&& byte_before !~# s:valid_key
-        if empty(a:onekey)
+        if empty(byte_before) || byte_before =~ '\s'
+            if !empty(s:vimim_tab_as_onekey)
+                let onekey = "\t"
+            endif
+        elseif empty(a:onekey)
             return <SID>vimim_get_unicode_menu()
         endif
     endif
@@ -899,8 +902,11 @@ function! s:vimim_onekey_action(onekey)
         let onekey = ""
     endif
     " ---------------------------------------------------
-    if !empty(byte_before)
-    \&& byte_before !~# s:valid_key
+    if empty(byte_before) || byte_before =~ '\s'
+        if !empty(s:vimim_tab_as_onekey)
+            let onekey = "\t"
+        endif
+    elseif byte_before !~# s:valid_key
         let onekey = a:onekey
     endif
     " ---------------------------------------------------
@@ -4767,6 +4773,7 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     let s:vimim_debug = 9
+    let s:vimim_tab_as_onekey = 1
     let s:vimim_cloud_sogou = -1
     let s:vimim_static_input_style = 2
     let s:vimim_ctrl_space_to_toggle = 2
@@ -5558,8 +5565,9 @@ function! s:vimim_onekey_mapping_on()
     if !hasmapto('<Plug>VimimOnekey', 'i')
         inoremap <unique> <expr> <Plug>VimimOnekey <SID>Onekey()
     endif
-    imap <silent> <C-^> <Plug>VimimOnekey
-    if s:vimim_tab_as_onekey > 0
+    if empty(s:vimim_tab_as_onekey)
+        imap <silent> <C-^> <Plug>VimimOnekey
+    else
         imap <silent> <Tab> <Plug>VimimOnekey
     endif
 endfunction
