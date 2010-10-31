@@ -4011,7 +4011,9 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         endif
     endif
     " ----------------------------------------
-    if len(s:data_directory_wubi) > 1
+    if len(s:data_directory_wubi) > 1 
+    \&& s:chinese_input_mode !~ 'dynamic'
+    \&& im =~ 'wubi'
         if len(keyboard) > 4
             return s:vimim_break_every_four(keyboard)
         else
@@ -4027,6 +4029,8 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         let filename = dir . '/' . key
         if filereadable(filename)
             break
+        else
+            continue
         endif
     endwhile
     " ----------------------------------------
