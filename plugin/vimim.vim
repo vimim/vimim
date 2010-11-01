@@ -1290,11 +1290,12 @@ endfunction
 " -------------------------------------
 function! s:vimim_navigation_label_on()
 " -------------------------------------
-    let hjkl_list = split('hjklqrspxyz', '\zs')
+    let hjkl_list = split('xyzjkhrspq', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
     endfor
+    sil!exe 'imap <silent> l <Space>'
 endfunction
 
 " ----------------------------
@@ -1304,19 +1305,16 @@ function! <SID>vimim_hjkl(key)
     if pumvisible()
         if a:key == 'x'
             let hjkl  = '\<C-E>'
-        elseif a:key == 'j'
-            let hjkl  = '\<Down>'
-        elseif a:key == 'k'
-            let hjkl  = '\<Up>'
         elseif a:key == 'y'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
         elseif a:key == 'z'
             let hjkl = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        elseif a:key == 'j'
+            let hjkl  = '\<Down>'
+        elseif a:key == 'k'
+            let hjkl  = '\<Up>'
         elseif a:key == 'h'
             let s:pumvisible_hjkl_h = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'l'
-            let s:pumvisible_hjkl_h = -1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'r'
             let s:pumvisible_reverse += 1
@@ -1894,7 +1892,7 @@ function! s:vimim_build_popupmenu(matched_list)
                     let label2 = "_"
                 endif
                 " -----------------------------------------
-                if s:pinyin_and_4corner > 0 
+                if s:pinyin_and_4corner > 0
                 \&& empty(s:vimim_cloud_plugin)
                     let labeling = label2
                 else
@@ -2372,10 +2370,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
      " -------------------------------------
      " [condition] one file per unicode, eg:
      " $cat s:data_directory_unihan/u9a6c
-     " 
-     " 
-     " 
-     " 
+     "
      " -------------------------------------
     let keyboard = a:keyboard
     if empty(keyboard)
@@ -4036,14 +4031,12 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     endif
     " ----------------------------------------
     if empty(s:keyboard_head)
-        let msg = 'h or l was not typed on omni popup menu'
+        let msg = 'h was not typed on omni popup menu'
     else
         if s:pumvisible_hjkl_h > 0
             let s:pumvisible_hjkl_h = 0
             " for pinyin, works best if using vimim_get_pinyin_from_pinyin()
             let keyboard = strpart(s:keyboard_head,0,len(s:keyboard_head)-1)
-        elseif s:pumvisible_hjkl_h < 0
-            let s:keyboard_head = 0
         endif
     endif
     " ----------------------------------------
