@@ -4108,9 +4108,9 @@ function! s:vimim_get_directory_data(keyboard, im)
     return results
 endfunction
 
-" -----------------------
-function! g:vimim_mkdir()
-" -----------------------
+" ------------------------
+function! g:vimim_mkdir1()
+" ------------------------
     " within one line, new item is appeneded
     " (1) existed order:  key  value_1 value_2
     " (2) new items:      key  value_2 value_3
@@ -4149,9 +4149,9 @@ function! s:vimim_mkdir(option)
 "          many output: pinyin/ma3        (one sample slave file)
 " (1) $cd $VIM/vimfiles/plugin/vimim/
 " (2) $vi vimim.pinyin.txt
-"         :call g:vimim_mkdir()
+"         :call g:vimim_mkdir1()
 " ----------------------------- bash
-" vimimmkdir()  { vi -E -n "+call g:vimim_mkdir()"  +x vimim.$1.txt; }
+" vimimmkdir1() { vi -E -n "+call g:vimim_mkdir1()" +x vimim.$1.txt; }
 " vimimmkdir2() { vi -E -n "+call g:vimim_mkdir2()" +x vimim.$1.txt; }
 " vimimmkdir3() { vi -E -n "+call g:vimim_mkdir3()" +x vimim.$1.txt; }
 " -----------------------------
@@ -4170,6 +4170,15 @@ function! s:vimim_mkdir(option)
         endif
         let key_as_filename = dir . "/" . key
         let chinese_list = entries[1:]
+        " ----------------------------------------
+        " keep line as is, for unihan definition
+        " u99ac $ 馬 horse; surname; KangXi radical 187
+        let one_line_mark = get(entries, 1)
+        if match(one_line_mark, "$") > -1
+            let chinese_list = [join(entries[2:])]
+            let one_line_mark = 123456789
+        endif
+        " ----------------------------------------
         let first_list = []
         let second_list = []
         if filereadable(key_as_filename)
@@ -4187,7 +4196,11 @@ function! s:vimim_mkdir(option)
             call extend(first_list, second_list)
             let chinese_list = first_list
         endif
-        let results = s:vimim_remove_duplication(chinese_list)
+        if one_line_mark == 123456789
+            let results = chinese_list
+        else
+            let results = s:vimim_remove_duplication(chinese_list)
+        endif
         if !empty(results)
             call writefile(results, key_as_filename)
         endif
