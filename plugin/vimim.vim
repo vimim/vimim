@@ -175,6 +175,7 @@ function! s:vimim_initialize_session()
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
     " --------------------------------
+    let s:pumvisible_hjkl_h = 0
     let s:www_libcall = 0
     let s:www_executable = 0
     let s:vimim_cloud_plugin = 0
@@ -1316,7 +1317,7 @@ function! <SID>vimim_hjkl(key)
             let s:pumvisible_hjkl_h = 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'l'
-            let s:pumvisible_hjkl_h = 2
+            let s:pumvisible_hjkl_h = -1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'r'
             let s:pumvisible_reverse += 1
@@ -1560,55 +1561,6 @@ function! g:vimim_slash_search()
     sil!exe 'sil!return "' . slash . '"'
 endfunction
 
-" ------------------------ TODO
-function! g:vimim_hjkl_h()
-" ------------------------
-    return s:vimim_hjkl_hl("h")
-endfunction
-
-" ------------------------
-function! g:vimim_hjkl_l()
-" ------------------------
-    return s:vimim_hjkl_hl("l")
-endfunction
-
-" ---------------------------- TODO
-function! s:vimim_hjkl_hl(key)
-" ----------------------------
-    let bracket = a:key
-    if pumvisible()
-        let i = -1
-        let left = ""
-        let right = ""
-        if bracket == "l"
-            let i = 0
-            let left = "\<Left>"
-            let right = "\<Right>"
-        endif
-        let backspace = '\<C-R>=g:vimim_hjkl_backspace('.i.')\<CR>'
-        let yes = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
-        let bracket = yes . left . backspace . right
-    endif
-    sil!exe 'sil!return "' . bracket . '"'
-endfunction
-
-" --------------------------------------
-function! g:vimim_hjkl_backspace(offset)
-" --------------------------------------
-    let column_end = col('.')-1
-    let column_start = s:start_column_before
-    let range = column_end - column_start
-    let repeat_times = range/s:multibyte
-    let repeat_times += a:offset
-    let row_end = line('.')
-    let row_start = s:start_row_before
-    let delete_char = ""
-    if repeat_times > 0 && row_end == row_start
-        let delete_char = repeat("\<BS>", repeat_times)
-    endif
-    return delete_char
-endfunction
-
 " ------------------------------
 function! g:vimim_left_bracket()
 " ------------------------------
@@ -1704,6 +1656,7 @@ function! <SID>vimim_smart_enter()
         let s:pattern_not_found = 0
         let s:seamless_positions = getpos(".")
         let s:keyboard_leading_zero = 0
+        let s:keyboard_head = 0
     else
         if s:smart_enter == 2
             let key = " "
@@ -1924,6 +1877,7 @@ function! s:vimim_build_popupmenu(matched_list)
                 endif
                 if tail =~ '\w'
                     let chinese .=  tail
+                    let s:keyboard_head = strpart(keyboard, 0, len(menu))
                 endif
             endif
         else
@@ -2010,6 +1964,7 @@ function! <SID>vimim_set_seamless()
 " ---------------------------------
     let s:seamless_positions = getpos(".")
     let s:keyboard_leading_zero = 0
+    let s:keyboard_head = 0
     return ""
 endfunction
 
@@ -4072,6 +4027,15 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         endif
     endif
     " ----------------------------------------
+    if !empty(s:keyboard_head)
+        if s:pumvisible_hjkl_h > 0
+            let s:pumvisible_hjkl_h = 0
+            let keyboard = strpart(s:keyboard_head,0,len(s:keyboard_head)-1)
+        elseif s:pumvisible_hjkl_h < 0
+            let s:keyboard_head = 0
+        endif
+    endif
+    " ----------------------------------------
     let key = ''
     let max = len(keyboard)
     while max > 2 && len(keyboard) > 1
@@ -4087,7 +4051,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     " ----------------------------------------
     let filename = dir . '/' . key
     if filereadable(filename)
-        let blocks = s:vimim_get_sentence_blocks(keyboard, max)
+        let blocks = s:vimim_get_sentence_blocks(a:keyboard, max)
     endif
     return blocks
 endfunction
@@ -5117,8 +5081,9 @@ endfunction
 function! g:reset_after_auto_insert()
 " -----------------------------------
     let s:keyboard_leading_zero = 0
-    let s:keyboard_shuangpin = 0
+    let s:keyboard_head = 0
     let s:keyboard_wubi = ''
+    let s:keyboard_shuangpin = 0
     let s:one_key_correction = 0
     return ''
 endfunction
@@ -5340,11 +5305,9 @@ else
                 let s:pumvisible_reverse = 0
                 let results = reverse(results)
             endif
-            if s:pumvisible_hjkl_h > 0
-                let s:pumvisible_hjkl_h = 0
-                let results = reverse(results)
+            if empty(s:pumvisible_hjkl_h)
+                return s:vimim_popupmenu_list(results)
             endif
-            return s:vimim_popupmenu_list(results)
         endif
     endif
 
