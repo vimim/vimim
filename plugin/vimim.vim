@@ -247,8 +247,14 @@ function! s:vimim_finalize_session()
     if s:input_method =~# '^\d\w\+'
     \&& empty(get(s:im['pinyin'],0))
         let s:only_4corner_or_12345 = 1
-        let s:vimim_static_input_style = 1
     endif
+    if !empty(s:only_4corner_or_12345)
+        let s:input_method = '4corner'
+        let s:vimim_static_input_style = 1
+        let s:im['4corner'][0] = 1
+        let s:im['pinyin'][0] = 0
+    endif
+    " ------------------------------
 endfunction
 
 " ------------------------------------
@@ -3893,9 +3899,6 @@ function! s:vimim_scan_plugin_data_directory()
             let s:im['4corner'][0] = 1
         else
             let s:only_4corner_or_12345 = 1
-            let s:input_method = '4corner'
-            let s:im['4corner'][0] = 1
-            let s:im['pinyin'][0] = 0
         endif
     endif
     " ------------------------------------
