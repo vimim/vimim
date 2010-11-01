@@ -1308,14 +1308,16 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
-        elseif a:key == 'h'
-            let hjkl  = '\<C-R>=g:vimim_hjkl_h()\<CR>'
-        elseif a:key == 'l'
-            let hjkl  = '\<C-R>=g:vimim_hjkl_l()\<CR>'
         elseif a:key == 'y'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
         elseif a:key == 'z'
             let hjkl = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        elseif a:key == 'h'
+            let s:pumvisible_hjkl_h = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == 'l'
+            let s:pumvisible_hjkl_h = 2
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'r'
             let s:pumvisible_reverse += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
@@ -1558,16 +1560,53 @@ function! g:vimim_slash_search()
     sil!exe 'sil!return "' . slash . '"'
 endfunction
 
-" ------------------------------
+" ------------------------ TODO
 function! g:vimim_hjkl_h()
-" ------------------------------
-    return s:vimim_hjkl_l("[")
+" ------------------------
+    return s:vimim_hjkl_hl("h")
 endfunction
 
-" ------------------------------
+" ------------------------
 function! g:vimim_hjkl_l()
-" ------------------------------
-    return s:vimim_square_bracket("[")
+" ------------------------
+    return s:vimim_hjkl_hl("l")
+endfunction
+
+" ---------------------------- TODO
+function! s:vimim_hjkl_hl(key)
+" ----------------------------
+    let bracket = a:key
+    if pumvisible()
+        let i = -1
+        let left = ""
+        let right = ""
+        if bracket == "l"
+            let i = 0
+            let left = "\<Left>"
+            let right = "\<Right>"
+        endif
+        let backspace = '\<C-R>=g:vimim_hjkl_backspace('.i.')\<CR>'
+        let yes = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
+        let bracket = yes . left . backspace . right
+    endif
+    sil!exe 'sil!return "' . bracket . '"'
+endfunction
+
+" --------------------------------------
+function! g:vimim_hjkl_backspace(offset)
+" --------------------------------------
+    let column_end = col('.')-1
+    let column_start = s:start_column_before
+    let range = column_end - column_start
+    let repeat_times = range/s:multibyte
+    let repeat_times += a:offset
+    let row_end = line('.')
+    let row_start = s:start_row_before
+    let delete_char = ""
+    if repeat_times > 0 && row_end == row_start
+        let delete_char = repeat("\<BS>", repeat_times)
+    endif
+    return delete_char
 endfunction
 
 " ------------------------------
@@ -5055,6 +5094,7 @@ function! s:reset_before_anything()
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
     let s:pumvisible_reverse = 0
+    let s:pumvisible_hjkl_h = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
@@ -5298,6 +5338,10 @@ else
         else
             if s:pumvisible_reverse > 0
                 let s:pumvisible_reverse = 0
+                let results = reverse(results)
+            endif
+            if s:pumvisible_hjkl_h > 0
+                let s:pumvisible_hjkl_h = 0
                 let results = reverse(results)
             endif
             return s:vimim_popupmenu_list(results)
