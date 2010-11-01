@@ -738,7 +738,7 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_start()
     sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_navigation_label_on()
-    sil!call s:vimim_action_label_on()
+    sil!call s:vimim_abcdefg_label_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
     sil!call s:vimim_onekey_autocmd()
@@ -1222,28 +1222,28 @@ let VimIM = " ====  User_Interface   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" --------------------------
-function! s:vimim_label_on()
-" --------------------------
+" -----------------------------------
+function! s:vimim_12345678_label_on()
+" -----------------------------------
     if s:vimim_custom_menu_label < 1
         return
     endif
     " ----------------------
     let labels = range(8)
-    if &pumheight > 0 && &pumheight != 8
+    if &pumheight > 0
         let labels = range(1, &pumheight)
     endif
     " ----------------------
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_label("'._.'")<CR>'
+        \  <C-R>=<SID>vimim_12345678_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
 endfunction
 
-" ---------------------------
-function! <SID>vimim_label(n)
-" ---------------------------
+" ------------------------------------
+function! <SID>vimim_12345678_label(n)
+" ------------------------------------
     let label = a:n
     let n = a:n
     if a:n !~ '\d'
@@ -1260,23 +1260,23 @@ function! <SID>vimim_label(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
-" ---------------------------------
-function! s:vimim_action_label_on()
-" ---------------------------------
+" ----------------------------------
+function! s:vimim_abcdefg_label_on()
+" ----------------------------------
     if s:vimim_custom_menu_label < 1
         return
     endif
     let labels = split(s:abcdefg, '\zs')
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_action_label("'._.'")<CR>'
+        \  <C-R>=<SID>vimim_abcdefg_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
 endfunction
 
-" ----------------------------------
-function! <SID>vimim_action_label(n)
-" ----------------------------------
+" -----------------------------------
+function! <SID>vimim_abcdefg_label(n)
+" -----------------------------------
     let label = a:n
     if pumvisible()
         let n = match(s:abcdefg, label)
@@ -1885,9 +1885,6 @@ function! s:vimim_build_popupmenu(matched_list)
         " -------------------------------------------------
         let labeling = label
         if s:vimim_custom_menu_label > 0
-            if label == 8
-                let labeling = 0
-            endif
             if label < &pumheight+1
             \&& (empty(s:chinese_input_mode)
             \|| s:chinese_input_mode=~ 'onekey')
@@ -1897,7 +1894,8 @@ function! s:vimim_build_popupmenu(matched_list)
                     let label2 = "_"
                 endif
                 " -----------------------------------------
-                if s:pinyin_and_4corner > 0 && empty(s:vimim_cloud_plugin)
+                if s:pinyin_and_4corner > 0 
+                \&& empty(s:vimim_cloud_plugin)
                     let labeling = label2
                 else
                     let labeling .= label2
@@ -2371,6 +2369,13 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
      "          ma3  li4    --  pinyin
      "          马   力
      "          ml 马力     --  cjjp
+     " -------------------------------------
+     " [condition] one file per unicode, eg:
+     " $cat s:data_directory_unihan/u9a6c
+     " 
+     " 
+     " 
+     " 
      " -------------------------------------
     let keyboard = a:keyboard
     if empty(keyboard)
@@ -3876,6 +3881,8 @@ function! s:vimim_scan_plugin_data_directory()
             continue
         elseif directory =~# '^pinyin'
             let s:data_directory_pinyin = dir
+            let s:input_method = 'pinyin'
+            let s:im['pinyin'][0] = 1
         elseif directory =~# '^\d'
             let s:data_directory_4corner = dir
         elseif directory =~# 'unihan'
@@ -3888,9 +3895,7 @@ function! s:vimim_scan_plugin_data_directory()
     if len(s:data_directory_4corner) > 1
         if len(s:data_directory_pinyin) > 1
             let s:pinyin_and_4corner = 1
-            let s:input_method = 'pinyin'
             let s:im['4corner'][0] = 1
-            let s:im['pinyin'][0] = 1
         else
             let s:only_4corner_or_12345 = 1
             let s:input_method = '4corner'
@@ -4144,6 +4149,7 @@ function! s:vimim_mkdir(option)
 " Goal: creating directory xxx and adding files, based on vimim.xxx.txt
 " Sample file A: $VIM/vimfiles/plugin/vimim/4corner/7132
 " Sample file B: $VIM/vimfiles/plugin/vimim/pinyin/jjjj
+" Sample file C: $VIM/vimfiles/plugin/vimim/unihan/u808f
 " ----------------------------- vim
 " Example: one   input: vimim.pinyin.txt  (the master file)
 "          many output: pinyin/ma3        (one sample slave file)
@@ -4171,13 +4177,9 @@ function! s:vimim_mkdir(option)
         let key_as_filename = dir . "/" . key
         let chinese_list = entries[1:]
         " ----------------------------------------
-        " keep line as is, for unihan definition
-        " u99ac $ 馬 horse; surname; KangXi radical 187
-        let one_line_mark = get(entries, 1)
-        if match(one_line_mark, "$") > -1
-            let chinese_list = [join(entries[2:])]
-            let one_line_mark = 123456789
-        endif
+        " u99ac 7132
+        " u99ac ma3
+        " u99ac 馬 horse; surname; KangXi radical 187
         " ----------------------------------------
         let first_list = []
         let second_list = []
@@ -4194,13 +4196,9 @@ function! s:vimim_mkdir(option)
                 let option = 'append'
             endif
             call extend(first_list, second_list)
-            let chinese_list = first_list
+            let chinese_list = copy(first_list)
         endif
-        if one_line_mark == 123456789
-            let results = chinese_list
-        else
-            let results = s:vimim_remove_duplication(chinese_list)
-        endif
+        let results = s:vimim_remove_duplication(chinese_list)
         if !empty(results)
             call writefile(results, key_as_filename)
         endif
@@ -5046,7 +5044,7 @@ function! s:vimim_start()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_i_cursor_color(1)
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_label_on()
+    sil!call s:vimim_12345678_label_on()
     sil!call s:vimim_load_datafile()
 endfunction
 
@@ -5348,7 +5346,7 @@ else
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
     if s:vimim_internal_code_input > 0
-        let msg = "usage: u808f<C-6> 32911<C-6> 32910<C-6>"
+        let msg = " usage: u808f<C-6> 32911<C-6>  32910<C-6> "
         let results = s:vimim_internal_code(keyboard)
         if len(results) > 0
             let s:unicode_menu_display_flag = 1
