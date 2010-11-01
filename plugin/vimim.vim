@@ -53,7 +53,7 @@ let VimIM = " ====  Introduction     ==== {{{"
 "            * Support "non-stop-typing" for Wubi, 4Corner & Telegraph
 "            * The "OneKey" can input Chinese without mode change.
 "            * The "static"  Chinese Input Mode smooths mixture input.
-"            * The "dynamic" Chinese Input Mode uses sexy input style.
+"            * The "dynamic" Chinese Input Mode uses natural input style.
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
@@ -175,7 +175,6 @@ function! s:vimim_initialize_session()
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
     " --------------------------------
-    let s:pumvisible_hjkl_h = 0
     let s:www_libcall = 0
     let s:www_executable = 0
     let s:vimim_cloud_plugin = 0
@@ -452,7 +451,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_reverse_pageup_pagedown")
-    call add(G, "g:vimim_sexy_input_style")
+    call add(G, "g:vimim_fancy_input_style")
     call add(G, "g:vimim_shuangpin_abc")
     call add(G, "g:vimim_shuangpin_microsoft")
     call add(G, "g:vimim_shuangpin_nature")
@@ -623,7 +622,7 @@ function! s:vimim_egg_vimim()
     let dynamic = s:vimim_get_chinese('dynamic')
     let static = s:vimim_get_chinese('static')
     let toggle = "i_CTRL-Bslash"
-    if hasmapto('<Plug>VimimSexymode', 'i')
+    if hasmapto('<Plug>VimIMOneKeyMode', 'i')
         let toggle = "i_CTRL-Space"
     endif
     if option < 1
@@ -631,7 +630,7 @@ function! s:vimim_egg_vimim()
     elseif option == 1
         let classic .= static
     elseif option == 2
-        let classic = "VimIM " . static
+        let classic = "VimIM OneKey " . static
     endif
     let toggle .= "　"
     let style = s:vimim_get_chinese('style')
@@ -705,7 +704,7 @@ endfunction
 function! s:vimim_easter_chicken(keyboard)
 " ----------------------------------------
     if empty(s:chinese_input_mode)
-    \|| s:chinese_input_mode =~ 'sexy'
+    \|| s:chinese_input_mode =~ 'onekey'
         let msg = "easter eggs hidden in OneKey only"
     else
         return
@@ -742,7 +741,7 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_action_label_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
-    sil!call s:vimim_sexy_autocmd()
+    sil!call s:vimim_onekey_autocmd()
     " ----------------------------------------------------------
     " default <OneKey> triple play
     "   (1) after English (valid keys)   => trigger omni popup
@@ -755,7 +754,7 @@ function! s:vimim_start_onekey()
 endfunction
 
 " ------------------------------
-function! s:vimim_sexy_autocmd()
+function! s:vimim_onekey_autocmd()
 " ------------------------------
     if s:vimim_static_input_style==2 && has("autocmd")
         augroup onekey_mode_autocmd
@@ -767,10 +766,10 @@ function! s:vimim_sexy_autocmd()
     endif
 endfunction
 
-" --------------------------------
-function! s:vimim_stop_sexy_mode()
-" --------------------------------
-    if s:chinese_input_mode =~ 'sexy'
+" ----------------------------------
+function! s:vimim_stop_onekey_mode()
+" ----------------------------------
+    if s:chinese_input_mode =~ 'onekey'
         set ruler
         let s:chinese_mode_switch = 1
         if s:vimim_auto_copy_clipboard>0 && has("gui_running")
@@ -779,12 +778,12 @@ function! s:vimim_stop_sexy_mode()
     endif
 endfunction
 
-" -----------------------
-function! <SID>Sexymode()
-" -----------------------
-" sexy <OneKey> double play
-"  (1) <OneKey> => start sexy OneKey mode and start to play
-"  (2) <OneKey> => stop  sexy OneKey mode and stop to play
+" -------------------------
+function! <SID>OneKeymode()
+" -------------------------
+" VimIM <OneKey> mode double play
+"  (1) <OneKey> => start OneKey mode and start to play
+"  (2) <OneKey> => stop  OneKey mode and stop to play
 " ----------------------------------------------------------
     if pumvisible()
         let msg = "<C-\> does nothing over omni menu"
@@ -793,7 +792,7 @@ function! <SID>Sexymode()
         if empty(s:chinese_mode_switch%2)
             sil!call s:vimim_start_onekey()
             set noruler
-            let s:chinese_input_mode = 'sexy'
+            let s:chinese_input_mode = 'onekey'
             sil!return s:vimim_onekey_action("")
         else
             call s:vimim_stop()
@@ -868,7 +867,7 @@ function! s:vimim_onekey_action(onekey)
             let msg = "transform punctuation from english to chinese"
             let replacement = s:punctuations[byte_before]
             if s:vimim_static_input_style == 2
-                let msg = " play sexy quote in sexy mode "
+                let msg = " play smart quote in onekey static mode "
                 if byte_before ==# "'"
                     let replacement = <SID>vimim_get_single_quote()
                 elseif byte_before ==# '"'
@@ -956,7 +955,7 @@ call add(s:vimims, VimIM)
 " s:chinese_input_mode=0         => (default) OneKey: hit-and-run
 " s:chinese_input_mode='dynamic' => (default) classic dynamic mode
 " s:chinese_input_mode='static'  => let g:vimim_static_input_style = 1
-" s:chinese_input_mode='sexy'    => let g:vimim_static_input_style = 2
+" s:chinese_input_mode='onekey'  => let g:vimim_static_input_style = 2
 " -------------------------------------------
 
 " --------------------------
@@ -1372,7 +1371,7 @@ function! g:vimim_one_key_correction()
     call s:reset_matched_list()
     " --------------------------------
     if empty(s:chinese_input_mode)
-    \|| s:chinese_input_mode=~ 'sexy'
+    \|| s:chinese_input_mode=~ 'onekey'
         call s:vimim_stop()
     else
         let byte_before = getline(".")[col(".")-2]
@@ -1489,7 +1488,7 @@ function! g:vimim_ctrl_x_ctrl_u()
         if s:chinese_input_mode =~ 'dynamic'
             call g:reset_after_auto_insert()
         endif
-        if empty(s:vimim_sexy_input_style)
+        if empty(s:vimim_fancy_input_style)
             let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
         endif
     else
@@ -1891,7 +1890,7 @@ function! s:vimim_build_popupmenu(matched_list)
             endif
             if label < &pumheight+1
             \&& (empty(s:chinese_input_mode)
-            \|| s:chinese_input_mode=~ 'sexy')
+            \|| s:chinese_input_mode=~ 'onekey')
                 " -----------------------------------------
                 let label2 = s:abcdefg[label-1 : label-1]
                 if label < 2
@@ -4005,7 +4004,11 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     " ----------------------------------------
     let filename = dir . '/' . keyboard
     if filereadable(filename)
-        return [keyboard]
+        if s:pumvisible_hjkl_h > 0
+            let s:keyboard_head = keyboard
+        else
+            return [keyboard]
+        endif
     endif
     let blocks = []
     " ----------------------------------------
@@ -4017,7 +4020,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         endif
     endif
     " ----------------------------------------
-    if len(s:data_directory_wubi) > 1 
+    if len(s:data_directory_wubi) > 1
     \&& s:chinese_input_mode !~ 'dynamic'
     \&& im =~ 'wubi'
         if len(keyboard) > 4
@@ -4027,18 +4030,25 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         endif
     endif
     " ----------------------------------------
-    if !empty(s:keyboard_head)
+    if empty(s:keyboard_head)
+        let msg = 'h or l was not typed on omni popup menu'
+    else
         if s:pumvisible_hjkl_h > 0
             let s:pumvisible_hjkl_h = 0
+            " for pinyin, works best if using vimim_get_pinyin_from_pinyin()
             let keyboard = strpart(s:keyboard_head,0,len(s:keyboard_head)-1)
         elseif s:pumvisible_hjkl_h < 0
             let s:keyboard_head = 0
         endif
     endif
     " ----------------------------------------
-    let key = ''
+    let key = keyboard
     let max = len(keyboard)
-    while max > 2 && len(keyboard) > 1
+    let minimum_match = 1
+    if s:pumvisible_hjkl_h > 0
+        let minimum_match = 0
+    endif
+    while max > minimum_match
         let max -= 1
         let key = strpart(keyboard, 0, max)
         let filename = dir . '/' . key
@@ -5032,7 +5042,7 @@ function! s:vimim_stop()
 " ----------------------
     sil!autocmd! onekey_mode_autocmd
     sil!autocmd! chinese_mode_autocmd
-    sil!call s:vimim_stop_sexy_mode()
+    sil!call s:vimim_stop_onekey_mode()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_i_cursor_color(0)
     sil!call s:vimim_super_reset()
@@ -5300,14 +5310,10 @@ else
         let results = s:popupmenu_matched_list
         if empty(results)
             let msg = "no popup matched list; let us build it"
-        else
-            if s:pumvisible_reverse > 0
-                let s:pumvisible_reverse = 0
-                let results = reverse(results)
-            endif
-            if empty(s:pumvisible_hjkl_h)
-                return s:vimim_popupmenu_list(results)
-            endif
+        elseif s:pumvisible_reverse > 0
+            let s:pumvisible_reverse = 0
+            let results = reverse(results)
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
@@ -5361,7 +5367,7 @@ else
     " -------------------------------------------------
     if s:vimim_imode_universal > 0
     \&& keyboard =~# "^'"
-    \&& (empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'sexy')
+    \&& (empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'onekey')
         let msg = "usage: '88<C-6> ''88<C-6> '1g<C-6> 'sw8ql "
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
         if len(chinese_numbers) > 0
@@ -5520,7 +5526,7 @@ function! s:vimim_initialize_mapping()
 " ------------------------------------
     sil!call s:vimim_visual_mapping_on()
     sil!call s:vimim_chinese_mode_mapping_on()
-    sil!call s:vimim_sexy_mode_mapping_on()
+    sil!call s:vimim_onekey_mode_mapping_on()
     sil!call s:vimim_ctrl_space_mapping_on()
     sil!call s:vimim_onekey_mapping_on()
 endfunction
@@ -5547,18 +5553,18 @@ function! s:vimim_chinese_mode_mapping_on()
     vmap <silent> <C-Bslash> :call <SID>Chinesemode()<CR>gv
 endfunction
 
-" --------------------------------------
-function! s:vimim_sexy_mode_mapping_on()
-" --------------------------------------
+" ----------------------------------------
+function! s:vimim_onekey_mode_mapping_on()
+" ----------------------------------------
     if s:vimim_static_input_style != 2
         return
     endif
-    if !hasmapto('<Plug>VimimSexymode', 'i')
-        inoremap <unique> <expr> <Plug>VimimSexymode <SID>Sexymode()
+    if !hasmapto('<Plug>VimIMOneKeyMode', 'i')
+        inoremap <unique> <expr> <Plug>VimIMOneKeyMode <SID>OneKeymode()
     endif
     if s:vimim_ctrl_space_to_toggle < 2
-           imap <silent> <C-Bslash> <Plug>VimimSexymode
-        noremap <silent> <C-Bslash> :call <SID>Sexymode()<CR>
+           imap <silent> <C-Bslash> <Plug>VimIMOneKeyMode
+        noremap <silent> <C-Bslash> :call <SID>OneKeymode()<CR>
     endif
 endfunction
 
@@ -5575,9 +5581,9 @@ function! s:vimim_ctrl_space_mapping_on()
         endif
     elseif s:vimim_ctrl_space_to_toggle == 2
         if has("gui_running")
-            imap <silent> <C-Space> <Plug>VimimSexymode
+            imap <silent> <C-Space> <Plug>VimIMOneKeyMode
         elseif has("win32unix")
-            imap <silent> <C-@> <Plug>VimimSexymode
+            imap <silent> <C-@> <Plug>VimIMOneKeyMode
         endif
     endif
 endfunction
