@@ -159,6 +159,7 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_start_omni()
     sil!call s:vimim_super_reset()
     " --------------------------------
+    let s:sqlite = 0
     let s:datafile = 0
     let s:datafile_has_dot = 0
     let s:lines = []
@@ -3594,10 +3595,15 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_scan_plugin_datafile()
 " --------------------------------------
+    let datafile = s:path . "vimim.sqlite"
+    if filereadable(datafile)
+        let s:sqlite = datafile
+        return
+    endif
+    " -----------------------------------
     if s:vimim_debug > 8 || !empty(s:datafile)
         return
     endif
-    let datafile = 0
     let all_input_methods = []
     " -----------------------------------
     call add(all_input_methods, "pinyin")
