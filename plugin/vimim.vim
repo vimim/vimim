@@ -3797,19 +3797,20 @@ function! s:vimim_sentence_match_datafile(lines, keyboard)
 " --------------------------------------------------------
     let keyboard = a:keyboard
     if empty(a:lines)
-    \|| s:chinese_input_mode =~ 'dynamic'
     \|| get(s:im['pinyin'],0) < 1
-    \|| keyboard =~ '\d'
-    \|| len(keyboard) < 5
+    \|| s:chinese_input_mode =~ 'dynamic'
         return []
     endif
-    let pattern = '^\<' . keyboard . '\>'
     let match_start = -1
+    let minimum_match = 1
+    let keyboard = s:vimim_get_matched_sentence_head(keyboard)
     let max = len(keyboard)
-    " [sentence input]: break up long whole sentence
-    " word matching algorithm for Chinese word segmentation
-    " -----------------------------------------------------
-    while max > 2 && len(keyboard) > 1
+    if s:pumvisible_hjkl_h > 0
+        let minimum_match = 0
+    endif
+    " word matching algorithm for Chinese segmentation
+    " ------------------------------------------------
+    while max > minimum_match
         let max -= 1
         let break_at = max
         let block = strpart(keyboard, 0, break_at)
@@ -3821,10 +3822,10 @@ function! s:vimim_sentence_match_datafile(lines, keyboard)
             break
         endif
     endwhile
-    " -------------------------------------------
+    " ----------------------------------------
     let blocks = []
     if match_start > 0
-        let blocks = s:vimim_get_sentence_blocks(keyboard, max)
+        let blocks = s:vimim_get_sentence_blocks(a:keyboard, max)
     endif
     return blocks
 endfunction
@@ -4004,8 +4005,8 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         return []
     endif
     let dir = s:vimim_get_data_directory(im)
-    " ----------------------------------------
     let filename = dir . '/' . keyboard
+    " ----------------------------------------
     if filereadable(filename)
         if s:pumvisible_hjkl_h > 0
             let s:keyboard_head = keyboard
@@ -4013,8 +4014,8 @@ function! s:vimim_sentence_match_directory(keyboard, im)
             return [keyboard]
         endif
     endif
-    let blocks = []
     " ----------------------------------------
+    let blocks = []
     if len(s:data_directory_4corner) > 1
         if len(keyboard) > 4 && keyboard =~ '\d\d\d\d'
             return s:vimim_break_every_four(keyboard)
@@ -4033,22 +4034,14 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         endif
     endif
     " ----------------------------------------
-    if empty(s:keyboard_head)
-        let msg = 'h was not typed on omni popup menu'
-    else
-        if s:pumvisible_hjkl_h > 0
-            let s:pumvisible_hjkl_h = 0
-            " for pinyin, works best if using vimim_get_pinyin_from_pinyin()
-            let keyboard = strpart(s:keyboard_head,0,len(s:keyboard_head)-1)
-        endif
-    endif
-    " ----------------------------------------
+    let keyboard = s:vimim_get_matched_sentence_head(keyboard)
     let key = keyboard
     let max = len(keyboard)
     let minimum_match = 1
     if s:pumvisible_hjkl_h > 0
         let minimum_match = 0
     endif
+    " ----------------------------------------
     while max > minimum_match
         let max -= 1
         let key = strpart(keyboard, 0, max)
@@ -4065,6 +4058,22 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         let blocks = s:vimim_get_sentence_blocks(a:keyboard, max)
     endif
     return blocks
+endfunction
+
+" ---------------------------------------------------
+function! s:vimim_get_matched_sentence_head(keyboard)
+" ---------------------------------------------------
+    let keyboard = a:keyboard
+    if empty(s:keyboard_head)
+        let msg = 'h was not typed on omni popup menu'
+    else
+        if s:pumvisible_hjkl_h > 0
+            let s:pumvisible_hjkl_h = 0
+            " for pinyin, works best if using vimim_get_pinyin_from_pinyin()
+            let keyboard = strpart(s:keyboard_head,0,len(s:keyboard_head)-1)
+        endif
+    endif
+    return keyboard
 endfunction
 
 " ---------------------------------------------
@@ -5471,13 +5480,16 @@ else
     let match_start = match(s:lines, pattern)
 
     " sentence match for datafile only
-    " ----------------------------------------------
+    " --------------------------------
     if match_start < 0 && empty(clouds)
         let keyboards = s:vimim_sentence_match_datafile(s:lines, keyboard)
         if empty(keyboards)
             let msg = "sell the keyboard as is, without modification"
         else
             let keyboard = get(keyboards, 0)
+            if s:pumvisible_hjkl_h > 0
+                let s:keyboard_head = keyboard
+            endif
             let pattern = "\\C" . "^" . keyboard
             let match_start = match(s:lines, pattern)
         endif
