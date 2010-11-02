@@ -100,8 +100,6 @@ call add(s:vimims, VimIM)
 " # (3) [option] drop a directory: plugin/vimim/pinyin/
 
 " ======================================= }}}
-
-" ======================================= }}}
 let VimIM = " ====  Initialization   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
