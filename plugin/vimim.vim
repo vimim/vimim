@@ -1398,7 +1398,6 @@ function! g:vimim_pumvisible_p_paste()
     let pastes = []
     let title = s:keyboard_leading_zero . " =>"
     let words = [title]
-    let msg = "resever ii/oo/vv for pretty print "
     if title =~ s:show_me_not_pattern
         let words = []
     endif
@@ -1865,6 +1864,7 @@ function! s:vimim_build_popupmenu(matched_list)
                 let extra_text = menu.'　'.unicode
             endif
             if extra_text =~ s:show_me_not_pattern
+                let msg = "ignore key starting with ii/oo "
                 let extra_text = ''
             endif
             let complete_items["menu"] = extra_text
