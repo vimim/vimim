@@ -3412,7 +3412,7 @@ function! s:vimim_egg_vimimunicode()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Backend_GBK      ==== {{{"
+let VimIM = " ====  Backend==GBK     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3554,7 +3554,7 @@ function! s:vimim_without_backend(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Backend_BIG5     ==== {{{"
+let VimIM = " ====  Backend==BIG5    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3586,7 +3586,7 @@ function! BIG5()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Backend_FILE     ==== {{{"
+let VimIM = " ====  Backend==FILE    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3835,7 +3835,7 @@ function! s:vimim_load_datafile()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Backend_DIR      ==== {{{"
+let VimIM = " ====  Backend==DIR     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4227,7 +4227,7 @@ function! s:vimim_remove_duplication(chinese)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Backend__Cloud   ==== {{{"
+let VimIM = " ====  Backend=>Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4485,7 +4485,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Backend__myCloud ==== {{{"
+let VimIM = " ====  Backend=>myCloud ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
