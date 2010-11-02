@@ -30,7 +30,7 @@ let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html    "]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
 " -----------------------------------------------------------------
 
-let VimIM = " ====  Vim Input Method ==== {{{"
+let VimIM = " ====  Introduction     ==== {{{"
 " ===========================================
 "       File: vimim.vim
 "     Author: vimim <vimim@googlegroups.com>
@@ -41,63 +41,72 @@ let VimIM = " ====  Vim Input Method ==== {{{"
 "            (Input Method) to support the input of multi-byte.
 "            VimIM aims to complete the Vim as the greatest editor.
 " -----------------------------------------------------------
-"  Features: * "Plug & Play": as a client to "myCloud" and "Cloud"
-"            * "Plug & Play": as a client to VimIM backend engine
-"            * support internal code input: "UNICODE", "GBK", "Big5"
-"            * support "pinyin" including 6 "shuangpin"
-"            * support "4Corner" standalone or as a filter to "pinyin"
-"            * Support "wubi", "boshiamy", "Cang Jie", "Erbi", etc
-"            * Support "Chinese search" using search key '/' or '?'
-"            * Support popup menu navigation using "hjkl"
+"  Features: * "Plug & Play": as a client to "Cloud Input"
+"            * "Plug & Play": as a client to "myCloud"
+"            * "Plug & Play": pinyin (quanpin plus 6 Shuangpin)
+"            * "Plug & Play": Pinyin and 4Corner in harmony
+"            * Play "UNICODE input" using integer or hex
+"            * Play "GBK input" and "Big5 input"
+"            * Support "boshiamy", "Cang Jie", "Erbi", etc
+"            * Support "Chinese search" using search key '/' or '?'.
+"            * Support popup menu navigation using "vi key" (hjkl)
+"            * Support "non-stop-typing" for Wubi, 4Corner & Telegraph
+"            * The "OneKey" can input Chinese without mode change.
+"            * The "static"  Chinese Input Mode smooths mixture input.
+"            * The "dynamic" Chinese Input Mode uses natural input style.
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
+" -----------------------------------------------------------
+" Install:   (1) drop this file to plugin:  plugin/vimim.vim
+"            (2) [option] drop a datafile:  plugin/vimim.pinyin.txt
+"            (3) [option] drop a directory: plugin/vimim/pinyin/
+" -----------------------------------------------------------
+" Usage (1): [in Insert Mode] "to insert/search Chinese ad hoc":
+"            # to insert: type keycode and hit <C-6> to trigger
+"            # to search: hit '/' or '?' from popup menu
+" Usage (2): [in Insert Mode] "to type Chinese continuously":
+"            # hit <C-Bslash> to toggle to Chinese Input Mode:
+"            # type any valid keycode and enjoy
 " -----------------------------------------------------------
 
 let s:vimims = [VimIM]
 " ======================================= }}}
-let VimIM = " ====  Introduction     ==== {{{"
+let VimIM = " ====  Instruction      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -------------------
-" "VimIM Design Goal"
-" -------------------
-" # Chinese can be input using Vim regardless of encoding
-" # Chinese can be input using Vim without local datafile
-" # No negative impact to Vim when VimIM is not used
-" # No compromise for high speed and low memory usage
-" # Most VimIM options are activated based on input methods
-" # All  VimIM options can be explicitly disabled at will
-
-" --------------------
-" "VimIM Front End UI"
-" --------------------
-" # VimIM "OneKey": can input Chinese without mode change.
+" -----------------
+" "VimIM Front End"
+" -----------------
+" # VimIM "OneKey", without mode change
 "    - use OneKey to insert multi-byte candidates
 "    - use OneKey to search multi-byte using "/" or "?"
 "    The default key is <C-6> (Vim Insert Mode)
-" # VimIM "Chinese Input Mode":
+" # VimIM "Chinese Input Mode"
 "   - [dynamic_mode] show omni popup menu as one types
 "   - [static_mode]  <Space>=>Chinese  <Enter>=>English
-"   - [onekey_mode] plays hjkl
 "   The default key is <Ctrl-Bslash> (Vim Insert Mode)
 
-" -----------------------
-" "VimIM Back End Engine"
-" -----------------------
-" # (1) [external] myCloud: http://pim-cloud.appspot.com
-" # (2) [external] Cloud:   http://web.pinyin.sogou.com
-" # (3) [internal] VimIM:   http://vimim.googlecode.com
+" ----------------
+" "VimIM Back End"
+" ----------------
+" # (1) myCloud: http://pim-cloud.appspot.com
+" # (2) Cloud:   http://web.pinyin.sogou.com
+" # (3) VimIM:   http://vimim.googlecode.com
 " #     (3.1) internal direct input for Unicode/GBK/Big5
 " #     (3.2) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
 " #     (3.3) a directory: $VIM/vimfiles/plugin/vimim/pinyin/
 
-" --------------------
-" "VimIM Installation"
-" --------------------
-" # (1) drop this file to plugin/: plugin/vimim.vim
-" # (2) [option] drop a datafile:  plugin/vimim.pinyin.txt
-" # (3) [option] drop a directory: plugin/vimim/pinyin/
+" -------------
+" "Design Goal"
+" -------------
+" # Chinese can be input using Vim regardless of encoding
+" # Chinese can be input using Vim without local datafile
+" # Without negative impact to Vim when VimIM is not used
+" # No compromise for high speed and low memory usage
+" # Making the best use of Vim for popular input methods
+" # Most VimIM options are activated based on input methods
+" # All  VimIM options can be explicitly disabled at will
 
 " ======================================= }}}
 let VimIM = " ====  Initialization   ==== {{{"
@@ -150,7 +159,6 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_start_omni()
     sil!call s:vimim_super_reset()
     " --------------------------------
-    let s:sqlite = 0
     let s:datafile = 0
     let s:datafile_has_dot = 0
     let s:lines = []
@@ -158,6 +166,7 @@ function! s:vimim_initialize_session()
     let s:im = {}
     let s:input_method = 0
     " --------------------------------
+    let s:data_directory_unihan = 0
     let s:data_directory_4corner = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_wubi = 0
@@ -1225,13 +1234,12 @@ function! s:vimim_12345678_label_on()
     if s:vimim_custom_menu_label < 1
         return
     endif
-    let default_popup_menu_height = 8
-    " -------------------------------
-    let labels = range(default_popup_menu_height)
+    " ----------------------
+    let labels = range(8)
     if &pumheight > 0
         let labels = range(1, &pumheight)
     endif
-    " -------------------------------
+    " ----------------------
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
         \  <C-R>=<SID>vimim_12345678_label("'._.'")<CR>'
@@ -1855,7 +1863,7 @@ function! s:vimim_build_popupmenu(matched_list)
                 let extra_text = menu.'　'.unicode
             endif
             if extra_text =~ s:show_me_not_pattern
-                let msg = "ignore key starting with ii/oo "
+                let msg = "ignore key starting with ii/oo for beauty "
                 let extra_text = ''
             endif
             let complete_items["menu"] = extra_text
@@ -2357,20 +2365,27 @@ endfunction
 " ------------------------------------------
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
-" [input]  马力
-" [output] 9a6c 529b   --  unicode
-"          马   力
-" ------------------------------------------
-"          7712 4002   --  4corner
-"          马   力
-"          ma3  li4    --  pinyin
-"          马   力
-"          ml 马力     --  cjjp
-" ------------------------------------------ plugin/vimim/unihan/
+     " [input]  马力
+     " [output] 9a6c 529b   --  unicode
+     "          马   力
+     "          7712 4002   --  4corner
+     "          马   力
+     "          ma3  li4    --  pinyin
+     "          马   力
+     "          ml 马力     --  cjjp
+     " -------------------------------------
+     " [condition] one file per unicode, eg:
+     " $cat s:data_directory_unihan/u9a6c
+     "
+     " -------------------------------------
     let keyboard = a:keyboard
-    if empty(keyboard) || empty(s:path2)
+    if empty(keyboard)
+    \|| empty(s:path2)
         return
     endif
+    " --------------------------------
+    call s:vimim_initialization_once()
+    " --------------------------------
     let results = []
     if keyboard !~ '\p'
         let results = s:vimim_reverse_lookup(keyboard)
@@ -2412,8 +2427,7 @@ function! s:vimim_reverse_lookup(chinese)
     let results_4corner = []  " 马力 => 7712 4002
     let result_cjjp = ""      " 马力 => ml
     " ------------------------------------
-    let dir = s:vimim_get_data_directory('unihan')
-    if !empty(dir)
+    if !empty(s:data_directory_unihan)
         let im = '4corner'
         let cache = s:vimim_get_reverse_cache(chinese, im)
         let items = s:vimim_reverse_one_entry(cache, chinese)
@@ -2422,6 +2436,7 @@ function! s:vimim_reverse_lookup(chinese)
         let results_4corner = copy(results)
         " --------------------------------------
         let results = []
+        " --------------------------------------
         let im = 'pinyin'
         let cache = s:vimim_get_reverse_cache(chinese, im)
         let items = s:vimim_reverse_one_entry(cache, chinese)
@@ -2490,7 +2505,8 @@ function! s:vimim_get_reverse_cache(chinese, im)
 " [output] {'馬': '7132', '力': '4002'}
 " ----------------------------------------------
     let chinese = a:chinese
-    if empty(chinese)
+    let dir = s:data_directory_unihan
+    if empty(dir) || empty(chinese)
         return {}
     endif
     let cache = {}
@@ -3101,6 +3117,39 @@ function! s:vimim_shuangpin_flypy(rule)
 endfunction
 
 " ======================================= }}}
+let VimIM = " ====  Input_Erbi       ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" ---------------------------------
+function! s:vimim_initialize_erbi()
+" ---------------------------------
+    if empty(get(s:im['erbi'],0))
+        return
+    endif
+    let s:im['wubi'][0] = 1
+    let s:vimim_punctuation_navigation = -1
+    let s:vimim_wildcard_search = -1
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_first_punctuation_erbi(keyboard)
+" ------------------------------------------------
+    let keyboard = a:keyboard
+    if empty(get(s:im['erbi'],0))
+        return 0
+    endif
+    " [erbi] the first .,/;' is punctuation
+    let chinese_punctuatoin = 0
+    if len(keyboard) == 1
+    \&& keyboard =~ "[.,/;]"
+    \&& has_key(s:punctuations_all, keyboard)
+        let chinese_punctuatoin = s:punctuations_all[keyboard]
+    endif
+    return chinese_punctuatoin
+endfunction
+
+" ======================================= }}}
 let VimIM = " ====  Input_Wubi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
@@ -3180,39 +3229,6 @@ function! s:vimim_wubi_z_as_wildcard(keyboard)
     let pattern = '^' . keyboard . '\>'
     call filter(lines, 'v:val =~ pattern')
     return lines
-endfunction
-
-" ======================================= }}}
-let VimIM = " ====  Input_Misc       ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" ---------------------------------
-function! s:vimim_initialize_erbi()
-" ---------------------------------
-    if empty(get(s:im['erbi'],0))
-        return
-    endif
-    let s:im['wubi'][0] = 1
-    let s:vimim_punctuation_navigation = -1
-    let s:vimim_wildcard_search = -1
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_first_punctuation_erbi(keyboard)
-" ------------------------------------------------
-    let keyboard = a:keyboard
-    if empty(get(s:im['erbi'],0))
-        return 0
-    endif
-    " [erbi] the first .,/;' is punctuation
-    let chinese_punctuatoin = 0
-    if len(keyboard) == 1
-    \&& keyboard =~ "[.,/;]"
-    \&& has_key(s:punctuations_all, keyboard)
-        let chinese_punctuatoin = s:punctuations_all[keyboard]
-    endif
-    return chinese_punctuatoin
 endfunction
 
 " ======================================= }}}
@@ -3586,15 +3602,10 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_scan_plugin_datafile()
 " --------------------------------------
-    let datafile = s:path . "vimim.sqlite"
-    if filereadable(datafile)
-        let s:sqlite = datafile
-        return
-    endif
-    " -----------------------------------
     if s:vimim_debug > 8 || !empty(s:datafile)
         return
     endif
+    let datafile = 0
     let all_input_methods = []
     " -----------------------------------
     call add(all_input_methods, "pinyin")
@@ -3846,6 +3857,7 @@ function! s:vimim_scan_plugin_data_directory()
     " ----------------------------------------
     let all_input_methods = []
     call add(all_input_methods, "wubi")
+    call add(all_input_methods, "unihan")
     call add(all_input_methods, "4corner")
     call add(all_input_methods, "pinyin")
     " ----------------------------------------
@@ -3875,6 +3887,8 @@ function! s:vimim_scan_plugin_data_directory()
             let s:im['pinyin'][0] = 1
         elseif directory =~# '^\d'
             let s:data_directory_4corner = dir
+        elseif directory =~# 'unihan'
+            let s:data_directory_unihan = dir
         elseif directory =~# '^wubi'
             let s:data_directory_wubi = dir
         endif
@@ -3957,7 +3971,7 @@ function! s:vimim_get_data_from_directory(keyboard, im)
         let lines = readfile(filename)
         for line in lines
             for chinese in split(line)
-                if im !~ 'unihan' && s:localization > 0
+                if s:localization > 0
                     let chinese = s:vimim_i18n_read(chinese)
                 endif
                 let menu = keyboard . " " . chinese
@@ -4222,7 +4236,7 @@ function! s:vimim_remove_duplication(chinese)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Backend__Cloud   ==== {{{"
+let VimIM = " ====  Backend_Cloud    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4480,7 +4494,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Backend__myCloud ==== {{{"
+let VimIM = " ====  Backend_myCloud  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4781,7 +4795,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 0
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
-    let s:localization = 0
     let s:backend = 0
     " ------------------------------
     let s:path2 = 0
