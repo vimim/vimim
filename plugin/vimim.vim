@@ -166,7 +166,6 @@ function! s:vimim_initialize_session()
     let s:im = {}
     let s:input_method = 0
     " --------------------------------
-    let s:data_directory_unihan = 0
     let s:data_directory_4corner = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_wubi = 0
@@ -1234,12 +1233,13 @@ function! s:vimim_12345678_label_on()
     if s:vimim_custom_menu_label < 1
         return
     endif
-    " ----------------------
-    let labels = range(8)
+    let default_popup_menu_height = 8
+    " -------------------------------
+    let labels = range(default_popup_menu_height)
     if &pumheight > 0
         let labels = range(1, &pumheight)
     endif
-    " ----------------------
+    " -------------------------------
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
         \  <C-R>=<SID>vimim_12345678_label("'._.'")<CR>'
@@ -2365,27 +2365,20 @@ endfunction
 " ------------------------------------------
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
-     " [input]  马力
-     " [output] 9a6c 529b   --  unicode
-     "          马   力
-     "          7712 4002   --  4corner
-     "          马   力
-     "          ma3  li4    --  pinyin
-     "          马   力
-     "          ml 马力     --  cjjp
-     " -------------------------------------
-     " [condition] one file per unicode, eg:
-     " $cat s:data_directory_unihan/u9a6c
-     "
-     " -------------------------------------
+" [input]  马力
+" [output] 9a6c 529b   --  unicode
+"          马   力
+" ------------------------------------------
+"          7712 4002   --  4corner
+"          马   力
+"          ma3  li4    --  pinyin
+"          马   力
+"          ml 马力     --  cjjp
+" ------------------------------------------ plugin/vimim/unihan/
     let keyboard = a:keyboard
-    if empty(keyboard)
-    \|| empty(s:path2)
+    if empty(keyboard) || empty(s:path2)
         return
     endif
-    " --------------------------------
-    call s:vimim_initialization_once()
-    " --------------------------------
     let results = []
     if keyboard !~ '\p'
         let results = s:vimim_reverse_lookup(keyboard)
@@ -2427,7 +2420,8 @@ function! s:vimim_reverse_lookup(chinese)
     let results_4corner = []  " 马力 => 7712 4002
     let result_cjjp = ""      " 马力 => ml
     " ------------------------------------
-    if !empty(s:data_directory_unihan)
+    let dir = s:vimim_get_data_directory('unihan')
+    if !empty(dir)
         let im = '4corner'
         let cache = s:vimim_get_reverse_cache(chinese, im)
         let items = s:vimim_reverse_one_entry(cache, chinese)
@@ -2436,7 +2430,6 @@ function! s:vimim_reverse_lookup(chinese)
         let results_4corner = copy(results)
         " --------------------------------------
         let results = []
-        " --------------------------------------
         let im = 'pinyin'
         let cache = s:vimim_get_reverse_cache(chinese, im)
         let items = s:vimim_reverse_one_entry(cache, chinese)
@@ -2505,8 +2498,7 @@ function! s:vimim_get_reverse_cache(chinese, im)
 " [output] {'馬': '7132', '力': '4002'}
 " ----------------------------------------------
     let chinese = a:chinese
-    let dir = s:data_directory_unihan
-    if empty(dir) || empty(chinese)
+    if empty(chinese)
         return {}
     endif
     let cache = {}
@@ -3857,7 +3849,6 @@ function! s:vimim_scan_plugin_data_directory()
     " ----------------------------------------
     let all_input_methods = []
     call add(all_input_methods, "wubi")
-    call add(all_input_methods, "unihan")
     call add(all_input_methods, "4corner")
     call add(all_input_methods, "pinyin")
     " ----------------------------------------
@@ -3887,8 +3878,6 @@ function! s:vimim_scan_plugin_data_directory()
             let s:im['pinyin'][0] = 1
         elseif directory =~# '^\d'
             let s:data_directory_4corner = dir
-        elseif directory =~# 'unihan'
-            let s:data_directory_unihan = dir
         elseif directory =~# '^wubi'
             let s:data_directory_wubi = dir
         endif
@@ -3971,7 +3960,7 @@ function! s:vimim_get_data_from_directory(keyboard, im)
         let lines = readfile(filename)
         for line in lines
             for chinese in split(line)
-                if s:localization > 0
+                if im !~ 'unihan' && s:localization > 0
                     let chinese = s:vimim_i18n_read(chinese)
                 endif
                 let menu = keyboard . " " . chinese
@@ -4795,6 +4784,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 0
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
+    let s:localization = 0
     let s:backend = 0
     " ------------------------------
     let s:path2 = 0
