@@ -1287,7 +1287,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_navigation_label_on()
 " -------------------------------------
-    let hjkl_list = split('xyzhjklrspq', '\zs')
+    let hjkl_list = split('iouhjklrspqm', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
@@ -1299,17 +1299,19 @@ function! <SID>vimim_hjkl(key)
 " ----------------------------
     let hjkl = a:key
     if pumvisible()
-        if a:key == 'x'
+        if a:key == 'i'
             let hjkl  = '\<C-E>'
+        elseif a:key == 'm'
+            let hjkl  = '\<Down>\<Down>\<Down>'
+        elseif a:key == 'o'
+            let hjkl  = '\<Up>\<Up>\<Up>'
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
-        elseif a:key == 'y'
-            let hjkl  = g:vimim_pumvisible_y_yes()
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
-        elseif a:key == 'z'
+        elseif a:key == 'u'
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'h'
             let s:pumvisible_hjkl_h = 1
