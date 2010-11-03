@@ -1301,19 +1301,19 @@ function! <SID>vimim_hjkl(key)
     if pumvisible()
         if a:key == 'x'
             let hjkl  = '\<C-E>'
-        elseif a:key == 'y'
-            let hjkl  = g:vimim_pumvisible_y_yes()
-        elseif a:key == 'z'
-            let hjkl = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
-        elseif a:key == 'h'
-            let s:pumvisible_hjkl_h = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
+        elseif a:key == 'y'
+            let hjkl  = g:vimim_pumvisible_y_yes()
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
+        elseif a:key == 'z'
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == 'h'
+            let s:pumvisible_hjkl_h = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'r'
             let s:pumvisible_reverse += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
