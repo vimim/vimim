@@ -79,7 +79,7 @@ call add(s:vimims, VimIM)
 " # VimIM "Chinese Input Mode":
 "   - [dynamic_mode] show omni popup menu as one types
 "   - [static_mode]  <Space>=>Chinese  <Enter>=>English
-"   - [onekey_mode] plays hjkl
+"   - [onekey_mode] plays well with hjkl
 "   The default key is <Ctrl-Bslash> (Vim Insert Mode)
 
 " -----------------------
@@ -91,6 +91,7 @@ call add(s:vimims, VimIM)
 " #     (3.1) internal direct input for Unicode/GBK/Big5
 " #     (3.2) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
 " #     (3.3) a directory: $VIM/vimfiles/plugin/vimim/pinyin/
+" #     (3.4) a database:  $VIM/vimfiles/plugin/vimim/vimim.sqlite
 
 " --------------------
 " "VimIM Installation"
@@ -1288,7 +1289,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_navigation_label_on()
 " -------------------------------------
-    let hjkl_list = split('iouhjklrspqm', '\zs')
+    let hjkl_list = split('iouhjklrspqmn', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
@@ -1304,6 +1305,8 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<C-E>'
         elseif a:key == 'm'
             let hjkl  = '\<Down>\<Down>\<Down>'
+        elseif a:key == 'n'
+            let hjkl  = '\<C-Y>\<Esc>'
         elseif a:key == 'o'
             let hjkl  = '\<Up>\<Up>\<Up>'
         elseif a:key == 'j'
@@ -2222,16 +2225,16 @@ function! s:vimim_initialize_quantifiers()
     \&& s:vimim_imode_pinyin < 1
         return
     endif
-    let s:quantifiers['1'] = '一壹㈠①⒈⑴甲'
-    let s:quantifiers['2'] = '二贰㈡②⒉⑵乙'
-    let s:quantifiers['3'] = '三叁㈢③⒊⑶丙'
-    let s:quantifiers['4'] = '四肆㈣④⒋⑷丁'
-    let s:quantifiers['5'] = '五伍㈤⑤⒌⑸戊'
-    let s:quantifiers['6'] = '六陆㈥⑥⒍⑹己'
-    let s:quantifiers['7'] = '七柒㈦⑦⒎⑺庚'
-    let s:quantifiers['8'] = '八捌㈧⑧⒏⑻辛'
-    let s:quantifiers['9'] = '九玖㈨⑨⒐⑼壬'
-    let s:quantifiers['0'] = '〇零㈩⑩⒑⑽癸十拾'
+    let s:quantifiers['1'] = '一壹①⒈⑴甲'
+    let s:quantifiers['2'] = '二贰②⒉⑵乙'
+    let s:quantifiers['3'] = '三叁③⒊⑶丙'
+    let s:quantifiers['4'] = '四肆④⒋⑷丁'
+    let s:quantifiers['5'] = '五伍⑤⒌⑸戊'
+    let s:quantifiers['6'] = '六陆⑥⒍⑹己'
+    let s:quantifiers['7'] = '七柒⑦⒎⑺庚'
+    let s:quantifiers['8'] = '八捌⑧⒏⑻辛'
+    let s:quantifiers['9'] = '九玖⑨⒐⑼壬'
+    let s:quantifiers['0'] = '〇零⑩⒑⑽癸十拾'
     let s:quantifiers['a'] = '秒'
     let s:quantifiers['b'] = '百佰步把包杯本笔部班'
     let s:quantifiers['c'] = '厘次餐场串处床'
@@ -4847,9 +4850,9 @@ function! s:vimim_initialize_debug()
     let s:vimim_cloud_sogou = -1
     let s:vimim_static_input_style = 2
     let s:vimim_ctrl_space_to_toggle = 2
+    let s:vimim_imode_pinyin = 1
     let s:vimim_custom_skin = 1
     let s:vimim_custom_laststatus = 0
-    let s:vimim_imode_universal = 1
     let s:vimim_english_punctuation = 0
     let s:vimim_chinese_punctuation = 1
     let s:vimim_reverse_pageup_pagedown = 1
