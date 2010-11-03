@@ -1302,7 +1302,7 @@ function! <SID>vimim_hjkl(key)
         if a:key == 'x'
             let hjkl  = '\<C-E>'
         elseif a:key == 'y'
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
+            let hjkl  = g:vimim_pumvisible_y_yes()
         elseif a:key == 'z'
             let hjkl = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
         elseif a:key == 'h'
@@ -1313,7 +1313,7 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
-            let hjkl  = <SID>vimim_space_onekey()
+            let hjkl  = g:vimim_pumvisible_y_yes()
         elseif a:key == 'r'
             let s:pumvisible_reverse += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
