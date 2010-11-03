@@ -750,9 +750,9 @@ function! s:vimim_start_onekey()
     " ----------------------------------------------------------
 endfunction
 
-" ------------------------------
+" --------------------------------
 function! s:vimim_onekey_autocmd()
-" ------------------------------
+" --------------------------------
     if s:vimim_static_input_style==2 && has("autocmd")
         augroup onekey_mode_autocmd
             autocmd!
@@ -1287,12 +1287,11 @@ endfunction
 " -------------------------------------
 function! s:vimim_navigation_label_on()
 " -------------------------------------
-    let hjkl_list = split('xyzjkhrspq', '\zs')
+    let hjkl_list = split('xyzhjklrspq', '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
     endfor
-    sil!exe 'imap <silent> l <Space>'
 endfunction
 
 " ----------------------------
@@ -1306,13 +1305,15 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
         elseif a:key == 'z'
             let hjkl = '\<C-E>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        elseif a:key == 'h'
+            let s:pumvisible_hjkl_h = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
-        elseif a:key == 'h'
-            let s:pumvisible_hjkl_h = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == 'l'
+            let hjkl  = <SID>vimim_space_onekey()
         elseif a:key == 'r'
             let s:pumvisible_reverse += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
