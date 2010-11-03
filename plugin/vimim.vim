@@ -134,6 +134,7 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_pinyin()
     call s:vimim_initialize_shuangpin()
     " -----------------------------------------
+    call s:vimim_initialize_sqlite()
     call s:vimim_initialize_cloud()
     call s:vimim_initialize_mycloud_plugin()
     " -----------------------------------------
@@ -3599,9 +3600,16 @@ function! s:vimim_scan_plugin_datafile()
     if s:vimim_debug > 8 || !empty(s:datafile)
         return
     endif
-    let datafile = 0
-    let all_input_methods = []
     " -----------------------------------
+    let sqlite = "vimim.sqlite"
+    let datafile = s:path . sqlite
+    if filereadable(datafile)
+        let msg = " SQLite is our first-class citizen. "
+        let s:path2 = 0
+        let s:backend = "sqlite"
+    endif
+    " -----------------------------------
+    let all_input_methods = []
     call add(all_input_methods, "pinyin")
     call add(all_input_methods, "pinyin_quote_sogou")
     call add(all_input_methods, "pinyin_huge")
@@ -4227,6 +4235,29 @@ function! s:vimim_remove_duplication(chinese)
         endfor
     endfor
     return results
+endfunction
+
+" ======================================= }}}
+let VimIM = " ====  Backend==SQLite  ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" -----------------------------------
+function! s:vimim_initialize_sqlite()
+" -----------------------------------
+    if s:backend =~ "sqlite"
+        let msg = " starting to flirt with database vimim.sqlite "
+    else
+        return
+    endif
+    " -------------------------------
+    let sqlite = 0
+    if empty(sqlite)
+        if executable('sqlite3')
+            let sqlite = "sqlite3 "
+        endif
+    endif
+    return sqlite
 endfunction
 
 " ======================================= }}}
