@@ -2519,8 +2519,14 @@ function! s:vimim_get_reverse_cache(chinese, im)
             let value = char
             if a:im =~ '4corner'
                 let value = get(split(get(results,0)),1)
+                if value =~ '\l'
+                    let value = '....'  " 4corner not available
+                endif
             elseif a:im =~ 'pinyin'
                 let value = get(split(get(results,1)),1)
+                if value !~ '^\l\+\d$'
+                    let value = get(split(get(results,0)),1)
+                endif
             endif
             let cache[char] = value
         endif
