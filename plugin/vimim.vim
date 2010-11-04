@@ -4269,6 +4269,41 @@ function! s:vimim_initialize_sqlite()
     return sqlite
 endfunction
 
+" -----------------------------------------
+function! g:vimim_create_cache_for_sqlite()
+" -----------------------------------------
+" Example:  input: vimim.pinyin.txt
+"          output: vimim.sqlite
+" (1) $cd $VIM/vimfiles/plugin/vimim/
+" (2) $vi vimim.pinyin.txt
+"         :call g:vimim_create_sqlite()
+" -------------------------------
+    let root = expand("%:p:h")
+    let sqlite = root . "/" . "vimim.sqlite"
+    let lines = readfile(bufname("%"))
+    let cache = {}
+    let key_chinese_cache = {}
+    for line in lines
+        let entries = split(line)
+        let key = get(entries, 0)
+        if match(key, "'") > -1
+            let key = substitute(key,"'",'','g')
+        endif
+        let chinese_list = entries[1:]
+        if has_key(cache, key)
+            let results = cache(key)
+            call extend(chinese_list, results)
+        else
+            let cache[key] = chinese_list
+        endif
+        let results = s:vimim_remove_duplication(chinese_list)
+        if !empty(results)
+            let key_chinese_cache[key] = join(results)
+        endif
+    endfor
+    return key_chinese_cache
+endfunction
+
 " ======================================= }}}
 let VimIM = " ====  Backend=>Cloud   ==== {{{"
 " ===========================================
