@@ -4255,7 +4255,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_sqlite()
 " -----------------------------------
     if s:backend =~ "sqlite"
-        let msg = " starting to flirt with database vimim.sqlite "
+        let msg = " starting to flirt with SQLite "
     else
         return
     endif
@@ -4272,17 +4272,11 @@ endfunction
 " -----------------------------------------
 function! g:vimim_create_cache_for_sqlite()
 " -----------------------------------------
-" Example:  input: vimim.pinyin.txt
-"          output: vimim.sqlite
-" (1) $cd $VIM/vimfiles/plugin/vimim/
-" (2) $vi vimim.pinyin.txt
-"         :call g:vimim_create_sqlite()
-" -------------------------------
-    let root = expand("%:p:h")
-    let sqlite = root . "/" . "vimim.sqlite"
+" input:  vimim.pinyin.txt
+" output: key2chinese cache
+" -------------------------
     let lines = readfile(bufname("%"))
     let cache = {}
-    let key_chinese_cache = {}
     for line in lines
         let entries = split(line)
         let key = get(entries, 0)
@@ -4297,11 +4291,9 @@ function! g:vimim_create_cache_for_sqlite()
             let cache[key] = chinese_list
         endif
         let results = s:vimim_remove_duplication(chinese_list)
-        if !empty(results)
-            let key_chinese_cache[key] = join(results)
-        endif
+        let cache[key] = results
     endfor
-    return key_chinese_cache
+    return cache
 endfunction
 
 " ======================================= }}}
