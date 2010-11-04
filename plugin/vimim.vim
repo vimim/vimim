@@ -91,7 +91,6 @@ call add(s:vimims, VimIM)
 " #     (3.1) internal direct input for Unicode/GBK/Big5
 " #     (3.2) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
 " #     (3.3) a directory: $VIM/vimfiles/plugin/vimim/pinyin/
-" #     (3.4) a database:  $VIM/vimfiles/plugin/vimim/vimim.sqlite
 
 " --------------------
 " "VimIM Installation"
@@ -4258,12 +4257,13 @@ call add(s:vimims, VimIM)
 " -----------------------------------
 function! s:vimim_initialize_sqlite()
 " -----------------------------------
+" /bin/sqlite3 /usr/local/share/cjklib/cedict.db
+" ----------------------------------------------
     if s:backend =~ "sqlite"
         let msg = " starting to flirt with SQLite "
     else
         return
     endif
-    " -------------------------------
     let sqlite = 0
     if empty(sqlite)
         if executable('sqlite3')
@@ -4271,33 +4271,6 @@ function! s:vimim_initialize_sqlite()
         endif
     endif
     return sqlite
-endfunction
-
-" -----------------------------------------
-function! g:vimim_create_cache_for_sqlite()
-" -----------------------------------------
-" input:  vimim.pinyin.txt
-" output: key2chinese cache
-" -------------------------
-    let lines = readfile(bufname("%"))
-    let cache = {}
-    for line in lines
-        let entries = split(line)
-        let key = get(entries, 0)
-        if match(key, "'") > -1
-            let key = substitute(key,"'",'','g')
-        endif
-        let chinese_list = entries[1:]
-        if has_key(cache, key)
-            let results = cache(key)
-            call extend(chinese_list, results)
-        else
-            let cache[key] = chinese_list
-        endif
-        let results = s:vimim_remove_duplication(chinese_list)
-        let cache[key] = results
-    endfor
-    return cache
 endfunction
 
 " ======================================= }}}
