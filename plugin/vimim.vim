@@ -3606,7 +3606,9 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_scan_plugin_datafile()
 " --------------------------------------
-    if s:vimim_debug > 8 || !empty(s:datafile)
+    if empty(s:path2) || empty(s:datafile)
+        let msg = " no datafile nor directory specifiled in vimrc "
+    else
         return
     endif
     " -----------------------------------
@@ -3862,7 +3864,7 @@ call add(s:vimims, VimIM)
 " --------------------------------------------
 function! s:vimim_scan_plugin_data_directory()
 " --------------------------------------------
-    if empty(s:path2) || !empty(s:datafile)
+    if empty(s:path2) || s:backend =~ "datafile"
         return
     endif
     " ----------------------------------------
@@ -3922,7 +3924,6 @@ function! s:vimim_get_datafile_in_vimrc()
     let dir = s:vimim_data_directory
     if !empty(dir) && isdirectory(dir)
         let s:path2 = copy(dir)
-        let s:backend = "directory"
     endif
     " -----------------------------------
     if empty(s:path2)
@@ -3930,6 +3931,9 @@ function! s:vimim_get_datafile_in_vimrc()
         if !empty(datafile) && filereadable(datafile)
             let s:datafile = copy(datafile)
             let s:backend = "datafile"
+            if s:datafile ==# 'vimim.sqlite'
+                let s:backend = "sqlite"
+            endif
         endif
     endif
 endfunction
