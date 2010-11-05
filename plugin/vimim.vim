@@ -161,7 +161,6 @@ function! s:vimim_initialize_session()
     let s:im = {}
     let s:input_method = 0
     " --------------------------------
-    let s:data_directory_unihan = 0
     let s:data_directory_4corner = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_wubi = 0
@@ -2367,6 +2366,14 @@ function! s:vimim_break_every_four(keyboard)
     return keyboards
 endfunction
 
+" ------------------------------------------
+function! <SID>vimim_visual_ctrl_6(keyboard)
+" ------------------------------------------
+    if len(a:keyboard) > 1
+        call s:vimim_visual_ctrl_6_directory(a:keyboard)
+    endif
+endfunction
+
 " -------------------------------------------------
 function! s:vimim_visual_ctrl_6_directory(keyboard)
 " -------------------------------------------------
@@ -2402,21 +2409,6 @@ function! s:vimim_visual_ctrl_6_output(results)
     call setpos(".", new_positions)
 endfunction
 
-" ------------------------------------------
-function! <SID>vimim_visual_ctrl_6(keyboard)
-" ------------------------------------------
-    let keyboard = a:keyboard
-    if empty(keyboard)
-        return
-    endif
-    " --------------------------------
-    call s:vimim_initialization_once()
-    " --------------------------------
-    if len(s:path2) > 2
-        call s:vimim_visual_ctrl_6_directory(keyboard)
-    endif
-endfunction
-
 " ---------------------------------------
 function! s:vimim_reverse_lookup(chinese)
 " ---------------------------------------
@@ -2444,7 +2436,7 @@ function! s:vimim_reverse_lookup(chinese)
     " ------------------------------------
     if !empty(s:data_directory_unihan)
         let im = '4corner'
-        let cache = s:vimim_get_reverse_cache(chinese, im)
+        let cache = s:vimim_get_unihan_reverse_cache(chinese, im)
         let items = s:vimim_reverse_one_entry(cache, chinese)
         call add(results, get(items,0))
         call add(results, get(items,1))
@@ -2453,7 +2445,7 @@ function! s:vimim_reverse_lookup(chinese)
         let results = []
         " --------------------------------------
         let im = 'pinyin'
-        let cache = s:vimim_get_reverse_cache(chinese, im)
+        let cache = s:vimim_get_unihan_reverse_cache(chinese, im)
         let items = s:vimim_reverse_one_entry(cache, chinese)
         let pinyin_head = get(items,0)
         if !empty(pinyin_head)
@@ -2513,18 +2505,14 @@ function! s:vimim_reverse_one_entry(cache, chinese)
     return results
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_get_reverse_cache(chinese, im)
-" ----------------------------------------------
+" -----------------------------------------------------
+function! s:vimim_get_unihan_reverse_cache(chinese, im)
+" -----------------------------------------------------
 " [input]  '馬力','4corner' || '馬力','pinyin'
 " [output] {'馬': '7132', '力': '4002'}
 " ----------------------------------------------
-    let chinese = a:chinese
-    let dir = s:data_directory_unihan
-    if empty(dir) || empty(chinese)
-        return {}
-    endif
     let cache = {}
+    let chinese = a:chinese
     let characters = split(chinese, '\zs')
     let im = 'unihan'  " # u808f => 8022 cao4
     for char in characters
@@ -3720,9 +3708,9 @@ function! s:vimim_oneline_match(lines, keyboard)
     return results
 endfunction
 
-" ---------------------------------------------------------
-function! s:vimim_exact_match(lines, keyboard, match_start)
-" ---------------------------------------------------------
+" --------------------------------------------------------
+function! s:vimim_grep_match(lines, keyboard, match_start)
+" --------------------------------------------------------
     let match_start = a:match_start
     if empty(a:lines) || match_start < 0
         return []
@@ -4917,6 +4905,7 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     let s:vimim_static_input_style = 0
     let s:chinese_mode_switch = 1
+    let s:data_directory_unihan = 0
     let s:initialization_loaded = 0
     let s:backend = 0
     " ------------------------------
@@ -5641,7 +5630,7 @@ else
         if s:vimim_datafile_has_apostrophe > 0
             let results = s:vimim_oneline_match(s:lines, keyboard)
         else
-            let results = s:vimim_exact_match(s:lines,keyboard,match_start)
+            let results = s:vimim_grep_match(s:lines,keyboard,match_start)
         endif
         if len(results) > 0
             let results = s:vimim_pair_list(results)
