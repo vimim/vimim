@@ -447,6 +447,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_sqlite_cedict")
+    call add(G, "g:vimim_sqlite_cedict_traditional")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_has_apostrophe")
     call add(G, "g:vimim_datafile_is_not_utf8")
@@ -4290,8 +4291,6 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard)
 " -----------------------------------------------------
     let keyboard = a:keyboard
     if empty(keyboard)
-    \|| empty(s:sqlite)
-    \|| empty(s:sqlite_executable)
         return []
     endif
     " -------------------------------------------------
@@ -4309,6 +4308,9 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard)
     let column3 = 'Reading'
     let column4 = 'Translation'
     let select = column2
+    if s:vimim_sqlite_cedict_traditional > 0
+        let select = column1
+    endif
     " ----------------------------------------
     let query  = ' SELECT distinct ' . select
     let query .= ' FROM CEDICT '
@@ -4321,12 +4323,45 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard)
     let input .= ' " '
     let output = system(input)
     " ----------------------------------------
+    if empty(output)
+        return []
+    endif
     let results = []
     for chinese in split(output,'\n')
         let headword = chinese
         let menu = keyboard . " " . headword
         call add(results, menu)
     endfor
+    return results
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_sentence_match_sqlite(keyboard)
+" -----------------------------------------------
+    let keyboard = a:keyboard
+    let results = []
+    " ----------------------------------------
+    let results = s:vimim_get_data_from_cedict_sqlite(keyboard)
+    if empty(results)
+        let msg = 'nothing found from sqlite, but why not try more'
+    else
+        return results
+    endif
+    " ----------------------------------------
+    let key = keyboard
+    let max = len(keyboard)
+    let minimum_match = 1
+    while max > minimum_match
+        let max -= 1
+        let key = strpart(keyboard, 0, max)
+        let results = s:vimim_get_data_from_cedict_sqlite(key)
+        if empty(results)
+            continue
+        else
+            break
+        endif
+    endwhile
+    " ----------------------------------------
     return results
 endfunction
 
@@ -5512,11 +5547,13 @@ else
     " --------------------------------------------------------
     let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
 
-    " [apostrophe] in pinyin datafile
-    " -------------------------------
     let s:keyboard_leading_zero = keyboard
+    " ------------------------------------
     if s:vimim_datafile_has_apostrophe > 0
         let keyboard = s:vimim_apostrophe(keyboard)
+    endif
+    if empty(keyboard)
+        return
     endif
 
     " [cloud] to make cloud come true for woyouyigemeng
@@ -5538,8 +5575,11 @@ else
     " [sqlite] uses standard unihan cedict database
     " ---------------------------------------------
     if len(s:sqlite_executable) > 5
-        let results2 = s:vimim_get_data_from_cedict_sqlite(keyboard)
-        if len(results2) > 0
+    \&& !empty(s:sqlite)
+        let results2 = s:vimim_sentence_match_sqlite(keyboard)
+        if empty(results2)
+            let msg = "nothing found from sqlite database"
+        else
             let results = s:vimim_pair_list(results2)
             return s:vimim_popupmenu_list(results)
         endif
@@ -5732,4 +5772,4 @@ endfunction
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
-" ====================================== }}}
+" ======================================= }}}
