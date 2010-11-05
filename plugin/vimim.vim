@@ -3931,16 +3931,16 @@ endfunction
 " ---------------------------------------
 function! s:vimim_get_datafile_in_vimrc()
 " ---------------------------------------
-    let dir = s:vimim_data_directory
-    if !empty(dir) && isdirectory(dir)
-        let s:path2 = copy(dir)
-        return
-    endif
-    " -----------------------------------
     let datafile = s:vimim_sqlite_cedict
     if !empty(datafile) && filereadable(datafile)
         let s:sqlite = copy(datafile)
         let s:backend = "sqlite"
+        return
+    endif
+    " -----------------------------------
+    let dir = s:vimim_data_directory
+    if !empty(dir) && isdirectory(dir)
+        let s:path2 = copy(dir)
         return
     endif
     " -----------------------------------
@@ -4271,16 +4271,15 @@ call add(s:vimims, VimIM)
 " -----------------------------------
 function! s:vimim_initialize_sqlite()
 " -----------------------------------
-    if s:backend =~ "sqlite" && !empty(s:sqlite)
-        let msg = " starting to flirt with SQLite "
-    else
+    if empty(s:sqlite)
         return
-    endif
-    let s:sqlite_executable = "sqlite3 "
-    if executable(s:sqlite_executable)
-        let s:input_method = 'pinyin'
     else
-        let s:sqlite_executable = 0
+        let msg = " starting to flirt with SQLite "
+    endif
+    let sqlite_executable = "/bin/sqlite3"
+    if executable(sqlite_executable)
+        let s:sqlite_executable = sqlite_executable
+        let s:input_method = 'pinyin'
     endif
 endfunction
 
@@ -4294,7 +4293,6 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard)
         return []
     endif
     " -------------------------------------------------
-    " /bin/sqlite3 /usr/local/share/cjklib/cedict.db
     " /bin/sqlite3 /usr/local/share/cjklib/cedict.db "select random()"
     " sqlite> select * from cedict where Translation like '/pretty girl/';
     " sqlite> select * from cedict where Reading like 'ma_ ma_';
@@ -4303,6 +4301,7 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard)
     let table = 'CEDICT'
     let where = 'Reading like '
     let key = keyboard
+    let key = "'" . keyboard . "'" 
     " ----------------------------------------
     let query  = ' select ' . column
     let query .= ' from   ' . table
