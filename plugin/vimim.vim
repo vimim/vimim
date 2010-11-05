@@ -89,8 +89,9 @@ call add(s:vimims, VimIM)
 " # (2) [external] Cloud:   http://web.pinyin.sogou.com
 " # (3) [internal] VimIM:   http://vimim.googlecode.com
 " #     (3.1) internal direct input for Unicode/GBK/Big5
-" #     (3.2) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
-" #     (3.3) a directory: $VIM/vimfiles/plugin/vimim/pinyin/
+" #     (3.2) a database:  $VIM/vimfiles/plugin/cedict.db
+" #     (3.3) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
+" #     (3.4) a directory: $VIM/vimfiles/plugin/vimim/pinyin/
 
 " --------------------
 " "VimIM Installation"
@@ -3746,10 +3747,10 @@ endfunction
 " ---------------------------------------------------------
 function! s:vimim_exact_match(lines, keyboard, match_start)
 " ---------------------------------------------------------
-    if empty(a:lines) || a:match_start < 0
+    let match_start = a:match_start
+    if empty(a:lines) || match_start < 0
         return []
     endif
-    let match_start = a:match_start
     let keyboard = a:keyboard
     " ----------------------------------------
     let pattern = '\M^\(' . keyboard
@@ -3764,17 +3765,13 @@ function! s:vimim_exact_match(lines, keyboard, match_start)
     let pattern .=  '\)\@!'
     " ----------------------------------------
     let matched = match(a:lines, pattern, match_start)-1
-    if matched - match_start < 1
-        let results = a:lines[match_start : match_start]
-    endif
-    " ----------------------------------------
     let match_end = match_start
     if matched > 0 && matched > match_start
         let match_end = matched
     endif
     " ----------------------------------------
     " always do popup as one-to-many translation
-    let menu_maximum = 10+20
+    let menu_maximum = 20
     if match_end - match_start > menu_maximum
         let match_end = match_start + menu_maximum
     endif
@@ -5085,9 +5082,9 @@ call add(s:vimims, VimIM)
 function!  s:vimim_getsid(scriptname)
 " -----------------------------------
     " frederick.zou fixes these conflicting plugins:
-    " supertab          http://www.vim.org/scripts/script.php?script_id=1643
-    " autocomplpop(acp) http://www.vim.org/scripts/script.php?script_id=1879
-    " word_complete     http://www.vim.org/scripts/script.php?script_id=73
+    " supertab      http://www.vim.org/scripts/script.php?script_id=1643
+    " autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
+    " word_complete http://www.vim.org/scripts/script.php?script_id=73
     " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
     let l:scriptname = a:scriptname
     " get the output of ":scriptnames" in the scriptnames_output variable
@@ -5434,7 +5431,6 @@ if a:start
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
     let s:keyboard_leading_zero = strpart(current_line,start_column,len)
-
     let s:start_column_before = start_column
     return start_column
 
