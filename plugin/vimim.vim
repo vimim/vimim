@@ -2415,10 +2415,6 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     if len(s:path2) > 2
         call s:vimim_visual_ctrl_6_directory(keyboard)
     endif
-    " --------------------------------
-    if len(s:sqlite) > 2
-        call s:vimim_visual_ctrl_6_sqlite(keyboard)
-    endif
 endfunction
 
 " ---------------------------------------
@@ -3177,7 +3173,7 @@ function! s:vimim_wubi(keyboard)
         if  match_start < 0
             let results = []
         else
-            let match_end = match_start + 4
+            let match_end = match_start + 3
             let results = s:lines[match_start : match_end]
         endif
     endif
@@ -4282,7 +4278,6 @@ function! s:vimim_sentence_match_sqlite(keyboard)
 " -----------------------------------------------
     let keyboard = a:keyboard
     let results = []
-    " ----------------------------------------
     let sql = s:vimim_get_cedict_sqlite_query(keyboard)
     let results = s:vimim_get_data_from_cedict_sqlite(keyboard, sql)
     if empty(results)
@@ -4290,10 +4285,10 @@ function! s:vimim_sentence_match_sqlite(keyboard)
     else
         return results
     endif
-    " ----------------------------------------
     let key = keyboard
     let max = len(keyboard)
     let minimum_match = 1
+    " ----------------------------------------
     while max > minimum_match
         let max -= 1
         let key = strpart(keyboard, 0, max)
@@ -4339,44 +4334,19 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     let query .= ' FROM CEDICT '
     let query .= ' WHERE  ' . column3 . ' like ' . key
     " ----------------------------------------
-    let sql  = s:sqlite_executable . ' '
-    let sql .= s:sqlite . ' '
-    let sql .= ' " '
-    let sql .= query
-    let sql .= ' " '
+    let sqlite  = s:sqlite_executable . ' '
+    let sqlite .= s:sqlite . ' '
+    let sqlite .= ' " '
+    let sqlite .= query
+    let sqlite .= ' " '
     " ----------------------------------------
-    return sql
+    return sqlite
 endfunction
 
-" ----------------------------------------
-function! s:vimim_reverse_sqlite(keyboard)
-" ----------------------------------------
-    " sqlite> select * from cedict where HeadwordSimplified like '马力';
-    " sqlite> select * from cedict where Translation        like '%english%';
-    " ------------------------------------
-    let column1 = 'HeadwordTraditional'
-    let column2 = 'HeadwordSimplified'
-    let column3 = 'Reading'
-    let column4 = 'Translation'
-    let key = "'%" . a:keyboard . "%'"
-    " ----------------------------------------
-    let query  = ' SELECT * '
-    let query .= ' FROM CEDICT '
-    let query .= ' WHERE  ' . column4 . ' like ' . key
-    " ----------------------------------------
-    let sql  = s:sqlite_executable . ' '
-    let sql .= s:sqlite . ' '
-    let sql .= ' " '
-    let sql .= query
-    let sql .= ' " '
-    " ----------------------------------------
-    return sql
-endfunction
-
-" ----------------------------------------------------------
-function! s:vimim_get_data_from_cedict_sqlite(keyboard, sql)
-" ----------------------------------------------------------
-    let sql_return = system(a:sql)
+" -------------------------------------------------------------
+function! s:vimim_get_data_from_cedict_sqlite(keyboard, sqlite)
+" -------------------------------------------------------------
+    let sql_return = system(a:sqlite)
     if empty(sql_return)
         return []
     endif
@@ -4386,18 +4356,6 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard, sql)
         call add(results, menu)
     endfor
     return results
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_visual_ctrl_6_sqlite(keyboard)
-" ----------------------------------------------
-    let keyboard = a:keyboard   " english
-    let results = []
-    if keyboard =~ '\p'
-        let sql = s:vimim_reverse_sqlite(keyboard)
-        let results = s:vimim_get_data_from_cedict_sqlite(keyboard, sql)
-    endif
-    call s:vimim_visual_ctrl_6_output(results)
 endfunction
 
 " ======================================= }}}
