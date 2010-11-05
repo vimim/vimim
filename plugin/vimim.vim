@@ -4278,7 +4278,7 @@ function! s:vimim_initialize_sqlite()
     else
         let msg = " starting to flirt with SQLite "
     endif
-    let sqlite_executable = "/bin/sqlite3"
+    let sqlite_executable = "sqlite3"
     if executable(sqlite_executable)
         let s:sqlite_executable = sqlite_executable
         let s:input_method = 'pinyin'
@@ -4295,18 +4295,20 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard)
         return []
     endif
     " -------------------------------------------------
-    " /bin/sqlite3 /usr/local/share/cjklib/cedict.db "select random()"
+    " sqlite3 /usr/local/share/cjklib/cedict.db "select random()"
     " sqlite> select * from cedict where Translation like '/pretty girl/';
     " sqlite> select * from cedict where Reading like 'ma_ ma_';
     " -------------------------------------------------
-    let key = keyboard
-    let key = "'" . keyboard . "'" 
+    let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+    let pinyins = map(pinyins, 'v:val."_"')
+    let key = join(pinyins)
+    let key = "'" . key . "'" 
     " -------------------------------------------------
     let column1 = 'HeadwordTraditional'
     let column2 = 'HeadwordSimplified'
     let column3 = 'Reading'
     let column4 = 'Translation'
-    let select = column2 .','. column1
+    let select = column2
     " ----------------------------------------
     let query  = ' SELECT distinct ' . select
     let query .= ' FROM CEDICT '
@@ -4317,13 +4319,11 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard)
     let input .= ' " '
     let input .= query
     let input .= ' " '
-let g:g1=input
     let output = system(input)
-let g:g2=output
     " ----------------------------------------
     let results = []
     for chinese in split(output,'\n')
-        let headword = join(split(chinese,'|'),'　')
+        let headword = chinese
         let menu = keyboard . " " . headword
         call add(results, menu)
     endfor
