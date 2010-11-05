@@ -1904,6 +1904,8 @@ function! s:vimim_build_popupmenu(matched_list)
                 if s:pinyin_and_4corner > 0
                 \&& empty(s:vimim_cloud_plugin)
                     let labeling = label2
+                elseif !empty(s:vimim_sqlite_cedict)
+                    let labeling = label2
                 else
                     let labeling .= label2
                 endif
@@ -4297,26 +4299,32 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard)
     " sqlite> select * from cedict where Translation like '/pretty girl/';
     " sqlite> select * from cedict where Reading like 'ma_ ma_';
     " -------------------------------------------------
-    let column = 'HeadwordSimplified'
-    let table = 'CEDICT'
-    let where = 'Reading like '
     let key = keyboard
     let key = "'" . keyboard . "'" 
+    " -------------------------------------------------
+    let column1 = 'HeadwordTraditional'
+    let column2 = 'HeadwordSimplified'
+    let column3 = 'Reading'
+    let column4 = 'Translation'
+    let select = column2 .','. column1
     " ----------------------------------------
-    let query  = ' select ' . column
-    let query .= ' from   ' . table
-    let query .= ' where  ' . where . key
+    let query  = ' SELECT distinct ' . select
+    let query .= ' FROM CEDICT '
+    let query .= ' WHERE  ' . column3 . ' like ' . key
     " ----------------------------------------
     let input  = s:sqlite_executable . ' '
     let input .= s:sqlite . ' '
     let input .= ' " '
     let input .= query
     let input .= ' " '
+let g:g1=input
     let output = system(input)
+let g:g2=output
     " ----------------------------------------
     let results = []
-    for chinese in split(output,'|')
-        let menu = keyboard . " " . chinese
+    for chinese in split(output,'\n')
+        let headword = join(split(chinese,'|'),'　')
+        let menu = keyboard . " " . headword
         call add(results, menu)
     endfor
     return results
@@ -4885,7 +4893,7 @@ function! s:vimim_initialize_debug()
     let s:backend = 0
     " ------------------------------
     let s:path2 = 0
-    let dir = "/vimim"
+    let dir = "/vimim" 
     if isdirectory(dir)
         let s:path2 = dir
     endif
@@ -4903,6 +4911,7 @@ function! s:vimim_initialize_debug()
         return
     elseif filereadable(sqlite)
         let s:vimim_sqlite_cedict = '/usr/local/share/cjklib/cedict.db'
+        let s:path2 = 0
     else
         let s:backend = "directory"
     endif
