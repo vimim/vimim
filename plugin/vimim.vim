@@ -2368,35 +2368,29 @@ function! s:vimim_break_every_four(keyboard)
     return keyboards
 endfunction
 
-" ------------------------------------------
-function! <SID>vimim_visual_ctrl_6(keyboard)
-" ------------------------------------------
-     " [input]  马力
-     " [output] 9a6c 529b   --  unicode
-     "          马   力
-     "          7712 4002   --  4corner
-     "          马   力
-     "          ma3  li4    --  pinyin
-     "          马   力
-     "          ml 马力     --  cjjp
-     " -------------------------------------
-     " [condition] one file per unicode, eg:
-     " $cat s:data_directory_unihan/u9a6c
-     "
-     " -------------------------------------
-    let keyboard = a:keyboard
-    if empty(keyboard)
-    \|| empty(s:path2)
-        return
-    endif
-    " --------------------------------
-    call s:vimim_initialization_once()
-    " --------------------------------
+" -------------------------------------------------
+function! s:vimim_visual_ctrl_6_directory(keyboard)
+" -------------------------------------------------
+" [input]     马力
+" [output]    9a6c 529b   --  unicode
+"             马   力
+"             7712 4002   --  4corner
+"             马   力
+"             ma3  li4    --  pinyin
+"             马   力
+"             ml 马力     --  cjjp
+" -------------------------------------------------
     let results = []
     if keyboard !~ '\p'
         let results = s:vimim_reverse_lookup(keyboard)
     endif
-    " --------------------------------
+    call s:vimim_visual_ctrl_6_output(results)
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_visual_ctrl_6_output(results)
+" ---------------------------------------------
+    let results = a:results
     if empty(results)
         return
     endif
@@ -2406,6 +2400,25 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     let new_positions[1] = line + len(results) - 1
     let new_positions[2] = len(get(split(get(results,-1)),0))+1
     call setpos(".", new_positions)
+endfunction
+
+" ------------------------------------------
+function! <SID>vimim_visual_ctrl_6(keyboard)
+" ------------------------------------------
+    let keyboard = a:keyboard
+    if empty(keyboard)
+        return
+    endif
+    " --------------------------------
+    call s:vimim_initialization_once()
+    " --------------------------------
+    if len(s:path2) > 2
+        call s:vimim_visual_ctrl_6_directory(keyboard)
+    endif
+    " --------------------------------
+    if len(s:sqlite) > 2
+        call s:vimim_visual_ctrl_6_sqlite(keyboard)
+    endif
 endfunction
 
 " ---------------------------------------
@@ -4286,12 +4299,44 @@ function! s:vimim_initialize_sqlite()
     endif
 endfunction
 
-" -----------------------------------------------------
-function! s:vimim_get_data_from_cedict_sqlite(keyboard)
-" -----------------------------------------------------
+" -----------------------------------------------
+function! s:vimim_sentence_match_sqlite(keyboard)
+" -----------------------------------------------
+    let keyboard = a:keyboard
+    let results = []
+    " ----------------------------------------
+    let sql = s:vimim_get_cedict_sqlite_query(keyboard)
+    let results = s:vimim_get_data_from_cedict_sqlite(keyboard, sql)
+    if empty(results)
+        let msg = 'nothing found from sqlite, but why not try more'
+    else
+        return results
+    endif
+    " ----------------------------------------
+    let key = keyboard
+    let max = len(keyboard)
+    let minimum_match = 1
+    while max > minimum_match
+        let max -= 1
+        let key = strpart(keyboard, 0, max)
+        let sql = s:vimim_get_cedict_sqlite_query(key)
+        let results = s:vimim_get_data_from_cedict_sqlite(key, sql)
+        if empty(results)
+            continue
+        else
+            break
+        endif
+    endwhile
+    " ----------------------------------------
+    return results
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_get_cedict_sqlite_query(keyboard)
+" -------------------------------------------------
     let keyboard = a:keyboard
     if empty(keyboard)
-        return []
+        return 0
     endif
     " -------------------------------------------------
     " sqlite3 /usr/local/share/cjklib/cedict.db "select random()"
@@ -4301,7 +4346,7 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard)
     let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
     let pinyins = map(pinyins, 'v:val."_"')
     let key = join(pinyins)
-    let key = "'" . key . "'" 
+    let key = "'" . key . "'"
     " -------------------------------------------------
     let column1 = 'HeadwordTraditional'
     let column2 = 'HeadwordSimplified'
@@ -4316,53 +4361,65 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard)
     let query .= ' FROM CEDICT '
     let query .= ' WHERE  ' . column3 . ' like ' . key
     " ----------------------------------------
-    let input  = s:sqlite_executable . ' '
-    let input .= s:sqlite . ' '
-    let input .= ' " '
-    let input .= query
-    let input .= ' " '
-    let output = system(input)
+    let sql  = s:sqlite_executable . ' '
+    let sql .= s:sqlite . ' '
+    let sql .= ' " '
+    let sql .= query
+    let sql .= ' " '
     " ----------------------------------------
-    if empty(output)
+    return sql
+endfunction
+
+" ----------------------------------------
+function! s:vimim_reverse_sqlite(keyboard)
+" ----------------------------------------
+    " sqlite> select * from cedict where HeadwordSimplified like '马力';
+    " sqlite> select * from cedict where Translation        like '%english%';
+    " ------------------------------------
+    let column1 = 'HeadwordTraditional'
+    let column2 = 'HeadwordSimplified'
+    let column3 = 'Reading'
+    let column4 = 'Translation'
+    let key = "'%" . a:keyboard . "%'"
+    " ----------------------------------------
+    let query  = ' SELECT * '
+    let query .= ' FROM CEDICT '
+    let query .= ' WHERE  ' . column4 . ' like ' . key
+    " ----------------------------------------
+    let sql  = s:sqlite_executable . ' '
+    let sql .= s:sqlite . ' '
+    let sql .= ' " '
+    let sql .= query
+    let sql .= ' " '
+    " ----------------------------------------
+    return sql
+endfunction
+
+" ----------------------------------------------------------
+function! s:vimim_get_data_from_cedict_sqlite(keyboard, sql)
+" ----------------------------------------------------------
+    let sql_return = system(a:sql)
+    if empty(sql_return)
         return []
     endif
     let results = []
-    for chinese in split(output,'\n')
-        let headword = chinese
-        let menu = keyboard . " " . headword
+    for chinese in split(sql_return,'\n')
+        let menu = a:keyboard . " " . chinese
         call add(results, menu)
     endfor
     return results
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_sentence_match_sqlite(keyboard)
-" -----------------------------------------------
-    let keyboard = a:keyboard
+" ----------------------------------------------
+function! s:vimim_visual_ctrl_6_sqlite(keyboard)
+" ----------------------------------------------
+    let keyboard = a:keyboard   " 马力
     let results = []
-    " ----------------------------------------
-    let results = s:vimim_get_data_from_cedict_sqlite(keyboard)
-    if empty(results)
-        let msg = 'nothing found from sqlite, but why not try more'
-    else
-        return results
+    if keyboard =~ '\p'
+        let sql = s:vimim_reverse_sqlite(keyboard)
+        let results = s:vimim_get_data_from_cedict_sqlite(keyboard, sql)
     endif
-    " ----------------------------------------
-    let key = keyboard
-    let max = len(keyboard)
-    let minimum_match = 1
-    while max > minimum_match
-        let max -= 1
-        let key = strpart(keyboard, 0, max)
-        let results = s:vimim_get_data_from_cedict_sqlite(key)
-        if empty(results)
-            continue
-        else
-            break
-        endif
-    endwhile
-    " ----------------------------------------
-    return results
+    call s:vimim_visual_ctrl_6_output(results)
 endfunction
 
 " ======================================= }}}
@@ -4928,7 +4985,7 @@ function! s:vimim_initialize_debug()
     let s:backend = 0
     " ------------------------------
     let s:path2 = 0
-    let dir = "/vimim" 
+    let dir = "/vimim"
     if isdirectory(dir)
         let s:path2 = dir
     endif
