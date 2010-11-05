@@ -2380,6 +2380,7 @@ function! s:vimim_visual_ctrl_6_directory(keyboard)
 "             马   力
 "             ml 马力     --  cjjp
 " -------------------------------------------------
+    let keyboard = a:keyboard
     let results = []
     if keyboard !~ '\p'
         let results = s:vimim_reverse_lookup(keyboard)
@@ -4413,7 +4414,7 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_visual_ctrl_6_sqlite(keyboard)
 " ----------------------------------------------
-    let keyboard = a:keyboard   " 马力
+    let keyboard = a:keyboard   " english
     let results = []
     if keyboard =~ '\p'
         let sql = s:vimim_reverse_sqlite(keyboard)
