@@ -3800,6 +3800,14 @@ function! s:vimim_sentence_match_datafile(lines, keyboard)
     \|| s:chinese_input_mode =~ 'dynamic'
         return []
     endif
+    " ----------------------------------------
+    let blocks = s:vimim_static_break_every_four(keyboard, im)
+    if empty(blocks)
+        let msg = "continue when no fancy 4-char-block"
+    else
+        return blocks
+    endif
+    " ----------------------------------------
     let match_start = -1
     let minimum_match = 1
     let keyboard = s:vimim_get_matched_sentence_head(keyboard)
@@ -3822,7 +3830,6 @@ function! s:vimim_sentence_match_datafile(lines, keyboard)
         endif
     endwhile
     " ----------------------------------------
-    let blocks = []
     if match_start > 0
         let blocks = s:vimim_get_sentence_blocks(a:keyboard, max)
     endif
@@ -4002,12 +4009,38 @@ function! s:vimim_get_sentence_blocks(keyboard, max)
     return blocks
 endfunction
 
+" -----------------------------------------------------
+function! s:vimim_static_break_every_four(keyboard, im)
+" -----------------------------------------------------
+    let keyboard = a:keyboard
+    if len(keyboard) < 4
+        return []
+    endif
+    let blocks = []
+    " ----------------------------------------
+    if a:im =~ '4corner'
+        if keyboard =~ '\d\d\d\d'
+            let blocks = s:vimim_break_every_four(keyboard)
+        elseif keyboard =~ '\d\+$'
+            let blocks = [keyboard]
+        endif
+    endif
+    " ----------------------------------------
+    if a:im =~ 'wubi'
+        let blocks = s:vimim_break_every_four(keyboard)
+    endif
+    " ----------------------------------------
+    return blocks
+endfunction
+
 " ------------------------------------------------------
 function! s:vimim_sentence_match_directory(keyboard, im)
 " ------------------------------------------------------
     let keyboard = a:keyboard
     let im = a:im
-    if empty(keyboard) || empty(im)
+    if s:chinese_input_mode =~ 'dynamic'
+    \|| empty(keyboard) 
+    \|| empty(im)
         return []
     endif
     let dir = s:vimim_get_data_directory(im)
@@ -4021,23 +4054,11 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         endif
     endif
     " ----------------------------------------
-    let blocks = []
-    if len(s:data_directory_4corner) > 1
-        if len(keyboard) > 4 && keyboard =~ '\d\d\d\d'
-            return s:vimim_break_every_four(keyboard)
-        elseif keyboard =~ '\d$'
-            return [keyboard]
-        endif
-    endif
-    " ----------------------------------------
-    if len(s:data_directory_wubi) > 1
-    \&& s:chinese_input_mode !~ 'dynamic'
-    \&& im =~ 'wubi'
-        if len(keyboard) > 4
-            return s:vimim_break_every_four(keyboard)
-        else
-            return [keyboard]
-        endif
+    let blocks = s:vimim_static_break_every_four(keyboard, im)
+    if empty(blocks)
+        let msg = "continue when no fancy 4-char-block"
+    else
+        return blocks
     endif
     " ----------------------------------------
     let keyboard = s:vimim_get_matched_sentence_head(keyboard)
@@ -4059,8 +4080,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         endif
     endwhile
     " ----------------------------------------
-    let filename = dir . '/' . key
-    if filereadable(filename)
+    if max > 0 && filereadable(filename)
         let blocks = s:vimim_get_sentence_blocks(a:keyboard, max)
     endif
     return blocks
