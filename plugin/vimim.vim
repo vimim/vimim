@@ -151,8 +151,10 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_start_omni()
     sil!call s:vimim_super_reset()
     " --------------------------------
+    let s:sqlite = 0
+    let s:sqlite_executable = 0
+    " --------------------------------
     let s:datafile = 0
-    let s:datafile_has_dot = 0
     let s:lines = []
     " --------------------------------
     let s:im = {}
@@ -171,6 +173,7 @@ function! s:vimim_initialize_session()
     let s:www_executable = 0
     let s:vimim_cloud_plugin = 0
     let s:vimim_sogou_key = 0
+    let s:has_dot_in_datafile = 0
     " --------------------------------
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -220,11 +223,6 @@ function! s:vimim_finalize_session()
         let s:vimim_datafile_has_apostrophe = 1
     endif
     " ------------------------------
-    if s:shuangpin_flag > 0
-        let s:input_method = 'pinyin'
-        let s:im['pinyin'][0] = 1
-    endif
-    " ------------------------------
     if get(s:im['boshiamy'],0) > 0
         let s:vimim_chinese_punctuation = -1
         let s:vimim_punctuation_navigation = -1
@@ -234,6 +232,13 @@ function! s:vimim_finalize_session()
     if get(s:im['phonetic'],0) > 0
     \|| get(s:im['array30'],0) > 0
         let s:vimim_static_input_style = 1
+    endif
+    " ------------------------------
+    if s:shuangpin_flag > 0
+        let s:input_method = 'pinyin'
+    endif
+    if s:input_method =~ 'pinyin'
+        let s:im['pinyin'][0] = 1
     endif
     " ------------------------------
     if s:input_method =~# '^\d\w\+'
@@ -342,7 +347,7 @@ function! s:vimim_build_im_keycode()
     call add(key_keycode, ['cangjie', "[a-z'.]"])
     call add(key_keycode, ['zhengma', "[a-z'.]"])
     call add(key_keycode, ['quick', "[0-9a-z'.]"])
-    " ----------------------------- datafile_has_dot
+    " ----------------------------- has_dot_in_datafile
     call add(key_keycode, ['erbi', "[a-z'.,;/]"])
     call add(key_keycode, ['wu', "[a-z'.]"])
     call add(key_keycode, ['yong', "[a-z'.;/]"])
@@ -401,7 +406,7 @@ function! s:vimim_initialize_keycode()
     \|| get(s:im['phonetic'],0) > 0
     \|| get(s:im['array30'],0) > 0
         let msg = "How to handle real valid keycode for dot?"
-        let s:datafile_has_dot = 1
+        let s:has_dot_in_datafile = 1
     endif
     " --------------------------------
     return
@@ -441,6 +446,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_data_directory")
+    call add(G, "g:vimim_sqlite_cedict")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_has_apostrophe")
     call add(G, "g:vimim_datafile_is_not_utf8")
@@ -1079,7 +1085,7 @@ function! s:vimim_dynamic_alphabet_trigger()
         return
     endif
     let not_used_valid_keys = "[0-9.']"
-    if s:datafile_has_dot > 0
+    if s:has_dot_in_datafile > 0
         let not_used_valid_keys = "[0-9]"
     endif
     " --------------------------------------
@@ -1869,7 +1875,7 @@ function! s:vimim_build_popupmenu(matched_list)
         if empty(s:vimim_cloud_plugin)
             if get(s:im['pinyin'],0) > 0 || s:menu_from_cloud_flag > 0
                 let tail = ''
-                if keyboard =~ '[.]' && s:datafile_has_dot < 1
+                if keyboard =~ '[.]' && s:has_dot_in_datafile < 1
                     let dot = match(keyboard, '[.]')
                     let tail = strpart(keyboard, dot+1)
                 elseif keyboard !~? '^vim' && keyboard !~ "[']"
@@ -2015,7 +2021,7 @@ function! s:vimim_initialize_punctuation()
         if has_key(s:punctuations, char)
             " ----------------------------------
             if !empty(s:vimim_cloud_plugin)
-            \|| s:datafile_has_dot > 0
+            \|| s:has_dot_in_datafile > 0
                 unlet s:punctuations[char]
             elseif char !~# "[*.']"
                 unlet s:punctuations[char]
@@ -3605,18 +3611,21 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_scan_plugin_datafile()
 " --------------------------------------
-    if empty(s:path2) || empty(s:datafile)
+    if empty(s:path2)
+    \|| empty(s:datafile)
+    \|| empty(s:sqlite)
         let msg = " no datafile nor directory specifiled in vimrc "
     else
         return
     endif
     " -----------------------------------
-    let sqlite = "vimim.sqlite"
+    let sqlite = "cedict.db"
     let datafile = s:path . sqlite
     if filereadable(datafile)
-        let msg = " SQLite is our first-class citizen. "
         let s:path2 = 0
+        let s:sqlite = datafile
         let s:backend = "sqlite"
+        return
     endif
     " -----------------------------------
     let all_input_methods = []
@@ -3863,7 +3872,9 @@ call add(s:vimims, VimIM)
 " --------------------------------------------
 function! s:vimim_scan_plugin_data_directory()
 " --------------------------------------------
-    if empty(s:path2) || s:backend =~ "datafile"
+    if empty(s:path2)
+    \|| s:backend =~ "datafile"
+    \|| s:backend =~ "sqlite"
         return
     endif
     " ----------------------------------------
@@ -3923,17 +3934,20 @@ function! s:vimim_get_datafile_in_vimrc()
     let dir = s:vimim_data_directory
     if !empty(dir) && isdirectory(dir)
         let s:path2 = copy(dir)
+        return
     endif
     " -----------------------------------
-    if empty(s:path2)
-        let datafile = s:vimim_datafile
-        if !empty(datafile) && filereadable(datafile)
-            let s:datafile = copy(datafile)
-            let s:backend = "datafile"
-            if s:datafile ==# 'vimim.sqlite'
-                let s:backend = "sqlite"
-            endif
-        endif
+    let datafile = s:vimim_sqlite_cedict
+    if !empty(datafile) && filereadable(datafile)
+        let s:sqlite = copy(datafile)
+        let s:backend = "sqlite"
+        return
+    endif
+    " -----------------------------------
+    let datafile = s:vimim_datafile
+    if !empty(datafile) && filereadable(datafile)
+        let s:datafile = copy(datafile)
+        let s:backend = "datafile"
     endif
 endfunction
 
@@ -4257,20 +4271,56 @@ call add(s:vimims, VimIM)
 " -----------------------------------
 function! s:vimim_initialize_sqlite()
 " -----------------------------------
-" /bin/sqlite3 /usr/local/share/cjklib/cedict.db
-" ----------------------------------------------
-    if s:backend =~ "sqlite"
+    if s:backend =~ "sqlite" && !empty(s:sqlite)
         let msg = " starting to flirt with SQLite "
     else
         return
     endif
-    let sqlite = 0
-    if empty(sqlite)
-        if executable('sqlite3')
-            let sqlite = "sqlite3 "
-        endif
+    let s:sqlite_executable = "sqlite3 "
+    if executable(s:sqlite_executable)
+        let s:input_method = 'pinyin'
+    else
+        let s:sqlite_executable = 0
     endif
-    return sqlite
+endfunction
+
+" -----------------------------------------------------
+function! s:vimim_get_data_from_cedict_sqlite(keyboard)
+" -----------------------------------------------------
+    let keyboard = a:keyboard
+    if empty(keyboard)
+    \|| empty(s:sqlite)
+    \|| empty(s:sqlite_executable)
+        return []
+    endif
+    " -------------------------------------------------
+    " /bin/sqlite3 /usr/local/share/cjklib/cedict.db
+    " /bin/sqlite3 /usr/local/share/cjklib/cedict.db "select random()"
+    " sqlite> select * from cedict where Translation like '/pretty girl/';
+    " sqlite> select * from cedict where Reading like 'ma_ ma_';
+    " -------------------------------------------------
+    let column = 'HeadwordSimplified'
+    let table = 'CEDICT'
+    let where = 'Reading like '
+    let key = keyboard
+    " ----------------------------------------
+    let query  = ' select ' . column
+    let query .= ' from   ' . table
+    let query .= ' where  ' . where . key
+    " ----------------------------------------
+    let input  = s:sqlite_executable . ' '
+    let input .= s:sqlite . ' '
+    let input .= ' " '
+    let input .= query
+    let input .= ' " '
+    let output = system(input)
+    " ----------------------------------------
+    let results = []
+    for chinese in split(output,'|')
+        let menu = keyboard . " " . chinese
+        call add(results, menu)
+    endfor
+    return results
 endfunction
 
 " ======================================= }}}
@@ -4355,7 +4405,7 @@ function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
-    \|| s:datafile_has_dot > 0
+    \|| s:has_dot_in_datafile > 0
     \|| keyboard =~ '\d\d\d\d'
         return []
     endif
@@ -4849,8 +4899,11 @@ function! s:vimim_initialize_debug()
         return
     endif
     " ------------------------------
+    let sqlite = s:path . "sqlite"
     if empty(s:path2)
         return
+    elseif filereadable(sqlite)
+        let s:vimim_sqlite_cedict = '/usr/local/share/cjklib/cedict.db'
     else
         let s:backend = "directory"
     endif
@@ -5470,6 +5523,16 @@ else
         else
             let s:no_internet_connection = 0
             let s:menu_from_cloud_flag = 1
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
+    " [sqlite] uses standard unihan cedict database
+    " ---------------------------------------------
+    if len(s:sqlite_executable) > 5
+        let results2 = s:vimim_get_data_from_cedict_sqlite(keyboard)
+        if len(results2) > 0
+            let results = s:vimim_pair_list(results2)
             return s:vimim_popupmenu_list(results)
         endif
     endif
