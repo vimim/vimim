@@ -165,7 +165,6 @@ function! s:vimim_initialize_session()
     let s:data_directory_4corner = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_wubi = 0
-    let s:toggle_xiangma_pinyin = 0
     " --------------------------------
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
@@ -319,6 +318,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['shezhi'] = ['设置','設置']
     let s:chinese['test'] = ['测试','測試']
     let s:chinese['jidian'] = ['极点','極點']
+    let s:chinese['newcentury'] = ['新世纪','新世紀']
     let s:chinese['shuangpin'] = ['双拼','雙拼']
     let s:chinese['abc'] = ['智能双打','智能雙打']
     let s:chinese['microsoft'] = ['微软','微軟']
@@ -471,7 +471,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_super_internal_input")
-    call add(G, "g:vimim_wubi_sleep_with_pinyin")
     call add(G, "g:vimim_debug")
     call add(G, "g:vimimdebug")
     " -----------------------------------
@@ -1011,11 +1010,7 @@ function! s:vimim_start_chinese_mode()
     endif
     " ----------------------------------
     sil!call s:vimim_helper_mapping_on()
-    " ------------------------------------------
-    if s:vimim_wubi_sleep_with_pinyin > 0
-        inoremap <expr> <C-N> <SID>vimim_smart_ctrl_n()
-    endif
-    " ---------------------------------------------------
+    " ----------------------------------
     inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
     " ---------------------------------------------------
     return <SID>vimim_toggle_punctuation()
@@ -1180,6 +1175,9 @@ function! s:vimim_statusline()
     if key =~# 'wubi'
         if s:datafile =~# 'wubi98'
             let im .= '98'
+        elseif s:datafile =~# 'wubi2000'
+            let newcentury = s:vimim_get_chinese('newcentury')
+            let im = newcentury . im
         elseif s:datafile =~# 'wubijd'
             let jidian = s:vimim_get_chinese('jidian')
             let im = jidian . im
@@ -3148,34 +3146,17 @@ let VimIM = " ====  Input_Wubi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------
-function! <SID>vimim_smart_ctrl_n()
-" ---------------------------------
-    if s:backend =~ 'directory'
-        let msg = "pinyin and wubi sleep well in hard disk"
-    else
-        return ''
-    endif
-    let s:toggle_xiangma_pinyin += 1
-    let s:input_method = "wubi"
-    if empty(s:toggle_xiangma_pinyin%2)
-        let s:input_method = "pinyin"
-    endif
-    let s:im[s:input_method][0] = 1
-    " -----------------------------
-    let im = s:vimim_initialize_keycode()
-    let b:keymap_name = s:vimim_statusline()
-    let space = "\<C-O>:redraw\<CR>"
-    sil!exe 'sil!return "' . space . '"'
-endfunction
-
 " ------------------------------
 function! s:vimim_wubi(keyboard)
 " ------------------------------
     let keyboard = a:keyboard
-    let results = s:vimim_wubi_z_as_wildcard(keyboard)
-    if len(results) > 0
-        return results
+    let results = []
+    " ----------------------------
+    if s:vimim_wildcard_search > 0
+        let results = s:vimim_wubi_z_as_wildcard(keyboard)
+        if len(results) > 0
+            return results
+        endif
     endif
     " ----------------------------
     " support wubi non-stop typing
@@ -3188,16 +3169,17 @@ function! s:vimim_wubi(keyboard)
         let s:keyboard_wubi = keyboard
     endif
     " ----------------------------
-    if empty(s:path2)
+    if len(s:path2) > 4
+        let results = s:vimim_get_data_from_directory(keyboard, 'wubi')
+    else
         let pattern = '\M^' . keyboard
         let match_start = match(s:lines, pattern)
         if  match_start < 0
             let results = []
         else
-            let results = s:vimim_exact_match(s:lines, keyboard, match_start)
+            let match_end = match_start + 4
+            let results = s:lines[match_start : match_end]
         endif
-    else
-        let results = s:vimim_get_data_from_directory(keyboard, 'wubi')
     endif
     " ----------------------------
     if empty(results)
@@ -3210,9 +3192,7 @@ endfunction
 function! s:vimim_wubi_z_as_wildcard(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    if s:vimim_wildcard_search < 1
-    \|| empty(s:lines)
-    \|| len(keyboard) < 2
+    if len(keyboard) < 2
     \|| match(keyboard, 'z') < 1
         return []
     endif
@@ -3657,8 +3637,8 @@ function! s:vimim_scan_plugin_datafile()
     call add(all_input_methods, "12345")
     call add(all_input_methods, "wubi")
     call add(all_input_methods, "wubi98")
-    call add(all_input_methods, "wubijd")
     call add(all_input_methods, "wubi2000")
+    call add(all_input_methods, "wubijd")
     call add(all_input_methods, 'cangjie')
     call add(all_input_methods, 'zhengma')
     call add(all_input_methods, 'quick')
@@ -5323,8 +5303,7 @@ function! s:vimim_i_map_off()
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['<CR>', '<BS>', '<Space>'])
-    call extend(unmap_list, ['<Esc>', '<C-N>'])
+    call extend(unmap_list, ['<Esc>','<CR>','<BS>','<Space>'])
     " -----------------------
     for _ in unmap_list
         sil!exe 'iunmap '. _
@@ -5536,6 +5515,16 @@ else
         endif
     endif
 
+    " [wubi] support wubi non-stop input
+    " ----------------------------------
+    if get(s:im['wubi'],0) > 0
+        let results = s:vimim_wubi(keyboard)
+        if len(results) > 0
+            let results = s:vimim_pair_list(results)
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
     if s:vimim_internal_code_input > 0
@@ -5576,16 +5565,6 @@ else
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
-        endif
-    endif
-
-    " [wubi] support wubi non-stop input
-    " ----------------------------------
-    if get(s:im['wubi'],0) > 0
-        let results = s:vimim_wubi(keyboard)
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
         endif
     endif
 
