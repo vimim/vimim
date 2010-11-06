@@ -189,14 +189,17 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:keyboard_count = 0
     let s:abcdefg = "'abcdefg"
+    let s:abcdefg = "'asdfgvb"
     let s:show_me_not_pattern = "^ii\\|^oo"
     " --------------------------------
     let A = char2nr('A')
     let Z = char2nr('Z')
     let a = char2nr('a')
     let z = char2nr('z')
-    let az_nr_list = extend(range(A,Z), range(a,z))
-    let s:az_char_list = map(az_nr_list,"nr2char(".'v:val'.")")
+    let az_nr_list = range(a,z)
+    let Az_nr_list = extend(range(A,Z), range(a,z))
+    let s:Az_list = map(Az_nr_list,"nr2char(".'v:val'.")")
+    let s:az_list = map(az_nr_list,"nr2char(".'v:val'.")")
     " --------------------------------
     let s:debugs = []
     let s:debug_count = 0
@@ -1067,7 +1070,7 @@ function! s:vimim_static_alphabet_auto_select()
         return
     endif
     " always do alphabet auto selection for static mode
-    for char in s:az_char_list
+    for char in s:Az_list
         sil!exe 'inoremap <silent> ' . char . '
         \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
         \'<C-R>=g:reset_after_auto_insert()<CR>'
@@ -1293,7 +1296,8 @@ endfunction
 " -------------------------------------
 function! s:vimim_navigation_label_on()
 " -------------------------------------
-    let hjkl_list = split('iouhjklrspqmn', '\zs')
+    let hjkl = 'hjklmnzxc'
+    let hjkl_list = split(hjkl, '\zs')
     for _ in hjkl_list
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
@@ -1305,21 +1309,59 @@ function! <SID>vimim_hjkl(key)
 " ----------------------------
     let hjkl = a:key
     if pumvisible()
-        if a:key == 'i'
-            let hjkl  = '\<C-E>'
-        elseif a:key == 'm'
-            let hjkl  = '\<Down>\<Down>\<Down>'
-        elseif a:key == 'n'
-            let hjkl  = '\<C-Y>\<Esc>'
-        elseif a:key == 'o'
-            let hjkl  = '\<Up>\<Up>\<Up>'
+        if a:key == 'h'
+            let s:pumvisible_hjkl_h = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
-        elseif a:key == 'u'
+        elseif a:key == 'm'
+            let hjkl  = '\<Down>\<Down>\<Down>'
+        elseif a:key == 'n'
+            let hjkl  = '\<C-Y>\<Esc>'
+        elseif a:key == 'z'
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == 'x'
+            let hjkl  = '\<C-E>'
+        elseif a:key == 'c'
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
+        endif
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
+" ------------------------------------- todo
+function! s:vimim_navigation_label_on2()
+" -------------------------------------
+    let hjkl_list = split('xzhjklrcpqmn', '\zs')
+    for _ in hjkl_list
+        sil!exe 'inoremap <silent> <expr> '._.'
+        \ <SID>vimim_hjkl("'._.'")'
+    endfor
+endfunction
+
+" ---------------------------- todo
+function! <SID>vimim_hjkl2(key)
+" ----------------------------
+    let hjkl = a:key
+    if pumvisible()
+        if a:key == 'x'
+            let hjkl  = '\<C-E>'
+        elseif a:key == 'm'
+            let hjkl  = '\<Down>\<Down>\<Down>'
+        elseif a:key == 'n'
+            let hjkl  = '\<C-Y>\<Esc>'
+        elseif a:key == 'j'
+            let hjkl  = '\<Down>'
+        elseif a:key == 'k'
+            let hjkl  = '\<Up>'
+        elseif a:key == 'l'
+            let hjkl  = g:vimim_pumvisible_y_yes()
+        elseif a:key == 'z'
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'h'
             let s:pumvisible_hjkl_h = 1
@@ -1327,7 +1369,7 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'r'
             let s:pumvisible_reverse += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 's'
+        elseif a:key == 'c'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
         elseif a:key == 'p'
@@ -1348,9 +1390,10 @@ function! s:vimim_1234567890_filter_on()
     \|| empty(s:pinyin_and_4corner)
         return
     endif
-    let labels = range(0,9)
-    if get(s:im['12345'],0) > 0
-        let labels = range(1,5)
+    let label = 'qwertyuiop'
+    let labels = split(label, '\zs')
+    if s:pinyin_and_4corner > 1
+        let labels = range(10)
     endif
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
@@ -1363,8 +1406,13 @@ function! <SID>vimim_label_1234567890_filter(n)
 " ---------------------------------------------
     let label = a:n
     if pumvisible()
-        let msg = "give 1234567890 label new meaning"
-        let s:menu_4corner_as_filter = a:n
+        if s:pinyin_and_4corner > 1
+            let msg = "use 1234567890 as pinyin filter"
+        else
+            let label_alpha = 'pqwertyuio'
+            let label = match(label_alpha, a:n)
+        endif
+        let s:menu_4corner_as_filter = label
         let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -3511,8 +3559,6 @@ function! s:vimim_without_backend(keyboard)
     let numbers = []
     let gbk = {}
     let a = char2nr('a')
-    let z = char2nr('z')
-    let az_range = range(a, z)
     " ---------------------------------------
     let start = 19968
     if  s:encoding ==# "chinese"
@@ -3521,7 +3567,7 @@ function! s:vimim_without_backend(keyboard)
         let az .= " bbf7 bfa6 c0ac c2e8 c4c3 c5b6 c5be c6da c8bb "
         let az .= " c8f6 cbfa cdda cdda cdda cef4 d1b9 d4d1"
         let gb_code_orders = split(az)
-        for xxxx in az_range
+        for xxxx in s:az_list
             let gbk[nr2char(xxxx)] = "0x" . get(gb_code_orders, xxxx-a)
         endfor
     elseif  s:encoding ==# "taiwan"
@@ -5080,7 +5126,7 @@ function! s:vimim_plugins_fix_stop()
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
             \ '<','>','/','\','<Space>','<C-H>','<BS>','<Enter>',]
         call extend(ACPMappingDrivenkeys, range(10))
-        call extend(ACPMappingDrivenkeys, s:az_char_list)
+        call extend(ACPMappingDrivenkeys, s:Az_list)
         for key in ACPMappingDrivenkeys
             exe printf('iu <silent> %s', key)
             exe printf('im <silent> %s
