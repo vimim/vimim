@@ -189,7 +189,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:keyboard_count = 0
     let s:abcdefg = "'abcdefg"
-    let s:abcdefg = "'asdfgvb"
     let s:show_me_not_pattern = "^ii\\|^oo"
     " --------------------------------
     let A = char2nr('A')
@@ -252,6 +251,10 @@ function! s:vimim_finalize_session()
         let s:vimim_static_input_style = 1
         let s:im['4corner'][0] = 1
         let s:im['pinyin'][0] = 0
+    endif
+    " ------------------------------
+    if s:pinyin_and_4corner > 0
+        let s:abcdefg = "'asdfgvb"
     endif
     " ------------------------------
 endfunction
@@ -743,8 +746,8 @@ call add(s:vimims, VimIM)
 function! s:vimim_start_onekey()
 " ------------------------------
     sil!call s:vimim_start()
-    sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_navigation_label_on()
+    sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_abcdefg_label_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
@@ -1298,6 +1301,11 @@ function! s:vimim_navigation_label_on()
 " -------------------------------------
     let hjkl = 'hjklmnzxc'
     let hjkl_list = split(hjkl, '\zs')
+    " ---------------------------------
+    if empty(s:pinyin_and_4corner)
+        call extend(hjkl_list, ['p'])
+    endif
+    " ---------------------------------
     for _ in hjkl_list
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
@@ -1319,65 +1327,20 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
         elseif a:key == 'm'
-            let hjkl  = '\<Down>\<Down>\<Down>'
-        elseif a:key == 'n'
             let hjkl  = '\<C-Y>\<Esc>'
+        elseif a:key == 'n'
+            let hjkl  = '\<Down>\<Down>\<Down>'
         elseif a:key == 'z'
+            call s:reset_matched_list()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'x'
             let hjkl  = '\<C-E>'
         elseif a:key == 'c'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
-        endif
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-" ------------------------------------- todo
-function! s:vimim_navigation_label_on2()
-" -------------------------------------
-    let hjkl_list = split('xzhjklrcpqmn', '\zs')
-    for _ in hjkl_list
-        sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_hjkl("'._.'")'
-    endfor
-endfunction
-
-" ---------------------------- todo
-function! <SID>vimim_hjkl2(key)
-" ----------------------------
-    let hjkl = a:key
-    if pumvisible()
-        if a:key == 'x'
-            let hjkl  = '\<C-E>'
-        elseif a:key == 'm'
-            let hjkl  = '\<Down>\<Down>\<Down>'
-        elseif a:key == 'n'
-            let hjkl  = '\<C-Y>\<Esc>'
-        elseif a:key == 'j'
-            let hjkl  = '\<Down>'
-        elseif a:key == 'k'
-            let hjkl  = '\<Up>'
-        elseif a:key == 'l'
-            let hjkl  = g:vimim_pumvisible_y_yes()
-        elseif a:key == 'z'
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'h'
-            let s:pumvisible_hjkl_h = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'r'
-            let s:pumvisible_reverse += 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'c'
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
         elseif a:key == 'p'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_p_paste()\<CR>'
-        elseif a:key == 'q'
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -1388,6 +1351,7 @@ function! s:vimim_1234567890_filter_on()
 " --------------------------------------
     if s:vimim_custom_menu_label < 1
     \|| empty(s:pinyin_and_4corner)
+    \|| !empty(s:vimim_cloud_plugin)
         return
     endif
     let label = 'qwertyuiop'
@@ -1482,6 +1446,7 @@ function! g:vimim_pumvisible_p_paste()
         endfor
         let @+ = string_words
     endif
+    call s:reset_matched_list()
     return "\<Esc>"
 endfunction
 
@@ -1507,6 +1472,7 @@ function! g:vimim_pumvisible_putclip()
             let @+ = chinese
         endif
     endif
+    call s:reset_matched_list()
     return "\<Esc>"
 endfunction
 
@@ -1868,7 +1834,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let first_pair = split(get(matched_list,0))
     let first_stone = get(first_pair, 0)
     " ----------------------------------------
-    if empty(s:vimim_cloud_plugin)
+    if s:menu_4corner_as_filter > -1
         let matched_list = s:vimim_menu_4corner_filter(matched_list)
     endif
     " ----------------------------------------
@@ -2592,12 +2558,6 @@ endfunction
 function! s:vimim_menu_4corner_filter(matched_list)
 " -------------------------------------------------
     let matched_list = a:matched_list
-    if s:menu_4corner_as_filter > -1
-        let msg = "make 4corner as a filter to omni menu"
-    else
-        return matched_list
-    endif
-    " ---------------------------------------------
     let menu_cache = s:vimim_chinese_menu_hash(matched_list)
     if empty(menu_cache)    " {'马':'ma', '猫啊':'ma'}
         return matched_list
@@ -5262,7 +5222,6 @@ function! s:reset_before_anything()
     let s:no_internet_connection = 0
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
-    let s:pumvisible_reverse = 0
     let s:pumvisible_hjkl_h = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
@@ -5499,13 +5458,13 @@ else
     " use cached list for pageup/pagedown or digit filter
     " ---------------------------------------------------
     if s:vimim_punctuation_navigation > -1
-        let results = s:popupmenu_matched_list
-        if empty(results)
-            let msg = "no popup matched list; let us build it"
-        elseif s:pumvisible_reverse > 0
-            let s:pumvisible_reverse = 0
-            let results = reverse(results)
-            return s:vimim_popupmenu_list(results)
+        if s:menu_4corner_as_filter > -1
+            let results = s:popupmenu_matched_list
+            if empty(results)
+                let msg = "built it if no popup matched list"
+            else
+                return s:vimim_popupmenu_list(results)
+            endif
         endif
     endif
 
