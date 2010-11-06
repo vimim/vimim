@@ -1659,7 +1659,7 @@ function! <SID>vimim_smart_enter()
         let msg = "do seamless for the first time <Enter>"
         let s:pattern_not_found = 0
         let s:seamless_positions = getpos(".")
-        let s:keyboard_leading_zero = 0
+        let s:keyboard_leading_zero = ''
         let s:keyboard_head = 0
     else
         if s:smart_enter == 2
@@ -1696,11 +1696,12 @@ function! g:vimim_pumvisible_ctrl_e_ctrl_y()
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
+" ------------------------------------------
         if get(s:im['wubi'],0) > 0
-        \&& get(s:im['pinyin'],0) < 1
-        \&& empty(len(s:keyboard_wubi)%4)
+        \&& empty(len(s:keyboard_leading_zero)%4)
             let key = "\<C-Y>"
         endif
+" ------------------------------------------
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1968,7 +1969,7 @@ endfunction
 function! <SID>vimim_set_seamless()
 " ---------------------------------
     let s:seamless_positions = getpos(".")
-    let s:keyboard_leading_zero = 0
+    let s:keyboard_leading_zero = ''
     let s:keyboard_head = 0
     return ""
 endfunction
@@ -3137,6 +3138,8 @@ function! s:vimim_wubi(keyboard)
     let results = []
     " ----------------------------
     if s:vimim_wildcard_search > 0
+    \&& len(keyboard) > 2
+    \&& s:chinese_input_mode !~ 'dynamic'
         let results = s:vimim_wubi_z_as_wildcard(keyboard)
         if len(results) > 0
             return results
@@ -3150,7 +3153,7 @@ function! s:vimim_wubi(keyboard)
             let start = 4*((len(keyboard)-1)/4)
             let keyboard = strpart(keyboard, start)
         endif
-        let s:keyboard_wubi = keyboard
+        let s:keyboard_leading_zero = keyboard
     endif
     " ----------------------------
     if len(s:path2) > 4
@@ -3158,8 +3161,9 @@ function! s:vimim_wubi(keyboard)
     else
         let results = s:vimim_fixed_match(s:lines, keyboard, 3)
     " ----------------------------
-    if empty(results)
-        let s:keyboard_wubi = ''
+    if s:chinese_input_mode =~ 'dynamic'
+    \&& empty(results)
+        let s:keyboard_leading_zero = ''
     endif
     return results
 endfunction
@@ -3168,8 +3172,7 @@ endfunction
 function! s:vimim_wubi_z_as_wildcard(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    if len(keyboard) < 2
-    \|| match(keyboard, 'z') < 1
+    if match(keyboard, 'z') < 1
         return []
     endif
     let lines = copy(s:lines)
@@ -5222,9 +5225,8 @@ endfunction
 " -----------------------------------
 function! g:reset_after_auto_insert()
 " -----------------------------------
-    let s:keyboard_leading_zero = 0
+    let s:keyboard_leading_zero = ''
     let s:keyboard_head = 0
-    let s:keyboard_wubi = ''
     let s:keyboard_shuangpin = 0
     let s:one_key_correction = 0
     return ''
