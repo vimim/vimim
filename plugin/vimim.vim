@@ -167,6 +167,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
+    let s:digit_cache = {}
     " --------------------------------
     let s:www_libcall = 0
     let s:www_executable = 0
@@ -2559,12 +2560,12 @@ function! s:vimim_menu_4corner_filter(matched_list)
 " -------------------------------------------------
     let matched_list = a:matched_list
     let menu_cache = s:vimim_chinese_menu_hash(matched_list)
-    if empty(menu_cache)    " {'马':'ma', '猫啊':'ma'}
+    if empty(menu_cache)    " {'马':'ma', '妈啊':'ma'}
         return matched_list
     endif
     " ---------------------------------------------
-    let number = s:menu_4corner_as_filter
-    let digit_list = s:vimim_get_data_from_directory(number, '4corner')
+    let digit = s:menu_4corner_as_filter
+    let digit_list = s:vimim_get_data_from_directory(digit, '4corner')
     let digit_cache = s:vimim_chinese_menu_hash(digit_list)
     if empty(digit_cache)   " {'马':7}
         return matched_list
@@ -2584,16 +2585,29 @@ function! s:vimim_chinese_menu_hash(menu_list)
     if empty(menu_list)
         return {}
     endif
+    " ----------------------------------------
+    let digit = get(split(get(menu_list,0)),0)
+    if digit =~ '\d'
+        if has_key(s:digit_cache, digit)
+            return s:digit_cache[digit]
+        endif
+    endif
+    " ----------------------------------------
     let chinese_to_keyboard_hash = {}
     for line in menu_list
-        let words = split(line)  " shishi 事实 诗史
-        let menu = get(words,0)  " shishi
+        let words = split(line)  " shishi 事实 " 7 马
+        let menu = get(words,0)  " shishi      " 7
         for word in words
             if word != menu
                 let chinese_to_keyboard_hash[word] = menu
             endif
         endfor
     endfor
+    " ----------------------------------------
+    if digit =~ '\d'
+        let s:digit_cache[digit] = chinese_to_keyboard_hash
+    endif
+    " ----------------------------------------
     return chinese_to_keyboard_hash
 endfunction
 
@@ -4110,25 +4124,14 @@ function! s:vimim_pinyin_with_4corner(keyboard)
     let pinyin = get(alpha_keyboards,0)   " ma im=pinyin
     let digit =  get(digit_keyboards,0)   " 7  im=4corner
     " ----------------------------------------------
-    let cache_list = s:vimim_get_directory_data(pinyin, 'pinyin')
+    let cache_list = s:vimim_get_data_from_directory(pinyin, 'pinyin')
     let pinyin_cache = s:vimim_chinese_menu_hash(cache_list)
     " ----------------------------------------------
-    let cache_list = s:vimim_get_directory_data(digit, '4corner')
+    let cache_list = s:vimim_get_data_from_directory(digit, '4corner')
     let digit_cache = s:vimim_chinese_menu_hash(cache_list)
     " ----------------------------------
     " free style pinyin+4corner: ma7  mali4  mxj3
     return s:vimim_double_filter(pinyin_cache, digit_cache, -1)
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_get_directory_data(keyboard, im)
-" ------------------------------------------------
-    let keyboard = a:keyboard
-    if len(keyboard) < 1
-        return []
-    endif
-    let results = s:vimim_get_data_from_directory(keyboard, a:im)
-    return results
 endfunction
 
 " ------------------------
@@ -5456,14 +5459,12 @@ else
 
     " use cached list for pageup/pagedown or digit filter
     " ---------------------------------------------------
-    if s:vimim_punctuation_navigation > -1
-        if s:menu_4corner_as_filter > -1
-            let results = s:popupmenu_matched_list
-            if empty(results)
-                let msg = "built it if no popup matched list"
-            else
-                return s:vimim_popupmenu_list(results)
-            endif
+    if s:menu_4corner_as_filter > -1
+        let results = s:popupmenu_matched_list
+        if empty(results)
+            let msg = "built it if no popup matched list"
+        else
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
