@@ -4018,9 +4018,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
 " ------------------------------------------------------
     let keyboard = a:keyboard
     let im = a:im
-    if s:chinese_input_mode =~ 'dynamic'
-    \|| empty(keyboard)
-    \|| empty(im)
+    if empty(keyboard) || empty(im)
         return []
     endif
     let dir = s:vimim_get_data_directory(im)
