@@ -4350,7 +4350,6 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     let sqlite .= ' " '
     let sqlite .= query
     let sqlite .= ' " '
-let g:g1=sqlite
     " ----------------------------------------
     return sqlite
 endfunction
@@ -5590,14 +5589,14 @@ else
     let im = s:input_method
     " ------------------------------------------------------
     if len(s:path2) > 1
-        if keyboard =~ '\d\d\d\d'
+        if keyboard =~ '^\d\d\+$'
         \&& len(s:data_directory_4corner) > 1
             let im = "4corner"
         endif
         " ---------------------------------
         let keyboards = s:vimim_sentence_match_directory(keyboard, im)
         if empty(keyboards)
-            let msg = "sell the keyboard as is for directory database"
+            let msg = "sell keyboard as is for directory database"
         else
             let keyboard = get(keyboards, 0)
             let results2 = s:vimim_get_data_from_directory(keyboard, im)
