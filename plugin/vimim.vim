@@ -1868,6 +1868,8 @@ function! s:vimim_build_popupmenu(matched_list)
             if extra_text =~ s:show_me_not_pattern
                 let msg = "ignore key starting with ii/oo for beauty "
                 let extra_text = ''
+            elseif extra_text =~ '^u' && s:backend =~ "sqlite"
+                let extra_text = strpart(extra_text, 1)
             endif
             let complete_items["menu"] = extra_text
         endif
@@ -4300,26 +4302,37 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     endif
     " -------------------------------------------------
     " sqlite3 /usr/local/share/cjklib/cedict.db "select random()"
-    " sqlite> select * from cedict where Translation like '/pretty girl/';
+    " sqlite> select * from cedict where Translation like '%dream%';
     " sqlite> select * from cedict where Reading like 'ma_ ma_';
     " -------------------------------------------------
-    let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-    let pinyins = map(pinyins, 'v:val."_"')
-    let key = join(pinyins)
-    let key = "'" . key . "'"
-    " -------------------------------------------------
+    let table = 'CEDICT'
     let column1 = 'HeadwordTraditional'
     let column2 = 'HeadwordSimplified'
     let column3 = 'Reading'
     let column4 = 'Translation'
+    " ----------------------------------------
     let select = column2
     if s:vimim_sqlite_cedict_traditional > 0
         let select = column1
     endif
     " ----------------------------------------
-    let query  = ' SELECT distinct ' . select
-    let query .= ' FROM CEDICT '
-    let query .= ' WHERE  ' . column3 . ' like ' . key
+    let magic_head = keyboard[:0]
+    if  magic_head ==# "u"
+        let msg = ' u switch to English mode: udream => dream '
+        let key = strpart(keyboard, 1)
+        let where = column4 . ' like ' . "'%" . key . "%'"
+    else
+        let msg = ' pinyin is the default: woyou yige meng'
+        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+        let pinyins = map(pinyins, 'v:val."_"')
+        let key = join(pinyins)
+        let key = "'" . key . "'"
+        let where = column3 . ' like ' . key
+    endif
+    " ----------------------------------------
+    let query  = " SELECT " . select
+    let query .= " FROM   " . table
+    let query .= " WHERE  " . where
     " ----------------------------------------
     let sqlite  = s:sqlite_executable . ' '
     let sqlite .= s:sqlite . ' '
@@ -5492,7 +5505,9 @@ else
 
     " [imode] magic 'i': English number => Chinese number
     " ---------------------------------------------------
-    if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
+    if s:vimim_imode_pinyin > 0
+    \&& keyboard =~# '^i'
+    \&& s:backend !~ "sqlite"
         let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
