@@ -1029,7 +1029,7 @@ function! <SID>vimim_space_dynamic()
 " ----------------------------------
     let space = ' '
     if pumvisible()
-        let space = "\<C-Y>"
+        let space = s:vimim_ctrl_y_ctrl_x_ctrl_u()
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
@@ -3726,7 +3726,7 @@ function! s:vimim_pinyin_match(lines, keyboard, match_start)
     " ----------------------------------------
     " always do popup as one-to-many translation
     let menu_maximum = 20
-    let match_end - match_start = range
+    let range = match_end - match_start
     if range > menu_maximum || range < 1
         let match_end = match_start + menu_maximum
     endif
@@ -3774,17 +3774,17 @@ function! s:vimim_pinyin_more_matches(lines, keyboard, results)
     return matched_list
 endfunction
 
-" --------------------------------------------------------
-function! s:vimim_sentence_match_datafile(lines, keyboard)
-" --------------------------------------------------------
+" ------------------------------------------------------------
+function! s:vimim_sentence_match_datafile(lines, keyboard, im)
+" ------------------------------------------------------------
     let keyboard = a:keyboard
     if empty(a:lines)
+    \|| empty(a:keyboard)
     \|| get(s:im['pinyin'],0) < 1
-    \|| s:chinese_input_mode =~ 'dynamic'
         return []
     endif
     " ----------------------------------------
-    let blocks = s:vimim_static_break_every_four(keyboard, im)
+    let blocks = s:vimim_static_break_every_four(keyboard, a:im)
     if empty(blocks)
         let msg = "continue when no fancy 4-char-block"
     else
@@ -5568,10 +5568,9 @@ else
     endif
 
     " [datafile_directory] directory are first-class citizen
+    let im = s:input_method
     " ------------------------------------------------------
     if len(s:path2) > 1
-        let im = s:input_method
-        " ---------------------------------
         if keyboard =~ '\d\d\d\d'
         \&& len(s:data_directory_4corner) > 1
             let im = "4corner"
@@ -5613,7 +5612,7 @@ else
     " sentence match for datafile only
     " --------------------------------
     if match_start < 0 && empty(clouds)
-        let keyboards = s:vimim_sentence_match_datafile(s:lines, keyboard)
+        let keyboards = s:vimim_sentence_match_datafile(s:lines, keyboard, im)
         if empty(keyboards)
             let msg = "sell the keyboard as is, without modification"
         else
