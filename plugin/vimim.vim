@@ -2663,7 +2663,7 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
 " ------------------------------------------------
-    if s:shuangpin_flag > 0 || s:im['pinyin'][0] < 1
+    if s:shuangpin_flag > 0
         return []
     else
         let msg = "pinyin breakdown: pinyin=>pin'yin "
@@ -4315,30 +4315,36 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     if s:vimim_sqlite_cedict_traditional > 0
         let select = column1
     endif
+    let column = column3
     " ----------------------------------------
     let magic_head = keyboard[:0]
     if  magic_head ==# "u"
         let msg = ' u switch to English mode: udream => dream '
-        let key = strpart(keyboard, 1)
-        let where = column4 . ' like ' . "'%" . key . "%'"
+        let keyboard = strpart(keyboard, 1)
+        let keyboard = "'%" . keyboard . "%'"
+        let column = column4
     else
-        let msg = ' pinyin is the default: woyou yige meng'
+        let msg = ' pinyin is the default: meng'
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        let pinyins = map(pinyins, 'v:val."_"')
-        let key = join(pinyins)
-        let key = "'" . key . "'"
-        let where = column3 . ' like ' . key
+        if len(pinyins) > 1
+            let pinyins = map(pinyins, 'v:val."_"')
+            let keyboard = join(pinyins)
+        else
+            let keyboard = keyboard."_"
+        endif
+        let keyboard = "'" . keyboard . "'"
     endif
     " ----------------------------------------
     let query  = " SELECT " . select
     let query .= " FROM   " . table
-    let query .= " WHERE  " . where
+    let query .= " WHERE  " . column . ' like ' . keyboard
     " ----------------------------------------
     let sqlite  = s:sqlite_executable . ' '
     let sqlite .= s:sqlite . ' '
     let sqlite .= ' " '
     let sqlite .= query
     let sqlite .= ' " '
+let g:g1=sqlite
     " ----------------------------------------
     return sqlite
 endfunction
