@@ -3156,15 +3156,7 @@ function! s:vimim_wubi(keyboard)
     if len(s:path2) > 4
         let results = s:vimim_get_data_from_directory(keyboard, 'wubi')
     else
-        let pattern = '\M^' . keyboard
-        let match_start = match(s:lines, pattern)
-        if  match_start < 0
-            let results = []
-        else
-            let match_end = match_start + 3
-            let results = s:lines[match_start : match_end]
-        endif
-    endif
+        let results = s:vimim_fixed_match(s:lines, keyboard, 3)
     " ----------------------------
     if empty(results)
         let s:keyboard_wubi = ''
@@ -3689,28 +3681,25 @@ function! s:vimim_wildcard_search(keyboard, lines)
     return results
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_oneline_match(lines, keyboard)
-" ----------------------------------------------
-    if empty(a:lines)
-    \|| empty(a:keyboard)
-    \|| get(s:im['pinyin'],0) < 1
+" ---------------------------------------------------
+function! s:vimim_fixed_match(lines, keyboard, fixed)
+" ---------------------------------------------------
+    if empty(a:lines) || empty(a:keyboard)
         return []
     endif
-    " [pinyin_quote_sogou] try exact one-line match
-    " ---------------------------------------------
+    let pattern = '^' . a:keyboard
+    let matched = match(a:lines, pattern)
+    let match_end = matched + a:fixed
     let results = []
-    let pattern = '^' . a:keyboard . '\>'
-    let oneline_match = match(a:lines, pattern)
-    if  oneline_match >= 0
-        let results = a:lines[oneline_match : oneline_match]
+    if  matched >= 0
+        let results = a:lines[matched : match_end]
     endif
     return results
 endfunction
 
-" --------------------------------------------------------
-function! s:vimim_grep_match(lines, keyboard, match_start)
-" --------------------------------------------------------
+" ----------------------------------------------------------
+function! s:vimim_pinyin_match(lines, keyboard, match_start)
+" ----------------------------------------------------------
     let match_start = a:match_start
     if empty(a:lines) || match_start < 0
         return []
@@ -3720,11 +3709,9 @@ function! s:vimim_grep_match(lines, keyboard, match_start)
     let pattern = '\M^\(' . keyboard
     if len(keyboard) < 2
         let pattern .= '\>'
-    elseif get(s:im['pinyin'],0) > 0
+    else
         let pinyin_tone = '\d\='
         let pattern .= pinyin_tone . '\>'
-    else
-        let pattern .= '\>'
     endif
     let pattern .=  '\)\@!'
     " ----------------------------------------
@@ -3736,16 +3723,9 @@ function! s:vimim_grep_match(lines, keyboard, match_start)
     " ----------------------------------------
     " always do popup as one-to-many translation
     let menu_maximum = 20
-    if match_end - match_start > menu_maximum
+    let match_end - match_start = range
+    if range > menu_maximum || range < 1
         let match_end = match_start + menu_maximum
-    endif
-    " --------------------------------------------
-    if match_end - match_start < 1
-        let popup = 5-1
-        if get(s:im['pinyin'],0) > 0
-            let popup = 20
-        endif
-        let match_end = match_start + popup
     endif
     " --------------------------------------------
     let results = a:lines[match_start : match_end]
@@ -3785,7 +3765,7 @@ function! s:vimim_pinyin_more_matches(lines, keyboard, results)
     endif
     let matched_list = []
     for keyboard in candidates
-        let results = s:vimim_oneline_match(a:lines, keyboard)
+        let results = s:vimim_fixed_match(a:lines, keyboard, 1)
         call extend(matched_list, results)
     endfor
     return matched_list
@@ -4039,7 +4019,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     let keyboard = a:keyboard
     let im = a:im
     if s:chinese_input_mode =~ 'dynamic'
-    \|| empty(keyboard) 
+    \|| empty(keyboard)
     \|| empty(im)
         return []
     endif
@@ -5625,7 +5605,7 @@ else
 
     " [datafile] datafile is used as another backend
     " ----------------------------------------------
-    let pattern = '\M^' . keyboard
+    let pattern = '^' . keyboard
     let match_start = match(s:lines, pattern)
 
     " sentence match for datafile only
@@ -5639,7 +5619,7 @@ else
             if s:pumvisible_hjkl_h > 0
                 let s:keyboard_head = keyboard
             endif
-            let pattern = "\\C" . "^" . keyboard
+            let pattern = "^" . keyboard
             let match_start = match(s:lines, pattern)
         endif
     endif
@@ -5648,9 +5628,11 @@ else
         let msg = "fuzzy search could be done here, if needed"
     else
         if s:vimim_datafile_has_apostrophe > 0
-            let results = s:vimim_oneline_match(s:lines, keyboard)
+            let results = s:vimim_fixed_match(s:lines, keyboard, 1)
+        elseif get(s:im['pinyin'],0) > 0
+            let results = s:vimim_pinyin_match(s:lines,keyboard,match_start)
         else
-            let results = s:vimim_grep_match(s:lines,keyboard,match_start)
+            let results = s:vimim_fixed_match(s:lines, keyboard, 4)
         endif
         if len(results) > 0
             let results = s:vimim_pair_list(results)
