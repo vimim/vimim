@@ -1873,18 +1873,16 @@ function! s:vimim_build_popupmenu(matched_list)
         endif
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
-            if get(s:im['pinyin'],0) > 0 || s:menu_from_cloud_flag > 0
-                let tail = ''
-                if keyboard =~ '[.]' && s:has_dot_in_datafile < 1
-                    let dot = match(keyboard, '[.]')
-                    let tail = strpart(keyboard, dot+1)
-                elseif keyboard !~? '^vim' && keyboard !~ "[']"
-                    let tail = strpart(keyboard, len(menu))
-                endif
-                if tail =~ '\w'
-                    let chinese .=  tail
-                    let s:keyboard_head = strpart(keyboard, 0, len(menu))
-                endif
+            let tail = ''
+            if keyboard =~ '[.]' && s:has_dot_in_datafile < 1
+                let dot = match(keyboard, '[.]')
+                let tail = strpart(keyboard, dot+1)
+            elseif keyboard !~? '^vim' && keyboard !~ "[']"
+                let tail = strpart(keyboard, len(menu))
+            endif
+            if tail =~ '\w'
+                let chinese .=  tail
+                let s:keyboard_head = strpart(keyboard, 0, len(menu))
             endif
         else
             let menu = get(split(menu,"_"),0)
@@ -3780,7 +3778,6 @@ function! s:vimim_sentence_match_datafile(lines, keyboard, im)
     let keyboard = a:keyboard
     if empty(a:lines)
     \|| empty(a:keyboard)
-    \|| get(s:im['pinyin'],0) < 1
         return []
     endif
     " ----------------------------------------
@@ -4073,13 +4070,14 @@ endfunction
 function! s:vimim_get_matched_sentence_head(keyboard)
 " ---------------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:keyboard_head)
+    let head = s:keyboard_head
+    if empty(head)
         let msg = 'h was not typed on omni popup menu'
     else
         if s:pumvisible_hjkl_h > 0
             let s:pumvisible_hjkl_h = 0
-            " for pinyin, works best if using vimim_get_pinyin_from_pinyin()
-            let keyboard = strpart(s:keyboard_head,0,len(s:keyboard_head)-1)
+            " for pinyin, best if using vimim_get_pinyin_from_pinyin()
+            let keyboard = strpart(head, 0, len(head)-1)
         endif
     endif
     return keyboard
@@ -5148,7 +5146,6 @@ endfunction
 function! s:vimim_start_omni()
 " ----------------------------
     let s:unicode_menu_display_flag = 0
-    let s:menu_from_cloud_flag = 0
     let s:insert_without_popup = 0
 endfunction
 
@@ -5459,7 +5456,6 @@ else
             " return empty list if the result is empty
             return []
         else
-            let s:menu_from_cloud_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5549,7 +5545,6 @@ else
             endif
         else
             let s:no_internet_connection = 0
-            let s:menu_from_cloud_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5646,7 +5641,6 @@ else
     if s:vimim_cloud_sogou == 1
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
         if len(results) > 0
-            let s:menu_from_cloud_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
