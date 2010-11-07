@@ -757,9 +757,16 @@ function! <SID>OneKeyMode()
 " -------------------------
 " VimIM <OneKey> mode double play
 "  (1) <OneKey> => start OneKey mode and start to play
-"  (2) <OneKey> => stop  OneKey mode and print out menu
+"  (2) <OneKey> => stop  OneKey mode and stop to play
 " -----------------------------------------------------
-    return s:vimim_start_both_onekey(1)
+    let onekey = ""
+    let s:chinese_mode_switch += 1
+    if empty(s:chinese_mode_switch%2)
+        let onekey = s:vimim_start_both_onekey(1)
+    else
+        call s:vimim_stop()
+    endif
+    return onekey
 endfunction
 
 " ---------------------------------------
@@ -1832,24 +1839,18 @@ endfunction
 " --------------------------------------------
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
-    let matched_list = a:matched_list
-    if empty(matched_list)
-        return []
-    endif
-    let s:popupmenu_matched_list = copy(matched_list)
-    let first_pair = split(get(matched_list,0))
-    let first_stone = get(first_pair, 0)
+    let filtered_list = a:matched_list
+    let s:popupmenu_matched_list = copy(a:matched_list)
     " ----------------------------------------
     if s:menu_4corner_as_filter > -1
-        let matched_list = s:vimim_menu_4corner_filter(matched_list)
+        let filtered_list = s:vimim_menu_4corner_filter(a:matched_list)
     endif
     " ----------------------------------------
     if s:pageup_pagedown > 0
-        let matched_list = s:vimim_pageup_pagedown(matched_list)
+        let filtered_list = s:vimim_pageup_pagedown(a:matched_list)
     endif
     " ----------------------------------------
-    let popupmenu_list = s:vimim_build_popupmenu(matched_list)
-    " ----------------------------------------
+    let popupmenu_list = s:vimim_build_popupmenu(filtered_list)
     return popupmenu_list
 endfunction
 
@@ -1888,8 +1889,6 @@ function! s:vimim_build_popupmenu(matched_list)
             if extra_text =~ s:show_me_not_pattern
                 let msg = "ignore key starting with ii/oo for beauty "
                 let extra_text = ''
-            elseif extra_text =~ '^u' && s:backend =~ "sqlite"
-                let extra_text = strpart(extra_text, 1)
             endif
             let complete_items["menu"] = extra_text
         endif
@@ -1923,8 +1922,6 @@ function! s:vimim_build_popupmenu(matched_list)
                 " -----------------------------------------
                 if s:pinyin_and_4corner > 0
                 \&& empty(s:vimim_cloud_plugin)
-                    let labeling = label2
-                elseif !empty(s:vimim_sqlite_cedict)
                     let labeling = label2
                 else
                     let labeling .= label2
@@ -2645,6 +2642,10 @@ function! s:vimim_double_filter(chinese2pinyin, chinese2digit, position)
         " --------------------------------------
         if !empty(menu_fix) && !empty(menu_vary)
             let menu = menu_fix . '　' . menu_vary
+            if s:pumvisible_hjkl_h > 0
+                let s:pumvisible_hjkl_h = 0
+                let menu =  menu_vary
+            endif
             call add(values, menu . " " . key)
         endif
     endfor
@@ -3800,33 +3801,25 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_sentence_datafile(lines, keyboard, im)
 " ------------------------------------------------------
-    let keyboard = a:keyboard
     if empty(a:lines)
-    \|| empty(a:keyboard)
         return []
     endif
-    " ----------------------------------------
+    let keyboard = a:keyboard
     let blocks = s:vimim_static_break_every_four(keyboard, a:im)
     if empty(blocks)
         let msg = "continue when no fancy 4-char-block"
     else
         return blocks
     endif
-    " ----------------------------------------
     let match_start = -1
-    let minimum_match = 1
-    let keyboard = s:vimim_get_matched_sentence_head(keyboard)
-    if s:pumvisible_hjkl_h > 0
-        let minimum_match = 0
-    endif
+    let head = s:vimim_get_matched_sentence_head(keyboard)
+    let max = s:vimim_get_hjkl_h_pinyin(head)
     " word matching algorithm for Chinese segmentation
     " ------------------------------------------------
-    let max = s:vimim_get_hjkl_l_pinyin(keyboard)
-    while max > minimum_match
+    while max > 1
         let max -= 1
-        let break_at = max
-        let block = strpart(keyboard, 0, break_at)
-        let pattern = '^' . block . '\>'
+        let head = strpart(keyboard, 0, max)
+        let pattern = '^' . head . '\>'
         let match_start = match(a:lines, pattern)
         if  match_start < 0
             let msg = "continue until match is found"
@@ -3834,7 +3827,7 @@ function! s:vimim_sentence_datafile(lines, keyboard, im)
             break
         endif
     endwhile
-    " ----------------------------------------
+    " ------------------------------------------------
     if match_start > 0
         let blocks = s:vimim_get_sentence_blocks(a:keyboard, max)
     endif
@@ -3972,7 +3965,7 @@ endfunction
 function! s:vimim_get_data_from_directory(keyboard, im)
 " -----------------------------------------------------
     let dir = s:vimim_get_data_directory(a:im)
-    if empty(dir)
+    if empty(dir) || empty(a:keyboard)
         return []
     endif
     let results = []
@@ -4037,9 +4030,9 @@ function! s:vimim_sentence_directory(keyboard, im)
     let im = a:im
     let dir = s:vimim_get_data_directory(im)
     let filename = dir . '/' . keyboard
-    " ----------------------------------------
     if filereadable(filename)
         if s:pumvisible_hjkl_h > 0
+            let s:pumvisible_hjkl_h = 0
             let s:keyboard_head = keyboard
         else
             return [keyboard]
@@ -4052,19 +4045,13 @@ function! s:vimim_sentence_directory(keyboard, im)
     else
         return blocks
     endif
-    " ----------------------------------------
-    let keyboard = s:vimim_get_matched_sentence_head(keyboard)
-    let key = keyboard
-    let minimum_match = 1
-    if s:pumvisible_hjkl_h > 0
-        let minimum_match = 0
-    endif
     " -------------------------------------------
-    let max = s:vimim_get_hjkl_l_pinyin(keyboard)
-    while max > minimum_match
+    let head = s:vimim_get_matched_sentence_head(keyboard)
+    let max = s:vimim_get_hjkl_h_pinyin(head)
+    while max > 1
         let max -= 1
-        let key = strpart(keyboard, 0, max)
-        let filename = dir . '/' . key
+        let head = strpart(keyboard, 0, max)
+        let filename = dir . '/' . head
         if filereadable(filename)
             break
         else
@@ -4079,7 +4066,7 @@ function! s:vimim_sentence_directory(keyboard, im)
 endfunction
 
 " -------------------------------------------
-function! s:vimim_get_hjkl_l_pinyin(keyboard)
+function! s:vimim_get_hjkl_h_pinyin(keyboard)
 " -------------------------------------------
     let keyboard = a:keyboard
     let max = len(keyboard)
@@ -4102,12 +4089,12 @@ function! s:vimim_get_matched_sentence_head(keyboard)
 " ---------------------------------------------------
     let keyboard = a:keyboard
     let head = s:keyboard_head
-    let length = len(head)-1
     if empty(head)
         let msg = 'h was not typed on omni popup menu'
     else
         if s:pumvisible_hjkl_h > 0
             let s:pumvisible_hjkl_h = 0
+            let length = len(head)-1
             let keyboard = strpart(head, 0, length)
         endif
     endif
@@ -4295,9 +4282,8 @@ function! s:vimim_sentence_match_sqlite(keyboard)
     endif
     let key = keyboard
     let max = len(keyboard)
-    let minimum_match = 1
     " ----------------------------------------
-    while max > minimum_match
+    while max > 1
         let max -= 1
         let key = strpart(keyboard, 0, max)
         let sql = s:vimim_get_cedict_sqlite_query(key)
@@ -4967,7 +4953,8 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     let s:vimim_debug = 9
-    let s:vimim_static_input_style = 3
+    let s:vimim_static_input_style = 2
+    let s:vimim_ctrl_space_to_toggle = 2
     let s:vimim_cloud_sogou = -1
     let s:vimim_imode_pinyin = 1
     let s:vimim_custom_skin = 1
@@ -5229,7 +5216,6 @@ function! s:reset_before_anything()
     let s:no_internet_connection = 0
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
-    let s:pumvisible_hjkl_h = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
@@ -5252,6 +5238,7 @@ endfunction
 function! g:reset_after_auto_insert()
 " -----------------------------------
     let s:keyboard_leading_zero = ''
+    let s:pumvisible_hjkl_h = 0
     let s:keyboard_head = 0
     let s:keyboard_shuangpin = 0
     let s:one_key_correction = 0
@@ -5588,15 +5575,23 @@ else
         endif
     endif
 
-    " [datafile_directory] directory are first-class citizen
+    " [directory] directory is the first-class citizen
     let im = s:input_method
     " ------------------------------------------------------
     if len(s:path2) > 1
-        if keyboard =~ '^\d\d\+$'
-        \&& len(s:data_directory_4corner) > 1
-            let im = "4corner"
+        if len(s:data_directory_4corner) > 1
+            let pinyin_4corner = '^\l\+\d\+$'
+            let digit_input  = '^\d\d\+$'
+            if keyboard =~ digit_input
+                let im = "4corner"
+            elseif keyboard =~ pinyin_4corner
+                let results = s:vimim_pinyin_with_4corner(keyboard)
+                if len(results) > 0
+                    return s:vimim_popupmenu_list(results)
+                endif
+            endif
         endif
-        " ---------------------------------
+        " --------------------------------------------------
         let keyboards = s:vimim_sentence_directory(keyboard, im)
         if empty(keyboards)
             let msg = "sell keyboard as is for directory database"
@@ -5605,12 +5600,9 @@ else
             let results2 = s:vimim_get_data_from_directory(keyboard, im)
             if len(results2) > 0
                 let results = s:vimim_pair_list(results2)
-                return s:vimim_popupmenu_list(results)
-            endif
-            " -------------------------------------------------
-            let results = s:vimim_pinyin_with_4corner(keyboard)
-            if len(results) > 0
-                return s:vimim_popupmenu_list(results)
+                if len(results) > 0
+                    return s:vimim_popupmenu_list(results)
+                endif
             endif
         endif
     endif
