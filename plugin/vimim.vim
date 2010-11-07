@@ -895,11 +895,13 @@ function! s:vimim_onekey_action(onekey)
     endif
     " -------------------------------------------------
     let onekey = a:onekey
-    if empty(s:chinese_input_mode)
-    \&& byte_before !~# s:valid_key
+    if byte_before !~# s:valid_key
         if empty(byte_before) || byte_before =~ '\s'
-            if !empty(s:vimim_tab_as_onekey)
+            if s:vimim_tab_as_onekey > 0
                 let onekey = "\t"
+                if s:vimim_tab_as_onekey > 1
+                    sil!call s:vimim_stop()
+                endif
             endif
         elseif empty(a:onekey)
             return <SID>vimim_get_unicode_menu()
@@ -918,7 +920,7 @@ function! s:vimim_onekey_action(onekey)
     endif
     " ---------------------------------------------------
     if empty(byte_before) || byte_before =~ '\s'
-        if !empty(s:vimim_tab_as_onekey)
+        if s:vimim_tab_as_onekey > 0
             let onekey = "\t"
         endif
     elseif byte_before !~# s:valid_key
