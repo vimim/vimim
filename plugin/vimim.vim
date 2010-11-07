@@ -633,7 +633,7 @@ function! s:vimim_egg_vimim()
     let dynamic = s:vimim_get_chinese('dynamic')
     let static = s:vimim_get_chinese('static')
     let toggle = "i_CTRL-Bslash"
-    if s:vimim_static_input_style == 2
+    if s:vimim_static_input_style > 1
         let toggle = "OneKeyMode"
     endif
     if option < 1
@@ -802,7 +802,7 @@ endfunction
 " --------------------------------
 function! s:vimim_onekey_autocmd()
 " --------------------------------
-    if s:vimim_static_input_style==2 && has("autocmd")
+    if s:vimim_static_input_style > 1 && has("autocmd")
         augroup onekey_mode_autocmd
             autocmd!
             if hasmapto('<Space>', 'i')
@@ -881,7 +881,7 @@ function! s:vimim_onekey_action(onekey)
         if empty(onekey)
             let msg = "transform punctuation from english to chinese"
             let replacement = s:punctuations[byte_before]
-            if s:vimim_static_input_style == 2
+            if s:vimim_static_input_style > 2
                 let msg = " play smart quote in onekey static mode "
                 if byte_before ==# "'"
                     let replacement = <SID>vimim_get_single_quote()
@@ -3727,9 +3727,9 @@ function! s:vimim_fixed_match(lines, keyboard, fixed)
     return results
 endfunction
 
-" ----------------------------------------------------------
-function! s:vimim_pinyin_match(lines, keyboard, match_start)
-" ----------------------------------------------------------
+" ----------------------------------------------------
+function! s:vimim_pinyin(lines, keyboard, match_start)
+" ----------------------------------------------------
     let match_start = a:match_start
     if empty(a:lines) || match_start < 0
         return []
@@ -3801,9 +3801,9 @@ function! s:vimim_pinyin_more_matches(lines, keyboard, results)
     return matched_list
 endfunction
 
-" ------------------------------------------------------------
-function! s:vimim_sentence_match_datafile(lines, keyboard, im)
-" ------------------------------------------------------------
+" ------------------------------------------------------
+function! s:vimim_sentence_datafile(lines, keyboard, im)
+" ------------------------------------------------------
     let keyboard = a:keyboard
     if empty(a:lines)
     \|| empty(a:keyboard)
@@ -4034,14 +4034,11 @@ function! s:vimim_static_break_every_four(keyboard, im)
     return blocks
 endfunction
 
-" ------------------------------------------------------
-function! s:vimim_sentence_match_directory(keyboard, im)
-" ------------------------------------------------------
+" ------------------------------------------------
+function! s:vimim_sentence_directory(keyboard, im)
+" ------------------------------------------------
     let keyboard = a:keyboard
     let im = a:im
-    if empty(keyboard) || empty(im)
-        return []
-    endif
     let dir = s:vimim_get_data_directory(im)
     let filename = dir . '/' . keyboard
     " ----------------------------------------
@@ -4109,7 +4106,6 @@ function! s:vimim_pinyin_with_4corner(keyboard)
     if empty(s:pinyin_and_4corner)
     \|| s:chinese_input_mode =~ 'dynamic'
     \|| s:shuangpin_flag > 0
-    \|| empty(keyboard)
     \|| len(keyboard) < 2
     \|| keyboard =~# '^\d'
     \|| keyboard !~# '\d'
@@ -4959,8 +4955,7 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     let s:vimim_debug = 9
-    let s:vimim_tab_as_onekey = 2
-    let s:vimim_static_input_style = 2
+    let s:vimim_static_input_style = 3
     let s:vimim_cloud_sogou = -1
     let s:vimim_imode_pinyin = 1
     let s:vimim_custom_skin = 1
@@ -5552,9 +5547,6 @@ else
     if s:vimim_datafile_has_apostrophe > 0
         let keyboard = s:vimim_apostrophe(keyboard)
     endif
-    if empty(keyboard)
-        return
-    endif
 
     " [cloud] to make cloud come true for woyouyigemeng
     " -------------------------------------------------
@@ -5593,7 +5585,7 @@ else
             let im = "4corner"
         endif
         " ---------------------------------
-        let keyboards = s:vimim_sentence_match_directory(keyboard, im)
+        let keyboards = s:vimim_sentence_directory(keyboard, im)
         if empty(keyboards)
             let msg = "sell keyboard as is for directory database"
         else
@@ -5629,7 +5621,7 @@ else
     " sentence match for datafile only
     " --------------------------------
     if match_start < 0 && empty(clouds)
-        let keyboards = s:vimim_sentence_match_datafile(s:lines, keyboard, im)
+        let keyboards = s:vimim_sentence_datafile(s:lines, keyboard, im)
         if empty(keyboards)
             let msg = "sell the keyboard as is, without modification"
         else
@@ -5648,7 +5640,7 @@ else
         if s:vimim_datafile_has_apostrophe > 0
             let results = s:vimim_fixed_match(s:lines, keyboard, 1)
         elseif get(s:im['pinyin'],0) > 0
-            let results = s:vimim_pinyin_match(s:lines,keyboard,match_start)
+            let results = s:vimim_pinyin(s:lines, keyboard, match_start)
         else
             let results = s:vimim_fixed_match(s:lines, keyboard, 4)
         endif
@@ -5743,7 +5735,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_onekey_mode_mapping_on()
 " ----------------------------------------
-    if s:vimim_static_input_style != 2
+    if s:vimim_static_input_style < 2
         return
     endif
     " ------------------------------------
@@ -5751,9 +5743,10 @@ function! s:vimim_onekey_mode_mapping_on()
         inoremap <unique> <expr> <Plug>VimIMOneKeyMode <SID>OneKeyMode()
     endif
     " ------------------------------------
-    if s:vimim_tab_as_onekey == 2
+    if s:vimim_static_input_style == 3
+        imap <silent> <C-^> <Plug>VimIMOneKeyMode
+    elseif s:vimim_tab_as_onekey == 2
         imap <silent> <Tab> <Plug>VimIMOneKeyMode
-    " ------------------------------------
     elseif s:vimim_ctrl_space_to_toggle < 2
            imap <silent> <C-Bslash> <Plug>VimIMOneKeyMode
         noremap <silent> <C-Bslash> :call <SID>OneKeyMode()<CR>
@@ -5763,6 +5756,10 @@ endfunction
 " -----------------------------------
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
+    if s:vimim_static_input_style > 2
+        return
+    endif
+    " ------------------------------------
     if !hasmapto('<Plug>VimIMOneKey', 'i')
         inoremap <unique> <expr> <Plug>VimIMOneKey <SID>OneKey()
     endif
