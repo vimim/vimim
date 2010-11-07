@@ -1340,7 +1340,8 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
         elseif a:key == 'm'
-            let hjkl  = '\<C-Y>\<Esc>'
+            let hjkl  = '\<C-Y>'
+            let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
         elseif a:key == 'n'
             let hjkl  = '\<Down>\<Down>\<Down>'
         elseif a:key == 'z'
@@ -5760,17 +5761,12 @@ endfunction
 " -----------------------------------
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
-    if s:vimim_static_input_style > 2
-        return
+    if !hasmapto('<Plug>VimimOneKey', 'i')
+        inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
     endif
-    " ------------------------------------
-    if !hasmapto('<Plug>VimIMOneKey', 'i')
-        inoremap <unique> <expr> <Plug>VimIMOneKey <SID>OneKey()
-    endif
-    if empty(s:vimim_tab_as_onekey)
-        imap <silent> <C-^> <Plug>VimIMOneKey
-    elseif s:vimim_tab_as_onekey == 1
-        imap <silent> <Tab> <Plug>VimIMOneKey
+    imap <silent> <C-^> <Plug>VimimOneKey
+    if s:vimim_tab_as_onekey > 0
+        imap <silent> <Tab> <Plug>VimimOneKey
     endif
 endfunction
 
