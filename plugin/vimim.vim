@@ -2450,7 +2450,8 @@ function! s:vimim_reverse_lookup(chinese)
     let results_4corner = []  " 马力 => 7712 4002
     let result_cjjp = ""      " 马力 => ml
     " ------------------------------------
-    if !empty(s:data_directory_unihan)
+    let unihan = s:vimim_get_data_directory('unihan')
+    if !empty(unihan)
         let im = '4corner'
         let cache = s:vimim_get_unihan_reverse_cache(chinese, im)
         let items = s:vimim_reverse_one_entry(cache, chinese)
@@ -3897,8 +3898,6 @@ function! s:vimim_scan_plugin_data_directory()
             let s:im['pinyin'][0] = 1
         elseif directory =~# '^\d'
             let s:data_directory_4corner = dir
-        elseif directory =~# 'unihan'
-            let s:data_directory_unihan = dir
         elseif directory =~# '^wubi'
             let s:data_directory_wubi = dir
         endif
@@ -4929,11 +4928,11 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let s:vimim_static_input_style = 0
-    let s:chinese_mode_switch = 1
-    let s:data_directory_unihan = 0
-    let s:initialization_loaded = 0
     let s:backend = 0
+    let s:localization = 0
+    let s:chinese_mode_switch = 1
+    let s:initialization_loaded = 0
+    let s:vimim_static_input_style = 0
     " ------------------------------
     let s:path2 = 0
     let dir = "/vimim"
