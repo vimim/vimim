@@ -5710,10 +5710,10 @@ function! s:vimim_chinese_mode_mapping_on()
     if s:vimim_static_input_style > 1
         return
     endif
-    if !hasmapto('<Plug>VimimChinesemode', 'i')
-        inoremap <unique> <expr> <Plug>VimimChinesemode <SID>ChineseMode()
+    if !hasmapto('<Plug>VimimChineseMode', 'i')
+        inoremap <unique> <expr> <Plug>VimimChineseMode <SID>ChineseMode()
     endif
-        imap <silent> <C-Bslash> <Plug>VimimChinesemode
+        imap <silent> <C-Bslash> <Plug>VimimChineseMode
     noremap  <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
         vmap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>gv
 endfunction
@@ -5746,7 +5746,7 @@ function! s:vimim_onekey_mode_mapping_on()
     endif
     " ------------------------------------
     if !hasmapto('<Plug>VimIMOneKeyMode', 'i')
-        inoremap <unique> <expr> <Plug>VimIMOneKeyMode <SID>OneKeymode()
+        inoremap <unique> <expr> <Plug>VimIMOneKeyMode <SID>OneKeyMode()
     endif
     " ------------------------------------
     if s:vimim_tab_as_onekey == 2
