@@ -454,7 +454,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_sqlite_cedict")
-    call add(G, "g:vimim_sqlite_cedict_traditional")
     call add(G, "g:vimim_datafile")
     call add(G, "g:vimim_datafile_has_apostrophe")
     call add(G, "g:vimim_datafile_is_not_utf8")
@@ -3790,9 +3789,6 @@ function! s:vimim_pinyin_more_matches(lines, keyboard, results)
         let candidate = join(keyboards[0 : i], "")
         call add(candidates, candidate)
     endfor
-    if empty(candidates)
-        return []
-    endif
     let matched_list = []
     for keyboard in candidates
         let results = s:vimim_fixed_match(a:lines, keyboard, 1)
@@ -3820,12 +3816,12 @@ function! s:vimim_sentence_datafile(lines, keyboard, im)
     let match_start = -1
     let minimum_match = 1
     let keyboard = s:vimim_get_matched_sentence_head(keyboard)
-    let max = len(keyboard)
     if s:pumvisible_hjkl_h > 0
         let minimum_match = 0
     endif
     " word matching algorithm for Chinese segmentation
     " ------------------------------------------------
+    let max = s:vimim_get_hjkl_l_pinyin(keyboard)
     while max > minimum_match
         let max -= 1
         let break_at = max
@@ -4059,12 +4055,12 @@ function! s:vimim_sentence_directory(keyboard, im)
     " ----------------------------------------
     let keyboard = s:vimim_get_matched_sentence_head(keyboard)
     let key = keyboard
-    let max = len(keyboard)
     let minimum_match = 1
     if s:pumvisible_hjkl_h > 0
         let minimum_match = 0
     endif
-    " ----------------------------------------
+    " -------------------------------------------
+    let max = s:vimim_get_hjkl_l_pinyin(keyboard)
     while max > minimum_match
         let max -= 1
         let key = strpart(keyboard, 0, max)
@@ -4075,11 +4071,30 @@ function! s:vimim_sentence_directory(keyboard, im)
             continue
         endif
     endwhile
-    " ----------------------------------------
+    " -------------------------------------------
     if max > 0 && filereadable(filename)
         let blocks = s:vimim_get_sentence_blocks(a:keyboard, max)
     endif
     return blocks
+endfunction
+
+" -------------------------------------------
+function! s:vimim_get_hjkl_l_pinyin(keyboard)
+" -------------------------------------------
+    let keyboard = a:keyboard
+    let max = len(keyboard)
+    if get(s:im['pinyin'],0) < 1
+        return max
+    endif
+    " -------------------------
+    let msg = " yeyeqifangcao "
+    " -------------------------
+    let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+    if len(pinyins) > 1
+        let last = pinyins[-1:-1]
+        let max = len(keyboard)-len(last)-1
+    endif
+    return max
 endfunction
 
 " ---------------------------------------------------
@@ -4087,13 +4102,13 @@ function! s:vimim_get_matched_sentence_head(keyboard)
 " ---------------------------------------------------
     let keyboard = a:keyboard
     let head = s:keyboard_head
+    let length = len(head)-1
     if empty(head)
         let msg = 'h was not typed on omni popup menu'
     else
         if s:pumvisible_hjkl_h > 0
             let s:pumvisible_hjkl_h = 0
-            " for pinyin, best if using vimim_get_pinyin_from_pinyin()
-            let keyboard = strpart(head, 0, len(head)-1)
+            let keyboard = strpart(head, 0, length)
         endif
     endif
     return keyboard
@@ -4314,13 +4329,10 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     let column2 = 'HeadwordSimplified'
     let column3 = 'Reading'
     let column4 = 'Translation'
-    " ----------------------------------------
+    " ------------------
     let select = column2
-    if s:vimim_sqlite_cedict_traditional > 0
-        let select = column1
-    endif
     let column = column3
-    " ----------------------------------------
+    " ------------------
     let magic_head = keyboard[:0]
     if  magic_head ==# "u"
         let msg = ' u switch to English mode: udream => dream '
