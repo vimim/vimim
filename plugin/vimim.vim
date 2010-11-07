@@ -5704,7 +5704,11 @@ endfunction
 function! s:vimim_visual_mapping_on()
 " -----------------------------------
     if !hasmapto('<C-^>', 'v')
-        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
+        if s:vimim_ctrl_space_to_toggle == 2
+            xnoremap<silent><C-Space> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
+        else
+            xnoremap<silent><C-^>     y:call <SID>vimim_visual_ctrl_6(@0)<CR>
+        endif
     endif
 endfunction
 
