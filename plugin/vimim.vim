@@ -633,8 +633,8 @@ function! s:vimim_egg_vimim()
     let dynamic = s:vimim_get_chinese('dynamic')
     let static = s:vimim_get_chinese('static')
     let toggle = "i_CTRL-Bslash"
-    if hasmapto('<Plug>VimIMOneKeyMode', 'i')
-        let toggle = "i_CTRL-Space"
+    if s:vimim_static_input_style == 2
+        let toggle = "OneKeyMode"
     endif
     if option < 1
         let classic .= dynamic
@@ -743,16 +743,51 @@ let VimIM = " ====  OneKey           ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ------------------------------
-function! s:vimim_start_onekey()
-" ------------------------------
+" ---------------------
+function! <SID>OneKey()
+" ---------------------
+" VimIM <OneKey> double play
+"  (1) <OneKey> => start OneKey as "hit and run"
+"  (2) <OneKey> => stop  OneKey and print out menu
+" ------------------------------------------------
+    return s:vimim_start_both_onekey(0)
+endfunction
+
+" -------------------------
+function! <SID>OneKeyMode()
+" -------------------------
+" VimIM <OneKey> mode double play
+"  (1) <OneKey> => start OneKey mode and start to play
+"  (2) <OneKey> => stop  OneKey mode and print out menu
+" -----------------------------------------------------
+    return s:vimim_start_both_onekey(1)
+endfunction
+
+" ---------------------------------------
+function! s:vimim_start_both_onekey(mode)
+" ---------------------------------------
+    sil!call s:vimim_start_onekey(a:mode)
+    let onekey = s:vimim_onekey_action("")
+    if pumvisible() && s:vimim_onekey_double_ctrl6
+        let onekey  = "\<C-E>\<C-X>\<C-U>\<C-E>"
+        let onekey .= "\<C-R>=g:vimim_pumvisible_p_paste()\<CR>"
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+" ----------------------------------
+function! s:vimim_start_onekey(mode)
+" ----------------------------------
     sil!call s:vimim_start()
     sil!call s:vimim_navigation_label_on()
     sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_abcdefg_label_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
-    sil!call s:vimim_onekey_autocmd()
+    if a:mode > 0
+        sil!call s:vimim_onekey_autocmd()
+        sil!call s:vimim_start_onekey_mode()
+    endif
     " ----------------------------------------------------------
     " default <OneKey> triple play
     "   (1) after English (valid keys)   => trigger omni popup
@@ -777,52 +812,22 @@ function! s:vimim_onekey_autocmd()
     endif
 endfunction
 
+" -----------------------------------
+function! s:vimim_start_onekey_mode()
+" -----------------------------------
+    set noruler
+    let s:chinese_input_mode = 'onekey'
+endfunction
+
 " ----------------------------------
 function! s:vimim_stop_onekey_mode()
 " ----------------------------------
     if s:chinese_input_mode =~ 'onekey'
         set ruler
-        let s:chinese_mode_switch = 1
         if s:vimim_auto_copy_clipboard>0 && has("gui_running")
             let @+ = getline(".")
         endif
     endif
-endfunction
-
-" -------------------------
-function! <SID>OneKeymode()
-" -------------------------
-" VimIM <OneKey> mode double play
-"  (1) <OneKey> => start OneKey mode and start to play
-"  (2) <OneKey> => stop  OneKey mode and stop to play
-" ----------------------------------------------------------
-    if pumvisible()
-        let msg = "<C-\> does nothing over omni menu"
-    else
-        let s:chinese_mode_switch += 1
-        if empty(s:chinese_mode_switch%2)
-            sil!call s:vimim_start_onekey()
-            set noruler
-            let s:chinese_input_mode = 'onekey'
-            sil!return s:vimim_onekey_action("")
-        else
-            call s:vimim_stop()
-        endif
-    endif
-    return ""
-endfunction
-
-" ---------------------
-function! <SID>Onekey()
-" ---------------------
-    let onekey = ""
-    sil!call s:vimim_start_onekey()
-    let onekey = s:vimim_onekey_action("")
-    if pumvisible() && s:vimim_onekey_double_ctrl6
-        let onekey  = "\<C-E>\<C-X>\<C-U>\<C-E>"
-        let onekey .= "\<C-R>=g:vimim_pumvisible_p_paste()\<CR>"
-    endif
-    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 " ---------------------------------
@@ -835,14 +840,13 @@ endfunction
 " -------------------------------------
 function! s:vimim_onekey_action(onekey)
 " -------------------------------------
+" <Space> multiple play in OneKey Mode:
+"   (1) after English (valid keys) => trigger keycode menu
+"   (2) after omni popup menu      => insert Chinese
+"   (3) after English punctuation  => Chinese punctuation
+"   (4) after Chinese              => trigger unicode menu
+" -------------------------------------------------------
     let onekey = ''
-    " -----------------------------------------------
-    " <Space> multiple play in OneKey Mode:
-    "   (1) after English (valid keys) => trigger keycode menu
-    "   (2) after omni popup menu      => insert Chinese
-    "   (3) after English punctuation  => Chinese punctuation
-    "   (4) after Chinese              => trigger unicode menu
-    " -----------------------------------------------
     if pumvisible()
         if s:pattern_not_found > 0
             let s:pattern_not_found = 0
@@ -970,7 +974,7 @@ call add(s:vimims, VimIM)
 " -------------------------------------------
 
 " --------------------------
-function! <SID>Chinesemode()
+function! <SID>ChineseMode()
 " --------------------------
     let space = ""
     let s:chinese_mode_switch += 1
@@ -1355,7 +1359,7 @@ function! s:vimim_1234567890_filter_on()
     \|| !empty(s:vimim_cloud_plugin)
         return
     endif
-    let label = 'qwertyuiop'
+    let label = 'pqwertyuio'
     let labels = split(label, '\zs')
     if s:pinyin_and_4corner > 1
         let labels = range(10)
@@ -3969,18 +3973,12 @@ endfunction
 " -----------------------------------------------------
 function! s:vimim_get_data_from_directory(keyboard, im)
 " -----------------------------------------------------
-    let keyboard = a:keyboard
-    let im = a:im
-    if empty(keyboard) || empty(im)
-        return []
-    endif
-    let dir = s:vimim_get_data_directory(im)
+    let dir = s:vimim_get_data_directory(a:im)
     if empty(dir)
         return []
     endif
-    " ----------------------------------------
     let results = []
-    let filename = dir . '/' . keyboard
+    let filename = dir . '/' . a:keyboard
     if filereadable(filename)
         let lines = readfile(filename)
         for line in lines
@@ -3988,7 +3986,7 @@ function! s:vimim_get_data_from_directory(keyboard, im)
                 if s:localization > 0
                     let chinese = s:vimim_i18n_read(chinese)
                 endif
-                let menu = keyboard . " " . chinese
+                let menu = a:keyboard . " " . chinese
                 call add(results, menu)
             endfor
         endfor
@@ -4959,10 +4957,9 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     let s:vimim_debug = 9
-    let s:vimim_tab_as_onekey = 1
-    let s:vimim_cloud_sogou = -1
+    let s:vimim_tab_as_onekey = 2
     let s:vimim_static_input_style = 2
-    let s:vimim_ctrl_space_to_toggle = 2
+    let s:vimim_cloud_sogou = -1
     let s:vimim_imode_pinyin = 1
     let s:vimim_custom_skin = 1
     let s:vimim_custom_laststatus = 0
@@ -5703,11 +5700,7 @@ endfunction
 function! s:vimim_visual_mapping_on()
 " -----------------------------------
     if !hasmapto('<C-^>', 'v')
-        if s:vimim_ctrl_space_to_toggle == 2
-            xnoremap<silent><C-Space> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
-        else
-            xnoremap<silent><C-^>     y:call <SID>vimim_visual_ctrl_6(@0)<CR>
-        endif
+        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
 endfunction
 
@@ -5718,26 +5711,11 @@ function! s:vimim_chinese_mode_mapping_on()
         return
     endif
     if !hasmapto('<Plug>VimimChinesemode', 'i')
-        inoremap <unique> <expr> <Plug>VimimChinesemode <SID>Chinesemode()
+        inoremap <unique> <expr> <Plug>VimimChinesemode <SID>ChineseMode()
     endif
         imap <silent> <C-Bslash> <Plug>VimimChinesemode
-    noremap <silent> <C-Bslash> :call <SID>Chinesemode()<CR>
-    vmap <silent> <C-Bslash> :call <SID>Chinesemode()<CR>gv
-endfunction
-
-" ----------------------------------------
-function! s:vimim_onekey_mode_mapping_on()
-" ----------------------------------------
-    if s:vimim_static_input_style != 2
-        return
-    endif
-    if !hasmapto('<Plug>VimIMOneKeyMode', 'i')
-        inoremap <unique> <expr> <Plug>VimIMOneKeyMode <SID>OneKeymode()
-    endif
-    if s:vimim_ctrl_space_to_toggle < 2
-           imap <silent> <C-Bslash> <Plug>VimIMOneKeyMode
-        noremap <silent> <C-Bslash> :call <SID>OneKeymode()<CR>
-    endif
+    noremap  <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
+        vmap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>gv
 endfunction
 
 " ---------------------------------------
@@ -5760,16 +5738,36 @@ function! s:vimim_ctrl_space_mapping_on()
     endif
 endfunction
 
+" ----------------------------------------
+function! s:vimim_onekey_mode_mapping_on()
+" ----------------------------------------
+    if s:vimim_static_input_style != 2
+        return
+    endif
+    " ------------------------------------
+    if !hasmapto('<Plug>VimIMOneKeyMode', 'i')
+        inoremap <unique> <expr> <Plug>VimIMOneKeyMode <SID>OneKeymode()
+    endif
+    " ------------------------------------
+    if s:vimim_tab_as_onekey == 2
+        imap <silent> <Tab> <Plug>VimIMOneKeyMode
+    " ------------------------------------
+    elseif s:vimim_ctrl_space_to_toggle < 2
+           imap <silent> <C-Bslash> <Plug>VimIMOneKeyMode
+        noremap <silent> <C-Bslash> :call <SID>OneKeyMode()<CR>
+    endif
+endfunction
+
 " -----------------------------------
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
-    if !hasmapto('<Plug>VimimOnekey', 'i')
-        inoremap <unique> <expr> <Plug>VimimOnekey <SID>Onekey()
+    if !hasmapto('<Plug>VimIMOneKey', 'i')
+        inoremap <unique> <expr> <Plug>VimIMOneKey <SID>OneKey()
     endif
     if empty(s:vimim_tab_as_onekey)
-        imap <silent> <C-^> <Plug>VimimOnekey
-    else
-        imap <silent> <Tab> <Plug>VimimOnekey
+        imap <silent> <C-^> <Plug>VimIMOneKey
+    elseif s:vimim_tab_as_onekey == 1
+        imap <silent> <Tab> <Plug>VimIMOneKey
     endif
 endfunction
 
