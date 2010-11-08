@@ -5590,7 +5590,7 @@ else
         endif
     endif
 
-    " [directory] directory is the first-class citizen
+    " [directory] directory database is natural to vim editor
     let im = s:input_method
     " ------------------------------------------------------
     if len(s:path2) > 1
@@ -5789,6 +5789,7 @@ function! s:vimim_initialize_autocmd()
     if !has("autocmd")
         return
     endif
+    " All dot vimim files are our first-class citizen.
     augroup vimim_auto_chinese_mode
         autocmd InsertLeave *.vimim sil!call s:vimim_stop()
         if s:vimim_static_input_style < 2
@@ -5804,4 +5805,3 @@ sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
 " ======================================= }}}
-
