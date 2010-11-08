@@ -73,9 +73,9 @@ call add(s:vimims, VimIM)
 " "VimIM Front End UI"
 " --------------------
 " # VimIM "OneKey": can input Chinese without mode change.
-"    - use OneKey to insert multi-byte candidates
-"    - use OneKey to search multi-byte using "/" or "?"
-"    The default key is <C-6> (Vim Insert Mode)
+"   - use OneKey to insert multi-byte candidates
+"   - use OneKey to search multi-byte using "/" or "?"
+"   The default key is <C-6> (Vim Insert Mode)
 " # VimIM "Chinese Input Mode":
 "   - [dynamic_mode] show omni popup menu as one types
 "   - [static_mode]  <Space>=>Chinese  <Enter>=>English
@@ -2236,9 +2236,9 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
     if s:chinese_punctuation > 0
     \&& has_key(s:punctuations, value)
         let byte_before = getline(".")[col(".")-2]
-        let filter = '\w'      " english_punctuation_after_english
+        let filter = '\w'     |" english_punctuation_after_english
         if empty(s:vimim_english_punctuation)
-            let filter = '\d'  " english_punctuation_after_digit
+            let filter = '\d' |" english_punctuation_after_digit
         endif
         if byte_before !~ filter
             let value = s:punctuations[value]
@@ -2458,10 +2458,10 @@ function! s:vimim_reverse_lookup(chinese)
     call add(results, get(items,1))
     let results_unicode = copy(results)
     " ------------------------------------
-    let results = []          " 马力 => u9a6c u529b
-    let results_pinyin = []   " 马力 => ma3 li2
-    let results_4corner = []  " 马力 => 7712 4002
-    let result_cjjp = ""      " 马力 => ml
+    let results = []          |" 马力 => u9a6c u529b
+    let results_pinyin = []   |" 马力 => ma3 li2
+    let results_4corner = []  |" 马力 => 7712 4002
+    let result_cjjp = ""      |" 马力 => ml
     " ------------------------------------
     let unihan = s:vimim_get_data_directory('unihan')
     if !empty(unihan)
@@ -2555,7 +2555,7 @@ function! s:vimim_get_unihan_reverse_cache(chinese, im)
             if a:im =~ '4corner'
                 let value = get(split(get(results,0)),1)
                 if value =~ '\l'
-                    let value = '....'  " 4corner not available
+                    let value = '....'  |" 4corner not available
                 endif
             elseif a:im =~ 'pinyin'
                 let value = get(split(get(results,1)),1)
@@ -2609,8 +2609,8 @@ function! s:vimim_chinese_menu_hash(menu_list)
     " ----------------------------------------
     let chinese_to_keyboard_hash = {}
     for line in menu_list
-        let words = split(line)  " shishi 事实 " 7 马
-        let menu = get(words,0)  " shishi      " 7
+        let words = split(line)  |" shishi 事实    7 马
+        let menu = get(words,0)  |" shishi         7
         for word in words
             if word != menu
                 let chinese_to_keyboard_hash[word] = menu
@@ -2724,7 +2724,7 @@ function! s:vimim_quanpin_transform(keyboard)
 " -------------------------------------------
     let qptable = s:quanpin_table
     let item = a:keyboard
-    let pinyinstr = ""      " output string
+    let pinyinstr = ""     |" output string
     let index = 0
     let lenitem = len(item)
     while index < lenitem
@@ -3021,7 +3021,7 @@ function! s:vimim_create_shuangpin_table(rule)
     endfor
     " the jxqy+v special case handling
     if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0)
-                \ || (s:vimim_shuangpin_nature>0) || (s:vimim_shuangpin_flypy>0)
+        \ || (s:vimim_shuangpin_nature>0) || (s:vimim_shuangpin_flypy>0)
         let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
         call extend(sptable, jxqy)
     elseif s:vimim_shuangpin_microsoft > 0
@@ -3638,7 +3638,7 @@ function! s:vimim_scan_plugin_datafile()
     if filereadable(datafile)
         let s:path2 = 0
         let s:sqlite = datafile
-        let s:backend = "sqlite"
+        let s:vimim_embedded_backend = "sqlite"
         return
     endif
     " -----------------------------------
@@ -3684,7 +3684,7 @@ function! s:vimim_scan_plugin_datafile()
     if filereadable(datafile)
         let msg = "datafile is used first over directory database"
         let s:path2 = 0
-        let s:backend = "datafile"
+        let s:vimim_embedded_backend = "datafile"
     else
         return
     endif
@@ -3771,7 +3771,7 @@ function! s:vimim_pinyin(lines, keyboard, match_start)
     let results = a:lines[match_start : match_end]
     " --------------------------------------------
     if len(results) < 10 && get(s:im['pinyin'],0) > 0
-       let extras = s:vimim_pinyin_more_matches(a:lines, keyboard, results)
+       let extras = s:vimim_pinyin_more_match(a:lines, keyboard, results)
        if len(extras) > 0
            call extend(results, extras)
        endif
@@ -3779,9 +3779,9 @@ function! s:vimim_pinyin(lines, keyboard, match_start)
     return results
 endfunction
 
-" -------------------------------------------------------------
-function! s:vimim_pinyin_more_matches(lines, keyboard, results)
-" -------------------------------------------------------------
+" -----------------------------------------------------------
+function! s:vimim_pinyin_more_match(lines, keyboard, results)
+" -----------------------------------------------------------
     let filter = "vim\\|#\\|　"
     if match(a:results, filter) > -1
         return []
@@ -3866,8 +3866,8 @@ call add(s:vimims, VimIM)
 function! s:vimim_scan_plugin_data_directory()
 " --------------------------------------------
     if empty(s:path2)
-    \|| s:backend =~ "datafile"
-    \|| s:backend =~ "sqlite"
+    \|| s:vimim_embedded_backend =~ "datafile"
+    \|| s:vimim_embedded_backend =~ "sqlite"
         return
     endif
     " ----------------------------------------
@@ -3890,7 +3890,7 @@ function! s:vimim_scan_plugin_data_directory()
     if empty(directoires)
         return
     else
-        let s:backend = "directory"
+        let s:vimim_embedded_backend = "directory"
     endif
     " ------------------------------------
     for directory in directoires
@@ -3925,7 +3925,7 @@ function! s:vimim_get_datafile_in_vimrc()
     let datafile = s:vimim_sqlite_cedict
     if !empty(datafile) && filereadable(datafile)
         let s:sqlite = copy(datafile)
-        let s:backend = "sqlite"
+        let s:vimim_embedded_backend = "sqlite"
         return
     endif
     " -----------------------------------
@@ -3938,7 +3938,7 @@ function! s:vimim_get_datafile_in_vimrc()
     let datafile = s:vimim_datafile
     if !empty(datafile) && filereadable(datafile)
         let s:datafile = copy(datafile)
-        let s:backend = "datafile"
+        let s:vimim_embedded_backend = "datafile"
     endif
 endfunction
 
@@ -4151,30 +4151,30 @@ endfunction
 " ------------------------
 function! g:vimim_mkdir1()
 " ------------------------
-    " within one line, new item is appeneded
-    " (1) existed order:  key  value_1 value_2
-    " (2) new items:      key  value_2 value_3
-    " (3) new order:      key  value_1 value_2 value_3
+" within one line, new item is appeneded
+" (1) existed order:  key  value_1 value_2
+" (2) new items:      key  value_2 value_3
+" (3) new order:      key  value_1 value_2 value_3
     call s:vimim_mkdir('append')
 endfunction
 
 " ------------------------
 function! g:vimim_mkdir2()
 " ------------------------
-    " within one line, new item is inserted first
-    " (1) existed order:  key  value_1 value_2
-    " (2) new items:      key  value_2 value_3
-    " (3) new order:      key  value_2 value_3 value_1
+" within one line, new item is inserted first
+" (1) existed order:  key  value_1 value_2
+" (2) new items:      key  value_2 value_3
+" (3) new order:      key  value_2 value_3 value_1
     call s:vimim_mkdir('prepend')
 endfunction
 
 " ------------------------
 function! g:vimim_mkdir3()
 " ------------------------
-    " replace the existed content with new items
-    " (1) existed order:  key  value_1 value_2
-    " (2) new items:      key  value_2 value_3
-    " (3) new order:      key  value_2 value_3
+" replace the existed content with new items
+" (1) existed order:  key  value_1 value_2
+" (2) new items:      key  value_2 value_3
+" (3) new order:      key  value_2 value_3
     call s:vimim_mkdir('replace')
 endfunction
 
@@ -4452,7 +4452,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_do_cloud_if_no_backend()
 " ----------------------------------------
-    if empty(s:backend)
+    if empty(s:vimim_embedded_backend)
         if empty(s:vimim_cloud_sogou)
             let s:vimim_cloud_sogou = 1
         endif
@@ -4816,7 +4816,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
-    if !empty(s:backend)
+    if !empty(s:vimim_embedded_backend)
         return
     endif
 " -------------------
@@ -4939,11 +4939,11 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let s:backend = 0
+    let s:vimim_embedded_backend = 0
     let s:localization = 0
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
-    let s:vimim_static_input_style = 1
+    let s:vimim_static_input_style = 0
     " ------------------------------
     let s:path2 = 0
     let dir = "/vimim"
@@ -4966,7 +4966,7 @@ function! s:vimim_initialize_debug()
         let s:vimim_sqlite_cedict = '/usr/local/share/cjklib/cedict.db'
         let s:path2 = 0
     else
-        let s:backend = "directory"
+        let s:vimim_embedded_backend = "directory"
     endif
     " ------------------------------
     let s:vimim_debug = 9
@@ -5527,7 +5527,7 @@ else
     " ---------------------------------------------------
     if s:vimim_imode_pinyin > 0
     \&& keyboard =~# '^i'
-    \&& s:backend !~ "sqlite"
+    \&& s:vimim_embedded_backend !~ "sqlite"
         let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
