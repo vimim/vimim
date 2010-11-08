@@ -3200,8 +3200,7 @@ function! s:vimim_wubi(keyboard)
     else
         let results = s:vimim_fixed_match(s:lines, keyboard, 3)
     " ----------------------------
-    if s:chinese_input_mode =~ 'dynamic'
-    \&& empty(results)
+    if s:chinese_input_mode =~ 'dynamic' && empty(results)
         let s:keyboard_leading_zero = ''
     endif
     return results
@@ -3975,7 +3974,7 @@ endfunction
 function! s:vimim_get_data_from_directory(keyboard, im)
 " -----------------------------------------------------
     let dir = s:vimim_get_data_directory(a:im)
-    if empty(dir) || empty(a:keyboard)
+    if empty(dir)
         return []
     endif
     let results = []
@@ -5761,9 +5760,7 @@ function! s:vimim_onekey_mode_mapping_on()
         inoremap <unique> <expr> <Plug>VimIMOneKeyMode <SID>OneKeyMode()
     endif
     " ------------------------------------
-    if s:vimim_static_input_style == 3
-        imap <silent> <C-^> <Plug>VimIMOneKeyMode
-    elseif s:vimim_tab_as_onekey == 2
+    if s:vimim_tab_as_onekey == 2
         imap <silent> <Tab> <Plug>VimIMOneKeyMode
     elseif s:vimim_ctrl_space_to_toggle < 2
            imap <silent> <C-Bslash> <Plug>VimIMOneKeyMode
