@@ -74,7 +74,7 @@ call add(s:vimims, VimIM)
 " --------------------
 " # VimIM "OneKey": can input Chinese without mode change.
 "   - use OneKey to insert multi-byte candidates
-"   - use OneKey to search multi-byte using "/" or "?"
+"   - use OneKey to search multi-byte using '/' or '?'
 "   The default key is <C-6> (Vim Insert Mode)
 " # VimIM "Chinese Input Mode":
 "   - [dynamic_mode] show omni popup menu as one types
@@ -87,7 +87,7 @@ call add(s:vimims, VimIM)
 " -----------------------
 " # (1) [external] myCloud: http://pim-cloud.appspot.com
 " # (2) [external] Cloud:   http://web.pinyin.sogou.com
-" # (3) [internal] VimIM:   http://vimim.googlecode.com
+" # (3) [embedded] VimIM:   http://vimim.googlecode.com
 " #     (3.1) internal direct input for Unicode/GBK/Big5
 " #     (3.2) a database:  $VIM/vimfiles/plugin/cedict.db
 " #     (3.3) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
@@ -593,23 +593,23 @@ function! s:vimim_egg_vimim()
     elseif has("macunix")
         let option = "macunix"
     endif
-" ----------------------------------
+    " ----------------------------------
     let input = s:vimim_get_chinese('input') . "："
     let ciku = s:vimim_get_chinese('ciku')
     let ciku = "datafile " . ciku .  "："
     let myversion = s:vimim_get_chinese('myversion')
     let myversion = "\t " . myversion . "："
     let encoding = s:vimim_get_chinese('encoding') . "："
-" ----------------------------------
+    " ----------------------------------
     let option .= "_" . &term
     let computer = s:vimim_get_chinese('computer')
     let option = "computer " . computer . "：" . option
     call add(eggs, option)
-" ----------------------------------
+    " ----------------------------------
     let option = v:progname . "　"
     let option = "Vim" . myversion  . option . v:version
     call add(eggs, option)
-" ----------------------------------
+    " ----------------------------------
     let option = get(split($VimIM), 1)
     if empty(option)
         let msg = "not a SVN check out, revision number not available"
@@ -617,16 +617,16 @@ function! s:vimim_egg_vimim()
         let option = "VimIM" . myversion . "vimim.vim　" . option
         call add(eggs, option)
     endif
-" ----------------------------------
+    " ----------------------------------
     let option = "encoding " . encoding . &encoding
     call add(eggs, option)
-" ----------------------------------
+    " ----------------------------------
     let option = "fencs\t "  . encoding . &fencs
     call add(eggs, option)
-" ----------------------------------
+    " ----------------------------------
     let option = "lc_time\t " . encoding . v:lc_time
     call add(eggs, option)
-" ----------------------------------
+    " ----------------------------------
     let option = s:vimim_static_input_style
     let classic = s:vimim_get_chinese('classic')
     let dynamic = s:vimim_get_chinese('dynamic')
@@ -646,13 +646,13 @@ function! s:vimim_egg_vimim()
     let style = s:vimim_get_chinese('style')
     let option = "mode\t " . style . "：" . toggle . classic
     call add(eggs, option)
-" ----------------------------------
+    " ----------------------------------
     let im = s:vimim_statusline()
     if !empty(im)
         let option = "im\t " . input . im
         call add(eggs, option)
     endif
-" ----------------------------------
+    " ----------------------------------
     let option = s:shuangpin_flag
     if empty(option)
         let msg = "no shuangpin is used"
@@ -661,7 +661,7 @@ function! s:vimim_egg_vimim()
         let option = "scheme\t " . scheme . '：' . get(s:im['shuangpin'],1)
         call add(eggs, option)
     endif
-" ----------------------------------
+    " ----------------------------------
     let option = s:datafile
     if empty(option)
         let msg = "no primary datafile, might play cloud"
@@ -669,7 +669,7 @@ function! s:vimim_egg_vimim()
         let option = ciku . option
         call add(eggs, option)
     endif
-" ----------------------------------
+    " ----------------------------------
     let cloud = s:vimim_cloud_sogou
     let sogou = s:vimim_get_chinese('sogou')
     let option = "cloud\t " . sogou ."："
@@ -688,7 +688,7 @@ function! s:vimim_egg_vimim()
     endif
     let option .= CLOUD
     call add(eggs, option)
-" ----------------------------------
+    " ----------------------------------
     if empty(s:global_customized)
         let msg = "no global variable is set"
     else
@@ -698,7 +698,7 @@ function! s:vimim_egg_vimim()
             call add(eggs, option)
         endfor
     endif
-" ----------------------------------
+    " ----------------------------------
     let option = s:vimimdebug
     if option > 0
         let option = "g:vimimdebug=" . option
@@ -706,7 +706,7 @@ function! s:vimim_egg_vimim()
         let option = "debug\t " . test . "：" . option
         call add(eggs, option)
     endif
-" ----------------------------------
+    " ----------------------------------
     return map(eggs, 'v:val . "　"')
 endfunction
 
@@ -1250,12 +1250,12 @@ function! s:vimim_12345678_label_on()
     if s:vimim_custom_menu_label < 1
         return
     endif
-    " ----------------------
+    " -------------------------------
     let labels = range(8)
     if &pumheight > 0
         let labels = range(1, &pumheight)
     endif
-    " ----------------------
+    " -------------------------------
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
         \  <C-R>=<SID>vimim_12345678_label("'._.'")<CR>'
@@ -1323,6 +1323,7 @@ function! s:vimim_navigation_label_on()
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_hjkl("'._.'")'
     endfor
+    " ---------------------------------
 endfunction
 
 " ----------------------------
@@ -1339,9 +1340,6 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
-        elseif a:key == 'm'
-            let hjkl  = '\<C-Y>'
-            let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
         elseif a:key == 'n'
             let hjkl  = '\<Down>\<Down>\<Down>'
         elseif a:key == 'z'
@@ -1349,6 +1347,9 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'x'
             let hjkl  = '\<C-E>'
+        elseif a:key == 'm'
+            let hjkl  = '\<C-Y>'
+            let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
         elseif a:key == 'c'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
@@ -1401,7 +1402,6 @@ function! g:vimim_one_key_correction()
 " ------------------------------------
     let key = '\<Esc>'
     call s:reset_matched_list()
-    " --------------------------------
     if empty(s:chinese_input_mode)
     \|| s:chinese_input_mode=~ 'onekey'
         call s:vimim_stop()
@@ -1412,7 +1412,6 @@ function! g:vimim_one_key_correction()
             let key = '\<C-X>\<C-U>\<BS>'
         endif
     endif
-    " --------------------------------
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -4826,9 +4825,9 @@ function! s:vimim_initialize_mycloud_plugin()
 " :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
 " :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
 " :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
-" :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
 " :let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
 " :let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
+" :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
 " :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
 " :let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
 " :let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
@@ -5044,10 +5043,11 @@ call add(s:vimims, VimIM)
 " -----------------------------------
 function!  s:vimim_getsid(scriptname)
 " -----------------------------------
-    " frederick.zou fixes these conflicting plugins:
-    " supertab      http://www.vim.org/scripts/script.php?script_id=1643
-    " autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
-    " word_complete http://www.vim.org/scripts/script.php?script_id=73
+" frederick.zou fixes these conflicting plugins:
+" supertab      http://www.vim.org/scripts/script.php?script_id=1643
+" autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
+" word_complete http://www.vim.org/scripts/script.php?script_id=73
+" -----------------------------------
     " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
     let l:scriptname = a:scriptname
     " get the output of ":scriptnames" in the scriptnames_output variable
@@ -5223,6 +5223,7 @@ endfunction
 function! s:vimim_reset_before_stop()
 " -----------------------------------
     let s:smart_enter = 0
+    let s:chinese_mode_switch = 1
     let s:pumvisible_ctrl_e = 0
 endfunction
 
