@@ -769,6 +769,17 @@ function! <SID>OneKeyMode()
     return onekey
 endfunction
 
+" ---------------------
+function! <SID>TabKey()
+" ---------------------
+    let tab = "\t"
+    if pumvisible() && s:vimim_onekey_double_ctrl6
+        let tab  = "\<C-E>\<C-X>\<C-U>\<C-E>"
+        let tab .= "\<C-R>=g:vimim_pumvisible_p_paste()\<CR>"
+    endif
+    sil!exe 'sil!return "' . tab . '"'
+endfunction
+
 " ---------------------------------------
 function! s:vimim_start_both_onekey(mode)
 " ---------------------------------------
@@ -4969,6 +4980,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_debug = 9
     let s:vimim_static_input_style = 2
     let s:vimim_ctrl_space_to_toggle = 2
+    let s:vimim_tab_as_onekey = 2
     let s:vimim_cloud_sogou = -1
     let s:vimim_imode_pinyin = 1
     let s:vimim_custom_skin = 1
@@ -5779,6 +5791,11 @@ function! s:vimim_onekey_mapping_on()
     " -------------------------------
     if s:vimim_tab_as_onekey == 1
         imap <silent> <Tab> <Plug>VimimOneKey
+    endif
+    " -------------------------------
+    if s:vimim_tab_as_onekey == 2
+        inoremap <unique> <expr> <Plug>VimimTabKey <SID>TabKey()
+        imap <silent> <Tab> <Plug>VimimTabKey
     endif
     " -------------------------------
 endfunction
