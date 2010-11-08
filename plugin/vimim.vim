@@ -1724,12 +1724,12 @@ function! g:vimim_pumvisible_ctrl_e_ctrl_y()
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
-" ------------------------------------------
+        " ----------------------------------
         if get(s:im['wubi'],0) > 0
         \&& empty(len(s:keyboard_leading_zero)%4)
             let key = "\<C-Y>"
         endif
-" ------------------------------------------
+        " ----------------------------------
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2049,14 +2049,14 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations_all = copy(s:punctuations)
     for char in s:valid_keys
         if has_key(s:punctuations, char)
-            " ----------------------------------
+            " -----------------------------
             if !empty(s:vimim_cloud_plugin)
             \|| s:has_dot_in_datafile > 0
                 unlet s:punctuations[char]
             elseif char !~# "[*.']"
                 unlet s:punctuations[char]
             endif
-            " ----------------------------------
+            " -----------------------------
         endif
     endfor
 endfunction
@@ -2120,7 +2120,7 @@ function! <SID>vimim_punctuation_on()
         iunmap "
         iunmap <Bslash>
     endif
-    " ----------------------------
+    " --------------------------------------
     for _ in keys(s:punctuations)
         sil!exe 'inoremap <silent> '._.'
         \    <C-R>=<SID>vimim_punctuation_mapping("'._.'")<CR>'
@@ -2260,41 +2260,43 @@ function! s:vimim_initialize_quantifiers()
     \&& s:vimim_imode_pinyin < 1
         return
     endif
-    let s:quantifiers['1'] = '一壹①⒈⑴甲'
-    let s:quantifiers['2'] = '二贰②⒉⑵乙'
-    let s:quantifiers['3'] = '三叁③⒊⑶丙'
-    let s:quantifiers['4'] = '四肆④⒋⑷丁'
-    let s:quantifiers['5'] = '五伍⑤⒌⑸戊'
-    let s:quantifiers['6'] = '六陆⑥⒍⑹己'
-    let s:quantifiers['7'] = '七柒⑦⒎⑺庚'
-    let s:quantifiers['8'] = '八捌⑧⒏⑻辛'
-    let s:quantifiers['9'] = '九玖⑨⒐⑼壬'
-    let s:quantifiers['0'] = '〇零⑩⒑⑽癸十拾'
-    let s:quantifiers['a'] = '秒'
-    let s:quantifiers['b'] = '百佰步把包杯本笔部班'
-    let s:quantifiers['c'] = '厘次餐场串处床'
-    let s:quantifiers['d'] = '第度点袋道滴碟顶栋堆对朵堵顿'
-    let s:quantifiers['e'] = '亿'
-    let s:quantifiers['f'] = '分份发封付副幅峰方服'
-    let s:quantifiers['g'] = '个根股管'
-    let s:quantifiers['h'] = '时毫行盒壶户回'
-    let s:quantifiers['i'] = '毫'
-    let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
-    let s:quantifiers['k'] = '克口块棵颗捆孔'
-    let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
-    let s:quantifiers['m'] = '米名枚面门秒'
-    let s:quantifiers['n'] = '年'
-    let s:quantifiers['o'] = '度'
-    let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
-    let s:quantifiers['q'] = '千仟群'
-    let s:quantifiers['r'] = '日'
-    let s:quantifiers['s'] = '十拾时升艘扇首双所束手'
-    let s:quantifiers['t'] = '吨条头通堂台套桶筒贴趟'
-    let s:quantifiers['u'] = '微'
-    let s:quantifiers['w'] = '万位味碗窝'
-    let s:quantifiers['x'] = '升席些项'
-    let s:quantifiers['y'] = '月亿叶'
-    let s:quantifiers['z'] = '兆只张株支枝指盏座阵桩尊则种站幢宗'
+    let q = {}
+    let q['1'] = '一壹①⒈⑴甲'
+    let q['2'] = '二贰②⒉⑵乙'
+    let q['3'] = '三叁③⒊⑶丙'
+    let q['4'] = '四肆④⒋⑷丁'
+    let q['5'] = '五伍⑤⒌⑸戊'
+    let q['6'] = '六陆⑥⒍⑹己'
+    let q['7'] = '七柒⑦⒎⑺庚'
+    let q['8'] = '八捌⑧⒏⑻辛'
+    let q['9'] = '九玖⑨⒐⑼壬'
+    let q['0'] = '〇零⑩⒑⑽癸十拾'
+    let q['a'] = '秒'
+    let q['b'] = '百佰步把包杯本笔部班'
+    let q['c'] = '厘次餐场串处床'
+    let q['d'] = '第度点袋道滴碟顶栋堆对朵堵顿'
+    let q['e'] = '亿'
+    let q['f'] = '分份发封付副幅峰方服'
+    let q['g'] = '个根股管'
+    let q['h'] = '时毫行盒壶户回'
+    let q['i'] = '毫'
+    let q['j'] = '斤家具架间件节剂具捲卷茎记'
+    let q['k'] = '克口块棵颗捆孔'
+    let q['l'] = '里粒类辆列轮厘升领缕'
+    let q['m'] = '米名枚面门秒'
+    let q['n'] = '年'
+    let q['o'] = '度'
+    let q['p'] = '磅盆瓶排盘盆匹片篇撇喷'
+    let q['q'] = '千仟群'
+    let q['r'] = '日'
+    let q['s'] = '十拾时升艘扇首双所束手'
+    let q['t'] = '吨条头通堂台套桶筒贴趟'
+    let q['u'] = '微'
+    let q['w'] = '万位味碗窝'
+    let q['x'] = '升席些项'
+    let q['y'] = '月亿叶'
+    let q['z'] = '兆只张株支枝指盏座阵桩尊则种站幢宗'
+    let s:quantifiers = q
 endfunction
 
 " ----------------------------------------------
@@ -3423,17 +3425,17 @@ function! s:vimim_egg_vimimunicode()
     if s:encoding != "utf8"
         return []
     endif
-    let msg = "Unicode 中文部首起始碼位表【康熙字典】"
-    let unicode  = "一丨丶丿乙亅二亠人儿入八冂冖冫几凵刀力勹匕匚匸十"
-    let unicode .= "卜卩厂厶又口囗土士夂夊夕大女子宀寸小尢尸屮山巛工"
-    let unicode .= "己巾干幺广廴廾弋弓彐彡彳心戈戶手支攴文斗斤方无日"
-    let unicode .= "曰月木欠止歹殳毋比毛氏气水火爪父爻爿片牙牛犬玄玉"
-    let unicode .= "瓜瓦甘生用田疋疒癶白皮皿目矛矢石示禸禾穴立竹米糸"
-    let unicode .= "缶网羊羽老而耒耳聿肉臣自至臼舌舛舟艮色艸虍虫血行"
-    let unicode .= "衣襾見角言谷豆豕豸貝赤走足身車辛辰辵邑酉釆里金長"
-    let unicode .= "門阜隶隹雨靑非面革韋韭音頁風飛食首香馬骨高髟鬥鬯"
-    let unicode .= "鬲鬼魚鳥鹵鹿麥麻黃黍黑黹黽鼎鼓鼠鼻齊齒龍龜龠"
-    let unicodes = split(unicode, '\zs')
+    let msg = " Unicode 中文部首起始碼位表【康熙字典】"
+    let u  = "一丨丶丿乙亅二亠人儿入八冂冖冫几凵刀力勹匕匚匸十"
+    let u .= "卜卩厂厶又口囗土士夂夊夕大女子宀寸小尢尸屮山巛工"
+    let u .= "己巾干幺广廴廾弋弓彐彡彳心戈戶手支攴文斗斤方无日"
+    let u .= "曰月木欠止歹殳毋比毛氏气水火爪父爻爿片牙牛犬玄玉"
+    let u .= "瓜瓦甘生用田疋疒癶白皮皿目矛矢石示禸禾穴立竹米糸"
+    let u .= "缶网羊羽老而耒耳聿肉臣自至臼舌舛舟艮色艸虍虫血行"
+    let u .= "衣襾見角言谷豆豕豸貝赤走足身車辛辰辵邑酉釆里金長"
+    let u .= "門阜隶隹雨靑非面革韋韭音頁風飛食首香馬骨高髟鬥鬯"
+    let u .= "鬲鬼魚鳥鹵鹿麥麻黃黍黑黹黽鼎鼓鼠鼻齊齒龍龜龠"
+    let unicodes = split(u, '\zs')
     let eggs = []
     for char in unicodes
         let ddddd = char2nr(char)
@@ -3641,36 +3643,36 @@ function! s:vimim_scan_plugin_datafile()
         return
     endif
     " -----------------------------------
-    let all_input_methods = []
-    call add(all_input_methods, "pinyin")
-    call add(all_input_methods, "pinyin_quote_sogou")
-    call add(all_input_methods, "pinyin_huge")
-    call add(all_input_methods, "pinyin_fcitx")
-    call add(all_input_methods, "pinyin_canton")
-    call add(all_input_methods, "pinyin_hongkong")
-    call add(all_input_methods, "4corner")
-    call add(all_input_methods, "12345")
-    call add(all_input_methods, "wubi")
-    call add(all_input_methods, "wubi98")
-    call add(all_input_methods, "wubi2000")
-    call add(all_input_methods, "wubijd")
-    call add(all_input_methods, 'cangjie')
-    call add(all_input_methods, 'zhengma')
-    call add(all_input_methods, 'quick')
-    call add(all_input_methods, 'xinhua')
-    call add(all_input_methods, 'erbi')
-    call add(all_input_methods, 'boshiamy')
-    call add(all_input_methods, 'phonetic')
-    call add(all_input_methods, 'array30')
-    call add(all_input_methods, "wu")
-    call add(all_input_methods, "yong")
-    call add(all_input_methods, "nature")
-    call add(all_input_methods, "hangul")
-    call add(all_input_methods, "cns11643")
-    call add(all_input_methods, "ctc")
-    call add(all_input_methods, "english")
+    let input_methods = []
+    call add(input_methods, "pinyin")
+    call add(input_methods, "pinyin_quote_sogou")
+    call add(input_methods, "pinyin_huge")
+    call add(input_methods, "pinyin_fcitx")
+    call add(input_methods, "pinyin_canton")
+    call add(input_methods, "pinyin_hongkong")
+    call add(input_methods, "4corner")
+    call add(input_methods, "12345")
+    call add(input_methods, "wubi")
+    call add(input_methods, "wubi98")
+    call add(input_methods, "wubi2000")
+    call add(input_methods, "wubijd")
+    call add(input_methods, 'cangjie')
+    call add(input_methods, 'zhengma')
+    call add(input_methods, 'quick')
+    call add(input_methods, 'xinhua')
+    call add(input_methods, 'erbi')
+    call add(input_methods, 'boshiamy')
+    call add(input_methods, 'phonetic')
+    call add(input_methods, 'array30')
+    call add(input_methods, "wu")
+    call add(input_methods, "yong")
+    call add(input_methods, "nature")
+    call add(input_methods, "hangul")
+    call add(input_methods, "cns11643")
+    call add(input_methods, "ctc")
+    call add(input_methods, "english")
     " ------------------------------------
-    for im in all_input_methods
+    for im in input_methods
         let file = "vimim." . im . ".txt"
         let datafile = s:path . file
         if filereadable(datafile)
@@ -3870,14 +3872,14 @@ function! s:vimim_scan_plugin_data_directory()
         return
     endif
     " ----------------------------------------
-    let all_input_methods = []
-    call add(all_input_methods, "wubi")
-    call add(all_input_methods, "unihan")
-    call add(all_input_methods, "4corner")
-    call add(all_input_methods, "pinyin")
+    let input_methods = []
+    call add(input_methods, "wubi")
+    call add(input_methods, "unihan")
+    call add(input_methods, "4corner")
+    call add(input_methods, "pinyin")
     " ----------------------------------------
     let directoires = []
-    for im in all_input_methods
+    for im in input_methods
         let dir = s:vimim_get_data_directory(im)
         if empty(dir)
             continue
@@ -4131,18 +4133,18 @@ function! s:vimim_pinyin_with_4corner(keyboard)
         return []
     endif
     " --------------------------------------------------------
-    let alpha_keyboards = split(keyboard, '\d\+')  " => ['ma']
-    let digit_keyboards = split(keyboard, '\D\+')  " => ['77']
-    " ----------------------------------------------
-    let pinyin = get(alpha_keyboards,0)   " ma im=pinyin
-    let digit =  get(digit_keyboards,0)   " 7  im=4corner
-    " ----------------------------------------------
+    let alpha_keyboards = split(keyboard, '\d\+') |" => ['ma']
+    let digit_keyboards = split(keyboard, '\D\+') |" => ['77']
+    " --------------------------------------------------------
+    let pinyin = get(alpha_keyboards,0)           |" ma im=pinyin
+    let digit =  get(digit_keyboards,0)           |" 7  im=4corner
+    " --------------------------------------------------------
     let cache_list = s:vimim_get_data_from_directory(pinyin, 'pinyin')
     let pinyin_cache = s:vimim_chinese_menu_hash(cache_list)
-    " ----------------------------------------------
+    " --------------------------------------------------------
     let cache_list = s:vimim_get_data_from_directory(digit, '4corner')
     let digit_cache = s:vimim_chinese_menu_hash(cache_list)
-    " ----------------------------------
+    " --------------------------------------------------------
     " free style pinyin+4corner: ma7  mali4  mxj3
     return s:vimim_double_filter(pinyin_cache, digit_cache, -1)
 endfunction
