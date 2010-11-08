@@ -161,11 +161,6 @@ function! s:vimim_initialize_session()
     let s:im = {}
     let s:input_method = 0
     " --------------------------------
-    let s:chinese_input_mode = {}
-    let s:chinese_input_mode['onekey'] = 0
-    let s:chinese_input_mode['dynamic'] = 0
-    let s:chinese_input_mode['static'] = 0
-    " --------------------------------
     let s:data_directory_4corner = 0
     let s:data_directory_pinyin = 0
     let s:data_directory_wubi = 0
@@ -761,10 +756,9 @@ function! <SID>OneKeyMode()
 " -------------------------
 " VimIM <OneKey> mode double play
 "  (1) <OneKey> => start OneKey mode and start to play
-"  (2) <OneKey> => stop  OneKey mode and stop to play
+"  (2) <OneKey> => stop  OneKey mode and stop  to play
 " -----------------------------------------------------
     let onekey = ""
-    let s:chinese_input_mode['onekey'] = 1
     let s:chinese_mode_switch += 1
     if empty(s:chinese_mode_switch%2)
         let onekey = s:vimim_start_both_onekey(1)
@@ -796,8 +790,8 @@ function! s:vimim_start_onekey(mode)
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
     if a:mode > 0
-        sil!call s:vimim_onekey_autocmd()
         sil!call s:vimim_start_onekey_mode()
+        sil!call s:vimim_onekey_autocmd()
     endif
     " ----------------------------------------------------------
     " default <OneKey> triple play
@@ -4930,16 +4924,28 @@ let VimIM = " ====  Debug_Framework  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------
-function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------
+function! s:vimim_initialize_boot()
+" ---------------------------------
+    let s:path2 = 0
     let s:backend = 0
     let s:localization = 0
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
     let s:vimim_static_input_style = 0
+    let s:chinese_input_mode = {}
+    " -------------------------------------
+    let s:chinese_input_mode['onekey'] = 0
+    let s:chinese_input_mode['static'] = 0
+    let s:chinese_input_mode['dynamic'] = 0
+    " -------------------------------------
+endfunction
+
+" ----------------------------------
+function! s:vimim_initialize_debug()
+" ----------------------------------
+    call s:vimim_initialize_boot()
     " ------------------------------
-    let s:path2 = 0
     let dir = "/vimim"
     if isdirectory(dir)
         let s:path2 = dir
