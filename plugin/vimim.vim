@@ -5783,7 +5783,25 @@ function! s:vimim_onekey_mapping_on()
     " -------------------------------
 endfunction
 
+" ------------------------------------
+function! s:vimim_initialize_autocmd()
+" ------------------------------------
+    if !has("autocmd")
+        return
+    endif
+    augroup vimim_auto_chinese_mode
+        autocmd InsertLeave *.vimim sil!call s:vimim_stop()
+        if s:vimim_static_input_style < 2
+            autocmd InsertEnter *.vimim sil!call <SID>ChineseMode()
+        else
+            autocmd InsertEnter *.vimim sil!call <SID>OneKeyMode()
+        endif
+    augroup END
+endfunction
+
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
+sil!call s:vimim_initialize_autocmd()
 " ======================================= }}}
+
