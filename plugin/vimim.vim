@@ -823,8 +823,7 @@ function! s:vimim_start_both_onekey(mode)
     sil!call s:vimim_start_onekey(a:mode)
     let onekey = s:vimim_onekey_action("")
     if pumvisible() && s:vimim_onekey_double_ctrl6
-        let onekey  = "\<C-E>\<C-X>\<C-U>\<C-E>"
-        let onekey .= "\<C-R>=g:vimim_pumvisible_p_paste()\<CR>"
+        let onekey  = <SID>TabKey()
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -1386,8 +1385,7 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_putclip()\<CR>'
         elseif a:key == 'p'
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_pumvisible_p_paste()\<CR>'
+            let hjkl  = <SID>TabKey()
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -1869,6 +1867,9 @@ function! s:vimim_popupmenu_list(matched_list)
     " ----------------------------------------
     if s:menu_4corner_as_filter > -1
         let matched_list = s:vimim_menu_4corner_filter(a:matched_list)
+        if empty(matched_list)
+            return []
+        endif
     endif
     " ----------------------------------------
     let menu = 0
@@ -1951,6 +1952,7 @@ function! s:vimim_popupmenu_list(matched_list)
         call add(popupmenu_list, complete_items)
         " -------------------------------------------------
     endfor
+    let s:popupmenu_list = copy(popupmenu_list)
     return popupmenu_list
 endfunction
 
@@ -2580,20 +2582,18 @@ function! s:vimim_menu_4corner_filter(matched_list)
 " -------------------------------------------------
     let matched_list = a:matched_list
     let menu_cache = s:vimim_chinese_menu_hash(matched_list)
-    if empty(menu_cache)    " {'马':'ma', '妈啊':'ma'}
+    if empty(menu_cache) |" {'马':'ma', '妈啊':'ma'}
         return matched_list
     endif
     " ---------------------------------------------
-    let digit = s:menu_4corner_as_filter
+    let digit = s:menu_4corner_as_filter  |" {'马':7}
     let digit_list = s:vimim_get_data_from_directory(digit, '4corner')
     let digit_cache = s:vimim_chinese_menu_hash(digit_list)
-    if empty(digit_cache)   " {'马':7}
-        return matched_list
-    endif
-    " ---------------------------------------------
-    let results = s:vimim_double_filter(menu_cache, digit_cache, 0)
-    if empty(results)
-        let results = matched_list
+    let results = []
+    if empty(digit_cache)
+        let msg = " no 4corner for all list in the menu"
+    else
+        let results = s:vimim_double_filter(menu_cache, digit_cache, 0)
     endif
     return results
 endfunction
@@ -5242,6 +5242,7 @@ function! s:reset_popupmenu_matched_list()
 " ----------------------------------------
     let s:menu_4corner_as_filter = -1
     let s:popupmenu_matched_list = []
+    let s:popupmenu_list = []
 endfunction
 
 " ------------------------------
@@ -5473,7 +5474,12 @@ else
         if empty(results)
             let msg = "built it if no popup matched list"
         else
-            return s:vimim_popupmenu_list(results)
+            let results = s:vimim_popupmenu_list(results)
+            if empty(results)
+                return s:popupmenu_list
+            else
+                return results
+            endif
         endif
     endif
 
@@ -5528,6 +5534,7 @@ else
     if s:vimim_imode_pinyin > 0
     \&& keyboard =~# '^i'
     \&& s:vimim_embedded_backend !~ "sqlite"
+        let msg = "usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
         let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
         if len(chinese_numbers) > 0
             return s:vimim_popupmenu_list(chinese_numbers)
