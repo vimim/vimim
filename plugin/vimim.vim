@@ -3782,7 +3782,7 @@ function! s:vimim_sentence_datafile(lines, keyboard, im)
     endif
     let match_start = -1
     let head = s:vimim_get_matched_sentence_head(keyboard)
-    let max = s:vimim_get_hjkl_h_pinyin(head)
+    let max = s:vimim_get_hjkl_h_pinyin(head) + 1
     " word matching algorithm for Chinese segmentation
     " ------------------------------------------------
     while max > 1
@@ -4894,32 +4894,15 @@ let VimIM = " ====  Debug_Framework  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------
-function! s:vimim_quick_and_dirty()
-" ---------------------------------
-    let buffer = expand("%:p:t")
-    if buffer =~# 'auto_dynamic.vimim'
-        let s:vimim_static_input_style = 0
-    elseif buffer =~# 'auto_static.vimim'
-        let s:vimim_static_input_style = 1
-    elseif buffer =~# 'auto_onekey.vimim'
-        let s:vimim_static_input_style = 2
-    elseif s:vimim_debug > 8
-        let s:vimim_static_input_style = 2
-    endkf
-endfunction
-
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
+    let s:path2 = 0
     let s:localization = 0
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
     let s:vimim_embedded_backend = 0
-    " ------------------------------
-    call s:vimim_quick_and_dirty()
-    " ------------------------------
-    let s:path2 = 0
+    let s:vimim_static_input_style = 0
     let dir = "/vimim"
     if isdirectory(dir)
         let s:path2 = dir
@@ -4945,6 +4928,7 @@ function! s:vimim_initialize_debug()
     " ------------------------------
     let s:vimim_debug = 9
     let s:vimim_tab_as_onekey = 2
+    let s:vimim_static_input_style = 2
     let s:vimim_cloud_sogou = -1
     let s:vimim_imode_pinyin = 1
     let s:vimim_custom_skin = 1
