@@ -278,64 +278,68 @@ endfunction
 function! s:vimim_dictionary_chinese()
 " ------------------------------------
     let s:space = "　"
-    let s:chinese = {}
-    let s:chinese['vim1'] = ['文本编辑器','文本編輯器']
-    let s:chinese['vim2'] = ['最牛']
-    let s:chinese['vim3'] = ['精力']
-    let s:chinese['vim4'] = ['生气','生氣']
-    let s:chinese['vim5'] = ['中文输入法','中文輸入法']
-    let s:chinese['cloud'] = ['云输入','雲輸入']
-    let s:chinese['mycloud'] = ['自己的云','自己的雲']
-    let s:chinese['wubi'] = ['五笔','五筆']
-    let s:chinese['4corner'] = ['四角号码','四角號碼']
-    let s:chinese['12345'] = ['五笔划','五筆劃']
-    let s:chinese['ctc'] = ['中文电码','中文電碼']
-    let s:chinese['cns11643'] = ['交换码','交換碼']
-    let s:chinese['english'] = ['英文']
-    let s:chinese['hangul'] = ['韩文','韓文']
-    let s:chinese['xinhua'] = ['新华','新華']
-    let s:chinese['pinyin'] = ['拼音']
-    let s:chinese['cangjie'] = ['仓颉','倉頡']
-    let s:chinese['boshiamy'] = ['呒虾米','嘸蝦米']
-    let s:chinese['zhengma'] = ['郑码','鄭碼']
-    let s:chinese['yong'] = ['永码','永碼']
-    let s:chinese['nature'] = ['自然']
-    let s:chinese['quick'] = ['速成']
-    let s:chinese['yong'] = ['永码','永碼']
-    let s:chinese['wu'] = ['吴语','吳語']
-    let s:chinese['phonetic'] = ['注音']
-    let s:chinese['array30'] = ['行列']
-    let s:chinese['erbi'] = ['二笔','二筆']
-    let s:chinese['nonstop'] = ['连续','連續']
-    let s:chinese['input'] = ['输入','輸入']
-    let s:chinese['ciku'] = ['词库','詞庫']
-    let s:chinese['myversion'] = ['版本','版本']
-    let s:chinese['encoding'] = ['编码','編碼']
-    let s:chinese['computer'] = ['电脑','電腦']
-    let s:chinese['classic'] = ['经典','經典']
-    let s:chinese['static'] = ['静态','靜態']
-    let s:chinese['dynamic'] = ['动态','動態']
-    let s:chinese['internal'] = ['内码','內碼']
-    let s:chinese['onekey'] = ['点石成金','點石成金']
-    let s:chinese['style'] = ['风格','風格']
-    let s:chinese['scheme'] = ['方案','方案']
-    let s:chinese['sogou'] = ['搜狗']
-    let s:chinese['cloud_no'] = ['晴天无云','晴天無雲']
-    let s:chinese['all'] = ['全']
-    let s:chinese['cloud_atwill'] = ['想云就云','想雲就雲']
-    let s:chinese['shezhi'] = ['设置','設置']
-    let s:chinese['test'] = ['测试','測試']
-    let s:chinese['jidian'] = ['极点','極點']
-    let s:chinese['newcentury'] = ['新世纪','新世紀']
-    let s:chinese['shuangpin'] = ['双拼','雙拼']
-    let s:chinese['abc'] = ['智能双打','智能雙打']
-    let s:chinese['microsoft'] = ['微软','微軟']
-    let s:chinese['nature'] = ['自然']
-    let s:chinese['plusplus'] = ['拼音加加']
-    let s:chinese['purple'] = ['紫光']
-    let s:chinese['flypy'] = ['小鹤','小鶴']
-    let s:chinese['bracket_l'] = ['《','【']
-    let s:chinese['bracket_r'] = ['》','】']
+    let H = {}
+    let H['vim1'] = ['文本编辑器','文本編輯器']
+    let H['vim2'] = ['最牛']
+    let H['vim3'] = ['精力']
+    let H['vim4'] = ['生气','生氣']
+    let H['vim5'] = ['中文输入法','中文輸入法']
+    let H['nonstop'] = ['连续','連續']
+    let H['input'] = ['输入','輸入']
+    let H['directory'] = ['目录','目錄']
+    let H['ciku'] = ['词库','詞庫']
+    let H['font'] = ['字体','字體']
+    let H['environment'] = ['环境','環境']
+    let H['myversion'] = ['版本','版本']
+    let H['encoding'] = ['编码','編碼']
+    let H['computer'] = ['电脑','電腦']
+    let H['classic'] = ['经典','經典']
+    let H['static'] = ['静态','靜態']
+    let H['dynamic'] = ['动态','動態']
+    let H['internal'] = ['内码','內碼']
+    let H['onekey'] = ['点石成金','點石成金']
+    let H['style'] = ['风格','風格']
+    let H['scheme'] = ['方案','方案']
+    let H['cloud'] = ['云输入','雲輸入']
+    let H['mycloud'] = ['自己的云','自己的雲']
+    let H['wubi'] = ['五笔','五筆']
+    let H['4corner'] = ['四角号码','四角號碼']
+    let H['12345'] = ['五笔划','五筆劃']
+    let H['ctc'] = ['中文电码','中文電碼']
+    let H['cns11643'] = ['交换码','交換碼']
+    let H['english'] = ['英文']
+    let H['hangul'] = ['韩文','韓文']
+    let H['xinhua'] = ['新华','新華']
+    let H['pinyin'] = ['拼音']
+    let H['cangjie'] = ['仓颉','倉頡']
+    let H['boshiamy'] = ['呒虾米','嘸蝦米']
+    let H['zhengma'] = ['郑码','鄭碼']
+    let H['yong'] = ['永码','永碼']
+    let H['nature'] = ['自然']
+    let H['quick'] = ['速成']
+    let H['yong'] = ['永码','永碼']
+    let H['wu'] = ['吴语','吳語']
+    let H['phonetic'] = ['注音']
+    let H['array30'] = ['行列']
+    let H['erbi'] = ['二笔','二筆']
+    let H['sogou'] = ['搜狗']
+    let H['cloud_no'] = ['晴天无云','晴天無雲']
+    let H['all'] = ['全']
+    let H['cloud_atwill'] = ['想云就云','想雲就雲']
+    let H['shezhi'] = ['设置','設置']
+    let H['test'] = ['测试','測試']
+    let H['jidian'] = ['极点','極點']
+    let H['newcentury'] = ['新世纪','新世紀']
+    let H['shuangpin'] = ['双拼','雙拼']
+    let H['abc'] = ['智能双打','智能雙打']
+    let H['microsoft'] = ['微软','微軟']
+    let H['nature'] = ['自然']
+    let H['plusplus'] = ['拼音加加']
+    let H['purple'] = ['紫光']
+    let H['flypy'] = ['小鹤','小鶴']
+    let H['bracket_l'] = ['《','【']
+    let H['bracket_r'] = ['》','】']
+    let s:chinese = copy(H)
 endfunction
 
 " ----------------------------------
@@ -597,10 +601,10 @@ function! s:vimim_egg_vimim()
     endif
     " ----------------------------------
     let input = s:vimim_get_chinese('input')
-    let ciku = s:vimim_get_chinese('ciku')
-    let ciku = "datafile " . ciku .  "："
     let myversion = s:vimim_get_chinese('myversion')
     let myversion = "\t " . myversion . "："
+    let font = s:vimim_get_chinese('font') . "："
+    let environment = s:vimim_get_chinese('environment') . "："
     let encoding = s:vimim_get_chinese('encoding') . "："
     " ----------------------------------
     let option .= "_" . &term
@@ -623,30 +627,26 @@ function! s:vimim_egg_vimim()
     let option = "encoding " . encoding . &encoding
     call add(eggs, option)
     " ----------------------------------
-    let option = "fencs\t "  . encoding . &fencs
+    let option = "fencs\t "  . encoding . &fileencodings
     call add(eggs, option)
     " ----------------------------------
-    let option = "lc_time\t " . encoding . v:lc_time
+    let option = "fonts\t "  . font . &guifontwide
     call add(eggs, option)
     " ----------------------------------
-    let option = s:vimim_static_input_style
-    let classic = s:vimim_get_chinese('classic')
-    let dynamic = s:vimim_get_chinese('dynamic')
-    let static = s:vimim_get_chinese('static')
-    let nonstop = s:vimim_get_chinese('nonstop')
-    if option < 1
-        let classic .= dynamic
-    elseif option == 1
-        let classic .= static
-    elseif option == 2
-        let classic = "OneKey " . nonstop . input
+    let option = "lc_time\t " . environment . v:lc_time
+    call add(eggs, option)
+    " ----------------------------------
+    let toggle = 'i_CTRL-Bslash'
+    if s:vimim_ctrl_space_to_toggle == 1
+        let toggle = "i_CTRL-Space"
+    elseif s:vimim_tab_as_onekey == 1
+        let toggle = "Tab_as_OneKey"
+    elseif s:vimim_tab_as_onekey == 2
+        let toggle = "OneKey n_CTRL-6"
     endif
-    let toggle = "i_CTRL-Bslash" . s:space
-    if s:vimim_static_input_style == 2
-        let toggle = ""
-    endif
+    let toggle .=  s:space
     let style = s:vimim_get_chinese('style')
-    let option = "mode\t " . style . "：" . toggle . classic
+    let option = "mode\t " . style . "：" . toggle
     call add(eggs, option)
     " ----------------------------------
     let im = s:vimim_statusline()
@@ -664,11 +664,12 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
     " ----------------------------------
-    let option = s:datafile
+    let option = s:vimim_get_ciku_in_Chinese()
     if empty(option)
-        let msg = "no primary datafile, might play cloud"
+        let msg = "no ciku found"
     else
-        let option = ciku . option
+        let ciku = s:vimim_get_chinese('ciku')
+        let option = "database " . ciku . "：" . option
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -712,11 +713,51 @@ function! s:vimim_egg_vimim()
     return map(eggs, 'v:val . s:space')
 endfunction
 
+" -------------------------------------
+function! s:vimim_get_ciku_in_Chinese()
+" -------------------------------------
+    let database = s:datafile
+    if empty(database)
+        let msg = "no primary datafile, try directory"
+        let database = s:path2
+        if empty(database)
+            let msg = "no primary datafile nor directory"
+        else
+            let ciku = s:vimim_get_chinese('ciku')
+            let directory  = s:vimim_get_chinese('directory')
+            let directory .= ciku . s:space  . database . "/"
+            return  directory
+        endif
+    else
+        return database
+    endif
+    return 0
+endfunction
+
+" --------------------------------------------
+function! s:vimim_get_input_style_in_Chinese()
+" -------------------------------------------
+    let style = s:vimim_static_input_style
+    let classic = s:vimim_get_chinese('classic')
+    let dynamic = s:vimim_get_chinese('dynamic')
+    let static = s:vimim_get_chinese('static')
+    let nonstop = s:vimim_get_chinese('nonstop')
+    let input = s:vimim_get_chinese('input')
+    let chinese = classic
+    if style < 1
+        let chinese .= dynamic
+    elseif style == 1
+        let chinese .= static
+    elseif style == 2
+        let chinese = "OneKey " . nonstop . input
+    endif
+    return chinese
+endfunction
+
 " ----------------------------------------
 function! s:vimim_easter_chicken(keyboard)
 " ----------------------------------------
     if empty(s:chinese_input_mode)
-    \|| s:chinese_input_mode =~ 'onekey'
         let msg = "easter eggs hidden in OneKey only"
     else
         return
@@ -762,6 +803,7 @@ function! <SID>OneKey()
 "  (1) <OneKey> => start OneKey as "hit and run"
 "  (2) <OneKey> => stop  OneKey and print out menu
 " ------------------------------------------------
+    let s:chinese_input_mode = 0
     return s:vimim_start_both_onekey(0)
 endfunction
 
@@ -900,7 +942,7 @@ function! s:vimim_onekey_action(onekey)
             if s:vimim_tab_as_onekey == 1
                 let onekey = "\t"
             endif
-        elseif empty(a:onekey)
+        elseif empty(a:onekey) && empty(s:chinese_input_mode)
             return <SID>vimim_get_unicode_menu()
         endif
     endif
@@ -1003,7 +1045,6 @@ endfunction
 function! s:vimim_start_chinese_mode()
 " ------------------------------------
     sil!call s:vimim_start()
-    sil!call s:vimim_i_chinese_mode_on()
     " ------------------------------------------
     if s:vimim_static_input_style < 1
         let s:chinese_input_mode = 'dynamic'
@@ -1126,6 +1167,9 @@ endfunction
 " -----------------------------------
 function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
+    if empty(s:chinese_input_mode)
+        return
+    endif
     if s:vimim_custom_laststatus > 0
         set laststatus=2
     endif
@@ -1222,6 +1266,9 @@ function! s:vimim_statusline()
     endif
     " ----------------------------------
     let im  = bracket_l . im . bracket_r
+    " ----------------------------------
+    let input_style = s:vimim_get_input_style_in_Chinese()
+    let im = im . s:space . input_style . s:space
     " ----------------------------------
     return im
 endfunction
@@ -5161,6 +5208,7 @@ function! s:vimim_start()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_12345678_label_on()
     sil!call s:vimim_load_datafile()
+    sil!call s:vimim_i_chinese_mode_on()
 endfunction
 
 " ----------------------
@@ -5187,7 +5235,6 @@ endfunction
 function! s:reset_before_anything()
 " ---------------------------------
     call s:reset_matched_list()
-    let s:chinese_input_mode = 0
     let s:no_internet_connection = 0
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
