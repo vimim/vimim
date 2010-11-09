@@ -1384,6 +1384,12 @@ function! <SID>vimim_label_1234567890_filter(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
+" --------------------------------------
+function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
+" --------------------------------------
+    return '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
+endfunction
+
 " ------------------------------------
 function! g:vimim_one_key_correction()
 " ------------------------------------
@@ -1809,7 +1815,7 @@ endfunction
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
     let matched_list = a:matched_list
-    if empty(matched_list) 
+    if empty(matched_list)
     \|| type(matched_list) != type([])
         return []
     endif
@@ -2110,7 +2116,8 @@ function! s:vimim_punctuation_navigation_on()
     if s:vimim_punctuation_navigation < 1
         let punctuation = default . semicolon
     endif
-    if s:chinese_input_mode =~ 'static'
+    if s:chinese_input_mode =~ 'dynamic'
+    \|| s:chinese_input_mode =~ 'static'
         let punctuation = default
     endif
     " ---------------------------------------
@@ -2179,12 +2186,6 @@ function! s:vimim_pageup_pagedown(key)
         endif
     endif
     return key
-endfunction
-
-" --------------------------------------
-function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
-" --------------------------------------
-    return '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
 endfunction
 
 " ------------------------------------------------------------
