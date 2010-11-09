@@ -738,18 +738,16 @@ endfunction
 function! s:vimim_get_input_style_in_Chinese()
 " -------------------------------------------
     let style = s:vimim_static_input_style
-    let classic = s:vimim_get_chinese('classic')
     let dynamic = s:vimim_get_chinese('dynamic')
     let static = s:vimim_get_chinese('static')
     let nonstop = s:vimim_get_chinese('nonstop')
-    let input = s:vimim_get_chinese('input')
-    let chinese = classic
+    let chinese = s:vimim_get_chinese('classic')
     if style < 1
         let chinese .= dynamic
     elseif style == 1
         let chinese .= static
     elseif style == 2
-        let chinese = "OneKey " . nonstop . input
+        let chinese = "OneKey" . nonstop
     endif
     return chinese
 endfunction
@@ -1268,7 +1266,7 @@ function! s:vimim_statusline()
     let im  = bracket_l . im . bracket_r
     " ----------------------------------
     let input_style = s:vimim_get_input_style_in_Chinese()
-    let im = im . s:space . input_style . s:space
+    let im = im . s:space . input_style
     " ----------------------------------
     return im
 endfunction
@@ -4981,8 +4979,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_imode_pinyin = 1
     let s:vimim_custom_skin = 1
     let s:vimim_custom_laststatus = 0
-    let s:vimim_english_punctuation = 0
-    let s:vimim_chinese_punctuation = 1
     let s:vimim_reverse_pageup_pagedown = 1
     " ------------------------------
 endfunction
