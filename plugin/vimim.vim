@@ -950,7 +950,7 @@ function! s:vimim_onekey_action(onekey)
     " ---------------------------------------------------
     if s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
-        let onekey = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        let onekey = '\<C-R>=g:vimim()\<CR>'
     else
         let onekey = ""
     endif
@@ -1103,7 +1103,7 @@ function! s:vimim_static_action(space)
         let byte_before = getline(".")[col(".")-2]
         if byte_before =~# s:valid_key
             if s:pattern_not_found < 1
-                let space = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+                let space = '\<C-R>=g:vimim()\<CR>'
             else
                 let s:pattern_not_found = 0
             endif
@@ -1141,7 +1141,7 @@ function! s:vimim_dynamic_alphabet_trigger()
         if char !~# not_used_valid_keys
             sil!exe 'inoremap <silent> ' . char . '
             \ <C-R>=g:vimim_pumvisible_ctrl_e_ctrl_y()<CR>'. char .
-            \'<C-R>=g:vimim_ctrl_x_ctrl_u()<CR>'
+            \'<C-R>=g:vimim()<CR>'
         endif
     endfor
 endfunction
@@ -1542,12 +1542,12 @@ endfunction
 " --------------------------------------
 function! s:vimim_ctrl_y_ctrl_x_ctrl_u()
 " --------------------------------------
-    return '\<C-Y>\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+    return '\<C-Y>\<C-R>=g:vimim()\<CR>'
 endfunction
 
-" -------------------------------
-function! g:vimim_ctrl_x_ctrl_u()
-" -------------------------------
+" -----------------
+function! g:vimim()
+" -----------------
     let key = ''
     call s:reset_popupmenu_matched_list()
     let byte_before = getline(".")[col(".")-2]
@@ -1745,7 +1745,7 @@ endfunction
 " -------------------------------------
 function! <SID>vimim_get_unicode_menu()
 " -------------------------------------
-    let trigger = '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+    let trigger = '\<C-R>=g:vimim()\<CR>'
     let xxxx = s:vimim_get_internal_code_char_before()
     if !empty(xxxx)
         let trigger = xxxx . trigger
@@ -1806,7 +1806,7 @@ function! <SID>vimim_ctrl_x_ctrl_u_bs()
     if s:pumvisible_ctrl_e > 0
     \&& s:chinese_input_mode =~ 'dynamic'
         let s:pumvisible_ctrl_e = 0
-        let key .= '\<C-R>=g:vimim_ctrl_x_ctrl_u()\<CR>'
+        let key .= '\<C-R>=g:vimim()\<CR>'
         sil!exe 'sil!return "' . key . '"'
     endif
     " ---------------------------------
