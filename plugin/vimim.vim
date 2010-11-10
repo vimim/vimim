@@ -2561,6 +2561,31 @@ function! <SID>vimim_label_1234567890_filter(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
+" ----------------------------------------
+function! s:vimim_menu_4corner_as_filter()
+" ----------------------------------------
+    if empty(s:menu_4corner_as_filter)
+    \|| empty(s:popupmenu_list)
+        return []
+    endif
+    let s:insert_without_popup = 0
+    let results = s:vimim_popup_filter(s:popupmenu_list, -1)
+    if empty(results)
+        let filter = s:menu_4corner_as_filter
+        if len(filter) > 1
+            let filter = strpart(filter, 0, len(filter)-1)
+        endif
+        let s:menu_4corner_as_filter = filter
+        let results = s:vimim_popup_filter(s:popupmenu_list, -1)
+        if empty(results)
+            let results = s:popupmenu_list
+        endif
+    elseif len(results) == 1
+        let s:insert_without_popup = 1
+    endif
+    return results
+endfunction
+
 " ----------------------------------------------------
 function! s:vimim_popup_filter(popupmenu_list, filter)
 " ----------------------------------------------------
@@ -2593,7 +2618,7 @@ function! s:vimim_popup_filter(popupmenu_list, filter)
         if matched < 0
             continue
         endif
-        " --------------------------------------------- todo
+        " ---------------------------------------------
         if s:vimim_custom_menu_label > 0
             let labeling = s:vimim_get_labeling(label)
             let abbr = printf('%2s',labeling)."\t".chinese
@@ -5406,24 +5431,14 @@ else
         endif
     endif
 
-    " use cached popupmenu list for digit filter
-    " ------------------------------------------
-    if len(s:menu_4corner_as_filter) > 0
-        let results = s:popupmenu_list
-        if empty(results)
-            let msg = "do nothing if empty"
-        else
-            let s:insert_without_popup = 0
-            let results = s:vimim_popup_filter(results, -1)
-            if empty(results)
-                return s:popupmenu_list
-            elseif len(results) == 1
-                let s:insert_without_popup = 1
-            endif
-            return results
-        endif
+    " [4corner] use cached popupmenu list for digit filter
+    " ----------------------------------------------------
+    let results = s:vimim_menu_4corner_as_filter()
+    if empty(results)
+        let msg = "do nothing if empty"
+    else
+        return results
     endif
-
 
     " [mycloud] get chunmeng from mycloud local or www
     " ------------------------------------------------
