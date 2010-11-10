@@ -167,6 +167,8 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
+    let s:abcdefg = "'abcdefg"
+    let s:pqwertyuio = range(10)
     " --------------------------------
     let s:www_libcall = 0
     let s:www_executable = 0
@@ -188,7 +190,6 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     " --------------------------------
     let s:keyboard_count = 0
-    let s:abcdefg = "'abcdefg"
     let s:show_me_not_pattern = "^ii\\|^oo"
     " --------------------------------
     let A = char2nr('A')
@@ -255,6 +256,7 @@ function! s:vimim_finalize_session()
     " ------------------------------
     if s:pinyin_and_4corner > 0
         let s:abcdefg = "'asdfgvb"
+        let s:pqwertyuio = split('pqwertyuio', '\zs')
     endif
     " ------------------------------
 endfunction
@@ -814,7 +816,7 @@ function! s:vimim_onekey_mode()
     else
         call s:vimim_stop()
     endif
-    return onekey
+    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 " ---------------------------------------
@@ -1391,12 +1393,6 @@ function! <SID>vimim_hjkl(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" --------------------------------------
-function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
-" --------------------------------------
-    return '\<C-E>\<C-X>\<C-U>\<C-P>\<Down>'
-endfunction
-
 " ------------------------------------
 function! g:vimim_one_key_correction()
 " ------------------------------------
@@ -1490,6 +1486,12 @@ function! s:vimim_popup_word()
 endfunction
 
 " --------------------------------------
+function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
+" --------------------------------------
+    return '\<C-E>\<C-R>=g:vimim()\<CR>'
+endfunction
+
+" --------------------------------------
 function! s:vimim_ctrl_y_ctrl_x_ctrl_u()
 " --------------------------------------
     return '\<C-Y>\<C-R>=g:vimim()\<CR>'
@@ -1498,8 +1500,10 @@ endfunction
 " -----------------
 function! g:vimim()
 " -----------------
+    if empty(s:menu_4corner_as_filter)
+        call s:reset_popupmenu_matched_list()
+    endif
     let key = ''
-    call s:reset_popupmenu_matched_list()
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
@@ -1526,6 +1530,7 @@ function! g:vimim_menu_select()
             if s:insert_without_popup > 1
                 let select_not_insert .= '\<Esc>'
             endif
+            call s:reset_popupmenu_matched_list()
             let s:insert_without_popup = 0
         endif
     endif
@@ -1829,9 +1834,6 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["menu"] = menu
         endif
         let chinese = get(pairs, 1)
-        if chinese =~ "#"
-            continue
-        endif
         " -------------------------------------------------
         if s:vimim_custom_skin < 2
             let extra_text = menu
@@ -1894,7 +1896,6 @@ function! s:vimim_get_labeling(label)
         endif
         " -----------------------------------------
         if s:pinyin_and_4corner > 0
-        \&& empty(s:vimim_cloud_plugin)
             let labeling = label2
         else
             let labeling .= label2
@@ -2531,15 +2532,9 @@ function! s:vimim_1234567890_filter_on()
 " --------------------------------------
     if s:vimim_custom_menu_label < 1
     \|| empty(s:pinyin_and_4corner)
-    \|| !empty(s:vimim_cloud_plugin)
         return
     endif
-    let label = 'pqwertyuio'
-    let labels = split(label, '\zs')
-    if s:pinyin_and_4corner > 1
-        let labels = range(10)
-    endif
-    for _ in labels
+    for _ in s:pqwertyuio
         sil!exe'inoremap <silent>  '._.'
         \  <C-R>=<SID>vimim_label_1234567890_filter("'._.'")<CR>'
     endfor
@@ -2553,7 +2548,7 @@ function! <SID>vimim_label_1234567890_filter(n)
         if s:pinyin_and_4corner > 1
             let msg = "use 1234567890 as pinyin filter"
         else
-            let label_alpha = 'pqwertyuio'
+            let label_alpha = join(s:pqwertyuio,'')
             let label = match(label_alpha, a:n)
         endif
         if len(s:menu_4corner_as_filter) > 0
@@ -2598,7 +2593,7 @@ function! s:vimim_popup_filter(popupmenu_list, filter)
         if matched < 0
             continue
         endif
-        " ---------------------------------------------
+        " --------------------------------------------- todo
         if s:vimim_custom_menu_label > 0
             let labeling = s:vimim_get_labeling(label)
             let abbr = printf('%2s',labeling)."\t".chinese
@@ -3889,8 +3884,8 @@ function! s:vimim_scan_plugin_data_directory()
     " ------------------------------------
     if len(s:data_directory_4corner) > 1
         if len(s:data_directory_pinyin) > 1
-            let s:pinyin_and_4corner = 1
             let s:im['4corner'][0] = 1
+            let s:pinyin_and_4corner = 1
         else
             let s:only_4corner_or_12345 = 1
         endif
@@ -5416,16 +5411,19 @@ else
     if len(s:menu_4corner_as_filter) > 0
         let results = s:popupmenu_list
         if empty(results)
-            let msg = "do nothing if no cached popupmenu list"
+            let msg = "do nothing if empty"
         else
+            let s:insert_without_popup = 0
             let results = s:vimim_popup_filter(results, -1)
             if empty(results)
                 return s:popupmenu_list
-            else
-                return results
+            elseif len(results) == 1
+                let s:insert_without_popup = 1
             endif
+            return results
         endif
     endif
+
 
     " [mycloud] get chunmeng from mycloud local or www
     " ------------------------------------------------
