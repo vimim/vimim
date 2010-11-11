@@ -2329,30 +2329,20 @@ endfunction
 " ------------------------------------------
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
-    if len(a:keyboard) > 1
-        call s:vimim_initialization_once()
-        call s:vimim_chinese_reverse_lookup(a:keyboard)
-    endif
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_chinese_reverse_lookup(keyboard)
-" ------------------------------------------------
 " [input]     马力
-" [output]    9a6c 529b   --  unicode
+" [output]    7712 4002   --  4corner
 "             马   力
-"             7712 4002   --  4corner
+"             9a6c 529b   --  unicode
 "             马   力
 "             ma3  li4    --  pinyin
 "             马   力
 "             ml 马力     --  cjjp
-" ------------------------------------------------
-    let keyboard = a:keyboard
-    let results = []
-    if keyboard !~ '\p'
-        let results = s:vimim_reverse_lookup(keyboard)
+" ------------------------------------------
+    if len(a:keyboard) > 1
+        call s:vimim_initialization_once()
+        let results = s:vimim_reverse_lookup(a:keyboard)
+        call s:vimim_visual_ctrl_6_output(results)
     endif
-    call s:vimim_visual_ctrl_6_output(results)
 endfunction
 
 " ---------------------------------------------
@@ -2374,57 +2364,40 @@ endfunction
 function! s:vimim_reverse_lookup(chinese)
 " ---------------------------------------
     let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
-    let chinese_characters = split(chinese,'\zs')
-    let items = []
-    " -----------------------------------
-    let results = []
-    " -----------------------------------
-    let cache = {}
-    let characters = split(chinese, '\zs')
-    for char in characters
-"todo
-        let unicode = printf('u%04x',char2nr(char))
-        let cache[char] = unicode
-    endfor
-    let items = s:vimim_reverse_one_entry(cache, chinese)
-    call add(results, get(items,0))
-    call add(results, get(items,1))
-    let results_unicode = copy(results)
-    " ------------------------------------
-    let results = []          |" 马力 => u9a6c u529b
-    let results_pinyin = []   |" 马力 => ma3 li2
-    let results_4corner = []  |" 马力 => 7712 4002
-    let result_cjjp = ""      |" 马力 => ml
-    " ------------------------------------
-    if s:pinyin_and_4corner == 2
-        let im = '4corner'
-        call s:vimim_build_unihan_reverse_cache(chinese, im)
+    if empty(a:chinese)
+        return []
     endif
-    let cache = s:unicode_4corner_cache
-    let items = s:vimim_reverse_one_entry(cache, chinese)
-    call add(results, get(items,0))
-    call add(results, get(items,1))
-    let results_4corner = copy(results)
-    " ------------------------------------------------
+    " -----------------------------------
+    let results_unicode = []  |" 马力 => u9a6c u529b
+    let items = s:vimim_reverse_one_entry(chinese, 'unicode')
+    call add(results_unicode, get(items,0))
+    call add(results_unicode, get(items,1))
+    " -----------------------------------
+    if s:pinyin_and_4corner == 2
+        call s:vimim_build_unihan_reverse_cache(chinese, '4corner')
+    endif
+    let results_4corner = []  |" 马力 => 7712 4002
+    let items = s:vimim_reverse_one_entry(chinese, '4corner')
+    call add(results_4corner, get(items,0))
+    call add(results_4corner, get(items,1))
+    " -----------------------------------
+    let results_pinyin = []   |" 马力 => ma3 li2
+    let result_cjjp = ""      |" 马力 => ml
     let unihan = s:vimim_get_data_directory('unihan')
     if !empty(unihan)
-        let results = []
-        let im = 'pinyin'
-        call s:vimim_build_unihan_reverse_cache(chinese, im)
-        let cache = s:unicode_pinyin_cache
-        let items = s:vimim_reverse_one_entry(cache, chinese)
+        call s:vimim_build_unihan_reverse_cache(chinese, 'pinyin')
+        let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
         let pinyin_head = get(items,0)
         if !empty(pinyin_head)
-            call add(results, pinyin_head)
-            call add(results, get(items,1))
+            call add(results_pinyin, pinyin_head)
+            call add(results_pinyin, get(items,1))
             for pinyin in split(pinyin_head)
                 let result_cjjp .= pinyin[0:0]
             endfor
             let result_cjjp .= " ".chinese
         endif
-        let results_pinyin = copy(results)
     endif
-    " ------------------------------------------------
+    " -----------------------------------
     let results = []
     if len(results_4corner) > 0
         call extend(results, results_4corner)
@@ -2441,20 +2414,26 @@ function! s:vimim_reverse_lookup(chinese)
     return results
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_reverse_one_entry(cache, chinese)
-" -------------------------------------------------
-    if empty(a:cache) || empty(a:chinese)
-        return []
-    endif
-    let chinese_list = split(a:chinese, '\zs')
+" ----------------------------------------------
+function! s:vimim_reverse_one_entry(chinese, im)
+" ----------------------------------------------
     let results = []
     let headers = []  "|  ma3 li4
     let bodies = []   "|  马  力
+    let cache = {}
+    if a:im == '4corner'
+        let cache = s:unicode_4corner_cache
+    elseif a:im == 'pinyin'
+        let cache = s:unicode_pinyin_cache
+    endif
+    let chinese_list = split(a:chinese, '\zs')
     for chinese in chinese_list
         let unicode = printf('u%x',char2nr(chinese))
-        if has_key(a:cache, unicode)
-            let head = a:cache[unicode]
+        if a:im == 'unicode'
+            let cache[unicode] = unicode
+        endif
+        if has_key(cache, unicode)
+            let head = cache[unicode]
             call add(headers, head)
             let spaces = ''
             let number_of_space = len(head)-2
