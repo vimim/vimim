@@ -3134,7 +3134,7 @@ function! s:vimim_wubi(keyboard)
         let s:keyboard_leading_zero = keyboard
     endif
     " ----------------------------
-    if len(s:path2) > 4
+    if s:vimim_embedded_backend == "directory"
         let results = s:vimim_get_data_from_directory(keyboard, 'wubi')
     else
         let results = s:vimim_fixed_match(s:lines, keyboard, 3)
@@ -3574,25 +3574,23 @@ function! s:vimim_scan_plugin_file()
     let sqlite = "cedict.db"
     let datafile = s:path . sqlite
     if filereadable(datafile)
-        let s:path2 = 0
         let s:sqlite = datafile
-        let s:vimim_embedded_backend = "sqlite"
         return
     endif
     " -----------------------------------
     let input_methods = []
-    call add(input_methods, "pinyin")
-    call add(input_methods, "pinyin_quote_sogou")
-    call add(input_methods, "pinyin_huge")
-    call add(input_methods, "pinyin_fcitx")
-    call add(input_methods, "pinyin_canton")
-    call add(input_methods, "pinyin_hongkong")
-    call add(input_methods, "4corner")
-    call add(input_methods, "12345")
-    call add(input_methods, "wubi")
-    call add(input_methods, "wubi98")
-    call add(input_methods, "wubi2000")
-    call add(input_methods, "wubijd")
+    call add(input_methods, 'pinyin')
+    call add(input_methods, 'pinyin_quote_sogou')
+    call add(input_methods, 'pinyin_huge')
+    call add(input_methods, 'pinyin_fcitx')
+    call add(input_methods, 'pinyin_canton')
+    call add(input_methods, 'pinyin_hongkong')
+    call add(input_methods, '4corner')
+    call add(input_methods, '12345')
+    call add(input_methods, 'wubi')
+    call add(input_methods, 'wubi98')
+    call add(input_methods, 'wubi2000')
+    call add(input_methods, 'wubijd')
     call add(input_methods, 'cangjie')
     call add(input_methods, 'zhengma')
     call add(input_methods, 'quick')
@@ -3601,13 +3599,13 @@ function! s:vimim_scan_plugin_file()
     call add(input_methods, 'boshiamy')
     call add(input_methods, 'phonetic')
     call add(input_methods, 'array30')
-    call add(input_methods, "wu")
-    call add(input_methods, "yong")
-    call add(input_methods, "nature")
-    call add(input_methods, "hangul")
-    call add(input_methods, "cns11643")
-    call add(input_methods, "ctc")
-    call add(input_methods, "english")
+    call add(input_methods, 'wu')
+    call add(input_methods, 'yong')
+    call add(input_methods, 'nature')
+    call add(input_methods, 'hangul')
+    call add(input_methods, 'cns11643')
+    call add(input_methods, 'ctc')
+    call add(input_methods, 'english')
     " ------------------------------------
     for im in input_methods
         let file = "vimim." . im . ".txt"
@@ -3621,8 +3619,6 @@ function! s:vimim_scan_plugin_file()
     " ----------------------------------------
     if filereadable(datafile)
         let msg = "datafile is used first over directory database"
-        let s:path2 = 0
-        let s:vimim_embedded_backend = "datafile"
     else
         return
     endif
@@ -3878,7 +3874,7 @@ endfunction
 " -------------------------------
 function! s:vimim_load_datafile()
 " -------------------------------
-    if len(s:path2) > 1
+    if s:vimim_embedded_backend == "directory"
         return
     endif
     " ---------------------------
@@ -3911,9 +3907,17 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_scan_plugin_directory()
 " ---------------------------------------
+    if len(s:sqlite) > 1
+        let s:vimim_embedded_backend = "sqlite"
+        return
+    endif
+    " -----------------------------------
+    if len(s:datafile) > 1
+        let s:vimim_embedded_backend = "datafile"
+        return
+    endif
+    " -----------------------------------
     if empty(s:path2)
-    \|| s:vimim_embedded_backend =~ "datafile"
-    \|| s:vimim_embedded_backend =~ "sqlite"
         return
     endif
     " -----------------------------------
@@ -3971,7 +3975,6 @@ function! s:vimim_get_datafile_in_vimrc()
     let datafile = s:vimim_sqlite_cedict
     if !empty(datafile) && filereadable(datafile)
         let s:sqlite = copy(datafile)
-        let s:vimim_embedded_backend = "sqlite"
         return
     endif
     " -----------------------------------
@@ -3984,7 +3987,6 @@ function! s:vimim_get_datafile_in_vimrc()
     let datafile = s:vimim_datafile
     if !empty(datafile) && filereadable(datafile)
         let s:datafile = copy(datafile)
-        let s:vimim_embedded_backend = "datafile"
     endif
 endfunction
 
@@ -4087,7 +4089,7 @@ function! s:vimim_get_sentence_directory(keyboard)
     let msg = "Directory database is natural to vim editor."
     let keyboard = a:keyboard
     let im = s:input_method
-    if len(s:path2) < 1
+    if s:vimim_embedded_backend != "directory"
         return []
     endif
     let results = []
@@ -4323,15 +4325,12 @@ call add(s:vimims, VimIM)
 " -----------------------------------
 function! s:vimim_initialize_sqlite()
 " -----------------------------------
-    if empty(s:sqlite)
-        return
-    else
-        let msg = " starting to flirt with SQLite "
-    endif
-    let sqlite_executable = "sqlite3"
-    if executable(sqlite_executable)
-        let s:sqlite_executable = sqlite_executable
-        let s:input_method = 'pinyin'
+    if s:vimim_embedded_backend == "sqlite"
+        let sqlite_executable = "sqlite3"
+        if executable(sqlite_executable)
+            let s:sqlite_executable = sqlite_executable
+            let s:input_method = 'pinyin'
+        endif
     endif
 endfunction
 
@@ -4339,7 +4338,6 @@ endfunction
 function! s:vimim_sentence_match_sqlite(keyboard)
 " -----------------------------------------------
     if len(s:sqlite_executable) < len("sqlite3")
-    \|| empty(s:sqlite)
         return []
     endif
     let keyboard = a:keyboard
@@ -5019,8 +5017,6 @@ function! s:vimim_initialize_debug()
     elseif filereadable(sqlite)
         let s:vimim_sqlite_cedict = '/usr/local/share/cjklib/cedict.db'
         let s:path2 = 0
-    else
-        let s:vimim_embedded_backend = "directory"
     endif
     " ------------------------------
     let s:vimim_debug = 9
@@ -5612,14 +5608,11 @@ else
     " ------------------------------------------------
     " [backend] VimIM internal embedded backend engine
     " ------------------------------------------------
-    if len(s:path2) > 1
-        let msg = "[directory] as VimIM embedded backend"
+    if s:vimim_embedded_backend == "directory"
         let results = s:vimim_get_sentence_directory(keyboard)
-    elseif len(s:lines) > 1
-        let msg = "[datafile] as VimIM embedded backend"
+    elseif s:vimim_embedded_backend == "datafile"
         let results = s:vimim_get_sentence_datafile(keyboard)
-    elseif len(s:sqlite) > 1
-        let msg = "[sqlite] unihan cedict database as VimIM embedded backend"
+    elseif s:vimim_embedded_backend == "sqlite"
         let results = s:vimim_sentence_match_sqlite(keyboard)
     endif
     if len(results) > 0
