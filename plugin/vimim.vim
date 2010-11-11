@@ -120,30 +120,30 @@ function! s:vimim_initialization_once()
     else
         return
     endif
-    " -----------------------------------------
+    " ---------------------------------------
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
     call s:vimim_initialize_encoding()
     call s:vimim_dictionary_chinese()
     call s:vimim_build_im_keycode()
-    " -----------------------------------------
+    " ---------------------------------------
     call s:vimim_get_datafile_in_vimrc()
-    call s:vimim_scan_plugin_datafile()
-    call s:vimim_scan_plugin_data_directory()
-    " -----------------------------------------
+    call s:vimim_scan_plugin_file()
+    call s:vimim_scan_plugin_directory()
+    " ---------------------------------------
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_pinyin()
     call s:vimim_initialize_shuangpin()
-    " -----------------------------------------
+    " ---------------------------------------
     call s:vimim_initialize_sqlite()
     call s:vimim_initialize_cloud()
     call s:vimim_initialize_mycloud_plugin()
-    " -----------------------------------------
+    " ---------------------------------------
     call s:vimim_initialize_keycode()
     call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
     call s:vimim_finalize_session()
-    " -----------------------------------------
+    " ---------------------------------------
 endfunction
 
 " ------------------------------------
@@ -167,7 +167,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
-    let s:abcdefg = "'abcdefg"
+    let s:abcd = "'abcdefg"
     let s:pqwertyuio = range(10)
     " --------------------------------
     let s:www_libcall = 0
@@ -247,16 +247,11 @@ function! s:vimim_finalize_session()
     \&& empty(get(s:im['pinyin'],0))
         let s:only_4corner_or_12345 = 1
     endif
-    if !empty(s:only_4corner_or_12345)
-        let s:input_method = '4corner'
-        let s:vimim_static_input_style = 1
+    if s:only_4corner_or_12345 > 0
         let s:im['4corner'][0] = 1
         let s:im['pinyin'][0] = 0
-    endif
-    " ------------------------------
-    if s:pinyin_and_4corner > 0
-        let s:abcdefg = "'asdfgvb"
-        let s:pqwertyuio = split('pqwertyuio', '\zs')
+        let s:input_method = '4corner'
+        let s:vimim_static_input_style = 1
     endif
     " ------------------------------
 endfunction
@@ -756,6 +751,7 @@ endfunction
 function! s:vimim_easter_chicken(keyboard)
 " ----------------------------------------
     if empty(s:chinese_input_mode)
+    \|| s:chinese_input_mode=~ 'onekey'
         let msg = "easter eggs hidden in OneKey only"
     else
         return
@@ -1288,7 +1284,7 @@ function! s:vimim_abcdefg_label_on()
     if s:vimim_custom_menu_label < 1
         return
     endif
-    let labels = split(s:abcdefg, '\zs')
+    let labels = split(s:abcd, '\zs')
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
         \  <C-R>=<SID>vimim_abcdefg_label("'._.'")<CR>'
@@ -1301,7 +1297,7 @@ function! <SID>vimim_abcdefg_label(n)
 " -----------------------------------
     let label = a:n
     if pumvisible()
-        let n = match(s:abcdefg, label)
+        let n = match(s:abcd, label)
         let mycount = repeat("\<Down>", n)
         let yes = s:vimim_ctrl_y_ctrl_x_ctrl_u()
         let label = mycount . yes
@@ -1312,7 +1308,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_navigation_label_on()
 " -------------------------------------
-    let hjkl = 'hjklmnzxc'
+    let hjkl = 'hjklmnvfg'
     let hjkl_list = split(hjkl, '\zs')
     " ---------------------------------
     if empty(s:pinyin_and_4corner)
@@ -1332,18 +1328,18 @@ function! <SID>vimim_hjkl(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == 'h'
-            let s:pumvisible_hjkl_h = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            call s:reset_popupmenu_list()
+            let hjkl  = '\<C-E>'
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
-        elseif a:key == 'x'
-            call s:reset_popupmenu_list()
-            let hjkl  = '\<C-E>'
-        elseif a:key == 'z'
+        elseif a:key == 'g'
+            let s:pumvisible_hjkl_g = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == 'f'
             call s:reset_popupmenu_list()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
@@ -1351,7 +1347,7 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'm'
             let hjkl  = '\<C-Y>'
             let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
-        elseif a:key == 'c'
+        elseif a:key == 'v'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_copy_to_clip()\<CR>'
         elseif a:key == 'p'
@@ -1857,7 +1853,7 @@ function! s:vimim_get_labeling(label)
     \&& (empty(s:chinese_input_mode)
     \|| s:chinese_input_mode=~ 'onekey')
         " -----------------------------------------
-        let label2 = s:abcdefg[label-1 : label-1]
+        let label2 = s:abcd[label-1 : label-1]
         if label < 2
             let label2 = "_"
         endif
@@ -3543,9 +3539,9 @@ let VimIM = " ====  Backend==FILE    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" --------------------------------------
-function! s:vimim_scan_plugin_datafile()
-" --------------------------------------
+" ----------------------------------
+function! s:vimim_scan_plugin_file()
+" ----------------------------------
     if empty(s:path2)
     \|| empty(s:datafile)
     \|| empty(s:sqlite)
@@ -3784,21 +3780,21 @@ let VimIM = " ====  Backend==DIR     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" --------------------------------------------
-function! s:vimim_scan_plugin_data_directory()
-" --------------------------------------------
+" ---------------------------------------
+function! s:vimim_scan_plugin_directory()
+" ---------------------------------------
     if empty(s:path2)
     \|| s:vimim_embedded_backend =~ "datafile"
     \|| s:vimim_embedded_backend =~ "sqlite"
         return
     endif
-    " ----------------------------------------
+    " -----------------------------------
     let input_methods = []
     call add(input_methods, "wubi")
     call add(input_methods, "unihan")
     call add(input_methods, "4corner")
     call add(input_methods, "pinyin")
-    " ----------------------------------------
+    " -----------------------------------
     let directoires = []
     for im in input_methods
         let dir = s:vimim_get_data_directory(im)
@@ -3808,13 +3804,13 @@ function! s:vimim_scan_plugin_data_directory()
             call add(directoires, im)
         endif
     endfor
-    " ----------------------------------------
+    " -----------------------------------
     if empty(directoires)
         return
     else
         let s:vimim_embedded_backend = "directory"
     endif
-    " ------------------------------------
+    " -----------------------------------
     for directory in directoires
         let dir = s:vimim_get_data_directory(directory)
         if empty(dir)
@@ -3825,20 +3821,22 @@ function! s:vimim_scan_plugin_data_directory()
             let s:im['pinyin'][0] = 1
         elseif directory =~# '^\d'
             let s:data_directory_4corner = dir
+            let s:im['4corner'][0] = 1
         elseif directory =~# '^wubi'
             let s:data_directory_wubi = dir
         endif
     endfor
-    " ------------------------------------
+    " -----------------------------------
     if len(s:data_directory_4corner) > 1
         if len(s:data_directory_pinyin) > 1
-            let s:im['4corner'][0] = 1
             let s:pinyin_and_4corner = 1
+            let s:abcd = "'abcdsxz"
+            let s:pqwertyuio = split('pqwertyuio', '\zs')
         else
             let s:only_4corner_or_12345 = 1
         endif
     endif
-    " ------------------------------------
+    " -----------------------------------
 endfunction
 
 " ---------------------------------------
@@ -4001,7 +3999,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     let filename = dir . '/' . keyboard
     let head = keyboard
     if filereadable(filename)
-        if s:pumvisible_hjkl_h > 0
+        if s:pumvisible_hjkl_g > 0
             let s:keyboard_head = keyboard
         else
             return [keyboard]
@@ -4071,8 +4069,8 @@ function! s:vimim_get_hjkl_h_head(keyboard)
     if empty(head)
         let msg = 'h was not typed on omni popup menu'
     else
-        if s:pumvisible_hjkl_h > 0
-            let s:pumvisible_hjkl_h = 0
+        if s:pumvisible_hjkl_g > 0
+            let s:pumvisible_hjkl_g = 0
             let length = len(head)-1
             let keyboard = strpart(head, 0, length)
         endif
@@ -4901,8 +4899,8 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     let s:vimim_debug = 9
-    let s:vimim_tab_as_onekey = 2
     let s:vimim_static_input_style = 2
+    let s:vimim_tab_as_onekey = 2
     let s:vimim_cloud_sogou = -1
     let s:vimim_imode_pinyin = 1
     let s:vimim_custom_skin = 1
@@ -5168,7 +5166,7 @@ endfunction
 function! s:reset_popupmenu_list()
 " --------------------------------
     let s:menu_4corner_as_filter = ''
-    let s:pumvisible_hjkl_h = 0
+    let s:pumvisible_hjkl_g = 0
     let s:popupmenu_list = []
     let s:keyboard_head = 0
 endfunction
@@ -5434,8 +5432,7 @@ else
 
     " [imode] magic 'i': English number => Chinese number
     " ---------------------------------------------------
-    if s:vimim_imode_pinyin > 0
-    \&& keyboard =~# '^i'
+    if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
     \&& s:vimim_embedded_backend !~ "sqlite"
         let msg = "usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
         let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
@@ -5446,8 +5443,7 @@ else
 
     " [imode] magic leading apostrophe: universal imode
     " -------------------------------------------------
-    if s:vimim_imode_universal > 0
-    \&& keyboard =~# "^'"
+    if s:vimim_imode_universal > 0 && keyboard =~# "^'"
     \&& (empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'onekey')
         let msg = "usage: '88<C-6> ''88<C-6> '1g<C-6> 'sw8ql "
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
@@ -5537,7 +5533,7 @@ else
             let msg = "sell the keyboard as is, without modification"
         else
             let keyboard = get(keyboards, 0)
-            if s:pumvisible_hjkl_h > 0
+            if s:pumvisible_hjkl_g > 0
                 let s:keyboard_head = keyboard
             endif
             let pattern = "^" . keyboard
@@ -5661,7 +5657,7 @@ function! s:vimim_initialize_autocmd()
     endif
     " make dot vimim file our first-class citizen:
     augroup vimim_auto_chinese_mode
-        autocmd BufEnter    *.vimim startinsert
+        autocmd BufNewFile  *.vimim startinsert
         autocmd InsertEnter *.vimim sil!call <SID>ChineseMode()
         autocmd InsertLeave *.vimim sil!call <SID>ChineseMode()
     augroup END
