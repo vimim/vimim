@@ -2529,7 +2529,7 @@ function! <SID>vimim_label_1234567890_filter(n)
 " ---------------------------------------------
     let label = a:n
     if pumvisible()
-        if s:pinyin_and_4corner > 0
+        if s:pinyin_and_4corner < 1
             let msg = "use 1234567890 as pinyin filter"
         else
             let label_alpha = join(s:pqwertyuio,'')
@@ -3757,18 +3757,20 @@ endfunction
 
 " ----------------------------------------------------
 function! s:vimim_sentence_match_file(lines, keyboard)
-" ---------------------------------------------------- todo
+" ----------------------------------------------------
     if empty(a:lines)
         return []
     endif
     let keyboard = a:keyboard
     let im = s:input_method
-    let blocks = s:vimim_static_break_every_four(keyboard, im)
+    " --------------------------------------------------
+    let blocks = s:vimim_get_sentence_block(keyboard, im)
     if empty(blocks)
-        let msg = "continue when no fancy 4-char-block"
+        let msg = "continue when no 4-char-block nor digit "
     else
         return blocks
     endif
+    " --------------------------------------------------
     let match_start = -1
     let head = s:vimim_get_hjkl_h_head(keyboard)
     let max = s:vimim_get_hjkl_h_pinyin(head) + 1
@@ -3788,6 +3790,87 @@ function! s:vimim_sentence_match_file(lines, keyboard)
     " ------------------------------------------------
     if match_start > 0
         let blocks = s:vimim_break_string_at(a:keyboard, max)
+    endif
+    return blocks
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_get_sentence_datafile(keyboard)
+" -----------------------------------------------
+    let keyboard = a:keyboard
+    if len(s:lines) < 1
+        return []
+    endif
+    " --------------------------------------
+    " [wildcard search] play with magic star
+    if s:vimim_wildcard_search > 0
+        let results = s:vimim_wildcard_search(keyboard, s:lines)
+        if len(results) > 0
+            return s:vimim_pair_list(results)
+        endif
+    endif
+    " -------------------------------------------
+    let results = []
+    let pattern = '^' . keyboard
+    let match_start = match(s:lines, pattern)
+    if match_start < 0
+        let keyboards = s:vimim_sentence_match_file(s:lines, keyboard)
+        if empty(keyboards)
+            let msg = "sell the keyboard as is, without modification"
+        else
+            if s:pinyin_and_4corner > 0
+                let filter = get(keyboards, 1)
+                if filter =~ '^\d\+$' && filter > 0
+                \&& len(s:menu_4corner_as_filter) < 1
+                    let s:menu_4corner_as_filter = -filter
+                endif
+            endif
+            let keyboard = get(keyboards, 0)
+            if s:pumvisible_hjkl_g > 0
+                let s:keyboard_head = keyboard
+            endif
+            let pattern = "^" . keyboard
+            let match_start = match(s:lines, pattern)
+        endif
+    endif
+    " -------------------------------------------
+    if match_start < 0
+        let msg = "fuzzy search could be done here, if needed"
+    else
+        if s:vimim_datafile_has_apostrophe > 0
+            let results = s:vimim_fixed_match(s:lines, keyboard, 1)
+        elseif get(s:im['pinyin'],0) > 0
+            let results = s:vimim_pinyin(s:lines, keyboard, match_start)
+        else
+            let results = s:vimim_fixed_match(s:lines, keyboard, 4)
+        endif
+        if len(results) > 0
+            let results = s:vimim_pair_list(results)
+        endif
+    endif
+    return results
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_get_sentence_block(keyboard, im)
+" ------------------------------------------------
+    let keyboard = a:keyboard
+    let im = a:im
+    " --------------------------------------------
+    let blocks = s:vimim_static_break_every_four(keyboard, im)
+    if empty(blocks)
+        return []
+    else
+        return blocks
+    endif
+    " --------------------------------------------
+    let blocks = []
+    if s:pinyin_and_4corner > 0
+        let pinyin_4corner_pattern = '\d\+\l\='
+        let digit = match(keyboard, pinyin_4corner_pattern)
+        if digit > 0
+            let blocks = s:vimim_break_string_at(keyboard, digit)
+        endif
     endif
     return blocks
 endfunction
@@ -4001,6 +4084,7 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_sentence_directory(keyboard)
 " ------------------------------------------------
+    let msg = "Directory database is natural to vim editor."
     let keyboard = a:keyboard
     let im = s:input_method
     if len(s:path2) < 1
@@ -4013,20 +4097,20 @@ function! s:vimim_get_sentence_directory(keyboard)
             let im = "4corner"
         endif
     endif
+    " ------------------------------------------------------------
     let keyboards = s:vimim_sentence_match_directory(keyboard, im)
     " ------------------------------------------------------------
     if empty(keyboards)
         let msg = "sell keyboard as is for directory database"
         return []
     else
-        if s:pinyin_and_4corner == 2
+        if s:pinyin_and_4corner > 0
             let filter = get(keyboards, 1)
             if filter =~ '^\d\+$' && filter > 0
             \&& len(s:menu_4corner_as_filter) < 1
                 let s:menu_4corner_as_filter = -filter
             endif
         endif
-        " -----------------------------------------------
         let keyboard = get(keyboards, 0)
         let results = s:vimim_get_data_from_directory(keyboard, im)
     endif
@@ -4035,7 +4119,7 @@ endfunction
 
 " ------------------------------------------------------
 function! s:vimim_sentence_match_directory(keyboard, im)
-" ------------------------------------------------------ todo
+" ------------------------------------------------------
     let im = a:im
     let keyboard = a:keyboard
     let dir = s:vimim_get_data_directory(im)
@@ -4048,21 +4132,14 @@ function! s:vimim_sentence_match_directory(keyboard, im)
             return [keyboard]
         endif
     endif
-    " ----------------------------------------
-    let blocks = s:vimim_static_break_every_four(keyboard, im)
+    " --------------------------------------------------
+    let blocks = s:vimim_get_sentence_block(keyboard, im)
     if empty(blocks)
-        let msg = "continue when no fancy 4-char-block"
+        let msg = "continue when no 4-char-block nor digit "
     else
         return blocks
     endif
-    " -------------------------------------------
-    let pinyin_4corner_pattern = '\d\+\l\='
-    let digit = match(keyboard, pinyin_4corner_pattern)
-    if digit > 0
-        let blocks = s:vimim_break_string_at(keyboard, digit)
-        return blocks
-    endif
-    " -------------------------------------------
+    " --------------------------------------------------
     let head = s:vimim_get_hjkl_h_head(head)
     let max = s:vimim_get_hjkl_h_pinyin(head)
     while max > 1
@@ -4075,7 +4152,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
             continue
         endif
     endwhile
-    " -------------------------------------------
+    " --------------------------------------------------
     if max > 0 && filereadable(filename)
         let blocks = s:vimim_break_string_at(keyboard, max)
     endif
@@ -4261,6 +4338,10 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_sentence_match_sqlite(keyboard)
 " -----------------------------------------------
+    if len(s:sqlite_executable) < len("sqlite3")
+    \|| empty(s:sqlite)
+        return []
+    endif
     let keyboard = a:keyboard
     let results = []
     let sql = s:vimim_get_cedict_sqlite_query(keyboard)
@@ -5528,21 +5609,19 @@ else
         endif
     endif
 
-    " [sqlite] uses standard unihan cedict database
-    " ---------------------------------------------
-    if len(s:sqlite_executable) > 5 && !empty(s:sqlite)
-        let results2 = s:vimim_sentence_match_sqlite(keyboard)
-        if empty(results2)
-            let msg = "nothing found from sqlite database"
-        else
-            let results = s:vimim_pair_list(results2)
-            return s:vimim_popupmenu_list(results)
-        endif
+    " ------------------------------------------------
+    " [backend] VimIM internal embedded backend engine
+    " ------------------------------------------------
+    if len(s:path2) > 1
+        let msg = "[directory] as VimIM embedded backend"
+        let results = s:vimim_get_sentence_directory(keyboard)
+    elseif len(s:lines) > 1
+        let msg = "[datafile] as VimIM embedded backend"
+        let results = s:vimim_get_sentence_datafile(keyboard)
+    elseif len(s:sqlite) > 1
+        let msg = "[sqlite] unihan cedict database as VimIM embedded backend"
+        let results = s:vimim_sentence_match_sqlite(keyboard)
     endif
-
-    " [directory] directory database is natural to vim editor
-    " -------------------------------------------------------
-    let results = s:vimim_get_sentence_directory(keyboard)
     if len(results) > 0
         let results = s:vimim_pair_list(results)
         if empty(results)
@@ -5551,53 +5630,6 @@ else
             let results = s:vimim_popupmenu_list(results)
         endif
         return results
-    endif
-
-    " [wildcard search] play with magic star
-    " --------------------------------------
-    if s:vimim_wildcard_search > 0
-        let results = s:vimim_wildcard_search(keyboard, s:lines)
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " [datafile] datafile is used as another backend
-    " ----------------------------------------------
-    let pattern = '^' . keyboard
-    let match_start = match(s:lines, pattern)
-
-    " sentence match for datafile only
-    " --------------------------------
-    if match_start < 0 && empty(clouds)
-        let keyboards = s:vimim_sentence_match_file(s:lines, keyboard)
-        if empty(keyboards)
-            let msg = "sell the keyboard as is, without modification"
-        else
-            let keyboard = get(keyboards, 0)
-            if s:pumvisible_hjkl_g > 0
-                let s:keyboard_head = keyboard
-            endif
-            let pattern = "^" . keyboard
-            let match_start = match(s:lines, pattern)
-        endif
-    endif
-
-    if match_start < 0
-        let msg = "fuzzy search could be done here, if needed"
-    else
-        if s:vimim_datafile_has_apostrophe > 0
-            let results = s:vimim_fixed_match(s:lines, keyboard, 1)
-        elseif get(s:im['pinyin'],0) > 0
-            let results = s:vimim_pinyin(s:lines, keyboard, match_start)
-        else
-            let results = s:vimim_fixed_match(s:lines, keyboard, 4)
-        endif
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
-        endif
     endif
 
     " [cloud] last try cloud before giving up
@@ -5611,16 +5643,14 @@ else
 
     " [seamless] support seamless English input
     " -----------------------------------------
-    if match_start < 0
-        let s:pattern_not_found += 1
-        let results = []
-        if empty(s:chinese_input_mode)
-            let results = [keyboard ." ". keyboard]
-        else
-            call <SID>vimim_set_seamless()
-        endif
-        return s:vimim_popupmenu_list(results)
+    let s:pattern_not_found += 1
+    let results = []
+    if empty(s:chinese_input_mode)
+        let results = [keyboard ." ". keyboard]
+    else
+        call <SID>vimim_set_seamless()
     endif
+    return s:vimim_popupmenu_list(results)
 
 endif
 endfunction
