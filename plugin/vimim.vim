@@ -157,6 +157,8 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:datafile = 0
     let s:lines = []
+    let s:datafile_4corner = 0
+    let s:datafile_4corner_cache = {}
     " --------------------------------
     let s:im = {}
     let s:input_method = 0
@@ -3618,6 +3620,14 @@ function! s:vimim_scan_plugin_file()
     " ----------------------------------------
     let s:datafile = datafile
     let s:input_method = im
+    " ----------------------------------------
+    if im =~# '^pinyin'
+        let file = "vimim.4corner.txt"
+        if filereadable(datafile)
+            let s:datafile_4corner = file
+        endif
+    endif
+    " ----------------------------------------
 endfunction
 
 " ------------------------------------------------
@@ -3768,12 +3778,60 @@ function! s:vimim_load_datafile()
     if len(s:path2) > 1
         return
     endif
+    " ---------------------------
     if empty(s:lines)
-    \&& !empty(s:datafile)
+    \&& len(s:datafile) > 1
     \&& filereadable(s:datafile)
         let s:lines = readfile(s:datafile)
     endif
+    " ---------------------------
+    if s:input_method = 'pinyin'
+    \&& len(s:datafile) > 1
+    \&& len(s:datafile_4corner) > 1
+        let s:digit_lines = readfile(s:datafile_4corner)
+        let digit = match(s:digit_lines, '^\d\+')
+        call extend(s:lines, s:digit_lines[digit :])
+        let unihan_list = s:digit_lines[: digit-1]
+        for unihan in unihan_list
+            let pairs = split(unihan)  |" u808f 8022
+            let key = get(pairs, 0)
+            let value = get(pairs, 1)
+            let s:datafile_4corner_cache[key] = value
+        endfor
+    endif
+    " ---------------------------
 endfunction
+
+" -------------------------------
+function! s:vimim_load_datafile()
+" -------------------------------
+    if len(s:path2) > 1
+        return
+    endif
+    if empty(s:lines)
+    \&& len(s:datafile) > 1
+    \&& filereadable(s:datafile)
+        let s:lines = readfile(s:datafile)
+    endif
+    if s:input_method = 'pinyin'
+    \&& len(s:datafile) > 1
+    \&& len(s:datafile_4corner) > 1
+        let s:digit_lines = readfile(s:datafile_4corner)
+        let digit = match(s:digit_lines, '^\d\+')
+        call extend(s:lines, s:digit_lines[digit :])
+        let unihan_list = s:digit_lines[: digit-1]
+        for unihan in unihan_list
+            let pairs = split(unihan)  |" u808f 8022
+            let key = get(pairs, 0)
+            let value = get(pairs, 1)
+            let s:datafile_4corner_cache[key] = value
+        endfor
+    endif
+endfunction
+
+
+
+
 
 " ======================================= }}}
 let VimIM = " ====  Backend==DIR     ==== {{{"
