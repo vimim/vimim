@@ -1346,7 +1346,7 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
         elseif a:key == 'g'
-            let s:pumvisible_hjkl_g = 1
+            let s:pumvisible_hjkl_bs = 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'f'
             call s:reset_popupmenu_list()
@@ -1721,22 +1721,17 @@ function! g:vimim_pumvisible_ctrl_e_on()
     return g:vimim_pumvisible_ctrl_e()
 endfunction
 
-" -------------------------------------
-function! <SID>vimim_ctrl_x_ctrl_u_bs()
-" -------------------------------------
+" --------------------------------------------
+function! <SID>vimim_ctrl_x_ctrl_u_backspace()
+" --------------------------------------------
     call s:reset_popupmenu_list()
     let s:pattern_not_found = 0
     let key = '\<BS>'
     " ---------------------------------
     if s:pumvisible_ctrl_e > 0
-    \&& s:chinese_input_mode =~ 'dynamic'
         let s:pumvisible_ctrl_e = 0
         let key .= '\<C-R>=g:vimim()\<CR>'
         sil!exe 'sil!return "' . key . '"'
-    endif
-    " ---------------------------------
-    if empty(s:chinese_input_mode)
-        call s:vimim_stop()
     endif
     " ---------------------------------
     sil!exe 'sil!return "' . key . '"'
@@ -3762,7 +3757,7 @@ function! s:vimim_get_sentence_datafile(keyboard)
                 endif
             endif
             let keyboard = get(keyboards, 0)
-            if s:pumvisible_hjkl_g > 0
+            if s:pumvisible_hjkl_bs > 0
                 let s:keyboard_head = keyboard
             endif
             let pattern = "^" . keyboard
@@ -4065,7 +4060,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     let filename = dir . '/' . keyboard
     let head = keyboard
     if filereadable(filename)
-        if s:pumvisible_hjkl_g > 0
+        if s:pumvisible_hjkl_bs > 0
             let s:keyboard_head = keyboard
         else
             return [keyboard]
@@ -4126,8 +4121,8 @@ function! s:vimim_get_hjkl_g_head(keyboard)
     let keyboard = a:keyboard
     let head = s:keyboard_head
     if !empty(head)
-        if s:pumvisible_hjkl_g > 0
-            let s:pumvisible_hjkl_g = 0
+        if s:pumvisible_hjkl_bs > 0
+            let s:pumvisible_hjkl_bs = 0
             let length = len(head)-1
             let keyboard = strpart(head, 0, length)
         endif
@@ -5217,7 +5212,7 @@ endfunction
 function! s:reset_popupmenu_list()
 " --------------------------------
     let s:menu_4corner_as_filter = ""
-    let s:pumvisible_hjkl_g = 0
+    let s:pumvisible_hjkl_bs = 0
     let s:popupmenu_list = []
     let s:keyboard_head = 0
 endfunction
@@ -5274,7 +5269,7 @@ function! s:vimim_helper_mapping_on()
                   \<C-R>=<SID>vimim_smart_enter()<CR>
     " ----------------------------------------------------------
     inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
-                  \<C-R>=<SID>vimim_ctrl_x_ctrl_u_bs()<CR>
+                  \<C-R>=<SID>vimim_ctrl_x_ctrl_u_backspace()<CR>
     " ----------------------------------------------------------
 endfunction
 
