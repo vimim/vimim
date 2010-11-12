@@ -42,13 +42,12 @@ let VimIM = " ====  Vim Input Method ==== {{{"
 "            VimIM aims to complete the Vim as the greatest editor.
 " -----------------------------------------------------------
 "  Features: * "Plug & Play": as a client to "myCloud" and "Cloud"
-"            * "Plug & Play": as a client to VimIM backend engine
+"            * "Plug & Play": as a client to VimIM embedded backends
 "            * support internal code input: "UNICODE", "GBK", "Big5"
 "            * support "pinyin" including 6 "shuangpin"
-"            * support "4Corner" standalone or as a filter to "pinyin"
+"            * support "4Corner" standalone or as a dynamic filter
 "            * Support "wubi", "boshiamy", "Cang Jie", "Erbi", etc
 "            * Support "Chinese search" using search key '/' or '?'
-"            * Support popup menu navigation using "hjkl"
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
@@ -80,7 +79,7 @@ call add(s:vimims, VimIM)
 "   - [dynamic_mode] show omni popup menu as one types
 "   - [static_mode]  <Space>=>Chinese  <Enter>=>English
 "   - [onekey_mode] plays well with hjkl
-"   The default key is <Ctrl-Bslash> (Vim Insert Mode)
+"   No key is needed when editing *.vimim files.
 
 " -----------------------
 " "VimIM Back End Engine"
@@ -1752,19 +1751,8 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_pair_list(matched_list)
 " ---------------------------------------
-    let matched_list = a:matched_list
-    if empty(matched_list)
-        return []
-    endif
-    " -----------------------------------
     let pair_matched_list = []
-    let maximum_list = 288
-    if len(matched_list) > maximum_list
-        let matched_list = matched_list[0 : maximum_list]
-    endif
-    " ----------------------
-    for line in matched_list
-    " ----------------------
+    for line in a:matched_list
         if len(line) < 2
             continue
         endif
@@ -2541,8 +2529,7 @@ function! s:vimim_digit_filter(chinese)
     endif
     let position = -1
     let filter = s:menu_4corner_as_filter
-    let im = '4corner'
-    call s:vimim_build_unihan_reverse_cache(chinese, im)
+    call s:vimim_build_unihan_reverse_cache(chinese, '4corner')
     let number = s:vimim_get_4corner(chinese, filter)
     if filter < 0
         let filter = filter * (-1)
@@ -2559,9 +2546,8 @@ endfunction
 function! s:vimim_get_4corner(chinese, position)
 " ----------------------------------------------
 " Smart Digit Filter:  马力 7712 4002
-" (1) ma<C-6>     马    => filtering with 7712
-" (2) mali<C-6>   马力  => filtering with 7 4002
-" (3) mali4<C-6>  马力  => filtering with 7 4002
+"   (1) ma<C-6>        马   => filter with 7712
+"   (2) mali<C-6>      马力 => filter with 7 4002
 " -------------------------------------------
     let head = ''
     let tail = ''
@@ -2582,8 +2568,8 @@ function! s:vimim_get_4corner(chinese, position)
             let tail = four_corner[1:]
         endif
     endfor
-    let number = head . tail
-    return number
+    let expected_filtering_number = head . tail
+    return expected_filtering_number
 endfunction
 
 " ======================================= }}}
@@ -3246,24 +3232,6 @@ function! s:vimim_localization()
     return localization
 endfunction
 
-" -------------------------------------
-function! s:vimim_i18n_read_list(lines)
-" -------------------------------------
-    if empty(a:lines)
-        return []
-    endif
-    let results = []
-    if empty(s:localization)
-        return a:lines
-    else
-        for line in a:lines
-            let line = s:vimim_i18n_read(line)
-            call add(results, line)
-        endfor
-    endif
-    return results
-endfunction
-
 " -------------------------------
 function! s:vimim_i18n_read(line)
 " -------------------------------
@@ -3272,18 +3240,6 @@ function! s:vimim_i18n_read(line)
         let line = iconv(line, "chinese", "utf-8")
     elseif s:localization == 2
         let line = iconv(line, "utf-8", &enc)
-    endif
-    return line
-endfunction
-
-" --------------------------------
-function! s:vimim_i18n_iconv(line)
-" --------------------------------
-    let line = a:line
-    if s:localization == 1
-        let line = iconv(line, "utf-8", &enc)
-    elseif s:localization == 2
-        let line = iconv(line, &enc, "utf-8")
     endif
     return line
 endfunction
@@ -4018,9 +3974,6 @@ function! s:vimim_get_data_from_directory(keyboard, im)
         let lines = readfile(filename)
         for line in lines
             for chinese in split(line)
-                if s:localization > 0
-                    let chinese = s:vimim_i18n_read(chinese)
-                endif
                 let menu = a:keyboard . " " . chinese
                 call add(results, menu)
             endfor
