@@ -1355,7 +1355,7 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
         elseif a:key == 'g'
-            let s:pumvisible_hjkl_short_match = 1
+            let s:pumvisible_hjkl_2nd_match = 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'f'
             call s:reset_popupmenu_list()
@@ -2511,12 +2511,10 @@ function! <SID>vimim_label_1234567890_filter(n)
             let label = match(label_alpha, a:n)
         endif
         if s:menu_4corner_as_filter < 0
-            let s:menu_4corner_as_filter = ""
-        endif
-        if len(s:menu_4corner_as_filter) > 0
-            let s:menu_4corner_as_filter .= label
-        else
+        \|| len(s:menu_4corner_as_filter) < 1
             let s:menu_4corner_as_filter = label
+        else
+            let s:menu_4corner_as_filter .= label
         endif
         let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
     endif
@@ -2531,13 +2529,9 @@ function! s:vimim_digit_filter(chinese)
         return chinese
     endif
     let position = -1
-    let filter = s:menu_4corner_as_filter
     call s:vimim_build_unihan_reverse_cache(chinese, '4corner')
-    let number = s:vimim_get_4corner(chinese, filter)
-    if filter < 0
-        let filter = filter * (-1)
-    endif
-    let patter = "^" . filter
+    let number = s:vimim_get_4corner(chinese)
+    let patter = "^" . substitute(s:menu_4corner_as_filter,'\D','','g')
     let matched = match(number, patter)
     if matched < 0
         let chinese = 0
@@ -2545,17 +2539,18 @@ function! s:vimim_digit_filter(chinese)
     return chinese
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_get_4corner(chinese, position)
-" ----------------------------------------------
+" ------------------------------------
+function! s:vimim_get_4corner(chinese)
+" ------------------------------------
 " Smart Digit Filter:  马力 7712 4002
 "   (1) ma<C-6>        马   => filter with 7712
 "   (2) mali<C-6>      马力 => filter with 7 4002
+"   (2) mali4<C-6>     马力 => 4 for last char then filter with 7 4002
 " -------------------------------------------
     let head = ""
     let tail = ""
     let words = split(a:chinese, '\zs')
-    if a:position < 0
+    if s:menu_4corner_as_filter < 0
         let words = copy(words[-1:-1])
     endif
     for chinese in words
@@ -3766,7 +3761,7 @@ function! s:vimim_get_sentence_datafile(keyboard)
                 endif
             endif
             let keyboard = get(keyboards, 0)
-            if s:pumvisible_hjkl_short_match > 0
+            if s:pumvisible_hjkl_2nd_match > 0
                 let s:keyboard_head = keyboard
             endif
             let pattern = "^" . keyboard
@@ -3798,13 +3793,10 @@ function! s:vimim_get_sentence_block(keyboard, im)
     let im = a:im
     " --------------------------------------------
     let blocks = s:vimim_static_break_every_four(keyboard, im)
-    if empty(blocks)
-        return []
-    else
+    if len(blocks) > 0
         return blocks
     endif
     " --------------------------------------------
-    let blocks = []
     if s:pinyin_and_4corner > 0
         let pinyin_4corner_pattern = '\d\+\l\='
         let digit = match(keyboard, pinyin_4corner_pattern)
@@ -4069,7 +4061,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     let filename = dir . '/' . keyboard
     let head = keyboard
     if filereadable(filename)
-        if s:pumvisible_hjkl_short_match > 0
+        if s:pumvisible_hjkl_2nd_match > 0
             let s:keyboard_head = keyboard
         else
             return [keyboard]
@@ -4130,8 +4122,8 @@ function! s:vimim_get_hjkl_g_head(keyboard)
     let keyboard = a:keyboard
     let head = s:keyboard_head
     if !empty(head)
-        if s:pumvisible_hjkl_short_match > 0
-            let s:pumvisible_hjkl_short_match = 0
+        if s:pumvisible_hjkl_2nd_match > 0
+            let s:pumvisible_hjkl_2nd_match = 0
             let length = len(head)-1
             let keyboard = strpart(head, 0, length)
         endif
@@ -5221,7 +5213,7 @@ endfunction
 function! s:reset_popupmenu_list()
 " --------------------------------
     let s:menu_4corner_as_filter = ""
-    let s:pumvisible_hjkl_short_match = 0
+    let s:pumvisible_hjkl_2nd_match = 0
     let s:popupmenu_list = []
     let s:keyboard_head = 0
 endfunction
