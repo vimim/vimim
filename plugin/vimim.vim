@@ -260,7 +260,7 @@ function! s:vimim_finalize_session()
     endif
     " ------------------------------
     if s:pinyin_and_4corner > 0
-        let s:abcd = "'abcdsxz"
+        let s:abcd = "'abcdfgz"
         let s:pqwertyuio = split('pqwertyuio', '\zs')
     endif
     " ------------------------------
@@ -819,7 +819,7 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_label_navigation_on()
     sil!call s:vimim_capital_navigation_on()
     sil!call s:vimim_1234567890_filter_on()
-    sil!call s:vimim_abcdefg_label_on()
+    sil!call s:vimim_abcd_label_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
     " ----------------------------------------------------------
@@ -1286,9 +1286,9 @@ function! <SID>vimim_12345678_label(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
-" ----------------------------------
-function! s:vimim_abcdefg_label_on()
-" ----------------------------------
+" -------------------------------
+function! s:vimim_abcd_label_on()
+" -------------------------------
     if s:vimim_custom_menu_label < 1
         return
     endif
@@ -1326,7 +1326,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_label_navigation_on()
 " -------------------------------------
-    let hjkl = 'hjklmnvfg'
+    let hjkl = 'hjklmnsxv'
     let hjkl_list = split(hjkl, '\zs')
     " ---------------------------------
     if empty(s:pinyin_and_4corner)
@@ -1354,20 +1354,20 @@ function! <SID>vimim_hjkl(key)
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
-        elseif a:key == 'g'
-            let s:pumvisible_hjkl_2nd_match = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'f'
-            call s:reset_popupmenu_list()
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
             let hjkl  = '\<Down>\<Down>\<Down>'
         elseif a:key == 'm'
             let hjkl  = '\<C-Y>'
             let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
-        elseif a:key == 'v'
+        elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_copy_to_clip()\<CR>'
+        elseif a:key == 'x'
+            call s:reset_popupmenu_list()
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == 'v'
+            let s:pumvisible_hjkl_2nd_match = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'p'
             let hjkl  = <SID>TabKey()
         endif
@@ -1739,8 +1739,15 @@ function! <SID>vimim_ctrl_x_ctrl_u_backspace()
     " ---------------------------------
     if s:pumvisible_ctrl_e > 0
         let s:pumvisible_ctrl_e = 0
-        let key .= '\<C-R>=g:vimim()\<CR>'
-        sil!exe 'sil!return "' . key . '"'
+        if s:chinese_input_mode =~ 'dynamic'
+        \|| s:chinese_input_mode =~ 'onekey'
+            let key .= '\<C-R>=g:vimim()\<CR>'
+            sil!exe 'sil!return "' . key . '"'
+        endif
+    endif
+    " ---------------------------------
+    if empty(s:chinese_input_mode)
+        call s:vimim_stop()
     endif
     " ---------------------------------
     sil!exe 'sil!return "' . key . '"'
