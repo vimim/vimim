@@ -167,10 +167,9 @@ function! s:vimim_initialize_session()
     let s:input_method = 0
     " --------------------------------
     let s:data_directory_4corner = 0
-    let s:data_directory_pinyin = 0
+    let s:data_directory = 0
     " --------------------------------
     let s:wubi_cache = {}
-    let s:data_directory_wubi = 0
     " --------------------------------
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
@@ -2589,7 +2588,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_pinyin()
 " -----------------------------------
     if empty(get(s:im['pinyin'],0))
-        if len(s:data_directory_pinyin) > 1
+        if len(s:data_directory) > 1
             let s:im['pinyin'][0] = 1
         else
             return
@@ -3939,19 +3938,18 @@ function! s:vimim_scan_plugin_directory()
         if empty(dir)
             continue
         elseif directory =~# '^pinyin'
-            let s:data_directory_pinyin = dir
+            let s:data_directory = dir
             let s:input_method = 'pinyin'
             let s:im['pinyin'][0] = 1
         elseif directory =~# '^\d'
             let s:data_directory_4corner = dir
             let s:im['4corner'][0] = 1
-        elseif directory =~# '^wubi'
-            let s:data_directory_wubi = dir
         endif
     endfor
     " -----------------------------------
     if len(s:data_directory_4corner) > 1
-        if len(s:data_directory_pinyin) > 1
+        if len(s:data_directory) > 1
+        \&& s:input_method == 'pinyin'
             let s:pinyin_and_4corner = 2
         else
             let s:only_4corner_or_12345 = 1
