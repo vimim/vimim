@@ -3105,15 +3105,6 @@ function! s:vimim_wubi(keyboard)
     let keyboard = a:keyboard
     let results = []
     " ----------------------------
-    if s:vimim_wildcard_search > 0
-    \&& empty(wubi_cache)
-    \&& s:chinese_input_mode !~ 'dynamic'
-        let results = s:vimim_wubi_z_as_wildcard(keyboard)
-        if len(results) > 0
-            return results
-        endif
-    endif
-    " ----------------------------
     " support wubi non-stop typing
     " ----------------------------
     if s:chinese_input_mode =~ 'dynamic'
@@ -3129,7 +3120,7 @@ function! s:vimim_wubi(keyboard)
     elseif s:vimim_wildcard_search > 0
         let results = s:vimim_fixed_match(s:lines, keyboard, 3)
     else
-        let results = s:vimim_get_from_datafile_cache(keyboard, s:wubi_cache)
+        let results = s:vimim_get_data_from_cache(s:wubi_cache, keyboard)
     endif
     " ----------------------------
     if s:chinese_input_mode =~ 'dynamic' && empty(results)
@@ -3138,23 +3129,9 @@ function! s:vimim_wubi(keyboard)
     return results
 endfunction
 
-" --------------------------------------
-function! s:vimim_build_datafile_cache()
-" --------------------------------------
-    if len(s:lines) < 1
-        return {}
-    endif
-    let cache = {}
-    for line in s:lines
-        let key = get(split(line), 0)
-        let cache[key] = line
-    endfor
-    return cache
-endfunction
-
-" --------------------------------------------------------
-function! s:vimim_get_from_datafile_cache(keyboard, cache)
-" --------------------------------------------------------
+" ----------------------------------------------------
+function! s:vimim_get_data_from_cache(cache, keyboard)
+" ----------------------------------------------------
     let keyboard = a:keyboard
     let cache = a:cache
     if empty(cache)
@@ -3166,22 +3143,6 @@ function! s:vimim_get_from_datafile_cache(keyboard, cache)
         let results = [line]
     endif
     return results
-endfunction
-
-" --------------------------------------------
-function! s:vimim_wubi_z_as_wildcard(keyboard)
-" --------------------------------------------
-    let keyboard = a:keyboard
-    if match(keyboard, 'z') < 1
-        return []
-    endif
-    let lines = copy(s:lines)
-    if a:keyboard[:1] != 'zz'
-        let keyboard = substitute(a:keyboard,'z','.','g')
-    endif
-    let pattern = '^' . keyboard . '\>'
-    call filter(lines, 'v:val =~ pattern')
-    return lines
 endfunction
 
 " ======================================= }}}
@@ -3639,7 +3600,21 @@ function! s:vimim_scan_plugin_file()
     " ----------------------------------------
 endfunction
 
-" ------------------------------------------------
+" --------------------------------------
+function! s:vimim_build_datafile_cache()
+" -------------------------------------- todo
+    if len(s:lines) < 1
+        return {}
+    endif
+    let cache = {}
+    for line in s:lines
+        let key = get(split(line), 0)
+        let cache[key] = line
+    endfor
+    return cache
+endfunction
+
+" ------------------------------------------------ todo
 function! s:vimim_wildcard_search(keyboard, lines)
 " ------------------------------------------------
     if s:chinese_input_mode =~ 'dynamic'
