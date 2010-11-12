@@ -4932,7 +4932,7 @@ function! s:vimim_initialize_debug()
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
     let s:vimim_embedded_backend = 0
-    let s:vimim_static_input_style = 2
+    let s:vimim_static_input_style = 0
     let dir = "/vimim"
     if isdirectory(dir)
         let s:path2 = dir
@@ -4944,15 +4944,10 @@ function! s:vimim_initialize_debug()
         return
     elseif filereadable(dir)
         let s:path2 = 0
-        return
-    endif
-    " ------------------------------
-    let sqlite = s:path . "sqlite"
-    if empty(s:path2)
-        return
-    elseif filereadable(sqlite)
-        let s:vimim_sqlite_cedict = '/usr/local/share/cjklib/cedict.db'
-        let s:path2 = 0
+        let sqlite = s:path . "sqlite"
+        if filereadable(sqlite)
+            let s:vimim_sqlite_cedict = '/usr/local/share/cjklib/cedict.db'
+        endif
     endif
     " ------------------------------
     let s:vimim_debug = 9
@@ -5130,8 +5125,8 @@ endfunction
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
-    set completefunc = VimIM
-    set completeopt = menuone
+    set completefunc=VimIM
+    set completeopt=menuone
     set nolazyredraw
     if empty(&pumheight)
         let &pumheight=8
