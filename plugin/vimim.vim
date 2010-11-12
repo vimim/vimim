@@ -130,6 +130,7 @@ function! s:vimim_initialization_once()
     call s:vimim_scan_plugin_file()
     call s:vimim_scan_plugin_directory()
     " ---------------------------------------
+    call s:vimim_initialize_wubi()
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_pinyin()
     call s:vimim_initialize_shuangpin()
@@ -143,7 +144,7 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_quantifiers()
     call s:vimim_finalize_session()
     " ---------------------------------------
-    call s:vimim_load_datafile()
+    call s:vimim_datafile_load()
     " ---------------------------------------
 endfunction
 
@@ -167,6 +168,8 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:data_directory_4corner = 0
     let s:data_directory_pinyin = 0
+    " --------------------------------
+    let s:wubi_cache = {}
     let s:data_directory_wubi = 0
     " --------------------------------
     let s:only_4corner_or_12345 = 0
@@ -3085,6 +3088,18 @@ let VimIM = " ====  Input_Wubi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" ---------------------------------
+function! s:vimim_initialize_wubi()
+" ---------------------------------
+    if empty(get(s:im['wubi'],0))
+        return
+    endif
+    let s:vimim_punctuation_navigation = -1
+    if s:vimim_wildcard_search > 0
+        let s:wubi_cache = s:vimim_build_datafile_cache()
+    endif
+endfunction
+
 " ------------------------------
 function! s:vimim_wubi(keyboard)
 " ------------------------------
@@ -3092,7 +3107,7 @@ function! s:vimim_wubi(keyboard)
     let results = []
     " ----------------------------
     if s:vimim_wildcard_search > 0
-    \&& len(keyboard) > 2
+    \&& empty(wubi_cache)
     \&& s:chinese_input_mode !~ 'dynamic'
         let results = s:vimim_wubi_z_as_wildcard(keyboard)
         if len(results) > 0
@@ -3112,11 +3127,44 @@ function! s:vimim_wubi(keyboard)
     " ----------------------------
     if s:vimim_embedded_backend == "directory"
         let results = s:vimim_get_data_from_directory(keyboard, 'wubi')
-    else
+    elseif s:vimim_wildcard_search > 0
         let results = s:vimim_fixed_match(s:lines, keyboard, 3)
+    else
+        let results = s:vimim_get_from_datafile_cache(keyboard, s:wubi_cache)
+    endif
     " ----------------------------
     if s:chinese_input_mode =~ 'dynamic' && empty(results)
         let s:keyboard_leading_zero = ""
+    endif
+    return results
+endfunction
+
+" --------------------------------------
+function! s:vimim_build_datafile_cache()
+" --------------------------------------
+    if len(s:lines) < 1
+        return {}
+    endif
+    let cache = {}
+    for line in s:lines
+        let key = get(split(line), 0)
+        let cache[key] = line
+    endfor
+    return cache
+endfunction
+
+" --------------------------------------------------------
+function! s:vimim_get_from_datafile_cache(keyboard, cache)
+" --------------------------------------------------------
+    let keyboard = a:keyboard
+    let cache = a:cache
+    if empty(cache)
+        return []
+    endif
+    let results = []
+    if has_key(cache, keyboard)
+        let line = cache[keyboard]
+        let results = [line]
     endif
     return results
 endfunction
@@ -3815,7 +3863,7 @@ function! s:vimim_get_sentence_block(keyboard, im)
 endfunction
 
 " -------------------------------
-function! s:vimim_load_datafile()
+function! s:vimim_datafile_load()
 " -------------------------------
     if s:vimim_embedded_backend == "directory"
         return
