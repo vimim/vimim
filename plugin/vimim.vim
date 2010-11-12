@@ -123,7 +123,7 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_session()
     call s:vimim_initialize_encoding()
-    call s:vimim_dictionary_chinese()
+    call s:vimim_chinese_dictionary()
     call s:vimim_build_im_keycode()
     " ---------------------------------------
     call s:vimim_get_datafile_in_vimrc()
@@ -281,7 +281,7 @@ function! s:vimim_get_chinese(english)
 endfunction
 
 " ------------------------------------
-function! s:vimim_dictionary_chinese()
+function! s:vimim_chinese_dictionary()
 " ------------------------------------
     let s:space = "　"
     let s:chinese = {}
@@ -1097,7 +1097,7 @@ function! s:vimim_static_alphabet_auto_select()
     for char in s:Az_list
         sil!exe 'inoremap <silent> ' . char . '
         \ <C-R>=g:vimim_pumvisible_ctrl_y()<CR>'. char .
-        \'<C-R>=g:reset_after_auto_insert()<CR>'
+        \'<C-R>=g:vimim_reset_after_auto_insert()<CR>'
     endfor
 endfunction
 
@@ -1479,13 +1479,13 @@ function! g:vimim()
     if byte_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
         if s:chinese_input_mode =~ 'dynamic'
-            call g:reset_after_auto_insert()
+            call g:vimim_reset_after_auto_insert()
         endif
         if empty(s:vimim_fancy_input_style)
             let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
         endif
     else
-        call g:reset_after_auto_insert()
+        call g:vimim_reset_after_auto_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2039,7 +2039,7 @@ function! <SID>vimim_punctuation_on()
     for _ in keys(s:punctuations)
         sil!exe 'inoremap <silent> '._.'
         \    <C-R>=<SID>vimim_punctuation_mapping("'._.'")<CR>'
-        \ . '<C-R>=g:reset_after_auto_insert()<CR>'
+        \ . '<C-R>=g:vimim_reset_after_auto_insert()<CR>'
     endfor
     " --------------------------------------
     call s:vimim_punctuation_navigation_on()
@@ -3709,8 +3709,8 @@ function! s:vimim_sentence_match_file(lines, keyboard)
     endif
     " --------------------------------------------------
     let match_start = -1
-    let head = s:vimim_get_hjkl_h_head(keyboard)
-    let max = s:vimim_get_hjkl_h_pinyin(head) + 1
+    let head = s:vimim_get_hjkl_g_head(keyboard)
+    let max = s:vimim_get_hjkl_g_pinyin(head) + 1
     " word matching algorithm for Chinese segmentation
     " ------------------------------------------------
     while max > 1
@@ -4080,8 +4080,8 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         return blocks
     endif
     " --------------------------------------------------
-    let head = s:vimim_get_hjkl_h_head(head)
-    let max = s:vimim_get_hjkl_h_pinyin(head)
+    let head = s:vimim_get_hjkl_g_head(head)
+    let max = s:vimim_get_hjkl_g_pinyin(head)
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
@@ -4100,7 +4100,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
 endfunction
 
 " -------------------------------------------
-function! s:vimim_get_hjkl_h_pinyin(keyboard)
+function! s:vimim_get_hjkl_g_pinyin(keyboard)
 " -------------------------------------------
     let keyboard = a:keyboard
     let max = len(keyboard)
@@ -4122,7 +4122,7 @@ function! s:vimim_get_hjkl_h_pinyin(keyboard)
 endfunction
 
 " -----------------------------------------
-function! s:vimim_get_hjkl_h_head(keyboard)
+function! s:vimim_get_hjkl_g_head(keyboard)
 " -----------------------------------------
     let keyboard = a:keyboard
     let head = s:keyboard_head
@@ -5027,10 +5027,10 @@ let VimIM = " ====  Plugin_Conflict  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------
-function!  s:vimim_getsid(scriptname)
-" -----------------------------------
-" frederick.zou fixes these conflicting plugins:
+" ----------------------------------
+function! s:vimim_getsid(scriptname)
+" ----------------------------------
+" frederick.zou fixed these conflicting plugins:
 " supertab      http://www.vim.org/scripts/script.php?script_id=1643
 " autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
 " word_complete http://www.vim.org/scripts/script.php?script_id=73
@@ -5175,7 +5175,7 @@ endfunction
 function! s:vimim_super_reset()
 " -----------------------------
     sil!call s:reset_before_anything()
-    sil!call g:reset_after_auto_insert()
+    sil!call g:vimim_reset_after_auto_insert()
     sil!call s:vimim_reset_before_stop()
 endfunction
 
@@ -5229,9 +5229,9 @@ function! s:reset_popupmenu_list()
     let s:keyboard_head = 0
 endfunction
 
-" -----------------------------------
-function! g:reset_after_auto_insert()
-" -----------------------------------
+" -----------------------------------------
+function! g:vimim_reset_after_auto_insert()
+" -----------------------------------------
     let s:keyboard_leading_zero = ''
     let s:keyboard_shuangpin = 0
     let s:one_key_correction = 0
@@ -5245,7 +5245,7 @@ function! g:vimim_reset_after_insert()
         return ''
     endif
     call s:reset_popupmenu_list()
-    call g:reset_after_auto_insert()
+    call g:vimim_reset_after_auto_insert()
     if empty(s:chinese_input_mode)
         call s:vimim_stop()
     endif
