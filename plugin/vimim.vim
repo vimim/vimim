@@ -438,14 +438,6 @@ function! s:vimim_get_keycode()
         return 0
     endif
     let keycode = get(s:im[s:input_method],2)
-    if s:vimim_wildcard_search > 0
-    \&& empty(get(s:im['wubi'],0))
-    \&& len(keycode) > 1
-        let wildcard = '[*]'
-        let key_valid = strpart(keycode, 1, len(keycode)-2)
-        let key_wildcard = strpart(wildcard, 1, len(wildcard)-2)
-        let keycode = '[' . key_valid . key_wildcard . ']'
-    endif
     return keycode
 endfunction
 
@@ -483,7 +475,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_flypy")
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_tab_as_onekey")
-    call add(G, "g:vimim_wildcard_search")
     call add(G, "g:vimim_wget_dll")
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
@@ -1963,9 +1954,7 @@ function! s:vimim_initialize_punctuation()
     let s:punctuations[',']='，'
     let s:punctuations['.']='。'
     let s:punctuations['?']='？'
-    if empty(s:vimim_wildcard_search)
-        let s:punctuations['*']='﹡'
-    endif
+    let s:punctuations['*']='﹡'
     if empty(s:vimim_backslash_close_pinyin)
         let s:punctuations['\']='、'
     endif
@@ -3094,9 +3083,7 @@ function! s:vimim_initialize_wubi()
         return
     endif
     let s:vimim_punctuation_navigation = -1
-    if s:vimim_wildcard_search > 0
-        let s:wubi_cache = s:vimim_build_datafile_cache()
-    endif
+    let s:wubi_cache = s:vimim_build_datafile_cache()
 endfunction
 
 " ------------------------------
@@ -3117,8 +3104,6 @@ function! s:vimim_wubi(keyboard)
     " ----------------------------
     if s:vimim_embedded_backend == "directory"
         let results = s:vimim_get_data_from_directory(keyboard, 'wubi')
-    elseif s:vimim_wildcard_search > 0
-        let results = s:vimim_fixed_match(s:lines, keyboard, 3)
     else
         let results = s:vimim_get_data_from_cache(s:wubi_cache, keyboard)
     endif
@@ -3158,7 +3143,6 @@ function! s:vimim_initialize_erbi()
     endif
     let s:im['wubi'][0] = 1
     let s:vimim_punctuation_navigation = -1
-    let s:vimim_wildcard_search = -1
 endfunction
 
 " ------------------------------------------------
@@ -3614,24 +3598,6 @@ function! s:vimim_build_datafile_cache()
     return cache
 endfunction
 
-" ------------------------------------------------ todo
-function! s:vimim_wildcard_search(keyboard, lines)
-" ------------------------------------------------
-    if s:chinese_input_mode =~ 'dynamic'
-    \|| empty(a:lines)
-        return []
-    endif
-    let results = []
-    let wildcard_pattern = "[*]"
-    let wildcard = match(a:keyboard, wildcard_pattern)
-    if wildcard > 0
-        let star = substitute(a:keyboard,'[*]','.*','g')
-        let wildcard = '^' . star . '\>'
-        let results = filter(a:lines, 'v:val =~ wildcard')
-    endif
-    return results
-endfunction
-
 " ---------------------------------------------------
 function! s:vimim_fixed_match(lines, keyboard, fixed)
 " ---------------------------------------------------
@@ -3764,14 +3730,6 @@ function! s:vimim_get_sentence_datafile(keyboard)
     let keyboard = a:keyboard
     if len(s:lines) < 1
         return []
-    endif
-    " --------------------------------------
-    " [wildcard search] play with magic star
-    if s:vimim_wildcard_search > 0
-        let results = s:vimim_wildcard_search(keyboard, s:lines)
-        if len(results) > 0
-            return s:vimim_pair_list(results)
-        endif
     endif
     " -------------------------------------------
     let results = []
