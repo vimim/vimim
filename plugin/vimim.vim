@@ -201,10 +201,10 @@ function! s:vimim_initialize_session()
     let Z = char2nr('Z')
     let a = char2nr('a')
     let z = char2nr('z')
-    let az_nr_list = range(a,z)
     let Az_nr_list = extend(range(A,Z), range(a,z))
     let s:Az_list = map(Az_nr_list,"nr2char(".'v:val'.")")
-    let s:az_list = map(az_nr_list,"nr2char(".'v:val'.")")
+    let s:az_list = map(range(a,z),"nr2char(".'v:val'.")")
+    let s:AZ_list = map(range(A,Z),"nr2char(".'v:val'.")")
     " --------------------------------
     let s:debugs = []
     let s:debug_count = 0
@@ -816,7 +816,8 @@ endfunction
 function! s:vimim_start_onekey()
 " ------------------------------
     sil!call s:vimim_start()
-    sil!call s:vimim_navigation_label_on()
+    sil!call s:vimim_label_navigation_on()
+    sil!call s:vimim_capital_navigation_on()
     sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_abcdefg_label_on()
     sil!call s:vimim_punctuation_navigation_on()
@@ -1089,15 +1090,13 @@ endfunction
 " ---------------------------------------------
 function! s:vimim_static_alphabet_auto_select()
 " ---------------------------------------------
-    if s:chinese_input_mode !~ 'static'
-        return
+    if s:chinese_input_mode == 'static'
+        for char in s:Az_list
+            sil!exe 'inoremap <silent> ' . char . '
+            \ <C-R>=g:vimim_pumvisible_ctrl_y()<CR>'. char .
+            \'<C-R>=g:vimim_reset_after_auto_insert()<CR>'
+        endfor
     endif
-    " always do alphabet auto selection for static mode
-    for char in s:Az_list
-        sil!exe 'inoremap <silent> ' . char . '
-        \ <C-R>=g:vimim_pumvisible_ctrl_y()<CR>'. char .
-        \'<C-R>=g:vimim_reset_after_auto_insert()<CR>'
-    endfor
 endfunction
 
 " ------------------------------------------
@@ -1314,8 +1313,18 @@ function! <SID>vimim_abcdefg_label(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
+" ---------------------------------------
+function! s:vimim_capital_navigation_on()
+" ---------------------------------------
+    for char in s:AZ_list
+        sil!exe 'inoremap <silent> ' . char . '
+        \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. tolower(char) .
+        \'<C-R>=g:vimim()<CR>'
+    endfor
+endfunction
+
 " -------------------------------------
-function! s:vimim_navigation_label_on()
+function! s:vimim_label_navigation_on()
 " -------------------------------------
     let hjkl = 'hjklmnvfg'
     let hjkl_list = split(hjkl, '\zs')
@@ -1346,7 +1355,7 @@ function! <SID>vimim_hjkl(key)
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
         elseif a:key == 'g'
-            let s:pumvisible_hjkl_bs = 1
+            let s:pumvisible_hjkl_short_match = 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'f'
             call s:reset_popupmenu_list()
@@ -3757,7 +3766,7 @@ function! s:vimim_get_sentence_datafile(keyboard)
                 endif
             endif
             let keyboard = get(keyboards, 0)
-            if s:pumvisible_hjkl_bs > 0
+            if s:pumvisible_hjkl_short_match > 0
                 let s:keyboard_head = keyboard
             endif
             let pattern = "^" . keyboard
@@ -4060,7 +4069,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     let filename = dir . '/' . keyboard
     let head = keyboard
     if filereadable(filename)
-        if s:pumvisible_hjkl_bs > 0
+        if s:pumvisible_hjkl_short_match > 0
             let s:keyboard_head = keyboard
         else
             return [keyboard]
@@ -4121,8 +4130,8 @@ function! s:vimim_get_hjkl_g_head(keyboard)
     let keyboard = a:keyboard
     let head = s:keyboard_head
     if !empty(head)
-        if s:pumvisible_hjkl_bs > 0
-            let s:pumvisible_hjkl_bs = 0
+        if s:pumvisible_hjkl_short_match > 0
+            let s:pumvisible_hjkl_short_match = 0
             let length = len(head)-1
             let keyboard = strpart(head, 0, length)
         endif
@@ -5212,7 +5221,7 @@ endfunction
 function! s:reset_popupmenu_list()
 " --------------------------------
     let s:menu_4corner_as_filter = ""
-    let s:pumvisible_hjkl_bs = 0
+    let s:pumvisible_hjkl_short_match = 0
     let s:popupmenu_list = []
     let s:keyboard_head = 0
 endfunction
@@ -5245,6 +5254,7 @@ function! s:vimim_i_map_off()
 " ---------------------------
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
+    call extend(unmap_list, s:AZ_list)
     call extend(unmap_list, keys(s:punctuations))
     call extend(unmap_list, ['<Esc>','<CR>','<BS>','<Space>'])
     " -----------------------
