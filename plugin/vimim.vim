@@ -130,7 +130,6 @@ function! s:vimim_initialization_once()
     call s:vimim_scan_plugin_file()
     call s:vimim_scan_plugin_directory()
     " ---------------------------------------
-    call s:vimim_initialize_wubi()
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_pinyin()
     call s:vimim_initialize_shuangpin()
@@ -144,7 +143,8 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_quantifiers()
     call s:vimim_finalize_session()
     " ---------------------------------------
-    call s:vimim_datafile_load()
+    call s:vimim_build_datafile_lines()
+    call s:vimim_build_datafile_cache()
     " ---------------------------------------
 endfunction
 
@@ -158,7 +158,9 @@ function! s:vimim_initialize_session()
     let s:sqlite_executable = 0
     " --------------------------------
     let s:datafile = 0
-    let s:lines = []
+    let s:datafile_lines = []
+    let s:datafile_cache = {}
+    " --------------------------------
     let s:datafile_4corner = 0
     let s:unicode_4corner_cache = {}
     let s:unicode_pinyin_cache = {}
@@ -168,8 +170,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:data_directory_4corner = 0
     let s:data_directory = 0
-    " --------------------------------
-    let s:wubi_cache = {}
     " --------------------------------
     let s:only_4corner_or_12345 = 0
     let s:pinyin_and_4corner = 0
@@ -457,8 +457,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_sqlite_cedict")
-    call add(G, "g:vimim_datafile")
+    call add(G, "g:vimim_data_sqlite")
+    call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_datafile_has_apostrophe")
     call add(G, "g:vimim_datafile_is_not_utf8")
     call add(G, "g:vimim_english_punctuation")
@@ -485,6 +485,7 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
+    call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_laststatus")
@@ -1762,7 +1763,7 @@ function! s:vimim_pair_list(matched_list)
         if s:localization > 0
             let line = s:vimim_i18n_read(line)
         endif
-        let oneline_list = split(line, '\s\+')
+        let oneline_list = split(line)
         let menu = remove(oneline_list, 0)
         for chinese in oneline_list
             let chinese = s:vimim_digit_filter(chinese)
@@ -3076,16 +3077,6 @@ let VimIM = " ====  Input_Wubi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------
-function! s:vimim_initialize_wubi()
-" ---------------------------------
-    if empty(get(s:im['wubi'],0))
-        return
-    endif
-    let s:vimim_punctuation_navigation = -1
-    let s:wubi_cache = s:vimim_build_datafile_cache()
-endfunction
-
 " ------------------------------
 function! s:vimim_wubi(keyboard)
 " ------------------------------
@@ -3105,7 +3096,7 @@ function! s:vimim_wubi(keyboard)
     if s:vimim_embedded_backend == "directory"
         let results = s:vimim_get_data_from_directory(keyboard, 'wubi')
     else
-        let results = s:vimim_get_data_from_cache(s:wubi_cache, keyboard)
+        let results = s:vimim_get_data_from_cache(keyboard)
     endif
     " ----------------------------
     if s:chinese_input_mode =~ 'dynamic' && empty(results)
@@ -3114,18 +3105,19 @@ function! s:vimim_wubi(keyboard)
     return results
 endfunction
 
-" ----------------------------------------------------
-function! s:vimim_get_data_from_cache(cache, keyboard)
-" ----------------------------------------------------
+" ---------------------------------------------
+function! s:vimim_get_data_from_cache(keyboard)
+" ---------------------------------------------
     let keyboard = a:keyboard
-    let cache = a:cache
-    if empty(cache)
+    if empty(s:datafile_cache)
         return []
     endif
     let results = []
-    if has_key(cache, keyboard)
-        let line = cache[keyboard]
-        let results = [line]
+    if has_key(s:datafile_cache, keyboard)
+        let oneline_list = s:datafile_cache[keyboard]
+   "    let oneline = keyboard . ' ' . join(oneline_list, ' ')
+   "    let results = [oneline]
+        return oneline_list
     endif
     return results
 endfunction
@@ -3584,20 +3576,6 @@ function! s:vimim_scan_plugin_file()
     " ----------------------------------------
 endfunction
 
-" --------------------------------------
-function! s:vimim_build_datafile_cache()
-" -------------------------------------- todo
-    if len(s:lines) < 1
-        return {}
-    endif
-    let cache = {}
-    for line in s:lines
-        let key = get(split(line), 0)
-        let cache[key] = line
-    endfor
-    return cache
-endfunction
-
 " ---------------------------------------------------
 function! s:vimim_fixed_match(lines, keyboard, fixed)
 " ---------------------------------------------------
@@ -3728,15 +3706,15 @@ endfunction
 function! s:vimim_get_sentence_datafile(keyboard)
 " -----------------------------------------------
     let keyboard = a:keyboard
-    if len(s:lines) < 1
+    if len(s:datafile_lines) < 1
         return []
     endif
     " -------------------------------------------
     let results = []
     let pattern = '^' . keyboard
-    let match_start = match(s:lines, pattern)
+    let match_start = match(s:datafile_lines, pattern)
     if match_start < 0
-        let keyboards = s:vimim_sentence_match_file(s:lines, keyboard)
+        let keyboards = s:vimim_sentence_match_file(s:datafile_lines, keyboard)
         if empty(keyboards)
             let msg = "sell the keyboard as is, without modification"
         else
@@ -3752,7 +3730,7 @@ function! s:vimim_get_sentence_datafile(keyboard)
                 let s:keyboard_head = keyboard
             endif
             let pattern = "^" . keyboard
-            let match_start = match(s:lines, pattern)
+            let match_start = match(s:datafile_lines, pattern)
         endif
     endif
     " -------------------------------------------
@@ -3760,11 +3738,11 @@ function! s:vimim_get_sentence_datafile(keyboard)
         let msg = "fuzzy search could be done here, if needed"
     else
         if s:vimim_datafile_has_apostrophe > 0
-            let results = s:vimim_fixed_match(s:lines, keyboard, 1)
+            let results = s:vimim_fixed_match(s:datafile_lines, keyboard, 1)
         elseif get(s:im['pinyin'],0) > 0
-            let results = s:vimim_pinyin(s:lines, keyboard, match_start)
+            let results = s:vimim_pinyin(s:datafile_lines, keyboard, match_start)
         else
-            let results = s:vimim_fixed_match(s:lines, keyboard, 4)
+            let results = s:vimim_fixed_match(s:datafile_lines, keyboard, 4)
         endif
         if len(results) > 0
             let results = s:vimim_pair_list(results)
@@ -3794,23 +3772,21 @@ function! s:vimim_get_sentence_block(keyboard, im)
     return blocks
 endfunction
 
-" -------------------------------
-function! s:vimim_datafile_load()
-" -------------------------------
-    if s:vimim_embedded_backend == "directory"
-        return
-    endif
-    " ---------------------------
-    if empty(s:lines)
+" --------------------------------------
+function! s:vimim_build_datafile_lines()
+" --------------------------------------
+    if s:vimim_embedded_backend == "datafile"
+    \&& empty(s:vimim_use_cache)
+    \&& empty(s:datafile_lines)
     \&& len(s:datafile) > 1
     \&& filereadable(s:datafile)
-        let s:lines = readfile(s:datafile)
+        let s:datafile_lines = readfile(s:datafile)
     endif
     " ---------------------------
     if s:pinyin_and_4corner == 1
         let s:digit_lines = readfile(s:datafile_4corner)
         let digit = match(s:digit_lines, '^\d\+')
-        call extend(s:lines, s:digit_lines[digit :])
+        call extend(s:datafile_lines, s:digit_lines[digit :])
         let unihan_list = s:digit_lines[: digit-1]
         for unihan in unihan_list
             let pairs = split(unihan) |" u808f 8022
@@ -3820,6 +3796,25 @@ function! s:vimim_datafile_load()
         endfor
     endif
     " ---------------------------
+endfunction
+
+" --------------------------------------
+function! s:vimim_build_datafile_cache()
+" --------------------------------------
+    if s:vimim_embedded_backend == "datafile"
+    \&& s:vimim_use_cache > 0
+    \&& filereadable(s:datafile)
+        for line in readfile(s:datafile)
+            let oneline_list = split(line)
+            let menu = remove(oneline_list, 0)
+            if has_key(s:datafile_cache, menu)
+                let line_list = s:datafile_cache[menu]
+                call extend(line_list, oneline_list)
+                let line = join(line_list)
+            endif
+            let s:datafile_cache[menu] = [line]
+        endfor
+    endif
 endfunction
 
 " ======================================= }}}
@@ -3894,7 +3889,7 @@ endfunction
 " ---------------------------------------
 function! s:vimim_get_datafile_in_vimrc()
 " ---------------------------------------
-    let datafile = s:vimim_sqlite_cedict
+    let datafile = s:vimim_data_sqlite
     if !empty(datafile) && filereadable(datafile)
         let s:sqlite = copy(datafile)
         return
@@ -3906,7 +3901,7 @@ function! s:vimim_get_datafile_in_vimrc()
         return
     endif
     " -----------------------------------
-    let datafile = s:vimim_datafile
+    let datafile = s:vimim_data_file
     if !empty(datafile) && filereadable(datafile)
         let s:datafile = copy(datafile)
     endif
@@ -4288,24 +4283,21 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_get_cedict_sqlite_query(keyboard)
 " -------------------------------------------------
+" sqlite3 /usr/local/share/cjklib/cedict.db "select random()"
+" sqlite> select * from cedict where Translation like '%dream%';
+" sqlite> select * from cedict where Reading like 'ma_ ma_';
+" -------------------------------------------------
     let keyboard = a:keyboard
     if empty(keyboard)
         return 0
     endif
-    " -------------------------------------------------
-    " sqlite3 /usr/local/share/cjklib/cedict.db "select random()"
-    " sqlite> select * from cedict where Translation like '%dream%';
-    " sqlite> select * from cedict where Reading like 'ma_ ma_';
-    " -------------------------------------------------
     let table = 'CEDICT'
     let column1 = 'HeadwordTraditional'
     let column2 = 'HeadwordSimplified'
     let column3 = 'Reading'
     let column4 = 'Translation'
-    " ------------------
     let select = column2
     let column = column3
-    " ------------------
     let magic_head = keyboard[:0]
     if  magic_head ==# "u"
         let msg = "u switch to English mode: udream => dream"
@@ -4928,7 +4920,7 @@ function! s:vimim_initialize_debug()
         let s:path2 = 0
         let sqlite = s:path . "sqlite"
         if filereadable(sqlite)
-            let s:vimim_sqlite_cedict = '/usr/local/share/cjklib/cedict.db'
+            let s:vimim_data_sqlite = '/usr/local/share/cjklib/cedict.db'
         endif
     endif
     " ------------------------------
