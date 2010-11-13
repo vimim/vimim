@@ -1209,17 +1209,18 @@ function! s:vimim_statusline()
         let im = get(s:im['mycloud'],0)
     endif
     " ------------------------------------
-    if empty(im)
-        if s:vimim_cloud_sogou > 0
-            if s:vimim_cloud_sogou == 1
-                let all = s:vimim_get_chinese('all')
-                let cloud = get(s:im['cloud'],1)
-                let im = all . cloud
-            endif
-        else
-            let im = s:vimim_get_chinese('internal')
-            let im .= s:vimim_get_chinese('input')
+    if s:vimim_cloud_sogou > 0
+        if s:vimim_cloud_sogou == 1
+            let all = s:vimim_get_chinese('all')
+            let cloud = get(s:im['cloud'],1)
+            let im = all . cloud
         endif
+    elseif s:vimim_cloud_sogou == -777
+        let mycloud = s:vimim_get_chinese('mycloud')
+        let im = mycloud . s:space . im
+    else
+        let im = s:vimim_get_chinese('internal')
+        let im .= s:vimim_get_chinese('input')
     endif
     " ----------------------------------
     let im = bracket_l . im . bracket_r
@@ -2355,7 +2356,7 @@ function! s:vimim_reverse_lookup(chinese)
     let items = s:vimim_reverse_one_entry(chinese, 'unicode')
     call add(results_unicode, get(items,0))
     call add(results_unicode, get(items,1))
-    " ----------------------------------- todo
+    " -----------------------------------
     call s:vimim_build_unihan_reverse_cache(chinese)
     let results_4corner = []  |" 马力 => 7712 4002
     if len(s:unicode_4corner_cache) > 1
@@ -3672,7 +3673,7 @@ endfunction
 
 " ---------------------------------------------
 function! s:vimim_get_data_from_cache(keyboard)
-" --------------------------------------------- todo
+" ---------------------------------------------
     let keyboard = a:keyboard
     if empty(s:datafile_cache)
         return []
@@ -4944,6 +4945,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
+    let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     let s:path2 = 0
     let s:localization = 0
     let s:chinese_mode_switch = 1
@@ -4965,6 +4967,7 @@ function! s:vimim_initialize_debug()
         if filereadable(sqlite)
             let s:vimim_data_sqlite = '/usr/local/share/cjklib/cedict.db'
         endif
+        return
     endif
     " ------------------------------
     let s:vimim_debug = 9
