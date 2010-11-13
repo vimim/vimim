@@ -987,7 +987,7 @@ function! <SID>ChineseMode()
         endif
     else |" ----------------------------
         if s:chinese_mode_switch > 2
-            call s:vimim_stop_chinese_mode()
+            call s:vimim_stop()
             let action = "\<C-O>:redraw\<CR>"
         endif
         if empty(s:chinese_mode_switch%2)
@@ -1009,8 +1009,11 @@ endfunction
 function! s:vimim_start_chinese_mode()
 " ------------------------------------
     sil!call s:vimim_start()
-    sil!call s:vimim_build_datafile_cache()
-    " ------------------------------------------
+    " --------------------------------
+    if empty(s:datafile_cache)
+        sil!call s:vimim_build_datafile_cache()
+    endif
+    " --------------------------------
     if s:vimim_static_input_style < 1
         let s:chinese_input_mode = 'dynamic'
         call <SID>vimim_set_seamless()
@@ -1033,15 +1036,6 @@ function! s:vimim_start_chinese_mode()
     inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
     " ---------------------------------------------------
     return <SID>vimim_toggle_punctuation()
-endfunction
-
-" -----------------------------------
-function! s:vimim_stop_chinese_mode()
-" -----------------------------------
-    if s:vimim_auto_copy_clipboard>0 && has("gui_running")
-        sil!exe ':%y +'
-    endif
-    sil!call s:vimim_stop()
 endfunction
 
 " ----------------------------------
@@ -3085,11 +3079,10 @@ function! s:vimim_initialize_wubi()
     let s:vimim_punctuation_navigation = -1
 endfunction
 
-" ------------------------------
-function! s:vimim_wubi(keyboard)
-" ------------------------------
+" --------------------------------------
+function! s:vimim_wubi_nonstop(keyboard)
+" --------------------------------------
     let keyboard = a:keyboard
-    let results = []
     " ----------------------------
     " support wubi non-stop typing
     " ----------------------------
@@ -3100,34 +3093,7 @@ function! s:vimim_wubi(keyboard)
         endif
         let s:keyboard_leading_zero = keyboard
     endif
-    " ---------------------------- todo
-    if s:vimim_embedded_backend == "directory"
-        let results = s:vimim_get_data_from_directory(keyboard, 'wubi')
-    else
-        let results = s:vimim_get_data_from_cache(keyboard)
-    endif
-    " ----------------------------
-    if s:chinese_input_mode =~ 'dynamic' && empty(results)
-        let s:keyboard_leading_zero = ""
-    endif
-    return results
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_get_data_from_cache(keyboard)
-" --------------------------------------------- todo
-    let keyboard = a:keyboard
-    if empty(s:datafile_cache)
-        return []
-    endif
-    let results = []
-    if has_key(s:datafile_cache, keyboard)
-        let oneline_list = s:datafile_cache[keyboard]
-   "    let oneline = keyboard . ' ' . join(oneline_list, ' ')
-   "    let results = [oneline]
-        return oneline_list
-    endif
-    return results
+    return keyboard
 endfunction
 
 " ======================================= }}}
@@ -3709,15 +3675,33 @@ function! s:vimim_sentence_match_file(lines, keyboard)
     return blocks
 endfunction
 
+" ---------------------------------------------
+function! s:vimim_get_data_from_cache(keyboard)
+" --------------------------------------------- todo
+    let keyboard = a:keyboard
+    if empty(s:datafile_cache)
+        return []
+    endif
+    let results = []
+    if has_key(s:datafile_cache, keyboard)
+        let results = s:datafile_cache[keyboard]
+    endif
+    return results
+endfunction
+
 " -----------------------------------------------
 function! s:vimim_get_sentence_datafile(keyboard)
 " -----------------------------------------------
     let keyboard = a:keyboard
-    if len(s:datafile_lines) < 1
-        return []
+    let results = []
+    " -------------------------------------------
+    if len(s:datafile_cache) > 1
+        let results = s:vimim_get_data_from_cache(keyboard)
+    endif
+    if len(results) > 0
+        return results
     endif
     " -------------------------------------------
-    let results = []
     let pattern = '^' . keyboard
     let match_start = match(s:datafile_lines, pattern)
     if match_start < 0
@@ -3732,6 +3716,7 @@ function! s:vimim_get_sentence_datafile(keyboard)
                     let s:menu_4corner_as_filter = -filter
                 endif
             endif
+    " ------------------------------------------- todo
             let keyboard = get(keyboards, 0)
             if s:pumvisible_hjkl_2nd_match > 0
                 let s:keyboard_head = keyboard
@@ -3750,9 +3735,6 @@ function! s:vimim_get_sentence_datafile(keyboard)
             let results = s:vimim_pinyin(s:datafile_lines, keyboard, match_start)
         else
             let results = s:vimim_fixed_match(s:datafile_lines, keyboard, 4)
-        endif
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
         endif
     endif
     return results
@@ -5379,16 +5361,6 @@ else
         endif
     endif
 
-    " [wubi] support wubi non-stop input
-    " ----------------------------------
-    if get(s:im['wubi'],0) > 0
-        let results = s:vimim_wubi(keyboard)
-        if len(results) > 0
-            let results = s:vimim_pair_list(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
     if s:vimim_internal_code_input > 0
@@ -5464,6 +5436,12 @@ else
         endif
     endif
 
+    " [wubi] support wubi non-stop input
+    " ----------------------------------
+    if get(s:im['wubi'],0) > 0
+        let keyboard = s:vimim_wubi_nonstop(keyboard)
+    endif
+
     " ------------------------------------------------
     " [backend] VimIM internal embedded backend engine
     " ------------------------------------------------
@@ -5482,6 +5460,8 @@ else
             let results = s:vimim_popupmenu_list(results)
         endif
         return results
+    elseif s:chinese_input_mode =~ 'dynamic' && get(s:im['wubi'],0) > 0
+        let s:keyboard_leading_zero = ""
     endif
 
     " [cloud] last try cloud before giving up
@@ -5640,9 +5620,8 @@ function! s:vimim_initialize_autocmd()
     endif
     " make dot vimim file our first-class citizen:
     augroup vimim_auto_chinese_mode
-        autocmd BufNewFile  *.vimim startinsert
-        autocmd InsertEnter *.vimim sil!call <SID>ChineseMode()
-        autocmd InsertLeave *.vimim sil!call <SID>ChineseMode()
+        autocmd BufNewFile *.vimim startinsert
+        autocmd BufEnter   *.vimim sil!call <SID>ChineseMode()
     augroup END
 endfunction
 
