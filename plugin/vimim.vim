@@ -477,13 +477,13 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_super_internal_input")
-    call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_debug")
     call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
+    call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_laststatus")
@@ -1768,21 +1768,21 @@ function! s:vimim_pair_list(matched_list)
     return pair_matched_list
 endfunction
 
-" --------------------------------------------
-function! s:vimim_popupmenu_list(matched_list)
-" --------------------------------------------
-    let matched_list = a:matched_list
-    if empty(matched_list)
-    \|| type(matched_list) != type([])
+" -------------------------------------------------
+function! s:vimim_popupmenu_list(pair_matched_list)
+" -------------------------------------------------
+    let pair_matched_list = a:pair_matched_list
+    if empty(pair_matched_list)
+    \|| type(pair_matched_list) != type([])
         return []
     endif
     let menu = 0
     let label = 1
     let popupmenu_list = []
     let keyboard = s:keyboard_leading_zero
-    " ----------------------
-    for pair in matched_list
-    " ----------------------
+    " ---------------------------
+    for pair in pair_matched_list
+    " ---------------------------
         let complete_items = {}
         let pairs = split(pair)
         if len(pairs) < 2
@@ -2469,7 +2469,8 @@ function! s:vimim_build_unihan_reverse_cache(chinese)
         if has_key(s:unicode_4corner_cache, key)
             continue
         else
-            let results = s:vimim_get_raw_data_from_directory(key, '4corner')
+            let im = '4corner'
+            let results = s:vimim_get_raw_data_from_directory(key, im)
             let s:unicode_4corner_cache[key] = results
         endif
     endfor
@@ -3072,9 +3073,6 @@ function! s:vimim_initialize_wubi()
 " ---------------------------------
     if empty(get(s:im['wubi'],0))
         return
-    endif
-    if s:vimim_use_cache > -1
-        let s:vimim_use_cache = 1
     endif
     let s:vimim_punctuation_navigation = -1
 endfunction
@@ -3826,15 +3824,15 @@ function! s:vimim_build_datafile_lines()
         let s:datafile_lines = readfile(s:datafile)
     endif
     if s:pinyin_and_4corner == 1
-        let s:digit_lines = readfile(s:datafile_4corner)
-        let digit = match(s:digit_lines, '^\d\+')
-        call extend(s:datafile_lines, s:digit_lines[digit :])
-        let unihan_list = s:digit_lines[: digit-1]
+        let digit_lines = readfile(s:datafile_4corner)
+        let digit = match(digit_lines, '^\d\+')
+        call extend(s:datafile_lines, digit_lines[digit :])
+        let unihan_list = digit_lines[: digit-1]
         for unihan in unihan_list
             let pairs = split(unihan) |" u808f 8022
             let key = get(pairs, 0)
             let value = get(pairs, 1)
-            let s:unicode_4corner_cache[key] = value
+            let s:unicode_4corner_cache[key] = [value]
         endfor
     endif
 endfunction
@@ -3842,6 +3840,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_cache()
 " --------------------------------------
+    if s:vimim_embedded_backend == "datafile"
     \&& s:vimim_use_cache > 0
     \&& len(s:datafile_lines) > 1
         for line in s:datafile_lines
