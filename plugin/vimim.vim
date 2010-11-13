@@ -131,6 +131,7 @@ function! s:vimim_initialization_once()
     call s:vimim_scan_plugin_directory()
     " ---------------------------------------
     call s:vimim_initialize_erbi()
+    call s:vimim_initialize_wubi()
     call s:vimim_initialize_pinyin()
     call s:vimim_initialize_shuangpin()
     " ---------------------------------------
@@ -142,7 +143,7 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
     call s:vimim_finalize_session()
-    " ---------------------------------------
+    " --------------------------------------- todo
     call s:vimim_build_datafile_lines()
     call s:vimim_build_datafile_cache()
     " ---------------------------------------
@@ -353,29 +354,29 @@ endfunction
 function! s:vimim_build_im_keycode()
 " ----------------------------------
     let key_keycode = []
-    call add(key_keycode, ['cloud', "[0-9a-z'.]"])
+    call add(key_keycode, ['cloud',   "[0-9a-z'.]"])
     call add(key_keycode, ['mycloud', "[0-9a-z'.]"])
-    call add(key_keycode, ['wubi', "[0-9a-z'.]"])
-    call add(key_keycode, ['4corner', "[0-9a-z'.]"])
-    call add(key_keycode, ['12345', "[0-9a-z'.]"])
-    call add(key_keycode, ['ctc', "[0-9a-z'.]"])
-    call add(key_keycode, ['cns11643', "[0-9a-z'.]"])
-    call add(key_keycode, ['english', "[0-9a-z'.]"])
-    call add(key_keycode, ['hangul', "[0-9a-z'.]"])
-    call add(key_keycode, ['xinhua', "[0-9a-z'.]"])
-    call add(key_keycode, ['pinyin', "[0-9a-z'.]"])
-    call add(key_keycode, ['cangjie', "[a-z'.]"])
-    call add(key_keycode, ['zhengma', "[a-z'.]"])
-    call add(key_keycode, ['quick', "[0-9a-z'.]"])
+    call add(key_keycode, ['wubi',    "[0-9a-z']"])
+    call add(key_keycode, ['4corner', "[0-9a-z']"])
+    call add(key_keycode, ['12345',   "[0-9a-z']"])
+    call add(key_keycode, ['ctc',     "[0-9a-z']"])
+    call add(key_keycode, ['cns11643',"[0-9a-z']"])
+    call add(key_keycode, ['english', "[0-9a-z']"])
+    call add(key_keycode, ['hangul',  "[0-9a-z']"])
+    call add(key_keycode, ['xinhua',  "[0-9a-z']"])
+    call add(key_keycode, ['pinyin',  "[0-9a-z']"])
+    call add(key_keycode, ['cangjie', "[a-z']"])
+    call add(key_keycode, ['zhengma', "[a-z']"])
+    call add(key_keycode, ['quick',   "[0-9a-z']"])
     " ----------------------------- has_dot_in_datafile
-    call add(key_keycode, ['erbi', "[a-z'.,;/]"])
-    call add(key_keycode, ['wu', "[a-z'.]"])
-    call add(key_keycode, ['yong', "[a-z'.;/]"])
-    call add(key_keycode, ['nature', "[a-z'.]"])
-    call add(key_keycode, ['boshiamy', "[][a-z'.,]"])
+    call add(key_keycode, ['erbi',    "[a-z'.,;/]"])
+    call add(key_keycode, ['wu',      "[a-z'.]"])
+    call add(key_keycode, ['yong',    "[a-z'.;/]"])
+    call add(key_keycode, ['nature',  "[a-z'.]"])
+    call add(key_keycode, ['boshiamy',"[][a-z'.,]"])
     " ----------------------------- static
     call add(key_keycode, ['phonetic', "[0-9a-z.,;/]"])
-    call add(key_keycode, ['array30', "[0-9a-z.,;/]"])
+    call add(key_keycode, ['array30',  "[0-9a-z.,;/]"])
     " ------------------------------------
     let loaded = 0
     for pairs in key_keycode
@@ -479,13 +480,13 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_super_internal_input")
+    call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_debug")
     call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
-    call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_laststatus")
@@ -3077,6 +3078,18 @@ let VimIM = " ====  Input_Wubi       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" ---------------------------------
+function! s:vimim_initialize_wubi()
+" ---------------------------------
+    if empty(get(s:im['wubi'],0))
+        return
+    endif
+    if s:vimim_use_cache > -1
+        let s:vimim_use_cache = 1
+    endif
+    let s:vimim_punctuation_navigation = -1
+endfunction
+
 " ------------------------------
 function! s:vimim_wubi(keyboard)
 " ------------------------------
@@ -3134,7 +3147,6 @@ function! s:vimim_initialize_erbi()
         return
     endif
     let s:im['wubi'][0] = 1
-    let s:vimim_punctuation_navigation = -1
 endfunction
 
 " ------------------------------------------------
@@ -3803,6 +3815,7 @@ function! s:vimim_build_datafile_cache()
 " --------------------------------------
     if s:vimim_embedded_backend == "datafile"
     \&& s:vimim_use_cache > 0
+    \&& empty(s:datafile_cache)
     \&& filereadable(s:datafile)
         for line in readfile(s:datafile)
             let oneline_list = split(line)
@@ -4426,6 +4439,7 @@ function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
+    \|| get(s:im['boshiamy'],0) > 0
     \|| s:has_dot_in_datafile > 0
     \|| keyboard =~ '\d\d\d\d'
         return []
@@ -5338,66 +5352,8 @@ if a:start
 
 else
 
-    if s:vimimdebug > 0
-        let s:debug_count += 1
-        call s:debugs('keyboard', s:keyboard_leading_zero)
-        if s:vimimdebug > 2
-            call s:debugs('keyboard_a', a:keyboard)
-        endif
-    endif
-
-    if s:one_key_correction > 0
-        let d = 'delete in omni popup menu'
-        let BS = 'delete in Chinese Mode'
-        let s:one_key_correction = 0
-        return [" "]
-    endif
-
-    let keyboard = a:keyboard
-    if empty(s:keyboard_leading_zero)
-        let s:keyboard_leading_zero = keyboard
-    endif
-    if empty(str2nr(keyboard))
-        let msg = "the input is alphabet only"
-    else
-        let keyboard = s:keyboard_leading_zero
-    endif
-
-    " ignore all-zeroes keyboard inputs
-    " ---------------------------------
-    if empty(s:keyboard_leading_zero)
-        return
-    endif
-
-    " ignore non-sense keyboard inputs
-    " --------------------------------
-    if keyboard !~# s:valid_key
-        return
-    endif
-
-    " ignore multiple non-sense dots
-    " ------------------------------
-    if keyboard =~# '^[\.\.\+]'
-    \&& get(s:im['boshiamy'],0) < 1
-        let s:pattern_not_found += 1
-        return
-    endif
-
-    " [erbi] special meaning of the first punctuation
-    " -----------------------------------------------
-    if s:im['erbi'][0] > 0
-        let punctuation = s:vimim_first_punctuation_erbi(keyboard)
-        if !empty(punctuation)
-            return [punctuation]
-        endif
-    endif
-
-    " ignore non-sense one char input
-    " -------------------------------
-    if s:vimim_static_input_style < 2
-    \&& get(s:im['boshiamy'],0) < 1
-    \&& len(keyboard) == 1
-    \&& keyboard !~# '\w'
+    let keyboard = s:vimim_get_valid_keyboard(a:keyboard)
+    if empty(keyboard)
         return
     endif
 
@@ -5550,6 +5506,64 @@ else
     return s:vimim_popupmenu_list(results)
 
 endif
+endfunction
+
+" --------------------------------------------
+function! s:vimim_get_valid_keyboard(keyboard)
+" --------------------------------------------
+    let keyboard = a:keyboard
+    if s:vimimdebug > 0
+        let s:debug_count += 1
+        call s:debugs('keyboard', s:keyboard_leading_zero)
+    endif
+    if s:one_key_correction > 0
+        let d = 'delete in omni popup menu'
+        let BS = 'delete in Chinese Mode'
+        let s:one_key_correction = 0
+        return [" "]
+    endif
+    if empty(s:keyboard_leading_zero)
+        let s:keyboard_leading_zero = keyboard
+    endif
+    if empty(str2nr(keyboard))
+        let msg = "the input is alphabet only"
+    else
+        let keyboard = s:keyboard_leading_zero
+    endif
+    " ignore all-zeroes keyboard inputs
+    " ---------------------------------
+    if empty(s:keyboard_leading_zero)
+        return []
+    endif
+    " ignore non-sense keyboard inputs
+    " --------------------------------
+    if keyboard !~# s:valid_key
+        return []
+    endif
+    " ignore multiple non-sense dots
+    " ------------------------------
+    if keyboard =~# '^[\.\.\+]'
+    \&& get(s:im['boshiamy'],0) < 1
+        let s:pattern_not_found += 1
+        return []
+    endif
+    " [erbi] special meaning of the first punctuation
+    " -----------------------------------------------
+    if s:im['erbi'][0] > 0
+        let punctuation = s:vimim_first_punctuation_erbi(keyboard)
+        if !empty(punctuation)
+            return [punctuation]
+        endif
+    endif
+    " ignore non-sense one char input
+    " -------------------------------
+    if s:vimim_static_input_style < 2
+    \&& get(s:im['boshiamy'],0) < 1
+    \&& len(keyboard) == 1
+    \&& keyboard !~# '\w'
+        return []
+    endif
+    return keyboard
 endfunction
 
 " ======================================= }}}
