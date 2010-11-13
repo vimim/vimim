@@ -164,7 +164,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:datafile_4corner = 0
     let s:unicode_4corner_cache = {}
-    let s:unicode_pinyin_cache = {}
     " --------------------------------
     let s:im = {}
     let s:input_method = 0
@@ -2363,29 +2362,29 @@ function! s:vimim_reverse_lookup(chinese)
     let items = s:vimim_reverse_one_entry(chinese, 'unicode')
     call add(results_unicode, get(items,0))
     call add(results_unicode, get(items,1))
-    " -----------------------------------
-    if s:pinyin_and_4corner == 2
-        call s:vimim_build_unihan_reverse_cache(chinese, '4corner')
-    endif
+    " ----------------------------------- todo
+    call s:vimim_build_unihan_reverse_cache(chinese)
     let results_4corner = []  |" 马力 => 7712 4002
-    let items = s:vimim_reverse_one_entry(chinese, '4corner')
-    call add(results_4corner, get(items,0))
-    call add(results_4corner, get(items,1))
+    if len(s:unicode_4corner_cache) > 1
+        let items = s:vimim_reverse_one_entry(chinese, '4corner')
+        call add(results_4corner, get(items,0))
+        call add(results_4corner, get(items,1))
+    endif
     " -----------------------------------
     let results_pinyin = []   |" 马力 => ma3 li2
     let result_cjjp = ""      |" 马力 => ml
-    let unihan = s:vimim_get_data_directory('unihan')
-    if !empty(unihan)
-        call s:vimim_build_unihan_reverse_cache(chinese, 'pinyin')
+    if len(s:unicode_4corner_cache) > 1
         let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
-        let pinyin_head = get(items,0)
-        if !empty(pinyin_head)
-            call add(results_pinyin, pinyin_head)
-            call add(results_pinyin, get(items,1))
-            for pinyin in split(pinyin_head)
-                let result_cjjp .= pinyin[0:0]
-            endfor
-            let result_cjjp .= " ".chinese
+        if len(items) > 0
+            let pinyin_head = get(items,0)
+            if !empty(pinyin_head)
+                call add(results_pinyin, pinyin_head)
+                call add(results_pinyin, get(items,1))
+                for pinyin in split(pinyin_head)
+                    let result_cjjp .= pinyin[0:0]
+                endfor
+                let result_cjjp .= " ".chinese
+            endif
         endif
     endif
     " -----------------------------------
@@ -2408,80 +2407,77 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_reverse_one_entry(chinese, im)
 " ----------------------------------------------
+    let im = a:im
     let results = []
     let headers = []  "|  ma3 li4
     let bodies = []   "|  马  力
-    let cache = {}
-    if a:im == '4corner'
-        let cache = s:unicode_4corner_cache
-    elseif a:im == 'pinyin'
-        let cache = s:unicode_pinyin_cache
-    endif
     let chinese_list = split(a:chinese, '\zs')
     for chinese in chinese_list
         let unicode = printf('u%x',char2nr(chinese))
-        if a:im == 'unicode'
-            let cache[unicode] = unicode
-        endif
-        if has_key(cache, unicode)
-            let head = cache[unicode]
-            call add(headers, head)
-            let spaces = ""
-            let number_of_space = len(head)-2
-            if  number_of_space > 0
-                let space = ' '
-                for i in range(number_of_space)
-                    let spaces .= space
-                endfor
+        let head = ''
+        if im == 'unicode'
+            let head = unicode
+        elseif has_key(s:unicode_4corner_cache, unicode)
+            " ------------------------------------------------
+            let values = s:unicode_4corner_cache[unicode]
+            let head = get(values, 0)
+            if im == '4corner'
+                let head = get(values, 0)
+                if head =~ '\D'
+                    let head = '....' |" 4corner not available
+                endif
+            elseif im == 'pinyin'
+                let head = get(values, 1)
+                if empty(head)
+                    continue
+                elseif head !~ '^\l\+\d$'
+                    let head = get(values, 0)
+                endif
             endif
-            call add(bodies, chinese . spaces)
+            " ------------------------------------------------
         endif
+        if empty(head)
+            continue
+        endif
+        call add(headers, head)
+        let spaces = ""
+        let number_of_space = len(head)-2
+        if  number_of_space > 0
+            let space = ' '
+            for i in range(number_of_space)
+                let spaces .= space
+            endfor
+        endif
+        call add(bodies, chinese . spaces)
     endfor
+    if empty(head)
+        return []
+    endif
     call add(results, join(headers))
     call add(results, join(bodies))
     return results
 endfunction
 
-" -------------------------------------------------------
-function! s:vimim_build_unihan_reverse_cache(chinese, im)
-" -------------------------------------------------------
-" [input]  '馬力','4corner' || '馬力','pinyin'
-" [output] {'u99ac': '7132', 'u529b': '4002'}
-" --------------------------------------------
+" ---------------------------------------------------
+function! s:vimim_build_unihan_reverse_cache(chinese)
+" ---------------------------------------------------
+" [input]  馬力
+" [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
+" ---------------------------------------------------
     if s:pinyin_and_4corner < 2
         return
     endif
-    " ----------------------------------------
     let chinese = a:chinese
     let chinese = substitute(chinese,'\w','','g')
     let characters = split(chinese, '\zs')
     " unihan database: u808f => 8022 cao4 copulate
     for char in characters
         let key = printf('u%x',char2nr(char))
-        if a:im =~ '4corner'
-            if has_key(s:unicode_4corner_cache, key)
-                continue
-            else
-                let results = s:vimim_get_data_from_directory(key, 'unihan')
-                let value = get(split(get(results,0)),1)
-                if value =~ '\D'
-                    let value = '....' |" 4corner not available
-                endif
-                let s:unicode_4corner_cache[key] = value
-            endif
-        endif
-        " ------------------------------------------------------------
-        if a:im =~ 'pinyin'
-            if has_key(s:unicode_pinyin_cache, key)
-                continue
-            else
-                let results = s:vimim_get_data_from_directory(key, 'unihan')
-                let value = get(split(get(results,1)),1)
-                if value !~ '^\l\+\d$'
-                    let value = get(split(get(results,0)),1)
-                endif
-                let s:unicode_pinyin_cache[key] = value
-            endif
+        if has_key(s:unicode_4corner_cache, key)
+            continue
+        else
+            let results = s:vimim_get_raw_data_from_directory(key, '4corner')
+            let s:unicode_4corner_cache[key] = results
         endif
     endfor
 endfunction
@@ -2529,7 +2525,7 @@ function! s:vimim_digit_filter(chinese)
         return chinese
     endif
     let position = -1
-    call s:vimim_build_unihan_reverse_cache(chinese, '4corner')
+    call s:vimim_build_unihan_reverse_cache(chinese)
     let number = s:vimim_get_4corner(chinese)
     let patter = "^" . substitute(s:menu_4corner_as_filter,'\D','','g')
     let matched = match(number, patter)
@@ -2561,7 +2557,7 @@ function! s:vimim_get_4corner(chinese)
             if !has_key(s:unicode_4corner_cache, key)
                 continue
             endif
-            let four_corner = s:unicode_4corner_cache[key]
+            let four_corner = get(s:unicode_4corner_cache[key],0)
             let head .= four_corner[:0]
             let tail = four_corner[1:]
         endif
@@ -3105,7 +3101,7 @@ function! s:vimim_wubi(keyboard)
         endif
         let s:keyboard_leading_zero = keyboard
     endif
-    " ----------------------------
+    " ---------------------------- todo
     if s:vimim_embedded_backend == "directory"
         let results = s:vimim_get_data_from_directory(keyboard, 'wubi')
     else
@@ -3807,7 +3803,7 @@ function! s:vimim_build_datafile_lines()
             let s:unicode_4corner_cache[key] = value
         endfor
     endif
-    " ---------------------------
+    " --------------------------- todo
 endfunction
 
 " --------------------------------------
@@ -3949,25 +3945,35 @@ function! s:vimim_set_data_directory(im)
     endif
 endfunction
 
-" -----------------------------------------------------
-function! s:vimim_get_data_from_directory(keyboard, im)
-" -----------------------------------------------------
-    let im = a:im
-    let dir = s:vimim_get_data_directory(im)
+" ---------------------------------------------------------
+function! s:vimim_get_raw_data_from_directory(keyboard, im)
+" ---------------------------------------------------------
+    let dir = s:vimim_get_data_directory(a:im)
     if empty(dir)
         return []
     endif
     let results = []
     let filename = dir . '/' . a:keyboard
     if filereadable(filename)
-        let lines = readfile(filename)
-        for line in lines
-            for chinese in split(line)
-                let menu = a:keyboard . " " . chinese
-                call add(results, menu)
-            endfor
-        endfor
+        let results = readfile(filename)
     endif
+    return results
+endfunction
+
+" -----------------------------------------------------
+function! s:vimim_get_data_from_directory(keyboard, im)
+" -----------------------------------------------------
+    let lines = s:vimim_get_raw_data_from_directory(a:keyboard, a:im)
+    if empty(lines)
+        return []
+    endif
+    let results = []
+    for line in lines
+        for chinese in split(line)
+            let menu = a:keyboard . " " . chinese
+            call add(results, menu)
+        endfor
+    endfor
     return results
 endfunction
 
