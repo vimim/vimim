@@ -1218,16 +1218,15 @@ function! s:vimim_statusline()
     elseif s:vimim_cloud_sogou == -777
         let mycloud = s:vimim_get_chinese('mycloud')
         let im = mycloud . s:space . im
-    else
+    elseif empty(im)
         let im = s:vimim_get_chinese('internal')
         let im .= s:vimim_get_chinese('input')
     endif
-    " ----------------------------------
+    " ---------------------------------
     let im = bracket_l . im . bracket_r
-    " ----------------------------------
+    " ---------------------------------
     let input_style = s:vimim_get_input_style_in_Chinese()
     let im = im . s:space . input_style
-    " ----------------------------------
     return im
 endfunction
 
@@ -4945,7 +4944,6 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     let s:path2 = 0
     let s:localization = 0
     let s:chinese_mode_switch = 1
