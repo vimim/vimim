@@ -143,9 +143,7 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
     call s:vimim_finalize_session()
-    " --------------------------------------- todo
     call s:vimim_build_datafile_lines()
-    call s:vimim_build_datafile_cache()
     " ---------------------------------------
 endfunction
 
@@ -1011,6 +1009,7 @@ endfunction
 function! s:vimim_start_chinese_mode()
 " ------------------------------------
     sil!call s:vimim_start()
+    sil!call s:vimim_build_datafile_cache()
     " ------------------------------------------
     if s:vimim_static_input_style < 1
         let s:chinese_input_mode = 'dynamic'
@@ -3116,7 +3115,7 @@ endfunction
 
 " ---------------------------------------------
 function! s:vimim_get_data_from_cache(keyboard)
-" ---------------------------------------------
+" --------------------------------------------- todo
     let keyboard = a:keyboard
     if empty(s:datafile_cache)
         return []
@@ -3784,13 +3783,10 @@ endfunction
 function! s:vimim_build_datafile_lines()
 " --------------------------------------
     if s:vimim_embedded_backend == "datafile"
-    \&& empty(s:vimim_use_cache)
-    \&& empty(s:datafile_lines)
     \&& len(s:datafile) > 1
     \&& filereadable(s:datafile)
         let s:datafile_lines = readfile(s:datafile)
     endif
-    " ---------------------------
     if s:pinyin_and_4corner == 1
         let s:digit_lines = readfile(s:datafile_4corner)
         let digit = match(s:digit_lines, '^\d\+')
@@ -3803,17 +3799,14 @@ function! s:vimim_build_datafile_lines()
             let s:unicode_4corner_cache[key] = value
         endfor
     endif
-    " --------------------------- todo
 endfunction
 
 " --------------------------------------
 function! s:vimim_build_datafile_cache()
 " --------------------------------------
-    if s:vimim_embedded_backend == "datafile"
     \&& s:vimim_use_cache > 0
-    \&& empty(s:datafile_cache)
-    \&& filereadable(s:datafile)
-        for line in readfile(s:datafile)
+    \&& len(s:datafile_lines) > 1
+        for line in s:datafile_lines
             let oneline_list = split(line)
             let menu = remove(oneline_list, 0)
             if has_key(s:datafile_cache, menu)
