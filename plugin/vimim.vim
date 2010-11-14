@@ -10,16 +10,18 @@ let $VimIM = "$Revision$"
 " ------------------
 " For the impatient:
 " ------------------
-" (1) throw this script into your vim plugin directory
-" (2) open your vim and enter Insert mode
-" (3) play with various eggs:
-"     -  VimIM 經典:  type:   vim<C-6><C-6>
-"     -  VimIM 環境:  type:   vimim<C-6><C-6>
-"     -  VimIM 程式:  type:   vimimvim<C-6><C-6>
-"     -  VimIM 幫助:  type:   vimimhelp<C-6><C-6>
-"     -  VimIM 測試:  type:   vimimdebug<C-6><C-6>
-"     -  VimIM 內碼:  type:   vimimunicode<C-6><C-6>
-"     -  VimIM 設置:  type:   vimimdefaults<C-6><C-6>
+" # play with various VimIM Input Methods:
+"   - vim whatever.sogou.vimim  => do cloud input
+"   - vim whatever.sqlite.vimim => do unihan input with cedict.db
+"   - vim whatever.vimim        => do pinyin input with vimim.pinyin.txt
+" # play with various eggs:
+"   -  VimIM 經典:  type:   vim<C-6><C-6>
+"   -  VimIM 環境:  type:   vimim<C-6><C-6>
+"   -  VimIM 程式:  type:   vimimvim<C-6><C-6>
+"   -  VimIM 幫助:  type:   vimimhelp<C-6><C-6>
+"   -  VimIM 測試:  type:   vimimdebug<C-6><C-6>
+"   -  VimIM 內碼:  type:   vimimunicode<C-6><C-6>
+"   -  VimIM 設置:  type:   vimimdefaults<C-6><C-6>
 " -----------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry         "]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506 "]
@@ -1208,7 +1210,7 @@ function! s:vimim_statusline()
         let im .= s:vimim_get_chinese('input')
     endif
     " ------------------------------------
-    if s:vimim_embedded_backend == "sqlite"
+    if s:vimim_embedded_backend =~# "sqlite"
         let sqlite = s:vimim_get_chinese('sqlite')
         let im = 'Unihan' . s:space . sqlite
     endif
@@ -3483,7 +3485,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_scan_plugin_file()
 " ----------------------------------
-    if s:vimim_embedded_backend == "sqlite"
+    if s:vimim_embedded_backend =~# "sqlite"
         return
     endif
     " -----------------------------------
@@ -3843,7 +3845,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_cache()
 " --------------------------------------
-    if s:vimim_embedded_backend == "datafile"
+    if s:vimim_embedded_backend =~# "datafile"
     \&& s:vimim_use_cache > 0
     \&& len(s:lines) > 1
         for line in s:lines
@@ -3870,7 +3872,7 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_scan_plugin_directory()
 " ---------------------------------------
-    if s:vimim_embedded_backend == "sqlite"
+    if s:vimim_embedded_backend =~# "sqlite"
         return
     endif
     " -----------------------------------
@@ -3933,7 +3935,7 @@ endfunction
 " ------------------------------------- todo
 function! s:vimim_scan_current_buffer()
 " -------------------------------------
-    if s:vimim_embedded_backend == "sqlite"
+    if s:vimim_embedded_backend =~# "sqlite"
         return
     endif
 endfunction
@@ -4307,7 +4309,6 @@ endfunction
 function! s:vimim_sentence_match_sqlite(keyboard)
 " -----------------------------------------------
     let keyboard = a:keyboard
-    let results = []
     let sql = s:vimim_get_cedict_sqlite_query(keyboard)
     let results = s:vimim_get_data_from_cedict_sqlite(keyboard, sql)
     if empty(results)
@@ -4341,9 +4342,6 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
 " sqlite> select * from cedict where Reading like 'ma_ ma_';
 " -------------------------------------------------
     let keyboard = a:keyboard
-    if empty(keyboard)
-        return 0
-    endif
     let table = 'CEDICT'
     let column1 = 'HeadwordTraditional'
     let column2 = 'HeadwordSimplified'
@@ -4357,22 +4355,27 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     endif
     " ----------------------------------------
     let column = column3
-    let magic_head = keyboard[:0]
-    if  magic_head ==# "u"
-        let msg = "u switch to English mode: udream => dream"
-        let keyboard = strpart(keyboard, 1)
+    if buffer =~ 'english'
         let keyboard = "'%" . keyboard . "%'"
         let column = column4
     else
-        let msg = "pinyin is the default: meng"
-        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        if len(pinyins) > 1
-            let pinyins = map(pinyins, 'v:val."_"')
-            let keyboard = join(pinyins)
+        let magic_head = keyboard[:0]
+        if  magic_head ==# "u"
+            let msg = "u switch to English mode: udream => dream"
+            let keyboard = strpart(keyboard, 1)
+            let keyboard = "'%" . keyboard . "%'"
+            let column = column4
         else
-            let keyboard = keyboard."_"
+            let msg = "pinyin is the default: meng"
+            let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+            if len(pinyins) > 1
+                let pinyins = map(pinyins, 'v:val."_"')
+                let keyboard = join(pinyins)
+            else
+                let keyboard = keyboard."_"
+            endif
+            let keyboard = "'" . keyboard . "'"
         endif
-        let keyboard = "'" . keyboard . "'"
     endif
     " ----------------------------------------
     let query  = " SELECT " . select
@@ -5506,11 +5509,11 @@ else
     " ------------------------------------------------
     " [backend] VimIM internal embedded backend engine
     " ------------------------------------------------
-    if s:vimim_embedded_backend == "directory"
+    if s:vimim_embedded_backend =~# "directory"
         let results = s:vimim_get_sentence_directory(keyboard)
-    elseif s:vimim_embedded_backend == "sqlite"
+    elseif s:vimim_embedded_backend =~# "sqlite"
         let results = s:vimim_sentence_match_sqlite(keyboard)
-    elseif s:vimim_embedded_backend == "datafile"
+    elseif s:vimim_embedded_backend =~# "datafile"
         if empty(s:cache)
             let results = s:vimim_get_sentence_datafile_lines(keyboard)
         else
