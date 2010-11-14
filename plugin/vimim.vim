@@ -128,7 +128,6 @@ function! s:vimim_initialization_once()
     call s:vimim_chinese_dictionary()
     call s:vimim_build_im_keycode()
     " ---------------------------------------
-    call s:vimim_scan_sqlite()
     call s:vimim_scan_current_buffer()
     call s:vimim_scan_vimrc()
     call s:vimim_scan_plugin_file()
@@ -454,11 +453,11 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
+    call add(G, "g:vimim_data_directory")
+    call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
-    call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_datafile_is_not_utf8")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_universal")
@@ -1212,7 +1211,7 @@ function! s:vimim_statusline()
         let im .= s:vimim_get_chinese('input')
     endif
     " ------------------------------------
-    if s:vimim_backend =~# "sqlite"
+    if s:vimim_backend.name =~# "sqlite"
         let sqlite = s:vimim_get_chinese('sqlite')
         let im = 'Unihan' . s:space . sqlite
     endif
@@ -1873,7 +1872,7 @@ function! s:vimim_get_labeling(label)
             let label2 = "_"
         endif
         " -----------------------------------------
-        if s:pinyin_and_4corner > 0
+        if s:pinyin_and_4corner > 0 || s:vimim_custom_skin == 2
             let labeling = label2
         else
             let labeling .= label2
@@ -3497,7 +3496,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_scan_plugin_file()
 " ----------------------------------
-    if s:vimim_backend =~# "sqlite"
+    if s:vimim_backend.name =~# "sqlite"
         return
     endif
     " -----------------------------------
@@ -3832,7 +3831,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_lines()
 " --------------------------------------
-    if s:vimim_backend != "datafile"
+    if s:vimim_backend.name != "datafile"
         return
     endif
     " ----------------------------------
@@ -3857,7 +3856,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_cache()
 " --------------------------------------
-    if s:vimim_backend =~# "datafile"
+    if s:vimim_backend.name =~# "datafile"
     \&& s:vimim_use_cache > 0
     \&& len(s:lines) > 1
         for line in s:lines
@@ -3884,12 +3883,12 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_scan_plugin_directory()
 " ---------------------------------------
-    if s:vimim_backend =~# "sqlite"
+    if s:vimim_backend.name =~# "sqlite"
         return
     endif
     " -----------------------------------
     if len(s:datafile) > 1
-        let s:vimim_backend = "datafile"
+        let s:vimim_backend.name = "datafile"
         return
     endif
     " -----------------------------------
@@ -3916,7 +3915,7 @@ function! s:vimim_scan_plugin_directory()
     if empty(directoires)
         return
     else
-        let s:vimim_backend = "directory"
+        let s:vimim_backend.name = "directory"
     endif
     " -----------------------------------
     for directory in directoires
@@ -3951,17 +3950,32 @@ function! s:vimim_scan_current_buffer()
     if buffer !~# '.vimim\>'
         return
     endif
+    " ---------------------------------
     if buffer =~? 'sqlite'
-        return
+        let backend = s:vimim_scan_sqlite()
+        if empty(backend)
+            return
+        else
+            let s:vimim_backend = backend
+        endif
+    " ---------------------------------
     elseif buffer =~? 'sogou'
-        let s:vimim_cloud_sogou = 1
-        let s:vimim_backend = 'sogou'
+        let backend = s:vimim_scan_sogou()
+        if empty(backend)
+            return
+        else
+            let s:vimim_backend = backend
+        endif
+ """""  let s:vimim_cloud_sogou = 1
+    " ---------------------------------
     elseif buffer =~? 'mycloud'
-        let s:vimim_backend = 'mycloud'
-    elseif buffer =~? 'dir'
-        let s:vimim_backend = 'directory'
-    elseif buffer =~? 'file'
-        let s:vimim_backend = 'datafile'
+        let s:vimim_backend.name = 'mycloud'
+    " ---------------------------------
+    elseif buffer =~? 'directory'
+        let s:vimim_backend.name = 'directory'
+    " ---------------------------------
+    elseif buffer =~? 'datafile'
+        let s:vimim_backend.name = 'datafile'
     endif
 endfunction
 
@@ -4086,7 +4100,7 @@ function! s:vimim_get_sentence_directory(keyboard)
     let msg = "Directory database is natural to vim editor."
     let keyboard = a:keyboard
     let im = s:input_method
-    if s:vimim_backend != "directory"
+    if s:vimim_backend.name != "directory"
         return []
     endif
     let results = []
@@ -4299,35 +4313,26 @@ call add(s:vimims, VimIM)
 " -----------------------------
 function! s:vimim_scan_sqlite()
 " -----------------------------
-    let s:sqlite = 0
-    let buffer = expand("%:p:t")
-    if buffer =~# '.vimim\>' && buffer =~? 'sqlite'
-        let msg = "only play auto on *sqlite*.vimim"
-    else
-        return
+    let executable = "sqlite3"
+    if !executable(executable)
+        return {}
     endif
-    " -------------------------------
-    let sqlite_executable = "sqlite3"
-    if !executable(sqlite_executable)
-        return
-    endif
-    " -------------------------------
-    let s:sqlite = s:path . 'cedict.db'
-    if filereadable(s:sqlite)
-        let msg = "found $VIM/vimfiles/plugin/cedict.db"
-    else
-        let s:sqlite = '/usr/local/share/cjklib/cedict.db'
-        if filereadable(s:sqlite)
-            let msg = "system installed unihan database"
-        else
-            return
+    let datafile = s:path . 'cedict.db'
+    if !filereadable(datafile)
+        let datafile = '/usr/local/share/cjklib/cedict.db'
+        if !filereadable(datafile)
+            return {}
         endif
     endif
-    " -------------------------------------
-    let s:vimim_backend = "sqlite"
-    " -------------------------------------
     let s:vimim_imode_pinyin = 0
     let s:vimim_static_input_style = 2
+    " ------------------------------------------
+    let vimim_backend = {}
+    let vimim_backend['name'] = "sqlite"
+    let vimim_backend['datafile'] = datafile
+    let vimim_backend['executable'] = executable
+    " ------------------------------------------
+    return vimim_backend
 endfunction
 
 " -----------------------------------------------
@@ -4407,8 +4412,8 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     let query .= " FROM   " . table
     let query .= " WHERE  " . column . ' like ' . keyboard
     " ----------------------------------------
-    let sqlite  =  "sqlite3 "
-    let sqlite .= s:sqlite . ' '
+    let sqlite  = s:vimim_backend.executable . ' '
+    let sqlite .= s:vimim_backend.datafile   . ' '
     let sqlite .= ' " '
     let sqlite .= query
     let sqlite .= ' " '
@@ -4436,6 +4441,19 @@ let VimIM = " ====  Backend=>Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" ---------------------------- todo
+function! s:vimim_scan_sogou()
+" ----------------------------
+    let s:sogou = 0
+    let executable = "sqlite3"
+    if !executable(executable)
+        return {}
+    endif
+    " -------------------------------
+    let vimim_backend = {}
+    return vimim_backend
+endfunction
+
 " ----------------------------------
 function! s:vimim_initialize_cloud()
 " ----------------------------------
@@ -4444,7 +4462,7 @@ function! s:vimim_initialize_cloud()
     " s:vimim_cloud_sogou=-2 : cloud is shut down without condition
     " ------------------------------
     if s:vimim_cloud_sogou < -1
-        return
+        return 0
     endif
     " step 1: try to find libvimim
     " ----------------------------
@@ -4465,7 +4483,7 @@ function! s:vimim_initialize_cloud()
             let s:www_executable = cloud
             let s:www_libcall = 1
             call s:vimim_do_cloud_if_no_backend()
-            return
+            return 0
         endif
     endif
     " step 2: try to find wget
@@ -4493,15 +4511,17 @@ function! s:vimim_initialize_cloud()
     endif
     if empty(s:www_executable)
         let s:vimim_cloud_sogou = 0
+        return 0
     else
         call s:vimim_do_cloud_if_no_backend()
     endif
+    return 'sogou'
 endfunction
 
 " ----------------------------------------
 function! s:vimim_do_cloud_if_no_backend()
 " ----------------------------------------
-    if empty(s:vimim_backend)
+    if empty(s:vimim_backend.name)
         if empty(s:vimim_cloud_sogou)
             let s:vimim_cloud_sogou = 1
         endif
@@ -4866,7 +4886,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
-    if !empty(s:vimim_backend)
+    if !empty(s:vimim_backend.name)
         return
     endif
 " -------------------
@@ -4993,8 +5013,8 @@ function! s:vimim_initialize_debug()
     let s:localization = 0
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
-    let s:vimim_backend = 0
     let s:chinese_input_mode = 0
+    let s:vimim_backend = {}
     " ------------------------------
     let dir = "/vimim"
     if isdirectory(dir)
@@ -5530,11 +5550,11 @@ else
     " ------------------------------------------------
     " [backend] VimIM internal embedded backend engine
     " ------------------------------------------------
-    if s:vimim_backend =~# "directory"
+    if s:vimim_backend.name =~# "directory"
         let results = s:vimim_get_sentence_directory(keyboard)
-    elseif s:vimim_backend =~# "sqlite"
+    elseif s:vimim_backend.name =~# "sqlite"
         let results = s:vimim_sentence_match_sqlite(keyboard)
-    elseif s:vimim_backend =~# "datafile"
+    elseif s:vimim_backend.name =~# "datafile"
         if empty(s:cache)
             let results = s:vimim_get_sentence_datafile_lines(keyboard)
         else
