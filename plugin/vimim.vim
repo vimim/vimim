@@ -3701,13 +3701,7 @@ function! s:vimim_get_sentence_datafile_cache(keyboard)
         let msg = "sell keyboard as is for cache"
         return []
     else
-        if s:pinyin_and_4corner > 0
-            let filter = get(keyboards, 1)
-            if filter =~ '^\d\+$' && filter > 0
-            \&& len(s:menu_4corner_as_filter) < 1
-                let s:menu_4corner_as_filter = -filter
-            endif
-        endif
+        call s:vimim_set_menu_4corner_as_filter(keyboards)
         let keyboard = get(keyboards, 0)
         let results = s:vimim_get_data_from_cache(keyboard)
     endif
@@ -3766,13 +3760,7 @@ function! s:vimim_get_sentence_datafile_lines(keyboard)
         if empty(keyboards)
             let msg = "sell the keyboard as is, without modification"
         else
-            if s:pinyin_and_4corner > 0
-                let filter = get(keyboards, 1)
-                if filter =~ '^\d\+$' && filter > 0
-                \&& len(s:menu_4corner_as_filter) < 1
-                    let s:menu_4corner_as_filter = -filter
-                endif
-            endif
+            call s:vimim_set_menu_4corner_as_filter(keyboards)
             let keyboard = get(keyboards, 0)
             if s:pumvisible_hjkl_2nd_match > 0
                 let s:keyboard_head = keyboard
@@ -4070,17 +4058,23 @@ function! s:vimim_get_sentence_directory(keyboard)
         let msg = "sell keyboard as is for directory database"
         return []
     else
-        if s:pinyin_and_4corner > 0
-            let filter = get(keyboards, 1)
-            if filter =~ '^\d\+$' && filter > 0
-            \&& len(s:menu_4corner_as_filter) < 1
-                let s:menu_4corner_as_filter = -filter
-            endif
-        endif
+        call s:vimim_set_menu_4corner_as_filter(keyboards)
         let keyboard = get(keyboards, 0)
         let results = s:vimim_get_data_from_directory(keyboard, im)
     endif
     return results
+endfunction
+
+" -----------------------------------------------------
+function! s:vimim_set_menu_4corner_as_filter(keyboards)
+" -----------------------------------------------------
+    if s:pinyin_and_4corner > 0
+        let filter = get(a:keyboards, 1)
+        if filter =~ '^\d\+$' && filter > 0
+        \&& len(s:menu_4corner_as_filter) < 1
+            let s:menu_4corner_as_filter = -filter
+        endif
+    endif
 endfunction
 
 " ------------------------------------------------------
