@@ -126,6 +126,7 @@ function! s:vimim_initialization_once()
     call s:vimim_chinese_dictionary()
     call s:vimim_build_im_keycode()
     " ---------------------------------------
+    call s:vimim_scan_sqlite()
     call s:vimim_scan_vimrc()
     call s:vimim_scan_current_buffer()
     call s:vimim_scan_plugin_file()
@@ -136,7 +137,6 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_pinyin()
     call s:vimim_initialize_shuangpin()
     " ---------------------------------------
-    call s:vimim_initialize_sqlite()
     call s:vimim_initialize_cloud()
     call s:vimim_initialize_mycloud_plugin()
     " ---------------------------------------
@@ -144,6 +144,7 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
     call s:vimim_finalize_session()
+    " ---------------------------------------
     call s:vimim_build_datafile_lines()
     " ---------------------------------------
 endfunction
@@ -235,11 +236,6 @@ function! s:vimim_finalize_session()
         let s:im['pinyin'][0] = 0
     endif
     " ------------------------------
-    if get(s:im['phonetic'],0) > 0
-    \|| get(s:im['array30'],0) > 0
-        let s:vimim_static_input_style = 1
-    endif
-    " ------------------------------
     if s:shuangpin_flag > 0
         let s:input_method = 'pinyin'
     endif
@@ -255,6 +251,11 @@ function! s:vimim_finalize_session()
         let s:im['4corner'][0] = 1
         let s:im['pinyin'][0] = 0
         let s:input_method = '4corner'
+        let s:vimim_static_input_style = 1
+    endif
+    " ------------------------------
+    if get(s:im['phonetic'],0) > 0
+    \|| get(s:im['array30'],0) > 0
         let s:vimim_static_input_style = 1
     endif
     " ------------------------------
@@ -289,6 +290,7 @@ function! s:vimim_chinese_dictionary()
     let s:chinese['vim3'] = ['精力']
     let s:chinese['vim4'] = ['生气','生氣']
     let s:chinese['vim5'] = ['中文输入法','中文輸入法']
+    let s:chinese['sqlite'] = ['数据库','數據庫']
     let s:chinese['nonstop'] = ['连续','連續']
     let s:chinese['input'] = ['输入','輸入']
     let s:chinese['directory'] = ['目录','目錄']
@@ -727,24 +729,6 @@ function! s:vimim_get_ciku_in_Chinese()
     return 0
 endfunction
 
-" --------------------------------------------
-function! s:vimim_get_input_style_in_Chinese()
-" -------------------------------------------
-    let style = s:vimim_static_input_style
-    let dynamic = s:vimim_get_chinese('dynamic')
-    let static = s:vimim_get_chinese('static')
-    let nonstop = s:vimim_get_chinese('nonstop')
-    let chinese = s:vimim_get_chinese('classic')
-    if style < 1
-        let chinese .= dynamic
-    elseif style == 1
-        let chinese .= static
-    elseif style == 2
-        let chinese = "OneKey" . nonstop
-    endif
-    return chinese
-endfunction
-
 " ----------------------------------------
 function! s:vimim_easter_chicken(keyboard)
 " ----------------------------------------
@@ -793,17 +777,26 @@ endfunction
 " ---------------------
 function! <SID>OneKey()
 " ---------------------
-" VimIM <OneKey> double play
+" VimIM <OneKey> overall
 "  (1) <OneKey> => start OneKey as "hit and run"
 "  (2) <OneKey> => stop  OneKey and print out menu
-" ------------------------------------------------
-    let s:chinese_input_mode = 0
-    return s:vimim_start_onekey()
+" ----------------------------------------------------------
+" VimIM <OneKey> triple play
+"   (1) after English (valid keys)   => trigger omni popup
+"   (2) after omni popup window      => <Space> or nothing
+"   (3) after Chinese (invalid keys) => <Tab> or nothing
+" ----------------------------------------------------------
+    if empty(s:chinese_input_mode)
+        return s:vimim_start_onekey()
+    else
+        return ''
+    endif
 endfunction
 
 " ------------------------------
 function! s:vimim_start_onekey()
 " ------------------------------
+    sil!call s:vimim_initialization_once()
     sil!call s:vimim_start()
     sil!call s:vimim_label_navigation_on()
     sil!call s:vimim_capital_navigation_on()
@@ -811,15 +804,10 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_abcd_label_on()
     sil!call s:vimim_punctuation_navigation_on()
     sil!call s:vimim_helper_mapping_on()
-    " ----------------------------------------------------------
-    " default <OneKey> triple play
-    "   (1) after English (valid keys)   => trigger omni popup
-    "   (2) after omni popup window      => <Space> or nothing
-    "   (3) after Chinese (invalid keys) => <Tab> or nothing
-    " ----------------------------------------------------------
+    " -----------------------------------------------------
     inoremap <Space> <C-R>=<SID>vimim_space_onekey()<CR>
                     \<C-R>=g:vimim_reset_after_insert()<CR>
-    " ----------------------------------------------------------
+    " -----------------------------------------------------
     let onekey = s:vimim_onekey_action("")
     if pumvisible() && s:vimim_onekey_double_ctrl6
         let onekey  = <SID>TabKey()
@@ -962,34 +950,37 @@ let VimIM = " ====  Chinese_Mode     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -------------------------------------------
+" -----------------------------------------
+function!  s:vimim_set_chinese_input_mode()
+" -----------------------------------------
 " s:chinese_input_mode=0         => (default) OneKey: hit-and-run
 " s:chinese_input_mode='dynamic' => (default) classic dynamic mode
-" s:chinese_input_mode='static'  => let g:vimim_static_input_style = 1
-" s:chinese_input_mode='onekey'  => let g:vimim_static_input_style = 2
-" -------------------------------------------
+" s:chinese_input_mode='static'  => <space> triggers menu, auto
+" s:chinese_input_mode='onekey'  => <space> triggers menu, hjkl
+" ----------------------------------------------------------------
+    if s:vimim_static_input_style < 1
+        let s:chinese_input_mode = 'dynamic'
+    elseif s:vimim_static_input_style == 1
+        let s:chinese_input_mode = 'static'
+    elseif s:vimim_static_input_style == 2
+        let s:chinese_input_mode = 'onekey'
+    endif
+endfunction
 
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
     let action = ""
+    call s:vimim_initialization_once()
+    call s:vimim_set_chinese_input_mode()
     let s:chinese_mode_switch += 1
-    " ----------------------------------
-    if s:vimim_static_input_style == 2
-        if empty(s:chinese_mode_switch%2)
-            let s:chinese_input_mode = 'onekey'
+    if empty(s:chinese_mode_switch%2)
+        call s:vimim_i_chinese_mode_on()
+        if s:chinese_input_mode == 'onekey'
             return s:vimim_start_onekey()
         else
-            call s:vimim_stop()
-        endif
-    else |" ----------------------------
-        if s:chinese_mode_switch > 2
-            call s:vimim_stop()
-            let action = "\<C-O>:redraw\<CR>"
-        endif
-        if empty(s:chinese_mode_switch%2)
             call s:vimim_start_chinese_mode()
-            if s:vimim_static_input_style > 0
+            if s:chinese_input_mode == 'static'
                 if pumvisible()
                     let msg = "<C-\> does nothing on omni menu"
                 else
@@ -997,8 +988,10 @@ function! <SID>ChineseMode()
                 endif
             endif
         endif
+    else
+        call s:vimim_stop()
+        let action = "\<C-O>:redraw\<CR>"
     endif
-    " ----------------------------------
     sil!exe 'sil!return "' . action . '"'
 endfunction
 
@@ -1011,16 +1004,14 @@ function! s:vimim_start_chinese_mode()
         sil!call s:vimim_build_datafile_cache()
     endif
     " --------------------------------
-    if s:vimim_static_input_style < 1
-        let s:chinese_input_mode = 'dynamic'
+    if s:chinese_input_mode == 'dynamic'
         call <SID>vimim_set_seamless()
         call s:vimim_dynamic_alphabet_trigger()
         " ---------------------------------------------------
         inoremap <Space> <C-R>=<SID>vimim_space_dynamic()<CR>
                       \<C-R>=g:vimim_reset_after_insert()<CR>
         " ---------------------------------------------------
-    elseif s:vimim_static_input_style == 1
-        let s:chinese_input_mode = 'static'
+    elseif s:chinese_input_mode == 'static'
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------
         inoremap <Space> <C-R>=<SID>vimim_space_static()<CR>
@@ -1104,7 +1095,7 @@ function! s:vimim_dynamic_alphabet_trigger()
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Skin             ==== {{{"
+let VimIM = " ====  User_Interface   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -1116,18 +1107,6 @@ function! s:vimim_initialize_skin()
     highlight!      Pmenu      NONE
     highlight!      PmenuSbar  NONE
     highlight!      PmenuThumb NONE
-endfunction
-
-" -----------------------------------
-function! s:vimim_i_chinese_mode_on()
-" -----------------------------------
-    if empty(s:chinese_input_mode)
-        return
-    endif
-    if s:vimim_custom_laststatus > 0
-        set laststatus=2
-    endif
-    let b:keymap_name = s:vimim_statusline()
 endfunction
 
 " --------------------------------------
@@ -1142,6 +1121,15 @@ function! s:vimim_i_cursor_color(switch)
     else
         highlight! Cursor guifg=bg guibg=Green
     endif
+endfunction
+
+" -----------------------------------
+function! s:vimim_i_chinese_mode_on()
+" -----------------------------------
+    if s:vimim_custom_laststatus > 0
+        set laststatus=2
+    endif
+    let b:keymap_name = s:vimim_statusline()
 endfunction
 
 " ----------------
@@ -1219,6 +1207,11 @@ function! s:vimim_statusline()
         let im = s:vimim_get_chinese('internal')
         let im .= s:vimim_get_chinese('input')
     endif
+    " ------------------------------------
+    if s:vimim_embedded_backend == "sqlite"
+        let sqlite = s:vimim_get_chinese('sqlite')
+        let im = 'Unihan' . s:space . sqlite
+    endif
     " ---------------------------------
     let im = bracket_l . im . bracket_r
     " ---------------------------------
@@ -1227,10 +1220,23 @@ function! s:vimim_statusline()
     return im
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  User_Interface   ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
+" --------------------------------------------
+function! s:vimim_get_input_style_in_Chinese()
+" -------------------------------------------
+    let style = s:vimim_static_input_style
+    let dynamic = s:vimim_get_chinese('dynamic')
+    let static = s:vimim_get_chinese('static')
+    let nonstop = s:vimim_get_chinese('nonstop')
+    let chinese = s:vimim_get_chinese('classic')
+    if style < 1
+        let chinese .= dynamic
+    elseif style == 1
+        let chinese .= static
+    elseif style == 2
+        let chinese = "OneKey" . nonstop
+    endif
+    return chinese
+endfunction
 
 " -----------------------------------
 function! s:vimim_12345678_label_on()
@@ -3477,6 +3483,10 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_scan_plugin_file()
 " ----------------------------------
+    if s:vimim_embedded_backend == "sqlite"
+        return
+    endif
+    " -----------------------------------
     if empty(s:path2)
     \|| empty(s:datafile)
         let msg = "no datafile nor directory specifiled in vimrc"
@@ -3808,11 +3818,14 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_lines()
 " --------------------------------------
-    if s:vimim_embedded_backend == "datafile"
-    \&& len(s:datafile) > 1
-    \&& filereadable(s:datafile)
+    if s:vimim_embedded_backend != "datafile"
+        return
+    endif
+    " ----------------------------------
+    if len(s:datafile)>1 && filereadable(s:datafile)
         let s:lines = readfile(s:datafile)
     endif
+    " ----------------------------------
     if s:pinyin_and_4corner == 1
         let digit_lines = readfile(s:datafile_4corner)
         let digit = match(digit_lines, '^\d\+')
@@ -3857,6 +3870,10 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_scan_plugin_directory()
 " ---------------------------------------
+    if s:vimim_embedded_backend == "sqlite"
+        return
+    endif
+    " -----------------------------------
     if len(s:datafile) > 1
         let s:vimim_embedded_backend = "datafile"
         return
@@ -3916,7 +3933,9 @@ endfunction
 " ------------------------------------- todo
 function! s:vimim_scan_current_buffer()
 " -------------------------------------
-    return ''
+    if s:vimim_embedded_backend == "sqlite"
+        return
+    endif
 endfunction
 
 " ----------------------------
@@ -4250,12 +4269,12 @@ let VimIM = " ====  Backend==SQLite  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------
-function! s:vimim_initialize_sqlite()
-" -----------------------------------
+" -----------------------------
+function! s:vimim_scan_sqlite()
+" -----------------------------
     let s:sqlite = 0
     let buffer = expand("%:p:t")
-    if buffer =~# '.vimim\>' && buffer =~# 'sqlite'
+    if buffer =~# '.vimim\>' && buffer =~? 'sqlite'
         let msg = "only play auto on *sqlite*.vimim"
     else
         return
@@ -4280,8 +4299,8 @@ function! s:vimim_initialize_sqlite()
     " -------------------------------------
     let s:vimim_embedded_backend = "sqlite"
     " -------------------------------------
-    let s:input_method = 'pinyin'
     let s:vimim_imode_pinyin = 0
+    let s:vimim_static_input_style = 2
 endfunction
 
 " -----------------------------------------------
@@ -4330,7 +4349,13 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     let column2 = 'HeadwordSimplified'
     let column3 = 'Reading'
     let column4 = 'Translation'
+    " ----------------------------------------
     let select = column2
+    let buffer = expand("%:p:t")
+    if buffer =~# 'SQLITE'
+        let select = column1
+    endif
+    " ----------------------------------------
     let column = column3
     let magic_head = keyboard[:0]
     if  magic_head ==# "u"
@@ -4941,7 +4966,7 @@ function! s:vimim_initialize_debug()
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
     let s:vimim_embedded_backend = 0
-    let s:vimim_static_input_style = 0
+    let s:chinese_input_mode = 0
     let dir = "/vimim"
     if isdirectory(dir)
         let s:path2 = dir
@@ -5008,6 +5033,7 @@ endfunction
 " -----------------------------
 function! s:vimim_debug_reset()
 " -----------------------------
+    let s:chinese_input_mode = 0
     if s:vimimdebug > 0
         let max = 512
         if s:debug_count > max
@@ -5181,13 +5207,11 @@ endfunction
 " -----------------------
 function! s:vimim_start()
 " -----------------------
-    sil!call s:vimim_initialization_once()
     sil!call s:vimim_plugins_fix_start()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_i_cursor_color(1)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_12345678_label_on()
-    sil!call s:vimim_i_chinese_mode_on()
 endfunction
 
 " ----------------------
