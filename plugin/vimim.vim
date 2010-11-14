@@ -126,7 +126,8 @@ function! s:vimim_initialization_once()
     call s:vimim_chinese_dictionary()
     call s:vimim_build_im_keycode()
     " ---------------------------------------
-    call s:vimim_get_datafile_in_vimrc()
+    call s:vimim_scan_vimrc()
+    call s:vimim_scan_current_buffer()
     call s:vimim_scan_plugin_file()
     call s:vimim_scan_plugin_directory()
     " ---------------------------------------
@@ -152,9 +153,6 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     sil!call s:vimim_start_omni()
     sil!call s:vimim_super_reset()
-    " --------------------------------
-    let s:sqlite = 0
-    let s:sqlite_executable = 0
     " --------------------------------
     let s:datafile = 0
     let s:lines = []
@@ -456,7 +454,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_data_sqlite")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_datafile_is_not_utf8")
     call add(G, "g:vimim_english_punctuation")
@@ -3482,16 +3479,8 @@ function! s:vimim_scan_plugin_file()
 " ----------------------------------
     if empty(s:path2)
     \|| empty(s:datafile)
-    \|| empty(s:sqlite)
         let msg = "no datafile nor directory specifiled in vimrc"
     else
-        return
-    endif
-    " -----------------------------------
-    let sqlite = "cedict.db"
-    let datafile = s:path . sqlite
-    if filereadable(datafile)
-        let s:sqlite = datafile
         return
     endif
     " -----------------------------------
@@ -3868,11 +3857,6 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_scan_plugin_directory()
 " ---------------------------------------
-    if len(s:sqlite) > 1
-        let s:vimim_embedded_backend = "sqlite"
-        return
-    endif
-    " -----------------------------------
     if len(s:datafile) > 1
         let s:vimim_embedded_backend = "datafile"
         return
@@ -3929,15 +3913,15 @@ function! s:vimim_scan_plugin_directory()
     " -----------------------------------
 endfunction
 
-" ---------------------------------------
-function! s:vimim_get_datafile_in_vimrc()
-" ---------------------------------------
-    let datafile = s:vimim_data_sqlite
-    if !empty(datafile) && filereadable(datafile)
-        let s:sqlite = copy(datafile)
-        return
-    endif
-    " -----------------------------------
+" ------------------------------------- todo
+function! s:vimim_scan_current_buffer()
+" -------------------------------------
+    return ''
+endfunction
+
+" ----------------------------
+function! s:vimim_scan_vimrc()
+" ----------------------------
     let dir = s:vimim_data_directory
     if !empty(dir) && isdirectory(dir)
         let s:path2 = copy(dir)
@@ -4269,22 +4253,40 @@ call add(s:vimims, VimIM)
 " -----------------------------------
 function! s:vimim_initialize_sqlite()
 " -----------------------------------
-    if s:vimim_embedded_backend == "sqlite"
-        let sqlite_executable = "sqlite3"
-        if executable(sqlite_executable)
-            let s:sqlite_executable = sqlite_executable
-            let s:input_method = 'pinyin'
-            let s:vimim_imode_pinyin = 0
+    let s:sqlite = 0
+    let buffer = expand("%:p:t")
+    if buffer =~# '.vimim\>' && buffer =~# 'sqlite'
+        let msg = "only play auto on *sqlite*.vimim"
+    else
+        return
+    endif
+    " -------------------------------
+    let sqlite_executable = "sqlite3"
+    if !executable(sqlite_executable)
+        return
+    endif
+    " -------------------------------
+    let s:sqlite = s:path . 'cedict.db'
+    if filereadable(s:sqlite)
+        let msg = "found $VIM/vimfiles/plugin/cedict.db"
+    else
+        let s:sqlite = '/usr/local/share/cjklib/cedict.db'
+        if filereadable(s:sqlite)
+            let msg = "system installed unihan database"
+        else
+            return
         endif
     endif
+    " -------------------------------------
+    let s:vimim_embedded_backend = "sqlite"
+    " -------------------------------------
+    let s:input_method = 'pinyin'
+    let s:vimim_imode_pinyin = 0
 endfunction
 
 " -----------------------------------------------
 function! s:vimim_sentence_match_sqlite(keyboard)
 " -----------------------------------------------
-    if len(s:sqlite_executable) < len("sqlite3")
-        return []
-    endif
     let keyboard = a:keyboard
     let results = []
     let sql = s:vimim_get_cedict_sqlite_query(keyboard)
@@ -4352,7 +4354,7 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     let query .= " FROM   " . table
     let query .= " WHERE  " . column . ' like ' . keyboard
     " ----------------------------------------
-    let sqlite  = s:sqlite_executable . ' '
+    let sqlite  =  "sqlite3 "
     let sqlite .= s:sqlite . ' '
     let sqlite .= ' " '
     let sqlite .= query
@@ -4951,10 +4953,6 @@ function! s:vimim_initialize_debug()
         return
     elseif filereadable(dir)
         let s:path2 = 0
-        let sqlite = s:path . "sqlite"
-        if filereadable(sqlite)
-            let s:vimim_data_sqlite = '/usr/local/share/cjklib/cedict.db'
-        endif
         return
     endif
     " ------------------------------
