@@ -801,7 +801,7 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_initialization_once()
     sil!call s:vimim_start()
     sil!call s:vimim_label_navigation_on()
-    sil!call s:vimim_capital_navigation_on()
+    sil!call s:vimim_onekey_capital_on()
     sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_abcd_label_on()
     sil!call s:vimim_punctuation_navigation_on()
@@ -1128,10 +1128,12 @@ endfunction
 " -----------------------------------
 function! s:vimim_i_chinese_mode_on()
 " -----------------------------------
-    if s:vimim_custom_laststatus > 0
-        set laststatus=2
+    if s:vimim_custom_skin < 2
+        if s:vimim_custom_laststatus > 0
+            set laststatus=2
+        endif
+        let b:keymap_name = s:vimim_statusline()
     endif
-    let b:keymap_name = s:vimim_statusline()
 endfunction
 
 " ----------------
@@ -1287,14 +1289,14 @@ function! s:vimim_abcd_label_on()
     let labels = split(s:abcd, '\zs')
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_abcdefg_label("'._.'")<CR>'
+        \  <C-R>=<SID>vimim_abcd_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
 endfunction
 
-" -----------------------------------
-function! <SID>vimim_abcdefg_label(n)
-" -----------------------------------
+" --------------------------------
+function! <SID>vimim_abcd_label(n)
+" --------------------------------
     let label = a:n
     if pumvisible()
         let n = match(s:abcd, label)
@@ -1305,14 +1307,25 @@ function! <SID>vimim_abcdefg_label(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
-" ---------------------------------------
-function! s:vimim_capital_navigation_on()
-" ---------------------------------------
-    for char in s:AZ_list
-        sil!exe 'inoremap <silent> ' . char . '
-        \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. tolower(char) .
-        \'<C-R>=g:vimim()<CR>'
+" -----------------------------------
+function! s:vimim_onekey_capital_on()
+" -----------------------------------
+    for _ in s:AZ_list
+        sil!exe 'inoremap <silent> <expr> '._.'
+        \ <SID>vimim_onkey_capital("'._.'")'
     endfor
+endfunction
+
+" -------------------------------------
+function! <SID>vimim_onkey_capital(key)
+" -------------------------------------
+    let hjkl = a:key
+    if pumvisible()
+        let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
+        let hjkl .= tolower(a:key)
+        let hjkl .= '\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
 " -------------------------------------
@@ -1327,14 +1340,14 @@ function! s:vimim_label_navigation_on()
     " ---------------------------------
     for _ in hjkl_list
         sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_hjkl("'._.'")'
+        \ <SID>vimim_label_navigation("'._.'")'
     endfor
     " ---------------------------------
 endfunction
 
-" ----------------------------
-function! <SID>vimim_hjkl(key)
-" ----------------------------
+" ----------------------------------------
+function! <SID>vimim_label_navigation(key)
+" ----------------------------------------
     let hjkl = a:key
     if pumvisible()
         if a:key == 'h'
@@ -1801,19 +1814,18 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         endif
         let chinese = get(pairs, 1)
         " -------------------------------------------------
-        if s:vimim_custom_skin < 2
-            let extra_text = menu
-            if s:pinyin_and_4corner > 0
-            \&& empty(match(extra_text, '^\d\{4}$'))
-                let unicode = printf('u%04x', char2nr(chinese))
-                let extra_text = menu . s:space . unicode
-            endif
-            if extra_text =~ s:show_me_not_pattern
-                let msg = "ignore key starting with ii/oo for beauty"
-                let extra_text = ""
-            endif
-            let complete_items["menu"] = extra_text
+        let extra_text = menu
+        if s:pinyin_and_4corner > 0
+        \&& empty(match(extra_text, '^\d\{4}$'))
+            let unicode = printf('u%04x', char2nr(chinese))
+            let extra_text = menu . s:space . unicode
         endif
+        if s:vimim_custom_skin == 2
+        \&& extra_text =~ s:show_me_not_pattern
+            let msg = "ignore key starting with ii/oo for beauty"
+            let extra_text = ""
+        endif
+        let complete_items["menu"] = extra_text
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             let tail = ""
@@ -2483,19 +2495,6 @@ function! s:vimim_build_unihan_reverse_cache(chinese)
     endfor
 endfunction
 
-" --------------------------------------
-function! s:vimim_1234567890_filter_on()
-" --------------------------------------
-    if s:vimim_custom_menu_label < 1
-    \|| empty(s:pinyin_and_4corner)
-        return
-    endif
-    for _ in s:pqwertyuio
-        sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_label_1234567890_filter("'._.'")<CR>'
-    endfor
-endfunction
-
 " -----------------------------------------------------
 function! s:vimim_set_menu_4corner_as_filter(keyboards)
 " -----------------------------------------------------
@@ -2510,9 +2509,22 @@ function! s:vimim_set_menu_4corner_as_filter(keyboards)
     endif
 endfunction
 
-" ---------------------------------------------
-function! <SID>vimim_label_1234567890_filter(n)
-" ---------------------------------------------
+" --------------------------------------
+function! s:vimim_1234567890_filter_on()
+" --------------------------------------
+    if s:vimim_custom_menu_label < 1
+    \|| empty(s:pinyin_and_4corner)
+        return
+    endif
+    for _ in s:pqwertyuio
+        sil!exe'inoremap <silent>  '._.'
+        \  <C-R>=<SID>vimim_1234567890_filter("'._.'")<CR>'
+    endfor
+endfunction
+
+" ---------------------------------------
+function! <SID>vimim_1234567890_filter(n)
+" ---------------------------------------
     let label = a:n
     if pumvisible()
         if s:pinyin_and_4corner < 1
@@ -3935,8 +3947,13 @@ endfunction
 " ------------------------------------- todo
 function! s:vimim_scan_current_buffer()
 " -------------------------------------
-    if s:vimim_embedded_backend =~# "sqlite"
+    let buffer = expand("%:p:t")
+    if buffer !~# '.vimim\>'
         return
+    endif
+    if buffer =~? 'sogou'
+        let s:vimim_cloud_sogou = 1
+        let s:vimim_embedded_backend = 0
     endif
 endfunction
 
@@ -4970,26 +4987,22 @@ function! s:vimim_initialize_debug()
     let s:initialization_loaded = 0
     let s:vimim_embedded_backend = 0
     let s:chinese_input_mode = 0
+    " ------------------------------
     let dir = "/vimim"
     if isdirectory(dir)
         let s:path2 = dir
     endif
-    " ------------------------------
-    let dir = s:path . "vimim"
+    let dir = s:path . "tmp"
     if isdirectory(dir)
-        let s:path2 = dir
-        return
-    elseif filereadable(dir)
         let s:path2 = 0
-        return
     endif
     " ------------------------------
     let s:vimim_debug = 9
     let s:vimim_static_input_style = 2
     let s:vimim_tab_as_onekey = 2
+    let s:vimim_custom_skin = 2
     let s:vimim_cloud_sogou = -1
     let s:vimim_imode_pinyin = 1
-    let s:vimim_custom_skin = 1
     let s:vimim_custom_laststatus = 0
     let s:vimim_reverse_pageup_pagedown = 1
     " ------------------------------
