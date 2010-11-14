@@ -129,8 +129,8 @@ function! s:vimim_initialization_once()
     call s:vimim_build_im_keycode()
     " ---------------------------------------
     call s:vimim_scan_sqlite()
-    call s:vimim_scan_vimrc()
     call s:vimim_scan_current_buffer()
+    call s:vimim_scan_vimrc()
     call s:vimim_scan_plugin_file()
     call s:vimim_scan_plugin_directory()
     " ---------------------------------------
@@ -1212,7 +1212,7 @@ function! s:vimim_statusline()
         let im .= s:vimim_get_chinese('input')
     endif
     " ------------------------------------
-    if s:vimim_embedded_backend =~# "sqlite"
+    if s:vimim_backend =~# "sqlite"
         let sqlite = s:vimim_get_chinese('sqlite')
         let im = 'Unihan' . s:space . sqlite
     endif
@@ -3497,7 +3497,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_scan_plugin_file()
 " ----------------------------------
-    if s:vimim_embedded_backend =~# "sqlite"
+    if s:vimim_backend =~# "sqlite"
         return
     endif
     " -----------------------------------
@@ -3832,7 +3832,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_lines()
 " --------------------------------------
-    if s:vimim_embedded_backend != "datafile"
+    if s:vimim_backend != "datafile"
         return
     endif
     " ----------------------------------
@@ -3857,7 +3857,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_cache()
 " --------------------------------------
-    if s:vimim_embedded_backend =~# "datafile"
+    if s:vimim_backend =~# "datafile"
     \&& s:vimim_use_cache > 0
     \&& len(s:lines) > 1
         for line in s:lines
@@ -3884,12 +3884,12 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_scan_plugin_directory()
 " ---------------------------------------
-    if s:vimim_embedded_backend =~# "sqlite"
+    if s:vimim_backend =~# "sqlite"
         return
     endif
     " -----------------------------------
     if len(s:datafile) > 1
-        let s:vimim_embedded_backend = "datafile"
+        let s:vimim_backend = "datafile"
         return
     endif
     " -----------------------------------
@@ -3916,7 +3916,7 @@ function! s:vimim_scan_plugin_directory()
     if empty(directoires)
         return
     else
-        let s:vimim_embedded_backend = "directory"
+        let s:vimim_backend = "directory"
     endif
     " -----------------------------------
     for directory in directoires
@@ -3951,9 +3951,17 @@ function! s:vimim_scan_current_buffer()
     if buffer !~# '.vimim\>'
         return
     endif
-    if buffer =~? 'sogou'
+    if buffer =~? 'sqlite'
+        return
+    elseif buffer =~? 'sogou'
         let s:vimim_cloud_sogou = 1
-        let s:vimim_embedded_backend = 0
+        let s:vimim_backend = 'sogou'
+    elseif buffer =~? 'mycloud'
+        let s:vimim_backend = 'mycloud'
+    elseif buffer =~? 'dir'
+        let s:vimim_backend = 'directory'
+    elseif buffer =~? 'file'
+        let s:vimim_backend = 'datafile'
     endif
 endfunction
 
@@ -4078,7 +4086,7 @@ function! s:vimim_get_sentence_directory(keyboard)
     let msg = "Directory database is natural to vim editor."
     let keyboard = a:keyboard
     let im = s:input_method
-    if s:vimim_embedded_backend != "directory"
+    if s:vimim_backend != "directory"
         return []
     endif
     let results = []
@@ -4316,7 +4324,7 @@ function! s:vimim_scan_sqlite()
         endif
     endif
     " -------------------------------------
-    let s:vimim_embedded_backend = "sqlite"
+    let s:vimim_backend = "sqlite"
     " -------------------------------------
     let s:vimim_imode_pinyin = 0
     let s:vimim_static_input_style = 2
@@ -4493,7 +4501,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_do_cloud_if_no_backend()
 " ----------------------------------------
-    if empty(s:vimim_embedded_backend)
+    if empty(s:vimim_backend)
         if empty(s:vimim_cloud_sogou)
             let s:vimim_cloud_sogou = 1
         endif
@@ -4858,7 +4866,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_initialize_mycloud_plugin()
 " -------------------------------------------
-    if !empty(s:vimim_embedded_backend)
+    if !empty(s:vimim_backend)
         return
     endif
 " -------------------
@@ -4985,7 +4993,7 @@ function! s:vimim_initialize_debug()
     let s:localization = 0
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
-    let s:vimim_embedded_backend = 0
+    let s:vimim_backend = 0
     let s:chinese_input_mode = 0
     " ------------------------------
     let dir = "/vimim"
@@ -5522,11 +5530,11 @@ else
     " ------------------------------------------------
     " [backend] VimIM internal embedded backend engine
     " ------------------------------------------------
-    if s:vimim_embedded_backend =~# "directory"
+    if s:vimim_backend =~# "directory"
         let results = s:vimim_get_sentence_directory(keyboard)
-    elseif s:vimim_embedded_backend =~# "sqlite"
+    elseif s:vimim_backend =~# "sqlite"
         let results = s:vimim_sentence_match_sqlite(keyboard)
-    elseif s:vimim_embedded_backend =~# "datafile"
+    elseif s:vimim_backend =~# "datafile"
         if empty(s:cache)
             let results = s:vimim_get_sentence_datafile_lines(keyboard)
         else
