@@ -157,8 +157,8 @@ function! s:vimim_initialize_session()
     let s:sqlite_executable = 0
     " --------------------------------
     let s:datafile = 0
-    let s:datafile_lines = []
-    let s:datafile_cache = {}
+    let s:lines = []
+    let s:cache = {}
     " --------------------------------
     let s:datafile_4corner = 0
     let s:unicode_4corner_cache = {}
@@ -179,6 +179,7 @@ function! s:vimim_initialize_session()
     let s:vimim_cloud_plugin = 0
     let s:vimim_sogou_key = 0
     let s:has_dot_in_datafile = 0
+    let s:has_apostrophe_in_datafile = 0
     let s:shuangpin_flag = 0
     " --------------------------------
     let s:smart_single_quotes = 1
@@ -227,7 +228,7 @@ function! s:vimim_finalize_session()
     endif
     " ------------------------------
     if s:datafile =~# "quote"
-        let s:vimim_datafile_has_apostrophe = 1
+        let s:has_apostrophe_in_datafile = 1
     endif
     " ------------------------------
     if get(s:im['boshiamy'],0) > 0
@@ -457,7 +458,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_data_sqlite")
     call add(G, "g:vimim_data_file")
-    call add(G, "g:vimim_datafile_has_apostrophe")
     call add(G, "g:vimim_datafile_is_not_utf8")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_universal")
@@ -1010,7 +1010,7 @@ function! s:vimim_start_chinese_mode()
 " ------------------------------------
     sil!call s:vimim_start()
     " --------------------------------
-    if empty(s:datafile_cache)
+    if empty(s:cache)
         sil!call s:vimim_build_datafile_cache()
     endif
     " --------------------------------
@@ -2591,8 +2591,9 @@ function! s:vimim_apostrophe(keyboard)
     \&& keyboard[-1:-1] != "'"
         let msg = "valid apostrophe is typed"
     else
-        let zero_or_one = "'\\="
-        let keyboard = join(split(keyboard,'\ze'), zero_or_one)
+      " let zero_or_one = "'\\="
+      " let keyboard = join(split(keyboard,'\ze'), zero_or_one)
+        let keyboard = s:vimim_get_pinyin_from_pinyin(keyboard)
     endif
     return keyboard
 endfunction
@@ -3674,12 +3675,12 @@ endfunction
 function! s:vimim_get_data_from_cache(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:datafile_cache)
+    if empty(s:cache)
         return []
     endif
     let results = []
-    if has_key(s:datafile_cache, keyboard)
-        let results = s:datafile_cache[keyboard]
+    if has_key(s:cache, keyboard)
+        let results = s:cache[keyboard]
     endif
     return results
 endfunction
@@ -3689,7 +3690,7 @@ function! s:vimim_get_sentence_datafile_cache(keyboard)
 " -----------------------------------------------------
     let msg = "use cache to speed up search after cache is built"
     let keyboard = a:keyboard
-    if empty(s:datafile_cache)
+    if empty(s:cache)
         return []
     endif
     let results = []
@@ -3759,9 +3760,9 @@ function! s:vimim_get_sentence_datafile_lines(keyboard)
     let results = []
     " -------------------------------------------
     let pattern = '^' . keyboard
-    let match_start = match(s:datafile_lines, pattern)
+    let match_start = match(s:lines, pattern)
     if match_start < 0
-        let keyboards = s:vimim_sentence_match_file(s:datafile_lines, keyboard)
+        let keyboards = s:vimim_sentence_match_file(s:lines, keyboard)
         if empty(keyboards)
             let msg = "sell the keyboard as is, without modification"
         else
@@ -3777,19 +3778,19 @@ function! s:vimim_get_sentence_datafile_lines(keyboard)
                 let s:keyboard_head = keyboard
             endif
             let pattern = "^" . keyboard
-            let match_start = match(s:datafile_lines, pattern)
+            let match_start = match(s:lines, pattern)
         endif
     endif
     " -------------------------------------------
     if match_start < 0
         let msg = "fuzzy search could be done here, if needed"
     else
-        if s:vimim_datafile_has_apostrophe > 0
-            let results = s:vimim_fixed_match(s:datafile_lines, keyboard, 1)
+        if s:has_apostrophe_in_datafile > 0
+            let results = s:vimim_fixed_match(s:lines, keyboard, 1)
         elseif get(s:im['pinyin'],0) > 0
-            let results = s:vimim_pinyin(s:datafile_lines, keyboard, match_start)
+            let results = s:vimim_pinyin(s:lines, keyboard, match_start)
         else
-            let results = s:vimim_fixed_match(s:datafile_lines, keyboard, 4)
+            let results = s:vimim_fixed_match(s:lines, keyboard, 4)
         endif
     endif
     return results
@@ -3821,12 +3822,12 @@ function! s:vimim_build_datafile_lines()
     if s:vimim_embedded_backend == "datafile"
     \&& len(s:datafile) > 1
     \&& filereadable(s:datafile)
-        let s:datafile_lines = readfile(s:datafile)
+        let s:lines = readfile(s:datafile)
     endif
     if s:pinyin_and_4corner == 1
         let digit_lines = readfile(s:datafile_4corner)
         let digit = match(digit_lines, '^\d\+')
-        call extend(s:datafile_lines, digit_lines[digit :])
+        call extend(s:lines, digit_lines[digit :])
         let unihan_list = digit_lines[: digit-1]
         for unihan in unihan_list
             let pairs = split(unihan) |" u808f 8022
@@ -3842,16 +3843,16 @@ function! s:vimim_build_datafile_cache()
 " --------------------------------------
     if s:vimim_embedded_backend == "datafile"
     \&& s:vimim_use_cache > 0
-    \&& len(s:datafile_lines) > 1
-        for line in s:datafile_lines
+    \&& len(s:lines) > 1
+        for line in s:lines
             let oneline_list = split(line)
             let menu = remove(oneline_list, 0)
-            if has_key(s:datafile_cache, menu)
-                let line_list = s:datafile_cache[menu]
+            if has_key(s:cache, menu)
+                let line_list = s:cache[menu]
                 call extend(line_list, oneline_list)
                 let line = join(line_list)
             endif
-            let s:datafile_cache[menu] = [line]
+            let s:cache[menu] = [line]
         endfor
     endif
 endfunction
@@ -5466,7 +5467,7 @@ else
 
     let s:keyboard_leading_zero = keyboard
     " ------------------------------------
-    if s:vimim_datafile_has_apostrophe > 0
+    if s:has_apostrophe_in_datafile > 0
         let keyboard = s:vimim_apostrophe(keyboard)
     endif
 
@@ -5497,7 +5498,7 @@ else
     if s:vimim_embedded_backend == "directory"
         let results = s:vimim_get_sentence_directory(keyboard)
     elseif s:vimim_embedded_backend == "datafile"
-        if empty(s:datafile_cache)
+        if empty(s:cache)
             let results = s:vimim_get_sentence_datafile_lines(keyboard)
         else
             let results = s:vimim_get_sentence_datafile_cache(keyboard)
