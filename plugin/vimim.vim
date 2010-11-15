@@ -129,6 +129,7 @@ function! s:vimim_initialization_once()
     call s:vimim_build_im_keycode()
     call s:vimim_build_all_datafile_names()
     " --------------------------------------- todo
+    call s:vimim_one_backend_one_time()
     call s:vimim_scan_current_vimrc()
     call s:vimim_scan_backend_embedded_datafile()
     call s:vimim_scan_backend_embedded_directory()
@@ -157,13 +158,13 @@ function! s:vimim_initialize_session()
     sil!call s:vimim_super_reset()
     " --------------------------------
     let s:datafile = 0
-    let s:lines = []
-    let s:cache = {}
     " --------------------------------
     let s:datafile_4corner = 0
     let s:unicode_4corner_cache = {}
     " --------------------------------
     let s:im = {}
+    let s:lines = []
+    let s:cache = {}
     let s:input_method = 0
     " --------------------------------
     let s:data_directory_4corner = 0
@@ -374,15 +375,23 @@ function! s:vimim_build_im_keycode()
     call add(key_keycode, ['phonetic', "[0-9a-z.,;/]"])
     call add(key_keycode, ['array30',  "[0-9a-z.,;/]"])
     " -----------------------------
+    let im_hash = {}
+    let im_hash.loaded = 0
+    let im_hash.chinese = 0
+    let im_hash.keycode = 0
+    let im_hash.lines = []
+    let im_hash.cache = {}
+    let im_hash.directory = ''
+    " ----------------------------- todo
     for pairs in key_keycode
         let name = get(pairs, 0)
         let keycode = get(pairs, 1)
         let chinese = s:vimim_get_chinese(name)
-        let key = {}
-        let key.loaded = 0
+        let key = copy(im_hash)
         let key.chinese = chinese
         let key.keycode = keycode
         let s:im[name] = key
+        " -------------------------
     endfor
 endfunction
 
@@ -2473,7 +2482,7 @@ function! s:vimim_build_unihan_reverse_cache(chinese)
 " [input]  馬力
 " [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
 " ---------------------------------------------------
-    if s:pinyin_and_4corner < 2
+    if empty(s:pinyin_and_4corner)
         return
     endif
     let chinese = a:chinese
@@ -3129,6 +3138,21 @@ let VimIM = " ====  Input_Misc       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+
+" --------------------------------------
+function! s:vimim_one_backend_one_time()
+" --------------------------------------
+ "  [todo] 4corner as filter is independent
+ "         can be used as sqlite filter
+ "         can also be used as cloud filter?
+ "  call s:vimim_scan_current_vimrc()
+ "  call s:vimim_scan_backend_embedded_datafile()
+ "  call s:vimim_scan_backend_embedded_directory()
+ "  call s:vimim_scan_backend_cloud()
+ "  call s:vimim_scan_backend_mycloud()
+ "  call s:vimim_scan_current_buffer()
+endfunction
+
 " ---------------------------------
 function! s:vimim_initialize_erbi()
 " ---------------------------------
@@ -3509,10 +3533,6 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if s:vimim_backend_embedded.name =~# "sqlite"
-        return
-    endif
-    " -----------------------------------
     if empty(s:path2) || empty(s:datafile)
         let msg = "no datafile nor directory specifiled in vimrc"
     else
@@ -3866,8 +3886,7 @@ call add(s:vimims, VimIM)
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if s:vimim_backend_embedded.name =~# "sqlite"
-    \|| empty(s:path2)
+    if empty(s:path2)
     \|| len(s:datafile) > 1
         return
     endif
