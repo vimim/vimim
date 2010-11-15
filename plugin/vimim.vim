@@ -127,7 +127,7 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_encoding()
     call s:vimim_chinese_dictionary()
     call s:vimim_build_im_keycode()
-    " ---------------------------------------
+    " --------------------------------------- todo
     call s:vimim_scan_current_buffer()
     call s:vimim_scan_vimrc()
     call s:vimim_scan_plugin_file()
@@ -4324,12 +4324,12 @@ function! s:vimim_scan_sqlite()
     let s:vimim_imode_pinyin = 0
     let s:vimim_static_input_style = 2
     " ------------------------------------------
-    let vimim_backend_embedded = {}
-    let vimim_backend_embedded['name'] = "sqlite"
-    let vimim_backend_embedded['datafile'] = datafile
-    let vimim_backend_embedded['executable'] = executable
+    let s:vimim_backend_embedded = {}
+    let s:vimim_backend_embedded.name = "sqlite"
+    let s:vimim_backend_embedded.datafile = datafile
+    let s:vimim_backend_embedded.executable = executable
     " ------------------------------------------
-    return vimim_backend_embedded
+    return s:vimim_backend_embedded
 endfunction
 
 " -----------------------------------------------
@@ -4442,7 +4442,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_scan_sogou()
 " ----------------------------
 "   let vimim_backend_cloud = {}
-"   let vimim_backend_cloud['name'] = 'sogou'
+"   let vimim_backend_cloud.name = 'sogou'
 "   return vimim_backend_cloud
     " ---------------------------------------
 endfunction
@@ -4454,13 +4454,9 @@ function! s:vimim_initialize_cloud()
     " s:vimim_cloud_sogou=-1 : cloud is open when cloud at will
     " s:vimim_cloud_sogou=-2 : cloud is shut down without condition
     " ------------------------------ todo
-    if s:vimim_cloud_sogou = -1
+    if s:vimim_cloud_sogou < 0
         return {}
     endif
-    " ----------------------------
-    let s:vimim_backend_cloud['name'] = 'sogou'
-    let s:vimim_backend_cloud['www_executable'] = 0
-    let s:vimim_backend_cloud['www_libcall'] = 0
     " ----------------------------
     " step 1: try to find libvimim
     " ----------------------------
@@ -5018,9 +5014,14 @@ function! s:vimim_initialize_debug()
     let s:chinese_mode_switch = 1
     let s:initialization_loaded = 0
     let s:chinese_input_mode = 0
-    " ------------------------------
+    " ------------------------------ todo
     let s:vimim_backend_embedded = {}
+    let s:vimim_backend_embedded.name = 0
+    " ------------------------------ todo
     let s:vimim_backend_cloud = {}
+    let s:vimim_backend_cloud.name = 'sogou'
+    let s:vimim_backend_cloud.www_executable = 0
+    let s:vimim_backend_cloud.www_libcall = 0
     " ------------------------------
     let dir = "/vimim"
     if isdirectory(dir)
