@@ -127,6 +127,7 @@ function! s:vimim_initialization_once()
     call s:vimim_initialize_encoding()
     call s:vimim_chinese_dictionary()
     call s:vimim_build_im_keycode()
+    call s:vimim_build_all_datafile_names()
     " --------------------------------------- todo
     call s:vimim_scan_current_vimrc()
     call s:vimim_scan_backend_embedded_datafile()
@@ -310,7 +311,7 @@ function! s:vimim_chinese_dictionary()
     let s:chinese['4corner'] = ['四角号码','四角號碼']
     let s:chinese['12345'] = ['五笔划','五筆劃']
     let s:chinese['ctc'] = ['中文电码','中文電碼']
-    let s:chinese['cns11643'] = ['交换码','交換碼']
+    let s:chinese['11643'] = ['交换码','交換碼']
     let s:chinese['english'] = ['英文']
     let s:chinese['hangul'] = ['韩文','韓文']
     let s:chinese['xinhua'] = ['新华','新華']
@@ -345,7 +346,7 @@ function! s:vimim_chinese_dictionary()
     let s:chinese['bracket_r'] = ['》','】']
 endfunction
 
-" ---------------------------------- todo todo
+" ----------------------------------
 function! s:vimim_build_im_keycode()
 " ----------------------------------
     let key_keycode = []
@@ -355,7 +356,7 @@ function! s:vimim_build_im_keycode()
     call add(key_keycode, ['4corner', "[0-9a-z']"])
     call add(key_keycode, ['12345',   "[0-9a-z']"])
     call add(key_keycode, ['ctc',     "[0-9a-z']"])
-    call add(key_keycode, ['cns11643',"[0-9a-z']"])
+    call add(key_keycode, ['11643',   "[0-9a-z']"])
     call add(key_keycode, ['english', "[0-9a-z']"])
     call add(key_keycode, ['hangul',  "[0-9a-z']"])
     call add(key_keycode, ['xinhua',  "[0-9a-z']"])
@@ -3490,6 +3491,21 @@ let VimIM = " ====  Backend==FILE    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" ------------------------------------------
+function! s:vimim_build_all_datafile_names()
+" ------------------------------------------
+    let names = copy(keys(s:im))
+    call add(names, 'pinyin_quote_sogou')
+    call add(names, 'pinyin_huge')
+    call add(names, 'pinyin_fcitx')
+    call add(names, 'pinyin_canton')
+    call add(names, 'pinyin_hongkong')
+    call add(names, 'wubi98')
+    call add(names, 'wubi2000')
+    call add(names, 'wubijd')
+    let s:datafile_names = names
+endfunction
+
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
@@ -3497,43 +3513,13 @@ function! s:vimim_scan_backend_embedded_datafile()
         return
     endif
     " -----------------------------------
-    if empty(s:path2)
-    \|| empty(s:datafile)
+    if empty(s:path2) || empty(s:datafile)
         let msg = "no datafile nor directory specifiled in vimrc"
     else
         return
     endif
-    " ----------------------------------- todo todo
-    let input_methods = []
-    call add(input_methods, 'pinyin')
-    call add(input_methods, 'pinyin_quote_sogou')
-    call add(input_methods, 'pinyin_huge')
-    call add(input_methods, 'pinyin_fcitx')
-    call add(input_methods, 'pinyin_canton')
-    call add(input_methods, 'pinyin_hongkong')
-    call add(input_methods, '4corner')
-    call add(input_methods, '12345')
-    call add(input_methods, 'wubi')
-    call add(input_methods, 'wubi98')
-    call add(input_methods, 'wubi2000')
-    call add(input_methods, 'wubijd')
-    call add(input_methods, 'cangjie')
-    call add(input_methods, 'zhengma')
-    call add(input_methods, 'quick')
-    call add(input_methods, 'xinhua')
-    call add(input_methods, 'erbi')
-    call add(input_methods, 'boshiamy')
-    call add(input_methods, 'phonetic')
-    call add(input_methods, 'array30')
-    call add(input_methods, 'wu')
-    call add(input_methods, 'yong')
-    call add(input_methods, 'nature')
-    call add(input_methods, 'hangul')
-    call add(input_methods, 'cns11643')
-    call add(input_methods, 'ctc')
-    call add(input_methods, 'english')
     " ------------------------------------
-    for im in input_methods
+    for im in s:datafile_names
         let file = "vimim." . im . ".txt"
         let datafile = s:path . file
         if filereadable(datafile)
@@ -3881,54 +3867,38 @@ call add(s:vimims, VimIM)
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
     if s:vimim_backend_embedded.name =~# "sqlite"
+    \|| empty(s:path2)
+    \|| len(s:datafile) > 1
         return
     endif
     " -----------------------------------
-    if len(s:datafile) > 1
-        let s:vimim_backend_embedded.name = "datafile"
-        return
-    endif
-    " -----------------------------------
-    if empty(s:path2)
-        return
-    endif
-    " -----------------------------------
-    let input_methods = []
-    call add(input_methods, "wubi")
-    call add(input_methods, "unihan")
-    call add(input_methods, "4corner")
-    call add(input_methods, "pinyin")
-    " -----------------------------------
-    let directoires = []
-    for im in input_methods
+    let valid_directoires = []
+    for im in s:datafile_names
         let dir = s:vimim_get_data_directory(im)
         if empty(dir)
             continue
         else
-            call add(directoires, im)
+            call add(valid_directoires, im)
         endif
     endfor
     " -----------------------------------
-    if empty(directoires)
+    if empty(valid_directoires)
         return
     else
         let s:vimim_backend_embedded.name = "directory"
     endif
     " -----------------------------------
-    for directory in directoires
-        let dir = s:vimim_get_data_directory(directory)
-        if empty(dir)
-            continue
-        elseif directory =~# '^pinyin'
-            let s:data_directory = dir
+    for directory in valid_directoires
+        if directory =~# '^pinyin'
+            let s:data_directory = directory
             let s:input_method = 'pinyin'
-            let s:im.pinyin.loaded = 1
+            let s:im['pinyin'][0] = 1
         elseif directory =~# '^\d'
-            let s:data_directory_4corner = dir
-            let s:im.4corner.loaded = 1
+            let s:data_directory_4corner = directory
+            let s:im['4corner'][0] = 1
         endif
     endfor
-    " -----------------------------------
+    " ----------------------------------- todo
     if len(s:data_directory_4corner) > 1
         if len(s:data_directory) > 1
         \&& s:input_method == 'pinyin'
@@ -3937,7 +3907,6 @@ function! s:vimim_scan_backend_embedded_directory()
             let s:only_4corner_or_12345 = 1
         endif
     endif
-    " -----------------------------------
 endfunction
 
 " ------------------------------------- todo
