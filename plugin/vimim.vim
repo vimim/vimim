@@ -175,8 +175,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:vimim_cloud_plugin = 0
     let s:has_dot_in_datafile = 0
-    let s:has_apostrophe_in_datafile = 0
-    let s:shuangpin_flag = 0
     " --------------------------------
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -188,6 +186,8 @@ function! s:vimim_initialize_session()
     let s:start_column_before = 1
     let s:scriptnames_output = 0
     " --------------------------------
+    let s:has_apostrophe_in_datafile = 0
+    let s:shuangpin_flag = 0
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     " --------------------------------
@@ -227,32 +227,32 @@ function! s:vimim_finalize_session()
         let s:has_apostrophe_in_datafile = 1
     endif
     " ------------------------------
-    if get(s:im['boshiamy'],0) > 0
+    if get(s:im.boshiamy,0) > 0
         let s:vimim_chinese_punctuation = -1
         let s:vimim_punctuation_navigation = -1
-        let s:im['pinyin'][0] = 0
+        let s:im.pinyin[0] = 0
     endif
     " ------------------------------
     if s:shuangpin_flag > 0
         let s:input_method = 'pinyin'
     endif
     if s:input_method =~ 'pinyin'
-        let s:im['pinyin'][0] = 1
+        let s:im.pinyin[0] = 1
     endif
     " ------------------------------
     if s:input_method =~# '^\d\w\+'
-    \&& empty(get(s:im['pinyin'],0))
+    \&& empty(get(s:im.pinyin,0))
         let s:only_4corner_or_12345 = 1
     endif
     if s:only_4corner_or_12345 > 0
-        let s:im['4corner'][0] = 1
-        let s:im['pinyin'][0] = 0
+        let s:im.4corner[0] = 1
+        let s:im.pinyin[0] = 0
         let s:input_method = '4corner'
         let s:vimim_static_input_style = 1
     endif
     " ------------------------------
-    if get(s:im['phonetic'],0) > 0
-    \|| get(s:im['array30'],0) > 0
+    if get(s:im.phonetic,0) > 0
+    \|| get(s:im.array30,0) > 0
         let s:vimim_static_input_style = 1
     endif
     " ------------------------------
@@ -407,20 +407,20 @@ function! s:vimim_initialize_keycode()
     endif
     " --------------------------------
     if s:shuangpin_flag > 0
-        let keycode = s:im['shuangpin'][2]
+        let keycode = s:im.shuangpin[2]
     endif
     " --------------------------------
     let s:valid_key = copy(keycode)
     let keycode = s:vimim_expand_character_class(keycode)
     let s:valid_keys = split(keycode, '\zs')
     " --------------------------------
-    if get(s:im['erbi'],0) > 0
-    \|| get(s:im['wu'],0) > 0
-    \|| get(s:im['yong'],0) > 0
-    \|| get(s:im['nature'],0) > 0
-    \|| get(s:im['boshiamy'],0) > 0
-    \|| get(s:im['phonetic'],0) > 0
-    \|| get(s:im['array30'],0) > 0
+    if get(s:im.erbi,0) > 0
+    \|| get(s:im.wu,0) > 0
+    \|| get(s:im.yong,0) > 0
+    \|| get(s:im.nature,0) > 0
+    \|| get(s:im.boshiamy,0) > 0
+    \|| get(s:im.phonetic,0) > 0
+    \|| get(s:im.array30,0) > 0
         let s:has_dot_in_datafile = 1
     endif
     " --------------------------------
@@ -651,7 +651,7 @@ function! s:vimim_egg_vimim()
         let msg = "no shuangpin is used"
     else
         let scheme = s:vimim_get_chinese('scheme')
-        let option = "scheme\t " . scheme . '：' . get(s:im['shuangpin'],1)
+        let option = "scheme\t " . scheme . '：' . get(s:im.shuangpin,1)
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -849,7 +849,7 @@ function! s:vimim_onekey_action(onekey)
     " ---------------------------------------------------
     if char_before_before !~# "[0-9a-z]"
     \&& has_key(s:punctuations, byte_before)
-    \&& get(s:im['boshiamy'],0) < 1
+    \&& get(s:im.boshiamy,0) < 1
         let onekey = ""
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
@@ -886,7 +886,7 @@ function! s:vimim_onekey_action(onekey)
         endif
     endif
     " ---------------------------------------------------
-    if byte_before ==# "'" && get(s:im['boshiamy'],0)<1
+    if byte_before ==# "'" && get(s:im.boshiamy,0)<1
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
@@ -1173,29 +1173,29 @@ function! s:vimim_statusline()
         endif
     endif
     " ------------------------------------
-    let pinyin = get(s:im['pinyin'],1)
+    let pinyin = get(s:im.pinyin,1)
     if s:shuangpin_flag > 0
-        let pinyin = get(s:im['shuangpin'],0)
+        let pinyin = get(s:im.shuangpin,0)
         let im = pinyin
     endif
     " ------------------------------------
     if s:pinyin_and_4corner > 0
-        let im_digit = get(s:im['4corner'],1)
+        let im_digit = get(s:im.4corner,1)
         if s:datafile =~ '12345'
-            let im_digit = get(s:im['12345'],1)
-            let s:im['12345'][0] = 1
+            let im_digit = get(s:im.12345,1)
+            let s:im.12345[0] = 1
         endif
         let im = pinyin . plus . im_digit
     endif
     " ------------------------------------
     if !empty(s:vimim_cloud_plugin)
-        let im = get(s:im['mycloud'],0)
+        let im = get(s:im.mycloud,0)
     endif
     " ------------------------------------
     if s:vimim_cloud_sogou > 0
         if s:vimim_cloud_sogou == 1
             let all = s:vimim_get_chinese('all')
-            let cloud = get(s:im['cloud'],1)
+            let cloud = get(s:im.cloud,1)
             let im = all . cloud
         endif
     elseif s:vimim_cloud_sogou == -777
@@ -1693,7 +1693,7 @@ function! g:vimim_pumvisible_ctrl_e_ctrl_y()
     if pumvisible()
         let key = "\<C-E>"
         " ----------------------------------
-        if get(s:im['wubi'],0) > 0
+        if get(s:im.wubi,0) > 0
         \&& empty(len(s:keyboard_leading_zero)%4)
             let key = "\<C-Y>"
         endif
@@ -2024,7 +2024,7 @@ function! <SID>vimim_punctuation_on()
     " ----------------------------
     if s:chinese_punctuation > 0
         if empty(s:vimim_latex_suite)
-            if get(s:im['erbi'],0)>0 || get(s:im['pinyin'],0)>0
+            if get(s:im.erbi,0)>0 || get(s:im.pinyin,0)>0
                 let msg = "apostrophe is over-loaded for cloud at will"
             else
                 inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
@@ -2232,7 +2232,7 @@ function! s:vimim_imode_number(keyboard, prefix)
     endif
     let keyboard = a:keyboard
     " ------------------------------------------
-    if a:prefix ==# "'" && get(s:im['boshiamy'],0)<1
+    if a:prefix ==# "'" && get(s:im.boshiamy,0)<1
         let keyboard = substitute(keyboard,"'",'i','g')
     endif
     " ------------------------------------------
@@ -2594,9 +2594,9 @@ call add(s:vimims, VimIM)
 " -----------------------------------
 function! s:vimim_initialize_pinyin()
 " -----------------------------------
-    if empty(get(s:im['pinyin'],0))
+    if empty(get(s:im.pinyin,0))
         if len(s:data_directory) > 1
-            let s:im['pinyin'][0] = 1
+            let s:im.pinyin[0] = 1
         else
             return
         endif
@@ -3098,7 +3098,7 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_wubi()
 " ---------------------------------
-    if empty(get(s:im['wubi'],0))
+    if empty(get(s:im.wubi,0))
         return
     endif
     let s:vimim_punctuation_navigation = -1
@@ -3129,17 +3129,17 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_erbi()
 " ---------------------------------
-    if empty(get(s:im['erbi'],0))
+    if empty(get(s:im.erbi,0))
         return
     endif
-    let s:im['wubi'][0] = 1
+    let s:im.wubi[0] = 1
 endfunction
 
 " ------------------------------------------------
 function! s:vimim_first_punctuation_erbi(keyboard)
 " ------------------------------------------------
     let keyboard = a:keyboard
-    if empty(get(s:im['erbi'],0))
+    if empty(get(s:im.erbi,0))
         return 0
     endif
     " [erbi] the first .,/;' is punctuation
@@ -3603,7 +3603,7 @@ function! s:vimim_pinyin(lines, keyboard, match_start)
     " --------------------------------------------
     let results = a:lines[match_start : match_end]
     " --------------------------------------------
-    if len(results) < 10 && get(s:im['pinyin'],0) > 0
+    if len(results) < 10 && get(s:im.pinyin,0) > 0
        let extras = s:vimim_pinyin_more_match(a:lines, keyboard, results)
        if len(extras) > 0
            call extend(results, extras)
@@ -3779,7 +3779,7 @@ function! s:vimim_get_data_from_datafile(keyboard)
     else
         if s:has_apostrophe_in_datafile > 0
             let results = s:vimim_fixed_match(s:lines, keyboard, 1)
-        elseif get(s:im['pinyin'],0) > 0
+        elseif get(s:im.pinyin,0) > 0
             let results = s:vimim_pinyin(s:lines, keyboard, match_start)
         else
             let results = s:vimim_fixed_match(s:lines, keyboard, 4)
@@ -3920,10 +3920,10 @@ function! s:vimim_scan_backend_embedded_directory()
         elseif directory =~# '^pinyin'
             let s:data_directory = dir
             let s:input_method = 'pinyin'
-            let s:im['pinyin'][0] = 1
+            let s:im.pinyin[0] = 1
         elseif directory =~# '^\d'
             let s:data_directory_4corner = dir
-            let s:im['4corner'][0] = 1
+            let s:im.4corner[0] = 1
         endif
     endfor
     " -----------------------------------
@@ -4164,7 +4164,7 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
         return 0
     endif
     let max = len(keyboard)
-    if get(s:im['pinyin'],0) < 1
+    if get(s:im.pinyin,0) < 1
         return max
     endif
     " --------------------------------------------
@@ -4516,7 +4516,7 @@ function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
-    \|| get(s:im['boshiamy'],0) > 0
+    \|| get(s:im.boshiamy,0) > 0
     \|| s:has_dot_in_datafile > 0
     \|| keyboard =~ '\d\d\d\d'
         return []
@@ -4910,8 +4910,8 @@ function! s:vimim_scan_backend_mycloud()
         let s:vimim_cloud_plugin = cloud
         let s:vimim_cloud_sogou = -777
         let s:shuangpin_flag = 0
-        let s:im['mycloud'][0] = loaded
-        let s:im['mycloud'][2] = keycode
+        let s:im.mycloud[0] = loaded
+        let s:im.mycloud[2] = keycode
         let s:input_method = 'mycloud'
     endif
 endfunction
@@ -5387,10 +5387,10 @@ if a:start
     let all_digit = 1
 
     let nonsense_pattern = "[0-9.']"
-    if get(s:im['pinyin'],0) > 0
+    if get(s:im.pinyin,0) > 0
         let nonsense_pattern = "[0-9.]"
-    elseif get(s:im['phonetic'],0) > 0
-    \|| get(s:im['array30'],0) > 0
+    elseif get(s:im.phonetic,0) > 0
+    \|| get(s:im.array30,0) > 0
         let nonsense_pattern = "[.]"
     endif
 
@@ -5402,8 +5402,8 @@ if a:start
             endif
             if byte_before =~# '\l'
             \&& all_digit > 0
-            \&& get(s:im['phonetic'],0) < 1
-            \&& get(s:im['array30'],0) < 1
+            \&& get(s:im.phonetic,0) < 1
+            \&& get(s:im.array30,0) < 1
                 let all_digit = 0
             endif
         elseif byte_before=='\' && s:vimim_backslash_close_pinyin>0
@@ -5543,7 +5543,7 @@ else
 
     " [wubi] support wubi non-stop input
     " ----------------------------------
-    if get(s:im['wubi'],0) > 0
+    if get(s:im.wubi,0) > 0
         let keyboard = s:vimim_wubi_nonstop(keyboard)
     endif
 
@@ -5569,7 +5569,7 @@ else
             let results = s:vimim_popupmenu_list(results)
         endif
         return results
-    elseif s:chinese_input_mode =~ 'dynamic' && get(s:im['wubi'],0) > 0
+    elseif s:chinese_input_mode =~ 'dynamic' && get(s:im.wubi,0) > 0
         let s:keyboard_leading_zero = ""
     endif
 
@@ -5631,13 +5631,13 @@ function! s:vimim_get_valid_keyboard(keyboard)
     " ignore multiple non-sense dots
     " ------------------------------
     if keyboard =~# '^[\.\.\+]'
-    \&& get(s:im['boshiamy'],0) < 1
+    \&& get(s:im.boshiamy,0) < 1
         let s:pattern_not_found += 1
         return []
     endif
     " [erbi] special meaning of the first punctuation
     " -----------------------------------------------
-    if s:im['erbi'][0] > 0
+    if s:im.erbi[0] > 0
         let punctuation = s:vimim_first_punctuation_erbi(keyboard)
         if !empty(punctuation)
             return [punctuation]
@@ -5646,7 +5646,7 @@ function! s:vimim_get_valid_keyboard(keyboard)
     " ignore non-sense one char input
     " -------------------------------
     if s:vimim_static_input_style < 2
-    \&& get(s:im['boshiamy'],0) < 1
+    \&& get(s:im.boshiamy,0) < 1
     \&& len(keyboard) == 1
     \&& keyboard !~# '\w'
         return []
