@@ -1184,7 +1184,7 @@ function! s:vimim_statusline()
     endif
     " ------------------------------------
     if !empty(s:vimim_cloud_plugin)
-        let im = s:vimim_backend.cloud.mycloud.loaded
+        let im = s:vimim_backend.cloud.mycloud.datafile
     endif
     " ------------------------------------
     if s:vimim_cloud_sogou > 0
@@ -2779,7 +2779,6 @@ function! s:vimim_get_shuangpin_keycode()
     endif
     " ------------------------------------
     let key = {}
-    let key.loaded = s:shuangpin_flag
     let key.chinese = chinese . shuangpin
     let key.keycode = keycode
     return key
@@ -3573,7 +3572,6 @@ function! s:vimim_scan_backend_embedded_datafile()
         let s:vimim_backend.datafile[im] = s:vimim_get_empty_backend_hash()
         let s:vimim_backend.datafile[im].root = "datafile"
         let s:vimim_backend.datafile[im].name = im
-        let s:vimim_backend.datafile[im].loaded = 1
         let s:vimim_backend.datafile[im].datafile = datafile
         let s:vimim_backend.datafile[im].keycode = s:hash_im_keycode[im]
         let s:vimim_backend.datafile[im].chinese = s:vimim_get_chinese(im)
@@ -3933,7 +3931,6 @@ function! s:vimim_scan_backend_embedded_directory()
         let s:vimim_backend.directory[im] = s:vimim_get_empty_backend_hash()
         let s:vimim_backend.directory[im].root = "directory"
         let s:vimim_backend.directory[im].name = im
-        let s:vimim_backend.directory[im].loaded = 1
         let s:vimim_backend.directory[im].keycode = s:hash_im_keycode[im]
         let s:vimim_backend.directory[im].chinese = s:vimim_get_chinese(im)
         " -----------------------------------------------------------------
@@ -3991,7 +3988,6 @@ function! s:vimim_set_data_directory(im)
     if empty(dir)
         return 0
     else
-        let s:vimim_backend[s:im.root].im.loaded = 1
         let s:im.name = im
         return dir
     endif
@@ -4325,7 +4321,6 @@ function! s:vimim_check_sqlite_availability()
     let s:vimim_backend.database[im] = s:vimim_get_empty_backend_hash()
     let s:vimim_backend.database[im].root = root
     let s:vimim_backend.database[im].name = im
-    let s:vimim_backend.database[im].loaded = 1
     let s:vimim_backend.database[im].datafile = datafile
     let s:vimim_backend.database[im].executable = executable
     let s:vimim_backend.database[im].keycode = s:hash_im_keycode["pinyin"]
@@ -4483,7 +4478,7 @@ function! s:vimim_set_cloud_if_available()
     else
         let s:vimim_backend.cloud.sogou.root = "cloud"
         let s:vimim_backend.cloud.sogou.name = "sogou"
-        let s:vimim_backend.cloud.sogou.loaded = 1
+        let s:vimim_backend.cloud.sogou.datafile = s:vimim_get_chinese("pinyin")
         let s:vimim_backend.cloud.sogou.keycode = s:hash_im_keycode["cloud"]
         let s:vimim_backend.cloud.sogou.chinese = s:vimim_get_chinese("cloud")
         return cloud
@@ -4832,7 +4827,7 @@ function! s:vimim_check_mycloud_availability()
         return 0
     endif
     let ret = s:vimim_access_mycloud(cloud, "__getname")
-    let loaded = split(ret, "\t")[0]
+    let datafile = split(ret, "\t")[0]
     let ret = s:vimim_access_mycloud(cloud, "__getkeychars")
     let keycode = split(ret, "\t")[0]
     if empty(keycode)
@@ -4841,7 +4836,7 @@ function! s:vimim_check_mycloud_availability()
     else
         let s:vimim_backend.cloud.mycloud = copy(s:vimim_backend.cloud.sogou)
         let s:vimim_backend.cloud.mycloud.name = "mycloud"
-        let s:vimim_backend.cloud.mycloud.loaded = loaded
+        let s:vimim_backend.cloud.mycloud.datafile = datafile
         let s:vimim_backend.cloud.mycloud.keycode = s:hash_im_keycode["mycloud"]
         let s:vimim_backend.cloud.mycloud.chinese = s:vimim_get_chinese("mycloud")
         return cloud
@@ -5127,11 +5122,9 @@ function! s:vimim_get_empty_backend_hash()
     let one_backend_hash = {}
     let one_backend_hash.root = 0
     let one_backend_hash.name = 0
-    let one_backend_hash.loaded = 0
     let one_backend_hash.executable = 0
     let one_backend_hash.libcall = 0
     let one_backend_hash.sogou_key = 0
-    let one_backend_hash.loaded = 0
     let one_backend_hash.chinese = 0
     let one_backend_hash.keycode = 0
     let one_backend_hash.directory = 0
