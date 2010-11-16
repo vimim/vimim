@@ -115,7 +115,7 @@ let s:path = expand("<sfile>:p:h")."/"
 
 " -----------------------------------------
 function! s:vimim_frontend_initialization()
-" ----------------------------------------- TODO
+" ----------------------------------------- todo
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_wubi()
     call s:vimim_initialize_pinyin()
@@ -176,10 +176,11 @@ function! s:vimim_initialize_session()
     call s:vimim_start_omni()
     call s:vimim_super_reset()
     " --------------------------------
-    let s:unicode_4corner_cache = {}
+    let s:unicode_digit_cache = {}
     let s:pinyin_and_4corner = 0
     let s:abcd = "'abcdefg"
     let s:pqwertyuio = range(10)
+    let s:valid_key = "[0-9a-z'.]"
     " --------------------------------
     let s:vimim_cloud_plugin = 0
     let s:has_dot_in_datafile = 0
@@ -367,7 +368,6 @@ function! s:vimim_build_im_keycode_hash()
     let s:hash_im_keycode['array30']  = "[0-9a-z.,;/]"
 endfunction
 
-
 " -------------------------------------------------------
 function! s:vimim_expand_character_class(character_class)
 " -------------------------------------------------------
@@ -385,12 +385,11 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_initialize_keycode()
-" ------------------------------------ OO todo
-
-    let backend = s:im.root
+" ------------------------------------
+    let root = s:im.root
     let im  = s:im.name
-    let keycode = s:vimim_backend[backend][im].keycode
-
+    let keycode = s:vimim_backend[root][im].keycode
+    " --------------------------------
     if empty(keycode)
         let keycode = "[0-9a-z'.]"
     endif
@@ -952,20 +951,13 @@ function! <SID>ChineseMode()
     call s:vimim_backend_initialization_once()
     call s:vimim_frontend_initialization()
     call s:vimim_set_chinese_input_mode()
-    " ----------------------------------------- todo todo
+    " ----------------------------------------- todo
     if empty(s:vimim_backend[s:im.root][s:im.name].cache)
 "       sil!call s:vimim_build_datafile_cache()
     endif
     " -----------------------------------------
-
     let s:vimim_backend[s:im.root][s:im.name].chinese_mode_switch += 1
     let switch = s:vimim_backend[s:im.root][s:im.name].chinese_mode_switch % 2
-
-let g:g1=s:im.root
-let g:g2=s:im.name
-let g:g3=switch
-let g:g4=s:path2
-
     if empty(switch)
         call s:vimim_i_chinese_mode_on()
         if s:chinese_input_mode == 'onekey'
@@ -2302,26 +2294,22 @@ call add(s:vimims, VimIM)
 
 " --------------------------------------------
 function! s:vimim_scan_embedded_digit_filter()
-" -------------------------------------------- TODO
- "  [todo] 4corner as filter is independent
- "         can be used as sqlite filter
- "         can also be used as cloud filter?
- "         should use matched_list cache for sogou
-    " ---------------------------------------- todo todo
-"   let datafile = s:path . "vimim.4corner.txt"
-"   if filereadable(datafile)
-"       let s:pinyin_and_4corner = 1
-"       let digit_lines = readfile(datafile)
-"       let digit = match(digit_lines, '^\d\+')
-"       call extend(s:vimim_backend[s:im.root][s:im.name].lines, digit_lines[digit :])
-"       let unihan_list = digit_lines[: digit-1]
-"       for unihan in unihan_list
-"           let pairs = split(unihan) |" u808f 8022
-"           let key = get(pairs, 0)
-"           let value = get(pairs, 1)
-"           let s:unicode_4corner_cache[key] = [value]
-"       endfor
-"   endif
+" --------------------------------------------
+" Digit code such as 4corner can be used as independent filter.
+" It works for sqlite, cloud as well as VimIM embedded backends.
+" http://vimim-data.googlecode.com/svn/trunk/data/vimim.digit.txt
+" --------------------------------------------
+    let datafile = s:path . "vimim.digit.txt"
+    if filereadable(datafile)
+        let s:pinyin_and_4corner = 1
+        let digit_lines = readfile(datafile)
+        for digit in digit_lines
+            let pairs = split(digit) |" u808f 8022
+            let key = get(pairs, 0)
+            let value = get(pairs, 1)
+            let s:unicode_digit_cache[key] = [value]
+        endfor
+    endif
 endfunction
 
 " ------------------------------------------
@@ -2387,7 +2375,7 @@ function! s:vimim_reverse_lookup(chinese)
     " -----------------------------------
     call s:vimim_build_unihan_reverse_cache(chinese)
     let results_4corner = []  |" 马力 => 7712 4002
-    if len(s:unicode_4corner_cache) > 1
+    if len(s:unicode_digit_cache) > 1
         let items = s:vimim_reverse_one_entry(chinese, '4corner')
         call add(results_4corner, get(items,0))
         call add(results_4corner, get(items,1))
@@ -2395,7 +2383,7 @@ function! s:vimim_reverse_lookup(chinese)
     " -----------------------------------
     let results_pinyin = []   |" 马力 => ma3 li2
     let result_cjjp = ""      |" 马力 => ml
-    if len(s:unicode_4corner_cache) > 1
+    if len(s:unicode_digit_cache) > 1
         let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
         if len(items) > 0
             let pinyin_head = get(items,0)
@@ -2439,9 +2427,9 @@ function! s:vimim_reverse_one_entry(chinese, im)
         let head = ''
         if im == 'unicode'
             let head = unicode
-        elseif has_key(s:unicode_4corner_cache, unicode)
+        elseif has_key(s:unicode_digit_cache, unicode)
             " ------------------------------------------------
-            let values = s:unicode_4corner_cache[unicode]
+            let values = s:unicode_digit_cache[unicode]
             let head = get(values, 0)
             if im == '4corner'
                 let head = get(values, 0)
@@ -2495,12 +2483,12 @@ function! s:vimim_build_unihan_reverse_cache(chinese)
     " unihan database: u808f => 8022 cao4 copulate
     for char in characters
         let key = printf('u%x',char2nr(char))
-        if has_key(s:unicode_4corner_cache, key)
+        if has_key(s:unicode_digit_cache, key)
             continue
         else
             let im = '4corner'
             let results = s:vimim_get_raw_data_from_directory(key, im)
-            let s:unicode_4corner_cache[key] = results
+            let s:unicode_digit_cache[key] = results
         endif
     endfor
 endfunction
@@ -2590,10 +2578,10 @@ function! s:vimim_get_4corner(chinese)
             continue
         else
             let key = printf('u%x',char2nr(chinese))
-            if !has_key(s:unicode_4corner_cache, key)
+            if !has_key(s:unicode_digit_cache, key)
                 continue
             endif
-            let four_corner = get(s:unicode_4corner_cache[key],0)
+            let four_corner = get(s:unicode_digit_cache[key],0)
             let head .= four_corner[:0]
             let tail = four_corner[1:]
         endif
@@ -4248,7 +4236,6 @@ endfunction
 let VimIM = " ====  Backend==SQLite  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
-
 
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_database()
