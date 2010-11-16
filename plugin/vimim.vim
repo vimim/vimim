@@ -115,15 +115,15 @@ let s:path = expand("<sfile>:p:h")."/"
 
 " -----------------------------------------
 function! s:vimim_frontend_initialization()
-" ----------------------------------------- todo
+" -----------------------------------------
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_wubi()
     call s:vimim_initialize_pinyin()
-    call s:vimim_initialize_shuangpin()
-    " ---------------------------------------
-    call s:vimim_initialize_keycode()
-    call s:vimim_initialize_punctuation()
     call s:vimim_initialize_quantifiers()
+    call s:vimim_initialize_shuangpin()
+    call s:vimim_initialize_keycode()
+    call s:vimim_set_special_im_property()
+    call s:vimim_initialize_punctuation()
     " ---------------------------------------
 endfunction
 
@@ -199,6 +199,7 @@ function! s:vimim_initialize_session()
     let s:shuangpin_flag = 0
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
+    let s:quantifiers = {}
     " --------------------------------
     let s:keyboard_count = 0
     let s:show_me_not_pattern = "^ii\\|^oo"
@@ -402,16 +403,6 @@ function! s:vimim_initialize_keycode()
     let s:valid_key = copy(keycode)
     let keycode = s:vimim_expand_character_class(keycode)
     let s:valid_keys = split(keycode, '\zs')
-    " -------------------------------- todo  has_dot in hash
-    if  s:vimim_backend[s:im.root].erbi.loaded > 0
-    \|| s:vimim_backend[s:im.root].wu.loaded > 0
-    \|| s:vimim_backend[s:im.root].yong.loaded > 0
-    \|| s:vimim_backend[s:im.root].nature.loaded > 0
-    \|| s:vimim_backend[s:im.root].boshiamy.loaded > 0
-    \|| s:vimim_backend[s:im.root].phonetic.loaded > 0
-    \|| s:vimim_backend[s:im.root].array30.loaded > 0
-        let s:has_dot_in_datafile = 1
-    endif
     " --------------------------------
     return
 endfunction
@@ -2164,9 +2155,10 @@ call add(s:vimims, VimIM)
 " ----------------------------------------
 function! s:vimim_initialize_quantifiers()
 " ----------------------------------------
-    let s:quantifiers = {}
-    if s:vimim_imode_universal < 1
-    \&& s:vimim_imode_pinyin < 1
+    if s:im.name != 'pinyin' || len(s:quantifiers) > 1
+        return
+    endif
+    if s:vimim_imode_universal<1 && s:vimim_imode_pinyin<1
         return
     endif
     let q = {}
@@ -2598,6 +2590,9 @@ call add(s:vimims, VimIM)
 " -----------------------------------
 function! s:vimim_initialize_pinyin()
 " -----------------------------------
+    if s:im.name != 'pinyin'
+        return
+    endif
     if empty(s:vimim_imode_pinyin)
     \&& empty(s:vimim_imode_universal)
     \&& s:shuangpin_flag < 1
@@ -2769,13 +2764,15 @@ endfunction
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    call s:vimim_get_shuangpin_keycode()
-    " ----------------------------------
+    if s:im.name != 'pinyin'
+        return
+    endif
     if empty(s:shuangpin_flag)
         let s:quanpin_table = s:vimim_create_quanpin_table()
         return
     endif
     " ----------------------------------
+    call s:vimim_get_shuangpin_keycode()
     let s:vimim_imode_pinyin = -1
     let rules = s:vimim_shuangpin_generic()
     " ----------------------------------
@@ -3099,7 +3096,7 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_wubi()
 " ---------------------------------
-    if empty(s:vimim_backend[s:im.root].wubi.loaded)
+    if s:im.name != 'wubi'
         return
     endif
     let s:vimim_punctuation_navigation = -1
@@ -3126,6 +3123,19 @@ endfunction
 let VimIM = " ====  Input_Misc       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
+
+" -----------------------------------------
+function! s:vimim_set_special_im_property()
+" -----------------------------------------
+    if  s:im.name == 'erbi'
+    \|| s:im.name == 'wu'
+    \|| s:im.name == 'yong'
+    \|| s:im.name == 'nature'
+    \|| s:im.name == 'boshiamy'
+    \|| s:im.name == 'phonetic'
+    \|| s:im.name == 'array30'
+    let s:has_dot_in_datafile = 1
+endfunction
 
 " ---------------------------------
 function! s:vimim_initialize_erbi()
