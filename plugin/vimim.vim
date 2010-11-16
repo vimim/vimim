@@ -147,14 +147,14 @@ function! s:vimim_backend_initialization_once()
     call s:vimim_scan_backend_embedded_datafile()
     call s:vimim_scan_backend_embedded_directory()
     call s:vimim_scan_backend_embedded_database()
+    call s:vimim_scan_embedded_digit_filter()
     call s:vimim_scan_backend_cloud()
     call s:vimim_scan_backend_mycloud()
-    call s:vimim_scan_for_digit_filter_cache()
     " ---------------------------------------
     call s:vimim_finalize_session()
     " ---------------------------------------
     call s:vimim_scan_current_buffer()
-    " --------------------------------------- TODO
+    " ---------------------------------------
 endfunction
 
 " --------------------------------------
@@ -690,21 +690,21 @@ endfunction
 
 " -------------------------------------
 function! s:vimim_get_ciku_in_Chinese()
-" -------------------------------------
-    let database = s:vimim_backend[s:im.root][s:im.name].datafile
-    if empty(database)
+" ------------------------------------- TODO
+    let datafile = s:vimim_backend[s:im.root][s:im.name].datafile
+    if empty(datafile)
         let msg = "no primary datafile, try directory"
-        let database = s:path2
-        if empty(database)
+        let datafile = s:path2
+        if empty(datafile)
             let msg = "no primary datafile nor directory"
         else
             let ciku = s:vimim_get_chinese('ciku')
             let directory  = s:vimim_get_chinese('directory')
-            let directory .= ciku . s:space  . database . "/"
+            let directory .= ciku . s:space  . datafile . "/"
             return  directory
         endif
     else
-        return database
+        return datafile
     endif
     return 0
 endfunction
@@ -2301,6 +2301,15 @@ let VimIM = " ====  Input_4Corner    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" --------------------------------------------
+function! s:vimim_scan_embedded_digit_filter()
+" --------------------------------------------
+ "  [todo] 4corner as filter is independent
+ "         can be used as sqlite filter
+ "         can also be used as cloud filter?
+ "         should use matched_list cache for sogou
+endfunction
+
 " ------------------------------------------
 function! s:vimim_break_every_four(keyboard)
 " ------------------------------------------
@@ -3116,15 +3125,6 @@ let VimIM = " ====  Input_Misc       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------------------
-function! s:vimim_scan_for_digit_filter_cache()
-" ---------------------------------------------
- "  [todo] 4corner as filter is independent
- "         can be used as sqlite filter
- "         can also be used as cloud filter?
- "         should use matched_list cache for sogou
-endfunction
-
 " ---------------------------------
 function! s:vimim_initialize_erbi()
 " ---------------------------------
@@ -3495,26 +3495,23 @@ function! s:vimim_build_all_filesnames()
     call add(names, 'wubi98')
     call add(names, 'wubi2000')
     call add(names, 'wubijd')
-    let s:filenames = names
+    let s:all_vimim_datafile_names = names
 endfunction
 
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    let datafile = s:vimim_data_file
-    if !empty(datafile) && filereadable(datafile)
-        let s:vimim_backend[s:im.root][s:im.name].datafile = copy(datafile)
-    endif
-" ------------------------------------------------
-    if empty(s:path2) || empty(s:vimim_data_file)
-        let msg = "no datafile nor directory specifiled in vimrc"
-    else
-        return
-    endif
-    " ------------------------------------
-    for im in s:filenames
-        let file = "vimim." . im . ".txt"
-        let datafile = s:path . file
+    for im in s:all_vimim_datafile_names
+        if len(s:vimim_data_file) > 1
+            if match(s:vimim_data_file, im) < 0
+                continue
+            else
+                let datafile = s:vimim_data_file
+            endif
+        else
+            let file = "vimim." . im . ".txt"
+            let datafile = s:path . file
+        endif
         if filereadable(datafile)
             break
         else
@@ -3873,16 +3870,19 @@ function! s:vimim_scan_backend_embedded_directory()
     let dir = s:vimim_data_directory
     if !empty(dir) && isdirectory(dir)
         let s:path2 = copy(dir)
-        return
     endif
-" -------------------------------------------------
+    " -----------------------------------
     if empty(s:path2)
-    \|| s:vimim_backend.datafile.name =~ "datafile"
-        return
+         let dir = s:path . "vimim"
+         if isdirectory(dir)
+             let s:path2 = dir
+         else
+             return
+         endif
     endif
     " -----------------------------------
     let valid_directoires = []
-    for im in s:filenames
+    for im in s:all_vimim_datafile_names
         let dir = s:vimim_get_data_directory(im)
         if empty(dir)
             continue
@@ -4263,7 +4263,7 @@ function! s:vimim_scan_backend_embedded_database()
         return
     endif
     " --------------------------------------------
-    let backend = s:vimim_check_availability_for_sqlite()
+    let backend = s:vimim_check_sqlite_availability()
     if empty(backend)
         return
     else
@@ -4272,9 +4272,9 @@ function! s:vimim_scan_backend_embedded_database()
     endif
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_check_availability_for_sqlite()
-" -----------------------------------------------
+" -------------------------------------------
+function! s:vimim_check_sqlite_availability()
+" -------------------------------------------
     let executable = "sqlite3"
     if !executable(executable)
         return 0
@@ -4999,7 +4999,7 @@ function! s:vimim_initialize_debug()
     let s:localization = 0
     let s:vimim_backend_loaded = 0
     let s:chinese_input_mode = 0
-    " ---------------------------------
+    " ------------------------------
     let s:im = {}
     let s:im.name  = ''
     let s:im.root = ''
@@ -5017,12 +5017,10 @@ function! s:vimim_initialize_debug()
     let dir = "/vimim"
     if isdirectory(dir)
         let s:path2 = dir
+    else
+        return
     endif
-    let dir = s:path . "tmp"
-    if isdirectory(dir)
-        let s:path2 = 0
-    endif
-    " ------------------------------
+    " ---------------------------------
     let s:vimim_debug = 9
     let s:vimim_cloud_sogou = -1
     let s:vimim_static_input_style = 2
@@ -5031,7 +5029,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_custom_laststatus = 0
     let s:vimim_imode_pinyin = 1
     let s:vimim_reverse_pageup_pagedown = 1
-    " ------------------------------
+    " ---------------------------------
 endfunction
 
 " --------------------------------
