@@ -825,7 +825,7 @@ function! s:vimim_onekey_action(onekey)
     let byte_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     " ---------------------------------------------------
-    if char_before_before !~# "[0-9a-z]"
+    if char_before_before !~# "[0-9A-z]"
     \&& has_key(s:punctuations, byte_before)
     \&& s:im.name != 'boshiamy'
         let onekey = ""
@@ -840,7 +840,7 @@ function! s:vimim_onekey_action(onekey)
         if empty(onekey)
             let msg = "transform punctuation from english to chinese"
             let replacement = s:punctuations[byte_before]
-            if s:vimim_static_input_style > 2
+            if s:vimim_static_input_style == 2
                 let msg = "play smart quote in onekey static mode"
                 if byte_before ==# "'"
                     let replacement = <SID>vimim_get_single_quote()
