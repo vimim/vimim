@@ -137,6 +137,8 @@ function! s:vimim_backend_initialization_once()
     endif
     " ---------------------------------------
     call s:vimim_initialize_session()
+    call s:vimim_initialize_frontend()
+    call s:vimim_initialize_backend()
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_encoding()
     call s:vimim_chinese_dictionary()
@@ -423,6 +425,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
+    call add(G, "g:vimim_normal_ctrl_6_to_toggle")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_datafile_is_not_utf8")
     call add(G, "g:vimim_english_punctuation")
@@ -949,7 +952,7 @@ function! <SID>ChineseMode()
     endif
     " -----------------------------------------
     let s:vimim_backend[s:im.root][s:im.name].chinese_mode_switch += 1
-    let switch = s:vimim_backend[s:im.root][s:im.name].chinese_mode_switch % 2
+    let switch=s:vimim_backend[s:im.root][s:im.name].chinese_mode_switch%2
     if empty(switch)
         call s:vimim_i_chinese_mode_on()
         if s:chinese_input_mode == 'onekey'
@@ -3546,12 +3549,13 @@ function! s:vimim_scan_backend_embedded_datafile()
     endif
     let msg = "vim datafile.pinyin.vimim datafile.4corner.vimim"
     for pair in valid_datafiles
-        " --------------------------------------------------------------------------
+        " ----------------------------------------------------------------
         let datafile = get(pair, 1)
         let im = get(pair, 0)
         let im = s:vimim_get_valid_im_name(im)
         let s:im.root = "datafile"
         let s:im.name = im
+        call add(s:im.frontends, [s:im.root, s:im.name])
         let s:vimim_backend.datafile[im] = s:vimim_get_empty_backend_hash()
         let s:vimim_backend.datafile[im].root = "datafile"
         let s:vimim_backend.datafile[im].name = im
@@ -3559,7 +3563,7 @@ function! s:vimim_scan_backend_embedded_datafile()
         let s:vimim_backend.datafile[im].datafile = datafile
         let s:vimim_backend.datafile[im].keycode = s:hash_im_keycode[im]
         let s:vimim_backend.datafile[im].chinese = s:vimim_get_chinese(im)
-        " --------------------------------------------------------------------------
+        " ----------------------------------------------------------------
     endfor
 endfunction
 
@@ -3911,7 +3915,7 @@ function! s:vimim_scan_backend_embedded_directory()
         let im = s:vimim_get_valid_im_name(im)
         let s:im.root = "directory"
         let s:im.name = im
-        " -----------------------------------------------------------------
+        call add(s:im.frontends, [s:im.root, s:im.name])
         let s:vimim_backend.directory[im] = s:vimim_get_empty_backend_hash()
         let s:vimim_backend.directory[im].root = "directory"
         let s:vimim_backend.directory[im].name = im
@@ -4302,6 +4306,7 @@ function! s:vimim_check_sqlite_availability()
     " ----------------------------------------
     let root = "database"
     let im = "sqlite"
+    call add(s:im.frontends, [root, im])
     " ----------------------------------------
     let s:vimim_backend.database[im] = s:vimim_get_empty_backend_hash()
     let s:vimim_backend.database[im].root = root
@@ -4371,7 +4376,7 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     else
         let magic_head = keyboard[:0]
         if  magic_head ==# "u"
-            let msg = "u switch to English mode: udream => dream"
+            let msg = "u starts English mode: udream => dream"
             let keyboard = strpart(keyboard, 1)
             let keyboard = "'%" . keyboard . "%'"
             let column = column4
@@ -4430,6 +4435,7 @@ function! s:vimim_do_force_cloud()
     else
         let s:im.root = "cloud"
         let s:im.name = "sogou"
+        call add(s:im.frontends, [s:im.root, s:im.name])
         let s:vimim_cloud_sogou = 1
     endif
 endfunction
@@ -4736,9 +4742,10 @@ function! s:vimim_do_force_mycloud()
     if empty(mycloud)
         let s:vimim_cloud_plugin = 0
     else
-        let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
         let s:im.root = "cloud"
         let s:im.name = "mycloud"
+        call add(s:im.frontends, [s:im.root, s:im.name])
+        let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     endif
 endfunction
 
@@ -4779,7 +4786,6 @@ function! s:vimim_set_mycloud_if_available()
         let msg = "no mycloud if no cloud executable"
         return {}
     endif
-    " --------------------------------------
     let s:vimim_backend.cloud.mycloud = s:vimim_get_empty_backend_hash()
     let mycloud = s:vimim_check_mycloud_availability()
     if empty(mycloud)
@@ -4790,7 +4796,6 @@ function! s:vimim_set_mycloud_if_available()
         let s:shuangpin_flag = 0
         let s:im.root = "cloud"
         let s:im.name = "mycloud"
-        " ------------------------------------------------------
         return s:vimim_backend.cloud.mycloud
     endif
 endfunction
@@ -5073,6 +5078,28 @@ let VimIM = " ====  Debug_Framework  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" ------------------------------------
+function! s:vimim_initialize_frontend()
+" ------------------------------------
+    let s:im = {}
+    let s:im.name  = ''
+    let s:im.root = ''
+    let s:im.frontends = []
+    let s:im.has_dot = ''
+    let s:im.keycode = ''
+    let s:im.statusline = ''
+endfunction
+
+" ------------------------------------
+function! s:vimim_initialize_backend()
+" ------------------------------------
+    let s:vimim_backend = {}
+    let s:vimim_backend.directory = {}
+    let s:vimim_backend.datafile  = {}
+    let s:vimim_backend.database  = {}
+    let s:vimim_backend.cloud     = {}
+endfunction
+
 " ----------------------------------------
 function! s:vimim_get_empty_backend_hash()
 " ----------------------------------------
@@ -5101,20 +5128,6 @@ function! s:vimim_initialize_debug()
     let s:localization = 0
     let s:vimim_backend_loaded = 0
     let s:chinese_input_mode = 0
-    " ------------------------------
-    let s:im = {}
-    let s:im.name  = ''
-    let s:im.root = ''
-    let s:im.has_dot = ''
-    let s:im.keycode = ''
-    let s:im.statusline = ''
-    " ---------------------------------
-    let s:vimim_backend = {}
-    let s:vimim_backend.directory = {}
-    let s:vimim_backend.datafile  = {}
-    let s:vimim_backend.database  = {}
-    let s:vimim_backend.cloud     = {}
-    " ---------------------------------
     let dir = "/vimim"
     if isdirectory(dir)
         let s:path2 = dir
@@ -5125,6 +5138,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 2
     let s:vimim_cloud_sogou = -1
     let s:vimim_tab_as_onekey = 2
+    let s:vimim_normal_ctrl_6_to_toggle = 1
     let s:vimim_custom_skin = 2
     let s:vimim_custom_laststatus = 0
     let s:vimim_imode_pinyin = 1
@@ -5765,11 +5779,10 @@ endfunction
 " -----------------------------------------
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
-    if s:vimim_tab_as_onekey == 2
-        inoremap <unique> <expr> <Plug>VimimTabKey <SID>TabKey()
-            imap <silent> <Tab>  <Plug>VimimTabKey
-         noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
-        return
+    if s:vimim_normal_ctrl_6_to_toggle == 1
+        if !hasmapto('<C-^>', 'n')
+            noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
+        endif
     endif
     " ---------------------------------------------------------
     if !hasmapto('<Plug>VimimTrigger', 'i')
@@ -5812,8 +5825,12 @@ function! s:vimim_onekey_mapping_on()
     " -----------------------------------
     if s:vimim_tab_as_onekey == 1
         imap <silent> <Tab> <Plug>VimimOneKey
+    elseif s:vimim_tab_as_onekey == 2
+        inoremap <unique> <expr> <Plug>VimimTabKey <SID>TabKey()
+            imap <silent> <Tab>  <Plug>VimimTabKey
+        return
     endif
-    " -----------------------------------
+    " ---------------------------------------------------------
 endfunction
 
 " ------------------------------------
