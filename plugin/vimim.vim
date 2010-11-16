@@ -119,11 +119,11 @@ function! s:vimim_frontend_initialization()
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_wubi()
     call s:vimim_initialize_pinyin()
-    call s:vimim_initialize_quantifiers()
     call s:vimim_initialize_shuangpin()
     call s:vimim_initialize_keycode()
     call s:vimim_set_special_im_property()
-    call s:vimim_initialize_punctuation()
+    call s:vimim_initialize_frontend_punctuation()
+    call s:vimim_build_datafile_lines()
     " ---------------------------------------
 endfunction
 
@@ -137,10 +137,10 @@ function! s:vimim_backend_initialization_once()
     endif
     " ---------------------------------------
     call s:vimim_initialize_session()
-    " ---------------------------------------
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_encoding()
     call s:vimim_chinese_dictionary()
+    call s:vimim_initialize_backend_punctuation()
     call s:vimim_build_im_keycode_hash()
     call s:vimim_build_all_filesnames()
     " ---------------------------------------
@@ -151,9 +151,9 @@ function! s:vimim_backend_initialization_once()
     call s:vimim_scan_backend_cloud()
     call s:vimim_scan_backend_mycloud()
     " ---------------------------------------
+    call s:vimim_initialize_quantifiers()
     call s:vimim_finalize_session()
-    " ---------------------------------------
-    call s:vimim_scan_current_buffer_for_auto()
+    call s:vimim_force_scan_current_buffer()
     " ---------------------------------------
 endfunction
 
@@ -1104,6 +1104,9 @@ function! s:vimim_i_chinese_mode_on()
         endif
         let b:keymap_name = s:vimim_statusline()
     endif
+    if s:vimim_custom_laststatus < 1
+        echoh NonText| echo s:vimim_statusline()|echohl None
+    endif
 endfunction
 
 " ----------------
@@ -1910,9 +1913,9 @@ let VimIM = " ====  Punctuations     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------------
-function! s:vimim_initialize_punctuation()
-" ----------------------------------------
+" ------------------------------------------------
+function! s:vimim_initialize_backend_punctuation()
+" ------------------------------------------------
     let s:punctuations = {}
     let s:punctuations['@'] = s:space
     let s:punctuations['#'] = '＃'
@@ -1948,6 +1951,11 @@ function! s:vimim_initialize_punctuation()
         let s:punctuations['"'] = '“”'
     endif
     let s:punctuations_all = copy(s:punctuations)
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_initialize_frontend_punctuation()
+" -------------------------------------------------
     for char in s:valid_keys
         if has_key(s:punctuations, char)
             " -----------------------------
@@ -2158,10 +2166,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------------
 function! s:vimim_initialize_quantifiers()
 " ----------------------------------------
-    if s:im.name != 'pinyin' || len(s:quantifiers) > 1
-        return
-    endif
-    if s:vimim_imode_universal<1 && s:vimim_imode_pinyin<1
+    if s:vimim_imode_universal < 1 && s:vimim_imode_pinyin < 1
         return
     endif
     let q = {}
@@ -3554,7 +3559,6 @@ function! s:vimim_scan_backend_embedded_datafile()
         let s:vimim_backend.datafile[im].datafile = datafile
         let s:vimim_backend.datafile[im].keycode = s:hash_im_keycode[im]
         let s:vimim_backend.datafile[im].chinese = s:vimim_get_chinese(im)
-        let s:vimim_backend.datafile[im].lines = s:vimim_read_datafile(im, datafile)
         " --------------------------------------------------------------------------
     endfor
 endfunction
@@ -3573,14 +3577,18 @@ function! s:vimim_get_valid_im_name(im)
     return im
 endfunction
 
-" -------------------------------------------
-function! s:vimim_read_datafile(im, datafile)
-" -------------------------------------------
-    let datafile = a:datafile
-    if len(datafile)>1
+" --------------------------------------
+function! s:vimim_build_datafile_lines()
+" --------------------------------------
+    let im = s:im.name
+    if s:vimim_backend[s:im.root][im].root != "datafile"
+        return
+    endif
+    let datafile = s:vimim_backend.datafile[im].datafile
+    if len(datafile) > 1
     \&& filereadable(datafile)
-    \&& empty(s:vimim_backend.datafile[a:im].lines)
-        return readfile(datafile)
+    \&& empty(s:vimim_backend.datafile[im].lines)
+        let s:vimim_backend.datafile[im].lines = readfile(datafile)
     endif
 endfunction
 
@@ -3879,9 +3887,9 @@ function! s:vimim_scan_backend_embedded_directory()
     if empty(s:path2)
          let dir = s:path . "vimim"
          if isdirectory(dir)
-             let s:path2 = dir
+            let s:path2 = dir
          else
-             return
+            return
          endif
     endif
     " -----------------------------------
@@ -3917,9 +3925,9 @@ function! s:vimim_scan_backend_embedded_directory()
     endfor
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_scan_current_buffer_for_auto()
-" ----------------------------------------------
+" -------------------------------------------
+function! s:vimim_force_scan_current_buffer()
+" -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
         let msg = "vim whatever.vimim"
@@ -3932,7 +3940,7 @@ function! s:vimim_scan_current_buffer_for_auto()
     " ---------------------------------
     elseif buffer =~? 'mycloud'
         call s:vimim_do_force_mycloud()
-    " ---------------------------------
+    " --------------------------------- todo
     elseif buffer =~? 'directory'
         let s:im.root = "directory"
     " ---------------------------------
@@ -4453,12 +4461,12 @@ function! s:vimim_set_cloud_if_available()
     if empty(cloud)
         return 0
     else
-       let s:vimim_backend.cloud.sogou.root = "cloud"
-       let s:vimim_backend.cloud.sogou.name = "sogou"
-       let s:vimim_backend.cloud.sogou.loaded = 1
-       let s:vimim_backend.cloud.sogou.keycode = s:hash_im_keycode["cloud"]
-       let s:vimim_backend.cloud.sogou.chinese = s:vimim_get_chinese("cloud")
-       return cloud
+        let s:vimim_backend.cloud.sogou.root = "cloud"
+        let s:vimim_backend.cloud.sogou.name = "sogou"
+        let s:vimim_backend.cloud.sogou.loaded = 1
+        let s:vimim_backend.cloud.sogou.keycode = s:hash_im_keycode["cloud"]
+        let s:vimim_backend.cloud.sogou.chinese = s:vimim_get_chinese("cloud")
+        return cloud
     endif
 endfunction
 
@@ -4723,11 +4731,12 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_do_force_mycloud()
-" ----------------------------------
+" ---------------------------------- todo
     let mycloud = s:vimim_set_mycloud_if_available()
     if empty(mycloud)
         let s:vimim_cloud_plugin = 0
     else
+        let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
         let s:im.root = "cloud"
         let s:im.name = "mycloud"
     endif
