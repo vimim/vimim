@@ -609,7 +609,7 @@ function! s:vimim_egg_vimim()
     let style = s:vimim_get_chinese('style')
     let option = "mode\t " . style . "：" . toggle
     call add(eggs, option)
-    " ----------------------------------
+    " ---------------------------------- todo
     let im = s:vimim_statusline()
     if !empty(im)
         let option = "im\t " . input . "：" . im
@@ -1131,7 +1131,7 @@ function! s:vimim_statusline()
     let plus = s:vimim_get_chinese('plus')
     let plus = bracket_r . plus . bracket_l
     " ------------------------------------
-    if has_key(s:hash_im_keycode, s:im)
+    if has_key(s:hash_im_keycode, s:im.name)
         let im = s:vimim_backend[s:im.root][s:im.name].chinese
     endif
     " ------------------------------------
@@ -1148,29 +1148,29 @@ function! s:vimim_statusline()
         endif
     endif
     " ------------------------------------
-    let pinyin = s:vimim_backend[s:im.root].pinyin.chinese
+    let pinyin = s:vimim_get_chinese('pinyin')
     if s:shuangpin_flag > 0
         let keycodes = s:vimim_get_shuangpin_keycode()
         let im = keycodes[chinese]
     endif
     " ------------------------------------
     if s:pinyin_and_4corner > 0
-        let im_digit = s:vimim_backend[s:im.root].4corner.chinese
+        let im_digit = s:vimim_get_chinese('4corner')
         if datafile =~ '12345'
-            let im_digit = s:vimim_backend[s:im.root].12345.chinese
-            let s:vimim_backend[s:im.root].12345.loaded = 1
+            let im_digit = s:vimim_get_chinese('12345')
+            let s:im.name = '12345'
         endif
         let im = pinyin . plus . im_digit
     endif
     " ------------------------------------
     if !empty(s:vimim_cloud_plugin)
-        let im = s:vimim_backend[s:im.root].mycloud.loaded
+        let im = s:vimim_backend.cloud.mycloud.loaded
     endif
     " ------------------------------------
     if s:vimim_cloud_sogou > 0
         if s:vimim_cloud_sogou == 1
             let all = s:vimim_get_chinese('all')
-            let cloud = s:vimim_backend[s:im.root].cloud.chinese
+            let cloud = s:vimim_backend.cloud.sogou.chinese
             let im = all . cloud
         endif
     elseif s:vimim_cloud_sogou == -777
@@ -1668,7 +1668,7 @@ function! g:vimim_pumvisible_ctrl_e_ctrl_y()
     if pumvisible()
         let key = "\<C-E>"
         " ----------------------------------
-        if s:vimim_backend[s:im.root].wubi.loaded > 0
+        if s:im.name =~ 'wubi'
         \&& empty(len(s:keyboard_leading_zero)%4)
             let key = "\<C-Y>"
         endif
@@ -3749,7 +3749,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
         return [keyboard]
     endif
     " --------------------------------------------------
-    let blocks = s:vimim_break_sentence_into_block(keyboard, s:im)
+    let blocks = s:vimim_break_sentence_into_block(keyboard, s:im.name)
     if len(blocks) > 0 | return blocks | endif
     " --------------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)+1
@@ -4041,11 +4041,9 @@ function! s:vimim_get_sentence_directory(keyboard)
         return []
     endif
     let results = []
-    if s:vimim_backend[s:im.root].4corner.loaded > 0
-        let digit_input  = '^\d\d\+$'
-        if keyboard =~ digit_input
-            let im = "4corner"
-        endif
+    let digit_input  = '^\d\d\+$'
+    if keyboard =~ digit_input
+        let im = "4corner"
     endif
     " ------------------------------------------------------------
     let keyboards = s:vimim_sentence_match_directory(keyboard, im)
@@ -4769,14 +4767,8 @@ function! s:vimim_set_mycloud_if_available()
         let s:vimim_cloud_plugin = mycloud
         let s:vimim_cloud_sogou = -777
         let s:shuangpin_flag = 0
-        " ------------------------------------------------------
-        let im = "mycloud"
         let s:im.root = "cloud"
-        let s:im.name = im
-        let s:vimim_backend.cloud.mycloud = copy(s:vimim_backend.cloud.sogou)
-        let s:vimim_backend.cloud.mycloud.name = im
-        let s:vimim_backend.cloud.mycloud.keycode = s:hash_im_keycode[im]
-        let s:vimim_backend.cloud.mycloud.chinese = s:vimim_get_chinese(im)
+        let s:im.name = "mycloud"
         " ------------------------------------------------------
         return s:vimim_backend.cloud.mycloud
     endif
@@ -4800,6 +4792,11 @@ function! s:vimim_check_mycloud_availability()
         let s:vimim_cloud_plugin = 0
         return 0
     else
+        let s:vimim_backend.cloud.mycloud = copy(s:vimim_backend.cloud.sogou)
+        let s:vimim_backend.cloud.mycloud.name = "mycloud"
+        let s:vimim_backend.cloud.mycloud.loaded = loaded
+        let s:vimim_backend.cloud.mycloud.keycode = s:hash_im_keycode["mycloud"]
+        let s:vimim_backend.cloud.mycloud.chinese = s:vimim_get_chinese("mycloud")
         return cloud
     endif
 endfunction
