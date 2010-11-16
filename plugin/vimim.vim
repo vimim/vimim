@@ -942,15 +942,17 @@ endfunction
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
+    sil!call s:vimim_backend_initialization_once()
+    sil!call s:vimim_dynamic_im_toggle()
+    sil!call s:vimim_frontend_initialization()
+    sil!call s:vimim_set_chinese_input_mode()
+    sil!call s:vimim_build_datafile_cache()
+    " -------------------------------------
     let action = ""
-    call s:vimim_backend_initialization_once()
-    call s:vimim_frontend_initialization()
-    call s:vimim_set_chinese_input_mode()
-    " -----------------------------------------
-    if empty(s:vimim_backend[s:im.root][s:im.name].cache)
-        call s:vimim_build_datafile_cache()
+    if empty(s:im.root) || empty(s:im.name)
+        return action
     endif
-    " -----------------------------------------
+    " -------------------------------------
     let s:vimim_backend[s:im.root][s:im.name].chinese_mode_switch += 1
     let switch=s:vimim_backend[s:im.root][s:im.name].chinese_mode_switch%2
     if empty(switch)
@@ -972,6 +974,15 @@ function! <SID>ChineseMode()
         let action = "\<C-O>:redraw\<CR>"
     endif
     sil!exe 'sil!return "' . action . '"'
+endfunction
+
+" -----------------------------------
+function! s:vimim_dynamic_im_toggle()
+" ----------------------------------- todo
+    let im = s:im.name
+    let root = s:im.root
+    let frontends = s:im.frontends
+    let number_of_available_im = len(frontends)
 endfunction
 
 " ------------------------------------
@@ -2305,6 +2316,7 @@ function! s:vimim_scan_embedded_digit_filter()
     let datafile = s:path . "vimim.digit.txt"
     if filereadable(datafile)
         let s:pinyin_and_4corner = 1
+        let s:vimim_static_input_style = 2
         let digit_lines = readfile(datafile)
         for digit in digit_lines
             let pairs = split(digit) |" u808f 8022
@@ -3854,9 +3866,9 @@ endfunction
 function! s:vimim_build_datafile_cache()
 " --------------------------------------
     if s:vimim_use_cache < 1
-        return
-    endif
-    if s:vimim_backend[s:im.root][s:im.name].root != "datafile"
+    \|| s:vimim_backend[s:im.root][s:im.name].root != "datafile"
+    \|| empty(s:vimim_backend[s:im.root][s:im.name].lines)
+    \|| !empty(s:vimim_backend[s:im.root][s:im.name].cache)
         return
     endif
     " ----------------------------------
@@ -3944,7 +3956,7 @@ function! s:vimim_force_scan_current_buffer()
     " ---------------------------------
     elseif buffer =~? 'mycloud'
         call s:vimim_do_force_mycloud()
-    " --------------------------------- todo
+    " ---------------------------------
     elseif buffer =~? 'directory'
         let s:im.root = "directory"
     " ---------------------------------
@@ -4737,7 +4749,15 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_do_force_mycloud()
-" ---------------------------------- todo
+" ----------------------------------
+" (1) vim whatever.mycloud.vimim
+" (2) [option] to use local digit filter in onekey static mode
+"     (2.1) http://vimim-data.googlecode.com/svn/trunk/data/vimim.digit.txt
+"     (2.2) download above and throw the file to the vim plugin directiory
+"     (2.3) vim whatever.mycloud.vimim
+"     (2.4) [tip] in popop window: "qwertyuiop" means "1234567890"
+" --------------------------------------------------------------
+    let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     let mycloud = s:vimim_set_mycloud_if_available()
     if empty(mycloud)
         let s:vimim_cloud_plugin = 0
@@ -4745,7 +4765,6 @@ function! s:vimim_do_force_mycloud()
         let s:im.root = "cloud"
         let s:im.name = "mycloud"
         call add(s:im.frontends, [s:im.root, s:im.name])
-        let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     endif
 endfunction
 
@@ -4831,7 +4850,7 @@ endfunction
 function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
 "  use the same function to access mycloud by libcall() or system()
-    let executable = s:vimim_backend.cloud.mycloud.executable
+    let executable = s:vimim_backend.cloud.sogou.executable
     if s:vimimdebug > 0
         call s:debugs("cloud", a:cloud)
         call s:debugs("cmd", a:cmd)
@@ -5128,13 +5147,18 @@ function! s:vimim_initialize_debug()
     let s:localization = 0
     let s:vimim_backend_loaded = 0
     let s:chinese_input_mode = 0
+    " ------------------------------
+    let dir = s:path . "tmp"
+    if isdirectory(dir)
+        return
+    endif
     let dir = "/vimim"
     if isdirectory(dir)
         let s:path2 = dir
     else
         return
     endif
-    " ---------------------------------
+    " ------------------------------
     let s:vimim_static_input_style = 2
     let s:vimim_cloud_sogou = -1
     let s:vimim_tab_as_onekey = 2
