@@ -11,17 +11,18 @@ let $VimIM = "$Revision$"
 " For the impatient:
 " ------------------
 " # play with various VimIM Input Methods:
-"   - vim whatever.sogou.vimim  => do cloud input
-"   - vim whatever.sqlite.vimim => do unihan input with cedict.db
-"   - vim whatever.vimim        => do pinyin input with vimim.pinyin.txt
+"   - vim whatever.vimim          => do pinyin input with vimim.pinyin.txt
+"   - vim whatever.sqlite.vimim   => do unihan input with cedict.db
+"   - vim whatever.mycloud.vimim  => do mycloud input
+"   - vim whatever.sogou.vimim    => do cloud input
 " # play with various eggs:
-"   -  VimIM 經典:  type:   vim<C-6><C-6>
-"   -  VimIM 環境:  type:   vimim<C-6><C-6>
-"   -  VimIM 程式:  type:   vimimvim<C-6><C-6>
-"   -  VimIM 幫助:  type:   vimimhelp<C-6><C-6>
-"   -  VimIM 測試:  type:   vimimdebug<C-6><C-6>
-"   -  VimIM 內碼:  type:   vimimunicode<C-6><C-6>
-"   -  VimIM 設置:  type:   vimimdefaults<C-6><C-6>
+"   -  VimIM 經典:  type:  vim<C-6><C-6>
+"   -  VimIM 環境:  type:  vimim<C-6><C-6>
+"   -  VimIM 程式:  type:  vimimvim<C-6><C-6>
+"   -  VimIM 幫助:  type:  vimimhelp<C-6><C-6>
+"   -  VimIM 測試:  type:  vimimdebug<C-6><C-6>
+"   -  VimIM 內碼:  type:  vimimunicode<C-6><C-6>
+"   -  VimIM 設置:  type:  vimimdefaults<C-6><C-6>
 " -----------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry         "]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506 "]
@@ -607,8 +608,8 @@ function! s:vimim_egg_vimim()
         let toggle = "i_CTRL-Space"
     elseif s:vimim_tab_as_onekey == 1
         let toggle = "Tab_as_OneKey"
-    elseif s:vimim_tab_as_onekey == 2
-        let toggle = "OneKey n_CTRL-6"
+    elseif s:vimim_normal_ctrl_6_to_toggle == 1
+        let toggle = "OneKey　normal　*CTRL-6*"
     endif
     let toggle .=  s:space
     let style = s:vimim_get_chinese('style')
