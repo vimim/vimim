@@ -3517,43 +3517,46 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
+    let valid_datafiles = []
     for im in s:all_vimim_datafile_names
         if len(s:vimim_data_file) > 1
             if match(s:vimim_data_file, im) < 0
                 continue
             else
                 let datafile = s:vimim_data_file
+                call add(valid_datafiles, [im, datafile])
             endif
         else
             let file = "vimim." . im . ".txt"
             let datafile = s:path . file
         endif
         if filereadable(datafile)
-            break
+            call add(valid_datafiles, [im, datafile])
         else
             continue
         endif
     endfor
-    " ----------------------------------------
-    if filereadable(datafile)
-        let msg = "load file into memory and/or build cache"
-    else
+    if empty(valid_datafiles)
         return
     endif
-    " ----------------------------------------
-    let im = s:vimim_get_valid_im_name(im)
-    let s:im.root = "datafile"
-    let s:im.name = im
-    " ----------------------------------------
-    let s:vimim_backend.datafile[im] = s:vimim_get_empty_backend_hash()
-    let s:vimim_backend.datafile[im].root = "datafile"
-    let s:vimim_backend.datafile[im].name = im
-    let s:vimim_backend.datafile[im].loaded = 1
-    let s:vimim_backend.datafile[im].datafile = datafile
-    let s:vimim_backend.datafile[im].keycode = s:hash_im_keycode[im]
-    let s:vimim_backend.datafile[im].chinese = s:vimim_get_chinese(im)
-    let s:vimim_backend.datafile[im].lines = s:vimim_read_datafile(im, datafile)
-    " ----------------------------------------
+    let msg = "vim datafile.pinyin.vimim datafile.4corner.vimim"
+    for pair in valid_datafiles
+        " --------------------------------------------------------------------------
+        let datafile = get(pair, 1)
+        let im = get(pair, 0)
+        let im = s:vimim_get_valid_im_name(im)
+        let s:im.root = "datafile"
+        let s:im.name = im
+        let s:vimim_backend.datafile[im] = s:vimim_get_empty_backend_hash()
+        let s:vimim_backend.datafile[im].root = "datafile"
+        let s:vimim_backend.datafile[im].name = im
+        let s:vimim_backend.datafile[im].loaded = 1
+        let s:vimim_backend.datafile[im].datafile = datafile
+        let s:vimim_backend.datafile[im].keycode = s:hash_im_keycode[im]
+        let s:vimim_backend.datafile[im].chinese = s:vimim_get_chinese(im)
+        let s:vimim_backend.datafile[im].lines = s:vimim_read_datafile(im, datafile)
+        " --------------------------------------------------------------------------
+    endfor
 endfunction
 
 " -------------------------------------
