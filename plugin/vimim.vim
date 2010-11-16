@@ -594,8 +594,10 @@ function! s:vimim_egg_vimim()
     let option = "fencs\t "  . encoding . &fileencodings
     call add(eggs, option)
     " ----------------------------------
-    let option = "fonts\t "  . font . &guifontwide
-    call add(eggs, option)
+    if has("gui_running")
+        let option = "fonts\t " . font . &guifontwide
+        call add(eggs, option)
+    endif
     " ----------------------------------
     let option = "lc_time\t " . environment . v:lc_time
     call add(eggs, option)
