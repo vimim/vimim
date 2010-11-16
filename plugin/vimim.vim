@@ -153,7 +153,7 @@ function! s:vimim_backend_initialization_once()
     " ---------------------------------------
     call s:vimim_finalize_session()
     " ---------------------------------------
-    call s:vimim_scan_current_buffer()
+    call s:vimim_scan_current_buffer_for_auto()
     " ---------------------------------------
 endfunction
 
@@ -177,8 +177,6 @@ function! s:vimim_initialize_session()
     call s:vimim_super_reset()
     " --------------------------------
     let s:unicode_4corner_cache = {}
-    let s:hash_im = s:vimim_get_empty_im_hash()
-    " --------------------------------
     let s:pinyin_and_4corner = 0
     let s:abcd = "'abcdefg"
     let s:pqwertyuio = range(10)
@@ -690,7 +688,7 @@ endfunction
 
 " -------------------------------------
 function! s:vimim_get_ciku_in_Chinese()
-" ------------------------------------- TODO
+" -------------------------------------
     let datafile = s:vimim_backend[s:im.root][s:im.name].datafile
     if empty(datafile)
         let msg = "no primary datafile, try directory"
@@ -963,9 +961,10 @@ function! <SID>ChineseMode()
     let s:vimim_backend[s:im.root][s:im.name].chinese_mode_switch += 1
     let switch = s:vimim_backend[s:im.root][s:im.name].chinese_mode_switch % 2
 
-let g:g1=s:im.name
-let g:g2=s:im.root
+let g:g1=s:im.root
+let g:g2=s:im.name
 let g:g3=switch
+let g:g4=s:path2
 
     if empty(switch)
         call s:vimim_i_chinese_mode_on()
@@ -2303,11 +2302,26 @@ call add(s:vimims, VimIM)
 
 " --------------------------------------------
 function! s:vimim_scan_embedded_digit_filter()
-" --------------------------------------------
+" -------------------------------------------- TODO
  "  [todo] 4corner as filter is independent
  "         can be used as sqlite filter
  "         can also be used as cloud filter?
  "         should use matched_list cache for sogou
+    " ---------------------------------------- todo todo
+"   let datafile = s:path . "vimim.4corner.txt"
+"   if filereadable(datafile)
+"       let s:pinyin_and_4corner = 1
+"       let digit_lines = readfile(datafile)
+"       let digit = match(digit_lines, '^\d\+')
+"       call extend(s:vimim_backend[s:im.root][s:im.name].lines, digit_lines[digit :])
+"       let unihan_list = digit_lines[: digit-1]
+"       for unihan in unihan_list
+"           let pairs = split(unihan) |" u808f 8022
+"           let key = get(pairs, 0)
+"           let value = get(pairs, 1)
+"           let s:unicode_4corner_cache[key] = [value]
+"       endfor
+"   endif
 endfunction
 
 " ------------------------------------------
@@ -3486,7 +3500,7 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_build_all_filesnames()
 " --------------------------------------
-    let names = copy(keys(s:hash_im_keycode))
+    let names = sort(copy(keys(s:hash_im_keycode)))
     call add(names, 'pinyin_quote_sogou')
     call add(names, 'pinyin_huge')
     call add(names, 'pinyin_fcitx')
@@ -3529,18 +3543,14 @@ function! s:vimim_scan_backend_embedded_datafile()
     let s:im.root = "datafile"
     let s:im.name = im
     " ----------------------------------------
-    let s:vimim_backend.datafile[im] = copy(s:hash_im)
-    let s:vimim_backend.datafile[im].backend = "datafile"
-    let s:vimim_backend.datafile[im].im = im
+    let s:vimim_backend.datafile[im] = s:vimim_get_empty_backend_hash()
+    let s:vimim_backend.datafile[im].root = "datafile"
+    let s:vimim_backend.datafile[im].name = im
     let s:vimim_backend.datafile[im].loaded = 1
     let s:vimim_backend.datafile[im].datafile = datafile
     let s:vimim_backend.datafile[im].keycode = s:hash_im_keycode[im]
     let s:vimim_backend.datafile[im].chinese = s:vimim_get_chinese(im)
-    " ----------------------------------------
-    let s:vimim_backend.datafile[im].lines = s:vimim_get_datafile_lines(im, datafile)
-    " ----------------------------------------
-""  let s:vimim_backend.datafile[s:im.name].backend = "datafile"
-    let s:vimim_backend.datafile[s:im.name].cache = {}
+    let s:vimim_backend.datafile[im].lines = s:vimim_read_datafile(im, datafile)
     " ----------------------------------------
 endfunction
 
@@ -3558,30 +3568,15 @@ function! s:vimim_get_valid_im_name(im)
     return im
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_get_datafile_lines(im, datafile)
-" ------------------------------------------------
+" -------------------------------------------
+function! s:vimim_read_datafile(im, datafile)
+" -------------------------------------------
     let datafile = a:datafile
     if len(datafile)>1
     \&& filereadable(datafile)
     \&& empty(s:vimim_backend.datafile[a:im].lines)
         return readfile(datafile)
     endif
-    " ---------------------------------------- todo todo
-"   let datafile = s:path . "vimim.4corner.txt"
-"   if filereadable(datafile)
-"       let s:pinyin_and_4corner = 1
-"       let digit_lines = readfile(datafile)
-"       let digit = match(digit_lines, '^\d\+')
-"       call extend(s:vimim_backend[s:im.root][s:im.name].lines, digit_lines[digit :])
-"       let unihan_list = digit_lines[: digit-1]
-"       for unihan in unihan_list
-"           let pairs = split(unihan) |" u808f 8022
-"           let key = get(pairs, 0)
-"           let value = get(pairs, 1)
-"           let s:unicode_4corner_cache[key] = [value]
-"       endfor
-"   endif
 endfunction
 
 " ----------------------------------------------------
@@ -3896,39 +3891,38 @@ function! s:vimim_scan_backend_embedded_directory()
     endif
     " -----------------------------------
     for im in valid_directoires
-        let s:vimim_backend[s:im.root].[im].datafile = im
         let im = s:vimim_get_valid_im_name(im)
         let s:im.root = "directory"
         let s:im.name = im
-        let s:vimim_backend[s:im.root].[im].loaded = 1
-        let s:vimim_backend[s:im.root].[im].backend = s:im.root
-        if im =~ 4corner
+        " -----------------------------------------------------------------
+        let s:vimim_backend.directory[im] = s:vimim_get_empty_backend_hash()
+        let s:vimim_backend.directory[im].root = "directory"
+        let s:vimim_backend.directory[im].name = im
+        let s:vimim_backend.directory[im].loaded = 1
+        let s:vimim_backend.directory[im].keycode = s:hash_im_keycode[im]
+        let s:vimim_backend.directory[im].chinese = s:vimim_get_chinese(im)
+        " -----------------------------------------------------------------
+        if im =~ '^\d\+'
             let s:pinyin_and_4corner = 2
         endif
     endfor
 endfunction
 
-" -------------------------------------
-function! s:vimim_scan_current_buffer()
-" -------------------------------------
+" ----------------------------------------------
+function! s:vimim_scan_current_buffer_for_auto()
+" ----------------------------------------------
     let buffer = expand("%:p:t")
-    if buffer !~# '.vimim\>'
+    if buffer =~# '.vimim\>'
+        let msg = "vim whatever.vimim"
+    else
         return
     endif
     " ---------------------------------
     if buffer =~? 'sogou'
-        let s:im.name = "sogou"
-        let s:im.root = "sogou"
-        let s:vimim_cloud_sogou = 1
+        call s:vimim_do_force_cloud()
     " ---------------------------------
     elseif buffer =~? 'mycloud'
-        call s:vimim_scan_backend_mycloud()
-        if empty(s:vimim_cloud_plugin)
-            return
-        else
-            let s:im.name = "mycloud"
-            let s:im.root = "mycloud"
-        endif
+        call s:vimim_do_force_mycloud()
     " ---------------------------------
     elseif buffer =~? 'directory'
         let s:im.root = "directory"
@@ -3936,6 +3930,7 @@ function! s:vimim_scan_current_buffer()
     elseif buffer =~? 'datafile'
         let s:im.root = "datafile"
     endif
+    " ---------------------------------
 endfunction
 
 " --------------------------------------
@@ -4044,7 +4039,7 @@ function! s:vimim_get_sentence_directory(keyboard)
     let msg = "Directory database is natural to vim editor."
     let keyboard = a:keyboard
     let im = s:im.name
-    if s:vimim_backend.direcotry.name != "directory"
+    if s:vimim_backend[s:im.root][s:im.name].root != s:im.root
         return []
     endif
     let results = []
@@ -4259,7 +4254,9 @@ call add(s:vimims, VimIM)
 function! s:vimim_scan_backend_embedded_database()
 " ------------------------------------------------
     let buffer = expand("%:p:t")
-    if buffer !~# '.vimim\>' && buffer !~? 'sqlite'
+    if buffer =~# '.vimim\>' && buffer =~? 'sqlite'
+        let msg = "vim whatever.sqlite.vimim"
+    else
         return
     endif
     " --------------------------------------------
@@ -4289,19 +4286,19 @@ function! s:vimim_check_sqlite_availability()
     let s:vimim_imode_pinyin = 0
     let s:vimim_static_input_style = 2
     " ----------------------------------------
+    let root = "database"
     let im = "sqlite"
-    let backend = "database"
     " ----------------------------------------
-    let s:vimim_backend.database[im] = s:vimim_get_empty_im_hash()
-    let s:vimim_backend.database[im].backend = backend
-    let s:vimim_backend.database[im].im = im
+    let s:vimim_backend.database[im] = s:vimim_get_empty_backend_hash()
+    let s:vimim_backend.database[im].root = root
+    let s:vimim_backend.database[im].name = im
     let s:vimim_backend.database[im].loaded = 1
     let s:vimim_backend.database[im].datafile = datafile
     let s:vimim_backend.database[im].executable = executable
     let s:vimim_backend.database[im].keycode = s:hash_im_keycode["pinyin"]
-    let s:vimim_backend.database[im].chinese = s:vimim_get_chinese(backend)
+    let s:vimim_backend.database[im].chinese = s:vimim_get_chinese(root)
     " ----------------------------------------
-    return backend
+    return root
 endfunction
 
 " -----------------------------------------------
@@ -4410,6 +4407,17 @@ let VimIM = " ====  Backend=>Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" --------------------------------
+function! s:vimim_do_force_cloud()
+" --------------------------------
+    let cloud = s:vimim_set_cloud_if_available()
+    if empty(cloud)
+        let s:vimim_cloud_sogou = 0
+    else
+        let s:vimim_cloud_sogou = 1
+    endif
+endfunction
+
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
@@ -4417,14 +4425,42 @@ function! s:vimim_scan_backend_cloud()
 " s:vimim_cloud_sogou=-1 : cloud is open when cloud at will
 " s:vimim_cloud_sogou=-2 : cloud is shut down without condition
 " -------------------------------------------------------------
-    let backend = copy(s:hash_im)
-    let backend.name = 'sogou'
-    let backend.libcall = 0
-    let backend.sogou_key = 0
-    let s:vimim_backend.sogou = backend
-    " ----------------------------------------------- todo
+    if empty(s:vimim_backend)
+        let msg = "try cloud if no vimim embedded backend"
+    else
+        return
+    endif
+    let cloud = s:vimim_set_cloud_if_available()
+    if empty(cloud)
+        let s:vimim_cloud_sogou = 0
+        return
+    endif
+endfunction
+
+" ----------------------------------------
+function! s:vimim_set_cloud_if_available()
+" ----------------------------------------
+    let s:vimim_backend.cloud.sogou = s:vimim_get_empty_backend_hash()
+    let cloud = s:vimim_check_cloud_availability()
+    if empty(cloud)
+        return {}
+    else
+        let s:im.root = "cloud"
+        let s:im.name = "sogou"
+        let s:vimim_backend.cloud.sogou.root = "cloud"
+        let s:vimim_backend.cloud.sogou.name = "sogou"
+        let s:vimim_backend.cloud.sogou.loaded = 1
+        let s:vimim_backend.cloud.sogou.keycode = s:hash_im_keycode["sogou"]
+        let s:vimim_backend.cloud.sogou.chinese = s:vimim_get_chinese("sogou")
+        return s:vimim_backend.cloud.sogou
+    endif
+endfunction
+
+" ------------------------------------------
+function! s:vimim_check_cloud_availability()
+" ------------------------------------------
     if s:vimim_cloud_sogou < -1
-        let s:vimim_backend.sogou.name = 0
+        return {}
     endif
     " step 1 of 3: try to find libvimim
     " ---------------------------------
@@ -4439,16 +4475,16 @@ function! s:vimim_scan_backend_cloud()
         endif
         let ret = libcall(cloud, "do_geturl", "__isvalid")
         if ret ==# "True"
-            let s:vimim_backend.sogou.executable = cloud
-            let s:vimim_backend.sogou.libcall = 1
+            let s:vimim_backend.cloud.sogou.executable = cloud
+            let s:vimim_backend.cloud.sogou.libcall = 1
             call s:vimim_do_cloud_if_no_embedded_backend()
         else
-            let s:vimim_backend.sogou.name = 0
+            return {}
         endif
     endif
     " step 2 of 3: try to find wget
     " -----------------------------
-    if empty(s:vimim_backend.sogou.executable)
+    if empty(s:vimim_backend.cloud.sogou.executable)
         let wget = 0
         if executable(s:path .  "wget.exe")
             let wget = s:path . "wget.exe"
@@ -4459,28 +4495,30 @@ function! s:vimim_scan_backend_cloud()
             let msg = "wget is not available"
         else
             let wget_option = " -qO - --timeout 20 -t 10 "
-            let s:vimim_backend.sogou.executable = wget . wget_option
+            let s:vimim_backend.cloud.sogou.executable = wget . wget_option
         endif
     endif
     " step 3 of 3: try to find curl if no wget
     " ----------------------------------------
-    if empty(s:vimim_backend.sogou.executable)
+    if empty(s:vimim_backend.cloud.sogou.executable)
         if executable('curl')
-            let s:vimim_backend.sogou.executable = "curl -s "
+            let s:vimim_backend.cloud.sogou.executable = "curl -s "
         endif
     endif
-    if empty(s:vimim_backend.sogou.executable)
-        let s:vimim_cloud_sogou = 0
-        let s:vimim_backend.sogou.name = 0
+    if empty(s:vimim_backend.cloud.sogou.executable)
+        return {}
     else
         call s:vimim_do_cloud_if_no_embedded_backend()
     endif
+    return s:vimim_backend.cloud.sogou
 endfunction
 
 " -------------------------------------------------
 function! s:vimim_do_cloud_if_no_embedded_backend()
 " -------------------------------------------------
-    if empty(s:vimim_backend)
+    if empty(s:vimim_backend.directory)
+    \&& empty(s:vimim_backend.datafile)
+    \&& empty(s:vimim_backend.database)
         if empty(s:vimim_cloud_sogou)
             let s:vimim_cloud_sogou = 1
         endif
@@ -4565,7 +4603,7 @@ endfunction
 " -------------------------------
 function! s:vimim_get_sogou_key()
 " -------------------------------
-    let executable = s:vimim_backend.sogou.executable
+    let executable = s:vimim_backend.cloud.sogou.executable
     if empty(executable)
         return 0
     endif
@@ -4575,7 +4613,7 @@ function! s:vimim_get_sogou_key()
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     " --------------------------------------------------------------
     try
-        if s:vimim_backend.sogou.libcall
+        if s:vimim_backend.cloud.sogou.libcall
             let input = cloud
             let output = libcall(executable, "do_geturl", input)
         else
@@ -4599,7 +4637,7 @@ endfunction
 function! s:vimim_get_cloud_sogou(keyboard, force)
 " ------------------------------------------------
     let keyboard = a:keyboard
-    let executable = s:vimim_backend.sogou.executable
+    let executable = s:vimim_backend.cloud.sogou.executable
     if empty(executable) || empty(keyboard)
         return []
     endif
@@ -4607,12 +4645,11 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
         return []
     endif
     " only use sogou when we get a valid key
-    let s:vimim_backend.sogou.sogou_key = 0
-    if empty(s:vimim_backend.sogou.sogou_key)
-        let s:vimim_backend.sogou.sogou_key = s:vimim_get_sogou_key()
+    if empty(s:vimim_backend.cloud.sogou.sogou_key)
+        let s:vimim_backend.cloud.sogou.sogou_key = s:vimim_get_sogou_key()
     endif
     let cloud = 'http://web.pinyin.sogou.com/api/py?key='
-    let cloud = cloud . s:vimim_backend.sogou.sogou_key .'&query='
+    let cloud = cloud . s:vimim_backend.cloud.sogou.sogou_key .'&query='
     " support apostrophe as delimiter to remove ambiguity
     " (1) examples: piao => pi'ao (cloth)  xian => xi'an (city)
     " (2) add double quotes between keyboard
@@ -4622,7 +4659,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     " --------------------------------------------------------------
     try
-        if s:vimim_backend.sogou.libcall
+        if s:vimim_backend.cloud.sogou.libcall > 0
             let input = cloud . keyboard
             let output = libcall(executable, "do_geturl", input)
         else
@@ -4677,11 +4714,104 @@ let VimIM = " ====  Backend=>myCloud ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" ----------------------------------
+function! s:vimim_do_force_mycloud()
+" ----------------------------------
+    let mycloud = s:vimim_set_mycloud_if_available()
+    if empty(mycloud)
+        let s:vimim_cloud_plugin = 0
+    else
+        let s:im.root = "cloud"
+        let s:im.name = "mycloud"
+    endif
+endfunction
+
+" --------------------------------------
+function! s:vimim_scan_backend_mycloud()
+" --------------------------------------
+" sample mycloud url:
+" --------------------------------------------------------------
+" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
+" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
+" :let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
+" :let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
+" :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
+" :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
+" :let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
+" :let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
+" --------------------------------------------------------------
+    if s:vimim_cloud_sogou == 1
+        let msg = "try whole cloud if it is set already"
+    else
+        return
+    endif
+    " ---------------------------------------------------------
+    let cloud = s:vimim_set_mycloud_if_available()
+    if empty(cloud)
+        let s:vimim_cloud_sogou = 0
+        return
+    endif
+    " ---------------------------------------------------------
+endfunction
+
+" ------------------------------------------
+function! s:vimim_set_mycloud_if_available()
+" ------------------------------------------
+    let cloud = s:vimim_set_cloud_if_available()
+    if empty(cloud)
+        let msg = "no mycloud if no cloud executable"
+        return {}
+    endif
+    " --------------------------------------
+    let s:vimim_backend.cloud.mycloud = s:vimim_get_empty_backend_hash()
+    let mycloud = s:vimim_check_mycloud_availability()
+    if empty(mycloud)
+        return {}
+    else
+        let s:vimim_cloud_plugin = mycloud
+        let s:vimim_cloud_sogou = -777
+        let s:shuangpin_flag = 0
+        " ------------------------------------------------------
+        let im = "mycloud"
+        let s:im.root = "cloud"
+        let s:im.name = im
+        let s:vimim_backend.cloud.mycloud = copy(s:vimim_backend.cloud.sogou)
+        let s:vimim_backend.cloud.mycloud.name = im
+        let s:vimim_backend.cloud.mycloud.keycode = s:hash_im_keycode[im]
+        let s:vimim_backend.cloud.mycloud.chinese = s:vimim_get_chinese(im)
+        " ------------------------------------------------------
+        return s:vimim_backend.cloud.mycloud
+    endif
+endfunction
+
+" --------------------------------------------
+function! s:vimim_check_mycloud_availability()
+" --------------------------------------------
+    let cloud = s:vimim_check_mycloud_plugin()
+    " this variable should not be used after initialization
+    unlet s:vimim_mycloud_url
+    if empty(cloud)
+        let s:vimim_cloud_plugin = 0
+        return 0
+    endif
+    let ret = s:vimim_access_mycloud(cloud, "__getname")
+    let loaded = split(ret, "\t")[0]
+    let ret = s:vimim_access_mycloud(cloud, "__getkeychars")
+    let keycode = split(ret, "\t")[0]
+    if empty(keycode)
+        let s:vimim_cloud_plugin = 0
+        return 0
+    else
+        return cloud
+    endif
+endfunction
+
 " ------------------------------------------
 function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
 "  use the same function to access mycloud by libcall() or system()
-    let executable = s:vimim_backend.sogou.executable
+    let executable = s:vimim_backend.cloud.mycloud.executable
     if s:vimimdebug > 0
         call s:debugs("cloud", a:cloud)
         call s:debugs("cmd", a:cmd)
@@ -4697,7 +4827,7 @@ function! s:vimim_access_mycloud(cloud, cmd)
         return system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        if s:vimim_backend.sogou.libcall
+        if s:vimim_backend.cloud.sogou.libcall
             let ret = libcall(executable, "do_geturl", a:cloud.input)
         else
             let ret = system(executable . shellescape(a:cloud.input))
@@ -4832,7 +4962,7 @@ function! s:vimim_check_mycloud_plugin()
             endif
         elseif part[0] ==# "http" || part[0] ==# "https"
             let cloud = s:vimim_mycloud_url
-            if !empty(s:vimim_backend.sogou.executable)
+            if !empty(s:vimim_backend.cloud.sogou.executable)
                 let s:cloud_plugin_mode = "www"
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
                 if split(ret, "\t")[0] == "True"
@@ -4844,52 +4974,6 @@ function! s:vimim_check_mycloud_plugin()
         endif
     endif
     return 0
-endfunction
-
-" --------------------------------------
-function! s:vimim_scan_backend_mycloud()
-" --------------------------------------
-    if empty(s:vimim_backend)
-        let msg = "always try embedded backend first"
-    elseif s:vimim_cloud_sogou == 1
-        let msg = "then try cloud if it is whole cloud"
-    else
-        return
-    endif
-" -------------------
-" mycloud sample url:
-" --------------------------------------------------------------
-" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
-" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
-" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
-" :let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
-" :let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
-" :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
-" :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
-" :let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
-" :let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
-" --------------------------------------------------------------
-    let cloud = s:vimim_check_mycloud_plugin()
-    " this variable should not be used after initialization
-    unlet s:vimim_mycloud_url
-    if empty(cloud)
-        let s:vimim_cloud_plugin = 0
-        return
-    endif
-    let ret = s:vimim_access_mycloud(cloud, "__getname")
-    let loaded = split(ret, "\t")[0]
-    let ret = s:vimim_access_mycloud(cloud, "__getkeychars")
-    let keycode = split(ret, "\t")[0]
-    if empty(keycode)
-        let s:vimim_cloud_plugin = 0
-    else
-        let s:vimim_cloud_plugin = cloud
-        let s:vimim_cloud_sogou = -777
-        let s:shuangpin_flag = 0
-        let s:vimim_backend[s:im.root].mycloud.loaded = loaded
-        let s:im.name = 'mycloud'
-        let s:vimim_backend[s:im.name][s:im.name].keycode = keycode
-    endif
 endfunction
 
 " --------------------------------------------
@@ -4948,8 +5032,8 @@ endfunction
 " -------------------------------------
 function! s:vimim_url_xx_to_chinese(xx)
 " -------------------------------------
-    if s:vimim_backend.sogou.libcall
-        let executable = s:vimim_backend.sogou.executable
+    if s:vimim_backend.cloud.sogou.libcall > 0
+        let executable = s:vimim_backend.cloud.sogou.executable
         let output = libcall(executable, "do_unquote", a:xx)
     else
         let input = a:xx
@@ -4974,22 +5058,24 @@ let VimIM = " ====  Debug_Framework  ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------
-function! s:vimim_get_empty_im_hash()
-" -----------------------------------
-    let im_hash = {}
-    let im_hash.backend = 0
-    let im_hash.im = 0
-    let im_hash.executable = 0
-    let im_hash.loaded = 0
-    let im_hash.chinese = 0
-    let im_hash.keycode = 0
-    let im_hash.directory = 0
-    let im_hash.datafile = 0
-    let im_hash.lines = []
-    let im_hash.cache = {}
-    let im_hash.chinese_mode_switch = 1
-    return im_hash
+" ----------------------------------------
+function! s:vimim_get_empty_backend_hash()
+" ----------------------------------------
+    let one_backend_hash = {}
+    let one_backend_hash.root = 0
+    let one_backend_hash.name = 0
+    let one_backend_hash.executable = 0
+    let one_backend_hash.libcall = 0
+    let one_backend_hash.sogou_key = 0
+    let one_backend_hash.loaded = 0
+    let one_backend_hash.chinese = 0
+    let one_backend_hash.keycode = 0
+    let one_backend_hash.directory = 0
+    let one_backend_hash.datafile = 0
+    let one_backend_hash.lines = []
+    let one_backend_hash.cache = {}
+    let one_backend_hash.chinese_mode_switch = 1
+    return one_backend_hash
 endfunction
 
 " ----------------------------------
@@ -5011,8 +5097,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_backend.directory = {}
     let s:vimim_backend.datafile  = {}
     let s:vimim_backend.database  = {}
-    let s:vimim_backend.sogou     = {}
-    let s:vimim_backend.mycloud   = {}
+    let s:vimim_backend.cloud     = {}
     " ---------------------------------
     let dir = "/vimim"
     if isdirectory(dir)
@@ -5531,9 +5616,6 @@ else
 
     " ------------------------------------------------
     " [backend] VimIM internal embedded backend engine
-    " ------------------------------------------------ OO  todo
-""  if s:im.root =~# s:vimim_backend[s:im.root].im.backend
-""  if s:im.name      =~# s:vimim_backend[s:im.root].im.im
     " ------------------------------------------------
     if s:im.root =~# "directory"
         let results = s:vimim_get_sentence_directory(keyboard)
