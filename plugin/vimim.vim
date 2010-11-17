@@ -286,7 +286,6 @@ function! s:vimim_chinese_dictionary()
     let s:chinese['vim4'] = ['生气','生氣']
     let s:chinese['vim5'] = ['中文输入法','中文輸入法']
     let s:chinese['database'] = ['数据库','數據庫']
-    let s:chinese['nonstop'] = ['连续','連續']
     let s:chinese['input'] = ['输入','輸入']
     let s:chinese['directory'] = ['目录','目錄']
     let s:chinese['ciku'] = ['词库','詞庫']
@@ -301,7 +300,6 @@ function! s:vimim_chinese_dictionary()
     let s:chinese['internal'] = ['内码','內碼']
     let s:chinese['onekey'] = ['点石成金','點石成金']
     let s:chinese['style'] = ['风格','風格']
-    let s:chinese['scheme'] = ['方案','方案']
     let s:chinese['cloud'] = ['云输入','雲輸入']
     let s:chinese['mycloud'] = ['自己的云','自己的雲']
     let s:chinese['wubi'] = ['五笔','五筆']
@@ -333,10 +331,10 @@ function! s:vimim_chinese_dictionary()
     let s:chinese['jidian'] = ['极点','極點']
     let s:chinese['new_century'] = ['新世纪','新世紀']
     let s:chinese['shuangpin'] = ['双拼','雙拼']
-    let s:chinese['abc'] = ['智能双打','智能雙打']
+    let s:chinese['abc'] = ['智能','智能']
     let s:chinese['microsoft'] = ['微软','微軟']
     let s:chinese['nature'] = ['自然']
-    let s:chinese['plusplus'] = ['拼音加加']
+    let s:chinese['plusplus'] = ['加加']
     let s:chinese['purple'] = ['紫光']
     let s:chinese['flypy'] = ['小鹤','小鶴']
     let s:chinese['bracket_l'] = ['《','【']
@@ -399,8 +397,7 @@ function! s:vimim_initialize_keycode()
     endif
     " --------------------------------
     if s:shuangpin_flag > 0
-        let keycodes = s:vimim_get_shuangpin_keycode()
-        let keycode = keycodes[keycode]
+        let keycode = s:vimim_get_shuangpin_keycodes().keycode
     endif
     " --------------------------------
     let s:valid_key = copy(keycode)
@@ -619,17 +616,6 @@ function! s:vimim_egg_vimim()
     let im = s:vimim_statusline()
     if !empty(im)
         let option = "im\t " . input . "：" . im
-        call add(eggs, option)
-    endif
-    " ----------------------------------
-    let option = s:shuangpin_flag
-    if empty(option)
-        let msg = "no shuangpin is used"
-    else
-        let scheme = s:vimim_unihan('scheme')
-        let keycodes = s:vimim_get_shuangpin_keycode()
-        let shuangpin = keycodes[chinese]
-        let option = "scheme\t " . scheme . '：' . shuangpin
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -1239,10 +1225,8 @@ function! s:vimim_statusline()
         return s:vimim_get_im_unihan(im)
     endif
     " ------------------------------------
-    let pinyin = s:vimim_unihan('pinyin')
     if s:shuangpin_flag > 0
-        let keycodes = s:vimim_get_shuangpin_keycode()
-        let im = keycodes[chinese]
+        let im = s:vimim_get_shuangpin_keycodes().chinese
     endif
     " ------------------------------------
     if s:pinyin_and_4corner > 0 && s:im.name == 'pinyin'
@@ -1251,6 +1235,7 @@ function! s:vimim_statusline()
             let im_digit = s:vimim_unihan('12345')
             let s:im.name = "12345"
         endif
+        let pinyin = s:vimim_unihan('pinyin')
         let im = pinyin . s:space . im_digit
         return s:vimim_get_im_unihan(im)
     endif
@@ -1282,14 +1267,13 @@ function! s:vimim_get_im_unihan(im)
     let style = s:vimim_static_input_style
     let dynamic = s:vimim_unihan('dynamic')
     let static = s:vimim_unihan('static')
-    let nonstop = s:vimim_unihan('nonstop')
     let input_style = s:vimim_unihan('classic')
     if style < 1
         let input_style .= dynamic
     elseif style == 1
         let input_style .= static
     elseif style == 2
-        let input_style = "OneKey" . nonstop
+        let input_style = "OneKeyNonStop"
     endif
     " ------------------------------------
     let bracket_l = s:vimim_unihan('bracket_l')
@@ -1297,7 +1281,8 @@ function! s:vimim_get_im_unihan(im)
     let plus = s:vimim_unihan('plus')
     let plus = bracket_r . plus . bracket_l
     let im = bracket_l . im . bracket_r
-    let im = im . s:space . input_style
+"   let im = im . s:space . input_style
+    let im = im . input_style
     return im
 endfunction
 
@@ -2772,7 +2757,7 @@ let VimIM = " ====  Input_Shuangpin  ==== {{{"
 call add(s:vimims, VimIM)
 
 " ---------------------------------------
-function! s:vimim_get_shuangpin_keycode()
+function! s:vimim_get_shuangpin_keycodes()
 " ---------------------------------------
     let s:shuangpin_flag = 1
     let name = 'shuangpin'
@@ -2797,10 +2782,10 @@ function! s:vimim_get_shuangpin_keycode()
         let s:shuangpin_flag = 0
     endif
     " ------------------------------------
-    let key = {}
-    let key.chinese = chinese . shuangpin
-    let key.keycode = keycode
-    return key
+    let shuang_pin = {}
+    let shuang_pin.chinese = chinese . shuangpin
+    let shuang_pin.keycode = keycode
+    return shuang_pin
     " ------------------------------------
 endfunction
 
@@ -2810,12 +2795,11 @@ function! s:vimim_initialize_shuangpin()
     if s:im.name != 'pinyin'
         return
     endif
+    call s:vimim_get_shuangpin_keycodes()
     if empty(s:shuangpin_flag)
         let s:quanpin_table = s:vimim_create_quanpin_table()
         return
     endif
-    " ----------------------------------
-    call s:vimim_get_shuangpin_keycode()
     let s:vimim_imode_pinyin = -1
     let rules = s:vimim_shuangpin_generic()
     " ----------------------------------
@@ -3159,9 +3143,9 @@ function! s:vimim_initialize_wubi()
     let s:vimim_punctuation_navigation = -1
 endfunction
 
-" --------------------------------------
-function! s:vimim_wubi_nonstop(keyboard)
-" --------------------------------------
+" -----------------------------------------------
+function! s:vimim_wubi_4char_auto_input(keyboard)
+" -----------------------------------------------
     let keyboard = a:keyboard
     " ----------------------------
     " support wubi non-stop typing
@@ -5512,7 +5496,7 @@ if a:start
     let byte_before = current_line[start_column-1]
     let char_before_before = current_line[start_column-2]
 
-    " take care of seamless english/chinese input
+    " take care of seamless English/Chinese input
     " -------------------------------------------
     let seamless_column = s:vimim_get_seamless(current_positions)
     if seamless_column < 0
@@ -5691,10 +5675,10 @@ else
         endif
     endif
 
-    " [wubi] support wubi non-stop input
-    " ----------------------------------
+    " [wubi] support wubi auto input
+    " ------------------------------
     if s:im.name == 'wubi' || s:im.name == 'erbi'
-        let keyboard = s:vimim_wubi_nonstop(keyboard)
+        let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
     endif
 
     " ------------------------------------------------
@@ -5880,7 +5864,7 @@ function! s:vimim_initialize_autocmd()
     if !has("autocmd")
         return
     endif
-    " [egg] make the dot vimim file our first-class citizen 
+    " [egg] make the dot vimim file our first-class citizen
     augroup vimim_auto_chinese_mode
         autocmd BufNewFile  *.vimim startinsert
         autocmd BufEnter    *.vimim sil!call <SID>ChineseModeAlwaysOn()
