@@ -1167,7 +1167,7 @@ endfunction
 function! IMName()
 " ---------------- todo
 " This function is for user-defined 'stl' 'statusline'
- "  call s:vimim_backend_initialization_once()
+    call s:vimim_backend_initialization_once()
     if empty(s:chinese_input_mode)
         if pumvisible()
             return s:vimim_statusline()
