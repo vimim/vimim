@@ -117,7 +117,6 @@ let s:path = expand("<sfile>:p:h")."/"
 " -----------------------------------------
 function! s:vimim_frontend_initialization()
 " -----------------------------------------
-    call s:vimim_scan_backend_embedded_database()
     call s:vimim_force_scan_current_buffer()
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_wubi()
@@ -151,6 +150,7 @@ function! s:vimim_backend_initialization_once()
     " ---------------------------------------
     call s:vimim_scan_backend_embedded_datafile()
     call s:vimim_scan_backend_embedded_directory()
+    call s:vimim_scan_backend_embedded_database()
     call s:vimim_scan_embedded_digit_filter()
     call s:vimim_scan_backend_cloud()
     call s:vimim_scan_backend_mycloud()
@@ -961,7 +961,6 @@ endfunction
 function! s:vimim_chinesemode(switch)
 " -----------------------------------
     sil!call s:vimim_backend_initialization_once()
-    sil!call s:vimim_dynamic_im_toggle()
     sil!call s:vimim_frontend_initialization()
     sil!call s:vimim_set_chinese_input_mode()
     sil!call s:vimim_build_datafile_cache()
@@ -1001,13 +1000,18 @@ function! s:vimim_chinesemode(switch)
     sil!exe 'sil!return "' . action . '"'
 endfunction
 
-" -----------------------------------
-function! s:vimim_dynamic_im_toggle()
-" ----------------------------------- todo
-    let im = s:im.name
-    let root = s:im.root
+" --------------------------
+function! g:VimIMOpenAllIM()
+" --------------------------
+    sil!call s:vimim_backend_initialization_once()
     let frontends = s:im.frontends
-    let number_of_available_im = len(frontends)
+    " [['datafile', 'pinyin'], ['datafile', 'wubi']]
+    for input_method in frontends
+        let s:im.root = get(input_method,0)
+        let s:im.name = get(input_method,1)
+        call <SID>ChineseModeAlwaysOn()
+        tab split
+    endfor
 endfunction
 
 " ------------------------------------
@@ -5912,8 +5916,8 @@ function! s:vimim_initialize_autocmd()
     endif
     " make dot vimim file our first-class citizen:
     augroup vimim_auto_chinese_mode
-        autocmd BufEnter    *.vimim sil!call <SID>ChineseModeAlwaysOn()
         autocmd BufNewFile  *.vimim startinsert
+        autocmd BufEnter    *.vimim sil!call <SID>ChineseModeAlwaysOn()
     augroup END
 endfunction
 
