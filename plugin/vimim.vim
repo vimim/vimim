@@ -718,6 +718,38 @@ let VimIM = " ====  OneKey           ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" ---------------------------------------------------
+function! s:vimim_break_apostrophe_sentence(keyboard)
+" ---------------------------------------------------
+" VimIM classic OneKey sentence input showcase
+" --------------------------------------------
+" input method english:    i'have'a'dream
+" input method pinyin:     wo'you'yige'meng
+" input method wubi:       trde'ggwh'ssqu
+" input method cantonese:  ngoh'yau'yat'goh'mung
+" input method wu:         ngu'qyoe'iq'qku'qmon
+" input method zhengma:    m'gq'avov'ffrs
+" input method cangjie:    hqi'kb'm'ol'ddni
+" input method nature:     wop'yb'yg''mgx
+" input method boshiamy:   ix'x'e'bii'rfnc
+" --------------------------------------------
+    let keyboard = a:keyboard
+    let blocks = []
+    if empty(s:chinese_input_mode)
+    \&& s:has_apostrophe_in_datafile < 1
+    \&& keyboard =~ "[']"
+    \&& keyboard[0:0] != "'"
+    \&& keyboard[-1:-1] != "'"
+        let blocks = split(keyboard, "[']")
+        if len(blocks) > 0
+            let head = remove(blocks, 0)
+            let tail =  join(blocks, "'")
+            let blocks = [head, tail]
+        endif
+    endif
+    return blocks
+endfunction
+
 " ---------------------
 function! <SID>TabKey()
 " ---------------------
@@ -3172,7 +3204,7 @@ function! s:vimim_first_punctuation_erbi(keyboard)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Backend_Unicode  ==== {{{"
+let VimIM = " ====  Backend==Unicode ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -3909,8 +3941,7 @@ function! s:vimim_scan_backend_embedded_directory()
     endif
     " -----------------------------------
     let valid_directoires = []
-    let all_vimim_datafile_names = ['4corner','pinyin','wubi']
-    for im in all_vimim_datafile_names
+    for im in s:all_vimim_datafile_names
         let dir = s:vimim_get_data_directory(im)
         if empty(dir)
             continue
@@ -4065,37 +4096,6 @@ function! s:vimim_break_string_at(keyboard, max)
     let matched_part = strpart(keyboard, 0, max)
     let trailing_part = strpart(keyboard, max)
     let blocks = [matched_part, trailing_part]
-    return blocks
-endfunction
-
-" ---------------------------------------------------
-function! s:vimim_break_apostrophe_sentence(keyboard)
-" ---------------------------------------------------
-" VimIM classic OneKey sentence input showcase
-" --------------------------------------------
-" input method english:    i'have'a'dream
-" input method pinyin:     wo'you'yige'meng
-" input method wubi:       trde'ggwh'ssqu
-" input method cantonese:  ngoh'yau'yat'goh'mung
-" input method wu:         ngu'qyoe'iq'qku'qmon
-" input method zhengma:    m'gq'avov'ffrs
-" input method cangjie:    hqi'kb'm'ol'ddni
-" input method nature:     wop'yb'yg''mgx
-" input method boshiamy:   ix'x'e'bii'rfnc
-" --------------------------------------------
-    let keyboard = a:keyboard
-    let blocks = []
-    if empty(s:chinese_input_mode)
-    \&& keyboard =~ "[']"
-    \&& keyboard[0:0] != "'"
-    \&& keyboard[-1:-1] != "'"
-        let blocks = split(keyboard, "[']")
-        if len(blocks) > 0
-            let menu = remove(blocks, 0)
-            let tail =  join(blocks, "'")
-            let blocks = [menu, tail]
-        endif
-    endif
     return blocks
 endfunction
 
@@ -4373,8 +4373,8 @@ function! s:vimim_check_sqlite_availability()
     let s:backend.database[im].name = im
     let s:backend.database[im].datafile = datafile
     let s:backend.database[im].executable = executable
-"   let s:backend.database[im].keycode = s:im_keycode[im]
-"   let s:backend.database[im].chinese = s:vimim_unihan(root)
+    let s:backend.database[im].keycode = s:im_keycode[im]
+    let s:backend.database[im].chinese = s:vimim_unihan(root)
     " ----------------------------------------
     return root
 endfunction
