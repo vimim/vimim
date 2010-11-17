@@ -10,11 +10,6 @@ let $VimIM = "$Revision$"
 " ------------------
 " For the impatient:
 " ------------------
-" # play with various VimIM Input Methods:
-"   - vim whatever.vimim         => input pinyin with vimim.pinyin.txt
-"   - vim whatever.sqlite.vimim  => input unihan with cedict.db
-"   - vim whatever.mycloud.vimim => input mycloud
-"   - vim whatever.sogou.vimim   => input cloud
 " # play with various eggs:
 "   -  VimIM 經典:  type:            vim<C-6><C-6>
 "   -  VimIM 環境:  type:          vimim<C-6><C-6>
@@ -3947,6 +3942,11 @@ endfunction
 " -------------------------------------------
 function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
+" $vim whatever.vimim         => auto enter chinese input mode
+" $vim whatever.sqlite.vimim  => force sqlite input with cedict.db
+" $vim whatever.mycloud.vimim => force mycloud input
+" $vim whatever.sogou.vimim   => force cloud input
+" -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
         let msg = "vim whatever.vimim"
@@ -5674,8 +5674,8 @@ else
         endif
     endif
 
-    " [cloud] magic trailing apostrophe to control cloud or not cloud
-    " ---------------------------------------------------------------
+    " [cloud] magic trailing apostrophe to control cloud
+    " --------------------------------------------------
     let clouds = s:vimim_magic_tail(keyboard)
     if len(clouds) > 0
         let msg = " usage: woyouyigemeng'<C-6> "
