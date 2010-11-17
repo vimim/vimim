@@ -116,7 +116,9 @@ let s:path = expand("<sfile>:p:h")."/"
 
 " -----------------------------------------
 function! s:vimim_frontend_initialization()
-" -----------------------------------------
+" ----------------------------------------- todo
+    call s:vimim_scan_backend_embedded_database()
+    call s:vimim_force_scan_current_buffer()
     call s:vimim_initialize_erbi()
     call s:vimim_initialize_wubi()
     call s:vimim_initialize_pinyin()
@@ -149,14 +151,12 @@ function! s:vimim_backend_initialization_once()
     " ---------------------------------------
     call s:vimim_scan_backend_embedded_datafile()
     call s:vimim_scan_backend_embedded_directory()
-    call s:vimim_scan_backend_embedded_database()
     call s:vimim_scan_embedded_digit_filter()
     call s:vimim_scan_backend_cloud()
     call s:vimim_scan_backend_mycloud()
     " ---------------------------------------
     call s:vimim_initialize_quantifiers()
     call s:vimim_finalize_session()
-    call s:vimim_force_scan_current_buffer()
     " ---------------------------------------
 endfunction
 
@@ -951,6 +951,8 @@ function! <SID>ChineseMode()
     sil!call s:vimim_set_chinese_input_mode()
     sil!call s:vimim_build_datafile_cache()
     " -------------------------------------
+let g:g1=s:im.root
+let g:g2=s:im.name
     let action = ""
     if empty(s:im.root) || empty(s:im.name)
         return action
@@ -1114,23 +1116,38 @@ endfunction
 
 " -----------------------------------
 function! s:vimim_i_chinese_mode_on()
-" -----------------------------------
+" ----------------------------------- todo
     if s:vimim_custom_skin < 2
         if s:vimim_custom_laststatus > 0
             set laststatus=2
         endif
-        let b:keymap_name = s:vimim_statusline()
+     "  let b:keymap_name = s:vimim_statusline()
+        sil!call s:vimim_set_statusline()
     endif
     if s:vimim_custom_laststatus < 1
         echoh NonText| echo s:vimim_statusline()|echohl None
     endif
 endfunction
 
+" --------------------------------
+function! s:vimim_set_statusline()
+" --------------------------------
+    if empty(&statusline)
+        set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
+    elseif &statusline =~ 'IMName'
+        " nothing, because it is already in the statusline
+    elseif &statusline =~ '\V\^%!'
+        let &statusline .= '.IMName()'
+    else
+        let &statusline .= '%{IMName()}'
+    endif
+endfunction
+
 " ----------------
 function! IMName()
-" ----------------
+" ---------------- todo
 " This function is for user-defined 'stl' 'statusline'
-    call s:vimim_backend_initialization_once()
+ "  call s:vimim_backend_initialization_once()
     if empty(s:chinese_input_mode)
         if pumvisible()
             return s:vimim_statusline()
@@ -1175,7 +1192,7 @@ function! s:vimim_statusline()
         let im = keycodes[chinese]
     endif
     " ------------------------------------
-    if s:pinyin_and_4corner > 0
+    if s:pinyin_and_4corner > 0 && s:im.name =~# 'pinyin'
         let im_digit = s:vimim_get_chinese('4corner')
         if datafile =~ "12345"
             let im_digit = s:vimim_get_chinese('12345')
@@ -3951,21 +3968,21 @@ function! s:vimim_force_scan_current_buffer()
         return
     endif
     " ---------------------------------
-    if buffer =~? 'sogou'
+    if buffer =~? '.sqlite'
+        let msg = "vim SQLITE.english.vimim is covered"
+        return
+    " ---------------------------------
+    elseif buffer =~? 'sogou'
         call s:vimim_do_force_cloud()
     " ---------------------------------
     elseif buffer =~? 'mycloud'
         call s:vimim_do_force_mycloud()
     " ---------------------------------
-    elseif buffer =~? 'directory'
-        let s:im.root = "directory"
-        let im = s:vimim_get_im_from_buffer_name(buffer)
-        if !empty(im)
-            let s:im.name = im
-        endif
-    " ---------------------------------
-    elseif buffer =~? 'datafile'
+    else
         let s:im.root = "datafile"
+        if buffer =~? 'directory'
+            let s:im.root = "directory"
+        endif
         let im = s:vimim_get_im_from_buffer_name(buffer)
         if !empty(im)
             let s:im.name = im
@@ -3979,7 +3996,8 @@ function! s:vimim_get_im_from_buffer_name(filename)
 " -------------------------------------------------
     let im = 0
     for key in copy(keys(s:im_keycode_hash))
-        let matched = match(a:filename, key)
+        let patter = '\<' . key . '\>'
+        let matched = match(a:filename, patter)
         if matched < 0
             continue
         else
@@ -5350,15 +5368,6 @@ function! s:vimim_i_setting_on()
     endif
     set hlsearch
     set iminsert=1
-    if empty(&statusline)
-        set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
-    elseif &statusline =~ 'IMName'
-        " nothing, because it is already in the statusline
-    elseif &statusline =~ '\V\^%!'
-        let &statusline .= '.IMName()'
-    else
-        let &statusline .= '%{IMName()}'
-    endif
 endfunction
 
 " -------------------------------
