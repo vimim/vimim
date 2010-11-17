@@ -875,7 +875,9 @@ function! s:vimim_onekey_action(onekey)
             if s:vimim_tab_as_onekey == 1
                 let onekey = "\t"
             endif
-        elseif empty(a:onekey) && empty(s:chinese_input_mode)
+        elseif empty(a:onekey)
+        \&& empty(s:chinese_input_mode)
+        \&& index(s:valid_keys,'\d') > -1
             return <SID>vimim_get_unicode_menu()
         endif
     endif
@@ -3397,6 +3399,7 @@ function! s:vimim_internal_code(keyboard)
 " ---------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
+    \|| index(s:valid_keys,'\d') < 0
     \|| strlen(keyboard) != 5
         return []
     else
