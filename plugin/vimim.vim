@@ -16,12 +16,12 @@ let $VimIM = "$Revision$"
 "   - vim whatever.mycloud.vimim => input mycloud
 "   - vim whatever.sogou.vimim   => input cloud
 " # play with various eggs:
-"   -  VimIM 經典:  type:  vim<C-6><C-6>
-"   -  VimIM 環境:  type:  vimim<C-6><C-6>
-"   -  VimIM 程式:  type:  vimimvim<C-6><C-6>
-"   -  VimIM 幫助:  type:  vimimhelp<C-6><C-6>
-"   -  VimIM 測試:  type:  vimimdebug<C-6><C-6>
-"   -  VimIM 內碼:  type:  vimimunicode<C-6><C-6>
+"   -  VimIM 經典:  type:            vim<C-6><C-6>
+"   -  VimIM 環境:  type:          vimim<C-6><C-6>
+"   -  VimIM 程式:  type:       vimimvim<C-6><C-6>
+"   -  VimIM 幫助:  type:      vimimhelp<C-6><C-6>
+"   -  VimIM 測試:  type:     vimimdebug<C-6><C-6>
+"   -  VimIM 內碼:  type:   vimimunicode<C-6><C-6>
 "   -  VimIM 設置:  type:  vimimdefaults<C-6><C-6>
 " -----------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry         "]
@@ -645,7 +645,9 @@ function! s:vimim_egg_vimim()
         let CLOUD .= s:vimim_unihan('cloud')
     endif
     let option .= CLOUD
-    call add(eggs, option)
+    if s:im.name !~ 'boshiamy'
+        call add(eggs, option)
+    endif
     " ----------------------------------
     if empty(s:global_customized)
         let msg = "no global variable is set"
@@ -1874,8 +1876,8 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             let tail = ""
-            if keyboard =~ '[.]' && s:has_dot_in_datafile < 1
-                let dot = match(keyboard, '[.]')
+            if keyboard =~ "[']"
+                let dot = match(keyboard, "[']")
                 let tail = strpart(keyboard, dot+1)
             elseif keyboard !~? '^vim' && keyboard !~ "[']"
                 let tail = strpart(keyboard, len(menu))
@@ -3123,8 +3125,8 @@ call add(s:vimims, VimIM)
 " -----------------------------------------
 function! s:vimim_set_special_im_property()
 " -----------------------------------------
-    if  s:im.name == 'erbi'
-    \|| s:im.name == 'wu'
+    if s:im.name == 'wu'
+    \|| s:im.name == 'erbi'
     \|| s:im.name == 'yong'
     \|| s:im.name == 'nature'
     \|| s:im.name == 'boshiamy'
@@ -3691,7 +3693,7 @@ endfunction
 " -----------------------------------------------------
 function! s:vimim_get_sentence_datafile_cache(keyboard)
 " -----------------------------------------------------
-    let msg = "use cache to speed up search after cache is built"
+    let msg = "use cache to speed up search after initial load"
     let keyboard = a:keyboard
     if empty(s:backend[s:im.root][s:im.name].cache)
         return []
@@ -3845,6 +3847,11 @@ function! s:vimim_break_sentence_into_block(keyboard, im)
 " -------------------------------------------------------
     let keyboard = a:keyboard
     let blocks = s:vimim_static_break_every_four(keyboard, a:im)
+    if len(blocks) > 0
+        return blocks
+    endif
+    " --------------------------------------------
+    let blocks = s:vimim_break_apostrophe_sentence(keyboard)
     if len(blocks) > 0
         return blocks
     endif
@@ -4061,28 +4068,53 @@ function! s:vimim_break_string_at(keyboard, max)
     return blocks
 endfunction
 
+" ---------------------------------------------------
+function! s:vimim_break_apostrophe_sentence(keyboard)
+" ---------------------------------------------------
+" VimIM classic OneKey sentence input showcase
+" --------------------------------------------
+" input method english:    i'have'a'dream
+" input method pinyin:     wo'you'yige'meng
+" input method wubi:       trde'ggwh'ssqu
+" input method cantonese:  ngoh'yau'yat'goh'mung
+" input method wu:         ngu'qyoe'iq'qku'qmon
+" input method zhengma:    m'gq'avov'ffrs
+" input method cangjie:    hqi'kb'm'ol'ddni
+" input method nature:     wop'yb'yg''mgx
+" input method boshiamy:   ix'x'e'bii'rfnc
+" --------------------------------------------
+    let keyboard = a:keyboard
+    let blocks = []
+    if empty(s:chinese_input_mode)
+    \&& keyboard =~ "[']"
+    \&& keyboard[0:0] != "'"
+    \&& keyboard[-1:-1] != "'"
+        let blocks = split(keyboard, "[']")
+        if len(blocks) > 0
+            let menu = remove(blocks, 0)
+            let tail =  join(blocks, "'")
+            let blocks = [menu, tail]
+        endif
+    endif
+    return blocks
+endfunction
+
 " -----------------------------------------------------
 function! s:vimim_static_break_every_four(keyboard, im)
 " -----------------------------------------------------
-    let im = a:im
     let keyboard = a:keyboard
+    let blocks = []
     if len(keyboard) < 4
         return []
-    endif
-    let blocks = []
-    " ----------------------------------------
-    if im =~ '4corner'
+    elseif a:im =~ '4corner'
         if keyboard =~ '\d\d\d\d'
             let blocks = s:vimim_break_every_four(keyboard)
         elseif keyboard =~ '\d\+$'
             let blocks = [keyboard]
         endif
-    endif
-    " ----------------------------------------
-    if im =~ 'wubi'
+    elseif a:im =~ 'wubi'
         let blocks = s:vimim_break_every_four(keyboard)
     endif
-    " ----------------------------------------
     return blocks
 endfunction
 
@@ -5753,37 +5785,25 @@ function! s:vimim_get_valid_keyboard(keyboard)
         let keyboard = s:keyboard_leading_zero
     endif
     " ignore all-zeroes keyboard inputs
-    " ---------------------------------
     if empty(s:keyboard_leading_zero)
         return []
     endif
     " ignore non-sense keyboard inputs
-    " --------------------------------
     if keyboard !~# s:valid_key
         return []
     endif
     " ignore multiple non-sense dots
-    " ------------------------------
     if keyboard =~# '^[\.\.\+]'
     \&& s:im.name != 'boshiamy'
         let s:pattern_not_found += 1
         return []
     endif
     " [erbi] special meaning of the first punctuation
-    " -----------------------------------------------
     if s:im.name =~ 'erbi'
         let punctuation = s:vimim_first_punctuation_erbi(keyboard)
         if !empty(punctuation)
             return [punctuation]
         endif
-    endif
-    " ignore non-sense one char input
-    " -------------------------------
-    if s:vimim_static_input_style < 2
-    \&& s:im.name != 'boshiamy'
-    \&& len(keyboard) == 1
-    \&& keyboard !~# '\w'
-        return []
     endif
     return keyboard
 endfunction
