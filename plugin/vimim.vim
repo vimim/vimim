@@ -348,28 +348,28 @@ endfunction
 " ---------------------------------------
 function! s:vimim_build_im_keycode_hash()
 " ---------------------------------------
-    let s:hash_im_keycode = {}
-    let s:hash_im_keycode['cloud']    = "[0-9a-z'.]"
-    let s:hash_im_keycode['mycloud']  = "[0-9a-z'.]"
-    let s:hash_im_keycode['wubi']     = "[0-9a-z']"
-    let s:hash_im_keycode['4corner']  = "[0-9a-z']"
-    let s:hash_im_keycode['12345']    = "[0-9a-z']"
-    let s:hash_im_keycode['ctc']      = "[0-9a-z']"
-    let s:hash_im_keycode['11643']    = "[0-9a-z']"
-    let s:hash_im_keycode['english']  = "[0-9a-z']"
-    let s:hash_im_keycode['hangul']   = "[0-9a-z']"
-    let s:hash_im_keycode['xinhua']   = "[0-9a-z']"
-    let s:hash_im_keycode['pinyin']   = "[0-9a-z']"
-    let s:hash_im_keycode['cangjie']  = "[a-z']"
-    let s:hash_im_keycode['zhengma']  = "[a-z']"
-    let s:hash_im_keycode['quick']    = "[0-9a-z']"
-    let s:hash_im_keycode['erbi']     = "[a-z'.,;/]"
-    let s:hash_im_keycode['wu']       = "[a-z'.]"
-    let s:hash_im_keycode['yong']     = "[a-z'.;/]"
-    let s:hash_im_keycode['nature']   = "[a-z'.]"
-    let s:hash_im_keycode['boshiamy'] = "[][a-z'.,]"
-    let s:hash_im_keycode['phonetic'] = "[0-9a-z.,;/]"
-    let s:hash_im_keycode['array30']  = "[0-9a-z.,;/]"
+    let s:im_keycode_hash = {}
+    let s:im_keycode_hash['cloud']    = "[0-9a-z'.]"
+    let s:im_keycode_hash['mycloud']  = "[0-9a-z'.]"
+    let s:im_keycode_hash['wubi']     = "[0-9a-z']"
+    let s:im_keycode_hash['4corner']  = "[0-9a-z']"
+    let s:im_keycode_hash['12345']    = "[0-9a-z']"
+    let s:im_keycode_hash['ctc']      = "[0-9a-z']"
+    let s:im_keycode_hash['11643']    = "[0-9a-z']"
+    let s:im_keycode_hash['english']  = "[0-9a-z']"
+    let s:im_keycode_hash['hangul']   = "[0-9a-z']"
+    let s:im_keycode_hash['xinhua']   = "[0-9a-z']"
+    let s:im_keycode_hash['pinyin']   = "[0-9a-z']"
+    let s:im_keycode_hash['cangjie']  = "[a-z']"
+    let s:im_keycode_hash['zhengma']  = "[a-z']"
+    let s:im_keycode_hash['quick']    = "[0-9a-z']"
+    let s:im_keycode_hash['erbi']     = "[a-z'.,;/]"
+    let s:im_keycode_hash['wu']       = "[a-z'.]"
+    let s:im_keycode_hash['yong']     = "[a-z'.;/]"
+    let s:im_keycode_hash['nature']   = "[a-z'.]"
+    let s:im_keycode_hash['boshiamy'] = "[][a-z'.,]"
+    let s:im_keycode_hash['phonetic'] = "[0-9a-z.,;/]"
+    let s:im_keycode_hash['array30']  = "[0-9a-z.,;/]"
 endfunction
 
 " -------------------------------------------------------
@@ -1152,7 +1152,7 @@ function! s:vimim_statusline()
     let plus = s:vimim_get_chinese('plus')
     let plus = bracket_r . plus . bracket_l
     " ------------------------------------
-    if has_key(s:hash_im_keycode, s:im.name)
+    if has_key(s:im_keycode_hash, s:im.name)
         let im = s:vimim_backend[s:im.root][s:im.name].chinese
     endif
     " ------------------------------------
@@ -1652,7 +1652,6 @@ function! <SID>vimim_smart_enter()
         let s:pattern_not_found = 0
         let s:seamless_positions = getpos(".")
         let s:keyboard_leading_zero = ""
-        let s:keyboard_head = 0
     else
         if s:smart_enter == 2
             let key = " "
@@ -1921,7 +1920,6 @@ function! <SID>vimim_set_seamless()
 " ---------------------------------
     let s:seamless_positions = getpos(".")
     let s:keyboard_leading_zero = ""
-    let s:keyboard_head = 0
     return ""
 endfunction
 
@@ -3524,7 +3522,7 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_build_all_filesnames()
 " --------------------------------------
-    let names = sort(copy(keys(s:hash_im_keycode)))
+    let names = sort(copy(keys(s:im_keycode_hash)))
     call add(names, 'pinyin_quote_sogou')
     call add(names, 'pinyin_huge')
     call add(names, 'pinyin_fcitx')
@@ -3574,7 +3572,7 @@ function! s:vimim_scan_backend_embedded_datafile()
         let s:vimim_backend.datafile[im].root = "datafile"
         let s:vimim_backend.datafile[im].name = im
         let s:vimim_backend.datafile[im].datafile = datafile
-        let s:vimim_backend.datafile[im].keycode = s:hash_im_keycode[im]
+        let s:vimim_backend.datafile[im].keycode = s:im_keycode_hash[im]
         let s:vimim_backend.datafile[im].chinese = s:vimim_get_chinese(im)
         " ----------------------------------------------------------------
     endfor
@@ -3771,25 +3769,27 @@ endfunction
 function! s:vimim_sentence_match_datafile(keyboard)
 " -------------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:vimim_backend[s:im.root][s:im.name].lines) || empty(keyboard)
+    let lines = s:vimim_backend[s:im.root][s:im.name].lines
+    " ---------------------------------------------
+    if empty(lines) || empty(keyboard)
         return []
     endif
-    " --------------------------------------------------
+    " ---------------------------------------------
     let pattern = '^' . keyboard
-    let match_start = match(s:vimim_backend[s:im.root][s:im.name].lines, pattern)
+    let match_start = match(lines, pattern)
     if match_start > -1
         return [keyboard]
     endif
-    " --------------------------------------------------
+    " ---------------------------------------------
     let blocks = s:vimim_break_sentence_into_block(keyboard, s:im.name)
     if len(blocks) > 0 | return blocks | endif
-    " --------------------------------------------------
+    " ---------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)+1
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
         let pattern = '^' . head . '\>'
-        let match_start = match(s:vimim_backend[s:im.root][s:im.name].lines, pattern)
+        let match_start = match(lines, pattern)
         if  match_start < 0
             let msg = "continue until match is found"
         else
@@ -3932,7 +3932,7 @@ function! s:vimim_scan_backend_embedded_directory()
         let s:vimim_backend.directory[im] = s:vimim_get_empty_backend_hash()
         let s:vimim_backend.directory[im].root = "directory"
         let s:vimim_backend.directory[im].name = im
-        let s:vimim_backend.directory[im].keycode = s:hash_im_keycode[im]
+        let s:vimim_backend.directory[im].keycode = s:im_keycode_hash[im]
         let s:vimim_backend.directory[im].chinese = s:vimim_get_chinese(im)
         " -----------------------------------------------------------------
         if im =~ '^\d\+'
@@ -3957,13 +3957,33 @@ function! s:vimim_force_scan_current_buffer()
     elseif buffer =~? 'mycloud'
         call s:vimim_do_force_mycloud()
     " ---------------------------------
-    elseif buffer =~? 'directory'
-        let s:im.root = "directory"
-    " ---------------------------------
-    elseif buffer =~? 'datafile'
+    else
         let s:im.root = "datafile"
-    endif
+        if buffer =~? 'directory'
+            let s:im.root = "directory"
+        endif
+        let im = s:vimim_get_im_from_buffer_name(buffer)
+        if !empty(im)
+            let s:im.name = im
+        endif
     " ---------------------------------
+    endif
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_get_im_from_buffer_name(filename)
+" -------------------------------------------------
+    let im = 0
+    for key in copy(keys(s:im_keycode_hash))
+        let matched = match(a:filename, key)
+        if matched < 0
+            continue
+        else
+            let im = key
+            break
+        endif
+    endfor
+    return im
 endfunction
 
 " --------------------------------------
@@ -4134,16 +4154,15 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
         return 0
     endif
     let max = len(keyboard)
-    if s:im.name == 'pinyin'
+    if s:im.name != 'pinyin'
         return max
     endif
     " --------------------------------------------
-    let head = s:keyboard_head
-    if !empty(head)
+    if !empty(s:keyboard_head)
         if s:pumvisible_hjkl_2nd_match > 0
             let s:pumvisible_hjkl_2nd_match = 0
-            let length = len(head)-1
-            let keyboard = strpart(head, 0, length)
+            let length = len(s:keyboard_head)-1
+            let keyboard = strpart(s:keyboard_head, 0, length)
         endif
     endif
     " -------------------------
@@ -4324,7 +4343,7 @@ function! s:vimim_check_sqlite_availability()
     let s:vimim_backend.database[im].name = im
     let s:vimim_backend.database[im].datafile = datafile
     let s:vimim_backend.database[im].executable = executable
-    let s:vimim_backend.database[im].keycode = s:hash_im_keycode["pinyin"]
+    let s:vimim_backend.database[im].keycode = s:im_keycode_hash["pinyin"]
     let s:vimim_backend.database[im].chinese = s:vimim_get_chinese(root)
     " ----------------------------------------
     return root
@@ -4480,7 +4499,7 @@ function! s:vimim_set_cloud_if_available()
         let s:vimim_backend.cloud.sogou.root = "cloud"
         let s:vimim_backend.cloud.sogou.name = "sogou"
         let s:vimim_backend.cloud.sogou.datafile = s:vimim_get_chinese("pinyin")
-        let s:vimim_backend.cloud.sogou.keycode = s:hash_im_keycode["cloud"]
+        let s:vimim_backend.cloud.sogou.keycode = s:im_keycode_hash["cloud"]
         let s:vimim_backend.cloud.sogou.chinese = s:vimim_get_chinese("cloud")
         return cloud
     endif
@@ -4838,7 +4857,7 @@ function! s:vimim_check_mycloud_availability()
         let s:vimim_backend.cloud.mycloud = copy(s:vimim_backend.cloud.sogou)
         let s:vimim_backend.cloud.mycloud.name = "mycloud"
         let s:vimim_backend.cloud.mycloud.datafile = datafile
-        let s:vimim_backend.cloud.mycloud.keycode = s:hash_im_keycode["mycloud"]
+        let s:vimim_backend.cloud.mycloud.keycode = s:im_keycode_hash["mycloud"]
         let s:vimim_backend.cloud.mycloud.chinese = s:vimim_get_chinese("mycloud")
         return cloud
     endif
