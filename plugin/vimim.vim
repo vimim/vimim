@@ -118,7 +118,6 @@ let s:path = expand("<sfile>:p:h")."/"
 function! s:vimim_frontend_initialization()
 " -----------------------------------------
     call s:vimim_force_scan_current_buffer()
-    call s:vimim_initialize_erbi()
     call s:vimim_initialize_wubi()
     call s:vimim_initialize_pinyin()
     call s:vimim_initialize_shuangpin()
@@ -1109,6 +1108,50 @@ function! s:vimim_dynamic_alphabet_trigger()
     endfor
 endfunction
 
+" ---------------------------------
+function! <SID>vimim_set_seamless()
+" ---------------------------------
+    let s:seamless_positions = getpos(".")
+    let s:keyboard_leading_zero = ""
+    return ""
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_get_seamless(current_positions)
+" -----------------------------------------------
+    if empty(s:seamless_positions)
+    \|| empty(a:current_positions)
+        return -1
+    endif
+    let seamless_bufnum = s:seamless_positions[0]
+    let seamless_lnum = s:seamless_positions[1]
+    let seamless_off = s:seamless_positions[3]
+    if seamless_bufnum != a:current_positions[0]
+    \|| seamless_lnum != a:current_positions[1]
+    \|| seamless_off != a:current_positions[3]
+        let s:seamless_positions = []
+        return -1
+    endif
+    let seamless_column = s:seamless_positions[2]-1
+    let start_column = a:current_positions[2]-1
+    let len = start_column - seamless_column
+    let start_row = a:current_positions[1]
+    let current_line = getline(start_row)
+    let snip = strpart(current_line, seamless_column, len)
+    if empty(len(snip))
+        return -1
+    endif
+    let snips = split(snip, '\zs')
+    for char in snips
+        if char !~# s:valid_key
+            return -1
+        endif
+    endfor
+    let s:start_row_before = seamless_lnum
+    let s:smart_enter = 0
+    return seamless_column
+endfunction
+
 " ======================================= }}}
 let VimIM = " ====  User_Interface   ==== {{{"
 " ===========================================
@@ -1914,55 +1957,6 @@ function! s:vimim_get_labeling(label)
         " -----------------------------------------
     endif
     return labeling
-endfunction
-
-" ======================================= }}}
-let VimIM = " ====  Seamless         ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" -----------------------------------------------
-function! s:vimim_get_seamless(current_positions)
-" -----------------------------------------------
-    if empty(s:seamless_positions)
-    \|| empty(a:current_positions)
-        return -1
-    endif
-    let seamless_bufnum = s:seamless_positions[0]
-    let seamless_lnum = s:seamless_positions[1]
-    let seamless_off = s:seamless_positions[3]
-    if seamless_bufnum != a:current_positions[0]
-    \|| seamless_lnum != a:current_positions[1]
-    \|| seamless_off != a:current_positions[3]
-        let s:seamless_positions = []
-        return -1
-    endif
-    let seamless_column = s:seamless_positions[2]-1
-    let start_column = a:current_positions[2]-1
-    let len = start_column - seamless_column
-    let start_row = a:current_positions[1]
-    let current_line = getline(start_row)
-    let snip = strpart(current_line, seamless_column, len)
-    if empty(len(snip))
-        return -1
-    endif
-    let snips = split(snip, '\zs')
-    for char in snips
-        if char !~# s:valid_key
-            return -1
-        endif
-    endfor
-    let s:start_row_before = seamless_lnum
-    let s:smart_enter = 0
-    return seamless_column
-endfunction
-
-" ---------------------------------
-function! <SID>vimim_set_seamless()
-" ---------------------------------
-    let s:seamless_positions = getpos(".")
-    let s:keyboard_leading_zero = ""
-    return ""
 endfunction
 
 " ======================================= }}}
@@ -3154,9 +3148,23 @@ function! s:vimim_shuangpin_flypy(rule)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Input_Wubi       ==== {{{"
+let VimIM = " ====  Input_Misc       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
+
+" -----------------------------------------
+function! s:vimim_set_special_im_property()
+" -----------------------------------------
+    if  s:im.name == 'erbi'
+    \|| s:im.name == 'wu'
+    \|| s:im.name == 'yong'
+    \|| s:im.name == 'nature'
+    \|| s:im.name == 'boshiamy'
+    \|| s:im.name == 'phonetic'
+    \|| s:im.name == 'array30'
+        let s:has_dot_in_datafile = 1
+    endif
+endfunction
 
 " ---------------------------------
 function! s:vimim_initialize_wubi()
@@ -3182,33 +3190,6 @@ function! s:vimim_wubi_nonstop(keyboard)
         let s:keyboard_leading_zero = keyboard
     endif
     return keyboard
-endfunction
-
-" ======================================= }}}
-let VimIM = " ====  Input_Misc       ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" -----------------------------------------
-function! s:vimim_set_special_im_property()
-" -----------------------------------------
-    if  s:im.name == 'erbi'
-    \|| s:im.name == 'wu'
-    \|| s:im.name == 'yong'
-    \|| s:im.name == 'nature'
-    \|| s:im.name == 'boshiamy'
-    \|| s:im.name == 'phonetic'
-    \|| s:im.name == 'array30'
-        let s:has_dot_in_datafile = 1
-    endif
-endfunction
-
-" ---------------------------------
-function! s:vimim_initialize_erbi()
-" ---------------------------------
-    if s:im.name =~ "erbi"
-        let s:im.name = "wubi"
-    endif
 endfunction
 
 " ------------------------------------------------
@@ -5727,7 +5708,7 @@ else
 
     " [wubi] support wubi non-stop input
     " ----------------------------------
-    if s:im.name == 'wubi'
+    if s:im.name == 'wubi' || s:im.name == 'erbi'
         let keyboard = s:vimim_wubi_nonstop(keyboard)
     endif
 
