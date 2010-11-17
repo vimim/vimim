@@ -147,8 +147,8 @@ function! s:vimim_backend_initialization_once()
     call s:vimim_build_im_keycode_hash()
     call s:vimim_build_all_filesnames()
     " ---------------------------------------
-    call s:vimim_scan_backend_embedded_datafile()
     call s:vimim_scan_backend_embedded_directory()
+    call s:vimim_scan_backend_embedded_datafile()
     call s:vimim_scan_backend_embedded_database()
     call s:vimim_scan_embedded_digit_filter()
     call s:vimim_scan_backend_cloud()
@@ -964,9 +964,7 @@ function! s:vimim_chinesemode(switch)
     sil!call s:vimim_set_chinese_input_mode()
     sil!call s:vimim_build_datafile_cache()
     " -------------------------------------
-    let root = s:im.root
-    let im = s:im.name
-    if empty(root) || empty(im)
+    if empty(s:im.root) || empty(s:im.name)
         return ""
     endif
     " -------------------------------------
@@ -975,8 +973,8 @@ function! s:vimim_chinesemode(switch)
     if empty(switch)
         let msg = "chinese mode is always on"
     else
-        let s:backend[root][im].chinese_mode_switch += 1
-        let switch=s:backend[root][im].chinese_mode_switch%2
+        let s:backend[s:im.root][s:im.name].chinese_mode_switch += 1
+        let switch=s:backend[s:im.root][s:im.name].chinese_mode_switch%2
     endif
     if empty(switch)
         call s:vimim_i_chinese_mode_on()
@@ -3560,6 +3558,11 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
+    if empty(s:path2)
+        let msg = "no need datafile when directory exists"
+    else
+        return
+    endif
     let valid_datafiles = []
     for im in s:all_vimim_datafile_names
         if len(s:vimim_data_file) > 1
@@ -3934,7 +3937,8 @@ function! s:vimim_scan_backend_embedded_directory()
     endif
     " -----------------------------------
     let valid_directoires = []
-    for im in s:all_vimim_datafile_names
+    let all_vimim_datafile_names = ['4corner','pinyin','wubi']
+    for im in all_vimim_datafile_names
         let dir = s:vimim_get_data_directory(im)
         if empty(dir)
             continue
@@ -3946,7 +3950,7 @@ function! s:vimim_scan_backend_embedded_directory()
         return
     endif
     for im in valid_directoires
-        " -----------------------------------------------------------
+        " ------------------------------------------------------
         let im = s:vimim_get_valid_im_name(im)
         let s:im.root = "directory"
         let s:im.name = im
@@ -3956,7 +3960,7 @@ function! s:vimim_scan_backend_embedded_directory()
         let s:backend.directory[im].name = im
         let s:backend.directory[im].keycode = s:im_keycode[im]
         let s:backend.directory[im].chinese = s:vimim_unihan(im)
-        " -----------------------------------------------------------
+        " ------------------------------------------------------
         if im =~ '^\d\+'
             let s:pinyin_and_4corner = 2
         endif
@@ -4192,9 +4196,7 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
             let keyboard = strpart(s:keyboard_head, 0, length)
         endif
     endif
-    " -------------------------
     let msg = " yeyeqifangcao "
-    " -------------------------
     let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
     if len(pinyins) > 1
         let last = pinyins[-1:-1]
@@ -4363,7 +4365,6 @@ function! s:vimim_check_sqlite_availability()
     " ----------------------------------------
     let root = "database"
     let im = "sqlite"
-    call add(s:im.frontends, [root, im])
     " ----------------------------------------
     let s:backend.database[im] = s:vimim_one_backend_hash()
     let s:backend.database[im].root = root
@@ -4491,7 +4492,6 @@ function! s:vimim_do_force_cloud()
     else
         let s:im.root = "cloud"
         let s:im.name = "sogou"
-        call add(s:im.frontends, [s:im.root, s:im.name])
         let s:vimim_cloud_sogou = 1
     endif
 endfunction
@@ -4808,7 +4808,6 @@ function! s:vimim_do_force_mycloud()
     else
         let s:im.root = "cloud"
         let s:im.name = "mycloud"
-        call add(s:im.frontends, [s:im.root, s:im.name])
     endif
 endfunction
 
@@ -5282,7 +5281,7 @@ function! s:vimim_getsid(scriptname)
 " -----------------------------------
     " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
     let l:scriptname = a:scriptname
-    " get the output of ":scriptnames" in the scriptnames_output variable
+    " get output of ":scriptnames" in scriptnames_output variable
     if empty(s:scriptnames_output)
         let saved_shellslash=&shellslash
         set shellslash
@@ -5843,9 +5842,9 @@ function! s:vimim_chinese_mode_mapping_on()
     " ---------------------------------------------------------
     if !hasmapto('<Plug>VimimTrigger', 'i')
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
-           imap  <silent> <C-Bslash> <Plug>VimimTrigger
-        noremap  <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
-           vmap  <silent> <C-Bslash> :call <SID>ChineseMode()<CR>gv
+            imap <silent> <C-Bslash> <Plug>VimimTrigger
+         noremap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
+            vmap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>gv
     endif
     " ---------------------------------------------------------
 endfunction
@@ -5895,7 +5894,7 @@ function! s:vimim_initialize_autocmd()
     if !has("autocmd")
         return
     endif
-    " make dot vimim file our first-class citizen:
+    " [egg] make the dot vimim file our first-class citizen 
     augroup vimim_auto_chinese_mode
         autocmd BufNewFile  *.vimim startinsert
         autocmd BufEnter    *.vimim sil!call <SID>ChineseModeAlwaysOn()
