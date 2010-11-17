@@ -116,7 +116,7 @@ let s:path = expand("<sfile>:p:h")."/"
 
 " -----------------------------------------
 function! s:vimim_frontend_initialization()
-" ----------------------------------------- todo
+" -----------------------------------------
     call s:vimim_scan_backend_embedded_database()
     call s:vimim_force_scan_current_buffer()
     call s:vimim_initialize_erbi()
@@ -1136,13 +1136,12 @@ endfunction
 
 " -----------------------------------
 function! s:vimim_i_chinese_mode_on()
-" ----------------------------------- todo
+" -----------------------------------
     if s:vimim_custom_skin < 2
         if s:vimim_custom_laststatus > 0
             set laststatus=2
         endif
-     "  let b:keymap_name = s:vimim_statusline()
-        sil!call s:vimim_set_statusline()
+        let b:keymap_name = s:vimim_statusline()
     endif
     if s:vimim_custom_laststatus < 1
         echoh NonText| echo s:vimim_statusline()|echohl None
@@ -1165,9 +1164,9 @@ endfunction
 
 " ----------------
 function! IMName()
-" ---------------- todo
+" ----------------
 " This function is for user-defined 'stl' 'statusline'
-    call s:vimim_backend_initialization_once()
+""  call s:vimim_backend_initialization_once()
     if empty(s:chinese_input_mode)
         if pumvisible()
             return s:vimim_statusline()
@@ -1184,10 +1183,12 @@ endfunction
 function! s:vimim_statusline()
 " ----------------------------
     let im = ""
-    let bracket_l = s:vimim_unihan('bracket_l')
-    let bracket_r = s:vimim_unihan('bracket_r')
-    let plus = s:vimim_unihan('plus')
-    let plus = bracket_r . plus . bracket_l
+    " ------------------------------------
+    if s:im.root =~# "database"
+        let database = s:vimim_unihan('database')
+        let im = 'Unihan' . s:space . database
+        return s:vimim_get_im_unihan(im)
+    endif
     " ------------------------------------
     if has_key(s:im_keycode, s:im.name)
         let im = s:backend[s:im.root][s:im.name].chinese
@@ -1204,6 +1205,7 @@ function! s:vimim_statusline()
             let jidian = s:vimim_unihan('jidian')
             let im = jidian . im
         endif
+        return s:vimim_get_im_unihan(im)
     endif
     " ------------------------------------
     let pinyin = s:vimim_unihan('pinyin')
@@ -1212,17 +1214,14 @@ function! s:vimim_statusline()
         let im = keycodes[chinese]
     endif
     " ------------------------------------
-    if s:pinyin_and_4corner > 0 && s:im.name =~# 'pinyin'
+    if s:pinyin_and_4corner > 0 && s:im.name == 'pinyin'
         let im_digit = s:vimim_unihan('4corner')
         if datafile =~ "12345"
             let im_digit = s:vimim_unihan('12345')
             let s:im.name = "12345"
         endif
-        let im = pinyin . plus . im_digit
-    endif
-    " ------------------------------------
-    if !empty(s:vimim_cloud_plugin)
-        let im = s:backend.cloud.mycloud.datafile
+        let im = pinyin . s:space . im_digit
+        return s:vimim_get_im_unihan(im)
     endif
     " ------------------------------------
     if s:vimim_cloud_sogou > 0
@@ -1233,40 +1232,42 @@ function! s:vimim_statusline()
         endif
     elseif s:vimim_cloud_sogou == -777
         let mycloud = s:vimim_unihan('mycloud')
+        if !empty(s:vimim_cloud_plugin)
+            let im = s:backend.cloud.mycloud.datafile
+        endif
         let im = mycloud . s:space . im
     elseif empty(im)
         let im = s:vimim_unihan('internal')
         let im .= s:vimim_unihan('input')
     endif
     " ------------------------------------
-    if s:im.root =~# "database"
-        let database = s:vimim_unihan('database')
-        let im = 'Unihan' . s:space . database
-    endif
-    " ---------------------------------
-    let im = bracket_l . im . bracket_r
-    " ---------------------------------
-    let input_style = s:vimim_get_input_style_in_Chinese()
-    let im = im . s:space . input_style
-    return im
+    return s:vimim_get_im_unihan(im)
 endfunction
 
-" --------------------------------------------
-function! s:vimim_get_input_style_in_Chinese()
-" -------------------------------------------
+" --------------------------------
+function! s:vimim_get_im_unihan(im)
+" --------------------------------
+    let im = a:im
     let style = s:vimim_static_input_style
     let dynamic = s:vimim_unihan('dynamic')
     let static = s:vimim_unihan('static')
     let nonstop = s:vimim_unihan('nonstop')
-    let chinese = s:vimim_unihan('classic')
+    let input_style = s:vimim_unihan('classic')
     if style < 1
-        let chinese .= dynamic
+        let input_style .= dynamic
     elseif style == 1
-        let chinese .= static
+        let input_style .= static
     elseif style == 2
-        let chinese = "OneKey" . nonstop
+        let input_style = "OneKey" . nonstop
     endif
-    return chinese
+    " ------------------------------------
+    let bracket_l = s:vimim_unihan('bracket_l')
+    let bracket_r = s:vimim_unihan('bracket_r')
+    let plus = s:vimim_unihan('plus')
+    let plus = bracket_r . plus . bracket_l
+    let im = bracket_l . im . bracket_r
+    let im = im . s:space . input_style
+    return im
 endfunction
 
 " -----------------------------------
@@ -3987,7 +3988,7 @@ function! s:vimim_force_scan_current_buffer()
         return
     endif
     " ---------------------------------
-    if buffer =~? '.sqlite'
+    if buffer =~? 'sqlite'
         let msg = "vim SQLITE.english.vimim is covered"
         return
     " ---------------------------------
