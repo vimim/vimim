@@ -352,6 +352,7 @@ function! s:vimim_build_im_keycode_hash()
     let s:im_keycode['cloud']    = "[0-9a-z'.]"
     let s:im_keycode['mycloud']  = "[0-9a-z'.]"
     let s:im_keycode['sqlite']   = "[0-9a-z]"
+    let s:im_keycode['pinyin']   = "[0-9a-z']"
     let s:im_keycode['wubi']     = "[0-9a-z']"
     let s:im_keycode['4corner']  = "[0-9a-z']"
     let s:im_keycode['12345']    = "[0-9a-z']"
@@ -360,7 +361,6 @@ function! s:vimim_build_im_keycode_hash()
     let s:im_keycode['english']  = "[0-9a-z']"
     let s:im_keycode['hangul']   = "[0-9a-z']"
     let s:im_keycode['xinhua']   = "[0-9a-z']"
-    let s:im_keycode['pinyin']   = "[0-9a-z']"
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['zhengma']  = "[a-z']"
     let s:im_keycode['quick']    = "[0-9a-z']"
@@ -4384,8 +4384,8 @@ function! s:vimim_check_sqlite_availability()
     let s:backend.database[im].name = im
     let s:backend.database[im].datafile = datafile
     let s:backend.database[im].executable = executable
-    let s:backend.database[im].keycode = s:im_keycode["pinyin"]
-    let s:backend.database[im].chinese = s:vimim_unihan(root)
+"   let s:backend.database[im].keycode = s:im_keycode[im]
+"   let s:backend.database[im].chinese = s:vimim_unihan(root)
     " ----------------------------------------
     return root
 endfunction
