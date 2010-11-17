@@ -997,20 +997,6 @@ function! s:vimim_chinesemode(switch)
     sil!exe 'sil!return "' . action . '"'
 endfunction
 
-" --------------------------
-function! g:VimIMOpenAllIM()
-" --------------------------
-    sil!call s:vimim_backend_initialization_once()
-    let frontends = s:im.frontends
-    " [['datafile', 'pinyin'], ['datafile', 'wubi']]
-    for input_method in frontends
-        let s:im.root = get(input_method,0)
-        let s:im.name = get(input_method,1)
-        call <SID>ChineseModeAlwaysOn()
-        tab split
-    endfor
-endfunction
-
 " ------------------------------------
 function! s:vimim_start_chinese_mode()
 " ------------------------------------
