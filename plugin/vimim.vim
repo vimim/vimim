@@ -5879,9 +5879,8 @@ function! s:vimim_chinese_mode_mapping_on()
         if !hasmapto('<C-^>', 'n')
             noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
         endif
-    endif
     " ---------------------------------------------------------
-    if !hasmapto('<Plug>VimimTrigger', 'i')
+    elseif !hasmapto('<Plug>VimimTrigger', 'i')
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
             imap <silent> <C-Bslash> <Plug>VimimTrigger
          noremap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
