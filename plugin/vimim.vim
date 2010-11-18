@@ -613,7 +613,7 @@ function! s:vimim_egg_vimim()
         let option = "im\t " . input . "：" . im
         call add(eggs, option)
     endif
-    " ----------------------------------
+    " ---------------------------------- todo
     let option = s:backend[s:im.root][s:im.name].datafile
     if empty(option)
         let msg = "no ciku found"
@@ -1259,7 +1259,7 @@ function! s:vimim_statusline()
     elseif s:vimim_cloud_sogou == -777
         let mycloud = s:vimim_unihan('mycloud')
         if !empty(s:vimim_cloud_plugin)
-            let im = s:backend.cloud.mycloud.datafile
+            let im = s:backend.cloud.mycloud.directory
         endif
         let im = mycloud . s:space . im
     elseif empty(im)
@@ -4926,7 +4926,7 @@ function! s:vimim_check_mycloud_availability()
         return 0
     endif
     let ret = s:vimim_access_mycloud(cloud, "__getname")
-    let datafile = split(ret, "\t")[0]
+    let directory = split(ret, "\t")[0]
     let ret = s:vimim_access_mycloud(cloud, "__getkeychars")
     let keycode = split(ret, "\t")[0]
     if empty(keycode)
@@ -4935,7 +4935,7 @@ function! s:vimim_check_mycloud_availability()
     else
         let s:backend.cloud.mycloud = copy(s:backend.cloud.sogou)
         let s:backend.cloud.mycloud.name = "mycloud"
-        let s:backend.cloud.mycloud.datafile = datafile
+        let s:backend.cloud.mycloud.directory = directory
         let s:backend.cloud.mycloud.keycode = s:im_keycode["mycloud"]
         let s:backend.cloud.mycloud.chinese = s:vimim_unihan("mycloud")
         return cloud
