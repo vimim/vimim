@@ -621,9 +621,9 @@ function! s:vimim_egg_vimim()
         let datafile = s:vimim_unihan('datafile')
         let directory  = s:vimim_unihan('directory')
         if s:im.root == 'directory'
-            let datafile .=  directory . datafile
+            let datafile .=  "：" . directory . datafile
         endif
-        let option = "database " . datafile . "：" . s:space . option
+        let option = "database " . datafile . s:space . option
         call add(eggs, option)
     endif
     " ----------------------------------
