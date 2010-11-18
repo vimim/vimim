@@ -283,7 +283,7 @@ function! s:vimim_chinese_dictionary()
     let s:chinese['database'] = ['数据库','數據庫']
     let s:chinese['input'] = ['输入','輸入']
     let s:chinese['directory'] = ['目录','目錄']
-    let s:chinese['ciku'] = ['词库','詞庫']
+    let s:chinese['datafile'] = ['词库','詞庫']
     let s:chinese['font'] = ['字体','字體']
     let s:chinese['environment'] = ['环境','環境']
     let s:chinese['myversion'] = ['版本','版本']
@@ -618,8 +618,8 @@ function! s:vimim_egg_vimim()
     if empty(option)
         let msg = "no ciku found"
     else
-        let ciku = s:vimim_unihan('ciku')
-        let option = "database " . ciku . "：" . option
+        let datafile = s:vimim_unihan('datafile')
+        let option = "database " . datafile . "：" . option
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -675,9 +675,9 @@ function! s:vimim_get_ciku_in_Chinese()
         if empty(datafile)
             let msg = "no primary datafile nor directory"
         else
-            let ciku = s:vimim_unihan('ciku')
+            let datafile = s:vimim_unihan('datafile')
             let directory  = s:vimim_unihan('directory')
-            let directory .= ciku . s:space  . datafile . "/"
+            let directory .= datafile . s:space  . datafile . "/"
             return  directory
         endif
     else
@@ -3205,6 +3205,59 @@ function! s:vimim_first_punctuation_erbi(keyboard)
     return chinese_punctuatoin
 endfunction
 
+" ----------------------------------------------------
+" http://www.vim.org/scripts/script.php?script_id=2006
+" ----------------------------------------------------
+let s:progressbar = {}
+func! NewSimpleProgressBar(title, max_value, ...)
+  if !has("statusline")
+    return {}
+  endif
+  let winnr = a:0 ? a:1 : winnr()
+  let b = copy(s:progressbar)
+  let b.title = a:title
+  let b.max_value = a:max_value
+  let b.cur_value = 0
+  let b.winnr = winnr
+  let b.items = { 'title' : { 'color' : 'Statusline' }, 'bar' : { 'fillchar' : ' ', 'color' : 'Statusline' , 'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' } , 'counter' : { 'color' : 'Statusline' } }
+  let b.stl_save = getwinvar(winnr,"&statusline")
+  let b.lst_save = &laststatus"
+  return b
+endfun
+func! s:progressbar.paint()
+  let max_len = winwidth(self.winnr)-1
+  let t_len = strlen(self.title)+1+1
+  let c_len  = 2*strlen(self.max_value)+1+1+1
+  let pb_len = max_len - t_len - c_len - 2
+  let cur_pb_len = (pb_len*self.cur_value)/self.max_value
+  let t_color = self.items.title.color
+  let b_fcolor = self.items.bar.fillcolor
+  let b_color = self.items.bar.color
+  let c_color = self.items.counter.color
+  let fc= strpart(self.items.bar.fillchar." ",0,1)
+  let stl =  "%#".t_color."#%-( ".self.title." %)".
+      \"%#".b_color."#|".
+      \"%#".b_fcolor."#%-(".repeat(fc,cur_pb_len)."%)".
+      \"%#".b_color."#".repeat(" ",pb_len-cur_pb_len)."|".
+      \"%=%#".c_color."#%( ".repeat(" ",(strlen(self.max_value) - strlen(self.cur_value))).self.cur_value."/".self.max_value."  %)"
+  set laststatus=2
+  call setwinvar(self.winnr,"&stl",stl)
+  redraw
+endfun
+func! s:progressbar.incr( ... )
+  let i = a:0 ? a:1 : 1
+  let i+=self.cur_value
+  let i = i < 0 ? 0 : i > self.max_value ?  self.max_value : i
+  let self.cur_value = i
+  call self.paint()
+  return self.cur_value
+endfun
+func! s:progressbar.restore()
+  call setwinvar(self.winnr,"&stl",self.stl_save)
+  let &laststatus=self.lst_save
+  redraw
+endfun
+
 " ======================================= }}}
 let VimIM = " ====  Backend==Unicode ==== {{{"
 " ===========================================
@@ -3899,26 +3952,37 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_cache()
 " --------------------------------------
+    let im = s:im.name
+    let root = s:im.root
     if s:vimim_use_cache < 1
-    \|| s:backend[s:im.root][s:im.name].root != "datafile"
-    \|| empty(s:backend[s:im.root][s:im.name].lines)
-    \|| !empty(s:backend[s:im.root][s:im.name].cache)
+    \|| s:backend[root][im].root != "datafile"
+    \|| empty(s:backend[root][im].lines)
+    \|| !empty(s:backend[root][im].cache)
         return
     endif
     " ----------------------------------
-    for line in s:backend[s:im.root][s:im.name].lines
-        if s:localization > 0
-            let line = s:vimim_i18n_read(line)
-        endif
-        let oneline_list = split(line)
-        let menu = remove(oneline_list, 0)
-        if has_key(s:backend[s:im.root][s:im.name].cache, menu)
-            let line_list = s:backend[s:im.root][s:im.name].cache[menu]
-            call extend(line_list, oneline_list)
-            let line = join(line_list)
-        endif
-        let s:backend[s:im.root][s:im.name].cache[menu] = [line]
-    endfor
+    let title = "VimIM loading ".s:vimim_unihan(im).s:vimim_unihan(root)
+    let total = len(s:backend[root][im].lines)
+    let progress = NewSimpleProgressBar(title, total)
+    " ----------------------------------
+    try
+        for line in s:backend[root][im].lines
+            call progress.incr(1)
+            if s:localization > 0
+                let line = s:vimim_i18n_read(line)
+            endif
+            let oneline_list = split(line)
+            let menu = remove(oneline_list, 0)
+            if has_key(s:backend[root][im].cache, menu)
+                let line_list = s:backend[root][im].cache[menu]
+                call extend(line_list, oneline_list)
+                let line = join(line_list)
+            endif
+            let s:backend[root][im].cache[menu] = [line]
+        endfor
+    finally
+        call progress.restore()
+    endtry
 endfunction
 
 " ======================================= }}}
