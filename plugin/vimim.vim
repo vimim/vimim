@@ -3937,13 +3937,13 @@ function! s:vimim_build_datafile_cache()
         return
     endif
     " ----------------------------------
-    let title = "VimIM loading ".s:vimim_unihan(im).s:vimim_unihan(root)
+    let progress = "VimIM loading ".s:vimim_unihan(im).s:vimim_unihan(root)
     let total = len(s:backend[root][im].lines)
-    let progress = NewSimpleProgressBar(title, total)
+    let progressbar = NewSimpleProgressBar(progress, total)
     " ----------------------------------
     try
         for line in s:backend[root][im].lines
-            call progress.incr(1)
+            call progressbar.incr(1)
             if s:localization > 0
                 let line = s:vimim_i18n_read(line)
             endif
@@ -3957,7 +3957,7 @@ function! s:vimim_build_datafile_cache()
             let s:backend[root][im].cache[menu] = [line]
         endfor
     finally
-        call progress.restore()
+        call progressbar.restore()
     endtry
 endfunction
 
@@ -4557,7 +4557,7 @@ endfunction
 " ---------------------------
 function! s:vimim_set_cloud()
 " ---------------------------
-    let cloud = s:vimim_set_cloud_backend()
+    let cloud = s:vimim_set_cloud_backend_if_http_executable()
     if empty(cloud)
         let s:vimim_cloud_sogou = 0
     else
@@ -4566,11 +4566,11 @@ function! s:vimim_set_cloud()
     endif
 endfunction
 
-" -----------------------------------
-function! s:vimim_set_cloud_backend()
-" -----------------------------------
+" ------------------------------------------------------
+function! s:vimim_set_cloud_backend_if_http_executable()
+" ------------------------------------------------------
     let s:backend.cloud.sogou = s:vimim_one_backend_hash()
-    let cloud = s:vimim_check_cloud_availability()
+    let cloud = s:vimim_check_http_executable()
     if empty(cloud)
         return 0
     else
@@ -4582,9 +4582,9 @@ function! s:vimim_set_cloud_backend()
     endif
 endfunction
 
-" ------------------------------------------
-function! s:vimim_check_cloud_availability()
-" ------------------------------------------
+" ---------------------------------------
+function! s:vimim_check_http_executable()
+" ---------------------------------------
     if s:vimim_cloud_sogou < -1
         return {}
     endif
@@ -4678,7 +4678,7 @@ function! s:vimim_magic_tail(keyboard)
     elseif  magic_tail ==# "'"
         let msg = "trailing apostrophe => forced-cloud"
         let s:no_internet_connection = -1
-        let cloud = s:vimim_set_cloud_backend()
+        let cloud = s:vimim_set_cloud_backend_if_http_executable()
         if empty(cloud)
             return []
         endif
@@ -4893,9 +4893,8 @@ endfunction
 " -------------------------------------
 function! s:vimim_set_mycloud_backend()
 " -------------------------------------
-    let cloud = s:vimim_set_cloud_backend()
+    let cloud = s:vimim_set_cloud_backend_if_http_executable()
     if empty(cloud)
-        let msg = "no mycloud if no cloud executable"
         return {}
     endif
     let s:backend.cloud.mycloud = s:vimim_one_backend_hash()
@@ -4913,7 +4912,13 @@ endfunction
 " --------------------------------------------
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
-    let cloud = s:vimim_check_mycloud_plugin()
+"   " NOTE: *Not Responding* is frustrating: try sexy progress bar
+"   let progress = "VimIM checking ".s:vimim_unihan("mycloud")
+"   let progressbar = NewSimpleProgressBar(progress, 10)
+"   for line in range(10)
+        let cloud = s:vimim_check_mycloud_plugin()
+"       call progressbar.incr(1)
+"   endfor
     " this variable should not be used after initialization
     unlet s:vimim_mycloud_url
     if empty(cloud)
@@ -5235,8 +5240,7 @@ function! s:vimim_initialize_debug()
     let s:localization = 0
     let s:backend_loaded = 0
     let s:chinese_input_mode = 0
-    let s:vimim_static_input_style = 2
-    " ------------------------------ todo
+    " ------------------------------
     let dir = s:path . "tmp"
     if isdirectory(dir)
         return
