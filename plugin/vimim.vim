@@ -595,13 +595,13 @@ function! s:vimim_egg_vimim()
     let option = "lc_time\t " . environment . v:lc_time
     call add(eggs, option)
     " ----------------------------------
-    let toggle = 'i_<C-Bslash>'
+    let toggle = 'i_CTRL-Bslash'
     if s:vimim_ctrl_space_to_toggle == 1
         let toggle = "i_CTRL-Space"
     elseif s:vimim_tab_as_onekey == 1
         let toggle = "Tab_as_OneKey"
     elseif s:vimim_normal_ctrl_6_to_toggle == 1
-        let toggle = "OneKey　normal　*CTRL-6*"
+        let toggle = "OneKey　normal　<CTRL-6>"
     endif
     let toggle .=  s:space
     let style = s:vimim_unihan('style')
@@ -614,12 +614,14 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
     " ----------------------------------
-    let option = s:vimim_get_ciku_in_Chinese()
+    let option = s:backend[s:im.root][s:im.name].datafile
     if empty(option)
         let msg = "no ciku found"
     else
         let datafile = s:vimim_unihan('datafile')
-        let option = "database " . datafile . "：" . option
+        let directory  = s:vimim_unihan('directory')
+        let datafile .= "：" . directory . datafile
+        let option = "database " . datafile .  s:space .  option
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -663,27 +665,6 @@ function! s:vimim_egg_vimim()
     endif
     " ----------------------------------
     return map(eggs, 'v:val . s:space')
-endfunction
-
-" -------------------------------------
-function! s:vimim_get_ciku_in_Chinese()
-" -------------------------------------
-    let datafile = s:backend[s:im.root][s:im.name].datafile
-    if empty(datafile)
-        let msg = "no primary datafile, try directory"
-        let datafile = s:path2
-        if empty(datafile)
-            let msg = "no primary datafile nor directory"
-        else
-            let datafile = s:vimim_unihan('datafile')
-            let directory  = s:vimim_unihan('directory')
-            let directory .= datafile . s:space  . datafile . "/"
-            return  directory
-        endif
-    else
-        return datafile
-    endif
-    return 0
 endfunction
 
 " ----------------------------------------
@@ -4022,9 +4003,11 @@ function! s:vimim_scan_backend_embedded_directory()
         let im = s:vimim_get_valid_im_name(im)
         let s:im.root = "directory"
         let s:im.name = im
+        let datafile = s:path2 ."/". im
         call add(s:im.frontends, [s:im.root, s:im.name])
         let s:backend.directory[im] = s:vimim_one_backend_hash()
         let s:backend.directory[im].root = "directory"
+        let s:backend.directory[im].datafile = datafile
         let s:backend.directory[im].name = im
         let s:backend.directory[im].keycode = s:im_keycode[im]
         let s:backend.directory[im].chinese = s:vimim_unihan(im)
