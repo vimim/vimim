@@ -613,15 +613,17 @@ function! s:vimim_egg_vimim()
         let option = "im\t " . input . "：" . im
         call add(eggs, option)
     endif
-    " ---------------------------------- todo
+    " ----------------------------------
     let option = s:backend[s:im.root][s:im.name].datafile
     if empty(option)
         let msg = "no ciku found"
     else
         let datafile = s:vimim_unihan('datafile')
         let directory  = s:vimim_unihan('directory')
-        let datafile .= "：" . directory . datafile
-        let option = "database " . datafile .  s:space .  option
+        if s:im.root == 'directory'
+            let datafile .=  directory . datafile
+        endif
+        let option = "database " . datafile . "：" . s:space . option
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -629,9 +631,7 @@ function! s:vimim_egg_vimim()
     let sogou = s:vimim_unihan('sogou')
     let option = "cloud\t " . sogou ."："
     let CLOUD = "start_to_use_cloud_after_" .  cloud . "_characters"
-    if cloud == -777
-        let CLOUD = s:vimim_unihan('mycloud')
-    elseif cloud == -1
+    if cloud == -1
         let CLOUD = s:vimim_unihan('cloud_atwill')
     elseif cloud < -1
         let CLOUD = s:vimim_unihan('cloud_no')
@@ -642,7 +642,9 @@ function! s:vimim_egg_vimim()
         let CLOUD .= s:vimim_unihan('cloud')
     endif
     let option .= CLOUD
-    if s:im.name !~ 'boshiamy'
+    if s:im.name == 'boshiamy' || s:im.name == 'mycloud' 
+        let msg = "Who needs crazy sogou cloud?"
+    else
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -1885,6 +1887,8 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             if keyboard =~ "[']"
                 let dot = match(keyboard, "[']")
                 let tail = strpart(keyboard, dot+1)
+            elseif s:has_dot_in_datafile > 0
+                let tail = ""
             elseif keyboard !~? '^vim' && keyboard !~ "[']"
                 let tail = strpart(keyboard, len(menu))
             endif
@@ -1986,14 +1990,12 @@ function! s:vimim_initialize_frontend_punctuation()
 " -------------------------------------------------
     for char in s:valid_keys
         if has_key(s:punctuations, char)
-            " -----------------------------
             if !empty(s:vimim_cloud_plugin)
             \|| s:has_dot_in_datafile > 0
                 unlet s:punctuations[char]
             elseif char !~# "[*.']"
                 unlet s:punctuations[char]
             endif
-            " -----------------------------
         endif
     endfor
 endfunction
@@ -2240,11 +2242,12 @@ endfunction
 function! s:vimim_imode_number(keyboard, prefix)
 " ----------------------------------------------
     if s:chinese_input_mode =~ 'dynamic'
+    \|| s:im.name == 'boshiamy'
         return []
     endif
     let keyboard = a:keyboard
     " ------------------------------------------
-    if a:prefix ==# "'" && s:im.name != 'boshiamy'
+    if a:prefix ==# "'" 
         let keyboard = substitute(keyboard,"'",'i','g')
     endif
     " ------------------------------------------
@@ -4569,6 +4572,9 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_set_cloud_backend_if_http_executable()
 " ------------------------------------------------------
+    if s:im.name == 'boshiamy'
+        return 0
+    endif
     let s:backend.cloud.sogou = s:vimim_one_backend_hash()
     let cloud = s:vimim_check_http_executable()
     if empty(cloud)
