@@ -240,7 +240,7 @@ function! s:vimim_finalize_session()
         let s:vimim_static_input_style = 1
     endif
     " ------------------------------
-    if s:im.name == 'boshiamy' || s:im.name == 'array30'
+    if s:has_dot_in_datafile > 0
         let s:vimim_chinese_punctuation = -1
         let s:vimim_punctuation_navigation = -1
     endif
@@ -642,7 +642,7 @@ function! s:vimim_egg_vimim()
         let CLOUD .= s:vimim_unihan('cloud')
     endif
     let option .= CLOUD
-    if s:im.name == 'boshiamy' || s:im.name == 'mycloud' 
+    if s:has_dot_in_datafile > 0 || s:im.name == 'mycloud' 
         let msg = "Who needs crazy sogou cloud?"
     else
         call add(eggs, option)
@@ -826,7 +826,7 @@ function! s:vimim_onekey_action(onekey)
     " ---------------------------------------------------
     if char_before_before !~# "[0-9A-z]"
     \&& has_key(s:punctuations, byte_before)
-    \&& s:im.name != 'boshiamy'
+    \&& empty(s:has_dot_in_datafile)
         let onekey = ""
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
@@ -865,7 +865,7 @@ function! s:vimim_onekey_action(onekey)
         endif
     endif
     " ---------------------------------------------------
-    if byte_before ==# "'" && s:im.name != 'boshiamy'
+    if byte_before ==# "'" && empty(s:has_dot_in_datafile)
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
@@ -2242,7 +2242,7 @@ endfunction
 function! s:vimim_imode_number(keyboard, prefix)
 " ----------------------------------------------
     if s:chinese_input_mode =~ 'dynamic'
-    \|| s:im.name == 'boshiamy'
+    \|| s:has_dot_in_datafile > 0
         return []
     endif
     let keyboard = a:keyboard
@@ -4572,7 +4572,7 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_set_cloud_backend_if_http_executable()
 " ------------------------------------------------------
-    if s:im.name == 'boshiamy'
+    if s:has_dot_in_datafile > 0
         return 0
     endif
     let s:backend.cloud.sogou = s:vimim_one_backend_hash()
@@ -4659,7 +4659,6 @@ function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
-    \|| s:im.name =~ 'boshiamy'
     \|| s:has_dot_in_datafile > 0
     \|| keyboard =~ '\d\d\d\d'
         return []
@@ -5850,8 +5849,7 @@ function! s:vimim_get_valid_keyboard(keyboard)
         return []
     endif
     " ignore multiple non-sense dots
-    if keyboard =~# '^[\.\.\+]'
-    \&& s:im.name != 'boshiamy'
+    if keyboard =~# '^[\.\.\+]' && empty(s:has_dot_in_datafile)
         let s:pattern_not_found += 1
         return []
     endif
