@@ -138,7 +138,7 @@ function! s:vimim_backend_initialization_once()
     call s:vimim_initialize_i_setting()
     call s:vimim_initialize_encoding()
     call s:vimim_chinese_dictionary()
-    call s:vimim_initialize_backend_punctuation()
+    call s:vimim_backend_punctuation()
     call s:vimim_build_im_keycode_hash()
     call s:vimim_build_all_filesnames()
     " ---------------------------------------
@@ -261,10 +261,10 @@ function! s:vimim_unihan(english)
 " -------------------------------
     let key = a:english
     let chinese = a:english
-    if has_key(s:chinese, key)
-        let chinese = get(s:chinese[key], 0)
-        if v:lc_time !~ 'gb2312' && len(s:chinese[key]) > 1
-            let chinese = get(s:chinese[key], 1)
+    if has_key(s:unihan, key)
+        let chinese = get(s:unihan[key], 0)
+        if v:lc_time !~ 'gb2312' && len(s:unihan[key]) > 1
+            let chinese = get(s:unihan[key], 1)
         endif
     endif
     return chinese
@@ -274,67 +274,67 @@ endfunction
 function! s:vimim_chinese_dictionary()
 " ------------------------------------
     let s:space = "　"
-    let s:chinese = {}
-    let s:chinese['vim1'] = ['文本编辑器','文本編輯器']
-    let s:chinese['vim2'] = ['最牛']
-    let s:chinese['vim3'] = ['精力']
-    let s:chinese['vim4'] = ['生气','生氣']
-    let s:chinese['vim5'] = ['中文输入法','中文輸入法']
-    let s:chinese['database'] = ['数据库','數據庫']
-    let s:chinese['input'] = ['输入','輸入']
-    let s:chinese['directory'] = ['目录','目錄']
-    let s:chinese['datafile'] = ['词库','詞庫']
-    let s:chinese['font'] = ['字体','字體']
-    let s:chinese['environment'] = ['环境','環境']
-    let s:chinese['myversion'] = ['版本','版本']
-    let s:chinese['encoding'] = ['编码','編碼']
-    let s:chinese['computer'] = ['电脑','電腦']
-    let s:chinese['classic'] = ['经典','經典']
-    let s:chinese['static'] = ['静态','靜態']
-    let s:chinese['dynamic'] = ['动态','動態']
-    let s:chinese['internal'] = ['内码','內碼']
-    let s:chinese['onekey'] = ['点石成金','點石成金']
-    let s:chinese['style'] = ['风格','風格']
-    let s:chinese['cloud'] = ['云输入','雲輸入']
-    let s:chinese['mycloud'] = ['自己的云','自己的雲']
-    let s:chinese['wubi'] = ['五笔','五筆']
-    let s:chinese['4corner'] = ['四角号码','四角號碼']
-    let s:chinese['12345'] = ['五笔划','五筆劃']
-    let s:chinese['ctc'] = ['中文电码','中文電碼']
-    let s:chinese['11643'] = ['交换码','交換碼']
-    let s:chinese['english'] = ['英文']
-    let s:chinese['hangul'] = ['韩文','韓文']
-    let s:chinese['xinhua'] = ['新华','新華']
-    let s:chinese['pinyin'] = ['拼音']
-    let s:chinese['cangjie'] = ['仓颉','倉頡']
-    let s:chinese['boshiamy'] = ['呒虾米','嘸蝦米']
-    let s:chinese['zhengma'] = ['郑码','鄭碼']
-    let s:chinese['yong'] = ['永码','永碼']
-    let s:chinese['nature'] = ['自然']
-    let s:chinese['quick'] = ['速成']
-    let s:chinese['yong'] = ['永码','永碼']
-    let s:chinese['wu'] = ['吴语','吳語']
-    let s:chinese['phonetic'] = ['注音']
-    let s:chinese['array30'] = ['行列']
-    let s:chinese['erbi'] = ['二笔','二筆']
-    let s:chinese['sogou'] = ['搜狗']
-    let s:chinese['cloud_no'] = ['晴天无云','晴天無雲']
-    let s:chinese['all'] = ['全']
-    let s:chinese['cloud_atwill'] = ['想云就云','想雲就雲']
-    let s:chinese['shezhi'] = ['设置','設置']
-    let s:chinese['test'] = ['测试','測試']
-    let s:chinese['jidian'] = ['极点','極點']
-    let s:chinese['new_century'] = ['新世纪','新世紀']
-    let s:chinese['shuangpin'] = ['双拼','雙拼']
-    let s:chinese['abc'] = ['智能','智能']
-    let s:chinese['microsoft'] = ['微软','微軟']
-    let s:chinese['nature'] = ['自然']
-    let s:chinese['plusplus'] = ['加加']
-    let s:chinese['purple'] = ['紫光']
-    let s:chinese['flypy'] = ['小鹤','小鶴']
-    let s:chinese['bracket_l'] = ['《','【']
-    let s:chinese['bracket_r'] = ['》','】']
-    let s:chinese['plus'] = ['＋']
+    let s:plus  = "＋"
+    let s:unihan = {}
+    let s:unihan['vim1'] = ['文本编辑器','文本編輯器']
+    let s:unihan['vim2'] = ['最牛']
+    let s:unihan['vim3'] = ['精力']
+    let s:unihan['vim4'] = ['生气','生氣']
+    let s:unihan['vim5'] = ['中文输入法','中文輸入法']
+    let s:unihan['database'] = ['数据库','數據庫']
+    let s:unihan['input'] = ['输入','輸入']
+    let s:unihan['directory'] = ['目录','目錄']
+    let s:unihan['datafile'] = ['词库','詞庫']
+    let s:unihan['font'] = ['字体','字體']
+    let s:unihan['environment'] = ['环境','環境']
+    let s:unihan['myversion'] = ['版本','版本']
+    let s:unihan['encoding'] = ['编码','編碼']
+    let s:unihan['computer'] = ['电脑','電腦']
+    let s:unihan['classic'] = ['经典','經典']
+    let s:unihan['static'] = ['静态','靜態']
+    let s:unihan['dynamic'] = ['动态','動態']
+    let s:unihan['internal'] = ['内码','內碼']
+    let s:unihan['onekey'] = ['点石成金','點石成金']
+    let s:unihan['style'] = ['风格','風格']
+    let s:unihan['cloud'] = ['云输入','雲輸入']
+    let s:unihan['mycloud'] = ['自己的云','自己的雲']
+    let s:unihan['wubi'] = ['五笔','五筆']
+    let s:unihan['4corner'] = ['四角号码','四角號碼']
+    let s:unihan['12345'] = ['五笔划','五筆劃']
+    let s:unihan['ctc'] = ['中文电码','中文電碼']
+    let s:unihan['11643'] = ['交换码','交換碼']
+    let s:unihan['english'] = ['英文']
+    let s:unihan['hangul'] = ['韩文','韓文']
+    let s:unihan['xinhua'] = ['新华','新華']
+    let s:unihan['pinyin'] = ['拼音']
+    let s:unihan['cangjie'] = ['仓颉','倉頡']
+    let s:unihan['boshiamy'] = ['呒虾米','嘸蝦米']
+    let s:unihan['zhengma'] = ['郑码','鄭碼']
+    let s:unihan['yong'] = ['永码','永碼']
+    let s:unihan['nature'] = ['自然']
+    let s:unihan['quick'] = ['速成']
+    let s:unihan['yong'] = ['永码','永碼']
+    let s:unihan['wu'] = ['吴语','吳語']
+    let s:unihan['phonetic'] = ['注音']
+    let s:unihan['array30'] = ['行列']
+    let s:unihan['erbi'] = ['二笔','二筆']
+    let s:unihan['sogou'] = ['搜狗']
+    let s:unihan['cloud_no'] = ['晴天无云','晴天無雲']
+    let s:unihan['all'] = ['全']
+    let s:unihan['cloud_atwill'] = ['想云就云','想雲就雲']
+    let s:unihan['shezhi'] = ['设置','設置']
+    let s:unihan['test'] = ['测试','測試']
+    let s:unihan['jidian'] = ['极点','極點']
+    let s:unihan['new_century'] = ['新世纪','新世紀']
+    let s:unihan['shuangpin'] = ['双拼','雙拼']
+    let s:unihan['abc'] = ['智能','智能']
+    let s:unihan['microsoft'] = ['微软','微軟']
+    let s:unihan['nature'] = ['自然']
+    let s:unihan['plusplus'] = ['加加']
+    let s:unihan['purple'] = ['紫光']
+    let s:unihan['flypy'] = ['小鹤','小鶴']
+    let s:unihan['bracket_l'] = ['《','【']
+    let s:unihan['bracket_r'] = ['》','】']
 endfunction
 
 " ---------------------------------------
@@ -595,7 +595,7 @@ function! s:vimim_egg_vimim()
     let option = "lc_time\t " . environment . v:lc_time
     call add(eggs, option)
     " ----------------------------------
-    let toggle = 'i_CTRL-Bslash'
+    let toggle = 'i_<C-Bslash>'
     if s:vimim_ctrl_space_to_toggle == 1
         let toggle = "i_CTRL-Space"
     elseif s:vimim_tab_as_onekey == 1
@@ -1309,10 +1309,8 @@ function! s:vimim_get_im_unihan(im)
     " ------------------------------------
     let bracket_l = s:vimim_unihan('bracket_l')
     let bracket_r = s:vimim_unihan('bracket_r')
-    let plus = s:vimim_unihan('plus')
-    let plus = bracket_r . plus . bracket_l
+    let plus = bracket_r . s:plus . bracket_l
     let im = bracket_l . im . bracket_r
-"   let im = im . s:space . input_style
     let im = im . input_style
     return im
 endfunction
@@ -1964,18 +1962,18 @@ let VimIM = " ====  Punctuations     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ------------------------------------------------
-function! s:vimim_initialize_backend_punctuation()
-" ------------------------------------------------
+" -------------------------------------
+function! s:vimim_backend_punctuation()
+" -------------------------------------
     let s:punctuations = {}
     let s:punctuations['@'] = s:space
+    let s:punctuations['+'] = s:plus
     let s:punctuations['#'] = '＃'
     let s:punctuations['&'] = '＆'
     let s:punctuations['%'] = '％'
     let s:punctuations['$'] = '￥'
     let s:punctuations['!'] = '！'
     let s:punctuations['~'] = '～'
-    let s:punctuations['+'] = '＋'
     let s:punctuations[':'] = '：'
     let s:punctuations['('] = '（'
     let s:punctuations[')'] = '）'
