@@ -1252,12 +1252,10 @@ function! s:vimim_statusline()
         return s:vimim_get_im_unihan(im)
     endif
     " ------------------------------------
-    if s:vimim_cloud_sogou > 0
-        if s:vimim_cloud_sogou == 1
+    if s:vimim_cloud_sogou == 1
             let all = s:vimim_unihan('all')
             let cloud = s:backend.cloud.sogou.chinese
             let im = all . cloud
-        endif
     elseif s:vimim_cloud_sogou == -777
         let mycloud = s:vimim_unihan('mycloud')
         if !empty(s:vimim_cloud_plugin)
@@ -3431,7 +3429,6 @@ function! s:vimim_internal_code(keyboard)
 " ---------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
-    \|| index(s:valid_keys,'\d') < 0
     \|| strlen(keyboard) != 5
         return []
     else
@@ -4536,14 +4533,8 @@ call add(s:vimims, VimIM)
 " --------------------------------
 function! s:vimim_do_force_cloud()
 " --------------------------------
-    let cloud = s:vimim_set_cloud_if_available()
-    if empty(cloud)
-        let s:vimim_cloud_sogou = 0
-    else
-        let s:im.root = "cloud"
-        let s:im.name = "sogou"
-        let s:vimim_cloud_sogou = 1
-    endif
+    let s:vimim_cloud_sogou = 1
+    call s:vimim_set_cloud()
 endfunction
 
 " ------------------------------------
@@ -4553,21 +4544,31 @@ function! s:vimim_scan_backend_cloud()
 " s:vimim_cloud_sogou=-1 : cloud is open when cloud at will
 " s:vimim_cloud_sogou=-2 : cloud is shut down without condition
 " -------------------------------------------------------------
-    if empty(s:backend)
+    if empty(s:backend.datafile)
+    \&& empty(s:backend.directory)
+    \&& empty(s:backend.database)
         let msg = "try cloud if no vimim embedded backend"
     else
         return
     endif
-    let cloud = s:vimim_set_cloud_if_available()
+    call s:vimim_set_cloud()
+endfunction
+
+" ---------------------------
+function! s:vimim_set_cloud()
+" ---------------------------
+    let cloud = s:vimim_set_cloud_backend()
     if empty(cloud)
         let s:vimim_cloud_sogou = 0
-        return
+    else
+        let s:im.root = "cloud"
+        let s:im.name = "sogou"
     endif
 endfunction
 
-" ----------------------------------------
-function! s:vimim_set_cloud_if_available()
-" ----------------------------------------
+" -----------------------------------
+function! s:vimim_set_cloud_backend()
+" -----------------------------------
     let s:backend.cloud.sogou = s:vimim_one_backend_hash()
     let cloud = s:vimim_check_cloud_availability()
     if empty(cloud)
@@ -4575,7 +4576,6 @@ function! s:vimim_set_cloud_if_available()
     else
         let s:backend.cloud.sogou.root = "cloud"
         let s:backend.cloud.sogou.name = "sogou"
-        let s:backend.cloud.sogou.datafile = s:vimim_unihan("pinyin")
         let s:backend.cloud.sogou.keycode = s:im_keycode["cloud"]
         let s:backend.cloud.sogou.chinese = s:vimim_unihan("cloud")
         return cloud
@@ -4678,7 +4678,7 @@ function! s:vimim_magic_tail(keyboard)
     elseif  magic_tail ==# "'"
         let msg = "trailing apostrophe => forced-cloud"
         let s:no_internet_connection = -1
-        let cloud = s:vimim_set_cloud_if_available()
+        let cloud = s:vimim_set_cloud_backend()
         if empty(cloud)
             return []
         endif
@@ -4852,13 +4852,7 @@ function! s:vimim_do_force_mycloud()
 "   2.4 [tip] in popop window: "qwertyuiop" means "1234567890"
 " --------------------------------------------------------------
     let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
-    let mycloud = s:vimim_set_mycloud_if_available()
-    if empty(mycloud)
-        let s:vimim_cloud_plugin = 0
-    else
-        let s:im.root = "cloud"
-        let s:im.name = "mycloud"
-    endif
+    call s:vimim_set_mycloud()
 endfunction
 
 " --------------------------------------
@@ -4876,24 +4870,30 @@ function! s:vimim_scan_backend_mycloud()
 " :let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
 " :let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
 " --------------------------------------------------------------
-    if s:vimim_cloud_sogou == 1
-        let msg = "try whole cloud if it is set already"
+    if empty(s:backend.datafile)
+    \&& empty(s:backend.directory)
+    \&& empty(s:backend.database)
+        let msg = "try cloud if no vimim embedded backend"
     else
         return
     endif
-    " ---------------------------------------------------------
-    let cloud = s:vimim_set_mycloud_if_available()
-    if empty(cloud)
-        let s:vimim_cloud_sogou = 0
-        return
-    endif
-    " ---------------------------------------------------------
+    call s:vimim_set_mycloud()
 endfunction
 
-" ------------------------------------------
-function! s:vimim_set_mycloud_if_available()
-" ------------------------------------------
-    let cloud = s:vimim_set_cloud_if_available()
+" -----------------------------
+function! s:vimim_set_mycloud()
+" -----------------------------
+    let mycloud = s:vimim_set_mycloud_backend()
+    if !empty(mycloud)
+        let s:im.root = "cloud"
+        let s:im.name = "mycloud"
+    endif
+endfunction
+
+" -------------------------------------
+function! s:vimim_set_mycloud_backend()
+" -------------------------------------
+    let cloud = s:vimim_set_cloud_backend()
     if empty(cloud)
         let msg = "no mycloud if no cloud executable"
         return {}
@@ -4906,8 +4906,6 @@ function! s:vimim_set_mycloud_if_available()
         let s:vimim_cloud_plugin = mycloud
         let s:vimim_cloud_sogou = -777
         let s:shuangpin_flag = 0
-        let s:im.root = "cloud"
-        let s:im.name = "mycloud"
         return s:backend.cloud.mycloud
     endif
 endfunction
@@ -5237,7 +5235,8 @@ function! s:vimim_initialize_debug()
     let s:localization = 0
     let s:backend_loaded = 0
     let s:chinese_input_mode = 0
-    " ------------------------------
+    let s:vimim_static_input_style = 2
+    " ------------------------------ todo
     let dir = s:path . "tmp"
     if isdirectory(dir)
         return
