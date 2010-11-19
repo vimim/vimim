@@ -1162,7 +1162,8 @@ function! s:vimim_i_chinese_mode_on()
         if s:vimim_custom_laststatus > 0
             set laststatus=2
         endif
-        let b:keymap_name = s:vimim_statusline()
+        " let b:keymap_name = s:vimim_statusline()
+        sil!call s:vimim_set_statusline()
     endif
     if s:vimim_custom_laststatus < 1
         echoh NonText| echo s:vimim_statusline()|echohl None
@@ -1203,33 +1204,32 @@ endfunction
 " ----------------------------
 function! s:vimim_statusline()
 " ----------------------------
-    let im = ""
     if s:ui.root =~# "database"
         let database = s:vimim_unihan('database')
-        let im = 'Unihan' . s:space . database
-        return s:vimim_get_im_unihan(im)
+        let s:ui.statusline = 'Unihan' . s:space . database
+        return s:vimim_get_im_unihan()
     endif
     " ------------------------------------
     if has_key(s:im_keycode, s:ui.im)
-        let im = s:backend[s:ui.root][s:ui.im].chinese
+        let s:ui.statusline = s:backend[s:ui.root][s:ui.im].chinese
     endif
     " ------------------------------------
     let datafile = s:backend[s:ui.root][s:ui.im].datafile
     if s:ui.im =~# 'wubi'
         if datafile =~# 'wubi98'
-            let im .= '98'
+            let s:ui.statusline .= '98'
         elseif datafile =~# 'wubi2000'
             let new_century = s:vimim_unihan('new_century')
-            let im = new_century . im
+            let s:ui.statusline = new_century . s:ui.statusline
         elseif datafile =~# 'wubijd'
             let jidian = s:vimim_unihan('jidian')
-            let im = jidian . im
+            let s:ui.statusline = jidian . s:ui.statusline
         endif
-        return s:vimim_get_im_unihan(im)
+        return s:vimim_get_im_unihan()
     endif
     " ------------------------------------
     if s:shuangpin_flag > 0
-        let im = s:vimim_get_shuangpin_keycodes().chinese
+        let s:ui.statusline = s:vimim_get_shuangpin_keycodes().chinese
     endif
     " ------------------------------------
     if s:pinyin_and_4corner > 0 && s:ui.im == 'pinyin'
@@ -1239,32 +1239,31 @@ function! s:vimim_statusline()
             let s:ui.im = "12345"
         endif
         let pinyin = s:vimim_unihan('pinyin')
-        let im = pinyin . s:space . im_digit
-        return s:vimim_get_im_unihan(im)
+        let s:ui.statusline = pinyin . s:space . im_digit
+        return s:vimim_get_im_unihan()
     endif
     " ------------------------------------
     if s:vimim_cloud_sogou == 1
             let all = s:vimim_unihan('all')
             let cloud = s:backend.cloud.sogou.chinese
-            let im = all . cloud
+            let s:ui.statusline = all . cloud
     elseif s:vimim_cloud_sogou == -777
         let mycloud = s:vimim_unihan('mycloud')
         if !empty(s:vimim_cloud_plugin)
-            let im = s:backend.cloud.mycloud.directory
+            let s:ui.statusline = s:backend.cloud.mycloud.directory
         endif
-        let im = mycloud . s:space . im
-    elseif empty(im)
-        let im = s:vimim_unihan('internal')
-        let im .= s:vimim_unihan('input')
+        let s:ui.statusline = mycloud . s:space . s:ui.statusline
+    elseif empty(s:ui.statusline)
+        let s:ui.statusline = s:vimim_unihan('internal')
+        let s:ui.statusline .= s:vimim_unihan('input')
     endif
     " ------------------------------------
-    return s:vimim_get_im_unihan(im)
+    return s:vimim_get_im_unihan()
 endfunction
 
-" --------------------------------
-function! s:vimim_get_im_unihan(im)
-" --------------------------------
-    let im = a:im
+" -------------------------------
+function! s:vimim_get_im_unihan()
+" -------------------------------
     let style = s:vimim_static_input_style
     let dynamic = s:vimim_unihan('dynamic')
     let static = s:vimim_unihan('static')
@@ -1280,9 +1279,7 @@ function! s:vimim_get_im_unihan(im)
     let bracket_l = s:vimim_unihan('bracket_l')
     let bracket_r = s:vimim_unihan('bracket_r')
     let plus = bracket_r . s:plus . bracket_l
-    let im = bracket_l . im . bracket_r
-    let im = im . input_style
-    return im
+    return bracket_l . s:ui.statusline . bracket_r . input_style
 endfunction
 
 " -----------------------------------
