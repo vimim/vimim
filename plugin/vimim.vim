@@ -1393,8 +1393,8 @@ function! <SID>vimim_label_navigation(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == 'h'
-            call s:reset_popupmenu_list()
-            let hjkl  = '\<C-E>'
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e_onekey()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_ctrl_x_ctrl_u_backspace()\<CR>'
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
@@ -1404,8 +1404,8 @@ function! <SID>vimim_label_navigation(key)
         elseif a:key == 'n'
             let hjkl  = '\<Down>\<Down>\<Down>'
         elseif a:key == 'm'
-            let hjkl  = '\<C-Y>'
-            let hjkl .= '\<C-R>=g:vimim_one_key_correction()\<CR>'
+            call s:reset_popupmenu_list()
+            let hjkl  = '\<C-E>'
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_copy_to_clip()\<CR>'
@@ -1742,7 +1742,7 @@ function! g:vimim_pumvisible_ctrl_e_ctrl_y()
         " ----------------------------------
         if s:ui.im =~ 'wubi'
         \&& empty(len(s:keyboard_leading_zero)%4)
-"           let key = "\<C-Y>"
+            let key = "\<C-Y>"
         endif
         " ----------------------------------
     endif
@@ -1769,26 +1769,35 @@ function! g:vimim_pumvisible_ctrl_e()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" --------------------------------------
-function! g:vimim_pumvisible_ctrl_e_on()
-" --------------------------------------
-    let s:pumvisible_ctrl_e = 1
+" ------------------------------------------
+function! g:vimim_pumvisible_ctrl_e_onekey()
+" ------------------------------------------
+    if s:chinese_input_mode =~ 'onekey'
+        let s:pumvisible_ctrl_e = 1
+    endif
     return g:vimim_pumvisible_ctrl_e()
 endfunction
 
-" --------------------------------------------
-function! <SID>vimim_ctrl_x_ctrl_u_backspace()
-" --------------------------------------------
+" --------------------------------------
+function! g:vimim_pumvisible_ctrl_e_on()
+" --------------------------------------
+    if s:chinese_input_mode =~ 'dynamic'
+        let s:pumvisible_ctrl_e = 1
+    endif
+    return g:vimim_pumvisible_ctrl_e()
+endfunction
+
+" -----------------------------------------
+function! g:vimim_ctrl_x_ctrl_u_backspace()
+" -----------------------------------------
     call s:reset_popupmenu_list()
     let s:pattern_not_found = 0
     let key = '\<BS>'
     " ---------------------------------
     if s:pumvisible_ctrl_e > 0
         let s:pumvisible_ctrl_e = 0
-        if s:chinese_input_mode =~ 'dynamic'
-            let key .= '\<C-R>=g:vimim()\<CR>'
-            sil!exe 'sil!return "' . key . '"'
-        endif
+        let key .= '\<C-R>=g:vimim()\<CR>'
+        sil!exe 'sil!return "' . key . '"'
     endif
     " ---------------------------------
     if empty(s:chinese_input_mode)
@@ -5570,7 +5579,7 @@ function! s:vimim_helper_mapping_on()
                   \<C-R>=<SID>vimim_smart_enter()<CR>
     " ----------------------------------------------------------
     inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
-                  \<C-R>=<SID>vimim_ctrl_x_ctrl_u_backspace()<CR>
+                  \<C-R>=g:vimim_ctrl_x_ctrl_u_backspace()<CR>
     " ----------------------------------------------------------
 endfunction
 
@@ -5802,7 +5811,13 @@ else
     " [wubi] support wubi auto input
     " ------------------------------
     if s:ui.im == 'wubi' || s:ui.im == 'erbi'
-"       let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
+        let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
+        if s:ui.im =~ 'erbi'
+            let punctuation = s:vimim_first_punctuation_erbi(keyboard)
+            if !empty(punctuation)
+                return [punctuation]
+            endif
+        endif
     endif
 
     " ------------------------------------------------
@@ -5857,7 +5872,7 @@ function! s:vimim_get_valid_keyboard(keyboard)
         let d = 'delete in omni popup menu'
         let BS = 'delete in Chinese Mode'
         let s:one_key_correction = 0
-        return [" "]
+        return ' '
     endif
     if empty(s:keyboard_leading_zero)
         let s:keyboard_leading_zero = keyboard
@@ -5869,22 +5884,16 @@ function! s:vimim_get_valid_keyboard(keyboard)
     endif
     " ignore all-zeroes keyboard inputs
     if empty(s:keyboard_leading_zero)
-        return []
+        return 0
     endif
     " ignore non-sense keyboard inputs
     if keyboard !~# s:valid_key
-        return []
+        return 0
     endif
     " ignore multiple non-sense dots
     if keyboard =~# '^[\.\.\+]' && empty(s:ui.has_dot)
         let s:pattern_not_found += 1
-        return []
-    endif
-    if s:ui.im =~ 'erbi'
-        let punctuation = s:vimim_first_punctuation_erbi(keyboard)
-        if !empty(punctuation)
-            return [punctuation]
-        endif
+        return 0
     endif
     return keyboard
 endfunction
