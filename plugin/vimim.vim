@@ -4560,6 +4560,17 @@ function! s:vimim_do_force_cloud()
     call s:vimim_set_cloud()
 endfunction
 
+" ----------------------------------------------
+function! s:vimim_no_cloud_on_backend_embedded()
+" ----------------------------------------------
+    if empty(s:backend.datafile)
+    \&& empty(s:backend.directory)
+    \&& empty(s:backend.database)
+        return "try cloud if no vimim embedded backend"
+    endif
+    return 0
+endfunction
+
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
@@ -4567,14 +4578,10 @@ function! s:vimim_scan_backend_cloud()
 " s:vimim_cloud_sogou=-1 : cloud is open when cloud at will
 " s:vimim_cloud_sogou=-2 : cloud is shut down without condition
 " -------------------------------------------------------------
-    if empty(s:backend.datafile)
-    \&& empty(s:backend.directory)
-    \&& empty(s:backend.database)
-        let msg = "try cloud if no vimim embedded backend"
-    else
-        return
+    let cloud = s:vimim_no_cloud_on_backend_embedded()
+    if len(cloud) > 0
+        call s:vimim_set_cloud()
     endif
-    call s:vimim_set_cloud()
 endfunction
 
 " ---------------------------
@@ -4883,8 +4890,6 @@ endfunction
 " --------------------------------------
 function! s:vimim_scan_backend_mycloud()
 " --------------------------------------
-" sample mycloud url:
-" --------------------------------------------------------------
 " :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
 " :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
 " :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
@@ -4895,14 +4900,10 @@ function! s:vimim_scan_backend_mycloud()
 " :let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
 " :let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
 " --------------------------------------------------------------
-    if empty(s:backend.datafile)
-    \&& empty(s:backend.directory)
-    \&& empty(s:backend.database)
-        let msg = "try cloud if no vimim embedded backend"
-    else
-        return
+    let cloud = s:vimim_no_cloud_on_backend_embedded()
+    if len(cloud) > 0
+        call s:vimim_set_mycloud()
     endif
-    call s:vimim_set_mycloud()
 endfunction
 
 " -----------------------------
