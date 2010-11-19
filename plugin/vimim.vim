@@ -714,7 +714,7 @@ function! s:vimim_break_apostrophe_sentence(keyboard)
     \&& keyboard[0:0] != "'"
     \&& keyboard[-1:-1] != "'"
         let blocks = split(keyboard, "[']")
-        if len(blocks) > 0
+        if !empty(blocks)
             let head = remove(blocks, 0)
             let tail =  join(blocks, "'")
             let blocks = [head, tail]
@@ -1449,7 +1449,7 @@ function! g:vimim_pumvisible_copy_to_clip()
         call s:vimim_stop()
     endif
     let chinese = s:vimim_popup_word()
-    if len(chinese) > 0
+    if !empty(chinese)
         if s:vimim_auto_copy_clipboard>0 && has("gui_running")
             let @+ = chinese
         endif
@@ -2417,13 +2417,13 @@ function! s:vimim_reverse_lookup(chinese)
     endif
     " -----------------------------------
     let results = []
-    if len(results_4corner) > 0
+    if !empty(results_4corner)
         call extend(results, results_4corner)
     endif
-    if len(results_unicode) > 0
+    if !empty(results_unicode)
         call extend(results, results_unicode)
     endif
-    if len(results_pinyin) > 0
+    if !empty(results_pinyin)
         call extend(results, results_pinyin)
         if result_cjjp =~ '\a'
             call add(results, result_cjjp)
@@ -3129,7 +3129,8 @@ function! <SID>:vimim_search()
             sil!call s:vimim_backend_initialization_once()
             sil!call s:vimim_frontend_initialization()
             let results = s:vimim_embedded_backend_engine(english)
-            if len(results) > 0
+            if !empty(results)
+            if !empty(results)
                 let chinese = ""
                 for pair in results
                     let chinese .= get(split(pair),1) . '\|'
@@ -3778,7 +3779,7 @@ function! s:vimim_get_sentence_datafile_cache(keyboard)
     endif
     let results = []
     let keyboards = s:vimim_sentence_match_cache(keyboard)
-    if len(keyboards) > 0
+    if !empty(keyboards)
         call s:vimim_set_menu_4corner_as_filter(keyboards)
         let keyboard = get(keyboards, 0)
         let results = s:vimim_get_data_from_cache(keyboard)
@@ -3791,22 +3792,22 @@ function! s:vimim_sentence_match_cache(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
     let blocks = s:vimim_search_pattern(keyboard)
-    if len(blocks) > 0 | return blocks | endif
+    if !empty(blocks) | return blocks | endif
     " -----------------------------------------
     let results = s:vimim_get_data_from_cache(keyboard)
-    if len(results) > 0
+    if !empty(results)
         return [keyboard]
     endif
     let im = s:ui.im
     let blocks = s:vimim_break_sentence_into_block(keyboard, im)
-    if len(blocks) > 0 | return blocks | endif
+    if !empty(blocks) | return blocks | endif
     " -----------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
         let results = s:vimim_get_data_from_cache(head)
-        if len(results) > 0
+        if !empty(results)
             break
         else
             continue
@@ -3841,7 +3842,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines) | return [] | endif
     let blocks = s:vimim_search_pattern(keyboard)
-    if len(blocks) > 0 | return blocks | endif
+    if !empty(blocks) | return blocks | endif
     " ---------------------------------------------
     let pattern = '^' . keyboard
     let match_start = match(lines, pattern)
@@ -3849,7 +3850,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
         return [keyboard]
     endif
     let blocks = s:vimim_break_sentence_into_block(keyboard, s:ui.im)
-    if len(blocks) > 0 | return blocks | endif
+    if !empty(blocks) | return blocks | endif
     " ---------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)+1
     while max > 1
@@ -3916,13 +3917,13 @@ endfunction
 function! s:vimim_break_sentence_into_block(keyboard, im)
 " -------------------------------------------------------
     let blocks = s:vimim_static_break_every_four(a:keyboard, a:im)
-    if len(blocks) > 0 | return blocks | endif
+    if !empty(blocks) | return blocks | endif
     " --------------------------------------------
     let blocks = s:vimim_break_apostrophe_sentence(a:keyboard)
-    if len(blocks) > 0 | return blocks | endif
+    if !empty(blocks) | return blocks | endif
     " --------------------------------------------
     let blocks = s:vimim_break_pinyin_digit(a:keyboard)
-    if len(blocks) > 0 | return blocks | endif
+    if !empty(blocks) | return blocks | endif
     " --------------------------------------------
     return []
 endfunction
@@ -4224,7 +4225,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     let im = a:im
     let keyboard = a:keyboard
     let blocks = s:vimim_search_pattern(keyboard)
-    if len(blocks) > 0 | return blocks | endif
+    if !empty(blocks) | return blocks | endif
     " --------------------------------------------------
     let dir = s:vimim_get_data_directory(im)
     let filename = dir . '/' . keyboard
@@ -4232,7 +4233,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         return [keyboard]
     endif
     let blocks = s:vimim_break_sentence_into_block(keyboard, im)
-    if len(blocks) > 0 | return blocks | endif
+    if !empty(blocks) | return blocks | endif
     " --------------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     while max > 1
@@ -5620,7 +5621,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let results = s:vimim_get_sentence_datafile_cache(keyboard)
         endif
     endif
-    if len(results) > 0
+    if !empty(results)
         let results = s:vimim_pair_list(results)
     endif
     return results
@@ -5714,7 +5715,7 @@ else
     " -------------------------------------------
     if keyboard ==# "vim" || keyboard =~# "^vimim"
         let results = s:vimim_easter_chicken(keyboard)
-        if len(results) > 0
+        if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5724,7 +5725,7 @@ else
     if len(s:menu_4corner_as_filter) > 0
         if len(s:matched_list) > 1
             let results = s:vimim_pair_list(s:matched_list)
-            if len(results) > 0
+            if !empty(results)
                 return s:vimim_popupmenu_list(results)
             endif
         endif
@@ -5749,7 +5750,7 @@ else
     if s:vimim_internal_code_input > 0
         let msg = " usage: u808f<C-6> 32911<C-6>  32910<C-6> "
         let results = s:vimim_internal_code(keyboard)
-        if len(results) > 0
+        if !empty(results)
             let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
@@ -5760,7 +5761,7 @@ else
     if s:vimim_super_internal_input > 0
         let msg = " usage: a<C-6> b<C-6> ... z<C-6> "
         let results = s:vimim_without_backend(keyboard)
-        if len(results) > 0
+        if !empty(results)
             let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
@@ -5771,7 +5772,7 @@ else
     if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
         let msg = " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
         let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
-        if len(chinese_numbers) > 0
+        if !empty(chinese_numbers)
             return s:vimim_popupmenu_list(chinese_numbers)
         endif
     endif
@@ -5781,7 +5782,7 @@ else
     if s:vimim_imode_universal > 0 && keyboard =~# "^'"
     \&& (empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'onekey')
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
-        if len(chinese_numbers) > 0
+        if !empty(chinese_numbers)
             return s:vimim_popupmenu_list(chinese_numbers)
         endif
     endif
@@ -5789,7 +5790,7 @@ else
     " [cloud] magic trailing apostrophe to control cloud
     " --------------------------------------------------
     let clouds = s:vimim_magic_tail(keyboard)
-    if len(clouds) > 0
+    if !empty(clouds)
         let msg = " usage: woyouyigemeng'<C-6> "
         let keyboard = get(clouds, 0)
     endif
@@ -5846,7 +5847,7 @@ else
     " ---------------------------------------
     if s:vimim_cloud_sogou == 1
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
-        if len(results) > 0
+        if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
