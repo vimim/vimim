@@ -440,7 +440,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_super_internal_input")
     call add(G, "g:vimim_debug")
     call add(G, "g:vimimdebug")
-    call add(G, "g:vimim_n_next_search_chinese")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -453,6 +452,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_onekey_double_ctrl6")
     call add(G, "g:vimim_punctuation_navigation")
+    call add(G, "g:vimim_n_next_search_chinese")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -5963,7 +5963,7 @@ function! s:vimim_onekey_mapping_on()
         xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
     " -----------------------------------
-    if s:vimim_n_next_search_chinese < 1
+    if s:vimim_n_next_search_chinese > 0
         noremap <silent> n :sil!call <SID>:vimim_search()<CR>n
     endif
     " -----------------------------------
