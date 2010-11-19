@@ -232,11 +232,11 @@ function! s:vimim_finalize_session()
     endif
     " --------------------------------
     if s:shuangpin_flag > 0
-        let s:im.name = "pinyin"
+        let s:ui.im = "pinyin"
     endif
     " ------------------------------
-    if s:im.name =~# '^\d\w\+'
-        let s:im.name = "4corner"
+    if s:ui.im =~# '^\d\w\+'
+        let s:ui.im = "4corner"
         let s:vimim_static_input_style = 1
     endif
     " ------------------------------
@@ -245,12 +245,12 @@ function! s:vimim_finalize_session()
         let s:vimim_punctuation_navigation = -1
     endif
     " ------------------------------
-    if s:im.root =~ 'datafile' || s:im.root =~ 'directory'
-        if s:backend[s:im.root][s:im.name].datafile =~# "chinese"
+    if s:ui.root =~ 'datafile' || s:ui.root =~ 'directory'
+        if s:backend[s:ui.root][s:ui.im].datafile =~# "chinese"
             let s:vimim_datafile_is_not_utf8 = 1
         endif
         " --------------------------------------------------------
-        if s:backend[s:im.root][s:im.name].datafile =~# "quote"
+        if s:backend[s:ui.root][s:ui.im].datafile =~# "quote"
             let s:has_apostrophe_in_datafile = 1
         endif
     endif
@@ -383,10 +383,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_keycode()
 " ------------------------------------
-    let root = s:im.root
-    let im  = s:im.name
-    let keycode = s:backend[root][im].keycode
-    " --------------------------------
+    let keycode = s:backend[s:ui.root][s:ui.im].keycode
     if empty(keycode)
         let keycode = "[0-9a-z'.]"
     endif
@@ -615,13 +612,13 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
     " ----------------------------------
-    let option = s:backend[s:im.root][s:im.name].datafile
+    let option = s:backend[s:ui.root][s:ui.im].datafile
     if empty(option)
         let msg = "no ciku found"
     else
         let datafile = s:vimim_unihan('datafile')
         let directory  = s:vimim_unihan('directory')
-        if s:im.root == 'directory'
+        if s:ui.root == 'directory'
             let datafile .=  "：" . directory . datafile
         endif
         let option = "database " . datafile . s:space . option
@@ -643,7 +640,7 @@ function! s:vimim_egg_vimim()
         let CLOUD .= s:vimim_unihan('cloud')
     endif
     let option .= CLOUD
-    if s:has_dot_in_datafile > 0 || s:im.name == 'mycloud'
+    if s:has_dot_in_datafile > 0 || s:ui.im == 'mycloud'
         let msg = "Who needs crazy sogou cloud?"
     else
         call add(eggs, option)
@@ -965,7 +962,7 @@ function! s:vimim_chinesemode(switch)
     sil!call s:vimim_set_chinese_input_mode()
     sil!call s:vimim_build_datafile_cache()
     " -------------------------------------
-    if empty(s:im.root) || empty(s:im.name)
+    if empty(s:ui.root) || empty(s:ui.im)
         return ""
     endif
     " -------------------------------------
@@ -974,8 +971,8 @@ function! s:vimim_chinesemode(switch)
     if empty(switch)
         let msg = "chinese mode is always on"
     else
-        let s:backend[s:im.root][s:im.name].chinese_mode_switch += 1
-        let switch=s:backend[s:im.root][s:im.name].chinese_mode_switch%2
+        let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
+        let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
     endif
     if empty(switch)
         call s:vimim_i_chinese_mode_on()
@@ -1215,19 +1212,18 @@ endfunction
 function! s:vimim_statusline()
 " ----------------------------
     let im = ""
-    " ------------------------------------
-    if s:im.root =~# "database"
+    if s:ui.root =~# "database"
         let database = s:vimim_unihan('database')
         let im = 'Unihan' . s:space . database
         return s:vimim_get_im_unihan(im)
     endif
     " ------------------------------------
-    if has_key(s:im_keycode, s:im.name)
-        let im = s:backend[s:im.root][s:im.name].chinese
+    if has_key(s:im_keycode, s:ui.im)
+        let im = s:backend[s:ui.root][s:ui.im].chinese
     endif
     " ------------------------------------
-    let datafile = s:backend[s:im.root][s:im.name].datafile
-    if s:im.name =~# 'wubi'
+    let datafile = s:backend[s:ui.root][s:ui.im].datafile
+    if s:ui.im =~# 'wubi'
         if datafile =~# 'wubi98'
             let im .= '98'
         elseif datafile =~# 'wubi2000'
@@ -1244,11 +1240,11 @@ function! s:vimim_statusline()
         let im = s:vimim_get_shuangpin_keycodes().chinese
     endif
     " ------------------------------------
-    if s:pinyin_and_4corner > 0 && s:im.name == 'pinyin'
+    if s:pinyin_and_4corner > 0 && s:ui.im == 'pinyin'
         let im_digit = s:vimim_unihan('4corner')
         if datafile =~ "12345"
             let im_digit = s:vimim_unihan('12345')
-            let s:im.name = "12345"
+            let s:ui.im = "12345"
         endif
         let pinyin = s:vimim_unihan('pinyin')
         let im = pinyin . s:space . im_digit
@@ -1753,7 +1749,7 @@ function! g:vimim_pumvisible_ctrl_e_ctrl_y()
     if pumvisible()
         let key = "\<C-E>"
         " ----------------------------------
-        if s:im.name =~ 'wubi'
+        if s:ui.im =~ 'wubi'
         \&& empty(len(s:keyboard_leading_zero)%4)
             let key = "\<C-Y>"
         endif
@@ -1825,7 +1821,7 @@ function! s:vimim_pair_list(matched_list)
         if len(line) < 2
             continue
         endif
-        if empty(s:backend[s:im.root][s:im.name].cache)
+        if empty(s:backend[s:ui.root][s:ui.im].cache)
             if s:localization > 0
                 let line = s:vimim_i18n_read(line)
             endif
@@ -2041,7 +2037,7 @@ function! <SID>vimim_punctuation_on()
     " ----------------------------
     if s:chinese_punctuation > 0
         if empty(s:vimim_latex_suite)
-            if s:im.name == 'pinyin' || s:im.name == 'erbi'
+            if s:ui.im == 'pinyin' || s:ui.im == 'erbi'
                 let msg = "apostrophe is over-loaded for cloud at will"
             else
                 inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
@@ -2348,15 +2344,13 @@ endfunction
 " ------------------------------------------
 function! s:vimim_break_every_four(keyboard)
 " ------------------------------------------
-    if s:chinese_input_mode =~ 'dynamic'
-    \|| len(a:keyboard)%4 != 0
+    if s:chinese_input_mode =~ 'dynamic' || len(a:keyboard)%4 != 0
         return []
     endif
     " -------------------------------
     " sijiaohaoma == 6021272260021762
     " -------------------------------
-    let keyboards = split(a:keyboard, '\(.\{4}\)\zs')
-    return keyboards
+    return split(a:keyboard, '\(.\{4}\)\zs')
 endfunction
 
 " ------------------------------------------
@@ -2632,7 +2626,7 @@ call add(s:vimims, VimIM)
 " -----------------------------------
 function! s:vimim_initialize_pinyin()
 " -----------------------------------
-    if s:im.name != 'pinyin'
+    if s:ui.im != 'pinyin'
         return
     endif
     if empty(s:vimim_imode_pinyin)
@@ -2805,7 +2799,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if s:im.name != 'pinyin'
+    if s:ui.im != 'pinyin'
         return
     endif
     call s:vimim_get_shuangpin_keycodes()
@@ -3163,13 +3157,13 @@ endfunction
 " -----------------------------------------
 function! s:vimim_set_special_im_property()
 " -----------------------------------------
-    if s:im.name == 'wu'
-    \|| s:im.name == 'erbi'
-    \|| s:im.name == 'yong'
-    \|| s:im.name == 'nature'
-    \|| s:im.name == 'boshiamy'
-    \|| s:im.name == 'phonetic'
-    \|| s:im.name == 'array30'
+    if s:ui.im == 'wu'
+    \|| s:ui.im == 'erbi'
+    \|| s:ui.im == 'yong'
+    \|| s:ui.im == 'nature'
+    \|| s:ui.im == 'boshiamy'
+    \|| s:ui.im == 'phonetic'
+    \|| s:ui.im == 'array30'
         let s:has_dot_in_datafile = 1
     endif
 endfunction
@@ -3177,7 +3171,7 @@ endfunction
 " ---------------------------------
 function! s:vimim_initialize_wubi()
 " ---------------------------------
-    if s:im.name != 'wubi'
+    if s:ui.im != 'wubi'
         return
     endif
     let s:vimim_punctuation_navigation = -1
@@ -3654,12 +3648,12 @@ function! s:vimim_scan_backend_embedded_datafile()
         let datafile = get(pair, 1)
         let im = get(pair, 0)
         let im = s:vimim_get_valid_im_name(im)
-        let s:im.root = "datafile"
-        let s:im.name = im
-        call add(s:im.frontends, [s:im.root, s:im.name])
+        let s:ui.root = "datafile"
+        let s:ui.im = im
+        call add(s:ui.frontends, [s:ui.root, s:ui.im])
         let s:backend.datafile[im] = s:vimim_one_backend_hash()
         let s:backend.datafile[im].root = "datafile"
-        let s:backend.datafile[im].name = im
+        let s:backend.datafile[im].im = im
         let s:backend.datafile[im].datafile = datafile
         let s:backend.datafile[im].keycode = s:im_keycode[im]
         let s:backend.datafile[im].chinese = s:vimim_unihan(im)
@@ -3684,8 +3678,8 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_lines()
 " --------------------------------------
-    let im = s:im.name
-    if s:backend[s:im.root][im].root != "datafile"
+    let im = s:ui.im
+    if s:backend[s:ui.root][im].root != "datafile"
         return
     endif
     let datafile = s:backend.datafile[im].datafile
@@ -3729,7 +3723,7 @@ function! s:vimim_pinyin(lines, keyboard, match_start)
     " --------------------------------------------
     let results = a:lines[match_start : match_end]
     " --------------------------------------------
-    if len(results) < 10 && s:im.name == 'pinyin'
+    if len(results) < 10 && s:ui.im == 'pinyin'
        let extras = s:vimim_pinyin_more_match(a:lines, keyboard, results)
        if len(extras) > 0
            call extend(results, extras)
@@ -3771,12 +3765,12 @@ endfunction
 function! s:vimim_get_data_from_cache(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:backend[s:im.root][s:im.name].cache)
+    if empty(s:backend[s:ui.root][s:ui.im].cache)
         return []
     endif
     let results = []
-    if has_key(s:backend[s:im.root][s:im.name].cache, keyboard)
-        let results = s:backend[s:im.root][s:im.name].cache[keyboard]
+    if has_key(s:backend[s:ui.root][s:ui.im].cache, keyboard)
+        let results = s:backend[s:ui.root][s:ui.im].cache[keyboard]
     endif
     return results
 endfunction
@@ -3786,7 +3780,7 @@ function! s:vimim_get_sentence_datafile_cache(keyboard)
 " -----------------------------------------------------
     let msg = "use cache to speed up search after initial load"
     let keyboard = a:keyboard
-    if empty(s:backend[s:im.root][s:im.name].cache)
+    if empty(s:backend[s:ui.root][s:ui.im].cache)
         return []
     endif
     let results = []
@@ -3804,18 +3798,16 @@ function! s:vimim_sentence_match_cache(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
     let blocks = s:vimim_search_pattern(keyboard)
-    if len(blocks) > 0
-        return blocks
-    endif
+    if len(blocks) > 0 | return blocks | endif
+    " -----------------------------------------
     let results = s:vimim_get_data_from_cache(keyboard)
     if len(results) > 0
         return [keyboard]
     endif
-    " --------------------------------------------------
-    let im = s:im.name
+    let im = s:ui.im
     let blocks = s:vimim_break_sentence_into_block(keyboard, im)
     if len(blocks) > 0 | return blocks | endif
-    " ------------------------------------------------
+    " -----------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     while max > 1
         let max -= 1
@@ -3828,6 +3820,7 @@ function! s:vimim_sentence_match_cache(keyboard)
         endif
     endwhile
     " --------------------------------------------------
+    let blocks = []
     if max > 0 && len(results)
         let blocks = s:vimim_break_string_at(keyboard, max)
     endif
@@ -3852,24 +3845,17 @@ endfunction
 function! s:vimim_sentence_match_datafile(keyboard)
 " -------------------------------------------------
     let keyboard = a:keyboard
-    let lines = s:backend[s:im.root][s:im.name].lines
-    " ---------------------------------------------
-    if empty(lines) || empty(keyboard)
-        return []
-    endif
-    " ---------------------------------------------
+    let lines = s:backend[s:ui.root][s:ui.im].lines
+    if empty(lines) | return [] | endif
     let blocks = s:vimim_search_pattern(keyboard)
-    if len(blocks) > 0
-        return blocks
-    endif
+    if len(blocks) > 0 | return blocks | endif
     " ---------------------------------------------
     let pattern = '^' . keyboard
     let match_start = match(lines, pattern)
     if match_start > -1
         return [keyboard]
     endif
-    " ---------------------------------------------
-    let blocks = s:vimim_break_sentence_into_block(keyboard, s:im.name)
+    let blocks = s:vimim_break_sentence_into_block(keyboard, s:ui.im)
     if len(blocks) > 0 | return blocks | endif
     " ---------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)+1
@@ -3885,6 +3871,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
         endif
     endwhile
     " ------------------------------------------------
+    let blocks = []
     if match_start > 0
         let blocks = s:vimim_break_string_at(a:keyboard, max)
     endif
@@ -3895,7 +3882,7 @@ endfunction
 function! s:vimim_get_data_from_datafile(keyboard)
 " ------------------------------------------------
     let keyboard = a:keyboard
-    let lines =  s:backend[s:im.root][s:im.name].lines
+    let lines =  s:backend[s:ui.root][s:ui.im].lines
     if empty(lines)
         return []
     endif
@@ -3907,7 +3894,7 @@ function! s:vimim_get_data_from_datafile(keyboard)
     else
         if s:has_apostrophe_in_datafile > 0
             let results = s:vimim_fixed_match(lines, keyboard, 1)
-        elseif s:im.name == 'pinyin'
+        elseif s:ui.im == 'pinyin'
             let results = s:vimim_pinyin(lines, keyboard, match_start)
         else
             let results = s:vimim_fixed_match(lines, keyboard, 4)
@@ -3935,21 +3922,16 @@ endfunction
 " -------------------------------------------------------
 function! s:vimim_break_sentence_into_block(keyboard, im)
 " -------------------------------------------------------
-    let keyboard = a:keyboard
-    let blocks = s:vimim_static_break_every_four(keyboard, a:im)
-    if len(blocks) > 0
-        return blocks
-    endif
+    let blocks = s:vimim_static_break_every_four(a:keyboard, a:im)
+    if len(blocks) > 0 | return blocks | endif
     " --------------------------------------------
-    let blocks = s:vimim_break_apostrophe_sentence(keyboard)
-    if len(blocks) > 0
-        return blocks
-    endif
+    let blocks = s:vimim_break_apostrophe_sentence(a:keyboard)
+    if len(blocks) > 0 | return blocks | endif
     " --------------------------------------------
-    let blocks = s:vimim_break_pinyin_digit(keyboard)
-    if len(blocks) > 0
-        return blocks
-    endif
+    let blocks = s:vimim_break_pinyin_digit(a:keyboard)
+    if len(blocks) > 0 | return blocks | endif
+    " --------------------------------------------
+    return []
 endfunction
 
 " --------------------------------------------
@@ -3970,8 +3952,8 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_cache()
 " --------------------------------------
-    let im = s:im.name
-    let root = s:im.root
+    let im = s:ui.im
+    let root = s:ui.root
     if s:vimim_use_cache < 1
     \|| s:backend[root][im].root != "datafile"
     \|| empty(s:backend[root][im].lines)
@@ -4040,14 +4022,14 @@ function! s:vimim_scan_backend_embedded_directory()
     for im in valid_directoires
         " ------------------------------------------------------
         let im = s:vimim_get_valid_im_name(im)
-        let s:im.root = "directory"
-        let s:im.name = im
+        let s:ui.root = "directory"
+        let s:ui.im = im
         let datafile = s:path2 ."/". im
-        call add(s:im.frontends, [s:im.root, s:im.name])
+        call add(s:ui.frontends, [s:ui.root, s:ui.im])
         let s:backend.directory[im] = s:vimim_one_backend_hash()
         let s:backend.directory[im].root = "directory"
         let s:backend.directory[im].datafile = datafile
-        let s:backend.directory[im].name = im
+        let s:backend.directory[im].im = im
         let s:backend.directory[im].keycode = s:im_keycode[im]
         let s:backend.directory[im].chinese = s:vimim_unihan(im)
         " ------------------------------------------------------
@@ -4083,13 +4065,13 @@ function! s:vimim_force_scan_current_buffer()
         call s:vimim_do_force_mycloud()
     " ---------------------------------
     else
-        let s:im.root = "datafile"
+        let s:ui.root = "datafile"
         if buffer =~? 'directory'
-            let s:im.root = "directory"
+            let s:ui.root = "directory"
         endif
         let im = s:vimim_get_im_from_buffer_name(buffer)
         if !empty(im)
-            let s:im.name = im
+            let s:ui.im = im
         endif
     " ---------------------------------
     endif
@@ -4135,7 +4117,7 @@ function! s:vimim_set_data_directory(im)
     if empty(dir)
         return 0
     else
-        let s:im.name = im
+        let s:ui.im = im
         return dir
     endif
 endfunction
@@ -4210,8 +4192,8 @@ function! s:vimim_get_sentence_directory(keyboard)
 " ------------------------------------------------
     let msg = "Directory database is natural to vim editor."
     let keyboard = a:keyboard
-    let im = s:im.name
-    if s:backend[s:im.root][s:im.name].root != "directory"
+    let im = s:ui.im
+    if s:backend[s:ui.root][s:ui.im].root != "directory"
         return []
     endif
     let results = []
@@ -4249,15 +4231,13 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     let im = a:im
     let keyboard = a:keyboard
     let blocks = s:vimim_search_pattern(keyboard)
-    if len(blocks) > 0
-        return blocks
-    endif
+    if len(blocks) > 0 | return blocks | endif
+    " --------------------------------------------------
     let dir = s:vimim_get_data_directory(im)
     let filename = dir . '/' . keyboard
     if filereadable(filename)
         return [keyboard]
     endif
-    " --------------------------------------------------
     let blocks = s:vimim_break_sentence_into_block(keyboard, im)
     if len(blocks) > 0 | return blocks | endif
     " --------------------------------------------------
@@ -4273,6 +4253,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         endif
     endwhile
     " --------------------------------------------------
+    if blocks = []
     if max > 0 && filereadable(filename)
         let blocks = s:vimim_break_string_at(keyboard, max)
     endif
@@ -4288,7 +4269,7 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
         return 0
     endif
     let max = len(keyboard)
-    if s:im.name != 'pinyin'
+    if s:ui.im != 'pinyin'
         return max
     endif
     " --------------------------------------------
@@ -4444,8 +4425,8 @@ function! s:vimim_scan_backend_embedded_database()
     if empty(backend)
         return
     else
-        let s:im.root = "database"
-        let s:im.name = "sqlite"
+        let s:ui.root = "database"
+        let s:ui.im = "sqlite"
     endif
 endfunction
 
@@ -4471,7 +4452,7 @@ function! s:vimim_check_sqlite_availability()
     " ----------------------------------------
     let s:backend.database[im] = s:vimim_one_backend_hash()
     let s:backend.database[im].root = root
-    let s:backend.database[im].name = im
+    let s:backend.database[im].im = im
     let s:backend.database[im].datafile = datafile
     let s:backend.database[im].executable = executable
     let s:backend.database[im].keycode = s:im_keycode[im]
@@ -4625,8 +4606,8 @@ function! s:vimim_set_sogou()
     if empty(cloud)
         let s:vimim_cloud_sogou = 0
     else
-        let s:im.root = "cloud"
-        let s:im.name = "sogou"
+        let s:ui.root = "cloud"
+        let s:ui.im = "sogou"
     endif
 endfunction
 
@@ -4945,8 +4926,8 @@ function! s:vimim_set_mycloud()
 " -----------------------------
     let mycloud = s:vimim_set_mycloud_backend()
     if !empty(mycloud)
-        let s:im.root = "cloud"
-        let s:im.name = "mycloud"
+        let s:ui.root = "cloud"
+        let s:ui.im = "mycloud"
     endif
 endfunction
 
@@ -5255,13 +5236,13 @@ call add(s:vimims, VimIM)
 " ------------------------------------
 function! s:vimim_initialize_frontend()
 " ------------------------------------
-    let s:im = {}
-    let s:im.name  = ''
-    let s:im.root = ''
-    let s:im.frontends = []
-    let s:im.has_dot = ''
-    let s:im.keycode = ''
-    let s:im.statusline = ''
+    let s:ui = {}
+    let s:ui.im  = ''
+    let s:ui.root = ''
+    let s:ui.has_dot = ''
+    let s:ui.keycode = ''
+    let s:ui.statusline = ''
+    let s:ui.frontends = []
 endfunction
 
 " ------------------------------------
@@ -5628,8 +5609,8 @@ call add(s:vimims, VimIM)
 " -------------------------------------------------
 function! s:vimim_embedded_backend_engine(keyboard)
 " -------------------------------------------------
-    let im = s:im.name
-    let root = s:im.root
+    let im = s:ui.im
+    let root = s:ui.root
     if empty(root) || empty(im)
         return []
     endif
@@ -5681,9 +5662,9 @@ if a:start
     let all_digit = 1
 
     let nonsense_pattern = "[0-9.']"
-    if s:im.name == 'pinyin'
+    if s:ui.im == 'pinyin'
         let nonsense_pattern = "[0-9.]"
-    elseif s:im.name == 'phonetic' || s:im.name == 'array30'
+    elseif s:ui.im == 'phonetic' || s:ui.im == 'array30'
         let nonsense_pattern = "[.]"
     endif
 
@@ -5695,8 +5676,8 @@ if a:start
             endif
             if byte_before =~# '\l'
             \&& all_digit > 0
-            \&& s:im.name != 'phonetic'
-            \&& s:im.name != 'array30'
+            \&& s:ui.im != 'phonetic'
+            \&& s:ui.im != 'array30'
                 let all_digit = 0
             endif
         elseif byte_before=='\' && s:vimim_backslash_close_pinyin>0
@@ -5847,7 +5828,7 @@ else
 
     " [wubi] support wubi auto input
     " ------------------------------
-    if s:im.name == 'wubi' || s:im.name == 'erbi'
+    if s:ui.im == 'wubi' || s:ui.im == 'erbi'
         let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
     endif
 
@@ -5861,7 +5842,7 @@ else
         let results = s:vimim_popupmenu_list(results)
     endif
     if empty(results)
-        if s:chinese_input_mode =~ 'dynamic' && s:im.name == 'wubi'
+        if s:chinese_input_mode =~ 'dynamic' && s:ui.im == 'wubi'
             let s:keyboard_leading_zero = ""
         endif
     else
@@ -5927,7 +5908,7 @@ function! s:vimim_get_valid_keyboard(keyboard)
         return []
     endif
     " [erbi] special meaning of the first punctuation
-    if s:im.name =~ 'erbi'
+    if s:ui.im =~ 'erbi'
         let punctuation = s:vimim_first_punctuation_erbi(keyboard)
         if !empty(punctuation)
             return [punctuation]
