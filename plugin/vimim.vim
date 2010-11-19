@@ -135,12 +135,11 @@ function! s:vimim_backend_initialization_once()
     call s:vimim_initialize_frontend()
     call s:vimim_initialize_backend()
     call s:vimim_initialize_i_setting()
-    call s:vimim_initialize_encoding()
-    call s:vimim_chinese_dictionary()
-    call s:vimim_backend_punctuation()
-    call s:vimim_build_im_keycode_hash()
-    call s:vimim_build_all_filesnames()
+    call s:vimim_dictionary_unihan()
+    call s:vimim_dictionary_punctuation()
+    call s:vimim_dictionary_im_keycode()
     " ---------------------------------------
+    call s:vimim_scan_backend_internal()
     call s:vimim_scan_backend_embedded_directory()
     call s:vimim_scan_backend_embedded_datafile()
     call s:vimim_scan_backend_embedded_database()
@@ -261,9 +260,9 @@ function! s:vimim_unihan(english)
     return chinese
 endfunction
 
-" ------------------------------------
-function! s:vimim_chinese_dictionary()
-" ------------------------------------
+" -----------------------------------
+function! s:vimim_dictionary_unihan()
+" -----------------------------------
     let s:space = "　"
     let s:plus  = "＋"
     let s:unihan = {}
@@ -329,9 +328,10 @@ function! s:vimim_chinese_dictionary()
 endfunction
 
 " ---------------------------------------
-function! s:vimim_build_im_keycode_hash()
+function! s:vimim_dictionary_im_keycode()
 " ---------------------------------------
     let s:im_keycode = {}
+    let s:im_keycode['internal'] = "[0-9a-z]"
     let s:im_keycode['cloud']    = "[0-9a-z'.]"
     let s:im_keycode['mycloud']  = "[0-9a-z'.]"
     let s:im_keycode['sqlite']   = "[0-9a-z]"
@@ -354,6 +354,18 @@ function! s:vimim_build_im_keycode_hash()
     let s:im_keycode['boshiamy'] = "[][a-z'.,]"
     let s:im_keycode['phonetic'] = "[0-9a-z.,;/]"
     let s:im_keycode['array30']  = "[0-9a-z.,;/]"
+    " -------------------------------------------
+    let names = sort(copy(keys(s:im_keycode)))
+    call add(names, 'pinyin_quote_sogou')
+    call add(names, 'pinyin_huge')
+    call add(names, 'pinyin_fcitx')
+    call add(names, 'pinyin_canton')
+    call add(names, 'pinyin_hongkong')
+    call add(names, 'wubijd')
+    call add(names, 'wubi98')
+    call add(names, 'wubi2000')
+    let s:all_vimim_datafile_names = names
+    " -------------------------------------------
 endfunction
 
 " -------------------------------------------------------
@@ -1933,9 +1945,9 @@ let VimIM = " ====  Punctuations     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -------------------------------------
-function! s:vimim_backend_punctuation()
-" -------------------------------------
+" ----------------------------------------
+function! s:vimim_dictionary_punctuation()
+" ----------------------------------------
     let s:punctuations = {}
     let s:punctuations['@'] = s:space
     let s:punctuations['+'] = s:plus
@@ -2222,7 +2234,7 @@ function! s:vimim_initialize_quantifiers()
     let q['w'] = '万位味碗窝'
     let q['x'] = '升席些项'
     let q['y'] = '月亿叶'
-    let q['z'] = '兆只张株支枝指盏座阵桩尊则种站幢宗'
+    let q['z'] = '兆只张株支枝种指盏座阵桩尊则站幢宗'
     let s:quantifiers = q
 endfunction
 
@@ -3262,25 +3274,9 @@ let VimIM = " ====  Backend==Unicode ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -------------------------------------
-function! s:vimim_initialize_encoding()
-" -------------------------------------
-    call s:vimim_set_encoding()
-    let s:localization = s:vimim_localization()
-    let s:multibyte = 2
-    let s:max_ddddd = 64928
-    if &encoding == "utf-8"
-        let s:multibyte = 3
-        let s:max_ddddd = 40869
-    endif
-    if s:localization > 0
-        let warning = 'performance hit if &encoding & datafile differs!'
-    endif
-endfunction
-
-" ------------------------------
-function! s:vimim_set_encoding()
-" ------------------------------
+" ---------------------------------------
+function! s:vimim_scan_backend_internal()
+" ---------------------------------------
     let s:encoding = "utf8"
     if  &encoding == "chinese"
     \|| &encoding == "cp936"
@@ -3294,6 +3290,24 @@ function! s:vimim_set_encoding()
     \|| &encoding == "euc-tw"
         let s:encoding = "taiwan"
     endif
+    " -----------------------------------
+    let s:localization = s:vimim_localization()
+    let s:multibyte = 2
+    let s:max_ddddd = 64928
+    if &encoding == "utf-8"
+        let s:multibyte = 3
+        let s:max_ddddd = 40869
+    endif
+    " -----------------------------------
+    let root = "internal"
+    let im = "unicode"
+    let s:ui.root = root
+    let s:ui.im = im
+    call add(s:ui.frontends, [s:ui.root, s:ui.im])
+    let s:backend.internal[im].root = root
+    let s:backend.internal[im].im = im
+    let s:backend.internal[im].keycode = s:im_keycode[root]
+    let s:backend.internal[im].chinese = s:vimim_unihan(root)
 endfunction
 
 " ------------------------------
@@ -3320,6 +3334,9 @@ function! s:vimim_localization()
         endif
     elseif empty(datafile_fenc_chinese)
         let localization = 2
+    endif
+    if s:localization > 0
+        let warning = "performance hit if &encoding & datafile differs!"
     endif
     return localization
 endfunction
@@ -3608,21 +3625,6 @@ endfunction
 let VimIM = " ====  Backend==FILE    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
-
-" --------------------------------------
-function! s:vimim_build_all_filesnames()
-" --------------------------------------
-    let names = sort(copy(keys(s:im_keycode)))
-    call add(names, 'pinyin_quote_sogou')
-    call add(names, 'pinyin_huge')
-    call add(names, 'pinyin_fcitx')
-    call add(names, 'pinyin_canton')
-    call add(names, 'pinyin_hongkong')
-    call add(names, 'wubijd')
-    call add(names, 'wubi98')
-    call add(names, 'wubi2000')
-    let s:all_vimim_datafile_names = names
-endfunction
 
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
@@ -5247,6 +5249,7 @@ endfunction
 function! s:vimim_initialize_backend()
 " ------------------------------------
     let s:backend = {}
+    let s:backend.internal  = {}
     let s:backend.directory = {}
     let s:backend.datafile  = {}
     let s:backend.database  = {}
@@ -5751,7 +5754,6 @@ else
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
     if s:vimim_internal_code_input > 0
-    \|| s:chinese_input_mode =~ 'dynamic'
         let msg = " usage: u808f<C-6> 32911<C-6>  32910<C-6> "
         let results = s:vimim_internal_code(keyboard)
         if !empty(results)
