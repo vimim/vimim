@@ -2529,9 +2529,10 @@ endfunction
 " -----------------------------------------------------
 function! s:vimim_set_menu_4corner_as_filter(keyboards)
 " -----------------------------------------------------
-    if s:pinyin_and_4corner > 0
-        let menu = get(a:keyboards, 0)
-        let filter = get(a:keyboards, 1)
+    let keyboards = a:keyboards
+    if s:pinyin_and_4corner > 0 && len(keyboards) > 1
+        let menu = get(keyboards, 0)
+        let filter = get(keyboards, 1)
         if menu =~ '\D'
         \&& filter =~ '^\d\+$'
         \&& len(s:menu_4corner_as_filter) < 1
@@ -3136,9 +3137,9 @@ call add(s:vimims, VimIM)
 function! <SID>:vimim_search()
 " ----------------------------
     if v:errmsg =~ "^E486:"
-        let v:errmsg = ""
         let english = @/
-        if english =~ '\w' && english != '\W' && len(english)>1
+        if len(english) > 1 && len(english) < 24
+        \&& english != '\W' && english =~ '\w' && english !~ '_' 
             let english = tolower(english). "_"
             sil!call s:vimim_backend_initialization_once()
             sil!call s:vimim_frontend_initialization()
@@ -3154,6 +3155,8 @@ function! <SID>:vimim_search()
                 endif
             endif
         endif
+        let s:menu_4corner_as_filter = ""
+        let v:errmsg = ""
     endif
 endfunction
 
