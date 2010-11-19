@@ -5612,7 +5612,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
     elseif root =~# "database"
         let results = s:vimim_sentence_match_sqlite(keyboard)
     elseif root =~# "datafile"
-        if empty(s:backend[root][name].cache)
+        if empty(s:backend[root][im].cache)
             let results = s:vimim_get_sentence_datafile_lines(keyboard)
         else
             let results = s:vimim_get_sentence_datafile_cache(keyboard)
