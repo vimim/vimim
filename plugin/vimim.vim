@@ -1393,19 +1393,20 @@ function! <SID>vimim_label_navigation(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == 'h'
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e_onekey()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_ctrl_x_ctrl_u_backspace()\<CR>'
+            let s:pumvisible_ctrl_e = 1
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
             let hjkl  = g:vimim_pumvisible_y_yes()
-        elseif a:key == 'n'
-            let hjkl  = '\<Down>\<Down>\<Down>'
         elseif a:key == 'm'
             call s:reset_popupmenu_list()
             let hjkl  = '\<C-E>'
+        elseif a:key == 'n'
+            let hjkl  = '\<Down>\<Down>\<Down>'
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_copy_to_clip()\<CR>'
@@ -1769,15 +1770,6 @@ function! g:vimim_pumvisible_ctrl_e()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ------------------------------------------
-function! g:vimim_pumvisible_ctrl_e_onekey()
-" ------------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-        let s:pumvisible_ctrl_e = 1
-    endif
-    return g:vimim_pumvisible_ctrl_e()
-endfunction
-
 " --------------------------------------
 function! g:vimim_pumvisible_ctrl_e_on()
 " --------------------------------------
@@ -1787,9 +1779,9 @@ function! g:vimim_pumvisible_ctrl_e_on()
     return g:vimim_pumvisible_ctrl_e()
 endfunction
 
-" -----------------------------------------
-function! g:vimim_ctrl_x_ctrl_u_backspace()
-" -----------------------------------------
+" ---------------------------
+function! g:vimim_backspace()
+" ---------------------------
     call s:reset_popupmenu_list()
     let s:pattern_not_found = 0
     let key = '\<BS>'
@@ -5579,7 +5571,7 @@ function! s:vimim_helper_mapping_on()
                   \<C-R>=<SID>vimim_smart_enter()<CR>
     " ----------------------------------------------------------
     inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
-                  \<C-R>=g:vimim_ctrl_x_ctrl_u_backspace()<CR>
+                  \<C-R>=g:vimim_backspace()<CR>
     " ----------------------------------------------------------
 endfunction
 
