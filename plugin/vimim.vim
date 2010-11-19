@@ -2533,9 +2533,9 @@ function! s:vimim_set_menu_4corner_as_filter(keyboards)
         let menu = get(a:keyboards, 0)
         let filter = get(a:keyboards, 1)
         if menu =~ '\D'
-        \&& filter =~ '^\d\+$' && filter > 0
+        \&& filter =~ '^\d\+$'
         \&& len(s:menu_4corner_as_filter) < 1
-            let s:menu_4corner_as_filter = -filter
+            let s:menu_4corner_as_filter =  filter . "_"
         endif
     endif
 endfunction
@@ -2564,8 +2564,8 @@ function! <SID>vimim_1234567890_filter(n)
             let label_alpha = join(s:pqwertyuio,'')
             let label = match(label_alpha, a:n)
         endif
-        if s:menu_4corner_as_filter < 0
-        \|| len(s:menu_4corner_as_filter) < 1
+        if len(s:menu_4corner_as_filter) < 1
+        \|| s:menu_4corner_as_filter[-1:-1] == "_"
             let s:menu_4corner_as_filter = label
         else
             let s:menu_4corner_as_filter .= label
@@ -2584,8 +2584,8 @@ function! s:vimim_digit_filter(chinese)
     endif
     call s:vimim_build_unihan_reverse_cache(chinese)
     let number = s:vimim_get_4corner(chinese)
-    let patter = "^" . substitute(s:menu_4corner_as_filter,'\D','','g')
-    let matched = match(number, patter)
+    let pattern = "^" . substitute(s:menu_4corner_as_filter,'\D','','g')
+    let matched = match(number, pattern)
     if matched < 0
         let chinese = 0
     endif
@@ -2603,7 +2603,7 @@ function! s:vimim_get_4corner(chinese)
     let head = ""
     let tail = ""
     let words = split(a:chinese, '\zs')
-    if s:menu_4corner_as_filter < 0
+    if s:menu_4corner_as_filter[-1:-1] == "_"
         let words = copy(words[-1:-1])
     endif
     for chinese in words
@@ -3136,19 +3136,20 @@ call add(s:vimims, VimIM)
 function! <SID>:vimim_search()
 " ----------------------------
     if v:errmsg =~ "^E486:"
-        sil!call s:vimim_backend_initialization_once()
+        let v:errmsg = ""
         let english = @/
-        if english =~ '\a' && english != '\A'
-            let english = tolower(english)
+        if english =~ '\w' && english != '\W' && len(english)>1
+            let english = tolower(english). "_"
+            sil!call s:vimim_backend_initialization_once()
+            sil!call s:vimim_frontend_initialization()
             let results = s:vimim_embedded_backend_engine(english)
             if len(results) > 0
-                let v:errmsg = ""
                 let chinese = ""
                 for pair in results
                     let chinese .= get(split(pair),1) . '\|'
                 endfor
                 let @/ = chinese[0 : len(chinese)-3]
-                if empty(search(@/,'n'))
+                if empty(search(@/,'nw'))
                     let @/ = @_
                 endif
             endif
@@ -3786,13 +3787,8 @@ function! s:vimim_get_sentence_datafile_cache(keyboard)
         return []
     endif
     let results = []
-    " ----------------------------------------------------
     let keyboards = s:vimim_sentence_match_cache(keyboard)
-    " ----------------------------------------------------
-    if empty(keyboards)
-        let msg = "sell keyboard as is for cache"
-        return []
-    else
+    if len(keyboards) > 0
         call s:vimim_set_menu_4corner_as_filter(keyboards)
         let keyboard = get(keyboards, 0)
         let results = s:vimim_get_data_from_cache(keyboard)
@@ -3804,6 +3800,10 @@ endfunction
 function! s:vimim_sentence_match_cache(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
+    let blocks = s:vimim_search_pattern(keyboard)
+    if len(blocks) > 0
+        return blocks
+    endif
     let results = s:vimim_get_data_from_cache(keyboard)
     if len(results) > 0
         return [keyboard]
@@ -3836,13 +3836,8 @@ function! s:vimim_get_sentence_datafile_lines(keyboard)
 " -----------------------------------------------------
     let keyboard = a:keyboard
     let results = []
-    " -------------------------------------------------------
     let keyboards = s:vimim_sentence_match_datafile(keyboard)
-    " -------------------------------------------------------
-    if empty(keyboards)
-        let msg = "sell keyboard as is for datafile"
-        return []
-    else
+    if len(keyboards) > 0
         call s:vimim_set_menu_4corner_as_filter(keyboards)
         let keyboard = get(keyboards, 0)
         let results = s:vimim_get_data_from_datafile(keyboard)
@@ -3858,6 +3853,11 @@ function! s:vimim_sentence_match_datafile(keyboard)
     " ---------------------------------------------
     if empty(lines) || empty(keyboard)
         return []
+    endif
+    " ---------------------------------------------
+    let blocks = s:vimim_search_pattern(keyboard)
+    if len(blocks) > 0
+        return blocks
     endif
     " ---------------------------------------------
     let pattern = '^' . keyboard
@@ -3943,6 +3943,17 @@ function! s:vimim_break_sentence_into_block(keyboard, im)
         return blocks
     endif
     " --------------------------------------------
+    let blocks = s:vimim_break_pinyin_digit(keyboard)
+    if len(blocks) > 0
+        return blocks
+    endif
+endfunction
+
+" --------------------------------------------
+function! s:vimim_break_pinyin_digit(keyboard)
+" --------------------------------------------
+    let blocks = []
+    let keyboard = a:keyboard
     if s:pinyin_and_4corner > 0
         let pinyin_4corner_pattern = '\d\+\l\='
         let digit = match(keyboard, pinyin_4corner_pattern)
@@ -4086,8 +4097,8 @@ function! s:vimim_get_im_from_buffer_name(filename)
 " -------------------------------------------------
     let im = 0
     for key in copy(keys(s:im_keycode))
-        let patter = '\<' . key . '\>'
-        let matched = match(a:filename, patter)
+        let pattern = '\<' . key . '\>'
+        let matched = match(a:filename, pattern)
         if matched < 0
             continue
         else
@@ -4201,17 +4212,12 @@ function! s:vimim_get_sentence_directory(keyboard)
         return []
     endif
     let results = []
-    let digit_input  = '^\d\d\+$'
+    let digit_input  = '^\d\d\+'
     if keyboard =~ digit_input
         let im = "4corner"
     endif
-    " ------------------------------------------------------------
     let keyboards = s:vimim_sentence_match_directory(keyboard, im)
-    " ------------------------------------------------------------
-    if empty(keyboards)
-        let msg = "sell keyboard as is for directory database"
-        return []
-    else
+    if len(keyboards) > 0
         call s:vimim_set_menu_4corner_as_filter(keyboards)
         let keyboard = get(keyboards, 0)
         let results = s:vimim_get_data_from_directory(keyboard, im)
@@ -4219,11 +4225,30 @@ function! s:vimim_get_sentence_directory(keyboard)
     return results
 endfunction
 
+" ----------------------------------------
+function! s:vimim_search_pattern(keyboard)
+" ----------------------------------------
+    let keyboard = a:keyboard
+    let blocks = []
+    if match(keyboard, "_$") > 0
+        let keyboard = keyboard[0 : len(keyboard)-2]
+        let blocks = s:vimim_break_pinyin_digit(keyboard)
+        if empty(blocks)
+            let blocks = [keyboard]
+        endif
+    endif
+    return blocks
+endfunction
+
 " ------------------------------------------------------
 function! s:vimim_sentence_match_directory(keyboard, im)
 " ------------------------------------------------------
     let im = a:im
     let keyboard = a:keyboard
+    let blocks = s:vimim_search_pattern(keyboard)
+    if len(blocks) > 0
+        return blocks
+    endif
     let dir = s:vimim_get_data_directory(im)
     let filename = dir . '/' . keyboard
     if filereadable(filename)
