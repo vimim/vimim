@@ -3142,6 +3142,7 @@ function! <SID>:vimim_search()
             let english = tolower(english)
             let results = s:vimim_embedded_backend_engine(english)
             if len(results) > 0
+                let v:errmsg = ""
                 let chinese = ""
                 for pair in results
                     let chinese .= get(split(pair),1) . '\|'
