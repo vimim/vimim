@@ -287,7 +287,7 @@ function! s:vimim_chinese_dictionary()
     let s:unihan['datafile'] = ['词库','詞庫']
     let s:unihan['font'] = ['字体','字體']
     let s:unihan['environment'] = ['环境','環境']
-    let s:unihan['myversion'] = ['版本','版本']
+    let s:unihan['myversion'] = ['版本']
     let s:unihan['encoding'] = ['编码','編碼']
     let s:unihan['computer'] = ['电脑','電腦']
     let s:unihan['classic'] = ['经典','經典']
@@ -327,7 +327,7 @@ function! s:vimim_chinese_dictionary()
     let s:unihan['jidian'] = ['极点','極點']
     let s:unihan['new_century'] = ['新世纪','新世紀']
     let s:unihan['shuangpin'] = ['双拼','雙拼']
-    let s:unihan['abc'] = ['智能','智能']
+    let s:unihan['abc'] = ['智能']
     let s:unihan['microsoft'] = ['微软','微軟']
     let s:unihan['nature'] = ['自然']
     let s:unihan['plusplus'] = ['加加']
@@ -440,6 +440,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_super_internal_input")
     call add(G, "g:vimim_debug")
     call add(G, "g:vimimdebug")
+    call add(G, "g:vimim_n_next_search_chinese")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -3136,16 +3137,19 @@ function! <SID>:vimim_search()
 " ----------------------------
     if v:errmsg =~ "^E486:"
         sil!call s:vimim_backend_initialization_once()
-        let english = tolower(@/)
-        let results = s:vimim_embedded_backend_engine(english)
-        if len(results) > 0
-            let chinese = ""
-            for pair in results
-                let chinese .= get(split(pair),1) . '\|'
-            endfor
-            let @/ = chinese[0 : len(chinese)-3]
-            if empty(search(@/,'n'))
-                let @/ = @_
+        let english = @/
+        if english =~ '\a' && english != '\A'
+            let english = tolower(english)
+            let results = s:vimim_embedded_backend_engine(english)
+            if len(results) > 0
+                let chinese = ""
+                for pair in results
+                    let chinese .= get(split(pair),1) . '\|'
+                endfor
+                let @/ = chinese[0 : len(chinese)-3]
+                if empty(search(@/,'n'))
+                    let @/ = @_
+                endif
             endif
         endif
     endif
@@ -5919,19 +5923,15 @@ endfunction
 " -----------------------------------------
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
-    if s:vimim_normal_ctrl_6_to_toggle == 1
-        if !hasmapto('<C-^>', 'n')
-            noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
-        endif
-        noremap <silent> n :sil!call <SID>:vimim_search()<CR>n
-    " ---------------------------------------------------------
+    if s:vimim_normal_ctrl_6_to_toggle == 1 && !hasmapto('<C-^>', 'n')
+        noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
+    " -------------------------------------------------------------------
     elseif !hasmapto('<Plug>VimimTrigger', 'i')
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
             imap <silent> <C-Bslash> <Plug>VimimTrigger
          noremap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
             vmap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>gv
     endif
-    " ---------------------------------------------------------
 endfunction
 
 " ---------------------------------------
@@ -5963,6 +5963,10 @@ function! s:vimim_onekey_mapping_on()
         xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
     " -----------------------------------
+    if s:vimim_n_next_search_chinese < 1
+        noremap <silent> n :sil!call <SID>:vimim_search()<CR>n
+    endif
+    " -----------------------------------
     if s:vimim_tab_as_onekey == 1
         imap <silent> <Tab> <Plug>VimimOneKey
     elseif s:vimim_tab_as_onekey == 2
@@ -5970,7 +5974,6 @@ function! s:vimim_onekey_mapping_on()
             imap <silent> <Tab>  <Plug>VimimTabKey
         return
     endif
-    " ---------------------------------------------------------
 endfunction
 
 " ------------------------------------
