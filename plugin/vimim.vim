@@ -642,7 +642,7 @@ function! s:vimim_egg_vimim()
         let CLOUD .= s:vimim_unihan('cloud')
     endif
     let option .= CLOUD
-    if s:has_dot_in_datafile > 0 || s:im.name == 'mycloud' 
+    if s:has_dot_in_datafile > 0 || s:im.name == 'mycloud'
         let msg = "Who needs crazy sogou cloud?"
     else
         call add(eggs, option)
@@ -2247,7 +2247,7 @@ function! s:vimim_imode_number(keyboard, prefix)
     endif
     let keyboard = a:keyboard
     " ------------------------------------------
-    if a:prefix ==# "'" 
+    if a:prefix ==# "'"
         let keyboard = substitute(keyboard,"'",'i','g')
     endif
     " ------------------------------------------
@@ -3130,6 +3130,27 @@ endfunction
 let VimIM = " ====  Input_Misc       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
+
+" -----------------------
+function! <SID>:vimim_n()
+" -----------------------
+    if v:errmsg =~ "^E486:"
+        sil!call s:vimim_backend_initialization_once()
+        let english = @/
+        let results = s:vimim_embedded_backend_engine(english)
+        if len(results) > 0
+            let chinese = ""
+            let bar = '\|'
+            for pair in results
+                let chinese .= get(split(pair),1) . bar
+            endfor
+            let @/ = chinese[0 : len(chinese)-3]
+        endif
+        if empty(search(@/,'n'))
+            let @/ = @_
+        endif
+    endif
+endfunction
 
 " -----------------------------------------
 function! s:vimim_set_special_im_property()
@@ -5570,6 +5591,28 @@ let VimIM = " ====  Core_Engine      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" -------------------------------------------------
+function! s:vimim_embedded_backend_engine(keyboard)
+" -------------------------------------------------
+    let keyboard = a:keyboard
+    let results = []
+    if s:im.root =~# "directory"
+        let results = s:vimim_get_sentence_directory(keyboard)
+    elseif s:im.root =~# "database"
+        let results = s:vimim_sentence_match_sqlite(keyboard)
+    elseif s:im.root =~# "datafile"
+        if empty(s:backend[s:im.root][s:im.name].cache)
+            let results = s:vimim_get_sentence_datafile_lines(keyboard)
+        else
+            let results = s:vimim_get_sentence_datafile_cache(keyboard)
+        endif
+    endif
+    if len(results) > 0
+        let results = s:vimim_pair_list(results)
+    endif
+    return results
+endfunction
+
 " ------------------------------
 function! VimIM(start, keyboard)
 " ------------------------------
@@ -5772,27 +5815,18 @@ else
     " ------------------------------------------------
     " [backend] VimIM internal embedded backend engine
     " ------------------------------------------------
-    if s:im.root =~# "directory"
-        let results = s:vimim_get_sentence_directory(keyboard)
-    elseif s:im.root =~# "database"
-        let results = s:vimim_sentence_match_sqlite(keyboard)
-    elseif s:im.root =~# "datafile"
-        if empty(s:backend[s:im.root][s:im.name].cache)
-            let results = s:vimim_get_sentence_datafile_lines(keyboard)
-        else
-            let results = s:vimim_get_sentence_datafile_cache(keyboard)
-        endif
+    let results = s:vimim_embedded_backend_engine(keyboard)
+    if empty(results)
+        let results = s:popupmenu_list
+    else
+        let results = s:vimim_popupmenu_list(results)
     endif
-    if len(results) > 0
-        let results = s:vimim_pair_list(results)
-        if empty(results)
-            let results = s:popupmenu_list
-        else
-            let results = s:vimim_popupmenu_list(results)
+    if empty(results)
+        if s:chinese_input_mode =~ 'dynamic' && s:im.name == 'wubi'
+            let s:keyboard_leading_zero = ""
         endif
+    else
         return results
-    elseif s:chinese_input_mode =~ 'dynamic' && s:im.name == 'wubi'
-        let s:keyboard_leading_zero = ""
     endif
 
     " [cloud] last try cloud before giving up
@@ -5883,6 +5917,7 @@ function! s:vimim_chinese_mode_mapping_on()
         if !hasmapto('<C-^>', 'n')
             noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
         endif
+        noremap <silent> n :sil!call <SID>:vimim_n()<CR>n
     " ---------------------------------------------------------
     elseif !hasmapto('<Plug>VimimTrigger', 'i')
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
