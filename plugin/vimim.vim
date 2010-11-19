@@ -3131,23 +3131,22 @@ let VimIM = " ====  Input_Misc       ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -----------------------
-function! <SID>:vimim_n()
-" -----------------------
+" ----------------------------
+function! <SID>:vimim_search()
+" ----------------------------
     if v:errmsg =~ "^E486:"
         sil!call s:vimim_backend_initialization_once()
-        let english = @/
+        let english = tolower(@/)
         let results = s:vimim_embedded_backend_engine(english)
         if len(results) > 0
             let chinese = ""
-            let bar = '\|'
             for pair in results
-                let chinese .= get(split(pair),1) . bar
+                let chinese .= get(split(pair),1) . '\|'
             endfor
             let @/ = chinese[0 : len(chinese)-3]
-        endif
-        if empty(search(@/,'n'))
-            let @/ = @_
+            if empty(search(@/,'n'))
+                let @/ = @_
+            endif
         endif
     endif
 endfunction
@@ -5594,14 +5593,19 @@ call add(s:vimims, VimIM)
 " -------------------------------------------------
 function! s:vimim_embedded_backend_engine(keyboard)
 " -------------------------------------------------
+    let im = s:im.name
+    let root = s:im.root
+    if empty(root) || empty(im)
+        return []
+    endif
     let keyboard = a:keyboard
     let results = []
-    if s:im.root =~# "directory"
+    if root =~# "directory"
         let results = s:vimim_get_sentence_directory(keyboard)
-    elseif s:im.root =~# "database"
+    elseif root =~# "database"
         let results = s:vimim_sentence_match_sqlite(keyboard)
-    elseif s:im.root =~# "datafile"
-        if empty(s:backend[s:im.root][s:im.name].cache)
+    elseif root =~# "datafile"
+        if empty(s:backend[root][name].cache)
             let results = s:vimim_get_sentence_datafile_lines(keyboard)
         else
             let results = s:vimim_get_sentence_datafile_cache(keyboard)
@@ -5917,7 +5921,7 @@ function! s:vimim_chinese_mode_mapping_on()
         if !hasmapto('<C-^>', 'n')
             noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
         endif
-        noremap <silent> n :sil!call <SID>:vimim_n()<CR>n
+        noremap <silent> n :sil!call <SID>:vimim_search()<CR>n
     " ---------------------------------------------------------
     elseif !hasmapto('<Plug>VimimTrigger', 'i')
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
