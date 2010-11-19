@@ -3112,23 +3112,33 @@ function! <SID>:vimim_search()
         let english = @/
         if len(english) > 1 && len(english) < 24
         \&& english != '\W' && english =~ '\w' && english !~ '_'
-            let english = tolower(english). "_"
+            let english = tolower(english)
             sil!call s:vimim_backend_initialization_once()
             sil!call s:vimim_frontend_initialization()
-            let results = s:vimim_embedded_backend_engine(english)
+            let results = s:vimim_unicode_search(english)
+            if empty(results)
+                let english = tolower(english). "_"
+                let results = s:vimim_embedded_backend_engine(english)
+            endif
             if !empty(results)
-                let chinese = ""
-                for pair in results
-                    let chinese .= get(split(pair),1) . '\|'
-                endfor
-                let @/ = chinese[0 : len(chinese)-3]
-                if empty(search(@/,'nw'))
-                    let @/ = @_
-                endif
+                call s:vimim_search_process(results)
             endif
         endif
         let s:menu_4corner_as_filter = ""
         let v:errmsg = ""
+    endif
+endfunction
+
+" ---------------------------------------
+function! s:vimim_search_process(results)
+" ---------------------------------------
+    let chinese = ""
+    for pair in a:results
+        let chinese .= get(split(pair),1) . '\|'
+    endfor
+    let @/ = chinese[0 : len(chinese)-3]
+    if empty(search(@/,'nw'))
+        let @/ = @_
     endif
 endfunction
 
@@ -3440,8 +3450,8 @@ endfunction
 function! s:vimim_internal_code(keyboard)
 " ---------------------------------------
     let keyboard = a:keyboard
-    if s:chinese_input_mode =~ 'dynamic'
-    \|| strlen(keyboard) != 5
+    if strlen(keyboard) != 5
+    \|| s:chinese_input_mode =~ 'dynamic'
         return []
     else
         let msg = "support <C-6> to trigger multibyte"
@@ -3481,6 +3491,20 @@ function! s:vimim_internal_code(keyboard)
         endif
     endif
     return s:vimim_internal_codes(numbers)
+endfunction
+
+" ----------------------------------------
+function! s:vimim_unicode_search(keyboard)
+" ----------------------------------------
+    let msg = "search unicode: /808f or /32911"
+    let keyboard = a:keyboard
+    let results = []
+    if keyboard =~# '^\x\{4}$'
+        let results = [str2nr(keyboard, 16)]
+    elseif keyboard =~# '^\d\{5}$'
+       let results = [str2nr(keyboard, 10)]
+    endif
+    return s:vimim_internal_codes(results)
 endfunction
 
 " ---------------------------------------
