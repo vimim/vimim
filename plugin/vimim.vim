@@ -3122,8 +3122,8 @@ function! <SID>:vimim_search()
 " ----------------------------
     if v:errmsg =~ "^E486:"
         let english = @/
-        if len(english) > 1 && len(english) < 24
-        \&& english != '\W' && english =~ '\w' && english !~ '_'
+        if len(english) < 24 && english !~ '_'
+        \&& english =~ '\w' && english != '\W'
             let english = tolower(english)
             sil!call s:vimim_backend_initialization_once()
             let results = s:vimim_unicode_search(english)
