@@ -1575,21 +1575,21 @@ function! g:vimim_menu_select()
     sil!exe 'sil!return "' . select_not_insert . '"'
 endfunction
 
-" --------------------------------
-function! g:vimim_search_forward()
-" --------------------------------
-    return s:vimim_search("/")
+" -------------------------------------
+function! g:vimim_menu_search_forward()
+" -------------------------------------
+    return s:vimim_menu_search("/")
 endfunction
 
-" ---------------------------------
-function! g:vimim_search_backward()
-" ---------------------------------
-    return s:vimim_search("?")
+" --------------------------------------
+function! g:vimim_menu_search_backward()
+" --------------------------------------
+    return s:vimim_menu_search("?")
 endfunction
 
-" ---------------------------
-function! s:vimim_search(key)
-" ---------------------------
+" --------------------------------
+function! s:vimim_menu_search(key)
+" --------------------------------
     let slash = ""
     if pumvisible()
         let slash  = '\<C-R>=g:vimim_pumvisible_y_yes()\<CR>'
@@ -2135,9 +2135,9 @@ function! <SID>vimim_punctuations_navigation(key)
         elseif a:key == "]"
             let hjkl  = '\<C-R>=g:vimim_right_bracket()\<CR>'
         elseif a:key == "/"
-            let hjkl  = '\<C-R>=g:vimim_search_forward()\<CR>'
+            let hjkl  = '\<C-R>=g:vimim_menu_search_forward()\<CR>'
         elseif a:key == "?"
-            let hjkl  = '\<C-R>=g:vimim_search_backward()\<CR>'
+            let hjkl  = '\<C-R>=g:vimim_menu_search_backward()\<CR>'
         elseif a:key =~ "[-,=.]"
             let hjkl = s:vimim_pageup_pagedown(a:key)
         endif
@@ -4557,18 +4557,19 @@ call add(s:vimims, VimIM)
 function! s:vimim_do_force_cloud()
 " --------------------------------
     let s:vimim_cloud_sogou = 1
-    call s:vimim_set_cloud()
+    call s:vimim_set_sogou()
 endfunction
 
 " ----------------------------------------------
-function! s:vimim_no_cloud_on_backend_embedded()
+function! s:vimim_no_cloud_on_embedded_backend()
 " ----------------------------------------------
     if empty(s:backend.datafile)
     \&& empty(s:backend.directory)
     \&& empty(s:backend.database)
-        return "try cloud if no vimim embedded backend"
+        let msg = "try cloud if no vimim embedded backend"
+        return 0
     endif
-    return 0
+    return 1
 endfunction
 
 " ------------------------------------
@@ -4578,14 +4579,14 @@ function! s:vimim_scan_backend_cloud()
 " s:vimim_cloud_sogou=-1 : cloud is open when cloud at will
 " s:vimim_cloud_sogou=-2 : cloud is shut down without condition
 " -------------------------------------------------------------
-    let cloud = s:vimim_no_cloud_on_backend_embedded()
-    if len(cloud) > 0
-        call s:vimim_set_cloud()
+    let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
+    if empty(embedded_backend)
+        call s:vimim_set_sogou()
     endif
 endfunction
 
 " ---------------------------
-function! s:vimim_set_cloud()
+function! s:vimim_set_sogou()
 " ---------------------------
     let cloud = s:vimim_set_cloud_backend_if_http_executable()
     if empty(cloud)
@@ -4900,8 +4901,8 @@ function! s:vimim_scan_backend_mycloud()
 " :let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
 " :let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
 " --------------------------------------------------------------
-    let cloud = s:vimim_no_cloud_on_backend_embedded()
-    if len(cloud) > 0
+    let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
+    if empty(embedded_backend)
         call s:vimim_set_mycloud()
     endif
 endfunction
