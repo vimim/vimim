@@ -70,14 +70,14 @@ call add(s:vimims, VimIM)
 " "VimIM Front End UI"
 " --------------------
 " # VimIM "OneKey": can input Chinese without mode change.
-"   - use OneKey to insert multi-byte candidates
-"   - use OneKey to search multi-byte using '/' or '?'
+"    - use OneKey to insert multi-byte candidates
+"    - use OneKey to search multi-byte using '/' or '?'
 "   The default key is <C-6> (Vim Insert Mode)
 " # VimIM "Chinese Input Mode":
-"   - [dynamic_mode] show omni popup menu as one types
-"   - [static_mode]  <Space>=>Chinese  <Enter>=>English
-"   - [onekey_mode] plays well with hjkl
-"   No key is needed when editing *.vimim files.
+"    - [dynamic_mode] show omni popup menu as one types
+"    - [static_mode]  <Space>=>Chinese  <Enter>=>English
+"    - [onekey_mode] plays well with hjkl
+"    - No key is needed when editing *.vimim files.
 
 " -----------------------
 " "VimIM Back End Engine"
@@ -792,7 +792,7 @@ function! s:vimim_onekey_action(onekey)
 "   (1) after English (valid keys) => trigger keycode menu
 "   (2) after omni popup menu      => insert Chinese
 "   (3) after English punctuation  => Chinese punctuation
-"   (4) after Chinese              => trigger unicode menu
+"   (4) after Chinese              => <space>
 " -------------------------------------------------------
     let onekey = ""
     if pumvisible()
@@ -869,6 +869,8 @@ function! s:vimim_onekey_action(onekey)
     if empty(byte_before) || byte_before =~ '\s'
         if s:vimim_tab_as_onekey == 1
             let onekey = "\t"
+        else
+            let onekey = a:onekey
         endif
     elseif byte_before !~# s:valid_key
         let onekey = a:onekey
@@ -1784,7 +1786,6 @@ function! <SID>vimim_ctrl_x_ctrl_u_backspace()
     if s:pumvisible_ctrl_e > 0
         let s:pumvisible_ctrl_e = 0
         if s:chinese_input_mode =~ 'dynamic'
-        \|| s:chinese_input_mode =~ 'onekey'
             let key .= '\<C-R>=g:vimim()\<CR>'
             sil!exe 'sil!return "' . key . '"'
         endif
@@ -4225,7 +4226,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         endif
     endwhile
     " --------------------------------------------------
-    if blocks = []
+    let blocks = []
     if max > 0 && filereadable(filename)
         let blocks = s:vimim_break_string_at(keyboard, max)
     endif
@@ -4235,7 +4236,7 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_hjkl_redo_pinyin_match(keyboard)
 " ------------------------------------------------
-" word matching algorithm for Chinese segmentation
+" dummy word matching algorithm for Chinese segmentation
     let keyboard = a:keyboard
     if empty(keyboard)
         return 0
