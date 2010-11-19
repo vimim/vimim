@@ -3114,10 +3114,10 @@ function! <SID>:vimim_search()
         \&& english != '\W' && english =~ '\w' && english !~ '_'
             let english = tolower(english)
             sil!call s:vimim_backend_initialization_once()
-            sil!call s:vimim_frontend_initialization()
             let results = s:vimim_unicode_search(english)
             if empty(results)
-                let english = tolower(english). "_"
+                sil!call s:vimim_frontend_initialization()
+                let english .= "_"
                 let results = s:vimim_embedded_backend_engine(english)
             endif
             if !empty(results)
@@ -3496,11 +3496,13 @@ endfunction
 " ----------------------------------------
 function! s:vimim_unicode_search(keyboard)
 " ----------------------------------------
-    let msg = "search unicode: /808f or /32911"
+    let msg = "search CJK by unicode: /u808f or /32911"
     let keyboard = a:keyboard
+    if strlen(keyboard) != 5 |return [] |endif
     let results = []
-    if keyboard =~# '^\x\{4}$'
-        let results = [str2nr(keyboard, 16)]
+    if keyboard =~# '^u\x\{4}$'
+        let xxxx = keyboard[1:]
+        let results = [str2nr(xxxx, 16)]
     elseif keyboard =~# '^\d\{5}$'
        let results = [str2nr(keyboard, 10)]
     endif
@@ -4167,6 +4169,7 @@ endfunction
 " --------------------------------------------------
 function! s:vimim_break_4corner_every_four(keyboard)
 " --------------------------------------------------
+    let sijiaohaoma =  " 6021272260021762 "
     let keyboard = a:keyboard
     if len(keyboard) < 4
     \|| s:ui.im !~ '4corner'
@@ -4175,9 +4178,6 @@ function! s:vimim_break_4corner_every_four(keyboard)
     endif
     let blocks = []
     if keyboard =~ '\d\d\d\d'
-        " -------------------------------
-        " sijiaohaoma == 6021272260021762
-        " -------------------------------
         let blocks split(a:keyboard, '\(.\{4}\)\zs')
     elseif keyboard =~ '\d\+$'
         let blocks = [keyboard]
@@ -5300,7 +5300,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_imode_pinyin = 1
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_debug = 9
-    " ---------------------------------
 endfunction
 
 " --------------------------------
@@ -5752,6 +5751,7 @@ else
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
     if s:vimim_internal_code_input > 0
+    \|| s:chinese_input_mode =~ 'dynamic'
         let msg = " usage: u808f<C-6> 32911<C-6>  32910<C-6> "
         let results = s:vimim_internal_code(keyboard)
         if !empty(results)
@@ -5931,9 +5931,7 @@ endfunction
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
     if s:vimim_normal_ctrl_6_to_toggle == 1
-        if !hasmapto('<C-^>', 'n')
-            noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
-        endif
+        noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
     elseif !hasmapto('<Plug>VimimTrigger', 'i')
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
             imap <silent> <C-Bslash> <Plug>VimimTrigger
