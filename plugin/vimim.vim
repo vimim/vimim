@@ -113,7 +113,6 @@ let s:path = expand("<sfile>:p:h")."/"
 function! s:vimim_frontend_initialization()
 " -----------------------------------------
     call s:vimim_force_scan_current_buffer()
-    call s:vimim_initialize_wubi()
     call s:vimim_initialize_pinyin()
     call s:vimim_initialize_shuangpin()
     call s:vimim_initialize_keycode()
@@ -699,6 +698,7 @@ function! s:vimim_break_apostrophe_sentence(keyboard)
 " input method english:    i'have'a'dream
 " input method pinyin:     wo'you'yige'meng
 " input method wubi:       trde'ggwh'ssqu
+" input method wubi2000:   q'e'ggwh'ssq
 " input method cantonese:  ngoh'yau'yat'goh'mung
 " input method wu:         ngu'qyoe'iq'qku'qmon
 " input method zhengma:    m'gq'avov'ffrs
@@ -1740,7 +1740,7 @@ function! g:vimim_pumvisible_ctrl_e_ctrl_y()
         " ----------------------------------
         if s:ui.im =~ 'wubi'
         \&& empty(len(s:keyboard_leading_zero)%4)
-            let key = "\<C-Y>"
+"           let key = "\<C-Y>"
         endif
         " ----------------------------------
     endif
@@ -2327,18 +2327,6 @@ function! s:vimim_scan_embedded_digit_filter()
             let s:unicode_digit_cache[key] = [value]
         endfor
     endif
-endfunction
-
-" ------------------------------------------
-function! s:vimim_break_every_four(keyboard)
-" ------------------------------------------
-    if s:chinese_input_mode =~ 'dynamic' || len(a:keyboard)%4 != 0
-        return []
-    endif
-    " -------------------------------
-    " sijiaohaoma == 6021272260021762
-    " -------------------------------
-    return split(a:keyboard, '\(.\{4}\)\zs')
 endfunction
 
 " ------------------------------------------
@@ -3121,7 +3109,7 @@ function! <SID>:vimim_search()
     if v:errmsg =~ "^E486:"
         let english = @/
         if len(english) > 1 && len(english) < 24
-        \&& english != '\W' && english =~ '\w' && english !~ '_' 
+        \&& english != '\W' && english =~ '\w' && english !~ '_'
             let english = tolower(english). "_"
             sil!call s:vimim_backend_initialization_once()
             sil!call s:vimim_frontend_initialization()
@@ -3143,6 +3131,21 @@ function! <SID>:vimim_search()
     endif
 endfunction
 
+" -------------------------------------
+function! s:vimim_get_valid_im_name(im)
+" -------------------------------------
+    let im = a:im
+    if im =~# '^wubi'
+        let im = 'wubi'
+        let s:vimim_punctuation_navigation = -1
+    elseif im =~# '^pinyin'
+        let im = 'pinyin'
+    elseif im =~# '^\d'
+        let im = '4corner'
+    endif
+    return im
+endfunction
+
 " -----------------------------------------
 function! s:vimim_set_special_im_property()
 " -----------------------------------------
@@ -3157,15 +3160,6 @@ function! s:vimim_set_special_im_property()
         let s:vimim_chinese_punctuation = -1
         let s:vimim_punctuation_navigation = -1
     endif
-endfunction
-
-" ---------------------------------
-function! s:vimim_initialize_wubi()
-" ---------------------------------
-    if s:ui.im != 'wubi'
-        return
-    endif
-    let s:vimim_punctuation_navigation = -1
 endfunction
 
 " -----------------------------------------------
@@ -3597,9 +3591,9 @@ function! s:vimim_build_all_filesnames()
     call add(names, 'pinyin_fcitx')
     call add(names, 'pinyin_canton')
     call add(names, 'pinyin_hongkong')
+    call add(names, 'wubijd')
     call add(names, 'wubi98')
     call add(names, 'wubi2000')
-    call add(names, 'wubijd')
     let s:all_vimim_datafile_names = names
 endfunction
 
@@ -3650,20 +3644,6 @@ function! s:vimim_scan_backend_embedded_datafile()
         let s:backend.datafile[im].chinese = s:vimim_unihan(im)
         " ----------------------------------------------------------
     endfor
-endfunction
-
-" -------------------------------------
-function! s:vimim_get_valid_im_name(im)
-" -------------------------------------
-    let im = a:im
-    if im =~# '^wubi'
-        let im = 'wubi'
-    elseif im =~# '^pinyin'
-        let im = 'pinyin'
-    elseif im =~# '^\d'
-        let im = '4corner'
-    endif
-    return im
 endfunction
 
 " --------------------------------------
@@ -3796,7 +3776,7 @@ function! s:vimim_sentence_match_cache(keyboard)
         return [keyboard]
     endif
     let im = s:ui.im
-    let blocks = s:vimim_break_sentence_into_block(keyboard, im)
+    let blocks = s:vimim_break_sentence_into_block(keyboard)
     if !empty(blocks) | return blocks | endif
     " -----------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
@@ -3846,7 +3826,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
     if match_start > -1
         return [keyboard]
     endif
-    let blocks = s:vimim_break_sentence_into_block(keyboard, s:ui.im)
+    let blocks = s:vimim_break_sentence_into_block(keyboard)
     if !empty(blocks) | return blocks | endif
     " ---------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)+1
@@ -3910,10 +3890,10 @@ function! s:vimim_fixed_match(lines, keyboard, fixed)
     return results
 endfunction
 
-" -------------------------------------------------------
-function! s:vimim_break_sentence_into_block(keyboard, im)
-" -------------------------------------------------------
-    let blocks = s:vimim_static_break_every_four(a:keyboard, a:im)
+" ---------------------------------------------------
+function! s:vimim_break_sentence_into_block(keyboard)
+" ---------------------------------------------------
+    let blocks = s:vimim_break_4corner_every_four(a:keyboard)
     if !empty(blocks) | return blocks | endif
     " --------------------------------------------
     let blocks = s:vimim_break_apostrophe_sentence(a:keyboard)
@@ -4159,21 +4139,23 @@ function! s:vimim_break_string_at(keyboard, max)
     return blocks
 endfunction
 
-" -----------------------------------------------------
-function! s:vimim_static_break_every_four(keyboard, im)
-" -----------------------------------------------------
+" --------------------------------------------------
+function! s:vimim_break_4corner_every_four(keyboard)
+" --------------------------------------------------
     let keyboard = a:keyboard
-    let blocks = []
     if len(keyboard) < 4
+    \|| s:ui.im !~ '4corner'
+    \|| s:chinese_input_mode =~ 'dynamic'
         return []
-    elseif a:im =~ '4corner'
-        if keyboard =~ '\d\d\d\d'
-            let blocks = s:vimim_break_every_four(keyboard)
-        elseif keyboard =~ '\d\+$'
-            let blocks = [keyboard]
-        endif
-    elseif a:im =~ 'wubi'
-        let blocks = s:vimim_break_every_four(keyboard)
+    endif
+    let blocks = []
+    if keyboard =~ '\d\d\d\d'
+        " -------------------------------
+        " sijiaohaoma == 6021272260021762
+        " -------------------------------
+        let blocks split(a:keyboard, '\(.\{4}\)\zs')
+    elseif keyboard =~ '\d\+$'
+        let blocks = [keyboard]
     endif
     return blocks
 endfunction
@@ -4229,7 +4211,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     if filereadable(filename)
         return [keyboard]
     endif
-    let blocks = s:vimim_break_sentence_into_block(keyboard, im)
+    let blocks = s:vimim_break_sentence_into_block(keyboard)
     if !empty(blocks) | return blocks | endif
     " --------------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
@@ -5820,7 +5802,7 @@ else
     " [wubi] support wubi auto input
     " ------------------------------
     if s:ui.im == 'wubi' || s:ui.im == 'erbi'
-        let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
+"       let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
     endif
 
     " ------------------------------------------------
