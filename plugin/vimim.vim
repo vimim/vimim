@@ -180,11 +180,8 @@ function! s:vimim_initialize_session()
     let s:valid_key = "[0-9a-z'.]"
     " --------------------------------
     let s:vimim_cloud_plugin = 0
-    let s:has_dot_in_datafile = 0
-    " --------------------------------
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
-    " --------------------------------
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
     " --------------------------------
@@ -238,11 +235,6 @@ function! s:vimim_finalize_session()
     if s:ui.im =~# '^\d\w\+'
         let s:ui.im = "4corner"
         let s:vimim_static_input_style = 1
-    endif
-    " ------------------------------
-    if s:has_dot_in_datafile > 0
-        let s:vimim_chinese_punctuation = -1
-        let s:vimim_punctuation_navigation = -1
     endif
     " ------------------------------
     if s:ui.root =~ 'datafile' || s:ui.root =~ 'directory'
@@ -640,7 +632,7 @@ function! s:vimim_egg_vimim()
         let CLOUD .= s:vimim_unihan('cloud')
     endif
     let option .= CLOUD
-    if s:has_dot_in_datafile > 0 || s:ui.im == 'mycloud'
+    if s:ui.has_dot > 0 || s:ui.im == 'mycloud'
         let msg = "Who needs crazy sogou cloud?"
     else
         call add(eggs, option)
@@ -824,7 +816,7 @@ function! s:vimim_onekey_action(onekey)
     " ---------------------------------------------------
     if char_before_before !~# "[0-9A-z]"
     \&& has_key(s:punctuations, byte_before)
-    \&& empty(s:has_dot_in_datafile)
+    \&& empty(s:ui.has_dot)
         let onekey = ""
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
@@ -863,7 +855,7 @@ function! s:vimim_onekey_action(onekey)
         endif
     endif
     " ---------------------------------------------------
-    if byte_before ==# "'" && empty(s:has_dot_in_datafile)
+    if byte_before ==# "'" && empty(s:ui.has_dot)
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
@@ -1077,7 +1069,7 @@ function! s:vimim_dynamic_alphabet_trigger()
         return
     endif
     let not_used_valid_keys = "[0-9.']"
-    if s:has_dot_in_datafile > 0
+    if s:ui.has_dot > 0
         let not_used_valid_keys = "[0-9]"
     endif
     " --------------------------------------
@@ -1884,7 +1876,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             if keyboard =~ "[']"
                 let dot = match(keyboard, "[']")
                 let tail = strpart(keyboard, dot+1)
-            elseif s:has_dot_in_datafile > 0
+            elseif s:ui.has_dot > 0
                 let tail = ""
             elseif keyboard !~? '^vim' && keyboard !~ "[']"
                 let tail = strpart(keyboard, len(menu))
@@ -1988,7 +1980,7 @@ function! s:vimim_initialize_frontend_punctuation()
     for char in s:valid_keys
         if has_key(s:punctuations, char)
             if !empty(s:vimim_cloud_plugin)
-            \|| s:has_dot_in_datafile > 0
+            \|| s:ui.has_dot > 0
                 unlet s:punctuations[char]
             elseif char !~# "[*.']"
                 unlet s:punctuations[char]
@@ -2238,8 +2230,7 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_imode_number(keyboard, prefix)
 " ----------------------------------------------
-    if s:chinese_input_mode =~ 'dynamic'
-    \|| s:has_dot_in_datafile > 0
+    if s:chinese_input_mode =~ 'dynamic' || s:ui.has_dot > 0
         return []
     endif
     let keyboard = a:keyboard
@@ -3164,7 +3155,9 @@ function! s:vimim_set_special_im_property()
     \|| s:ui.im == 'boshiamy'
     \|| s:ui.im == 'phonetic'
     \|| s:ui.im == 'array30'
-        let s:has_dot_in_datafile = 1
+        let s:ui.has_dot = 1
+        let s:vimim_chinese_punctuation = -1
+        let s:vimim_punctuation_navigation = -1
     endif
 endfunction
 
@@ -4614,7 +4607,7 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_set_cloud_backend_if_http_executable()
 " ------------------------------------------------------
-    if s:has_dot_in_datafile > 0
+    if s:ui.has_dot > 0
         return 0
     endif
     let s:backend.cloud.sogou = s:vimim_one_backend_hash()
@@ -4701,7 +4694,7 @@ function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
-    \|| s:has_dot_in_datafile > 0
+    \|| s:ui.has_dot > 0
     \|| keyboard =~ '\d\d\d\d'
         return []
     endif
@@ -5239,9 +5232,9 @@ function! s:vimim_initialize_frontend()
     let s:ui = {}
     let s:ui.im  = ''
     let s:ui.root = ''
-    let s:ui.has_dot = ''
     let s:ui.keycode = ''
     let s:ui.statusline = ''
+    let s:ui.has_dot = 0
     let s:ui.frontends = []
 endfunction
 
@@ -5903,7 +5896,7 @@ function! s:vimim_get_valid_keyboard(keyboard)
         return []
     endif
     " ignore multiple non-sense dots
-    if keyboard =~# '^[\.\.\+]' && empty(s:has_dot_in_datafile)
+    if keyboard =~# '^[\.\.\+]' && empty(s:ui.has_dot)
         let s:pattern_not_found += 1
         return []
     endif
