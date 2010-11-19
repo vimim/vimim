@@ -3115,7 +3115,6 @@ function! <SID>:vimim_search()
             sil!call s:vimim_frontend_initialization()
             let results = s:vimim_embedded_backend_engine(english)
             if !empty(results)
-            if !empty(results)
                 let chinese = ""
                 for pair in results
                     let chinese .= get(split(pair),1) . '\|'
@@ -5880,7 +5879,6 @@ function! s:vimim_get_valid_keyboard(keyboard)
         let s:pattern_not_found += 1
         return []
     endif
-    " [erbi] special meaning of the first punctuation
     if s:ui.im =~ 'erbi'
         let punctuation = s:vimim_first_punctuation_erbi(keyboard)
         if !empty(punctuation)
@@ -5906,9 +5904,10 @@ endfunction
 " -----------------------------------------
 function! s:vimim_chinese_mode_mapping_on()
 " -----------------------------------------
-    if s:vimim_normal_ctrl_6_to_toggle == 1 && !hasmapto('<C-^>', 'n')
-        noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
-    " -------------------------------------------------------------------
+    if s:vimim_normal_ctrl_6_to_toggle == 1
+        if !hasmapto('<C-^>', 'n')
+            noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
+        endif
     elseif !hasmapto('<Plug>VimimTrigger', 'i')
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
             imap <silent> <C-Bslash> <Plug>VimimTrigger
@@ -5937,19 +5936,15 @@ function! s:vimim_onekey_mapping_on()
     if !hasmapto('<Plug>VimimOneKey', 'i')
         inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
     endif
-    " -----------------------------------
     if !hasmapto('<C-^>', 'i')
         imap <silent> <C-^> <Plug>VimimOneKey
     endif
-    " -----------------------------------
     if !hasmapto('<C-^>', 'v')
         xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
-    " -----------------------------------
     if s:vimim_n_next_search_chinese > 0
         noremap <silent> n :sil!call <SID>:vimim_search()<CR>n
     endif
-    " -----------------------------------
     if s:vimim_tab_as_onekey == 1
         imap <silent> <Tab> <Plug>VimimOneKey
     elseif s:vimim_tab_as_onekey == 2
