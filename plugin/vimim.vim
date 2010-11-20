@@ -5955,8 +5955,8 @@ function! s:vimim_initialize_autocmd()
     endif
     " [egg] make the dot vimim file our first-class citizen
     augroup vimim_auto_chinese_mode
-        autocmd BufNewFile  *.vimim startinsert
-        autocmd BufEnter    *.vimim sil!call <SID>ChineseModeAlwaysOn()
+        autocmd BufNewFile  *.vimim  startinsert
+        autocmd BufEnter    *.vimim  sil!call <SID>ChineseModeAlwaysOn()
     augroup END
 endfunction
 
