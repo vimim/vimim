@@ -2284,6 +2284,8 @@ function! s:vimim_scan_embedded_digit_datafile()
 " Digit code such as four corner can be used as independent filter.
 " It works for sqlite, cloud as well as VimIM embedded backends.
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.digit.txt
+" The format in datafile  is one record per line:         u808f 8022
+" The format in directory is one record per filename: cat u808f => 8022
 " --------------------------------------------
     let datafile = s:path . "vimim.digit.txt"
     if filereadable(datafile)
@@ -2291,7 +2293,7 @@ function! s:vimim_scan_embedded_digit_datafile()
         let s:vimim_static_input_style = 2
         let digit_lines = readfile(datafile)
         for digit in digit_lines
-            let pairs = split(digit) |" u808f 8022
+            let pairs = split(digit)
             let key = get(pairs, 0)
             let value = get(pairs, 1)
             let s:unicode_digit_cache[key] = [value]
@@ -3427,16 +3429,16 @@ function! s:vimim_internal_code(keyboard)
         let msg = "support <C-6> to trigger multibyte"
     endif
     let numbers = []
-    let ddddd = 32911
+    let ddddd = 0
     if keyboard =~# '^u\x\{4}$'
-        let msg = "do hex internal-code popup menu, eg, u808f"
+        " show hex internal-code popup menu: u808f
         let xxxx = keyboard[1:]
         let ddddd = str2nr(xxxx, 16)
     elseif keyboard =~# '^\d\{5}$'
-        let msg = "do decimal internal-code popup menu: 32911"
+        " show decimal internal-code popup menu: 32911
         let ddddd = str2nr(keyboard, 10)
     endif
-    if ddddd > 0xffff
+    if empty(ddddd) || ddddd>0xffff
         return []
     endif
     let numbers = []
@@ -3450,7 +3452,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_unicode_search(keyboard)
 " ----------------------------------------
-    let msg = "search CJK by unicode: /u808f or /32911"
+    " search CJK by unicode: /u808f or /32911
     let keyboard = a:keyboard
     if strlen(keyboard) != 5 |return [] |endif
     let results = []
@@ -5714,7 +5716,6 @@ else
     " support direct internal code (unicode/gb/big5) input
     " ----------------------------------------------------
     if s:vimim_internal_code_input > 0
-        let msg = " usage: u808f<C-6> 32911<C-6>  32910<C-6> "
         let results = s:vimim_internal_code(keyboard)
         if !empty(len(results))
             let s:unicode_menu_display_flag = 1
