@@ -3142,11 +3142,9 @@ endfunction
 function! s:vimim_wubi_4char_auto_input(keyboard)
 " -----------------------------------------------
     let keyboard = a:keyboard
-    " ----------------------------
-    " support wubi non-stop typing
-    " ----------------------------
     if s:chinese_input_mode =~ 'dynamic'
         if len(keyboard) > 4
+            " support wubi non-stop typing
             let start = 4*((len(keyboard)-1)/4)
             let keyboard = strpart(keyboard, start)
         endif
@@ -3430,7 +3428,6 @@ function! s:vimim_internal_code(keyboard)
     endif
     let numbers = []
     let ddddd = 32911
-    let pumheight = 4*4
     if keyboard =~# '^u\x\{4}$'
         let msg = "do hex internal-code popup menu, eg, u808f"
         let xxxx = keyboard[1:]
@@ -3443,7 +3440,7 @@ function! s:vimim_internal_code(keyboard)
         return []
     endif
     let numbers = []
-    for i in range(pumheight)
+    for i in range(&pumheight)
         let digit = str2nr(ddddd+i)
         call add(numbers, digit)
     endfor
@@ -3798,9 +3795,10 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_sentence_match_datafile(keyboard)
 " -------------------------------------------------
-    let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines) | return [] | endif
+    " ---------------------------------------------
+    let keyboard = a:keyboard
     let blocks = s:vimim_search_pattern(keyboard)
     if !empty(blocks) | return blocks | endif
     " ---------------------------------------------
@@ -3876,16 +3874,18 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_break_sentence_into_block(keyboard)
 " ---------------------------------------------------
-    let blocks = s:vimim_break_digit_every_four(a:keyboard)
-    if !empty(blocks) | return blocks | endif
-    " --------------------------------------------
-    let blocks = s:vimim_break_apostrophe_sentence(a:keyboard)
-    if !empty(blocks) | return blocks | endif
-    " --------------------------------------------
     let blocks = s:vimim_break_pinyin_digit(a:keyboard)
-    if !empty(blocks) | return blocks | endif
-    " --------------------------------------------
-    return []
+    if empty(blocks)
+        let blocks = s:vimim_break_digit_every_four(a:keyboard)
+        if empty(blocks)
+            let blocks = s:vimim_break_apostrophe_sentence(a:keyboard)
+        endif
+    endif
+    if empty(blocks)
+        return []
+    else
+        return blocks
+    endif
 endfunction
 
 " --------------------------------------------
@@ -4145,12 +4145,8 @@ function! s:vimim_get_sentence_directory(keyboard)
     let msg = "Directory database is natural to vim editor."
     let keyboard = a:keyboard
     let im = s:ui.im
-    if s:backend[s:ui.root][s:ui.im].root != "directory"
-        return []
-    endif
     let results = []
-    let digit_input  = '^\d\d\+'
-    if keyboard =~ digit_input
+    if keyboard =~ '^\d\d\+'
         let im = "digit"
     endif
     let keyboards = s:vimim_sentence_match_directory(keyboard, im)
@@ -4180,12 +4176,11 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_sentence_match_directory(keyboard, im)
 " ------------------------------------------------------
-    let im = a:im
     let keyboard = a:keyboard
     let blocks = s:vimim_search_pattern(keyboard)
     if !empty(blocks) | return blocks | endif
     " --------------------------------------------------
-    let dir = s:vimim_get_data_directory(im)
+    let dir = s:vimim_get_data_directory(a:im)
     let filename = dir . '/' . keyboard
     if filereadable(filename)
         return [keyboard]
@@ -5813,7 +5808,7 @@ else
         let results = s:vimim_popupmenu_list(results)
     endif
     if empty(results)
-        if s:chinese_input_mode =~ 'dynamic' && s:ui.im == 'wubi'
+        if s:chinese_input_mode =~ 'dynamic'
             let s:keyboard_leading_zero = ""
         endif
     else
