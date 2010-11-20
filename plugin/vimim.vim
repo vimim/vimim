@@ -1832,15 +1832,12 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         let chinese = get(pairs, 1)
         " -------------------------------------------------
         let extra_text = menu
-        if s:pinyin_and_digit > 0
-        \&& empty(match(extra_text, '^\d\{4}$'))
-            let unicode = printf('u%04x', char2nr(chinese))
-            let extra_text = menu . s:space . unicode
+        if s:pinyin_and_digit > 0 && len(chinese)==s:multibyte
+            let ddddd = char2nr(chinese)
+            let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
         endif
-        if s:vimim_custom_skin == 2
-        \&& extra_text =~ s:show_me_not_pattern
-            let msg = "ignore key starting with ii/oo for beauty"
-            let extra_text = ""
+        if s:vimim_custom_skin == 2 && extra_text =~ s:show_me_not_pattern
+            let extra_text = "" |" ignore key starting with ii/oo for beauty
         endif
         let complete_items["menu"] = extra_text
         " -------------------------------------------------
@@ -3433,7 +3430,7 @@ function! s:vimim_internal_code(keyboard)
     endif
     let numbers = []
     let ddddd = 32911
-    let pumheight = 2*2*2*2*2
+    let pumheight = 4*4
     if keyboard =~# '^u\x\{4}$'
         let msg = "do hex internal-code popup menu, eg, u808f"
         let xxxx = keyboard[1:]
@@ -3469,6 +3466,21 @@ function! s:vimim_unicode_search(keyboard)
     return s:vimim_internal_codes(results,0)
 endfunction
 
+" ---------------------------------------------------
+function! s:vimim_unicode_4corner_pinyin(ddddd, more)
+" ---------------------------------------------------
+    let hex = printf('u%04x', a:ddddd)
+    let menu = s:space . hex . s:space . a:ddddd
+    if a:more>0 && s:pinyin_and_digit>0
+        let chinese = nr2char(a:ddddd)
+        call s:vimim_build_unihan_reverse_cache(chinese)
+        let   four = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
+        let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
+        let menu .= s:space . four . s:space . pinyin
+    endif
+    return menu
+endfunction
+
 " ---------------------------------------------
 function! s:vimim_internal_codes(numbers, more)
 " ---------------------------------------------
@@ -3476,18 +3488,10 @@ function! s:vimim_internal_codes(numbers, more)
         return []
     endif
     let unicodes = []
-    for digit in a:numbers
-        let hex = printf('%04x', digit)
-        let menu = s:space . hex . s:space . digit
-        if a:more>0 && s:pinyin_and_digit>0
-            let chinese = nr2char(digit)
-            call s:vimim_build_unihan_reverse_cache(chinese)
-            let   four = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
-            let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-            let menu .= s:space . four . s:space . pinyin
-        endif
-        let unicode = menu .' '. chinese
-        call add(unicodes, unicode)
+    for ddddd in a:numbers
+        let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
+        let menu_chinese = menu .' '. nr2char(ddddd)
+        call add(unicodes, menu_chinese)
     endfor
     return unicodes
 endfunction
@@ -4712,11 +4716,13 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
         let msg = "cloud limits to valid cloud keycodes only"
         return 0
     endif
-    let msg = "auto cloud if number of zi > threshold"
-    let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-    let cloud_length = len(pinyins)
-    if cloud_length < s:vimim_cloud_sogou
-        return 0
+    if s:chinese_input_mode == 'static'
+        let msg = "auto cloud if number of zi > threshold"
+        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+        let threshold = len(pinyins)
+        if threshold < s:vimim_cloud_sogou
+            return 0
+        endif
     endif
     return 1
 endfunction
