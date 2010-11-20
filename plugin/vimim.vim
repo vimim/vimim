@@ -141,7 +141,7 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_scan_backend_embedded_database()
-    sil!call s:vimim_scan_embedded_digit_filter()
+    sil!call s:vimim_scan_embedded_digit_datafile()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_scan_backend_mycloud()
     " -------------------------------------
@@ -565,10 +565,10 @@ function! s:vimim_egg_vimim()
     let toggle = 'i_CTRL-Bslash'
     if s:vimim_ctrl_space_to_toggle == 1
         let toggle = "i_CTRL-Space"
-    elseif s:vimim_tab_as_onekey == 1
-        let toggle = "Tab_as_OneKey"
     elseif s:vimim_normal_ctrl_6_to_toggle == 1
         let toggle = "OneKey　normal　<CTRL-6>"
+    elseif s:vimim_tab_as_onekey == 1
+        let toggle = "Tab_as_OneKey"
     endif
     let toggle .=  s:space
     let style = s:vimim_unihan('style')
@@ -586,9 +586,13 @@ function! s:vimim_egg_vimim()
         let msg = "no ciku found"
     else
         let datafile = s:vimim_unihan('datafile')
-        let directory  = s:vimim_unihan('directory')
         if s:ui.root == 'directory'
+            let directory  = s:vimim_unihan('directory')
             let datafile .=  "：" . directory . datafile
+            if s:pinyin_and_4corner == 2
+                let digit = s:path2 . "/4corner/"
+                let option .= "/" . s:space . digit
+            endif
         endif
         let option = "database " . datafile . s:space . option
         call add(eggs, option)
@@ -1814,7 +1818,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     if empty(pair_matched_list)
     \|| type(pair_matched_list) != type([])
         return []
-    elseif len(s:menu_4corner_as_filter) < 1
+    elseif empty(len(s:menu_4corner_as_filter))
         let s:matched_list = copy(pair_matched_list)
     endif
     let menu = 0
@@ -2285,9 +2289,9 @@ let VimIM = " ====  Input_4Corner    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" --------------------------------------------
-function! s:vimim_scan_embedded_digit_filter()
-" --------------------------------------------
+" ----------------------------------------------
+function! s:vimim_scan_embedded_digit_datafile()
+" ----------------------------------------------
 " Digit code such as 4corner can be used as independent filter.
 " It works for sqlite, cloud as well as VimIM embedded backends.
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.digit.txt
@@ -2454,9 +2458,7 @@ function! s:vimim_build_unihan_reverse_cache(chinese)
 " [input]  馬力
 " [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
 " ---------------------------------------------------
-    if empty(s:pinyin_and_4corner)
-        return
-    endif
+    if empty(s:pinyin_and_4corner) | return | endif
     let chinese = a:chinese
     let chinese = substitute(chinese,'\w','','g')
     let characters = split(chinese, '\zs')
@@ -2482,7 +2484,7 @@ function! s:vimim_set_menu_4corner_as_filter(keyboards)
         let filter = get(keyboards, 1)
         if menu =~ '\D'
         \&& filter =~ '^\d\+$'
-        \&& len(s:menu_4corner_as_filter) < 1
+        \&& empty(len(s:menu_4corner_as_filter))
             let s:menu_4corner_as_filter =  filter . "_"
         endif
     endif
@@ -2512,7 +2514,7 @@ function! <SID>vimim_1234567890_filter(n)
             let label_alpha = join(s:pqwertyuio,'')
             let label = match(label_alpha, a:n)
         endif
-        if len(s:menu_4corner_as_filter) < 1
+        if empty(len(s:menu_4corner_as_filter))
         \|| s:menu_4corner_as_filter[-1:-1] == "_"
             let s:menu_4corner_as_filter = label
         else
@@ -2527,7 +2529,7 @@ endfunction
 function! s:vimim_digit_filter(chinese)
 " -------------------------------------
     let chinese = a:chinese
-    if len(s:menu_4corner_as_filter) < 1
+    if empty(len(s:menu_4corner_as_filter))
         return chinese
     endif
     call s:vimim_build_unihan_reverse_cache(chinese)
@@ -3124,11 +3126,10 @@ function! s:vimim_get_valid_im_name(im)
     if im =~# '^wubi'
         let im = 'wubi'
         let s:vimim_punctuation_navigation = -1
-    elseif im =~# '^pinyin'
-        let im = 'pinyin'
     elseif im =~# '^\d\w\+'
         let im = "4corner"
-        let s:vimim_static_input_style = 1
+    elseif im =~# '^pinyin'
+        let im = 'pinyin'
     endif
     return im
 endfunction
@@ -5641,7 +5642,7 @@ if a:start
     let nonsense_pattern = "[0-9.']"
     if s:ui.im == 'pinyin'
         let nonsense_pattern = "[0-9.]"
-    elseif s:ui.im == 'phonetic' || s:ui.im == 'array30'
+    elseif s:ui.has_dot == 1
         let nonsense_pattern = "[.]"
     endif
 
@@ -5698,7 +5699,7 @@ else
     " -------------------------------------------
     if keyboard ==# "vim" || keyboard =~# "^vimim"
         let results = s:vimim_easter_chicken(keyboard)
-        if !empty(results)
+        if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5708,7 +5709,7 @@ else
     if len(s:menu_4corner_as_filter) > 0
         if len(s:matched_list) > 1
             let results = s:vimim_pair_list(s:matched_list)
-            if !empty(results)
+            if !empty(len(results))
                 return s:vimim_popupmenu_list(results)
             endif
         endif
@@ -5733,7 +5734,7 @@ else
     if s:vimim_internal_code_input > 0
         let msg = " usage: u808f<C-6> 32911<C-6>  32910<C-6> "
         let results = s:vimim_internal_code(keyboard)
-        if !empty(results)
+        if !empty(len(results))
             let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
@@ -5744,7 +5745,7 @@ else
     if s:vimim_super_internal_input > 0
         let msg = " usage: a<C-6> b<C-6> ... z<C-6> "
         let results = s:vimim_without_backend(keyboard)
-        if !empty(results)
+        if !empty(len(results))
             let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
@@ -5755,7 +5756,7 @@ else
     if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
         let msg = " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
         let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
-        if !empty(chinese_numbers)
+        if !empty(len(chinese_numbers))
             return s:vimim_popupmenu_list(chinese_numbers)
         endif
     endif
@@ -5765,7 +5766,7 @@ else
     if s:vimim_imode_universal > 0 && keyboard =~# "^'"
     \&& (empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'onekey')
         let chinese_numbers = s:vimim_imode_number(keyboard, "'")
-        if !empty(chinese_numbers)
+        if !empty(len(chinese_numbers))
             return s:vimim_popupmenu_list(chinese_numbers)
         endif
     endif
@@ -5773,7 +5774,7 @@ else
     " [cloud] magic trailing apostrophe to control cloud
     " --------------------------------------------------
     let clouds = s:vimim_magic_tail(keyboard)
-    if !empty(clouds)
+    if !empty(len(clouds))
         let msg = " usage: woyouyigemeng'<C-6> "
         let keyboard = get(clouds, 0)
     endif
@@ -5836,7 +5837,7 @@ else
     " ---------------------------------------
     if s:vimim_cloud_sogou == 1
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
-        if !empty(results)
+        if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
     endif
