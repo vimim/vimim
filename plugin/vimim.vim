@@ -828,7 +828,7 @@ function! s:vimim_onekey_action(onekey)
             endif
         elseif empty(a:onekey)
         \&& empty(s:chinese_input_mode)
-        \&& index(s:valid_keys,'\d') > -1
+        \&& match(s:valid_keys,'\d') > -1
             return <SID>vimim_get_unicode_menu()
         endif
     endif
@@ -2441,7 +2441,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
     endif
     call add(results, join(headers))
     call add(results, join(bodies))
-    return results
+    return results  "| ['ma3', '馬']
 endfunction
 
 " ---------------------------------------------------
@@ -3432,40 +3432,25 @@ function! s:vimim_internal_code(keyboard)
         let msg = "support <C-6> to trigger multibyte"
     endif
     let numbers = []
-    " -------------------------
+    let ddddd = 32911
+    let pumheight = 2*2*2*2*2
     if keyboard =~# '^u\x\{4}$'
-    " -------------------------
         let msg = "do hex internal-code popup menu, eg, u808f"
-        let pumheight = 16*16
         let xxxx = keyboard[1:]
         let ddddd = str2nr(xxxx, 16)
-        if ddddd > 0xffff
-            return []
-        else
-            let numbers = []
-            for i in range(pumheight)
-                let digit = str2nr(ddddd+i)
-                call add(numbers, digit)
-            endfor
-        endif
-    " ----------------------------
     elseif keyboard =~# '^\d\{5}$'
-    " ----------------------------
-        let last_char = keyboard[-1:-1]
-        if last_char ==# '0'
-            let msg = "do decimal internal-code popup menu: 22220"
-            let dddd = keyboard[:-2]
-            for i in range(10)
-                let digit = str2nr(dddd.i)
-                call add(numbers, digit)
-            endfor
-        else
-            let msg = "do direct decimal internal-code insert: 22221"
-            let ddddd = str2nr(keyboard, 10)
-            let numbers = [ddddd]
-        endif
+        let msg = "do decimal internal-code popup menu: 32911"
+        let ddddd = str2nr(keyboard, 10)
     endif
-    return s:vimim_internal_codes(numbers)
+    if ddddd > 0xffff
+        return []
+    endif
+    let numbers = []
+    for i in range(pumheight)
+        let digit = str2nr(ddddd+i)
+        call add(numbers, digit)
+    endfor
+    return s:vimim_internal_codes(numbers,1)
 endfunction
 
 " ----------------------------------------
@@ -3481,23 +3466,30 @@ function! s:vimim_unicode_search(keyboard)
     elseif keyboard =~# '^\d\{5}$'
        let results = [str2nr(keyboard, 10)]
     endif
-    return s:vimim_internal_codes(results)
+    return s:vimim_internal_codes(results,0)
 endfunction
 
-" ---------------------------------------
-function! s:vimim_internal_codes(numbers)
-" ---------------------------------------
+" ---------------------------------------------
+function! s:vimim_internal_codes(numbers, more)
+" ---------------------------------------------
     if empty(a:numbers)
         return []
     endif
-    let internal_codes = []
+    let unicodes = []
     for digit in a:numbers
         let hex = printf('%04x', digit)
         let menu = s:space . hex . s:space . digit
-        let internal_code = menu.' '.nr2char(digit)
-        call add(internal_codes, internal_code)
+        if a:more>0 && s:pinyin_and_digit>0
+            let chinese = nr2char(digit)
+            call s:vimim_build_unihan_reverse_cache(chinese)
+            let   four = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
+            let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
+            let menu .= s:space . four . s:space . pinyin
+        endif
+        let unicode = menu .' '. chinese
+        call add(unicodes, unicode)
     endfor
-    return internal_codes
+    return unicodes
 endfunction
 
 " -----------------------------------------
@@ -3542,9 +3534,9 @@ function! s:vimim_without_backend(keyboard)
     for i in range(start, end)
         call add(numbers, str2nr(i,10))
     endfor
-    " ------------------------------------
-    return s:vimim_internal_codes(numbers)
-    " ------------------------------------
+    " --------------------------------------
+    return s:vimim_internal_codes(numbers,0)
+    " --------------------------------------
 endfunction
 
 " ======================================= }}}
