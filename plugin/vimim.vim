@@ -115,7 +115,7 @@ function! s:vimim_frontend_initialization()
     call s:vimim_initialize_keycode()
     call s:vimim_set_special_im_property()
     call s:vimim_initialize_frontend_punctuation()
-    call s:vimim_build_digit_datafile_lines()
+    call s:vimim_build_digit_filter_lines()
     call s:vimim_build_datafile_lines()
     call s:vimim_localization()
 endfunction
@@ -154,8 +154,8 @@ function! s:vimim_session_initialization()
     call s:vimim_start_omni()
     call s:vimim_super_reset()
     " --------------------------------
-    let s:unicode_digit_cache = {}
     let s:unicode_digit_lines = []
+    let s:unicode_digit_cache = {}
     let s:pinyin_and_digit = 0
     let s:abcd = "'abcdefg"
     let s:pqwertyuio = range(10)
@@ -597,8 +597,10 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
         if !empty(s:unicode_digit_lines)
             let digit = s:path . "vimim.digit.txt"
-            let digit = "database " . datafile . s:space . digit
-            call add(eggs, digit)
+            if option !~ digit
+                let digit = "database " . datafile . s:space . digit
+                call add(eggs, digit)
+            endif
         endif
     endif
     " ----------------------------------
@@ -1836,12 +1838,13 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         let chinese = get(pairs, 1)
         " -------------------------------------------------
         let extra_text = menu
-        if s:pinyin_and_digit > 0 && len(chinese)==s:multibyte
+        if s:pinyin_and_digit > 0
+        \&& len(chinese)==s:multibyte
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
         endif
         if s:vimim_custom_skin == 2 && extra_text =~ s:show_me_not_pattern
-            let extra_text = "" |" ignore key starting with ii/oo for beauty
+            let extra_text = "" |" ignore key starting with ii/oo
         endif
         let complete_items["menu"] = extra_text
         " -------------------------------------------------
@@ -2282,9 +2285,9 @@ let VimIM = " ====  Input_Digit      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" --------------------------------------------
-function! s:vimim_build_digit_datafile_lines()
-" --------------------------------------------
+" ------------------------------------------
+function! s:vimim_build_digit_filter_lines()
+" ------------------------------------------
 " Digit code such as four corner can be used as independent filter.
 " It works for sqlite, cloud as well as VimIM embedded backends.
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.digit.txt
@@ -2442,18 +2445,18 @@ function! s:vimim_build_unihan_reverse_cache(chinese)
 " ---------------------------------------------------
 " [input]  馬力
 " [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
+" [unihan] u808f => 8022 cao4 copulate
 " ---------------------------------------------------
     if empty(s:pinyin_and_digit) | return | endif
     let chinese = a:chinese
     let chinese = substitute(chinese,'\w','','g')
     let characters = split(chinese, '\zs')
-    " unihan database: u808f => 8022 cao4 copulate
     for char in characters
         let key = printf('u%x',char2nr(char))
         if has_key(s:unicode_digit_cache, key)
             continue
         else
-            let results = s:vimim_get_raw_data_from_directory(key, 'digit')
+            let results = s:vimim_get_raw_data_from_directory(key,'digit')
             let s:unicode_digit_cache[key] = results
         endif
     endfor
@@ -2517,7 +2520,7 @@ function! s:vimim_digit_filter(chinese)
         return chinese
     endif
     call s:vimim_build_unihan_reverse_cache(chinese)
-    let number = s:vimim_get_digit(chinese)
+    let number = s:vimim_get_filter_number(chinese)
     let pattern = "^" . substitute(s:menu_digit_as_filter,'\D','','g')
     let matched = match(number, pattern)
     if matched < 0
@@ -2526,9 +2529,9 @@ function! s:vimim_digit_filter(chinese)
     return chinese
 endfunction
 
-" ----------------------------------
-function! s:vimim_get_digit(chinese)
-" ----------------------------------
+" ------------------------------------------
+function! s:vimim_get_filter_number(chinese)
+" ------------------------------------------
 " Smart Digit Filter:  马力 7712 4002
 "   (1) ma<C-6>        马   => filter with 7712
 "   (2) mali<C-6>      马力 => filter with 7 4002
@@ -3469,7 +3472,12 @@ function! s:vimim_unicode_4corner_pinyin(ddddd, more)
         call s:vimim_build_unihan_reverse_cache(chinese)
         let   four = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        let menu .= s:space . four . s:space . pinyin
+        if empty(pinyin)
+            let pinyin = ""
+        else
+            let pinyin = s:space . pinyin
+        endif
+        let menu .= s:space . four . pinyin
     endif
     return menu
 endfunction
@@ -3908,18 +3916,18 @@ function! s:vimim_build_datafile_cache()
     let progressbar = 0
     " ----------------------------------
     if empty(s:unicode_digit_lines)
-    \|| !empty(s:unicode_digit_cache)
-        let msg = " always build digit cache "
-    else
+        let msg = " no way to build digit cache "
+    elseif empty(s:unicode_digit_cache)
         let progressbar += 1
     endif
     " ----------------------------------
-    if s:backend[s:ui.root][s:ui.im].root != "datafile"
-    \|| empty(s:backend[s:ui.root][s:ui.im].lines)
-    \|| !empty(s:backend[s:ui.root][s:ui.im].cache)
-        let msg = " build datafile cache for speed "
-    else
-        let progressbar += 2
+    if s:ui.im !~ "digit"
+    \&& s:backend[s:ui.root][s:ui.im].root == "datafile"
+        if empty(s:backend[s:ui.root][s:ui.im].lines)
+            let msg = " no way to build datafile cache "
+        elseif empty(s:backend[s:ui.root][s:ui.im].cache)
+            let progressbar += 2
+        endif
     endif
     " ----------------------------------
     if progressbar > 0
@@ -3954,29 +3962,31 @@ function! s:vimim_cache_loading_progressbar(progressbar)
     " --------------------------------------------------
     try
         if a:progressbar == 1
-            sil!call s:vimim_loading_digit_cache(progressbar)
+            sil!call s:vimim_loading_unicode_digit_cache(progressbar)
         elseif a:progressbar == 2
             sil!call s:vimim_loading_datafile_cache(progressbar)
         elseif a:progressbar == 3
             sil!call s:vimim_loading_datafile_cache(progressbar)
-            sil!call s:vimim_loading_digit_cache(0)
+            sil!call s:vimim_loading_unicode_digit_cache(0)
         endif
     finally
         call progressbar.restore()
     endtry
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_loading_digit_cache(progressbar)
-" ------------------------------------------------
-    for digit in s:unicode_digit_lines
+" --------------------------------------------------------
+function! s:vimim_loading_unicode_digit_cache(progressbar)
+" --------------------------------------------------------
+" in:  ['u808f 8022', 'u808f cao4'] from vimim.filter.txt
+" out: {'u808f': ['8022', 'cao4']}
+" --------------------------------------------------------
+    for line in s:unicode_digit_lines
         if !empty(a:progressbar)
             call a:progressbar.incr(1)
         endif
-        let pairs = split(digit)
-        let key = get(pairs, 0)
-        let value = get(pairs, 1)
-        let s:unicode_digit_cache[key] = [value]
+        let oneline_list = split(line)
+        let menu = remove(oneline_list, 0)
+        let s:unicode_digit_cache[menu] = oneline_list
     endfor
 endfunction
 
