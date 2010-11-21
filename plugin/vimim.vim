@@ -702,35 +702,18 @@ function! s:vimim_break_apostrophe_sentence(keyboard)
 endfunction
 
 " ---------------------
-function! <SID>TabKey()
-" ---------------------
-    let tab = "\t"
-    if pumvisible()
-    \&& s:vimim_onekey_double_ctrl6
-    \&& &completefunc ==# 'VimIM'
-        let tab  = "\<C-E>\<C-X>\<C-U>\<C-E>"
-        let tab .= "\<C-R>=g:vimim_pumvisible_dump()\<CR>"
-    endif
-    sil!exe 'sil!return "' . tab . '"'
-endfunction
-
-" ---------------------
 function! <SID>OneKey()
 " ---------------------
-" VimIM <OneKey> overall
-"  (1) <OneKey> => start OneKey as "hit and run"
-"  (2) <OneKey> => stop  OneKey and print out menu
-" ----------------------------------------------------------
-" VimIM <OneKey> triple play
-"   (1) after English (valid keys)   => trigger omni popup
-"   (2) after omni popup window      => <Space> or nothing
-"   (3) after Chinese (invalid keys) => <Tab> or nothing
-" ----------------------------------------------------------
+" (1) <OneKey> => start OneKey as "hit and run"
+" (2) <OneKey> => stop  OneKey and print out menu
+" -----------------------------------------------
+    let onekey = ""
     if empty(s:chinese_input_mode)
-        return s:vimim_start_onekey()
+        let onekey = s:vimim_start_onekey()
     else
-        return ''
+        let onekey = s:vimim_onekey_action(onekey)
     endif
+    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 " ------------------------------
@@ -750,9 +733,6 @@ function! s:vimim_start_onekey()
                     \<C-R>=g:vimim_reset_after_insert()<CR>
     " -----------------------------------------------------
     let onekey = s:vimim_onekey_action("")
-    if pumvisible() && s:vimim_onekey_double_ctrl6
-        let onekey  = <SID>TabKey()
-    endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
@@ -777,8 +757,11 @@ function! s:vimim_onekey_action(onekey)
         if s:pattern_not_found > 0
             let s:pattern_not_found = 0
             let onekey = " "
-        elseif a:onekey == " " || s:vimim_static_input_style < 2
+        elseif a:onekey == " "
             let onekey = s:vimim_ctrl_y_ctrl_x_ctrl_u()
+        elseif s:vimim_onekey_double_ctrl6
+            let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_ee()\<CR>'
+            let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
         else
             let onekey = "\<C-E>"
         endif
@@ -827,7 +810,6 @@ function! s:vimim_onekey_action(onekey)
                 let onekey = "\t"
             endif
         elseif empty(a:onekey)
-        \&& empty(s:chinese_input_mode)
         \&& match(s:valid_keys,'\d') > -1
             return <SID>vimim_get_unicode_menu()
         endif
@@ -981,6 +963,9 @@ function! s:vimim_start_chinese_mode()
         " ---------------------------------------------------
     elseif s:chinese_input_mode == 'static'
         sil!call s:vimim_static_alphabet_auto_select()
+        " ------------------------------------------------------
+        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                      \<C-R>=g:vimim_one_key_correction()<CR>
         " ------------------------------------------------------
         inoremap <Space> <C-R>=<SID>vimim_space_static()<CR>
                         \<C-R>=g:vimim_reset_after_insert()<CR>
@@ -1391,7 +1376,8 @@ function! <SID>vimim_label_navigation(key)
             let s:pumvisible_hjkl_2nd_match = 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'p'
-            let hjkl  = <SID>TabKey()
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_ee()\<CR>'
+            let hjkl .= "\<C-R>=g:vimim_pumvisible_dump()\<CR>"
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -1730,6 +1716,16 @@ function! g:vimim_pumvisible_ctrl_y()
     let key = ""
     if pumvisible()
         let key = "\<C-Y>"
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" ------------------------------------
+function! g:vimim_pumvisible_ctrl_ee()
+" ------------------------------------
+    let key = ""
+    if pumvisible()
+        let key = "\<C-E>\<C-X>\<C-U>\<C-E>"
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5245,7 +5241,6 @@ function! s:vimim_initialize_debug()
     " ------------------------------
     let s:vimim_static_input_style = 2
     let s:vimim_cloud_sogou = -1
-    let s:vimim_tab_as_onekey = 2
     let s:vimim_normal_ctrl_6_to_toggle = 1
     let s:vimim_custom_skin = 2
     let s:vimim_custom_laststatus = 0
@@ -5550,11 +5545,6 @@ endfunction
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    if s:vimim_static_input_style == 1
-        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                      \<C-R>=g:vimim_one_key_correction()<CR>
-    endif
-    " ----------------------------------------------------------
     inoremap <CR>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                   \<C-R>=<SID>vimim_smart_enter()<CR>
     " ----------------------------------------------------------
@@ -5934,10 +5924,6 @@ function! s:vimim_onekey_mapping_on()
     endif
     if s:vimim_tab_as_onekey == 1
         imap <silent> <Tab> <Plug>VimimOneKey
-    elseif s:vimim_tab_as_onekey == 2
-        inoremap <unique> <expr> <Plug>VimimTabKey <SID>TabKey()
-            imap <silent> <Tab>  <Plug>VimimTabKey
-        return
     endif
 endfunction
 
