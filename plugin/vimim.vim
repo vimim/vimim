@@ -303,8 +303,6 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['sqlite']   = "[0-9a-z]"
     let s:im_keycode['pinyin']   = "[0-9a-z']"
     let s:im_keycode['wubi']     = "[0-9a-z']"
-    let s:im_keycode['unihan']   = "[0-9a-z']"
-"todo
     let s:im_keycode['ctc']      = "[0-9a-z']"
     let s:im_keycode['11643']    = "[0-9a-z']"
     let s:im_keycode['english']  = "[0-9a-z']"
@@ -585,23 +583,25 @@ function! s:vimim_egg_vimim()
     if empty(option)
         let msg = "no ciku found"
     else
-        let datafile = s:vimim_unihan('datafile')
+        let ciku = s:vimim_unihan('datafile')
         if s:ui.root == 'directory'
             let directory  = s:vimim_unihan('directory')
-            let datafile .=  "：" . directory . datafile
-            if s:pinyin_plus_4corner_filter == 2
-                let digit = s:path2 . "/digit/"
-                let option .= "/" . s:space . digit
-            endif
+            let ciku .=  "：" . directory . ciku . s:space
         endif
-        let option = "database " . datafile . s:space . option
-        call add(eggs, option)
-        if !empty(s:unihan_4corner_lines)
+        let ciku = "database " . ciku
+        call add(eggs, ciku . option."/")
+        " ------------------------------
+        let filter = 0
+        if s:pinyin_plus_4corner_filter == 2
+            let filter = ciku . s:path2 . "unihan/"
+        elseif !empty(s:unihan_4corner_lines)
             let filter = s:path . "vimim.unihan_4corner.txt"
             if option !~ filter
-                let filter = "database " . datafile . s:space . filter
-                call add(eggs, filter)
+                let filter = ciku . s:space . filter
             endif
+        endif
+        if !empty(filter)
+            call add(eggs, filter)
         endif
     endif
     " ----------------------------------
@@ -2443,9 +2443,8 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_build_unihan_reverse_cache(chinese)
 " ---------------------------------------------------
-" [input]  馬力
+" [input]  馬力       [unihan] u808f => 8022 cao4 copulate
 " [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
-" [unihan] u808f => 8022 cao4 copulate
 " ---------------------------------------------------
     if empty(s:pinyin_plus_4corner_filter) | return | endif
     let chinese = a:chinese
@@ -3113,8 +3112,6 @@ function! s:vimim_get_valid_im_name(im)
     if im =~# '^wubi'
         let im = 'wubi'
         let s:vimim_punctuation_navigation = -1
-    elseif im =~# '^unihan'
-        let im = 'unihan'
     elseif im =~# '^pinyin'
         let im = 'pinyin'
     endif
@@ -3477,7 +3474,7 @@ function! s:vimim_unicode_4corner_pinyin(ddddd, more)
         else
             let pinyin = s:space . pinyin
         endif
-        let menu .= s:space . unihan pinyin
+        let menu .= s:space . unihan . pinyin
     endif
     return menu
 endfunction
@@ -3931,8 +3928,7 @@ function! s:vimim_build_datafile_cache()
         let progressbar += 1
     endif
     " ----------------------------------
-    if s:ui.im !~ 'unihan'
-    \&& s:backend[s:ui.root][s:ui.im].root == "datafile"
+    if s:backend[s:ui.root][s:ui.im].root == "datafile"
         if empty(s:backend[s:ui.root][s:ui.im].lines)
             let msg = " no way to build datafile cache "
         elseif empty(s:backend[s:ui.root][s:ui.im].cache)
@@ -4033,7 +4029,7 @@ function! s:vimim_scan_backend_embedded_directory()
     endif
     " -----------------------------------
     if empty(s:path2)
-         let dir = s:path . "vimim"
+         let dir = s:path . "vimim/"
          if isdirectory(dir)
             let s:path2 = dir
          else
@@ -4042,23 +4038,32 @@ function! s:vimim_scan_backend_embedded_directory()
     endif
     " -----------------------------------
     let valid_directoires = []
-    for im in s:all_vimim_datafile_names
-        let dir = s:vimim_get_data_directory(im)
-        if empty(dir)
-            continue
-        else
-            call add(valid_directoires, im)
-        endif
-    endfor
-    if empty(valid_directoires)
-        return
+    let unihan = s:path2 . "unihan"
+    let pinyin = s:path2 . "pinyin"
+    if isdirectory(unihan) && isdirectory(pinyin)
+        let valid_directoires = ['pinyin']
+        let s:pinyin_plus_4corner_filter = 2
     endif
+    " -----------------------------------
+    if empty(valid_directoires)
+        for im in s:all_vimim_datafile_names
+            let dir = s:vimim_get_data_directory(im)
+            if empty(dir)
+                continue
+            else
+                call add(valid_directoires, im)
+            endif
+        endfor
+        if empty(valid_directoires)
+            return
+        endif
+    endif
+    " -----------------------------------
     for im in valid_directoires
-        " ------------------------------------------------------
         let im = s:vimim_get_valid_im_name(im)
         let s:ui.root = "directory"
         let s:ui.im = im
-        let datafile = s:path2 ."/". im
+        let datafile = s:path2 . im
         call add(s:ui.frontends, [s:ui.root, s:ui.im])
         let s:backend.directory[im] = s:vimim_one_backend_hash()
         let s:backend.directory[im].root = "directory"
@@ -4066,8 +4071,6 @@ function! s:vimim_scan_backend_embedded_directory()
         let s:backend.directory[im].im = im
         let s:backend.directory[im].keycode = s:im_keycode[im]
         let s:backend.directory[im].chinese = s:vimim_unihan(im)
-        " ------------------------------------------------------
-        if im =~ 'unihan' | let s:pinyin_plus_4corner_filter=2 | endif
     endfor
 endfunction
 
@@ -4133,7 +4136,7 @@ function! s:vimim_get_data_directory(im)
     if empty(im) || empty(s:path2)
         return 0
     endif
-    let dir = s:path2 ."/". im
+    let dir = s:path2 . im
     if isdirectory(dir)
         return dir
     else
@@ -4203,11 +4206,10 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_break_digit_every_four(keyboard)
 " ------------------------------------------------
-" sijiaohaoma 4corner showcase:  6021272260021762 
+" sijiaohaoma 4corner showcase:  6021272260021762
 " ------------------------------------------------
     let keyboard = a:keyboard
     if len(keyboard) < 4
-    \|| s:ui.im !~ 'unihan'
     \|| s:chinese_input_mode =~ 'dynamic'
         return []
     endif
@@ -5302,7 +5304,7 @@ function! s:vimim_initialize_debug()
     if isdirectory(dir)
         return
     endif
-    let dir = "/vimim"
+    let dir = "/vimim/"
     if isdirectory(dir)
         let s:path2 = dir
     else
@@ -6003,10 +6005,10 @@ function! s:vimim_initialize_autocmd()
     if !has("autocmd")
         return
     endif
-    " [egg] make the dot vimim file our first-class citizen
+    " [egg] promote the dot vimim files to be our first-class citizens
     augroup vimim_auto_chinese_mode
-        autocmd BufNewFile  *.vimim  startinsert
-        autocmd BufEnter    *.vimim  sil!call <SID>ChineseModeAlwaysOn()
+        autocmd BufNewFile *.vimim startinsert
+        autocmd BufEnter   *.vimim sil!call <SID>ChineseModeAlwaysOn()
     augroup END
 endfunction
 
