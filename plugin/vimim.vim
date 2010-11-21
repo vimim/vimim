@@ -1838,8 +1838,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         let chinese = get(pairs, 1)
         " -------------------------------------------------
         let extra_text = menu
-        if s:pinyin_and_digit > 0
-        \&& len(chinese)==s:multibyte
+        if s:pinyin_and_digit > 0 && len(s:menu_digit_as_filter) > 0
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
         endif
