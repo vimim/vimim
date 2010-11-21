@@ -115,7 +115,9 @@ function! s:vimim_frontend_initialization()
     call s:vimim_initialize_keycode()
     call s:vimim_set_special_im_property()
     call s:vimim_initialize_frontend_punctuation()
+    call s:vimim_build_digit_datafile_lines()
     call s:vimim_build_datafile_lines()
+    call s:vimim_localization()
 endfunction
 
 " ---------------------------------------------
@@ -139,7 +141,6 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_scan_backend_embedded_database()
-    sil!call s:vimim_scan_embedded_digit_datafile()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_scan_backend_mycloud()
     " -------------------------------------
@@ -154,12 +155,15 @@ function! s:vimim_session_initialization()
     call s:vimim_super_reset()
     " --------------------------------
     let s:unicode_digit_cache = {}
+    let s:unicode_digit_lines = []
     let s:pinyin_and_digit = 0
     let s:abcd = "'abcdefg"
     let s:pqwertyuio = range(10)
     let s:valid_key = "[0-9a-z'.]"
     let s:quantifiers = {}
     " --------------------------------
+    let s:www_executable = 0
+    let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -195,7 +199,6 @@ endfunction
 " --------------------------------------
 function! s:vimim_session_finalization()
 " --------------------------------------
-    call s:vimim_localization()
     if s:vimim_imode_universal > 0 || s:vimim_imode_pinyin  > 0
         call s:vimim_initialize_quantifiers()
     endif
@@ -592,6 +595,11 @@ function! s:vimim_egg_vimim()
         endif
         let option = "database " . datafile . s:space . option
         call add(eggs, option)
+        if !empty(s:unicode_digit_lines)
+            let digit = s:path . "vimim.digit.txt"
+            let digit = "database " . datafile . s:space . digit
+            call add(eggs, digit)
+        endif
     endif
     " ----------------------------------
     let cloud = s:vimim_cloud_sogou
@@ -2274,26 +2282,18 @@ let VimIM = " ====  Input_Digit      ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------------------
-function! s:vimim_scan_embedded_digit_datafile()
-" ----------------------------------------------
+" --------------------------------------------
+function! s:vimim_build_digit_datafile_lines()
+" --------------------------------------------
 " Digit code such as four corner can be used as independent filter.
 " It works for sqlite, cloud as well as VimIM embedded backends.
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.digit.txt
-" The format in datafile  is one record per line:         u808f 8022
-" The format in directory is one record per filename: cat u808f => 8022
-" --------------------------------------------
+" ----------------------------------------------
     let datafile = s:path . "vimim.digit.txt"
-    if filereadable(datafile)
+    if filereadable(datafile) && empty(s:unicode_digit_lines)
         let s:pinyin_and_digit = 1
         let s:vimim_static_input_style = 2
-        let digit_lines = readfile(datafile)
-        for digit in digit_lines
-            let pairs = split(digit)
-            let key = get(pairs, 0)
-            let value = get(pairs, 1)
-            let s:unicode_digit_cache[key] = [value]
-        endfor
+        let s:unicode_digit_lines = readfile(datafile)
     endif
 endfunction
 
@@ -2399,7 +2399,6 @@ function! s:vimim_reverse_one_entry(chinese, im)
         if im == 'unicode'
             let head = unicode
         elseif has_key(s:unicode_digit_cache, unicode)
-            " ------------------------------------------------
             let values = s:unicode_digit_cache[unicode]
             let head = get(values, 0)
             if im == 'digit'
@@ -2415,7 +2414,6 @@ function! s:vimim_reverse_one_entry(chinese, im)
                     let head = get(values, 0)
                 endif
             endif
-            " ------------------------------------------------
         endif
         if empty(head)
             continue
@@ -3253,18 +3251,18 @@ endfunction
 " ------------------------------
 function! s:vimim_localization()
 " ------------------------------
-    let datafile_fenc_chinese = 0
+    if s:pinyin_and_digit > 0
+        let s:abcd = "'abcdfgz"
+        let s:pqwertyuio = split('pqwertyuio', '\zs')
+    endif
     " ---------------------------------------------
+    let datafile_fenc_chinese = 0
     if s:ui.root =~ 'datafile' || s:ui.root =~ 'directory'
         if s:backend[s:ui.root][s:ui.im].datafile =~# "chinese"
             let datafile_fenc_chinese = 1
         endif
         if s:backend[s:ui.root][s:ui.im].datafile =~# "quote"
             let s:ui.has_dot = 2  "| has_apostrophe_in_datafile
-        endif
-        if s:pinyin_and_digit > 0
-            let s:abcd = "'abcdfgz"
-            let s:pqwertyuio = split('pqwertyuio', '\zs')
         endif
     endif
     " ------------ ----------------- --------------
@@ -3466,7 +3464,7 @@ function! s:vimim_unicode_4corner_pinyin(ddddd, more)
 " ---------------------------------------------------
     let hex = printf('u%04x', a:ddddd)
     let menu = s:space . hex . s:space . a:ddddd
-    if a:more>0 && s:pinyin_and_digit>0
+    if a:more > 0 && s:pinyin_and_digit > 0
         let chinese = nr2char(a:ddddd)
         call s:vimim_build_unihan_reverse_cache(chinese)
         let   four = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
@@ -3904,37 +3902,101 @@ endfunction
 " --------------------------------------
 function! s:vimim_build_datafile_cache()
 " --------------------------------------
-    let im = s:ui.im
-    let root = s:ui.root
     if s:vimim_use_cache < 1
-    \|| s:backend[root][im].root != "datafile"
-    \|| empty(s:backend[root][im].lines)
-    \|| !empty(s:backend[root][im].cache)
         return
     endif
+    let progressbar = 0
     " ----------------------------------
-    let progress = "VimIM loading ".s:vimim_unihan(im).s:vimim_unihan(root)
-    let total = len(s:backend[root][im].lines)
+    if empty(s:unicode_digit_lines)
+    \|| !empty(s:unicode_digit_cache)
+        let msg = " always build digit cache "
+    else
+        let progressbar += 1
+    endif
+    " ----------------------------------
+    if s:backend[s:ui.root][s:ui.im].root != "datafile"
+    \|| empty(s:backend[s:ui.root][s:ui.im].lines)
+    \|| !empty(s:backend[s:ui.root][s:ui.im].cache)
+        let msg = " build datafile cache for speed "
+    else
+        let progressbar += 2
+    endif
+    " ----------------------------------
+    if progressbar > 0
+        call s:vimim_cache_loading_progressbar(progressbar)
+    endif
+endfunction
+
+" ------------------------------------------------------
+function! s:vimim_cache_loading_progressbar(progressbar)
+" ------------------------------------------------------
+    let title_1 = s:vimim_unihan("digit")
+    let total_1 = len(s:unicode_digit_lines)
+    let title_2 = s:vimim_unihan(s:ui.im)
+    let total_2 = len(s:backend[s:ui.root][s:ui.im].lines)
+    " --------------------------------------------------
+    let title = ""
+    let total = ""
+    if a:progressbar == 1
+        let title = title_1
+        let total = total_1
+    elseif a:progressbar == 2
+        let title = title_2
+        let total = total_2
+    elseif a:progressbar == 3
+        let title = title_2 . s:plus . title_1
+        let total = total_2 + total_1
+    endif
+    " --------------------------------------------------
+    let title .= s:vimim_unihan("datafile")
+    let progress = "VimIM loading " . title
     let progressbar = NewSimpleProgressBar(progress, total)
-    " ----------------------------------
+    " --------------------------------------------------
     try
-        for line in s:backend[root][im].lines
-            call progressbar.incr(1)
-            if s:localization > 0
-                let line = s:vimim_i18n_read(line)
-            endif
-            let oneline_list = split(line)
-            let menu = remove(oneline_list, 0)
-            if has_key(s:backend[root][im].cache, menu)
-                let line_list = s:backend[root][im].cache[menu]
-                call extend(line_list, oneline_list)
-                let line = join(line_list)
-            endif
-            let s:backend[root][im].cache[menu] = [line]
-        endfor
+        if a:progressbar == 1
+            sil!call s:vimim_loading_digit_cache(progressbar)
+        elseif a:progressbar == 2
+            sil!call s:vimim_loading_datafile_cache(progressbar)
+        elseif a:progressbar == 3
+            sil!call s:vimim_loading_datafile_cache(progressbar)
+            sil!call s:vimim_loading_digit_cache(0)
+        endif
     finally
         call progressbar.restore()
     endtry
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_loading_digit_cache(progressbar)
+" ------------------------------------------------
+    for digit in s:unicode_digit_lines
+        if !empty(a:progressbar)
+            call a:progressbar.incr(1)
+        endif
+        let pairs = split(digit)
+        let key = get(pairs, 0)
+        let value = get(pairs, 1)
+        let s:unicode_digit_cache[key] = [value]
+    endfor
+endfunction
+
+" ---------------------------------------------------
+function! s:vimim_loading_datafile_cache(progressbar)
+" ---------------------------------------------------
+    for line in s:backend[s:ui.root][s:ui.im].lines
+        call a:progressbar.incr(1)
+        if s:localization > 0
+            let line = s:vimim_i18n_read(line)
+        endif
+        let oneline_list = split(line)
+        let menu = remove(oneline_list, 0)
+        if has_key(s:backend[s:ui.root][s:ui.im].cache, menu)
+            let line_list = s:backend[s:ui.root][s:ui.im].cache[menu]
+            call extend(line_list, oneline_list)
+            let line = join(line_list)
+        endif
+        let s:backend[s:ui.root][s:ui.im].cache[menu] = [line]
+    endfor
 endfunction
 
 " ======================================= }}}
@@ -4546,7 +4608,7 @@ endfunction
 " ---------------------------
 function! s:vimim_set_sogou()
 " ---------------------------
-    let cloud = s:vimim_set_cloud_backend_if_http_executable()
+    let cloud = s:vimim_set_cloud_backend_if_www_executable()
     if empty(cloud)
         let s:vimim_cloud_sogou = 0
     else
@@ -4555,9 +4617,9 @@ function! s:vimim_set_sogou()
     endif
 endfunction
 
-" ------------------------------------------------------
-function! s:vimim_set_cloud_backend_if_http_executable()
-" ------------------------------------------------------
+" -----------------------------------------------------
+function! s:vimim_set_cloud_backend_if_www_executable()
+" -----------------------------------------------------
     if s:ui.has_dot == 1
         return 0
     endif
@@ -4592,15 +4654,15 @@ function! s:vimim_check_http_executable()
         endif
         let ret = libcall(cloud, "do_geturl", "__isvalid")
         if ret ==# "True"
-            let s:backend.cloud.sogou.executable = cloud
-            let s:backend.cloud.sogou.libcall = 1
+            let s:www_executable = cloud
+            let s:www_libcall = 1
             call s:vimim_do_cloud_if_no_embedded_backend()
         else
             return {}
         endif
     endif
     " step #2 of 3: try to find wget
-    if empty(s:backend.cloud.sogou.executable)
+    if empty(s:www_executable)
         let wget = 0
         if executable(s:path .  "wget.exe")
             let wget = s:path . "wget.exe"
@@ -4611,16 +4673,16 @@ function! s:vimim_check_http_executable()
             let msg = "wget is not available"
         else
             let wget_option = " -qO - --timeout 20 -t 10 "
-            let s:backend.cloud.sogou.executable = wget . wget_option
+            let s:www_executable = wget . wget_option
         endif
     endif
     " step #3 of 3: try to find curl if no wget
-    if empty(s:backend.cloud.sogou.executable)
+    if empty(s:www_executable)
         if executable('curl')
-            let s:backend.cloud.sogou.executable = "curl -s "
+            let s:www_executable = "curl -s "
         endif
     endif
-    if empty(s:backend.cloud.sogou.executable)
+    if empty(s:www_executable)
         return {}
     else
         call s:vimim_do_cloud_if_no_embedded_backend()
@@ -4669,7 +4731,7 @@ function! s:vimim_magic_tail(keyboard)
     elseif  magic_tail ==# "'"
         let msg = "trailing apostrophe => forced-cloud"
         let s:no_internet_connection = -1
-        let cloud = s:vimim_set_cloud_backend_if_http_executable()
+        let cloud = s:vimim_set_cloud_backend_if_www_executable()
         if empty(cloud)
             return []
         endif
@@ -4723,7 +4785,7 @@ endfunction
 " -------------------------------
 function! s:vimim_get_sogou_key()
 " -------------------------------
-    let executable = s:backend.cloud.sogou.executable
+    let executable = s:www_executable
     if empty(executable)
         return 0
     endif
@@ -4733,7 +4795,7 @@ function! s:vimim_get_sogou_key()
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     " --------------------------------------------------------------
     try
-        if s:backend.cloud.sogou.libcall
+        if s:www_libcall
             let input = cloud
             let output = libcall(executable, "do_geturl", input)
         else
@@ -4757,7 +4819,7 @@ endfunction
 function! s:vimim_get_cloud_sogou(keyboard, force)
 " ------------------------------------------------
     let keyboard = a:keyboard
-    let executable = s:backend.cloud.sogou.executable
+    let executable = s:www_executable
     if empty(executable) || empty(keyboard)
         return []
     endif
@@ -4779,7 +4841,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     " --------------------------------------------------------------
     try
-        if s:backend.cloud.sogou.libcall > 0
+        if s:www_libcall > 0
             let input = cloud . keyboard
             let output = libcall(executable, "do_geturl", input)
         else
@@ -4880,7 +4942,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_set_mycloud_backend()
 " -------------------------------------
-    let cloud = s:vimim_set_cloud_backend_if_http_executable()
+    let cloud = s:vimim_set_cloud_backend_if_www_executable()
     if empty(cloud)
         return {}
     endif
@@ -4899,13 +4961,8 @@ endfunction
 " --------------------------------------------
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
-"   " NOTE: *Not Responding* is frustrating: try sexy progress bar
-"   let progress = "VimIM checking ".s:vimim_unihan("mycloud")
-"   let progressbar = NewSimpleProgressBar(progress, 10)
-"   for line in range(10)
-        let cloud = s:vimim_check_mycloud_plugin()
-"       call progressbar.incr(1)
-"   endfor
+" NOTE: how to avoid *Not Responding*?
+    let cloud = s:vimim_check_mycloud_plugin()
     " this variable should not be used after initialization
     unlet s:vimim_mycloud_url
     if empty(cloud)
@@ -4933,7 +4990,7 @@ endfunction
 function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
 "  use the same function to access mycloud by libcall() or system()
-    let executable = s:backend.cloud.sogou.executable
+    let executable = s:www_executable
     if s:vimimdebug > 0
         call s:debugs("cloud", a:cloud)
         call s:debugs("cmd", a:cmd)
@@ -4949,7 +5006,7 @@ function! s:vimim_access_mycloud(cloud, cmd)
         return system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        if s:backend.cloud.sogou.libcall
+        if s:www_libcall
             let ret = libcall(executable, "do_geturl", a:cloud.input)
         else
             let ret = system(executable . shellescape(a:cloud.input))
@@ -5084,7 +5141,7 @@ function! s:vimim_check_mycloud_plugin()
             endif
         elseif part[0] ==# "http" || part[0] ==# "https"
             let cloud = s:vimim_mycloud_url
-            if !empty(s:backend.cloud.sogou.executable)
+            if !empty(s:www_executable)
                 let s:cloud_plugin_mode = "www"
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
                 if split(ret, "\t")[0] == "True"
@@ -5153,8 +5210,8 @@ endfunction
 " -------------------------------------
 function! s:vimim_url_xx_to_chinese(xx)
 " -------------------------------------
-    if s:backend.cloud.sogou.libcall > 0
-        let executable = s:backend.cloud.sogou.executable
+    if s:www_libcall > 0
+        let executable = s:www_executable
         let output = libcall(executable, "do_unquote", a:xx)
     else
         let input = a:xx
