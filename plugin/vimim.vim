@@ -44,7 +44,7 @@ let VimIM = " ====  Vim Input Method ==== {{{"
 "            * support Chinese input: "wubi", "boshiamy", "Cang Jie" etc
 "            * support internal code input: "UNICODE", "GBK", "Big5"
 "            * support "pinyin" including 6 "shuangpin"
-"            * support "digit" as a dynamic filter and search
+"            * support dynamic "digit filter" to "pinyin" and all
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
@@ -156,7 +156,7 @@ function! s:vimim_session_initialization()
     " --------------------------------
     let s:unicode_digit_lines = []
     let s:unicode_digit_cache = {}
-    let s:pinyin_and_digit = 0
+    let s:pinyin_plus_filter = 0
     let s:abcd = "'abcdefg"
     let s:pqwertyuio = range(10)
     let s:valid_key = "[0-9a-z'.]"
@@ -588,7 +588,7 @@ function! s:vimim_egg_vimim()
         if s:ui.root == 'directory'
             let directory  = s:vimim_unihan('directory')
             let datafile .=  "：" . directory . datafile
-            if s:pinyin_and_digit == 2
+            if s:pinyin_plus_filter == 2
                 let digit = s:path2 . "/digit/"
                 let option .= "/" . s:space . digit
             endif
@@ -596,10 +596,10 @@ function! s:vimim_egg_vimim()
         let option = "database " . datafile . s:space . option
         call add(eggs, option)
         if !empty(s:unicode_digit_lines)
-            let digit = s:path . "vimim.digit.txt"
-            if option !~ digit
-                let digit = "database " . datafile . s:space . digit
-                call add(eggs, digit)
+            let filter = s:path . "vimim.filter.txt"
+            if option !~ filter
+                let filter = "database " . datafile . s:space . filter
+                call add(eggs, filter)
             endif
         endif
     endif
@@ -1207,7 +1207,7 @@ function! s:vimim_statusline()
         let s:ui.statusline = s:vimim_get_shuangpin_keycodes().chinese
     endif
     " ------------------------------------
-    if s:pinyin_and_digit > 0 && s:ui.im == 'pinyin'
+    if s:pinyin_plus_filter > 0 && s:ui.im == 'pinyin'
         let im_digit = s:vimim_unihan('digit')
         let pinyin = s:vimim_unihan('pinyin')
         let s:ui.statusline = pinyin . s:plus . im_digit
@@ -1345,7 +1345,7 @@ function! s:vimim_label_navigation_on()
     let hjkl = 'hjklmnsxv'
     let hjkl_list = split(hjkl, '\zs')
     " ---------------------------------
-    if empty(s:pinyin_and_digit)
+    if empty(s:pinyin_plus_filter)
         call extend(hjkl_list, ['p'])
     endif
     " ---------------------------------
@@ -1838,7 +1838,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         let chinese = get(pairs, 1)
         " -------------------------------------------------
         let extra_text = menu
-        if s:pinyin_and_digit > 0 && len(s:menu_digit_as_filter) > 0
+        if s:pinyin_plus_filter > 0 && len(s:menu_digit_as_filter) > 0
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
         endif
@@ -1895,7 +1895,7 @@ function! s:vimim_get_labeling(label)
             let label2 = "_"
         endif
         " -----------------------------------------
-        if s:pinyin_and_digit > 0 || s:vimim_custom_skin == 2
+        if s:pinyin_plus_filter > 0 || s:vimim_custom_skin == 2
             let labeling = label2
         else
             let labeling .= label2
@@ -2289,11 +2289,11 @@ function! s:vimim_build_digit_filter_lines()
 " ------------------------------------------
 " Digit code such as four corner can be used as independent filter.
 " It works for sqlite, cloud as well as VimIM embedded backends.
-" http://vimim-data.googlecode.com/svn/trunk/data/vimim.digit.txt
-" ----------------------------------------------
-    let datafile = s:path . "vimim.digit.txt"
+" http://vimim-data.googlecode.com/svn/trunk/data/vimim.filter.txt
+" -----------------------------------------------------------------
+    let datafile = s:path . "vimim.filter.txt"
     if filereadable(datafile) && empty(s:unicode_digit_lines)
-        let s:pinyin_and_digit = 1
+        let s:pinyin_plus_filter = 1
         let s:vimim_static_input_style = 2
         let s:unicode_digit_lines = readfile(datafile)
     endif
@@ -2446,7 +2446,7 @@ function! s:vimim_build_unihan_reverse_cache(chinese)
 " [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
 " [unihan] u808f => 8022 cao4 copulate
 " ---------------------------------------------------
-    if empty(s:pinyin_and_digit) | return | endif
+    if empty(s:pinyin_plus_filter) | return | endif
     let chinese = a:chinese
     let chinese = substitute(chinese,'\w','','g')
     let characters = split(chinese, '\zs')
@@ -2465,7 +2465,7 @@ endfunction
 function! s:vimim_set_menu_digit_as_filter(keyboards)
 " ---------------------------------------------------
     let keyboards = a:keyboards
-    if s:pinyin_and_digit > 0 && len(keyboards) > 1
+    if s:pinyin_plus_filter > 0 && len(keyboards) > 1
         let menu = get(keyboards, 0)
         let filter = get(keyboards, 1)
         if menu =~ '\D'
@@ -2480,7 +2480,7 @@ endfunction
 function! s:vimim_1234567890_filter_on()
 " --------------------------------------
     if s:vimim_custom_menu_label < 1
-    \|| empty(s:pinyin_and_digit)
+    \|| empty(s:pinyin_plus_filter)
         return
     endif
     for _ in s:pqwertyuio
@@ -2494,7 +2494,7 @@ function! <SID>vimim_1234567890_filter(n)
 " ---------------------------------------
     let label = a:n
     if pumvisible()
-        if s:pinyin_and_digit < 1
+        if s:pinyin_plus_filter < 1
             let msg = "use 1234567890 as pinyin filter"
         else
             let label_alpha = join(s:pqwertyuio,'')
@@ -3253,7 +3253,7 @@ endfunction
 " ------------------------------
 function! s:vimim_localization()
 " ------------------------------
-    if s:pinyin_and_digit > 0
+    if s:pinyin_plus_filter > 0
         let s:abcd = "'abcdfgz"
         let s:pqwertyuio = split('pqwertyuio', '\zs')
     endif
@@ -3466,7 +3466,7 @@ function! s:vimim_unicode_4corner_pinyin(ddddd, more)
 " ---------------------------------------------------
     let hex = printf('u%04x', a:ddddd)
     let menu = s:space . hex . s:space . a:ddddd
-    if a:more > 0 && s:pinyin_and_digit > 0
+    if a:more > 0 && s:pinyin_plus_filter > 0
         let chinese = nr2char(a:ddddd)
         call s:vimim_build_unihan_reverse_cache(chinese)
         let   four = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
@@ -3641,6 +3641,15 @@ function! s:vimim_build_datafile_lines()
     \&& filereadable(datafile)
     \&& empty(s:backend.datafile[im].lines)
         let s:backend.datafile[im].lines = readfile(datafile)
+        " ------------------------------
+        if im == 'pinyin'
+            let digit = s:path . "vimim.4corner.txt"
+            if filereadable(digit)
+                let digit_lines = readfile(digit)
+                let s:backend.datafile[im].lines += digit_lines
+            endif
+        endif
+        " ------------------------------
     endif
 endfunction
 
@@ -3775,7 +3784,7 @@ function! s:vimim_sentence_match_cache(keyboard)
     endwhile
     " --------------------------------------------------
     let blocks = []
-    if max > 0 && len(results)
+    if max > 0 && len(results) > 0
         let blocks = s:vimim_break_string_at(keyboard, max)
     endif
     return blocks
@@ -3896,13 +3905,14 @@ function! s:vimim_break_pinyin_digit(keyboard)
 " --------------------------------------------
     let blocks = []
     let keyboard = a:keyboard
-    if s:pinyin_and_digit > 0
+    if s:pinyin_plus_filter > 0
         let pinyin_digit_pattern = '\d\+\l\='
         let digit = match(keyboard, pinyin_digit_pattern)
         if digit > 0
             let blocks = s:vimim_break_string_at(keyboard, digit)
         endif
     endif
+let g:g1=blocks
     return blocks
 endfunction
 
@@ -4056,7 +4066,7 @@ function! s:vimim_scan_backend_embedded_directory()
         let s:backend.directory[im].keycode = s:im_keycode[im]
         let s:backend.directory[im].chinese = s:vimim_unihan(im)
         " ------------------------------------------------------
-        if im =~ 'digit' | let s:pinyin_and_digit = 2 | endif
+        if im =~ 'digit' | let s:pinyin_plus_filter=2 | endif
     endfor
 endfunction
 
@@ -4908,12 +4918,8 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_do_force_mycloud()
 " ----------------------------------
-" 1 vim whatever.mycloud.vimim
-" 2 [option] to use local digit filter in onekey static mode
-"   2.1 http://vimim-data.googlecode.com/svn/trunk/data/vimim.digit.txt
-"   2.2 download above and throw the file to the vim plugin directiory
-"   2.3 vim whatever.mycloud.vimim
-"   2.4 [tip] in popop window: "qwertyuiop" means "1234567890"
+" (1) [quick test] vim whatever.mycloud.vimim
+" (2) [option] local digit filter can also be used
 " --------------------------------------------------------------
     let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     call s:vimim_set_mycloud()
