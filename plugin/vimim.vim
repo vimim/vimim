@@ -3454,11 +3454,9 @@ function! s:vimim_unicode_4corner_pinyin(ddddd, more)
         let unihan = get(s:vimim_reverse_one_entry(chinese,'unihan'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
         if empty(pinyin)
-            let pinyin = ""
-        else
-            let pinyin = s:space . pinyin
+            let pinyin = s:space
         endif
-        let menu .= s:space . unihan . pinyin
+        let menu .= s:space . unihan . s:space . chinese . s:space . pinyin
     endif
     return menu
 endfunction
@@ -3472,7 +3470,7 @@ function! s:vimim_internal_codes(numbers, more)
     let unicodes = []
     for ddddd in a:numbers
         let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
-        let menu_chinese = menu .' '. nr2char(ddddd)
+        let menu_chinese = menu .' '. s:space
         call add(unicodes, menu_chinese)
     endfor
     return unicodes
