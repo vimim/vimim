@@ -4330,14 +4330,11 @@ endfunction
 function! s:vimim_mkdir(option)
 " -----------------------------
 " Goal: creating directory xxx and adding files, based on vimim.xxx.txt
-" Sample file A: $VIM/vimfiles/plugin/vimim/digit/7132
+" Sample file A: $VIM/vimfiles/plugin/vimim/unihan/u808f
 " Sample file B: $VIM/vimfiles/plugin/vimim/pinyin/jjjj
 " ----------------------------- vim
-" Example: one   input: vimim.pinyin.txt  (the master file)
-"          many output: pinyin/ma3        (one sample slave file)
 " (1) $cd $VIM/vimfiles/plugin/vimim/
-" (2) $vi vimim.pinyin.txt
-"         :call g:vimim_mkdir1()
+" (2) $vi vimim.pinyin.txt  => :call g:vimim_mkdir1()
 " ----------------------------- bash
 " vimimmkdir1() { vi -E -n "+call g:vimim_mkdir1()" +x vimim.$1.txt; }
 " vimimmkdir2() { vi -E -n "+call g:vimim_mkdir2()" +x vimim.$1.txt; }
@@ -4351,6 +4348,9 @@ function! s:vimim_mkdir(option)
     let lines = readfile(bufname("%"))
     let option = a:option
     for line in lines
+        if line =~ '^#'
+            continue
+        endif
         let entries = split(line)
         let key = get(entries, 0)
         if match(key, "'") > -1
@@ -4399,8 +4399,6 @@ function! s:vimim_remove_duplication(chinese)
     for line in chinese
         let characters = split(line)
         for char in characters
-            " allow :: ## added to the source datafile
-            let char = substitute(char,':\+\|#\+','','g')
             if has_key(cache, char) || empty(char)
                 continue
             else
