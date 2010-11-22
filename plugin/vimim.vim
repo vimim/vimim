@@ -4081,15 +4081,14 @@ function! s:vimim_force_scan_current_buffer()
         call s:vimim_do_force_mycloud()
     " ---------------------------------
     else
-        let s:ui.root = "datafile"
-        if buffer =~? 'directory'
-            let s:ui.root = "directory"
+        let s:ui.root = "directory"
+        if empty(s:path2)
+            let s:ui.root = "datafile"
         endif
         let im = s:vimim_get_im_from_buffer_name(buffer)
         if !empty(im)
             let s:ui.im = im
         endif
-    " ---------------------------------
     endif
 endfunction
 
