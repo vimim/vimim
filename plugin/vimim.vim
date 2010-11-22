@@ -287,7 +287,6 @@ function! s:vimim_dictionary_unihan()
     let s:unihan['plusplus'] = ['加加']
     let s:unihan['purple'] = ['紫光']
     let s:unihan['flypy'] = ['小鹤','小鶴']
-    let s:unihan['cloud_no'] = ['晴天无云','晴天無雲']
     let s:unihan['cloud_atwill'] = ['想云就云','想雲就雲']
     let s:unihan['cloud'] = ['云输入','雲輸入']
     let s:unihan['mycloud'] = ['自己的云','自己的雲']
@@ -580,49 +579,35 @@ function! s:vimim_egg_vimim()
     endif
     " ----------------------------------
     let option = s:backend[s:ui.root][s:ui.im].datafile
+    let ciku = s:vimim_unihan('datafile')
     if empty(option)
         let msg = "no ciku found"
     else
-        let ciku = s:vimim_unihan('datafile')
         if s:ui.root == 'directory'
             let directory  = s:vimim_unihan('directory')
             let ciku .=  "：" . directory . ciku . s:space
         endif
         let ciku = "database " . ciku
         call add(eggs, ciku . option."/")
-        " ------------------------------
-        let filter = 0
-        if s:pinyin_plus_4corner_filter == 2
-            let filter = ciku . s:path2 . "unihan/"
-        elseif !empty(s:unihan_4corner_lines)
-            let filter = s:path . "vimim.unihan_4corner.txt"
-            if option !~ filter
-                let filter = ciku . s:space . filter
-            endif
-        endif
-        if !empty(filter)
-            call add(eggs, filter)
-        endif
     endif
     " ----------------------------------
-    let cloud = s:vimim_cloud_sogou
-    let sogou = s:vimim_unihan('sogou')
-    let option = "cloud\t " . sogou ."："
-    let CLOUD = "start_to_use_cloud_after_" .  cloud . "_characters"
-    if cloud == -1
-        let CLOUD = s:vimim_unihan('cloud_atwill')
-    elseif cloud < -1
-        let CLOUD = s:vimim_unihan('cloud_no')
-    elseif cloud == 888
-        let CLOUD = s:vimim_unihan('cloud_atwill')
-    elseif cloud == 1
-        let CLOUD = s:vimim_unihan('all')
-        let CLOUD .= s:vimim_unihan('cloud')
+    let filter = 0
+    if s:pinyin_plus_4corner_filter == 2
+        let filter = ciku . s:path2 . "unihan/"
+    elseif s:pinyin_plus_4corner_filter == 1
+        let filter = s:path . "vimim.unihan_4corner.txt"
+        let ciku = s:vimim_unihan('digit') . "："
+        let filter = "database " . ciku . filter
     endif
-    let option .= CLOUD
-    if s:ui.has_dot == 1 || s:ui.im == 'mycloud'
-        let msg = "Who needs crazy sogou cloud?"
-    else
+    if !empty(filter)
+        call add(eggs, filter)
+    endif
+    " ----------------------------------
+    if s:vimim_cloud_sogou == 888
+        let CLOUD = s:vimim_unihan('cloud_atwill')
+        let sogou = s:vimim_unihan('sogou')
+        let option = "cloud\t " . sogou ."："
+        let option .= CLOUD
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -3910,7 +3895,6 @@ function! s:vimim_break_pinyin_digit(keyboard)
             let blocks = s:vimim_break_string_at(keyboard, digit)
         endif
     endif
-let g:g1=blocks
     return blocks
 endfunction
 
