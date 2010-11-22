@@ -43,8 +43,7 @@ let VimIM = " ====  Vim Input Method ==== {{{"
 "            * support Chinese search using English without opening menu
 "            * support Chinese input: "wubi", "boshiamy", "Cang Jie" etc
 "            * support internal code input: "UNICODE", "GBK", "Big5"
-"            * support "pinyin" including 6 "shuangpin"
-"            * support dynamic "digit filter" to "pinyin" and all
+"            * support "pinyin" including 6 "shuangpin" and "digit filter"
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
@@ -4599,8 +4598,7 @@ endfunction
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
 " s:vimim_cloud_sogou=0  : default, auto open when no datafile
-" s:vimim_cloud_sogou=-1 : cloud is open when cloud at will
-" s:vimim_cloud_sogou=-2 : cloud is shut down without condition
+" s:vimim_cloud_sogou=-1 : cloud is shut down without condition
 " -------------------------------------------------------------
     let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
     if empty(embedded_backend)
@@ -4642,7 +4640,7 @@ endfunction
 " ---------------------------------------
 function! s:vimim_check_http_executable()
 " ---------------------------------------
-    if s:vimim_cloud_sogou < -1
+    if s:vimim_cloud_sogou < 0
         return {}
     endif
     " step #1 of 3: try to find libvimim
@@ -5296,7 +5294,6 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     let s:vimim_static_input_style = 2
-    let s:vimim_cloud_sogou = -1
     let s:vimim_normal_ctrl_6_to_toggle = 1
     let s:vimim_custom_skin = 2
     let s:vimim_custom_laststatus = 0
