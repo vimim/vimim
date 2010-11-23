@@ -141,6 +141,7 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_scan_backend_mycloud()
+    sil!call s:vimim_initialize_skin()
     " -------------------------------------
 endfunction
 
@@ -900,7 +901,6 @@ function! s:vimim_chinesemode(switch)
         let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
     endif
     if empty(switch)
-        call s:vimim_initialize_skin()
         if s:chinese_input_mode == 'onekey'
             return s:vimim_start_onekey()
         else
@@ -1070,21 +1070,21 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_skin()
 " ---------------------------------
-    if s:vimim_custom_skin > 0
-        " ------------------------------
-        highlight! link PmenuSel   Title
-        highlight! link StatusLine Title
-        highlight!      Pmenu      NONE
-        highlight!      PmenuSbar  NONE
-        highlight!      PmenuThumb NONE
-        " ------------------------------
-        if s:vimim_custom_skin == 1
-            set laststatus=2
-            sil!call s:vimim_set_statusline()
-        elseif s:vimim_custom_skin == 2
-            echoh NonText | echo s:vimim_statusline() | echohl None
-        endif
-        let s:vimim_custom_skin = 0
+    if s:vimim_custom_skin < 1
+        return
+    endif
+    " -----------------------------
+    highlight! link PmenuSel   Title
+    highlight! link StatusLine Title
+    highlight!      Pmenu      NONE
+    highlight!      PmenuSbar  NONE
+    highlight!      PmenuThumb NONE
+    " -----------------------------
+    if s:vimim_custom_skin == 1
+        set laststatus=2
+        sil!call s:vimim_set_statusline()
+    elseif s:vimim_custom_skin == 2
+        echoh NonText | echo s:vimim_statusline() | echohl None
     endif
 endfunction
 
@@ -3428,7 +3428,7 @@ function! s:vimim_unicode_4corner_pinyin(ddddd, more)
         if empty(pinyin)
             let pinyin = s:space
         endif
-        let menu .= s:space . unihan . s:space . chinese . s:space . pinyin
+        let menu .= s:space . unihan . s:space . pinyin
     endif
     return menu
 endfunction
@@ -3442,7 +3442,8 @@ function! s:vimim_internal_codes(numbers, more)
     let unicodes = []
     for ddddd in a:numbers
         let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
-        let menu_chinese = menu .' '. s:space
+        let chinese = nr2char(ddddd)
+        let menu_chinese = menu .' '. chinese
         call add(unicodes, menu_chinese)
     endfor
     return unicodes
