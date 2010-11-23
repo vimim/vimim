@@ -4437,11 +4437,15 @@ function! s:vimim_check_sqlite_availability()
     if !executable(executable)
         return 0
     endif
-    let datafile = s:path . 'cedict.db'
+    let sqlite = 'cedict.db'
+    let datafile = s:path . sqlite
     if !filereadable(datafile)
-        let datafile = '/usr/local/share/cjklib/cedict.db'
+        let datafile = s:path2 . sqlite
         if !filereadable(datafile)
-            return 0
+            let datafile = '/usr/local/share/cjklib/'.sqlite
+            if !filereadable(datafile)
+                return 0
+            endif
         endif
     endif
     let s:vimim_imode_pinyin = 0
