@@ -258,7 +258,6 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['array30'] = ['行列']
     let s:chinese['erbi'] = ['二笔','二筆']
     let s:chinese['sogou'] = ['搜狗']
-    let s:chinese['all'] = ['全']
     let s:chinese['shezhi'] = ['设置','設置']
     let s:chinese['jidian'] = ['极点','極點']
     let s:chinese['new_century'] = ['新世纪','新世紀']
@@ -270,7 +269,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['purple'] = ['紫光']
     let s:chinese['flypy'] = ['小鹤','小鶴']
     let s:chinese['cloud_atwill'] = ['想云就云','想雲就雲']
-    let s:chinese['cloud'] = ['云输入','雲輸入']
+    let s:chinese['sogou'] = ['搜狗云','搜狗雲']
     let s:chinese['mycloud'] = ['自己的云','自己的雲']
 endfunction
 
@@ -279,7 +278,7 @@ function! s:vimim_dictionary_im_keycode()
 " ---------------------------------------
     let s:im_keycode = {}
     let s:im_keycode['internal'] = "[0-9a-z]"
-    let s:im_keycode['cloud']    = "[0-9a-z.]"
+    let s:im_keycode['sogou']    = "[0-9a-z.]"
     let s:im_keycode['mycloud']  = "[0-9a-z'.]"
     let s:im_keycode['sqlite']   = "[0-9a-z]"
     let s:im_keycode['pinyin']   = "[0-9a-z']"
@@ -1165,15 +1164,12 @@ function! s:vimim_statusline()
     endif
     " ------------------------------------
     if s:vimim_cloud_sogou == 1
-            let all = s:vimim_chinese('all')
-            let cloud = s:backend.cloud.sogou.chinese
-            let s:ui.statusline = all . cloud
+        let s:ui.statusline = s:backend.cloud.sogou.chinese
     elseif s:vimim_cloud_sogou == -777
-        let mycloud = s:vimim_chinese('mycloud')
         if !empty(s:vimim_cloud_plugin)
-            let s:ui.statusline = s:backend.cloud.mycloud.directory
+            let __getname = s:backend.cloud.mycloud.directory
+            let s:ui.statusline .= s:space . __getname
         endif
-        let s:ui.statusline = mycloud . s:space . s:ui.statusline
     elseif empty(s:ui.statusline)
         let s:ui.statusline = s:vimim_chinese('internal')
         let s:ui.statusline .= s:vimim_chinese('input')
@@ -4045,13 +4041,13 @@ function! s:vimim_force_scan_current_buffer()
     " ---------------------------------
     if buffer =~? 'sqlite'
         call s:vimim_do_force_sqlite()
-    elseif buffer =~? 'sogou'
-        call s:vimim_do_force_cloud()
-    elseif buffer =~? 'mycloud'
+    elseif buffer =~# 'sogou'
+        call s:vimim_do_force_sogou()
+    elseif buffer =~# 'mycloud'
         call s:vimim_do_force_mycloud()
     endif
     " ---------------------------------
-    let s:backend_loaded = 0
+"   let s:backend_loaded = 0
 endfunction
 
 " -------------------------------------------------
@@ -4529,7 +4525,7 @@ let VimIM = " ====  Backend=>Cloud   ==== {{{"
 call add(s:vimims, VimIM)
 
 " --------------------------------
-function! s:vimim_do_force_cloud()
+function! s:vimim_do_force_sogou()
 " --------------------------------
     let s:vimim_cloud_sogou = 1
     call s:vimim_set_sogou()
@@ -4562,7 +4558,7 @@ endfunction
 " ---------------------------
 function! s:vimim_set_sogou()
 " ---------------------------
-    let cloud = s:vimim_set_cloud_backend_if_www_executable()
+    let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
     if empty(cloud)
         let s:vimim_cloud_sogou = 0
     else
@@ -4571,28 +4567,29 @@ function! s:vimim_set_sogou()
     endif
 endfunction
 
-" -----------------------------------------------------
-function! s:vimim_set_cloud_backend_if_www_executable()
-" -----------------------------------------------------
+" -------------------------------------------------------
+function! s:vimim_set_cloud_backend_if_www_executable(im)
+" -------------------------------------------------------
     if s:ui.has_dot == 1
         return 0
     endif
-    let s:backend.cloud.sogou = s:vimim_one_backend_hash()
-    let cloud = s:vimim_check_http_executable()
+    let im = a:im
+    let s:backend.cloud[im] = s:vimim_one_backend_hash()
+    let cloud = s:vimim_check_http_executable(im)
     if empty(cloud)
         return 0
     else
-        let s:backend.cloud.sogou.root = "cloud"
-        let s:backend.cloud.sogou.im = "pinyin"
-        let s:backend.cloud.sogou.keycode = s:im_keycode["cloud"]
-        let s:backend.cloud.sogou.chinese = s:vimim_chinese("cloud")
+        let s:backend.cloud[im].root = "cloud"
+        let s:backend.cloud[im].im = im
+        let s:backend.cloud[im].keycode = s:im_keycode[im]
+        let s:backend.cloud[im].chinese = s:vimim_chinese(im)
         return cloud
     endif
 endfunction
 
-" ---------------------------------------
-function! s:vimim_check_http_executable()
-" ---------------------------------------
+" -----------------------------------------
+function! s:vimim_check_http_executable(im)
+" -----------------------------------------
     if s:vimim_cloud_sogou < 0
         return {}
     endif
@@ -4641,7 +4638,7 @@ function! s:vimim_check_http_executable()
     else
         call s:vimim_do_cloud_if_no_embedded_backend()
     endif
-    return s:backend.cloud.sogou
+    return s:backend.cloud[a:im]
 endfunction
 
 " -------------------------------------------------
@@ -4685,7 +4682,7 @@ function! s:vimim_magic_tail(keyboard)
     elseif  magic_tail ==# "'"
         let msg = "trailing apostrophe => forced-cloud"
         let s:no_internet_connection = -1
-        let cloud = s:vimim_set_cloud_backend_if_www_executable()
+        let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
         if empty(cloud)
             return []
         endif
@@ -4850,7 +4847,7 @@ function! s:vimim_do_force_mycloud()
 " (1) [quick test] vim whatever.mycloud.vimim
 " (2) [option] local digit filter can also be used
 " --------------------------------------------------------------
-    if empty(s:vimim_mycloud_url)
+    if len(s:vimim_mycloud_url) < 3
         let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     endif
     call s:vimim_set_mycloud()
@@ -4891,11 +4888,10 @@ endfunction
 " -------------------------------------
 function! s:vimim_set_mycloud_backend()
 " -------------------------------------
-    let cloud = s:vimim_set_cloud_backend_if_www_executable()
+    let cloud = s:vimim_set_cloud_backend_if_www_executable('mycloud')
     if empty(cloud)
         return {}
     endif
-    let s:backend.cloud.mycloud = s:vimim_one_backend_hash()
     let mycloud = s:vimim_check_mycloud_availability()
     if empty(mycloud)
         return {}
@@ -4910,10 +4906,11 @@ endfunction
 " --------------------------------------------
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
-" NOTE: how to avoid *Not Responding*?
+    " NOTE: how to avoid *Not Responding*?
     let cloud = s:vimim_check_mycloud_plugin()
-    " this variable should not be used after initialization
-    unlet s:vimim_mycloud_url
+    " (A) this variable should not be used after initialization
+    " (B) reuse it to support forced buffer scan: vim mycloud.vimim
+    " unlet s:vimim_mycloud_url
     if empty(cloud)
         let s:vimim_cloud_plugin = 0
         return 0
@@ -4926,11 +4923,8 @@ function! s:vimim_check_mycloud_availability()
         let s:vimim_cloud_plugin = 0
         return 0
     else
-        let s:backend.cloud.mycloud = copy(s:backend.cloud.sogou)
-        let s:backend.cloud.mycloud.name = "mycloud"
         let s:backend.cloud.mycloud.directory = directory
         let s:backend.cloud.mycloud.keycode = s:im_keycode["mycloud"]
-        let s:backend.cloud.mycloud.chinese = s:vimim_chinese("mycloud")
         return cloud
     endif
 endfunction
@@ -5213,7 +5207,7 @@ function! s:vimim_one_backend_hash()
 " ----------------------------------
     let one_backend_hash = {}
     let one_backend_hash.root = 0
-    let one_backend_hash.name = 0
+    let one_backend_hash.im = 0
     let one_backend_hash.executable = 0
     let one_backend_hash.libcall = 0
     let one_backend_hash.sogou_key = 0
