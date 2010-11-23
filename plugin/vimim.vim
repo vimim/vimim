@@ -368,11 +368,9 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_normal_ctrl_6_to_toggle")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_english_punctuation")
-    call add(G, "g:vimim_imode_universal")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_reverse_pageup_pagedown")
-    call add(G, "g:vimim_fancy_input_style")
     call add(G, "g:vimim_shuangpin_abc")
     call add(G, "g:vimim_shuangpin_microsoft")
     call add(G, "g:vimim_shuangpin_nature")
@@ -1464,9 +1462,7 @@ function! g:vimim()
         if s:chinese_input_mode =~ 'dynamic'
             call g:vimim_reset_after_auto_insert()
         endif
-        if empty(s:vimim_fancy_input_style)
-            let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
-        endif
+        let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
     else
         call g:vimim_reset_after_auto_insert()
     endif
@@ -2118,7 +2114,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------------
 function! s:vimim_dictionary_quantifiers()
 " ----------------------------------------
-    if s:vimim_imode_universal < 1 && s:vimim_imode_pinyin < 1
+    if s:vimim_imode_pinyin < 1
         return
     endif
     let q = {}
@@ -2525,12 +2521,11 @@ call add(s:vimims, VimIM)
 
 " -----------------------------------
 function! s:vimim_initialize_pinyin()
-" -----------------------------------
+" ----------------------------------- todo
     if s:ui.im != 'pinyin'
         return
     endif
     if empty(s:vimim_imode_pinyin)
-    \&& empty(s:vimim_imode_universal)
     \&& s:shuangpin_flag < 1
         let s:vimim_imode_pinyin = 1
     endif
@@ -4431,7 +4426,7 @@ function! s:vimim_check_sqlite_availability()
     let sqlite = 'cedict.db'
     let datafile = s:path . sqlite
     if !filereadable(datafile)
-        let datafile = s:path2 . sqlite
+        let datafile = s:vimimdata.sqlite
         if !filereadable(datafile)
             let datafile = '/usr/local/share/cjklib/'.sqlite
             if !filereadable(datafile)
@@ -5267,6 +5262,7 @@ function! s:vimim_initialize_debug()
     let s:path2 = 0
     let s:backend_loaded = 0
     let s:chinese_input_mode = 0
+    let s:vimimdata = '/vimim/svn/vimim-data/trunk/data/'
     " ------------------------------
     let dir = s:path . "tmp"
     if isdirectory(dir)
@@ -5649,7 +5645,6 @@ if a:start
 
     let last_seen_nonsense_column = start_column
     let last_seen_backslash_column = start_column
-    let all_digit = 1
 
     let nonsense_pattern = "[0-9.']"
     if s:ui.im == 'pinyin'
@@ -5664,12 +5659,6 @@ if a:start
             if byte_before !~# nonsense_pattern
                 let last_seen_nonsense_column = start_column
             endif
-            if byte_before =~# '\l'
-            \&& all_digit > 0
-            \&& s:ui.im != 'phonetic'
-            \&& s:ui.im != 'array30'
-                let all_digit = 0
-            endif
         elseif byte_before=='\' && s:vimim_backslash_close_pinyin>0
             " do nothing for pinyin with leading backslash
             return last_seen_backslash_column
@@ -5678,20 +5667,6 @@ if a:start
         endif
         let byte_before = current_line[start_column-1]
     endwhile
-
-    if all_digit < 1
-        let start_column = last_seen_nonsense_column
-        let char_1st = current_line[start_column]
-        let char_2nd = current_line[start_column+1]
-        if char_1st ==# "'"
-            if s:vimim_imode_universal > 0
-            \&& char_2nd =~# "[0-9ds']"
-                let msg = "sharing apostrophe as much as possible"
-            else
-                let start_column += 1
-            endif
-        endif
-    endif
 
     let s:start_row_before = start_row
     let s:current_positions = current_positions
@@ -5767,16 +5742,6 @@ else
     if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
         let msg = " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
         let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
-        if !empty(len(chinese_numbers))
-            return s:vimim_popupmenu_list(chinese_numbers)
-        endif
-    endif
-
-    " [imode] magic leading apostrophe: universal imode
-    " -------------------------------------------------
-    if s:vimim_imode_universal > 0 && keyboard =~# "^'"
-    \&& (empty(s:chinese_input_mode) || s:chinese_input_mode=~ 'onekey')
-        let chinese_numbers = s:vimim_imode_number(keyboard, "'")
         if !empty(len(chinese_numbers))
             return s:vimim_popupmenu_list(chinese_numbers)
         endif
