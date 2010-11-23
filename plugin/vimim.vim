@@ -18,12 +18,12 @@ let $VimIM = "$Revision$"
 " - VimIM 內碼:  type:   vimimunicode<C-6><C-6>
 " - VimIM 設置:  type:  vimimdefaults<C-6><C-6>
 " -----------------------------------------------------------------
-let egg  = ["http://code.google.com/p/vimim/issues/entry         "]
-let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506 "]
-let egg += ["http://vimim-data.googlecode.com                    "]
-let egg += ["http://pim-cloud.appspot.com                        "]
-let egg += ["http://groups.google.com/group/vimim                "]
-let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html    "]
+let egg  = ["http://code.google.com/p/vimim/issues/entry"]
+let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506"]
+let egg += ["http://vimim-data.googlecode.com"]
+let egg += ["http://pim-cloud.appspot.com"]
+let egg += ["http://groups.google.com/group/vimim"]
+let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
 " -----------------------------------------------------------------
 
