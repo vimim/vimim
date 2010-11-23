@@ -4419,8 +4419,6 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_do_force_sqlite()
 " ---------------------------------
-    let s:vimim_cloud_sogou = 1
-    call s:vimim_set_sogou()
     let backend = s:vimim_check_sqlite_availability()
     if empty(backend)
         return
