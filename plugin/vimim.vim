@@ -200,9 +200,6 @@ function! s:vimim_session_finalization()
     if s:vimim_imode_universal > 0 || s:vimim_imode_pinyin  > 0
         call s:vimim_initialize_quantifiers()
     endif
-    if s:vimim_custom_skin > 0
-        call s:vimim_initialize_skin()
-    endif
     if empty(s:vimim_cloud_sogou)
         let s:vimim_cloud_sogou = 888
     endif
@@ -408,7 +405,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_custom_laststatus")
     call add(G, "g:vimim_custom_menu_label")
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_onekey_double_ctrl6")
@@ -917,7 +913,7 @@ function! s:vimim_chinesemode(switch)
         let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
     endif
     if empty(switch)
-        call s:vimim_i_chinese_mode_on()
+        call s:vimim_initialize_skin()
         if s:chinese_input_mode == 'onekey'
             return s:vimim_start_onekey()
         else
@@ -1087,16 +1083,27 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_skin()
 " ---------------------------------
-    highlight! link PmenuSel   Title
-    highlight! link StatusLine Title
-    highlight!      Pmenu      NONE
-    highlight!      PmenuSbar  NONE
-    highlight!      PmenuThumb NONE
+    if s:vimim_custom_skin > 0
+        " ------------------------------
+        highlight! link PmenuSel   Title
+        highlight! link StatusLine Title
+        highlight!      Pmenu      NONE
+        highlight!      PmenuSbar  NONE
+        highlight!      PmenuThumb NONE
+        " ------------------------------
+        if s:vimim_custom_skin == 1
+            set laststatus=2
+            sil!call s:vimim_set_statusline()
+        elseif s:vimim_custom_skin == 2
+            echoh NonText | echo s:vimim_statusline() | echohl None
+        endif
+        let s:vimim_custom_skin = 0
+    endif
 endfunction
 
-" --------------------------------------
-function! s:vimim_i_cursor_color(switch)
-" --------------------------------------
+" ------------------------------------
+function! s:vimim_cursor_color(switch)
+" ------------------------------------
     if empty(s:chinese_input_mode)
         return
     endif
@@ -1105,21 +1112,6 @@ function! s:vimim_i_cursor_color(switch)
         highlight! Cursor guifg=bg guibg=fg
     else
         highlight! Cursor guifg=bg guibg=Green
-    endif
-endfunction
-
-" -----------------------------------
-function! s:vimim_i_chinese_mode_on()
-" -----------------------------------
-    if s:vimim_custom_skin < 2
-        if s:vimim_custom_laststatus > 0
-            set laststatus=2
-        endif
-        " let b:keymap_name = s:vimim_statusline()
-        sil!call s:vimim_set_statusline()
-    endif
-    if s:vimim_custom_laststatus < 1
-        echoh NonText| echo s:vimim_statusline()|echohl None
     endif
 endfunction
 
@@ -4057,7 +4049,7 @@ function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
-        let msg = "vim test.whatever.vimim"
+        let s:vimim_custom_skin = 1
     else
         return
     endif
@@ -5296,7 +5288,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 2
     let s:vimim_normal_ctrl_6_to_toggle = 1
     let s:vimim_custom_skin = 2
-    let s:vimim_custom_laststatus = 0
     let s:vimim_imode_pinyin = 1
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_debug = 9
@@ -5510,7 +5501,7 @@ function! s:vimim_start()
 " -----------------------
     sil!call s:vimim_plugins_fix_start()
     sil!call s:vimim_i_setting_on()
-    sil!call s:vimim_i_cursor_color(1)
+    sil!call s:vimim_cursor_color(1)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_12345678_label_on()
 endfunction
@@ -5519,7 +5510,7 @@ endfunction
 function! s:vimim_stop()
 " ----------------------
     sil!call s:vimim_i_setting_off()
-    sil!call s:vimim_i_cursor_color(0)
+    sil!call s:vimim_cursor_color(0)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
