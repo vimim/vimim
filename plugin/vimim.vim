@@ -364,7 +364,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_normal_ctrl_6_to_toggle")
+    call add(G, "g:vimim_ctrl_6_to_toggle")
+    call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_pinyin")
@@ -377,7 +378,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_purple")
     call add(G, "g:vimim_shuangpin_flypy")
     call add(G, "g:vimim_static_input_style")
-    call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_super_internal_input")
@@ -388,13 +388,13 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_use_cache")
+    call add(G, "g:vimim_n_search_chinese")
     call add(G, "g:vimim_auto_copy_clipboard")
-    call add(G, "g:vimim_chinese_punctuation")
+    call add(G, "g:vimim_punctuation_chinese")
+    call add(G, "g:vimim_punctuation_navigation")
     call add(G, "g:vimim_custom_menu_label")
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_onekey_double_ctrl6")
-    call add(G, "g:vimim_punctuation_navigation")
-    call add(G, "g:vimim_n_next_search_chinese")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -544,7 +544,7 @@ function! s:vimim_egg_vimim()
         let toggle = auto . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "i_CTRL-Space"
-    elseif s:vimim_normal_ctrl_6_to_toggle == 1
+    elseif s:vimim_ctrl_6_to_toggle == 1
         let toggle = "OneKey　normal　<CTRL-6>"
     elseif s:vimim_tab_as_onekey == 1
         let toggle = "Tab_as_OneKey"
@@ -1917,7 +1917,7 @@ endfunction
 " ---------------------------------------
 function! <SID>vimim_toggle_punctuation()
 " ---------------------------------------
-    if s:vimim_chinese_punctuation > -1
+    if s:vimim_punctuation_chinese > -1
         let s:chinese_punctuation = (s:chinese_punctuation+1)%2
         sil!call s:vimim_punctuation_on()
     endif
@@ -1997,7 +1997,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
-    if s:vimim_chinese_punctuation < 0
+    if s:vimim_punctuation_chinese < 0
         return
     endif
     " ---------------------------------------
@@ -3060,7 +3060,7 @@ function! s:vimim_set_special_im_property()
     \|| s:ui.im == 'phonetic'
     \|| s:ui.im == 'array30'
         let s:ui.has_dot = 1  "| dot in datafile
-        let s:vimim_chinese_punctuation = -1
+        let s:vimim_punctuation_chinese = -1
         let s:vimim_punctuation_navigation = -1
     endif
 endfunction
@@ -5241,7 +5241,7 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     let s:vimim_static_input_style = 2
-    let s:vimim_normal_ctrl_6_to_toggle = 1
+    let s:vimim_ctrl_6_to_toggle = 1
     let s:vimim_custom_skin = 2
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_debug = 9
@@ -5486,7 +5486,7 @@ function! s:reset_before_anything()
     let s:no_internet_connection = 0
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
-    let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
+    let s:chinese_punctuation = (s:vimim_punctuation_chinese+1)%2
 endfunction
 
 " --------------------------------
@@ -5850,7 +5850,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_chinesemode_mapping_on()
 " ----------------------------------------
-    if s:vimim_normal_ctrl_6_to_toggle == 1
+    if s:vimim_ctrl_6_to_toggle == 1
         noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
     elseif !hasmapto('<Plug>VimimTrigger', 'i')
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
@@ -5886,7 +5886,7 @@ function! s:vimim_onekey_mapping_on()
     if !hasmapto('<C-^>', 'v')
         xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
-    if s:vimim_n_next_search_chinese > 0
+    if s:vimim_n_search_chinese > 0
         noremap <silent> n :sil!call <SID>:vimim_search()<CR>n
     endif
     if s:vimim_tab_as_onekey == 1
