@@ -109,7 +109,6 @@ let s:path = expand("<sfile>:p:h")."/"
 function! s:vimim_frontend_initialization()
 " -----------------------------------------
     sil!call s:vimim_force_scan_current_buffer()
-    sil!call s:vimim_initialize_pinyin()
     sil!call s:vimim_initialize_shuangpin()
     sil!call s:vimim_initialize_keycode()
     sil!call s:vimim_set_special_im_property()
@@ -133,15 +132,15 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_initialize_frontend()
     sil!call s:vimim_initialize_backend()
     sil!call s:vimim_initialize_i_setting()
-    sil!call s:vimim_dictionary_unihan()
+    sil!call s:vimim_dictionary_chinese()
     sil!call s:vimim_dictionary_punctuation()
-    sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_dictionary_im_keycode()
     sil!call s:vimim_scan_backend_internal()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_scan_backend_mycloud()
+    sil!call s:vimim_dictionary_quantifiers()
     " -------------------------------------
 endfunction
 
@@ -194,86 +193,85 @@ function! s:vimim_initialize_session()
 endfunction
 
 " -------------------------------
-function! s:vimim_unihan(english)
+function! s:vimim_chinese(english)
 " -------------------------------
     let key = a:english
     let chinese = a:english
-    if has_key(s:unihan, key)
-        let chinese = get(s:unihan[key], 0)
-        if v:lc_time !~ 'gb2312' && len(s:unihan[key]) > 1
-            let chinese = get(s:unihan[key], 1)
+    if has_key(s:chinese, key)
+        let chinese = get(s:chinese[key], 0)
+        if v:lc_time !~ 'gb2312' && len(s:chinese[key]) > 1
+            let chinese = get(s:chinese[key], 1)
         endif
     endif
     return chinese
 endfunction
 
-" -----------------------------------
-function! s:vimim_dictionary_unihan()
-" -----------------------------------
+" ------------------------------------
+function! s:vimim_dictionary_chinese()
+" ------------------------------------
     let s:space = "　"
     let s:plus  = "＋"
     let s:colon = "："
-    let s:unihan = {}
-    let s:unihan['vim1'] = ['文本编辑器','文本編輯器']
-    let s:unihan['vim2'] = ['最牛']
-    let s:unihan['vim3'] = ['精力']
-    let s:unihan['vim4'] = ['生气','生氣']
-    let s:unihan['vim5'] = ['中文输入法','中文輸入法']
-    let s:unihan['auto'] = ['自动','自動']
-    let s:unihan['internal'] = ['内码','內碼']
-    let s:unihan['unicode'] = ['统一码','統一碼']
-    let s:unihan['big5'] = ['大五码','大五碼']
-    let s:unihan['gb'] = ['国标码','国标碼']
-    let s:unihan['bracket_l'] = ['《','【']
-    let s:unihan['bracket_r'] = ['》','】']
-    let s:unihan['onekey'] = ['点石成金','點石成金']
-    let s:unihan['database'] = ['数据库','數據庫']
-    let s:unihan['directory'] = ['目录','目錄']
-    let s:unihan['datafile'] = ['词库','詞庫']
-    let s:unihan['computer'] = ['电脑','電腦']
-    let s:unihan['encoding'] = ['编码','編碼']
-    let s:unihan['environment'] = ['环境','環境']
-    let s:unihan['input'] = ['输入','輸入']
-    let s:unihan['font'] = ['字体','字體']
-    let s:unihan['myversion'] = ['版本']
-    let s:unihan['classic'] = ['经典','經典']
-    let s:unihan['static'] = ['静态','靜態']
-    let s:unihan['dynamic'] = ['动态','動態']
-    let s:unihan['style'] = ['风格','風格']
-    let s:unihan['wubi'] = ['五笔','五筆']
-    let s:unihan['digit'] = ['数码','数碼']
-    let s:unihan['ctc'] = ['中文电码','中文電碼']
-    let s:unihan['11643'] = ['交换码','交換碼']
-    let s:unihan['english'] = ['英文']
-    let s:unihan['hangul'] = ['韩文','韓文']
-    let s:unihan['xinhua'] = ['新华','新華']
-    let s:unihan['pinyin'] = ['拼音']
-    let s:unihan['cangjie'] = ['仓颉','倉頡']
-    let s:unihan['boshiamy'] = ['呒虾米','嘸蝦米']
-    let s:unihan['zhengma'] = ['郑码','鄭碼']
-    let s:unihan['yong'] = ['永码','永碼']
-    let s:unihan['nature'] = ['自然']
-    let s:unihan['quick'] = ['速成']
-    let s:unihan['yong'] = ['永码','永碼']
-    let s:unihan['wu'] = ['吴语','吳語']
-    let s:unihan['phonetic'] = ['注音']
-    let s:unihan['array30'] = ['行列']
-    let s:unihan['erbi'] = ['二笔','二筆']
-    let s:unihan['sogou'] = ['搜狗']
-    let s:unihan['all'] = ['全']
-    let s:unihan['shezhi'] = ['设置','設置']
-    let s:unihan['jidian'] = ['极点','極點']
-    let s:unihan['new_century'] = ['新世纪','新世紀']
-    let s:unihan['shuangpin'] = ['双拼','雙拼']
-    let s:unihan['abc'] = ['智能']
-    let s:unihan['microsoft'] = ['微软','微軟']
-    let s:unihan['nature'] = ['自然']
-    let s:unihan['plusplus'] = ['加加']
-    let s:unihan['purple'] = ['紫光']
-    let s:unihan['flypy'] = ['小鹤','小鶴']
-    let s:unihan['cloud_atwill'] = ['想云就云','想雲就雲']
-    let s:unihan['cloud'] = ['云输入','雲輸入']
-    let s:unihan['mycloud'] = ['自己的云','自己的雲']
+    let s:chinese = {}
+    let s:chinese['vim1'] = ['文本编辑器','文本編輯器']
+    let s:chinese['vim2'] = ['最牛']
+    let s:chinese['vim3'] = ['精力']
+    let s:chinese['vim4'] = ['生气','生氣']
+    let s:chinese['vim5'] = ['中文输入法','中文輸入法']
+    let s:chinese['auto'] = ['自动','自動']
+    let s:chinese['internal'] = ['内码','內碼']
+    let s:chinese['unicode'] = ['统一码','統一碼']
+    let s:chinese['gb'] = ['国标码','国标碼']
+    let s:chinese['big5'] = ['大五码','大五碼']
+    let s:chinese['bracket_l'] = ['《','【']
+    let s:chinese['bracket_r'] = ['》','】']
+    let s:chinese['onekey'] = ['点石成金','點石成金']
+    let s:chinese['database'] = ['数据库','數據庫']
+    let s:chinese['directory'] = ['目录','目錄']
+    let s:chinese['datafile'] = ['词库','詞庫']
+    let s:chinese['computer'] = ['电脑','電腦']
+    let s:chinese['encoding'] = ['编码','編碼']
+    let s:chinese['environment'] = ['环境','環境']
+    let s:chinese['input'] = ['输入','輸入']
+    let s:chinese['font'] = ['字体','字體']
+    let s:chinese['myversion'] = ['版本']
+    let s:chinese['classic'] = ['经典','經典']
+    let s:chinese['static'] = ['静态','靜態']
+    let s:chinese['dynamic'] = ['动态','動態']
+    let s:chinese['style'] = ['风格','風格']
+    let s:chinese['wubi'] = ['五笔','五筆']
+    let s:chinese['digit'] = ['数码','数碼']
+    let s:chinese['4corner'] = ['四角号码','四角號碼']
+    let s:chinese['english'] = ['英文']
+    let s:chinese['hangul'] = ['韩文','韓文']
+    let s:chinese['xinhua'] = ['新华','新華']
+    let s:chinese['pinyin'] = ['拼音']
+    let s:chinese['cangjie'] = ['仓颉','倉頡']
+    let s:chinese['boshiamy'] = ['呒虾米','嘸蝦米']
+    let s:chinese['zhengma'] = ['郑码','鄭碼']
+    let s:chinese['yong'] = ['永码','永碼']
+    let s:chinese['nature'] = ['自然']
+    let s:chinese['quick'] = ['速成']
+    let s:chinese['yong'] = ['永码','永碼']
+    let s:chinese['wu'] = ['吴语','吳語']
+    let s:chinese['phonetic'] = ['注音']
+    let s:chinese['array30'] = ['行列']
+    let s:chinese['erbi'] = ['二笔','二筆']
+    let s:chinese['sogou'] = ['搜狗']
+    let s:chinese['all'] = ['全']
+    let s:chinese['shezhi'] = ['设置','設置']
+    let s:chinese['jidian'] = ['极点','極點']
+    let s:chinese['new_century'] = ['新世纪','新世紀']
+    let s:chinese['shuangpin'] = ['双拼','雙拼']
+    let s:chinese['abc'] = ['智能']
+    let s:chinese['microsoft'] = ['微软','微軟']
+    let s:chinese['nature'] = ['自然']
+    let s:chinese['plusplus'] = ['加加']
+    let s:chinese['purple'] = ['紫光']
+    let s:chinese['flypy'] = ['小鹤','小鶴']
+    let s:chinese['cloud_atwill'] = ['想云就云','想雲就雲']
+    let s:chinese['cloud'] = ['云输入','雲輸入']
+    let s:chinese['mycloud'] = ['自己的云','自己的雲']
 endfunction
 
 " ---------------------------------------
@@ -286,11 +284,10 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['sqlite']   = "[0-9a-z]"
     let s:im_keycode['pinyin']   = "[0-9a-z']"
     let s:im_keycode['wubi']     = "[0-9a-z']"
-    let s:im_keycode['ctc']      = "[0-9a-z']"
-    let s:im_keycode['11643']    = "[0-9a-z']"
     let s:im_keycode['english']  = "[0-9a-z']"
     let s:im_keycode['hangul']   = "[0-9a-z']"
     let s:im_keycode['xinhua']   = "[0-9a-z']"
+    let s:im_keycode['4corner']  = "[0-9a-z']"
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['zhengma']  = "[a-z']"
     let s:im_keycode['quick']    = "[0-9a-z']"
@@ -302,16 +299,19 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['phonetic'] = "[0-9a-z.,;/]"
     let s:im_keycode['array30']  = "[0-9a-z.,;/]"
     " -------------------------------------------
-    let names = sort(copy(keys(s:im_keycode)))
-    call add(names, 'pinyin_quote_sogou')
-    call add(names, 'pinyin_huge')
-    call add(names, 'pinyin_fcitx')
-    call add(names, 'pinyin_canton')
-    call add(names, 'pinyin_hongkong')
-    call add(names, 'wubijd')
-    call add(names, 'wubi98')
-    call add(names, 'wubi2000')
-    let s:all_vimim_datafile_names = names
+    let keys = copy(keys(s:im_keycode))
+    call add(keys, 'pinyin_quote_sogou')
+    call add(keys, 'pinyin_huge')
+    call add(keys, 'pinyin_fcitx')
+    call add(keys, 'pinyin_canton')
+    call add(keys, 'pinyin_hongkong')
+    call add(keys, 'wubijd')
+    call add(keys, 'wubi98')
+    call add(keys, 'wubi2000')
+    " -------------------------------------------
+    call remove(keys, 'pinyin')
+    call insert(keys, 'pinyin')
+    let s:all_vimim_input_methods = copy(keys)
     " -------------------------------------------
 endfunction
 
@@ -439,11 +439,11 @@ endfunction
 " -------------------------
 function! s:vimim_egg_vim()
 " -------------------------
-    let vim1 = s:vimim_unihan('vim1')
-    let vim2 = s:vimim_unihan('vim2') . vim1
-    let vim3 = s:vimim_unihan('vim3')
-    let vim4 = s:vimim_unihan('vim4')
-    let vim5 = s:vimim_unihan('vim5')
+    let vim1 = s:vimim_chinese('vim1')
+    let vim2 = s:vimim_chinese('vim2') . vim1
+    let vim3 = s:vimim_chinese('vim3')
+    let vim4 = s:vimim_chinese('vim4')
+    let vim5 = s:vimim_chinese('vim5')
     " ------------------------------------
     let eggs  = ["vi    " . vim1 ]
     let eggs += ["vim   " . vim2 ]
@@ -501,15 +501,15 @@ function! s:vimim_egg_vimim()
         let option = "macunix"
     endif
     " ----------------------------------
-    let input = s:vimim_unihan('input')
-    let myversion = s:vimim_unihan('myversion')
+    let input = s:vimim_chinese('input')
+    let myversion = s:vimim_chinese('myversion')
     let myversion = "\t " . myversion . s:colon
-    let font = s:vimim_unihan('font') . s:colon
-    let environment = s:vimim_unihan('environment') . s:colon
-    let encoding = s:vimim_unihan('encoding') . s:colon
+    let font = s:vimim_chinese('font') . s:colon
+    let environment = s:vimim_chinese('environment') . s:colon
+    let encoding = s:vimim_chinese('encoding') . s:colon
     " ----------------------------------
     let option .= "_" . &term
-    let computer = s:vimim_unihan('computer')
+    let computer = s:vimim_chinese('computer')
     let option = "computer " . computer . s:colon . option
     call add(eggs, option)
     " ----------------------------------
@@ -541,7 +541,7 @@ function! s:vimim_egg_vimim()
     " ----------------------------------
     let toggle = "i_CTRL-Bslash"
     if expand("%:p:t") =~# '.vimim\>'
-        let auto = s:vimim_unihan('auto')
+        let auto = s:vimim_chinese('auto')
         let toggle = auto . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "i_CTRL-Space"
@@ -551,7 +551,7 @@ function! s:vimim_egg_vimim()
         let toggle = "Tab_as_OneKey"
     endif
     let toggle .=  s:space
-    let style = s:vimim_unihan('style')
+    let style = s:vimim_chinese('style')
     let option = "mode\t " . style . s:colon . toggle
     call add(eggs, option)
     " ----------------------------------
@@ -562,10 +562,10 @@ function! s:vimim_egg_vimim()
     endif
     " ----------------------------------
     let option = s:backend[s:ui.root][s:ui.im].datafile
-    let ciku = s:vimim_unihan('datafile') . s:colon
+    let ciku = s:vimim_chinese('datafile') . s:colon
     if !empty(option)
         if s:ui.root == 'directory'
-            let directory  = s:vimim_unihan('directory')
+            let directory  = s:vimim_chinese('directory')
             let ciku .=  directory . ciku
         endif
         let ciku = "database " . ciku
@@ -578,7 +578,7 @@ function! s:vimim_egg_vimim()
         let option = ciku . s:path2 . "unihan/"
     elseif s:pinyin_plus_4corner_filter == 1
         let option = s:path . "vimim.unihan_4corner.txt"
-        let ciku = s:vimim_unihan('digit') . s:colon
+        let ciku = s:vimim_chinese('digit') . s:colon
         let option = "database " . ciku . option
     endif
     if !empty(option)
@@ -586,8 +586,8 @@ function! s:vimim_egg_vimim()
     endif
     " ----------------------------------
     if s:vimim_cloud_sogou == 888
-        let CLOUD = s:vimim_unihan('cloud_atwill')
-        let sogou = s:vimim_unihan('sogou')
+        let CLOUD = s:vimim_chinese('cloud_atwill')
+        let sogou = s:vimim_chinese('sogou')
         let option = "cloud\t " . sogou . s:colon
         let option .= CLOUD
         call add(eggs, option)
@@ -597,7 +597,7 @@ function! s:vimim_egg_vimim()
         let msg = "no global variable is set"
     else
         for item in s:global_customized
-            let shezhi = s:vimim_unihan('shezhi')
+            let shezhi = s:vimim_chinese('shezhi')
             let option = "VimIM\t " . shezhi . s:colon . item
             call add(eggs, option)
         endfor
@@ -1134,9 +1134,9 @@ endfunction
 function! s:vimim_statusline()
 " ----------------------------
     if s:ui.root =~# "database"
-        let database = s:vimim_unihan('database')
+        let database = s:vimim_chinese('database')
         let s:ui.statusline = 'Unihan' . s:space . database
-        return s:vimim_get_im_unihan()
+        return s:vimim_get_chinese_im()
     endif
     " ------------------------------------
     if has_key(s:im_keycode, s:ui.im)
@@ -1148,35 +1148,35 @@ function! s:vimim_statusline()
         if datafile =~# 'wubi98'
             let s:ui.statusline .= '98'
         elseif datafile =~# 'wubi2000'
-            let new_century = s:vimim_unihan('new_century')
+            let new_century = s:vimim_chinese('new_century')
             let s:ui.statusline = new_century . s:ui.statusline
         elseif datafile =~# 'wubijd'
-            let jidian = s:vimim_unihan('jidian')
+            let jidian = s:vimim_chinese('jidian')
             let s:ui.statusline = jidian . s:ui.statusline
         endif
-        return s:vimim_get_im_unihan()
+        return s:vimim_get_chinese_im()
     endif
     " ------------------------------------
     if s:pinyin_plus_4corner_filter > 0 && s:ui.im == 'pinyin'
-        let filter = s:vimim_unihan('digit')
-        let pinyin = s:vimim_unihan('pinyin')
+        let filter = s:vimim_chinese('digit')
+        let pinyin = s:vimim_chinese('pinyin')
         let s:ui.statusline = pinyin . s:plus . filter
-        return s:vimim_get_im_unihan()
+        return s:vimim_get_chinese_im()
     endif
     " ------------------------------------
     if s:vimim_cloud_sogou == 1
-            let all = s:vimim_unihan('all')
+            let all = s:vimim_chinese('all')
             let cloud = s:backend.cloud.sogou.chinese
             let s:ui.statusline = all . cloud
     elseif s:vimim_cloud_sogou == -777
-        let mycloud = s:vimim_unihan('mycloud')
+        let mycloud = s:vimim_chinese('mycloud')
         if !empty(s:vimim_cloud_plugin)
             let s:ui.statusline = s:backend.cloud.mycloud.directory
         endif
         let s:ui.statusline = mycloud . s:space . s:ui.statusline
     elseif empty(s:ui.statusline)
-        let s:ui.statusline = s:vimim_unihan('internal')
-        let s:ui.statusline .= s:vimim_unihan('input')
+        let s:ui.statusline = s:vimim_chinese('internal')
+        let s:ui.statusline .= s:vimim_chinese('input')
     endif
     " ------------------------------------
     if s:shuangpin_flag > 0
@@ -1184,16 +1184,16 @@ function! s:vimim_statusline()
         let s:ui.statusline .= s:vimim_get_shuangpin_keycodes().chinese
     endif
     " ------------------------------------
-    return s:vimim_get_im_unihan()
+    return s:vimim_get_chinese_im()
 endfunction
 
-" -------------------------------
-function! s:vimim_get_im_unihan()
-" -------------------------------
+" --------------------------------
+function! s:vimim_get_chinese_im()
+" --------------------------------
     let style = s:vimim_static_input_style
-    let dynamic = s:vimim_unihan('dynamic')
-    let static = s:vimim_unihan('static')
-    let input_style = s:vimim_unihan('classic')
+    let dynamic = s:vimim_chinese('dynamic')
+    let static = s:vimim_chinese('static')
+    let input_style = s:vimim_chinese('classic')
     if style < 1
         let input_style .= dynamic
     elseif style == 1
@@ -1202,8 +1202,8 @@ function! s:vimim_get_im_unihan()
         let input_style = "OneKeyNonStop"
     endif
     " ------------------------------------
-    let bracket_l = s:vimim_unihan('bracket_l')
-    let bracket_r = s:vimim_unihan('bracket_r')
+    let bracket_l = s:vimim_chinese('bracket_l')
+    let bracket_r = s:vimim_chinese('bracket_r')
     let plus = bracket_r . s:plus . bracket_l
     return bracket_l . s:ui.statusline . bracket_r . input_style
 endfunction
@@ -2114,46 +2114,45 @@ call add(s:vimims, VimIM)
 " ----------------------------------------
 function! s:vimim_dictionary_quantifiers()
 " ----------------------------------------
+    let s:quantifiers = {}
     if s:vimim_imode_pinyin < 1
         return
     endif
-    let q = {}
-    let q['1'] = '一壹①⒈⑴甲'
-    let q['2'] = '二贰②⒉⑵乙'
-    let q['3'] = '三叁③⒊⑶丙'
-    let q['4'] = '四肆④⒋⑷丁'
-    let q['5'] = '五伍⑤⒌⑸戊'
-    let q['6'] = '六陆⑥⒍⑹己'
-    let q['7'] = '七柒⑦⒎⑺庚'
-    let q['8'] = '八捌⑧⒏⑻辛'
-    let q['9'] = '九玖⑨⒐⑼壬'
-    let q['0'] = '〇零⑩⒑⑽癸十拾'
-    let q['a'] = '秒'
-    let q['b'] = '百佰步把包杯本笔部班'
-    let q['c'] = '厘次餐场串处床'
-    let q['d'] = '第度点袋道滴碟顶栋堆对朵堵顿'
-    let q['e'] = '亿'
-    let q['f'] = '分份发封付副幅峰方服'
-    let q['g'] = '个根股管'
-    let q['h'] = '时毫行盒壶户回'
-    let q['i'] = '毫'
-    let q['j'] = '斤家具架间件节剂具捲卷茎记'
-    let q['k'] = '克口块棵颗捆孔'
-    let q['l'] = '里粒类辆列轮厘升领缕'
-    let q['m'] = '米名枚面门秒'
-    let q['n'] = '年'
-    let q['o'] = '度'
-    let q['p'] = '磅盆瓶排盘盆匹片篇撇喷'
-    let q['q'] = '千仟群'
-    let q['r'] = '日'
-    let q['s'] = '十拾时升艘扇首双所束手'
-    let q['t'] = '吨条头通堂台套桶筒贴趟'
-    let q['u'] = '微'
-    let q['w'] = '万位味碗窝'
-    let q['x'] = '升席些项'
-    let q['y'] = '月亿叶'
-    let q['z'] = '兆只张株支枝种指盏座阵桩尊则站幢宗'
-    let s:quantifiers = q
+    let s:quantifiers['1'] = '一壹①⒈⑴甲'
+    let s:quantifiers['2'] = '二贰②⒉⑵乙'
+    let s:quantifiers['3'] = '三叁③⒊⑶丙'
+    let s:quantifiers['4'] = '四肆④⒋⑷丁'
+    let s:quantifiers['5'] = '五伍⑤⒌⑸戊'
+    let s:quantifiers['6'] = '六陆⑥⒍⑹己'
+    let s:quantifiers['7'] = '七柒⑦⒎⑺庚'
+    let s:quantifiers['8'] = '八捌⑧⒏⑻辛'
+    let s:quantifiers['9'] = '九玖⑨⒐⑼壬'
+    let s:quantifiers['0'] = '〇零⑩⒑⑽癸十拾'
+    let s:quantifiers['a'] = '秒'
+    let s:quantifiers['b'] = '百佰步把包杯本笔部班'
+    let s:quantifiers['c'] = '厘次餐场串处床'
+    let s:quantifiers['d'] = '第度点袋道滴碟顶栋堆对朵堵顿'
+    let s:quantifiers['e'] = '亿'
+    let s:quantifiers['f'] = '分份发封付副幅峰方服'
+    let s:quantifiers['g'] = '个根股管'
+    let s:quantifiers['h'] = '时毫行盒壶户回'
+    let s:quantifiers['i'] = '毫'
+    let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
+    let s:quantifiers['k'] = '克口块棵颗捆孔'
+    let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
+    let s:quantifiers['m'] = '米名枚面门秒'
+    let s:quantifiers['n'] = '年'
+    let s:quantifiers['o'] = '度'
+    let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
+    let s:quantifiers['q'] = '千仟群'
+    let s:quantifiers['r'] = '日'
+    let s:quantifiers['s'] = '十拾时升艘扇首双所束手'
+    let s:quantifiers['t'] = '吨条头通堂台套桶筒贴趟'
+    let s:quantifiers['u'] = '微'
+    let s:quantifiers['w'] = '万位味碗窝'
+    let s:quantifiers['x'] = '升席些项'
+    let s:quantifiers['y'] = '月亿叶'
+    let s:quantifiers['z'] = '兆只张株支枝种指盏座阵桩尊则站幢宗'
 endfunction
 
 " ----------------------------------------------
@@ -2163,10 +2162,6 @@ function! s:vimim_imode_number(keyboard, prefix)
         return []
     endif
     let keyboard = a:keyboard
-    " ------------------------------------------
-    if a:prefix ==# "'"
-        let keyboard = substitute(keyboard,"'",'i','g')
-    endif
     " ------------------------------------------
     if strpart(keyboard,0,2) ==# 'ii'
         let keyboard = 'I' . strpart(keyboard,2)
@@ -2519,18 +2514,6 @@ let VimIM = " ====  Input_Pinyin     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------
-function! s:vimim_initialize_pinyin()
-" ----------------------------------- todo
-    if s:ui.im != 'pinyin'
-        return
-    endif
-    if empty(s:vimim_imode_pinyin)
-    \&& s:shuangpin_flag < 1
-        let s:vimim_imode_pinyin = 1
-    endif
-endfunction
-
 " ------------------------------------
 function! s:vimim_apostrophe(keyboard)
 " ------------------------------------
@@ -2663,23 +2646,23 @@ function! s:vimim_get_shuangpin_keycodes()
 " ----------------------------------------
     let s:shuangpin_flag = 1
     let name = 'shuangpin'
-    let shuangpin = s:vimim_unihan(name)
+    let shuangpin = s:vimim_chinese(name)
     let chinese = shuangpin
     let keycode = "[0-9a-z'.]"
     if s:vimim_shuangpin_abc > 0
-        let chinese = s:vimim_unihan('abc')
+        let chinese = s:vimim_chinese('abc')
     elseif s:vimim_shuangpin_microsoft > 0
-        let chinese = s:vimim_unihan('microsoft')
+        let chinese = s:vimim_chinese('microsoft')
         let keycode = "[0-9a-z'.;]"
     elseif s:vimim_shuangpin_nature > 0
-        let chinese = s:vimim_unihan('nature')
+        let chinese = s:vimim_chinese('nature')
     elseif s:vimim_shuangpin_plusplus > 0
-        let chinese = s:vimim_unihan('plusplus')
+        let chinese = s:vimim_chinese('plusplus')
     elseif s:vimim_shuangpin_purple > 0
-        let chinese = s:vimim_unihan('purple')
+        let chinese = s:vimim_chinese('purple')
         let keycode = "[0-9a-z'.;]"
     elseif s:vimim_shuangpin_flypy > 0
-        let chinese = s:vimim_unihan('flypy')
+        let chinese = s:vimim_chinese('flypy')
     else
         let s:shuangpin_flag = 0
     endif
@@ -2699,7 +2682,7 @@ function! s:vimim_initialize_shuangpin()
         let s:quanpin_table = s:vimim_create_quanpin_table()
         return
     endif
-    let s:vimim_imode_pinyin = -1
+    let s:vimim_imode_pinyin = 0
     let rules = s:vimim_shuangpin_generic()
     " ----------------------------------
     if s:vimim_shuangpin_abc > 0
@@ -3065,6 +3048,7 @@ function! s:vimim_get_valid_im_name(im)
         let s:vimim_punctuation_navigation = -1
     elseif im =~# '^pinyin'
         let im = 'pinyin'
+        let s:vimim_imode_pinyin = 1
     endif
     return im
 endfunction
@@ -3196,7 +3180,7 @@ function! s:vimim_scan_backend_internal()
     let s:backend.internal[im].root = root
     let s:backend.internal[im].im = im
     let s:backend.internal[im].keycode = s:im_keycode[root]
-    let s:backend.internal[im].chinese = s:vimim_unihan(root)
+    let s:backend.internal[im].chinese = s:vimim_chinese(root)
 endfunction
 
 " ------------------------------
@@ -3536,45 +3520,37 @@ function! s:vimim_scan_backend_embedded_datafile()
     else
         return
     endif
-    let valid_datafiles = []
-    for im in s:all_vimim_datafile_names
-        if len(s:vimim_data_file) > 1
-            if match(s:vimim_data_file, im) < 0
-                continue
-            else
-                let datafile = s:vimim_data_file
-                call add(valid_datafiles, [im, datafile])
-            endif
-        else
+    " ----------------------------------------
+    let datafile = s:vimim_data_file
+    if !empty(datafile) && filereadable(datafile)
+        let msg = " use user-defined datafile "
+    else
+        for im in s:all_vimim_input_methods
             let file = "vimim." . im . ".txt"
             let datafile = s:path . file
-        endif
-        if filereadable(datafile)
-            call add(valid_datafiles, [im, datafile])
-        else
-            continue
-        endif
-    endfor
-    if empty(valid_datafiles)
+            if filereadable(datafile)
+                break
+            else
+                continue
+            endif
+        endfor
+    endif
+    " ----------------------------------------
+    if !filereadable(datafile) || isdirectory(datafile)
         return
     endif
-    let msg = "vim datafile.pinyin.vimim datafile.digit.vimim"
-    for pair in valid_datafiles
-        " ----------------------------------------------------------
-        let datafile = get(pair, 1)
-        let im = get(pair, 0)
-        let im = s:vimim_get_valid_im_name(im)
-        let s:ui.root = "datafile"
-        let s:ui.im = im
-        call add(s:ui.frontends, [s:ui.root, s:ui.im])
-        let s:backend.datafile[im] = s:vimim_one_backend_hash()
-        let s:backend.datafile[im].root = "datafile"
-        let s:backend.datafile[im].im = im
-        let s:backend.datafile[im].datafile = datafile
-        let s:backend.datafile[im].keycode = s:im_keycode[im]
-        let s:backend.datafile[im].chinese = s:vimim_unihan(im)
-        " ----------------------------------------------------------
-    endfor
+    " ----------------------------------------
+    let im = s:vimim_get_valid_im_name(im)
+    let s:ui.root = "datafile"
+    let s:ui.im = im
+    call add(s:ui.frontends, [s:ui.root, s:ui.im])
+    let s:backend.datafile[im] = s:vimim_one_backend_hash()
+    let s:backend.datafile[im].root = "datafile"
+    let s:backend.datafile[im].im = im
+    let s:backend.datafile[im].datafile = datafile
+    let s:backend.datafile[im].keycode = s:im_keycode[im]
+    let s:backend.datafile[im].chinese = s:vimim_chinese(im)
+    " ----------------------------------------
 endfunction
 
 " --------------------------------------
@@ -3893,9 +3869,9 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_cache_loading_progressbar(progressbar)
 " ------------------------------------------------------
-    let title_1 = s:vimim_unihan('digit')
+    let title_1 = s:vimim_chinese('digit')
     let total_1 = len(s:unihan_4corner_lines)
-    let title_2 = s:vimim_unihan(s:ui.im)
+    let title_2 = s:vimim_chinese(s:ui.im)
     let total_2 = len(s:backend[s:ui.root][s:ui.im].lines)
     " --------------------------------------------------
     let title = ""
@@ -3911,7 +3887,7 @@ function! s:vimim_cache_loading_progressbar(progressbar)
         let total = total_2 + total_1
     endif
     " --------------------------------------------------
-    let title .= s:vimim_unihan("datafile")
+    let title .= s:vimim_chinese("datafile")
     let progress = "VimIM loading " . title
     let progressbar = NewSimpleProgressBar(progress, total)
     " --------------------------------------------------
@@ -3986,41 +3962,35 @@ function! s:vimim_scan_backend_embedded_directory()
          endif
     endif
     " -----------------------------------
-    let valid_directoires = []
-    let unihan = s:path2 . "unihan"
-    let pinyin = s:path2 . "pinyin"
-    if isdirectory(unihan) && isdirectory(pinyin)
-        let valid_directoires = ['pinyin']
-        let s:pinyin_plus_4corner_filter = 2
-    endif
+    for im in s:all_vimim_input_methods
+        let dir = s:vimim_get_data_directory(im)
+        if empty(dir)
+            continue
+        else
+            break
+        endif
+    endfor
     " -----------------------------------
-    if empty(valid_directoires)
-        for im in s:all_vimim_datafile_names
-            let dir = s:vimim_get_data_directory(im)
-            if empty(dir)
-                continue
-            else
-                call add(valid_directoires, im)
-            endif
-        endfor
-        if empty(valid_directoires)
-            return
+    if empty(dir)
+        return
+    else
+        let unihan = s:path2 . "unihan"
+        if im =~ 'pinyin' && isdirectory(unihan)
+            let s:pinyin_plus_4corner_filter = 2
         endif
     endif
     " -----------------------------------
-    for im in valid_directoires
-        let im = s:vimim_get_valid_im_name(im)
-        let s:ui.root = "directory"
-        let s:ui.im = im
-        let datafile = s:path2 . im
-        call add(s:ui.frontends, [s:ui.root, s:ui.im])
-        let s:backend.directory[im] = s:vimim_one_backend_hash()
-        let s:backend.directory[im].root = "directory"
-        let s:backend.directory[im].datafile = datafile
-        let s:backend.directory[im].im = im
-        let s:backend.directory[im].keycode = s:im_keycode[im]
-        let s:backend.directory[im].chinese = s:vimim_unihan(im)
-    endfor
+    let im = s:vimim_get_valid_im_name(im)
+    let s:ui.root = "directory"
+    let s:ui.im = im
+    let datafile = s:path2 . im
+    call add(s:ui.frontends, [s:ui.root, s:ui.im])
+    let s:backend.directory[im] = s:vimim_one_backend_hash()
+    let s:backend.directory[im].root = "directory"
+    let s:backend.directory[im].datafile = dir
+    let s:backend.directory[im].im = im
+    let s:backend.directory[im].keycode = s:im_keycode[im]
+    let s:backend.directory[im].chinese = s:vimim_chinese(im)
 endfunction
 
 " -------------------------------------------
@@ -4080,6 +4050,8 @@ function! s:vimim_force_scan_current_buffer()
     elseif buffer =~? 'mycloud'
         call s:vimim_do_force_mycloud()
     endif
+    " ---------------------------------
+    let s:backend_loaded = 0
 endfunction
 
 " -------------------------------------------------
@@ -4319,8 +4291,8 @@ endfunction
 function! s:vimim_mkdir(option)
 " -----------------------------
 " Goal: creating directory xxx and adding files, based on vimim.xxx.txt
-" Sample file A: $VIM/vimfiles/plugin/vimim/unihan/u808f
-" Sample file B: $VIM/vimfiles/plugin/vimim/pinyin/jjjj
+" Sample file A: $VIM/vimfiles/plugin/vimim/pinyin/jjjj
+" Sample file B: $VIM/vimfiles/plugin/vimim/unihan/u808f
 " ----------------------------- vim
 " (1) $cd $VIM/vimfiles/plugin/vimim/
 " (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir1()
@@ -4434,7 +4406,6 @@ function! s:vimim_check_sqlite_availability()
             endif
         endif
     endif
-    let s:vimim_imode_pinyin = 0
     let s:vimim_static_input_style = 2
     " ----------------------------------------
     let root = "database"
@@ -4446,7 +4417,7 @@ function! s:vimim_check_sqlite_availability()
     let s:backend.database[im].datafile = datafile
     let s:backend.database[im].executable = executable
     let s:backend.database[im].keycode = s:im_keycode[im]
-    let s:backend.database[im].chinese = s:vimim_unihan(root)
+    let s:backend.database[im].chinese = s:vimim_chinese(root)
     " ----------------------------------------
     return root
 endfunction
@@ -4614,7 +4585,7 @@ function! s:vimim_set_cloud_backend_if_www_executable()
         let s:backend.cloud.sogou.root = "cloud"
         let s:backend.cloud.sogou.im = "pinyin"
         let s:backend.cloud.sogou.keycode = s:im_keycode["cloud"]
-        let s:backend.cloud.sogou.chinese = s:vimim_unihan("cloud")
+        let s:backend.cloud.sogou.chinese = s:vimim_chinese("cloud")
         return cloud
     endif
 endfunction
@@ -4959,7 +4930,7 @@ function! s:vimim_check_mycloud_availability()
         let s:backend.cloud.mycloud.name = "mycloud"
         let s:backend.cloud.mycloud.directory = directory
         let s:backend.cloud.mycloud.keycode = s:im_keycode["mycloud"]
-        let s:backend.cloud.mycloud.chinese = s:vimim_unihan("mycloud")
+        let s:backend.cloud.mycloud.chinese = s:vimim_chinese("mycloud")
         return cloud
     endif
 endfunction
@@ -5278,7 +5249,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_static_input_style = 2
     let s:vimim_normal_ctrl_6_to_toggle = 1
     let s:vimim_custom_skin = 2
-    let s:vimim_imode_pinyin = 1
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_debug = 9
 endfunction
