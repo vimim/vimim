@@ -3981,8 +3981,14 @@ function! s:vimim_scan_backend_embedded_directory()
     if !empty(dir) && isdirectory(dir)
         let s:path2 = copy(dir)
     endif
+    " -----------------------------------
     if empty(s:path2)
-        return
+         let dir = s:path . "vimim/"
+         if isdirectory(dir)
+            let s:path2 = dir
+         else
+            return
+         endif
     endif
     " -----------------------------------
     let valid_directoires = []
@@ -5260,9 +5266,9 @@ function! s:vimim_initialize_debug()
     let s:backend_loaded = 0
     let s:chinese_input_mode = 0
     " ------------------------------
-    let dir = s:path . "vimim/"
+    let dir = s:path . "tmp"
     if isdirectory(dir)
-        let s:path2 = dir
+        return
     endif
     let dir = "/vimim/"
     if isdirectory(dir)
