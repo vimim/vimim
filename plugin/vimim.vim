@@ -108,15 +108,16 @@ let s:path = expand("<sfile>:p:h")."/"
 " -----------------------------------------
 function! s:vimim_frontend_initialization()
 " -----------------------------------------
-    call s:vimim_force_scan_current_buffer()
-    call s:vimim_initialize_pinyin()
-    call s:vimim_initialize_shuangpin()
-    call s:vimim_initialize_keycode()
-    call s:vimim_set_special_im_property()
-    call s:vimim_initialize_frontend_punctuation()
-    call s:vimim_build_digit_filter_lines()
-    call s:vimim_build_datafile_lines()
-    call s:vimim_localization()
+    sil!call s:vimim_force_scan_current_buffer()
+    sil!call s:vimim_initialize_pinyin()
+    sil!call s:vimim_initialize_shuangpin()
+    sil!call s:vimim_initialize_keycode()
+    sil!call s:vimim_set_special_im_property()
+    sil!call s:vimim_initialize_frontend_punctuation()
+    sil!call s:vimim_build_digit_filter_lines()
+    sil!call s:vimim_build_datafile_lines()
+    sil!call s:vimim_localization()
+    sil!call s:vimim_initialize_skin()
 endfunction
 
 " ---------------------------------------------
@@ -886,7 +887,6 @@ function! s:vimim_chinesemode(switch)
     sil!call s:vimim_frontend_initialization()
     sil!call s:vimim_set_chinese_input_mode()
     sil!call s:vimim_build_datafile_cache()
-    sil!call s:vimim_initialize_skin()
     " -------------------------------------
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
@@ -1070,7 +1070,7 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_skin()
 " ---------------------------------
-    if s:vimim_custom_skin < 1
+    if empty(s:vimim_custom_skin)
         return
     endif
     " -----------------------------
@@ -1852,7 +1852,7 @@ function! s:vimim_get_labeling(label)
             let label2 = "_"
         endif
         " -----------------------------------------
-        if s:pinyin_plus_4corner_filter > 0 || s:vimim_custom_skin == 2
+        if s:vimim_custom_skin == 2 || s:pinyin_plus_4corner_filter > 0
             let labeling = label2
         else
             let labeling .= label2
@@ -4040,7 +4040,9 @@ function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
-        let s:vimim_custom_skin = 1
+        if empty(s:vimim_custom_skin)
+            let s:vimim_custom_skin = 1
+        endif
     else
         return
     endif
@@ -4598,9 +4600,6 @@ function! s:vimim_set_sogou()
     if empty(cloud)
         let s:vimim_cloud_sogou = 0
     else
-        if empty(s:vimim_cloud_sogou)
-            let s:vimim_cloud_sogou = 888
-        endif
         let s:ui.root = "cloud"
         let s:ui.im = "sogou"
     endif
@@ -4904,6 +4903,9 @@ function! s:vimim_scan_backend_mycloud()
 " :let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
 " :let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
 " --------------------------------------------------------------
+    if empty(s:vimim_cloud_sogou)
+        let s:vimim_cloud_sogou = 888
+    endif
     let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
     if empty(embedded_backend)
         call s:vimim_set_mycloud()
