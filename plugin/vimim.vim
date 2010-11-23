@@ -141,7 +141,6 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_scan_backend_mycloud()
-    sil!call s:vimim_initialize_skin()
     " -------------------------------------
 endfunction
 
@@ -887,6 +886,7 @@ function! s:vimim_chinesemode(switch)
     sil!call s:vimim_frontend_initialization()
     sil!call s:vimim_set_chinese_input_mode()
     sil!call s:vimim_build_datafile_cache()
+    sil!call s:vimim_initialize_skin()
     " -------------------------------------
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
@@ -3981,14 +3981,8 @@ function! s:vimim_scan_backend_embedded_directory()
     if !empty(dir) && isdirectory(dir)
         let s:path2 = copy(dir)
     endif
-    " -----------------------------------
     if empty(s:path2)
-         let dir = s:path . "vimim/"
-         if isdirectory(dir)
-            let s:path2 = dir
-         else
-            return
-         endif
+        return
     endif
     " -----------------------------------
     let valid_directoires = []
@@ -4326,7 +4320,7 @@ function! s:vimim_mkdir(option)
 " Sample file B: $VIM/vimfiles/plugin/vimim/pinyin/jjjj
 " ----------------------------- vim
 " (1) $cd $VIM/vimfiles/plugin/vimim/
-" (2) $vi vimim.pinyin.txt  => :call g:vimim_mkdir1()
+" (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir1()
 " ----------------------------- bash
 " vimimmkdir1() { vi -E -n "+call g:vimim_mkdir1()" +x vimim.$1.txt; }
 " vimimmkdir2() { vi -E -n "+call g:vimim_mkdir2()" +x vimim.$1.txt; }
@@ -5266,9 +5260,9 @@ function! s:vimim_initialize_debug()
     let s:backend_loaded = 0
     let s:chinese_input_mode = 0
     " ------------------------------
-    let dir = s:path . "tmp"
+    let dir = s:path . "vimim/"
     if isdirectory(dir)
-        return
+        let s:path2 = dir
     endif
     let dir = "/vimim/"
     if isdirectory(dir)
