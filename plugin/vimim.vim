@@ -128,13 +128,13 @@ function! s:vimim_backend_initialization_once()
         return
     endif
     " ---------------------------------------
-    sil!call s:vimim_session_initialization()
-    " ---------------------------------------
+    sil!call s:vimim_initialize_session()
     sil!call s:vimim_initialize_frontend()
     sil!call s:vimim_initialize_backend()
     sil!call s:vimim_initialize_i_setting()
     sil!call s:vimim_dictionary_unihan()
     sil!call s:vimim_dictionary_punctuation()
+    sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_dictionary_im_keycode()
     sil!call s:vimim_scan_backend_internal()
     sil!call s:vimim_scan_backend_embedded_directory()
@@ -142,13 +142,11 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_scan_backend_mycloud()
     " -------------------------------------
-    sil!call s:vimim_session_finalization()
-    " -------------------------------------
 endfunction
 
-" ----------------------------------------
-function! s:vimim_session_initialization()
-" ----------------------------------------
+" ------------------------------------
+function! s:vimim_initialize_session()
+" ------------------------------------
     call s:vimim_start_omni()
     call s:vimim_super_reset()
     " --------------------------------
@@ -192,17 +190,6 @@ function! s:vimim_session_initialization()
     let s:debugs = []
     let s:debug_count = 0
     " --------------------------------
-endfunction
-
-" --------------------------------------
-function! s:vimim_session_finalization()
-" --------------------------------------
-    if s:vimim_imode_universal > 0 || s:vimim_imode_pinyin  > 0
-        call s:vimim_initialize_quantifiers()
-    endif
-    if empty(s:vimim_cloud_sogou)
-        let s:vimim_cloud_sogou = 888
-    endif
 endfunction
 
 " -------------------------------
@@ -293,7 +280,7 @@ function! s:vimim_dictionary_im_keycode()
 " ---------------------------------------
     let s:im_keycode = {}
     let s:im_keycode['internal'] = "[0-9a-z]"
-    let s:im_keycode['cloud']    = "[0-9a-z'.]"
+    let s:im_keycode['cloud']    = "[0-9a-z.]"
     let s:im_keycode['mycloud']  = "[0-9a-z'.]"
     let s:im_keycode['sqlite']   = "[0-9a-z]"
     let s:im_keycode['pinyin']   = "[0-9a-z']"
@@ -2129,8 +2116,11 @@ let VimIM = " ====  Chinese_Number   ==== {{{"
 call add(s:vimims, VimIM)
 
 " ----------------------------------------
-function! s:vimim_initialize_quantifiers()
+function! s:vimim_dictionary_quantifiers()
 " ----------------------------------------
+    if s:vimim_imode_universal < 1 && s:vimim_imode_pinyin < 1
+        return
+    endif
     let q = {}
     let q['1'] = '一壹①⒈⑴甲'
     let q['2'] = '二贰②⒉⑵乙'
@@ -4607,6 +4597,9 @@ function! s:vimim_set_sogou()
     if empty(cloud)
         let s:vimim_cloud_sogou = 0
     else
+        if empty(s:vimim_cloud_sogou)
+            let s:vimim_cloud_sogou = 888
+        endif
         let s:ui.root = "cloud"
         let s:ui.im = "sogou"
     endif
@@ -4786,9 +4779,6 @@ function! s:vimim_get_sogou_key()
     endif
     let cloud = 'http://web.pinyin.sogou.com/web_ime/patch.php'
     let output = 0
-    " --------------------------------------------------------------
-    " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
-    " --------------------------------------------------------------
     try
         if s:www_libcall
             let input = cloud
@@ -4827,10 +4817,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     endif
     let cloud = 'http://web.pinyin.sogou.com/api/py?key='
     let cloud = cloud . s:backend.cloud.sogou.sogou_key .'&query='
-    " support apostrophe as delimiter to remove ambiguity
-    " (1) examples: piao => pi'ao (cloth)  xian => xi'an (city)
-    " (2) add double quotes between keyboard
-    " (3) test: xi'anmeimeidepi'aosuifengpiaoyang
+    " sogou stops supporting apostrophe as delimiter
     let output = 0
     " --------------------------------------------------------------
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
@@ -4897,7 +4884,9 @@ function! s:vimim_do_force_mycloud()
 " (1) [quick test] vim whatever.mycloud.vimim
 " (2) [option] local digit filter can also be used
 " --------------------------------------------------------------
-    let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+    if empty(s:vimim_mycloud_url)
+        let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+    endif
     call s:vimim_set_mycloud()
 endfunction
 
