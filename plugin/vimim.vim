@@ -3196,10 +3196,10 @@ function! s:vimim_erbi_first_punctuation(keyboard)
     return chinese_punctuation
 endfunction
 
-" ----------------------------------------------------
 " http://www.vim.org/scripts/script.php?script_id=2006
-" ----------------------------------------------------
+" --------------------
 let s:progressbar = {}
+" --------------------
 func! NewSimpleProgressBar(title, max_value, ...)
   if !has("statusline")
     return {}
@@ -3222,7 +3222,7 @@ endfun
 func! s:progressbar.paint()
   let max_len = winwidth(self.winnr)-1
   let t_len = strlen(self.title)+1+1
-  let c_len  = 2*strlen(self.max_value)+1+1+1
+  let c_len = 2*strlen(self.max_value)+1+1+1
   let pb_len = max_len - t_len - c_len - 2
   let cur_pb_len = (pb_len*self.cur_value)/self.max_value
   let t_color = self.items.title.color
@@ -3230,7 +3230,7 @@ func! s:progressbar.paint()
   let b_color = self.items.bar.color
   let c_color = self.items.counter.color
   let fc= strpart(self.items.bar.fillchar." ",0,1)
-  let stl =  "%#".t_color."#%-( ".self.title." %)".
+  let stl = "%#".t_color."#%-( ".self.title." %)".
       \"%#".b_color."#|".
       \"%#".b_fcolor."#%-(".repeat(fc,cur_pb_len)."%)".
       \"%#".b_color."#".repeat(" ",pb_len-cur_pb_len)."|".
@@ -3243,7 +3243,7 @@ endfun
 func! s:progressbar.incr( ... )
   let i = a:0 ? a:1 : 1
   let i+=self.cur_value
-  let i = i < 0 ? 0 : i > self.max_value ?  self.max_value : i
+  let i = i < 0 ? 0 : i > self.max_value ? self.max_value : i
   let self.cur_value = i
   call self.paint()
   return self.cur_value
