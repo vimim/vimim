@@ -647,6 +647,151 @@ function! s:vimim_easter_chicken(keyboard)
 endfunction
 
 " ======================================= }}}
+let VimIM = " ====  /Search          ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" ------------------------
+function! g:vimim_search()
+" ------------------------
+    if v:errmsg =~ "^E486:"
+        let english = @/
+        if len(english) < 24 && english !~ '_'
+        \&& english =~ '\w' && english != '\W'
+            let english = tolower(english)
+            let results = s:vimim_unicode_search(english)
+            if empty(results)
+                sil!call s:vimim_backend_initialization_once()
+                if empty(s:backend.datafile) && empty(s:backend.directory)
+                    let msg = " search Chinese by typing English "
+                else
+                    let english .= "_"
+                    let results = s:vimim_embedded_backend_engine(english)
+                endif
+            endif
+            if !empty(results)
+                call s:vimim_search_pattern_register(results)
+                let v:errmsg = ""
+            endif
+        endif
+        let s:menu_digit_as_filter = ""
+    endif
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_search_pattern_register(results)
+" ------------------------------------------------
+    let chinese = ""
+    for pair in a:results
+        let chinese .= get(split(pair),1) . '\|'
+    endfor
+    let @/ = chinese[0 : len(chinese)-3]
+    if empty(search(@/,'nw'))
+        let @/ = @_
+    endif
+endfunction
+
+" ----------------------------------------
+function! s:vimim_unicode_search(keyboard)
+" ----------------------------------------
+" [search] slash search CJK using unicode
+"          /u808f   n
+"          /32911   n
+" ----------------------------------------
+    let keyboard = a:keyboard
+    if strlen(keyboard) != 5 
+        return [] 
+    endif
+    let results = []
+    if keyboard =~# '^u\x\{4}$'
+        let xxxx = keyboard[1:]
+        let results = [str2nr(xxxx, 16)]
+    elseif keyboard =~# '^\d\{5}$'
+       let results = [str2nr(keyboard, 10)]
+    endif
+    return s:vimim_internal_codes(results,0)
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_internal_codes(numbers, more)
+" ---------------------------------------------
+    if empty(a:numbers)
+        return []
+    endif
+    let unicodes = []
+    for ddddd in a:numbers
+        if ddddd < 19968 || ddddd > 40869
+            break
+        endif
+        let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
+        let chinese = nr2char(ddddd)
+        let menu_chinese = menu .' '. chinese
+        call add(unicodes, menu_chinese)
+    endfor
+    return unicodes
+endfunction
+
+" ---------------------------------------------------
+function! s:vimim_unicode_4corner_pinyin(ddddd, more)
+" ---------------------------------------------------
+    let hex = printf('u%04x', a:ddddd)
+    let menu = s:space . hex . s:space . a:ddddd
+    if a:more > 0 && s:pinyin_plus_4corner_filter > 0
+        let chinese = nr2char(a:ddddd)
+        call s:vimim_build_unihan_reverse_cache(chinese)
+        let unihan = get(s:vimim_reverse_one_entry(chinese,'unihan'),0)
+        let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
+        if empty(pinyin)
+            let pinyin = s:space
+        endif
+        let menu .= s:space . unihan . s:space . pinyin
+    endif
+    return menu
+endfunction
+
+" ----------------------------------------
+function! s:vimim_search_pattern(keyboard)
+" ----------------------------------------
+    let keyboard = a:keyboard
+    " hide sentence match in dynamic mode
+    if s:chinese_input_mode =~ 'dynamic'
+        return [keyboard]
+    endif
+    let keyboard = a:keyboard
+    let blocks = []
+    if match(keyboard, "_$") > 0
+        let keyboard = keyboard[0 : len(keyboard)-2]
+        let blocks = s:vimim_break_pinyin_digit(keyboard)
+        if empty(blocks)
+            let blocks = [keyboard]
+        endif
+    endif
+    return blocks
+endfunction
+
+" -----------------------------------
+function! g:vimim_search_pumvisible()
+" -----------------------------------
+    let msg = "search from popup menu"
+    let word = s:vimim_popup_word()
+    if empty(word)
+        let @/ = @_
+    else
+        let @/ = word
+    endif
+    let repeat_times = len(word)/s:multibyte
+    let row_start = s:start_row_before
+    let row_end = line('.')
+    let delete_chars = ""
+    if repeat_times > 0 && row_end == row_start
+        let delete_chars = repeat("\<BS>", repeat_times)
+    endif
+    let slash = delete_chars . "\<Esc>"
+    sil!call s:vimim_stop()
+    sil!exe 'sil!return "' . slash . '"'
+endfunction
+
+" ======================================= }}}
 let VimIM = " ====  OneKey           ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
@@ -1071,148 +1216,6 @@ function! s:vimim_get_seamless(current_positions)
     let s:start_row_before = seamless_lnum
     let s:smart_enter = 0
     return seamless_column
-endfunction
-
-" ======================================= }}}
-let VimIM = " ====  /Search          ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" ------------------------
-function! g:vimim_search()
-" ------------------------
-    if v:errmsg =~ "^E486:"
-        let english = @/
-        if len(english) < 24 && english !~ '_'
-        \&& english =~ '\w' && english != '\W'
-            let english = tolower(english)
-            let results = s:vimim_unicode_search(english)
-            if empty(results)
-                sil!call s:vimim_backend_initialization_once()
-                if empty(s:backend.datafile) && empty(s:backend.directory)
-                    let msg = " search Chinese by typing English "
-                else
-                    let english .= "_"
-                    let results = s:vimim_embedded_backend_engine(english)
-                endif
-            endif
-            if !empty(results)
-                call s:vimim_search_pattern_register(results)
-                let v:errmsg = ""
-            endif
-        endif
-        let s:menu_digit_as_filter = ""
-    endif
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_search_pattern_register(results)
-" ------------------------------------------------
-    let chinese = ""
-    for pair in a:results
-        let chinese .= get(split(pair),1) . '\|'
-    endfor
-    let @/ = chinese[0 : len(chinese)-3]
-    if empty(search(@/,'nw'))
-        let @/ = @_
-    endif
-endfunction
-
-" ----------------------------------------
-function! s:vimim_unicode_search(keyboard)
-" ----------------------------------------
-" [search] slash search CJK using unicode
-"          /u808f   n
-"          /32911   n
-" ----------------------------------------
-    let keyboard = a:keyboard
-    if strlen(keyboard) != 5 
-        return [] 
-    endif
-    let results = []
-    if keyboard =~# '^u\x\{4}$'
-        let xxxx = keyboard[1:]
-        let results = [str2nr(xxxx, 16)]
-    elseif keyboard =~# '^\d\{5}$'
-       let results = [str2nr(keyboard, 10)]
-    endif
-    return s:vimim_internal_codes(results,0)
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_internal_codes(numbers, more)
-" ---------------------------------------------
-    if empty(a:numbers)
-        return []
-    endif
-    let unicodes = []
-    for ddddd in a:numbers
-        let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
-        let chinese = nr2char(ddddd)
-        let menu_chinese = menu .' '. chinese
-        call add(unicodes, menu_chinese)
-    endfor
-    return unicodes
-endfunction
-
-" ---------------------------------------------------
-function! s:vimim_unicode_4corner_pinyin(ddddd, more)
-" ---------------------------------------------------
-    let hex = printf('u%04x', a:ddddd)
-    let menu = s:space . hex . s:space . a:ddddd
-    if a:more > 0 && s:pinyin_plus_4corner_filter > 0
-        let chinese = nr2char(a:ddddd)
-        call s:vimim_build_unihan_reverse_cache(chinese)
-        let unihan = get(s:vimim_reverse_one_entry(chinese,'unihan'),0)
-        let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        if empty(pinyin)
-            let pinyin = s:space
-        endif
-        let menu .= s:space . unihan . s:space . pinyin
-    endif
-    return menu
-endfunction
-
-" ----------------------------------------
-function! s:vimim_search_pattern(keyboard)
-" ----------------------------------------
-    let keyboard = a:keyboard
-    " hide sentence match in dynamic mode
-    if s:chinese_input_mode =~ 'dynamic'
-        return [keyboard]
-    endif
-    let keyboard = a:keyboard
-    let blocks = []
-    if match(keyboard, "_$") > 0
-        let keyboard = keyboard[0 : len(keyboard)-2]
-        let blocks = s:vimim_break_pinyin_digit(keyboard)
-        if empty(blocks)
-            let blocks = [keyboard]
-        endif
-    endif
-    return blocks
-endfunction
-
-" -----------------------------------
-function! g:vimim_search_pumvisible()
-" -----------------------------------
-    let msg = "search from popup menu"
-    let word = s:vimim_popup_word()
-    if empty(word)
-        let @/ = @_
-    else
-        let @/ = word
-    endif
-    let repeat_times = len(word)/s:multibyte
-    let row_start = s:start_row_before
-    let row_end = line('.')
-    let delete_chars = ""
-    if repeat_times > 0 && row_end == row_start
-        let delete_chars = repeat("\<BS>", repeat_times)
-    endif
-    let slash = delete_chars . "\<Esc>"
-    sil!call s:vimim_stop()
-    sil!exe 'sil!return "' . slash . '"'
 endfunction
 
 " ======================================= }}}
