@@ -3520,6 +3520,17 @@ let VimIM = " ====  Backend==FILE    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
+" -------------------------------------
+function! s:vimim_do_force_datafile(im)
+" -------------------------------------
+    let s:path2 = 0
+    let im = a:im
+    if s:ui.root == "datafile" && s:ui.im == im
+        return
+    endif
+    call s:vimim_set_datafile(im)
+endfunction
+
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
@@ -3528,12 +3539,21 @@ function! s:vimim_scan_backend_embedded_datafile()
     else
         return
     endif
-    " ----------------------------------------
-    let datafile = s:vimim_data_file
-    if !empty(datafile) && filereadable(datafile)
-        let msg = " use user-defined datafile "
-    else
+    call s:vimim_set_datafile(0)
+endfunction
+
+" --------------------------------
+function! s:vimim_set_datafile(im)
+" --------------------------------
+    let datafile = 0
+    if empty(a:im)
         for im in s:all_vimim_input_methods
+            let datafile = s:vimim_data_file
+            if !empty(datafile) && filereadable(datafile)
+                if datafile =~ '\<' . im . '\>'
+                    break
+                endif
+            endif
             let file = "vimim." . im . ".txt"
             let datafile = s:path . file
             if filereadable(datafile)
@@ -3542,6 +3562,13 @@ function! s:vimim_scan_backend_embedded_datafile()
                 continue
             endif
         endfor
+    else
+        let im = a:im
+        let file = "vimim." . im . ".txt"
+        let datafile = s:path . file
+        if !filereadable(datafile)
+            let datafile = s:vimimdata . file
+        endif
     endif
     " ----------------------------------------
     if !filereadable(datafile) || isdirectory(datafile)
@@ -4048,8 +4075,17 @@ function! s:vimim_force_scan_current_buffer()
         call s:vimim_do_force_sogou()
     elseif buffer =~# 'mycloud'
         call s:vimim_do_force_mycloud()
-    endif
     " ---------------------------------
+    else
+        for im in s:all_vimim_input_methods
+            if buffer =~ '\<' . im . '\>'
+                break
+            else
+                continue
+            endif
+        endfor
+        call s:vimim_do_force_datafile(im)
+    endif
 endfunction
 
 " -------------------------------------------------
