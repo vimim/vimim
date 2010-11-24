@@ -3925,7 +3925,10 @@ function! s:vimim_build_datafile_cache()
     if empty(s:unihan_4corner_lines)
         let msg = " no way to build digit cache "
     elseif empty(s:unihan_4corner_cache)
-        let progressbar += 1
+        " todo:  s:xiangmma = ["wubi', 'erbi']
+        if s:ui.im !~ 'wubi'
+            let progressbar += 1
+        endif
     endif
     " ----------------------------------
     if s:backend[s:ui.root][s:ui.im].root == "datafile"
@@ -4125,6 +4128,9 @@ function! s:vimim_force_scan_current_buffer()
             endif
         endfor
         if buffer =~ '\<' . im . '\>'
+            if buffer =~ 'nocache'
+                let s:vimim_use_cache = 0
+            endif
             call s:vimim_do_force_datafile(im)
         endif
     endif
@@ -5316,7 +5322,6 @@ function! s:vimim_initialize_debug()
     let s:backend_loaded = 0
     let s:chinese_input_mode = 0
     let s:vimimdata = '/vimim/svn/vimim-data/trunk/data/'
-    let s:vimim_use_cache = 1
     " ------------------------------
     let s:path2 = 0
     let dir = "/vimim/"
