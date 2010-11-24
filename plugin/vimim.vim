@@ -4013,7 +4013,7 @@ function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
-        if empty(s:vimim_custom_skin)
+        if s:vimim_custom_skin != 1
             let s:vimim_custom_skin = 1
         endif
     else
@@ -4377,6 +4377,9 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_do_force_sqlite()
 " ---------------------------------
+    if s:ui.root == "database" && s:ui.im == "sqlite"
+        return
+    endif
     let backend = s:vimim_check_sqlite_availability()
     if empty(backend)
         return
@@ -4406,10 +4409,10 @@ function! s:vimim_check_sqlite_availability()
             endif
         endif
     endif
-    let s:vimim_static_input_style = 2
     " ----------------------------------------
-    let root = "database"
     let im = "sqlite"
+    let root = "database"
+    let s:vimim_static_input_style = 2
     " ----------------------------------------
     let s:backend.database[im] = s:vimim_one_backend_hash()
     let s:backend.database[im].root = root
@@ -4578,9 +4581,6 @@ endfunction
 " -------------------------------------------------------
 function! s:vimim_set_cloud_backend_if_www_executable(im)
 " -------------------------------------------------------
-    if s:ui.has_dot == 1
-        return 0
-    endif
     let im = a:im
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
     let cloud = s:vimim_check_http_executable(im)
@@ -4846,18 +4846,6 @@ let VimIM = " ====  Backend=>myCloud ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------
-function! s:vimim_do_force_mycloud()
-" ----------------------------------
-" (1) [quick test] vim whatever.mycloud.vimim
-" (2) [option] local digit filter can also be used
-" --------------------------------------------------------------
-    if len(s:vimim_mycloud_url) < 3
-        let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
-    endif
-    call s:vimim_set_mycloud()
-endfunction
-
 " --------------------------------------
 function! s:vimim_scan_backend_mycloud()
 " --------------------------------------
@@ -4877,14 +4865,28 @@ function! s:vimim_scan_backend_mycloud()
     endif
 endfunction
 
+" ----------------------------------
+function! s:vimim_do_force_mycloud()
+" ----------------------------------
+" (1) [quick test] vim whatever.mycloud.vimim
+" (2) [option] local digit filter can also be used
+" --------------------------------------------------------------
+    if len(s:vimim_mycloud_url) < 3
+        let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+    endif
+    call s:vimim_set_mycloud()
+endfunction
+
 " -----------------------------
 function! s:vimim_set_mycloud()
 " -----------------------------
+    if s:ui.root == "cloud" && s:ui.im == "mycloud"
+        return
+    endif
     let mycloud = s:vimim_set_mycloud_backend()
     if !empty(mycloud)
         let s:ui.root = "cloud"
         let s:ui.im = "mycloud"
-        let s:vimim_cloud_sogou = -777
     endif
 endfunction
 
@@ -4899,6 +4901,7 @@ function! s:vimim_set_mycloud_backend()
     if empty(mycloud)
         return {}
     else
+        let s:vimim_cloud_sogou = -777
         let s:vimim_cloud_plugin = mycloud
         let s:shuangpin_flag = 0
         return s:backend.cloud.mycloud
@@ -4908,11 +4911,12 @@ endfunction
 " --------------------------------------------
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
-    " NOTE: how to avoid *Not Responding*?
+" note: this variable should not be used after initialization
+"       unlet s:vimim_mycloud_url
+" note: reuse it to support forced buffer scan: vim mycloud.vimim
+" note: how to avoid *Not Responding*?
+" --------------------------------------------
     let cloud = s:vimim_check_mycloud_plugin()
-    " (A) this variable should not be used after initialization
-    " (B) reuse it to support forced buffer scan: vim mycloud.vimim
-    " unlet s:vimim_mycloud_url
     if empty(cloud)
         let s:vimim_cloud_plugin = 0
         return 0
@@ -5264,8 +5268,8 @@ function! s:vimim_initialize_debug()
     endif
     " ------------------------------
     let s:vimim_static_input_style = 2
-    let s:vimim_ctrl_6_to_toggle = 1
     let s:vimim_custom_skin = 2
+    let s:vimim_ctrl_6_to_toggle = 1
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_debug = 9
 endfunction
