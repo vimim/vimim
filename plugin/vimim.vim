@@ -3567,7 +3567,8 @@ function! s:vimim_set_datafile(im)
         let file = "vimim." . im . ".txt"
         let datafile = s:path . file
         if !filereadable(datafile)
-            let datafile = s:vimimdata . file
+            let s:path = s:vimimdata
+            let datafile = s:path . file
         endif
     endif
     " ----------------------------------------
