@@ -4050,7 +4050,6 @@ function! s:vimim_force_scan_current_buffer()
         call s:vimim_do_force_mycloud()
     endif
     " ---------------------------------
-"   let s:backend_loaded = 0
 endfunction
 
 " -------------------------------------------------
@@ -4384,6 +4383,8 @@ function! s:vimim_do_force_sqlite()
     else
         let s:ui.root = "database"
         let s:ui.im = "sqlite"
+        let s:vimim_cloud_sogou = 0
+        let s:vimim_cloud_plugin = 0
     endif
 endfunction
 
@@ -4570,6 +4571,7 @@ function! s:vimim_set_sogou()
     else
         let s:ui.root = "cloud"
         let s:ui.im = "sogou"
+        let s:vimim_cloud_plugin = 0
     endif
 endfunction
 
@@ -4882,6 +4884,7 @@ function! s:vimim_set_mycloud()
     if !empty(mycloud)
         let s:ui.root = "cloud"
         let s:ui.im = "mycloud"
+        let s:vimim_cloud_sogou = -777
     endif
 endfunction
 
@@ -4897,7 +4900,6 @@ function! s:vimim_set_mycloud_backend()
         return {}
     else
         let s:vimim_cloud_plugin = mycloud
-        let s:vimim_cloud_sogou = -777
         let s:shuangpin_flag = 0
         return s:backend.cloud.mycloud
     endif
