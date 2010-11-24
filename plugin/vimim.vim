@@ -3210,7 +3210,11 @@ func! NewSimpleProgressBar(title, max_value, ...)
   let b.max_value = a:max_value
   let b.cur_value = 0
   let b.winnr = winnr
-  let b.items = { 'title' : { 'color' : 'Statusline' }, 'bar' : { 'fillchar' : ' ', 'color' : 'Statusline' , 'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' } , 'counter' : { 'color' : 'Statusline' } }
+  let b.items = { 
+      \ 'title' : { 'color' : 'Statusline' },
+      \ 'bar' : { 'fillchar' : ' ', 'color' : 'Statusline' ,
+      \           'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' } ,
+      \ 'counter' : { 'color' : 'Statusline' } }
   let b.stl_save = getwinvar(winnr,"&statusline")
   let b.lst_save = &laststatus"
   return b
@@ -3230,7 +3234,8 @@ func! s:progressbar.paint()
       \"%#".b_color."#|".
       \"%#".b_fcolor."#%-(".repeat(fc,cur_pb_len)."%)".
       \"%#".b_color."#".repeat(" ",pb_len-cur_pb_len)."|".
-      \"%=%#".c_color."#%( ".repeat(" ",(strlen(self.max_value) - strlen(self.cur_value))).self.cur_value."/".self.max_value."  %)"
+      \"%=%#".c_color."#%( ".repeat(" ",(strlen(self.max_value)- 
+      \strlen(self.cur_value))).self.cur_value."/".self.max_value."  %)"
   set laststatus=2
   call setwinvar(self.winnr,"&stl",stl)
   redraw
@@ -5311,7 +5316,7 @@ function! s:vimim_initialize_debug()
     let s:backend_loaded = 0
     let s:chinese_input_mode = 0
     let s:vimimdata = '/vimim/svn/vimim-data/trunk/data/'
-    let s:vimim_use_cache = 0
+    let s:vimim_use_cache = 1
     " ------------------------------
     let s:path2 = 0
     let dir = "/vimim/"
