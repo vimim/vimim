@@ -135,12 +135,12 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_chinese()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
-    sil!call s:vimim_scan_backend_internal()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_scan_backend_embedded_datafile()
-    sil!call s:vimim_scan_backend_cloud()
-    sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_dictionary_quantifiers()
+    sil!call s:vimim_scan_backend_mycloud()
+    sil!call s:vimim_scan_backend_cloud()
+    sil!call s:vimim_scan_backend_internal()
     " -------------------------------------
 endfunction
 
@@ -149,6 +149,20 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     call s:vimim_start_omni()
     call s:vimim_super_reset()
+    " --------------------------------
+    let s:encoding = "utf8"
+    if  &encoding == "chinese"
+    \|| &encoding == "cp936"
+    \|| &encoding == "gb2312"
+    \|| &encoding == "gbk"
+    \|| &encoding == "euc-cn"
+        let s:encoding = "chinese"
+    elseif  &encoding == "taiwan"
+    \|| &encoding == "cp950"
+    \|| &encoding == "big5"
+    \|| &encoding == "euc-tw"
+        let s:encoding = "taiwan"
+    endif
     " --------------------------------
     let s:unihan_4corner_lines = []
     let s:unihan_4corner_cache = {}
@@ -189,7 +203,7 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:debugs = []
     let s:debug_count = 0
-    " --------------------------------
+    " -----------------------------------
 endfunction
 
 " -------------------------------
@@ -3001,6 +3015,9 @@ call add(s:vimims, VimIM)
 " ----------------------------
 function! <SID>:vimim_search()
 " ----------------------------
+    if empty(s:backend.datafile) && empty(s:backend.directory)
+        return
+    endif
     if v:errmsg =~ "^E486:"
         let english = @/
         if len(english) < 24 && english !~ '_'
@@ -3154,29 +3171,24 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_scan_backend_internal()
 " ---------------------------------------
-    let s:encoding = "utf8"
-    if  &encoding == "chinese"
-    \|| &encoding == "cp936"
-    \|| &encoding == "gb2312"
-    \|| &encoding == "gbk"
-    \|| &encoding == "euc-cn"
-        let s:encoding = "chinese"
-    elseif  &encoding == "taiwan"
-    \|| &encoding == "cp950"
-    \|| &encoding == "big5"
-    \|| &encoding == "euc-tw"
-        let s:encoding = "taiwan"
+    if empty(s:vimim_cloud_sogou)
+        let s:vimim_cloud_sogou = 888
     endif
-    " -----------------------------------
-    let root = "internal"
-    let im = "unicode"
-    let s:ui.root = root
-    let s:ui.im = im
-    call add(s:ui.frontends, [s:ui.root, s:ui.im])
-    let s:backend.internal[im].root = root
-    let s:backend.internal[im].im = im
-    let s:backend.internal[im].keycode = s:im_keycode[root]
-    let s:backend.internal[im].chinese = s:vimim_chinese(root)
+    let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
+    if empty(embedded_backend)
+        if empty(s:vimim_cloud_plugin) && s:vimim_cloud_sogou < 1
+        " --------------------------------------------------------
+        let root = "internal"
+        let im = "unicode"
+        let s:ui.root = root
+        let s:ui.im = im
+        call add(s:ui.frontends, [s:ui.root, s:ui.im])
+        let s:backend.internal[im].root = root
+        let s:backend.internal[im].im = im
+        let s:backend.internal[im].keycode = s:im_keycode[root]
+        let s:backend.internal[im].chinese = s:vimim_chinese(root)
+        " --------------------------------------------------------
+    endif
 endfunction
 
 " ------------------------------
@@ -4030,15 +4042,6 @@ function! s:vimim_force_scan_current_buffer()
         let s:vimim_shuangpin_flypy = 1
     endif
     " ---------------------------------
-    let s:ui.root = "directory"
-    if empty(s:path2)
-        let s:ui.root = "datafile"
-    endif
-    let im = s:vimim_get_im_from_buffer_name(buffer)
-    if !empty(im)
-        let s:ui.im = im
-    endif
-    " ---------------------------------
     if buffer =~? 'sqlite'
         call s:vimim_do_force_sqlite()
     elseif buffer =~# 'sogou'
@@ -4524,13 +4527,6 @@ let VimIM = " ====  Backend=>Cloud   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" --------------------------------
-function! s:vimim_do_force_sogou()
-" --------------------------------
-    let s:vimim_cloud_sogou = 1
-    call s:vimim_set_sogou()
-endfunction
-
 " ----------------------------------------------
 function! s:vimim_no_cloud_on_embedded_backend()
 " ----------------------------------------------
@@ -4550,14 +4546,24 @@ function! s:vimim_scan_backend_cloud()
 " s:vimim_cloud_sogou=-1 : cloud is shut down without condition
 " -------------------------------------------------------------
     let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
-    if empty(embedded_backend)
+    if empty(embedded_backend) && empty(s:vimim_cloud_plugin)
         call s:vimim_set_sogou()
     endif
+endfunction
+
+" --------------------------------
+function! s:vimim_do_force_sogou()
+" --------------------------------
+    let s:vimim_cloud_sogou = 1
+    call s:vimim_set_sogou()
 endfunction
 
 " ---------------------------
 function! s:vimim_set_sogou()
 " ---------------------------
+    if s:ui.root == "cloud" && s:ui.im == "sogou"
+        return
+    endif
     let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
     if empty(cloud)
         let s:vimim_cloud_sogou = 0
@@ -4594,10 +4600,7 @@ function! s:vimim_check_http_executable(im)
         return {}
     endif
     " step #1 of 3: try to find libvimim
-    let cloud = s:path . "libvimim.so"
-    if has("win32") || has("win32unix")
-        let cloud = s:path . "libvimim.dll"
-    endif
+    let cloud = s:vimim_get_libvimim()
     if filereadable(cloud)
         " in win32, strip the .dll suffix
         if has("win32") && cloud[-4:] ==? ".dll"
@@ -4866,9 +4869,6 @@ function! s:vimim_scan_backend_mycloud()
 " :let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
 " :let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
 " --------------------------------------------------------------
-    if empty(s:vimim_cloud_sogou)
-        let s:vimim_cloud_sogou = 888
-    endif
     let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
     if empty(embedded_backend)
         call s:vimim_set_mycloud()
@@ -4961,16 +4961,37 @@ function! s:vimim_access_mycloud(cloud, cmd)
     return ""
 endfunction
 
+
+" ------------------------------
+function! s:vimim_get_libvimim()
+" ------------------------------
+    let cloud = 0
+    if has("win32") || has("win32unix")
+        let cloud = s:path . "libvimim.dll"
+    elseif has("unix")
+        let cloud = s:path . "libvimim.so"
+    else
+        return 0
+    endif
+    if filereadable(cloud)
+        return cloud
+    endif
+    let cloud = "/vimim/svn/mycloud/vimim-mycloud/libvimim.dll"
+    if filereadable(cloud)
+        if has("win32") || has("win32unix")
+            return cloud
+        endif
+    endif
+    return 0
+endfunction
+
 " --------------------------------------
 function! s:vimim_check_mycloud_plugin()
 " --------------------------------------
     if empty(s:vimim_mycloud_url)
         " we do plug-n-play for libcall(), not for system()
-        if has("win32") || has("win32unix")
-            let cloud = s:path . "libvimim.dll"
-        elseif has("unix")
-            let cloud = s:path . "libvimim.so"
-        else
+        let cloud = s:vimim_get_libvimim()
+        if empty(clould)
             return 0
         endif
         let s:cloud_plugin_mode = "libcall"
