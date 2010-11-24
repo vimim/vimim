@@ -1076,6 +1076,93 @@ function! s:vimim_get_seamless(current_positions)
 endfunction
 
 " ======================================= }}}
+let VimIM = " ====  Search           ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
+
+" ----------------------------------------
+function! s:vimim_search_pattern(keyboard)
+" ----------------------------------------
+    let keyboard = a:keyboard
+    " hide sentence match in dynamic mode
+    if s:chinese_input_mode =~ 'dynamic'
+        return [keyboard]
+    endif
+    let keyboard = a:keyboard
+    let blocks = []
+    if match(keyboard, "_$") > 0
+        let keyboard = keyboard[0 : len(keyboard)-2]
+        let blocks = s:vimim_break_pinyin_digit(keyboard)
+        if empty(blocks)
+            let blocks = [keyboard]
+        endif
+    endif
+    return blocks
+endfunction
+
+" ----------------------------
+function! <SID>:vimim_search()
+" ----------------------------
+    if empty(s:backend.datafile) && empty(s:backend.directory)
+        return
+    endif
+    if v:errmsg =~ "^E486:"
+        let english = @/
+        if len(english) < 24 && english !~ '_'
+        \&& english =~ '\w' && english != '\W'
+            let english = tolower(english)
+            sil!call s:vimim_backend_initialization_once()
+            let results = s:vimim_unicode_search(english)
+            if empty(results)
+                sil!call s:vimim_frontend_initialization()
+                let english .= "_"
+                let results = s:vimim_embedded_backend_engine(english)
+            endif
+            if !empty(results)
+                call s:vimim_search_process(results)
+            endif
+        endif
+        let s:menu_digit_as_filter = ""
+        let v:errmsg = ""
+    endif
+endfunction
+
+" ---------------------------------------
+function! s:vimim_search_process(results)
+" ---------------------------------------
+    let chinese = ""
+    for pair in a:results
+        let chinese .= get(split(pair),1) . '\|'
+    endfor
+    let @/ = chinese[0 : len(chinese)-3]
+    if empty(search(@/,'nw'))
+        let @/ = @_
+    endif
+endfunction
+
+" ------------------------------
+function! g:vimim_slash_search()
+" ------------------------------
+    let msg = "search from popup menu"
+    let word = s:vimim_popup_word()
+    if empty(word)
+        let @/ = @_
+    else
+        let @/ = word
+    endif
+    let repeat_times = len(word)/s:multibyte
+    let row_start = s:start_row_before
+    let row_end = line('.')
+    let delete_chars = ""
+    if repeat_times > 0 && row_end == row_start
+        let delete_chars = repeat("\<BS>", repeat_times)
+    endif
+    let slash = delete_chars . "\<Esc>"
+    sil!call s:vimim_stop()
+    sil!exe 'sil!return "' . slash . '"'
+endfunction
+
+" ======================================= }}}
 let VimIM = " ====  User_Interface   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
@@ -2988,93 +3075,6 @@ function! s:vimim_shuangpin_flypy(rule)
         \"un" : "y", "ua" : "x", "uo" : "o", "ue" : "t", "ui" : "v",
         \"uai": "k", "uan": "r", "uang" : "l" } )
     return a:rule
-endfunction
-
-" ======================================= }}}
-let VimIM = " ====  VimIM Search     ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
-" ----------------------------------------
-function! s:vimim_search_pattern(keyboard)
-" ----------------------------------------
-    let keyboard = a:keyboard
-    " hide sentence match in dynamic mode
-    if s:chinese_input_mode =~ 'dynamic'
-        return [keyboard]
-    endif
-    let keyboard = a:keyboard
-    let blocks = []
-    if match(keyboard, "_$") > 0
-        let keyboard = keyboard[0 : len(keyboard)-2]
-        let blocks = s:vimim_break_pinyin_digit(keyboard)
-        if empty(blocks)
-            let blocks = [keyboard]
-        endif
-    endif
-    return blocks
-endfunction
-
-" ----------------------------
-function! <SID>:vimim_search()
-" ----------------------------
-    if empty(s:backend.datafile) && empty(s:backend.directory)
-        return
-    endif
-    if v:errmsg =~ "^E486:"
-        let english = @/
-        if len(english) < 24 && english !~ '_'
-        \&& english =~ '\w' && english != '\W'
-            let english = tolower(english)
-            sil!call s:vimim_backend_initialization_once()
-            let results = s:vimim_unicode_search(english)
-            if empty(results)
-                sil!call s:vimim_frontend_initialization()
-                let english .= "_"
-                let results = s:vimim_embedded_backend_engine(english)
-            endif
-            if !empty(results)
-                call s:vimim_search_process(results)
-            endif
-        endif
-        let s:menu_digit_as_filter = ""
-        let v:errmsg = ""
-    endif
-endfunction
-
-" ---------------------------------------
-function! s:vimim_search_process(results)
-" ---------------------------------------
-    let chinese = ""
-    for pair in a:results
-        let chinese .= get(split(pair),1) . '\|'
-    endfor
-    let @/ = chinese[0 : len(chinese)-3]
-    if empty(search(@/,'nw'))
-        let @/ = @_
-    endif
-endfunction
-
-" ------------------------------
-function! g:vimim_slash_search()
-" ------------------------------
-    let msg = "search from popup menu"
-    let word = s:vimim_popup_word()
-    if empty(word)
-        let @/ = @_
-    else
-        let @/ = word
-    endif
-    let repeat_times = len(word)/s:multibyte
-    let row_start = s:start_row_before
-    let row_end = line('.')
-    let delete_chars = ""
-    if repeat_times > 0 && row_end == row_start
-        let delete_chars = repeat("\<BS>", repeat_times)
-    endif
-    let slash = delete_chars . "\<Esc>"
-    sil!call s:vimim_stop()
-    sil!exe 'sil!return "' . slash . '"'
 endfunction
 
 " ======================================= }}}
