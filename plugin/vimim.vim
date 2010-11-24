@@ -899,8 +899,7 @@ function! s:vimim_chinesemode(switch)
     sil!call s:vimim_backend_initialization_once()
     sil!call s:vimim_frontend_initialization()
     sil!call s:vimim_set_chinese_input_mode()
-"   sil!call s:vimim_build_datafile_cache()
-"todo
+    sil!call s:vimim_build_datafile_cache()
     " -------------------------------------
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
@@ -1521,28 +1520,6 @@ function! s:vimim_menu_search(key)
         let slash .= '\<C-R>=g:vimim_slash_search()\<CR>'
         let slash .= a:key . '\<CR>'
     endif
-    sil!exe 'sil!return "' . slash . '"'
-endfunction
-
-" ------------------------------
-function! g:vimim_slash_search()
-" ------------------------------
-    let msg = "search from popup menu"
-    let word = s:vimim_popup_word()
-    if empty(word)
-        let @/ = @_
-    else
-        let @/ = word
-    endif
-    let repeat_times = len(word)/s:multibyte
-    let row_start = s:start_row_before
-    let row_end = line('.')
-    let delete_chars = ""
-    if repeat_times > 0 && row_end == row_start
-        let delete_chars = repeat("\<BS>", repeat_times)
-    endif
-    let slash = delete_chars . "\<Esc>"
-    sil!call s:vimim_stop()
     sil!exe 'sil!return "' . slash . '"'
 endfunction
 
@@ -3014,9 +2991,29 @@ function! s:vimim_shuangpin_flypy(rule)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Input_Misc       ==== {{{"
+let VimIM = " ====  VimIM Search     ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
+
+" ----------------------------------------
+function! s:vimim_search_pattern(keyboard)
+" ----------------------------------------
+    let keyboard = a:keyboard
+    " hide sentence match in dynamic mode
+    if s:chinese_input_mode =~ 'dynamic'
+        return [keyboard]
+    endif
+    let keyboard = a:keyboard
+    let blocks = []
+    if match(keyboard, "_$") > 0
+        let keyboard = keyboard[0 : len(keyboard)-2]
+        let blocks = s:vimim_break_pinyin_digit(keyboard)
+        if empty(blocks)
+            let blocks = [keyboard]
+        endif
+    endif
+    return blocks
+endfunction
 
 " ----------------------------
 function! <SID>:vimim_search()
@@ -3057,6 +3054,33 @@ function! s:vimim_search_process(results)
         let @/ = @_
     endif
 endfunction
+
+" ------------------------------
+function! g:vimim_slash_search()
+" ------------------------------
+    let msg = "search from popup menu"
+    let word = s:vimim_popup_word()
+    if empty(word)
+        let @/ = @_
+    else
+        let @/ = word
+    endif
+    let repeat_times = len(word)/s:multibyte
+    let row_start = s:start_row_before
+    let row_end = line('.')
+    let delete_chars = ""
+    if repeat_times > 0 && row_end == row_start
+        let delete_chars = repeat("\<BS>", repeat_times)
+    endif
+    let slash = delete_chars . "\<Esc>"
+    sil!call s:vimim_stop()
+    sil!exe 'sil!return "' . slash . '"'
+endfunction
+
+" ======================================= }}}
+let VimIM = " ====  Input_Misc       ==== {{{"
+" ===========================================
+call add(s:vimims, VimIM)
 
 " -------------------------------------
 function! s:vimim_get_valid_im_name(im)
@@ -3750,7 +3774,7 @@ function! s:vimim_sentence_match_cache(keyboard)
     endwhile
     " --------------------------------------------------
     let blocks = []
-    if max > 0 && len(results) > 0
+    if len(results) > 0
         let blocks = s:vimim_break_string_at(keyboard, max)
     endif
     return blocks
@@ -3802,14 +3826,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
     endwhile
     " ------------------------------------------------
     let blocks = []
-"let max -= 1
-"todo
-    " ------------------------------------------------
-    if max < 2
-        let max = 0
-    endif
-    " ------------------------------------------------
-    if match_start > -1
+    if match_start > 0
         let blocks = s:vimim_break_string_at(a:keyboard, max)
     endif
     return blocks
@@ -4183,19 +4200,13 @@ endfunction
 
 " ----------------------------------------------
 function! s:vimim_break_string_at(keyboard, max)
-" ---------------------------------------------- todo
-    let keyboard = a:keyboard
+" ----------------------------------------------
     let max = a:max
-"     'keyboard'[0:2]='key'
-"     'keyboard'[3:-1]='board'
-    let blocks = [ keyboard[0 : max-1], keyboard[max : -1] ]
- "" let keyboard = a:keyboard
- "" if empty(keyboard) || empty(max)
- ""     return []
- "" endif
- "" let matched_part = strpart(keyboard, 0, max)
- "" let trailing_part = strpart(keyboard, max)
- "" let blocks = [matched_part, trailing_part]
+    let keyboard = a:keyboard
+    let blocks = [ keyboard ]
+    if max > 0
+        let blocks = [ keyboard[0 : max-1], keyboard[max : -1] ]
+    endif
     return blocks
 endfunction
 
@@ -4233,21 +4244,6 @@ function! s:vimim_get_sentence_directory(keyboard)
     return results
 endfunction
 
-" ----------------------------------------
-function! s:vimim_search_pattern(keyboard)
-" ----------------------------------------
-    let keyboard = a:keyboard
-    let blocks = []
-    if match(keyboard, "_$") > 0
-        let keyboard = keyboard[0 : len(keyboard)-2]
-        let blocks = s:vimim_break_pinyin_digit(keyboard)
-        if empty(blocks)
-            let blocks = [keyboard]
-        endif
-    endif
-    return blocks
-endfunction
-
 " ------------------------------------------------------
 function! s:vimim_sentence_match_directory(keyboard, im)
 " ------------------------------------------------------
@@ -4276,7 +4272,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     endwhile
     " --------------------------------------------------
     let blocks = []
-    if max > 0 && filereadable(filename)
+    if filereadable(filename)
         let blocks = s:vimim_break_string_at(keyboard, max)
     endif
     return blocks
@@ -5315,6 +5311,7 @@ function! s:vimim_initialize_debug()
     let s:backend_loaded = 0
     let s:chinese_input_mode = 0
     let s:vimimdata = '/vimim/svn/vimim-data/trunk/data/'
+    let s:vimim_use_cache = 0
     " ------------------------------
     let dir = s:path . "tmp"
     if isdirectory(dir)
