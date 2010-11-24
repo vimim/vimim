@@ -43,7 +43,7 @@ let VimIM = " ====  Vim Input Method ==== {{{"
 "            * support Chinese search using English without opening menu
 "            * support Chinese input: "wubi", "boshiamy", "Cang Jie" etc
 "            * support internal code input: "UNICODE", "GBK", "Big5"
-"            * support "pinyin" including 6 "shuangpin" and "digit filter"
+"            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
 "            * It is independent of the Operating System.
 "            * It is independent of Vim mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
@@ -3213,7 +3213,7 @@ func! NewSimpleProgressBar(title, max_value, ...)
   let b.items = { 
       \ 'title' : { 'color' : 'Statusline' },
       \ 'bar' : { 'fillchar' : ' ', 'color' : 'Statusline' ,
-      \           'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' } ,
+      \           'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' },
       \ 'counter' : { 'color' : 'Statusline' } }
   let b.stl_save = getwinvar(winnr,"&statusline")
   let b.lst_save = &laststatus"
