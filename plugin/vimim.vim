@@ -1074,7 +1074,7 @@ function! s:vimim_get_seamless(current_positions)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  Search           ==== {{{"
+let VimIM = " ====  Slash_/_Search   ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
