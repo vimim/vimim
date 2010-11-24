@@ -16,7 +16,6 @@ let $VimIM = "$Revision$"
 " - VimIM 幫助:  type:      vimimhelp<C-6><C-6>
 " - VimIM 測試:  type:     vimimdebug<C-6><C-6>
 " - VimIM 內碼:  type:   vimimunicode<C-6><C-6>
-" - VimIM 設置:  type:  vimimdefaults<C-6><C-6>
 " -----------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506"]
@@ -699,8 +698,8 @@ function! s:vimim_unicode_search(keyboard)
 "          /32911   n
 " ----------------------------------------
     let keyboard = a:keyboard
-    if strlen(keyboard) != 5 
-        return [] 
+    if strlen(keyboard) != 5
+        return []
     endif
     let results = []
     if keyboard =~# '^u\x\{4}$'
@@ -3210,7 +3209,7 @@ func! NewSimpleProgressBar(title, max_value, ...)
   let b.max_value = a:max_value
   let b.cur_value = 0
   let b.winnr = winnr
-  let b.items = { 
+  let b.items = {
       \ 'title' : { 'color' : 'Statusline' },
       \ 'bar' : { 'fillchar' : ' ', 'color' : 'Statusline' ,
       \           'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' },
@@ -3234,7 +3233,7 @@ func! s:progressbar.paint()
       \"%#".b_color."#|".
       \"%#".b_fcolor."#%-(".repeat(fc,cur_pb_len)."%)".
       \"%#".b_color."#".repeat(" ",pb_len-cur_pb_len)."|".
-      \"%=%#".c_color."#%( ".repeat(" ",(strlen(self.max_value)- 
+      \"%=%#".c_color."#%( ".repeat(" ",(strlen(self.max_value)-
       \strlen(self.cur_value))).self.cur_value."/".self.max_value."  %)"
   set laststatus=2
   call setwinvar(self.winnr,"&stl",stl)
@@ -3925,8 +3924,8 @@ function! s:vimim_build_datafile_cache()
     if empty(s:unihan_4corner_lines)
         let msg = " no way to build digit cache "
     elseif empty(s:unihan_4corner_cache)
-        " todo:  s:xiangmma = ["wubi', 'erbi']
-        if s:ui.im !~ 'wubi'
+        let no_digt_cache = ['wubi', 'erbi']
+        if match(no_digt_cache, s:ui.im) < 0
             let progressbar += 1
         endif
     endif
