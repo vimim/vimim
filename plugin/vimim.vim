@@ -1074,7 +1074,7 @@ function! s:vimim_get_seamless(current_positions)
 endfunction
 
 " ======================================= }}}
-let VimIM = " ====  /search          ==== {{{"
+let VimIM = " ====  /Search          ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
@@ -4511,10 +4511,9 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_get_cedict_sqlite_query(keyboard)
 " -------------------------------------------------
-" sqlite3 /usr/local/share/cjklib/cedict.db "select random()"
 " sqlite> select * from cedict where Translation like '%dream%';
-" sqlite> select * from cedict where Reading like 'ma_ ma_';
-" -------------------------------------------------
+" sqlite> select * from cedict where Reading     like 'ma_ ma_';
+" --------------------------------------------------------------
     let keyboard = a:keyboard
     let table = 'CEDICT'
     let column1 = 'HeadwordTraditional'
@@ -4552,9 +4551,9 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
         endif
     endif
     " ----------------------------------------
-    let query  = " SELECT " . select
-    let query .= " FROM   " . table
-    let query .= " WHERE  " . column . ' like ' . keyboard
+    let query  = " select " . select
+    let query .= " from   " . table
+    let query .= " where  " . column . ' like ' . keyboard
     " ----------------------------------------
     let sqlite  = s:backend.database.sqlite.executable . ' '
     let sqlite .= s:backend.database.sqlite.datafile   . ' '
@@ -4591,7 +4590,7 @@ function! s:vimim_no_cloud_on_embedded_backend()
     if empty(s:backend.datafile)
     \&& empty(s:backend.directory)
     \&& empty(s:backend.database)
-        let msg = "try cloud if no vimim embedded backend"
+        let msg = "try cloud if no vimim embedded backends"
         return 0
     endif
     return 1
@@ -5022,7 +5021,6 @@ function! s:vimim_access_mycloud(cloud, cmd)
     endif
     return ""
 endfunction
-
 
 " ------------------------------
 function! s:vimim_get_libvimim()
