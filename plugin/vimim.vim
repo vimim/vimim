@@ -115,8 +115,10 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_initialize_frontend_punctuation()
     sil!call s:vimim_build_digit_filter_lines()
     sil!call s:vimim_build_datafile_lines()
+let g:g999=copy(s:vimim_cloud_sogou)
     sil!call s:vimim_localization()
     sil!call s:vimim_initialize_skin()
+let g:g9999=copy(s:vimim_cloud_sogou)
 endfunction
 
 " ---------------------------------------------
@@ -897,7 +899,8 @@ function! s:vimim_chinesemode(switch)
     sil!call s:vimim_backend_initialization_once()
     sil!call s:vimim_frontend_initialization()
     sil!call s:vimim_set_chinese_input_mode()
-    sil!call s:vimim_build_datafile_cache()
+"   sil!call s:vimim_build_datafile_cache()
+"todo
     " -------------------------------------
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
@@ -912,11 +915,11 @@ function! s:vimim_chinesemode(switch)
         let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
     endif
     if empty(switch)
-        if s:chinese_input_mode == 'onekey'
+        if s:chinese_input_mode =~ 'onekey'
             return s:vimim_start_onekey()
         else
             call s:vimim_start_chinese_mode()
-            if s:chinese_input_mode == 'static'
+            if s:chinese_input_mode =~ 'static'
                 if pumvisible()
                     let msg = "<C-\> does nothing on omni menu"
                 else
@@ -936,14 +939,14 @@ function! s:vimim_start_chinese_mode()
 " ------------------------------------
     sil!call s:vimim_start()
     " --------------------------------
-    if s:chinese_input_mode == 'dynamic'
+    if s:chinese_input_mode =~ 'dynamic'
         sil!call <SID>vimim_set_seamless()
         sil!call s:vimim_dynamic_alphabet_trigger()
         " ---------------------------------------------------
         inoremap <Space> <C-R>=<SID>vimim_space_dynamic()<CR>
                       \<C-R>=g:vimim_reset_after_insert()<CR>
         " ---------------------------------------------------
-    elseif s:chinese_input_mode == 'static'
+    elseif s:chinese_input_mode =~ 'static'
         sil!call s:vimim_static_alphabet_auto_select()
         " ------------------------------------------------------
         inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
@@ -1000,7 +1003,7 @@ endfunction
 " ---------------------------------------------
 function! s:vimim_static_alphabet_auto_select()
 " ---------------------------------------------
-    if s:chinese_input_mode == 'static'
+    if s:chinese_input_mode =~ 'static'
         for char in s:Az_list
             sil!exe 'inoremap <silent> ' . char . '
             \ <C-R>=g:vimim_pumvisible_ctrl_y()<CR>'. char .
@@ -2254,8 +2257,11 @@ function! s:vimim_build_digit_filter_lines()
 " -----------------------------------------------------------------
     let datafile = s:path . "vimim.unihan_4corner.txt"
     if filereadable(datafile) && empty(s:unihan_4corner_lines)
+        let buffer = expand("%:p:t")
+        if buffer !~ 'dynamic' && buffer !~ 'static'
+            let s:vimim_static_input_style = 2
+        endif
         let s:pinyin_plus_4corner_filter = 1
-        let s:vimim_static_input_style = 2
         let s:unihan_4corner_lines = readfile(datafile)
     endif
 endfunction
@@ -3171,9 +3177,6 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_scan_backend_internal()
 " ---------------------------------------
-    if empty(s:vimim_cloud_sogou)
-        let s:vimim_cloud_sogou = 888
-    endif
     let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
     if empty(embedded_backend)
         if empty(s:vimim_cloud_plugin) && s:vimim_cloud_sogou < 1
@@ -3194,6 +3197,10 @@ endfunction
 " ------------------------------
 function! s:vimim_localization()
 " ------------------------------
+    if empty(s:vimim_cloud_sogou)
+        let s:vimim_cloud_sogou = 888
+    endif
+    " ---------------------------------------------
     if s:pinyin_plus_4corner_filter > 0
         let s:abcd = "'abcdfgz"
         let s:pqwertyuio = split('pqwertyuio', '\zs')
@@ -3520,17 +3527,6 @@ let VimIM = " ====  Backend==FILE    ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" -------------------------------------
-function! s:vimim_do_force_datafile(im)
-" -------------------------------------
-    let s:path2 = 0
-    let im = a:im
-    if s:ui.root == "datafile" && s:ui.im == im
-        return
-    endif
-    call s:vimim_set_datafile(im)
-endfunction
-
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
@@ -3540,6 +3536,15 @@ function! s:vimim_scan_backend_embedded_datafile()
         return
     endif
     call s:vimim_set_datafile(0)
+endfunction
+
+" -------------------------------------
+function! s:vimim_do_force_datafile(im)
+" -------------------------------------
+    let s:path2 = 0
+    let s:vimim_cloud_sogou = 0
+    let s:vimim_cloud_plugin = 0
+    call s:vimim_set_datafile(a:im)
 endfunction
 
 " --------------------------------
@@ -3575,6 +3580,7 @@ function! s:vimim_set_datafile(im)
     if !filereadable(datafile) || isdirectory(datafile)
         return
     endif
+let g:g99=s:vimim_cloud_sogou
     " ----------------------------------------
     let im = s:vimim_get_valid_im_name(im)
     let s:ui.root = "datafile"
@@ -3716,9 +3722,9 @@ function! s:vimim_get_sentence_datafile_cache(keyboard)
     return results
 endfunction
 
-" ---------------------------------------------
+" ----------------------------------------------
 function! s:vimim_sentence_match_cache(keyboard)
-" ---------------------------------------------
+" ----------------------------------------------
     let keyboard = a:keyboard
     let blocks = s:vimim_search_pattern(keyboard)
     if !empty(blocks) | return blocks | endif
@@ -3732,7 +3738,7 @@ function! s:vimim_sentence_match_cache(keyboard)
     if !empty(blocks) | return blocks | endif
     " -----------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
-    while max > 1
+    while max > 0
         let max -= 1
         let head = strpart(keyboard, 0, max)
         let results = s:vimim_get_data_from_cache(head)
@@ -3782,21 +3788,28 @@ function! s:vimim_sentence_match_datafile(keyboard)
     let blocks = s:vimim_break_sentence_into_block(keyboard)
     if !empty(blocks) | return blocks | endif
     " ---------------------------------------------
-    let max = s:vimim_hjkl_redo_pinyin_match(keyboard)+1
-    while max > 1
-        let max -= 1
+    let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
+    while max > 0
         let head = strpart(keyboard, 0, max)
         let pattern = '^' . head . '\>'
         let match_start = match(lines, pattern)
+        let max -= 1
         if  match_start < 0
-            let msg = "continue until match is found"
+            continue
         else
             break
         endif
     endwhile
     " ------------------------------------------------
     let blocks = []
-    if match_start > 0
+"let max -= 1
+"todo
+    " ------------------------------------------------
+    if max < 2
+        let max = 0
+    endif
+    " ------------------------------------------------
+    if match_start > -1
         let blocks = s:vimim_break_string_at(a:keyboard, max)
     endif
     return blocks
@@ -4085,7 +4098,9 @@ function! s:vimim_force_scan_current_buffer()
                 continue
             endif
         endfor
-        call s:vimim_do_force_datafile(im)
+        if buffer =~ '\<' . im . '\>'
+            call s:vimim_do_force_datafile(im)
+        endif
     endif
 endfunction
 
@@ -4168,15 +4183,19 @@ endfunction
 
 " ----------------------------------------------
 function! s:vimim_break_string_at(keyboard, max)
-" ----------------------------------------------
+" ---------------------------------------------- todo
     let keyboard = a:keyboard
     let max = a:max
-    if empty(keyboard) || empty(max)
-        return []
-    endif
-    let matched_part = strpart(keyboard, 0, max)
-    let trailing_part = strpart(keyboard, max)
-    let blocks = [matched_part, trailing_part]
+"     'keyboard'[0:2]='key'
+"     'keyboard'[3:-1]='board'
+    let blocks = [ keyboard[0 : max-1], keyboard[max : -1] ]
+ "" let keyboard = a:keyboard
+ "" if empty(keyboard) || empty(max)
+ ""     return []
+ "" endif
+ "" let matched_part = strpart(keyboard, 0, max)
+ "" let trailing_part = strpart(keyboard, max)
+ "" let blocks = [matched_part, trailing_part]
     return blocks
 endfunction
 
@@ -4272,7 +4291,7 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
         return 0
     endif
     let max = len(keyboard)
-    if s:ui.im != 'pinyin'
+    if s:ui.im != 'pinyin' || s:chinese_input_mode =~ 'dynamic'
         return max
     endif
     " --------------------------------------------
@@ -4285,10 +4304,12 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
     endif
     let msg = " yeyeqifangcao "
     let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+let g:gg=pinyins
     if len(pinyins) > 1
         let last = pinyins[-1:-1]
         let max = len(keyboard)-len(last)-1
     endif
+let g:gg2=max
     return max
 endfunction
 
@@ -4764,15 +4785,17 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
         let msg = "cloud limits to valid cloud keycodes only"
         return 0
     endif
-    if s:chinese_input_mode == 'static'
-        let msg = "auto cloud if number of zi > threshold"
+    let msg = "auto cloud if number of zi is greater than threshold"
+    let threshold = len(keyboard)
+    if s:chinese_input_mode =~ 'static'
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
         let threshold = len(pinyins)
-        if threshold < s:vimim_cloud_sogou
-            return 0
-        endif
     endif
-    return 1
+    if threshold < s:vimim_cloud_sogou
+        return 0
+    else
+        return 1
+    endif
 endfunction
 
 " -------------------------------
