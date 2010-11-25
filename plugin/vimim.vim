@@ -653,7 +653,9 @@ call add(s:vimims, VimIM)
 " ------------------------------
 function! g:vimim_search_slash()
 " ------------------------------
-    if v:errmsg !~ "^E486:"
+    if v:errmsg =~ "^E486:"
+        let v:errmsg = ""
+    else
         return ""
     endif
     let english = @/
@@ -664,15 +666,18 @@ function! g:vimim_search_slash()
         if empty(results)
             sil!call s:vimim_backend_initialization_once()
             if empty(s:backend.datafile) && empty(s:backend.directory)
-                let results = s:vimim_get_cloud_sogou(english, 1)
+                if empty(s:vimim_cloud_plugin)
+                    let results = s:vimim_get_cloud_sogou(english, 1)
+                else
+                    let results = s:vimim_get_mycloud_plugin(english)
+                endif
             else
                 let english .= "_"
                 let results = s:vimim_embedded_backend_engine(english)
             endif
         endif
         if !empty(results)
-            call s:vimim_search_pattern_register(results)
-            let v:errmsg = ""
+            sil!call s:vimim_search_pattern_register(results)
         endif
     endif
     let s:menu_digit_as_filter = ""
@@ -682,13 +687,19 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_search_pattern_register(results)
 " ------------------------------------------------
-    let chinese = ""
+    let results = []
     for pair in a:results
-        let chinese .= get(split(pair),1) . '\|'
+        let chinese = get(split(pair),1)
+        if chinese =~ '\w'
+            continue
+        endif
+        call add(results, chinese)
     endfor
-    let @/ = chinese[0 : len(chinese)-3]
-    if empty(search(@/,'nw'))
-        let @/ = @_
+    if len(results) > 0
+        let @/ = join(results, '\|')
+        if empty(search(@/,'nw'))
+            let @/ = @_
+        endif
     endif
 endfunction
 
@@ -5326,8 +5337,6 @@ function! s:vimim_initialize_debug()
     let s:path2 = 0
     let s:backend_loaded = 0
     let s:chinese_input_mode = 0
-return
-"todo
     " ------------------------------
     let dir = "/vimim/"
     if isdirectory(dir)
