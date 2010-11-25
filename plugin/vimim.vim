@@ -401,7 +401,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_use_cache")
-    call add(G, "g:vimim_n_search_chinese")
+    call add(G, "g:vimim_search_slash_n")
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_punctuation_chinese")
     call add(G, "g:vimim_punctuation_navigation")
@@ -650,31 +650,33 @@ let VimIM = " ====  /Search          ==== {{{"
 " ===========================================
 call add(s:vimims, VimIM)
 
-" ------------------------
-function! g:vimim_search()
-" ------------------------
-    if v:errmsg =~ "^E486:"
-        let english = @/
-        if len(english) < 24 && english !~ '_'
-        \&& english =~ '\w' && english != '\W'
-            let english = tolower(english)
-            let results = s:vimim_unicode_search(english)
-            if empty(results)
-                sil!call s:vimim_backend_initialization_once()
-                if empty(s:backend.datafile) && empty(s:backend.directory)
-                    let msg = " search Chinese by typing English "
-                else
-                    let english .= "_"
-                    let results = s:vimim_embedded_backend_engine(english)
-                endif
-            endif
-            if !empty(results)
-                call s:vimim_search_pattern_register(results)
-                let v:errmsg = ""
+" ------------------------------
+function! g:vimim_search_slash()
+" ------------------------------
+    if v:errmsg !~ "^E486:"
+        return ""
+    endif
+    let english = @/
+    if len(english) < 24 && english !~ '_'
+    \&& english =~ '\w' && english != '\W'
+        let english = tolower(english)
+        let results = s:vimim_unicode_search(english)
+        if empty(results)
+            sil!call s:vimim_backend_initialization_once()
+            if empty(s:backend.datafile) && empty(s:backend.directory)
+                let results = s:vimim_get_cloud_sogou(english, 1)
+            else
+                let english .= "_"
+                let results = s:vimim_embedded_backend_engine(english)
             endif
         endif
-        let s:menu_digit_as_filter = ""
+        if !empty(results)
+            call s:vimim_search_pattern_register(results)
+            let v:errmsg = ""
+        endif
     endif
+    let s:menu_digit_as_filter = ""
+    return ""
 endfunction
 
 " ------------------------------------------------
@@ -5321,14 +5323,16 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
+    let s:path2 = 0
     let s:backend_loaded = 0
     let s:chinese_input_mode = 0
-    let s:vimimdata = '/vimim/svn/vimim-data/trunk/data/'
+return
+"todo
     " ------------------------------
-    let s:path2 = 0
     let dir = "/vimim/"
     if isdirectory(dir)
         let s:path2 = dir
+        let s:vimimdata = '/vimim/svn/vimim-data/trunk/data/'
     else
         return
     endif
@@ -5980,8 +5984,8 @@ function! s:vimim_onekey_mapping_on()
         xnoremap <silent> <C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
     " -------------------------------
-    if s:vimim_n_search_chinese > 0
-        noremap <silent> n :sil!call g:vimim_search()<CR>n
+    if s:vimim_search_slash_n > 0
+        noremap <silent> n :sil!call g:vimim_search_slash()<CR>n
     endif
 endfunction
 
