@@ -189,7 +189,7 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     " --------------------------------
     let s:keyboard_count = 0
-    let s:show_me_not_pattern = "^ii\\|^oo"
+    let s:show_me_not_pattern = '^ii\|^oo'
     " --------------------------------
     let A = char2nr('A')
     let Z = char2nr('Z')
@@ -273,14 +273,14 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['sogou'] = ['搜狗']
     let s:chinese['shezhi'] = ['设置','設置']
     let s:chinese['jidian'] = ['极点','極點']
-    let s:chinese['new_century'] = ['新世纪','新世紀']
-    let s:chinese['shuangpin'] = ['双拼','雙拼']
-    let s:chinese['abc'] = ['智能']
-    let s:chinese['microsoft'] = ['微软','微軟']
-    let s:chinese['nature'] = ['自然']
-    let s:chinese['plusplus'] = ['加加']
+    let s:chinese['newcentury'] = ['新世纪','新世紀']
+    let s:chinese['abc'] = ['智能双打','智能雙打']
+    let s:chinese['ms'] = ['微软拼音','微軟拼音']
+    let s:chinese['nature'] = ['自然码','自然碼']
     let s:chinese['purple'] = ['紫光']
+    let s:chinese['plusplus'] = ['拼音加加']
     let s:chinese['flypy'] = ['小鹤','小鶴']
+    let s:chinese['shuangpin'] = ['双拼','雙拼']
     let s:chinese['cloud_atwill'] = ['想云就云','想雲就雲']
     let s:chinese['sogou'] = ['搜狗云','搜狗雲']
     let s:chinese['mycloud'] = ['自己的云','自己的雲']
@@ -385,7 +385,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_reverse_pageup_pagedown")
     call add(G, "g:vimim_shuangpin_abc")
-    call add(G, "g:vimim_shuangpin_microsoft")
+    call add(G, "g:vimim_shuangpin_ms")
     call add(G, "g:vimim_shuangpin_nature")
     call add(G, "g:vimim_shuangpin_plusplus")
     call add(G, "g:vimim_shuangpin_purple")
@@ -1305,8 +1305,8 @@ function! s:vimim_statusline()
         if datafile =~# 'wubi98'
             let s:ui.statusline .= '98'
         elseif datafile =~# 'wubi2000'
-            let new_century = s:vimim_chinese('new_century')
-            let s:ui.statusline = new_century . s:ui.statusline
+            let newcentury = s:vimim_chinese('newcentury')
+            let s:ui.statusline = newcentury . s:ui.statusline
         elseif datafile =~# 'wubijd'
             let jidian = s:vimim_chinese('jidian')
             let s:ui.statusline = jidian . s:ui.statusline
@@ -2779,15 +2779,18 @@ call add(s:vimims, VimIM)
 " ----------------------------------------
 function! s:vimim_get_shuangpin_keycodes()
 " ----------------------------------------
+    if s:shuangpin_flag < 0
+        return {}
+    endif
     let s:shuangpin_flag = 1
-    let name = 'shuangpin'
-    let shuangpin = s:vimim_chinese(name)
-    let chinese = shuangpin
+    let shuangpin = s:vimim_chinese('shuangpin')
+    let chinese = ""
     let keycode = "[0-9a-z'.]"
     if s:vimim_shuangpin_abc > 0
         let chinese = s:vimim_chinese('abc')
-    elseif s:vimim_shuangpin_microsoft > 0
-        let chinese = s:vimim_chinese('microsoft')
+        let shuangpin = ""
+    elseif s:vimim_shuangpin_ms > 0
+        let chinese = s:vimim_chinese('ms')
         let keycode = "[0-9a-z'.;]"
     elseif s:vimim_shuangpin_nature > 0
         let chinese = s:vimim_chinese('nature')
@@ -2823,8 +2826,8 @@ function! s:vimim_initialize_shuangpin()
     if s:vimim_shuangpin_abc > 0
         let rules = s:vimim_shuangpin_abc(rules)
         let s:vimim_imode_pinyin = 1
-    elseif s:vimim_shuangpin_microsoft > 0
-        let rules = s:vimim_shuangpin_microsoft(rules)
+    elseif s:vimim_shuangpin_ms > 0
+        let rules = s:vimim_shuangpin_ms(rules)
     elseif s:vimim_shuangpin_nature > 0
         let rules = s:vimim_shuangpin_nature(rules)
     elseif s:vimim_shuangpin_plusplus > 0
@@ -2991,7 +2994,7 @@ function! s:vimim_create_shuangpin_table(rule)
         \ || (s:vimim_shuangpin_nature>0) || (s:vimim_shuangpin_flypy>0)
         let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
         call extend(sptable, jxqy)
-    elseif s:vimim_shuangpin_microsoft > 0
+    elseif s:vimim_shuangpin_ms > 0
         let jxqy = {"jv" : "jue", "qv" : "que", "xv" : "xue", "yv" : "yue"}
         call extend(sptable, jxqy)
     endif
@@ -3054,9 +3057,9 @@ function! s:vimim_shuangpin_abc(rule)
     return a:rule
 endfunction
 
-" -----------------------------------------
-function! s:vimim_shuangpin_microsoft(rule)
-" -----------------------------------------
+" ----------------------------------
+function! s:vimim_shuangpin_ms(rule)
+" ----------------------------------
 " vi=>zhi ii=>chi ui=>shi keng=>keneng
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
@@ -4073,12 +4076,12 @@ endfunction
 " -------------------------------------------
 function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
-" $vim test.vimim         => auto enter chinese input mode
-" $vim test.sqlite.vimim  => force sqlite input with cedict.db
-" $vim test.mycloud.vimim => force mycloud input
-" $vim test.sogou.vimim   => force cloud input
-" $vim test.shuangpin_abc.sogou.vimim
-" $vim test.shuangpin_abc.sogou.onekey.vimim
+" $vim vimim                     => auto enter chinese input mode
+" $vim sqlite.vimim              => force sqlite with cedict.db
+" $vim mycloud.vimim             => force mycloud input
+" $vim sogou.vimim               => force cloud input
+" $vim sogou.shuangpin_abc.vimim => force cloud abc shuangpin
+" $vim sogou.onekey.vimim        => force cloud onekey
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
@@ -4100,7 +4103,7 @@ function! s:vimim_force_scan_current_buffer()
     if buffer =~ 'shuangpin_abc'
         let s:vimim_shuangpin_abc = 1
     elseif buffer =~ 'shuangpin_microsoft'
-        let s:vimim_shuangpin_microsoft = 1
+        let s:vimim_shuangpin_ms = 1
     elseif buffer =~ 'shuangpin_nature'
         let s:vimim_shuangpin_nature = 1
     elseif buffer =~ 'shuangpin_plusplus'
@@ -4917,16 +4920,6 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_scan_backend_mycloud()
 " --------------------------------------
-" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
-" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
-" :let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
-" :let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
-" :let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
-" :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
-" :let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
-" :let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
-" :let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
-" --------------------------------------------------------------
     let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
     if empty(embedded_backend)
         call s:vimim_set_mycloud()
@@ -4936,12 +4929,22 @@ endfunction
 " ----------------------------------
 function! s:vimim_do_force_mycloud()
 " ----------------------------------
-" (1) [quick test] vim whatever.mycloud.vimim
-" (2) [option] local digit filter can also be used
-" --------------------------------------------------------------
-    if len(s:vimim_mycloud_url) < 3
-        let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+" [quick test] vim mycloud.vimim
+" ----------------------------------
+    if s:vimim_mycloud_url =~ '^http\|^dll\|^app'
+        return
     endif
+    " ----------------------------------------------------------
+    let s:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
+    let s:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
+    let s:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
+    let s:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
+    let s:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
+    let s:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
+    let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
+    let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
+    let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+    " ----------------------------------------------------------
     call s:vimim_set_mycloud()
 endfunction
 
@@ -4970,8 +4973,8 @@ function! s:vimim_set_mycloud_backend()
         return {}
     else
         let s:vimim_cloud_sogou = -777
+        let s:shuangpin_flag = -1
         let s:vimim_cloud_plugin = mycloud
-        let s:shuangpin_flag = 0
         return s:backend.cloud.mycloud
     endif
 endfunction
