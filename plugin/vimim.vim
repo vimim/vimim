@@ -1928,7 +1928,9 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         " -------------------------------------------------
         let extra_text = menu
         if s:pinyin_4corner_filter > 0
-            if len(s:menu_digit_as_filter) > 0 || menu =~ '^\d\d\d\d'
+            if len(s:menu_digit_as_filter) > 0 
+            \|| s:keyboard_leading_zero =~ "'"
+            \|| menu =~ '^\d\d\d\d' 
                 let ddddd = char2nr(chinese)
                 let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
             endif
