@@ -26,8 +26,8 @@ let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
 " -----------------------------------------------------------------
 
-let VimIM = " ====  Vim Input Method ==== {{{"
-" ===========================================
+let VimIM = " ====  Vim Input Method  ==== {{{"
+" ============================================
 "       File: vimim.vim
 "     Author: vimim <vimim@googlegroups.com>
 "    License: GNU Lesser General Public License
@@ -48,9 +48,9 @@ let VimIM = " ====  Vim Input Method ==== {{{"
 " -----------------------------------------------------------
 
 let s:vimims = [VimIM]
-" ======================================= }}}
-let VimIM = " ====  Introduction     ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Introduction     ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " -------------------
@@ -66,7 +66,7 @@ call add(s:vimims, VimIM)
 " "VimIM Front End UI"
 " --------------------
 " # VimIM "OneKey": Chinese input without mode change.
-" # VimIM "Chinese Input Mode" ['dynamic','static','onekey]
+" # VimIM "Chinese Input Mode" ['onekeyrun','dynamic','static']
 " # VimIM auto Chinese input with zero configuration
 
 " -----------------------
@@ -87,9 +87,9 @@ call add(s:vimims, VimIM)
 " # (2) [option] drop a datafile:  plugin/vimim.pinyin.txt
 " # (3) [option] drop a directory: plugin/vimim/pinyin/
 
-" ======================================= }}}
-let VimIM = " ====  Initialization   ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Initialization   ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 if exists("b:loaded_vimim") || &cp || v:version<700
     finish
@@ -166,6 +166,7 @@ function! s:vimim_initialize_session()
     let s:valid_key = "[0-9a-z'.]"
     let s:quantifiers = {}
     " --------------------------------
+    let s:internal_input = 0
     let s:www_executable = 0
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
@@ -355,9 +356,9 @@ function! s:vimim_initialize_keycode()
     return
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Customization    ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Customization    ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " -----------------------------------
@@ -387,7 +388,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
-    call add(G, "g:vimim_super_internal_input")
     call add(G, "g:vimim_debug")
     call add(G, "g:vimimdebug")
     " -----------------------------------
@@ -422,9 +422,9 @@ function! s:vimim_set_global_default(options, default)
     endfor
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Easter_Egg       ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Easter_Egg       ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ------------------------------
@@ -637,9 +637,9 @@ function! s:vimim_easter_chicken(keyboard)
     endtry
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  /Search          ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   /Search          ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ------------------------------
@@ -724,8 +724,10 @@ function! s:vimim_internal_codes(numbers, more)
     endif
     let unicodes = []
     for ddddd in a:numbers
-        if ddddd < 19968 || ddddd > 40869
-            break
+        if s:encoding == "utf8" 
+            if ddddd < 19968 || ddddd > 40869
+                break
+            endif
         endif
         let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
         let chinese = nr2char(ddddd)
@@ -756,11 +758,6 @@ endfunction
 " ----------------------------------------
 function! s:vimim_search_pattern(keyboard)
 " ----------------------------------------
-    let keyboard = a:keyboard
-    " hide sentence match in dynamic mode
-    if s:chinese_input_mode =~ 'dynamic'
-        return [keyboard]
-    endif
     let keyboard = a:keyboard
     let blocks = []
     if match(keyboard, "_$") > 0
@@ -794,9 +791,9 @@ function! g:vimim_search_pumvisible()
     sil!exe 'sil!return "' . slash . '"'
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  OneKey           ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   OneKey           ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ---------------------------------------------------
@@ -1011,9 +1008,9 @@ function! s:vimim_decimal2hex(decimal)
     return hex
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Chinese_Mode     ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Chinese_Mode     ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " -----------------------------------------
@@ -1199,9 +1196,9 @@ function! s:vimim_get_seamless(current_positions)
     return seamless_column
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  User_Interface   ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   User_Interface   ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ---------------------------------
@@ -1765,9 +1762,9 @@ function! g:vimim_backspace()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Omni_Popup_Menu  ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Omni_Popup_Menu  ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ---------------------------------------
@@ -1889,9 +1886,9 @@ function! s:vimim_get_labeling(label)
     return labeling
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Punctuations     ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Punctuations     ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ----------------------------------------
@@ -2136,9 +2133,9 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
     return value
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Chinese_Number   ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Chinese_Number   ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ----------------------------------------
@@ -2260,9 +2257,9 @@ function! s:vimim_get_chinese_number(keyboards, i)
     return chinese_number
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Input_Digit      ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Input_Digit      ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ------------------------------------------
@@ -2538,9 +2535,9 @@ function! s:vimim_get_filter_number(chinese)
     return expected_filtering_number
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Input_Pinyin     ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Input_Pinyin     ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ------------------------------------
@@ -2665,9 +2662,9 @@ function! s:vimim_create_quanpin_table()
     return table
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Input_Shuangpin  ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Input_Shuangpin  ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ----------------------------------------
@@ -3029,9 +3026,9 @@ function! s:vimim_shuangpin_flypy(rule)
     return a:rule
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Input_Misc       ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Input_Misc       ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " -------------------------------------
@@ -3150,29 +3147,47 @@ func! s:progressbar.restore()
   redraw
 endfun
 
-" ======================================= }}}
-let VimIM = " ====  Backend==Unicode ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====  Backend==Internal ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
+
+" -----------------------------------
+function! s:vimim_do_force_internal()
+" -----------------------------------
+" [quick test] vim internal.vimim
+" -------------------------------
+    let s:internal_input = 1
+    call s:vimim_set_internal()
+endfunction
 
 " ---------------------------------------
 function! s:vimim_scan_backend_internal()
 " ---------------------------------------
-    let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
-    if empty(embedded_backend)
-        if empty(s:vimim_cloud_plugin) && s:vimim_cloud_sogou < 1
-        " --------------------------------------------------------
-        let root = "internal"
-        let im = "unicode"
-        let s:ui.root = root
-        let s:ui.im = im
-        call add(s:ui.frontends, [s:ui.root, s:ui.im])
-        let s:backend.internal[im].root = root
-        let s:backend.internal[im].im = im
-        let s:backend.internal[im].keycode = s:im_keycode[root]
-        let s:backend.internal[im].chinese = s:vimim_chinese(root)
-        " --------------------------------------------------------
+    let embedded_backend = s:vimim_has_embedded_backend()
+    if empty(embedded_backend) 
+    \&& empty(s:vimim_cloud_plugin)
+    \&& s:vimim_cloud_sogou < 1
+        call s:vimim_set_internal()
     endif
+endfunction
+
+" ------------------------------
+function! s:vimim_set_internal()
+" ------------------------------
+    if s:ui.root == "internal" && s:ui.im == s:encoding
+        return
+    endif
+    let root = "internal"
+    let im = s:encoding
+    call add(s:ui.frontends, [s:ui.root, s:ui.im])
+    let s:backend.internal[im].root = root
+    let s:backend.internal[im].im = im
+    let s:backend.internal[im].keycode = s:im_keycode[root]
+    let s:backend.internal[im].chinese = s:vimim_chinese(root)
+    " --------------------------
+    let s:vimim_cloud_sogou = -1
+    let s:vimim_cloud_plugin = 0
 endfunction
 
 " ------------------------------
@@ -3313,11 +3328,6 @@ function! s:vimim_egg_vimimunicode()
     return eggs
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Backend==GBK     ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
 " -------------
 function! GBK()
 " -------------
@@ -3421,11 +3431,6 @@ function! s:vimim_without_backend(keyboard)
     " --------------------------------------
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Backend==BIG5    ==== {{{"
-" ===========================================
-call add(s:vimims, VimIM)
-
 " --------------
 function! BIG5()
 " --------------
@@ -3453,9 +3458,9 @@ function! BIG5()
     return ""
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Backend==FILE    ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Backend==FILE    ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ------------------------------------------------
@@ -3677,11 +3682,11 @@ function! s:vimim_sentence_match_cache(keyboard)
         endif
     endwhile
     " --------------------------------------------------
-    let blocks = []
     if len(results) > 0
-        let blocks = s:vimim_break_string_at(keyboard, max)
+        return s:vimim_break_string_at(keyboard, max)
+    else
+        return []
     endif
-    return blocks
 endfunction
 
 " -----------------------------------------------------
@@ -3730,11 +3735,11 @@ function! s:vimim_sentence_match_datafile(keyboard)
         endif
     endwhile
     " ------------------------------------------------
-    let blocks = []
-    if match_start > 0
-        let blocks = s:vimim_break_string_at(a:keyboard, max)
+    if match_start < 0
+        return []
+    else
+        return s:vimim_break_string_at(a:keyboard, max)
     endif
-    return blocks
 endfunction
 
 " ------------------------------------------------
@@ -3914,9 +3919,9 @@ function! s:vimim_loading_datafile_cache(progressbar)
     endfor
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Backend==DIR     ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Backend==DIR     ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " -------------------------------------------------
@@ -3993,7 +3998,7 @@ function! s:vimim_force_scan_current_buffer()
         let s:vimim_static_input_style = 0
     elseif buffer =~ 'static'
         let s:vimim_static_input_style = 1
-    elseif buffer =~ 'onekey'
+    elseif buffer =~ 'onekeyrun'
         let s:vimim_static_input_style = 2
     endif
     " ---------------------------------
@@ -4017,6 +4022,8 @@ function! s:vimim_force_scan_current_buffer()
         call s:vimim_do_force_sogou()
     elseif buffer =~# 'mycloud'
         call s:vimim_do_force_mycloud()
+    elseif buffer =~# 'internal'
+        call s:vimim_do_force_internal()
     else
     " ---------------------------------
         let input_method = '\<' . im . '\>'
@@ -4185,11 +4192,11 @@ function! s:vimim_sentence_match_directory(keyboard, im)
         endif
     endwhile
     " --------------------------------------------------
-    let blocks = []
     if filereadable(filename)
-        let blocks = s:vimim_break_string_at(keyboard, max)
+        return s:vimim_break_string_at(keyboard, max)
+    else
+        return []
     endif
-    return blocks
 endfunction
 
 " ------------------------------------------------
@@ -4331,9 +4338,9 @@ function! s:vimim_remove_duplication(chinese)
     return results
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Backend==SQLite  ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Backend==SQLite  ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ---------------------------------
@@ -4387,12 +4394,12 @@ function! s:vimim_check_sqlite_availability()
     return root
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_sentence_match_sqlite(keyboard)
-" -----------------------------------------------
+" ---------------------------------------------
+function! s:vimim_get_sentence_sqlite(keyboard)
+" ---------------------------------------------
     let keyboard = a:keyboard
-    let sql = s:vimim_get_cedict_sqlite_query(keyboard)
-    let results = s:vimim_get_data_from_cedict_sqlite(keyboard, sql)
+    let sql = s:vimim_get_sqlite_query(keyboard)
+    let results = s:vimim_get_data_from_sqlite(keyboard, sql)
     if empty(results)
         let msg = "nothing found from sqlite, but why not try more"
     else
@@ -4404,8 +4411,8 @@ function! s:vimim_sentence_match_sqlite(keyboard)
     while max > 1
         let max -= 1
         let key = strpart(keyboard, 0, max)
-        let sql = s:vimim_get_cedict_sqlite_query(key)
-        let results = s:vimim_get_data_from_cedict_sqlite(key, sql)
+        let sql = s:vimim_get_sqlite_query(key)
+        let results = s:vimim_get_data_from_sqlite(key, sql)
         if empty(results)
             continue
         else
@@ -4416,9 +4423,9 @@ function! s:vimim_sentence_match_sqlite(keyboard)
     return results
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_get_cedict_sqlite_query(keyboard)
-" -------------------------------------------------
+" ------------------------------------------
+function! s:vimim_get_sqlite_query(keyboard)
+" ------------------------------------------
 " sqlite> select * from cedict where Translation like '%dream%';
 " sqlite> select * from cedict where Reading     like 'ma_ ma_';
 " --------------------------------------------------------------
@@ -4428,13 +4435,13 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
     let column2 = 'HeadwordSimplified'
     let column3 = 'Reading'
     let column4 = 'Translation'
-    " ----------------------------------------
+    " --------------------------------------
     let select = column2
     let buffer = expand("%:p:t")
     if buffer =~# 'SQLITE'
         let select = column1
     endif
-    " ----------------------------------------
+    " --------------------------------------
     let column = column3
     if buffer =~ 'english'
         let keyboard = "'%" . keyboard . "%'"
@@ -4458,23 +4465,23 @@ function! s:vimim_get_cedict_sqlite_query(keyboard)
             let keyboard = "'" . keyboard . "'"
         endif
     endif
-    " ----------------------------------------
+    " --------------------------------------
     let query  = " select " . select
     let query .= " from   " . table
     let query .= " where  " . column . ' like ' . keyboard
-    " ----------------------------------------
+    " --------------------------------------
     let sqlite  = s:backend.database.sqlite.executable . ' '
     let sqlite .= s:backend.database.sqlite.datafile   . ' '
     let sqlite .= ' " '
     let sqlite .= query
     let sqlite .= ' " '
-    " ----------------------------------------
+    " --------------------------------------
     return sqlite
 endfunction
 
-" -------------------------------------------------------------
-function! s:vimim_get_data_from_cedict_sqlite(keyboard, sqlite)
-" -------------------------------------------------------------
+" ------------------------------------------------------
+function! s:vimim_get_data_from_sqlite(keyboard, sqlite)
+" ------------------------------------------------------
     let sql_return = system(a:sqlite)
     if empty(sql_return)
         return []
@@ -4487,14 +4494,14 @@ function! s:vimim_get_data_from_cedict_sqlite(keyboard, sqlite)
     return results
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Backend=>Cloud   ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Backend=>Cloud   ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------------------
-function! s:vimim_no_cloud_on_embedded_backend()
-" ----------------------------------------------
+" --------------------------------------
+function! s:vimim_has_embedded_backend()
+" --------------------------------------
     if empty(s:backend.datafile)
     \&& empty(s:backend.directory)
     \&& empty(s:backend.database)
@@ -4510,7 +4517,7 @@ function! s:vimim_scan_backend_cloud()
 " s:vimim_cloud_sogou=0  : default, auto open when no datafile
 " s:vimim_cloud_sogou=-1 : cloud is shut down without condition
 " -------------------------------------------------------------
-    let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
+    let embedded_backend = s:vimim_has_embedded_backend()
     if empty(embedded_backend) && empty(s:vimim_cloud_plugin)
         call s:vimim_set_sogou()
     endif
@@ -4681,7 +4688,8 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
         return 0
     endif
     let keyboard = a:keyboard
-    if s:chinese_input_mode == 'onekey' && keyboard =~ '[.]'
+    if s:chinese_input_mode == 'onekey'
+    \&& keyboard =~ '[.]'
         return 0
     endif
     if keyboard =~# "[^a-z']"
@@ -4804,15 +4812,15 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     return menu
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Backend=>myCloud ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Backend=>myCloud ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " --------------------------------------
 function! s:vimim_scan_backend_mycloud()
 " --------------------------------------
-    let embedded_backend = s:vimim_no_cloud_on_embedded_backend()
+    let embedded_backend = s:vimim_has_embedded_backend()
     if empty(embedded_backend)
         call s:vimim_set_mycloud()
     endif
@@ -5163,9 +5171,9 @@ function! s:vimim_rot13(keyboard)
     return rot13
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Debug_Framework  ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Debug_Framework  ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ------------------------------------
@@ -5287,9 +5295,9 @@ function! s:vimim_debug_reset()
     endif
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Plugin_Conflict  ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Plugin_Conflict  ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ----------------------------------
@@ -5376,9 +5384,9 @@ function! s:vimim_plugins_fix_stop()
     endif
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Core_Workflow    ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Core_Workflow    ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " --------------------------------------
@@ -5574,9 +5582,9 @@ function! s:vimim_helper_mapping_on()
     " ----------------------------------------------------------
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Core_Engine      ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Core_Engine      ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " -------------------------------------------------
@@ -5592,7 +5600,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
     if root =~# "directory"
         let results = s:vimim_get_sentence_directory(keyboard)
     elseif root =~# "database"
-        let results = s:vimim_sentence_match_sqlite(keyboard)
+        let results = s:vimim_get_sentence_sqlite(keyboard)
     elseif root =~# "datafile"
         if empty(s:backend[root][im].cache)
             let results = s:vimim_get_sentence_datafile_lines(keyboard)
@@ -5715,7 +5723,7 @@ else
 
     " try super-internal-code if no backend nor cloud
     " -----------------------------------------------
-    if s:vimim_super_internal_input > 0
+    if s:internal_input > 0
         let msg = " usage: a<C-6> b<C-6> ... z<C-6> "
         let results = s:vimim_without_backend(keyboard)
         if !empty(len(results))
@@ -5857,9 +5865,9 @@ function! s:vimim_get_valid_keyboard(keyboard)
     return keyboard
 endfunction
 
-" ======================================= }}}
-let VimIM = " ====  Core_Driver      ==== {{{"
-" ===========================================
+" ======================================== }}}
+let VimIM = " ====   Core_Driver      ==== {{{"
+" ============================================
 call add(s:vimims, VimIM)
 
 " ------------------------------------
