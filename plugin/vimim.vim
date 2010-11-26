@@ -649,21 +649,7 @@ function! g:vimim_search_next()
         let english = @/
         if len(english) < 20 && english !~ '_'
         \&& english =~ '\w' && english != '\W'
-            let english = tolower(english)
-            let results = s:vimim_unicode_search(english)
-            if empty(results)
-                sil!call s:vimim_backend_initialization_once()
-                if empty(s:backend.datafile) && empty(s:backend.directory)
-                    if empty(s:vimim_cloud_plugin)
-                        let results = s:vimim_get_cloud_sogou(english, 1)
-                    else
-                        let results = s:vimim_get_mycloud_plugin(english)
-                    endif
-                else
-                    let english .= "_"
-                    let results = s:vimim_embedded_backend_engine(english)
-                endif
-            endif
+            let results = s:vimim_get_chinese_from_english(english)
             if !empty(results)
                 sil!call s:vimim_search_pattern_register(results)
             endif
@@ -671,6 +657,27 @@ function! g:vimim_search_next()
         let s:menu_digit_as_filter = ""
     endif
     :normal! n
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_get_chinese_from_english(english)
+" -------------------------------------------------
+    let english = tolower(a:english)
+    let results = s:vimim_unicode_search(english)
+    if empty(results)
+        sil!call s:vimim_backend_initialization_once()
+        if empty(s:backend.datafile) && empty(s:backend.directory)
+            if empty(s:vimim_cloud_plugin)
+                let results = s:vimim_get_cloud_sogou(english, 1)
+            else
+                let results = s:vimim_get_mycloud_plugin(english)
+            endif
+        else
+            let english .= "_"
+            let results = s:vimim_embedded_backend_engine(english)
+        endif
+    endif
+    return results
 endfunction
 
 " ------------------------------------------------
@@ -811,7 +818,7 @@ function! s:vimim_break_apostrophe_sentence(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
     let blocks = []
-    if s:chinese_input_mode == 'onekey'
+    if s:chinese_input_mode =~ 'onekey'
     \&& s:ui.has_dot != 2
     \&& keyboard =~ "[']"
     \&& keyboard[0:0] != "'"
@@ -3972,6 +3979,7 @@ function! s:vimim_force_scan_current_buffer()
 " $vim sogou.vimim               => force cloud input
 " $vim sogou.shuangpin_abc.vimim => force cloud abc shuangpin
 " $vim sogou.onekey.vimim        => force cloud onekey
+" $vim wubi.dynamic.vimim        => force wubi dynamic input mode
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
@@ -4015,7 +4023,7 @@ function! s:vimim_force_scan_current_buffer()
     else
     " ---------------------------------
         for input_method in s:all_vimim_input_methods
-            if buffer =~ input_method
+            if buffer =~ input_method . '\>'
                 break
             else
                 continue
@@ -4675,8 +4683,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
         return 0
     endif
     let keyboard = a:keyboard
-    if s:chinese_input_mode == 'onekey'
-    \&& keyboard =~ '[.]'
+    if s:chinese_input_mode == 'onekey' && keyboard =~ '[.]'
         return 0
     endif
     if keyboard =~# "[^a-z']"
@@ -5211,10 +5218,10 @@ function! s:vimim_initialize_debug()
     let s:path2 = 0
     let s:backend_loaded = 0
     let s:chinese_input_mode = 'onekey'
-    let s:vimimdata = '/vimim/svn/vimim-data/trunk/data/'
     " ------------------------------
     let dir = "/vimim/"
     if isdirectory(dir)
+        let s:vimimdata = '/vimim/svn/vimim-data/trunk/data/'
         let s:path2 = dir
     else
         return
