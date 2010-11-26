@@ -397,7 +397,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_auto_copy_clipboard")
-    call add(G, "g:vimim_punctuation_chinese")
+    call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_internal_code_input")
     call add(G, "g:vimim_onekey_double_ctrl6")
     " -----------------------------------
@@ -1949,16 +1949,6 @@ function! s:vimim_initialize_frontend_punctuation()
     endfor
 endfunction
 
-" ---------------------------------------
-function! <SID>vimim_toggle_punctuation()
-" ---------------------------------------
-    if s:vimim_punctuation_chinese > -1
-        let s:chinese_punctuation = (s:chinese_punctuation+1)%2
-        sil!call s:vimim_punctuation_on()
-    endif
-    return ""
-endfunction
-
 " ----------------------------------
 function! s:vimim_get_single_quote()
 " ----------------------------------
@@ -1975,6 +1965,16 @@ function! s:vimim_get_double_quote()
     let pairs = split(pair,'\zs')
     let s:smart_double_quotes += 1
     return get(pairs, s:smart_double_quotes % 2)
+endfunction
+
+" ---------------------------------------
+function! <SID>vimim_toggle_punctuation()
+" ---------------------------------------
+    if s:vimim_chinese_punctuation > -1
+        let s:chinese_punctuation = (s:chinese_punctuation+1)%2
+        sil!call s:vimim_punctuation_on()
+    endif
+    return ""
 endfunction
 
 " -----------------------------------
@@ -2015,7 +2015,6 @@ function! <SID>vimim_punctuation_on()
     endfor
     " --------------------------------------
     call s:vimim_punctuation_navigation_on()
-    " --------------------------------------
 endfunction
 
 " -------------------------------------------
@@ -2032,30 +2031,20 @@ endfunction
 " -------------------------------------------
 function! s:vimim_punctuation_navigation_on()
 " -------------------------------------------
-    if s:vimim_punctuation_chinese < 0
+    if s:vimim_chinese_punctuation < 0
         return
     endif
-    " ---------------------------------------
-    let default = "=-[]"
-    let period = "."
-    let comma = ","
-    let slash = "/"
-    let question_mark = "?"
-    " ---------------------------------------
-    let punctuation = default . period . comma . slash
-    if s:chinese_input_mode !~ 'onekey'
-        let punctuation = default
+    let dot = "."
+    let punctuation = "=-[]"
+    if s:chinese_input_mode =~ 'onekey'
+        let punctuation .= dot . ",/?"
     endif
-    " ---------------------------------------
     let hjkl_list = split(punctuation,'\zs')
-    if s:chinese_input_mode == 'onekey'
-        call add(hjkl_list, question_mark)
-    endif
     " ---------------------------------------
-    let msg = "we should never map valid keycode"
+    " note: we should never map valid keycode
     for char in s:valid_keys
         let i = index(hjkl_list, char)
-        if i > -1 && char != period
+        if i > -1 && char != dot
             unlet hjkl_list[i]
         endif
     endfor
@@ -2140,16 +2129,16 @@ function! s:vimim_dictionary_quantifiers()
     if s:vimim_imode_pinyin < 1
         return
     endif
-    let s:quantifiers['1'] = '一壹①⒈⑴甲'
-    let s:quantifiers['2'] = '二贰②⒉⑵乙'
-    let s:quantifiers['3'] = '三叁③⒊⑶丙'
-    let s:quantifiers['4'] = '四肆④⒋⑷丁'
-    let s:quantifiers['5'] = '五伍⑤⒌⑸戊'
-    let s:quantifiers['6'] = '六陆⑥⒍⑹己'
-    let s:quantifiers['7'] = '七柒⑦⒎⑺庚'
-    let s:quantifiers['8'] = '八捌⑧⒏⑻辛'
-    let s:quantifiers['9'] = '九玖⑨⒐⑼壬'
-    let s:quantifiers['0'] = '〇零⑩⒑⑽癸十拾'
+    let s:quantifiers['1'] = '一壹甲①⒈⑴'
+    let s:quantifiers['2'] = '二贰乙②⒉⑵'
+    let s:quantifiers['3'] = '三叁丙③⒊⑶'
+    let s:quantifiers['4'] = '四肆丁④⒋⑷'
+    let s:quantifiers['5'] = '五伍戊⑤⒌⑸'
+    let s:quantifiers['6'] = '六陆己⑥⒍⑹'
+    let s:quantifiers['7'] = '七柒庚⑦⒎⑺'
+    let s:quantifiers['8'] = '八捌辛⑧⒏⑻'
+    let s:quantifiers['9'] = '九玖壬⑨⒐⑼'
+    let s:quantifiers['0'] = '〇零癸⑩⒑⑽十拾'
     let s:quantifiers['a'] = '秒'
     let s:quantifiers['b'] = '百佰步把包杯本笔部班'
     let s:quantifiers['c'] = '厘次餐场串处床'
@@ -2169,12 +2158,12 @@ function! s:vimim_dictionary_quantifiers()
     let s:quantifiers['q'] = '千仟群'
     let s:quantifiers['r'] = '日'
     let s:quantifiers['s'] = '十拾时升艘扇首双所束手'
-    let s:quantifiers['t'] = '吨条头通堂台套桶筒贴趟'
+    let s:quantifiers['t'] = '吨条头通堂趟台套桶筒贴'
     let s:quantifiers['u'] = '微'
     let s:quantifiers['w'] = '万位味碗窝'
     let s:quantifiers['x'] = '升席些项'
     let s:quantifiers['y'] = '月亿叶'
-    let s:quantifiers['z'] = '兆只张株支枝种指盏座阵桩尊则站幢宗'
+    let s:quantifiers['z'] = '种只张株支枝盏座阵桩尊则站幢宗兆'
 endfunction
 
 " ----------------------------------------------
@@ -3050,7 +3039,7 @@ function! s:vimim_set_special_im_property()
     \|| s:ui.im == 'phonetic'
     \|| s:ui.im == 'array30'
         let s:ui.has_dot = 1  "| dot in datafile
-        let s:vimim_punctuation_chinese = -1
+        let s:vimim_chinese_punctuation = -1
     endif
 endfunction
 
@@ -5474,7 +5463,7 @@ function! s:reset_before_anything()
     let s:no_internet_connection = 0
     let s:pattern_not_found = 0
     let s:keyboard_count += 1
-    let s:chinese_punctuation = (s:vimim_punctuation_chinese+1)%2
+    let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
 " --------------------------------
