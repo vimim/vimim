@@ -1540,41 +1540,6 @@ function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
     return '\<C-E>\<C-R>=g:vimim()\<CR>'
 endfunction
 
-" -----------------
-function! g:vimim()
-" -----------------
-    let key = ""
-    let byte_before = getline(".")[col(".")-2]
-    if byte_before =~# s:valid_key
-        let key = '\<C-X>\<C-U>'
-        if s:chinese_input_mode =~ 'dynamic'
-            call g:vimim_reset_after_auto_insert()
-        endif
-        let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
-    else
-        call g:vimim_reset_after_auto_insert()
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" -----------------------------
-function! g:vimim_menu_select()
-" -----------------------------
-    let key = ""
-    if pumvisible()
-        let key = '\<C-P>\<Down>'
-        if s:insert_without_popup > 0
-            let key = '\<C-Y>'
-            if s:insert_without_popup > 1
-                let key .= '\<Esc>'
-            endif
-            call s:reset_popupmenu_list()
-            let s:insert_without_popup = 0
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 " -------------------------------------
 function! g:vimim_menu_search_forward()
 " -------------------------------------
@@ -5536,17 +5501,51 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
-    call s:reset_popupmenu_list()
-    call g:vimim_reset_after_auto_insert()
     if empty(s:chinese_input_mode) && empty(s:tail)
         call s:vimim_stop()
     endif
-    let onekey = ""
+    let key = ""
     if s:pumvisible_yes > 0
-        let s:pumvisible_yes = 0
-        let onekey = g:vimim()
+        let key = g:vimim()
     endif
-    sil!exe 'sil!return "' . onekey . '"'
+    call s:reset_popupmenu_list()
+    call g:vimim_reset_after_auto_insert()
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" -----------------
+function! g:vimim()
+" -----------------
+    let key = ""
+    let byte_before = getline(".")[col(".")-2]
+    if byte_before =~# s:valid_key
+        let key = '\<C-X>\<C-U>'
+        if s:chinese_input_mode =~ 'dynamic'
+            call g:vimim_reset_after_auto_insert()
+        endif
+        let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
+    else
+        call g:vimim_reset_after_auto_insert()
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" -----------------------------
+function! g:vimim_menu_select()
+" -----------------------------
+    let key = ""
+    if pumvisible()
+        let key = '\<C-P>\<Down>'
+        if s:insert_without_popup > 0
+            let key = '\<C-Y>'
+            if s:insert_without_popup > 1
+                let key .= '\<Esc>'
+            endif
+            call s:reset_popupmenu_list()
+            let s:insert_without_popup = 0
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ---------------------------
