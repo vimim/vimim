@@ -395,7 +395,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_use_cache")
-    call add(G, "g:vimim_search_slash_n")
+    call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_punctuation_chinese")
     call add(G, "g:vimim_internal_code_input")
@@ -641,38 +641,36 @@ let VimIM = " ====  /Search           ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ------------------------------
-function! g:vimim_search_slash()
-" ------------------------------
+" -----------------------------
+function! g:vimim_search_next()
+" -----------------------------
     if v:errmsg =~ "^E486:"
         let v:errmsg = ""
-    else
-        return
-    endif
-    let english = @/
-    if len(english) < 24 && english !~ '_'
-    \&& english =~ '\w' && english != '\W'
-        let english = tolower(english)
-        let results = s:vimim_unicode_search(english)
-        if empty(results)
-            sil!call s:vimim_backend_initialization_once()
-            if empty(s:backend.datafile) && empty(s:backend.directory)
-                if empty(s:vimim_cloud_plugin)
-                    let results = s:vimim_get_cloud_sogou(english, 1)
+        let english = @/
+        if len(english) < 20 && english !~ '_'
+        \&& english =~ '\w' && english != '\W'
+            let english = tolower(english)
+            let results = s:vimim_unicode_search(english)
+            if empty(results)
+                sil!call s:vimim_backend_initialization_once()
+                if empty(s:backend.datafile) && empty(s:backend.directory)
+                    if empty(s:vimim_cloud_plugin)
+                        let results = s:vimim_get_cloud_sogou(english, 1)
+                    else
+                        let results = s:vimim_get_mycloud_plugin(english)
+                    endif
                 else
-                    let results = s:vimim_get_mycloud_plugin(english)
+                    let english .= "_"
+                    let results = s:vimim_embedded_backend_engine(english)
                 endif
-            else
-                let english .= "_"
-                let results = s:vimim_embedded_backend_engine(english)
+            endif
+            if !empty(results)
+                sil!call s:vimim_search_pattern_register(results)
             endif
         endif
-        if !empty(results)
-            sil!call s:vimim_search_pattern_register(results)
-        endif
+        let s:menu_digit_as_filter = ""
     endif
-    let s:menu_digit_as_filter = ""
-    return
+    :normal! n
 endfunction
 
 " ------------------------------------------------
@@ -5907,8 +5905,8 @@ function! s:vimim_onekey_mapping_on()
         xnoremap <silent> <C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
     " -------------------------------
-    if s:vimim_search_slash_n > 0
-        noremap <silent> n :sil!call g:vimim_search_slash()<CR>n
+    if s:vimim_search_next > 0
+        noremap <silent> n :sil!call g:vimim_search_next()<CR>
     endif
 endfunction
 
