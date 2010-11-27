@@ -163,33 +163,33 @@ function! s:vimim_initialize_session()
     call s:vimim_super_reset()
     call s:vimim_set_encoding()
     " --------------------------------
+    let s:www_executable = 0
+    let s:www_libcall = 0
+    let s:vimim_cloud_plugin = 0
+    let s:internal_input = 0
+    " --------------------------------
+    let s:shuangpin_flag = 0
+    let s:shuangpin_table = {}
+    let s:quanpin_table = {}
+    " --------------------------------
     let s:unihan_4corner_lines = []
     let s:unihan_4corner_cache = {}
     let s:pinyin_4corner_filter = 0
+    " --------------------------------
     let s:abcd = "'abcdefg"
     let s:pqwertyuio = range(10)
     let s:valid_key = "[0-9a-z'.]"
     let s:quantifiers = {}
+    let s:localization = 0
+    let s:tail = ""
     " --------------------------------
-    let s:internal_input = 0
-    let s:www_executable = 0
-    let s:www_libcall = 0
-    let s:vimim_cloud_plugin = 0
+    let s:current_positions = [0,0,1,0]
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
     let s:seamless_positions = []
-    let s:current_positions = [0,0,1,0]
-    let s:localization = 0
-    " --------------------------------
-    let s:tail = ""
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
-    " --------------------------------
-    let s:shuangpin_flag = 0
-    let s:quanpin_table = {}
-    let s:shuangpin_table = {}
-    let s:keyboard_count = 0
     " --------------------------------
     let A = char2nr('A')
     let Z = char2nr('Z')
@@ -809,9 +809,11 @@ function! s:vimim_break_apostrophe_sentence(keyboard)
     \&& keyboard[-1:-1] != "'"
         let blocks = split(keyboard, "[']")
         if !empty(blocks)
-            let head = remove(blocks, 0)
-            let tail =  join(blocks, "'")
-            let blocks = [head, tail]
+            let head = get(blocks, 0)
+            let blocks = s:vimim_break_pinyin_digit(head)
+            if empty(blocks)
+                let blocks = [head]
+            endif
         endif
     endif
     return blocks
@@ -1823,17 +1825,16 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         if empty(s:vimim_cloud_plugin)
             let s:tail = ""
             if keyboard =~ "[']"
-                let dot = match(keyboard, "[']")
-                let s:tail = strpart(keyboard, dot+1)
-            elseif s:ui.has_dot == 1
-                let s:tail = ""
-            elseif keyboard !~? '^vim' && keyboard !~ "[']"
-                let s:tail = strpart(keyboard, len(menu))
-            endif
-            if keyboard =~ '\l\>' || keyboard =~ '^\d\+\>'
+                let apostrophe = match(keyboard, "[']")
+                let s:tail = strpart(keyboard, apostrophe+1)
                 let chinese .=  s:tail
-                let s:keyboard_head = strpart(keyboard, 0, len(menu))
+            elseif keyboard !~? '^vim'
+                let s:tail = strpart(keyboard, len(menu))
+                if keyboard =~ '\l\>' || keyboard =~ '^\d\+\>'
+                    let chinese .=  s:tail
+                endif
             endif
+            let s:keyboard_head = strpart(keyboard, 0, len(menu))
         else
             let menu = get(split(menu,"_"),0)
         endif
@@ -2109,7 +2110,6 @@ call add(s:vimims, VimIM)
 " ----------------------------------------
 function! s:vimim_dictionary_quantifiers()
 " ----------------------------------------
-    let s:quantifiers = {}
     if s:vimim_imode_pinyin < 1
         return
     endif
@@ -3617,8 +3617,11 @@ function! s:vimim_sentence_match_cache(keyboard)
         return [keyboard]
     endif
     let im = s:ui.im
+    " -----------------------------------------
     let blocks = s:vimim_break_sentence_into_block(keyboard)
-    if !empty(blocks) | return blocks | endif
+    if !empty(blocks)
+        return blocks
+    endif
     " -----------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     while max > 0
@@ -3665,8 +3668,11 @@ function! s:vimim_sentence_match_datafile(keyboard)
     if match_start > -1
         return [keyboard]
     endif
+    " ---------------------------------------------
     let blocks = s:vimim_break_sentence_into_block(keyboard)
-    if !empty(blocks) | return blocks | endif
+    if !empty(blocks)
+        return blocks
+    endif
     " ---------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     while max > 0
@@ -4127,8 +4133,11 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     if filereadable(filename)
         return [keyboard]
     endif
+    " --------------------------------------------------
     let blocks = s:vimim_break_sentence_into_block(keyboard)
-    if !empty(blocks) | return blocks | endif
+    if !empty(blocks)
+        return blocks
+    endif
     " --------------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     while max > 1
@@ -5428,7 +5437,6 @@ function! s:reset_before_anything()
     call s:reset_popupmenu_list()
     let s:no_internet_connection = 0
     let s:pattern_not_found = 0
-    let s:keyboard_count += 1
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
