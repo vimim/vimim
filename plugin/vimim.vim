@@ -581,7 +581,9 @@ function! s:vimim_egg_vimim()
     " ----------------------------------
     let option = 0
     if s:pinyin_4corner_filter == 2
-        let option = ciku . s:path2 . "unihan/"
+        if !empty(s:path2)
+            let option = ciku . s:path2 . "unihan/"
+        endif
     elseif s:pinyin_4corner_filter == 1
         let option = s:path . "vimim.unihan_4corner.txt"
         let ciku = s:vimim_chinese('digit') . s:colon
@@ -1123,6 +1125,21 @@ function! s:vimim_dynamic_alphabet_trigger()
     endfor
 endfunction
 
+" ------------------------------------------
+function! g:vimim_pumvisible_ctrl_e_ctrl_y()
+" ------------------------------------------
+    let key = ""
+    if pumvisible()
+        let key = "\<C-E>"
+        if s:ui.im =~ 'wubi'
+        \&& empty(len(s:keyboard_leading_zero)%4)
+            let key = "\<C-Y>"
+            let s:pumvisible_yes = 1
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
 " ---------------------------------
 function! <SID>vimim_set_seamless()
 " ---------------------------------
@@ -1656,23 +1673,6 @@ function! <SID>vimim_get_unicode_menu()
     endif
 endfunction
 
-" ------------------------------------------
-function! g:vimim_pumvisible_ctrl_e_ctrl_y()
-" ------------------------------------------
-    let key = ""
-    if pumvisible()
-        let key = "\<C-E>"
-        " ----------------------------------
-        if s:ui.im =~ 'wubi'
-        \&& empty(len(s:keyboard_leading_zero)%4)
-            let key = "\<C-Y>"
-            let s:pumvisible_yes = 1
-        endif
-        " ----------------------------------
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 " -----------------------------------
 function! g:vimim_pumvisible_ctrl_y()
 " -----------------------------------
@@ -1846,7 +1846,8 @@ function! s:vimim_get_labeling(label)
             if label < 2
                 let label2 = "_"
             endif
-            if s:vimim_custom_skin == 2 || s:pinyin_4corner_filter > 0
+            if s:vimim_custom_skin == 2 
+            \|| s:pinyin_4corner_filter > 0
                 let labeling = label2
             else
                 let labeling .= label2
@@ -2375,7 +2376,7 @@ function! s:vimim_build_unihan_reverse_cache(chinese)
 " [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
 " ---------------------------------------------------
     if s:pinyin_4corner_filter < 2
-        return []
+        return
     endif
     let chinese = substitute(a:chinese,'\w','','g')
     for char in split(chinese, '\zs')
@@ -5193,11 +5194,10 @@ function! s:vimim_initialize_debug()
         return
     endif
     " ------------------------------
-    let s:vimim_use_cache = 1
     let s:vimim_static_input_style = 2
-    let s:vimim_custom_skin = 2
     let s:vimim_ctrl_6_to_toggle = 1
     let s:vimim_reverse_pageup_pagedown = 1
+    let s:vimim_custom_skin = 2
     let s:vimim_debug = 9
 endfunction
 
@@ -5895,14 +5895,13 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_autocmd()
 " ------------------------------------
-    if !has("autocmd")
-        return
+" [egg] promote any dot vimim file to be our first-class citizen
+    if has("autocmd")
+        augroup vimim_auto_chinese_mode
+            autocmd BufNewFile *.vimim startinsert
+            autocmd BufEnter   *.vimim sil!call <SID>ChineseMode()
+        augroup END
     endif
-    " [egg] promote any dot vimim file to be our first-class citizen
-    augroup vimim_auto_chinese_mode
-        autocmd BufNewFile *.vimim startinsert
-        autocmd BufEnter   *.vimim sil!call <SID>ChineseMode()
-    augroup END
 endfunction
 
 sil!call s:vimim_initialize_global()
