@@ -673,7 +673,6 @@ function! s:vimim_get_chinese_from_english(english)
                 let results = s:vimim_get_mycloud_plugin(english)
             endif
         else
-            let english .= "_"
             let results = s:vimim_embedded_backend_engine(english)
         endif
     endif
@@ -757,21 +756,6 @@ function! s:vimim_unicode_4corner_pinyin(ddddd, more)
         let menu .= s:space . unihan . s:space . pinyin
     endif
     return menu
-endfunction
-
-" ----------------------------------------
-function! s:vimim_search_pattern(keyboard)
-" ----------------------------------------
-    let keyboard = a:keyboard
-    let blocks = []
-    if match(keyboard, "_$") > 0
-        let keyboard = keyboard[0 : len(keyboard)-2]
-        let blocks = s:vimim_break_pinyin_digit(keyboard)
-        if empty(blocks)
-            let blocks = [keyboard]
-        endif
-    endif
-    return blocks
 endfunction
 
 " -----------------------------------
@@ -2423,20 +2407,6 @@ function! s:vimim_build_unihan_reverse_cache(chinese)
     endfor
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_set_menu_digit_as_filter(keyboards)
-" ---------------------------------------------------
-    let keyboards = a:keyboards
-    if s:pinyin_4corner_filter > 0 && len(keyboards) > 1
-        let menu = get(keyboards, 0)
-        let filter = get(keyboards, 1)
-        if menu =~ '\D' && filter =~ '^\d\+$'
-        \&& empty(len(s:menu_digit_as_filter))
-            let s:menu_digit_as_filter =  filter . "_"
-        endif
-    endif
-endfunction
-
 " --------------------------------------
 function! s:vimim_1234567890_filter_on()
 " --------------------------------------
@@ -3632,7 +3602,6 @@ function! s:vimim_get_sentence_datafile_cache(keyboard)
     let results = []
     let keyboards = s:vimim_sentence_match_cache(keyboard)
     if !empty(keyboards)
-        call s:vimim_set_menu_digit_as_filter(keyboards)
         let keyboard = get(keyboards, 0)
         let results = s:vimim_get_data_from_cache(keyboard)
     endif
@@ -3643,9 +3612,6 @@ endfunction
 function! s:vimim_sentence_match_cache(keyboard)
 " ----------------------------------------------
     let keyboard = a:keyboard
-    let blocks = s:vimim_search_pattern(keyboard)
-    if !empty(blocks) | return blocks | endif
-    " -----------------------------------------
     let results = s:vimim_get_data_from_cache(keyboard)
     if !empty(results)
         return [keyboard]
@@ -3681,7 +3647,6 @@ function! s:vimim_get_sentence_datafile_lines(keyboard)
     let results = []
     let keyboards = s:vimim_sentence_match_datafile(keyboard)
     if len(keyboards) > 0
-        call s:vimim_set_menu_digit_as_filter(keyboards)
         let keyboard = get(keyboards, 0)
         let results = s:vimim_get_data_from_datafile(keyboard)
     endif
@@ -3695,9 +3660,6 @@ function! s:vimim_sentence_match_datafile(keyboard)
     if empty(lines) | return [] | endif
     " ---------------------------------------------
     let keyboard = a:keyboard
-    let blocks = s:vimim_search_pattern(keyboard)
-    if !empty(blocks) | return blocks | endif
-    " ---------------------------------------------
     let pattern = '^' . keyboard
     let match_start = match(lines, pattern)
     if match_start > -1
@@ -3770,11 +3732,11 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_break_sentence_into_block(keyboard)
 " ---------------------------------------------------
-    let blocks = s:vimim_break_pinyin_digit(a:keyboard)
+    let blocks = s:vimim_break_apostrophe_sentence(a:keyboard)
     if empty(blocks)
-        let blocks = s:vimim_break_digit_every_four(a:keyboard)
+        let blocks = s:vimim_break_pinyin_digit(a:keyboard)
         if empty(blocks)
-            let blocks = s:vimim_break_apostrophe_sentence(a:keyboard)
+            let blocks = s:vimim_break_digit_every_four(a:keyboard)
         endif
     endif
     if empty(blocks)
@@ -3789,11 +3751,19 @@ function! s:vimim_break_pinyin_digit(keyboard)
 " --------------------------------------------
     let blocks = []
     let keyboard = a:keyboard
-    if s:pinyin_4corner_filter > 0
-        let pinyin_digit_pattern = '\d\+\l\='
-        let digit = match(keyboard, pinyin_digit_pattern)
-        if digit > 0
-            let blocks = s:vimim_break_string_at(keyboard, digit)
+    if s:pinyin_4corner_filter < 1
+        return []
+    endif
+    let pinyin_digit_pattern = '\d\+\l\='
+    let digit = match(keyboard, pinyin_digit_pattern)
+    if digit > 0
+        let blocks = s:vimim_break_string_at(keyboard, digit)
+        if empty(len(s:menu_digit_as_filter))
+            let menu = get(blocks, 0)
+            let filter = get(blocks, 1)
+            if menu =~ '\D' && filter =~ '^\d\+$'
+                let s:menu_digit_as_filter =  filter . "_"
+            endif
         endif
     endif
     return blocks
@@ -4142,7 +4112,6 @@ function! s:vimim_get_sentence_directory(keyboard)
     let results = []
     let keyboards = s:vimim_sentence_match_directory(keyboard, s:ui.im)
     if len(keyboards) > 0
-        call s:vimim_set_menu_digit_as_filter(keyboards)
         let keyboard = get(keyboards, 0)
         let results = s:vimim_get_pair_from_directory(keyboard, s:ui.im)
     endif
@@ -4153,9 +4122,6 @@ endfunction
 function! s:vimim_sentence_match_directory(keyboard, im)
 " ------------------------------------------------------
     let keyboard = a:keyboard
-    let blocks = s:vimim_search_pattern(keyboard)
-    if !empty(blocks) | return blocks | endif
-    " --------------------------------------------------
     let dir = s:vimim_get_valid_directory(a:im)
     let filename = dir . '/' . keyboard
     if filereadable(filename)
@@ -4739,7 +4705,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     endif
     let cloud = 'http://web.pinyin.sogou.com/api/py?key='
     let cloud = cloud . s:backend.cloud.sogou.sogou_key .'&query='
-    " sogou stops supporting apostrophe as delimiter
+    " sogou stopped supporting apostrophe as delimiter
     let output = 0
     " --------------------------------------------------------------
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
