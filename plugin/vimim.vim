@@ -226,13 +226,11 @@ function! s:vimim_dictionary_chinese()
     let s:plus  = "＋"
     let s:colon = "："
     let s:chinese = {}
+    let s:chinese['bracket_l'] = ['《','【']
+    let s:chinese['bracket_r'] = ['》','】']
     let s:chinese['auto'] = ['自动','自動']
     let s:chinese['error'] = ['错误','錯誤']
     let s:chinese['internal'] = ['内码','內碼']
-    let s:chinese['bracket_l'] = ['《','【']
-    let s:chinese['bracket_r'] = ['》','】']
-    let s:chinese['onekey'] = ['点石成金','點石成金']
-    let s:chinese['database'] = ['数据库','數據庫']
     let s:chinese['digit'] = ['数码','數碼']
     let s:chinese['directory'] = ['目录','目錄']
     let s:chinese['datafile'] = ['词库','詞庫']
@@ -247,7 +245,6 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['dynamic'] = ['动态','動態']
     let s:chinese['style'] = ['风格','風格']
     let s:chinese['wubi'] = ['五笔','五筆']
-    let s:chinese['4corner'] = ['四角号码','四角號碼']
     let s:chinese['english'] = ['英文']
     let s:chinese['hangul'] = ['韩文','韓文']
     let s:chinese['xinhua'] = ['新华','新華']
@@ -274,6 +271,9 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['cloud_atwill'] = ['想云就云','想雲就雲']
     let s:chinese['sogou'] = ['搜狗云','搜狗雲']
     let s:chinese['mycloud'] = ['自己的云','自己的雲']
+    let s:chinese['database'] = ['数据库','數據庫']
+    let s:chinese['4corner'] = ['四角号码','四角號碼']
+    let s:chinese['onekey'] = ['点石成金','點石成金']
 endfunction
 
 " ---------------------------------------
@@ -645,7 +645,7 @@ function! g:vimim_search_next()
     if !empty(v:errmsg) && v:errmsg =~ "^E486:"
         let v:errmsg = ""
         let english = @/
-        if len(english) < 20 && english !~ '_'
+        if len(english) < 2*2*2*2 && english !~ '_'
         \&& english =~ '\w' && english != '\W'
             let results = s:vimim_get_chinese_from_english(english)
             if !empty(results)
@@ -1004,11 +1004,11 @@ function!  s:vimim_set_chinese_input_mode()
 " s:chinese_input_mode='onekeyrun'  =>   <space> triggers menu, hjkl
 " ----------------------------------------------------------------
     if s:vimim_static_input_style < 1
-        let s:chinese_input_mode = 'dynamic'
+        let s:chinese_input_mode = "dynamic"
     elseif s:vimim_static_input_style == 1
-        let s:chinese_input_mode = 'static'
+        let s:chinese_input_mode = "static"
     elseif s:vimim_static_input_style == 2
-        let s:chinese_input_mode = 'onekeyrun'
+        let s:chinese_input_mode = "onekeyrun"
     endif
 endfunction
 
@@ -1180,13 +1180,13 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_skin()
 " ---------------------------------
-    if s:vimim_custom_skin < 1
+    if s:vimim_custom_skin < 0
         return
     endif
     if s:vimim_custom_skin == 1
         set laststatus=2
         sil!call s:vimim_set_statusline()
-    elseif s:vimim_custom_skin == 3
+    else
         echoh NonText | echo s:vimim_statusline() | echohl None
     endif
     if s:vimim_custom_skin > 1
@@ -5137,15 +5137,15 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     let s:path2 = 0
     let s:backend_loaded = 0
-    let s:chinese_input_mode = 'onekey'
+    let s:chinese_input_mode = "onekey"
     " ------------------------------
     if !isdirectory("/home/xma")
         return
     endif
     " ------------------------------
     let s:path2 = "/home/vimim/"
-    let s:vimimdata = s:path2 . 'svn/vimim-data/trunk/data/'
-    let s:libvimdll = s:path2 . 'svn/mycloud/vimim-mycloud/libvimim.dll"
+    let s:vimimdata = s:path2 . "svn/vimim-data/trunk/data/"
+    let s:libvimdll = s:path2 . "svn/mycloud/vimim-mycloud/libvimim.dll"
     let s:vimim_static_input_style = 2
     let s:vimim_custom_skin = 3
     let s:vimim_ctrl_6_to_toggle = 1
@@ -5509,7 +5509,7 @@ endfunction
 " ---------------------------
 function! s:vimim_i_map_off()
 " ---------------------------
-    let s:chinese_input_mode = 'onekey'
+    let s:chinese_input_mode = "onekey"
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, s:AZ_list)
