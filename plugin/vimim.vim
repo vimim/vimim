@@ -374,9 +374,9 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin_plusplus")
     call add(G, "g:vimim_shuangpin_purple")
     call add(G, "g:vimim_shuangpin_flypy")
-    call add(G, "g:vimim_static_input_style")
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
+    call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_debug")
     call add(G, "g:vimimdebug")
     " -----------------------------------
@@ -391,6 +391,13 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_onekey_double_ctrl6")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
+    " -----------------------------------
+    let s:path2 = 0
+    let s:backend_loaded = 0
+    let s:chinese_input_mode = "onekey"
+    if empty(s:vimim_chinese_input_mode)
+        let s:vimim_chinese_input_mode = "dynamic"
+    endif
     " -----------------------------------
 endfunction
 
@@ -638,11 +645,11 @@ function! g:vimim_search_next()
 " -----------------------------
     if v:errmsg =~ "^E486:"
         let english = @/
-        if len(english) < 2*2*2*2 && english !~ '_'
-        \&& english =~ '\w' && english != '\W'
+        if len(english)<16 && len(english)>1 && english !~ "[.*]"
+        \&& english =~ '[0-9A-Za-z]' && english != '[^0-9A-Za-z]'
             let results = s:vimim_get_chinese_from_english(english)
             if !empty(results)
-                sil!call s:vimim_register_search_pattern(results)
+                sil!call s:vimim_register_search_pattern(english, results)
             endif
         endif
         let s:menu_digit_as_filter = ""
@@ -670,16 +677,19 @@ function! s:vimim_get_chinese_from_english(english)
     return results
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_register_search_pattern(results)
-" ------------------------------------------------
+" ---------------------------------------------------------
+function! s:vimim_register_search_pattern(english, results)
+" ---------------------------------------------------------
     let results = []
     for pair in a:results
-        let chinese = get(split(pair),1)
-        if chinese =~ '\w'
+        let pairs = split(pair)
+        let menu = get(pairs, 0)
+        let chinese = get(pairs, 1)
+        if menu != a:english || chinese =~ '\w'
             continue
+        else
+            call add(results, chinese)
         endif
-        call add(results, chinese)
     endfor
     if !empty(results)
         let slash = join(results, '\|')
@@ -883,14 +893,6 @@ function! s:vimim_onekey_action(onekey)
         if empty(onekey)
             let msg = "transform punctuation from english to chinese"
             let replacement = s:punctuations[byte_before]
-            if s:vimim_static_input_style == 2
-                let msg = "play smart quote in onekey static mode"
-                if byte_before ==# "'"
-                    let replacement = <SID>vimim_get_single_quote()
-                elseif byte_before ==# '"'
-                    let replacement = <SID>vimim_get_double_quote()
-                endif
-            endif
             let onekey = "\<BS>" . replacement
             sil!exe 'sil!return "' . onekey . '"'
         endif
@@ -969,23 +971,12 @@ endfunction
 let VimIM = " ====  Chinese_Mode      ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
-
-" -----------------------------------------
-function!  s:vimim_set_chinese_input_mode()
-" -----------------------------------------
+" ----------------------------------------------------------------------
 " s:chinese_input_mode='onekey'        => (default) OneKey: hit-and-run
 " s:chinese_input_mode='dynamic'       => (default) classic dynamic mode
 " s:chinese_input_mode='static'        =>   <Space> triggers menu, auto
 " s:chinese_input_mode='onekeynonstop' =>   <Space> triggers menu, hjkl
-" ----------------------------------------------------------------
-    if s:vimim_static_input_style < 1
-        let s:chinese_input_mode = "dynamic"
-    elseif s:vimim_static_input_style == 1
-        let s:chinese_input_mode = "static"
-    elseif s:vimim_static_input_style == 2
-        let s:chinese_input_mode = "onekeynonstop"
-    endif
-endfunction
+" ----------------------------------------------------------------------
 
 " --------------------------
 function! <SID>ChineseMode()
@@ -1000,7 +991,6 @@ function! s:vimim_start_chinesemode()
 " -----------------------------------
     sil!call s:vimim_backend_initialization_once()
     sil!call s:vimim_frontend_initialization()
-    sil!call s:vimim_set_chinese_input_mode()
     sil!call s:vimim_build_datafile_cache()
 endfunction
 
@@ -1013,6 +1003,7 @@ function! s:vimim_chinesemode_action()
     let action = ""
     let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
     let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
+    let s:chinese_input_mode = s:vimim_chinese_input_mode
     if empty(switch)
         if s:chinese_input_mode == 'onekeynonstop'
             call s:vimim_start_onekey()
@@ -1277,15 +1268,12 @@ endfunction
 " --------------------------------
 function! s:vimim_get_chinese_im()
 " --------------------------------
-    let style = s:vimim_static_input_style
-    let dynamic = s:vimim_chinese('dynamic')
-    let static = s:vimim_chinese('static')
     let input_style = s:vimim_chinese('classic')
-    if style < 1
-        let input_style .= dynamic
-    elseif style == 1
-        let input_style .= static
-    elseif style == 2
+    if s:vimim_chinese_input_mode == 'dynamic'
+        let input_style .= s:vimim_chinese('dynamic')
+    elseif s:vimim_chinese_input_mode == 'static'
+        let input_style .= s:vimim_chinese('static')
+    elseif s:vimim_chinese_input_mode == 'onekeynonstop'
         let input_style = "OneKeyNonStop"
     endif
     let bracket_l = s:vimim_chinese('bracket_l')
@@ -2192,7 +2180,7 @@ function! s:vimim_build_digit_filter_lines()
     endif
     let datafile = s:path . "vimim.unihan_4corner.txt"
     if filereadable(datafile) && empty(s:unihan_4corner_lines)
-        let s:vimim_static_input_style = 2
+        let s:vimim_chinese_input_mode = 'onekeynonstop'
         let s:pinyin_4corner_filter = 1
         let s:unihan_4corner_lines = readfile(datafile)
     endif
@@ -3888,11 +3876,11 @@ function! s:vimim_force_scan_current_buffer()
     endif
     " ---------------------------------
     if buffer =~ 'dynamic'
-        let s:vimim_static_input_style = 0
+        let s:vimim_chinese_input_mode = 'dynamic'
     elseif buffer =~ 'static'
-        let s:vimim_static_input_style = 1
+        let s:vimim_chinese_input_mode = 'static'
     elseif buffer =~ 'onekeynonstop'
-        let s:vimim_static_input_style = 2
+        let s:vimim_chinese_input_mode = 'onekeynonstop'
     endif
     " ---------------------------------
     if buffer =~ 'shuangpin_abc'
@@ -4271,7 +4259,7 @@ function! s:vimim_check_sqlite_availability()
     " ----------------------------------------
     let im = "sqlite"
     let root = "database"
-    let s:vimim_static_input_style = 2
+    let s:vimim_chinese_input_mode = 'onekeynonstop'
     " ----------------------------------------
     if empty(s:backend.database)
         let s:backend.database[im] = s:vimim_one_backend_hash()
@@ -4684,7 +4672,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     if empty(output)
         return []
     endif
-    " now, let's support Cloud for gb and big5
+    " now, let's support cloud for gb and big5
     " ----------------------------------------
     if empty(s:localization)
         let msg = "both vim and datafile are UTF-8 encoding"
@@ -5074,18 +5062,13 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let s:path2 = 0
-    let s:backend_loaded = 0
-    let s:chinese_input_mode = "onekey"
-    " ------------------------------
     if !isdirectory("/home/xma")
         return
     endif
-    " ------------------------------
     let s:path2 = "/home/vimim/"
     let s:vimimdata = s:path2 . "svn/vimim-data/trunk/data/"
     let s:libvimdll = s:path2 . "svn/mycloud/vimim-mycloud/libvimim.dll"
-    let s:vimim_static_input_style = 2
+    let s:vimim_chinese_input_mode = "onekeynonstop"
     let s:vimim_custom_skin = 3
     let s:vimim_ctrl_6_to_toggle = 1
     let s:vimim_reverse_pageup_pagedown = 1
