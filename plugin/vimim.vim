@@ -39,8 +39,8 @@ let VimIM = " ====  Vim Input Method  ==== {{{"
 " -----------------------------------------------------------
 "  Features: * "Plug & Play": as a client to VimIM embedded backends
 "            * "Plug & Play": as a client to "myCloud" and "Cloud"
-"            * type Chinese without changing mode
-"            * search Chinese without typing Chinese
+"            * CJK can be input without changing mode
+"            * CJK can be searched without using popup menu
 "            * support "wubi", "erbi", "boshiamy", "Cang Jie" etc
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
 "            * support internal code input: "UNICODE", "GBK", "Big5"
@@ -75,10 +75,9 @@ call add(s:vimims, VimIM)
 " # (1) [external] myCloud: http://pim-cloud.appspot.com
 " # (2) [external] Cloud:   http://web.pinyin.sogou.com
 " # (3) [embedded] VimIM:   http://vimim.googlecode.com
-" #     (3.1) internal direct input for Unicode/GBK/Big5
-" #     (3.2) a database:  $VIM/vimfiles/plugin/cedict.db
-" #     (3.3) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
-" #     (3.4) a directory: $VIM/vimfiles/plugin/vimim/pinyin/
+" #     (3.1) a database:  $VIM/vimfiles/plugin/cedict.db
+" #     (3.2) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
+" #     (3.3) a directory: $VIM/vimfiles/plugin/vimim/pinyin/
 
 " --------------------
 " "VimIM Installation"
@@ -134,7 +133,6 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
-    sil!call s:vimim_scan_backend_internal()
     " -------------------------------------
 endfunction
 
@@ -166,7 +164,6 @@ function! s:vimim_initialize_session()
     let s:www_executable = 0
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
-    let s:internal_input = 0
     " --------------------------------
     let s:shuangpin_flag = 0
     let s:shuangpin_table = {}
@@ -230,7 +227,6 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['bracket_r'] = ['》','】']
     let s:chinese['auto'] = ['自动','自動']
     let s:chinese['error'] = ['错误','錯誤']
-    let s:chinese['internal'] = ['内码','內碼']
     let s:chinese['digit'] = ['数码','數碼']
     let s:chinese['directory'] = ['目录','目錄']
     let s:chinese['datafile'] = ['词库','詞庫']
@@ -280,7 +276,6 @@ endfunction
 function! s:vimim_dictionary_im_keycode()
 " ---------------------------------------
     let s:im_keycode = {}
-    let s:im_keycode['internal'] = "[0-9a-z]"
     let s:im_keycode['sogou']    = "[0-9a-z.]"
     let s:im_keycode['mycloud']  = "[0-9a-z'.]"
     let s:im_keycode['sqlite']   = "[0-9a-z]"
@@ -651,6 +646,7 @@ function! g:vimim_search_next()
                 sil!call s:vimim_search_pattern_register(results)
             endif
         endif
+        let s:menu_digit_as_filter = ""
     endif
     normal! n
 endfunction
@@ -692,7 +688,6 @@ function! s:vimim_search_pattern_register(results)
             let @/ = @_
         else
             let v:errmsg = ""
-            let s:menu_digit_as_filter = ""
         endif
     endif
 endfunction
@@ -1290,9 +1285,6 @@ function! s:vimim_statusline()
             let __getname = s:backend.cloud.mycloud.directory
             let s:ui.statusline .= s:space . __getname
         endif
-    elseif empty(s:ui.statusline)
-        let s:ui.statusline = s:vimim_chinese('internal')
-        let s:ui.statusline .= s:vimim_chinese('input')
     endif
     " ------------------------------------
     if s:shuangpin_flag > 0
@@ -3082,44 +3074,6 @@ let VimIM = " ====  Backend==Internal ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------
-function! s:vimim_do_force_internal()
-" -----------------------------------
-" [quick test] vim internal.vimim
-" -------------------------------
-    let s:internal_input = 1
-    call s:vimim_set_internal()
-endfunction
-
-" ---------------------------------------
-function! s:vimim_scan_backend_internal()
-" ---------------------------------------
-    let embedded_backend = s:vimim_has_embedded_backend()
-    if empty(embedded_backend)
-    \&& empty(s:vimim_cloud_plugin)
-    \&& s:vimim_cloud_sogou < 1
-        call s:vimim_set_internal()
-    endif
-endfunction
-
-" ------------------------------
-function! s:vimim_set_internal()
-" ------------------------------
-    if s:ui.root == "internal" && s:ui.im == s:encoding
-        return
-    endif
-    let root = "internal"
-    let im = s:encoding
-    call add(s:ui.frontends, [s:ui.root, s:ui.im])
-    let s:backend.internal[im].root = root
-    let s:backend.internal[im].im = im
-    let s:backend.internal[im].keycode = s:im_keycode[root]
-    let s:backend.internal[im].chinese = s:vimim_chinese(root)
-    " --------------------------
-    let s:vimim_cloud_sogou = -1
-    let s:vimim_cloud_plugin = 0
-endfunction
-
 " ------------------------------
 function! s:vimim_localization()
 " ------------------------------
@@ -3293,7 +3247,6 @@ function! s:vimim_internal_code(keyboard)
     else
         let msg = "support <C-6> to trigger multibyte"
     endif
-    let numbers = []
     let ddddd = 0
     if keyboard =~# '^u\x\{4}$'
         " show hex internal-code popup menu: u808f
@@ -3302,6 +3255,8 @@ function! s:vimim_internal_code(keyboard)
     elseif keyboard =~# '^\d\{5}$'
         " show decimal internal-code popup menu: 32911
         let ddddd = str2nr(keyboard, 10)
+    else
+        return []
     endif
     if empty(ddddd) || ddddd>0xffff
         return []
@@ -3975,8 +3930,6 @@ function! s:vimim_force_scan_current_buffer()
         call s:vimim_do_force_sogou()
     elseif buffer =~# 'mycloud'
         call s:vimim_do_force_mycloud()
-    elseif buffer =~# 'internal'
-        call s:vimim_do_force_internal()
     else
     " ---------------------------------
         for input_method in s:all_vimim_input_methods
@@ -5170,7 +5123,6 @@ endfunction
 function! s:vimim_initialize_backend()
 " ------------------------------------
     let s:backend = {}
-    let s:backend.internal  = {}
     let s:backend.directory = {}
     let s:backend.datafile  = {}
     let s:backend.database  = {}
@@ -5654,8 +5606,8 @@ else
         endif
     endif
 
-    " [digit filter] use cache for all vimim backends
-    " -----------------------------------------------
+    " [filter] use cache for all vimim backends
+    " -----------------------------------------
     if len(s:menu_digit_as_filter) > 0
         if len(s:matched_list) > 1
             let results = s:vimim_pair_list(s:matched_list)
@@ -5679,21 +5631,10 @@ else
         endif
     endif
 
-    " support direct internal code (unicode/gb/big5) input
-    " ----------------------------------------------------
+    " [internal] support direct unicode/gb/big5 input
+    " -----------------------------------------------
     if s:vimim_internal_code_input > 0
         let results = s:vimim_internal_code(keyboard)
-        if !empty(len(results))
-            let s:unicode_menu_display_flag = 1
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " try super-internal-code if no backend nor cloud
-    " -----------------------------------------------
-    if s:internal_input > 0
-        let msg = " usage: a<C-6> b<C-6> ... z<C-6> "
-        let results = s:vimim_without_backend(keyboard)
         if !empty(len(results))
             let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
