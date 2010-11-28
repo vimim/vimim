@@ -5351,9 +5351,10 @@ function! s:vimim_initialize_i_setting()
     let s:completefunc=&completefunc
     let s:completeopt=&completeopt
     let s:saved_lazyredraw=&lazyredraw
-    let s:saved_hlsearch=&hlsearch
     let s:saved_pumheight=&pumheight
     let s:saved_laststatus=&laststatus
+    let s:saved_hlsearch=&hlsearch
+    let s:saved_smartcase=&smartcase
 endfunction
 
 " ------------------------------
@@ -5366,6 +5367,7 @@ function! s:vimim_i_setting_on()
         let &pumheight=8
     endif
     set hlsearch
+    set smartcase
     set iminsert=1
 endfunction
 
@@ -5377,9 +5379,10 @@ function! s:vimim_i_setting_off()
     let &completefunc=s:completefunc
     let &completeopt=s:completeopt
     let &lazyredraw=s:saved_lazyredraw
-    let &hlsearch=s:saved_hlsearch
     let &pumheight=s:saved_pumheight
     let &laststatus=s:saved_laststatus
+    let &hlsearch=s:saved_hlsearch
+    let &hlsearch=s:saved_smartcase
 endfunction
 
 " ----------------------------
