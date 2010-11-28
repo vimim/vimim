@@ -66,7 +66,7 @@ call add(s:vimims, VimIM)
 " "VimIM Front End UI"
 " --------------------
 " # VimIM "OneKey": Chinese input without mode change.
-" # VimIM "Chinese Input Mode" ['onekeynonstop','dynamic','static']
+" # VimIM "Chinese Input Mode" ['onekey','dynamic','static']
 " # VimIM auto Chinese input with zero configuration
 
 " -----------------------
@@ -645,8 +645,8 @@ function! g:vimim_search_next()
 " -----------------------------
     if v:errmsg =~ "^E486:"
         let english = @/
-        if len(english)<16 && len(english)>1 && english !~ "[.*]"
-        \&& english =~ '[0-9A-Za-z]' && english != '[^0-9A-Za-z]'
+        if len(english) < 16 && len(english) > 1 
+        \&& english =~ "\w" && english != "\W" && english !~ '[_.*\]'
             let results = s:vimim_get_chinese_from_english(english)
             if !empty(results)
                 sil!call s:vimim_register_search_pattern(english, results)
@@ -685,7 +685,7 @@ function! s:vimim_register_search_pattern(english, results)
         let pairs = split(pair)
         let menu = get(pairs, 0)
         let chinese = get(pairs, 1)
-        if menu != a:english || chinese =~ '\w'
+        if menu != a:english || chinese =~ "\w"
             continue
         else
             call add(results, chinese)
@@ -1004,6 +1004,9 @@ function! s:vimim_chinesemode_action()
     let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
     let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
     let s:chinese_input_mode = s:vimim_chinese_input_mode
+    if s:vimim_chinese_input_mode == 'onekey'
+        let s:chinese_input_mode = "onekeynonstop"
+    endif
     if empty(switch)
         if s:chinese_input_mode == 'onekeynonstop'
             call s:vimim_start_onekey()
@@ -1273,7 +1276,7 @@ function! s:vimim_get_chinese_im()
         let input_style .= s:vimim_chinese('dynamic')
     elseif s:vimim_chinese_input_mode == 'static'
         let input_style .= s:vimim_chinese('static')
-    elseif s:vimim_chinese_input_mode == 'onekeynonstop'
+    elseif s:vimim_chinese_input_mode == 'onekey'
         let input_style = "OneKeyNonStop"
     endif
     let bracket_l = s:vimim_chinese('bracket_l')
@@ -2180,7 +2183,7 @@ function! s:vimim_build_digit_filter_lines()
     endif
     let datafile = s:path . "vimim.unihan_4corner.txt"
     if filereadable(datafile) && empty(s:unihan_4corner_lines)
-        let s:vimim_chinese_input_mode = 'onekeynonstop'
+        let s:vimim_chinese_input_mode = 'onekey'
         let s:pinyin_4corner_filter = 1
         let s:unihan_4corner_lines = readfile(datafile)
     endif
@@ -2408,7 +2411,7 @@ function! s:vimim_get_filter_number(chinese)
         let words = copy(words[-1:-1])
     endif
     for chinese in words
-        if chinese =~ '\w'
+        if chinese =~ "\w"
             continue
         else
             let key = printf('u%x',char2nr(chinese))
@@ -3879,8 +3882,8 @@ function! s:vimim_force_scan_current_buffer()
         let s:vimim_chinese_input_mode = 'dynamic'
     elseif buffer =~ 'static'
         let s:vimim_chinese_input_mode = 'static'
-    elseif buffer =~ 'onekeynonstop'
-        let s:vimim_chinese_input_mode = 'onekeynonstop'
+    elseif buffer =~ 'onekey'
+        let s:vimim_chinese_input_mode = 'onekey'
     endif
     " ---------------------------------
     if buffer =~ 'shuangpin_abc'
@@ -4259,7 +4262,7 @@ function! s:vimim_check_sqlite_availability()
     " ----------------------------------------
     let im = "sqlite"
     let root = "database"
-    let s:vimim_chinese_input_mode = 'onekeynonstop'
+    let s:vimim_chinese_input_mode = 'onekey'
     " ----------------------------------------
     if empty(s:backend.database)
         let s:backend.database[im] = s:vimim_one_backend_hash()
@@ -5068,7 +5071,7 @@ function! s:vimim_initialize_debug()
     let s:path2 = "/home/vimim/"
     let s:vimimdata = s:path2 . "svn/vimim-data/trunk/data/"
     let s:libvimdll = s:path2 . "svn/mycloud/vimim-mycloud/libvimim.dll"
-    let s:vimim_chinese_input_mode = "onekeynonstop"
+    let s:vimim_chinese_input_mode = "onekey"
     let s:vimim_custom_skin = 3
     let s:vimim_ctrl_6_to_toggle = 1
     let s:vimim_reverse_pageup_pagedown = 1
