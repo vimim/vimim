@@ -226,11 +226,6 @@ function! s:vimim_dictionary_chinese()
     let s:plus  = "＋"
     let s:colon = "："
     let s:chinese = {}
-    let s:chinese['vim1'] = ['文本编辑器','文本編輯器']
-    let s:chinese['vim2'] = ['最牛']
-    let s:chinese['vim3'] = ['精力']
-    let s:chinese['vim4'] = ['生气','生氣']
-    let s:chinese['vim5'] = ['中文输入法','中文輸入法']
     let s:chinese['auto'] = ['自动','自動']
     let s:chinese['error'] = ['错误','錯誤']
     let s:chinese['internal'] = ['内码','內碼']
@@ -266,7 +261,6 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['phonetic'] = ['注音']
     let s:chinese['array30'] = ['行列']
     let s:chinese['erbi'] = ['二笔','二筆']
-    let s:chinese['sogou'] = ['搜狗']
     let s:chinese['shezhi'] = ['设置','設置']
     let s:chinese['jidian'] = ['极点','極點']
     let s:chinese['newcentury'] = ['新世纪','新世紀']
@@ -375,7 +369,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_6_to_toggle")
     call add(G, "g:vimim_tab_as_onekey")
-    call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_latex_suite")
@@ -396,6 +389,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_use_cache")
+    call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_chinese_punctuation")
@@ -444,17 +438,11 @@ endfunction
 " -------------------------
 function! s:vimim_egg_vim()
 " -------------------------
-    let vim1 = s:vimim_chinese('vim1')
-    let vim2 = s:vimim_chinese('vim2') . vim1
-    let vim3 = s:vimim_chinese('vim3')
-    let vim4 = s:vimim_chinese('vim4')
-    let vim5 = s:vimim_chinese('vim5')
-    " ------------------------------------
-    let eggs  = ["vi    " . vim1 ]
-    let eggs += ["vim   " . vim2 ]
-    let eggs += ["vim   " . vim3 ]
-    let eggs += ["vim   " . vim4 ]
-    let eggs += ["vimim " . vim5 ]
+    let eggs  = ["vi         文本編輯器"]
+    let eggs += ["vim    最牛文本編輯器"]
+    let eggs += ["vim    精力"]
+    let eggs += ["vim    生氣"]
+    let eggs += ["vimim  中文輸入法"]
     return eggs
 endfunction
 
@@ -1192,21 +1180,23 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_skin()
 " ---------------------------------
-    if empty(s:vimim_custom_skin)
+    if s:vimim_custom_skin < 1
         return
     endif
-    " -----------------------------
-    highlight! link PmenuSel   Title
-    highlight! link StatusLine Title
-    highlight!      Pmenu      NONE
-    highlight!      PmenuSbar  NONE
-    highlight!      PmenuThumb NONE
-    " -----------------------------
     if s:vimim_custom_skin == 1
         set laststatus=2
         sil!call s:vimim_set_statusline()
-    elseif s:vimim_custom_skin == 2
+    elseif s:vimim_custom_skin == 3
         echoh NonText | echo s:vimim_statusline() | echohl None
+    endif
+    if s:vimim_custom_skin > 1
+        " ------------------------------
+        highlight! link PmenuSel   Title
+        highlight! link StatusLine Title
+        highlight!      Pmenu      NONE
+        highlight!      PmenuSbar  NONE
+        highlight!      PmenuThumb NONE
+        " ------------------------------
     endif
 endfunction
 
@@ -1257,6 +1247,10 @@ endfunction
 " ----------------------------
 function! s:vimim_statusline()
 " ----------------------------
+    if empty(s:ui.root) || empty(s:ui.im)
+        return ""
+    endif
+    " ------------------------------------
     if s:ui.root =~# "database"
         let database = s:vimim_chinese('database')
         let s:ui.statusline = 'Unihan' . s:space . database
@@ -1799,7 +1793,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
                 let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
             endif
         endif
-        if s:vimim_custom_skin == 2 && extra_text =~# '^ii\|^oo'
+        if s:vimim_custom_skin == 3 && extra_text =~# '^ii\|^oo'
             let extra_text = ""
         endif
         let complete_items["menu"] = extra_text
@@ -1846,7 +1840,7 @@ function! s:vimim_get_labeling(label)
             if label < 2
                 let label2 = "_"
             endif
-            if s:vimim_custom_skin == 2 
+            if s:vimim_custom_skin == 3
             \|| s:pinyin_4corner_filter > 0
                 let labeling = label2
             else
@@ -3945,8 +3939,8 @@ function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
-        if s:vimim_custom_skin != 1
-            let s:vimim_custom_skin = 1
+        if s:vimim_custom_skin != 2
+            let s:vimim_custom_skin = 2
         endif
     else
         return
@@ -4498,6 +4492,7 @@ function! s:vimim_set_sogou()
     let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
     if empty(cloud)
         let s:vimim_cloud_sogou = 0
+        let s:backend.cloud = {}
     else
         let s:ui.root = "cloud"
         let s:ui.im = "sogou"
@@ -4532,7 +4527,7 @@ function! s:vimim_check_http_executable(im)
     endif
     " step #1 of 3: try to find libvimim
     let cloud = s:vimim_get_libvimim()
-    if filereadable(cloud)
+    if !empty(cloud) && filereadable(cloud)
         " in win32, strip the .dll suffix
         if has("win32") && cloud[-4:] ==? ".dll"
             let cloud = cloud[:-5]
@@ -4815,7 +4810,9 @@ function! s:vimim_set_mycloud()
         return
     endif
     let mycloud = s:vimim_set_mycloud_backend()
-    if !empty(mycloud)
+    if empty(mycloud)
+        let msg = " mycloud is not available"
+    else
         let s:ui.root = "cloud"
         let s:ui.im = "mycloud"
     endif
@@ -4830,6 +4827,7 @@ function! s:vimim_set_mycloud_backend()
     endif
     let mycloud = s:vimim_check_mycloud_availability()
     if empty(mycloud)
+        let s:backend.cloud = {}
         return {}
     else
         let s:vimim_cloud_sogou = -777
@@ -4911,11 +4909,9 @@ function! s:vimim_get_libvimim()
     endif
     if filereadable(cloud)
         return cloud
-    endif
-    let cloud = "/home/vimim/svn/mycloud/vimim-mycloud/libvimim.dll"
-    if filereadable(cloud)
+    elseif filereadable(s:libvimdll)
         if has("win32") || has("win32unix")
-            return cloud
+            return s:libvimdll
         endif
     endif
     return 0
@@ -5136,6 +5132,27 @@ let VimIM = " ====  Debug_Framework   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
+" ----------------------------------
+function! s:vimim_initialize_debug()
+" ----------------------------------
+    let s:path2 = 0
+    let s:backend_loaded = 0
+    let s:chinese_input_mode = 'onekey'
+    " ------------------------------
+    if !isdirectory("/home/xma")
+        return
+    endif
+    " ------------------------------
+    let s:path2 = "/home/vimim/"
+    let s:vimimdata = s:path2 . 'svn/vimim-data/trunk/data/'
+    let s:libvimdll = s:path2 . 'svn/mycloud/vimim-mycloud/libvimim.dll"
+    let s:vimim_static_input_style = 2
+    let s:vimim_custom_skin = 3
+    let s:vimim_ctrl_6_to_toggle = 1
+    let s:vimim_reverse_pageup_pagedown = 1
+    let s:vimim_debug = 9
+endfunction
+
 " ------------------------------------
 function! s:vimim_initialize_frontend()
 " ------------------------------------
@@ -5176,29 +5193,6 @@ function! s:vimim_one_backend_hash()
     let one_backend_hash.cache = {}
     let one_backend_hash.chinese_mode_switch = 1
     return one_backend_hash
-endfunction
-
-" ----------------------------------
-function! s:vimim_initialize_debug()
-" ----------------------------------
-    let v:errmsg = ""
-    let s:path2 = 0
-    let s:backend_loaded = 0
-    let s:chinese_input_mode = 'onekey'
-    " ------------------------------
-    let dir = "/home/vimim/"
-    if isdirectory(dir)
-        let s:vimimdata = dir . 'svn/vimim-data/trunk/data/'
-        let s:path2 = dir
-    else
-        return
-    endif
-    " ------------------------------
-    let s:vimim_static_input_style = 2
-    let s:vimim_ctrl_6_to_toggle = 1
-    let s:vimim_reverse_pageup_pagedown = 1
-    let s:vimim_custom_skin = 2
-    let s:vimim_debug = 9
 endfunction
 
 " --------------------------------
@@ -5649,7 +5643,7 @@ else
 
     " [eggs] hunt classic easter egg ... vim<C-6>
     " -------------------------------------------
-    if keyboard ==# "^vim" || keyboard =~# "^vimim"
+    if keyboard ==# "vim" || keyboard =~# "^vimim"
         let results = s:vimim_easter_chicken(keyboard)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
@@ -5888,6 +5882,7 @@ function! s:vimim_onekey_mapping_on()
     endif
     " -------------------------------
     if s:vimim_search_next > 0
+        let v:errmsg = ""
         noremap <silent> n :sil!call g:vimim_search_next()<CR>
     endif
 endfunction
