@@ -66,7 +66,7 @@ call add(s:vimims, VimIM)
 " "VimIM Front End UI"
 " --------------------
 " # VimIM "OneKey": Chinese input without mode change.
-" # VimIM "Chinese Input Mode" ['onekeyrun','dynamic','static']
+" # VimIM "Chinese Input Mode" ['onekeynonstop','dynamic','static']
 " # VimIM auto Chinese input with zero configuration
 
 " -----------------------
@@ -643,7 +643,6 @@ call add(s:vimims, VimIM)
 function! g:vimim_search_next()
 " -----------------------------
     if !empty(v:errmsg) && v:errmsg =~ "^E486:"
-        let v:errmsg = ""
         let english = @/
         if len(english) < 2*2*2*2 && english !~ '_'
         \&& english =~ '\w' && english != '\W'
@@ -652,7 +651,6 @@ function! g:vimim_search_next()
                 sil!call s:vimim_search_pattern_register(results)
             endif
         endif
-        let s:menu_digit_as_filter = ""
     endif
     normal! n
 endfunction
@@ -692,6 +690,9 @@ function! s:vimim_search_pattern_register(results)
         let @/ = join(results, '\|')
         if empty(search(@/,'nw'))
             let @/ = @_
+        else
+            let v:errmsg = ""
+            let s:menu_digit_as_filter = ""
         endif
     endif
 endfunction
@@ -998,17 +999,17 @@ call add(s:vimims, VimIM)
 " -----------------------------------------
 function!  s:vimim_set_chinese_input_mode()
 " -----------------------------------------
-" s:chinese_input_mode='onekey'     => (default) OneKey: hit-and-run
-" s:chinese_input_mode='dynamic'    => (default) classic dynamic mode
-" s:chinese_input_mode='static'     =>   <space> triggers menu, auto
-" s:chinese_input_mode='onekeyrun'  =>   <space> triggers menu, hjkl
+" s:chinese_input_mode='onekey'        => (default) OneKey: hit-and-run
+" s:chinese_input_mode='dynamic'       => (default) classic dynamic mode
+" s:chinese_input_mode='static'        =>   <Space> triggers menu, auto
+" s:chinese_input_mode='onekeynonstop' =>   <Space> triggers menu, hjkl
 " ----------------------------------------------------------------
     if s:vimim_static_input_style < 1
         let s:chinese_input_mode = "dynamic"
     elseif s:vimim_static_input_style == 1
         let s:chinese_input_mode = "static"
     elseif s:vimim_static_input_style == 2
-        let s:chinese_input_mode = "onekeyrun"
+        let s:chinese_input_mode = "onekeynonstop"
     endif
 endfunction
 
@@ -1039,7 +1040,7 @@ function! s:vimim_chinesemode_action()
     let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
     let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
     if empty(switch)
-        if s:chinese_input_mode == 'onekeyrun'
+        if s:chinese_input_mode == 'onekeynonstop'
             call s:vimim_start_onekey()
             let action = s:vimim_onekey_action("")
         else
@@ -1183,7 +1184,7 @@ function! s:vimim_initialize_skin()
     if s:vimim_custom_skin < 0
         return
     endif
-    if s:vimim_custom_skin == 1
+    if s:vimim_custom_skin < 3
         set laststatus=2
         sil!call s:vimim_set_statusline()
     else
@@ -1314,7 +1315,7 @@ function! s:vimim_get_chinese_im()
     elseif style == 1
         let input_style .= static
     elseif style == 2
-        let input_style = 'OneKeyRun'
+        let input_style = "OneKeyNonStop"
     endif
     let bracket_l = s:vimim_chinese('bracket_l')
     let bracket_r = s:vimim_chinese('bracket_r')
@@ -3950,7 +3951,7 @@ function! s:vimim_force_scan_current_buffer()
         let s:vimim_static_input_style = 0
     elseif buffer =~ 'static'
         let s:vimim_static_input_style = 1
-    elseif buffer =~ 'onekeyrun'
+    elseif buffer =~ 'onekeynonstop'
         let s:vimim_static_input_style = 2
     endif
     " ---------------------------------
