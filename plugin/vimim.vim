@@ -43,7 +43,7 @@ let VimIM = " ====  Vim Input Method  ==== {{{"
 "            * CJK can be searched without using popup menu
 "            * support "wubi", "erbi", "boshiamy", "Cang Jie" etc
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
-"            * support internal code input: "UNICODE", "GBK", "Big5"
+"            * support direct "UNICODE"/"GBK"/"Big5" input
 "            * It is independent of OS and mbyte-XIM/mbyte-IME API.
 " -----------------------------------------------------------
 
@@ -358,12 +358,12 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
-    call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_data_file")
-    call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_6_to_toggle")
     call add(G, "g:vimim_tab_as_onekey")
+    call add(G, "g:vimim_data_directory")
+    call add(G, "g:vimim_data_file")
+    call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_latex_suite")
@@ -386,9 +386,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_search_next")
-    call add(G, "g:vimim_auto_copy_clipboard")
     call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_internal_code_input")
+    call add(G, "g:vimim_unicode_input")
     call add(G, "g:vimim_onekey_double_ctrl6")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
@@ -433,11 +432,11 @@ endfunction
 " -------------------------
 function! s:vimim_egg_vim()
 " -------------------------
-    let eggs  = ["vi         文本編輯器"]
-    let eggs += ["vim    最牛文本編輯器"]
-    let eggs += ["vim    精力"]
-    let eggs += ["vim    生氣"]
-    let eggs += ["vimim  中文輸入法"]
+    let eggs  = ["vi        文本編輯器"]
+    let eggs += ["vim   最牛文本編輯器"]
+    let eggs += ["vim   精力"]
+    let eggs += ["vim   生氣"]
+    let eggs += ["vimim 中文輸入法"]
     return eggs
 endfunction
 
@@ -637,25 +636,25 @@ call add(s:vimims, VimIM)
 " -----------------------------
 function! g:vimim_search_next()
 " -----------------------------
-    if !empty(v:errmsg) && v:errmsg =~ "^E486:"
+    if v:errmsg =~ "^E486:"
         let english = @/
         if len(english) < 2*2*2*2 && english !~ '_'
         \&& english =~ '\w' && english != '\W'
             let results = s:vimim_get_chinese_from_english(english)
             if !empty(results)
-                sil!call s:vimim_search_pattern_register(results)
+                sil!call s:vimim_register_search_pattern(results)
             endif
         endif
         let s:menu_digit_as_filter = ""
     endif
-    normal! n
 endfunction
 
 " -------------------------------------------------
 function! s:vimim_get_chinese_from_english(english)
 " -------------------------------------------------
     let english = tolower(a:english)
-    let results = s:vimim_unicode_search(english)
+    let ddddd = s:vimim_get_unicode_ddddd(english)
+    let results = s:vimim_get_unicodes([ddddd], 0)
     if empty(results)
         sil!call s:vimim_backend_initialization_once()
         if empty(s:backend.datafile) && empty(s:backend.directory)
@@ -672,7 +671,7 @@ function! s:vimim_get_chinese_from_english(english)
 endfunction
 
 " ------------------------------------------------
-function! s:vimim_search_pattern_register(results)
+function! s:vimim_register_search_pattern(results)
 " ------------------------------------------------
     let results = []
     for pair in a:results
@@ -682,45 +681,25 @@ function! s:vimim_search_pattern_register(results)
         endif
         call add(results, chinese)
     endfor
-    if len(results) > 0
-        let @/ = join(results, '\|')
-        if empty(search(@/,'nw'))
+    if !empty(results)
+        let slash = join(results, '\|')
+        if empty(search(slash,'nw'))
             let @/ = @_
         else
-            let v:errmsg = ""
+            let @/ = slash
         endif
     endif
 endfunction
 
-" ----------------------------------------
-function! s:vimim_unicode_search(keyboard)
-" ----------------------------------------
-" [search] slash search CJK using unicode
-"          /u808f   n
-"          /32911   n
-" ----------------------------------------
-    let keyboard = a:keyboard
-    if strlen(keyboard) != 5
+" -------------------------------------------
+function! s:vimim_get_unicodes(unicodes, more)
+" -------------------------------------------
+    let unicodes = a:unicodes
+    if empty(unicodes) || empty(get(unicodes,0))
         return []
     endif
     let results = []
-    if keyboard =~# '^u\x\{4}$'
-        let xxxx = keyboard[1:]
-        let results = [str2nr(xxxx, 16)]
-    elseif keyboard =~# '^\d\{5}$'
-       let results = [str2nr(keyboard, 10)]
-    endif
-    return s:vimim_internal_codes(results,0)
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_internal_codes(numbers, more)
-" ---------------------------------------------
-    if empty(a:numbers)
-        return []
-    endif
-    let unicodes = []
-    for ddddd in a:numbers
+    for ddddd in unicodes
         if s:encoding == "utf8"
             if ddddd < 19968 || ddddd > 40869
                 break
@@ -729,9 +708,9 @@ function! s:vimim_internal_codes(numbers, more)
         let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
         let chinese = nr2char(ddddd)
         let menu_chinese = menu .' '. chinese
-        call add(unicodes, menu_chinese)
+        call add(results, menu_chinese)
     endfor
-    return unicodes
+    return results
 endfunction
 
 " ---------------------------------------------------
@@ -862,7 +841,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_onekey_action(onekey)
 " -------------------------------------
-" <Space> multiple play in OneKey Mode:
+" <Space> multiple play in OneKey:
 "   (1) after English (valid keys) => trigger keycode menu
 "   (2) after omni popup menu      => insert Chinese
 "   (3) after English punctuation  => Chinese punctuation
@@ -955,9 +934,9 @@ function! s:vimim_onekey_action(onekey)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_get_internal_code_char_before()
-" -----------------------------------------------
+" -----------------------------------------
+function! s:vimim_get_unicode_char_before()
+" -----------------------------------------
     let xxxx = 0
     let byte_before = getline(".")[col(".")-2]
     if empty(byte_before) || byte_before =~# s:valid_key
@@ -1449,8 +1428,7 @@ function! g:vimim_pumvisible_to_clip()
     call s:reset_popupmenu_list()
     let chinese = s:vimim_popup_word()
     if !empty(chinese)
-        if s:vimim_auto_copy_clipboard>0
-        \&& has("gui_running")
+        if has("gui_running") && has("win32")
             let @+ = chinese
         endif
     endif
@@ -1479,8 +1457,7 @@ function! g:vimim_pumvisible_dump()
         let one_line .= line . "\n"
     endfor
     " -----------------------------
-    if s:vimim_auto_copy_clipboard>0
-    \&& has("gui_running")
+    if has("gui_running") && has("win32")
         let @+ = one_line
     endif
     " -----------------------------
@@ -1653,7 +1630,7 @@ endfunction
 function! <SID>vimim_get_unicode_menu()
 " -------------------------------------
     let trigger = '\<C-R>=g:vimim()\<CR>'
-    let xxxx = s:vimim_get_internal_code_char_before()
+    let xxxx = s:vimim_get_unicode_char_before()
     if !empty(xxxx)
         let trigger = xxxx . trigger
         sil!exe 'sil!return "' . trigger . '"'
@@ -3070,7 +3047,7 @@ func! s:progressbar.restore()
 endfun
 
 " ======================================== }}}
-let VimIM = " ====  Backend==Internal ==== {{{"
+let VimIM = " ====  Backend==Unicode  ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
@@ -3237,28 +3214,36 @@ function! GBK()
     return ""
 endfunction
 
-" ---------------------------------------
-function! s:vimim_internal_code(keyboard)
-" ---------------------------------------
+" -------------------------------------------
+function! s:vimim_get_unicode_ddddd(keyboard)
+" -------------------------------------------
     let keyboard = a:keyboard
     if strlen(keyboard) != 5
-    \|| s:chinese_input_mode == 'dynamic'
-        return []
-    else
-        let msg = "support <C-6> to trigger multibyte"
+        return 0
     endif
     let ddddd = 0
     if keyboard =~# '^u\x\{4}$'
-        " show hex internal-code popup menu: u808f
+        " show hex unicode popup menu: u808f
         let xxxx = keyboard[1:]
         let ddddd = str2nr(xxxx, 16)
     elseif keyboard =~# '^\d\{5}$'
-        " show decimal internal-code popup menu: 32911
+        " show decimal unicode popup menu: 32911
         let ddddd = str2nr(keyboard, 10)
     else
-        return []
+        return 0
     endif
     if empty(ddddd) || ddddd>0xffff
+        return 0
+    endif
+    return ddddd
+endfunction
+
+" -------------------------------------
+function! s:vimim_get_unicode(keyboard)
+" -------------------------------------
+    let keyboard = a:keyboard
+    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+    if empty(ddddd)
         return []
     endif
     let numbers = []
@@ -3266,7 +3251,7 @@ function! s:vimim_internal_code(keyboard)
         let digit = str2nr(ddddd+i)
         call add(numbers, digit)
     endfor
-    return s:vimim_internal_codes(numbers,1)
+    return s:vimim_get_unicodes(numbers,1)
 endfunction
 
 " -----------------------------------------
@@ -3313,9 +3298,9 @@ function! s:vimim_without_backend(keyboard)
     for i in range(start, end)
         call add(numbers, str2nr(i,10))
     endfor
-    " --------------------------------------
-    return s:vimim_internal_codes(numbers,0)
-    " --------------------------------------
+    " ------------------------------------
+    return s:vimim_get_unicodes(numbers,0)
+    " ------------------------------------
 endfunction
 
 " --------------
@@ -5631,10 +5616,10 @@ else
         endif
     endif
 
-    " [internal] support direct unicode/gb/big5 input
-    " -----------------------------------------------
-    if s:vimim_internal_code_input > 0
-        let results = s:vimim_internal_code(keyboard)
+    " [unicode] support direct unicode/gb/big5 input
+    " ----------------------------------------------
+    if s:vimim_unicode_input > 0 && s:chinese_input_mode != 'dynamic'
+        let results = s:vimim_get_unicode(keyboard)
         if !empty(len(results))
             let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
@@ -5696,9 +5681,9 @@ else
         endif
     endif
 
-    " ------------------------------------------------
-    " [backend] VimIM internal embedded backend engine
-    " ------------------------------------------------
+    " ---------------------------------------------
+    " [backend] plug-n-play embedded backend engine
+    " ---------------------------------------------
     let results = s:vimim_embedded_backend_engine(keyboard)
     if empty(results)
         let results = s:popupmenu_list
@@ -5827,8 +5812,7 @@ function! s:vimim_onekey_mapping_on()
     endif
     " -------------------------------
     if s:vimim_search_next > 0
-        let v:errmsg = ""
-        noremap <silent> n :sil!call g:vimim_search_next()<CR>
+        noremap <silent> n :sil!call g:vimim_search_next()<CR>n
     endif
 endfunction
 
