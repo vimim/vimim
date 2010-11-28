@@ -654,7 +654,7 @@ call add(s:vimims, VimIM)
 " -----------------------------
 function! g:vimim_search_next()
 " -----------------------------
-    if v:errmsg =~ "^E486:"
+    if !empty(v:errmsg) && v:errmsg =~ "^E486:"
         let v:errmsg = ""
         let english = @/
         if len(english) < 20 && english !~ '_'
@@ -666,7 +666,7 @@ function! g:vimim_search_next()
         endif
         let s:menu_digit_as_filter = ""
     endif
-    :normal! n
+    normal! n
 endfunction
 
 " -------------------------------------------------
@@ -4220,8 +4220,8 @@ endfunction
 function! s:vimim_mkdir(option)
 " -----------------------------
 " Goal: create one file per entry based on vimim.xxx.txt
-" Sample file A: /vimim/pinyin/jjjj
-" Sample file B: /vimim/unihan/u808f
+" Sample file A: /home/vimim/pinyin/jjjj
+" Sample file B: /home/vimim/unihan/u808f
 " (1) $cd $VIM/vimfiles/plugin/vimim/
 " (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir1()
 " --------------------------------------------------
@@ -4912,7 +4912,7 @@ function! s:vimim_get_libvimim()
     if filereadable(cloud)
         return cloud
     endif
-    let cloud = "/vimim/svn/mycloud/vimim-mycloud/libvimim.dll"
+    let cloud = "/home/vimim/svn/mycloud/vimim-mycloud/libvimim.dll"
     if filereadable(cloud)
         if has("win32") || has("win32unix")
             return cloud
@@ -5185,10 +5185,10 @@ function! s:vimim_initialize_debug()
     let s:path2 = 0
     let s:backend_loaded = 0
     let s:chinese_input_mode = 'onekey'
-    let s:vimimdata = '/vimim/svn/vimim-data/trunk/data/'
     " ------------------------------
-    let dir = "/vimim/"
+    let dir = "/home/vimim/"
     if isdirectory(dir)
+        let s:vimimdata = dir . 'svn/vimim-data/trunk/data/'
         let s:path2 = dir
     else
         return
