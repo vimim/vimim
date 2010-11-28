@@ -172,6 +172,7 @@ function! s:vimim_initialize_session()
     let s:unihan_4corner_lines = []
     let s:unihan_4corner_cache = {}
     let s:pinyin_4corner_filter = 0
+    let s:xingma = ['wubi', 'erbi']
     " --------------------------------
     let s:abcd = "'abcdefg"
     let s:pqwertyuio = range(10)
@@ -392,6 +393,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
+    let v:errmsg = ""
     let s:path2 = 0
     let s:backend_loaded = 0
     let s:chinese_input_mode = "onekey"
@@ -562,9 +564,10 @@ function! s:vimim_egg_vimim()
         if s:ui.root == 'directory'
             let directory  = s:vimim_chinese('directory')
             let ciku .=  directory . ciku
+            let option .= "/"
         endif
         let ciku = "database " . ciku
-        let option = ciku . option."/"
+        let option = ciku . option
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -652,6 +655,7 @@ function! g:vimim_search_next()
                 sil!call s:vimim_register_search_pattern(english, results)
             endif
         endif
+        let v:errmsg = ""
         let s:menu_digit_as_filter = ""
     endif
 endfunction
@@ -3340,6 +3344,11 @@ function! s:vimim_do_force_datafile(im)
     let s:path2 = 0
     let s:vimim_cloud_sogou = 0
     let s:vimim_cloud_plugin = 0
+    if match(s:xingma, a:im) < 0
+        let msg = "no need digit filter for wubil"
+    else
+        let s:pinyin_4corner_filter = 0
+    endif
     call s:vimim_set_datafile(a:im)
 endfunction
 
@@ -3694,8 +3703,7 @@ function! s:vimim_build_datafile_cache()
     if empty(s:unihan_4corner_lines)
         let msg = " no way to build digit cache "
     elseif empty(s:unihan_4corner_cache)
-        let no_digt_cache = ['wubi', 'erbi']
-        if match(no_digt_cache, s:ui.im) < 0
+        if match(s:xingma, s:ui.im) < 0
             let progressbar += 1
         endif
     endif
