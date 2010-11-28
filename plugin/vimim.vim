@@ -645,8 +645,8 @@ function! g:vimim_search_next()
 " -----------------------------
     if v:errmsg =~ "^E486:"
         let english = @/
-        if len(english) < 16 && len(english) > 1 
-        \&& english =~ "\w" && english != "\W" && english !~ '[_.*\]'
+        if len(english) < 16 && len(english) > 1
+        \&& english =~ "\w" && english != "\W" && english !~ "[_.*\\]"
             let results = s:vimim_get_chinese_from_english(english)
             if !empty(results)
                 sil!call s:vimim_register_search_pattern(english, results)
@@ -1740,13 +1740,10 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             continue
         endif
         let menu = get(pairs, 0)
-        if s:unicode_menu_display_flag > 0
-            let complete_items["menu"] = menu
-        endif
         let chinese = get(pairs, 1)
-        " -------------------------------------------------
         let extra_text = menu
-        if s:pinyin_4corner_filter > 0
+        " -------------------------------------------------
+        if s:pinyin_4corner_filter > 0  && chinese !~ '\w'
             if len(s:menu_digit_as_filter) > 0
             \|| s:keyboard_leading_zero =~ "'"
             \|| menu =~ '^\d\d\d\d'
@@ -4773,13 +4770,13 @@ function! s:vimim_check_mycloud_availability()
 " note: this variable should not be used after initialization
 "       unlet s:vimim_mycloud_url
 " note: reuse it to support forced buffer scan: vim mycloud.vimim
-" note: how to avoid *Not Responding*?
 " --------------------------------------------
     let cloud = s:vimim_check_mycloud_plugin()
     if empty(cloud)
         let s:vimim_cloud_plugin = 0
         return 0
     endif
+    "  note: how to avoid *Not Responding*?
     let ret = s:vimim_access_mycloud(cloud, "__getname")
     let directory = split(ret, "\t")[0]
     let ret = s:vimim_access_mycloud(cloud, "__getkeychars")
@@ -5312,7 +5309,6 @@ endfunction
 " ----------------------------
 function! s:vimim_start_omni()
 " ----------------------------
-    let s:unicode_menu_display_flag = 0
     let s:insert_without_popup = 0
 endfunction
 
@@ -5487,6 +5483,9 @@ function! s:vimim_embedded_backend_engine(keyboard)
         return []
     endif
     let keyboard = a:keyboard
+    if  keyboard !~# s:valid_key
+        return []
+    endif
     let results = []
     if root =~# "directory"
         let results = s:vimim_get_sentence_directory(keyboard)
@@ -5607,7 +5606,6 @@ else
     if s:vimim_unicode_input > 0 && s:chinese_input_mode != 'dynamic'
         let results = s:vimim_get_unicode(keyboard)
         if !empty(len(results))
-            let s:unicode_menu_display_flag = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
