@@ -2727,16 +2727,18 @@ function! s:vimim_create_shuangpin_table(rule)
         endif
     endfor
     " the jxqy+v special case handling
-    if (s:vimim_shuangpin_abc>0) || (s:vimim_shuangpin_purple>0)
-        \ || (s:vimim_shuangpin_nature>0) || (s:vimim_shuangpin_flypy>0)
+    if s:vimim_shuangpin == 'abc'
+    \|| s:vimim_shuangpin == 'purple'
+    \|| s:vimim_shuangpin == 'nature'
+    \|| s:vimim_shuangpin == 'flypy'
         let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
         call extend(sptable, jxqy)
-    elseif s:vimim_shuangpin_ms > 0
+    elseif s:vimim_shuangpin == 'ms'
         let jxqy = {"jv" : "jue", "qv" : "que", "xv" : "xue", "yv" : "yue"}
         call extend(sptable, jxqy)
     endif
     " the flypy shuangpin special case handling
-    if s:vimim_shuangpin_flypy>0
+    if s:vimim_shuangpin == 'flypy'
         let flypy = {"aa" : "a", "oo" : "o", "ee" : "e",
                     \"an" : "an", "ao" : "ao", "ai" : "ai", "ah": "ang",
                     \"os" : "ong","ou" : "ou",
@@ -2744,7 +2746,7 @@ function! s:vimim_create_shuangpin_table(rule)
         call extend(sptable, flypy)
     endif
     " the nature shuangpin special case handling
-    if s:vimim_shuangpin_nature>0
+    if s:vimim_shuangpin == 'nature'
         let nature = {"aa" : "a", "oo" : "o", "ee" : "e" }
         call extend(sptable, nature)
     endif
@@ -3819,19 +3821,19 @@ endfunction
 " -------------------------------------------
 function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
-" auto enter chinese input mode => vim vimim              
-" auto sqlite with cedict.db    => vim sqlite.vimim       
-" auto mycloud input            => vim mycloud.vimim      
-" auto cloud input              => vim sogou.vimim        
-" auto cloud onekey             => vim sogou.onekey.vimim 
-" auto wubi dynamic input mode  => vim wubi.dynamic.vimim 
+" auto enter chinese input mode => vim vimim
+" auto sqlite with cedict.db    => vim sqlite.vimim
+" auto mycloud input            => vim mycloud.vimim
+" auto cloud input              => vim sogou.vimim
+" auto cloud onekey             => vim sogou.onekey.vimim
+" auto wubi dynamic input mode  => vim wubi.dynamic.vimim
 " -------------------------------------------
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_abc.vimim      
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_ms.vimim       
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_nature.vimim   
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_plusplus.vimim 
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_purple.vimim   
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_flypy.vimim    
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_abc.vimim
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_ms.vimim
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_nature.vimim
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_plusplus.vimim
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_purple.vimim
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_flypy.vimim
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
