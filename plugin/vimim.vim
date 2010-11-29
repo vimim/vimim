@@ -161,11 +161,11 @@ function! s:vimim_initialize_session()
     call s:vimim_super_reset()
     call s:vimim_set_encoding()
     " --------------------------------
-    let s:one_key_correction = 0
     let s:www_executable = 0
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
     " --------------------------------
+    let s:one_key_correction = 0
     let s:shuangpin_keycode_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
@@ -996,7 +996,6 @@ function! s:vimim_chinesemode_action()
     let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
     let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
     let s:chinese_input_mode = s:vimim_chinese_input_mode
-sil!call s:vimim_helper_mapping_on()
     if s:vimim_chinese_input_mode == 'onekey'
         let s:chinese_input_mode = "onekeynonstop"
     endif
@@ -5031,11 +5030,11 @@ function! s:vimim_initialize_debug()
     let s:path2 = "/home/vimim/"
     let s:vimimdata = s:path2 . "svn/vimim-data/trunk/data/"
     let s:libvimdll = s:path2 . "svn/mycloud/vimim-mycloud/libvimim.dll"
-    let s:vimim_chinese_input_mode = "onekey"
-    let s:vimim_custom_skin = 3
-    let s:vimim_ctrl_6_to_toggle = 1
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_debug = 9
+    let s:vimim_custom_skin = 3
+    let s:vimim_ctrl_6_to_toggle = 1
+    let s:vimim_chinese_input_mode = "onekey"
 endfunction
 
 " ------------------------------------
@@ -5422,13 +5421,14 @@ function! s:vimim_helper_mapping_on()
     inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
                   \<C-R>=g:vimim_backspace()<CR>
     " ----------------------------------------------------------
+    if s:chinese_input_mode == 'static'
+        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                      \<C-R>=g:vimim_one_key_correction()<CR>
+    endif
+    " ----------------------------------------------------------
     if s:chinese_input_mode !~ 'onekey'
         inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
         return <SID>vimim_toggle_punctuation()
-    endif
-    " ----------------------------------------------------------
-    if s:chinese_input_mode =~ 'static'
-        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR><C-R>=g:vimim_one_key_correction()<CR>
     endif
     " ----------------------------------------------------------
 endfunction
@@ -5531,10 +5531,9 @@ else
         return
     endif
 
-    " [correction] static Esc one_key_correction
-    " ------------------------------------------
+    " [one_key_correction] for static mode using Esc
+    " ----------------------------------------------
     if s:one_key_correction > 0
-        let BS = 'delete in Chinese Mode'
         let s:one_key_correction = 0
         return [' ']
     endif
