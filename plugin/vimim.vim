@@ -3819,13 +3819,19 @@ endfunction
 " -------------------------------------------
 function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
-" $vim vimim                     => auto enter chinese input mode
-" $vim sqlite.vimim              => force sqlite with cedict.db
-" $vim mycloud.vimim             => force mycloud input
-" $vim sogou.vimim               => force cloud input
-" $vim sogou.shuangpin_abc.vimim => force cloud abc shuangpin
-" $vim sogou.onekey.vimim        => force cloud onekey
-" $vim wubi.dynamic.vimim        => force wubi dynamic input mode
+" auto enter chinese input mode => vim vimim              
+" auto sqlite with cedict.db    => vim sqlite.vimim       
+" auto mycloud input            => vim mycloud.vimim      
+" auto cloud input              => vim sogou.vimim        
+" auto cloud onekey             => vim sogou.onekey.vimim 
+" auto wubi dynamic input mode  => vim wubi.dynamic.vimim 
+" -------------------------------------------
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_abc.vimim      
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_ms.vimim       
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_nature.vimim   
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_plusplus.vimim 
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_purple.vimim   
+" auto sogou cloud shuangpin    => vim sogou.shuangpin_flypy.vimim    
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
