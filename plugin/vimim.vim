@@ -5025,8 +5025,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let s:vimim_chinese_input_mode = "static"
-    if !isdirectory("/home/xxma")
+    if !isdirectory("/home/xma")
         return
     endif
     let s:path2 = "/home/vimim/"
