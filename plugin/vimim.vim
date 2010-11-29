@@ -388,7 +388,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_unicode_input")
     call add(G, "g:vimim_onekey_double_ctrl6")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
@@ -615,19 +614,12 @@ endfunction
 " ----------------------------------------
 function! s:vimim_easter_chicken(keyboard)
 " ----------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-        let msg = "easter eggs hidden in OneKey only"
-    else
-        return
-    endif
-    " ------------------------------------
     let egg = a:keyboard
     if egg =~# s:valid_key
         let msg = "hunt easter egg ... vim<C-6>"
     else
         return []
     endif
-    " ------------------------------------
     try
         return eval("<SID>vimim_egg_".egg."()")
     catch
@@ -2092,17 +2084,12 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_imode_number(keyboard, prefix)
 " ----------------------------------------------
-    if s:chinese_input_mode == 'dynamic' || s:ui.has_dot == 1
-        return []
-    endif
     let keyboard = a:keyboard
-    " ------------------------------------------
     if strpart(keyboard,0,2) ==# 'ii'
         let keyboard = 'I' . strpart(keyboard,2)
     endif
     let ii_keyboard = keyboard
     let keyboard = strpart(keyboard,1)
-    " ------------------------------------------
     if keyboard !~ '^\d\+' && keyboard !~# '^[ds]'
     \&& len(substitute(keyboard,'\d','','')) > 1
         return []
@@ -2628,14 +2615,6 @@ endfunction
 function! s:vimim_get_pinyin_from_shuangpin(keyboard)
 " ---------------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:shuangpin_flag)
-        return keyboard
-    endif
-    if empty(s:keyboard_shuangpin)
-        let msg = "it is here to resume shuangpin"
-    else
-        return keyboard
-    endif
     let keyboard2 = s:vimim_shuangpin_transform(keyboard)
     if s:vimimdebug > 0
         call s:debugs('shuangpin_in', keyboard)
@@ -4521,9 +4500,7 @@ endfunction
 function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
-    if s:chinese_input_mode == 'dynamic'
-    \|| s:ui.has_dot == 1
-    \|| keyboard =~ '\d\d\d\d'
+    if keyboard =~ '\d\d\d\d'
         return []
     endif
     let magic_tail = keyboard[-1:]
@@ -5575,15 +5552,6 @@ else
         return
     endif
 
-    " [eggs] hunt classic easter egg ... vim<C-6>
-    " -------------------------------------------
-    if keyboard ==# "vim" || keyboard =~# "^vimim"
-        let results = s:vimim_easter_chicken(keyboard)
-        if !empty(len(results))
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     " [filter] use cache for all vimim backends
     " -----------------------------------------
     if len(s:menu_digit_as_filter) > 0
@@ -5609,36 +5577,47 @@ else
         endif
     endif
 
-    " [unicode] support direct unicode/gb/big5 input
-    " ----------------------------------------------
-    if s:vimim_unicode_input > 0 && s:chinese_input_mode != 'dynamic'
+    if s:chinese_input_mode =~ 'onekey'
+        " [eggs] hunt classic easter egg ... vim<C-6>
+        " -------------------------------------------
+        if keyboard ==# "vim" || keyboard =~# "^vimim"
+            let results = s:vimim_easter_chicken(keyboard)
+            if !empty(len(results))
+                return s:vimim_popupmenu_list(results)
+            endif
+        endif
+        " [unicode] support direct unicode/gb/big5 input
+        " ----------------------------------------------
         let results = s:vimim_get_unicode(keyboard)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
     endif
 
-    " [imode] magic 'i': English number => Chinese number
-    " ---------------------------------------------------
-    if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
-        let msg = " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
-        let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
-        if !empty(len(chinese_numbers))
-            return s:vimim_popupmenu_list(chinese_numbers)
+    if s:chinese_input_mode != 'dynamic' && s:ui.has_dot < 1
+        " [imode] magic 'i': English number => Chinese number
+        " ---------------------------------------------------
+        if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
+            let msg = " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
+            let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
+            if !empty(len(chinese_numbers))
+                return s:vimim_popupmenu_list(chinese_numbers)
+            endif
         endif
-    endif
-
-    " [cloud] magic trailing apostrophe to control cloud
-    " --------------------------------------------------
-    let clouds = s:vimim_magic_tail(keyboard)
-    if !empty(len(clouds))
-        let msg = " usage: woyouyigemeng'<C-6> "
-        let keyboard = get(clouds, 0)
+        " [cloud] magic trailing apostrophe to control cloud
+        " --------------------------------------------------
+        let clouds = s:vimim_magic_tail(keyboard)
+        if !empty(len(clouds))
+            let msg = " usage: woyouyigemeng'<C-6> "
+            let keyboard = get(clouds, 0)
+        endif
     endif
 
     " [shuangpin] support 6 major shuangpin with various rules
     " --------------------------------------------------------
-    let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
+    if s:shuangpin_flag > 0 && empty(s:keyboard_shuangpin)
+        let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
+    endif
 
     let s:keyboard_leading_zero = keyboard
     " ------------------------------------
