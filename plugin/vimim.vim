@@ -161,6 +161,7 @@ function! s:vimim_initialize_session()
     call s:vimim_super_reset()
     call s:vimim_set_encoding()
     " --------------------------------
+    let s:one_key_correction = 0
     let s:www_executable = 0
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
@@ -995,6 +996,7 @@ function! s:vimim_chinesemode_action()
     let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
     let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
     let s:chinese_input_mode = s:vimim_chinese_input_mode
+sil!call s:vimim_helper_mapping_on()
     if s:vimim_chinese_input_mode == 'onekey'
         let s:chinese_input_mode = "onekeynonstop"
     endif
@@ -1017,7 +1019,9 @@ function! s:vimim_chinesemode_action()
                     let action = s:vimim_static_action("")
                 endif
             endif
+            " ----------------------------------
             sil!call s:vimim_helper_mapping_on()
+            " ----------------------------------
         endif
     else
         call s:vimim_stop()
@@ -1044,13 +1048,11 @@ endfunction
 " ---------------------------------------------
 function! s:vimim_static_alphabet_auto_select()
 " ---------------------------------------------
-    if s:chinese_input_mode == 'static'
-        for char in s:Az_list
-            sil!exe 'inoremap <silent> ' . char . '
-            \ <C-R>=g:vimim_pumvisible_ctrl_y()<CR>'. char .
-            \'<C-R>=g:vimim_reset_after_auto_insert()<CR>'
-        endfor
-    endif
+    for char in s:Az_list
+        sil!exe 'inoremap <silent> ' . char . '
+        \ <C-R>=g:vimim_pumvisible_ctrl_y()<CR>'. char .
+        \'<C-R>=g:vimim_reset_after_auto_insert()<CR>'
+    endfor
 endfunction
 
 " ------------------------------------------
@@ -1392,14 +1394,10 @@ function! g:vimim_one_key_correction()
 " ------------------------------------
     let key = '\<Esc>'
     call s:reset_popupmenu_list()
-    if s:chinese_input_mode == 'onekey'
-        call s:vimim_stop()
-    else
-        let byte_before = getline(".")[col(".")-2]
-        if byte_before =~# s:valid_key
-            let s:one_key_correction = 1
-            let key = '\<C-X>\<C-U>\<BS>'
-        endif
+    let byte_before = getline(".")[col(".")-2]
+    if byte_before =~# s:valid_key
+        let s:one_key_correction = 1
+        let key = '\<C-X>\<C-U>\<BS>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5027,7 +5025,8 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if !isdirectory("/home/xma")
+    let s:vimim_chinese_input_mode = "static"
+    if !isdirectory("/home/xxma")
         return
     endif
     let s:path2 = "/home/vimim/"
@@ -5340,7 +5339,6 @@ function! g:vimim_reset_after_auto_insert()
 " -----------------------------------------
     let s:keyboard_leading_zero = ""
     let s:keyboard_shuangpin = 0
-    let s:one_key_correction = 0
     return ""
 endfunction
 
@@ -5362,6 +5360,9 @@ endfunction
 " -----------------
 function! g:vimim()
 " -----------------
+    if empty(&completefunc) || &completefunc != 'VimIM'
+        set completefunc=VimIM
+    endif
     let key = ""
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
@@ -5427,9 +5428,8 @@ function! s:vimim_helper_mapping_on()
         return <SID>vimim_toggle_punctuation()
     endif
     " ----------------------------------------------------------
-    if s:chinese_input_mode == 'static'
-        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                      \<C-R>=g:vimim_one_key_correction()<CR>
+    if s:chinese_input_mode =~ 'static'
+        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR><C-R>=g:vimim_one_key_correction()<CR>
     endif
     " ----------------------------------------------------------
 endfunction
@@ -5530,6 +5530,14 @@ else
     let keyboard = s:vimim_get_valid_keyboard(a:keyboard)
     if empty(keyboard)
         return
+    endif
+
+    " [correction] static Esc one_key_correction
+    " ------------------------------------------
+    if s:one_key_correction > 0
+        let BS = 'delete in Chinese Mode'
+        let s:one_key_correction = 0
+        return [' ']
     endif
 
     " [filter] use cache for all vimim backends
@@ -5679,12 +5687,6 @@ function! s:vimim_get_valid_keyboard(keyboard)
     if s:vimimdebug > 0
         let s:debug_count += 1
         call s:debugs('keyboard', s:keyboard_leading_zero)
-    endif
-    if s:one_key_correction > 0
-        let d = 'delete in omni popup menu'
-        let BS = 'delete in Chinese Mode'
-        let s:one_key_correction = 0
-        return ' '
     endif
     if empty(s:keyboard_leading_zero)
         let s:keyboard_leading_zero = keyboard
