@@ -638,10 +638,15 @@ function! g:vimim_search_next()
         let english = @/
         if len(english) < 16 && len(english) > 1
         \&& english =~ '\w' && english != '\W' && english !~ '_'
-            let results = s:vimim_get_chinese_from_english(english)
-            if !empty(results)
-                sil!call s:vimim_register_search_pattern(english, results)
-            endif
+            let results = []
+            try
+                let results = s:vimim_get_chinese_from_english(english)
+                if !empty(results)
+                    call s:vimim_register_search_pattern(english, results)
+                endif
+            catch
+                let g:g486 = v:exception
+            endtry
         endif
         let v:errmsg = ""
         let s:menu_digit_as_filter = ""
@@ -677,7 +682,7 @@ function! s:vimim_register_search_pattern(english, results)
         let pairs = split(pair)
         let menu = get(pairs, 0)
         let chinese = get(pairs, 1)
-        if menu != a:english || chinese =~ "\w"
+        if menu != a:english || chinese =~ '\w'
             continue
         else
             call add(results, chinese)
@@ -2391,7 +2396,7 @@ function! s:vimim_get_filter_number(chinese)
         let words = copy(words[-1:-1])
     endif
     for chinese in words
-        if chinese =~ "\w"
+        if chinese =~ '\w'
             continue
         else
             let key = printf('u%x',char2nr(chinese))
