@@ -2552,8 +2552,8 @@ function! s:vimim_initialize_shuangpin()
     " ----------------------------------
     let s:vimim_imode_pinyin = 0
     let rules = s:vimim_shuangpin_generic()
-    let shuangpin = s:vimim_chinese('shuangpin')
     let chinese = ""
+    let shuangpin = s:vimim_chinese('shuangpin')
     let keycode = "[0-9a-z'.]"
     " ----------------------------------
     if s:vimim_shuangpin == 'abc'
@@ -2783,6 +2783,7 @@ endfunction
 " -----------------------------------
 function! s:vimim_shuangpin_abc(rule)
 " -----------------------------------
+" [auto clould test] vim sogou.shuangpin_abc.vimim
 " vtpc => shuang pin => double pinyin
     call extend(a:rule[0],{ "zh" : "a", "ch" : "e", "sh" : "v" })
     call extend(a:rule[1],{
@@ -2799,6 +2800,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_shuangpin_ms(rule)
 " ----------------------------------
+" [auto clould test] vim sogou.shuangpin_ms.vimim
 " vi=>zhi ii=>chi ui=>shi keng=>keneng
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
@@ -2816,6 +2818,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_shuangpin_nature(rule)
 " --------------------------------------
+" [auto clould test] vim sogou.shuangpin_nature.vimim
 " goal: 'woui' => wo shi => i am
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
@@ -2832,6 +2835,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_shuangpin_plusplus(rule)
 " ----------------------------------------
+" [auto clould test] vim sogou.shuangpin_plusplus.vimim
     call extend(a:rule[0],{ "zh" : "v", "ch" : "u", "sh" : "i" })
     call extend(a:rule[1],{
         \"an" : "f", "ao" : "d", "ai" : "s", "ang": "g",
@@ -2847,6 +2851,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_shuangpin_purple(rule)
 " --------------------------------------
+" [auto clould test] vim sogou.shuangpin_purple.vimim
     call extend(a:rule[0],{ "zh" : "u", "ch" : "a", "sh" : "i" })
     call extend(a:rule[1],{
         \"an" : "r", "ao" : "q", "ai" : "p", "ang": "s",
@@ -2862,6 +2867,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_shuangpin_flypy(rule)
 " -------------------------------------
+" [auto clould test] vim sogou.shuangpin_flypy.vimim
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "c", "ai" : "d", "ang": "h",
@@ -3828,13 +3834,6 @@ function! s:vimim_force_scan_current_buffer()
 " auto cloud onekey             => vim sogou.onekey.vimim
 " auto wubi dynamic input mode  => vim wubi.dynamic.vimim
 " -------------------------------------------
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_abc.vimim
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_ms.vimim
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_nature.vimim
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_plusplus.vimim
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_purple.vimim
-" auto sogou cloud shuangpin    => vim sogou.shuangpin_flypy.vimim
-" -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
         if s:vimim_custom_skin != 2
@@ -3854,7 +3853,7 @@ function! s:vimim_force_scan_current_buffer()
     " ---------------------------------
     if buffer =~ 'shuangpin_abc'
         let s:vimim_shuangpin = 'abc'
-    if buffer =~ 'shuangpin_ms'
+    elseif buffer =~ 'shuangpin_ms'
         let s:vimim_shuangpin = 'ms'
     elseif buffer =~ 'shuangpin_nature'
         let s:vimim_shuangpin = 'nature'
