@@ -637,7 +637,7 @@ function! g:vimim_search_next()
     if v:errmsg =~ "^E486:"
         let english = @/
         if len(english) < 16 && len(english) > 1
-        \&& english =~ "\w" && english != "\W" && english !~ "[_.*\\]"
+        \&& english =~ '\w' && english != '\W' && english !~ '_'
             let results = s:vimim_get_chinese_from_english(english)
             if !empty(results)
                 sil!call s:vimim_register_search_pattern(english, results)
