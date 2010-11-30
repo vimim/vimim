@@ -133,6 +133,7 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
+    sil!call s:vimim_initialize_keycode()
     " -------------------------------------
 endfunction
 
@@ -177,8 +178,8 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:abcd = "'abcdefg"
     let s:pqwertyuio = range(10)
-    let s:valid_key = "[0-9a-z'.]"
     let s:quantifiers = {}
+    let s:valid_key = 0
     let s:localization = 0
     let s:tail = ""
     " --------------------------------
@@ -224,9 +225,9 @@ function! s:vimim_dictionary_chinese()
     let s:space = "　"
     let s:plus  = "＋"
     let s:colon = "："
+    let s:bracket_l = "【"
+    let s:bracket_r = "】"
     let s:chinese = {}
-    let s:chinese['bracket_l'] = ['《','【']
-    let s:chinese['bracket_r'] = ['》','】']
     let s:chinese['auto'] = ['自动','自動']
     let s:chinese['error'] = ['错误','錯誤']
     let s:chinese['digit'] = ['数码','數碼']
@@ -333,19 +334,12 @@ endfunction
 function! s:vimim_initialize_keycode()
 " ------------------------------------
     let keycode = s:backend[s:ui.root][s:ui.im].keycode
-    if empty(keycode)
-        let keycode = "[0-9a-z'.]"
-    endif
-    " --------------------------------
     if !empty(s:vimim_shuangpin)
         let keycode = s:shuangpin_keycode_chinese.keycode
     endif
-    " --------------------------------
     let s:valid_key = copy(keycode)
     let keycode = s:vimim_expand_character_class(keycode)
     let s:valid_keys = split(keycode, '\zs')
-    " --------------------------------
-    return
 endfunction
 
 " ======================================== }}}
@@ -636,8 +630,10 @@ function! g:vimim_search_next()
 " -----------------------------
     if v:errmsg =~ "^E486:"
         let english = @/
-        if len(english) < 16 && len(english) > 1
-        \&& english =~ '\w' && english != '\W' && english !~ '_'
+        if len(english) < 16
+        \&& len(english) > 1
+        \&& english =~  "[0-9A-Za-z']"
+        \&& english !~ "[^0-9A-Za-z']"
             let results = []
             try
                 let results = s:vimim_get_chinese_from_english(english)
@@ -657,6 +653,18 @@ endfunction
 function! s:vimim_get_chinese_from_english(english)
 " -------------------------------------------------
     let english = tolower(a:english)
+    let magic_tail = english[-1:]
+    if  magic_tail == "'"
+        let english = english[:-2]
+        let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
+        if !empty(cloud)
+            let results = s:vimim_get_cloud_sogou(english, 1)
+            if !empty(results)
+                return results
+            endif
+        endif
+    endif
+    " ---------------------------------------------
     let ddddd = s:vimim_get_unicode_ddddd(english)
     let results = s:vimim_get_unicodes([ddddd], 0)
     if empty(results)
@@ -669,6 +677,13 @@ function! s:vimim_get_chinese_from_english(english)
             endif
         else
             let results = s:vimim_embedded_backend_engine(english)
+            if english =~# '^\d\{8}'   |" /77124002 for 马力
+                let english = english[4:]
+                let results2 = s:vimim_embedded_backend_engine(english)
+                if !empty(results2)
+                    call extend(results, results2)
+                endif
+            endif
         endif
     endif
     return results
@@ -682,7 +697,7 @@ function! s:vimim_register_search_pattern(english, results)
         let pairs = split(pair)
         let menu = get(pairs, 0)
         let chinese = get(pairs, 1)
-        if menu != a:english || chinese =~ '\w'
+        if chinese =~ '\w'
             continue
         else
             call add(results, chinese)
@@ -764,11 +779,6 @@ let VimIM = " ====  OneKey            ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------------------------
-function! s:vimim_break_apostrophe_sentence(keyboard)
-" ---------------------------------------------------
-" VimIM classic OneKey sentence input showcase
-" --------------------------------------------
 " input method english:    i'have'a'dream
 " input method pinyin:     wo'you'yige'meng
 " input method wubi:       trde'ggwh'ssqu
@@ -779,6 +789,8 @@ function! s:vimim_break_apostrophe_sentence(keyboard)
 " input method cangjie:    hqi'kb'm'ol'ddni
 " input method nature:     wop'yb'yg''mgx
 " input method boshiamy:   ix'x'e'bii'rfnc
+" --------------------------------------------
+function! s:vimim_break_word_by_word(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
     let blocks = []
@@ -844,15 +856,14 @@ function! g:vimim_space()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" -------------------------------------
-function! s:vimim_onekey_action(onekey)
-" -------------------------------------
 " <Space> multiple play in OneKey:
 "   (1) after English (valid keys) => trigger keycode menu
 "   (2) after omni popup menu      => insert Chinese
 "   (3) after English punctuation  => Chinese punctuation
 "   (4) after Chinese              => <space>
-" -------------------------------------------------------
+" -------------------------------------
+function! s:vimim_onekey_action(onekey)
+" -------------------------------------
     let onekey = ""
     if pumvisible()
         if s:pattern_not_found > 0
@@ -1266,10 +1277,8 @@ function! s:vimim_get_chinese_im()
     elseif s:vimim_chinese_input_mode == 'onekey'
         let input_style = "OneKeyNonStop"
     endif
-    let bracket_l = s:vimim_chinese('bracket_l')
-    let bracket_r = s:vimim_chinese('bracket_r')
-    let plus = bracket_r . s:plus . bracket_l
-    return bracket_l . s:ui.statusline . bracket_r . input_style
+    let statusline = s:bracket_l . s:ui.statusline . s:bracket_r
+    return statusline . input_style
 endfunction
 
 " --------------------------
@@ -1746,8 +1755,8 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         if empty(s:vimim_cloud_plugin)
             let s:tail = ""
             if keyboard =~ "[']"
-                let partition = match(keyboard, "[']")
-                let s:tail = strpart(keyboard, partition+1)
+                let word_by_word = match(keyboard, "[']")
+                let s:tail = strpart(keyboard, word_by_word+1)
                 let chinese .=  s:tail
             elseif keyboard !~? '^vim'
                 let s:tail = strpart(keyboard, len(menu))
@@ -3612,7 +3621,7 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_break_sentence_into_block(keyboard)
 " ---------------------------------------------------
-    let blocks = s:vimim_break_apostrophe_sentence(a:keyboard)
+    let blocks = s:vimim_break_word_by_word(a:keyboard)
     if empty(blocks)
         let blocks = s:vimim_break_pinyin_digit(a:keyboard)
         if empty(blocks)
@@ -4291,23 +4300,15 @@ function! s:vimim_get_sqlite_query(keyboard)
         let keyboard = "'%" . keyboard . "%'"
         let column = column4
     else
-        let magic_head = keyboard[:0]
-        if  magic_head ==# "u"
-            let msg = "u starts English mode: udream => dream"
-            let keyboard = strpart(keyboard, 1)
-            let keyboard = "'%" . keyboard . "%'"
-            let column = column4
+        let msg = "pinyin is the default: meng"
+        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+        if len(pinyins) > 1
+            let pinyins = map(pinyins, 'v:val."_"')
+            let keyboard = join(pinyins)
         else
-            let msg = "pinyin is the default: meng"
-            let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-            if len(pinyins) > 1
-                let pinyins = map(pinyins, 'v:val."_"')
-                let keyboard = join(pinyins)
-            else
-                let keyboard = keyboard."_"
-            endif
-            let keyboard = "'" . keyboard . "'"
+            let keyboard = keyboard."_"
         endif
+        let keyboard = "'" . keyboard . "'"
     endif
     " --------------------------------------
     let query  = " select " . select
@@ -4428,8 +4429,9 @@ function! s:vimim_check_http_executable(im)
             let s:www_executable = cloud
             let s:www_libcall = 1
             call s:vimim_do_cloud_if_no_embedded_backend()
-        else
-            return {}
+"       else
+"           return {}
+"todo
         endif
     endif
     " step #2 of 3: try to find wget
@@ -4588,6 +4590,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
 " ------------------------------------------------
     let keyboard = a:keyboard
     let executable = s:www_executable
+let g:gwww=s:www_executable
     if empty(executable) || empty(keyboard)
         return []
     endif
@@ -4801,7 +4804,6 @@ function! s:vimim_get_libvimim()
         if has("win32") || has("win32unix")
             return s:libvimdll
         endif
-    endif
     return 0
 endfunction
 
@@ -5068,11 +5070,11 @@ function! s:vimim_one_backend_hash()
     let one_backend_hash.libcall = 0
     let one_backend_hash.sogou_key = 0
     let one_backend_hash.chinese = 0
-    let one_backend_hash.keycode = 0
     let one_backend_hash.directory = 0
     let one_backend_hash.datafile = 0
     let one_backend_hash.lines = []
     let one_backend_hash.cache = {}
+    let one_backend_hash.keycode = "[0-9a-z'.]"
     let one_backend_hash.chinese_mode_switch = 1
     return one_backend_hash
 endfunction
