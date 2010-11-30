@@ -628,12 +628,10 @@ call add(s:vimims, VimIM)
 " -----------------------------
 function! g:vimim_search_next()
 " -----------------------------
-    if v:errmsg =~ "^E486:"
+    if !empty(v:errmsg) && v:errmsg =~ "^E486:"
         let english = @/
-        if len(english) < 16
-        \&& len(english) > 1
-        \&& english =~  "[0-9A-Za-z']"
-        \&& english !~ "[^0-9A-Za-z']"
+        if len(english) < 16 && len(english) > 1
+        \&& english =~ '\w' && english != '\W' && english !~ '_'
             let results = []
             try
                 let results = s:vimim_get_chinese_from_english(english)
@@ -641,7 +639,9 @@ function! g:vimim_search_next()
                     call s:vimim_register_search_pattern(english, results)
                 endif
             catch
-                let g:g486 = v:exception
+                let msg = v:exception
+            finally
+                let v:errmsg = ""
             endtry
         endif
         let v:errmsg = ""
@@ -653,18 +653,6 @@ endfunction
 function! s:vimim_get_chinese_from_english(english)
 " -------------------------------------------------
     let english = tolower(a:english)
-    let magic_tail = english[-1:]
-    if  magic_tail == "'"
-        let english = english[:-2]
-        let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
-        if !empty(cloud)
-            let results = s:vimim_get_cloud_sogou(english, 1)
-            if !empty(results)
-                return results
-            endif
-        endif
-    endif
-    " ---------------------------------------------
     let ddddd = s:vimim_get_unicode_ddddd(english)
     let results = s:vimim_get_unicodes([ddddd], 0)
     if empty(results)
@@ -706,7 +694,7 @@ function! s:vimim_register_search_pattern(english, results)
     if !empty(results)
         let slash = join(results, '\|')
         if empty(search(slash,'nw'))
-            let @/ = @_
+            let @/ = a:english
         else
             let @/ = slash
         endif
@@ -4590,7 +4578,6 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
 " ------------------------------------------------
     let keyboard = a:keyboard
     let executable = s:www_executable
-let g:gwww=s:www_executable
     if empty(executable) || empty(keyboard)
         return []
     endif
