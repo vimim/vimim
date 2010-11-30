@@ -820,7 +820,6 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_onekey_pumvisible_capital_on()
     sil!call s:vimim_1234567890_filter_on()
     sil!call s:vimim_punctuation_navigation_on()
-    sil!call s:vimim_helper_mapping_on()
 endfunction
 
 " --------------------------
@@ -978,40 +977,32 @@ call add(s:vimims, VimIM)
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
-    sil!call s:vimim_start_chinesemode()
-    let action = s:vimim_chinesemode_action()
-    sil!exe 'sil!return "' . action . '"'
-endfunction
-
-" -----------------------------------
-function! s:vimim_start_chinesemode()
-" -----------------------------------
     sil!call s:vimim_backend_initialization_once()
     sil!call s:vimim_frontend_initialization()
     sil!call s:vimim_build_datafile_cache()
+    let s:chinese_input_mode = s:vimim_chinese_input_mode
+    if s:vimim_chinese_input_mode == 'onekey'
+        let s:chinese_input_mode = "onekeynonstop"
+    endif
+    let action = ""
+    if !empty(s:ui.root) && !empty(s:ui.im)
+        let action = s:vimim_chinesemode_action()
+    endif
+    sil!exe 'sil!return "' . action . '"'
 endfunction
 
 " ------------------------------------
 function! s:vimim_chinesemode_action()
 " ------------------------------------
-    if empty(s:ui.root) || empty(s:ui.im)
-        return ""
-    endif
     let action = ""
     let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
     let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
-    let s:chinese_input_mode = s:vimim_chinese_input_mode
-    if s:vimim_chinese_input_mode == 'onekey'
-        let s:chinese_input_mode = "onekeynonstop"
-    endif
     if empty(switch)
         if s:chinese_input_mode == 'onekeynonstop'
             call s:vimim_start_onekey()
             let action = s:vimim_onekey_action("")
         else
-            " ----------------------
             sil!call s:vimim_start()
-            " ----------------------
             if s:chinese_input_mode == 'dynamic'
                 sil!call <SID>vimim_set_seamless()
                 sil!call s:vimim_dynamic_alphabet_trigger()
@@ -1023,9 +1014,8 @@ function! s:vimim_chinesemode_action()
                     let action = s:vimim_static_action("")
                 endif
             endif
-            " ----------------------------------
-            sil!call s:vimim_helper_mapping_on()
-            " ----------------------------------
+            inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
+            return <SID>vimim_toggle_punctuation()
         endif
     else
         call s:vimim_stop()
@@ -1396,13 +1386,9 @@ endfunction
 " ------------------------------------
 function! g:vimim_one_key_correction()
 " ------------------------------------
-    let key = '\<Esc>'
     call s:reset_popupmenu_list()
-    let byte_before = getline(".")[col(".")-2]
-    if byte_before =~# s:valid_key
-        let s:one_key_correction = 1
-        let key = '\<C-X>\<C-U>\<BS>'
-    endif
+    let key  = '\<C-R>=g:vimim()\<CR>'
+    let key .= '\<BS>'
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1657,6 +1643,8 @@ function! g:vimim_pumvisible_ctrl_e_on()
 " --------------------------------------
     if s:chinese_input_mode == 'dynamic'
         let s:pumvisible_ctrl_e = 1
+    elseif s:chinese_input_mode == 'static'
+        let s:pumvisible_ctrl_e = 2
     endif
     return g:vimim_pumvisible_ctrl_e()
 endfunction
@@ -5037,9 +5025,10 @@ function! s:vimim_initialize_debug()
     let s:libvimdll = s:path2 . "svn/mycloud/vimim-mycloud/libvimim.dll"
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_debug = 9
-    let s:vimim_custom_skin = 3
-    let s:vimim_ctrl_6_to_toggle = 1
+"   let s:vimim_custom_skin = 3
+"   let s:vimim_ctrl_6_to_toggle = 1
     let s:vimim_chinese_input_mode = "onekey"
+    let s:vimim_chinese_input_mode = "static"
 endfunction
 
 " ------------------------------------
@@ -5296,6 +5285,7 @@ function! s:vimim_start()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_space_on()
+    sil!call s:vimim_helper_mapping_on()
 endfunction
 
 " ----------------------
@@ -5373,7 +5363,12 @@ function! g:vimim()
         if s:chinese_input_mode == 'dynamic'
             call g:vimim_reset_after_auto_insert()
         endif
-        let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
+        if s:pumvisible_ctrl_e == 2
+            let s:pumvisible_ctrl_e = 0
+            let s:one_key_correction = 1
+        else
+            let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
+        endif
     else
         call g:vimim_reset_after_auto_insert()
     endif
@@ -5427,13 +5422,8 @@ function! s:vimim_helper_mapping_on()
                   \<C-R>=g:vimim_backspace()<CR>
     " ----------------------------------------------------------
     if s:chinese_input_mode == 'static'
-        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
                       \<C-R>=g:vimim_one_key_correction()<CR>
-    endif
-    " ----------------------------------------------------------
-    if s:chinese_input_mode !~ 'onekey'
-        inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
-        return <SID>vimim_toggle_punctuation()
     endif
     " ----------------------------------------------------------
 endfunction
