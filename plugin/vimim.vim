@@ -1412,10 +1412,11 @@ endfunction
 function! g:vimim_pumvisible_dump()
 " ---------------------------------
     if empty(s:popupmenu_list)
-        return
+        return ""
     endif
-    let one_line = ""
     let line = ""
+    let one_line = ""
+    let results = [s:keyboard_leading_zero]
     " -----------------------------
     for items in s:popupmenu_list
         if empty(items.menu)
@@ -1423,9 +1424,12 @@ function! g:vimim_pumvisible_dump()
         else
             let line = printf('%-8s %s', items.menu, items.word)
         endif
-        put = line
+        call add(results, line)
         let one_line .= line . "\n"
     endfor
+    " -----------------------------
+    let line = line(".")
+    call setline(line, results)
     " -----------------------------
     if has("gui_running") && has("win32")
         let @+ = one_line
@@ -1633,7 +1637,9 @@ function! g:vimim_pumvisible_ctrl_ee()
 " ------------------------------------
     let key = ""
     if pumvisible()
-        let key = "\<C-E>\<C-X>\<C-U>\<C-E>"
+        let key  = "\<C-E>"
+        let key .= '\<C-R>=g:vimim()\<CR>'
+        let key .= "\<C-E>"
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1740,8 +1746,8 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         if empty(s:vimim_cloud_plugin)
             let s:tail = ""
             if keyboard =~ "[']"
-                let apostrophe = match(keyboard, "[']")
-                let s:tail = strpart(keyboard, apostrophe+1)
+                let partition = match(keyboard, "[']")
+                let s:tail = strpart(keyboard, partition+1)
                 let chinese .=  s:tail
             elseif keyboard !~? '^vim'
                 let s:tail = strpart(keyboard, len(menu))
@@ -5025,10 +5031,9 @@ function! s:vimim_initialize_debug()
     let s:libvimdll = s:path2 . "svn/mycloud/vimim-mycloud/libvimim.dll"
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_debug = 9
-"   let s:vimim_custom_skin = 3
-"   let s:vimim_ctrl_6_to_toggle = 1
+    let s:vimim_custom_skin = 3
+    let s:vimim_ctrl_6_to_toggle = 1
     let s:vimim_chinese_input_mode = "onekey"
-    let s:vimim_chinese_input_mode = "static"
 endfunction
 
 " ------------------------------------
@@ -5237,8 +5242,6 @@ endfunction
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
-    set completefunc=VimIM
-    set completeopt=menuone
     set nolazyredraw
     if empty(&pumheight)
         let &pumheight=8
@@ -5259,7 +5262,7 @@ function! s:vimim_i_setting_off()
     let &pumheight=s:saved_pumheight
     let &laststatus=s:saved_laststatus
     let &hlsearch=s:saved_hlsearch
-    let &hlsearch=s:saved_smartcase
+    let &smartcase=s:saved_smartcase
 endfunction
 
 " ----------------------------
@@ -5355,7 +5358,9 @@ function! g:vimim()
 " -----------------
     if empty(&completefunc) || &completefunc != 'VimIM'
         set completefunc=VimIM
+        set completeopt=menuone
     endif
+" -----------------------------------------------------
     let key = ""
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
