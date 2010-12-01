@@ -628,9 +628,12 @@ call add(s:vimims, VimIM)
 " -----------------------------
 function! g:vimim_search_next()
 " -----------------------------
-    if !empty(v:errmsg) && v:errmsg =~ "^E486:"
-        let english = @/
-        if len(english) < 16 && len(english) > 1
+    let english = @/
+    if !empty(v:errmsg) && !empty(english)
+    \&& v:errmsg =~# "^E486:"
+    \&& v:errmsg =~# english
+        let v:errmsg = ""
+        if len(english) < 24 && len(english) > 1
         \&& english =~ '\w' && english != '\W' && english !~ '_'
             let results = []
             try
@@ -640,11 +643,8 @@ function! g:vimim_search_next()
                 endif
             catch
                 let msg = v:exception
-            finally
-                let v:errmsg = ""
             endtry
         endif
-        let v:errmsg = ""
         let s:menu_digit_as_filter = ""
     endif
 endfunction
@@ -657,6 +657,9 @@ function! s:vimim_get_chinese_from_english(english)
     let results = s:vimim_get_unicodes([ddddd], 0)
     if empty(results)
         sil!call s:vimim_backend_initialization_once()
+        if s:vimim_cloud_sogou == 1
+            return s:vimim_get_cloud_sogou(english, 1)
+        endif
         if empty(s:backend.datafile) && empty(s:backend.directory)
             if empty(s:vimim_cloud_plugin)
                 let results = s:vimim_get_cloud_sogou(english, 1)
@@ -698,6 +701,7 @@ function! s:vimim_register_search_pattern(english, results)
         else
             let @/ = slash
         endif
+        echon a:english
     endif
 endfunction
 
@@ -4417,9 +4421,8 @@ function! s:vimim_check_http_executable(im)
             let s:www_executable = cloud
             let s:www_libcall = 1
             call s:vimim_do_cloud_if_no_embedded_backend()
-"       else
-"           return {}
-"todo
+        else
+            return {}
         endif
     endif
     " step #2 of 3: try to find wget
@@ -5752,7 +5755,7 @@ function! s:vimim_onekey_mapping_on()
     endif
     " -------------------------------
     if s:vimim_search_next > 0
-        noremap <silent> n :sil!call g:vimim_search_next()<CR>n
+        noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
 endfunction
 
