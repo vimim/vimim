@@ -629,21 +629,18 @@ function! g:vimim_search_next()
 " -----------------------------
     let english = @/
     if !empty(v:errmsg) && !empty(english)
-    \&& v:errmsg =~# "^E486:"
-    \&& v:errmsg =~# english
-        let v:errmsg = ""
-        if len(english) < 24 && len(english) > 1
-        \&& english =~ '\w' && english != '\W' && english !~ '_'
-            let results = []
-            try
-                let results = s:vimim_get_chinese_from_english(english)
-                if !empty(results)
-                    call s:vimim_register_search_pattern(english, results)
-                endif
-            catch
-                let msg = v:exception
-            endtry
-        endif
+    \&& len(english) < 24 && len(english) > 1
+    \&& english =~ '\w' && english != '\W' && english !~ '_'
+    \&& v:errmsg =~#  '^E486: .* ' . english
+        let results = []
+        try
+            let results = s:vimim_get_chinese_from_english(english)
+            if !empty(results)
+                call s:vimim_register_search_pattern(english, results)
+            endif
+        catch
+            let msg = v:exception
+        endtry
         let s:menu_digit_as_filter = ""
     endif
 endfunction
