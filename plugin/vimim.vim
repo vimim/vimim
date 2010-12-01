@@ -382,7 +382,6 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
-    let v:errmsg = ""
     let s:path2 = 0
     let s:backend_loaded = 0
     let s:chinese_input_mode = "onekey"
@@ -4579,6 +4578,7 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard, force)
 " ------------------------------------------------
+" http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     let keyboard = a:keyboard
     let executable = s:www_executable
     if empty(executable) || empty(keyboard)
@@ -4595,9 +4595,6 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     let cloud = cloud . s:backend.cloud.sogou.sogou_key .'&query='
     " sogou stopped supporting apostrophe as delimiter
     let output = 0
-    " --------------------------------------------------------------
-    " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
-    " --------------------------------------------------------------
     try
         if s:www_libcall > 0
             let input = cloud . keyboard
@@ -4617,7 +4614,6 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     if empty(output)
         return []
     endif
-    " --------------------------------------------------------
     let first = match(output, '"', 0)
     let second = match(output, '"', 0, 2)
     if first > 0 && second > 0
@@ -4627,10 +4623,8 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     if empty(output)
         return []
     endif
-    " now, let's support cloud for gb and big5
-    " ----------------------------------------
     if empty(s:localization)
-        let msg = "both vim and datafile are UTF-8 encoding"
+        let msg = "support gb and big5 in addition to utf8"
     else
         let output = s:vimim_i18n_read(output)
     endif
