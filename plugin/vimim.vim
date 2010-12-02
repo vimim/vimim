@@ -687,6 +687,8 @@ function! s:vimim_register_search_pattern(english, results)
     let english = a:english
     if english =~ '^\l\+\d\+'
         let english = join(split(english,'\d'),'')
+    elseif english =~ '^\d\d\d\+'
+        let english = english[:3] 
     endif
     for pair in a:results
         let pairs = split(pair)
@@ -694,19 +696,14 @@ function! s:vimim_register_search_pattern(english, results)
         let chinese = get(pairs, 1)
         if chinese =~ '\w'
             continue
-        elseif len(english) % len(menu) > 0
+        elseif english != menu
             continue
         else
             call add(results, chinese)
         endif
     endfor
     if !empty(results)
-        let slash = join(results, '\|')
-        if empty(search(slash,'nw'))
-            let @/ = a:english
-        else
-            let @/ = slash
-        endif
+        let @/ = join(results, '\|')
     endif
 endfunction
 
