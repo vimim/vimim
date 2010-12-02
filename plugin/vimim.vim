@@ -382,6 +382,8 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
     let s:path2 = 0
+    let s:vimimdata = 0
+    let s:libvimdll = 0
     let s:backend_loaded = 0
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
@@ -4798,6 +4800,7 @@ function! s:vimim_get_libvimim()
         if has("win32") || has("win32unix")
             return s:libvimdll
         endif
+    endif
     return 0
 endfunction
 
@@ -5019,9 +5022,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let s:vimim_chinese_input_mode = "static"
-    let s:vimim_use_cache = 0
-    if !isdirectory("/homee/xma")
+    if !isdirectory("/home/xma")
         return
     endif
     let s:path2 = "/home/vimim/"
