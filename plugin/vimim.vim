@@ -1024,7 +1024,7 @@ function! s:vimim_chinesemode_action()
         if mode() == 'i'
             let action = "\<C-O>:redraw\<CR>"
         elseif mode() == 'n'
-            :redraws!
+            :redraw!
         endif
     endif
     sil!exe 'sil!return "' . action . '"'
@@ -1146,7 +1146,7 @@ function! s:vimim_initialize_skin()
         return
     endif
     if s:vimim_custom_skin < 3
-        set laststatus=2
+        set laststatus=1
         sil!call s:vimim_set_statusline()
     else
         echoh NonText | echo s:vimim_statusline() | echohl None
