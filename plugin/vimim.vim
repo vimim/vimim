@@ -634,7 +634,6 @@ function! g:vimim_search_next()
     \&& len(english) < 24 && len(english) > 1
     \&& english =~ '\w' && english != '\W' && english !~ '_'
     \&& v:errmsg =~# '^E486: ' && v:errmsg =~# english
-        let results = []
         try
             sil!call s:vimim_get_chinese_from_english(english)
             echon "/" . english
@@ -648,6 +647,7 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_get_chinese_from_english(english)
 " -------------------------------------------------
+    let results = []
     let english = tolower(a:english)
     let ddddd = s:vimim_get_unicode_ddddd(english)
     let results = s:vimim_get_unicodes([ddddd], 0)
@@ -664,10 +664,11 @@ function! s:vimim_get_chinese_from_english(english)
             endif
         else
             let blocks = [english]
-            if english =~ '^\d\d\d\d\d\d\d\+'  |" /77124002 for 马力
+            "  search by multiple 4corner: /77124002 for 马力
+            if english =~ '\d' && english != '\l' && len(english)%4<1 
                 let blocks = s:vimim_break_digit_every_four(english)
             endif
-            for block in blocks
+            for block in copy(blocks)
                 let blocks = s:vimim_embedded_backend_engine(block)
                 let results += blocks
             endfor
@@ -683,11 +684,17 @@ function! s:vimim_register_search_pattern(english, results)
         return
     endif
     let results = []
+    let english = a:english
+    if english =~ '^\l\+\d\+'
+        let english = join(split(english,'\d'),'')
+    endif
     for pair in a:results
         let pairs = split(pair)
         let menu = get(pairs, 0)
         let chinese = get(pairs, 1)
         if chinese =~ '\w'
+            continue
+        elseif len(english) % len(menu) > 0
             continue
         else
             call add(results, chinese)
