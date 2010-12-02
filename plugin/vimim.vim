@@ -1146,7 +1146,7 @@ function! s:vimim_initialize_skin()
         return
     endif
     if s:vimim_custom_skin < 3
-        set laststatus=1
+        set laststatus=2
         sil!call s:vimim_set_statusline()
     else
         echoh NonText | echo s:vimim_statusline() | echohl None
@@ -5571,23 +5571,23 @@ else
         endif
     endif
 
+    " [imode] magic 'i': English number => Chinese number
+    " ---------------------------------------------------
     if s:chinese_input_mode != 'dynamic' && s:ui.has_dot < 1
-        " [imode] magic 'i': English number => Chinese number
-        " ---------------------------------------------------
-        if s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
-            let msg = " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
-            let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
-            if !empty(len(chinese_numbers))
-                return s:vimim_popupmenu_list(chinese_numbers)
-            endif
+    \&& s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
+        let msg = " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
+        let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
+        if !empty(len(chinese_numbers))
+            return s:vimim_popupmenu_list(chinese_numbers)
         endif
-        " [cloud] magic trailing apostrophe to control cloud
-        " --------------------------------------------------
-        let clouds = s:vimim_magic_tail(keyboard)
-        if !empty(len(clouds))
-            let msg = " usage: woyouyigemeng'<C-6> "
-            let keyboard = get(clouds, 0)
-        endif
+    endif
+
+    " [cloud] magic trailing apostrophe to control cloud
+    " --------------------------------------------------
+    let clouds = s:vimim_magic_tail(keyboard)
+    if !empty(len(clouds))
+        let msg = " usage: woyouyigemeng'<C-6> "
+        let keyboard = get(clouds, 0)
     endif
 
     " [shuangpin] support 6 major shuangpin with various rules
