@@ -654,8 +654,10 @@ function! s:vimim_get_chinese_from_english(english)
     if empty(results)
         sil!call s:vimim_backend_initialization_once()
         if s:vimim_cloud_sogou == 1
-            return s:vimim_get_cloud_sogou(english, 1)
+            let results = s:vimim_get_cloud_sogou(english, 1)
         endif
+    endif
+    if empty(results)
         if empty(s:backend.datafile) && empty(s:backend.directory)
             if empty(s:vimim_cloud_plugin)
                 let results = s:vimim_get_cloud_sogou(english, 1)
