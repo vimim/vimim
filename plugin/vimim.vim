@@ -667,7 +667,7 @@ function! s:vimim_get_chinese_from_english(english)
         else
             let blocks = [english]
             "  search by multiple 4corner: /77124002 for 马力
-            if english =~ '\d' && english != '\l' && len(english)%4<1 
+            if english =~ '\d' && english != '\l' && len(english)%4<1
                 let blocks = s:vimim_break_digit_every_four(english)
             endif
             for block in copy(blocks)
@@ -690,7 +690,7 @@ function! s:vimim_register_search_pattern(english, results)
     if english =~ '^\l\+\d\+'
         let english = join(split(english,'\d'),'')
     elseif english =~ '^\d\d\d\+'
-        let english = english[:3] 
+        let english = english[:3]
     endif
     for pair in a:results
         let pairs = split(pair)
@@ -1010,6 +1010,7 @@ function! s:vimim_chinesemode_action()
             let action = s:vimim_onekey_action("")
         else
             sil!call s:vimim_start()
+            sil!call <SID>vimim_toggle_punctuation()
             if s:chinese_input_mode == 'dynamic'
                 sil!call <SID>vimim_set_seamless()
                 sil!call s:vimim_dynamic_alphabet_trigger()
@@ -1021,8 +1022,6 @@ function! s:vimim_chinesemode_action()
                     let action = s:vimim_static_action("")
                 endif
             endif
-            inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
-            return <SID>vimim_toggle_punctuation()
         endif
     else
         call s:vimim_stop()
@@ -1395,9 +1394,13 @@ endfunction
 " ------------------------------------
 function! g:vimim_one_key_correction()
 " ------------------------------------
+    let key = '\<Esc>'
     call s:reset_popupmenu_list()
-    let key  = '\<C-R>=g:vimim()\<CR>'
-    let key .= '\<BS>'
+    let byte_before = getline(".")[col(".")-2]
+    if byte_before =~# s:valid_key
+        let s:one_key_correction = 1
+        let key = '\<C-X>\<C-U>\<BS>'
+    endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1659,8 +1662,6 @@ function! g:vimim_pumvisible_ctrl_e_on()
 " --------------------------------------
     if s:chinese_input_mode == 'dynamic'
         let s:pumvisible_ctrl_e = 1
-    elseif s:chinese_input_mode == 'static'
-        let s:pumvisible_ctrl_e = 2
     endif
     return g:vimim_pumvisible_ctrl_e()
 endfunction
@@ -2915,7 +2916,7 @@ function! s:vimim_set_special_im_property()
     \|| s:ui.im == 'phonetic'
     \|| s:ui.im == 'array30'
         let s:ui.has_dot = 1  "| dot in datafile
-        let s:vimim_chinese_punctuation = -1
+        let s:vimim_chinese_punctuation = -9
     endif
 endfunction
 
@@ -5018,7 +5019,9 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if !isdirectory("/home/xma")
+    let s:vimim_chinese_input_mode = "static"
+    let s:vimim_use_cache = 0
+    if !isdirectory("/homee/xma")
         return
     endif
     let s:path2 = "/home/vimim/"
@@ -5363,12 +5366,7 @@ function! g:vimim()
         if s:chinese_input_mode == 'dynamic'
             call g:vimim_reset_after_auto_insert()
         endif
-        if s:pumvisible_ctrl_e == 2
-            let s:pumvisible_ctrl_e = 0
-            let s:one_key_correction = 1
-        else
-            let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
-        endif
+        let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
     else
         call g:vimim_reset_after_auto_insert()
     endif
@@ -5422,8 +5420,12 @@ function! s:vimim_helper_mapping_on()
                   \<C-R>=g:vimim_backspace()<CR>
     " ----------------------------------------------------------
     if s:chinese_input_mode == 'static'
-        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
+        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                       \<C-R>=g:vimim_one_key_correction()<CR>
+    endif
+    " ----------------------------------------------------------
+    if s:chinese_input_mode !~ 'onekey'
+        inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
     endif
     " ----------------------------------------------------------
 endfunction
