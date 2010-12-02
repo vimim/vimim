@@ -1,8 +1,8 @@
-﻿" ==================================================
-"              " VimIM —— Vim 中文輸入法 "
-" --------------------------------------------------
-"  VimIM -- Input Method by Vim, of Vim, for Vimmers
-" ==================================================
+﻿" =====================================================
+"               " VimIM —— Vim 中文輸入法 "          
+" -----------------------------------------------------
+"   VimIM -- Input Method by Vim, of Vim, for Vimmers  
+" =====================================================
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 " -------------------------------------------------------------------
@@ -16,7 +16,7 @@ let $VimIM = "$Revision$"
 " - VimIM 幫助:  type:      vimimhelp<C-6><C-6>
 " - VimIM 測試:  type:     vimimdebug<C-6><C-6>
 " - VimIM 內碼:  type:   vimimunicode<C-6><C-6>
-" -----------------------------------------------------------------
+" -------------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let egg += ["http://vimim-data.googlecode.com"]
@@ -24,7 +24,7 @@ let egg += ["http://pim-cloud.appspot.com"]
 let egg += ["http://groups.google.com/group/vimim"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
-" -----------------------------------------------------------------
+" -------------------------------------------------------------------
 
 let VimIM = " ====  Vim Input Method  ==== {{{"
 " ============================================
@@ -109,7 +109,7 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_build_digit_filter_lines()
     sil!call s:vimim_build_datafile_lines()
     sil!call s:vimim_localization()
-    sil!call s:vimim_initialize_skin()
+        call s:vimim_initialize_skin()
 endfunction
 
 " ---------------------------------------------
@@ -225,8 +225,8 @@ function! s:vimim_dictionary_chinese()
     let s:space = "　"
     let s:plus  = "＋"
     let s:colon = "："
-    let s:bracket_l = "【"
-    let s:bracket_r = "】"
+    let s:left = "【"
+    let s:right = "】"
     let s:chinese = {}
     let s:chinese['auto'] = ['自动','自動']
     let s:chinese['error'] = ['错误','錯誤']
@@ -628,18 +628,19 @@ call add(s:vimims, VimIM)
 function! g:vimim_search_next()
 " -----------------------------
     let english = @/
+    if english =~ '\<' && english =~ '\>'
+        let english = substitute(english,'[<>\\]','','g')
+    endif
     if !empty(v:errmsg) && !empty(english)
     \&& len(english) < 24 && len(english) > 1
     \&& english =~ '\w' && english != '\W' && english !~ '_'
-    \&& v:errmsg =~#  '^E486: .* ' . english
+    \&& v:errmsg =~# '^E486: ' && v:errmsg =~# english
         let results = []
         try
-            let results = s:vimim_get_chinese_from_english(english)
-            if !empty(results)
-                call s:vimim_register_search_pattern(english, results)
-            endif
+            sil!call s:vimim_get_chinese_from_english(english)
+            echon "/" . english
         catch
-            let msg = v:exception
+            echon "/" . english . " error:" .  v:exception
         endtry
         let s:menu_digit_as_filter = ""
     endif
@@ -663,22 +664,25 @@ function! s:vimim_get_chinese_from_english(english)
                 let results = s:vimim_get_mycloud_plugin(english)
             endif
         else
-            let results = s:vimim_embedded_backend_engine(english)
-            if english =~# '^\d\{8}'   |" /77124002 for 马力
-                let english = english[4:]
-                let results2 = s:vimim_embedded_backend_engine(english)
-                if !empty(results2)
-                    call extend(results, results2)
-                endif
+            let blocks = [english]
+            if english =~ '^\d\d\d\d\d\d\d\+'  |" /77124002 for 马力
+                let blocks = s:vimim_break_digit_every_four(english)
             endif
+            for block in blocks
+                let blocks = s:vimim_embedded_backend_engine(block)
+                let results += blocks
+            endfor
         endif
     endif
-    return results
+    call s:vimim_register_search_pattern(english, results)
 endfunction
 
 " ---------------------------------------------------------
 function! s:vimim_register_search_pattern(english, results)
 " ---------------------------------------------------------
+    if empty(a:results)
+        return
+    endif
     let results = []
     for pair in a:results
         let pairs = split(pair)
@@ -697,7 +701,6 @@ function! s:vimim_register_search_pattern(english, results)
         else
             let @/ = slash
         endif
-        echon a:english
     endif
 endfunction
 
@@ -976,12 +979,12 @@ call add(s:vimims, VimIM)
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
-    sil!call s:vimim_backend_initialization_once()
-    sil!call s:vimim_frontend_initialization()
-    sil!call s:vimim_build_datafile_cache()
+    call s:vimim_backend_initialization_once()
+    call s:vimim_frontend_initialization()
+    call s:vimim_build_datafile_cache()
     let s:chinese_input_mode = s:vimim_chinese_input_mode
     if s:vimim_chinese_input_mode == 'onekey'
-        let s:chinese_input_mode = "onekeynonstop"
+        let s:chinese_input_mode .= "nonstop"
     endif
     let action = ""
     if !empty(s:ui.root) && !empty(s:ui.im)
@@ -1018,7 +1021,11 @@ function! s:vimim_chinesemode_action()
         endif
     else
         call s:vimim_stop()
-        let action = "\<C-O>:redraw\<CR>"
+        if mode() == 'i'
+            let action = "\<C-O>:redraw\<CR>"
+        elseif mode() == 'n'
+            :redraws!
+        endif
     endif
     sil!exe 'sil!return "' . action . '"'
 endfunction
@@ -1258,14 +1265,14 @@ endfunction
 function! s:vimim_get_chinese_im()
 " --------------------------------
     let input_style = s:vimim_chinese('classic')
-    if s:vimim_chinese_input_mode == 'dynamic'
+    if s:vimim_chinese_input_mode =~ 'dynamic'
         let input_style .= s:vimim_chinese('dynamic')
-    elseif s:vimim_chinese_input_mode == 'static'
+    elseif s:vimim_chinese_input_mode =~ 'static'
         let input_style .= s:vimim_chinese('static')
     elseif s:vimim_chinese_input_mode == 'onekey'
         let input_style = "OneKeyNonStop"
     endif
-    let statusline = s:bracket_l . s:ui.statusline . s:bracket_r
+    let statusline = s:left . s:ui.statusline . s:right
     return statusline . input_style
 endfunction
 
@@ -1535,7 +1542,8 @@ function! g:vimim_bracket_backspace(offset)
         let chinese = strpart(current_line, column_start, s:multibyte)
         let delete_char = chinese
         if empty(a:offset)
-            let delete_char = "\<Right>\<BS>【".chinese."】\<Left>"
+            let chinese = s:left . chinese . s:right
+            let delete_char = "\<Right>\<BS>" . chinese . "\<Left>"
         endif
     endif
     return delete_char
@@ -1805,6 +1813,8 @@ function! s:vimim_dictionary_punctuation()
     let s:punctuations['@'] = s:space
     let s:punctuations['+'] = s:plus
     let s:punctuations[':'] = s:colon
+    let s:punctuations['['] = s:left
+    let s:punctuations[']'] = s:right
     let s:punctuations['#'] = '＃'
     let s:punctuations['&'] = '＆'
     let s:punctuations['%'] = '％'
@@ -1815,8 +1825,6 @@ function! s:vimim_dictionary_punctuation()
     let s:punctuations[')'] = '）'
     let s:punctuations['{'] = '〖'
     let s:punctuations['}'] = '〗'
-    let s:punctuations['['] = '【'
-    let s:punctuations[']'] = '】'
     let s:punctuations['^'] = '……'
     let s:punctuations['_'] = '——'
     let s:punctuations['<'] = '《'
