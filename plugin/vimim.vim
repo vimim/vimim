@@ -1,7 +1,7 @@
 ﻿" =====================================================
-"               " VimIM —— Vim 中文輸入法 "          
+"               " VimIM —— Vim 中文輸入法 "
 " -----------------------------------------------------
-"   VimIM -- Input Method by Vim, of Vim, for Vimmers  
+"   VimIM -- Input Method by Vim, of Vim, for Vimmers
 " =====================================================
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
@@ -39,8 +39,8 @@ let VimIM = " ====  Vim Input Method  ==== {{{"
 " -----------------------------------------------------------
 "  Features: * "Plug & Play": as a client to VimIM embedded backends
 "            * "Plug & Play": as a client to "myCloud" and "Cloud"
-"            * CJK can be input without changing mode
 "            * CJK can be searched without using popup menu
+"            * CJK can be input without changing mode
 "            * support "wubi", "erbi", "boshiamy", "Cang Jie" etc
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
 "            * support direct "UNICODE"/"GBK"/"Big5" input
@@ -120,7 +120,7 @@ function! s:vimim_backend_initialization_once()
     else
         return
     endif
-    " ---------------------------------------
+    " -----------------------------------------
     sil!call s:vimim_initialize_session()
     sil!call s:vimim_initialize_frontend()
     sil!call s:vimim_initialize_backend()
@@ -134,7 +134,6 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_initialize_keycode()
-    " -------------------------------------
 endfunction
 
 " ------------------------------
@@ -3122,7 +3121,7 @@ function! s:vimim_egg_vimimunicode()
     if s:encoding != "utf8"
         return []
     endif
-    let msg = " Unicode【康熙字典】中文部首起始碼位表"
+    let msg = " Unicode 康熙字典中文部首起始碼位表"
     let u  = "一丨丶丿乙亅二亠人儿入八冂冖冫几凵刀力勹匕匚匸十"
     let u .= "卜卩厂厶又口囗土士夂夊夕大女子宀寸小尢尸屮山巛工"
     let u .= "己巾干幺广廴廾弋弓彐彡彳心戈戶手支攴文斗斤方无日"
@@ -3360,7 +3359,6 @@ function! s:vimim_set_datafile(im)
         let s:backend.datafile[im].keycode = s:im_keycode[im]
         let s:backend.datafile[im].chinese = s:vimim_chinese(im)
     endif
-    " ----------------------------------------
 endfunction
 
 " --------------------------------------
@@ -5540,20 +5538,6 @@ else
         endif
     endif
 
-    " [mycloud] get chunmeng from mycloud local or www
-    " ------------------------------------------------
-    if empty(s:vimim_cloud_plugin)
-        let msg = "keep local mycloud code for the future"
-    else
-        let results = s:vimim_get_mycloud_plugin(keyboard)
-        if empty(len(results))
-            " return empty list if the result is empty
-            return []
-        else
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
     if s:chinese_input_mode =~ 'onekey'
         " [eggs] hunt classic easter egg ... vim<C-6>
         " -------------------------------------------
@@ -5582,6 +5566,20 @@ else
         endif
     endif
 
+    " [mycloud] get chunmeng from mycloud local or www
+    " ------------------------------------------------
+    if empty(s:vimim_cloud_plugin)
+        let msg = "keep local mycloud code for the future"
+    else
+        let results = s:vimim_get_mycloud_plugin(keyboard)
+        if empty(len(results))
+            " return empty list if the result is empty
+            return []
+        else
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
     " [cloud] magic trailing apostrophe to control cloud
     " --------------------------------------------------
     let clouds = s:vimim_magic_tail(keyboard)
@@ -5602,7 +5600,7 @@ else
         let keyboard = s:vimim_apostrophe(keyboard)
     endif
 
-    " [cloud] to make cloud come true for woyouyigemeng
+    " [sogou] to make cloud come true for woyouyigemeng
     " -------------------------------------------------
     let cloud = s:vimim_to_cloud_or_not(keyboard, clouds)
     if cloud > 0
@@ -5629,7 +5627,6 @@ else
         endif
     endif
 
-    " ---------------------------------------------
     " [backend] plug-n-play embedded backend engine
     " ---------------------------------------------
     let results = s:vimim_embedded_backend_engine(keyboard)
@@ -5646,7 +5643,7 @@ else
         return results
     endif
 
-    " [cloud] last try cloud before giving up
+    " [sogou] last try cloud before giving up
     " ---------------------------------------
     if s:vimim_cloud_sogou == 1
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
