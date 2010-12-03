@@ -358,6 +358,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_data_file")
+    call add(G, "g:vimim_vimimdata")
+    call add(G, "g:vimim_libvimdll")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_pinyin")
@@ -381,10 +383,8 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
-    let s:path2 = 0
-    let s:vimimdata = 0
-    let s:libvimdll = 0
     let s:backend_loaded = 0
+    let s:path2 = s:vimim_data_directory
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = "dynamic"
@@ -3347,7 +3347,7 @@ function! s:vimim_set_datafile(im)
         let file = "vimim." . im . ".txt"
         let datafile = s:path . file
         if !filereadable(datafile)
-            let s:path = s:vimimdata
+            let s:path = s:vimim_vimimdata
             let datafile = s:path . file
         endif
     endif
@@ -3782,18 +3782,14 @@ call add(s:vimims, VimIM)
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    let dir = s:vimim_data_directory
-    if !empty(dir) && isdirectory(dir)
-        let s:path2 = copy(dir)
+    if empty(s:path2)
+         let s:path2 = s:path . "vimim/"
     endif
     " -----------------------------------
-    if empty(s:path2)
-         let dir = s:path . "vimim/"
-         if isdirectory(dir)
-            let s:path2 = dir
-         else
-            return
-         endif
+    if isdirectory(s:path2)
+        let msg = " use directory as backend "
+    else
+        let return
     endif
     " -----------------------------------
     for im in s:all_vimim_input_methods
@@ -4224,7 +4220,7 @@ function! s:vimim_check_sqlite_availability()
     let sqlite = 'cedict.db'
     let datafile = s:path . sqlite
     if !filereadable(datafile)
-        let datafile = s:vimimdata.sqlite
+        let datafile = s:vimim_vimimdata.sqlite
         if !filereadable(datafile)
             let datafile = '/usr/local/share/cjklib/'.sqlite
             if !filereadable(datafile)
@@ -4796,9 +4792,9 @@ function! s:vimim_get_libvimim()
     endif
     if filereadable(cloud)
         return cloud
-    elseif filereadable(s:libvimdll)
+    elseif filereadable(s:vimim_libvimdll)
         if has("win32") || has("win32unix")
-            return s:libvimdll
+            return s:vimim_libvimdll
         endif
     endif
     return 0
@@ -5026,8 +5022,8 @@ function! s:vimim_initialize_debug()
         return
     endif
     let s:path2 = "/home/vimim/"
-    let s:vimimdata = s:path2 . "svn/vimim-data/trunk/data/"
-    let s:libvimdll = s:path2 . "svn/mycloud/vimim-mycloud/libvimim.dll"
+    let s:vimim_vimimdata = s:path2 . "svn/vimim-data/trunk/data/"
+    let s:vimim_libvimdll = s:path2 . "svn/mycloud/vimim-mycloud/libvimim.dll"
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_debug = 9
     let s:vimim_custom_skin = 3
