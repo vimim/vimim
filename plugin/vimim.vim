@@ -654,6 +654,10 @@ function! s:vimim_get_chinese_from_english(english)
     let results = s:vimim_get_unicodes([ddddd], 0)
     if empty(results)
         sil!call s:vimim_backend_initialization_once()
+        if !empty(s:vimim_shuangpin)
+            sil!call s:vimim_initialize_shuangpin()
+            let english = s:vimim_get_pinyin_from_shuangpin(english)
+        endif
         if s:vimim_cloud_sogou == 1
             let results = s:vimim_get_cloud_sogou(english, 1)
         endif
@@ -2553,8 +2557,11 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if empty(s:vimim_shuangpin)
-        let s:quanpin_table = s:vimim_create_quanpin_table()
+    if empty(s:vimim_shuangpin) 
+        return
+    endif
+    " ----------------------------------
+    if !empty(s:shuangpin_table)
         return
     endif
     " ----------------------------------
@@ -2909,6 +2916,10 @@ endfunction
 " -----------------------------------------
 function! s:vimim_set_special_im_property()
 " -----------------------------------------
+    if empty(s:vimim_shuangpin) && s:ui.im == 'pinyin'
+        let s:quanpin_table = s:vimim_create_quanpin_table()
+    endif
+    " -------------------------------------
     if s:ui.im == 'wu'
     \|| s:ui.im == 'erbi'
     \|| s:ui.im == 'yong'
