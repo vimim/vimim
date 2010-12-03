@@ -880,16 +880,13 @@ function! s:vimim_onekey_action(onekey)
     endif
     if s:insert_without_popup > 0
         let s:insert_without_popup = 0
-        let onekey = ""
     endif
     " ---------------------------------------------------
     let byte_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
-    " ---------------------------------------------------
     if char_before_before !~# "[0-9A-z]"
     \&& has_key(s:punctuations, byte_before)
     \&& empty(s:ui.has_dot)
-        let onekey = ""
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
                 let onekey = a:onekey
@@ -914,7 +911,7 @@ function! s:vimim_onekey_action(onekey)
             endif
         elseif empty(a:onekey)
         \&& match(s:valid_keys,'\d') > -1
-            return <SID>vimim_get_unicode_menu()
+            return s:vimim_get_unicode_menu()
         endif
     endif
     " ---------------------------------------------------
@@ -1618,15 +1615,16 @@ function! <SID>vimim_smart_enter()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" -------------------------------------
-function! <SID>vimim_get_unicode_menu()
-" -------------------------------------
+" ----------------------------------
+function! s:vimim_get_unicode_menu()
+" ----------------------------------
     let trigger = '\<C-R>=g:vimim()\<CR>'
     let xxxx = s:vimim_get_unicode_char_before()
     if !empty(xxxx)
         let trigger = xxxx . trigger
         sil!exe 'sil!return "' . trigger . '"'
     endif
+    return ""
 endfunction
 
 " -----------------------------------
@@ -2557,7 +2555,7 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if empty(s:vimim_shuangpin) 
+    if empty(s:vimim_shuangpin)
         return
     endif
     " ----------------------------------
