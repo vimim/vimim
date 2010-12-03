@@ -140,13 +140,13 @@ endfunction
 function! s:vimim_set_encoding()
 " ------------------------------
     let s:encoding = "utf8"
-    if  &encoding == "chinese"
+    if &encoding == "chinese"
     \|| &encoding == "cp936"
     \|| &encoding == "gb2312"
     \|| &encoding == "gbk"
     \|| &encoding == "euc-cn"
         let s:encoding = "chinese"
-    elseif  &encoding == "taiwan"
+    elseif &encoding == "taiwan"
     \|| &encoding == "cp950"
     \|| &encoding == "big5"
     \|| &encoding == "euc-tw"
@@ -2302,7 +2302,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
         call add(headers, head)
         let spaces = ""
         let number_of_space = len(head)-2
-        if  number_of_space > 0
+        if number_of_space > 0
             let space = ' '
             for i in range(number_of_space)
                 let spaces .= space
@@ -3159,7 +3159,7 @@ function! GBK()
 "   decimal  hex    GBK
 "   49901    c2ed    馬
 " ----------------------------- gbk=883+21003=21886
-    if  s:encoding ==# "chinese"
+    if s:encoding ==# "chinese"
         let start = str2nr('8140',16) "| 33088 丂
         for i in range(125)
             for j in range(start, start+190)
@@ -3220,7 +3220,7 @@ endfunction
 function! s:vimim_without_backend(keyboard)
 " -----------------------------------------
     let keyboard = a:keyboard
-    if  keyboard =~ '\l' && len(keyboard) == 1
+    if keyboard =~ '\l' && len(keyboard) == 1
         let msg = "make abcdefghijklmnopqrst alive"
     else
         return []
@@ -3230,7 +3230,7 @@ function! s:vimim_without_backend(keyboard)
     let a = char2nr('a')
     " ---------------------------------------
     let start = 19968
-    if  s:encoding ==# "chinese"
+    if s:encoding ==# "chinese"
         let start = 0xb0a1
         let az  = " b0a1 b0c5 b2c1 b4ee b6ea b7a2 b8c1 baa1 bbf7 "
         let az .= " bbf7 bfa6 c0ac c2e8 c4c3 c5b6 c5be c6da c8bb "
@@ -3241,7 +3241,7 @@ function! s:vimim_without_backend(keyboard)
                 let gbk[nr2char(xxxx)] = "0x" . get(gb_code_orders, xxxx-a)
             endif
         endfor
-    elseif  s:encoding ==# "taiwan"
+    elseif s:encoding ==# "taiwan"
         let start = 42048
     endif
     " ----------------------------------------------------------
@@ -3253,7 +3253,7 @@ function! s:vimim_without_backend(keyboard)
     let label = char2nr(keyboard) - a
     let block = 16*16*3
     let start += label*block
-    if  s:encoding ==# "chinese" && has_key(gbk, keyboard)
+    if s:encoding ==# "chinese" && has_key(gbk, keyboard)
         let start = gbk[keyboard]
     endif
     let end = start + block
@@ -3273,7 +3273,7 @@ function! BIG5()
 "   decimal  hex    BIG5
 "   45224    b0a8    馬
 " ----------------------------- big5=408+5401+7652=13461
-    if  s:encoding ==# "taiwan"
+    if s:encoding ==# "taiwan"
         let start = str2nr('A440',16) "| 42048  一
         for i in range(86)
             for j in range(start, start+(4*16)-2)
@@ -3566,7 +3566,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
         let pattern = '^' . head . '\>'
         let match_start = match(lines, pattern)
         let max -= 1
-        if  match_start < 0
+        if match_start < 0
             continue
         else
             break
@@ -3615,7 +3615,7 @@ function! s:vimim_fixed_match(lines, keyboard, fixed)
     let matched = match(a:lines, pattern)
     let match_end = matched + a:fixed
     let results = []
-    if  matched >= 0
+    if matched >= 0
         let results = a:lines[matched : match_end]
     endif
     return results
@@ -3986,13 +3986,12 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_break_digit_every_four(keyboard)
 " ------------------------------------------------
-" 4corner showcase:  6021272260021762
-" -----------------------------------
     let keyboard = a:keyboard
     if len(keyboard) < 4 || s:chinese_input_mode == 'dynamic'
         return []
     endif
     let blocks = []
+    " 4corner showcase:  6021272260021762
     if keyboard =~ '\d\d\d\d'
         let blocks = split(a:keyboard, '\(.\{4}\)\zs')
     elseif keyboard =~ '\d\+$'
@@ -4493,11 +4492,11 @@ function! s:vimim_magic_tail(keyboard)
     "   (1) magic trailing dot => forced-non-cloud
     "   (2) as word partition  => match dot by dot
     " ----------------------------------------------------
-    if  magic_tail ==# "."
+    if magic_tail ==# "."
         let msg = "trailing dot => forced-non-cloud"
         let s:no_internet_connection = 2
         call add(keyboards, -1)
-    elseif  magic_tail ==# "'"
+    elseif magic_tail ==# "'"
         let msg = "trailing apostrophe => forced-cloud"
         let s:no_internet_connection = -1
         let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
@@ -5022,12 +5021,13 @@ function! s:vimim_initialize_debug()
         return
     endif
     let s:path2 = "/home/vimim/"
-    let s:vimim_vimimdata = s:path2 . "svn/vimim-data/trunk/data/"
-    let s:vimim_libvimdll = s:path2 . "svn/mycloud/vimim-mycloud/libvimim.dll"
-    let s:vimim_reverse_pageup_pagedown = 1
+    let svn = s:path2 . "svn"
+    let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
+    let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
     let s:vimim_debug = 9
     let s:vimim_custom_skin = 3
     let s:vimim_ctrl_6_to_toggle = 1
+    let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_chinese_input_mode = "onekey"
 endfunction
 
@@ -5441,7 +5441,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
         return []
     endif
     let keyboard = a:keyboard
-    if  keyboard !~# s:valid_key
+    if keyboard !~# s:valid_key
         return []
     endif
     let results = []
@@ -5497,7 +5497,7 @@ if a:start
     endif
 
     while start_column > 0
-        if  byte_before =~# s:valid_key
+        if byte_before =~# s:valid_key
             let start_column -= 1
             if byte_before !~# nonsense_pattern
                 let last_seen_nonsense_column = start_column
