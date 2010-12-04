@@ -353,7 +353,7 @@ function! s:vimim_initialize_global()
     " -------------------------------
     let G = []
     call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_ctrl_6_to_toggle")
+    call add(G, "g:vimim_ctrl_l_as_onekey_nonstop")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_data_file")
@@ -530,10 +530,10 @@ function! s:vimim_egg_vimim()
         let toggle = auto . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "i_CTRL-Space"
-    elseif s:vimim_ctrl_6_to_toggle == 1
-        let toggle = "OneKey　normal　<CTRL-6>"
     elseif s:vimim_tab_as_onekey == 1
         let toggle = "Tab_as_OneKey"
+    elseif s:vimim_ctrl_l_as_onekey_nonstop == 1
+        let toggle = "OneKeyNonStop　normal　<CTRL-L>"
     endif
     let toggle .=  s:space
     let style = s:vimim_chinese('style')
@@ -5034,7 +5034,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
     let s:vimim_debug = 9
     let s:vimim_custom_skin = 3
-    let s:vimim_ctrl_6_to_toggle = 1
+    let s:vimim_ctrl_l_as_onekey_nonstop = 1
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_chinese_input_mode = "onekey"
 endfunction
@@ -5726,8 +5726,8 @@ endfunction
 " ----------------------------------------
 function! s:vimim_chinesemode_mapping_on()
 " ----------------------------------------
-    if s:vimim_ctrl_6_to_toggle == 1
-        noremap <silent> <C-^> :call <SID>ChineseMode()<CR>
+    if s:vimim_ctrl_l_as_onekey_nonstop == 1
+        noremap <silent> <C-L> :call <SID>ChineseMode()<CR>
     else
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
             imap <silent> <C-Bslash> <Plug>VimimTrigger
@@ -5752,7 +5752,9 @@ function! s:vimim_onekey_mapping_on()
         inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
     endif
     " -------------------------------
-    if !hasmapto('<C-^>', 'i')
+    if s:vimim_ctrl_l_as_onekey_nonstop == 1
+        imap <silent> <C-L> <Plug>VimimOneKey
+    elseif !hasmapto('<C-^>', 'i')
         imap <silent> <C-^> <Plug>VimimOneKey
     endif
     if s:vimim_tab_as_onekey == 1
