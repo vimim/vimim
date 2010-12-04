@@ -353,7 +353,7 @@ function! s:vimim_initialize_global()
     " -------------------------------
     let G = []
     call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_ctrl_l_as_onekey_nonstop")
+    call add(G, "g:vimim_ctrl_l_as_onekey")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_data_file")
@@ -532,7 +532,7 @@ function! s:vimim_egg_vimim()
         let toggle = "i_CTRL-Space"
     elseif s:vimim_tab_as_onekey == 1
         let toggle = "Tab_as_OneKey"
-    elseif s:vimim_ctrl_l_as_onekey_nonstop == 1
+    elseif s:vimim_ctrl_l_as_onekey == 1
         let toggle = "OneKeyNonStop　normal　<CTRL-L>"
     endif
     let toggle .=  s:space
@@ -986,26 +986,29 @@ call add(s:vimims, VimIM)
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
+    let action = ""
     call s:vimim_backend_initialization_once()
     call s:vimim_frontend_initialization()
     call s:vimim_build_datafile_cache()
-    let s:chinese_input_mode = s:vimim_chinese_input_mode
-    if s:vimim_chinese_input_mode == 'onekey'
-        let s:chinese_input_mode .= "nonstop"
-    endif
-    let action = ""
     if !empty(s:ui.root) && !empty(s:ui.im)
-        let action = s:vimim_chinesemode_action()
+        let action = <SID>vimim_chinesemode_action(1)
     endif
     sil!exe 'sil!return "' . action . '"'
 endfunction
 
-" ------------------------------------
-function! s:vimim_chinesemode_action()
-" ------------------------------------
+" ---------------------------------------------
+function! <SID>vimim_chinesemode_action(switch)
+" ---------------------------------------------
     let action = ""
-    let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
-    let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
+    let s:chinese_input_mode = s:vimim_chinese_input_mode
+    if s:vimim_chinese_input_mode == 'onekey'
+        let s:chinese_input_mode .= "nonstop"
+    endif
+    let switch = 0
+    if a:switch > 0
+        let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
+        let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
+    endif
     if empty(switch)
         if s:chinese_input_mode == 'onekeynonstop'
             call s:vimim_start_onekey()
@@ -1369,6 +1372,7 @@ function! <SID>vimim_label_navigation(key)
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
+            call <SID>vimim_chinesemode_action(0)
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         elseif a:key == 'm'
@@ -1406,6 +1410,15 @@ function! g:vimim_one_key_correction()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+" ---------------------
+function! g:vimim_esc()
+" ---------------------
+    if s:chinese_input_mode =~ 'onekey'
+        call s:vimim_stop()
+    endif
+    sil!exe "sil!return '\<Esc>'"
+endfunction
+
 " ------------------------------------
 function! g:vimim_pumvisible_to_clip()
 " ------------------------------------
@@ -1416,10 +1429,7 @@ function! g:vimim_pumvisible_to_clip()
             let @+ = chinese
         endif
     endif
-    if s:chinese_input_mode == 'onekey'
-        call s:vimim_stop()
-    endif
-    sil!exe "sil!return '\<Esc>'"
+    return g:vimim_esc()
 endfunction
 
 " ---------------------------------
@@ -1450,11 +1460,7 @@ function! g:vimim_pumvisible_dump()
     endif
     " -----------------------------
     call s:reset_popupmenu_list()
-    if s:chinese_input_mode == 'onekey'
-        call s:vimim_stop()
-    endif
-    let key = '\<Esc>'
-    sil!exe 'sil!return "' . key . '"'
+    return g:vimim_esc()
 endfunction
 
 " ----------------------------
@@ -5034,7 +5040,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
     let s:vimim_debug = 9
     let s:vimim_custom_skin = 3
-    let s:vimim_ctrl_l_as_onekey_nonstop = 1
+    let s:vimim_ctrl_l_as_onekey = 1
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_chinese_input_mode = "onekey"
 endfunction
@@ -5424,7 +5430,9 @@ function! s:vimim_helper_mapping_on()
     inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
                   \<C-R>=g:vimim_backspace()<CR>
     " ----------------------------------------------------------
-    if s:chinese_input_mode == 'static'
+    if s:chinese_input_mode =~ 'onekey'
+        inoremap <Esc> <C-R>=g:vimim_esc()<CR>
+    elseif s:chinese_input_mode == 'static'
         inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                       \<C-R>=g:vimim_one_key_correction()<CR>
     endif
@@ -5726,9 +5734,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_chinesemode_mapping_on()
 " ----------------------------------------
-    if s:vimim_ctrl_l_as_onekey_nonstop == 1
-        noremap <silent> <C-L> :call <SID>ChineseMode()<CR>
-    else
+    if s:vimim_ctrl_l_as_onekey < 1
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
             imap <silent> <C-Bslash> <Plug>VimimTrigger
          noremap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
@@ -5752,7 +5758,7 @@ function! s:vimim_onekey_mapping_on()
         inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
     endif
     " -------------------------------
-    if s:vimim_ctrl_l_as_onekey_nonstop == 1
+    if s:vimim_ctrl_l_as_onekey == 1
         imap <silent> <C-L> <Plug>VimimOneKey
     elseif !hasmapto('<C-^>', 'i')
         imap <silent> <C-^> <Plug>VimimOneKey
