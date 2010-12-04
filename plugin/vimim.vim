@@ -992,6 +992,15 @@ function! <SID>ChineseMode()
     sil!exe 'sil!return "' . action . '"'
 endfunction
 
+" -----------------------------------------
+function! s:vimim_chinesemode_action_once()
+" -----------------------------------------
+    if s:backend_loaded < 2
+        call <SID>vimim_chinesemode_action(0)
+    endif
+    let s:backend_loaded += 1
+endfunction
+
 " ---------------------------------------------
 function! <SID>vimim_chinesemode_action(switch)
 " ---------------------------------------------
@@ -1360,19 +1369,18 @@ function! <SID>vimim_label_navigation(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == 'h'
-            let s:pumvisible_ctrl_e = 1
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
+            call s:vimim_chinesemode_action_once()
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
-            call <SID>vimim_chinesemode_action(0)
+            call s:vimim_chinesemode_action_once()
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         elseif a:key == 'm'
-            call s:reset_popupmenu_list()
+            call s:vimim_chinesemode_action_once()
             let hjkl  = '\<C-E>'
         elseif a:key == 'n'
             let hjkl  = '\<Down>\<Down>\<Down>'
@@ -1380,8 +1388,9 @@ function! <SID>vimim_label_navigation(key)
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
         elseif a:key == 'x'
-            call s:reset_popupmenu_list()
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            let s:pumvisible_ctrl_e = 1
+            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
         elseif a:key == 'v'
             let s:pumvisible_hjkl_2nd_match = 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
@@ -5316,6 +5325,7 @@ endfunction
 " -----------------------------------
 function! s:vimim_reset_before_stop()
 " -----------------------------------
+    let s:backend_loaded = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
 endfunction
