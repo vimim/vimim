@@ -2007,11 +2007,9 @@ function! s:vimim_pageup_pagedown(key)
 " ------------------------------------
     let key = a:key
     if key == ',' || key == '-'
-            let key = '\<PageUp>'
-        endif
+        let key = '\<PageUp>'
     elseif key == '.' || key == '='
-            let key = '\<PageDown>'
-        endif
+        let key = '\<PageDown>'
     endif
     return key
 endfunction
