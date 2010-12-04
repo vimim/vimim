@@ -2179,7 +2179,7 @@ endfunction
 " ------------------------------------------
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
-" [input]     马力
+" [input]     马力 (visual mode)
 " [output]    7712 4002   --  four corner
 "             马   力
 "             9a6c 529b   --  unicode
@@ -2188,20 +2188,33 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
 "             马   力
 "             ml 马力     --  cjjp
 " ------------------------------------------
-    if len(a:keyboard) > 1
+    let range = line("'>") - line("'<")
+    if empty(range)
         call s:vimim_backend_initialization_once()
         let results = s:vimim_reverse_lookup(a:keyboard)
-        call s:vimim_visual_ctrl_6_output(results)
+        if !empty(results)
+            call s:vimim_visual_ctrl_6_output(results)
+        endif
+    else
+        call s:vimim_numberList()
     endif
+endfunction
+
+" ----------------------------------
+function! s:vimim_numberList() range
+" ----------------------------------
+    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
+    while (a<=z)
+        if match(x,'^9*$')==0|let pre=pre . ' '|endif
+        call setline(z, pre . x . "\t" . getline(z))
+        let z=z-1|let x=x-1
+    endwhile
 endfunction
 
 " ---------------------------------------------
 function! s:vimim_visual_ctrl_6_output(results)
 " ---------------------------------------------
     let results = a:results
-    if empty(results)
-        return
-    endif
     let line = line(".")
     call setline(line, results)
     let new_positions = getpos(".")
@@ -2214,7 +2227,7 @@ endfunction
 function! s:vimim_reverse_lookup(chinese)
 " ---------------------------------------
     let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
-    if empty(a:chinese)
+    if empty(chinese)
         return []
     endif
     " -----------------------------------
@@ -2270,6 +2283,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
     let im = a:im
     let headers = []  "|  ma3 li4
     let bodies = []   "|  马  力
+    let head = ''
     for chinese in split(a:chinese, '\zs')
         let unicode = printf('u%x',char2nr(chinese))
         let head = ''
@@ -5752,7 +5766,9 @@ function! s:vimim_onekey_mapping_on()
         imap <silent> <Tab> <Plug>VimimOneKey
     endif
     " -------------------------------
-    if !hasmapto('<C-^>', 'v')
+    if s:vimim_tab_as_onekey == 2
+        xnoremap <silent> <Tab> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
+    elseif !hasmapto('<C-^>', 'v')
         xnoremap <silent> <C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
     " -------------------------------
