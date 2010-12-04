@@ -362,7 +362,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_reverse_pageup_pagedown")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
@@ -2008,15 +2007,9 @@ function! s:vimim_pageup_pagedown(key)
 " ------------------------------------
     let key = a:key
     if key == ',' || key == '-'
-        if s:vimim_reverse_pageup_pagedown > 0
-            let key = '\<PageDown>'
-        else
             let key = '\<PageUp>'
         endif
     elseif key == '.' || key == '='
-        if s:vimim_reverse_pageup_pagedown > 0
-            let key = '\<PageUp>'
-        else
             let key = '\<PageDown>'
         endif
     endif
@@ -5038,7 +5031,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_debug = 9
     let s:vimim_custom_skin = 3
     let s:vimim_tab_as_onekey = 2
-    let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_chinese_input_mode = "onekey"
 endfunction
 
