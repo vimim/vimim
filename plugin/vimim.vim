@@ -353,7 +353,6 @@ function! s:vimim_initialize_global()
     " -------------------------------
     let G = []
     call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_ctrl_l_as_onekey")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_data_file")
@@ -530,10 +529,8 @@ function! s:vimim_egg_vimim()
         let toggle = auto . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "i_CTRL-Space"
-    elseif s:vimim_tab_as_onekey == 1
+    elseif s:vimim_tab_as_onekey > 0
         let toggle = "Tab_as_OneKey"
-    elseif s:vimim_ctrl_l_as_onekey == 1
-        let toggle = "OneKeyNonStop　normal　<CTRL-L>"
     endif
     let toggle .=  s:space
     let style = s:vimim_chinese('style')
@@ -906,7 +903,7 @@ function! s:vimim_onekey_action(onekey)
     let onekey = a:onekey
     if byte_before !~# s:valid_key
         if empty(byte_before) || byte_before =~ '\s'
-            if s:vimim_tab_as_onekey == 1
+            if s:vimim_tab_as_onekey > 0
                 let onekey = "\t"
             endif
         elseif empty(a:onekey)
@@ -927,7 +924,7 @@ function! s:vimim_onekey_action(onekey)
     endif
     " ---------------------------------------------------
     if empty(byte_before) || byte_before =~ '\s'
-        if s:vimim_tab_as_onekey == 1
+        if s:vimim_tab_as_onekey > 0
             let onekey = "\t"
         else
             let onekey = a:onekey
@@ -5040,7 +5037,7 @@ function! s:vimim_initialize_debug()
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
     let s:vimim_debug = 9
     let s:vimim_custom_skin = 3
-    let s:vimim_ctrl_l_as_onekey = 1
+    let s:vimim_tab_as_onekey = 2
     let s:vimim_reverse_pageup_pagedown = 1
     let s:vimim_chinese_input_mode = "onekey"
 endfunction
@@ -5734,7 +5731,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_chinesemode_mapping_on()
 " ----------------------------------------
-    if s:vimim_ctrl_l_as_onekey < 1
+    if s:vimim_tab_as_onekey < 2
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
             imap <silent> <C-Bslash> <Plug>VimimTrigger
          noremap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
@@ -5758,12 +5755,10 @@ function! s:vimim_onekey_mapping_on()
         inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
     endif
     " -------------------------------
-    if s:vimim_ctrl_l_as_onekey == 1
-        imap <silent> <C-L> <Plug>VimimOneKey
-    elseif !hasmapto('<C-^>', 'i')
+    if s:vimim_tab_as_onekey < 2 && !hasmapto('<C-^>', 'i')
         imap <silent> <C-^> <Plug>VimimOneKey
     endif
-    if s:vimim_tab_as_onekey == 1
+    if s:vimim_tab_as_onekey > 0
         imap <silent> <Tab> <Plug>VimimOneKey
     endif
     " -------------------------------
