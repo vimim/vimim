@@ -706,7 +706,13 @@ function! s:vimim_register_search_pattern(english, results)
         endif
     endfor
     if !empty(results)
-        let @/ = join(results, '\|')
+        let slash = join(results, '\|')
+        if empty(search(slash,'nw'))
+            let @/ = a:english
+        else
+            let @/ = slash
+        endif
+        echon "/" . a:english
     endif
 endfunction
 
@@ -987,33 +993,21 @@ function! <SID>ChineseMode()
     call s:vimim_frontend_initialization()
     call s:vimim_build_datafile_cache()
     if !empty(s:ui.root) && !empty(s:ui.im)
-        let action = <SID>vimim_chinesemode_action(1)
+        let action = <SID>vimim_chinesemode_action()
     endif
     sil!exe 'sil!return "' . action . '"'
 endfunction
 
-" -----------------------------------------
-function! s:vimim_chinesemode_action_once()
-" -----------------------------------------
-    if s:backend_loaded < 2
-        call <SID>vimim_chinesemode_action(0)
-    endif
-    let s:backend_loaded += 1
-endfunction
-
-" ---------------------------------------------
-function! <SID>vimim_chinesemode_action(switch)
-" ---------------------------------------------
+" ---------------------------------------
+function! <SID>vimim_chinesemode_action()
+" ---------------------------------------
     let action = ""
     let s:chinese_input_mode = s:vimim_chinese_input_mode
     if s:vimim_chinese_input_mode == 'onekey'
         let s:chinese_input_mode .= "nonstop"
     endif
-    let switch = 0
-    if a:switch > 0
-        let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
-        let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
-    endif
+    let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
+    let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
     if empty(switch)
         if s:chinese_input_mode == 'onekeynonstop'
             call s:vimim_start_onekey()
@@ -1179,14 +1173,12 @@ endfunction
 " ------------------------------------
 function! s:vimim_cursor_color(switch)
 " ------------------------------------
-    if s:chinese_input_mode == 'onekey'
-        return
-    endif
-    highlight! lCursor guifg=bg guibg=Green
     if empty(a:switch)
         highlight! Cursor guifg=bg guibg=fg
+	highlight! lCursor guifg=bg guibg=bg
     else
-        highlight! Cursor guifg=bg guibg=Green
+	highlight! lCursor guifg=NONE guibg=Cyan
+        highlight!  Cursor guifg=bg guibg=Green
     endif
 endfunction
 
@@ -1363,24 +1355,32 @@ function! s:vimim_label_navigation_on()
     " ---------------------------------
 endfunction
 
+" --------------------------------
+function! s:vimim_onekey_nonstop()
+" --------------------------------
+    if s:chinese_input_mode == 'onekey'
+        let s:onekeynonstop = 1
+        call s:vimim_cursor_color(1)
+        call s:reset_popupmenu_list()
+    endif
+endfunction
+
 " ----------------------------------------
 function! <SID>vimim_label_navigation(key)
 " ----------------------------------------
     let hjkl = a:key
     if pumvisible()
         if a:key == 'h'
-            call s:vimim_chinesemode_action_once()
+            sil!call s:vimim_onekey_nonstop()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
-            call s:vimim_chinesemode_action_once()
+            sil!call s:vimim_onekey_nonstop()
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
         elseif a:key == 'm'
-            call s:vimim_chinesemode_action_once()
             let hjkl  = '\<C-E>'
         elseif a:key == 'n'
             let hjkl  = '\<Down>\<Down>\<Down>'
@@ -1418,7 +1418,7 @@ endfunction
 " ---------------------
 function! g:vimim_esc()
 " ---------------------
-    if s:chinese_input_mode =~ 'onekey'
+    if s:chinese_input_mode == 'onekey'
         call s:vimim_stop()
     endif
     sil!exe "sil!return '\<Esc>'"
@@ -1693,7 +1693,7 @@ function! g:vimim_backspace()
         sil!exe 'sil!return "' . key . '"'
     endif
     " ---------------------------------
-    if s:chinese_input_mode == 'onekey'
+    if empty(s:onekeynonstop) && s:chinese_input_mode == 'onekey'
         call s:vimim_stop()
     endif
     " ---------------------------------
@@ -5052,7 +5052,6 @@ function! s:vimim_initialize_debug()
     let s:vimim_debug = 9
     let s:vimim_custom_skin = 3
     let s:vimim_tab_as_onekey = 2
-    let s:vimim_chinese_input_mode = "onekey"
 endfunction
 
 " ------------------------------------
@@ -5325,6 +5324,7 @@ endfunction
 " -----------------------------------
 function! s:vimim_reset_before_stop()
 " -----------------------------------
+    let s:onekeynonstop = 0
     let s:backend_loaded = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
@@ -5361,7 +5361,9 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
-    if s:chinese_input_mode == 'onekey' && empty(s:tail)
+    if empty(s:onekeynonstop)
+    \&& s:chinese_input_mode == 'onekey'
+    \&& empty(s:tail)
         call s:vimim_stop()
     endif
     let key = ""
@@ -5441,9 +5443,9 @@ function! s:vimim_helper_mapping_on()
     inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
                   \<C-R>=g:vimim_backspace()<CR>
     " ----------------------------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
+    if s:chinese_input_mode == 'onekey'
         inoremap <Esc> <C-R>=g:vimim_esc()<CR>
-    elseif s:chinese_input_mode == 'static'
+    elseif s:chinese_input_mode != 'dynamic'
         inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                       \<C-R>=g:vimim_one_key_correction()<CR>
     endif
