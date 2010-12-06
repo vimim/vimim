@@ -173,7 +173,7 @@ function! s:vimim_initialize_session()
     let s:unihan_4corner_lines = []
     let s:unihan_4corner_cache = {}
     let s:pinyin_4corner_filter = 0
-    let s:xingma = ['wubi', 'erbi']
+    let s:xingma = ['wubi', 'erbi', '4corner']
     " --------------------------------
     let s:abcd = "'abcdefg"
     let s:pqwertyuio = range(10)
@@ -527,9 +527,11 @@ function! s:vimim_egg_vimim()
         let auto = s:vimim_chinese('auto')
         let toggle = auto . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
-        let toggle = "i_CTRL-Space"
-    elseif s:vimim_tab_as_onekey > 0
+        let toggle = "toggle_with_CTRL-Space"
+    elseif s:vimim_tab_as_onekey == 1
         let toggle = "Tab_as_OneKey"
+    elseif s:vimim_tab_as_onekey == 2
+        let toggle = "Tab_as_OneKey_with_NonStop_hjkl"
     endif
     let toggle .=  s:space
     let style = s:vimim_chinese('style')
@@ -988,10 +990,14 @@ call add(s:vimims, VimIM)
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
-    let action = ""
     call s:vimim_backend_initialization_once()
     call s:vimim_frontend_initialization()
     call s:vimim_build_datafile_cache()
+    let s:chinese_input_mode = s:vimim_chinese_input_mode
+    if s:vimim_chinese_input_mode == 'onekey'
+        let s:chinese_input_mode .= "nonstop"
+    endif
+    let action = ""
     if !empty(s:ui.root) && !empty(s:ui.im)
         let action = <SID>vimim_chinesemode_action()
     endif
@@ -1002,12 +1008,8 @@ endfunction
 function! <SID>vimim_chinesemode_action()
 " ---------------------------------------
     let action = ""
-    let s:chinese_input_mode = s:vimim_chinese_input_mode
-    if s:vimim_chinese_input_mode == 'onekey'
-        let s:chinese_input_mode .= "nonstop"
-    endif
     let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
-    let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch%2
+    let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch % 2
     if empty(switch)
         if s:chinese_input_mode == 'onekeynonstop'
             call s:vimim_start_onekey()
@@ -1175,10 +1177,8 @@ function! s:vimim_cursor_color(switch)
 " ------------------------------------
     if empty(a:switch)
         highlight! Cursor guifg=bg guibg=fg
-	highlight! lCursor guifg=bg guibg=bg
     else
-	highlight! lCursor guifg=NONE guibg=Cyan
-        highlight!  Cursor guifg=bg guibg=Green
+        highlight! Cursor guifg=bg guibg=Green
     endif
 endfunction
 
@@ -3393,6 +3393,10 @@ function! s:vimim_set_datafile(im)
         let s:backend.datafile[im].keycode = s:im_keycode[im]
         let s:backend.datafile[im].chinese = s:vimim_chinese(im)
     endif
+    " ----------------------------------------
+    if im =~ '^\d'
+        let s:vimim_chinese_input_mode = 'static'
+    endif
 endfunction
 
 " --------------------------------------
@@ -3814,6 +3818,7 @@ function! s:vimim_scan_backend_embedded_directory()
     if isdirectory(s:path2)
         let msg = " use directory as backend "
     else
+        let s:path2 = 0
         let return
     endif
     " -----------------------------------
@@ -5042,7 +5047,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if !isdirectory("/home/xma")
+    if !isdirectory("/home/xmaaa")
         return
     endif
     let s:path2 = "/home/vimim/"
@@ -5325,7 +5330,6 @@ endfunction
 function! s:vimim_reset_before_stop()
 " -----------------------------------
     let s:onekeynonstop = 0
-    let s:backend_loaded = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
 endfunction
