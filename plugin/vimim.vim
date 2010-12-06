@@ -366,7 +366,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_chinese_input_mode")
-    call add(G, "g:vimim_debug")
     call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
@@ -1418,6 +1417,7 @@ endfunction
 " ---------------------
 function! g:vimim_esc()
 " ---------------------
+    call s:reset_popupmenu_list()
     if s:chinese_input_mode == 'onekey'
         call s:vimim_stop()
     endif
@@ -1427,7 +1427,6 @@ endfunction
 " ------------------------------------
 function! g:vimim_pumvisible_to_clip()
 " ------------------------------------
-    call s:reset_popupmenu_list()
     let chinese = s:vimim_popup_word()
     if !empty(chinese)
         if has("gui_running") && has("win32")
@@ -1464,7 +1463,6 @@ function! g:vimim_pumvisible_dump()
         let @+ = one_line
     endif
     " -----------------------------
-    call s:reset_popupmenu_list()
     return g:vimim_esc()
 endfunction
 
@@ -5047,14 +5045,13 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if !isdirectory("/home/xmaaa")
+    if !isdirectory("/home/xma")
         return
     endif
     let s:path2 = "/home/vimim/"
     let svn = s:path2 . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
-    let s:vimim_debug = 9
     let s:vimim_custom_skin = 3
     let s:vimim_tab_as_onekey = 2
 endfunction
