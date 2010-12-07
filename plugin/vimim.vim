@@ -75,9 +75,8 @@ call add(s:vimims, VimIM)
 " # (1) [external] myCloud: http://pim-cloud.appspot.com
 " # (2) [external] Cloud:   http://web.pinyin.sogou.com
 " # (3) [embedded] VimIM:   http://vimim.googlecode.com
-" #     (3.1) a database:  $VIM/vimfiles/plugin/cedict.db
-" #     (3.2) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
-" #     (3.3) a directory: $VIM/vimfiles/plugin/vimim/pinyin/
+" #     (3.1) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
+" #     (3.2) a directory: $VIM/vimfiles/plugin/vimim/pinyin/
 
 " --------------------
 " "VimIM Installation"
@@ -269,7 +268,6 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['sogou'] = ['搜狗云','搜狗雲']
     let s:chinese['cloud_atwill'] = ['想云就云','想雲就雲']
     let s:chinese['mycloud'] = ['自己的云','自己的雲']
-    let s:chinese['database'] = ['数据库','數據庫']
     let s:chinese['onekey'] = ['点石成金','點石成金']
 endfunction
 
@@ -279,7 +277,6 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode = {}
     let s:im_keycode['sogou']    = "[0-9a-z.]"
     let s:im_keycode['mycloud']  = "[0-9a-z'.]"
-    let s:im_keycode['sqlite']   = "[0-9a-z]"
     let s:im_keycode['pinyin']   = "[0-9a-z']"
     let s:im_keycode['wubi']     = "[0-9a-z']"
     let s:im_keycode['english']  = "[0-9a-z']"
@@ -1209,12 +1206,6 @@ function! s:vimim_statusline()
         return ""
     endif
     " ------------------------------------
-    if s:ui.root =~# "database"
-        let database = s:vimim_chinese('database')
-        let s:ui.statusline = 'Unihan' . s:space . database
-        return s:vimim_get_chinese_im()
-    endif
-    " ------------------------------------
     if has_key(s:im_keycode, s:ui.im)
         let s:ui.statusline = s:backend[s:ui.root][s:ui.im].chinese
     endif
@@ -1680,7 +1671,7 @@ function! g:vimim_backspace()
         sil!exe 'sil!return "' . key . '"'
     endif
     " ---------------------------------
-    if empty(s:onekeynonstop) 
+    if empty(s:onekeynonstop)
     \&& s:chinese_input_mode == 'onekey'
         call s:vimim_stop()
     endif
@@ -2156,7 +2147,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_build_digit_filter_lines()
 " ------------------------------------------
 " Digit code such as four corner can be used as independent filter.
-" It works for sqlite, cloud as well as VimIM embedded backends.
+" It works for both cloud and VimIM embedded backends.
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.unihan_4corner.txt
 " -----------------------------------------------------------------
     let buffer = expand("%:p:t")
@@ -3849,7 +3840,6 @@ endfunction
 function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
 " auto enter chinese input mode => vim vimim
-" auto sqlite with cedict.db    => vim sqlite.vimim
 " auto mycloud input            => vim mycloud.vimim
 " auto cloud input              => vim sogou.vimim
 " auto cloud onekey             => vim sogou.onekey.vimim
@@ -3886,9 +3876,7 @@ function! s:vimim_force_scan_current_buffer()
         let s:vimim_shuangpin = 'flypy'
     endif
     " ---------------------------------
-    if buffer =~? 'sqlite'
-        call s:vimim_do_force_sqlite()
-    elseif buffer =~# 'sogou'
+    if buffer =~# 'sogou'
         call s:vimim_do_force_sogou()
     elseif buffer =~# 'mycloud'
         call s:vimim_do_force_mycloud()
@@ -4020,7 +4008,7 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_sentence_directory(keyboard)
 " ------------------------------------------------
-    let msg = "Directory database is natural to vim editor."
+    let msg = "Directory data is natural to vim editor."
     let keyboard = a:keyboard
     let results = []
     let keyboards = s:vimim_sentence_match_directory(keyboard, s:ui.im)
@@ -4205,156 +4193,6 @@ function! s:vimim_remove_duplication(chinese)
 endfunction
 
 " ======================================== }}}
-let VimIM = " ====  Backend==SQLite   ==== {{{"
-" ============================================
-call add(s:vimims, VimIM)
-
-" ---------------------------------
-function! s:vimim_do_force_sqlite()
-" ---------------------------------
-    if s:ui.root == "database" && s:ui.im == "sqlite"
-        return
-    endif
-    let backend = s:vimim_check_sqlite_availability()
-    if empty(backend)
-        return
-    else
-        let s:ui.root = "database"
-        let s:ui.im = "sqlite"
-        let s:vimim_cloud_sogou = 0
-        let s:vimim_cloud_plugin = 0
-    endif
-endfunction
-
-" -------------------------------------------
-function! s:vimim_check_sqlite_availability()
-" -------------------------------------------
-    let executable = "sqlite3"
-    if !executable(executable)
-        return 0
-    endif
-    let sqlite = 'cedict.db'
-    let datafile = s:path . sqlite
-    if !filereadable(datafile)
-        let datafile = s:vimim_vimimdata.sqlite
-        if !filereadable(datafile)
-            let datafile = '/usr/local/share/cjklib/'.sqlite
-            if !filereadable(datafile)
-                return 0
-            endif
-        endif
-    endif
-    " ----------------------------------------
-    let im = "sqlite"
-    let root = "database"
-    let s:vimim_chinese_input_mode = 'onekey'
-    " ----------------------------------------
-    if empty(s:backend.database)
-        let s:backend.database[im] = s:vimim_one_backend_hash()
-        let s:backend.database[im].root = root
-        let s:backend.database[im].im = im
-        let s:backend.database[im].datafile = datafile
-        let s:backend.database[im].executable = executable
-        let s:backend.database[im].keycode = s:im_keycode[im]
-        let s:backend.database[im].chinese = s:vimim_chinese(root)
-    endif
-    " ----------------------------------------
-    return root
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_get_sentence_sqlite(keyboard)
-" ---------------------------------------------
-    let keyboard = a:keyboard
-    let sql = s:vimim_get_sqlite_query(keyboard)
-    let results = s:vimim_get_data_from_sqlite(keyboard, sql)
-    if empty(results)
-        let msg = "nothing found from sqlite, but why not try more"
-    else
-        return results
-    endif
-    let key = keyboard
-    let max = len(keyboard)
-    " ----------------------------------------
-    while max > 1
-        let max -= 1
-        let key = strpart(keyboard, 0, max)
-        let sql = s:vimim_get_sqlite_query(key)
-        let results = s:vimim_get_data_from_sqlite(key, sql)
-        if empty(results)
-            continue
-        else
-            break
-        endif
-    endwhile
-    " ----------------------------------------
-    return results
-endfunction
-
-" ------------------------------------------
-function! s:vimim_get_sqlite_query(keyboard)
-" ------------------------------------------
-" sqlite> select * from cedict where Translation like '%dream%';
-" sqlite> select * from cedict where Reading     like 'ma_ ma_';
-" --------------------------------------------------------------
-    let keyboard = a:keyboard
-    let table = 'CEDICT'
-    let column1 = 'HeadwordTraditional'
-    let column2 = 'HeadwordSimplified'
-    let column3 = 'Reading'
-    let column4 = 'Translation'
-    " --------------------------------------
-    let select = column2
-    let buffer = expand("%:p:t")
-    if buffer =~# 'SQLITE'
-        let select = column1
-    endif
-    " --------------------------------------
-    let column = column3
-    if buffer =~ 'english'
-        let keyboard = "'%" . keyboard . "%'"
-        let column = column4
-    else
-        let msg = "pinyin is the default: meng"
-        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        if len(pinyins) > 1
-            let pinyins = map(pinyins, 'v:val."_"')
-            let keyboard = join(pinyins)
-        else
-            let keyboard = keyboard."_"
-        endif
-        let keyboard = "'" . keyboard . "'"
-    endif
-    " --------------------------------------
-    let query  = " select " . select
-    let query .= " from   " . table
-    let query .= " where  " . column . ' like ' . keyboard
-    " --------------------------------------
-    let sqlite  = s:backend.database.sqlite.executable . ' '
-    let sqlite .= s:backend.database.sqlite.datafile   . ' '
-    let sqlite .= ' " '
-    let sqlite .= query
-    let sqlite .= ' " '
-    " --------------------------------------
-    return sqlite
-endfunction
-
-" ------------------------------------------------------
-function! s:vimim_get_data_from_sqlite(keyboard, sqlite)
-" ------------------------------------------------------
-    let sql_return = system(a:sqlite)
-    if empty(sql_return)
-        return []
-    endif
-    let results = []
-    for chinese in split(sql_return,'\n')
-        let menu = a:keyboard . " " . chinese
-        call add(results, menu)
-    endfor
-    return results
-endfunction
-
-" ======================================== }}}
 let VimIM = " ====  Backend=>Cloud    ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
@@ -4362,9 +4200,7 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_has_embedded_backend()
 " --------------------------------------
-    if empty(s:backend.datafile)
-    \&& empty(s:backend.directory)
-    \&& empty(s:backend.database)
+    if empty(s:backend.datafile) && empty(s:backend.directory)
         let msg = "try cloud if no vimim embedded backends"
         return 0
     endif
@@ -4480,9 +4316,7 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_do_cloud_if_no_embedded_backend()
 " -------------------------------------------------
-    if empty(s:backend.directory)
-    \&& empty(s:backend.datafile)
-    \&& empty(s:backend.database)
+    if empty(s:backend.directory) && empty(s:backend.datafile)
         if empty(s:vimim_cloud_sogou)
             let s:vimim_cloud_sogou = 1
         endif
@@ -5063,7 +4897,6 @@ function! s:vimim_initialize_backend()
     let s:backend = {}
     let s:backend.directory = {}
     let s:backend.datafile  = {}
-    let s:backend.database  = {}
     let s:backend.cloud     = {}
 endfunction
 
@@ -5466,8 +5299,6 @@ function! s:vimim_embedded_backend_engine(keyboard)
     let results = []
     if root =~# "directory"
         let results = s:vimim_get_sentence_directory(keyboard)
-    elseif root =~# "database"
-        let results = s:vimim_get_sentence_sqlite(keyboard)
     elseif root =~# "datafile"
         if empty(s:backend[root][im].cache)
             let results = s:vimim_get_sentence_datafile_lines(keyboard)
