@@ -66,7 +66,7 @@ call add(s:vimims, VimIM)
 " "VimIM Front End UI"
 " --------------------
 " # VimIM "OneKey": Chinese input without mode change.
-" # VimIM "Chinese Input Mode" ['onekey','dynamic','static']
+" # VimIM "Chinese Input Mode" ['dynamic','static']
 " # VimIM auto Chinese input with zero configuration
 
 " -----------------------
@@ -798,7 +798,7 @@ function! s:vimim_break_word_by_word(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
     let blocks = []
-    if s:chinese_input_mode =~ 'onekey'
+    if s:chinese_input_mode == 'onekey'
     \&& s:ui.has_dot != 2
     \&& keyboard =~ "[']"
     \&& keyboard[0:0] != "'"
@@ -852,9 +852,9 @@ function! g:vimim_space()
     if pumvisible()
         let space = "\<C-Y>"
         let s:pumvisible_yes = 1
-    elseif s:chinese_input_mode =~ 'static'
+    elseif s:chinese_input_mode == 'static'
         let space = s:vimim_static_action(space)
-    elseif s:chinese_input_mode !~ 'dynamic'
+    elseif s:chinese_input_mode == 'onekey'
         let space = s:vimim_onekey_action(space)
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -980,10 +980,9 @@ let VimIM = " ====  Chinese_Mode      ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 " ----------------------------------------------------------------------
-" s:chinese_input_mode='onekey'        => (default) OneKey: hit-and-run
-" s:chinese_input_mode='dynamic'       => (default) classic dynamic mode
-" s:chinese_input_mode='static'        =>   <Space> triggers menu, auto
-" s:chinese_input_mode='onekeynonstop' =>   <Space> triggers menu, hjkl
+" s:chinese_input_mode='onekey'  => (default) OneKey: hjkl and hit-and-run
+" s:chinese_input_mode='dynamic' => (default) classic dynamic mode
+" s:chinese_input_mode='static'  =>   <Space> triggers menu, auto
 " ----------------------------------------------------------------------
 
 " --------------------------
@@ -993,9 +992,6 @@ function! <SID>ChineseMode()
     call s:vimim_frontend_initialization()
     call s:vimim_build_datafile_cache()
     let s:chinese_input_mode = s:vimim_chinese_input_mode
-    if s:vimim_chinese_input_mode == 'onekey'
-        let s:chinese_input_mode .= "nonstop"
-    endif
     let action = ""
     if !empty(s:ui.root) && !empty(s:ui.im)
         let action = <SID>vimim_chinesemode_action()
@@ -1010,22 +1006,17 @@ function! <SID>vimim_chinesemode_action()
     let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
     let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch % 2
     if empty(switch)
-        if s:chinese_input_mode == 'onekeynonstop'
-            call s:vimim_start_onekey()
-            let action = s:vimim_onekey_action("")
-        else
-            sil!call s:vimim_start()
-            sil!call <SID>vimim_toggle_punctuation()
-            if s:chinese_input_mode == 'dynamic'
-                sil!call <SID>vimim_set_seamless()
-                sil!call s:vimim_dynamic_alphabet_trigger()
-            elseif s:chinese_input_mode == 'static'
-                sil!call s:vimim_static_alphabet_auto_select()
-                if pumvisible()
-                    let msg = "<C-\> does nothing on omni menu"
-                else
-                    let action = s:vimim_static_action("")
-                endif
+        sil!call s:vimim_start()
+        sil!call <SID>vimim_toggle_punctuation()
+        if s:chinese_input_mode == 'dynamic'
+            sil!call <SID>vimim_set_seamless()
+            sil!call s:vimim_dynamic_alphabet_trigger()
+        elseif s:chinese_input_mode == 'static'
+            sil!call s:vimim_static_alphabet_auto_select()
+            if pumvisible()
+                let msg = "<C-\> does nothing on omni menu"
+            else
+                let action = s:vimim_static_action("")
             endif
         endif
     else
@@ -1274,8 +1265,6 @@ function! s:vimim_get_chinese_im()
         let input_style .= s:vimim_chinese('dynamic')
     elseif s:vimim_chinese_input_mode =~ 'static'
         let input_style .= s:vimim_chinese('static')
-    elseif s:vimim_chinese_input_mode == 'onekey'
-        let input_style = "OneKeyNonStop"
     endif
     let statusline = s:left . s:ui.statusline . s:right
     return statusline . input_style
@@ -1288,7 +1277,7 @@ function! s:vimim_label_on()
     if &pumheight > 0
         let labels = range(1, &pumheight)
     endif
-    if s:chinese_input_mode =~ 'onekey'
+    if s:chinese_input_mode == 'onekey'
         let abcd_list = split(s:abcd, '\zs')
         let labels += abcd_list
     endif
