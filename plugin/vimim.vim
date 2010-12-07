@@ -1554,6 +1554,7 @@ function! <SID>vimim_smart_enter()
     let key = ""
     let enter = "\<CR>"
     let byte_before = getline(".")[col(".")-2]
+    sil!call s:vimim_onekey_nonstop()
     " -----------------------------------------------
     " <Enter> double play in Chinese Mode:
     "   (1) after English (valid keys)    => Seamless
