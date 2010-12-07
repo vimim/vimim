@@ -1367,7 +1367,7 @@ function! <SID>vimim_onekey_label_navigation(key)
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
             sil!call s:vimim_onekey_nonstop()
-            let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
+            let hjkl = "\<C-Y>"
         elseif a:key == 'm'
             let hjkl  = '\<C-E>'
         elseif a:key == 'n'
