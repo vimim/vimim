@@ -832,9 +832,9 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_backend_initialization_once()
     sil!call s:vimim_frontend_initialization()
     sil!call s:vimim_start()
-    sil!call s:vimim_label_navigation_on()
+    sil!call s:vimim_onekey_label_navigation_on()
     sil!call s:vimim_onekey_pumvisible_capital_on()
-    sil!call s:vimim_1234567890_filter_on()
+    sil!call s:vimim_onekey_1234567890_filter_on()
     sil!call s:vimim_punctuation_navigation_on()
 endfunction
 
@@ -864,7 +864,7 @@ endfunction
 "   (1) after English (valid keys) => trigger keycode menu
 "   (2) after omni popup menu      => insert Chinese
 "   (3) after English punctuation  => Chinese punctuation
-"   (4) after Chinese              => <space>
+"   (4) after Chinese              => <Space>
 " -------------------------------------
 function! s:vimim_onekey_action(onekey)
 " -------------------------------------
@@ -1326,9 +1326,9 @@ function! <SID>vimim_onkey_pumvisible_capital(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" -------------------------------------
-function! s:vimim_label_navigation_on()
-" -------------------------------------
+" --------------------------------------------
+function! s:vimim_onekey_label_navigation_on()
+" --------------------------------------------
     let hjkl = 'hjklmnsxv'
     let hjkl_list = split(hjkl, '\zs')
     " ---------------------------------
@@ -1338,7 +1338,7 @@ function! s:vimim_label_navigation_on()
     " ---------------------------------
     for _ in hjkl_list
         sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_label_navigation("'._.'")'
+        \ <SID>vimim_onekey_label_navigation("'._.'")'
     endfor
     " ---------------------------------
 endfunction
@@ -1353,9 +1353,9 @@ function! s:vimim_onekey_nonstop()
     endif
 endfunction
 
-" ----------------------------------------
-function! <SID>vimim_label_navigation(key)
-" ----------------------------------------
+" -----------------------------------------------
+function! <SID>vimim_onekey_label_navigation(key)
+" -----------------------------------------------
     let hjkl = a:key
     if pumvisible()
         if a:key == 'h'
@@ -1680,7 +1680,8 @@ function! g:vimim_backspace()
         sil!exe 'sil!return "' . key . '"'
     endif
     " ---------------------------------
-    if empty(s:onekeynonstop) && s:chinese_input_mode == 'onekey'
+    if empty(s:onekeynonstop) 
+    \&& s:chinese_input_mode == 'onekey'
         call s:vimim_stop()
     endif
     " ---------------------------------
@@ -2342,21 +2343,20 @@ function! s:vimim_build_unihan_reverse_cache(chinese)
     endfor
 endfunction
 
-" --------------------------------------
-function! s:vimim_1234567890_filter_on()
-" --------------------------------------
-    if empty(s:pinyin_4corner_filter)
-        return
+" ---------------------------------------------
+function! s:vimim_onekey_1234567890_filter_on()
+" ---------------------------------------------
+    if s:pinyin_4corner_filter > 0
+        for _ in s:pqwertyuio
+            sil!exe'inoremap <silent>  '._.'
+            \  <C-R>=<SID>vimim_onekey_1234567890_filter("'._.'")<CR>'
+        endfor
     endif
-    for _ in s:pqwertyuio
-        sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_1234567890_filter("'._.'")<CR>'
-    endfor
 endfunction
 
-" ---------------------------------------
-function! <SID>vimim_1234567890_filter(n)
-" ---------------------------------------
+" ----------------------------------------------
+function! <SID>vimim_onekey_1234567890_filter(n)
+" ----------------------------------------------
     let label = a:n
     if pumvisible()
         if s:pinyin_4corner_filter < 1
