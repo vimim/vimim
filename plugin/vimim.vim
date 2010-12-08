@@ -4510,6 +4510,16 @@ call add(s:vimims, VimIM)
 " --------------------------------------
 function! s:vimim_scan_backend_mycloud()
 " --------------------------------------
+" let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
+" let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
+" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
+" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
+" let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
+" let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+" -----------------------------------------------------------------------
     let embedded_backend = s:vimim_has_embedded_backend()
     if empty(embedded_backend)
         call s:vimim_set_mycloud()
@@ -4524,17 +4534,7 @@ function! s:vimim_do_force_mycloud()
     if s:vimim_mycloud_url =~ '^http\|^dll\|^app'
         return
     endif
-    " ----------------------------------------------------------
-    let s:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
-    let s:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
-    let s:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
-    let s:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
-    let s:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
-    let s:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
-    let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
-    let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
     let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
-    " ----------------------------------------------------------
     call s:vimim_set_mycloud()
 endfunction
 
