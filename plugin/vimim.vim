@@ -15,7 +15,6 @@ let $VimIM = "$Revision$"
 " - VimIM 程式:  type:       vimimvim<C-6><C-6>
 " - VimIM 幫助:  type:      vimimhelp<C-6><C-6>
 " - VimIM 測試:  type:     vimimdebug<C-6><C-6>
-" - VimIM 內碼:  type:   vimimunicode<C-6><C-6>
 " -------------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/entry"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506"]
@@ -415,7 +414,6 @@ function! s:vimim_egg_vimimegg()
     call add(eggs, "程式　vimimvim")
     call add(eggs, "幫助　vimimhelp")
     call add(eggs, "測試　vimimdebug")
-    call add(eggs, "內碼　vimimunicode")
     call add(eggs, "設置　vimimdefaults")
     return map(eggs,  '"VimIM 彩蛋" . s:colon . v:val . s:space')
 endfunction
@@ -3075,111 +3073,6 @@ function! s:vimim_i18n_read(line)
     return line
 endfunction
 
-" ------------------
-function! CJK16(...)
-" ------------------
-" This function outputs unicode block by block as:
-" ----------------------------------------------------
-"      0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
-" 4E00 #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #
-" ----------------------------------------------------
-    if &encoding != "utf-8"
-        $put='Your Vim encoding has to be set as utf-8.'
-        $put='[usage]'
-        $put='(in .vimrc):      :set encoding=utf-8'
-        $put='(in Vim Command): :call CJK16()<CR>'
-        $put='(in Vim Command): :call CJK16(0x8000,16)<CR>'
-    else
-        let a = 0x4E00| let n = 112-24| let block = 0x00F0
-        if (a:0>=1)| let a = a:1| let n = 1| endif
-        if (a:0==2)| let n = a:2| endif
-        let z = a + n*block - 128
-        while a <= z
-            if empty(a%(16*16))
-                $put='----------------------------------------------------'
-                $put='     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F '
-                $put='----------------------------------------------------'
-            endif
-            let c = printf('%04X ',a)
-            for j in range(16)|let c.=nr2char(a).' '|let a+=1|endfor
-            $put=c
-        endwhile
-    endif
-endfunction
-
-" -------------
-function! CJK()
-" -------------
-" This function outputs unicode as:
-" ---------------------------------
-"   decimal  hex    CJK
-"   39340    99ac    馬
-" ---------------------------------
-    if &encoding != "utf-8"
-        $put='Your Vim encoding has to be set as utf-8.'
-        $put='[usage]    :call CJK()<CR>'
-    else
-        let unicode_start = 19968  "| 一
-        let unicode_end   = 40869  "| 龥
-        for i in range(unicode_start, unicode_end)
-            $put=printf('%d %x ',i,i).nr2char(i)
-        endfor
-    endif
-    return ""
-endfunction
-
-" ----------------------------------
-function! s:vimim_egg_vimimunicode()
-" ----------------------------------
-    if s:encoding != "utf8"
-        return []
-    endif
-    let msg = " Unicode 康熙字典中文部首起始碼位表"
-    let u  = "一丨丶丿乙亅二亠人儿入八冂冖冫几凵刀力勹匕匚匸十"
-    let u .= "卜卩厂厶又口囗土士夂夊夕大女子宀寸小尢尸屮山巛工"
-    let u .= "己巾干幺广廴廾弋弓彐彡彳心戈戶手支攴文斗斤方无日"
-    let u .= "曰月木欠止歹殳毋比毛氏气水火爪父爻爿片牙牛犬玄玉"
-    let u .= "瓜瓦甘生用田疋疒癶白皮皿目矛矢石示禸禾穴立竹米糸"
-    let u .= "缶网羊羽老而耒耳聿肉臣自至臼舌舛舟艮色艸虍虫血行"
-    let u .= "衣襾見角言谷豆豕豸貝赤走足身車辛辰辵邑酉釆里金長"
-    let u .= "門阜隶隹雨靑非面革韋韭音頁風飛食首香馬骨高髟鬥鬯"
-    let u .= "鬲鬼魚鳥鹵鹿麥麻黃黍黑黹黽鼎鼓鼠鼻齊齒龍龜龠"
-    let unicodes = split(u, '\zs')
-    let eggs = []
-    for char in unicodes
-        let ddddd = char2nr(char)
-        let xxxx = s:vimim_decimal2hex(ddddd)
-        let display = "U+" .  xxxx . " " . char
-        call add(eggs, display)
-    endfor
-    return eggs
-endfunction
-
-" -------------
-function! GBK()
-" -------------
-" This function outputs GBK as:
-" ----------------------------- gb=6763
-"   decimal  hex    GBK
-"   49901    c2ed    馬
-" ----------------------------- gbk=883+21003=21886
-    if s:encoding ==# "chinese"
-        let start = str2nr('8140',16) "| 33088 丂
-        for i in range(125)
-            for j in range(start, start+190)
-                if j <= 64928 && j != start+63
-                    $put=printf('%d %x ',j,j).nr2char(j)
-                endif
-            endfor
-            let start += 16*16
-        endfor
-    else
-        $put='Your Vim encoding has to be set as chinese.'
-        $put='[usage]    :call GBK()<CR>'
-    endif
-    return ""
-endfunction
-
 " -------------------------------------------
 function! s:vimim_get_unicode_ddddd(keyboard)
 " -------------------------------------------
@@ -3267,6 +3160,84 @@ function! s:vimim_without_backend(keyboard)
     " ------------------------------------
     return s:vimim_get_unicodes(numbers,0)
     " ------------------------------------
+endfunction
+
+" ------------------
+function! CJK16(...)
+" ------------------
+" This function outputs unicode block by block as:
+" ----------------------------------------------------
+"      0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
+" 4E00 #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #
+" ----------------------------------------------------
+    if &encoding != "utf-8"
+        $put='Your Vim encoding has to be set as utf-8.'
+        $put='[usage]'
+        $put='(in .vimrc):      :set encoding=utf-8'
+        $put='(in Vim Command): :call CJK16()<CR>'
+        $put='(in Vim Command): :call CJK16(0x8000,16)<CR>'
+    else
+        let a = 0x4E00| let n = 112-24| let block = 0x00F0
+        if (a:0>=1)| let a = a:1| let n = 1| endif
+        if (a:0==2)| let n = a:2| endif
+        let z = a + n*block - 128
+        while a <= z
+            if empty(a%(16*16))
+                $put='----------------------------------------------------'
+                $put='     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F '
+                $put='----------------------------------------------------'
+            endif
+            let c = printf('%04X ',a)
+            for j in range(16)|let c.=nr2char(a).' '|let a+=1|endfor
+            $put=c
+        endwhile
+    endif
+endfunction
+
+" -------------
+function! CJK()
+" -------------
+" This function outputs unicode as:
+" ---------------------------------
+"   decimal  hex    CJK
+"   39340    99ac    馬
+" ---------------------------------
+    if &encoding != "utf-8"
+        $put='Your Vim encoding has to be set as utf-8.'
+        $put='[usage]    :call CJK()<CR>'
+    else
+        let unicode_start = 19968  "| 一
+        let unicode_end   = 40869  "| 龥
+        for i in range(unicode_start, unicode_end)
+            $put=printf('%d %x ',i,i).nr2char(i)
+        endfor
+    endif
+    return ""
+endfunction
+
+" -------------
+function! GBK()
+" -------------
+" This function outputs GBK as:
+" ----------------------------- gb=6763
+"   decimal  hex    GBK
+"   49901    c2ed    馬
+" ----------------------------- gbk=883+21003=21886
+    if s:encoding ==# "chinese"
+        let start = str2nr('8140',16) "| 33088 丂
+        for i in range(125)
+            for j in range(start, start+190)
+                if j <= 64928 && j != start+63
+                    $put=printf('%d %x ',j,j).nr2char(j)
+                endif
+            endfor
+            let start += 16*16
+        endfor
+    else
+        $put='Your Vim encoding has to be set as chinese.'
+        $put='[usage]    :call GBK()<CR>'
+    endif
+    return ""
 endfunction
 
 " --------------
