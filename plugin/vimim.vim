@@ -16,7 +16,7 @@ let $VimIM = "$Revision$"
 " - VimIM 幫助:  type:      vimimhelp<C-6><C-6>
 " - VimIM 測試:  type:     vimimdebug<C-6><C-6>
 " -------------------------------------------------------------------
-let egg  = ["http://code.google.com/p/vimim/issues/entry"]
+let egg  = ["http://code.google.com/p/vimim/issues/list"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let egg += ["http://vimim-data.googlecode.com"]
 let egg += ["http://pim-cloud.appspot.com"]
