@@ -248,6 +248,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['cangjie'] = ['仓颉','倉頡']
     let s:chinese['boshiamy'] = ['呒虾米','嘸蝦米']
     let s:chinese['zhengma'] = ['郑码','鄭碼']
+    let s:chinese['taijima'] = ['太极码','太極碼']
     let s:chinese['yong'] = ['永码','永碼']
     let s:chinese['quick'] = ['速成']
     let s:chinese['wu'] = ['吴语','吳語']
@@ -284,6 +285,7 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['4corner']  = "[0-9a-z']"
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['zhengma']  = "[a-z']"
+    let s:im_keycode['taijima']  = "[a-z']"
     let s:im_keycode['quick']    = "[0-9a-z']"
     let s:im_keycode['erbi']     = "[a-z'.,;/]"
     let s:im_keycode['wu']       = "[a-z'.]"
@@ -362,12 +364,12 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_chinese_input_mode")
+    call add(G, "g:vimim_use_cache")
     call add(G, "g:vimimdebug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
-    call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_chinese_punctuation")
@@ -785,6 +787,7 @@ call add(s:vimims, VimIM)
 " input method cantonese:  ngoh'yau'yat'goh'mung
 " input method wu:         ngu'qyoe'iq'qku'qmon
 " input method zhengma:    m'gq'avov'ffrs
+" input method taijima:    tlt'fm't'e'vvi
 " input method cangjie:    hqi'kb'm'ol'ddni
 " input method nature:     wop'yb'yg''mgx
 " input method boshiamy:   ix'x'e'bii'rfnc
@@ -3862,8 +3865,8 @@ function! s:vimim_force_scan_current_buffer()
             endif
         endfor
         if buffer =~ input_method
-            if buffer =~# 'nocache'
-                let s:vimim_use_cache = 0
+            if buffer =~# 'cache'
+                let s:vimim_use_cache = 1
             endif
             call s:vimim_do_force_datafile(input_method)
         endif
