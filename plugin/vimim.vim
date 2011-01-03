@@ -40,7 +40,7 @@ let VimIM = " ====  Vim Input Method  ==== {{{"
 "            * "Plug & Play": as a client to "myCloud" and "Cloud"
 "            * CJK can be searched without using popup menu
 "            * CJK can be input without changing mode
-"            * support "wubi", "erbi", "boshiamy", "Cang Jie" etc
+"            * support "wubi", "erbi", "boshiamy", "cangjie", "taijima"
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
 "            * support direct "UNICODE"/"GBK"/"Big5" input
 "            * It is independent of OS and mbyte-XIM/mbyte-IME API.
@@ -245,9 +245,9 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['hangul'] = ['韩文','韓文']
     let s:chinese['xinhua'] = ['新华','新華']
     let s:chinese['pinyin'] = ['拼音']
-    let s:chinese['cangjie'] = ['仓颉','倉頡']
     let s:chinese['boshiamy'] = ['呒虾米','嘸蝦米']
     let s:chinese['zhengma'] = ['郑码','鄭碼']
+    let s:chinese['cangjie'] = ['仓颉','倉頡']
     let s:chinese['taijima'] = ['太极码','太極碼']
     let s:chinese['yong'] = ['永码','永碼']
     let s:chinese['quick'] = ['速成']
@@ -283,8 +283,8 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['hangul']   = "[0-9a-z']"
     let s:im_keycode['xinhua']   = "[0-9a-z']"
     let s:im_keycode['4corner']  = "[0-9a-z']"
-    let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['zhengma']  = "[a-z']"
+    let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['taijima']  = "[a-z']"
     let s:im_keycode['quick']    = "[0-9a-z']"
     let s:im_keycode['erbi']     = "[a-z'.,;/]"
@@ -295,19 +295,17 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['phonetic'] = "[0-9a-z.,;/]"
     let s:im_keycode['array30']  = "[0-9a-z.,;/]"
     " -------------------------------------------
-    let keys = copy(keys(s:im_keycode))
-    call add(keys, 'pinyin_quote_sogou')
-    call add(keys, 'pinyin_huge')
-    call add(keys, 'pinyin_fcitx')
-    call add(keys, 'pinyin_canton')
-    call add(keys, 'pinyin_hongkong')
-    call add(keys, 'wubijd')
-    call add(keys, 'wubi98')
-    call add(keys, 'wubi2000')
-    " -------------------------------------------
-    call remove(keys, 'pinyin')
-    call insert(keys, 'pinyin')
-    let s:all_vimim_input_methods = copy(keys)
+    let vimimkeys = copy(keys(s:im_keycode))
+    call add(vimimkeys, 'pinyin_quote_sogou')
+    call add(vimimkeys, 'pinyin_huge')
+    call add(vimimkeys, 'pinyin_fcitx')
+    call add(vimimkeys, 'pinyin_canton')
+    call add(vimimkeys, 'pinyin_hongkong')
+    call add(vimimkeys, 'wubijd')
+    call add(vimimkeys, 'wubi98')
+    call add(vimimkeys, 'wubi2000')
+    call insert(vimimkeys, 'pinyin')
+    let s:all_vimim_input_methods = copy(vimimkeys)
     " -------------------------------------------
 endfunction
 
@@ -787,8 +785,8 @@ call add(s:vimims, VimIM)
 " input method cantonese:  ngoh'yau'yat'goh'mung
 " input method wu:         ngu'qyoe'iq'qku'qmon
 " input method zhengma:    m'gq'avov'ffrs
-" input method taijima:    tlt'fm't'e'vvi
 " input method cangjie:    hqi'kb'm'ol'ddni
+" input method taijima:    tlt'fm't'e'vvi
 " input method nature:     wop'yb'yg''mgx
 " input method boshiamy:   ix'x'e'bii'rfnc
 " --------------------------------------------
