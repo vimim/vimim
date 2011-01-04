@@ -527,7 +527,7 @@ function! s:vimim_egg_vimim()
     elseif s:vimim_tab_as_onekey == 2
         let toggle = "Tab_as_OneKey_with_NonStop_hjkl"
     endif
-    let toggle .=  s:space
+    let toggle .= s:space
     let style = s:vimim_chinese('style')
     let option = "mode\t " . style . s:colon . toggle
     call add(eggs, option)
@@ -543,7 +543,7 @@ function! s:vimim_egg_vimim()
     if !empty(option)
         if s:ui.root == 'directory'
             let directory  = s:vimim_chinese('directory')
-            let ciku .=  directory . ciku
+            let ciku .= directory . ciku
             let option .= "/"
         endif
         let ciku = "database " . ciku
@@ -1757,11 +1757,11 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             if keyboard =~ "[']"
                 let word_by_word = match(keyboard, "[']")
                 let s:tail = strpart(keyboard, word_by_word+1)
-                let chinese .=  s:tail
+                let chinese .= s:tail
             elseif keyboard !~? '^vim'
                 let s:tail = strpart(keyboard, len(menu))
                 if keyboard =~ '\l\>' || keyboard =~ '^\d\+\>'
-                    let chinese .=  s:tail
+                    let chinese .= s:tail
                 endif
             endif
             let s:keyboard_head = strpart(keyboard, 0, len(menu))
@@ -1772,12 +1772,10 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         let labeling = s:vimim_get_labeling(label)
         let abbr = printf('%2s',labeling)."\t".chinese
         let complete_items["abbr"] = abbr
-        " -------------------------------------------------
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
         let label += 1
         call add(popupmenu_list, complete_items)
-        " -------------------------------------------------
     endfor
     let s:popupmenu_list = copy(popupmenu_list)
     return popupmenu_list
@@ -1788,18 +1786,15 @@ function! s:vimim_get_labeling(label)
 " -----------------------------------
     let label = a:label
     let labeling = label
-    if s:chinese_input_mode =~ 'onekey'
-        if label < &pumheight+1
-            let label2 = s:abcd[label-1 : label-1]
-            if label < 2
-                let label2 = "_"
-            endif
-            if s:vimim_custom_skin == 3
-            \|| s:pinyin_4corner_filter > 0
-                let labeling = label2
-            else
-                let labeling .= label2
-            endif
+    if s:chinese_input_mode =~ 'onekey' && label < &pumheight+1
+        let label2 = s:abcd[label-1 : label-1]
+        if label < 2
+            let label2 = "_"
+        endif
+        if s:vimim_custom_skin == 3 || s:pinyin_4corner_filter > 0
+            let labeling = label2
+        else
+            let labeling .= label2
         endif
     endif
     return labeling
@@ -2836,7 +2831,7 @@ endfunction
 " -----------------------------------
 function! s:vimim_shuangpin_abc(rule)
 " -----------------------------------
-" [auto clould test] vim sogou.shuangpin_abc.vimim
+" [auto cloud test] vim sogou.shuangpin_abc.vimim
 " vtpc => shuang pin => double pinyin
     call extend(a:rule[0],{ "zh" : "a", "ch" : "e", "sh" : "v" })
     call extend(a:rule[1],{
@@ -2853,7 +2848,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_shuangpin_ms(rule)
 " ----------------------------------
-" [auto clould test] vim sogou.shuangpin_ms.vimim
+" [auto cloud test] vim sogou.shuangpin_ms.vimim
 " vi=>zhi ii=>chi ui=>shi keng=>keneng
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
@@ -2871,7 +2866,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_shuangpin_nature(rule)
 " --------------------------------------
-" [auto clould test] vim sogou.shuangpin_nature.vimim
+" [auto cloud test] vim sogou.shuangpin_nature.vimim
 " goal: 'woui' => wo shi => i am
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
@@ -2888,7 +2883,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_shuangpin_plusplus(rule)
 " ----------------------------------------
-" [auto clould test] vim sogou.shuangpin_plusplus.vimim
+" [auto cloud test] vim sogou.shuangpin_plusplus.vimim
     call extend(a:rule[0],{ "zh" : "v", "ch" : "u", "sh" : "i" })
     call extend(a:rule[1],{
         \"an" : "f", "ao" : "d", "ai" : "s", "ang": "g",
@@ -2904,7 +2899,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_shuangpin_purple(rule)
 " --------------------------------------
-" [auto clould test] vim sogou.shuangpin_purple.vimim
+" [auto cloud test] vim sogou.shuangpin_purple.vimim
     call extend(a:rule[0],{ "zh" : "u", "ch" : "a", "sh" : "i" })
     call extend(a:rule[1],{
         \"an" : "r", "ao" : "q", "ai" : "p", "ang": "s",
@@ -2920,7 +2915,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_shuangpin_flypy(rule)
 " -------------------------------------
-" [auto clould test] vim sogou.shuangpin_flypy.vimim
+" [auto cloud test] vim sogou.shuangpin_flypy.vimim
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "c", "ai" : "d", "ang": "h",
@@ -3417,9 +3412,9 @@ function! s:vimim_build_datafile_lines()
     endif
 endfunction
 
-" ----------------------------------------------------
-function! s:vimim_pinyin(lines, keyboard, match_start)
-" ----------------------------------------------------
+" ---------------------------------------------------------
+function! s:vimim_smart_match(lines, keyboard, match_start)
+" ---------------------------------------------------------
     let match_start = a:match_start
     if empty(a:lines) || match_start < 0
         return []
@@ -3433,7 +3428,7 @@ function! s:vimim_pinyin(lines, keyboard, match_start)
         let pinyin_tone = '\d\='
         let pattern .= pinyin_tone . '\>'
     endif
-    let pattern .=  '\)\@!'
+    let pattern .= '\)\@!'
     " ----------------------------------------
     let matched = match(a:lines, pattern, match_start)-1
     let match_end = match_start
@@ -3556,7 +3551,7 @@ endfunction
 " -----------------------------------------------------
 function! s:vimim_get_sentence_datafile_lines(keyboard)
 " -----------------------------------------------------
-    sil!call s:vimim_build_datafile_lines()
+    call s:vimim_build_datafile_lines()
     let keyboard = a:keyboard
     let results = []
     let keyboards = s:vimim_sentence_match_datafile(keyboard)
@@ -3609,7 +3604,7 @@ endfunction
 function! s:vimim_get_data_from_datafile(keyboard)
 " ------------------------------------------------
     let keyboard = a:keyboard
-    let lines =  s:backend[s:ui.root][s:ui.im].lines
+    let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines)
         return []
     endif
@@ -3621,10 +3616,11 @@ function! s:vimim_get_data_from_datafile(keyboard)
     else
         if s:ui.has_dot == 2
             let results = s:vimim_fixed_match(lines, keyboard, 1)
-        elseif s:ui.im == 'pinyin'
-            let results = s:vimim_pinyin(lines, keyboard, match_start)
+        elseif s:ui.im == 'test'
+            let pumheight = &pumheight - 1
+            let results = s:vimim_fixed_match(lines, keyboard, pumheight)
         else
-            let results = s:vimim_fixed_match(lines, keyboard, 4)
+            let results = s:vimim_smart_match(lines, keyboard, match_start)
         endif
     endif
     return results
@@ -3679,7 +3675,7 @@ function! s:vimim_break_pinyin_digit(keyboard)
             let menu = get(blocks, 0)
             let filter = get(blocks, 1)
             if menu =~ '\D' && filter =~ '^\d\+$'
-                let s:menu_digit_as_filter =  filter . "_"
+                let s:menu_digit_as_filter = filter . "_"
             endif
         endif
     endif
@@ -4349,7 +4345,7 @@ function! s:vimim_magic_tail(keyboard)
         return []
     endif
     let magic_tail = keyboard[-1:]
-    let last_but_one =  keyboard[-2:-2]
+    let last_but_one = keyboard[-2:-2]
     if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
         let msg = "play with magic trailing char"
     else
@@ -4679,7 +4675,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
 " ----------------------------------------------
     " we do plug-n-play for libcall(), not for system()
     let cloud = s:vimim_get_libvimim()
-    if empty(clould)
+    if empty(cloud)
         return 0
     endif
     let s:cloud_plugin_mode = "libcall"
