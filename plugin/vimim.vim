@@ -1370,7 +1370,12 @@ function! <SID>vimim_onekey_label_navigation(key)
             let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
         elseif a:key == 'v'
-            let s:pumvisible_hjkl_2nd_match = 1
+            if s:pinyin_4corner_filter == 2
+                sil!call s:vimim_build_unihan_cache()
+                sil!call s:vimim_onekey_nonstop()
+            else
+                let s:pumvisible_hjkl_2nd_match = 1
+            endif
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'p'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_ee()\<CR>'
@@ -2263,6 +2268,46 @@ function! s:vimim_reverse_lookup(chinese)
         endif
     endif
     return results
+endfunction
+
+" -------------------------------------------
+function! s:vimim_build_one_unihan_cache(key)
+" -------------------------------------------
+    let key = a:key
+    if has_key(s:unihan_4corner_cache, key)
+        continue
+    else
+        let results = s:vimim_get_data_from_directory(key, 'unihan')
+        let s:unihan_4corner_cache[key] = results
+    endif
+endfunction
+
+" ------------------------------------
+function! s:vimim_build_unihan_cache()
+" ------------------------------------
+    if s:encoding != "utf8"
+        return
+    endif
+    for ddddd in range(19968, 40869)
+        let key = printf('u%x',ddddd)
+        call s:vimim_build_one_unihan_cache(key)
+    endfor
+endfunction
+
+" ---------------------------------------------------
+function! s:vimim_build_unihan_reverse_cache(chinese)
+" ---------------------------------------------------
+" [input]  馬力       [unihan] u808f => 8022 cao4 copulate
+" [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
+" ---------------------------------------------------
+    if s:pinyin_4corner_filter < 2
+        return
+    endif
+    let chinese = substitute(a:chinese,'\w','','g')
+    for char in split(chinese, '\zs')
+        let key = printf('u%x',char2nr(char))
+        call s:vimim_build_one_unihan_cache(key)
+    endfor
 endfunction
 
 " ----------------------------------------------
