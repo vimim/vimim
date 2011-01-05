@@ -1371,11 +1371,11 @@ function! <SID>vimim_onekey_label_navigation(key)
             let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
         elseif a:key == 'v'
             if s:pinyin_4corner_filter == 2
-                sil!call s:vimim_build_unihan_cache()
-                sil!call s:vimim_onekey_nonstop()
+                call s:vimim_build_unihan_cache()
             else
                 let s:pumvisible_hjkl_2nd_match = 1
             endif
+            call s:vimim_onekey_nonstop()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'p'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_ee()\<CR>'
@@ -1705,6 +1705,9 @@ function! s:vimim_pair_list(matched_list)
         let oneline_list = split(line)
         let menu = remove(oneline_list, 0)
         for chinese in oneline_list
+            if !empty(len(s:menu_digit_as_filter))
+                call s:vimim_build_unihan_reverse_cache(chinese)
+            endif
             let chinese = s:vimim_digit_filter(chinese)
             if !empty(chinese)
                 call add(pair_matched_list, menu .' '. chinese)
@@ -2269,9 +2272,7 @@ endfunction
 function! s:vimim_build_one_unihan_cache(key)
 " -------------------------------------------
     let key = a:key
-    if has_key(s:unihan_4corner_cache, key)
-        continue
-    else
+    if !has_key(s:unihan_4corner_cache, key)
         let results = s:vimim_get_data_from_directory(key, 'unihan')
         let s:unihan_4corner_cache[key] = results
     endif
@@ -2353,27 +2354,6 @@ function! s:vimim_reverse_one_entry(chinese, im)
     return [join(headers), join(bodies)]
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_build_unihan_reverse_cache(chinese)
-" ---------------------------------------------------
-" [input]  馬力       [unihan] u808f => 8022 cao4 copulate
-" [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
-" ---------------------------------------------------
-    if s:pinyin_4corner_filter < 2
-        return
-    endif
-    let chinese = substitute(a:chinese,'\w','','g')
-    for char in split(chinese, '\zs')
-        let key = printf('u%x',char2nr(char))
-        if has_key(s:unihan_4corner_cache, key)
-            continue
-        else
-            let results = s:vimim_get_data_from_directory(key, 'unihan')
-            let s:unihan_4corner_cache[key] = results
-        endif
-    endfor
-endfunction
-
 " ---------------------------------------------
 function! s:vimim_onekey_1234567890_filter_on()
 " ---------------------------------------------
@@ -2411,10 +2391,6 @@ endfunction
 function! s:vimim_digit_filter(chinese)
 " -------------------------------------
     let chinese = a:chinese
-    if empty(len(s:menu_digit_as_filter))
-        return chinese
-    endif
-    call s:vimim_build_unihan_reverse_cache(chinese)
     let number = s:vimim_get_filter_number(chinese)
     let pattern = "^" . substitute(s:menu_digit_as_filter,'\D','','g')
     let matched = match(number, pattern)
@@ -2443,12 +2419,11 @@ function! s:vimim_get_filter_number(chinese)
             continue
         else
             let key = printf('u%x',char2nr(chinese))
-            if !has_key(s:unihan_4corner_cache, key)
-                continue
+            if has_key(s:unihan_4corner_cache, key)
+                let digit = get(s:unihan_4corner_cache[key],0)
+                let head .= digit[:0]
+                let tail = digit[1:]
             endif
-            let digit = get(s:unihan_4corner_cache[key],0)
-            let head .= digit[:0]
-            let tail = digit[1:]
         endif
     endfor
     let expected_filtering_number = head . tail
