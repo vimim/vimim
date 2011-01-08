@@ -1370,7 +1370,7 @@ function! <SID>vimim_onekey_label_navigation(key)
             let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
         elseif a:key == 'v'
-            if s:pinyin_4corner_filter == 2
+            if s:pinyin_4corner_filter == 2 && s:encoding == "utf8"
                 call s:vimim_build_unihan_cache()
             else
                 let s:pumvisible_hjkl_2nd_match = 1
@@ -2265,7 +2265,7 @@ endfunction
 
 " -------------------------------------------
 function! s:vimim_build_one_unihan_cache(key)
-" -------------------------------------------
+" ------------------------------------------- todo
     let key = a:key
     if !has_key(s:unihan_4corner_cache, key)
         let results = s:vimim_get_data_from_directory(key, 'unihan')
@@ -2275,14 +2275,23 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_build_unihan_cache()
-" ------------------------------------
-    if s:encoding != "utf8"
-        return
+" ------------------------------------ todo
+    let datafile = s:path . "unihan_4corner.txt"
+    if filereadable(datafile) 
+        if empty(s:unihan_4corner_cache)
+            for line in readfile(datafile)
+                let pairs = split(line)
+                let key = get(pairs, 0)
+                let value = get(pairs, 1)
+                let s:unihan_4corner_cache[key]=[value]
+            endfor
+        endif
+    else
+        for ddddd in range(19968, 40869)
+            let key = printf('u%x',ddddd)
+            call s:vimim_build_one_unihan_cache(key)
+        endfor
     endif
-    for ddddd in range(19968, 40869)
-        let key = printf('u%x',ddddd)
-        call s:vimim_build_one_unihan_cache(key)
-    endfor
 endfunction
 
 " ---------------------------------------------------
@@ -5616,3 +5625,5 @@ sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
 " ======================================= }}}
+
+
