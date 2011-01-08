@@ -57,7 +57,6 @@ call add(s:vimims, VimIM)
 " -------------------
 " # Chinese can be searched using Vim without menu
 " # Chinese can be input using Vim regardless of encoding
-" # Chinese can be input using Vim without local datafile
 " # No negative impact to Vim when VimIM is not used
 " # No compromise for high speed and low memory usage
 
@@ -72,10 +71,10 @@ call add(s:vimims, VimIM)
 " "VimIM Back End Engine"
 " -----------------------
 " # (1) [external] myCloud: http://pim-cloud.appspot.com
-" # (2) [external] Cloud:   http://web.pinyin.sogou.com
+" # (2) [external]   Cloud: http://web.pinyin.sogou.com
 " # (3) [embedded] VimIM:   http://vimim.googlecode.com
-" #     (3.1) a datafile:  $VIM/vimfiles/plugin/vimim.pinyin.txt
-" #     (3.2) a directory: $VIM/vimfiles/plugin/vimim/pinyin/
+" #     (3.1) a datafile:   $VIM/vimfiles/plugin/vimim.pinyin.txt
+" #     (3.2) a directory:  $VIM/vimfiles/plugin/vimim/pinyin/
 
 " --------------------
 " "VimIM Installation"
@@ -1370,12 +1369,7 @@ function! <SID>vimim_onekey_label_navigation(key)
             let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
         elseif a:key == 'v'
-            if s:pinyin_4corner_filter == 2 && s:encoding == "utf8"
-                call s:vimim_build_unihan_cache()
-            else
-                let s:pumvisible_hjkl_2nd_match = 1
-            endif
-            call s:vimim_onekey_nonstop()
+            let s:pumvisible_hjkl_2nd_match = 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'p'
             let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_ee()\<CR>'
@@ -2265,32 +2259,11 @@ endfunction
 
 " -------------------------------------------
 function! s:vimim_build_one_unihan_cache(key)
-" ------------------------------------------- todo
+" -------------------------------------------
     let key = a:key
     if !has_key(s:unihan_4corner_cache, key)
         let results = s:vimim_get_data_from_directory(key, 'unihan')
         let s:unihan_4corner_cache[key] = results
-    endif
-endfunction
-
-" ------------------------------------
-function! s:vimim_build_unihan_cache()
-" ------------------------------------ todo
-    let datafile = s:path . "unihan_4corner.txt"
-    if filereadable(datafile) 
-        if empty(s:unihan_4corner_cache)
-            for line in readfile(datafile)
-                let pairs = split(line)
-                let key = get(pairs, 0)
-                let value = get(pairs, 1)
-                let s:unihan_4corner_cache[key]=[value]
-            endfor
-        endif
-    else
-        for ddddd in range(19968, 40869)
-            let key = printf('u%x',ddddd)
-            call s:vimim_build_one_unihan_cache(key)
-        endfor
     endif
 endfunction
 
@@ -3946,7 +3919,7 @@ function! s:vimim_get_data_from_directory(keyboard, im)
     endif
     let filename = dir . '/' . a:keyboard
     if filereadable(filename)
-        return readfile(filename)
+        return readfile(filename, 2)
     endif
     return []
 endfunction
@@ -5625,5 +5598,3 @@ sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
 " ======================================= }}}
-
-
