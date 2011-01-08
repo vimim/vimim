@@ -2221,23 +2221,18 @@ function! s:vimim_reverse_lookup(chinese)
     if empty(chinese)
         return []
     endif
-    " -----------------------------------
     let results_unicode = []  |" 马力 => u9a6c u529b
+    let results_digit = []    |" 马力 => 7712 4002
+    let results_pinyin = []   |" 马力 => ma3 li2
+    let result_cjjp = ""      |" 马力 => ml
     let items = s:vimim_reverse_one_entry(chinese, 'unicode')
     call add(results_unicode, get(items,0))
     call add(results_unicode, get(items,1))
-    " -----------------------------------
     call s:vimim_build_unihan_reverse_cache(chinese)
-    let results_digit = []  |" 马力 => 7712 4002
     if len(s:unihan_4corner_cache) > 1
         let items = s:vimim_reverse_one_entry(chinese, 'unihan')
         call add(results_digit, get(items,0))
         call add(results_digit, get(items,1))
-    endif
-    " -----------------------------------
-    let results_pinyin = []   |" 马力 => ma3 li2
-    let result_cjjp = ""      |" 马力 => ml
-    if len(s:unihan_4corner_cache) > 1
         let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
         if len(items) > 0
             let pinyin_head = get(items,0)
@@ -3940,12 +3935,11 @@ function! s:vimim_get_data_from_directory(keyboard, im)
     if empty(dir)
         return []
     endif
-    let results = []
     let filename = dir . '/' . a:keyboard
     if filereadable(filename)
-        let results = readfile(filename)
+        return readfile(filename)
     endif
-    return results
+    return []
 endfunction
 
 " -----------------------------------------------------
