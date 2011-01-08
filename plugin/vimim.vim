@@ -1687,6 +1687,11 @@ call add(s:vimims, VimIM)
 function! s:vimim_pair_list(matched_list)
 " ---------------------------------------
     let pair_matched_list = []
+    if !empty(len(s:menu_digit_as_filter))
+        let chinese = join(a:matched_list,'')
+        let chinese = substitute(chinese,'\s\|\w','','g')
+        call s:vimim_build_unihan_reverse_cache(chinese)
+    endif
     for line in a:matched_list
         if len(line) < 2
             continue
@@ -1699,10 +1704,9 @@ function! s:vimim_pair_list(matched_list)
         let oneline_list = split(line)
         let menu = remove(oneline_list, 0)
         for chinese in oneline_list
-            if !empty(len(s:menu_digit_as_filter))
-                call s:vimim_build_unihan_reverse_cache(chinese)
+            if s:pinyin_4corner_filter > 0
+                let chinese = s:vimim_digit_filter(chinese)
             endif
-            let chinese = s:vimim_digit_filter(chinese)
             if !empty(chinese)
                 call add(pair_matched_list, menu .' '. chinese)
             endif
@@ -2222,7 +2226,9 @@ function! s:vimim_reverse_lookup(chinese)
     let items = s:vimim_reverse_one_entry(chinese, 'unicode')
     call add(results_unicode, get(items,0))
     call add(results_unicode, get(items,1))
-    call s:vimim_build_unihan_reverse_cache(chinese)
+    if s:pinyin_4corner_filter > 0
+        call s:vimim_build_unihan_reverse_cache(chinese)
+    endif
     if len(s:unihan_4corner_cache) > 1
         let items = s:vimim_reverse_one_entry(chinese, 'unihan')
         call add(results_digit, get(items,0))
@@ -2257,29 +2263,23 @@ function! s:vimim_reverse_lookup(chinese)
     return results
 endfunction
 
-" -------------------------------------------
-function! s:vimim_build_one_unihan_cache(key)
-" -------------------------------------------
-    let key = a:key
-    if !has_key(s:unihan_4corner_cache, key)
-        let results = s:vimim_get_data_from_directory(key, 'unihan')
-        let s:unihan_4corner_cache[key] = results
-    endif
-endfunction
-
 " ---------------------------------------------------
 function! s:vimim_build_unihan_reverse_cache(chinese)
 " ---------------------------------------------------
-" [input]  馬力       [unihan] u808f => 8022 cao4 copulate
+" [input]  馬力     [unihan] u808f => 8022 cao4 copulate
 " [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
 " ---------------------------------------------------
     if s:pinyin_4corner_filter < 2
         return
     endif
-    let chinese = substitute(a:chinese,'\w','','g')
-    for char in split(chinese, '\zs')
+    for char in split(a:chinese, '\zs')
         let key = printf('u%x',char2nr(char))
-        call s:vimim_build_one_unihan_cache(key)
+        if !has_key(s:unihan_4corner_cache, key)
+            let results = s:vimim_get_data_from_directory(key, 'unihan')
+            if !empty(results)
+                let s:unihan_4corner_cache[key] = results
+            endif
+        endif
     endfor
 endfunction
 
