@@ -14,7 +14,6 @@ let $VimIM = "$Revision$"
 " - VimIM 環境:  type:          vimim<C-6><C-6>
 " - VimIM 程式:  type:       vimimvim<C-6><C-6>
 " - VimIM 幫助:  type:      vimimhelp<C-6><C-6>
-" - VimIM 測試:  type:     vimimdebug<C-6><C-6>
 " -------------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/list"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506"]
@@ -602,9 +601,7 @@ function! s:vimim_easter_chicken(keyboard)
     try
         return eval("<SID>vimim_egg_".egg."()")
     catch
-        if s:vimimdebug > 0
-            call s:debugs('egg::exception=', v:exception)
-        endif
+        call s:debugs('egg::exception=', v:exception)
         return []
     endtry
 endfunction
@@ -2432,10 +2429,8 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
         let msg = "pinyin breakdown: pinyin=>pin'yin"
     endif
     let keyboard2 = s:vimim_quanpin_transform(a:keyboard)
-    if s:vimimdebug > 0
-        call s:debugs('pinyin_in', a:keyboard)
-        call s:debugs('pinyin_out', keyboard2)
-    endif
+    call s:debugs('pinyin_in', a:keyboard)
+    call s:debugs('pinyin_out', keyboard2)
     let results = split(keyboard2,"'")
     if len(results) > 1
         return results
@@ -2582,10 +2577,8 @@ function! s:vimim_get_pinyin_from_shuangpin(keyboard)
 " ---------------------------------------------------
     let keyboard = a:keyboard
     let keyboard2 = s:vimim_shuangpin_transform(keyboard)
-    if s:vimimdebug > 0
-        call s:debugs('shuangpin_in', keyboard)
-        call s:debugs('shuangpin_out', keyboard2)
-    endif
+    call s:debugs('shuangpin_in', keyboard)
+    call s:debugs('shuangpin_out', keyboard2)
     if keyboard2 ==# keyboard
         let msg = "no point to do transform"
     else
@@ -4379,9 +4372,7 @@ function! s:vimim_get_sogou_key()
         endif
     catch
         let msg = "It looks like sogou has trouble with its cloud?"
-        if s:vimimdebug > 0
-            call s:debugs('sogou::exception=', v:exception)
-        endif
+        call s:debugs('sogou::exception=', v:exception)
         let output = 0
     endtry
     if empty(output)
@@ -4420,9 +4411,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
         endif
     catch
         let msg = "it looks like sogou has trouble with its cloud?"
-        if s:vimimdebug > 0
-            call s:debugs('sogou::exception=', v:exception)
-        endif
+        call s:debugs('sogou::exception=', v:exception)
         let output = 0
     endtry
     call s:debugs('sogou::outputquery=', output)
@@ -4565,10 +4554,8 @@ function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
 "  use the same function to access mycloud by libcall() or system()
     let executable = s:www_executable
-    if s:vimimdebug > 0
-        call s:debugs("cloud", a:cloud)
-        call s:debugs("cmd", a:cmd)
-    endif
+    call s:debugs("cloud", a:cloud)
+    call s:debugs("cmd", a:cmd)
     if s:cloud_plugin_mode == "libcall"
         let arg = s:cloud_plugin_arg
         if empty(arg)
@@ -4635,9 +4622,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
                 return cloud
             endif
         catch
-            if s:vimimdebug > 0
-                call s:debugs('libcall_mycloud2::error=',v:exception)
-            endif
+            call s:debugs('libcall_mycloud2::error=',v:exception)
         endtry
     endif
     " libcall check failed, we now check system()
@@ -4726,10 +4711,8 @@ function! s:vimim_check_mycloud_plugin_url()
                     return cloud
                 endif
             catch
-                if s:vimimdebug > 0
-                    let key = 'libcall_mycloud1::error='
-                    call s:debugs(key, v:exception)
-                endif
+                let key = 'libcall_mycloud1::error='
+                call s:debugs(key, v:exception)
             endtry
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
@@ -4760,9 +4743,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
         let output = s:vimim_access_mycloud(cloud, input)
     catch
         let output = 0
-        if s:vimimdebug > 0
-            call s:debugs('mycloud::error=',v:exception)
-        endif
+        call s:debugs('mycloud::error=',v:exception)
     endtry
     if empty(output)
         return []
@@ -4901,13 +4882,15 @@ endfunction
 " ----------------------------
 function! s:debugs(key, value)
 " ----------------------------
-    let item = '['
-    let item .= s:debug_count
-    let item .= ']'
-    let item .= a:key
-    let item .= '='
-    let item .= a:value
-    call add(s:debugs, item)
+    if s:vimimdebug > 0
+        let item = '['
+        let item .= s:debug_count
+        let item .= ']'
+        let item .= a:key
+        let item .= '='
+        let item .= a:value
+        call add(s:debugs, item)
+    endif
 endfunction
 
 " -----------------------------
