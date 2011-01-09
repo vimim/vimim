@@ -1310,16 +1310,10 @@ function! s:vimim_onekey_label_navigation_on()
 " --------------------------------------------
     let hjkl = 'hjklmnsx'
     let hjkl_list = split(hjkl, '\zs')
-    " --------------------------------- todo
-    if empty(s:pinyin_4corner_filter)
-        call extend(hjkl_list, ['p'])
-    endif
-    " ---------------------------------
     for _ in hjkl_list
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_onekey_label_navigation("'._.'")'
     endfor
-    " ---------------------------------
 endfunction
 
 " --------------------------------
@@ -3689,7 +3683,7 @@ function! s:vimim_scan_backend_embedded_directory()
     endif
     " -----------------------------------
     if isdirectory(s:path2)
-        let msg = " use directory as backend "
+        let msg = " use directory as backend database "
     else
         let s:path2 = 0
         let return
@@ -3843,14 +3837,25 @@ endfunction
 function! s:vimim_get_data_from_directory(keyboard, im)
 " -----------------------------------------------------
     let dir = s:vimim_get_valid_directory(a:im)
-    if empty(dir)
+    if empty(dir) && empty(s:path3)
         return []
     endif
+    let lines = []
     let filename = dir . '/' . a:keyboard
     if filereadable(filename)
-        return readfile(filename, 2)
+        if a:im == 'unihan'
+            let lines = readfile(filename, '', 2)
+        else
+            let lines = readfile(filename)
+        endif
     endif
-    return []
+    if empty(lines)
+        let filename = s:path3 . a:keyboard
+        if filereadable(filename)
+            let lines = readfile(filename)
+        endif
+    endif
+    return lines
 endfunction
 
 " -----------------------------------------------------
@@ -3902,7 +3907,7 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_sentence_directory(keyboard)
 " ------------------------------------------------
-    let msg = "Directory data is natural to vim editor."
+    let msg = "Directory data is natural to text editor like vi."
     let keyboard = a:keyboard
     let results = []
     let keyboards = s:vimim_sentence_match_directory(keyboard, s:ui.im)
@@ -3919,7 +3924,7 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     let keyboard = a:keyboard
     let dir = s:vimim_get_valid_directory(a:im)
     let filename = dir . '/' . keyboard
-    if filereadable(filename)
+    if filereadable(filename) || keyboard =~ '^oo'
         return [keyboard]
     endif
     " --------------------------------------------------
@@ -4759,6 +4764,7 @@ function! s:vimim_initialize_debug()
         return
     endif
     let s:path2 = "/home/vimim/"
+    let s:path3 = "/home/xma/oo/"
     let svn = s:path2 . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
