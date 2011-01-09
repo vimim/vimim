@@ -343,6 +343,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_data_directory")
+    call add(G, "g:vimim_private_data_directory")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_vimimdata")
     call add(G, "g:vimim_libvimdll")
@@ -368,11 +369,11 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let s:backend_loaded = 0
     let s:path2 = s:vimim_data_directory
+    let s:path3 = s:vimim_private_data_directory
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = "dynamic"
     endif
-    " -----------------------------------
 endfunction
 
 " ----------------------------------------------------
@@ -3841,18 +3842,18 @@ function! s:vimim_get_data_from_directory(keyboard, im)
         return []
     endif
     let lines = []
-    let filename = dir . '/' . a:keyboard
+    let filename = s:path3 . a:keyboard
     if filereadable(filename)
-        if a:im == 'unihan'
-            let lines = readfile(filename, '', 2)
-        else
-            let lines = readfile(filename)
-        endif
+        let lines = readfile(filename)
     endif
     if empty(lines)
-        let filename = s:path3 . a:keyboard
+        let filename = dir . '/' . a:keyboard
         if filereadable(filename)
-            let lines = readfile(filename)
+            if a:im == 'unihan'
+                let lines = readfile(filename, '', 2)
+            else
+                let lines = readfile(filename)
+            endif
         endif
     endif
     return lines
@@ -4763,8 +4764,8 @@ function! s:vimim_initialize_debug()
     if !isdirectory("/home/xma")
         return
     endif
-    let s:path2 = "/home/vimim/"
     let s:path3 = "/home/xma/oo/"
+    let s:path2 = "/home/vimim/"
     let svn = s:path2 . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
