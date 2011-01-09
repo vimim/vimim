@@ -15,7 +15,6 @@ let $VimIM = "$Revision$"
 let egg  = ["http://code.google.com/p/vimim/issues/list"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let egg += ["http://vimim-data.googlecode.com"]
-let egg += ["http://pim-cloud.appspot.com"]
 let egg += ["http://groups.google.com/group/vimim"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
@@ -74,9 +73,9 @@ call add(s:vimims, VimIM)
 " --------------------
 " "VimIM Installation"
 " --------------------
-" # (1) drop this file to plugin/: plugin/vimim.vim
-" # (2) [option] drop a datafile:  plugin/vimim.pinyin.txt
-" # (3) [option] drop a directory: plugin/vimim/pinyin/
+" # (1) drop this file to plugin/:  plugin/vimim.vim
+" # (2) [option] drop a datafile:   plugin/vimim.pinyin.txt
+" # (3) [option] drop a directory:  plugin/vimim/pinyin/
 
 " ======================================== }}}
 let VimIM = " ====  Initialization    ==== {{{"
@@ -2424,8 +2423,6 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
         return []
     endif
     let keyboard2 = s:vimim_quanpin_transform(a:keyboard)
-    call s:debugs('pinyin_in', a:keyboard)
-    call s:debugs('pinyin_out', keyboard2)
     let results = split(keyboard2,"'")
     if len(results) > 1
         return results
@@ -4408,7 +4405,6 @@ function! s:vimim_scan_backend_mycloud()
 " let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
 " -----------------------------------------------------------------------
     let embedded_backend = s:vimim_has_embedded_backend()
     if empty(embedded_backend)
