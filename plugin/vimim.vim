@@ -41,8 +41,7 @@ let VimIM = " ====  Vim Input Method  ==== {{{"
 "            * CJK can be input without changing mode
 "            * support "wubi", "erbi", "boshiamy", "cangjie", "taijima"
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
-"            * support direct "UNICODE"/"GBK"/"Big5" input
-"            * It is independent of OS and mbyte-XIM/mbyte-IME API.
+"            * support direct internal code (UNICODE/GBK/Big5) input
 " -----------------------------------------------------------
 
 let s:vimims = [VimIM]
@@ -197,7 +196,6 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:debugs = []
     let s:debug_count = 0
-    " -----------------------------------
 endfunction
 
 " -------------------------------
@@ -2423,10 +2421,10 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
 " ------------------------------------------------
-    if !empty(s:vimim_shuangpin)
-        return []
-    else
+    if empty(s:vimim_shuangpin)
         let msg = "pinyin breakdown: pinyin=>pin'yin"
+    else
+        return []
     endif
     let keyboard2 = s:vimim_quanpin_transform(a:keyboard)
     call s:debugs('pinyin_in', a:keyboard)
@@ -3032,7 +3030,6 @@ function! s:vimim_localization()
     if s:localization > 0
         let warning = "performance hit if &encoding & datafile differs!"
     endif
-    " ---------------------------------------------
     let s:multibyte = 2
     if &encoding == "utf-8"
         let s:multibyte = 3
@@ -3089,55 +3086,6 @@ function! s:vimim_get_unicode(keyboard)
         call add(numbers, digit)
     endfor
     return s:vimim_get_unicodes(numbers,1)
-endfunction
-
-" -----------------------------------------
-function! s:vimim_without_backend(keyboard)
-" -----------------------------------------
-    let keyboard = a:keyboard
-    if keyboard =~ '\l' && len(keyboard) == 1
-        let msg = "make abcdefghijklmnopqrst alive"
-    else
-        return []
-    endif
-    let numbers = []
-    let gbk = {}
-    let a = char2nr('a')
-    " ---------------------------------------
-    let start = 19968
-    if s:encoding ==# "chinese"
-        let start = 0xb0a1
-        let az  = " b0a1 b0c5 b2c1 b4ee b6ea b7a2 b8c1 baa1 bbf7 "
-        let az .= " bbf7 bfa6 c0ac c2e8 c4c3 c5b6 c5be c6da c8bb "
-        let az .= " c8f6 cbfa cdda cdda cdda cef4 d1b9 d4d1"
-        let gb_code_orders = split(az)
-        for xxxx in s:az_list
-            if !empty(nr2char(xxxx))
-                let gbk[nr2char(xxxx)] = "0x" . get(gb_code_orders, xxxx-a)
-            endif
-        endfor
-    elseif s:encoding ==# "taiwan"
-        let start = 42048
-    endif
-    " ----------------------------------------------------------
-    " [purpose] to input Chinese without datafile nor internet
-    "  (1) every abcdefghijklmnopqrstuvwxy shows different menu
-    "  (2) every char displays 16*16*3=768 glyph in omni menu
-    "  (3) the total number of glyphs is 16*16*3*26=19968
-    " ----------------------------------------------------------
-    let label = char2nr(keyboard) - a
-    let block = 16*16*3
-    let start += label*block
-    if s:encoding ==# "chinese" && has_key(gbk, keyboard)
-        let start = gbk[keyboard]
-    endif
-    let end = start + block
-    for i in range(start, end)
-        call add(numbers, str2nr(i,10))
-    endfor
-    " ------------------------------------
-    return s:vimim_get_unicodes(numbers,0)
-    " ------------------------------------
 endfunction
 
 " ------------------
