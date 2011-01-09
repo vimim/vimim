@@ -1149,9 +1149,11 @@ endfunction
 function! s:vimim_cursor_color(switch)
 " ------------------------------------
     if empty(a:switch)
-        highlight! Cursor guifg=bg guibg=fg
+        set ruler
+        highlight! Cursor  guifg=bg   guibg=fg
     else
-        highlight! Cursor guifg=bg guibg=Green
+        set noruler
+        highlight! Cursor  guifg=bg   guibg=green
     endif
 endfunction
 
