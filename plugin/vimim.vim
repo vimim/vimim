@@ -172,8 +172,8 @@ function! s:vimim_initialize_session()
     let s:pinyin_4corner_filter = 0
     let s:xingma = ['wubi', 'erbi', '4corner']
     " --------------------------------
-    let s:abcd = "'abcdefg"
-    let s:pqwertyuio = range(10)
+    let s:abcd = "'abcdefgz"
+    let s:qwerty = range(10)
     let s:quantifiers = {}
     let s:valid_key = 0
     let s:localization = 0
@@ -1775,7 +1775,8 @@ function! s:vimim_get_labeling(label)
 " -----------------------------------
     let label = a:label
     let labeling = label
-    if s:chinese_input_mode =~ 'onekey' && label < &pumheight+1
+    if s:chinese_input_mode =~ 'onekey'
+    \&& label < &pumheight+1
         let label2 = s:abcd[label-1 : label-1]
         if label < 2
             let label2 = "_"
@@ -2326,7 +2327,7 @@ endfunction
 function! s:vimim_onekey_1234567890_filter_on()
 " ---------------------------------------------
     if s:pinyin_4corner_filter > 0
-        for _ in s:pqwertyuio
+        for _ in s:qwerty
             sil!exe'inoremap <silent>  '._.'
             \  <C-R>=<SID>vimim_onekey_1234567890_filter("'._.'")<CR>'
         endfor
@@ -2341,7 +2342,7 @@ function! <SID>vimim_onekey_1234567890_filter(n)
         if s:pinyin_4corner_filter < 1
             let msg = "use 1234567890 as pinyin filter"
         else
-            let label_alpha = join(s:pqwertyuio,'')
+            let label_alpha = join(s:qwerty,'')
             let label = match(label_alpha, a:n)
         endif
         if empty(len(s:menu_digit_as_filter))
@@ -3007,8 +3008,8 @@ function! s:vimim_localization()
     endif
     " ---------------------------------------------
     if s:pinyin_4corner_filter > 0
-        let s:abcd = "'abcdfgvz"
-        let s:pqwertyuio = split('pqwertyuio', '\zs')
+        let s:abcd = "'abcdvfgz"
+        let s:qwerty = split('pqwertyuio', '\zs')
     endif
     " ---------------------------------------------
     let datafile_fenc_chinese = 0
