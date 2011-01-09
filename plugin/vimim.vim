@@ -370,7 +370,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_onekey_double_ctrl6")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -868,11 +867,9 @@ function! s:vimim_onekey_action(onekey)
         if s:pattern_not_found > 0
             let s:pattern_not_found = 0
             let onekey = " "
-        elseif s:vimim_onekey_double_ctrl6
+        else
             let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_ee()\<CR>'
             let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
-        else
-            let onekey = "\<C-E>"
         endif
         sil!exe 'sil!return "' . onekey . '"'
     endif
@@ -1262,7 +1259,7 @@ endfunction
 " --------------------------
 function! s:vimim_label_on()
 " --------------------------
-    let labels = range(8)
+    let labels = range(9)
     if &pumheight > 0
         let labels = range(1, &pumheight)
     endif
@@ -1318,9 +1315,9 @@ endfunction
 " --------------------------------------------
 function! s:vimim_onekey_label_navigation_on()
 " --------------------------------------------
-    let hjkl = 'hjklmnsxv'
+    let hjkl = 'hjklmnsx'
     let hjkl_list = split(hjkl, '\zs')
-    " ---------------------------------
+    " --------------------------------- todo
     if empty(s:pinyin_4corner_filter)
         call extend(hjkl_list, ['p'])
     endif
@@ -1368,12 +1365,6 @@ function! <SID>vimim_onekey_label_navigation(key)
             let s:pumvisible_ctrl_e = 1
             let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
-        elseif a:key == 'v'
-            let s:pumvisible_hjkl_2nd_match = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'p'
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_ee()\<CR>'
-            let hjkl .= "\<C-R>=g:vimim_pumvisible_dump()\<CR>"
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -1639,12 +1630,9 @@ endfunction
 " ------------------------------------
 function! g:vimim_pumvisible_ctrl_ee()
 " ------------------------------------
-    let key = ""
-    if pumvisible()
-        let key  = "\<C-E>"
-        let key .= '\<C-R>=g:vimim()\<CR>'
-        let key .= "\<C-E>"
-    endif
+    let key  = "\<C-E>"
+    let key .= '\<C-R>=g:vimim()\<CR>'
+    let key .= "\<C-E>"
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1947,7 +1935,7 @@ function! s:vimim_punctuation_navigation_on()
         return
     endif
     let dot = "."
-    let punctuation = "=-[]"
+    let punctuation = "=-[]<"
     if s:chinese_input_mode =~ 'onekey'
         let punctuation .= dot . ",/?"
     endif
@@ -1982,6 +1970,9 @@ function! <SID>vimim_punctuations_navigation(key)
             let hjkl  = '\<C-R>=g:vimim_menu_search_backward()\<CR>'
         elseif a:key =~ "[-,=.]"
             let hjkl = s:vimim_pageup_pagedown(a:key)
+        elseif a:key == '<'
+            let s:pumvisible_hjkl_2nd_match = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         endif
     else
         if s:chinese_input_mode !~ 'onekey'
@@ -3016,7 +3007,7 @@ function! s:vimim_localization()
     endif
     " ---------------------------------------------
     if s:pinyin_4corner_filter > 0
-        let s:abcd = "'abcdfgz"
+        let s:abcd = "'abcdfgvz"
         let s:pqwertyuio = split('pqwertyuio', '\zs')
     endif
     " ---------------------------------------------
@@ -4039,7 +4030,7 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
         endif
     endif
     " --------------------------------------------
-    let msg = " yeyeqifangcao "
+    let msg = " yeyeqifangcao  <C-6> <Space> <Space> < <Space> "
     let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
     if len(pinyins) > 1
         let last = pinyins[-1:-1]
@@ -5057,7 +5048,7 @@ function! s:vimim_i_setting_on()
 " ------------------------------
     set nolazyredraw
     if empty(&pumheight)
-        let &pumheight=8
+        let &pumheight=9
     endif
     set hlsearch
     set smartcase
