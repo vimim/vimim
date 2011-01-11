@@ -1241,12 +1241,12 @@ endfunction
 function! s:vimim_get_chinese_im()
 " --------------------------------
     let input_style = s:vimim_chinese('classic')
-    if s:chinese_input_mode =~ 'dynamic'
-        let input_style .= s:vimim_chinese('dynamic')
-    elseif s:chinese_input_mode =~ 'static'
-        let input_style .= s:vimim_chinese('static')
-    elseif s:chinese_input_mode =~ 'onekey'
+    if s:chinese_input_mode =~ 'onekey' && s:vimim_tab_as_onekey > 0
         let input_style = s:vimim_chinese('onekey')
+    elseif s:vimim_chinese_input_mode =~ 'dynamic'
+        let input_style .= s:vimim_chinese('dynamic')
+    elseif s:vimim_chinese_input_mode =~ 'static'
+        let input_style .= s:vimim_chinese('static')
     endif
     let statusline = s:left . s:ui.statusline . s:right
     return statusline . input_style
