@@ -4032,7 +4032,7 @@ function! s:vimim_mkdir(option)
     let lines = readfile(bufname("%"))
     let option = a:option
     for line in lines
-        if line =~ '^#'
+        if line =~ '^\W' || line =~ '^\U'
             continue
         endif
         let entries = split(line)
