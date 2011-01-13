@@ -446,10 +446,9 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "错误报告" . s:colon . s:vimimhelp[0])
     call add(eggs, "官方网址" . s:colon . s:vimimhelp[1])
     call add(eggs, "民间词库" . s:colon . s:vimimhelp[2])
-    call add(eggs, "自己的云" . s:colon . s:vimimhelp[3])
-    call add(eggs, "新闻论坛" . s:colon . s:vimimhelp[4])
-    call add(eggs, "最新主页" . s:colon . s:vimimhelp[5])
-    call add(eggs, "最新程式" . s:colon . s:vimimhelp[6])
+    call add(eggs, "新闻论坛" . s:colon . s:vimimhelp[3])
+    call add(eggs, "最新主页" . s:colon . s:vimimhelp[4])
+    call add(eggs, "最新程式" . s:colon . s:vimimhelp[5])
     " ---------------------------------------------------
     return map(eggs, '"VimIM " . v:val . s:space')
 endfunction
