@@ -100,7 +100,7 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_build_digit_filter_lines()
     sil!call s:vimim_build_datafile_lines()
     sil!call s:vimim_localization()
-        call s:vimim_initialize_skin()
+    sil!call s:vimim_initialize_skin()
 endfunction
 
 " ---------------------------------------------
@@ -169,7 +169,6 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
     let s:quantifiers = {}
-    let s:valid_key = 0
     let s:localization = 0
     let s:tail = ""
     " --------------------------------
@@ -189,6 +188,9 @@ function! s:vimim_initialize_session()
     let s:Az_list = map(Az_nr_list,"nr2char(".'v:val'.")")
     let s:az_list = map(range(a,z),"nr2char(".'v:val'.")")
     let s:AZ_list = map(range(A,Z),"nr2char(".'v:val'.")")
+    " --------------------------------
+    let s:valid_key = 0
+    let s:valid_keys = s:az_list
     " --------------------------------
     let s:debugs = []
     let s:debug_count = 0
@@ -972,6 +974,7 @@ function! <SID>ChineseMode()
 " --------------------------
     call s:vimim_backend_initialization_once()
     call s:vimim_frontend_initialization()
+    call s:vimim_initialize_statusline()
     call s:vimim_build_datafile_cache()
     let s:chinese_input_mode = s:vimim_chinese_input_mode
     let action = ""
@@ -1123,24 +1126,41 @@ call add(s:vimims, VimIM)
 
 " ---------------------------------
 function! s:vimim_initialize_skin()
-" --------------------------------- todo
-    if s:vimim_custom_skin < 0
-        return
-    endif
-    if s:vimim_custom_skin < 3
-        set laststatus=2
-        sil!call s:vimim_set_statusline()
-    else
-        echoh NonText | echo s:vimim_statusline() | echohl None
-    endif
+" ---------------------------------
     if s:vimim_custom_skin > 1
-        " ------------------------------
         highlight! link PmenuSel   Title
         highlight! link StatusLine Title
         highlight!      Pmenu      NONE
         highlight!      PmenuSbar  NONE
         highlight!      PmenuThumb NONE
-        " ------------------------------
+    endif
+endfunction
+
+" ---------------------------------------
+function! s:vimim_initialize_statusline()
+" ---------------------------------------
+    if s:vimim_custom_skin < 0
+        return
+    endif
+    if s:vimim_custom_skin < 3
+        sil!call s:vimim_set_statusline()
+    else
+        echoh NonText | echo s:vimim_statusline() | echohl None
+    endif
+endfunction
+
+" --------------------------------
+function! s:vimim_set_statusline()
+" --------------------------------
+    set laststatus=2
+    if empty(&statusline)
+        set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
+    elseif &statusline =~ 'IMName'
+        " nothing, because it is already in the statusline
+    elseif &statusline =~ '\V\^%!'
+        let &statusline .= '.IMName()'
+    else
+        let &statusline .= '%{IMName()}'
     endif
 endfunction
 
@@ -1153,20 +1173,6 @@ function! s:vimim_cursor_color(switch)
     else
         set noruler
         highlight! Cursor  guifg=bg   guibg=green
-    endif
-endfunction
-
-" --------------------------------
-function! s:vimim_set_statusline()
-" --------------------------------
-    if empty(&statusline)
-        set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
-    elseif &statusline =~ 'IMName'
-        " nothing, because it is already in the statusline
-    elseif &statusline =~ '\V\^%!'
-        let &statusline .= '.IMName()'
-    else
-        let &statusline .= '%{IMName()}'
     endif
 endfunction
 
