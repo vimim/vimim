@@ -806,9 +806,18 @@ function! <SID>OneKey()
 " (1) <OneKey> => start OneKey as "hit and run"
 " (2) <OneKey> => stop  OneKey and print out menu
 " -----------------------------------------------
-    sil!call s:vimim_start_onekey()
-    let action = s:vimim_onekey_action("")
-    sil!exe 'sil!return "' . action . '"'
+    let onekey = ""
+    let byte_before = getline(".")[col(".")-2]
+    if empty(byte_before) || byte_before =~ '\s'
+        if s:vimim_tab_as_onekey > 0
+            let onekey = "\t"
+        endif
+    endif
+    if empty(onekey)
+        sil!call s:vimim_start_onekey()
+        let onekey = s:vimim_onekey_action("")
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 " ------------------------------
@@ -868,10 +877,10 @@ function! s:vimim_onekey_action(onekey)
         let s:insert_without_popup = 0
     endif
     " ---------------------------------------------------
-    let byte_before = getline(".")[col(".")-2]
+    let before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     if char_before_before !~# "[0-9A-z]"
-    \&& has_key(s:punctuations, byte_before)
+    \&& has_key(s:punctuations, before)
     \&& empty(s:ui.has_dot)
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
@@ -883,42 +892,30 @@ function! s:vimim_onekey_action(onekey)
         endfor
         if empty(onekey)
             let msg = "transform punctuation from english to chinese"
-            let replacement = s:punctuations[byte_before]
+            let replacement = s:punctuations[before]
             let onekey = "\<BS>" . replacement
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
     " -------------------------------------------------
     let onekey = a:onekey
-    if byte_before !~# s:valid_key
-        if empty(byte_before) || byte_before =~ '\s'
-            if s:vimim_tab_as_onekey > 0
-                let onekey = "\t"
-            endif
-        elseif empty(a:onekey)
-        \&& match(s:valid_keys,'\d') > -1
-            return s:vimim_get_unicode_menu()
-        endif
+    if before !~# s:valid_key
+    \&& empty(a:onekey)
+    \&& match(s:valid_keys,'\d') > -1
+        return s:vimim_get_unicode_menu()
     endif
     " ---------------------------------------------------
-    if byte_before ==# "'" && empty(s:ui.has_dot)
+    if before ==# "'" && empty(s:ui.has_dot)
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
-    if s:seamless_positions != getpos(".")
-    \&& s:pattern_not_found < 1
+    if s:seamless_positions != getpos(".") && s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
     else
         let onekey = ""
     endif
     " ---------------------------------------------------
-    if empty(byte_before) || byte_before =~ '\s'
-        if s:vimim_tab_as_onekey > 0
-            let onekey = "\t"
-        else
-            let onekey = a:onekey
-        endif
-    elseif byte_before !~# s:valid_key
+    if empty(before) || before =~ '\s' || before !~# s:valid_key
         let onekey = a:onekey
     endif
     " ---------------------------------------------------
