@@ -344,6 +344,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_private_data_directory")
+    call add(G, "g:vimim_private_data_file")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_vimimdata")
     call add(G, "g:vimim_libvimdll")
@@ -368,8 +369,6 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
     let s:backend_loaded = 0
-    let s:path2 = s:vimim_data_directory
-    let s:path3 = s:vimim_private_data_directory
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = "dynamic"
@@ -545,8 +544,8 @@ function! s:vimim_egg_vimim()
     " ----------------------------------
     let option = 0
     if s:pinyin_4corner_filter == 2
-        if !empty(s:path2)
-            let option = ciku . s:path2 . "unihan/"
+        if !empty(s:vimim_data_directory)
+            let option = ciku . s:vimim_data_directory . "unihan/"
         endif
     elseif s:pinyin_4corner_filter == 1
         let option = s:path . "vimim.unihan_4corner.txt"
@@ -2164,7 +2163,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     if empty(range)
         call s:vimim_backend_initialization_once()
         if keyboard =~ '\s'
-            if !empty(s:path2)
+            if !empty(s:vimim_data_directory)
                 call s:vimim_visual_ctrl_6_update()
             endif
         else
@@ -2195,16 +2194,31 @@ function! s:vimim_visual_ctrl_6_update()
 " purpose: update one entry to directory database
 " input example (one line, within vim): cjjp 超级简拼
 " action: (1) cursor on space (2) v (3) ctrl_6
-" result: (1) confirm or create new file: /home/vimim/pinyin/cjjp
-"         (2) update content, with 超级简拼 as first line
+" result: (1) confirm or create new file based on the "left": cjjp
+"         (2) update content, with the "right", as first line
     let current_line = getline(".")
     let fields = split(current_line)
     let left = get(fields,0)
     let right = get(fields,1)
     if left =~# '\l' && right =~# '\W'
-        let dir = s:path2 . "pinyin"
+        let dir = s:vimim_data_directory . "pinyin"
         let lines = [current_line]
         call s:vimim_mkdir('prepend', dir, lines)
+        call s:vimim_append_to_datafile()
+    endif
+endfunction
+
+" ------------------------------------
+function! s:vimim_append_to_datafile()
+" ------------------------------------
+    let datafile = s:vimim_private_data_file
+    if empty(datafile)
+        return
+    endif
+    if filereadable(datafile)
+        let lines = readfile(datafile)
+        call add(lines, getline("."))
+        call writefile(lines, s:vimim_private_data_file)
     endif
 endfunction
 
@@ -3220,7 +3234,7 @@ call add(s:vimims, VimIM)
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if empty(s:path2)
+    if empty(s:vimim_data_directory)
         let msg = "no need datafile when directory exists"
     else
         return
@@ -3231,7 +3245,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_do_force_datafile(im)
 " -------------------------------------
-    let s:path2 = 0
+    let s:vimim_data_directory = 0
     let s:vimim_cloud_sogou = 0
     let s:vimim_cloud_plugin = 0
     if match(s:xingma, a:im) < 0
@@ -3707,14 +3721,14 @@ call add(s:vimims, VimIM)
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if empty(s:path2)
-         let s:path2 = s:path . "vimim/"
+    if empty(s:vimim_data_directory)
+         let s:vimim_data_directory = s:path . "vimim/"
     endif
     " -----------------------------------
-    if isdirectory(s:path2)
+    if isdirectory(s:vimim_data_directory)
         let msg = " use directory as backend database "
     else
-        let s:path2 = 0
+        let s:vimim_data_directory = 0
         let return
     endif
     " -----------------------------------
@@ -3734,7 +3748,7 @@ function! s:vimim_scan_backend_embedded_directory()
         if s:chinese_input_mode !~ 'onekey'
         \|| buffer =~ 'dynamic' || buffer =~ 'static'
             let msg = 'digit filter for onekey only'
-        elseif im =~ 'pinyin' && isdirectory(s:path2 . "unihan")
+        elseif isdirectory(s:vimim_data_directory . "unihan")
             let s:pinyin_4corner_filter = 2
         endif
     endif
@@ -3742,7 +3756,7 @@ function! s:vimim_scan_backend_embedded_directory()
     let im = s:vimim_get_valid_im_name(im)
     let s:ui.root = "directory"
     let s:ui.im = im
-    let datafile = s:path2 . im
+    let datafile = s:vimim_data_directory . im
     call add(s:ui.frontends, [s:ui.root, s:ui.im])
     if empty(s:backend.directory)
         let s:backend.directory[im] = s:vimim_one_backend_hash()
@@ -3838,10 +3852,10 @@ endfunction
 function! s:vimim_get_valid_directory(im)
 " ---------------------------------------
     let im = a:im
-    if empty(im) || empty(s:path2)
+    if empty(im) || empty(s:vimim_data_directory)
         return 0
     endif
-    let dir = s:path2 . im
+    let dir = s:vimim_data_directory . im
     if isdirectory(dir)
         return dir
     else
@@ -3866,11 +3880,11 @@ endfunction
 function! s:vimim_get_data_from_directory(keyboard, im)
 " -----------------------------------------------------
     let dir = s:vimim_get_valid_directory(a:im)
-    if empty(dir) && empty(s:path3)
+    if empty(dir) && empty(s:vimim_private_data_directory)
         return []
     endif
     let lines = []
-    let filename = s:path3 . a:keyboard
+    let filename = s:vimim_private_data_directory . a:keyboard
     if filereadable(filename)
         let lines = readfile(filename)
     endif
@@ -4798,9 +4812,10 @@ function! s:vimim_initialize_debug()
     if !isdirectory("/home/xma")
         return
     endif
-    let s:path3 = "/home/xma/oo/"
-    let s:path2 = "/home/vimim/"
-    let svn = s:path2 . "svn"
+    let s:vimim_private_data_directory = "/home/xma/oo/"
+    let s:vimim_private_data_file =      "/home/xma/oo/io"
+    let s:vimim_data_directory =         "/home/vimim/"
+    let svn = s:vimim_data_directory . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
     let s:vimim_custom_skin = 3
