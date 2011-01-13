@@ -2188,16 +2188,16 @@ endfunction
 " --------------------------------------
 function! s:vimim_visual_ctrl_6_update()
 " --------------------------------------
-" purpose: update one entry to directory database
+" purpose: update one entry to the directory database
 " input example (one line, within vim): cjjp 超级简拼
 " action: (1) cursor on space (2) v (3) ctrl_6
 " result: (1) confirm or create new file based on the "left": cjjp
-"         (2) update content, with the "right", as first line
+"         (2) update content, with the "right" as the first line
     let current_line = getline(".")
     let fields = split(current_line)
     let left = get(fields,0)
     let right = get(fields,1)
-    if left =~# '\l' && right =~# '\W'
+    if left =~# '\l' && left !~ '\W' && right =~# '\W' && right !~ '\l'
         let dir = s:vimim_data_directory . "pinyin"
         let lines = [current_line]
         call s:vimim_mkdir('prepend', dir, lines)
