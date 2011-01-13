@@ -806,14 +806,16 @@ function! <SID>OneKey()
 " (1) <OneKey> => start OneKey as "hit and run"
 " (2) <OneKey> => stop  OneKey and print out menu
 " -----------------------------------------------
-    let onekey = ""
+    let onekey = -1
     let byte_before = getline(".")[col(".")-2]
     if empty(byte_before) || byte_before =~ '\s'
         if s:vimim_tab_as_onekey > 0
             let onekey = "\t"
+        else
+            let onekey = ""
         endif
     endif
-    if empty(onekey)
+    if onekey < 0
         sil!call s:vimim_start_onekey()
         let onekey = s:vimim_onekey_action("")
     endif
@@ -1121,7 +1123,7 @@ call add(s:vimims, VimIM)
 
 " ---------------------------------
 function! s:vimim_initialize_skin()
-" ---------------------------------
+" --------------------------------- todo
     if s:vimim_custom_skin < 0
         return
     endif
