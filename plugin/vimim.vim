@@ -2159,14 +2159,21 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
 "             马   力
 "             ml 马力     --  cjjp
 " ------------------------------------------
+    let keyboard = a:keyboard
     let range = line("'>") - line("'<")
     if empty(range)
         call s:vimim_backend_initialization_once()
-        let results = s:vimim_reverse_lookup(a:keyboard)
-        if !empty(results)
-            call s:vimim_visual_ctrl_6_output(results)
+        if keyboard =~ '\s'
+            if !empty(s:path2)
+                call s:vimim_visual_ctrl_6_update()
+            endif
+        else
+            let results = s:vimim_reverse_lookup(keyboard)
+            if !empty(results)
+                call s:vimim_visual_ctrl_6_output(results)
+            endif
         endif
-    else
+    elseif s:vimim_tab_as_onekey == 2
         call s:vimim_numberList()
     endif
 endfunction
@@ -2180,6 +2187,25 @@ function! s:vimim_numberList() range
         call setline(z, pre . x . "\t" . getline(z))
         let z=z-1|let x=x-1
     endwhile
+endfunction
+
+" --------------------------------------
+function! s:vimim_visual_ctrl_6_update()
+" --------------------------------------
+" purpose: update one entry to directory database
+" input example (one line, within vim): cjjp 超级简拼
+" action: (1) cursor on space (2) v (3) ctrl_6
+" result: (1) confirm or create new file: /home/vimim/pinyin/cjjp
+"         (2) update content, with 超级简拼 as first line
+    let current_line = getline(".")
+    let fields = split(current_line)
+    let left = get(fields,0)
+    let right = get(fields,1)
+    if left =~# '\l' && right =~# '\W'
+        let dir = s:path2 . "pinyin"
+        let lines = [current_line]
+        call s:vimim_mkdir('prepend', dir, lines)
+    endif
 endfunction
 
 " ---------------------------------------------
@@ -3992,7 +4018,7 @@ function! g:vimim_mkdir1()
 " (1) existed order:  key  value_1 value_2
 " (2) new items:      key  value_2 value_3
 " (3) new order:      key  value_1 value_2 value_3
-    call s:vimim_mkdir('append')
+    call s:vimim_mkdir('append', 0, 0)
 endfunction
 
 " ------------------------
@@ -4002,7 +4028,7 @@ function! g:vimim_mkdir2()
 " (1) existed order:  key  value_1 value_2
 " (2) new items:      key  value_2 value_3
 " (3) new order:      key  value_2 value_3 value_1
-    call s:vimim_mkdir('prepend')
+    call s:vimim_mkdir('prepend', 0, 0)
 endfunction
 
 " ------------------------
@@ -4012,27 +4038,33 @@ function! g:vimim_mkdir3()
 " (1) existed order:  key  value_1 value_2
 " (2) new items:      key  value_2 value_3
 " (3) new order:      key  value_2 value_3
-    call s:vimim_mkdir('replace')
+    call s:vimim_mkdir('replace', 0, 0)
 endfunction
 
-" -----------------------------
-function! s:vimim_mkdir(option)
-" -----------------------------
+" -----------------------------------------
+function! s:vimim_mkdir(option, dir, lines)
+" -----------------------------------------
 " Goal: create one file per entry based on vimim.xxx.txt
 " Sample file A: /home/vimim/pinyin/jjjj
 " Sample file B: /home/vimim/unihan/u808f
 " (1) $cd $VIM/vimfiles/plugin/vimim/
 " (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir1()
 " --------------------------------------------------
-    let root = expand("%:p:h")
-    let dir = root . "/" . expand("%:e:e:r")
-    if !exists(dir) && !isdirectory(dir)
-        call mkdir(dir, "p")
+    let dir = a:dir
+    let lines = a:lines
+    if empty(dir)
+        let root = expand("%:p:h")
+        let dir = root . "/" . expand("%:e:e:r")
+        if !exists(dir) && !isdirectory(dir)
+            call mkdir(dir, "p")
+        endif
     endif
-    let lines = readfile(bufname("%"))
+    if empty(lines)
+        let lines = readfile(bufname("%"))
+    endif
     let option = a:option
     for line in lines
-        if line =~ '^\W' || line =~ '^\U'
+        if line =~# '^\W'
             continue
         endif
         let entries = split(line)
