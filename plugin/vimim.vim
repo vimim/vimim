@@ -4006,7 +4006,7 @@ function! g:vimim_mkdir1()
 " (1) existed order:  key  value_1 value_2
 " (2) new items:      key  value_2 value_3
 " (3) new order:      key  value_1 value_2 value_3
-    call s:vimim_mkdir('append', 0, 0)
+    call s:vimim_mkdir('append', 0, [])
 endfunction
 
 " ------------------------
@@ -4016,7 +4016,7 @@ function! g:vimim_mkdir2()
 " (1) existed order:  key  value_1 value_2
 " (2) new items:      key  value_2 value_3
 " (3) new order:      key  value_2 value_3 value_1
-    call s:vimim_mkdir('prepend', 0, 0)
+    call s:vimim_mkdir('prepend', 0, [])
 endfunction
 
 " ------------------------
@@ -4026,7 +4026,7 @@ function! g:vimim_mkdir3()
 " (1) existed order:  key  value_1 value_2
 " (2) new items:      key  value_2 value_3
 " (3) new order:      key  value_2 value_3
-    call s:vimim_mkdir('replace', 0, 0)
+    call s:vimim_mkdir('replace', 0, [])
 endfunction
 
 " -----------------------------------------
