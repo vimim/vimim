@@ -326,8 +326,8 @@ function! s:vimim_initialize_keycode()
         let keycode = s:shuangpin_keycode_chinese.keycode
     endif
     let s:valid_key = copy(keycode)
-    let keycode = s:vimim_expand_character_class(keycode)
-    let s:valid_keys = split(keycode, '\zs')
+    let keycode_real = s:vimim_expand_character_class(keycode)
+    let s:valid_keys = split(keycode_real, '\zs')
 endfunction
 
 " ======================================== }}}
@@ -901,10 +901,7 @@ function! s:vimim_onekey_action(onekey)
         endif
     endif
     " -------------------------------------------------
-    let onekey = a:onekey
-    if before !~# s:valid_key
-    \&& empty(a:onekey)
-    \&& match(s:valid_keys,'\d') > -1
+    if before !~# s:valid_key && empty(a:onekey)
         return s:vimim_get_unicode_menu()
     endif
     " ---------------------------------------------------
@@ -930,32 +927,19 @@ endfunction
 " -----------------------------------------
 function! s:vimim_get_unicode_char_before()
 " -----------------------------------------
-    let xxxx = 0
+" [unicode] OneKey to trigger Chinese with omni menu"
     let byte_before = getline(".")[col(".")-2]
     if empty(byte_before) || byte_before =~# s:valid_key
         return 0
     endif
-    let msg = "[unicode] OneKey to trigger Chinese with omni menu"
     let start = s:multibyte + 1
     let char_before = getline(".")[col(".")-start : col(".")-2]
     let ddddd = char2nr(char_before)
+    let xxxx = 0
     if ddddd > 127
-        let xxxx = s:vimim_decimal2hex(ddddd)
-        let xxxx = 'u' . xxxx
+        let xxxx = printf('u%04x', ddddd)
     endif
     return xxxx
-endfunction
-
-" ------------------------------------
-function! s:vimim_decimal2hex(decimal)
-" ------------------------------------
-    let n = a:decimal
-    let hex = ""
-    while n
-        let hex = '0123456789abcdef'[n%16].hex
-        let n = n/16
-    endwhile
-    return hex
 endfunction
 
 " ======================================== }}}
@@ -1087,7 +1071,7 @@ function! s:vimim_get_seamless(current_positions)
 " -----------------------------------------------
     if empty(s:seamless_positions)
     \|| empty(a:current_positions)
-        return -1
+"       return -1
     endif
     let seamless_bufnum = s:seamless_positions[0]
     let seamless_lnum = s:seamless_positions[1]
@@ -1096,7 +1080,7 @@ function! s:vimim_get_seamless(current_positions)
     \|| seamless_lnum != a:current_positions[1]
     \|| seamless_off != a:current_positions[3]
         let s:seamless_positions = []
-        return -1
+"       return -1
     endif
     let seamless_column = s:seamless_positions[2]-1
     let start_column = a:current_positions[2]-1
@@ -1105,12 +1089,12 @@ function! s:vimim_get_seamless(current_positions)
     let current_line = getline(start_row)
     let snip = strpart(current_line, seamless_column, len)
     if empty(len(snip))
-        return -1
+"       return -1
     endif
     let snips = split(snip, '\zs')
     for char in snips
         if char !~# s:valid_key
-            return -1
+"           return -1
         endif
     endfor
     let s:start_row_before = seamless_lnum
@@ -1591,12 +1575,14 @@ endfunction
 function! s:vimim_get_unicode_menu()
 " ----------------------------------
     let trigger = '\<C-R>=g:vimim()\<CR>'
-    let xxxx = s:vimim_get_unicode_char_before()
-    if !empty(xxxx)
-        let trigger = xxxx . trigger
-        sil!exe 'sil!return "' . trigger . '"'
+    let uxxxx = s:vimim_get_unicode_char_before()
+    if empty(uxxxx)
+        let trigger = ""
+    else
+        call <SID>vimim_set_seamless()
+        let trigger = uxxxx . trigger
     endif
-    return ""
+    sil!exe 'sil!return "' . trigger . '"'
 endfunction
 
 " -----------------------------------
@@ -1833,8 +1819,7 @@ function! s:vimim_initialize_frontend_punctuation()
 " -------------------------------------------------
     for char in s:valid_keys
         if has_key(s:punctuations, char)
-            if !empty(s:vimim_cloud_plugin)
-            \|| s:ui.has_dot == 1
+            if !empty(s:vimim_cloud_plugin) || s:ui.has_dot == 1
                 unlet s:punctuations[char]
             elseif char !~# "[*.']"
                 unlet s:punctuations[char]
@@ -3109,16 +3094,17 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     return ddddd
 endfunction
 
-" -------------------------------------
-function! s:vimim_get_unicode(keyboard)
-" -------------------------------------
+" ---------------------------------------------
+function! s:vimim_get_unicode(keyboard, height)
+" ---------------------------------------------
     let keyboard = a:keyboard
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
         return []
     endif
     let numbers = []
-    for i in range(&pumheight)
+    let height = &pumheight * a:height
+    for i in range(height)
         let digit = str2nr(ddddd+i)
         call add(numbers, digit)
     endfor
@@ -4813,7 +4799,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if !isdirectory("/home/xma")
+    if !isdirectory("/home/xxma")
         return
     endif
     let s:vimim_private_data_directory = "/home/xma/oo/"
@@ -5157,15 +5143,16 @@ function! g:vimim()
 " -----------------------------------------------------
     let key = ""
     let byte_before = getline(".")[col(".")-2]
-    if byte_before =~# s:valid_key
+ "  if byte_before =~# s:valid_key
         let key = '\<C-X>\<C-U>'
         if s:chinese_input_mode == 'dynamic'
             call g:vimim_reset_after_auto_insert()
         endif
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
-    else
-        call g:vimim_reset_after_auto_insert()
-    endif
+ "  else
+ "      call g:vimim_reset_after_auto_insert()
+ "  endif
+ "todo
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -5287,7 +5274,6 @@ if a:start
 
     let last_seen_nonsense_column = start_column
     let last_seen_backslash_column = start_column
-
     let nonsense_pattern = "[0-9.']"
     if s:ui.im == 'pinyin'
         let nonsense_pattern = "[0-9.]"
@@ -5342,18 +5328,21 @@ else
         endif
     endif
 
+    " [eggs] hunt classic easter egg ... vim<C-6>
+    " -------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        " [eggs] hunt classic easter egg ... vim<C-6>
-        " -------------------------------------------
         if keyboard ==# "vim" || keyboard =~# "^vimim"
             let results = s:vimim_easter_chicken(keyboard)
             if !empty(len(results))
                 return s:vimim_popupmenu_list(results)
             endif
         endif
-        " [unicode] support direct unicode/gb/big5 input
-        " ----------------------------------------------
-        let results = s:vimim_get_unicode(keyboard)
+    endif
+
+    " [unicode] support direct unicode/gb/big5 input
+    " ----------------------------------------------
+    if s:chinese_input_mode =~ 'onekey'
+        let results = s:vimim_get_unicode(keyboard, 8)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
@@ -5440,7 +5429,7 @@ else
         let results = s:vimim_popupmenu_list(results)
     endif
     if empty(results)
-        if s:chinese_input_mode == 'dynamic'
+        if s:chinese_input_mode =~ 'dynamic'
             let s:keyboard_leading_zero = ""
         endif
     else
@@ -5486,11 +5475,14 @@ function! s:vimim_get_valid_keyboard(keyboard)
     else
         let keyboard = s:keyboard_leading_zero
     endif
+    " [unicode] support direct unicode/gb/big5 input
+    if keyboard =~# 'u\x\x\x\x' && len(keyboard)==5
+        return keyboard
+    endif
     " ignore all-zeroes keyboard inputs
     if empty(s:keyboard_leading_zero)
         return 0
     endif
-    " ignore non-sense keyboard inputs
     if keyboard !~# s:valid_key
         return 0
     endif
