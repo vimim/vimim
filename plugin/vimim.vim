@@ -690,11 +690,6 @@ function! s:vimim_get_unicodes(unicodes, more)
     endif
     let results = []
     for ddddd in unicodes
-        if s:encoding == "utf8"
-            if ddddd < 19968 || ddddd > 40869
-                break
-            endif
-        endif
         let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
         let menu_chinese = menu .' '. nr2char(ddddd)
         call add(results, menu_chinese)
@@ -711,8 +706,12 @@ function! s:vimim_unicode_4corner_pinyin(ddddd, more)
         call s:vimim_build_unihan_reverse_cache(chinese)
         let unihan = get(s:vimim_reverse_one_entry(chinese,'unihan'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        let menu .= s:space . unihan
-        let menu .= s:space . pinyin
+        if empty(unihan) && empty(pinyin)
+            let msg = 'no need to print out sparse matrix'
+        else
+            let menu .= s:space . unihan
+            let menu .= s:space . pinyin
+        endif
     endif
     return menu
 endfunction
@@ -1376,7 +1375,7 @@ function! g:vimim_pumvisible_dump()
             let line = printf('%s', items.word)
         else
             let format = '%-8s %s'
-            if items.menu =~ '^u\x\x\x\x'
+            if items.menu =~ '^u\x\x\x\x' && s:pinyin_4corner_filter > 0
                 let format = '%-32s %s'
             endif
             let line = printf(format, items.menu, items.word)
@@ -1558,12 +1557,12 @@ endfunction
 function! s:vimim_get_unicode_menu()
 " ----------------------------------
     let trigger = '\<C-R>=g:vimim()\<CR>'
-    let uxxxx = s:vimim_get_unicode_char_before()
-    if empty(uxxxx)
+    let xxxx = s:vimim_get_unicode_char_before()
+    if empty(xxxx)
         let trigger = ""
     else
         call <SID>vimim_set_seamless()
-        let trigger = uxxxx . trigger
+        let trigger = xxxx . trigger
     endif
     sil!exe 'sil!return "' . trigger . '"'
 endfunction
@@ -2285,7 +2284,8 @@ function! s:vimim_reverse_one_entry(chinese, im)
     let bodies = []   "|  马  力
     let head = ''
     for chinese in split(a:chinese, '\zs')
-        let unicode = printf('u%x',char2nr(chinese))
+        let ddddd = char2nr(chinese)
+        let unicode = printf('u%x', ddddd)
         let head = ''
         if im == 'unicode'
             let head = unicode
