@@ -2320,7 +2320,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
             elseif im == 'pinyin'
                 let head = get(values, 1)
                 if empty(head)
-                    continue
+                    let head = '....' |" pinyin not available
                 elseif head !~ '^\l\+\d$'
                     let head = get(values, 0)
                 endif
