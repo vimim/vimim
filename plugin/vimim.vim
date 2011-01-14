@@ -5,27 +5,24 @@
 " =====================================================
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
-"    VimIM 經典:       vim<C-6><C-6>
-"    VimIM 環境:     vimim<C-6><C-6>
-"    VimIM 幫助: vimimhelp<C-6><C-6>
+"    VimIM 經典:                           vim<C-6><C-6>
+"    VimIM 環境:                         vimim<C-6><C-6>
+"    VimIM 幫助:                     vimimhelp<C-6><C-6>
 
-let egg  = ["http://code.google.com/p/vimim/issues/list"]
-let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506"]
+let egg  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let egg += ["http://vimim-data.googlecode.com"]
 let egg += ["http://groups.google.com/group/vimim"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
+let egg += ["http://code.google.com/p/vimim/issues/list"]
 
 let VimIM = " ====  Introduction      ==== {{{"
 " ============================================
 "       File: vimim.vim
 "     Author: vimim <vimim@googlegroups.com>
 "    License: GNU Lesser General Public License
-"   Official: http://vim.sf.net/scripts/script.php?script_id=2506
-" -----------------------------------------------------------
-"    Readme: VimIM is a Vim plugin designed as an independent IM
-"            (Input Method) to support the input of multi-byte.
-"            VimIM aims to complete the Vim as the greatest editor.
+"    Readme:  VimIM is a Vim plugin designed as an independent IM
+"             (Input Method) to support the input of multi-byte.
 " -----------------------------------------------------------
 "  Features: * "Plug & Play": as a client to VimIM embedded backends
 "            * "Plug & Play": as a client to "myCloud" and "Cloud"
@@ -37,13 +34,13 @@ let VimIM = " ====  Introduction      ==== {{{"
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
-"  (2) Chinese can be input using Vim regardless of encoding
+"  (2) Chinese can be input using Vim regardless of encoding and OS
 "  (3) No negative impact to Vim when VimIM is not used
 "  (4) No compromise for high speed and low memory usage
 " -----------------------------------------------------------
 " "VimIM Front End UI"
-"  (1) VimIM "OneKey": Chinese input without mode change.
-"  (2) VimIM "Chinese Input Mode" ['dynamic','static']
+"  (1) VimIM OneKey: Chinese input without mode change.
+"  (2) VimIM Chinese Input Mode: ['dynamic','static']
 "  (3) VimIM auto Chinese input with zero configuration
 " -----------------------------------------------------------
 " "VimIM Back End Engine"
@@ -174,9 +171,8 @@ function! s:vimim_initialize_session()
     " --------------------------------
     let s:valid_key = 0
     let s:valid_keys = s:az_list
-    " --------------------------------
-    let s:debugs = []
     let s:debug_count = 0
+    let s:debugs = []
 endfunction
 
 " -------------------------------
@@ -426,12 +422,12 @@ function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
     " ---------------------------------------------------
-    call add(eggs, "错误报告" . s:colon . s:vimimhelp[0])
-    call add(eggs, "官方网址" . s:colon . s:vimimhelp[1])
-    call add(eggs, "民间词库" . s:colon . s:vimimhelp[2])
-    call add(eggs, "新闻论坛" . s:colon . s:vimimhelp[3])
-    call add(eggs, "最新主页" . s:colon . s:vimimhelp[4])
-    call add(eggs, "最新程式" . s:colon . s:vimimhelp[5])
+    call add(eggs, "官方网址" . s:colon . s:vimimhelp[0])
+    call add(eggs, "民间词库" . s:colon . s:vimimhelp[1])
+    call add(eggs, "新闻论坛" . s:colon . s:vimimhelp[2])
+    call add(eggs, "最新主页" . s:colon . s:vimimhelp[3])
+    call add(eggs, "最新程式" . s:colon . s:vimimhelp[4])
+    call add(eggs, "错误报告" . s:colon . s:vimimhelp[5])
     " ---------------------------------------------------
     return map(eggs, '"VimIM " . v:val . s:space')
 endfunction
