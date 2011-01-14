@@ -5,20 +5,17 @@
 " =====================================================
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
+"    VimIM 經典:       vim<C-6><C-6>
+"    VimIM 環境:     vimim<C-6><C-6>
+"    VimIM 程式:  vimimvim<C-6><C-6>
+"    VimIM 幫助: vimimhelp<C-6><C-6>
 
-" ----------------------------------------
-" - VimIM 經典:  type:       vim<C-6><C-6>
-" - VimIM 環境:  type:     vimim<C-6><C-6>
-" - VimIM 程式:  type:  vimimvim<C-6><C-6>
-" - VimIM 幫助:  type: vimimhelp<C-6><C-6>
-" -----------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/list"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let egg += ["http://vimim-data.googlecode.com"]
 let egg += ["http://groups.google.com/group/vimim"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
-" -----------------------------------------------------------------
 
 let VimIM = " ====  Vim Input Method  ==== {{{"
 " ============================================
