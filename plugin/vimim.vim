@@ -6,19 +6,19 @@
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 
-" -------------------------------------------------------------------
-" - VimIM 經典:  type:            vim<C-6><C-6>
-" - VimIM 環境:  type:          vimim<C-6><C-6>
-" - VimIM 程式:  type:       vimimvim<C-6><C-6>
-" - VimIM 幫助:  type:      vimimhelp<C-6><C-6>
-" -------------------------------------------------------------------
+" ----------------------------------------
+" - VimIM 經典:  type:       vim<C-6><C-6>
+" - VimIM 環境:  type:     vimim<C-6><C-6>
+" - VimIM 程式:  type:  vimimvim<C-6><C-6>
+" - VimIM 幫助:  type: vimimhelp<C-6><C-6>
+" -----------------------------------------------------------------
 let egg  = ["http://code.google.com/p/vimim/issues/list"]
 let egg += ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let egg += ["http://vimim-data.googlecode.com"]
 let egg += ["http://groups.google.com/group/vimim"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
-" -------------------------------------------------------------------
+" -----------------------------------------------------------------
 
 let VimIM = " ====  Vim Input Method  ==== {{{"
 " ============================================
@@ -1071,7 +1071,7 @@ function! s:vimim_get_seamless(current_positions)
 " -----------------------------------------------
     if empty(s:seamless_positions)
     \|| empty(a:current_positions)
-"       return -1
+        return -1
     endif
     let seamless_bufnum = s:seamless_positions[0]
     let seamless_lnum = s:seamless_positions[1]
@@ -1080,7 +1080,7 @@ function! s:vimim_get_seamless(current_positions)
     \|| seamless_lnum != a:current_positions[1]
     \|| seamless_off != a:current_positions[3]
         let s:seamless_positions = []
-"       return -1
+        return -1
     endif
     let seamless_column = s:seamless_positions[2]-1
     let start_column = a:current_positions[2]-1
@@ -1089,14 +1089,18 @@ function! s:vimim_get_seamless(current_positions)
     let current_line = getline(start_row)
     let snip = strpart(current_line, seamless_column, len)
     if empty(len(snip))
-"       return -1
+        return -1
     endif
-    let snips = split(snip, '\zs')
-    for char in snips
-        if char !~# s:valid_key
-"           return -1
-        endif
-    endfor
+    if snip =~# 'u\x\x\x\x'
+        let meg = 'support onekey after CJK'
+    else
+        let snips = split(snip, '\zs')
+        for char in snips
+            if char !~# s:valid_key
+                return -1
+            endif
+        endfor
+    endif
     let s:start_row_before = seamless_lnum
     let s:smart_enter = 0
     return seamless_column
@@ -2161,7 +2165,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
                 call s:vimim_visual_ctrl_6_output(results)
             endif
         endif
-    elseif s:vimim_tab_as_onekey == 2
+    elseif s:vimim_tab_as_onekey > 0
         call s:vimim_numberList()
     endif
 endfunction
@@ -4799,7 +4803,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if !isdirectory("/home/xxma")
+    if !isdirectory("/home/xma")
         return
     endif
     let s:vimim_private_data_directory = "/home/xma/oo/"
@@ -5143,16 +5147,17 @@ function! g:vimim()
 " -----------------------------------------------------
     let key = ""
     let byte_before = getline(".")[col(".")-2]
- "  if byte_before =~# s:valid_key
+    let five_byte_before = getline(".")[col(".")-6]
+    if byte_before =~ s:valid_key
+    \|| (byte_before =~ '\x' && five_byte_before ==# 'u')
         let key = '\<C-X>\<C-U>'
         if s:chinese_input_mode == 'dynamic'
             call g:vimim_reset_after_auto_insert()
         endif
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
- "  else
- "      call g:vimim_reset_after_auto_insert()
- "  endif
- "todo
+    else
+        call g:vimim_reset_after_auto_insert()
+    endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -5342,7 +5347,7 @@ else
     " [unicode] support direct unicode/gb/big5 input
     " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        let results = s:vimim_get_unicode(keyboard, 8)
+        let results = s:vimim_get_unicode(keyboard, 108/9)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
