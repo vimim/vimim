@@ -717,7 +717,7 @@ function! s:vimim_get_unicodes(unicodes, more)
             endif
         endif
         let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
-        let menu_chinese = menu .' '. s:space
+        let menu_chinese = menu .' '. nr2char(ddddd)
         call add(results, menu_chinese)
     endfor
     return results
@@ -726,18 +726,13 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_unicode_4corner_pinyin(ddddd, more)
 " ---------------------------------------------------
-    let hex = printf('u%04x', a:ddddd)
-    let menu = s:space . hex . s:space . a:ddddd
+    let menu = printf('u%04x',a:ddddd) . s:space . a:ddddd
     if a:more > 0 && s:pinyin_4corner_filter > 0
         let chinese = nr2char(a:ddddd)
         call s:vimim_build_unihan_reverse_cache(chinese)
         let unihan = get(s:vimim_reverse_one_entry(chinese,'unihan'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        if empty(pinyin)
-            let pinyin = s:space
-        endif
         let menu .= s:space . unihan
-        let menu .= s:space . chinese
         let menu .= s:space . pinyin
     endif
     return menu
@@ -1401,7 +1396,11 @@ function! g:vimim_pumvisible_dump()
         if empty(items.menu)
             let line = printf('%s', items.word)
         else
-            let line = printf('%-8s %s', items.menu, items.word)
+            let format = '%-8s %s'
+            if items.menu =~ '^u\x\x\x\x'
+                let format = '%-32s %s'
+            endif
+            let line = printf(format, items.menu, items.word)
         endif
         call add(results, line)
         let one_line .= line . "\n"
