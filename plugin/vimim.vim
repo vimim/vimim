@@ -7,7 +7,6 @@ let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 "    VimIM 經典:       vim<C-6><C-6>
 "    VimIM 環境:     vimim<C-6><C-6>
-"    VimIM 程式:  vimimvim<C-6><C-6>
 "    VimIM 幫助: vimimhelp<C-6><C-6>
 
 let egg  = ["http://code.google.com/p/vimim/issues/list"]
@@ -17,7 +16,7 @@ let egg += ["http://groups.google.com/group/vimim"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
 
-let VimIM = " ====  Vim Input Method  ==== {{{"
+let VimIM = " ====  Introduction      ==== {{{"
 " ============================================
 "       File: vimim.vim
 "     Author: vimim <vimim@googlegroups.com>
@@ -36,44 +35,31 @@ let VimIM = " ====  Vim Input Method  ==== {{{"
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
 "            * support direct internal code (UNICODE/GBK/Big5) input
 " -----------------------------------------------------------
+" "VimIM Design Goal"
+"  (1) Chinese can be searched using Vim without menu
+"  (2) Chinese can be input using Vim regardless of encoding
+"  (3) No negative impact to Vim when VimIM is not used
+"  (4) No compromise for high speed and low memory usage
+" -----------------------------------------------------------
+" "VimIM Front End UI"
+"  (1) VimIM "OneKey": Chinese input without mode change.
+"  (2) VimIM "Chinese Input Mode" ['dynamic','static']
+"  (3) VimIM auto Chinese input with zero configuration
+" -----------------------------------------------------------
+" "VimIM Back End Engine"
+"  (1) [external] myCloud: http://pim-cloud.appspot.com
+"  (2) [external]   Cloud: http://web.pinyin.sogou.com
+"  (3) [embedded] VimIM:   http://vimim.googlecode.com
+"      (3.1) a datafile:   $VIM/vimfiles/plugin/vimim.pinyin.txt
+"      (3.2) a directory:  $VIM/vimfiles/plugin/vimim/pinyin/
+"  -----------------------------------------------------------
+" "VimIM Installation"
+"  (1) drop this file to plugin/:  plugin/vimim.vim
+"  (2) [option] drop a datafile:   plugin/vimim.pinyin.txt
+"  (3) [option] drop a directory:  plugin/vimim/pinyin/
+" -----------------------------------------------------------
 
 let s:vimims = [VimIM]
-" ======================================== }}}
-let VimIM = " ====  Introduction      ==== {{{"
-" ============================================
-call add(s:vimims, VimIM)
-
-" -------------------
-" "VimIM Design Goal"
-" -------------------
-" # Chinese can be searched using Vim without menu
-" # Chinese can be input using Vim regardless of encoding
-" # No negative impact to Vim when VimIM is not used
-" # No compromise for high speed and low memory usage
-
-" --------------------
-" "VimIM Front End UI"
-" --------------------
-" # VimIM "OneKey": Chinese input without mode change.
-" # VimIM "Chinese Input Mode" ['dynamic','static']
-" # VimIM auto Chinese input with zero configuration
-
-" -----------------------
-" "VimIM Back End Engine"
-" -----------------------
-" # (1) [external] myCloud: http://pim-cloud.appspot.com
-" # (2) [external]   Cloud: http://web.pinyin.sogou.com
-" # (3) [embedded] VimIM:   http://vimim.googlecode.com
-" #     (3.1) a datafile:   $VIM/vimfiles/plugin/vimim.pinyin.txt
-" #     (3.2) a directory:  $VIM/vimfiles/plugin/vimim/pinyin/
-
-" --------------------
-" "VimIM Installation"
-" --------------------
-" # (1) drop this file to plugin/:  plugin/vimim.vim
-" # (2) [option] drop a datafile:   plugin/vimim.pinyin.txt
-" # (3) [option] drop a directory:  plugin/vimim/pinyin/
-
 " ======================================== }}}
 let VimIM = " ====  Initialization    ==== {{{"
 " ============================================
