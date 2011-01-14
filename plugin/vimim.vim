@@ -702,9 +702,9 @@ function! s:vimim_register_search_pattern(english, results)
     endif
 endfunction
 
-" -------------------------------------------
+" --------------------------------------------
 function! s:vimim_get_unicodes(unicodes, more)
-" -------------------------------------------
+" --------------------------------------------
     let unicodes = a:unicodes
     if empty(unicodes) || empty(get(unicodes,0))
         return []
@@ -717,8 +717,7 @@ function! s:vimim_get_unicodes(unicodes, more)
             endif
         endif
         let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
-        let chinese = nr2char(ddddd)
-        let menu_chinese = menu .' '. chinese
+        let menu_chinese = menu .' '. s:space
         call add(results, menu_chinese)
     endfor
     return results
@@ -737,7 +736,9 @@ function! s:vimim_unicode_4corner_pinyin(ddddd, more)
         if empty(pinyin)
             let pinyin = s:space
         endif
-        let menu .= s:space . unihan . s:space . pinyin
+        let menu .= s:space . unihan
+        let menu .= s:space . chinese
+        let menu .= s:space . pinyin
     endif
     return menu
 endfunction
@@ -2320,7 +2321,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
             elseif im == 'pinyin'
                 let head = get(values, 1)
                 if empty(head)
-                    let head = '....' |" pinyin not available
+                    continue
                 elseif head !~ '^\l\+\d$'
                     let head = get(values, 0)
                 endif
@@ -2343,7 +2344,8 @@ function! s:vimim_reverse_one_entry(chinese, im)
     if empty(head)
         return []
     endif
-    return [join(headers), join(bodies)]
+    let results = [join(headers), join(bodies)]
+    return results
 endfunction
 
 " ---------------------------------------------
