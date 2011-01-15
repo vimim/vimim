@@ -1283,16 +1283,6 @@ function! s:vimim_onekey_label_navigation_on()
     endfor
 endfunction
 
-" --------------------------------
-function! s:vimim_onekey_nonstop()
-" --------------------------------
-    if s:chinese_input_mode == 'onekey'
-        let s:onekeynonstop = 1
-        call s:vimim_cursor_color(1)
-        call s:reset_matched_list()
-    endif
-endfunction
-
 " -----------------------------------------------
 function! <SID>vimim_onekey_label_navigation(key)
 " -----------------------------------------------
@@ -1303,10 +1293,8 @@ function! <SID>vimim_onekey_label_navigation(key)
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'h'
-            sil!call s:vimim_onekey_nonstop()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'l'
-            sil!call s:vimim_onekey_nonstop()
             let hjkl  = s:vimim_ctrl_y_ctrl_x_ctrl_u()
         elseif a:key == 'm'
             let hjkl  = '\<C-E>'
@@ -1507,7 +1495,6 @@ function! <SID>vimim_smart_enter()
     let key = ""
     let enter = "\<CR>"
     let byte_before = getline(".")[col(".")-2]
-    sil!call s:vimim_onekey_nonstop()
     " -----------------------------------------------
     " <Enter> double play in Chinese Mode:
     "   (1) after English (valid keys)    => Seamless
@@ -1609,10 +1596,6 @@ function! g:vimim_backspace()
         let s:pumvisible_ctrl_e = 0
         let key .= '\<C-R>=g:vimim()\<CR>'
         sil!exe 'sil!return "' . key . '"'
-    endif
-    if empty(s:onekeynonstop)
-    \&& s:chinese_input_mode =~ 'onekey'
-        call s:vimim_stop()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5010,7 +4993,6 @@ endfunction
 " -----------------------------------
 function! s:vimim_reset_before_stop()
 " -----------------------------------
-    let s:onekeynonstop = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
 endfunction
@@ -5045,11 +5027,6 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
-    if empty(s:onekeynonstop)
-    \&& s:chinese_input_mode == 'onekey'
-    \&& empty(s:tail)
-        call s:vimim_stop()
-    endif
     let key = ""
     if s:pumvisible_yes > 0
         let key = g:vimim()
