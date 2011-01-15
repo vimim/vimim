@@ -1307,7 +1307,7 @@ function! <SID>vimim_onekey_label_navigation(key)
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'l'
             sil!call s:vimim_onekey_nonstop()
-            let hjkl = '\<C-Y>\<C-R>=g:vimim()\<CR>'
+            let hjkl  = s:vimim_ctrl_y_ctrl_x_ctrl_u()
         elseif a:key == 'm'
             let hjkl  = '\<C-E>'
         elseif a:key == 'n'
@@ -1411,6 +1411,12 @@ endfunction
 function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
 " --------------------------------------
     return '\<C-E>\<C-R>=g:vimim()\<CR>'
+endfunction
+
+" --------------------------------------
+function! s:vimim_ctrl_y_ctrl_x_ctrl_u()
+" --------------------------------------
+    return '\<C-Y>\<C-R>=g:vimim()\<CR>'
 endfunction
 
 " -------------------------------------
@@ -5296,7 +5302,6 @@ else
     else
         let results = s:vimim_get_mycloud_plugin(keyboard)
         if empty(len(results))
-            " return empty list if the result is empty
             return []
         else
             return s:vimim_popupmenu_list(results)
@@ -5354,16 +5359,11 @@ else
     " ---------------------------------------------
     let results = s:vimim_embedded_backend_engine(keyboard)
     if empty(results)
-        let results = s:popupmenu_list
-    else
-        let results = s:vimim_popupmenu_list(results)
-    endif
-    if empty(results)
         if s:chinese_input_mode =~ 'dynamic'
             let s:keyboard_leading_zero = ""
         endif
     else
-        return results
+        return s:vimim_popupmenu_list(results)
     endif
 
     " [sogou] last try cloud before giving up
