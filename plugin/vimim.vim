@@ -77,7 +77,7 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_initialize_keycode()
     sil!call s:vimim_set_special_im_property()
     sil!call s:vimim_initialize_frontend_punctuation()
-    sil!call s:vimim_build_digit_filter_lines()
+    sil!call s:vimim_build_digit_filter_cache()
     sil!call s:vimim_build_datafile_lines()
     sil!call s:vimim_localization()
     sil!call s:vimim_initialize_skin()
@@ -141,6 +141,7 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     " --------------------------------
+    let s:unihan_4corner_file = s:path . "vimim.unihan_4corner.txt"
     let s:unihan_4corner_lines = []
     let s:unihan_4corner_cache = {}
     let s:pinyin_4corner_filter = 0
@@ -529,9 +530,8 @@ function! s:vimim_egg_vimim()
             let option = ciku . s:vimim_data_directory . "unihan/"
         endif
     elseif s:pinyin_4corner_filter == 1
-        let option = s:path . "vimim.unihan_4corner.txt"
-        let ciku = s:vimim_chinese('digit') . s:colon
-        let option = "database " . ciku . option
+        let ciku = "database " . s:vimim_chinese('digit') . s:colon
+        let option = ciku . s:unihan_4corner_file
     endif
     if !empty(option)
         call add(eggs, option)
@@ -884,7 +884,8 @@ function! s:vimim_onekey_action(onekey)
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
-    if s:seamless_positions != getpos(".") && s:pattern_not_found < 1
+    if s:seamless_positions != getpos(".")
+    \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
     else
         let onekey = ""
@@ -1377,8 +1378,8 @@ function! g:vimim_pumvisible_dump()
         else
             let format = '%-8s %s'
             if s:pinyin_4corner_filter > 0
-            \&& items.menu =~ '^u\x\x\x\x' 
-            \&& len(items.menu) > 13
+            \&& items.menu =~ '^u\x\x\x\x'
+            \&& len(split(items.menu)) > 2
                 let format = '%-32s %s'
             endif
             let line = printf(format, items.menu, items.word)
@@ -1606,7 +1607,8 @@ function! g:vimim_backspace()
         let key .= '\<C-R>=g:vimim()\<CR>'
         sil!exe 'sil!return "' . key . '"'
     endif
-    if empty(s:onekeynonstop) && s:chinese_input_mode =~ 'onekey'
+    if empty(s:onekeynonstop)
+    \&& s:chinese_input_mode =~ 'onekey'
         call s:vimim_stop()
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2095,7 +2097,7 @@ let VimIM = " ====  Input_Digit       ==== {{{"
 call add(s:vimims, VimIM)
 
 " ------------------------------------------
-function! s:vimim_build_digit_filter_lines()
+function! s:vimim_build_digit_filter_cache()
 " ------------------------------------------
 " Digit code such as four corner can be used as independent filter.
 " It works for both cloud and VimIM embedded backends.
@@ -2104,14 +2106,15 @@ function! s:vimim_build_digit_filter_lines()
     let buffer = expand("%:p:t")
     if s:chinese_input_mode !~ 'onekey'
     \|| buffer =~ 'dynamic' || buffer =~ 'static'
-        let msg = 'digit filter for onekey only'
+        let msg = 'digit filter is used for onekey only'
         return
     endif
-    let datafile = s:path . "vimim.unihan_4corner.txt"
-    if filereadable(datafile) && empty(s:unihan_4corner_lines)
-        let s:vimim_chinese_input_mode = 'onekey'
+    if empty(s:vimim_data_directory)
+    \&& filereadable(s:unihan_4corner_file)
+    \&& empty(s:unihan_4corner_lines)
         let s:pinyin_4corner_filter = 1
-        let s:unihan_4corner_lines = readfile(datafile)
+        let s:unihan_4corner_lines = readfile(s:unihan_4corner_file)
+        call s:vimim_loading_unicode_digit_cache(0)
     endif
 endfunction
 
@@ -5124,16 +5127,22 @@ function! g:vimim()
 " -----------------------------------------------------
     let key = ""
     let byte_before = getline(".")[col(".")-2]
-    let five_byte_before = getline(".")[col(".")-6]
     if byte_before =~ s:valid_key
-    \|| (byte_before =~ '\x' && five_byte_before ==# 'u')
         let key = '\<C-X>\<C-U>'
+    endif
+    if empty(key) && s:chinese_input_mode != 'dynamic'
+        let five_byte_before = getline(".")[col(".")-6]
+        if byte_before =~ '\x' && five_byte_before ==# 'u'
+            let key = '\<C-X>\<C-U>'
+        endif
+    endif
+    if empty(key)
+        call g:vimim_reset_after_auto_insert()
+    else
         if s:chinese_input_mode == 'dynamic'
             call g:vimim_reset_after_auto_insert()
         endif
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
-    else
-        call g:vimim_reset_after_auto_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
