@@ -4726,7 +4726,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if !isdirectory("/home/xma")
+    if !isdirectory("/home/xma/vim")
         return
     endif
     let s:vimim_private_data_directory = "/home/xma/oo/"
