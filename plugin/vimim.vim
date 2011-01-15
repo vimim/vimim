@@ -140,9 +140,6 @@ function! s:vimim_initialize_session()
     let s:shuangpin_keycode_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
-    " --------------------------------
-    let s:unihan_4corner_file = s:path . "vimim.unihan_4corner.txt"
-    let s:unihan_4corner_lines = []
     let s:unihan_4corner_cache = {}
     let s:pinyin_4corner_filter = 0
     let s:xingma = ['wubi', 'erbi', '4corner']
@@ -531,7 +528,7 @@ function! s:vimim_egg_vimim()
         endif
     elseif s:pinyin_4corner_filter == 1
         let ciku = "database " . s:vimim_chinese('digit') . s:colon
-        let option = ciku . s:unihan_4corner_file
+        let option = ciku . s:path . "vimim.unihan_4corner.txt"
     endif
     if !empty(option)
         call add(eggs, option)
@@ -2109,12 +2106,18 @@ function! s:vimim_build_digit_filter_cache()
         let msg = 'digit filter is used for onekey only'
         return
     endif
-    if empty(s:vimim_data_directory)
-    \&& filereadable(s:unihan_4corner_file)
-    \&& empty(s:unihan_4corner_lines)
+    let unihan_4corner_file = s:path . "vimim.unihan_4corner.txt"
+    if filereadable(unihan_4corner_file)
+    \&& empty(s:unihan_4corner_cache)
+    \&& empty(s:vimim_data_directory)
+        " in:  ['u808f 8022', 'u808f cao4']
+        " out: {'u808f': ['8022', 'cao4']}
+        for line in readfile(unihan_4corner_file)
+            let oneline_list = split(line)
+            let menu = remove(oneline_list, 0)
+            let s:unihan_4corner_cache[menu] = oneline_list
+        endfor
         let s:pinyin_4corner_filter = 1
-        let s:unihan_4corner_lines = readfile(s:unihan_4corner_file)
-        call s:vimim_loading_unicode_digit_cache(0)
     endif
 endfunction
 
@@ -2122,13 +2125,10 @@ endfunction
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
 " [input]     马力 (visual mode)
-" [output]    7712 4002   --  four corner
-"             马   力
-"             9a6c 529b   --  unicode
-"             马   力
-"             ma3  li4    --  pinyin
-"             马   力
-"             ml 马力     --  cjjp
+" [output]    7712 4002  --  four corner
+"             9a6c 529b  --  unicode
+"             ma3  li4   --  pinyin
+"             ml 马力    --  cjjp
 " ------------------------------------------
     let keyboard = a:keyboard
     let range = line("'>") - line("'<")
@@ -3416,13 +3416,12 @@ function! s:vimim_sentence_match_cache(keyboard)
         return [keyboard]
     endif
     let im = s:ui.im
-    " -----------------------------------------
     let blocks = s:vimim_break_sentence_into_block(keyboard)
     if !empty(blocks)
         return blocks
     endif
-    " -----------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
+    " -----------------------------------------
     while max > 0
         let max -= 1
         let head = strpart(keyboard, 0, max)
@@ -3433,7 +3432,7 @@ function! s:vimim_sentence_match_cache(keyboard)
             continue
         endif
     endwhile
-    " --------------------------------------------------
+    " -----------------------------------------
     if len(results) > 0
         return s:vimim_break_string_at(keyboard, max)
     else
@@ -3459,20 +3458,19 @@ endfunction
 function! s:vimim_sentence_match_datafile(keyboard)
 " -------------------------------------------------
     let lines = s:backend[s:ui.root][s:ui.im].lines
-    if empty(lines) | return [] | endif
-    " ---------------------------------------------
+    if empty(lines)
+        return []
+    endif
     let keyboard = a:keyboard
     let pattern = '^' . keyboard
     let match_start = match(lines, pattern)
     if match_start > -1
         return [keyboard]
     endif
-    " ---------------------------------------------
     let blocks = s:vimim_break_sentence_into_block(keyboard)
     if !empty(blocks)
         return blocks
     endif
-    " ---------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     while max > 0
         let head = strpart(keyboard, 0, max)
@@ -3485,7 +3483,6 @@ function! s:vimim_sentence_match_datafile(keyboard)
             break
         endif
     endwhile
-    " ------------------------------------------------
     if match_start < 0
         return []
     else
@@ -3581,87 +3578,28 @@ function! s:vimim_build_datafile_cache()
     if s:vimim_use_cache < 1
         return
     endif
-    let progressbar = 0
-    " ----------------------------------
-    if empty(s:unihan_4corner_lines)
-        let msg = " no way to build digit cache "
-    elseif empty(s:unihan_4corner_cache)
-        if match(s:xingma, s:ui.im) < 0
-            let progressbar += 1
-        endif
-    endif
-    " ----------------------------------
     if s:backend[s:ui.root][s:ui.im].root == "datafile"
         if empty(s:backend[s:ui.root][s:ui.im].lines)
             let msg = " no way to build datafile cache "
         elseif empty(s:backend[s:ui.root][s:ui.im].cache)
-            let progressbar += 2
+            call s:vimim_cache_loading_progressbar()
         endif
-    endif
-    " ----------------------------------
-    if progressbar > 0
-        call s:vimim_cache_loading_progressbar(progressbar)
     endif
 endfunction
 
-" ------------------------------------------------------
-function! s:vimim_cache_loading_progressbar(progressbar)
-" ------------------------------------------------------
-    let title_1 = s:vimim_chinese('digit')
-    let total_1 = len(s:unihan_4corner_lines)
-    let title_2 = s:vimim_chinese(s:ui.im)
-    let total_2 = len(s:backend[s:ui.root][s:ui.im].lines)
-    " --------------------------------------------------
-    let title = ""
-    let total = ""
-    if a:progressbar == 1
-        let title = title_1
-        let total = total_1
-    elseif a:progressbar == 2
-        let title = title_2
-        let total = total_2
-    elseif a:progressbar == 3
-        let title = title_2 . s:plus . title_1
-        let total = total_2 + total_1
-    endif
-    " --------------------------------------------------
+" -------------------------------------------
+function! s:vimim_cache_loading_progressbar()
+" -------------------------------------------
+    let title = s:vimim_chinese(s:ui.im)
+    let total = len(s:backend[s:ui.root][s:ui.im].lines)
     let title .= s:vimim_chinese("datafile")
     let progress = "VimIM loading " . title
     let progressbar = NewSimpleProgressBar(progress, total)
-    " --------------------------------------------------
     try
-        if a:progressbar == 1
-            sil!call s:vimim_loading_unicode_digit_cache(progressbar)
-        elseif a:progressbar == 2
-            sil!call s:vimim_loading_datafile_cache(progressbar)
-        elseif a:progressbar == 3
-            sil!call s:vimim_loading_datafile_cache(progressbar)
-            sil!call s:vimim_loading_unicode_digit_cache(0)
-        endif
+        sil!call s:vimim_loading_datafile_cache(progressbar)
     finally
         call progressbar.restore()
     endtry
-endfunction
-
-" --------------------------------------------------------
-function! s:vimim_loading_unicode_digit_cache(progressbar)
-" --------------------------------------------------------
-" in:  ['u808f 8022', 'u808f cao4']
-" out: {'u808f': ['8022', 'cao4']}
-" ---------------------------------
-    if empty(s:unihan_4corner_cache)
-        let msg = " cache only needs to be loaded once "
-    else
-        return
-    endif
-    for line in s:unihan_4corner_lines
-        if !empty(a:progressbar)
-            call a:progressbar.incr(1)
-        endif
-        let oneline_list = split(line)
-        let menu = remove(oneline_list, 0)
-        let s:unihan_4corner_cache[menu] = oneline_list
-    endfor
 endfunction
 
 " ---------------------------------------------------
@@ -4726,13 +4664,11 @@ endfunction
 " --------------------------------------------------------
 function! s:vimim_process_mycloud_output(keyboard, output)
 " --------------------------------------------------------
+" one line output example:  春夢      8       4420
     let output = a:output
     if empty(output) || empty(a:keyboard)
         return []
     endif
-    " ----------------------
-    " 春夢      8       4420
-    " ----------------------
     let menu = []
     for item in split(output, '\n')
         let item_list = split(item, '\t')
@@ -5465,7 +5401,7 @@ function! s:vimim_get_valid_keyboard(keyboard)
         let s:keyboard_leading_zero = keyboard
     endif
     if empty(str2nr(keyboard))
-        let msg = "the input is alphabet only"
+        let msg = "keyboard input is alphabet only"
     else
         let keyboard = s:keyboard_leading_zero
     endif
