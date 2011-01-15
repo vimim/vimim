@@ -1369,7 +1369,7 @@ function! g:vimim_pumvisible_dump()
     endif
     let line = ""
     let one_line = ""
-    let results = [s:keyboard_leading_zero]
+    let results = []
     " -----------------------------
     for items in s:popupmenu_list
         if empty(items.menu)
@@ -1385,13 +1385,10 @@ function! g:vimim_pumvisible_dump()
         let one_line .= line . "\n"
     endfor
     " -----------------------------
-    let line = line(".")
-    call setline(line, results)
-    " -----------------------------
     if has("gui_running") && has("win32")
         let @+ = one_line
     endif
-    " -----------------------------
+    call setline(line("."), results)
     return g:vimim_esc()
 endfunction
 
@@ -1604,18 +1601,14 @@ function! g:vimim_backspace()
     call s:reset_matched_list()
     let s:pattern_not_found = 0
     let key = '\<BS>'
-    " ---------------------------------
     if s:pumvisible_ctrl_e > 0
         let s:pumvisible_ctrl_e = 0
         let key .= '\<C-R>=g:vimim()\<CR>'
         sil!exe 'sil!return "' . key . '"'
     endif
-    " ---------------------------------
-    if empty(s:onekeynonstop)
-    \&& s:chinese_input_mode == 'onekey'
+    if empty(s:onekeynonstop) && s:chinese_input_mode =~ 'onekey'
         call s:vimim_stop()
     endif
-    " ---------------------------------
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1623,6 +1616,19 @@ endfunction
 let VimIM = " ====  Omni_Popup_Menu   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
+
+" ----------------------------------------
+function! s:vimim_get_previous_pair_list()
+" ----------------------------------------
+    let results = []
+    let filter = s:menu_digit_as_filter
+    let filter = strpart(filter, 0, len(filter)-1)
+    if len(filter) > 0
+        let s:menu_digit_as_filter = filter
+        let results = s:vimim_pair_list(s:matched_list)
+    endif
+    return results
+endfunction
 
 " ---------------------------------------
 function! s:vimim_pair_list(matched_list)
@@ -5298,6 +5304,9 @@ else
     if len(s:menu_digit_as_filter) > 0
         if len(s:matched_list) > 1
             let results = s:vimim_pair_list(s:matched_list)
+            if empty(len(results))
+                let results = s:vimim_get_previous_pair_list()
+            endif
             if !empty(len(results))
                 return s:vimim_popupmenu_list(results)
             endif
