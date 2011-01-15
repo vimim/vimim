@@ -1300,16 +1300,16 @@ function! <SID>vimim_onekey_label_navigation(key)
 " -----------------------------------------------
     let hjkl = a:key
     if pumvisible()
-        if a:key == 'h'
-            sil!call s:vimim_onekey_nonstop()
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'j'
+        if a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
+        elseif a:key == 'h'
+            sil!call s:vimim_onekey_nonstop()
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'l'
             sil!call s:vimim_onekey_nonstop()
-            let hjkl = "\<C-Y>"
+            let hjkl = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         elseif a:key == 'm'
             let hjkl  = '\<C-E>'
         elseif a:key == 'n'
@@ -1376,7 +1376,9 @@ function! g:vimim_pumvisible_dump()
             let line = printf('%s', items.word)
         else
             let format = '%-8s %s'
-            if items.menu =~ '^u\x\x\x\x' && s:pinyin_4corner_filter > 0
+            if s:pinyin_4corner_filter > 0
+            \&& items.menu =~ '^u\x\x\x\x' 
+            \&& len(items.menu) > 13
                 let format = '%-32s %s'
             endif
             let line = printf(format, items.menu, items.word)
@@ -1388,6 +1390,7 @@ function! g:vimim_pumvisible_dump()
     if has("gui_running") && has("win32")
         let @+ = one_line
     endif
+    " -----------------------------
     call setline(line("."), results)
     return g:vimim_esc()
 endfunction
@@ -1527,7 +1530,6 @@ function! <SID>vimim_smart_enter()
             let key = enter
         endif
     endif
-    " -----------------------------------------------
     if s:smart_enter == 1
         let msg = "do seamless for the first time <Enter>"
         let s:pattern_not_found = 0
@@ -1541,13 +1543,11 @@ function! <SID>vimim_smart_enter()
         endif
         let s:smart_enter = 0
     endif
-    " -----------------------------------------------
     if s:chinese_input_mode == 'onekey'
         if empty(byte_before)
             let key = s:space . enter
         endif
     endif
-    " -----------------------------------------------
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
