@@ -159,6 +159,7 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
+    let s:popupmenu_list = []
     " --------------------------------
     let A = char2nr('A')
     let Z = char2nr('Z')
@@ -845,7 +846,7 @@ function! s:vimim_onekey_action(onekey)
             let s:pattern_not_found = 0
             let onekey = " "
         else
-            let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_ee()\<CR>'
+            let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
         endif
         sil!exe 'sil!return "' . onekey . '"'
@@ -1290,7 +1291,7 @@ function! s:vimim_onekey_nonstop()
     if s:chinese_input_mode == 'onekey'
         let s:onekeynonstop = 1
         call s:vimim_cursor_color(1)
-        call s:reset_popupmenu_list()
+        call s:reset_matched_list()
     endif
 endfunction
 
@@ -1329,7 +1330,7 @@ endfunction
 function! g:vimim_one_key_correction()
 " ------------------------------------
     let key = '\<Esc>'
-    call s:reset_popupmenu_list()
+    call s:reset_matched_list()
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
         let s:one_key_correction = 1
@@ -1341,7 +1342,7 @@ endfunction
 " ---------------------
 function! g:vimim_esc()
 " ---------------------
-    call s:reset_popupmenu_list()
+    call s:reset_matched_list()
     if s:chinese_input_mode == 'onekey'
         call s:vimim_stop()
     endif
@@ -1588,15 +1589,6 @@ function! g:vimim_pumvisible_ctrl_e()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ------------------------------------
-function! g:vimim_pumvisible_ctrl_ee()
-" ------------------------------------
-    let key  = "\<C-E>"
-    let key .= '\<C-R>=g:vimim()\<CR>'
-    let key .= "\<C-E>"
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 " --------------------------------------
 function! g:vimim_pumvisible_ctrl_e_on()
 " --------------------------------------
@@ -1609,7 +1601,7 @@ endfunction
 " ---------------------------
 function! g:vimim_backspace()
 " ---------------------------
-    call s:reset_popupmenu_list()
+    call s:reset_matched_list()
     let s:pattern_not_found = 0
     let key = '\<BS>'
     " ---------------------------------
@@ -5075,20 +5067,19 @@ endfunction
 " ---------------------------------
 function! s:reset_before_anything()
 " ---------------------------------
-    call s:reset_popupmenu_list()
+    call s:reset_matched_list()
     let s:no_internet_connection = 0
     let s:pattern_not_found = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
-" --------------------------------
-function! s:reset_popupmenu_list()
-" --------------------------------
+" ------------------------------
+function! s:reset_matched_list()
+" ------------------------------
     let s:pumvisible_yes = 0
     let s:keyboard_head = 0
-    let s:menu_digit_as_filter = ""
     let s:pumvisible_hjkl_2nd_match = 0
-    let s:popupmenu_list = []
+    let s:menu_digit_as_filter = ""
     let s:matched_list = []
 endfunction
 
@@ -5112,7 +5103,7 @@ function! g:vimim_reset_after_insert()
     if s:pumvisible_yes > 0
         let key = g:vimim()
     endif
-    call s:reset_popupmenu_list()
+    call s:reset_matched_list()
     call g:vimim_reset_after_auto_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5152,7 +5143,7 @@ function! g:vimim_menu_select()
             if s:insert_without_popup > 1
                 let key .= '\<Esc>'
             endif
-            call s:reset_popupmenu_list()
+            call s:reset_matched_list()
             let s:insert_without_popup = 0
         endif
     endif
