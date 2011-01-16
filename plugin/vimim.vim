@@ -137,6 +137,7 @@ function! s:vimim_initialize_session()
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
     " --------------------------------
+    let s:hjkl_h = 0
     let s:hjkl_l = 0
     let s:one_key_correction = 0
     let s:shuangpin_keycode_chinese = {}
@@ -2210,9 +2211,10 @@ endfunction
 function! g:vimim_build_directory_4corner_cache()
 " -----------------------------------------------
     let dir = s:vimim_get_valid_directory('unihan')
-    if empty(dir)
+    if empty(dir) || s:hjkl_h > 0
         return
     else
+        let s:hjkl_h = 1
         echo "VimIM building digit cache from " . dir
     endif
     let start = 19968
