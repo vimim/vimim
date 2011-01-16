@@ -808,7 +808,11 @@ function! <SID>OneKey()
         endif
     endif
     if onekey < 0
-        sil!call s:vimim_start_onekey()
+        if pumvisible()
+            let msg = "optimize for double ctrl-6"
+        else
+            sil!call s:vimim_start_onekey()
+        endif
         let onekey = s:vimim_onekey_action("")
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -1374,30 +1378,31 @@ function! g:vimim_pumvisible_dump()
         return ""
     endif
     let line = ""
-    let one_line = ""
-    let results = []
+    let one_line_clipboard = ""
+    let results = [s:keyboard_leading_zero]
     " -----------------------------
     for items in s:popupmenu_list
-        if empty(items.menu)
+        if empty(items.menu) 
+        \|| s:keyboard_leading_zero =~ '^oo'
             let line = printf('%s', items.abbr)
         else
             let format = '%-8s %s'
             if s:pinyin_4corner_filter > 0
             \&& items.menu =~ '^u\x\x\x\x'
-            \&& len(split(items.menu)) > 2
+            \&& len(items.menu) > 12
                 let format = '%-32s %s'
             endif
             let line = printf(format, items.menu, items.word)
         endif
         call add(results, line)
-        let one_line .= line . "\n"
+        let one_line_clipboard .= line . "\n"
     endfor
+    call setline(line("."), results)
     " -----------------------------
     if has("gui_running") && has("win32")
-        let @+ = one_line
+        let @+ = one_line_clipboard
     endif
     " -----------------------------
-    call setline(line("."), results)
     return g:vimim_esc()
 endfunction
 
@@ -2334,7 +2339,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
                 let head = get(values, 1)
                 if empty(head)
                     continue
-                elseif head !~ '^\l\+\d$'
+                elseif head !~ '^\l\+\d\=$'
                     let head = get(values, 0)
                 endif
             endif
