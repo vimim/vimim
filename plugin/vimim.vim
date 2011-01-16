@@ -137,6 +137,7 @@ function! s:vimim_initialize_session()
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
     " --------------------------------
+    let s:hjkl_l = 0
     let s:one_key_correction = 0
     let s:shuangpin_keycode_chinese = {}
     let s:shuangpin_table = {}
@@ -496,7 +497,7 @@ function! s:vimim_egg_vimim()
     elseif s:vimim_tab_as_onekey == 1
         let toggle = "Tab_as_OneKey"
     elseif s:vimim_tab_as_onekey == 2
-        let toggle = "Tab_as_OneKey_with_NonStop_hjkl"
+        let toggle = "Tab_as_OneKey_NonStop"
     endif
     let toggle .= s:space
     let style = s:vimim_chinese('style')
@@ -1293,8 +1294,7 @@ endfunction
 function! s:vimim_onekey_label_navigation_on()
 " --------------------------------------------
     let hjkl = 'hjklmnsx'
-    let hjkl_list = split(hjkl, '\zs')
-    for _ in hjkl_list
+    for _ in split(hjkl, '\zs')
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_onekey_label_navigation("'._.'")'
     endfor
@@ -1310,9 +1310,11 @@ function! <SID>vimim_onekey_label_navigation(key)
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'h'
+            let s:hjkl_l = 0
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'l'
-            let hjkl  = s:vimim_ctrl_y_ctrl_x_ctrl_u()
+            let s:hjkl_l = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'm'
             let hjkl  = '\<C-E>'
         elseif a:key == 'n'
@@ -1416,12 +1418,6 @@ endfunction
 function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
 " --------------------------------------
     return '\<C-E>\<C-R>=g:vimim()\<CR>'
-endfunction
-
-" --------------------------------------
-function! s:vimim_ctrl_y_ctrl_x_ctrl_u()
-" --------------------------------------
-    return '\<C-Y>\<C-R>=g:vimim()\<CR>'
 endfunction
 
 " -------------------------------------
@@ -1691,17 +1687,10 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         let menu = get(pairs, 0)
         let chinese = get(pairs, 1)
         " -------------------------------------------------
-        let extra_text = menu
-        if s:vimim_custom_skin > 1
-            let extra_text = ""
-        endif
-        if s:pinyin_4corner_filter > 0  && chinese !~ '\w'
-            if len(s:menu_digit_as_filter) > 0 
-            \|| menu =~ '^\d\d\d\d\='
-            \|| menu =~ '^u\x\x\x\x'
-                let ddddd = char2nr(chinese)
-                let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
-            endif
+        let extra_text = ""
+        if s:hjkl_l > 0
+            let ddddd = char2nr(chinese)
+            let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
         endif
         let complete_items["menu"] = extra_text
         " -------------------------------------------------
@@ -1907,17 +1896,17 @@ function! s:vimim_punctuation_navigation_on()
     if s:chinese_input_mode =~ 'onekey'
         let punctuation .= dot . ",/?"
     endif
-    let hjkl_list = split(punctuation,'\zs')
+    let punctuations = split(punctuation,'\zs')
     " ---------------------------------------
     " note: we should never map valid keycode
     for char in s:valid_keys
-        let i = index(hjkl_list, char)
+        let i = index(punctuations, char)
         if i > -1 && char != dot
-            unlet hjkl_list[i]
+            unlet punctuations[i]
         endif
     endfor
     " ---------------------------------------
-    for _ in hjkl_list
+    for _ in punctuations
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_punctuations_navigation("'._.'")'
     endfor
@@ -3016,7 +3005,7 @@ function! s:vimim_localization()
     endif
     " ---------------------------------------------
     if s:pinyin_4corner_filter > 0
-        let s:abcd = "'abcdvfgz"
+        let s:abcd = "'abcdfgvz"
         let s:qwerty = split('pqwertyuio', '\zs')
     endif
     " ---------------------------------------------
