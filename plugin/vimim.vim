@@ -137,8 +137,8 @@ function! s:vimim_initialize_session()
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
     " --------------------------------
-    let s:hjkl_h = 0
     let s:hjkl_l = 0
+    let s:qwertyuiop = 0
     let s:one_key_correction = 0
     let s:shuangpin_keycode_chinese = {}
     let s:shuangpin_table = {}
@@ -240,7 +240,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['purple'] = ['紫光']
     let s:chinese['plusplus'] = ['加加']
     let s:chinese['flypy'] = ['小鹤','小鶴']
-    let s:chinese['sogou'] = ['搜狗云','搜狗雲']
+    let s:chinese['sogou'] = ['搜狗']
     let s:chinese['cloud_atwill'] = ['想云就云','想雲就雲']
     let s:chinese['mycloud'] = ['自己的云','自己的雲']
     let s:chinese['onekey'] = ['点石成金','點石成金']
@@ -1312,7 +1312,6 @@ function! <SID>vimim_onekey_label_navigation(key)
             let hjkl  = '\<Up>'
         elseif a:key == 'h'
             let s:hjkl_l = 0
-            call g:vimim_build_directory_4corner_cache()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'l'
             let s:hjkl_l = 1
@@ -1893,17 +1892,16 @@ function! s:vimim_punctuation_navigation_on()
     if s:vimim_chinese_punctuation < 0
         return
     endif
-    let dot = "."
-    let punctuation = "=-[]<"
+    let punctuation = "=-[]<>"
     if s:chinese_input_mode =~ 'onekey'
-        let punctuation .= dot . ",/?"
+        let punctuation .= ".,/?"
     endif
     let punctuations = split(punctuation,'\zs')
     " ---------------------------------------
     " note: we should never map valid keycode
     for char in s:valid_keys
         let i = index(punctuations, char)
-        if i > -1 && char != dot
+        if i > -1 && char != "."
             unlet punctuations[i]
         endif
     endfor
@@ -1928,9 +1926,12 @@ function! <SID>vimim_punctuations_navigation(key)
         elseif a:key == "?"
             let hjkl  = '\<C-R>=g:vimim_menu_search_backward()\<CR>'
         elseif a:key =~ "[-,=.]"
-            let hjkl = s:vimim_pageup_pagedown(a:key)
+            let hjkl  = s:vimim_pageup_pagedown(a:key)
         elseif a:key == '<'
             let s:pumvisible_hjkl_2nd_match = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == '>'
+            call g:vimim_build_directory_4corner_cache()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         endif
     else
@@ -2211,10 +2212,10 @@ endfunction
 function! g:vimim_build_directory_4corner_cache()
 " -----------------------------------------------
     let dir = s:vimim_get_valid_directory('unihan')
-    if empty(dir) || s:hjkl_h > 0
+    if empty(dir) || s:qwertyuiop > 0
         return
     else
-        let s:hjkl_h = 1
+        let s:qwertyuiop = 1
         echo "VimIM building digit cache from " . dir
     endif
     let start = 19968
