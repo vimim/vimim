@@ -1690,18 +1690,18 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         endif
         let menu = get(pairs, 0)
         let chinese = get(pairs, 1)
-        let extra_text = menu
         " -------------------------------------------------
+        let extra_text = menu
+        if s:vimim_custom_skin > 1
+            let extra_text = ""
+        endif
         if s:pinyin_4corner_filter > 0  && chinese !~ '\w'
-            if len(s:menu_digit_as_filter) > 0
-            \|| s:keyboard_leading_zero =~ "'"
-            \|| menu =~ '^\d\d\d\d'
+            if len(s:menu_digit_as_filter) > 0 
+            \|| menu =~ '^\d\d\d\d\='
+            \|| menu =~ '^u\x\x\x\x'
                 let ddddd = char2nr(chinese)
                 let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
             endif
-        endif
-        if s:vimim_custom_skin == 3 && extra_text =~# '^ii\|^oo'
-            let extra_text = ""
         endif
         let complete_items["menu"] = extra_text
         " -------------------------------------------------
