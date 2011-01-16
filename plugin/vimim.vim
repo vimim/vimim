@@ -3,6 +3,7 @@
 " -----------------------------------------------------
 "   VimIM -- Input Method by Vim, of Vim, for Vimmers
 " =====================================================
+
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 let  VimIM = string("VimIM 經典:") "|         vim<C-6><C-6>
@@ -174,9 +175,9 @@ function! s:vimim_initialize_session()
     let s:debugs = []
 endfunction
 
-" -------------------------------
+" --------------------------------
 function! s:vimim_chinese(english)
-" -------------------------------
+" --------------------------------
     let key = a:english
     let chinese = a:english
     if has_key(s:chinese, key)
@@ -5131,7 +5132,6 @@ function! s:vimim_helper_mapping_on()
     if s:chinese_input_mode !~ 'onekey'
         inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
     endif
-    " ----------------------------------------------------------
 endfunction
 
 " ======================================== }}}
