@@ -2213,7 +2213,7 @@ function! g:vimim_build_directory_4corner_cache()
     if empty(dir)
         return
     else
-        echo "VimIM building cache: " . delta . " " . dir
+        echo "VimIM building digit cache from " . dir
     endif
     let start = 19968
     let delta = 40869 - start
