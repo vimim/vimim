@@ -760,21 +760,30 @@ function! s:vimim_break_word_by_word(keyboard)
         return []
     endif
     let blocks = []
+    " ----------------------------------------
     let delimiter = "'"
-    if s:ui.im =~ 'pinyin' || s:ui.im =~ 'english'
-        " i.have.a.dream <=> simpler and easier
-        let delimiter = "."
+    if keyboard =~ "[']"
+        let blocks = split(keyboard, "[']")
     endif
-    if keyboard =~ delimiter
-    \&& keyboard[0:0] != delimiter
-    \&& keyboard[-1:-1] != delimiter
-        let blocks = split(keyboard, delimiter)
-        if !empty(blocks)
-            let head = get(blocks, 0)
-            let blocks = s:vimim_break_pinyin_digit(head)
-            if empty(blocks)
-                let blocks = [head]
-            endif
+    " ----------------------------------------
+    if s:ui.im =~ 'pinyin' || s:ui.im =~ 'english'
+        let delimiter = "."
+        if keyboard =~ "[.]"
+            " i.have.a.dream <=> simpler and easier
+            let blocks = split(keyboard, "[.]")
+        endif
+    endif
+    " ----------------------------------------
+    if keyboard[0:0] == delimiter
+    \|| keyboard[-1:-1] == delimiter
+        return []
+    endif
+    " ----------------------------------------
+    if !empty(blocks)
+        let head = get(blocks, 0)
+        let blocks = s:vimim_break_pinyin_digit(head)
+        if empty(blocks)
+            let blocks = [head]
         endif
     endif
     return blocks
@@ -1697,8 +1706,11 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             let s:tail = ""
-            if keyboard =~ "[']"
+            if keyboard =~ "[.']"
                 let word_by_word = match(keyboard, "[']")
+                if s:ui.im =~ 'pinyin' || s:ui.im =~ 'english'
+                    let word_by_word = match(keyboard, "[.]")
+                endif
                 let s:tail = strpart(keyboard, word_by_word+1)
                 let chinese .= s:tail
             elseif keyboard !~? '^vim'
@@ -3539,11 +3551,7 @@ function! s:vimim_break_sentence_into_block(keyboard)
             let blocks = s:vimim_break_digit_every_four(a:keyboard)
         endif
     endif
-    if empty(blocks)
-        return []
-    else
-        return blocks
-    endif
+    return blocks
 endfunction
 
 " --------------------------------------------
@@ -5476,4 +5484,3 @@ sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
 " ======================================= }}}
-
