@@ -808,11 +808,7 @@ function! <SID>OneKey()
         endif
     endif
     if onekey < 0
-        if pumvisible()
-            let msg = "optimize for double ctrl-6"
-        else
-            sil!call s:vimim_start_onekey()
-        endif
+        sil!call s:vimim_start_onekey()
         let onekey = s:vimim_onekey_action("")
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -823,7 +819,11 @@ function! s:vimim_start_onekey()
 " ------------------------------
     sil!call s:vimim_backend_initialization_once()
     sil!call s:vimim_frontend_initialization()
-    sil!call s:vimim_start()
+    if pumvisible()
+        let msg = "optimize for double ctrl-6"
+    else
+        sil!call s:vimim_start()
+    endif
     sil!call s:vimim_onekey_label_navigation_on()
     sil!call s:vimim_onekey_pumvisible_capital_on()
     sil!call s:vimim_onekey_1234567890_filter_on()
@@ -1382,7 +1382,7 @@ function! g:vimim_pumvisible_dump()
     let results = [s:keyboard_leading_zero]
     " -----------------------------
     for items in s:popupmenu_list
-        if empty(items.menu) 
+        if empty(items.menu)
         \|| s:keyboard_leading_zero =~ '^oo'
             let line = printf('%s', items.abbr)
         else
