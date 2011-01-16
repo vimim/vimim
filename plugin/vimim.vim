@@ -1379,7 +1379,7 @@ function! g:vimim_pumvisible_dump()
     " -----------------------------
     for items in s:popupmenu_list
         if empty(items.menu)
-            let line = printf('%s', items.word)
+            let line = printf('%s', items.abbr)
         else
             let format = '%-8s %s'
             if s:pinyin_4corner_filter > 0
