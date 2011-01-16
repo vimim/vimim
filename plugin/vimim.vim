@@ -247,14 +247,14 @@ endfunction
 function! s:vimim_dictionary_im_keycode()
 " ---------------------------------------
     let s:im_keycode = {}
-    let s:im_keycode['sogou']    = "[0-9a-z.]"
-    let s:im_keycode['mycloud']  = "[0-9a-z'.]"
-    let s:im_keycode['pinyin']   = "[0-9a-z']"
+    let s:im_keycode['pinyin']   = "[0-9a-z'.]"
+    let s:im_keycode['english']  = "[0-9a-z'.]"
+    let s:im_keycode['4corner']  = "[0-9a-z'.]"
+    let s:im_keycode['mycloud']  = "[0-9a-z']"
     let s:im_keycode['wubi']     = "[0-9a-z']"
-    let s:im_keycode['english']  = "[0-9a-z']"
     let s:im_keycode['hangul']   = "[0-9a-z']"
     let s:im_keycode['xinhua']   = "[0-9a-z']"
-    let s:im_keycode['4corner']  = "[0-9a-z']"
+    let s:im_keycode['sogou']    = "[0-9a-z]"
     let s:im_keycode['zhengma']  = "[a-z']"
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['taijima']  = "[a-z']"
@@ -740,8 +740,9 @@ let VimIM = " ====  OneKey            ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" input method english:    i'have'a'dream
-" input method pinyin:     wo'you'yige'meng
+" input method english:    i.have.a.dream
+" input method pinyin:     wo.you.yige.meng
+" ----------------------
 " input method wubi:       trde'ggwh'ssqu
 " input method wubi2000:   q'e'ggwh'ssq
 " input method cantonese:  ngoh'yau'yat'goh'mung
@@ -755,13 +756,19 @@ call add(s:vimims, VimIM)
 function! s:vimim_break_word_by_word(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
+    if s:chinese_input_mode != 'onekey'
+        return []
+    endif
     let blocks = []
-    if s:chinese_input_mode == 'onekey'
-    \&& s:ui.has_dot != 2
-    \&& keyboard =~ "[']"
-    \&& keyboard[0:0] != "'"
-    \&& keyboard[-1:-1] != "'"
-        let blocks = split(keyboard, "[']")
+    let delimiter = "'"
+    if s:ui.im =~ 'pinyin' || s:ui.im =~ 'english'
+        " i.have.a.dream <=> simpler and easier
+        let delimiter = "."
+    endif
+    if keyboard =~ delimiter
+    \&& keyboard[0:0] != delimiter
+    \&& keyboard[-1:-1] != delimiter
+        let blocks = split(keyboard, delimiter)
         if !empty(blocks)
             let head = get(blocks, 0)
             let blocks = s:vimim_break_pinyin_digit(head)
@@ -1728,7 +1735,8 @@ function! s:vimim_get_labeling(label)
         if label < 2
             let label2 = "_"
         endif
-        if s:vimim_custom_skin == 3 || s:pinyin_4corner_filter > 0
+        if s:vimim_custom_skin == 3
+        \|| s:pinyin_4corner_filter > 0
             let labeling = label2
         else
             let labeling .= label2
@@ -3541,15 +3549,18 @@ endfunction
 " --------------------------------------------
 function! s:vimim_break_pinyin_digit(keyboard)
 " --------------------------------------------
+" [input]  mali4
+" [output] mali filtered with 4 for the last char
+"          馬力 马力 马莉 玛莉
+" --------------------------------------------
     let blocks = []
-    let keyboard = a:keyboard
     if s:pinyin_4corner_filter < 1
         return []
     endif
     let pinyin_digit_pattern = '\d\+\l\='
-    let digit = match(keyboard, pinyin_digit_pattern)
+    let digit = match(a:keyboard, pinyin_digit_pattern)
     if digit > 0
-        let blocks = s:vimim_break_string_at(keyboard, digit)
+        let blocks = s:vimim_break_string_at(a:keyboard, digit)
         if empty(len(s:menu_digit_as_filter))
             let menu = get(blocks, 0)
             let filter = get(blocks, 1)
@@ -4209,7 +4220,7 @@ function! s:vimim_magic_tail(keyboard)
     " ----------------------------------------------------
     " <apostrophe> double play in OneKey:
     "   (1) magic trailing apostrophe => cloud at will
-    "   (2) magic leading  apostrophe => universal imode
+    "   (2) as word partition  => match apostrophe by apostrophe
     " ----------------------------------------------------
     let keyboard = keyboard[:-2]
     call insert(keyboards, keyboard)
@@ -4790,16 +4801,6 @@ function! s:debugs(key, value)
         let item .= a:value
         call add(s:debugs, item)
     endif
-endfunction
-
-" -----------------------------
-function! s:debug_list(results)
-" -----------------------------
-    let string_in = string(a:results)
-    let length = 5
-    let delimiter = ":"
-    let string_out = join(split(string_in)[0 : length], delimiter)
-    return string_out
 endfunction
 
 " -----------------------------
@@ -5475,3 +5476,4 @@ sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
 " ======================================= }}}
+
