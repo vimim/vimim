@@ -78,7 +78,7 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_initialize_keycode()
     sil!call s:vimim_set_special_im_property()
     sil!call s:vimim_initialize_frontend_punctuation()
-    sil!call s:vimim_build_digit_filter_cache()
+    sil!call s:vimim_build_datafile_4corner_cache()
     sil!call s:vimim_build_datafile_lines()
     sil!call s:vimim_localization()
     sil!call s:vimim_initialize_skin()
@@ -1311,6 +1311,7 @@ function! <SID>vimim_onekey_label_navigation(key)
             let hjkl  = '\<Up>'
         elseif a:key == 'h'
             let s:hjkl_l = 0
+            call g:vimim_build_directory_4corner_cache()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'l'
             let s:hjkl_l = 1
@@ -2092,9 +2093,9 @@ let VimIM = " ====  Input_Digit       ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ------------------------------------------
-function! s:vimim_build_digit_filter_cache()
-" ------------------------------------------
+" ----------------------------------------------
+function! s:vimim_build_datafile_4corner_cache()
+" ----------------------------------------------
 " Digit code such as four corner can be used as independent filter.
 " It works for both cloud and VimIM embedded backends.
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.unihan_4corner.txt
@@ -2203,6 +2204,36 @@ function! s:vimim_visual_ctrl_6_output(results)
     let new_positions[1] = line + len(results) - 1
     let new_positions[2] = len(get(split(get(results,-1)),0))+1
     call setpos(".", new_positions)
+endfunction
+
+" -----------------------------------------------
+function! g:vimim_build_directory_4corner_cache()
+" -----------------------------------------------
+    let dir = s:vimim_get_valid_directory('unihan')
+    if empty(dir)
+        return
+    else
+        echo "VimIM building cache: " . delta . " " . dir
+    endif
+    let start = 19968
+    let delta = 40869 - start
+    if s:encoding ==# "taiwan"
+        let start = str2nr('A440',16)
+    elseif s:encoding ==# "chinese"
+        let start = str2nr('8140',16)
+    endif
+    for ddddd in range(start, start+delta)
+        let key = printf('u%x', ddddd)
+        if !has_key(s:unihan_4corner_cache, key)
+            let filename = dir . '/' . key
+            if filereadable(filename)
+                let results = readfile(filename, '', 2)
+                if !empty(results)
+                    let s:unihan_4corner_cache[key] = results
+                endif
+            endif
+        endif
+    endfor
 endfunction
 
 " ---------------------------------------
@@ -3139,10 +3170,10 @@ function! CJK()
         $put='Your Vim encoding has to be set as utf-8.'
         $put='[usage]    :call CJK()<CR>'
     else
-        let unicode_start = 19968  "| 一
-        let unicode_end   = 40869  "| 龥
-        for i in range(unicode_start, unicode_end)
-            $put=printf('%d %x ',i,i).nr2char(i)
+        let start = 19968  "| 一
+        let end   = 40869  "| 龥
+        for ddddd in range(start, end)
+            $put=printf('%d %x ',ddddd,ddddd).nr2char(ddddd)
         endfor
     endif
     return ""
