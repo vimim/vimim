@@ -474,7 +474,7 @@ function! s:vimim_egg_vimim()
     let option = "encoding " . encoding . &encoding
     call add(eggs, option)
     " ----------------------------------
-    let option = "fencs\t "  . encoding . &fileencodings
+    let option = "fencs\t " . encoding . &fileencodings
     call add(eggs, option)
     " ----------------------------------
     if has("gui_running")
@@ -521,16 +521,13 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
     " ----------------------------------
-    let option = 0
-    if s:pinyin_4corner_filter == 2
-        if !empty(s:vimim_data_directory)
+    if s:pinyin_4corner_filter > 0
+        if empty(s:vimim_data_directory)
+            let ciku = "database " . s:vimim_chinese('digit') . s:colon
+            let option = ciku . s:path . "vimim.unihan_4corner.txt"
+        else
             let option = ciku . s:vimim_data_directory . "unihan/"
         endif
-    elseif s:pinyin_4corner_filter == 1
-        let ciku = "database " . s:vimim_chinese('digit') . s:colon
-        let option = ciku . s:path . "vimim.unihan_4corner.txt"
-    endif
-    if !empty(option)
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -886,7 +883,7 @@ function! s:vimim_onekey_action(onekey)
             endif
         endfor
         if empty(onekey)
-            let msg = "transform punctuation from english to chinese"
+            let msg = "transform punctuation from English to Chinese"
             let replacement = s:punctuations[before]
             let onekey = "\<BS>" . replacement
             sil!exe 'sil!return "' . onekey . '"'
@@ -1121,8 +1118,7 @@ function! s:vimim_initialize_statusline()
 " ---------------------------------------
     if s:vimim_custom_skin < 0
         return
-    endif
-    if s:vimim_custom_skin < 3
+    elseif s:vimim_custom_skin < 3
         sil!call s:vimim_set_statusline()
     else
         echoh NonText
@@ -1756,8 +1752,7 @@ function! s:vimim_get_labeling(label)
         if label < 2
             let label2 = "_"
         endif
-        if s:vimim_custom_skin == 3
-        \|| s:pinyin_4corner_filter > 0
+        if s:pinyin_4corner_filter > 0
             let labeling = label2
         else
             let labeling .= label2
@@ -2083,7 +2078,7 @@ function! s:vimim_build_datafile_4corner_cache()
     let buffer = expand("%:p:t")
     if s:chinese_input_mode !~ 'onekey'
     \|| buffer =~ 'dynamic' || buffer =~ 'static'
-        let msg = 'digit filter is used for onekey only'
+        let msg = 'digit filter is used for OneKey only'
         return
     endif
     let unihan_4corner_file = s:path . "vimim.unihan_4corner.txt"
@@ -2263,10 +2258,11 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_build_unihan_reverse_cache(chinese)
 " ---------------------------------------------------
-" [input]  馬力     [unihan] u808f => 8022 cao4 copulate
+" [input]  馬力  sample format: u808f => 8022 cao4 copulate
 " [output] {'u99ac':['7132','ma3'],'u529b':['4002','li2']}
 " ---------------------------------------------------
-    if s:pinyin_4corner_filter < 2
+    if s:pinyin_4corner_filter > 0
+    \&& empty(s:vimim_data_directory)
         return
     endif
     for char in split(a:chinese, '\zs')
@@ -3175,7 +3171,7 @@ function! s:vimim_do_force_datafile(im)
     let s:vimim_cloud_sogou = 0
     let s:vimim_cloud_plugin = 0
     if match(s:xingma, a:im) < 0
-        let msg = "no need digit filter for wubil"
+        let msg = "no need digit filter for wubi"
     else
         let s:pinyin_4corner_filter = 0
     endif
@@ -3608,7 +3604,7 @@ function! s:vimim_scan_backend_embedded_directory()
         let buffer = expand("%:p:t")
         if s:chinese_input_mode !~ 'onekey'
         \|| buffer =~ 'dynamic' || buffer =~ 'static'
-            let msg = 'digit filter for onekey only'
+            let msg = 'digit filter for OneKey only'
         elseif isdirectory(s:vimim_data_directory . "unihan")
             let s:pinyin_4corner_filter = 2
         endif
@@ -4612,7 +4608,7 @@ endfunction
 " --------------------------------------------------------
 function! s:vimim_process_mycloud_output(keyboard, output)
 " --------------------------------------------------------
-" one line output example:  春夢      8       4420
+" one line sample output:  春夢 8 4420
     let output = a:output
     if empty(output) || empty(a:keyboard)
         return []
@@ -4668,7 +4664,9 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if !isdirectory("/home/xma/vim")
+    if isdirectory("/home/xma/vim")
+        let msg = "VimIM sample configuration:"
+    else
         return
     endif
     let s:vimim_private_data_directory = "/home/xma/oo/"
@@ -5023,7 +5021,7 @@ endfunction
 " ---------------------------
 function! s:vimim_i_map_off()
 " ---------------------------
-    let s:chinese_input_mode = "onekey"
+    let s:chinese_input_mode = 'onekey'
     let unmap_list = range(0,9)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, s:AZ_list)
