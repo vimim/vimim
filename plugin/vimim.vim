@@ -3156,58 +3156,6 @@ function! CJK()
     return ""
 endfunction
 
-" -------------
-function! GBK()
-" -------------
-" This function outputs GBK as:
-" ----------------------------- gb=6763
-"   decimal  hex    GBK
-"   49901    c2ed    馬
-" ----------------------------- gbk=883+21003=21886
-    if s:encoding ==# "chinese"
-        let start = str2nr('8140',16) "| 33088 丂
-        for i in range(125)
-            for j in range(start, start+190)
-                if j <= 64928 && j != start+63
-                    $put=printf('%d %x ',j,j).nr2char(j)
-                endif
-            endfor
-            let start += 16*16
-        endfor
-    else
-        $put='Your Vim encoding has to be set as chinese.'
-        $put='[usage]    :call GBK()<CR>'
-    endif
-    return ""
-endfunction
-
-" --------------
-function! BIG5()
-" --------------
-" This function outputs BIG5 as:
-" -----------------------------
-"   decimal  hex    BIG5
-"   45224    b0a8    馬
-" ----------------------------- big5=408+5401+7652=13461
-    if s:encoding ==# "taiwan"
-        let start = str2nr('A440',16) "| 42048  一
-        for i in range(86)
-            for j in range(start, start+(4*16)-2)
-                $put=printf('%d %x ',j,j).nr2char(j)
-            endfor
-            let start2 = start + 6*16+1
-            for j in range(start2, start2+93)
-                $put=printf('%d %x ',j,j).nr2char(j)
-            endfor
-            let start += 16*16
-        endfor
-    else
-        $put='Your Vim encoding has to be set as taiwan.'
-        $put='[usage]    :call BIG5()<CR>'
-    endif
-    return ""
-endfunction
-
 " ======================================== }}}
 let VimIM = " ====  Backend==File     ==== {{{"
 " ============================================
