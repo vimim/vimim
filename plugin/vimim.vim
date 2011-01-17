@@ -4955,14 +4955,6 @@ function! s:vimim_i_setting_off()
     let &smartcase=s:saved_smartcase
 endfunction
 
-" -----------------------------
-function! s:vimim_super_reset()
-" -----------------------------
-    sil!call s:reset_before_anything()
-    sil!call g:vimim_reset_after_auto_insert()
-    sil!call s:vimim_reset_before_stop()
-endfunction
-
 " -----------------------
 function! s:vimim_start()
 " -----------------------
@@ -4988,17 +4980,19 @@ function! s:vimim_stop()
     return ""
 endfunction
 
-" -----------------------------------
-function! s:vimim_reset_before_stop()
-" -----------------------------------
-    let s:smart_enter = 0
-    let s:pumvisible_ctrl_e = 0
+" -----------------------------
+function! s:vimim_super_reset()
+" -----------------------------
+    sil!call s:reset_before_anything()
+    sil!call g:vimim_reset_after_auto_insert()
 endfunction
 
 " ---------------------------------
 function! s:reset_before_anything()
 " ---------------------------------
     call s:reset_matched_list()
+    let s:smart_enter = 0
+    let s:pumvisible_ctrl_e = 0
     let s:no_internet_connection = 0
     let s:pattern_not_found = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
@@ -5304,7 +5298,6 @@ else
     endif
 
     let s:keyboard_leading_zero = keyboard
-    " ------------------------------------
     if s:ui.has_dot == 2
         let keyboard = s:vimim_apostrophe(keyboard)
     endif
