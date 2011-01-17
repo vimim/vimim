@@ -1252,23 +1252,23 @@ function! s:vimim_label_on()
     endif
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_12345678_label("'._.'")<CR>'
+        \  <C-R>=<SID>vimim_123456789_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
 endfunction
 
-" ------------------------------------
-function! <SID>vimim_12345678_label(n)
-" ------------------------------------
+" -------------------------------------
+function! <SID>vimim_123456789_label(n)
+" -------------------------------------
     let label = a:n
     if pumvisible()
         let n = match(s:abcd, label)
         if label =~ '\d'
             let n = label - 1
         endif
+        let s:pumvisible_yes = 1
         let down = repeat("\<Down>", n)
         let yes = "\<C-Y>"
-        let s:pumvisible_yes = 1
         let label = down . yes
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -1298,7 +1298,7 @@ endfunction
 " --------------------------------------------
 function! s:vimim_onekey_label_navigation_on()
 " --------------------------------------------
-    let hjkl = 'hjklmnsx'
+    let hjkl = 'hjklmnsx<>()'
     for _ in split(hjkl, '\zs')
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_onekey_label_navigation("'._.'")'
@@ -1331,6 +1331,17 @@ function! <SID>vimim_onekey_label_navigation(key)
             let s:pumvisible_ctrl_e = 1
             let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
+        elseif a:key == '('
+            let s:pumvisible_hjkl_2nd_match = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == ')'
+            call g:vimim_build_directory_4corner_cache()
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key =~ "[<>]"
+            let punctuation = nr2char(char2nr(a:key)-16)
+            let hjkl  = '\<C-Y>'
+            let hjkl .= s:vimim_get_chinese_punctuation(punctuation)
+            let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -1476,7 +1487,7 @@ function! s:vimim_square_bracket(key)
             let right = "\<Right>"
         endif
         let backspace = '\<C-R>=g:vimim_bracket_backspace('.i.')\<CR>'
-        let yes = '\<C-R>=g:vimim_space()\<CR>'
+        let yes = "\<C-Y>"
         let bracket = yes . left . backspace . right
     endif
     sil!exe 'sil!return "' . bracket . '"'
@@ -1812,7 +1823,7 @@ function! s:vimim_initialize_frontend_punctuation()
     endfor
 endfunction
 
-" ----------------------------------
+" ---------------------------------- todo
 function! s:vimim_get_single_quote()
 " ----------------------------------
     let pair = "‘’"
@@ -1878,17 +1889,7 @@ function! <SID>vimim_punctuation_on()
     endfor
     " --------------------------------------
     call s:vimim_punctuation_navigation_on()
-endfunction
-
-" -------------------------------------------
-function! <SID>vimim_punctuation_mapping(key)
-" -------------------------------------------
-    let value = s:vimim_get_chinese_punctuation(a:key)
-    if pumvisible()
-        let value = "\<C-Y>" . value
-        let s:pumvisible_yes = 1
-    endif
-    sil!exe 'sil!return "' . value . '"'
+    " --------------------------------------
 endfunction
 
 " -------------------------------------------
@@ -1897,7 +1898,7 @@ function! s:vimim_punctuation_navigation_on()
     if s:vimim_chinese_punctuation < 0
         return
     endif
-    let punctuation = "=-[]<>"
+    let punctuation = "=-[]"
     if s:chinese_input_mode =~ 'onekey'
         let punctuation .= ".,/?"
     endif
@@ -1917,6 +1918,17 @@ function! s:vimim_punctuation_navigation_on()
     endfor
 endfunction
 
+" -------------------------------------------
+function! <SID>vimim_punctuation_mapping(key)
+" -------------------------------------------
+    let value = s:vimim_get_chinese_punctuation(a:key)
+    if pumvisible()
+        let value = "\<C-Y>" . value
+        let s:pumvisible_yes = 1
+    endif
+    sil!exe 'sil!return "' . value . '"'
+endfunction
+
 " -----------------------------------------------
 function! <SID>vimim_punctuations_navigation(key)
 " -----------------------------------------------
@@ -1930,14 +1942,10 @@ function! <SID>vimim_punctuations_navigation(key)
             let hjkl  = '\<C-R>=g:vimim_menu_search_forward()\<CR>'
         elseif a:key == "?"
             let hjkl  = '\<C-R>=g:vimim_menu_search_backward()\<CR>'
-        elseif a:key =~ "[-,=.]"
-            let hjkl  = s:vimim_pageup_pagedown(a:key)
-        elseif a:key == '<'
-            let s:pumvisible_hjkl_2nd_match = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == '>'
-            call g:vimim_build_directory_4corner_cache()
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key =~ "[-,]"
+            let hjkl = '\<PageUp>'
+        elseif a:key =~ "[=.]"
+            let hjkl = '\<PageDown>'
         endif
     else
         if s:chinese_input_mode !~ 'onekey'
@@ -1945,18 +1953,6 @@ function! <SID>vimim_punctuations_navigation(key)
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-" ------------------------------------
-function! s:vimim_pageup_pagedown(key)
-" ------------------------------------
-    let key = a:key
-    if key == ',' || key == '-'
-        let key = '\<PageUp>'
-    elseif key == '.' || key == '='
-        let key = '\<PageDown>'
-    endif
-    return key
 endfunction
 
 " ------------------------------------------------------------
