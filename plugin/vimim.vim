@@ -145,6 +145,7 @@ function! s:vimim_initialize_session()
     let s:unihan_4corner_cache = {}
     let s:pinyin_4corner_filter = 0
     let s:xingma = ['wubi', 'erbi', '4corner']
+    let s:show_me_not_pattern = '^oo\|^vim'
     " --------------------------------
     let s:tail = ""
     let s:abcd = "'abcdefgz"
@@ -1393,7 +1394,7 @@ function! g:vimim_pumvisible_dump()
     " -----------------------------
     for items in s:popupmenu_list
         if empty(items.menu)
-        \|| s:keyboard_leading_zero =~ '^oo'
+        \|| s:keyboard_leading_zero =~ s:show_me_not_pattern
             let line = printf('%s', items.abbr)
         else
             let format = '%-8s %s'
@@ -1701,13 +1702,11 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         endif
         let menu = get(pairs, 0)
         let chinese = get(pairs, 1)
-        " -------------------------------------------------
         let extra_text = ""
-        if s:hjkl_h % 2 > 0
+        if s:hjkl_h % 2 > 0 && keyboard !~ s:show_me_not_pattern
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
         endif
-        let complete_items["menu"] = extra_text
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             let s:tail = ""
@@ -1726,15 +1725,20 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             endif
             let s:keyboard_head = strpart(keyboard, 0, len(menu))
         else
-            let menu = get(split(menu,"_"),0)
+            let extra_text = get(split(menu,"_"),0)
         endif
         " -------------------------------------------------
-        let labeling = s:vimim_get_labeling(label)
-        let abbr = printf('%2s',labeling)."\t".chinese
-        let complete_items["abbr"] = abbr
+        let abbr = ""
+        if keyboard !~# s:show_me_not_pattern
+            let labeling = s:vimim_get_labeling(label)
+            let abbr = printf('%2s', labeling) . "\t"
+            let label += 1
+        endif
+        " -------------------------------------------------
+        let complete_items["menu"] = extra_text
+        let complete_items["abbr"] = abbr . chinese
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
-        let label += 1
         call add(popupmenu_list, complete_items)
     endfor
     let s:popupmenu_list = copy(popupmenu_list)
@@ -3013,7 +3017,7 @@ function! s:vimim_localization()
     endif
     " ---------------------------------------------
     if s:pinyin_4corner_filter > 0
-        let s:abcd = "'abcdfgvz"
+        let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
     endif
     " ---------------------------------------------
