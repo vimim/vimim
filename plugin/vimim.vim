@@ -28,10 +28,10 @@ let VimIM = " ====  Introduction      ==== {{{"
 "  Features: * "Plug & Play": as a client to VimIM embedded backends
 "            * "Plug & Play": as a client to "myCloud" and "Cloud"
 "            * CJK can be searched without using popup menu
-"            * CJK can be input without changing mode
+"            * CJK can be input independently without changing mode
 "            * support "wubi", "erbi", "boshiamy", "cangjie", "taijima"
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
-"            * support direct internal code (UNICODE/GBK/Big5) input
+"            * support direct internal input by UNICODE, GBK or Big5
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -1085,7 +1085,7 @@ function! s:vimim_get_seamless(current_positions)
         return -1
     endif
     if snip =~# 'u\x\x\x\x'
-        let meg = 'support onekey after CJK'
+        let meg = 'support OneKey after any CJK'
     else
         let snips = split(snip, '\zs')
         for char in snips
@@ -2104,7 +2104,7 @@ endfunction
 " ------------------------------------------
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
-" [input]     马力 (visual mode)
+" [input]     马力 (in vim visual mode)
 " [output]    7712 4002  --  four corner
 "             9a6c 529b  --  unicode
 "             ma3  li4   --  pinyin
@@ -2146,8 +2146,7 @@ function! s:vimim_visual_ctrl_6_update()
 " purpose: update one entry to the directory database
 " input example (one line, within vim): cjjp 超级简拼
 " action: (1) cursor on space (2) v (3) ctrl_6
-" result: (1) confirm or create new file based on the "left": cjjp
-"         (2) update content, with the "right" as the first line
+" result: (1) create file from "left"; (2) update content from "right"
     let current_line = getline(".")
     let fields = split(current_line)
     let left = get(fields,0)
@@ -2196,14 +2195,7 @@ function! g:vimim_build_directory_4corner_cache()
         let s:qwertyuiop = 1
         echo "VimIM building digit cache from " . dir
     endif
-    let start = 19968
-    let delta = 40869 - start
-    if s:encoding ==# "taiwan"
-        let start = str2nr('A440',16)
-    elseif s:encoding ==# "chinese"
-        let start = str2nr('8140',16)
-    endif
-    for ddddd in range(start, start+delta)
+    for ddddd in range(19968, 40869)
         let key = printf('u%x', ddddd)
         if !has_key(s:unihan_4corner_cache, key)
             let filename = dir . '/' . key
