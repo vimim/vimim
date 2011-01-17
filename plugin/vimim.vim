@@ -862,7 +862,7 @@ function! s:vimim_onekey_action(onekey)
         if s:pattern_not_found > 0
             let s:pattern_not_found = 0
             let onekey = " "
-        elseif len(s:popupmenu_list) > 1
+        elseif len(s:popupmenu_list) > 0
             let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
         endif
@@ -1390,7 +1390,7 @@ function! g:vimim_pumvisible_dump()
 " ---------------------------------
     let line = ""
     let one_line_clipboard = ""
-    let results = [s:keyboard_leading_zero]
+    let saved_position = getpos(".")
     " -----------------------------
     for items in s:popupmenu_list
         if empty(items.menu)
@@ -1405,14 +1405,14 @@ function! g:vimim_pumvisible_dump()
             endif
             let line = printf(format, items.menu, items.word)
         endif
-        call add(results, line)
+        put=line
         let one_line_clipboard .= line . "\n"
     endfor
-    call setline(line("."), results)
     " -----------------------------
     if has("gui_running") && has("win32")
         let @+ = one_line_clipboard
     endif
+    call setpos(".", saved_position)
     return g:vimim_esc()
 endfunction
 
