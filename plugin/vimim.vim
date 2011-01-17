@@ -5169,7 +5169,6 @@ if a:start
     let char_before_before = current_line[start_column-2]
 
     " take care of seamless English/Chinese input
-    " -------------------------------------------
     let seamless_column = s:vimim_get_seamless(current_positions)
     if seamless_column < 0
         let msg = "no need to set seamless"
@@ -5180,6 +5179,7 @@ if a:start
 
     let last_seen_nonsense_column = start_column
     let last_seen_backslash_column = start_column
+    let all_digit = 1
     let nonsense_pattern = "[0-9.']"
     if s:ui.im == 'pinyin'
         let nonsense_pattern = "[0-9.]"
@@ -5192,6 +5192,9 @@ if a:start
             let start_column -= 1
             if byte_before !~# nonsense_pattern
                 let last_seen_nonsense_column = start_column
+                if all_digit > 0
+                    let all_digit = 0
+                endif
             endif
         elseif byte_before=='\' && s:vimim_backslash_close_pinyin>0
             " do nothing for pinyin with leading backslash
@@ -5201,6 +5204,10 @@ if a:start
         endif
         let byte_before = current_line[start_column-1]
     endwhile
+
+    if all_digit < 1
+        let start_column = last_seen_nonsense_column
+    endif
 
     let s:start_row_before = start_row
     let s:current_positions = current_positions
