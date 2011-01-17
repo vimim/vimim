@@ -136,7 +136,7 @@ function! s:vimim_initialize_session()
     let s:www_executable = 0
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
-    let s:hjkl_hl = 0
+    let s:hjkl_h = 0
     let s:qwertyuiop = 0
     let s:one_key_correction = 0
     let s:shuangpin_keycode_chinese = {}
@@ -1316,11 +1316,11 @@ function! <SID>vimim_onekey_label_navigation(key)
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'h'
-            let s:hjkl_hl = 0
+            let s:hjkl_h += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'l'
-            let s:hjkl_hl = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            let hjkl  = '\<C-Y>'
+            let hjkl .= s:vimim_stop()
         elseif a:key == 'm'
             let s:menu_digit_as_filter = ""
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
@@ -1703,7 +1703,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         let chinese = get(pairs, 1)
         " -------------------------------------------------
         let extra_text = ""
-        if s:hjkl_hl > 0
+        if s:hjkl_h % 2 > 0
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
         endif
@@ -4985,6 +4985,7 @@ function! s:vimim_stop()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_initialize_mapping()
     sil!call s:vimim_plugins_fix_stop()
+    return ""
 endfunction
 
 " -----------------------------------
