@@ -154,8 +154,6 @@ function! s:vimim_initialize_session()
     let s:tail = ""
     " --------------------------------
     let s:current_positions = [0,0,1,0]
-    let s:smart_single_quotes = 1
-    let s:smart_double_quotes = 1
     let s:seamless_positions = []
     let s:start_row_before = 0
     let s:start_column_before = 1
@@ -1803,8 +1801,8 @@ function! s:vimim_dictionary_punctuation()
         let s:punctuations['\'] = '、'
     endif
     if empty(s:vimim_latex_suite)
-        let s:punctuations["'"] = '‘’'
-        let s:punctuations['"'] = '“”'
+        let s:punctuations["'"] = '“'
+        let s:punctuations['"'] = '”'
     endif
     let s:punctuations_all = copy(s:punctuations)
 endfunction
@@ -1821,24 +1819,6 @@ function! s:vimim_initialize_frontend_punctuation()
             endif
         endif
     endfor
-endfunction
-
-" ---------------------------------- todo
-function! s:vimim_get_single_quote()
-" ----------------------------------
-    let pair = "‘’"
-    let pairs = split(pair,'\zs')
-    let s:smart_single_quotes += 1
-    return get(pairs, s:smart_single_quotes % 2)
-endfunction
-
-" ----------------------------------
-function! s:vimim_get_double_quote()
-" ----------------------------------
-    let pair = "“”"
-    let pairs = split(pair,'\zs')
-    let s:smart_double_quotes += 1
-    return get(pairs, s:smart_double_quotes % 2)
 endfunction
 
 " ---------------------------------------
@@ -1861,16 +1841,6 @@ function! <SID>vimim_punctuation_on()
     endif
     " ----------------------------
     if s:chinese_punctuation > 0
-        if empty(s:vimim_latex_suite)
-            if s:ui.im == 'pinyin' || s:ui.im == 'erbi'
-                let msg = "apostrophe is over-loaded for cloud at will"
-            else
-                inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
-            endif
-            if index(s:valid_keys, '"') < 0
-                inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
-            endif
-        endif
         if empty(s:vimim_backslash_close_pinyin)
             if index(s:valid_keys, '\') < 0
                 inoremap <Bslash> 、
