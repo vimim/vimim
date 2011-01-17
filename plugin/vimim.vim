@@ -145,7 +145,7 @@ function! s:vimim_initialize_session()
     let s:unihan_4corner_cache = {}
     let s:pinyin_4corner_filter = 0
     let s:xingma = ['wubi', 'erbi', '4corner']
-    let s:show_me_not_pattern = '^oo\|^vim'
+    let s:show_me_not_pattern = '^oo\|^ii\|^vim'
     " --------------------------------
     let s:tail = ""
     let s:abcd = "'abcdefgz"
