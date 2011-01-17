@@ -136,8 +136,7 @@ function! s:vimim_initialize_session()
     let s:www_executable = 0
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
-    " --------------------------------
-    let s:hjkl_l = 0
+    let s:hjkl_hl = 0
     let s:qwertyuiop = 0
     let s:one_key_correction = 0
     let s:shuangpin_keycode_chinese = {}
@@ -147,12 +146,11 @@ function! s:vimim_initialize_session()
     let s:pinyin_4corner_filter = 0
     let s:xingma = ['wubi', 'erbi', '4corner']
     " --------------------------------
+    let s:tail = ""
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
     let s:quantifiers = {}
     let s:localization = 0
-    let s:tail = ""
-    " --------------------------------
     let s:current_positions = [0,0,1,0]
     let s:seamless_positions = []
     let s:start_row_before = 0
@@ -863,7 +861,7 @@ function! s:vimim_onekey_action(onekey)
         if s:pattern_not_found > 0
             let s:pattern_not_found = 0
             let onekey = " "
-        else
+        elseif len(s:popupmenu_list) > 1
             let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
         endif
@@ -1313,13 +1311,14 @@ function! <SID>vimim_onekey_label_navigation(key)
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'h'
-            let s:hjkl_l = 0
+            let s:hjkl_hl = 0
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'l'
-            let s:hjkl_l = 1
+            let s:hjkl_hl = 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'm'
-            let hjkl  = '\<C-E>'
+            let s:menu_digit_as_filter = ""
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
             let hjkl  = '\<Down>\<Down>\<Down>'
         elseif a:key == 's'
@@ -1383,9 +1382,6 @@ endfunction
 " ---------------------------------
 function! g:vimim_pumvisible_dump()
 " ---------------------------------
-    if empty(s:popupmenu_list)
-        return ""
-    endif
     let line = ""
     let one_line_clipboard = ""
     let results = [s:keyboard_leading_zero]
@@ -1411,7 +1407,6 @@ function! g:vimim_pumvisible_dump()
     if has("gui_running") && has("win32")
         let @+ = one_line_clipboard
     endif
-    " -----------------------------
     return g:vimim_esc()
 endfunction
 
@@ -1703,7 +1698,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         let chinese = get(pairs, 1)
         " -------------------------------------------------
         let extra_text = ""
-        if s:hjkl_l > 0
+        if s:hjkl_hl > 0
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
         endif
