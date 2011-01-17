@@ -129,10 +129,10 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    call s:vimim_start_omni()
     call s:vimim_super_reset()
     call s:vimim_set_encoding()
     " --------------------------------
+    let s:insert_without_popup = 0
     let s:www_executable = 0
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
@@ -1124,7 +1124,9 @@ function! s:vimim_initialize_statusline()
     if s:vimim_custom_skin < 3
         sil!call s:vimim_set_statusline()
     else
-        echoh NonText | echo s:vimim_statusline() | echohl None
+        echoh NonText
+        echo s:vimim_statusline()
+        echohl None
     endif
 endfunction
 
@@ -1294,7 +1296,10 @@ endfunction
 " --------------------------------------------
 function! s:vimim_onekey_label_navigation_on()
 " --------------------------------------------
-    let hjkl = 'hjklmnsx<>_+'
+    let hjkl = 'hjklmnsx<>-='
+    if s:pinyin_4corner_filter < 1
+        let hjkl .= "_+"
+    endif
     for _ in split(hjkl, '\zs')
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_onekey_label_navigation("'._.'")'
@@ -1333,10 +1338,10 @@ function! <SID>vimim_onekey_label_navigation(key)
             let hjkl  = '\<C-Y>'
             let hjkl .= s:vimim_get_chinese_punctuation(punctuation)
             let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
-        elseif a:key == '+'
+        elseif a:key =~ "[=+]"
             call g:vimim_build_directory_4corner_cache()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == '_'
+        elseif a:key =~ "[-_]"
             let s:pumvisible_hjkl_2nd_match = 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         endif
@@ -1863,13 +1868,16 @@ function! s:vimim_punctuation_navigation_on()
     if s:vimim_chinese_punctuation < 0
         return
     endif
-    let punctuation = "=-[]"
+    let punctuation = "[]"
+    if s:pinyin_4corner_filter < 1
+        let punctuation .= "-="
+    endif
     if s:chinese_input_mode =~ 'onekey'
         let punctuation .= ".,/?"
     endif
     let punctuations = split(punctuation,'\zs')
-    " ---------------------------------------
     " note: we should never map valid keycode
+    " ---------------------------------------
     for char in s:valid_keys
         let i = index(punctuations, char)
         if i > -1 && char != "."
@@ -3276,7 +3284,6 @@ function! s:vimim_set_datafile(im)
         let s:backend.datafile[im].keycode = s:im_keycode[im]
         let s:backend.datafile[im].chinese = s:vimim_chinese(im)
     endif
-    " ----------------------------------------
     if im =~ '^\d'
         let s:vimim_chinese_input_mode = 'static'
     endif
@@ -3334,7 +3341,6 @@ function! s:vimim_smart_match(lines, keyboard, match_start)
     if range > menu_maximum || range < 1
         let match_end = match_start + menu_maximum
     endif
-    " --------------------------------------------
     let results = a:lines[match_start : match_end]
     " --------------------------------------------
     if len(results) < 10 && s:ui.im == 'pinyin'
@@ -3724,7 +3730,7 @@ function! s:vimim_force_scan_current_buffer()
     elseif buffer =~# 'mycloud'
         call s:vimim_do_force_mycloud()
     else
-    " ---------------------------------
+        " -----------------------------
         for input_method in s:all_vimim_input_methods
             if buffer =~ input_method . '\>'
                 break
@@ -3738,7 +3744,7 @@ function! s:vimim_force_scan_current_buffer()
             endif
             call s:vimim_do_force_datafile(input_method)
         endif
-    " ---------------------------------
+        " -----------------------------
     endif
 endfunction
 
@@ -4804,16 +4810,14 @@ endfunction
 " -----------------------------
 function! s:vimim_debug_reset()
 " -----------------------------
-    if s:vimimdebug > 0
-        let max = 512
-        if s:debug_count > max
-            let begin = len(s:debugs) - max
-            if begin < 0
-                let begin = 0
-            endif
-            let end = len(s:debugs) - 1
-            let s:debugs = s:debugs[begin : end]
+    let max = 512
+    if s:vimimdebug > 0 && s:debug_count > max
+        let begin = len(s:debugs) - max
+        if begin < 0
+            let begin = 0
         endif
+        let end = len(s:debugs) - 1
+        let s:debugs = s:debugs[begin : end]
     endif
 endfunction
 
@@ -4949,12 +4953,6 @@ function! s:vimim_i_setting_off()
     let &laststatus=s:saved_laststatus
     let &hlsearch=s:saved_hlsearch
     let &smartcase=s:saved_smartcase
-endfunction
-
-" ----------------------------
-function! s:vimim_start_omni()
-" ----------------------------
-    let s:insert_without_popup = 0
 endfunction
 
 " -----------------------------
@@ -5161,7 +5159,7 @@ function! VimIM(start, keyboard)
 " ------------------------------
 if a:start
 
-    call s:vimim_start_omni()
+    let s:insert_without_popup = 0
     let current_positions = getpos(".")
     let start_column = current_positions[2]-1
     let start_column_save = start_column
