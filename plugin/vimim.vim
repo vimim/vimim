@@ -1294,7 +1294,7 @@ endfunction
 " --------------------------------------------
 function! s:vimim_onekey_label_navigation_on()
 " --------------------------------------------
-    let hjkl = 'hjklmnsx<>()'
+    let hjkl = 'hjklmnsx<>_+'
     for _ in split(hjkl, '\zs')
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_onekey_label_navigation("'._.'")'
@@ -1328,17 +1328,17 @@ function! <SID>vimim_onekey_label_navigation(key)
             let s:pumvisible_ctrl_e = 1
             let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
-        elseif a:key == '('
-            let s:pumvisible_hjkl_2nd_match = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == ')'
-            call g:vimim_build_directory_4corner_cache()
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key =~ "[<>]"
             let punctuation = nr2char(char2nr(a:key)-16)
             let hjkl  = '\<C-Y>'
             let hjkl .= s:vimim_get_chinese_punctuation(punctuation)
             let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
+        elseif a:key == '+'
+            call g:vimim_build_directory_4corner_cache()
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == '_'
+            let s:pumvisible_hjkl_2nd_match = 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -4878,7 +4878,7 @@ function! s:vimim_plugins_fix_stop()
     if !empty(s:acp_sid)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
-            \ '<','>','/','\','<Space>','<C-H>','<BS>','<Enter>',]
+            \ '<','>','/','\','<Space>','<BS>','<Enter>',]
         call extend(ACPMappingDrivenkeys, range(10))
         call extend(ACPMappingDrivenkeys, s:Az_list)
         for key in ACPMappingDrivenkeys
