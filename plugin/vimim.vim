@@ -132,6 +132,7 @@ function! s:vimim_initialize_session()
     call s:vimim_super_reset()
     call s:vimim_set_encoding()
     " --------------------------------
+    let s:show_me_not_pattern = '^oo\|^ii\|^vim'
     let s:insert_without_popup = 0
     let s:www_executable = 0
     let s:www_libcall = 0
@@ -145,8 +146,6 @@ function! s:vimim_initialize_session()
     let s:unihan_4corner_cache = {}
     let s:pinyin_4corner_filter = 0
     let s:xingma = ['wubi', 'erbi', '4corner']
-    let s:show_me_not_pattern = '^oo\|^ii\|^vim'
-    " --------------------------------
     let s:tail = ""
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
@@ -157,21 +156,18 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
-    let s:popupmenu_list = []
-    " --------------------------------
-    let A = char2nr('A')
-    let Z = char2nr('Z')
     let a = char2nr('a')
     let z = char2nr('z')
+    let A = char2nr('A')
+    let Z = char2nr('Z')
     let Az_nr_list = extend(range(A,Z), range(a,z))
     let s:Az_list = map(Az_nr_list,"nr2char(".'v:val'.")")
     let s:az_list = map(range(a,z),"nr2char(".'v:val'.")")
     let s:AZ_list = map(range(A,Z),"nr2char(".'v:val'.")")
-    " --------------------------------
     let s:valid_key = 0
     let s:valid_keys = s:az_list
-    let s:debug_count = 0
-    let s:debugs = []
+    let s:popupmenu_list = []
+    let g:vimim_debugs = []
 endfunction
 
 " --------------------------------
@@ -337,7 +333,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_use_cache")
-    call add(G, "g:vimimdebug")
+    call add(G, "g:vimim_debug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -384,7 +380,6 @@ function! s:vimim_egg_vimimegg()
     call add(eggs, "環境　vimim")
     call add(eggs, "程式　vimimvim")
     call add(eggs, "幫助　vimimhelp")
-    call add(eggs, "測試　vimimdebug")
     call add(eggs, "設置　vimimdefaults")
     return map(eggs,  '"VimIM 彩蛋" . s:colon . v:val . s:space')
 endfunction
@@ -4719,47 +4714,14 @@ function! s:vimim_one_backend_hash()
     return one_backend_hash
 endfunction
 
-" --------------------------------
-function! s:vimim_egg_vimimdebug()
-" --------------------------------
-    let eggs = []
-    for item in s:debugs
-        let egg = "> "
-        let egg .= item
-        let egg .= s:space
-        call add(eggs, egg)
-    endfor
-    if empty(eggs)
-        let eggs = s:vimim_egg_vimimdefaults()
-    endif
-    return eggs
-endfunction
-
 " ----------------------------
 function! s:debugs(key, value)
 " ----------------------------
-    if s:vimimdebug > 0
-        let item = '['
-        let item .= s:debug_count
-        let item .= ']'
-        let item .= a:key
+    if s:vimim_debug > 0
+        let item  = a:key
         let item .= '='
         let item .= a:value
-        call add(s:debugs, item)
-    endif
-endfunction
-
-" -----------------------------
-function! s:vimim_debug_reset()
-" -----------------------------
-    let max = 512
-    if s:vimimdebug > 0 && s:debug_count > max
-        let begin = len(s:debugs) - max
-        if begin < 0
-            let begin = 0
-        endif
-        let end = len(s:debugs) - 1
-        let s:debugs = s:debugs[begin : end]
+        call add(g:vimim_debugs, item)
     endif
 endfunction
 
@@ -4915,7 +4877,6 @@ function! s:vimim_stop()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_cursor_color(0)
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_debug_reset()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_initialize_mapping()
     sil!call s:vimim_plugins_fix_stop()
@@ -5309,10 +5270,7 @@ endfunction
 function! s:vimim_get_valid_keyboard(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    if s:vimimdebug > 0
-        let s:debug_count += 1
-        call s:debugs('keyboard', s:keyboard_leading_zero)
-    endif
+    call s:debugs('keyboard', s:keyboard_leading_zero)
     if empty(s:keyboard_leading_zero)
         let s:keyboard_leading_zero = keyboard
     endif
