@@ -2186,7 +2186,7 @@ function! s:vimim_reverse_lookup(chinese)
     call add(results_unicode, get(items,1))
     for char in split(chinese, '\zs')
         call s:vimim_build_unihan_reverse_cache(char)
-    endfor 
+    endfor
     if len(s:unihan_4corner_cache) > 1
         let items = s:vimim_reverse_one_entry(chinese, 'unihan')
         call add(results_digit, get(items,0))
@@ -2261,7 +2261,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
             let values = s:unihan_4corner_cache[unicode]
             let head = get(values, 0)
             if im == 'unihan'
-                if head =~ '\D'
+                if head =~ '\D' || head ==# '0000'
                     let head = '....' |" four corner not available
                 endif
             elseif im == 'pinyin'
@@ -2334,7 +2334,7 @@ function! s:vimim_digit_filter(chinese)
     let number = s:vimim_get_filter_number(chinese)
     let pattern = "^" . substitute(s:menu_digit_as_filter,'\D','','g')
     let matched = match(number, pattern)
-    if matched < 0
+    if matched < 0 || number ==# '0000'
         let chinese = 0
     endif
     return chinese
