@@ -1618,15 +1618,17 @@ let VimIM = " ====  Omni_Popup_Menu   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------------
-function! s:vimim_get_previous_pair_list()
-" ----------------------------------------
-    let results = []
-    let filter = s:menu_digit_as_filter
-    let filter = strpart(filter, 0, len(filter)-1)
-    if len(filter) > 0
-        let s:menu_digit_as_filter = filter
-        let results = s:vimim_pair_list(s:matched_list)
+" --------------------------------------
+function! s:vimim_get_cached_pair_list()
+" --------------------------------------
+    let results = s:vimim_pair_list(s:matched_list)
+    if empty(len(results))
+        let filter = s:menu_digit_as_filter
+        let filter = strpart(filter, 0, len(filter)-1)
+        if len(filter) > 0
+            let s:menu_digit_as_filter = filter
+            let results = s:vimim_pair_list(s:matched_list)
+        endif
     endif
     return results
 endfunction
@@ -2250,7 +2252,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
     let bodies = []   "|  马  力
     let head = ''
     for chinese in split(a:chinese, '\zs')
-        let ddddd = char2nr(a:chinese)
+        let ddddd = char2nr(chinese)
         let unicode = printf('u%x', ddddd)
         let head = ''
         if im == 'unicode'
@@ -5102,15 +5104,12 @@ else
 
     " [filter] use cache for all vimim backends
     " -----------------------------------------
-    if len(s:menu_digit_as_filter) > 0
-        if len(s:matched_list) > 1
-            let results = s:vimim_pair_list(s:matched_list)
-            if empty(len(results))
-                let results = s:vimim_get_previous_pair_list()
-            endif
-            if !empty(len(results))
-                return s:vimim_popupmenu_list(results)
-            endif
+    if len(s:menu_digit_as_filter) > 0 && len(s:matched_list) > 1
+        let results = s:vimim_get_cached_pair_list()
+        if empty(len(results))
+            let s:menu_digit_as_filter = ""
+        else
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
