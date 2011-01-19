@@ -161,9 +161,9 @@ function! s:vimim_initialize_session()
     let A = char2nr('A')
     let Z = char2nr('Z')
     let Az_nr_list = extend(range(A,Z), range(a,z))
-    let s:Az_list = map(Az_nr_list,"nr2char(".'v:val'.")")
-    let s:az_list = map(range(a,z),"nr2char(".'v:val'.")")
-    let s:AZ_list = map(range(A,Z),"nr2char(".'v:val'.")")
+    let s:Az_list = map(Az_nr_list, "nr2char(".'v:val'.")")
+    let s:az_list = map(range(a,z), "nr2char(".'v:val'.")")
+    let s:AZ_list = map(range(A,Z), "nr2char(".'v:val'.")")
     let s:valid_key = 0
     let s:valid_keys = s:az_list
     let s:popupmenu_list = []
@@ -3701,45 +3701,34 @@ function! s:vimim_set_data_directory(im)
 endfunction
 
 " -----------------------------------------------------
-function! s:vimim_get_data_from_directory(keyboard, im)
+function! s:vimim_get_pair_from_directory(keyboard, im)
 " -----------------------------------------------------
+    let keyboard = a:keyboard
     let dir = s:vimim_get_valid_directory(a:im)
     if empty(dir) && empty(s:vimim_private_data_directory)
         return []
     endif
-    let lines = []
-    let filename = s:vimim_private_data_directory . a:keyboard
-    if filereadable(filename)
-        let lines = readfile(filename)
-    endif
-    if empty(lines)
-        let filename = dir . '/' . a:keyboard
+    if keyboard =~ '^oo' && len(s:vimim_private_data_directory)> 2
+        let filename = s:vimim_private_data_directory . keyboard
         if filereadable(filename)
-            if a:im == 'unihan'
-                let lines = readfile(filename, '', 2)
-            else
-                let lines = readfile(filename)
+            let lines = readfile(filename)
+            if len(lines) > 0
+                return map(lines, 'keyboard ." ". v:val')
             endif
         endif
     endif
-    return lines
-endfunction
-
-" -----------------------------------------------------
-function! s:vimim_get_pair_from_directory(keyboard, im)
-" -----------------------------------------------------
-    let lines = s:vimim_get_data_from_directory(a:keyboard, a:im)
-    if empty(lines)
-        return []
+    let filename = dir . '/' . keyboard
+    if filereadable(filename)
+        let lines = []
+        if a:im == 'unihan'
+            let lines = readfile(filename, '', 2)
+        else
+            let lines = readfile(filename)
+        endif
+        if len(lines) > 0
+            return map(lines, 'keyboard ." ". v:val')
+        endif
     endif
-    let results = []
-    for line in lines
-        for chinese in split(line)
-            let pair = a:keyboard . " " . chinese
-            call add(results, pair)
-        endfor
-    endfor
-    return results
 endfunction
 
 " ----------------------------------------------
