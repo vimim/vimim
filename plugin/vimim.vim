@@ -886,6 +886,7 @@ function! s:vimim_onekey_action(onekey)
     endif
     " -------------------------------------------------
     if before !~# s:valid_key && empty(a:onekey)
+        let s:hjkl_h = 1
         return s:vimim_get_unicode_menu()
     endif
     " ---------------------------------------------------
@@ -1232,9 +1233,6 @@ endfunction
 function! s:vimim_label_on()
 " --------------------------
     let labels = range(9)
-    if &pumheight > 0
-        let labels = range(1, &pumheight)
-    endif
     if s:chinese_input_mode == 'onekey'
         let abcd_list = split(s:abcd, '\zs')
         let labels += abcd_list
@@ -1299,13 +1297,13 @@ function! <SID>vimim_onekey_label_navigation(key)
 " -----------------------------------------------
     let hjkl = a:key
     if pumvisible()
-        if a:key == 'j'
+        if a:key == 'h'
+            let s:hjkl_h += 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
-        elseif a:key == 'h'
-            let s:hjkl_h += 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'l'
             let hjkl  = '\<C-Y>'
             let hjkl .= s:vimim_stop()
