@@ -601,8 +601,7 @@ function! s:vimim_get_chinese_from_english(english)
     let results = []
     let english = tolower(a:english)
     let ddddd = s:vimim_get_unicode_ddddd(english)
-    let results = s:vimim_get_unicodes([ddddd], 0)
-    if empty(results)
+    if empty(ddddd)
         sil!call s:vimim_backend_initialization_once()
         if !empty(s:vimim_shuangpin)
             sil!call s:vimim_initialize_shuangpin()
@@ -611,6 +610,8 @@ function! s:vimim_get_chinese_from_english(english)
         if s:vimim_cloud_sogou == 1
             let results = s:vimim_get_cloud_sogou(english, 1)
         endif
+    else
+        let results = [nr2char(ddddd)]
     endif
     if empty(results)
         if empty(s:backend.datafile) && empty(s:backend.directory)
@@ -631,33 +632,39 @@ function! s:vimim_get_chinese_from_english(english)
             endfor
         endif
     endif
-    call s:vimim_register_search_pattern(english, results)
+    if empty(results)
+        let msg = "so far so good, nothing found"
+    else
+        call s:vimim_register_search_pattern(english, results)
+    endif
 endfunction
 
 " ---------------------------------------------------------
 function! s:vimim_register_search_pattern(english, results)
 " ---------------------------------------------------------
-    if empty(a:results)
-        return
-    endif
-    let results = []
     let english = a:english
     if english =~ '^\l\+\d\+'
         let english = join(split(english,'\d'),'')
     elseif english =~ '^\d\d\d\+'
         let english = english[:3]
     endif
-    for pair in a:results
-        let pairs = split(pair)
-        let menu = get(pairs, 0)
-        let chinese = get(pairs, 1)
+    let results = []
+    for chinese in a:results
+        if empty(s:vimim_data_directory)
+            let pairs = split(chinese)
+            if len(pairs) < 2
+                continue
+            endif
+            let chinese = get(pairs, 1)
+            let menu = get(pairs, 0)
+            if english != menu
+                continue
+            endif
+        endif
         if chinese =~ '\w'
             continue
-        elseif english != menu
-            continue
-        else
-            call add(results, chinese)
         endif
+        call add(results, chinese)
     endfor
     if !empty(results)
         let slash = join(results, '\|')
@@ -670,27 +677,13 @@ function! s:vimim_register_search_pattern(english, results)
     endif
 endfunction
 
-" --------------------------------------------
-function! s:vimim_get_unicodes(unicodes, more)
-" --------------------------------------------
-    let unicodes = a:unicodes
-    if empty(unicodes) || empty(get(unicodes,0))
-        return []
-    endif
-    let results = []
-    for ddddd in unicodes
-        let menu = s:vimim_unicode_4corner_pinyin(ddddd, a:more)
-        let menu_chinese = menu .' '. nr2char(ddddd)
-        call add(results, menu_chinese)
-    endfor
-    return results
-endfunction
-
 " ---------------------------------------------------
 function! s:vimim_unicode_4corner_pinyin(ddddd, more)
 " ---------------------------------------------------
-    let menu = printf('u%04x',a:ddddd) . s:space . a:ddddd
+    let menu = ""
     if a:more > 0 && s:unicode_digit_filter > 0
+        let unicode = printf('u%04x',a:ddddd)
+        let menu .= unicode . s:space . a:ddddd
         let chinese = nr2char(a:ddddd)
         call s:vimim_build_directory_4corner_cache(chinese)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
@@ -4619,8 +4612,8 @@ function! s:vimim_initialize_debug()
     else
         return
     endif
-    let s:vimim_private_data_directory = "/home/xma/oo/"
     let s:vimim_data_directory         = "/home/vimim/"
+    let s:vimim_private_data_directory = "/home/xma/oo/"
     let svn = s:vimim_data_directory . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
