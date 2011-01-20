@@ -1377,7 +1377,7 @@ function! g:vimim_pumvisible_dump()
     for items in s:popupmenu_list
         if empty(items.menu)
         \|| s:keyboard_leading_zero =~ s:show_me_not_pattern
-            let line = printf('%s', items.abbr)
+            let line = printf('%s', items.word)
         else
             let format = '%-8s %s'
             if s:pinyin_4corner_filter > 0
@@ -1712,15 +1712,14 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             let extra_text = get(split(menu,"_"),0)
         endif
         " -------------------------------------------------
-        let abbr = ""
         if keyboard !~# s:show_me_not_pattern
             let labeling = s:vimim_get_labeling(label)
             let abbr = printf('%2s', labeling) . "\t"
+            let complete_items["abbr"] = abbr . chinese
             let label += 1
         endif
         " -------------------------------------------------
         let complete_items["menu"] = extra_text
-        let complete_items["abbr"] = abbr . chinese
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
         call add(popupmenu_list, complete_items)
@@ -3711,10 +3710,7 @@ function! s:vimim_get_pair_from_directory(keyboard, im)
     if keyboard =~ '^oo' && len(s:vimim_private_data_directory)> 2
         let filename = s:vimim_private_data_directory . keyboard
         if filereadable(filename)
-            let lines = readfile(filename)
-            if len(lines) > 0
-                return map(lines, 'keyboard ." ". v:val')
-            endif
+            return map(readfile(filename), 'keyboard ." ". v:val')
         endif
     endif
     let filename = dir . '/' . keyboard
