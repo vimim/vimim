@@ -1633,7 +1633,7 @@ endfunction
 
 " ---------------------------------------
 function! s:vimim_pair_list(matched_list)
-" --------------------------------------- todo
+" ---------------------------------------
     let pair_matched_list = []
     if s:unicode_digit_filter > 0
     \&& len(s:menu_digit_as_filter) > 0
@@ -1688,7 +1688,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     let popupmenu_list = []
     let keyboard = s:keyboard_leading_zero
     let menu = keyboard
-    " ------------------------------ todo
+    " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
         if empty(s:vimim_data_directory)
@@ -2186,21 +2186,16 @@ function! s:vimim_reverse_lookup(chinese)
     let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
     if empty(chinese)
         return []
+    elseif len(s:vimim_data_directory) > 2
+        for char in split(chinese, '\zs')
+            call s:vimim_build_directory_4corner_cache(char)
+        endfor
     endif
-    let results_unicode = []  |" 马力 => u9a6c u529b
-    let results_digit = []    |" 马力 => 7712 4002
     let results_pinyin = []   |" 马力 => ma3 li2
     let result_cjjp = ""      |" 马力 => ml
-    let items = s:vimim_reverse_one_entry(chinese, 'unicode')
-    call add(results_unicode, get(items,0))
-    call add(results_unicode, get(items,1))
-    for char in split(chinese, '\zs')
-        call s:vimim_build_directory_4corner_cache(char)
-    endfor
+    let results_unicode = s:vimim_reverse_one_entry(chinese, 'unicode')
     if len(s:unicode_cache) > 1
-        let items = s:vimim_reverse_one_entry(chinese, 'digit')
-        call add(results_digit, get(items,0))
-        call add(results_digit, get(items,1))
+        let results_digit = s:vimim_reverse_one_entry(chinese, 'digit')
         let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
         if len(items) > 0
             let pinyin_head = get(items,0)
@@ -2216,11 +2211,11 @@ function! s:vimim_reverse_lookup(chinese)
     endif
     " -----------------------------------
     let results = []
-    if !empty(results_digit)
-        call extend(results, results_digit)
-    endif
-    if !empty(results_unicode)
+    if !empty(results_unicode) |" 马力 => u9a6c u529b
         call extend(results, results_unicode)
+    endif
+    if !empty(results_digit)   |" 马力 => 7712 4002
+        call extend(results, results_digit)
     endif
     if !empty(results_pinyin)
         call extend(results, results_pinyin)
@@ -2255,7 +2250,6 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_reverse_one_entry(chinese, im)
 " ----------------------------------------------
-    let im = a:im
     let headers = []  "|  ma3 li4
     let bodies = []   "|  马  力
     let head = ''
@@ -2263,19 +2257,19 @@ function! s:vimim_reverse_one_entry(chinese, im)
         let ddddd = char2nr(chinese)
         let unicode = printf('u%x', ddddd)
         let head = ''
-        if im == 'unicode'
+        if a:im == 'unicode'
             let head = unicode
         elseif has_key(s:unicode_cache, unicode)
             let values = s:unicode_cache[unicode]
-            if im == 'digit'
+            if a:im == 'digit'
                 let head = get(values, 0)
                 if head =~ '\D' || head ==# '0000'
                     let head = '....' |" four corner not available
                 endif
-            elseif im == 'pinyin'
+            elseif a:im == 'pinyin'
                 let head = get(values, 1)
                 if empty(head)
-                    let head = '....' |" four corner not available
+                    let head = '....' |" pinyin not available
                 endif
             endif
         endif
@@ -2981,12 +2975,10 @@ function! s:vimim_localization()
     if empty(s:vimim_cloud_sogou)
         let s:vimim_cloud_sogou = 888
     endif
-    " ---------------------------------------------
     if s:unicode_digit_filter > 0
         let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
     endif
-    " ---------------------------------------------
     let datafile_fenc_chinese = 0
     if s:ui.root =~ 'datafile' || s:ui.root =~ 'directory'
         if s:backend[s:ui.root][s:ui.im].datafile =~# "chinese"
@@ -3003,6 +2995,7 @@ function! s:vimim_localization()
     "   utf-8          chinese              1
     "   chinese        utf-8                2
     "   chinese        chinese              8
+    "   utf-8          utf-8                0
     " ------------ ----------------- --------------
     if &encoding == "utf-8"
         if datafile_fenc_chinese > 0
@@ -3713,7 +3706,7 @@ endfunction
 
 " -----------------------------------------------------
 function! s:vimim_get_list_from_directory(keyboard, im)
-" ----------------------------------------------------- todo
+" -----------------------------------------------------
     let keyboard = a:keyboard
     let dir = s:vimim_get_valid_directory(a:im)
     if empty(dir) && empty(s:vimim_private_data_directory)
