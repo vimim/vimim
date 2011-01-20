@@ -1691,7 +1691,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
-        if keyboard =~# 'u\x\x\x\x' && len(keyboard)==5
+        if keyboard =~# 'u\x\x\x\x'
             let msg = 'make it work for OneKey after any CJK'
         elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
@@ -2162,10 +2162,10 @@ function! s:vimim_append_to_datafile()
     if empty(datafile)
         return
     endif
-    if filereadable(datafile)
+    if filereadable(datafile) && filewritable(datafile)
         let lines = readfile(datafile)
         call add(lines, getline("."))
-        call writefile(lines, s:vimim_private_data_file)
+        call writefile(lines, datafile)
     endif
 endfunction
 
@@ -3554,7 +3554,6 @@ function! s:vimim_scan_backend_embedded_directory()
     if empty(s:vimim_data_directory)
          let s:vimim_data_directory = s:path . "vimim/"
     endif
-    " -----------------------------------
     if isdirectory(s:vimim_data_directory)
         let msg = " use directory as backend database "
     else
@@ -4619,9 +4618,9 @@ function! s:vimim_initialize_debug()
     else
         return
     endif
+    let s:vimim_private_data_file      = "/home/xma/oo/io"
     let s:vimim_private_data_directory = "/home/xma/oo/"
-    let s:vimim_private_data_file =      "/home/xma/oo/io"
-    let s:vimim_data_directory =         "/home/vimim/"
+    let s:vimim_data_directory         = "/home/vimim/"
     let svn = s:vimim_data_directory . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
