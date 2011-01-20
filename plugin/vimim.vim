@@ -1691,7 +1691,9 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
-        if empty(s:vimim_data_directory)
+        if keyboard =~# 'u\x\x\x\x' && len(keyboard)==5
+            let msg = 'make it work for OneKey after any CJK'
+        elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
             if len(pairs) < 2
                 continue
@@ -2074,8 +2076,6 @@ function! s:vimim_build_datafile_4corner_cache()
 " ----------------------------------------------
 " Digit code such as four corner can be used as independent filter.
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.unicode.txt
-" in:  ['u808f 8022 cao4']
-" out: {'u808f': ['8022', 'cao4']}
 " -----------------------------------------------------------------
     let buffer = expand("%:p:t")
     if s:chinese_input_mode !~ 'onekey'
@@ -2083,16 +2083,16 @@ function! s:vimim_build_datafile_4corner_cache()
         let msg = 'digit filter is used for OneKey only'
         return
     endif
-    let unicode_4corner_file = s:path . "vimim.unicode.txt"
-    if filereadable(unicode_4corner_file)
-    \&& empty(s:unicode_cache)
-    \&& empty(s:vimim_data_directory)
-        for line in readfile(unicode_4corner_file)
-            let oneline_list = split(line)
-            let key = remove(oneline_list, 0)
-            let s:unicode_cache[key] = oneline_list
-        endfor
-        let s:unicode_digit_filter = 1
+    if empty(s:unicode_cache) && empty(s:vimim_data_directory)
+        let unicode_4corner_file = s:path . "vimim.unicode.txt"
+        if filereadable(unicode_4corner_file)
+            for line in readfile(unicode_4corner_file)
+                let oneline_list = split(line)
+                let key = remove(oneline_list, 0)
+                let s:unicode_cache[key] = oneline_list
+            endfor
+            let s:unicode_digit_filter = 1
+        endif
     endif
 endfunction
 
@@ -2109,6 +2109,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     let range = line("'>") - line("'<")
     if empty(range)
         call s:vimim_backend_initialization_once()
+        call s:vimim_build_datafile_4corner_cache()
         if keyboard =~ '\s'
             if !empty(s:vimim_data_directory)
                 call s:vimim_visual_ctrl_6_update()
@@ -2191,30 +2192,31 @@ function! s:vimim_reverse_lookup(chinese)
             call s:vimim_build_directory_4corner_cache(char)
         endfor
     endif
+    let results_digit = []
     let results_pinyin = []   |" 马力 => ma3 li2
     let result_cjjp = ""      |" 马力 => ml
     let results_unicode = s:vimim_reverse_one_entry(chinese, 'unicode')
-    if len(s:unicode_cache) > 1
-        let results_digit = s:vimim_reverse_one_entry(chinese, 'digit')
-        let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
-        if len(items) > 0
-            let pinyin_head = get(items,0)
-            if !empty(pinyin_head)
-                call add(results_pinyin, pinyin_head)
-                call add(results_pinyin, get(items,1))
-                for pinyin in split(pinyin_head)
-                    let result_cjjp .= pinyin[0:0]
-                endfor
-                let result_cjjp .= " ".chinese
-            endif
-        endif
-    endif
-    " -----------------------------------
     let results = []
     if !empty(results_unicode) |" 马力 => u9a6c u529b
         call extend(results, results_unicode)
     endif
-    if !empty(results_digit)   |" 马力 => 7712 4002
+    if empty(s:unicode_cache)
+        return results
+    endif
+    let results_digit = s:vimim_reverse_one_entry(chinese, 'digit')
+    let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
+    if len(items) > 0
+        let pinyin_head = get(items,0)
+        if !empty(pinyin_head)
+            call add(results_pinyin, pinyin_head)
+            call add(results_pinyin, get(items,1))
+            for pinyin in split(pinyin_head)
+                let result_cjjp .= pinyin[0:0]
+            endfor
+            let result_cjjp .= " ".chinese
+        endif
+    endif
+    if !empty(results_digit)    |" 马力 => 7712 4002
         call extend(results, results_digit)
     endif
     if !empty(results_pinyin)
@@ -4612,7 +4614,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma/vim")
+    if isdirectory("/home/xxma/vim")
         let msg = "VimIM sample configuration:"
     else
         return
