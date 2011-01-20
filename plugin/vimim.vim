@@ -320,7 +320,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_private_data_directory")
-    call add(G, "g:vimim_private_data_file")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_vimimdata")
     call add(G, "g:vimim_libvimdll")
@@ -2151,17 +2150,18 @@ function! s:vimim_visual_ctrl_6_update()
         let dir = s:vimim_data_directory . "pinyin"
         let lines = [current_line]
         call s:vimim_mkdir('prepend', dir, lines)
-        call s:vimim_append_to_datafile()
+        call s:vimim_append_to_private_datafile()
     endif
 endfunction
 
-" ------------------------------------
-function! s:vimim_append_to_datafile()
-" ------------------------------------
-    let datafile = s:vimim_private_data_file
-    if empty(datafile)
+" --------------------------------------------
+function! s:vimim_append_to_private_datafile()
+" --------------------------------------------
+    let dir = s:vimim_private_data_directory
+    if empty(dir)
         return
     endif
+    let datafile = dir . 'io'
     if filereadable(datafile) && filewritable(datafile)
         let lines = readfile(datafile)
         call add(lines, getline("."))
@@ -3710,11 +3710,12 @@ function! s:vimim_get_list_from_directory(keyboard, im)
 " -----------------------------------------------------
     let keyboard = a:keyboard
     let dir = s:vimim_get_valid_directory(a:im)
-    if empty(dir) && empty(s:vimim_private_data_directory)
+    let dir2 = s:vimim_private_data_directory
+    if empty(dir) && empty(dir2)
         return []
     endif
-    if keyboard =~ '^oo' && len(s:vimim_private_data_directory)>2
-        let dir = s:vimim_private_data_directory
+    if keyboard =~ '^oo' && len(dir2) > 2
+        let dir = dir2
     endif
     let filename = dir . '/' . keyboard
     if filereadable(filename)
@@ -4618,7 +4619,6 @@ function! s:vimim_initialize_debug()
     else
         return
     endif
-    let s:vimim_private_data_file      = "/home/xma/oo/io"
     let s:vimim_private_data_directory = "/home/xma/oo/"
     let s:vimim_data_directory         = "/home/vimim/"
     let svn = s:vimim_data_directory . "svn"
