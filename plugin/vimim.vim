@@ -677,13 +677,12 @@ function! s:vimim_register_search_pattern(english, results)
     endif
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_unicode_4corner_pinyin(ddddd, more)
-" ---------------------------------------------------
-    let menu = ""
-    if a:more > 0 && s:unicode_digit_filter > 0
-        let unicode = printf('u%04x',a:ddddd)
-        let menu .= unicode . s:space . a:ddddd
+" ---------------------------------------------
+function! s:vimim_unicode_4corner_pinyin(ddddd)
+" ---------------------------------------------
+    let unicode = printf('u%04x',a:ddddd)
+    let menu = unicode . s:space . a:ddddd
+    if s:unicode_digit_filter > 0
         let chinese = nr2char(a:ddddd)
         call s:vimim_build_directory_4corner_cache(chinese)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
@@ -1696,7 +1695,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         let extra_text = ""
         if s:hjkl_h % 2 > 0 && keyboard !~ s:show_me_not_pattern
             let ddddd = char2nr(chinese)
-            let extra_text = s:vimim_unicode_4corner_pinyin(ddddd, 1)
+            let extra_text = s:vimim_unicode_4corner_pinyin(ddddd)
         endif
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
@@ -3225,7 +3224,6 @@ function! s:vimim_smart_match(lines, keyboard, match_start)
         return []
     endif
     let keyboard = a:keyboard
-    " ----------------------------------------
     let pattern = '\M^\(' . keyboard
     if len(keyboard) < 2
         let pattern .= '\>'
@@ -3234,13 +3232,11 @@ function! s:vimim_smart_match(lines, keyboard, match_start)
         let pattern .= pinyin_tone . '\>'
     endif
     let pattern .= '\)\@!'
-    " ----------------------------------------
     let matched = match(a:lines, pattern, match_start)-1
     let match_end = match_start
     if matched > 0 && matched > match_start
         let match_end = matched
     endif
-    " ----------------------------------------
     " always do popup as one-to-many translation
     let menu_maximum = 20
     let range = match_end - match_start
@@ -3248,7 +3244,6 @@ function! s:vimim_smart_match(lines, keyboard, match_start)
         let match_end = match_start + menu_maximum
     endif
     let results = a:lines[match_start : match_end]
-    " --------------------------------------------
     if len(results) < 10 && s:ui.im == 'pinyin'
        let extras = s:vimim_pinyin_more_match(a:lines, keyboard, results)
        if len(extras) > 0
@@ -3261,15 +3256,14 @@ endfunction
 " -----------------------------------------------------------
 function! s:vimim_pinyin_more_match(lines, keyboard, results)
 " -----------------------------------------------------------
+" [purpose] make standard popup menu layout
+" in  => chao'ji'jian'pin
+" out => chaojijian, chaoji, chao
+" -----------------------------------------
     let filter = "vim\\|#\\|　"
     if match(a:results, filter) > -1
         return []
     endif
-    " -----------------------------------------
-    " [purpose] make standard popup menu layout
-    " in  => chao'ji'jian'pin
-    " out => chaojijian, chaoji, chao
-    " -----------------------------------------
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
     if empty(keyboards)
         return []
@@ -3304,7 +3298,7 @@ endfunction
 " -----------------------------------------------------
 function! s:vimim_get_sentence_datafile_cache(keyboard)
 " -----------------------------------------------------
-    let msg = "use cache to speed up search after initial load"
+" [purpose] use cache to speed up search after initial load
     let keyboard = a:keyboard
     if empty(s:backend[s:ui.root][s:ui.im].cache)
         return []
