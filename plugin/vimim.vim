@@ -693,13 +693,13 @@ function! s:vimim_unicode_4corner_pinyin(ddddd, more)
     let menu = printf('u%04x',a:ddddd) . s:space . a:ddddd
     if a:more > 0 && s:unicode_digit_filter > 0
         let chinese = nr2char(a:ddddd)
-        call s:vimim_directory_unicode_cache(chinese)
-        let unicode = get(s:vimim_reverse_one_entry(chinese,'unicode'),0)
+        call s:vimim_build_directory_4corner_cache(chinese)
+        let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        if empty(unicode) && empty(pinyin)
+        if empty(digit) && empty(pinyin)
             let msg = 'no need to print out sparse matrix'
         else
-            let menu .= s:space . unicode
+            let menu .= s:space . digit
             let menu .= s:space . pinyin
         endif
     endif
@@ -1190,7 +1190,7 @@ function! s:vimim_statusline()
         return s:vimim_get_chinese_im()
     endif
     " ------------------------------------
-    if s:unicode_digit_filter > 0 && s:ui.im =~ 'pinyin'
+    if s:unicode_digit_filter > 0
         let filter = s:vimim_chinese('digit')
         let pinyin = s:vimim_chinese('pinyin')
         let s:ui.statusline = pinyin . s:plus . filter
@@ -1383,7 +1383,7 @@ function! g:vimim_pumvisible_dump()
             if s:unicode_digit_filter > 0
             \&& items.menu =~ '^u\x\x\x\x'
             \&& len(items.menu) > 12
-                let format = '%-32s %s'
+                let format = '%-48s %s'
             endif
             let line = printf(format, items.menu, items.word)
         endif
@@ -1633,33 +1633,45 @@ endfunction
 
 " ---------------------------------------
 function! s:vimim_pair_list(matched_list)
-" ---------------------------------------
+" --------------------------------------- todo
     let pair_matched_list = []
-    if !empty(len(s:menu_digit_as_filter))
-        let chinese = join(a:matched_list,'')
-        let chinese = substitute(chinese,'\s\|\w','','g')
-    endif
-    for line in a:matched_list
-        if len(line) < 2
-            continue
-        endif
-        if empty(s:backend[s:ui.root][s:ui.im].cache)
-            if s:localization > 0
-                let line = s:vimim_i18n_read(line)
-            endif
-        endif
-        let oneline_list = split(line)
-        let menu = remove(oneline_list, 0)
-        for chinese in oneline_list
-            if s:unicode_digit_filter > 0
+    if s:unicode_digit_filter > 0
+    \&& len(s:menu_digit_as_filter) > 0
+    \&& len(a:matched_list) > 0
+        if empty(s:vimim_data_directory)
+            for line in a:matched_list
+                if len(line) < s:multibyte
+                    continue
+                endif
+                if empty(s:backend[s:ui.root][s:ui.im].cache)
+                    if s:localization > 0
+                        let line = s:vimim_i18n_read(line)
+                    endif
+                endif
+                let oneline_list = split(line)
+                let menu = remove(oneline_list, 0)
+                for chinese in oneline_list
+                    let chinese = s:vimim_digit_filter(chinese)
+                    if empty(chinese)
+                        continue
+                    else
+                        call add(pair_matched_list, menu .' '. chinese)
+                    endif
+                endfor
+            endfor
+        else
+            for chinese in a:matched_list
                 let chinese = s:vimim_digit_filter(chinese)
                 if empty(chinese)
                     continue
+                else
+                    call add(pair_matched_list, chinese)
                 endif
-            endif
-            call add(pair_matched_list, menu .' '. chinese)
-        endfor
-    endfor
+            endfor
+        endif
+    else
+        return a:matched_list
+    endif
     return pair_matched_list
 endfunction
 
@@ -1672,20 +1684,21 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     elseif empty(len(s:menu_digit_as_filter))
         let s:matched_list = copy(pair_matched_list)
     endif
-    let menu = 0
     let label = 1
     let popupmenu_list = []
     let keyboard = s:keyboard_leading_zero
-    " ---------------------------
-    for pair in pair_matched_list
-    " ---------------------------
-        let complete_items = {}
-        let pairs = split(pair)
-        if len(pairs) < 2
-            continue
+    let menu = keyboard
+    " ------------------------------ todo
+    for chinese in pair_matched_list
+    " ------------------------------
+        if empty(s:vimim_data_directory)
+            let pairs = split(chinese)
+            if len(pairs) < 2
+                continue
+            endif
+            let menu = get(pairs, 0)
+            let chinese = get(pairs, 1)
         endif
-        let menu = get(pairs, 0)
-        let chinese = get(pairs, 1)
         let extra_text = ""
         if s:hjkl_h % 2 > 0 && keyboard !~ s:show_me_not_pattern
             let ddddd = char2nr(chinese)
@@ -1712,6 +1725,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             let extra_text = get(split(menu,"_"),0)
         endif
         " -------------------------------------------------
+        let complete_items = {}
         if keyboard !~# s:show_me_not_pattern
             let labeling = s:vimim_get_labeling(label)
             let abbr = printf('%2s', labeling) . "\t"
@@ -2059,8 +2073,9 @@ call add(s:vimims, VimIM)
 function! s:vimim_build_datafile_4corner_cache()
 " ----------------------------------------------
 " Digit code such as four corner can be used as independent filter.
-" It works for both cloud and VimIM embedded backends.
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.unicode.txt
+" in:  ['u808f 8022 cao4']
+" out: {'u808f': ['8022', 'cao4']}
 " -----------------------------------------------------------------
     let buffer = expand("%:p:t")
     if s:chinese_input_mode !~ 'onekey'
@@ -2072,12 +2087,10 @@ function! s:vimim_build_datafile_4corner_cache()
     if filereadable(unicode_4corner_file)
     \&& empty(s:unicode_cache)
     \&& empty(s:vimim_data_directory)
-        " in:  ['u808f 8022', 'u808f cao4']
-        " out: {'u808f': ['8022', 'cao4']}
         for line in readfile(unicode_4corner_file)
             let oneline_list = split(line)
-            let menu = remove(oneline_list, 0)
-            let s:unicode_cache[menu] = oneline_list
+            let key = remove(oneline_list, 0)
+            let s:unicode_cache[key] = oneline_list
         endfor
         let s:unicode_digit_filter = 1
     endif
@@ -2182,7 +2195,7 @@ function! s:vimim_reverse_lookup(chinese)
     call add(results_unicode, get(items,0))
     call add(results_unicode, get(items,1))
     for char in split(chinese, '\zs')
-        call s:vimim_directory_unicode_cache(char)
+        call s:vimim_build_directory_4corner_cache(char)
     endfor
     if len(s:unicode_cache) > 1
         let items = s:vimim_reverse_one_entry(chinese, 'digit')
@@ -2218,9 +2231,9 @@ function! s:vimim_reverse_lookup(chinese)
     return results
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_directory_unicode_cache(chinese)
-" ------------------------------------------------
+" ------------------------------------------------------
+function! s:vimim_build_directory_4corner_cache(chinese)
+" ------------------------------------------------------
 " [input]  u808f => 8022 cao4
 " [output] 'u808f':['8022','cao4']
     if empty(s:vimim_data_directory)
@@ -2351,7 +2364,7 @@ function! s:vimim_get_filter_number(chinese)
         if chinese =~ '\w'
             continue
         else
-            call s:vimim_directory_unicode_cache(chinese)
+            call s:vimim_build_directory_4corner_cache(chinese)
             let key = printf('u%x',char2nr(chinese))
             if has_key(s:unicode_cache, key)
                 let digit = get(s:unicode_cache[key],0)
@@ -3043,21 +3056,21 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     return ddddd
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_get_unicode(keyboard, height)
-" ---------------------------------------------
+" --------------------------------------------------
+function! s:vimim_get_chinese_list(keyboard, height)
+" --------------------------------------------------
     let keyboard = a:keyboard
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
         return []
     endif
-    let numbers = []
+    let words = []
     let height = &pumheight * a:height
     for i in range(height)
-        let digit = str2nr(ddddd+i)
-        call add(numbers, digit)
+        let chinese = nr2char(ddddd+i)
+        call add(words, chinese)
     endfor
-    return s:vimim_get_unicodes(numbers,1)
+    return words
 endfunction
 
 " ------------------
@@ -3699,25 +3712,21 @@ function! s:vimim_set_data_directory(im)
 endfunction
 
 " -----------------------------------------------------
-function! s:vimim_get_pair_from_directory(keyboard, im)
-" -----------------------------------------------------
+function! s:vimim_get_list_from_directory(keyboard, im)
+" ----------------------------------------------------- todo
     let keyboard = a:keyboard
     let dir = s:vimim_get_valid_directory(a:im)
     if empty(dir) && empty(s:vimim_private_data_directory)
         return []
     endif
-    if keyboard =~ '^oo' && len(s:vimim_private_data_directory)> 2
-        let filename = s:vimim_private_data_directory . keyboard
-        if filereadable(filename)
-            return map(readfile(filename), 'keyboard ." ". v:val')
-        endif
+    if keyboard =~ '^oo' && len(s:vimim_private_data_directory)>2
+        let dir = s:vimim_private_data_directory
     endif
     let filename = dir . '/' . keyboard
     if filereadable(filename)
-        let lines = readfile(filename)
-        if len(lines) > 0
-            return map(lines, 'keyboard ." ". v:val')
-        endif
+        return readfile(filename)
+    else
+        return []
     endif
 endfunction
 
@@ -3759,7 +3768,7 @@ function! s:vimim_get_sentence_directory(keyboard)
     let keyboards = s:vimim_sentence_match_directory(keyboard, s:ui.im)
     if len(keyboards) > 0
         let keyboard = get(keyboards, 0)
-        let results = s:vimim_get_pair_from_directory(keyboard, s:ui.im)
+        let results = s:vimim_get_list_from_directory(keyboard, s:ui.im)
     endif
     return results
 endfunction
@@ -5104,7 +5113,7 @@ else
     " [unicode] support direct unicode/gb/big5 input
     " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        let results = s:vimim_get_unicode(keyboard, 108/9)
+        let results = s:vimim_get_chinese_list(keyboard, 108/9)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
