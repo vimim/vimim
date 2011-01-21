@@ -2153,7 +2153,7 @@ function! s:vimim_append_to_private_datafile()
     if empty(dir)
         return
     endif
-    let datafile = dir . 'io'
+    let datafile = dir . 'oo'
     if filereadable(datafile) && filewritable(datafile)
         let lines = readfile(datafile)
         call add(lines, getline("."))
