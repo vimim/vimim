@@ -93,6 +93,8 @@ function! s:vimim_backend_initialization_once()
         return
     endif
     " -----------------------------------------
+    sil!call s:vimim_super_reset()
+    sil!call s:vimim_set_encoding()
     sil!call s:vimim_initialize_session()
     sil!call s:vimim_initialize_frontend()
     sil!call s:vimim_initialize_backend()
@@ -129,10 +131,9 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    call s:vimim_super_reset()
-    call s:vimim_set_encoding()
-    " --------------------------------
     let s:show_me_not_pattern = '^oo\|^ii\|^vim'
+    let s:unicode_4corner_file = s:path . "vimim.unicode.txt"
+    let s:xingma = ['wubi', 'erbi', '4corner']
     let s:insert_without_popup = 0
     let s:www_executable = 0
     let s:www_libcall = 0
@@ -145,7 +146,6 @@ function! s:vimim_initialize_session()
     let s:quanpin_table = {}
     let s:unicode_cache = {}
     let s:unicode_digit_filter = 0
-    let s:xingma = ['wubi', 'erbi', '4corner']
     let s:tail = ""
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
@@ -472,8 +472,7 @@ function! s:vimim_egg_vimim()
     let toggle = "i_CTRL-Bslash"
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
-        let auto = s:vimim_chinese('auto')
-        let toggle = auto . s:space . buffer
+        let toggle = s:vimim_chinese('auto') . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_CTRL-Space"
     elseif s:vimim_tab_as_onekey == 1
@@ -507,7 +506,7 @@ function! s:vimim_egg_vimim()
     if s:unicode_digit_filter > 0
         if empty(s:vimim_data_directory)
             let ciku = s:vimim_chinese('digit') . s:colon
-            let option = ciku . s:path . "vimim.unicode.txt"
+            let option = ciku . s:unicode_4corner_file
         else
             let option = ciku . s:vimim_data_directory . "unicode/"
         endif
@@ -2062,17 +2061,12 @@ function! s:vimim_build_datafile_4corner_cache()
 " ----------------------------------------------
 " Digit code such as four corner can be used as independent filter.
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.unicode.txt
-" -----------------------------------------------------------------
-    let buffer = expand("%:p:t")
-    if s:chinese_input_mode !~ 'onekey'
-    \|| buffer =~ 'dynamic' || buffer =~ 'static'
-        let msg = 'digit filter is used for OneKey only'
-        return
-    endif
-    if empty(s:unicode_cache) && empty(s:vimim_data_directory)
-        let unicode_4corner_file = s:path . "vimim.unicode.txt"
-        if filereadable(unicode_4corner_file)
-            for line in readfile(unicode_4corner_file)
+    if s:chinese_input_mode == 'onekey'
+    \&& empty(s:vimim_data_directory)
+    \&& empty(s:unicode_cache)
+        let datafile = s:unicode_4corner_file
+        if filereadable(datafile)
+            for line in readfile(datafile)
                 let oneline_list = split(line)
                 let key = remove(oneline_list, 0)
                 let s:unicode_cache[key] = oneline_list
@@ -2854,7 +2848,6 @@ function! s:vimim_set_special_im_property()
     if empty(s:vimim_shuangpin) && s:ui.im == 'pinyin'
         let s:quanpin_table = s:vimim_create_quanpin_table()
     endif
-    " -------------------------------------
     if s:ui.im == 'wu'
     \|| s:ui.im == 'erbi'
     \|| s:ui.im == 'yong'
@@ -3601,8 +3594,6 @@ function! s:vimim_force_scan_current_buffer()
         let s:vimim_chinese_input_mode = 'dynamic'
     elseif buffer =~ 'static'
         let s:vimim_chinese_input_mode = 'static'
-    elseif buffer =~ 'onekey'
-        let s:vimim_chinese_input_mode = 'onekey'
     endif
     " ---------------------------------
     if buffer =~ 'shuangpin_abc'
@@ -3620,11 +3611,11 @@ function! s:vimim_force_scan_current_buffer()
     endif
     " ---------------------------------
     if buffer =~# 'sogou'
-        call s:vimim_do_force_sogou()
+        let s:vimim_cloud_sogou = 1
+        call s:vimim_set_sogou()
     elseif buffer =~# 'mycloud'
         call s:vimim_do_force_mycloud()
     else
-        " -----------------------------
         for input_method in s:all_vimim_input_methods
             if buffer =~ input_method . '\>'
                 break
@@ -3638,7 +3629,6 @@ function! s:vimim_force_scan_current_buffer()
             endif
             call s:vimim_do_force_datafile(input_method)
         endif
-        " -----------------------------
     endif
 endfunction
 
@@ -3956,13 +3946,6 @@ function! s:vimim_scan_backend_cloud()
     endif
 endfunction
 
-" --------------------------------
-function! s:vimim_do_force_sogou()
-" --------------------------------
-    let s:vimim_cloud_sogou = 1
-    call s:vimim_set_sogou()
-endfunction
-
 " ---------------------------
 function! s:vimim_set_sogou()
 " ---------------------------
@@ -4260,8 +4243,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_do_force_mycloud()
 " ----------------------------------
-" [quick test] vim mycloud.vimim
-" ----------------------------------
+" [auto mycloud test] vim mycloud.vimim
     if s:vimim_mycloud_url =~ '^http\|^dll\|^app'
         return
     endif
@@ -4308,7 +4290,6 @@ function! s:vimim_check_mycloud_availability()
 " note: this variable should not be used after initialization
 "       unlet s:vimim_mycloud_url
 " note: reuse it to support forced buffer scan: vim mycloud.vimim
-" --------------------------------------------
     let cloud = 0
     if empty(s:vimim_mycloud_url)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
@@ -4319,7 +4300,6 @@ function! s:vimim_check_mycloud_availability()
         let s:vimim_cloud_plugin = 0
         return 0
     endif
-    " ----------------------------------------
     " note: how to avoid *Not Responding*?
     let ret = s:vimim_access_mycloud(cloud, "__getname")
     let directory = split(ret, "\t")[0]
