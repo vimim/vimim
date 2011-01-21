@@ -386,11 +386,24 @@ endfunction
 " -------------------------
 function! s:vimim_egg_vim()
 " -------------------------
-    let eggs  = ["vi        文本編輯器"]
+    let eggs  = ["vi    文本編輯器"]
     let eggs += ["vim   最牛文本編輯器"]
     let eggs += ["vim   精力"]
     let eggs += ["vim   生氣"]
     let eggs += ["vimim 中文輸入法"]
+    return eggs
+endfunction
+
+" -------------------------------
+function! s:vimim_egg_vimimhelp()
+" -------------------------------
+    let eggs = []
+    call add(eggs, "官方网址" . s:colon . s:vimimhelp[0] . s:space)
+    call add(eggs, "民间词库" . s:colon . s:vimimhelp[1] . s:space)
+    call add(eggs, "新闻论坛" . s:colon . s:vimimhelp[2] . s:space)
+    call add(eggs, "最新主页" . s:colon . s:vimimhelp[3] . s:space)
+    call add(eggs, "最新程式" . s:colon . s:vimimhelp[4] . s:space)
+    call add(eggs, "错误报告" . s:colon . s:vimimhelp[5] . s:space)
     return eggs
 endfunction
 
@@ -410,21 +423,6 @@ function! s:vimim_egg_vimimdefaults()
     return map(eggs, egg)
 endfunction
 
-" -------------------------------
-function! s:vimim_egg_vimimhelp()
-" -------------------------------
-    let eggs = []
-    " ---------------------------------------------------
-    call add(eggs, "官方网址" . s:colon . s:vimimhelp[0])
-    call add(eggs, "民间词库" . s:colon . s:vimimhelp[1])
-    call add(eggs, "新闻论坛" . s:colon . s:vimimhelp[2])
-    call add(eggs, "最新主页" . s:colon . s:vimimhelp[3])
-    call add(eggs, "最新程式" . s:colon . s:vimimhelp[4])
-    call add(eggs, "错误报告" . s:colon . s:vimimhelp[5])
-    " ---------------------------------------------------
-    return map(eggs, '"VimIM " . v:val . s:space')
-endfunction
-
 " ---------------------------
 function! s:vimim_egg_vimim()
 " ---------------------------
@@ -440,43 +438,35 @@ function! s:vimim_egg_vimim()
     elseif has("macunix")
         let option = "macunix"
     endif
-    " ----------------------------------
-    let input = s:vimim_chinese('input')
-    let myversion = s:vimim_chinese('myversion')
-    let myversion = "\t " . myversion . s:colon
-    let font = s:vimim_chinese('font') . s:colon
-    let environment = s:vimim_chinese('environment') . s:colon
-    let encoding = s:vimim_chinese('encoding') . s:colon
-    " ----------------------------------
     let option .= "_" . &term
-    let computer = s:vimim_chinese('computer')
-    let option = "computer " . computer . s:colon . option
+    let option = s:vimim_chinese('computer') . s:colon . option
     call add(eggs, option)
     " ----------------------------------
-    let option = v:progname . s:space
-    let option = "Vim" . myversion  . option . v:version
+    let myversion = s:vimim_chinese('myversion') . s:colon
+    let option = myversion  . v:progname . s:space . v:version
     call add(eggs, option)
     " ----------------------------------
     let option = get(split($VimIM), 1)
     if empty(option)
         let msg = "not a SVN check out, revision number not available"
     else
-        let option = "VimIM" . myversion . "vimim.vim" . s:space . option
+        let option = myversion . "vimim.vim" . s:space . option
         call add(eggs, option)
     endif
     " ----------------------------------
-    let option = "encoding " . encoding . &encoding
+    let encoding = s:vimim_chinese('encoding') . s:colon
+    let option = encoding . &encoding
     call add(eggs, option)
     " ----------------------------------
-    let option = "fencs\t " . encoding . &fileencodings
+    let option = encoding . &fileencodings
     call add(eggs, option)
     " ----------------------------------
     if has("gui_running")
-        let option = "fonts\t " . font . &guifontwide
+        let option = s:vimim_chinese('font') . s:colon . &guifontwide
         call add(eggs, option)
     endif
     " ----------------------------------
-    let option = "lc_time\t " . environment . v:lc_time
+    let option = s:vimim_chinese('environment') . s:colon . v:lc_time
     call add(eggs, option)
     " ----------------------------------
     let toggle = "i_CTRL-Bslash"
@@ -493,12 +483,12 @@ function! s:vimim_egg_vimim()
     endif
     let toggle .= s:space
     let style = s:vimim_chinese('style')
-    let option = "mode\t " . style . s:colon . toggle
+    let option = style . s:colon . toggle
     call add(eggs, option)
     " ----------------------------------
     let im = s:vimim_statusline()
     if !empty(im)
-        let option = "im\t " . input . s:colon . im
+        let option = s:vimim_chinese('input') . s:colon . im
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -510,14 +500,13 @@ function! s:vimim_egg_vimim()
             let ciku .= directory . ciku
             let option .= "/"
         endif
-        let ciku = "database " . ciku
         let option = ciku . option
         call add(eggs, option)
     endif
     " ----------------------------------
     if s:unicode_digit_filter > 0
         if empty(s:vimim_data_directory)
-            let ciku = "database " . s:vimim_chinese('digit') . s:colon
+            let ciku = s:vimim_chinese('digit') . s:colon
             let option = ciku . s:path . "vimim.unicode.txt"
         else
             let option = ciku . s:vimim_data_directory . "unicode/"
@@ -528,7 +517,7 @@ function! s:vimim_egg_vimim()
     if s:vimim_cloud_sogou == 888
         let CLOUD = s:vimim_chinese('cloud_atwill')
         let sogou = s:vimim_chinese('sogou')
-        let option = "cloud\t " . sogou . s:colon
+        let option = sogou . s:colon
         let option .= CLOUD
         call add(eggs, option)
     endif
@@ -538,14 +527,14 @@ function! s:vimim_egg_vimim()
     else
         for item in s:global_customized
             let shezhi = s:vimim_chinese('shezhi')
-            let option = "VimIM\t " . shezhi . s:colon . item
+            let option = shezhi . s:colon . item
             call add(eggs, option)
         endfor
     endif
     " ----------------------------------
     if !empty(v:exception)
         let error = s:vimim_chinese('error')
-        let option = "error\t " . error . s:colon . v:exception
+        let option = error . s:colon . v:exception
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -929,7 +918,7 @@ let VimIM = " ====  Chinese_Mode      ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 " ----------------------------------------------------------------------
-" s:chinese_input_mode='onekey'  => (default) OneKey: hjkl and hit-and-run
+" s:chinese_input_mode='onekey'  => (default) OneKey: hjkl
 " s:chinese_input_mode='dynamic' => (default) classic dynamic mode
 " s:chinese_input_mode='static'  =>   <Space> triggers menu, auto
 " ----------------------------------------------------------------------
@@ -1684,6 +1673,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     let popupmenu_list = []
     let keyboard = s:keyboard_leading_zero
     let menu = keyboard
+let g:gg= pair_matched_list
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
@@ -1698,7 +1688,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             let chinese = get(pairs, 1)
         endif
         let extra_text = ""
-        if s:hjkl_h % 2 > 0 && keyboard !~ s:show_me_not_pattern
+        if s:hjkl_h % 2 > 0 && keyboard !~# s:show_me_not_pattern
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_unicode_4corner_pinyin(ddddd)
         endif
