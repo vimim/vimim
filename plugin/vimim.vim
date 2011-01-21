@@ -639,25 +639,30 @@ function! s:vimim_get_chinese_from_english(english)
     endif
 endfunction
 
-" ---------------------------------------------------------
-function! s:vimim_register_search_pattern(english, results)
-" ---------------------------------------------------------
-    let english = a:english
-    if english =~ '^\l\+\d\+'
-        let english = join(split(english,'\d'),'')
-    elseif english =~ '^\d\d\d\+'
-        let english = english[:3]
+" ----------------------------------------------------------
+function! s:vimim_register_search_pattern(keyboard, results)
+" ----------------------------------------------------------
+    let keyboard = a:keyboard
+    if empty(s:vimim_data_directory)
+        if keyboard =~ '^\l\+\d\+'
+            let keyboard = join(split(keyboard,'\d'),'')
+        elseif keyboard =~ '^\d\d\d\+'
+            let keyboard = keyboard[:3]
+        endif
     endif
     let results = []
     for chinese in a:results
-        if empty(s:vimim_data_directory)
+        if a:keyboard =~# '^u\x\x\x\x\>'
+        \|| a:keyboard =~# '^\d\d\d\d\d\>'
+            let msg = "for unicode slash search: /u808f /32911"
+        elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
             if len(pairs) < 2
                 continue
             endif
             let chinese = get(pairs, 1)
             let menu = get(pairs, 0)
-            if english != menu
+            if keyboard != menu
                 continue
             endif
         endif
@@ -669,11 +674,11 @@ function! s:vimim_register_search_pattern(english, results)
     if !empty(results)
         let slash = join(results, '\|')
         if empty(search(slash,'nw'))
-            let @/ = a:english
+            let @/ = a:keyboard
         else
             let @/ = slash
         endif
-        echon "/" . a:english
+        echon "/" . a:keyboard
     endif
 endfunction
 
@@ -1068,7 +1073,7 @@ function! s:vimim_get_seamless(current_positions)
     if empty(len(snip))
         return -1
     endif
-    if snip =~# 'u\x\x\x\x'
+    if snip =~# '^u\x\x\x\x'
         let meg = 'support OneKey after any CJK'
     else
         for char in split(snip, '\zs')
@@ -1682,7 +1687,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
-        if keyboard =~# 'u\x\x\x\x'
+        if keyboard =~# '^u\x\x\x\x'
             let msg = 'make it work for OneKey after any CJK'
         elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
@@ -5218,7 +5223,8 @@ function! s:vimim_get_valid_keyboard(keyboard)
         let keyboard = s:keyboard_leading_zero
     endif
     " [unicode] support direct unicode/gb/big5 input
-    if keyboard =~# 'u\x\x\x\x' && len(keyboard)==5
+    if a:keyboard =~# '^u\x\x\x\x\>'
+    \|| a:keyboard =~# '^\d\d\d\d\d\>'
         return keyboard
     endif
     " ignore all-zeroes keyboard inputs
