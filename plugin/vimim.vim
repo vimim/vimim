@@ -2068,6 +2068,7 @@ function! s:vimim_build_datafile_4corner_cache()
             for line in readfile(datafile)
                 let oneline_list = split(line)
                 let key = remove(oneline_list, 0)
+                let key = printf('u%04x',char2nr(key))
                 let s:unicode_cache[key] = oneline_list
             endfor
             let s:unicode_digit_filter = 1
@@ -3050,7 +3051,7 @@ endfunction
 " -------------
 function! CJK()
 " -------------
-" This function outputs unicode as:
+" This function outputs Unicode as:
 " ---------------------------------
 "   decimal  hex    CJK
 "   39340    99ac    馬
@@ -3824,12 +3825,11 @@ function! s:vimim_mkdir(option, dir, lines)
     endif
     let option = a:option
     for line in lines
-        if line =~# '^\W'
-            continue
-        endif
         let entries = split(line)
         let key = get(entries, 0)
-        if match(key, "'") > -1
+        if dir =~ 'unicode'
+            let key = printf('u%04x',char2nr(key))
+        elseif match(key, "'") > -1
             let key = substitute(key,"'",'','g')
         endif
         let key_as_filename = dir . "/" . key
