@@ -448,9 +448,7 @@ function! s:vimim_egg_vimim()
     call add(eggs, option)
     " ----------------------------------
     let option = get(split($VimIM), 1)
-    if empty(option)
-        let msg = "not a SVN check out, revision number not available"
-    else
+    if !empty(option)
         let option = myversion . "vimim.vim" . s:space . option
         call add(eggs, option)
     endif
@@ -2247,7 +2245,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
             if a:im == 'digit'
                 let head = get(values, 0)
                 if head =~ '\D' || head ==# '0000'
-                    let head = '....' |" four corner not available
+                    let head = '....' |" 4corner not available
                 endif
             elseif a:im == 'pinyin'
                 let head = get(values, 1)
@@ -2345,9 +2343,7 @@ function! s:vimim_get_filter_number(chinese)
             let key = printf('u%x',char2nr(chinese))
             if has_key(s:unicode_cache, key)
                 let digit = get(s:unicode_cache[key],0)
-                if digit =~ '\D'
-                    let msg = '4corner is not available for ' . chinese
-                else
+                if digit !~ '\D'
                     let digit_head .= digit[:0]
                     let digit_tail = digit[1:]
                 endif
@@ -4130,7 +4126,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     if s:vimim_cloud_sogou < 1 && a:force < 1
         return []
     endif
-    " only use sogou when we get a valid key
+    " use sogou only when a valid key is found
     if empty(s:backend.cloud.sogou.sogou_key)
         let s:backend.cloud.sogou.sogou_key = s:vimim_get_sogou_key()
     endif
