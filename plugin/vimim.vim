@@ -4646,6 +4646,10 @@ endfunction
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
+    if s:vimim_tab_as_onekey == 2
+        return
+    endif
+    " -------------------------------
     if !exists('s:acp_sid')
         let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
         if !empty(s:acp_sid)
@@ -4666,6 +4670,10 @@ endfunction
 " ----------------------------------
 function! s:vimim_plugins_fix_stop()
 " ----------------------------------
+    if s:vimim_tab_as_onekey == 2
+        return
+    endif
+    " ------------------------------
     if !empty(s:acp_sid)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
