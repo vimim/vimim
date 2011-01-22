@@ -78,7 +78,7 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_initialize_keycode()
     sil!call s:vimim_set_special_im_property()
     sil!call s:vimim_initialize_frontend_punctuation()
-    sil!call s:vimim_build_datafile_4corner_cache()
+    sil!call s:vimim_load_swiss_army_unicode_file()
     sil!call s:vimim_build_datafile_lines()
     sil!call s:vimim_localization()
     sil!call s:vimim_initialize_skin()
@@ -145,7 +145,7 @@ function! s:vimim_initialize_session()
     let s:shuangpin_keycode_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
-    let s:unicode_cache = {}
+    let s:unicode_lines = []
     let s:unicode_digit_filter = 0
     let s:tail = ""
     let s:abcd = "'abcdefgz"
@@ -503,12 +503,8 @@ function! s:vimim_egg_vimim()
     endif
     " ----------------------------------
     if s:unicode_digit_filter > 0
-        if empty(s:vimim_data_directory)
-            let ciku = s:vimim_chinese('digit') . s:colon
-            let option = ciku . s:unicode_4corner_file
-        else
-            let option = ciku . s:vimim_data_directory . "unicode/"
-        endif
+        let ciku = s:vimim_chinese('digit') . s:colon
+        let option = ciku . s:unicode_4corner_file
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -675,7 +671,6 @@ function! s:vimim_unicode_4corner_pinyin(ddddd)
     let menu = unicode . s:space . a:ddddd
     if s:unicode_digit_filter > 0
         let chinese = nr2char(a:ddddd)
-        call s:vimim_build_directory_4corner_cache(chinese)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
         if empty(digit) && empty(pinyin)
@@ -2054,21 +2049,20 @@ let VimIM = " ====  Input_Digit       ==== {{{"
 call add(s:vimims, VimIM)
 
 " ----------------------------------------------
-function! s:vimim_build_datafile_4corner_cache()
+function! s:vimim_load_swiss_army_unicode_file()
 " ----------------------------------------------
-" Digit code such as four corner can be used as independent filter.
-" http://vimim-data.googlecode.com/svn/trunk/data/vimim.unicode.txt
+" VimIM swiss army datafile without using cache
+" (1) http://vimim-data.googlecode.com/svn/trunk/data/vimim.unicode.txt
+" (2) Digit code such as four corner can be used as independent filter
+" (3) The property of Chinese character can be displayed
+" (4) 108 more CJK is shown from popup menu using OneKey after CJK
+" ----------------------------------------------
     if s:chinese_input_mode == 'onekey'
-    \&& empty(s:vimim_data_directory)
-    \&& empty(s:unicode_cache)
+    \&& empty(s:unicode_lines)
+    \&& &encoding == "utf-8"
         let datafile = s:unicode_4corner_file
         if filereadable(datafile)
-            for line in readfile(datafile)
-                let oneline_list = split(line)
-                let key = remove(oneline_list, 0)
-                let key = printf('u%04x',char2nr(key))
-                let s:unicode_cache[key] = oneline_list
-            endfor
+            let s:unicode_lines = readfile(datafile)
             let s:unicode_digit_filter = 1
         endif
     endif
@@ -2087,7 +2081,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     let range = line("'>") - line("'<")
     if empty(range)
         call s:vimim_backend_initialization_once()
-        call s:vimim_build_datafile_4corner_cache()
+        call s:vimim_load_swiss_army_unicode_file()
         if keyboard =~ '\s'
             if !empty(s:vimim_data_directory)
                 call s:vimim_visual_ctrl_6_update()
@@ -2166,10 +2160,6 @@ function! s:vimim_reverse_lookup(chinese)
     let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
     if empty(chinese)
         return []
-    elseif len(s:vimim_data_directory) > 2
-        for char in split(chinese, '\zs')
-            call s:vimim_build_directory_4corner_cache(char)
-        endfor
     endif
     let results_digit = []
     let results_pinyin = []   |" 马力 => ma3 li2
@@ -2179,7 +2169,7 @@ function! s:vimim_reverse_lookup(chinese)
     if !empty(results_unicode) |" 马力 => u9a6c u529b
         call extend(results, results_unicode)
     endif
-    if empty(s:unicode_cache)
+    if empty(s:unicode_lines)
         return results
     endif
     let results_digit = s:vimim_reverse_one_entry(chinese, 'digit')
@@ -2207,27 +2197,6 @@ function! s:vimim_reverse_lookup(chinese)
     return results
 endfunction
 
-" ------------------------------------------------------
-function! s:vimim_build_directory_4corner_cache(chinese)
-" ------------------------------------------------------
-" [input]  u808f => 8022 cao4
-" [output] 'u808f':['8022','cao4']
-    if empty(s:vimim_data_directory)
-        return
-    endif
-    let key = printf('u%x',char2nr(a:chinese))
-    if !has_key(s:unicode_cache, key)
-        let dir = s:vimim_get_valid_directory('unicode')
-        let filename = dir . '/' . key
-        if filereadable(filename)
-            let results = readfile(filename)
-            if !empty(results)
-                let s:unicode_cache[key] = results
-            endif
-        endif
-    endif
-endfunction
-
 " ----------------------------------------------
 function! s:vimim_reverse_one_entry(chinese, im)
 " ----------------------------------------------
@@ -2240,15 +2209,16 @@ function! s:vimim_reverse_one_entry(chinese, im)
         let head = ''
         if a:im == 'unicode'
             let head = unicode
-        elseif has_key(s:unicode_cache, unicode)
-            let values = s:unicode_cache[unicode]
+        else
+            let line = ddddd - 19968
+            let values = split(s:unicode_lines[line])
             if a:im == 'digit'
-                let head = get(values, 0)
+                let head = get(values, 1)
                 if head =~ '\D' || head ==# '0000'
                     let head = '....' |" 4corner not available
                 endif
             elseif a:im == 'pinyin'
-                let head = get(values, 1)
+                let head = get(values, 2)
                 if empty(head)
                     let head = '....' |" pinyin not available
                 endif
@@ -2278,7 +2248,9 @@ endfunction
 " ---------------------------------------------
 function! s:vimim_onekey_1234567890_filter_on()
 " ---------------------------------------------
-    if s:unicode_digit_filter > 0
+    if empty(s:unicode_lines)
+        let msg = "No filter without vimim.unicode.txt"
+    else
         for _ in s:qwerty
             sil!exe'inoremap <silent>  '._.'
             \  <C-R>=<SID>vimim_onekey_1234567890_filter("'._.'")<CR>'
@@ -2291,7 +2263,7 @@ function! <SID>vimim_onekey_1234567890_filter(n)
 " ----------------------------------------------
     let label = a:n
     if pumvisible()
-        if s:unicode_digit_filter < 1
+        if empty(s:unicode_lines)
             let msg = "use 1234567890 as pinyin filter"
         else
             let label_alpha = join(s:qwerty,'')
@@ -2339,15 +2311,12 @@ function! s:vimim_get_filter_number(chinese)
         if chinese =~ '\w'
             continue
         else
-            call s:vimim_build_directory_4corner_cache(chinese)
-            let key = printf('u%x',char2nr(chinese))
-            if has_key(s:unicode_cache, key)
-                let digit = get(s:unicode_cache[key],0)
-                if digit !~ '\D'
-                    let digit_head .= digit[:0]
-                    let digit_tail = digit[1:]
-                endif
-            endif
+            let ddddd = char2nr(chinese)
+            let line = ddddd - 19968
+            let values = split(s:unicode_lines[line])
+            let digit = get(values,1)
+            let digit_head .= digit[:0]
+            let digit_tail = digit[1:]
         endif
     endfor
     return digit_head . digit_tail
