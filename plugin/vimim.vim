@@ -131,7 +131,8 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    let s:show_me_not_pattern = '^oo\|^ii\|^vim'
+    let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
+    let s:show_me_not = '^oo\|^ii\|^vim'
     let s:unicode_4corner_file = s:path . "vimim.unicode.txt"
     let s:xingma = ['wubi', 'erbi', '4corner']
     let s:insert_without_popup = 0
@@ -640,8 +641,7 @@ function! s:vimim_register_search_pattern(keyboard, results)
     endif
     let results = []
     for chinese in a:results
-        if a:keyboard =~# '^u\x\x\x\x\>'
-        \|| a:keyboard =~# '^\d\d\d\d\d\>'
+        if a:keyboard =~# s:uxxxx
             let msg = "for unicode slash search: /u808f /32911"
         elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
@@ -1061,7 +1061,7 @@ function! s:vimim_get_seamless(current_positions)
     if empty(len(snip))
         return -1
     endif
-    if snip =~# '^u\x\x\x\x'
+    if snip =~# s:uxxxx
         let meg = 'support OneKey after any CJK'
     else
         for char in split(snip, '\zs')
@@ -1360,12 +1360,12 @@ function! g:vimim_pumvisible_dump()
     " -----------------------------
     for items in s:popupmenu_list
         if empty(items.menu)
-        \|| s:keyboard_leading_zero =~ s:show_me_not_pattern
+        \|| s:keyboard_leading_zero =~ s:show_me_not
             let line = printf('%s', items.word)
         else
             let format = '%-8s %s'
             if s:unicode_digit_filter > 0
-            \&& items.menu =~ '^u\x\x\x\x'
+            \&& items.menu =~# s:uxxxx
             \&& len(items.menu) > 12
                 let format = '%-48s %s'
             endif
@@ -1672,11 +1672,10 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     let popupmenu_list = []
     let keyboard = s:keyboard_leading_zero
     let menu = keyboard
-let g:gg= pair_matched_list
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
-        if keyboard =~# '^u\x\x\x\x'
+        if keyboard =~# s:uxxxx
             let msg = 'make it work for OneKey after any CJK'
         elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
@@ -1687,7 +1686,7 @@ let g:gg= pair_matched_list
             let chinese = get(pairs, 1)
         endif
         let extra_text = ""
-        if s:hjkl_h % 2 > 0 && keyboard !~# s:show_me_not_pattern
+        if s:hjkl_h % 2 > 0 && keyboard !~# s:show_me_not
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_unicode_4corner_pinyin(ddddd)
         endif
@@ -1713,7 +1712,7 @@ let g:gg= pair_matched_list
         endif
         " -------------------------------------------------
         let complete_items = {}
-        if keyboard !~# s:show_me_not_pattern
+        if keyboard !~# s:show_me_not
             let labeling = s:vimim_get_labeling(label)
             let abbr = printf('%2s', labeling) . "\t"
             let complete_items["abbr"] = abbr . chinese
@@ -3046,38 +3045,6 @@ function! s:vimim_get_chinese_list(keyboard, height)
         call add(words, chinese)
     endfor
     return words
-endfunction
-
-" ------------------
-function! CJK16(...)
-" ------------------
-" This function outputs unicode block by block as:
-" ----------------------------------------------------
-"      0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
-" 4E00 #  #  #  #  #  #  #  #  #  #  #  #  #  #  #  #
-" ----------------------------------------------------
-    if &encoding != "utf-8"
-        $put='Your Vim encoding has to be set as utf-8.'
-        $put='[usage]'
-        $put='(in .vimrc):      :set encoding=utf-8'
-        $put='(in Vim Command): :call CJK16()<CR>'
-        $put='(in Vim Command): :call CJK16(0x8000,16)<CR>'
-    else
-        let a = 0x4E00| let n = 112-24| let block = 0x00F0
-        if (a:0>=1)| let a = a:1| let n = 1| endif
-        if (a:0==2)| let n = a:2| endif
-        let z = a + n*block - 128
-        while a <= z
-            if empty(a%(16*16))
-                $put='----------------------------------------------------'
-                $put='     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F '
-                $put='----------------------------------------------------'
-            endif
-            let c = printf('%04X ',a)
-            for j in range(16)|let c.=nr2char(a).' '|let a+=1|endfor
-            $put=c
-        endwhile
-    endif
 endfunction
 
 " -------------
@@ -5193,8 +5160,7 @@ function! s:vimim_get_valid_keyboard(keyboard)
         let keyboard = s:keyboard_leading_zero
     endif
     " [unicode] support direct unicode/gb/big5 input
-    if a:keyboard =~# '^u\x\x\x\x\>'
-    \|| a:keyboard =~# '^\d\d\d\d\d\>'
+    if a:keyboard =~# s:uxxxx
         return keyboard
     endif
     " ignore all-zeroes keyboard inputs
