@@ -133,8 +133,8 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:show_me_not = '^oo\|^ii\|^vim'
-    let s:cjk_20902_file = s:path . "vimim.cjk20902.txt"
-    let s:cjk_20902_lines = []
+    let s:cjk_file = s:path . "vimim.cjk.txt"
+    let s:cjk_lines = []
     let s:unicode_digit_filter = 0
     let s:xingma = ['wubi', 'erbi', '4corner']
     let s:insert_without_popup = 0
@@ -505,7 +505,7 @@ function! s:vimim_egg_vimim()
     " ----------------------------------
     if s:unicode_digit_filter > 0
         let ciku = s:vimim_chinese('digit') . s:colon
-        let option = ciku . s:cjk_20902_file
+        let option = ciku . s:cjk_file
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -2053,15 +2053,15 @@ call add(s:vimims, VimIM)
 function! s:vimim_load_swiss_army_cjk_file()
 " ------------------------------------------
 " VimIM swiss army datafile without using cache
-" (1) http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk20902.txt
+" (1) http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt
 " (2) Digit code such as four corner can be used as independent filter
 " (3) The property of Chinese character can be displayed
 " (4) 108 more CJK is shown from popup menu using OneKey after CJK
 " (5) dummy transformation between simplified and traditional Chinese
 " ----------------------------------------------
-    if empty(s:cjk_20902_lines) && &encoding == "utf-8"
-        if filereadable(s:cjk_20902_file)
-            let s:cjk_20902_lines = readfile(s:cjk_20902_file)
+    if empty(s:cjk_lines) && &encoding == "utf-8"
+        if filereadable(s:cjk_file)
+            let s:cjk_lines = readfile(s:cjk_file)
             let s:unicode_digit_filter = 1
         endif
     endif
@@ -2077,7 +2077,7 @@ function! s:vimim_toggle_chinese() range abort
 "             (4) range for visual mode is supported
 " --------------------------------------------
     sil!call s:vimim_backend_initialization_once()
-    if empty(s:cjk_20902_lines)
+    if empty(s:cjk_lines)
         let msg = "no toggle between simplified and tranditional Chinese"
     elseif s:chinese_input_mode != 'onekey'
         let msg = "it only makes sense to do in normal mode"
@@ -2095,7 +2095,7 @@ function! s:vimim_one2one(chinese)
     return chinese
   endif
   let line = ddddd - 19968
-  let values = split(s:cjk_20902_lines[line])
+  let values = split(s:cjk_lines[line])
   let right_pair = get(split(get(values,0),'\zs'),1)
   if right_pair != nr2char(12288)
     let chinese = right_pair
@@ -2201,7 +2201,7 @@ function! s:vimim_reverse_lookup(chinese)
     if !empty(results_unicode) |" 马力 => u9a6c u529b
         call extend(results, results_unicode)
     endif
-    if empty(s:cjk_20902_lines)
+    if empty(s:cjk_lines)
         return results
     endif
     let results_pinyin = []    |" 马力 => ma3 li2
@@ -2247,7 +2247,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
             let head = printf('%x', ddddd)
         else
             let line = ddddd - 19968
-            let values = split(s:cjk_20902_lines[line])
+            let values = split(s:cjk_lines[line])
             if a:im == 'digit'
                 let head = get(values, 1)
                 if head =~ '\D' || head ==# '0000'
@@ -2280,7 +2280,7 @@ endfunction
 " ---------------------------------------------
 function! s:vimim_onekey_1234567890_filter_on()
 " ---------------------------------------------
-    if !empty(s:cjk_20902_lines)
+    if !empty(s:cjk_lines)
         for _ in s:qwerty
             sil!exe'inoremap <silent>  '._.'
             \  <C-R>=<SID>vimim_onekey_1234567890_filter("'._.'")<CR>'
@@ -2293,7 +2293,7 @@ function! <SID>vimim_onekey_1234567890_filter(n)
 " ----------------------------------------------
     let label = a:n
     if pumvisible()
-        if empty(s:cjk_20902_lines)
+        if empty(s:cjk_lines)
             let msg = "use 1234567890 as pinyin filter"
         else
             let label_alpha = join(s:qwerty,'')
@@ -2343,7 +2343,7 @@ function! s:vimim_get_filter_number(chinese)
         else
             let ddddd = char2nr(chinese)
             let line = ddddd - 19968
-            let values = split(s:cjk_20902_lines[line])
+            let values = split(s:cjk_lines[line])
             let digit = get(values,1)
             let digit_head .= digit[:0]
             let digit_tail = digit[1:]
