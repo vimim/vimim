@@ -78,7 +78,6 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_initialize_keycode()
     sil!call s:vimim_set_special_im_property()
     sil!call s:vimim_initialize_frontend_punctuation()
-    sil!call s:vimim_load_swiss_army_unicode_file()
     sil!call s:vimim_build_datafile_lines()
     sil!call s:vimim_localization()
     sil!call s:vimim_initialize_skin()
@@ -102,6 +101,7 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_chinese()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
+    sil!call s:vimim_load_swiss_army_unicode_file()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_dictionary_quantifiers()
@@ -2057,15 +2057,50 @@ function! s:vimim_load_swiss_army_unicode_file()
 " (3) The property of Chinese character can be displayed
 " (4) 108 more CJK is shown from popup menu using OneKey after CJK
 " ----------------------------------------------
-    if s:chinese_input_mode == 'onekey'
-    \&& empty(s:unicode_lines)
-    \&& &encoding == "utf-8"
+    if empty(s:unicode_lines) && &encoding == "utf-8"
         let datafile = s:unicode_4corner_file
         if filereadable(datafile)
             let s:unicode_lines = readfile(datafile)
             let s:unicode_digit_filter = 1
         endif
     endif
+endfunction
+
+" --------------------------------------------
+function! s:vimim_toggle_chinese() range abort
+" --------------------------------------------
+" [usage]     :VimIM
+" [condition] plug-in vimim.unicode.txt
+" [feature]   (1) "quick and dirty" way to transfer Chinese to Chinese
+"             (2) 20% of efforts for solving 80% of problems
+"             (3) 2172 Chinese pairs are used for one-to-one map
+"             (4) range for visual mode is supported
+" --------------------------------------------
+    sil!call s:vimim_backend_initialization_once()
+    if empty(s:unicode_lines)
+        let msg = "no toggle between simplified and tranditional Chinese"
+    elseif s:chinese_input_mode != 'onekey'
+        let msg = "it only makes sense to do in normal mode"
+    elseif &encoding == "utf-8"
+        exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
+    endif
+endfunction
+
+" --------------------------------
+function! s:vimim_one2one(chinese)
+" --------------------------------
+  let chinese = a:chinese
+  let ddddd = char2nr(chinese)
+  if ddddd < 19968 || ddddd > 40869
+    return chinese
+  endif
+  let line = ddddd - 19968
+  let values = split(s:unicode_lines[line])
+  let right_pair = get(split(get(values,0),'\zs'),1)
+  if right_pair != nr2char(12288)
+    let chinese = right_pair
+  endif
+  return chinese
 endfunction
 
 " ------------------------------------------
@@ -2080,8 +2115,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     let keyboard = a:keyboard
     let range = line("'>") - line("'<")
     if empty(range)
-        call s:vimim_backend_initialization_once()
-        call s:vimim_load_swiss_army_unicode_file()
+        sil!call s:vimim_backend_initialization_once()
         if keyboard =~ '\s'
             if !empty(s:vimim_data_directory)
                 call s:vimim_visual_ctrl_6_update()
@@ -2097,9 +2131,9 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     endif
 endfunction
 
-" ----------------------------------
-function! s:vimim_numberList() range
-" ----------------------------------
+" ----------------------------------------
+function! s:vimim_numberList() range abort
+" ----------------------------------------
     let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
     while (a<=z)
         if match(x,'^9*$')==0|let pre=pre . ' '|endif
@@ -5206,6 +5240,8 @@ function! s:vimim_onekey_mapping_on()
     if s:vimim_search_next > 0
         noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
+    " -------------------------------
+    :com! -range=% VimIM <line1>,<line2>call s:vimim_toggle_chinese()
 endfunction
 
 " ------------------------------------
