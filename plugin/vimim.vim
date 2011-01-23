@@ -502,7 +502,9 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
     " ----------------------------------
-    if len(s:cjk_file) > 3
+    if empty(s:cjk_file)
+        let msg = "no swiss army tool found"
+    else
         let ciku = s:vimim_chinese('digit') . s:colon
         let option = ciku . s:cjk_file
         call add(eggs, option)
@@ -1581,24 +1583,24 @@ let VimIM = " ====  Omni_Popup_Menu   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------------------
-function! s:vimim_get_cached_pair_list(keyboard)
-" ----------------------------------------------
-    let results = s:vimim_pair_list(s:matched_list, a:keyboard)
+" ------------------------------------------------------
+function! s:vimim_get_filtered_list_from_cache(keyboard)
+" ------------------------------------------------------
+    let results = s:vimim_get_filtered_list(s:matched_list, a:keyboard)
     if empty(len(results))
         let filter = s:menu_digit_as_filter
         let filter = strpart(filter, 0, len(filter)-1)
         if len(filter) > 0
             let s:menu_digit_as_filter = filter
-            let results = s:vimim_pair_list(s:matched_list, a:keyboard)
+            let results = s:vimim_get_filtered_list(s:matched_list, a:keyboard)
         endif
     endif
     return results
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_pair_list(matched_list, keyboard)
-" -------------------------------------------------
+" ---------------------------------------------------------
+function! s:vimim_get_filtered_list(matched_list, keyboard)
+" ---------------------------------------------------------
     let pair_matched_list = []
     if &encoding == "utf-8"
     \&& len(s:cjk_file) > 3
@@ -4911,7 +4913,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
         endif
     endif
     if !empty(results)
-        let results = s:vimim_pair_list(results, keyboard)
+        let results = s:vimim_get_filtered_list(results, keyboard)
     endif
     return results
 endfunction
@@ -4995,7 +4997,7 @@ else
     " [filter] use cache for all vimim backends
     " -----------------------------------------
     if len(s:menu_digit_as_filter) > 0 && len(s:matched_list) > 1
-        let results = s:vimim_get_cached_pair_list(keyboard)
+        let results = s:vimim_get_filtered_list_from_cache(keyboard)
         if empty(len(results))
             let s:menu_digit_as_filter = ""
         else
