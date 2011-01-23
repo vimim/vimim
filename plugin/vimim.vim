@@ -2056,6 +2056,7 @@ function! s:vimim_load_swiss_army_cjk_file()
 " (2) Digit code such as four corner can be used as independent filter
 " (3) The property of Chinese character can be displayed
 " (4) 108 more CJK is shown from popup menu using OneKey after CJK
+" (5) dummy transformation between simplified and traditional Chinese
 " ----------------------------------------------
     if empty(s:cjk_20902_lines) && &encoding == "utf-8"
         if filereadable(s:cjk_20902_file)
