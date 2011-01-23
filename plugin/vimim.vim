@@ -321,6 +321,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_private_data_directory")
+    call add(G, "g:vimim_private_data_file")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_vimimdata")
     call add(G, "g:vimim_libvimdll")
@@ -2115,7 +2116,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     let range = line("'>") - line("'<")
     if empty(range)
         sil!call s:vimim_backend_initialization_once()
-        if keyboard =~ '\s'
+        if keyboard == ' '
             if !empty(s:vimim_data_directory)
                 call s:vimim_visual_ctrl_6_update()
             endif
@@ -2146,13 +2147,16 @@ function! s:vimim_visual_ctrl_6_update()
 " --------------------------------------
 " purpose: update one entry to the directory database
 " input example (one line, within vim): cjjp 超级简拼
-" action: (1) cursor on space (2) v (3) ctrl_6
-" result: (1) create file from "left"; (2) update content from "right"
+" action: (1) put cursor on space (2) type v (3) type ctrl_6
+" result: (1) create file from "left"; 
+"         (2) update content from "right"
+"         (3) append the entry to the private data file
     let current_line = getline(".")
     let fields = split(current_line)
     let left = get(fields,0)
     let right = get(fields,1)
-    if left =~# '\l' && left !~ '\W' && right =~# '\W' && right !~ '\l'
+    if left =~# '\l' && left !~ '\W' 
+    \&& right =~# '\W' && right !~ '\l'
         let dir = s:vimim_data_directory . "pinyin"
         let lines = [current_line]
         call s:vimim_mkdir('prepend', dir, lines)
@@ -2163,12 +2167,10 @@ endfunction
 " --------------------------------------------
 function! s:vimim_append_to_private_datafile()
 " --------------------------------------------
-    let dir = s:vimim_private_data_directory
-    if empty(dir)
-        return
-    endif
-    let datafile = dir . 'oo'
-    if filereadable(datafile) && filewritable(datafile)
+    let datafile = s:vimim_private_data_file
+    if len(datafile) > 1
+    \&& filereadable(datafile) 
+    \&& filewritable(datafile)
         let lines = readfile(datafile)
         call add(lines, getline("."))
         call writefile(lines, datafile)
@@ -3018,7 +3020,7 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     else
         return 0
     endif
-    if empty(ddddd) || ddddd>0xffff
+    if empty(ddddd) || ddddd > 0xffff
         return 0
     endif
     return ddddd
@@ -4543,6 +4545,7 @@ function! s:vimim_initialize_debug()
     endif
     let s:vimim_data_directory         = "/home/vimim/"
     let s:vimim_private_data_directory = "/home/xma/oo/"
+    let s:vimim_private_data_file      = "/home/xma/oo/oo"
     let svn = s:vimim_data_directory . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
