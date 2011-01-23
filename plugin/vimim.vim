@@ -1341,6 +1341,7 @@ function! g:vimim_pumvisible_dump()
     let one_line_clipboard = ""
     let saved_position = getpos(".")
     " -----------------------------
+    let g:gg= s:popupmenu_list
     for items in s:popupmenu_list
         if empty(items.menu)
         \|| s:keyboard_leading_zero =~ s:show_me_not
@@ -1349,7 +1350,7 @@ function! g:vimim_pumvisible_dump()
             let format = '%-8s %s'
             if len(s:cjk_file) > 3
             \&& items.menu =~# s:uxxxx
-            \&& len(items.menu) > 12
+            \&& len(items.menu) > 18
                 let format = '%-48s %s'
             endif
             let line = printf(format, items.menu, items.word)
@@ -3013,15 +3014,15 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         " show decimal unicode popup menu: 32911
         let ddddd = str2nr(keyboard, 10)
     endif
-    if ddddd < 19968 || ddddd > 40869
-        let ddddd = 0
+    if empty(ddddd) || ddddd > 0xffff
+        return 0
     endif
     return ddddd
 endfunction
 
-" --------------------------------------------------
-function! s:vimim_get_chinese_list(keyboard, height)
-" --------------------------------------------------
+" ----------------------------------------------
+function! s:vimim_get_cjk_list(keyboard, height)
+" ----------------------------------------------
     let keyboard = a:keyboard
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
@@ -5019,7 +5020,7 @@ else
     " [unicode] support direct unicode/gb/big5 input
     " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        let results = s:vimim_get_chinese_list(keyboard, 108/9)
+        let results = s:vimim_get_cjk_list(keyboard, 108/9)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
