@@ -2195,18 +2195,16 @@ function! s:vimim_reverse_lookup(chinese)
     if empty(chinese)
         return []
     endif
-    let results_digit = []
-    let results_pinyin = []   |" 马力 => ma3 li2
-    let result_cjjp = ""      |" 马力 => ml
-    let results_unicode = s:vimim_reverse_one_entry(chinese, 'unicode')
     let results = []
+    let results_unicode = s:vimim_reverse_one_entry(chinese, 'unicode')
     if !empty(results_unicode) |" 马力 => u9a6c u529b
         call extend(results, results_unicode)
     endif
     if empty(s:unicode_lines)
         return results
     endif
-    let results_digit = s:vimim_reverse_one_entry(chinese, 'digit')
+    let results_pinyin = []    |" 马力 => ma3 li2
+    let result_cjjp = ""       |" 马力 => ml
     let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
     if len(items) > 0
         let pinyin_head = get(items,0)
@@ -2219,7 +2217,8 @@ function! s:vimim_reverse_lookup(chinese)
             let result_cjjp .= " ".chinese
         endif
     endif
-    if !empty(results_digit)    |" 马力 => 7712 4002
+    let results_digit = s:vimim_reverse_one_entry(chinese, 'digit')
+    if !empty(results_digit)   |" 马力 => 7712 4002
         call extend(results, results_digit)
     endif
     if !empty(results_pinyin)
@@ -2239,10 +2238,12 @@ function! s:vimim_reverse_one_entry(chinese, im)
     let head = ''
     for chinese in split(a:chinese, '\zs')
         let ddddd = char2nr(chinese)
-        let unicode = printf('u%x', ddddd)
+        if ddddd < 19968 || ddddd > 40869
+          continue
+        endif
         let head = ''
         if a:im == 'unicode'
-            let head = unicode
+            let head = printf('%x', ddddd)
         else
             let line = ddddd - 19968
             let values = split(s:unicode_lines[line])
@@ -2272,11 +2273,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
         endif
         call add(bodies, chinese . spaces)
     endfor
-    if empty(head)
-        return []
-    endif
-    let results = [join(headers), join(bodies)]
-    return results
+    return [join(headers), join(bodies)]
 endfunction
 
 " ---------------------------------------------
