@@ -101,7 +101,7 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_chinese()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
-    sil!call s:vimim_load_swiss_army_unicode_file()
+    sil!call s:vimim_load_swiss_army_cjk_file()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_dictionary_quantifiers()
@@ -133,7 +133,7 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:show_me_not = '^oo\|^ii\|^vim'
-    let s:cjk_20902_file = s:path . "vimim.cjk.txt"
+    let s:cjk_20902_file = s:path . "vimim.cjk20902.txt"
     let s:cjk_20902_lines = []
     let s:unicode_digit_filter = 0
     let s:xingma = ['wubi', 'erbi', '4corner']
@@ -2048,11 +2048,11 @@ let VimIM = " ====  Input_Digit       ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------------------
-function! s:vimim_load_swiss_army_unicode_file()
-" ----------------------------------------------
+" ------------------------------------------
+function! s:vimim_load_swiss_army_cjk_file()
+" ------------------------------------------
 " VimIM swiss army datafile without using cache
-" (1) http://vimim-data.googlecode.com/svn/trunk/data/vimim.cjk.txt
+" (1) http://vimim-data.googlecode.com/svn/trunk/data/vimim.cjk20902.txt
 " (2) Digit code such as four corner can be used as independent filter
 " (3) The property of Chinese character can be displayed
 " (4) 108 more CJK is shown from popup menu using OneKey after CJK
@@ -2069,7 +2069,6 @@ endfunction
 function! s:vimim_toggle_chinese() range abort
 " --------------------------------------------
 " [usage]     :VimIM
-" [condition] plug-in vimim.cjk.txt
 " [feature]   (1) "quick and dirty" way to transfer Chinese to Chinese
 "             (2) 20% of efforts for solving 80% of problems
 "             (3) 2172 Chinese pairs are used for one-to-one map
