@@ -2052,7 +2052,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_load_swiss_army_cjk_file()
 " ------------------------------------------
 " VimIM swiss army datafile without using cache
-" (1) http://vimim-data.googlecode.com/svn/trunk/data/vimim.cjk20902.txt
+" (1) http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk20902.txt
 " (2) Digit code such as four corner can be used as independent filter
 " (3) The property of Chinese character can be displayed
 " (4) 108 more CJK is shown from popup menu using OneKey after CJK
