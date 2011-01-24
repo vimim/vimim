@@ -52,8 +52,8 @@ let VimIM = " ====  Introduction      ==== {{{"
 "      (3.2) a directory:  $VIM/vimfiles/plugin/vimim/pinyin/
 "  -----------------------------------------------------------
 " "VimIM Installation"
-"  (1)   drop this file to plugin/: plugin/vimim.vim
-"  (2)   [option] drop a tool:      plugin/vimim.cjk.txt
+"  (1.0) drop this file to plugin/: plugin/vimim.vim
+"  (2.0) [option] drop a tool:      plugin/vimim.cjk.txt
 "  (3.1) [option] drop a datafile:  plugin/vimim.pinyin.txt
 "  (3.2) [option] drop a directory: plugin/vimim/pinyin/
 " -----------------------------------------------------------
@@ -339,6 +339,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_custom_skin")
+    call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_chinese_punctuation")
     " -----------------------------------
@@ -937,8 +938,12 @@ function! <SID>vimim_chinesemode_action()
         sil!call s:vimim_start()
         sil!call <SID>vimim_toggle_punctuation()
         if s:chinese_input_mode == 'dynamic'
-            sil!call <SID>vimim_set_seamless()
-            sil!call s:vimim_dynamic_alphabet_trigger()
+            sil!call s:vimim_set_seamless()
+            if s:ui.im =~ 'wubi' || s:ui.im =~ 'erbi'
+                sil!call s:vimim_dynamic_wubi_auto_trigger()
+            else
+                sil!call s:vimim_dynamic_alphabet_trigger()
+            endif
         elseif s:chinese_input_mode == 'static'
             sil!call s:vimim_static_alphabet_auto_select()
             if pumvisible()
@@ -986,41 +991,22 @@ endfunction
 " ------------------------------------------
 function! s:vimim_dynamic_alphabet_trigger()
 " ------------------------------------------
-    if s:chinese_input_mode !~ 'dynamic'
-        return
-    endif
     let not_used_valid_keys = "[0-9.']"
     if s:ui.has_dot == 1
         let not_used_valid_keys = "[0-9]"
     endif
-    " --------------------------------------
     for char in s:valid_keys
         if char !~# not_used_valid_keys
             sil!exe 'inoremap <silent> ' . char . '
-            \ <C-R>=g:vimim_pumvisible_ctrl_e_ctrl_y()<CR>'. char .
+            \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
             \'<C-R>=g:vimim()<CR>'
         endif
     endfor
 endfunction
 
-" ------------------------------------------
-function! g:vimim_pumvisible_ctrl_e_ctrl_y()
-" ------------------------------------------
-    let key = ""
-    if pumvisible()
-        let key = "\<C-E>"
-        if s:ui.im =~ 'wubi'
-        \&& empty(len(s:keyboard_leading_zero)%4)
-            let key = "\<C-Y>"
-            let s:pumvisible_yes = 1
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ---------------------------------
-function! <SID>vimim_set_seamless()
-" ---------------------------------
+" ------------------------------
+function! s:vimim_set_seamless()
+" ------------------------------
     let s:seamless_positions = getpos(".")
     let s:keyboard_leading_zero = ""
     return ""
@@ -1073,9 +1059,13 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_skin()
 " ---------------------------------
-    if s:vimim_custom_skin > 1
+    if s:vimim_custom_skin > 3
+        highlight!      Pmenu      NONE
+        highlight!      PmenuSel   NONE
+        highlight!      PmenuSbar  NONE
+        highlight!      PmenuThumb NONE
+    elseif s:vimim_custom_skin > 1
         highlight! link PmenuSel   Title
-        highlight! link StatusLine Title
         highlight!      Pmenu      NONE
         highlight!      PmenuSbar  NONE
         highlight!      PmenuThumb NONE
@@ -1199,6 +1189,9 @@ endfunction
 " --------------------------
 function! s:vimim_label_on()
 " --------------------------
+    if s:vimim_custom_label < 1
+        return
+    endif
     let labels = range(9)
     if s:chinese_input_mode == 'onekey'
         let abcd_list = split(s:abcd, '\zs')
@@ -1341,7 +1334,6 @@ function! g:vimim_pumvisible_dump()
     let one_line_clipboard = ""
     let saved_position = getpos(".")
     " -----------------------------
-    let g:gg= s:popupmenu_list
     for items in s:popupmenu_list
         if empty(items.menu)
         \|| s:keyboard_leading_zero =~ s:show_me_not
@@ -1503,8 +1495,7 @@ function! <SID>vimim_smart_enter()
     if s:smart_enter == 1
         let msg = "do seamless for the first time <Enter>"
         let s:pattern_not_found = 0
-        let s:seamless_positions = getpos(".")
-        let s:keyboard_leading_zero = ""
+        call s:vimim_set_seamless()
     else
         if s:smart_enter == 2
             let key = " "
@@ -1529,7 +1520,7 @@ function! s:vimim_get_unicode_menu()
     if empty(xxxx)
         let trigger = ""
     else
-        call <SID>vimim_set_seamless()
+        call s:vimim_set_seamless()
         let trigger = xxxx . trigger
     endif
     sil!exe 'sil!return "' . trigger . '"'
@@ -1697,11 +1688,13 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         endif
         " -------------------------------------------------
         let complete_items = {}
-        if keyboard !~# s:show_me_not
-            let labeling = s:vimim_get_labeling(label)
-            let abbr = printf('%2s', labeling) . "\t"
-            let complete_items["abbr"] = abbr . chinese
-            let label += 1
+        if s:vimim_custom_label > 0
+            if keyboard !~# s:show_me_not
+                let labeling = s:vimim_get_labeling(label)
+                let abbr = printf('%2s', labeling) . "\t"
+                let complete_items["abbr"] = abbr . chinese
+                let label += 1
+            endif
         endif
         " -------------------------------------------------
         let complete_items["menu"] = extra_text
@@ -2861,16 +2854,41 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_wubi_4char_auto_input(keyboard)
 " -----------------------------------------------
+" support wubi non-stop typing by auto selection on each 4th
     let keyboard = a:keyboard
     if s:chinese_input_mode == 'dynamic'
         if len(keyboard) > 4
-            " support wubi non-stop typing
             let start = 4*((len(keyboard)-1)/4)
             let keyboard = strpart(keyboard, start)
         endif
         let s:keyboard_leading_zero = keyboard
     endif
     return keyboard
+endfunction
+
+" -------------------------------------------
+function! s:vimim_dynamic_wubi_auto_trigger()
+" -------------------------------------------
+    for char in s:valid_keys
+        sil!exe 'inoremap <silent> ' . char . '
+        \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'. char .
+        \'<C-R>=g:vimim()<CR>'
+    endfor
+endfunction
+
+" -----------------------------------------------
+function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
+" -----------------------------------------------
+    let key = ""
+    if pumvisible()
+        let key = "\<C-E>"
+        if empty(len(s:keyboard_leading_zero)%4)
+            let key = "\<C-Y>"
+            let s:keyboard_leading_zero = ""
+            let s:pumvisible_yes = 1
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ------------------------------------------------
@@ -4518,7 +4536,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma/vim")
+    if isdirectory("/hhome/xma/vim")
         let msg = "VimIM sample configuration:"
     else
         return
@@ -4801,22 +4819,25 @@ endfunction
 " -----------------
 function! g:vimim()
 " -----------------
-    if empty(&completefunc) || &completefunc != 'VimIM'
+    if empty(&completefunc)
+    \|| &completefunc != 'VimIM'
         set completefunc=VimIM
         set completeopt=menuone
     endif
-" -----------------------------------------------------
+    " --------------------------
     let key = ""
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ s:valid_key
         let key = '\<C-X>\<C-U>'
     endif
+    " --------------------------
     if empty(key) && s:chinese_input_mode != 'dynamic'
         let five_byte_before = getline(".")[col(".")-6]
         if byte_before =~ '\x' && five_byte_before ==# 'u'
             let key = '\<C-X>\<C-U>'
         endif
     endif
+    " --------------------------
     if empty(key)
         call g:vimim_reset_after_auto_insert()
     else
@@ -4825,6 +4846,7 @@ function! g:vimim()
         endif
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
     endif
+    " --------------------------
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -5123,7 +5145,7 @@ else
     if s:chinese_input_mode == 'onekey'
         let results = [keyboard ." ". keyboard]
     else
-        call <SID>vimim_set_seamless()
+        call s:vimim_set_seamless()
     endif
     return s:vimim_popupmenu_list(results)
 
