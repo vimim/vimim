@@ -338,8 +338,9 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
-    call add(G, "g:vimim_custom_skin")
     call add(G, "g:vimim_custom_label")
+    call add(G, "g:vimim_custom_color")
+    call add(G, "g:vimim_custom_statusline")
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_chinese_punctuation")
     " -----------------------------------
@@ -918,7 +919,7 @@ function! <SID>ChineseMode()
 " --------------------------
     call s:vimim_backend_initialization_once()
     call s:vimim_frontend_initialization()
-    call s:vimim_initialize_statusline()
+    call s:vimim_set_statusline()
     call s:vimim_build_datafile_cache()
     let s:chinese_input_mode = s:vimim_chinese_input_mode
     let action = ""
@@ -1059,12 +1060,14 @@ call add(s:vimims, VimIM)
 " ---------------------------------
 function! s:vimim_initialize_skin()
 " ---------------------------------
-    if s:vimim_custom_skin > 3
+    if s:vimim_custom_color == 1
+        return
+    elseif s:vimim_custom_color < 1
         highlight!      Pmenu      NONE
         highlight!      PmenuSel   NONE
         highlight!      PmenuSbar  NONE
         highlight!      PmenuThumb NONE
-    elseif s:vimim_custom_skin > 1
+    elseif s:vimim_custom_color == 2
         highlight! link PmenuSel   Title
         highlight!      Pmenu      NONE
         highlight!      PmenuSbar  NONE
@@ -1072,23 +1075,12 @@ function! s:vimim_initialize_skin()
     endif
 endfunction
 
-" ---------------------------------------
-function! s:vimim_initialize_statusline()
-" ---------------------------------------
-    if s:vimim_custom_skin < 0
-        return
-    elseif s:vimim_custom_skin < 3
-        sil!call s:vimim_set_statusline()
-    else
-        echoh NonText
-        echo s:vimim_statusline()
-        echohl None
-    endif
-endfunction
-
 " --------------------------------
 function! s:vimim_set_statusline()
 " --------------------------------
+    if s:vimim_custom_statusline < 1
+        return
+    endif
     set laststatus=2
     if empty(&statusline)
         set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
@@ -3544,9 +3536,8 @@ function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
-        if s:vimim_custom_skin != 2
-            let s:vimim_custom_skin = 2
-        endif
+       let s:vimim_custom_label = 1
+       let s:vimim_custom_color = 2
     else
         return
     endif
@@ -4547,8 +4538,8 @@ function! s:vimim_initialize_debug()
     let svn = s:vimim_data_directory . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
-    let s:vimim_custom_skin = 3
     let s:vimim_tab_as_onekey = 2
+    let s:vimim_custom_color = 0
 endfunction
 
 " ------------------------------------
