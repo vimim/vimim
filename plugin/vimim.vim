@@ -886,24 +886,6 @@ function! s:vimim_onekey_action(onekey)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" -----------------------------------------
-function! s:vimim_get_unicode_char_before()
-" -----------------------------------------
-" [unicode] OneKey to trigger Chinese with omni menu"
-    let byte_before = getline(".")[col(".")-2]
-    if empty(byte_before) || byte_before =~# s:valid_key
-        return 0
-    endif
-    let start = s:multibyte + 1
-    let char_before = getline(".")[col(".")-start : col(".")-2]
-    let ddddd = char2nr(char_before)
-    let xxxx = 0
-    if ddddd > 127
-        let xxxx = printf('u%04x', ddddd)
-    endif
-    return xxxx
-endfunction
-
 " ======================================== }}}
 let VimIM = " ====  Chinese_Mode      ==== {{{"
 " ============================================
@@ -1503,20 +1485,6 @@ function! <SID>vimim_smart_enter()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ----------------------------------
-function! s:vimim_get_unicode_menu()
-" ----------------------------------
-    let trigger = '\<C-R>=g:vimim()\<CR>'
-    let xxxx = s:vimim_get_unicode_char_before()
-    if empty(xxxx)
-        let trigger = ""
-    else
-        call s:vimim_set_seamless()
-        let trigger = xxxx . trigger
-    endif
-    sil!exe 'sil!return "' . trigger . '"'
-endfunction
-
 " -----------------------------------
 function! g:vimim_pumvisible_ctrl_y()
 " -----------------------------------
@@ -1569,21 +1537,22 @@ call add(s:vimims, VimIM)
 " ------------------------------------------------------
 function! s:vimim_get_filtered_list_from_cache(keyboard)
 " ------------------------------------------------------
-    let results = s:vimim_get_filtered_list(s:matched_list, a:keyboard)
+    let keyboard = a:keyboard
+    let results = s:vimim_filter_list(s:matched_list, keyboard)
     if empty(len(results))
         let filter = s:menu_digit_as_filter
         let filter = strpart(filter, 0, len(filter)-1)
         if len(filter) > 0
             let s:menu_digit_as_filter = filter
-            let results = s:vimim_get_filtered_list(s:matched_list, a:keyboard)
+            let results = s:vimim_filter_list(s:matched_list, keyboard)
         endif
     endif
     return results
 endfunction
 
-" ---------------------------------------------------------
-function! s:vimim_get_filtered_list(matched_list, keyboard)
-" ---------------------------------------------------------
+" ---------------------------------------------------
+function! s:vimim_filter_list(matched_list, keyboard)
+" ---------------------------------------------------
     let pair_matched_list = []
     if &encoding == "utf-8"
     \&& len(s:cjk_file) > 3
@@ -2063,18 +2032,18 @@ endfunction
 " --------------------------------
 function! s:vimim_one2one(chinese)
 " --------------------------------
-  let chinese = a:chinese
-  let ddddd = char2nr(chinese)
-  if ddddd < 19968 || ddddd > 40869
+    let chinese = a:chinese
+    let ddddd = char2nr(chinese)
+    if ddddd < 19968 || ddddd > 40869
+        return chinese
+    endif
+    let line = ddddd - 19968
+    let values = split(s:cjk_lines[line])
+    let right_pair = get(split(get(values,0),'\zs'),1)
+    if right_pair != nr2char(12288)
+        let chinese = right_pair
+    endif
     return chinese
-  endif
-  let line = ddddd - 19968
-  let values = split(s:cjk_lines[line])
-  let right_pair = get(split(get(values,0),'\zs'),1)
-  if right_pair != nr2char(12288)
-    let chinese = right_pair
-  endif
-  return chinese
 endfunction
 
 " ------------------------------------------
@@ -2958,6 +2927,27 @@ let VimIM = " ====  Backend==Unicode  ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
+" -------------
+function! CJK()
+" -------------
+" This function outputs Unicode as:
+" ---------------------------------
+"   decimal  hex    CJK
+"   39340    99ac    馬
+" ---------------------------------
+    if &encoding != "utf-8"
+        $put='Your Vim encoding has to be set as utf-8.'
+        $put='[usage]    :call CJK()<CR>'
+    else
+        let start = 19968  "| 一
+        let end   = 40869  "| 龥
+        for ddddd in range(start, end)
+            $put=printf('%d %x ',ddddd,ddddd).nr2char(ddddd)
+        endfor
+    endif
+    return ""
+endfunction
+
 " ------------------------------
 function! s:vimim_localization()
 " ------------------------------
@@ -3007,6 +2997,55 @@ function! s:vimim_i18n_read(line)
     return line
 endfunction
 
+" ----------------------------------------------
+function! s:vimim_get_cjk_list(keyboard, height)
+" ----------------------------------------------
+    let keyboard = a:keyboard
+    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+    if empty(ddddd)
+        return []
+    endif
+    let words = []
+    let height = &pumheight * a:height
+    for i in range(height)
+        let chinese = nr2char(ddddd+i)
+        call add(words, chinese)
+    endfor
+    return words
+endfunction
+
+" ----------------------------------
+function! s:vimim_get_unicode_menu()
+" ----------------------------------
+    let trigger = '\<C-R>=g:vimim()\<CR>'
+    let xxxx = s:vimim_get_unicode_char_before()
+    if empty(xxxx)
+        let trigger = ""
+    else
+        call s:vimim_set_seamless()
+        let trigger = xxxx . trigger
+    endif
+    sil!exe 'sil!return "' . trigger . '"'
+endfunction
+
+" -----------------------------------------
+function! s:vimim_get_unicode_char_before()
+" -----------------------------------------
+" [unicode] OneKey to trigger cjk with omni menu"
+    let byte_before = getline(".")[col(".")-2]
+    if empty(byte_before) || byte_before =~# s:valid_key
+        return 0
+    endif
+    let start = s:multibyte + 1
+    let char_before = getline(".")[col(".")-start : col(".")-2]
+    let ddddd = char2nr(char_before)
+    let uxxxx = 0
+    if ddddd > 127
+        let uxxxx = printf('u%04x', ddddd)
+    endif
+    return uxxxx
+endfunction
+
 " -------------------------------------------
 function! s:vimim_get_unicode_ddddd(keyboard)
 " -------------------------------------------
@@ -3027,44 +3066,6 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         return 0
     endif
     return ddddd
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_get_cjk_list(keyboard, height)
-" ----------------------------------------------
-    let keyboard = a:keyboard
-    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if empty(ddddd)
-        return []
-    endif
-    let words = []
-    let height = &pumheight * a:height
-    for i in range(height)
-        let chinese = nr2char(ddddd+i)
-        call add(words, chinese)
-    endfor
-    return words
-endfunction
-
-" -------------
-function! CJK()
-" -------------
-" This function outputs Unicode as:
-" ---------------------------------
-"   decimal  hex    CJK
-"   39340    99ac    馬
-" ---------------------------------
-    if &encoding != "utf-8"
-        $put='Your Vim encoding has to be set as utf-8.'
-        $put='[usage]    :call CJK()<CR>'
-    else
-        let start = 19968  "| 一
-        let end   = 40869  "| 龥
-        for ddddd in range(start, end)
-            $put=printf('%d %x ',ddddd,ddddd).nr2char(ddddd)
-        endfor
-    endif
-    return ""
 endfunction
 
 " ======================================== }}}
@@ -4926,7 +4927,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
         endif
     endif
     if !empty(results)
-        let results = s:vimim_get_filtered_list(results, keyboard)
+        let results = s:vimim_filter_list(results, keyboard)
     endif
     return results
 endfunction
