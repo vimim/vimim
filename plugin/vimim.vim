@@ -134,7 +134,6 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
-    let s:cjk_single_pair = 0
     let s:cjk_file = s:path . "vimim.cjk.txt"
     let s:cjk_lines = []
     let s:show_me_not = '^vim'
@@ -617,9 +616,6 @@ function! s:vimim_get_chinese_from_english(english)
     if empty(results)
         if !empty(s:cjk_lines) && &encoding == "utf-8"
             let results = s:vimim_try_cjk_file(english)
-            if !empty(len(results))
-                let s:cjk_single_pair = 1
-            endif
         endif
     endif
     if empty(results)
@@ -2018,16 +2014,28 @@ function! s:vimim_try_cjk_file(keyboard)
         return []
     endif
     let results = []
-    let lines = copy(s:cjk_lines)
-    if !empty(pattern)
-        call filter(lines, 'v:val =~# pattern')
-    endif
-    for line in lines
-        let values = split(line)
-        let pair = get(values,0)
-        let chinese = get(split(pair,'\zs'),0)
+
+""  let lines = copy(s:cjk_lines)
+""  if !empty(pattern)
+""      call filter(lines, 'v:val =~# pattern')
+""  endif
+
+    let matched = match(s:cjk_lines, pattern)
+    while matched > 0
+        let ddddd = matched + 19968
+        let chinese = nr2char(ddddd)
         call add(results, chinese)
-    endfor
+        let matched = match(s:cjk_lines, pattern, matched+1)
+        let s:cjk_single_pair += 1
+    endwhile
+
+""" for line in lines
+"""     let values = split(line)
+"""     let pair = get(values,0)
+"""     let chinese = get(split(pair,'\zs'),0)
+"""     call add(results, chinese)
+""" endfor
+
     return results
 endfunction
 
@@ -4579,7 +4587,7 @@ function! s:vimim_initialize_debug()
     let svn = s:vimim_data_directory . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
-    let s:vimim_custom_color = 0
+    let s:vimim_custom_color = 2
     let s:vimim_tab_as_onekey = 2
 endfunction
 
@@ -4811,6 +4819,7 @@ endfunction
 function! s:reset_before_anything()
 " ---------------------------------
     call s:reset_matched_list()
+    let s:cjk_single_pair = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
     let s:no_internet_connection = 0
@@ -5162,7 +5171,6 @@ else
     if !empty(s:cjk_lines) && &encoding == "utf-8"
         let results = s:vimim_try_cjk_file(keyboard)
         if !empty(len(results))
-            let s:cjk_single_pair = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
