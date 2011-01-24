@@ -1993,6 +1993,18 @@ let VimIM = " ====  Input_Digit       ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
+" --------------------------------------
+function! s:vimim_try_cjk_file(keyboard)
+" --------------------------------------
+    let keyboard = a:keyboard
+    let results = []
+    let line = 0
+    let values = split(s:cjk_lines[line])
+    let digit = get(values,1)
+    let pinyin = get(values,2)
+    return results
+endfunction
+
 " ------------------------------------------
 function! s:vimim_load_swiss_army_cjk_file()
 " ------------------------------------------
@@ -5112,12 +5124,17 @@ else
     " [backend] plug-n-play embedded backend engine
     " ---------------------------------------------
     let results = s:vimim_embedded_backend_engine(keyboard)
-    if empty(results)
-        if s:chinese_input_mode =~ 'dynamic'
-            let s:keyboard_leading_zero = ""
-        endif
-    else
+    if !empty(results)
         return s:vimim_popupmenu_list(results)
+    endif
+
+    " [vimim.cjk.txt] try 4corner and pinyin there
+    " --------------------------------------------
+    if !empty(s:cjk_lines) && &encoding == "utf-8"
+        let results = s:vimim_try_cjk_file(keyboard)
+        if !empty(len(results))
+            return s:vimim_popupmenu_list(results)
+        endif
     endif
 
     " [sogou] last try cloud before giving up
@@ -5132,7 +5149,6 @@ else
     " [seamless] support seamless English input
     " -----------------------------------------
     let s:pattern_not_found += 1
-    let results = []
     if s:chinese_input_mode == 'onekey'
         let results = [keyboard ." ". keyboard]
     else
