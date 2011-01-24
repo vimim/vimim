@@ -1062,16 +1062,15 @@ function! s:vimim_initialize_skin()
 " ---------------------------------
     if s:vimim_custom_color == 1
         return
-    elseif s:vimim_custom_color < 1
-        highlight!      Pmenu      NONE
-        highlight!      PmenuSel   NONE
+    elseif s:vimim_custom_color < 3
+        if s:vimim_custom_color < 1
+            highlight!      PmenuSel   NONE
+        elseif s:vimim_custom_color == 2
+            highlight! link PmenuSel   Title
+        endif
         highlight!      PmenuSbar  NONE
         highlight!      PmenuThumb NONE
-    elseif s:vimim_custom_color == 2
-        highlight! link PmenuSel   Title
         highlight!      Pmenu      NONE
-        highlight!      PmenuSbar  NONE
-        highlight!      PmenuThumb NONE
     endif
 endfunction
 
@@ -4538,8 +4537,8 @@ function! s:vimim_initialize_debug()
     let svn = s:vimim_data_directory . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
-    let s:vimim_tab_as_onekey = 2
     let s:vimim_custom_color = 0
+    let s:vimim_tab_as_onekey = 2
 endfunction
 
 " ------------------------------------
@@ -4598,6 +4597,30 @@ let VimIM = " ====  Plugin_Conflict   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
+" -----------------------------------
+function! s:vimim_plugins_fix_start()
+" -----------------------------------
+    if s:vimim_tab_as_onekey == 2
+        return
+    endif
+    " -------------------------------
+    if !exists('s:acp_sid')
+        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+        if !empty(s:acp_sid)
+            AcpDisable
+        endif
+    endif
+    if !exists('s:supertab_sid')
+        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    endif
+    if !exists('s:word_complete')
+        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
+        if !empty(s:word_complete)
+            call EndWordComplete()
+        endif
+    endif
+endfunction
+
 " ----------------------------------
 function! s:vimim_getsid(scriptname)
 " ----------------------------------
@@ -4626,30 +4649,6 @@ function! s:vimim_getsid(scriptname)
         endif
     endfor
     return 0
-endfunction
-
-" -----------------------------------
-function! s:vimim_plugins_fix_start()
-" -----------------------------------
-    if s:vimim_tab_as_onekey == 2
-        return
-    endif
-    " -------------------------------
-    if !exists('s:acp_sid')
-        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
-        if !empty(s:acp_sid)
-            AcpDisable
-        endif
-    endif
-    if !exists('s:supertab_sid')
-        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
-    endif
-    if !exists('s:word_complete')
-        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
-        if !empty(s:word_complete)
-            call EndWordComplete()
-        endif
-    endif
 endfunction
 
 " ----------------------------------
