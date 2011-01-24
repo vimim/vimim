@@ -134,6 +134,7 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
+    let s:cjk_single_pair = 0
     let s:cjk_file = s:path . "vimim.cjk.txt"
     let s:cjk_lines = []
     let s:show_me_not = '^vim'
@@ -614,6 +615,14 @@ function! s:vimim_get_chinese_from_english(english)
         endif
     endif
     if empty(results)
+        if !empty(s:cjk_lines) && &encoding == "utf-8"
+            let results = s:vimim_try_cjk_file(english)
+            if !empty(len(results))
+                let s:cjk_single_pair = 1
+            endif
+        endif
+    endif
+    if empty(results)
         let msg = "so far so good, nothing found"
     else
         call s:vimim_register_search_pattern(english, results)
@@ -634,6 +643,7 @@ function! s:vimim_register_search_pattern(keyboard, results)
     let results = []
     for chinese in a:results
         if a:keyboard =~# s:uxxxx
+        \|| s:cjk_single_pair > 0
             let msg = "for unicode slash search: /u808f /32911"
         elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
@@ -1611,7 +1621,9 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
-        if keyboard =~# s:uxxxx || keyboard =~# "^vimim"
+        if keyboard =~# s:uxxxx
+        \|| keyboard =~# "^vimim"
+        \|| s:cjk_single_pair > 0
             let msg = 'make it work for OneKey after any CJK'
         elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
@@ -1997,11 +2009,25 @@ call add(s:vimims, VimIM)
 function! s:vimim_try_cjk_file(keyboard)
 " --------------------------------------
     let keyboard = a:keyboard
+    let pattern = ""
+    if keyboard =~# '^\d\d\d\d\>'
+	let pattern = '\s' . keyboard . '\s'
+    elseif keyboard =~# '^\l'
+	let pattern = '\s' . keyboard
+    else
+        return []
+    endif
     let results = []
-    let line = 0
-    let values = split(s:cjk_lines[line])
-    let digit = get(values,1)
-    let pinyin = get(values,2)
+    let lines = copy(s:cjk_lines)
+    if !empty(pattern)
+        call filter(lines, 'v:val =~# pattern')
+    endif
+    for line in lines
+        let values = split(line)
+        let pair = get(values,0)
+        let chinese = get(split(pair,'\zs'),0)
+        call add(results, chinese)
+    endfor
     return results
 endfunction
 
@@ -4069,7 +4095,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     if s:chinese_input_mode == 'onekey' && keyboard =~ '[.]'
         return 0
     endif
-    if keyboard =~# "[^a-z']"
+    if keyboard =~# "[^a-z]"
         let msg = "cloud limits to valid cloud keycodes only"
         return 0
     endif
@@ -4119,8 +4145,11 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
 " ------------------------------------------------
 " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     let keyboard = a:keyboard
+    if empty(keyboard) || keyboard =~# '\L'
+        return []
+    endif
     let executable = s:www_executable
-    if empty(executable) || empty(keyboard)
+    if empty(executable)
         return []
     endif
     if s:vimim_cloud_sogou < 1 && a:force < 1
@@ -5133,13 +5162,14 @@ else
     if !empty(s:cjk_lines) && &encoding == "utf-8"
         let results = s:vimim_try_cjk_file(keyboard)
         if !empty(len(results))
+            let s:cjk_single_pair = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
 
     " [sogou] last try cloud before giving up
     " ---------------------------------------
-    if s:vimim_cloud_sogou == 1
+    if s:vimim_cloud_sogou == 1 && keyboard !~# '\L'
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
