@@ -1546,10 +1546,10 @@ function! s:vimim_get_filtered_list_from_cache(keyboard)
     let keyboard = a:keyboard
     let results = s:vimim_filter_list(s:matched_list, keyboard)
     if empty(len(results))
-        let filter = s:menu_digit_as_filter
-        let filter = strpart(filter, 0, len(filter)-1)
-        if len(filter) > 0
-            let s:menu_digit_as_filter = filter
+        let number = s:menu_digit_as_filter
+        let number = strpart(number, 0, len(number)-1)
+        if len(number) > 0
+            let s:menu_digit_as_filter = number
             let results = s:vimim_filter_list(s:matched_list, keyboard)
         endif
     endif
@@ -1867,11 +1867,11 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
     if s:chinese_punctuation > 0
     \&& has_key(s:punctuations, value)
         let byte_before = getline(".")[col(".")-2]
-        let filter = '\w'     |" english_punctuation_after_english
+        let before = '\w'     |" english_punctuation_after_english
         if empty(s:vimim_english_punctuation)
-            let filter = '\d' |" english_punctuation_after_digit
+            let before = '\d' |" english_punctuation_after_digit
         endif
-        if byte_before !~ filter
+        if byte_before !~ before
             let value = s:punctuations[value]
         endif
     endif
@@ -2006,21 +2006,18 @@ function! s:vimim_try_cjk_file(keyboard)
 " --------------------------------------
     let keyboard = a:keyboard
     let pattern = ""
-    if keyboard =~# '^\d\d\d\d\>'
-	let pattern = '\s' . keyboard . '\s'
-    elseif keyboard =~# '^\l'
+    if keyboard !~# '\d' || keyboard !~# '\l'
 	let pattern = '\s' . keyboard
+    elseif keyboard =~# '^\l\+\d\+'
+	let digit = substitute(keyboard,'\a','','g')
+	let alpha = substitute(keyboard,'\d','','g')
+	let pattern = '\s' . digit . '\d*\s' . alpha
     else
         return []
     endif
     let results = []
-
-""  let lines = copy(s:cjk_lines)
-""  if !empty(pattern)
-""      call filter(lines, 'v:val =~# pattern')
-""  endif
-
     let matched = match(s:cjk_lines, pattern)
+    " ----------------------------------
     while matched > 0
         let ddddd = matched + 19968
         let chinese = nr2char(ddddd)
@@ -2028,14 +2025,7 @@ function! s:vimim_try_cjk_file(keyboard)
         let matched = match(s:cjk_lines, pattern, matched+1)
         let s:cjk_single_pair += 1
     endwhile
-
-""" for line in lines
-"""     let values = split(line)
-"""     let pair = get(values,0)
-"""     let chinese = get(split(pair,'\zs'),0)
-"""     call add(results, chinese)
-""" endfor
-
+    " ----------------------------------
     return results
 endfunction
 
@@ -3256,8 +3246,8 @@ function! s:vimim_pinyin_more_match(lines, keyboard, results)
 " in  => chao'ji'jian'pin
 " out => chaojijian, chaoji, chao
 " -----------------------------------------
-    let filter = "vim\\|#\\|　"
-    if match(a:results, filter) > -1
+    let pattern = "vim\\|#\\|　"
+    if match(a:results, pattern) > -1
         return []
     endif
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
@@ -4033,10 +4023,11 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_do_cloud_if_no_embedded_backend()
 " -------------------------------------------------
-    if empty(s:backend.directory) && empty(s:backend.datafile)
-        if empty(s:vimim_cloud_sogou)
-            let s:vimim_cloud_sogou = 1
-        endif
+    if empty(s:backend.directory) 
+    \&& empty(s:backend.datafile)
+    \&& empty(s:cjk_lines)
+    \&& empty(s:vimim_cloud_sogou)
+        let s:vimim_cloud_sogou = 1
     endif
 endfunction
 
@@ -4583,7 +4574,7 @@ function! s:vimim_initialize_debug()
     endif
     let s:vimim_data_directory         = "/home/vimim/"
     let s:vimim_private_data_directory = "/home/xma/oo/"
-    let s:vimim_private_data_file      = "/home/xma/oo/oo"
+    let s:vimim_private_data_file      = "/home/xma/oo/cjk"
     let svn = s:vimim_data_directory . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
