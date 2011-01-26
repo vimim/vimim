@@ -133,8 +133,8 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
+    let s:cjk_file = 0
     let s:cjk_lines = []
-    let s:cjk_file = s:path . "vimim.cjk.txt"
     let s:cjk_keyboard_qwertyuiop = {}
     let s:show_me_not = '^vim'
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
@@ -486,12 +486,6 @@ function! s:vimim_egg_vimim()
     let option = style . s:colon . toggle
     call add(eggs, option)
     " ----------------------------------
-    let im = s:vimim_statusline()
-    if !empty(im)
-        let option = s:vimim_chinese('input') . s:colon . im
-        call add(eggs, option)
-    endif
-    " ----------------------------------
     let option = s:backend[s:ui.root][s:ui.im].datafile
     let ciku = s:vimim_chinese('datafile') . s:colon
     if !empty(option)
@@ -504,19 +498,23 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
     " ----------------------------------
-    if empty(s:cjk_file)
-        let msg = "no swiss army tool found"
-    else
+    if s:cjk_file > 0
         let ciku = s:vimim_chinese('digit') . s:colon
-        let option = ciku . s:cjk_file
+        let option = ciku . s:path . "vimim.cjk.txt"
+        call add(eggs, option)
+    endif
+    " ----------------------------------
+    let im = s:vimim_statusline()
+    if !empty(im)
+        let option = s:vimim_chinese('input') . s:colon . im
         call add(eggs, option)
     endif
     " ----------------------------------
     if s:vimim_cloud_sogou == 888
-        let CLOUD = s:vimim_chinese('cloud_atwill')
+        let cloud_atwill = s:vimim_chinese('cloud_atwill')
         let sogou = s:vimim_chinese('sogou')
         let option = sogou . s:colon
-        let option .= CLOUD
+        let option .= cloud_atwill
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -604,7 +602,7 @@ function! s:vimim_get_chinese_from_english(english)
         endif
     endif
     if empty(results)
-        if !empty(s:cjk_lines) && &encoding == "utf-8"
+        if s:cjk_file > 0 && &encoding == "utf-8"
             let results = s:vimim_try_cjk_file(english)
             if empty(results)
                 let english = s:vimim_diy_keyboard2number(english)
@@ -668,7 +666,9 @@ function! s:vimim_cjk_property_display(ddddd)
     let ddddd = a:ddddd
     let unicode = printf('u%04x',ddddd)
     let menu = unicode . s:space . ddddd
-    if len(s:cjk_file) > 3 && ddddd >= 19968 && ddddd <= 40869
+    if s:cjk_file > 0
+    \&& ddddd >= 19968 
+    \&& ddddd <= 40869
         let chinese = nr2char(ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
@@ -1248,7 +1248,7 @@ function! <SID>vimim_onekey_label_navigation(key)
             let hjkl .= s:vimim_get_chinese_punctuation(punctuation)
             let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
         elseif a:key =~ "[-_]"
-            let s:pumvisible_hjkl_2nd_match = 1
+            let s:hjkl_2nd_match = 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         endif
     endif
@@ -1303,7 +1303,7 @@ function! g:vimim_pumvisible_dump()
             let line = printf('%s', items.word)
         else
             let format = '%-8s %s'
-            if len(s:cjk_file) > 3
+            if s:cjk_file > 0
             \&& items.menu =~# s:uxxxx
             \&& len(items.menu) > 18
                 let format = '%-48s %s'
@@ -1530,10 +1530,10 @@ function! s:vimim_recycle_list_from_cache()
     let chinese = get(split(get(s:matched_list,0),'\zs'),0)
     let keyboard = char2nr(chinese)
     if s:hjkl_h%3 == 1
-        let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
-    elseif s:hjkl_h%3 == 2
         let keyboard = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
         let keyboard = strpart(keyboard,0,match(keyboard,'\d'))
+    elseif s:hjkl_h%3 == 2
+        let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
     endif
     let results = s:vimim_try_cjk_file(keyboard)
     let matched = match(results, chinese)
@@ -1563,7 +1563,7 @@ function! s:vimim_filter_list(matched_list, keyboard)
 " ---------------------------------------------------
     let pair_matched_list = []
     if &encoding == "utf-8"
-    \&& len(s:cjk_file) > 3
+    \&& s:cjk_file > 0
     \&& len(s:menu_digit_as_filter) > 0
     \&& len(a:matched_list) > 0
         if a:keyboard =~# s:uxxxx || !empty(s:vimim_data_directory)
@@ -1690,10 +1690,10 @@ function! s:vimim_get_labeling(label)
         if label < 2
             let label2 = "_"
         endif
-        if empty(s:cjk_file)
-            let labeling .= label2
-        else
+        if s:cjk_file > 0
             let labeling = label2
+        else
+            let labeling .= label2
         endif
     endif
     return labeling
@@ -2072,10 +2072,14 @@ function! s:vimim_load_swiss_army_cjk_file()
 " (4) list of CJK is shown from popup menu using OneKey after CJK
 " (5) dummy transformation between simplified and traditional Chinese
 " ----------------------------------------------
-    if &encoding == "utf-8"
-    \&& filereadable(s:cjk_file)
-    \&& empty(s:cjk_lines)
-        let s:cjk_lines = readfile(s:cjk_file)
+    let cjk_file = s:path . "vimim.cjk.txt"
+    if filereadable(cjk_file)
+        let s:cjk_file = 1
+    else
+        return
+    endif
+    if empty(s:cjk_lines) && &encoding == "utf-8"
+        let s:cjk_lines = readfile(cjk_file)
         let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
     endif
@@ -2091,7 +2095,7 @@ function! s:vimim_toggle_chinese() range abort
 "             (4) range for visual mode is supported
 " --------------------------------------------
     sil!call s:vimim_backend_initialization_once()
-    if empty(s:cjk_lines)
+    if empty(s:cjk_file)
         let msg = "no toggle between simplified and tranditional Chinese"
     elseif s:chinese_input_mode != 'onekey'
         let msg = "it only makes sense to do in normal mode"
@@ -2215,7 +2219,7 @@ function! s:vimim_reverse_lookup(chinese)
     if !empty(results_unicode) |" 马力 => u9a6c u529b
         call extend(results, results_unicode)
     endif
-    if empty(s:cjk_lines)
+    if empty(s:cjk_file)
         return results
     endif
     let results_pinyin = []    |" 马力 => ma3 li2
@@ -2294,7 +2298,7 @@ endfunction
 " ---------------------------------------------
 function! s:vimim_onekey_1234567890_filter_on()
 " ---------------------------------------------
-    if !empty(s:cjk_lines)
+    if s:cjk_file > 0
         for _ in s:qwerty
             sil!exe'inoremap <silent>  '._.'
             \  <C-R>=<SID>vimim_onekey_1234567890_filter("'._.'")<CR>'
@@ -2307,7 +2311,7 @@ function! <SID>vimim_onekey_1234567890_filter(n)
 " ----------------------------------------------
     let label = a:n
     if pumvisible()
-        if !empty(s:cjk_lines)
+        if s:cjk_file > 0
             let label = match(s:qwerty, a:n)
         endif
         if empty(len(s:menu_digit_as_filter))
@@ -3433,7 +3437,7 @@ endfunction
 function! s:vimim_break_sentence_into_block(keyboard)
 " ---------------------------------------------------
     let blocks = s:vimim_break_word_by_word(a:keyboard)
-    if empty(blocks) && !empty(s:cjk_lines)
+    if empty(blocks) && s:cjk_file > 0
         let blocks = s:vimim_break_pinyin_digit(a:keyboard)
     endif
     return blocks
@@ -3753,8 +3757,8 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
     endif
     " --------------------------------------------
     if !empty(s:keyboard_head)
-        if s:pumvisible_hjkl_2nd_match > 0
-            let s:pumvisible_hjkl_2nd_match = 0
+        if s:hjkl_2nd_match > 0
+            let s:hjkl_2nd_match = 0
             let length = len(s:keyboard_head)-1
             let keyboard = strpart(s:keyboard_head, 0, length)
         endif
@@ -4002,7 +4006,6 @@ function! s:vimim_do_cloud_if_no_embedded_backend()
 " -------------------------------------------------
     if empty(s:backend.directory)
     \&& empty(s:backend.datafile)
-    \&& empty(s:cjk_lines)
     \&& empty(s:vimim_cloud_sogou)
         let s:vimim_cloud_sogou = 1
     endif
@@ -4800,9 +4803,9 @@ function! s:reset_matched_list()
 " ------------------------------
     let s:hjkl_l = 0
     let s:hjkl_h = 0
-    let s:pumvisible_yes = 0
+    let s:hjkl_2nd_match = 0
     let s:keyboard_head = 0
-    let s:pumvisible_hjkl_2nd_match = 0
+    let s:pumvisible_yes = 0
     let s:menu_digit_as_filter = ""
     let s:matched_list = []
 endfunction
@@ -5037,7 +5040,9 @@ else
 
     " [filter] use cache for all vimim backends
     " -----------------------------------------
-    if len(s:matched_list)>1 && !empty(s:cjk_lines) && &encoding=="utf-8"
+    if len(s:matched_list)>1 
+    \&& s:cjk_file > 0
+    \&& &encoding=="utf-8"
         if len(s:menu_digit_as_filter) > 0 
             let results = s:vimim_get_filtered_list_from_cache(keyboard)
             if empty(len(results))
@@ -5066,7 +5071,7 @@ else
     " [unicode] support direct unicode/gb/big5 input
     " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        let results = s:vimim_get_cjk_list(keyboard, 108/2/9)
+        let results = s:vimim_get_cjk_list(keyboard, 36/9)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
@@ -5149,7 +5154,7 @@ else
 
     " [vimim.cjk.txt] try 4corner and pinyin there
     " --------------------------------------------
-    if !empty(s:cjk_lines) && &encoding == "utf-8"
+    if s:cjk_file > 0 && &encoding == "utf-8"
         if s:vimim_tab_as_onekey == 2
             let keyboard = s:vimim_diy_keyboard2number(keyboard)
         endif
