@@ -2004,33 +2004,32 @@ let VimIM = " ====  Input_Digit       ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------------------
-function! s:vimim_diy_keyboard2number(keyboard)
-" ---------------------------------------------
-    let keyboard = a:keyboard
-    if s:chinese_input_mode != 'onekey'
-    \|| keyboard =~ '\d'
-    \|| keyboard !~ '\l'
-    \|| len(keyboard) !~ 5
-        return keyboard
+" -------------------------------
+function! s:vimim_load_cjk_file()
+" -------------------------------
+" VimIM swiss army datafile without using cache
+" # http://vimim-data.googlecode.com/svn/trunk/data/vimim.cjk.txt
+" # Digit code such as four corner can be used as independent filter
+" # dummy transformation between simplified and traditional Chinese
+" # list of CJK is shown from popup menu using OneKey after CJK
+" # hjkl_h cycle list of unicode, 4corner and pinyin
+" # hjkl_l toggle display of the property of Chinese character
+" # can be used as one datafile for 4corner or pinyin or both
+" ---------------------------------------------------------------------
+    if &encoding != "utf-8"
+        return
     endif
-    let digits = []
-    let diy_4corner = strpart(keyboard, 1)
-    " [diy] muqew=m7132 xeyqp=x3610 jeqqq=j3111
-    for char in split(diy_4corner, '\zs')
-        let digit = match(s:qwerty, char)
-        if digit < 0
-            return keyboard
-        else
-            call add(digits, digit)
+    let cjk_file = s:path . "vimim.cjk.txt"
+    if empty(s:cjk_lines)
+        if filereadable(cjk_file)
+            let s:cjk_lines = readfile(cjk_file)
         endif
-    endfor
-    if len(digits) < 4
-        return keyboard
     endif
-    let dddd = join(digits,"")
-    let alpha_dddd = keyboard[0:0] . dddd
-    return alpha_dddd
+    if len(s:cjk_lines) == 20902
+        let s:cjk_file = 1
+        let s:abcd = "'abcdvfgz"
+        let s:qwerty = split('pqwertyuio', '\zs')
+    endif
 endfunction
 
 " --------------------------------------
@@ -2060,29 +2059,33 @@ function! s:vimim_try_cjk_file(keyboard)
     return results
 endfunction
 
-" -------------------------------
-function! s:vimim_load_cjk_file()
-" -------------------------------
-" VimIM swiss army datafile without using cache
-" # http://vimim-data.googlecode.com/svn/trunk/data/vimim.cjk.txt
-" # Digit code such as four corner can be used as independent filter
-" # dummy transformation between simplified and traditional Chinese
-" # list of CJK is shown from popup menu using OneKey after CJK
-" # hjkl_h cycle list of unicode, 4corner and pinyin
-" # hjkl_l toggle display of the property of Chinese character
-" # can be used as one datafile for 4corner or pinyin or both
-" ---------------------------------------------------------------------
-    let cjk_file = s:path . "vimim.cjk.txt"
-    if filereadable(cjk_file) && &encoding == "utf-8"
-        let s:cjk_file = 1
-    else
-        return
+" ---------------------------------------------
+function! s:vimim_diy_keyboard2number(keyboard)
+" ---------------------------------------------
+    let keyboard = a:keyboard
+    if s:chinese_input_mode != 'onekey'
+    \|| keyboard =~ '\d'
+    \|| keyboard !~ '\l'
+    \|| len(keyboard) !~ 5
+        return keyboard
     endif
-    if empty(s:cjk_lines)
-        let s:cjk_lines = readfile(cjk_file)
-        let s:abcd = "'abcdvfgz"
-        let s:qwerty = split('pqwertyuio', '\zs')
+    let digits = []
+    let diy_4corner = strpart(keyboard, 1)
+    " [diy] muqew=m7132 xeyqp=x3610 jeqqq=j3111
+    for char in split(diy_4corner, '\zs')
+        let digit = match(s:qwerty, char)
+        if digit < 0
+            return keyboard
+        else
+            call add(digits, digit)
+        endif
+    endfor
+    if len(digits) < 4
+        return keyboard
     endif
+    let dddd = join(digits,"")
+    let alpha_dddd = keyboard[0:0] . dddd
+    return alpha_dddd
 endfunction
 
 " --------------------------------------------
