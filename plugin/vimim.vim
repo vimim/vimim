@@ -575,7 +575,7 @@ function! g:vimim_search_next()
         catch
             echon "/" . english . " error:" .  v:exception
         endtry
-        let s:menu_digit_as_filter = ""
+        let s:hjkl_filter = ""
     endif
 endfunction
 
@@ -796,6 +796,11 @@ function! s:vimim_space_on()
                     \<C-R>=g:vimim_reset_after_insert()<CR>
 endfunction
 
+" <Space> multiple play in OneKey:
+"   (1) after English (valid keys) => trigger keycode menu
+"   (2) after omni popup menu      => insert Chinese
+"   (3) after English punctuation  => Chinese punctuation
+"   (4) after Chinese              => <Space>
 " -----------------------
 function! g:vimim_space()
 " -----------------------
@@ -811,11 +816,6 @@ function! g:vimim_space()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" <Space> multiple play in OneKey:
-"   (1) after English (valid keys) => trigger keycode menu
-"   (2) after omni popup menu      => insert Chinese
-"   (3) after English punctuation  => Chinese punctuation
-"   (4) after Chinese              => <Space>
 " -------------------------------------
 function! s:vimim_onekey_action(onekey)
 " -------------------------------------
@@ -1236,7 +1236,7 @@ function! <SID>vimim_onekey_label_navigation(key)
             let s:hjkl_l += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'm'
-            let s:menu_digit_as_filter = ""
+            let s:hjkl_filter = ""
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
             let hjkl  = '\<C-Y>'
@@ -1530,11 +1530,14 @@ let VimIM = " ====  Omni_Popup_Menu   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------------
-function! s:vimim_recycle_list_from_cache()
-" -----------------------------------------
+" ---------------------------------------
+function! s:vimim_cycle_list_from_cache()
+" ---------------------------------------
     let chinese = get(split(get(s:matched_list,0),'\zs'),0)
     let keyboard = char2nr(chinese)
+    if keyboard < 19968 || keyboard > 40869
+        return []
+    endif
     if s:hjkl_h%3 == 1
         let keyboard = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
         let keyboard = strpart(keyboard,0,match(keyboard,'\d'))
@@ -1554,10 +1557,10 @@ function! s:vimim_get_filtered_list_from_cache(keyboard)
     let keyboard = a:keyboard
     let results = s:vimim_filter_list(s:matched_list, keyboard)
     if empty(len(results))
-        let number = s:menu_digit_as_filter
+        let number = s:hjkl_filter
         let number = strpart(number, 0, len(number)-1)
         if len(number) > 0
-            let s:menu_digit_as_filter = number
+            let s:hjkl_filter = number
             let results = s:vimim_filter_list(s:matched_list, keyboard)
         endif
     endif
@@ -1568,7 +1571,7 @@ endfunction
 function! s:vimim_filter_list(matched_list, keyboard)
 " ---------------------------------------------------
     if empty(s:cjk_file)
-    \|| empty(s:menu_digit_as_filter)
+    \|| empty(len(s:hjkl_filter))
         return a:matched_list
     endif
     let pair_matched_list = []
@@ -1577,7 +1580,7 @@ function! s:vimim_filter_list(matched_list, keyboard)
         if len(first_in_list) < 2
         \|| a:keyboard =~# s:uxxxx
         \|| !empty(s:vimim_data_directory)
-            let chinese = s:vimim_digit_filter(line)
+            let chinese = s:vimim_cjk_digit_filter(line)
             if empty(chinese)
                 continue
             else
@@ -1587,7 +1590,7 @@ function! s:vimim_filter_list(matched_list, keyboard)
             let words = split(line)
             let menu = remove(words, 0)
             for chinese in words
-                let chinese = s:vimim_digit_filter(chinese)
+                let chinese = s:vimim_cjk_digit_filter(chinese)
                 if empty(chinese)
                     continue
                 else
@@ -1607,7 +1610,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     if empty(pair_matched_list)
         return []
     endif
-    if empty(len(s:menu_digit_as_filter))
+    if empty(len(s:hjkl_filter))
         let s:matched_list = copy(pair_matched_list)
     endif
     let label = 1
@@ -2049,7 +2052,7 @@ function! s:vimim_try_cjk_file(keyboard)
     let results = []
     let matched = match(s:cjk_lines, pattern)
     " ----------------------------------
-    while matched > 0
+    while matched > -1
         let ddddd = matched + 19968
         let chinese = nr2char(ddddd)
         call add(results, chinese)
@@ -2315,47 +2318,37 @@ function! <SID>vimim_onekey_1234567890_filter(n)
         if s:cjk_file > 0
             let label = match(s:qwerty, a:n)
         endif
-        if empty(len(s:menu_digit_as_filter))
-        \|| s:menu_digit_as_filter[-1:-1] == "_"
-            let s:menu_digit_as_filter = label
+        if empty(len(s:hjkl_filter))
+        \|| s:hjkl_filter[-1:-1] == "_"
+            let s:hjkl_filter = label
         else
-            let s:menu_digit_as_filter .= label
+            let s:hjkl_filter .= label
         endif
         let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
     endif
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
-" -------------------------------------
-function! s:vimim_digit_filter(chinese)
-" -------------------------------------
-    let chinese = a:chinese
-    let number = s:vimim_get_filter_number(chinese)
-    let pattern = "^" . substitute(s:menu_digit_as_filter,'\D','','g')
-    let matched = match(number, pattern)
-    if matched < 0 || number ==# '0000'
-        let chinese = 0
-    endif
-    return chinese
-endfunction
-
-" ------------------------------------------
-function! s:vimim_get_filter_number(chinese)
-" ------------------------------------------
+" -----------------------------------------
+function! s:vimim_cjk_digit_filter(chinese)
+" -----------------------------------------
 " smart digit filter:  马力 7712 4002
 "   (1) ma<C-6>        马   => filter with 7712
 "   (2) mali<C-6>      马力 => filter with 7 4002
 "   (2) mali4<C-6>     马力 => 4 for last char then filter with 7 4002
-" -------------------------------------------
+" -----------------------------------------
+    let chinese = a:chinese
     let digit_head = ""
     let digit_tail = ""
-    let words = split(a:chinese, '\zs')
-    if s:menu_digit_as_filter[-1:-1] == "_"
+    let words = split(chinese, '\zs')
+    if empty(len(s:hjkl_filter))
+        return 0
+    elseif s:hjkl_filter[-1:-1] == "_"
         let words = copy(words[-1:-1])
     endif
-    for chinese in words
-        let ddddd = char2nr(chinese)
-        if chinese =~ '\w' || ddddd < 19968 || ddddd > 40869
+    for cjk in words
+        let ddddd = char2nr(cjk)
+        if cjk =~ '\w' || ddddd < 19968 || ddddd > 40869
             continue
         else
             let line = ddddd - 19968
@@ -2365,7 +2358,13 @@ function! s:vimim_get_filter_number(chinese)
             let digit_tail = digit[1:]
         endif
     endfor
-    return digit_head . digit_tail
+    let number = digit_head . digit_tail
+    let pattern = "^" . substitute(s:hjkl_filter,'\D','','g')
+    let matched = match(number, pattern)
+    if matched < 0 || number ==# '0000'
+        let chinese = 0
+    endif
+    return chinese
 endfunction
 
 " ======================================== }}}
@@ -3453,10 +3452,10 @@ function! s:vimim_break_pinyin_digit(keyboard)
         let pinyins = s:vimim_get_pinyin_from_pinyin(menu)
         if empty(pinyins)
             return []
-        elseif empty(len(s:menu_digit_as_filter))
+        elseif empty(len(s:hjkl_filter))
             let filter = get(blocks, 1)
             if menu =~ '\D' && filter =~ '^\d\+$'
-                let s:menu_digit_as_filter = filter . "_"
+                let s:hjkl_filter = filter . "_"
             endif
         endif
     endif
@@ -4796,19 +4795,20 @@ endfunction
 " ------------------------------
 function! s:reset_matched_list()
 " ------------------------------
-    let s:hjkl_l = 0
-    let s:hjkl_h = 0
-    let s:hjkl_2nd_match = 0
-    let s:keyboard_head = 0
     let s:pumvisible_yes = 0
-    let s:menu_digit_as_filter = ""
     let s:matched_list = []
+    call g:vimim_reset_after_auto_insert()
 endfunction
 
 " -----------------------------------------
 function! g:vimim_reset_after_auto_insert()
 " -----------------------------------------
+    let s:hjkl_l = 0
+    let s:hjkl_h = 0
+    let s:hjkl_2nd_match = 0
+    let s:hjkl_filter = ""
     let s:keyboard_list = []
+    let s:keyboard_head = 0
     let s:keyboard_shuangpin = 0
     return ""
 endfunction
@@ -4818,9 +4818,10 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let key = ""
     if s:pumvisible_yes > 0
+    \&& len(s:keyboard_list) > 1
         let key = g:vimim()
+        call s:reset_matched_list()
     endif
-    call s:reset_matched_list()
     call g:vimim_reset_after_auto_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5035,18 +5036,20 @@ else
 
     " [filter] use cache for all vimim backends
     " -----------------------------------------
-    if len(s:matched_list)>1 && s:cjk_file > 0
-        if len(s:menu_digit_as_filter) > 0
+    if s:cjk_file > 0 && len(s:matched_list) > 1
+        if len(s:hjkl_filter) > 0
             let results = s:vimim_get_filtered_list_from_cache(keyboard)
             if empty(len(results))
-                let s:menu_digit_as_filter = ""
+                let s:hjkl_filter = ""
             else
                 return s:vimim_popupmenu_list(results)
             endif
         endif
         if s:hjkl_h % 3 > 0
-            let results = s:vimim_recycle_list_from_cache()
-            return s:vimim_popupmenu_list(results)
+            let results = s:vimim_cycle_list_from_cache()
+            if !empty(results)
+                return s:vimim_popupmenu_list(results)
+            endif
         endif
     endif
 
