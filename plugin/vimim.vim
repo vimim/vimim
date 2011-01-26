@@ -141,7 +141,6 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
     let s:insert_without_popup = 0
-    let s:hjkl_h = 0
     let s:www_executable = 0
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
@@ -1228,13 +1227,14 @@ function! <SID>vimim_onekey_label_navigation(key)
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
-            let hjkl  = '\<C-Y>'
-            let hjkl .= s:vimim_stop()
+            let s:hjkl_l += 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'm'
             let s:menu_digit_as_filter = ""
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
-            let hjkl  = '\<Down>\<Down>\<Down>'
+            let hjkl  = '\<C-Y>'
+            let hjkl .= s:vimim_stop()
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
@@ -1523,6 +1523,20 @@ endfunction
 let VimIM = " ====  Omni_Popup_Menu   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
+
+" -----------------------------------------
+function! s:vimim_recycle_list_from_cache()
+" -----------------------------------------
+    let chinese = get(s:matched_list,0)
+    let keyboard = char2nr(chinese)
+    if s:hjkl_l%3 == 1
+        let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
+    elseif s:hjkl_l%3 == 2
+        let keyboard = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
+        let keyboard = get(split(keyboard,'\d'),0)
+    endif
+    return keyboard
+endfunction
 
 " ------------------------------------------------------
 function! s:vimim_get_filtered_list_from_cache(keyboard)
@@ -2051,7 +2065,7 @@ function! s:vimim_load_swiss_army_cjk_file()
 " (1) http://vimim-data.googlecode.com/svn/trunk/data/vimim.cjk.txt
 " (2) Digit code such as four corner can be used as independent filter
 " (3) The property of Chinese character can be displayed
-" (4) 108 more CJK is shown from popup menu using OneKey after CJK
+" (4) list of CJK is shown from popup menu using OneKey after CJK
 " (5) dummy transformation between simplified and traditional Chinese
 " ----------------------------------------------
     if &encoding == "utf-8"
@@ -4780,6 +4794,8 @@ endfunction
 " ------------------------------
 function! s:reset_matched_list()
 " ------------------------------
+    let s:hjkl_h = 0
+    let s:hjkl_l = 0
     let s:pumvisible_yes = 0
     let s:keyboard_head = 0
     let s:pumvisible_hjkl_2nd_match = 0
@@ -5017,12 +5033,17 @@ else
 
     " [filter] use cache for all vimim backends
     " -----------------------------------------
-    if len(s:menu_digit_as_filter) > 0 && len(s:matched_list) > 1
-        let results = s:vimim_get_filtered_list_from_cache(keyboard)
-        if empty(len(results))
-            let s:menu_digit_as_filter = ""
-        else
-            return s:vimim_popupmenu_list(results)
+    if len(s:matched_list)>1 && !empty(s:cjk_lines) && &encoding=="utf-8"
+        if len(s:menu_digit_as_filter) > 0 
+            let results = s:vimim_get_filtered_list_from_cache(keyboard)
+            if empty(len(results))
+                let s:menu_digit_as_filter = ""
+            else
+                return s:vimim_popupmenu_list(results)
+            endif
+        endif
+        if s:hjkl_l % 3 > 0
+            let keyboard = s:vimim_recycle_list_from_cache()
         endif
     endif
 
@@ -5040,7 +5061,7 @@ else
     " [unicode] support direct unicode/gb/big5 input
     " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        let results = s:vimim_get_cjk_list(keyboard, 108/9)
+        let results = s:vimim_get_cjk_list(keyboard, 108/2/9)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
