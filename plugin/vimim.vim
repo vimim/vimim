@@ -579,20 +579,20 @@ function! g:vimim_search_next()
     endif
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_get_chinese_from_english(english)
-" -------------------------------------------------
+" --------------------------------------------------
+function! s:vimim_get_chinese_from_english(keyboard)
+" --------------------------------------------------
     let results = []
-    let english = tolower(a:english)
-    let ddddd = s:vimim_get_unicode_ddddd(english)
+    let keyboard = tolower(a:keyboard)
+    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
         sil!call s:vimim_backend_initialization_once()
         if !empty(s:vimim_shuangpin)
             sil!call s:vimim_initialize_shuangpin()
-            let english = s:vimim_get_pinyin_from_shuangpin(english)
+            let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
         endif
         if s:vimim_cloud_sogou == 1
-            let results = s:vimim_get_cloud_sogou(english, 1)
+            let results = s:vimim_get_cloud_sogou(keyboard, 1)
         endif
     else
         let results = [nr2char(ddddd)]
@@ -600,25 +600,25 @@ function! s:vimim_get_chinese_from_english(english)
     if empty(results)
         if empty(s:backend.datafile) && empty(s:backend.directory)
             if empty(s:vimim_cloud_plugin)
-                let results = s:vimim_get_cloud_sogou(english, 1)
+                let results = s:vimim_get_cloud_sogou(keyboard, 1)
             else
-                let results = s:vimim_get_mycloud_plugin(english)
+                let results = s:vimim_get_mycloud_plugin(keyboard)
             endif
         endif
     endif
     if empty(results)
         if s:cjk_file > 0
-            let results = s:vimim_try_cjk_file(english)
+            let results = s:vimim_try_cjk_file(keyboard)
             if empty(results)
-                let english = s:vimim_diy_keyboard2number(english)
-                let results = s:vimim_try_cjk_file(english)
+                let keyboard = s:vimim_diy_keyboard2number(keyboard)
+                let results = s:vimim_try_cjk_file(keyboard)
             endif
         endif
     endif
     if empty(results)
         let msg = "so far so good, nothing found"
     else
-        call s:vimim_register_search_pattern(english, results)
+        call s:vimim_register_search_pattern(keyboard, results)
     endif
 endfunction
 
@@ -803,9 +803,9 @@ function! g:vimim_space()
     if pumvisible()
         let space = "\<C-Y>"
         let s:pumvisible_yes = 1
-    elseif s:chinese_input_mode == 'static'
+    elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
-    elseif s:chinese_input_mode == 'onekey'
+    elseif s:chinese_input_mode =~ 'onekey'
         let space = s:vimim_onekey_action(space)
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -898,6 +898,7 @@ function! <SID>ChineseMode()
     call s:vimim_set_statusline()
     call s:vimim_build_datafile_cache()
     let s:chinese_input_mode = s:vimim_chinese_input_mode
+    call s:vimim_do_cloud_if_no_embedded_backend()
     let action = ""
     if !empty(s:ui.root) && !empty(s:ui.im)
         let action = <SID>vimim_chinesemode_action()
@@ -1605,7 +1606,8 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     let pair_matched_list = a:pair_matched_list
     if empty(pair_matched_list)
         return []
-    elseif empty(len(s:menu_digit_as_filter))
+    endif
+    if empty(len(s:menu_digit_as_filter))
         let s:matched_list = copy(pair_matched_list)
     endif
     let label = 1
@@ -3996,6 +3998,7 @@ function! s:vimim_do_cloud_if_no_embedded_backend()
     if empty(s:backend.directory)
     \&& empty(s:backend.datafile)
     \&& empty(s:vimim_cloud_sogou)
+    \&& s:chinese_input_mode != 'onekey'
         let s:vimim_cloud_sogou = 1
     endif
 endfunction
@@ -5134,9 +5137,8 @@ else
 
     " [vimim.cjk.txt] try 4corner and pinyin there
     " --------------------------------------------
-        if s:vimim_tab_as_onekey == 2
-            let keyboard = s:vimim_diy_keyboard2number(keyboard)
-        endif
+    if s:cjk_file > 0
+        let keyboard = s:vimim_diy_keyboard2number(keyboard)
         let results = s:vimim_try_cjk_file(keyboard)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
@@ -5162,8 +5164,8 @@ else
     " [seamless] support seamless English input
     " -----------------------------------------
     let s:pattern_not_found += 1
-    if s:chinese_input_mode == 'onekey'
-        let results = [keyboard ." ". keyboard]
+    if s:chinese_input_mode =~ 'onekey'
+        let results = [keyboard]
     else
         call s:vimim_set_seamless()
     endif
