@@ -981,7 +981,7 @@ endfunction
 function! s:vimim_set_seamless()
 " ------------------------------
     let s:seamless_positions = getpos(".")
-    let s:keyboard_leading_zero = ""
+    let s:keyboard_list = []
     return ""
 endfunction
 
@@ -1299,7 +1299,7 @@ function! g:vimim_pumvisible_dump()
     " -----------------------------
     for items in s:popupmenu_list
         if empty(items.menu)
-        \|| s:keyboard_leading_zero =~ s:show_me_not
+        \|| get(s:keyboard_list,0) =~ s:show_me_not
             let line = printf('%s', items.word)
         else
             let format = '%-8s %s'
@@ -1596,9 +1596,9 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     endif
     let label = 1
     let popupmenu_list = []
-    let keyboard = s:keyboard_leading_zero
-    let menu = keyboard
-    " ------------------------------
+    let keyboard = join(s:keyboard_list,"")
+    let menu = get(s:keyboard_list,0)
+    " ------------------------------ 
     for chinese in pair_matched_list
     " ------------------------------
         if keyboard =~# s:uxxxx
@@ -1628,7 +1628,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
                 endif
                 let s:tail = strpart(keyboard, word_by_word+1)
                 let chinese .= s:tail
-            elseif keyboard !~? '^vim'
+            elseif keyboard !~# s:show_me_not
                 let s:tail = strpart(keyboard, len(menu))
                 if keyboard =~ '\l\>' || keyboard =~ '^\d\+\>'
                     let chinese .= s:tail
@@ -1998,28 +1998,15 @@ function! s:vimim_diy_keyboard2number(keyboard)
     \|| len(keyboard) !~ 5
         return keyboard
     endif
-    " -----------------------------------------
-    if empty(s:cjk_keyboard_qwertyuiop)
-        let s:cjk_keyboard_qwertyuiop['q'] = 1
-        let s:cjk_keyboard_qwertyuiop['w'] = 2
-        let s:cjk_keyboard_qwertyuiop['e'] = 3
-        let s:cjk_keyboard_qwertyuiop['r'] = 4
-        let s:cjk_keyboard_qwertyuiop['t'] = 5
-        let s:cjk_keyboard_qwertyuiop['y'] = 6
-        let s:cjk_keyboard_qwertyuiop['u'] = 7
-        let s:cjk_keyboard_qwertyuiop['i'] = 8
-        let s:cjk_keyboard_qwertyuiop['o'] = 9
-        let s:cjk_keyboard_qwertyuiop['p'] = 0
-    endif
-    " -----------------------------------------
     let digits = []
-    let four_corner = strpart(keyboard, 1)
-    for char in split(four_corner, '\zs')
-        if has_key(s:cjk_keyboard_qwertyuiop, char)
-            let digit = s:cjk_keyboard_qwertyuiop[char]
-            call add(digits, digit)
-        else
+    let diy_4corner = strpart(keyboard, 1)
+    " [diy] muqew=m7132 xeyqp=x3610 jeqqq=j3111
+    for char in split(diy_4corner, '\zs')
+        let digit = match(s:qwerty, char)
+        if digit < 0
             return keyboard
+        else
+            call add(digits, digit)
         endif
     endfor
     if len(digits) < 4
@@ -2071,6 +2058,8 @@ function! s:vimim_load_swiss_army_cjk_file()
     \&& filereadable(s:cjk_file)
     \&& empty(s:cjk_lines)
         let s:cjk_lines = readfile(s:cjk_file)
+        let s:abcd = "'abcdvfgz"
+        let s:qwerty = split('pqwertyuio', '\zs')
     endif
 endfunction
 
@@ -2301,8 +2290,7 @@ function! <SID>vimim_onekey_1234567890_filter(n)
     let label = a:n
     if pumvisible()
         if !empty(s:cjk_lines)
-            let label_alpha = join(s:qwerty,'')
-            let label = match(label_alpha, a:n)
+            let label = match(s:qwerty, a:n)
         endif
         if empty(len(s:menu_digit_as_filter))
         \|| s:menu_digit_as_filter[-1:-1] == "_"
@@ -2542,7 +2530,7 @@ function! s:vimim_get_pinyin_from_shuangpin(keyboard)
         let msg = "no point to do transform"
     else
         let s:keyboard_shuangpin = keyboard
-        let s:keyboard_leading_zero = keyboard2
+        let s:keyboard_list = [keyboard2]
         let keyboard = keyboard2
     endif
     return keyboard
@@ -2835,10 +2823,6 @@ function! s:vimim_customization()
     if empty(s:vimim_cloud_sogou)
         let s:vimim_cloud_sogou = 888
     endif
-    if len(s:cjk_file) > 3
-        let s:abcd = "'abcdvfgz"
-        let s:qwerty = split('pqwertyuio', '\zs')
-    endif
     if s:vimim_tab_as_onekey == 2
         let s:show_me_not = '^oo\|^ii\|^vim'
     endif
@@ -2885,7 +2869,7 @@ function! s:vimim_wubi_4char_auto_input(keyboard)
             let start = 4*((len(keyboard)-1)/4)
             let keyboard = strpart(keyboard, start)
         endif
-        let s:keyboard_leading_zero = keyboard
+        let get(s:keyboard_list,0) = keyboard
     endif
     return keyboard
 endfunction
@@ -2906,9 +2890,9 @@ function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
-        if empty(len(s:keyboard_leading_zero)%4)
+        if empty(len(get(s:keyboard_list,0))%4)
             let key = "\<C-Y>"
-            let s:keyboard_leading_zero = ""
+            let s:keyboard_list = []
             let s:pumvisible_yes = 1
         endif
     endif
@@ -3295,10 +3279,13 @@ function! s:vimim_pinyin_more_match(lines, keyboard, results)
     return matched_list
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_get_data_from_cache(keyboard)
-" ---------------------------------------------
-    let keyboard = a:keyboard
+" ----------------------------------------------
+function! s:vimim_get_data_from_cache(keyboards)
+" ----------------------------------------------
+    if empty(a:keyboards)
+        return []
+    endif
+    let keyboard = get(a:keyboards, 0)
     if empty(s:backend[s:ui.root][s:ui.im].cache)
         return []
     endif
@@ -3309,28 +3296,11 @@ function! s:vimim_get_data_from_cache(keyboard)
     return results
 endfunction
 
-" -----------------------------------------------------
-function! s:vimim_get_sentence_datafile_cache(keyboard)
-" -----------------------------------------------------
-" [purpose] use cache to speed up search after initial load
-    let keyboard = a:keyboard
-    if empty(s:backend[s:ui.root][s:ui.im].cache)
-        return []
-    endif
-    let results = []
-    let keyboards = s:vimim_sentence_match_cache(keyboard)
-    if !empty(keyboards)
-        let keyboard = get(keyboards, 0)
-        let results = s:vimim_get_data_from_cache(keyboard)
-    endif
-    return results
-endfunction
-
 " ----------------------------------------------
 function! s:vimim_sentence_match_cache(keyboard)
 " ----------------------------------------------
     let keyboard = a:keyboard
-    let results = s:vimim_get_data_from_cache(keyboard)
+    let results = s:vimim_get_data_from_cache([keyboard])
     if !empty(results)
         return [keyboard]
     endif
@@ -3344,7 +3314,7 @@ function! s:vimim_sentence_match_cache(keyboard)
     while max > 0
         let max -= 1
         let head = strpart(keyboard, 0, max)
-        let results = s:vimim_get_data_from_cache(head)
+        let results = s:vimim_get_data_from_cache([head])
         if !empty(results)
             break
         else
@@ -3359,23 +3329,10 @@ function! s:vimim_sentence_match_cache(keyboard)
     endif
 endfunction
 
-" -----------------------------------------------------
-function! s:vimim_get_sentence_datafile_lines(keyboard)
-" -----------------------------------------------------
-    call s:vimim_build_datafile_lines()
-    let keyboard = a:keyboard
-    let results = []
-    let keyboards = s:vimim_sentence_match_datafile(keyboard)
-    if len(keyboards) > 0
-        let keyboard = get(keyboards, 0)
-        let results = s:vimim_get_data_from_datafile(keyboard)
-    endif
-    return results
-endfunction
-
 " -------------------------------------------------
 function! s:vimim_sentence_match_datafile(keyboard)
 " -------------------------------------------------
+    call s:vimim_build_datafile_lines()
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines)
         return []
@@ -3409,10 +3366,13 @@ function! s:vimim_sentence_match_datafile(keyboard)
     endif
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_get_data_from_datafile(keyboard)
-" ------------------------------------------------
-    let keyboard = a:keyboard
+" -------------------------------------------------
+function! s:vimim_get_data_from_datafile(keyboards)
+" -------------------------------------------------
+    if empty(a:keyboards)
+        return []
+    endif
+    let keyboard = get(a:keyboards, 0)
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines)
         return []
@@ -3455,7 +3415,7 @@ endfunction
 function! s:vimim_break_sentence_into_block(keyboard)
 " ---------------------------------------------------
     let blocks = s:vimim_break_word_by_word(a:keyboard)
-    if empty(blocks)
+    if empty(blocks) && !empty(s:cjk_lines)
         let blocks = s:vimim_break_pinyin_digit(a:keyboard)
     endif
     return blocks
@@ -3469,19 +3429,15 @@ function! s:vimim_break_pinyin_digit(keyboard)
 "          馬力 马力 马莉 玛莉
 " --------------------------------------------
     let blocks = []
-    if empty(s:cjk_file)
-        return []
-    endif
     let pinyin_digit_pattern = '\d\+\l\='
     let digit = match(a:keyboard, pinyin_digit_pattern)
     if digit > 0
         let blocks = s:vimim_break_string_at(a:keyboard, digit)
         let menu = get(blocks, 0)
         let pinyins = s:vimim_get_pinyin_from_pinyin(menu)
-        if len(pinyins) > 1
+        if empty(pinyins)
             return []
-        endif
-        if empty(len(s:menu_digit_as_filter))
+        elseif empty(len(s:menu_digit_as_filter))
             let filter = get(blocks, 1)
             if menu =~ '\D' && filter =~ '^\d\+$'
                 let s:menu_digit_as_filter = filter . "_"
@@ -3694,11 +3650,14 @@ function! s:vimim_set_data_directory(im)
     endif
 endfunction
 
-" -----------------------------------------------------
-function! s:vimim_get_list_from_directory(keyboard, im)
-" -----------------------------------------------------
-    let keyboard = a:keyboard
-    let dir = s:vimim_get_valid_directory(a:im)
+" --------------------------------------------------
+function! s:vimim_get_list_from_directory(keyboards)
+" --------------------------------------------------
+    if empty(a:keyboards)
+        return []
+    endif
+    let keyboard = get(a:keyboards, 0)
+    let dir = s:vimim_get_valid_directory(s:ui.im)
     let dir2 = s:vimim_private_data_directory
     if empty(dir) && empty(dir2)
         return []
@@ -3714,44 +3673,18 @@ function! s:vimim_get_list_from_directory(keyboard, im)
     endif
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_break_string_at(keyboard, max)
-" ----------------------------------------------
-    let max = a:max
+" --------------------------------------------------
+function! s:vimim_sentence_match_directory(keyboard)
+" --------------------------------------------------
     let keyboard = a:keyboard
-    let blocks = [keyboard]
-    if max > 0
-        let blocks = [ keyboard[0 : max-1], keyboard[max : -1] ]
-    endif
-    return blocks
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_get_sentence_directory(keyboard)
-" ------------------------------------------------
-    let msg = "Directory data is natural to text editor like vi."
-    let keyboard = a:keyboard
-    let results = []
-    let keyboards = s:vimim_sentence_match_directory(keyboard, s:ui.im)
-    if len(keyboards) > 0
-        let keyboard = get(keyboards, 0)
-        let results = s:vimim_get_list_from_directory(keyboard, s:ui.im)
-    endif
-    return results
-endfunction
-
-" ------------------------------------------------------
-function! s:vimim_sentence_match_directory(keyboard, im)
-" ------------------------------------------------------
-    let keyboard = a:keyboard
-    let dir = s:vimim_get_valid_directory(a:im)
-    let filename = dir . '/' . keyboard
-    if filereadable(filename)
-    \|| keyboard =~ '^oo'
-    \|| len(keyboard) < 6
+    if keyboard =~ '^oo'
         return [keyboard]
     endif
-    " --------------------------------------------------
+    let dir = s:vimim_get_valid_directory(s:ui.im)
+    let filename = dir . '/' . keyboard
+    if filereadable(filename)
+        return [keyboard]
+    endif
     let blocks = s:vimim_break_sentence_into_block(keyboard)
     if !empty(blocks)
         return blocks
@@ -3774,6 +3707,18 @@ function! s:vimim_sentence_match_directory(keyboard, im)
     else
         return []
     endif
+endfunction
+
+" ----------------------------------------------
+function! s:vimim_break_string_at(keyboard, max)
+" ----------------------------------------------
+    let max = a:max
+    let keyboard = a:keyboard
+    let blocks = [keyboard]
+    if max > 0
+        let blocks = [ keyboard[0 : max-1], keyboard[max : -1] ]
+    endif
+    return blocks
 endfunction
 
 " ------------------------------------------------
@@ -4845,7 +4790,7 @@ endfunction
 " -----------------------------------------
 function! g:vimim_reset_after_auto_insert()
 " -----------------------------------------
-    let s:keyboard_leading_zero = ""
+    let s:keyboard_list = []
     let s:keyboard_shuangpin = 0
     return ""
 endfunction
@@ -4972,14 +4917,23 @@ function! s:vimim_embedded_backend_engine(keyboard)
         return []
     endif
     let results = []
+    let keyboards = []
     if root =~# "directory"
-        let results = s:vimim_get_sentence_directory(keyboard)
+        let keyboards = s:vimim_sentence_match_directory(keyboard)
+        let results = s:vimim_get_list_from_directory(keyboards)
     elseif root =~# "datafile"
         if empty(s:backend[root][im].cache)
-            let results = s:vimim_get_sentence_datafile_lines(keyboard)
+            let keyboards = s:vimim_sentence_match_datafile(keyboard)
+            let results = s:vimim_get_data_from_datafile(keyboards)
         else
-            let results = s:vimim_get_sentence_datafile_cache(keyboard)
+            let keyboards = s:vimim_sentence_match_cache(keyboard)
+            let results = s:vimim_get_data_from_cache(keyboards)
         endif
+    endif
+    if empty(keyboards)
+        let s:keyboard_list = [keyboard]
+    else
+        let s:keyboard_list = keyboards
     endif
     if !empty(results)
         let results = s:vimim_filter_list(results, keyboard)
@@ -5045,7 +4999,7 @@ if a:start
     let s:start_row_before = start_row
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
-    let s:keyboard_leading_zero = strpart(current_line,start_column,len)
+    let s:keyboard_list = [strpart(current_line,start_column,len)]
     let s:start_column_before = start_column
     return start_column
 
@@ -5061,12 +5015,6 @@ else
     if s:one_key_correction > 0
         let s:one_key_correction = 0
         return [' ']
-    endif
-
-    " [diy] muqew=m7132 xeyqp=x3610 jeqqq=j3111
-    " -----------------------------------------
-    if s:vimim_tab_as_onekey == 2
-        let keyboard = s:vimim_diy_keyboard2number(keyboard)
     endif
 
     " [filter] use cache for all vimim backends
@@ -5137,8 +5085,6 @@ else
     if !empty(s:vimim_shuangpin) && empty(s:keyboard_shuangpin)
         let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
     endif
-
-    let s:keyboard_leading_zero = keyboard
     if s:ui.has_dot == 2
         let keyboard = s:vimim_apostrophe(keyboard)
     endif
@@ -5180,6 +5126,9 @@ else
     " [vimim.cjk.txt] try 4corner and pinyin there
     " --------------------------------------------
     if !empty(s:cjk_lines) && &encoding == "utf-8"
+        if s:vimim_tab_as_onekey == 2
+            let keyboard = s:vimim_diy_keyboard2number(keyboard)
+        endif
         let results = s:vimim_try_cjk_file(keyboard)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
@@ -5212,21 +5161,20 @@ endfunction
 function! s:vimim_get_valid_keyboard(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    call s:debugs('keyboard', s:keyboard_leading_zero)
-    if empty(s:keyboard_leading_zero)
-        let s:keyboard_leading_zero = keyboard
+    if empty(s:keyboard_list)
+        let s:keyboard_list = [keyboard]
     endif
     if empty(str2nr(keyboard))
         let msg = "keyboard input is alphabet only"
     else
-        let keyboard = s:keyboard_leading_zero
+        let keyboard = get(s:keyboard_list,0)
     endif
     " [unicode] support direct unicode/gb/big5 input
     if a:keyboard =~# s:uxxxx
         return keyboard
     endif
     " ignore all-zeroes keyboard inputs
-    if empty(s:keyboard_leading_zero)
+    if empty(s:keyboard_list)
         return 0
     endif
     if keyboard !~# s:valid_key
