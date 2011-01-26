@@ -136,7 +136,6 @@ function! s:vimim_initialize_session()
     let s:cjk_file = 0
     let s:cjk_lines = []
     let s:cjk_keyboard_qwertyuiop = {}
-    let s:show_me_not = '^vim'
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
@@ -168,6 +167,10 @@ function! s:vimim_initialize_session()
     let s:valid_keys = s:az_list
     let s:popupmenu_list = []
     let g:vimim_debugs = []
+    let s:show_me_not = '^vim'
+    if s:vimim_tab_as_onekey == 2
+        let s:show_me_not = '^oo\|^ii\|^vim'
+    endif
 endfunction
 
 " --------------------------------
@@ -602,7 +605,7 @@ function! s:vimim_get_chinese_from_english(english)
         endif
     endif
     if empty(results)
-        if s:cjk_file > 0 && &encoding == "utf-8"
+        if s:cjk_file > 0
             let results = s:vimim_try_cjk_file(english)
             if empty(results)
                 let english = s:vimim_diy_keyboard2number(english)
@@ -2073,12 +2076,12 @@ function! s:vimim_load_swiss_army_cjk_file()
 " (5) dummy transformation between simplified and traditional Chinese
 " ----------------------------------------------
     let cjk_file = s:path . "vimim.cjk.txt"
-    if filereadable(cjk_file)
+    if filereadable(cjk_file) && &encoding == "utf-8"
         let s:cjk_file = 1
     else
         return
     endif
-    if empty(s:cjk_lines) && &encoding == "utf-8"
+    if empty(s:cjk_lines)
         let s:cjk_lines = readfile(cjk_file)
         let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
@@ -2844,9 +2847,6 @@ function! s:vimim_customization()
 " -------------------------------
     if empty(s:vimim_cloud_sogou)
         let s:vimim_cloud_sogou = 888
-    endif
-    if s:vimim_tab_as_onekey == 2
-        let s:show_me_not = '^oo\|^ii\|^vim'
     endif
 endfunction
 
@@ -5040,9 +5040,7 @@ else
 
     " [filter] use cache for all vimim backends
     " -----------------------------------------
-    if len(s:matched_list)>1 
-    \&& s:cjk_file > 0
-    \&& &encoding=="utf-8"
+    if len(s:matched_list)>1 && s:cjk_file > 0
         if len(s:menu_digit_as_filter) > 0 
             let results = s:vimim_get_filtered_list_from_cache(keyboard)
             if empty(len(results))
@@ -5154,7 +5152,7 @@ else
 
     " [vimim.cjk.txt] try 4corner and pinyin there
     " --------------------------------------------
-    if s:cjk_file > 0 && &encoding == "utf-8"
+    if s:cjk_file > 0
         if s:vimim_tab_as_onekey == 2
             let keyboard = s:vimim_diy_keyboard2number(keyboard)
         endif
