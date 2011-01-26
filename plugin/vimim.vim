@@ -793,7 +793,7 @@ endfunction
 function! s:vimim_space_on()
 " --------------------------
     inoremap <Space> <C-R>=g:vimim_space()<CR>
-                    \<C-R>=g:vimim_reset_after_insert()<CR>
+                    \<C-R>=g:vimim_nonstop_after_insert()<CR>
 endfunction
 
 " <Space> multiple play in OneKey:
@@ -807,7 +807,6 @@ function! g:vimim_space()
     let space = " "
     if pumvisible()
         let space = "\<C-Y>"
-        let s:pumvisible_yes = 1
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
@@ -962,7 +961,7 @@ function! s:vimim_static_alphabet_auto_select()
     for char in s:Az_list
         sil!exe 'inoremap <silent> ' . char . '
         \ <C-R>=g:vimim_pumvisible_ctrl_y()<CR>'. char .
-        \'<C-R>=g:vimim_reset_after_auto_insert()<CR>'
+        \'<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
 endfunction
 
@@ -1168,7 +1167,7 @@ function! s:vimim_label_on()
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
         \  <C-R>=<SID>vimim_123456789_label("'._.'")<CR>'
-        \.'<C-R>=g:vimim_reset_after_insert()<CR>'
+        \.'<C-R>=g:vimim_nonstop_after_insert()<CR>'
     endfor
 endfunction
 
@@ -1181,7 +1180,6 @@ function! <SID>vimim_123456789_label(n)
         if label =~ '\d'
             let n = label - 1
         endif
-        let s:pumvisible_yes = 1
         let down = repeat("\<Down>", n)
         let yes = "\<C-Y>"
         let label = down . yes
@@ -1265,7 +1263,7 @@ endfunction
 function! g:vimim_one_key_correction()
 " ------------------------------------
     let key = '\<Esc>'
-    call s:reset_matched_list()
+    call vimim_reset_after_insert()
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
         let s:one_key_correction = 1
@@ -1277,7 +1275,7 @@ endfunction
 " ---------------------
 function! g:vimim_esc()
 " ---------------------
-    call s:reset_matched_list()
+    call vimim_reset_after_insert
     if s:chinese_input_mode != 'static'
         call s:vimim_stop()
     endif
@@ -1487,7 +1485,6 @@ function! g:vimim_pumvisible_ctrl_y()
     let key = ""
     if pumvisible()
         let key = "\<C-Y>"
-        let s:pumvisible_yes = 1
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1514,7 +1511,7 @@ endfunction
 " ---------------------------
 function! g:vimim_backspace()
 " ---------------------------
-    call s:reset_matched_list()
+    call vimim_reset_after_insert()
     let s:pattern_not_found = 0
     let key = '\<BS>'
     if s:pumvisible_ctrl_e > 0
@@ -1793,7 +1790,7 @@ function! <SID>vimim_punctuation_on()
     for _ in keys(s:punctuations)
         sil!exe 'inoremap <silent> '._.'
         \    <C-R>=<SID>vimim_punctuation_mapping("'._.'")<CR>'
-        \ . '<C-R>=g:vimim_reset_after_auto_insert()<CR>'
+        \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
     " --------------------------------------
     call s:vimim_punctuation_navigation_on()
@@ -1835,7 +1832,6 @@ function! <SID>vimim_punctuation_mapping(key)
     let value = s:vimim_get_chinese_punctuation(a:key)
     if pumvisible()
         let value = "\<C-Y>" . value
-        let s:pumvisible_yes = 1
     endif
     sil!exe 'sil!return "' . value . '"'
 endfunction
@@ -2908,7 +2904,6 @@ function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
         if empty(len(get(s:keyboard_list,0))%4)
             let key = "\<C-Y>"
             let s:keyboard_list = []
-            let s:pumvisible_yes = 1
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -4776,14 +4771,14 @@ endfunction
 " -----------------------------
 function! s:vimim_super_reset()
 " -----------------------------
-    sil!call s:reset_before_anything()
-    sil!call g:vimim_reset_after_auto_insert()
+    sil!call s:vimim_reset_before_anything()
+    sil!call g:vimim_reset_after_insert()
 endfunction
 
-" ---------------------------------
-function! s:reset_before_anything()
-" ---------------------------------
-    call s:reset_matched_list()
+" ---------------------------------------
+function! s:vimim_reset_before_anything()
+" ---------------------------------------
+    let s:matched_list = []
     let s:cjk_single_pair = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
@@ -4792,17 +4787,9 @@ function! s:reset_before_anything()
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
-" ------------------------------
-function! s:reset_matched_list()
-" ------------------------------
-    let s:pumvisible_yes = 0
-    let s:matched_list = []
-    call g:vimim_reset_after_auto_insert()
-endfunction
-
-" -----------------------------------------
-function! g:vimim_reset_after_auto_insert()
-" -----------------------------------------
+" ------------------------------------
+function! g:vimim_reset_after_insert()
+" ------------------------------------
     let s:hjkl_l = 0
     let s:hjkl_h = 0
     let s:hjkl_2nd_match = 0
@@ -4813,16 +4800,14 @@ function! g:vimim_reset_after_auto_insert()
     return ""
 endfunction
 
-" ------------------------------------
-function! g:vimim_reset_after_insert()
-" ------------------------------------
+" --------------------------------------
+function! g:vimim_nonstop_after_insert()
+" --------------------------------------
     let key = ""
-    if s:pumvisible_yes > 0
-    \&& len(s:keyboard_list) > 1
+    if len(s:keyboard_list) > 1
         let key = g:vimim()
-        call s:reset_matched_list()
     endif
-    call g:vimim_reset_after_auto_insert()
+    call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -4847,10 +4832,10 @@ function! g:vimim()
     endif
     " --------------------------
     if empty(key)
-        call g:vimim_reset_after_auto_insert()
+        call g:vimim_reset_after_insert()
     else
         if s:chinese_input_mode == 'dynamic'
-            call g:vimim_reset_after_auto_insert()
+            call g:vimim_reset_after_insert()
         endif
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
     endif
@@ -4869,7 +4854,7 @@ function! g:vimim_menu_select()
             if s:insert_without_popup > 1
                 let key .= '\<Esc>'
             endif
-            call s:reset_matched_list()
+            call vimim_reset_after_insert()
             let s:insert_without_popup = 0
         endif
     endif
