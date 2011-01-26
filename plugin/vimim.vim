@@ -2859,6 +2859,16 @@ function! s:vimim_set_special_im_property()
     endif
 endfunction
 
+" -------------------------------------------
+function! s:vimim_dynamic_wubi_auto_trigger()
+" -------------------------------------------
+    for char in s:valid_keys
+        sil!exe 'inoremap <silent> ' . char . '
+        \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'. char .
+        \'<C-R>=g:vimim()<CR>'
+    endfor
+endfunction
+
 " -----------------------------------------------
 function! s:vimim_wubi_4char_auto_input(keyboard)
 " -----------------------------------------------
@@ -2869,19 +2879,9 @@ function! s:vimim_wubi_4char_auto_input(keyboard)
             let start = 4*((len(keyboard)-1)/4)
             let keyboard = strpart(keyboard, start)
         endif
-        let get(s:keyboard_list,0) = keyboard
+        let s:keyboard_list = [keyboard]
     endif
     return keyboard
-endfunction
-
-" -------------------------------------------
-function! s:vimim_dynamic_wubi_auto_trigger()
-" -------------------------------------------
-    for char in s:valid_keys
-        sil!exe 'inoremap <silent> ' . char . '
-        \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'. char .
-        \'<C-R>=g:vimim()<CR>'
-    endfor
 endfunction
 
 " -----------------------------------------------
@@ -4820,9 +4820,7 @@ function! g:vimim()
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ s:valid_key
         let key = '\<C-X>\<C-U>'
-    endif
-    " --------------------------
-    if empty(key) && s:chinese_input_mode != 'dynamic'
+    elseif s:chinese_input_mode != 'dynamic'
         let five_byte_before = getline(".")[col(".")-6]
         if byte_before =~ '\x' && five_byte_before ==# 'u'
             let key = '\<C-X>\<C-U>'
@@ -5172,10 +5170,6 @@ function! s:vimim_get_valid_keyboard(keyboard)
     " [unicode] support direct unicode/gb/big5 input
     if a:keyboard =~# s:uxxxx
         return keyboard
-    endif
-    " ignore all-zeroes keyboard inputs
-    if empty(s:keyboard_list)
-        return 0
     endif
     if keyboard !~# s:valid_key
         return 0
