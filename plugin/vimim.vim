@@ -851,7 +851,7 @@ function! s:vimim_onekey_action(onekey)
     endif
     " -------------------------------------------------
     if before !~# s:valid_key && empty(a:onekey)
-        let s:hjkl_h = 1
+        let s:hjkl_l = 1
         return s:vimim_get_unicode_menu()
     endif
     " ---------------------------------------------------
@@ -1529,9 +1529,9 @@ function! s:vimim_recycle_list_from_cache()
 " -----------------------------------------
     let chinese = get(split(get(s:matched_list,0),'\zs'),0)
     let keyboard = char2nr(chinese)
-    if s:hjkl_l%3 == 1
+    if s:hjkl_h%3 == 1
         let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
-    elseif s:hjkl_l%3 == 2
+    elseif s:hjkl_h%3 == 2
         let keyboard = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
         let keyboard = strpart(keyboard,0,match(keyboard,'\d'))
     endif
@@ -1632,7 +1632,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             let chinese = get(pairs, 1)
         endif
         let extra_text = ""
-        if s:hjkl_h % 2 > 0 && keyboard !~# s:show_me_not
+        if s:hjkl_l % 2 > 0 && keyboard !~# s:show_me_not
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_cjk_property_display(ddddd)
         endif
@@ -4798,8 +4798,8 @@ endfunction
 " ------------------------------
 function! s:reset_matched_list()
 " ------------------------------
-    let s:hjkl_h = 0
     let s:hjkl_l = 0
+    let s:hjkl_h = 0
     let s:pumvisible_yes = 0
     let s:keyboard_head = 0
     let s:pumvisible_hjkl_2nd_match = 0
@@ -5046,7 +5046,7 @@ else
                 return s:vimim_popupmenu_list(results)
             endif
         endif
-        if s:hjkl_l % 3 > 0
+        if s:hjkl_h % 3 > 0
             let results = s:vimim_recycle_list_from_cache()
             return s:vimim_popupmenu_list(results)
         endif
