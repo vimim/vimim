@@ -1527,15 +1527,19 @@ call add(s:vimims, VimIM)
 " -----------------------------------------
 function! s:vimim_recycle_list_from_cache()
 " -----------------------------------------
-    let chinese = get(s:matched_list,0)
+    let chinese = get(split(get(s:matched_list,0),'\zs'),0)
     let keyboard = char2nr(chinese)
     if s:hjkl_l%3 == 1
         let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
     elseif s:hjkl_l%3 == 2
         let keyboard = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        let keyboard = get(split(keyboard,'\d'),0)
+        let keyboard = strpart(keyboard,0,match(keyboard,'\d'))
     endif
-    return keyboard
+    let results = s:vimim_try_cjk_file(keyboard)
+    let matched = match(results, chinese)
+    let fixed_chinese = remove(results, matched)
+    call insert(results, fixed_chinese)
+    return results
 endfunction
 
 " ------------------------------------------------------
@@ -5043,7 +5047,8 @@ else
             endif
         endif
         if s:hjkl_l % 3 > 0
-            let keyboard = s:vimim_recycle_list_from_cache()
+            let results = s:vimim_recycle_list_from_cache()
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
