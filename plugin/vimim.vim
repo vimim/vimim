@@ -80,7 +80,6 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_set_special_im_property()
     sil!call s:vimim_initialize_frontend_punctuation()
     sil!call s:vimim_build_datafile_lines()
-    sil!call s:vimim_customization()
     sil!call s:vimim_localization()
     sil!call s:vimim_initialize_skin()
 endfunction
@@ -135,7 +134,6 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     let s:cjk_file = 0
     let s:cjk_lines = []
-    let s:cjk_keyboard_qwertyuiop = {}
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
@@ -298,7 +296,11 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_keycode()
 " ------------------------------------
-    let keycode = s:backend[s:ui.root][s:ui.im].keycode
+    let keycode = "[0-9a-z'.]"
+    let keycode2 = s:backend[s:ui.root][s:ui.im].keycode
+    if !empty(keycode2)
+        let keycode = copy(keycode2)
+    endif
     if !empty(s:vimim_shuangpin)
         let keycode = s:shuangpin_keycode_chinese.keycode
     endif
@@ -670,7 +672,7 @@ function! s:vimim_cjk_property_display(ddddd)
     let unicode = printf('u%04x',ddddd)
     let menu = unicode . s:space . ddddd
     if s:cjk_file > 0
-    \&& ddddd >= 19968 
+    \&& ddddd >= 19968
     \&& ddddd <= 40869
         let chinese = nr2char(ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
@@ -1564,45 +1566,36 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_filter_list(matched_list, keyboard)
 " ---------------------------------------------------
+    if empty(s:cjk_file)
+    \|| empty(s:menu_digit_as_filter)
+        return a:matched_list
+    endif
     let pair_matched_list = []
-    if &encoding == "utf-8"
-    \&& s:cjk_file > 0
-    \&& len(s:menu_digit_as_filter) > 0
-    \&& len(a:matched_list) > 0
-        if a:keyboard =~# s:uxxxx || !empty(s:vimim_data_directory)
-            for chinese in a:matched_list
+    let first_in_list = split(get(a:matched_list,0))
+    for line in a:matched_list
+        if len(first_in_list) < 2
+        \|| a:keyboard =~# s:uxxxx
+        \|| !empty(s:vimim_data_directory)
+            let chinese = s:vimim_digit_filter(line)
+            if empty(chinese)
+                continue
+            else
+                call add(pair_matched_list, chinese)
+            endif
+        else
+            let words = split(line)
+            let menu = remove(words, 0)
+            for chinese in words
                 let chinese = s:vimim_digit_filter(chinese)
                 if empty(chinese)
                     continue
                 else
+                    let chinese = menu .' '. chinese
                     call add(pair_matched_list, chinese)
                 endif
             endfor
-        else
-            for line in a:matched_list
-                if len(line) < s:multibyte
-                    continue
-                endif
-                if empty(s:backend[s:ui.root][s:ui.im].cache)
-                    if s:localization > 0
-                        let line = s:vimim_i18n_read(line)
-                    endif
-                endif
-                let oneline_list = split(line)
-                let menu = remove(oneline_list, 0)
-                for chinese in oneline_list
-                    let chinese = s:vimim_digit_filter(chinese)
-                    if empty(chinese)
-                        continue
-                    else
-                        call add(pair_matched_list, menu .' '. chinese)
-                    endif
-                endfor
-            endfor
         endif
-    else
-        return a:matched_list
-    endif
+    endfor
     return pair_matched_list
 endfunction
 
@@ -1619,7 +1612,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     let popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
     let menu = get(s:keyboard_list,0)
-    " ------------------------------ 
+    " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
         if keyboard =~# s:uxxxx
@@ -2303,12 +2296,10 @@ endfunction
 " ---------------------------------------------
 function! s:vimim_onekey_1234567890_filter_on()
 " ---------------------------------------------
-    if s:cjk_file > 0
-        for _ in s:qwerty
-            sil!exe'inoremap <silent>  '._.'
-            \  <C-R>=<SID>vimim_onekey_1234567890_filter("'._.'")<CR>'
-        endfor
-    endif
+    for _ in s:qwerty
+        sil!exe'inoremap <silent>  '._.'
+        \  <C-R>=<SID>vimim_onekey_1234567890_filter("'._.'")<CR>'
+    endfor
 endfunction
 
 " ----------------------------------------------
@@ -2844,14 +2835,6 @@ let VimIM = " ====  Input_Misc        ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" -------------------------------
-function! s:vimim_customization()
-" -------------------------------
-    if empty(s:vimim_cloud_sogou)
-        let s:vimim_cloud_sogou = 888
-    endif
-endfunction
-
 " -------------------------------------
 function! s:vimim_get_valid_im_name(im)
 " -------------------------------------
@@ -2868,6 +2851,10 @@ endfunction
 " -----------------------------------------
 function! s:vimim_set_special_im_property()
 " -----------------------------------------
+    if empty(s:vimim_cloud_sogou)
+        let s:vimim_cloud_sogou = 888
+    endif
+    " -------------------------------------
     if empty(s:vimim_shuangpin) && s:ui.im == 'pinyin'
         let s:quanpin_table = s:vimim_create_quanpin_table()
     endif
@@ -5043,7 +5030,7 @@ else
     " [filter] use cache for all vimim backends
     " -----------------------------------------
     if len(s:matched_list)>1 && s:cjk_file > 0
-        if len(s:menu_digit_as_filter) > 0 
+        if len(s:menu_digit_as_filter) > 0
             let results = s:vimim_get_filtered_list_from_cache(keyboard)
             if empty(len(results))
                 let s:menu_digit_as_filter = ""
@@ -5145,16 +5132,8 @@ else
         endif
     endif
 
-    " [backend] plug-n-play embedded backend engine
-    " ---------------------------------------------
-    let results = s:vimim_embedded_backend_engine(keyboard)
-    if !empty(results)
-        return s:vimim_popupmenu_list(results)
-    endif
-
     " [vimim.cjk.txt] try 4corner and pinyin there
     " --------------------------------------------
-    if s:cjk_file > 0
         if s:vimim_tab_as_onekey == 2
             let keyboard = s:vimim_diy_keyboard2number(keyboard)
         endif
@@ -5162,6 +5141,13 @@ else
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
+    endif
+
+    " [backend] plug-n-play embedded backend engine
+    " ---------------------------------------------
+    let results = s:vimim_embedded_backend_engine(keyboard)
+    if !empty(results)
+        return s:vimim_popupmenu_list(results)
     endif
 
     " [sogou] last try cloud before giving up
