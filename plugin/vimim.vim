@@ -103,12 +103,12 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_chinese()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
-    sil!call s:vimim_load_swiss_army_cjk_file()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
+    sil!call s:vimim_load_cjk_file()
     sil!call s:vimim_initialize_keycode()
 endfunction
 
@@ -2065,16 +2065,18 @@ function! s:vimim_try_cjk_file(keyboard)
     return results
 endfunction
 
-" ------------------------------------------
-function! s:vimim_load_swiss_army_cjk_file()
-" ------------------------------------------
+" -------------------------------
+function! s:vimim_load_cjk_file()
+" -------------------------------
 " VimIM swiss army datafile without using cache
-" (1) http://vimim-data.googlecode.com/svn/trunk/data/vimim.cjk.txt
-" (2) Digit code such as four corner can be used as independent filter
-" (3) The property of Chinese character can be displayed
-" (4) list of CJK is shown from popup menu using OneKey after CJK
-" (5) dummy transformation between simplified and traditional Chinese
-" ----------------------------------------------
+" # http://vimim-data.googlecode.com/svn/trunk/data/vimim.cjk.txt
+" # Digit code such as four corner can be used as independent filter
+" # dummy transformation between simplified and traditional Chinese
+" # list of CJK is shown from popup menu using OneKey after CJK
+" # hjkl_h cycle list of unicode, 4corner and pinyin
+" # hjkl_l toggle display of the property of Chinese character
+" # can be used as one datafile for 4corner or pinyin or both
+" ---------------------------------------------------------------------
     let cjk_file = s:path . "vimim.cjk.txt"
     if filereadable(cjk_file) && &encoding == "utf-8"
         let s:cjk_file = 1
