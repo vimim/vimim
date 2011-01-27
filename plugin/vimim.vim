@@ -2057,13 +2057,10 @@ endfunction
 " -------------------------------------------
 function! s:vimim_cjk_nonstop_input(keyboard)
 " -------------------------------------------
-"  6021272260201762
-"  s6021j2722h6002m1762
-"  sypwqjwuwwhyppwmquyw
-" --------------------------------------------
     let keyboard = a:keyboard
-    let block = 4
     let delimiter = -1
+    let block = 4
+    " sample (every four digits) 6021272260201762
     if len(keyboard) % block < 1 && keyboard !~ '\D'
         let delimiter = match(keyboard, '^\d\d\d\d')
         if delimiter > -1
@@ -2072,6 +2069,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
     endif
     " -----------------------------------------------------
     let block = 5
+    " sample (every 1+4=5 chars) s6021j2722h6002m1762
     if len(keyboard) % block < 1
         let delimiter = match(keyboard, '^\l\d\d\d\d')
         if delimiter > -1
@@ -2079,6 +2077,21 @@ function! s:vimim_cjk_nonstop_input(keyboard)
         endif
     endif
     " -----------------------------------------------------
+    let delimiter = match(keyboard, '^\l\+\d\+')
+    if empty(delimiter)
+        " sample (free-style) si60jiao27ha6ma17
+        let alpha_list = split (keyboard,'\d\+')
+        let digit_list = split (keyboard,'\l\+')
+        if len(alpha_list) == len(digit_list)
+            let alpha_first = get(alpha_list,0)
+            let digit_first = get(digit_list,0)
+            let block = len(alpha_first . digit_first)
+            return s:vimim_keyboard_blocks(keyboard, block)
+        endif
+    endif
+    " -----------------------------------------------------
+    let block = 5
+    " sample (every 1+4=5 chars) sypwqjwuwwhyppwmquyw
     if len(keyboard) % block < 1 && keyboard !~ '\d'
         let delimiter = match(keyboard, '^\l\l\l\l\l')
         if delimiter > -1
@@ -5080,7 +5093,9 @@ else
             let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
             if !empty(keyboard2)
                 let results = s:vimim_try_cjk_file(keyboard2)
-                if !empty(len(results))
+                if empty(len(results))
+                    let s:keyboard_list = []
+                else
                     return s:vimim_popupmenu_list(results)
                 endif
             endif
