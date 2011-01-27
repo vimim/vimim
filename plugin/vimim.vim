@@ -1513,7 +1513,6 @@ function! g:vimim_backspace()
     if s:pumvisible_ctrl_e > 0
         let s:pumvisible_ctrl_e = 0
         let key .= '\<C-R>=g:vimim()\<CR>'
-        sil!exe 'sil!return "' . key . '"'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1563,8 +1562,7 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_filter_list(matched_list, keyboard)
 " ---------------------------------------------------
-    if empty(s:cjk_file)
-    \|| empty(len(s:hjkl_filter))
+    if empty(s:cjk_file) || empty(len(s:hjkl_filter))
         return a:matched_list
     endif
     let pair_matched_list = []
@@ -2331,7 +2329,6 @@ function! <SID>vimim_onekey_1234567890_filter(n)
             let label = match(s:qwerty, a:n)
         endif
         if empty(len(s:hjkl_filter))
-        \|| s:hjkl_filter[-1:-1] == "_"
             let s:hjkl_filter = label
         else
             let s:hjkl_filter .= label
@@ -2347,17 +2344,14 @@ function! s:vimim_cjk_digit_filter(chinese)
 " smart digit filter:  马力 7712 4002
 "   (1) ma<C-6>        马   => filter with 7712
 "   (2) mali<C-6>      马力 => filter with 7 4002
-"   (2) mali4<C-6>     马力 => 4 for last char then filter with 7 4002
 " -----------------------------------------
     let chinese = a:chinese
+    if empty(len(s:hjkl_filter)) || empty(chinese)
+        return 0
+    endif
     let digit_head = ""
     let digit_tail = ""
     let words = split(chinese, '\zs')
-    if empty(len(s:hjkl_filter))
-        return 0
-    elseif s:hjkl_filter[-1:-1] == "_"
-        let words = copy(words[-1:-1])
-    endif
     for cjk in words
         let ddddd = char2nr(cjk)
         if cjk =~ '\w' || ddddd < 19968 || ddddd > 40869
@@ -2371,7 +2365,7 @@ function! s:vimim_cjk_digit_filter(chinese)
         endif
     endfor
     let number = digit_head . digit_tail
-    let pattern = "^" . substitute(s:hjkl_filter,'\D','','g')
+    let pattern = "^" . s:hjkl_filter
     let matched = match(number, pattern)
     if matched < 0 || number ==# '0000'
         let chinese = 0
@@ -3429,32 +3423,6 @@ function! s:vimim_fixed_match(lines, keyboard, fixed)
     return results
 endfunction
 
-" -------------------------------------------- todo
-function! s:vimim_break_pinyin_digit(keyboard)
-" --------------------------------------------
-" [input]  mali4
-" [output] mali filtered with 4 as the last char
-"          馬力 马力 马莉 玛莉
-" --------------------------------------------
-    let blocks = []
-    let pinyin_digit_pattern = '\d\+\l\='
-    let digit = match(a:keyboard, pinyin_digit_pattern)
-    if digit > 0
-        let blocks = s:vimim_break_string_at(a:keyboard, digit)
-        let menu = get(blocks, 0)
-        let pinyins = s:vimim_get_pinyin_from_pinyin(menu)
-        if empty(pinyins)
-            return []
-        elseif empty(len(s:hjkl_filter))
-            let filter = get(blocks, 1)
-            if menu =~ '\D' && filter =~ '^\d\+$'
-                let s:hjkl_filter = filter . "_"
-            endif
-        endif
-    endif
-    return blocks
-endfunction
-
 " --------------------------------------
 function! s:vimim_build_datafile_cache()
 " --------------------------------------
@@ -3692,12 +3660,6 @@ function! s:vimim_sentence_match_directory(keyboard)
     let filename = dir . '/' . keyboard
     if filereadable(filename)
         return [keyboard]
-    endif
-    if s:cjk_file > 0
-        let blocks = s:vimim_break_pinyin_digit(keyboard)
-        if !empty(blocks)
-            return blocks
-        endif
     endif
     " --------------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
@@ -4791,11 +4753,11 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_l = 0
     let s:hjkl_h = 0
-    let s:hjkl_2nd_match = 0
     let s:hjkl_filter = ""
-    let s:keyboard_list = []
+    let s:hjkl_2nd_match = 0
     let s:keyboard_head = 0
     let s:keyboard_shuangpin = 0
+    let s:keyboard_list = []
     return ""
 endfunction
 
