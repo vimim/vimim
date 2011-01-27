@@ -610,8 +610,10 @@ function! s:vimim_get_chinese_from_english(keyboard)
         if s:cjk_file > 0
             let results = s:vimim_try_cjk_file(keyboard)
             if empty(results)
-                let keyboard = s:vimim_diy_keyboard2number(keyboard)
-                let results = s:vimim_try_cjk_file(keyboard)
+                let keyboard2 = s:vimim_cjk_keyboard2number(keyboard)
+                if !empty(keyboard2)
+                    let results = s:vimim_try_cjk_file(keyboard2)
+                endif
             endif
         endif
     endif
@@ -637,6 +639,7 @@ function! s:vimim_register_search_pattern(keyboard, results)
     for chinese in a:results
         if a:keyboard =~# s:uxxxx
         \|| s:cjk_single_pair > 0
+"todo
             let msg = "for unicode slash search: /u808f /32911"
         elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
@@ -727,28 +730,25 @@ call add(s:vimims, VimIM)
 " input method boshiamy:   ix'x'e'bii'rfnc
 " --------------------------------------------
 function! s:vimim_break_word_by_word(keyboard)
-" --------------------------------------------
+" -------------------------------------------- todo
     let keyboard = a:keyboard
     if s:chinese_input_mode != 'onekey'
         return []
     endif
-    let blocks = []
-    let delimiter = "'"
+    let delimiter = 0
     if keyboard =~ "[']"
-        let blocks = split(keyboard, "[']")
-    endif
-    if s:ui.im =~ 'pinyin' || s:ui.im =~ 'english'
-        let delimiter = "."
-        if keyboard =~ "[.]"
-            " i.have.a.dream <=> simpler and easier
-            let blocks = split(keyboard, "[.]")
+        let delimiter = match(keyboard, "'")
+    elseif keyboard =~ "[.]"
+        if s:ui.im =~ 'pinyin' || s:ui.im =~ 'english'
+            let delimiter = match(keyboard, ".")
         endif
     endif
-    if keyboard[0:0] == delimiter
-    \|| keyboard[-1:-1] == delimiter
+    if delimiter < 1 || delimiter == keyboard[-1:-1]
         return []
     endif
-    return blocks
+    let first = keyboard[0:delimiter]
+    let last  = keyboard[delimiter+2:-1]
+    return [first, last]
 endfunction
 
 " ---------------------
@@ -1263,7 +1263,7 @@ endfunction
 function! g:vimim_one_key_correction()
 " ------------------------------------
     let key = '\<Esc>'
-    call vimim_reset_after_insert()
+    call g:vimim_reset_after_insert()
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
         let s:one_key_correction = 1
@@ -1275,7 +1275,7 @@ endfunction
 " ---------------------
 function! g:vimim_esc()
 " ---------------------
-    call vimim_reset_after_insert
+    call g:vimim_reset_after_insert()
     if s:chinese_input_mode != 'static'
         call s:vimim_stop()
     endif
@@ -1511,7 +1511,7 @@ endfunction
 " ---------------------------
 function! g:vimim_backspace()
 " ---------------------------
-    call vimim_reset_after_insert()
+    call g:vimim_reset_after_insert()
     let s:pattern_not_found = 0
     let key = '\<BS>'
     if s:pumvisible_ctrl_e > 0
@@ -1638,18 +1638,19 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         if empty(s:vimim_cloud_plugin)
             let s:tail = ""
             if keyboard =~ "[.']"
-                let word_by_word = match(keyboard, "[']")
-                if s:ui.im =~ 'pinyin' || s:ui.im =~ 'english'
-                    let word_by_word = match(keyboard, "[.]")
-                endif
-                let s:tail = strpart(keyboard, word_by_word+1)
-                let chinese .= s:tail
-            elseif keyboard !~# s:show_me_not
-                let s:tail = strpart(keyboard, len(menu))
-                if keyboard =~ '\l\>' || keyboard =~ '^\d\+\>'
-                    let chinese .= s:tail
-                endif
+          "     let word_by_word = match(keyboard, "[']")
+          "     if s:ui.im =~ 'pinyin' || s:ui.im =~ 'english'
+          "         let word_by_word = match(keyboard, "[.]")
+          "     endif
+          "     let s:tail = strpart(keyboard, word_by_word+1)
+          "     let chinese .= s:tail
+          " elseif keyboard !~# s:show_me_not
+          "     let s:tail = strpart(keyboard, len(menu))
+          "     if keyboard =~ '\l\>' || keyboard =~ '^\d\+\>'
+          "         let chinese .= s:tail
+          "     endif
             endif
+let chinese .= strpart(keyboard, len(menu))
             let s:keyboard_head = strpart(keyboard, 0, len(menu))
         else
             let extra_text = get(split(menu,"_"),0)
@@ -1671,9 +1672,6 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         call add(popupmenu_list, complete_items)
     endfor
     let s:popupmenu_list = copy(popupmenu_list)
-    if s:cjk_single_pair > 0 && len(popupmenu_list) == 1
-        let s:insert_without_popup = 1
-    endif
     return popupmenu_list
 endfunction
 
@@ -2058,29 +2056,98 @@ function! s:vimim_try_cjk_file(keyboard)
     return results
 endfunction
 
+" --------------------------------------------
+function! s:vimim_cjk_sentence_match(keyboard)
+" --------------------------------------------
+    let keyboard = a:keyboard
+    let blocks = []
+    let dddd = '^\d\d\d\d'
+    let block = 4
+    let delimiter = -1
+    if len(keyboard) % block < 1
+    \&& keyboard =~ dddd 
+    \&& keyboard !~ '\D'
+        let delimiter = match(keyboard, dddd)
+        if delimiter < 0
+            let sample = "6021272260201762"
+        else
+            return s:vimim_keyboard_blocks(keyboard, block)
+        endif
+    endif
+    " -----------------------------------------------------
+    let ldddd = '\l\d\d\d\d'
+    let block = 5
+    if len(keyboard) % block < 1
+    \&& keyboard =~ ldddd 
+        let delimiter = match(keyboard, ldddd)
+        if delimiter < 0
+            let sample = "s6021j2722h6002m1762"
+        else
+            return s:vimim_keyboard_blocks(keyboard, block)
+        endif
+    endif
+    " -----------------------------------------------------
+    let lllll = '\l\l\l\l\l'
+    let block = 5
+    if len(keyboard) % block < 1
+    \&& keyboard =~ lllll 
+    \&& keyboard !~ '\d'
+        let delimiter = match(keyboard, lllll)
+        if delimiter < 0
+            let sample = "sypwqjwuwwhyppwmquyw"
+        else
+            let keyboard2 = s:vimim_keyboard_blocks(keyboard, block)
+            let ldddd = s:vimim_cjk_keyboard2number(keyboard2)
+            if empty(ldddd)
+               let s:keyboard_list = []
+            else
+                return ldddd
+            endif
+        endif
+    endif
+    return 0
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_keyboard_blocks(keyboard, block)
+" ------------------------------------------------
+    let keyboard = a:keyboard
+    let block = a:block
+    let keyboards = []
+    let first = keyboard[0 : block-1]
+    let last  = keyboard[block : -1]
+    call add(keyboards, first)
+    if !empty(last)
+        call add(keyboards, last)
+    endif
+    let s:keyboard_list = keyboards
+let g:g1=s:keyboard_list
+    return first
+endfunction
+
 " ---------------------------------------------
-function! s:vimim_diy_keyboard2number(keyboard)
+function! s:vimim_cjk_keyboard2number(keyboard)
 " ---------------------------------------------
     let keyboard = a:keyboard
     if s:chinese_input_mode != 'onekey'
     \|| keyboard =~ '\d'
     \|| keyboard !~ '\l'
     \|| len(keyboard) !~ 5
-        return keyboard
+        return 0
     endif
     let digits = []
     let diy_4corner = strpart(keyboard, 1)
-    " [diy] muqew=m7132 xeyqp=x3610 jeqqq=j3111
+    " [diy] muuew=m7732 xeyqp=x3610 jeqqq=j3111
     for char in split(diy_4corner, '\zs')
         let digit = match(s:qwerty, char)
         if digit < 0
-            return keyboard
+            return 0
         else
             call add(digits, digit)
         endif
     endfor
     if len(digits) < 4
-        return keyboard
+        return 0
     endif
     let dddd = join(digits,"")
     let alpha_dddd = keyboard[0:0] . dddd
@@ -3423,7 +3490,7 @@ endfunction
 
 " ---------------------------------------------------
 function! s:vimim_break_sentence_into_block(keyboard)
-" ---------------------------------------------------
+" --------------------------------------------------- todo
     let blocks = s:vimim_break_word_by_word(a:keyboard)
     if empty(blocks) && s:cjk_file > 0
         let blocks = s:vimim_break_pinyin_digit(a:keyboard)
@@ -3795,8 +3862,7 @@ endfunction
 function! s:vimim_mkdir(option, dir, lines)
 " -----------------------------------------
 " Goal: create one file per entry based on vimim.xxx.txt
-" Sample file A: /home/vimim/pinyin/jjjj
-" Sample file B: /home/vimim/unicode/u808f
+" example file: /home/vimim/pinyin/jjjj
 " (1) $cd $VIM/vimfiles/plugin/vimim/
 " (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir1()
 " --------------------------------------------------
@@ -4480,7 +4546,7 @@ endfunction
 " --------------------------------------------------------
 function! s:vimim_process_mycloud_output(keyboard, output)
 " --------------------------------------------------------
-" one line sample output:  春夢 8 4420
+" one line typical output:  春夢 8 4420
     let output = a:output
     if empty(output) || empty(a:keyboard)
         return []
@@ -4537,7 +4603,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma/vim")
-        let msg = "VimIM sample configuration:"
+        let msg = "VimIM showoff configuration:"
     else
         return
     endif
@@ -4834,9 +4900,10 @@ function! g:vimim()
     if empty(key)
         call g:vimim_reset_after_insert()
     else
-        if s:chinese_input_mode == 'dynamic'
-            call g:vimim_reset_after_insert()
-        endif
+""""""  if s:chinese_input_mode == 'dynamic'
+""""""      call g:vimim_reset_after_insert()
+""""""  endif
+""todo
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
     endif
     " --------------------------
@@ -4854,7 +4921,7 @@ function! g:vimim_menu_select()
             if s:insert_without_popup > 1
                 let key .= '\<Esc>'
             endif
-            call vimim_reset_after_insert()
+""""""""    call g:vimim_reset_after_insert()
             let s:insert_without_popup = 0
         endif
     endif
@@ -5127,10 +5194,15 @@ else
     endif
 
     " [vimim.cjk.txt] try 4corner and pinyin there
-    " --------------------------------------------
+    " -------------------------------------------- todo
     if s:cjk_file > 0
-        let keyboard = s:vimim_diy_keyboard2number(keyboard)
-        let results = s:vimim_try_cjk_file(keyboard)
+        let keyboard2 = s:vimim_cjk_sentence_match(keyboard)
+let g:gg8=keyboard
+let g:gg9=keyboard2
+        if !empty(keyboard2)
+            let results = s:vimim_try_cjk_file(keyboard2)
+let g:gg7=results
+        endif
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
