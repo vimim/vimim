@@ -32,6 +32,7 @@ let VimIM = " ====  Introduction      ==== {{{"
 "            * support "wubi", "erbi", "boshiamy", "cangjie", "taijima"
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
 "            * support direct internal input by UNICODE, GBK or Big5
+"            * introduction of vimim.cjk.txt as swiss army Chinese database
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -2015,7 +2016,7 @@ function! s:vimim_match_cjk_file(keyboard)
 	let alpha = substitute(keyboard,'\d','','g')
 	let grep = '\s'    . digit . '\d*\s' . alpha
 	let grep = '\s\d*' . digit .    '\s' . alpha
-        " sample free-style input and search: ma7712 ma712 ma12 ma2"
+        " [sample] free-style input and search: ma7712 ma712 ma12 ma2"
     else
         return []
     endif
@@ -2039,7 +2040,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
     let delimiter = -1
     let block = 4
     if len(keyboard) % block < 1 && keyboard !~ '\D'
-        " sample (every four digits) 6021272260201762
+        " [sample] (every four digits) 6021272260201762
         let delimiter = match(keyboard, '^\d\d\d\d')
         if delimiter > -1
             return s:vimim_keyboard_blocks(keyboard, block)
@@ -2048,7 +2049,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
     " -----------------------------------------------------
     let delimiter = match(keyboard, '^\l\+\d\+')
     if empty(delimiter)
-        " sample (free-style) si60jiao27ha6ma17
+        " [sample] (free-style) si60jiao27ha6ma17
         let alpha_list = split (keyboard,'\d\+')
         let digit_list = split (keyboard,'\l\+')
         if len(alpha_list) == len(digit_list)
@@ -2064,7 +2065,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
     " -----------------------------------------------------
     let block = 5
     if len(keyboard) % block < 1 && keyboard !~ '\d'
-        " sample (every 1+4=5 chars) sypwqjwuwwhyppwmquyw
+        " [sample] (every 1+4=5 chars) sypwqjwuwwhyppwmquyw
         let delimiter = match(keyboard, '^\l\l\l\l\l')
         if delimiter > -1
             let lllll = s:vimim_keyboard_blocks(keyboard, block)
@@ -3065,9 +3066,9 @@ function! s:vimim_i18n_read(line)
     return line
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_get_cjk_list(keyboard, height)
-" ----------------------------------------------
+" --------------------------------------------------
+function! s:vimim_get_unicode_list(keyboard, height)
+" --------------------------------------------------
     let keyboard = a:keyboard
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
@@ -4956,6 +4957,26 @@ else
         return [' ']
     endif
 
+    " [eggs] hunt classic easter egg ... vim<C-6>
+    " -------------------------------------------
+    if s:chinese_input_mode =~ 'onekey'
+        if keyboard ==# "vim" || keyboard =~# "^vimim"
+            let results = s:vimim_easter_chicken(keyboard)
+            if !empty(results)
+                return s:vimim_popupmenu_list(results)
+            endif
+        endif
+    endif
+
+    " [unicode] support direct unicode/gb/big5 input
+    " ----------------------------------------------
+    if s:chinese_input_mode =~ 'onekey'
+        let results = s:vimim_get_unicode_list(keyboard, 36/9)
+        if !empty(len(results))
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
     " [filter] use cache for all vimim backends
     " -----------------------------------------
     if s:cjk_file > 0 && len(s:matched_list) > 1
@@ -4975,40 +4996,23 @@ else
         endif
     endif
 
-    " [eggs] hunt classic easter egg ... vim<C-6>
-    " -------------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-        if keyboard ==# "vim" || keyboard =~# "^vimim"
-            let results = s:vimim_easter_chicken(keyboard)
-            if !empty(results)
+    " [cjk] vimim.cjk.txt as swiss army datafile
+    " ------------------------------------------
+    if s:cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
+        let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
+        if !empty(keyboard2)
+            let results = s:vimim_match_cjk_file(keyboard2)
+            if empty(len(results))
+                let s:keyboard_list = []
+            else
                 return s:vimim_popupmenu_list(results)
             endif
         endif
     endif
 
-    " [unicode] support direct unicode/gb/big5 input
-    " ----------------------------------------------
+    " [dot-by-dot] VimIM classic:  i.have.a.dream
+    " --------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        let results = s:vimim_get_cjk_list(keyboard, 36/9)
-        if !empty(len(results))
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " [cjk] vimim.cjk.txt for 4corner and pinyin
-    " ------------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-        if s:cjk_file > 0
-            let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
-            if !empty(keyboard2)
-                let results = s:vimim_match_cjk_file(keyboard2)
-                if empty(len(results))
-                    let s:keyboard_list = []
-                else
-                    return s:vimim_popupmenu_list(results)
-                endif
-            endif
-        endif
         let keyboard2 = s:vimim_break_dot_by_dot(keyboard)
         if !empty(keyboard2)
             let keyboard = copy(keyboard2)
