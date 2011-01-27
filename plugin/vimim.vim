@@ -608,11 +608,11 @@ function! s:vimim_get_chinese_from_english(keyboard)
     endif
     if empty(results)
         if s:cjk_file > 0
-            let results = s:vimim_try_cjk_file(keyboard)
+            let results = s:vimim_match_cjk_file(keyboard)
             if empty(results)
                 let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
                 if !empty(keyboard2)
-                    let results = s:vimim_try_cjk_file(keyboard2)
+                    let results = s:vimim_match_cjk_file(keyboard2)
                 endif
             endif
         endif
@@ -1538,7 +1538,7 @@ function! s:vimim_cycle_list_from_cache()
     elseif s:hjkl_h%3 == 2
         let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
     endif
-    let results = s:vimim_try_cjk_file(keyboard)
+    let results = s:vimim_match_cjk_file(keyboard)
     let matched = match(results, chinese)
     let fixed_chinese = remove(results, matched)
     call insert(results, fixed_chinese)
@@ -2027,28 +2027,30 @@ function! s:vimim_load_cjk_file()
     endif
 endfunction
 
-" --------------------------------------
-function! s:vimim_try_cjk_file(keyboard)
-" --------------------------------------
+" ----------------------------------------
+function! s:vimim_match_cjk_file(keyboard)
+" ----------------------------------------
     let keyboard = a:keyboard
-    let pattern = ""
+    let grep = ""
     if keyboard !~# '\d' || keyboard !~# '\l'
-	let pattern = '\s' . keyboard
+	let grep = '\s' . keyboard
     elseif keyboard =~# '^\l\+\d\+'
 	let digit = substitute(keyboard,'\a','','g')
 	let alpha = substitute(keyboard,'\d','','g')
-	let pattern = '\s' . digit . '\d*\s' . alpha
+	let grep = '\s'    . digit . '\d*\s' . alpha
+	let grep = '\s\d*' . digit .    '\s' . alpha
+        " sample free-style input and search: ma7712 ma712 ma12 ma2"
     else
         return []
     endif
     let results = []
-    let matched = match(s:cjk_lines, pattern)
-    " ----------------------------------
+    let matched = match(s:cjk_lines, grep)
+    " ------------------------------------
     while matched > -1
         let ddddd = matched + 19968
         let chinese = nr2char(ddddd)
         call add(results, chinese)
-        let matched = match(s:cjk_lines, pattern, matched+1)
+        let matched = match(s:cjk_lines, grep, matched+1)
         let s:cjk_single_pair += 1
     endwhile
     return results
@@ -2060,18 +2062,9 @@ function! s:vimim_cjk_nonstop_input(keyboard)
     let keyboard = a:keyboard
     let delimiter = -1
     let block = 4
-    " sample (every four digits) 6021272260201762
     if len(keyboard) % block < 1 && keyboard !~ '\D'
+        " sample (every four digits) 6021272260201762
         let delimiter = match(keyboard, '^\d\d\d\d')
-        if delimiter > -1
-            return s:vimim_keyboard_blocks(keyboard, block)
-        endif
-    endif
-    " -----------------------------------------------------
-    let block = 5
-    " sample (every 1+4=5 chars) s6021j2722h6002m1762
-    if len(keyboard) % block < 1
-        let delimiter = match(keyboard, '^\l\d\d\d\d')
         if delimiter > -1
             return s:vimim_keyboard_blocks(keyboard, block)
         endif
@@ -2083,16 +2076,19 @@ function! s:vimim_cjk_nonstop_input(keyboard)
         let alpha_list = split (keyboard,'\d\+')
         let digit_list = split (keyboard,'\l\+')
         if len(alpha_list) == len(digit_list)
-            let alpha_first = get(alpha_list,0)
-            let digit_first = get(digit_list,0)
-            let block = len(alpha_first . digit_first)
-            return s:vimim_keyboard_blocks(keyboard, block)
+            let alpha_first = len(get(alpha_list,0))
+            let digit_first = len(get(digit_list,0))
+            if alpha_first > 0 && alpha_first < 7
+            \&& digit_first > 0 && digit_first < 5
+                let block = alpha_first + digit_first
+                return s:vimim_keyboard_blocks(keyboard, block)
+            endif
         endif
     endif
     " -----------------------------------------------------
     let block = 5
-    " sample (every 1+4=5 chars) sypwqjwuwwhyppwmquyw
     if len(keyboard) % block < 1 && keyboard !~ '\d'
+        " sample (every 1+4=5 chars) sypwqjwuwwhyppwmquyw
         let delimiter = match(keyboard, '^\l\l\l\l\l')
         if delimiter > -1
             let lllll = s:vimim_keyboard_blocks(keyboard, block)
@@ -2122,7 +2118,7 @@ function! s:vimim_keyboard_blocks(keyboard, block)
     let first = keyboard[0 : block-1]
     let last  = keyboard[block : -1]
     call add(keyboards, first)
-    if !empty(last)
+    if !empty(last) && block > 0
         call add(keyboards, last)
     endif
     let s:keyboard_list = keyboards
@@ -5092,7 +5088,7 @@ else
         if s:cjk_file > 0
             let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
             if !empty(keyboard2)
-                let results = s:vimim_try_cjk_file(keyboard2)
+                let results = s:vimim_match_cjk_file(keyboard2)
                 if empty(len(results))
                     let s:keyboard_list = []
                 else
