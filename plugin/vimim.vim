@@ -2056,46 +2056,36 @@ function! s:vimim_try_cjk_file(keyboard)
     return results
 endfunction
 
-" --------------------------------------------
-function! s:vimim_cjk_sentence_match(keyboard)
+" -------------------------------------------
+function! s:vimim_cjk_nonstop_input(keyboard)
+" -------------------------------------------
+"  6021272260201762
+"  s6021j2722h6002m1762
+"  sypwqjwuwwhyppwmquyw
 " --------------------------------------------
     let keyboard = a:keyboard
-    let blocks = []
-    let dddd = '^\d\d\d\d'
     let block = 4
     let delimiter = -1
     if len(keyboard) % block < 1
-    \&& keyboard =~ dddd 
     \&& keyboard !~ '\D'
-        let delimiter = match(keyboard, dddd)
-        if delimiter < 0
-            let sample = "6021272260201762"
-        else
+        let delimiter = match(keyboard, '^\d\d\d\d')
+        if delimiter > -1
             return s:vimim_keyboard_blocks(keyboard, block)
         endif
     endif
     " -----------------------------------------------------
-    let ldddd = '\l\d\d\d\d'
     let block = 5
     if len(keyboard) % block < 1
-    \&& keyboard =~ ldddd 
-        let delimiter = match(keyboard, ldddd)
-        if delimiter < 0
-            let sample = "s6021j2722h6002m1762"
-        else
+        let delimiter = match(keyboard, '^\l\d\d\d\d')
+        if delimiter > -1
             return s:vimim_keyboard_blocks(keyboard, block)
         endif
     endif
     " -----------------------------------------------------
-    let lllll = '\l\l\l\l\l'
-    let block = 5
     if len(keyboard) % block < 1
-    \&& keyboard =~ lllll 
     \&& keyboard !~ '\d'
-        let delimiter = match(keyboard, lllll)
-        if delimiter < 0
-            let sample = "sypwqjwuwwhyppwmquyw"
-        else
+        let delimiter = match(keyboard, '^\l\l\l\l\l')
+        if delimiter > -1
             let keyboard2 = s:vimim_keyboard_blocks(keyboard, block)
             let ldddd = s:vimim_cjk_keyboard2number(keyboard2)
             if empty(ldddd)
@@ -2105,24 +2095,8 @@ function! s:vimim_cjk_sentence_match(keyboard)
             endif
         endif
     endif
+    " -----------------------------------------------------
     return 0
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_keyboard_blocks(keyboard, block)
-" ------------------------------------------------
-    let keyboard = a:keyboard
-    let block = a:block
-    let keyboards = []
-    let first = keyboard[0 : block-1]
-    let last  = keyboard[block : -1]
-    call add(keyboards, first)
-    if !empty(last)
-        call add(keyboards, last)
-    endif
-    let s:keyboard_list = keyboards
-let g:g1=s:keyboard_list
-    return first
 endfunction
 
 " ---------------------------------------------
@@ -2152,6 +2126,22 @@ function! s:vimim_cjk_keyboard2number(keyboard)
     let dddd = join(digits,"")
     let alpha_dddd = keyboard[0:0] . dddd
     return alpha_dddd
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_keyboard_blocks(keyboard, block)
+" ------------------------------------------------
+    let keyboard = a:keyboard
+    let block = a:block
+    let keyboards = []
+    let first = keyboard[0 : block-1]
+    let last  = keyboard[block : -1]
+    call add(keyboards, first)
+    if !empty(last)
+        call add(keyboards, last)
+    endif
+    let s:keyboard_list = keyboards
+    return first
 endfunction
 
 " --------------------------------------------
@@ -5193,18 +5183,16 @@ else
         endif
     endif
 
-    " [vimim.cjk.txt] try 4corner and pinyin there
-    " -------------------------------------------- todo
-    if s:cjk_file > 0
-        let keyboard2 = s:vimim_cjk_sentence_match(keyboard)
-let g:gg8=keyboard
-let g:gg9=keyboard2
+    " [vimim.cjk.txt] try 4corner and pinyin here
+    " ------------------------------------------- todo
+    if s:chinese_input_mode =~ 'onekey'
+    \&& s:cjk_file > 0
+        let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
         if !empty(keyboard2)
             let results = s:vimim_try_cjk_file(keyboard2)
-let g:gg7=results
-        endif
-        if !empty(len(results))
-            return s:vimim_popupmenu_list(results)
+            if !empty(len(results))
+                return s:vimim_popupmenu_list(results)
+            endif
         endif
     endif
 
