@@ -2095,10 +2095,10 @@ function! s:vimim_keyboard_blocks(keyboard, block)
     let first = keyboard[0 : block-1]
     let last  = keyboard[block : -1]
     call add(keyboards, first)
-    if !empty(last) && block > 0
+    if !empty(last)
         call add(keyboards, last)
     endif
-    let s:keyboard_list = keyboards
+    let s:keyboard_list = copy(keyboards)
     return first
 endfunction
 
@@ -3706,7 +3706,7 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
     if s:ui.im != 'pinyin' || s:chinese_input_mode == 'dynamic'
         return max
     endif
-    " --------------------------------------------
+    " -------------------------------------------- todo
     if !empty(s:keyboard_head)
         if s:hjkl_2nd_match > 0
             let s:hjkl_2nd_match = 0
@@ -4871,10 +4871,8 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let results = s:vimim_get_data_from_cache(keyboards)
         endif
     endif
-    if empty(keyboards)
-        let s:keyboard_list = [keyboard]
-    else
-        let s:keyboard_list = keyboards
+    if !empty(keyboards)
+        let s:keyboard_list = copy(keyboards)
     endif
     if !empty(results)
         let results = s:vimim_filter_list(results, keyboard)
@@ -4939,8 +4937,10 @@ if a:start
     let s:start_row_before = start_row
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
-    let s:keyboard_list = [strpart(current_line,start_column,len)]
     let s:start_column_before = start_column
+    if empty(s:keyboard_list)
+        let s:keyboard_list = [strpart(current_line,start_column,len)]
+    endif
     return start_column
 
 else
@@ -4997,7 +4997,7 @@ else
     endif
 
     " [cjk] vimim.cjk.txt as swiss army datafile
-    " ------------------------------------------
+    " ------------------------------------------ 
     if s:cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
         let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
         if !empty(keyboard2)
@@ -5120,9 +5120,6 @@ endfunction
 function! s:vimim_get_valid_keyboard(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    if empty(s:keyboard_list)
-        let s:keyboard_list = [keyboard]
-    endif
     if empty(str2nr(keyboard))
         let msg = "keyboard input is alphabet only"
     else
