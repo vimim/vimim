@@ -727,13 +727,10 @@ call add(s:vimims, VimIM)
 " input method taijima:    tlt'fm't'e'vvi
 " input method nature:     wop'yb'yg''mgx
 " input method boshiamy:   ix'x'e'bii'rfnc
-" --------------------------------------------
-function! s:vimim_break_word_by_word(keyboard)
-" -------------------------------------------- todo
+" ------------------------------------------
+function! s:vimim_break_dot_by_dot(keyboard)
+" ------------------------------------------
     let keyboard = a:keyboard
-    if s:chinese_input_mode != 'onekey'
-        return []
-    endif
     let delimiter = 0
     if keyboard =~ "[']"
         let delimiter = match(keyboard, "'")
@@ -743,11 +740,12 @@ function! s:vimim_break_word_by_word(keyboard)
         endif
     endif
     if delimiter < 1 || delimiter == keyboard[-1:-1]
-        return []
+        return 0
     endif
-    let first = keyboard[0:delimiter]
-    let last  = keyboard[delimiter+2:-1]
-    return [first, last]
+    let first = keyboard[0 : delimiter]
+    let last  = keyboard[delimiter+2 : -1]
+    let s:keyboard_list = [first, last]
+    return first
 endfunction
 
 " ---------------------
@@ -3346,10 +3344,6 @@ function! s:vimim_sentence_match_cache(keyboard)
         return [keyboard]
     endif
     let im = s:ui.im
-    let blocks = s:vimim_break_sentence_into_block(keyboard)
-    if !empty(blocks)
-        return blocks
-    endif
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     " -----------------------------------------
     while max > 0
@@ -3383,10 +3377,6 @@ function! s:vimim_sentence_match_datafile(keyboard)
     let match_start = match(lines, pattern)
     if match_start > -1
         return [keyboard]
-    endif
-    let blocks = s:vimim_break_sentence_into_block(keyboard)
-    if !empty(blocks)
-        return blocks
     endif
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     while max > 0
@@ -3452,21 +3442,11 @@ function! s:vimim_fixed_match(lines, keyboard, fixed)
     return results
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_break_sentence_into_block(keyboard)
-" --------------------------------------------------- todo
-    let blocks = s:vimim_break_word_by_word(a:keyboard)
-    if empty(blocks) && s:cjk_file > 0
-        let blocks = s:vimim_break_pinyin_digit(a:keyboard)
-    endif
-    return blocks
-endfunction
-
-" --------------------------------------------
+" -------------------------------------------- todo
 function! s:vimim_break_pinyin_digit(keyboard)
 " --------------------------------------------
 " [input]  mali4
-" [output] mali filtered with 4 for the last char
+" [output] mali filtered with 4 as the last char
 "          馬力 马力 马莉 玛莉
 " --------------------------------------------
     let blocks = []
@@ -3726,9 +3706,11 @@ function! s:vimim_sentence_match_directory(keyboard)
     if filereadable(filename)
         return [keyboard]
     endif
-    let blocks = s:vimim_break_sentence_into_block(keyboard)
-    if !empty(blocks)
-        return blocks
+    if s:cjk_file > 0
+        let blocks = s:vimim_break_pinyin_digit(keyboard)
+        if !empty(blocks)
+            return blocks
+        endif
     endif
     " --------------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
@@ -4964,6 +4946,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let results = s:vimim_get_data_from_cache(keyboards)
         endif
     endif
+"todo
     if empty(keyboards)
         let s:keyboard_list = [keyboard]
     else
@@ -5092,13 +5075,19 @@ else
 
     " [cjk] vimim.cjk.txt for 4corner and pinyin
     " ------------------------------------------
-    if s:chinese_input_mode =~ 'onekey' && s:cjk_file > 0
-        let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
-        if !empty(keyboard2)
-            let results = s:vimim_try_cjk_file(keyboard2)
-            if !empty(len(results))
-                return s:vimim_popupmenu_list(results)
+    if s:chinese_input_mode =~ 'onekey' 
+        if s:cjk_file > 0
+            let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
+            if !empty(keyboard2)
+                let results = s:vimim_try_cjk_file(keyboard2)
+                if !empty(len(results))
+                    return s:vimim_popupmenu_list(results)
+                endif
             endif
+        endif
+        let keyboard2 = s:vimim_break_dot_by_dot(keyboard)
+        if !empty(keyboard2)
+            let keyboard = copy(keyboard2)
         endif
     endif
 
