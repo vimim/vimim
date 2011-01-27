@@ -137,7 +137,6 @@ function! s:vimim_initialize_session()
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
-    let s:insert_without_popup = 0
     let s:www_executable = 0
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
@@ -145,7 +144,6 @@ function! s:vimim_initialize_session()
     let s:shuangpin_keycode_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
-    let s:tail = ""
     let s:quantifiers = {}
     let s:localization = 0
     let s:current_positions = [0,0,1,0]
@@ -826,9 +824,6 @@ function! s:vimim_onekey_action(onekey)
         endif
         sil!exe 'sil!return "' . onekey . '"'
     endif
-    if s:insert_without_popup > 0
-        let s:insert_without_popup = 0
-    endif
     " ---------------------------------------------------
     let before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
@@ -1130,6 +1125,10 @@ function! s:vimim_statusline()
     if !empty(s:vimim_shuangpin)
         let s:ui.statusline .= s:space
         let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
+    endif
+    " ------------------------------------
+    if s:cjk_file > 0
+        let s:ui.statusline .= s:plus . s:vimim_chinese('digit')
     endif
     " ------------------------------------
     return s:vimim_get_chinese_im()
@@ -1633,21 +1632,6 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         endif
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
-" todo
-" let s:tail = ""
-" if keyboard =~ "[.']"
-"     let word_by_word = match(keyboard, "[']")
-"     if s:ui.im =~ 'pinyin' || s:ui.im =~ 'english'
-"         let word_by_word = match(keyboard, "[.]")
-"     endif
-"     let s:tail = strpart(keyboard, word_by_word+1)
-"     let chinese .= s:tail
-" elseif keyboard !~# s:show_me_not
-"     let s:tail = strpart(keyboard, len(menu))
-"     if keyboard =~ '\l\>' || keyboard =~ '^\d\+\>'
-"         let chinese .= s:tail
-"     endif
-" endif
             let chinese .= strpart(keyboard, len(menu))
             let s:keyboard_head = strpart(keyboard, 0, len(menu))
         else
@@ -1961,12 +1945,6 @@ function! s:vimim_imode_number(keyboard, prefix)
         elseif keyboard =~# '^\d*$' && len(keyboards)<2 && i ==# 'i'
             let numbers = quantifiers
         endif
-    endif
-    if len(numbers) == 1
-        let s:insert_without_popup = 1
-    endif
-    if len(numbers) > 0
-        call map(numbers, 'a:keyboard ." ". v:val')
     endif
     return numbers
 endfunction
@@ -4844,42 +4822,17 @@ function! g:vimim()
     let key = ""
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ s:valid_key
-        let key = '\<C-X>\<C-U>'
+        let key = 1
     elseif s:chinese_input_mode != 'dynamic'
-        let five_byte_before = getline(".")[col(".")-6]
-        if byte_before =~ '\x' && five_byte_before ==# 'u'
-            let key = '\<C-X>\<C-U>'
+        let byte_before_five = getline(".")[col(".")-6]
+        if byte_before =~ '\x' && byte_before_five ==# 'u'
+            let key = 1
         endif
     endif
-    " --------------------------
     if empty(key)
         call g:vimim_reset_after_insert()
     else
-""""""  if s:chinese_input_mode == 'dynamic'
-""""""      call g:vimim_reset_after_insert()
-""""""  endif
-""todo
-        let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
-    endif
-    " --------------------------
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" -----------------------------
-function! g:vimim_menu_select()
-" -----------------------------
-    let key = ""
-    if pumvisible()
-        let key = '\<C-P>\<Down>'
-        if s:insert_without_popup > 0
-            let key = '\<C-Y>'
-            if s:insert_without_popup > 1
-                let key .= '\<Esc>'
-            endif
-""""""""    call g:vimim_reset_after_insert()
-"todo
-            let s:insert_without_popup = 0
-        endif
+       let key = '\<C-X>\<C-U>\<C-P>\<Down>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -4955,7 +4908,6 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let results = s:vimim_get_data_from_cache(keyboards)
         endif
     endif
-"todo
     if empty(keyboards)
         let s:keyboard_list = [keyboard]
     else
@@ -4972,7 +4924,6 @@ function! VimIM(start, keyboard)
 " ------------------------------
 if a:start
 
-    let s:insert_without_popup = 0
     let current_positions = getpos(".")
     let start_column = current_positions[2]-1
     let start_column_save = start_column
@@ -5084,7 +5035,7 @@ else
 
     " [cjk] vimim.cjk.txt for 4corner and pinyin
     " ------------------------------------------
-    if s:chinese_input_mode =~ 'onekey' 
+    if s:chinese_input_mode =~ 'onekey'
         if s:cjk_file > 0
             let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
             if !empty(keyboard2)
