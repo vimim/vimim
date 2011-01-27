@@ -32,7 +32,7 @@ let VimIM = " ====  Introduction      ==== {{{"
 "            * support "wubi", "erbi", "boshiamy", "cangjie", "taijima"
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
 "            * support direct internal input by UNICODE, GBK or Big5
-"            * introduction of vimim.cjk.txt as swiss army Chinese database
+"            * invent vimim.cjk.txt as swiss army Chinese database
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -53,10 +53,10 @@ let VimIM = " ====  Introduction      ==== {{{"
 "      (3.2) a directory:  $VIM/vimfiles/plugin/vimim/pinyin/
 "  -----------------------------------------------------------
 " "VimIM Installation"
-"  (1.0) drop this file to plugin/: plugin/vimim.vim
-"  (2.0) [option] drop a tool:      plugin/vimim.cjk.txt
-"  (3.1) [option] drop a datafile:  plugin/vimim.pinyin.txt
-"  (3.2) [option] drop a directory: plugin/vimim/pinyin/
+"           drop this file to:    plugin/: plugin/vimim.vim
+"  [option] drop a database to:   plugin/vimim.cjk.txt
+"  [option] drop a datafile to:   plugin/vimim.pinyin.txt
+"  [option] drop a directory to:  plugin/vimim/pinyin/
 " -----------------------------------------------------------
 
 let s:vimims = [VimIM]
@@ -1979,14 +1979,13 @@ call add(s:vimims, VimIM)
 " -------------------------------
 function! s:vimim_load_cjk_file()
 " -------------------------------
-" VimIM swiss army datafile without using cache
+" VimIM swiss army Chinese database without using cache
 " # http://vimim-data.googlecode.com/svn/trunk/data/vimim.cjk.txt
-" # Digit code such as four corner can be used as independent filter
+" # can be used as one datafile for 4corner or pinyin or both
 " # dummy transformation between simplified and traditional Chinese
 " # list of CJK is shown from popup menu using OneKey after CJK
 " # hjkl_h cycle list of unicode, 4corner and pinyin
 " # hjkl_l toggle display of the property of Chinese character
-" # can be used as one datafile for 4corner or pinyin or both
 " ---------------------------------------------------------------------
     if &encoding != "utf-8"
         return
@@ -2022,7 +2021,6 @@ function! s:vimim_match_cjk_file(keyboard)
     endif
     let results = []
     let matched = match(s:cjk_lines, grep)
-    " ------------------------------------
     while matched > -1
         let ddddd = matched + 19968
         let chinese = nr2char(ddddd)
@@ -2102,15 +2100,15 @@ function! s:vimim_keyboard_blocks(keyboard, block)
     return first
 endfunction
 
-" --------------------------------------------
-function! s:vimim_toggle_chinese() range abort
-" --------------------------------------------
-" [usage]     :VimIM
-" [feature]   (1) "quick and dirty" way to transfer Chinese to Chinese
-"             (2) 20% of efforts for solving 80% of problems
-"             (3) 2172 Chinese pairs are used for one-to-one map
-"             (4) range for visual mode is supported
-" --------------------------------------------
+" ---------------------------------------------
+function! s:vimim_tranfer_chinese() range abort
+" ---------------------------------------------
+" [usage]    :VimIM
+" [feature]  (1) "quick and dirty" way to transfer Chinese to Chinese
+"            (2) 20% of the effort to solve 80% of the problem
+"            (3) 2172 Chinese pairs are used for one-to-one mapping
+"            (4) range for visual mode is supported
+" ---------------------------------------------
     sil!call s:vimim_backend_initialization_once()
     if empty(s:cjk_file)
         let msg = "no toggle between simplified and tranditional Chinese"
@@ -2142,10 +2140,10 @@ endfunction
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
 " [input]     马力 (in vim visual mode)
-" [output]    7712 4002  --  four corner
-"             9a6c 529b  --  unicode
-"             ma3  li4   --  pinyin
-"             ml 马力    --  cjjp
+" [output]    9a6c 529b  --  in unicode
+"             7712 4002  --  in four corner
+"             ma3  li4   --  in pinyin
+"             ml 马力    --  in cjjp
 " ------------------------------------------
     let keyboard = a:keyboard
     let range = line("'>") - line("'<")
@@ -4997,7 +4995,7 @@ else
     endif
 
     " [cjk] vimim.cjk.txt as swiss army datafile
-    " ------------------------------------------ 
+    " ------------------------------------------
     if s:cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
         let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
         if !empty(keyboard2)
@@ -5196,7 +5194,7 @@ function! s:vimim_onekey_mapping_on()
         noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
     " -------------------------------
-    :com! -range=% VimIM <line1>,<line2>call s:vimim_toggle_chinese()
+    :com! -range=% VimIM <line1>,<line2>call s:vimim_tranfer_chinese()
 endfunction
 
 " ------------------------------------
