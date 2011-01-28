@@ -842,8 +842,10 @@ endfunction
 function! s:vimim_break_dot_by_dot(keyboard)
 " ------------------------------------------
     let keyboard = a:keyboard
-    let delimiter = match(keyboard, '[.]')
-    if delimiter < 1 || delimiter > len(keyboard)-2
+    let delimiter = match(keyboard, "[.]")
+    if delimiter < 1 
+    \|| delimiter > len(keyboard)-2
+    \|| match(keyboard, "[.][.]") > -1
         return 0
     endif
     let first = keyboard[0 : delimiter-1]
@@ -3284,13 +3286,13 @@ function! s:vimim_pinyin_more_match(lines, keyboard, results)
     return matched_list
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_get_data_from_cache(keyboards)
-" ----------------------------------------------
-    if empty(a:keyboards)
+" ---------------------------------------------
+function! s:vimim_get_data_from_cache(keyboard)
+" ---------------------------------------------
+    let keyboard = a:keyboard
+    if empty(a:keyboard)
         return []
     endif
-    let keyboard = get(a:keyboards, 0)
     if empty(s:backend[s:ui.root][s:ui.im].cache)
         return []
     endif
@@ -3305,9 +3307,9 @@ endfunction
 function! s:vimim_sentence_match_cache(keyboard)
 " ----------------------------------------------
     let keyboard = a:keyboard
-    let results = s:vimim_get_data_from_cache([keyboard])
+    let results = s:vimim_get_data_from_cache(keyboard)
     if !empty(results)
-        return [keyboard]
+        return keyboard
     endif
     let im = s:ui.im
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
@@ -3315,7 +3317,7 @@ function! s:vimim_sentence_match_cache(keyboard)
     while max > 0
         let max -= 1
         let head = strpart(keyboard, 0, max)
-        let results = s:vimim_get_data_from_cache([head])
+        let results = s:vimim_get_data_from_cache(head)
         if !empty(results)
             break
         else
@@ -3324,9 +3326,9 @@ function! s:vimim_sentence_match_cache(keyboard)
     endwhile
     " -----------------------------------------
     if len(results) > 0
-        return s:vimim_break_string_at(keyboard, max)
+        return keyboard[0 : max-1]
     else
-        return []
+        return 0
     endif
 endfunction
 
@@ -3336,13 +3338,13 @@ function! s:vimim_sentence_match_datafile(keyboard)
     call s:vimim_build_datafile_lines()
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines)
-        return []
+        return 0
     endif
     let keyboard = a:keyboard
     let pattern = '^' . keyboard
     let match_start = match(lines, pattern)
     if match_start > -1
-        return [keyboard]
+        return keyboard
     endif
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     while max > 0
@@ -3357,19 +3359,19 @@ function! s:vimim_sentence_match_datafile(keyboard)
         endif
     endwhile
     if match_start < 0
-        return []
+        return 0
     else
-        return s:vimim_break_string_at(a:keyboard, max)
+        return keyboard[0 : max-1]
     endif
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_get_data_from_datafile(keyboards)
-" -------------------------------------------------
-    if empty(a:keyboards)
+" ------------------------------------------------
+function! s:vimim_get_data_from_datafile(keyboard)
+" ------------------------------------------------
+    let keyboard = a:keyboard
+    if empty(keyboard)
         return []
     endif
-    let keyboard = get(a:keyboards, 0)
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines)
         return []
@@ -3611,13 +3613,13 @@ function! s:vimim_set_data_directory(im)
     endif
 endfunction
 
-" --------------------------------------------------
-function! s:vimim_get_list_from_directory(keyboards)
-" --------------------------------------------------
-    if empty(a:keyboards)
+" -------------------------------------------------
+function! s:vimim_get_list_from_directory(keyboard)
+" -------------------------------------------------
+    let keyboard = a:keyboard
+    if empty(a:keyboard)
         return []
     endif
-    let keyboard = get(a:keyboards, 0)
     let dir = s:vimim_get_valid_directory(s:ui.im)
     let dir2 = s:vimim_private_data_directory
     if empty(dir) && empty(dir2)
@@ -3639,12 +3641,12 @@ function! s:vimim_sentence_match_directory(keyboard)
 " --------------------------------------------------
     let keyboard = a:keyboard
     if keyboard =~ '^oo'
-        return [keyboard]
+        return keyboard
     endif
     let dir = s:vimim_get_valid_directory(s:ui.im)
     let filename = dir . '/' . keyboard
     if filereadable(filename)
-        return [keyboard]
+        return keyboard
     endif
     " --------------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
@@ -3660,22 +3662,10 @@ function! s:vimim_sentence_match_directory(keyboard)
     endwhile
     " --------------------------------------------------
     if filereadable(filename)
-        return s:vimim_break_string_at(keyboard, max)
+        return keyboard[0 : max-1]
     else
-        return []
+        return 0
     endif
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_break_string_at(keyboard, max)
-" ----------------------------------------------
-    let max = a:max
-    let keyboard = a:keyboard
-    let blocks = [keyboard]
-    if max > 0
-        let blocks = [ keyboard[0 : max-1], keyboard[max : -1] ]
-    endif
-    return blocks
 endfunction
 
 " ------------------------------------------------
@@ -4842,21 +4832,24 @@ function! s:vimim_embedded_backend_engine(keyboard)
         return []
     endif
     let results = []
-    let keyboards = []
+    let keyboard2 = 0
     if root =~# "directory"
-        let keyboards = s:vimim_sentence_match_directory(keyboard)
-        let results = s:vimim_get_list_from_directory(keyboards)
+        let keyboard2 = s:vimim_sentence_match_directory(keyboard)
+        let results = s:vimim_get_list_from_directory(keyboard2)
     elseif root =~# "datafile"
         if empty(s:backend[root][im].cache)
-            let keyboards = s:vimim_sentence_match_datafile(keyboard)
-            let results = s:vimim_get_data_from_datafile(keyboards)
+            let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
+            let results = s:vimim_get_data_from_datafile(keyboard2)
         else
-            let keyboards = s:vimim_sentence_match_cache(keyboard)
-            let results = s:vimim_get_data_from_cache(keyboards)
+            let keyboard2 = s:vimim_sentence_match_cache(keyboard)
+            let results = s:vimim_get_data_from_cache(keyboard2)
         endif
     endif
-    if get(s:keyboard_list,1) !~ '[.]' && !empty(keyboards)
-        let s:keyboard_list = copy(keyboards)
+    if empty(keyboard2)
+        let s:keyboard_list = [keyboard]
+    elseif keyboard2 !=# keyboard
+        let last = strpart(keyboard,len(keyboard2))
+        let s:keyboard_list = [keyboard2, last]
     endif
     if !empty(results)
         let results = s:vimim_filter_list(results, keyboard)
