@@ -134,6 +134,7 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     let s:cjk_file = 0
     let s:cjk_lines = []
+    let s:keyboard_list = []
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
@@ -246,14 +247,14 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['english']  = "[0-9a-z'.]"
     let s:im_keycode['4corner']  = "[0-9a-z'.]"
     let s:im_keycode['mycloud']  = "[0-9a-z']"
-    let s:im_keycode['wubi']     = "[0-9a-z']"
     let s:im_keycode['hangul']   = "[0-9a-z']"
     let s:im_keycode['xinhua']   = "[0-9a-z']"
-    let s:im_keycode['sogou']    = "[0-9a-z]"
+    let s:im_keycode['quick']    = "[0-9a-z']"
+    let s:im_keycode['sogou']    = "[a-z]"
     let s:im_keycode['zhengma']  = "[a-z']"
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['taijima']  = "[a-z']"
-    let s:im_keycode['quick']    = "[0-9a-z']"
+    let s:im_keycode['wubi']     = "[a-z']"
     let s:im_keycode['erbi']     = "[a-z'.,;/]"
     let s:im_keycode['wu']       = "[a-z'.]"
     let s:im_keycode['yong']     = "[a-z'.;/]"
@@ -739,15 +740,15 @@ function! s:vimim_start_onekey()
 " ------------------------------
     sil!call s:vimim_backend_initialization_once()
     sil!call s:vimim_frontend_initialization()
+    sil!call s:vimim_onekey_pumvisible_capital_on()
+    sil!call s:vimim_onekey_pumvisible_hjkl_on()
+    sil!call s:vimim_onekey_pumvisible_qwertyuiop_on()
+    sil!call s:vimim_punctuation_navigation_on()
     if pumvisible()
         let msg = "optimize for double ctrl-6"
     else
         sil!call s:vimim_start()
     endif
-    sil!call s:vimim_onekey_pumvisible_capital_on()
-    sil!call s:vimim_onekey_label_navigation_on()
-    sil!call s:vimim_onekey_1234567890_filter_on()
-    sil!call s:vimim_punctuation_navigation_on()
 endfunction
 
 " --------------------------
@@ -874,19 +875,19 @@ function! <SID>vimim_onkey_pumvisible_capital(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" --------------------------------------------
-function! s:vimim_onekey_label_navigation_on()
-" --------------------------------------------
+" -------------------------------------------
+function! s:vimim_onekey_pumvisible_hjkl_on()
+" -------------------------------------------
     let hjkl = 'hjklmnsx<>-_'
     for _ in split(hjkl, '\zs')
         sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_onekey_label_navigation("'._.'")'
+        \ <SID>vimim_onekey_pumvisible_hjkl("'._.'")'
     endfor
 endfunction
 
-" -----------------------------------------------
-function! <SID>vimim_onekey_label_navigation(key)
-" -----------------------------------------------
+" ----------------------------------------------
+function! <SID>vimim_onekey_pumvisible_hjkl(key)
+" ----------------------------------------------
     let hjkl = a:key
     if pumvisible()
         if a:key == 'h'
@@ -925,22 +926,22 @@ function! <SID>vimim_onekey_label_navigation(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_onekey_1234567890_filter_on()
-" ---------------------------------------------
+" -------------------------------------------------
+function! s:vimim_onekey_pumvisible_qwertyuiop_on()
+" -------------------------------------------------
     let labels = s:qwerty
-    if s:cjk_file > 0
+    if s:cjk_file > 0 && s:ui.im == 'pinyin'
         let labels += range(10)
     endif
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_onekey_1234567890_filter("'._.'")<CR>'
+        \  <C-R>=<SID>vimim_onekey_pumvisible_qwertyuiop("'._.'")<CR>'
     endfor
 endfunction
 
-" ----------------------------------------------
-function! <SID>vimim_onekey_1234567890_filter(n)
-" ----------------------------------------------
+" --------------------------------------------------
+function! <SID>vimim_onekey_pumvisible_qwertyuiop(n)
+" --------------------------------------------------
     let label = a:n
     if pumvisible()
         if label =~ '\l'
@@ -1072,7 +1073,7 @@ function! <SID>vimim_chinesemode_action()
         sil!call s:vimim_start()
         sil!call <SID>vimim_toggle_punctuation()
         if s:chinese_input_mode == 'dynamic'
-            sil!call s:vimim_set_seamless()
+   "        sil!call s:vimim_set_seamless()
             if s:ui.im =~ 'wubi' || s:ui.im =~ 'erbi'
                 sil!call s:vimim_dynamic_wubi_auto_trigger()
             else
@@ -1314,13 +1315,13 @@ function! s:vimim_get_chinese_im()
     return statusline . input_style
 endfunction
 
-" --------------------------
-function! s:vimim_label_on()
-" --------------------------
+" ------------------------------------
+function! s:vimim_123456789_label_on()
+" ------------------------------------
     if s:vimim_custom_label < 1
         return
     endif
-    let labels = range(9)
+    let labels = range(1,9)
     if s:chinese_input_mode == 'onekey'
         let abcd_list = split(s:abcd, '\zs')
         let labels += abcd_list
@@ -1330,14 +1331,14 @@ function! s:vimim_label_on()
     endif
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_123456789_label("'._.'")<CR>'
+        \  <C-R>=g:vimim_123456789_label("'._.'")<CR>'
         \.'<C-R>=g:vimim_nonstop_after_insert()<CR>'
     endfor
 endfunction
 
-" -------------------------------------
-function! <SID>vimim_123456789_label(n)
-" -------------------------------------
+" ----------------------------------
+function! g:vimim_123456789_label(n)
+" ----------------------------------
     let label = a:n
     if pumvisible()
         let n = match(s:abcd, label)
@@ -2886,16 +2887,6 @@ function! s:vimim_set_special_im_property()
     endif
 endfunction
 
-" -------------------------------------------
-function! s:vimim_dynamic_wubi_auto_trigger()
-" -------------------------------------------
-    for char in s:valid_keys
-        sil!exe 'inoremap <silent> ' . char . '
-        \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'. char .
-        \'<C-R>=g:vimim()<CR>'
-    endfor
-endfunction
-
 " -----------------------------------------------
 function! s:vimim_wubi_4char_auto_input(keyboard)
 " -----------------------------------------------
@@ -2909,6 +2900,16 @@ function! s:vimim_wubi_4char_auto_input(keyboard)
         let s:keyboard_list = [keyboard]
     endif
     return keyboard
+endfunction
+
+" -------------------------------------------
+function! s:vimim_dynamic_wubi_auto_trigger()
+" -------------------------------------------
+    for char in s:valid_keys
+        sil!exe 'inoremap <silent> ' . char . '
+        \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'. char .
+        \'<C-R>=g:vimim()<CR>'
+    endfor
 endfunction
 
 " -----------------------------------------------
@@ -4707,7 +4708,7 @@ function! s:vimim_start()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_cursor_color(1)
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_label_on()
+    sil!call s:vimim_123456789_label_on()
     sil!call s:vimim_space_on()
     sil!call s:vimim_helper_mapping_on()
 endfunction
@@ -4755,10 +4756,11 @@ function! g:vimim_reset_after_insert()
     return ""
 endfunction
 
-" --------------------------------------
+" -------------------------------------- 
 function! g:vimim_nonstop_after_insert()
 " --------------------------------------
     let key = ""
+        let key = g:vimim()
     if len(s:keyboard_list) > 1
         let key = g:vimim()
     endif
@@ -4788,11 +4790,10 @@ function! g:vimim()
     if empty(key)
         call g:vimim_reset_after_insert()
     else
+        let key = '\<C-X>\<C-U>'
         if s:chinese_input_mode == 'dynamic'
             call g:vimim_reset_after_insert()
-        endif
-        let key = '\<C-X>\<C-U>'
-        if pumvisible()
+        else
             let key .= '\<C-P>\<Down>'
         endif
     endif
