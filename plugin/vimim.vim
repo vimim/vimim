@@ -569,7 +569,7 @@ function! g:vimim_search_next()
     \&& english =~ '\w' && english != '\W' && english !~ '_'
     \&& v:errmsg =~# '^E486: ' && v:errmsg =~# english
         try
-            sil!call s:vimim_get_chinese_from_english(english)
+            sil!call s:vimim_search_chinese_from_english(english)
             echon "/" . english
         catch
             echon "/" . english . " error:" .  v:exception
@@ -578,9 +578,9 @@ function! g:vimim_search_next()
     endif
 endfunction
 
-" --------------------------------------------------
-function! s:vimim_get_chinese_from_english(keyboard)
-" --------------------------------------------------
+" -----------------------------------------------------
+function! s:vimim_search_chinese_from_english(keyboard)
+" -----------------------------------------------------
     let results = []
     let keyboard = tolower(a:keyboard)
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
@@ -607,13 +607,11 @@ function! s:vimim_get_chinese_from_english(keyboard)
     endif
     if empty(results)
         if s:cjk_file > 0
-            let results = s:vimim_match_cjk_file(keyboard)
-            if empty(results)
-                let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
-                if !empty(keyboard2)
-                    let results = s:vimim_match_cjk_file(keyboard2)
-                endif
+            let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
+            if empty(keyboard2)
+                let keyboard2 = keyboard
             endif
+            let results = s:vimim_match_cjk_file(keyboard2)
         endif
     endif
     if empty(results)
@@ -779,8 +777,8 @@ function! s:vimim_start_onekey()
     else
         sil!call s:vimim_start()
     endif
-    sil!call s:vimim_onekey_label_navigation_on()
     sil!call s:vimim_onekey_pumvisible_capital_on()
+    sil!call s:vimim_onekey_label_navigation_on()
     sil!call s:vimim_onekey_1234567890_filter_on()
     sil!call s:vimim_punctuation_navigation_on()
 endfunction
@@ -1150,6 +1148,27 @@ function! s:vimim_get_chinese_im()
     return statusline . input_style
 endfunction
 
+" ----------------------------------------------
+function! s:vimim_onekey_pumvisible_capital_on()
+" ----------------------------------------------
+    for _ in s:AZ_list
+        sil!exe 'inoremap <silent> <expr> '._.'
+        \ <SID>vimim_onkey_pumvisible_capital("'._.'")'
+    endfor
+endfunction
+
+" ------------------------------------------------
+function! <SID>vimim_onkey_pumvisible_capital(key)
+" ------------------------------------------------
+    let hjkl = a:key
+    if pumvisible()
+        let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
+        let hjkl .= tolower(a:key)
+        let hjkl .= '\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
 " --------------------------
 function! s:vimim_label_on()
 " --------------------------
@@ -1160,6 +1179,9 @@ function! s:vimim_label_on()
     if s:chinese_input_mode == 'onekey'
         let abcd_list = split(s:abcd, '\zs')
         let labels += abcd_list
+        if s:cjk_file > 0
+            let labels = abcd_list
+        endif
     endif
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
@@ -1182,27 +1204,6 @@ function! <SID>vimim_123456789_label(n)
         let label = down . yes
     endif
     sil!exe 'sil!return "' . label . '"'
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_onekey_pumvisible_capital_on()
-" ----------------------------------------------
-    for _ in s:AZ_list
-        sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_onkey_pumvisible_capital("'._.'")'
-    endfor
-endfunction
-
-" ------------------------------------------------
-function! <SID>vimim_onkey_pumvisible_capital(key)
-" ------------------------------------------------
-    let hjkl = a:key
-    if pumvisible()
-        let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-        let hjkl .= tolower(a:key)
-        let hjkl .= '\<C-R>=g:vimim()\<CR>'
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
 " --------------------------------------------
@@ -1254,6 +1255,37 @@ function! <SID>vimim_onekey_label_navigation(key)
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_onekey_1234567890_filter_on()
+" ---------------------------------------------
+    let labels = s:qwerty
+    if s:cjk_file > 0
+        let labels += range(10)
+    endif
+    for _ in labels
+        sil!exe'inoremap <silent>  '._.'
+        \  <C-R>=<SID>vimim_onekey_1234567890_filter("'._.'")<CR>'
+    endfor
+endfunction
+
+" ----------------------------------------------
+function! <SID>vimim_onekey_1234567890_filter(n)
+" ----------------------------------------------
+    let label = a:n
+    if pumvisible()
+        if label =~ '\l'
+            let label = match(s:qwerty, a:n)
+        endif
+        if empty(len(s:hjkl_filter))
+            let s:hjkl_filter = label
+        else
+            let s:hjkl_filter .= label
+        endif
+        let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+    endif
+    sil!exe 'sil!return "' . label . '"'
 endfunction
 
 " ------------------------------------
@@ -1539,8 +1571,8 @@ function! s:vimim_cycle_list_from_cache()
     endif
     let results = s:vimim_match_cjk_file(keyboard)
     let matched = match(results, chinese)
-    let fixed_chinese = remove(results, matched)
-    call insert(results, fixed_chinese)
+    let fixed_first_chinese = remove(results, matched)
+    call insert(results, fixed_first_chinese)
     return results
 endfunction
 
@@ -2013,9 +2045,8 @@ function! s:vimim_match_cjk_file(keyboard)
     elseif keyboard =~# '^\l\+\d\+'
 	let digit = substitute(keyboard,'\a','','g')
 	let alpha = substitute(keyboard,'\d','','g')
+        " [sample] free-style input and search: ma7 ma77 ma771 ma7712"
 	let grep = '\s'    . digit . '\d*\s' . alpha
-	let grep = '\s\d*' . digit .    '\s' . alpha
-        " [sample] free-style input and search: ma7712 ma712 ma12 ma2"
     else
         return []
     endif
@@ -2308,33 +2339,6 @@ function! s:vimim_reverse_one_entry(chinese, im)
         call add(bodies, chinese . spaces)
     endfor
     return [join(headers), join(bodies)]
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_onekey_1234567890_filter_on()
-" ---------------------------------------------
-    for _ in s:qwerty
-        sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_onekey_1234567890_filter("'._.'")<CR>'
-    endfor
-endfunction
-
-" ----------------------------------------------
-function! <SID>vimim_onekey_1234567890_filter(n)
-" ----------------------------------------------
-    let label = a:n
-    if pumvisible()
-        if s:cjk_file > 0
-            let label = match(s:qwerty, a:n)
-        endif
-        if empty(len(s:hjkl_filter))
-            let s:hjkl_filter = label
-        else
-            let s:hjkl_filter .= label
-        endif
-        let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-    endif
-    sil!exe 'sil!return "' . label . '"'
 endfunction
 
 " -----------------------------------------
@@ -5000,9 +5004,7 @@ else
         let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
         if !empty(keyboard2)
             let results = s:vimim_match_cjk_file(keyboard2)
-            if empty(len(results))
-                let s:keyboard_list = []
-            else
+            if !empty(len(results))
                 return s:vimim_popupmenu_list(results)
             endif
         endif
