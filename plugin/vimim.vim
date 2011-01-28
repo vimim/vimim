@@ -843,7 +843,7 @@ function! s:vimim_break_dot_by_dot(keyboard)
 " ------------------------------------------
     let keyboard = a:keyboard
     let delimiter = match(keyboard, "[.]")
-    if delimiter < 1 
+    if delimiter < 1
     \|| delimiter > len(keyboard)-2
     \|| match(keyboard, "[.][.]") > -1
         return 0
@@ -1576,6 +1576,21 @@ function! s:vimim_get_filtered_list_from_cache(keyboard)
     return results
 endfunction
 
+" ----------------------------------------------------
+function! s:vimim_make_pair_matched_list(matched_list)
+" ----------------------------------------------------
+    let pair_matched_list = []
+    for line in a:matched_list
+        let words = split(line)
+        let menu = remove(words, 0)
+        for chinese in words
+            let menu_chinese = menu .' '. chinese
+            call add(pair_matched_list, menu_chinese)
+        endfor
+    endfor
+    return pair_matched_list
+endfunction
+
 " ---------------------------------------------------
 function! s:vimim_filter_list(matched_list, keyboard)
 " ---------------------------------------------------
@@ -1595,17 +1610,13 @@ function! s:vimim_filter_list(matched_list, keyboard)
                 call add(pair_matched_list, chinese)
             endif
         else
-            let words = split(line)
-            let menu = remove(words, 0)
-            for chinese in words
-                let chinese = s:vimim_cjk_digit_filter(chinese)
-                if empty(chinese)
-                    continue
-                else
-                    let chinese = menu .' '. chinese
-                    call add(pair_matched_list, chinese)
-                endif
-            endfor
+            let chinese = get(split(line), 1)
+            let chinese = s:vimim_cjk_digit_filter(chinese)
+            if empty(chinese)
+                continue
+            else
+                call add(pair_matched_list, line)
+            endif
         endif
     endfor
     return pair_matched_list
@@ -1648,7 +1659,6 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             let chinese .= strpart(keyboard, len(menu))
-            let s:keyboard_head = strpart(keyboard, 0, len(menu))
         else
             let extra_text = get(split(menu,"_"),0)
         endif
@@ -3680,16 +3690,17 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
     if s:ui.im != 'pinyin' || s:chinese_input_mode == 'dynamic'
         return max
     endif
-    " -------------------------------------------- todo
-    if !empty(s:keyboard_head)
+    " --------------------------------------------
+    let keyboard_head = get(s:keyboard_list,0)
+    if !empty(keyboard_head)
         if s:hjkl_2nd_match > 0
             let s:hjkl_2nd_match = 0
-            let length = len(s:keyboard_head)-1
-            let keyboard = strpart(s:keyboard_head, 0, length)
+            let length = len(keyboard_head)-1
+            let keyboard = strpart(keyboard_head, 0, length)
         endif
     endif
     " --------------------------------------------
-    let msg = " yeyeqifangcao  <C-6> <Space> <Space> < <Space> "
+    let msg = " yeyeqifangcao <C-6> <Space> <Space> _ <Space> "
     let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
     if len(pinyins) > 1
         let last = pinyins[-1:-1]
@@ -4472,7 +4483,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma/vim")
+    if isdirectory("/home/xxma/vim")
         let msg = "VimIM showoff configuration:"
     else
         return
@@ -4730,7 +4741,6 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_h = 0
     let s:hjkl_filter = ""
     let s:hjkl_2nd_match = 0
-    let s:keyboard_head = 0
     let s:keyboard_shuangpin = 0
     let s:keyboard_list = []
     return ""
@@ -4843,6 +4853,9 @@ function! s:vimim_embedded_backend_engine(keyboard)
         else
             let keyboard2 = s:vimim_sentence_match_cache(keyboard)
             let results = s:vimim_get_data_from_cache(keyboard2)
+        endif
+        if !empty(results)
+            let results = s:vimim_make_pair_matched_list(results)
         endif
     endif
     if empty(keyboard2)
