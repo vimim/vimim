@@ -603,6 +603,8 @@ function! s:vimim_search_chinese_from_english(keyboard)
             else
                 let results = s:vimim_get_mycloud_plugin(keyboard)
             endif
+        else
+            let results = s:vimim_embedded_backend_engine(keyboard)
         endif
     endif
     if empty(results)
