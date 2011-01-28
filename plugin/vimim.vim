@@ -635,8 +635,7 @@ function! s:vimim_register_search_pattern(keyboard, results)
     endif
     let results = []
     for chinese in a:results
-        if a:keyboard =~# s:uxxxx
-        \|| s:cjk_single_pair > 0
+        if a:keyboard =~# s:uxxxx || s:cjk_single_pair > 0
             let msg = "for unicode slash search: /u808f /32911"
         elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
@@ -1125,7 +1124,7 @@ endfunction
 
 " ------------------------------------------
 function! s:vimim_dynamic_alphabet_trigger()
-" ------------------------------------------
+" ------------------------------------------ todo
     let not_used_valid_keys = "[0-9.']"
     if s:ui.has_dot == 1
         let not_used_valid_keys = "[0-9]"
@@ -1542,7 +1541,15 @@ call add(s:vimims, VimIM)
 " ---------------------------------------
 function! s:vimim_cycle_list_from_cache()
 " ---------------------------------------
-    let chinese = get(split(get(s:matched_list,0),'\zs'),0)
+    let first_pair = get(s:matched_list,0)
+    let first_list = split(first_pair)
+    let chinese = nr2char(32911)
+    if len(first_list) == 1
+        let chinese = get(first_list, 0)
+        let chinese = get(split(chinese,'\zs'),0)
+    elseif len(first_list) == 2
+        let chinese = get(first_list, 1)
+    endif
     let keyboard = char2nr(chinese)
     if keyboard < 19968 || keyboard > 40869
         return []
@@ -1658,7 +1665,9 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         endif
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
-            let chinese .= strpart(keyboard, len(menu))
+            if keyboard !~# s:show_me_not
+                let chinese .= strpart(keyboard, len(menu))
+            endif
         else
             let extra_text = get(split(menu,"_"),0)
         endif
@@ -4757,7 +4766,7 @@ function! g:vimim_nonstop_after_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" -----------------
+" ----------------- todo
 function! g:vimim()
 " -----------------
     if empty(&completefunc)
