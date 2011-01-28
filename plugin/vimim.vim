@@ -1124,7 +1124,7 @@ endfunction
 
 " ------------------------------------------
 function! s:vimim_dynamic_alphabet_trigger()
-" ------------------------------------------ todo
+" ------------------------------------------
     let not_used_valid_keys = "[0-9.']"
     if s:ui.has_dot == 1
         let not_used_valid_keys = "[0-9]"
@@ -4766,7 +4766,7 @@ function! g:vimim_nonstop_after_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ----------------- todo
+" -----------------
 function! g:vimim()
 " -----------------
     if empty(&completefunc)
@@ -4788,7 +4788,13 @@ function! g:vimim()
     if empty(key)
         call g:vimim_reset_after_insert()
     else
-       let key = '\<C-X>\<C-U>\<C-P>\<Down>'
+        if s:chinese_input_mode == 'dynamic'
+            call g:vimim_reset_after_insert()
+        endif
+        let key = '\<C-X>\<C-U>'
+        if pumvisible()
+            let key .= '\<C-P>\<Down>'
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
