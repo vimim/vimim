@@ -249,7 +249,7 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['hangul']   = "[0-9a-z']"
     let s:im_keycode['xinhua']   = "[0-9a-z']"
     let s:im_keycode['quick']    = "[0-9a-z']"
-    let s:im_keycode['sogou']    = "[a-z]"
+    let s:im_keycode['sogou']    = "[0-9a-z]"
     let s:im_keycode['zhengma']  = "[a-z']"
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['taijima']  = "[a-z']"
@@ -2049,7 +2049,11 @@ function! s:vimim_match_cjk_file(keyboard)
 	let digit = substitute(keyboard,'\a','','g')
 	let alpha = substitute(keyboard,'\d','','g')
         " [sample] free-style input and search: ma7 ma77 ma771 ma7712"
-	let grep = '\s'    . digit . '\d*\s' . alpha
+        " search for line 81 for 乐樂 7290 le4yue4 using le72 yue72
+	let space = 4-len(digit)
+	let grep  = '\s' . digit  
+	let grep .= '\d\{' . space . '}' 
+        let grep .= '\s' . '.*' . alpha
     else
         return []
     endif
@@ -2115,7 +2119,13 @@ function! s:vimim_cjk_nonstop_input(keyboard)
         endif
     endif
     " -----------------------------------------------------
-    return 0
+    if empty(s:backend.datafile)
+    \&& empty(s:backend.directory)
+    \&& empty(s:vimim_cloud_plugin)
+        return keyboard
+    else
+        return 0
+    endif
 endfunction
 
 " ------------------------------------------------
@@ -4492,7 +4502,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma/vim")
+    if isdirectory("/home/xxma/vim")
         let msg = "VimIM showoff configuration:"
     else
         return
