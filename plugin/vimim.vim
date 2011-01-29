@@ -134,7 +134,6 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     let s:cjk_file = 0
     let s:cjk_lines = []
-    let s:keyboard_list = []
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
@@ -1073,7 +1072,7 @@ function! <SID>vimim_chinesemode_action()
         sil!call s:vimim_start()
         sil!call <SID>vimim_toggle_punctuation()
         if s:chinese_input_mode == 'dynamic'
-   "        sil!call s:vimim_set_seamless()
+            sil!call s:vimim_set_seamless()
             if s:ui.im =~ 'wubi' || s:ui.im =~ 'erbi'
                 sil!call s:vimim_dynamic_wubi_auto_trigger()
             else
@@ -2939,10 +2938,10 @@ function! s:vimim_erbi_first_punctuation(keyboard)
     return chinese_punctuation
 endfunction
 
-" http://www.vim.org/scripts/script.php?script_id=2006
 " --------------------
 let s:progressbar = {}
 " --------------------
+" http://www.vim.org/scripts/script.php?script_id=2006
 func! NewSimpleProgressBar(title, max_value, ...)
   if !has("statusline")
     return {}
@@ -4493,7 +4492,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xxma/vim")
+    if isdirectory("/home/xma/vim")
         let msg = "VimIM showoff configuration:"
     else
         return
@@ -4760,7 +4759,6 @@ endfunction
 function! g:vimim_nonstop_after_insert()
 " --------------------------------------
     let key = ""
-        let key = g:vimim()
     if len(s:keyboard_list) > 1
         let key = g:vimim()
     endif
