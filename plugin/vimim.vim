@@ -134,6 +134,7 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     let s:cjk_file = 0
     let s:cjk_lines = []
+    let s:keyboard_list = []
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
@@ -973,7 +974,7 @@ endfunction
 function! g:vimim_esc()
 " ---------------------
     call g:vimim_reset_after_insert()
-    if s:chinese_input_mode != 'static'
+    if s:chinese_input_mode !~ 'static'
         call s:vimim_stop()
     endif
     sil!exe "sil!return '\<Esc>'"
@@ -999,7 +1000,7 @@ function! g:vimim_pumvisible_dump()
     let saved_position = getpos(".")
     " -----------------------------
     for items in s:popupmenu_list
-        if empty(items.menu)
+        if !has_key(items, "menu")
         \|| get(s:keyboard_list,0) =~ s:show_me_not
             let line = printf('%s', items.word)
         else
@@ -1071,14 +1072,14 @@ function! <SID>vimim_chinesemode_action()
     if empty(switch)
         sil!call s:vimim_start()
         sil!call <SID>vimim_toggle_punctuation()
-        if s:chinese_input_mode == 'dynamic'
+        if s:chinese_input_mode =~ 'dynamic'
             sil!call s:vimim_set_seamless()
             if s:ui.im =~ 'wubi' || s:ui.im =~ 'erbi'
                 sil!call s:vimim_dynamic_wubi_auto_trigger()
             else
                 sil!call s:vimim_dynamic_alphabet_trigger()
             endif
-        elseif s:chinese_input_mode == 'static'
+        elseif s:chinese_input_mode =~ 'static'
             sil!call s:vimim_static_alphabet_auto_select()
             if pumvisible()
                 let msg = "<C-\> does nothing on omni menu"
@@ -1241,7 +1242,7 @@ endfunction
 function! IMName()
 " ----------------
 " This function is for user-defined 'stl' 'statusline'
-    if s:chinese_input_mode == 'onekey'
+    if s:chinese_input_mode =~ 'onekey'
         if pumvisible()
             return s:vimim_statusline()
         else
@@ -1321,7 +1322,7 @@ function! s:vimim_123456789_label_on()
         return
     endif
     let labels = range(1,9)
-    if s:chinese_input_mode == 'onekey'
+    if s:chinese_input_mode =~ 'onekey'
         let abcd_list = split(s:abcd, '\zs')
         let labels += abcd_list
         if s:cjk_file > 0
@@ -1462,7 +1463,7 @@ function! <SID>vimim_smart_enter()
     " (3) after Chinese or double Enter => <Enter>
     " (4) after empty line              => <Enter> with invisible <Space>
     " -----------------------------------------------
-    if s:chinese_input_mode == 'onekey'
+    if s:chinese_input_mode =~ 'onekey'
         if has_key(s:punctuations, byte_before)
             let s:smart_enter += 1
             let key = ' '
@@ -1483,7 +1484,7 @@ function! <SID>vimim_smart_enter()
         endif
         let s:smart_enter = 0
     endif
-    if s:chinese_input_mode == 'onekey'
+    if s:chinese_input_mode =~ 'onekey'
         if empty(byte_before)
             let key = s:space . enter
         endif
@@ -1514,7 +1515,7 @@ endfunction
 " --------------------------------------
 function! g:vimim_pumvisible_ctrl_e_on()
 " --------------------------------------
-    if s:chinese_input_mode == 'dynamic'
+    if s:chinese_input_mode =~ 'dynamic'
         let s:pumvisible_ctrl_e = 1
     endif
     return g:vimim_pumvisible_ctrl_e()
@@ -1654,6 +1655,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         \|| s:cjk_single_pair > 0
             let msg = 'make it work for OneKey after any CJK'
         elseif empty(s:vimim_data_directory)
+        \|| s:vimim_cloud_sogou == 1
             let pairs = split(chinese)
             if len(pairs) < 2
                 continue
@@ -1668,7 +1670,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         endif
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
-            if keyboard !~# s:show_me_not
+            if !empty(keyboard) && keyboard !~# s:show_me_not
                 let chinese .= strpart(keyboard, len(menu))
             endif
         else
@@ -1684,8 +1686,10 @@ function! s:vimim_popupmenu_list(pair_matched_list)
                 let label += 1
             endif
         endif
-        " -------------------------------------------------
-        let complete_items["menu"] = extra_text
+        " ------------------------------------------------- todo
+        if !empty(extra_text)
+            let complete_items["menu"] = extra_text
+        endif
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
         call add(popupmenu_list, complete_items)
@@ -2054,8 +2058,8 @@ function! s:vimim_match_cjk_file(keyboard)
         " [sample] free-style input and search: ma7 ma77 ma771 ma7712"
         " search for line 81 for 乐樂 7290 le4yue4 using le72 yue72
 	let space = 4-len(digit)
-	let grep  = '\s' . digit  
-	let grep .= '\d\{' . space . '}' 
+	let grep  = '\s' . digit
+	let grep .= '\d\{' . space . '}'
         let grep .= '\s' . '.*' . alpha
     else
         return []
@@ -2159,7 +2163,7 @@ function! s:vimim_tranfer_chinese() range abort
     sil!call s:vimim_backend_initialization_once()
     if empty(s:cjk_file)
         let msg = "no toggle between simplified and tranditional Chinese"
-    elseif s:chinese_input_mode != 'onekey'
+    elseif s:chinese_input_mode !~ 'onekey'
         let msg = "it only makes sense to do in normal mode"
     elseif &encoding == "utf-8"
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
@@ -2568,7 +2572,7 @@ endfunction
 
 " ---------------------------------------------------
 function! s:vimim_get_pinyin_from_shuangpin(keyboard)
-" ---------------------------------------------------
+" --------------------------------------------------- todo
     let keyboard = a:keyboard
     let keyboard2 = s:vimim_shuangpin_transform(keyboard)
     call s:debugs('shuangpin_in', keyboard)
@@ -2880,10 +2884,6 @@ endfunction
 " -----------------------------------------
 function! s:vimim_set_special_im_property()
 " -----------------------------------------
-    if empty(s:vimim_cloud_sogou)
-        let s:vimim_cloud_sogou = 888
-    endif
-    " -------------------------------------
     if empty(s:vimim_shuangpin) && s:ui.im == 'pinyin'
         let s:quanpin_table = s:vimim_create_quanpin_table()
     endif
@@ -2904,7 +2904,7 @@ function! s:vimim_wubi_4char_auto_input(keyboard)
 " -----------------------------------------------
 " support wubi non-stop typing by auto selection on each 4th
     let keyboard = a:keyboard
-    if s:chinese_input_mode == 'dynamic'
+    if s:chinese_input_mode =~ 'dynamic'
         if len(keyboard) > 4
             let start = 4*((len(keyboard)-1)/4)
             let keyboard = strpart(keyboard, start)
@@ -3869,6 +3869,10 @@ function! s:vimim_scan_backend_cloud()
     if empty(embedded_backend) && empty(s:vimim_cloud_plugin)
         call s:vimim_set_sogou()
     endif
+    " ---------------------------------------------------------
+    if empty(s:vimim_cloud_sogou)
+        let s:vimim_cloud_sogou = 888
+    endif
 endfunction
 
 " ---------------------------
@@ -3963,9 +3967,13 @@ function! s:vimim_do_cloud_if_no_embedded_backend()
 " -------------------------------------------------
     if empty(s:backend.directory)
     \&& empty(s:backend.datafile)
-    \&& empty(s:vimim_cloud_sogou)
-    \&& s:chinese_input_mode != 'onekey'
-        let s:vimim_cloud_sogou = 1
+        if s:chinese_input_mode =~ 'onekey'
+        \&& s:vimim_cloud_sogou == 888
+        \&& s:cjk_file > 0
+            let msg = "use local cjk when cloud is too slow"
+        else
+            let s:vimim_cloud_sogou = 1
+        endif
     endif
 endfunction
 
@@ -4029,7 +4037,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
         return 0
     endif
     let keyboard = a:keyboard
-    if s:chinese_input_mode == 'onekey' && keyboard =~ '[.]'
+    if s:chinese_input_mode =~ 'onekey' && keyboard =~ '[.]'
         return 0
     endif
     if keyboard =~# "[^a-z]"
@@ -4038,7 +4046,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     endif
     let msg = "auto cloud if number of zi is greater than threshold"
     let threshold = len(keyboard)
-    if s:chinese_input_mode == 'static'
+    if s:chinese_input_mode =~ 'static'
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
         let threshold = len(pinyins)
     endif
@@ -4768,14 +4776,15 @@ function! g:vimim_reset_after_insert()
     return ""
 endfunction
 
-" -------------------------------------- 
+" --------------------------------------
 function! g:vimim_nonstop_after_insert()
 " --------------------------------------
     let key = ""
-    if len(s:keyboard_list) > 1
+    if empty(s:keyboard_list)
+        call g:vimim_reset_after_insert()
+    else
         let key = g:vimim()
     endif
-    call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -4791,22 +4800,24 @@ function! g:vimim()
     let key = ""
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ s:valid_key
-        let key = 1
-    elseif s:chinese_input_mode != 'dynamic'
+        let key = '\<C-X>\<C-U>'
+    elseif s:chinese_input_mode =~ 'onekey'
         let byte_before_five = getline(".")[col(".")-6]
         if byte_before =~ '\x' && byte_before_five ==# 'u'
-            let key = 1
+            let key = '\<C-X>\<C-U>'
         endif
     endif
-    if empty(key)
-        call g:vimim_reset_after_insert()
-    else
-        let key = '\<C-X>\<C-U>'
-        if s:chinese_input_mode == 'dynamic'
-            call g:vimim_reset_after_insert()
-        else
-            let key .= '\<C-P>\<Down>'
-        endif
+    call g:vimim_reset_after_insert()
+    let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" -----------------------------
+function! g:vimim_menu_select()
+" -----------------------------
+    let key = ""
+    if pumvisible()
+        let key = '\<C-P>\<Down>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -4839,9 +4850,9 @@ function! s:vimim_helper_mapping_on()
     inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
                   \<C-R>=g:vimim_backspace()<CR>
     " ----------------------------------------------------------
-    if s:chinese_input_mode == 'onekey'
+    if s:chinese_input_mode =~ 'onekey'
         inoremap <Esc> <C-R>=g:vimim_esc()<CR>
-    elseif s:chinese_input_mode == 'static'
+    elseif s:chinese_input_mode =~ 'static'
         inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                       \<C-R>=g:vimim_one_key_correction()<CR>
     endif
@@ -5036,7 +5047,7 @@ else
 
     " [imode] magic 'i': English number => Chinese number
     " ---------------------------------------------------
-    if s:chinese_input_mode != 'dynamic' && s:ui.has_dot < 1
+    if s:chinese_input_mode !~ 'dynamic' && s:ui.has_dot < 1
     \&& s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
         let msg = " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
         let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
@@ -5054,6 +5065,7 @@ else
         if empty(len(results))
             return []
         else
+            let s:keyboard_list = [keyboard]
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5086,6 +5098,7 @@ else
             endif
         else
             let s:no_internet_connection = 0
+            let s:keyboard_list = [keyboard]
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5122,7 +5135,7 @@ else
     " -----------------------------------------
     let s:pattern_not_found += 1
     if s:chinese_input_mode =~ 'onekey'
-        let results = [keyboard]
+        let results = []
     else
         call s:vimim_set_seamless()
     endif
