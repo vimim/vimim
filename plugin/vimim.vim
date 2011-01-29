@@ -1655,6 +1655,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         \|| s:cjk_single_pair > 0
             let msg = 'make it work for OneKey after any CJK'
         elseif empty(s:vimim_data_directory)
+        \|| s:no_internet_connection < 0
         \|| s:vimim_cloud_sogou == 1
             let pairs = split(chinese)
             if len(pairs) < 2
@@ -1686,7 +1687,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
                 let label += 1
             endif
         endif
-        " ------------------------------------------------- todo
+        " -------------------------------------------------
         if !empty(extra_text)
             let complete_items["menu"] = extra_text
         endif
@@ -2572,11 +2573,9 @@ endfunction
 
 " ---------------------------------------------------
 function! s:vimim_get_pinyin_from_shuangpin(keyboard)
-" --------------------------------------------------- todo
+" ---------------------------------------------------
     let keyboard = a:keyboard
     let keyboard2 = s:vimim_shuangpin_transform(keyboard)
-    call s:debugs('shuangpin_in', keyboard)
-    call s:debugs('shuangpin_out', keyboard2)
     if keyboard2 ==# keyboard
         let msg = "no point to do transform"
     else
@@ -4003,7 +4002,7 @@ function! s:vimim_magic_tail(keyboard)
         call add(keyboards, -1)
     elseif magic_tail ==# "'"
         let msg = "trailing apostrophe => forced-cloud"
-        let s:no_internet_connection = -1
+        let s:no_internet_connection -= 2
         let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
         if empty(cloud)
             return []
@@ -4257,8 +4256,6 @@ function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
 "  use the same function to access mycloud by libcall() or system()
     let executable = s:www_executable
-    call s:debugs("cloud", a:cloud)
-    call s:debugs("cmd", a:cmd)
     if s:cloud_plugin_mode == "libcall"
         let arg = s:cloud_plugin_arg
         if empty(arg)
@@ -4514,7 +4511,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma/vim")
-        let msg = "VimIM showoff configuration:"
+        let msg = "VimIM super configuration:"
     else
         return
     endif
@@ -4759,8 +4756,8 @@ function! s:vimim_reset_before_anything()
     let s:cjk_single_pair = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
-    let s:no_internet_connection = 0
     let s:pattern_not_found = 0
+    let s:keyboard_shuangpin = 0
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
@@ -4771,7 +4768,7 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_h = 0
     let s:hjkl_filter = ""
     let s:hjkl_2nd_match = 0
-    let s:keyboard_shuangpin = 0
+    let s:no_internet_connection = 0
     let s:keyboard_list = []
     return ""
 endfunction
@@ -5083,6 +5080,9 @@ else
     if !empty(s:vimim_shuangpin) && empty(s:keyboard_shuangpin)
         let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
     endif
+
+    " [apostrophe] apostrophe is not 2nd class citizen
+    " ------------------------------------------------
     if s:ui.has_dot == 2
         let keyboard = s:vimim_apostrophe(keyboard)
     endif
@@ -5097,7 +5097,7 @@ else
                 let s:no_internet_connection += 1
             endif
         else
-            let s:no_internet_connection = 0
+            let s:no_internet_connection = -1
             let s:keyboard_list = [keyboard]
             return s:vimim_popupmenu_list(results)
         endif
