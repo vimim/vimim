@@ -585,13 +585,24 @@ function! s:vimim_search_chinese_from_english(keyboard)
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
         sil!call s:vimim_backend_initialization_once()
-        if s:cjk_file > 0
-            let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
-            if empty(keyboard2)
-                let keyboard2 = keyboard
-            endif
-            let results = s:vimim_match_cjk_file(keyboard2)
+     "" if s:cjk_file > 0
+     ""     let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
+     ""     if empty(keyboard2)
+     ""         let keyboard2 = keyboard
+     ""     endif
+     ""     let results = s:vimim_match_cjk_file(keyboard2)
+     "" endif
+        "todo
+        let keyboards = s:vimim_search_multiple_cjk(keyboard)
+        if len(keyboards) > 0
+            for char in keyboards
+                let chars = s:vimim_match_cjk_file(char)
+                if len(chars) > 0
+                    call extend(results, chars)
+                endif
+            endfor
         endif
+let g:gg3=results
     else
         let results = [nr2char(ddddd)]
     endif
@@ -2076,6 +2087,34 @@ function! s:vimim_match_cjk_file(keyboard)
     return results
 endfunction
 
+" ---------------------------------------------
+function! s:vimim_search_multiple_cjk(keyboard)
+" ---------------------------------------------
+" search multiple cjk free-style way: /ma77xia36ji3 
+" search multiple cjk standard   way: /m7712x3610j3111 
+" search multiple cjk shortcut   way: /muuqwxeyqpjeqqq
+    let keyboard = a:keyboard
+" --------------------------------------------- todo
+"   let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
+"   if empty(keyboard2)
+"       return []
+"   else
+"       let keyboard = strpart(keyboard,len(keyboard2))
+"   endif
+" ---------------------------------------------
+    let results = []
+    while len(keyboard) > 3
+        let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
+        if empty(keyboard2)
+            break
+        else
+            call add(results, keyboard2)
+            let keyboard = strpart(keyboard,len(keyboard2))
+        endif
+    endwhile
+    return results
+endfunction
+
 " -------------------------------------------
 function! s:vimim_cjk_nonstop_input(keyboard)
 " -------------------------------------------
@@ -2125,7 +2164,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
             return ldddd
         endif
     endif
-    " -----------------------------------------------------
+    " ----------------------------------------------------- todo
     if empty(s:backend.datafile)
     \&& empty(s:backend.directory)
     \&& empty(s:vimim_cloud_plugin)
