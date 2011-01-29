@@ -79,8 +79,7 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_initialize_keycode()
     sil!call s:vimim_set_special_im_property()
     sil!call s:vimim_initialize_frontend_punctuation()
-    sil!call s:vimim_build_datafile_lines()
-    sil!call s:vimim_localization()
+    sil!call s:vimim_load_datafile_lines()
     sil!call s:vimim_initialize_skin()
 endfunction
 
@@ -107,6 +106,7 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
+    sil!call s:vimim_set_localization()
     sil!call s:vimim_load_cjk_file()
     sil!call s:vimim_initialize_keycode()
 endfunction
@@ -676,8 +676,6 @@ function! s:vimim_cjk_property_display(ddddd)
     let unicode = printf('u%04x',ddddd)
     let menu = unicode . s:space . ddddd
     if s:cjk_file > 0
-    \&& ddddd >= 19968
-    \&& ddddd <= 40869
         let chinese = nr2char(ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
@@ -2033,14 +2031,11 @@ function! s:vimim_load_cjk_file()
 " # list of CJK is shown from popup menu using OneKey after CJK
 " # hjkl_h cycle list of unicode, 4corner and pinyin
 " # hjkl_l toggle display of the property of Chinese character
-" ---------------------------------------------------------------------
-    if &encoding != "utf-8"
-        return
-    endif
+" -----------------------------------------------------------------
     let cjk_file = s:path . "vimim.cjk.txt"
     if empty(s:cjk_lines)
         if filereadable(cjk_file)
-            let s:cjk_lines = readfile(cjk_file)
+            let s:cjk_lines = s:vimim_readfile(cjk_file)
         endif
     endif
     if len(s:cjk_lines) == 20902
@@ -2056,26 +2051,26 @@ function! s:vimim_match_cjk_file(keyboard)
     let keyboard = a:keyboard
     let grep = ""
     if keyboard !~# '\d' || keyboard !~# '\l'
-	let grep = '\s' . keyboard
+        let grep = '\s' . keyboard
     elseif keyboard =~# '^\l\+\d\+'
-	let digit = substitute(keyboard,'\a','','g')
-	let alpha = substitute(keyboard,'\d','','g')
+        let digit = substitute(keyboard,'\a','','g')
+        let alpha = substitute(keyboard,'\d','','g')
         " [sample] free-style input and search: ma7 ma77 ma771 ma7712"
         " search for line 81 for 乐樂 7290 le4yue4 using le72 yue72
-	let space = 4-len(digit)
-	let grep  = '\s' . digit
-	let grep .= '\d\{' . space . '}'
+        let space = 4-len(digit)
+        let grep  = '\s' . digit
+        let grep .= '\d\{' . space . '}'
         let grep .= '\s' . '.*' . alpha
     else
         return []
     endif
     let results = []
-    let matched = match(s:cjk_lines, grep)
-    while matched > -1
-        let ddddd = matched + 19968
-        let chinese = nr2char(ddddd)
+    let line = match(s:cjk_lines, grep)
+    while line > -1
+        let values = split(s:cjk_lines[line])
+        let chinese = get(split(get(values,0),'\zs'),0)
         call add(results, chinese)
-        let matched = match(s:cjk_lines, grep, matched+1)
+        let line = match(s:cjk_lines, grep, line+1)
         let s:cjk_single_pair += 1
     endwhile
     return results
@@ -2192,8 +2187,6 @@ function! s:vimim_tranfer_chinese() range abort
     sil!call s:vimim_backend_initialization_once()
     if empty(s:cjk_file)
         let msg = "no toggle between simplified and tranditional Chinese"
-    elseif s:chinese_input_mode !~ 'onekey'
-        let msg = "it only makes sense to do in normal mode"
     elseif &encoding == "utf-8"
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
     endif
@@ -2261,9 +2254,9 @@ function! s:vimim_visual_ctrl_6_update()
 " purpose: update one entry to the directory database
 " input example (one line, within vim): cjjp 超级简拼
 " action: (1) put cursor on space (2) type v (3) type ctrl_6
-" result: (1) create file from "left";
-"         (2) update content from "right"
-"         (3) append the entry to the private data file
+" result: (A) create file from "left";
+"         (B) update content from "right"
+"         (C) append the entry to the private data file
     let current_line = getline(".")
     let fields = split(current_line)
     let left = get(fields,0)
@@ -2353,7 +2346,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
     for chinese in split(a:chinese, '\zs')
         let ddddd = char2nr(chinese)
         if ddddd < 19968 || ddddd > 40869
-          continue
+            continue
         endif
         let head = ''
         if a:im == 'unicode'
@@ -2470,7 +2463,7 @@ function! s:vimim_quanpin_transform(keyboard)
 " -------------------------------------------
     let qptable = s:quanpin_table
     let item = a:keyboard
-    let pinyinstr = ""     |" output string
+    let pinyinstr = ""
     let index = 0
     let lenitem = len(item)
     while index < lenitem
@@ -2924,6 +2917,9 @@ function! s:vimim_set_special_im_property()
         let s:ui.has_dot = 1  "| dot in datafile
         let s:vimim_chinese_punctuation = -9
     endif
+    if s:backend[s:ui.root][s:ui.im].datafile =~# "quote"
+        let s:ui.has_dot = 2  "| has_apostrophe_in_datafile
+    endif
 endfunction
 
 " -----------------------------------------------
@@ -3062,32 +3058,20 @@ function! CJK()
     return ""
 endfunction
 
-" ------------------------------
-function! s:vimim_localization()
-" ------------------------------
-    let datafile_fenc_chinese = 0
-    if s:ui.root =~ 'datafile' || s:ui.root =~ 'directory'
-        if s:backend[s:ui.root][s:ui.im].datafile =~# "chinese"
-            let datafile_fenc_chinese = 1
-        endif
-        if s:backend[s:ui.root][s:ui.im].datafile =~# "quote"
-            let s:ui.has_dot = 2  "| has_apostrophe_in_datafile
-        endif
-    endif
-    " ------------ ----------------- --------------
-    " vim encoding datafile encoding s:localization
-    " ------------ ----------------- --------------
-    "   utf-8          utf-8                0
-    "   utf-8          chinese              1
-    "   chinese        utf-8                2
-    "   chinese        chinese              8
-    "   utf-8          utf-8                0
-    " ------------ ----------------- --------------
+" ----------------------------------
+function! s:vimim_set_localization()
+" ----------------------------------
+" vim encoding datafile encoding s:localization
+" ------------ ----------------- --------------
+"   utf-8          utf-8                0
+"   utf-8          chinese              1
+"   chinese        utf-8                2
+"   chinese        chinese              8
+"   utf-8          utf-8                0
+" ------------ ----------------- --------------
     if &encoding == "utf-8"
-        if datafile_fenc_chinese > 0
-            let s:localization = 1
-        endif
-    elseif empty(datafile_fenc_chinese)
+        let s:localization = 1
+    else
         let s:localization = 2
     endif
     if s:localization > 0
@@ -3097,6 +3081,25 @@ function! s:vimim_localization()
     if &encoding == "utf-8"
         let s:multibyte = 3
     endif
+endfunction
+
+" ----------------------------------
+function! s:vimim_readfile(datafile)
+" ----------------------------------
+    let datafile = a:datafile
+    if !filereadable(datafile)
+        return []
+    endif
+    let lines = readfile(datafile)
+    if s:localization > 0
+        let  results = []
+        for line in lines
+            let line = s:vimim_i18n_read(line)
+            call add(results, line)
+        endfor
+        let lines = results
+    endif
+    return lines
 endfunction
 
 " -------------------------------
@@ -3240,7 +3243,6 @@ function! s:vimim_set_datafile(im)
     if !filereadable(datafile) || isdirectory(datafile)
         return
     endif
-    " ----------------------------------------
     let im = s:vimim_get_valid_im_name(im)
     let s:ui.root = "datafile"
     let s:ui.im = im
@@ -3258,26 +3260,41 @@ function! s:vimim_set_datafile(im)
     endif
 endfunction
 
-" --------------------------------------
-function! s:vimim_build_datafile_lines()
-" --------------------------------------
+" -------------------------------------
+function! s:vimim_load_datafile_lines()
+" -------------------------------------
     let im = s:ui.im
     if s:backend[s:ui.root][im].root != "datafile"
         return
     endif
     let datafile = s:backend.datafile[im].datafile
-    if len(datafile) > 1 && filereadable(datafile)
+    if !empty(datafile) && filereadable(datafile)
         if empty(s:backend.datafile[im].lines)
-            let s:backend.datafile[im].lines = readfile(datafile)
-            if im == 'pinyin'
-                let digit = s:path . "vimim.4corner.txt"
-                if filereadable(digit)
-                    let digit_lines = readfile(digit)
-                    let s:backend.datafile[im].lines += digit_lines
-                endif
-            endif
+            let lines = s:vimim_readfile(datafile)
+            let s:backend.datafile[im].lines = lines
         endif
     endif
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_load_datafile_cache(progressbar)
+" ------------------------------------------------
+    if empty(s:backend[s:ui.root][s:ui.im].cache)
+        let msg = "cache only needs to be loaded once"
+    else
+        return
+    endif
+    for line in s:backend[s:ui.root][s:ui.im].lines
+        call a:progressbar.incr(1)
+        let oneline_list = split(line)
+        let menu = remove(oneline_list, 0)
+        if has_key(s:backend[s:ui.root][s:ui.im].cache, menu)
+            let line_list = s:backend[s:ui.root][s:ui.im].cache[menu]
+            call extend(line_list, oneline_list)
+            let line = join(line_list)
+        endif
+        let s:backend[s:ui.root][s:ui.im].cache[menu] = [line]
+    endfor
 endfunction
 
 " ---------------------------------------------------------
@@ -3394,7 +3411,7 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_sentence_match_datafile(keyboard)
 " -------------------------------------------------
-    call s:vimim_build_datafile_lines()
+    call s:vimim_load_datafile_lines()
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines)
         return 0
@@ -3493,79 +3510,10 @@ function! s:vimim_cache_loading_progressbar()
     let progress = "VimIM loading " . title
     let progressbar = NewSimpleProgressBar(progress, total)
     try
-        sil!call s:vimim_loading_datafile_cache(progressbar)
+        sil!call s:vimim_load_datafile_cache(progressbar)
     finally
         call progressbar.restore()
     endtry
-endfunction
-
-" ---------------------------------------------------
-function! s:vimim_loading_datafile_cache(progressbar)
-" ---------------------------------------------------
-    if empty(s:backend[s:ui.root][s:ui.im].cache)
-        let msg = " cache only needs to be loaded once "
-    else
-        return
-    endif
-    for line in s:backend[s:ui.root][s:ui.im].lines
-        call a:progressbar.incr(1)
-        if s:localization > 0
-            let line = s:vimim_i18n_read(line)
-        endif
-        let oneline_list = split(line)
-        let menu = remove(oneline_list, 0)
-        if has_key(s:backend[s:ui.root][s:ui.im].cache, menu)
-            let line_list = s:backend[s:ui.root][s:ui.im].cache[menu]
-            call extend(line_list, oneline_list)
-            let line = join(line_list)
-        endif
-        let s:backend[s:ui.root][s:ui.im].cache[menu] = [line]
-    endfor
-endfunction
-
-" ======================================== }}}
-let VimIM = " ====  Backend==Dir      ==== {{{"
-" ============================================
-call add(s:vimims, VimIM)
-
-" -------------------------------------------------
-function! s:vimim_scan_backend_embedded_directory()
-" -------------------------------------------------
-    if empty(s:vimim_data_directory)
-         let s:vimim_data_directory = s:path . "vimim/"
-    endif
-    if isdirectory(s:vimim_data_directory)
-        let msg = " use directory as backend database "
-    else
-        let s:vimim_data_directory = 0
-        let return
-    endif
-    " -----------------------------------
-    for im in s:all_vimim_input_methods
-        let dir = s:vimim_get_valid_directory(im)
-        if empty(dir)
-            continue
-        else
-            break
-        endif
-    endfor
-    " -----------------------------------
-    if empty(dir)
-        return
-    endif
-    let im = s:vimim_get_valid_im_name(im)
-    let s:ui.root = "directory"
-    let s:ui.im = im
-    let datafile = s:vimim_data_directory . im
-    call add(s:ui.frontends, [s:ui.root, s:ui.im])
-    if empty(s:backend.directory)
-        let s:backend.directory[im] = s:vimim_one_backend_hash()
-        let s:backend.directory[im].root = "directory"
-        let s:backend.directory[im].datafile = dir
-        let s:backend.directory[im].im = im
-        let s:backend.directory[im].keycode = s:im_keycode[im]
-        let s:backend.directory[im].chinese = s:vimim_chinese(im)
-    endif
 endfunction
 
 " -------------------------------------------
@@ -3644,6 +3592,51 @@ function! s:vimim_get_im_from_buffer_name(filename)
     return im
 endfunction
 
+" ======================================== }}}
+let VimIM = " ====  Backend==Dir      ==== {{{"
+" ============================================
+call add(s:vimims, VimIM)
+
+" -------------------------------------------------
+function! s:vimim_scan_backend_embedded_directory()
+" -------------------------------------------------
+    if empty(s:vimim_data_directory)
+         let s:vimim_data_directory = s:path . "vimim/"
+    endif
+    if isdirectory(s:vimim_data_directory)
+        let msg = " use directory as backend database "
+    else
+        let s:vimim_data_directory = 0
+        let return
+    endif
+    " -----------------------------------
+    for im in s:all_vimim_input_methods
+        let dir = s:vimim_get_valid_directory(im)
+        if empty(dir)
+            continue
+        else
+            break
+        endif
+    endfor
+    " -----------------------------------
+    if empty(dir)
+        return
+    endif
+    let im = s:vimim_get_valid_im_name(im)
+    let s:ui.root = "directory"
+    let s:ui.im = im
+    let datafile = s:vimim_data_directory . im
+    call add(s:ui.frontends, [s:ui.root, s:ui.im])
+    if empty(s:backend.directory)
+        let s:backend.directory[im] = s:vimim_one_backend_hash()
+        let s:backend.directory[im].root = "directory"
+        let s:backend.directory[im].datafile = dir
+        let s:backend.directory[im].im = im
+        let s:backend.directory[im].keycode = s:im_keycode[im]
+        let s:backend.directory[im].chinese = s:vimim_chinese(im)
+    endif
+endfunction
+
 " ---------------------------------------
 function! s:vimim_get_valid_directory(im)
 " ---------------------------------------
@@ -3689,7 +3682,8 @@ function! s:vimim_get_list_from_directory(keyboard)
     endif
     let filename = dir . '/' . keyboard
     if filereadable(filename)
-        return readfile(filename)
+        let lines = s:vimim_readfile(filename)
+        return lines
     else
         return []
     endif
@@ -3707,7 +3701,6 @@ function! s:vimim_sentence_match_directory(keyboard)
     if filereadable(filename)
         return keyboard
     endif
-    " --------------------------------------------------
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
     while max > 1
         let max -= 1
@@ -3719,7 +3712,6 @@ function! s:vimim_sentence_match_directory(keyboard)
             continue
         endif
     endwhile
-    " --------------------------------------------------
     if filereadable(filename)
         return keyboard[0 : max-1]
     else
@@ -3739,7 +3731,6 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
     if s:ui.im != 'pinyin' || s:chinese_input_mode == 'dynamic'
         return max
     endif
-    " --------------------------------------------
     let keyboard_head = get(s:keyboard_list,0)
     if !empty(keyboard_head)
         if s:hjkl_2nd_match > 0
@@ -3748,7 +3739,6 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
             let keyboard = strpart(keyboard_head, 0, length)
         endif
     endif
-    " --------------------------------------------
     let msg = " yeyeqifangcao <C-6> <Space> <Space> _ <Space> "
     let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
     if len(pinyins) > 1
@@ -3791,10 +3781,9 @@ endfunction
 " -----------------------------------------
 function! s:vimim_mkdir(option, dir, lines)
 " -----------------------------------------
-" Goal: create one file per entry based on vimim.xxx.txt
-" example file: /home/vimim/pinyin/jjjj
-" (1) $cd $VIM/vimfiles/plugin/vimim/
-" (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir1()
+" purpose: create one file per entry based on vimim.pinyin.txt
+"    (1) $cd $VIM/vimfiles/plugin/vimim/
+"    (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir1()
 " --------------------------------------------------
     let dir = a:dir
     let lines = a:lines
@@ -3809,21 +3798,15 @@ function! s:vimim_mkdir(option, dir, lines)
         let lines = readfile(bufname("%"))
     endif
     let option = a:option
+    " ----------------------------------------------
     for line in lines
         let entries = split(line)
         let key = get(entries, 0)
-        if dir =~ 'unicode'
-            let key = printf('u%04x',char2nr(key))
-        elseif match(key, "'") > -1
+        if match(key, "'") > -1
             let key = substitute(key,"'",'','g')
         endif
         let key_as_filename = dir . "/" . key
         let chinese_list = entries[1:]
-        " ----------------------------------------
-        " u99ac 7132
-        " u99ac ma3
-        " u99ac 馬 horse; surname; KangXi radical 187
-        " ----------------------------------------
         let first_list = []
         let second_list = []
         if filereadable(key_as_filename)
