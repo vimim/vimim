@@ -2118,7 +2118,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
             return s:vimim_keyboard_blocks(keyboard, block)
         endif
     endif
-    " -----------------------------------------------------
+    " ---------------------------------------
     let delimiter = match(keyboard, '^\l\+\d\+')
     if empty(delimiter)
         " [sample] (free-style) si60jiao27ha6ma17
@@ -2134,7 +2134,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
             endif
         endif
     endif
-    " -----------------------------------------------------
+    " ---------------------------------------
     let block = 5
     if len(keyboard) % block < 1 && keyboard !~ '\d'
         " [sample] (every 1+4=5 chars) sypwqjwuwwhyppwmquyw
@@ -2154,7 +2154,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
             return ldddd
         endif
     endif
-    " ----------------------------------------------------- todo
+    " ---------------------------------------
     if empty(s:backend.datafile)
     \&& empty(s:backend.directory)
     \&& empty(s:vimim_cloud_plugin)
