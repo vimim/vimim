@@ -23,7 +23,7 @@ let VimIM = " ====  Introduction      ==== {{{"
 "     Author: vimim <vimim@googlegroups.com>
 "    License: GNU Lesser General Public License
 "    Readme:  VimIM is a Vim plugin designed as an independent IM
-"             (Input Method) to support the input of multi-byte.
+"             (Input Method) to support CJK search and input
 " -----------------------------------------------------------
 "  Features: * "Plug & Play": as a client to VimIM embedded backends
 "            * "Plug & Play": as a client to "myCloud" and "Cloud"
@@ -31,7 +31,7 @@ let VimIM = " ====  Introduction      ==== {{{"
 "            * input Chinese independently without changing mode
 "            * support "wubi", "erbi", "boshiamy", "cangjie", "taijima"
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
-"            * invent vimim.cjk.txt as swiss army Chinese database
+"            * invent vimim.cjk.txt as a swiss army Chinese database
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -48,14 +48,9 @@ let VimIM = " ====  Introduction      ==== {{{"
 "  (1) [external] myCloud: http://pim-cloud.appspot.com
 "  (2) [external]   Cloud: http://web.pinyin.sogou.com
 "  (3) [embedded] VimIM:   http://vimim.googlecode.com
-"      (3.1) a datafile:   $VIM/vimfiles/plugin/vimim.pinyin.txt
-"      (3.2) a directory:  $VIM/vimfiles/plugin/vimim/pinyin/
-"  -----------------------------------------------------------
-" "VimIM Installation"
-"           drop this file to:    plugin/: plugin/vimim.vim
-"  [option] drop a database to:   plugin/vimim.cjk.txt
-"  [option] drop a datafile to:   plugin/vimim.pinyin.txt
-"  [option] drop a directory to:  plugin/vimim/pinyin/
+"      (3.1) a datafile:   $VIM/vimfiles/plugin/vimim.cjk.txt
+"      (3.2) a datafile:   $VIM/vimfiles/plugin/vimim.pinyin.txt
+"      (3.3) a directory:  $VIM/vimfiles/plugin/vimim/pinyin/
 " -----------------------------------------------------------
 
 let s:vimims = [VimIM]
@@ -3070,7 +3065,9 @@ function! s:vimim_set_localization()
 "   utf-8          utf-8                0
 " ------------ ----------------- --------------
     if &encoding == "utf-8"
-        let s:localization = 1
+        if len("datafile_fenc_chinese") > 20110129
+            let s:localization = 1
+        endif
     else
         let s:localization = 2
     endif
@@ -3682,6 +3679,7 @@ function! s:vimim_get_list_from_directory(keyboard)
     endif
     let filename = dir . '/' . keyboard
     if filereadable(filename)
+    let g:gg= s:localization
         let lines = s:vimim_readfile(filename)
         return lines
     else
