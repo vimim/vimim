@@ -586,6 +586,17 @@ function! s:vimim_search_chinese_from_english(keyboard)
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
         sil!call s:vimim_backend_initialization_once()
+        if s:cjk_file > 0
+            let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
+            if empty(keyboard2)
+                let keyboard2 = keyboard
+            endif
+            let results = s:vimim_match_cjk_file(keyboard2)
+        endif
+    else
+        let results = [nr2char(ddddd)]
+    endif
+    if empty(results)
         if !empty(s:vimim_shuangpin)
             sil!call s:vimim_initialize_shuangpin()
             let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
@@ -593,8 +604,6 @@ function! s:vimim_search_chinese_from_english(keyboard)
         if s:vimim_cloud_sogou == 1
             let results = s:vimim_get_cloud_sogou(keyboard, 1)
         endif
-    else
-        let results = [nr2char(ddddd)]
     endif
     if empty(results)
         if empty(s:backend.datafile) && empty(s:backend.directory)
@@ -605,15 +614,6 @@ function! s:vimim_search_chinese_from_english(keyboard)
             endif
         else
             let results = s:vimim_embedded_backend_engine(keyboard)
-        endif
-    endif
-    if empty(results)
-        if s:cjk_file > 0
-            let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
-            if empty(keyboard2)
-                let keyboard2 = keyboard
-            endif
-            let results = s:vimim_match_cjk_file(keyboard2)
         endif
     endif
     if empty(results)
