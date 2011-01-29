@@ -1641,8 +1641,11 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     endif
     let label = 1
     let popupmenu_list = []
-    let keyboard = join(s:keyboard_list,"")
     let menu = get(s:keyboard_list,0)
+    let keyboard = join(s:keyboard_list,"")
+    if keyboard[-1:-1] == "'"
+        let keyboard = strpart(keyboard,0,len(keyboard)-1)
+    endif
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
@@ -4502,7 +4505,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xxma/vim")
+    if isdirectory("/home/xma/vim")
         let msg = "VimIM showoff configuration:"
     else
         return
