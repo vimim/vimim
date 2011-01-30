@@ -148,7 +148,6 @@ function! s:vimim_set_encoding()
     endif
 endfunction
 
-
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
@@ -1578,10 +1577,10 @@ function! s:vimim_cycle_list_from_cache()
     endif
     let keyboard = char2nr(chinese)
     if s:hjkl_h%3 == 1
+        let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
+    elseif s:hjkl_h%3 == 2
         let keyboard = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
         let keyboard = strpart(keyboard,0,match(keyboard,'\d'))
-    elseif s:hjkl_h%3 == 2
-        let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
     endif
     let results = s:vimim_match_cjk_file(keyboard)
     if !empty(results)
@@ -1673,7 +1672,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         if keyboard =~# s:uxxxx
         \|| keyboard =~# "^vimim"
         \|| s:cjk_match_found > 0
-            let msg = 'make it work for OneKey after any CJK'
+            let msg = 'pair_matched_list has only single item'
         elseif empty(s:vimim_data_directory)
         \|| s:no_internet_connection < 0
         \|| s:vimim_cloud_sogou == 1
@@ -3115,6 +3114,8 @@ function! s:vimim_get_unicode_list(keyboard, height)
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
         return []
+    else
+        let s:keyboard_list = [ddddd]
     endif
     let words = []
     let height = &pumheight * a:height
