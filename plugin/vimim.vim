@@ -568,7 +568,6 @@ function! g:vimim_search_next()
         catch
             echon "/" . english . " error:" .  v:exception
         endtry
-        let s:cjk_filter = ""
     endif
 endfunction
 
@@ -635,7 +634,7 @@ function! s:vimim_register_search_pattern(keyboard, results)
     endif
     let results = []
     for chinese in a:results
-        if a:keyboard =~# s:uxxxx || s:cjk_single_pair > 0
+        if a:keyboard =~# s:uxxxx || s:cjk_match_found > 0
             let msg = "for unicode slash search: /u808f /32911"
         elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
@@ -766,6 +765,7 @@ function! g:vimim_space()
     let space = " "
     if pumvisible()
         let space = "\<C-Y>"
+        let s:pumvisible_yes = 1
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
@@ -927,7 +927,7 @@ endfunction
 function! s:vimim_onekey_pumvisible_qwertyuiop_on()
 " -------------------------------------------------
     let labels = s:qwerty
-    if s:cjk_file > 0 
+    if s:cjk_file > 0
         let labels += range(10)
     endif
     for _ in labels
@@ -1325,6 +1325,7 @@ function! s:vimim_123456789_label_on()
         if s:cjk_file > 0
             let labels = abcd_list
         endif
+        call remove(labels, "'")
     endif
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
@@ -1344,6 +1345,7 @@ function! g:vimim_123456789_label(n)
         endif
         let down = repeat("\<Down>", n)
         let yes = "\<C-Y>"
+        let s:pumvisible_yes = 1
         let label = down . yes
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -1495,6 +1497,7 @@ function! g:vimim_pumvisible_ctrl_y()
     let key = ""
     if pumvisible()
         let key = "\<C-Y>"
+        let s:pumvisible_yes = 1
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1562,22 +1565,6 @@ function! s:vimim_cycle_list_from_cache()
     let matched = match(results, chinese)
     let fixed_first_chinese = remove(results, matched)
     call insert(results, fixed_first_chinese)
-    return results
-endfunction
-
-" ------------------------------------------------------
-function! s:vimim_get_filtered_list_from_cache(keyboard)
-" ------------------------------------------------------
-    let keyboard = a:keyboard
-    let results = s:vimim_filter_list(s:matched_list, keyboard)
-    if empty(len(results)) && len(s:cjk_filter) > 0 
-        let number = s:cjk_filter
-        let number = strpart(number, 0, len(number)-1)
-        if len(number) > 0
-            let s:cjk_filter = number
-            let results = s:vimim_filter_list(s:matched_list, keyboard)
-        endif
-    endif
     return results
 endfunction
 
@@ -1649,7 +1636,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     " ------------------------------
         if keyboard =~# s:uxxxx
         \|| keyboard =~# "^vimim"
-        \|| s:cjk_single_pair > 0
+        \|| s:cjk_match_found > 0
             let msg = 'make it work for OneKey after any CJK'
         elseif empty(s:vimim_data_directory)
         \|| s:no_internet_connection < 0
@@ -1851,6 +1838,7 @@ function! <SID>vimim_punctuation_mapping(key)
     let value = s:vimim_get_chinese_punctuation(a:key)
     if pumvisible()
         let value = "\<C-Y>" . value
+        let s:pumvisible_yes = 1
     endif
     sil!exe 'sil!return "' . value . '"'
 endfunction
@@ -2066,7 +2054,7 @@ function! s:vimim_match_cjk_file(keyboard)
         let chinese = get(split(get(values,0),'\zs'),0)
         call add(results, chinese)
         let line = match(s:cjk_lines, grep, line+1)
-        let s:cjk_single_pair += 1
+        let s:cjk_match_found += 1
     endwhile
     return results
 endfunction
@@ -2074,8 +2062,8 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_keyboard_search_block(keyboard)
 " -----------------------------------------------
-" search multiple cjk, free-style way: /ma77xia36ji3 
-" search multiple cjk, standard   way: /m7712x3610j3111 
+" search multiple cjk, free-style way: /ma77xia36ji3
+" search multiple cjk, standard   way: /m7712x3610j3111
 " search multiple cjk, shortcut   way: /muuqwxeyqpjeqqq
 " -----------------------------------------------
     if empty(s:cjk_file)
@@ -2950,6 +2938,7 @@ function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
         let key = "\<C-E>"
         if empty(len(get(s:keyboard_list,0))%4)
             let key = "\<C-Y>"
+            let s:pumvisible_yes = 1
             let s:keyboard_list = []
         endif
     endif
@@ -3679,7 +3668,6 @@ function! s:vimim_get_list_from_directory(keyboard)
     endif
     let filename = dir . '/' . keyboard
     if filereadable(filename)
-    let g:gg= s:localization
         let lines = s:vimim_readfile(filename)
         return lines
     else
@@ -4761,9 +4749,8 @@ endfunction
 " ---------------------------------------
 function! s:vimim_reset_before_anything()
 " ---------------------------------------
-    let s:cjk_filter = ""
-    let s:cjk_single_pair = 0
     let s:matched_list = []
+    let s:keyboard_list = []
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
     let s:pattern_not_found = 0
@@ -4777,8 +4764,10 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_l = 0
     let s:hjkl_h = 0
     let s:hjkl_2nd_match = 0
+    let s:cjk_match_found = 0
+    let s:cjk_filter = ""
     let s:no_internet_connection = 0
-    let s:keyboard_list = []
+    let s:pumvisible_yes = 0
     return ""
 endfunction
 
@@ -4786,11 +4775,10 @@ endfunction
 function! g:vimim_nonstop_after_insert()
 " --------------------------------------
     let key = ""
-    if empty(s:keyboard_list)
-        call g:vimim_reset_after_insert()
-    else
+    if s:pumvisible_yes > 0
         let key = g:vimim()
     endif
+    call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -4813,7 +4801,6 @@ function! g:vimim()
             let key = '\<C-X>\<C-U>'
         endif
     endif
-    call g:vimim_reset_after_insert()
     let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -4902,11 +4889,13 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let results = s:vimim_make_pair_matched_list(results)
         endif
     endif
-    if empty(keyboard2)
-        let s:keyboard_list = [keyboard]
-    elseif keyboard2 !=# keyboard
-        let last = strpart(keyboard,len(keyboard2))
-        let s:keyboard_list = [keyboard2, last]
+    if len(s:keyboard_list) < 2
+        if empty(keyboard2)
+            let s:keyboard_list = [keyboard]
+        elseif len(keyboard2) < len(keyboard)
+            let last = strpart(keyboard,len(keyboard2))
+            let s:keyboard_list = [keyboard2, last]
+        endif
     endif
     if !empty(results)
         let results = s:vimim_filter_list(results, keyboard)
@@ -4972,9 +4961,7 @@ if a:start
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
     let s:start_column_before = start_column
-    if empty(s:keyboard_list)
-        let s:keyboard_list = [strpart(current_line,start_column,len)]
-    endif
+    let s:keyboard_list = [strpart(current_line,start_column,len)]
     return start_column
 
 else
@@ -5011,22 +4998,15 @@ else
         endif
     endif
 
-    " [filter] use cache for all vimim backends
+    " [hjkl_h] cycle 4corner and pinyin display
     " -----------------------------------------
-    if s:cjk_file > 0 && len(s:matched_list) > 1
-        if len(s:cjk_filter) > 0
-            let results = s:vimim_get_filtered_list_from_cache(keyboard)
-            if empty(len(results))
-                let s:cjk_filter = ""
-            else
-                return s:vimim_popupmenu_list(results)
-            endif
-        endif
-        if s:hjkl_h % 3 > 0
-            let results = s:vimim_cycle_list_from_cache()
-            if !empty(results)
-                return s:vimim_popupmenu_list(results)
-            endif
+    if s:chinese_input_mode =~ 'onekey'
+    \&& len(s:matched_list) > 1
+    \&& s:cjk_file > 0
+    \&& s:hjkl_h % 3 > 0
+        let results = s:vimim_cycle_list_from_cache()
+        if !empty(results)
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
@@ -5044,7 +5024,7 @@ else
 
     " [dot-by-dot] VimIM classic:  i.have.a.dream
     " --------------------------------------------
-    if s:ui.has_dot != 1 && s:chinese_input_mode !~ 'dynamic'
+    if s:ui.has_dot != 1 && s:chinese_input_mode =~ 'onekey'
         let keyboard2 = s:vimim_break_dot_by_dot(keyboard)
         if !empty(keyboard2)
             let keyboard = copy(keyboard2)
