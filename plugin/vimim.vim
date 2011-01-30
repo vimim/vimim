@@ -4970,6 +4970,7 @@ if a:start
 
 else
 
+    let results = []
     let keyboard = s:vimim_get_valid_keyboard(a:keyboard)
     if empty(keyboard)
         return
@@ -4993,12 +4994,12 @@ else
         endif
     endif
 
-    " [filter] use cache for hjkl_h and digit filter
-    " ----------------------------------------------
+    " [filter] use cache to play within popup menu
+    " --------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-    \&& s:cjk_file > 0
     \&& len(s:matched_list) > 1
-        if len(s:cjk_filter) > 0
+        " 1234567890/qwertyuiop as digit filter
+        if len(s:cjk_filter) > 0 && s:cjk_file > 0
             let results = s:vimim_cjk_filtered_list_from_cache(keyboard)
             if empty(len(results))
                 let s:cjk_filter = ""
@@ -5006,11 +5007,14 @@ else
                 return s:vimim_popupmenu_list(results)
             endif
         endif
-        if s:hjkl_h % 3 > 0
+        " hjkl_h cycles the popup menu list
+        if s:cjk_file > 0 && s:hjkl_h % 3 > 0
             let results = s:vimim_cycle_list_from_cache()
-            if !empty(results)
-                return s:vimim_popupmenu_list(results)
-            endif
+        elseif s:hjkl_h % 2 > 0
+            let results = sort(s:matched_list)
+        endif
+        if !empty(results)
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
