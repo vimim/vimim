@@ -1571,13 +1571,13 @@ call add(s:vimims, VimIM)
 function! s:vimim_cycle_list_from_cache()
 " ---------------------------------------
     let first_pair = get(s:matched_list,0)
-    let first_list = split(first_pair)
+    let first_pair_list = split(first_pair)
     let chinese = nr2char(32911)
-    if len(first_list) == 1
-        let chinese = get(first_list, 0)
+    if len(first_pair_list) == 1
+        let chinese = get(first_pair_list, 0)
         let chinese = get(split(chinese,'\zs'),0)
-    elseif len(first_list) == 2
-        let chinese = get(first_list, 1)
+    elseif len(first_pair_list) == 2
+        let chinese = get(first_pair_list, 1)
     endif
     let keyboard = char2nr(chinese)
     if s:hjkl_h%3 == 1
@@ -1659,8 +1659,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     let pair_matched_list = a:pair_matched_list
     if empty(pair_matched_list)
         return []
-    endif
-    if empty(len(s:cjk_filter))
+    elseif empty(len(s:cjk_filter)) && empty(s:hjkl_h)
         let s:matched_list = copy(pair_matched_list)
     endif
     let label = 1
@@ -4511,7 +4510,7 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
+" ----------------------------------
     if isdirectory("/home/xma/vim")
         let msg = "VimIM super configuration:"
     else
@@ -5015,11 +5014,14 @@ else
                 return s:vimim_popupmenu_list(results)
             endif
         endif
-        " use hjkl_h tgo cycle the popup menu list
+        " use hjkl_h to cycle the popup menu list
         if s:has_cjk_file > 0 && s:hjkl_h % 3 > 0
             let results = s:vimim_cycle_list_from_cache()
-        elseif s:hjkl_h % 2 > 0
-            let results = sort(s:matched_list)
+        else
+            let s:cjk_match_found = 0
+            if s:hjkl_h % 2 > 0
+                let results = sort(s:matched_list)
+            endif
         endif
         if !empty(results)
             return s:vimim_popupmenu_list(results)
