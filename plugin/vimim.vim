@@ -31,7 +31,6 @@ let VimIM = " ====  Introduction      ==== {{{"
 "            * input Chinese independently without changing mode
 "            * support "wubi", "erbi", "boshiamy", "cangjie", "taijima"
 "            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
-"            * invent vimim.cjk.txt as a swiss army Chinese database
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -39,18 +38,20 @@ let VimIM = " ====  Introduction      ==== {{{"
 "  (3) No negative impact to Vim when VimIM is not used
 "  (4) No compromise for high speed and low memory usage
 " -----------------------------------------------------------
-" "VimIM Front End UI"
+" "VimIM Frontend UI"
 "  (1) VimIM OneKey: Chinese input without mode change.
 "  (2) VimIM Chinese Input Mode: ['dynamic','static']
 "  (3) VimIM auto Chinese input with zero configuration
 " -----------------------------------------------------------
-" "VimIM Back End Engine"
+" "VimIM Backend Engine"
 "  (1) [external] myCloud: http://pim-cloud.appspot.com
 "  (2) [external]   Cloud: http://web.pinyin.sogou.com
-"  (3) [embedded] VimIM:   http://vimim.googlecode.com
-"      (3.1) a datafile:   $VIM/vimfiles/plugin/vimim.cjk.txt
-"      (3.2) a datafile:   $VIM/vimfiles/plugin/vimim.pinyin.txt
-"      (3.3) a directory:  $VIM/vimfiles/plugin/vimim/pinyin/
+"  (3) [embedded]   VimIM: http://vimim.googlecode.com
+"  -----------------------------------------------------------
+" "VimIM Installation"
+"  (1) drop this file to plugin/:     plugin/vimim.vim
+"  (2) [option] drop a datafile:      plugin/vimim.cjk.txt
+"  (3) [option] drop a directory:     plugin/vimim/pinyin/
 " -----------------------------------------------------------
 
 let s:vimims = [VimIM]
@@ -101,7 +102,6 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
-    sil!call s:vimim_set_localization()
     sil!call s:vimim_load_cjk_file()
     sil!call s:vimim_initialize_keycode()
 endfunction
@@ -122,12 +122,38 @@ function! s:vimim_set_encoding()
     \|| &encoding == "euc-tw"
         let s:encoding = "taiwan"
     endif
+" ------------ ----------------- --------------
+" vim encoding datafile encoding s:localization
+" ------------ ----------------- --------------
+"   utf-8          utf-8                0
+"   utf-8          chinese              1
+"   chinese        utf-8                2
+"   chinese        chinese              8
+"   utf-8          utf-8                0
+" ------------ ----------------- --------------
+    let s:localization = 0
+    if &encoding == "utf-8"
+        if len("datafile_fenc_chinese") > 20110129
+            let s:localization = 1
+        endif
+    else
+        let s:localization = 2
+    endif
+    if s:localization > 0
+        let warning = "performance hit if &encoding & datafile differs!"
+    endif
+    let s:multibyte = 2
+    if &encoding == "utf-8"
+        let s:multibyte = 3
+    endif
 endfunction
+
 
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    let s:cjk_file = 0
+    let s:cjk_file = s:path . "vimim.cjk.txt"
+    let s:has_cjk_file = 0
     let s:cjk_lines = []
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:abcd = "'abcdefgz"
@@ -140,7 +166,6 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     let s:quantifiers = {}
-    let s:localization = 0
     let s:current_positions = [0,0,1,0]
     let s:seamless_positions = []
     let s:start_row_before = 0
@@ -160,7 +185,7 @@ function! s:vimim_initialize_session()
     let g:vimim_debugs = []
     let s:show_me_not = '^vim'
     if s:vimim_tab_as_onekey == 2
-        let s:show_me_not = '^oo\|^ii\|^vim'
+        let s:show_me_not .= '\|^oo\|^ii'
     endif
 endfunction
 
@@ -496,9 +521,9 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
     " ----------------------------------
-    if s:cjk_file > 0
+    if s:has_cjk_file > 0
         let ciku = s:vimim_chinese('digit') . s:colon
-        let option = ciku . s:path . "vimim.cjk.txt"
+        let option = ciku . s:cjk_file
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -568,7 +593,6 @@ function! g:vimim_search_next()
         catch
             echon "/" . english . " error:" .  v:exception
         endtry
-        let s:cjk_filter = ""
     endif
 endfunction
 
@@ -670,7 +694,7 @@ function! s:vimim_cjk_property_display(ddddd)
     let ddddd = a:ddddd
     let unicode = printf('u%04x',ddddd)
     let menu = unicode . s:space . ddddd
-    if s:cjk_file > 0
+    if s:has_cjk_file > 0
         let chinese = nr2char(ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
@@ -928,7 +952,7 @@ endfunction
 function! s:vimim_onekey_pumvisible_qwertyuiop_on()
 " -------------------------------------------------
     let labels = s:qwerty
-    if s:cjk_file > 0
+    if s:has_cjk_file > 0
         let labels += range(10)
     endif
     for _ in labels
@@ -1003,7 +1027,7 @@ function! g:vimim_pumvisible_dump()
             let line = printf('%s', items.word)
         else
             let format = '%-8s %s'
-            if s:cjk_file > 0
+            if s:has_cjk_file > 0
             \&& items.menu =~# s:uxxxx
             \&& len(items.menu) > 18
                 let format = '%-48s %s'
@@ -1291,7 +1315,7 @@ function! s:vimim_statusline()
         let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
     endif
     " ------------------------------------
-    if s:cjk_file > 0
+    if s:has_cjk_file > 0
         let s:ui.statusline .= s:plus . s:vimim_chinese('digit')
     endif
     " ------------------------------------
@@ -1323,7 +1347,7 @@ function! s:vimim_123456789_label_on()
     if s:chinese_input_mode =~ 'onekey'
         let abcd_list = split(s:abcd, '\zs')
         let labels += abcd_list
-        if s:cjk_file > 0
+        if s:has_cjk_file > 0
             let labels = abcd_list
         endif
         call remove(labels, "'")
@@ -1643,7 +1667,6 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     if keyboard[-1:-1] == "'"
         let keyboard = strpart(keyboard,0,len(keyboard)-1)
     endif
-let g:gg1=s:keyboard_list
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
@@ -1707,7 +1730,7 @@ function! s:vimim_get_labeling(label)
         if label < 2
             let label2 = "_"
         endif
-        if s:cjk_file > 0
+        if s:has_cjk_file > 0
             let labeling = label2
         else
             let labeling .= label2
@@ -2028,14 +2051,13 @@ function! s:vimim_load_cjk_file()
 " # hjkl_h cycle list of unicode, 4corner and pinyin
 " # hjkl_l toggle display of the property of Chinese character
 " -----------------------------------------------------------------
-    let cjk_file = s:path . "vimim.cjk.txt"
     if empty(s:cjk_lines)
-        if filereadable(cjk_file)
-            let s:cjk_lines = s:vimim_readfile(cjk_file)
+        if filereadable(s:cjk_file)
+            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
         endif
     endif
     if len(s:cjk_lines) == 20902
-        let s:cjk_file = 1
+        let s:has_cjk_file = 1
         let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
     endif
@@ -2079,7 +2101,7 @@ function! s:vimim_keyboard_search_block(keyboard)
 " search multiple cjk, standard   way: /m7712x3610j3111
 " search multiple cjk, shortcut   way: /muuqwxeyqpjeqqq
 " -----------------------------------------------
-    if empty(s:cjk_file)
+    if empty(s:has_cjk_file)
         return []
     endif
     let results = []
@@ -2181,7 +2203,7 @@ function! s:vimim_tranfer_chinese() range abort
 "            (4) range for visual mode is supported
 " ---------------------------------------------
     sil!call s:vimim_backend_initialization_once()
-    if empty(s:cjk_file)
+    if empty(s:has_cjk_file)
         let msg = "no toggle between simplified and tranditional Chinese"
     elseif &encoding == "utf-8"
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
@@ -2303,7 +2325,7 @@ function! s:vimim_reverse_lookup(chinese)
     if !empty(results_unicode) |" 马力 => u9a6c u529b
         call extend(results, results_unicode)
     endif
-    if empty(s:cjk_file)
+    if empty(s:has_cjk_file)
         return results
     endif
     let results_pinyin = []    |" 马力 => ma3 li2
@@ -3053,33 +3075,6 @@ function! CJK()
         endfor
     endif
     return ""
-endfunction
-
-" ----------------------------------
-function! s:vimim_set_localization()
-" ----------------------------------
-" vim encoding datafile encoding s:localization
-" ------------ ----------------- --------------
-"   utf-8          utf-8                0
-"   utf-8          chinese              1
-"   chinese        utf-8                2
-"   chinese        chinese              8
-"   utf-8          utf-8                0
-" ------------ ----------------- --------------
-    if &encoding == "utf-8"
-        if len("datafile_fenc_chinese") > 20110129
-            let s:localization = 1
-        endif
-    else
-        let s:localization = 2
-    endif
-    if s:localization > 0
-        let warning = "performance hit if &encoding & datafile differs!"
-    endif
-    let s:multibyte = 2
-    if &encoding == "utf-8"
-        let s:multibyte = 3
-    endif
 endfunction
 
 " ----------------------------------
@@ -3864,7 +3859,7 @@ function! s:vimim_scan_backend_cloud()
 " s:vimim_cloud_sogou=0  : default, auto open when no datafile
 " s:vimim_cloud_sogou=-1 : cloud is shut down without condition
 " -------------------------------------------------------------
-    if empty(s:backend.datafile) 
+    if empty(s:backend.datafile)
     \&& empty(s:backend.directory)
     \&& empty(s:vimim_cloud_plugin)
         call s:vimim_set_sogou()
@@ -3968,7 +3963,7 @@ function! s:vimim_do_cloud_if_no_embedded_backend()
     \&& empty(s:backend.datafile)
         if s:chinese_input_mode =~ 'onekey'
         \&& s:vimim_cloud_sogou == 888
-        \&& s:cjk_file > 0
+        \&& s:has_cjk_file > 0
             let msg = "use local cjk when cloud is too slow"
         else
             let s:vimim_cloud_sogou = 1
@@ -4999,7 +4994,7 @@ else
     if s:chinese_input_mode =~ 'onekey'
     \&& len(s:matched_list) > 1
         " 1234567890/qwertyuiop as digit filter
-        if len(s:cjk_filter) > 0 && s:cjk_file > 0
+        if len(s:cjk_filter) > 0 && s:has_cjk_file > 0
             let results = s:vimim_cjk_filtered_list_from_cache(keyboard)
             if empty(len(results))
                 let s:cjk_filter = ""
@@ -5008,7 +5003,7 @@ else
             endif
         endif
         " hjkl_h cycles the popup menu list
-        if s:cjk_file > 0 && s:hjkl_h % 3 > 0
+        if s:has_cjk_file > 0 && s:hjkl_h % 3 > 0
             let results = s:vimim_cycle_list_from_cache()
         elseif s:hjkl_h % 2 > 0
             let results = sort(s:matched_list)
@@ -5027,9 +5022,9 @@ else
         endif
     endif
 
-    " [cjk] vimim.cjk.txt as swiss army datafile
-    " ------------------------------------------
-    if s:cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
+    " [cjk] nothing is better than our swiss army datafile
+    " ----------------------------------------------------
+    if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
         let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
         if !empty(keyboard2)
             let results = s:vimim_match_cjk_file(keyboard2)
