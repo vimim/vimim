@@ -269,10 +269,10 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['hangul']   = "[0-9a-z']"
     let s:im_keycode['xinhua']   = "[0-9a-z']"
     let s:im_keycode['quick']    = "[0-9a-z']"
+    let s:im_keycode['wubi']     = "[0-9a-z']"
     let s:im_keycode['zhengma']  = "[a-z']"
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['taijima']  = "[a-z']"
-    let s:im_keycode['wubi']     = "[a-z']"
     let s:im_keycode['erbi']     = "[a-z'.,;/]"
     let s:im_keycode['wu']       = "[a-z'.]"
     let s:im_keycode['yong']     = "[a-z'.;/]"
@@ -1350,6 +1350,10 @@ function! s:vimim_123456789_label_on()
             let labels = abcd_list
         endif
         call remove(labels, "'")
+    else
+        for _ in abcd_list
+            sil!exe 'iunmap '. _
+        endfor
     endif
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
@@ -2957,10 +2961,13 @@ endfunction
 " -------------------------------------------
 function! s:vimim_dynamic_wubi_auto_trigger()
 " -------------------------------------------
+    let not_used_valid_keys = "[0-9.']"
     for char in s:valid_keys
-        sil!exe 'inoremap <silent> ' . char . '
-        \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'. char .
-        \'<C-R>=g:vimim()<CR>'
+        if char !~# not_used_valid_keys
+            sil!exe 'inoremap <silent> ' . char . '
+            \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'. char .
+            \'<C-R>=g:vimim()<CR>'
+        endif
     endfor
 endfunction
 
@@ -4504,7 +4511,7 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------- todo
     if isdirectory("/home/xma/vim")
         let msg = "VimIM super configuration:"
     else
@@ -4966,9 +4973,7 @@ if a:start
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
     let s:start_column_before = start_column
-    if empty(s:keyboard_list)
-        let s:keyboard_list = [strpart(current_line,start_column,len)]
-    endif
+    let s:keyboard_list = [strpart(current_line,start_column,len)]
     return start_column
 
 else
