@@ -264,11 +264,11 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['pinyin']   = "[0-9a-z'.]"
     let s:im_keycode['english']  = "[0-9a-z'.]"
     let s:im_keycode['4corner']  = "[0-9a-z'.]"
+    let s:im_keycode['sogou']    = "[0-9a-z.]"
     let s:im_keycode['mycloud']  = "[0-9a-z']"
     let s:im_keycode['hangul']   = "[0-9a-z']"
     let s:im_keycode['xinhua']   = "[0-9a-z']"
     let s:im_keycode['quick']    = "[0-9a-z']"
-    let s:im_keycode['sogou']    = "[0-9a-z]"
     let s:im_keycode['zhengma']  = "[a-z']"
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['taijima']  = "[a-z']"
@@ -843,8 +843,7 @@ function! s:vimim_onekey_action(onekey)
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
-    if s:seamless_positions != getpos(".")
-    \&& s:pattern_not_found < 1
+    if s:seamless_positions != getpos(".") && s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
     else
         let onekey = ""
@@ -4778,8 +4777,8 @@ function! g:vimim_nonstop_after_insert()
         if len(s:keyboard_list) > 1
             let s:keyboard_list = [get(s:keyboard_list,1)]
         endif
+        call g:vimim_reset_after_insert()
     endif
-    call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -4802,7 +4801,9 @@ function! g:vimim()
             let key = '\<C-X>\<C-U>'
         endif
     endif
-    let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
+    if !empty(key)
+        let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
+    endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -4927,7 +4928,7 @@ if a:start
     let last_seen_backslash_column = start_column
     let all_digit = 1
     let nonsense_pattern = "[0-9.']"
-    if s:ui.im == 'pinyin'
+    if s:ui.im == 'pinyin' || s:has_cjk_file > 0
         let nonsense_pattern = "[0-9.]"
     elseif s:ui.has_dot == 1
         let nonsense_pattern = "[.]"
@@ -4994,7 +4995,7 @@ else
     " --------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
     \&& len(s:matched_list) > 1
-        " 1234567890/qwertyuiop as digit filter
+        " use 1234567890/qwertyuiop as digit filter
         if len(s:cjk_filter) > 0 && s:has_cjk_file > 0
             let results = s:vimim_cjk_filtered_list_from_cache(keyboard)
             if empty(len(results))
@@ -5003,7 +5004,7 @@ else
                 return s:vimim_popupmenu_list(results)
             endif
         endif
-        " hjkl_h cycles the popup menu list
+        " use hjkl_h tgo cycle the popup menu list
         if s:has_cjk_file > 0 && s:hjkl_h % 3 > 0
             let results = s:vimim_cycle_list_from_cache()
         elseif s:hjkl_h % 2 > 0
@@ -5023,6 +5024,15 @@ else
         endif
     endif
 
+    " [dot-by-dot] VimIM classic:  i.have.a.dream
+    " --------------------------------------------
+    if s:ui.has_dot != 1 && s:chinese_input_mode =~ 'onekey'
+        let keyboard2 = s:vimim_break_dot_by_dot(keyboard)
+        if !empty(keyboard2)
+            let keyboard = copy(keyboard2)
+        endif
+    endif
+
     " [cjk] nothing is better than our swiss army datafile
     " ----------------------------------------------------
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
@@ -5032,15 +5042,6 @@ else
             if !empty(len(results))
                 return s:vimim_popupmenu_list(results)
             endif
-        endif
-    endif
-
-    " [dot-by-dot] VimIM classic:  i.have.a.dream
-    " --------------------------------------------
-    if s:ui.has_dot != 1 && s:chinese_input_mode =~ 'onekey'
-        let keyboard2 = s:vimim_break_dot_by_dot(keyboard)
-        if !empty(keyboard2)
-            let keyboard = copy(keyboard2)
         endif
     endif
 
