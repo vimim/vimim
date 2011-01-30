@@ -360,6 +360,7 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
+    call add(G, "g:vimim_onekey_nonstop")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_custom_statusline")
@@ -4771,6 +4772,11 @@ endfunction
 " --------------------------------------
 function! g:vimim_nonstop_after_insert()
 " --------------------------------------
+    if s:chinese_input_mode =~ 'onekey'
+    \&& s:vimim_onekey_nonstop > 0
+    \&& len(s:keyboard_list) < 2
+        call s:vimim_stop()
+    endif
     let key = ""
     if s:pumvisible_yes > 0
         let key = g:vimim()
