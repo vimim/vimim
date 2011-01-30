@@ -4773,7 +4773,7 @@ endfunction
 function! g:vimim_nonstop_after_insert()
 " --------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-    \&& s:vimim_onekey_nonstop > 0
+    \&& s:vimim_onekey_nonstop < 1
     \&& len(s:keyboard_list) < 2
         call s:vimim_stop()
     endif
