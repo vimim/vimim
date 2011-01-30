@@ -568,6 +568,7 @@ function! g:vimim_search_next()
         catch
             echon "/" . english . " error:" .  v:exception
         endtry
+        let s:cjk_filter = ""
     endif
 endfunction
 
@@ -1552,9 +1553,6 @@ function! s:vimim_cycle_list_from_cache()
         let chinese = get(first_list, 1)
     endif
     let keyboard = char2nr(chinese)
-    if keyboard < 19968 || keyboard > 40869
-        return []
-    endif
     if s:hjkl_h%3 == 1
         let keyboard = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
         let keyboard = strpart(keyboard,0,match(keyboard,'\d'))
@@ -1562,21 +1560,35 @@ function! s:vimim_cycle_list_from_cache()
         let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
     endif
     let results = s:vimim_match_cjk_file(keyboard)
-    let matched = match(results, chinese)
-    let fixed_first_chinese = remove(results, matched)
-    call insert(results, fixed_first_chinese)
+    if !empty(results)
+        let matched = match(results, chinese)
+        let fixed_first_chinese = remove(results, matched)
+        call insert(results, fixed_first_chinese)
+    endif
     return results
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_filter_list(matched_list, keyboard)
-" ---------------------------------------------------
-    if empty(s:cjk_file) || empty(len(s:cjk_filter))
-        return a:matched_list
+" ------------------------------------------------------
+function! s:vimim_cjk_filtered_list_from_cache(keyboard)
+" ------------------------------------------------------
+    let keyboard = a:keyboard
+    let results = s:vimim_cjk_filter_list(keyboard)
+    if empty(len(results)) && len(s:cjk_filter) > 0
+        let number_before = strpart(s:cjk_filter,0,len(s:cjk_filter)-1)
+        if len(number_before) > 0
+            let s:cjk_filter = number_before
+            let results = s:vimim_cjk_filter_list(keyboard)
+        endif
     endif
+    return results
+endfunction
+
+" -----------------------------------------
+function! s:vimim_cjk_filter_list(keyboard)
+" -----------------------------------------
     let pair_matched_list = []
-    let first_in_list = split(get(a:matched_list,0))
-    for line in a:matched_list
+    let first_in_list = split(get(s:matched_list,0))
+    for line in s:matched_list
         if len(first_in_list) < 2
         \|| a:keyboard =~# s:uxxxx
         \|| !empty(s:vimim_data_directory)
@@ -1631,6 +1643,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     if keyboard[-1:-1] == "'"
         let keyboard = strpart(keyboard,0,len(keyboard)-1)
     endif
+let g:gg1=s:keyboard_list
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
@@ -3845,27 +3858,17 @@ let VimIM = " ====  Backend=>Cloud    ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" --------------------------------------
-function! s:vimim_has_embedded_backend()
-" --------------------------------------
-    if empty(s:backend.datafile) && empty(s:backend.directory)
-        let msg = "try cloud if no vimim embedded backends"
-        return 0
-    endif
-    return 1
-endfunction
-
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
 " s:vimim_cloud_sogou=0  : default, auto open when no datafile
 " s:vimim_cloud_sogou=-1 : cloud is shut down without condition
 " -------------------------------------------------------------
-    let embedded_backend = s:vimim_has_embedded_backend()
-    if empty(embedded_backend) && empty(s:vimim_cloud_plugin)
+    if empty(s:backend.datafile) 
+    \&& empty(s:backend.directory)
+    \&& empty(s:vimim_cloud_plugin)
         call s:vimim_set_sogou()
     endif
-    " ---------------------------------------------------------
     if empty(s:vimim_cloud_sogou)
         let s:vimim_cloud_sogou = 888
     endif
@@ -4167,8 +4170,7 @@ function! s:vimim_scan_backend_mycloud()
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
 " -----------------------------------------------------------------------
-    let embedded_backend = s:vimim_has_embedded_backend()
-    if empty(embedded_backend)
+    if empty(s:backend.datafile) && empty(s:backend.directory)
         call s:vimim_set_mycloud()
     endif
 endfunction
@@ -4777,6 +4779,9 @@ function! g:vimim_nonstop_after_insert()
     let key = ""
     if s:pumvisible_yes > 0
         let key = g:vimim()
+        if len(s:keyboard_list) > 1
+            let s:keyboard_list = [get(s:keyboard_list,1)]
+        endif
     endif
     call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . key . '"'
@@ -4897,9 +4902,6 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let s:keyboard_list = [keyboard2, last]
         endif
     endif
-    if !empty(results)
-        let results = s:vimim_filter_list(results, keyboard)
-    endif
     return results
 endfunction
 
@@ -4961,7 +4963,9 @@ if a:start
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
     let s:start_column_before = start_column
-    let s:keyboard_list = [strpart(current_line,start_column,len)]
+    if empty(s:keyboard_list)
+        let s:keyboard_list = [strpart(current_line,start_column,len)]
+    endif
     return start_column
 
 else
@@ -4989,23 +4993,32 @@ else
         endif
     endif
 
+    " [filter] use cache for hjkl_h and digit filter
+    " ----------------------------------------------
+    if s:chinese_input_mode =~ 'onekey'
+    \&& s:cjk_file > 0
+    \&& len(s:matched_list) > 1
+        if len(s:cjk_filter) > 0
+            let results = s:vimim_cjk_filtered_list_from_cache(keyboard)
+            if empty(len(results))
+                let s:cjk_filter = ""
+            else
+                return s:vimim_popupmenu_list(results)
+            endif
+        endif
+        if s:hjkl_h % 3 > 0
+            let results = s:vimim_cycle_list_from_cache()
+            if !empty(results)
+                return s:vimim_popupmenu_list(results)
+            endif
+        endif
+    endif
+
     " [unicode] support direct unicode/gb/big5 input
     " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
         let results = s:vimim_get_unicode_list(keyboard, 36/9)
         if !empty(len(results))
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " [hjkl_h] cycle 4corner and pinyin display
-    " -----------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-    \&& len(s:matched_list) > 1
-    \&& s:cjk_file > 0
-    \&& s:hjkl_h % 3 > 0
-        let results = s:vimim_cycle_list_from_cache()
-        if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
