@@ -106,48 +106,6 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_initialize_keycode()
 endfunction
 
-" ------------------------------
-function! s:vimim_set_encoding()
-" ------------------------------
-    let s:encoding = "utf8"
-    if &encoding == "chinese"
-    \|| &encoding == "cp936"
-    \|| &encoding == "gb2312"
-    \|| &encoding == "gbk"
-    \|| &encoding == "euc-cn"
-        let s:encoding = "chinese"
-    elseif &encoding == "taiwan"
-    \|| &encoding == "cp950"
-    \|| &encoding == "big5"
-    \|| &encoding == "euc-tw"
-        let s:encoding = "taiwan"
-    endif
-" ------------ ----------------- --------------
-" vim encoding datafile encoding s:localization
-" ------------ ----------------- --------------
-"   utf-8          utf-8                0
-"   utf-8          chinese              1
-"   chinese        utf-8                2
-"   chinese        chinese              8
-"   utf-8          utf-8                0
-" ------------ ----------------- --------------
-    let s:localization = 0
-    if &encoding == "utf-8"
-        if len("datafile_fenc_chinese") > 20110129
-            let s:localization = 1
-        endif
-    else
-        let s:localization = 2
-    endif
-    if s:localization > 0
-        let warning = "performance hit if &encoding & datafile differs!"
-    endif
-    let s:multibyte = 2
-    if &encoding == "utf-8"
-        let s:multibyte = 3
-    endif
-endfunction
-
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
@@ -2070,7 +2028,9 @@ function! s:vimim_match_cjk_file(keyboard)
 " ----------------------------------------
     let keyboard = a:keyboard
     let grep = ""
-    if keyboard !~# '\d' || keyboard !~# '\l'
+    if keyboard =~# '^\l\+\_[1234]\>'
+    \|| keyboard !~# '\d'
+    \|| keyboard !~# '\l'
         let grep = '\s' . keyboard
     elseif keyboard =~# '^\l\+\d\+'
         let digit = substitute(keyboard,'\a','','g')
@@ -3060,6 +3020,48 @@ endfun
 let VimIM = " ====  Backend==Unicode  ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
+
+" ------------------------------
+function! s:vimim_set_encoding()
+" ------------------------------
+    let s:encoding = "utf8"
+    if &encoding == "chinese"
+    \|| &encoding == "cp936"
+    \|| &encoding == "gb2312"
+    \|| &encoding == "gbk"
+    \|| &encoding == "euc-cn"
+        let s:encoding = "chinese"
+    elseif &encoding == "taiwan"
+    \|| &encoding == "cp950"
+    \|| &encoding == "big5"
+    \|| &encoding == "euc-tw"
+        let s:encoding = "taiwan"
+    endif
+" ------------ ----------------- --------------
+" vim encoding datafile encoding s:localization
+" ------------ ----------------- --------------
+"   utf-8          utf-8                0
+"   utf-8          chinese              1
+"   chinese        utf-8                2
+"   chinese        chinese              8
+"   utf-8          utf-8                0
+" ------------ ----------------- --------------
+    let s:localization = 0
+    if &encoding == "utf-8"
+        if len("datafile_fenc_chinese") > 20110129
+            let s:localization = 1
+        endif
+    else
+        let s:localization = 2
+    endif
+    if s:localization > 0
+        let warning = "performance hit if &encoding & datafile differs!"
+    endif
+    let s:multibyte = 2
+    if &encoding == "utf-8"
+        let s:multibyte = 3
+    endif
+endfunction
 
 " -------------
 function! CJK()
@@ -4668,10 +4670,6 @@ function! s:vimim_plugins_fix_stop()
             " inoremap <silent> <S-Tab> <C-P>
         endif
     endif
-    " -------------------------------------------------------------
-    if !empty(s:word_complete)
-    "   call DoWordComplete()
-    endif
 endfunction
 
 " ======================================== }}}
@@ -5046,8 +5044,8 @@ else
         endif
     endif
 
-    " [cjk] nothing is better than our swiss army datafile
-    " ----------------------------------------------------
+    " [cjk] swiss army cjk database is the first-class citizen
+    " --------------------------------------------------------
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
         let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
         if !empty(keyboard2)
