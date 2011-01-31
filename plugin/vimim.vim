@@ -50,7 +50,7 @@ let VimIM = " ====  Introduction      ==== {{{"
 "  -----------------------------------------------------------
 " "VimIM Installation"
 "  (1) drop this file to plugin/:     plugin/vimim.vim
-"  (2) [option] drop a datafile:      plugin/vimim.cjk.txt
+"  (2) [option] drop a datafile:      plugin/vimim.pinyin.txt
 "  (3) [option] drop a directory:     plugin/vimim/pinyin/
 " -----------------------------------------------------------
 
@@ -2004,10 +2004,8 @@ call add(s:vimims, VimIM)
 function! s:vimim_load_cjk_file()
 " -------------------------------
 " VimIM swiss army Chinese database without using cache
-" # http://vimim-data.googlecode.com/svn/trunk/data/vimim.cjk.txt
-" # can be used as one datafile for 4corner or pinyin or both
+" # one super yet simple cjk database for 4corner and pinyin and both
 " # dummy transformation between simplified and traditional Chinese
-" # list of CJK is shown from popup menu using OneKey after CJK
 " # hjkl_h cycle list of unicode, 4corner and pinyin
 " # hjkl_l toggle display of the property of Chinese character
 " -----------------------------------------------------------------
@@ -4970,7 +4968,9 @@ if a:start
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
     let s:start_column_before = start_column
-    let s:keyboard_list = [strpart(current_line,start_column,len)]
+    if len(s:keyboard_list) < 2
+        let s:keyboard_list = [strpart(current_line,start_column,len)]
+    endif
     return start_column
 
 else
