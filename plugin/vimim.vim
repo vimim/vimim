@@ -108,7 +108,7 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_initialize_session()
-" ------------------------------------ todo
+" ------------------------------------
     let s:cjk_file = s:path . "vimim.cjk.txt"
     let s:has_cjk_file = 0
     let s:cjk_lines = []
@@ -821,23 +821,6 @@ function! s:vimim_onekey_action(onekey)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" ------------------------------------------
-function! s:vimim_break_dot_by_dot(keyboard)
-" ------------------------------------------
-    let keyboard = a:keyboard
-    let delimiter = match(keyboard, "[.]")
-    if delimiter < 1
-    \|| delimiter > len(keyboard)-2
-    \|| match(keyboard, "[.][.]") > -1
-    \|| !empty(s:vimim_shuangpin)
-        return 0
-    endif
-    let first = keyboard[0 : delimiter-1]
-    let last  = keyboard[delimiter+1 : -1]
-    let s:keyboard_list = [first, last]
-    return first
-endfunction
-
 " ----------------------------------------------
 function! s:vimim_onekey_pumvisible_capital_on()
 " ----------------------------------------------
@@ -1127,7 +1110,6 @@ endfunction
 function! s:vimim_set_seamless()
 " ------------------------------
     let s:seamless_positions = getpos(".")
- " -------------------------------------------- todo
     let s:keyboard_list = []
     return ""
 endfunction
@@ -1632,13 +1614,6 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     if keyboard =~ "'"
         let menu_tail += 1
     endif
- " -------------------------------------------- todo
- "" if keyboard[-1:-1] == "'"
- ""     let keyboard = strpart(keyboard,0,len(keyboard)-1)
- "" endif
- "" if keyboard[0:0] == "'"
- ""     let keyboard = strpart(keyboard,1)
- "" endif
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
@@ -2592,7 +2567,6 @@ function! s:vimim_get_pinyin_from_shuangpin(keyboard)
         let msg = "no point to do transform"
     else
         let keyboard = keyboard2
- " -------------------------------------------- todo
         let s:keyboard_shuangpin = 1
     endif
     return keyboard
@@ -4886,16 +4860,17 @@ let VimIM = " ====  Core_Engine       ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
+" VimIM classic:  i'have'a'dream
+" VimIM classic:  i.have.a.dream
 " -------------------------------------------------
 function! s:vimim_embedded_backend_engine(keyboard)
 " -------------------------------------------------
+    let keyboard = a:keyboard
     let im = s:ui.im
     let root = s:ui.root
-    if empty(root) || empty(im)
-        return []
-    endif
-    let keyboard = a:keyboard
-    if keyboard !~# s:valid_key
+    if empty(root) 
+    \|| empty(im) 
+    \|| keyboard !~# s:valid_key
         return []
     endif
     let results = []
@@ -4952,13 +4927,9 @@ if a:start
     let last_seen_backslash_column = start_column
     let all_digit = 1
     let nonsense_pattern = "[0-9.']"
- " -------------------------------------------- todo
-""" if s:ui.im == 'pinyin' || s:has_cjk_file > 0
-"""     let nonsense_pattern = "[0-9.]"
     if s:ui.has_dot == 1
         let nonsense_pattern = "[.]"
     endif
-
     while start_column > 0
         if byte_before =~# s:valid_key
             let start_column -= 1
@@ -5051,15 +5022,6 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     endif
-
-    " [dot-by-dot] VimIM classic:  i.have.a.dream
-    " -------------------------------------------- todo
-""  if s:ui.has_dot != 1 && s:chinese_input_mode =~ 'onekey'
-""      let keyboard2 = s:vimim_break_dot_by_dot(keyboard)
-""      if !empty(keyboard2)
-""          let keyboard = copy(keyboard2)
-""      endif
-""  endif
 
     " [cjk] swiss army cjk database is the first-class citizen
     " --------------------------------------------------------
