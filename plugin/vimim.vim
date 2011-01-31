@@ -108,7 +108,7 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_initialize_session()
-" ------------------------------------
+" ------------------------------------ todo
     let s:cjk_file = s:path . "vimim.cjk.txt"
     let s:has_cjk_file = 0
     let s:cjk_lines = []
@@ -487,6 +487,10 @@ function! s:vimim_egg_vimim()
     " ----------------------------------
     let im = s:vimim_statusline()
     if !empty(im)
+        if s:vimim_tab_as_onekey == 2
+            let statusline = s:left . s:ui.statusline . s:right
+            let im = statusline . s:vimim_chinese('onekey')
+        endif
         let option = s:vimim_chinese('input') . s:colon . im
         call add(eggs, option)
     endif
@@ -1124,7 +1128,7 @@ function! s:vimim_set_seamless()
 " ------------------------------
     let s:seamless_positions = getpos(".")
  " -------------------------------------------- todo
- "  let s:keyboard_list = []
+    let s:keyboard_list = []
     return ""
 endfunction
 
@@ -1274,7 +1278,7 @@ function! s:vimim_statusline()
         let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
     endif
     " ------------------------------------
-    if s:has_cjk_file > 0
+    if s:has_cjk_file > 0 && empty(s:vimim_shuangpin)
         let s:ui.statusline .= s:plus . s:vimim_chinese('digit')
     endif
     " ------------------------------------
@@ -1285,9 +1289,7 @@ endfunction
 function! s:vimim_get_chinese_im()
 " --------------------------------
     let input_style = s:vimim_chinese('classic')
-    if s:vimim_tab_as_onekey == 2
-        let input_style = s:vimim_chinese('onekey')
-    elseif s:vimim_chinese_input_mode =~ 'dynamic'
+    if s:vimim_chinese_input_mode =~ 'dynamic'
         let input_style .= s:vimim_chinese('dynamic')
     elseif s:vimim_chinese_input_mode =~ 'static'
         let input_style .= s:vimim_chinese('static')
@@ -2590,6 +2592,7 @@ function! s:vimim_get_pinyin_from_shuangpin(keyboard)
         let msg = "no point to do transform"
     else
         let keyboard = keyboard2
+ " -------------------------------------------- todo
         let s:keyboard_shuangpin = 1
     endif
     return keyboard
@@ -5105,8 +5108,13 @@ else
 
     " [shuangpin] support 6 major shuangpin with various rules
     " --------------------------------------------------------
-    if !empty(s:vimim_shuangpin) && empty(s:keyboard_shuangpin)
-        let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
+    if !empty(s:vimim_shuangpin)
+        if s:chinese_input_mode =~ 'dynamic'
+            let s:keyboard_shuangpin = 0
+        endif
+        if empty(s:keyboard_shuangpin)
+            let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
+        endif
     endif
 
     " [apostrophe] apostrophe is not 2nd class citizen
