@@ -1511,47 +1511,6 @@ let VimIM = " ====  Omni_Popup_Menu   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------------------
-function! s:vimim_hjkl_h_cycle_list_from_cache()
-" ----------------------------------------------
-    let first_pair = get(s:matched_list,0)
-    let first_pair_list = split(first_pair)
-    let chinese = nr2char(32911)
-    if len(first_pair_list) == 1
-        let chinese = get(first_pair_list, 0)
-        let chinese = get(split(chinese,'\zs'),0)
-    elseif len(first_pair_list) == 2
-        let chinese = get(first_pair_list, 1)
-    endif
-    let results = []
-    " -----------------------------------
-    if s:has_cjk_file < 1
-        let s:cjk_match_found = 0
-        if s:hjkl_h % 2 > 0
-            let s:hjkl_h = 0
-            let results = reverse(s:matched_list)
-        endif
-    elseif s:hjkl_h%3 == 0
-        let results = reverse(s:matched_list)
-    else
-        let keyboard = char2nr(chinese)
-        if s:hjkl_h%3 == 1
-            let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
-        elseif s:hjkl_h%3 == 2
-            let keyboard = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-            let keyboard = strpart(keyboard,0,match(keyboard,'\d'))
-        endif
-        let results = s:vimim_match_cjk_file(keyboard)
-    endif
-    " --------------------------------------------------------
-    if !empty(results)
-        let matched = match(results, chinese)
-        let fixed_first_chinese = remove(results, matched)
-        call insert(results, fixed_first_chinese)
-    endif
-    return results
-endfunction
-
 " ------------------------------------------------------
 function! s:vimim_cjk_filtered_list_from_cache(keyboard)
 " ------------------------------------------------------
@@ -3128,9 +3087,6 @@ function! s:vimim_get_unicode_list(keyboard, height)
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
         return []
-    else
-   "    let s:keyboard_list = [ddddd]
-   "todo
     endif
     let words = []
     let height = &pumheight * a:height
@@ -5031,7 +4987,11 @@ else
             endif
         endif
         if s:hjkl_h > 0 
-            let results = s:vimim_hjkl_h_cycle_list_from_cache()
+            let s:cjk_match_found = 0
+            if s:hjkl_h % 2 > 0
+                let s:hjkl_h = 0
+                let results = reverse(s:matched_list)
+            endif
         endif
         if !empty(results)
             return s:vimim_popupmenu_list(results)
@@ -5041,12 +5001,9 @@ else
     " [unicode] support direct unicode/gb/big5 input
     " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        let g:g1=keyboard
         let results = s:vimim_get_unicode_list(keyboard, 36/9)
-        let g:g2=results
-        if !empty(len(results))
+        if !empty(results)
             let s:keyboard_list = [keyboard]
-            let g:g3= s:vimim_popupmenu_list(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5084,7 +5041,6 @@ else
             return []
         else
             let s:keyboard_list = [keyboard]
-            " todo
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5126,7 +5082,6 @@ else
         else
             let s:no_internet_connection = -1
             let s:keyboard_list = [keyboard]
-            " todo
             return s:vimim_popupmenu_list(results)
         endif
     endif
