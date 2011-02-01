@@ -1511,9 +1511,9 @@ let VimIM = " ====  Omni_Popup_Menu   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ------------------------------------------------------
-function! s:vimim_cjk_filtered_list_from_cache(keyboard)
-" ------------------------------------------------------
+" -----------------------------------------------
+function! s:vimim_cjk_filter_from_cache(keyboard)
+" -----------------------------------------------
 " use 1234567890/qwertyuiop as digit filter
     let keyboard = a:keyboard
     let results = s:vimim_cjk_filter_list(keyboard)
@@ -1523,6 +1523,9 @@ function! s:vimim_cjk_filtered_list_from_cache(keyboard)
             let s:cjk_filter = number_before
             let results = s:vimim_cjk_filter_list(keyboard)
         endif
+    endif
+    if empty(results)
+        let s:cjk_filter = ""
     endif
     return results
 endfunction
@@ -1573,8 +1576,6 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_popupmenu_list(pair_matched_list)
 " -------------------------------------------------
-let g:gi1=s:cjk_filter
-let g:gi2=s:hjkl_h
     let pair_matched_list = a:pair_matched_list
     if empty(pair_matched_list)
         return []
@@ -2882,7 +2883,7 @@ endfunction
 
 " -----------------------------------------------
 function! s:vimim_wubi_4char_auto_input(keyboard)
-" ----------------------------------------------- todo
+" ----------------------------------------------- 
 " support wubi non-stop typing by auto selection on each 4th
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
@@ -2897,7 +2898,7 @@ endfunction
 
 " -----------------------------------------------
 function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
-" ----------------------------------------------- todo
+" ----------------------------------------------- 
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
@@ -3355,7 +3356,6 @@ function! s:vimim_sentence_match_cache(keyboard)
     endif
     let im = s:ui.im
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
-    " ------------------------------------------ todo
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
@@ -3366,7 +3366,6 @@ function! s:vimim_sentence_match_cache(keyboard)
             continue
         endif
     endwhile
-    " ------------------------------------------
     if len(results) > 0
         return keyboard[0 : max-1]
     else
@@ -3389,8 +3388,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
         return keyboard
     endif
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
-    " ---------------------------------------------
-    " surprise: wo'you'yige'meng simply works in this algorithm
+    " wo'you'yige'meng works in this algorithm
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
@@ -3402,7 +3400,6 @@ function! s:vimim_sentence_match_datafile(keyboard)
             break
         endif
     endwhile
-    " ---------------------------------------------
     if match_start < 0
         return 0
     else
@@ -3671,10 +3668,7 @@ function! s:vimim_sentence_match_directory(keyboard)
         return keyboard
     endif
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
-    let g:g1=keyboard
-    let g:g2=max
-    " ----------------------------------------------
-    " surprise: i.have.a.dream simply works in this algorithm
+    " i.have.a.dream works in this algorithm
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
@@ -3688,9 +3682,6 @@ function! s:vimim_sentence_match_directory(keyboard)
             continue
         endif
     endwhile
-    " ----------------------------------------------
-    let g:g3=filename
-    let g:g4=max
     if filereadable(filename)
         return keyboard[0 : max-1]
     else
@@ -4979,19 +4970,11 @@ else
     " --------------------------------------------
     if s:chinese_input_mode =~ 'onekey' && len(s:matched_list) > 1
         if len(s:cjk_filter) > 0 && s:has_cjk_file > 0
-            let results = s:vimim_cjk_filtered_list_from_cache(keyboard)
-            if empty(len(results))
-                let s:cjk_filter = ""
-            else
-                let s:hjkl_h = 0 
-            endif
+            let results = s:vimim_cjk_filter_from_cache(keyboard)
         endif
         if s:hjkl_h > 0 
-            let s:cjk_match_found = 0
-            if s:hjkl_h % 2 > 0
-                let s:hjkl_h = 0
-                let results = reverse(s:matched_list)
-            endif
+            let s:hjkl_h = 0
+            let results = reverse(s:matched_list)
         endif
         if !empty(results)
             return s:vimim_popupmenu_list(results)
