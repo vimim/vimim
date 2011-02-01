@@ -1108,7 +1108,7 @@ endfunction
 
 " ------------------------------
 function! s:vimim_set_seamless()
-" ------------------------------
+" ------------------------------ todo
     let s:seamless_positions = getpos(".")
     let s:keyboard_list = []
     return ""
@@ -1511,9 +1511,9 @@ let VimIM = " ====  Omni_Popup_Menu   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ---------------------------------------
-function! s:vimim_cycle_list_from_cache()
-" ---------------------------------------
+" ----------------------------------------------
+function! s:vimim_hjkl_h_cycle_list_from_cache()
+" ----------------------------------------------
     let first_pair = get(s:matched_list,0)
     let first_pair_list = split(first_pair)
     let chinese = nr2char(32911)
@@ -1523,14 +1523,27 @@ function! s:vimim_cycle_list_from_cache()
     elseif len(first_pair_list) == 2
         let chinese = get(first_pair_list, 1)
     endif
-    let keyboard = char2nr(chinese)
-    if s:hjkl_h%3 == 1
-        let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
-    elseif s:hjkl_h%3 == 2
-        let keyboard = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        let keyboard = strpart(keyboard,0,match(keyboard,'\d'))
+    let results = []
+    " -----------------------------------
+    if s:has_cjk_file < 1
+        let s:cjk_match_found = 0
+        if s:hjkl_h % 2 > 0
+            let s:hjkl_h = 0
+            let results = reverse(s:matched_list)
+        endif
+    elseif s:hjkl_h%3 == 0
+        let results = reverse(s:matched_list)
+    else
+        let keyboard = char2nr(chinese)
+        if s:hjkl_h%3 == 1
+            let keyboard = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
+        elseif s:hjkl_h%3 == 2
+            let keyboard = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
+            let keyboard = strpart(keyboard,0,match(keyboard,'\d'))
+        endif
+        let results = s:vimim_match_cjk_file(keyboard)
     endif
-    let results = s:vimim_match_cjk_file(keyboard)
+    " --------------------------------------------------------
     if !empty(results)
         let matched = match(results, chinese)
         let fixed_first_chinese = remove(results, matched)
@@ -1542,6 +1555,7 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_cjk_filtered_list_from_cache(keyboard)
 " ------------------------------------------------------
+" use 1234567890/qwertyuiop as digit filter
     let keyboard = a:keyboard
     let results = s:vimim_cjk_filter_list(keyboard)
     if empty(len(results)) && len(s:cjk_filter) > 0
@@ -1600,27 +1614,30 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_popupmenu_list(pair_matched_list)
 " -------------------------------------------------
+let g:gi1=s:cjk_filter
+let g:gi2=s:hjkl_h
     let pair_matched_list = a:pair_matched_list
     if empty(pair_matched_list)
         return []
     elseif empty(len(s:cjk_filter)) && empty(s:hjkl_h)
         let s:matched_list = copy(pair_matched_list)
     endif
+let g:gi3=s:matched_list
     let label = 1
     let popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
-    let menu = get(s:keyboard_list,0)
-    let menu_tail = len(menu)
-    if keyboard =~ "'"
-        let menu_tail += 1
-    endif
+    let keyboard_head = get(s:keyboard_list,0)
+let g:g55=pair_matched_list
+let g:g56=keyboard
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
+        let keyboard_head_length = len(keyboard_head)
         if keyboard =~# s:uxxxx
         \|| keyboard =~# "^vimim"
         \|| s:cjk_match_found > 0
             let msg = 'pair_matched_list has only single item'
+let g:g5=msg
         elseif empty(s:vimim_data_directory)
         \|| s:no_internet_connection < 0
         \|| s:vimim_cloud_sogou == 1
@@ -1628,8 +1645,8 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             if len(pairs) < 2
                 continue
             endif
-            let menu = get(pairs, 0)
-            let menu_tail = len(menu)
+            let keyboard_head = get(pairs, 0)
+            let keyboard_head_length = len(keyboard_head)
             let chinese = get(pairs, 1)
         endif
         let extra_text = ""
@@ -1640,10 +1657,14 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             if !empty(keyboard) && keyboard !~# s:show_me_not
-                let chinese .= strpart(keyboard, menu_tail)
+                if keyboard =~ "['.]" && empty(s:ui.has_dot)
+                    " for vimim classic demo: i.have.a.dream
+                    let keyboard_head_length += 1
+                endif
+                let chinese .= strpart(keyboard, keyboard_head_length)
             endif
         else
-            let extra_text = get(split(menu,"_"),0)
+            let extra_text = get(split(keyboard_head,"_"),0)
         endif
         " -------------------------------------------------
         let complete_items = {}
@@ -2127,7 +2148,7 @@ endfunction
 
 " ------------------------------------------------
 function! s:vimim_keyboard_blocks(keyboard, block)
-" ------------------------------------------------
+" ------------------------------------------------ todo
     let keyboard = a:keyboard
     let block = a:block
     let keyboards = []
@@ -2389,9 +2410,9 @@ let VimIM = " ====  Input_Pinyin      ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ------------------------------------
-function! s:vimim_apostrophe(keyboard)
-" ------------------------------------
+" ----------------------------------------
+function! s:vimim_add_apostrophe(keyboard)
+" ----------------------------------------
     let keyboard = a:keyboard
     if keyboard =~ "[']"
     \&& keyboard[0:0] != "'"
@@ -2887,21 +2908,6 @@ function! s:vimim_set_special_im_property()
     endif
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_wubi_4char_auto_input(keyboard)
-" -----------------------------------------------
-" support wubi non-stop typing by auto selection on each 4th
-    let keyboard = a:keyboard
-    if s:chinese_input_mode =~ 'dynamic'
-        if len(keyboard) > 4
-            let start = 4*((len(keyboard)-1)/4)
-            let keyboard = strpart(keyboard, start)
-        endif
-        let s:keyboard_list = [keyboard]
-    endif
-    return keyboard
-endfunction
-
 " -------------------------------------------
 function! s:vimim_dynamic_wubi_auto_trigger()
 " -------------------------------------------
@@ -2916,8 +2922,23 @@ function! s:vimim_dynamic_wubi_auto_trigger()
 endfunction
 
 " -----------------------------------------------
-function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
+function! s:vimim_wubi_4char_auto_input(keyboard)
+" ----------------------------------------------- todo
+" support wubi non-stop typing by auto selection on each 4th
+    let keyboard = a:keyboard
+    if s:chinese_input_mode =~ 'dynamic'
+        if len(keyboard) > 4
+            let start = 4*((len(keyboard)-1)/4)
+            let keyboard = strpart(keyboard, start)
+        endif
+        let s:keyboard_list = [keyboard]
+    endif
+    return keyboard
+endfunction
+
 " -----------------------------------------------
+function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
+" ----------------------------------------------- todo
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
@@ -3108,7 +3129,8 @@ function! s:vimim_get_unicode_list(keyboard, height)
     if empty(ddddd)
         return []
     else
-        let s:keyboard_list = [ddddd]
+   "    let s:keyboard_list = [ddddd]
+   "todo
     endif
     let words = []
     let height = &pumheight * a:height
@@ -3377,8 +3399,8 @@ function! s:vimim_sentence_match_cache(keyboard)
     endif
     let im = s:ui.im
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
-    " -----------------------------------------
-    while max > 0
+    " ------------------------------------------ todo
+    while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
         let results = s:vimim_get_data_from_cache(head)
@@ -3388,7 +3410,7 @@ function! s:vimim_sentence_match_cache(keyboard)
             continue
         endif
     endwhile
-    " -----------------------------------------
+    " ------------------------------------------
     if len(results) > 0
         return keyboard[0 : max-1]
     else
@@ -3411,17 +3433,20 @@ function! s:vimim_sentence_match_datafile(keyboard)
         return keyboard
     endif
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
-    while max > 0
+    " ---------------------------------------------
+    " surprise: wo'you'yige'meng simply works in this algorithm
+    while max > 1
+        let max -= 1
         let head = strpart(keyboard, 0, max)
         let pattern = '^' . head . '\>'
         let match_start = match(lines, pattern)
-        let max -= 1
         if match_start < 0
             continue
         else
             break
         endif
     endwhile
+    " ---------------------------------------------
     if match_start < 0
         return 0
     else
@@ -3681,7 +3706,7 @@ endfunction
 function! s:vimim_sentence_match_directory(keyboard)
 " --------------------------------------------------
     let keyboard = a:keyboard
-    if keyboard =~ '^oo'
+    if keyboard =~ s:show_me_not
         return keyboard
     endif
     let dir = s:vimim_get_valid_directory(s:ui.im)
@@ -3690,16 +3715,26 @@ function! s:vimim_sentence_match_directory(keyboard)
         return keyboard
     endif
     let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
+    let g:g1=keyboard
+    let g:g2=max
+    " ----------------------------------------------
+    " surprise: i.have.a.dream simply works in this algorithm
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
         let filename = dir . '/' . head
-        if filereadable(filename)
+        if empty(s:ui.has_dot) && head[-1:-1] == "."
+            " workaround: filereadable("/filename.") returns true
+            continue 
+        elseif filereadable(filename)
             break
         else
             continue
         endif
     endwhile
+    " ----------------------------------------------
+    let g:g3=filename
+    let g:g4=max
     if filereadable(filename)
         return keyboard[0 : max-1]
     else
@@ -3711,23 +3746,21 @@ endfunction
 function! s:vimim_hjkl_redo_pinyin_match(keyboard)
 " ------------------------------------------------
 " dummy word matching algorithm for pinyin segmentation
+" sample: yeyeqifangcao <C-6> <Space> <Space> _ <Space> "
     let keyboard = a:keyboard
-    if empty(keyboard)
-        return 0
-    endif
     let max = len(keyboard)
-    if s:ui.im != 'pinyin' || s:chinese_input_mode == 'dynamic'
+    if s:chinese_input_mode == 'dynamic'
+    \|| s:ui.im != 'pinyin' 
+    \|| s:hjkl_2nd_match < 1
+    \|| keyboard =~ "['.]"
         return max
     endif
+    let s:hjkl_2nd_match = 0
     let keyboard_head = get(s:keyboard_list,0)
     if !empty(keyboard_head)
-        if s:hjkl_2nd_match > 0
-            let s:hjkl_2nd_match = 0
-            let length = len(keyboard_head)-1
-            let keyboard = strpart(keyboard_head, 0, length)
-        endif
+        let length = len(keyboard_head)-1
+        let keyboard = strpart(keyboard_head, 0, length)
     endif
-    let msg = " yeyeqifangcao <C-6> <Space> <Space> _ <Space> "
     let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
     if len(pinyins) > 1
         let last = pinyins[-1:-1]
@@ -4498,7 +4531,8 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma/vim")
+ "  let s:vimim_use_cache=1
+    if isdirectory("/home/xxma/vim")
         let msg = "VimIM super configuration:"
     else
         return
@@ -4860,16 +4894,14 @@ let VimIM = " ====  Core_Engine       ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" VimIM classic:  i'have'a'dream
-" VimIM classic:  i.have.a.dream
 " -------------------------------------------------
 function! s:vimim_embedded_backend_engine(keyboard)
 " -------------------------------------------------
     let keyboard = a:keyboard
     let im = s:ui.im
     let root = s:ui.root
-    if empty(root) 
-    \|| empty(im) 
+    if empty(root)
+    \|| empty(im)
     \|| keyboard !~# s:valid_key
         return []
     endif
@@ -4989,25 +5021,17 @@ else
 
     " [filter] use cache to play within popup menu
     " --------------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-    \&& len(s:matched_list) > 1
-        " use 1234567890/qwertyuiop as digit filter
+    if s:chinese_input_mode =~ 'onekey' && len(s:matched_list) > 1
         if len(s:cjk_filter) > 0 && s:has_cjk_file > 0
             let results = s:vimim_cjk_filtered_list_from_cache(keyboard)
             if empty(len(results))
                 let s:cjk_filter = ""
             else
-                return s:vimim_popupmenu_list(results)
+                let s:hjkl_h = 0 
             endif
         endif
-        " use hjkl_h to cycle the popup menu list
-        if s:has_cjk_file > 0 && s:hjkl_h % 3 > 0
-            let results = s:vimim_cycle_list_from_cache()
-        else
-            let s:cjk_match_found = 0
-            if s:hjkl_h % 2 > 0
-                let results = sort(s:matched_list)
-            endif
+        if s:hjkl_h > 0 
+            let results = s:vimim_hjkl_h_cycle_list_from_cache()
         endif
         if !empty(results)
             return s:vimim_popupmenu_list(results)
@@ -5017,8 +5041,12 @@ else
     " [unicode] support direct unicode/gb/big5 input
     " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
+        let g:g1=keyboard
         let results = s:vimim_get_unicode_list(keyboard, 36/9)
+        let g:g2=results
         if !empty(len(results))
+            let s:keyboard_list = [keyboard]
+            let g:g3= s:vimim_popupmenu_list(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5056,6 +5084,7 @@ else
             return []
         else
             let s:keyboard_list = [keyboard]
+            " todo
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5082,7 +5111,7 @@ else
     " [apostrophe] apostrophe is not 2nd class citizen
     " ------------------------------------------------
     if s:ui.has_dot == 2
-        let keyboard = s:vimim_apostrophe(keyboard)
+        let keyboard = s:vimim_add_apostrophe(keyboard)
     endif
 
     " [sogou] to make cloud come true for woyouyigemeng
@@ -5097,6 +5126,7 @@ else
         else
             let s:no_internet_connection = -1
             let s:keyboard_list = [keyboard]
+            " todo
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5159,7 +5189,7 @@ function! s:vimim_get_valid_keyboard(keyboard)
         return 0
     endif
     " ignore multiple non-sense dots
-    if keyboard =~# '^[\.\.\+]' && empty(s:ui.has_dot)
+    if keyboard =~ "['.]['.]" && empty(s:ui.has_dot)
         let s:pattern_not_found += 1
         return 0
     endif
