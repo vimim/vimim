@@ -49,9 +49,9 @@ let VimIM = " ====  Introduction      ==== {{{"
 "  (3) [embedded]   VimIM: http://vimim.googlecode.com
 "  -----------------------------------------------------------
 " "VimIM Installation"
-"  (1) drop this file to plugin/:     plugin/vimim.vim
-"  (2) [option] drop a datafile:      plugin/vimim.pinyin.txt
-"  (3) [option] drop a directory:     plugin/vimim/pinyin/
+"  (1) drop this file to plugin/:  plugin/vimim.vim
+"  (2) [option] drop a datafile:   plugin/vimim.pinyin.txt
+"  (3) [option] drop a directory:  plugin/vimim/pinyin/
 " -----------------------------------------------------------
 
 let s:vimims = [VimIM]
@@ -109,9 +109,13 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
+    let s:show_me_not = '^vim'
+    if s:vimim_tab_as_onekey == 2
+        let s:show_me_not .= '\|^oo\|^ii'
+    endif
     let s:cjk_file = s:path . "vimim.cjk.txt"
-    let s:has_cjk_file = 0
     let s:cjk_lines = []
+    let s:has_cjk_file = 0
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
@@ -119,9 +123,9 @@ function! s:vimim_initialize_session()
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
     let s:one_key_correction = 0
-    let s:shuangpin_keycode_chinese = {}
-    let s:shuangpin_table = {}
     let s:quanpin_table = {}
+    let s:shuangpin_table = {}
+    let s:shuangpin_keycode_chinese = {}
     let s:quantifiers = {}
     let s:current_positions = [0,0,1,0]
     let s:seamless_positions = []
@@ -140,10 +144,6 @@ function! s:vimim_initialize_session()
     let s:valid_keys = s:az_list
     let s:popupmenu_list = []
     let g:vimim_debugs = []
-    let s:show_me_not = '^vim'
-    if s:vimim_tab_as_onekey == 2
-        let s:show_me_not .= '\|^oo\|^ii'
-    endif
 endfunction
 
 " --------------------------------
@@ -457,11 +457,8 @@ function! s:vimim_egg_vimim()
         let toggle = s:vimim_chinese('auto') . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_CTRL-Space"
-    elseif s:vimim_tab_as_onekey == 1
-        let toggle = "Tab_as_OneKey"
-    elseif s:vimim_tab_as_onekey == 2
-        let toggle = "Tab_as_OneKey_NonStop"
-    endif
+    elseif s:vimim_tab_as_onekey > 1
+        let toggle = "Tab_as_OneKey_OneKeyNonStop"
     let toggle .= s:space
     let style = s:vimim_chinese('style')
     let option = style . s:colon . toggle
@@ -486,11 +483,11 @@ function! s:vimim_egg_vimim()
     endif
     " ----------------------------------
     let im = s:vimim_statusline()
+    if s:vimim_tab_as_onekey == 2
+        let statusline = s:left . s:ui.statusline . s:right
+        let im = statusline . s:vimim_chinese('onekey')
+    endif
     if !empty(im)
-        if s:vimim_tab_as_onekey == 2
-            let statusline = s:left . s:ui.statusline . s:right
-            let im = statusline . s:vimim_chinese('onekey')
-        endif
         let option = s:vimim_chinese('input') . s:colon . im
         call add(eggs, option)
     endif
@@ -746,6 +743,7 @@ endfunction
 "   (2) after omni popup menu      => insert Chinese
 "   (3) after English punctuation  => Chinese punctuation
 "   (4) after Chinese              => <Space>
+"   (5) after Space                => stop OneKeyNonStop
 " -----------------------
 function! g:vimim_space()
 " -----------------------
@@ -756,7 +754,13 @@ function! g:vimim_space()
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
-        let space = s:vimim_onekey_action(space)
+        let char_before = getline(".")[col(".")-2]
+        if char_before =~ '\s'
+            let space = ""
+            call s:vimim_stop()
+        else
+            let space = s:vimim_onekey_action(space)
+        endif
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
@@ -776,10 +780,10 @@ function! s:vimim_onekey_action(onekey)
         sil!exe 'sil!return "' . onekey . '"'
     endif
     " ---------------------------------------------------
-    let before = getline(".")[col(".")-2]
+    let char_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     if char_before_before !~# "[0-9A-z]"
-    \&& has_key(s:punctuations, before)
+    \&& has_key(s:punctuations, char_before)
     \&& empty(s:ui.has_dot)
         for char in keys(s:punctuations_all)
             if char_before_before ==# char
@@ -791,18 +795,18 @@ function! s:vimim_onekey_action(onekey)
         endfor
         if empty(onekey)
             let msg = "transform punctuation from English to Chinese"
-            let replacement = s:punctuations[before]
+            let replacement = s:punctuations[char_before]
             let onekey = "\<BS>" . replacement
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
     " -------------------------------------------------
-    if before !~# s:valid_key && empty(a:onekey)
+    if char_before !~# s:valid_key && empty(a:onekey)
         let s:hjkl_l = 1
         return s:vimim_get_unicode_menu()
     endif
     " ---------------------------------------------------
-    if before ==# "'" && empty(s:ui.has_dot)
+    if char_before ==# "'" && empty(s:ui.has_dot)
         let s:pattern_not_found = 0
     endif
     " ---------------------------------------------------
@@ -812,7 +816,9 @@ function! s:vimim_onekey_action(onekey)
         let onekey = ""
     endif
     " ---------------------------------------------------
-    if empty(before) || before =~ '\s' || before !~# s:valid_key
+    if empty(char_before)
+    \|| char_before =~ '\s'
+    \|| char_before !~# s:valid_key
         let onekey = a:onekey
     endif
     " ---------------------------------------------------
@@ -4610,7 +4616,7 @@ function! s:vimim_plugins_fix_stop()
     if !empty(s:acp_sid)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
-            \ '<','>','/','\','<Space>','<BS>','<Enter>',]
+            \ '<','>','/','\','<Space>','<BS>','<CR>',]
         call extend(ACPMappingDrivenkeys, range(10))
         call extend(ACPMappingDrivenkeys, s:Az_list)
         for key in ACPMappingDrivenkeys
@@ -4801,11 +4807,9 @@ function! s:vimim_i_map_off()
     call extend(unmap_list, s:AZ_list)
     call extend(unmap_list, keys(s:punctuations))
     call extend(unmap_list, ['<Esc>','<CR>','<BS>','<Space>'])
-    " -----------------------
     for _ in unmap_list
         sil!exe 'iunmap '. _
     endfor
-    " -----------------------
     iunmap <Bslash>
     iunmap '
     iunmap "
@@ -4978,7 +4982,7 @@ else
     endif
 
     " [unicode] support direct unicode/gb/big5 input
-    " ---------------------------------------------- todo
+    " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
         let results = s:vimim_get_unicode_list(keyboard, 36/9)
         if !empty(results)
