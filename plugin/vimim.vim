@@ -847,7 +847,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_onekey_pumvisible_hjkl_on()
 " -------------------------------------------
-    let hjkl = 'hjklmnsx<>-_'
+    let hjkl = 'hjklmnsx<>'
     for _ in split(hjkl, '\zs')
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_onekey_pumvisible_hjkl("'._.'")'
@@ -887,9 +887,6 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             let hjkl  = '\<C-Y>'
             let hjkl .= s:vimim_get_chinese_punctuation(punctuation)
             let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
-        elseif a:key =~ "[-_]"
-            let s:hjkl_2nd_match = 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -3342,7 +3339,7 @@ function! s:vimim_sentence_match_cache(keyboard)
         return keyboard
     endif
     let im = s:ui.im
-    let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
+    let max = len(keyboard)
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
@@ -3374,7 +3371,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
     if match_start > -1
         return keyboard
     endif
-    let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
+    let max = len(keyboard)
     " wo'you'yige'meng works in this algorithm
     while max > 1
         let max -= 1
@@ -3654,7 +3651,7 @@ function! s:vimim_sentence_match_directory(keyboard)
     if filereadable(filename)
         return keyboard
     endif
-    let max = s:vimim_hjkl_redo_pinyin_match(keyboard)
+    let max = len(keyboard)
     " i.have.a.dream works in this algorithm
     while max > 1
         let max -= 1
@@ -3674,40 +3671,6 @@ function! s:vimim_sentence_match_directory(keyboard)
     else
         return 0
     endif
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_hjkl_redo_pinyin_match(keyboard)
-" ------------------------------------------------ todo
-" dummy word matching algorithm for pinyin segmentation
-" sample: yeyeqifangcao <C-6> <Space> <Space> _ <Space> "
-    let keyboard = a:keyboard
-    let max = len(keyboard)
-    if s:chinese_input_mode == 'dynamic'
-    \|| s:ui.im != 'pinyin'
-    \|| keyboard =~ "['.]"
-        return max
-    endif
-let g:g1=s:keyboard_list
-    if s:hjkl_2nd_match > 0
-        let keyboard_head = get(s:keyboard_list,0)
-        if !empty(keyboard_head)
-            let s:hjkl_2nd_match = 0
-            let length = len(keyboard_head)-1
-            let keyboard = strpart(keyboard_head, 0, length)
-            let keyboard_tail  = strpart(keyboard_head, length)
-            let keyboard_tail  = get(s:keyboard_list,1)
-"           let s:keyboard_list = [keyboard, keyboard_tail]
-let g:g3=keyboard
-let g:g2=keyboard_tail
-        endif
-    endif
-    let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-    if len(pinyins) > 1
-        let last = pinyins[-1:-1]
-        let max = len(keyboard)-len(last)-1
-    endif
-    return max
 endfunction
 
 " ------------------------
@@ -4725,7 +4688,6 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_l = 0
     let s:hjkl_h = 0
-    let s:hjkl_2nd_match = 0
     let s:cjk_has_match = 0
     let s:cjk_filter = ""
     let s:no_internet_connection = 0
