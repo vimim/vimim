@@ -614,7 +614,7 @@ function! s:vimim_register_search_pattern(keyboard, results)
     endif
     let results = []
     for chinese in a:results
-        if a:keyboard =~# s:uxxxx || s:cjk_match_found > 0
+        if a:keyboard =~# s:uxxxx || s:cjk_has_match > 0
             let msg = "for unicode slash search: /u808f /32911"
         elseif empty(s:vimim_data_directory)
             let pairs = split(chinese)
@@ -1592,7 +1592,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         let keyboard_head_length = len(keyboard_head)
         if keyboard =~# s:uxxxx
         \|| keyboard =~# "^vimim"
-        \|| s:cjk_match_found > 0
+        \|| s:cjk_has_match > 0
             let msg = 'pair_matched_list has only single item'
         elseif empty(s:vimim_data_directory)
         \|| s:no_internet_connection < 0
@@ -1979,12 +1979,46 @@ function! s:vimim_load_cjk_file()
         endif
     endif
     if len(s:cjk_lines) == 20902
-        let s:has_cjk_file += 1
+        let s:has_cjk_file = 1
         let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
     else
         let s:has_cjk_file = 0
     endif
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_tranfer_chinese() range abort
+" ---------------------------------------------
+" [usage]    :VimIM
+" [feature]  (1) "quick and dirty" way to transfer Chinese to Chinese
+"            (2) 20% of the effort to solve 80% of the problem
+"            (3) 2172 Chinese pairs are used for one-to-one mapping
+"            (4) range for visual mode is supported
+" ---------------------------------------------
+    sil!call s:vimim_backend_initialization_once()
+    if empty(s:has_cjk_file)
+        let msg = "no toggle between simplified and tranditional Chinese"
+    elseif &encoding == "utf-8"
+        exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
+    endif
+endfunction
+
+" --------------------------------
+function! s:vimim_one2one(chinese)
+" --------------------------------
+    let chinese = a:chinese
+    let ddddd = char2nr(chinese)
+    if ddddd < 19968 || ddddd > 40869
+        return chinese
+    endif
+    let line = ddddd - 19968
+    let values = split(s:cjk_lines[line])
+    let traditional_chinese = get(split(get(values,0),'\zs'),1)
+    if !empty(traditional_chinese)
+        let chinese = traditional_chinese
+    endif
+    return chinese
 endfunction
 
 " ----------------------------------------
@@ -2015,7 +2049,7 @@ function! s:vimim_match_cjk_file(keyboard)
         let chinese = get(split(get(values,0),'\zs'),0)
         call add(results, chinese)
         let line = match(s:cjk_lines, grep, line+1)
-        let s:cjk_match_found += 1
+        let s:cjk_has_match += 1
     endwhile
     return results
 endfunction
@@ -2116,40 +2150,6 @@ function! s:vimim_keyboard_blocks(keyboard, block)
     endif
     let s:keyboard_list = copy(keyboards)
     return first
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_tranfer_chinese() range abort
-" ---------------------------------------------
-" [usage]    :VimIM
-" [feature]  (1) "quick and dirty" way to transfer Chinese to Chinese
-"            (2) 20% of the effort to solve 80% of the problem
-"            (3) 2172 Chinese pairs are used for one-to-one mapping
-"            (4) range for visual mode is supported
-" ---------------------------------------------
-    sil!call s:vimim_backend_initialization_once()
-    if empty(s:has_cjk_file)
-        let msg = "no toggle between simplified and tranditional Chinese"
-    elseif &encoding == "utf-8"
-        exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
-    endif
-endfunction
-
-" --------------------------------
-function! s:vimim_one2one(chinese)
-" --------------------------------
-    let chinese = a:chinese
-    let ddddd = char2nr(chinese)
-    if ddddd < 19968 || ddddd > 40869
-        return chinese
-    endif
-    let line = ddddd - 19968
-    let values = split(s:cjk_lines[line])
-    let right_pair = get(split(get(values,0),'\zs'),1)
-    if right_pair != nr2char(12288)
-        let chinese = right_pair
-    endif
-    return chinese
 endfunction
 
 " ------------------------------------------
@@ -3678,22 +3678,29 @@ endfunction
 
 " ------------------------------------------------
 function! s:vimim_hjkl_redo_pinyin_match(keyboard)
-" ------------------------------------------------
+" ------------------------------------------------ todo
 " dummy word matching algorithm for pinyin segmentation
 " sample: yeyeqifangcao <C-6> <Space> <Space> _ <Space> "
     let keyboard = a:keyboard
     let max = len(keyboard)
     if s:chinese_input_mode == 'dynamic'
     \|| s:ui.im != 'pinyin'
-    \|| s:hjkl_2nd_match < 1
     \|| keyboard =~ "['.]"
         return max
     endif
-    let s:hjkl_2nd_match = 0
-    let keyboard_head = get(s:keyboard_list,0)
-    if !empty(keyboard_head)
-        let length = len(keyboard_head)-1
-        let keyboard = strpart(keyboard_head, 0, length)
+let g:g1=s:keyboard_list
+    if s:hjkl_2nd_match > 0
+        let keyboard_head = get(s:keyboard_list,0)
+        if !empty(keyboard_head)
+            let s:hjkl_2nd_match = 0
+            let length = len(keyboard_head)-1
+            let keyboard = strpart(keyboard_head, 0, length)
+            let keyboard_tail  = strpart(keyboard_head, length)
+            let keyboard_tail  = get(s:keyboard_list,1)
+"           let s:keyboard_list = [keyboard, keyboard_tail]
+let g:g3=keyboard
+let g:g2=keyboard_tail
+        endif
     endif
     let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
     if len(pinyins) > 1
@@ -4719,7 +4726,7 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_l = 0
     let s:hjkl_h = 0
     let s:hjkl_2nd_match = 0
-    let s:cjk_match_found = 0
+    let s:cjk_has_match = 0
     let s:cjk_filter = ""
     let s:no_internet_connection = 0
     let s:pumvisible_yes = 0
