@@ -1108,7 +1108,7 @@ endfunction
 
 " ------------------------------
 function! s:vimim_set_seamless()
-" ------------------------------ todo
+" ------------------------------
     let s:seamless_positions = getpos(".")
     let s:keyboard_list = []
     return ""
@@ -2108,7 +2108,7 @@ endfunction
 
 " ------------------------------------------------
 function! s:vimim_keyboard_blocks(keyboard, block)
-" ------------------------------------------------ todo
+" ------------------------------------------------
     let keyboard = a:keyboard
     let block = a:block
     let keyboards = []
@@ -2883,7 +2883,7 @@ endfunction
 
 " -----------------------------------------------
 function! s:vimim_wubi_4char_auto_input(keyboard)
-" ----------------------------------------------- 
+" -----------------------------------------------
 " support wubi non-stop typing by auto selection on each 4th
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
@@ -2898,7 +2898,7 @@ endfunction
 
 " -----------------------------------------------
 function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
-" ----------------------------------------------- 
+" -----------------------------------------------
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
@@ -3101,21 +3101,18 @@ endfunction
 " ----------------------------------
 function! s:vimim_get_unicode_menu()
 " ----------------------------------
-    let trigger = '\<C-R>=g:vimim()\<CR>'
-    let xxxx = s:vimim_get_unicode_char_before()
-    if empty(xxxx)
-        let trigger = ""
-    else
+    let trigger = ""
+    let xxxx = s:vimim_get_unicode_before()
+    if !empty(xxxx)
         call s:vimim_set_seamless()
-        let trigger = xxxx . trigger
+        let trigger = xxxx . '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . trigger . '"'
 endfunction
 
-" -----------------------------------------
-function! s:vimim_get_unicode_char_before()
-" -----------------------------------------
-" [unicode] OneKey to trigger cjk with omni menu"
+" ------------------------------------
+function! s:vimim_get_unicode_before()
+" ------------------------------------
     let byte_before = getline(".")[col(".")-2]
     if empty(byte_before) || byte_before =~# s:valid_key
         return 0
@@ -3675,7 +3672,7 @@ function! s:vimim_sentence_match_directory(keyboard)
         let filename = dir . '/' . head
         if empty(s:ui.has_dot) && head[-1:-1] == "."
             " workaround: filereadable("/filename.") returns true
-            continue 
+            continue
         elseif filereadable(filename)
             break
         else
@@ -3697,7 +3694,7 @@ function! s:vimim_hjkl_redo_pinyin_match(keyboard)
     let keyboard = a:keyboard
     let max = len(keyboard)
     if s:chinese_input_mode == 'dynamic'
-    \|| s:ui.im != 'pinyin' 
+    \|| s:ui.im != 'pinyin'
     \|| s:hjkl_2nd_match < 1
     \|| keyboard =~ "['.]"
         return max
@@ -4478,8 +4475,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
- "  let s:vimim_use_cache=1
-    if isdirectory("/home/xxma/vim")
+    if isdirectory("/home/xma/vim")
         let msg = "VimIM super configuration:"
     else
         return
@@ -4972,7 +4968,7 @@ else
         if len(s:cjk_filter) > 0 && s:has_cjk_file > 0
             let results = s:vimim_cjk_filter_from_cache(keyboard)
         endif
-        if s:hjkl_h > 0 
+        if s:hjkl_h > 0
             let s:hjkl_h = 0
             let results = reverse(s:matched_list)
         endif
@@ -4982,7 +4978,7 @@ else
     endif
 
     " [unicode] support direct unicode/gb/big5 input
-    " ----------------------------------------------
+    " ---------------------------------------------- todo
     if s:chinese_input_mode =~ 'onekey'
         let results = s:vimim_get_unicode_list(keyboard, 36/9)
         if !empty(results)
