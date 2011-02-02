@@ -2032,8 +2032,7 @@ function! s:vimim_sentence_match_with_number(keyboard)
     let partition = match(keyboard, '\d')
     while partition > -1
         let partition += 1
-        let char = keyboard[partition : partition]
-        if char =~ '\D'
+        if keyboard[partition : partition] =~ '\D'
             break
         endif
     endwhile
