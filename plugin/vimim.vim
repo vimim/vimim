@@ -102,7 +102,7 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
-    sil!call s:vimim_load_cjk_file()
+    sil!call s:vimim_initialize_cjk_file()
     sil!call s:vimim_initialize_keycode()
 endfunction
 
@@ -113,12 +113,7 @@ function! s:vimim_initialize_session()
     if s:vimim_tab_as_onekey == 2
         let s:show_me_not .= '\|^oo\|^ii'
     endif
-    let s:cjk_lines = []
-    let s:cjk_file = s:path . "vimim.cjk.txt"
-    let s:has_cjk_file = 0
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
-    let s:abcd = "'abcdefgz"
-    let s:qwerty = range(10)
     let s:www_executable = 0
     let s:www_libcall = 0
     let s:vimim_cloud_plugin = 0
@@ -1961,26 +1956,33 @@ let VimIM = " ====  Input_Digit       ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" -------------------------------
-function! s:vimim_load_cjk_file()
-" -------------------------------
+" -------------------------------------
+function! s:vimim_initialize_cjk_file()
+" -------------------------------------
 " VimIM swiss army Chinese database without using cache
 " # one super yet simple cjk database for 4corner and pinyin and both
 " # dummy transformation between simplified and traditional Chinese
-" # hjkl_h cycle list of unicode, 4corner and pinyin
 " # hjkl_l toggle display of the property of Chinese character
-" -----------------------------------------------------------------
-    if empty(s:cjk_lines) && empty(s:has_cjk_file)
-        if filereadable(s:cjk_file)
-            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-        endif
-    endif
-    if len(s:cjk_lines) == 20902
+" --------------------------------------------------------------------
+    let s:has_cjk_file = 0
+    let s:abcd = "'abcdefgz"
+    let s:qwerty = range(10)
+    let s:cjk_lines = []
+    let s:cjk_file = s:path . "vimim.cjk.txt"
+    if filereadable(s:cjk_file)
         let s:has_cjk_file = 1
         let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
-    else
-        let s:has_cjk_file = 0
+    endif
+endfunction
+
+" -------------------------------
+function! s:vimim_load_cjk_file()
+" -------------------------------
+    if s:has_cjk_file > 0 && empty(s:cjk_lines)
+        if filereadable(s:cjk_file)
+            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+        endif
     endif
 endfunction
 
@@ -1997,6 +1999,7 @@ function! s:vimim_tranfer_chinese() range abort
     if empty(s:has_cjk_file)
         let msg = "no toggle between simplified and tranditional Chinese"
     elseif &encoding == "utf-8"
+        call s:vimim_load_cjk_file()
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
     endif
 endfunction
@@ -2081,12 +2084,13 @@ function! s:vimim_slash_search_block(keyboard)
 " --------------------------------------------
     if empty(s:has_cjk_file)
         return []
+    else
+        call s:vimim_load_cjk_file()
     endif
     let results = []
     let keyboard = a:keyboard
     while len(keyboard) > 3
-        let keyboards = s:vimim_cjk_nonstop_input(keyboard)
-        let keyboard2 = get(keyboards,0)
+        let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
         if empty(keyboard2)
             break
         else
@@ -2274,6 +2278,8 @@ function! s:vimim_reverse_lookup(chinese)
     if empty(s:has_cjk_file)
         return results
     endif
+    " -----------------------------------
+    call s:vimim_load_cjk_file()
     let results_pinyin = []    |" 马力 => ma3 li2
     let result_cjjp = ""       |" 马力 => ml
     let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
@@ -4972,6 +4978,7 @@ else
     " [cjk] swiss army cjk database is the first-class citizen
     " --------------------------------------------------------
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
+        call s:vimim_load_cjk_file()
         let keyboard2 = s:vimim_sentence_match_with_number(keyboard)
         let keyboard2 = s:vimim_cjk_nonstop_input(keyboard2)
         if !empty(keyboard2)
