@@ -2028,9 +2028,9 @@ function! s:vimim_sentence_match_with_number(keyboard)
 " output: keyboards ["wo23","you40yigemeng"]
     let keyboard = a:keyboard
     if keyboard =~ '\l\+\d\+\l\+'
-        let msg = "use digit as partition for mixture sentence"
+        call s:vimim_load_cjk_file()
     else
-        return keyboard
+        return 0
     endif
     let partition = match(keyboard, '\d')
     while partition > -1
@@ -2039,7 +2039,8 @@ function! s:vimim_sentence_match_with_number(keyboard)
             break
         endif
     endwhile
-    return s:vimim_keyboard_break_at(keyboard, partition)
+    let head = s:vimim_get_keyboard_head(keyboard, partition)
+    return head
 endfunction
 
 " ----------------------------------------
@@ -2111,7 +2112,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
         " [sample] (every four digits) 6021272260201762
         let delimiter = match(keyboard, '^\d\d\d\d')
         if delimiter > -1
-            return s:vimim_keyboard_break_at(keyboard, partition)
+            return s:vimim_get_keyboard_head(keyboard, partition)
         endif
     endif
     " ---------------------------------------
@@ -2126,7 +2127,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
             if alpha_first > 0 && alpha_first < 7
             \&& digit_first > 0 && digit_first < 5
                 let partition = alpha_first + digit_first
-                return s:vimim_keyboard_break_at(keyboard, partition)
+                return s:vimim_get_keyboard_head(keyboard, partition)
             endif
         endif
     endif
@@ -2136,7 +2137,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
         " [sample] (every 1+4=5 chars) sypwqjwuwwhyppwmquyw
         let delimiter = match(keyboard, '^\l\l\l\l\l')
         if delimiter > -1
-            let lllll = s:vimim_keyboard_break_at(keyboard, partition)
+            let lllll = s:vimim_get_keyboard_head(keyboard, partition)
             let llll = lllll[1:-1]
             let ldddd = lllll[0:0]
             for char in split(llll, '\zs')
@@ -2160,7 +2161,7 @@ function! s:vimim_cjk_nonstop_input(keyboard)
 endfunction
 
 " ------------------------------------------------------
-function! s:vimim_keyboard_break_at(keyboard, partition)
+function! s:vimim_get_keyboard_head(keyboard, partition)
 " ------------------------------------------------------
     let keyboard = a:keyboard
     let partition = a:partition
@@ -4978,13 +4979,14 @@ else
     " [cjk] swiss army cjk database is the first-class citizen
     " --------------------------------------------------------
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
-        call s:vimim_load_cjk_file()
-        let keyboard2 = s:vimim_sentence_match_with_number(keyboard)
-        let keyboard2 = s:vimim_cjk_nonstop_input(keyboard2)
-        if !empty(keyboard2)
-            let results = s:vimim_match_cjk_file(keyboard2)
-            if !empty(len(results))
-                return s:vimim_popupmenu_list(results)
+        let head = s:vimim_sentence_match_with_number(keyboard)
+        if !empty(head)
+            let keyboard2 = s:vimim_cjk_nonstop_input(head)
+            if !empty(keyboard2)
+                let results = s:vimim_match_cjk_file(keyboard2)
+                if !empty(len(results))
+                    return s:vimim_popupmenu_list(results)
+                endif
             endif
         endif
     endif
