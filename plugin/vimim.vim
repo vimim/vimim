@@ -2018,6 +2018,28 @@ function! s:vimim_one2one(chinese)
     return chinese
 endfunction
 
+" ----------------------------------------------
+function! s:vimim_sentence_with_number(keyboard)
+" ---------------------------------------------- todo
+" input:  keyboard   "wo23you40yigemeng"
+" output: keyboards ["wo23","you40yigemeng"]
+    let keyboard = a:keyboard
+    let digit = match(keyboard, '\d')
+    if digit < 0
+        return []
+    endif
+    while digit > -1
+        let digit += 1
+        let char = keyboard[ digit : digit ]
+        if char =~ '\D'
+            break
+        endif
+    endwhile
+    let keyboards = s:vimim_keyboard_break_at(keyboard, digit)
+    let s:keyboard_list = copy(keyboards)
+    return keyboards
+endfunction
+
 " ----------------------------------------
 function! s:vimim_match_cjk_file(keyboard)
 " ----------------------------------------
@@ -2064,7 +2086,8 @@ function! s:vimim_slash_search_block(keyboard)
     let results = []
     let keyboard = a:keyboard
     while len(keyboard) > 3
-        let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
+        let keyboards = s:vimim_cjk_nonstop_input(keyboard)
+        let keyboard2 = get(keyboards,0)
         if empty(keyboard2)
             break
         else
@@ -2080,12 +2103,12 @@ function! s:vimim_cjk_nonstop_input(keyboard)
 " -------------------------------------------
     let keyboard = a:keyboard
     let delimiter = -1
-    let block = 4
-    if len(keyboard) % block < 1 && keyboard !~ '\D'
+    let partition = 4
+    if len(keyboard) % partition < 1 && keyboard !~ '\D'
         " [sample] (every four digits) 6021272260201762
         let delimiter = match(keyboard, '^\d\d\d\d')
         if delimiter > -1
-            return s:vimim_keyboard_blocks(keyboard, block)
+            return s:vimim_keyboard_break_at(keyboard, partition)
         endif
     endif
     " ---------------------------------------
@@ -2099,54 +2122,54 @@ function! s:vimim_cjk_nonstop_input(keyboard)
             let digit_first = len(get(digit_list,0))
             if alpha_first > 0 && alpha_first < 7
             \&& digit_first > 0 && digit_first < 5
-                let block = alpha_first + digit_first
-                return s:vimim_keyboard_blocks(keyboard, block)
+                let partition = alpha_first + digit_first
+                return s:vimim_keyboard_break_at(keyboard, partition)
             endif
         endif
     endif
     " ---------------------------------------
-    let block = 5
-    if len(keyboard) % block < 1 && keyboard !~ '\d'
+    let partition = 5
+    if len(keyboard) % partition < 1 && keyboard !~ '\d'
         " [sample] (every 1+4=5 chars) sypwqjwuwwhyppwmquyw
         let delimiter = match(keyboard, '^\l\l\l\l\l')
         if delimiter > -1
-            let lllll = s:vimim_keyboard_blocks(keyboard, block)
+            let keyboards = s:vimim_keyboard_break_at(keyboard, partition)
+            let lllll = get(keyboards,0)
             let llll = lllll[1:-1]
             let ldddd = lllll[0:0]
             for char in split(llll, '\zs')
                 let digit = match(s:qwerty, char)
                 if digit < 0
-                    return 0
+                    return []
                 else
                     let ldddd .= digit
                 endif
             endfor
-            return ldddd
+            return [ldddd]
         endif
     endif
     " ---------------------------------------
     if empty(s:backend.datafile)
     \&& empty(s:backend.directory)
     \&& empty(s:vimim_cloud_plugin)
-        return keyboard
+        return [keyboard]
     endif
-    return 0
+    return []
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_keyboard_blocks(keyboard, block)
-" ------------------------------------------------
+" ------------------------------------------------------
+function! s:vimim_keyboard_break_at(keyboard, partition)
+" ------------------------------------------------------ todo
     let keyboard = a:keyboard
-    let block = a:block
+    let partition = a:partition
+    let head = keyboard[0 : partition-1]
+    let tail  = keyboard[partition : -1]
     let keyboards = []
-    let first = keyboard[0 : block-1]
-    let last  = keyboard[block : -1]
-    call add(keyboards, first)
-    if !empty(last)
-        call add(keyboards, last)
+    call add(keyboards, head)
+    if !empty(tail)
+        call add(keyboards, tail)
     endif
-    let s:keyboard_list = copy(keyboards)
-    return first
+    return keyboards
 endfunction
 
 " ------------------------------------------
@@ -4827,8 +4850,8 @@ function! s:vimim_embedded_backend_engine(keyboard)
         if empty(keyboard2)
             let s:keyboard_list = [keyboard]
         elseif len(keyboard2) < len(keyboard)
-            let last = strpart(keyboard,len(keyboard2))
-            let s:keyboard_list = [keyboard2, last]
+            let tail = strpart(keyboard,len(keyboard2))
+            let s:keyboard_list = [keyboard2, tail]
         endif
     endif
     return results
@@ -4945,10 +4968,20 @@ else
         endif
     endif
 
+    " [sentence] includes number in sentence match game
+    " -------------------------------------------------
+    let keyboards = s:vimim_sentence_with_number(keyboard)
+    if empty(keyboards)
+        let msg = " no number found in input "
+    else
+        let keyboard = get(keyboards, 0)
+    endif
+
     " [cjk] swiss army cjk database is the first-class citizen
-    " --------------------------------------------------------
+    " -------------------------------------------------------- 
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
-        let keyboard2 = s:vimim_cjk_nonstop_input(keyboard)
+        let keyboards = s:vimim_cjk_nonstop_input(keyboard)
+        let keyboard2 = get(keyboards,0)
         if !empty(keyboard2)
             let results = s:vimim_match_cjk_file(keyboard2)
             if !empty(len(results))
