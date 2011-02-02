@@ -2018,26 +2018,26 @@ function! s:vimim_one2one(chinese)
     return chinese
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_sentence_with_number(keyboard)
-" ---------------------------------------------- todo
+" ----------------------------------------------------
+function! s:vimim_sentence_match_with_number(keyboard)
+" ----------------------------------------------------
 " input:  keyboard   "wo23you40yigemeng"
 " output: keyboards ["wo23","you40yigemeng"]
     let keyboard = a:keyboard
-    let digit = match(keyboard, '\d')
-    if digit < 0
-        return []
+    if keyboard =~ '\l\+\d\+\l\+'
+        let msg = "use digit as partition for mixture sentence"
+    else
+        return keyboard
     endif
-    while digit > -1
-        let digit += 1
-        let char = keyboard[ digit : digit ]
+    let partition = match(keyboard, '\d')
+    while partition > -1
+        let partition += 1
+        let char = keyboard[partition : partition]
         if char =~ '\D'
             break
         endif
     endwhile
-    let keyboards = s:vimim_keyboard_break_at(keyboard, digit)
-    let s:keyboard_list = copy(keyboards)
-    return keyboards
+    return s:vimim_keyboard_break_at(keyboard, partition)
 endfunction
 
 " ----------------------------------------
@@ -2133,43 +2133,45 @@ function! s:vimim_cjk_nonstop_input(keyboard)
         " [sample] (every 1+4=5 chars) sypwqjwuwwhyppwmquyw
         let delimiter = match(keyboard, '^\l\l\l\l\l')
         if delimiter > -1
-            let keyboards = s:vimim_keyboard_break_at(keyboard, partition)
-            let lllll = get(keyboards,0)
+            let lllll = s:vimim_keyboard_break_at(keyboard, partition)
             let llll = lllll[1:-1]
             let ldddd = lllll[0:0]
             for char in split(llll, '\zs')
                 let digit = match(s:qwerty, char)
                 if digit < 0
-                    return []
+                    return 0
                 else
                     let ldddd .= digit
                 endif
             endfor
-            return [ldddd]
+            return ldddd
         endif
     endif
     " ---------------------------------------
     if empty(s:backend.datafile)
     \&& empty(s:backend.directory)
     \&& empty(s:vimim_cloud_plugin)
-        return [keyboard]
+        return keyboard
     endif
-    return []
+    return 0
 endfunction
 
 " ------------------------------------------------------
 function! s:vimim_keyboard_break_at(keyboard, partition)
-" ------------------------------------------------------ todo
+" ------------------------------------------------------
     let keyboard = a:keyboard
     let partition = a:partition
+    let keyboards = []
     let head = keyboard[0 : partition-1]
     let tail  = keyboard[partition : -1]
-    let keyboards = []
     call add(keyboards, head)
     if !empty(tail)
         call add(keyboards, tail)
     endif
-    return keyboards
+    if len(s:keyboard_list) < 2
+        let s:keyboard_list = copy(keyboards)
+    endif
+    return head
 endfunction
 
 " ------------------------------------------
@@ -4968,20 +4970,11 @@ else
         endif
     endif
 
-    " [sentence] includes number in sentence match game
-    " -------------------------------------------------
-    let keyboards = s:vimim_sentence_with_number(keyboard)
-    if empty(keyboards)
-        let msg = " no number found in input "
-    else
-        let keyboard = get(keyboards, 0)
-    endif
-
     " [cjk] swiss army cjk database is the first-class citizen
-    " -------------------------------------------------------- 
+    " --------------------------------------------------------
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
-        let keyboards = s:vimim_cjk_nonstop_input(keyboard)
-        let keyboard2 = get(keyboards,0)
+        let keyboard2 = s:vimim_sentence_match_with_number(keyboard)
+        let keyboard2 = s:vimim_cjk_nonstop_input(keyboard2)
         if !empty(keyboard2)
             let results = s:vimim_match_cjk_file(keyboard2)
             if !empty(len(results))
