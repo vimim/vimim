@@ -589,9 +589,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
             let results = s:vimim_embedded_backend_engine(keyboard)
         endif
     endif
-    if empty(results)
-        let msg = "so far so good, nothing found"
-    else
+    if !empty(results)
         call s:vimim_register_search_pattern(keyboard, results)
     endif
 endfunction
@@ -645,6 +643,7 @@ function! s:vimim_cjk_property_display(ddddd)
     let unicode = printf('u%04x',ddddd)
     let menu = unicode . s:space . ddddd
     if s:has_cjk_file > 0
+        call s:vimim_load_cjk_file()
         let chinese = nr2char(ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
@@ -1507,6 +1506,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_cjk_filter_from_cache(keyboard)
 " -----------------------------------------------
 " use 1234567890/qwertyuiop as digit filter
+    call s:vimim_load_cjk_file()
     let keyboard = a:keyboard
     let results = s:vimim_cjk_filter_list(keyboard)
     if empty(len(results)) && len(s:cjk_filter) > 0
@@ -4031,7 +4031,6 @@ function! s:vimim_get_sogou_key()
             let output = system(executable . input)
         endif
     catch
-        let msg = "It looks like sogou has trouble with its cloud?"
         call s:debugs('sogou::exception=', v:exception)
         let output = 0
     endtry
