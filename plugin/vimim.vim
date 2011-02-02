@@ -3682,11 +3682,11 @@ function! s:vimim_sentence_match_directory(keyboard)
         let max -= 1
         let head = strpart(keyboard, 0, max)
         let filename = dir . '/' . head
-        if empty(s:ui.has_dot) && head[-1:-1] == "."
-            " workaround: filereadable("/filename.") returns true
-            continue
-        elseif filereadable(filename)
-            break
+        " workaround: filereadable("/filename.") returns true
+        if filereadable(filename)
+            if head[-1:-1] != "."
+                break
+            endif
         else
             continue
         endif
