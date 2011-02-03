@@ -2021,17 +2021,46 @@ function! s:vimim_one2one(chinese)
     return chinese
 endfunction
 
-" ----------------------------------------------------
-function! s:vimim_sentence_match_with_number(keyboard)
-" ----------------------------------------------------
-" input:  keyboard   "wo23you40yigemeng"
-" output: keyboards ["wo23","you40yigemeng"]
+" --------------------------------------------
+function! s:vimim_cjk_sentence_match(keyboard)
+" --------------------------------------------
     let keyboard = a:keyboard
-    if keyboard =~ '\l\+\d\+\l\+'
+    if keyboard =~ '\l\+\d\+\l\+' || s:has_cjk_file == 2
         call s:vimim_load_cjk_file()
     else
         return 0
     endif
+    let head = 0
+    if keyboard =~ '\l\+\d\+\l\+'
+        let head = s:vimim_cjk_sentence_match_with_digit(keyboard)
+    elseif s:has_cjk_file == 2
+        let head = s:vimim_cjk_sentence_match_dot_by_dot(keyboard)
+    endif
+    return head
+endfunction
+
+" -------------------------------------------------------
+function! s:vimim_cjk_sentence_match_with_digit(keyboard)
+" -------------------------------------------------------
+" input:  keyboard   "wo23you40yigemeng"
+" output: keyboards ["wo23","you40yigemeng"]
+    let partition = match(keyboard, '\d')
+    while partition > -1
+        let partition += 1
+        if keyboard[partition : partition] =~ '\D'
+            break
+        endif
+    endwhile
+    let head = s:vimim_get_keyboard_head(keyboard, partition)
+    return head
+endfunction
+
+" -------------------------------------------------------
+function! s:vimim_cjk_sentence_match_dot_by_dot(keyboard)
+" ------------------------------------------------------- todo
+" input:  keyboard   "woyouyigemeng"
+" output  keyboard   "wo.you.yi.ge.meng"
+    let keyboard = a:keyboard
     let partition = match(keyboard, '\d')
     while partition > -1
         let partition += 1
@@ -2048,7 +2077,7 @@ function! s:vimim_match_cjk_file(keyboard)
 " ----------------------------------------
     let keyboard = a:keyboard
     let grep = ""
-    if keyboard =~# '^\l\+\_[1234]\>'
+    if keyboard =~# '^\l\+\_[12345]\>'
     \|| keyboard !~# '\d'
     \|| keyboard !~# '\l'
         let grep = '\s' . keyboard
@@ -3927,6 +3956,7 @@ function! s:vimim_do_cloud_if_no_embedded_backend()
         \&& s:vimim_cloud_sogou == 888
         \&& s:has_cjk_file > 0
             let msg = "use local cjk when cloud is too slow"
+            let s:has_cjk_file = 2
         else
             let s:vimim_cloud_sogou = 1
         endif
@@ -4953,7 +4983,7 @@ else
     " [filter] use cache to play within popup menu
     " --------------------------------------------
     if s:chinese_input_mode =~ 'onekey' && len(s:matched_list) > 1
-        if len(s:cjk_filter) > 0 && s:has_cjk_file > 0
+        if s:has_cjk_file > 0 && len(s:cjk_filter) > 0
             let results = s:vimim_cjk_filter_from_cache(keyboard)
         endif
         if s:hjkl_h > 0
@@ -4978,7 +5008,7 @@ else
     " [cjk] swiss army cjk database is the first-class citizen
     " --------------------------------------------------------
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
-        let head = s:vimim_sentence_match_with_number(keyboard)
+        let head = s:vimim_cjk_sentence_match(keyboard)
         if !empty(head)
             let keyboard2 = s:vimim_cjk_nonstop_input(head)
             if !empty(keyboard2)
