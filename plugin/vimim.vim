@@ -2044,6 +2044,7 @@ function! s:vimim_cjk_sentence_match_with_digit(keyboard)
 " -------------------------------------------------------
 " input:  keyboard   "wo23you40yigemeng"
 " output: keyboards ["wo23","you40yigemeng"]
+    let keyboard = a:keyboard
     let partition = match(keyboard, '\d')
     while partition > -1
         let partition += 1
