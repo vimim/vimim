@@ -2327,7 +2327,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
             let values = split(s:cjk_lines[line])
             if a:im == 'digit'
                 let head = get(values, 1)
-                if head =~ '\D' || head ==# '0000'
+                if head =~ '\D'
                     let head = '....' |" 4corner not available
                 endif
             elseif a:im == 'pinyin'
