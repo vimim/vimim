@@ -2123,12 +2123,10 @@ function! s:vimim_match_cjk_file(keyboard)
     endif
     let keyboard = a:keyboard
     let grep = ""
-    let order = 0
-    let sequence = 1
+    let order_3000 = 0
     if keyboard =~ '^\l\>'
-        " take care of frequency for single alphabet input
-        let grep = '\s' . keyboard . sequence . '$'
-        let order = 1
+        let grep = '\s' . keyboard . '\d\+$'
+        let order_3000 = 1
     elseif keyboard =~# '^\l\+\_[12345]\>'
     \|| keyboard !~# '\d'
     \|| keyboard !~# '\l'
@@ -2151,17 +2149,34 @@ function! s:vimim_match_cjk_file(keyboard)
     while line > -1
         let values = split(s:cjk_lines[line])
         let chinese = get(split(get(values,0),'\zs'),0)
-        call add(results, chinese)
-        if empty(order)
-            let line = match(s:cjk_lines, grep, line+1)
-        else
-            let sequence += 1
-            let grep = '\s' . keyboard . sequence . '$'
-            let line = match(s:cjk_lines, grep)
+        if order_3000 > 0
+            let last = get(values, -1)
+            let chinese = chinese . ' ' . last[1:-1]
         endif
+        call add(results, chinese)
+        let line = match(s:cjk_lines, grep, line+1)
         let s:cjk_has_match += 1
     endwhile
+    if order_3000 > 0 && len(results) > 1
+        let results = sort(results, "s:vimim_sort_by_last_field")
+        call map(results, "strpart(".'v:val'.",0,s:multibyte)")
+    endif
     return results
+endfunction
+
+" -----------------------------------------------
+function s:vimim_sort_by_last_field(line1, line2)
+" -----------------------------------------------
+" m => 马 <= 马 1 <= 马馬 7712 ma3 m1
+    let line1 = get(split(a:line1),-1) + 1
+    let line2 = get(split(a:line2),-1) + 1
+    if line1 < line2
+        return -1
+    elseif line1 > line2
+        return 1
+    else
+        return 0
+    endif
 endfunction
 
 " --------------------------------------------
@@ -5002,7 +5017,7 @@ else
     endif
 
     " [cjk] swiss-army cjk database is the first-class citizen
-    " -------------------------------------------------------- 
+    " --------------------------------------------------------
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
         let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
         if !empty(keyboard_head)
