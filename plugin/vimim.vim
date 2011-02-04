@@ -91,6 +91,7 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_set_encoding()
     sil!call s:vimim_initialize_session()
+    sil!call s:vimim_initialize_cjk_file()
     sil!call s:vimim_initialize_frontend()
     sil!call s:vimim_initialize_backend()
     sil!call s:vimim_initialize_i_setting()
@@ -102,7 +103,6 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
-    sil!call s:vimim_initialize_cjk_file()
     sil!call s:vimim_initialize_keycode()
 endfunction
 
@@ -2042,8 +2042,7 @@ endfunction
 " -------------------------------------------------------
 function! s:vimim_cjk_sentence_match_with_digit(keyboard)
 " -------------------------------------------------------
-" input:  keyboard   "wo23you40yigemeng"
-" output: keyboards ["wo23","you40yigemeng"]
+" output is 'wo23' for the input "wo23you40yigemeng"
     let keyboard = a:keyboard
     let partition = match(keyboard, '\d')
     while partition > -1
@@ -2058,18 +2057,11 @@ endfunction
 
 " -------------------------------------------------------
 function! s:vimim_cjk_sentence_match_dot_by_dot(keyboard)
-" ------------------------------------------------------- todo
-" input:  keyboard   "woyouyigemeng"
-" output  keyboard   "wo.you.yi.ge.meng"
-    let keyboard = a:keyboard
-    let partition = match(keyboard, '\d')
-    while partition > -1
-        let partition += 1
-        if keyboard[partition : partition] =~ '\D'
-            break
-        endif
-    endwhile
-    let head = s:vimim_get_keyboard_head(keyboard, partition)
+" ------------------------------------------------------- 
+" output is 'wo' for the input woyouyigemeng"
+    let keyboard = s:vimim_quanpin_transform(a:keyboard)
+    let partition = match(keyboard, "'")
+    let head = s:vimim_get_keyboard_head(a:keyboard, partition)
     return head
 endfunction
 
@@ -2900,8 +2892,10 @@ endfunction
 " -----------------------------------------
 function! s:vimim_set_special_im_property()
 " -----------------------------------------
-    if empty(s:vimim_shuangpin) && s:ui.im == 'pinyin'
-        let s:quanpin_table = s:vimim_create_quanpin_table()
+    if empty(s:vimim_shuangpin)
+        if  s:ui.im == 'pinyin' || s:has_cjk_file > 0
+            let s:quanpin_table = s:vimim_create_quanpin_table()
+        endif
     endif
     if s:ui.im == 'wu'
     \|| s:ui.im == 'erbi'
@@ -3858,6 +3852,10 @@ function! s:vimim_scan_backend_cloud()
     endif
     if empty(s:vimim_cloud_sogou)
         let s:vimim_cloud_sogou = 888
+        if s:has_cjk_file == 1
+            let msg = "use local cjk when cloud is too slow"
+            let s:has_cjk_file = 2
+        endif
     endif
 endfunction
 
@@ -3951,13 +3949,10 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_do_cloud_if_no_embedded_backend()
 " -------------------------------------------------
-    if empty(s:backend.directory)
-    \&& empty(s:backend.datafile)
+    if empty(s:backend.directory) && empty(s:backend.datafile)
         if s:chinese_input_mode =~ 'onekey'
-        \&& s:vimim_cloud_sogou == 888
         \&& s:has_cjk_file > 0
-            let msg = "use local cjk when cloud is too slow"
-            let s:has_cjk_file = 2
+            let s:vimim_cloud_sogou == 888
         else
             let s:vimim_cloud_sogou = 1
         endif
@@ -4496,7 +4491,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma/vim")
+    if isdirectory("/home/xxma/vim")
         let msg = " VimIM super configuration: "
     else
         return
