@@ -2024,17 +2024,13 @@ endfunction
 " --------------------------------------------
 function! s:vimim_cjk_sentence_match(keyboard)
 " --------------------------------------------
-    let keyboard = a:keyboard
-    if keyboard =~ '\l\+\d\+\l\+' || s:has_cjk_file == 2
-        call s:vimim_load_cjk_file()
-    else
-        return 0
-    endif
     let head = 0
-    if keyboard =~ '\l\+\d\+\l\+'
-        let head = s:vimim_cjk_sentence_match_with_digit(keyboard)
+    if a:keyboard =~ '\l\+\d\+\l\+'
+        call s:vimim_load_cjk_file()
+        let head = s:vimim_cjk_sentence_match_with_digit(a:keyboard)
     elseif s:has_cjk_file == 2
-        let head = s:vimim_cjk_sentence_match_dot_by_dot(keyboard)
+        call s:vimim_load_cjk_file()
+        let head = s:vimim_cjk_sentence_match_dot_by_dot(a:keyboard)
     endif
     return head
 endfunction
@@ -2042,7 +2038,7 @@ endfunction
 " -------------------------------------------------------
 function! s:vimim_cjk_sentence_match_with_digit(keyboard)
 " -------------------------------------------------------
-" output is 'wo23' for the input "wo23you40yigemeng"
+    " output is 'wo23' for the input "wo23you40yigemeng"
     let keyboard = a:keyboard
     let partition = match(keyboard, '\d')
     while partition > -1
@@ -2058,8 +2054,9 @@ endfunction
 " -------------------------------------------------------
 function! s:vimim_cjk_sentence_match_dot_by_dot(keyboard)
 " ------------------------------------------------------- 
-" output is 'wo' for the input woyouyigemeng"
+    " output is 'wo' for the input woyouyigemeng"
     let keyboard = s:vimim_quanpin_transform(a:keyboard)
+    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
     let partition = match(keyboard, "'")
     let head = s:vimim_get_keyboard_head(a:keyboard, partition)
     return head
@@ -2187,6 +2184,10 @@ function! s:vimim_get_keyboard_head(keyboard, partition)
 " ------------------------------------------------------
     let keyboard = a:keyboard
     let partition = a:partition
+    if partition < 0
+        let s:keyboard_list = []
+        return keyboard
+    endif
     let keyboards = []
     let head = keyboard[0 : partition-1]
     let tail  = keyboard[partition : -1]
