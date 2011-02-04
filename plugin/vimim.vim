@@ -2133,11 +2133,11 @@ function! s:vimim_match_cjk_file(keyboard)
         let digit = substitute(keyboard,'\a','','g')
         let alpha = substitute(keyboard,'\d','','g')
         " [sample] free-style input and search: ma7 ma77 ma771 ma7712"
-        " search for line 81 for 乐樂 7290 le4yue4 using le72 yue72
+        " search for line 81 '乐樂 7290 le4yue4 27' using le72 yue72
         let space = 4 - len(digit)
         let grep  = '\s' . digit
         let grep .= '\d\{' . space . '}'
-        let grep .= '\s' . '.*' . alpha
+        let grep .= '\s\l*' . alpha
     else
         return []
     endif
@@ -2156,15 +2156,15 @@ function! s:vimim_match_cjk_file(keyboard)
         let line = match(s:cjk_lines, grep, line+1)
         let s:cjk_has_match += 1
     endwhile
-    if len(results) > 1
-        let results = sort(results, "s:vimim_sort_by_last_field")
+    if len(results) > 0
+        let results = sort(results, "s:vimim_sort_on_last_index")
         call map(results, "strpart(".'v:val'.",0,s:multibyte)")
     endif
     return results
 endfunction
 
 " -----------------------------------------------
-function s:vimim_sort_by_last_field(line1, line2)
+function s:vimim_sort_on_last_index(line1, line2)
 " -----------------------------------------------
 " m => 马 <= 马 1 <= 马馬 7712 ma3 1
     let line1 = get(split(a:line1),-1) + 1
