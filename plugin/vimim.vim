@@ -2125,12 +2125,12 @@ function! s:vimim_match_cjk_file(keyboard)
     let grep = ""
     let order_3000 = 0
     if keyboard =~ '^\l\>'
-        let grep = '\s' . keyboard . '\d\+$'
+        let grep = '\s' . keyboard . '\w\+\s\d\+$'
         let order_3000 = 1
     elseif keyboard =~# '^\l\+\_[12345]\>'
     \|| keyboard !~# '\d'
     \|| keyboard !~# '\l'
-        let grep = '\d\d\d\d\s' . keyboard
+        let grep = '\s' . keyboard
     elseif keyboard =~# '^\l\+\d\+'
         let digit = substitute(keyboard,'\a','','g')
         let alpha = substitute(keyboard,'\d','','g')
