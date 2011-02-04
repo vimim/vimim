@@ -3844,13 +3844,13 @@ function! s:vimim_scan_backend_cloud()
     \&& empty(s:backend.directory)
     \&& empty(s:vimim_cloud_plugin)
         call s:vimim_set_sogou()
-    endif
-    if empty(s:vimim_cloud_sogou)
-        let s:vimim_cloud_sogou = 888
         if s:has_cjk_file == 1
             let msg = "use local cjk when cloud is too slow"
             let s:has_cjk_file = 2
         endif
+    endif
+    if empty(s:vimim_cloud_sogou)
+        let s:vimim_cloud_sogou = 888
     endif
 endfunction
 
@@ -4486,7 +4486,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma/vim")
+    if isdirectory("/home/xxma/vim")
         let msg = " VimIM super configuration: "
     else
         return
