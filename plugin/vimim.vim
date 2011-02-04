@@ -3096,11 +3096,10 @@ endfunction
 " ----------------------------------
 function! s:vimim_readfile(datafile)
 " ----------------------------------
-    let datafile = a:datafile
-    if !filereadable(datafile)
+    if !filereadable(a:datafile)
         return []
     endif
-    let lines = readfile(datafile)
+    let lines = readfile(a:datafile)
     if s:localization > 0
         let  results = []
         for line in lines
@@ -4491,8 +4490,8 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
-    if isdirectory("/home/xxma/vim")
+" ----------------------------------
+    if isdirectory("/home/xma/vim")
         let msg = " VimIM super configuration: "
     else
         return
