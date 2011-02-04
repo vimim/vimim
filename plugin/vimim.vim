@@ -1960,10 +1960,9 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_cjk_file()
 " -------------------------------------
 " VimIM swiss army Chinese database without using cache
-" # one super yet simple cjk database for 4corner and pinyin and both
+" # one super yet simple cjk database for 4corner or pinyin or both
 " # dummy transformation between simplified and traditional Chinese
-" # hjkl_l toggle display of the property of Chinese character
-" --------------------------------------------------------------------
+" -----------------------------------------------------------------
     let s:has_cjk_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
@@ -2025,32 +2024,35 @@ endfunction
 function! s:vimim_cjk_sentence_match(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    let head = 0
+    let keyboard_head = 0
     if keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
-            let head = s:vimim_cjk_sentence_match_4corner(keyboard)
+            let keyboard_head = s:vimim_cjk_sentence_4corner(keyboard)
         elseif keyboard =~ '^\l\+\d\+'
-            let head = s:vimim_cjk_sentence_match_with_digit(keyboard)
+            let keyboard_head = s:vimim_cjk_sentence_digit(keyboard)
         endif
     elseif keyboard =~ '^\l\>'
-        let head = keyboard
+        let keyboard_head = keyboard
     else
         if len(keyboard) % 5 < 1
-            let head = s:vimim_cjk_sentence_match_diy(keyboard)
+            let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
         endif
-        if empty(head) && s:has_cjk_file == 2
-            let head = s:vimim_cjk_sentence_match_no_digit(keyboard)
+        if empty(keyboard_head) && s:has_cjk_file == 2
+            let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
         endif
     endif
-    return head
+    return keyboard_head
 endfunction
 
-" ----------------------------------------------------
-function! s:vimim_cjk_sentence_match_4corner(keyboard)
-" ----------------------------------------------------
+" ----------------------------------------------
+function! s:vimim_cjk_sentence_4corner(keyboard)
+" ----------------------------------------------
     " output is '6021' for the input "6021272260201762"
     let keyboard = a:keyboard
-    if len(keyboard) % 4 < 1
+    if len(keyboard) < 5
+        let s:keyboard_list = []
+        return keyboard
+    elseif len(keyboard) % 4 < 1
         let delimiter = match(keyboard, '^\d\d\d\d')
         if delimiter > -1
             return s:vimim_get_keyboard_head_list(keyboard, 4)
@@ -2058,9 +2060,9 @@ function! s:vimim_cjk_sentence_match_4corner(keyboard)
     endif
 endfunction
 
-" -------------------------------------------------------
-function! s:vimim_cjk_sentence_match_with_digit(keyboard)
-" -------------------------------------------------------
+" --------------------------------------------
+function! s:vimim_cjk_sentence_digit(keyboard)
+" --------------------------------------------
     " output is 'wo23' for the input "wo23you40yigemeng"
     let keyboard = a:keyboard
     if keyboard =~ '^\l\+\d\+\>'
@@ -2077,9 +2079,9 @@ function! s:vimim_cjk_sentence_match_with_digit(keyboard)
     return head
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_cjk_sentence_match_diy(keyboard)
-" ------------------------------------------------
+" ------------------------------------------
+function! s:vimim_cjk_sentence_diy(keyboard)
+" ------------------------------------------
     " output is 'm7712' for the input "muuqwxeyqpjeqqq"
     let ldddd = 0
     let keyboard = a:keyboard
@@ -2105,12 +2107,12 @@ function! s:vimim_cjk_sentence_match_diy(keyboard)
     return head
 endfunction
 
-" -----------------------------------------------------
-function! s:vimim_cjk_sentence_match_no_digit(keyboard)
-" -----------------------------------------------------
+" --------------------------------------------
+function! s:vimim_cjk_sentence_alpha(keyboard)
+" --------------------------------------------
     " output is 'wo' for the input woyouyigemeng"
-    let keyboard = s:vimim_quanpin_transform(a:keyboard)
-    let partition = match(keyboard, "'")
+    let keyboard2 = s:vimim_quanpin_transform(a:keyboard)
+    let partition = match(keyboard2, "'")
     let head = s:vimim_get_keyboard_head_list(a:keyboard, partition)
     return head
 endfunction
@@ -2123,21 +2125,35 @@ function! s:vimim_match_cjk_file(keyboard)
     endif
     let keyboard = a:keyboard
     let grep = ""
-    if keyboard =~ '^\l\>'
+    if keyboard =~ '\d'
+        if keyboard =~# '^\l\+[12345]\>'
+            " [sample] pinyin with tone: ma3
+            let grep = '\s' . keyboard . '\D\='
+        else
+            let digit = 0
+            let alpha = ""
+            if keyboard =~ '^\d\d\+' && keyboard !~ '\D'
+                " [sample] free-style digit input: 77 771 7712"
+                let digit = keyboard
+            elseif keyboard =~ '^\l\+\d\+'
+                " [sample] free-style input and search: ma7 ma77 ma771 ma7712"
+                " search for line 81 '乐樂 7290 le4yue4 27' using le72 yue72
+                let digit = substitute(keyboard,'\a','','g')
+                let alpha = substitute(keyboard,'\d','','g')
+            endif
+            if !empty(digit)
+                let space = 4 - len(digit)
+                let grep  = '\s' . digit
+                let grep .= '\d\{' . space . '}'
+                let grep .= '\s\l*' . alpha
+            endif
+        endif
+    elseif keyboard =~ '^\l\>'
+        " [sample] one-char-list by frequency m
         let grep = '\s' . keyboard . '\w\+\s\d\+$'
-    elseif keyboard =~# '^\l\+\_[12345]\>'
-    \|| keyboard !~# '\d'
-    \|| keyboard !~# '\l'
-        let grep = '\s' . keyboard
-    elseif keyboard =~# '^\l\+\d\+'
-        let digit = substitute(keyboard,'\a','','g')
-        let alpha = substitute(keyboard,'\d','','g')
-        " [sample] free-style input and search: ma7 ma77 ma771 ma7712"
-        " search for line 81 '乐樂 7290 le4yue4 27' using le72 yue72
-        let space = 4 - len(digit)
-        let grep  = '\s' . digit
-        let grep .= '\d\{' . space . '}'
-        let grep .= '\s\l*' . alpha
+    elseif keyboard =~ '^\l'
+        " [sample] many-char-list by frequency ma
+        let grep = '\s' . keyboard . '\d'
     else
         return []
     endif
@@ -2146,11 +2162,11 @@ function! s:vimim_match_cjk_file(keyboard)
     let line = match(s:cjk_lines, grep)
     while line > -1
         let values = split(s:cjk_lines[line])
-        let chinese = get(split(get(values,0),'\zs'),0)
         let frequency_index = get(values, -1)
         if frequency_index =~ '\l'
             let frequency_index = 999
         endif
+        let chinese = get(values, 0)
         let chinese = chinese . ' ' . frequency_index
         call add(results, chinese)
         let line = match(s:cjk_lines, grep, line+1)
@@ -2166,7 +2182,7 @@ endfunction
 " -----------------------------------------------
 function s:vimim_sort_on_last_index(line1, line2)
 " -----------------------------------------------
-" m => 马 <= 马 1 <= 马馬 7712 ma3 1
+" m => 马 <= 马 1 <= '马馬 7712 ma3 1'
     let line1 = get(split(a:line1),-1) + 1
     let line2 = get(split(a:line2),-1) + 1
     if line1 < line2
