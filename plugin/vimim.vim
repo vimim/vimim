@@ -2032,6 +2032,8 @@ function! s:vimim_cjk_sentence_match(keyboard)
         elseif keyboard =~ '^\l\+\d\+'
             let head = s:vimim_cjk_sentence_match_with_digit(keyboard)
         endif
+    elseif keyboard =~ '^\l\>'
+        let head = keyboard
     else
         if len(keyboard) % 5 < 1
             let head = s:vimim_cjk_sentence_match_diy(keyboard)
@@ -2121,10 +2123,16 @@ function! s:vimim_match_cjk_file(keyboard)
     endif
     let keyboard = a:keyboard
     let grep = ""
-    if keyboard =~# '^\l\+\_[12345]\>'
+    let order = 0
+    let sequence = 1
+    if keyboard =~ '^\l\>'
+        " take care of frequency for single alphabet input
+        let grep = '\s' . keyboard . sequence . '$'
+        let order = 1
+    elseif keyboard =~# '^\l\+\_[12345]\>'
     \|| keyboard !~# '\d'
     \|| keyboard !~# '\l'
-        let grep = '\s' . keyboard
+        let grep = '\d\d\d\d\s' . keyboard
     elseif keyboard =~# '^\l\+\d\+'
         let digit = substitute(keyboard,'\a','','g')
         let alpha = substitute(keyboard,'\d','','g')
@@ -2144,7 +2152,13 @@ function! s:vimim_match_cjk_file(keyboard)
         let values = split(s:cjk_lines[line])
         let chinese = get(split(get(values,0),'\zs'),0)
         call add(results, chinese)
-        let line = match(s:cjk_lines, grep, line+1)
+        if empty(order)
+            let line = match(s:cjk_lines, grep, line+1)
+        else
+            let sequence += 1
+            let grep = '\s' . keyboard . sequence . '$'
+            let line = match(s:cjk_lines, grep)
+        endif
         let s:cjk_has_match += 1
     endwhile
     return results
@@ -4989,7 +5003,7 @@ else
     endif
 
     " [cjk] swiss-army cjk database is the first-class citizen
-    " -------------------------------------------------------- todo
+    " -------------------------------------------------------- 
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
         let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
         if !empty(keyboard_head)
