@@ -2033,15 +2033,11 @@ function! s:vimim_cjk_sentence_match(keyboard)
             let head = s:vimim_cjk_sentence_match_with_digit(keyboard)
         endif
     else
-        if len(keyboard) % 5 < 1 && keyboard !~ '\d'
+        if len(keyboard) % 5 < 1
             let head = s:vimim_cjk_sentence_match_diy(keyboard)
         endif
-        if empty(head) 
-            if s:has_cjk_file == 2
-               let head = s:vimim_cjk_sentence_match_no_digit(keyboard)
-            endif
-        else
-            let head = s:vimim_get_keyboard_head_list(head, 5)
+        if empty(head) && s:has_cjk_file == 2
+            let head = s:vimim_cjk_sentence_match_no_digit(keyboard)
         endif
     endif
     return head
@@ -2050,14 +2046,12 @@ endfunction
 " ----------------------------------------------------
 function! s:vimim_cjk_sentence_match_4corner(keyboard)
 " ----------------------------------------------------
+    " output is '6021' for the input "6021272260201762"
     let keyboard = a:keyboard
-    let delimiter = -1
-    let partition = 4
-    if len(keyboard) % partition < 1
-        " [sample] (every four digits) 6021272260201762
+    if len(keyboard) % 4 < 1
         let delimiter = match(keyboard, '^\d\d\d\d')
         if delimiter > -1
-            return s:vimim_get_keyboard_head_list(keyboard, partition)
+            return s:vimim_get_keyboard_head_list(keyboard, 4)
         endif
     endif
 endfunction
@@ -2084,11 +2078,12 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_cjk_sentence_match_diy(keyboard)
 " ------------------------------------------------
-    " [sample] (every 1+4=5 chars) muuqwxeyqpjeqqq
+    " output is 'm7712' for the input "muuqwxeyqpjeqqq"
     let ldddd = 0
-    let delimiter = match(a:keyboard, '^\l\l\l\l\l')
+    let keyboard = a:keyboard
+    let delimiter = match(keyboard, '^\l\l\l\l\l')
     if delimiter > -1
-        let lllll = a:keyboard[0:4]
+        let lllll = keyboard[0:4]
         let llll = lllll[1:-1]
         let ldddd = lllll[0:0]
         for char in split(llll, '\zs')
@@ -2099,9 +2094,13 @@ function! s:vimim_cjk_sentence_match_diy(keyboard)
                 let ldddd .= digit
             endif
         endfor
-        return ldddd
     endif
-    return 0
+    if empty(ldddd)
+        return 0
+    endif
+    let keyboard = ldddd . keyboard[5:-1]
+    let head = s:vimim_get_keyboard_head_list(keyboard, 5)
+    return head
 endfunction
 
 " -----------------------------------------------------
@@ -4992,9 +4991,9 @@ else
     " [cjk] swiss-army cjk database is the first-class citizen
     " -------------------------------------------------------- todo
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
-        let head = s:vimim_cjk_sentence_match(keyboard)
-        if !empty(head)
-            let results = s:vimim_match_cjk_file(head)
+        let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
+        if !empty(keyboard_head)
+            let results = s:vimim_match_cjk_file(keyboard_head)
             if !empty(results)
                 return s:vimim_popupmenu_list(results)
             endif
