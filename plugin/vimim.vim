@@ -2123,10 +2123,8 @@ function! s:vimim_match_cjk_file(keyboard)
     endif
     let keyboard = a:keyboard
     let grep = ""
-    let order_3000 = 0
     if keyboard =~ '^\l\>'
         let grep = '\s' . keyboard . '\w\+\s\d\+$'
-        let order_3000 = 1
     elseif keyboard =~# '^\l\+\_[12345]\>'
     \|| keyboard !~# '\d'
     \|| keyboard !~# '\l'
@@ -2149,15 +2147,16 @@ function! s:vimim_match_cjk_file(keyboard)
     while line > -1
         let values = split(s:cjk_lines[line])
         let chinese = get(split(get(values,0),'\zs'),0)
-        if order_3000 > 0
-            let last = get(values, -1)
-            let chinese = chinese . ' ' . last
+        let frequency_index = get(values, -1)
+        if frequency_index =~ '\l'
+            let frequency_index = 999
         endif
+        let chinese = chinese . ' ' . frequency_index
         call add(results, chinese)
         let line = match(s:cjk_lines, grep, line+1)
         let s:cjk_has_match += 1
     endwhile
-    if order_3000 > 0 && len(results) > 1
+    if len(results) > 1
         let results = sort(results, "s:vimim_sort_by_last_field")
         call map(results, "strpart(".'v:val'.",0,s:multibyte)")
     endif
@@ -4506,7 +4505,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma/vim")
+    if isdirectory("/home/xxma/vim")
         let msg = " VimIM super configuration: "
     else
         return
