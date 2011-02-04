@@ -536,7 +536,7 @@ function! g:vimim_search_next()
     endif
     if !empty(v:errmsg) && !empty(english)
     \&& len(english) < 24 && len(english) > 1
-    \&& english =~ '\w' && english != '\W' && english !~ '_'
+    \&& english =~ '\w' && english !~ '\W' && english !~ '_'
     \&& v:errmsg =~# '^E486: ' && v:errmsg =~# english
         try
             sil!call s:vimim_search_chinese_from_english(english)
@@ -2053,7 +2053,7 @@ endfunction
 
 " -------------------------------------------------------
 function! s:vimim_cjk_sentence_match_dot_by_dot(keyboard)
-" ------------------------------------------------------- 
+" -------------------------------------------------------
     " output is 'wo' for the input woyouyigemeng"
     let keyboard = s:vimim_quanpin_transform(a:keyboard)
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
@@ -4492,7 +4492,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xxma/vim")
+    if isdirectory("/home/xma/vim")
         let msg = " VimIM super configuration: "
     else
         return
