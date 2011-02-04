@@ -2151,7 +2151,7 @@ function! s:vimim_match_cjk_file(keyboard)
         let chinese = get(split(get(values,0),'\zs'),0)
         if order_3000 > 0
             let last = get(values, -1)
-            let chinese = chinese . ' ' . last[1:-1]
+            let chinese = chinese . ' ' . last
         endif
         call add(results, chinese)
         let line = match(s:cjk_lines, grep, line+1)
@@ -2167,7 +2167,7 @@ endfunction
 " -----------------------------------------------
 function s:vimim_sort_by_last_field(line1, line2)
 " -----------------------------------------------
-" m => 马 <= 马 1 <= 马馬 7712 ma3 m1
+" m => 马 <= 马 1 <= 马馬 7712 ma3 1
     let line1 = get(split(a:line1),-1) + 1
     let line2 = get(split(a:line2),-1) + 1
     if line1 < line2
