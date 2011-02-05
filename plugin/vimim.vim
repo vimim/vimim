@@ -648,7 +648,7 @@ function! s:vimim_cjk_property_display(ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
         if empty(digit) && empty(pinyin)
-            let msg = 'no need to print out sparse matrix'
+            let msg = "no need to print out sparse matrix"
         else
             let menu .= s:space . digit
             let menu .= s:space . pinyin
@@ -1537,7 +1537,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         if keyboard =~# s:uxxxx
         \|| keyboard =~# "^vimim"
         \|| s:cjk_has_match > 0
-            let msg = 'pair_matched_list has only single item'
+            let msg = "pair_matched_list has only single item"
         elseif empty(s:vimim_data_directory)
         \|| s:no_internet_connection < 0
         \|| s:vimim_cloud_sogou == 1
@@ -1723,7 +1723,6 @@ function! s:vimim_punctuation_navigation_on()
         let punctuation .= ".,/?"
     endif
     let punctuations = split(punctuation,'\zs')
-    " NOTE: we should never map valid keycode
     " ---------------------------------------
     for char in s:valid_keys
         let i = index(punctuations, char)
@@ -1976,7 +1975,7 @@ endfunction
 
 " --------------------------------------------
 function! s:vimim_cjk_sentence_match(keyboard)
-" -------------------------------------------- todo
+" --------------------------------------------
     let keyboard = a:keyboard
     let keyboard_head = 0
     if keyboard =~ '\d'
@@ -2369,7 +2368,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
     return [join(headers), join(bodies)]
 endfunction
 
-" ----------------------------------------------- todo
+" -----------------------------------------------
 function! s:vimim_cjk_filter_from_cache(keyboard)
 " -----------------------------------------------
 " use 1234567890/qwertyuiop as digit filter
@@ -2390,27 +2389,24 @@ endfunction
 
 " -----------------------------------------
 function! s:vimim_cjk_filter_list(keyboard)
-" -----------------------------------------  todo
+" -----------------------------------------
     let pair_matched_list = []
     let first_in_list = split(get(s:matched_list,0))
     for line in s:matched_list
+        let chinese = ""
         if len(first_in_list) < 2
         \|| a:keyboard =~# s:uxxxx
         \|| !empty(s:vimim_data_directory)
             let chinese = s:vimim_cjk_digit_filter(line)
-            if empty(chinese)
-                continue
-            else
-                call add(pair_matched_list, chinese)
-            endif
+            let line = chinese
         else
             let chinese = get(split(line), 1)
             let chinese = s:vimim_cjk_digit_filter(chinese)
-            if empty(chinese)
-                continue
-            else
-                call add(pair_matched_list, line)
-            endif
+        endif
+        if empty(chinese)
+            continue
+        else
+            call add(pair_matched_list, line)
         endif
     endfor
     return pair_matched_list
@@ -2503,7 +2499,6 @@ function! s:vimim_quanpin_transform(keyboard)
             continue
         endif
         for i in range(6,1,-1)
-            " NOTE: remove the space after index will cause syntax error
             let tmp = item[index : ]
             if len(tmp) < i
                 continue
@@ -3538,7 +3533,7 @@ function! s:vimim_build_datafile_cache()
     endif
     if s:backend[s:ui.root][s:ui.im].root == "datafile"
         if empty(s:backend[s:ui.root][s:ui.im].lines)
-            let msg = " no way to build datafile cache "
+            let msg = "no way to build datafile cache"
         elseif empty(s:backend[s:ui.root][s:ui.im].cache)
             call s:vimim_cache_loading_progressbar()
         endif
@@ -3648,7 +3643,7 @@ function! s:vimim_scan_backend_embedded_directory()
          let s:vimim_data_directory = s:path . "vimim/"
     endif
     if isdirectory(s:vimim_data_directory)
-        let msg = " use directory as backend database "
+        let msg = "use directory as backend database"
     else
         let s:vimim_data_directory = 0
         let return
@@ -4137,7 +4132,6 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
             let output = system(executable . input)
         endif
     catch
-        let msg = "it looks like sogou has trouble with its cloud?"
         call s:debugs('sogou::exception=', v:exception)
         let output = 0
     endtry
@@ -4243,9 +4237,7 @@ endfunction
 " --------------------------------------------
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
-" NOTE: this variable should not be used after initialization
-"       unlet s:vimim_mycloud_url
-" NOTE: reuse it to support forced buffer scan: vim mycloud.vimim
+" reuse s:vimim_mycloud_url for forced buffer scan: vim mycloud.vimim
     let cloud = 0
     if empty(s:vimim_mycloud_url)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
@@ -4256,7 +4248,6 @@ function! s:vimim_check_mycloud_availability()
         let s:vimim_cloud_plugin = 0
         return 0
     endif
-    " NOTE: how to avoid *Not Responding*?
     let ret = s:vimim_access_mycloud(cloud, "__getname")
     let directory = split(ret, "\t")[0]
     let ret = s:vimim_access_mycloud(cloud, "__getkeychars")
@@ -4945,7 +4936,7 @@ if a:start
     " take care of seamless English/Chinese input
     let seamless_column = s:vimim_get_seamless(current_positions)
     if seamless_column < 0
-        let msg = " no need to set seamless "
+        let msg = "no need to set seamless"
     else
         let s:start_column_before = seamless_column
         return seamless_column
@@ -5056,7 +5047,7 @@ else
     " ---------------------------------------------------
     if s:chinese_input_mode !~ 'dynamic' && s:ui.has_dot < 1
     \&& s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
-        let msg = " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql "
+        let msg = "usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql"
         let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
         if !empty(len(chinese_numbers))
             return s:vimim_popupmenu_list(chinese_numbers)
@@ -5066,7 +5057,7 @@ else
     " [mycloud] get chunmeng from mycloud local or www
     " ------------------------------------------------
     if empty(s:vimim_cloud_plugin)
-        let msg = " keep local mycloud code for the future "
+        let msg = "keep local mycloud code for the future"
     else
         let results = s:vimim_get_mycloud_plugin(keyboard)
         if empty(len(results))
@@ -5081,7 +5072,7 @@ else
     " --------------------------------------------------
     let clouds = s:vimim_magic_tail(keyboard)
     if !empty(len(clouds))
-        let msg = " usage: woyouyigemeng'<C-6> "
+        let msg = "usage: woyouyigemeng'<C-6>"
         let keyboard = get(clouds, 0)
     endif
 
