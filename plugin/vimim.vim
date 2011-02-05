@@ -1557,9 +1557,11 @@ function! s:vimim_popupmenu_list(pair_matched_list)
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             if !empty(keyboard) && keyboard !~# s:show_me_not
-                if keyboard =~ "['.]" && empty(s:ui.has_dot)
+                if empty(s:ui.has_dot) && keyboard =~ "['.]"
                     " for vimim classic demo: i.have.a.dream
-                    let keyboard_head_length += 1
+                    if keyboard[-1:-1] !=  "['.]"
+                        let keyboard_head_length += 1
+                    endif
                 endif
                 let chinese .= strpart(keyboard, keyboard_head_length)
             endif
@@ -1989,10 +1991,12 @@ function! s:vimim_cjk_sentence_match(keyboard)
         if len(keyboard) % 5 < 1
             let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
         endif
-     "  if empty(keyboard_head)
-     "  magic trailing dot to use cjk: shishishishishi. 
-        if empty(keyboard_head) && s:has_cjk_file == 2
-            let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
+        "  magic trailing dot to use cjk: shishishishishi.
+        if empty(keyboard_head)
+            let magic_tail = keyboard[-1:-1]
+            if magic_tail ==# "." || s:has_cjk_file == 2
+                let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
+            endif
         endif
     endif
     return keyboard_head
@@ -2065,9 +2069,12 @@ endfunction
 function! s:vimim_cjk_sentence_alpha(keyboard)
 " --------------------------------------------
     " output is 'wo' for the input woyouyigemeng"
-    let keyboard2 = s:vimim_quanpin_transform(a:keyboard)
-    let partition = match(keyboard2, "'")
+    let keyboard = s:vimim_quanpin_transform(a:keyboard)
+    let partition = match(keyboard, "'")
     let head = s:vimim_get_keyboard_head_list(a:keyboard, partition)
+    if len(head) > len(keyboard)
+        let head = keyboard
+    endif
     return head
 endfunction
 
@@ -2185,6 +2192,7 @@ function! s:vimim_get_keyboard_head_list(keyboard, partition)
     if !empty(tail)
         call add(keyboards, tail)
     endif
+let g:ux1=keyboards
     if len(s:keyboard_list) < 2
         let s:keyboard_list = copy(keyboards)
     endif
@@ -3994,10 +4002,10 @@ endfunction
 function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
-    if keyboard =~ '\d\d\d\d'
+    if keyboard =~ '\d'
         return []
     endif
-    let magic_tail = keyboard[-1:]
+    let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
     if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
         let msg = "play with magic trailing char"
