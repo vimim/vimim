@@ -1559,7 +1559,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             if !empty(keyboard) && keyboard !~# s:show_me_not
                 if empty(s:ui.has_dot) && keyboard =~ "['.]"
                     " for vimim classic demo: i.have.a.dream
-                    if keyboard[-1:-1] !=  "['.]"
+                    if keyboard[-1:-1] !~ "['.]"
                         let keyboard_head_length += 1
                     endif
                 endif
@@ -1994,7 +1994,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         "  magic trailing dot to use cjk: shishishishishi.
         if empty(keyboard_head)
             let magic_tail = keyboard[-1:-1]
-            if magic_tail ==# "." || s:has_cjk_file == 2
+            if magic_tail == "." || s:has_cjk_file == 2
                 let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
             endif
         endif
