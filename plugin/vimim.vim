@@ -712,7 +712,7 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_frontend_initialization()
     sil!call s:vimim_onekey_pumvisible_capital_on()
     sil!call s:vimim_onekey_pumvisible_hjkl_on()
-    sil!call s:vimim_onekey_pumvisible_qwertyuiop_on()
+    sil!call s:vimim_onekey_pumvisible_qwert_on()
     sil!call s:vimim_punctuation_navigation_on()
     if pumvisible()
         let msg = "optimize for double ctrl-6"
@@ -886,22 +886,22 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_onekey_pumvisible_qwertyuiop_on()
-" -------------------------------------------------
+" --------------------------------------------
+function! s:vimim_onekey_pumvisible_qwert_on()
+" --------------------------------------------
     let labels = s:qwerty
     if s:has_cjk_file > 0
         let labels += range(10)
     endif
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_onekey_pumvisible_qwertyuiop("'._.'")<CR>'
+        \  <C-R>=<SID>vimim_onekey_pumvisible_qwerty("'._.'")<CR>'
     endfor
 endfunction
 
-" --------------------------------------------------
-function! <SID>vimim_onekey_pumvisible_qwertyuiop(n)
-" --------------------------------------------------
+" ----------------------------------------------
+function! <SID>vimim_onekey_pumvisible_qwerty(n)
+" ----------------------------------------------
     let label = a:n
     if pumvisible()
         if label =~ '\l'
@@ -1502,54 +1502,6 @@ let VimIM = " ====  Omni_Popup_Menu   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" -----------------------------------------------
-function! s:vimim_cjk_filter_from_cache(keyboard)
-" -----------------------------------------------
-" use 1234567890/qwertyuiop as digit filter
-    call s:vimim_load_cjk_file()
-    let keyboard = a:keyboard
-    let results = s:vimim_cjk_filter_list(keyboard)
-    if empty(len(results)) && len(s:cjk_filter) > 0
-        let number_before = strpart(s:cjk_filter,0,len(s:cjk_filter)-1)
-        if len(number_before) > 0
-            let s:cjk_filter = number_before
-            let results = s:vimim_cjk_filter_list(keyboard)
-        endif
-    endif
-    if empty(results)
-        let s:cjk_filter = ""
-    endif
-    return results
-endfunction
-
-" -----------------------------------------
-function! s:vimim_cjk_filter_list(keyboard)
-" -----------------------------------------
-    let pair_matched_list = []
-    let first_in_list = split(get(s:matched_list,0))
-    for line in s:matched_list
-        if len(first_in_list) < 2
-        \|| a:keyboard =~# s:uxxxx
-        \|| !empty(s:vimim_data_directory)
-            let chinese = s:vimim_cjk_digit_filter(line)
-            if empty(chinese)
-                continue
-            else
-                call add(pair_matched_list, chinese)
-            endif
-        else
-            let chinese = get(split(line), 1)
-            let chinese = s:vimim_cjk_digit_filter(chinese)
-            if empty(chinese)
-                continue
-            else
-                call add(pair_matched_list, line)
-            endif
-        endif
-    endfor
-    return pair_matched_list
-endfunction
-
 " ----------------------------------------------------
 function! s:vimim_make_pair_matched_list(matched_list)
 " ----------------------------------------------------
@@ -2022,7 +1974,7 @@ endfunction
 
 " --------------------------------------------
 function! s:vimim_cjk_sentence_match(keyboard)
-" --------------------------------------------
+" -------------------------------------------- todo
     let keyboard = a:keyboard
     let keyboard_head = 0
     if keyboard =~ '\d'
@@ -2037,6 +1989,8 @@ function! s:vimim_cjk_sentence_match(keyboard)
         if len(keyboard) % 5 < 1
             let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
         endif
+     "  if empty(keyboard_head)
+     "  magic trailing dot to use cjk: shishishishishi. 
         if empty(keyboard_head) && s:has_cjk_file == 2
             let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
         endif
@@ -2126,7 +2080,7 @@ function! s:vimim_match_cjk_file(keyboard)
     let keyboard = a:keyboard
     let grep = ""
     if keyboard =~ '\d'
-        if keyboard =~# '^\l\+[12345]\>'
+        if keyboard =~# '^\l\+[12345]\>' && empty(len(s:cjk_filter))
             " [sample] pinyin with tone: ma3
             let grep = '\s' . keyboard . '\D\='
         else
@@ -2152,7 +2106,7 @@ function! s:vimim_match_cjk_file(keyboard)
         " [sample] one-char-list by frequency m
         let grep = '\s' . keyboard . '\w\+\s\d\+$'
     elseif keyboard =~ '^\l'
-        " [sample] many-char-list by frequency ma
+        " [sample] multiple-char-list by frequency ma
         let grep = '\s' . keyboard . '\d'
     else
         return []
@@ -2407,6 +2361,53 @@ function! s:vimim_reverse_one_entry(chinese, im)
     return [join(headers), join(bodies)]
 endfunction
 
+" ----------------------------------------------- todo
+function! s:vimim_cjk_filter_from_cache(keyboard)
+" -----------------------------------------------
+" use 1234567890/qwertyuiop as digit filter
+    call s:vimim_load_cjk_file()
+    let results = s:vimim_cjk_filter_list(a:keyboard)
+    if empty(results) && len(s:cjk_filter) > 0
+        let number_before = strpart(s:cjk_filter,0,len(s:cjk_filter)-1)
+        if len(number_before) > 0
+            let s:cjk_filter = number_before
+            let results = s:vimim_cjk_filter_list(a:keyboard)
+        endif
+    endif
+    if empty(results)
+        let s:cjk_filter = ""
+    endif
+    return results
+endfunction
+
+" -----------------------------------------
+function! s:vimim_cjk_filter_list(keyboard)
+" -----------------------------------------  todo
+    let pair_matched_list = []
+    let first_in_list = split(get(s:matched_list,0))
+    for line in s:matched_list
+        if len(first_in_list) < 2
+        \|| a:keyboard =~# s:uxxxx
+        \|| !empty(s:vimim_data_directory)
+            let chinese = s:vimim_cjk_digit_filter(line)
+            if empty(chinese)
+                continue
+            else
+                call add(pair_matched_list, chinese)
+            endif
+        else
+            let chinese = get(split(line), 1)
+            let chinese = s:vimim_cjk_digit_filter(chinese)
+            if empty(chinese)
+                continue
+            else
+                call add(pair_matched_list, line)
+            endif
+        endif
+    endfor
+    return pair_matched_list
+endfunction
+
 " -----------------------------------------
 function! s:vimim_cjk_digit_filter(chinese)
 " -----------------------------------------
@@ -2420,7 +2421,7 @@ function! s:vimim_cjk_digit_filter(chinese)
     endif
     let digit_head = ""
     let digit_tail = ""
-    let words = split(chinese, '\zs')
+    let words = split(chinese,'\zs')
     for cjk in words
         let ddddd = char2nr(cjk)
         if cjk =~ '\w' || ddddd < 19968 || ddddd > 40869
@@ -2436,7 +2437,7 @@ function! s:vimim_cjk_digit_filter(chinese)
     let number = digit_head . digit_tail
     let pattern = "^" . s:cjk_filter
     let matched = match(number, pattern)
-    if matched < 0 || number ==# '0000'
+    if matched < 0
         let chinese = 0
     endif
     return chinese
@@ -4521,7 +4522,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xxma/vim")
+    if isdirectory("/home/xma/vim")
         let msg = " VimIM super configuration: "
     else
         return
