@@ -866,11 +866,15 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
         elseif a:key == 'm'
             let s:cjk_filter = ""
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+   ""   elseif a:key == 'n'
+   ""       let hjkl  = ""
+   ""       for i in range(&pumheight/2)
+   ""           let hjkl .= '\<Down>'
+   ""       endfor
+   "todo
         elseif a:key == 'n'
-            let hjkl  = ""
-            for i in range(&pumheight/2)
-                let hjkl .= '\<Down>'
-            endfor
+            let s:hjkl_n += 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
@@ -890,10 +894,10 @@ endfunction
 
 " --------------------------------------------
 function! s:vimim_onekey_pumvisible_qwert_on()
-" --------------------------------------------
+" -------------------------------------------- todo
     let labels = s:qwerty
-    if s:has_cjk_file > 0
-        let s:has_cjk_file = 1
+    if s:has_cjk_file > 4
+        let s:has_cjk_file -= 4
         let labels += range(10)
     endif
     for _ in labels
@@ -1533,6 +1537,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     let s:popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
     let keyboard_head = get(s:keyboard_list,0)
+let g:g1=pair_matched_list
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
@@ -1552,6 +1557,14 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             let keyboard_head_length = len(keyboard_head)
             let chinese = get(pairs, 1)
         endif
+        " ------------------------------------------------- todo
+     "" if s:has_cjk_file > 0 && empty(s:has_cjk_file%2)
+     ""     let chinese = s:vimim_get_traditional(chinese)
+     "" endif
+        if  s:has_cjk_file > 0 && s:hjkl_n%2 > 0
+            let chinese = s:vimim_get_traditional(chinese)
+        endif
+        " -------------------------------------------------
         let extra_text = ""
         if s:hjkl_l % 2 > 0 && keyboard !~# s:show_me_not
             let ddddd = char2nr(chinese)
@@ -1919,9 +1932,17 @@ function! s:vimim_initialize_cjk_file()
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
     let s:cjk_lines = []
-    let s:cjk_file = s:path . "vimim.cjk.txt"
-    if filereadable(s:cjk_file)
+    let datafile = s:path . "vimim.cjk.txt"
+    if filereadable(datafile)
         let s:has_cjk_file = 1
+    else
+        let datafile = s:path . "vimim.CJK.txt"
+        if filereadable(datafile)
+            let s:has_cjk_file = 2
+        endif
+    endif
+    if s:has_cjk_file > 0
+        let s:cjk_file = datafile
         let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
     endif
@@ -1951,13 +1972,13 @@ function! s:vimim_tranfer_chinese() range abort
         let msg = "no toggle between simplified and tranditional Chinese"
     elseif &encoding == "utf-8"
         call s:vimim_load_cjk_file()
-        exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
+        exe a:firstline.",".a:lastline.'s/./\=s:vimim_get_traditional(submatch(0))'
     endif
 endfunction
 
-" --------------------------------
-function! s:vimim_one2one(chinese)
-" --------------------------------
+" ----------------------------------------
+function! s:vimim_get_traditional(chinese)
+" ---------------------------------------- todo
     let chinese = a:chinese
     let ddddd = char2nr(chinese)
     if ddddd < 19968 || ddddd > 40869
@@ -1966,10 +1987,11 @@ function! s:vimim_one2one(chinese)
     let line = ddddd - 19968
     let values = split(s:cjk_lines[line])
     let traditional_chinese = get(split(get(values,0),'\zs'),1)
-    if !empty(traditional_chinese)
-        let chinese = traditional_chinese
+    if empty(traditional_chinese)
+        return chinese
+    else
+        return traditional_chinese
     endif
-    return chinese
 endfunction
 
 " --------------------------------------------
@@ -1993,10 +2015,13 @@ function! s:vimim_cjk_sentence_match(keyboard)
         if empty(keyboard_head)
             let magic_tail = keyboard[-1:-1]
             if magic_tail == "."
-                let s:has_cjk_file = 2
+                if s:has_cjk_file > 0 && s:has_cjk_file < 3
+                    let s:has_cjk_file += 4
+                endif
                 let keyboard = keyboard[0 : len(keyboard)-2]
             endif
-            if s:has_cjk_file > 1
+            if s:has_cjk_file > 2
+" todo
                 let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
             endif
         endif
@@ -2137,12 +2162,16 @@ function! s:vimim_match_cjk_file(keyboard)
     endwhile
     if len(results) > 0
         let results = sort(results, "s:vimim_sort_on_last_index")
-        call map(results, "strpart(".'v:val'.",0,s:multibyte)")
+""""    let filter = "strpart(".'v:val'.",s:multibyte,s:multibyte)"
+        let filter = "strpart(".'v:val'.",0,s:multibyte)"
+        call map(results, filter)
+"""     call map(results, "strpart(".'v:val'.",0,s:multibyte)")
+"function! s:vimim_get_traditional(chinese)
     endif
     return results
 endfunction
 
-" -----------------------------------------------
+" ----------------------------------------------- todo
 function s:vimim_sort_on_last_index(line1, line2)
 " -----------------------------------------------
 " m => 马 <= 马 1 <= '马馬 7712 ma3 1'
@@ -3886,9 +3915,9 @@ function! s:vimim_scan_backend_cloud()
     \&& empty(s:backend.directory)
     \&& empty(s:vimim_cloud_plugin)
         call s:vimim_set_sogou()
-        if s:has_cjk_file == 1
+        if s:has_cjk_file > 0 && s:has_cjk_file < 3
             let msg = "use local cjk when cloud is too slow"
-            let s:has_cjk_file = 2
+            let s:has_cjk_file += 2
         endif
     endif
     if empty(s:vimim_cloud_sogou)
@@ -4777,6 +4806,7 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_l = 0
     let s:hjkl_h = 0
+    let s:hjkl_n = 0
     let s:cjk_has_match = 0
     let s:cjk_filter = ""
     let s:no_internet_connection = 0
