@@ -1562,7 +1562,8 @@ let g:g1=pair_matched_list
      ""     let chinese = s:vimim_get_traditional(chinese)
      "" endif
         if  s:has_cjk_file > 0 && s:hjkl_n%2 > 0
-            let chinese = s:vimim_get_traditional(chinese)
+ """""""    let chinese = s:vimim_get_traditional(chinese)
+            let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
         " -------------------------------------------------
         let extra_text = ""
@@ -1971,20 +1972,33 @@ function! s:vimim_tranfer_chinese() range abort
     if empty(s:has_cjk_file)
         let msg = "no toggle between simplified and tranditional Chinese"
     elseif &encoding == "utf-8"
-        call s:vimim_load_cjk_file()
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_get_traditional(submatch(0))'
     endif
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_get_traditional_chinese(chinese)
+" ------------------------------------------------ todo
+    let chinese_list = split(a:chinese,'\zs')
+    let chinese = ""
+    for char in chinese_list
+        let chinese .= s:vimim_get_traditional(char)
+    endfor
+    return chinese
 endfunction
 
 " ----------------------------------------
 function! s:vimim_get_traditional(chinese)
 " ---------------------------------------- todo
+    call s:vimim_load_cjk_file()
     let chinese = a:chinese
+    let start = 19968
+    let end = 40869
     let ddddd = char2nr(chinese)
-    if ddddd < 19968 || ddddd > 40869
+    if ddddd < start || ddddd > end
         return chinese
     endif
-    let line = ddddd - 19968
+    let line = ddddd - start
     let values = split(s:cjk_lines[line])
     let traditional_chinese = get(split(get(values,0),'\zs'),1)
     if empty(traditional_chinese)
