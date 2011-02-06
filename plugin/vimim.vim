@@ -2513,10 +2513,10 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
 " ------------------------------------------------
-    if empty(s:vimim_shuangpin)
-        let msg = "pinyin breakdown: pinyin=>pin'yin"
-    else
+    if empty(s:quanpin_table)
         return []
+    else
+        let msg = "pinyin breakdown: pinyin=>pin'yin"
     endif
     let keyboard2 = s:vimim_quanpin_transform(a:keyboard)
     let results = split(keyboard2,"'")
@@ -3779,6 +3779,10 @@ function! s:vimim_sentence_match_directory(keyboard)
     let dir = s:vimim_get_valid_directory(s:ui.im)
     let filename = dir . '/' . keyboard
     if filereadable(filename)
+        return keyboard
+    endif
+    let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+    if len(keyboard) == len(pinyins)
         return keyboard
     endif
     let max = len(keyboard)
@@ -5178,9 +5182,14 @@ else
     " ---------------------------------------
     if s:vimim_cloud_sogou == 1 && keyboard !~# '\L'
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
-        if !empty(len(results))
-            return s:vimim_popupmenu_list(results)
+    elseif s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
+        let keyboard_head = s:vimim_cjk_sentence_match(keyboard.".")
+        if !empty(keyboard_head)
+            let results = s:vimim_match_cjk_file(keyboard_head)
         endif
+    endif
+    if !empty(len(results))
+        return s:vimim_popupmenu_list(results)
     endif
 
     " [seamless] support seamless English input
