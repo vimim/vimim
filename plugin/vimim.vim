@@ -732,8 +732,7 @@ endfunction
 "   (1) after English (valid keys) => trigger keycode menu
 "   (2) after omni popup menu      => insert Chinese
 "   (3) after English punctuation  => Chinese punctuation
-"   (4) after Chinese              => <Space>
-"   (5) after Space                => stop OneKeyNonStop
+"   (4) after Chinese              => stop OneKeyNonStop
 " -----------------------
 function! g:vimim_space()
 " -----------------------
@@ -745,7 +744,8 @@ function! g:vimim_space()
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
         let char_before = getline(".")[col(".")-2]
-        if char_before =~ '\s'
+        if char_before !~# s:valid_key
+        \&& !has_key(s:punctuations, char_before)
             let space = ""
             call s:vimim_stop()
         else
@@ -867,8 +867,10 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             let s:cjk_filter = ""
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
-            let hjkl  = '\<C-Y>'
-            let hjkl .= s:vimim_stop()
+            let hjkl  = ""
+            for i in range(&pumheight/2)
+                let hjkl .= '\<Down>'
+            endfor
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
@@ -1912,10 +1914,8 @@ call add(s:vimims, VimIM)
 " -------------------------------------
 function! s:vimim_initialize_cjk_file()
 " -------------------------------------
-" VimIM swiss army Chinese database without using cache
-" # one super yet simple cjk database for 4corner or pinyin or both
-" # dummy transformation between simplified and traditional Chinese
-" -----------------------------------------------------------------
+" VimIM swiss-army Chinese database covering all 20902 CJK
+" --------------------------------------------------------
     let s:has_cjk_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
