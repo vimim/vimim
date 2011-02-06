@@ -866,12 +866,6 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
         elseif a:key == 'm'
             let s:cjk_filter = ""
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-   ""   elseif a:key == 'n'
-   ""       let hjkl  = ""
-   ""       for i in range(&pumheight/2)
-   ""           let hjkl .= '\<Down>'
-   ""       endfor
-   "todo
         elseif a:key == 'n'
             let s:hjkl_chinese_transfer += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
@@ -894,10 +888,9 @@ endfunction
 
 " --------------------------------------------
 function! s:vimim_onekey_pumvisible_qwert_on()
-" -------------------------------------------- todo
+" --------------------------------------------
     let labels = s:qwerty
-    if s:has_cjk_file > 4
-        let s:has_cjk_file -= 4
+    if s:has_cjk_file > 0
         let labels += range(10)
     endif
     for _ in labels
@@ -1140,7 +1133,7 @@ function! s:vimim_get_seamless(current_positions)
         return -1
     endif
     if snip =~# s:uxxxx
-        let meg = 'support OneKey after any CJK'
+        let meg = 'support OneKey after any cjk'
     else
         for char in split(snip, '\zs')
             if char !~# s:valid_key
@@ -1537,7 +1530,6 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     let s:popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
     let keyboard_head = get(s:keyboard_list,0)
-let g:g1=pair_matched_list
     " ------------------------------
     for chinese in pair_matched_list
     " ------------------------------
@@ -1557,12 +1549,8 @@ let g:g1=pair_matched_list
             let keyboard_head_length = len(keyboard_head)
             let chinese = get(pairs, 1)
         endif
-        " ------------------------------------------------- todo
-     "" if s:has_cjk_file > 0 && empty(s:has_cjk_file%2)
-     ""     let chinese = s:vimim_get_traditional(chinese)
-     "" endif
-        if  s:has_cjk_file > 0 && s:hjkl_chinese_transfer%2 > 0
- """""""    let chinese = s:vimim_get_traditional(chinese)
+        " -------------------------------------------------
+        if s:has_cjk_file > 0 && s:hjkl_chinese_transfer%2 > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
         " -------------------------------------------------
@@ -1949,22 +1937,14 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_cjk_file()
 " -------------------------------------
 " VimIM swiss-army Chinese database covering all 20902 CJK
-" --------------------------------------------------------
     let s:has_cjk_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
     let s:cjk_lines = []
     let datafile = s:path . "vimim.cjk.txt"
     if filereadable(datafile)
-        let s:has_cjk_file = 1
-    else
-        let datafile = s:path . "vimim.CJK.txt"
-        if filereadable(datafile)
-            let s:has_cjk_file = 2
-        endif
-    endif
-    if s:has_cjk_file > 0
         let s:cjk_file = datafile
+        let s:has_cjk_file = 1
         let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
     endif
@@ -1986,44 +1966,42 @@ function! s:vimim_tranfer_chinese() range abort
 " [usage]    :VimIM
 " [feature]  (1) "quick and dirty" way to transfer Chinese to Chinese
 "            (2) 20% of the effort to solve 80% of the problem
-"            (3) 2172 Chinese pairs are used for one-to-one mapping
+"            (3) >2172 Chinese pairs are used for one-to-one mapping
 "            (4) range for visual mode is supported
 " ---------------------------------------------
     sil!call s:vimim_backend_initialization_once()
     if empty(s:has_cjk_file)
         let msg = "no toggle between simplified and tranditional Chinese"
     elseif &encoding == "utf-8"
-        exe a:firstline.",".a:lastline.'s/./\=s:vimim_get_traditional(submatch(0))'
+        call s:vimim_load_cjk_file()
+        exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
     endif
 endfunction
 
 " ------------------------------------------------
 function! s:vimim_get_traditional_chinese(chinese)
-" ------------------------------------------------ todo
-    let chinese_list = split(a:chinese,'\zs')
+" ------------------------------------------------
+    call s:vimim_load_cjk_file()
     let chinese = ""
+    let chinese_list = split(a:chinese,'\zs')
     for char in chinese_list
-        let chinese .= s:vimim_get_traditional(char)
+        let chinese .= s:vimim_one2one(char)
     endfor
     return chinese
 endfunction
 
-" ----------------------------------------
-function! s:vimim_get_traditional(chinese)
-" ---------------------------------------- todo
-    call s:vimim_load_cjk_file()
-    let chinese = a:chinese
-    let start = 19968
-    let end = 40869
-    let ddddd = char2nr(chinese)
-    if ddddd < start || ddddd > end
-        return chinese
+" --------------------------------
+function! s:vimim_one2one(chinese)
+" --------------------------------
+    let ddddd = char2nr(a:chinese)
+    let line = ddddd - 19968
+    if line < 0 || line > 20902
+        return a:chinese
     endif
-    let line = ddddd - start
     let values = split(s:cjk_lines[line])
     let traditional_chinese = get(split(get(values,0),'\zs'),1)
     if empty(traditional_chinese)
-        return chinese
+        return a:chinese
     else
         return traditional_chinese
     endif
@@ -2050,13 +2028,12 @@ function! s:vimim_cjk_sentence_match(keyboard)
         if empty(keyboard_head)
             let magic_tail = keyboard[-1:-1]
             if magic_tail == "."
-                if s:has_cjk_file > 0 && s:has_cjk_file < 3
-                    let s:has_cjk_file += 4
+                if s:has_cjk_file == 1
+                    let s:has_cjk_file = 3
                 endif
                 let keyboard = keyboard[0 : len(keyboard)-2]
             endif
-            if s:has_cjk_file > 2
-" todo
+            if s:has_cjk_file > 1
                 let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
             endif
         endif
@@ -2196,18 +2173,15 @@ function! s:vimim_match_cjk_file(keyboard)
         let s:cjk_has_match += 1
     endwhile
     if len(results) > 0
-        let results = sort(results, "s:vimim_sort_on_last_index")
-""""    let filter = "strpart(".'v:val'.",s:multibyte,s:multibyte)"
+        let results = sort(results, "s:vimim_sort_on_last_field")
         let filter = "strpart(".'v:val'.",0,s:multibyte)"
         call map(results, filter)
-"""     call map(results, "strpart(".'v:val'.",0,s:multibyte)")
-"function! s:vimim_get_traditional(chinese)
     endif
     return results
 endfunction
 
-" ----------------------------------------------- todo
-function s:vimim_sort_on_last_index(line1, line2)
+" -----------------------------------------------
+function s:vimim_sort_on_last_field(line1, line2)
 " -----------------------------------------------
 " m => 马 <= 马 1 <= '马馬 7712 ma3 1'
     let line1 = get(split(a:line1),-1) + 1
@@ -3950,9 +3924,9 @@ function! s:vimim_scan_backend_cloud()
     \&& empty(s:backend.directory)
     \&& empty(s:vimim_cloud_plugin)
         call s:vimim_set_sogou()
-        if s:has_cjk_file > 0 && s:has_cjk_file < 3
+        if s:has_cjk_file == 1
             let msg = "use local cjk when cloud is too slow"
-            let s:has_cjk_file += 2
+            let s:has_cjk_file = 2
         endif
     endif
     if empty(s:vimim_cloud_sogou)
@@ -4051,8 +4025,7 @@ endfunction
 function! s:vimim_do_cloud_if_no_embedded_backend()
 " -------------------------------------------------
     if empty(s:backend.directory) && empty(s:backend.datafile)
-        if s:chinese_input_mode =~ 'onekey'
-        \&& s:has_cjk_file > 0
+        if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
             let s:vimim_cloud_sogou == 888
         else
             let s:vimim_cloud_sogou = 1
