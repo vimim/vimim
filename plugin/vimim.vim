@@ -873,7 +873,7 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
    ""       endfor
    "todo
         elseif a:key == 'n'
-            let s:hjkl_n += 1
+            let s:hjkl_chinese_transfer += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
@@ -1561,7 +1561,7 @@ let g:g1=pair_matched_list
      "" if s:has_cjk_file > 0 && empty(s:has_cjk_file%2)
      ""     let chinese = s:vimim_get_traditional(chinese)
      "" endif
-        if  s:has_cjk_file > 0 && s:hjkl_n%2 > 0
+        if  s:has_cjk_file > 0 && s:hjkl_chinese_transfer%2 > 0
  """""""    let chinese = s:vimim_get_traditional(chinese)
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
@@ -1622,6 +1622,23 @@ function! s:vimim_get_labeling(label)
         endif
     endif
     return labeling
+endfunction
+
+" ---------------------------------
+function! s:vimim_pageup_pagedown()
+" ---------------------------------
+    if s:vimim_custom_label < 1
+    \|| len(s:matched_list) <= &pumheight
+        return s:matched_list
+    endif
+    let partition = &pumheight - 2
+    if s:hjkl_pageup_pagedown < 0
+        let partition = len(s:matched_list) - &pumheight
+    endif
+    let s:hjkl_pageup_pagedown = 0
+    let head = s:matched_list[: partition]
+    let tail = s:matched_list[partition+1 :]
+    return tail + head
 endfunction
 
 " ======================================== }}}
@@ -1778,8 +1795,12 @@ function! <SID>vimim_punctuations_navigation(key)
             let hjkl  = '\<C-R>=g:vimim_menu_search_backward()\<CR>'
         elseif a:key =~ "[-,]"
             let hjkl = '\<PageUp>'
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            let s:hjkl_pageup_pagedown = -1
         elseif a:key =~ "[=.]"
             let hjkl = '\<PageDown>'
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            let s:hjkl_pageup_pagedown = 1
         endif
     else
         if s:chinese_input_mode !~ 'onekey'
@@ -4820,7 +4841,8 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_l = 0
     let s:hjkl_h = 0
-    let s:hjkl_n = 0
+    let s:hjkl_chinese_transfer = 0
+    let s:hjkl_pageup_pagedown = 0
     let s:cjk_has_match = 0
     let s:cjk_filter = ""
     let s:no_internet_connection = 0
@@ -5056,12 +5078,16 @@ else
     " [filter] use cache to play within popup menu
     " --------------------------------------------
     if s:chinese_input_mode =~ 'onekey' && len(s:matched_list) > 1
-        if s:has_cjk_file > 0 && len(s:cjk_filter) > 0
-            let results = s:vimim_cjk_filter_from_cache(keyboard)
-        endif
-        if s:hjkl_h > 0
-            let s:hjkl_h = 0
-            let results = reverse(s:matched_list)
+        if !empty(s:hjkl_pageup_pagedown)
+            let results = s:vimim_pageup_pagedown()
+        else
+            if s:has_cjk_file > 0 && len(s:cjk_filter) > 0
+                let results = s:vimim_cjk_filter_from_cache(keyboard)
+            endif
+            if s:hjkl_h > 0
+                let s:hjkl_h = 0
+                let results = reverse(s:matched_list)
+            endif
         endif
         if !empty(results)
             return s:vimim_popupmenu_list(results)
