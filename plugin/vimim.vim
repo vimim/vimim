@@ -1967,7 +1967,7 @@ function! s:vimim_tranfer_chinese() range abort
 " [usage]    :VimIM
 " [feature]  (1) "quick and dirty" way to transfer Chinese to Chinese
 "            (2) 20% of the effort to solve 80% of the problem
-"            (3) >2172 Chinese pairs are used for one-to-one mapping
+"            (3) 5128/2=2564 Chinese pairs are used for one-to-one mapping
 "            (4) range for visual mode is supported
 " ---------------------------------------------
     sil!call s:vimim_backend_initialization_once()
@@ -3155,26 +3155,6 @@ function! s:vimim_set_encoding()
     if &encoding == "utf-8"
         let s:multibyte = 3
     endif
-endfunction
-
-" -------------
-function! CJK()
-" -------------
-    if &encoding != "utf-8"
-        $put='Your Vim encoding has to be set as utf-8.'
-        $put='[usage]  :call CJK()<CR>'
-        $put=' ------------------ '
-        $put=' decimal  hex   CJK '
-        $put=' 39340    99ac   馬 '
-        $put=' ------------------ '
-    else
-        let start = 19968  "| 一
-        let end   = 40869  "| 龥
-        for ddddd in range(start, end)
-            $put=printf('%d %x ',ddddd,ddddd).nr2char(ddddd)
-        endfor
-    endif
-    return ""
 endfunction
 
 " ----------------------------------
