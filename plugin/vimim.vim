@@ -127,6 +127,7 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
+    let s:cjk_az = {}
     let a = char2nr('a')
     let z = char2nr('z')
     let A = char2nr('A')
@@ -2012,14 +2013,14 @@ function! s:vimim_cjk_sentence_match(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
     let keyboard_head = 0
-    if keyboard =~ '\d'
+    if keyboard =~ s:show_me_not || keyboard =~ '^\l\>'
+        return keyboard
+    elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
             let keyboard_head = s:vimim_cjk_sentence_4corner(keyboard)
         elseif keyboard =~ '^\l\+\d\+'
             let keyboard_head = s:vimim_cjk_sentence_digit(keyboard)
         endif
-    elseif keyboard =~ '^\l\>'
-        let keyboard_head = keyboard
     else
         if len(keyboard) % 5 < 1
             let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
@@ -2149,8 +2150,11 @@ function! s:vimim_match_cjk_file(keyboard)
             endif
         endif
     elseif keyboard =~ '^\l\>'
-        " [sample] one-char-list by frequency m
-        let grep = '\s' . keyboard . '\w\+\s\d\+$'
+        if has_key(s:cjk_az, keyboard)
+            return s:cjk_az[keyboard]
+        endif
+        " [sample] one-char-list by frequency y 72 l 72
+        let grep = '[ 0-9]' . keyboard . '\w\+\s\d\+$'
     elseif keyboard =~ '^\l'
         " [sample] multiple-char-list by frequency ma
         let grep = '\s' . keyboard . '\d'
@@ -2164,7 +2168,7 @@ function! s:vimim_match_cjk_file(keyboard)
         let values = split(s:cjk_lines[line])
         let frequency_index = get(values, -1)
         if frequency_index =~ '\l'
-            let frequency_index = 999
+            let frequency_index = 1
         endif
         let chinese = get(values, 0)
         let chinese = chinese . ' ' . frequency_index
@@ -2176,6 +2180,9 @@ function! s:vimim_match_cjk_file(keyboard)
         let results = sort(results, "s:vimim_compare_last_field")
         let filter = "strpart(".'v:val'.",0,s:multibyte)"
         call map(results, filter)
+        if keyboard =~ '^\l\>' && !has_key(s:cjk_az, keyboard)
+            let s:cjk_az[keyboard] = results
+        endif
     endif
     return results
 endfunction
@@ -5180,8 +5187,8 @@ else
         return s:vimim_popupmenu_list(results)
     endif
 
-    " [sogou] last try cloud before giving up
-    " ---------------------------------------
+    " [sogou] last try before giving up
+    " ---------------------------------
     if s:vimim_cloud_sogou == 1 && keyboard !~# '\L'
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
     elseif s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
@@ -5195,7 +5202,7 @@ else
     endif
 
     " [seamless] support seamless English input
-    " -----------------------------------------
+    " ----------------------------------------- todo
     let s:pattern_not_found += 1
     if s:chinese_input_mode =~ 'onekey'
         let results = []
