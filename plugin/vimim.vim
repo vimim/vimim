@@ -864,7 +864,7 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             let s:hjkl_l += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'm'
-            let s:cjk_filter = ""
+            call g:vimim_reset_after_insert()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
             let s:hjkl_chinese_transfer += 1
@@ -1615,21 +1615,32 @@ function! s:vimim_get_labeling(label)
     return labeling
 endfunction
 
-" ---------------------------------
-function! s:vimim_pageup_pagedown()
-" ---------------------------------
+" ----------------------------------------
+function! s:vimim_pageup_pagedown(results)
+" ----------------------------------------
+    let results = a:results
     if s:vimim_custom_label < 1
-    \|| len(s:matched_list) <= &pumheight
-        return s:matched_list
+        return results
     endif
-    let partition = &pumheight - 2
-    if s:hjkl_pageup_pagedown < 0
-        let partition = len(s:matched_list) - &pumheight
+    if empty(results)
+        let results = s:matched_list
+    endif
+    if len(results) <= &pumheight
+        return results
+    endif
+    let partition = 0
+    if s:hjkl_pageup_pagedown > 0
+        let partition = &pumheight - 2
+    elseif s:hjkl_pageup_pagedown < 0
+        let partition = len(results) - &pumheight
     endif
     let s:hjkl_pageup_pagedown = 0
-    let head = s:matched_list[: partition]
-    let tail = s:matched_list[partition+1 :]
-    return tail + head
+    let head = results[: partition]
+    let tail = results[partition+1 :]
+    if !empty(partition)
+        let results = tail + head
+    endif
+    return results
 endfunction
 
 " ======================================== }}}
@@ -1940,12 +1951,12 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_cjk_file()
 " -------------------------------------
 " VimIM swiss-army Chinese database covering all 20902 CJK
+    let s:cjk_az_cache = {}
+    let s:cjk_lines = []
     let s:cjk_file = 0
     let s:has_cjk_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
-    let s:cjk_az = {}
-    let s:cjk_lines = []
     let datafile = s:path . "vimim.cjk.txt"
     if filereadable(datafile)
         let s:cjk_file = datafile
@@ -2154,9 +2165,9 @@ function! s:vimim_match_cjk_file(keyboard)
             endif
         endif
     elseif keyboard =~ '^\l\>'
-        if has_key(s:cjk_az, keyboard)
+        if has_key(s:cjk_az_cache, keyboard)
             let s:cjk_has_match += 1
-            return s:cjk_az[keyboard]
+            return s:cjk_az_cache[keyboard]
         endif
         " [sample] one-char-list by frequency y 72 l 72
         let grep = '[ 0-9]' . keyboard . '\w\+\s\d\+$'
@@ -2185,8 +2196,8 @@ function! s:vimim_match_cjk_file(keyboard)
         let results = sort(results, "s:vimim_compare_last_field")
         let filter = "strpart(".'v:val'.",0,s:multibyte)"
         call map(results, filter)
-        if keyboard =~ '^\l\>' && !has_key(s:cjk_az, keyboard)
-            let s:cjk_az[keyboard] = results
+        if keyboard =~ '^\l\>' && !has_key(s:cjk_az_cache, keyboard)
+            let s:cjk_az_cache[keyboard] = results
         endif
     endif
     return results
@@ -5053,16 +5064,18 @@ else
     " [filter] use cache to play within popup menu
     " --------------------------------------------
     if s:chinese_input_mode =~ 'onekey' && len(s:matched_list) > 1
+        if s:has_cjk_file > 0 && len(s:cjk_filter) > 0
+            let results = s:vimim_cjk_filter_from_cache(keyboard)
+        endif
+        if s:hjkl_h > 0
+            let s:hjkl_h = 0
+            if empty(results)
+                let results = s:matched_list
+            endif
+            let results = reverse(results)
+        endif
         if !empty(s:hjkl_pageup_pagedown)
-            let results = s:vimim_pageup_pagedown()
-        else
-            if s:has_cjk_file > 0 && len(s:cjk_filter) > 0
-                let results = s:vimim_cjk_filter_from_cache(keyboard)
-            endif
-            if s:hjkl_h > 0
-                let s:hjkl_h = 0
-                let results = reverse(s:matched_list)
-            endif
+            let results = s:vimim_pageup_pagedown(results)
         endif
         if !empty(results)
             return s:vimim_popupmenu_list(results)
