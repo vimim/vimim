@@ -1964,11 +1964,10 @@ endfunction
 " ---------------------------------------------
 function! s:vimim_tranfer_chinese() range abort
 " ---------------------------------------------
-" [usage]    :VimIM
-" [feature]  (1) "quick and dirty" way to transfer Chinese to Chinese
-"            (2) 20% of the effort to solve 80% of the problem
-"            (3) 5128/2=2564 Chinese pairs are used for one-to-one mapping
-"            (4) range for visual mode is supported
+" [usage]   :VimIM
+" [feature] (1) "quick and dirty" way to transfer Chinese to Chinese
+"           (2) 20% of the effort to solve 80% of the problem
+"           (3) 5128/2=2564 Chinese pairs are used for one-to-one mapping
 " ---------------------------------------------
     sil!call s:vimim_backend_initialization_once()
     if empty(s:has_cjk_file)
@@ -2137,8 +2136,8 @@ function! s:vimim_match_cjk_file(keyboard)
                 " [sample] free-style digit input: 77 771 7712"
                 let digit = keyboard
             elseif keyboard =~ '^\l\+\d\+'
-                " [sample] free-style input and search: ma7 ma77 ma771 ma7712"
-                " search line 81 using le72 yue72:    乐樂 7290 le4yue4 113092
+                " [sample] free-style input/search: ma7 ma77 ma771 ma7712"
+                " on line 81 using le72 yue72: 乐樂 7290 le4yue4 113092
                 let digit = substitute(keyboard,'\a','','g')
                 let alpha = substitute(keyboard,'\d','','g')
             endif
@@ -2190,8 +2189,8 @@ endfunction
 " -----------------------------------------------
 function s:vimim_compare_last_field(line1, line2)
 " -----------------------------------------------
-" m => 马 <= 马 1 <= '马馬 马馬 7712 ma3 260992'
-" 12041 combined character frequency list of classical and modern chinese
+" m => 马 <= 马 1 <= '马馬 7712 ma3 260992'
+" 12041 chinese frequency list based on a 45-million character corpus
 " http://lingua.mtsu.edu/chinese-computing/statistics/
     let line1 = get(split(a:line1),-1) + 1
     let line2 = get(split(a:line2),-1) + 1
@@ -3004,8 +3003,8 @@ function! s:vimim_dynamic_wubi_auto_trigger()
     for char in s:valid_keys
         if char !~# not_used_valid_keys
             sil!exe 'inoremap <silent> ' . char . '
-            \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'. char .
-            \'<C-R>=g:vimim()<CR>'
+            \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'
+            \. char . '<C-R>=g:vimim()<CR>'
         endif
     endfor
 endfunction
@@ -3326,7 +3325,7 @@ function! s:vimim_set_datafile(im)
         let s:backend.datafile[im].chinese = s:vimim_chinese(im)
     endif
     if im =~ '^\d'
-        let s:vimim_chinese_input_mode = 'static'
+        let s:vimim_chinese_input_mode = "static"
     endif
 endfunction
 
@@ -3523,17 +3522,17 @@ function! s:vimim_get_data_from_datafile(keyboard)
     endif
     let results = []
     let pattern = "^" . keyboard
-    let match_start = match(lines, pattern)
-    if match_start < 0
+    let start = match(lines, pattern)
+    if start < 0
         let msg = "fuzzy search could be done here, if needed"
     else
         if s:ui.has_dot == 2
             let results = s:vimim_fixed_match(lines, keyboard, 1)
         elseif s:ui.im == 'test'
-            let pumheight = &pumheight - 1
-            let results = s:vimim_fixed_match(lines, keyboard, pumheight)
+            let start = &pumheight - 1
+            let results = s:vimim_fixed_match(lines, keyboard, start)
         else
-            let results = s:vimim_smart_match(lines, keyboard, match_start)
+            let results = s:vimim_smart_match(lines, keyboard, start)
         endif
     endif
     return results
@@ -3988,8 +3987,9 @@ function! s:vimim_check_http_executable(im)
     " step #2 of 3: try to find wget
     if empty(s:www_executable)
         let wget = 0
-        if executable(s:path .  "wget.exe")
-            let wget = s:path . "wget.exe"
+        if wget_exe = s:path . "wget.exe"
+        if executable(wget_exe)
+            let wget = wget_exe
         elseif executable('wget')
             let wget = "wget"
         endif
@@ -4043,8 +4043,9 @@ function! s:vimim_magic_tail(keyboard)
     let keyboards = []
     " ----------------------------------------------------
     " <dot> double play in OneKey:
-    "   (1) magic trailing dot => forced-non-cloud
-    "   (2) as word partition  => match dot by dot
+    "   (1) magic trailing dot => forced-non-cloud in cloud
+    "   (2) magic trailing dot => forced-cjk-match
+    "   (3) as word partition  => match dot by dot
     " ----------------------------------------------------
     if magic_tail ==# "."
         let msg = "trailing dot => forced-non-cloud"
