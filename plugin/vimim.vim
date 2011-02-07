@@ -2173,7 +2173,7 @@ function! s:vimim_match_cjk_file(keyboard)
         let s:cjk_has_match += 1
     endwhile
     if len(results) > 0
-        let results = sort(results, "s:vimim_sort_on_last_field")
+        let results = sort(results, "s:vimim_compare_last_field")
         let filter = "strpart(".'v:val'.",0,s:multibyte)"
         call map(results, filter)
     endif
@@ -2181,15 +2181,17 @@ function! s:vimim_match_cjk_file(keyboard)
 endfunction
 
 " -----------------------------------------------
-function s:vimim_sort_on_last_field(line1, line2)
+function s:vimim_compare_last_field(line1, line2)
 " -----------------------------------------------
-" m => 马 <= 马 1 <= '马馬 7712 ma3 1'
+" m => 马 <= 马 1 <= '马馬 7712 ma3 155772'
+" 9933 chinese on the modern chinese character frequency list
+" http://lingua.mtsu.edu/chinese-computing/statistics/
     let line1 = get(split(a:line1),-1) + 1
     let line2 = get(split(a:line2),-1) + 1
     if line1 < line2
-        return -1
-    elseif line1 > line2
         return 1
+    elseif line1 > line2
+        return -1
     else
         return 0
     endif
