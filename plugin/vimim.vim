@@ -2132,8 +2132,8 @@ function! s:vimim_match_cjk_file(keyboard)
         else
             let digit = 0
             let alpha = ""
-            if keyboard =~ '^\d\d\+' && keyboard !~ '\D'
-                " [sample] free-style digit input: 77 771 7712"
+            if keyboard =~ '^\d\+' && keyboard !~ '\D'
+                " [sample] free-style digit input: 7 77 771 7712"
                 let digit = keyboard
             elseif keyboard =~ '^\l\+\d\+'
                 " [sample] free-style input/search: ma7 ma77 ma771 ma7712"
