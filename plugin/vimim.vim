@@ -2138,7 +2138,7 @@ function! s:vimim_match_cjk_file(keyboard)
                 let digit = keyboard
             elseif keyboard =~ '^\l\+\d\+'
                 " [sample] free-style input and search: ma7 ma77 ma771 ma7712"
-                " search for line 81 '乐樂 7290 le4yue4 27' using le72 yue72
+                " search line 81 using le72 yue72:    乐樂 7290 le4yue4 113092
                 let digit = substitute(keyboard,'\a','','g')
                 let alpha = substitute(keyboard,'\d','','g')
             endif
@@ -2146,7 +2146,7 @@ function! s:vimim_match_cjk_file(keyboard)
                 let space = 4 - len(digit)
                 let grep  = '\s' . digit
                 let grep .= '\d\{' . space . '}'
-                let grep .= '\s\l*' . alpha
+                let grep .= '\s\w*' . alpha
             endif
         endif
     elseif keyboard =~ '^\l\>'
@@ -2190,8 +2190,8 @@ endfunction
 " -----------------------------------------------
 function s:vimim_compare_last_field(line1, line2)
 " -----------------------------------------------
-" m => 马 <= 马 1 <= '马馬 7712 ma3 155772'
-" 9933 chinese on the modern chinese character frequency list
+" m => 马 <= 马 1 <= '马馬 马馬 7712 ma3 260992'
+" 12041 combined character frequency list of classical and modern chinese
 " http://lingua.mtsu.edu/chinese-computing/statistics/
     let line1 = get(split(a:line1),-1) + 1
     let line2 = get(split(a:line2),-1) + 1
