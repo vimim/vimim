@@ -127,7 +127,6 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
-    let s:cjk_az = {}
     let a = char2nr('a')
     let z = char2nr('z')
     let A = char2nr('A')
@@ -893,6 +892,9 @@ function! s:vimim_onekey_pumvisible_qwert_on()
     let labels = s:qwerty
     if s:has_cjk_file > 0
         let labels += range(10)
+        if s:has_cjk_file == 3
+            let s:has_cjk_file = 1
+        endif
     endif
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
@@ -1938,9 +1940,11 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_cjk_file()
 " -------------------------------------
 " VimIM swiss-army Chinese database covering all 20902 CJK
+    let s:cjk_file = 0
     let s:has_cjk_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
+    let s:cjk_az = {}
     let s:cjk_lines = []
     let datafile = s:path . "vimim.cjk.txt"
     if filereadable(datafile)
@@ -1948,7 +1952,6 @@ function! s:vimim_initialize_cjk_file()
         let s:has_cjk_file = 1
         let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
-    endif
 endfunction
 
 " -------------------------------
@@ -2013,7 +2016,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
     let keyboard = a:keyboard
     let keyboard_head = 0
     if keyboard =~ s:show_me_not || keyboard =~ '^\l\>'
-        return keyboard
+        let keyboard_head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
             let keyboard_head = s:vimim_cjk_sentence_4corner(keyboard)
@@ -2030,6 +2033,8 @@ function! s:vimim_cjk_sentence_match(keyboard)
             if magic_tail == "."
                 if s:has_cjk_file == 1
                     let s:has_cjk_file = 3
+                elseif s:has_cjk_file == 3
+                    let s:has_cjk_file = 1
                 endif
                 let keyboard = keyboard[0 : len(keyboard)-2]
             endif
@@ -2150,6 +2155,7 @@ function! s:vimim_match_cjk_file(keyboard)
         endif
     elseif keyboard =~ '^\l\>'
         if has_key(s:cjk_az, keyboard)
+            let s:cjk_has_match += 1
             return s:cjk_az[keyboard]
         endif
         " [sample] one-char-list by frequency y 72 l 72
@@ -2210,6 +2216,9 @@ function! s:vimim_slash_search_block(keyboard)
 " /muuqwxeyqpjeqqq  =>  shortcut   /search
 " /ma77xia36ji31    =>  free-style /search
 " --------------------------------------------
+    if empty(s:has_cjk_file)
+        return []
+    endif
     let results = []
     let keyboard = a:keyboard
     while len(keyboard) > 3
@@ -2240,7 +2249,6 @@ function! s:vimim_get_keyboard_head_list(keyboard, partition)
     if !empty(tail)
         call add(keyboards, tail)
     endif
-let g:ux1=keyboards
     if len(s:keyboard_list) < 2
         let s:keyboard_list = copy(keyboards)
     endif
@@ -3987,7 +3995,7 @@ function! s:vimim_check_http_executable(im)
     " step #2 of 3: try to find wget
     if empty(s:www_executable)
         let wget = 0
-        if wget_exe = s:path . "wget.exe"
+        let wget_exe = s:path . "wget.exe"
         if executable(wget_exe)
             let wget = wget_exe
         elseif executable('wget')
@@ -5183,7 +5191,7 @@ else
     endif
 
     " [seamless] support seamless English input
-    " ----------------------------------------- todo
+    " -----------------------------------------
     let s:pattern_not_found += 1
     if s:chinese_input_mode =~ 'onekey'
         let results = []
