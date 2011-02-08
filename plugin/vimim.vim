@@ -27,9 +27,8 @@ let VimIM = " ====  Introduction      ==== {{{"
 " -----------------------------------------------------------
 "  Features: * "Plug & Play": as a client to VimIM embedded backends
 "            * "Plug & Play": as a client to "myCloud" and "Cloud"
-"            * search Chinese without using popup menu
-"            * input Chinese independently without changing mode
-"            * integration with a swiss-army cjk database
+"            * search Chinese without using any popup window
+"            * input  Chinese without changing vim mode
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -163,10 +162,10 @@ function! s:vimim_dictionary_chinese()
     let s:right = "】"
     let s:chinese = {}
     let s:chinese['auto'] = ['自动','自動']
-    let s:chinese['error'] = ['错误','錯誤']
     let s:chinese['digit'] = ['数码','數碼']
-    let s:chinese['directory'] = ['目录','目錄']
+    let s:chinese['cjk'] = ['字库','字庫']
     let s:chinese['datafile'] = ['词库','詞庫']
+    let s:chinese['directory'] = ['目录','目錄']
     let s:chinese['computer'] = ['电脑','電腦']
     let s:chinese['encoding'] = ['编码','編碼']
     let s:chinese['environment'] = ['环境','環境']
@@ -422,7 +421,6 @@ function! s:vimim_egg_vimim()
     let myversion = s:vimim_chinese('myversion') . s:colon
     let option = myversion  . v:progname . s:space . v:version
     call add(eggs, option)
-    " ----------------------------------
     let option = get(split($VimIM), 1)
     if !empty(option)
         let option = myversion . "vimim.vim" . s:space . option
@@ -432,7 +430,6 @@ function! s:vimim_egg_vimim()
     let encoding = s:vimim_chinese('encoding') . s:colon
     let option = encoding . &encoding
     call add(eggs, option)
-    " ----------------------------------
     let option = encoding . &fileencodings
     call add(eggs, option)
     " ----------------------------------
@@ -452,9 +449,9 @@ function! s:vimim_egg_vimim()
         let toggle = "toggle_with_CTRL-Space"
     elseif s:vimim_tab_as_onekey > 1
         let toggle = "Tab_as_OneKey_OneKeyNonStop"
+    endif
     let toggle .= s:space
-    let style = s:vimim_chinese('style')
-    let option = style . s:colon . toggle
+    let option = s:vimim_chinese('style') . s:colon . toggle
     call add(eggs, option)
     " ----------------------------------
     let option = s:backend[s:ui.root][s:ui.im].datafile
@@ -470,8 +467,7 @@ function! s:vimim_egg_vimim()
     endif
     " ----------------------------------
     if s:has_cjk_file > 0
-        let ciku = s:vimim_chinese('digit') . s:colon
-        let option = ciku . s:cjk_file
+        let option = s:vimim_chinese('cjk') . s:colon . s:cjk_file
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -500,13 +496,6 @@ function! s:vimim_egg_vimim()
             call add(eggs, option)
         endfor
     endif
-    " ----------------------------------
-    if !empty(v:exception)
-        let error = s:vimim_chinese('error')
-        let option = error . s:colon . v:exception
-        call add(eggs, option)
-    endif
-    " ----------------------------------
     return map(eggs, 'v:val . s:space')
 endfunction
 
