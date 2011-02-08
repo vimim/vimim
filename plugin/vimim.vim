@@ -29,8 +29,7 @@ let VimIM = " ====  Introduction      ==== {{{"
 "            * "Plug & Play": as a client to "myCloud" and "Cloud"
 "            * search Chinese without using popup menu
 "            * input Chinese independently without changing mode
-"            * support "wubi", "erbi", "boshiamy", "cangjie", "taijima"
-"            * support "pinyin" plus 6 "shuangpin" plus "digit filter"
+"            * integration with a swiss-army cjk database
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -728,13 +727,14 @@ function! s:vimim_space_on()
                     \<C-R>=g:vimim_nonstop_after_insert()<CR>
 endfunction
 
+" -----------------------
+function! g:vimim_space()
+" -----------------------
 " <Space> multiple play in OneKey:
 "   (1) after English (valid keys) => trigger keycode menu
 "   (2) after omni popup menu      => insert Chinese
 "   (3) after English punctuation  => Chinese punctuation
 "   (4) after Chinese              => stop OneKeyNonStop
-" -----------------------
-function! g:vimim_space()
 " -----------------------
     let space = " "
     if pumvisible()
@@ -1410,26 +1410,20 @@ endfunction
 " --------------------------------
 function! <SID>vimim_smart_enter()
 " --------------------------------
+" <Enter> multiple play in OneKey:
+" (1) after English (valid keys)    ==> Seamless
+" (3) after Chinese or double Enter ==> <Enter>
+" (2) after English punctuation      => <Space>
+" (4) after empty line               => <Enter> with invisible <Space>
+" --------------------------------
     let key = ""
     let enter = "\<CR>"
     let byte_before = getline(".")[col(".")-2]
-    " -----------------------------------------------
-    " <Enter> double play in Chinese Mode:
-    "   (1) after English (valid keys)    => Seamless
-    "   (2) after Chinese or double Enter => Enter
-    " -----------------------------------------------
     if byte_before =~# "[*']"
         let s:smart_enter = 0
     elseif byte_before =~# s:valid_key
         let s:smart_enter += 1
     endif
-    " -----------------------------------------------
-    " <Enter> multiple play in OneKey Mode:
-    " (1) after English (valid keys)    => Seamless
-    " (2) after English punctuation     => <Space>
-    " (3) after Chinese or double Enter => <Enter>
-    " (4) after empty line              => <Enter> with invisible <Space>
-    " -----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
         if has_key(s:punctuations, byte_before)
             let s:smart_enter += 1
@@ -2406,14 +2400,14 @@ function! s:vimim_reverse_one_entry(chinese, im)
     let head = ''
     for chinese in split(a:chinese, '\zs')
         let ddddd = char2nr(chinese)
-        if ddddd < 19968 || ddddd > 40869
+        let line = ddddd - 19968
+        if line < 0 || line > 20902
             continue
         endif
         let head = ''
         if a:im == 'unicode'
             let head = printf('%x', ddddd)
         else
-            let line = ddddd - 19968
             let values = split(s:cjk_lines[line])
             if a:im == 'digit'
                 let head = get(values, 1)
@@ -2498,10 +2492,10 @@ function! s:vimim_cjk_digit_filter(chinese)
     let words = split(chinese,'\zs')
     for cjk in words
         let ddddd = char2nr(cjk)
-        if cjk =~ '\w' || ddddd < 19968 || ddddd > 40869
+        let line = ddddd - 19968
+        if cjk =~ '\w' ||  line < 0 || line > 20902
             continue
         else
-            let line = ddddd - 19968
             let values = split(s:cjk_lines[line])
             let digit = get(values,1)
             let digit_head .= digit[:0]
@@ -3819,9 +3813,9 @@ endfunction
 " ------------------------
 function! g:vimim_mkdir1()
 " ------------------------
-" within one line, new item is appeneded
 " (1) existed order:  key  value_1 value_2
 " (2) new items:      key  value_2 value_3
+" within one line, new item is appeneded
 " (3) new order:      key  value_1 value_2 value_3
     call s:vimim_mkdir('append', 0, [])
 endfunction
@@ -3830,8 +3824,6 @@ endfunction
 function! g:vimim_mkdir2()
 " ------------------------
 " within one line, new item is inserted first
-" (1) existed order:  key  value_1 value_2
-" (2) new items:      key  value_2 value_3
 " (3) new order:      key  value_2 value_3 value_1
     call s:vimim_mkdir('prepend', 0, [])
 endfunction
@@ -3840,8 +3832,6 @@ endfunction
 function! g:vimim_mkdir3()
 " ------------------------
 " replace the existed content with new items
-" (1) existed order:  key  value_1 value_2
-" (2) new items:      key  value_2 value_3
 " (3) new order:      key  value_2 value_3
     call s:vimim_mkdir('replace', 0, [])
 endfunction
@@ -4063,7 +4053,7 @@ function! s:vimim_magic_tail(keyboard)
     endif
     let keyboards = []
     " ----------------------------------------------------
-    " <dot> double play in OneKey:
+    " <dot> triple play in OneKey:
     "   (1) magic trailing dot => forced-non-cloud in cloud
     "   (2) magic trailing dot => forced-cjk-match
     "   (3) as word partition  => match dot by dot
@@ -4239,7 +4229,7 @@ function! s:vimim_scan_backend_mycloud()
 " let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
-" -----------------------------------------------------------------------
+" ------------------------------------------------------------
     if empty(s:backend.datafile) && empty(s:backend.directory)
         call s:vimim_set_mycloud()
     endif
@@ -4395,7 +4385,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
     if has("gui_win32")
         return 0
     endif
-    let mes = "on linux, we do plug-n-play"
+    let msg = "on linux, we do plug-n-play"
     let cloud = s:path . "mycloud/mycloud"
     if !executable(cloud)
         if !executable("python")
@@ -4862,8 +4852,7 @@ endfunction
 " -----------------
 function! g:vimim()
 " -----------------
-    if empty(&completefunc)
-    \|| &completefunc != 'VimIM'
+    if empty(&completefunc) || &completefunc != 'VimIM'
         set completefunc=VimIM
         set completeopt=menuone
     endif
@@ -4943,9 +4932,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
     let keyboard = a:keyboard
     let im = s:ui.im
     let root = s:ui.root
-    if empty(root)
-    \|| empty(im)
-    \|| keyboard !~# s:valid_key
+    if empty(root) || empty(im) || keyboard !~# s:valid_key
         return []
     endif
     let results = []
@@ -5062,9 +5049,9 @@ else
         endif
     endif
 
-    " [filter] use cache to play within popup menu
-    " --------------------------------------------
-    if s:chinese_input_mode =~ 'onekey' && len(s:matched_list) > 1
+    " [filter] use cache to flirt within popup menu
+    " ---------------------------------------------
+    if s:chinese_input_mode =~ 'onekey' && len(s:matched_list) > 0
         if s:has_cjk_file > 0 && len(s:cjk_filter) > 0
             let results = s:vimim_cjk_filter_from_cache(keyboard)
         endif
@@ -5219,14 +5206,13 @@ function! s:vimim_get_valid_keyboard(keyboard)
     else
         let keyboard = get(s:keyboard_list,0)
     endif
-    " [unicode] support direct unicode/gb/big5 input
     if a:keyboard =~# s:uxxxx
         return keyboard
     endif
     if keyboard !~# s:valid_key
         return 0
     endif
-    " ignore multiple non-sense dots
+    " ignore multiple nonsense dots
     if keyboard =~ "['.]['.]" && empty(s:ui.has_dot)
         let s:pattern_not_found += 1
         return 0
