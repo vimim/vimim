@@ -1488,27 +1488,30 @@ function! s:vimim_make_pair_matched_list(matched_list)
     return pair_matched_list
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_popupmenu_list(pair_matched_list)
-" -------------------------------------------------
-    let pair_matched_list = a:pair_matched_list
-    if empty(pair_matched_list)
+" --------------------------------------------
+function! s:vimim_popupmenu_list(matched_list)
+" --------------------------------------------
+    let matched_list = a:matched_list
+    if empty(matched_list)
         return []
     elseif empty(len(s:cjk_filter))
-        let s:matched_list = copy(pair_matched_list)
+        let s:matched_list = copy(matched_list)
+    endif
+    if s:hjkl_pageup_pagedown > 0
+        let matched_list = s:vimim_pageup_pagedown(matched_list)
     endif
     let label = 1
     let s:popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
     let keyboard_head = get(s:keyboard_list,0)
-    " ------------------------------
-    for chinese in pair_matched_list
-    " ------------------------------
+    " -------------------------
+    for chinese in matched_list
+    " -------------------------
         let keyboard_head_length = len(keyboard_head)
         if keyboard =~# s:uxxxx
         \|| keyboard =~# "^vimim"
         \|| s:cjk_has_match > 0
-            let msg = "pair_matched_list has only single item"
+            let msg = "matched_list has only single item"
         elseif empty(s:vimim_data_directory)
         \|| s:no_internet_connection < 0
         \|| s:vimim_cloud_sogou == 1
@@ -1583,32 +1586,33 @@ function! s:vimim_get_labeling(label)
     return labeling
 endfunction
 
-" ----------------------------------------
-function! s:vimim_pageup_pagedown(results)
-" ----------------------------------------
-    let results = a:results
-    if s:vimim_custom_label < 1
-        return results
+" ---------------------------------------------
+function! s:vimim_pageup_pagedown(matched_list)
+" ---------------------------------------------
+    let matched_list = a:matched_list
+    let length = len(matched_list)
+    if s:vimim_custom_label < 1 || length <= &pumheight
+        return matched_list
     endif
-    if empty(results)
-        let results = s:matched_list
+    let page = s:hjkl_pageup_pagedown * &pumheight
+    if page < 0
+        " no more PageUp after the first page
+        let s:hjkl_pageup_pagedown += 1
+        let first_page = &pumheight-1
+        let matched_list = matched_list[0 : first_page]
+    elseif page >= length
+        " no more PageDown after the last page
+        let s:hjkl_pageup_pagedown -= 1
+        let last_page = length / &pumheight
+        if empty(length % &pumheight)
+            let last_page -= 1
+        endif
+        let last_page = last_page * &pumheight
+        let matched_list = matched_list[last_page : -1]
+    else
+        let matched_list = matched_list[page :]
     endif
-    if len(results) <= &pumheight
-        return results
-    endif
-    let partition = 0
-    if s:hjkl_pageup_pagedown > 0
-        let partition = &pumheight - 2
-    elseif s:hjkl_pageup_pagedown < 0
-        let partition = len(results) - &pumheight
-    endif
-    let s:hjkl_pageup_pagedown = 0
-    let head = results[: partition]
-    let tail = results[partition+1 :]
-    if !empty(partition)
-        let results = tail + head
-    endif
-    return results
+    return matched_list
 endfunction
 
 " ======================================== }}}
@@ -1764,13 +1768,11 @@ function! <SID>vimim_punctuations_navigation(key)
         elseif a:key == "?"
             let hjkl  = '\<C-R>=g:vimim_menu_search_backward()\<CR>'
         elseif a:key =~ "[-,]"
-            let hjkl = '\<PageUp>'
+            let s:hjkl_pageup_pagedown -= 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-            let s:hjkl_pageup_pagedown = -1
         elseif a:key =~ "[=.]"
-            let hjkl = '\<PageDown>'
+            let s:hjkl_pageup_pagedown += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-            let s:hjkl_pageup_pagedown = 1
         endif
     else
         if s:chinese_input_mode !~ 'onekey'
@@ -3821,7 +3823,6 @@ function! g:vimim_mkdir1()
 " ------------------------
 " (1) existed order:  key  value_1 value_2
 " (2) new items:      key  value_2 value_3
-" within one line, new item is appeneded
 " (3) new order:      key  value_1 value_2 value_3
     call s:vimim_mkdir('append', 0, [])
 endfunction
@@ -3829,7 +3830,6 @@ endfunction
 " ------------------------
 function! g:vimim_mkdir2()
 " ------------------------
-" within one line, new item is inserted first
 " (3) new order:      key  value_2 value_3 value_1
     call s:vimim_mkdir('prepend', 0, [])
 endfunction
@@ -3837,7 +3837,6 @@ endfunction
 " ------------------------
 function! g:vimim_mkdir3()
 " ------------------------
-" replace the existed content with new items
 " (3) new order:      key  value_2 value_3
     call s:vimim_mkdir('replace', 0, [])
 endfunction
@@ -5055,15 +5054,13 @@ else
         endif
     endif
 
-    " [filter] use cache to flirt within popup menu
-    " ---------------------------------------------
-    if s:chinese_input_mode =~ 'onekey' && len(s:matched_list) > 0
-        if s:has_cjk_file > 0 && len(s:cjk_filter) > 0
-            let results = s:vimim_cjk_filter_from_cache(keyboard)
-        endif
-        if !empty(s:hjkl_pageup_pagedown)
-            let results = s:vimim_pageup_pagedown(results)
-        endif
+    " [filter] do digit filter within cache memory
+    " --------------------------------------------
+    if s:chinese_input_mode =~ 'onekey'
+    \&& s:has_cjk_file > 0
+    \&& len(s:cjk_filter) > 0
+    \&& len(s:matched_list) > 0
+        let results = s:vimim_cjk_filter_from_cache(keyboard)
         if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
