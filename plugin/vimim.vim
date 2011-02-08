@@ -635,27 +635,6 @@ function! s:vimim_register_search_pattern(keyboard, results)
     endif
 endfunction
 
-" -------------------------------------------
-function! s:vimim_cjk_property_display(ddddd)
-" -------------------------------------------
-    let ddddd = a:ddddd
-    let unicode = printf('u%04x',ddddd)
-    let menu = unicode . s:space . ddddd
-    if s:has_cjk_file > 0
-        call s:vimim_load_cjk_file()
-        let chinese = nr2char(ddddd)
-        let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
-        let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        if empty(digit) && empty(pinyin)
-            let msg = "no need to print out sparse matrix"
-        else
-            let menu .= s:space . digit
-            let menu .= s:space . pinyin
-        endif
-    endif
-    return menu
-endfunction
-
 " -----------------------------------
 function! g:vimim_search_pumvisible()
 " -----------------------------------
@@ -2102,7 +2081,7 @@ function! s:vimim_cjk_sentence_diy(keyboard)
         return 0
     endif
     let llll = keyboard[1:4]
-    let dddd = s:vimim_cjk_qwertyuiop_1234567890(llll)
+    let dddd = s:vimim_qwertyuiop_1234567890(llll)
     if empty(dddd)
         return 0
     endif
@@ -2112,11 +2091,11 @@ function! s:vimim_cjk_sentence_diy(keyboard)
     return head
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_cjk_qwertyuiop_1234567890(keyboard)
-" ---------------------------------------------------
+" -----------------------------------------------
+function! s:vimim_qwertyuiop_1234567890(keyboard)
+" -----------------------------------------------
     " output is '7712' for the input 'uuqw'
-    if a:keyboard =~ '\d'
+    if a:keyboard =~ '\d' || s:has_cjk_file < 1
         return 0
     else
     let dddd = ""
@@ -3282,6 +3261,25 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         return 0
     endif
     return ddddd
+endfunction
+
+" -------------------------------------------
+function! s:vimim_cjk_property_display(ddddd)
+" -------------------------------------------
+    let unicode = printf('u%04x', a:ddddd)
+    if s:has_cjk_file > 0
+        call s:vimim_load_cjk_file()
+        let chinese = nr2char( a:ddddd)
+        let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
+        let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
+        if empty(digit) && empty(pinyin)
+            let msg = "no need to print out sparse matrix"
+        else
+            let unicode .= s:space . digit
+            let unicode .= s:space . pinyin
+        endif
+    endif
+    return unicode
 endfunction
 
 " ======================================== }}}
@@ -5098,11 +5096,12 @@ else
             else
                 return s:vimim_popupmenu_list(chinese_numbers)
             endif
-        elseif s:has_cjk_file > 0
-            let dddd = s:vimim_cjk_qwertyuiop_1234567890(keyboard[1:-1])
+        elseif s:has_cjk_file > 1 || s:vimim_imode_pinyin > 0
+            let dddd = s:vimim_qwertyuiop_1234567890(keyboard[1:-1])
             if empty(dddd)
                 let msg = " iypwqwuwwyppwquyw => 6021272260021762 "
             else
+                let s:hjkl_l = 1
                 let keyboard = dddd
             endif
         endif
