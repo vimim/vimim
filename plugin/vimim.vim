@@ -110,7 +110,7 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     let s:show_me_not = '^vim'
     if s:vimim_tab_as_onekey == 2
-        let s:show_me_not .= '\|^oo\|^ii'
+        let s:show_me_not .= '\|^oo\|^oi'
     endif
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:www_executable = 0
@@ -942,24 +942,17 @@ function! g:vimim_pumvisible_dump()
     let line = ""
     let one_line_clipboard = ""
     let saved_position = getpos(".")
-    " -----------------------------
     for items in s:popupmenu_list
         if !has_key(items, "menu")
         \|| get(s:keyboard_list,0) =~ s:show_me_not
             let line = printf('%s', items.word)
         else
-            let format = '%-8s %s'
-            if s:has_cjk_file > 0
-            \&& items.menu =~# s:uxxxx
-            \&& len(items.menu) > 18
-                let format = '%-48s %s'
-            endif
-            let line = printf(format, items.menu, items.word)
+            let format = '%s  %s'
+            let line = printf(format, items.word, items.menu)
         endif
         put=line
         let one_line_clipboard .= line . "\n"
     endfor
-    " -----------------------------
     if has("gui_running") && has("win32")
         let @+ = one_line_clipboard
     endif
