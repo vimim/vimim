@@ -1877,6 +1877,10 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_imode_number(keyboard, prefix)
 " ----------------------------------------------
+    " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql
+    if empty(s:vimim_imode_pinyin)
+        return []
+    endif
     let keyboard = a:keyboard
     if strpart(keyboard,0,2) ==# 'ii'
         let keyboard = 'I' . strpart(keyboard,2)
@@ -2091,29 +2095,40 @@ endfunction
 " ------------------------------------------
 function! s:vimim_cjk_sentence_diy(keyboard)
 " ------------------------------------------
-    " output is 'm7712' for the input "muuqwxeyqpjeqqq"
-    let ldddd = 0
+    " output is 'm7712' for the input 'muuqwxeyqpjeqqq'
     let keyboard = a:keyboard
     let delimiter = match(keyboard, '^\l\l\l\l\l')
-    if delimiter > -1
-        let lllll = keyboard[0:4]
-        let llll = lllll[1:-1]
-        let ldddd = lllll[0:0]
-        for char in split(llll, '\zs')
-            let digit = match(s:qwerty, char)
-            if digit < 0
-                return 0
-            else
-                let ldddd .= digit
-            endif
-        endfor
-    endif
-    if empty(ldddd)
+    if delimiter < 0
         return 0
     endif
+    let llll = keyboard[1:4]
+    let dddd = s:vimim_cjk_qwertyuiop_1234567890(llll)
+    if empty(dddd)
+        return 0
+    endif
+    let ldddd = keyboard[0:0] . dddd
     let keyboard = ldddd . keyboard[5:-1]
     let head = s:vimim_get_keyboard_head_list(keyboard, 5)
     return head
+endfunction
+
+" ---------------------------------------------------
+function! s:vimim_cjk_qwertyuiop_1234567890(keyboard)
+" ---------------------------------------------------
+    " output is '7712' for the input 'uuqw'
+    if a:keyboard =~ '\d'
+        return 0
+    else
+    let dddd = ""
+    for char in split(a:keyboard, '\zs')
+        let digit = match(s:qwerty, char)
+        if digit < 0
+            return 0
+        else
+            let dddd .= digit
+        endif
+    endfor
+    return dddd
 endfunction
 
 " --------------------------------------------
@@ -5073,6 +5088,26 @@ else
         endif
     endif
 
+    " [imode] magic 'i': (1) english number (2) qwerty shortcut
+    " ---------------------------------------------------------
+    if s:chinese_input_mode !~ 'dynamic' && keyboard =~# '^i'
+        if keyboard =~ '\d'
+            let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
+            if empty(len(chinese_numbers))
+                let msg = " English number => Chinese number "
+            else
+                return s:vimim_popupmenu_list(chinese_numbers)
+            endif
+        elseif s:has_cjk_file > 0
+            let dddd = s:vimim_cjk_qwertyuiop_1234567890(keyboard[1:-1])
+            if empty(dddd)
+                let msg = " iypwqwuwwyppwquyw => 6021272260021762 "
+            else
+                let keyboard = dddd
+            endif
+        endif
+    endif
+
     " [cjk] swiss-army cjk database is the first-class citizen
     " --------------------------------------------------------
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
@@ -5082,17 +5117,6 @@ else
             if !empty(results)
                 return s:vimim_popupmenu_list(results)
             endif
-        endif
-    endif
-
-    " [imode] magic 'i': English number => Chinese number
-    " ---------------------------------------------------
-    if s:chinese_input_mode !~ 'dynamic' && s:ui.has_dot < 1
-    \&& s:vimim_imode_pinyin > 0 && keyboard =~# '^i'
-        let msg = "usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql"
-        let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
-        if !empty(len(chinese_numbers))
-            return s:vimim_popupmenu_list(chinese_numbers)
         endif
     endif
 
