@@ -867,8 +867,10 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             call g:vimim_reset_after_insert()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
-            let s:hjkl_chinese_transfer += 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            let hjkl  = ""
+            for i in range(&pumheight/2)
+                let hjkl .= '\<Down>'
+            endfor
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
@@ -1526,7 +1528,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
     let pair_matched_list = a:pair_matched_list
     if empty(pair_matched_list)
         return []
-    elseif empty(len(s:cjk_filter)) && empty(s:hjkl_h)
+    elseif empty(len(s:cjk_filter))
         let s:matched_list = copy(pair_matched_list)
     endif
     let label = 1
@@ -1553,7 +1555,7 @@ function! s:vimim_popupmenu_list(pair_matched_list)
             let chinese = get(pairs, 1)
         endif
         " -------------------------------------------------
-        if s:has_cjk_file > 0 && s:hjkl_chinese_transfer%2 > 0
+        if s:has_cjk_file > 0 && s:hjkl_h%2 > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
         " -------------------------------------------------
@@ -4827,7 +4829,6 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_l = 0
     let s:hjkl_h = 0
-    let s:hjkl_chinese_transfer = 0
     let s:hjkl_pageup_pagedown = 0
     let s:cjk_has_match = 0
     let s:cjk_filter = ""
@@ -5066,13 +5067,6 @@ else
     if s:chinese_input_mode =~ 'onekey' && len(s:matched_list) > 1
         if s:has_cjk_file > 0 && len(s:cjk_filter) > 0
             let results = s:vimim_cjk_filter_from_cache(keyboard)
-        endif
-        if s:hjkl_h > 0
-            let s:hjkl_h = 0
-            if empty(results)
-                let results = s:matched_list
-            endif
-            let results = reverse(results)
         endif
         if !empty(s:hjkl_pageup_pagedown)
             let results = s:vimim_pageup_pagedown(results)
