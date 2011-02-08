@@ -25,10 +25,11 @@ let VimIM = " ====  Introduction      ==== {{{"
 "    Readme:  VimIM is a Vim plugin designed as an independent IM
 "             (Input Method) to support CJK search and input
 " -----------------------------------------------------------
-"  Features: * "Plug & Play": as a client to VimIM embedded backends
-"            * "Plug & Play": as a client to "myCloud" and "Cloud"
-"            * search Chinese without using any popup window
-"            * input  Chinese without changing vim mode
+" "VimIM Features"
+"  (1) "Plug & Play": as a client to VimIM embedded backends
+"  (2) "Plug & Play": as a client to "myCloud" and "Cloud"
+"  (3) search Chinese without using any popup window
+"  (4) input  Chinese without changing vim mode
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -1395,7 +1396,7 @@ function! <SID>vimim_smart_enter()
         endif
     endif
     if s:smart_enter == 1
-        let msg = "do seamless for the first time <Enter>"
+        " do seamless for the first time <Enter>
         let s:pattern_not_found = 0
         call s:vimim_set_seamless()
     else
@@ -3251,7 +3252,9 @@ endfunction
 function! s:vimim_cjk_property_display(ddddd)
 " -------------------------------------------
     let unicode = printf('u%04x', a:ddddd)
-    if s:has_cjk_file > 0
+    if s:has_cjk_file < 1
+        let unicode .= s:space . a:ddddd
+    else
         call s:vimim_load_cjk_file()
         let chinese = nr2char( a:ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
@@ -3998,9 +4001,7 @@ function! s:vimim_check_http_executable(im)
         elseif executable('wget')
             let wget = "wget"
         endif
-        if empty(wget)
-            let msg = "wget is not available"
-        else
+        if !empty(wget)
             let wget_option = " -qO - --timeout 20 -t 10 "
             let s:www_executable = wget . wget_option
         endif
@@ -4053,11 +4054,11 @@ function! s:vimim_magic_tail(keyboard)
     "   (3) as word partition  => match dot by dot
     " ----------------------------------------------------
     if magic_tail ==# "."
-        let msg = "trailing dot => forced-non-cloud"
+        " trailing dot => forced-non-cloud
         let s:no_internet_connection = 2
         call add(keyboards, -1)
     elseif magic_tail ==# "'"
-        let msg = "trailing apostrophe => forced-cloud"
+        " trailing apostrophe => forced-cloud
         let s:no_internet_connection -= 2
         let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
         if empty(cloud)
@@ -4174,7 +4175,6 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
         call s:debugs('sogou::exception=', v:exception)
         let output = 0
     endtry
-    call s:debugs('sogou::outputquery=', output)
     if empty(output)
         return []
     endif
@@ -4504,7 +4504,7 @@ endfunction
 " --------------------------------------------------------
 function! s:vimim_process_mycloud_output(keyboard, output)
 " --------------------------------------------------------
-" one line typical output:  春夢 8 4420
+" one line typical output:  春梦 8 4420
     let output = a:output
     if empty(output) || empty(a:keyboard)
         return []
