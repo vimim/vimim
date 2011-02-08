@@ -2234,7 +2234,7 @@ function! s:vimim_slash_search_block(keyboard)
     endif
     let results = []
     let keyboard = a:keyboard
-    while len(keyboard) > 3
+    while len(keyboard) > 2
         let keyboard2 = s:vimim_cjk_sentence_match(keyboard)
         if empty(keyboard2)
             break
