@@ -292,11 +292,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_private_data_directory")
-    call add(G, "g:vimim_private_data_file")
+    call add(G, "g:vimim_self_directory")
     call add(G, "g:vimim_data_file")
-    call add(G, "g:vimim_vimimdata")
-    call add(G, "g:vimim_libvimdll")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_pinyin")
@@ -1914,7 +1911,6 @@ call add(s:vimims, VimIM)
 " -------------------------------------
 function! s:vimim_initialize_cjk_file()
 " -------------------------------------
-" VimIM swiss-army Chinese database covering all 20902 CJK
     let s:cjk_az_cache = {}
     let s:cjk_lines = []
     let s:cjk_file = 0
@@ -1931,18 +1927,27 @@ endfunction
 
 " -------------------------------
 function! s:vimim_load_cjk_file()
-" ------------------------------- todo
-    if s:has_cjk_file > 0 && empty(s:cjk_lines)
-        let datafile = s:cjk_file
+" -------------------------------
+    if empty(s:cjk_lines)
+        let msg = "load once and only once"
+    else
+        return
+    endif
+    if s:has_cjk_file > 0
+        let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+    endif
+    let private = 0
+    let datafile = s:vimim_self_directory . "vimim.txt"
+    if filereadable(datafile)
+        let private = 1
+    else
+        let datafile = s:path . "vimim.txt"
         if filereadable(datafile)
-            let s:cjk_lines = s:vimim_readfile(datafile)
+            let private = 1
         endif
-        let datafile = s:vimim_private_data_file
-        if  empty(datafile) 
-            let msg = "no private file available"
-        elseif filereadable(datafile)
-            call extend(s:cjk_lines, readfile(datafile))
-        endif
+    endif
+    if private > 0
+        call extend(s:cjk_lines, readfile(datafile))
     endif
 endfunction
 
@@ -1997,7 +2002,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
     let keyboard_head = 0
-    if keyboard =~ s:show_me_not || keyboard =~ '^\l\>'
+    if keyboard =~ s:show_me_not 
         let keyboard_head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
@@ -2005,8 +2010,10 @@ function! s:vimim_cjk_sentence_match(keyboard)
         elseif keyboard =~ '^\l\+\d\+'
             let keyboard_head = s:vimim_cjk_sentence_digit(keyboard)
         endif
+    elseif len(keyboard) == 1
+        let keyboard_head = keyboard
     else
-        if len(keyboard) % 5 < 1
+        if len(keyboard) % 5 < 1  && keyboard !~ "[.']"
             let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
         endif
         if empty(keyboard_head)
@@ -2104,18 +2111,23 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
         endif
         let keyboard = keyboard[0 : len(keyboard)-2]
     endif
+    let a_keyboard = keyboard
     " ---------------------------------------- todo
     call s:vimim_load_cjk_file()
-    let grep = '^' . keyboard . '\>'
-    let matched = match(s:cjk_lines, grep, 20902)
-    let head = keyboard
+    let grep = '^' . a_keyboard . '\>'
+    let matched = match(s:cjk_lines, grep)
+    let head = a_keyboard
     if matched < 0 && s:has_cjk_file > 1
-        " output is 'wo' for the input woyouyigemeng"
-        let block = s:vimim_quanpin_transform(keyboard)
-        let partition = match(block, "'")
-        let head = s:vimim_get_keyboard_head_list(keyboard, partition)
-        if len(head) > len(keyboard)
-            let head = keyboard
+        if a_keyboard =~ "[.']"
+            let msg = "i.have.a.dream"
+        else
+            " output is 'wo' for the input woyouyigemeng"
+            let keyboard = s:vimim_quanpin_transform(a_keyboard)
+        endif
+        let partition = match(keyboard, "[.']")
+        let head = s:vimim_get_keyboard_head_list(a_keyboard, partition)
+        if len(head) > len(a_keyboard)
+            let head = a_keyboard
         endif
     endif
     return head
@@ -2193,11 +2205,11 @@ function! s:vimim_match_cjk_file(keyboard)
     " ------------------------------------ todo
     if keyboard =~ '^\l\+'
         let grep = '^' . keyboard . '\>'
-        let matched = match(s:cjk_lines, grep, 20902)
+        let matched = match(s:cjk_lines, grep)
         if matched < 0
-            let msg = "no insert as no match for private data"
-            let msg = "dream 梦 梦想 幻想"
+            let msg = "dream 梦 梦想"
         else
+            let s:cjk_has_match += 1
             let line = s:cjk_lines[matched]
             let values = split(line)[1:]
             call extend(results, values, 0)
@@ -2509,7 +2521,7 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
         let msg = "pinyin breakdown: pinyin=>pin'yin"
     endif
     let keyboard2 = s:vimim_quanpin_transform(a:keyboard)
-    let results = split(keyboard2,"'")
+    let results = split(keyboard2, "'")
     if len(results) > 1
         return results
     endif
@@ -3306,10 +3318,6 @@ function! s:vimim_set_datafile(im)
         let im = a:im
         let file = "vimim." . im . ".txt"
         let datafile = s:path . file
-        if !filereadable(datafile)
-            let s:path = s:vimim_vimimdata
-            let datafile = s:path . file
-        endif
     endif
     " ----------------------------------------
     if !filereadable(datafile) || isdirectory(datafile)
@@ -3744,7 +3752,7 @@ function! s:vimim_get_list_from_directory(keyboard)
         return []
     endif
     let dir = s:vimim_get_valid_directory(s:ui.im)
-    let dir2 = s:vimim_private_data_directory
+    let dir2 = s:vimim_self_directory
     if empty(dir) && empty(dir2)
         return []
     endif
@@ -4320,22 +4328,19 @@ endfunction
 " ------------------------------
 function! s:vimim_get_libvimim()
 " ------------------------------
-    let cloud = 0
+    let cloud = ""
     if has("win32") || has("win32unix")
-        let cloud = s:path . "libvimim.dll"
+        let cloud = "libvimim.dll"
     elseif has("unix")
-        let cloud = s:path . "libvimim.so"
+        let cloud = "libvimim.so"
     else
-        return 0
+        return ""
     endif
+    let cloud = s:path . cloud
     if filereadable(cloud)
         return cloud
-    elseif filereadable(s:vimim_libvimdll)
-        if has("win32") || has("win32unix")
-            return s:vimim_libvimdll
-        endif
     endif
-    return 0
+    return ""
 endfunction
 
 " ----------------------------------------------
@@ -4547,18 +4552,14 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------- todo
     if isdirectory("/home/xma/vim")
         let msg = " VimIM super configuration: "
     else
         return
     endif
-    let s:vimim_data_directory         = "/home/vimim/"
-    let s:vimim_private_data_directory = "/home/xma/oo/"
-    let s:vimim_private_data_file      = "/home/xma/oo/oo"
-    let svn = s:vimim_data_directory . "svn"
-    let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
-    let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
+    let s:vimim_data_directory = "/home/vimim/"
+    let s:vimim_self_directory = "/home/xma/oo/"
     let s:vimim_custom_color = 2
     let s:vimim_tab_as_onekey = 2
 endfunction
