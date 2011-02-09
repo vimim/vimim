@@ -1979,7 +1979,6 @@ function! s:vimim_tranfer_chinese() range abort
 "           (3) 5128/2=2564 Chinese pairs are used for one-to-one mapping
 " ---------------------------------------------
     sil!call s:vimim_backend_initialization_once()
-    let g:g1=s:has_cjk_file
     if empty(s:has_cjk_file)
         let msg = "no toggle between simplified and tranditional Chinese"
     elseif &encoding == "utf-8"
@@ -2032,7 +2031,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         endif
     elseif len(keyboard) == 1
         let keyboard_head = keyboard
-    else
+    elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
         if len(keyboard) % 5 < 1  && keyboard !~ "[.']"
             let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
         endif
