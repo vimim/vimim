@@ -167,6 +167,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['cjk'] = ['字库','字庫']
     let s:chinese['datafile'] = ['词库','詞庫']
     let s:chinese['directory'] = ['目录','目錄']
+    let s:chinese['private'] = ['机密','機密']
     let s:chinese['computer'] = ['电脑','電腦']
     let s:chinese['encoding'] = ['编码','編碼']
     let s:chinese['environment'] = ['环境','環境']
@@ -452,20 +453,26 @@ function! s:vimim_egg_vimim()
     let option = s:vimim_chinese('style') . s:colon . toggle
     call add(eggs, option)
     " ----------------------------------
-    let option = s:backend[s:ui.root][s:ui.im].datafile
-    let ciku = s:vimim_chinese('datafile') . s:colon
-    if !empty(option)
-        if s:ui.root == 'directory'
-            let directory  = s:vimim_chinese('directory')
-            let ciku .= directory . ciku
-            let option .= "/"
-        endif
-        let option = ciku . option
+    if s:has_cjk_file > 0
+        let option = s:vimim_chinese('cjk') . s:colon . s:cjk_file
+        call add(eggs, option)
+    endif
+    let database = s:vimim_chinese('datafile') . s:colon
+    let ciku = database
+    if len(s:cjk_self_file) > 1
+        let ciku .= s:vimim_chinese('private') . ciku
+        let option = ciku . s:cjk_self_file
         call add(eggs, option)
     endif
     " ----------------------------------
-    if s:has_cjk_file > 0
-        let option = s:vimim_chinese('cjk') . s:colon . s:cjk_file
+    let ciku = database
+    let option = s:backend[s:ui.root][s:ui.im].datafile
+    if !empty(option)
+        if s:ui.root == 'directory'
+            let ciku .= s:vimim_chinese('directory') . ciku
+            let option .= "/"
+        endif
+        let option = ciku . option
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -1917,6 +1924,7 @@ function! s:vimim_initialize_cjk_file()
     let s:cjk_az_cache = {}
     let s:cjk_lines = []
     let s:cjk_file = 0
+    let s:cjk_self_file = 0
     let s:has_cjk_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
@@ -1929,19 +1937,8 @@ function! s:vimim_initialize_cjk_file()
         if s:vimim_custom_color == 1
             let s:vimim_custom_color = 2
         endif
-endfunction
-
-" -------------------------------
-function! s:vimim_load_cjk_file()
-" -------------------------------
-    if empty(s:cjk_lines)
-        let msg = "load once and only once"
-    else
-        return
     endif
-    if s:has_cjk_file > 0
-        let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-    endif
+    " ---------------------------------
     let default = "vimim.txt"
     let datafile = s:vimim_self_directory . default
     if filereadable(datafile)
@@ -1953,6 +1950,26 @@ function! s:vimim_load_cjk_file()
         endif
     endif
     if empty(default)
+        let s:cjk_self_file = datafile
+    endif
+endfunction
+
+" -------------------------------
+function! s:vimim_load_cjk_file()
+" -------------------------------
+    if empty(s:cjk_lines)
+        let msg = "load once and only once"
+    else
+        return
+    endif
+    let datafile = s:cjk_file
+    if s:has_cjk_file > 0
+        let s:cjk_lines = s:vimim_readfile(datafile)
+    endif
+    let datafile = s:cjk_self_file
+    if empty(datafile)
+        let msg = "no private datafile found"
+    else
         call extend(s:cjk_lines, readfile(datafile))
     endif
 endfunction
