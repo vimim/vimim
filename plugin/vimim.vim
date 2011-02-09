@@ -290,31 +290,31 @@ function! s:vimim_initialize_global()
     let s:global_customized = []
     " -------------------------------
     let G = []
-    call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_tab_as_onekey")
-    call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_self_directory")
-    call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_backslash_close_pinyin")
+    call add(G, "g:vimim_chinese_input_mode")
+    call add(G, "g:vimim_cloud_sogou")
+    call add(G, "g:vimim_ctrl_space_to_toggle")
+    call add(G, "g:vimim_data_directory")
+    call add(G, "g:vimim_data_file")
+    call add(G, "g:vimim_debug")
     call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_mycloud_url")
-    call add(G, "g:vimim_cloud_sogou")
-    call add(G, "g:vimim_chinese_input_mode")
+    call add(G, "g:vimim_self_directory")
+    call add(G, "g:vimim_shuangpin")
+    call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_use_cache")
-    call add(G, "g:vimim_debug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
-    call add(G, "g:vimim_onekey_nonstop")
-    call add(G, "g:vimim_custom_label")
-    call add(G, "g:vimim_custom_color")
-    call add(G, "g:vimim_custom_statusline")
-    call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_chinese_punctuation")
+    call add(G, "g:vimim_custom_color")
+    call add(G, "g:vimim_custom_label")
+    call add(G, "g:vimim_custom_statusline")
+    call add(G, "g:vimim_onekey_nonstop")
+    call add(G, "g:vimim_search_next")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -459,7 +459,7 @@ function! s:vimim_egg_vimim()
     endif
     let database = s:vimim_chinese('datafile') . s:colon
     let ciku = database
-    if len(s:cjk_self_file) > 1
+    if s:has_cjk_self_file > 0
         let ciku .= s:vimim_chinese('private') . ciku
         let option = ciku . s:cjk_self_file
         call add(eggs, option)
@@ -1925,10 +1925,19 @@ function! s:vimim_initialize_cjk_file()
     let s:cjk_az_cache = {}
     let s:cjk_results = []
     let s:cjk_lines = []
-    let s:cjk_file = 0
     let s:has_cjk_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
+    " ---------------------------------
+    let s:cjk_self_file = 0
+    let s:has_cjk_self_file = 0
+    let datafile = s:path . "vimim.txt"
+    if filereadable(datafile)
+        let s:has_cjk_self_file = 1
+        let s:cjk_self_file = datafile
+    endif
+    " ---------------------------------
+    let s:cjk_file = 0
     let datafile = s:path . "vimim.cjk.txt"
     if filereadable(datafile)
         let s:cjk_file = datafile
@@ -1938,21 +1947,6 @@ function! s:vimim_initialize_cjk_file()
         if s:vimim_custom_color == 1
             let s:vimim_custom_color = 2
         endif
-    endif
-    " ---------------------------------
-    let s:cjk_self_file = 0
-    let default = "vimim.txt"
-    let datafile = s:vimim_self_directory . default
-    if filereadable(datafile)
-        let default = 0
-    else
-        let datafile = s:path . default
-        if filereadable(datafile)
-            let default = 0
-        endif
-    endif
-    if empty(default)
-        let s:cjk_self_file = datafile
     endif
 endfunction
 
@@ -1985,6 +1979,7 @@ function! s:vimim_tranfer_chinese() range abort
 "           (3) 5128/2=2564 Chinese pairs are used for one-to-one mapping
 " ---------------------------------------------
     sil!call s:vimim_backend_initialization_once()
+    let g:g1=s:has_cjk_file
     if empty(s:has_cjk_file)
         let msg = "no toggle between simplified and tranditional Chinese"
     elseif &encoding == "utf-8"
@@ -2161,7 +2156,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_match_cjk_file(keyboard)
 " ----------------------------------------
-    if empty(s:has_cjk_file)
+    if empty(s:has_cjk_file) && empty(s:has_cjk_self_file)
         return []
     endif
     let keyboard = a:keyboard
@@ -2227,7 +2222,7 @@ function! s:vimim_match_cjk_file(keyboard)
         endif
     endif
     " ------------------------------------------------------
-    if len(s:cjk_self_file) > 1 && keyboard =~ '^\l\+'
+    if s:has_cjk_self_file > 0 && keyboard =~ '^\l\+'
         let grep = '^' . keyboard . '\>'
         let matched = match(s:cjk_lines, grep)
         if matched < 0
@@ -2414,7 +2409,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
         let head = ''
         if a:im == 'unicode'
             let head = printf('%x', ddddd)
-        else
+        elseif len(s:cjk_lines) >= 20902
             let values = split(s:cjk_lines[line])
             if a:im == 'digit'
                 let head = get(values, 1)
@@ -5072,12 +5067,14 @@ else
 
     " [cjk] swiss-army cjk database is the first-class citizen
     " --------------------------------------------------------
-    if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
-        let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
-        if !empty(keyboard_head)
-            let results = s:vimim_match_cjk_file(keyboard_head)
-            if !empty(results) && empty(s:cjk_results) 
-                return s:vimim_popupmenu_list(results)
+    if s:chinese_input_mode =~ 'onekey'
+        if s:has_cjk_file > 0 || s:has_cjk_self_file > 0
+            let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
+            if !empty(keyboard_head)
+                let results = s:vimim_match_cjk_file(keyboard_head)
+                if !empty(results) && empty(s:cjk_results)
+                    return s:vimim_popupmenu_list(results)
+                endif
             endif
         endif
     endif
@@ -5152,7 +5149,7 @@ else
     " [backend] plug-n-play embedded backend engine
     " ---------------------------------------------
     let results = s:vimim_embedded_backend_engine(keyboard)
-    if !empty(s:cjk_results) 
+    if !empty(s:cjk_results)
         call extend(results, s:cjk_results, 0)
         let results = s:vimim_remove_duplication(results)
         let s:cjk_results = []
