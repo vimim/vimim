@@ -3806,49 +3806,20 @@ function! s:vimim_sentence_match_directory(keyboard)
     endif
 endfunction
 
-" ------------------------
-function! g:vimim_mkdir1()
-" ------------------------
-" (1) existed order:  key  value_1 value_2
-" (2) new items:      key  value_2 value_3
-" (3) new order:      key  value_1 value_2 value_3
-    call s:vimim_mkdir('append', 0, [])
-endfunction
-
-" ------------------------
-function! g:vimim_mkdir2()
-" ------------------------
-" (3) new order:      key  value_2 value_3 value_1
-    call s:vimim_mkdir('prepend', 0, [])
-endfunction
-
-" ------------------------
-function! g:vimim_mkdir3()
-" ------------------------
-" (3) new order:      key  value_2 value_3
-    call s:vimim_mkdir('replace', 0, [])
-endfunction
-
-" -----------------------------------------
-function! s:vimim_mkdir(option, dir, lines)
-" -----------------------------------------
+" -----------------------
+function! g:vimim_mkdir()
+" -----------------------
 " purpose: create one file per entry based on vimim.pinyin.txt
 "    (1) $cd $VIM/vimfiles/plugin/vimim/
-"    (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir1()
+"    (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir()
 " --------------------------------------------------
-    let dir = a:dir
-    let lines = a:lines
-    if empty(dir)
-        let root = expand("%:p:h")
-        let dir = root . "/" . expand("%:e:e:r")
-        if !exists(dir) && !isdirectory(dir)
-            call mkdir(dir, "p")
-        endif
+    let root = expand("%:p:h")
+    let dir = root . "/" . expand("%:e:e:r")
+    if !exists(dir) && !isdirectory(dir)
+        call mkdir(dir, "p")
     endif
-    if empty(lines)
-        let lines = readfile(bufname("%"))
-    endif
-    let option = a:option
+    let option = 'prepend'
+    let lines = readfile(bufname("%"))
     " ----------------------------------------------
     for line in lines
         let entries = split(line)
