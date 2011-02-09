@@ -1931,10 +1931,17 @@ endfunction
 
 " -------------------------------
 function! s:vimim_load_cjk_file()
-" -------------------------------
+" ------------------------------- todo
     if s:has_cjk_file > 0 && empty(s:cjk_lines)
-        if filereadable(s:cjk_file)
-            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+        let datafile = s:cjk_file
+        if filereadable(datafile)
+            let s:cjk_lines = s:vimim_readfile(datafile)
+        endif
+        let datafile = s:vimim_private_data_file
+        if  empty(datafile) 
+            let msg = "no private file available"
+        elseif filereadable(datafile)
+            call extend(s:cjk_lines, readfile(datafile))
         endif
     endif
 endfunction
@@ -2002,20 +2009,8 @@ function! s:vimim_cjk_sentence_match(keyboard)
         if len(keyboard) % 5 < 1
             let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
         endif
-        "  magic trailing dot to use cjk: shishishishishi.
         if empty(keyboard_head)
-            let magic_tail = keyboard[-1:-1]
-            if magic_tail == "."
-                if s:has_cjk_file == 1
-                    let s:has_cjk_file = 3
-                elseif s:has_cjk_file == 3
-                    let s:has_cjk_file = 1
-                endif
-                let keyboard = keyboard[0 : len(keyboard)-2]
-            endif
-            if s:has_cjk_file > 1
-                let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
-            endif
+            let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
         endif
     endif
     return keyboard_head
@@ -2098,12 +2093,30 @@ endfunction
 " --------------------------------------------
 function! s:vimim_cjk_sentence_alpha(keyboard)
 " --------------------------------------------
-    " output is 'wo' for the input woyouyigemeng"
-    let keyboard = s:vimim_quanpin_transform(a:keyboard)
-    let partition = match(keyboard, "'")
-    let head = s:vimim_get_keyboard_head_list(a:keyboard, partition)
-    if len(head) > len(keyboard)
-        let head = keyboard
+    "  magic trailing dot to use cjk: shishishishishi.
+    let keyboard = a:keyboard
+    let magic_tail = keyboard[-1:-1]
+    if magic_tail == "."
+        if s:has_cjk_file == 1
+            let s:has_cjk_file = 3
+        elseif s:has_cjk_file == 3
+            let s:has_cjk_file = 1
+        endif
+        let keyboard = keyboard[0 : len(keyboard)-2]
+    endif
+    " ---------------------------------------- todo
+    call s:vimim_load_cjk_file()
+    let grep = '^' . keyboard . '\>'
+    let matched = match(s:cjk_lines, grep, 20902)
+    let head = keyboard
+    if matched < 0 && s:has_cjk_file > 1
+        " output is 'wo' for the input woyouyigemeng"
+        let block = s:vimim_quanpin_transform(keyboard)
+        let partition = match(block, "'")
+        let head = s:vimim_get_keyboard_head_list(keyboard, partition)
+        if len(head) > len(keyboard)
+            let head = keyboard
+        endif
     endif
     return head
 endfunction
@@ -2152,9 +2165,10 @@ function! s:vimim_match_cjk_file(keyboard)
     else
         return []
     endif
-    let results = []
     call s:vimim_load_cjk_file()
     let line = match(s:cjk_lines, grep)
+    let results = []
+    " ------------------------------------ 
     while line > -1
         let values = split(s:cjk_lines[line])
         let frequency_index = get(values, -1)
@@ -2167,6 +2181,7 @@ function! s:vimim_match_cjk_file(keyboard)
         let line = match(s:cjk_lines, grep, line+1)
         let s:cjk_has_match += 1
     endwhile
+    " ------------------------------------
     if len(results) > 0
         let results = sort(results, "s:vimim_compare_last_field")
         let filter = "strpart(".'v:val'.",0,s:multibyte)"
@@ -2175,6 +2190,20 @@ function! s:vimim_match_cjk_file(keyboard)
             let s:cjk_az_cache[keyboard] = results
         endif
     endif
+    " ------------------------------------ todo
+    if keyboard =~ '^\l\+'
+        let grep = '^' . keyboard . '\>'
+        let matched = match(s:cjk_lines, grep, 20902)
+        if matched < 0
+            let msg = "no insert as no match for private data"
+            let msg = "dream 梦 梦想 幻想"
+        else
+            let line = s:cjk_lines[matched]
+            let values = split(line)[1:]
+            call extend(results, values, 0)
+        endif
+    endif
+    " ------------------------------------
     return results
 endfunction
 
@@ -2254,77 +2283,13 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     let range = line("'>") - line("'<")
     if empty(range)
         sil!call s:vimim_backend_initialization_once()
-        if keyboard == ' '
-            if !empty(s:vimim_data_directory)
-                call s:vimim_visual_ctrl_6_update()
-            endif
-        else
-            let results = s:vimim_reverse_lookup(keyboard)
-            if !empty(results)
-                call s:vimim_visual_ctrl_6_output(results)
-            endif
+        let results = s:vimim_reverse_lookup(keyboard)
+        if !empty(results)
+            call s:vimim_visual_ctrl_6_output(results)
         endif
     elseif s:vimim_tab_as_onekey > 0
         call s:vimim_numberList()
     endif
-endfunction
-
-" ----------------------------------------
-function! s:vimim_numberList() range abort
-" ----------------------------------------
-    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
-    while (a<=z)
-        if match(x,'^9*$')==0|let pre=pre . ' '|endif
-        call setline(z, pre . x . "\t" . getline(z))
-        let z=z-1|let x=x-1
-    endwhile
-endfunction
-
-" --------------------------------------
-function! s:vimim_visual_ctrl_6_update()
-" --------------------------------------
-" purpose: update one entry to the directory database
-" input example (one line, within vim): ml 马力
-" action: (1) put cursor on space (2) type v (3) type ctrl+6
-" result: (A) create file from "left";
-"         (B) update content from "right"
-"         (C) append the entry to the private data file
-    let current_line = getline(".")
-    let fields = split(current_line)
-    let left = get(fields,0)
-    let right = get(fields,1)
-    if left =~# '\l' && left !~ '\W'
-    \&& right =~# '\W' && right !~ '\l'
-        let dir = s:vimim_data_directory . "pinyin"
-        let lines = [current_line]
-        call s:vimim_mkdir('prepend', dir, lines)
-        call s:vimim_append_to_private_datafile()
-    endif
-endfunction
-
-" --------------------------------------------
-function! s:vimim_append_to_private_datafile()
-" --------------------------------------------
-    let datafile = s:vimim_private_data_file
-    if len(datafile) > 1
-    \&& filereadable(datafile)
-    \&& filewritable(datafile)
-        let lines = readfile(datafile)
-        call add(lines, getline("."))
-        call writefile(lines, datafile)
-    endif
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_visual_ctrl_6_output(results)
-" ---------------------------------------------
-    let results = a:results
-    let line = line(".")
-    call setline(line, results)
-    let new_positions = getpos(".")
-    let new_positions[1] = line + len(results) - 1
-    let new_positions[2] = len(get(split(get(results,-1)),0))+1
-    call setpos(".", new_positions)
 endfunction
 
 " ---------------------------------------
@@ -2369,6 +2334,29 @@ function! s:vimim_reverse_lookup(chinese)
         endif
     endif
     return results
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_visual_ctrl_6_output(results)
+" ---------------------------------------------
+    let results = a:results
+    let line = line(".")
+    call setline(line, results)
+    let new_positions = getpos(".")
+    let new_positions[1] = line + len(results) - 1
+    let new_positions[2] = len(get(split(get(results,-1)),0))+1
+    call setpos(".", new_positions)
+endfunction
+
+" ----------------------------------------
+function! s:vimim_numberList() range abort
+" ----------------------------------------
+    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
+    while (a<=z)
+        if match(x,'^9*$')==0|let pre=pre . ' '|endif
+        call setline(z, pre . x . "\t" . getline(z))
+        let z=z-1|let x=x-1
+    endwhile
 endfunction
 
 " ----------------------------------------------
@@ -4567,7 +4555,7 @@ function! s:vimim_initialize_debug()
     endif
     let s:vimim_data_directory         = "/home/vimim/"
     let s:vimim_private_data_directory = "/home/xma/oo/"
-    let s:vimim_private_data_file      = "/home/xma/oo/cjk"
+    let s:vimim_private_data_file      = "/home/xma/oo/oo"
     let svn = s:vimim_data_directory . "svn"
     let s:vimim_vimimdata = svn . "/vimim-data/trunk/data/"
     let s:vimim_libvimdll = svn . "/mycloud/vimim-mycloud/libvimim.dll"
