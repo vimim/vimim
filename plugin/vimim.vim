@@ -4560,8 +4560,8 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma")
-        let s:vimim_self_directory = "/home/xma/oo/"
+    if isdirectory("/home/xma/vimim")
+        let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/"
         let s:vimim_tab_as_onekey = 2
     endif
