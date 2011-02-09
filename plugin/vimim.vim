@@ -165,6 +165,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['auto'] = ['自动','自動']
     let s:chinese['digit'] = ['数码','數碼']
     let s:chinese['cjk'] = ['字库','字庫']
+    let s:chinese['standard'] = ['标准','標準']
     let s:chinese['datafile'] = ['词库','詞庫']
     let s:chinese['directory'] = ['目录','目錄']
     let s:chinese['private'] = ['机密','機密']
@@ -453,21 +454,22 @@ function! s:vimim_egg_vimim()
     let option = s:vimim_chinese('style') . s:colon . toggle
     call add(eggs, option)
     " ----------------------------------
+    let database = s:vimim_chinese('datafile') . s:colon
     if s:has_cjk_file > 0
-        let option = s:vimim_chinese('cjk') . s:colon . s:cjk_file
+        let ciku = database . s:vimim_chinese('standard') 
+        let ciku .= s:vimim_chinese('cjk') . s:colon
+        let option = ciku . s:cjk_file
         call add(eggs, option)
     endif
-    let database = s:vimim_chinese('datafile') . s:colon
-    let ciku = database
     if s:has_cjk_self_file > 0
-        let ciku .= s:vimim_chinese('private') . ciku
+        let ciku = database . s:vimim_chinese('private') . database
         let option = ciku . s:cjk_self_file
         call add(eggs, option)
     endif
     " ----------------------------------
-    let ciku = database
     let option = s:backend[s:ui.root][s:ui.im].datafile
     if !empty(option)
+        let ciku = database
         if s:ui.root == 'directory'
             let ciku .= s:vimim_chinese('directory') . ciku
             let option .= "/"
@@ -1931,14 +1933,14 @@ function! s:vimim_initialize_cjk_file()
     let s:has_cjk_self_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
-    " ---------------------------------
     let datafile = s:vimim_check_cjk_file("vimim.txt")
+    " ---------------------------------
     if !empty(datafile)
         let s:cjk_self_file = datafile
         let s:has_cjk_self_file = 1
     endif
-    " ---------------------------------
     let datafile = s:vimim_check_cjk_file("vimim.cjk.txt")
+    " ---------------------------------
     if !empty(datafile)
         let s:cjk_file = datafile
         let s:has_cjk_file = 1
@@ -2753,8 +2755,7 @@ endfunction
 "-----------------------------------
 function! s:vimim_get_pinyin_table()
 "-----------------------------------
-" List of all valid pinyin
-" NOTE: Don't change this function or remove the spaces after commas.
+" List of all valid pinyin.  Note: Don't change this function!
 return [
 \"'a", "'ai", "'an", "'ang", "'ao", 'ba', 'bai', 'ban', 'bang', 'bao',
 \'bei', 'ben', 'beng', 'bi', 'bian', 'biao', 'bie', 'bin', 'bing', 'bo',
@@ -3579,13 +3580,9 @@ function! s:vimim_get_data_from_datafile(keyboard)
         let msg = "fuzzy search could be done here, if needed"
     else
         if s:ui.has_dot == 2
-            let results = s:vimim_fixed_match(lines, keyboard, 1)
-        elseif s:ui.im == 'test'
-            let start = &pumheight - 1
-            let results = s:vimim_fixed_match(lines, keyboard, start)
-        else
-            let results = s:vimim_smart_match(lines, keyboard, start)
+            let start = 1
         endif
+        let results = s:vimim_smart_match(lines, keyboard, start)
     endif
     return results
 endfunction
@@ -3853,7 +3850,7 @@ function! g:vimim_mkdir()
 " purpose: create one file per entry based on vimim.pinyin.txt
 "    (1) $cd $VIM/vimfiles/plugin/vimim/
 "    (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir()
-" --------------------------------------------------
+" ----------------------------------------------------
     let root = expand("%:p:h")
     let dir = root . "/" . expand("%:e:e:r")
     if !exists(dir) && !isdirectory(dir)
@@ -3861,7 +3858,6 @@ function! g:vimim_mkdir()
     endif
     let option = 'prepend'
     let lines = readfile(bufname("%"))
-    " ----------------------------------------------
     for line in lines
         let entries = split(line)
         let key = get(entries, 0)
@@ -4565,8 +4561,8 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma")
-        let s:vimim_data_directory = "/home/vimim/"
         let s:vimim_self_directory = "/home/xma/oo/"
+        let s:vimim_data_directory = "/home/vimim/"
         let s:vimim_tab_as_onekey = 2
     endif
 endfunction
