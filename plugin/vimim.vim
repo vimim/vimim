@@ -1942,17 +1942,17 @@ function! s:vimim_load_cjk_file()
     if s:has_cjk_file > 0
         let s:cjk_lines = s:vimim_readfile(s:cjk_file)
     endif
-    let private = 0
-    let datafile = s:vimim_self_directory . "vimim.txt"
+    let default = "vimim.txt"
+    let datafile = s:vimim_self_directory . default
     if filereadable(datafile)
-        let private = 1
+        let default = 0
     else
-        let datafile = s:path . "vimim.txt"
+        let datafile = s:path . default
         if filereadable(datafile)
-            let private = 1
+            let default = 0
         endif
     endif
-    if private > 0
+    if empty(default)
         call extend(s:cjk_lines, readfile(datafile))
     endif
 endfunction
@@ -2008,7 +2008,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
     let keyboard_head = 0
-    if keyboard =~ s:show_me_not 
+    if keyboard =~ s:show_me_not
         let keyboard_head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
@@ -2106,11 +2106,10 @@ endfunction
 " --------------------------------------------
 function! s:vimim_cjk_sentence_alpha(keyboard)
 " --------------------------------------------
-    "  magic trailing dot to use cjk: shishishishishi.
-        let g:ggg= s:has_cjk_file 
     let keyboard = a:keyboard
     let magic_tail = keyboard[-1:-1]
     if magic_tail == "."
+        "  magic trailing dot to use cjk: shishishishishi.
         if s:has_cjk_file == 1
             let s:has_cjk_file = 3
         elseif s:has_cjk_file == 3
@@ -2187,7 +2186,7 @@ function! s:vimim_match_cjk_file(keyboard)
     call s:vimim_load_cjk_file()
     let line = match(s:cjk_lines, grep)
     let results = []
-    " ------------------------------------ 
+    " ------------------------------------
     while line > -1
         let values = split(s:cjk_lines[line])
         let frequency_index = get(values, -1)
