@@ -1925,21 +1925,21 @@ function! s:vimim_initialize_cjk_file()
     let s:cjk_az_cache = {}
     let s:cjk_results = []
     let s:cjk_lines = []
+    let s:cjk_file = 0
+    let s:cjk_self_file = 0
     let s:has_cjk_file = 0
+    let s:has_cjk_self_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
     " ---------------------------------
-    let s:cjk_self_file = 0
-    let s:has_cjk_self_file = 0
-    let datafile = s:path . "vimim.txt"
-    if filereadable(datafile)
-        let s:has_cjk_self_file = 1
+    let datafile = s:vimim_check_cjk_file("vimim.txt")
+    if !empty(datafile)
         let s:cjk_self_file = datafile
+        let s:has_cjk_self_file = 1
     endif
     " ---------------------------------
-    let s:cjk_file = 0
-    let datafile = s:path . "vimim.cjk.txt"
-    if filereadable(datafile)
+    let datafile = s:vimim_check_cjk_file("vimim.cjk.txt")
+    if !empty(datafile)
         let s:cjk_file = datafile
         let s:has_cjk_file = 1
         let s:abcd = "'abcdvfgz"
@@ -1948,6 +1948,25 @@ function! s:vimim_initialize_cjk_file()
             let s:vimim_custom_color = 2
         endif
     endif
+endfunction
+
+" ---------------------------------------
+function! s:vimim_check_cjk_file(default)
+" ---------------------------------------
+    let default = a:default
+    let datafile = s:vimim_self_directory . default
+    if filereadable(datafile)
+        let default = 0
+    else
+        let datafile = s:path . default
+        if filereadable(datafile)
+            let default = 0
+        endif
+    endif
+    if empty(default)
+        return datafile
+    endif
+    return 0
 endfunction
 
 " -------------------------------
