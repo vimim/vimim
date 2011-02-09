@@ -542,7 +542,10 @@ function! s:vimim_search_chinese_from_english(keyboard)
     if empty(ddddd)
         sil!call s:vimim_backend_initialization_once()
         let keyboards = s:vimim_slash_search_block(keyboard)
-        if len(keyboards) > 0
+        if len(keyboards) == 1
+            let keyboard2 = get(keyboards,0)
+            let results = s:vimim_match_cjk_file(keyboard2)
+        elseif len(keyboards) > 1
             for keyboard2 in keyboards
                 let chars = s:vimim_match_cjk_file(keyboard2)
                 if len(chars) > 0
@@ -1923,6 +1926,9 @@ function! s:vimim_initialize_cjk_file()
         let s:has_cjk_file = 1
         let s:abcd = "'abcdvfgz"
         let s:qwerty = split('pqwertyuio', '\zs')
+        if s:vimim_custom_color == 1
+            let s:vimim_custom_color = 2
+        endif
 endfunction
 
 " -------------------------------
@@ -2101,6 +2107,7 @@ endfunction
 function! s:vimim_cjk_sentence_alpha(keyboard)
 " --------------------------------------------
     "  magic trailing dot to use cjk: shishishishishi.
+        let g:ggg= s:has_cjk_file 
     let keyboard = a:keyboard
     let magic_tail = keyboard[-1:-1]
     if magic_tail == "."
@@ -2121,7 +2128,7 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
         if a_keyboard =~ "[.']"
             let msg = "i.have.a.dream"
         else
-            " output is 'wo' for the input woyouyigemeng"
+            let msg = "woyouyigemeng"
             let keyboard = s:vimim_quanpin_transform(a_keyboard)
         endif
         let partition = match(keyboard, "[.']")
@@ -2193,7 +2200,6 @@ function! s:vimim_match_cjk_file(keyboard)
         let line = match(s:cjk_lines, grep, line+1)
         let s:cjk_has_match += 1
     endwhile
-    " ------------------------------------
     if len(results) > 0
         let results = sort(results, "s:vimim_compare_last_field")
         let filter = "strpart(".'v:val'.",0,s:multibyte)"
@@ -3606,7 +3612,6 @@ function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
-        let s:vimim_custom_label = 1
         let s:vimim_custom_color = 2
     else
         return
@@ -3785,7 +3790,7 @@ function! s:vimim_sentence_match_directory(keyboard)
         return keyboard
     endif
     let max = len(keyboard)
-    " i.have.a.dream works in this algorithm
+    "  [i.have.a.dream] works in this algorithm
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
@@ -4523,16 +4528,12 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
-    if isdirectory("/home/xma/vim")
-        let msg = " VimIM super configuration: "
-    else
-        return
+" ----------------------------------
+    if isdirectory("/home/vimim")
+        let s:vimim_data_directory = "/home/vimim/"
+        let s:vimim_self_directory = "/home/xma/oo/"
+        let s:vimim_tab_as_onekey = 2
     endif
-    let s:vimim_data_directory = "/home/vimim/"
-    let s:vimim_self_directory = "/home/xma/oo/"
-    let s:vimim_custom_color = 2
-    let s:vimim_tab_as_onekey = 2
 endfunction
 
 " ------------------------------------
