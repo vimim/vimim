@@ -1934,14 +1934,14 @@ function! s:vimim_initialize_cjk_file()
     let s:has_cjk_self_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
-    let datafile = s:vimim_check_filereadable("vimim.txt")
     " ---------------------------------
+    let datafile = s:vimim_check_filereadable("vimim.txt")
     if !empty(datafile)
         let s:cjk_self_file = datafile
         let s:has_cjk_self_file = 1
     endif
-    let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
     " ---------------------------------
+    let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
     if !empty(datafile)
         let s:cjk_file = datafile
         let s:has_cjk_file = 1
@@ -1976,19 +1976,12 @@ endfunction
 function! s:vimim_load_cjk_file()
 " -------------------------------
     if empty(s:cjk_lines)
-        let msg = "load once and only once"
-    else
-        return
-    endif
-    let datafile = s:cjk_file
-    if s:has_cjk_file > 0
-        let s:cjk_lines = s:vimim_readfile(datafile)
-    endif
-    let datafile = s:cjk_self_file
-    if empty(datafile)
-        let msg = "no private datafile found"
-    else
-        call extend(s:cjk_lines, readfile(datafile))
+        if s:has_cjk_file > 0
+            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+        endif
+        if s:has_cjk_self_file > 0
+            call extend(s:cjk_lines, readfile(s:cjk_self_file))
+        endif
     endif
 endfunction
 
