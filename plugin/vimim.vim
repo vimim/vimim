@@ -24,7 +24,7 @@ let VimIM = " ====  Introduction      ==== {{{"
 "     Author: vimim <vimim@googlegroups.com>
 "    License: GNU Lesser General Public License
 "    Readme:  VimIM is a Vim plugin designed as an independent IM
-"             (Input Method) to support CJK search and input
+"             (Input Method) to support CJK search and CJK input
 " -----------------------------------------------------------
 " "VimIM Features"
 "  (1) "Plug & Play": as a client to VimIM embedded backends
@@ -196,7 +196,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['phonetic']    = ['注音']
     let s:chinese['array30']     = ['行列']
     let s:chinese['erbi']        = ['二笔','二筆']
-    let s:chinese['shezhi']      = ['设置','設置']
+    let s:chinese['configure']   = ['设置','設置']
     let s:chinese['jidian']      = ['极点','極點']
     let s:chinese['newcentury']  = ['新世纪','新世紀']
     let s:chinese['shuangpin']   = ['双拼','雙拼']
@@ -459,7 +459,7 @@ function! s:vimim_egg_vimim()
     " ----------------------------------
     let database = s:vimim_chinese('datafile') . s:colon
     if s:has_cjk_file > 0
-        let ciku = database . s:vimim_chinese('standard') 
+        let ciku = database . s:vimim_chinese('standard')
         let ciku .= s:vimim_chinese('cjk') . s:colon
         let option = ciku . s:cjk_file
         call add(eggs, option)
@@ -499,8 +499,7 @@ function! s:vimim_egg_vimim()
     " ----------------------------------
     if !empty(s:global_customized)
         for item in s:global_customized
-            let shezhi = s:vimim_chinese('shezhi')
-            let option = shezhi . s:colon . item
+            let option = s:vimim_chinese('configure') . s:colon . item
             call add(eggs, option)
         endfor
     endif
@@ -1231,7 +1230,7 @@ function! s:vimim_statusline()
     elseif s:has_cjk_file > 0
         let s:ui.statusline .= s:plus . s:vimim_chinese('digit')
     endif
-    if s:has_cjk_self_file > 0 
+    if s:has_cjk_self_file > 0
         let s:ui.statusline .= s:plus . s:vimim_chinese('private')
     endif
     return s:vimim_get_chinese_im()
@@ -2057,6 +2056,12 @@ function! s:vimim_cjk_sentence_match(keyboard)
     elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
             let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
+            if !empty(keyboard_head)
+                let results = s:vimim_match_cjk_file(keyboard_head)
+                if empty(results)
+                    let keyboard_head = 0
+                endif
+            endif
         endif
         if empty(keyboard_head)
             let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
@@ -2068,7 +2073,7 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_cjk_sentence_4corner(keyboard)
 " ----------------------------------------------
-    " output is '6021' for the input "6021272260201762"
+    " output is '6021' for input "6021272260201762"
     let keyboard = a:keyboard
     if len(keyboard) < 5
         let s:keyboard_list = []
@@ -2084,7 +2089,7 @@ endfunction
 " --------------------------------------------
 function! s:vimim_cjk_sentence_digit(keyboard)
 " --------------------------------------------
-    " output is 'wo23' for the input "wo23you40yigemeng"
+    " output is 'wo23' for input "wo23you40yigemeng"
     let keyboard = a:keyboard
     if keyboard =~ '^\l\+\d\+\>'
         return keyboard
@@ -2103,7 +2108,7 @@ endfunction
 " ------------------------------------------
 function! s:vimim_cjk_sentence_diy(keyboard)
 " ------------------------------------------
-    " output is 'm7712' for the input 'muuqwxeyqpjeqqq'
+    " output is 'm7712' for input 'muuqwxeyqpjeqqq'
     let keyboard = a:keyboard
     let delimiter = match(keyboard, '^\l\l\l\l\l')
     if delimiter < 0
@@ -2123,7 +2128,7 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_qwertyuiop_1234567890(keyboard)
 " -----------------------------------------------
-    " output is '7712' for the input 'uuqw'
+    " output is '7712' for input 'uuqw'
     if a:keyboard =~ '\d' || s:has_cjk_file < 1
         return 0
     else
@@ -3925,7 +3930,7 @@ function! s:vimim_scan_backend_cloud()
     \&& empty(s:vimim_cloud_plugin)
         call s:vimim_set_sogou()
         if s:has_cjk_file == 1
-            let msg = "use local cjk when cloud is too slow"
+            let msg = "it seems better to use local cjk"
             let s:has_cjk_file = 2
         endif
     endif
@@ -4084,7 +4089,6 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
         return 1
     endif
     if s:no_internet_connection > 1
-        let msg = "oops, there is no internet connection"
         return 0
     elseif s:no_internet_connection < 0
         return 1
@@ -4108,9 +4112,8 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     endif
     if threshold < s:vimim_cloud_sogou
         return 0
-    else
-        return 1
     endif
+    return 1
 endfunction
 
 " -------------------------------
