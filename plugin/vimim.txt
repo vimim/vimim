@@ -163,7 +163,6 @@ air 空气
 airplane 飞机
 airport 飞机场
 alabama 阿拉巴马
-alaboshuzi 阿拉伯数字
 alarm 警报
 alaska 阿拉斯加
 alcohol 酒 酒精
@@ -219,7 +218,6 @@ apparent 显然
 appear 显露 现出 显得 好像
 appendix 附录
 apple 苹果
-applesauce 苹果酱
 application 应用
 apply 申请
 appoint 指定
@@ -316,7 +314,7 @@ bald 秃
 ball 球
 bamboo 竹 竹笋
 banana 香蕉
-band 带队一伙 一帮 一群
+band 乐队
 bangladesh 孟加拉国
 bank 银行 河岸
 banquet 宴会
@@ -931,7 +929,6 @@ develop 发展 发达 显像
 device 设备
 devil 魔鬼 恶魔
 dew 露水
-dffhy 地富反坏右
 dialog 对话
 diamond 钻石
 diary 日记 日志 记事簿
@@ -1051,7 +1048,6 @@ effort 努力 尽力
 eg 例如
 egg 蛋 鸡蛋 彩蛋 王八蛋 网八蛋
 egypt 埃及
-ehubushizi 恶虎不食子
 eights 孝悌忠信礼义廉耻
 einstein 爱因斯坦
 election 选举
@@ -1100,7 +1096,7 @@ erage 平均
 erase 擦掉 删掉 抹除
 eraser 橡皮
 errand 差使
-error 错误 錯誤 过失
+error 错误 过失
 escape 逃避 逸出
 escrow 第三方担保 附带条件委付盖印契约
 especial 特别 尤其
@@ -1165,7 +1161,7 @@ fair 博览会 美丽 洁白
 fairy 仙女 妖精
 fall 倒塌 跌到 掉下
 fall 掉下 瀑布 跌落
-false 错误 虚伪
+false 假 虚假 虚伪
 familiar 熟悉 亲密
 family 家庭 家眷
 famous 著名 有名
@@ -1235,7 +1231,6 @@ flame 火苗 火焰
 flash 闪光 瞬间
 flat 平地 扁平
 flattery 阿谀 谄媚
-flbth 费力不讨好
 flesh 肌肉
 flexible 灵活
 flirt 调情
@@ -1486,7 +1481,6 @@ heavy 重 沉闷
 hedge 篱笆
 heel 后跟 踵
 height 高地 高度
-heleerbuwei 何乐而不为
 hello 哈罗 喂 你好
 help 帮忙 帮上忙 帮助
 hemorrhoidal 痔疮
@@ -1494,7 +1488,6 @@ hence 从此 因此 此后
 her 她 她的
 here 此地 这儿 这里
 hero 英雄
-herzegovina 黑塞哥维那
 hi 嗨 你好
 hide 躲避 隐蔽 隐藏
 high 高
@@ -1731,7 +1724,6 @@ know 懂 知道 认得
 knowledge 知识
 korea 高丽 韩国 朝鲜 南韩 北韩
 kuwait 科威特
-kzmyh 苛政猛于虎
 lab 实验室
 label 标签 题签
 labor 劳动
@@ -1782,7 +1774,6 @@ left 左 左边
 leg 腿
 legend 传说
 leica 徕卡
-leishengda 雷声大，雨点小
 leisure 空闲 擂台 闲暇
 lemon 柠檬
 lend 借贷
@@ -2809,7 +2800,6 @@ sms 短讯
 snail 蜗牛
 snake 蛇
 snatch 抢去
-snmyj 十年磨一剑
 snobbish 势利
 snow 雪
 so 所以 因此
@@ -2979,7 +2969,7 @@ surface 表面
 surprise 惊奇 意外 吃惊
 surrender 投降
 surround 包围 围绕
-sushi 寿司 壽司
+sushi 寿司
 swan 天鹅
 swaziland 斯威士兰
 swear 发誓
@@ -3383,7 +3373,7 @@ wreck 失事 遭难
 wrist 手腕
 write 写 写作
 writer 作家
-wrong 错误 错
+wrong 错的 不对的
 wto 世界贸易组织
 www 互联网 网站 万维网 萬維網
 xag 白银
@@ -3412,188 +3402,3 @@ zombie 僵尸 行尸走肉
 zone 区域 地带
 zoo 动物园
 zoology   动物学
-
-big5  大五码 大五碼
-gb    国标 国标码 国标碼
-unicode 统一码 統一碼 万国码 萬國碼 通用碼 国际代码标准
-jpms 键盘磨损
-mlck 【目录词库】
-wjck 【文件词库】
-mulu 目录 目錄
-mjck 民间词库
-znbq 智能补全
-boshiamy 嘸蝦米 呒虾米
-ciku 词库 詞庫
-dscj 点石成金 點石成金
-mycloud 自己的云 自己的雲
-wubi 五笔 五筆
-sjhm 四角号码 四角號碼
-wbh 五笔划 五筆劃
-zwdm 中文电码 中文電碼
-jhm 交换码 交換碼
-korean 韩文 韓文
-xinhua 新华 新華
-cangjie 仓颉 倉頡
-zhengma 郑码 鄭碼
-erbi 二笔 二筆
-nocloud 晴天无云 晴天無雲
-cloudondemand 想云就云 想雲就雲
-cjjp 超级简拼 首拼
-shuangpin 双拼 雙拼
-microsoft 微软 微軟
-
-awj    嗷乌忌
-bap    被安排
-bbp    摆不平
-bcf    被仇富
-brn    被热闹
-bxf    被幸福
-bzt    不折腾
-gtz    高铁站
-hbg    海不归
-hbh    合不合
-hkx    好开心
-hsz    化生子
-jnj    姜你军
-ljh    留交会
-mgc    敏感词
-ndd    你懂的
-wsn    猥琐男
-xzt    瞎折腾
-ynz    油你涨
-yyl    岳阳楼
-crh    中国高铁 和谐号
-skr    婶婶可忍，叔叔不可忍！
-snh    蒜你狠
-bxgh   八仙过海，各显神通
-bzbz   保重保重
-crjw   宠辱皆忘
-csbf   参禅拜佛
-cxwy   草鞋无样，边打边像
-ddjs   大胆假设
-hebl   混而不乱 活而不乱
-hwsf   毫无水分
-jclr   嫁错了人
-jcmx   酒残梦醒
-ksgf   空守闺房
-lsgw   临时岗位
-lsxm   来势胸猛
-mmhz   慢慢好转
-mqwz   满清王朝
-nbny   乃不能也
-pgll   屁股溜卵
-plsz   盘龙山庄
-qkwb   奇快无比
-qsaq   情深爱切
-rhtb   日后提拔
-rjxq   人间凶器 人间胸器
-sjnt   世界难题
-szfn   失足妇女
-tclt   投错了胎
-tjcd   甜酒冲蛋
-tlty   天籁童音
-tqjb   提前进步 提钱进步
-ttcj   天天春节
-tyss   太阳上山
-wdbg   吾道不孤
-wggt   武广高铁
-wjjm   维基解密
-xllg   乡里老倌
-ydss   有点三俗
-ydyl   一钉一铆
-yfhz   要饭花子
-yjrc   有鉴如此
-ykms   有空冇事
-ysjd   一时激动
-ysmk   有事冇空
-yyxl   夜夜新郎
-yzwg   一字未改
-zxdc   最新调查
-bbrsd  兵败如山倒
-bhlct  冰火两重天
-bjlty  病急乱投医
-bnsyy  饱暖思淫欲
-bpbsh  不怕不识货
-bwysg  霸王硬上弓
-bybdm  霸要霸得蛮
-chjkk  常回家看看
-hdbcg  恨爹不成刚
-hkpyy  海阔凭鱼跃
-hrjzl  何日君再来
-htbcg  恨铁不成钢
-jeans  牛仔 牛仔裤
-jphbh  就怕货比货
-kunao  苦恼 哭闹 昆鳌
-lqblz  留情不留种
-lzblq  留种不留情
-ndsbb  女大十八变
-nihao  你好 妳好
-nyndf  耐要耐得烦
-qdbqq  缺德不缺钱
-qqbqd  缺钱不缺德
-qscfr  清水出芙蓉
-rxzfn  瑞雪兆丰年
-smjml  说没就没了
-teqqc  退而求其次
-tkrnf  天空任鸟飞
-tqbsx  图穷匕首见
-trqds  天然去雕饰
-weyws  万恶淫为首
-whdgm  文化大革命
-wsktn  万事开头难
-wszqw  温水煮青蛙
-xcbdf  小葱伴豆腐
-ydbys  有得必有失
-yjfgd  沿江风光带
-yyybz  一言以蔽之
-zfcdy  张飞吃豆牙
-zgyfl  做鬼也风流
-zpyxr  只怕有心人
-zrbhq  自然保护区
-zsghd  坐山观虎斗
-zzmrf  知子莫若父
-bktrey 不可同日而语
-bwbryj 百闻不如一见
-bwqhzb 不问青红皂白
-bztgdh 不知天高地厚
-dkdfcd 道可道非常道
-tsdlrh 天时地利人和
-wuzang 五脏 心肝脾肺肾
-ydbuyj  一动不如一静
-ysyere  一是一，二是二
-yxbryx  一蟹不如一蟹
-yxsjlt  英雄所见略同
-zjbphl  真金不怕火炼
-zznbkh  自作孽不可活
-bjgcbll 不见棺材不落泪
-bksmkfm 不看僧面看佛面
-bwwdmzy 不为五斗米折腰
-cjnmcgy 寸金难买寸光阴
-cswssys 此时无声胜有声
-ddeqbhs 党的恩情比海深
-ldfhbrj 落地凤凰不如鸡
-mdbwkcg 磨刀不误砍柴工
-privacy 隐私 隐居
-qjnmsnp 千斤难买少年贫
-rqldjwz 人情练达即文章
-srrcbws 杀人如草不闻声
-wddpwzz 我的地盘我做主
-wuchang 五常 仁义礼智信
-xgjcbwl 小姑居处本无郎
-ycgyycj 一寸光阴一寸金
-yctzycc 一朝天子一朝臣
-yjgcwgk 一将功成万骨骷
-ynzjzrc  一年之计在于春
-yqnsgtm  有钱能使鬼推磨
-yxwywzd  英雄无用武之地
-zrzmbzx  知人知面不知心
-zwzybzj  醉翁之意不在酒
-zxdlhcc  宰相肚里好撑船
-zyxczyf  昨夜星辰昨夜风
-zyxfdbs  昨夜西风凋碧树
-zzsdehs  置之死地而后生
-zzshbyt  站着说话不腰疼
-mtxzdbw  冒天下之大不韪
-yubuzhuo 玉不琢，不成器
-yslhyht  一树梨花压海棠
-
