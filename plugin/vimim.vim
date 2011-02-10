@@ -448,7 +448,7 @@ function! s:vimim_egg_vimim()
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_CTRL-Space"
     elseif s:vimim_tab_as_onekey > 1
-        let toggle = "Tab_as_OneKey_OneKeyNonStop"
+        let toggle = "Tab_as_OneKey"
     endif
     let toggle .= s:space
     let option = s:vimim_chinese('style') . s:colon . toggle
@@ -1226,12 +1226,12 @@ function! s:vimim_statusline()
     if !empty(s:vimim_shuangpin)
         let s:ui.statusline .= s:space
         let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
-    endif
-    " ------------------------------------
-    if s:has_cjk_file > 0 && empty(s:vimim_shuangpin)
+    elseif s:has_cjk_file > 0
         let s:ui.statusline .= s:plus . s:vimim_chinese('digit')
     endif
-    " ------------------------------------
+    if s:has_cjk_self_file > 0 
+        let s:ui.statusline .= s:plus . s:vimim_chinese('private')
+    endif
     return s:vimim_get_chinese_im()
 endfunction
 
@@ -2053,7 +2053,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
     elseif len(keyboard) == 1
         let keyboard_head = keyboard
     elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
-        if len(keyboard) % 5 < 1  && keyboard !~ "[.']"
+        if len(keyboard)%5 < 1 && keyboard !~ "[.']"
             let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
         endif
         if empty(keyboard_head)
@@ -2200,11 +2200,11 @@ function! s:vimim_match_cjk_file(keyboard)
             if !empty(digit)
                 let space = 4 - len(digit)
                 let grep  = '\s' . digit
-                let grep .= '\d\{' . space . '}'
-                let grep .= '\s\w*' . alpha
+                let grep .= '\d\{' . space . '}\s'
+                let grep .= '\(\l\+\d\)\=' . alpha
             endif
         endif
-    elseif keyboard =~ '^\l\>'
+    elseif keyboard =~ '^\l\>' && len(keyboard) == 1
         if has_key(s:cjk_az_cache, keyboard)
             let s:cjk_has_match = 1
             return s:cjk_az_cache[keyboard]
@@ -2221,14 +2221,13 @@ function! s:vimim_match_cjk_file(keyboard)
     call s:vimim_load_cjk_file()
     let results = []
     let line = match(s:cjk_lines, grep)
-    while line > -1 && line < 20902
+    while line > -1 && line <= 20902
         let values = split(s:cjk_lines[line])
         let frequency_index = get(values, -1)
         if frequency_index =~ '\l'
             let frequency_index = 1
         endif
-        let chinese = get(values, 0)
-        let chinese = chinese . ' ' . frequency_index
+        let chinese = get(values,0) . ' ' . frequency_index
         call add(results, chinese)
         let line = match(s:cjk_lines, grep, line+1)
     endwhile
@@ -4560,7 +4559,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma/vimim")
+    if isdirectory("/home/xma")
         let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/"
         let s:vimim_tab_as_onekey = 2
