@@ -2059,6 +2059,8 @@ function! s:vimim_cjk_sentence_match(keyboard)
             if !empty(keyboard_head)
                 let results = s:vimim_match_cjk_file(keyboard_head)
                 if empty(results)
+                    "english in bed with cjk: error/e4494 typewriter
+                    let s:keyboard_list = []
                     let keyboard_head = 0
                 endif
             endif
@@ -2189,7 +2191,7 @@ function! s:vimim_match_cjk_file(keyboard)
     let keyboard = a:keyboard
     let grep = ""
     if keyboard =~ '\d'
-        if keyboard =~# '^\l\+[12345]\>' && empty(len(s:cjk_filter))
+        if keyboard =~# '^\l\l\+[12345]\>' && empty(len(s:cjk_filter))
             " [sample] pinyin with tone: ma3
             let grep = '\s' . keyboard . '\D\='
         else
