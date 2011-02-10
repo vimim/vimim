@@ -49,9 +49,10 @@ let VimIM = " ====  Introduction      ==== {{{"
 "  (3) [embedded]   VimIM: http://vimim.googlecode.com
 "  -----------------------------------------------------------
 " "VimIM Installation"
-"  (1) drop this file to plugin/:  plugin/vimim.vim
-"  (2) [option] drop a datafile:   plugin/vimim.pinyin.txt
-"  (3) [option] drop a directory:  plugin/vimim/pinyin/
+"  (1) drop this vim script to plugin/:    plugin/vimim.vim
+"  (2) [option] drop a standard datafile:  plugin/vimim.cjk.txt
+"  (3) [option] drop a standard directory: plugin/vimim/pinyin/
+"  (4) [option] drop a private  datafile:  plugin/vimim.txt
 " -----------------------------------------------------------
 
 let s:vimims = [VimIM]
@@ -89,7 +90,7 @@ function! s:vimim_backend_initialization_once()
     endif
     " -----------------------------------------
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_set_encoding()
+    sil!call s:vimim_initialize_encoding()
     sil!call s:vimim_initialize_session()
     sil!call s:vimim_initialize_cjk_file()
     sil!call s:vimim_initialize_frontend()
@@ -163,52 +164,52 @@ function! s:vimim_dictionary_chinese()
     let s:left = "【"
     let s:right = "】"
     let s:chinese = {}
-    let s:chinese['auto'] = ['自动','自動']
-    let s:chinese['digit'] = ['数码','數碼']
-    let s:chinese['cjk'] = ['字库','字庫']
-    let s:chinese['standard'] = ['标准','標準']
-    let s:chinese['datafile'] = ['词库','詞庫']
-    let s:chinese['directory'] = ['目录','目錄']
-    let s:chinese['private'] = ['机密','機密']
-    let s:chinese['computer'] = ['电脑','電腦']
-    let s:chinese['encoding'] = ['编码','編碼']
+    let s:chinese['standard']    = ['标准','標準']
+    let s:chinese['cjk']         = ['字库','字庫']
+    let s:chinese['auto']        = ['自动','自動']
+    let s:chinese['digit']       = ['数码','數碼']
+    let s:chinese['datafile']    = ['词库','詞庫']
+    let s:chinese['directory']   = ['目录','目錄']
+    let s:chinese['private']     = ['机密','機密']
+    let s:chinese['computer']    = ['电脑','電腦']
+    let s:chinese['encoding']    = ['编码','編碼']
     let s:chinese['environment'] = ['环境','環境']
-    let s:chinese['input'] = ['输入','輸入']
-    let s:chinese['font'] = ['字体','字體']
-    let s:chinese['myversion'] = ['版本']
-    let s:chinese['classic'] = ['经典','經典']
-    let s:chinese['static'] = ['静态','靜態']
-    let s:chinese['dynamic'] = ['动态','動態']
-    let s:chinese['style'] = ['风格','風格']
-    let s:chinese['wubi'] = ['五笔','五筆']
-    let s:chinese['english'] = ['英文']
-    let s:chinese['hangul'] = ['韩文','韓文']
-    let s:chinese['xinhua'] = ['新华','新華']
-    let s:chinese['pinyin'] = ['拼音']
-    let s:chinese['boshiamy'] = ['呒虾米','嘸蝦米']
-    let s:chinese['zhengma'] = ['郑码','鄭碼']
-    let s:chinese['cangjie'] = ['仓颉','倉頡']
-    let s:chinese['taijima'] = ['太极码','太極碼']
-    let s:chinese['yong'] = ['永码','永碼']
-    let s:chinese['quick'] = ['速成']
-    let s:chinese['wu'] = ['吴语','吳語']
-    let s:chinese['phonetic'] = ['注音']
-    let s:chinese['array30'] = ['行列']
-    let s:chinese['erbi'] = ['二笔','二筆']
-    let s:chinese['shezhi'] = ['设置','設置']
-    let s:chinese['jidian'] = ['极点','極點']
-    let s:chinese['newcentury'] = ['新世纪','新世紀']
-    let s:chinese['shuangpin'] = ['双拼','雙拼']
-    let s:chinese['abc'] = ['智能双打','智能雙打']
-    let s:chinese['ms'] = ['微软','微軟']
-    let s:chinese['nature'] = ['自然码','自然碼']
-    let s:chinese['purple'] = ['紫光']
-    let s:chinese['plusplus'] = ['加加']
-    let s:chinese['flypy'] = ['小鹤','小鶴']
-    let s:chinese['sogou'] = ['搜狗']
-    let s:chinese['cloud_atwill'] = ['想云就云','想雲就雲']
-    let s:chinese['mycloud'] = ['自己的云','自己的雲']
-    let s:chinese['onekey'] = ['点石成金','點石成金']
+    let s:chinese['input']       = ['输入','輸入']
+    let s:chinese['font']        = ['字体','字體']
+    let s:chinese['myversion']   = ['版本']
+    let s:chinese['classic']     = ['经典','經典']
+    let s:chinese['static']      = ['静态','靜態']
+    let s:chinese['dynamic']     = ['动态','動態']
+    let s:chinese['style']       = ['风格','風格']
+    let s:chinese['wubi']        = ['五笔','五筆']
+    let s:chinese['english']     = ['英文']
+    let s:chinese['hangul']      = ['韩文','韓文']
+    let s:chinese['xinhua']      = ['新华','新華']
+    let s:chinese['pinyin']      = ['拼音']
+    let s:chinese['boshiamy']    = ['呒虾米','嘸蝦米']
+    let s:chinese['zhengma']     = ['郑码','鄭碼']
+    let s:chinese['cangjie']     = ['仓颉','倉頡']
+    let s:chinese['taijima']     = ['太极码','太極碼']
+    let s:chinese['yong']        = ['永码','永碼']
+    let s:chinese['quick']       = ['速成']
+    let s:chinese['wu']          = ['吴语','吳語']
+    let s:chinese['phonetic']    = ['注音']
+    let s:chinese['array30']     = ['行列']
+    let s:chinese['erbi']        = ['二笔','二筆']
+    let s:chinese['shezhi']      = ['设置','設置']
+    let s:chinese['jidian']      = ['极点','極點']
+    let s:chinese['newcentury']  = ['新世纪','新世紀']
+    let s:chinese['shuangpin']   = ['双拼','雙拼']
+    let s:chinese['abc']         = ['智能双打','智能雙打']
+    let s:chinese['ms']          = ['微软','微軟']
+    let s:chinese['nature']      = ['自然码','自然碼']
+    let s:chinese['purple']      = ['紫光']
+    let s:chinese['plusplus']    = ['加加']
+    let s:chinese['flypy']       = ['小鹤','小鶴']
+    let s:chinese['sogou']       = ['搜狗']
+    let s:chinese['cloudatwill'] = ['想云就云','想雲就雲']
+    let s:chinese['mycloud']     = ['自己的云','自己的雲']
+    let s:chinese['onekey']      = ['点石成金','點石成金']
 endfunction
 
 " ---------------------------------------
@@ -491,10 +492,8 @@ function! s:vimim_egg_vimim()
     endif
     " ----------------------------------
     if s:vimim_cloud_sogou == 888
-        let cloud_atwill = s:vimim_chinese('cloud_atwill')
         let sogou = s:vimim_chinese('sogou')
-        let option = sogou . s:colon
-        let option .= cloud_atwill
+        let option = sogou . s:colon . s:vimim_chinese('cloudatwill')
         call add(eggs, option)
     endif
     " ----------------------------------
@@ -3153,9 +3152,9 @@ let VimIM = " ====  Backend==Unicode  ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ------------------------------
-function! s:vimim_set_encoding()
-" ------------------------------
+" -------------------------------------
+function! s:vimim_initialize_encoding()
+" -------------------------------------
     let s:encoding = "utf8"
     if &encoding == "chinese"
     \|| &encoding == "cp936"
@@ -3450,7 +3449,7 @@ function! s:vimim_smart_match(lines, keyboard, match_start)
     endif
     let results = a:lines[match_start : match_end]
     if len(results) < 10 && s:ui.im == 'pinyin'
-       let extras = s:vimim_pinyin_more_match(a:lines, keyboard, results)
+       let extras = s:vimim_pinyin_more_match(a:lines, keyboard)
        if len(extras) > 0
            call extend(results, extras)
        endif
@@ -3458,17 +3457,13 @@ function! s:vimim_smart_match(lines, keyboard, match_start)
     return results
 endfunction
 
-" -----------------------------------------------------------
-function! s:vimim_pinyin_more_match(lines, keyboard, results)
-" -----------------------------------------------------------
+" --------------------------------------------------
+function! s:vimim_pinyin_more_match(lines, keyboard)
+" --------------------------------------------------
 " [purpose] make standard popup menu layout
 "           in  => chao'ji'jian'pin
 "           out => chaojijian, chaoji, chao
-" -----------------------------------------
-    let pattern = "vim\\|#\\|　"
-    if match(a:results, pattern) > -1
-        return []
-    endif
+" --------------------------------------------------
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
     if empty(keyboards)
         return []
