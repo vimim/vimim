@@ -1,10 +1,11 @@
+
 poppy     罂粟花
 jasmine   茉莉花
 rose      玫瑰花
 tulip     郁金香
 camellia  山茶花
 hawthorn  山楂花
-vanilla   香草 香子兰
+vanilla   香子兰 香草
 
 hunan      湖南 昏暗 昏黯
 xiangtan   湘潭 详谈 相谈 乡谈 故乡
@@ -97,6 +98,35 @@ twelve 十二 十二个
 numbers Ｏ一二三四五六七八九十百千万亿
 numbers 零壹贰叁肆伍陆柒捌玖拾佰仟萬億
 
+big5  大五码 大五碼
+gb    国标 国标码 国标碼
+unicode 统一码 統一碼 万国码 萬國碼 通用碼 国际代码标准
+jpms 键盘磨损
+mlck 【目录词库】
+wjck 【文件词库】
+mulu 目录 目錄
+mjck 民间词库
+znbq 智能补全
+boshiamy 嘸蝦米 呒虾米
+ciku 词库 詞庫
+dscj 点石成金 點石成金
+mycloud 自己的云 自己的雲
+wubi 五笔 五筆
+sjhm 四角号码 四角號碼
+wbh 五笔划 五筆劃
+zwdm 中文电码 中文電碼
+jhm 交换码 交換碼
+korean 韩文 韓文
+xinhua 新华 新華
+cangjie 仓颉 倉頡
+zhengma 郑码 鄭碼
+erbi 二笔 二筆
+nocloud 晴天无云 晴天無雲
+cloudondemand 想云就云 想雲就雲
+cjjp 超级简拼 首拼
+shuangpin 双拼 雙拼
+microsoft 微软 微軟
+
 a 一个 一
 ability 才能 能力
 able 能力
@@ -179,7 +209,6 @@ alphabet 字母
 already 已经
 also 也 亦
 although 虽然 纵然 即使
-altogether 一起 全部
 alumina 铝
 alumni 校友
 always 总是 常常 经常
@@ -396,7 +425,6 @@ biscuit 饼干
 bit 少许 一点 位
 bite 咬 比特
 bitter 苦的 辛苦
-biyishi 彼一时，此一时
 blackberry 黑莓 黑莓子
 blackboard 黑板
 blackbox 黑箱
@@ -424,7 +452,6 @@ boast 夸耀 自夸
 boat 船 小艇
 body 身体 团体
 boil 沸腾 烧 煮
-boiler 汽锅
 boiler 锅炉 汽锅
 bold 大胆
 bolivia 玻利维亚
@@ -470,8 +497,7 @@ brief 简短 扼要 概略
 bright 光亮 灿烂 辉煌
 brilliant 辉煌 华丽
 bring 带来 拿来
-britain 不列颠
-britain 英国 英国人
+britain 不列颠 英国 英国人
 broad 广大 广阔 明朗
 broadcast 广播
 broken 破碎 断续
@@ -499,8 +525,6 @@ bunch 串 束
 burden 负担 重担
 burn 燃烧
 burst 爆发 破裂
-buruhuxue 不入虎穴，焉得虎子
-burundi 布隆迪
 bury 埋葬
 bus 汽车 公共汽车
 bush 丛林 树丛
@@ -649,8 +673,7 @@ citizen 市民
 city 市 城市 都市
 civil 国内 市民
 civilization 文明
-ciyishi 此一时，彼一时
-claim 号称 主张 要求
+claim 号称 主张
 clap 敲打
 clarkson 克拉克森大学
 class 阶级 年级 班
@@ -683,7 +706,6 @@ cloudy 阴天
 clown 小丑
 club 俱乐部
 cluster 族
-co2 二氧化碳
 coach 教练 指导
 coal 煤 石炭
 coat 上衣
@@ -716,8 +738,7 @@ commercial 商业 通商
 commit 为作 委员
 common 公共 共同 普通
 communication 通讯
-communist 共产主义
-communist 共产党
+communist 共产主义 共产党
 company 公司 伴侣 伙伴
 compare 比较 对照
 compass 指南针 罗盘 圆规
@@ -745,8 +766,7 @@ condition 条件 状态
 condom 安全套 避孕套
 conference 会议
 configuration 配置
-configure 结构
-configure 设置 設置
+configure 配置 设置
 confine 监禁 限制
 confirm 确认
 conflict 冲突 矛盾
@@ -794,8 +814,7 @@ corn 玉米 谷类
 cornell 康奈尔大学
 corner 角落 拐角
 corpus 文集 尸体 本金
-correct 正确
-correction 正确 合适 改正 纠正
+correct 正确 合适 改正 纠正
 correspond 对应 相应
 cosmetic 美容的
 cost 代价 成本
@@ -1048,7 +1067,6 @@ effort 努力 尽力
 eg 例如
 egg 蛋 鸡蛋 彩蛋 王八蛋 网八蛋
 egypt 埃及
-eights 孝悌忠信礼义廉耻
 einstein 爱因斯坦
 election 选举
 electron 电子
@@ -1159,9 +1177,8 @@ fade 淡薄 褪色 衰老
 failure 失败 缺少 破产
 fair 博览会 美丽 洁白
 fairy 仙女 妖精
-fall 倒塌 跌到 掉下
-fall 掉下 瀑布 跌落
-false 假 虚假 虚伪
+fall 瀑布 倒塌 掉下 跌到 跌落
+false 假 虚假 虚伪 伪造的
 familiar 熟悉 亲密
 family 家庭 家眷
 famous 著名 有名
@@ -1205,13 +1222,13 @@ fierce 猛烈 凶猛
 fight 打架 战斗 奋斗
 figure 数字 图形
 fiji 斐济
-file 文件 文本 文本文件
+file 文件 文本文件
 fill 填充 充满
 filter 过滤 过滤器
-final 最后 决定性
+final 最后
 finally 终于
 finance 金融
-find 找 找到 发现 发觉 寻找
+find 找 找到 发觉 寻找
 fine 美好 细 优良
 finger 手指
 finish 结束 终结 完成 做完
@@ -1219,13 +1236,13 @@ finland 芬兰
 fire 火 火灾
 firefox 火狐
 fireman 消防员
-firm 坚固 商行 公司
+firm 坚固 商行
 firmware 固件
-fish 鱼
-fishing 钓鱼
+fish 鱼 钓鱼
 fist 拳头
 fit 适当 适合
 fix 固定 安装
+flack 高射炮 严厉批评 宣传员
 flag 旗帜 标识
 flame 火苗 火焰
 flash 闪光 瞬间
@@ -1337,13 +1354,10 @@ gentle 斯文 雅致 温和
 gentleman 先生 绅士
 geography 地理
 geometry 几何学
-georgia 佐治亚
-georgia 格鲁吉亚
+georgia 佐治亚 格鲁吉亚
 german 德文 德语
 germany 德国
 get 获得 得到
-geyusi 歌于斯，哭于斯
-ghana 加纳
 ghost 鬼 鬼门关 幽灵
 giant 巨人
 gift 礼物 赠品
@@ -1418,7 +1432,6 @@ gum 口香糖
 gun 枪
 gust 阵风
 guyana 圭亚那
-h2so4 硫酸
 habit 习惯 瘾
 hacker 骇客 黑客
 haha 哈哈 o(∩_∩)o
@@ -1506,8 +1519,7 @@ hit 打击 打中 命中 碰撞
 hobby 爱好
 hohhot 呼和浩特
 hold 保持 握
-hole 孔穴
-hole 洞 窟窿
+hole 洞 窟窿 孔穴
 holiday 节日 假日
 holistic 整体 整体主义的
 hollow 中空 凹
@@ -1517,7 +1529,7 @@ home 家
 homework 作业
 honest 诚实 老实 正直
 honey 蜜糖 蜂蜜 蜜蜂
-honor 名誉 荣誉
+honor 名誉
 hoof 蹄 啼
 hoop 滕圈 铁环 箍
 hop 跳跃
@@ -1790,8 +1802,6 @@ levis 李维斯 牛仔裤
 levitra 德国伟哥 艾力达
 lexus 凌志
 lhasa 拉萨
-liberia 利比里亚
-library 图书室
 library 图书馆
 libyan 利比亚
 lid 盖 盖子
@@ -1812,7 +1822,6 @@ listen 听 倾听
 lithuania 立陶宛
 litigation 诉讼 打官司
 little 小 少 少量 少许
-liushuibufu 流水不腐，户枢不蠹
 live 活 居住
 load 装载 负荷 货物
 loan 贷款
@@ -1847,7 +1856,6 @@ lung 肺
 macau 澳门
 macedonia 马其顿
 machine 机器
-macro 宏
 macro 宏观 宏
 mad 疯狂
 madam 太太 夫人
@@ -2089,7 +2097,6 @@ nurser 托儿所 养殖场 苗床
 nut 坚果
 nutty 坚果味的 疯疯癫癫的
 nylon 尼龙
-o2 氧气
 oak 橡树 桨 橹
 obama 奥巴马 欧巴马
 obey 顺从 服从 听从
@@ -2178,11 +2185,9 @@ overtake 追上
 overwork 过劳
 owe 欠债
 own 拥有
-own 自己的
 pace 步伐
 pacific 太平洋
-pack 包 捆
-pack 填装
+pack 包 捆 填装
 package 包装 包裹
 pad 垫子
 page 页
@@ -2407,8 +2412,8 @@ promote 促进 鼓励
 prompt 提示
 propagate 传播
 propel 螺旋桨
-proper 固有 财产
 proper 适当
+property 属性 财产 性能 特性 产权 财产权 所有权 家当
 prophecy 预言 预告 预示 预言书
 proposal 草案
 proselytism  劝诱改信仰
@@ -2452,7 +2457,6 @@ quiver 摇动 震 颤
 quota 行市
 quotation 引用 语录
 quote 引用 引证 援引 摘引 引号 断字符号
-quzhibujin 取之不尽，用之不竭
 rabbit 兔子
 race 人种 竟赛 赛跑
 racket 吵闹
@@ -2519,7 +2523,6 @@ remember 记忆 记起
 remind 提醒 想起
 remove 移去 拿去
 renbuzhi 人不知，鬼不觉
-renerwuxin 人而无信，不知其可
 renew 更新
 renxinqi 人心齐，泰山移
 repair 修理 赔偿
@@ -2531,9 +2534,8 @@ report 报告
 reporter 记者
 repost 【转贴】【转载】
 represent 代表 表示
-reputation 名誉
-request 要求 请求 恳求
-require 需要 要求
+request 要求 请求
+require 要求 需求
 rescue 救助 解救
 research 研究
 reside 驻留
@@ -2553,8 +2555,7 @@ return 返回 归
 reverse 倒 反 翻 颠倒
 review 复习
 revolution 革命
-reward 奖赏
-reward 报酬 酬谢
+reward 报酬 酬谢 奖赏
 ribbon 丝带
 rice 饭 米
 rich 富 有钱 富有
@@ -2564,7 +2565,6 @@ ride 乘 骑
 rider 骑师
 ridiculous 荒谬 岂有此理
 right 右 右边 权利 正确
-rijibuzu 日计不足，岁计有余
 ring 指环
 rio 桑巴 里约热内卢
 ripe 成熟
@@ -2655,8 +2655,7 @@ seagull 海鸥
 seal 封印 图章
 seamless 无缝 无缝混排
 search 搜索 寻找 检查 被人肉 人肉搜索
-season 季节
-season 春耕 夏耘 秋收 冬藏
+season 季节 春耕 夏耘 秋收 冬藏
 seat 席位 座位
 seaturtle 海龟 海归 海不归
 secret 秘密 机密
@@ -2688,8 +2687,7 @@ servant 仆人
 serve 服务 合用 侍候
 server 服务器 伺服器
 service 服务
-set 搁置
-set 放 置
+set 放 搁 置置
 settle 搞妥 搞踮 决定 解决
 several 几个
 severe 严格 剧烈
@@ -2873,8 +2871,7 @@ staff 职员 参谋
 stage 阶段
 stairs 楼梯
 stalk 柄 茎
-stamp 跺 踏
-stamp 邮票
+stamp 邮票 跺 踏
 stand 站 起立
 standard 标准
 stanford 斯坦福大学
@@ -2882,8 +2879,7 @@ staple 钉书针
 star 星 明星 ☆ ★
 starbucks 星巴克
 stare 疑视
-start 出发
-start 开始 起动
+start 出发 开始 起动
 starve 饿死 挨饿
 state 状态 情形 州
 static 静态 靜態
@@ -2930,14 +2926,14 @@ stretch 展开 扩张
 strike 打击
 string 弦 字符串
 strip 剥 条
-stroke 击 打 笔划 笔画 筆劃
+stroke 击 打 笔划 笔画
 strong 强壮
 struggle 斗争 奋斗 挣扎
 student 学生
 study 学习 研究
 stuff 塞进 材料
 stupid 愚蠢 笨
-style 风格 風格
+style 风格
 subject 主题
 submit 提出 屈服
 subscribe 订 订阅
@@ -3029,11 +3025,12 @@ term 期限 术语
 terminal 终端
 terrible 可怕
 terror 恐怖
-test 测试 试验 考试 测验 測試
+test 测试 试验 考试 测验
 texas 德州 德克萨斯
-text 课文
+text 文本 案文 正文 课文 纂辑
 textbook 课本 教科书
 thailand 泰国
+thallium 铊 铊中毒
 than 比
 thank 感谢
 thanks 谢谢
@@ -3068,7 +3065,6 @@ thresh 门槛 阈值
 throat 咽喉
 through 全部 遍及 经过 通过
 throw 扔 扔掉 扔到 抛掷
-thrust 戳刺
 thrust 推入
 thumb 大姆指
 thunder 雷 打雷
@@ -3170,7 +3166,7 @@ twig 树枝
 twin 孪生子
 twinkle 闪烁
 twitter 微博 微博客 推特
-type 典型 方式 打字
+type 类型 打字
 typewriter 打字机
 typical 典型 模范
 typist 打字员
@@ -3343,7 +3339,6 @@ wire 电线
 wisconsin 威斯康星
 wisdom 智慧 聪明 智能
 wish 愿望 祝愿 希望
-with 一起
 with 关于 具 兼 带
 wither 枯萎 凋残
 within 以内 在内
@@ -3364,8 +3359,7 @@ worldwar 世界大战
 worse 更差 更坏 越来越差 越来越坏
 worth 价值
 wound 负伤 伤害
-wow 哇 哇啦
-wow 魔兽世界
+wow 哇 哇啦 魔兽世界
 wrap 裹
 wrath 愤怒
 wreath 花环
@@ -3378,7 +3372,6 @@ wto 世界贸易组织
 www 互联网 网站 万维网 萬維網
 xag 白银
 xau 黄金
-xixi 嘻嘻 (*^__^*)
 yahoo 雅虎
 yale 耶鲁大学
 yard 院子
@@ -3390,7 +3383,7 @@ yes 是的 对
 yesterday 昨天
 yet 还 仍然
 yield 产 供给
-you 你 有 又 由 友 油 游 右 优 尤 犹 幽 幼 忧 您 妳
+you 你 妳 您
 youku 优酷
 young 年轻 年青
 your 你的 妳的 您的 你们的 妳们的
@@ -3402,3 +3395,4 @@ zombie 僵尸 行尸走肉
 zone 区域 地带
 zoo 动物园
 zoology   动物学
+
