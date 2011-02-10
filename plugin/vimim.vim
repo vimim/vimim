@@ -11,6 +11,7 @@ let  VimIM = string("VimIM 環境:") "|       vimim<C-6><C-6>
 let  VimIM = string("VimIM 幫助:") "|   vimimhelp<C-6><C-6>
 
 let egg  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
+let egg += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
 let egg += ["http://vimim-data.googlecode.com"]
 let egg += ["http://groups.google.com/group/vimim"]
 let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
@@ -375,11 +376,12 @@ function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
     call add(eggs, "官方网址" . s:colon . s:vimimhelp[0] . s:space)
-    call add(eggs, "民间词库" . s:colon . s:vimimhelp[1] . s:space)
-    call add(eggs, "新闻论坛" . s:colon . s:vimimhelp[2] . s:space)
-    call add(eggs, "最新主页" . s:colon . s:vimimhelp[3] . s:space)
-    call add(eggs, "最新程式" . s:colon . s:vimimhelp[4] . s:space)
-    call add(eggs, "错误报告" . s:colon . s:vimimhelp[5] . s:space)
+    call add(eggs, "标准字库" . s:colon . s:vimimhelp[1] . s:space)
+    call add(eggs, "民间词库" . s:colon . s:vimimhelp[2] . s:space)
+    call add(eggs, "新闻论坛" . s:colon . s:vimimhelp[3] . s:space)
+    call add(eggs, "最新主页" . s:colon . s:vimimhelp[4] . s:space)
+    call add(eggs, "最新程式" . s:colon . s:vimimhelp[5] . s:space)
+    call add(eggs, "错误报告" . s:colon . s:vimimhelp[6] . s:space)
     return eggs
 endfunction
 
@@ -503,7 +505,8 @@ function! s:vimim_egg_vimim()
             call add(eggs, option)
         endfor
     endif
-    return map(eggs, 'v:val . s:space')
+    call map(eggs, 'v:val . s:space')
+    return eggs
 endfunction
 
 " ----------------------------------------
@@ -1933,13 +1936,13 @@ function! s:vimim_initialize_cjk_file()
     let s:has_cjk_self_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
-    let datafile = s:vimim_check_cjk_file("vimim.txt")
+    let datafile = s:vimim_check_filereadable("vimim.txt")
     " ---------------------------------
     if !empty(datafile)
         let s:cjk_self_file = datafile
         let s:has_cjk_self_file = 1
     endif
-    let datafile = s:vimim_check_cjk_file("vimim.cjk.txt")
+    let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
     " ---------------------------------
     if !empty(datafile)
         let s:cjk_file = datafile
@@ -1952,9 +1955,9 @@ function! s:vimim_initialize_cjk_file()
     endif
 endfunction
 
-" ---------------------------------------
-function! s:vimim_check_cjk_file(default)
-" ---------------------------------------
+" -------------------------------------------
+function! s:vimim_check_filereadable(default)
+" -------------------------------------------
     let default = a:default
     let datafile = s:vimim_self_directory . default
     if filereadable(datafile)
