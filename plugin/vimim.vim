@@ -772,7 +772,7 @@ function! s:vimim_onekey_action(onekey)
     endif
     " -------------------------------------------------
     if char_before !~# s:valid_key && empty(a:onekey)
-        let s:hjkl_l = 1
+        let s:hjkl_h = 1
         return s:vimim_get_unicode_menu()
     endif
     " ---------------------------------------------------
@@ -834,16 +834,16 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == 'h'
-            let pumheight = &pumheight
-            let &pumheight = s:hjkl_h
-            let s:hjkl_h = pumheight
+            let s:hjkl_h += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key == 'l'
-            let s:hjkl_l += 1
+            let pumheight = &pumheight
+            let &pumheight = s:hjkl_l
+            let s:hjkl_l = pumheight
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'm'
             call g:vimim_reset_after_insert()
@@ -1530,7 +1530,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
         " -------------------------------------------------
-        if s:hjkl_l % 2 > 0 && keyboard !~# s:show_me_not
+        if s:hjkl_h % 2 > 0 && keyboard !~# s:show_me_not
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_cjk_property_display(ddddd)
         endif
@@ -4790,7 +4790,7 @@ function! s:vimim_reset_before_anything()
     let s:popupmenu_list = []
     let s:matched_list = []
     let s:keyboard_list = []
-    let s:hjkl_h = 0
+    let s:hjkl_l = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
     let s:pattern_not_found = 0
@@ -4801,7 +4801,7 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
-    let s:hjkl_l = 0
+    let s:hjkl_h = 0
     let s:hjkl_n = 0
     let s:hjkl_pageup_pagedown = 0
     let s:cjk_has_match = 0
@@ -5071,7 +5071,7 @@ else
             if empty(dddd)
                 let msg = " iypwqwuwwyppwquyw => 6021272260021762 "
             else
-                let s:hjkl_l = 1
+                let s:hjkl_h = 1
                 let keyboard = dddd
             endif
         endif
