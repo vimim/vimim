@@ -948,8 +948,7 @@ function! g:vimim_pumvisible_dump()
         \|| get(s:keyboard_list,0) =~ s:show_me_not
             let line = printf('%s', items.word)
         else
-            let format = '%s  %s'
-            let line = printf(format, items.word, items.menu)
+            let line = printf('%s  %s', items.word, items.menu)
         endif
         put=line
         let one_line_clipboard .= line . "\n"
@@ -1550,9 +1549,12 @@ function! s:vimim_popupmenu_list(matched_list)
         let complete_items = {}
         if s:vimim_custom_label > 0
             if keyboard !~# s:show_me_not
-                let labeling = s:vimim_get_labeling(label)
-                let abbr = printf('%2s', labeling) . "\t"
-                let complete_items["abbr"] = abbr . chinese
+                let fmt = '%2s'
+                if s:hjkl_l > 0 && &pumheight < 1 && s:has_cjk_file > 0
+                    let fmt = '%02s'
+                endif
+                let labeling = printf(fmt, s:vimim_get_labeling(label))
+                let complete_items["abbr"] = labeling . "\t" . chinese
                 let label += 1
             endif
         endif
