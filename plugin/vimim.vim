@@ -3011,11 +3011,16 @@ call add(s:vimims, VimIM)
 function! s:vimim_get_valid_im_name(im)
 " -------------------------------------
     let im = a:im
+    if empty(im)
+        return 0
+    endif
     if im =~# '^wubi'
         let im = 'wubi'
     elseif im =~# '^pinyin'
         let im = 'pinyin'
         let s:vimim_imode_pinyin = 1
+    elseif im !~ s:all_vimim_input_methods
+        let im = 0
     endif
     return im
 endfunction
@@ -3330,7 +3335,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
     if empty(s:vimim_data_directory)
-        let msg = "no need datafile when directory exists"
+        let msg = "check datafile when no directory"
     else
         return
     endif
@@ -3376,6 +3381,9 @@ function! s:vimim_set_datafile(im)
         return
     endif
     let im = s:vimim_get_valid_im_name(im)
+    if empty(im)
+        return
+    endif
     let s:ui.root = "datafile"
     let s:ui.im = im
     call add(s:ui.frontends, [s:ui.root, s:ui.im])
@@ -3722,29 +3730,27 @@ call add(s:vimims, VimIM)
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
+    let im = 0
     if empty(s:vimim_data_directory)
-         let s:vimim_data_directory = s:path . "vimim/"
+        for im in s:all_vimim_input_methods
+            let dir = s:path . im
+            if isdirectory(dir)
+                let s:vimim_data_directory = dir . '/'
+                break
+            endif
+        endfor
+    else
+        let dirs = split(s:vimim_data_directory, "/")
+        let im = get(dirs, -1) 
     endif
-    if isdirectory(s:vimim_data_directory)
+    " ---------------------------------------------
+    let im = s:vimim_get_valid_im_name(im)
+    if isdirectory(s:vimim_data_directory) && !empty(im)
         let msg = "use directory as backend database"
     else
         let s:vimim_data_directory = 0
         let return
     endif
-    " -----------------------------------
-    for im in s:all_vimim_input_methods
-        let dir = s:vimim_get_valid_directory(im)
-        if empty(dir)
-            continue
-        else
-            break
-        endif
-    endfor
-    " -----------------------------------
-    if empty(dir)
-        return
-    endif
-    let im = s:vimim_get_valid_im_name(im)
     let s:ui.root = "directory"
     let s:ui.im = im
     let datafile = s:vimim_data_directory . im
@@ -3752,38 +3758,10 @@ function! s:vimim_scan_backend_embedded_directory()
     if empty(s:backend.directory)
         let s:backend.directory[im] = s:vimim_one_backend_hash()
         let s:backend.directory[im].root = "directory"
-        let s:backend.directory[im].datafile = dir
+        let s:backend.directory[im].datafile = s:vimim_data_directory
         let s:backend.directory[im].im = im
         let s:backend.directory[im].keycode = s:im_keycode[im]
         let s:backend.directory[im].chinese = s:vimim_chinese(im)
-    endif
-endfunction
-
-" ---------------------------------------
-function! s:vimim_get_valid_directory(im)
-" ---------------------------------------
-    let im = a:im
-    if empty(im) || empty(s:vimim_data_directory)
-        return 0
-    endif
-    let dir = s:vimim_data_directory . im
-    if isdirectory(dir)
-        return dir
-    else
-        return 0
-    endif
-endfunction
-
-" --------------------------------------
-function! s:vimim_set_data_directory(im)
-" --------------------------------------
-    let im = a:im
-    let dir = s:vimim_get_valid_directory(im)
-    if empty(dir)
-        return 0
-    else
-        let s:ui.im = im
-        return dir
     endif
 endfunction
 
@@ -3794,7 +3772,7 @@ function! s:vimim_get_list_from_directory(keyboard)
     if empty(a:keyboard)
         return []
     endif
-    let dir = s:vimim_get_valid_directory(s:ui.im)
+    let dir = s:vimim_data_directory
     let dir2 = s:vimim_self_directory
     if empty(dir) && empty(dir2)
         return []
@@ -3802,7 +3780,7 @@ function! s:vimim_get_list_from_directory(keyboard)
     if keyboard =~ '^oo' && len(dir2) > 2
         let dir = dir2
     endif
-    let filename = dir . '/' . keyboard
+    let filename = dir . keyboard
     if filereadable(filename)
         let lines = s:vimim_readfile(filename)
         return lines
@@ -3818,8 +3796,7 @@ function! s:vimim_sentence_match_directory(keyboard)
     if keyboard =~ s:show_me_not
         return keyboard
     endif
-    let dir = s:vimim_get_valid_directory(s:ui.im)
-    let filename = dir . '/' . keyboard
+    let filename = s:vimim_data_directory . keyboard
     if filereadable(filename)
         return keyboard
     endif
@@ -3833,7 +3810,7 @@ function! s:vimim_sentence_match_directory(keyboard)
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
-        let filename = dir . '/' . head
+        let filename = s:vimim_data_directory . head
         " workaround: filereadable("/filename.") returns true
         if filereadable(filename)
             if head[-1:-1] != "."
@@ -4566,7 +4543,7 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma")
         let s:vimim_self_directory = "/home/xma/vimim/"
-        let s:vimim_data_directory = "/home/vimim/"
+        let s:vimim_data_directory = "/home/vimim/pinyin/"
         let s:vimim_tab_as_onekey = 2
     endif
 endfunction
