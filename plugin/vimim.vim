@@ -847,10 +847,10 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             call g:vimim_reset_after_insert()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
-            let hjkl  = ""
-            for i in range(&pumheight/2)
-                let hjkl .= '\<Down>'
-            endfor
+            let pumheight = &pumheight
+            let &pumheight = s:hjkl_n
+            let s:hjkl_n = pumheight
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
@@ -1589,7 +1589,7 @@ endfunction
 
 " ---------------------------------------------
 function! s:vimim_pageup_pagedown(matched_list)
-" ---------------------------------------------
+" --------------------------------------------- todo
     let matched_list = a:matched_list
     let length = len(matched_list)
     if s:vimim_custom_label < 1 || length <= &pumheight
@@ -2215,7 +2215,7 @@ function! s:vimim_match_cjk_file(keyboard)
         let grep = '[ 0-9]' . keyboard . '\w\+\s\d\+$'
     elseif keyboard =~ '^\l'
         " [sample] multiple-char-list by frequency ma
-        let grep = '\s' . keyboard . '\d'
+        let grep = '\s\+\d\d\d\d\s' . keyboard . '\d'
     else
         return []
     endif
@@ -4800,6 +4800,7 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_l = 0
     let s:hjkl_h = 0
+    let s:hjkl_n = 0
     let s:hjkl_pageup_pagedown = 0
     let s:cjk_has_match = 0
     let s:cjk_filter = ""
