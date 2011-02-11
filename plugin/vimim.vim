@@ -1771,11 +1771,19 @@ function! <SID>vimim_punctuations_navigation(key)
         elseif a:key == "?"
             let hjkl  = '\<C-R>=g:vimim_menu_search_backward()\<CR>'
         elseif a:key =~ "[-,]"
-            let s:hjkl_pageup_pagedown -= 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            if s:hjkl_l > 0 && &pumheight < 1
+                let hjkl = '\<PageUp>'
+            else
+                let s:hjkl_pageup_pagedown -= 1
+                let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            endif
         elseif a:key =~ "[=.]"
-            let s:hjkl_pageup_pagedown += 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            if s:hjkl_l > 0 && &pumheight < 1
+                let hjkl = '\<PageDown>'
+            else
+                let s:hjkl_pageup_pagedown += 1
+                let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            endif
         endif
     else
         if s:chinese_input_mode !~ 'onekey'
@@ -3233,10 +3241,7 @@ function! s:vimim_get_unicode_list(keyboard)
         return []
     endif
     let words = []
-    let height = &pumheight
-    if empty(&pumheight)
-        let height = 108
-    endif
+    let height = 108
     for i in range(height)
         let chinese = nr2char(ddddd+i)
         call add(words, chinese)
