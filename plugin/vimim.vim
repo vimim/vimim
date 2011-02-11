@@ -1589,7 +1589,7 @@ endfunction
 
 " ---------------------------------------------
 function! s:vimim_pageup_pagedown(matched_list)
-" --------------------------------------------- todo
+" ---------------------------------------------
     let matched_list = a:matched_list
     let length = len(matched_list)
     if s:vimim_custom_label < 1 || length <= &pumheight
@@ -1599,7 +1599,7 @@ function! s:vimim_pageup_pagedown(matched_list)
     if page < 0
         " no more PageUp after the first page
         let s:hjkl_pageup_pagedown += 1
-        let first_page = &pumheight-1
+        let first_page = &pumheight - 1
         let matched_list = matched_list[0 : first_page]
     elseif page >= length
         " no more PageDown after the last page
@@ -3223,16 +3223,18 @@ function! s:vimim_i18n_read(line)
     return line
 endfunction
 
-" --------------------------------------------------
-function! s:vimim_get_unicode_list(keyboard, height)
-" --------------------------------------------------
-    let keyboard = a:keyboard
-    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+" ------------------------------------------
+function! s:vimim_get_unicode_list(keyboard)
+" ------------------------------------------
+    let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
     if empty(ddddd)
         return []
     endif
     let words = []
-    let height = &pumheight * a:height
+    let height = &pumheight
+    if empty(&pumheight)
+        let height = 108
+    endif
     for i in range(height)
         let chinese = nr2char(ddddd+i)
         call add(words, chinese)
@@ -3244,10 +3246,10 @@ endfunction
 function! s:vimim_get_unicode_menu()
 " ----------------------------------
     let trigger = ""
-    let xxxx = s:vimim_get_unicode_before()
-    if !empty(xxxx)
+    let uxxxx = s:vimim_get_unicode_before()
+    if !empty(uxxxx)
         call s:vimim_set_seamless()
-        let trigger = xxxx . '\<C-R>=g:vimim()\<CR>'
+        let trigger = uxxxx . '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . trigger . '"'
 endfunction
@@ -4788,6 +4790,7 @@ function! s:vimim_reset_before_anything()
     let s:popupmenu_list = []
     let s:matched_list = []
     let s:keyboard_list = []
+    let s:hjkl_n = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
     let s:pattern_not_found = 0
@@ -4800,7 +4803,6 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_l = 0
     let s:hjkl_h = 0
-    let s:hjkl_n = 0
     let s:hjkl_pageup_pagedown = 0
     let s:cjk_has_match = 0
     let s:cjk_filter = ""
@@ -5047,7 +5049,7 @@ else
     " [unicode] support direct unicode/gb/big5 input
     " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        let results = s:vimim_get_unicode_list(keyboard, 36/9)
+        let results = s:vimim_get_unicode_list(keyboard)
         if !empty(results)
             let s:keyboard_list = [keyboard]
             return s:vimim_popupmenu_list(results)
