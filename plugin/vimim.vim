@@ -834,7 +834,9 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == 'h'
-            let s:hjkl_h += 1
+            let pumheight = &pumheight
+            let &pumheight = s:hjkl_h
+            let s:hjkl_h = pumheight
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'j'
             let hjkl  = '\<Down>'
@@ -847,9 +849,7 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             call g:vimim_reset_after_insert()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
-            let pumheight = &pumheight
-            let &pumheight = s:hjkl_n
-            let s:hjkl_n = pumheight
+            let s:hjkl_n += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
@@ -1524,12 +1524,12 @@ function! s:vimim_popupmenu_list(matched_list)
             let keyboard_head_length = len(keyboard_head)
             let chinese = get(pairs, 1)
         endif
+        let extra_text = ""
         " -------------------------------------------------
-        if s:has_cjk_file > 0 && s:hjkl_h%2 > 0
+        if s:hjkl_n % 2 > 0 && s:has_cjk_file > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
         " -------------------------------------------------
-        let extra_text = ""
         if s:hjkl_l % 2 > 0 && keyboard !~# s:show_me_not
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_cjk_property_display(ddddd)
@@ -4790,7 +4790,7 @@ function! s:vimim_reset_before_anything()
     let s:popupmenu_list = []
     let s:matched_list = []
     let s:keyboard_list = []
-    let s:hjkl_n = 0
+    let s:hjkl_h = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
     let s:pattern_not_found = 0
@@ -4802,7 +4802,7 @@ endfunction
 function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_l = 0
-    let s:hjkl_h = 0
+    let s:hjkl_n = 0
     let s:hjkl_pageup_pagedown = 0
     let s:cjk_has_match = 0
     let s:cjk_filter = ""
