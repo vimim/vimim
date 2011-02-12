@@ -588,7 +588,9 @@ function! s:vimim_search_chinese_from_english(keyboard)
             let results = s:vimim_embedded_backend_engine(keyboard)
         endif
     endif
-    if !empty(results)
+    if empty(results)
+        let v:errmsg = ""
+    else
         call s:vimim_register_search_pattern(keyboard, results)
     endif
 endfunction
@@ -850,6 +852,7 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
         elseif a:key == 'n'
             let s:hjkl_n += 1
             call g:vimim_reset_after_insert()
+            let s:keyboard_list = []
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 's'
             let s:hjkl_n = 0
@@ -1944,13 +1947,12 @@ function! s:vimim_initialize_cjk_file()
     let s:has_cjk_self_file = 0
     let s:abcd = "'abcdefgz"
     let s:qwerty = range(10)
-    " ---------------------------------
+    " --------------------------------- 
     let datafile = s:vimim_check_filereadable("vimim.txt")
     if !empty(datafile)
         let s:cjk_self_file = datafile
         let s:has_cjk_self_file = 1
     endif
-    " ---------------------------------
     let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
     if !empty(datafile)
         let s:cjk_file = datafile
@@ -2056,7 +2058,9 @@ function! s:vimim_cjk_sentence_match(keyboard)
         endif
     elseif len(keyboard) == 1
         let keyboard_head = keyboard
-    elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
+"todo
+"   elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
+    elseif s:has_cjk_file > 0 || s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
             let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
             if !empty(keyboard_head)
@@ -2153,6 +2157,7 @@ endfunction
 function! s:vimim_cjk_sentence_alpha(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
+let g:gooo=keyboard
     let magic_tail = keyboard[-1:-1]
     if magic_tail == "."
         "  magic trailing dot to use cjk: sssss.
@@ -2170,14 +2175,15 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     let matched = match(s:cjk_lines, grep)
     let head = a_keyboard
     if matched < 0 || a_keyboard =~ "[.']"
-        if s:hjkl_n % 2 > 0
-            let msg = "super cjjp: wyygm => w.y.y.g.m"
-            let keyboard = join(split(a_keyboard,'\zs'),".")
-        elseif s:has_cjk_file > 1
-            let msg = "woyouyigemeng"
-            let keyboard = s:vimim_quanpin_transform(a_keyboard)
+"todo
+""      let keyboard = s:vimim_toggle_cjjp(a_keyboard)
+        if s:has_cjk_file > 1
+      "     let msg = "woyouyigemeng"
+      "     let keyboard = s:vimim_quanpin_transform(a_keyboard)
         endif
-        "  i.have.a.dream works in this algorithm
+        if s:has_cjk_file > 0 
+            let keyboard = s:vimim_toggle_pinyin(a_keyboard)
+        endif
         let partition = match(keyboard, "[.']")
         let head = s:vimim_get_keyboard_head_list(a_keyboard, partition)
         if len(head) > len(a_keyboard)
@@ -2185,6 +2191,26 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
         endif
     endif
     return head
+endfunction
+
+" -------------------------------------
+function! s:vimim_toggle_cjjp(keyboard)
+" ------------------------------------- todo
+    let keyboard = a:keyboard
+    if s:hjkl_n > 0 && s:has_cjk_file > 0
+        if s:hjkl_n % 2 > 0
+            " set cjjp:   wyygm => w'y'y'g'm
+            let keyboard = join(split(keyboard,'\zs'),"'")
+        elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
+            " reset cjjp: w'y'y'g'm => wyygm
+let g:gx1=keyboard
+            let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+        """"let keyboard = join(split(s:keyboard_list,"'"),"")
+        """ let keyboard = substitute(join(s:keyboard_list,""),"'",'','g')
+let g:gx2=keyboard
+        endif
+    endif
+    return keyboard
 endfunction
 
 " ----------------------------------------
@@ -2569,26 +2595,42 @@ function! s:vimim_add_apostrophe(keyboard)
     return keyboard
 endfunction
 
-" ------------------------------------------------
+" ------------------------------------------------ todo
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
 " ------------------------------------------------
-    if empty(s:quanpin_table)
-        return []
-    else
-        let msg = "pinyin breakdown: pinyin=>pin'yin"
-    endif
-    let keyboard2 = s:vimim_quanpin_transform(a:keyboard)
-    let results = split(keyboard2, "'")
+    let keyboard = s:vimim_quanpin_transform(a:keyboard)
+    let results = split(keyboard, "'")
     if len(results) > 1
         return results
     endif
     return []
 endfunction
 
+" ---------------------------------------
+function! s:vimim_toggle_pinyin(keyboard)
+" ---------------------------------------
+    let keyboard = a:keyboard
+    if s:hjkl_n > 0 && s:ui.im == 'pinyin'
+        if s:hjkl_n % 2 > 0
+            " set pin'yin: woyouyigemeng => wo.you.yi.ge.meng
+            let keyboard = s:vimim_quanpin_transform(keyboard)
+        elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
+            " reset pinyin: wo.you.yi.ge.meng => woyouyigemeng
+            let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+        endif
+    endif
+    return keyboard
+endfunction
+
 " -------------------------------------------
 function! s:vimim_quanpin_transform(keyboard)
 " -------------------------------------------
     let qptable = s:quanpin_table
+    if empty(qptable)
+        return []
+    else
+        let msg = "pinyin breakdown: pinyin=>pin'yin"
+    endif
     let item = a:keyboard
     let pinyinstr = ""
     let index = 0
@@ -3799,11 +3841,12 @@ function! s:vimim_sentence_match_directory(keyboard)
     if filereadable(filename)
         return keyboard
     endif
-    " no more action if it is cjjp
-    let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-    if len(keyboard) == len(pinyins)
-        return keyboard
-    endif
+" todo
+"      " no more action if it is cjjp
+"      let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+"      if len(keyboard) == len(pinyins)
+"          return keyboard
+"      endif
     let max = len(keyboard)
     "  i.have.a.dream works in this algorithm
     while max > 1
@@ -4905,6 +4948,9 @@ function! s:vimim_embedded_backend_engine(keyboard)
     endif
     let results = []
     let keyboard2 = 0
+    if s:has_cjk_file < 1 
+        let keyboard = s:vimim_toggle_pinyin(keyboard)
+    endif
     if root =~# "directory"
         let keyboard2 = s:vimim_sentence_match_directory(keyboard)
         let results = s:vimim_get_list_from_directory(keyboard2)
@@ -5155,12 +5201,12 @@ else
     endif
 
     " [sogou] last try before giving up
-    " ---------------------------------
+    " --------------------------------- todo
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
-        let keyboard_head = s:vimim_cjk_sentence_match(keyboard.".")
-        if !empty(keyboard_head)
-            let results = s:vimim_match_cjk_file(keyboard_head)
-        endif
+"       let keyboard_head = s:vimim_cjk_sentence_match(keyboard.".")
+"       if !empty(keyboard_head)
+"           let results = s:vimim_match_cjk_file(keyboard_head)
+"       endif
     elseif s:vimim_cloud_sogou == 1 && keyboard !~# '\L'
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
     endif
@@ -5168,11 +5214,11 @@ else
         return s:vimim_popupmenu_list(results)
     endif
 
-    " [seamless] support seamless English input
-    " -----------------------------------------
+    " [seamless] for OneKeyNonStop and seamless English input
+    " -------------------------------------------------------
     let s:pattern_not_found += 1
     if s:chinese_input_mode =~ 'onekey'
-        let results = []
+        let results = [s:space]
     else
         call s:vimim_set_seamless()
     endif
