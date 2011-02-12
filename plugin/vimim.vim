@@ -846,21 +846,32 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             let &pumheight = s:hjkl_l
             let s:hjkl_l = pumheight
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'm'
-            let s:hjkl_m += 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'n'
-            let s:hjkl_n += 1
+        elseif a:key =~ "[mn]"
             call g:vimim_reset_after_insert()
             let s:keyboard_list = []
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            if a:key == 'm'
+                let s:hjkl_m += 1
+            elseif a:key == 'n'
+                let s:hjkl_n += 1
+            endif
+      " todo
+      " elseif a:key == 'm'
+      "     let s:hjkl_m += 1
+      "     call g:vimim_reset_after_insert()
+      "     let s:keyboard_list = []
+      "     let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+      " elseif a:key == 'n'
+      "     let s:hjkl_n += 1
+      "     call g:vimim_reset_after_insert()
+      "     let s:keyboard_list = []
+      "     let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 's'
-            let s:hjkl_n = 0
             call g:vimim_reset_after_insert()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'x'
-            let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
+            let s:hjkl_x += 1
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key =~ "[<>]"
             let punctuation = nr2char(char2nr(a:key)-16)
             let hjkl  = '\<C-Y>'
@@ -1528,7 +1539,7 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         let extra_text = ""
         " -------------------------------------------------
-        if s:hjkl_m % 2 > 0 && s:has_cjk_file > 0
+        if s:hjkl_x % 2 > 0 && s:has_cjk_file > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
         " -------------------------------------------------
@@ -2157,7 +2168,6 @@ endfunction
 function! s:vimim_cjk_sentence_alpha(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-let g:gooo=keyboard
     let magic_tail = keyboard[-1:-1]
     if magic_tail == "."
         "  magic trailing dot to use cjk: sssss.
@@ -2169,45 +2179,42 @@ let g:gooo=keyboard
         let keyboard = keyboard[0 : len(keyboard)-2]
     endif
     let a_keyboard = keyboard
-    " ----------------------------------------
+    " ---------------------------------------- todo
     call s:vimim_load_cjk_file()
+    if s:hjkl_n > 0 
+        let keyboard = s:vimim_toggle_cjjp(a_keyboard)
+    endif
     let grep = '^' . a_keyboard . '\>'
     let matched = match(s:cjk_lines, grep)
-    let head = a_keyboard
-    if matched < 0 || a_keyboard =~ "[.']"
-"todo
-""      let keyboard = s:vimim_toggle_cjjp(a_keyboard)
-        if s:has_cjk_file > 1
-      "     let msg = "woyouyigemeng"
-      "     let keyboard = s:vimim_quanpin_transform(a_keyboard)
-        endif
+    if matched < 0
         if s:has_cjk_file > 0 
-            let keyboard = s:vimim_toggle_pinyin(a_keyboard)
+            if s:hjkl_m > 0 
+                let keyboard = s:vimim_toggle_pinyin(a_keyboard)
+            endif
         endif
-        let partition = match(keyboard, "[.']")
+    endif
+    let head = a_keyboard
+    let partition = match(keyboard, "[.']")
+    if partition > -1
         let head = s:vimim_get_keyboard_head_list(a_keyboard, partition)
-        if len(head) > len(a_keyboard)
-            let head = a_keyboard
-        endif
+    endif
+    if len(head) > len(a_keyboard)
+        let head = a_keyboard
     endif
     return head
 endfunction
 
 " -------------------------------------
 function! s:vimim_toggle_cjjp(keyboard)
-" ------------------------------------- todo
+" -------------------------------------
     let keyboard = a:keyboard
-    if s:hjkl_n > 0 && s:has_cjk_file > 0
+    if s:hjkl_n > 0
         if s:hjkl_n % 2 > 0
             " set cjjp:   wyygm => w'y'y'g'm
             let keyboard = join(split(keyboard,'\zs'),"'")
         elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
             " reset cjjp: w'y'y'g'm => wyygm
-let g:gx1=keyboard
             let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
-        """"let keyboard = join(split(s:keyboard_list,"'"),"")
-        """ let keyboard = substitute(join(s:keyboard_list,""),"'",'','g')
-let g:gx2=keyboard
         endif
     endif
     return keyboard
@@ -2610,8 +2617,8 @@ endfunction
 function! s:vimim_toggle_pinyin(keyboard)
 " ---------------------------------------
     let keyboard = a:keyboard
-    if s:hjkl_n > 0 && s:ui.im == 'pinyin'
-        if s:hjkl_n % 2 > 0
+    if s:hjkl_m > 0 && s:ui.im == 'pinyin'
+        if s:hjkl_m % 2 > 0
             " set pin'yin: woyouyigemeng => wo.you.yi.ge.meng
             let keyboard = s:vimim_quanpin_transform(keyboard)
         elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
@@ -4817,6 +4824,7 @@ function! s:vimim_reset_before_anything()
     let s:matched_list = []
     let s:keyboard_list = []
     let s:hjkl_l = 0
+    let s:hjkl_m = 0
     let s:hjkl_n = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
@@ -4829,7 +4837,7 @@ endfunction
 function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_h = 0
-    let s:hjkl_m = 0
+    let s:hjkl_x = 0
     let s:hjkl_pageup_pagedown = 0
     let s:cjk_has_match = 0
     let s:cjk_filter = ""
