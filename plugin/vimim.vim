@@ -854,9 +854,9 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
         elseif a:key == 'x'
-            let s:pumvisible_ctrl_e = 1
-            let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_backspace()\<CR>'
+            let s:hjkl_x += 1
+            call g:vimim_reset_after_insert()
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key =~ "[<>]"
             let punctuation = nr2char(char2nr(a:key)-16)
             let hjkl  = '\<C-Y>'
@@ -2168,12 +2168,15 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     let grep = '^' . a_keyboard . '\>'
     let matched = match(s:cjk_lines, grep)
     let head = a_keyboard
-    "  i.have.a.dream works in this algorithm
     if matched < 0 || a_keyboard =~ "[.']"
-        if s:has_cjk_file > 1
+        if s:hjkl_x % 2 > 0
+            let msg = "super cjjp: wyygm => w.y.y.g.m"
+            let keyboard = join(split(a_keyboard,'\zs'),".")
+        elseif s:has_cjk_file > 1
             let msg = "woyouyigemeng"
             let keyboard = s:vimim_quanpin_transform(a_keyboard)
         endif
+        "  i.have.a.dream works in this algorithm
         let partition = match(keyboard, "[.']")
         let head = s:vimim_get_keyboard_head_list(a_keyboard, partition)
         if len(head) > len(a_keyboard)
@@ -4770,6 +4773,7 @@ function! s:vimim_reset_before_anything()
     let s:matched_list = []
     let s:keyboard_list = []
     let s:hjkl_l = 0
+    let s:hjkl_x = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
     let s:pattern_not_found = 0
