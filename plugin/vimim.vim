@@ -138,6 +138,8 @@ function! s:vimim_initialize_session()
     let s:AZ_list = map(range(A,Z), "nr2char(".'v:val'.")")
     let s:valid_key = 0
     let s:valid_keys = s:az_list
+    let s:abcd = "'abcdvfgz"
+    let s:qwerty = split('pqwertyuio','\zs')
     let g:vimim_debugs = []
 endfunction
 
@@ -889,15 +891,19 @@ function! <SID>vimim_onekey_pumvisible_qwerty(n)
 " ----------------------------------------------
     let label = a:n
     if pumvisible()
-        if label =~ '\l'
-            let label = match(s:qwerty, a:n)
-        endif
-        if empty(len(s:cjk_filter))
-            let s:cjk_filter = label
+        if s:has_cjk_file > 0
+            if label =~ '\l'
+                let label = match(s:qwerty, a:n)
+            endif
+            if empty(len(s:cjk_filter))
+                let s:cjk_filter = label
+            else
+                let s:cjk_filter .= label
+            endif
+            let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         else
-            let s:cjk_filter .= label
+            let label = g:vimim_pumvisible_ctrl_y()
         endif
-        let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
     endif
     sil!exe 'sil!return "' . label . '"'
 endfunction
@@ -1933,8 +1939,6 @@ function! s:vimim_initialize_cjk_file()
     let s:cjk_self_file = 0
     let s:has_cjk_file = 0
     let s:has_cjk_self_file = 0
-    let s:abcd = "'abcdefgz"
-    let s:qwerty = range(10)
     " --------------------------------- 
     let datafile = s:vimim_check_filereadable("vimim.txt")
     if !empty(datafile)
@@ -1945,8 +1949,6 @@ function! s:vimim_initialize_cjk_file()
     if !empty(datafile)
         let s:cjk_file = datafile
         let s:has_cjk_file = 1
-        let s:abcd = "'abcdvfgz"
-        let s:qwerty = split('pqwertyuio', '\zs')
         if s:vimim_custom_color == 1
             let s:vimim_custom_color = 2
         endif
@@ -4548,7 +4550,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/hhome/xma")
+    if isdirectory("/home/xma")
         let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
         let s:vimim_tab_as_onekey = 2
