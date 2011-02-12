@@ -851,11 +851,11 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             let s:hjkl_n += 1
             call g:vimim_reset_after_insert()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'x'
+        elseif a:key == 's'
             let s:hjkl_n = 0
             call g:vimim_reset_after_insert()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 's'
+        elseif a:key == 'x'
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
         elseif a:key =~ "[<>]"
