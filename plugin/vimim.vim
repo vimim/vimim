@@ -845,18 +845,19 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             let s:hjkl_l = pumheight
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'm'
-            call g:vimim_reset_after_insert()
+            let s:hjkl_m += 1
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 'n'
             let s:hjkl_n += 1
+            call g:vimim_reset_after_insert()
+            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        elseif a:key == 'x'
+            let s:hjkl_n = 0
+            call g:vimim_reset_after_insert()
             let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key == 's'
             let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
             let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
-        elseif a:key == 'x'
-            let s:hjkl_x += 1
-            call g:vimim_reset_after_insert()
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key =~ "[<>]"
             let punctuation = nr2char(char2nr(a:key)-16)
             let hjkl  = '\<C-Y>'
@@ -1524,7 +1525,7 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         let extra_text = ""
         " -------------------------------------------------
-        if s:hjkl_n % 2 > 0 && s:has_cjk_file > 0
+        if s:hjkl_m % 2 > 0 && s:has_cjk_file > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
         " -------------------------------------------------
@@ -2169,7 +2170,7 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     let matched = match(s:cjk_lines, grep)
     let head = a_keyboard
     if matched < 0 || a_keyboard =~ "[.']"
-        if s:hjkl_x % 2 > 0
+        if s:hjkl_n % 2 > 0
             let msg = "super cjjp: wyygm => w.y.y.g.m"
             let keyboard = join(split(a_keyboard,'\zs'),".")
         elseif s:has_cjk_file > 1
@@ -4773,7 +4774,7 @@ function! s:vimim_reset_before_anything()
     let s:matched_list = []
     let s:keyboard_list = []
     let s:hjkl_l = 0
-    let s:hjkl_x = 0
+    let s:hjkl_n = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
     let s:pattern_not_found = 0
@@ -4785,7 +4786,7 @@ endfunction
 function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_h = 0
-    let s:hjkl_n = 0
+    let s:hjkl_m = 0
     let s:hjkl_pageup_pagedown = 0
     let s:cjk_has_match = 0
     let s:cjk_filter = ""
