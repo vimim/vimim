@@ -1491,7 +1491,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let label = 1
     let s:popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
-    if s:hjkl_m > 0 && s:hjkl_m%2 > 0 && s:ui.im == 'pinyin'
+    if s:hjkl_n > 0 && s:hjkl_n%2 > 0 && s:ui.im == 'pinyin'
         let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
     endif
     let keyboard_head = get(s:keyboard_list,0)
@@ -2147,18 +2147,16 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     let magic_tail = keyboard[-1:-1]
     if magic_tail == "."
         "  magic trailing dot to use control cjjp: sssss.
-        let s:hjkl_n += 1
+        let s:hjkl_m += 1
         let a_keyboard = keyboard[0 : len(keyboard)-2]
     endif
     " ----------------------------------------
     call s:vimim_load_cjk_file()
     let grep = '^' . a_keyboard . '\>'
     let matched = match(s:cjk_lines, grep)
-    if s:hjkl_n > 0 
+    if s:hjkl_m > 0 
         let keyboard = s:vimim_toggle_cjjp(a_keyboard)
-    elseif matched < 0 
-    \&& s:has_cjk_file > 0 
-    \&& s:hjkl_m > 0 
+    elseif matched < 0 && s:has_cjk_file > 0 
         let keyboard = s:vimim_toggle_pinyin(a_keyboard)
     endif
     let head = a_keyboard
@@ -2176,8 +2174,8 @@ endfunction
 function! s:vimim_toggle_cjjp(keyboard)
 " -------------------------------------
     let keyboard = a:keyboard
-    if s:hjkl_n > 0
-        if s:hjkl_n % 2 > 0
+    if s:hjkl_m > 0
+        if s:hjkl_m % 2 > 0
             " set cjjp:   wyygm => w'y'y'g'm
             let keyboard = join(split(keyboard,'\zs'),"'")
         elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
@@ -2582,7 +2580,10 @@ endfunction
 function! s:vimim_toggle_pinyin(keyboard)
 " ---------------------------------------
     let keyboard = a:keyboard
-    if s:hjkl_m % 2 > 0
+    if s:hjkl_n < 1
+        return keyboard
+    endif
+    if s:hjkl_n % 2 > 0
         " set pin'yin: woyouyigemeng => wo.you.yi.ge.meng
         let keyboard = s:vimim_quanpin_transform(keyboard)
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
@@ -4547,7 +4548,7 @@ call add(s:vimims, VimIM)
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma")
+    if isdirectory("/hhome/xma")
         let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
         let s:vimim_tab_as_onekey = 2
@@ -4925,7 +4926,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
     endif
     let results = []
     let keyboard2 = 0
-    if s:has_cjk_file < 1 && s:hjkl_m > 0 && s:ui.im == 'pinyin'
+    if s:has_cjk_file < 1 && s:ui.im == 'pinyin'
         let keyboard = s:vimim_toggle_pinyin(keyboard)
     endif
     if root =~# "directory"
