@@ -1547,7 +1547,7 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:vimim_custom_label > 0
             if keyboard !~# s:show_me_not
                 let fmt = '%2s'
-                if s:hjkl_l > 0 && &pumheight < 1 && s:has_cjk_file > 0
+                if s:hjkl_l > 0 && s:has_cjk_file > 0 && &pumheight < 1
                     let fmt = '%02s'
                 endif
                 let labeling = printf(fmt, s:vimim_get_labeling(label))
@@ -1939,7 +1939,6 @@ function! s:vimim_initialize_cjk_file()
     let s:cjk_self_file = 0
     let s:has_cjk_file = 0
     let s:has_cjk_self_file = 0
-    " --------------------------------- 
     let datafile = s:vimim_check_filereadable("vimim.txt")
     if !empty(datafile)
         let s:cjk_self_file = datafile
@@ -2156,9 +2155,9 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     call s:vimim_load_cjk_file()
     let grep = '^' . a_keyboard . '\>'
     let matched = match(s:cjk_lines, grep)
-    if s:hjkl_m > 0 
+    if s:hjkl_m > 0
         let keyboard = s:vimim_toggle_cjjp(a_keyboard)
-    elseif matched < 0 && s:has_cjk_file > 0 
+    elseif matched < 0 && s:has_cjk_file > 0
         let keyboard = s:vimim_toggle_pinyin(a_keyboard)
     endif
     let head = a_keyboard
@@ -2170,22 +2169,6 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
         let head = a_keyboard
     endif
     return head
-endfunction
-
-" -------------------------------------
-function! s:vimim_toggle_cjjp(keyboard)
-" -------------------------------------
-    let keyboard = a:keyboard
-    if s:hjkl_m > 0
-        if s:hjkl_m % 2 > 0
-            " set cjjp:   wyygm => w'y'y'g'm
-            let keyboard = join(split(keyboard,'\zs'),"'")
-        elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
-            " reset cjjp: w'y'y'g'm => wyygm
-            let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
-        endif
-    endif
-    return keyboard
 endfunction
 
 " ----------------------------------------
@@ -2361,6 +2344,29 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     endif
 endfunction
 
+" ----------------------------------------
+function! s:vimim_numberList() range abort
+" ----------------------------------------
+    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
+    while (a<=z)
+        if match(x,'^9*$')==0|let pre=pre . ' '|endif
+        call setline(z, pre . x . "\t" . getline(z))
+        let z=z-1|let x=x-1
+    endwhile
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_visual_ctrl_6_output(results)
+" ---------------------------------------------
+    let results = a:results
+    let line = line(".")
+    call setline(line, results)
+    let new_positions = getpos(".")
+    let new_positions[1] = line + len(results) - 1
+    let new_positions[2] = len(get(split(get(results,-1)),0))+1
+    call setpos(".", new_positions)
+endfunction
+
 " ---------------------------------------
 function! s:vimim_reverse_lookup(chinese)
 " ---------------------------------------
@@ -2406,29 +2412,6 @@ function! s:vimim_reverse_lookup(chinese)
     return results
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_visual_ctrl_6_output(results)
-" ---------------------------------------------
-    let results = a:results
-    let line = line(".")
-    call setline(line, results)
-    let new_positions = getpos(".")
-    let new_positions[1] = line + len(results) - 1
-    let new_positions[2] = len(get(split(get(results,-1)),0))+1
-    call setpos(".", new_positions)
-endfunction
-
-" ----------------------------------------
-function! s:vimim_numberList() range abort
-" ----------------------------------------
-    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
-    while (a<=z)
-        if match(x,'^9*$')==0|let pre=pre . ' '|endif
-        call setline(z, pre . x . "\t" . getline(z))
-        let z=z-1|let x=x-1
-    endwhile
-endfunction
-
 " ----------------------------------------------
 function! s:vimim_reverse_one_entry(chinese, im)
 " ----------------------------------------------
@@ -2444,7 +2427,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
         let head = ''
         if a:im == 'unicode'
             let head = printf('%x', ddddd)
-        elseif len(s:cjk_lines) >= 20902
+        elseif s:has_cjk_file > 0
             let values = split(s:cjk_lines[line])
             if a:im == 'digit'
                 let head = get(values, 1)
@@ -2562,7 +2545,7 @@ function! s:vimim_add_apostrophe(keyboard)
     \&& keyboard[-1:-1] != "'"
         let msg = "valid apostrophe is typed"
     else
-        let keyboard = s:vimim_quanpin_transform(a:keyboard)
+        let keyboard = s:vimim_quanpin_transform(keyboard)
     endif
     return keyboard
 endfunction
@@ -2590,6 +2573,20 @@ function! s:vimim_toggle_pinyin(keyboard)
         let keyboard = s:vimim_quanpin_transform(keyboard)
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
         " reset pinyin: wo.you.yi.ge.meng => woyouyigemeng
+        let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+    endif
+    return keyboard
+endfunction
+
+" -------------------------------------
+function! s:vimim_toggle_cjjp(keyboard)
+" -------------------------------------
+    let keyboard = a:keyboard
+    if s:hjkl_m % 2 > 0
+        " set cjjp:   wyygm => w'y'y'g'm
+        let keyboard = join(split(keyboard,'\zs'),"'")
+    elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
+        " reset cjjp: w'y'y'g'm => wyygm
         let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
     endif
     return keyboard
@@ -4780,9 +4777,6 @@ endfunction
 " ---------------------------------------
 function! s:vimim_reset_before_anything()
 " ---------------------------------------
-    let s:popupmenu_list = []
-    let s:matched_list = []
-    let s:keyboard_list = []
     let s:hjkl_l = 0
     let s:hjkl_m = 0
     let s:hjkl_n = 0
@@ -4790,17 +4784,20 @@ function! s:vimim_reset_before_anything()
     let s:pumvisible_ctrl_e = 0
     let s:pattern_not_found = 0
     let s:keyboard_shuangpin = 0
+    let s:popupmenu_list = []
+    let s:matched_list = []
+    let s:keyboard_list = []
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
+    let s:cjk_filter = ""
+    let s:cjk_has_match = 0
     let s:hjkl_h = 0
     let s:hjkl_x = 0
     let s:hjkl_pageup_pagedown = 0
-    let s:cjk_has_match = 0
-    let s:cjk_filter = ""
     let s:no_internet_connection = 0
     let s:pumvisible_yes = 0
     return ""
@@ -5134,8 +5131,8 @@ else
         endif
     endif
 
-    " [apostrophe] apostrophe is not 2nd class citizen
-    " ------------------------------------------------
+    " [apostrophe] apostrophe is not the 2nd class citizen
+    " ----------------------------------------------------
     if s:ui.has_dot == 2
         let keyboard = s:vimim_add_apostrophe(keyboard)
     endif
