@@ -3820,12 +3820,6 @@ function! s:vimim_sentence_match_directory(keyboard)
     if filereadable(filename)
         return keyboard
     endif
-    " no more action if it is cjjp
-    let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-    if len(keyboard) == len(pinyins)
-        return keyboard
-    endif
-    " ----------------------------------------------
     let max = len(keyboard)
     "  i.have.a.dream works in this algorithm
     while max > 1
@@ -4561,7 +4555,7 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------- todo
     if isdirectory("/home/xma")
         let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
