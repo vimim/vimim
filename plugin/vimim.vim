@@ -1491,6 +1491,9 @@ function! s:vimim_popupmenu_list(matched_list)
     let label = 1
     let s:popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
+    if s:hjkl_m > 0 && s:hjkl_m%2 > 0 && s:ui.im == 'pinyin'
+        let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+    endif
     let keyboard_head = get(s:keyboard_list,0)
     " -------------------------
     for chinese in matched_list
