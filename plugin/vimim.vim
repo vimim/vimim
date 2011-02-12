@@ -925,18 +925,6 @@ function! g:vimim_esc()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
-" ------------------------------------
-function! g:vimim_pumvisible_to_clip()
-" ------------------------------------
-    let chinese = s:vimim_popup_word()
-    if !empty(chinese)
-        if has("gui_running") && has("win32")
-            let @+ = chinese
-        endif
-    endif
-    return g:vimim_esc()
-endfunction
-
 " ---------------------------------
 function! g:vimim_pumvisible_dump()
 " ---------------------------------
@@ -4555,7 +4543,7 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
+" ----------------------------------
     if isdirectory("/home/xma")
         let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
@@ -4829,9 +4817,21 @@ function! g:vimim_nonstop_after_insert()
         else
             let s:keyboard_shuangpin = 0
         endif
+        call s:vimim_pumvisible_to_clip()
         call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" ------------------------------------
+function! s:vimim_pumvisible_to_clip()
+" ------------------------------------
+    let chinese = s:vimim_popup_word()
+    if !empty(chinese)
+        if has("gui_running") && has("win32")
+            let @+ = chinese
+        endif
+    endif
 endfunction
 
 " -----------------
@@ -5187,7 +5187,6 @@ else
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
     endif
-
 
     " [seamless] for OneKeyNonStop and seamless English input
     " -------------------------------------------------------
