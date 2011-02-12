@@ -475,7 +475,6 @@ function! s:vimim_egg_vimim()
         let ciku = database
         if s:ui.root == 'directory'
             let ciku .= s:vimim_chinese('directory') . ciku
-            let option .= "/"
         endif
         let option = ciku . option
         call add(eggs, option)
@@ -1835,7 +1834,7 @@ function! s:vimim_dictionary_quantifiers()
     let s:quantifiers['a'] = '秒'
     let s:quantifiers['b'] = '百佰步把包杯本笔部班'
     let s:quantifiers['c'] = '厘次餐场串处床'
-    let s:quantifiers['d'] = '第度点袋道滴碟顶栋堆对朵堵顿'
+    let s:quantifiers['d'] = '日第度点袋道滴碟顶栋堆对朵堵顿'
     let s:quantifiers['e'] = '亿'
     let s:quantifiers['f'] = '分份发封付副幅峰方服'
     let s:quantifiers['g'] = '个根股管'
@@ -1844,7 +1843,7 @@ function! s:vimim_dictionary_quantifiers()
     let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
     let s:quantifiers['k'] = '克口块棵颗捆孔'
     let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
-    let s:quantifiers['m'] = '米名枚面门秒'
+    let s:quantifiers['m'] = '月米名枚面门秒'
     let s:quantifiers['n'] = '年'
     let s:quantifiers['o'] = '度'
     let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
@@ -1855,7 +1854,7 @@ function! s:vimim_dictionary_quantifiers()
     let s:quantifiers['u'] = '微'
     let s:quantifiers['w'] = '万位味碗窝'
     let s:quantifiers['x'] = '升席些项'
-    let s:quantifiers['y'] = '月亿叶'
+    let s:quantifiers['y'] = '年亿叶月'
     let s:quantifiers['z'] = '种只张株支枝盏座阵桩尊则站幢宗兆'
 endfunction
 
@@ -2237,7 +2236,7 @@ function! s:vimim_match_cjk_file(keyboard)
         let values = split(s:cjk_lines[line])
         let frequency_index = get(values, -1)
         if frequency_index =~ '\l'
-            let frequency_index = 1
+            let frequency_index = 21003
         endif
         let chinese = get(values,0) . ' ' . frequency_index
         call add(results, chinese)
@@ -2282,9 +2281,9 @@ function s:vimim_compare_last_field(line1, line2)
     let line1 = get(split(a:line1),-1) + 1
     let line2 = get(split(a:line2),-1) + 1
     if line1 < line2
-        return 1
-    elseif line1 > line2
         return -1
+    elseif line1 > line2
+        return 1
     else
         return 0
     endif
