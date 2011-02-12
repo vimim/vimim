@@ -2047,7 +2047,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         endif
     elseif len(keyboard) == 1
         let keyboard_head = keyboard
-    elseif s:has_cjk_file > 0 || s:ui.im == 'pinyin'
+    elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
             let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
             if !empty(keyboard_head)
@@ -2160,6 +2160,7 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     elseif matched < 0 && s:has_cjk_file > 0
         let keyboard = s:vimim_toggle_pinyin(a_keyboard)
     endif
+    " ----------------------------------------
     let head = a_keyboard
     let partition = match(keyboard, "[.']")
     if partition > -1
@@ -2262,9 +2263,7 @@ endfunction
 " -----------------------------------------------
 function s:vimim_compare_last_field(line1, line2)
 " -----------------------------------------------
-" m => 马 <= 马 1 <= '马馬 7712 ma3 260992'
-" 12041 chinese frequency list based on a 45-million character corpus
-" http://lingua.mtsu.edu/chinese-computing/statistics/
+    " m => 马 <= 马 259 <=  马馬 7712 ma3 259
     let line1 = get(split(a:line1),-1) + 1
     let line2 = get(split(a:line2),-1) + 1
     if line1 < line2
@@ -2303,15 +2302,13 @@ endfunction
 " -----------------------------------------------------------
 function! s:vimim_get_keyboard_head_list(keyboard, partition)
 " -----------------------------------------------------------
-    let keyboard = a:keyboard
-    let partition = a:partition
-    if partition < 0
+    if a:partition < 0
         let s:keyboard_list = []
-        return keyboard
+        return a:keyboard
     endif
     let keyboards = []
-    let head = keyboard[0 : partition-1]
-    let tail  = keyboard[partition : -1]
+    let head = a:keyboard[0 : a:partition-1]
+    let tail  = a:keyboard[a:partition : -1]
     call add(keyboards, head)
     if !empty(tail)
         call add(keyboards, tail)
@@ -2398,16 +2395,15 @@ function! s:vimim_reverse_lookup(chinese)
             let result_cjjp .= " ".chinese
         endif
     endif
+    let results_digit = s:vimim_reverse_one_entry(chinese, 'digit')
+    if !empty(results_digit)
+        call extend(results, results_digit)
+    endif
     if !empty(results_pinyin)
         call extend(results, results_pinyin)
         if result_cjjp =~ '\a'
             call add(results, result_cjjp)
         endif
-    endif
-    " -----------------------------------
-    let results_digit = s:vimim_reverse_one_entry(chinese, 'digit')
-    if !empty(results_digit)
-        call extend(results, results_digit)
     endif
     return results
 endfunction
@@ -2417,7 +2413,6 @@ function! s:vimim_reverse_one_entry(chinese, im)
 " ----------------------------------------------
     let headers = []  "|  ma3 li4
     let bodies = []   "|  马  力
-    let head = ''
     for chinese in split(a:chinese, '\zs')
         let ddddd = char2nr(chinese)
         let line = ddddd - 19968
@@ -2439,7 +2434,7 @@ function! s:vimim_reverse_one_entry(chinese, im)
             continue
         endif
         call add(headers, head)
-        let spaces = ""
+        let spaces = ''
         let number_of_space = len(head)-2
         if number_of_space > 0
             let space = ' '
