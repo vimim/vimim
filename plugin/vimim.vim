@@ -2195,7 +2195,7 @@ function! s:vimim_match_cjk_file(keyboard)
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[12345]\>' && empty(len(s:cjk_filter))
             " [sample] pinyin with tone: ma3
-            let grep = '\s' . keyboard . '\D\='
+            let grep = '\s\+\d\d\d\d\s' . keyboard . '\D\='
         else
             let digit = 0
             let alpha = ""
@@ -2236,7 +2236,7 @@ function! s:vimim_match_cjk_file(keyboard)
         let values = split(s:cjk_lines[line])
         let frequency_index = get(values, -1)
         if frequency_index =~ '\l'
-            let frequency_index = 21003
+            let frequency_index = 9999
         endif
         let chinese = get(values,0) . ' ' . frequency_index
         call add(results, chinese)
