@@ -2389,8 +2389,12 @@ function! s:vimim_reverse_lookup(chinese)
         endif
     endif
     let results_digit = s:vimim_reverse_one_entry(chinese, 'digit')
-    if !empty(results_digit)   |" 马力 => 7712 4002
+    if !empty(results_digit)
         call extend(results, results_digit)
+    endif
+    let results_wubi = s:vimim_reverse_one_entry(chinese, 'wubi')
+    if !empty(results_wubi)
+        call extend(results, results_wubi)
     endif
     if !empty(results_pinyin)
         call extend(results, results_pinyin)
@@ -2441,10 +2445,12 @@ function! s:vimim_reverse_one_entry(chinese, im)
             let head = printf('%x', ddddd)
         elseif len(s:cjk_lines) >= 20902
             let values = split(s:cjk_lines[line])
-            if a:im == 'digit'
+            if a:im == 'wubi'
                 let head = get(values, 1)
-            elseif a:im == 'pinyin'
+            elseif a:im == 'digit'
                 let head = get(values, 2)
+            elseif a:im == 'pinyin'
+                let head = get(values, 3)
             endif
         endif
         if empty(head)
@@ -3315,12 +3321,10 @@ function! s:vimim_cjk_property_display(ddddd)
         let chinese = nr2char( a:ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        if empty(digit) && empty(pinyin)
-            let msg = "no need to print out sparse matrix"
-        else
-            let unicode .= s:space . digit
-            let unicode .= s:space . pinyin
-        endif
+        let wubi = get(s:vimim_reverse_one_entry(chinese,'wubi'),0)
+        let unicode .= s:space . digit
+        let unicode .= s:space . pinyin
+        let unicode .= s:space . wubi
     endif
     return unicode
 endfunction
