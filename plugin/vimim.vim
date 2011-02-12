@@ -2168,10 +2168,9 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     let grep = '^' . a_keyboard . '\>'
     let matched = match(s:cjk_lines, grep)
     let head = a_keyboard
-    if matched < 0
-        if a_keyboard =~ "[.']"
-            let msg = "i.have.a.dream"
-        elseif s:has_cjk_file > 1
+    "  i.have.a.dream works in this algorithm
+    if matched < 0 || a_keyboard =~ "[.']"
+        if s:has_cjk_file > 1
             let msg = "woyouyigemeng"
             let keyboard = s:vimim_quanpin_transform(a_keyboard)
         endif
