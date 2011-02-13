@@ -1862,7 +1862,7 @@ function! s:vimim_imode_number(keyboard, prefix)
         return []
     endif
     let keyboard = a:keyboard
-    if strpart(keyboard,0,2) ==# 'ii'
+    if keyboard[0:1] ==# 'ii'
         let keyboard = 'I' . strpart(keyboard,2)
     endif
     let ii_keyboard = keyboard
@@ -2067,15 +2067,16 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_cjk_sentence_4corner(keyboard)
 " ----------------------------------------------
-    " output is '6021' for input "6021272260201762"
+    " output is '6021' for input "6021272260001762"
     let keyboard = a:keyboard
+    let block = 4
     if len(keyboard) < 5
-        let s:keyboard_list = []
         return keyboard
-    elseif len(keyboard) % 4 < 1
-        let delimiter = match(keyboard, '^\d\d\d\d')
+    elseif len(keyboard) % block < 1
+        let pattern = '^\d\{' . block . '}'
+        let delimiter = match(keyboard, pattern)
         if delimiter > -1
-            return s:vimim_get_keyboard_head_list(keyboard, 4)
+            return s:vimim_get_keyboard_head_list(keyboard, block)
         endif
     endif
 endfunction
@@ -2194,8 +2195,6 @@ function! s:vimim_match_cjk_file(keyboard)
                     let s:cjk_filter = ""
                 endif
             elseif keyboard =~ '^\l\+\d\+'
-                " [sample] free-style input/search: ma7 ma77 ma771 ma7712"
-                " on line 81 using le72 yue72: 乐樂 7290 le4yue4 113092
                 let digit = substitute(keyboard,'\a','','g')
                 let alpha = substitute(keyboard,'\d','','g')
             endif
@@ -2204,6 +2203,8 @@ function! s:vimim_match_cjk_file(keyboard)
                 let grep  = '\s' . digit
                 let grep .= '\d\{' . space . '}\s'
                 let grep .= '\(\l\+\d\)\=' . alpha
+                " [sample] free-style input/search: ma7 ma77 ma771 ma7712"
+                " on line 81 using le72 yue72: 乐樂 7290 le4yue4 113092
             endif
         endif
     elseif keyboard =~ '^\l\>' && len(keyboard) == 1
@@ -2212,10 +2213,18 @@ function! s:vimim_match_cjk_file(keyboard)
             return s:cjk_az_cache[keyboard]
         endif
         " [sample] one-char-list by frequency y 72 l 72
-        let grep = '[ 0-9]' . keyboard . '\w\+\s\d\+$'
+        let grep  = '[ 0-9]' . keyboard . '\w\+\s\d\+$'
+        if s:has_cjk_file > 1 || s:ui.im == 'pinyin'
+            "  我 2355 wo3 i 16
+            let grep .= '\|\s' . keyboard . '\W\='
+        endif
     elseif keyboard =~ '^\l'
         " [sample] multiple-char-list by frequency ma
-        let grep = '\s\d\d\d\d\s' . keyboard . '\d'
+        let grep  = '\s\d\d\d\d\s' . keyboard . '\d'
+        if s:has_cjk_file > 1 || s:ui.im == 'pinyin'
+            "  /ma3 /horse for 马馬 7712 ma3 horse 259
+            let grep .= '\|\s' . keyboard . '\W\='
+        endif
     else
         return []
     endif
@@ -2243,21 +2252,24 @@ function! s:vimim_match_cjk_file(keyboard)
         endif
     endif
     " ------------------------------------------------------
+    let grep = '\|\s' . keyboard . '\W\='
+    let line = match(s:cjk_lines, grep)
+    if line > -1 && len(results) > 0
+        " english like 'color' is found
+        let s:cjk_results = copy(results)
+    endif
+    " ------------------------------------------------------
     if s:has_cjk_self_file > 0 && keyboard =~ '^\l\+'
         let grep = '^' . keyboard . '\>'
         let matched = match(s:cjk_lines, grep)
         if matched < 0
-            let msg = "no more scan for: 'dream 梦 梦想' "
+            let msg = "no more scan for: 'dream 梦想' "
         else
             let s:cjk_has_match = 2
             let line = s:cjk_lines[matched]
             let values = split(line)[1:]
-            call extend(results, values, 0)
-            let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-            if len(keyboard) == len(pinyins)
-                " most likely cjjp instead of english is typed
-                let s:cjk_results = copy(results)
-            endif
+            call extend(results, values)
+            let s:cjk_results = copy(results)
         endif
     endif
     return results
@@ -3532,6 +3544,10 @@ function! s:vimim_sentence_match_cache(keyboard)
     let results = s:vimim_get_data_from_cache(keyboard)
     if !empty(results)
         return keyboard
+    elseif empty(s:cjk_results)
+        let msg = "scan cache when no english found in cjk"
+    else
+        return 0
     endif
     let im = s:ui.im
     let max = len(keyboard)
@@ -3565,6 +3581,10 @@ function! s:vimim_sentence_match_datafile(keyboard)
     let match_start = match(lines, pattern)
     if match_start > -1
         return keyboard
+    elseif empty(s:cjk_results)
+        let msg = "scan datafile when no english found in cjk"
+    else
+        return 0
     endif
     let max = len(keyboard)
     " wo'you'yige'meng works in this algorithm
@@ -3809,6 +3829,10 @@ function! s:vimim_sentence_match_directory(keyboard)
     let filename = s:vimim_data_directory . keyboard
     if filereadable(filename)
         return keyboard
+    elseif empty(s:cjk_results)
+        let msg = "scan directory database when no english found in cjk"
+    else
+        return 0
     endif
     let max = len(keyboard)
     "  i.have.a.dream works in this algorithm
