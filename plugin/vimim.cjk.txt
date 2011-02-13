@@ -110,7 +110,7 @@
 乭   1071 shi2
 乮   7771 korean
 乯   1071 korean
-买買 1780 mai3 659
+买買 1780 mai3 buy 659
 乱亂 2261 luan4 627
 乲   3771 korean
 乳   2241 ru3 breast 2138
@@ -184,7 +184,7 @@
 亷   0023 lian2
 亸嚲 0845 duo3
 亹   0010 wei3men2
-人   8000 ren2 man 9
+人   8000 ren2 man person 9
 亻   2020 ren2
 亼   8010 ji2
 亽   8030 ji1
@@ -212,7 +212,7 @@
 仓倉 8071 cang1 1777
 仔   2724 zi3zai3 1573
 仕   2421 shi4 2763
-他   2421 ta1 35
+他   2421 ta1 him he 35
 仗   2520 zhang4 1953
 付   2420 fu4 863
 仙   2227 xian1 1233
@@ -541,7 +541,7 @@
 倜   2722 ti4 4308
 倝   4840 gan4
 倞   2029 jing4liang4
-借   2426 jie4 907
+借   2426 jie4 borrow 907
 倠   2021 sui1
 倡   2626 chang4chang1 2502
 倢   1528 jie2
@@ -881,7 +881,7 @@
 兰蘭 8010 lan2 641
 共   4480 gong4gong1 461
 兲   1080 tian1
-关關 8080 guan1 129
+关關 8080 guan1 close shut 129
 兴興 9080 xing1xing4 380
 兵   7280 bing1 587
 其   4480 qi2ji1 74
@@ -891,7 +891,7 @@
 兺   8061 bun1
 养養 8022 yang3 704
 兼   8023 jian1 1405
-兽獸 8060 shou4 1987
+兽獸 8060 shou4 beast 1987
 兾   8080 ji4
 兿   8073 yi4
 冀   1280 ji4 2701
@@ -1014,7 +1014,7 @@
 凵   2277 qu1
 凶   2277 xiong1 1559
 凷   2277 kuai4
-凸   7777 tu1 2774
+凸   7777 tu1 convex 2774
 凹   7777 ao1wa1 2822
 出   2277 chu1 out 18
 击擊 5077 ji1 stroke 658
@@ -1045,7 +1045,7 @@
 刔   5280 jue2
 刕   1722 li2
 刖   7220 yue4
-列   1220 lie4 671
+列   1220 lie4 column 671
 刘劉 0240 liu2 753
 则則 7280 ze2 255
 刚剛 7220 gang1 478
@@ -1080,7 +1080,7 @@
 刷   7220 shua1shua4 1756
 券   9022 quan4 2290
 刹剎 4290 cha4sha1 2155
-刺   5290 ci4qi4 sting 1080
+刺   5290 ci4qi4 sting thorn 1080
 刻   0280 ke4 454
 刼   4772 jie2
 刽劊 8270 gui4 4222
@@ -1089,7 +1089,7 @@
 剀剴 2270 kai3
 剁   7290 duo4 4163
 剂劑 0220 ji4 2424
-剃   8220 ti4 3610
+剃   8220 ti4 shave 3610
 剄刭 1210 jing3
 剅   1210 lou2
 剆   3270 gen1
@@ -1182,7 +1182,7 @@
 劝勸 7442 quan4 1432
 办辦 4033 ban4 326
 功   1412 gong1 power 353
-加   4600 jia1 add 186
+加   4600 jia1 add plus 186
 务務 2742 wu4 422
 劢勱 1422 mai4
 劣   9042 lie4 1871
@@ -1398,7 +1398,7 @@
 卵   7772 luan3 2879
 卶   2722 shi4
 卷   9071 juan4quan2 volume 953
-卸   8712 xie4 2330
+卸   8712 xie4 discharge 2330
 卹   2712 xu4
 卺   1771 jin3
 卻却 8762 que4
@@ -1411,7 +1411,7 @@
 厂廠 7120 chang3han4an1 1151
 厃   2720 zhan1
 厄   7121 e4 2623
-厅廳 7122 ting1 977
+厅廳 7122 ting1 lobby 977
 历曆 7122 li4 598
 厇   7121 zhe2
 厈   7124 han3an4
@@ -1479,7 +1479,7 @@
 叆   1274 ai4
 叇   1573 dai4
 又   7740 you4 again 125
-叉   7740 cha1cha2cha3 1889
+叉   7740 cha1cha2cha3 fork 1889
 及   1724 ji2 210
 友   4040 you3 401
 双雙 7744 shuang1 pair 350
@@ -1574,7 +1574,7 @@
 吥   6109 bu4
 否   1060 fou3pi3 639
 吧   6701 ba1ba5 773
-吨噸 6501 dun1 2744
+吨噸 6501 dun1 ton 2744
 吩   6802 fen1 2598
 吪   6401 e2hua1
 含   8060 han2 856
@@ -1743,7 +1743,7 @@
 哎   6404 ai1 2729
 哏   6703 hen3gen2
 哐   6101 kuang1
-哑啞 6101 ya3ya1e4 2067
+哑啞 6101 ya3ya1e4 dumb 2067
 哒噠 6403 da1 4352
 哓嘵 6501 xiao1
 哔嗶 6204 bi4
@@ -1858,7 +1858,7 @@
 啁   6702 zhou1zhao1
 啂   6201 nou4
 啃   6102 ken3 3286
-啄   6103 zhuo2zhou4 3342
+啄   6103 zhuo2zhou4 peck 3342
 啅   6104 zhuo2
 商   0022 shang1 425
 啇   0022 di2
@@ -2382,7 +2382,7 @@
 坍   4714 tan1 3806
 坎   4718 kan3 2499
 坏壞 4119 huai4pi1pei2 bad 832
-坐   8810 zuo4 439
+坐   8810 zuo4 sit 439
 坑   4011 keng1 2366
 坒   2210 bi4
 坓   4410 xing2
@@ -2853,10 +2853,10 @@
 夤   2780 yin2
 夥   6792 huo3 4706
 夦   4772 chen3
-大   4080 da4dai4tai4 13
+大   4080 da4dai4tai4 big 13
 夨   2080 ce4
 天   1080 tian1 sky 86
-太   4003 tai4 237
+太   4003 tai4 too 237
 夫   5080 fu1fu2 333
 夬   5080 guai4
 夭   2080 yao1 2705
@@ -2901,7 +2901,7 @@
 奔   4044 ben1ben4 1089
 奕   0080 yi4 2942
 奖奬 3780 jiang3 1460
-套   4073 tao4 846
+套   4073 tao4 kit 846
 奘   2480 zang4zhuang3
 奙   2371 ben3
 奚   2080 xi1xi2 2968
@@ -2935,7 +2935,7 @@
 奶   4742 nai3 1115
 奷   4244 qian1
 奸姦 4144 jian1 2082
-她   4441 ta1 her 322
+她   4441 ta1 she 322
 奺   4748 jiu3
 奻   4444 nan2
 奼姹 4241 cha4
@@ -3457,7 +3457,7 @@
 宀   3032 mian2
 宁寧 3020 ning2 870
 宂   3021 rong3
-它   3071 ta1tuo1 281
+它   3071 ta1tuo1 it 281
 宄   3041 gui3
 宅   3071 zhai2 1581
 宆   3002 qiong2
@@ -3497,7 +3497,7 @@
 宨   3011 tiao3
 宩   3090 shi3
 宪憲 3021 xian4 2212
-宫宮 3060 gong1 917
+宫宮 3060 gong1 palace 917
 宬   3025 cheng2
 宭   3060 qun2
 宮宫 3060 gong1
@@ -3508,7 +3508,7 @@
 害   3060 hai4he2 550
 宴   3040 yan4 1767
 宵   3022 xiao1 2738
-家   3023 jia1 house 47
+家   3023 jia1 house home family 47
 宷   3090 shen3
 宸   3023 chen2 4330
 容   3060 rong2 321
@@ -3588,7 +3588,7 @@
 尃   5334 fu1
 射   2420 she4yi4ye4 897
 尅   4421 ke4
-将將 3214 jiang1jiang4 93
+将將 3214 jiang1jiang4 will 93
 將将 2724 jiang1jiang4
 專专 5034 zhuan1
 尉   7420 wei4yu4 2117
@@ -3597,14 +3597,14 @@
 尌   4410 shu4
 對对 3410 dui4
 導导 3834 dao3dao4
-小   9000 xiao3 little 56
+小   9000 xiao3 little small 56
 尐   9030 ji1
 少   9020 shao3shao4 little 164
 尒   8090 er3
 尓   8090 er3
 尔爾 2790 er3 456
 尕   1790 ga3 4544
-尖   9080 jian1 1306
+尖   9080 jian1 sharp 1306
 尗   2190 shu2
 尘塵 9010 chen2 1422
 尙   9022 shang4chang2
@@ -3648,7 +3648,7 @@
 尿   7729 niao4sui1 2724
 局   7722 ju2 554
 屁   7721 pi4 2568
-层層 7723 ceng2 floor 702
+层層 7723 ceng2 floor layer 702
 屃屓 7728 xi4
 屄   7728 bi1 pussy
 居   7726 ju1 549
@@ -3676,7 +3676,7 @@
 屛   7724 ping2bing3
 屜屉 7721 ti4
 屝   7721 fei4
-属屬 7722 shu3zhu3 648
+属屬 7722 shu3zhu3 belong 648
 屟   7724 xie4
 屠   7726 tu2 2040
 屡屢 7724 lv3 2430
@@ -3737,7 +3737,7 @@
 岘峴 2771 xian4
 岙嶴 2077 ao4
 岚嵐 2221 lan2 2666
-岛島 2772 dao3 1342
+岛島 2772 dao3 island 1342
 岜   2271 ba1
 岝   2281 zuo4
 岞   2871 zuo4
@@ -3822,7 +3822,7 @@
 峭   2972 qiao4 3284
 峮   2776 qun1
 峯   2250 feng1
-峰   2775 feng1 1204
+峰   2775 feng1 peak 1204
 峱   4727 nao2
 峲   2292 li3
 峳   2224 you2
@@ -5135,7 +5135,7 @@
 戎   5340 rong2 3042
 戏戲 7345 xi4hu1 853
 成   5320 cheng2 51
-我   2355 wo3 i 16
+我   2355 wo3 i me 16
 戒   5340 jie4 1585
 戓   5360 ge1
 戔戋 5350 jian1
@@ -5239,7 +5239,7 @@
 扶   5508 fu2pu2 1217
 扷   5208 ao4
 扸   5202 xi1
-批   5201 pi1 932
+批   5201 pi1 batch 932
 扺   5204 zhi3
 扻   5708 zi4jie2zhi4
 扼   5101 e4 3119
@@ -5701,7 +5701,7 @@
 摄攝 5104 she4nie4 1636
 摅攄 5103 shu1
 摆擺 5603 bai3 980
-摇搖 5207 yao2 927
+摇搖 5207 yao2 shake 927
 摈擯 5308 bin4 4078
 摉   5302 sou1
 摊攤 5001 tan1 2036
@@ -5975,7 +5975,7 @@
 敖   4824 ao2ao4 3010
 敗败 6884 bai4
 敘叙 8894 xu4
-教   4844 jiao4jiao1 211
+教   4844 jiao4jiao1 teach 211
 敚   8824 duo2
 敛斂 8814 lian4lian3 2384
 敜   8834 nie4
@@ -6053,7 +6053,7 @@
 斤   7222 jin1 1774
 斥   7224 chi4 2018
 斦   7222 yin2
-斧   8022 fu3 2603
+斧   8022 fu3 axe 2603
 斨   2222 qiang1
 斩斬 4252 zhan3 2402
 斪   2262 qu2
@@ -6093,7 +6093,7 @@
 旌   0821 jing1 3717
 旍   0823 jing1
 旎   0821 ni3 4496
-族   0828 zu2 749
+族   0828 zu2 cluster 749
 旐   0821 zhao4
 旑   0422 yi3
 旒   0821 liu2
@@ -6119,7 +6119,7 @@
 旦   6010 dan4 1278
 旧舊 2600 jiu4 old 798
 旨   2260 zhi3 1695
-早   6040 zao3 383
+早   6040 zao3 early 383
 旪   6400 xie2
 旫   6702 tiao1
 旬   2762 xun2 2316
@@ -6189,7 +6189,7 @@
 昬   7760 hun1min3
 昭   6706 zhao1 1713
 昮   6012 zong4
-是   6080 shi4 3
+是   6080 shi4 is are 3
 昰   6010 shi4xia4
 昱   6010 yu4yi4 4091
 昲   6502 fei4
@@ -6398,7 +6398,7 @@
 曽   8060 ceng1
 曾   8060 ceng2zeng1 462
 替   5560 ti4 871
-最   6014 zui4 169
+最   6014 zui4 most 169
 朁   1160 can3
 朂   6042 xu4
 會会 8060 hui4kuai4
@@ -6407,7 +6407,7 @@
 朆   8762 fen1
 朇   8664 pi2
 月   7722 yue4 month 159
-有   4022 you3you4 have 7
+有   4022 you3you4 have has 7
 朊   7121 ruan3
 朋   7722 peng2 799
 朌   7822 ban1fen2
@@ -6477,7 +6477,7 @@
 杌   4191 wu4
 杍   4794 zi3
 李   4040 li3 360
-杏   4060 xing4 2339
+杏   4060 xing4 apricot 2339
 材   4490 cai2 984
 村   4490 cun1 725
 杒   4792 ren4
@@ -6499,7 +6499,7 @@
 杢   4010 jie2
 杣   4297 mian2
 杤   4192 wan4
-来來 5090 lai2 15
+来來 5090 lai2 come 15
 杦   4798 jiu3
 杧   4091 mang2
 杨楊 4792 yang2 811
@@ -6568,7 +6568,7 @@
 枧梘 4791 jian4jian3
 枨棖 4293 cheng2
 枩   4073 song1
-枪槍 4891 qiang1cheng1 1182
+枪槍 4891 qiang1cheng1 gun 1182
 枫楓 4791 feng1 2479
 枬   4794 nan2
 枭梟 2790 xiao1 3732
@@ -6671,7 +6671,7 @@
 栎櫟 4299 li4lao2yue4
 栏欄 4891 lan2lian4 1666
 栐   4399 yong3
-树樹 4490 shu4 508
+树樹 4490 shu4 tree 508
 栒   4792 xun2sun3
 栓   4891 shuan1 3488
 栔   5790 qi4
@@ -6711,7 +6711,7 @@
 栶   4690 yin1
 样樣 4895 yang4xiang4 122
 核   4098 he2hu2 1566
-根   4793 gen1 369
+根   4793 gen1 root 369
 栺   4296 zhi3
 栻   4394 shi4chi4
 格   4796 ge2ge1 396
@@ -6721,7 +6721,7 @@
 桀   2590 jie2 3857
 桁   4192 heng2hang2hang4
 桂   4491 gui4 1727
-桃   4291 tao2 1706
+桃   4291 tao2 peach 1706
 桄   4991 guang4guang1
 桅   4791 wei2 3896
 框   4191 kuang4kuang1 2303
@@ -7163,7 +7163,7 @@
 槺   4399 kang1
 槻   4691 gui1
 槼   5690 gui1
-槽   4596 cao2zao1 2749
+槽   4596 cao2zao1 slot 2749
 槾   4694 man2man4
 槿   4491 jin3qin2
 樀   4092 di4
@@ -7603,7 +7603,7 @@
 殲歼 1325 jian1
 殳   7740 shu1
 殴毆 7774 ou1 3291
-段   7744 duan4 paragraph 490
+段   7744 duan4 paragraph sector 490
 殶   0714 zhu4
 殷   2724 yin1 1788
 殸   4724 qing4
@@ -7632,9 +7632,9 @@
 每   8075 mei3 308
 毐   4055 ai3
 毑   7471 jie3
-毒   5075 du2dai4 885
+毒   5075 du2dai4 poison 885
 毓   8071 yu4 3568
-比   2271 bi3 197
+比   2271 bi3 than 197
 毕畢 2240 bi4 865
 毖   2233 bi4
 毗   6201 pi2 3592
@@ -7700,37 +7700,37 @@
 氓   0774 mang2meng2 3130
 气氣 8001 qi4 215
 氕   8021 pie1
-氖   8021 nai3 4953
+氖   8021 nai3 neon 4953
 気   8041 qi4
 氘   8021 dao1
-氙   8071 xian1
+氙   8071 xian1 xenon
 氚   8021 chuan1
 氛   8021 fen1 2043
 氜   8061 ri4
 氝   8021 nei4
 氞   8021 nei4
-氟   8051 fu2 3891
+氟   8051 fu2 fluorine 3891
 氠   8051 shen1
-氡   8031 dong1
-氢氫 8011 qing1 4046
+氡   8031 dong1 radon
+氢氫 8011 qing1 hydrogen 4046
 氣气 8091 qi4
 氤   8061 yin1yan2 4575
 氥   8061 xi1
-氦   8081 hai4 4804
-氧   8051 yang3 3472
+氦   8081 hai4 helium 4804
+氧   8051 yang3 oxygen 3472
 氨   8042 an1 3972
-氩氬 8011 ya4
-氪   8021 ke4
+氩氬 8011 ya4 argon
+氪   8021 ke4 krypton
 氫氢 8011 qing1
 氬氩 8011 ya4
 氭   8091 dong1
-氮   8081 dan4 3769
-氯   8091 lv4 4187
+氮   8081 dan4 nitrogen 3769
+氯   8091 lv4 chlorine 4187
 氰   8021 qing2 4736
 氱   8021 yang3
 氲氳 8011 yun1 4529
 氳氲 8011 yun1
-水   1290 shui3 167
+水   1290 shui3 water 167
 氵   3010 shui3 4684
 氶   1790 zheng3
 氷   3290 bing1
@@ -7772,13 +7772,13 @@
 汛   3711 xun4 3586
 汜   3711 si4
 汝   3414 ru3 2108
-汞   1029 gong3 4802
+汞   1029 gong3 mercury 4802
 江   3111 jiang1 451
-池   3411 chi2 1393
+池   3411 chi2 pond 1393
 污   3112 wu1 1491
 汢   3411 tu
 汣   3718 jiu3
-汤湯 3712 tang1shang1 1497
+汤湯 3712 tang1shang1 soup 1497
 汥   3414 zhi1
 汦   3214 chi2
 汧   3114 qian1
@@ -7831,7 +7831,7 @@
 沖冲 3510 chong1
 沗   1090 ong2pang1
 沘   3211 bi3
-沙   3912 sha1sha4 703
+沙   3912 sha1sha4 sand 703
 沚   3111 zhi3
 沛   3512 pei4 2609
 沜   3212 pan4
@@ -7855,7 +7855,7 @@
 沮   3711 ju3ju4 3148
 沯   1260 za2
 沰   3116 tuo1
-沱   3311 tuo2duo4chi2 4178
+沱   3311 tuo2 4178
 沲   3811 tuo2duo4
 河   3112 he2 river 619
 沴   3812 li4
@@ -7863,7 +7863,7 @@
 沶   3119 yi2
 沷   3314 fa1
 沸   3512 fei4fu2 2621
-油   3516 you2you4 956
+油   3516 you2 oil 956
 沺   3610 tian2
 治   3316 zhi4 479
 沼   3716 zhao3 3110
@@ -7957,7 +7957,7 @@
 洔   3414 zhi3
 洕   3812 yin1
 洖   3618 wu2
-洗   3411 xi3xian3 1043
+洗   3411 xi3xian3 wash 1043
 洘   3412 kao3
 洙   3519 zhu1 4752
 洚   3715 jiang4
@@ -8175,7 +8175,7 @@
 淮   3011 huai2 2151
 淯   3012 yu4
 淰   3813 nian3shen3
-深   3719 shen1 292
+深   3719 shen1 deep 292
 淲   3111 piao2
 淳   3014 chun2zhun1 2773
 淴   3713 wa4hu1
@@ -8317,7 +8317,7 @@
 湼   1711 nie4
 湽   1216 zi1
 湾灣 3012 wan1 bay 1595
-湿濕 3611 shi1 1778
+湿濕 3611 shi1 wet 1778
 満   3412 man3
 溁   3419 ying2
 溂   3210 la4
@@ -8334,7 +8334,7 @@
 溍   3116 jin4
 溎   3411 gui4
 溏   3016 tang2
-源   3119 yuan2 909
+源   3119 yuan2 source 909
 溑   3918 suo3
 溒   3413 yuan2
 溓   3813 lian2nian2lian3
@@ -8370,7 +8370,7 @@
 溱   3519 zhen1qin2
 溲   3714 sou1
 溳涢 3618 yun2
-溴   3618 xiu4
+溴   3618 xiu4 bromine
 溵   3714 yin1
 溶   3316 rong2 2560
 溷   3610 hun4hun2
@@ -8813,7 +8813,7 @@
 灬   3300 biao1hou3
 灭滅 1080 mie4 1274
 灮   9021 guang1
-灯燈 9182 deng1 873
+灯燈 9182 deng1 lamp 873
 灰   4080 hui1 grey 1277
 灱   9782 xiao1
 灲   9280 xiao1
@@ -9256,9 +9256,9 @@
 爧   9181 ling2
 爨   7780 cuan4
 爩   9482 yu4
-爪   7223 zhua3zhao3 2594
+爪   7223 zhua3zhao3 claw 2594
 爫   2090 zhao3zhua3
-爬   7723 pa2 1655
+爬   7723 pa2 crawl 1655
 爭争 2050 zheng1
 爮   7723 pao2
 爯   2044 cheng1
@@ -9466,7 +9466,7 @@
 狹狭 4428 xia2
 狺   4026 yin2
 狻   4324 suan1
-狼   4323 lang2 1886
+狼   4323 lang2 wolf 1886
 狽狈 4628 bei4
 狾   4222 zhi4
 狿   4224 yan2
@@ -9729,7 +9729,7 @@
 琀   1816 han2han4
 琁   1818 xuan2
 琂   1016 yan2
-球   1319 qiu2 962
+球   1319 qiu2 ball 962
 琄   1612 quan3juan1xuan4
 琅   1313 lang2lang4 3245
 理   1611 li3 98
@@ -9972,7 +9972,7 @@
 瓳   4161 hu2
 瓴   8121 ling2
 瓵   2161 yi2
-瓶   8141 ping2 jar 1462
+瓶   8141 ping2 jar bottle 1462
 瓷   3771 ci2 2578
 瓸   1171 bai3wa3
 瓹   6121 juan4
@@ -10747,7 +10747,7 @@
 矺   1261 tuo1
 矻   1861 ku4ku1wu4
 矼   1161 qiang1gang1kong4
-矽   1762 xi4xi1 4912
+矽硅 1762 xi4xi1 silicon 4912
 矾礬 1761 fan2 4340
 矿礦 1060 kuang4 2128
 砀碭 1762 dang4
@@ -10758,7 +10758,7 @@
 砅   1269 li4
 砆   1568 fu1
 砇   1064 min2
-砈   1161 nuo3
+砈砹 1161 nuo3 astatine
 砉   5060 huo4hua1xu1
 砊   1061 kang4kang1
 砋   1161 zhi3
@@ -10805,9 +10805,9 @@
 破   1464 po4 519
 砵   1464 bo1
 砶   1660 po4
-砷   1560 shen1 4251
+砷   1560 shen1 arsenic 4251
 砸   1161 za2 2508
-砹   1464 nuo3ai4
+砹砈 1464 nuo3ai4
 砺礪 1162 li4 4366
 砻礱 4360 long2
 砼   1861 tong2 4966
@@ -10819,7 +10819,7 @@
 硂   1861 quan2
 硃   1569 zhu1
 硄   1961 kuang1
-硅   1461 gui1huo4he4 3961
+硅矽 1461 gui1huo4he4 silicon 3961
 硆   1866 e4
 硇   1660 nao2
 硈   1466 jia2
@@ -10832,7 +10832,7 @@
 硏   1164 yan2
 硐   1762 tong2dong3dong4
 硑   1864 peng1
-硒   1166 xi1 4925
+硒   1166 xi1 4925 selenium
 硓   1461 lao3
 硔   1468 hong2
 硕碩 1168 shuo4shi2 2270
@@ -10857,8 +10857,8 @@
 硨砗 1560 che1
 硩   5260 che4
 硪   1365 e2wo4yi3
-硫   1061 liu2chu4 3710
-硬   1164 ying4geng3 941
+硫   1061 liu2chu4 sulphur 3710
+硬   1164 ying4geng3 stiff hard 941
 硭   1461 mang2
 确確 1762 que4 484
 硯砚 1661 yan4
@@ -10874,7 +10874,7 @@
 硹   1863 song1
 硺   1163 zhuo2
 硻   1760 keng1
-硼   1762 peng2peng1
+硼   1762 peng2peng1 boron
 硽   1461 yan3
 硾   1261 zhui4
 硿   1361 kong1
@@ -10902,7 +10902,7 @@
 碕   1462 qi2
 碖   1862 lun4
 碗   1361 wan3 1823
-碘   1568 dian3 4077
+碘   1568 dian3 iodine 4077
 碙   1762 gang1
 碚   1066 bei4pei2
 碛磧 1568 qi4
@@ -10928,8 +10928,8 @@
 碯   1266 nao3
 碰   1861 peng4 1291
 碱鹼 1365 jian3xian2 3931
-碲   1062 di4
-碳   1268 tan4 3978
+碲   1062 di4 tellurium
+碳   1268 tan4 carbon 3978
 碴   1961 cha2cha1 4463
 碵   1168 tian2
 碶   1768 qi4
@@ -10943,7 +10943,7 @@
 碾   1763 nian3 grind 3788
 碿   1762 su4
 磀   1863 e2
-磁   1863 ci2 2157
+磁   1863 ci2 magnet 2157
 磂   1766 liu4
 磃   1261 si1
 磄   1066 tang2
@@ -10997,7 +10997,7 @@
 磴   1261 deng4deng1
 磵   1762 jian4
 磶   1762 xi4
-磷   1965 lin2 3391
+磷   1965 lin2 phosphorus 3391
 磸   1868 ding4
 磹   1164 dian4
 磺   1468 huang2 4558
@@ -11201,7 +11201,7 @@
 秀   2022 xiu4 743
 私   2293 si1 908
 秂   2080 ren2
-秃禿 2021 tu1 2547
+秃禿 2021 tu1 bald 2547
 秄   2794 zi3
 秅   2291 cha2
 秆稈 2194 gan3 4201
@@ -11486,7 +11486,7 @@
 竝   0011 bing4bang4
 竞競 0021 jing4 1384
 竟   0021 jing4 583
-章   0040 zhang1zhang4 610
+章   0040 zhang1zhang4 chapter 610
 竡   0116 bai3
 竢   0318 si4
 竣   0314 jun4 3665
@@ -11679,7 +11679,7 @@
 箞   8871 quan1
 箟   8871 jun4
 箠   8810 chui2
-管   8877 guan3 tube 200
+管   8877 guan3 tube pipe 200
 箢   8821 yuan1wan3
 箣   8892 ce4
 箤   8840 ju2
@@ -11988,7 +11988,7 @@
 糓   4794 gu3
 糔   9793 xiu3xiu1
 糕   9893 gao1 cake 2457
-糖   9096 tang2 sweet 2214
+糖   9096 tang2 sugar 2214
 糗   9698 qiu3
 糘   9393 jia1
 糙   9493 cao1 3115
@@ -12391,7 +12391,7 @@
 繦   2693 qiang3jiang3
 繧   2193 wen2
 繨   2493 da2da5
-繩绳 2791 sheng2min3ying4sheng4
+繩绳 2791 sheng2
 繪绘 2896 hui4gui4
 繫系 5790 xi4ji4
 繬   2496 se4
@@ -12470,14 +12470,14 @@
 纵縱 2810 zong4zong3 1173
 纶綸 2811 lun2guan1 3356
 纷紛 2812 fen1 1041
-纸紙 2214 zhi3 866
+纸紙 2214 zhi3 paper 866
 纹紋 2014 wen2 1859
 纺紡 2012 fang3 2686
 纻紵 2311 zhu4
 纼紖 2210 yin3zhen4
 纽紐 2711 niu3 2253
 纾紓 2712 shu1 4640
-线綫 2315 xian4 line 522
+线綫 2315 xian4 line thread 522
 绀紺 2417 gan4
 绁紲 2411 xie4yi4
 绂紱 2314 fu2
@@ -12485,7 +12485,7 @@
 组組 2711 zu3 842
 绅紳 2510 shen1 2653
 细細 2610 xi4 fine 538
-织織 2618 zhi1zhi4 915
+织織 2618 zhi1zhi4 weave 915
 终終 2713 zhong1 408
 绉縐 2717 zhou4 4202
 绊絆 2915 ban4 3006
@@ -12497,7 +12497,7 @@
 绐紿 2316 dai4
 绑綁 2712 bang3 fasten 2064
 绒絨 2315 rong2 2618
-结結 2416 jie2jie1 203
+结結 2416 jie2jie1 junction 203
 绔絝 2412 ku4 4940
 绕繞 2511 rao4rao3 1282
 绖絰 2111 die2
@@ -12529,7 +12529,7 @@
 绰綽 2114 chuo4chao1 2848
 绱緔 2912 zhang3
 绲緄 2611 gun3
-绳繩 2611 sheng2min3ying4 1851
+绳繩 2611 sheng2 rope string 1851
 维維 2011 wei2 694
 绵綿 2612 mian2 2066
 绶綬 2214 shou4 4288
@@ -12571,7 +12571,7 @@
 缚縛 2314 fu2 2486
 缛縟 2114 ru4
 缜縝 2418 zhen1zhen3 4194
-缝縫 2713 feng2feng4 1784
+缝縫 2713 feng2feng4 sew 1784
 缞縗 2013 shuai1cui1
 缟縞 2012 gao3
 缠纏 2011 chan2 1828
@@ -12623,7 +12623,7 @@
 罎   8673 tan2
 罏   8171 lu2
 罐   8471 guan4 2505
-网網 7722 wang3 935
+网網 7722 wang3 net mesh 935
 罒   6000 wang3
 罓   7722 gang1
 罔   7722 wang3wang2 3716
@@ -12680,7 +12680,7 @@
 羇   6052 ji1
 羈羁 6052 ji1
 羉   6099 luan2
-羊   8050 yang2 1500
+羊   8050 yang2 sheep 1500
 羋芈 1150 mi3mie1
 羌   8021 qiang1 3892
 羍   4050 ta4da2
@@ -12706,7 +12706,7 @@
 羡   8018 xian4yi2yan2 2512
 羢   8355 rong2
 羣   1750 qun2
-群   1865 qun2 481
+群   1865 qun2 flock 481
 羥羟 8151 qiang3qian1
 羦   8351 huan2
 羧   8354 suo1zui1
@@ -12873,7 +12873,7 @@
 聈   1442 you3
 聉   1242 wa1
 聊   1742 liao2liu2 1624
-聋聾 4340 long2 2835
+聋聾 4340 long2 deaf 2835
 职職 1648 zhi2 744
 聍聹 1342 ning2ning3
 聎   1341 tiao1
@@ -12935,7 +12935,7 @@
 肆   7570 si4ti4 four 2363
 肇   3850 zhao4 2974
 肈   3350 zhao4
-肉   4022 rou4ru4 967
+肉   4022 rou4ru4 meat 967
 肊   7721 yi4
 肋   7422 lei4le4 3235
 肌   7721 ji1 2172
@@ -13166,7 +13166,7 @@
 腭齶 7622 e4
 腮   7623 sai1 3300
 腯   7226 tu2
-腰   7124 yao1 1373
+腰   7124 yao1 waist 1373
 腱   7524 jian4qian2
 腲   7623 wei3
 腳脚 7722 jiao3
@@ -13181,7 +13181,7 @@
 腼靦 7126 mian3 4070
 腽膃 7621 wa4
 腾騰 7922 teng2 1343
-腿   7723 tui3 1305
+腿   7723 tui3 leg 1305
 膀   7022 bang3 2140
 膁   7823 qian1lian2
 膂   0822 lv3
@@ -13248,7 +13248,7 @@
 膿脓 7523 nong2
 臀   7722 tun2 3615
 臁   7023 lian2
-臂   7022 bi4bei5bei4 1378
+臂   7022 bi4bei5bei4 arm 1378
 臃   7021 yong3yong1 4134
 臄   7123 jue2
 臅   7622 chu4
@@ -13367,7 +13367,7 @@
 舶   2640 bo2 3331
 舷   2043 xian2 3859
 舸   2142 ge3 4552
-船   2846 chuan2 boat 721
+船   2846 chuan2 boat ship 721
 舺   2645 xia2jia2jia3
 舻艫 2140 lu3lu2
 舼   2448 hong2
@@ -14455,14 +14455,14 @@
 虶   5114 yu1
 虷   5114 gan1han2
 虸   5714 zi3
-虹   5111 hong2 1927
+虹   5111 hong2 rainbow 1927
 虺   1521 hui3hui1
 虻   5011 meng2 4881
 虼   5811 ge4
 虽雖 6013 sui1 414
 虾蝦 5113 xia1ha2 3016
 虿蠆 1013 chai4
-蚀蝕 2573 shi2 2503
+蚀蝕 2573 shi2 eclipse 2503
 蚁蟻 5410 yi3 2739
 蚂螞 5712 ma3ma1ma4 3029
 蚃   2013 xiang3
@@ -14533,7 +14533,7 @@
 蛄   5416 gu1
 蛅   5116 zhan1
 蛆   5711 qu1ju1 4429
-蛇   5311 she2yi2 1793
+蛇   5311 she2yi2 snake 1793
 蛈   5518 tie4
 蛉   5813 ling2
 蛊蠱 5010 gu3 3720
@@ -14933,7 +14933,7 @@
 衔銜 2122 xian2 2301
 衕同 2122 tong4dong4
 衖   2122 long4
-街   2122 jie1 924
+街   2122 jie1 street 924
 衘   2122 xian2yu4
 衙   2122 ya2yu2yu3yu4 2882
 衚胡 2122 hu2
@@ -15095,7 +15095,7 @@
 裶   3121 fei1
 裷   3921 yuan1gun3
 裸   3629 luo3 nude 2417
-裹   0073 guo3 2037
+裹   0073 guo3 wrap 2037
 裺   3421 yan3
 裻   2773 du3du1
 裼   3622 xi2ti4xi1
@@ -15312,7 +15312,7 @@
 觏覯 5741 gou4
 觐覲 4711 jin3 4476
 觑覷 2721 qu4 3351
-角   2722 jiao3jue2 625
+角   2722 jiao3jue2 angel 625
 觓   2220 jiu1qiu2
 觔   2422 jin1
 觕   2752 cu1
@@ -15861,7 +15861,7 @@
 说說 3871 shuo1shui4yue4 say 39
 诵誦 3772 song4 2443
 诶誒 3378 ei1ei2ei3ei4
-请請 3572 qing3 320
+请請 3572 qing3 please 320
 诸諸 3476 zhu1 1009
 诹諏 3774 zou1
 诺諾 3476 nuo4 1253
@@ -15871,7 +15871,7 @@
 课課 3679 ke4 lesson 1326
 诿諉 3274 wei3 4335
 谀諛 3778 yu2 4328
-谁誰 3071 shui2shei2 520
+谁誰 3071 shui2shei2 who 520
 谂諗 3873 shen3
 调調 3772 diao4tiao2 393
 谄諂 3777 chan3 4285
@@ -15898,7 +15898,7 @@
 谙諳 3076 an1 3884
 谚諺 3072 yan4 3735
 谛諦 3072 di4ti2 3606
-谜謎 3973 mi2mei4mi4 2899
+谜謎 3973 mi2mei4mi4 riddle 2899
 谝諞 3372 pian2pian3
 谞諝 3772 xu3
 谟謨 3478 mo2 4002
@@ -15940,7 +15940,7 @@
 豃   8864 han3
 豄   8468 du2
 豅   8161 long2
-豆   1010 dou4 1698
+豆   1010 dou4 bean 1698
 豇   1111 jiang1
 豈岂 2210 qi3kai3
 豉   1414 chi3shi4
@@ -15967,7 +15967,7 @@
 豞   1722 hou4
 豟   1321 e4
 豠   1721 cu2
-象   2723 xiang4 286
+象   2723 xiang4 elephant 286
 豢   9023 huan4 4561
 豣   1124 jian1yan4
 豤   1723 ken3
@@ -16057,7 +16057,7 @@
 貸贷 2380 dai4te4
 貹   6581 sheng4
 貺贶 6681 kuang4
-費费 5580 fei4bi4
+費费 5580 fei4
 貼贴 6186 tie1
 貽贻 6386 yi2
 貾   6284 chi2
@@ -16183,7 +16183,7 @@
 贶貺 7681 kuang4
 贷貸 2380 dai4te4 2307
 贸貿 7780 mao4 1939
-费費 5580 fei4bi4 498
+费費 5580 fei4 fee 498
 贺賀 4680 he4 1535
 贻貽 7386 yi2 3497
 贼賊 7385 zei2ze2 1899
@@ -16264,7 +16264,7 @@
 趇   4080 se4
 趈   4180 zhan1
 趉   4280 zhu2
-越   4380 yue4huo2 429
+越   4380 yue4 over 429
 趋趨 4780 qu1cu4 1632
 趌   4480 jie2
 趍   4780 chi2qu1
@@ -16360,7 +16360,7 @@
 跧   6811 quan2zun1zhuan1
 跨   6412 kua4ku4kua1kua3 1499
 跩   6510 zhuai3shi4
-跪   6711 gui4 1890
+跪   6711 gui4 kneel 1890
 跫   1780 qiong2qiong1qiang1
 跬   6411 kui3xie4
 跭   6714 xiang2
@@ -16416,7 +16416,7 @@
 踟   6610 chi2
 踠   6311 wan3
 踡   6911 quan2
-踢   6612 ti1die2 2131
+踢   6612 ti1die2 kick 2131
 踣   6016 bo2pou4
 踤   6014 zu2cui4
 踥   6014 qie4
@@ -16748,13 +16748,13 @@
 轫軔 4752 ren4
 转轉 4553 zhuan3zhuan4 271
 轭軛 4151 e4 4884
-轮輪 4851 lun2 997
+轮輪 4851 lun2 wheel 997
 软軟 4758 ruan3 816
 轰轟 4044 hong1 1845
 轱軲 4456 gu1
 轲軻 4152 ke1 4620
 轳轤 4150 lu2
-轴軸 4556 zhou2zhu2 2662
+轴軸 4556 zhou2zhu2 axis 2662
 轵軹 4658 zhi3
 轶軼 4558 yi4die2 4032
 轷軤 4254 hu1
@@ -16855,7 +16855,7 @@
 迖   3330 da2ti4ta4
 迗   3230 e2
 还還 3130 huan2hai2 yet 73
-这這 3030 zhe4zhei4 10
+这這 3030 zhe4zhei4 the 10
 迚   3530 da2
 进進 3530 jin4 63
 远遠 3130 yuan3yuan4 317
@@ -17270,7 +17270,7 @@
 酵   1464 jiao4xiao4 4093
 酶   1865 mei2 4653
 酷   1466 ku4 cool 2006
-酸   1364 suan1 1750
+酸   1364 suan1 sour 1750
 酹   1264 lei4
 酺   1362 pu2
 酻   1264 zui4
@@ -17383,7 +17383,7 @@
 釦   8610 kou4
 釧钏 8210 chuan4
 釨   8714 zi3
-釩钒 8711 fan2fan3fan4
+釩钒 8711 fan2fan3fan4 vanadium
 釪   8114 yu2
 釫   8112 hua2
 釬   8114 han4gan1
@@ -17444,7 +17444,7 @@
 鈣钙 8112 gai4
 鈤   8610 ri4
 鈥钬 8918 huo3huo2
-鈦钛 8413 tai4
+鈦钛 8413 tai4 titanium
 鈧钪 8011 kang4
 鈨   8111 yuan2
 鈩   8310 lu2
@@ -17520,7 +17520,7 @@
 鉯   8810 yi3
 鉰   8712 si1
 鉱   8013 kuang4
-鉲   8113 ka3
+鉲   8113 ka3 californium
 鉳   8211 bei3
 鉴鑒 2810 jian4 1626
 鉵   8513 tong2
@@ -17599,7 +17599,7 @@
 銾   8119 gong3
 銿   8712 zhong1yong1
 鋀   8111 dou4
-鋁铝 8616 lv3lv4
+鋁铝 8616 lv3lv4 aluminium
 鋂   8815 mei2
 鋃锒 8313 lang2
 鋄   8114 wan3wan4
@@ -17662,7 +17662,7 @@
 鋽   8114 diao4
 鋾   8712 tao2
 鋿   8912 chang2
-錀   8812 lun2
+錀   8812 lun2 roentgenium
 錁锞 8619 guo3kua3ke4
 錂   8414 ling2
 錃   3410 bei1
@@ -17722,7 +17722,7 @@
 錹   8112 ken3
 錺   8412 fang1
 錻   8314 bu1
-錼   8019 nai4
+錼   8019 nai4 neptunium
 錽   8114 wan4
 錾鏨 4210 zan4
 錿   8111 hu3
@@ -17819,7 +17819,7 @@
 鎚锤 8713 chui2
 鎛镈 8314 bo2
 鎜   8710 pan2
-鎝   8416 sa4da1
+鎝   8416 sa4da1 technetium
 鎞   8611 bi4bi1pi1
 鎟   8719 sang3
 鎠   8611 gang1
@@ -17841,10 +17841,10 @@
 鎰镒 8811 yi4
 鎱   8413 yuan2
 鎲镋 8911 tang3
-鎳镍 8719 nie4
+鎳镍 8719 nie4 nickel
 鎴   8613 xi2
 鎵镓 8313 jia1
-鎶   8112 ge1
+鎶   8112 ge1 copernicium
 鎷   8112 ma3
 鎸镌 8012 juan1
 鎹   8813 song4
@@ -17979,7 +17979,7 @@
 鐺铛 8916 dang1cheng1
 鐻   8113 ju4qu2
 鐼   8418 fen2ben1
-鐽   8413 da2
+鐽   8413 da2 darmstadtium
 鐾   7010 bei4bi4
 鐿镱 8013 yi4
 鑀   8214 ai4
@@ -18024,7 +18024,7 @@
 鑧   8311 kuan1
 鑨   8111 long2
 鑩   8111 e4
-鑪   8111 lu2
+鑪   8111 lu2 rutherfordium
 鑫   8011 xin1xun4 3719
 鑬   8811 jian4
 鑭镧 8712 lan2lan4
@@ -18052,86 +18052,86 @@
 钃   8712 shu3zhu2
 钄   8412 lan2
 钅釒 8070 jin1 4926
-钆釓 8271 qiu2ga2
-钇釔 8771 yi3
-针針 8470 zhen1 1093
+钆釓 8271 qiu2ga2 gadolinium
+钇釔 8771 yi3 yttrium
+针針 8470 zhen1 needle 1093
 钉釘 8172 ding1ding4 2189
 钊釗 8270 zhao1 3521
-钋釙 8370 po4
-钌釕 8772 diao3liao3
-钍釷 8471 tu3
+钋釙 8370 po4 polonium
+钌釕 8772 diao3liao3 ruthenium
+钍釷 8471 tu3 thorium
 钎釺 8274 qian1
 钏釧 8270 chuan4 4668
-钐釤 8272 shan4shan1xian1
+钐釤 8272 shan4shan1xian1 samarium
 钑鈒 8774 ji2sa4
 钒釩 8771 fan2
 钓釣 8772 diao4 2280
-钔鍆 8772 men2
-钕釹 8474 nv3
+钔鍆 8772 men2 mendelevium
+钕釹 8474 nv3 neodymium
 钖鍚 8772 xi2xi1
 钗釵 8774 chai1 3334
 钘鈃 8174 xing2jian1
-钙鈣 8172 gai4 4499
-钚鈈 8179 bu4
+钙鈣 8172 gai4 calcium 4499
+钚鈈 8179 bu4 plutonium
 钛鈦 8473 tai4 4714
 钜鉅 8171 ju4 4704
 钝鈍 8571 dun4 3215
 钞鈔 8972 chao1 2532
-钟鍾 8570 zhong1 bell 760
-钠鈉 8472 na4 4384
-钡鋇 8778 bei4 4856
-钢鋼 8772 gang1gang4 1467
+钟鍾 8570 zhong1 bell clock 760
+钠鈉 8472 na4 sodium 4384
+钡鋇 8778 bei4 4856 barium
+钢鋼 8772 gang1gang4 steel 1467
 钣鈑 8274 ban3
 钤鈐 8872 qian2 4611
 钥鑰 8772 yao4yue4 2069
 钦欽 8778 qin1 1990
 钧鈞 8772 jun1 2306
-钨鎢 8772 wu4wu1
+钨鎢 8772 wu4wu1 tungsten
 钩鈎 8772 gou1 2202
-钪鈧 8071 kang4
-钫鈁 8072 fang1
-钬鈥 8978 huo2huo3
+钪鈧 8071 kang4 scandium
+钫鈁 8072 fang1 francium
+钬鈥 8978 huo2huo3 holmium
 钭鈄 8470 dou3
-钮鈕 8771 niu3 2570
-钯鈀 8771 ba3pa2
+钮鈕 8771 niu3 knob 2570
+钯鈀 8771 ba3pa2 palladium
 钰鈺 8171 yu4 3722
 钱錢 8375 qian2jian3 money 424
 钲鉦 8171 zheng1
 钳鉗 8477 qian2 3406
-钴鈷 8476 gu3
+钴鈷 8476 gu3 cobalt
 钵缽 8573 bo1 3552
 钶鈳 8172 e1ke1
-钷鉕 8171 po1po3
+钷鉕 8171 po1po3 promethium
 钸鈽 8472 bu4
 钹鈸 8374 ba2bo2 4118
 钺鉞 8375 yue4hui4 4495
 钻鑽 8176 zuan4zuan1 1662
-钼鉬 8670 mu4
-钽鉭 8671 dan4tan3
-钾鉀 8675 jia3 4484
+钼鉬 8670 mu4 molybdenum
+钽鉭 8671 dan4tan3 tantalum
+钾鉀 8675 jia3 potassium 4484
 钿鈿 8670 dian4tian2 4582
-铀鈾 8576 you2 4477
+铀鈾 8576 you2 uranium 4477
 铁鐵 8578 tie3 iron 636
-铂鉑 8670 bo2 4958
+铂鉑 8670 bo2 platinum 4958
 铃鈴 8873 ling2 bell 1829
 铄鑠 8279 shuo4 4650
-铅鉛 8776 qian1yan2 2777
+铅鉛 8776 qian1yan2 lead 2777
 铆鉚 8772 liu3mao3 4715
 铇鉋 8771 bao4
-铈鈰 8072 shi4
+铈鈰 8072 shi4 cerium
 铉鉉 8073 xuan4 4629
 铊鉈 8371 ta1tuo2 thallium
-铋鉍 8370 bi4
-铌鈮 8771 ni3
-铍鈹 8474 pi1pi2
+铋鉍 8370 bi4 bismuth
+铌鈮 8771 ni3 niobium
+铍鈹 8474 pi1pi2 beryllium
 铎鐸 8775 duo2 3256
 铏鉶 8270 xing2
 铐銬 8472 kao4 3757
-铑銠 8471 lao3
-铒鉺 8174 er4
+铑銠 8471 lao3 rhodium
+铒鉺 8174 er4 erbium
 铓鋩 8471 mang2
 铔錏 8171 ya4
-铕銪 8472 you3
+铕銪 8472 you3 europium
 铖鋮 8375 cheng2
 铗鋏 8578 jia2
 铘鋣 8772 ye2
@@ -18139,9 +18139,9 @@
 铚銍 8171 zhi4
 铛鐺 8977 dang1cheng1 4144
 铜銅 8772 tong2 copper 1732
-铝鋁 8676 lv3 3800
+铝鋁 8676 lv3 alumina 3800
 铞銱 8672 diao4
-铟銦 8670 yin1
+铟銦 8670 yin1 indium
 铠鎧 8271 kai3 4542
 铡鍘 8270 zha2 4781
 铢銖 8579 zhu1 4323
@@ -18152,62 +18152,62 @@
 铧鏵 8474 hua2 4960
 铨銓 8871 quan2 3916
 铩鎩 8479 sha1
-铪鉿 8876 ha1ke1
+铪鉿 8876 ha1ke1 hafnium
 铫銚 8271 yao2tiao2
-铬鉻 8776 ge4ge2luo4 4359
+铬鉻 8776 ge4ge2luo4 chromium 4359
 铭銘 8776 ming2 1998
 铮錚 8775 zheng1 3159
-铯銫 8771 se4
+铯銫 8771 se4 caesium
 铰鉸 8074 jiao3 4908
-铱銥 8073 yi3yi1
-铲鏟 8070 chan3 2954
+铱銥 8073 yi3yi1 iridium
+铲鏟 8070 chan3 spade shovel 2954
 铳銃 8071 chong4
 铴鐋 8772 tang4
 铵銨 8374 an1 4948
-银銀 8773 yin2 605
-铷銣 8670 ru3ru2
+银銀 8773 yin2 silver 605
+铷銣 8670 ru3ru2 rubidium
 铸鑄 8574 zhu4 2586
-铹鐒 8472 lao2
+铹鐒 8472 lao2 lawrencium
 铺鋪 8372 pu1pu4 1410
 铻鋙 8176 wu2yu3
-铼錸 8579 lai2
-铽鋱 8374 te4
+铼錸 8579 lai2 rhenium
+铽鋱 8374 te4 terbium
 链鏈 8473 lian4 2014
 铿鏗 8771 keng1 3676
 销銷 8972 xiao1 1195
 锁鎖 8978 suo3 lock 1198
-锂鋰 8671 li3 4764
+锂鋰 8671 li3 lithium 4764
 锃鋥 8671 zheng4zeng4
 锄鋤 8472 chu2 3498
-锅鍋 8672 guo1 2087
-锆鋯 8476 gao4
-锇鋨 8375 tie3e2
+锅鍋 8672 guo1 pan 2087
+锆鋯 8476 gao4 zirconium
+锇鋨 8375 e2 osmium
 锈銹 8272 xiu4 3462
 锉銼 8871 cuo4 4867
 锊鋝 8274 lue4
 锋鋒 8775 feng1 1495
-锌鋅 8074 xin1 4017
+锌鋅 8074 xin1 zinc 4017
 锍鋶 8071 liu3
-锎鐦 8772 kai1
+锎鐦 8772 kai1 californium
 锏鐧 8772 jian3jian4 4492
 锐銳 8871 rui4dui4yue4 1908
-锑銻 8872 ti4ti1
+锑銻 8872 ti4ti1 antimony
 锒鋃 8373 lang2
 锓鋟 8774 qin3
-锔鋦 8772 ju2ju1
-锕錒 8172 a1
+锔鋦 8772 ju2ju1 curium
+锕錒 8172 a1 actinium
 锖錆 8572 qiang1
-锗鍺 8476 duo3zhe3
-锘鍩 8476 tian3nuo4
+锗鍺 8476 duo3zhe3 germanium
+锘鍩 8476 tian3nuo4 nobelium
 错錯 8476 cuo4cu4 error 553
 锚錨 8476 mao2 3597
 锛錛 8474 ben1
 锜錡 8472 qi2yi3
-锝鍀 8674 de2
+锝鍀 8674 de2 technetium
 锞錁 8679 kua3ke4
 锟錕 8671 kun1 4855
 锠錩 8676 chang1
-锡錫 8672 xi2ti4 2173
+锡錫 8672 xi2ti4 tin 2173
 锢錮 8670 gu4 4188
 锣鑼 8672 luo2 2897
 锤錘 8271 chui2 2881
@@ -18217,18 +18217,18 @@
 锨杴 8778 xian1 4756
 锩錈 8971 juan4
 锪鍃 8773 huo1huo4
-锫錇 8076 pou2pei2
+锫錇 8076 pou2pei2 berkelium
 锬錟 8978 tan2
 锭錠 8378 ding4 3075
 键鍵 8574 jian4 key 1822
 锯鋸 8776 ju4ju1 3101
-锰錳 8771 meng3
+锰錳 8771 meng3 manganese
 锱錙 8276 zi1
 锲鍥 8778 qie4 4347
 锳鍈 8478 ying1
 锴鍇 8276 kai3
 锵鏘 8774 qiang1 3519
-锶鍶 8673 song1si1
+锶鍶 8673 song1si1 strontium
 锷鍔 8672 e4 4998
 锸鍤 8277 cha2
 锹鍬 8978 qiao1 4065
@@ -18237,27 +18237,27 @@
 锼鎪 8774 sou1
 锽鍠 8671 huang2
 锾鍰 8274 huan2
-锿鎄 8073 ai1
+锿鎄 8073 ai1 einsteinium
 镀鍍 8074 du4 3855
-镁鎂 8878 mei3 4618
+镁鎂 8878 mei3 magnesium 4618
 镂鏤 8974 lou4 4012
 镃鎡 8873 zi1
-镄鐨 8578 fei4
-镅鎇 8776 mei2
+镄鐨 8578 fei4 fermium
+镅鎇 8776 mei2 americium
 镆鏌 8478 mo4
 镇鎮 8478 zhen4 910
 镈鎛 8374 bo2
-镉鎘 8172 ge2li4
+镉鎘 8172 ge2li4 cadmium
 镊鑷 8174 nie4
 镋鎲 8971 tang3
 镌鎸 8072 juan1 3926
 镍鎳 8679 nie4 4741
-镎鎿 8875 na2
+镎鎿 8875 na2 neptunium
 镏鎦 8776 liu2liu4
 镐鎬 8072 hao4gao3 4186
 镑鎊 8072 bang4 3713
 镒鎰 8871 yi4
-镓鎵 8373 jia1
+镓鎵 8373 jia1 gallium
 镔鑌 8378 bin1
 镕鎔 8376 rong2 3302
 镖鏢 8179 biao1 2844
@@ -18267,27 +18267,27 @@
 镚鏰 8272 beng4
 镛鏞 8072 yong1 4886
 镜鏡 8071 jing4 1206
-镝鏑 8072 di2di1
+镝鏑 8072 di2di1 dysprosium
 镞鏃 8878 zu2
 镟鏇 8878 xuan4
 镠鏐 8772 liu2
 镡鐔 8174 tan2xin2
 镢鐝 8178 jue2
 镣鐐 8479 liao4 4181
-镤鏷 8278 pu2
-镥鑥 8776 lu3
+镤鏷 8278 pu2 protactinium
+镥鑥 8776 lu3 lutetium
 镦鐓 8874 dui4
-镧鑭 8772 lan4lan2
-镨鐠 8876 pu3
+镧鑭 8772 lan4lan2 lanthanum
+镨鐠 8876 pu3 praseodymium
 镩鑹 8375 cuan4cuan1
 镪鏹 8673 qiang1qiang3
 镫鐙 8271 deng1deng4 4932
 镬鑊 8474 huo4
-镭鐳 8176 lei2
+镭鐳 8176 lei2 radium
 镮鐶 8673 huan2
 镯鐲 8672 zhuo2 3785
 镰鐮 8073 lian2 4033
-镱鐿 8073 yi4
+镱鐿 8073 yi4 ytterbium
 镲鑔 8379 cha3
 镳鑣 8073 biao1 4568
 镴鑞 8271 la4
@@ -18662,9 +18662,9 @@
 雥   2021 za2
 雦   2021 ji2
 雧   2091 ji2
-雨   1022 yu3yu4 716
+雨   1022 yu3yu4 rain 716
 雩   1002 yu2
-雪   1017 xue3 774
+雪   1017 xue3 snow 774
 雫   1023 na3
 雬   1090 fou3
 雭   1024 se4
@@ -18684,7 +18684,7 @@
 電电 1071 dian4
 雼   1060 dang4
 雽   1040 xing2
-雾霧 1042 wu4 1682
+雾霧 1042 wu4 fog 1682
 雿   1011 zhao4
 需   1022 xu1 650
 霁霽 1022 ji4 4042
@@ -18714,7 +18714,7 @@
 霙   1080 ying1
 霚   1024 wu4
 霛   1022 ling2
-霜   1096 shuang1 1842
+霜   1096 shuang1 frost 1842
 霝   1066 ling2ling4
 霞   1024 xia2 1642
 霟   1018 hong2
@@ -19059,8 +19059,8 @@
 顲   9168 lan3
 顳颞 1118 nie4
 顴颧 4128 quan2
-页頁 1080 ye4 1172
-顶頂 1128 ding3 859
+页頁 1080 ye4 page 1172
+顶頂 1128 ding3 top 859
 顷頃 2178 qing3 2387
 顸頇 1148 han1
 项項 1118 xiang4 697
@@ -19096,7 +19096,7 @@
 颗顆 6198 ke1 1381
 题題 6180 ti2di4 287
 颙顒 6128 yong2
-颚顎 6128 e4 4776
+颚顎 6128 e4 jaw 4776
 颛顓 2128 zhuan1
 颜顏 0128 yan2 1145
 额額 3168 e2 1100
@@ -19670,7 +19670,7 @@
 髕髌 7328 bin4
 髖髋 7321 kuan1
 髗   7122 lu2
-高   0022 gao1 87
+高   0022 gao1 high 87
 髙   0022 gao1
 髚   0021 qiao4
 髛   0721 kao1
@@ -20509,7 +20509,7 @@
 鸜   6722 qu2
 鸝鹂 1722 li2
 鸞鸾 2232 luan2
-鸟鳥 2712 niao3diao3 1325
+鸟鳥 2712 niao3diao3 bird 1325
 鸠鳩 4702 jiu1 3804
 鸡雞 7742 ji1 chicken 1391
 鸢鳶 4312 yuan1 4617
@@ -20523,7 +20523,7 @@
 鸪鴣 4762 gu1 4560
 鸫鶇 4792 dong1
 鸬鸕 2722 lu2
-鸭鴨 6752 ya1 2460
+鸭鴨 6752 ya1 duck 2460
 鸮鴞 6722 xiao1
 鸯鴦 5012 yang1 3399
 鸰鴒 8732 ling2
@@ -20547,7 +20547,7 @@
 鹂鸝 1722 li2 4516
 鹃鵑 6722 juan1 3364
 鹄鵠 2762 hu2gu3 4018
-鹅鵝 2752 e2 2663
+鹅鵝 2752 e2 goose 2663
 鹆鵒 8762 yu4
 鹇鷳 3722 xian2
 鹈鵜 8722 ti2
@@ -20590,7 +20590,7 @@
 鹭鷺 6712 lu4 3789
 鹮   6772 huan2
 鹯鸇 0712 zhan1
-鹰鷹 0022 ying1 1857
+鹰鷹 0022 ying1 eagle 1857
 鹱鸌 2414 hu4
 鹲鸏 4722 meng2
 鹳鸛 4722 guan4 4745
@@ -20605,7 +20605,7 @@
 鹼硷 2868 jian3
 鹽盐 7810 yan2
 鹾鹺 2861 cuo2
-鹿   0021 lu4 2269
+鹿   0021 lu4 deer 2269
 麀   0021 you1
 麁   2721 cu1
 麂   0021 ji3
@@ -20753,7 +20753,7 @@
 鼐   1722 nai4
 鼑   2122 ding3
 鼒   4022 zi1
-鼓   4414 gu3 1002
+鼓   4414 gu3 drum 1002
 鼔   4114 gu3
 鼕   4430 dong1
 鼖   4014 fen2
@@ -20887,7 +20887,7 @@
 龖   0121 ta4
 龗   1021 ling2
 龘   0121 ta4
-龙龍 4301 long2 533
+龙龍 4301 long2 dragon 533
 龚龔 4380 gong1 2647
 龛龕 8041 kan1 4208
 龜龟 2711 gui1jun1qiu1
