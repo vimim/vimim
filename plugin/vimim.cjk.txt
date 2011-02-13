@@ -1428,7 +1428,7 @@
 厓   7121 ya2yai2
 厔   7121 zhi4
 厕厠 7122 ce4 2775
-厖   7121 pang2mang2
+厖   7121 mang2
 厗   7124 ti2
 厘釐 7121 li2 3045
 厙厍 7125 she4
@@ -1437,7 +1437,7 @@
 厜   7121 zui1
 厝   7126 cuo4
 厞   7121 fei4
-原   7129 yuan2yuan4 207
+原   7129 yuan2 207
 厠厕 7122 ce4
 厡   7129 yuan2
 厢廂 7126 xiang1 2389
@@ -1472,9 +1472,9 @@
 县縣 7773 xian4xuan2 1071
 叀   5073 zhuan1hui4
 叁叄 2310 san1 3791
-参參 2320 can1san1shen1cen1 557
-參参 2320 can1san1shen1cen1
-叄叁 2310 can1san1shen1cen1
+参參 2320 can1san1shen1 557
+參参 2320 can1san1shen1
+叄叁 2310 can1san1shen1
 叅   2333 can1can4cen1
 叆   1274 ai4
 叇   1573 dai4
@@ -1496,7 +1496,7 @@
 受   2040 shou4 229
 变變 0040 bian4 225
 叙敘 8794 xu4 1819
-叚   7724 jia3jia4xia2
+叚   7724 jia3
 叛   9254 pan4 2328
 叜   3040 sou3
 叝   4774 gao4
