@@ -1486,7 +1486,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let matched_list = a:matched_list
     if empty(matched_list)
         return []
-    elseif empty(len(s:cjk_filter))
+    else
         let s:matched_list = copy(matched_list)
     endif
     if s:hjkl_pageup_pagedown > 0
@@ -2188,6 +2188,11 @@ function! s:vimim_match_cjk_file(keyboard)
             if keyboard =~ '^\d\+' && keyboard !~ '\D'
                 " [sample] free-style digit input: 7 77 771 7712"
                 let digit = keyboard
+                if len(keyboard) < 4
+                    let s:cjk_filter = digit
+                else
+                    let s:cjk_filter = ""
+                endif
             elseif keyboard =~ '^\l\+\d\+'
                 " [sample] free-style input/search: ma7 ma77 ma771 ma7712"
                 " on line 81 using le72 yue72: 乐樂 7290 le4yue4 113092
@@ -2560,8 +2565,7 @@ function! s:vimim_toggle_pinyin(keyboard)
     let keyboard = a:keyboard
     if s:hjkl_n < 1
         return keyboard
-    endif
-    if s:hjkl_n % 2 > 0
+    elseif s:hjkl_n % 2 > 0
         " set pin'yin: woyouyigemeng => wo.you.yi.ge.meng
         let keyboard = s:vimim_quanpin_transform(keyboard)
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
@@ -2575,7 +2579,9 @@ endfunction
 function! s:vimim_toggle_cjjp(keyboard)
 " -------------------------------------
     let keyboard = a:keyboard
-    if s:hjkl_m % 2 > 0
+    if s:hjkl_m < 1
+        return keyboard
+    elseif s:hjkl_m % 2 > 0
         " set cjjp:   wyygm => w'y'y'g'm
         let keyboard = join(split(keyboard,'\zs'),"'")
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
