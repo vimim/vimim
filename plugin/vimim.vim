@@ -2047,21 +2047,37 @@ function! s:vimim_cjk_sentence_match(keyboard)
         let keyboard_head = keyboard
     elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
-            let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
-            if !empty(keyboard_head)
-                let results = s:vimim_match_cjk_file(keyboard_head)
-                if empty(results)
-                    "english in bed with cjk: error/e4494 typewriter
-                    let s:keyboard_list = []
-                    let keyboard_head = 0
-                endif
-            endif
+            let  keyboard_head = s:vimim_cjk_english_match(keyboard)
         endif
         if empty(keyboard_head)
             let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
         endif
     endif
     return keyboard_head
+endfunction
+
+" -------------------------------------------
+function! s:vimim_cjk_english_match(keyboard)
+" -------------------------------------------
+    let keyboard = a:keyboard
+    let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
+    if !empty(keyboard_head)
+        let results = s:vimim_match_cjk_file(keyboard_head)
+        if empty(results)
+            "english in bed with cjk: error/e4494 typewriter
+            let s:keyboard_list = []
+            let keyboard_head = 0
+        else
+            let grep = '\s' . keyboard . '\W\='
+            let matched = match(s:cjk_lines, grep)
+            if matched > -1 && len(results) > 0
+                " english like 'color/arrow' is found
+                let chinese = get(split(s:cjk_lines[matched]),0)
+                let s:cjk_results = add(results, chinese)
+            endif
+        endif
+    endif
+    return keyboard_head 
 endfunction
 
 " ----------------------------------------------
@@ -2250,13 +2266,6 @@ function! s:vimim_match_cjk_file(keyboard)
         if keyboard =~ '^\l\>' && !has_key(s:cjk_az_cache, keyboard)
             let s:cjk_az_cache[keyboard] = results
         endif
-    endif
-    " ------------------------------------------------------
-    let grep = '\|\s' . keyboard . '\W\='
-    let line = match(s:cjk_lines, grep)
-    if line > -1 && len(results) > 0
-        " english like 'color' is found
-        let s:cjk_results = copy(results)
     endif
     " ------------------------------------------------------
     if s:has_cjk_self_file > 0 && keyboard =~ '^\l\+'
