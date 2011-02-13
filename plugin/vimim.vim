@@ -1978,11 +1978,15 @@ function! s:vimim_load_cjk_file()
     if empty(s:cjk_lines)
         if s:has_cjk_file > 0
             let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+            if len(s:cjk_lines) != 20902
+                let s:cjk_lines = []
+                let s:has_cjk_file = 0
+            endif
         endif
     endif
 endfunction
 
-" ----------------------------------- todo
+" -----------------------------------
 function! s:vimim_load_private_file()
 " -----------------------------------
     if empty(s:cjk_self_lines)
@@ -2204,32 +2208,48 @@ endfunction
 
 " -----------------------------------------
 function! s:vimim_match_cjk_files(keyboard)
-" ----------------------------------------- todo
+" -----------------------------------------
     let keyboard = a:keyboard
     let results = []
     if s:has_cjk_file > 0
-        let results = s:vimim_match_cjk_file(keyboard)
+        let results = s:vimim_cjk_match(keyboard)
     endif
     if s:has_cjk_self_file > 0
- "      let results = s:vimim_match_cjk_self_file(keyboard)
+        let private_results = s:vimim_cjk_private_match(keyboard)
+        if !empty(private_results)
+            call extend(results, private_results)
+            let s:cjk_results = copy(results)
+        endif
     endif
     return results
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_match_cjk_self_file(keyboard)
-" ---------------------------------------------
-    let keyboard = a:keyboard
-    let results = []
-    if empty(s:has_cjk_self_file)
+" -------------------------------------------
+function! s:vimim_cjk_private_match(keyboard)
+" -------------------------------------------
+    call s:vimim_load_private_file()
+    if empty(s:cjk_self_lines)
         return []
     endif
-    return results
+    let keyboard = a:keyboard
+    let results = []
+    if keyboard =~ '^\l\+'
+        let grep = '^' . keyboard . '\>'
+        let matched = match(s:cjk_self_lines, grep)
+        if matched < 0
+            let msg = "no more scan for: 'dream 梦 梦想' "
+        else
+            let s:cjk_has_match = 2
+            let line = s:cjk_self_lines[matched]
+            let results = split(line)[1:]
+        endif
+    endif
+   return results
 endfunction
 
-" ----------------------------------------
-function! s:vimim_match_cjk_file(keyboard)
-" ----------------------------------------
+" -----------------------------------
+function! s:vimim_cjk_match(keyboard)
+" -----------------------------------
     if empty(s:has_cjk_file)
         return []
     endif
@@ -2316,36 +2336,7 @@ function! s:vimim_match_cjk_file(keyboard)
         " cjk has english entry such as color/arrow/push
         let s:cjk_results = copy(results)
     endif
-    " ------------------------------------------------------
-    let private_results = s:vimim_cjk_private_match(keyboard)
-    if !empty(private_results)
-        call extend(results, private_results)
-        let s:cjk_results = copy(results)
-    endif
     return results
-endfunction
-
-" -------------------------------------------
-function! s:vimim_cjk_private_match(keyboard)
-" ------------------------------------------- todo
-    call s:vimim_load_private_file()
-    if empty(s:cjk_self_lines)
-        return []
-    endif
-    let keyboard = a:keyboard
-    let results = []
-    if keyboard =~ '^\l\+'
-        let grep = '^' . keyboard . '\>'
-        let matched = match(s:cjk_self_lines, grep)
-        if matched < 0
-            let msg = "no more scan for: 'dream 梦 梦想' "
-        else
-            let s:cjk_has_match = 2
-            let line = s:cjk_self_lines[matched]
-            let results = split(line)[1:]
-        endif
-    endif
-   return results
 endfunction
 
 " -----------------------------------------------
