@@ -555,7 +555,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
         let keyboards = s:vimim_slash_search_block(keyboard)
         if len(keyboards) > 0
             for keyboard2 in keyboards
-                let chars = s:vimim_match_cjk_file(keyboard2)
+                let chars = s:vimim_match_cjk_files(keyboard2)
                 if len(keyboards) == 1
                     let results = copy(chars)
                 elseif len(chars) > 0
@@ -1932,9 +1932,10 @@ function! s:vimim_initialize_cjk_file()
 " -------------------------------------
     let s:cjk_az_cache = {}
     let s:cjk_results = []
-    let s:cjk_lines = []
     let s:cjk_file = 0
+    let s:cjk_lines = []
     let s:cjk_self_file = 0
+    let s:cjk_self_lines = []
     let s:has_cjk_file = 0
     let s:has_cjk_self_file = 0
     let datafile = s:vimim_check_filereadable("vimim.txt")
@@ -1978,8 +1979,15 @@ function! s:vimim_load_cjk_file()
         if s:has_cjk_file > 0
             let s:cjk_lines = s:vimim_readfile(s:cjk_file)
         endif
+    endif
+endfunction
+
+" ----------------------------------- todo
+function! s:vimim_load_private_file()
+" -----------------------------------
+    if empty(s:cjk_self_lines)
         if s:has_cjk_self_file > 0
-            call extend(s:cjk_lines, readfile(s:cjk_self_file))
+            let s:cjk_self_lines = s:vimim_readfile(s:cjk_self_file)
         endif
     endif
 endfunction
@@ -2062,7 +2070,7 @@ function! s:vimim_cjk_english_match(keyboard)
     let keyboard = a:keyboard
     let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
     if !empty(keyboard_head)
-        let results = s:vimim_match_cjk_file(keyboard_head)
+        let results = s:vimim_match_cjk_files(keyboard_head)
         if empty(results)
             "english in bed with cjk: error/e4494 typewriter
             let s:keyboard_list = []
@@ -2076,7 +2084,8 @@ function! s:vimim_cjk_english_match(keyboard)
                 let s:cjk_results = insert(results, chinese)
                 let s:hjkl_h = 1
             endif
-            let private_results = s:vimim_private_file_match(keyboard)
+            " english 'arrow' has an entry in private datafile
+            let private_results = s:vimim_cjk_private_match(keyboard)
             if !empty(private_results)
                 call extend(results, private_results)
                 let s:cjk_results = copy(results)
@@ -2193,10 +2202,35 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     return head
 endfunction
 
+" -----------------------------------------
+function! s:vimim_match_cjk_files(keyboard)
+" ----------------------------------------- todo
+    let keyboard = a:keyboard
+    let results = []
+    if s:has_cjk_file > 0
+        let results = s:vimim_match_cjk_file(keyboard)
+    endif
+    if s:has_cjk_self_file > 0
+ "      let results = s:vimim_match_cjk_self_file(keyboard)
+    endif
+    return results
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_match_cjk_self_file(keyboard)
+" ---------------------------------------------
+    let keyboard = a:keyboard
+    let results = []
+    if empty(s:has_cjk_self_file)
+        return []
+    endif
+    return results
+endfunction
+
 " ----------------------------------------
 function! s:vimim_match_cjk_file(keyboard)
 " ----------------------------------------
-    if empty(s:has_cjk_file) && empty(s:has_cjk_self_file)
+    if empty(s:has_cjk_file)
         return []
     endif
     let keyboard = a:keyboard
@@ -2252,7 +2286,7 @@ function! s:vimim_match_cjk_file(keyboard)
     call s:vimim_load_cjk_file()
     let results = []
     let line = match(s:cjk_lines, grep)
-    while line > -1 && line <= 20902
+    while line > -1
         let values = split(s:cjk_lines[line])
         let frequency_index = get(values, -1)
         if frequency_index =~ '\l'
@@ -2279,11 +2313,11 @@ function! s:vimim_match_cjk_file(keyboard)
     " ------------------------------------------------------
     let line = match(s:cjk_lines, english_in_cjk)
     if line > -1 && len(results) > 0
-        " english 'color/arrow/push' is found in cjk
+        " cjk has english entry such as color/arrow/push
         let s:cjk_results = copy(results)
     endif
     " ------------------------------------------------------
-    let private_results = s:vimim_private_file_match(keyboard)
+    let private_results = s:vimim_cjk_private_match(keyboard)
     if !empty(private_results)
         call extend(results, private_results)
         let s:cjk_results = copy(results)
@@ -2291,20 +2325,23 @@ function! s:vimim_match_cjk_file(keyboard)
     return results
 endfunction
 
-" --------------------------------------------
-function! s:vimim_private_file_match(keyboard)
-" --------------------------------------------
-    call s:vimim_load_cjk_file()
+" -------------------------------------------
+function! s:vimim_cjk_private_match(keyboard)
+" ------------------------------------------- todo
+    call s:vimim_load_private_file()
+    if empty(s:cjk_self_lines)
+        return []
+    endif
     let keyboard = a:keyboard
     let results = []
-    if s:has_cjk_self_file > 0 && keyboard =~ '^\l\+'
+    if keyboard =~ '^\l\+'
         let grep = '^' . keyboard . '\>'
-        let matched = match(s:cjk_lines, grep)
+        let matched = match(s:cjk_self_lines, grep)
         if matched < 0
             let msg = "no more scan for: 'dream 梦 梦想' "
         else
             let s:cjk_has_match = 2
-            let line = s:cjk_lines[matched]
+            let line = s:cjk_self_lines[matched]
             let results = split(line)[1:]
         endif
     endif
@@ -5149,7 +5186,7 @@ else
         if s:has_cjk_file > 0 || s:has_cjk_self_file > 0
             let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
             if !empty(keyboard_head)
-                let results = s:vimim_match_cjk_file(keyboard_head)
+                let results = s:vimim_match_cjk_files(keyboard_head)
                 if !empty(results) && empty(s:cjk_results)
                     return s:vimim_popupmenu_list(results)
                 endif
@@ -5241,7 +5278,7 @@ else
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
         let keyboard_head = s:vimim_cjk_sentence_match(keyboard.".")
         if !empty(keyboard_head)
-            let results = s:vimim_match_cjk_file(keyboard_head)
+            let results = s:vimim_match_cjk_files(keyboard_head)
         endif
     elseif s:vimim_cloud_sogou == 1 && keyboard !~# '\L'
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
