@@ -2269,6 +2269,13 @@ function! s:vimim_match_cjk_file(keyboard)
         endif
     endif
     " ------------------------------------------------------
+    let grep = '\s' . keyboard . '\W\='
+    let line = match(s:cjk_lines, grep)
+    if line > -1 && len(results) > 0
+        " english 'color/arrow/push' is found in cjk
+        let s:cjk_results = copy(results)
+    endif
+    " ------------------------------------------------------
     if s:has_cjk_self_file > 0 && keyboard =~ '^\l\+'
         let grep = '^' . keyboard . '\>'
         let matched = match(s:cjk_lines, grep)
