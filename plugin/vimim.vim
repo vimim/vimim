@@ -2078,7 +2078,7 @@ function! s:vimim_cjk_english_match(keyboard)
             endif
         endif
     endif
-    return keyboard_head 
+    return keyboard_head
 endfunction
 
 " ----------------------------------------------
@@ -2196,6 +2196,7 @@ function! s:vimim_match_cjk_file(keyboard)
     endif
     let keyboard = a:keyboard
     let grep = ""
+    let english_in_cjk = '\s' . keyboard . '\(\s\d\+\)\=$'
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[12345]\>' && empty(len(s:cjk_filter))
             " [sample] pinyin with tone: ma3
@@ -2224,23 +2225,20 @@ function! s:vimim_match_cjk_file(keyboard)
                 " on line 81 using le72 yue72: 乐樂 7290 le4yue4 113092
             endif
         endif
-    elseif keyboard =~ '^\l\>' && len(keyboard) == 1
+    elseif keyboard =~ '^\l\>'
         if has_key(s:cjk_az_cache, keyboard)
             let s:cjk_has_match = 1
             return s:cjk_az_cache[keyboard]
-        endif
-        " [sample] one-char-list by frequency y 72 l 72
-        let grep  = '[ 0-9]' . keyboard . '\w\+\s\d\+$'
-        if s:has_cjk_file > 1 || s:ui.im == 'pinyin'
-            "  我 2355 wo3 i 16
-            let grep .= '\|\s' . keyboard . '\W\='
+        else
+            " [sample] one-char-list by frequency y 72 l 72
+            let grep = '[ 0-9]' . keyboard . '\l*\d.*\s\d\+$'
         endif
     elseif keyboard =~ '^\l'
         " [sample] multiple-char-list by frequency ma
         let grep  = '\s\d\d\d\d\s' . keyboard . '\d'
         if s:has_cjk_file > 1 || s:ui.im == 'pinyin'
             "  /ma3 /horse for 马馬 7712 ma3 horse 259
-            let grep .= '\|\s' . keyboard . '\W\='
+            let grep .= '\|' . english_in_cjk
         endif
     else
         return []
@@ -2253,7 +2251,11 @@ function! s:vimim_match_cjk_file(keyboard)
         let values = split(s:cjk_lines[line])
         let frequency_index = get(values, -1)
         if frequency_index =~ '\l'
-            let frequency_index = 9999
+            if keyboard =~ '^\l\>'
+                continue
+            else
+                let frequency_index = 9999
+            endif
         endif
         let chinese = get(values,0) . ' ' . frequency_index
         call add(results, chinese)
@@ -2266,29 +2268,29 @@ function! s:vimim_match_cjk_file(keyboard)
         call map(results, filter)
         if keyboard =~ '^\l\>' && !has_key(s:cjk_az_cache, keyboard)
             let s:cjk_az_cache[keyboard] = results
+            return results
         endif
     endif
     " ------------------------------------------------------
-    let grep = '\s' . keyboard . '\W\='
-    let line = match(s:cjk_lines, grep)
+    let line = match(s:cjk_lines, english_in_cjk)
     if line > -1 && len(results) > 0
         " english 'color/arrow/push' is found in cjk
         let s:cjk_results = copy(results)
     endif
     " ------------------------------------------------------
-    if s:has_cjk_self_file > 0 && keyboard =~ '^\l\+'
-        let grep = '^' . keyboard . '\>'
-        let matched = match(s:cjk_lines, grep)
-        if matched < 0
-            let msg = "no more scan for: 'dream 梦想' "
-        else
-            let s:cjk_has_match = 2
-            let line = s:cjk_lines[matched]
-            let values = split(line)[1:]
-            call extend(results, values)
-            let s:cjk_results = copy(results)
-        endif
-    endif
+     if s:has_cjk_self_file > 0 && keyboard =~ '^\l\+'
+         let grep = '^' . keyboard . '\>'
+         let matched = match(s:cjk_lines, grep)
+         if matched < 0
+             let msg = "no more scan for: 'dream 梦 梦想' "
+         else
+             let s:cjk_has_match = 2
+             let line = s:cjk_lines[matched]
+             let values = split(line)[1:]
+             call extend(results, values)
+             let s:cjk_results = copy(results)
+         endif
+     endif
     return results
 endfunction
 
