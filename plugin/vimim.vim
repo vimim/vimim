@@ -2047,7 +2047,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         let keyboard_head = keyboard
     elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
-            let  keyboard_head = s:vimim_cjk_english_match(keyboard)
+            let keyboard_head = s:vimim_cjk_english_match(keyboard)
         endif
         if empty(keyboard_head)
             let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
@@ -2071,9 +2071,10 @@ function! s:vimim_cjk_english_match(keyboard)
             let grep = '\s' . keyboard . '\W\='
             let matched = match(s:cjk_lines, grep)
             if matched > -1 && len(results) > 0
-                " english like 'color/arrow' is found
+                " english 'arrow' is also shortcut 'a4492'
                 let chinese = get(split(s:cjk_lines[matched]),0)
-                let s:cjk_results = add(results, chinese)
+                let s:cjk_results = insert(results, chinese)
+                let s:hjkl_h = 1
             endif
         endif
     endif
