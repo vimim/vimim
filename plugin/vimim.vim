@@ -824,7 +824,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_onekey_pumvisible_hjkl_on()
 " -------------------------------------------
-    let hjkl = 'hjklmnsx<>'
+    let hjkl = 'jk<>hlmnsx'
     for _ in split(hjkl, '\zs')
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_onekey_pumvisible_hjkl("'._.'")'
@@ -836,38 +836,36 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
 " ----------------------------------------------
     let hjkl = a:key
     if pumvisible()
-        if a:key == 'h'
-            let s:hjkl_h += 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'j'
+        if a:key == 'j'
             let hjkl  = '\<Down>'
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
-        elseif a:key == 'l'
-            let pumheight = &pumheight
-            let &pumheight = s:hjkl_l
-            let s:hjkl_l = pumheight
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key =~ "[mn]"
-            if a:key == 'm'
-                let s:hjkl_m += 1
-            elseif a:key == 'n'
-                let s:hjkl_n += 1
-            endif
-            call g:vimim_reset_after_insert()
-            let s:keyboard_list = []
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 's'
-            call g:vimim_reset_after_insert()
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        elseif a:key == 'x'
-            let s:hjkl_x += 1
-            let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         elseif a:key =~ "[<>]"
             let punctuation = nr2char(char2nr(a:key)-16)
             let hjkl  = '\<C-Y>'
             let hjkl .= s:vimim_get_chinese_punctuation(punctuation)
             let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
+        else
+            if a:key == 'h'
+                let s:hjkl_h += 1
+            elseif a:key == 'l'
+                let pumheight = &pumheight
+                let &pumheight = s:hjkl_l
+                let s:hjkl_l = pumheight
+            elseif a:key == 's'
+                call g:vimim_reset_after_insert()
+            elseif a:key == 'x'
+                let s:hjkl_x += 1
+            elseif a:key == 'm'
+                let s:hjkl_n  = 0
+                let s:hjkl_m += 1
+                let s:keyboard_list = []
+            elseif a:key == 'n'
+                let s:hjkl_m  = 0
+                let s:hjkl_n += 1
+                let s:keyboard_list = []
+            endif
+            let hjkl = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -4772,9 +4770,11 @@ endfunction
 " ---------------------------------------
 function! s:vimim_reset_before_anything()
 " ---------------------------------------
+    let s:hjkl_h = 0
     let s:hjkl_l = 0
     let s:hjkl_m = 0
     let s:hjkl_n = 0
+    let s:hjkl_x = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e = 0
     let s:pattern_not_found = 0
@@ -4790,8 +4790,6 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:cjk_filter = ""
     let s:cjk_has_match = 0
-    let s:hjkl_h = 0
-    let s:hjkl_x = 0
     let s:hjkl_pageup_pagedown = 0
     let s:no_internet_connection = 0
     let s:pumvisible_yes = 0
