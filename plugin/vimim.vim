@@ -2068,13 +2068,18 @@ function! s:vimim_cjk_english_match(keyboard)
             let s:keyboard_list = []
             let keyboard_head = 0
         else
-            let grep = '\s' . keyboard . '\W\='
-            let matched = match(s:cjk_lines, grep)
+            let english_in_cjk = '\s' . keyboard . '\(\s\d\+\)\=$'
+            let matched = match(s:cjk_lines, english_in_cjk)
             if matched > -1 && len(results) > 0
                 " english 'arrow' is also shortcut 'a4492'
                 let chinese = get(split(s:cjk_lines[matched]),0)
                 let s:cjk_results = insert(results, chinese)
                 let s:hjkl_h = 1
+            endif
+            let private_results = s:vimim_private_file_match(keyboard)
+            if !empty(private_results)
+                call extend(results, private_results)
+                let s:cjk_results = copy(results)
             endif
         endif
     endif
@@ -2278,20 +2283,32 @@ function! s:vimim_match_cjk_file(keyboard)
         let s:cjk_results = copy(results)
     endif
     " ------------------------------------------------------
-     if s:has_cjk_self_file > 0 && keyboard =~ '^\l\+'
-         let grep = '^' . keyboard . '\>'
-         let matched = match(s:cjk_lines, grep)
-         if matched < 0
-             let msg = "no more scan for: 'dream 梦 梦想' "
-         else
-             let s:cjk_has_match = 2
-             let line = s:cjk_lines[matched]
-             let values = split(line)[1:]
-             call extend(results, values)
-             let s:cjk_results = copy(results)
-         endif
-     endif
+    let private_results = s:vimim_private_file_match(keyboard)
+    if !empty(private_results)
+        call extend(results, private_results)
+        let s:cjk_results = copy(results)
+    endif
     return results
+endfunction
+
+" --------------------------------------------
+function! s:vimim_private_file_match(keyboard)
+" --------------------------------------------
+    call s:vimim_load_cjk_file()
+    let keyboard = a:keyboard
+    let results = []
+    if s:has_cjk_self_file > 0 && keyboard =~ '^\l\+'
+        let grep = '^' . keyboard . '\>'
+        let matched = match(s:cjk_lines, grep)
+        if matched < 0
+            let msg = "no more scan for: 'dream 梦 梦想' "
+        else
+            let s:cjk_has_match = 2
+            let line = s:cjk_lines[matched]
+            let results = split(line)[1:]
+        endif
+    endif
+   return results
 endfunction
 
 " -----------------------------------------------
