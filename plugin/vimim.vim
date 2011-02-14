@@ -310,11 +310,11 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_use_cache")
+    call add(G, "g:vimim_digit_12345")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
-    " -----------------------------------
+    " ----------------------------------- todo
     let G = []
-    call add(G, "g:vimim_digit_12345")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_custom_label")
@@ -2258,7 +2258,7 @@ function! s:vimim_cjk_match(keyboard)
             " [sample] pinyin with tone: ma3
             let grep = '\s\d\d\d\d\s' . keyboard . '\D\='
         else
-            let digit = 0
+            let digit = ""
             if keyboard =~ '^\d\+' && keyboard !~ '\D'
                 " [sample] free-style digit input: 7 77 771 7712"
                 let digit = keyboard
@@ -2282,7 +2282,7 @@ function! s:vimim_cjk_match(keyboard)
                     let grep .= cjk_frequency
                 endif
             endif
-            if len(keyboard) < dddddd && digit > 0
+            if len(keyboard) < dddddd && len(string(digit)) > 0
                 let s:cjk_filter = digit
             endif
         endif
