@@ -313,7 +313,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_digit_12345")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
-    " ----------------------------------- todo
+    " -----------------------------------
     let G = []
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_color")
@@ -4637,7 +4637,7 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------- todo
     if isdirectory("/home/xma")
         let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
