@@ -723,7 +723,7 @@ function! g:vimim_space()
     let space = " "
     if pumvisible()
         let space = "\<C-Y>"
-        let s:pumvisible_yes = 1
+        let s:has_pumvisible = 1
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
@@ -1278,7 +1278,7 @@ function! g:vimim_123456789_label(n)
         endif
         let down = repeat("\<Down>", n)
         let yes = "\<C-Y>"
-        let s:pumvisible_yes = 1
+        let s:has_pumvisible = 1
         let label = down . yes
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -1424,7 +1424,7 @@ function! g:vimim_pumvisible_ctrl_y()
     let key = ""
     if pumvisible()
         let key = "\<C-Y>"
-        let s:pumvisible_yes = 1
+        let s:has_pumvisible = 1
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1495,7 +1495,7 @@ function! s:vimim_popupmenu_list(matched_list)
         \|| s:cjk_has_match > 0
             let msg = "matched_list has only single item"
         elseif empty(s:vimim_data_directory)
-        \|| s:no_internet_connection < 0
+        \|| s:has_no_internet < 0
         \|| s:vimim_cloud_sogou == 1
             let pairs = split(chinese)
             if len(pairs) < 2
@@ -1746,7 +1746,7 @@ function! <SID>vimim_punctuation_mapping(key)
     let value = s:vimim_get_chinese_punctuation(a:key)
     if pumvisible()
         let value = "\<C-Y>" . value
-        let s:pumvisible_yes = 1
+        let s:has_pumvisible = 1
     endif
     sil!exe 'sil!return "' . value . '"'
 endfunction
@@ -2243,6 +2243,9 @@ function! s:vimim_cjk_match(keyboard)
     endif
     if len(keyboard) == 1 && has_key(s:cjk_one_char_cache, keyboard)
         let s:cjk_has_match = 1
+        if keyboard =~ '\d'
+            let s:cjk_filter = keyboard
+        endif
         return s:cjk_one_char_cache[keyboard]
     endif
     " -------------------------------
@@ -2281,8 +2284,6 @@ function! s:vimim_cjk_match(keyboard)
             endif
             if len(keyboard) < dddddd && digit > 0
                 let s:cjk_filter = digit
-            else
-                let s:cjk_filter = ""
             endif
         endif
     elseif len(keyboard) == 1
@@ -2530,7 +2531,7 @@ function! s:vimim_cjk_filter_from_cache(keyboard)
 " use 1234567890/qwertyuiop as digit filter
     call s:vimim_load_cjk_file()
     let results = s:vimim_cjk_filter_list(a:keyboard)
-    if empty(results) && len(s:cjk_filter) > 0
+    if empty(results) && !empty(len(s:cjk_filter))
         let number_before = strpart(s:cjk_filter,0,len(s:cjk_filter)-1)
         if len(number_before) > 0
             let s:cjk_filter = number_before
@@ -3173,7 +3174,7 @@ function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
         let key = "\<C-E>"
         if empty(len(get(s:keyboard_list,0))%4)
             let key = "\<C-Y>"
-            let s:pumvisible_yes = 1
+            let s:has_pumvisible = 1
             let s:keyboard_list = []
         endif
     endif
@@ -4137,11 +4138,11 @@ function! s:vimim_magic_tail(keyboard)
     " ----------------------------------------------------
     if magic_tail ==# "."
         " trailing dot => forced-non-cloud
-        let s:no_internet_connection = 2
+        let s:has_no_internet = 2
         call add(keyboards, -1)
     elseif magic_tail ==# "'"
         " trailing apostrophe => forced-cloud
-        let s:no_internet_connection -= 2
+        let s:has_no_internet -= 2
         let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
         if empty(cloud)
             return []
@@ -4165,9 +4166,9 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     if do_cloud > 0
         return 1
     endif
-    if s:no_internet_connection > 1
+    if s:has_no_internet > 1
         return 0
-    elseif s:no_internet_connection < 0
+    elseif s:has_no_internet < 0
         return 1
     endif
     if s:vimim_cloud_sogou < 1
@@ -4888,8 +4889,8 @@ function! g:vimim_reset_after_insert()
     let s:cjk_filter = ""
     let s:cjk_has_match = 0
     let s:hjkl_pageup_pagedown = 0
-    let s:no_internet_connection = 0
-    let s:pumvisible_yes = 0
+    let s:has_no_internet = 0
+    let s:has_pumvisible = 0
     return ""
 endfunction
 
@@ -4902,7 +4903,7 @@ function! g:vimim_nonstop_after_insert()
         call s:vimim_stop()
     endif
     let key = ""
-    if s:pumvisible_yes > 0
+    if s:has_pumvisible > 0
         let key = g:vimim()
         if len(s:keyboard_list) > 1
             let s:keyboard_list = [get(s:keyboard_list,1)]
@@ -5131,8 +5132,8 @@ else
         endif
     endif
 
-    " [filter] do digit filter within cache memory
-    " --------------------------------------------
+    " [filter] do digital filter within cache memory
+    " ----------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
     \&& s:has_cjk_file > 0
     \&& len(s:cjk_filter) > 0
@@ -5234,10 +5235,10 @@ else
         let results = s:vimim_get_cloud_sogou(keyboard, cloud)
         if empty(len(results))
             if s:vimim_cloud_sogou > 2
-                let s:no_internet_connection += 1
+                let s:has_no_internet += 1
             endif
         else
-            let s:no_internet_connection = -1
+            let s:has_no_internet = -1
             let s:keyboard_list = [keyboard]
             return s:vimim_popupmenu_list(results)
         endif
