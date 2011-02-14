@@ -310,6 +310,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_use_cache")
+    call add(G, "g:vimim_digit_12345")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -2242,6 +2243,7 @@ function! s:vimim_cjk_match(keyboard)
     if empty(s:has_cjk_file)
         return []
     endif
+    let dddd = 4 + s:vimim_digit_12345
     let keyboard = a:keyboard
     let grep = ""
     let english_in_cjk = '\s' . keyboard . '\(\s\d\+\)\=$'
@@ -2254,7 +2256,7 @@ function! s:vimim_cjk_match(keyboard)
             if keyboard =~ '^\d\+' && keyboard !~ '\D'
                 " [sample] free-style digit input: 7 77 771 7712"
                 let digit = keyboard
-                if len(keyboard) < 4
+                if len(keyboard) < dddd
                     let s:cjk_filter = digit
                 else
                     let s:cjk_filter = ""
@@ -2265,11 +2267,14 @@ function! s:vimim_cjk_match(keyboard)
                 let digit = substitute(keyboard,'\a','','g')
             endif
             if !empty(digit)
-                let space = 4 - len(digit)
+                let space = dddd - len(digit)
                 let grep  = '\s' . digit
                 let grep .= '\d\{' . space . '}\s'
                 let alpha = substitute(keyboard,'\d','','g')
                 if !empty(alpha)
+                    if dddd == 5
+                        let grep .= '\s\d\d\d\d\s'
+                    endif
                     let grep .= '\(\l\+\d\)\=' . alpha
                 endif
             endif
@@ -2448,10 +2453,15 @@ function! s:vimim_reverse_lookup(chinese)
     if empty(s:has_cjk_file)
         return results
     endif
-    " -----------------------------------
     call s:vimim_load_cjk_file()
-    let results_pinyin = []    |" 马力 => ma3 li2
-    let result_cjjp = ""       |" 马力 => ml
+    " -----------------------------------
+    let results_digit = s:vimim_reverse_one_entry(chinese, 2)
+    call extend(results, results_digit)
+    let results_digit = s:vimim_reverse_one_entry(chinese, 1)
+    call extend(results, results_digit)
+    " -----------------------------------
+    let results_pinyin = []  |" 马力 => ma3 li2
+    let result_cjjp = ""     |" 马力 => ml
     let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
     if len(items) > 0
         let pinyin_head = get(items,0)
@@ -2464,10 +2474,6 @@ function! s:vimim_reverse_lookup(chinese)
             let result_cjjp .= " ".chinese
         endif
     endif
-    let results_digit = s:vimim_reverse_one_entry(chinese, 'digit')
-    if !empty(results_digit)
-        call extend(results, results_digit)
-    endif
     if !empty(results_pinyin)
         call extend(results, results_pinyin)
         if result_cjjp =~ '\a'
@@ -2477,11 +2483,12 @@ function! s:vimim_reverse_lookup(chinese)
     return results
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_reverse_one_entry(chinese, im)
-" ----------------------------------------------
-    let headers = []  "|  ma3 li4
-    let bodies = []   "|  马  力
+" ----------------------------------------------------
+function! s:vimim_reverse_one_entry(chinese, property)
+" ----------------------------------------------------
+    let property = a:property
+    let headers = []
+    let bodies = []
     for chinese in split(a:chinese, '\zs')
         let ddddd = char2nr(chinese)
         let line = ddddd - 19968
@@ -2489,14 +2496,14 @@ function! s:vimim_reverse_one_entry(chinese, im)
             continue
         endif
         let head = ''
-        if a:im == 'unicode'
+        if property == 'unicode'
             let head = printf('%x', ddddd)
         elseif s:has_cjk_file > 0
             let values = split(s:cjk_lines[line])
-            if a:im == 'digit'
-                let head = get(values, 1)
-            elseif a:im == 'pinyin'
-                let head = get(values, 2)
+            if property =~ '\d'
+                let head = get(values, property)
+            elseif property == 'pinyin'
+                let head = get(values, 3)
             endif
         endif
         if empty(head)
@@ -2563,9 +2570,9 @@ endfunction
 " -----------------------------------------
 function! s:vimim_cjk_digit_filter(chinese)
 " -----------------------------------------
-" smart digit filter:  马力 7712 4002
-"   (1) ma<C-6>        马   => filter with 7712
-"   (2) mali<C-6>      马力 => filter with 7 4002
+" smart digital filter: 马力 7712 4002
+"   (1) ma<C-6>         马   => filter with 7712
+"   (2) mali<C-6>       马力 => filter with 7 4002
 " -----------------------------------------
     let chinese = a:chinese
     if empty(len(s:cjk_filter)) || empty(chinese)
@@ -2581,7 +2588,8 @@ function! s:vimim_cjk_digit_filter(chinese)
             continue
         else
             let values = split(s:cjk_lines[line])
-            let digit = get(values,1)
+            let digit = 2 - s:vimim_digit_12345
+            let digit = get(values, digit)
             let digit_head .= digit[:0]
             let digit_tail = digit[1:]
         endif
@@ -3394,9 +3402,13 @@ function! s:vimim_cjk_property_display(ddddd)
     else
         call s:vimim_load_cjk_file()
         let chinese = nr2char( a:ddddd)
-        let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
+        let four = get(s:vimim_reverse_one_entry(chinese,2),0)
+        let five = get(s:vimim_reverse_one_entry(chinese,1),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        let unicode = digit . s:space . unicode . s:space . pinyin
+        let four = four . s:space 
+        let five = five . s:space
+        let unicode = unicode . s:space
+        let unicode = four . five . unicode . pinyin
     endif
     return unicode
 endfunction
