@@ -2076,7 +2076,8 @@ function! s:vimim_cjk_english_match(keyboard)
             let s:keyboard_list = []
             let keyboard_head = 0
         else
-            let cjk_english = '\s' . keyboard . '\(\s\d\+\)\=$'
+            " cjk sample:  加 532510 4600 jia1 add plus 186
+            let cjk_english = '\s' . keyboard . '.*' . '\(\s\d\+\)\=$'
             let matched = match(s:cjk_lines, cjk_english)
             if matched > -1 && len(results) > 0
                 " english 'arrow' is also shortcut 'a4492'
@@ -2260,7 +2261,7 @@ function! s:vimim_cjk_match(keyboard)
     " -------------------------------
     let grep = ""
     let dddddd = 6 - 2 * s:vimim_digit_4corner
-    let cjk_english = '\s' . keyboard . '\(\s\d\+\)\=$'
+    let cjk_english = '\s' . keyboard . '.*' . '\(\s\d\+\)\=$'
     let cjk_frequency = '.*' . '\s\d\+$'
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[12345]\>' && empty(len(s:cjk_filter))
@@ -4646,9 +4647,9 @@ call add(s:vimims, VimIM)
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
+" ----------------------------------
     if isdirectory("/home/xma")
-        let s:vimim_digit_4corner = 0
+        let s:vimim_digit_4corner = 1
         let s:vimim_tab_as_onekey = 2
         let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
