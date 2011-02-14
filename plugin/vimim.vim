@@ -310,11 +310,11 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_use_cache")
-    call add(G, "g:vimim_digit_12345")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
+    call add(G, "g:vimim_digit_12345")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_custom_label")
@@ -1929,7 +1929,7 @@ call add(s:vimims, VimIM)
 " -------------------------------------
 function! s:vimim_initialize_cjk_file()
 " -------------------------------------
-    let s:cjk_az_cache = {}
+    let s:cjk_one_char_cache = {}
     let s:cjk_results = []
     let s:cjk_file = 0
     let s:cjk_lines = []
@@ -2040,7 +2040,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         let keyboard_head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
-            let keyboard_head = s:vimim_cjk_sentence_4corner(keyboard)
+            let keyboard_head = s:vimim_cjk_every_four(keyboard)
         elseif keyboard =~ '^\l\+\d\+'
             let keyboard_head = s:vimim_cjk_sentence_digit(keyboard)
         endif
@@ -2069,8 +2069,8 @@ function! s:vimim_cjk_english_match(keyboard)
             let s:keyboard_list = []
             let keyboard_head = 0
         else
-            let english_in_cjk = '\s' . keyboard . '\(\s\d\+\)\=$'
-            let matched = match(s:cjk_lines, english_in_cjk)
+            let cjk_english = '\s' . keyboard . '\(\s\d\+\)\=$'
+            let matched = match(s:cjk_lines, cjk_english)
             if matched > -1 && len(results) > 0
                 " english 'arrow' is also shortcut 'a4492'
                 let chinese = get(split(s:cjk_lines[matched]),0)
@@ -2088,13 +2088,13 @@ function! s:vimim_cjk_english_match(keyboard)
     return keyboard_head
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_cjk_sentence_4corner(keyboard)
-" ----------------------------------------------
+" ----------------------------------------
+function! s:vimim_cjk_every_four(keyboard)
+" ----------------------------------------
     " output is '6021' for input "6021272260001762"
-    let keyboard = a:keyboard
     let block = 4
-    if len(keyboard) < 5
+    let keyboard = a:keyboard
+    if len(keyboard) < block + 1
         return keyboard
     elseif len(keyboard) % block < 1
         let pattern = '^\d\{' . block . '}'
@@ -2240,13 +2240,19 @@ endfunction
 " -----------------------------------
 function! s:vimim_cjk_match(keyboard)
 " -----------------------------------
+    let keyboard = a:keyboard
     if empty(s:has_cjk_file)
         return []
     endif
-    let dddddd = 4 + 2 * s:vimim_digit_12345
-    let keyboard = a:keyboard
+    if len(keyboard) == 1 && has_key(s:cjk_one_char_cache, keyboard)
+        let s:cjk_has_match = 1
+        return s:cjk_one_char_cache[keyboard]
+    endif
+    " -------------------------------
     let grep = ""
-    let english_in_cjk = '\s' . keyboard . '\(\s\d\+\)\=$'
+    let dddddd = 4 + 2 * s:vimim_digit_12345
+    let cjk_english = '\s' . keyboard . '\(\s\d\+\)\=$'
+    let cjk_frequency = '.*' . '\s\d\+$'
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[12345]\>' && empty(len(s:cjk_filter))
             " [sample] pinyin with tone: ma3
@@ -2271,6 +2277,9 @@ function! s:vimim_cjk_match(keyboard)
                 let alpha = substitute(keyboard,'\d','','g')
                 if !empty(alpha)
                     let grep .= '\(\l\+\d\)\=' . alpha
+                elseif len(keyboard) == 1
+                    " [sample] one-char-list by frequency: 1 2 3 4 5
+                    let grep .= cjk_frequency
                 endif
             endif
             if len(keyboard) < dddddd && digit > 0
@@ -2279,20 +2288,15 @@ function! s:vimim_cjk_match(keyboard)
                 let s:cjk_filter = ""
             endif
         endif
-    elseif keyboard =~ '^\l\>'
-        if has_key(s:cjk_az_cache, keyboard)
-            let s:cjk_has_match = 1
-            return s:cjk_az_cache[keyboard]
-        else
-            " [sample] one-char-list by frequency y 72 l 72
-            let grep = '[ 0-9]' . keyboard . '\l*\d.*\s\d\+$'
-        endif
+    elseif len(keyboard) == 1
+        " [sample] one-char-list by frequency y 72 l 72
+        let grep = '[ 0-9]' . keyboard . '\l*\d' . cjk_frequency
     elseif keyboard =~ '^\l'
-        " [sample] multiple-char-list by frequency ma
+        " [sample] multiple-char-list without frequency: ma
         let grep  = '\s\d\d\d\d\s' . keyboard . '\d'
         if s:has_cjk_file > 1 || s:ui.im == 'pinyin'
             "  /ma3 /horse for 马馬 7712 ma3 horse 259
-            let grep .= '\|' . english_in_cjk
+            let grep .= '\|' . cjk_english
         endif
     else
         return []
@@ -2320,13 +2324,13 @@ function! s:vimim_cjk_match(keyboard)
         let results = sort(results, "s:vimim_compare_last_field")
         let filter = "strpart(".'v:val'.",0,s:multibyte)"
         call map(results, filter)
-        if keyboard =~ '^\l\>' && !has_key(s:cjk_az_cache, keyboard)
-            let s:cjk_az_cache[keyboard] = results
+        if len(keyboard) == 1 && !has_key(s:cjk_one_char_cache, keyboard)
+            let s:cjk_one_char_cache[keyboard] = results
             return results
         endif
     endif
     " ------------------------------------------------------
-    let line = match(s:cjk_lines, english_in_cjk)
+    let line = match(s:cjk_lines, cjk_english)
     if line > -1 && len(results) > 0
         " cjk has english entry such as color/arrow/push
         let s:cjk_results = copy(results)
