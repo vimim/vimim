@@ -20893,7 +20893,7 @@
 龜龟 325112 2711 gui1jun1qiu1
 龝   312343 2791 qiu1
 龞   243253 9811 bie1
-龟龜 351511 2771 gui1jun1qiu1 tortoise turtle 2614
+龟龜 351511 2771 gui1 tortoise turtle 2614
 龠   341251 8022 yue4
 龡   341251 8728 chui4
 龢   341251 8229 he2he4huo4
