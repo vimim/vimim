@@ -1934,9 +1934,9 @@ function! s:vimim_initialize_cjk_file()
     let s:cjk_results = []
     let s:cjk_file = 0
     let s:cjk_lines = []
+    let s:has_cjk_file = 0
     let s:cjk_self_file = 0
     let s:cjk_self_lines = []
-    let s:has_cjk_file = 0
     let s:has_cjk_self_file = 0
     let datafile = s:vimim_check_filereadable("vimim.txt")
     if !empty(datafile)
@@ -1982,16 +1982,6 @@ function! s:vimim_load_cjk_file()
                 let s:cjk_lines = []
                 let s:has_cjk_file = 0
             endif
-        endif
-    endif
-endfunction
-
-" -----------------------------------
-function! s:vimim_load_private_file()
-" -----------------------------------
-    if empty(s:cjk_self_lines)
-        if s:has_cjk_self_file > 0
-            let s:cjk_self_lines = s:vimim_readfile(s:cjk_self_file)
         endif
     endif
 endfunction
@@ -2227,9 +2217,10 @@ endfunction
 " -------------------------------------------
 function! s:vimim_cjk_private_match(keyboard)
 " -------------------------------------------
-    call s:vimim_load_private_file()
     if empty(s:cjk_self_lines)
-        return []
+        if s:has_cjk_self_file > 0
+            let s:cjk_self_lines = s:vimim_readfile(s:cjk_self_file)
+        endif
     endif
     let keyboard = a:keyboard
     let results = []
