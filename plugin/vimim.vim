@@ -2243,7 +2243,7 @@ function! s:vimim_cjk_match(keyboard)
     if empty(s:has_cjk_file)
         return []
     endif
-    let dddd = 4 + s:vimim_digit_12345
+    let dddddd = 4 + 2 * s:vimim_digit_12345
     let keyboard = a:keyboard
     let grep = ""
     let english_in_cjk = '\s' . keyboard . '\(\s\d\+\)\=$'
@@ -2256,27 +2256,27 @@ function! s:vimim_cjk_match(keyboard)
             if keyboard =~ '^\d\+' && keyboard !~ '\D'
                 " [sample] free-style digit input: 7 77 771 7712"
                 let digit = keyboard
-                if len(keyboard) < dddd
-                    let s:cjk_filter = digit
-                else
-                    let s:cjk_filter = ""
-                endif
             elseif keyboard =~ '^\l\+\d\+'
                 " [sample] free-style input/search: ma7 ma77 ma771 ma7712
                 " on line 81 using le72 yue72: 乐樂 7290 le4yue4 113092
                 let digit = substitute(keyboard,'\a','','g')
             endif
             if !empty(digit)
-                let space = dddd - len(digit)
+                let space = dddddd - len(digit)
                 let grep  = '\s' . digit
                 let grep .= '\d\{' . space . '}\s'
+                if dddddd == 6
+                    let grep .= '\d\d\d\d\s'
+                endif
                 let alpha = substitute(keyboard,'\d','','g')
                 if !empty(alpha)
-                    if dddd == 5
-                        let grep .= '\s\d\d\d\d\s'
-                    endif
                     let grep .= '\(\l\+\d\)\=' . alpha
                 endif
+            endif
+            if len(keyboard) < dddddd && digit > 0
+                let s:cjk_filter = digit
+            else
+                let s:cjk_filter = ""
             endif
         endif
     elseif keyboard =~ '^\l\>'
@@ -2588,8 +2588,8 @@ function! s:vimim_cjk_digit_filter(chinese)
             continue
         else
             let values = split(s:cjk_lines[line])
-            let digit = 2 - s:vimim_digit_12345
-            let digit = get(values, digit)
+            let column = 2 - s:vimim_digit_12345
+            let digit = get(values, column)
             let digit_head .= digit[:0]
             let digit_tail = digit[1:]
         endif
