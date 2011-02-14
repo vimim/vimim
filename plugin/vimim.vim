@@ -894,15 +894,6 @@ function! <SID>vimim_onekey_pumvisible_qwerty(n)
             if label =~ '\l'
                 let label = match(s:qwerty, a:n)
             endif
-            if empty(s:vimim_digit_4corner)
-                " qwert/12345 => 12345
-                " yuiop/67890 => 12345
-                if label > 5
-                    let label -= 5
-                elseif empty(label)
-                    let label = 5
-                endif
-            endif
             if empty(len(s:cjk_filter))
                 let s:cjk_filter = label
             else
@@ -2274,7 +2265,7 @@ function! s:vimim_cjk_match(keyboard)
                 let digit = keyboard
             elseif keyboard =~ '^\l\+\d\+'
                 " [sample] free-style input/search: ma7 ma77 ma771 ma7712
-                " on line 81 using le72 yue72: 乐樂 7290 le4yue4 113092
+                " on line 81 using le72 yue72: 乐樂 7290 le4yue4 426
                 let digit = substitute(keyboard,'\a','','g')
             endif
             if !empty(digit)
@@ -4649,7 +4640,7 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma")
-        let s:vimim_digit_4corner = 1
+        let s:vimim_digit_4corner = 0
         let s:vimim_tab_as_onekey = 2
         let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
