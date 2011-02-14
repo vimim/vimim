@@ -2036,16 +2036,14 @@ function! s:vimim_cjk_sentence_match(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
     let keyboard_head = 0
-    if keyboard =~ s:show_me_not
+    if keyboard =~ s:show_me_not || len(keyboard) == 1
         let keyboard_head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
             let keyboard_head = s:vimim_cjk_every_four(keyboard)
         elseif keyboard =~ '^\l\+\d\+'
-            let keyboard_head = s:vimim_cjk_sentence_digit(keyboard)
+            let keyboard_head = s:vimim_cjk_alpha_digit(keyboard)
         endif
-    elseif len(keyboard) == 1
-        let keyboard_head = keyboard
     elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
             let keyboard_head = s:vimim_cjk_english_match(keyboard)
@@ -2092,22 +2090,21 @@ endfunction
 function! s:vimim_cjk_every_four(keyboard)
 " ----------------------------------------
     " output is '6021' for input "6021272260001762"
-    let block = 4
     let keyboard = a:keyboard
-    if len(keyboard) < block + 1
-        return keyboard
-    elseif len(keyboard) % block < 1
+    let block = 4
+    if len(keyboard) % block < 1
         let pattern = '^\d\{' . block . '}'
         let delimiter = match(keyboard, pattern)
         if delimiter > -1
-            return s:vimim_get_keyboard_head_list(keyboard, block)
+            let keyboard = s:vimim_get_keyboard_head_list(keyboard, block)
         endif
     endif
+    return keyboard
 endfunction
 
-" --------------------------------------------
-function! s:vimim_cjk_sentence_digit(keyboard)
-" --------------------------------------------
+" -----------------------------------------
+function! s:vimim_cjk_alpha_digit(keyboard)
+" -----------------------------------------
     " output is 'wo23' for input "wo23you40yigemeng"
     let keyboard = a:keyboard
     if keyboard =~ '^\l\+\d\+\>'
@@ -3334,7 +3331,8 @@ endfunction
 function! s:vimim_get_unicode_list(keyboard)
 " ------------------------------------------
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
-    if empty(ddddd)
+    let line = ddddd - 19968
+    if line < 0 || line > 20902
         return []
     endif
     let words = []
@@ -3409,7 +3407,7 @@ function! s:vimim_cjk_property_display(ddddd)
         let four = get(s:vimim_reverse_one_entry(chinese,2),0)
         let five = get(s:vimim_reverse_one_entry(chinese,1),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        let four = four . s:space 
+        let four = four . s:space
         let five = five . s:space
         let unicode = unicode . s:space
         let unicode = four . five . unicode . pinyin
