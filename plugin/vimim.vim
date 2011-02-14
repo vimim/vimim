@@ -1465,21 +1465,6 @@ let VimIM = " ====  Omni_Popup_Menu   ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" ----------------------------------------------------
-function! s:vimim_make_pair_matched_list(matched_list)
-" ----------------------------------------------------
-    let pair_matched_list = []
-    for line in a:matched_list
-        let words = split(line)
-        let menu = remove(words, 0)
-        for chinese in words
-            let menu_chinese = menu .' '. chinese
-            call add(pair_matched_list, menu_chinese)
-        endfor
-    endfor
-    return pair_matched_list
-endfunction
-
 " --------------------------------------------
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
@@ -1493,6 +1478,7 @@ function! s:vimim_popupmenu_list(matched_list)
         let matched_list = s:vimim_pageup_pagedown(matched_list)
     endif
     let label = 1
+    let extra_text = ""
     let s:popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
     if s:hjkl_n > 0 && s:hjkl_n%2 > 0 && s:ui.im == 'pinyin'
@@ -1518,7 +1504,6 @@ function! s:vimim_popupmenu_list(matched_list)
             let keyboard_head_length = len(keyboard_head)
             let chinese = get(pairs, 1)
         endif
-        let extra_text = ""
         " -------------------------------------------------
         if s:hjkl_x % 2 > 0 && s:has_cjk_file > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
@@ -1542,16 +1527,14 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         " -------------------------------------------------
         let complete_items = {}
-        if s:vimim_custom_label > 0
-            if keyboard !~# s:show_me_not
-                let fmt = '%2s'
-                if s:hjkl_l > 0 && s:has_cjk_file > 0 && &pumheight < 1
-                    let fmt = '%02s'
-                endif
-                let labeling = printf(fmt, s:vimim_get_labeling(label))
-                let complete_items["abbr"] = labeling . "\t" . chinese
-                let label += 1
+        if s:vimim_custom_label > 0 && keyboard !~# s:show_me_not
+            let fmt = '%2s'
+            if s:hjkl_l > 0 && &pumheight < 1
+                let fmt = '%02s'
             endif
+            let labeling = printf(fmt, s:vimim_get_labeling(label))
+            let complete_items["abbr"] = labeling . "\t" . chinese
+            let label += 1
         endif
         " -------------------------------------------------
         if !empty(extra_text)
@@ -1562,6 +1545,21 @@ function! s:vimim_popupmenu_list(matched_list)
         call add(s:popupmenu_list, complete_items)
     endfor
     return s:popupmenu_list
+endfunction
+
+" ----------------------------------------------------
+function! s:vimim_make_pair_matched_list(matched_list)
+" ----------------------------------------------------
+    let pair_matched_list = []
+    for line in a:matched_list
+        let words = split(line)
+        let menu = remove(words, 0)
+        for chinese in words
+            let menu_chinese = menu .' '. chinese
+            call add(pair_matched_list, menu_chinese)
+        endfor
+    endfor
+    return pair_matched_list
 endfunction
 
 " -----------------------------------
@@ -2253,7 +2251,6 @@ function! s:vimim_cjk_match(keyboard)
             let grep = '\s\d\d\d\d\s' . keyboard . '\D\='
         else
             let digit = 0
-            let alpha = ""
             if keyboard =~ '^\d\+' && keyboard !~ '\D'
                 " [sample] free-style digit input: 7 77 771 7712"
                 let digit = keyboard
@@ -2263,16 +2260,18 @@ function! s:vimim_cjk_match(keyboard)
                     let s:cjk_filter = ""
                 endif
             elseif keyboard =~ '^\l\+\d\+'
+                " [sample] free-style input/search: ma7 ma77 ma771 ma7712
+                " on line 81 using le72 yue72: 乐樂 7290 le4yue4 113092
                 let digit = substitute(keyboard,'\a','','g')
-                let alpha = substitute(keyboard,'\d','','g')
             endif
             if !empty(digit)
                 let space = 4 - len(digit)
                 let grep  = '\s' . digit
                 let grep .= '\d\{' . space . '}\s'
-                let grep .= '\(\l\+\d\)\=' . alpha
-                " [sample] free-style input/search: ma7 ma77 ma771 ma7712"
-                " on line 81 using le72 yue72: 乐樂 7290 le4yue4 113092
+                let alpha = substitute(keyboard,'\d','','g')
+                if !empty(alpha)
+                    let grep .= '\(\l\+\d\)\=' . alpha
+                endif
             endif
         endif
     elseif keyboard =~ '^\l\>'
@@ -3397,8 +3396,7 @@ function! s:vimim_cjk_property_display(ddddd)
         let chinese = nr2char( a:ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,'digit'),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        let unicode .= s:space . digit
-        let unicode .= s:space . pinyin
+        let unicode = digit . s:space . unicode . s:space . pinyin
     endif
     return unicode
 endfunction
