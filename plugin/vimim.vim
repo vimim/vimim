@@ -310,7 +310,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_use_cache")
-    call add(G, "g:vimim_digit_12345")
+    call add(G, "g:vimim_digit_4corner")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -893,6 +893,15 @@ function! <SID>vimim_onekey_pumvisible_qwerty(n)
         if s:has_cjk_file > 0
             if label =~ '\l'
                 let label = match(s:qwerty, a:n)
+            endif
+            if empty(s:vimim_digit_4corner)
+                " qwert/12345 => 12345
+                " yuiop/67890 => 12345
+                if label > 5
+                    let label -= 5
+                elseif empty(label)
+                    let label = 5
+                endif
             endif
             if empty(len(s:cjk_filter))
                 let s:cjk_filter = label
@@ -2250,7 +2259,7 @@ function! s:vimim_cjk_match(keyboard)
     endif
     " -------------------------------
     let grep = ""
-    let dddddd = 4 + 2 * s:vimim_digit_12345
+    let dddddd = 6 - 2 * s:vimim_digit_4corner
     let cjk_english = '\s' . keyboard . '\(\s\d\+\)\=$'
     let cjk_frequency = '.*' . '\s\d\+$'
     if keyboard =~ '\d'
@@ -2590,7 +2599,7 @@ function! s:vimim_cjk_digit_filter(chinese)
             continue
         else
             let values = split(s:cjk_lines[line])
-            let column = 2 - s:vimim_digit_12345
+            let column = 1 + s:vimim_digit_4corner
             let digit = get(values, column)
             let digit_head .= digit[:0]
             let digit_tail = digit[1:]
@@ -4639,9 +4648,10 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_debug()
 " ---------------------------------- todo
     if isdirectory("/home/xma")
+        let s:vimim_digit_4corner = 0
+        let s:vimim_tab_as_onekey = 2
         let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
-        let s:vimim_tab_as_onekey = 2
     endif
 endfunction
 
