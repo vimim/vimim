@@ -220,7 +220,6 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode = {}
     let s:im_keycode['pinyin']   = "[0-9a-z'.]"
     let s:im_keycode['english']  = "[0-9a-z'.]"
-    let s:im_keycode['4corner']  = "[0-9a-z'.]"
     let s:im_keycode['sogou']    = "[0-9a-z.]"
     let s:im_keycode['mycloud']  = "[0-9a-z']"
     let s:im_keycode['hangul']   = "[0-9a-z']"
@@ -454,7 +453,7 @@ function! s:vimim_egg_vimim()
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_CTRL-Space"
     elseif s:vimim_tab_as_onekey > 1
-        let toggle = "Tab_as_OneKey"
+        let toggle = "Tab_as_OneKey_NonStop"
     endif
     let toggle .= s:space
     let option = s:vimim_chinese('style') . s:colon . toggle
@@ -2675,7 +2674,7 @@ function! s:vimim_quanpin_transform(keyboard)
     if empty(qptable)
         return []
     else
-        let msg = "pinyin breakdown: pinyin=>pin'yin"
+        let msg = "start pinyin breakdown: pinyin=>pin'yin"
     endif
     let item = a:keyboard
     let pinyinstr = ""
@@ -3119,11 +3118,10 @@ endfunction
 " -----------------------------------------
 function! s:vimim_set_special_im_property()
 " -----------------------------------------
-    if empty(s:vimim_shuangpin)
-        if  s:ui.im == 'pinyin' || s:has_cjk_file > 0
-            let s:quanpin_table = s:vimim_create_quanpin_table()
-        endif
+    if  s:ui.im == 'pinyin' || s:has_cjk_file > 0
+        let s:quanpin_table = s:vimim_create_quanpin_table()
     endif
+    " -------------------------------------
     if s:ui.im == 'wu'
     \|| s:ui.im == 'erbi'
     \|| s:ui.im == 'yong'
@@ -3134,8 +3132,13 @@ function! s:vimim_set_special_im_property()
         let s:ui.has_dot = 1  "| dot in datafile
         let s:vimim_chinese_punctuation = -9
     endif
+    " -------------------------------------
     if s:backend[s:ui.root][s:ui.im].datafile =~# "quote"
         let s:ui.has_dot = 2  "| has_apostrophe_in_datafile
+    endif
+    " -------------------------------------
+    if s:ui.im =~ '^\d'
+        let s:vimim_chinese_input_mode = "static"
     endif
 endfunction
 
@@ -3445,6 +3448,7 @@ endfunction
 " --------------------------------
 function! s:vimim_set_datafile(im)
 " --------------------------------
+    let im = 0
     let datafile = 0
     if empty(a:im)
         for im in s:all_vimim_input_methods
@@ -3454,21 +3458,21 @@ function! s:vimim_set_datafile(im)
                     break
                 endif
             endif
-            let file = "vimim." . im . ".txt"
-            let datafile = s:path . file
+            let datafile = s:path . "vimim." . im . ".txt"
             if filereadable(datafile)
                 break
             else
+                let datafile = 0
                 continue
             endif
         endfor
     else
-        let im = a:im
-        let file = "vimim." . im . ".txt"
-        let datafile = s:path . file
+        let datafile = s:path . "vimim." . a:im . ".txt"
     endif
     " ----------------------------------------
-    if !filereadable(datafile) || isdirectory(datafile)
+    if empty(datafile)
+    \|| !filereadable(datafile)
+    \|| isdirectory(datafile)
         return
     endif
     let im = s:vimim_get_valid_im_name(im)
@@ -3485,9 +3489,6 @@ function! s:vimim_set_datafile(im)
         let s:backend.datafile[im].datafile = datafile
         let s:backend.datafile[im].keycode = s:im_keycode[im]
         let s:backend.datafile[im].chinese = s:vimim_chinese(im)
-    endif
-    if im =~ '^\d'
-        let s:vimim_chinese_input_mode = "static"
     endif
 endfunction
 
@@ -3843,6 +3844,9 @@ function! s:vimim_scan_backend_embedded_directory()
         let im = get(dirs, -1)
     endif
     " ---------------------------------------------
+    if empty(s:vimim_data_directory)
+        return
+    endif
     let im = s:vimim_get_valid_im_name(im)
     if isdirectory(s:vimim_data_directory) && !empty(im)
         let msg = "use directory as backend database"
@@ -4163,33 +4167,25 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_to_cloud_or_not(keyboard, clouds)
 " -------------------------------------------------
+    let keyboard = a:keyboard
     let do_cloud = get(a:clouds, 1)
-    if do_cloud > 0
+    if s:has_no_internet < 0
+    \|| do_cloud > 0
         return 1
     endif
     if s:has_no_internet > 1
-        return 0
-    elseif s:has_no_internet < 0
-        return 1
-    endif
-    if s:vimim_cloud_sogou < 1
+    \|| s:vimim_cloud_sogou < 1
+    \|| keyboard =~ "[.]"
+    \|| keyboard =~ "[^a-z]"
         return 0
     endif
-    let keyboard = a:keyboard
-    if s:chinese_input_mode =~ 'onekey' && keyboard =~ '[.]'
-        return 0
-    endif
-    if keyboard =~# "[^a-z]"
-        let msg = "cloud limits to valid cloud keycodes only"
-        return 0
-    endif
-    let msg = "auto cloud if number of zi is greater than threshold"
     let threshold = len(keyboard)
     if s:chinese_input_mode =~ 'static'
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
         let threshold = len(pinyins)
     endif
     if threshold < s:vimim_cloud_sogou
+        " auto cloud if number of zi is greater than threshold
         return 0
     endif
     return 1
@@ -4640,16 +4636,16 @@ call add(s:vimims, VimIM)
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma")
-        let s:vimim_digit_4corner = 0
+        let s:vimim_digit_4corner = 1
         let s:vimim_tab_as_onekey = 2
         let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
     endif
 endfunction
 
-" ------------------------------------
+" -------------------------------------
 function! s:vimim_initialize_frontend()
-" ------------------------------------
+" -------------------------------------
     let s:ui = {}
     let s:ui.im  = ''
     let s:ui.root = ''
