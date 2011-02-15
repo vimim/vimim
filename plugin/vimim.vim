@@ -50,9 +50,15 @@ let VimIM = " ====  Introduction      ==== {{{"
 "  -----------------------------------------------------------
 " "VimIM Installation"
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
-"  (2) [option] drop a standard datafile:  plugin/vimim.cjk.txt
+"  (2) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
 "  (3) [option] drop a standard directory: plugin/vimim/pinyin/
 "  (4) [option] drop a private  datafile:  plugin/vimim.txt
+"  -----------------------------------------------------------
+" "VimIM Usage"
+"  (1) play with sogou cloud:
+"      open vim, type i, type woyouyigemeng, hit <C-6>
+"  (2) play with cjk standard file:
+"      open vim, type i, type sssss, hit <C-6>, hit 1/2/3/4/5/<Space>
 " -----------------------------------------------------------
 
 let s:vimims = [VimIM]
