@@ -3116,17 +3116,23 @@ function! s:vimim_mom()
     sil!call s:vimim_start_onekey()
     if empty(s:has_cjk_file)
         return
-    else
-        startinsert
-        set number
-        let &gfn .= ":h24:w12"
-        set lines=24
-        set columns=36
-        let s:vimim_tab_as_onekey = 2
-        let s:vimim_digit_4corner = 0
-        let s:vimim_data_directory = 0
-        return s:vimim_onekey_action("")
     endif
+    if has("gui_running") && has("win32")
+        noremap <silent> <Esc> :sil!%y +<CR>
+        autocmd! * <buffer>
+        autocmd! VimEnter  <buffer> set t_vb=
+        autocmd! FocusLost <buffer> sil!wall
+    endif
+    set noswapfile
+    set number
+    set lines=24
+    set columns=36
+    let &gfn .= ":h24:w12"
+    let s:vimim_tab_as_onekey = 2
+    let s:vimim_digit_4corner = 0
+    let s:vimim_data_directory = 0
+    startinsert!
+    return s:vimim_onekey_action("")
 endfunction
 
 " -------------------------------------
