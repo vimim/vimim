@@ -755,6 +755,7 @@ function! s:vimim_onekey_action(onekey)
         elseif len(s:popupmenu_list) > 0
             let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
             let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
+            let onekey .= '\<Esc>'
         endif
         sil!exe 'sil!return "' . onekey . '"'
     endif
@@ -915,7 +916,7 @@ endfunction
 " ------------------------------------
 function! g:vimim_one_key_correction()
 " ------------------------------------
-    let key = '\<Esc>'
+    let key = '\<C-C>'
     call g:vimim_reset_after_insert()
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
@@ -928,11 +929,12 @@ endfunction
 " ---------------------
 function! g:vimim_esc()
 " ---------------------
-    call g:vimim_reset_after_insert()
-    if s:chinese_input_mode !~ 'static'
-        call s:vimim_stop()
+    if s:chinese_input_mode =~ 'static'
+        sil!call g:vimim_reset_after_insert()
+    else
+        sil!call s:vimim_stop()
     endif
-    sil!exe "sil!return '\<Esc>'"
+    return ""
 endfunction
 
 " ---------------------------------
@@ -955,7 +957,8 @@ function! g:vimim_pumvisible_dump()
         let @+ = one_line_clipboard
     endif
     call setpos(".", saved_position)
-    return g:vimim_esc()
+    sil!call s:vimim_stop()
+    return ""
 endfunction
 
 " ----------------------------
@@ -1496,7 +1499,7 @@ function! s:vimim_popupmenu_list(matched_list)
     " -------------------------
         let keyboard_head_length = len(keyboard_head)
         if keyboard =~# s:uxxxx
-        \|| keyboard =~# "^vimim"
+        \|| keyboard =~# s:show_me_not
         \|| s:cjk_has_match > 0
             let msg = "matched_list has only single item"
         elseif empty(s:vimim_data_directory)
@@ -3103,6 +3106,30 @@ let VimIM = " ====  Input_Misc        ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
+" --------------------------
+function! s:vimim_mom_test()
+" --------------------------
+    let buffer = expand("%:p:t")
+    if buffer !~ 'vimim_mom_test.txt'
+        return
+    endif
+    sil!call s:vimim_start_onekey()
+    if empty(s:has_cjk_file)
+        return
+    endif
+    " ---------------------
+    startinsert
+    set number
+    let &gfn .= ":h24:w12"
+    set lines=24
+    set columns=36
+    let s:vimim_tab_as_onekey = 2
+    let s:vimim_digit_4corner = 0
+    let s:vimim_data_directory = 0
+    " ---------------------
+    return s:vimim_onekey_action("")
+endfunction
+
 " -------------------------------------
 function! s:vimim_get_valid_im_name(im)
 " -------------------------------------
@@ -3442,15 +3469,6 @@ function! s:vimim_scan_backend_embedded_datafile()
     call s:vimim_set_datafile(0)
 endfunction
 
-" -------------------------------------
-function! s:vimim_do_force_datafile(im)
-" -------------------------------------
-    let s:vimim_data_directory = 0
-    let s:vimim_cloud_sogou = 0
-    let s:vimim_cloud_plugin = 0
-    call s:vimim_set_datafile(a:im)
-endfunction
-
 " --------------------------------
 function! s:vimim_set_datafile(im)
 " --------------------------------
@@ -3753,6 +3771,15 @@ function! s:vimim_cache_loading_progressbar()
     endtry
 endfunction
 
+" -------------------------------------
+function! s:vimim_do_force_datafile(im)
+" -------------------------------------
+    let s:vimim_data_directory = 0
+    let s:vimim_cloud_sogou = 0
+    let s:vimim_cloud_plugin = 0
+    call s:vimim_set_datafile(a:im)
+endfunction
+
 " -------------------------------------------
 function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
@@ -3874,28 +3901,20 @@ function! s:vimim_scan_backend_embedded_directory()
     endif
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_get_list_from_directory(keyboard)
-" -------------------------------------------------
+" ------------------------------------------------------
+function! s:vimim_get_list_from_directory(keyboard, dir)
+" ------------------------------------------------------
+    let dir = a:dir
     let keyboard = a:keyboard
-    if empty(a:keyboard)
+    if empty(dir) || empty(keyboard)
         return []
-    endif
-    let dir = s:vimim_data_directory
-    let dir2 = s:vimim_self_directory
-    if empty(dir) && empty(dir2)
-        return []
-    endif
-    if keyboard =~ '^oo' && len(dir2) > 2
-        let dir = dir2
     endif
     let filename = dir . keyboard
     if filereadable(filename)
         let lines = s:vimim_readfile(filename)
         return lines
-    else
-        return []
     endif
+    return []
 endfunction
 
 " --------------------------------------------------
@@ -4993,7 +5012,7 @@ function! s:vimim_helper_mapping_on()
                   \<C-R>=g:vimim_backspace()<CR>
     " ----------------------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        inoremap <Esc> <C-R>=g:vimim_esc()<CR>
+        inoremap <silent> <Esc> <Esc>:call g:vimim_esc()<CR>
     elseif s:chinese_input_mode =~ 'static'
         inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                       \<C-R>=g:vimim_one_key_correction()<CR>
@@ -5024,8 +5043,9 @@ function! s:vimim_embedded_backend_engine(keyboard)
         let keyboard = s:vimim_toggle_pinyin(keyboard)
     endif
     if root =~# "directory"
+        let dir = s:vimim_data_directory
         let keyboard2 = s:vimim_sentence_match_directory(keyboard)
-        let results = s:vimim_get_list_from_directory(keyboard2)
+        let results = s:vimim_get_list_from_directory(keyboard2, dir)
     elseif root =~# "datafile"
         if empty(s:backend[root][im].cache)
             let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
@@ -5268,6 +5288,11 @@ else
         let results = s:vimim_remove_duplication(results)
         let s:cjk_results = []
     endif
+    if keyboard =~ '^oo'
+        " never ignore our private directory
+        let dir = s:vimim_self_directory
+        let results = s:vimim_get_list_from_directory(keyboard, dir)
+    endif
     if !empty(results)
         return s:vimim_popupmenu_list(results)
     endif
@@ -5397,4 +5422,5 @@ sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
+sil!call s:vimim_mom_test()
 " ======================================= }}}
