@@ -1459,7 +1459,7 @@ endfunction
 " ---------------------------
 function! g:vimim_backspace()
 " ---------------------------
-    call g:vimim_reset_after_insert()
+    call s:vimim_super_reset()
     let s:pattern_not_found = 0
     let key = '\<BS>'
     if s:pumvisible_ctrl_e > 0
