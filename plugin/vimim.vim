@@ -55,9 +55,9 @@ let VimIM = " ====  Introduction      ==== {{{"
 "  (4) [option] drop a private  datafile:  plugin/vimim.txt
 "  -----------------------------------------------------------
 " "VimIM Usage"
-"  (1) play with sogou cloud:
+"  (1) play with sogou cloud, without datafile installed:
 "      open vim, type i, type woyouyigemeng, hit <C-6>
-"  (2) play with cjk standard file:
+"  (2) play with cjk standard file, with datafile installed:
 "      open vim, type i, type sssss, hit <C-6>, hit 1/2/3/4/5/<Space>
 " -----------------------------------------------------------
 
@@ -2073,7 +2073,7 @@ function! s:vimim_cjk_english_match(keyboard)
             let keyboard_head = 0
         else
             " cjk sample:  加 532510 4600 jia1 add plus 186
-            let cjk_english = '\s' . keyboard . '.*' . '\(\s\d\+\)\=$'
+            let cjk_english = '\s' . keyboard . '\>.*\(\s\d\+\)\=$'
             let matched = match(s:cjk_lines, cjk_english)
             if matched > -1 && len(results) > 0
                 " english 'arrow' is also shortcut 'a4492'
@@ -2257,7 +2257,7 @@ function! s:vimim_cjk_match(keyboard)
     " -------------------------------
     let grep = ""
     let dddddd = 6 - 2 * s:vimim_digit_4corner
-    let cjk_english = '\s' . keyboard . '.*' . '\(\s\d\+\)\=$'
+    let cjk_english = '\s' . keyboard . '\>.*\(\s\d\+\)\=$'
     let cjk_frequency = '.*' . '\s\d\+$'
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[12345]\>' && empty(len(s:cjk_filter))
