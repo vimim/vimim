@@ -916,7 +916,7 @@ endfunction
 " ------------------------------------
 function! g:vimim_one_key_correction()
 " ------------------------------------
-    let key = '\<C-C>'
+    let key = '\<Esc>'
     call g:vimim_reset_after_insert()
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
@@ -3116,18 +3116,17 @@ function! s:vimim_mom_test()
     sil!call s:vimim_start_onekey()
     if empty(s:has_cjk_file)
         return
+    else
+        startinsert
+        set number
+        let &gfn .= ":h24:w12"
+        set lines=24
+        set columns=36
+        let s:vimim_tab_as_onekey = 2
+        let s:vimim_digit_4corner = 0
+        let s:vimim_data_directory = 0
+        return s:vimim_onekey_action("")
     endif
-    " ---------------------
-    startinsert
-    set number
-    let &gfn .= ":h24:w12"
-    set lines=24
-    set columns=36
-    let s:vimim_tab_as_onekey = 2
-    let s:vimim_digit_4corner = 0
-    let s:vimim_data_directory = 0
-    " ---------------------
-    return s:vimim_onekey_action("")
 endfunction
 
 " -------------------------------------
