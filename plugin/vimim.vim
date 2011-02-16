@@ -3106,11 +3106,11 @@ let VimIM = " ====  Input_Misc        ==== {{{"
 " ============================================
 call add(s:vimims, VimIM)
 
-" --------------------------
-function! s:vimim_mom_test()
-" --------------------------
+" ---------------------
+function! s:vimim_mom()
+" ---------------------
     let buffer = expand("%:p:t")
-    if buffer !~ 'vimim_mom_test.txt'
+    if buffer !~ 'vimim_mom.txt'
         return
     endif
     sil!call s:vimim_start_onekey()
@@ -5421,5 +5421,5 @@ sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
-sil!call s:vimim_mom_test()
+sil!call s:vimim_mom()
 " ======================================= }}}
