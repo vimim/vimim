@@ -2061,7 +2061,7 @@ function! s:vimim_cjk_english_match(keyboard)
             let keyboard_head = 0
         else
             " cjk sample:  加 532510 4600 jia1 add plus 186
-            let cjk_english = '\s' . keyboard . '\>.*\(\s\d\+\)\=$'
+            let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
             let matched = match(s:cjk_lines, cjk_english)
             if matched > -1 && len(results) > 0
                 " english 'arrow' is also shortcut 'a4492'
@@ -2245,12 +2245,12 @@ function! s:vimim_cjk_match(keyboard)
     " -------------------------------
     let grep = ""
     let dddddd = 6 - 2 * s:vimim_digit_4corner
-    let cjk_english = '\s' . keyboard . '\>.*\(\s\d\+\)\=$'
+    let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
     let cjk_frequency = '.*' . '\s\d\+$'
     if keyboard =~ '\d'
-        if keyboard =~# '^\l\l\+[12345]\>' && empty(len(s:cjk_filter))
-            " [sample] pinyin with tone: ma3
-            let grep = '\s\d\d\d\d\s' . keyboard . '\D\='
+        if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:cjk_filter))
+            " [sample] pinyin with tone: huan2hai2
+            let grep =  keyboard . '[a-z ]'
         else
             let digit = ""
             if keyboard =~ '^\d\+' && keyboard !~ '\D'
@@ -2258,7 +2258,7 @@ function! s:vimim_cjk_match(keyboard)
                 let digit = keyboard
             elseif keyboard =~ '^\l\+\d\+'
                 " [sample] free-style input/search: ma7 ma77 ma771 ma7712
-                " on line 81 using le72 yue72: 乐樂 7290 le4yue4 426
+                " on line 81:  乐樂 352340 7290 le4yue4 music happy 426
                 let digit = substitute(keyboard,'\a','','g')
             endif
             if !empty(digit)
@@ -2270,9 +2270,11 @@ function! s:vimim_cjk_match(keyboard)
                 endif
                 let alpha = substitute(keyboard,'\d','','g')
                 if !empty(alpha)
+                    " search le or yue from le4yue4
                     let grep .= '\(\l\+\d\)\=' . alpha
                 elseif len(keyboard) == 1
-                    " [sample] one-char-list by frequency: 1 2 3 4 5
+                    " [sample] one-char-list by frequency:
+                    " search l or y from le4yue4 music happy 426
                     let grep .= cjk_frequency
                 endif
             endif
@@ -2281,15 +2283,13 @@ function! s:vimim_cjk_match(keyboard)
             endif
         endif
     elseif len(keyboard) == 1
-        " [sample] one-char-list by frequency y 72 l 72
-        let grep = '[ 0-9]' . keyboard . '\l*\d' . cjk_frequency
+        " [sample] one-char-list by frequency y72/yue72 l72/le72 for 乐
+        let grep = '[ 0-9]' . keyboard . cjk_frequency
     elseif keyboard =~ '^\l'
-        " [sample] multiple-char-list without frequency: ma
-        let grep  = '\s\d\d\d\d\s' . keyboard . '\d'
-        if s:has_cjk_file > 1 || s:ui.im == 'pinyin'
-            "  /ma3 /horse for 马馬 7712 ma3 horse 259
-            let grep .= '\|' . cjk_english
-        endif
+        " [sample] multiple-char-list without frequency
+        " on line 16875:  还還 132445 3130 huan2hai2 yet 73
+        " support all cases: /huan /hai /yet /huan2 /hai2
+        let grep = cjk_english
     else
         return []
     endif
