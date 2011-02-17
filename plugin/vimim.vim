@@ -3439,20 +3439,24 @@ endfunction
 " -------------------------------------------
 function! s:vimim_cjk_property_display(ddddd)
 " -------------------------------------------
-    let unicode = printf('u%04x', a:ddddd)
-    if s:has_cjk_file < 1
-        let unicode .= s:space . a:ddddd
-    else
+    let unicode = printf('u%04x', a:ddddd) . s:space . a:ddddd
+    if s:has_cjk_file > 0
         call s:vimim_load_cjk_file()
         let column = 1
         if s:vimim_digit_4corner > 0
             let column = 2
         endif
-        let chinese = nr2char( a:ddddd)
+        let chinese = nr2char(a:ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,column),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
         let english = get(s:vimim_reverse_one_entry(chinese,'english'),0)
-        let unicode = digit . s:space . unicode . s:space . pinyin
+        let keyboard_head = get(s:keyboard_list,0)
+        if  keyboard_head =~ s:uxxxx
+            let unicode = unicode . s:space
+        else
+            let unicode = ""
+        endif
+        let unicode .= digit . s:space . pinyin
         if !empty(english)
             let unicode .= s:space . english
         endif
