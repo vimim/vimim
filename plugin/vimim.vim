@@ -2062,11 +2062,12 @@ function! s:vimim_english_cjk_match(keyboard)
         else
             " cjk sample:  加 532510 4600 jia1 add plus 186
             let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
-            let matched = match(s:cjk_lines, cjk_english)
-            if matched > -1 && len(results) > 0
-                " english 'arrow' is also shortcut 'a4492'
-                let chinese = get(split(s:cjk_lines[matched]),0)
-                let s:cjk_results = insert(results, chinese)
+            let cjk_results = s:vimim_english_cjk_search(cjk_english, 0)
+            if len(cjk_results) > 0
+                " english 'arrow' is also shortcut of 'a4492'
+                let filter = "strpart(".'v:val'.", 0, s:multibyte)"
+                call map(cjk_results, filter)
+                let s:cjk_results = extend(results, cjk_results, 0)
                 let s:hjkl_h = 1
             endif
             " english 'arrow' has an entry in private datafile
@@ -2295,26 +2296,11 @@ function! s:vimim_cjk_match(keyboard)
     endif
     " ------------------------------------------------------
     call s:vimim_load_cjk_file()
-    let results = []
-    let line = match(s:cjk_lines, grep)
-    while line > -1
-        let values = split(s:cjk_lines[line])
-        let frequency_index = get(values, -1)
-        if frequency_index =~ '\l'
-            if keyboard =~ '^\l\>'
-                continue
-            else
-                let frequency_index = 9999
-            endif
-        endif
-        let chinese = get(values,0) . ' ' . frequency_index
-        call add(results, chinese)
-        let line = match(s:cjk_lines, grep, line+1)
-    endwhile
+    let results = s:vimim_english_cjk_search(grep, len(keyboard))
     if len(results) > 0
         let s:cjk_has_match = 1
         let results = sort(results, "s:vimim_compare_last_field")
-        let filter = "strpart(".'v:val'.",0,s:multibyte)"
+        let filter = "strpart(".'v:val'.", 0, s:multibyte)"
         call map(results, filter)
         if len(keyboard) == 1 && !has_key(s:cjk_one_char_cache, keyboard)
             let s:cjk_one_char_cache[keyboard] = results
@@ -2327,6 +2313,32 @@ function! s:vimim_cjk_match(keyboard)
         " cjk has english entry such as color/arrow/push
         let s:cjk_results = copy(results)
     endif
+    return results
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_english_cjk_search(grep, length)
+" ------------------------------------------------
+    let results = []
+    let line = match(s:cjk_lines, a:grep)
+    let single_char = 0
+    if a:length == 1
+        let single_char = 1
+    endif
+    while line > -1
+        let values = split(s:cjk_lines[line])
+        let frequency_index = get(values, -1)
+        if frequency_index =~ '\l' && frequency_index =~ '\d'
+            if single_char > 0
+                continue
+            else
+                let frequency_index = 9999
+            endif
+        endif
+        let chinese = get(values,0) . ' ' . frequency_index
+        call add(results, chinese)
+        let line = match(s:cjk_lines, a:grep, line+1)
+    endwhile
     return results
 endfunction
 
