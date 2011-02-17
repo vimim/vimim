@@ -4640,11 +4640,11 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
+" ----------------------------------
     if isdirectory("/home/xma")
         let s:vimim_digit_4corner = 1
         let s:vimim_tab_as_onekey = 2
-        let s:vimim_self_directory = "/hhome/xma/vimim/"
+        let s:vimim_self_directory = "/home/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
     endif
 endfunction
