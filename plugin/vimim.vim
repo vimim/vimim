@@ -2062,7 +2062,7 @@ function! s:vimim_english_cjk_match(keyboard)
         else
             " cjk sample:  加 532510 4600 jia1 add plus 186
             let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
-            let cjk_results = s:vimim_english_cjk_search(cjk_english, 0)
+            let cjk_results = s:vimim_english_cjk_search(cjk_english)
             if len(cjk_results) > 0
                 " english 'arrow' is also shortcut of 'a4492'
                 let filter = "strpart(".'v:val'.", 0, s:multibyte)"
@@ -2296,7 +2296,7 @@ function! s:vimim_cjk_match(keyboard)
     endif
     " ------------------------------------------------------
     call s:vimim_load_cjk_file()
-    let results = s:vimim_english_cjk_search(grep, len(keyboard))
+    let results = s:vimim_english_cjk_search(grep)
     if len(results) > 0
         let s:cjk_has_match = 1
         let results = sort(results, "s:vimim_compare_last_field")
@@ -2316,24 +2316,16 @@ function! s:vimim_cjk_match(keyboard)
     return results
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_english_cjk_search(grep, length)
-" ------------------------------------------------
+" ----------------------------------------
+function! s:vimim_english_cjk_search(grep)
+" ----------------------------------------
     let results = []
     let line = match(s:cjk_lines, a:grep)
-    let single_char = 0
-    if a:length == 1
-        let single_char = 1
-    endif
     while line > -1
         let values = split(s:cjk_lines[line])
         let frequency_index = get(values, -1)
-        if frequency_index =~ '\l' && frequency_index =~ '\d'
-            if single_char > 0
-                continue
-            else
-                let frequency_index = 9999
-            endif
+        if frequency_index =~ '\l'
+            let frequency_index = 9999
         endif
         let chinese = get(values,0) . ' ' . frequency_index
         call add(results, chinese)
