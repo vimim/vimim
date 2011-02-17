@@ -1125,13 +1125,13 @@ function! s:vimim_initialize_skin()
         return
     elseif s:vimim_custom_color < 3
         if s:vimim_custom_color < 1
-            highlight!    PmenuSel NONE
+            highlight! PmenuSel NONE
         elseif s:vimim_custom_color == 2
-            highlight! link PmenuSel   Title
+            highlight! link PmenuSel Title
         endif
-        highlight!    PmenuSbar  NONE
-        highlight!    PmenuThumb NONE
-        highlight!    Pmenu      NONE
+        highlight! PmenuSbar  NONE
+        highlight! PmenuThumb NONE
+        highlight! Pmenu      NONE
     endif
 endfunction
 
@@ -1158,10 +1158,10 @@ function! s:vimim_cursor_color(switch)
 " ------------------------------------
     if empty(a:switch)
         set ruler
-        highlight! Cursor  guifg=bg   guibg=fg
+        highlight! Cursor guifg=bg  guibg=fg
     else
         set noruler
-        highlight! Cursor  guifg=bg   guibg=green
+        highlight! Cursor guifg=bg  guibg=green
     endif
 endfunction
 
@@ -1789,9 +1789,9 @@ function! s:vimim_get_chinese_punctuation(english_punctuation)
     if s:chinese_punctuation > 0
     \&& has_key(s:punctuations, value)
         let byte_before = getline(".")[col(".")-2]
-        let before = '\w'     |" english_punctuation_after_english
+        let before = '\w'     |" English punctuation after English
         if empty(s:vimim_english_punctuation)
-            let before = '\d' |" english_punctuation_after_digit
+            let before = '\d' |" English punctuation after digit
         endif
         if byte_before !~ before
             let value = s:punctuations[value]
@@ -3102,8 +3102,8 @@ function! s:vimim_mom()
     if has("gui_running") && has("win32")
         noremap <silent> <Esc> :sil!%y +<CR>
         autocmd! * <buffer>
-        autocmd! VimEnter  <buffer> set t_vb=
-        autocmd! FocusLost <buffer> sil!wall
+        autocmd  VimEnter  <buffer> set t_vb=
+        autocmd  FocusLost <buffer> sil!wall
     endif
     set noswapfile
     set number
