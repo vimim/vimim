@@ -1821,9 +1821,9 @@ function! s:vimim_dictionary_quantifiers()
     let s:quantifiers['9'] = '九玖壬⑨⒐⑼'
     let s:quantifiers['0'] = '〇零癸⑩⒑⑽十拾'
     let s:quantifiers['a'] = '秒'
-    let s:quantifiers['b'] = '百佰步把包杯本笔部班'
+    let s:quantifiers['b'] = '步百佰把包杯本笔部班'
     let s:quantifiers['c'] = '厘次餐场串处床'
-    let s:quantifiers['d'] = '日第度点袋道滴碟顶栋堆对朵堵顿'
+    let s:quantifiers['d'] = '第度点袋道滴碟日顶栋堆对朵堵顿'
     let s:quantifiers['e'] = '亿'
     let s:quantifiers['f'] = '分份发封付副幅峰方服'
     let s:quantifiers['g'] = '个根股管'
@@ -3088,11 +3088,15 @@ endfunction
 let s:VimIM += [" ====  Input_Misc       ==== {{{"]
 " =================================================
 
-" ---------------------
-function! s:vimim_mom()
-" ---------------------
+" -------------------------
+function! s:vimim_mom_dad()
+" -------------------------
     let buffer = expand("%:p:t")
-    if buffer !~ 'vimim_mom.txt'
+    if buffer =~ 'vimim_mom.txt'
+        let s:vimim_digit_4corner = 0
+    elseif buffer =~ 'vimim_dad.txt'
+        let s:vimim_digit_4corner = 1
+    else
         return
     endif
     sil!call s:vimim_start_onekey()
@@ -3111,7 +3115,6 @@ function! s:vimim_mom()
     set number
     set noswapfile
     let s:vimim_tab_as_onekey = 2
-    let s:vimim_digit_4corner = 0
     let s:vimim_data_directory = 0
     startinsert!
     return s:vimim_onekey_action("")
@@ -5017,6 +5020,9 @@ function! s:vimim_embedded_backend_engine(keyboard)
     if s:has_cjk_file < 1 && s:ui.im == 'pinyin'
         let keyboard = s:vimim_toggle_pinyin(keyboard)
     endif
+    if s:ui.has_dot == 2
+        let keyboard = s:vimim_add_apostrophe(keyboard)
+    endif
     if root =~# "directory"
         let dir = s:vimim_data_directory
         let keyboard2 = s:vimim_sentence_match_directory(keyboard)
@@ -5221,12 +5227,6 @@ else
         endif
     endif
 
-    " [apostrophe] apostrophe is not the 2nd class citizen
-    " ----------------------------------------------------
-    if s:ui.has_dot == 2
-        let keyboard = s:vimim_add_apostrophe(keyboard)
-    endif
-
     " [sogou] to make cloud come true for woyouyigemeng
     " -------------------------------------------------
     let cloud = s:vimim_to_cloud_or_not(keyboard, clouds)
@@ -5396,5 +5396,5 @@ sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
-sil!call s:vimim_mom()
+sil!call s:vimim_mom_dad()
 " ======================================= }}}
