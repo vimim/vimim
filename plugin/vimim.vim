@@ -24,7 +24,7 @@ let s:VimIM  = [" ====  Introduction     ==== {{{"]
 "     Author: vimim <vimim@googlegroups.com>
 "    License: GNU Lesser General Public License
 "     Readme: VimIM is a Vim plugin designed as an independent IM
-"             (Input Method) to support CJK search and CJK input
+"             (Input Method) to support CJK search and CJK input.
 " -----------------------------------------------------------
 " "VimIM Features"
 "  (1) "Plug & Play": as a client to VimIM embedded backends
@@ -2061,7 +2061,7 @@ function! s:vimim_cjk_english_match(keyboard)
             let keyboard_head = 0
         else
             " cjk sample:  加 532510 4600 jia1 add plus 186
-            let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
+            let cjk_english = '[ 0-9]' . keyboard . '\>\([ 0-9]\)\='
             let matched = match(s:cjk_lines, cjk_english)
             if matched > -1 && len(results) > 0
                 " english 'arrow' is also shortcut 'a4492'
@@ -2245,7 +2245,7 @@ function! s:vimim_cjk_match(keyboard)
     " -------------------------------
     let grep = ""
     let dddddd = 6 - 2 * s:vimim_digit_4corner
-    let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
+    let cjk_english = '[ 0-9]' . keyboard . '\>\([ 0-9]\)\='
     let cjk_frequency = '.*' . '\s\d\+$'
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:cjk_filter))
