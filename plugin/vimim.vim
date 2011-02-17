@@ -2512,6 +2512,8 @@ function! s:vimim_reverse_one_entry(chinese, property)
                 let head = get(values, property)
             elseif property == 'pinyin'
                 let head = get(values, 3)
+            elseif property == 'english'
+                let head = join(values[4:-2])
             endif
         endif
         if empty(head)
@@ -3449,7 +3451,11 @@ function! s:vimim_cjk_property_display(ddddd)
         let chinese = nr2char( a:ddddd)
         let digit = get(s:vimim_reverse_one_entry(chinese,column),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
+        let english = get(s:vimim_reverse_one_entry(chinese,'english'),0)
         let unicode = digit . s:space . unicode . s:space . pinyin
+        if !empty(english)
+            let unicode .= s:space . english
+        endif
     endif
     return unicode
 endfunction
