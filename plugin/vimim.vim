@@ -2039,7 +2039,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         endif
     elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
-            let keyboard_head = s:vimim_cjk_english_match(keyboard)
+            let keyboard_head = s:vimim_english_cjk_match(keyboard)
         endif
         if empty(keyboard_head)
             let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
@@ -2049,7 +2049,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
 endfunction
 
 " -------------------------------------------
-function! s:vimim_cjk_english_match(keyboard)
+function! s:vimim_english_cjk_match(keyboard)
 " -------------------------------------------
     let keyboard = a:keyboard
     let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
@@ -2061,7 +2061,7 @@ function! s:vimim_cjk_english_match(keyboard)
             let keyboard_head = 0
         else
             " cjk sample:  加 532510 4600 jia1 add plus 186
-            let cjk_english = '[ 0-9]' . keyboard . '\>\([ 0-9]\)\='
+            let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
             let matched = match(s:cjk_lines, cjk_english)
             if matched > -1 && len(results) > 0
                 " english 'arrow' is also shortcut 'a4492'
@@ -2245,7 +2245,7 @@ function! s:vimim_cjk_match(keyboard)
     " -------------------------------
     let grep = ""
     let dddddd = 6 - 2 * s:vimim_digit_4corner
-    let cjk_english = '[ 0-9]' . keyboard . '\>\([ 0-9]\)\='
+    let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
     let cjk_frequency = '.*' . '\s\d\+$'
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:cjk_filter))
@@ -3430,14 +3430,14 @@ function! s:vimim_cjk_property_display(ddddd)
         let unicode .= s:space . a:ddddd
     else
         call s:vimim_load_cjk_file()
+        let column = 1
+        if s:vimim_digit_4corner > 0
+            let column = 2
+        endif
         let chinese = nr2char( a:ddddd)
-        let four = get(s:vimim_reverse_one_entry(chinese,2),0)
-        let five = get(s:vimim_reverse_one_entry(chinese,1),0)
+        let digit = get(s:vimim_reverse_one_entry(chinese,column),0)
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        let four = four . s:space
-        let five = five . s:space
-        let unicode = unicode . s:space
-        let unicode = four . five . unicode . pinyin
+        let unicode = digit . s:space . unicode . s:space . pinyin
     endif
     return unicode
 endfunction
@@ -4640,11 +4640,11 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------- todo
     if isdirectory("/home/xma")
         let s:vimim_digit_4corner = 1
         let s:vimim_tab_as_onekey = 2
-        let s:vimim_self_directory = "/home/xma/vimim/"
+        let s:vimim_self_directory = "/hhome/xma/vimim/"
         let s:vimim_data_directory = "/home/vimim/pinyin/"
     endif
 endfunction
