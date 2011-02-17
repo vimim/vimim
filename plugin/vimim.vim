@@ -2284,7 +2284,7 @@ function! s:vimim_cjk_match(keyboard)
         endif
     elseif len(keyboard) == 1
         " [sample] one-char-list by frequency y72/yue72 l72/le72 for 乐
-        let grep = '[ 0-9]' . keyboard . cjk_frequency
+        let grep = '[ 0-9]' . keyboard . '\l*\d' . cjk_frequency
     elseif keyboard =~ '^\l'
         " [sample] multiple-char-list without frequency
         " on line 16875:  还還 132445 3130 huan2hai2 yet 73
@@ -3100,16 +3100,16 @@ function! s:vimim_mom()
         return
     endif
     if has("gui_running") && has("win32")
-        noremap <silent> <Esc> :sil!%y +<CR>
         autocmd! * <buffer>
         autocmd  VimEnter  <buffer> set t_vb=
         autocmd  FocusLost <buffer> sil!wall
+        noremap <silent> <Esc> :sil!%y +<CR>
+        set lines=24
+        set columns=36
+        let &gfn .= ":h24:w12"
     endif
-    set noswapfile
     set number
-    set lines=24
-    set columns=36
-    let &gfn .= ":h24:w12"
+    set noswapfile
     let s:vimim_tab_as_onekey = 2
     let s:vimim_digit_4corner = 0
     let s:vimim_data_directory = 0
