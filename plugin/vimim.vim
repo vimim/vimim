@@ -771,7 +771,6 @@ function! s:vimim_onekey_action(onekey)
     endif
     " -------------------------------------------------
     if char_before !~# s:valid_key && empty(a:onekey)
-        let s:hjkl_h = 1
         return s:vimim_get_unicode_menu()
     endif
     if char_before ==# "'" && empty(s:ui.has_dot)
@@ -779,10 +778,12 @@ function! s:vimim_onekey_action(onekey)
     endif
     " -------------------------------------------------
     let onekey = ""
-    if s:seamless_positions != getpos(".") && s:pattern_not_found < 1
+    if s:seamless_positions != getpos(".")
+    \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
     endif
-    if empty(char_before) || char_before =~ '\s'
+    if empty(char_before)
+    \|| char_before =~ '\s'
     \|| char_before !~# s:valid_key
         let onekey = a:onekey
     endif
@@ -3337,6 +3338,7 @@ function! s:vimim_get_unicode_menu()
     let trigger = ""
     let uxxxx = s:vimim_get_unicode_before()
     if !empty(uxxxx)
+        let s:hjkl_h = 1
         call s:vimim_set_seamless()
         let trigger = uxxxx . '\<C-R>=g:vimim()\<CR>'
     endif
@@ -5168,10 +5170,8 @@ else
             endif
         elseif s:has_cjk_file > 1 || s:vimim_imode_pinyin > 0
             let dddd = s:vimim_qwertyuiop_1234567890(keyboard[1:-1])
-            if empty(dddd)
-                let msg = " iypwqwuwwyppwquyw => 6021272260021762 "
-            else
-                let s:hjkl_h = 1
+            if !empty(dddd)
+                " iypwqwuwwyppwquyw => 6021272260021762
                 let keyboard = dddd
             endif
         endif
