@@ -511,9 +511,9 @@ endfunction
 let s:VimIM += [" ====  /Search          ==== {{{"]
 " =================================================
 
-" ---------------------------------------
-function! s:vimim_double_slash_grep(grep)
-" ---------------------------------------
+" --------------------------------
+function! s:vimim_slash_grep(grep)
+" --------------------------------
     let results = s:vimim_cjk_grep_results(a:grep)
     if len(results) > 0
         if s:hjkl_h < 1
@@ -5034,16 +5034,16 @@ if a:start
     let byte_before = current_line[start_column-1]
     let char_before_before = current_line[start_column-2]
 
-    " state-of-the-art double slash grep
-    " ----------------------------------
+    " [/grep] state-of-the-art slash grep
+    " -----------------------------------
     if s:chinese_input_mode =~ 'onekey' 
     \&& s:has_cjk_file > 0
         let s:has_slash_grep = 0
-        let slash_column = match(current_line, "//")
-        let slash_more = match(current_line, "/", 0, 3)
+        let slash_column = match(current_line, "/")
+        let slash_more = match(current_line, "/", 0, 2)
         if slash_column > -1 && slash_more < 0
             let s:has_slash_grep = 1
-            return slash_column + 2
+            return slash_column + 1
         endif
     endif
 
@@ -5100,10 +5100,10 @@ else
     let s:cjk_results = []
     let keyboard = a:keyboard
 
-    " [//grep] double slash grep
-    " --------------------------
+    " [/grep] slash grep to search cjk
+    " --------------------------------
     if s:has_slash_grep > 0
-        let results = s:vimim_double_slash_grep(keyboard)
+        let results = s:vimim_slash_grep(keyboard)
         if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
