@@ -511,6 +511,20 @@ endfunction
 let s:VimIM += [" ====  /Search          ==== {{{"]
 " =================================================
 
+" --------------------------------
+function! s:vimim_slash_grep(grep)
+" --------------------------------
+    let results = s:vimim_cjk_grep_results(a:grep)
+    if len(results) > 0
+        if s:hjkl_h < 1
+            let s:hjkl_h = 1
+        endif
+        let filter = "strpart(".'v:val'.", 0, s:multibyte)"
+        call map(results, filter)
+    endif
+    return results
+endfunction
+
 " -----------------------------
 function! g:vimim_search_next()
 " -----------------------------
@@ -1901,6 +1915,7 @@ let s:VimIM += [" ====  Input_Digit      ==== {{{"]
 " -------------------------------------
 function! s:vimim_initialize_cjk_file()
 " -------------------------------------
+    let s:has_slash_grep = 0
     let s:cjk_one_char_cache = {}
     let s:cjk_results = []
     let s:cjk_file = 0
@@ -2033,7 +2048,7 @@ function! s:vimim_cjk_english_match(keyboard)
         else
             " cjk sample:  加 532510 4600 jia1 add plus 186
             let grep_english = '[ 0-9]' . keyboard . '[ 0-9]'
-            let cjk_results = s:vimim_cjk_english_search(grep_english)
+            let cjk_results = s:vimim_cjk_grep_results(grep_english)
             if len(cjk_results) > 0
                 " english 'arrow' is also shortcut of 'a4492'
                 let filter = "strpart(".'v:val'.", 0, s:multibyte)"
@@ -2268,8 +2283,7 @@ function! s:vimim_cjk_match(keyboard)
         return []
     endif
     " ------------------------------------------------------
-    call s:vimim_load_cjk_file()
-    let results = s:vimim_cjk_english_search(grep)
+    let results = s:vimim_cjk_grep_results(grep)
     if len(results) > 0
         let s:cjk_has_match = 1
         let results = sort(results, "s:vimim_compare_last_field")
@@ -2289,9 +2303,13 @@ function! s:vimim_cjk_match(keyboard)
     return results
 endfunction
 
-" ----------------------------------------
-function! s:vimim_cjk_english_search(grep)
-" ----------------------------------------
+" --------------------------------------
+function! s:vimim_cjk_grep_results(grep)
+" -------------------------------------- todo
+    call s:vimim_load_cjk_file()
+    if empty(s:has_cjk_file)
+        return []
+    endif
     let results = []
     let line = match(s:cjk_lines, a:grep)
     while line > -1
@@ -2300,8 +2318,8 @@ function! s:vimim_cjk_english_search(grep)
         if frequency_index =~ '\l'
             let frequency_index = 9999
         endif
-        let chinese = get(values,0) . ' ' . frequency_index
-        call add(results, chinese)
+        let chinese_frequency = get(values,0) . ' ' . frequency_index
+        call add(results, chinese_frequency)
         let line = match(s:cjk_lines, a:grep, line+1)
     endwhile
     return results
@@ -3417,16 +3435,20 @@ function! s:vimim_cjk_property_display(ddddd)
     let unicode = printf('u%04x', a:ddddd) . s:space . a:ddddd
     if s:has_cjk_file > 0
         call s:vimim_load_cjk_file()
-        let column = 1
-        if s:vimim_digit_4corner > 0
-            let column = 2
-        endif
         let chinese = nr2char(a:ddddd)
-        let digit = get(s:vimim_reverse_one_entry(chinese,column),0)
+        let five = get(s:vimim_reverse_one_entry(chinese,1),0)
+        let four = get(s:vimim_reverse_one_entry(chinese,2),0)
+        let digit = five
+        if s:vimim_digit_4corner > 0
+            let digit = four
+        endif
+        if  s:has_slash_grep > 0
+            let digit = five . s:space . four
+        endif
         let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
         let english = get(s:vimim_reverse_one_entry(chinese,'english'),0)
         let keyboard_head = get(s:keyboard_list,0)
-        if  keyboard_head =~ s:uxxxx
+        if keyboard_head =~ s:uxxxx
             let unicode = unicode . s:space
         else
             let unicode = ""
@@ -4639,10 +4661,10 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma")
-      " let s:vimim_digit_4corner = 1
-      " let s:vimim_tab_as_onekey = 2
+        let s:vimim_digit_4corner = 1
+        let s:vimim_tab_as_onekey = 2
         let s:vimim_self_directory = "/home/xma/vimim/"
-      " let s:vimim_data_directory = "/home/vimim/pinyin/"
+        let s:vimim_data_directory = "/home/vimim/pinyin/"
     endif
 endfunction
 
@@ -5054,11 +5076,44 @@ if a:start
 
     let current_positions = getpos(".")
     let start_column = current_positions[2]-1
-    let start_column_save = start_column
     let start_row = current_positions[1]
     let current_line = getline(start_row)
     let byte_before = current_line[start_column-1]
     let char_before_before = current_line[start_column-2]
+
+"   " state-of-the-art slash search using regular grep
+"   " ------------------------------------------------ todo
+"   if s:chinese_input_mode =~ 'onekey'
+"       if s:has_cjk_file > 0
+"           let match_start = match(current_line, "\/")
+"           if match_start < 0
+"               let s:has_slash_grep = 0
+"           else
+"               let s:has_slash_grep = 1
+"               return match_start + 1
+"           endif
+"       endif
+"   endif
+
+    " state-of-the-art slash search using regular grep
+    " ------------------------------------------------
+    if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 0
+        let has_slash = match(current_line, "\/")
+        if has_slash > -1
+            let s:has_slash_grep = 0
+            let slash_column = copy(start_column)
+            while slash_column > 0
+                let slash_column -= 1
+                let byte_before = current_line[slash_column]
+                if byte_before =~ '/'
+                    let s:has_slash_grep = 1
+                    return slash_column + 1
+                else
+                    continue
+                endif
+            endwhile
+        endif
+    endif
 
     " take care of seamless English/Chinese input
     let seamless_column = s:vimim_get_seamless(current_positions)
@@ -5069,8 +5124,8 @@ if a:start
         return seamless_column
     endif
 
-    let last_seen_nonsense_column = start_column
-    let last_seen_backslash_column = start_column
+    let last_seen_nonsense_column = copy(start_column)
+    let last_seen_backslash_column = copy(start_column)
     let all_digit = 1
     let nonsense_pattern = "[0-9.']"
     if s:ui.has_dot == 1
@@ -5111,7 +5166,20 @@ else
 
     let results = []
     let s:cjk_results = []
-    let keyboard = s:vimim_get_valid_keyboard(a:keyboard)
+    let keyboard = a:keyboard
+
+    " [/grep] slash search using regular grep
+    " ---------------------------------------
+    if s:has_slash_grep > 0
+        let results = s:vimim_slash_grep(keyboard)
+        if !empty(results)
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+
+    " [keyboard] start to initialize legal input
+    " ------------------------------------------
+    let keyboard = s:vimim_get_valid_keyboard(keyboard)
     if empty(keyboard)
         return
     endif
