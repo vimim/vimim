@@ -511,9 +511,9 @@ endfunction
 let s:VimIM += [" ====  /Search          ==== {{{"]
 " =================================================
 
-" --------------------------------
-function! s:vimim_slash_grep(grep)
-" --------------------------------
+" ---------------------------------------
+function! s:vimim_double_slash_grep(grep)
+" ---------------------------------------
     let results = s:vimim_cjk_grep_results(a:grep)
     if len(results) > 0
         if s:hjkl_h < 1
@@ -2305,7 +2305,7 @@ endfunction
 
 " --------------------------------------
 function! s:vimim_cjk_grep_results(grep)
-" -------------------------------------- todo
+" --------------------------------------
     call s:vimim_load_cjk_file()
     if empty(s:has_cjk_file)
         return []
@@ -5081,39 +5081,38 @@ if a:start
     let byte_before = current_line[start_column-1]
     let char_before_before = current_line[start_column-2]
 
-"   " state-of-the-art slash search using regular grep
-"   " ------------------------------------------------ todo
-"   if s:chinese_input_mode =~ 'onekey'
-"       if s:has_cjk_file > 0
-"           let match_start = match(current_line, "\/")
-"           if match_start < 0
-"               let s:has_slash_grep = 0
-"           else
-"               let s:has_slash_grep = 1
-"               return match_start + 1
-"           endif
-"       endif
-"   endif
-
-    " state-of-the-art slash search using regular grep
-    " ------------------------------------------------
-    if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 0
-        let has_slash = match(current_line, "\/")
-        if has_slash > -1
-            let s:has_slash_grep = 0
-            let slash_column = copy(start_column)
-            while slash_column > 0
-                let slash_column -= 1
-                let byte_before = current_line[slash_column]
-                if byte_before =~ '/'
-                    let s:has_slash_grep = 1
-                    return slash_column + 1
-                else
-                    continue
-                endif
-            endwhile
+    " state-of-the-art double slash grep
+    " ----------------------------------
+    if s:chinese_input_mode =~ 'onekey' 
+    \&& s:has_cjk_file > 0
+        let s:has_slash_grep = 0
+        let slash_column = match(current_line, "//")
+        let slash_more = match(current_line, "/", 0, 3)
+        if slash_column > -1 && slash_more < 0
+            let s:has_slash_grep = 1
+            return slash_column + 2
         endif
     endif
+
+"   " state-of-the-art slash search using regular grep
+"   " ------------------------------------------------ todo
+"   if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 0
+"       let has_slash = match(current_line, "\/")
+"       if has_slash > -1
+"           let s:has_slash_grep = 0
+"           let slash_column = copy(start_column)
+"           while slash_column > 0
+"               let slash_column -= 1
+"               let byte_before = current_line[slash_column]
+"               if byte_before =~ '/'
+"                   let s:has_slash_grep = 1
+"                   return slash_column + 1
+"               else
+"                   continue
+"               endif
+"           endwhile
+"       endif
+"   endif
 
     " take care of seamless English/Chinese input
     let seamless_column = s:vimim_get_seamless(current_positions)
@@ -5168,10 +5167,10 @@ else
     let s:cjk_results = []
     let keyboard = a:keyboard
 
-    " [/grep] slash search using regular grep
-    " ---------------------------------------
+    " [//grep] double slash grep
+    " --------------------------
     if s:has_slash_grep > 0
-        let results = s:vimim_slash_grep(keyboard)
+        let results = s:vimim_double_slash_grep(keyboard)
         if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
