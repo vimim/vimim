@@ -516,9 +516,6 @@ function! s:vimim_slash_grep(grep)
 " --------------------------------
     let results = s:vimim_cjk_grep_results(a:grep)
     if len(results) > 0
-        if s:hjkl_h < 1
-            let s:hjkl_h = 1
-        endif
         let filter = "strpart(".'v:val'.", 0, s:multibyte)"
         call map(results, filter)
     endif
@@ -2017,7 +2014,6 @@ function! s:vimim_cjk_english_match(keyboard)
                 let filter = "strpart(".'v:val'.", 0, s:multibyte)"
                 call map(cjk_results, filter)
                 let s:cjk_results = extend(results, cjk_results, 0)
-                let s:hjkl_h = 1
             endif
             " english 'arrow' has an entry in private datafile
             let private_results = s:vimim_cjk_private_match(keyboard)
@@ -2247,7 +2243,6 @@ function! s:vimim_cjk_match(keyboard)
     " ------------------------------------------------------
     let results = s:vimim_cjk_grep_results(grep)
     if len(results) > 0
-        let s:cjk_has_match = 1
         let results = sort(results, "s:vimim_compare_last_field")
         let filter = "strpart(".'v:val'.", 0, s:multibyte)"
         call map(results, filter)
@@ -2255,12 +2250,11 @@ function! s:vimim_cjk_match(keyboard)
             let s:cjk_one_char_cache[keyboard] = results
             return results
         endif
-    endif
-    " ------------------------------------------------------
-    let line = match(s:cjk_lines, grep_english)
-    if line > -1 && len(results) > 0
-        " cjk has english entry such as color/arrow/push
-        let s:cjk_results = copy(results)
+        let line = match(s:cjk_lines, grep_english)
+        if line > -1
+            " cjk has english entry such as color/arrow/push
+            let s:cjk_results = copy(results)
+        endif
     endif
     return results
 endfunction
@@ -2284,6 +2278,12 @@ function! s:vimim_cjk_grep_results(grep)
         call add(results, chinese_frequency)
         let line = match(s:cjk_lines, a:grep, line+1)
     endwhile
+    if len(results) > 0
+        if s:hjkl_h < 1
+            let s:hjkl_h = 1
+        endif
+        let s:cjk_has_match = 1
+    endif
     return results
 endfunction
 
@@ -5036,7 +5036,7 @@ if a:start
 
     " [/grep] state-of-the-art slash grep
     " -----------------------------------
-    if s:chinese_input_mode =~ 'onekey' 
+    if s:chinese_input_mode =~ 'onekey'
     \&& s:has_cjk_file > 0
         let s:has_slash_grep = 0
         let slash_column = match(current_line, "/")
