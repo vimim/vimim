@@ -1824,13 +1824,13 @@ function! s:vimim_dictionary_quantifiers()
     let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
     let s:quantifiers['k'] = '克口块棵颗捆孔'
     let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
-    let s:quantifiers['m'] = '月米名枚面门秒'
+    let s:quantifiers['m'] = '月米名枚面门'
     let s:quantifiers['n'] = '年'
     let s:quantifiers['o'] = '度'
     let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
     let s:quantifiers['q'] = '千仟群'
     let s:quantifiers['r'] = '日'
-    let s:quantifiers['s'] = '十拾时升艘扇首双所束手'
+    let s:quantifiers['s'] = '十拾时升艘扇首双所束手秒'
     let s:quantifiers['t'] = '吨条头通堂趟台套桶筒贴'
     let s:quantifiers['u'] = '微'
     let s:quantifiers['w'] = '万位味碗窝'
@@ -1863,10 +1863,22 @@ function! s:vimim_imode_number(keyboard, prefix)
     endif
     let keyboards = split(digit_alpha, '\ze')
     let i = ii_keyboard[:0]
-    let number = s:vimim_get_chinese_number(keyboards, i)
+    let number = ""
+    for char in keyboards
+        if has_key(s:quantifiers, char)
+            let quantifiers = split(s:quantifiers[char], '\zs')
+            if i ==# 'i'
+                let char = get(quantifiers, 0)
+            elseif i ==# 'I'
+                let char = get(quantifiers, 1)
+            endif
+        endif
+        let number .= char
+    endfor
     if empty(number)
         return []
     endif
+    " ------------------------------------------
     let numbers = [number]
     let last_char = keyboard[-1:]
     if !empty(last_char) && has_key(s:quantifiers, last_char)
@@ -1882,29 +1894,6 @@ function! s:vimim_imode_number(keyboard, prefix)
         endif
     endif
     return numbers
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_get_chinese_number(keyboards, i)
-" ------------------------------------------------
-    if empty(a:keyboards) && a:i !~? 'i'
-        return 0
-    endif
-    let chinese_number = ""
-    for char in a:keyboards
-        if has_key(s:quantifiers, char)
-            let quantifier = s:quantifiers[char]
-            let quantifiers = split(quantifier,'\zs')
-            if a:i ==# 'i'
-                let chinese_number .= get(quantifiers,0)
-            elseif a:i ==# 'I'
-                let chinese_number .= get(quantifiers,1)
-            endif
-        else
-            let chinese_number .= char
-        endif
-    endfor
-    return chinese_number
 endfunction
 
 " ============================================= }}}
@@ -1924,8 +1913,10 @@ function! s:vimim_initialize_cjk_file()
     let s:has_cjk_self_file = 0
     let datafile = s:vimim_check_filereadable("vimim.txt")
     if !empty(datafile)
-        let s:cjk_self_file = datafile
-        let s:has_cjk_self_file = 1
+        if s:has_cjk_file > 1 || s:ui.im == 'pinyin'
+            let s:cjk_self_file = datafile
+            let s:has_cjk_self_file = 1
+        endif
     endif
     let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
     if !empty(datafile)
@@ -2053,8 +2044,8 @@ function! s:vimim_cjk_english_match(keyboard)
             let keyboard_head = 0
         else
             " cjk sample:  加 532510 4600 jia1 add plus 186
-            let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
-            let cjk_results = s:vimim_cjk_english_search(cjk_english)
+            let grep_english = '[ 0-9]' . keyboard . '[ 0-9]'
+            let cjk_results = s:vimim_cjk_english_search(grep_english)
             if len(cjk_results) > 0
                 " english 'arrow' is also shortcut of 'a4492'
                 let filter = "strpart(".'v:val'.", 0, s:multibyte)"
@@ -2238,8 +2229,8 @@ function! s:vimim_cjk_match(keyboard)
     " -------------------------------
     let grep = ""
     let dddddd = 6 - 2 * s:vimim_digit_4corner
-    let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
-    let cjk_frequency = '.*' . '\s\d\+$'
+    let grep_english = '[ 0-9]' . keyboard . '[ 0-9]'
+    let grep_frequency = '.*' . '\s\d\+$'
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:cjk_filter))
             " [sample] pinyin with tone: huan2hai2
@@ -2268,21 +2259,23 @@ function! s:vimim_cjk_match(keyboard)
                 elseif len(keyboard) == 1
                     " [sample] one-char-list by frequency:
                     " search l or y from le4yue4 music happy 426
-                    let grep .= cjk_frequency
+                    let grep .= grep_frequency
                 endif
             endif
             if len(keyboard) < dddddd && len(string(digit)) > 0
                 let s:cjk_filter = digit
             endif
         endif
-    elseif len(keyboard) == 1 && keyboard !~ '[ai]'
-        " [sample] one-char-list by frequency y72/yue72 l72/le72 for 乐
-        let grep = '[ 0-9]' . keyboard . '\l*\d' . cjk_frequency
-    elseif keyboard =~ '^\l'
-        " [sample] multiple-char-list without frequency
-        " on line 16875:  还還 132445 3130 huan2hai2 yet 73
-        " support all cases: /huan /hai /yet /huan2 /hai2
-        let grep = cjk_english
+    elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
+        if len(keyboard) == 1 && keyboard !~ '[ai]'
+            " [sample] one-char-list by frequency y72/yue72 l72/le72 for 乐
+            let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
+        elseif keyboard =~ '^\l'
+            " [sample] multiple-char-list without frequency
+            " on line 16875:  还還 132445 3130 huan2hai2 yet 73
+            " support all cases: /huan /hai /yet /huan2 /hai2
+            let grep = grep_english
+        endif
     else
         return []
     endif
@@ -2300,7 +2293,7 @@ function! s:vimim_cjk_match(keyboard)
         endif
     endif
     " ------------------------------------------------------
-    let line = match(s:cjk_lines, cjk_english)
+    let line = match(s:cjk_lines, grep_english)
     if line > -1 && len(results) > 0
         " cjk has english entry such as color/arrow/push
         let s:cjk_results = copy(results)
