@@ -2275,7 +2275,7 @@ function! s:vimim_cjk_match(keyboard)
                 let s:cjk_filter = digit
             endif
         endif
-    elseif len(keyboard) == 1
+    elseif len(keyboard) == 1 && keyboard !~ '[ai]'
         " [sample] one-char-list by frequency y72/yue72 l72/le72 for 乐
         let grep = '[ 0-9]' . keyboard . '\l*\d' . cjk_frequency
     elseif keyboard =~ '^\l'
