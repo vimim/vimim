@@ -105,6 +105,7 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_im_keycode()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_scan_backend_embedded_datafile()
+    sil!call s:vimim_initialize_private_file()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
@@ -115,9 +116,6 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s:show_me_not = '^vim'
-    if s:vimim_tab_as_onekey == 2
-        let s:show_me_not .= '\|^oo\|^oi'
-    endif
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:www_executable = 0
     let s:www_libcall = 0
@@ -1908,16 +1906,6 @@ function! s:vimim_initialize_cjk_file()
     let s:cjk_file = 0
     let s:cjk_lines = []
     let s:has_cjk_file = 0
-    let s:cjk_self_file = 0
-    let s:cjk_self_lines = []
-    let s:has_cjk_self_file = 0
-    let datafile = s:vimim_check_filereadable("vimim.txt")
-    if !empty(datafile)
-        if s:has_cjk_file > 1 || s:ui.im == 'pinyin'
-            let s:cjk_self_file = datafile
-            let s:has_cjk_self_file = 1
-        endif
-    endif
     let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
     if !empty(datafile)
         let s:cjk_file = datafile
@@ -2587,6 +2575,22 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  Input_Pinyin     ==== {{{"]
 " =================================================
+
+" -----------------------------------------
+function! s:vimim_initialize_private_file()
+" -----------------------------------------
+    let s:cjk_self_file = 0
+    let s:cjk_self_lines = []
+    let s:has_cjk_self_file = 0
+    let datafile = s:vimim_check_filereadable("vimim.txt")
+    if s:has_cjk_file > 1 || s:ui.im == 'pinyin'
+        let s:show_me_not .= '\|^oo\|^oi'
+        if !empty(datafile)
+            let s:has_cjk_self_file = 1
+            let s:cjk_self_file = datafile
+        endif
+    endif
+endfunction
 
 " ----------------------------------------
 function! s:vimim_add_apostrophe(keyboard)
@@ -4635,10 +4639,10 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma")
-        let s:vimim_digit_4corner = 1
-        let s:vimim_tab_as_onekey = 2
+      " let s:vimim_digit_4corner = 1
+      " let s:vimim_tab_as_onekey = 2
         let s:vimim_self_directory = "/home/xma/vimim/"
-        let s:vimim_data_directory = "/home/vimim/pinyin/"
+      " let s:vimim_data_directory = "/home/vimim/pinyin/"
     endif
 endfunction
 
@@ -5256,10 +5260,13 @@ else
         let results = s:vimim_remove_duplication(results)
         let s:cjk_results = []
     endif
+let g:o1=keyboard
     if keyboard =~ '^oo'
         " never ignore our private directory
         let dir = s:vimim_self_directory
+let g:o2=dir
         let results = s:vimim_get_list_from_directory(keyboard, dir)
+let g:o3=results
     endif
     if !empty(results)
         return s:vimim_popupmenu_list(results)
