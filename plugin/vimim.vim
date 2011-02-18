@@ -644,10 +644,9 @@ endfunction
 function! g:vimim_search_pumvisible()
 " -----------------------------------
     let word = s:vimim_popup_word()
+    let @/ = word
     if empty(word)
         let @/ = @_
-    else
-        let @/ = word
     endif
     let repeat_times = len(word)/s:multibyte
     let row_start = s:start_row_before
@@ -674,10 +673,9 @@ function! <SID>OneKey()
     let onekey = -1
     let byte_before = getline(".")[col(".")-2]
     if empty(byte_before) || byte_before =~ '\s'
+        let onekey = ""
         if s:vimim_tab_as_onekey > 0
             let onekey = "\t"
-        else
-            let onekey = ""
         endif
     endif
     if onekey < 0
@@ -779,23 +777,18 @@ function! s:vimim_onekey_action(onekey)
         let s:hjkl_h = 1
         return s:vimim_get_unicode_menu()
     endif
-    " ---------------------------------------------------
     if char_before ==# "'" && empty(s:ui.has_dot)
         let s:pattern_not_found = 0
     endif
-    " ---------------------------------------------------
+    " -------------------------------------------------
+    let onekey = ""
     if s:seamless_positions != getpos(".") && s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
-    else
-        let onekey = ""
     endif
-    " ---------------------------------------------------
-    if empty(char_before)
-    \|| char_before =~ '\s'
+    if empty(char_before) || char_before =~ '\s'
     \|| char_before !~# s:valid_key
         let onekey = a:onekey
     endif
-    " ---------------------------------------------------
     let s:smart_enter = 0
     let s:pattern_not_found = 0
     sil!exe 'sil!return "' . onekey . '"'
@@ -1187,11 +1180,9 @@ function! s:vimim_statusline()
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
     endif
-    " ------------------------------------
     if has_key(s:im_keycode, s:ui.im)
         let s:ui.statusline = s:backend[s:ui.root][s:ui.im].chinese
     endif
-    " ------------------------------------
     let datafile = s:backend[s:ui.root][s:ui.im].datafile
     if s:ui.im =~# 'wubi'
         if datafile =~# 'wubi98'
@@ -1205,7 +1196,6 @@ function! s:vimim_statusline()
         endif
         return s:vimim_get_chinese_im()
     endif
-    " ------------------------------------
     if s:vimim_cloud_sogou == 1
         let s:ui.statusline = s:backend.cloud.sogou.chinese
     elseif s:vimim_cloud_sogou == -777
@@ -1214,7 +1204,6 @@ function! s:vimim_statusline()
             let s:ui.statusline .= s:space . __getname
         endif
     endif
-    " ------------------------------------
     if !empty(s:vimim_shuangpin)
         let s:ui.statusline .= s:space
         let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
@@ -1289,18 +1278,6 @@ function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
     return '\<C-E>\<C-R>=g:vimim()\<CR>'
 endfunction
 
-" -------------------------------------
-function! g:vimim_menu_search_forward()
-" -------------------------------------
-    return s:vimim_menu_search("/")
-endfunction
-
-" --------------------------------------
-function! g:vimim_menu_search_backward()
-" --------------------------------------
-    return s:vimim_menu_search("?")
-endfunction
-
 " --------------------------------
 function! s:vimim_menu_search(key)
 " --------------------------------
@@ -1311,18 +1288,6 @@ function! s:vimim_menu_search(key)
         let slash .= a:key . '\<CR>'
     endif
     sil!exe 'sil!return "' . slash . '"'
-endfunction
-
-" ------------------------------
-function! g:vimim_left_bracket()
-" ------------------------------
-    return s:vimim_square_bracket("[")
-endfunction
-
-" -------------------------------
-function! g:vimim_right_bracket()
-" -------------------------------
-    return s:vimim_square_bracket("]")
 endfunction
 
 " -----------------------------------
@@ -1756,13 +1721,13 @@ function! <SID>vimim_punctuations_navigation(key)
     let hjkl = a:key
     if pumvisible()
         if a:key == "["
-            let hjkl  = '\<C-R>=g:vimim_left_bracket()\<CR>'
+            let hjkl  = s:vimim_square_bracket("[")
         elseif a:key == "]"
-            let hjkl  = '\<C-R>=g:vimim_right_bracket()\<CR>'
+            let hjkl  = s:vimim_square_bracket("]")
         elseif a:key == "/"
-            let hjkl  = '\<C-R>=g:vimim_menu_search_forward()\<CR>'
+            let hjkl  = s:vimim_menu_search("/")
         elseif a:key == "?"
-            let hjkl  = '\<C-R>=g:vimim_menu_search_backward()\<CR>'
+            let hjkl  = s:vimim_menu_search("?")
         elseif a:key =~ "[-,]"
             if s:hjkl_l > 0 && &pumheight < 1
                 let hjkl = '\<PageUp>'
@@ -1868,7 +1833,6 @@ function! s:vimim_imode_number(keyboard, prefix)
     \&& len(substitute(keyboard,'\d','','')) > 1
         return []
     endif
-    " ------------------------------------------
     let digit_alpha = keyboard
     if keyboard =~# '^\d*\l\{1}$'
         let digit_alpha = keyboard[:-2]
@@ -1890,7 +1854,6 @@ function! s:vimim_imode_number(keyboard, prefix)
     if empty(number)
         return []
     endif
-    " ------------------------------------------
     let numbers = [number]
     let last_char = keyboard[-1:]
     if !empty(last_char) && has_key(s:quantifiers, last_char)
@@ -1916,11 +1879,11 @@ let s:VimIM += [" ====  Input_Digit      ==== {{{"]
 function! s:vimim_initialize_cjk_file()
 " -------------------------------------
     let s:has_slash_grep = 0
+    let s:has_cjk_file = 0
     let s:cjk_one_char_cache = {}
     let s:cjk_results = []
     let s:cjk_file = 0
     let s:cjk_lines = []
-    let s:has_cjk_file = 0
     let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
     if !empty(datafile)
         let s:cjk_file = datafile
@@ -2229,7 +2192,6 @@ function! s:vimim_cjk_match(keyboard)
         endif
         return s:cjk_one_char_cache[keyboard]
     endif
-    " -------------------------------
     let grep = ""
     let dddddd = 6 - 2 * s:vimim_digit_4corner
     let grep_english = '[ 0-9]' . keyboard . '[ 0-9]'
@@ -2439,12 +2401,10 @@ function! s:vimim_reverse_lookup(chinese)
         return results
     endif
     call s:vimim_load_cjk_file()
-    " -----------------------------------
     let results_digit = s:vimim_reverse_one_entry(chinese, 2)
     call extend(results, results_digit)
     let results_digit = s:vimim_reverse_one_entry(chinese, 1)
     call extend(results, results_digit)
-    " -----------------------------------
     let results_pinyin = []  |" 马力 => ma3 li2
     let result_cjjp = ""     |" 马力 => ml
     let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
@@ -2761,20 +2721,14 @@ let s:VimIM += [" ====  Input_Shuangpin  ==== {{{"]
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if empty(s:vimim_shuangpin)
+    if empty(s:vimim_shuangpin) || !empty(s:shuangpin_table)
         return
     endif
-    " ----------------------------------
-    if !empty(s:shuangpin_table)
-        return
-    endif
-    " ----------------------------------
     let s:vimim_imode_pinyin = 0
     let rules = s:vimim_shuangpin_generic()
     let chinese = ""
     let shuangpin = s:vimim_chinese('shuangpin')
     let keycode = "[0-9a-z'.]"
-    " ----------------------------------
     if s:vimim_shuangpin == 'abc'
         let rules = s:vimim_shuangpin_abc(rules)
         let s:vimim_imode_pinyin = 1
@@ -2798,7 +2752,6 @@ function! s:vimim_initialize_shuangpin()
         let rules = s:vimim_shuangpin_flypy(rules)
         let chinese = s:vimim_chinese('flypy')
     endif
-    " ----------------------------------
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
     let s:shuangpin_keycode_chinese.chinese = chinese . shuangpin
     let s:shuangpin_keycode_chinese.keycode = keycode
@@ -5093,26 +5046,6 @@ if a:start
             return slash_column + 2
         endif
     endif
-
-"   " state-of-the-art slash search using regular grep
-"   " ------------------------------------------------ todo
-"   if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 0
-"       let has_slash = match(current_line, "\/")
-"       if has_slash > -1
-"           let s:has_slash_grep = 0
-"           let slash_column = copy(start_column)
-"           while slash_column > 0
-"               let slash_column -= 1
-"               let byte_before = current_line[slash_column]
-"               if byte_before =~ '/'
-"                   let s:has_slash_grep = 1
-"                   return slash_column + 1
-"               else
-"                   continue
-"               endif
-"           endwhile
-"       endif
-"   endif
 
     " take care of seamless English/Chinese input
     let seamless_column = s:vimim_get_seamless(current_positions)
