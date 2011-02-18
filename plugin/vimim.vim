@@ -422,7 +422,6 @@ function! s:vimim_egg_vimim()
     let option .= "_" . &term
     let option = s:vimim_chinese('computer') . s:colon . option
     call add(eggs, option)
-    " ----------------------------------
     let myversion = s:vimim_chinese('myversion') . s:colon
     let option = myversion  . v:progname . s:space . v:version
     call add(eggs, option)
@@ -431,21 +430,17 @@ function! s:vimim_egg_vimim()
         let option = myversion . "vimim.vim" . s:space . option
         call add(eggs, option)
     endif
-    " ----------------------------------
     let encoding = s:vimim_chinese('encoding') . s:colon
     let option = encoding . &encoding
     call add(eggs, option)
     let option = encoding . &fileencodings
     call add(eggs, option)
-    " ----------------------------------
     if has("gui_running")
         let option = s:vimim_chinese('font') . s:colon . &guifontwide
         call add(eggs, option)
     endif
-    " ----------------------------------
     let option = s:vimim_chinese('environment') . s:colon . v:lc_time
     call add(eggs, option)
-    " ----------------------------------
     let toggle = "i_CTRL-Bslash"
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
@@ -458,7 +453,6 @@ function! s:vimim_egg_vimim()
     let toggle .= s:space
     let option = s:vimim_chinese('style') . s:colon . toggle
     call add(eggs, option)
-    " ----------------------------------
     let database = s:vimim_chinese('datafile') . s:colon
     if s:has_cjk_file > 0
         let ciku = database . s:vimim_chinese('standard')
@@ -471,7 +465,6 @@ function! s:vimim_egg_vimim()
         let option = ciku . s:cjk_self_file
         call add(eggs, option)
     endif
-    " ----------------------------------
     let option = s:backend[s:ui.root][s:ui.im].datafile
     if !empty(option)
         let ciku = database
@@ -481,7 +474,6 @@ function! s:vimim_egg_vimim()
         let option = ciku . option
         call add(eggs, option)
     endif
-    " ----------------------------------
     let im = s:vimim_statusline()
     if s:vimim_tab_as_onekey == 2
         let statusline = s:left . s:ui.statusline . s:right
@@ -491,13 +483,11 @@ function! s:vimim_egg_vimim()
         let option = s:vimim_chinese('input') . s:colon . im
         call add(eggs, option)
     endif
-    " ----------------------------------
     if s:vimim_cloud_sogou == 888
         let sogou = s:vimim_chinese('sogou')
         let option = sogou . s:colon . s:vimim_chinese('cloudatwill')
         call add(eggs, option)
     endif
-    " ----------------------------------
     if !empty(s:global_customized)
         for item in s:global_customized
             let option = s:vimim_chinese('configure') . s:colon . item
@@ -1101,7 +1091,7 @@ function! s:vimim_get_seamless(current_positions)
         return -1
     endif
     if snip =~# s:uxxxx
-        let meg = 'support OneKey after any cjk'
+        let msg = 'support OneKey after any cjk'
     else
         for char in split(snip, '\zs')
             if char !~# s:valid_key
@@ -1478,7 +1468,9 @@ function! s:vimim_popupmenu_list(matched_list)
     let extra_text = ""
     let s:popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
-    if s:hjkl_n > 0 && s:hjkl_n%2 > 0 && s:ui.im == 'pinyin'
+    if s:hjkl_n > 0
+    \&& s:hjkl_n%2 > 0
+    \&& s:ui.im == 'pinyin'
         let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
     endif
     let keyboard_head = get(s:keyboard_list,0)
@@ -2039,7 +2031,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         endif
     elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
-            let keyboard_head = s:vimim_english_cjk_match(keyboard)
+            let keyboard_head = s:vimim_cjk_english_match(keyboard)
         endif
         if empty(keyboard_head)
             let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
@@ -2049,7 +2041,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
 endfunction
 
 " -------------------------------------------
-function! s:vimim_english_cjk_match(keyboard)
+function! s:vimim_cjk_english_match(keyboard)
 " -------------------------------------------
     let keyboard = a:keyboard
     let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
@@ -2062,7 +2054,7 @@ function! s:vimim_english_cjk_match(keyboard)
         else
             " cjk sample:  加 532510 4600 jia1 add plus 186
             let cjk_english = '[ 0-9]' . keyboard . '[ 0-9]'
-            let cjk_results = s:vimim_english_cjk_search(cjk_english)
+            let cjk_results = s:vimim_cjk_english_search(cjk_english)
             if len(cjk_results) > 0
                 " english 'arrow' is also shortcut of 'a4492'
                 let filter = "strpart(".'v:val'.", 0, s:multibyte)"
@@ -2296,7 +2288,7 @@ function! s:vimim_cjk_match(keyboard)
     endif
     " ------------------------------------------------------
     call s:vimim_load_cjk_file()
-    let results = s:vimim_english_cjk_search(grep)
+    let results = s:vimim_cjk_english_search(grep)
     if len(results) > 0
         let s:cjk_has_match = 1
         let results = sort(results, "s:vimim_compare_last_field")
@@ -2317,7 +2309,7 @@ function! s:vimim_cjk_match(keyboard)
 endfunction
 
 " ----------------------------------------
-function! s:vimim_english_cjk_search(grep)
+function! s:vimim_cjk_english_search(grep)
 " ----------------------------------------
     let results = []
     let line = match(s:cjk_lines, a:grep)
@@ -2397,10 +2389,11 @@ endfunction
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
 " [input]     马力  highlighted in vim visual mode
-" [output]    9a6c 529b  --  in unicode
-"             7712 4002  --  in four corner
-"             ma3  li4   --  in pinyin
-"             ml 马力    --  in cjjp
+" [output]    9a6c   529b    --  in unicode
+"             7712   4002    --  in four corner
+"             551000 530000  --  in five stroke
+"             ma3    li4     --  in pinyin
+"             ml 马力        --  in cjjp
 " ------------------------------------------
     let keyboard = a:keyboard
     let range = line("'>") - line("'<")
@@ -2408,10 +2401,15 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
         sil!call s:vimim_backend_initialization_once()
         let results = s:vimim_reverse_lookup(keyboard)
         if !empty(results)
-            call s:vimim_visual_ctrl_6_output(results)
+            let line = line(".")
+            call setline(line, results)
+            let new_positions = getpos(".")
+            let new_positions[1] = line + len(results) - 1
+            let new_positions[2] = len(get(split(get(results,-1)),0))+1
+            call setpos(".", new_positions)
         endif
     elseif s:vimim_tab_as_onekey > 0
-        call s:vimim_numberList()
+        sil!call s:vimim_numberList()
     endif
 endfunction
 
@@ -2424,18 +2422,6 @@ function! s:vimim_numberList() range abort
         call setline(z, pre . x . "\t" . getline(z))
         let z=z-1|let x=x-1
     endwhile
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_visual_ctrl_6_output(results)
-" ---------------------------------------------
-    let results = a:results
-    let line = line(".")
-    call setline(line, results)
-    let new_positions = getpos(".")
-    let new_positions[1] = line + len(results) - 1
-    let new_positions[2] = len(get(split(get(results,-1)),0))+1
-    call setpos(".", new_positions)
 endfunction
 
 " ---------------------------------------
