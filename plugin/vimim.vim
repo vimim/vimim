@@ -5037,15 +5037,15 @@ if a:start
     let char_before_before = current_line[start_column-2]
 
     " [/grep] state-of-the-art slash grep
-    " -----------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-    \&& s:has_cjk_file > 0
+    if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 0
         let s:has_slash_grep = 0
         let slash_column = match(current_line, "/")
-        let slash_more = match(current_line, "/", 0, 2)
-        if slash_column > -1 && slash_more < 0
-            let s:has_slash_grep = 1
-            return slash_column + 1
+        if slash_column > -1
+            let slash_more = match(current_line, "/", 0, 2)
+            if slash_more < 0
+                let s:has_slash_grep = 1
+                return slash_column + 1
+            endif
         endif
     endif
 
