@@ -565,16 +565,17 @@ function! s:vimim_search_chinese_from_english(keyboard)
             if len(keyboards) == 1
                 let filter = 'v:val' . " len(" . 'v:val' . ")"
                 call map(cjk_results, filter)
-                let cjk_results = sort(cjk_results, "s:vimim_compare_last_field")
+                let cjk_results = sort(cjk_results, "s:vimim_sort_on_last")
              elseif len(keyboards) > 1
                 let cjk_results = [join(cjk_results,'')]
             endif
         endif
-        "  /arrow  three sources (1) 矛 in cjk (2) → in english datafile (3) a4492 柪
+        "  /arrow (1) 矛 in cjk (2) → in english datafile (3) a4492 柪
         call extend(cjk_results, s:cjk_results)
     else
         let cjk_results = [nr2char(ddddd)]
     endif
+    " -------------------------------------------------
     if empty(cjk_results)
         if !empty(s:vimim_shuangpin)
             sil!call s:vimim_initialize_shuangpin()
@@ -584,6 +585,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
             let results = s:vimim_get_cloud_sogou(keyboard, 1)
         endif
     endif
+    " -------------------------------------------------
     if empty(results)
         if empty(s:backend.datafile) && empty(s:backend.directory)
             if empty(s:vimim_cloud_plugin)
@@ -595,6 +597,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
             let results = s:vimim_embedded_backend_engine(keyboard)
         endif
     endif
+    " -------------------------------------------------
     call extend(results, cjk_results)
     if empty(results)
         let v:errmsg = ""
@@ -721,7 +724,7 @@ function! g:vimim_space()
 "   (2) after omni popup menu      => insert Chinese
 "   (3) after English punctuation  => Chinese punctuation
 "   (4) after Chinese              => stop OneKeyNonStop
-" -----------------------
+" ---------------------------------------------------------
     let space = " "
     if pumvisible()
         let space = "\<C-Y>"
@@ -756,6 +759,7 @@ function! s:vimim_onekey_action(onekey)
         endif
         sil!exe 'sil!return "' . onekey . '"'
     endif
+    " ---------------------------------
     let char_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     if char_before_before !~# "[0-9A-z]"
@@ -776,22 +780,27 @@ function! s:vimim_onekey_action(onekey)
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
+    " ---------------------------------
     if char_before !~# s:valid_key && empty(a:onekey)
         return s:vimim_get_unicode_menu()
     endif
+    " ---------------------------------
     if char_before ==# "'" && empty(s:ui.has_dot)
         let s:pattern_not_found = 0
     endif
     let onekey = ""
+    " ---------------------------------
     if s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
     endif
+    " ---------------------------------
     if empty(char_before)
     \|| char_before =~ '\s'
     \|| char_before !~# s:valid_key
         let onekey = a:onekey
     endif
+    " ---------------------------------
     let s:smart_enter = 0
     let s:pattern_not_found = 0
     sil!exe 'sil!return "' . onekey . '"'
@@ -1342,7 +1351,7 @@ endfunction
 " --------------------------------
 function! <SID>vimim_smart_enter()
 " --------------------------------
-" smart <Enter> triple play:
+" <Enter> triple play:
 " (1) single <Enter> ==> Seamless
 " (2) double <Enter> ==> <Space>
 " (3) triple <Enter> ==> <Enter>
@@ -2236,7 +2245,7 @@ function! s:vimim_cjk_match(keyboard)
     " ------------------------------------------------------
     let results = s:vimim_cjk_grep_results(grep)
     if len(results) > 0
-        let results = sort(results, "s:vimim_compare_last_field")
+        let results = sort(results, "s:vimim_sort_on_last")
         let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
         if len(keyboard) == 1 && !has_key(s:cjk_one_char_cache, keyboard)
@@ -2280,9 +2289,9 @@ function! s:vimim_cjk_grep_results(grep)
     return results
 endfunction
 
-" -----------------------------------------------
-function s:vimim_compare_last_field(line1, line2)
-" -----------------------------------------------
+" -----------------------------------------
+function s:vimim_sort_on_last(line1, line2)
+" -----------------------------------------
     " m => 马 <= 马 259 <=  马馬 7712 ma3 259
     let line1 = get(split(a:line1),-1) + 1
     let line2 = get(split(a:line2),-1) + 1
