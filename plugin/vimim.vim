@@ -28,8 +28,8 @@ let s:VimIM  = [" ====  Introduction     ==== {{{"]
 " "VimIM Features"
 "  (1) "Plug & Play": as a client to VimIM embedded backends
 "  (2) "Plug & Play": as a client to "myCloud" and "Cloud"
-"  (3) search Chinese without using any popup window
-"  (4) input  Chinese without changing vim mode
+"  (3) input  Chinese without changing Vim mode
+"  (4) search Chinese without poping up any window
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -1368,11 +1368,9 @@ function! <SID>vimim_smart_enter()
         call s:vimim_set_seamless()
     else
         if s:smart_enter == 2
-            " the 2nd <Enter> becomes space
-            let key = " "
+            let key = " "   "| the 2nd <Enter> becomes <Space>
         else
-            " otherwise, <Enter> is <Enter>
-            let key = enter
+            let key = enter "| <Enter> is <Enter>
         endif
         let s:smart_enter = 0
     endif
@@ -1650,7 +1648,6 @@ function! <SID>vimim_punctuation_on()
         unlet s:punctuations['"']
         unlet s:punctuations["'"]
     endif
-    " ----------------------------
     if s:chinese_punctuation > 0
         if empty(s:vimim_backslash_close_pinyin)
             if index(s:valid_keys, '\') < 0
@@ -1670,7 +1667,6 @@ function! <SID>vimim_punctuation_on()
     endfor
     " --------------------------------------
     call s:vimim_punctuation_navigation_on()
-    " --------------------------------------
 endfunction
 
 " -------------------------------------------
