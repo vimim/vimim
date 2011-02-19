@@ -554,16 +554,12 @@ function! s:vimim_search_chinese_from_english(keyboard)
         if len(keyboards) > 0
             for keyboard2 in keyboards
                 let chars = s:vimim_match_cjk_files(keyboard2)
-                if len(keyboards) == 1
-                    let results = copy(chars)
-                elseif len(chars) > 0
+                if len(chars) > 0
                     let collection = "[" . join(chars,'') . "]"
                     call add(results, collection)
                 endif
             endfor
-            if len(keyboards) > 1
-                let results = [join(results,'')]
-            endif
+            let results = [join(results,'')]
         endif
     else
         let results = [nr2char(ddddd)]
@@ -769,17 +765,21 @@ function! s:vimim_onekey_action(onekey)
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
+    " ---------------------------------------------------
     if char_before !~# s:valid_key && empty(a:onekey)
         return s:vimim_get_unicode_menu()
     endif
+    " ---------------------------------------------------
     if char_before ==# "'" && empty(s:ui.has_dot)
         let s:pattern_not_found = 0
     endif
+    " ---------------------------------------------------
     let onekey = ""
     if s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
     endif
+    " ---------------------------------------------------
     if empty(char_before)
     \|| char_before =~ '\s'
     \|| char_before !~# s:valid_key
