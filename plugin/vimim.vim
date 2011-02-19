@@ -6,9 +6,8 @@
 
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
-let  VimIM = string("VimIM 經典:") "|         vim<C-6><C-6>
-let  VimIM = string("VimIM 環境:") "|       vimim<C-6><C-6>
-let  VimIM = string("VimIM 幫助:") "|   vimimhelp<C-6><C-6>
+let  VimIM = "VimIM 环境:     vimim<C-6><C-6> "
+let  VimIM = "VimIM 帮忙: vimimhelp<C-6><C-6> "
 
 let egg  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let egg += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
