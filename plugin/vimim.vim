@@ -546,6 +546,7 @@ endfunction
 function! s:vimim_search_chinese_from_english(keyboard)
 " -----------------------------------------------------
     let results = []
+    let cjk_results = []
     let keyboard = tolower(a:keyboard)
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
@@ -554,17 +555,27 @@ function! s:vimim_search_chinese_from_english(keyboard)
         if len(keyboards) > 0
             for keyboard2 in keyboards
                 let chars = s:vimim_match_cjk_files(keyboard2)
-                if len(chars) > 0
+                if len(keyboards) == 1
+                    let cjk_results = copy(chars)
+                elseif len(chars) > 0
                     let collection = "[" . join(chars,'') . "]"
-                    call add(results, collection)
+                    call add(cjk_results, collection)
                 endif
             endfor
-            let results = [join(results,'')]
+            if len(keyboards) == 1
+                let filter = 'v:val' . " len(" . 'v:val' . ")"
+                call map(cjk_results, filter)
+                let cjk_results = sort(cjk_results, "s:vimim_compare_last_field")
+             elseif len(keyboards) > 1
+                let cjk_results = [join(cjk_results,'')]
+            endif
         endif
+        "  /arrow  three sources (1) 矛 in cjk (2) → in english datafile (3) a4492 柪
+        call extend(cjk_results, s:cjk_results)
     else
-        let results = [nr2char(ddddd)]
+        let cjk_results = [nr2char(ddddd)]
     endif
-    if empty(results)
+    if empty(cjk_results)
         if !empty(s:vimim_shuangpin)
             sil!call s:vimim_initialize_shuangpin()
             let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
@@ -584,6 +595,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
             let results = s:vimim_embedded_backend_engine(keyboard)
         endif
     endif
+    call extend(results, cjk_results)
     if empty(results)
         let v:errmsg = ""
     else
@@ -744,7 +756,6 @@ function! s:vimim_onekey_action(onekey)
         endif
         sil!exe 'sil!return "' . onekey . '"'
     endif
-    " ---------------------------------------------------
     let char_before = getline(".")[col(".")-2]
     let char_before_before = getline(".")[col(".")-3]
     if char_before_before !~# "[0-9A-z]"
@@ -765,21 +776,17 @@ function! s:vimim_onekey_action(onekey)
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
-    " ---------------------------------------------------
     if char_before !~# s:valid_key && empty(a:onekey)
         return s:vimim_get_unicode_menu()
     endif
-    " ---------------------------------------------------
     if char_before ==# "'" && empty(s:ui.has_dot)
         let s:pattern_not_found = 0
     endif
-    " ---------------------------------------------------
     let onekey = ""
     if s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
     endif
-    " ---------------------------------------------------
     if empty(char_before)
     \|| char_before =~ '\s'
     \|| char_before !~# s:valid_key
@@ -2243,7 +2250,7 @@ function! s:vimim_cjk_match(keyboard)
     let results = s:vimim_cjk_grep_results(grep)
     if len(results) > 0
         let results = sort(results, "s:vimim_compare_last_field")
-        let filter = "strpart(".'v:val'.", 0, s:multibyte)"
+        let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
         if len(keyboard) == 1 && !has_key(s:cjk_one_char_cache, keyboard)
             let s:cjk_one_char_cache[keyboard] = results
@@ -2304,8 +2311,8 @@ endfunction
 " --------------------------------------------
 function! s:vimim_slash_search_block(keyboard)
 " --------------------------------------------
-" /m7712x3610j3111  =>  standard   /search
 " /muuqwxeyqpjeqqq  =>  shortcut   /search
+" /m7712x3610j3111  =>  standard   /search
 " /ma77xia36ji31    =>  free-style /search
 " --------------------------------------------
     if empty(s:has_cjk_file)
@@ -4909,18 +4916,10 @@ function! g:vimim()
         set completefunc=VimIM
         set completeopt=menuone
     endif
-    " --------------------------
     let key = ""
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ s:valid_key
-        let key = '\<C-X>\<C-U>'
-    elseif s:chinese_input_mode =~ 'onekey'
-        let byte_before_five = getline(".")[col(".")-6]
-        if byte_before =~ '\x' && byte_before_five ==# 'u'
-            let key = '\<C-X>\<C-U>'
-        endif
-    endif
-    if !empty(key)
+        let key  = '\<C-X>\<C-U>'
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -5363,6 +5362,7 @@ function! s:vimim_onekey_mapping_on()
     if s:vimim_tab_as_onekey < 2 && !hasmapto('<C-^>', 'i')
         imap <silent> <C-^> <Plug>VimimOneKey
     endif
+    " -------------------------------
     if s:vimim_tab_as_onekey > 0
         imap <silent> <Tab> <Plug>VimimOneKey
     endif
