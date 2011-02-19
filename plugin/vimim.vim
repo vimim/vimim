@@ -1342,45 +1342,32 @@ endfunction
 " --------------------------------
 function! <SID>vimim_smart_enter()
 " --------------------------------
-" <Enter> multiple play in OneKey:
-" (1) after English (valid keys)    ==> Seamless
-" (3) after Chinese or double Enter ==> <Enter>
-" (2) after English punctuation      => <Space>
-" (4) after empty line               => <Enter> with invisible <Space>
+" smart <Enter> triple play:
+" (1) single <Enter> ==> Seamless
+" (2) double <Enter> ==> <Space>
+" (3) triple <Enter> ==> <Enter>
 " --------------------------------
     let key = ""
     let enter = "\<CR>"
     let byte_before = getline(".")[col(".")-2]
-    if byte_before =~# "[*']"
-        let s:smart_enter = 0
-    elseif byte_before =~# s:valid_key
+    if byte_before =~ '\S'
         let s:smart_enter += 1
-    endif
-    if s:chinese_input_mode =~ 'onekey'
-        if has_key(s:punctuations, byte_before)
-            let s:smart_enter += 1
-            let key = ' '
-        endif
-        if byte_before =~ '\s'
-            let key = enter
-        endif
+    else
+        let key = enter
     endif
     if s:smart_enter == 1
-        " do seamless for the first time <Enter>
+        " the first <Enter> does seamless
         let s:pattern_not_found = 0
         call s:vimim_set_seamless()
     else
         if s:smart_enter == 2
+            " the 2nd <Enter> becomes space
             let key = " "
         else
+            " otherwise, <Enter> is <Enter>
             let key = enter
         endif
         let s:smart_enter = 0
-    endif
-    if s:chinese_input_mode =~ 'onekey'
-        if empty(byte_before)
-            let key = s:space . enter
-        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5043,8 +5030,12 @@ if a:start
                 let more = match(current_line_left, "/", slash_column)
                 let slash_column += 1
             endwhile
-            let s:has_slash_grep = 1
-            return slash_column - 1
+            let grep = current_line_left[slash_column : -1]
+            let space = match(grep, '\s')
+            if space < 0
+                let s:has_slash_grep = 1
+                return slash_column - 1
+            endif
         endif
     endif
 
