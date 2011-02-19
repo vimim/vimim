@@ -769,14 +769,12 @@ function! s:vimim_onekey_action(onekey)
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
-    " -------------------------------------------------
     if char_before !~# s:valid_key && empty(a:onekey)
         return s:vimim_get_unicode_menu()
     endif
     if char_before ==# "'" && empty(s:ui.has_dot)
         let s:pattern_not_found = 0
     endif
-    " -------------------------------------------------
     let onekey = ""
     if s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
@@ -5034,18 +5032,20 @@ if a:start
     let start_row = current_positions[1]
     let current_line = getline(start_row)
     let byte_before = current_line[start_column-1]
-    let char_before_before = current_line[start_column-2]
+    let current_line_left = current_line[0 : start_column-2]
 
     " [/grep] state-of-the-art slash grep
-    if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 0
+    if s:chinese_input_mode =~ 'onekey'
         let s:has_slash_grep = 0
-        let slash_column = match(current_line, "/")
-        if slash_column > -1
-            let slash_more = match(current_line, "/", 0, 2)
-            if slash_more < 0
-                let s:has_slash_grep = 1
-                return slash_column + 1
-            endif
+        let slash_column = match(current_line_left, "/")
+        if slash_column > -1 && s:has_cjk_file > 0
+            let more = 0
+            while more > -1
+                let more = match(current_line_left, "/", slash_column)
+                let slash_column += 1
+            endwhile
+            let s:has_slash_grep = 1
+            return slash_column - 1
         endif
     endif
 
@@ -5105,8 +5105,11 @@ else
     " [/grep] slash grep to search cjk
     " --------------------------------
     if s:has_slash_grep > 0
-        let results = s:vimim_slash_grep(keyboard)
-        if !empty(results)
+        let uxxxx = keyboard[s:multibyte : -1]
+        if uxxxx =~ s:uxxxx
+            let keyboard = uxxxx
+        else
+            let results = s:vimim_slash_grep(keyboard)
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -5260,13 +5263,10 @@ else
         let results = s:vimim_remove_duplication(results)
         let s:cjk_results = []
     endif
-let g:o1=keyboard
     if keyboard =~ '^oo'
         " never ignore our private directory
         let dir = s:vimim_self_directory
-let g:o2=dir
         let results = s:vimim_get_list_from_directory(keyboard, dir)
-let g:o3=results
     endif
     if !empty(results)
         return s:vimim_popupmenu_list(results)
