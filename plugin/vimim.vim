@@ -6,16 +6,16 @@
 
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
-let  VimIM = "VimIM 环境:     vimim<C-6><C-6> "
-let  VimIM = "VimIM 帮忙: vimimhelp<C-6><C-6> "
+let  VimIM = string("VimIM 环境:")"|        vimim<C-6><C-6>
+let  VimIM = string("VimIM 帮助:")"|    vimimhelp<C-6><C-6>
 
-let egg  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
-let egg += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
-let egg += ["http://vimim-data.googlecode.com"]
-let egg += ["http://groups.google.com/group/vimim"]
-let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
-let egg += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
-let egg += ["http://code.google.com/p/vimim/issues/list"]
+let s:help  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
+let s:help += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
+let s:help += ["http://vimim-data.googlecode.com"]
+let s:help += ["http://groups.google.com/group/vimim"]
+let s:help += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
+let s:help += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
+let s:help += ["http://code.google.com/p/vimim/issues/list"]
 
 let s:VimIM  = [" ====  Introduction     ==== {{{"]
 " =================================================
@@ -68,7 +68,6 @@ if exists("b:loaded_vimim") || &cp || v:version<700
 endif
 scriptencoding utf-8
 let b:loaded_vimim = 1
-let s:vimimhelp = egg
 let s:path = expand("<sfile>:p:h")."/"
 
 " -----------------------------------------
@@ -375,13 +374,13 @@ endfunction
 function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
-    call add(eggs, "官方网址" . s:colon . s:vimimhelp[0] . s:space)
-    call add(eggs, "标准字库" . s:colon . s:vimimhelp[1] . s:space)
-    call add(eggs, "民间词库" . s:colon . s:vimimhelp[2] . s:space)
-    call add(eggs, "新闻论坛" . s:colon . s:vimimhelp[3] . s:space)
-    call add(eggs, "最新主页" . s:colon . s:vimimhelp[4] . s:space)
-    call add(eggs, "最新程式" . s:colon . s:vimimhelp[5] . s:space)
-    call add(eggs, "错误报告" . s:colon . s:vimimhelp[6] . s:space)
+    call add(eggs, "官方网址" . s:colon . s:help[0] . s:space)
+    call add(eggs, "标准字库" . s:colon . s:help[1] . s:space)
+    call add(eggs, "民间词库" . s:colon . s:help[2] . s:space)
+    call add(eggs, "新闻论坛" . s:colon . s:help[3] . s:space)
+    call add(eggs, "最新主页" . s:colon . s:help[4] . s:space)
+    call add(eggs, "最新程式" . s:colon . s:help[5] . s:space)
+    call add(eggs, "错误报告" . s:colon . s:help[6] . s:space)
     return eggs
 endfunction
 
