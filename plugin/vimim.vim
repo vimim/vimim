@@ -6,8 +6,8 @@
 
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
-let  VimIM = string("VimIM 环境:")"|        vimim<C-6><C-6>
-let  VimIM = string("VimIM 帮助:")"|    vimimhelp<C-6><C-6>
+let  VimIM = "VimIM 环境"  "|          vimim<C-6><C-6>
+let  VimIM = "VimIM 帮助"  "|      vimimhelp<C-6><C-6>
 
 let s:help  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let s:help += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
