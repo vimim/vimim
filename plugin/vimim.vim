@@ -4,8 +4,8 @@
 "   VimIM -- Input Method by Vim, of Vim, for Vimmers
 " =====================================================
 
-let $VimIM  = "VimIM 帮助" "|       vimimhelp<C-6><C-6>
-let $VimIM  = "VimIM 环境" "|           vimim<C-6><C-6>
+let $VimIM  = "VimIM 環境" "|       vimimhelp<C-6><C-6>
+let $VimIM  = "VimIM 幫助" "|           vimim<C-6><C-6>
 let $VimIM  = "$Date$"
 let $VimIM  = "$Revision$"
 let s:help  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
@@ -28,7 +28,7 @@ let s:VimIM  = [" ====  Introduction     ==== {{{"]
 "  (1) "Plug & Play": as a client to VimIM embedded backends
 "  (2) "Plug & Play": as a client to "myCloud" and "Cloud"
 "  (3) input  Chinese without changing Vim mode
-"  (4) search Chinese without poping up any window
+"  (4) search Chinese without popping up any window
 " -----------------------------------------------------------
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -162,7 +162,7 @@ function! s:vimim_dictionary_chinese()
     let s:space = "　"
     let s:plus  = "＋"
     let s:colon = "："
-    let s:left = "【"
+    let s:left  = "【"
     let s:right = "】"
     let s:chinese = {}
     let s:chinese['standard']    = ['标准','標準']
@@ -245,7 +245,6 @@ function! s:vimim_dictionary_im_keycode()
     call add(vimimkeys, 'wubi2000')
     call insert(vimimkeys, 'pinyin')
     let s:all_vimim_input_methods = copy(vimimkeys)
-    " -------------------------------------------
 endfunction
 
 " -------------------------------------------------------
@@ -286,7 +285,7 @@ let s:VimIM += [" ====  Customization    ==== {{{"]
 " -----------------------------------
 function! s:vimim_initialize_global()
 " -----------------------------------
-    let s:global_defaults = []
+    let s:global_defaults   = []
     let s:global_customized = []
     " -------------------------------
     let G = []
@@ -387,16 +386,16 @@ endfunction
 function! s:vimim_egg_vimimvim()
 " ------------------------------
     let eggs = copy(s:VimIM)
-    let egg = "strpart(" . 'v:val' . ", 0, 28)"
-    return map(eggs, egg)
+    let filter = "strpart(" . 'v:val' . ", 0, 28)"
+    return map(eggs, filter)
 endfunction
 
 " -----------------------------------
 function! s:vimim_egg_vimimdefaults()
 " -----------------------------------
     let eggs = copy(s:global_defaults)
-    let egg = '"VimIM  " . v:val . s:space'
-    return map(eggs, egg)
+    let filter = '"VimIM  " . v:val . s:space'
+    return map(eggs, filter)
 endfunction
 
 " ---------------------------
@@ -567,7 +566,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
                 let cjk_results = [join(cjk_results,'')]
             endif
         endif
-        "  /arrow (1) 矛 in cjk (2) → in english datafile (3) a4492 柪
+        " /arrow (1) 矛 in cjk (2) → in english datafile (3) a4492 柪
         call extend(cjk_results, s:cjk_results)
     else
         let cjk_results = [nr2char(ddddd)]
@@ -700,28 +699,20 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_onekey_pumvisible_qwert_on()
     sil!call s:vimim_punctuation_navigation_on()
     if pumvisible()
-        let msg = "optimize for double ctrl-6"
+        let msg = "optimize for double ctrl+6"
     else
         sil!call s:vimim_start()
     endif
 endfunction
 
-" --------------------------
-function! s:vimim_space_on()
-" --------------------------
-    inoremap <Space> <C-R>=g:vimim_space()<CR>
-                    \<C-R>=g:vimim_nonstop_after_insert()<CR>
-endfunction
-
 " -----------------------
 function! g:vimim_space()
 " -----------------------
-" <Space> multiple play in OneKey:
-"   (1) after English (valid keys) => trigger keycode menu
-"   (2) after omni popup menu      => insert Chinese
-"   (3) after English punctuation  => Chinese punctuation
-"   (4) after Chinese              => stop OneKeyNonStop
-" ---------------------------------------------------------
+" (1) <Space> after English (valid keys) => trigger keycode menu
+" (2) <Space> after omni popup menu      => insert Chinese
+" (3) <Space> after English punctuation  => Chinese punctuation
+" (4) <Space> after Chinese              => stop OneKeyNonStop
+" ---------------------------------------------------------------
     let space = " "
     if pumvisible()
         let space = "\<C-Y>"
@@ -1348,7 +1339,6 @@ endfunction
 " --------------------------------
 function! <SID>vimim_smart_enter()
 " --------------------------------
-" <Enter> triple play:
 " (1) single <Enter> ==> Seamless
 " (2) double <Enter> ==> <Space>
 " (3) triple <Enter> ==> <Enter>
@@ -1886,6 +1876,20 @@ function! s:vimim_initialize_cjk_file()
     endif
 endfunction
 
+" -------------------------------
+function! s:vimim_load_cjk_file()
+" -------------------------------
+    if empty(s:cjk_lines)
+        if s:has_cjk_file > 0
+            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+            if len(s:cjk_lines) != 20902
+                let s:cjk_lines = []
+                let s:has_cjk_file = 0
+            endif
+        endif
+    endif
+endfunction
+
 " -------------------------------------------
 function! s:vimim_check_filereadable(default)
 " -------------------------------------------
@@ -1903,20 +1907,6 @@ function! s:vimim_check_filereadable(default)
         return datafile
     endif
     return 0
-endfunction
-
-" -------------------------------
-function! s:vimim_load_cjk_file()
-" -------------------------------
-    if empty(s:cjk_lines)
-        if s:has_cjk_file > 0
-            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-            if len(s:cjk_lines) != 20902
-                let s:cjk_lines = []
-                let s:has_cjk_file = 0
-            endif
-        endif
-    endif
 endfunction
 
 " ---------------------------------------------
@@ -2344,12 +2334,12 @@ endfunction
 " ------------------------------------------
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
-" [input]     马力  highlighted in vim visual mode
-" [output]    9a6c   529b    --  in unicode
-"             7712   4002    --  in four corner
-"             551000 530000  --  in five stroke
-"             ma3    li4     --  in pinyin
-"             ml 马力        --  in cjjp
+" [input]  马力  highlighted in Vim visual mode
+" [output] 9a6c   529b    --  in unicode
+"          7712   4002    --  in four corner
+"          551000 530000  --  in five stroke
+"          ma3    li4     --  in pinyin
+"          ml 马力        --  in cjjp
 " ------------------------------------------
     let keyboard = a:keyboard
     let range = line("'>") - line("'<")
@@ -3107,15 +3097,15 @@ function! s:vimim_set_special_im_property()
     \|| s:ui.im == 'boshiamy'
     \|| s:ui.im == 'phonetic'
     \|| s:ui.im == 'array30'
-        let s:ui.has_dot = 1  "| dot in datafile
+        let s:ui.has_dot = 1 "| dot in datafile
         let s:vimim_chinese_punctuation = -9
     endif
     " -------------------------------------
     if s:backend[s:ui.root][s:ui.im].datafile =~# "quote"
-        let s:ui.has_dot = 2  "| has_apostrophe_in_datafile
+        let s:ui.has_dot = 2 "| has_apostrophe_in_datafile
     endif
     " -------------------------------------
-    if s:ui.im =~ '^\d'
+    if s:ui.im == 'phonetic' || s:ui.im == 'array30'
         let s:vimim_chinese_input_mode = "static"
     endif
 endfunction
@@ -3176,63 +3166,63 @@ function! s:vimim_erbi_first_punctuation(keyboard)
     return chinese_punctuation
 endfunction
 
-" --------------------
-let s:progressbar = {}
-" --------------------
+" ----------------------------------------------------
 " http://www.vim.org/scripts/script.php?script_id=2006
-func! NewSimpleProgressBar(title, max_value, ...)
-  if !has("statusline")
-    return {}
-  endif
-  let winnr = a:0 ? a:1 : winnr()
-  let b = copy(s:progressbar)
-  let b.title = a:title
-  let b.max_value = a:max_value
-  let b.cur_value = 0
-  let b.winnr = winnr
-  let b.items = {
-      \ 'title' : { 'color' : 'Statusline' },
-      \ 'bar' : { 'fillchar' : ' ', 'color' : 'Statusline' ,
-      \           'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' },
-      \ 'counter' : { 'color' : 'Statusline' } }
-  let b.stl_save = getwinvar(winnr,"&statusline")
-  let b.lst_save = &laststatus"
-  return b
-endfun
-func! s:progressbar.paint()
-  let max_len = winwidth(self.winnr)-1
-  let t_len = strlen(self.title)+1+1
-  let c_len = 2*strlen(self.max_value)+1+1+1
-  let pb_len = max_len - t_len - c_len - 2
-  let cur_pb_len = (pb_len*self.cur_value)/self.max_value
-  let t_color = self.items.title.color
-  let b_fcolor = self.items.bar.fillcolor
-  let b_color = self.items.bar.color
-  let c_color = self.items.counter.color
-  let fc= strpart(self.items.bar.fillchar." ",0,1)
-  let stl = "%#".t_color."#%-( ".self.title." %)".
-      \"%#".b_color."#|".
-      \"%#".b_fcolor."#%-(".repeat(fc,cur_pb_len)."%)".
-      \"%#".b_color."#".repeat(" ",pb_len-cur_pb_len)."|".
-      \"%=%#".c_color."#%( ".repeat(" ",(strlen(self.max_value)-
-      \strlen(self.cur_value))).self.cur_value."/".self.max_value."  %)"
-  set laststatus=2
-  call setwinvar(self.winnr,"&stl",stl)
-  redraw
-endfun
-func! s:progressbar.incr( ... )
-  let i = a:0 ? a:1 : 1
-  let i+=self.cur_value
-  let i = i < 0 ? 0 : i > self.max_value ? self.max_value : i
-  let self.cur_value = i
-  call self.paint()
-  return self.cur_value
-endfun
-func! s:progressbar.restore()
-  call setwinvar(self.winnr,"&stl",self.stl_save)
-  let &laststatus=self.lst_save
-  redraw
-endfun
+" ----------------------------------------------------
+let s:progressbar = {}
+function! NewSimpleProgressBar(title, max_value, ...)
+    if !has("statusline")
+        return {}
+    endif
+    let winnr = a:0 ? a:1 : winnr()
+    let b = copy(s:progressbar)
+    let b.title = a:title
+    let b.max_value = a:max_value
+    let b.cur_value = 0
+    let b.winnr = winnr
+    let b.items = {
+        \ 'title' : { 'color' : 'Statusline' },
+        \ 'bar' : { 'fillchar' : ' ', 'color' : 'Statusline' ,
+        \           'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' },
+        \ 'counter' : { 'color' : 'Statusline' } }
+    let b.stl_save = getwinvar(winnr,"&statusline")
+    let b.lst_save = &laststatus"
+    return b
+endfunction
+function! s:progressbar.paint()
+    let max_len = winwidth(self.winnr)-1
+    let t_len = strlen(self.title)+1+1
+    let c_len = 2*strlen(self.max_value)+1+1+1
+    let pb_len = max_len - t_len - c_len - 2
+    let cur_pb_len = (pb_len*self.cur_value)/self.max_value
+    let t_color = self.items.title.color
+    let b_fcolor = self.items.bar.fillcolor
+    let b_color = self.items.bar.color
+    let c_color = self.items.counter.color
+    let fc= strpart(self.items.bar.fillchar." ",0,1)
+    let stl = "%#".t_color."#%-( ".self.title." %)".
+        \"%#".b_color."#|".
+        \"%#".b_fcolor."#%-(".repeat(fc,cur_pb_len)."%)".
+        \"%#".b_color."#".repeat(" ",pb_len-cur_pb_len)."|".
+        \"%=%#".c_color."#%( ".repeat(" ",(strlen(self.max_value)-
+        \strlen(self.cur_value))).self.cur_value."/".self.max_value."  %)"
+    set laststatus=2
+    call setwinvar(self.winnr,"&stl",stl)
+    redraw
+endfunction
+function! s:progressbar.incr( ... )
+    let i = a:0 ? a:1 : 1
+    let i+=self.cur_value
+    let i = i < 0 ? 0 : i > self.max_value ? self.max_value : i
+    let self.cur_value = i
+    call self.paint()
+    return self.cur_value
+endfunction
+function! s:progressbar.restore()
+    call setwinvar(self.winnr,"&stl",self.stl_save)
+    let &laststatus=self.lst_save
+    redraw
+endfunction
 
 " ============================================= }}}
 let s:VimIM += [" ====  Backend==Unicode ==== {{{"]
@@ -3535,10 +3525,10 @@ function! s:vimim_smart_match(lines, keyboard, match_start)
     endif
     let results = a:lines[match_start : match_end]
     if len(results) < 10 && s:ui.im == 'pinyin'
-       let extras = s:vimim_pinyin_more_match(a:lines, keyboard)
-       if len(extras) > 0
-           call extend(results, extras)
-       endif
+        let extras = s:vimim_pinyin_more_match(a:lines, keyboard)
+        if len(extras) > 0
+            call extend(results, extras)
+        endif
     endif
     return results
 endfunction
@@ -4703,7 +4693,7 @@ function! s:vimim_getsid(scriptname)
 " supertab      http://www.vim.org/scripts/script.php?script_id=1643
 " autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
 " word_complete http://www.vim.org/scripts/script.php?script_id=73
-" -----------------------------------
+" ------------------------------------------------------------------
     " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
     let l:scriptname = a:scriptname
     " get output of ":scriptnames" in scriptnames_output variable
@@ -4812,7 +4802,6 @@ function! s:vimim_start()
     sil!call s:vimim_cursor_color(1)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_123456789_label_on()
-    sil!call s:vimim_space_on()
     sil!call s:vimim_helper_mapping_on()
 endfunction
 
@@ -4844,12 +4833,12 @@ function! s:vimim_reset_before_anything()
     let s:hjkl_n = 0
     let s:hjkl_x = 0
     let s:smart_enter = 0
-    let s:pumvisible_ctrl_e = 0
-    let s:pattern_not_found = 0
+    let s:pumvisible_ctrl_e  = 0
+    let s:pattern_not_found  = 0
     let s:keyboard_shuangpin = 0
     let s:popupmenu_list = []
-    let s:matched_list = []
-    let s:keyboard_list = []
+    let s:matched_list   = []
+    let s:keyboard_list  = []
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
 endfunction
 
@@ -4944,19 +4933,22 @@ endfunction
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    inoremap <CR>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                  \<C-R>=<SID>vimim_smart_enter()<CR>
-    " ----------------------------------------------------------
-    inoremap <BS>  <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
-                  \<C-R>=g:vimim_backspace()<CR>
-    " ----------------------------------------------------------
+    inoremap <Space> <C-R>=g:vimim_space()<CR>
+                    \<C-R>=g:vimim_nonstop_after_insert()<CR>
+    " ----------------------------------------------------------------
+    inoremap <CR>    <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                    \<C-R>=<SID>vimim_smart_enter()<CR>
+    " ----------------------------------------------------------------
+    inoremap <BS>    <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
+                    \<C-R>=g:vimim_backspace()<CR>
+    " ----------------------------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
         inoremap <silent> <Esc> <Esc>:call g:vimim_esc()<CR>
     elseif s:chinese_input_mode =~ 'static'
-        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                      \<C-R>=g:vimim_one_key_correction()<CR>
+        inoremap <silent> <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                               \<C-R>=g:vimim_one_key_correction()<CR>
     endif
-    " ----------------------------------------------------------
+    " ----------------------------------------------------------------
     if s:chinese_input_mode !~ 'onekey'
         inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
     endif
