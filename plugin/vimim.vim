@@ -297,7 +297,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_debug")
-    call add(G, "g:vimim_english_punctuation")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_mycloud_url")
@@ -1502,7 +1501,7 @@ function! s:vimim_onekey_action(onekey)
     endif
     " ---------------------------------
     let onekey = s:vimim_onekey_punctuation()
-    if len(onekey) > 3
+    if len(onekey) > len("<BS>")
         sil!exe 'sil!return "' . onekey . '"'
     endif
     " ---------------------------------
@@ -1515,7 +1514,6 @@ function! s:vimim_onekey_action(onekey)
         let s:pattern_not_found = 0
     endif
     " ---------------------------------
-    let onekey = ""
     if s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
@@ -1535,7 +1533,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_onekey_punctuation()
 " ------------------------------------
-    let onekey = 0
+    let onekey = ""
     let current_line = getline(".")
     let char_before = current_line[col(".")-2]
     let char_before_before = current_line[col(".")-3]
@@ -1551,22 +1549,20 @@ function! s:vimim_onekey_punctuation()
                 endif
             endfor
             if empty(onekey)
-                let msg = "punctuation transform from English to Chinese"
+                " English punctuation to Chinese punctuation
                 let replacement = s:punctuations[char_before]
             endif
         endif
-        " ------------------------------------------------------
         if empty(replacement)
-            let msg = "onekey flirts 3 evil punctuations"
-            if char_before == '\'
-                let replacement = '、'
-            elseif char_before == "'"
-                let replacement = '“'
-            elseif char_before =~ '"'
-                let replacement = '”'
-            endif
+            for char in keys(s:evils)
+                if char_before ==# char
+                    let replacement = s:evils[char]
+                endif
+            endfor
         endif
-        if !empty(replacement)
+        if empty(replacement)
+            let onekey = ""
+        else
             let onekey = "\<BS>" . replacement
         endif
     endif
@@ -2362,6 +2358,7 @@ function! s:vimim_dictionary_punctuation()
     let s:punctuations['?'] = '？'
     let s:punctuations['*'] = '﹡'
     let s:punctuations_all = copy(s:punctuations)
+    let s:evils = {'\':'、', "'":'“', '"':'”'}
 endfunction
 
 " -------------------------------------------------
@@ -2381,10 +2378,6 @@ endfunction
 " ---------------------------------------
 function! <SID>vimim_toggle_punctuation()
 " ---------------------------------------
-    " note: only OneKey supports these 3 evil punctuations
-    " unlet! s:punctuations['\']
-    " unlet! s:punctuations['"']
-    " unlet! s:punctuations["'"]
     let s:chinese_punctuation = (s:chinese_punctuation+1)%2
     call s:vimim_set_statusline()
     call s:vimim_punctuation_mapping_on()
@@ -2397,19 +2390,47 @@ function! s:vimim_punctuation_mapping_on()
     if s:vimim_chinese_punctuation < 0
         return ""
     endif
-    for _ in keys(s:punctuations)
-        sil!exe 'inoremap <silent> '._.'
-        \    <C-R>=<SID>vimim_punctuation_mapping("'._.'")<CR>'
+    " ------------------------------------
+    for key in keys(s:punctuations)
+        let value = s:vimim_get_chinese_punctuation(key)
+        sil!exe 'inoremap <silent> '. key .'
+        \    <C-R>=<SID>vimim_punctuation_mapping("'. value .'")<CR>'
         \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
+    " ------------------------------------
+    if s:chinese_punctuation > 0
+        for [key, value] in items(s:evils)
+            sil!exe 'inoremap <silent> '. key .'
+            \    <C-R>=<SID>vimim_punctuation_mapping("'. value .'")<CR>'
+            \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
+        endfor
+    else
+        for _ in keys(s:evils)
+            sil!exe 'iunmap '. _
+        endfor
+    endif
+    " ------------------------------------
     sil!call s:vimim_punctuation_navigation_on()
     return ""
 endfunction
 
-" -------------------------------------------
-function! <SID>vimim_punctuation_mapping(key)
-" -------------------------------------------
-    let value = s:vimim_get_chinese_punctuation(a:key)
+" ------------------------------------------------------------
+function! s:vimim_get_chinese_punctuation(english_punctuation)
+" ------------------------------------------------------------
+    let value = a:english_punctuation
+    if s:chinese_punctuation > 0 && has_key(s:punctuations, value)
+        let byte_before = getline(".")[col(".")-2]
+        if byte_before !~ '\w'  " English punctuation after English
+            let value = s:punctuations[value]
+        endif
+    endif
+    return value
+endfunction
+
+" ---------------------------------------------
+function! <SID>vimim_punctuation_mapping(value)
+" ---------------------------------------------  todo
+    let value = a:value
     if pumvisible()
         let value = "\<C-Y>" . value
         let s:has_pumvisible = 1
@@ -2472,23 +2493,6 @@ function! <SID>vimim_punctuations_navigation(key)
         let hjkl = s:vimim_get_chinese_punctuation(hjkl)
     endif
     sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-" ------------------------------------------------------------
-function! s:vimim_get_chinese_punctuation(english_punctuation)
-" ------------------------------------------------------------
-    let value = a:english_punctuation
-    if s:chinese_punctuation > 0 && has_key(s:punctuations, value)
-        let byte_before = getline(".")[col(".")-2]
-        let before = '\w'     " English punctuation after English
-        if empty(s:vimim_english_punctuation)
-            let before = '\d' " English punctuation after digit
-        endif
-        if byte_before !~ before
-            let value = s:punctuations[value]
-        endif
-    endif
-    return value
 endfunction
 
 " ============================================= }}}
@@ -4613,7 +4617,7 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/hhome/xma")
+    if isdirectory("/home/xma")
         let s:vimim_digit_4corner = 1
         let s:vimim_tab_as_onekey = 2
         let s:vimim_self_directory = "/home/xma/vimim/"
@@ -4932,12 +4936,10 @@ function! s:vimim_i_map_off()
     call extend(unmap_list, s:AZ_list)
     call extend(unmap_list, keys(s:punctuations))
     call extend(unmap_list, ['<Esc>','<CR>','<BS>','<Space>'])
+    call extend(unmap_list, ['\', '"', "'"])
     for _ in unmap_list
         sil!exe 'iunmap '. _
     endfor
-    iunmap <Bslash>
-    iunmap '
-    iunmap "
 endfunction
 
 " -----------------------------------
