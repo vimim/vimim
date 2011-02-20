@@ -431,14 +431,17 @@ function! s:vimim_egg_vimim()
     endif
     let option = s:vimim_chinese('environment') . s:colon . v:lc_time
     call add(eggs, option)
+    let im = s:vimim_statusline()
     let toggle = "i_CTRL-Bslash"
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
         let toggle = s:vimim_chinese('auto') . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_CTRL-Space"
-    elseif s:vimim_tab_as_onekey > 1
+    elseif s:vimim_tab_as_onekey == 2
         let toggle = "Tab_as_OneKey_NonStop"
+        let statusline = s:left . s:ui.statusline . s:right
+        let im = statusline . s:vimim_chinese('onekey')
     endif
     let toggle .= s:space
     let option = s:vimim_chinese('style') . s:colon . toggle
@@ -460,11 +463,6 @@ function! s:vimim_egg_vimim()
             let ciku .= s:vimim_chinese('directory') . ciku
         endif
         call add(eggs, ciku . option)
-    endif
-    let im = s:vimim_statusline()
-    if s:vimim_tab_as_onekey == 2
-        let statusline = s:left . s:ui.statusline . s:right
-        let im = statusline . s:vimim_chinese('onekey')
     endif
     if !empty(im)
         let option = s:vimim_chinese('input') . s:colon . im
@@ -944,23 +942,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  User_Interface   ==== {{{"]
 " =================================================
-
-" ---------------------------------
-function! s:vimim_initialize_skin()
-" ---------------------------------
-    if s:vimim_custom_color == 1
-        return
-    elseif s:vimim_custom_color < 3
-        if s:vimim_custom_color < 1
-            highlight! PmenuSel NONE
-        elseif s:vimim_custom_color == 2
-            highlight! link PmenuSel Title
-        endif
-        highlight! PmenuSbar  NONE
-        highlight! PmenuThumb NONE
-        highlight! Pmenu      NONE
-    endif
-endfunction
 
 " --------------------------------
 function! s:vimim_set_statusline()
@@ -1480,13 +1461,11 @@ function! <SID>vimim_punctuation_on()
         iunmap "
         iunmap <Bslash>
     endif
-    " --------------------------------------
     for _ in keys(s:punctuations)
         sil!exe 'inoremap <silent> '._.'
         \    <C-R>=<SID>vimim_punctuation_mapping("'._.'")<CR>'
         \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
-    " --------------------------------------
     call s:vimim_punctuation_navigation_on()
 endfunction
 
@@ -1496,22 +1475,17 @@ function! s:vimim_punctuation_navigation_on()
     if s:vimim_chinese_punctuation < 0
         return
     endif
-    let punctuation = "[]"
-    if s:vimim_tab_as_onekey < 2
-        let punctuation .= "-="
-    endif
+    let punctuation = "[]-="
     if s:chinese_input_mode =~ 'onekey'
         let punctuation .= ".,/?"
     endif
     let punctuations = split(punctuation,'\zs')
-    " ---------------------------------------
     for char in s:valid_keys
         let i = index(punctuations, char)
         if i > -1 && char != "."
             unlet punctuations[i]
         endif
     endfor
-    " ---------------------------------------
     for _ in punctuations
         sil!exe 'inoremap <silent> <expr> '._.'
         \ <SID>vimim_punctuations_navigation("'._.'")'
@@ -1702,9 +1676,6 @@ function! s:vimim_initialize_cjk_file()
     if !empty(datafile)
         let s:cjk_file = datafile
         let s:has_cjk_file = 1
-        if s:vimim_custom_color == 1
-            let s:vimim_custom_color = 2
-        endif
     endif
 endfunction
 
@@ -2214,6 +2185,66 @@ function! s:vimim_cjk_digit_filter(chinese)
         let chinese = 0
     endif
     return chinese
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  for mom and dad  ==== {{{"]
+" =================================================
+
+" ---------------------------------
+function! s:vimim_for_mom_and_dad()
+" ---------------------------------
+    if s:vimim_custom_color == 1
+        let s:vimim_custom_color = 2
+    endif
+    " -----------------------------
+    let buffer = expand("%:p:t")
+    if buffer =~ 'vimim_mom.txt'
+        let s:vimim_digit_4corner = 0
+    elseif buffer =~ 'vimim_dad.txt'
+        let s:vimim_digit_4corner = 1
+    else
+        return
+    endif
+    " -----------------------------
+    sil!call s:vimim_start_onekey()
+    if empty(s:has_cjk_file)
+        return
+    endif
+    " -----------------------------
+    if has("gui_running") && has("win32")
+        autocmd! * <buffer>
+        autocmd  VimEnter  <buffer> set t_vb=
+        autocmd  FocusLost <buffer> sil!wall
+        noremap <silent> <Esc> :sil!%y +<CR>
+        set lines=24
+        set columns=36
+        let &gfn .= ":h24:w12"
+    endif
+    set number
+    set noswapfile
+    let s:vimim_tab_as_onekey = 2
+    let s:vimim_data_directory = 0
+    startinsert!
+    " -----------------------------
+    return s:vimim_onekey_action("")
+endfunction
+
+" ---------------------------------
+function! s:vimim_initialize_skin()
+" ---------------------------------
+    if s:vimim_custom_color == 1
+        return
+    elseif s:vimim_custom_color < 3
+        if s:vimim_custom_color < 1
+            highlight! PmenuSel NONE
+        elseif s:vimim_custom_color == 2
+            highlight! link PmenuSel Title
+        endif
+        highlight! PmenuSbar  NONE
+        highlight! PmenuThumb NONE
+        highlight! Pmenu      NONE
+    endif
 endfunction
 
 " ============================================= }}}
@@ -3029,38 +3060,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  Input_Misc       ==== {{{"]
 " =================================================
-
-" -------------------------
-function! s:vimim_mom_dad()
-" -------------------------
-    let buffer = expand("%:p:t")
-    if buffer =~ 'vimim_mom.txt'
-        let s:vimim_digit_4corner = 0
-    elseif buffer =~ 'vimim_dad.txt'
-        let s:vimim_digit_4corner = 1
-    else
-        return
-    endif
-    sil!call s:vimim_start_onekey()
-    if empty(s:has_cjk_file)
-        return
-    endif
-    if has("gui_running") && has("win32")
-        autocmd! * <buffer>
-        autocmd  VimEnter  <buffer> set t_vb=
-        autocmd  FocusLost <buffer> sil!wall
-        noremap <silent> <Esc> :sil!%y +<CR>
-        set lines=24
-        set columns=36
-        let &gfn .= ":h24:w12"
-    endif
-    set number
-    set noswapfile
-    let s:vimim_tab_as_onekey = 2
-    let s:vimim_data_directory = 0
-    startinsert!
-    return s:vimim_onekey_action("")
-endfunction
 
 " -------------------------------------
 function! s:vimim_get_valid_im_name(im)
@@ -5311,7 +5310,7 @@ function! s:vimim_onekey_mapping_on()
     if s:vimim_tab_as_onekey < 2 && !hasmapto('<C-^>', 'i')
         imap <silent> <C-^> <Plug>VimimOneKey
     endif
-    if s:vimim_tab_as_onekey > 0
+    if s:vimim_tab_as_onekey > 0 && !hasmapto('<Tab>', 'i')
         imap <silent> <Tab> <Plug>VimimOneKey
     endif
     if s:vimim_tab_as_onekey == 2
@@ -5341,5 +5340,5 @@ sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
-sil!call s:vimim_mom_dad()
+sil!call s:vimim_for_mom_and_dad()
 " ======================================= }}}
