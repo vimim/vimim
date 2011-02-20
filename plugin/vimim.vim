@@ -1983,11 +1983,13 @@ function! s:vimim_get_chinese_im()
     elseif s:vimim_chinese_input_mode =~ 'static'
         let input_style .= s:vimim_chinese('static')
     endif
-    let punctuation = s:vimim_chinese('half_width')
-    if s:chinese_punctuation > 0
-        let punctuation = s:vimim_chinese('full_width')
+    if s:vimim_tab_as_onekey < 2
+        let punctuation = s:vimim_chinese('half_width')
+        if s:vimim_chinese_punctuation > 0
+            let punctuation = s:vimim_chinese('full_width')
+        endif
+        let s:ui.statusline .= s:plus . punctuation
     endif
-    let s:ui.statusline .= s:plus . punctuation
     let statusline = s:left . s:ui.statusline . s:right
     return statusline . input_style
 endfunction
