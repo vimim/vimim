@@ -4829,7 +4829,6 @@ function! s:vimim_stop()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_plugins_fix_stop()
     sil!call s:vimim_initialize_mapping()
-    return ""
 endfunction
 
 " -----------------------------
@@ -4932,11 +4931,11 @@ function! s:vimim_i_map_off()
 " ---------------------------
     let s:chinese_input_mode = 'onekey'
     let unmap_list = range(0,9)
-    call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, s:AZ_list)
+    call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
+    call extend(unmap_list, keys(s:evils))
     call extend(unmap_list, ['<Esc>','<CR>','<BS>','<Space>'])
-    call extend(unmap_list, ['\', '"', "'"])
     for _ in unmap_list
         sil!exe 'iunmap '. _
     endfor
