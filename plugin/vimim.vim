@@ -495,6 +495,910 @@ function! s:vimim_easter_chicken(keyboard)
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  vimim.cjk.txt    ==== {{{"]
+" =================================================
+
+" -------------------------------------
+function! s:vimim_initialize_cjk_file()
+" -------------------------------------
+    let s:has_slash_grep = 0
+    let s:has_cjk_file = 0
+    let s:cjk_one_char_cache = {}
+    let s:cjk_results = []
+    let s:cjk_file = 0
+    let s:cjk_lines = []
+    let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
+    if !empty(datafile)
+        let s:cjk_file = datafile
+        let s:has_cjk_file = 1
+    endif
+endfunction
+
+" -------------------------------------------
+function! s:vimim_check_filereadable(default)
+" -------------------------------------------
+    let default = a:default
+    let datafile = s:vimim_self_directory . default
+    if filereadable(datafile)
+        let default = 0
+    else
+        let datafile = s:path . default
+        if filereadable(datafile)
+            let default = 0
+        endif
+    endif
+    if empty(default)
+        return datafile
+    endif
+    return 0
+endfunction
+
+" --------------------------------------------
+function! s:vimim_cjk_sentence_match(keyboard)
+" --------------------------------------------
+    let keyboard = a:keyboard
+    let keyboard_head = 0
+    if keyboard =~ s:show_me_not || len(keyboard) == 1
+        let keyboard_head = keyboard
+    elseif keyboard =~ '\d'
+        if keyboard =~ '^\d' && keyboard !~ '\D'
+            let keyboard_head = s:vimim_cjk_every_four(keyboard)
+        elseif keyboard =~ '^\l\+\d\+'
+            let keyboard_head = s:vimim_cjk_alpha_digit(keyboard)
+        endif
+    elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
+        if len(keyboard)%5 < 1 && keyboard !~ "[.']"
+            let keyboard_head = s:vimim_cjk_english_match(keyboard)
+        endif
+        if empty(keyboard_head)
+            let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
+        endif
+    endif
+    return keyboard_head
+endfunction
+
+" -------------------------------------------
+function! s:vimim_cjk_english_match(keyboard)
+" -------------------------------------------
+    let keyboard = a:keyboard
+    let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
+    if !empty(keyboard_head)
+        let results = s:vimim_match_cjk_files(keyboard_head)
+        if empty(results)
+            "english in bed with cjk: error/e4494 typewriter
+            let s:keyboard_list = []
+            let keyboard_head = 0
+        else
+            " cjk sample:  加 532510 4600 jia1 add plus 186
+            let grep_english = '[ 0-9]' . keyboard . '[ 0-9]'
+            let cjk_results = s:vimim_cjk_grep_results(grep_english)
+            if len(cjk_results) > 0
+                " english 'arrow' is also shortcut of 'a4492'
+                let filter = "strpart(".'v:val'.", 0, s:multibyte)"
+                call map(cjk_results, filter)
+                let s:cjk_results = extend(results, cjk_results, 0)
+            endif
+            " english 'arrow' has an entry in private datafile
+            let private_results = s:vimim_cjk_private_match(keyboard)
+            if !empty(private_results)
+                call extend(results, private_results)
+                let s:cjk_results = copy(results)
+            endif
+        endif
+    endif
+    return keyboard_head
+endfunction
+
+" ----------------------------------------
+function! s:vimim_cjk_every_four(keyboard)
+" ----------------------------------------
+    " output is '6021' for input "6021272260001762"
+    let keyboard = a:keyboard
+    let block = 4
+    if len(keyboard) % block < 1
+        let pattern = '^\d\{' . block . '}'
+        let delimiter = match(keyboard, pattern)
+        if delimiter > -1
+            let keyboard = s:vimim_get_keyboard_head_list(keyboard, block)
+        endif
+    endif
+    return keyboard
+endfunction
+
+" -----------------------------------------
+function! s:vimim_cjk_alpha_digit(keyboard)
+" -----------------------------------------
+    " output is 'wo23' for input "wo23you40yigemeng"
+    let keyboard = a:keyboard
+    if keyboard =~ '^\l\+\d\+\>'
+        return keyboard
+    endif
+    let partition = match(keyboard, '\d')
+    while partition > -1
+        let partition += 1
+        if keyboard[partition : partition] =~ '\D'
+            break
+        endif
+    endwhile
+    let head = s:vimim_get_keyboard_head_list(keyboard, partition)
+    return head
+endfunction
+
+" ------------------------------------------
+function! s:vimim_cjk_sentence_diy(keyboard)
+" ------------------------------------------
+    " output is 'm7712' for input 'muuqwxeyqpjeqqq'
+    let keyboard = a:keyboard
+    let delimiter = match(keyboard, '^\l\l\l\l\l')
+    if delimiter < 0
+        return 0
+    endif
+    let llll = keyboard[1:4]
+    let dddd = s:vimim_qwertyuiop_1234567890(llll)
+    if empty(dddd)
+        return 0
+    endif
+    let ldddd = keyboard[0:0] . dddd
+    let keyboard = ldddd . keyboard[5:-1]
+    let head = s:vimim_get_keyboard_head_list(keyboard, 5)
+    return head
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_qwertyuiop_1234567890(keyboard)
+" -----------------------------------------------
+    " output is '7712' for input 'uuqw'
+    if a:keyboard =~ '\d' || s:has_cjk_file < 1
+        return 0
+    else
+    let dddd = ""
+    for char in split(a:keyboard, '\zs')
+        let digit = match(s:qwerty, char)
+        if digit < 0
+            return 0
+        else
+            let dddd .= digit
+        endif
+    endfor
+    return dddd
+endfunction
+
+" --------------------------------------------
+function! s:vimim_cjk_sentence_alpha(keyboard)
+" --------------------------------------------
+    let keyboard = a:keyboard
+    let a_keyboard = keyboard
+    let magic_tail = keyboard[-1:-1]
+    if magic_tail == "."
+        "  magic trailing dot to use control cjjp: sssss.
+        let s:hjkl_m += 1
+        let a_keyboard = keyboard[0 : len(keyboard)-2]
+    endif
+    " ----------------------------------------
+    call s:vimim_load_cjk_file()
+    let grep = '^' . a_keyboard . '\>'
+    let matched = match(s:cjk_lines, grep)
+    if s:hjkl_m > 0
+        let keyboard = s:vimim_toggle_cjjp(a_keyboard)
+    elseif matched < 0 && s:has_cjk_file > 0
+        let keyboard = s:vimim_toggle_pinyin(a_keyboard)
+    endif
+    " ----------------------------------------
+    let head = a_keyboard
+    let partition = match(keyboard, "[.']")
+    if partition > -1
+        let head = s:vimim_get_keyboard_head_list(a_keyboard, partition)
+    endif
+    if len(head) > len(a_keyboard)
+        let head = a_keyboard
+    endif
+    return head
+endfunction
+
+" -----------------------------------------
+function! s:vimim_match_cjk_files(keyboard)
+" -----------------------------------------
+    let keyboard = a:keyboard
+    let results = []
+    if s:has_cjk_file > 0
+        let results = s:vimim_cjk_match(keyboard)
+    endif
+    if s:has_cjk_self_file > 0
+        let private_results = s:vimim_cjk_private_match(keyboard)
+        if !empty(private_results)
+            call extend(results, private_results)
+            let s:cjk_results = copy(results)
+        endif
+    endif
+    return results
+endfunction
+
+" -------------------------------------------
+function! s:vimim_cjk_private_match(keyboard)
+" -------------------------------------------
+    if empty(s:cjk_self_lines)
+        if s:has_cjk_self_file > 0
+            let s:cjk_self_lines = s:vimim_readfile(s:cjk_self_file)
+        endif
+    endif
+    let keyboard = a:keyboard
+    let results = []
+    if keyboard =~ '^\l\+'
+        let grep = '^' . keyboard . '\>'
+        let matched = match(s:cjk_self_lines, grep)
+        if matched < 0
+            let msg = "no more scan for: 'dream 梦 梦想' "
+        else
+            let s:cjk_has_match = 2
+            let line = s:cjk_self_lines[matched]
+            let results = split(line)[1:]
+        endif
+    endif
+   return results
+endfunction
+
+" -----------------------------------
+function! s:vimim_cjk_match(keyboard)
+" -----------------------------------
+    let keyboard = a:keyboard
+    if empty(s:has_cjk_file)
+        return []
+    endif
+    if len(keyboard) == 1 && has_key(s:cjk_one_char_cache, keyboard)
+        let s:cjk_has_match = 1
+        if keyboard =~ '\d'
+            let s:cjk_filter = keyboard
+        endif
+        return s:cjk_one_char_cache[keyboard]
+    endif
+    let grep = ""
+    let dddddd = 6 - 2 * s:vimim_digit_4corner
+    let grep_english = '[ 0-9]' . keyboard . '[ 0-9]'
+    let grep_frequency = '.*' . '\s\d\+$'
+    if keyboard =~ '\d'
+        if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:cjk_filter))
+            " [sample] pinyin with tone: huan2hai2
+            let grep =  keyboard . '[a-z ]'
+        else
+            let digit = ""
+            if keyboard =~ '^\d\+' && keyboard !~ '\D'
+                " [sample] free-style digit input: 7 77 771 7712"
+                let digit = keyboard
+            elseif keyboard =~ '^\l\+\d\+'
+                " [sample] free-style input/search: ma7 ma77 ma771 ma7712
+                " on line 81:  乐樂 352340 7290 le4yue4 music happy 426
+                let digit = substitute(keyboard,'\a','','g')
+            endif
+            if !empty(digit)
+                let space = dddddd - len(digit)
+                let grep  = '\s' . digit
+                let grep .= '\d\{' . space . '}\s'
+                if dddddd == 6
+                    let grep .= '\d\d\d\d\s'
+                endif
+                let alpha = substitute(keyboard,'\d','','g')
+                if !empty(alpha)
+                    " search le or yue from le4yue4
+                    let grep .= '\(\l\+\d\)\=' . alpha
+                elseif len(keyboard) == 1
+                    " [sample] one-char-list by frequency:
+                    " search l or y from le4yue4 music happy 426
+                    let grep .= grep_frequency
+                endif
+            endif
+            if len(keyboard) < dddddd && len(string(digit)) > 0
+                let s:cjk_filter = digit
+            endif
+        endif
+    elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
+        if len(keyboard) == 1 && keyboard !~ '[ai]'
+            " [sample] one-char-list by frequency y72/yue72 l72/le72 for 乐
+            let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
+        elseif keyboard =~ '^\l'
+            " [sample] multiple-char-list without frequency
+            " on line 16875:  还還 132445 3130 huan2hai2 yet 73
+            " support all cases: /huan /hai /yet /huan2 /hai2
+            let grep = grep_english
+        endif
+    else
+        return []
+    endif
+    " ------------------------------------------------------
+    let results = s:vimim_cjk_grep_results(grep)
+    if len(results) > 0
+        let results = sort(results, "s:vimim_sort_on_last")
+        let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
+        call map(results, filter)
+        if len(keyboard) == 1 && !has_key(s:cjk_one_char_cache, keyboard)
+            let s:cjk_one_char_cache[keyboard] = results
+            return results
+        endif
+        let line = match(s:cjk_lines, grep_english)
+        if line > -1
+            " cjk has english entry such as color/arrow/push
+            let s:cjk_results = copy(results)
+        endif
+    endif
+    return results
+endfunction
+
+" -----------------------------------------
+function s:vimim_sort_on_last(line1, line2)
+" -----------------------------------------
+    " m => 马 <= 马 259 <=  马馬 7712 ma3 259
+    let line1 = get(split(a:line1),-1) + 1
+    let line2 = get(split(a:line2),-1) + 1
+    if line1 < line2
+        return -1
+    elseif line1 > line2
+        return 1
+    else
+        return 0
+    endif
+endfunction
+
+" -----------------------------------------------------------
+function! s:vimim_get_keyboard_head_list(keyboard, partition)
+" -----------------------------------------------------------
+    if a:partition < 0
+        let s:keyboard_list = []
+        return a:keyboard
+    endif
+    let keyboards = []
+    let head = a:keyboard[0 : a:partition-1]
+    let tail  = a:keyboard[a:partition : -1]
+    call add(keyboards, head)
+    if !empty(tail)
+        call add(keyboards, tail)
+    endif
+    if len(s:keyboard_list) < 2
+        let s:keyboard_list = copy(keyboards)
+    endif
+    return head
+endfunction
+
+" ---------------------------------------
+function! s:vimim_reverse_lookup(chinese)
+" ---------------------------------------
+    let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
+    if empty(chinese)
+        return []
+    endif
+    let results = []
+    let results_unicode = s:vimim_reverse_one_entry(chinese, 'unicode')
+    if !empty(results_unicode)
+        call extend(results, results_unicode)
+    endif
+    if empty(s:has_cjk_file)
+        return results
+    endif
+    call s:vimim_load_cjk_file()
+    let results_digit = s:vimim_reverse_one_entry(chinese, 2)
+    call extend(results, results_digit)
+    let results_digit = s:vimim_reverse_one_entry(chinese, 1)
+    call extend(results, results_digit)
+    let results_pinyin = []  " 马力 => ma3 li2
+    let result_cjjp = ""     " 马力 => ml
+    let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
+    if len(items) > 0
+        let pinyin_head = get(items,0)
+        if !empty(pinyin_head)
+            call add(results_pinyin, pinyin_head)
+            call add(results_pinyin, get(items,1))
+            for pinyin in split(pinyin_head)
+                let result_cjjp .= pinyin[0:0]
+            endfor
+            let result_cjjp .= " ".chinese
+        endif
+    endif
+    if !empty(results_pinyin)
+        call extend(results, results_pinyin)
+        if result_cjjp =~ '\a'
+            call add(results, result_cjjp)
+        endif
+    endif
+    return results
+endfunction
+
+" ----------------------------------------------------
+function! s:vimim_reverse_one_entry(chinese, property)
+" ----------------------------------------------------
+    let property = a:property
+    let headers = []
+    let bodies = []
+    for chinese in split(a:chinese, '\zs')
+        let ddddd = char2nr(chinese)
+        let line = ddddd - 19968
+        if line < 0 || line > 20902
+            continue
+        endif
+        let head = ''
+        if property == 'unicode'
+            let head = printf('%x', ddddd)
+        elseif s:has_cjk_file > 0
+            let values = split(s:cjk_lines[line])
+            if property =~ '\d'
+                let head = get(values, property)
+            elseif property == 'pinyin'
+                let head = get(values, 3)
+            elseif property == 'english'
+                let head = join(values[4:-2])
+            endif
+        endif
+        if empty(head)
+            continue
+        endif
+        call add(headers, head)
+        let spaces = ''
+        let number_of_space = len(head)-2
+        if number_of_space > 0
+            let space = ' '
+            for i in range(number_of_space)
+                let spaces .= space
+            endfor
+        endif
+        call add(bodies, chinese . spaces)
+    endfor
+    return [join(headers), join(bodies)]
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_cjk_filter_from_cache(keyboard)
+" -----------------------------------------------
+" use 1234567890/qwertyuiop as digit filter
+    call s:vimim_load_cjk_file()
+    let results = s:vimim_cjk_filter_list(a:keyboard)
+    if empty(results) && !empty(len(s:cjk_filter))
+        let number_before = strpart(s:cjk_filter,0,len(s:cjk_filter)-1)
+        if len(number_before) > 0
+            let s:cjk_filter = number_before
+            let results = s:vimim_cjk_filter_list(a:keyboard)
+        endif
+    endif
+    if empty(results)
+        let s:cjk_filter = ""
+    endif
+    return results
+endfunction
+
+" -----------------------------------------
+function! s:vimim_cjk_filter_list(keyboard)
+" -----------------------------------------
+    let pair_matched_list = []
+    let first_in_list = split(get(s:matched_list,0))
+    for line in s:matched_list
+        let chinese = ""
+        if len(first_in_list) < 2
+        \|| a:keyboard =~# s:uxxxx
+        \|| !empty(s:vimim_data_directory)
+            let chinese = s:vimim_cjk_digit_filter(line)
+            let line = chinese
+        else
+            let chinese = get(split(line), 1)
+            let chinese = s:vimim_cjk_digit_filter(chinese)
+        endif
+        if empty(chinese)
+            continue
+        else
+            call add(pair_matched_list, line)
+        endif
+    endfor
+    return pair_matched_list
+endfunction
+
+" -----------------------------------------
+function! s:vimim_cjk_digit_filter(chinese)
+" -----------------------------------------
+" smart digital filter: 马力 7712 4002
+"   (1) ma<C-6>         马   => filter with 7712
+"   (2) mali<C-6>       马力 => filter with 7 4002
+" -----------------------------------------
+    let chinese = a:chinese
+    if empty(len(s:cjk_filter)) || empty(chinese)
+        return 0
+    endif
+    let digit_head = ""
+    let digit_tail = ""
+    let words = split(chinese,'\zs')
+    for cjk in words
+        let ddddd = char2nr(cjk)
+        let line = ddddd - 19968
+        if cjk =~ '\w' ||  line < 0 || line > 20902
+            continue
+        else
+            let values = split(s:cjk_lines[line])
+            let column = 1 + s:vimim_digit_4corner
+            let digit = get(values, column)
+            let digit_head .= digit[:0]
+            let digit_tail = digit[1:]
+        endif
+    endfor
+    let number = digit_head . digit_tail
+    let pattern = "^" . s:cjk_filter
+    let matched = match(number, pattern)
+    if matched < 0
+        let chinese = 0
+    endif
+    return chinese
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  for mom and dad  ==== {{{"]
+" =================================================
+
+" ---------------------------------
+function! s:vimim_for_mom_and_dad()
+" ---------------------------------
+    if s:vimim_custom_color == 1
+        let s:vimim_custom_color = 2
+    endif
+    " -----------------------------
+    let buffer = expand("%:p:t")
+    if buffer =~ 'vimim_mom.txt'
+        let s:vimim_digit_4corner = 0
+    elseif buffer =~ 'vimim_dad.txt'
+        let s:vimim_digit_4corner = 1
+    else
+        return
+    endif
+    " -----------------------------
+    sil!call s:vimim_start_onekey()
+    if empty(s:has_cjk_file)
+        return
+    endif
+    " -----------------------------
+    if has("gui_running") && has("win32")
+        autocmd! * <buffer>
+        autocmd  VimEnter  <buffer> set t_vb=
+        autocmd  FocusLost <buffer> sil!wall
+        noremap <silent> <Esc> :sil!%y +<CR>
+        set lines=24
+        set columns=36
+        let &gfn .= ":h24:w12"
+    endif
+    set number
+    set noswapfile
+    let s:vimim_tab_as_onekey = 2
+    let s:vimim_data_directory = 0
+    startinsert!
+    " -----------------------------
+    return s:vimim_onekey_action("")
+endfunction
+
+" ---------------------------------
+function! s:vimim_initialize_skin()
+" ---------------------------------
+    if s:vimim_custom_color == 1
+        return
+    elseif s:vimim_custom_color < 3
+        if s:vimim_custom_color < 1
+            highlight! PmenuSel NONE
+        elseif s:vimim_custom_color == 2
+            highlight! link PmenuSel Title
+        endif
+        highlight! PmenuSbar  NONE
+        highlight! PmenuThumb NONE
+        highlight! Pmenu      NONE
+    endif
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  /search          ==== {{{"]
+" =================================================
+
+" -----------------------------
+function! g:vimim_search_next()
+" -----------------------------
+    let english = @/
+    if english =~ '\<' && english =~ '\>'
+        let english = substitute(english,'[<>\\]','','g')
+    endif
+    if !empty(v:errmsg) && !empty(english)
+    \&& len(english) < 24 && len(english) > 1
+    \&& english =~ '\w' && english !~ '\W' && english !~ '_'
+    \&& v:errmsg =~# '^E486: ' && v:errmsg =~# english
+        try
+            sil!call s:vimim_search_chinese_from_english(english)
+            echon "/" . english
+        catch
+            echon "/" . english . " error:" .  v:exception
+        endtry
+    endif
+endfunction
+
+" -----------------------------------------------------
+function! s:vimim_search_chinese_from_english(keyboard)
+" -----------------------------------------------------
+    let results = []
+    let cjk_results = []
+    let keyboard = tolower(a:keyboard)
+    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+    if empty(ddddd)
+        sil!call s:vimim_backend_initialization_once()
+        let keyboards = s:vimim_slash_search_block(keyboard)
+        if len(keyboards) > 0
+            for keyboard2 in keyboards
+                let chars = s:vimim_match_cjk_files(keyboard2)
+                if len(keyboards) == 1
+                    let cjk_results = copy(chars)
+                elseif len(chars) > 0
+                    let collection = "[" . join(chars,'') . "]"
+                    call add(cjk_results, collection)
+                endif
+            endfor
+            if len(keyboards) == 1
+                let filter = 'v:val' . " len(" . 'v:val' . ")"
+                call map(cjk_results, filter)
+                let cjk_results = sort(cjk_results, "s:vimim_sort_on_last")
+             elseif len(keyboards) > 1
+                let cjk_results = [join(cjk_results,'')]
+            endif
+        endif
+        " /arrow (1) 矛 in cjk (2) → in english datafile (3) a4492 柪
+        call extend(cjk_results, s:cjk_results)
+    else
+        let cjk_results = [nr2char(ddddd)]
+    endif
+    " -------------------------------------------------
+    if empty(cjk_results)
+        if !empty(s:vimim_shuangpin)
+            sil!call s:vimim_initialize_shuangpin()
+            let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
+        endif
+        if s:vimim_cloud_sogou == 1
+            let results = s:vimim_get_cloud_sogou(keyboard, 1)
+        endif
+    endif
+    " -------------------------------------------------
+    if empty(results)
+        if empty(s:backend.datafile) && empty(s:backend.directory)
+            if empty(s:vimim_cloud_plugin)
+                let results = s:vimim_get_cloud_sogou(keyboard, 1)
+            else
+                let results = s:vimim_get_mycloud_plugin(keyboard)
+            endif
+        else
+            let results = s:vimim_embedded_backend_engine(keyboard)
+        endif
+    endif
+    " -------------------------------------------------
+    call extend(results, cjk_results)
+    if empty(results)
+        let v:errmsg = ""
+    else
+        call s:vimim_register_search_pattern(keyboard, results)
+    endif
+endfunction
+
+" --------------------------------------------
+function! s:vimim_slash_search_block(keyboard)
+" --------------------------------------------
+" /muuqwxeyqpjeqqq  =>  shortcut   /search
+" /m7712x3610j3111  =>  standard   /search
+" /ma77xia36ji31    =>  free-style /search
+" --------------------------------------------
+    if empty(s:has_cjk_file)
+        return []
+    endif
+    let results = []
+    let keyboard = a:keyboard
+    while len(keyboard) > 2
+        let keyboard2 = s:vimim_cjk_sentence_match(keyboard)
+        if empty(keyboard2)
+            break
+        else
+            call add(results, keyboard2)
+            let keyboard = strpart(keyboard,len(keyboard2))
+        endif
+    endwhile
+    return results
+endfunction
+
+" ----------------------------------------------------------
+function! s:vimim_register_search_pattern(keyboard, results)
+" ----------------------------------------------------------
+    let keyboard = a:keyboard
+    if empty(s:vimim_data_directory)
+        if keyboard =~ '^\l\+\d\+'
+            let keyboard = join(split(keyboard,'\d'),'')
+        elseif keyboard =~ '^\d\d\d\+'
+            let keyboard = keyboard[:3]
+        endif
+    endif
+    let results = []
+    for chinese in a:results
+        if a:keyboard =~# s:uxxxx || s:cjk_has_match > 0
+            let msg = "for unicode slash search: /u808f /32911"
+        elseif empty(s:vimim_data_directory)
+            let pairs = split(chinese)
+            if len(pairs) < 2
+                continue
+            endif
+            let chinese = get(pairs, 1)
+            let menu = get(pairs, 0)
+            if keyboard != menu
+                continue
+            endif
+        endif
+        if chinese =~ '\w'
+            continue
+        endif
+        call add(results, chinese)
+    endfor
+    if !empty(results)
+        let slash = join(results, '\|')
+        if empty(search(slash,'nw'))
+            let @/ = a:keyboard
+        else
+            let @/ = slash
+        endif
+        echon "/" . a:keyboard
+    endif
+endfunction
+
+" -----------------------------------
+function! g:vimim_search_pumvisible()
+" -----------------------------------
+    let word = s:vimim_popup_word()
+    let @/ = word
+    if empty(word)
+        let @/ = @_
+    endif
+    let repeat_times = len(word)/s:multibyte
+    let row_start = s:start_row_before
+    let row_end = line('.')
+    let delete_chars = ""
+    if repeat_times > 0 && row_end == row_start
+        let delete_chars = repeat("\<BS>", repeat_times)
+    endif
+    let slash = delete_chars . "\<Esc>"
+    sil!call s:vimim_stop()
+    sil!exe 'sil!return "' . slash . '"'
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  /grep            ==== {{{"]
+" =================================================
+
+" --------------------------------
+function! s:vimim_slash_grep(grep)
+" --------------------------------
+    let results = s:vimim_cjk_grep_results(a:grep)
+    if len(results) > 0
+        let filter = "strpart(".'v:val'.", 0, s:multibyte)"
+        call map(results, filter)
+    endif
+    return results
+endfunction
+
+" --------------------------------------
+function! s:vimim_cjk_grep_results(grep)
+" --------------------------------------
+    call s:vimim_load_cjk_file()
+    if empty(s:has_cjk_file)
+        return []
+    endif
+    let results = []
+    let line = match(s:cjk_lines, a:grep)
+    while line > -1
+        let values = split(s:cjk_lines[line])
+        let frequency_index = get(values, -1)
+        if frequency_index =~ '\l'
+            let frequency_index = 9999
+        endif
+        let chinese_frequency = get(values,0) . ' ' . frequency_index
+        call add(results, chinese_frequency)
+        let line = match(s:cjk_lines, a:grep, line+1)
+    endwhile
+    if len(results) > 0
+        if s:hjkl_h < 1
+            let s:hjkl_h = 1
+        endif
+        let s:cjk_has_match = 1
+    endif
+    return results
+endfunction
+
+" -------------------------------
+function! s:vimim_load_cjk_file()
+" -------------------------------
+    if empty(s:cjk_lines)
+        if s:has_cjk_file > 0
+            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+            if len(s:cjk_lines) != 20902
+                let s:cjk_lines = []
+                let s:has_cjk_file = 0
+            endif
+        endif
+    endif
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_tranfer_chinese() range abort
+" ---------------------------------------------
+" [usage]   :VimIM
+" [feature] (1) "quick and dirty" way to transfer Chinese to Chinese
+"           (2) 20% of the effort to solve 80% of the problem
+"           (3) 5128/2=2564 Chinese pairs are used for one-to-one mapping
+" ---------------------------------------------
+    sil!call s:vimim_backend_initialization_once()
+    if empty(s:has_cjk_file)
+        let msg = "no toggle between simplified and tranditional Chinese"
+    elseif &encoding == "utf-8"
+        call s:vimim_load_cjk_file()
+        exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
+    endif
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_get_traditional_chinese(chinese)
+" ------------------------------------------------
+    call s:vimim_load_cjk_file()
+    let chinese = ""
+    let chinese_list = split(a:chinese,'\zs')
+    for char in chinese_list
+        let chinese .= s:vimim_one2one(char)
+    endfor
+    return chinese
+endfunction
+
+" --------------------------------
+function! s:vimim_one2one(chinese)
+" --------------------------------
+    let ddddd = char2nr(a:chinese)
+    let line = ddddd - 19968
+    if line < 0 || line > 20902
+        return a:chinese
+    endif
+    let values = split(s:cjk_lines[line])
+    let traditional_chinese = get(split(get(values,0),'\zs'),1)
+    if empty(traditional_chinese)
+        return a:chinese
+    else
+        return traditional_chinese
+    endif
+endfunction
+
+" ------------------------------------------
+function! <SID>vimim_visual_ctrl_6(keyboard)
+" ------------------------------------------
+" [input]  马力  highlighted in Vim visual mode
+" [output] 9a6c   529b    --  in unicode
+"          7712   4002    --  in four corner
+"          551000 530000  --  in five stroke
+"          ma3    li4     --  in pinyin
+"          ml 马力        --  in cjjp
+" ------------------------------------------
+    let keyboard = a:keyboard
+    let range = line("'>") - line("'<")
+    if empty(range)
+        sil!call s:vimim_backend_initialization_once()
+        let results = s:vimim_reverse_lookup(keyboard)
+        if !empty(results)
+            let line = line(".")
+            call setline(line, results)
+            let new_positions = getpos(".")
+            let new_positions[1] = line + len(results) - 1
+            let new_positions[2] = len(get(split(get(results,-1)),0))+1
+            call setpos(".", new_positions)
+        endif
+    elseif s:vimim_tab_as_onekey > 0
+        sil!call s:vimim_numberList()
+    endif
+endfunction
+
+" ----------------------------------------
+function! s:vimim_numberList() range abort
+" ----------------------------------------
+    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
+    while (a<=z)
+        if match(x,'^9*$')==0|let pre=pre . ' '|endif
+        call setline(z, pre . x . "\t" . getline(z))
+        let z=z-1|let x=x-1
+    endwhile
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  OneKey           ==== {{{"]
 " =================================================
 
@@ -1657,910 +2561,6 @@ function! s:vimim_imode_number(keyboard, prefix)
         endif
     endif
     return numbers
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  vimim.cjk.txt    ==== {{{"]
-" =================================================
-
-" -------------------------------------
-function! s:vimim_initialize_cjk_file()
-" -------------------------------------
-    let s:has_slash_grep = 0
-    let s:has_cjk_file = 0
-    let s:cjk_one_char_cache = {}
-    let s:cjk_results = []
-    let s:cjk_file = 0
-    let s:cjk_lines = []
-    let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
-    if !empty(datafile)
-        let s:cjk_file = datafile
-        let s:has_cjk_file = 1
-    endif
-endfunction
-
-" -------------------------------------------
-function! s:vimim_check_filereadable(default)
-" -------------------------------------------
-    let default = a:default
-    let datafile = s:vimim_self_directory . default
-    if filereadable(datafile)
-        let default = 0
-    else
-        let datafile = s:path . default
-        if filereadable(datafile)
-            let default = 0
-        endif
-    endif
-    if empty(default)
-        return datafile
-    endif
-    return 0
-endfunction
-
-" --------------------------------------------
-function! s:vimim_cjk_sentence_match(keyboard)
-" --------------------------------------------
-    let keyboard = a:keyboard
-    let keyboard_head = 0
-    if keyboard =~ s:show_me_not || len(keyboard) == 1
-        let keyboard_head = keyboard
-    elseif keyboard =~ '\d'
-        if keyboard =~ '^\d' && keyboard !~ '\D'
-            let keyboard_head = s:vimim_cjk_every_four(keyboard)
-        elseif keyboard =~ '^\l\+\d\+'
-            let keyboard_head = s:vimim_cjk_alpha_digit(keyboard)
-        endif
-    elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
-        if len(keyboard)%5 < 1 && keyboard !~ "[.']"
-            let keyboard_head = s:vimim_cjk_english_match(keyboard)
-        endif
-        if empty(keyboard_head)
-            let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
-        endif
-    endif
-    return keyboard_head
-endfunction
-
-" -------------------------------------------
-function! s:vimim_cjk_english_match(keyboard)
-" -------------------------------------------
-    let keyboard = a:keyboard
-    let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
-    if !empty(keyboard_head)
-        let results = s:vimim_match_cjk_files(keyboard_head)
-        if empty(results)
-            "english in bed with cjk: error/e4494 typewriter
-            let s:keyboard_list = []
-            let keyboard_head = 0
-        else
-            " cjk sample:  加 532510 4600 jia1 add plus 186
-            let grep_english = '[ 0-9]' . keyboard . '[ 0-9]'
-            let cjk_results = s:vimim_cjk_grep_results(grep_english)
-            if len(cjk_results) > 0
-                " english 'arrow' is also shortcut of 'a4492'
-                let filter = "strpart(".'v:val'.", 0, s:multibyte)"
-                call map(cjk_results, filter)
-                let s:cjk_results = extend(results, cjk_results, 0)
-            endif
-            " english 'arrow' has an entry in private datafile
-            let private_results = s:vimim_cjk_private_match(keyboard)
-            if !empty(private_results)
-                call extend(results, private_results)
-                let s:cjk_results = copy(results)
-            endif
-        endif
-    endif
-    return keyboard_head
-endfunction
-
-" ----------------------------------------
-function! s:vimim_cjk_every_four(keyboard)
-" ----------------------------------------
-    " output is '6021' for input "6021272260001762"
-    let keyboard = a:keyboard
-    let block = 4
-    if len(keyboard) % block < 1
-        let pattern = '^\d\{' . block . '}'
-        let delimiter = match(keyboard, pattern)
-        if delimiter > -1
-            let keyboard = s:vimim_get_keyboard_head_list(keyboard, block)
-        endif
-    endif
-    return keyboard
-endfunction
-
-" -----------------------------------------
-function! s:vimim_cjk_alpha_digit(keyboard)
-" -----------------------------------------
-    " output is 'wo23' for input "wo23you40yigemeng"
-    let keyboard = a:keyboard
-    if keyboard =~ '^\l\+\d\+\>'
-        return keyboard
-    endif
-    let partition = match(keyboard, '\d')
-    while partition > -1
-        let partition += 1
-        if keyboard[partition : partition] =~ '\D'
-            break
-        endif
-    endwhile
-    let head = s:vimim_get_keyboard_head_list(keyboard, partition)
-    return head
-endfunction
-
-" ------------------------------------------
-function! s:vimim_cjk_sentence_diy(keyboard)
-" ------------------------------------------
-    " output is 'm7712' for input 'muuqwxeyqpjeqqq'
-    let keyboard = a:keyboard
-    let delimiter = match(keyboard, '^\l\l\l\l\l')
-    if delimiter < 0
-        return 0
-    endif
-    let llll = keyboard[1:4]
-    let dddd = s:vimim_qwertyuiop_1234567890(llll)
-    if empty(dddd)
-        return 0
-    endif
-    let ldddd = keyboard[0:0] . dddd
-    let keyboard = ldddd . keyboard[5:-1]
-    let head = s:vimim_get_keyboard_head_list(keyboard, 5)
-    return head
-endfunction
-
-" -----------------------------------------------
-function! s:vimim_qwertyuiop_1234567890(keyboard)
-" -----------------------------------------------
-    " output is '7712' for input 'uuqw'
-    if a:keyboard =~ '\d' || s:has_cjk_file < 1
-        return 0
-    else
-    let dddd = ""
-    for char in split(a:keyboard, '\zs')
-        let digit = match(s:qwerty, char)
-        if digit < 0
-            return 0
-        else
-            let dddd .= digit
-        endif
-    endfor
-    return dddd
-endfunction
-
-" --------------------------------------------
-function! s:vimim_cjk_sentence_alpha(keyboard)
-" --------------------------------------------
-    let keyboard = a:keyboard
-    let a_keyboard = keyboard
-    let magic_tail = keyboard[-1:-1]
-    if magic_tail == "."
-        "  magic trailing dot to use control cjjp: sssss.
-        let s:hjkl_m += 1
-        let a_keyboard = keyboard[0 : len(keyboard)-2]
-    endif
-    " ----------------------------------------
-    call s:vimim_load_cjk_file()
-    let grep = '^' . a_keyboard . '\>'
-    let matched = match(s:cjk_lines, grep)
-    if s:hjkl_m > 0
-        let keyboard = s:vimim_toggle_cjjp(a_keyboard)
-    elseif matched < 0 && s:has_cjk_file > 0
-        let keyboard = s:vimim_toggle_pinyin(a_keyboard)
-    endif
-    " ----------------------------------------
-    let head = a_keyboard
-    let partition = match(keyboard, "[.']")
-    if partition > -1
-        let head = s:vimim_get_keyboard_head_list(a_keyboard, partition)
-    endif
-    if len(head) > len(a_keyboard)
-        let head = a_keyboard
-    endif
-    return head
-endfunction
-
-" -----------------------------------------
-function! s:vimim_match_cjk_files(keyboard)
-" -----------------------------------------
-    let keyboard = a:keyboard
-    let results = []
-    if s:has_cjk_file > 0
-        let results = s:vimim_cjk_match(keyboard)
-    endif
-    if s:has_cjk_self_file > 0
-        let private_results = s:vimim_cjk_private_match(keyboard)
-        if !empty(private_results)
-            call extend(results, private_results)
-            let s:cjk_results = copy(results)
-        endif
-    endif
-    return results
-endfunction
-
-" -------------------------------------------
-function! s:vimim_cjk_private_match(keyboard)
-" -------------------------------------------
-    if empty(s:cjk_self_lines)
-        if s:has_cjk_self_file > 0
-            let s:cjk_self_lines = s:vimim_readfile(s:cjk_self_file)
-        endif
-    endif
-    let keyboard = a:keyboard
-    let results = []
-    if keyboard =~ '^\l\+'
-        let grep = '^' . keyboard . '\>'
-        let matched = match(s:cjk_self_lines, grep)
-        if matched < 0
-            let msg = "no more scan for: 'dream 梦 梦想' "
-        else
-            let s:cjk_has_match = 2
-            let line = s:cjk_self_lines[matched]
-            let results = split(line)[1:]
-        endif
-    endif
-   return results
-endfunction
-
-" -----------------------------------
-function! s:vimim_cjk_match(keyboard)
-" -----------------------------------
-    let keyboard = a:keyboard
-    if empty(s:has_cjk_file)
-        return []
-    endif
-    if len(keyboard) == 1 && has_key(s:cjk_one_char_cache, keyboard)
-        let s:cjk_has_match = 1
-        if keyboard =~ '\d'
-            let s:cjk_filter = keyboard
-        endif
-        return s:cjk_one_char_cache[keyboard]
-    endif
-    let grep = ""
-    let dddddd = 6 - 2 * s:vimim_digit_4corner
-    let grep_english = '[ 0-9]' . keyboard . '[ 0-9]'
-    let grep_frequency = '.*' . '\s\d\+$'
-    if keyboard =~ '\d'
-        if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:cjk_filter))
-            " [sample] pinyin with tone: huan2hai2
-            let grep =  keyboard . '[a-z ]'
-        else
-            let digit = ""
-            if keyboard =~ '^\d\+' && keyboard !~ '\D'
-                " [sample] free-style digit input: 7 77 771 7712"
-                let digit = keyboard
-            elseif keyboard =~ '^\l\+\d\+'
-                " [sample] free-style input/search: ma7 ma77 ma771 ma7712
-                " on line 81:  乐樂 352340 7290 le4yue4 music happy 426
-                let digit = substitute(keyboard,'\a','','g')
-            endif
-            if !empty(digit)
-                let space = dddddd - len(digit)
-                let grep  = '\s' . digit
-                let grep .= '\d\{' . space . '}\s'
-                if dddddd == 6
-                    let grep .= '\d\d\d\d\s'
-                endif
-                let alpha = substitute(keyboard,'\d','','g')
-                if !empty(alpha)
-                    " search le or yue from le4yue4
-                    let grep .= '\(\l\+\d\)\=' . alpha
-                elseif len(keyboard) == 1
-                    " [sample] one-char-list by frequency:
-                    " search l or y from le4yue4 music happy 426
-                    let grep .= grep_frequency
-                endif
-            endif
-            if len(keyboard) < dddddd && len(string(digit)) > 0
-                let s:cjk_filter = digit
-            endif
-        endif
-    elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
-        if len(keyboard) == 1 && keyboard !~ '[ai]'
-            " [sample] one-char-list by frequency y72/yue72 l72/le72 for 乐
-            let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
-        elseif keyboard =~ '^\l'
-            " [sample] multiple-char-list without frequency
-            " on line 16875:  还還 132445 3130 huan2hai2 yet 73
-            " support all cases: /huan /hai /yet /huan2 /hai2
-            let grep = grep_english
-        endif
-    else
-        return []
-    endif
-    " ------------------------------------------------------
-    let results = s:vimim_cjk_grep_results(grep)
-    if len(results) > 0
-        let results = sort(results, "s:vimim_sort_on_last")
-        let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
-        call map(results, filter)
-        if len(keyboard) == 1 && !has_key(s:cjk_one_char_cache, keyboard)
-            let s:cjk_one_char_cache[keyboard] = results
-            return results
-        endif
-        let line = match(s:cjk_lines, grep_english)
-        if line > -1
-            " cjk has english entry such as color/arrow/push
-            let s:cjk_results = copy(results)
-        endif
-    endif
-    return results
-endfunction
-
-" -----------------------------------------
-function s:vimim_sort_on_last(line1, line2)
-" -----------------------------------------
-    " m => 马 <= 马 259 <=  马馬 7712 ma3 259
-    let line1 = get(split(a:line1),-1) + 1
-    let line2 = get(split(a:line2),-1) + 1
-    if line1 < line2
-        return -1
-    elseif line1 > line2
-        return 1
-    else
-        return 0
-    endif
-endfunction
-
-" -----------------------------------------------------------
-function! s:vimim_get_keyboard_head_list(keyboard, partition)
-" -----------------------------------------------------------
-    if a:partition < 0
-        let s:keyboard_list = []
-        return a:keyboard
-    endif
-    let keyboards = []
-    let head = a:keyboard[0 : a:partition-1]
-    let tail  = a:keyboard[a:partition : -1]
-    call add(keyboards, head)
-    if !empty(tail)
-        call add(keyboards, tail)
-    endif
-    if len(s:keyboard_list) < 2
-        let s:keyboard_list = copy(keyboards)
-    endif
-    return head
-endfunction
-
-" ---------------------------------------
-function! s:vimim_reverse_lookup(chinese)
-" ---------------------------------------
-    let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
-    if empty(chinese)
-        return []
-    endif
-    let results = []
-    let results_unicode = s:vimim_reverse_one_entry(chinese, 'unicode')
-    if !empty(results_unicode)
-        call extend(results, results_unicode)
-    endif
-    if empty(s:has_cjk_file)
-        return results
-    endif
-    call s:vimim_load_cjk_file()
-    let results_digit = s:vimim_reverse_one_entry(chinese, 2)
-    call extend(results, results_digit)
-    let results_digit = s:vimim_reverse_one_entry(chinese, 1)
-    call extend(results, results_digit)
-    let results_pinyin = []  " 马力 => ma3 li2
-    let result_cjjp = ""     " 马力 => ml
-    let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
-    if len(items) > 0
-        let pinyin_head = get(items,0)
-        if !empty(pinyin_head)
-            call add(results_pinyin, pinyin_head)
-            call add(results_pinyin, get(items,1))
-            for pinyin in split(pinyin_head)
-                let result_cjjp .= pinyin[0:0]
-            endfor
-            let result_cjjp .= " ".chinese
-        endif
-    endif
-    if !empty(results_pinyin)
-        call extend(results, results_pinyin)
-        if result_cjjp =~ '\a'
-            call add(results, result_cjjp)
-        endif
-    endif
-    return results
-endfunction
-
-" ----------------------------------------------------
-function! s:vimim_reverse_one_entry(chinese, property)
-" ----------------------------------------------------
-    let property = a:property
-    let headers = []
-    let bodies = []
-    for chinese in split(a:chinese, '\zs')
-        let ddddd = char2nr(chinese)
-        let line = ddddd - 19968
-        if line < 0 || line > 20902
-            continue
-        endif
-        let head = ''
-        if property == 'unicode'
-            let head = printf('%x', ddddd)
-        elseif s:has_cjk_file > 0
-            let values = split(s:cjk_lines[line])
-            if property =~ '\d'
-                let head = get(values, property)
-            elseif property == 'pinyin'
-                let head = get(values, 3)
-            elseif property == 'english'
-                let head = join(values[4:-2])
-            endif
-        endif
-        if empty(head)
-            continue
-        endif
-        call add(headers, head)
-        let spaces = ''
-        let number_of_space = len(head)-2
-        if number_of_space > 0
-            let space = ' '
-            for i in range(number_of_space)
-                let spaces .= space
-            endfor
-        endif
-        call add(bodies, chinese . spaces)
-    endfor
-    return [join(headers), join(bodies)]
-endfunction
-
-" -----------------------------------------------
-function! s:vimim_cjk_filter_from_cache(keyboard)
-" -----------------------------------------------
-" use 1234567890/qwertyuiop as digit filter
-    call s:vimim_load_cjk_file()
-    let results = s:vimim_cjk_filter_list(a:keyboard)
-    if empty(results) && !empty(len(s:cjk_filter))
-        let number_before = strpart(s:cjk_filter,0,len(s:cjk_filter)-1)
-        if len(number_before) > 0
-            let s:cjk_filter = number_before
-            let results = s:vimim_cjk_filter_list(a:keyboard)
-        endif
-    endif
-    if empty(results)
-        let s:cjk_filter = ""
-    endif
-    return results
-endfunction
-
-" -----------------------------------------
-function! s:vimim_cjk_filter_list(keyboard)
-" -----------------------------------------
-    let pair_matched_list = []
-    let first_in_list = split(get(s:matched_list,0))
-    for line in s:matched_list
-        let chinese = ""
-        if len(first_in_list) < 2
-        \|| a:keyboard =~# s:uxxxx
-        \|| !empty(s:vimim_data_directory)
-            let chinese = s:vimim_cjk_digit_filter(line)
-            let line = chinese
-        else
-            let chinese = get(split(line), 1)
-            let chinese = s:vimim_cjk_digit_filter(chinese)
-        endif
-        if empty(chinese)
-            continue
-        else
-            call add(pair_matched_list, line)
-        endif
-    endfor
-    return pair_matched_list
-endfunction
-
-" -----------------------------------------
-function! s:vimim_cjk_digit_filter(chinese)
-" -----------------------------------------
-" smart digital filter: 马力 7712 4002
-"   (1) ma<C-6>         马   => filter with 7712
-"   (2) mali<C-6>       马力 => filter with 7 4002
-" -----------------------------------------
-    let chinese = a:chinese
-    if empty(len(s:cjk_filter)) || empty(chinese)
-        return 0
-    endif
-    let digit_head = ""
-    let digit_tail = ""
-    let words = split(chinese,'\zs')
-    for cjk in words
-        let ddddd = char2nr(cjk)
-        let line = ddddd - 19968
-        if cjk =~ '\w' ||  line < 0 || line > 20902
-            continue
-        else
-            let values = split(s:cjk_lines[line])
-            let column = 1 + s:vimim_digit_4corner
-            let digit = get(values, column)
-            let digit_head .= digit[:0]
-            let digit_tail = digit[1:]
-        endif
-    endfor
-    let number = digit_head . digit_tail
-    let pattern = "^" . s:cjk_filter
-    let matched = match(number, pattern)
-    if matched < 0
-        let chinese = 0
-    endif
-    return chinese
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  for mom and dad  ==== {{{"]
-" =================================================
-
-" ---------------------------------
-function! s:vimim_for_mom_and_dad()
-" ---------------------------------
-    if s:vimim_custom_color == 1
-        let s:vimim_custom_color = 2
-    endif
-    " -----------------------------
-    let buffer = expand("%:p:t")
-    if buffer =~ 'vimim_mom.txt'
-        let s:vimim_digit_4corner = 0
-    elseif buffer =~ 'vimim_dad.txt'
-        let s:vimim_digit_4corner = 1
-    else
-        return
-    endif
-    " -----------------------------
-    sil!call s:vimim_start_onekey()
-    if empty(s:has_cjk_file)
-        return
-    endif
-    " -----------------------------
-    if has("gui_running") && has("win32")
-        autocmd! * <buffer>
-        autocmd  VimEnter  <buffer> set t_vb=
-        autocmd  FocusLost <buffer> sil!wall
-        noremap <silent> <Esc> :sil!%y +<CR>
-        set lines=24
-        set columns=36
-        let &gfn .= ":h24:w12"
-    endif
-    set number
-    set noswapfile
-    let s:vimim_tab_as_onekey = 2
-    let s:vimim_data_directory = 0
-    startinsert!
-    " -----------------------------
-    return s:vimim_onekey_action("")
-endfunction
-
-" ---------------------------------
-function! s:vimim_initialize_skin()
-" ---------------------------------
-    if s:vimim_custom_color == 1
-        return
-    elseif s:vimim_custom_color < 3
-        if s:vimim_custom_color < 1
-            highlight! PmenuSel NONE
-        elseif s:vimim_custom_color == 2
-            highlight! link PmenuSel Title
-        endif
-        highlight! PmenuSbar  NONE
-        highlight! PmenuThumb NONE
-        highlight! Pmenu      NONE
-    endif
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  /search          ==== {{{"]
-" =================================================
-
-" -----------------------------
-function! g:vimim_search_next()
-" -----------------------------
-    let english = @/
-    if english =~ '\<' && english =~ '\>'
-        let english = substitute(english,'[<>\\]','','g')
-    endif
-    if !empty(v:errmsg) && !empty(english)
-    \&& len(english) < 24 && len(english) > 1
-    \&& english =~ '\w' && english !~ '\W' && english !~ '_'
-    \&& v:errmsg =~# '^E486: ' && v:errmsg =~# english
-        try
-            sil!call s:vimim_search_chinese_from_english(english)
-            echon "/" . english
-        catch
-            echon "/" . english . " error:" .  v:exception
-        endtry
-    endif
-endfunction
-
-" -----------------------------------------------------
-function! s:vimim_search_chinese_from_english(keyboard)
-" -----------------------------------------------------
-    let results = []
-    let cjk_results = []
-    let keyboard = tolower(a:keyboard)
-    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if empty(ddddd)
-        sil!call s:vimim_backend_initialization_once()
-        let keyboards = s:vimim_slash_search_block(keyboard)
-        if len(keyboards) > 0
-            for keyboard2 in keyboards
-                let chars = s:vimim_match_cjk_files(keyboard2)
-                if len(keyboards) == 1
-                    let cjk_results = copy(chars)
-                elseif len(chars) > 0
-                    let collection = "[" . join(chars,'') . "]"
-                    call add(cjk_results, collection)
-                endif
-            endfor
-            if len(keyboards) == 1
-                let filter = 'v:val' . " len(" . 'v:val' . ")"
-                call map(cjk_results, filter)
-                let cjk_results = sort(cjk_results, "s:vimim_sort_on_last")
-             elseif len(keyboards) > 1
-                let cjk_results = [join(cjk_results,'')]
-            endif
-        endif
-        " /arrow (1) 矛 in cjk (2) → in english datafile (3) a4492 柪
-        call extend(cjk_results, s:cjk_results)
-    else
-        let cjk_results = [nr2char(ddddd)]
-    endif
-    " -------------------------------------------------
-    if empty(cjk_results)
-        if !empty(s:vimim_shuangpin)
-            sil!call s:vimim_initialize_shuangpin()
-            let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
-        endif
-        if s:vimim_cloud_sogou == 1
-            let results = s:vimim_get_cloud_sogou(keyboard, 1)
-        endif
-    endif
-    " -------------------------------------------------
-    if empty(results)
-        if empty(s:backend.datafile) && empty(s:backend.directory)
-            if empty(s:vimim_cloud_plugin)
-                let results = s:vimim_get_cloud_sogou(keyboard, 1)
-            else
-                let results = s:vimim_get_mycloud_plugin(keyboard)
-            endif
-        else
-            let results = s:vimim_embedded_backend_engine(keyboard)
-        endif
-    endif
-    " -------------------------------------------------
-    call extend(results, cjk_results)
-    if empty(results)
-        let v:errmsg = ""
-    else
-        call s:vimim_register_search_pattern(keyboard, results)
-    endif
-endfunction
-
-" --------------------------------------------
-function! s:vimim_slash_search_block(keyboard)
-" --------------------------------------------
-" /muuqwxeyqpjeqqq  =>  shortcut   /search
-" /m7712x3610j3111  =>  standard   /search
-" /ma77xia36ji31    =>  free-style /search
-" --------------------------------------------
-    if empty(s:has_cjk_file)
-        return []
-    endif
-    let results = []
-    let keyboard = a:keyboard
-    while len(keyboard) > 2
-        let keyboard2 = s:vimim_cjk_sentence_match(keyboard)
-        if empty(keyboard2)
-            break
-        else
-            call add(results, keyboard2)
-            let keyboard = strpart(keyboard,len(keyboard2))
-        endif
-    endwhile
-    return results
-endfunction
-
-" ----------------------------------------------------------
-function! s:vimim_register_search_pattern(keyboard, results)
-" ----------------------------------------------------------
-    let keyboard = a:keyboard
-    if empty(s:vimim_data_directory)
-        if keyboard =~ '^\l\+\d\+'
-            let keyboard = join(split(keyboard,'\d'),'')
-        elseif keyboard =~ '^\d\d\d\+'
-            let keyboard = keyboard[:3]
-        endif
-    endif
-    let results = []
-    for chinese in a:results
-        if a:keyboard =~# s:uxxxx || s:cjk_has_match > 0
-            let msg = "for unicode slash search: /u808f /32911"
-        elseif empty(s:vimim_data_directory)
-            let pairs = split(chinese)
-            if len(pairs) < 2
-                continue
-            endif
-            let chinese = get(pairs, 1)
-            let menu = get(pairs, 0)
-            if keyboard != menu
-                continue
-            endif
-        endif
-        if chinese =~ '\w'
-            continue
-        endif
-        call add(results, chinese)
-    endfor
-    if !empty(results)
-        let slash = join(results, '\|')
-        if empty(search(slash,'nw'))
-            let @/ = a:keyboard
-        else
-            let @/ = slash
-        endif
-        echon "/" . a:keyboard
-    endif
-endfunction
-
-" -----------------------------------
-function! g:vimim_search_pumvisible()
-" -----------------------------------
-    let word = s:vimim_popup_word()
-    let @/ = word
-    if empty(word)
-        let @/ = @_
-    endif
-    let repeat_times = len(word)/s:multibyte
-    let row_start = s:start_row_before
-    let row_end = line('.')
-    let delete_chars = ""
-    if repeat_times > 0 && row_end == row_start
-        let delete_chars = repeat("\<BS>", repeat_times)
-    endif
-    let slash = delete_chars . "\<Esc>"
-    sil!call s:vimim_stop()
-    sil!exe 'sil!return "' . slash . '"'
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  /grep            ==== {{{"]
-" =================================================
-
-" --------------------------------
-function! s:vimim_slash_grep(grep)
-" --------------------------------
-    let results = s:vimim_cjk_grep_results(a:grep)
-    if len(results) > 0
-        let filter = "strpart(".'v:val'.", 0, s:multibyte)"
-        call map(results, filter)
-    endif
-    return results
-endfunction
-
-" --------------------------------------
-function! s:vimim_cjk_grep_results(grep)
-" --------------------------------------
-    call s:vimim_load_cjk_file()
-    if empty(s:has_cjk_file)
-        return []
-    endif
-    let results = []
-    let line = match(s:cjk_lines, a:grep)
-    while line > -1
-        let values = split(s:cjk_lines[line])
-        let frequency_index = get(values, -1)
-        if frequency_index =~ '\l'
-            let frequency_index = 9999
-        endif
-        let chinese_frequency = get(values,0) . ' ' . frequency_index
-        call add(results, chinese_frequency)
-        let line = match(s:cjk_lines, a:grep, line+1)
-    endwhile
-    if len(results) > 0
-        if s:hjkl_h < 1
-            let s:hjkl_h = 1
-        endif
-        let s:cjk_has_match = 1
-    endif
-    return results
-endfunction
-
-" -------------------------------
-function! s:vimim_load_cjk_file()
-" -------------------------------
-    if empty(s:cjk_lines)
-        if s:has_cjk_file > 0
-            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-            if len(s:cjk_lines) != 20902
-                let s:cjk_lines = []
-                let s:has_cjk_file = 0
-            endif
-        endif
-    endif
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_tranfer_chinese() range abort
-" ---------------------------------------------
-" [usage]   :VimIM
-" [feature] (1) "quick and dirty" way to transfer Chinese to Chinese
-"           (2) 20% of the effort to solve 80% of the problem
-"           (3) 5128/2=2564 Chinese pairs are used for one-to-one mapping
-" ---------------------------------------------
-    sil!call s:vimim_backend_initialization_once()
-    if empty(s:has_cjk_file)
-        let msg = "no toggle between simplified and tranditional Chinese"
-    elseif &encoding == "utf-8"
-        call s:vimim_load_cjk_file()
-        exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
-    endif
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_get_traditional_chinese(chinese)
-" ------------------------------------------------
-    call s:vimim_load_cjk_file()
-    let chinese = ""
-    let chinese_list = split(a:chinese,'\zs')
-    for char in chinese_list
-        let chinese .= s:vimim_one2one(char)
-    endfor
-    return chinese
-endfunction
-
-" --------------------------------
-function! s:vimim_one2one(chinese)
-" --------------------------------
-    let ddddd = char2nr(a:chinese)
-    let line = ddddd - 19968
-    if line < 0 || line > 20902
-        return a:chinese
-    endif
-    let values = split(s:cjk_lines[line])
-    let traditional_chinese = get(split(get(values,0),'\zs'),1)
-    if empty(traditional_chinese)
-        return a:chinese
-    else
-        return traditional_chinese
-    endif
-endfunction
-
-" ------------------------------------------
-function! <SID>vimim_visual_ctrl_6(keyboard)
-" ------------------------------------------
-" [input]  马力  highlighted in Vim visual mode
-" [output] 9a6c   529b    --  in unicode
-"          7712   4002    --  in four corner
-"          551000 530000  --  in five stroke
-"          ma3    li4     --  in pinyin
-"          ml 马力        --  in cjjp
-" ------------------------------------------
-    let keyboard = a:keyboard
-    let range = line("'>") - line("'<")
-    if empty(range)
-        sil!call s:vimim_backend_initialization_once()
-        let results = s:vimim_reverse_lookup(keyboard)
-        if !empty(results)
-            let line = line(".")
-            call setline(line, results)
-            let new_positions = getpos(".")
-            let new_positions[1] = line + len(results) - 1
-            let new_positions[2] = len(get(split(get(results,-1)),0))+1
-            call setpos(".", new_positions)
-        endif
-    elseif s:vimim_tab_as_onekey > 0
-        sil!call s:vimim_numberList()
-    endif
-endfunction
-
-" ----------------------------------------
-function! s:vimim_numberList() range abort
-" ----------------------------------------
-    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
-    while (a<=z)
-        if match(x,'^9*$')==0|let pre=pre . ' '|endif
-        call setline(z, pre . x . "\t" . getline(z))
-        let z=z-1|let x=x-1
-    endwhile
 endfunction
 
 " ============================================= }}}
