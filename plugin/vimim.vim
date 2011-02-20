@@ -504,47 +504,8 @@ function! s:vimim_easter_chicken(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  /Search          ==== {{{"]
+let s:VimIM += [" ====  /search          ==== {{{"]
 " =================================================
-
-" --------------------------------
-function! s:vimim_slash_grep(grep)
-" --------------------------------
-    let results = s:vimim_cjk_grep_results(a:grep)
-    if len(results) > 0
-        let filter = "strpart(".'v:val'.", 0, s:multibyte)"
-        call map(results, filter)
-    endif
-    return results
-endfunction
-
-" --------------------------------------
-function! s:vimim_cjk_grep_results(grep)
-" --------------------------------------
-    call s:vimim_load_cjk_file()
-    if empty(s:has_cjk_file)
-        return []
-    endif
-    let results = []
-    let line = match(s:cjk_lines, a:grep)
-    while line > -1
-        let values = split(s:cjk_lines[line])
-        let frequency_index = get(values, -1)
-        if frequency_index =~ '\l'
-            let frequency_index = 9999
-        endif
-        let chinese_frequency = get(values,0) . ' ' . frequency_index
-        call add(results, chinese_frequency)
-        let line = match(s:cjk_lines, a:grep, line+1)
-    endwhile
-    if len(results) > 0
-        if s:hjkl_h < 1
-            let s:hjkl_h = 1
-        endif
-        let s:cjk_has_match = 1
-    endif
-    return results
-endfunction
 
 " -----------------------------
 function! g:vimim_search_next()
@@ -714,6 +675,148 @@ function! g:vimim_search_pumvisible()
     let slash = delete_chars . "\<Esc>"
     sil!call s:vimim_stop()
     sil!exe 'sil!return "' . slash . '"'
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  /grep            ==== {{{"]
+" =================================================
+
+" --------------------------------
+function! s:vimim_slash_grep(grep)
+" --------------------------------
+    let results = s:vimim_cjk_grep_results(a:grep)
+    if len(results) > 0
+        let filter = "strpart(".'v:val'.", 0, s:multibyte)"
+        call map(results, filter)
+    endif
+    return results
+endfunction
+
+" --------------------------------------
+function! s:vimim_cjk_grep_results(grep)
+" --------------------------------------
+    call s:vimim_load_cjk_file()
+    if empty(s:has_cjk_file)
+        return []
+    endif
+    let results = []
+    let line = match(s:cjk_lines, a:grep)
+    while line > -1
+        let values = split(s:cjk_lines[line])
+        let frequency_index = get(values, -1)
+        if frequency_index =~ '\l'
+            let frequency_index = 9999
+        endif
+        let chinese_frequency = get(values,0) . ' ' . frequency_index
+        call add(results, chinese_frequency)
+        let line = match(s:cjk_lines, a:grep, line+1)
+    endwhile
+    if len(results) > 0
+        if s:hjkl_h < 1
+            let s:hjkl_h = 1
+        endif
+        let s:cjk_has_match = 1
+    endif
+    return results
+endfunction
+
+" -------------------------------
+function! s:vimim_load_cjk_file()
+" -------------------------------
+    if empty(s:cjk_lines)
+        if s:has_cjk_file > 0
+            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+            if len(s:cjk_lines) != 20902
+                let s:cjk_lines = []
+                let s:has_cjk_file = 0
+            endif
+        endif
+    endif
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_tranfer_chinese() range abort
+" ---------------------------------------------
+" [usage]   :VimIM
+" [feature] (1) "quick and dirty" way to transfer Chinese to Chinese
+"           (2) 20% of the effort to solve 80% of the problem
+"           (3) 5128/2=2564 Chinese pairs are used for one-to-one mapping
+" ---------------------------------------------
+    sil!call s:vimim_backend_initialization_once()
+    if empty(s:has_cjk_file)
+        let msg = "no toggle between simplified and tranditional Chinese"
+    elseif &encoding == "utf-8"
+        call s:vimim_load_cjk_file()
+        exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
+    endif
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_get_traditional_chinese(chinese)
+" ------------------------------------------------
+    call s:vimim_load_cjk_file()
+    let chinese = ""
+    let chinese_list = split(a:chinese,'\zs')
+    for char in chinese_list
+        let chinese .= s:vimim_one2one(char)
+    endfor
+    return chinese
+endfunction
+
+" --------------------------------
+function! s:vimim_one2one(chinese)
+" --------------------------------
+    let ddddd = char2nr(a:chinese)
+    let line = ddddd - 19968
+    if line < 0 || line > 20902
+        return a:chinese
+    endif
+    let values = split(s:cjk_lines[line])
+    let traditional_chinese = get(split(get(values,0),'\zs'),1)
+    if empty(traditional_chinese)
+        return a:chinese
+    else
+        return traditional_chinese
+    endif
+endfunction
+
+" ------------------------------------------
+function! <SID>vimim_visual_ctrl_6(keyboard)
+" ------------------------------------------
+" [input]  马力  highlighted in Vim visual mode
+" [output] 9a6c   529b    --  in unicode
+"          7712   4002    --  in four corner
+"          551000 530000  --  in five stroke
+"          ma3    li4     --  in pinyin
+"          ml 马力        --  in cjjp
+" ------------------------------------------
+    let keyboard = a:keyboard
+    let range = line("'>") - line("'<")
+    if empty(range)
+        sil!call s:vimim_backend_initialization_once()
+        let results = s:vimim_reverse_lookup(keyboard)
+        if !empty(results)
+            let line = line(".")
+            call setline(line, results)
+            let new_positions = getpos(".")
+            let new_positions[1] = line + len(results) - 1
+            let new_positions[2] = len(get(split(get(results,-1)),0))+1
+            call setpos(".", new_positions)
+        endif
+    elseif s:vimim_tab_as_onekey > 0
+        sil!call s:vimim_numberList()
+    endif
+endfunction
+
+" ----------------------------------------
+function! s:vimim_numberList() range abort
+" ----------------------------------------
+    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
+    while (a<=z)
+        if match(x,'^9*$')==0|let pre=pre . ' '|endif
+        call setline(z, pre . x . "\t" . getline(z))
+        let z=z-1|let x=x-1
+    endwhile
 endfunction
 
 " ============================================= }}}
@@ -1928,20 +2031,6 @@ function! s:vimim_initialize_cjk_file()
     endif
 endfunction
 
-" -------------------------------
-function! s:vimim_load_cjk_file()
-" -------------------------------
-    if empty(s:cjk_lines)
-        if s:has_cjk_file > 0
-            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-            if len(s:cjk_lines) != 20902
-                let s:cjk_lines = []
-                let s:has_cjk_file = 0
-            endif
-        endif
-    endif
-endfunction
-
 " -------------------------------------------
 function! s:vimim_check_filereadable(default)
 " -------------------------------------------
@@ -1959,52 +2048,6 @@ function! s:vimim_check_filereadable(default)
         return datafile
     endif
     return 0
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_tranfer_chinese() range abort
-" ---------------------------------------------
-" [usage]   :VimIM
-" [feature] (1) "quick and dirty" way to transfer Chinese to Chinese
-"           (2) 20% of the effort to solve 80% of the problem
-"           (3) 5128/2=2564 Chinese pairs are used for one-to-one mapping
-" ---------------------------------------------
-    sil!call s:vimim_backend_initialization_once()
-    if empty(s:has_cjk_file)
-        let msg = "no toggle between simplified and tranditional Chinese"
-    elseif &encoding == "utf-8"
-        call s:vimim_load_cjk_file()
-        exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
-    endif
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_get_traditional_chinese(chinese)
-" ------------------------------------------------
-    call s:vimim_load_cjk_file()
-    let chinese = ""
-    let chinese_list = split(a:chinese,'\zs')
-    for char in chinese_list
-        let chinese .= s:vimim_one2one(char)
-    endfor
-    return chinese
-endfunction
-
-" --------------------------------
-function! s:vimim_one2one(chinese)
-" --------------------------------
-    let ddddd = char2nr(a:chinese)
-    let line = ddddd - 19968
-    if line < 0 || line > 20902
-        return a:chinese
-    endif
-    let values = split(s:cjk_lines[line])
-    let traditional_chinese = get(split(get(values,0),'\zs'),1)
-    if empty(traditional_chinese)
-        return a:chinese
-    else
-        return traditional_chinese
-    endif
 endfunction
 
 " --------------------------------------------
@@ -3024,45 +3067,6 @@ function! s:vimim_mom_dad()
     let s:vimim_data_directory = 0
     startinsert!
     return s:vimim_onekey_action("")
-endfunction
-
-" ------------------------------------------
-function! <SID>vimim_visual_ctrl_6(keyboard)
-" ------------------------------------------
-" [input]  马力  highlighted in Vim visual mode
-" [output] 9a6c   529b    --  in unicode
-"          7712   4002    --  in four corner
-"          551000 530000  --  in five stroke
-"          ma3    li4     --  in pinyin
-"          ml 马力        --  in cjjp
-" ------------------------------------------
-    let keyboard = a:keyboard
-    let range = line("'>") - line("'<")
-    if empty(range)
-        sil!call s:vimim_backend_initialization_once()
-        let results = s:vimim_reverse_lookup(keyboard)
-        if !empty(results)
-            let line = line(".")
-            call setline(line, results)
-            let new_positions = getpos(".")
-            let new_positions[1] = line + len(results) - 1
-            let new_positions[2] = len(get(split(get(results,-1)),0))+1
-            call setpos(".", new_positions)
-        endif
-    elseif s:vimim_tab_as_onekey > 0
-        sil!call s:vimim_numberList()
-    endif
-endfunction
-
-" ----------------------------------------
-function! s:vimim_numberList() range abort
-" ----------------------------------------
-    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
-    while (a<=z)
-        if match(x,'^9*$')==0|let pre=pre . ' '|endif
-        call setline(z, pre . x . "\t" . getline(z))
-        let z=z-1|let x=x-1
-    endwhile
 endfunction
 
 " -------------------------------------
