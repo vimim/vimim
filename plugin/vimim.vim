@@ -518,6 +518,34 @@ function! s:vimim_slash_grep(grep)
     return results
 endfunction
 
+" --------------------------------------
+function! s:vimim_cjk_grep_results(grep)
+" --------------------------------------
+    call s:vimim_load_cjk_file()
+    if empty(s:has_cjk_file)
+        return []
+    endif
+    let results = []
+    let line = match(s:cjk_lines, a:grep)
+    while line > -1
+        let values = split(s:cjk_lines[line])
+        let frequency_index = get(values, -1)
+        if frequency_index =~ '\l'
+            let frequency_index = 9999
+        endif
+        let chinese_frequency = get(values,0) . ' ' . frequency_index
+        call add(results, chinese_frequency)
+        let line = match(s:cjk_lines, a:grep, line+1)
+    endwhile
+    if len(results) > 0
+        if s:hjkl_h < 1
+            let s:hjkl_h = 1
+        endif
+        let s:cjk_has_match = 1
+    endif
+    return results
+endfunction
+
 " -----------------------------
 function! g:vimim_search_next()
 " -----------------------------
@@ -600,6 +628,30 @@ function! s:vimim_search_chinese_from_english(keyboard)
     else
         call s:vimim_register_search_pattern(keyboard, results)
     endif
+endfunction
+
+" --------------------------------------------
+function! s:vimim_slash_search_block(keyboard)
+" --------------------------------------------
+" /muuqwxeyqpjeqqq  =>  shortcut   /search
+" /m7712x3610j3111  =>  standard   /search
+" /ma77xia36ji31    =>  free-style /search
+" --------------------------------------------
+    if empty(s:has_cjk_file)
+        return []
+    endif
+    let results = []
+    let keyboard = a:keyboard
+    while len(keyboard) > 2
+        let keyboard2 = s:vimim_cjk_sentence_match(keyboard)
+        if empty(keyboard2)
+            break
+        else
+            call add(results, keyboard2)
+            let keyboard = strpart(keyboard,len(keyboard2))
+        endif
+    endwhile
+    return results
 endfunction
 
 " ----------------------------------------------------------
@@ -1854,7 +1906,7 @@ function! s:vimim_imode_number(keyboard, prefix)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Input_Digit      ==== {{{"]
+let s:VimIM += [" ====  vimim.cjk.txt    ==== {{{"]
 " =================================================
 
 " -------------------------------------
@@ -2244,34 +2296,6 @@ function! s:vimim_cjk_match(keyboard)
     return results
 endfunction
 
-" --------------------------------------
-function! s:vimim_cjk_grep_results(grep)
-" --------------------------------------
-    call s:vimim_load_cjk_file()
-    if empty(s:has_cjk_file)
-        return []
-    endif
-    let results = []
-    let line = match(s:cjk_lines, a:grep)
-    while line > -1
-        let values = split(s:cjk_lines[line])
-        let frequency_index = get(values, -1)
-        if frequency_index =~ '\l'
-            let frequency_index = 9999
-        endif
-        let chinese_frequency = get(values,0) . ' ' . frequency_index
-        call add(results, chinese_frequency)
-        let line = match(s:cjk_lines, a:grep, line+1)
-    endwhile
-    if len(results) > 0
-        if s:hjkl_h < 1
-            let s:hjkl_h = 1
-        endif
-        let s:cjk_has_match = 1
-    endif
-    return results
-endfunction
-
 " -----------------------------------------
 function s:vimim_sort_on_last(line1, line2)
 " -----------------------------------------
@@ -2285,30 +2309,6 @@ function s:vimim_sort_on_last(line1, line2)
     else
         return 0
     endif
-endfunction
-
-" --------------------------------------------
-function! s:vimim_slash_search_block(keyboard)
-" --------------------------------------------
-" /muuqwxeyqpjeqqq  =>  shortcut   /search
-" /m7712x3610j3111  =>  standard   /search
-" /ma77xia36ji31    =>  free-style /search
-" --------------------------------------------
-    if empty(s:has_cjk_file)
-        return []
-    endif
-    let results = []
-    let keyboard = a:keyboard
-    while len(keyboard) > 2
-        let keyboard2 = s:vimim_cjk_sentence_match(keyboard)
-        if empty(keyboard2)
-            break
-        else
-            call add(results, keyboard2)
-            let keyboard = strpart(keyboard,len(keyboard2))
-        endif
-    endwhile
-    return results
 endfunction
 
 " -----------------------------------------------------------
@@ -2329,45 +2329,6 @@ function! s:vimim_get_keyboard_head_list(keyboard, partition)
         let s:keyboard_list = copy(keyboards)
     endif
     return head
-endfunction
-
-" ------------------------------------------
-function! <SID>vimim_visual_ctrl_6(keyboard)
-" ------------------------------------------
-" [input]  马力  highlighted in Vim visual mode
-" [output] 9a6c   529b    --  in unicode
-"          7712   4002    --  in four corner
-"          551000 530000  --  in five stroke
-"          ma3    li4     --  in pinyin
-"          ml 马力        --  in cjjp
-" ------------------------------------------
-    let keyboard = a:keyboard
-    let range = line("'>") - line("'<")
-    if empty(range)
-        sil!call s:vimim_backend_initialization_once()
-        let results = s:vimim_reverse_lookup(keyboard)
-        if !empty(results)
-            let line = line(".")
-            call setline(line, results)
-            let new_positions = getpos(".")
-            let new_positions[1] = line + len(results) - 1
-            let new_positions[2] = len(get(split(get(results,-1)),0))+1
-            call setpos(".", new_positions)
-        endif
-    elseif s:vimim_tab_as_onekey > 0
-        sil!call s:vimim_numberList()
-    endif
-endfunction
-
-" ----------------------------------------
-function! s:vimim_numberList() range abort
-" ----------------------------------------
-    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
-    while (a<=z)
-        if match(x,'^9*$')==0|let pre=pre . ' '|endif
-        call setline(z, pre . x . "\t" . getline(z))
-        let z=z-1|let x=x-1
-    endwhile
 endfunction
 
 " ---------------------------------------
@@ -3063,6 +3024,45 @@ function! s:vimim_mom_dad()
     let s:vimim_data_directory = 0
     startinsert!
     return s:vimim_onekey_action("")
+endfunction
+
+" ------------------------------------------
+function! <SID>vimim_visual_ctrl_6(keyboard)
+" ------------------------------------------
+" [input]  马力  highlighted in Vim visual mode
+" [output] 9a6c   529b    --  in unicode
+"          7712   4002    --  in four corner
+"          551000 530000  --  in five stroke
+"          ma3    li4     --  in pinyin
+"          ml 马力        --  in cjjp
+" ------------------------------------------
+    let keyboard = a:keyboard
+    let range = line("'>") - line("'<")
+    if empty(range)
+        sil!call s:vimim_backend_initialization_once()
+        let results = s:vimim_reverse_lookup(keyboard)
+        if !empty(results)
+            let line = line(".")
+            call setline(line, results)
+            let new_positions = getpos(".")
+            let new_positions[1] = line + len(results) - 1
+            let new_positions[2] = len(get(split(get(results,-1)),0))+1
+            call setpos(".", new_positions)
+        endif
+    elseif s:vimim_tab_as_onekey > 0
+        sil!call s:vimim_numberList()
+    endif
+endfunction
+
+" ----------------------------------------
+function! s:vimim_numberList() range abort
+" ----------------------------------------
+    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
+    while (a<=z)
+        if match(x,'^9*$')==0|let pre=pre . ' '|endif
+        call setline(z, pre . x . "\t" . getline(z))
+        let z=z-1|let x=x-1
+    endwhile
 endfunction
 
 " -------------------------------------
