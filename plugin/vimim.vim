@@ -3300,8 +3300,7 @@ endfunction
 function! s:vimim_get_unicode_list(keyboard)
 " ------------------------------------------
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
-    let line = ddddd - 19968
-    if line < 0 || line > 20902
+    if ddddd < 8888 || ddddd > 19968+19968
         return []
     endif
     let words = []
