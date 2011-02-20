@@ -114,8 +114,9 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     let s:show_me_not = '^vim'
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
-    let s:www_executable = 0
     let s:www_libcall = 0
+    let s:www_executable = 0
+    let s:cloud_sogou_key = 0
     let s:vimim_cloud_plugin = 0
     let s:one_key_correction = 0
     let s:quanpin_table = {}
@@ -4161,71 +4162,36 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     return 1
 endfunction
 
-" -------------------------------
-function! s:vimim_get_sogou_key()
-" -------------------------------
-    let executable = s:www_executable
-    if empty(executable)
-        return 0
-    endif
-    let cloud = 'http://web.pinyin.sogou.com/web_ime/patch.php'
-    let output = 0
-    try
-        if s:www_libcall
-            let input = cloud
-            let output = libcall(executable, "do_geturl", input)
-        else
-            let input = cloud
-            let output = system(executable . input)
-        endif
-    catch
-        call s:debugs('sogou::exception=', v:exception)
-        let output = 0
-    endtry
-    if empty(output)
-        return 0
-    endif
-    return get(split(output, '"'), 1)
-endfunction
-
 " ------------------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard, force)
 " ------------------------------------------------
-" http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     let keyboard = a:keyboard
-    if empty(keyboard) || keyboard =~# '\L'
+    if empty(keyboard)
+    \|| keyboard =~# '\L'
+    \|| empty(s:www_executable)
+    \|| (s:vimim_cloud_sogou < 1 && a:force < 1)
         return []
     endif
-    let executable = s:www_executable
-    if empty(executable)
-        return []
-    endif
-    if s:vimim_cloud_sogou < 1 && a:force < 1
-        return []
-    endif
-    " use sogou only when a valid key is found
-    if empty(s:backend.cloud.sogou.sogou_key)
-        let s:backend.cloud.sogou.sogou_key = s:vimim_get_sogou_key()
-    endif
-    let cloud = 'http://web.pinyin.sogou.com/api/py?key='
-    let cloud = cloud . s:backend.cloud.sogou.sogou_key .'&query='
-    " sogou stopped supporting apostrophe as delimiter
-    let output = 0
-    try
-        if s:www_libcall > 0
-            let input = cloud . keyboard
-            let output = libcall(executable, "do_geturl", input)
-        else
-            let input = '"' . cloud . keyboard . '"'
-            let output = system(executable . input)
+    " --------------------------------------------------------
+    if empty(s:cloud_sogou_key)
+        let sogou_key = 'http://web.pinyin.sogou.com/web_ime/patch.php'
+        let output = s:vimim_get_from_http(sogou_key)
+        " only use sogou when we get a valid key
+        if empty(output)
+            return []
         endif
-    catch
-        call s:debugs('sogou::exception=', v:exception)
-        let output = 0
-    endtry
+        let s:cloud_sogou_key = get(split(output, '"'), 1)
+    endif
+    " --------------------------------------------------------
+    " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
+    let cloud = 'http://web.pinyin.sogou.com/api/py?key='
+    let cloud = cloud . s:cloud_sogou_key .'&query='
+    let input = cloud . keyboard
+    let output = s:vimim_get_from_http(input)
     if empty(output)
         return []
     endif
+    " --------------------------------------------------------
     let first = match(output, '"', 0)
     let second = match(output, '"', 0, 2)
     if first > 0 && second > 0
@@ -4240,7 +4206,9 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     else
         let output = s:vimim_i18n_read(output)
     endif
-    " output => '我有一个梦：13    +
+    " --------------------------------------------------------
+    " from output => '我有一个梦：13    +
+    " to   output => ['woyouyigemeng 我有一个梦']
     let menu = []
     for item in split(output, '\t+')
         let item_list = split(item, '：')
@@ -4251,8 +4219,32 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
             call add(menu, new_item)
         endif
     endfor
-    " output => ['woyouyigemeng 我有一个梦']
     return menu
+endfunction
+
+" ------------------------------------
+function! s:vimim_get_from_http(input)
+" ------------------------------------
+    if empty(s:www_executable)
+        return 0
+    endif
+    let input = a:input
+    let output = 0
+    try
+        if s:www_libcall > 0
+            let output = libcall(s:www_executable, "do_geturl", input)
+        else
+            let input = '"' . input . '"'
+            let output = system(s:www_executable . input)
+        endif
+    catch
+        if s:vimimdebug > 0
+            call s:debugs('sogou::outputquery=', output)
+            call s:debugs('sogou::exception=', v:exception)
+        endif
+        let output = 0
+    endtry
+    return output
 endfunction
 
 " ============================================= }}}
@@ -4638,9 +4630,6 @@ function! s:vimim_one_backend_hash()
     let one_backend_hash = {}
     let one_backend_hash.root = 0
     let one_backend_hash.im = 0
-    let one_backend_hash.executable = 0
-    let one_backend_hash.libcall = 0
-    let one_backend_hash.sogou_key = 0
     let one_backend_hash.chinese = 0
     let one_backend_hash.directory = 0
     let one_backend_hash.datafile = 0
@@ -4816,8 +4805,8 @@ function! s:vimim_stop()
     sil!call s:vimim_cursor_color(0)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_i_map_off()
-    sil!call s:vimim_initialize_mapping()
     sil!call s:vimim_plugins_fix_stop()
+    sil!call s:vimim_initialize_mapping()
     return ""
 endfunction
 
@@ -4937,14 +4926,14 @@ endfunction
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    inoremap <Space> <C-R>=g:vimim_space()<CR>
-                    \<C-R>=g:vimim_nonstop_after_insert()<CR>
+    inoremap <BS>    <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
+                    \<C-R>=g:vimim_backspace()<CR>
     " ----------------------------------------------------------------
     inoremap <CR>    <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                     \<C-R>=<SID>vimim_smart_enter()<CR>
     " ----------------------------------------------------------------
-    inoremap <BS>    <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
-                    \<C-R>=g:vimim_backspace()<CR>
+    inoremap <Space> <C-R>=g:vimim_space()<CR>
+                    \<C-R>=g:vimim_nonstop_after_insert()<CR>
     " ----------------------------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
         inoremap <silent> <Esc> <Esc>:call g:vimim_esc()<CR>
@@ -5286,8 +5275,8 @@ function! s:vimim_get_valid_keyboard(keyboard)
     if keyboard !~# s:valid_key
         return 0
     endif
-    " ignore multiple nonsense dots
     if keyboard =~ "['.]['.]" && empty(s:ui.has_dot)
+        " ignore multiple nonsense dots
         let s:pattern_not_found += 1
         return 0
     endif
@@ -5313,7 +5302,6 @@ function! s:vimim_chinesemode_mapping_on()
             imap <silent> <C-Bslash> <Plug>VimimTrigger
          noremap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
     endif
-    " ------------------------------------
     if s:vimim_ctrl_space_to_toggle == 1
         if has("gui_running")
              map <C-Space> <C-Bslash>
@@ -5331,25 +5319,20 @@ function! s:vimim_onekey_mapping_on()
     if !hasmapto('<Plug>VimimOneKey', 'i')
         inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
     endif
-    " -------------------------------
     if s:vimim_tab_as_onekey < 2 && !hasmapto('<C-^>', 'i')
         imap <silent> <C-^> <Plug>VimimOneKey
     endif
-    " -------------------------------
     if s:vimim_tab_as_onekey > 0
         imap <silent> <Tab> <Plug>VimimOneKey
     endif
-    " -------------------------------
     if s:vimim_tab_as_onekey == 2
         xnoremap <silent> <Tab> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     elseif !hasmapto('<C-^>', 'v')
         xnoremap <silent> <C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
-    " -------------------------------
     if s:vimim_search_next > 0
         noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
-    " -------------------------------
     :com! -range=% VimIM <line1>,<line2>call s:vimim_tranfer_chinese()
 endfunction
 
