@@ -89,7 +89,6 @@ function! s:vimim_backend_initialization_once()
     else
         return
     endif
-    " -----------------------------------------
     sil!call s:vimim_super_reset()
     sil!call s:vimim_initialize_encoding()
     sil!call s:vimim_initialize_session()
@@ -112,6 +111,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
+    let s:chinese_mode_switch = 0
     let s:show_me_not = '^vim'
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:www_libcall = 0
@@ -221,19 +221,19 @@ function! s:vimim_dictionary_im_keycode()
 " ---------------------------------------
     let s:im_keycode = {}
     let s:im_keycode['pinyin']   = "[0-9a-z'.]"
-    let s:im_keycode['sogou']    = "[0-9a-z.]"
     let s:im_keycode['mycloud']  = "[0-9a-z']"
+    let s:im_keycode['sogou']    = "[0-9a-z.]"
     let s:im_keycode['hangul']   = "[0-9a-z']"
     let s:im_keycode['xinhua']   = "[0-9a-z']"
     let s:im_keycode['quick']    = "[0-9a-z']"
     let s:im_keycode['wubi']     = "[0-9a-z']"
+    let s:im_keycode['erbi']     = "[a-z'.,;/]"
+    let s:im_keycode['yong']     = "[a-z'.;/]"
+    let s:im_keycode['wu']       = "[a-z'.]"
+    let s:im_keycode['nature']   = "[a-z'.]"
     let s:im_keycode['zhengma']  = "[a-z']"
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['taijima']  = "[a-z']"
-    let s:im_keycode['erbi']     = "[a-z'.,;/]"
-    let s:im_keycode['wu']       = "[a-z'.]"
-    let s:im_keycode['yong']     = "[a-z'.;/]"
-    let s:im_keycode['nature']   = "[a-z'.]"
     let s:im_keycode['boshiamy'] = "[][a-z'.,]"
     let s:im_keycode['phonetic'] = "[0-9a-z.,;/]"
     let s:im_keycode['array30']  = "[0-9a-z.,;/]"
@@ -247,7 +247,6 @@ function! s:vimim_dictionary_im_keycode()
     call add(vimimkeys, 'wubijd')
     call add(vimimkeys, 'wubi98')
     call add(vimimkeys, 'wubi2000')
-    call insert(vimimkeys, 'pinyin')
     let s:all_vimim_input_methods = copy(vimimkeys)
 endfunction
 
@@ -290,21 +289,21 @@ let s:VimIM += [" ====  Customization    ==== {{{"]
 function! s:vimim_initialize_global()
 " -----------------------------------
     let G = []
-    call add(G, "g:vimim_backslash_close_pinyin")
+    call add(G, "g:vimim_tab_as_onekey")
+    call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_chinese_input_mode")
-    call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_data_file")
+    call add(G, "g:vimim_data_directory")
+    call add(G, "g:vimim_self_directory")
+    call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_imode_pinyin")
-    call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_mycloud_url")
-    call add(G, "g:vimim_self_directory")
+    call add(G, "g:vimim_latex_suite")
+    call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_shuangpin")
-    call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_use_cache")
-    call add(G, "g:vimim_digit_4corner")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -1151,7 +1150,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
                 let cjk_results = [join(cjk_results,'')]
             endif
         endif
-        " /arrow (1) 矛 in cjk (2) → in english datafile (3) a4492 柪
+        " /arrow (1) 矛 in cjk (2) → in english datafile (3) a4492
         call extend(cjk_results, s:cjk_results)
     else
         let cjk_results = [nr2char(ddddd)]
@@ -1379,7 +1378,7 @@ endfunction
 " ------------------------------------------
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
-" [input]  马力  highlighted in Vim visual mode
+" [input]  马力  highlighted in vim visual mode
 " [output] 9a6c   529b    --  in unicode
 "          7712   4002    --  in four corner
 "          551000 530000  --  in five stroke
@@ -1725,6 +1724,10 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  Chinese_Mode     ==== {{{"]
 " =================================================
+" s:chinese_input_mode='onekey'  => (default) OneKey hjkl
+" s:chinese_input_mode='dynamic' => (default) dynamic mode
+" s:chinese_input_mode='static'  => OneKey but not hit-and-run
+" ------------------------------------------------------------
 
 " --------------------------
 function! <SID>ChineseMode()
@@ -1734,11 +1737,6 @@ function! <SID>ChineseMode()
     call s:vimim_set_statusline()
     call s:vimim_build_datafile_cache()
     let s:chinese_input_mode = s:vimim_chinese_input_mode
-    "   --------------------------------------------------------
-    "   s:chinese_input_mode='onekey'  => (default) hjkl
-    "   s:chinese_input_mode='dynamic' => (default) dynamic mode
-    "   s:chinese_input_mode='static'  =>  <Space> triggers menu
-    "   --------------------------------------------------------
     call s:vimim_do_cloud_if_no_embedded_backend()
     let action = ""
     if !empty(s:ui.root) && !empty(s:ui.im)
@@ -1749,11 +1747,27 @@ endfunction
 
 " ---------------------------------------
 function! <SID>vimim_chinesemode_action()
-" --------------------------------------- todo
+" ---------------------------------------
+    let s:chinese_mode_switch += 1
+    let cycle = len(s:ui.frontends) + 1
+    let switch = s:chinese_mode_switch % cycle
+    let ui = get(s:ui.frontends, switch-1)
+    if empty(ui)
+        let switch = 0
+    else
+        let s:ui.root = get(ui,0)
+        let s:ui.im = get(ui,1)
+    endif
+    " -----------------------------------
     let action = ""
-    let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
-    let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch % 2
     if empty(switch)
+        call s:vimim_stop()
+        if mode() == 'i'
+            let action = "\<C-O>:redraw\<CR>"
+        elseif mode() == 'n'
+            :redraw!
+        endif
+    else
         sil!call s:vimim_start()
         if s:vimim_chinese_punctuation > -1
             let s:chinese_punctuation = s:vimim_chinese_punctuation%2
@@ -1773,13 +1787,6 @@ function! <SID>vimim_chinesemode_action()
             else
                 let action = s:vimim_static_action("")
             endif
-        endif
-    else
-        call s:vimim_stop()
-        if mode() == 'i'
-            let action = "\<C-O>:redraw\<CR>"
-        elseif mode() == 'n'
-            :redraw!
         endif
     endif
     sil!exe 'sil!return "' . action . '"'
@@ -1977,7 +1984,8 @@ function! s:vimim_get_chinese_im()
         let s:ui.statusline .= s:plus . punctuation
     endif
     let statusline = s:left . s:ui.statusline . s:right
-    return statusline . input_style
+    let statusline .= "VimIM"
+    return input_style . statusline
 endfunction
 
 " ------------------------------------
@@ -3421,7 +3429,7 @@ let s:VimIM += [" ====  Backend==File    ==== {{{"]
 
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
-" ------------------------------------------------ todo
+" ------------------------------------------------
     if !empty(s:vimim_data_directory)
         return
     endif
@@ -3431,18 +3439,17 @@ function! s:vimim_scan_backend_embedded_datafile()
         let datafile = s:vimim_data_file
         if !empty(datafile) && filereadable(datafile)
             if datafile =~ '\<' . im . '\>'
-                break
+                call s:vimim_set_datafile(im, datafile)
             endif
         endif
         let datafile = s:path . "vimim." . im . ".txt"
         if filereadable(datafile)
-            break
+            call s:vimim_set_datafile(im, datafile)
         else
             let datafile = 0
             continue
         endif
     endfor
-    call s:vimim_set_datafile(im, datafile)
 endfunction
 
 " ------------------------------------------
@@ -3454,20 +3461,17 @@ function! s:vimim_set_datafile(im, datafile)
     \|| empty(datafile)
     \|| !filereadable(datafile)
     \|| isdirectory(datafile)
-        return 0
+        return
     endif
     let s:ui.root = "datafile"
     let s:ui.im = im
-    call add(s:ui.frontends, [s:ui.root, s:ui.im])
-    if empty(s:backend.datafile)
-        let s:backend.datafile[im] = s:vimim_one_backend_hash()
-        let s:backend.datafile[im].root = "datafile"
-        let s:backend.datafile[im].im = im
-        let s:backend.datafile[im].datafile = datafile
-        let s:backend.datafile[im].keycode = s:im_keycode[im]
-        let s:backend.datafile[im].chinese = s:vimim_chinese(im)
-    endif
-    return im
+    call insert(s:ui.frontends, [s:ui.root, s:ui.im])
+    let s:backend.datafile[im] = s:vimim_one_backend_hash()
+    let s:backend.datafile[im].root = "datafile"
+    let s:backend.datafile[im].im = im
+    let s:backend.datafile[im].datafile = datafile
+    let s:backend.datafile[im].keycode = s:im_keycode[im]
+    let s:backend.datafile[im].chinese = s:vimim_chinese(im)
 endfunction
 
 " -------------------------------------
@@ -4634,7 +4638,6 @@ function! s:vimim_one_backend_hash()
     let one_backend_hash.lines = []
     let one_backend_hash.cache = {}
     let one_backend_hash.keycode = "[0-9a-z'.]"
-    let one_backend_hash.chinese_mode_switch = 1
     return one_backend_hash
 endfunction
 
