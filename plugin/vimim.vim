@@ -179,7 +179,6 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['environment'] = ['环境','環境']
     let s:chinese['input']       = ['输入','輸入']
     let s:chinese['font']        = ['字体','字體']
-    let s:chinese['classic']     = ['经典','經典']
     let s:chinese['static']      = ['静态','靜態']
     let s:chinese['dynamic']     = ['动态','動態']
     let s:chinese['style']       = ['风格','風格']
@@ -214,6 +213,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['myversion']   = ['版本']
     let s:chinese['full_width']  = ['全角']
     let s:chinese['half_width']  = ['半角']
+    let s:chinese['chinese']     = ['中文']
 endfunction
 
 " ---------------------------------------
@@ -1970,7 +1970,7 @@ endfunction
 " --------------------------------
 function! s:vimim_get_chinese_im()
 " --------------------------------
-    let input_style = s:vimim_chinese('classic')
+    let input_style = s:vimim_chinese('chinese')
     if s:vimim_chinese_input_mode =~ 'dynamic'
         let input_style .= s:vimim_chinese('dynamic')
     elseif s:vimim_chinese_input_mode =~ 'static'
@@ -4597,7 +4597,7 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma")
+    if isdirectory("/hhome/xma")
         let s:vimim_digit_4corner = 1
         let s:vimim_tab_as_onekey = 2
         let s:vimim_self_directory = "/home/xma/vimim/"
