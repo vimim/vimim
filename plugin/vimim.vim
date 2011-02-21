@@ -1472,11 +1472,8 @@ function! g:vimim_space()
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
         let char_before = getline(".")[col(".")-2]
-        if !has_key(s:punctuations, char_before)
-        \&& char_before !~# s:valid_key
-        \&& char_before !~ '\'
-        \&& char_before !~ '"'
-        \&& char_before !~ "'"
+        if char_before !~# s:valid_key
+        \&& !has_key(s:punctuations, char_before)
             let space = ""
             call s:vimim_stop()
         else
@@ -1501,32 +1498,26 @@ function! s:vimim_onekey_action(onekey)
         endif
         sil!exe 'sil!return "' . onekey . '"'
     endif
-    " ---------------------------------
     let onekey = s:vimim_onekey_punctuation()
     if len(onekey) > len("<BS>")
         sil!exe 'sil!return "' . onekey . '"'
     endif
-    " ---------------------------------
     let char_before = getline(".")[col(".")-2]
     if char_before !~# s:valid_key && empty(a:onekey)
         return s:vimim_get_unicode_menu()
     endif
-    " ---------------------------------
     if char_before ==# "'" && empty(s:ui.has_dot)
         let s:pattern_not_found = 0
     endif
-    " ---------------------------------
     if s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
     endif
-    " ---------------------------------
     if empty(char_before)
     \|| char_before =~ '\s'
     \|| char_before !~# s:valid_key
         let onekey = a:onekey
     endif
-    " ---------------------------------
     let s:smart_enter = 0
     let s:pattern_not_found = 0
     sil!exe 'sil!return "' . onekey . '"'
@@ -1551,7 +1542,7 @@ function! s:vimim_onekey_punctuation()
                 endif
             endfor
             if empty(onekey)
-                " English punctuation to Chinese punctuation
+                " transfer English punctuation to Chinese punctuation
                 let replacement = s:punctuations[char_before]
             endif
         endif
@@ -1738,15 +1729,16 @@ let s:VimIM += [" ====  Chinese_Mode     ==== {{{"]
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
-" s:chinese_input_mode='onekey'  => (default) OneKeyNonStop: hjkl
-" s:chinese_input_mode='dynamic' => (default) classic dynamic mode
-" s:chinese_input_mode='static'  =>   <Space> triggers menu, auto
-" ----------------------------------------------------------------
     call s:vimim_backend_initialization_once()
     call s:vimim_frontend_initialization()
     call s:vimim_set_statusline()
     call s:vimim_build_datafile_cache()
     let s:chinese_input_mode = s:vimim_chinese_input_mode
+    "   --------------------------------------------------------
+    "   s:chinese_input_mode='onekey'  => (default) hjkl
+    "   s:chinese_input_mode='dynamic' => (default) dynamic mode
+    "   s:chinese_input_mode='static'  =>  <Space> triggers menu
+    "   --------------------------------------------------------
     call s:vimim_do_cloud_if_no_embedded_backend()
     let action = ""
     if !empty(s:ui.root) && !empty(s:ui.im)
@@ -1757,7 +1749,7 @@ endfunction
 
 " ---------------------------------------
 function! <SID>vimim_chinesemode_action()
-" ---------------------------------------
+" --------------------------------------- todo
     let action = ""
     let s:backend[s:ui.root][s:ui.im].chinese_mode_switch += 1
     let switch=s:backend[s:ui.root][s:ui.im].chinese_mode_switch % 2
@@ -1977,11 +1969,11 @@ function! s:vimim_get_chinese_im()
     elseif s:vimim_chinese_input_mode =~ 'static'
         let input_style .= s:vimim_chinese('static')
     endif
-    let punctuation = s:vimim_chinese('half_width')
-    if s:chinese_punctuation > 0
-        let punctuation = s:vimim_chinese('full_width')
-    endif
-    if s:vimim_tab_as_onekey < 2
+    if s:chinese_input_mode !~ 'onekey'
+        let punctuation = s:vimim_chinese('half_width')
+        if s:chinese_punctuation > 0
+            let punctuation = s:vimim_chinese('full_width')
+        endif
         let s:ui.statusline .= s:plus . punctuation
     endif
     let statusline = s:left . s:ui.statusline . s:right
@@ -2372,7 +2364,8 @@ function! s:vimim_initialize_frontend_punctuation()
 " -------------------------------------------------
     for char in s:valid_keys
         if has_key(s:punctuations, char)
-            if !empty(s:vimim_cloud_plugin) || s:ui.has_dot == 1
+            if !empty(s:vimim_cloud_plugin)
+            \|| s:ui.has_dot == 1
                 unlet s:punctuations[char]
             elseif char !~# "[*.']"
                 unlet s:punctuations[char]
@@ -3428,45 +3421,40 @@ let s:VimIM += [" ====  Backend==File    ==== {{{"]
 
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
-" ------------------------------------------------
-    if empty(s:vimim_data_directory)
-        call s:vimim_set_datafile(0)
+" ------------------------------------------------ todo
+    if !empty(s:vimim_data_directory)
+        return
     endif
-endfunction
-
-" --------------------------------
-function! s:vimim_set_datafile(im)
-" --------------------------------
     let im = 0
     let datafile = 0
-    if empty(a:im)
-        for im in s:all_vimim_input_methods
-            let datafile = s:vimim_data_file
-            if !empty(datafile) && filereadable(datafile)
-                if datafile =~ '\<' . im . '\>'
-                    break
-                endif
-            endif
-            let datafile = s:path . "vimim." . im . ".txt"
-            if filereadable(datafile)
+    for im in s:all_vimim_input_methods
+        let datafile = s:vimim_data_file
+        if !empty(datafile) && filereadable(datafile)
+            if datafile =~ '\<' . im . '\>'
                 break
-            else
-                let datafile = 0
-                continue
             endif
-        endfor
-    else
-        let datafile = s:path . "vimim." . a:im . ".txt"
-    endif
-    " ----------------------------------------
-    if empty(datafile)
+        endif
+        let datafile = s:path . "vimim." . im . ".txt"
+        if filereadable(datafile)
+            break
+        else
+            let datafile = 0
+            continue
+        endif
+    endfor
+    call s:vimim_set_datafile(im, datafile)
+endfunction
+
+" ------------------------------------------
+function! s:vimim_set_datafile(im, datafile)
+" ------------------------------------------
+    let im = s:vimim_get_valid_im_name(a:im)
+    let datafile = a:datafile
+    if empty(im)
+    \|| empty(datafile)
     \|| !filereadable(datafile)
     \|| isdirectory(datafile)
-        return
-    endif
-    let im = s:vimim_get_valid_im_name(im)
-    if empty(im)
-        return
+        return 0
     endif
     let s:ui.root = "datafile"
     let s:ui.im = im
@@ -3479,6 +3467,7 @@ function! s:vimim_set_datafile(im)
         let s:backend.datafile[im].keycode = s:im_keycode[im]
         let s:backend.datafile[im].chinese = s:vimim_chinese(im)
     endif
+    return im
 endfunction
 
 " -------------------------------------
@@ -3736,15 +3725,6 @@ function! s:vimim_cache_loading_progressbar()
     endtry
 endfunction
 
-" -------------------------------------
-function! s:vimim_do_force_datafile(im)
-" -------------------------------------
-    let s:vimim_data_directory = 0
-    let s:vimim_cloud_sogou = 0
-    let s:vimim_cloud_plugin = 0
-    call s:vimim_set_datafile(a:im)
-endfunction
-
 " -------------------------------------------
 function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
@@ -3798,7 +3778,11 @@ function! s:vimim_force_scan_current_buffer()
             if buffer =~# 'cache'
                 let s:vimim_use_cache = 1
             endif
-            call s:vimim_do_force_datafile(input_method)
+            let s:vimim_data_directory = 0
+            let s:vimim_cloud_sogou = 0
+            let s:vimim_cloud_plugin = 0
+            let datafile = s:path . "vimim." . input_method . ".txt"
+            call s:vimim_set_datafile(input_method, datafile)
         endif
     endif
 endfunction
