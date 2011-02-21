@@ -305,6 +305,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_digit_4corner")
+    " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
@@ -314,6 +315,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_statusline")
     call add(G, "g:vimim_onekey_nonstop")
     call add(G, "g:vimim_search_next")
+    " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
     let s:backend_loaded = 0
@@ -1554,13 +1556,6 @@ function! s:vimim_onekey_punctuation()
             endif
         endif
         if empty(replacement)
-            for char in keys(s:evils)
-                if char_before ==# char
-                    let replacement = s:evils[char]
-                endif
-            endfor
-        endif
-        if empty(replacement)
             let onekey = ""
         else
             let onekey = "\<BS>" . replacement
@@ -1610,9 +1605,8 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
         elseif a:key == 'k'
             let hjkl  = '\<Up>'
         elseif a:key =~ "[<>]"
-            let punctuation = nr2char(char2nr(a:key)-16)
             let hjkl  = '\<C-Y>'
-            let hjkl .= s:vimim_get_chinese_punctuation(punctuation)
+            let hjkl .= s:punctuations[nr2char(char2nr(a:key)-16)]
             let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
         else
             if a:key == 'h'
@@ -1983,11 +1977,11 @@ function! s:vimim_get_chinese_im()
     elseif s:vimim_chinese_input_mode =~ 'static'
         let input_style .= s:vimim_chinese('static')
     endif
+    let punctuation = s:vimim_chinese('half_width')
+    if s:chinese_punctuation > 0
+        let punctuation = s:vimim_chinese('full_width')
+    endif
     if s:vimim_tab_as_onekey < 2
-        let punctuation = s:vimim_chinese('half_width')
-        if s:vimim_chinese_punctuation > 0
-            let punctuation = s:vimim_chinese('full_width')
-        endif
         let s:ui.statusline .= s:plus . punctuation
     endif
     let statusline = s:left . s:ui.statusline . s:right
@@ -2359,8 +2353,18 @@ function! s:vimim_dictionary_punctuation()
     let s:punctuations['.'] = '。'
     let s:punctuations['?'] = '？'
     let s:punctuations['*'] = '﹡'
+    " ------------------------------------
+    let s:evils = {}
+    if empty(s:vimim_backslash_close_pinyin)
+        let s:evils['\'] = '、'
+    endif
+    if empty(s:vimim_latex_suite)
+        let s:evils["'"] = '“'
+        let s:evils['"'] = '”'
+    endif
+    " ------------------------------------
+    call extend(s:punctuations, s:evils)
     let s:punctuations_all = copy(s:punctuations)
-    let s:evils = {'\':'、', "'":'“', '"':'”'}
 endfunction
 
 " -------------------------------------------------
@@ -2392,47 +2396,39 @@ function! s:vimim_punctuation_mapping_on()
     if s:vimim_chinese_punctuation < 0
         return ""
     endif
-    " ------------------------------------
     for key in keys(s:punctuations)
-        let value = s:vimim_get_chinese_punctuation(key)
+        let value = key
+        if has_key(s:evils, key)
+            let value = s:evils[key]
+        endif
         sil!exe 'inoremap <silent> '. key .'
         \    <C-R>=<SID>vimim_punctuation_mapping("'. value .'")<CR>'
         \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
-    " ------------------------------------
-    if s:chinese_punctuation > 0
-        for [key, value] in items(s:evils)
-            sil!exe 'inoremap <silent> '. key .'
-            \    <C-R>=<SID>vimim_punctuation_mapping("'. value .'")<CR>'
-            \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
-        endfor
-    else
-        for _ in keys(s:evils)
-            sil!exe 'iunmap '. _
-        endfor
-    endif
-    " ------------------------------------
     sil!call s:vimim_punctuation_navigation_on()
     return ""
 endfunction
 
-" ------------------------------------------------------------
-function! s:vimim_get_chinese_punctuation(english_punctuation)
-" ------------------------------------------------------------
-    let value = a:english_punctuation
-    if s:chinese_punctuation > 0 && has_key(s:punctuations, value)
+" -------------------------------------------
+function! <SID>vimim_punctuation_mapping(key)
+" -------------------------------------------
+    let key = a:key
+    for key2 in keys(s:evils)
+        if key ==# s:evils[key2]
+            let key = '\' . key2
+        endif
+    endfor
+    let value = key
+    if s:chinese_punctuation > 0
         let byte_before = getline(".")[col(".")-2]
-        if byte_before !~ '\w'  " English punctuation after English
-            let value = s:punctuations[value]
+        if byte_before !~ '\w' || pumvisible()
+            if has_key(s:punctuations, key)
+                let value = s:punctuations[key]
+            else
+                let value = a:key
+            endif
         endif
     endif
-    return value
-endfunction
-
-" ---------------------------------------------
-function! <SID>vimim_punctuation_mapping(value)
-" ---------------------------------------------  todo
-    let value = a:value
     if pumvisible()
         let value = "\<C-Y>" . value
         let s:has_pumvisible = 1
@@ -2468,14 +2464,10 @@ function! <SID>vimim_punctuations_navigation(key)
 " -----------------------------------------------
     let hjkl = a:key
     if pumvisible()
-        if a:key == "["
-            let hjkl  = s:vimim_square_bracket("[")
-        elseif a:key == "]"
-            let hjkl  = s:vimim_square_bracket("]")
-        elseif a:key == "/"
-            let hjkl  = s:vimim_menu_search("/")
-        elseif a:key == "?"
-            let hjkl  = s:vimim_menu_search("?")
+        if a:key =~ "[][]"
+            let hjkl  = s:vimim_square_bracket(a:key)
+        elseif a:key =~ "[/?]"
+            let hjkl  = s:vimim_menu_search(a:key)
         elseif a:key =~ "[-,]"
             if s:hjkl_l > 0 && &pumheight < 1
                 let hjkl = '\<PageUp>'
@@ -2491,8 +2483,6 @@ function! <SID>vimim_punctuations_navigation(key)
                 let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
             endif
         endif
-    elseif s:chinese_input_mode !~ 'onekey'
-        let hjkl = s:vimim_get_chinese_punctuation(hjkl)
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
@@ -2636,8 +2626,9 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
 " ------------------------------------------------
-    let keyboard = s:vimim_quanpin_transform(a:keyboard)
-    let results = split(keyboard, "'")
+    let keyboard = a:keyboard
+    let keyboard2 = s:vimim_quanpin_transform(keyboard)
+    let results = split(keyboard2, "'")
     if len(results) > 1
         return results
     endif
@@ -2681,7 +2672,7 @@ function! s:vimim_quanpin_transform(keyboard)
 " -------------------------------------------
     let qptable = s:quanpin_table
     if empty(qptable)
-        return []
+        return ""
     else
         let msg = "start pinyin breakdown: pinyin=>pin'yin"
     endif
@@ -4166,8 +4157,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
 " -------------------------------------------------
     let keyboard = a:keyboard
     let do_cloud = get(a:clouds, 1)
-    if s:has_no_internet < 0
-    \|| do_cloud > 0
+    if s:has_no_internet < 0 || do_cloud > 0
         return 1
     endif
     if s:has_no_internet > 1
@@ -4177,7 +4167,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
         return 0
     endif
     let threshold = len(keyboard)
-    if s:chinese_input_mode =~ 'static'
+    if s:chinese_input_mode =~ 'static' && s:ui.im == 'pinyin'
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
         let threshold = len(pinyins)
     endif
@@ -4936,7 +4926,6 @@ function! s:vimim_i_map_off()
     call extend(unmap_list, s:AZ_list)
     call extend(unmap_list, s:valid_keys)
     call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, keys(s:evils))
     call extend(unmap_list, ['<Esc>','<CR>','<BS>','<Space>'])
     for _ in unmap_list
         sil!exe 'iunmap '. _
