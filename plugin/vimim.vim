@@ -288,6 +288,7 @@ let s:VimIM += [" ====  Customization    ==== {{{"]
 " -----------------------------------
 function! s:vimim_initialize_global()
 " -----------------------------------
+    let s:vimimconf = []
     let G = []
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_digit_4corner")
@@ -327,16 +328,14 @@ endfunction
 " ----------------------------------------------------
 function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
-    let s:global_defaults   = []
-    let s:global_customized = []
     for variable in a:options
-        call add(s:global_defaults, variable .'='. a:default)
         let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
-            call add(s:global_customized, variable .'='. eval(variable))
+            call add(s:vimimconf, variable .' = '. eval(variable))
             exe 'let '. s_variable .'='. variable
             exe 'unlet! ' . variable
         else
+            call add(s:vimimconf, variable .' = '. a:default)
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
@@ -354,8 +353,7 @@ function! s:vimim_egg_vimimegg()
     call add(eggs, "環境　vimim")
     call add(eggs, "程式　vimimvim")
     call add(eggs, "幫助　vimimhelp")
-    call add(eggs, "設置　vimimdefaults")
-    return map(eggs,  '"VimIM 彩蛋" . s:colon . v:val . s:space')
+    return map(eggs,  '"VimIM 彩蛋" . s:colon . v:val . " "')
 endfunction
 
 " -------------------------
@@ -388,14 +386,6 @@ function! s:vimim_egg_vimimvim()
 " ------------------------------
     let eggs = copy(s:VimIM)
     let filter = "strpart(" . 'v:val' . ", 0, 28)"
-    return map(eggs, filter)
-endfunction
-
-" -----------------------------------
-function! s:vimim_egg_vimimdefaults()
-" -----------------------------------
-    let eggs = copy(s:global_defaults)
-    let filter = '"VimIM  " . v:val . s:space'
     return map(eggs, filter)
 endfunction
 
@@ -477,13 +467,15 @@ function! s:vimim_egg_vimim()
         let option = sogou . s:colon . s:vimim_chinese('cloudatwill')
         call add(eggs, option)
     endif
-    if !empty(s:global_customized)
-        for item in s:global_customized
-            let option = s:vimim_chinese('configure') . s:colon . item
-            call add(eggs, option)
-        endfor
-    endif
-    call map(eggs, 'v:val . s:space')
+    let filter = 'v:val . " "'
+    call map(eggs, filter)
+    call add(eggs, s:vimim_chinese('configure') . s:colon)
+    " gather vimim configuration information
+    let vimimconf = copy(s:vimimconf)
+    let filter = '":let " . v:val . " "'
+    call map(vimimconf, filter)
+    " append vimim configuration to the vimim egg
+    call extend(eggs, vimimconf)
     return eggs
 endfunction
 
@@ -4597,7 +4589,7 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/hhome/xma")
+    if isdirectory("/home/xma")
         let s:vimim_digit_4corner = 1
         let s:vimim_tab_as_onekey = 2
         let s:vimim_self_directory = "/home/xma/vimim/"
