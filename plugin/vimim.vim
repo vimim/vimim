@@ -455,8 +455,15 @@ function! s:vimim_egg_vimim()
         let ciku = database
         if s:ui.root == 'directory'
             let ciku .= s:vimim_chinese('directory') . ciku
+            call add(eggs, ciku . option)
+        else
+            for frontend in s:ui.frontends
+                let ui_root = get(frontend, 0)
+                let ui_im = get(frontend, 1)
+                let option = s:backend[ui_root][ui_im].datafile
+                call add(eggs, ciku . option)
+            endfor
         endif
-        call add(eggs, ciku . option)
     endif
     if !empty(im)
         let option = s:vimim_chinese('input') . s:colon . im
