@@ -335,7 +335,7 @@ function! s:vimim_set_global_default(options, default)
             exe 'let '. s_variable .'='. variable
             exe 'unlet! ' . variable
         else
-            call add(s:vimimconf, variable .' = '. a:default)
+            call add(s:vimimconf, variable .'='. a:default)
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
