@@ -1531,8 +1531,10 @@ function! s:vimim_onekey_punctuation()
     let char_before_before = current_line[col(".")-3]
     if char_before_before !~# "[0-9A-z]" && empty(s:ui.has_dot)
         let replacement = 0
-        if has_key(s:punctuations, char_before)
-            for char in keys(s:punctuations_all)
+        let punctuations = s:punctuations
+        call extend(punctuations, s:evils)
+        if has_key(punctuations, char_before)
+            for char in keys(punctuations)
                 if char_before_before ==# char
                     let onekey = 1
                     break
@@ -1542,7 +1544,13 @@ function! s:vimim_onekey_punctuation()
             endfor
             if empty(onekey)
                 " transfer English punctuation to Chinese punctuation
-                let replacement = s:punctuations[char_before]
+                let replacement = punctuations[char_before]
+                " play sexy quote in sexy mode
+                if char_before == "'"
+                    let replacement = <SID>vimim_get_single_quote()
+                elseif char_before == '"'
+                    let replacement = <SID>vimim_get_double_quote()
+                endif
             endif
         endif
         if empty(replacement)
@@ -2359,12 +2367,9 @@ function! s:vimim_dictionary_punctuation()
         let s:evils['\'] = '、'
     endif
     if empty(s:vimim_latex_suite)
-        let s:evils["'"] = '“'
-        let s:evils['"'] = '”'
+        let s:evils["'"] = '‘’'
+        let s:evils['"'] = '“”'
     endif
-    " ------------------------------------
-    call extend(s:punctuations, s:evils)
-    let s:punctuations_all = copy(s:punctuations)
 endfunction
 
 " -------------------------------------------------
@@ -2372,8 +2377,7 @@ function! s:vimim_initialize_frontend_punctuation()
 " -------------------------------------------------
     for char in s:valid_keys
         if has_key(s:punctuations, char)
-            if !empty(s:vimim_cloud_plugin)
-            \|| s:ui.has_dot == 1
+            if !empty(s:vimim_cloud_plugin) || s:ui.has_dot == 1
                 unlet s:punctuations[char]
             elseif char !~# "[*.']"
                 unlet s:punctuations[char]
@@ -2396,29 +2400,66 @@ function! s:vimim_punctuation_mapping_on()
 " ----------------------------------------
     if s:vimim_chinese_punctuation < 0
         return ""
+    else
+        call s:vimim_evil_punctuation_mapping_on()
     endif
     for key in keys(s:punctuations)
-        let value = key
-        if has_key(s:evils, key)
-            let value = s:evils[key]
-        endif
         sil!exe 'inoremap <silent> '. key .'
-        \    <C-R>=<SID>vimim_punctuation_mapping("'. value .'")<CR>'
+        \    <C-R>=<SID>vimim_punctuation_mapping("'. key .'")<CR>'
         \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
     sil!call s:vimim_punctuation_navigation_on()
     return ""
 endfunction
 
+" ---------------------------------------------
+function! s:vimim_evil_punctuation_mapping_on()
+" ---------------------------------------------
+    if s:chinese_punctuation > 0
+        if empty(s:vimim_latex_suite)
+            inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
+            inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
+        endif
+        if empty(s:vimim_backslash_close_pinyin)
+            sil!exe 'inoremap <Bslash> ' . s:evils['\']
+        endif
+    else
+        for _ in keys(s:evils)
+            sil!exe 'iunmap '. _
+        endfor
+    endif
+endfunction
+
+" -------------------------------------
+function! <SID>vimim_get_single_quote()
+" -------------------------------------
+    let key = "'"
+    if !has_key(s:evils, key)
+        return ""
+    endif
+    let pair = s:evils[key]
+    let pairs = split(pair,'\zs')
+    let s:smart_single_quotes += 1
+    return get(pairs, s:smart_single_quotes % 2)
+endfunction
+
+" -------------------------------------
+function! <SID>vimim_get_double_quote()
+" -------------------------------------
+    let key = '"'
+    if !has_key(s:evils, key)
+        return ""
+    endif
+    let pair = s:evils[key]
+    let pairs = split(pair,'\zs')
+    let s:smart_double_quotes += 1
+    return get(pairs, s:smart_double_quotes % 2)
+endfunction
+
 " -------------------------------------------
 function! <SID>vimim_punctuation_mapping(key)
 " -------------------------------------------
     let key = a:key
-    for key2 in keys(s:evils)
-        if key ==# s:evils[key2]
-            let key = '\' . key2
-        endif
-    endfor
     let value = key
     if s:chinese_punctuation > 0
         let byte_before = getline(".")[col(".")-2]
@@ -3184,8 +3225,8 @@ function! s:vimim_erbi_first_punctuation(keyboard)
     let chinese_punctuation = 0
     if len(keyboard) == 1
     \&& keyboard =~ "[.,/;]"
-    \&& has_key(s:punctuations_all, keyboard)
-        let chinese_punctuation = s:punctuations_all[keyboard]
+    \&& has_key(s:punctuations, keyboard)
+        let chinese_punctuation = s:punctuations[keyboard]
     endif
     return chinese_punctuation
 endfunction
@@ -4826,6 +4867,8 @@ function! s:vimim_reset_before_anything()
     let s:hjkl_m = 0
     let s:hjkl_n = 0
     let s:hjkl_x = 0
+    let s:smart_single_quotes = 1
+    let s:smart_double_quotes = 1
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e  = 0
     let s:pattern_not_found  = 0
@@ -4913,6 +4956,7 @@ function! s:vimim_i_map_off()
     let unmap_list = range(0,9)
     call extend(unmap_list, s:AZ_list)
     call extend(unmap_list, s:valid_keys)
+    call extend(unmap_list, keys(s:evils))
     call extend(unmap_list, keys(s:punctuations))
     call extend(unmap_list, ['<Esc>','<CR>','<BS>','<Space>'])
     for _ in unmap_list
