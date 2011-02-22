@@ -167,12 +167,14 @@ function! s:vimim_dictionary_chinese()
     let s:left  = "【"
     let s:right = "】"
     let s:chinese = {}
+    let s:chinese['chinese']     = ['中文']
+    let s:chinese['datafile']    = ['文件']
+    let s:chinese['directory']   = ['目录','目錄']
+    let s:chinese['database']    = ['词库','詞庫']
     let s:chinese['standard']    = ['标准','標準']
     let s:chinese['cjk']         = ['字库','字庫']
     let s:chinese['auto']        = ['自动','自動']
     let s:chinese['digit']       = ['数码','數碼']
-    let s:chinese['datafile']    = ['词库','詞庫']
-    let s:chinese['directory']   = ['目录','目錄']
     let s:chinese['private']     = ['机密','機密']
     let s:chinese['computer']    = ['电脑','電腦']
     let s:chinese['encoding']    = ['编码','編碼']
@@ -213,7 +215,6 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['myversion']   = ['版本']
     let s:chinese['full_width']  = ['全角']
     let s:chinese['half_width']  = ['半角']
-    let s:chinese['chinese']     = ['中文']
 endfunction
 
 " ---------------------------------------
@@ -328,10 +329,11 @@ endfunction
 " ----------------------------------------------------
 function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
+    let vimimconf = []
     for variable in a:options
         let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
-            call add(s:vimimconf, variable .' = '. eval(variable))
+            call add(vimimconf, variable .' = '. eval(variable))
             exe 'let '. s_variable .'='. variable
             exe 'unlet! ' . variable
         else
@@ -339,6 +341,7 @@ function! s:vimim_set_global_default(options, default)
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
+    call extend(s:vimimconf, vimimconf, 0)
 endfunction
 
 " ============================================= }}}
@@ -348,12 +351,11 @@ let s:VimIM += [" ====  Easter_Egg       ==== {{{"]
 " ------------------------------
 function! s:vimim_egg_vimimegg()
 " ------------------------------
-    let eggs = []
-    call add(eggs, "經典　vim")
-    call add(eggs, "環境　vimim")
-    call add(eggs, "程式　vimimvim")
-    call add(eggs, "幫助　vimimhelp")
-    return map(eggs,  '"VimIM 彩蛋" . s:colon . v:val . " "')
+    let eggs  = ["VimIM 經典 vim       "]
+    let eggs += ["VimIM 環境 vimim     "]
+    let eggs += ["VimIM 程式 vimimvim  "]
+    let eggs += ["VimIM 幫助 vimimhelp "]
+    return eggs
 endfunction
 
 " -------------------------
@@ -371,13 +373,13 @@ endfunction
 function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
-    call add(eggs, "官方网址" . s:colon . s:help[0] . s:space)
-    call add(eggs, "标准字库" . s:colon . s:help[1] . s:space)
-    call add(eggs, "民间词库" . s:colon . s:help[2] . s:space)
-    call add(eggs, "新闻论坛" . s:colon . s:help[3] . s:space)
-    call add(eggs, "最新主页" . s:colon . s:help[4] . s:space)
-    call add(eggs, "最新程式" . s:colon . s:help[5] . s:space)
-    call add(eggs, "错误报告" . s:colon . s:help[6] . s:space)
+    call add(eggs, "官方网址 " . s:help[0] . " ")
+    call add(eggs, "标准字库 " . s:help[1] . " ")
+    call add(eggs, "民间词库 " . s:help[2] . " ")
+    call add(eggs, "新闻论坛 " . s:help[3] . " ")
+    call add(eggs, "最新主页 " . s:help[4] . " ")
+    call add(eggs, "最新程式 " . s:help[5] . " ")
+    call add(eggs, "错误报告 " . s:help[6] . " ")
     return eggs
 endfunction
 
@@ -406,25 +408,28 @@ function! s:vimim_egg_vimim()
         let option = "macunix"
     endif
     let option .= "_" . &term
-    let option = s:vimim_chinese('computer') . s:colon . option
-    call add(eggs, option)
+    let computer = s:vimim_chinese('computer') . s:colon
+    call add(eggs, computer . option)
+    " --------------------------------------------------------------
     let myversion = s:vimim_chinese('myversion') . s:colon
-    let option = myversion  . v:progname . s:space . v:version
-    call add(eggs, option)
     let option = get(split($VimIM), 1)
     if !empty(option)
-        let option = myversion . "vimim.vim" . s:space . option
-        call add(eggs, option)
+        let option = "vimim.vim" . s:space . option
     endif
+    let vim = s:space . s:space . v:progname . s:space . v:version
+    call add(eggs, myversion . option . vim)
+    " --------------------------------------------------------------
     let encoding = s:vimim_chinese('encoding') . s:colon
-    call add(eggs, encoding . &encoding)
-    call add(eggs, encoding . &fileencodings)
+    call add(eggs, encoding . &encoding . s:space . &fileencodings)
+    " --------------------------------------------------------------
     if has("gui_running")
         let option = s:vimim_chinese('font') . s:colon . &guifontwide
         call add(eggs, option)
     endif
+    " --------------------------------------------------------------
     let option = s:vimim_chinese('environment') . s:colon . v:lc_time
     call add(eggs, option)
+    " --------------------------------------------------------------
     let im = s:vimim_statusline()
     let toggle = "i_CTRL-Bslash"
     let buffer = expand("%:p:t")
@@ -437,12 +442,12 @@ function! s:vimim_egg_vimim()
         let statusline = s:left . s:ui.statusline . s:right
         let im = statusline . s:vimim_chinese('onekey')
     endif
-    let toggle .= s:space
     let option = s:vimim_chinese('style') . s:colon . toggle
     call add(eggs, option)
-    let database = s:vimim_chinese('datafile') . s:colon
+    " --------------------------------------------------------------
+    let database = s:vimim_chinese('database') . s:colon
     if s:has_cjk_file > 0
-        let ciku = database . s:vimim_chinese('standard')
+        let ciku  = database . s:vimim_chinese('standard')
         let ciku .= s:vimim_chinese('cjk') . s:colon
         call add(eggs, ciku . s:cjk_file)
     endif
@@ -450,32 +455,30 @@ function! s:vimim_egg_vimim()
         let ciku = database . s:vimim_chinese('private') . database
         call add(eggs, ciku . s:cjk_self_file)
     endif
-    let option = s:backend[s:ui.root][s:ui.im].datafile
-    if !empty(option)
-        let ciku = database
-        if s:ui.root == 'directory'
-            let ciku .= s:vimim_chinese('directory') . ciku
-            call add(eggs, ciku . option)
-        else
-            for frontend in s:ui.frontends
-                let ui_root = get(frontend, 0)
-                let ui_im = get(frontend, 1)
-                let option = s:backend[ui_root][ui_im].datafile
-                call add(eggs, ciku . option)
-            endfor
-        endif
+    if len(s:ui.frontends) > 0
+        for frontend in s:ui.frontends
+            let ui_root = get(frontend, 0)
+            let ui_im = get(frontend, 1)
+            let ciku =  database . s:vimim_chinese(ui_root) . database
+            let datafile = s:backend[ui_root][ui_im].datafile
+            call add(eggs, ciku . datafile)
+        endfor
     endif
+    " --------------------------------------------------------------
     if !empty(im)
         let option = s:vimim_chinese('input') . s:colon . im
         call add(eggs, option)
     endif
+    " --------------------------------------------------------------
     if s:vimim_cloud_sogou == 888
         let sogou = s:vimim_chinese('sogou')
         let option = sogou . s:colon . s:vimim_chinese('cloudatwill')
         call add(eggs, option)
     endif
+    " --------------------------------------------------------------
     let filter = 'v:val . " "'
     call map(eggs, filter)
+    " --------------------------------------------------------------
     call add(eggs, s:vimim_chinese('configure') . s:colon)
     " gather vimim configuration information
     let vimimconf = copy(s:vimimconf)
@@ -483,6 +486,7 @@ function! s:vimim_egg_vimim()
     call map(vimimconf, filter)
     " append vimim configuration to the vimim egg
     call extend(eggs, vimimconf)
+    " --------------------------------------------------------------
     return eggs
 endfunction
 
@@ -1032,10 +1036,6 @@ let s:VimIM += [" ====  for mom and dad  ==== {{{"]
 " ---------------------------------
 function! s:vimim_for_mom_and_dad()
 " ---------------------------------
-    if s:vimim_custom_color == 1
-        let s:vimim_custom_color = 2
-    endif
-    " -----------------------------
     let buffer = expand("%:p:t")
     if buffer =~ 'vimim_mom.txt'
         let s:vimim_digit_4corner = 0
@@ -1062,6 +1062,7 @@ function! s:vimim_for_mom_and_dad()
     set number
     set noswapfile
     let s:vimim_tab_as_onekey = 2
+    let s:vimim_custom_color = 2
     let s:vimim_data_directory = 0
     startinsert!
     " -----------------------------
@@ -4597,10 +4598,11 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma")
-        let s:vimim_digit_4corner = 1
-        let s:vimim_tab_as_onekey = 2
-        let s:vimim_self_directory = "/home/xma/vimim/"
-        let s:vimim_data_directory = "/home/vimim/pinyin/"
+        let g:vimim_digit_4corner = 1
+        let g:vimim_tab_as_onekey = 2
+        let g:vimim_custom_color = 2
+        let g:vimim_self_directory = "/home/xma/vimim/"
+        let g:vimim_data_directory = "/home/vimim/pinyin/"
     endif
 endfunction
 
@@ -5344,8 +5346,8 @@ function! s:vimim_initialize_autocmd()
     endif
 endfunction
 
-sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_debug()
+sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
 sil!call s:vimim_for_mom_and_dad()
