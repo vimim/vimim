@@ -296,6 +296,7 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_digit_4corner")
+    call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_data_file")
@@ -314,7 +315,6 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_statusline")
     call add(G, "g:vimim_onekey_nonstop")
@@ -326,6 +326,8 @@ function! s:vimim_initialize_global()
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = "dynamic"
+    elseif s:vimim_chinese_input_mode == 1
+        let s:vimim_chinese_input_mode = "static"
     endif
 endfunction
 
@@ -1080,18 +1082,17 @@ endfunction
 " ---------------------------------
 function! s:vimim_initialize_skin()
 " ---------------------------------
-    if s:vimim_custom_color == 1
+    if s:vimim_custom_color < 1
         return
-    elseif s:vimim_custom_color < 3
-        if s:vimim_custom_color < 1
-            highlight! PmenuSel NONE
-        elseif s:vimim_custom_color == 2
-            highlight! link PmenuSel Title
-        endif
-        highlight! PmenuSbar  NONE
-        highlight! PmenuThumb NONE
-        highlight! Pmenu      NONE
     endif
+    if s:vimim_custom_color == 1
+        highlight! PmenuSel NONE
+    elseif s:vimim_custom_color == 2
+        highlight! link PmenuSel Title 
+    endif
+    highlight! PmenuSbar  NONE
+    highlight! PmenuThumb NONE
+    highlight! Pmenu      NONE
 endfunction
 
 " ------------------------------------
@@ -4206,7 +4207,7 @@ endfunction
 function! s:vimim_to_cloud_or_not(keyboard, clouds)
 " -------------------------------------------------
     let keyboard = a:keyboard
-    \|| keyboard =~ "[^a-z]"
+    if keyboard =~ "[^a-z]"
     \|| s:vimim_cloud_sogou < 1
     \|| s:has_no_internet > 1
         return 0
