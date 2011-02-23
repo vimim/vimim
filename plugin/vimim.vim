@@ -113,7 +113,7 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     let s:show_me_not = '^vim'
     if !empty(s:vimim_self_directory)
-        let s:show_me_not .= '\|^vv\|^vi'
+        let s:show_me_not .= '\|^vv'
     endif
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:smart_single_quotes = 1
