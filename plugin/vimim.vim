@@ -1123,7 +1123,6 @@ function! g:vimim_search_next()
     \&& english =~ '\w'
     \&& english !~ '\W'
     \&& english !~ '_'
-    \&& english !~ s:show_me_not
     \&& !empty(v:errmsg)
     \&& v:errmsg =~# english
     \&& v:errmsg =~# '^E486: '
@@ -1145,6 +1144,9 @@ function! s:vimim_search_chinese_from_english(keyboard)
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
         sil!call s:vimim_backend_initialization_once()
+        if keyboard =~ s:show_me_not
+            return
+        endif
         let keyboards = s:vimim_slash_search_block(keyboard)
         if len(keyboards) > 0
             for keyboard2 in keyboards
@@ -4204,23 +4206,22 @@ endfunction
 function! s:vimim_to_cloud_or_not(keyboard, clouds)
 " -------------------------------------------------
     let keyboard = a:keyboard
-    let do_cloud = get(a:clouds, 1)
-    if s:has_no_internet < 0 || do_cloud > 0
-        return 1
-    endif
-    if s:has_no_internet > 1
-    \|| s:vimim_cloud_sogou < 1
-    \|| keyboard =~ "[.]"
     \|| keyboard =~ "[^a-z]"
+    \|| s:vimim_cloud_sogou < 1
+    \|| s:has_no_internet > 1
         return 0
     endif
-    let threshold = len(keyboard)
-    if s:chinese_input_mode =~ 'static' && s:ui.im == 'pinyin'
-        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        let threshold = len(pinyins)
+    if s:has_no_internet < 0 
+    \|| s:vimim_cloud_sogou == 1
+    \|| get(a:clouds, 1) > 0
+        return 1
     endif
-    if threshold < s:vimim_cloud_sogou
-        " trigger cloud when zi_number > threshold
+    let threshold_to_trigger_cloud = len(keyboard)
+    if s:chinese_input_mode !~ 'dynamic' && s:ui.im == 'pinyin'
+        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
+        let threshold_to_trigger_cloud = len(pinyins)
+    endif
+    if threshold_to_trigger_cloud < s:vimim_cloud_sogou
         return 0
     endif
     return 1
@@ -4656,9 +4657,8 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
-        let g:vimim_digit_4corner = 1
-    if isdirectory("/hhome/xma")
+" ----------------------------------
+    if isdirectory("/home/xma")
         let g:vimim_tab_as_onekey = 2
         let g:vimim_digit_4corner = 1
         let g:vimim_custom_color = 2
