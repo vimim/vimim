@@ -2249,13 +2249,13 @@ function! s:vimim_popupmenu_list(matched_list)
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
         " -------------------------------------------------
-        if s:hjkl_h % 2 > 0 && keyboard !~# s:show_me_not
+        if s:hjkl_h % 2 > 0 && keyboard !~ s:show_me_not
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_cjk_property_display(ddddd)
         endif
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
-            if !empty(keyboard) && keyboard !~# s:show_me_not
+            if !empty(keyboard) && keyboard !~ s:show_me_not
                 if empty(s:ui.has_dot) && keyboard =~ "['.]"
                     " for vimim classic demo: i.have.a.dream
                     let keyboard_head_length += 1
@@ -2267,7 +2267,7 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         " -------------------------------------------------
         let complete_items = {}
-        if s:vimim_custom_label > 0 && keyboard !~# s:show_me_not
+        if s:vimim_custom_label > 0 && keyboard !~ s:show_me_not
             let fmt = '%2s'
             if s:hjkl_l > 0 && &pumheight < 1
                 let fmt = '%02s'
