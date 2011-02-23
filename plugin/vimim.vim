@@ -101,10 +101,10 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_dictionary_im_keycode()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_scan_backend_embedded_directory()
-    sil!call s:vimim_initialize_private_file()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
+    sil!call s:vimim_scan_private_file()
     sil!call s:vimim_initialize_keycode()
 endfunction
 
@@ -112,6 +112,9 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s:show_me_not = '^vim'
+    if !empty(s:vimim_self_directory)
+        let s:show_me_not .= '\|^vv\|^vi'
+    endif
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -1088,7 +1091,7 @@ function! s:vimim_initialize_skin()
     if s:vimim_custom_color == 1
         highlight! PmenuSel NONE
     elseif s:vimim_custom_color == 2
-        highlight! link PmenuSel Title 
+        highlight! link PmenuSel Title
     endif
     highlight! PmenuSbar  NONE
     highlight! PmenuThumb NONE
@@ -2659,15 +2662,16 @@ endfunction
 let s:VimIM += [" ====  Input_Pinyin     ==== {{{"]
 " =================================================
 
-" -----------------------------------------
-function! s:vimim_initialize_private_file()
-" -----------------------------------------
+" -----------------------------------
+function! s:vimim_scan_private_file()
+" -----------------------------------
     let s:cjk_self_file = 0
     let s:cjk_self_lines = []
     let s:has_cjk_self_file = 0
     let datafile = s:vimim_check_filereadable("vimim.txt")
-    if s:has_cjk_file > 1 || s:ui.im == 'pinyin'
-        let s:show_me_not .= '\|^vv\|^vi'
+    if s:has_cjk_file > 1
+    \|| s:ui.im =~ 'pinyin'
+    \|| s:vimim_cloud_sogou == 1
         if !empty(datafile)
             let s:has_cjk_self_file = 1
             let s:cjk_self_file = datafile
@@ -4206,13 +4210,18 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_to_cloud_or_not(keyboard, clouds)
 " -------------------------------------------------
+    if s:chinese_input_mode =~ 'onekey'
+        if s:has_cjk_file > 0 || s:has_cjk_self_file > 0
+            return 0
+        endif
+    endif
     let keyboard = a:keyboard
     if keyboard =~ "[^a-z]"
     \|| s:vimim_cloud_sogou < 1
     \|| s:has_no_internet > 1
         return 0
     endif
-    if s:has_no_internet < 0 
+    if s:has_no_internet < 0
     \|| s:vimim_cloud_sogou == 1
     \|| get(a:clouds, 1) > 0
         return 1
@@ -4660,9 +4669,9 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma")
-        let g:vimim_tab_as_onekey = 2
         let g:vimim_digit_4corner = 1
         let g:vimim_custom_color = 2
+        let g:vimim_tab_as_onekey = 2
         let g:vimim_self_directory = "/home/xma/vimim/"
         let g:vimim_data_directory = "/home/vimim/pinyin/"
     endif
@@ -5271,11 +5280,13 @@ else
     if s:chinese_input_mode =~ 'onekey'
         if s:has_cjk_file > 0 || s:has_cjk_self_file > 0
             let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
-            if !empty(keyboard_head)
+            if empty(keyboard_head)
+                let results = s:vimim_match_cjk_files(keyboard)
+            else
                 let results = s:vimim_match_cjk_files(keyboard_head)
-                if !empty(results) && empty(s:cjk_results)
-                    return s:vimim_popupmenu_list(results)
-                endif
+            endif
+            if !empty(results) && empty(s:cjk_results)
+                return s:vimim_popupmenu_list(results)
             endif
         endif
     endif
