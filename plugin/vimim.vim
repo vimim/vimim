@@ -417,9 +417,9 @@ function! s:vimim_egg_vimim()
     let myversion = s:vimim_chinese('myversion') . s:colon
     let option = get(split($VimIM), 1)
     if !empty(option)
-        let option = "vimim.vim" . s:space . option
+        let option = "vimim.vim=" . option
     endif
-    let vim = s:space . s:space . v:progname . s:space . v:version
+    let vim = s:space . s:space . v:progname . "=" . v:version
     call add(eggs, myversion . option . vim)
     " --------------------------------------------------------------
     let encoding = s:vimim_chinese('encoding') . s:colon
@@ -442,8 +442,8 @@ function! s:vimim_egg_vimim()
         let toggle = "toggle_with_CTRL-Space"
     elseif s:vimim_tab_as_onekey == 2
         let toggle = "Tab_as_OneKey_NonStop"
-        let statusline = s:left . s:ui.statusline . s:right
-        let im = statusline . s:vimim_chinese('onekey')
+        let im = s:vimim_chinese('onekey') . s:space
+        let im .= s:ui.statusline . s:space . "VimIM"
     endif
     let option = s:vimim_chinese('style') . s:colon . toggle
     call add(eggs, option)
