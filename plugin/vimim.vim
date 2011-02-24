@@ -111,7 +111,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    let s:show_me_not = '^vim'
+    let s:show_me_not = '^vim\>\|^vimim'
     if !empty(s:vimim_self_directory)
         let s:show_me_not .= '\|^vv'
     endif
@@ -306,13 +306,13 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_self_directory")
     call add(G, "g:vimim_cloud_sogou")
-    call add(G, "g:vimim_debug")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_use_cache")
+    call add(G, "g:vimim_debug")
     " -----------------------------------
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
@@ -355,16 +355,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  Easter_Egg       ==== {{{"]
 " =================================================
-
-" ------------------------------
-function! s:vimim_egg_vimimegg()
-" ------------------------------
-    let eggs  = ["VimIM 經典 vim       "]
-    let eggs += ["VimIM 環境 vimim     "]
-    let eggs += ["VimIM 程式 vimimvim  "]
-    let eggs += ["VimIM 幫助 vimimhelp "]
-    return eggs
-endfunction
 
 " -------------------------
 function! s:vimim_egg_vim()
@@ -502,7 +492,7 @@ endfunction
 function! s:vimim_easter_chicken(keyboard)
 " ----------------------------------------
     try
-        return eval("s:vimim_egg_".a:keyboard."()")
+        return eval("s:vimim_egg_" . a:keyboard . "()")
     catch
         call s:debugs('egg::exception=', v:exception)
     endtry
@@ -1723,6 +1713,7 @@ function! g:vimim_pumvisible_dump()
     let line = ""
     let one_line_clipboard = ""
     let saved_position = getpos(".")
+    put=line
     for items in s:popupmenu_list
         if !has_key(items, "menu")
         \|| get(s:keyboard_list,0) =~ s:show_me_not
@@ -2267,7 +2258,11 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         " -------------------------------------------------
         let complete_items = {}
-        if s:vimim_custom_label > 0 && keyboard !~ s:show_me_not
+        if keyboard =~ s:show_me_not
+            let msg = "no label needed for vim easter egg"
+        elseif keyboard =~ '^vi' && s:has_cjk_self_file > 0
+            let msg = "vii vipipal vitruth vimary"
+        elseif s:vimim_custom_label > 0
             let fmt = '%2s'
             if s:hjkl_l > 0 && &pumheight < 1
                 let fmt = '%02s'
@@ -4314,7 +4309,7 @@ function! s:vimim_get_from_http(input)
         endif
     catch
         if s:vimimdebug > 0
-            call s:debugs('sogou::outputquery=', output)
+            call s:debugs('sogou::output=', output)
             call s:debugs('sogou::exception=', v:exception)
         endif
         let output = 0
@@ -5176,7 +5171,7 @@ else
     if s:chinese_input_mode =~ 'onekey'
         if keyboard ==# "vim" || keyboard =~# "^vimim"
             let results = s:vimim_easter_chicken(keyboard)
-            if !empty(results)
+            if !empty(len(results))
                 return s:vimim_popupmenu_list(results)
             endif
         endif
