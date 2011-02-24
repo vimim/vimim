@@ -519,6 +519,16 @@ function! s:vimim_initialize_cjk_file()
     endif
 endfunction
 
+" ------------------------------------
+function! s:build_cjk_one_char_cache()
+" ------------------------------------
+    call s:vimim_load_cjk_file()
+    for _ in s:az_list
+        call s:vimim_cjk_match(_)
+    endfor
+    let s:cjk_results = []
+endfunction
+
 " -------------------------------------------
 function! s:vimim_check_filereadable(default)
 " -------------------------------------------
@@ -817,9 +827,13 @@ function! s:vimim_cjk_match(keyboard)
         let results = sort(results, "s:vimim_sort_on_last")
         let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
-        if len(keyboard) == 1 && !has_key(s:cjk_one_char_cache, keyboard)
-            let s:cjk_one_char_cache[keyboard] = results
-            return results
+        if len(keyboard) == 1
+            if has_key(s:cjk_one_char_cache, keyboard)
+                let msg = "cache is ready in memory"
+            else
+                let s:cjk_one_char_cache[keyboard] = results
+                return results
+            endif
         endif
         let line = match(s:cjk_lines, grep_english)
         if line > -1
@@ -1405,6 +1419,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     let range = line("'>") - line("'<")
     if empty(range)
         sil!call s:vimim_backend_initialization_once()
+        sil!call s:build_cjk_one_char_cache()
         let results = s:vimim_reverse_lookup(keyboard)
         if !empty(results)
             let line = line(".")
