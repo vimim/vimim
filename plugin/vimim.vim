@@ -2015,7 +2015,7 @@ function! s:vimim_get_chinese_im()
         if s:chinese_punctuation > 0
             let punctuation = s:vimim_chinese('full_width')
         endif
-        let s:ui.statusline .= s:plus . punctuation
+        let s:ui.statusline .= s:space . punctuation
     endif
     let statusline = s:left . s:ui.statusline . s:right
     let statusline .= "VimIM"
