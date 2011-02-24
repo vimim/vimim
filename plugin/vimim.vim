@@ -4211,7 +4211,7 @@ endfunction
 function! s:vimim_to_cloud_or_not(keyboard, clouds)
 " -------------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        if s:has_cjk_file > 0 || s:has_cjk_self_file > 0
+        if s:has_cjk_file > 1 && get(a:clouds, 1) < 1
             return 0
         endif
     endif
