@@ -1713,7 +1713,6 @@ function! g:vimim_pumvisible_dump()
     let line = ""
     let one_line_clipboard = ""
     let saved_position = getpos(".")
-    put=line
     for items in s:popupmenu_list
         if !has_key(items, "menu")
         \|| get(s:keyboard_list,0) =~ s:show_me_not
@@ -2217,6 +2216,10 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     let keyboard_head = get(s:keyboard_list,0)
     let s:popupmenu_list = []
+    if keyboard_head =~ '^vi' && s:has_cjk_self_file > 0
+        call insert(matched_list, s:space)
+        call add(matched_list, s:space)
+    endif
     " -------------------------
     for chinese in matched_list
     " -------------------------
