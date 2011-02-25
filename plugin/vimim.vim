@@ -16,7 +16,7 @@ let s:help += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
 let s:help += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
 let s:help += ["http://code.google.com/p/vimim/issues/list"]
 
-let s:VimIM  = [" ====  Introduction     ==== {{{"]
+let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
 "       File: vimim.vim
 "     Author: vimim <vimim@googlegroups.com>
@@ -60,7 +60,7 @@ let s:VimIM  = [" ====  Introduction     ==== {{{"]
 " -----------------------------------------------------------
 
 " ============================================= }}}
-let s:VimIM += [" ====  Initialization   ==== {{{"]
+let s:VimIM += [" ====  initialization   ==== {{{"]
 " =================================================
 if exists("b:loaded_vimim") || &cp || v:version<700
     finish
@@ -289,7 +289,7 @@ function! s:vimim_initialize_keycode()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Customization    ==== {{{"]
+let s:VimIM += [" ====  customization    ==== {{{"]
 " =================================================
 
 " -----------------------------------
@@ -1466,6 +1466,69 @@ function! s:vimim_numberList() range abort
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  debug framework  ==== {{{"]
+" =================================================
+
+" ----------------------------------
+function! s:vimim_initialize_debug()
+" ---------------------------------- todo
+    if isdirectory("/home/xma")
+        let g:vimim_digit_4corner = 1
+        let g:vimim_custom_color = 2
+        let g:vimim_tab_as_onekey = 2
+        let g:vimim_self_directory = "/home/xma/vimim/"
+        let g:vimim_data_directory = "/home/vimim/pinyin/"
+    endif
+endfunction
+
+" -------------------------------------
+function! s:vimim_initialize_frontend()
+" -------------------------------------
+    let s:ui = {}
+    let s:ui.im  = ''
+    let s:ui.root = ''
+    let s:ui.keycode = ''
+    let s:ui.statusline = ''
+    let s:ui.has_dot = 0
+    let s:ui.frontends = []
+endfunction
+
+" ------------------------------------
+function! s:vimim_initialize_backend()
+" ------------------------------------
+    let s:backend = {}
+    let s:backend.directory = {}
+    let s:backend.datafile  = {}
+    let s:backend.cloud     = {}
+endfunction
+
+" ---------------------------------
+function! s:vimim_one_backend_hash()
+" ----------------------------------
+    let one_backend_hash = {}
+    let one_backend_hash.root = 0
+    let one_backend_hash.im = 0
+    let one_backend_hash.name = 0
+    let one_backend_hash.chinese = 0
+    let one_backend_hash.directory = 0
+    let one_backend_hash.lines = []
+    let one_backend_hash.cache = {}
+    let one_backend_hash.keycode = "[0-9a-z'.]"
+    return one_backend_hash
+endfunction
+
+" ----------------------------
+function! s:debugs(key, value)
+" ----------------------------
+    if s:vimim_debug > 0
+        let item  = a:key
+        let item .= '='
+        let item .= a:value
+        call add(g:vimim_debugs, item)
+    endif
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  OneKey           ==== {{{"]
 " =================================================
 
@@ -1781,7 +1844,7 @@ function! s:vimim_popup_word()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Chinese_Mode     ==== {{{"]
+let s:VimIM += [" ====  chinese mode     ==== {{{"]
 " =================================================
 " s:chinese_input_mode='onekey'  => (default) OneKey hjkl
 " s:chinese_input_mode='dynamic' => (default) dynamic mode
@@ -1954,7 +2017,109 @@ function! s:vimim_get_seamless(current_positions)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  User_Interface   ==== {{{"]
+let s:VimIM += [" ====  chinese number   ==== {{{"]
+" =================================================
+
+" ----------------------------------------
+function! s:vimim_dictionary_quantifiers()
+" ----------------------------------------
+    if s:vimim_imode_pinyin < 1
+        return
+    endif
+    let s:quantifiers['1'] = '一壹甲①⒈⑴'
+    let s:quantifiers['2'] = '二贰乙②⒉⑵'
+    let s:quantifiers['3'] = '三叁丙③⒊⑶'
+    let s:quantifiers['4'] = '四肆丁④⒋⑷'
+    let s:quantifiers['5'] = '五伍戊⑤⒌⑸'
+    let s:quantifiers['6'] = '六陆己⑥⒍⑹'
+    let s:quantifiers['7'] = '七柒庚⑦⒎⑺'
+    let s:quantifiers['8'] = '八捌辛⑧⒏⑻'
+    let s:quantifiers['9'] = '九玖壬⑨⒐⑼'
+    let s:quantifiers['0'] = '〇零癸⑩⒑⑽十拾'
+    let s:quantifiers['a'] = '秒'
+    let s:quantifiers['b'] = '步百佰把包杯本笔部班'
+    let s:quantifiers['c'] = '厘次餐场串处床'
+    let s:quantifiers['d'] = '第度点袋道滴碟日顶栋堆对朵堵顿'
+    let s:quantifiers['e'] = '亿'
+    let s:quantifiers['f'] = '分份发封付副幅峰方服'
+    let s:quantifiers['g'] = '个根股管'
+    let s:quantifiers['h'] = '时毫行盒壶户回'
+    let s:quantifiers['i'] = '毫'
+    let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
+    let s:quantifiers['k'] = '克口块棵颗捆孔'
+    let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
+    let s:quantifiers['m'] = '月米名枚面门'
+    let s:quantifiers['n'] = '年'
+    let s:quantifiers['o'] = '度'
+    let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
+    let s:quantifiers['q'] = '千仟群'
+    let s:quantifiers['r'] = '日'
+    let s:quantifiers['s'] = '十拾时升艘扇首双所束手秒'
+    let s:quantifiers['t'] = '吨条头通堂趟台套桶筒贴'
+    let s:quantifiers['u'] = '微'
+    let s:quantifiers['w'] = '万位味碗窝'
+    let s:quantifiers['x'] = '升席些项'
+    let s:quantifiers['y'] = '年亿叶月'
+    let s:quantifiers['z'] = '种只张株支枝盏座阵桩尊则站幢宗兆'
+endfunction
+
+" ----------------------------------------------
+function! s:vimim_imode_number(keyboard, prefix)
+" ----------------------------------------------
+    " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql
+    if empty(s:vimim_imode_pinyin)
+        return []
+    endif
+    let keyboard = a:keyboard
+    if keyboard[0:1] ==# 'ii'
+        let keyboard = 'I' . strpart(keyboard,2)
+    endif
+    let ii_keyboard = keyboard
+    let keyboard = strpart(keyboard,1)
+    if keyboard !~ '^\d\+' && keyboard !~# '^[ds]'
+    \&& len(substitute(keyboard,'\d','','')) > 1
+        return []
+    endif
+    let digit_alpha = keyboard
+    if keyboard =~# '^\d*\l\{1}$'
+        let digit_alpha = keyboard[:-2]
+    endif
+    let keyboards = split(digit_alpha, '\ze')
+    let i = ii_keyboard[:0]
+    let number = ""
+    for char in keyboards
+        if has_key(s:quantifiers, char)
+            let quantifiers = split(s:quantifiers[char], '\zs')
+            if i ==# 'i'
+                let char = get(quantifiers, 0)
+            elseif i ==# 'I'
+                let char = get(quantifiers, 1)
+            endif
+        endif
+        let number .= char
+    endfor
+    if empty(number)
+        return []
+    endif
+    let numbers = [number]
+    let last_char = keyboard[-1:]
+    if !empty(last_char) && has_key(s:quantifiers, last_char)
+        let quantifier = s:quantifiers[last_char]
+        let quantifiers = split(quantifier, '\zs')
+        if keyboard =~# '^[ds]\=\d*\l\{1}$'
+            if keyboard =~# '^[ds]'
+                let number = strpart(number,0,len(number)-s:multibyte)
+            endif
+            let numbers = map(copy(quantifiers), 'number . v:val')
+        elseif keyboard =~# '^\d*$' && len(keyboards)<2 && i ==# 'i'
+            let numbers = quantifiers
+        endif
+    endif
+    return numbers
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
 " --------------------------------
@@ -2228,7 +2393,7 @@ function! g:vimim_backspace()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Omni_Popup_Menu  ==== {{{"]
+let s:VimIM += [" ====  omni popup menu  ==== {{{"]
 " =================================================
 
 " --------------------------------------------
@@ -2388,7 +2553,7 @@ function! s:vimim_pageup_pagedown(matched_list)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Punctuations     ==== {{{"]
+let s:VimIM += [" ====  punctuations     ==== {{{"]
 " =================================================
 
 " ----------------------------------------
@@ -2590,109 +2755,99 @@ function! <SID>vimim_punctuations_navigation(key)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Chinese_Number   ==== {{{"]
+let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " =================================================
 
-" ----------------------------------------
-function! s:vimim_dictionary_quantifiers()
-" ----------------------------------------
-    if s:vimim_imode_pinyin < 1
+" -----------------------------------
+function! s:vimim_plugins_fix_start()
+" -----------------------------------
+    if s:vimim_tab_as_onekey == 2
         return
     endif
-    let s:quantifiers['1'] = '一壹甲①⒈⑴'
-    let s:quantifiers['2'] = '二贰乙②⒉⑵'
-    let s:quantifiers['3'] = '三叁丙③⒊⑶'
-    let s:quantifiers['4'] = '四肆丁④⒋⑷'
-    let s:quantifiers['5'] = '五伍戊⑤⒌⑸'
-    let s:quantifiers['6'] = '六陆己⑥⒍⑹'
-    let s:quantifiers['7'] = '七柒庚⑦⒎⑺'
-    let s:quantifiers['8'] = '八捌辛⑧⒏⑻'
-    let s:quantifiers['9'] = '九玖壬⑨⒐⑼'
-    let s:quantifiers['0'] = '〇零癸⑩⒑⑽十拾'
-    let s:quantifiers['a'] = '秒'
-    let s:quantifiers['b'] = '步百佰把包杯本笔部班'
-    let s:quantifiers['c'] = '厘次餐场串处床'
-    let s:quantifiers['d'] = '第度点袋道滴碟日顶栋堆对朵堵顿'
-    let s:quantifiers['e'] = '亿'
-    let s:quantifiers['f'] = '分份发封付副幅峰方服'
-    let s:quantifiers['g'] = '个根股管'
-    let s:quantifiers['h'] = '时毫行盒壶户回'
-    let s:quantifiers['i'] = '毫'
-    let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
-    let s:quantifiers['k'] = '克口块棵颗捆孔'
-    let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
-    let s:quantifiers['m'] = '月米名枚面门'
-    let s:quantifiers['n'] = '年'
-    let s:quantifiers['o'] = '度'
-    let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
-    let s:quantifiers['q'] = '千仟群'
-    let s:quantifiers['r'] = '日'
-    let s:quantifiers['s'] = '十拾时升艘扇首双所束手秒'
-    let s:quantifiers['t'] = '吨条头通堂趟台套桶筒贴'
-    let s:quantifiers['u'] = '微'
-    let s:quantifiers['w'] = '万位味碗窝'
-    let s:quantifiers['x'] = '升席些项'
-    let s:quantifiers['y'] = '年亿叶月'
-    let s:quantifiers['z'] = '种只张株支枝盏座阵桩尊则站幢宗兆'
+    " -------------------------------
+    if !exists('s:acp_sid')
+        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+        if !empty(s:acp_sid)
+            AcpDisable
+        endif
+    endif
+    if !exists('s:supertab_sid')
+        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    endif
+    if !exists('s:word_complete')
+        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
+        if !empty(s:word_complete)
+            call EndWordComplete()
+        endif
+    endif
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_imode_number(keyboard, prefix)
-" ----------------------------------------------
-    " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql
-    if empty(s:vimim_imode_pinyin)
-        return []
+" ----------------------------------
+function! s:vimim_getsid(scriptname)
+" ----------------------------------
+" frederick.zou fixed these conflicting plugins:
+" supertab      http://www.vim.org/scripts/script.php?script_id=1643
+" autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
+" word_complete http://www.vim.org/scripts/script.php?script_id=73
+" ------------------------------------------------------------------
+    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
+    let l:scriptname = a:scriptname
+    " get output of ":scriptnames" in scriptnames_output variable
+    if empty(s:scriptnames_output)
+        let saved_shellslash=&shellslash
+        set shellslash
+        redir => s:scriptnames_output
+        silent scriptnames
+        redir END
+        let &shellslash = saved_shellslash
     endif
-    let keyboard = a:keyboard
-    if keyboard[0:1] ==# 'ii'
-        let keyboard = 'I' . strpart(keyboard,2)
-    endif
-    let ii_keyboard = keyboard
-    let keyboard = strpart(keyboard,1)
-    if keyboard !~ '^\d\+' && keyboard !~# '^[ds]'
-    \&& len(substitute(keyboard,'\d','','')) > 1
-        return []
-    endif
-    let digit_alpha = keyboard
-    if keyboard =~# '^\d*\l\{1}$'
-        let digit_alpha = keyboard[:-2]
-    endif
-    let keyboards = split(digit_alpha, '\ze')
-    let i = ii_keyboard[:0]
-    let number = ""
-    for char in keyboards
-        if has_key(s:quantifiers, char)
-            let quantifiers = split(s:quantifiers[char], '\zs')
-            if i ==# 'i'
-                let char = get(quantifiers, 0)
-            elseif i ==# 'I'
-                let char = get(quantifiers, 1)
-            endif
+    for line in split(s:scriptnames_output, "\n")
+        " only do non-blank lines
+        if line =~ l:scriptname
+            " get the first number in the line.
+            let nr = matchstr(line, '\d\+')
+            return nr
         endif
-        let number .= char
     endfor
-    if empty(number)
-        return []
+    return 0
+endfunction
+
+" ----------------------------------
+function! s:vimim_plugins_fix_stop()
+" ----------------------------------
+    if s:vimim_tab_as_onekey == 2
+        return
     endif
-    let numbers = [number]
-    let last_char = keyboard[-1:]
-    if !empty(last_char) && has_key(s:quantifiers, last_char)
-        let quantifier = s:quantifiers[last_char]
-        let quantifiers = split(quantifier, '\zs')
-        if keyboard =~# '^[ds]\=\d*\l\{1}$'
-            if keyboard =~# '^[ds]'
-                let number = strpart(number,0,len(number)-s:multibyte)
-            endif
-            let numbers = map(copy(quantifiers), 'number . v:val')
-        elseif keyboard =~# '^\d*$' && len(keyboards)<2 && i ==# 'i'
-            let numbers = quantifiers
+    " ------------------------------
+    if !empty(s:acp_sid)
+        let ACPMappingDrivenkeys = [
+            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
+            \ '<','>','/','\','<Space>','<BS>','<CR>',]
+        call extend(ACPMappingDrivenkeys, range(10))
+        call extend(ACPMappingDrivenkeys, s:Az_list)
+        for key in ACPMappingDrivenkeys
+            exe printf('iu <silent> %s', key)
+            exe printf('im <silent> %s
+            \ %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp_sid)
+        endfor
+        AcpEnable
+    endif
+    " -------------------------------------------------------------
+    if !empty(s:supertab_sid)
+        let tab = s:supertab_sid
+        if g:SuperTabMappingForward =~ '^<tab>$'
+            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
+        endif
+        if g:SuperTabMappingBackward =~ '^<s-tab>$'
+            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
+            " inoremap <silent> <Tab>   <C-N>
+            " inoremap <silent> <S-Tab> <C-P>
         endif
     endif
-    return numbers
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Input_Pinyin     ==== {{{"]
+let s:VimIM += [" ====  input pinyin     ==== {{{"]
 " =================================================
 
 " -----------------------------------
@@ -2859,7 +3014,7 @@ function! s:vimim_create_quanpin_table()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Input_Shuangpin  ==== {{{"]
+let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " =================================================
 
 " --------------------------------------
@@ -3189,7 +3344,7 @@ function! s:vimim_shuangpin_flypy(rule)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Input_Misc       ==== {{{"]
+let s:VimIM += [" ====  input misc       ==== {{{"]
 " =================================================
 
 " -------------------------------------
@@ -3354,7 +3509,7 @@ function! s:progressbar.restore()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Backend==Unicode ==== {{{"]
+let s:VimIM += [" ====  backend unicode  ==== {{{"]
 " =================================================
 
 " -------------------------------------
@@ -3529,7 +3684,7 @@ function! s:vimim_cjk_property_display(ddddd)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Backend==File    ==== {{{"]
+let s:VimIM += [" ====  backend file     ==== {{{"]
 " =================================================
 
 " ------------------------------------------------
@@ -3911,7 +4066,7 @@ function! s:vimim_get_im_from_buffer_name(filename)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Backend==Dir     ==== {{{"]
+let s:VimIM += [" ====  backend dir      ==== {{{"]
 " =================================================
 
 " -------------------------------------------------
@@ -4078,7 +4233,7 @@ function! s:vimim_remove_duplication(chinese)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Backend=>Cloud   ==== {{{"]
+let s:VimIM += [" ====  backend cloud    ==== {{{"]
 " =================================================
 
 " ------------------------------------
@@ -4359,7 +4514,7 @@ function! s:vimim_get_from_http(input)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Backend=>myCloud ==== {{{"]
+let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
 
 " --------------------------------------
@@ -4698,162 +4853,7 @@ function! s:vimim_rot13(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
-" =================================================
-
-" ----------------------------------
-function! s:vimim_initialize_debug()
-" ---------------------------------- todo
-    if isdirectory("/home/xma")
-        let g:vimim_digit_4corner = 1
-        let g:vimim_custom_color = 2
-        let g:vimim_tab_as_onekey = 2
-        let g:vimim_self_directory = "/home/xma/vimim/"
-        let g:vimim_data_directory = "/home/vimim/pinyin/"
-    endif
-endfunction
-
-" -------------------------------------
-function! s:vimim_initialize_frontend()
-" -------------------------------------
-    let s:ui = {}
-    let s:ui.im  = ''
-    let s:ui.root = ''
-    let s:ui.keycode = ''
-    let s:ui.statusline = ''
-    let s:ui.has_dot = 0
-    let s:ui.frontends = []
-endfunction
-
-" ------------------------------------
-function! s:vimim_initialize_backend()
-" ------------------------------------
-    let s:backend = {}
-    let s:backend.directory = {}
-    let s:backend.datafile  = {}
-    let s:backend.cloud     = {}
-endfunction
-
-" ---------------------------------
-function! s:vimim_one_backend_hash()
-" ----------------------------------
-    let one_backend_hash = {}
-    let one_backend_hash.root = 0
-    let one_backend_hash.im = 0
-    let one_backend_hash.name = 0
-    let one_backend_hash.chinese = 0
-    let one_backend_hash.directory = 0
-    let one_backend_hash.lines = []
-    let one_backend_hash.cache = {}
-    let one_backend_hash.keycode = "[0-9a-z'.]"
-    return one_backend_hash
-endfunction
-
-" ----------------------------
-function! s:debugs(key, value)
-" ----------------------------
-    if s:vimim_debug > 0
-        let item  = a:key
-        let item .= '='
-        let item .= a:value
-        call add(g:vimim_debugs, item)
-    endif
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  Plugin_Conflict  ==== {{{"]
-" =================================================
-
-" -----------------------------------
-function! s:vimim_plugins_fix_start()
-" -----------------------------------
-    if s:vimim_tab_as_onekey == 2
-        return
-    endif
-    " -------------------------------
-    if !exists('s:acp_sid')
-        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
-        if !empty(s:acp_sid)
-            AcpDisable
-        endif
-    endif
-    if !exists('s:supertab_sid')
-        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
-    endif
-    if !exists('s:word_complete')
-        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
-        if !empty(s:word_complete)
-            call EndWordComplete()
-        endif
-    endif
-endfunction
-
-" ----------------------------------
-function! s:vimim_getsid(scriptname)
-" ----------------------------------
-" frederick.zou fixed these conflicting plugins:
-" supertab      http://www.vim.org/scripts/script.php?script_id=1643
-" autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
-" word_complete http://www.vim.org/scripts/script.php?script_id=73
-" ------------------------------------------------------------------
-    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
-    let l:scriptname = a:scriptname
-    " get output of ":scriptnames" in scriptnames_output variable
-    if empty(s:scriptnames_output)
-        let saved_shellslash=&shellslash
-        set shellslash
-        redir => s:scriptnames_output
-        silent scriptnames
-        redir END
-        let &shellslash = saved_shellslash
-    endif
-    for line in split(s:scriptnames_output, "\n")
-        " only do non-blank lines
-        if line =~ l:scriptname
-            " get the first number in the line.
-            let nr = matchstr(line, '\d\+')
-            return nr
-        endif
-    endfor
-    return 0
-endfunction
-
-" ----------------------------------
-function! s:vimim_plugins_fix_stop()
-" ----------------------------------
-    if s:vimim_tab_as_onekey == 2
-        return
-    endif
-    " ------------------------------
-    if !empty(s:acp_sid)
-        let ACPMappingDrivenkeys = [
-            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
-            \ '<','>','/','\','<Space>','<BS>','<CR>',]
-        call extend(ACPMappingDrivenkeys, range(10))
-        call extend(ACPMappingDrivenkeys, s:Az_list)
-        for key in ACPMappingDrivenkeys
-            exe printf('iu <silent> %s', key)
-            exe printf('im <silent> %s
-            \ %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp_sid)
-        endfor
-        AcpEnable
-    endif
-    " -------------------------------------------------------------
-    if !empty(s:supertab_sid)
-        let tab = s:supertab_sid
-        if g:SuperTabMappingForward =~ '^<tab>$'
-            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
-        endif
-        if g:SuperTabMappingBackward =~ '^<s-tab>$'
-            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
-            " inoremap <silent> <Tab>   <C-N>
-            " inoremap <silent> <S-Tab> <C-P>
-        endif
-    endif
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  Core_Workflow    ==== {{{"]
+let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
 " --------------------------------------
@@ -5054,7 +5054,7 @@ function! s:vimim_helper_mapping_on()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Core_Engine      ==== {{{"]
+let s:VimIM += [" ====  core engine      ==== {{{"]
 " =================================================
 
 " -------------------------------------------------
@@ -5392,7 +5392,7 @@ function! s:vimim_get_valid_keyboard(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Core_Driver      ==== {{{"]
+let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
 " ------------------------------------
