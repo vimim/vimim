@@ -1276,7 +1276,7 @@ endfunction
 " -----------------------------------
 function! g:vimim_search_pumvisible()
 " -----------------------------------
-    let word = s:vimim_popup_word()
+    let word = s:vimim_onekey_popup_word()
     let @/ = word
     if empty(word)
         let @/ = @_
@@ -1826,9 +1826,22 @@ function! g:vimim_pumvisible_dump()
     return ""
 endfunction
 
-" ----------------------------
-function! s:vimim_popup_word()
-" ----------------------------
+" ------------------------------------
+function! g:vimim_pumvisible_to_clip()
+" ------------------------------------
+    let chinese = s:vimim_onekey_popup_word()
+    if !empty(chinese)
+        if has("gui_running") && has("win32")
+            let @+ = chinese
+        endif
+    endif
+    call s:vimim_stop()
+    sil!exe "sil!return '\<Esc>'"
+endfunction
+
+" -----------------------------------
+function! s:vimim_onekey_popup_word()
+" -----------------------------------
     if pumvisible()
         return ""
     endif
@@ -2708,7 +2721,7 @@ function! s:vimim_punctuation_navigation_on()
     endif
     let punctuation = "[]-="
     if s:chinese_input_mode =~ 'onekey'
-        let punctuation .= ".,/?"
+        let punctuation .= ".,/?;"
     endif
     let punctuations = split(punctuation,'\zs')
     for char in s:valid_keys
@@ -2728,7 +2741,10 @@ function! <SID>vimim_punctuations_navigation(key)
 " -----------------------------------------------
     let hjkl = a:key
     if pumvisible()
-        if a:key =~ "[][]"
+        if a:key =~ ";"
+            let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
+        elseif a:key =~ "[][]"
             let hjkl  = s:vimim_square_bracket(a:key)
         elseif a:key =~ "[/?]"
             let hjkl  = s:vimim_menu_search(a:key)
@@ -4963,21 +4979,9 @@ function! g:vimim_nonstop_after_insert()
         else
             let s:keyboard_shuangpin = 0
         endif
-        call s:vimim_pumvisible_to_clip()
         call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ------------------------------------
-function! s:vimim_pumvisible_to_clip()
-" ------------------------------------
-    let chinese = s:vimim_popup_word()
-    if !empty(chinese)
-        if has("gui_running") && has("win32")
-            let @+ = chinese
-        endif
-    endif
 endfunction
 
 " -----------------
