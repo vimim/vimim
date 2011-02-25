@@ -449,9 +449,9 @@ function! s:vimim_egg_vimim()
         let ciku .= s:vimim_chinese('cjk') . s:colon
         call add(eggs, ciku . s:cjk_file)
     endif
-    if s:has_cjk_self_file > 0
+    if s:has_self_file > 0
         let ciku = database . s:vimim_chinese('private') . database
-        call add(eggs, ciku . s:cjk_self_file)
+        call add(eggs, ciku . s:self_file)
     endif
     if len(s:ui.frontends) > 0
         for frontend in s:ui.frontends
@@ -508,10 +508,10 @@ function! s:vimim_initialize_cjk_file()
 " -------------------------------------
     let s:has_slash_grep = 0
     let s:has_cjk_file = 0
-    let s:cjk_one_char_cache = {}
-    let s:cjk_results = []
     let s:cjk_file = 0
     let s:cjk_lines = []
+    let s:cjk_results = []
+    let s:cjk_one_char_cache = {}
     let datafile = "vimim.cjk.txt"
     let datafile = s:vimim_check_filereadable(datafile)
     if !empty(datafile)
@@ -585,7 +585,7 @@ function! s:vimim_cjk_english_match(keyboard)
                 let s:cjk_results = extend(results, cjk_results, 0)
             endif
             " english 'arrow' has an entry in private datafile
-            if s:has_cjk_self_file > 0
+            if s:has_self_file > 0
                 let private_results = s:vimim_cjk_private_match(keyboard)
                 if !empty(private_results)
                     call extend(results, private_results)
@@ -711,7 +711,7 @@ function! s:vimim_match_cjk_files(keyboard)
     if s:has_cjk_file > 0
         let results = s:vimim_cjk_match(keyboard)
     endif
-    if s:has_cjk_self_file > 0
+    if s:has_self_file > 0
         let private_results = s:vimim_cjk_private_match(keyboard)
         if !empty(private_results)
             call extend(results, private_results)
@@ -725,7 +725,7 @@ endfunction
 function! s:vimim_cjk_private_match(keyboard)
 " -------------------------------------------
     if empty(s:cjk_self_lines)
-        let s:cjk_self_lines = s:vimim_readfile(s:cjk_self_file)
+        let s:cjk_self_lines = s:vimim_readfile(s:self_file)
     endif
     let keyboard = a:keyboard
     let results = []
@@ -750,7 +750,8 @@ function! s:vimim_cjk_match(keyboard)
     if empty(s:has_cjk_file)
         return []
     endif
-    if len(keyboard) == 1 && has_key(s:cjk_one_char_cache, keyboard)
+    if len(keyboard) == 1
+    \&& has_key(s:cjk_one_char_cache, keyboard)
         let s:has_cjk_match = 1
         if keyboard =~ '\d'
             let s:cjk_filter = keyboard
@@ -761,6 +762,7 @@ function! s:vimim_cjk_match(keyboard)
     let dddddd = 6 - 2 * s:vimim_digit_4corner
     let grep_english = '[ 0-9]' . keyboard . '[ 0-9]'
     let grep_frequency = '.*' . '\s\d\+$'
+    " ------------------------------------------------------
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:cjk_filter))
             " [sample] pinyin with tone: huan2hai2
@@ -796,6 +798,7 @@ function! s:vimim_cjk_match(keyboard)
                 let s:cjk_filter = digit
             endif
         endif
+    " ------------------------------------------------------
     elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
         if len(keyboard) == 1 && keyboard !~ '[ai]'
             " [sample] one-char-list by frequency y72/yue72 l72/le72 for 乐
@@ -820,7 +823,7 @@ function! s:vimim_cjk_match(keyboard)
         call map(results, filter)
         if len(keyboard) == 1
             if has_key(s:cjk_one_char_cache, keyboard)
-                let msg = "cache is ready in memory"
+                let msg = "cache is available in memory"
             else
                 let s:cjk_one_char_cache[keyboard] = results
                 return results
@@ -1339,17 +1342,15 @@ endfunction
 " -------------------------------
 function! s:vimim_load_cjk_file()
 " -------------------------------
-    if empty(s:cjk_lines)
-        if s:has_cjk_file > 0
-            let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-            if len(s:cjk_lines) < 20902
-                let s:cjk_lines = []
-                let s:has_cjk_file = 0
-            elseif len(s:cjk_lines) == 20902
-                let msg = 'standard cjk'
-            elseif empty(s:cjk_one_char_cache)
-               call s:build_cjk_one_char_cache()
-            endif
+    if empty(s:cjk_lines) && s:has_cjk_file > 0
+        let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+        if len(s:cjk_lines) < 20902
+            let s:cjk_lines = []
+            let s:has_cjk_file = 0
+        elseif len(s:cjk_lines) == 20902
+            let msg = 'standard cjk'
+        elseif empty(s:cjk_one_char_cache)
+            call s:build_cjk_one_char_cache()
         endif
     endif
 endfunction
@@ -1357,15 +1358,10 @@ endfunction
 " ------------------------------------
 function! s:build_cjk_one_char_cache()
 " ------------------------------------
-    if s:has_cjk_file < 2 && s:ui.im != 'pinyin'
-        return
-    endif
-    " --------------------------------
     " call s:vimim_load_cjk_file()
     " for _ in s:az_list
     "     call s:vimim_cjk_match(_)
     " endfor
-    " return
     " --------------------------------
     if len(s:cjk_lines) > 20902
         for line in s:cjk_lines[20902: -1]
@@ -1380,40 +1376,6 @@ function! s:build_cjk_one_char_cache()
         endfor
         return
     endif
-    " --------------------------------
-    for line in s:cjk_lines
-        let columns = split(line)
-        let frequency = get(columns, -1)
-        if frequency =~ '\l' || frequency > 3000
-            continue
-        endif
-        let chinese = get(columns,0)
-        let chinese_frequency = chinese . ' ' . frequency
-        let results = [chinese_frequency]
-        let pinyin = get(columns, 3)
-        let pinyins = split(pinyin, '\d')
-        for ldld in pinyins
-            let char = ldld[0:0]
-            if has_key(s:cjk_one_char_cache, char)
-                let results = s:cjk_one_char_cache[char]
-                if get(results,-1) != chinese_frequency
-                    call add(results, chinese_frequency)
-                endif
-            endif
-            let s:cjk_one_char_cache[char] = results
-        endfor
-    endfor
-    " --------------------------------
-    for char in keys(s:cjk_one_char_cache)
-        let results = s:cjk_one_char_cache[char]
-        let results = sort(results, "s:vimim_sort_on_last")
-        let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
-        call map(results, filter)
-        let s:cjk_one_char_cache[char] = results
-    endfor
-    " --------------------------------
-    let s:has_cjk_match = 0
-    let s:cjk_results = []
 endfunction
 
 " ---------------------------------------------
@@ -2287,7 +2249,7 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     let keyboard_head = get(s:keyboard_list,0)
     let s:popupmenu_list = []
-    if keyboard_head =~ '^vi' && s:has_cjk_self_file > 0
+    if keyboard_head =~ '^vi' && s:has_self_file > 0
         call insert(matched_list, s:space)
         call add(matched_list, s:space)
     endif
@@ -2334,7 +2296,7 @@ function! s:vimim_popupmenu_list(matched_list)
         let complete_items = {}
         if keyboard =~ s:show_me_not
             let msg = "no label needed for vim easter egg"
-        elseif keyboard =~ '^vi' && s:has_cjk_self_file > 0
+        elseif keyboard =~ '^vi' && s:has_self_file > 0
             let msg = "vii vipipal vitruth vimary"
         elseif s:vimim_custom_label > 0
             let fmt = '%2s'
@@ -2734,17 +2696,17 @@ let s:VimIM += [" ====  Input_Pinyin     ==== {{{"]
 " -----------------------------------
 function! s:vimim_scan_private_file()
 " -----------------------------------
-    let s:cjk_self_file = 0
+    let s:has_self_file = 0
+    let s:self_file = 0
     let s:cjk_self_lines = []
-    let s:has_cjk_self_file = 0
     let datafile = "vimim.txt"
     let datafile = s:vimim_check_filereadable(datafile)
     if s:has_cjk_file > 1
     \|| s:ui.im =~ 'pinyin'
     \|| s:vimim_cloud_sogou == 1
         if !empty(datafile)
-            let s:has_cjk_self_file = 1
-            let s:cjk_self_file = datafile
+            let s:has_self_file = 1
+            let s:self_file = datafile
         endif
     endif
 endfunction
@@ -3249,7 +3211,8 @@ endfunction
 " -----------------------------------------
 function! s:vimim_set_special_im_property()
 " -----------------------------------------
-    if  s:ui.im == 'pinyin' || s:has_cjk_file > 0
+    if  s:ui.im == 'pinyin'
+    \|| s:has_cjk_file > 0
         let s:quanpin_table = s:vimim_create_quanpin_table()
     endif
     " -------------------------------------
@@ -3268,7 +3231,8 @@ function! s:vimim_set_special_im_property()
         let s:ui.has_dot = 2  " has_apostrophe_in_datafile
     endif
     " -------------------------------------
-    if s:ui.im == 'phonetic' || s:ui.im == 'array30'
+    if s:ui.im == 'phonetic'
+    \|| s:ui.im == 'array30'
         let s:vimim_chinese_input_mode = "static"
     endif
 endfunction
@@ -5348,7 +5312,7 @@ else
 
     " [cjk] swiss-army cjk database is the first-class citizen
     if s:chinese_input_mode =~ 'onekey'
-        if s:has_cjk_file > 0 || s:has_cjk_self_file > 0
+        if s:has_cjk_file > 0 || s:has_self_file > 0
             let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
             if empty(keyboard_head)
                 let results = s:vimim_match_cjk_files(keyboard)
