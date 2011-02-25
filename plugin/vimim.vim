@@ -743,56 +743,6 @@ function! s:vimim_cjk_private_match(keyboard)
    return results
 endfunction
 
-" ------------------------------------
-function! s:build_cjk_one_char_cache()
-" ------------------------------------
-    if s:has_cjk_file < 2 && s:ui.im != 'pinyin'
-        return
-    endif
-    if len(s:cjk_one_char_cache) > 26/2
-        return
-    endif
-    call s:vimim_load_cjk_file()
-    " --------------------------------
-    " for _ in s:az_list
-    "     call s:vimim_cjk_match(_)
-    " endfor
-    " --------------------------------
-    for line in s:cjk_lines
-        let columns = split(line)
-        let frequency = get(columns, -1)
-        if frequency =~ '\l' || frequency > 3000
-            continue
-        endif
-        let chinese = get(columns,0)
-        let chinese_frequency = chinese . ' ' . frequency
-        let results = [chinese_frequency]
-        let pinyin = get(columns, 3)
-        let pinyins = split(pinyin, '\d')
-        for ldld in pinyins
-            let char = ldld[0:0]
-            if has_key(s:cjk_one_char_cache, char)
-                let results = s:cjk_one_char_cache[char]
-                if get(results,-1) != chinese_frequency
-                    call add(results, chinese_frequency)
-                endif
-            endif
-            let s:cjk_one_char_cache[char] = results
-        endfor
-    endfor
-    " --------------------------------
-    for char in keys(s:cjk_one_char_cache)
-        let results = s:cjk_one_char_cache[char]
-        let results = sort(results, "s:vimim_sort_on_last")
-        let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
-        call map(results, filter)
-        let s:cjk_one_char_cache[char] = results
-    endfor
-    " --------------------------------
-    let s:has_cjk_match = 0
-    let s:cjk_results = []
-endfunction
-
 " -----------------------------------
 function! s:vimim_cjk_match(keyboard)
 " -----------------------------------
@@ -1392,12 +1342,78 @@ function! s:vimim_load_cjk_file()
     if empty(s:cjk_lines)
         if s:has_cjk_file > 0
             let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-            if len(s:cjk_lines) != 20902
+            if len(s:cjk_lines) < 20902
                 let s:cjk_lines = []
                 let s:has_cjk_file = 0
+            elseif len(s:cjk_lines) == 20902
+                let msg = 'standard cjk'
+            elseif empty(s:cjk_one_char_cache)
+               call s:build_cjk_one_char_cache()
             endif
         endif
     endif
+endfunction
+
+" ------------------------------------
+function! s:build_cjk_one_char_cache()
+" ------------------------------------
+    if s:has_cjk_file < 2 && s:ui.im != 'pinyin'
+        return
+    endif
+    " --------------------------------
+    " call s:vimim_load_cjk_file()
+    " for _ in s:az_list
+    "     call s:vimim_cjk_match(_)
+    " endfor
+    " return
+    " --------------------------------
+    if len(s:cjk_lines) > 20902
+        for line in s:cjk_lines[20902: -1]
+            let lines = split(line)
+            let char = get(lines,0)
+            let right = get(lines,1)
+            let results = split(right, '\zs')
+            if has_key(s:cjk_one_char_cache, char)
+                call extend(results, s:cjk_one_char_cache[char])
+            endif
+            let s:cjk_one_char_cache[char] = results
+        endfor
+        return
+    endif
+    " --------------------------------
+    for line in s:cjk_lines
+        let columns = split(line)
+        let frequency = get(columns, -1)
+        if frequency =~ '\l' || frequency > 3000
+            continue
+        endif
+        let chinese = get(columns,0)
+        let chinese_frequency = chinese . ' ' . frequency
+        let results = [chinese_frequency]
+        let pinyin = get(columns, 3)
+        let pinyins = split(pinyin, '\d')
+        for ldld in pinyins
+            let char = ldld[0:0]
+            if has_key(s:cjk_one_char_cache, char)
+                let results = s:cjk_one_char_cache[char]
+                if get(results,-1) != chinese_frequency
+                    call add(results, chinese_frequency)
+                endif
+            endif
+            let s:cjk_one_char_cache[char] = results
+        endfor
+    endfor
+    " --------------------------------
+    for char in keys(s:cjk_one_char_cache)
+        let results = s:cjk_one_char_cache[char]
+        let results = sort(results, "s:vimim_sort_on_last")
+        let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
+        call map(results, filter)
+        let s:cjk_one_char_cache[char] = results
+    endfor
+    " --------------------------------
+    let s:has_cjk_match = 0
+    let s:cjk_results = []
 endfunction
 
 " ---------------------------------------------
@@ -1460,7 +1476,6 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     let range = line("'>") - line("'<")
     if empty(range)
         sil!call s:vimim_backend_initialization_once()
-        sil!call s:build_cjk_one_char_cache()
         let results = s:vimim_reverse_lookup(keyboard)
         if !empty(results)
             let line = line(".")
