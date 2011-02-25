@@ -4,17 +4,17 @@
 "   VimIM -- Input Method by Vim, of Vim, for Vimmers
 " =====================================================
 
-let $VimIM  = "VimIM 環境""             vimim<C-6><C-6>
-let $VimIM  = "VimIM 幫助""         vimimhelp<C-6><C-6>
-let $VimIM  = "$Date$"
-let $VimIM  = "$Revision$"
-let s:help  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
-let s:help += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
-let s:help += ["http://vimim-data.googlecode.com"]
-let s:help += ["http://groups.google.com/group/vimim"]
-let s:help += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
-let s:help += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
-let s:help += ["http://code.google.com/p/vimim/issues/list"]
+let $VimIM = "VimIM 環境""              vimim<C-6><C-6>
+let $VimIM = "VimIM 幫助""          vimimhelp<C-6><C-6>
+let $VimIM = "$Date$"
+let $VimIM = "$Revision$"
+let s:url  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
+let s:url += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
+let s:url += ["http://vimim-data.googlecode.com"]
+let s:url += ["http://groups.google.com/group/vimim"]
+let s:url += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
+let s:url += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
+let s:url += ["http://code.google.com/p/vimim/issues/list"]
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
@@ -371,13 +371,13 @@ endfunction
 function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
-    call add(eggs, "官方网址 " . s:help[0] . " ")
-    call add(eggs, "标准字库 " . s:help[1] . " ")
-    call add(eggs, "民间词库 " . s:help[2] . " ")
-    call add(eggs, "新闻论坛 " . s:help[3] . " ")
-    call add(eggs, "最新主页 " . s:help[4] . " ")
-    call add(eggs, "最新程式 " . s:help[5] . " ")
-    call add(eggs, "错误报告 " . s:help[6] . " ")
+    call add(eggs, "官方网址 " . s:url[0] . " ")
+    call add(eggs, "标准字库 " . s:url[1] . " ")
+    call add(eggs, "民间词库 " . s:url[2] . " ")
+    call add(eggs, "新闻论坛 " . s:url[3] . " ")
+    call add(eggs, "最新主页 " . s:url[4] . " ")
+    call add(eggs, "最新程式 " . s:url[5] . " ")
+    call add(eggs, "错误报告 " . s:url[6] . " ")
     return eggs
 endfunction
 
@@ -494,7 +494,7 @@ function! s:vimim_easter_chicken(keyboard)
     try
         return eval("s:vimim_egg_" . a:keyboard . "()")
     catch
-        call s:debugs('egg::exception=', v:exception)
+        call s:debugs('egg::', v:exception)
     endtry
     return []
 endfunction
@@ -1348,8 +1348,6 @@ function! s:vimim_load_cjk_file()
         if len(s:cjk_lines) < 20902
             let s:cjk_lines = []
             let s:has_cjk_file = 0
-        elseif len(s:cjk_lines) == 20902
-            let msg = 'original standard cjk'
         elseif empty(s:cjk_one_char_cache)
             call s:build_cjk_one_char_cache()
         endif
@@ -1359,12 +1357,12 @@ endfunction
 " ------------------------------------
 function! s:build_cjk_one_char_cache()
 " ------------------------------------
-    " call s:vimim_load_cjk_file()
-    " for _ in s:az_list
-    "     call s:vimim_cjk_match(_)
-    " endfor
-    " --------------------------------
-    if len(s:cjk_lines) > 20902
+    let cjk = len(s:cjk_lines)
+    if cjk == 20902
+        for _ in s:az_list
+            call s:vimim_cjk_match(_)
+        endfor
+    elseif cjk > 20902
         for line in s:cjk_lines[20902: -1]
             let lines = split(line)
             let char = get(lines,0)
@@ -1376,7 +1374,6 @@ function! s:build_cjk_one_char_cache()
             endif
             let s:cjk_one_char_cache[char] = results
         endfor
-        return
     endif
 endfunction
 
@@ -1471,7 +1468,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
+" ----------------------------------
     if isdirectory("/home/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_custom_color = 2
@@ -1522,7 +1519,7 @@ function! s:debugs(key, value)
 " ----------------------------
     if s:vimim_debug > 0
         let item  = a:key
-        let item .= '='
+        let item .= ' = '
         let item .= a:value
         call add(g:vimim_debugs, item)
     endif
@@ -4504,10 +4501,7 @@ function! s:vimim_get_from_http(input)
             let output = system(s:www_executable . input)
         endif
     catch
-        if s:vimimdebug > 0
-            call s:debugs('sogou::output=', output)
-            call s:debugs('sogou::exception=', v:exception)
-        endif
+        call s:debugs("sogou::", output ." ". v:exception)
         let output = 0
     endtry
     return output
@@ -4705,7 +4699,7 @@ function! s:vimim_check_mycloud_plugin_url()
     let part = split(s:vimim_mycloud_url, ':')
     let lenpart = len(part)
     if lenpart <= 1
-        call s:debugs("invalid_cloud_plugin_url","")
+        call s:debugs("invalid_cloud_plugin_url::","")
     elseif part[0] ==# 'app'
         if !has("gui_win32")
             " strip the first root if contains ":"
@@ -4763,8 +4757,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return cloud
                 endif
             catch
-                let key = 'libcall_mycloud1::error='
-                call s:debugs(key, v:exception)
+                call s:debugs('libcall_mycloud1::', v:exception)
             endtry
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
@@ -4777,7 +4770,7 @@ function! s:vimim_check_mycloud_plugin_url()
             endif
         endif
     else
-        call s:debugs("invalid_cloud_plugin_url","")
+        call s:debugs("invalid_cloud_plugin_url::","")
     endif
     return 0
 endfunction
@@ -4794,7 +4787,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
         let output = s:vimim_access_mycloud(cloud, a:keyboard)
     catch
         let output = 0
-        call s:debugs('mycloud::error=',v:exception)
+        call s:debugs('mycloud::',v:exception)
     endtry
     if empty(output)
         return []
