@@ -925,7 +925,7 @@ function! s:vimim_reverse_one_entry(chinese, property)
     for chinese in split(a:chinese, '\zs')
         let ddddd = char2nr(chinese)
         let line = ddddd - 19968
-        if line < 0 || line > 20902
+        if line < 0 || line > 20902+200
             continue
         endif
         let head = ''
@@ -1021,7 +1021,7 @@ function! s:vimim_cjk_digit_filter(chinese)
     for cjk in words
         let ddddd = char2nr(cjk)
         let line = ddddd - 19968
-        if cjk =~ '\w' ||  line < 0 || line > 20902
+        if cjk =~ '\w' ||  line < 0 || line > 20902+200
             continue
         else
             let values = split(s:cjk_lines[line])
@@ -1047,6 +1047,7 @@ let s:VimIM += [" ====  for mom and dad  ==== {{{"]
 " ---------------------------------
 function! s:vimim_for_mom_and_dad()
 " ---------------------------------
+    let s:mom_and_dad = 0
     let buffer = expand("%:p:t")
     if buffer =~ 'vimim_mom.txt'
         let s:vimim_digit_4corner = 0
@@ -1071,7 +1072,7 @@ function! s:vimim_for_mom_and_dad()
         let &gfn .= ":h24:w12"
     endif
     set number
-    set noswapfile
+    let s:mom_and_dad = 0
     let s:vimim_tab_as_onekey = 2
     let s:vimim_custom_color = 2
     let s:vimim_data_directory = 0
@@ -1348,7 +1349,7 @@ function! s:vimim_load_cjk_file()
             let s:cjk_lines = []
             let s:has_cjk_file = 0
         elseif len(s:cjk_lines) == 20902
-            let msg = 'standard cjk'
+            let msg = 'original standard cjk'
         elseif empty(s:cjk_one_char_cache)
             call s:build_cjk_one_char_cache()
         endif
@@ -1370,7 +1371,8 @@ function! s:build_cjk_one_char_cache()
             let right = get(lines,1)
             let results = split(right, '\zs')
             if has_key(s:cjk_one_char_cache, char)
-                call extend(results, s:cjk_one_char_cache[char])
+                let history_results = s:cjk_one_char_cache[char]
+                call extend(results, history_results, 0)
             endif
             let s:cjk_one_char_cache[char] = results
         endfor
@@ -1412,7 +1414,7 @@ function! s:vimim_one2one(chinese)
 " --------------------------------
     let ddddd = char2nr(a:chinese)
     let line = ddddd - 19968
-    if line < 0 || line > 20902
+    if line < 0 || line > 20902+200
         return a:chinese
     endif
     let values = split(s:cjk_lines[line])
@@ -4701,7 +4703,7 @@ let s:VimIM += [" ====  Debug_Framework  ==== {{{"]
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------- todo
     if isdirectory("/home/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_custom_color = 2
@@ -5446,7 +5448,7 @@ endfunction
 function! s:vimim_initialize_autocmd()
 " ------------------------------------
 " [egg] promote any dot vimim file to be our first-class citizen
-    if has("autocmd")
+    if has("autocmd") && s:mom_and_dad < 1
         augroup vimim_auto_chinese_mode
             autocmd BufNewFile *.vimim startinsert
             autocmd BufEnter   *.vimim sil!call <SID>ChineseMode()
@@ -5456,7 +5458,7 @@ endfunction
 
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
+sil!call s:vimim_for_mom_and_dad()
 sil!call s:vimim_initialize_mapping()
 sil!call s:vimim_initialize_autocmd()
-sil!call s:vimim_for_mom_and_dad()
 " ======================================= }}}
