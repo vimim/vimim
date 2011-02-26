@@ -984,14 +984,12 @@ function! s:vimim_cjk_filter_list(keyboard)
     let first_in_list = split(get(s:matched_list,0))
     for line in s:matched_list
         let chinese = ""
-        if len(first_in_list) < 2
-        \|| a:keyboard =~# s:uxxxx
-        \|| s:ui.root == 'directory'
-            let chinese = s:vimim_cjk_digit_filter(line)
-            let line = chinese
-        else
+        if len(first_in_list) > 1
             let chinese = get(split(line), 1)
             let chinese = s:vimim_cjk_digit_filter(chinese)
+        else
+            let chinese = s:vimim_cjk_digit_filter(line)
+            let line = chinese
         endif
         if empty(chinese)
             continue
@@ -2422,17 +2420,18 @@ function! s:vimim_popupmenu_list(matched_list)
         call insert(matched_list, s:space)
         call add(matched_list, s:space)
     endif
+    let first_in_list = split(get(s:matched_list,0))
     " -------------------------
     for chinese in matched_list
-    " -------------------------
+    " ------------------------- todo
         let keyboard_head_length = len(keyboard_head)
-        if keyboard =~# s:uxxxx
-        \|| keyboard =~# s:show_me_not
-        \|| s:has_cjk_match > 0
-            let msg = "matched_list has only single item"
-        elseif s:ui.root == "directory" && s:has_no_internet > 0
-            let msg = "either directory or not-cloud-at-will"
-        else
+      " if keyboard =~# s:uxxxx
+      " \|| keyboard =~# s:show_me_not
+      " \|| s:has_cjk_match > 0
+      " \|| s:ui.root == "directory"
+      "     let msg = "matched_list has only single item"
+      " else
+        if len(first_in_list) > 1
             let pairs = split(chinese)
             if len(pairs) < 2
                 continue
