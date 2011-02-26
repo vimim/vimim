@@ -978,6 +978,7 @@ endfunction
 " ----------------------------------------------------
 function! s:vimim_make_pair_matched_list(matched_list)
 " ----------------------------------------------------
+    " input: lively 热闹 活泼
     let pair_matched_list = []
     for line in a:matched_list
         let words = split(line)
@@ -1139,12 +1140,13 @@ function! g:vimim_search_next()
     \&& !empty(v:errmsg)
     \&& v:errmsg =~# english
     \&& v:errmsg =~# '^E486: '
+        let error = ""
         try
             sil!call s:vimim_search_chinese_from_english(english)
-            echon "/" . english
         catch
-            echon "/" . english . " error:" .  v:exception
+            let error = v:exception
         endtry
+        echon "/" . english . error
     endif
 endfunction
 
@@ -1158,6 +1160,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
         return
     endif
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+    " -------------------------------------------------
     if empty(ddddd)
         sil!call s:vimim_backend_initialization_once()
         let keyboards = s:vimim_slash_search_block(keyboard)
