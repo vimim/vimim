@@ -299,7 +299,6 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_digit_4corner")
-    call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_data_file")
@@ -319,6 +318,7 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_label")
+    call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_custom_statusline")
     call add(G, "g:vimim_onekey_nonstop")
     call add(G, "g:vimim_search_next")
@@ -1085,7 +1085,6 @@ function! s:vimim_for_mom_and_dad()
     set number
     let s:mom_and_dad = 0
     let s:vimim_tab_as_onekey = 2
-    let s:vimim_custom_color = 2
     let s:vimim_data_directory = 0
     startinsert!
     " -----------------------------
@@ -1099,9 +1098,9 @@ function! s:vimim_initialize_skin()
         return
     endif
     if s:vimim_custom_color == 1
-        highlight! PmenuSel NONE
-    elseif s:vimim_custom_color == 2
         highlight! link PmenuSel Title
+    elseif s:vimim_custom_color == 2
+        highlight! PmenuSel NONE
     endif
     highlight! PmenuSbar  NONE
     highlight! PmenuThumb NONE
@@ -1481,7 +1480,6 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory("/home/xma")
         let g:vimim_digit_4corner = 1
-        let g:vimim_custom_color = 2
         let g:vimim_tab_as_onekey = 2
         let g:vimim_self_directory = "/home/xma/vimim/"
         let g:vimim_data_directory = "/home/vimim/pinyin/"
@@ -3987,18 +3985,16 @@ function! s:vimim_force_scan_current_buffer()
 " auto wubi dynamic input mode  => vim wubi.dynamic.vimim
 " -------------------------------------------
     let buffer = expand("%:p:t")
-    if buffer =~# '.vimim\>'
-        let s:vimim_custom_color = 2
-    else
+    if buffer !~ '.vimim\>'
         return
     endif
-    " ---------------------------------
+    " ---------------------------------------
     if buffer =~ 'dynamic'
         let s:vimim_chinese_input_mode = 'dynamic'
     elseif buffer =~ 'static'
         let s:vimim_chinese_input_mode = 'static'
     endif
-    " ---------------------------------
+    " ---------------------------------------
     if buffer =~ 'shuangpin_abc'
         let s:vimim_shuangpin = 'abc'
     elseif buffer =~ 'shuangpin_ms'
@@ -4012,7 +4008,7 @@ function! s:vimim_force_scan_current_buffer()
     elseif buffer =~ 'shuangpin_flypy'
         let s:vimim_shuangpin = 'flypy'
     endif
-    " ---------------------------------
+    " ---------------------------------------
     if buffer =~# 'sogou'
         let s:vimim_cloud_sogou = 1
         call s:vimim_set_sogou()
