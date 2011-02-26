@@ -1616,9 +1616,6 @@ function! s:vimim_onekey_action(onekey)
     if char_before !~# s:valid_key && empty(a:onekey)
         return s:vimim_get_unicode_menu()
     endif
-    if char_before ==# "'" && empty(s:ui.has_dot)
-        let s:pattern_not_found = 0
-    endif
     if s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
@@ -1641,13 +1638,12 @@ function! s:vimim_onekey_punctuation()
     let char_before = current_line[col(".")-2]
     let char_before_before = current_line[col(".")-3]
     if char_before_before !~# "[0-9A-z]" && empty(s:ui.has_dot)
-        let replacement = 0
         let punctuations = s:punctuations
         call extend(punctuations, s:evils)
         if has_key(punctuations, char_before)
             for char in keys(punctuations)
                 if char_before_before ==# char
-                    let onekey = 1
+                    let onekey = " "
                     break
                 else
                     continue
@@ -1662,12 +1658,8 @@ function! s:vimim_onekey_punctuation()
                 elseif char_before == '"'
                     let replacement = <SID>vimim_get_double_quote()
                 endif
+                let onekey = "\<BS>" . replacement
             endif
-        endif
-        if empty(replacement)
-            let onekey = ""
-        else
-            let onekey = "\<BS>" . replacement
         endif
     endif
     return onekey
@@ -2436,9 +2428,10 @@ function! s:vimim_popupmenu_list(matched_list)
         let keyboard_head_length = len(keyboard_head)
         if keyboard =~# s:uxxxx
         \|| keyboard =~# s:show_me_not
-        \|| s:ui.root == "directory"
         \|| s:has_cjk_match > 0
             let msg = "matched_list has only single item"
+        elseif s:ui.root == "directory" && s:has_no_internet > 0
+            let msg = "either directory or not-cloud-at-will"
         else
             let pairs = split(chinese)
             if len(pairs) < 2
