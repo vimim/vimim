@@ -735,7 +735,6 @@ function! s:vimim_cjk_private_match(keyboard)
         if matched < 0
             let msg = "no more scan for: 'dream 梦 梦想' "
         else
-            let s:has_cjk_match = 2
             let line = s:cjk_self_lines[matched]
             let results = split(line)[1:]
         endif
@@ -752,7 +751,6 @@ function! s:vimim_cjk_match(keyboard)
     endif
     if len(keyboard) == 1
     \&& has_key(s:cjk_one_char_cache, keyboard)
-        let s:has_cjk_match = 1
         if keyboard =~ '\d'
             let s:cjk_filter = keyboard
         endif
@@ -977,24 +975,38 @@ function! s:vimim_cjk_filter_from_cache(keyboard)
     return results
 endfunction
 
+" ----------------------------------------------------
+function! s:vimim_make_pair_matched_list(matched_list)
+" ----------------------------------------------------
+    let pair_matched_list = []
+    for line in a:matched_list
+        let words = split(line)
+        let menu = remove(words, 0)
+        if empty(menu) || menu =~ '\W'
+            continue
+        endif
+        for chinese in words
+            let menu_chinese = menu .' '. chinese
+            call add(pair_matched_list, menu_chinese)
+        endfor
+    endfor
+    return pair_matched_list
+endfunction
+
 " -----------------------------------------
 function! s:vimim_cjk_filter_list(keyboard)
 " -----------------------------------------
     let pair_matched_list = []
     let first_in_list = split(get(s:matched_list,0))
-    for line in s:matched_list
-        let chinese = ""
+    for chinese in s:matched_list
         if len(first_in_list) > 1
-            let chinese = get(split(line), 1)
-            let chinese = s:vimim_cjk_digit_filter(chinese)
-        else
-            let chinese = s:vimim_cjk_digit_filter(line)
-            let line = chinese
+            let chinese = get(split(chinese), 1)
         endif
+        let chinese = s:vimim_cjk_digit_filter(chinese)
         if empty(chinese)
-            continue
+            let msg = "garbage out"
         else
-            call add(pair_matched_list, line)
+            call add(pair_matched_list, chinese)
         endif
     endfor
     return pair_matched_list
@@ -1142,12 +1154,12 @@ function! s:vimim_search_chinese_from_english(keyboard)
     let results = []
     let cjk_results = []
     let keyboard = tolower(a:keyboard)
+    if keyboard =~ s:show_me_not
+        return
+    endif
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd)
         sil!call s:vimim_backend_initialization_once()
-        if keyboard =~ s:show_me_not
-            return
-        endif
         let keyboards = s:vimim_slash_search_block(keyboard)
         if len(keyboards) > 0
             for keyboard2 in keyboards
@@ -1159,18 +1171,18 @@ function! s:vimim_search_chinese_from_english(keyboard)
                     call add(cjk_results, collection)
                 endif
             endfor
-            if len(keyboards) == 1
-                let filter = 'v:val' . " len(" . 'v:val' . ")"
-                call map(cjk_results, filter)
-                let cjk_results = sort(cjk_results, "s:vimim_sort_on_last")
-             elseif len(keyboards) > 1
+            if len(keyboards) > 1
                 let cjk_results = [join(cjk_results,'')]
             endif
         endif
-        " /arrow (1) 矛 in cjk (2) → in english datafile (3) a4492
-        call extend(cjk_results, s:cjk_results)
     else
         let cjk_results = [nr2char(ddddd)]
+    endif
+    " -------------------------------------------------
+    if empty(s:cjk_results)
+        let s:cjk_results = copy(cjk_results)
+    else
+        let cjk_results = copy(s:cjk_results)
     endif
     " -------------------------------------------------
     if empty(cjk_results)
@@ -1215,7 +1227,7 @@ function! s:vimim_slash_search_block(keyboard)
     endif
     let results = []
     let keyboard = a:keyboard
-    while len(keyboard) > 2
+    while len(keyboard) > 1
         let keyboard2 = s:vimim_cjk_sentence_match(keyboard)
         if empty(keyboard2)
             break
@@ -1239,12 +1251,10 @@ function! s:vimim_register_search_pattern(keyboard, results)
         endif
     endif
     let results = []
-    for chinese in a:results
-        if keyboard =~# s:uxxxx
-        \|| s:has_cjk_match > 0
-        \|| s:ui.root == "directory"
-            let msg = "for unicode slash search: /u808f /32911"
-        else
+    let matched_list = a:results
+    let first_in_list = split(get(matched_list,0))
+    for chinese in matched_list
+        if len(first_in_list) > 1
             let pairs = split(chinese)
             if len(pairs) < 2
                 continue
@@ -1333,7 +1343,6 @@ function! s:vimim_cjk_grep_results(grep)
         if s:hjkl_h < 1
             let s:hjkl_h = 1
         endif
-        let s:has_cjk_match = 1
     endif
     return results
 endfunction
@@ -2408,36 +2417,26 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:hjkl_pageup_pagedown > 0
         let matched_list = s:vimim_pageup_pagedown(matched_list)
     endif
-    let label = 1
-    let extra_text = ""
     let keyboard = join(s:keyboard_list,"")
     if s:hjkl_n > 0 && s:hjkl_n%2 > 0 && s:ui.im == 'pinyin'
         let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
     endif
     let keyboard_head = get(s:keyboard_list,0)
-    let s:popupmenu_list = []
     if keyboard_head =~ '^vi' && s:has_self_file > 0
         call insert(matched_list, s:space)
         call add(matched_list, s:space)
     endif
+    let label = 1
+    let extra_text = ""
+    let s:popupmenu_list = []
     let first_in_list = split(get(s:matched_list,0))
-    " -------------------------
     for chinese in matched_list
-    " ------------------------- todo
-        let keyboard_head_length = len(keyboard_head)
-      " if keyboard =~# s:uxxxx
-      " \|| keyboard =~# s:show_me_not
-      " \|| s:has_cjk_match > 0
-      " \|| s:ui.root == "directory"
-      "     let msg = "matched_list has only single item"
-      " else
         if len(first_in_list) > 1
             let pairs = split(chinese)
             if len(pairs) < 2
                 continue
             endif
             let keyboard_head = get(pairs, 0)
-            let keyboard_head_length = len(keyboard_head)
             let chinese = get(pairs, 1)
         endif
         " -------------------------------------------------
@@ -2452,6 +2451,7 @@ function! s:vimim_popupmenu_list(matched_list)
         " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             if !empty(keyboard) && keyboard !~ s:show_me_not
+                let keyboard_head_length = len(keyboard_head)
                 if empty(s:ui.has_dot) && keyboard =~ "['.]"
                     " for vimim classic demo: i.have.a.dream
                     let keyboard_head_length += 1
@@ -2485,24 +2485,6 @@ function! s:vimim_popupmenu_list(matched_list)
         call add(s:popupmenu_list, complete_items)
     endfor
     return s:popupmenu_list
-endfunction
-
-" ----------------------------------------------------
-function! s:vimim_make_pair_matched_list(matched_list)
-" ----------------------------------------------------
-    let pair_matched_list = []
-    for line in a:matched_list
-        let words = split(line)
-        let menu = remove(words, 0)
-        if empty(menu) || menu =~ '\W'
-            continue
-        endif
-        for chinese in words
-            let menu_chinese = menu .' '. chinese
-            call add(pair_matched_list, menu_chinese)
-        endfor
-    endfor
-    return pair_matched_list
 endfunction
 
 " -----------------------------------
@@ -4947,7 +4929,6 @@ endfunction
 function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:cjk_filter = ""
-    let s:has_cjk_match = 0
     let s:has_no_internet = 0
     let s:has_pumvisible = 0
     let s:hjkl_pageup_pagedown = 0
@@ -5306,10 +5287,9 @@ else
         if s:has_cjk_file > 0 || s:has_self_file > 0
             let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
             if empty(keyboard_head)
-                let results = s:vimim_match_cjk_files(keyboard)
-            else
-                let results = s:vimim_match_cjk_files(keyboard_head)
+                let keyboard_head = keyboard
             endif
+            let results = s:vimim_match_cjk_files(keyboard_head)
             if !empty(results) && empty(s:cjk_results)
                 return s:vimim_popupmenu_list(results)
             endif
