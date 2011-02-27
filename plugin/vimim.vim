@@ -2790,8 +2790,8 @@ let s:VimIM += [" ====  input pinyin     ==== {{{"]
 " -----------------------------------
 function! s:vimim_scan_private_file()
 " -----------------------------------
-    let s:has_self_file = 0
     let s:self_file = 0
+    let s:has_self_file = 0
     let s:cjk_self_lines = []
     let datafile = "vimim.txt"
     let datafile = s:vimim_check_filereadable(datafile)
@@ -2799,8 +2799,8 @@ function! s:vimim_scan_private_file()
     \|| s:ui.im =~ 'pinyin'
     \|| s:vimim_cloud_sogou == 1
         if !empty(datafile)
-            let s:has_self_file = 1
             let s:self_file = datafile
+            let s:has_self_file = 1
         endif
     endif
 endfunction
