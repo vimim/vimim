@@ -1424,7 +1424,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/hhome/xma")
+    if isdirectory("/home/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_self_directory = "/home/xma/vimim/"
@@ -3698,7 +3698,7 @@ function! s:vimim_get_from_cache(keyboard)
     " ------------------------------------
     let extras = []
     if s:ui.im == 'pinyin'
-        let extras = s:vimim_pinyin_extra_match(keyboard)
+        let extras = s:vimim_pinyin_extra_match(keyboard, 0)
     endif
     if len(extras) > 0
         let matched_list = [keyboard .' '. join(results)]
@@ -3793,7 +3793,7 @@ function! s:vimim_get_from_datafile(keyboard, search)
     let matched_list = lines[matched : matched]
     let extras = []
     if s:ui.im == 'pinyin' && a:search < 1
-        let extras = s:vimim_pinyin_extra_match(keyboard)
+        let extras = s:vimim_pinyin_extra_match(keyboard, 0)
     endif
     let results = s:vimim_build_popup_list(matched_list, extras)
     return results
@@ -3813,9 +3813,9 @@ function! s:vimim_build_popup_list(matched_list, extras)
     return results
 endfunction
 
-" --------------------------------------------
-function! s:vimim_pinyin_extra_match(keyboard)
-" --------------------------------------------
+" -------------------------------------------------
+function! s:vimim_pinyin_extra_match(keyboard, dir)
+" -------------------------------------------------
     " [purpose] make standard layout for popup menu
     "           in   =>  mamahuhu
     "           out  =>  mamahuhu, mama, ma
@@ -3833,23 +3833,45 @@ function! s:vimim_pinyin_extra_match(keyboard)
     endfor
     " ----------------------------------------------
     let results = []
-    let lines = s:backend[s:ui.root][s:ui.im].lines
-    for keyboard in candidates
-        let pattern = '^' . keyboard . '\>'
+    if empty(a:dir)
+        let lines = s:backend[s:ui.root][s:ui.im].lines
+        for keyboard in candidates
+            let pattern = '^' . keyboard . '\>'
+            let matched = match(lines, pattern, 0)
+            if matched < 0
+                continue
+            endif
+            let oneline_list = lines[matched : matched]
+            let matched_list = s:vimim_make_pair_matched_list(oneline_list)
+            call extend(results, matched_list)
+        endfor
+        let pattern = '^' . a:keyboard . '\>'
         let matched = match(lines, pattern, 0)
         if matched < 0
-            continue
+            " delegate to s:vimim_sentence_match_
+        elseif len(results) > 0
+            " for g:vimim_nonstop_after_insert()
+            let s:keyboard_list = [a:keyboard, ""]
         endif
-        let oneline_list = lines[matched : matched]
-        let matched_list = s:vimim_make_pair_matched_list(oneline_list)
-        call extend(results, matched_list)
-    endfor
-    let pattern = '^' . a:keyboard . '\>'
-    let matched = match(lines, pattern, 0)
-    if matched < 0
-        let msg = "delegate to s:vimim_sentence_match_datafile()"
-    elseif len(results) > 0
-        let s:keyboard_list = [a:keyboard, ""]
+    else
+    " ---------------------------------------------- todo
+        let filter = 'a:keyboard ." ". v:val'
+        call map(results, filter)
+        for keyboard in candidates
+            let filename = a:dir . keyboard
+            if filereadable(filename)
+                let matched_list = s:vimim_readfile(filename)
+                let filter = 'keyboard ." ". v:val'
+                call map(matched_list, filter)
+                call extend(results, matched_list)
+            else
+                continue
+            endif
+        endfor
+        let filename = a:dir . a:keyboard
+        if filereadable(filename) && len(results) > 0
+            let s:keyboard_list = [a:keyboard, ""]
+        endif
     endif
     return results
 endfunction
@@ -4061,12 +4083,24 @@ function! s:vimim_get_from_directory(keyboard, dir)
     if empty(dir) || empty(keyboard)
         return []
     endif
+    let results = []
     let filename = dir . keyboard
     if filereadable(filename)
-        let lines = s:vimim_readfile(filename)
-        return lines
+        let results = s:vimim_readfile(filename)
     endif
-    return []
+    if len(results) > 20
+        return results
+    endif
+    " ------------------------------------ todo
+    let extras = []
+    if s:ui.im == 'pinyin'
+        let extras = s:vimim_pinyin_extra_match(keyboard, dir)
+    endif
+    if len(extras) > 0
+        let matched_list = [keyboard .' '. join(results)]
+        let results = s:vimim_build_popup_list(matched_list, extras)
+    endif
+    return results
 endfunction
 
 " --------------------------------------------------
