@@ -1424,7 +1424,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma")
+    if isdirectory("/hhome/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_self_directory = "/home/xma/vimim/"
@@ -3725,10 +3725,10 @@ function! s:vimim_sentence_match_cache(keyboard)
         let max -= 1
         let head = strpart(keyboard, 0, max)
         let results = s:vimim_get_from_cache(head)
-        if !empty(results)
-            break
-        else
+        if empty(results)
             continue
+        else
+            break
         endif
     endwhile
     if len(results) > 0
@@ -3747,7 +3747,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
         return 0
     endif
     let keyboard = a:keyboard
-    let pattern = '^' . keyboard
+    let pattern = '^' . keyboard . '\>'
     let match_start = match(lines, pattern)
     if match_start > -1
         return keyboard
@@ -3816,9 +3816,9 @@ endfunction
 " --------------------------------------------
 function! s:vimim_pinyin_extra_match(keyboard)
 " --------------------------------------------
-    " [purpose] make standard popup menu layout
-    "           in   =>  chaojijianpin
-    "           out  =>  chaojijian, chaoji, chao
+    " [purpose] make standard layout for popup menu
+    "           in   =>  mamahuhu
+    "           out  =>  mamahuhu, mama, ma
     " ----------------------------------------------
     let keyboard = a:keyboard
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
@@ -3836,12 +3836,13 @@ function! s:vimim_pinyin_extra_match(keyboard)
     let lines = s:backend[s:ui.root][s:ui.im].lines
     for keyboard in candidates
         let pattern = '^' . keyboard . '\>'
-        let matched = match(lines, pattern)
+        let matched = match(lines, pattern, 0)
         if matched < 0
             continue
         endif
-        let matched_list = lines[matched : matched]
-        let results = s:vimim_make_pair_matched_list(matched_list)
+        let oneline_list = lines[matched : matched]
+        let matched_list = s:vimim_make_pair_matched_list(oneline_list)
+        call extend(results, matched_list)
     endfor
     return results
 endfunction
@@ -3849,7 +3850,8 @@ endfunction
 " ----------------------------------------------------
 function! s:vimim_make_pair_matched_list(matched_list)
 " ----------------------------------------------------
-    " input: lively 热闹 活泼
+" [input]    lively 热闹 活泼
+" [output] ['lively 热闹', 'lively 活泼']
     let pair_matched_list = []
     for line in a:matched_list
         let words = split(line)
