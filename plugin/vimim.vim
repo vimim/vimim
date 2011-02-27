@@ -193,16 +193,16 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['wubi']        = ['五笔','五筆']
     let s:chinese['hangul']      = ['韩文','韓文']
     let s:chinese['xinhua']      = ['新华','新華']
-    let s:chinese['boshiamy']    = ['呒虾米','嘸蝦米']
     let s:chinese['zhengma']     = ['郑码','鄭碼']
     let s:chinese['cangjie']     = ['仓颉','倉頡']
+    let s:chinese['boshiamy']    = ['呒虾米','嘸蝦米']
+    let s:chinese['newcentury']  = ['新世纪','新世紀']
     let s:chinese['taijima']     = ['太极码','太極碼']
     let s:chinese['yong']        = ['永码','永碼']
     let s:chinese['wu']          = ['吴语','吳語']
     let s:chinese['erbi']        = ['二笔','二筆']
     let s:chinese['configure']   = ['设置','設置']
     let s:chinese['jidian']      = ['极点','極點']
-    let s:chinese['newcentury']  = ['新世纪','新世紀']
     let s:chinese['shuangpin']   = ['双拼','雙拼']
     let s:chinese['abc']         = ['智能双打','智能雙打']
     let s:chinese['ms']          = ['微软','微軟']
@@ -300,15 +300,15 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_digit_4corner")
+    call add(G, "g:vimim_data_file")
+    call add(G, "g:vimim_data_directory")
+    call add(G, "g:vimim_self_directory")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_data_file")
-    call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_self_directory")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_use_cache")
@@ -317,11 +317,10 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
-    call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_custom_statusline")
-    call add(G, "g:vimim_onekey_nonstop")
+    call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_search_next")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
@@ -1055,11 +1054,7 @@ function! s:vimim_for_mom_and_dad()
     if empty(s:has_cjk_file)
         let s:mom_and_dad = 0
         return
-    else
-        set number
-        let s:vimim_tab_as_onekey = 2
     endif
-    " -----------------------------
     if has("gui_running") && has("win32")
         autocmd! * <buffer>
         autocmd  VimEnter  <buffer> set t_vb=
@@ -1069,7 +1064,8 @@ function! s:vimim_for_mom_and_dad()
         set columns=36
         let &gfn .= ":h24:w12"
     endif
-    " -----------------------------
+    set number
+    let s:vimim_tab_as_onekey = 2
     startinsert!
     return s:vimim_onekey_action("")
 endfunction
@@ -1428,7 +1424,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/hhome/xma")
+    if isdirectory("/home/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_self_directory = "/home/xma/vimim/"
@@ -3524,7 +3520,7 @@ endfunction
 function! s:vimim_get_unicode_list(keyboard)
 " ------------------------------------------
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
-    if ddddd < 8888 || ddddd > 19968+19968
+    if ddddd < 8888 || ddddd > 19968+20902
         return []
     endif
     let words = []
@@ -3553,7 +3549,8 @@ endfunction
 function! s:vimim_get_unicode_before()
 " ------------------------------------
     let byte_before = getline(".")[col(".")-2]
-    if empty(byte_before) || byte_before =~# s:valid_key
+    if empty(byte_before)
+    \|| byte_before =~# s:valid_key
         return 0
     endif
     let start = s:multibyte + 1
@@ -3592,30 +3589,31 @@ endfunction
 function! s:vimim_cjk_property_display(ddddd)
 " -------------------------------------------
     let unicode = printf('u%04x', a:ddddd) . s:space . a:ddddd
-    if s:has_cjk_file > 0
-        call s:vimim_load_cjk_file()
-        let chinese = nr2char(a:ddddd)
-        let five = get(s:vimim_reverse_one_entry(chinese,1),0)
-        let four = get(s:vimim_reverse_one_entry(chinese,2),0)
-        let digit = five
-        if s:vimim_digit_4corner > 0
-            let digit = four
-        endif
-        if  s:has_slash_grep > 0
-            let digit = five . s:space . four
-        endif
-        let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
-        let english = get(s:vimim_reverse_one_entry(chinese,'english'),0)
-        let keyboard_head = get(s:keyboard_list,0)
-        if keyboard_head =~ s:uxxxx
-            let unicode = unicode . s:space
-        else
-            let unicode = ""
-        endif
-        let unicode .= digit . s:space . pinyin
-        if !empty(english)
-            let unicode .= s:space . english
-        endif
+    if s:has_cjk_file < 1
+        return unicode
+    endif
+    call s:vimim_load_cjk_file()
+    let chinese = nr2char(a:ddddd)
+    let five = get(s:vimim_reverse_one_entry(chinese,1),0)
+    let four = get(s:vimim_reverse_one_entry(chinese,2),0)
+    let digit = five
+    if s:vimim_digit_4corner > 0
+        let digit = four
+    endif
+    if  s:has_slash_grep > 0
+        let digit = five . s:space . four
+    endif
+    let pinyin = get(s:vimim_reverse_one_entry(chinese,'pinyin'),0)
+    let english = get(s:vimim_reverse_one_entry(chinese,'english'),0)
+    let keyboard_head = get(s:keyboard_list,0)
+    if keyboard_head =~ s:uxxxx
+        let unicode = unicode . s:space
+    else
+        let unicode = ""
+    endif
+    let unicode .= digit . s:space . pinyin
+    if !empty(english)
+        let unicode .= s:space . english
     endif
     return unicode
 endfunction
@@ -4887,7 +4885,6 @@ endfunction
 function! g:vimim_nonstop_after_insert()
 " --------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-    \&& s:vimim_onekey_nonstop < 1
     \&& len(s:keyboard_list) < 2
         call s:vimim_stop()
     endif
