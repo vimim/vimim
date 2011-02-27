@@ -1427,8 +1427,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-                let g:vimim_use_cache = 1
-    if isdirectory("/hhome/xma")
+    if isdirectory("/home/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_self_directory = "/home/xma/vimim/"
@@ -3909,9 +3908,9 @@ function! s:vimim_load_progressbar(progressbar)
             let line_list = s:backend[s:ui.root][s:ui.im].cache[menu]
             call extend(line_list, oneline_list)
             let lines = line_list
-            let results[-1] = menu .' '. join(line_list)
+          " let results[-1] = menu .' '. join(line_list)
         else
-            call add(results, line)
+          " call add(results, line)
             let lines = split(line)[1:]
         endif
         let s:backend[s:ui.root][s:ui.im].cache[menu] = lines
