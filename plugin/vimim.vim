@@ -3844,6 +3844,13 @@ function! s:vimim_pinyin_extra_match(keyboard)
         let matched_list = s:vimim_make_pair_matched_list(oneline_list)
         call extend(results, matched_list)
     endfor
+    let pattern = '^' . a:keyboard . '\>'
+    let matched = match(lines, pattern, 0)
+    if matched < 0
+        let msg = "delegate to s:vimim_sentence_match_datafile()"
+    elseif len(results) > 0
+        let s:keyboard_list = [a:keyboard, ""]
+    endif
     return results
 endfunction
 
