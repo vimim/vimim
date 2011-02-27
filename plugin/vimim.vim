@@ -1050,9 +1050,14 @@ function! s:vimim_for_mom_and_dad()
         return
     endif
     " -----------------------------
+    let s:mom_and_dad = 1
     sil!call s:vimim_start_onekey()
     if empty(s:has_cjk_file)
+        let s:mom_and_dad = 0
         return
+    else
+        set number
+        let s:vimim_tab_as_onekey = 2
     endif
     " -----------------------------
     if has("gui_running") && has("win32")
@@ -1064,12 +1069,8 @@ function! s:vimim_for_mom_and_dad()
         set columns=36
         let &gfn .= ":h24:w12"
     endif
-    set number
-    let s:mom_and_dad = 0
-    let s:vimim_tab_as_onekey = 2
-    let s:vimim_data_directory = 0
-    startinsert!
     " -----------------------------
+    startinsert!
     return s:vimim_onekey_action("")
 endfunction
 
@@ -1427,7 +1428,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma")
+    if isdirectory("/hhome/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_self_directory = "/home/xma/vimim/"
@@ -3626,7 +3627,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if s:vimim_tab_as_onekey == 2
+    if s:mom_and_dad == 1 || s:vimim_tab_as_onekey == 2
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4003,6 +4004,9 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
+    if s:mom_and_dad == 1
+        return
+    endif
     for im in s:all_vimim_input_methods
         let dir = s:vimim_data_directory
         if !empty(dir) && isdirectory(dir)
