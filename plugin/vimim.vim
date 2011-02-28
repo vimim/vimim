@@ -116,6 +116,7 @@ function! s:vimim_initialize_session()
         let s:show_me_not .= '\|^vv'
     endif
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
+    let s:is_english = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
     let s:www_libcall = 0
@@ -583,16 +584,11 @@ function! s:vimim_cjk_english_match(keyboard)
                 " english 'arrow' is also shortcut of 'a4492'
                 let filter = "strpart(".'v:val'.", 0, s:multibyte)"
                 call map(cjk_results, filter)
+                let s:is_english = 1
                 let s:cjk_results = extend(results, cjk_results, 0)
             endif
             " english 'arrow' has an entry in private datafile
-            if s:has_self_file > 0
-                let private_results = s:vimim_cjk_private_match(keyboard)
-                if !empty(private_results)
-                    call extend(results, private_results)
-                    let s:cjk_results = copy(results)
-                endif
-            endif
+            let results = s:vimim_add_self_file_match(keyboard, results)
         endif
     endif
     return keyboard_head
@@ -712,19 +708,27 @@ function! s:vimim_match_cjk_files(keyboard)
     if s:has_cjk_file > 0
         let results = s:vimim_cjk_match(keyboard)
     endif
+    return s:vimim_add_self_file_match(keyboard, results)
+endfunction
+
+" ------------------------------------------------------
+function! s:vimim_add_self_file_match(keyboard, results)
+" ------------------------------------------------------
+    let results = a:results
     if s:has_self_file > 0
-        let private_results = s:vimim_cjk_private_match(keyboard)
+        let private_results = s:vimim_private_match(a:keyboard)
         if !empty(private_results)
             call extend(results, private_results)
             let s:cjk_results = copy(results)
+            let s:is_english = 1
         endif
     endif
     return results
 endfunction
 
-" -------------------------------------------
-function! s:vimim_cjk_private_match(keyboard)
-" -------------------------------------------
+" ---------------------------------------
+function! s:vimim_private_match(keyboard)
+" ---------------------------------------
     if empty(s:cjk_self_lines)
         let s:cjk_self_lines = s:vimim_readfile(s:self_file)
     endif
@@ -3827,8 +3831,12 @@ function! s:vimim_pinyin_more_candidates(keyboard)
     "           out  =>  mamahuhu, mama, ma
     " ----------------------------------------------
     let keyboard = a:keyboard
+    if s:is_english > 0
+        let s:is_english = 0
+        return []
+    endif
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
-    if empty(keyboard) || empty(keyboards)
+    if empty(keyboards) || empty(keyboard)
         return []
     endif
     let candidates = []
