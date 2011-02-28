@@ -2388,23 +2388,22 @@ function! s:vimim_popupmenu_list(matched_list)
         else
             let extra_text = get(split(keyboard_head,"_"),0)
         endif
-        " -------------------------------------------------
+        " ------------------------------------------------- todo
         let complete_items = {}
-        if keyboard =~ s:show_me_not
-            let msg = "no label needed for vim easter egg"
-        elseif s:vimim_custom_label > 0
+        if s:vimim_custom_label > 0
             let fmt = '%2s'
             if s:hjkl_l > 0 && &pumheight < 1
                 let fmt = '%02s'
             endif
-            let labeling = printf(fmt, s:vimim_get_labeling(label))
+            let labeling = s:vimim_get_labeling(label, keyboard)
+            if !empty(labeling)
+                let labeling = printf(fmt, labeling)
             let complete_items["abbr"] = labeling . "\t" . chinese
+            endif
             let label += 1
         endif
         " -------------------------------------------------
-        if !empty(extra_text)
-            let complete_items["menu"] = extra_text
-        endif
+        let complete_items["menu"] = extra_text
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
         call add(s:popupmenu_list, complete_items)
@@ -2412,21 +2411,28 @@ function! s:vimim_popupmenu_list(matched_list)
     return s:popupmenu_list
 endfunction
 
-" -----------------------------------
-function! s:vimim_get_labeling(label)
-" -----------------------------------
+" ---------------------------------------------
+function! s:vimim_get_labeling(label, keyboard)
+" ---------------------------------------------
     let label = a:label
     let labeling = label
     if s:chinese_input_mode =~ 'onekey'
-    \&& label < &pumheight+1
-        let label2 = s:abcd[label-1 : label-1]
-        if label < 2
-            let label2 = "_"
-        endif
-        if s:has_cjk_file > 0
-            let labeling = label2
-        else
-            let labeling .= label2
+        if a:keyboard =~ s:show_me_not
+            if s:hjkl_h % 2 > 0 
+                let labeling = label
+            else
+                let labeling = ""
+            endif
+        elseif label < &pumheight+1
+            let label2 = s:abcd[label-1 : label-1]
+            if label < 2
+                let label2 = "_"
+            endif
+            if s:has_cjk_file > 0
+                let labeling = label2
+            else
+                let labeling .= label2
+            endif
         endif
     endif
     return labeling
