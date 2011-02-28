@@ -2366,16 +2366,13 @@ function! s:vimim_popupmenu_list(matched_list)
             let keyboard_head = get(pairs, 0)
             let chinese = get(pairs, 1)
         endif
-        " -------------------------------------------------
         if s:hjkl_x % 2 > 0 && s:has_cjk_file > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
-        " -------------------------------------------------
         if s:hjkl_h % 2 > 0 && keyboard !~ s:show_me_not
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_cjk_property_display(ddddd)
         endif
-        " -------------------------------------------------
         if empty(s:vimim_cloud_plugin)
             if !empty(keyboard) && keyboard !~ s:show_me_not
                 let keyboard_head_length = len(keyboard_head)
@@ -2388,21 +2385,12 @@ function! s:vimim_popupmenu_list(matched_list)
         else
             let extra_text = get(split(keyboard_head,"_"),0)
         endif
-        " ------------------------------------------------- todo
         let complete_items = {}
         if s:vimim_custom_label > 0
-            let fmt = '%2s'
-            if s:hjkl_l > 0 && &pumheight < 1
-                let fmt = '%02s'
-            endif
             let labeling = s:vimim_get_labeling(label, keyboard)
-            if !empty(labeling)
-                let labeling = printf(fmt, labeling)
-            let complete_items["abbr"] = labeling . "\t" . chinese
-            endif
+            let complete_items["abbr"] = labeling . chinese
             let label += 1
         endif
-        " -------------------------------------------------
         let complete_items["menu"] = extra_text
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
@@ -2414,26 +2402,30 @@ endfunction
 " ---------------------------------------------
 function! s:vimim_get_labeling(label, keyboard)
 " ---------------------------------------------
-    let label = a:label
-    let labeling = label
+    let labeling = a:label
+    let fmt = '%2s'
     if s:chinese_input_mode =~ 'onekey'
         if a:keyboard =~ s:show_me_not
-            if s:hjkl_h % 2 > 0 
-                let labeling = label
-            else
+            let fmt = '%02s'
+            if s:hjkl_h % 2 < 1 
                 let labeling = ""
             endif
-        elseif label < &pumheight+1
-            let label2 = s:abcd[label-1 : label-1]
-            if label < 2
+        elseif a:label < &pumheight+1
+            let label2 = s:abcd[a:label-1]
+            if a:label < 2
                 let label2 = "_"
             endif
+            let labeling .= label2
             if s:has_cjk_file > 0
                 let labeling = label2
-            else
-                let labeling .= label2
             endif
         endif
+        if s:hjkl_l > 0 && &pumheight < 1
+            let fmt = '%02s'
+        endif
+    endif
+    if !empty(labeling)
+        let labeling = printf(fmt, labeling) . "\t" 
     endif
     return labeling
 endfunction
