@@ -112,7 +112,7 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s:show_me_not = '^vim\>\|^vimim'
-    if !empty(s:vimim_self_directory)
+    if !empty(s:vimim_vv_directory)
         let s:show_me_not .= '\|^vv'
     endif
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
@@ -303,7 +303,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_self_directory")
+    call add(G, "g:vimim_vv_directory")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_backslash_close_pinyin")
@@ -526,7 +526,7 @@ endfunction
 function! s:vimim_check_filereadable(default)
 " -------------------------------------------
     let default = a:default
-    let datafile = s:vimim_self_directory . default
+    let datafile = s:vimim_vv_directory . default
     if filereadable(datafile)
         let default = 0
     else
@@ -1423,7 +1423,7 @@ function! s:vimim_initialize_debug()
     if isdirectory("/home/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
-        let g:vimim_self_directory = "/home/xma/vimim/"
+        let g:vimim_vv_directory = "/home/xma/vimim/"
         let g:vimim_data_directory = "/home/vimim/pinyin/"
     endif
 endfunction
@@ -5286,8 +5286,8 @@ else
         let s:cjk_results = []
     endif
     if keyboard =~ s:show_me_not
-        " never ignore our private directory
-        let dir = s:vimim_self_directory
+        " file starting with vv can be poem
+        let dir = s:vimim_vv_directory
         let results = s:vimim_get_from_directory(keyboard, dir, 1)
     endif
     if !empty(results)
