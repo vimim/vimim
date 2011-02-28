@@ -1288,11 +1288,6 @@ function! s:vimim_cjk_grep_results(grep)
         call add(results, chinese_frequency)
         let line = match(s:cjk_lines, grep, line+1)
     endwhile
-    if len(results) > 0
-        if s:hjkl_h < 1 && s:chinese_input_mode =~ 'onekey'
-            let s:hjkl_h = 1
-        endif
-    endif
     return results
 endfunction
 
