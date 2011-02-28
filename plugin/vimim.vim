@@ -510,9 +510,9 @@ function! s:vimim_initialize_cjk_file()
     let s:has_slash_grep = 0
     let s:has_cjk_file = 0
     let s:cjk_file = 0
+    let s:cjk_cache = {}
     let s:cjk_lines = []
     let s:cjk_results = []
-    let s:cjk_one_char_cache = {}
     let datafile = "vimim.cjk.txt"
     let datafile = s:vimim_check_filereadable(datafile)
     if !empty(datafile)
@@ -750,12 +750,11 @@ function! s:vimim_cjk_match(keyboard)
     if empty(s:has_cjk_file)
         return []
     endif
-    if len(keyboard) == 1
-    \&& has_key(s:cjk_one_char_cache, keyboard)
+    if len(keyboard) == 1 && has_key(s:cjk_cache, keyboard)
         if keyboard =~ '\d'
             let s:cjk_filter = keyboard
         endif
-        return s:cjk_one_char_cache[keyboard]
+        return s:cjk_cache[keyboard]
     endif
     let grep = ""
     let dddddd = 6 - 2 * s:vimim_digit_4corner
@@ -821,10 +820,10 @@ function! s:vimim_cjk_match(keyboard)
         let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
         if len(keyboard) == 1
-            if has_key(s:cjk_one_char_cache, keyboard)
+            if has_key(s:cjk_cache, keyboard)
                 let msg = "cache is available in memory"
             else
-                let s:cjk_one_char_cache[keyboard] = results
+                let s:cjk_cache[keyboard] = results
                 return results
             endif
         endif
@@ -1116,7 +1115,6 @@ function! g:vimim_search_next()
     \&& english =~ '\w'
     \&& english !~ '\W'
     \&& english !~ '_'
-    \&& !empty(v:errmsg)
     \&& v:errmsg =~# english
     \&& v:errmsg =~# '^E486: '
         let error = ""
@@ -1295,20 +1293,18 @@ endfunction
 function! s:vimim_load_cjk_file()
 " -------------------------------
     if empty(s:cjk_lines) && s:has_cjk_file > 0
-        let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-        if len(s:cjk_lines) < 20902
-            let s:cjk_lines = []
-            let s:has_cjk_file = 0
-        elseif empty(s:cjk_one_char_cache)
-            call s:build_cjk_one_char_cache()
-        endif
+        let msg = "load cjk lines and build one char cache"
+    else
+        return
     endif
-endfunction
-
-" ------------------------------------
-function! s:build_cjk_one_char_cache()
-" ------------------------------------
+    let s:cjk_lines = s:vimim_readfile(s:cjk_file)
     let cjk = len(s:cjk_lines)
+    if cjk < 20902
+        let s:cjk_lines = []
+        let s:has_cjk_file = 0
+    elseif len(s:cjk_cache) > len('abcdefg')
+        return
+    endif
     if cjk == 20902
         for _ in s:az_list
             call s:vimim_cjk_match(_)
@@ -1319,11 +1315,11 @@ function! s:build_cjk_one_char_cache()
             let char = get(lines,0)
             let right = get(lines,1)
             let results = split(right, '\zs')
-            if has_key(s:cjk_one_char_cache, char)
-                let history_results = s:cjk_one_char_cache[char]
+            if has_key(s:cjk_cache, char)
+                let history_results = s:cjk_cache[char]
                 call extend(results, history_results, 0)
             endif
-            let s:cjk_one_char_cache[char] = results
+            let s:cjk_cache[char] = results
         endfor
     endif
 endfunction
@@ -2787,9 +2783,7 @@ function! s:vimim_scan_private_file()
     let s:cjk_self_lines = []
     let datafile = "vimim.txt"
     let datafile = s:vimim_check_filereadable(datafile)
-    if s:has_cjk_file > 1
-    \|| s:ui.im =~ 'pinyin'
-    \|| s:vimim_cloud_sogou == 1
+    if s:has_cjk_file > 1 || s:ui.im =~ 'pinyin'
         if !empty(datafile)
             let s:self_file = datafile
             let s:has_self_file = 1
@@ -5257,7 +5251,6 @@ else
 
     " [cjk] swiss-army cjk database is the first-class citizen
     if s:chinese_input_mode =~ 'onekey'
-    \|| s:backend[s:ui.root][s:ui.im].root == "directory"
         if s:has_cjk_file > 0 || s:has_self_file > 0
             let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
             if empty(keyboard_head)
