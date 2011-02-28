@@ -4072,13 +4072,20 @@ function! s:vimim_get_from_directory(keyboard, dir, search)
     let extras = []
     for candidate in candidates
         let filename = dir . candidate
+        let matched_list = []
         if filereadable(filename)
             let matched_list = s:vimim_readfile(filename)
+        elseif s:has_cjk_file > 0 
+        \&& s:chinese_input_mode =~ 'onekey'
+            let matched_list = s:vimim_cjk_match(candidate)[0:20]
+            let s:cjk_results = []
+        endif
+        if empty(matched_list)
+            continue
+        else
             let make_pair_filter = 'candidate ." ". v:val'
             call map(matched_list, make_pair_filter)
             call extend(extras, matched_list)
-        else
-            continue
         endif
     endfor
     if len(extras) > 0
