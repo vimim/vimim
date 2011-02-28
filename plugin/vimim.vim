@@ -3695,14 +3695,13 @@ function! s:vimim_get_from_cache(keyboard)
     if has_key(s:backend[s:ui.root][s:ui.im].cache, keyboard)
         let results = s:backend[s:ui.root][s:ui.im].cache[keyboard]
     endif
-    " ------------------------------------
-    let extras = []
-    if s:ui.im == 'pinyin'
-        let extras = s:vimim_pinyin_extra_match(keyboard, 0)
-    endif
-    if len(extras) > 0
-        let matched_list = [keyboard .' '. join(results)]
-        let results = s:vimim_build_popup_list(matched_list, extras)
+    if len(pairs) < 20 && s:ui.im == 'pinyin'
+        let extras = s:vimim_pinyin_more_datafile(keyboard)
+        if len(extras) > 0
+            let make_pair_filter = 'keyboard ." ". v:val'
+            call map(results, make_pair_filter)
+            call extend(results, extras)
+        endif
     endif
     return results
 endfunction
@@ -3740,7 +3739,9 @@ endfunction
 
 " -------------------------------------------------
 function! s:vimim_sentence_match_datafile(keyboard)
-" -------------------------------------------------
+" ------------------------------------------------- todo
+" mamahuhu
+" mahuhu
     call s:vimim_load_datafile_lines()
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines)
@@ -3778,44 +3779,68 @@ endfunction
 
 " ---------------------------------------------------
 function! s:vimim_get_from_datafile(keyboard, search)
-" ---------------------------------------------------
+" --------------------------------------------------- todo
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(keyboard) || empty(lines)
         return []
     endif
-    let results = []
     let pattern = '^' . keyboard . '\>'
     let matched = match(lines, pattern)
     if matched < 0
         return []
     endif
-    let matched_list = lines[matched : matched]
-    let extras = []
-    if s:ui.im == 'pinyin' && a:search < 1
-        let extras = s:vimim_pinyin_extra_match(keyboard, 0)
-    endif
-    let results = s:vimim_build_popup_list(matched_list, extras)
-    return results
-endfunction
-
-" ------------------------------------------------------
-function! s:vimim_build_popup_list(matched_list, extras)
-" ------------------------------------------------------
-    let results = []
-    if len(a:extras) > 0
-        let results = s:vimim_make_pair_matched_list(a:matched_list)
-        call extend(results, a:extras)
+    let results = lines[matched : matched]
+    let pairs = split(get(results,0))
+    if len(pairs) < 20
+    \&& a:search < 1
+    \&& s:ui.im == 'pinyin' 
+        let extras = s:vimim_pinyin_more_datafile(keyboard)
+let g:gx3=results
+let g:gx2=keyboard
+let g:gx1=extras
+        if len(extras) > 0
+            let results = s:vimim_make_pair_matched_list(results)
+            call extend(results, extras)
+        endif
     else
-        let pairs = split(get(a:matched_list,0))
         let results = pairs[1:]
     endif
     return results
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_pinyin_extra_match(keyboard, dir)
-" -------------------------------------------------
+" ----------------------------------------------
+function! s:vimim_pinyin_more_datafile(keyboard)
+" ---------------------------------------------- todo
+    let keyboard = a:keyboard
+    let candidates = s:vimim_pinyin_more_candidates(keyboard)
+    if empty(candidates)
+        return []
+    endif
+    let results = []
+    let lines = s:backend[s:ui.root][s:ui.im].lines
+    for keyboard in candidates
+        let pattern = '^' . keyboard . '\>'
+        let matched = match(lines, pattern, 0)
+        if matched < 0
+            continue
+        endif
+        let oneline_list = lines[matched : matched]
+        let matched_list = s:vimim_make_pair_matched_list(oneline_list)
+        call extend(results, matched_list)
+    endfor
+" todo
+"   if s:chinese_input_mode !~ 'dynamic' 
+"   \&& len(s:keyboard_list) < 2
+"   \&& len(results) > 0 
+"       let s:keyboard_list = [a:keyboard, ""]
+"   endif
+    return results
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_pinyin_more_candidates(keyboard)
+" ------------------------------------------------
     " [purpose] make standard layout for popup menu
     "           in   =>  mamahuhu
     "           out  =>  mamahuhu, mama, ma
@@ -3825,55 +3850,12 @@ function! s:vimim_pinyin_extra_match(keyboard, dir)
     if empty(keyboard) || empty(keyboards)
         return []
     endif
-    " ----------------------------------------------
     let candidates = []
     for i in reverse(range(len(keyboards)-1))
         let candidate = join(keyboards[0 : i], "")
         call add(candidates, candidate)
     endfor
-    " ----------------------------------------------
-    let results = []
-    if empty(a:dir)
-        let lines = s:backend[s:ui.root][s:ui.im].lines
-        for keyboard in candidates
-            let pattern = '^' . keyboard . '\>'
-            let matched = match(lines, pattern, 0)
-            if matched < 0
-                continue
-            endif
-            let oneline_list = lines[matched : matched]
-            let matched_list = s:vimim_make_pair_matched_list(oneline_list)
-            call extend(results, matched_list)
-        endfor
-        let pattern = '^' . a:keyboard . '\>'
-        let matched = match(lines, pattern, 0)
-        if matched < 0
-            " delegate to s:vimim_sentence_match_
-        elseif len(results) > 0
-            " for g:vimim_nonstop_after_insert()
-            let s:keyboard_list = [a:keyboard, ""]
-        endif
-    else
-    " ---------------------------------------------- todo
-        let filter = 'a:keyboard ." ". v:val'
-        call map(results, filter)
-        for keyboard in candidates
-            let filename = a:dir . keyboard
-            if filereadable(filename)
-                let matched_list = s:vimim_readfile(filename)
-                let filter = 'keyboard ." ". v:val'
-                call map(matched_list, filter)
-                call extend(results, matched_list)
-            else
-                continue
-            endif
-        endfor
-        let filename = a:dir . a:keyboard
-        if filereadable(filename) && len(results) > 0
-            let s:keyboard_list = [a:keyboard, ""]
-        endif
-    endif
-    return results
+    return candidates
 endfunction
 
 " ----------------------------------------------------
@@ -4075,9 +4057,9 @@ function! s:vimim_set_directory(im, dir)
     endif
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_get_from_directory(keyboard, dir)
-" -------------------------------------------------
+" ---------------------------------------------------------
+function! s:vimim_get_from_directory(keyboard, dir, search)
+" ---------------------------------------------------------
     let dir = a:dir
     let keyboard = a:keyboard
     if empty(dir) || empty(keyboard)
@@ -4088,18 +4070,46 @@ function! s:vimim_get_from_directory(keyboard, dir)
     if filereadable(filename)
         let results = s:vimim_readfile(filename)
     endif
-    if len(results) > 20
-        return results
+    if len(results) < 20
+    \&& s:ui.im == 'pinyin' 
+    \&& a:search < 1
+        let extras = s:vimim_pinyin_more_dictory(keyboard, dir)
+        if len(extras) > 0
+            let make_pair_filter = 'keyboard ." ". v:val'
+            call map(results, make_pair_filter)
+            call extend(results, extras)
+        endif
     endif
-    " ------------------------------------ todo
-    let extras = []
-    if s:ui.im == 'pinyin'
-        let extras = s:vimim_pinyin_extra_match(keyboard, dir)
+    return results
+endfunction
+
+" --------------------------------------------------
+function! s:vimim_pinyin_more_dictory(keyboard, dir)
+" -------------------------------------------------- todo
+    let keyboard = a:keyboard
+    let candidates = s:vimim_pinyin_more_candidates(keyboard)
+    if empty(candidates)
+        return []
     endif
-    if len(extras) > 0
-        let matched_list = [keyboard .' '. join(results)]
-        let results = s:vimim_build_popup_list(matched_list, extras)
-    endif
+    let results = []
+    for keyboard in candidates
+        let filename = a:dir . keyboard
+        if filereadable(filename)
+            let matched_list = s:vimim_readfile(filename)
+            let make_pair_filter = 'keyboard ." ". v:val'
+            call map(matched_list, make_pair_filter)
+            call extend(results, matched_list)
+        else
+            continue
+        endif
+    endfor
+"todo
+""  let filename = a:dir . a:keyboard
+""  if s:chinese_input_mode !~ 'dynamic'
+""  \&& len(results) > 0
+""  \&& filereadable(filename) 
+""      let s:keyboard_list = [a:keyboard, ""]
+""  endif
     return results
 endfunction
 
@@ -4929,8 +4939,9 @@ function! g:vimim_nonstop_after_insert()
 " --------------------------------------
     if s:chinese_input_mode =~ 'onekey'
     \&& len(s:keyboard_list) < 2
-        call s:vimim_stop()
+"""""   call s:vimim_stop()
     endif
+"""""   todo
     let key = ""
     if s:has_pumvisible > 0
         let key = g:vimim()
@@ -5035,16 +5046,29 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     if root =~# "directory"
         let dir = s:backend[root][im].name
         let keyboard2 = s:vimim_sentence_match_directory(keyboard)
-        let results = s:vimim_get_from_directory(keyboard2, dir)
+        let results = s:vimim_get_from_directory(keyboard2, dir, a:search)
     elseif root =~# "datafile"
         if empty(s:backend[root][im].cache)
             let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
             let results = s:vimim_get_from_datafile(keyboard2, a:search)
+let g:g61=results
+let g:g62=keyboard2
+let g:g63=keyboard
+let g:g64=copy(s:keyboard_list)
         else
             let keyboard2 = s:vimim_sentence_match_cache(keyboard)
             let results = s:vimim_get_from_cache(keyboard2)
         endif
     endif
+
+"   if s:chinese_input_mode !~ 'dynamic' 
+"   \&& len(s:keyboard_list) < 2
+"   \&& len(results) > 0 
+"       let s:keyboard_list = [a:keyboard, ""]
+"   endif
+"
+" todo
+
     if s:chinese_input_mode !~ 'dynamic'
     \&& len(s:keyboard_list) < 2
         if empty(keyboard2)
@@ -5052,8 +5076,12 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
+        elseif s:ui.im == 'pinyin'
+            " mamahuhu
+            let s:keyboard_list = [keyboard2, ""]
         endif
     endif
+
     return results
 endfunction
 
@@ -5292,7 +5320,7 @@ else
     if keyboard =~ s:show_me_not
         " never ignore our private directory
         let dir = s:vimim_self_directory
-        let results = s:vimim_get_from_directory(keyboard, dir)
+        let results = s:vimim_get_from_directory(keyboard, dir, 1)
     endif
     if !empty(results)
         return s:vimim_popupmenu_list(results)
