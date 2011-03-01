@@ -111,10 +111,6 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    let s:show_me_not = '^vim\>\|^vimim'
-    if !empty(s:vimim_poem_directory)
-        let s:show_me_not .= '\|^oo'
-    endif
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -545,7 +541,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
     let keyboard_head = 0
-    if keyboard =~ s:show_me_not || len(keyboard) == 1
+    if s:show_me_not > 0 || len(keyboard) == 1
         let keyboard_head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
@@ -1102,9 +1098,9 @@ function! g:vimim_search_next()
     if english =~ '\<' && english =~ '\>'
         let english = substitute(english,'[<>\\]','','g')
     endif
-    if !empty(english)
-    \&& len(english) < 24
+    if empty(s:show_me_not)
     \&& len(english) > 1
+    \&& len(english) < 24
     \&& english =~ '\w'
     \&& english !~ '\W'
     \&& english !~ '_'
@@ -1126,9 +1122,6 @@ function! s:vimim_search_chinese_from_english(keyboard)
     let results = []
     let cjk_results = []
     let keyboard = tolower(a:keyboard)
-    if keyboard =~ s:show_me_not
-        return
-    endif
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     " -------------------------------------------------
     if empty(ddddd)
@@ -1740,11 +1733,10 @@ function! g:vimim_pumvisible_dump()
     let one_line_clipboard = ""
     let saved_position = getpos(".")
     for items in s:popupmenu_list
-        if !has_key(items, "menu")
-        \|| get(s:keyboard_list,0) =~ s:show_me_not
-            let line = printf('%s', items.word)
-        else
+        if has_key(items, "menu")
             let line = printf('%s  %s', items.word, items.menu)
+        else
+            let line = printf('%s', items.word)
         endif
         put=line
         let one_line_clipboard .= line . "\n"
@@ -2358,7 +2350,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let s:popupmenu_list = []
     let first_in_list = split(get(s:matched_list,0))
     for chinese in matched_list
-        if len(first_in_list) > 1
+        if len(first_in_list) > 1 && s:show_me_not < 1
             let pairs = split(chinese)
             if len(pairs) < 2
                 continue
@@ -2369,12 +2361,12 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:hjkl_x % 2 > 0 && s:has_cjk_file > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
-        if s:hjkl_h % 2 > 0 && keyboard !~ s:show_me_not
+        if s:hjkl_h % 2 > 0 && s:show_me_not < 1
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_cjk_property_display(ddddd)
         endif
         if empty(s:vimim_cloud_plugin)
-            if !empty(keyboard) && keyboard !~ s:show_me_not
+            if !empty(keyboard) && s:show_me_not < 1
                 let keyboard_head_length = len(keyboard_head)
                 if empty(s:ui.has_dot) && keyboard =~ "['.]"
                     " for vimim classic demo: i.have.a.dream
@@ -2391,10 +2383,14 @@ function! s:vimim_popupmenu_list(matched_list)
         let complete_items = {}
         if s:vimim_custom_label > 0
             let labeling = s:vimim_get_labeling(label, keyboard)
-            let complete_items["abbr"] = labeling . chinese
+            if !empty(labeling)
+                let complete_items["abbr"] = labeling . chinese
+            endif
             let label += 1
         endif
-        let complete_items["menu"] = extra_text
+        if !empty(extra_text)
+            let complete_items["menu"] = extra_text
+        endif
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
         call add(s:popupmenu_list, complete_items)
@@ -2408,7 +2404,7 @@ function! s:vimim_get_labeling(label, keyboard)
     let labeling = a:label
     let fmt = '%2s'
     if s:chinese_input_mode =~ 'onekey'
-        if a:keyboard =~ s:show_me_not
+        if s:show_me_not > 0
             let fmt = '%02s'
             if s:hjkl_h % 2 < 1
                 let labeling = ""
@@ -3770,9 +3766,7 @@ function! s:vimim_get_from_datafile(keyboard, search)
     endif
     let results = lines[matched : matched]
     let pairs = split(get(results,0))
-    if len(pairs) < 20
-    \&& a:search < 1
-    \&& s:ui.im == 'pinyin'
+    if len(pairs) < 20 && a:search < 1 && s:ui.im == 'pinyin'
         let extras = s:vimim_pinyin_more_datafile(keyboard)
         if len(extras) > 0
             let results = s:vimim_make_pair_matched_list(results)
@@ -4029,32 +4023,17 @@ function! s:vimim_set_directory(im, dir)
     endif
 endfunction
 
-" ---------------------------------------------------------
-function! s:vimim_get_from_directory(keyboard, dir, search)
-" ---------------------------------------------------------
-    let dir = a:dir
+" ----------------------------------------------------
+function! s:vimim_pinyin_more_directory(keyboard, dir)
+" ----------------------------------------------------
     let keyboard = a:keyboard
-    if empty(dir) || empty(keyboard)
+    let candidates = s:vimim_pinyin_more_candidates(keyboard)
+    if empty(candidates)
         return []
     endif
     let results = []
-    let filename = dir . keyboard
-    if filereadable(filename)
-        let results = s:vimim_readfile(filename)
-    endif
-    if empty(results)
-    \|| len(results) > 20
-    \|| a:search > 0
-    \|| s:ui.im !~ 'pinyin'
-        return results
-    endif
-    let candidates = s:vimim_pinyin_more_candidates(keyboard)
-    if empty(candidates)
-        return results
-    endif
-    let extras = []
     for candidate in candidates
-        let filename = dir . candidate
+        let filename = a:dir . candidate
         let matched_list = []
         if filereadable(filename)
             let matched_list = s:vimim_readfile(filename)
@@ -4068,13 +4047,41 @@ function! s:vimim_get_from_directory(keyboard, dir, search)
         else
             let make_pair_filter = 'candidate ." ". v:val'
             call map(matched_list, make_pair_filter)
-            call extend(extras, matched_list)
+            call extend(results, matched_list)
         endif
     endfor
-    if len(extras) > 0
-        let make_pair_filter = 'keyboard ." ". v:val'
-        call map(results, make_pair_filter)
-        call extend(results, extras)
+    return results
+endfunction
+
+" ----------------------------------
+function! s:vimim_get_poem(keyboard)
+" ----------------------------------
+" poem can live in either of the 3 directories
+    let dirs = [s:path]
+    let dirs += [s:path . "vimim/"]
+    let dirs += [s:vimim_poem_directory]
+    let results = []
+    for dir in dirs
+        let results = s:vimim_get_from_directory(a:keyboard, dir)
+        if empty(results)
+            continue
+        else
+            break
+        endif
+    endfor
+    return results
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_get_from_directory(keyboard, dir)
+" -------------------------------------------------
+    if empty(a:dir) || empty(a:keyboard)
+        return []
+    endif
+    let results = []
+    let filename = a:dir . a:keyboard
+    if filereadable(filename)
+        let results = s:vimim_readfile(filename)
     endif
     return results
 endfunction
@@ -4083,9 +4090,6 @@ endfunction
 function! s:vimim_sentence_match_directory(keyboard)
 " --------------------------------------------------
     let keyboard = a:keyboard
-    if keyboard =~ s:show_me_not
-        return keyboard
-    endif
     let filename = s:vimim_data_directory . keyboard
     if filereadable(filename)
         return keyboard
@@ -4882,6 +4886,7 @@ function! s:vimim_reset_before_anything()
     let s:hjkl_n = 0
     let s:hjkl_x = 0
     let s:is_english = 0
+    let s:show_me_not = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e  = 0
     let s:pattern_not_found  = 0
@@ -4998,7 +5003,10 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     let keyboard = a:keyboard
     let im = s:ui.im
     let root = s:ui.root
-    if empty(root) || empty(im) || keyboard !~# s:valid_key
+    if empty(im) 
+    \|| empty(root) 
+    \|| s:show_me_not > 0
+    \|| keyboard !~# s:valid_key
         return []
     endif
     if s:has_cjk_file < 1 && s:ui.im == 'pinyin'
@@ -5009,15 +5017,22 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     endif
     let results = []
     let keyboard2 = 0
-    let search = a:search
     if root =~# "directory"
         let dir = s:backend[root][im].name
         let keyboard2 = s:vimim_sentence_match_directory(keyboard)
-        let results = s:vimim_get_from_directory(keyboard2, dir, search)
+        let results = s:vimim_get_from_directory(keyboard2, dir)
+        if len(results) < 20 && a:search < 1 && s:ui.im == 'pinyin'
+            let extras = s:vimim_pinyin_more_directory(keyboard, dir)
+            if len(extras) > 0
+                let make_pair_filter = 'keyboard ." ". v:val'
+                call map(results, make_pair_filter)
+                call extend(results, extras)
+            endif
+        endif
     elseif root =~# "datafile"
         if empty(s:backend[root][im].cache)
             let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
-            let results = s:vimim_get_from_datafile(keyboard2, search)
+            let results = s:vimim_get_from_datafile(keyboard2, a:search)
         else
             let keyboard2 = s:vimim_sentence_match_cache(keyboard)
             let results = s:vimim_get_from_cache(keyboard2)
@@ -5118,6 +5133,7 @@ if a:start
 else
 
     let s:is_english = 0
+    let s:show_me_not = 0
     let s:cjk_results = []
     let results = []
     let keyboard = a:keyboard
@@ -5145,13 +5161,20 @@ else
         return [' ']
     endif
 
-    " [eggs] hunt classic easter egg ... vim<C-6>
     if s:chinese_input_mode =~ 'onekey'
+      " [eggs] hunt classic easter egg ... vim<C-6>
         if keyboard ==# "vim" || keyboard =~# "^vimim"
             let results = s:vimim_easter_chicken(keyboard)
             if !empty(len(results))
+                let s:show_me_not = 1
                 return s:vimim_popupmenu_list(results)
             endif
+        endif
+        " [poem] check entry in special directories first
+        let results = s:vimim_get_poem(keyboard)
+        if !empty(results)
+            let s:show_me_not = 1
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
@@ -5269,11 +5292,6 @@ else
         call extend(results, s:cjk_results, 0)
         let results = s:vimim_remove_duplication(results)
         let s:cjk_results = []
-    endif
-    if keyboard =~ s:show_me_not
-        " file starting with oo must be poem
-        let dir = s:vimim_poem_directory
-        let results = s:vimim_get_from_directory(keyboard, dir, 1)
     endif
     if !empty(results)
         return s:vimim_popupmenu_list(results)
