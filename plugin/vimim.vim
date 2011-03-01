@@ -322,6 +322,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
+    let s:backend_loaded = 0
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = "dynamic"
@@ -1027,11 +1028,7 @@ let s:VimIM += [" ====  for mom and dad  ==== {{{"]
 " ---------------------------------
 function! s:vimim_for_mom_and_dad()
 " ---------------------------------
-    let s:backend_loaded = 0
-    let s:is_english = 0
-    let s:show_me_not = 0
     let s:mom_and_dad = 0
-    " -----------------------------
     let buffer = expand("%:p:t")
     if buffer =~ 'vimim_mom.txt'
         let s:vimim_digit_4corner = 0
@@ -1101,8 +1098,7 @@ function! g:vimim_search_next()
     if english =~ '\<' && english =~ '\>'
         let english = substitute(english,'[<>\\]','','g')
     endif
-    if empty(s:show_me_not)
-    \&& len(english) > 1
+    if len(english) > 1
     \&& len(english) < 24
     \&& english =~ '\w'
     \&& english !~ '\W'
@@ -1777,6 +1773,77 @@ function! s:vimim_onekey_popup_word()
     let current_line = getline(".")
     let chinese = strpart(current_line, column_start, range)
     return substitute(chinese,'\w','','g')
+endfunction
+
+" --------------------------------------
+function! s:vimim_onekey_input(keyboard)
+" -------------------------------------- todo
+    let results = []
+    let keyboard = a:keyboard
+    if s:chinese_input_mode !~ 'onekey'
+        return []
+    endif
+    " [filter] do digital filter within cache memory
+    " ----------------------------------------------
+    if s:has_cjk_file > 0
+    \&& len(s:cjk_filter) > 0
+    \&& len(s:matched_list) > 0
+        let results = s:vimim_cjk_filter_from_cache(keyboard)
+        if !empty(results)
+            return results
+        endif
+    endif
+    " [eggs] hunt classic easter egg ... vim<C-6>
+    " -------------------------------------------
+    if keyboard ==# "vim" || keyboard =~# "^vimim"
+        let results = s:vimim_easter_chicken(keyboard)
+        if !empty(results)
+            let s:show_me_not = 1
+            return results
+        endif
+    endif
+    " [poem] check entry in special directories first
+    " -----------------------------------------------
+    let results = s:vimim_get_poem(keyboard)
+    if !empty(results)
+        let s:show_me_not = 1
+        return results
+    endif
+    " [unicode] support direct unicode/gb/big5 input
+    " ----------------------------------------------
+    let results = s:vimim_get_unicode_list(keyboard)
+    if !empty(results)
+        let s:keyboard_list = [keyboard]
+        return results
+    endif
+    " [imode] magic i: (1) english number (2) qwerty shortcut
+    " -------------------------------------------------------
+    if keyboard =~# '^i'
+        if keyboard =~ '\d'
+            let results = s:vimim_imode_number(keyboard, 'i')
+            if !empty(len(results))
+                return results
+            endif
+        elseif s:has_cjk_file > 1 || s:vimim_imode_pinyin > 0
+            let dddd = s:vimim_qwertyuiop_1234567890(keyboard[1:-1])
+            if !empty(dddd)
+                let keyboard = dddd " iypwqwuww => 60212722
+            endif
+        endif
+    endif
+    " [cjk] swiss-army cjk database is the first-class citizen
+    " --------------------------------------------------------
+    if s:has_cjk_file > 0 || s:has_english_file > 0
+        let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
+        if empty(keyboard_head)
+            let keyboard_head = keyboard
+        endif
+        let results = s:vimim_match_cjk_files(keyboard_head)
+        if !empty(results) && empty(s:cjk_results)
+            return results
+        endif
+    endif
+    return results
 endfunction
 
 " ============================================= }}}
@@ -4888,6 +4955,8 @@ function! s:vimim_reset_before_anything()
     let s:hjkl_m = 0
     let s:hjkl_n = 0
     let s:hjkl_x = 0
+    let s:is_english = 0
+    let s:show_me_not = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e  = 0
     let s:pattern_not_found  = 0
@@ -5000,12 +5069,12 @@ let s:VimIM += [" ====  core engine      ==== {{{"]
 
 " ---------------------------------------------------------
 function! s:vimim_embedded_backend_engine(keyboard, search)
-" ---------------------------------------------------------
+" --------------------------------------------------------- todo
     let keyboard = a:keyboard
     let im = s:ui.im
     let root = s:ui.root
-    if empty(im) 
-    \|| empty(root) 
+    if empty(im)
+    \|| empty(root)
     \|| s:show_me_not > 0
     \|| keyboard !~# s:valid_key
         return []
@@ -5162,59 +5231,10 @@ else
         return [' ']
     endif
 
-    if s:chinese_input_mode =~ 'onekey'
-      " [eggs] hunt classic easter egg ... vim<C-6>
-        if keyboard ==# "vim" || keyboard =~# "^vimim"
-            let results = s:vimim_easter_chicken(keyboard)
-            if !empty(len(results))
-                let s:show_me_not = 1
-                return s:vimim_popupmenu_list(results)
-            endif
-        endif
-        " [poem] check entry in special directories first
-        let results = s:vimim_get_poem(keyboard)
-        if !empty(results)
-            let s:show_me_not = 1
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " [filter] do digital filter within cache memory
-    if s:chinese_input_mode =~ 'onekey'
-    \&& s:has_cjk_file > 0
-    \&& len(s:cjk_filter) > 0
-    \&& len(s:matched_list) > 0
-        let results = s:vimim_cjk_filter_from_cache(keyboard)
-        if !empty(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " [unicode] support direct unicode/gb/big5 input
-    if s:chinese_input_mode =~ 'onekey'
-        let results = s:vimim_get_unicode_list(keyboard)
-        if !empty(results)
-            let s:keyboard_list = [keyboard]
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-
-    " [imode] magic 'i': (1) english number (2) qwerty shortcut
-    if s:chinese_input_mode !~ 'dynamic' && keyboard =~# '^i'
-        if keyboard =~ '\d'
-            let chinese_numbers = s:vimim_imode_number(keyboard, 'i')
-            if empty(len(chinese_numbers))
-                let msg = " English number => Chinese number "
-            else
-                return s:vimim_popupmenu_list(chinese_numbers)
-            endif
-        elseif s:has_cjk_file > 1 || s:vimim_imode_pinyin > 0
-            let dddd = s:vimim_qwertyuiop_1234567890(keyboard[1:-1])
-            if !empty(dddd)
-                " iypwqwuwwyppwquyw => 6021272260021762
-                let keyboard = dddd
-            endif
-        endif
+    " [onekey] play with onekey special
+    let results = s:vimim_onekey_input(keyboard)
+    if !empty(len(results))
+        return s:vimim_popupmenu_list(results)
     endif
 
     " [mycloud] get chunmeng from mycloud local or www
@@ -5269,20 +5289,6 @@ else
             let punctuation = s:vimim_erbi_first_punctuation(keyboard)
             if !empty(punctuation)
                 return [punctuation]
-            endif
-        endif
-    endif
-
-    " [cjk] swiss-army cjk database is the first-class citizen
-    if s:chinese_input_mode =~ 'onekey'
-        if s:has_cjk_file > 0 || s:has_english_file > 0
-            let keyboard_head = s:vimim_cjk_sentence_match(keyboard)
-            if empty(keyboard_head)
-                let keyboard_head = keyboard
-            endif
-            let results = s:vimim_match_cjk_files(keyboard_head)
-            if !empty(results) && empty(s:cjk_results)
-                return s:vimim_popupmenu_list(results)
             endif
         endif
     endif
