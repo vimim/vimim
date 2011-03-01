@@ -1412,7 +1412,7 @@ function! s:vimim_initialize_debug()
     if isdirectory("/home/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
-        let g:vimim_poem_directory = "/home/xma/vimim/"
+        let g:vimim_poem_directory = "/home/xma/poem/"
         let g:vimim_data_directory = "/home/vimim/pinyin/"
     endif
 endfunction
@@ -3599,7 +3599,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if s:mom_and_dad == 1 || s:vimim_tab_as_onekey == 2
+    if s:mom_and_dad > 0 || s:vimim_tab_as_onekey > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -3984,7 +3984,7 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if s:mom_and_dad == 1
+    if s:mom_and_dad > 0
         return
     endif
     for im in s:all_vimim_input_methods
