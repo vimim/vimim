@@ -2385,6 +2385,9 @@ function! s:vimim_popupmenu_list(matched_list)
         else
             let extra_text = get(split(keyboard_head,"_"),0)
         endif
+        if empty(chinese)
+            let chinese = s:space
+        endif
         let complete_items = {}
         if s:vimim_custom_label > 0
             let labeling = s:vimim_get_labeling(label, keyboard)
@@ -2407,7 +2410,7 @@ function! s:vimim_get_labeling(label, keyboard)
     if s:chinese_input_mode =~ 'onekey'
         if a:keyboard =~ s:show_me_not
             let fmt = '%02s'
-            if s:hjkl_h % 2 < 1 
+            if s:hjkl_h % 2 < 1
                 let labeling = ""
             endif
         elseif a:label < &pumheight+1
@@ -2425,7 +2428,7 @@ function! s:vimim_get_labeling(label, keyboard)
         endif
     endif
     if !empty(labeling)
-        let labeling = printf(fmt, labeling) . "\t" 
+        let labeling = printf(fmt, labeling) . "\t"
     endif
     return labeling
 endfunction
@@ -5268,7 +5271,7 @@ else
         let s:cjk_results = []
     endif
     if keyboard =~ s:show_me_not
-        " file starting with oo can be poem
+        " file starting with oo must be poem
         let dir = s:vimim_poem_directory
         let results = s:vimim_get_from_directory(keyboard, dir, 1)
     endif
