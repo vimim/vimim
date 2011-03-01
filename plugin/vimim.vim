@@ -316,13 +316,12 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_custom_statusline")
-    call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_onekey_nonstop")
+    call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_search_next")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
-    let s:backend_loaded = 0
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = "dynamic"
@@ -1028,7 +1027,11 @@ let s:VimIM += [" ====  for mom and dad  ==== {{{"]
 " ---------------------------------
 function! s:vimim_for_mom_and_dad()
 " ---------------------------------
+    let s:backend_loaded = 0
+    let s:is_english = 0
+    let s:show_me_not = 0
     let s:mom_and_dad = 0
+    " -----------------------------
     let buffer = expand("%:p:t")
     if buffer =~ 'vimim_mom.txt'
         let s:vimim_digit_4corner = 0
@@ -4885,8 +4888,6 @@ function! s:vimim_reset_before_anything()
     let s:hjkl_m = 0
     let s:hjkl_n = 0
     let s:hjkl_x = 0
-    let s:is_english = 0
-    let s:show_me_not = 0
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e  = 0
     let s:pattern_not_found  = 0
