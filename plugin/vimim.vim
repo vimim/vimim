@@ -1033,6 +1033,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
     sil!call s:vimim_backend_initialization_once()
     let keyboard = tolower(a:keyboard)
     let cjk_results = []
+    let s:english_results = []
     " => slash search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     " => slash search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
@@ -1057,7 +1058,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
     endif
     " => slash search english /horse
     if keyboard =~ '^\l\+'
-        sil!call s:vimim_onekey_english(keyboard)
+        sil!call s:vimim_onekey_english(a:keyboard, 1)
     endif
     let results = []
     if empty(cjk_results) && empty(s:english_results)
@@ -1159,6 +1160,7 @@ endfunction
 function! s:vimim_cjk_grep_results(grep)
 " --------------------------------------
     let grep = a:grep
+    " error: grep is e4494
     if empty(grep)
         return []
     endif
@@ -1720,7 +1722,7 @@ function! s:vimim_onekey_input(keyboard)
     endif
     " [english] english cannot be ignored
     if keyboard =~ '^\l\+'
-        sil!call s:vimim_onekey_english(keyboard)
+        sil!call s:vimim_onekey_english(keyboard, 0)
     endif
     " [imode] magic i: (1) English number (2) qwerty shortcut
     if keyboard =~# '^i'
@@ -2769,9 +2771,20 @@ function! s:vimim_check_filereadable(default)
     return 0
 endfunction
 
-" ----------------------------------------
-function! s:vimim_onekey_english(keyboard)
-" ----------------------------------------
+" -----------------------------------------------
+function! s:vimim_onekey_english(keyboard, order)
+" -----------------------------------------------
+    let results = []
+    if s:has_cjk_file > 0 && s:ui.im == 'pinyin'
+        " select english from vimim.cjk.txt
+        let grep_english = '\s' . a:keyboard . '\s'
+        let results = s:vimim_cjk_grep_results(grep_english)
+        if len(results) > 0
+            let filter = "strpart(".'v:val'.", 0, s:multibyte)"
+            call map(results, filter)
+            let s:english_results = copy(results)
+        endif
+    endif
     if s:has_english_file > 0
         " select english from vimim.txt
         if empty(s:english_lines)
@@ -2783,17 +2796,12 @@ function! s:vimim_onekey_english(keyboard)
             " no more scan for: dream 梦想
         else
             let line = s:english_lines[matched]
-            let s:english_results = split(line)[1:]
-        endif
-    endif
-    if s:has_cjk_file > 0 && s:ui.im == 'pinyin'
-        " select english from vimim.cjk.txt
-        let grep_english = '\s' . a:keyboard . '\s'
-        let results = s:vimim_cjk_grep_results(grep_english)
-        if len(results) > 0
-            let filter = "strpart(".'v:val'.", 0, s:multibyte)"
-            call map(results, filter)
-            call extend(s:english_results, results, 0)
+            let results = split(line)[1:]
+            if empty(a:order)
+                call extend(s:english_results, results)
+            else
+                call extend(s:english_results, results, 0)
+            endif
         endif
     endif
 endfunction
