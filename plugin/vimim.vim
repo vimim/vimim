@@ -3730,8 +3730,8 @@ function! s:vimim_more_pinyin_datafile(keyboard)
         if matched < 0
             continue
         endif
-        let oneline_list = lines[matched : matched]
-        let matched_list = s:vimim_make_pair_matched_list(oneline_list)
+        let oneline = lines[matched]
+        let matched_list = s:vimim_make_pair_matched_list(oneline)
         call extend(results, matched_list)
     endfor
     return results
@@ -3823,17 +3823,34 @@ function! s:vimim_get_from_datafile(keyboard, search)
     if matched < 0
         return []
     endif
-    let results = lines[matched : matched]
-    let pairs = split(get(results,0))
-    if len(pairs) < 20 && a:search < 1 && s:ui.im =~ 'pinyin'
+    let oneline = lines[matched]
+    let results = split(oneline)[1:]
+    if a:search < 1 && s:ui.im =~ 'pinyin'
+    \&& len(results) > 0 && len(results) < 20
         let extras = s:vimim_more_pinyin_datafile(keyboard)
         if len(extras) > 0
-            let results = s:vimim_make_pair_matched_list(results)
+            let results = s:vimim_make_pair_matched_list(oneline)
             call extend(results, extras)
         endif
-    else
-        let results = pairs[1:]
     endif
+    return results
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_make_pair_matched_list(oneline)
+" -----------------------------------------------
+" [input]    lively 热闹 活泼
+" [output] ['lively 热闹', 'lively 活泼']
+    let oneline_list = split(a:oneline)
+    let menu = remove(oneline_list, 0)
+    if empty(menu) || menu =~ '\W'
+        return []
+    endif
+    let results = []
+    for chinese in oneline_list
+        let menu_chinese = menu .' '. chinese
+        call add(results, menu_chinese)
+    endfor
     return results
 endfunction
 
@@ -3860,26 +3877,6 @@ function! s:vimim_more_pinyin_candidates(keyboard)
         call add(candidates, candidate)
     endfor
     return candidates
-endfunction
-
-" ----------------------------------------------------
-function! s:vimim_make_pair_matched_list(matched_list)
-" ----------------------------------------------------
-" [input]    lively 热闹 活泼
-" [output] ['lively 热闹', 'lively 活泼']
-    let pair_matched_list = []
-    for line in a:matched_list
-        let words = split(line)
-        let menu = remove(words, 0)
-        if empty(menu) || menu =~ '\W'
-            continue
-        endif
-        for chinese in words
-            let menu_chinese = menu .' '. chinese
-            call add(pair_matched_list, menu_chinese)
-        endfor
-    endfor
-    return pair_matched_list
 endfunction
 
 " --------------------------------------
