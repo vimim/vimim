@@ -3324,9 +3324,8 @@ function! s:vimim_get_valid_im_name(im)
 " -------------------------------------
     let im = a:im
     if empty(im)
-        return 0
-    endif
-    if im =~ '^wubi'
+        let im = 0
+    elseif im =~ '^wubi'
         let im = 'wubi'
     elseif im =~ '^pinyin'
         let im = 'pinyin'
@@ -3343,39 +3342,23 @@ function! s:vimim_set_special_im_property()
     if  s:ui.im == 'pinyin' || s:has_cjk_file > 0
         let s:quanpin_table = s:vimim_create_quanpin_table()
     endif
-    " -------------------------------------
+    if s:backend[s:ui.root][s:ui.im].name =~# "quote"
+        let s:ui.has_dot = 2  " has_apostrophe_in_datafile
+    endif
     if s:ui.im == 'wu'
     \|| s:ui.im == 'erbi'
     \|| s:ui.im == 'yong'
     \|| s:ui.im == 'nature'
     \|| s:ui.im == 'boshiamy'
-    \|| s:ui.im == 'phonetic'
-    \|| s:ui.im == 'array30'
         let s:ui.has_dot = 1  " dot in datafile
         let s:vimim_chinese_punctuation = -99
     endif
-    " -------------------------------------
-    if s:backend[s:ui.root][s:ui.im].name =~# "quote"
-        let s:ui.has_dot = 2  " has_apostrophe_in_datafile
-    endif
-    " -------------------------------------
     if s:ui.im == 'phonetic'
     \|| s:ui.im == 'array30'
+        let s:ui.has_dot = 1
+        let s:vimim_chinese_punctuation = -99
         let s:vimim_chinese_input_mode = "static"
     endif
-endfunction
-
-" -------------------------------------------
-function! s:vimim_dynamic_wubi_auto_trigger()
-" -------------------------------------------
-    let not_used_valid_keys = "[0-9.']"
-    for char in s:valid_keys
-        if char !~# not_used_valid_keys
-            sil!exe 'inoremap <silent> ' . char . '
-            \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'
-            \. char . '<C-R>=g:vimim()<CR>'
-        endif
-    endfor
 endfunction
 
 " -----------------------------------------------
@@ -3391,6 +3374,19 @@ function! s:vimim_wubi_4char_auto_input(keyboard)
         let s:keyboard_list = [keyboard]
     endif
     return keyboard
+endfunction
+
+" -------------------------------------------
+function! s:vimim_dynamic_wubi_auto_trigger()
+" -------------------------------------------
+    let not_used_valid_keys = "[0-9.']"
+    for char in s:valid_keys
+        if char !~# not_used_valid_keys
+            sil!exe 'inoremap <silent> ' . char . '
+            \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'
+            \. char . '<C-R>=g:vimim()<CR>'
+        endif
+    endfor
 endfunction
 
 " -----------------------------------------------
