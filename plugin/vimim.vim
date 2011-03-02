@@ -1056,7 +1056,9 @@ function! s:vimim_search_chinese_from_english(keyboard)
         let cjk_results = [nr2char(ddddd)]
     endif
     " => slash search english /horse
-    sil!call s:vimim_onekey_english(keyboard)
+    if keyboard =~ '^\l\+'
+        sil!call s:vimim_onekey_english(keyboard)
+    endif
     let results = []
     if empty(cjk_results) && empty(s:english_results)
         if !empty(s:vimim_shuangpin)
@@ -1716,8 +1718,10 @@ function! s:vimim_onekey_input(keyboard)
         let s:keyboard_list = [keyboard]
         return results
     endif
-    " [english] from (1) vimim.cjk.txt (2) vimim.txt
-    sil!call s:vimim_onekey_english(keyboard)
+    " [english] english cannot be ignored
+    if keyboard =~ '^\l\+'
+        sil!call s:vimim_onekey_english(keyboard)
+    endif
     " [imode] magic i: (1) English number (2) qwerty shortcut
     if keyboard =~# '^i'
         if keyboard =~ '\d'
@@ -2768,46 +2772,29 @@ endfunction
 " ----------------------------------------
 function! s:vimim_onekey_english(keyboard)
 " ----------------------------------------
-    let keyboard = a:keyboard
-    if keyboard !~ '^\l\+' || keyboard =~ '\d'
-        return
-    endif
     if s:has_english_file > 0
-        " search english and save the results
-        call s:vimim_english_match(keyboard)
+        " select english from vimim.txt
+        if empty(s:english_lines)
+            let s:english_lines = s:vimim_readfile(s:english_file)
+        endif
+        let grep_english = '^' . a:keyboard . '\>'
+        let matched = match(s:english_lines, grep_english)
+        if matched < 0
+            " no more scan for: dream 梦想
+        else
+            let line = s:english_lines[matched]
+            let s:english_results = split(line)[1:]
+        endif
     endif
     if s:has_cjk_file > 0 && s:ui.im == 'pinyin'
-        " search english and append the results
-        call s:vimim_cjk_english_match(keyboard)
-    endif
-endfunction
-
-" ---------------------------------------
-function! s:vimim_english_match(keyboard)
-" ---------------------------------------
-    if empty(s:english_lines)
-        let s:english_lines = s:vimim_readfile(s:english_file)
-    endif
-    let grep_english = '^' . a:keyboard . '\>'
-    let matched = match(s:english_lines, grep_english)
-    if matched < 0
-        " no more scan for: dream 梦 梦想
-    else
-        let line = s:english_lines[matched]
-        let s:english_results = split(line)[1:]
-    endif
-endfunction
-
-" -------------------------------------------
-function! s:vimim_cjk_english_match(keyboard)
-" -------------------------------------------
-" cjk sample: 加 532510 4600 jia1 add plus 186
-    let grep_english = '\s' . a:keyboard . '\s'
-    let results = s:vimim_cjk_grep_results(grep_english)
-    if len(results) > 0
-        let filter = "strpart(".'v:val'.", 0, s:multibyte)"
-        call map(results, filter)
-        call extend(s:english_results, results, 0)
+        " select english from vimim.cjk.txt
+        let grep_english = '\s' . a:keyboard . '\s'
+        let results = s:vimim_cjk_grep_results(grep_english)
+        if len(results) > 0
+            let filter = "strpart(".'v:val'.", 0, s:multibyte)"
+            call map(results, filter)
+            call extend(s:english_results, results, 0)
+        endif
     endif
 endfunction
 
