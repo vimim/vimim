@@ -4,8 +4,8 @@
 "   VimIM -- Input Method by Vim, of Vim, for Vimmers
 " =====================================================
 
-let $VimIM = "VimIM 環境""              vimim<C-6><C-6>
-let $VimIM = "VimIM 幫助""          vimimhelp<C-6><C-6>
+let $VimIM = "VimIM Environments""      vimim<C-6><C-6>
+let $VimIM = "VimIM Help""          vimimhelp<C-6><C-6>
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 let s:url  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
