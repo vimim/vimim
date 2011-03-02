@@ -3597,9 +3597,9 @@ endfunction
 " -------------------------------------------
 function! s:vimim_cjk_property_display(ddddd)
 " -------------------------------------------
-    let unicode = printf('u%04x', a:ddddd) . s:space . a:ddddd
+    let unicode = printf('u%04x', a:ddddd)
     if s:has_cjk_file < 1
-        return unicode
+        return unicode . s:space . a:ddddd
     endif
     call s:vimim_load_cjk_file()
     let chinese = nr2char(a:ddddd)
