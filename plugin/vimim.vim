@@ -77,7 +77,6 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_initialize_keycode()
     sil!call s:vimim_set_special_im_property()
     sil!call s:vimim_initialize_frontend_punctuation()
-    sil!call s:vimim_load_datafile_lines()
     sil!call s:vimim_initialize_skin()
 endfunction
 
@@ -3674,20 +3673,8 @@ function! s:vimim_set_datafile(im, datafile)
     let s:backend.datafile[im].name = datafile
     let s:backend.datafile[im].keycode = s:im_keycode[im]
     let s:backend.datafile[im].chinese = s:vimim_chinese(im)
-endfunction
-
-" -------------------------------------
-function! s:vimim_load_datafile_lines()
-" -------------------------------------
-    let im = s:ui.im
-    if s:backend[s:ui.root][im].root == "datafile"
-        let datafile = s:backend.datafile[im].name
-        if !empty(datafile) && filereadable(datafile)
-            if empty(s:backend.datafile[im].lines)
-                let lines = s:vimim_readfile(datafile)
-                let s:backend.datafile[im].lines = lines
-            endif
-        endif
+    if empty(s:backend.datafile[im].lines)
+        let s:backend.datafile[im].lines = s:vimim_readfile(datafile)
     endif
 endfunction
 
