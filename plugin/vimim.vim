@@ -1765,12 +1765,8 @@ let s:VimIM += [" ====  chinese mode     ==== {{{"]
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
-    let s:chinese_input_mode = s:vimim_chinese_input_mode
     call s:vimim_backend_initialization_once()
-    call s:vimim_frontend_initialization()
-    call s:vimim_set_statusline()
-    call s:vimim_build_datafile_cache()
-    call s:vimim_do_cloud_if_no_embedded_backend()
+    let s:chinese_input_mode = s:vimim_chinese_input_mode
     let action = ""
     if !empty(s:ui.root) && !empty(s:ui.im)
         let action = <SID>vimim_chinesemode_action()
@@ -1794,9 +1790,13 @@ function! <SID>vimim_chinesemode_action()
         else
             let s:ui.root = get(ui,0)
             let s:ui.im = get(ui,1)
+            call s:vimim_frontend_initialization()
+            call s:vimim_set_statusline()
+            call s:vimim_build_datafile_cache()
+            call s:vimim_do_cloud_if_no_embedded_backend()
         endif
     endif
-    " -----------------------------------
+    " ----------------------------------- todo
     let action = ""
     if empty(switch)
         call s:vimim_stop()
@@ -3656,7 +3656,7 @@ endfunction
 
 " ------------------------------------------
 function! s:vimim_set_datafile(im, datafile)
-" ------------------------------------------
+" ------------------------------------------ todo
     let im = s:vimim_get_valid_im_name(a:im)
     let datafile = a:datafile
     if empty(im)
@@ -3680,14 +3680,13 @@ endfunction
 function! s:vimim_load_datafile_lines()
 " -------------------------------------
     let im = s:ui.im
-    if s:backend[s:ui.root][im].root != "datafile"
-        return
-    endif
-    let datafile = s:backend.datafile[im].name
-    if !empty(datafile) && filereadable(datafile)
-        if empty(s:backend.datafile[im].lines)
-            let lines = s:vimim_readfile(datafile)
-            let s:backend.datafile[im].lines = lines
+    if s:backend[s:ui.root][im].root == "datafile"
+        let datafile = s:backend.datafile[im].name
+        if !empty(datafile) && filereadable(datafile)
+            if empty(s:backend.datafile[im].lines)
+                let lines = s:vimim_readfile(datafile)
+                let s:backend.datafile[im].lines = lines
+            endif
         endif
     endif
 endfunction
@@ -3776,11 +3775,7 @@ endfunction
 function! s:vimim_sentence_match_datafile(keyboard)
 " -------------------------------------------------
     let keyboard = a:keyboard
-    call s:vimim_load_datafile_lines()
     let lines = s:backend[s:ui.root][s:ui.im].lines
-    if empty(lines)
-        return 0
-    endif
     let pattern = '^' . keyboard . '\>'
     let match_start = match(lines, pattern)
     if match_start > -1
@@ -3812,7 +3807,7 @@ endfunction
 
 " ---------------------------------------------------
 function! s:vimim_get_from_datafile(keyboard, search)
-" ---------------------------------------------------
+" --------------------------------------------------- todo
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(keyboard) || empty(lines)
@@ -3825,8 +3820,9 @@ function! s:vimim_get_from_datafile(keyboard, search)
     endif
     let oneline = lines[matched]
     let results = split(oneline)[1:]
+    let pairs = split(oneline)
     if a:search < 1 && s:ui.im =~ 'pinyin'
-    \&& len(results) > 0 && len(results) < 20
+    \&& len(pairs) > 0 && len(pairs) < 20
         let extras = s:vimim_more_pinyin_datafile(keyboard)
         if len(extras) > 0
             let results = s:vimim_make_pair_matched_list(oneline)
