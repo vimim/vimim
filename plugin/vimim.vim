@@ -543,7 +543,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_cjk_every_four(keyboard)
 " ----------------------------------------
-    " output is '6021' for input "6021272260001762"
+    " output is '6021' for input  6021272260001762
     let keyboard = a:keyboard
     let block = 4
     if len(keyboard) % block < 1
@@ -559,7 +559,7 @@ endfunction
 " -----------------------------------------
 function! s:vimim_cjk_alpha_digit(keyboard)
 " -----------------------------------------
-    " output is 'wo23' for input "wo23you40yigemeng"
+    " output is 'wo23' for input wo23you40yigemeng
     let keyboard = a:keyboard
     if keyboard =~ '^\l\+\d\+\>'
         return keyboard
@@ -578,7 +578,7 @@ endfunction
 " ------------------------------------------
 function! s:vimim_cjk_sentence_diy(keyboard)
 " ------------------------------------------
-    " output is 'm7712' for input 'muuqwxeyqpjeqqq'
+    " output is 'm7712' for input muuqwxeyqpjeqqq
     let keyboard = a:keyboard
     let delimiter = match(keyboard, '^\l\l\l\l\l')
     if delimiter < 0
@@ -598,7 +598,7 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_qwertyuiop_1234567890(keyboard)
 " -----------------------------------------------
-    " output is '7712' for input 'uuqw'
+    " output is '7712' for input uuqw
     if a:keyboard =~ '\d' || s:has_cjk_file < 1
         return 0
     else
@@ -1026,17 +1026,17 @@ endfunction
 " -----------------------------------------------------
 function! s:vimim_search_chinese_from_english(keyboard)
 " -----------------------------------------------------
-    let results = []
-    let cjk_results = []
+    sil!call s:vimim_backend_initialization_once()
     let keyboard = tolower(a:keyboard)
+    let cjk_results = []
+    " => slash search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    " -------------------------------------------------
+    " => slash search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
     if empty(ddddd)
-        sil!call s:vimim_backend_initialization_once()
         let keyboards = s:vimim_slash_search_block(keyboard)
         if len(keyboards) > 0
-            for keyboard2 in keyboards
-                let chars = s:vimim_cjk_match(keyboard2)
+            for keyboard in keyboards
+                let chars = s:vimim_cjk_match(keyboard)
                 if len(keyboards) == 1
                     let cjk_results = copy(chars)
                 elseif len(chars) > 0
@@ -1051,42 +1051,34 @@ function! s:vimim_search_chinese_from_english(keyboard)
     else
         let cjk_results = [nr2char(ddddd)]
     endif
-    " ------------------------------------------------- todo
+    " => slash search english /horse
     sil!call s:vimim_onekey_english(keyboard)
-    if empty(s:english_results)
-        let s:english_results = copy(cjk_results)
-    else
-        let cjk_results = copy(s:english_results)
-    endif
-    " -------------------------------------------------
-    if empty(cjk_results)
+    let results = []
+    if empty(cjk_results) && empty(s:english_results)
         if !empty(s:vimim_shuangpin)
             sil!call s:vimim_initialize_shuangpin()
             let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
         endif
         if s:vimim_cloud_sogou == 1
+            " => slash search from sogou cloud
             let results = s:vimim_get_cloud_sogou(keyboard, 1)
+        elseif !empty(s:vimim_cloud_plugin)
+            " => slash search from mycloud
+            let results = s:vimim_get_mycloud_plugin(keyboard)
         endif
     endif
-    " -------------------------------------------------
     if empty(results)
-        if empty(s:backend.datafile) && empty(s:backend.directory)
-            if empty(s:vimim_cloud_plugin)
-                let results = s:vimim_get_cloud_sogou(keyboard, 1)
-            else
-                let results = s:vimim_get_mycloud_plugin(keyboard)
-            endif
-        else
-            let results = s:vimim_embedded_backend_engine(keyboard,1)
-        endif
+        " => slash search from local datafile or directory
+        let results = s:vimim_embedded_backend_engine(keyboard,1)
     endif
-    " -------------------------------------------------
+    call extend(results, s:english_results, 0)
     call extend(results, cjk_results)
+    " -------------------------------------------------
     if empty(results)
         let v:errmsg = ""
     else
         let slash = get(results, 0)
-        if len(a:results) > 1
+        if len(results) > 1
             let slash = join(results, '\|')
         endif
         if empty(search(slash,'nw'))
@@ -1119,6 +1111,7 @@ function! s:vimim_slash_search_block(keyboard)
             let keyboard = strpart(keyboard,len(keyboard2))
         endif
     endwhile
+let g:g4=copy(results)
     return results
 endfunction
 
@@ -5268,7 +5261,6 @@ else
         " no english is found for the keyboard input
     else
         call extend(results, s:english_results, 0)
-        let s:english_results = []
         let results = s:vimim_remove_duplication(results)
     endif
     if !empty(results)
