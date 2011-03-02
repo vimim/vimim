@@ -84,7 +84,7 @@ endfunction
 function! s:vimim_backend_initialization_once()
 " ---------------------------------------------
     if empty(s:backend_loaded)
-        let s:backend_loaded = 1
+        let s:backend_loaded += 1
     else
         return
     endif
@@ -1366,6 +1366,96 @@ function! s:debugs(key, value)
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  plugin conflict  ==== {{{"]
+" =================================================
+
+" -----------------------------------
+function! s:vimim_plugins_fix_start()
+" -----------------------------------
+    if s:vimim_tab_as_onekey == 2
+        return
+    endif
+    " -------------------------------
+    if !exists('s:acp_sid')
+        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+        if !empty(s:acp_sid)
+            AcpDisable
+        endif
+    endif
+    if !exists('s:supertab_sid')
+        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    endif
+    if !exists('s:word_complete')
+        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
+        if !empty(s:word_complete)
+            call EndWordComplete()
+        endif
+    endif
+endfunction
+
+" ----------------------------------
+function! s:vimim_getsid(scriptname)
+" ----------------------------------
+" frederick.zou fixed these conflicting plugins:
+" supertab      http://www.vim.org/scripts/script.php?script_id=1643
+" autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
+" word_complete http://www.vim.org/scripts/script.php?script_id=73
+" ------------------------------------------------------------------
+    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
+    let l:scriptname = a:scriptname
+    " get output of ":scriptnames" in scriptnames_output variable
+    if empty(s:scriptnames_output)
+        let saved_shellslash=&shellslash
+        set shellslash
+        redir => s:scriptnames_output
+        silent scriptnames
+        redir END
+        let &shellslash = saved_shellslash
+    endif
+    for line in split(s:scriptnames_output, "\n")
+        " only do non-blank lines
+        if line =~ l:scriptname
+            " get the first number in the line.
+            let nr = matchstr(line, '\d\+')
+            return nr
+        endif
+    endfor
+    return 0
+endfunction
+
+" ----------------------------------
+function! s:vimim_plugins_fix_stop()
+" ----------------------------------
+    if s:vimim_tab_as_onekey == 2
+        return
+    endif
+    " ------------------------------
+    if !empty(s:acp_sid)
+        let ACPMappingDrivenkeys = [
+            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
+            \ '<','>','/','\','<Space>','<BS>','<CR>',]
+        call extend(ACPMappingDrivenkeys, range(10))
+        call extend(ACPMappingDrivenkeys, s:Az_list)
+        for key in ACPMappingDrivenkeys
+            exe printf('iu <silent> %s', key)
+            exe printf('im <silent> %s
+            \ %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp_sid)
+        endfor
+        AcpEnable
+    endif
+    " -------------------------------------------------------------
+    if !empty(s:supertab_sid)
+        let tab = s:supertab_sid
+        if g:SuperTabMappingForward =~ '^<tab>$'
+            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
+        endif
+        if g:SuperTabMappingBackward =~ '^<s-tab>$'
+            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
+        endif
+    endif
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  OneKey           ==== {{{"]
 " =================================================
 
@@ -1927,313 +2017,6 @@ function! s:vimim_get_seamless(current_positions)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  cjk number       ==== {{{"]
-" =================================================
-
-" ----------------------------------------
-function! s:vimim_dictionary_quantifiers()
-" ----------------------------------------
-    if s:vimim_imode_pinyin < 1
-        return
-    endif
-    let s:quantifiers['1'] = '一壹甲①⒈⑴'
-    let s:quantifiers['2'] = '二贰乙②⒉⑵'
-    let s:quantifiers['3'] = '三叁丙③⒊⑶'
-    let s:quantifiers['4'] = '四肆丁④⒋⑷'
-    let s:quantifiers['5'] = '五伍戊⑤⒌⑸'
-    let s:quantifiers['6'] = '六陆己⑥⒍⑹'
-    let s:quantifiers['7'] = '七柒庚⑦⒎⑺'
-    let s:quantifiers['8'] = '八捌辛⑧⒏⑻'
-    let s:quantifiers['9'] = '九玖壬⑨⒐⑼'
-    let s:quantifiers['0'] = '〇零癸⑩⒑⑽十拾'
-    let s:quantifiers['a'] = '秒'
-    let s:quantifiers['b'] = '步百佰把包杯本笔部班'
-    let s:quantifiers['c'] = '厘次餐场串处床'
-    let s:quantifiers['d'] = '第度点袋道滴碟日顶栋堆对朵堵顿'
-    let s:quantifiers['e'] = '亿'
-    let s:quantifiers['f'] = '分份发封付副幅峰方服'
-    let s:quantifiers['g'] = '个根股管'
-    let s:quantifiers['h'] = '时毫行盒壶户回'
-    let s:quantifiers['i'] = '毫'
-    let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
-    let s:quantifiers['k'] = '克口块棵颗捆孔'
-    let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
-    let s:quantifiers['m'] = '月米名枚面门'
-    let s:quantifiers['n'] = '年'
-    let s:quantifiers['o'] = '度'
-    let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
-    let s:quantifiers['q'] = '千仟群'
-    let s:quantifiers['r'] = '日'
-    let s:quantifiers['s'] = '十拾时升艘扇首双所束手秒'
-    let s:quantifiers['t'] = '吨条头通堂趟台套桶筒贴'
-    let s:quantifiers['u'] = '微'
-    let s:quantifiers['w'] = '万位味碗窝'
-    let s:quantifiers['x'] = '升席些项'
-    let s:quantifiers['y'] = '年亿叶月'
-    let s:quantifiers['z'] = '种只张株支枝盏座阵桩尊则站幢宗兆'
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_imode_number(keyboard, prefix)
-" ----------------------------------------------
-    " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql
-    if empty(s:vimim_imode_pinyin)
-        return []
-    endif
-    let keyboard = a:keyboard
-    if keyboard[0:1] ==# 'ii'
-        let keyboard = 'I' . strpart(keyboard,2)
-    endif
-    let ii_keyboard = keyboard
-    let keyboard = strpart(keyboard,1)
-    if keyboard !~ '^\d\+' && keyboard !~# '^[ds]'
-    \&& len(substitute(keyboard,'\d','','')) > 1
-        return []
-    endif
-    let digit_alpha = keyboard
-    if keyboard =~# '^\d*\l\{1}$'
-        let digit_alpha = keyboard[:-2]
-    endif
-    let keyboards = split(digit_alpha, '\ze')
-    let i = ii_keyboard[:0]
-    let number = ""
-    for char in keyboards
-        if has_key(s:quantifiers, char)
-            let quantifiers = split(s:quantifiers[char], '\zs')
-            if i ==# 'i'
-                let char = get(quantifiers, 0)
-            elseif i ==# 'I'
-                let char = get(quantifiers, 1)
-            endif
-        endif
-        let number .= char
-    endfor
-    if empty(number)
-        return []
-    endif
-    let numbers = [number]
-    let last_char = keyboard[-1:]
-    if !empty(last_char) && has_key(s:quantifiers, last_char)
-        let quantifier = s:quantifiers[last_char]
-        let quantifiers = split(quantifier, '\zs')
-        if keyboard =~# '^[ds]\=\d*\l\{1}$'
-            if keyboard =~# '^[ds]'
-                let number = strpart(number,0,len(number)-s:multibyte)
-            endif
-            let numbers = map(copy(quantifiers), 'number . v:val')
-        elseif keyboard =~# '^\d*$' && len(keyboards)<2 && i ==# 'i'
-            let numbers = quantifiers
-        endif
-    endif
-    return numbers
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  cjk punctuation  ==== {{{"]
-" =================================================
-
-" ----------------------------------------
-function! s:vimim_dictionary_punctuation()
-" ----------------------------------------
-    let s:punctuations = {}
-    let s:punctuations['@'] = s:space
-    let s:punctuations['+'] = s:plus
-    let s:punctuations[':'] = s:colon
-    let s:punctuations['['] = s:left
-    let s:punctuations[']'] = s:right
-    let s:punctuations['#'] = '＃'
-    let s:punctuations['&'] = '＆'
-    let s:punctuations['%'] = '％'
-    let s:punctuations['$'] = '￥'
-    let s:punctuations['!'] = '！'
-    let s:punctuations['~'] = '～'
-    let s:punctuations['('] = '（'
-    let s:punctuations[')'] = '）'
-    let s:punctuations['{'] = '〖'
-    let s:punctuations['}'] = '〗'
-    let s:punctuations['^'] = '……'
-    let s:punctuations['_'] = '——'
-    let s:punctuations['<'] = '《'
-    let s:punctuations['>'] = '》'
-    let s:punctuations['-'] = '－'
-    let s:punctuations['='] = '＝'
-    let s:punctuations[';'] = '；'
-    let s:punctuations[','] = '，'
-    let s:punctuations['.'] = '。'
-    let s:punctuations['?'] = '？'
-    let s:punctuations['*'] = '﹡'
-    " ------------------------------------
-    let s:evils = {}
-    if empty(s:vimim_backslash_close_pinyin)
-        let s:evils['\'] = '、'
-    endif
-    if empty(s:vimim_latex_suite)
-        let s:evils["'"] = '‘’'
-        let s:evils['"'] = '“”'
-    endif
-endfunction
-
-" -------------------------------------------------
-function! s:vimim_initialize_frontend_punctuation()
-" -------------------------------------------------
-    for char in s:valid_keys
-        if has_key(s:punctuations, char)
-            if !empty(s:vimim_cloud_plugin) || s:ui.has_dot == 1
-                unlet s:punctuations[char]
-            elseif char !~# "[*.']"
-                unlet s:punctuations[char]
-            endif
-        endif
-    endfor
-endfunction
-
-" ---------------------------------------
-function! <SID>vimim_toggle_punctuation()
-" ---------------------------------------
-    let s:chinese_punctuation = (s:chinese_punctuation+1)%2
-    call s:vimim_set_statusline()
-    call s:vimim_punctuation_mapping_on()
-    return  ""
-endfunction
-
-" ----------------------------------------
-function! s:vimim_punctuation_mapping_on()
-" ----------------------------------------
-    if s:vimim_chinese_punctuation < 0
-        return ""
-    else
-        call s:vimim_evil_punctuation_mapping_on()
-    endif
-    for key in keys(s:punctuations)
-        sil!exe 'inoremap <silent> '. key .'
-        \    <C-R>=<SID>vimim_punctuation_mapping("'. key .'")<CR>'
-        \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
-    endfor
-    sil!call s:vimim_punctuation_navigation_on()
-    return ""
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_evil_punctuation_mapping_on()
-" ---------------------------------------------
-    if s:chinese_punctuation > 0
-        if empty(s:vimim_latex_suite)
-            inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
-            inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
-        endif
-        if empty(s:vimim_backslash_close_pinyin)
-            sil!exe 'inoremap <Bslash> ' . s:evils['\']
-        endif
-    else
-        for _ in keys(s:evils)
-            sil!exe 'iunmap '. _
-        endfor
-    endif
-endfunction
-
-" -------------------------------------
-function! <SID>vimim_get_single_quote()
-" -------------------------------------
-    let key = "'"
-    if !has_key(s:evils, key)
-        return ""
-    endif
-    let pair = s:evils[key]
-    let pairs = split(pair,'\zs')
-    let s:smart_single_quotes += 1
-    return get(pairs, s:smart_single_quotes % 2)
-endfunction
-
-" -------------------------------------
-function! <SID>vimim_get_double_quote()
-" -------------------------------------
-    let key = '"'
-    if !has_key(s:evils, key)
-        return ""
-    endif
-    let pair = s:evils[key]
-    let pairs = split(pair,'\zs')
-    let s:smart_double_quotes += 1
-    return get(pairs, s:smart_double_quotes % 2)
-endfunction
-
-" -------------------------------------------
-function! <SID>vimim_punctuation_mapping(key)
-" -------------------------------------------
-    let key = a:key
-    let value = key
-    if s:chinese_punctuation > 0
-        let byte_before = getline(".")[col(".")-2]
-        if byte_before !~ '\w' || pumvisible()
-            if has_key(s:punctuations, key)
-                let value = s:punctuations[key]
-            else
-                let value = a:key
-            endif
-        endif
-    endif
-    if pumvisible()
-        let value = "\<C-Y>" . value
-        let s:has_pumvisible = 1
-    endif
-    sil!exe 'sil!return "' . value . '"'
-endfunction
-
-" -------------------------------------------
-function! s:vimim_punctuation_navigation_on()
-" -------------------------------------------
-    if s:vimim_chinese_punctuation < 0
-        return ""
-    endif
-    let punctuation = "[]-="
-    if s:chinese_input_mode =~ 'onekey'
-        let punctuation .= ".,/?;"
-    endif
-    let punctuations = split(punctuation,'\zs')
-    for char in s:valid_keys
-        let i = index(punctuations, char)
-        if i > -1 && char != "."
-            unlet punctuations[i]
-        endif
-    endfor
-    for _ in punctuations
-        sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_punctuations_navigation("'._.'")'
-    endfor
-endfunction
-
-" -----------------------------------------------
-function! <SID>vimim_punctuations_navigation(key)
-" -----------------------------------------------
-    let hjkl = a:key
-    if pumvisible()
-        if a:key =~ ";"
-            let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
-            let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
-        elseif a:key =~ "[][]"
-            let hjkl  = s:vimim_square_bracket(a:key)
-        elseif a:key =~ "[/?]"
-            let hjkl  = s:vimim_menu_search(a:key)
-        elseif a:key =~ "[-,]"
-            if s:hjkl_l > 0 && &pumheight < 1
-                let hjkl = '\<PageUp>'
-            else
-                let s:hjkl_pageup_pagedown -= 1
-                let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-            endif
-        elseif a:key =~ "[=.]"
-            if s:hjkl_l > 0 && &pumheight < 1
-                let hjkl = '\<PageDown>'
-            else
-                let s:hjkl_pageup_pagedown += 1
-                let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-            endif
-        endif
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-" ============================================= }}}
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
@@ -2639,93 +2422,310 @@ function! s:vimim_pageup_pagedown(matched_list)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  plugin conflict  ==== {{{"]
+let s:VimIM += [" ====  cjk number       ==== {{{"]
 " =================================================
 
-" -----------------------------------
-function! s:vimim_plugins_fix_start()
-" -----------------------------------
-    if s:vimim_tab_as_onekey == 2
+" ----------------------------------------
+function! s:vimim_dictionary_quantifiers()
+" ----------------------------------------
+    if s:vimim_imode_pinyin < 1
         return
     endif
-    " -------------------------------
-    if !exists('s:acp_sid')
-        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
-        if !empty(s:acp_sid)
-            AcpDisable
+    let s:quantifiers['1'] = '一壹甲①⒈⑴'
+    let s:quantifiers['2'] = '二贰乙②⒉⑵'
+    let s:quantifiers['3'] = '三叁丙③⒊⑶'
+    let s:quantifiers['4'] = '四肆丁④⒋⑷'
+    let s:quantifiers['5'] = '五伍戊⑤⒌⑸'
+    let s:quantifiers['6'] = '六陆己⑥⒍⑹'
+    let s:quantifiers['7'] = '七柒庚⑦⒎⑺'
+    let s:quantifiers['8'] = '八捌辛⑧⒏⑻'
+    let s:quantifiers['9'] = '九玖壬⑨⒐⑼'
+    let s:quantifiers['0'] = '〇零癸⑩⒑⑽十拾'
+    let s:quantifiers['a'] = '秒'
+    let s:quantifiers['b'] = '步百佰把包杯本笔部班'
+    let s:quantifiers['c'] = '厘次餐场串处床'
+    let s:quantifiers['d'] = '第度点袋道滴碟日顶栋堆对朵堵顿'
+    let s:quantifiers['e'] = '亿'
+    let s:quantifiers['f'] = '分份发封付副幅峰方服'
+    let s:quantifiers['g'] = '个根股管'
+    let s:quantifiers['h'] = '时毫行盒壶户回'
+    let s:quantifiers['i'] = '毫'
+    let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
+    let s:quantifiers['k'] = '克口块棵颗捆孔'
+    let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
+    let s:quantifiers['m'] = '月米名枚面门'
+    let s:quantifiers['n'] = '年'
+    let s:quantifiers['o'] = '度'
+    let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
+    let s:quantifiers['q'] = '千仟群'
+    let s:quantifiers['r'] = '日'
+    let s:quantifiers['s'] = '十拾时升艘扇首双所束手秒'
+    let s:quantifiers['t'] = '吨条头通堂趟台套桶筒贴'
+    let s:quantifiers['u'] = '微'
+    let s:quantifiers['w'] = '万位味碗窝'
+    let s:quantifiers['x'] = '升席些项'
+    let s:quantifiers['y'] = '年亿叶月'
+    let s:quantifiers['z'] = '种只张株支枝盏座阵桩尊则站幢宗兆'
+endfunction
+
+" ----------------------------------------------
+function! s:vimim_imode_number(keyboard, prefix)
+" ----------------------------------------------
+    " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql
+    if empty(s:vimim_imode_pinyin)
+        return []
+    endif
+    let keyboard = a:keyboard
+    if keyboard[0:1] ==# 'ii'
+        let keyboard = 'I' . strpart(keyboard,2)
+    endif
+    let ii_keyboard = keyboard
+    let keyboard = strpart(keyboard,1)
+    if keyboard !~ '^\d\+' && keyboard !~# '^[ds]'
+    \&& len(substitute(keyboard,'\d','','')) > 1
+        return []
+    endif
+    let digit_alpha = keyboard
+    if keyboard =~# '^\d*\l\{1}$'
+        let digit_alpha = keyboard[:-2]
+    endif
+    let keyboards = split(digit_alpha, '\ze')
+    let i = ii_keyboard[:0]
+    let number = ""
+    for char in keyboards
+        if has_key(s:quantifiers, char)
+            let quantifiers = split(s:quantifiers[char], '\zs')
+            if i ==# 'i'
+                let char = get(quantifiers, 0)
+            elseif i ==# 'I'
+                let char = get(quantifiers, 1)
+            endif
+        endif
+        let number .= char
+    endfor
+    if empty(number)
+        return []
+    endif
+    let numbers = [number]
+    let last_char = keyboard[-1:]
+    if !empty(last_char) && has_key(s:quantifiers, last_char)
+        let quantifier = s:quantifiers[last_char]
+        let quantifiers = split(quantifier, '\zs')
+        if keyboard =~# '^[ds]\=\d*\l\{1}$'
+            if keyboard =~# '^[ds]'
+                let number = strpart(number,0,len(number)-s:multibyte)
+            endif
+            let numbers = map(copy(quantifiers), 'number . v:val')
+        elseif keyboard =~# '^\d*$' && len(keyboards)<2 && i ==# 'i'
+            let numbers = quantifiers
         endif
     endif
-    if !exists('s:supertab_sid')
-        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    return numbers
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  cjk punctuation  ==== {{{"]
+" =================================================
+
+" ----------------------------------------
+function! s:vimim_dictionary_punctuation()
+" ----------------------------------------
+    let s:punctuations = {}
+    let s:punctuations['@'] = s:space
+    let s:punctuations['+'] = s:plus
+    let s:punctuations[':'] = s:colon
+    let s:punctuations['['] = s:left
+    let s:punctuations[']'] = s:right
+    let s:punctuations['#'] = '＃'
+    let s:punctuations['&'] = '＆'
+    let s:punctuations['%'] = '％'
+    let s:punctuations['$'] = '￥'
+    let s:punctuations['!'] = '！'
+    let s:punctuations['~'] = '～'
+    let s:punctuations['('] = '（'
+    let s:punctuations[')'] = '）'
+    let s:punctuations['{'] = '〖'
+    let s:punctuations['}'] = '〗'
+    let s:punctuations['^'] = '……'
+    let s:punctuations['_'] = '——'
+    let s:punctuations['<'] = '《'
+    let s:punctuations['>'] = '》'
+    let s:punctuations['-'] = '－'
+    let s:punctuations['='] = '＝'
+    let s:punctuations[';'] = '；'
+    let s:punctuations[','] = '，'
+    let s:punctuations['.'] = '。'
+    let s:punctuations['?'] = '？'
+    let s:punctuations['*'] = '﹡'
+    " ------------------------------------
+    let s:evils = {}
+    if empty(s:vimim_backslash_close_pinyin)
+        let s:evils['\'] = '、'
     endif
-    if !exists('s:word_complete')
-        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
-        if !empty(s:word_complete)
-            call EndWordComplete()
-        endif
+    if empty(s:vimim_latex_suite)
+        let s:evils["'"] = '‘’'
+        let s:evils['"'] = '“”'
     endif
 endfunction
 
-" ----------------------------------
-function! s:vimim_getsid(scriptname)
-" ----------------------------------
-" frederick.zou fixed these conflicting plugins:
-" supertab      http://www.vim.org/scripts/script.php?script_id=1643
-" autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
-" word_complete http://www.vim.org/scripts/script.php?script_id=73
-" ------------------------------------------------------------------
-    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
-    let l:scriptname = a:scriptname
-    " get output of ":scriptnames" in scriptnames_output variable
-    if empty(s:scriptnames_output)
-        let saved_shellslash=&shellslash
-        set shellslash
-        redir => s:scriptnames_output
-        silent scriptnames
-        redir END
-        let &shellslash = saved_shellslash
-    endif
-    for line in split(s:scriptnames_output, "\n")
-        " only do non-blank lines
-        if line =~ l:scriptname
-            " get the first number in the line.
-            let nr = matchstr(line, '\d\+')
-            return nr
+" -------------------------------------------------
+function! s:vimim_initialize_frontend_punctuation()
+" -------------------------------------------------
+    for char in s:valid_keys
+        if has_key(s:punctuations, char)
+            if !empty(s:vimim_cloud_plugin) || s:ui.has_dot == 1
+                unlet s:punctuations[char]
+            elseif char !~# "[*.']"
+                unlet s:punctuations[char]
+            endif
         endif
     endfor
-    return 0
 endfunction
 
-" ----------------------------------
-function! s:vimim_plugins_fix_stop()
-" ----------------------------------
-    if s:vimim_tab_as_onekey == 2
-        return
+" ---------------------------------------
+function! <SID>vimim_toggle_punctuation()
+" ---------------------------------------
+    let s:chinese_punctuation = (s:chinese_punctuation+1)%2
+    call s:vimim_set_statusline()
+    call s:vimim_punctuation_mapping_on()
+    return  ""
+endfunction
+
+" ----------------------------------------
+function! s:vimim_punctuation_mapping_on()
+" ----------------------------------------
+    if s:vimim_chinese_punctuation < 0
+        return ""
+    else
+        call s:vimim_evil_punctuation_mapping_on()
     endif
-    " ------------------------------
-    if !empty(s:acp_sid)
-        let ACPMappingDrivenkeys = [
-            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
-            \ '<','>','/','\','<Space>','<BS>','<CR>',]
-        call extend(ACPMappingDrivenkeys, range(10))
-        call extend(ACPMappingDrivenkeys, s:Az_list)
-        for key in ACPMappingDrivenkeys
-            exe printf('iu <silent> %s', key)
-            exe printf('im <silent> %s
-            \ %s<C-r>=<SNR>%s_feedPopup()<CR>', key, key, s:acp_sid)
+    for key in keys(s:punctuations)
+        sil!exe 'inoremap <silent> '. key .'
+        \    <C-R>=<SID>vimim_punctuation_mapping("'. key .'")<CR>'
+        \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
+    endfor
+    sil!call s:vimim_punctuation_navigation_on()
+    return ""
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_evil_punctuation_mapping_on()
+" ---------------------------------------------
+    if s:chinese_punctuation > 0
+        if empty(s:vimim_latex_suite)
+            inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
+            inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
+        endif
+        if empty(s:vimim_backslash_close_pinyin)
+            sil!exe 'inoremap <Bslash> ' . s:evils['\']
+        endif
+    else
+        for _ in keys(s:evils)
+            sil!exe 'iunmap '. _
         endfor
-        AcpEnable
     endif
-    " -------------------------------------------------------------
-    if !empty(s:supertab_sid)
-        let tab = s:supertab_sid
-        if g:SuperTabMappingForward =~ '^<tab>$'
-            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
-        endif
-        if g:SuperTabMappingBackward =~ '^<s-tab>$'
-            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
+endfunction
+
+" -------------------------------------
+function! <SID>vimim_get_single_quote()
+" -------------------------------------
+    let key = "'"
+    if !has_key(s:evils, key)
+        return ""
+    endif
+    let pair = s:evils[key]
+    let pairs = split(pair,'\zs')
+    let s:smart_single_quotes += 1
+    return get(pairs, s:smart_single_quotes % 2)
+endfunction
+
+" -------------------------------------
+function! <SID>vimim_get_double_quote()
+" -------------------------------------
+    let key = '"'
+    if !has_key(s:evils, key)
+        return ""
+    endif
+    let pair = s:evils[key]
+    let pairs = split(pair,'\zs')
+    let s:smart_double_quotes += 1
+    return get(pairs, s:smart_double_quotes % 2)
+endfunction
+
+" -------------------------------------------
+function! <SID>vimim_punctuation_mapping(key)
+" -------------------------------------------
+    let key = a:key
+    let value = key
+    if s:chinese_punctuation > 0
+        let byte_before = getline(".")[col(".")-2]
+        if byte_before !~ '\w' || pumvisible()
+            if has_key(s:punctuations, key)
+                let value = s:punctuations[key]
+            else
+                let value = a:key
+            endif
         endif
     endif
+    if pumvisible()
+        let value = "\<C-Y>" . value
+        let s:has_pumvisible = 1
+    endif
+    sil!exe 'sil!return "' . value . '"'
+endfunction
+
+" -------------------------------------------
+function! s:vimim_punctuation_navigation_on()
+" -------------------------------------------
+    if s:vimim_chinese_punctuation < 0
+        return ""
+    endif
+    let punctuation = "[]-="
+    if s:chinese_input_mode =~ 'onekey'
+        let punctuation .= ".,/?;"
+    endif
+    let punctuations = split(punctuation,'\zs')
+    for char in s:valid_keys
+        let i = index(punctuations, char)
+        if i > -1 && char != "."
+            unlet punctuations[i]
+        endif
+    endfor
+    for _ in punctuations
+        sil!exe 'inoremap <silent> <expr> '._.'
+        \ <SID>vimim_punctuations_navigation("'._.'")'
+    endfor
+endfunction
+
+" -----------------------------------------------
+function! <SID>vimim_punctuations_navigation(key)
+" -----------------------------------------------
+    let hjkl = a:key
+    if pumvisible()
+        if a:key =~ ";"
+            let hjkl  = '\<C-R>=g:vimim_space()\<CR>'
+            let hjkl .= '\<C-R>=g:vimim_pumvisible_to_clip()\<CR>'
+        elseif a:key =~ "[][]"
+            let hjkl  = s:vimim_square_bracket(a:key)
+        elseif a:key =~ "[/?]"
+            let hjkl  = s:vimim_menu_search(a:key)
+        elseif a:key =~ "[-,]"
+            if s:hjkl_l > 0 && &pumheight < 1
+                let hjkl = '\<PageUp>'
+            else
+                let s:hjkl_pageup_pagedown -= 1
+                let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            endif
+        elseif a:key =~ "[=.]"
+            if s:hjkl_l > 0 && &pumheight < 1
+                let hjkl = '\<PageDown>'
+            else
+                let s:hjkl_pageup_pagedown += 1
+                let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            endif
+        endif
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
 " ============================================= }}}
