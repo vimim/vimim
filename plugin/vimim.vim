@@ -854,32 +854,37 @@ let s:VimIM += [" ====  for mom and dad  ==== {{{"]
 " ---------------------------------
 function! s:vimim_for_mom_and_dad()
 " ---------------------------------
+    let onekey = ""
     let s:mom_and_dad = 0
     let buffer = expand("%:p:t")
     if buffer =~ 'vimim.mom.txt'
+        startinsert!
         let s:vimim_digit_4corner = 0
+        let onekey = s:vimim_onekey_action("")
+        sil!call s:vimim_start_onekey()
     elseif buffer =~ 'vimim.dad.txt'
+        set noruler
         let s:vimim_digit_4corner = 1
     else
         return
     endif
-    let s:mom_and_dad = 1
-    sil!call s:vimim_start_onekey()
     if empty(s:has_cjk_file)
-        let s:mom_and_dad = 0
         return
+    else
+        let s:mom_and_dad = 1
+        let s:vimim_tab_as_onekey = 2
     endif
     if has("gui_running") && has("win32")
         autocmd! * <buffer>
         autocmd  FocusLost <buffer> sil!wall
         noremap  <silent>  <Esc> :sil!%y +<CR>
+        set tw=30
         set lines=24
         set columns=36
+        set report=12345
         let &gfn .= ":h24:w12"
     endif
-    let s:vimim_tab_as_onekey = 2
-    startinsert!
-    return s:vimim_onekey_action("")
+    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 " ---------------------------------
@@ -1389,6 +1394,7 @@ endfunction
 " ------------------------------
 function! s:vimim_start_onekey()
 " ------------------------------
+    set lazyredraw
     let s:chinese_input_mode = "onekey"
     sil!call s:vimim_backend_initialization_once()
     sil!call s:vimim_frontend_initialization()
@@ -2048,6 +2054,7 @@ function! s:vimim_set_statusline()
         return
     endif
     set laststatus=2
+    set nolazyredraw
     if empty(&statusline)
         set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
     elseif &statusline =~ 'IMName'
@@ -3697,14 +3704,13 @@ function! s:vimim_get_from_cache(keyboard)
     if has_key(s:backend[s:ui.root][s:ui.im].cache, keyboard)
         let results = s:backend[s:ui.root][s:ui.im].cache[keyboard]
     endif
-    if empty(results) || len(results) > 20
-        return results
-    endif
-    let extras = s:vimim_more_pinyin_datafile(keyboard)
-    if len(extras) > 0
-        let make_pair_filter = 'keyboard ." ". v:val'
-        call map(results, make_pair_filter)
-        call extend(results, extras)
+    if s:ui.im =~ 'pinyin' && len(results) > 0 && len(results) < 20
+        let extras = s:vimim_more_pinyin_datafile(keyboard)
+        if len(extras) > 0
+            let make_pair_filter = 'keyboard ." ". v:val'
+            call map(results, make_pair_filter)
+            call extend(results, extras)
+        endif
     endif
     return results
 endfunction
@@ -3819,7 +3825,7 @@ function! s:vimim_get_from_datafile(keyboard, search)
     endif
     let results = lines[matched : matched]
     let pairs = split(get(results,0))
-    if len(pairs) < 20 && a:search < 1
+    if len(pairs) < 20 && a:search < 1 && s:ui.im =~ 'pinyin'
         let extras = s:vimim_more_pinyin_datafile(keyboard)
         if len(extras) > 0
             let results = s:vimim_make_pair_matched_list(results)
@@ -3839,9 +3845,6 @@ function! s:vimim_more_pinyin_candidates(keyboard)
 "           out  =>  mamahuhu, mama, ma
 " ------------------------------------------------
     let keyboard = a:keyboard
-    if s:ui.im !~ 'pinyin'
-        return []
-    endif
     if empty(s:english_results)
         " break up keyboard only if it is not english
     else
@@ -4843,7 +4846,6 @@ endfunction
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
-    set nolazyredraw
     if empty(&pumheight)
         let &pumheight=9
     endif
@@ -5037,7 +5039,8 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         let dir = s:backend[root][im].name
         let keyboard2 = s:vimim_sentence_match_directory(keyboard)
         let results = s:vimim_get_from_directory(keyboard2, dir)
-        if keyboard ==# keyboard2 && a:search < 1 && len(results) < 20
+        if keyboard ==# keyboard2 && s:ui.im =~ 'pinyin'
+        \&& a:search < 1 && len(results) > 0 && len(results) < 20
             let extras = s:vimim_more_pinyin_directory(keyboard, dir)
             if len(extras) > 0 && len(results) > 0
                 call map(results, 'keyboard ." ". v:val')
