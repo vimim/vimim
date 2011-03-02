@@ -856,9 +856,9 @@ function! s:vimim_for_mom_and_dad()
 " ---------------------------------
     let s:mom_and_dad = 0
     let buffer = expand("%:p:t")
-    if buffer =~ 'vimim_mom.txt'
+    if buffer =~ 'vimim.mom.txt'
         let s:vimim_digit_4corner = 0
-    elseif buffer =~ 'vimim_dad.txt'
+    elseif buffer =~ 'vimim.dad.txt'
         let s:vimim_digit_4corner = 1
     else
         return
