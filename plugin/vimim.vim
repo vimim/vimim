@@ -142,7 +142,7 @@ function! s:vimim_initialize_session()
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
     let s:chinese_mode_switch = 0
-    let g:vimim_debugs = []
+    let s:vimim_debugs = []
 endfunction
 
 " --------------------------------
@@ -631,7 +631,6 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
         let s:hjkl_m += 1
         let a_keyboard = keyboard[0 : len(keyboard)-2]
     endif
-    " ----------------------------------------
     call s:vimim_load_cjk_file()
     let grep = '^' . a_keyboard . '\>'
     let matched = match(s:cjk_lines, grep)
@@ -640,7 +639,6 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     elseif matched < 0 && s:has_cjk_file > 0
         let keyboard = s:vimim_toggle_pinyin(a_keyboard)
     endif
-    " ----------------------------------------
     let head = a_keyboard
     let partition = match(keyboard, "[.']")
     if partition > -1
@@ -771,91 +769,6 @@ function! s:vimim_get_keyboard_head_list(keyboard, partition)
         let s:keyboard_list = copy(keyboards)
     endif
     return head
-endfunction
-
-" ---------------------------------------
-function! s:vimim_reverse_lookup(chinese)
-" ---------------------------------------
-    let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
-    if empty(chinese)
-        return []
-    endif
-    let results = []
-    let results_unicode = s:vimim_reverse_one_entry(chinese, 'unicode')
-    if !empty(results_unicode)
-        call extend(results, results_unicode)
-    endif
-    if empty(s:has_cjk_file)
-        return results
-    endif
-    call s:vimim_load_cjk_file()
-    let results_digit = s:vimim_reverse_one_entry(chinese, 2)
-    call extend(results, results_digit)
-    let results_digit = s:vimim_reverse_one_entry(chinese, 1)
-    call extend(results, results_digit)
-    let results_pinyin = []  " 马力 => ma3 li2
-    let result_cjjp = ""     " 马力 => ml
-    let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
-    if len(items) > 0
-        let pinyin_head = get(items,0)
-        if !empty(pinyin_head)
-            call add(results_pinyin, pinyin_head)
-            call add(results_pinyin, get(items,1))
-            for pinyin in split(pinyin_head)
-                let result_cjjp .= pinyin[0:0]
-            endfor
-            let result_cjjp .= " ".chinese
-        endif
-    endif
-    if !empty(results_pinyin)
-        call extend(results, results_pinyin)
-        if result_cjjp =~ '\a'
-            call add(results, result_cjjp)
-        endif
-    endif
-    return results
-endfunction
-
-" ----------------------------------------------------
-function! s:vimim_reverse_one_entry(chinese, property)
-" ----------------------------------------------------
-    let property = a:property
-    let headers = []
-    let bodies = []
-    for chinese in split(a:chinese, '\zs')
-        let ddddd = char2nr(chinese)
-        let line = ddddd - 19968
-        if line < 0 || line > 20902+200
-            continue
-        endif
-        let head = ''
-        if property == 'unicode'
-            let head = printf('%x', ddddd)
-        elseif s:has_cjk_file > 0
-            let values = split(s:cjk_lines[line])
-            if property =~ '\d'
-                let head = get(values, property)
-            elseif property == 'pinyin'
-                let head = get(values, 3)
-            elseif property == 'english'
-                let head = join(values[4:-2])
-            endif
-        endif
-        if empty(head)
-            continue
-        endif
-        call add(headers, head)
-        let spaces = ''
-        let number_of_space = len(head)-2
-        if number_of_space > 0
-            let space = ' '
-            for i in range(number_of_space)
-                let spaces .= space
-            endfor
-        endif
-        call add(bodies, chinese . spaces)
-    endfor
-    return [join(headers), join(bodies)]
 endfunction
 
 " -----------------------------------------------
@@ -1292,6 +1205,91 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     endif
 endfunction
 
+" ---------------------------------------
+function! s:vimim_reverse_lookup(chinese)
+" ---------------------------------------
+    let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
+    if empty(chinese)
+        return []
+    endif
+    let results = []
+    let results_unicode = s:vimim_reverse_one_entry(chinese, 'unicode')
+    if !empty(results_unicode)
+        call extend(results, results_unicode)
+    endif
+    if empty(s:has_cjk_file)
+        return results
+    endif
+    call s:vimim_load_cjk_file()
+    let results_digit = s:vimim_reverse_one_entry(chinese, 2)
+    call extend(results, results_digit)
+    let results_digit = s:vimim_reverse_one_entry(chinese, 1)
+    call extend(results, results_digit)
+    let results_pinyin = []  " 马力 => ma3 li2
+    let result_cjjp = ""     " 马力 => ml
+    let items = s:vimim_reverse_one_entry(chinese, 'pinyin')
+    if len(items) > 0
+        let pinyin_head = get(items,0)
+        if !empty(pinyin_head)
+            call add(results_pinyin, pinyin_head)
+            call add(results_pinyin, get(items,1))
+            for pinyin in split(pinyin_head)
+                let result_cjjp .= pinyin[0:0]
+            endfor
+            let result_cjjp .= " ".chinese
+        endif
+    endif
+    if !empty(results_pinyin)
+        call extend(results, results_pinyin)
+        if result_cjjp =~ '\a'
+            call add(results, result_cjjp)
+        endif
+    endif
+    return results
+endfunction
+
+" ----------------------------------------------------
+function! s:vimim_reverse_one_entry(chinese, property)
+" ----------------------------------------------------
+    let property = a:property
+    let headers = []
+    let bodies = []
+    for chinese in split(a:chinese, '\zs')
+        let ddddd = char2nr(chinese)
+        let line = ddddd - 19968
+        if line < 0 || line > 20902+200
+            continue
+        endif
+        let head = ''
+        if property == 'unicode'
+            let head = printf('%x', ddddd)
+        elseif s:has_cjk_file > 0
+            let values = split(s:cjk_lines[line])
+            if property =~ '\d'
+                let head = get(values, property)
+            elseif property == 'pinyin'
+                let head = get(values, 3)
+            elseif property == 'english'
+                let head = join(values[4:-2])
+            endif
+        endif
+        if empty(head)
+            continue
+        endif
+        call add(headers, head)
+        let spaces = ''
+        let number_of_space = len(head)-2
+        if number_of_space > 0
+            let space = ' '
+            for i in range(number_of_space)
+                let spaces .= space
+            endfor
+        endif
+        call add(bodies, chinese . spaces)
+    endfor
+    return [join(headers), join(bodies)]
+endfunction
+
 " ----------------------------------------
 function! s:vimim_numberList() range abort
 " ----------------------------------------
@@ -1361,7 +1359,7 @@ function! s:debugs(key, value)
         let item  = a:key
         let item .= ' = '
         let item .= a:value
-        call add(g:vimim_debugs, item)
+        call add(s:vimim_debugs, item)
     endif
 endfunction
 
@@ -1481,26 +1479,27 @@ function! s:vimim_onekey_punctuation()
     if char_before_before !~# "[0-9A-z]" && empty(s:ui.has_dot)
         let punctuations = s:punctuations
         call extend(punctuations, s:evils)
-        if has_key(punctuations, char_before)
-            for char in keys(punctuations)
-                if char_before_before ==# char
-                    let onekey = " "
-                    break
-                else
-                    continue
-                endif
-            endfor
-            if empty(onekey)
-                " transfer English punctuation to Chinese punctuation
-                let replacement = punctuations[char_before]
-                " play sexy quote in sexy mode
-                if char_before == "'"
-                    let replacement = <SID>vimim_get_single_quote()
-                elseif char_before == '"'
-                    let replacement = <SID>vimim_get_double_quote()
-                endif
-                let onekey = "\<BS>" . replacement
+        if !has_key(punctuations, char_before)
+            return onekey
+        endif
+        for char in keys(punctuations)
+            if char_before_before ==# char
+                let onekey = " "
+                break
+            else
+                continue
             endif
+        endfor
+        if empty(onekey)
+            " transfer English punctuation to Chinese punctuation
+            let replacement = punctuations[char_before]
+            " play sexy quote in sexy mode
+            if char_before == "'"
+                let replacement = <SID>vimim_get_single_quote()
+            elseif char_before == '"'
+                let replacement = <SID>vimim_get_double_quote()
+            endif
+            let onekey = "\<BS>" . replacement
         endif
     endif
     return onekey
@@ -1911,7 +1910,7 @@ function! s:vimim_get_seamless(current_positions)
         return -1
     endif
     if snip =~# s:uxxxx
-        let msg = "support OneKey after any cjk"
+        " support OneKey after any cjk
     else
         for char in split(snip, '\zs')
             if char !~# s:valid_key
@@ -2030,6 +2029,20 @@ endfunction
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
+" ----------------
+function! IMName()
+" ----------------
+" This function is for user-defined 'stl' 'statusline'
+    if s:chinese_input_mode =~ 'onekey'
+        if pumvisible()
+            return s:vimim_statusline()
+        endif
+    else
+        return s:vimim_statusline()
+    endif
+    return ""
+endfunction
+
 " --------------------------------
 function! s:vimim_set_statusline()
 " --------------------------------
@@ -2046,20 +2059,6 @@ function! s:vimim_set_statusline()
     else
         let &statusline .= '%{IMName()}'
     endif
-endfunction
-
-" ----------------
-function! IMName()
-" ----------------
-" This function is for user-defined 'stl' 'statusline'
-    if s:chinese_input_mode =~ 'onekey'
-        if pumvisible()
-            return s:vimim_statusline()
-        endif
-    else
-        return s:vimim_statusline()
-    endif
-    return ""
 endfunction
 
 " ----------------------------
@@ -2725,8 +2724,6 @@ function! s:vimim_plugins_fix_stop()
         endif
         if g:SuperTabMappingBackward =~ '^<s-tab>$'
             exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
-            " inoremap <silent> <Tab>   <C-N>
-            " inoremap <silent> <S-Tab> <C-P>
         endif
     endif
 endfunction
@@ -2857,9 +2854,8 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
 " ------------------------------------------------
-    let keyboard = a:keyboard
-    let keyboard2 = s:vimim_quanpin_transform(keyboard)
-    let results = split(keyboard2, "'")
+    let keyboard = s:vimim_quanpin_transform(a:keyboard)
+    let results = split(keyboard, "'")
     if len(results) > 1
         return results
     endif
@@ -3326,9 +3322,9 @@ function! s:vimim_get_valid_im_name(im)
     if empty(im)
         return 0
     endif
-    if im =~# '^wubi'
+    if im =~ '^wubi'
         let im = 'wubi'
-    elseif im =~# '^pinyin'
+    elseif im =~ '^pinyin'
         let im = 'pinyin'
         let s:vimim_imode_pinyin = 1
     elseif im !~ s:all_vimim_input_methods
@@ -3775,12 +3771,12 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_sentence_match_datafile(keyboard)
 " -------------------------------------------------
+    let keyboard = a:keyboard
     call s:vimim_load_datafile_lines()
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines)
         return 0
     endif
-    let keyboard = a:keyboard
     let pattern = '^' . keyboard . '\>'
     let match_start = match(lines, pattern)
     if match_start > -1
@@ -3844,6 +3840,7 @@ function! s:vimim_more_pinyin_candidates(keyboard)
 "           in   =>  mamahuhu
 "           out  =>  mamahuhu, mama, ma
 " ------------------------------------------------
+    let keyboard = a:keyboard
     if s:ui.im !~ 'pinyin'
         return []
     endif
@@ -3852,7 +3849,6 @@ function! s:vimim_more_pinyin_candidates(keyboard)
     else
         return []
     endif
-    let keyboard = a:keyboard
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
     if empty(keyboards) || empty(keyboard)
         return []
@@ -5168,7 +5164,7 @@ else
         endif
     endif
 
-    " [keyboard] start to initialize legal input
+    " [input] start to initialize legal input
     let keyboard = s:vimim_get_valid_keyboard(keyboard)
     if empty(keyboard)
         return
