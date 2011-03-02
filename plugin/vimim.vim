@@ -871,14 +871,12 @@ function! s:vimim_for_mom_and_dad()
     endif
     if has("gui_running") && has("win32")
         autocmd! * <buffer>
-        autocmd  VimEnter  <buffer> set t_vb=
         autocmd  FocusLost <buffer> sil!wall
-        noremap <silent> <Esc> :sil!%y +<CR>
+        noremap  <silent>  <Esc> :sil!%y +<CR>
         set lines=24
         set columns=36
         let &gfn .= ":h24:w12"
     endif
-    set number
     let s:vimim_tab_as_onekey = 2
     startinsert!
     return s:vimim_onekey_action("")
