@@ -1753,7 +1753,7 @@ function! s:vimim_onekey_input(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Chinese mode     ==== {{{"]
+let s:VimIM += [" ====  chinese mode     ==== {{{"]
 " =================================================
 " s:chinese_input_mode='onekey'  => (default) OneKey hjkl
 " s:chinese_input_mode='dynamic' => (default) dynamic mode
@@ -1925,7 +1925,7 @@ function! s:vimim_get_seamless(current_positions)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Chinese number   ==== {{{"]
+let s:VimIM += [" ====  chinese number   ==== {{{"]
 " =================================================
 
 " ----------------------------------------
@@ -2732,7 +2732,7 @@ function! s:vimim_plugins_fix_stop()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  input English    ==== {{{"]
+let s:VimIM += [" ====  input english    ==== {{{"]
 " =================================================
 
 " -----------------------------------
