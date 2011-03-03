@@ -667,9 +667,9 @@ function! s:vimim_cjk_match(keyboard)
         endif
         return s:cjk_cache[keyboard]
     endif
-    let grep = ""
     let dddddd = 6 - 2 * s:vimim_digit_4corner
     let grep_frequency = '.*' . '\s\d\+$'
+    let grep = ""
     " ------------------------------------------------------
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:cjk_filter))
@@ -708,11 +708,10 @@ function! s:vimim_cjk_match(keyboard)
         endif
     elseif s:ui.im == 'pinyin'
         if len(keyboard) == 1 && keyboard !~ '[ai]'
-            " cjk one-char-list by frequency y72/yue72 l72/le72 for 乐
+            " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
         elseif keyboard =~ '^\l'
-            " cjk multiple-char-list without frequency
-            " on line 16875:  还還 132445 3130 huan2hai2 yet 73
+            " cjk multiple-char-list without frequency: huan2hai2
             " support all cases: /huan /hai /yet /huan2 /hai2
             let grep = '[ 0-9]' . keyboard . '[0-9]'
         endif
@@ -743,7 +742,6 @@ endfunction
 " -----------------------------------------
 function s:vimim_sort_on_last(line1, line2)
 " -----------------------------------------
-    " m => 马 <= 马 259 <=  马馬 7712 ma3 259
     let line1 = get(split(a:line1),-1) + 1
     let line2 = get(split(a:line2),-1) + 1
     if line1 < line2
@@ -944,6 +942,7 @@ function! g:vimim_search_next()
             let error = v:exception
         endtry
         echon "/" . english . error
+        let v:errmsg = ""
     endif
 endfunction
 
@@ -1000,10 +999,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
     endif
     call extend(results, s:english_results, 0)
     call extend(results, cjk_results)
-    " -------------------------------------------------
-    if empty(results)
-        let v:errmsg = ""
-    else
+    if !empty(results)
         let slash = get(results, 0)
         if len(results) > 1
             let slash = join(results, '\|')
@@ -1315,7 +1311,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma")
+    if isdirectory("/hhome/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_poem_directory = "/home/xma/poem/"
@@ -1474,36 +1470,35 @@ function! <SID>ChineseMode()
     let s:chinese_input_mode = s:vimim_chinese_input_mode
     let action = ""
     if !empty(s:ui.root) && !empty(s:ui.im)
-        let action = <SID>vimim_chinesemode_action()
+        let s:chinese_mode_switch += 1
+        let switch = 0
+        if s:ui.root == 'cloud'
+            let switch = s:chinese_mode_switch % 2
+        else
+            let cycle = len(s:ui.frontends) + 1
+            let switch = s:chinese_mode_switch % cycle
+            let ui = get(s:ui.frontends, switch-1)
+            if empty(ui)
+                let switch = 0
+            else
+                let s:ui.root = get(ui,0)
+                let s:ui.im = get(ui,1)
+                call s:vimim_frontend_initialization()
+                call s:vimim_set_statusline()
+                call s:vimim_build_datafile_cache()
+                call s:vimim_do_cloud_if_no_embedded_backend()
+            endif
+        endif
+        let action = s:vimim_chinesemode_action(switch)
     endif
     sil!exe 'sil!return "' . action . '"'
 endfunction
 
-" ---------------------------------------
-function! <SID>vimim_chinesemode_action()
-" ---------------------------------------
-    let s:chinese_mode_switch += 1
-    let switch = 0
-    if s:ui.root == 'cloud'
-        let switch = s:chinese_mode_switch % 2
-    else
-        let cycle = len(s:ui.frontends) + 1
-        let switch = s:chinese_mode_switch % cycle
-        let ui = get(s:ui.frontends, switch-1)
-        if empty(ui)
-            let switch = 0
-        else
-            let s:ui.root = get(ui,0)
-            let s:ui.im = get(ui,1)
-            call s:vimim_frontend_initialization()
-            call s:vimim_set_statusline()
-            call s:vimim_build_datafile_cache()
-            call s:vimim_do_cloud_if_no_embedded_backend()
-        endif
-    endif
-    " ----------------------------------- todo
+" ------------------------------------------
+function! s:vimim_chinesemode_action(switch)
+" ------------------------------------------
     let action = ""
-    if empty(switch)
+    if empty(a:switch)
         call s:vimim_stop()
         if mode() == 'i'
             let action = "\<C-O>:redraw\<CR>"
@@ -3722,7 +3717,7 @@ endfunction
 
 " ------------------------------------------
 function! s:vimim_set_datafile(im, datafile)
-" ------------------------------------------ todo
+" ------------------------------------------
     let im = s:vimim_get_valid_im_name(a:im)
     let datafile = a:datafile
     if empty(im)
@@ -3861,7 +3856,7 @@ endfunction
 
 " ---------------------------------------------------
 function! s:vimim_get_from_datafile(keyboard, search)
-" --------------------------------------------------- todo
+" ---------------------------------------------------
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(keyboard) || empty(lines)
