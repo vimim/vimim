@@ -942,8 +942,8 @@ function! g:vimim_search_next()
             let error = v:exception
         endtry
         echon "/" . english . error
-        let v:errmsg = ""
     endif
+    let v:errmsg = ""
 endfunction
 
 " -----------------------------------------------------
@@ -1849,7 +1849,7 @@ function! s:vimim_onekey_input(keyboard)
 " --------------------------------------
     let results = []
     let keyboard = a:keyboard
-    if s:chinese_input_mode !~ 'onekey'
+    if empty(keyboard) || s:chinese_input_mode !~ 'onekey'
         return []
     endif
     " [filter] do digital filter within cache memory
@@ -2327,10 +2327,8 @@ let s:VimIM += [" ====      hjkl         ==== {{{"]
 " ----------------------------------
 function! s:vimim_get_poem(keyboard)
 " ----------------------------------
-    " poem can live in either directory
-    let dirs = [s:path]
-    let dirs += [s:vimim_poem_directory]
     let lines = []
+    let dirs = [s:path, s:vimim_poem_directory]
     for dir in dirs
         let lines = s:vimim_get_from_directory(a:keyboard, dir)
         if empty(lines)
@@ -2356,14 +2354,13 @@ function! s:vimim_hjkl_rotation(matched_list)
 " -------------------------------------------
     let lines = a:matched_list
     let max = max(map(copy(lines), 'strlen(v:val)')) + 1
-    let max = max/s:multibyte + 1
     let results = []
     for line in lines
         if line =~ '\w'
             return lines
         endif
         let spaces = ''
-        let gap = max - len(line)
+        let gap = (max-len(line))/s:multibyte
         if gap > 0
             for i in range(gap)
                 let spaces .= s:space
@@ -2373,7 +2370,7 @@ function! s:vimim_hjkl_rotation(matched_list)
         call add(results, line)
     endfor
     let rotations = ['']
-    for i in range(max)
+    for i in range(max/s:multibyte)
         let column = ''
         for line in reverse(copy(results))
             let lines = split(line,'\zs')
@@ -2412,11 +2409,9 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             elseif a:key == 'x'
                 let s:hjkl_x += 1
             elseif a:key == 'm'
-                let s:hjkl_n  = 0
                 let s:hjkl_m += 1
                 let s:keyboard_list = []
             elseif a:key == 'n'
-                let s:hjkl_m  = 0
                 let s:hjkl_n += 1
                 let s:keyboard_list = []
             endif
