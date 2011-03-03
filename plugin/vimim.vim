@@ -1311,7 +1311,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/hhome/xma")
+    if isdirectory("/home/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_poem_directory = "/home/xma/poem/"
@@ -2342,6 +2342,7 @@ function! s:vimim_get_poem(keyboard)
     if empty(lines)
         return []
     else
+        call add(lines,'')
         call insert(lines,'')
     endif
     if s:hjkl_m > 0 && s:hjkl_m%2 > 0
