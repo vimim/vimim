@@ -2194,25 +2194,29 @@ endfunction
 " --------------------------------------------
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
-    let matched_list = a:matched_list
-    if empty(matched_list)
+    let lines = a:matched_list
+    if empty(lines)
         return []
     else
-        let s:matched_list = copy(matched_list)
+        let s:lines = copy(lines)
     endif
     if s:hjkl_pageup_pagedown > 0
-        let matched_list = s:vimim_pageup_pagedown(matched_list)
+        let lines = s:vimim_pageup_pagedown(lines)
     endif
     let keyboard = join(s:keyboard_list,"")
-    if s:hjkl_n > 0 && s:hjkl_n%2 > 0 && s:ui.im == 'pinyin'
-        let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+    if s:hjkl_n > 0 && s:hjkl_n%2 > 0
+        if s:show_me_not > 0
+            let lines = reverse(copy(lines))
+        elseif s:ui.im == 'pinyin'
+            let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+        endif
     endif
     let keyboard_head = get(s:keyboard_list,0)
     let label = 1
     let extra_text = ""
     let s:popupmenu_list = []
-    let first_in_list = split(get(s:matched_list,0))
-    for chinese in matched_list
+    let first_in_list = split(get(s:lines,0))
+    for chinese in lines
         if len(first_in_list) > 1 && s:show_me_not < 1
             let pairs = split(chinese)
             if len(pairs) < 2
@@ -2325,14 +2329,43 @@ endfunction
 let s:VimIM += [" ====      hjkl         ==== {{{"]
 " =================================================
 
+" ----------------------------------
+function! s:vimim_get_poem(keyboard)
+" ----------------------------------
+    " poem can live in either directory
+    let dirs = [s:path]
+    let dirs += [s:vimim_poem_directory]
+    let lines = []
+    for dir in dirs
+        let lines = s:vimim_get_from_directory(a:keyboard, dir)
+        if empty(lines)
+            continue
+        else
+            break
+        endif
+    endfor
+    if empty(lines)
+        return []
+    else
+        call insert(lines,'')
+    endif
+    if s:hjkl_m > 0 && s:hjkl_m%2 > 0
+        let lines = s:vimim_hjkl_rotation(copy(lines))
+    endif
+    return lines
+endfunction
+
 " -------------------------------------------
 function! s:vimim_hjkl_rotation(matched_list)
 " -------------------------------------------
     let lines = a:matched_list
     let max = max(map(copy(lines), 'strlen(v:val)')) + 1
-    let max = max/s:multibyte
+    let max = max/s:multibyte + 1
     let results = []
     for line in lines
+        if line =~ '\w'
+            return lines
+        endif
         let spaces = ''
         let gap = max - len(line)
         if gap > 0
@@ -2343,12 +2376,15 @@ function! s:vimim_hjkl_rotation(matched_list)
         let line .= spaces
         call add(results, line)
     endfor
-    let rotations = []
+    let rotations = ['']
     for i in range(max)
         let column = ''
         for line in reverse(copy(results))
             let lines = split(line,'\zs')
-            let column .= get(lines, i)
+            let line = get(lines, i)
+            if !empty(line)
+                let column .= line
+            endif
         endfor
         call add(rotations, column)
     endfor
@@ -4079,25 +4115,6 @@ function! s:vimim_more_pinyin_directory(keyboard, dir)
         else
             call map(matches, 'candidate ." ". v:val')
             call extend(results, matches)
-        endif
-    endfor
-    return results
-endfunction
-
-" ----------------------------------
-function! s:vimim_get_poem(keyboard)
-" ----------------------------------
-" poem can live in either of the 3 directories
-    let dirs = [s:path]
-    let dirs += [s:path . "vimim/"]
-    let dirs += [s:vimim_poem_directory]
-    let results = []
-    for dir in dirs
-        let results = s:vimim_get_from_directory(a:keyboard, dir)
-        if empty(results)
-            continue
-        else
-            break
         endif
     endfor
     return results
