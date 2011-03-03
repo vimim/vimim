@@ -1686,7 +1686,7 @@ function! g:vimim_space()
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
         let char_before = getline(".")[col(".")-2]
-        if char_before !~# s:valid_key
+        if char_before !~ s:valid_key
         \&& !has_key(s:punctuations, char_before)
             let space = ""
             call s:vimim_stop()
@@ -1716,17 +1716,19 @@ function! s:vimim_onekey_action(onekey)
     if len(onekey) > len("<BS>")
         sil!exe 'sil!return "' . onekey . '"'
     endif
-    let char_before = getline(".")[col(".")-2]
-    if char_before !~# s:valid_key && empty(a:onekey)
-        return s:vimim_get_unicode_menu()
+    if empty(a:onekey)
+        let onekey = s:vimim_get_unicode_menu()
+        if !empty(onekey)
+            sil!exe 'sil!return "' . onekey . '"'
+        endif
     endif
-    if s:seamless_positions != getpos(".")
+    let char_before = getline(".")[col(".")-2]
+    if char_before =~ s:valid_key
+    \&& s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
     endif
-    if empty(char_before)
-    \|| char_before =~ '\s'
-    \|| char_before !~# s:valid_key
+    if empty(char_before) || char_before =~ '\s'
         let onekey = a:onekey
     endif
     let s:smart_enter = 0
@@ -3601,22 +3603,8 @@ endfunction
 " ----------------------------------
 function! s:vimim_get_unicode_menu()
 " ----------------------------------
-    let trigger = ""
-    let uxxxx = s:vimim_get_unicode_before()
-    if !empty(uxxxx)
-        let s:hjkl_h = 1
-        call s:vimim_set_seamless()
-        let trigger = uxxxx . '\<C-R>=g:vimim()\<CR>'
-    endif
-    sil!exe 'sil!return "' . trigger . '"'
-endfunction
-
-" ------------------------------------
-function! s:vimim_get_unicode_before()
-" ------------------------------------
     let byte_before = getline(".")[col(".")-2]
-    if empty(byte_before)
-    \|| byte_before =~# s:valid_key
+    if empty(byte_before) || byte_before =~# s:valid_key
         return 0
     endif
     let start = s:multibyte + 1
@@ -3626,7 +3614,12 @@ function! s:vimim_get_unicode_before()
     if ddddd > 127
         let uxxxx = printf('u%04x', ddddd)
     endif
-    return uxxxx
+    if !empty(uxxxx)
+        let s:hjkl_h = 1
+        call s:vimim_set_seamless()
+        let uxxxx .= '\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . uxxxx . '"'
 endfunction
 
 " -------------------------------------------
