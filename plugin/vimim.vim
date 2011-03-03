@@ -1724,19 +1724,15 @@ function! s:vimim_onekey_action(onekey)
     endif
     let char_before = getline(".")[col(".")-2]
     if char_before =~ s:valid_key
-let g:g4=char_before
-let g:g1=onekey
     \&& s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
-let g:g3=onekey
     endif
-  " if empty(char_before) || char_before =~ '\s'
-  "     let onekey = a:onekey
-  "     let g:g2=onekey
-  " endif
-  " let s:smart_enter = 0
-  " let s:pattern_not_found = 0
+    if empty(char_before) || char_before =~ '\s'
+        let onekey = a:onekey
+    endif
+    let s:smart_enter = 0
+    let s:pattern_not_found = 0
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
@@ -2327,7 +2323,7 @@ function! s:vimim_pageup_pagedown(matched_list)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====      hjkl         ==== {{{"]
+let s:VimIM += [" ====  hjkl             ==== {{{"]
 " =================================================
 
 " ----------------------------------
@@ -4966,7 +4962,7 @@ endfunction
 
 " -----------------
 function! g:vimim()
-" ----------------- todo
+" -----------------
     let key = ""
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ s:valid_key
