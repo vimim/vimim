@@ -1724,15 +1724,19 @@ function! s:vimim_onekey_action(onekey)
     endif
     let char_before = getline(".")[col(".")-2]
     if char_before =~ s:valid_key
+let g:g4=char_before
+let g:g1=onekey
     \&& s:seamless_positions != getpos(".")
     \&& s:pattern_not_found < 1
         let onekey = '\<C-R>=g:vimim()\<CR>'
+let g:g3=onekey
     endif
-    if empty(char_before) || char_before =~ '\s'
-        let onekey = a:onekey
-    endif
-    let s:smart_enter = 0
-    let s:pattern_not_found = 0
+  " if empty(char_before) || char_before =~ '\s'
+  "     let onekey = a:onekey
+  "     let g:g2=onekey
+  " endif
+  " let s:smart_enter = 0
+  " let s:pattern_not_found = 0
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
@@ -2195,7 +2199,7 @@ function! s:vimim_popupmenu_list(matched_list)
     if empty(lines)
         return []
     else
-        let s:lines = copy(lines)
+        let s:matched_list = copy(lines)
     endif
     if s:hjkl_pageup_pagedown > 0
         let lines = s:vimim_pageup_pagedown(lines)
@@ -2212,9 +2216,9 @@ function! s:vimim_popupmenu_list(matched_list)
     let label = 1
     let extra_text = ""
     let s:popupmenu_list = []
-    let first_in_list = split(get(s:lines,0))
+    let first_in_list = get(a:matched_list,0)
     for chinese in lines
-        if len(first_in_list) > 1 && s:show_me_not < 1
+        if first_in_list =~ '\s' && s:show_me_not < 1
             let pairs = split(chinese)
             if len(pairs) < 2
                 continue
@@ -4858,6 +4862,8 @@ endfunction
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
+    set completefunc=VimIM
+    set completeopt=menuone
     if empty(&pumheight)
         let &pumheight=9
     endif
@@ -4960,11 +4966,7 @@ endfunction
 
 " -----------------
 function! g:vimim()
-" -----------------
-    if empty(&completefunc) || &completefunc != 'VimIM'
-        set completefunc=VimIM
-        set completeopt=menuone
-    endif
+" ----------------- todo
     let key = ""
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ s:valid_key
