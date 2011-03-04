@@ -303,7 +303,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_poem_directory")
+    call add(G, "g:vimim_hjkl_directory")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_backslash_close_pinyin")
@@ -1299,7 +1299,7 @@ function! s:vimim_initialize_debug()
     if isdirectory("/home/xma")
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
-        let g:vimim_poem_directory = "/home/xma/poem/"
+        let g:vimim_hjkl_directory = "/home/xma/hjkl/"
         let g:vimim_data_directory = "/home/vimim/pinyin/"
     endif
 endfunction
@@ -1849,7 +1849,7 @@ function! s:vimim_onekey_input(keyboard)
         return results
     endif
     " [poem] check entry in special directories first
-    let results = s:vimim_get_poem(keyboard)
+    let results = s:vimim_get_hjkl(keyboard)
     if !empty(results)
         let s:show_me_not = 1
         return results
@@ -2307,11 +2307,22 @@ endfunction
 let s:VimIM += [" ====  hjkl             ==== {{{"]
 " =================================================
 
+" --------------------------------------
+function! s:vimim_rotation() range abort
+" --------------------------------------
+    sil!call s:vimim_backend_initialization_once()
+    let lines = getbufline(bufnr("%"), 1, "$")
+    let lines = s:vimim_hjkl_rotation(copy(lines))
+    for line in lines
+        $put=line
+    endfor
+endfunction
+
 " ----------------------------------
-function! s:vimim_get_poem(keyboard)
+function! s:vimim_get_hjkl(keyboard)
 " ----------------------------------
     let lines = []
-    let dirs = [s:path, s:vimim_poem_directory]
+    let dirs = [s:path, s:vimim_hjkl_directory]
     for dir in dirs
         let lines = s:vimim_get_from_directory(a:keyboard, dir)
         if empty(lines)
@@ -2320,6 +2331,10 @@ function! s:vimim_get_poem(keyboard)
             break
         endif
     endfor
+    if a:keyboard ==# "hjkl"
+        let s:hjkl_h = 1
+        let lines = getline(1, ".")
+    endif
     if empty(lines)
         return []
     else
@@ -2340,7 +2355,7 @@ function! s:vimim_hjkl_rotation(matched_list)
     let results = []
     for line in lines
         if line =~ '\w'
-            return lines
+            continue
         endif
         let spaces = ''
         let gap = (max-len(line))/s:multibyte
@@ -2797,7 +2812,7 @@ endfunction
 function! s:vimim_check_filereadable(default)
 " -------------------------------------------
     let default = a:default
-    let datafile = s:vimim_poem_directory . default
+    let datafile = s:vimim_hjkl_directory . default
     if filereadable(datafile)
         let default = 0
     else
@@ -3592,7 +3607,6 @@ function! s:vimim_get_unicode_menu()
     endif
     if !empty(uxxxx)
         let s:hjkl_h = 1
-        call s:vimim_set_seamless()
         let uxxxx .= '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . uxxxx . '"'
@@ -5315,6 +5329,7 @@ function! s:vimim_onekey_mapping_on()
         noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_tranfer_chinese()
+    :com! -range=% Vimim <line1>,<line2>call s:vimim_rotation()
 endfunction
 
 " ------------------------------------
