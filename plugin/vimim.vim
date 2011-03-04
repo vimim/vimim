@@ -863,7 +863,7 @@ function! s:vimim_for_mom_and_dad()
         startinsert!
         let s:vimim_digit_4corner = 0
         let onekey = s:vimim_onekey_action("")
-        sil!call s:vimim_start_onekey()
+        sil!call s:vimim_onekey_start()
     elseif buffer =~ 'vimim.dad.txt'
         set noruler
         let s:vimim_digit_4corner = 1
@@ -1631,29 +1631,8 @@ endfunction
 let s:VimIM += [" ====  OneKey           ==== {{{"]
 " =================================================
 
-" ---------------------
-function! <SID>OneKey()
-" ---------------------
-" (1) <OneKey> => start OneKey as "hit and run"
-" (2) <OneKey> => stop  OneKey and print out menu
-" -----------------------------------------------
-    let onekey = -1
-    let byte_before = getline(".")[col(".")-2]
-    if empty(byte_before) || byte_before =~ '\s'
-        let onekey = ""
-        if s:vimim_tab_as_onekey > 0
-            let onekey = "\t"
-        endif
-    endif
-    if onekey < 0
-        sil!call s:vimim_start_onekey()
-        let onekey = s:vimim_onekey_action("")
-    endif
-    sil!exe 'sil!return "' . onekey . '"'
-endfunction
-
 " ------------------------------
-function! s:vimim_start_onekey()
+function! s:vimim_onekey_start()
 " ------------------------------
     set lazyredraw
     let s:chinese_input_mode = "onekey"
@@ -1663,14 +1642,65 @@ function! s:vimim_start_onekey()
     sil!call s:vimim_onekey_pumvisible_hjkl_on()
     sil!call s:vimim_onekey_pumvisible_qwert_on()
     sil!call s:vimim_punctuation_navigation_on()
-    if pumvisible()
-        let msg = "optimize for double ctrl+6"
-    else
-        sil!call s:vimim_start()
-    endif
+    sil!call s:vimim_start()
 endfunction
 
-" -----------------------
+" ---------------------
+function! <SID>OneKey()
+" ---------------------
+" (1) <OneKey> => start OneKey as "hit and run"
+" (2) <OneKey> => stop  OneKey and print out menu
+" -----------------------------------------------
+    let onekey = ""
+    let byte_before = getline(".")[col(".")-2]
+    if empty(byte_before) || byte_before =~ '\s'
+        if s:vimim_tab_as_onekey > 0
+            let onekey = "\t"
+        endif
+    else
+        if pumvisible()
+            if s:pattern_not_found > 0
+                let s:pattern_not_found = 0
+                let onekey = " "
+            elseif len(s:popupmenu_list) > 0
+                let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
+                let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
+                let onekey .= '\<Esc>'
+            endif
+        else
+            sil!call s:vimim_onekey_start()
+            let onekey = s:vimim_onekey_action("")
+        endif
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+" -------------------------------------
+function! s:vimim_onekey_action(onekey)
+" -------------------------------------
+    let onekey = s:vimim_onekey_punctuation()
+    if len(onekey) > len("<BS>")
+        " transfer English punctuation to Chinese one
+    elseif empty(a:onekey)
+        let onekey = s:vimim_get_unicode_menu()
+    endif
+    if empty(onekey)
+        let char_before = getline(".")[col(".")-2]
+        if char_before =~ s:valid_key
+        \&& s:seamless_positions != getpos(".")
+        \&& s:pattern_not_found < 1
+            let onekey = '\<C-R>=g:vimim()\<CR>'
+        endif
+        if empty(char_before) || char_before =~ '\s'
+            let onekey = a:onekey
+        endif
+        let s:smart_enter = 0
+        let s:pattern_not_found = 0
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+" ----------------------- todo
 function! g:vimim_space()
 " -----------------------
 " (1) <Space> after English (valid keys) => trigger keycode menu
@@ -1693,47 +1723,30 @@ function! g:vimim_space()
         else
             let space = s:vimim_onekey_action(space)
         endif
+        let s:has_pumvisible = 0
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" -------------------------------------
-function! s:vimim_onekey_action(onekey)
-" -------------------------------------
-    let onekey = ""
-    if pumvisible()
-        if s:pattern_not_found > 0
-            let s:pattern_not_found = 0
-            let onekey = " "
-        elseif len(s:popupmenu_list) > 0
-            let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-            let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
-            let onekey .= '\<Esc>'
+" -------------------------------------- todo
+function! g:vimim_nonstop_after_insert()
+" --------------------------------------
+    if s:chinese_input_mode =~ 'onekey'
+    \&& s:vimim_onekey_nonstop < 1
+        call s:vimim_stop()
+        return ""
+    endif
+    let key = ""
+    if s:has_pumvisible > 0
+        if len(s:keyboard_list) > 1
+            let s:keyboard_list = [get(s:keyboard_list,1)]
+            let s:keyboard_shuangpin = 1
+        else
+            let s:keyboard_shuangpin = 0
         endif
-        sil!exe 'sil!return "' . onekey . '"'
+        call g:vimim_reset_after_insert()
     endif
-    let onekey = s:vimim_onekey_punctuation()
-    if len(onekey) > len("<BS>")
-        sil!exe 'sil!return "' . onekey . '"'
-    endif
-    if empty(a:onekey)
-        let onekey = s:vimim_get_unicode_menu()
-        if !empty(onekey)
-            sil!exe 'sil!return "' . onekey . '"'
-        endif
-    endif
-    let char_before = getline(".")[col(".")-2]
-    if char_before =~ s:valid_key
-    \&& s:seamless_positions != getpos(".")
-    \&& s:pattern_not_found < 1
-        let onekey = '\<C-R>=g:vimim()\<CR>'
-    endif
-    if empty(char_before) || char_before =~ '\s'
-        let onekey = a:onekey
-    endif
-    let s:smart_enter = 0
-    let s:pattern_not_found = 0
-    sil!exe 'sil!return "' . onekey . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ------------------------------------
@@ -2211,7 +2224,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let keyboard_head = get(s:keyboard_list,0)
     let label = 1
     let extra_text = ""
-    let s:popupmenu_list = []
+    let popupmenu_list = []
     let first_in_list = get(a:matched_list,0)
     for chinese in lines
         if first_in_list =~ '\s' && s:show_me_not < 1
@@ -2257,9 +2270,12 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         let complete_items["word"] = chinese
         let complete_items["dup"] = 1
-        call add(s:popupmenu_list, complete_items)
+        call add(popupmenu_list, complete_items)
     endfor
-    return s:popupmenu_list
+    if s:chinese_input_mode =~ 'onekey'
+        let s:popupmenu_list = copy(popupmenu_list)
+    endif
+    return popupmenu_list
 endfunction
 
 " ---------------------------------------------
@@ -4939,27 +4955,6 @@ function! g:vimim_reset_after_insert()
     return ""
 endfunction
 
-" --------------------------------------
-function! g:vimim_nonstop_after_insert()
-" --------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-    \&& s:vimim_onekey_nonstop < 1
-        call s:vimim_stop()
-    endif
-    let key = ""
-    if s:has_pumvisible > 0
-        let key = g:vimim()
-        if len(s:keyboard_list) > 1
-            let s:keyboard_list = [get(s:keyboard_list,1)]
-            let s:keyboard_shuangpin = 1
-        else
-            let s:keyboard_shuangpin = 0
-        endif
-        call g:vimim_reset_after_insert()
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 " -----------------
 function! g:vimim()
 " -----------------
@@ -4994,31 +4989,6 @@ function! s:vimim_i_map_off()
     for _ in unmap_list
         sil!exe 'iunmap '. _
     endfor
-endfunction
-
-" -----------------------------------
-function! s:vimim_helper_mapping_on()
-" -----------------------------------
-    inoremap <BS>    <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
-                    \<C-R>=g:vimim_backspace()<CR>
-    " ----------------------------------------------------------------
-    inoremap <CR>    <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                    \<C-R>=<SID>vimim_smart_enter()<CR>
-    " ----------------------------------------------------------------
-    inoremap <Space> <C-R>=g:vimim_space()<CR>
-                    \<C-R>=g:vimim_nonstop_after_insert()<CR>
-    " ----------------------------------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-        inoremap <silent> <Esc> <Esc>:call g:vimim_onekey_esc()<CR>
-    elseif s:chinese_input_mode =~ 'static'
-        inoremap <silent> <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                               \<C-R>=g:vimim_one_key_correction()<CR>
-    endif
-    " ----------------------------------------------------------------
-    if s:vimim_chinese_punctuation > -1
-    \&& s:chinese_input_mode !~ 'onekey'
-        inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
-    endif
 endfunction
 
 " ============================================= }}}
@@ -5312,6 +5282,29 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
+
+" -----------------------------------
+function! s:vimim_helper_mapping_on()
+" -----------------------------------
+    inoremap <BS>    <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
+                    \<C-R>=g:vimim_backspace()<CR>
+    inoremap <CR>    <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                    \<C-R>=<SID>vimim_smart_enter()<CR>
+    inoremap <Space> <C-R>=g:vimim_space()<CR>
+                    \<C-R>=g:vimim_nonstop_after_insert()<CR>
+    " -------------------------------------------------------
+    if s:chinese_input_mode !~ 'onekey'
+    \&& s:vimim_chinese_punctuation > -1
+        inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
+    endif
+    " -------------------------------------------------------
+    if s:chinese_input_mode =~ 'onekey'
+        inoremap <silent> <Esc> <Esc>:call g:vimim_onekey_esc()<CR>
+    elseif s:chinese_input_mode =~ 'static'
+        inoremap <silent> <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                               \<C-R>=g:vimim_one_key_correction()<CR>
+    endif
+endfunction
 
 " ------------------------------------
 function! s:vimim_initialize_mapping()
