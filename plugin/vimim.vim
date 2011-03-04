@@ -862,7 +862,7 @@ function! s:vimim_for_mom_and_dad()
     if buffer =~ 'vimim.mom.txt'
         startinsert!
         let s:vimim_digit_4corner = 0
-        let onekey = s:vimim_onekey_action("")
+        let onekey = s:vimim_onekey_action()
         sil!call s:vimim_onekey_start()
     elseif buffer =~ 'vimim.dad.txt'
         set noruler
@@ -1634,7 +1634,6 @@ let s:VimIM += [" ====  OneKey           ==== {{{"]
 " ------------------------------
 function! s:vimim_onekey_start()
 " ------------------------------
-    set lazyredraw
     let s:chinese_input_mode = "onekey"
     sil!call s:vimim_backend_initialization_once()
     sil!call s:vimim_frontend_initialization()
@@ -1669,30 +1668,52 @@ function! <SID>OneKey()
             endif
         else
             sil!call s:vimim_onekey_start()
-            let onekey = s:vimim_onekey_action("")
+            let onekey = s:vimim_get_unicode_menu()
+            if empty(onekey)
+                let onekey = s:vimim_onekey_action()
+            endif
         endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" -------------------------------------
-function! s:vimim_onekey_action(onekey)
-" -------------------------------------
-    let onekey = s:vimim_onekey_punctuation()
-    if len(onekey) > len("<BS>")
-        " transfer English punctuation to Chinese one
-    elseif empty(a:onekey)
-        let onekey = s:vimim_get_unicode_menu()
+" -------------------------------
+function! s:vimim_onekey_action()
+" -------------------------------
+    let onekey = ""
+    let current_line = getline(".")
+    let char_before = current_line[col(".")-2]
+    let char_before_before = current_line[col(".")-3]
+    if char_before_before !~# "[0-9A-z]" && empty(s:ui.has_dot)
+        let punctuations = s:punctuations
+        call extend(punctuations, s:evils)
+        if has_key(punctuations, char_before)
+            for char in keys(punctuations)
+                if char_before_before ==# char
+                    let onekey = " "
+                    break
+                else
+                    continue
+                endif
+            endfor
+            if empty(onekey)
+                " transfer English punctuation to Chinese punctuation
+                let replacement = punctuations[char_before]
+                " play sexy quote in sexy mode
+                if char_before == "'"
+                    let replacement = <SID>vimim_get_single_quote()
+                elseif char_before == '"'
+                    let replacement = <SID>vimim_get_double_quote()
+                endif
+                let onekey = "\<BS>" . replacement
+            endif
+        endif
     endif
-    if empty(onekey)
-        let char_before = getline(".")[col(".")-2]
+    if len(onekey) < len("<BS>")
         if char_before =~ s:valid_key
         \&& s:seamless_positions != getpos(".")
         \&& s:pattern_not_found < 1
             let onekey = '\<C-R>=g:vimim()\<CR>'
-        endif
-        if empty(char_before) || char_before =~ '\s'
-            let onekey = a:onekey
         endif
         let s:smart_enter = 0
         let s:pattern_not_found = 0
@@ -1700,7 +1721,7 @@ function! s:vimim_onekey_action(onekey)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" ----------------------- todo
+" -----------------------
 function! g:vimim_space()
 " -----------------------
 " (1) <Space> after English (valid keys) => trigger keycode menu
@@ -1721,14 +1742,14 @@ function! g:vimim_space()
             let space = ""
             call s:vimim_stop()
         else
-            let space = s:vimim_onekey_action(space)
+            let space = s:vimim_onekey_action()
         endif
         let s:has_pumvisible = 0
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" -------------------------------------- todo
+" --------------------------------------
 function! g:vimim_nonstop_after_insert()
 " --------------------------------------
     if s:chinese_input_mode =~ 'onekey'
@@ -1738,6 +1759,7 @@ function! g:vimim_nonstop_after_insert()
     endif
     let key = ""
     if s:has_pumvisible > 0
+        let key = g:vimim()
         if len(s:keyboard_list) > 1
             let s:keyboard_list = [get(s:keyboard_list,1)]
             let s:keyboard_shuangpin = 1
@@ -1747,42 +1769,6 @@ function! g:vimim_nonstop_after_insert()
         call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ------------------------------------
-function! s:vimim_onekey_punctuation()
-" ------------------------------------
-    let onekey = ""
-    let current_line = getline(".")
-    let char_before = current_line[col(".")-2]
-    let char_before_before = current_line[col(".")-3]
-    if char_before_before !~# "[0-9A-z]" && empty(s:ui.has_dot)
-        let punctuations = s:punctuations
-        call extend(punctuations, s:evils)
-        if !has_key(punctuations, char_before)
-            return onekey
-        endif
-        for char in keys(punctuations)
-            if char_before_before ==# char
-                let onekey = " "
-                break
-            else
-                continue
-            endif
-        endfor
-        if empty(onekey)
-            " transfer English punctuation to Chinese punctuation
-            let replacement = punctuations[char_before]
-            " play sexy quote in sexy mode
-            if char_before == "'"
-                let replacement = <SID>vimim_get_single_quote()
-            elseif char_before == '"'
-                let replacement = <SID>vimim_get_double_quote()
-            endif
-            let onekey = "\<BS>" . replacement
-        endif
-    endif
-    return onekey
 endfunction
 
 " ------------------------------------
@@ -1951,7 +1937,6 @@ function! s:vimim_set_statusline()
         return
     endif
     set laststatus=2
-    set nolazyredraw
     if empty(&statusline)
         set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
     elseif &statusline =~ 'IMName'
@@ -4876,12 +4861,13 @@ function! s:vimim_i_setting_on()
 " ------------------------------
     set completefunc=VimIM
     set completeopt=menuone
-    if empty(&pumheight)
-        let &pumheight=9
-    endif
+    set nolazyredraw
     set hlsearch
     set smartcase
     set iminsert=1
+    if empty(&pumheight)
+        let &pumheight=9
+    endif
 endfunction
 
 " -------------------------------
