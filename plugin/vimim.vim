@@ -1679,7 +1679,6 @@ function! s:vimim_onekey_action(onekey)
             if empty(onekey)
                 " transfer English punctuation to Chinese punctuation
                 let replacement = punctuations[char_before]
-                " play sexy quote in sexy mode
                 if char_before == "'"
                     let replacement = <SID>vimim_get_single_quote()
                 elseif char_before == '"'
@@ -2373,7 +2372,9 @@ function! s:vimim_hjkl_rotation(matched_list)
         for line in reverse(copy(results))
             let lines = split(line,'\zs')
             let line = get(lines, i)
-            if !empty(line)
+            if empty(line)
+                continue
+            else
                 let column .= line
             endif
         endfor
