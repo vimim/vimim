@@ -2471,7 +2471,7 @@ function! <SID>vimim_onekey_pumvisible_qwerty(n)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  cjk multibyte    ==== {{{"]
+let s:VimIM += [" ====  multibyte        ==== {{{"]
 " =================================================
 
 " ----------------------------------------
