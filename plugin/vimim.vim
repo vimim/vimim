@@ -847,7 +847,7 @@ function! s:vimim_for_mom_and_dad()
     if buffer =~ 'vimim.mom.txt'
         startinsert!
         let s:vimim_digit_4corner = 0
-        let onekey = s:vimim_onekey_action()
+        let onekey = s:vimim_onekey_action(0)
         sil!call s:vimim_onekey_start()
     elseif buffer =~ 'vimim.dad.txt'
         set noruler
@@ -1607,7 +1607,6 @@ function! s:vimim_get_seamless(current_positions)
         endfor
     endif
     let s:start_row_before = seamless_lnum
-    let s:smart_enter = 0
     return seamless_column
 endfunction
 
@@ -1652,18 +1651,15 @@ function! <SID>OneKey()
             endif
         else
             sil!call s:vimim_onekey_start()
-            let onekey = s:vimim_get_unicode_menu()
-            if empty(onekey)
-                let onekey = s:vimim_onekey_action()
-            endif
+            let onekey = s:vimim_onekey_action(0)
         endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" -------------------------------
-function! s:vimim_onekey_action()
-" -------------------------------
+" -------------------------------------
+function! s:vimim_onekey_action(onekey)
+" -------------------------------------
     let onekey = ""
     let current_line = getline(".")
     let char_before = current_line[col(".")-2]
@@ -1698,8 +1694,9 @@ function! s:vimim_onekey_action()
         \&& s:seamless_positions != getpos(".")
         \&& s:pattern_not_found < 1
             let onekey = '\<C-R>=g:vimim()\<CR>'
+        elseif a:onekey < 1
+            let onekey = s:vimim_get_unicode_menu()
         endif
-        let s:smart_enter = 0
         let s:pattern_not_found = 0
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -1726,7 +1723,7 @@ function! g:vimim_space()
             let space = ""
             call s:vimim_stop()
         else
-            let space = s:vimim_onekey_action()
+            let space = s:vimim_onekey_action(1)
         endif
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -5094,8 +5091,9 @@ if a:start
 else
 
     let s:show_me_not = 0
-    let s:english_results = []
+    let s:smart_enter = 0
     let results = []
+    let s:english_results = []
     let keyboard = a:keyboard
 
     " [/grep] slash grep to search cjk
