@@ -1354,6 +1354,10 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " =================================================
+" Thanks to frederick.zou for providing codes on this section
+" supertab      http://www.vim.org/scripts/script.php?script_id=1643
+" autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
+" word_complete http://www.vim.org/scripts/script.php?script_id=73
 
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
@@ -1382,11 +1386,6 @@ endfunction
 " ----------------------------------
 function! s:vimim_getsid(scriptname)
 " ----------------------------------
-" frederick.zou fixed these conflicting plugins:
-" supertab      http://www.vim.org/scripts/script.php?script_id=1643
-" autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
-" word_complete http://www.vim.org/scripts/script.php?script_id=73
-" ------------------------------------------------------------------
     " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
     let l:scriptname = a:scriptname
     " get output of ":scriptnames" in scriptnames_output variable
@@ -3044,6 +3043,7 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " =================================================
+" Thanks to Pan Shizhu for providing all shuangpin codes
 
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
