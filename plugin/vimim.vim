@@ -1354,7 +1354,7 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " =================================================
-" Thanks to frederick.zou for providing codes on this section
+" Thanks to frederick.zou for providing codes on this section.
 " supertab      http://www.vim.org/scripts/script.php?script_id=1643
 " autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
 " word_complete http://www.vim.org/scripts/script.php?script_id=73
@@ -3043,7 +3043,7 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " =================================================
-" Thanks to Pan Shizhu for providing all shuangpin codes
+" Thanks to Pan Shizhu for providing all shuangpin codes.
 
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
@@ -3473,7 +3473,7 @@ function! s:vimim_erbi_first_punctuation(keyboard)
     return chinese_punctuation
 endfunction
 
-" ----------------------------------------------------
+" Thanks to Politz for creating this sexy plugin.
 " http://www.vim.org/scripts/script.php?script_id=2006
 " ----------------------------------------------------
 let s:progressbar = {}
