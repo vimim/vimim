@@ -106,9 +106,8 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_dictionary_quantifiers()
-    sil!call s:vimim_scan_backend_mycloud()
     sil!call s:vimim_scan_backend_cloud()
-    sil!call s:vimim_scan_english_file()
+    sil!call s:vimim_scan_english_datafile()
     sil!call s:vimim_initialize_keycode()
 endfunction
 
@@ -2791,9 +2790,9 @@ endfunction
 let s:VimIM += [" ====  input english    ==== {{{"]
 " =================================================
 
-" -----------------------------------
-function! s:vimim_scan_english_file()
-" -----------------------------------
+" ---------------------------------------
+function! s:vimim_scan_english_datafile()
+" ---------------------------------------
     let s:has_english_file = 0
     let s:english_file = 0
     let s:english_lines = []
@@ -4218,27 +4217,25 @@ let s:VimIM += [" ====  backend cloud    ==== {{{"]
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
-" s:vimim_cloud_sogou=0  : default, auto open when no datafile
-" s:vimim_cloud_sogou=-1 : cloud is shut down without condition
-" -------------------------------------------------------------
-    if empty(s:backend.datafile)
-    \&& empty(s:backend.directory)
-    \&& empty(s:vimim_cloud_plugin)
-        call s:vimim_set_sogou()
-        if s:has_cjk_file == 1
-            " it seems better to use local cjk
-            let s:has_cjk_file = 2
-            let s:ui.im = 'pinyin'
+    if empty(s:backend.datafile) && empty(s:backend.directory)
+        call s:vimim_set_mycloud()
+        if empty(s:vimim_cloud_plugin)
+            call s:vimim_set_sogou()
+            if s:has_cjk_file == 1
+                " it seems better to use local cjk
+                let s:has_cjk_file = 2
+                let s:ui.im = 'pinyin'
+            endif
         endif
-    endif
-    if empty(s:vimim_cloud_sogou)
-        let s:vimim_cloud_sogou = 888
     endif
 endfunction
 
 " ---------------------------
 function! s:vimim_set_sogou()
 " ---------------------------
+" s:vimim_cloud_sogou=0  : default, auto open when no datafile
+" s:vimim_cloud_sogou=-1 : cloud is shut down without condition
+" -------------------------------------------------------------
     if s:ui.root == "cloud" && s:ui.im == "sogou"
         return
     endif
@@ -4325,7 +4322,7 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_do_cloud_if_no_embedded_backend()
 " -------------------------------------------------
-    if empty(s:backend.directory) && empty(s:backend.datafile)
+    if empty(s:backend.datafile) && empty(s:backend.directory)
         if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
             let s:vimim_cloud_sogou = 888
         else
@@ -4493,23 +4490,7 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
-
-" --------------------------------------
-function! s:vimim_scan_backend_mycloud()
-" --------------------------------------
-" let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
-" let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
-" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
-" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
-" let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
-" let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
-" ------------------------------------------------------------
-    if empty(s:backend.datafile) && empty(s:backend.directory)
-        call s:vimim_set_mycloud()
-    endif
-endfunction
+" Thanks to Pan Shizhu for providing all mycloud codes.
 
 " ----------------------------------
 function! s:vimim_do_force_mycloud()
@@ -4517,9 +4498,18 @@ function! s:vimim_do_force_mycloud()
 " [auto mycloud test] vim mycloud.vimim
     if s:vimim_mycloud_url =~ '^http\|^dll\|^app'
         return
+    else
+      " let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
+      " let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
+      " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
+      " let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
+      " let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
+      " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
+      " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
+      " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
+        let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+        call s:vimim_set_mycloud()
     endif
-    let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
-    call s:vimim_set_mycloud()
 endfunction
 
 " -----------------------------
