@@ -2329,14 +2329,12 @@ function! s:vimim_get_hjkl(keyboard)
         endif
     endfor
     if a:keyboard ==# "hjkl"
-        let s:hjkl_h = 1
         let lines = getline(1, ".")
     endif
     if empty(lines)
         return []
     else
         call add(lines,'')
-        call insert(lines,'')
     endif
     if s:hjkl_m > 0 && s:hjkl_m%2 > 0
         let lines = s:vimim_hjkl_rotation(copy(lines))
