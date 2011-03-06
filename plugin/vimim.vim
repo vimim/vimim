@@ -296,7 +296,6 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 " -----------------------------------
 function! s:vimim_initialize_global()
 " -----------------------------------
-    let s:vimimconf = []
     let G = []
     call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_digit_4corner")
@@ -314,6 +313,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_debug")
     " -----------------------------------
+    let s:vimimconf = []
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
@@ -342,11 +342,11 @@ function! s:vimim_set_global_default(options, default)
     for variable in a:options
         let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
-            call add(vimimconf, variable .' = '. eval(variable))
+            call add(vimimconf, variable .' = '. string(eval(variable)))
             exe 'let '. s_variable .'='. variable
             exe 'unlet! ' . variable
         else
-            call add(s:vimimconf, variable .'='. a:default)
+            call add(s:vimimconf, variable .'='. string(a:default))
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
@@ -470,11 +470,8 @@ function! s:vimim_egg_vimim()
     call map(eggs, filter)
     call add(eggs, s:vimim_chinese('configure') . s:colon)
     " gather vimim configuration information
-    let vimimconf = copy(s:vimimconf)
     let filter = '":let " . v:val . " "'
-    call map(vimimconf, filter)
-    " append vimim configuration to the vimim egg
-    call extend(eggs, vimimconf)
+    call extend(eggs, map(copy(s:vimimconf), filter))
     return eggs
 endfunction
 
