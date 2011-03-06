@@ -967,7 +967,7 @@ function! s:vimim_search_chinese_from_english(keyboard)
     if empty(cjk_results) && empty(s:english_results)
         if !empty(s:vimim_shuangpin)
             sil!call s:vimim_initialize_shuangpin()
-            let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
+            let keyboard = s:vimim_shuangpin_transform(keyboard)
         endif
         if s:vimim_cloud_sogou == 1
             " => slash search from sogou cloud
@@ -1708,9 +1708,10 @@ function! g:vimim_space()
 " (4) <Space> after Chinese              => stop OneKeyNonStop
 " ---------------------------------------------------------------
     let space = " "
+"   let s:has_pumvisible_yes = 0
     if pumvisible()
         let space = "\<C-Y>"
-        let s:has_pumvisible = 1
+        let s:has_pumvisible_yes = 1
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
@@ -1729,20 +1730,12 @@ endfunction
 " --------------------------------------
 function! g:vimim_nonstop_after_insert()
 " --------------------------------------
+    let key = ""
     if s:chinese_input_mode =~ 'onekey'
     \&& s:vimim_onekey_nonstop < 1
         call s:vimim_stop()
-        return ""
-    endif
-    let key = ""
-    if s:has_pumvisible > 0
+    elseif s:has_pumvisible_yes > 0
         let key = g:vimim()
-        if len(s:keyboard_list) > 1
-            let s:keyboard_list = [get(s:keyboard_list,1)]
-            let s:keyboard_shuangpin = 1
-        else
-            let s:keyboard_shuangpin = 0
-        endif
         call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2013,6 +2006,7 @@ endfunction
 function! g:vimim_123456789_label(n)
 " ----------------------------------
     let label = a:n
+"   let s:has_pumvisible_yes = 0
     if pumvisible()
         let n = match(s:abcd, label)
         if label =~ '\d'
@@ -2020,7 +2014,7 @@ function! g:vimim_123456789_label(n)
         endif
         let down = repeat("\<Down>", n)
         let yes = "\<C-Y>"
-        let s:has_pumvisible = 1
+        let s:has_pumvisible_yes = 1
         let label = down . yes
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -2124,9 +2118,10 @@ endfunction
 function! g:vimim_pumvisible_ctrl_y()
 " -----------------------------------
     let key = ""
+"   let s:has_pumvisible_yes = 0
     if pumvisible()
         let key = "\<C-Y>"
-        let s:has_pumvisible = 1
+        let s:has_pumvisible_yes = 1
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2211,7 +2206,8 @@ function! s:vimim_popupmenu_list(matched_list)
                     " for vimim classic demo: i.have.a.dream
                     let keyboard_head_length += 1
                 endif
-                let chinese .= strpart(keyboard, keyboard_head_length)
+                let tail = strpart(keyboard, keyboard_head_length)
+                let chinese .= tail
             endif
         else
             let extra_text = get(split(keyboard_head,"_"),0)
@@ -2679,9 +2675,10 @@ function! <SID>vimim_punctuation_mapping(key)
             endif
         endif
     endif
+"   let s:has_pumvisible_yes = 0
     if pumvisible()
         let key = "\<C-Y>" . key
-        let s:has_pumvisible = 1
+        let s:has_pumvisible_yes = 1
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -3081,18 +3078,6 @@ function! s:vimim_initialize_shuangpin()
     let s:shuangpin_keycode_chinese.keycode = keycode
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_get_pinyin_from_shuangpin(keyboard)
-" ---------------------------------------------------
-    let keyboard = a:keyboard
-    let keyboard2 = s:vimim_shuangpin_transform(keyboard)
-    if keyboard2 != keyboard
-        let keyboard = copy(keyboard2)
-        let s:keyboard_shuangpin = 1
-    endif
-    return keyboard
-endfunction
-
 " ---------------------------------------------
 function! s:vimim_shuangpin_transform(keyboard)
 " ---------------------------------------------
@@ -3246,7 +3231,6 @@ function! s:vimim_create_shuangpin_table(rule)
             let sptable[value] = key
         end
     endfor
-    " finished init sptable, will use in s:vimim_shuangpin_transform
     return sptable
 endfunction
 
@@ -3446,11 +3430,12 @@ endfunction
 function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
 " -----------------------------------------------
     let key = ""
+"   let s:has_pumvisible_yes = 0
     if pumvisible()
         let key = "\<C-E>"
         if empty(len(get(s:keyboard_list,0))%4)
             let key = "\<C-Y>"
-            let s:has_pumvisible = 1
+            let s:has_pumvisible_yes = 1
             let s:keyboard_list = []
         endif
     endif
@@ -4901,7 +4886,7 @@ function! s:vimim_reset_before_anything()
     let s:smart_enter = 0
     let s:pumvisible_ctrl_e  = 0
     let s:pattern_not_found  = 0
-    let s:keyboard_shuangpin = 0
+    let s:has_pumvisible_yes = 0
     let s:popupmenu_list = []
     let s:matched_list   = []
     let s:keyboard_list  = []
@@ -4912,7 +4897,6 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:cjk_filter = ""
     let s:has_no_internet = 0
-    let s:has_pumvisible = 0
     let s:hjkl_pageup_pagedown = 0
     return ""
 endfunction
@@ -4925,6 +4909,8 @@ function! g:vimim()
     if byte_before =~ s:valid_key
         let key  = '\<C-X>\<C-U>'
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
+    else
+        let s:has_pumvisible_yes = 0
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -4998,7 +4984,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
             let results = s:vimim_get_from_cache(keyboard2)
         endif
     endif
-    if s:chinese_input_mode !~ "dynamic" && len(s:keyboard_list) < 2
+    if len(s:keyboard_list) < 2
         if empty(keyboard2)
             let s:keyboard_list = [keyboard]
         elseif len(keyboard2) < len(keyboard)
@@ -5148,11 +5134,11 @@ else
 
     " [shuangpin] support 6 major shuangpin
     if !empty(s:vimim_shuangpin)
-        if s:chinese_input_mode =~ 'dynamic'
-            let s:keyboard_shuangpin = 0
-        endif
-        if empty(s:keyboard_shuangpin)
-            let keyboard = s:vimim_get_pinyin_from_shuangpin(keyboard)
+       if s:has_pumvisible_yes < 1
+            let keyboard = s:vimim_shuangpin_transform(keyboard)
+            let s:keyboard_list = [keyboard,""]
+        else
+            let s:keyboard_list = [keyboard]
         endif
     endif
 
