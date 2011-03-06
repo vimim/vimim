@@ -1825,13 +1825,11 @@ endfunction
 " --------------------------------------
 function! s:vimim_onekey_input(keyboard)
 " --------------------------------------
-    " [input] start to initialize legal input
-    let keyboard = s:vimim_get_valid_keyboard(a:keyboard)
-    if empty(keyboard) 
-    \|| s:chinese_input_mode !~ 'onekey'
+    let results = []
+    let keyboard = a:keyboard
+    if empty(keyboard) || s:chinese_input_mode !~ 'onekey'
         return []
     endif
-    let results = []
     " [filter] do digital filter within cache memory
     if s:has_cjk_file > 0
     \&& len(s:cjk_filter) > 0
@@ -4415,6 +4413,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     \|| (s:vimim_cloud_sogou < 1 && a:force < 1)
         return []
     endif
+    " --------------------------------------------------------
     let sogou_key = 'http://web.pinyin.sogou.com/web_ime/patch.php'
     if empty(s:cloud_sogou_key)
         let output = s:vimim_get_from_http(sogou_key)
@@ -4424,6 +4423,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
         endif
         let s:cloud_sogou_key = get(split(output, '"'), 1)
     endif
+    " --------------------------------------------------------
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     let cloud = 'http://web.pinyin.sogou.com/api/py?key='
     let cloud = cloud . s:cloud_sogou_key .'&query='
@@ -4432,6 +4432,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     if empty(output)
         return []
     endif
+    " --------------------------------------------------------
     let first = match(output, '"', 0)
     let second = match(output, '"', 0, 2)
     if first > 0 && second > 0
@@ -4444,19 +4445,20 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
         " support gb and big5 in addition to utf8
         let output = s:vimim_i18n_read(output)
     endif
+    " --------------------------------------------------------
     " from output => '我有一个梦：13    +
     " to   output => ['woyouyigemeng 我有一个梦']
-    let menu = []
+    let matched_list = []
     for item in split(output, '\t+')
         let item_list = split(item, '：')
         if len(item_list) > 1
             let chinese = get(item_list,0)
             let english = strpart(keyboard, 0, get(item_list,1))
             let new_item = english . " " . chinese
-            call add(menu, new_item)
+            call add(matched_list, new_item)
         endif
     endfor
-    return menu
+    return matched_list
 endfunction
 
 " ------------------------------------
@@ -5106,6 +5108,12 @@ else
         endif
     endif
 
+    " [input] start to initialize legal input
+    let keyboard = s:vimim_get_valid_keyboard(keyboard)
+    if empty(keyboard)
+        return
+    endif
+
     " [one_key_correction] for static mode using Esc
     if s:one_key_correction > 0
         let s:one_key_correction = 0
@@ -5114,9 +5122,7 @@ else
 
     " [onekey] play with nothing but OneKey
     let results = s:vimim_onekey_input(keyboard)
-    if empty(len(results))
-        return
-    elseif empty(s:english_results)
+    if !empty(len(results)) && empty(s:english_results)
         return s:vimim_popupmenu_list(results)
     endif
 
