@@ -1775,14 +1775,14 @@ endfunction
 " ---------------------------------
 function! g:vimim_pumvisible_dump()
 " ---------------------------------
-    let line = ""
     let one_line_clipboard = ""
     let saved_position = getpos(".")
     for items in s:popupmenu_list
+        let line = printf('%s', items.word)
         if has_key(items, "menu")
             let line = printf('%s  %s', items.word, items.menu)
-        else
-            let line = printf('%s', items.word)
+        elseif has_key(items, "abbr") && s:show_me_not > 0
+            let line = printf('%s', items.abbr)
         endif
         put=line
         let one_line_clipboard .= line . "\n"
@@ -2131,6 +2131,15 @@ function! g:vimim_pumvisible_ctrl_y()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+" --------------------------------------
+function! g:vimim_pumvisible_ctrl_e_on()
+" --------------------------------------
+    if s:chinese_input_mode =~ 'dynamic'
+        let s:pumvisible_ctrl_e = 1
+    endif
+    return g:vimim_pumvisible_ctrl_e()
+endfunction
+
 " -----------------------------------
 function! g:vimim_pumvisible_ctrl_e()
 " -----------------------------------
@@ -2139,15 +2148,6 @@ function! g:vimim_pumvisible_ctrl_e()
         let key = "\<C-E>"
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" --------------------------------------
-function! g:vimim_pumvisible_ctrl_e_on()
-" --------------------------------------
-    if s:chinese_input_mode =~ 'dynamic'
-        let s:pumvisible_ctrl_e = 1
-    endif
-    return g:vimim_pumvisible_ctrl_e()
 endfunction
 
 " ---------------------------
@@ -2244,10 +2244,10 @@ endfunction
 function! s:vimim_get_labeling(label, keyboard)
 " ---------------------------------------------
     let labeling = a:label
-    let fmt = '%2s'
+    let fmt = '%2s '
     if s:chinese_input_mode =~ 'onekey'
         if s:show_me_not > 0
-            let fmt = '%02s'
+            let fmt = '%02s '
             if s:hjkl_h % 2 < 1
                 let labeling = ""
             endif
@@ -2262,11 +2262,11 @@ function! s:vimim_get_labeling(label, keyboard)
             endif
         endif
         if s:hjkl_l > 0 && &pumheight < 1
-            let fmt = '%02s'
+            let fmt = '%02s '
         endif
     endif
     if !empty(labeling)
-        let labeling = printf(fmt, labeling) . "\t"
+        let labeling = printf(fmt, labeling)
     endif
     return labeling
 endfunction
