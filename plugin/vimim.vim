@@ -3920,20 +3920,17 @@ function! s:vimim_force_scan_current_buffer()
     if buffer !~ '.vimim\>'
         return
     endif
-    " ---------------------------------------
     if buffer =~ 'dynamic'
         let s:vimim_chinese_input_mode = 'dynamic'
     elseif buffer =~ 'static'
         let s:vimim_chinese_input_mode = 'static'
     endif
-    " ---------------------------------------
     let buffers = split(buffer,'[.]')
     let shuangpin = 'shuangpin_'
     let position = match(buffers, shuangpin)
     if position > -1
         let s:vimim_shuangpin = buffers[position][len(shuangpin) :]
     endif
-    " ---------------------------------------
     if buffer =~# 'sogou'
         let s:vimim_cloud_sogou = 1
         call s:vimim_set_sogou()
@@ -4232,7 +4229,7 @@ function! s:vimim_check_http_executable(im)
     if s:vimim_cloud_sogou < 0
         return {}
     endif
-    " step #1 of 3: try to find libvimim
+    " step 1 of 3: try to find libvimim
     let cloud = s:vimim_get_libvimim()
     if !empty(cloud) && filereadable(cloud)
         " in win32, strip the .dll suffix
@@ -4248,7 +4245,7 @@ function! s:vimim_check_http_executable(im)
             return {}
         endif
     endif
-    " step #2 of 3: try to find wget
+    " step 2 of 3: try to find wget
     if empty(s:www_executable)
         let wget = 0
         let wget_exe = s:path . "wget.exe"
@@ -4262,7 +4259,7 @@ function! s:vimim_check_http_executable(im)
             let s:www_executable = wget . wget_option
         endif
     endif
-    " step #3 of 3: try to find curl if no wget
+    " step 3 of 3: try to find curl if no wget
     if empty(s:www_executable)
         if executable('curl')
             let s:www_executable = "curl -s "
@@ -4392,7 +4389,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
         return []
     endif
     " --------------------------------------------------------
-    let first = match(output, '"', 0)
+    let first  = match(output, '"', 0)
     let second = match(output, '"', 0, 2)
     if first > 0 && second > 0
         let output = strpart(output, first+1, second-first-1)
@@ -4447,6 +4444,14 @@ let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
 " Thanks to Pan Shizhu for providing all mycloud codes.
 
+" let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
+" let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
+" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
+" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
+" let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
+" let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
+" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
 " ----------------------------------
 function! s:vimim_do_force_mycloud()
 " ----------------------------------
@@ -4454,14 +4459,6 @@ function! s:vimim_do_force_mycloud()
     if s:vimim_mycloud_url =~ '^http\|^dll\|^app'
         return
     else
-      " let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
-      " let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
-      " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
-      " let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
-      " let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
-      " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
-      " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
-      " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
         let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
         call s:vimim_set_mycloud()
     endif
