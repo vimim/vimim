@@ -2308,7 +2308,11 @@ function! s:vimim_get_hjkl(keyboard)
         endif
     endfor
     if a:keyboard ==# "hjkl"
+        let lines = getline(1, "$")
+    elseif a:keyboard ==# "hjklk"
         let lines = getline(1, ".")
+    elseif a:keyboard ==# "hjklj"
+        let lines = getline(".", "$")
     endif
     if empty(lines)
         return []
