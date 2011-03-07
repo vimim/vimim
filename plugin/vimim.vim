@@ -734,11 +734,19 @@ function s:vimim_sort_on_last(line1, line2)
     endif
 endfunction
 
+" ---------------------------------------------------------
+function! s:vimim_set_keyboard_list(start_column, keyboard)
+" ---------------------------------------------------------
+    let s:start_column_before = a:start_column
+    if len(s:keyboard_list) < 2
+        let s:keyboard_list = [a:keyboard]
+    endif
+endfunction
+
 " -----------------------------------------------------------
 function! s:vimim_get_keyboard_head_list(keyboard, partition)
 " -----------------------------------------------------------
     if a:partition < 0
-        let s:keyboard_list = []
         return a:keyboard
     endif
     let keyboards = []
@@ -1491,7 +1499,7 @@ function! s:vimim_chinesemode_action(switch)
             call s:vimim_punctuation_mapping_on()
         endif
         if s:chinese_input_mode =~ 'dynamic'
-            sil!call s:vimim_set_seamless()
+            let s:seamless_positions = getpos(".")
             if s:ui.im =~ 'wubi' || s:ui.im =~ 'erbi'
                 sil!call s:vimim_dynamic_wubi_auto_trigger()
             else
@@ -1548,23 +1556,6 @@ function! s:vimim_dynamic_alphabet_trigger()
             \'<C-R>=g:vimim()<CR>'
         endif
     endfor
-endfunction
-
-" ---------------------------------------------------------
-function! s:vimim_set_keyboard_list(start_column, keyboard)
-" ---------------------------------------------------------
-    let s:start_column_before = a:start_column
-    if len(s:keyboard_list) < 2
-        let s:keyboard_list = [a:keyboard]
-    endif
-endfunction
-
-" ------------------------------
-function! s:vimim_set_seamless()
-" ------------------------------
-    let s:seamless_positions = getpos(".")
-    let s:keyboard_list = []
-    return ""
 endfunction
 
 " -----------------------------------------------
@@ -1705,7 +1696,6 @@ function! g:vimim_space()
 " (4) <Space> after Chinese              => stop OneKeyNonStop
 " ---------------------------------------------------------------
     let space = " "
-"   let s:has_pumvisible_yes = 0
     if pumvisible()
         let space = "\<C-Y>"
         let s:has_pumvisible_yes = 1
@@ -2003,7 +1993,6 @@ endfunction
 function! g:vimim_123456789_label(n)
 " ----------------------------------
     let label = a:n
-"   let s:has_pumvisible_yes = 0
     if pumvisible()
         let n = match(s:abcd, label)
         if label =~ '\d'
@@ -2098,8 +2087,8 @@ function! <SID>vimim_smart_enter()
     endif
     if s:smart_enter == 1
         " the first <Enter> does seamless
+        let s:seamless_positions = getpos(".")
         let s:pattern_not_found = 0
-        call s:vimim_set_seamless()
     else
         if s:smart_enter == 2
             let key = " "   " the 2nd <Enter> becomes <Space>
@@ -2115,7 +2104,6 @@ endfunction
 function! g:vimim_pumvisible_ctrl_y()
 " -----------------------------------
     let key = ""
-"   let s:has_pumvisible_yes = 0
     if pumvisible()
         let key = "\<C-Y>"
         let s:has_pumvisible_yes = 1
@@ -2429,10 +2417,8 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
                 let s:hjkl_x += 1
             elseif a:key == 'm'
                 let s:hjkl_m += 1
-                let s:keyboard_list = []
             elseif a:key == 'n'
                 let s:hjkl_n += 1
-                let s:keyboard_list = []
             endif
             let hjkl = s:vimim_ctrl_e_ctrl_x_ctrl_u()
         endif
@@ -2672,7 +2658,6 @@ function! <SID>vimim_punctuation_mapping(key)
             endif
         endif
     endif
-"   let s:has_pumvisible_yes = 0
     if pumvisible()
         let key = "\<C-Y>" . key
         let s:has_pumvisible_yes = 1
@@ -3427,13 +3412,11 @@ endfunction
 function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
 " -----------------------------------------------
     let key = ""
-"   let s:has_pumvisible_yes = 0
     if pumvisible()
         let key = "\<C-E>"
         if empty(len(get(s:keyboard_list,0))%4)
             let key = "\<C-Y>"
             let s:has_pumvisible_yes = 1
-            let s:keyboard_list = []
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -3927,10 +3910,11 @@ endfunction
 function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
 " auto enter chinese input mode => vim vimim
+" auto wubi dynamic input mode  => vim wubi.dynamic.vimim
 " auto mycloud input            => vim mycloud.vimim
 " auto cloud input              => vim sogou.vimim
 " auto cloud onekey             => vim sogou.onekey.vimim
-" auto wubi dynamic input mode  => vim wubi.dynamic.vimim
+" auto cloud shuangpin abc mode => vim sogou.shuangpin_abc.vimim
 " -------------------------------------------
     let buffer = expand("%:p:t")
     if buffer !~ '.vimim\>'
@@ -3943,18 +3927,11 @@ function! s:vimim_force_scan_current_buffer()
         let s:vimim_chinese_input_mode = 'static'
     endif
     " ---------------------------------------
-    if buffer =~ 'shuangpin_abc'
-        let s:vimim_shuangpin = 'abc'
-    elseif buffer =~ 'shuangpin_ms'
-        let s:vimim_shuangpin = 'ms'
-    elseif buffer =~ 'shuangpin_nature'
-        let s:vimim_shuangpin = 'nature'
-    elseif buffer =~ 'shuangpin_plusplus'
-        let s:vimim_shuangpin = 'plusplus'
-    elseif buffer =~ 'shuangpin_purple'
-        let s:vimim_shuangpin = 'purple'
-    elseif buffer =~ 'shuangpin_flypy'
-        let s:vimim_shuangpin = 'flypy'
+    let buffers = split(buffer,'[.]')
+    let shuangpin = 'shuangpin_'
+    let position = match(buffers, shuangpin)
+    if position > -1
+        let s:vimim_shuangpin = buffers[position][len(shuangpin) :]
     endif
     " ---------------------------------------
     if buffer =~# 'sogou'
@@ -4884,9 +4861,9 @@ function! s:vimim_reset_before_anything()
     let s:pumvisible_ctrl_e  = 0
     let s:pattern_not_found  = 0
     let s:has_pumvisible_yes = 0
-    let s:popupmenu_list = []
     let s:matched_list   = []
     let s:keyboard_list  = []
+    let s:popupmenu_list = []
 endfunction
 
 " ------------------------------------
@@ -4902,6 +4879,7 @@ endfunction
 function! g:vimim()
 " -----------------
     let key = ""
+    let s:keyboard_list = []
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ s:valid_key
         let key  = '\<C-X>\<C-U>'
@@ -4981,14 +4959,12 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
             let results = s:vimim_get_from_cache(keyboard2)
         endif
     endif
-    if len(s:keyboard_list) < 2
+    if len(s:keyboard_list) < 2 && !empty(s:vimim_shuangpin)
         if empty(keyboard2)
             let s:keyboard_list = [keyboard]
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
-        elseif s:ui.im == 'pinyin'
-            let s:keyboard_list = [keyboard2, ""]
         endif
     endif
     return results
@@ -5130,13 +5106,9 @@ else
     endif
 
     " [shuangpin] support 6 major shuangpin
-    if !empty(s:vimim_shuangpin)
-       if s:has_pumvisible_yes < 1
-            let keyboard = s:vimim_shuangpin_transform(keyboard)
-            let s:keyboard_list = [keyboard,""]
-        else
-            let s:keyboard_list = [keyboard]
-        endif
+    if !empty(s:vimim_shuangpin) && s:has_pumvisible_yes < 1
+        let keyboard = s:vimim_shuangpin_transform(keyboard)
+        let s:keyboard_list = [keyboard]
     endif
 
     " [sogou] to make cloud come true for woyouyigemeng
@@ -5195,7 +5167,7 @@ else
     if s:chinese_input_mode =~ 'onekey'
         let results = [s:space]
     else
-        call s:vimim_set_seamless()
+        let s:seamless_positions = getpos(".")
     endif
     return s:vimim_popupmenu_list(results)
 
