@@ -2152,7 +2152,9 @@ function! s:vimim_popupmenu_list(matched_list)
     else
         let s:matched_list = copy(lines)
     endif
-    if s:hjkl_pageup_pagedown > 0
+    if s:vimim_custom_label > 0
+    \&& s:pageup_pagedown != 0
+    \&& len(lines) > &pumheight
         let lines = s:vimim_pageup_pagedown(lines)
     endif
     let keyboard = join(s:keyboard_list,"")
@@ -2256,27 +2258,24 @@ endfunction
 function! s:vimim_pageup_pagedown(matched_list)
 " ---------------------------------------------
     let matched_list = a:matched_list
-    let length = len(matched_list)
-    if s:vimim_custom_label < 1 || length <= &pumheight
-        return matched_list
+    let page = &pumheight-1
+    if page < 1
+        let page = 9
     endif
-    let page = s:hjkl_pageup_pagedown * &pumheight
-    if page < 0
-        " no more PageUp after the first page
-        let s:hjkl_pageup_pagedown += 1
-        let first_page = &pumheight - 1
-        let matched_list = matched_list[0 : first_page]
-    elseif page >= length
-        " no more PageDown after the last page
-        let s:hjkl_pageup_pagedown -= 1
-        let last_page = length / &pumheight
-        if empty(length % &pumheight)
-            let last_page -= 1
+    let shift = s:pageup_pagedown * page
+    let length = len(matched_list)
+    if length > page
+        if shift >= length || shift*(-1) >= length
+            let s:pageup_pagedown = 0
+            return matched_list
         endif
-        let last_page = last_page * &pumheight
-        let matched_list = matched_list[last_page : -1]
-    else
-        let matched_list = matched_list[page :]
+        let partition = shift
+        if shift < 0
+            let partition = length + shift
+        endif
+        let A = matched_list[: partition-1]
+        let B = matched_list[partition :]
+        let matched_list = B + A
     endif
     return matched_list
 endfunction
@@ -2704,14 +2703,14 @@ function! <SID>vimim_punctuations_navigation(key)
             if s:hjkl_l > 0 && &pumheight < 1
                 let hjkl = '\<PageUp>'
             else
-                let s:hjkl_pageup_pagedown -= 1
+                let s:pageup_pagedown -= 1
                 let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
             endif
         elseif a:key =~ "[=.]"
             if s:hjkl_l > 0 && &pumheight < 1
                 let hjkl = '\<PageDown>'
             else
-                let s:hjkl_pageup_pagedown += 1
+                let s:pageup_pagedown += 1
                 let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
             endif
         endif
@@ -4868,7 +4867,7 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:cjk_filter = ""
     let s:has_no_internet = 0
-    let s:hjkl_pageup_pagedown = 0
+    let s:pageup_pagedown = 0
     return ""
 endfunction
 
