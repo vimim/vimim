@@ -338,19 +338,16 @@ endfunction
 " ----------------------------------------------------
 function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
-    let vimimconf = []
     for variable in a:options
         let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
-            call add(vimimconf, variable .' = '. string(eval(variable)))
+            call add(s:vimimconf, variable .'='. string(eval(variable)))
             exe 'let '. s_variable .'='. variable
             exe 'unlet! ' . variable
         else
-            call add(s:vimimconf, variable .'='. string(a:default))
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
-    call extend(s:vimimconf, vimimconf, 0)
 endfunction
 
 " ============================================= }}}
@@ -2156,6 +2153,8 @@ function! s:vimim_popupmenu_list(matched_list)
     \&& s:pageup_pagedown != 0
     \&& len(lines) > &pumheight
         let lines = s:vimim_pageup_pagedown(lines)
+    else
+        let s:pageup_pagedown = 0
     endif
     let keyboard = join(s:keyboard_list,"")
     if s:hjkl_n > 0 && s:hjkl_n%2 > 0
