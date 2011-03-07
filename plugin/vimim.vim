@@ -509,98 +509,51 @@ endfunction
 function! s:vimim_cjk_sentence_match(keyboard)
 " --------------------------------------------
     let keyboard = a:keyboard
-    let keyboard_head = 0
+    let head = 0
     if s:show_me_not > 0 || len(keyboard) == 1
-        let keyboard_head = keyboard
+        let head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
-            let keyboard_head = s:vimim_cjk_every_four(keyboard)
+            " output is '6021' for input 6021272260021762
+            if len(keyboard) % 4 < 1
+                let pattern = '^\d\{' . 4 . '}'
+                let delimiter = match(keyboard, pattern)
+                if delimiter > -1
+                    let head = s:vimim_get_head(keyboard, 4)
+                endif
+            endif
+        elseif keyboard =~ '^\l\+\d\+\>'
+            let head = keyboard
         elseif keyboard =~ '^\l\+\d\+'
-            let keyboard_head = s:vimim_cjk_alpha_digit(keyboard)
+            " output is 'wo23' for input wo23you40yigemeng
+            let partition = match(keyboard, '\d')
+            while partition > -1
+                let partition += 1
+                if keyboard[partition : partition] =~ '\D'
+                    break
+                endif
+            endwhile
+            let head = s:vimim_get_head(keyboard, partition)
         endif
     elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
-            let keyboard_head = s:vimim_cjk_sentence_diy(keyboard)
+            " output is 'm7712' for input muuqwxeyqpjeqqq
+            let delimiter = match(keyboard, '^\l\l\l\l\l')
+            if delimiter > -1
+                let llll = keyboard[1:4]
+                let dddd = s:vimim_qwertyuiop_1234567890(llll)
+                if !empty(dddd)
+                    let ldddd = keyboard[0:0] . dddd
+                    let keyboard = ldddd . keyboard[5:-1]
+                    let head = s:vimim_get_head(keyboard, 5)
+                endif
+            endif
         endif
-        if empty(keyboard_head)
-            let keyboard_head = s:vimim_cjk_sentence_alpha(keyboard)
-        endif
-    endif
-    return keyboard_head
-endfunction
-
-" ----------------------------------------
-function! s:vimim_cjk_every_four(keyboard)
-" ----------------------------------------
-    " output is '6021' for input  6021272260001762
-    let keyboard = a:keyboard
-    let block = 4
-    if len(keyboard) % block < 1
-        let pattern = '^\d\{' . block . '}'
-        let delimiter = match(keyboard, pattern)
-        if delimiter > -1
-            let keyboard = s:vimim_get_keyboard_head_list(keyboard, block)
+        if empty(head)
+            let head = s:vimim_cjk_sentence_alpha(keyboard)
         endif
     endif
-    return keyboard
-endfunction
-
-" -----------------------------------------
-function! s:vimim_cjk_alpha_digit(keyboard)
-" -----------------------------------------
-    " output is 'wo23' for input wo23you40yigemeng
-    let keyboard = a:keyboard
-    if keyboard =~ '^\l\+\d\+\>'
-        return keyboard
-    endif
-    let partition = match(keyboard, '\d')
-    while partition > -1
-        let partition += 1
-        if keyboard[partition : partition] =~ '\D'
-            break
-        endif
-    endwhile
-    let head = s:vimim_get_keyboard_head_list(keyboard, partition)
     return head
-endfunction
-
-" ------------------------------------------
-function! s:vimim_cjk_sentence_diy(keyboard)
-" ------------------------------------------
-    " output is 'm7712' for input muuqwxeyqpjeqqq
-    let keyboard = a:keyboard
-    let delimiter = match(keyboard, '^\l\l\l\l\l')
-    if delimiter < 0
-        return 0
-    endif
-    let llll = keyboard[1:4]
-    let dddd = s:vimim_qwertyuiop_1234567890(llll)
-    if empty(dddd)
-        return 0
-    endif
-    let ldddd = keyboard[0:0] . dddd
-    let keyboard = ldddd . keyboard[5:-1]
-    let head = s:vimim_get_keyboard_head_list(keyboard, 5)
-    return head
-endfunction
-
-" -----------------------------------------------
-function! s:vimim_qwertyuiop_1234567890(keyboard)
-" -----------------------------------------------
-    " output is '7712' for input uuqw
-    if a:keyboard =~ '\d' || s:has_cjk_file < 1
-        return 0
-    else
-    let dddd = ""
-    for char in split(a:keyboard, '\zs')
-        let digit = match(s:qwerty, char)
-        if digit < 0
-            return 0
-        else
-            let dddd .= digit
-        endif
-    endfor
-    return dddd
 endfunction
 
 " --------------------------------------------
@@ -625,12 +578,31 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     let head = a_keyboard
     let partition = match(keyboard, "[.']")
     if partition > -1
-        let head = s:vimim_get_keyboard_head_list(a_keyboard, partition)
+        let head = s:vimim_get_head(a_keyboard, partition)
     endif
     if len(head) > len(a_keyboard)
         let head = a_keyboard
     endif
     return head
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_qwertyuiop_1234567890(keyboard)
+" -----------------------------------------------
+    " output is '7712' for input uuqw
+    if a:keyboard =~ '\d' || s:has_cjk_file < 1
+        return 0
+    else
+    let dddd = ""
+    for char in split(a:keyboard, '\zs')
+        let digit = match(s:qwerty, char)
+        if digit < 0
+            return 0
+        else
+            let dddd .= digit
+        endif
+    endfor
+    return dddd
 endfunction
 
 " -----------------------------------
@@ -740,9 +712,9 @@ function! s:vimim_set_keyboard_list(start_column, keyboard)
     endif
 endfunction
 
-" -----------------------------------------------------------
-function! s:vimim_get_keyboard_head_list(keyboard, partition)
-" -----------------------------------------------------------
+" ---------------------------------------------
+function! s:vimim_get_head(keyboard, partition)
+" ---------------------------------------------
     if a:partition < 0
         return a:keyboard
     endif
@@ -923,7 +895,7 @@ function! g:vimim_search_next()
     \&& v:errmsg =~# '^E486: '
         let error = ""
         try
-            sil!call s:vimim_search_chinese_from_english(english)
+            sil!call s:vimim_search_chinese_by_english(english)
         catch
             let error = v:exception
         endtry
@@ -932,9 +904,9 @@ function! g:vimim_search_next()
     let v:errmsg = ""
 endfunction
 
-" -----------------------------------------------------
-function! s:vimim_search_chinese_from_english(keyboard)
-" -----------------------------------------------------
+" ---------------------------------------------------
+function! s:vimim_search_chinese_by_english(keyboard)
+" ---------------------------------------------------
     sil!call s:vimim_backend_initialization_once()
     let keyboard = tolower(a:keyboard)
     let cjk_results = []
@@ -1521,7 +1493,7 @@ function! s:vimim_static_action(space)
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
         if s:pattern_not_found < 1
-            let space = '\<C-R>=g:vimim()\<CR>'
+            let space = g:vimim()
         else
             let s:pattern_not_found = 0
         endif
@@ -1645,14 +1617,14 @@ function! s:vimim_onekey_action(onekey)
 " -------------------------------------
     let onekey = ""
     let current_line = getline(".")
-    let char_before = current_line[col(".")-2]
-    let char_before_before = current_line[col(".")-3]
-    if char_before_before !~# "[0-9A-z]" && empty(s:ui.has_dot)
+    let byte_before = current_line[col(".")-2]
+    let byte_before_before = current_line[col(".")-3]
+    if byte_before_before !~# "[0-9A-z]" && empty(s:ui.has_dot)
         let punctuations = s:punctuations
         call extend(punctuations, s:evils)
-        if has_key(punctuations, char_before)
+        if has_key(punctuations, byte_before)
             for char in keys(punctuations)
-                if char_before_before ==# char
+                if byte_before_before ==# char
                     let onekey = " "
                     break
                 else
@@ -1661,10 +1633,10 @@ function! s:vimim_onekey_action(onekey)
             endfor
             if empty(onekey)
                 " transfer English punctuation to Chinese punctuation
-                let replacement = punctuations[char_before]
-                if char_before == "'"
+                let replacement = punctuations[byte_before]
+                if byte_before == "'"
                     let replacement = <SID>vimim_get_single_quote()
-                elseif char_before == '"'
+                elseif byte_before == '"'
                     let replacement = <SID>vimim_get_double_quote()
                 endif
                 let onekey = "\<BS>" . replacement
@@ -1672,10 +1644,10 @@ function! s:vimim_onekey_action(onekey)
         endif
     endif
     if len(onekey) < len("<BS>")
-        if char_before =~ s:valid_key
+        if byte_before =~ s:valid_key
         \&& s:seamless_positions != getpos(".")
         \&& s:pattern_not_found < 1
-            let onekey = '\<C-R>=g:vimim()\<CR>'
+            let onekey = g:vimim()
         elseif a:onekey < 1
             let onekey = s:vimim_get_unicode_menu()
         endif
@@ -1699,9 +1671,9 @@ function! g:vimim_space()
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
-        let char_before = getline(".")[col(".")-2]
-        if char_before !~ s:valid_key
-        \&& !has_key(s:punctuations, char_before)
+        let byte_before = getline(".")[col(".")-2]
+        if byte_before !~ s:valid_key
+        \&& !has_key(s:punctuations, byte_before)
             let space = ""
             call s:vimim_stop()
         else
@@ -2330,13 +2302,15 @@ function! s:vimim_hjkl_rotation(matched_list)
 " -------------------------------------------
     let lines = a:matched_list
     let max = max(map(copy(lines), 'strlen(v:val)')) + 1
+    let multibyte = 1
+    if match(lines,'\w') < 0
+        " rotation makes more sense for cjk
+        let multibyte = s:multibyte
+    endif
     let results = []
     for line in lines
-        if line =~ '\w'
-            continue
-        endif
         let spaces = ''
-        let gap = (max-len(line))/s:multibyte
+        let gap = (max-len(line))/multibyte
         if gap > 0
             for i in range(gap)
                 let spaces .= s:space
@@ -2346,7 +2320,7 @@ function! s:vimim_hjkl_rotation(matched_list)
         call add(results, line)
     endfor
     let rotations = ['']
-    for i in range(max/s:multibyte)
+    for i in range(max/multibyte)
         let column = ''
         for line in reverse(copy(results))
             let lines = split(line,'\zs')
