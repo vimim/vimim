@@ -1300,11 +1300,11 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory("/home/xma")
+    if isdirectory('/home/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
-        let g:vimim_hjkl_directory = "/home/xma/hjkl/"
-        let g:vimim_data_directory = "/home/vimim/pinyin/"
+        let g:vimim_hjkl_directory = '/home/xma/hjkl/'
+        let g:vimim_data_directory = '/home/vimim/pinyin/'
     endif
 endfunction
 
