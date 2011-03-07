@@ -4959,7 +4959,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
             let results = s:vimim_get_from_cache(keyboard2)
         endif
     endif
-    if len(s:keyboard_list) < 2 && !empty(s:vimim_shuangpin)
+    if len(s:keyboard_list) < 2
         if empty(keyboard2)
             let s:keyboard_list = [keyboard]
         elseif len(keyboard2) < len(keyboard)
