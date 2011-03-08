@@ -731,42 +731,45 @@ function! s:vimim_get_head(keyboard, partition)
     return head
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_cjk_filter_from_cache(keyboard)
-" -----------------------------------------------
+" ---------------------------------------
+function! s:vimim_cjk_filter_from_cache()
+" ---------------------------------------
 " use 1234567890/qwertyuiop as digit filter
     call s:vimim_load_cjk_file()
-    let results = s:vimim_cjk_filter_list(a:keyboard)
+    let results = s:vimim_cjk_filter_list()
     if empty(results) && !empty(len(s:cjk_filter))
         let number_before = strpart(s:cjk_filter,0,len(s:cjk_filter)-1)
         if len(number_before) > 0
             let s:cjk_filter = number_before
-            let results = s:vimim_cjk_filter_list(a:keyboard)
+            let results = s:vimim_cjk_filter_list()
         endif
-    endif
-    if empty(results)
-        let s:cjk_filter = ""
     endif
     return results
 endfunction
 
-" -----------------------------------------
-function! s:vimim_cjk_filter_list(keyboard)
-" -----------------------------------------
-    let pair_matched_list = []
-    let first_in_list = split(get(s:matched_list,0))
-    for chinese in s:matched_list
-        if len(first_in_list) > 1
-            let chinese = get(split(chinese), 1)
-        endif
-        let chinese = s:vimim_cjk_digit_filter(chinese)
+" ---------------------------------
+function! s:vimim_cjk_filter_list()
+" ---------------------------------
+    let i = 0
+    let foods = []
+    for items in s:popupmenu_list
+        let chinese = s:vimim_cjk_digit_filter(items.word)
         if empty(chinese)
-            let msg = "garbage out and food in"
+            " garbage out
         else
-            call add(pair_matched_list, chinese)
+            call add(foods, i)
         endif
+        let i += 1
     endfor
-    return pair_matched_list
+    if empty(foods)
+        return []
+    endif
+    let results = []
+    for i in foods
+        let menu = s:popupmenu_list[i].word
+        call add(results, menu)
+    endfor
+    return results
 endfunction
 
 " -----------------------------------------
@@ -777,9 +780,7 @@ function! s:vimim_cjk_digit_filter(chinese)
 "   (2) mali<C-6>       马力 => filter with 7 4002
 " -----------------------------------------
     let chinese = a:chinese
-    if empty(len(s:cjk_filter))
-    \|| empty(chinese)
-    \|| chinese =~ '\w'
+    if empty(len(s:cjk_filter)) || empty(chinese)
         return 0
     endif
     let digit_head = ""
@@ -788,7 +789,7 @@ function! s:vimim_cjk_digit_filter(chinese)
     for cjk in words
         let ddddd = char2nr(cjk)
         let line = ddddd - 19968
-        if cjk =~ '\w' ||  line < 0 || line > 20902+200
+        if cjk =~ '\w' ||  line < 0 || line > 20902
             continue
         else
             let values = split(s:cjk_lines[line])
@@ -1126,7 +1127,7 @@ function! s:vimim_one2one(chinese)
 " --------------------------------
     let ddddd = char2nr(a:chinese)
     let line = ddddd - 19968
-    if line < 0 || line > 20902+200
+    if line < 0 || line > 20902
         return a:chinese
     endif
     let values = split(s:cjk_lines[line])
@@ -1218,7 +1219,7 @@ function! s:vimim_get_property(chinese, property)
     for chinese in split(a:chinese, '\zs')
         let ddddd = char2nr(chinese)
         let line = ddddd - 19968
-        if line < 0 || line > 20902+200
+        if line < 0 || line > 20902
             continue
         endif
         let head = ''
@@ -1773,17 +1774,19 @@ endfunction
 " --------------------------------------
 function! s:vimim_onekey_input(keyboard)
 " --------------------------------------
-    let results = []
     let keyboard = a:keyboard
     if empty(keyboard) || s:chinese_input_mode !~ 'onekey'
         return []
     endif
+    let results = []
     " [filter] do digital filter within cache memory
     if s:has_cjk_file > 0
     \&& len(s:cjk_filter) > 0
-    \&& len(s:matched_list) > 0
-        let results = s:vimim_cjk_filter_from_cache(keyboard)
-        if !empty(results)
+    \&& len(s:popupmenu_list) > 0
+        let results = s:vimim_cjk_filter_from_cache()
+        if empty(results)
+            let s:cjk_filter = ""
+        else
             return results
         endif
     endif
@@ -2127,8 +2130,6 @@ function! s:vimim_popupmenu_list(matched_list)
     let lines = a:matched_list
     if empty(lines)
         return []
-    else
-        let s:matched_list = copy(lines)
     endif
     if s:vimim_custom_label > 0
     \&& s:pageup_pagedown != 0
@@ -2198,7 +2199,7 @@ function! s:vimim_popupmenu_list(matched_list)
         call add(popupmenu_list, complete_items)
     endfor
     if s:chinese_input_mode =~ 'onekey'
-        let s:popupmenu_list = copy(popupmenu_list)
+        let s:popupmenu_list = popupmenu_list
     endif
     return popupmenu_list
 endfunction
@@ -4849,7 +4850,6 @@ function! s:vimim_reset_before_anything()
     let s:pumvisible_ctrl_e  = 0
     let s:pattern_not_found  = 0
     let s:has_pumvisible_yes = 0
-    let s:matched_list   = []
     let s:keyboard_list  = []
     let s:popupmenu_list = []
 endfunction
