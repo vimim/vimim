@@ -1602,6 +1602,7 @@ function! <SID>OneKey()
                 let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
                 let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
                 let onekey .= '\<Esc>'
+                let onekey .= ':normal z.\<CR>'
             endif
         else
             sil!call s:vimim_onekey_start()
