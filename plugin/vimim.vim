@@ -463,12 +463,12 @@ function! s:vimim_egg_vimim()
         let option = sogou . s:colon . s:vimim_chinese('cloudatwill')
         call add(eggs, option)
     endif
-    let filter = 'v:val . " "'
-    call map(eggs, filter)
-    call add(eggs, s:vimim_chinese('configure') . s:colon)
-    " gather vimim configuration information
-    let filter = '":let " . v:val . " "'
-    call extend(eggs, map(copy(s:vimimconf), filter))
+    call map(eggs, 'v:val . " "')
+    if !empty(s:vimimconf)
+        call add(eggs, s:vimim_chinese('configure') . s:colon)
+        let filter = '":let " . v:val . " "'
+        call extend(eggs, map(copy(s:vimimconf), filter))
+    endif
     return eggs
 endfunction
 
@@ -1439,12 +1439,12 @@ function! <SID>ChineseMode()
             else
                 let s:ui.root = get(ui,0)
                 let s:ui.im = get(ui,1)
-                call s:vimim_frontend_initialization()
-                call s:vimim_set_statusline()
-                call s:vimim_build_datafile_cache()
-                call s:vimim_do_cloud_if_no_embedded_backend()
             endif
         endif
+        call s:vimim_frontend_initialization()
+        call s:vimim_set_statusline()
+        call s:vimim_build_datafile_cache()
+        call s:vimim_do_cloud_if_no_embedded_backend()
         let action = s:vimim_chinesemode_action(switch)
     endif
     sil!exe 'sil!return "' . action . '"'
@@ -3518,7 +3518,7 @@ endfunction
 function! s:vimim_get_unicode_list(keyboard)
 " ------------------------------------------
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
-    if ddddd < 8888 || ddddd > 19968+20902
+    if ddddd < 8080 || ddddd > 19968+20902
         return []
     endif
     let words = []
@@ -4157,6 +4157,9 @@ function! s:vimim_scan_backend_cloud()
                 let s:ui.im = 'pinyin'
             endif
         endif
+    endif
+    if empty(s:vimim_cloud_sogou)
+        let s:vimim_cloud_sogou = 888
     endif
 endfunction
 
