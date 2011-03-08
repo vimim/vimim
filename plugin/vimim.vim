@@ -329,9 +329,9 @@ function! s:vimim_initialize_global()
     let s:backend_loaded = 0
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
-        let s:vimim_chinese_input_mode = "dynamic"
+        let s:vimim_chinese_input_mode = 'dynamic'
     elseif s:vimim_chinese_input_mode == 1
-        let s:vimim_chinese_input_mode = "static"
+        let s:vimim_chinese_input_mode = 'static'
     endif
 endfunction
 
@@ -1794,10 +1794,20 @@ function! s:vimim_onekey_input(keyboard)
         return results
     endif
     " [poem] check entry in special directories first
-    let results = s:vimim_get_hjkl(keyboard)
-    if !empty(results)
+    let lines = s:vimim_get_hjkl(keyboard)
+    if !empty(lines)
+        " turn poem 90 degree for each hjkl_m
+        if s:hjkl_m > 0 && s:hjkl_m%4 > 0
+            let lines = s:vimim_hjkl_rotation(lines)
+            if s:hjkl_m%4 > 1
+                let lines = s:vimim_hjkl_rotation(lines)
+            endif
+            if s:hjkl_m%4 > 2
+                let lines = s:vimim_hjkl_rotation(lines)
+            endif
+        endif
         let s:show_me_not = 1
-        return results
+        return lines
     endif
     " [unicode] support direct unicode/gb/big5 input
     let results = s:vimim_get_unicode_list(keyboard)
@@ -2260,9 +2270,11 @@ function! s:vimim_rotation() range abort
     sil!call s:vimim_backend_initialization_once()
     let lines = getbufline(bufnr("%"), 1, "$")
     let lines = s:vimim_hjkl_rotation(copy(lines))
-    for line in lines
-        $put=line
-    endfor
+    if !empty(lines)
+        for line in lines
+            $put=line
+        endfor
+    endif
 endfunction
 
 " ----------------------------------
@@ -2290,9 +2302,6 @@ function! s:vimim_get_hjkl(keyboard)
     else
         call add(lines,'')
     endif
-    if s:hjkl_m > 0 && s:hjkl_m%2 > 0
-        let lines = s:vimim_hjkl_rotation(copy(lines))
-    endif
     return lines
 endfunction
 
@@ -2300,6 +2309,9 @@ endfunction
 function! s:vimim_hjkl_rotation(matched_list)
 " -------------------------------------------
     let lines = a:matched_list
+    if empty(lines)
+        return []
+    endif
     let max = max(map(copy(lines), 'strlen(v:val)')) + 1
     let multibyte = 1
     if match(lines,'\w') < 0
@@ -3351,7 +3363,7 @@ function! s:vimim_set_special_im_property()
     \|| s:ui.im == 'array30'
         let s:ui.has_dot = 1
         let s:vimim_chinese_punctuation = -99
-        let s:vimim_chinese_input_mode = "static"
+        let s:vimim_chinese_input_mode = 'static'
     endif
 endfunction
 
