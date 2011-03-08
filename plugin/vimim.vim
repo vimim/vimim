@@ -463,12 +463,12 @@ function! s:vimim_egg_vimim()
         let option = sogou . s:colon . s:vimim_chinese('cloudatwill')
         call add(eggs, option)
     endif
-    call map(eggs, 'v:val . " "')
     if !empty(s:vimimconf)
         call add(eggs, s:vimim_chinese('configure') . s:colon)
-        let filter = '":let " . v:val . " "'
+        let filter = '":let " . v:val'
         call extend(eggs, map(copy(s:vimimconf), filter))
     endif
+    call map(eggs, 'v:val . " "')
     return eggs
 endfunction
 
@@ -863,10 +863,10 @@ function! s:vimim_initialize_skin()
     highlight! Pmenu      NONE
 endfunction
 
-" ------------------------------------
-function! s:vimim_cursor_color(switch)
-" ------------------------------------
-    if empty(a:switch)
+" ----------------------------------
+function! s:vimim_cursor_color(flag)
+" ----------------------------------
+    if empty(a:flag)
         set ruler
         highlight! Cursor guifg=bg guibg=fg
     else
@@ -1422,7 +1422,8 @@ let s:VimIM += [" ====  Chinese mode     ==== {{{"]
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
-    call s:vimim_backend_initialization_once()
+    sil!call s:vimim_backend_initialization_once()
+    sil!call s:vimim_frontend_initialization()
     let s:chinese_input_mode = s:vimim_chinese_input_mode
     let action = ""
     if !empty(s:ui.root) && !empty(s:ui.im)
@@ -1441,10 +1442,8 @@ function! <SID>ChineseMode()
                 let s:ui.im = get(ui,1)
             endif
         endif
-        call s:vimim_frontend_initialization()
         call s:vimim_set_statusline()
         call s:vimim_build_datafile_cache()
-        call s:vimim_do_cloud_if_no_embedded_backend()
         let action = s:vimim_chinesemode_action(switch)
     endif
     sil!exe 'sil!return "' . action . '"'
@@ -3885,7 +3884,6 @@ endfunction
 " -------------------------------------------
 function! s:vimim_force_scan_current_buffer()
 " -------------------------------------------
-" auto enter chinese input mode => vim vimim
 " auto wubi dynamic input mode  => vim wubi.dynamic.vimim
 " auto mycloud input            => vim mycloud.vimim
 " auto cloud input              => vim sogou.vimim
@@ -3893,7 +3891,9 @@ function! s:vimim_force_scan_current_buffer()
 " auto cloud shuangpin abc mode => vim sogou.shuangpin_abc.vimim
 " -------------------------------------------
     let buffer = expand("%:p:t")
-    if buffer !~ '.vimim\>'
+    if buffer =~ '.vimim\>'
+        " start zero configuration showcase
+    else
         return
     endif
     if buffer =~ 'dynamic'
