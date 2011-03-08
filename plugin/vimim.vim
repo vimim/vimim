@@ -3752,17 +3752,33 @@ endfunction
 
 " -------------------------------------------------
 function! s:vimim_sentence_match_datafile(keyboard)
-" -------------------------------------------------
+" ------------------------------------------------- todo
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
     let pattern = '^' . keyboard . '\>'
-    let match_start = match(lines, pattern)
-    if match_start > -1
+    let matched = match(lines, pattern)
+    if matched > -1
         return keyboard
     elseif empty(s:english_results)
         " scan more on datafile when English is not found
     else
         return 0
+    endif
+    if s:ui.im =~ 'pinyin' && keyboard !~ "[.']"
+        let candidates = s:vimim_more_pinyin_candidates(keyboard)
+        if empty(candidates)
+            return 0
+        else
+            for candidate in candidates
+                let pattern = '^' . candidate . '\>'
+                let matched = match(lines, pattern, 0)
+                if matched < 0
+                    continue
+                else
+                    return candidate
+                endif
+            endfor
+        endif
     endif
     let max = len(keyboard)
     " wo'you'yige'meng works in this algorithm
@@ -3770,14 +3786,14 @@ function! s:vimim_sentence_match_datafile(keyboard)
         let max -= 1
         let head = strpart(keyboard, 0, max)
         let pattern = '^' . head . '\>'
-        let match_start = match(lines, pattern)
-        if match_start < 0
+        let matched = match(lines, pattern)
+        if matched < 0
             continue
         else
             break
         endif
     endwhile
-    if match_start < 0
+    if matched < 0
         return 0
     else
         return keyboard[0 : max-1]
