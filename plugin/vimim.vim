@@ -371,11 +371,18 @@ endfunction
 " -------------------------------
 function! s:vimim_egg_vimimpoem()
 " -------------------------------
-    let eggs  = [""]
-    let eggs += ["床前明月光"]
-    let eggs += ["疑是地上霜"]
-    let eggs += ["举头望明月"]
-    let eggs += ["低头思故乡"]
+    let eggs = [""]
+    if empty(localtime()%2)
+        let eggs += ["床前明月光"]
+        let eggs += ["疑是地上霜"]
+        let eggs += ["举头望明月"]
+        let eggs += ["低头思故乡"]
+    else
+        let eggs += ["白日依山尽"]
+        let eggs += ["黄河入海流"]
+        let eggs += ["欲穷千里目"]
+        let eggs += ["更上一层楼"]
+    endif
     return eggs
 endfunction
 
@@ -1805,10 +1812,10 @@ function! s:vimim_onekey_input(keyboard)
             return results
         endif
     endif
-    " [poem] hunt for easter eggs
+    " [egg] hunt for easter eggs
     let lines = s:vimim_get_hjkl(keyboard)
     if !empty(lines)
-        " turn poem 90 degree for each hjkl_m
+        " turn menu 90 degree for each hjkl_m
         if s:hjkl_m > 0 && s:hjkl_m%4 > 0
             let lines = s:vimim_hjkl_rotation(lines)
             if s:hjkl_m%4 > 1
