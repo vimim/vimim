@@ -355,6 +355,30 @@ endfunction
 let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
 
+" ----------------------------------------
+function! s:vimim_easter_chicken(keyboard)
+" ----------------------------------------
+    if a:keyboard ==# "vim" || a:keyboard =~# "^vimim"
+        try
+            return eval("s:vimim_egg_" . a:keyboard . "()")
+        catch
+            call s:debugs('egg::', v:exception)
+        endtry
+    endif
+    return []
+endfunction
+
+" -------------------------------
+function! s:vimim_egg_vimimpoem()
+" -------------------------------
+    let eggs  = [""]
+    let eggs += ["床前明月光"]
+    let eggs += ["疑是地上霜"]
+    let eggs += ["举头望明月"]
+    let eggs += ["低头思故乡"]
+    return eggs
+endfunction
+
 " -------------------------
 function! s:vimim_egg_vim()
 " -------------------------
@@ -471,19 +495,6 @@ function! s:vimim_egg_vimim()
     endif
     call map(eggs, 'v:val . " "')
     return eggs
-endfunction
-
-" ----------------------------------------
-function! s:vimim_easter_chicken(keyboard)
-" ----------------------------------------
-    if a:keyboard ==# "vim" || a:keyboard =~# "^vimim"
-        try
-            return eval("s:vimim_egg_" . a:keyboard . "()")
-        catch
-            call s:debugs('egg::', v:exception)
-        endtry
-    endif
-    return []
 endfunction
 
 " ============================================= }}}
@@ -1794,13 +1805,7 @@ function! s:vimim_onekey_input(keyboard)
             return results
         endif
     endif
-    " [eggs] hunt classic easter egg ... vim<C-6>
-    let results = s:vimim_easter_chicken(keyboard)
-    if !empty(results)
-        let s:show_me_not = 1
-        return results
-    endif
-    " [poem] check entry in special directories first
+    " [poem] hunt for easter eggs
     let lines = s:vimim_get_hjkl(keyboard)
     if !empty(lines)
         " turn poem 90 degree for each hjkl_m
@@ -2305,21 +2310,27 @@ endfunction
 " ----------------------------------
 function! s:vimim_get_hjkl(keyboard)
 " ----------------------------------
-    let lines = []
+    let keyboard = a:keyboard
+    " [eggs] hunt classic easter egg ... vim<C-6>
+    let lines = s:vimim_easter_chicken(keyboard)
+    if !empty(lines)
+        return lines
+    endif
+    " [poem] check entry in special directories first
     let dirs = [s:path, s:vimim_hjkl_directory]
     for dir in dirs
-        let lines = s:vimim_get_from_directory(a:keyboard, dir)
+        let lines = s:vimim_get_from_directory(keyboard, dir)
         if empty(lines)
             continue
         else
             break
         endif
     endfor
-    if a:keyboard ==# "hjkl"
+    if keyboard ==# "hjkl"
         let lines = getline(1, "$")
-    elseif a:keyboard ==# "hjklk"
+    elseif keyboard ==# "hjklk"
         let lines = getline(1, ".")
-    elseif a:keyboard ==# "hjklj"
+    elseif keyboard ==# "hjklj"
         let lines = getline(".", "$")
     endif
     if empty(lines)
