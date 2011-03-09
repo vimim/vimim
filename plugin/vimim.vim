@@ -851,13 +851,9 @@ function! s:vimim_for_mom_and_dad()
     else
         return
     endif
-    if empty(s:has_cjk_file)
-        return
-    else
-        let s:mom_and_dad = 1
-        let s:vimim_tab_as_onekey = 2
-    endif
-    if has("gui_running") && has("win32")
+    let s:mom_and_dad = 1
+    let s:vimim_tab_as_onekey = 1
+    if has("gui_running")
         autocmd! * <buffer>
         autocmd  FocusLost <buffer> sil!wall
         noremap  <silent>  <Esc> :sil!%y +<CR>
@@ -5297,10 +5293,10 @@ function! s:vimim_onekey_mapping_on()
     if !hasmapto('<Plug>VimimOneKey', 'i')
         inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
     endif
-    if s:vimim_tab_as_onekey < 2 && !hasmapto('<C-^>', 'i')
+    if s:vimim_tab_as_onekey < 2
         imap <silent> <C-^> <Plug>VimimOneKey
     endif
-    if s:vimim_tab_as_onekey > 0 && !hasmapto('<Tab>', 'i')
+    if s:vimim_tab_as_onekey > 0
         imap <silent> <Tab> <Plug>VimimOneKey
     endif
     if s:vimim_tab_as_onekey == 2
