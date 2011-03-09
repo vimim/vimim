@@ -562,7 +562,7 @@ function! s:vimim_dot_by_dot(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     let partition = match(keyboard, "[.']")
-    if partition > -1
+    if partition > -1 && empty(s:ui.has_dot) 
         let keyboard = s:vimim_get_head(keyboard, partition)
     endif
     return keyboard
