@@ -319,6 +319,7 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
+    call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_custom_statusline")
     call add(G, "g:vimim_onekey_nonstop")
     call add(G, "g:vimim_chinese_punctuation")
@@ -2239,24 +2240,44 @@ endfunction
 function! s:vimim_pageup_pagedown(matched_list)
 " ---------------------------------------------
     let matched_list = a:matched_list
-    let page = &pumheight-1
-    if page < 1
-        let page = 9
-    endif
-    let shift = s:pageup_pagedown * page
     let length = len(matched_list)
-    if length > page
-        if shift >= length || shift*(-1) >= length
-            let s:pageup_pagedown = 0
-            return matched_list
+    let first_page = &pumheight - 1
+    if s:vimim_loop_pageup_pagedown > 0
+        if first_page < 1
+            let first_page = 9
         endif
-        let partition = shift
-        if shift < 0
-            let partition = length + shift
+        let shift = s:pageup_pagedown * first_page
+        if length > first_page
+            if shift >= length || shift*(-1) >= length
+                let s:pageup_pagedown = 0
+                return matched_list
+            endif
+            let partition = shift
+            if shift < 0
+                let partition = length + shift
+            endif
+            let A = matched_list[: partition-1]
+            let B = matched_list[partition :]
+            let matched_list = B + A
         endif
-        let A = matched_list[: partition-1]
-        let B = matched_list[partition :]
-        let matched_list = B + A
+    else
+        let page = s:pageup_pagedown * &pumheight
+        if page < 0
+            " no more PageUp after the first page
+            let s:pageup_pagedown += 1
+            let matched_list = matched_list[0 : first_page]
+        elseif page >= length
+            " no more PageDown after the last page
+            let s:pageup_pagedown -= 1
+            let last_page = length / &pumheight
+            if empty(length % &pumheight)
+                let last_page -= 1
+            endif
+            let last_page = last_page * &pumheight
+            let matched_list = matched_list[last_page :]
+        else
+            let matched_list = matched_list[page :]
+        endif
     endif
     return matched_list
 endfunction
@@ -3668,6 +3689,7 @@ function! s:vimim_set_datafile(im, datafile)
     if empty(s:backend.datafile[im].lines)
         let s:backend.datafile[im].lines = s:vimim_readfile(datafile)
     endif
+    call s:vimim_set_special_im_property()
 endfunction
 
 " ----------------------------------------
@@ -3682,8 +3704,8 @@ function! s:vimim_get_from_cache(keyboard)
     if has_key(s:backend[s:ui.root][s:ui.im].cache, keyboard)
         let results = s:backend[s:ui.root][s:ui.im].cache[keyboard]
     endif
-    if s:ui.im =~ 'pinyin' && len(results) > 0 && len(results) < 20
-        let extras = s:vimim_more_pinyin_datafile(keyboard)
+    if len(results) > 0 && len(results) < 20
+        let extras = s:vimim_more_pinyin_datafile(keyboard,0)
         if len(extras) > 0
             let make_pair_filter = 'keyboard ." ". v:val'
             call map(results, make_pair_filter)
@@ -3693,10 +3715,16 @@ function! s:vimim_get_from_cache(keyboard)
     return results
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_more_pinyin_datafile(keyboard)
-" ----------------------------------------------
-    let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
+" --------------------------------------------------------
+function! s:vimim_more_pinyin_datafile(keyboard, sentence)
+" --------------------------------------------------------
+    let keyboard = a:keyboard
+    if s:ui.im =~ 'pinyin' && keyboard !~ "[.']"
+        " for pinyin with valid keycodes only
+    else
+        return []
+    endif
+    let candidates = s:vimim_more_pinyin_candidates(keyboard)
     if empty(candidates)
         return []
     endif
@@ -3706,6 +3734,10 @@ function! s:vimim_more_pinyin_datafile(keyboard)
         let pattern = '^' . candidate . '\>'
         let matched = match(lines, pattern, 0)
         if matched < 0
+            continue
+        elseif a:sentence > 0
+            return [candidate]
+        else
             continue
         endif
         let oneline = lines[matched]
@@ -3752,9 +3784,12 @@ endfunction
 
 " -------------------------------------------------
 function! s:vimim_sentence_match_datafile(keyboard)
-" ------------------------------------------------- todo
+" -------------------------------------------------
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
+    if empty(keyboard) || empty(lines)
+        return []
+    endif
     let pattern = '^' . keyboard . '\>'
     let matched = match(lines, pattern)
     if matched > -1
@@ -3764,24 +3799,12 @@ function! s:vimim_sentence_match_datafile(keyboard)
     else
         return 0
     endif
-    if s:ui.im =~ 'pinyin' && keyboard !~ "[.']"
-        let candidates = s:vimim_more_pinyin_candidates(keyboard)
-        if empty(candidates)
-            return 0
-        else
-            for candidate in candidates
-                let pattern = '^' . candidate . '\>'
-                let matched = match(lines, pattern, 0)
-                if matched < 0
-                    continue
-                else
-                    return candidate
-                endif
-            endfor
-        endif
+    let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
+    if !empty(candidates)
+        return get(candidates,0)
     endif
-    let max = len(keyboard)
     " wo'you'yige'meng works in this algorithm
+    let max = len(keyboard)
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
@@ -3805,20 +3828,16 @@ function! s:vimim_get_from_datafile(keyboard, search)
 " ---------------------------------------------------
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
-    if empty(keyboard) || empty(lines)
-        return []
-    endif
     let pattern = '^' . keyboard . '\>'
     let matched = match(lines, pattern)
     if matched < 0
         return []
     endif
     let oneline = lines[matched]
+    let onelines = split(oneline)
     let results = split(oneline)[1:]
-    let pairs = split(oneline)
-    if a:search < 1 && s:ui.im =~ 'pinyin'
-    \&& len(pairs) > 0 && len(pairs) < 20
-        let extras = s:vimim_more_pinyin_datafile(keyboard)
+    if a:search < 1 && len(onelines) > 0 && len(onelines) < 20
+        let extras = s:vimim_more_pinyin_datafile(keyboard,0)
         if len(extras) > 0
             let results = s:vimim_make_pair_matched_list(oneline)
             call extend(results, extras)
@@ -4025,6 +4044,7 @@ function! s:vimim_set_directory(im, dir)
         let s:backend.directory[im].keycode = s:im_keycode[im]
         let s:backend.directory[im].chinese = s:vimim_chinese(im)
     endif
+    call s:vimim_set_special_im_property()
 endfunction
 
 " ----------------------------------------------------
@@ -4079,8 +4099,13 @@ function! s:vimim_sentence_match_directory(keyboard)
     else
         return 0
     endif
+    let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
+    if empty(candidates)
+        " i.have.a.dream works in this algorithm
+    else
+        return get(candidates,0)
+    endif
     let max = len(keyboard)
-    "  i.have.a.dream works in this algorithm
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
