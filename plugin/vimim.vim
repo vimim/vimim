@@ -3713,32 +3713,30 @@ endfunction
 function! s:vimim_get_from_cache(keyboard)
 " ----------------------------------------
     let keyboard = a:keyboard
-    if empty(a:keyboard) || empty(s:backend[s:ui.root][s:ui.im].cache)
+    if empty(keyboard) || empty(s:backend[s:ui.root][s:ui.im].cache)
         return []
     endif
     let results = []
     if has_key(s:backend[s:ui.root][s:ui.im].cache, keyboard)
         let results = s:backend[s:ui.root][s:ui.im].cache[keyboard]
     endif
-    let extras = s:vimim_more_pinyin_datafile(keyboard)
+    let extras = s:vimim_more_pinyin_datafile(keyboard,0)
     if len(extras) > 0
-        let make_pair_filter = 'keyboard ." ". v:val'
-        call map(results, make_pair_filter)
+        call map(results, 'keyboard ." ". v:val')
         call extend(results, extras)
     endif
     return results
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_more_pinyin_datafile(keyboard)
-" ----------------------------------------------
-    let keyboard = a:keyboard
-    if s:ui.im =~ 'pinyin' && keyboard !~ "[.']"
+" --------------------------------------------------------
+function! s:vimim_more_pinyin_datafile(keyboard, sentence)
+" --------------------------------------------------------
+    if s:ui.im =~ 'pinyin' && a:keyboard !~ "[.']"
         " for pinyin with valid keycodes only
     else
         return []
     endif
-    let candidates = s:vimim_more_pinyin_candidates(keyboard)
+    let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
     if empty(candidates)
         return []
     endif
@@ -3749,6 +3747,8 @@ function! s:vimim_more_pinyin_datafile(keyboard)
         let matched = match(lines, pattern, 0)
         if matched < 0
             continue
+        elseif a:sentence > 0
+            return [candidate]
         endif
         let oneline = lines[matched]
         let matched_list = s:vimim_make_pair_matched_list(oneline)
@@ -3809,7 +3809,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
     else
         return 0
     endif
-    let candidates = s:vimim_more_pinyin_datafile(keyboard)
+    let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
     if !empty(candidates)
         return get(candidates,0)
     endif
@@ -3836,9 +3836,8 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_get_from_datafile(keyboard, search)
 " ---------------------------------------------------
-    let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
-    let pattern = '^' . keyboard . '\>'
+    let pattern = '^' . a:keyboard . '\>'
     let matched = match(lines, pattern)
     if matched < 0
         return []
@@ -3847,7 +3846,7 @@ function! s:vimim_get_from_datafile(keyboard, search)
     let onelines = split(oneline)
     let results = split(oneline)[1:]
     if a:search < 1 && len(onelines) > 0 && len(onelines) < 20
-        let extras = s:vimim_more_pinyin_datafile(keyboard)
+        let extras = s:vimim_more_pinyin_datafile(a:keyboard,0)
         if len(extras) > 0
             let results = s:vimim_make_pair_matched_list(oneline)
             call extend(results, extras)
@@ -3859,8 +3858,10 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_make_pair_matched_list(oneline)
 " -----------------------------------------------
-" [input]    lively 热闹 活泼
-" [output] ['lively 热闹', 'lively 活泼']
+" [purpose] break row entry in datafile as pair
+"           input  =>   lively 热闹 活泼
+"           output => ['lively 热闹', 'lively 活泼']
+" -----------------------------------------------
     let oneline_list = split(a:oneline)
     let menu = remove(oneline_list, 0)
     if empty(menu) || menu =~ '\W'
@@ -3878,8 +3879,8 @@ endfunction
 function! s:vimim_more_pinyin_candidates(keyboard)
 " ------------------------------------------------
 " [purpose] make standard layout for popup menu
-"           in   =>  mamahuhu
-"           out  =>  mamahuhu, mama, ma
+"           input  =>  mamahuhu
+"           output =>  mamahuhu, mama, ma
 " ------------------------------------------------
     let keyboard = a:keyboard
     if empty(s:english_results)
@@ -4109,7 +4110,7 @@ function! s:vimim_sentence_match_directory(keyboard)
     else
         return 0
     endif
-    let candidates = s:vimim_more_pinyin_datafile(keyboard)
+    let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
     if !empty(candidates)
         return get(candidates,0)
     endif
