@@ -557,6 +557,17 @@ function! s:vimim_cjk_sentence_match(keyboard)
     return head
 endfunction
 
+" ------------------------------------
+function! s:vimim_dot_by_dot(keyboard)
+" ------------------------------------
+    let keyboard = a:keyboard
+    let partition = match(keyboard, "[.']")
+    if partition > -1
+        let keyboard = s:vimim_get_head(keyboard, partition)
+    endif
+    return keyboard
+endfunction
+
 " --------------------------------------------
 function! s:vimim_cjk_sentence_alpha(keyboard)
 " --------------------------------------------
@@ -576,15 +587,7 @@ function! s:vimim_cjk_sentence_alpha(keyboard)
     elseif matched < 0 && s:has_cjk_file > 0
         let keyboard = s:vimim_toggle_pinyin(a_keyboard)
     endif
-    let head = a_keyboard
-    let partition = match(keyboard, "[.']")
-    if partition > -1
-        let head = s:vimim_get_head(a_keyboard, partition)
-    endif
-    if len(head) > len(a_keyboard)
-        let head = a_keyboard
-    endif
-    return head
+    return keyboard
 endfunction
 
 " -----------------------------------------------
@@ -1271,7 +1274,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
@@ -1819,6 +1822,8 @@ function! s:vimim_onekey_input(keyboard)
         let s:keyboard_list = [keyboard]
         return results
     endif
+    " [dot_by_dot] i.have.a.dream
+    let keyboard = s:vimim_dot_by_dot(keyboard)
     " [english] english cannot be ignored
     if keyboard =~ '^\l\+'
         sil!call s:vimim_onekey_english(keyboard, 0)
@@ -4962,7 +4967,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         let dir = s:backend[root][im].name
         let keyboard2 = s:vimim_sentence_match_directory(keyboard)
         let results = s:vimim_get_from_directory(keyboard2, dir)
-        if keyboard ==# keyboard2 && a:search < 1 
+        if keyboard ==# keyboard2 && a:search < 1
         \&& len(results) > 0 && len(results) < 20
             let extras = s:vimim_more_pinyin_directory(keyboard, dir)
             if len(extras) > 0 && len(results) > 0
