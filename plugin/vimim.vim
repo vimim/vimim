@@ -1271,7 +1271,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
@@ -2093,15 +2093,6 @@ function! g:vimim_pumvisible_ctrl_y()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" --------------------------------------
-function! g:vimim_pumvisible_ctrl_e_on()
-" --------------------------------------
-    if s:chinese_input_mode =~ 'dynamic'
-        let s:pumvisible_ctrl_e = 1
-    endif
-    return g:vimim_pumvisible_ctrl_e()
-endfunction
-
 " -----------------------------------
 function! g:vimim_pumvisible_ctrl_e()
 " -----------------------------------
@@ -2112,16 +2103,23 @@ function! g:vimim_pumvisible_ctrl_e()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+" --------------------------------------
+function! g:vimim_pumvisible_ctrl_e_on()
+" --------------------------------------
+    if s:chinese_input_mode =~ 'dynamic'
+        let s:pumvisible_ctrl_e = 1
+    endif
+    return g:vimim_pumvisible_ctrl_e()
+endfunction
+
 " ---------------------------
 function! g:vimim_backspace()
 " ---------------------------
-    call s:vimim_super_reset()
-    let s:pattern_not_found = 0
     let key = '\<BS>'
     if s:pumvisible_ctrl_e > 0
-        let s:pumvisible_ctrl_e = 0
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
+    call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -3696,28 +3694,25 @@ endfunction
 function! s:vimim_get_from_cache(keyboard)
 " ----------------------------------------
     let keyboard = a:keyboard
-    if empty(a:keyboard)
-    \|| empty(s:backend[s:ui.root][s:ui.im].cache)
+    if empty(a:keyboard) || empty(s:backend[s:ui.root][s:ui.im].cache)
         return []
     endif
     let results = []
     if has_key(s:backend[s:ui.root][s:ui.im].cache, keyboard)
         let results = s:backend[s:ui.root][s:ui.im].cache[keyboard]
     endif
-    if len(results) > 0 && len(results) < 20
-        let extras = s:vimim_more_pinyin_datafile(keyboard,0)
-        if len(extras) > 0
-            let make_pair_filter = 'keyboard ." ". v:val'
-            call map(results, make_pair_filter)
-            call extend(results, extras)
-        endif
+    let extras = s:vimim_more_pinyin_datafile(keyboard)
+    if len(extras) > 0
+        let make_pair_filter = 'keyboard ." ". v:val'
+        call map(results, make_pair_filter)
+        call extend(results, extras)
     endif
     return results
 endfunction
 
-" --------------------------------------------------------
-function! s:vimim_more_pinyin_datafile(keyboard, sentence)
-" --------------------------------------------------------
+" ----------------------------------------------
+function! s:vimim_more_pinyin_datafile(keyboard)
+" ----------------------------------------------
     let keyboard = a:keyboard
     if s:ui.im =~ 'pinyin' && keyboard !~ "[.']"
         " for pinyin with valid keycodes only
@@ -3734,10 +3729,6 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
         let pattern = '^' . candidate . '\>'
         let matched = match(lines, pattern, 0)
         if matched < 0
-            continue
-        elseif a:sentence > 0
-            return [candidate]
-        else
             continue
         endif
         let oneline = lines[matched]
@@ -3799,7 +3790,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
     else
         return 0
     endif
-    let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
+    let candidates = s:vimim_more_pinyin_datafile(keyboard)
     if !empty(candidates)
         return get(candidates,0)
     endif
@@ -3837,7 +3828,7 @@ function! s:vimim_get_from_datafile(keyboard, search)
     let onelines = split(oneline)
     let results = split(oneline)[1:]
     if a:search < 1 && len(onelines) > 0 && len(onelines) < 20
-        let extras = s:vimim_more_pinyin_datafile(keyboard,0)
+        let extras = s:vimim_more_pinyin_datafile(keyboard)
         if len(extras) > 0
             let results = s:vimim_make_pair_matched_list(oneline)
             call extend(results, extras)
@@ -4099,7 +4090,7 @@ function! s:vimim_sentence_match_directory(keyboard)
     else
         return 0
     endif
-    let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
+    let candidates = s:vimim_more_pinyin_datafile(keyboard)
     if empty(candidates)
         " i.have.a.dream works in this algorithm
     else
@@ -4971,8 +4962,8 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         let dir = s:backend[root][im].name
         let keyboard2 = s:vimim_sentence_match_directory(keyboard)
         let results = s:vimim_get_from_directory(keyboard2, dir)
-        if keyboard ==# keyboard2 && s:ui.im =~ 'pinyin'
-        \&& a:search < 1 && len(results) > 0 && len(results) < 20
+        if keyboard ==# keyboard2 && a:search < 1 
+        \&& len(results) > 0 && len(results) < 20
             let extras = s:vimim_more_pinyin_directory(keyboard, dir)
             if len(extras) > 0 && len(results) > 0
                 call map(results, 'keyboard ." ". v:val')
