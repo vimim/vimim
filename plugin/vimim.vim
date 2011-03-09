@@ -562,7 +562,7 @@ function! s:vimim_dot_by_dot(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     let partition = match(keyboard, "[.']")
-    if partition > -1 && empty(s:ui.has_dot) 
+    if partition > -1 && empty(s:ui.has_dot)
         let keyboard = s:vimim_get_head(keyboard, partition)
     endif
     return keyboard
@@ -4096,9 +4096,7 @@ function! s:vimim_sentence_match_directory(keyboard)
         return 0
     endif
     let candidates = s:vimim_more_pinyin_datafile(keyboard)
-    if empty(candidates)
-        " i.have.a.dream works in this algorithm
-    else
+    if !empty(candidates)
         return get(candidates,0)
     endif
     let max = len(keyboard)
