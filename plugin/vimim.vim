@@ -4847,14 +4847,11 @@ function! s:vimim_reset_before_anything()
 " ---------------------------------------
     let s:hjkl_h = 0
     let s:hjkl_l = 0
-    let s:hjkl_m = 0
-    let s:hjkl_n = 0
-    let s:hjkl_x = 0
-    let s:show_me_not = 0
     let s:smart_enter = 0
+    let s:show_me_not = 0
+    let s:pattern_not_found  = 0
     let s:pumvisible_yes = 0
     let s:pumvisible_ctrl_e  = 0
-    let s:pattern_not_found  = 0
     let s:keyboard_list  = []
     let s:popupmenu_list = []
 endfunction
@@ -4863,6 +4860,9 @@ endfunction
 function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_s = ""
+    let s:hjkl_x = 0
+    let s:hjkl_m = 0
+    let s:hjkl_n = 0
     let s:has_no_internet = 0
     let s:pageup_pagedown = 0
     return ""
