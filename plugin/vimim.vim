@@ -1152,12 +1152,8 @@ endfunction
 " ------------------------------------------
 function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
-" [input]  马力  highlighted in vim visual mode
-" [output] 9a6c   529b    --  in unicode
-"          7712   4002    --  in four corner
-"          551000 530000  --  in five stroke
-"          ma3    li4     --  in pinyin
-"          ml 马力        --  in cjjp
+" input:  马力 highlighted in vim visual mode
+" output: unicode 4corner 5stroke pinyin cjjp
 " ------------------------------------------
     let range = line("'>") - line("'<")
     if empty(range)
