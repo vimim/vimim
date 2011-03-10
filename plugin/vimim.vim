@@ -1801,27 +1801,15 @@ function! s:vimim_onekey_input(keyboard)
             return results
         endif
     endif
-    " [egg] hunt for easter eggs
+    " [game] turn menu 90 degree for each hjkl_m
     let lines = s:vimim_get_hjkl(keyboard)
     if !empty(lines)
-        " turn menu 90 degree for each hjkl_m
         if s:hjkl_m > 0 && s:hjkl_m%4 > 0
-            let lines = s:vimim_hjkl_rotation(lines)
-            if s:hjkl_m%4 > 1
+            for i in range(s:hjkl_m%4)
                 let lines = s:vimim_hjkl_rotation(lines)
-            endif
-            if s:hjkl_m%4 > 2
-                let lines = s:vimim_hjkl_rotation(lines)
-            endif
+            endfor
         endif
-        let s:show_me_not = 1
         return lines
-    endif
-    " [unicode] support direct unicode/gb/big5 input
-    let results = s:vimim_get_unicode_list(keyboard)
-    if !empty(results)
-        let s:keyboard_list = [keyboard]
-        return results
     endif
     " [dot_by_dot] i.have.a.dream
     let keyboard = s:vimim_dot_by_dot(keyboard)
@@ -2310,29 +2298,37 @@ function! s:vimim_get_hjkl(keyboard)
     " [eggs] hunt classic easter egg ... vim<C-6>
     let lines = s:vimim_easter_chicken(keyboard)
     if !empty(lines)
+        let s:show_me_not = 1
         return lines
     endif
-    " [poem] check entry in special directories first
-    let dirs = [s:path, s:vimim_hjkl_directory]
-    for dir in dirs
-        let lines = s:vimim_get_from_directory(keyboard, dir)
-        if empty(lines)
-            continue
-        else
-            break
-        endif
-    endfor
+    " [unicode] support direct unicode/gb/big5 input
+    let lines = s:vimim_get_unicode_list(keyboard)
+    if !empty(lines)
+        return lines
+    endif
     if keyboard ==# "hjkl"
         let lines = getline(1, "$")
     elseif keyboard ==# "hjklk"
         let lines = getline(1, ".")
     elseif keyboard ==# "hjklj"
         let lines = getline(".", "$")
+    else
+        " [poem] check entry in special directories first
+        let dirs = [s:path, s:vimim_hjkl_directory]
+        for dir in dirs
+            let lines = s:vimim_get_from_directory(keyboard, dir)
+            if empty(lines)
+                continue
+            else
+                break
+            endif
+        endfor
     endif
     if empty(lines)
         return []
     else
         call add(lines,'')
+        let s:show_me_not = 1
     endif
     return lines
 endfunction
