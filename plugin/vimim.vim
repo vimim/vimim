@@ -4128,7 +4128,6 @@ function! g:vimim_mkdir()
     if !exists(dir) && !isdirectory(dir)
         call mkdir(dir, "p")
     endif
-    let option = 'prepend'
     let lines = readfile(bufname("%"))
     for line in lines
         let entries = split(line)
@@ -4142,16 +4141,8 @@ function! g:vimim_mkdir()
         let second_list = []
         if filereadable(key_as_filename)
             let contents = split(join(readfile(key_as_filename)))
-            if option =~ 'append'
-                let first_list = contents
-                let second_list = chinese_list
-            elseif option =~ 'prepend'
-                let first_list = chinese_list
-                let second_list = contents
-            elseif option =~ 'replace'
-                let first_list = chinese_list
-                let option = 'append'
-            endif
+            let first_list = chinese_list
+            let second_list = contents
             call extend(first_list, second_list)
             let chinese_list = copy(first_list)
         endif
