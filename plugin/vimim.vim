@@ -277,7 +277,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_imode_pinyin")
-    call add(G, "g:vimim_taiwan_ui")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_cloud_sogou")
@@ -2118,19 +2117,15 @@ function! g:vimim_bracket_backspace(offset)
     return delete_char
 endfunction
 
-" --------------------------------
-function! <SID>vimim_smart_enter()
-" --------------------------------
+" -----------------------
+function! g:vimim_enter()
+" -----------------------
 " (1) single <Enter> ==> Seamless
 " (2) double <Enter> ==> <Space>
 " (3) triple <Enter> ==> <Enter>
 " -------------------------------- todo
     let key = ""
     let enter = "\<CR>"
-    if s:vimim_taiwan_ui > 0
-        let enter = "\<Space>"
-        return
-    endif
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ '\S'
         let s:smart_enter += 1
@@ -5190,7 +5185,7 @@ function! s:vimim_helper_mapping_on()
     inoremap <BS>    <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
                     \<C-R>=g:vimim_backspace()<CR>
     inoremap <CR>    <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                    \<C-R>=<SID>vimim_smart_enter()<CR>
+                    \<C-R>=g:vimim_enter()<CR>
     inoremap <Space> <C-R>=g:vimim_space()<CR>
                     \<C-R>=g:vimim_nonstop_after_insert()<CR>
     " -------------------------------------------------------
