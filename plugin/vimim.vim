@@ -1725,6 +1725,208 @@ function! s:vimim_dot_by_dot(keyboard)
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  hjkl             ==== {{{"]
+" =================================================
+
+" -------------------------------------------
+function! s:vimim_onekey_pumvisible_hjkl_on()
+" -------------------------------------------
+    let hjkl = 'jk<>hlmnsx'
+    for _ in split(hjkl, '\zs')
+        sil!exe 'inoremap <silent> <expr> '._.'
+        \ <SID>vimim_onekey_pumvisible_hjkl("'._.'")'
+    endfor
+endfunction
+
+" ----------------------------------------------
+function! <SID>vimim_onekey_pumvisible_hjkl(key)
+" ----------------------------------------------
+    let hjkl = a:key
+    if pumvisible()
+        if a:key == 'j'
+            let hjkl  = '\<Down>'
+        elseif a:key == 'k'
+            let hjkl  = '\<Up>'
+        elseif a:key =~ "[<>]"
+            let hjkl  = '\<C-Y>'
+            let hjkl .= s:punctuations[nr2char(char2nr(a:key)-16)]
+            let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
+        else
+            if a:key == 'h'
+                let s:hjkl_h += 1
+            elseif a:key == 'l'
+                let pumheight = &pumheight
+                let &pumheight = s:hjkl_l
+                let s:hjkl_l = pumheight
+            elseif a:key == 's'
+                call g:vimim_reset_after_insert()
+            elseif a:key == 'x'
+                let s:hjkl_x += 1
+            elseif a:key == 'm'
+                let s:hjkl_m += 1
+            elseif a:key == 'n'
+                let s:hjkl_n += 1
+            endif
+            let hjkl = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        endif
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
+" --------------------------------------------
+function! s:vimim_onekey_pumvisible_qwert_on()
+" --------------------------------------------
+    let labels = s:qwerty
+    if s:has_cjk_file > 0
+        let labels += range(10)
+    endif
+    for _ in labels
+        sil!exe'inoremap <silent>  '._.'
+        \  <C-R>=<SID>vimim_onekey_pumvisible_qwerty("'._.'")<CR>'
+    endfor
+endfunction
+
+" ----------------------------------------------
+function! <SID>vimim_onekey_pumvisible_qwerty(n)
+" ----------------------------------------------
+    let label = a:n
+    if pumvisible()
+        if s:has_cjk_file > 0
+            if label =~ '\l'
+                let label = match(s:qwerty, a:n)
+            endif
+            if empty(len(s:hjkl_s))
+                let s:hjkl_s = label
+            else
+                let s:hjkl_s .= label
+            endif
+            let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        else
+            let label = g:vimim_pumvisible_ctrl_y()
+        endif
+    endif
+    sil!exe 'sil!return "' . label . '"'
+endfunction
+
+" --------------------------------------
+function! s:vimim_rotation() range abort
+" --------------------------------------
+    sil!call s:vimim_backend_initialization_once()
+    let lines = getbufline(bufnr("%"), 1, "$")
+    let lines = s:vimim_hjkl_rotation(copy(lines))
+    if !empty(lines)
+        for line in lines
+            $put=line
+        endfor
+    endif
+endfunction
+
+" ----------------------------------
+function! s:vimim_get_hjkl(keyboard)
+" ----------------------------------
+    let keyboard = a:keyboard
+    " [eggs] hunt classic easter egg ... vim<C-6>
+    let lines = s:vimim_easter_chicken(keyboard)
+    if !empty(lines)
+        let s:show_me_not = 1
+        return lines
+    endif
+    " [unicode] support direct unicode/gb/big5 input
+    let lines = s:vimim_get_unicode_list(keyboard)
+    if !empty(lines)
+        return lines
+    endif
+    if keyboard ==# "hjkl"
+        let lines = getline(1, "$")
+    elseif keyboard ==# "hjklk"
+        let lines = getline(1, ".")
+    elseif keyboard ==# "hjklj"
+        let lines = getline(".", "$")
+    else
+        " [poem] check entry in special directories first
+        let dirs = [s:path, s:vimim_hjkl_directory]
+        for dir in dirs
+            let lines = s:vimim_get_from_directory(keyboard, dir)
+            if empty(lines)
+                continue
+            else
+                break
+            endif
+        endfor
+    endif
+    if empty(lines)
+        return []
+    else
+        call add(lines,'')
+        let s:show_me_not = 1
+    endif
+    return lines
+endfunction
+
+" -------------------------------------------
+function! s:vimim_hjkl_rotation(matched_list)
+" -------------------------------------------
+    let lines = a:matched_list
+    if empty(lines)
+        return []
+    endif
+    let max = max(map(copy(lines), 'strlen(v:val)')) + 1
+    let multibyte = 1
+    if match(lines,'\w') < 0
+        " rotation makes more sense for cjk
+        let multibyte = s:multibyte
+    endif
+    let results = []
+    for line in lines
+        let spaces = ''
+        let gap = (max-len(line))/multibyte
+        if gap > 0
+            for i in range(gap)
+                let spaces .= s:space
+            endfor
+        endif
+        let line .= spaces
+        call add(results, line)
+    endfor
+    let rotations = ['']
+    for i in range(max/multibyte)
+        let column = ''
+        for line in reverse(copy(results))
+            let lines = split(line,'\zs')
+            let line = get(lines, i)
+            if empty(line)
+                continue
+            else
+                let column .= line
+            endif
+        endfor
+        call add(rotations, column)
+    endfor
+    return rotations
+endfunction
+
+" ----------------------------------------------
+function! s:vimim_onekey_pumvisible_capital_on()
+" ----------------------------------------------
+    for _ in s:AZ_list
+        sil!exe 'inoremap <silent> <expr> '._.'
+        \ <SID>vimim_onkey_pumvisible_capital("'._.'")'
+    endfor
+endfunction
+
+" ------------------------------------------------
+function! <SID>vimim_onkey_pumvisible_capital(key)
+" ------------------------------------------------
+    let hjkl = a:key
+    if pumvisible()
+        let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
+        let hjkl .= tolower(a:key)
+        let hjkl .= '\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
@@ -2151,208 +2353,6 @@ function! s:vimim_pageup_pagedown(matched_list)
         endif
     endif
     return matched_list
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  hjkl             ==== {{{"]
-" =================================================
-
-" -------------------------------------------
-function! s:vimim_onekey_pumvisible_hjkl_on()
-" -------------------------------------------
-    let hjkl = 'jk<>hlmnsx'
-    for _ in split(hjkl, '\zs')
-        sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_onekey_pumvisible_hjkl("'._.'")'
-    endfor
-endfunction
-
-" ----------------------------------------------
-function! <SID>vimim_onekey_pumvisible_hjkl(key)
-" ----------------------------------------------
-    let hjkl = a:key
-    if pumvisible()
-        if a:key == 'j'
-            let hjkl  = '\<Down>'
-        elseif a:key == 'k'
-            let hjkl  = '\<Up>'
-        elseif a:key =~ "[<>]"
-            let hjkl  = '\<C-Y>'
-            let hjkl .= s:punctuations[nr2char(char2nr(a:key)-16)]
-            let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
-        else
-            if a:key == 'h'
-                let s:hjkl_h += 1
-            elseif a:key == 'l'
-                let pumheight = &pumheight
-                let &pumheight = s:hjkl_l
-                let s:hjkl_l = pumheight
-            elseif a:key == 's'
-                call g:vimim_reset_after_insert()
-            elseif a:key == 'x'
-                let s:hjkl_x += 1
-            elseif a:key == 'm'
-                let s:hjkl_m += 1
-            elseif a:key == 'n'
-                let s:hjkl_n += 1
-            endif
-            let hjkl = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        endif
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-" --------------------------------------------
-function! s:vimim_onekey_pumvisible_qwert_on()
-" --------------------------------------------
-    let labels = s:qwerty
-    if s:has_cjk_file > 0
-        let labels += range(10)
-    endif
-    for _ in labels
-        sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_onekey_pumvisible_qwerty("'._.'")<CR>'
-    endfor
-endfunction
-
-" ----------------------------------------------
-function! <SID>vimim_onekey_pumvisible_qwerty(n)
-" ----------------------------------------------
-    let label = a:n
-    if pumvisible()
-        if s:has_cjk_file > 0
-            if label =~ '\l'
-                let label = match(s:qwerty, a:n)
-            endif
-            if empty(len(s:hjkl_s))
-                let s:hjkl_s = label
-            else
-                let s:hjkl_s .= label
-            endif
-            let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        else
-            let label = g:vimim_pumvisible_ctrl_y()
-        endif
-    endif
-    sil!exe 'sil!return "' . label . '"'
-endfunction
-
-" --------------------------------------
-function! s:vimim_rotation() range abort
-" --------------------------------------
-    sil!call s:vimim_backend_initialization_once()
-    let lines = getbufline(bufnr("%"), 1, "$")
-    let lines = s:vimim_hjkl_rotation(copy(lines))
-    if !empty(lines)
-        for line in lines
-            $put=line
-        endfor
-    endif
-endfunction
-
-" ----------------------------------
-function! s:vimim_get_hjkl(keyboard)
-" ----------------------------------
-    let keyboard = a:keyboard
-    " [eggs] hunt classic easter egg ... vim<C-6>
-    let lines = s:vimim_easter_chicken(keyboard)
-    if !empty(lines)
-        let s:show_me_not = 1
-        return lines
-    endif
-    " [unicode] support direct unicode/gb/big5 input
-    let lines = s:vimim_get_unicode_list(keyboard)
-    if !empty(lines)
-        return lines
-    endif
-    if keyboard ==# "hjkl"
-        let lines = getline(1, "$")
-    elseif keyboard ==# "hjklk"
-        let lines = getline(1, ".")
-    elseif keyboard ==# "hjklj"
-        let lines = getline(".", "$")
-    else
-        " [poem] check entry in special directories first
-        let dirs = [s:path, s:vimim_hjkl_directory]
-        for dir in dirs
-            let lines = s:vimim_get_from_directory(keyboard, dir)
-            if empty(lines)
-                continue
-            else
-                break
-            endif
-        endfor
-    endif
-    if empty(lines)
-        return []
-    else
-        call add(lines,'')
-        let s:show_me_not = 1
-    endif
-    return lines
-endfunction
-
-" -------------------------------------------
-function! s:vimim_hjkl_rotation(matched_list)
-" -------------------------------------------
-    let lines = a:matched_list
-    if empty(lines)
-        return []
-    endif
-    let max = max(map(copy(lines), 'strlen(v:val)')) + 1
-    let multibyte = 1
-    if match(lines,'\w') < 0
-        " rotation makes more sense for cjk
-        let multibyte = s:multibyte
-    endif
-    let results = []
-    for line in lines
-        let spaces = ''
-        let gap = (max-len(line))/multibyte
-        if gap > 0
-            for i in range(gap)
-                let spaces .= s:space
-            endfor
-        endif
-        let line .= spaces
-        call add(results, line)
-    endfor
-    let rotations = ['']
-    for i in range(max/multibyte)
-        let column = ''
-        for line in reverse(copy(results))
-            let lines = split(line,'\zs')
-            let line = get(lines, i)
-            if empty(line)
-                continue
-            else
-                let column .= line
-            endif
-        endfor
-        call add(rotations, column)
-    endfor
-    return rotations
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_onekey_pumvisible_capital_on()
-" ----------------------------------------------
-    for _ in s:AZ_list
-        sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_onkey_pumvisible_capital("'._.'")'
-    endfor
-endfunction
-
-" ------------------------------------------------
-function! <SID>vimim_onkey_pumvisible_capital(key)
-" ------------------------------------------------
-    let hjkl = a:key
-    if pumvisible()
-        let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-        let hjkl .= tolower(a:key)
-        let hjkl .= '\<C-R>=g:vimim()\<CR>'
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
 " ============================================= }}}
