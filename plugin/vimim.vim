@@ -370,7 +370,7 @@ endfunction
 function! s:vimim_egg_vimimpoem()
 " -------------------------------
     let eggs = [""]
-    if empty(localtime()%2)
+    if empty(get(split($VimIM),1)%2)
         let eggs += ["床前明月光"]
         let eggs += ["疑是地上霜"]
         let eggs += ["举头望明月"]
@@ -437,7 +437,7 @@ function! s:vimim_egg_vimim()
     let computer = s:vimim_chinese('computer') . s:colon
     call add(eggs, computer . option)
     let revision = s:vimim_chinese('revision') . s:colon
-    let option = get(split($VimIM), 1)
+    let option = get(split($VimIM),1)
     if !empty(option)
         let option = "vimim.vim=" . option
     endif
