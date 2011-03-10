@@ -213,8 +213,8 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['taijima']  = "[a-z']"
     let s:im_keycode['boshiamy'] = "[][a-z'.,]"
-    let s:im_keycode['phonetic'] = "[0-9a-z.,;/]"
-    let s:im_keycode['array30']  = "[0-9a-z.,;/]"
+    let s:im_keycode['phonetic'] = "[,0-9a-z.;/]"
+    let s:im_keycode['array30']  = "[,0-9a-z.;/]"
     " -------------------------------------------
     let vimimkeys = copy(keys(s:im_keycode))
     call add(vimimkeys, 'pinyin_quote_sogou')
@@ -337,7 +337,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_debug = 1
         let g:vimim_plugin_fix = 0
         let g:vimim_digit_4corner = 1
@@ -2264,7 +2264,9 @@ function! s:vimim_popupmenu_list(matched_list)
         let complete_items["dup"] = 1
         call add(popupmenu_list, complete_items)
     endfor
-    if s:ui.im == 'array30' && tail =~ '\d'
+    if tail =~ '\d'
+    \&& s:ui.im == 'array30'
+    \&& s:chinese_input_mode =~ 'static'
         let tail_item = get(popupmenu_list,tail-1)
         let tail_item.word = get(split(tail_item.word,'\d'),0)
         let popupmenu_list = [tail_item]
@@ -3315,21 +3317,17 @@ function! s:vimim_set_special_im_property()
         let s:quanpin_table = s:vimim_create_quanpin_table()
     endif
     if s:backend[s:ui.root][s:ui.im].name =~# "quote"
-        let s:ui.has_dot = 2  " has_apostrophe_in_datafile
+        let s:ui.has_dot = 2  " has apostrophe in datafile
     endif
     if s:ui.im == 'wu'
     \|| s:ui.im == 'erbi'
     \|| s:ui.im == 'yong'
     \|| s:ui.im == 'nature'
     \|| s:ui.im == 'boshiamy'
-        let s:ui.has_dot = 1  " dot in datafile
-        let s:vimim_chinese_punctuation = -99
-    endif
-    if s:ui.im == 'phonetic'
+    \|| s:ui.im == 'phonetic'
     \|| s:ui.im == 'array30'
-        let s:ui.has_dot = 1
+        let s:ui.has_dot = 1  " has dot in datafile
         let s:vimim_chinese_punctuation = -99
-        let s:vimim_chinese_input_mode = 'static'
     endif
 endfunction
 
