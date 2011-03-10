@@ -702,7 +702,7 @@ function! g:vimim_search_pumvisible()
         let delete_chars = repeat("\<BS>", repeat_times)
     endif
     let slash = delete_chars . "\<Esc>"
-    sil!call s:vimim_stop()
+    sil!call g:vimim_stop()
     sil!exe 'sil!return "' . slash . '"'
 endfunction
 
@@ -1335,7 +1335,7 @@ function! s:vimim_chinesemode_action(switch)
 " ------------------------------------------
     let action = ""
     if empty(a:switch)
-        call s:vimim_stop()
+        call g:vimim_stop()
         if mode() == 'i'
             let action = "\<C-O>:redraw\<CR>"
         elseif mode() == 'n'
@@ -1553,7 +1553,7 @@ function! g:vimim_space()
         if byte_before !~ s:valid_key
         \&& !has_key(s:punctuations, byte_before)
             let space = ""
-            call s:vimim_stop()
+            call g:vimim_stop()
         else
             let space = s:vimim_onekey_action(1)
         endif
@@ -1567,7 +1567,7 @@ function! g:vimim_nonstop_after_insert()
     let key = ""
     if s:chinese_input_mode =~ 'onekey'
     \&& s:vimim_onekey_nonstop < 1
-        call s:vimim_stop()
+        call g:vimim_stop()
     elseif s:pumvisible_yes > 0
         let key = g:vimim()
         call g:vimim_reset_after_insert()
@@ -1575,25 +1575,14 @@ function! g:vimim_nonstop_after_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" -----------------------------
-function! g:vimim_onekey_stop()
-" -----------------------------
-    if s:chinese_input_mode =~ 'static'
-        sil!call g:vimim_reset_after_insert()
-    else
-        sil!call s:vimim_stop()
-    endif
-    return ""
-endfunction
-
 " ------------------------------------
 function! g:vimim_one_key_correction()
 " ------------------------------------
     let esc = '\<Esc>'
-    call g:vimim_reset_after_insert()
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
         let s:one_key_correction = 1
+        let s:pageup_pagedown = 0
         let esc = '\<C-X>\<C-U>\<BS>'
     endif
     sil!exe 'sil!return "' . esc . '"'
@@ -1619,7 +1608,7 @@ function! g:vimim_pumvisible_dump()
         let @+ = one_line_clipboard
     endif
     call setpos(".", saved_position)
-    call s:vimim_stop()
+    call g:vimim_stop()
     let esc = '\<Esc>:normal z.\<CR>'
     sil!exe 'sil!return "' . esc . '"'
 endfunction
@@ -1633,7 +1622,7 @@ function! g:vimim_pumvisible_to_clip()
             let @+ = chinese
         endif
     endif
-    call s:vimim_stop()
+    call g:vimim_stop()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
@@ -4826,7 +4815,7 @@ function! s:vimim_start()
 endfunction
 
 " ----------------------
-function! s:vimim_stop()
+function! g:vimim_stop()
 " ----------------------
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_cursor_color(0)
@@ -5206,7 +5195,7 @@ function! s:vimim_helper_mapping_on()
     endif
     " -------------------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
-        inoremap <silent> <Esc> <Esc>:call g:vimim_onekey_stop()<CR>
+        inoremap <silent> <Esc> <Esc>:call g:vimim_stop()<CR>
     elseif s:chinese_input_mode =~ 'static'
         inoremap <silent> <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                                \<C-R>=g:vimim_one_key_correction()<CR>
