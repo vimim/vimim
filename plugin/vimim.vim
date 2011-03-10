@@ -412,7 +412,9 @@ endfunction
 " ------------------------------
 function! s:vimim_egg_vimimvim()
 " ------------------------------
-    return s:VimIM
+    let eggs = copy(s:VimIM)
+    let filter = "strpart(" . 'v:val' . ", 0, 29)"
+    return map(eggs, filter)
 endfunction
 
 " ---------------------------
@@ -4580,6 +4582,16 @@ function! s:vimim_access_mycloud(cloud, cmd)
     return ""
 endfunction
 
+" -------------------------------
+function! s:vimim_rot13(keyboard)
+" -------------------------------
+    let rot13 = a:keyboard
+    let a = "12345abcdefghijklmABCDEFGHIJKLM"
+    let z = "98760nopqrstuvwxyzNOPQRSTUVWXYZ"
+    let rot13 = tr(rot13, a.z, z.a)
+    return rot13
+endfunction
+
 " ------------------------------
 function! s:vimim_get_libvimim()
 " ------------------------------
@@ -4785,16 +4797,6 @@ function! s:vimim_url_xx_to_chinese(xx)
                     \ '\=eval(''"\x''.submatch(1).''"'')','g')
     endif
     return output
-endfunction
-
-" -------------------------------
-function! s:vimim_rot13(keyboard)
-" -------------------------------
-    let rot13 = a:keyboard
-    let a = "12345abcdefghijklmABCDEFGHIJKLM"
-    let z = "98760nopqrstuvwxyzNOPQRSTUVWXYZ"
-    let rot13 = tr(rot13, a.z, z.a)
-    return rot13
 endfunction
 
 " ============================================= }}}
@@ -5289,7 +5291,7 @@ function! s:vimim_onekey_mapping_on()
         noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_tranfer_chinese()
-    :com! -range=% Vimim <line1>,<line2>call s:vimim_rotation()
+    :com! -range=% VimiM <line1>,<line2>call s:vimim_rotation()
 endfunction
 
 " ------------------------------------
