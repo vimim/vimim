@@ -347,6 +347,80 @@ function! s:vimim_initialize_debug()
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  for mom and dad  ==== {{{"]
+" =================================================
+
+" ---------------------------------
+function! s:vimim_for_mom_and_dad()
+" ---------------------------------
+    let onekey = ""
+    let s:mom_and_dad = 0
+    let buffer = expand("%:p:t")
+    if buffer =~ 'vimim.mom.txt'
+        startinsert!
+        let s:vimim_digit_4corner = 0
+        let onekey = s:vimim_onekey_action(0)
+        sil!call s:vimim_onekey_start()
+    elseif buffer =~ 'vimim.dad.txt'
+        set noruler
+        let s:vimim_digit_4corner = 1
+    else
+        return
+    endif
+    let s:mom_and_dad = 1
+    let s:vimim_plugin_fix = 0
+    let s:vimim_tab_as_onekey = 1
+    if has("gui_running")
+        autocmd! * <buffer>
+        autocmd  FocusLost <buffer> sil!wall
+        noremap  <silent>  <Esc> :sil!%y +<CR>
+        set tw=30
+        set lines=24
+        set columns=36
+        set report=12345
+        let &gfn .= ":h24:w12"
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+" ---------------------------------
+function! s:vimim_initialize_skin()
+" ---------------------------------
+    if s:vimim_custom_color < 1
+        return
+    endif
+    if s:vimim_custom_color == 1
+        highlight! link PmenuSel Title
+    elseif s:vimim_custom_color == 2
+        highlight! PmenuSel NONE
+    endif
+    highlight! PmenuSbar  NONE
+    highlight! PmenuThumb NONE
+    highlight! Pmenu      NONE
+endfunction
+
+" ---------------------------------
+function! s:vimim_cursor_color(yes)
+" ---------------------------------
+    if empty(a:yes)
+        set ruler
+        highlight! Cursor guifg=bg guibg=fg
+    else
+        set noruler
+        highlight! Cursor guifg=bg guibg=green
+    endif
+endfunction
+
+" ---------------------------------------------------------
+function! s:vimim_set_keyboard_list(start_column, keyboard)
+" ---------------------------------------------------------
+    let s:start_column_before = a:start_column
+    if len(s:keyboard_list) < 2
+        let s:keyboard_list = [a:keyboard]
+    endif
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
 
@@ -490,80 +564,6 @@ function! s:vimim_egg_vimim()
     endif
     call map(eggs, 'v:val . " "')
     return eggs
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  for mom and dad  ==== {{{"]
-" =================================================
-
-" ---------------------------------
-function! s:vimim_for_mom_and_dad()
-" ---------------------------------
-    let onekey = ""
-    let s:mom_and_dad = 0
-    let buffer = expand("%:p:t")
-    if buffer =~ 'vimim.mom.txt'
-        startinsert!
-        let s:vimim_digit_4corner = 0
-        let onekey = s:vimim_onekey_action(0)
-        sil!call s:vimim_onekey_start()
-    elseif buffer =~ 'vimim.dad.txt'
-        set noruler
-        let s:vimim_digit_4corner = 1
-    else
-        return
-    endif
-    let s:mom_and_dad = 1
-    let s:vimim_plugin_fix = 0
-    let s:vimim_tab_as_onekey = 1
-    if has("gui_running")
-        autocmd! * <buffer>
-        autocmd  FocusLost <buffer> sil!wall
-        noremap  <silent>  <Esc> :sil!%y +<CR>
-        set tw=30
-        set lines=24
-        set columns=36
-        set report=12345
-        let &gfn .= ":h24:w12"
-    endif
-    sil!exe 'sil!return "' . onekey . '"'
-endfunction
-
-" ---------------------------------
-function! s:vimim_initialize_skin()
-" ---------------------------------
-    if s:vimim_custom_color < 1
-        return
-    endif
-    if s:vimim_custom_color == 1
-        highlight! link PmenuSel Title
-    elseif s:vimim_custom_color == 2
-        highlight! PmenuSel NONE
-    endif
-    highlight! PmenuSbar  NONE
-    highlight! PmenuThumb NONE
-    highlight! Pmenu      NONE
-endfunction
-
-" ---------------------------------
-function! s:vimim_cursor_color(yes)
-" ---------------------------------
-    if empty(a:yes)
-        set ruler
-        highlight! Cursor guifg=bg guibg=fg
-    else
-        set noruler
-        highlight! Cursor guifg=bg guibg=green
-    endif
-endfunction
-
-" ---------------------------------------------------------
-function! s:vimim_set_keyboard_list(start_column, keyboard)
-" ---------------------------------------------------------
-    let s:start_column_before = a:start_column
-    if len(s:keyboard_list) < 2
-        let s:keyboard_list = [a:keyboard]
-    endif
 endfunction
 
 " ============================================= }}}
