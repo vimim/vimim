@@ -336,7 +336,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_debug = 1
         let g:vimim_plugin_fix = 0
         let g:vimim_digit_4corner = 1
@@ -4999,13 +4999,10 @@ if a:start
     let last_seen_backslash_column = copy(start_column)
     let all_digit = 1
     let nonsense_pattern = "[0-9.']"
-    if s:ui.has_dot == 1
-        let nonsense_pattern = "[.]"
-    endif
     while start_column > 0
         if byte_before =~# s:valid_key
             let start_column -= 1
-            if byte_before !~# nonsense_pattern
+            if byte_before !~# nonsense_pattern && s:ui.has_dot < 1
                 let last_seen_nonsense_column = start_column
                 if all_digit > 0
                     let all_digit = 0
