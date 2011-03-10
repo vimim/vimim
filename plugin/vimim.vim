@@ -1606,10 +1606,11 @@ function! g:vimim_pumvisible_dump()
     let saved_position = getpos(".")
     for items in s:popupmenu_list
         let line = printf('%s', items.word)
-        if has_key(items, "menu")
-            let line = printf('%s  %s', items.word, items.menu)
-        elseif has_key(items, "abbr") && s:show_me_not > 0
+        if has_key(items, "abbr")
             let line = printf('%s', items.abbr)
+            if has_key(items, "menu")
+                let line = printf('%s %s', items.abbr, items.menu)
+            endif
         endif
         put=line
         let one_line_clipboard .= line . "\n"
