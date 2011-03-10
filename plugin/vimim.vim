@@ -317,6 +317,7 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
+    call add(G, "g:vimim_plugin_fix")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_loop_pageup_pagedown")
@@ -843,6 +844,7 @@ function! s:vimim_for_mom_and_dad()
         return
     endif
     let s:mom_and_dad = 1
+    let s:vimim_plugin_fix = 0
     let s:vimim_tab_as_onekey = 1
     if has("gui_running")
         autocmd! * <buffer>
@@ -1278,6 +1280,7 @@ let s:VimIM += [" ====  debug framework  ==== {{{"]
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory('/home/xma')
+        let g:vimim_plugin_fix = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
@@ -1343,10 +1346,9 @@ let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
-    if s:vimim_tab_as_onekey == 2
+    if s:vimim_plugin_fix < 1
         return
     endif
-    " -------------------------------
     if !exists('s:acp_sid')
         let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
         if !empty(s:acp_sid)
@@ -1392,10 +1394,9 @@ endfunction
 " ----------------------------------
 function! s:vimim_plugins_fix_stop()
 " ----------------------------------
-    if s:vimim_tab_as_onekey == 2
+    if s:vimim_plugin_fix < 1
         return
     endif
-    " ------------------------------
     if !empty(s:acp_sid)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
