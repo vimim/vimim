@@ -370,17 +370,10 @@ endfunction
 function! s:vimim_egg_vimimpoem()
 " -------------------------------
     let eggs = [""]
-    if empty(get(split($VimIM),1)%2)
-        let eggs += ["床前明月光"]
-        let eggs += ["疑是地上霜"]
-        let eggs += ["举头望明月"]
-        let eggs += ["低头思故乡"]
-    else
-        let eggs += ["白日依山尽"]
-        let eggs += ["黄河入海流"]
-        let eggs += ["欲穷千里目"]
-        let eggs += ["更上一层楼"]
-    endif
+    let eggs += ["白日依山尽"]
+    let eggs += ["黄河入海流"]
+    let eggs += ["欲穷千里目"]
+    let eggs += ["更上一层楼"]
     return eggs
 endfunction
 
