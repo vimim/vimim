@@ -96,9 +96,8 @@ function! s:vimim_backend_initialization_once()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_initialize_encoding()
     sil!call s:vimim_initialize_session()
+    sil!call s:vimim_initialize_ui()
     sil!call s:vimim_initialize_cjk_file()
-    sil!call s:vimim_initialize_frontend()
-    sil!call s:vimim_initialize_backend()
     sil!call s:vimim_initialize_i_setting()
     sil!call s:vimim_dictionary_chinese()
     sil!call s:vimim_dictionary_punctuation()
@@ -146,6 +145,37 @@ function! s:vimim_initialize_session()
     let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
     let s:chinese_mode_switch = 0
     let s:vimim_debugs = []
+endfunction
+
+" -------------------------------
+function! s:vimim_initialize_ui()
+" -------------------------------
+    let s:ui = {}
+    let s:ui.im  = ''
+    let s:ui.root = ''
+    let s:ui.keycode = ''
+    let s:ui.statusline = ''
+    let s:ui.has_dot = 0
+    let s:ui.frontends = []
+    let s:backend = {}
+    let s:backend.directory = {}
+    let s:backend.datafile  = {}
+    let s:backend.cloud     = {}
+endfunction
+
+" ---------------------------------
+function! s:vimim_one_backend_hash()
+" ----------------------------------
+    let one_backend_hash = {}
+    let one_backend_hash.root = 0
+    let one_backend_hash.im = 0
+    let one_backend_hash.name = 0
+    let one_backend_hash.chinese = 0
+    let one_backend_hash.directory = 0
+    let one_backend_hash.lines = []
+    let one_backend_hash.cache = {}
+    let one_backend_hash.keycode = "[0-9a-z'.]"
+    return one_backend_hash
 endfunction
 
 " --------------------------------
@@ -348,6 +378,29 @@ function! s:vimim_set_global_default(options, default)
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
+endfunction
+
+" ----------------------------
+function! s:debugs(key, value)
+" ----------------------------
+    if s:vimim_debug > 0
+        let item  = a:key
+        let item .= ' = '
+        let item .= a:value
+        call add(s:vimim_debugs, item)
+    endif
+endfunction
+
+" ----------------------------------
+function! s:vimim_initialize_debug()
+" ----------------------------------
+    if isdirectory('/home/xma')
+        let g:vimim_plugin_fix = 0
+        let g:vimim_digit_4corner = 1
+        let g:vimim_tab_as_onekey = 2
+        let g:vimim_hjkl_directory = '/home/xma/hjkl/'
+        let g:vimim_data_directory = '/home/vimim/pinyin/'
+    endif
 endfunction
 
 " ============================================= }}}
@@ -1266,69 +1319,6 @@ function! s:vimim_numberList() range abort
         call setline(z, pre . x . "\t" . getline(z))
         let z=z-1|let x=x-1
     endwhile
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  debug framework  ==== {{{"]
-" =================================================
-
-" ----------------------------------
-function! s:vimim_initialize_debug()
-" ----------------------------------
-    if isdirectory('/home/xma')
-        let g:vimim_plugin_fix = 0
-        let g:vimim_digit_4corner = 1
-        let g:vimim_tab_as_onekey = 2
-        let g:vimim_hjkl_directory = '/home/xma/hjkl/'
-        let g:vimim_data_directory = '/home/vimim/pinyin/'
-    endif
-endfunction
-
-" -------------------------------------
-function! s:vimim_initialize_frontend()
-" -------------------------------------
-    let s:ui = {}
-    let s:ui.im  = ''
-    let s:ui.root = ''
-    let s:ui.keycode = ''
-    let s:ui.statusline = ''
-    let s:ui.has_dot = 0
-    let s:ui.frontends = []
-endfunction
-
-" ------------------------------------
-function! s:vimim_initialize_backend()
-" ------------------------------------
-    let s:backend = {}
-    let s:backend.directory = {}
-    let s:backend.datafile  = {}
-    let s:backend.cloud     = {}
-endfunction
-
-" ---------------------------------
-function! s:vimim_one_backend_hash()
-" ----------------------------------
-    let one_backend_hash = {}
-    let one_backend_hash.root = 0
-    let one_backend_hash.im = 0
-    let one_backend_hash.name = 0
-    let one_backend_hash.chinese = 0
-    let one_backend_hash.directory = 0
-    let one_backend_hash.lines = []
-    let one_backend_hash.cache = {}
-    let one_backend_hash.keycode = "[0-9a-z'.]"
-    return one_backend_hash
-endfunction
-
-" ----------------------------
-function! s:debugs(key, value)
-" ----------------------------
-    if s:vimim_debug > 0
-        let item  = a:key
-        let item .= ' = '
-        let item .= a:value
-        call add(s:vimim_debugs, item)
-    endif
 endfunction
 
 " ============================================= }}}
