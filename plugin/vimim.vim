@@ -129,7 +129,6 @@ function! s:vimim_initialize_session()
     let s:seamless_positions = []
     let s:start_row_before = 0
     let s:start_column_before = 1
-    let s:insert_without_popup = 0
     let s:scriptnames_output = 0
     let a = char2nr('a')
     let z = char2nr('z')
@@ -2264,14 +2263,6 @@ function! s:vimim_popupmenu_list(matched_list)
         let complete_items["dup"] = 1
         call add(popupmenu_list, complete_items)
     endfor
-    if tail =~ '\d'
-    \&& s:ui.im == 'array30'
-    \&& s:chinese_input_mode =~ 'static'
-        let tail_item = get(popupmenu_list,tail-1)
-        let tail_item.word = get(split(tail_item.word,'\d'),0)
-        let popupmenu_list = [tail_item]
-        let s:insert_without_popup = 1
-    endif
     if s:chinese_input_mode =~ 'onekey'
         let s:popupmenu_list = popupmenu_list
     endif
@@ -2511,9 +2502,6 @@ function! s:vimim_imode_number(keyboard, prefix)
         elseif keyboard =~# '^\d*$' && len(keyboards)<2 && i ==# 'i'
             let numbers = quantifiers
         endif
-    endif
-    if len(numbers) == 1
-        let s:insert_without_popup = 1
     endif
     return numbers
 endfunction
@@ -4888,9 +4876,6 @@ function! g:vimim_menu_select()
     let key = ""
     if pumvisible()
         let key = '\<C-P>\<Down>'
-        if s:insert_without_popup > 0
-            let key = '\<C-Y>'
-        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5044,7 +5029,6 @@ else
 
     let s:show_me_not = 0
     let s:smart_enter = 0
-    let s:insert_without_popup = 0
     let results = []
     let s:english_results = []
     let keyboard = a:keyboard
