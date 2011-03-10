@@ -893,13 +893,13 @@ endfunction
 " -----------------------------------
 function! s:vimim_cjk_match(keyboard)
 " -----------------------------------
-    let keyboard = a:keyboard
     if empty(s:has_cjk_file)
         return []
     endif
+    let keyboard = a:keyboard
     if len(keyboard) == 1 && has_key(s:cjk_cache, keyboard)
         if keyboard =~ '\d'
-            let s:cjk_filter = keyboard
+            let s:hjkl_s = keyboard
         endif
         return s:cjk_cache[keyboard]
     endif
@@ -908,7 +908,7 @@ function! s:vimim_cjk_match(keyboard)
     let grep = ""
     " ------------------------------------------------------
     if keyboard =~ '\d'
-        if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:cjk_filter))
+        if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_s))
             " cjk pinyin with tone: huan2hai2
             let grep =  keyboard . '[a-z ]'
         else
@@ -938,7 +938,7 @@ function! s:vimim_cjk_match(keyboard)
                 endif
             endif
             if len(keyboard) < dddddd && len(string(digit)) > 0
-                let s:cjk_filter = digit
+                let s:hjkl_s = digit
             endif
         endif
     elseif s:ui.im == 'pinyin'
@@ -1013,10 +1013,10 @@ function! s:vimim_cjk_filter_from_cache()
 " use 1234567890/qwertyuiop as digit filter
     call s:vimim_load_cjk_file()
     let results = s:vimim_cjk_filter_list()
-    if empty(results) && !empty(len(s:cjk_filter))
-        let number_before = strpart(s:cjk_filter,0,len(s:cjk_filter)-1)
+    if empty(results) && !empty(len(s:hjkl_s))
+        let number_before = strpart(s:hjkl_s,0,len(s:hjkl_s)-1)
         if len(number_before) > 0
-            let s:cjk_filter = number_before
+            let s:hjkl_s = number_before
             let results = s:vimim_cjk_filter_list()
         endif
     endif
@@ -1056,7 +1056,7 @@ function! s:vimim_cjk_digit_filter(chinese)
 "   (2) mali<C-6>       马力 => filter with 7 4002
 " -----------------------------------------
     let chinese = a:chinese
-    if empty(len(s:cjk_filter)) || empty(chinese)
+    if empty(len(s:hjkl_s)) || empty(chinese)
         return 0
     endif
     let digit_head = ""
@@ -1076,7 +1076,7 @@ function! s:vimim_cjk_digit_filter(chinese)
         endif
     endfor
     let number = digit_head . digit_tail
-    let pattern = "^" . s:cjk_filter
+    let pattern = "^" . s:hjkl_s
     let matched = match(number, pattern)
     if matched < 0
         let chinese = 0
@@ -1660,11 +1660,11 @@ function! s:vimim_onekey_input(keyboard)
     let results = []
     " [filter] do digital filter within cache memory
     if s:has_cjk_file > 0
-    \&& len(s:cjk_filter) > 0
+    \&& len(s:hjkl_s) > 0
     \&& len(s:popupmenu_list) > 0
         let results = s:vimim_cjk_filter_from_cache()
         if empty(results)
-            let s:cjk_filter = ""
+            call g:vimim_reset_after_insert()
         else
             return results
         endif
@@ -2157,6 +2157,86 @@ endfunction
 let s:VimIM += [" ====  hjkl             ==== {{{"]
 " =================================================
 
+" -------------------------------------------
+function! s:vimim_onekey_pumvisible_hjkl_on()
+" -------------------------------------------
+    let hjkl = 'jk<>hlmnsx'
+    for _ in split(hjkl, '\zs')
+        sil!exe 'inoremap <silent> <expr> '._.'
+        \ <SID>vimim_onekey_pumvisible_hjkl("'._.'")'
+    endfor
+endfunction
+
+" ----------------------------------------------
+function! <SID>vimim_onekey_pumvisible_hjkl(key)
+" ----------------------------------------------
+    let hjkl = a:key
+    if pumvisible()
+        if a:key == 'j'
+            let hjkl  = '\<Down>'
+        elseif a:key == 'k'
+            let hjkl  = '\<Up>'
+        elseif a:key =~ "[<>]"
+            let hjkl  = '\<C-Y>'
+            let hjkl .= s:punctuations[nr2char(char2nr(a:key)-16)]
+            let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
+        else
+            if a:key == 'h'
+                let s:hjkl_h += 1
+            elseif a:key == 'l'
+                let pumheight = &pumheight
+                let &pumheight = s:hjkl_l
+                let s:hjkl_l = pumheight
+            elseif a:key == 's'
+                call g:vimim_reset_after_insert()
+            elseif a:key == 'x'
+                let s:hjkl_x += 1
+            elseif a:key == 'm'
+                let s:hjkl_m += 1
+            elseif a:key == 'n'
+                let s:hjkl_n += 1
+            endif
+            let hjkl = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        endif
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
+" --------------------------------------------
+function! s:vimim_onekey_pumvisible_qwert_on()
+" --------------------------------------------
+    let labels = s:qwerty
+    if s:has_cjk_file > 0
+        let labels += range(10)
+    endif
+    for _ in labels
+        sil!exe'inoremap <silent>  '._.'
+        \  <C-R>=<SID>vimim_onekey_pumvisible_qwerty("'._.'")<CR>'
+    endfor
+endfunction
+
+" ----------------------------------------------
+function! <SID>vimim_onekey_pumvisible_qwerty(n)
+" ----------------------------------------------
+    let label = a:n
+    if pumvisible()
+        if s:has_cjk_file > 0
+            if label =~ '\l'
+                let label = match(s:qwerty, a:n)
+            endif
+            if empty(len(s:hjkl_s))
+                let s:hjkl_s = label
+            else
+                let s:hjkl_s .= label
+            endif
+            let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+        else
+            let label = g:vimim_pumvisible_ctrl_y()
+        endif
+    endif
+    sil!exe 'sil!return "' . label . '"'
+endfunction
+
 " --------------------------------------
 function! s:vimim_rotation() range abort
 " --------------------------------------
@@ -2273,86 +2353,6 @@ function! <SID>vimim_onkey_pumvisible_capital(key)
         let hjkl .= '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-" -------------------------------------------
-function! s:vimim_onekey_pumvisible_hjkl_on()
-" -------------------------------------------
-    let hjkl = 'jk<>hlmnsx'
-    for _ in split(hjkl, '\zs')
-        sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_onekey_pumvisible_hjkl("'._.'")'
-    endfor
-endfunction
-
-" ----------------------------------------------
-function! <SID>vimim_onekey_pumvisible_hjkl(key)
-" ----------------------------------------------
-    let hjkl = a:key
-    if pumvisible()
-        if a:key == 'j'
-            let hjkl  = '\<Down>'
-        elseif a:key == 'k'
-            let hjkl  = '\<Up>'
-        elseif a:key =~ "[<>]"
-            let hjkl  = '\<C-Y>'
-            let hjkl .= s:punctuations[nr2char(char2nr(a:key)-16)]
-            let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
-        else
-            if a:key == 'h'
-                let s:hjkl_h += 1
-            elseif a:key == 'l'
-                let pumheight = &pumheight
-                let &pumheight = s:hjkl_l
-                let s:hjkl_l = pumheight
-            elseif a:key == 's'
-                call g:vimim_reset_after_insert()
-            elseif a:key == 'x'
-                let s:hjkl_x += 1
-            elseif a:key == 'm'
-                let s:hjkl_m += 1
-            elseif a:key == 'n'
-                let s:hjkl_n += 1
-            endif
-            let hjkl = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        endif
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-" --------------------------------------------
-function! s:vimim_onekey_pumvisible_qwert_on()
-" --------------------------------------------
-    let labels = s:qwerty
-    if s:has_cjk_file > 0
-        let labels += range(10)
-    endif
-    for _ in labels
-        sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_onekey_pumvisible_qwerty("'._.'")<CR>'
-    endfor
-endfunction
-
-" ----------------------------------------------
-function! <SID>vimim_onekey_pumvisible_qwerty(n)
-" ----------------------------------------------
-    let label = a:n
-    if pumvisible()
-        if s:has_cjk_file > 0
-            if label =~ '\l'
-                let label = match(s:qwerty, a:n)
-            endif
-            if empty(len(s:cjk_filter))
-                let s:cjk_filter = label
-            else
-                let s:cjk_filter .= label
-            endif
-            let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
-        else
-            let label = g:vimim_pumvisible_ctrl_y()
-        endif
-    endif
-    sil!exe 'sil!return "' . label . '"'
 endfunction
 
 " ============================================= }}}
@@ -4862,7 +4862,7 @@ endfunction
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
-    let s:cjk_filter = ""
+    let s:hjkl_s = ""
     let s:has_no_internet = 0
     let s:pageup_pagedown = 0
     return ""
