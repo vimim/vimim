@@ -277,6 +277,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_imode_pinyin")
+    call add(G, "g:vimim_taiwan_ui")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_cloud_sogou")
@@ -2123,9 +2124,13 @@ function! <SID>vimim_smart_enter()
 " (1) single <Enter> ==> Seamless
 " (2) double <Enter> ==> <Space>
 " (3) triple <Enter> ==> <Enter>
-" --------------------------------
+" -------------------------------- todo
     let key = ""
     let enter = "\<CR>"
+    if s:vimim_taiwan_ui > 0
+        let enter = "\<Space>"
+        return
+    endif
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ '\S'
         let s:smart_enter += 1
