@@ -129,6 +129,7 @@ function! s:vimim_initialize_session()
     let s:seamless_positions = []
     let s:start_row_before = 0
     let s:start_column_before = 1
+    let s:insert_without_popup = 0
     let s:scriptnames_output = 0
     let a = char2nr('a')
     let z = char2nr('z')
@@ -198,11 +199,12 @@ function! s:vimim_dictionary_im_keycode()
 " ---------------------------------------
     let s:im_keycode = {}
     let s:im_keycode['pinyin']   = "[0-9a-z'.]"
-    let s:im_keycode['sogou']    = "[0-9a-z']"
     let s:im_keycode['hangul']   = "[0-9a-z']"
     let s:im_keycode['xinhua']   = "[0-9a-z']"
     let s:im_keycode['quick']    = "[0-9a-z']"
     let s:im_keycode['wubi']     = "[0-9a-z']"
+    let s:im_keycode['sogou']    = "[0-9a-z']"
+    let s:im_keycode['mycloud']  = "[0-9a-z]"
     let s:im_keycode['erbi']     = "[a-z'.,;/]"
     let s:im_keycode['yong']     = "[a-z'.;/]"
     let s:im_keycode['wu']       = "[a-z'.]"
@@ -213,7 +215,6 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['boshiamy'] = "[][a-z'.,]"
     let s:im_keycode['phonetic'] = "[0-9a-z.,;/]"
     let s:im_keycode['array30']  = "[0-9a-z.,;/]"
-    let s:im_keycode['mycloud']  = "[0-9a-z]"
     " -------------------------------------------
     let vimimkeys = copy(keys(s:im_keycode))
     call add(vimimkeys, 'pinyin_quote_sogou')
@@ -336,7 +337,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_debug = 1
         let g:vimim_plugin_fix = 0
         let g:vimim_digit_4corner = 1
@@ -412,9 +413,9 @@ function! s:vimim_cursor_color(yes)
 endfunction
 
 " ---------------------------------------------------------
-function! s:vimim_set_keyboard_list(start_column, keyboard)
+function! s:vimim_set_keyboard_list(column_start, keyboard)
 " ---------------------------------------------------------
-    let s:start_column_before = a:start_column
+    let s:start_column_before = a:column_start
     if len(s:keyboard_list) < 2
         let s:keyboard_list = [a:keyboard]
     endif
@@ -1167,7 +1168,7 @@ endfunction
 " ---------------------------------------
 function! s:vimim_reverse_lookup(chinese)
 " ---------------------------------------
-    let chinese = substitute(a:chinese,'\s\+\|\w\|\n','','g')
+    let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
     if empty(chinese)
         return []
     endif
@@ -2120,10 +2121,10 @@ endfunction
 " -----------------------
 function! g:vimim_enter()
 " -----------------------
-" (1) single <Enter> ==> Seamless
+" (1) single <Enter> ==> seamless
 " (2) double <Enter> ==> <Space>
 " (3) triple <Enter> ==> <Enter>
-" -------------------------------- todo
+" --------------------------------
     let key = ""
     let enter = "\<CR>"
     let byte_before = getline(".")[col(".")-2]
@@ -2212,6 +2213,7 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     let keyboard_head = get(s:keyboard_list,0)
     let label = 1
+    let tail = 0
     let extra_text = ""
     let popupmenu_list = []
     let first_in_list = get(a:matched_list,0)
@@ -2262,6 +2264,12 @@ function! s:vimim_popupmenu_list(matched_list)
         let complete_items["dup"] = 1
         call add(popupmenu_list, complete_items)
     endfor
+    if s:ui.im == 'array30' && tail =~ '\d'
+        let tail_item = get(popupmenu_list,tail-1)
+        let tail_item.word = get(split(tail_item.word,'\d'),0)
+        let popupmenu_list = [tail_item]
+        let s:insert_without_popup = 1
+    endif
     if s:chinese_input_mode =~ 'onekey'
         let s:popupmenu_list = popupmenu_list
     endif
@@ -2501,6 +2509,9 @@ function! s:vimim_imode_number(keyboard, prefix)
         elseif keyboard =~# '^\d*$' && len(keyboards)<2 && i ==# 'i'
             let numbers = quantifiers
         endif
+    endif
+    if len(numbers) == 1
+        let s:insert_without_popup = 1
     endif
     return numbers
 endfunction
@@ -4879,6 +4890,9 @@ function! g:vimim_menu_select()
     let key = ""
     if pumvisible()
         let key = '\<C-P>\<Down>'
+        if s:insert_without_popup > 0
+            let key = '\<C-Y>'
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5032,6 +5046,7 @@ else
 
     let s:show_me_not = 0
     let s:smart_enter = 0
+    let s:insert_without_popup = 0
     let results = []
     let s:english_results = []
     let keyboard = a:keyboard
