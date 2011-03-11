@@ -204,7 +204,6 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['wubi']     = "[0-9a-z']"
     let s:im_keycode['sogou']    = "[0-9a-z']"
     let s:im_keycode['mycloud']  = "[0-9a-z]"
-    let s:im_keycode['erbi']     = "[a-z'.,;/]"
     let s:im_keycode['yong']     = "[a-z'.;/]"
     let s:im_keycode['wu']       = "[a-z'.]"
     let s:im_keycode['nature']   = "[a-z'.]"
@@ -212,8 +211,9 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['cangjie']  = "[a-z']"
     let s:im_keycode['taijima']  = "[a-z']"
     let s:im_keycode['boshiamy'] = "[][a-z'.,]"
-    let s:im_keycode['phonetic'] = "[,0-9a-z.;/]"
-    let s:im_keycode['array30']  = "[,0-9a-z.;/]"
+    let s:im_keycode['erbi']     = "[.,a-z';/]"
+    let s:im_keycode['phonetic'] = "[.,0-9a-z;/]"
+    let s:im_keycode['array30']  = "[.,0-9a-z;/]"
     " -------------------------------------------
     let vimimkeys = copy(keys(s:im_keycode))
     call add(vimimkeys, 'pinyin_quote_sogou')
@@ -1643,10 +1643,6 @@ endfunction
 " --------------------------------------
 function! s:vimim_onekey_input(keyboard)
 " --------------------------------------
-    let keyboard = a:keyboard
-    if empty(keyboard) || s:chinese_input_mode !~ 'onekey'
-        return []
-    endif
     let results = []
     " [filter] do digital filter within cache memory
     if s:has_cjk_file > 0
@@ -1660,6 +1656,7 @@ function! s:vimim_onekey_input(keyboard)
         endif
     endif
     " [game] turn menu 90 degree for each hjkl_m
+    let keyboard = a:keyboard
     let lines = s:vimim_get_hjkl(keyboard)
     if !empty(lines)
         if s:hjkl_m > 0 && s:hjkl_m%4 > 0
@@ -3752,7 +3749,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
     if empty(keyboard) || empty(lines)
         return []
     endif
-    let pattern = '^' . keyboard . '\>'
+    let pattern = '^' . keyboard . '\s'
     let matched = match(lines, pattern)
     if matched > -1
         return keyboard
@@ -3770,7 +3767,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
     while max > 1
         let max -= 1
         let head = strpart(keyboard, 0, max)
-        let pattern = '^' . head . '\>'
+        let pattern = '^' . head . '\s'
         let matched = match(lines, pattern)
         if matched < 0
             continue
@@ -3789,7 +3786,7 @@ endfunction
 function! s:vimim_get_from_datafile(keyboard, search)
 " ---------------------------------------------------
     let lines = s:backend[s:ui.root][s:ui.im].lines
-    let pattern = '^' . a:keyboard . '\>'
+    let pattern = '^' . a:keyboard . '\s'
     let matched = match(lines, pattern)
     if matched < 0
         return []
@@ -5057,9 +5054,11 @@ else
     endif
 
     " [onekey] play with nothing but OneKey
-    let results = s:vimim_onekey_input(keyboard)
-    if !empty(len(results)) && empty(s:english_results)
-        return s:vimim_popupmenu_list(results)
+    if s:chinese_input_mode =~ 'onekey'
+        let results = s:vimim_onekey_input(keyboard)
+        if !empty(len(results)) && empty(s:english_results)
+            return s:vimim_popupmenu_list(results)
+        endif
     endif
 
     " [mycloud] get chunmeng from mycloud local or www
@@ -5155,10 +5154,7 @@ function! s:vimim_get_valid_keyboard(keyboard)
     else
         let keyboard = get(s:keyboard_list,0)
     endif
-    if a:keyboard =~# s:uxxxx
-        return keyboard
-    endif
-    if keyboard !~# s:valid_key
+    if empty(keyboard) || keyboard !~# s:valid_key
         return 0
     endif
     if keyboard =~ "['.]['.]" && empty(s:ui.has_dot)
@@ -5183,14 +5179,13 @@ function! s:vimim_helper_mapping_on()
     inoremap <Space> <C-R>=g:vimim_space()<CR>
                     \<C-R>=g:vimim_nonstop_after_insert()<CR>
     " -------------------------------------------------------
-    if s:chinese_input_mode !~ 'onekey'
-    \&& s:vimim_chinese_punctuation > -1
+    if s:chinese_input_mode =~ 'onekey'
+        inoremap <silent> <Esc> <Esc>:call g:vimim_stop()<CR>
+    elseif s:vimim_chinese_punctuation > -1
         inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
     endif
     " -------------------------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-        inoremap <silent> <Esc> <Esc>:call g:vimim_stop()<CR>
-    elseif s:chinese_input_mode =~ 'static'
+    if s:chinese_input_mode =~ 'static'
         inoremap <silent> <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                                \<C-R>=g:vimim_one_key_correction()<CR>
     endif
