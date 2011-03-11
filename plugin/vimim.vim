@@ -729,20 +729,17 @@ endfunction
 " -------------------------------
 function! s:vimim_load_cjk_file()
 " -------------------------------
+    " load cjk lines and build one char cache
     if empty(s:cjk_lines) && s:has_cjk_file > 0
-        let msg = "load cjk lines and build one char cache"
-    else
+        let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+    elseif len(s:cjk_cache) > len('cjk_cache')
         return
     endif
-    let s:cjk_lines = s:vimim_readfile(s:cjk_file)
     let cjk = len(s:cjk_lines)
     if cjk < 20902
         let s:cjk_lines = []
         let s:has_cjk_file = 0
-    elseif len(s:cjk_cache) > len('abcdefg')
-        return
-    endif
-    if cjk == 20902
+    elseif cjk == 20902
         for _ in s:az_list
             call s:vimim_cjk_match(_)
         endfor
@@ -843,32 +840,25 @@ function! s:vimim_cjk_sentence_match(keyboard)
             endif
         endif
         if empty(head)
-            let head = s:vimim_cjk_sentence_alpha(keyboard)
+            let a_keyboard = keyboard
+            let magic_tail = keyboard[-1:-1]
+            if magic_tail == "."
+                "  magic trailing dot to use control cjjp: sssss.
+                let s:hjkl_m += 1
+                let a_keyboard = keyboard[0 : len(keyboard)-2]
+            endif
+            call s:vimim_load_cjk_file()
+            let grep = '^' . a_keyboard . '\>'
+            let matched = match(s:cjk_lines, grep)
+            if s:hjkl_m > 0
+                let keyboard = s:vimim_toggle_cjjp(a_keyboard)
+            elseif matched < 0 && s:has_cjk_file > 0
+                let keyboard = s:vimim_toggle_pinyin(a_keyboard)
+            endif
+            let head = s:vimim_dot_by_dot(keyboard)
         endif
     endif
     return head
-endfunction
-
-" --------------------------------------------
-function! s:vimim_cjk_sentence_alpha(keyboard)
-" --------------------------------------------
-    let keyboard = a:keyboard
-    let a_keyboard = keyboard
-    let magic_tail = keyboard[-1:-1]
-    if magic_tail == "."
-        "  magic trailing dot to use control cjjp: sssss.
-        let s:hjkl_m += 1
-        let a_keyboard = keyboard[0 : len(keyboard)-2]
-    endif
-    call s:vimim_load_cjk_file()
-    let grep = '^' . a_keyboard . '\>'
-    let matched = match(s:cjk_lines, grep)
-    if s:hjkl_m > 0
-        let keyboard = s:vimim_toggle_cjjp(a_keyboard)
-    elseif matched < 0 && s:has_cjk_file > 0
-        let keyboard = s:vimim_toggle_pinyin(a_keyboard)
-    endif
-    return keyboard
 endfunction
 
 " -----------------------------------------------
@@ -4838,6 +4828,8 @@ function! s:vimim_reset_before_anything()
 " ---------------------------------------
     let s:hjkl_h = 0
     let s:hjkl_l = 0
+    let s:hjkl_m = 0
+    let s:hjkl_n = 0
     let s:smart_enter = 0
     let s:show_me_not = 0
     let s:pattern_not_found  = 0
@@ -4852,8 +4844,6 @@ function! g:vimim_reset_after_insert()
 " ------------------------------------
     let s:hjkl_s = ""
     let s:hjkl_x = 0
-    let s:hjkl_m = 0
-    let s:hjkl_n = 0
     let s:has_no_internet = 0
     let s:pageup_pagedown = 0
     return ""
