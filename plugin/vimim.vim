@@ -4083,9 +4083,9 @@ function! s:vimim_sentence_match_directory(keyboard)
     endif
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_one_line_per_key(file_in, file_out)
-" ---------------------------------------------------
+" --------------------------------------------------------
+function! s:vimim_tool_one_line_per_key(file_in, file_out)
+" --------------------------------------------------------
     let hash = {}
     for line in readfile(a:file_in)
         let lines = split(line)
@@ -4105,40 +4105,25 @@ function! s:vimim_one_line_per_key(file_in, file_out)
     call writefile(sort(results), a:file_out)
 endfunction
 
-" -----------------------
-function! g:vimim_mkdir()
-" -----------------------
-" purpose: create one file per entry based on vimim.pinyin.txt
-"    (1) $cd $VIM/vimfiles/plugin/vimim/
-"    (2) $vi vimim.pinyin.txt => :call g:vimim_mkdir()
-" ----------------------------------------------------
-    let root = expand("%:p:h")
-    let dir = root . "/" . expand("%:e:e:r")
+" ---------------------------------------------------
+function! s:vimim_tool_one_file_per_line(file_in, im)
+" ---------------------------------------------------
+    let dir = s:path .  a:im . '/'
     if !exists(dir) && !isdirectory(dir)
-        call mkdir(dir, "p")
+        call mkdir(dir)
     endif
-    let lines = readfile(bufname("%"))
-    for line in lines
+    for line in readfile(a:file_in)
         let entries = split(line)
         let key = get(entries, 0)
         if match(key, "'") > -1
             let key = substitute(key,"'",'','g')
         endif
-        let key_as_filename = dir . "/" . key
-        let chinese_list = entries[1:]
-        let first_list = []
-        let second_list = []
-        if filereadable(key_as_filename)
-            let contents = split(join(readfile(key_as_filename)))
-            let first_list = chinese_list
-            let second_list = contents
-            call extend(first_list, second_list)
-            let chinese_list = copy(first_list)
+        let key_as_filename = dir . key
+        let results = entries[1:]
+        if empty(results)
+            continue
         endif
-        let results = s:vimim_remove_duplication(chinese_list)
-        if !empty(results)
-            call writefile(results, key_as_filename)
-        endif
+        call writefile(results, key_as_filename)
     endfor
 endfunction
 
