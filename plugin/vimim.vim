@@ -4083,6 +4083,28 @@ function! s:vimim_sentence_match_directory(keyboard)
     endif
 endfunction
 
+" ---------------------------------------------------
+function! s:vimim_one_line_per_key(file_in, file_out)
+" ---------------------------------------------------
+    let hash = {}
+    for line in readfile(a:file_in)
+        let lines = split(line)
+        let key = get(lines,0)
+        let values = lines[1:]
+        if has_key(hash, key)
+            let values = hash[key] + values
+            let values = s:vimim_remove_duplication(values)
+        endif
+        let hash[key] = values
+    endfor
+    let results = []
+    for key in keys(hash)
+        let line = key . ' ' . join(hash[key])
+        call add(results, line)
+    endfor
+    call writefile(sort(results), a:file_out)
+endfunction
+
 " -----------------------
 function! g:vimim_mkdir()
 " -----------------------
