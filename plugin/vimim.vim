@@ -4105,10 +4105,10 @@ function! s:vimim_tool_one_line_per_key(file_in, file_out)
     call writefile(sort(results), a:file_out)
 endfunction
 
-" ---------------------------------------------------
-function! s:vimim_tool_one_file_per_line(file_in, im)
-" ---------------------------------------------------
-    let dir = s:path .  a:im . '/'
+" --------------------------------------------------------
+function! s:vimim_tool_one_file_per_line(file_in, dir_out)
+" --------------------------------------------------------
+    let dir = s:path .  a:dir_out . '/'
     if !exists(dir) && !isdirectory(dir)
         call mkdir(dir)
     endif
