@@ -22,48 +22,42 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 " License: GNU Lesser General Public License
 "  Readme: VimIM is a Vim plugin designed as an independent IM
 "          (Input Method) to support CJK search and CJK input.
-" ----------------
+"
 " "VimIM Features"
-" ----------------
 "  (1) Plug & Play: as a client to VimIM embedded backends
 "  (2) Plug & Play: as a client to myCloud and Cloud
 "  (3) input  Chinese without changing Vim mode
 "  (4) search Chinese without popping up any window
-" -------------------
+"
 " "VimIM Design Goal"
-" -------------------
 "  (1) Chinese can be searched using Vim without menu
 "  (2) Chinese can be input using Vim regardless of encoding and OS
 "  (3) No negative impact to Vim when VimIM is not used
 "  (4) No compromise for high speed and low memory usage
-" -------------------
+"
 " "VimIM Frontend UI"
-" -------------------
 "  (1) VimIM OneKey: Chinese input without mode change.
 "  (2) VimIM Chinese Input Mode: ['dynamic','static']
 "  (3) VimIM auto Chinese input with zero configuration
-" -----------------------
+"
 " "VimIM Backend Engines"
-" -----------------------
 "  (1) [external] myCloud: http://pim-cloud.appspot.com
 "  (2) [external]   Cloud: http://web.pinyin.sogou.com
 "  (3) [embedded]   VimIM: http://vimim.googlecode.com
-" --------------------
+"
 " "VimIM Installation"
-" --------------------
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
 "  (2) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
 "  (3) [option] drop a standard directory: plugin/vimim/pinyin/
 "  (4) [option] drop a English  datafile:  plugin/vimim.txt
-" -------------
+"
 " "VimIM Usage"
-" -------------
 "  (1) play with easter egg game to rotate poem:
 "      open vim, type i, type vimimpoem, <C-6>, m, m, m, m
 "  (2) play with OneKey, with cjk standard file installed:
 "      open vim, type i, type sssss, <C-6>, 1, 2, 3, 4
 "  (3) play with sogou cloud, without datafile installed:
-"      open vim, type i, type woyouyigemeng, <C-6>
+"      open vim, type i, type <C-\>, woyouyigemeng
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -5070,7 +5064,6 @@ else
     " [cloud] magic trailing apostrophe to control cloud
     let clouds = s:vimim_magic_tail(keyboard)
     if !empty(len(clouds))
-        " usage: woyouyigemeng'<C-6>
         let keyboard = get(clouds, 0)
     endif
 
