@@ -336,7 +336,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_debug = 1
         let g:vimim_plugin_fix = 0
         let g:vimim_digit_4corner = 1
