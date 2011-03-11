@@ -4,8 +4,7 @@
 "   VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ======================================================
 
-let $VimIM = "easter egg for env: ""     vimim<C-6><C-6>
-let $VimIM = "easter egg for help:"" vimimhelp<C-6><C-6>
+let $VimIM = "easter egg:""              vimim<C-6><C-6>
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 let s:url  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
@@ -43,9 +42,9 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (1) VimIM OneKey: Chinese input without mode change.
 "  (2) VimIM Chinese Input Mode: ['dynamic','static']
 "  (3) VimIM auto Chinese input with zero configuration
-" ----------------------
-" "VimIM Backend Engine"
-" ----------------------
+" -----------------------
+" "VimIM Backend Engines"
+" -----------------------
 "  (1) [external] myCloud: http://pim-cloud.appspot.com
 "  (2) [external]   Cloud: http://web.pinyin.sogou.com
 "  (3) [embedded]   VimIM: http://vimim.googlecode.com
@@ -59,10 +58,12 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 " -------------
 " "VimIM Usage"
 " -------------
-"  (1) play with sogou cloud, without datafile installed:
-"      open vim, type i, type woyouyigemeng, hit <C-6>
-"  (2) play with cjk standard file, with datafile installed:
-"      open vim, type i, type sssss, hit <C-6>, hit 1/2/3/4/5/<Space>
+"  (1) play with easter egg game to rotate poem:
+"      open vim, type i, type vimimpoem, <C-6>, m, m, m, m
+"  (2) play with OneKey, with cjk standard file installed:
+"      open vim, type i, type sssss, <C-6>, 1, 2, 3, 4
+"  (3) play with sogou cloud, without datafile installed:
+"      open vim, type i, type woyouyigemeng, <C-6>
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
