@@ -330,7 +330,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_plugin_fix = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
@@ -835,7 +835,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         if empty(head)
             let a_keyboard = keyboard
             let magic_tail = keyboard[-1:-1]
-            if magic_tail == "."
+            if magic_tail ==# "."
                 "  magic trailing dot to use control cjjp: sssss.
                 let s:hjkl_m += 1
                 let a_keyboard = keyboard[0 : len(keyboard)-2]
@@ -1355,11 +1355,7 @@ function! s:vimim_static_action(space)
     let space = a:space
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
-        if s:pattern_not_found < 1
-            let space = g:vimim()
-        else
-            let s:pattern_not_found = 0
-        endif
+        let space = g:vimim()
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
@@ -1458,10 +1454,7 @@ function! <SID>OneKey()
         endif
     else
         if pumvisible()
-            if s:pattern_not_found > 0
-                let s:pattern_not_found = 0
-                let onekey = " "
-            elseif len(s:popupmenu_list) > 0
+            if len(s:popupmenu_list) > 0
                 let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
                 let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
             endif
@@ -1501,12 +1494,10 @@ function! s:vimim_onekey_action(onekey)
         endif
     endif
     if byte_before =~ s:valid_key
-    \&& s:seamless_positions != getpos(".")
         let onekey = g:vimim()
     elseif a:onekey < 1
         let onekey = s:vimim_get_unicode_menu()
     endif
-    let s:pattern_not_found = 0
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
@@ -2109,7 +2100,6 @@ function! g:vimim_enter()
     if s:smart_enter == 1
         " the first <Enter> does seamless
         let s:seamless_positions = getpos(".")
-        let s:pattern_not_found = 0
     else
         if s:smart_enter == 2
             let key = " "   " the 2nd <Enter> becomes <Space>
@@ -4816,9 +4806,8 @@ function! s:vimim_reset_before_anything()
     let s:hjkl_n = 0
     let s:smart_enter = 0
     let s:show_me_not = 0
-    let s:pattern_not_found  = 0
     let s:pumvisible_yes = 0
-    let s:pumvisible_ctrl_e  = 0
+    let s:pumvisible_ctrl_e = 0
     let s:keyboard_list  = []
     let s:popupmenu_list = []
 endfunction
@@ -5028,10 +5017,7 @@ else
     else
         let keyboard = get(s:keyboard_list,0)
     endif
-    if empty(keyboard)
-    \|| keyboard !~# s:valid_key
-    \|| (keyboard =~ "['.]['.]" && empty(s:ui.has_dot))
-    \|| s:pattern_not_found > 0
+    if empty(keyboard) || keyboard !~# s:valid_key
         return
     endif
 
@@ -5101,27 +5087,26 @@ else
         return s:vimim_popupmenu_list(results)
     endif
 
-    " [sogou] last try before giving up
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
+        " [cjk] last try before giving up
         let keyboard_head = s:vimim_cjk_sentence_match(keyboard.".")
         if !empty(keyboard_head)
             let results = s:vimim_cjk_match(keyboard_head)
         endif
     elseif s:vimim_cloud_sogou == 1 && keyboard !~# '\L'
+        " [sogou] last try before giving up
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
     endif
 
-    " [seamless] for OneKeyNonStop and seamless English input
-    let s:pattern_not_found += 1
     if s:chinese_input_mode =~ 'onekey'
-        let results = [s:space]
+        call s:vimim_super_reset()
     else
         let s:seamless_positions = getpos(".")
     endif
-    return s:vimim_popupmenu_list(results)
+    return
 
 endif
 endfunction
