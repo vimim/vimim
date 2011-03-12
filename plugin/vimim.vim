@@ -1582,19 +1582,24 @@ function! s:vimim_popup_word()
     return substitute(chinese,'\w','','g')
 endfunction
 
-" --------------------------------
-function! g:vimim_esc_correction()
-" --------------------------------
-    let esc = '\<Esc>'
+" -----------------------------------
+function! <SID>vimim_esc_correction()
+" -----------------------------------
+    let key = ""
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~# s:valid_key
+        if pumvisible()
+            let key = "\<C-E>"
+        endif
         let column_start = s:start_column_before
         let column_end = col('.') - 1
         let range = column_end - column_start
-        let esc = repeat("\<BS>", range)
+        let key .= repeat("\<BS>", range)
         call g:vimim_reset_after_insert()
+    else
+        let key = '\<Esc>'
     endif
-    sil!exe 'sil!return "' . esc . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " --------------------------------------
@@ -5085,13 +5090,11 @@ function! s:vimim_helper_mapping_on()
                     \<C-R>=g:vimim_enter()<CR>
     inoremap <Space> <C-R>=g:vimim_space()<CR>
                     \<C-R>=g:vimim_nonstop()<CR>
-    " -------------------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
         inoremap <silent> <Esc> <Esc>:call g:vimim_stop()<CR>
-    elseif s:vimim_chinese_punctuation > -1
+    else
         inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
-        inoremap <Esc>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                       \<C-R>=g:vimim_esc_correction()<CR>
+        inoremap <expr> <Esc> <SID>vimim_esc_correction()
     endif
 endfunction
 
