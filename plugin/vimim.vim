@@ -115,7 +115,6 @@ function! s:vimim_initialize_session()
     let s:www_executable = 0
     let s:cloud_sogou_key = 0
     let s:mycloud_plugin = 0
-    let s:one_key_correction = 0
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     let s:shuangpin_keycode_chinese = {}
@@ -683,7 +682,7 @@ endfunction
 " -----------------------------------
 function! g:vimim_search_pumvisible()
 " -----------------------------------
-    let word = s:vimim_onekey_popup_word()
+    let word = s:vimim_popup_word()
     let @/ = word
     if empty(word)
         let @/ = @_
@@ -1559,19 +1558,6 @@ function! g:vimim_nonstop()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ------------------------------------
-function! g:vimim_one_key_correction()
-" ------------------------------------
-    let esc = '\<Esc>'
-    let byte_before = getline(".")[col(".")-2]
-    if byte_before =~# s:valid_key
-        let s:one_key_correction = 1
-        let s:pageup_pagedown = 0
-        let esc = '\<C-X>\<C-U>\<BS>'
-    endif
-    sil!exe 'sil!return "' . esc . '"'
-endfunction
-
 " ---------------------------------
 function! g:vimim_pumvisible_dump()
 " ---------------------------------
@@ -1600,7 +1586,7 @@ endfunction
 " ------------------------------------
 function! g:vimim_pumvisible_to_clip()
 " ------------------------------------
-    let chinese = s:vimim_onekey_popup_word()
+    let chinese = s:vimim_popup_word()
     if !empty(chinese)
         if has("gui_running") && has("win32")
             let @+ = chinese
@@ -1610,9 +1596,9 @@ function! g:vimim_pumvisible_to_clip()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
-" -----------------------------------
-function! s:vimim_onekey_popup_word()
-" -----------------------------------
+" ----------------------------
+function! s:vimim_popup_word()
+" ----------------------------
     if pumvisible()
         return ""
     endif
@@ -1622,6 +1608,20 @@ function! s:vimim_onekey_popup_word()
     let current_line = getline(".")
     let chinese = strpart(current_line, column_start, range)
     return substitute(chinese,'\w','','g')
+endfunction
+
+" --------------------------------
+function! g:vimim_esc_correction()
+" --------------------------------
+    let esc = '\<Esc>'
+    let byte_before = getline(".")[col(".")-2]
+    if byte_before =~# s:valid_key
+        let column_start = s:start_column_before
+        let column_end = col('.') - 1
+        let range = column_end - column_start
+        let esc = repeat("\<BS>", range)
+    endif
+    sil!exe 'sil!return "' . esc . '"'
 endfunction
 
 " --------------------------------------
@@ -5035,12 +5035,6 @@ else
         return
     endif
 
-    " [one_key_correction] for static mode using Esc
-    if s:one_key_correction > 0
-        let s:one_key_correction = 0
-        return [' ']
-    endif
-
     " [onekey] play with nothing but OneKey
     if s:chinese_input_mode =~ 'onekey'
         let results = s:vimim_onekey_input(keyboard)
@@ -5173,8 +5167,8 @@ function! s:vimim_helper_mapping_on()
     endif
     " -------------------------------------------------------
     if s:chinese_input_mode =~ 'static'
-        inoremap <silent> <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                               \<C-R>=g:vimim_one_key_correction()<CR>
+        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                      \<C-R>=g:vimim_esc_correction()<CR>
     endif
 endfunction
 
