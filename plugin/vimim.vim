@@ -1986,15 +1986,13 @@ function! s:vimim_123456789_label_on()
         endfor
     endif
     for _ in labels
-        sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=g:vimim_123456789_label("'._.'")<CR>'
-        \.'<C-R>=g:vimim_nonstop()<CR>'
+        sil!exe'inoremap<silent> '._.' <C-R>=g:vimim_label("'._.'")<CR>'
     endfor
 endfunction
 
-" ----------------------------------
-function! g:vimim_123456789_label(n)
-" ----------------------------------
+" ------------------------
+function! g:vimim_label(n)
+" ------------------------
     let label = a:n
     if pumvisible()
         let n = match(s:abcd, label)
@@ -2002,9 +2000,9 @@ function! g:vimim_123456789_label(n)
             let n = label - 1
         endif
         let down = repeat("\<Down>", n)
-        let yes = "\<C-Y>"
-        let s:pumvisible_yes = 1
+        let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let label = down . yes
+        call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . label . '"'
 endfunction
@@ -5104,11 +5102,8 @@ function! s:vimim_helper_mapping_on()
         inoremap <silent> <Esc> <Esc>:call g:vimim_stop()<CR>
     elseif s:vimim_chinese_punctuation > -1
         inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
-    endif
-    " -------------------------------------------------------
-    if s:chinese_input_mode =~ 'static'
-        inoremap <Esc> <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                      \<C-R>=g:vimim_esc_correction()<CR>
+        inoremap <Esc>  <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
+                       \<C-R>=g:vimim_esc_correction()<CR>
     endif
 endfunction
 
