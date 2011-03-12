@@ -1334,11 +1334,8 @@ function! <SID>OneKey()
             let onekey = "\t"
         endif
     else
-        if pumvisible()
-            if len(s:popupmenu_list) > 0
-                let onekey  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-                let onekey .= '\<C-R>=g:vimim_pumvisible_dump()\<CR>'
-            endif
+        if pumvisible() && len(s:popupmenu_list) > 0
+            let onekey = '\<C-E>\<C-R>=g:vimim_dump()\<CR>'
         else
             sil!call s:vimim_onekey_start()
             let onekey = s:vimim_onekey_action(0)
@@ -1409,9 +1406,9 @@ function! g:vimim_space()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" ---------------------------------
-function! g:vimim_pumvisible_dump()
-" ---------------------------------
+" ----------------------
+function! g:vimim_dump()
+" ----------------------
     let one_line_clipboard = ""
     let saved_position = getpos(".")
     for items in s:popupmenu_list
@@ -1430,8 +1427,7 @@ function! g:vimim_pumvisible_dump()
     endif
     call setpos(".", saved_position)
     call g:vimim_stop()
-    let esc = '\<Esc>:normal z.\<CR>'
-    sil!exe 'sil!return "' . esc . '"'
+    sil!exe "sil!return '\<Esc>'"
 endfunction
 
 " ------------------------------
@@ -1581,6 +1577,12 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
+" ------------------------------------
+function! s:vimim_omni_on_pumvisible()
+" ------------------------------------
+    return '\<C-E>\<C-R>=g:vimim()\<CR>'
+endfunction
+
 " --------------------------------------------
 function! s:vimim_onekey_pumvisible_qwert_on()
 " --------------------------------------------
@@ -1616,17 +1618,25 @@ function! <SID>vimim_onekey_pumvisible_qwerty(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
-" --------------------------------------
-function! s:vimim_rotation() range abort
-" --------------------------------------
-    sil!call s:vimim_backend_initialization_once()
-    let lines = getbufline(bufnr("%"), 1, "$")
-    let lines = s:vimim_hjkl_rotation(copy(lines))
-    if !empty(lines)
-        for line in lines
-            $put=line
-        endfor
+" ----------------------------------------------
+function! s:vimim_onekey_pumvisible_capital_on()
+" ----------------------------------------------
+    for _ in s:AZ_list
+        sil!exe 'inoremap <silent> <expr> '._.'
+        \ <SID>vimim_onkey_pumvisible_capital("'._.'")'
+    endfor
+endfunction
+
+" ------------------------------------------------
+function! <SID>vimim_onkey_pumvisible_capital(key)
+" ------------------------------------------------
+    let hjkl = a:key
+    if pumvisible()
+        let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
+        let hjkl .= tolower(a:key)
+        let hjkl .= '\<C-R>=g:vimim()\<CR>'
     endif
+    sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
 " ----------------------------------
@@ -1713,25 +1723,17 @@ function! s:vimim_hjkl_rotation(matched_list)
     return rotations
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_onekey_pumvisible_capital_on()
-" ----------------------------------------------
-    for _ in s:AZ_list
-        sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_onkey_pumvisible_capital("'._.'")'
-    endfor
-endfunction
-
-" ------------------------------------------------
-function! <SID>vimim_onkey_pumvisible_capital(key)
-" ------------------------------------------------
-    let hjkl = a:key
-    if pumvisible()
-        let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-        let hjkl .= tolower(a:key)
-        let hjkl .= '\<C-R>=g:vimim()\<CR>'
+" --------------------------------------
+function! s:vimim_rotation() range abort
+" --------------------------------------
+    sil!call s:vimim_backend_initialization_once()
+    let lines = getbufline(bufnr("%"), 1, "$")
+    let lines = s:vimim_hjkl_rotation(copy(lines))
+    if !empty(lines)
+        for line in lines
+            $put=line
+        endfor
     endif
-    sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
 " ============================================= }}}
@@ -2507,20 +2509,6 @@ endfunction
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
-" ----------------
-function! IMName()
-" ----------------
-" This function is for user-defined 'stl' 'statusline'
-    if s:chinese_input_mode =~ 'onekey'
-        if pumvisible()
-            return s:vimim_statusline()
-        endif
-    else
-        return s:vimim_statusline()
-    endif
-    return ""
-endfunction
-
 " --------------------------------
 function! s:vimim_set_statusline()
 " --------------------------------
@@ -2534,6 +2522,20 @@ function! s:vimim_set_statusline()
     else
         let &statusline .= '%{IMName()}'
     endif
+endfunction
+
+" ----------------
+function! IMName()
+" ----------------
+" This function is for user-defined 'stl' 'statusline'
+    if s:chinese_input_mode =~ 'onekey'
+        if pumvisible()
+            return s:vimim_statusline()
+        endif
+    else
+        return s:vimim_statusline()
+    endif
+    return ""
 endfunction
 
 " ----------------------------
@@ -2594,9 +2596,9 @@ function! s:vimim_get_chinese_im()
     return input_style . statusline
 endfunction
 
-" ------------------------------------
-function! s:vimim_123456789_label_on()
-" ------------------------------------
+" --------------------------
+function! s:vimim_label_on()
+" --------------------------
     if s:vimim_custom_label < 1
         return
     endif
@@ -2634,12 +2636,6 @@ function! g:vimim_label(n)
         call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . label . '"'
-endfunction
-
-" ---------------------------------
-function! s:vimim_omni_on_pumvisible()
-" ---------------------------------
-    return '\<C-E>\<C-R>=g:vimim()\<CR>'
 endfunction
 
 " --------------------------------
@@ -4712,7 +4708,7 @@ function! s:vimim_start()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_cursor_color(1)
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_123456789_label_on()
+    sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
 endfunction
 
