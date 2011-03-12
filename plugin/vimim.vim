@@ -319,6 +319,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
+    let g:vimim_chinese_input_mode = 'static'
     if isdirectory('/home/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
@@ -1245,9 +1246,9 @@ endfunction
 function! s:vimim_static_alphabet_auto_select()
 " ---------------------------------------------
     for char in s:Az_list
-        sil!exe 'inoremap <silent> ' . char . '
-        \ <C-R>=g:vimim_pumvisible_ctrl_y()<CR>'. char .
-        \'<C-R>=g:vimim_reset_after_insert()<CR>'
+        sil!exe 'inoremap <silent> ' . char .
+        \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
+        \ . char . '<C-R>=g:vimim_reset_after_insert()<CR>'
     endfor
 endfunction
 
@@ -1260,9 +1261,9 @@ function! s:vimim_dynamic_alphabet_trigger()
     endif
     for char in s:valid_keys
         if char !~# not_used_valid_keys
-            sil!exe 'inoremap <silent> ' . char . '
-            \ <C-R>=g:vimim_pumvisible_ctrl_e()<CR>'. char .
-            \'<C-R>=g:vimim()<CR>'
+            sil!exe 'inoremap <silent> ' . char .
+            \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
+            \ . char . '<C-R>=g:vimim()<CR>'
         endif
     endfor
 endfunction
@@ -1571,16 +1572,10 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             elseif a:key == 'n'
                 let s:hjkl_n += 1
             endif
-            let hjkl = s:vimim_omni_on_pumvisible()
+            let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-" ------------------------------------
-function! s:vimim_omni_on_pumvisible()
-" ------------------------------------
-    return '\<C-E>\<C-R>=g:vimim()\<CR>'
 endfunction
 
 " --------------------------------------------
@@ -1610,9 +1605,9 @@ function! <SID>vimim_onekey_pumvisible_qwerty(n)
             else
                 let s:hjkl_s .= label
             endif
-            let label = s:vimim_omni_on_pumvisible()
+            let label = '\<C-E>\<C-R>=g:vimim()\<CR>'
         else
-            let label = g:vimim_pumvisible_ctrl_y()
+            let label = '\<C-Y>'
         endif
     endif
     sil!exe 'sil!return "' . label . '"'
@@ -1630,13 +1625,13 @@ endfunction
 " ------------------------------------------------
 function! <SID>vimim_onkey_pumvisible_capital(key)
 " ------------------------------------------------
-    let hjkl = a:key
+    let key = a:key
     if pumvisible()
-        let hjkl  = '\<C-R>=g:vimim_pumvisible_ctrl_e()\<CR>'
-        let hjkl .= tolower(a:key)
-        let hjkl .= '\<C-R>=g:vimim()\<CR>'
+        let key  = '\<C-E>'
+        let key .= tolower(a:key)
+        let key .= '\<C-R>=g:vimim()\<CR>'
     endif
-    sil!exe 'sil!return "' . hjkl . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ----------------------------------
@@ -2168,7 +2163,7 @@ function! <SID>vimim_punctuation_mapping(key)
         endif
     endif
     if pumvisible()
-        let key = "\<C-Y>" . key
+        let key = '\<C-Y>' . key
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2212,14 +2207,14 @@ function! <SID>vimim_punctuations_navigation(key)
                 let hjkl = '\<PageUp>'
             else
                 let s:pageup_pagedown -= 1
-                let hjkl  = s:vimim_omni_on_pumvisible()
+                let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
             endif
         elseif a:key =~ "[=.]"
             if s:hjkl_l > 0 && &pumheight < 1
                 let hjkl = '\<PageDown>'
             else
                 let s:pageup_pagedown += 1
-                let hjkl  = s:vimim_omni_on_pumvisible()
+                let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
             endif
         endif
     endif
@@ -2342,9 +2337,9 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
 " ------------------------------------
     let key = ""
     if pumvisible()
-        let key = "\<C-E>"
+        let key = '\<C-E>'
         if empty(len(get(s:keyboard_list,0))%4)
-            let key = "\<C-Y>"
+            let key = '\<C-Y>'
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2672,26 +2667,25 @@ endfunction
 " -----------------------------------
 function! s:vimim_square_bracket(key)
 " -----------------------------------
-    let bracket = a:key
+    let key = a:key
     if pumvisible()
         let i = -1
-        let left = ""
+        let left  = ""
         let right = ""
-        if bracket == "]"
+        if key == "]"
             let i = 0
-            let left = "\<Left>"
+            let left  = "\<Left>"
             let right = "\<Right>"
         endif
-        let backspace = '\<C-R>=g:vimim_bracket_backspace('.i.')\<CR>'
-        let yes = "\<C-Y>"
-        let bracket = yes . left . backspace . right
+        let backspace = '\<C-R>=g:vimim_bracket('.i.')\<CR>'
+        let key = '\<C-Y>' . left . backspace . right
     endif
-    sil!exe 'sil!return "' . bracket . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" -----------------------------------------
-function! g:vimim_bracket_backspace(offset)
-" -----------------------------------------
+" -------------------------------
+function! g:vimim_bracket(offset)
+" -------------------------------
     let column_end = col('.')-1
     let column_start = s:start_column_before
     let range = column_end - column_start
@@ -2713,26 +2707,6 @@ function! g:vimim_bracket_backspace(offset)
         endif
     endif
     return delete_char
-endfunction
-
-" -----------------------------------
-function! g:vimim_pumvisible_ctrl_y()
-" -----------------------------------
-    let key = ""
-    if pumvisible()
-        let key = "\<C-Y>"
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" -----------------------------------
-function! g:vimim_pumvisible_ctrl_e()
-" -----------------------------------
-    let key = ""
-    if pumvisible()
-        let key = "\<C-E>"
-    endif
-    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ------------------------
