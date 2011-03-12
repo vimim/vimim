@@ -4,7 +4,7 @@
 "   VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ======================================================
 
-let $VimIM = "easter egg:""              vimim<C-6><C-6>
+let $VimIM = "easter egg:""  vimim<C-6><C-6>
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 let s:url  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
@@ -280,13 +280,12 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
-    call add(G, "g:vimim_plugin_fix")
+    call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
-    call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_onekey_nonstop")
+    call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_search_next")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -328,7 +327,6 @@ endfunction
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory('/home/xma')
-        let g:vimim_plugin_fix = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
@@ -1197,7 +1195,7 @@ let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
-    if s:vimim_plugin_fix < 1
+    if s:vimim_tab_as_onekey > 1
         return
     endif
     if !exists('s:acp_sid')
@@ -1245,7 +1243,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_plugins_fix_stop()
 " ----------------------------------
-    if s:vimim_plugin_fix < 1
+    if s:vimim_tab_as_onekey > 1
         return
     endif
     if !empty(s:acp_sid)
