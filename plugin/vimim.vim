@@ -2047,7 +2047,7 @@ function! g:vimim_bracket_backspace(offset)
     let column_end = col('.')-1
     let column_start = s:start_column_before
     let range = column_end - column_start
-    let repeat_times = range/s:multibyte
+    let repeat_times = range / s:multibyte
     let repeat_times += a:offset
     let row_end = line('.')
     let row_start = s:start_row_before
@@ -2464,7 +2464,6 @@ let s:VimIM += [" ====  multibyte        ==== {{{"]
 function! s:vimim_dictionary_chinese()
 " ------------------------------------
     let s:space = "　"
-    let s:plus  = "＋"
     let s:colon = "："
     let s:left  = "【"
     let s:right = "】"
@@ -2621,10 +2620,10 @@ function! s:vimim_dictionary_punctuation()
 " ----------------------------------------
     let s:punctuations = {}
     let s:punctuations['@'] = s:space
-    let s:punctuations['+'] = s:plus
     let s:punctuations[':'] = s:colon
     let s:punctuations['['] = s:left
     let s:punctuations[']'] = s:right
+    let s:punctuations['+'] = "＋"
     let s:punctuations['#'] = '＃'
     let s:punctuations['&'] = '＆'
     let s:punctuations['%'] = '％'
