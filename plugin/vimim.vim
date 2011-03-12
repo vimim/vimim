@@ -25,14 +25,8 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "
 " "VimIM Features"
 "  (1) Plug & Play: as an independent input method editor
-"  (2) input  Chinese without changing Vim mode
-"  (3) search Chinese without popping up any window
-"
-" "VimIM Design Goal"
-"  (1) Chinese can be searched using Vim without menu
-"  (2) Chinese can be input using Vim regardless of encoding and OS
-"  (3) No negative impact to Vim when VimIM is not used
-"  (4) No compromise for high speed and low memory usage
+"  (2) input  of Chinese without mode change
+"  (3) search of Chinese without pop-up window
 "
 " "VimIM Frontend UI"
 "  (1) VimIM OneKey: Chinese input without mode change
@@ -1598,6 +1592,7 @@ function! g:vimim_esc_correction()
         let column_end = col('.') - 1
         let range = column_end - column_start
         let esc = repeat("\<BS>", range)
+        call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . esc . '"'
 endfunction
@@ -1716,7 +1711,7 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             elseif a:key == 'n'
                 let s:hjkl_n += 1
             endif
-            let hjkl = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            let hjkl = s:vimim_pumvisible_omni()
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -1749,7 +1744,7 @@ function! <SID>vimim_onekey_pumvisible_qwerty(n)
             else
                 let s:hjkl_s .= label
             endif
-            let label = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+            let label = s:vimim_pumvisible_omni()
         else
             let label = g:vimim_pumvisible_ctrl_y()
         endif
@@ -1999,6 +1994,7 @@ function! g:vimim_label(n)
         if label =~ '\d'
             let n = label - 1
         endif
+        let s:pumvisible_yes = 1
         let down = repeat("\<Down>", n)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let label = down . yes
@@ -2007,9 +2003,9 @@ function! g:vimim_label(n)
     sil!exe 'sil!return "' . label . '"'
 endfunction
 
-" --------------------------------------
-function! s:vimim_ctrl_e_ctrl_x_ctrl_u()
-" --------------------------------------
+" ---------------------------------
+function! s:vimim_pumvisible_omni()
+" ---------------------------------
     return '\<C-E>\<C-R>=g:vimim()\<CR>'
 endfunction
 
@@ -2106,7 +2102,6 @@ function! g:vimim_pumvisible_ctrl_y()
     let key = ""
     if pumvisible()
         let key = "\<C-Y>"
-        let s:pumvisible_yes = 1
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2718,7 +2713,6 @@ function! <SID>vimim_punctuation_mapping(key)
     endif
     if pumvisible()
         let key = "\<C-Y>" . key
-        let s:pumvisible_yes = 1
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2763,14 +2757,14 @@ function! <SID>vimim_punctuations_navigation(key)
                 let hjkl = '\<PageUp>'
             else
                 let s:pageup_pagedown -= 1
-                let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+                let hjkl  = s:vimim_pumvisible_omni()
             endif
         elseif a:key =~ "[=.]"
             if s:hjkl_l > 0 && &pumheight < 1
                 let hjkl = '\<PageDown>'
             else
                 let s:pageup_pagedown += 1
-                let hjkl  = s:vimim_ctrl_e_ctrl_x_ctrl_u()
+                let hjkl  = s:vimim_pumvisible_omni()
             endif
         endif
     endif
@@ -3452,25 +3446,21 @@ endfunction
 " -------------------------------------------
 function! s:vimim_dynamic_wubi_auto_trigger()
 " -------------------------------------------
-    let not_used_valid_keys = "[0-9.']"
-    for char in s:valid_keys
-        if char !~# not_used_valid_keys
-            sil!exe 'inoremap <silent> ' . char . '
-            \ <C-R>=g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()<CR>'
-            \. char . '<C-R>=g:vimim()<CR>'
-        endif
+    for char in s:az_list
+        sil!exe 'inoremap <silent> ' . char . '
+        \ <C-R>=g:vimim_wubi_ctrl_e_ctrl_y()<CR>'
+        \. char . '<C-R>=g:vimim()<CR>'
     endfor
 endfunction
 
-" -----------------------------------------------
-function! g:vimim_pumvisible_wubi_ctrl_e_ctrl_y()
-" -----------------------------------------------
+" ------------------------------------
+function! g:vimim_wubi_ctrl_e_ctrl_y()
+" ------------------------------------
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
         if empty(len(get(s:keyboard_list,0))%4)
             let key = "\<C-Y>"
-            let s:pumvisible_yes = 1
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
