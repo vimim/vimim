@@ -24,10 +24,9 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "          (Input Method) to support CJK search and CJK input.
 "
 " "VimIM Features"
-"  (1) Plug & Play: as a client to VimIM embedded backends
-"  (2) Plug & Play: as a client to myCloud and Cloud
-"  (3) input  Chinese without changing Vim mode
-"  (4) search Chinese without popping up any window
+"  (1) Plug & Play: as an independent input method editor
+"  (2) input  Chinese without changing Vim mode
+"  (3) search Chinese without popping up any window
 "
 " "VimIM Design Goal"
 "  (1) Chinese can be searched using Vim without menu
@@ -36,14 +35,13 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (4) No compromise for high speed and low memory usage
 "
 " "VimIM Frontend UI"
-"  (1) VimIM OneKey: Chinese input without mode change.
+"  (1) VimIM OneKey: Chinese input without mode change
 "  (2) VimIM Chinese Input Mode: ['dynamic','static']
-"  (3) VimIM auto Chinese input with zero configuration
 "
 " "VimIM Backend Engines"
-"  (1) [external] myCloud: http://pim-cloud.appspot.com
+"  (1) [embedded]   VimIM: http://vimim.googlecode.com
 "  (2) [external]   Cloud: http://web.pinyin.sogou.com
-"  (3) [embedded]   VimIM: http://vimim.googlecode.com
+"  (3) [external] myCloud: http://pim-cloud.appspot.com
 "
 " "VimIM Installation"
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
