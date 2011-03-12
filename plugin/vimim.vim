@@ -4352,8 +4352,8 @@ function! s:vimim_get_from_http(input)
             let output = system(s:www_executable . input)
         endif
     catch
-        call s:debugs("sogou::", output ." ". v:exception)
         let output = 0
+        call s:debugs("sogou::", output ." ". v:exception)
     endtry
     return output
 endfunction
@@ -4363,6 +4363,9 @@ let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
 " Thanks to Pan Shizhu for providing all mycloud codes.
 
+" ----------------------------------
+function! s:vimim_do_force_mycloud()
+" ----------------------------------
 " let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
 " let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
 " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
@@ -4372,9 +4375,6 @@ let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
 " ----------------------------------
-function! s:vimim_do_force_mycloud()
-" ----------------------------------
-" [auto mycloud test] vim mycloud.vimim
     if s:vimim_mycloud_url =~ '^http\|^dll\|^app'
         return
     else
@@ -4678,12 +4678,11 @@ endfunction
 " -------------------------------------
 function! s:vimim_url_xx_to_chinese(xx)
 " -------------------------------------
-    let input = a:xx
     let output = a:xx
     if s:www_libcall > 0
         let output = libcall(s:www_executable, "do_unquote", a:xx)
     else
-        let output = substitute(input, '%\(\x\x\)',
+        let output = substitute(a:xx, '%\(\x\x\)',
                     \ '\=eval(''"\x''.submatch(1).''"'')','g')
     endif
     return output
