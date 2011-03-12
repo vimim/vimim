@@ -1500,7 +1500,7 @@ function! g:vimim_space()
     let space = " "
     if pumvisible()
         let space = "\<C-Y>"
-        let s:pumvisible_yes = 1
+        let s:has_pumvisible = 1
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
@@ -1523,7 +1523,7 @@ function! g:vimim_nonstop()
     if s:chinese_input_mode =~ 'onekey'
     \&& s:vimim_onekey_nonstop < 1
         call g:vimim_stop()
-    elseif s:pumvisible_yes > 0
+    elseif s:has_pumvisible == 1
         let key = g:vimim()
         call g:vimim_reset_after_insert()
     endif
@@ -1580,26 +1580,6 @@ function! s:vimim_popup_word()
     let current_line = getline(".")
     let chinese = strpart(current_line, column_start, range)
     return substitute(chinese,'\w','','g')
-endfunction
-
-" -----------------------------------
-function! <SID>vimim_esc_correction()
-" -----------------------------------
-    let key = ""
-    let byte_before = getline(".")[col(".")-2]
-    if byte_before =~# s:valid_key
-        if pumvisible()
-            let key = "\<C-E>"
-        endif
-        let column_start = s:start_column_before
-        let column_end = col('.') - 1
-        let range = column_end - column_start
-        let key .= repeat("\<BS>", range)
-        call g:vimim_reset_after_insert()
-    else
-        let key = '\<Esc>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " --------------------------------------
@@ -1999,7 +1979,7 @@ function! g:vimim_label(n)
         if label =~ '\d'
             let n = label - 1
         endif
-        let s:pumvisible_yes = 1
+        let s:has_pumvisible = 1
         let down = repeat("\<Down>", n)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let label = down . yes
@@ -2121,14 +2101,30 @@ function! g:vimim_pumvisible_ctrl_e()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ---------------------------
-function! g:vimim_backspace()
-" ---------------------------
+" ------------------------------
+function! <SID>vimim_backspace()
+" ------------------------------
     let key = '\<BS>'
-    if s:chinese_input_mode =~ 'dynamic'
+    if pumvisible()
+        let key = "\<C-E>"
+        let key .= "\<BS>"
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
     call s:vimim_super_reset()
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" -----------------------------------
+function! <SID>vimim_esc_correction()
+" -----------------------------------
+    let key = '\<Esc>'
+    if pumvisible()
+        let column_start = s:start_column_before
+        let column_end = col('.') - 1
+        let range = column_end - column_start
+        let key = '\<C-E>' . repeat("\<BS>", range)
+        call g:vimim_reset_after_insert()
+    endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -4773,7 +4769,7 @@ function! s:vimim_reset_before_anything()
     let s:hjkl_n = 0
     let s:smart_enter = 0
     let s:show_me_not = 0
-    let s:pumvisible_yes = 0
+    let s:has_pumvisible = 0
     let s:keyboard_list  = []
     let s:popupmenu_list = []
 endfunction
@@ -4798,7 +4794,7 @@ function! g:vimim()
         let key  = '\<C-X>\<C-O>'
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
     else
-        let s:pumvisible_yes = 0
+        let s:has_pumvisible = 0
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -5010,7 +5006,7 @@ else
     endif
 
     " [shuangpin] support 6 major shuangpin
-    if !empty(s:vimim_shuangpin) && s:pumvisible_yes < 1
+    if !empty(s:vimim_shuangpin) && s:has_pumvisible < 1
         let keyboard = s:vimim_shuangpin_transform(keyboard)
         let s:keyboard_list = [keyboard]
     endif
@@ -5084,8 +5080,6 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    inoremap <BS>    <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
-                    \<C-R>=g:vimim_backspace()<CR>
     inoremap <CR>    <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                     \<C-R>=g:vimim_enter()<CR>
     inoremap <Space> <C-R>=g:vimim_space()<CR>
@@ -5096,6 +5090,7 @@ function! s:vimim_helper_mapping_on()
         inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
         inoremap <expr> <Esc> <SID>vimim_esc_correction()
     endif
+    inoremap <expr> <BS> <SID>vimim_backspace()
 endfunction
 
 " ------------------------------------
