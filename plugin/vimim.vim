@@ -332,7 +332,6 @@ endfunction
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory('/home/xma')
-        let g:vimim_debug = 1
         let g:vimim_plugin_fix = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
@@ -1342,7 +1341,7 @@ function! s:vimim_chinesemode_action(switch)
         elseif s:chinese_input_mode =~ 'static'
             sil!call s:vimim_static_alphabet_auto_select()
             if pumvisible()
-                let msg = "<C-\> does nothing on omni menu"
+                let msg = "<C-\> does nothing on popup menu"
             else
                 let action = s:vimim_static_action("")
             endif
@@ -1524,7 +1523,7 @@ function! g:vimim_space()
 " -----------------------
 " (1) <Space> after English (valid keys) => trigger keycode menu
 " (3) <Space> after English punctuation  => Chinese punctuation
-" (2) <Space> after omni popup menu      => insert Chinese
+" (2) <Space> after popup menu           => insert Chinese
 " (4) <Space> after Chinese              => stop OneKeyNonStop
 " ---------------------------------------------------------------
     let space = " "
@@ -1546,9 +1545,9 @@ function! g:vimim_space()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" --------------------------------------
-function! g:vimim_nonstop_after_insert()
-" --------------------------------------
+" -------------------------
+function! g:vimim_nonstop()
+" -------------------------
     let key = ""
     if s:chinese_input_mode =~ 'onekey'
     \&& s:vimim_onekey_nonstop < 1
@@ -2014,7 +2013,7 @@ function! s:vimim_123456789_label_on()
     for _ in labels
         sil!exe'inoremap <silent>  '._.'
         \  <C-R>=g:vimim_123456789_label("'._.'")<CR>'
-        \.'<C-R>=g:vimim_nonstop_after_insert()<CR>'
+        \.'<C-R>=g:vimim_nonstop()<CR>'
     endfor
 endfunction
 
@@ -4751,7 +4750,6 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 function! s:vimim_initialize_i_setting()
 " --------------------------------------
     let s:saved_cpo=&cpo
-    let s:saved_iminsert=&iminsert
     let s:completefunc=&completefunc
     let s:completeopt=&completeopt
     let s:saved_lazyredraw=&lazyredraw
@@ -4764,12 +4762,11 @@ endfunction
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
-    set completefunc=VimIM
+    set omnifunc=VimIM
     set completeopt=menuone
     set nolazyredraw
     set hlsearch
     set smartcase
-    set iminsert=1
     if empty(&pumheight)
         let &pumheight=9
     endif
@@ -4779,7 +4776,6 @@ endfunction
 function! s:vimim_i_setting_off()
 " -------------------------------
     let &cpo=s:saved_cpo
-    let &iminsert=s:saved_iminsert
     let &completefunc=s:completefunc
     let &completeopt=s:completeopt
     let &lazyredraw=s:saved_lazyredraw
@@ -4851,7 +4847,7 @@ function! g:vimim()
     let s:keyboard_list = []
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ s:valid_key
-        let key  = '\<C-X>\<C-U>'
+        let key  = '\<C-X>\<C-O>'
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
     else
         let s:pumvisible_yes = 0
@@ -5168,7 +5164,7 @@ function! s:vimim_helper_mapping_on()
     inoremap <CR>    <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                     \<C-R>=g:vimim_enter()<CR>
     inoremap <Space> <C-R>=g:vimim_space()<CR>
-                    \<C-R>=g:vimim_nonstop_after_insert()<CR>
+                    \<C-R>=g:vimim_nonstop()<CR>
     " -------------------------------------------------------
     if s:chinese_input_mode =~ 'onekey'
         inoremap <silent> <Esc> <Esc>:call g:vimim_stop()<CR>
