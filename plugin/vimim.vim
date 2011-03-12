@@ -1486,34 +1486,27 @@ function! s:vimim_onekey_action(onekey)
         if has_key(punctuations, byte_before)
             for char in keys(punctuations)
                 if byte_before_before ==# char
-                    let onekey = " "
-                    break
-                else
-                    continue
+                    return " "
                 endif
             endfor
-            if empty(onekey)
-                " transfer English punctuation to Chinese punctuation
-                let replacement = punctuations[byte_before]
-                if byte_before == "'"
-                    let replacement = <SID>vimim_get_single_quote()
-                elseif byte_before == '"'
-                    let replacement = <SID>vimim_get_double_quote()
-                endif
-                let onekey = "\<BS>" . replacement
+            " transfer English punctuation to Chinese punctuation
+            let replacement = punctuations[byte_before]
+            if byte_before == "'"
+                let replacement = <SID>vimim_get_single_quote()
+            elseif byte_before == '"'
+                let replacement = <SID>vimim_get_double_quote()
             endif
+            let onekey = "\<BS>" . replacement
+            sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
-    if len(onekey) < len("<BS>")
-        if byte_before =~ s:valid_key
-        \&& s:seamless_positions != getpos(".")
-        \&& s:pattern_not_found < 1
-            let onekey = g:vimim()
-        elseif a:onekey < 1
-            let onekey = s:vimim_get_unicode_menu()
-        endif
-        let s:pattern_not_found = 0
+    if byte_before =~ s:valid_key
+    \&& s:seamless_positions != getpos(".")
+        let onekey = g:vimim()
+    elseif a:onekey < 1
+        let onekey = s:vimim_get_unicode_menu()
     endif
+    let s:pattern_not_found = 0
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
@@ -5029,9 +5022,16 @@ else
         endif
     endif
 
-    " [input] start to initialize legal input
-    let keyboard = s:vimim_get_valid_keyboard(keyboard)
+    " [qa] input validation
+    if empty(str2nr(keyboard))
+        let msg = "keyboard input is alphabet only"
+    else
+        let keyboard = get(s:keyboard_list,0)
+    endif
     if empty(keyboard)
+    \|| keyboard !~# s:valid_key
+    \|| (keyboard =~ "['.]['.]" && empty(s:ui.has_dot))
+    \|| s:pattern_not_found > 0
         return
     endif
 
@@ -5124,26 +5124,6 @@ else
     return s:vimim_popupmenu_list(results)
 
 endif
-endfunction
-
-" --------------------------------------------
-function! s:vimim_get_valid_keyboard(keyboard)
-" --------------------------------------------
-    let keyboard = a:keyboard
-    if empty(str2nr(keyboard))
-        let msg = "keyboard input is alphabet only"
-    else
-        let keyboard = get(s:keyboard_list,0)
-    endif
-    if empty(keyboard) || keyboard !~# s:valid_key
-        return 0
-    endif
-    if keyboard =~ "['.]['.]" && empty(s:ui.has_dot)
-        " ignore multiple nonsense dots
-        let s:pattern_not_found += 1
-        return 0
-    endif
-    return keyboard
 endfunction
 
 " ============================================= }}}
