@@ -64,7 +64,7 @@ let s:path = expand("<sfile>:p:h")."/"
 " -----------------------------------------
 function! s:vimim_frontend_initialization()
 " -----------------------------------------
-    sil!call s:vimim_force_scan_current_buffer()
+    sil!call s:vimim_auto_scan_current_buffer()
     sil!call s:vimim_initialize_shuangpin()
     sil!call s:vimim_initialize_keycode()
     sil!call s:vimim_set_special_im_property()
@@ -3803,15 +3803,9 @@ function! s:vimim_load_datafile_cache(progressbar)
     endfor
 endfunction
 
-" -------------------------------------------
-function! s:vimim_force_scan_current_buffer()
-" -------------------------------------------
-" auto wubi dynamic input mode  => vim wubi.dynamic.vimim
-" auto mycloud input            => vim mycloud.vimim
-" auto cloud input              => vim sogou.vimim
-" auto cloud onekey             => vim sogou.onekey.vimim
-" auto cloud shuangpin abc mode => vim sogou.shuangpin_abc.vimim
-" -------------------------------------------
+" ------------------------------------------
+function! s:vimim_auto_scan_current_buffer()
+" ------------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~ '.vimim\>'
         " start zero configuration showcase
@@ -4403,7 +4397,7 @@ endfunction
 " --------------------------------------------
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
-" reuse s:vimim_mycloud_url for forced buffer scan: vim mycloud.vimim
+" [auto mycloud test] vim mycloud.vimim
     let cloud = 0
     if empty(s:vimim_mycloud_url)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
