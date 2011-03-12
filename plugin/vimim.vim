@@ -1160,7 +1160,7 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " =================================================
-" Thanks to frederick.zou for providing codes on this section.
+" Thanks to frederick.zou for providing codes on this section:
 " supertab      http://www.vim.org/scripts/script.php?script_id=1643
 " autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
 " word_complete http://www.vim.org/scripts/script.php?script_id=73
@@ -2801,6 +2801,155 @@ function! <SID>vimim_get_double_quote()
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  miscellaneous    ==== {{{"]
+" =================================================
+
+" -------------------------------------
+function! s:vimim_get_valid_im_name(im)
+" -------------------------------------
+    let im = a:im
+    if empty(im)
+        let im = 0
+    elseif im =~ '^wubi'
+        let im = 'wubi'
+    elseif im =~ '^pinyin'
+        let im = 'pinyin'
+        let s:vimim_imode_pinyin = 1
+    elseif im !~ s:all_vimim_input_methods
+        let im = 0
+    endif
+    return im
+endfunction
+
+" -----------------------------------------
+function! s:vimim_set_special_im_property()
+" -----------------------------------------
+    if  s:ui.im == 'pinyin' || s:has_cjk_file > 0
+        let s:quanpin_table = s:vimim_create_quanpin_table()
+    endif
+    if s:backend[s:ui.root][s:ui.im].name =~# "quote"
+        let s:ui.has_dot = 2  " has apostrophe in datafile
+    endif
+    if s:ui.im == 'wu'
+    \|| s:ui.im == 'erbi'
+    \|| s:ui.im == 'yong'
+    \|| s:ui.im == 'nature'
+    \|| s:ui.im == 'boshiamy'
+    \|| s:ui.im == 'phonetic'
+    \|| s:ui.im == 'array30'
+        let s:ui.has_dot = 1  " has dot in datafile
+        let s:vimim_chinese_punctuation = -99
+    endif
+endfunction
+
+" -----------------------------------------------
+function! s:vimim_wubi_4char_auto_input(keyboard)
+" -----------------------------------------------
+" wubi non-stop typing by auto selection on each 4th
+    let keyboard = a:keyboard
+    if s:chinese_input_mode =~ 'dynamic'
+        if len(keyboard) > 4
+            let start = 4*((len(keyboard)-1)/4)
+            let keyboard = strpart(keyboard, start)
+        endif
+        let s:keyboard_list = [keyboard]
+    endif
+    return keyboard
+endfunction
+
+" -------------------------------------------
+function! s:vimim_dynamic_wubi_auto_trigger()
+" -------------------------------------------
+    for char in s:az_list
+        sil!exe 'inoremap <silent> ' . char . '
+        \ <C-R>=g:vimim_wubi_ctrl_e_ctrl_y()<CR>'
+        \. char . '<C-R>=g:vimim()<CR>'
+    endfor
+endfunction
+
+" ------------------------------------
+function! g:vimim_wubi_ctrl_e_ctrl_y()
+" ------------------------------------
+    let key = ""
+    if pumvisible()
+        let key = "\<C-E>"
+        if empty(len(get(s:keyboard_list,0))%4)
+            let key = "\<C-Y>"
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_erbi_first_punctuation(keyboard)
+" ------------------------------------------------
+    let chinese_punctuation = 0
+    if len(a:keyboard) == 1
+    \&& a:keyboard =~ "[.,/;]"
+    \&& has_key(s:punctuations, a:keyboard)
+        let chinese_punctuation = s:punctuations[a:keyboard]
+    endif
+    return chinese_punctuation
+endfunction
+
+" Thanks to Politz for creating this sexy plugin:
+" http://www.vim.org/scripts/script.php?script_id=2006
+let s:progressbar = {}
+function! NewSimpleProgressBar(title, max_value, ...)
+    if !has("statusline")
+        return {}
+    endif
+    let winnr = a:0 ? a:1 : winnr()
+    let b = copy(s:progressbar)
+    let b.title = a:title
+    let b.max_value = a:max_value
+    let b.cur_value = 0
+    let b.winnr = winnr
+    let b.items = {
+        \ 'title' : { 'color' : 'Statusline' },
+        \ 'bar' : { 'fillchar' : ' ', 'color' : 'Statusline' ,
+        \           'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' },
+        \ 'counter' : { 'color' : 'Statusline' } }
+    let b.stl_save = getwinvar(winnr,"&statusline")
+    let b.lst_save = &laststatus"
+    return b
+endfunction
+function! s:progressbar.paint()
+    let max_len = winwidth(self.winnr)-1
+    let t_len = strlen(self.title)+1+1
+    let c_len = 2*strlen(self.max_value)+1+1+1
+    let pb_len = max_len - t_len - c_len - 2
+    let cur_pb_len = (pb_len*self.cur_value)/self.max_value
+    let t_color = self.items.title.color
+    let b_fcolor = self.items.bar.fillcolor
+    let b_color = self.items.bar.color
+    let c_color = self.items.counter.color
+    let fc= strpart(self.items.bar.fillchar." ",0,1)
+    let stl = "%#".t_color."#%-( ".self.title." %)".
+        \"%#".b_color."#|".
+        \"%#".b_fcolor."#%-(".repeat(fc,cur_pb_len)."%)".
+        \"%#".b_color."#".repeat(" ",pb_len-cur_pb_len)."|".
+        \"%=%#".c_color."#%( ".repeat(" ",(strlen(self.max_value)-
+        \strlen(self.cur_value))).self.cur_value."/".self.max_value."  %)"
+    set laststatus=2
+    call setwinvar(self.winnr,"&stl",stl)
+    redraw
+endfunction
+function! s:progressbar.incr( ... )
+    let i = a:0 ? a:1 : 1
+    let i+=self.cur_value
+    let i = i < 0 ? 0 : i > self.max_value ? self.max_value : i
+    let self.cur_value = i
+    call self.paint()
+    return self.cur_value
+endfunction
+function! s:progressbar.restore()
+    call setwinvar(self.winnr,"&stl",self.stl_save)
+    let &laststatus=self.lst_save
+    redraw
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  input english    ==== {{{"]
 " =================================================
 
@@ -3056,7 +3205,7 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " =================================================
-" Thanks to Pan Shizhu for providing all shuangpin codes.
+" Thanks to Pan Shizhu for providing all shuangpin codes:
 
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
@@ -3369,156 +3518,6 @@ function! s:vimim_shuangpin_flypy(rule)
         \"un" : "y", "ua" : "x", "uo" : "o", "ue" : "t", "ui" : "v",
         \"uai": "k", "uan": "r", "uang" : "l" } )
     return a:rule
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  input misc       ==== {{{"]
-" =================================================
-
-" -------------------------------------
-function! s:vimim_get_valid_im_name(im)
-" -------------------------------------
-    let im = a:im
-    if empty(im)
-        let im = 0
-    elseif im =~ '^wubi'
-        let im = 'wubi'
-    elseif im =~ '^pinyin'
-        let im = 'pinyin'
-        let s:vimim_imode_pinyin = 1
-    elseif im !~ s:all_vimim_input_methods
-        let im = 0
-    endif
-    return im
-endfunction
-
-" -----------------------------------------
-function! s:vimim_set_special_im_property()
-" -----------------------------------------
-    if  s:ui.im == 'pinyin' || s:has_cjk_file > 0
-        let s:quanpin_table = s:vimim_create_quanpin_table()
-    endif
-    if s:backend[s:ui.root][s:ui.im].name =~# "quote"
-        let s:ui.has_dot = 2  " has apostrophe in datafile
-    endif
-    if s:ui.im == 'wu'
-    \|| s:ui.im == 'erbi'
-    \|| s:ui.im == 'yong'
-    \|| s:ui.im == 'nature'
-    \|| s:ui.im == 'boshiamy'
-    \|| s:ui.im == 'phonetic'
-    \|| s:ui.im == 'array30'
-        let s:ui.has_dot = 1  " has dot in datafile
-        let s:vimim_chinese_punctuation = -99
-    endif
-endfunction
-
-" -----------------------------------------------
-function! s:vimim_wubi_4char_auto_input(keyboard)
-" -----------------------------------------------
-" wubi non-stop typing by auto selection on each 4th
-    let keyboard = a:keyboard
-    if s:chinese_input_mode =~ 'dynamic'
-        if len(keyboard) > 4
-            let start = 4*((len(keyboard)-1)/4)
-            let keyboard = strpart(keyboard, start)
-        endif
-        let s:keyboard_list = [keyboard]
-    endif
-    return keyboard
-endfunction
-
-" -------------------------------------------
-function! s:vimim_dynamic_wubi_auto_trigger()
-" -------------------------------------------
-    for char in s:az_list
-        sil!exe 'inoremap <silent> ' . char . '
-        \ <C-R>=g:vimim_wubi_ctrl_e_ctrl_y()<CR>'
-        \. char . '<C-R>=g:vimim()<CR>'
-    endfor
-endfunction
-
-" ------------------------------------
-function! g:vimim_wubi_ctrl_e_ctrl_y()
-" ------------------------------------
-    let key = ""
-    if pumvisible()
-        let key = "\<C-E>"
-        if empty(len(get(s:keyboard_list,0))%4)
-            let key = "\<C-Y>"
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_erbi_first_punctuation(keyboard)
-" ------------------------------------------------
-    let chinese_punctuation = 0
-    if len(a:keyboard) == 1
-    \&& a:keyboard =~ "[.,/;]"
-    \&& has_key(s:punctuations, a:keyboard)
-        let chinese_punctuation = s:punctuations[a:keyboard]
-    endif
-    return chinese_punctuation
-endfunction
-
-" Thanks to Politz for creating this sexy plugin.
-" http://www.vim.org/scripts/script.php?script_id=2006
-" ----------------------------------------------------
-let s:progressbar = {}
-function! NewSimpleProgressBar(title, max_value, ...)
-    if !has("statusline")
-        return {}
-    endif
-    let winnr = a:0 ? a:1 : winnr()
-    let b = copy(s:progressbar)
-    let b.title = a:title
-    let b.max_value = a:max_value
-    let b.cur_value = 0
-    let b.winnr = winnr
-    let b.items = {
-        \ 'title' : { 'color' : 'Statusline' },
-        \ 'bar' : { 'fillchar' : ' ', 'color' : 'Statusline' ,
-        \           'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' },
-        \ 'counter' : { 'color' : 'Statusline' } }
-    let b.stl_save = getwinvar(winnr,"&statusline")
-    let b.lst_save = &laststatus"
-    return b
-endfunction
-function! s:progressbar.paint()
-    let max_len = winwidth(self.winnr)-1
-    let t_len = strlen(self.title)+1+1
-    let c_len = 2*strlen(self.max_value)+1+1+1
-    let pb_len = max_len - t_len - c_len - 2
-    let cur_pb_len = (pb_len*self.cur_value)/self.max_value
-    let t_color = self.items.title.color
-    let b_fcolor = self.items.bar.fillcolor
-    let b_color = self.items.bar.color
-    let c_color = self.items.counter.color
-    let fc= strpart(self.items.bar.fillchar." ",0,1)
-    let stl = "%#".t_color."#%-( ".self.title." %)".
-        \"%#".b_color."#|".
-        \"%#".b_fcolor."#%-(".repeat(fc,cur_pb_len)."%)".
-        \"%#".b_color."#".repeat(" ",pb_len-cur_pb_len)."|".
-        \"%=%#".c_color."#%( ".repeat(" ",(strlen(self.max_value)-
-        \strlen(self.cur_value))).self.cur_value."/".self.max_value."  %)"
-    set laststatus=2
-    call setwinvar(self.winnr,"&stl",stl)
-    redraw
-endfunction
-function! s:progressbar.incr( ... )
-    let i = a:0 ? a:1 : 1
-    let i+=self.cur_value
-    let i = i < 0 ? 0 : i > self.max_value ? self.max_value : i
-    let self.cur_value = i
-    call self.paint()
-    return self.cur_value
-endfunction
-function! s:progressbar.restore()
-    call setwinvar(self.winnr,"&stl",self.stl_save)
-    let &laststatus=self.lst_save
-    redraw
 endfunction
 
 " ============================================= }}}
@@ -4346,7 +4345,7 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
-" Thanks to Pan Shizhu for providing all mycloud codes.
+" Thanks to Pan Shizhu for providing all mycloud codes:
 
 " ----------------------------------
 function! s:vimim_do_force_mycloud()
