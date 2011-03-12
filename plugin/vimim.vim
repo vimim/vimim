@@ -328,7 +328,7 @@ function! s:vimim_initialize_debug()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  for mom and dad  ==== {{{"]
+let s:VimIM += [" ====  for Mom and Dad  ==== {{{"]
 " =================================================
 
 " ---------------------------------
@@ -1158,7 +1158,7 @@ function! s:vimim_reverse_lookup(chinese)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Chinese mode     ==== {{{"]
+let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " =================================================
 " s:chinese_input_mode='onekey'  => (default) OneKey
 " s:chinese_input_mode='dynamic' => (default) dynamic mode
@@ -2418,6 +2418,92 @@ function! s:progressbar.restore()
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  plugin conflict  ==== {{{"]
+" =================================================
+" Thanks to frederick.zou for providing codes on this section:
+" supertab      http://www.vim.org/scripts/script.php?script_id=1643
+" autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
+" word_complete http://www.vim.org/scripts/script.php?script_id=73
+
+" -----------------------------------
+function! s:vimim_plugins_fix_start()
+" -----------------------------------
+    if s:vimim_tab_as_onekey > 1
+        return
+    endif
+    if !exists('s:acp_sid')
+        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+        if !empty(s:acp_sid)
+            AcpDisable
+        endif
+    endif
+    if !exists('s:supertab_sid')
+        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    endif
+    if !exists('s:word_complete')
+        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
+        if !empty(s:word_complete)
+            call EndWordComplete()
+        endif
+    endif
+endfunction
+
+" ----------------------------------
+function! s:vimim_getsid(scriptname)
+" ----------------------------------
+    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
+    let l:scriptname = a:scriptname
+    " get output of ":scriptnames" in scriptnames_output variable
+    if empty(s:scriptnames_output)
+        let saved_shellslash=&shellslash
+        set shellslash
+        redir => s:scriptnames_output
+        silent scriptnames
+        redir END
+        let &shellslash = saved_shellslash
+    endif
+    for line in split(s:scriptnames_output, "\n")
+        " only do non-blank lines
+        if line =~ l:scriptname
+            " get the first number in the line.
+            let nr = matchstr(line, '\d\+')
+            return nr
+        endif
+    endfor
+    return 0
+endfunction
+
+" ----------------------------------
+function! s:vimim_plugins_fix_stop()
+" ----------------------------------
+    if s:vimim_tab_as_onekey > 1
+        return
+    endif
+    if !empty(s:acp_sid)
+        let ACPMappingDrivenkeys = [
+            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
+            \ '<','>','/','\','<Space>','<BS>','<CR>',]
+        call extend(ACPMappingDrivenkeys, range(10))
+        call extend(ACPMappingDrivenkeys, s:Az_list)
+        for key in ACPMappingDrivenkeys
+            exe printf('iu <silent> %s', key)
+            exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>',
+            \ key, key, s:acp_sid)
+        endfor
+        AcpEnable
+    endif
+    if !empty(s:supertab_sid)
+        let tab = s:supertab_sid
+        if g:SuperTabMappingForward =~ '^<tab>$'
+            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
+        endif
+        if g:SuperTabMappingBackward =~ '^<s-tab>$'
+            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
+        endif
+    endif
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
@@ -2861,92 +2947,6 @@ function! s:vimim_pageup_pagedown(matched_list)
         endif
     endif
     return matched_list
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  plugin conflict  ==== {{{"]
-" =================================================
-" Thanks to frederick.zou for providing codes on this section:
-" supertab      http://www.vim.org/scripts/script.php?script_id=1643
-" autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
-" word_complete http://www.vim.org/scripts/script.php?script_id=73
-
-" -----------------------------------
-function! s:vimim_plugins_fix_start()
-" -----------------------------------
-    if s:vimim_tab_as_onekey > 1
-        return
-    endif
-    if !exists('s:acp_sid')
-        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
-        if !empty(s:acp_sid)
-            AcpDisable
-        endif
-    endif
-    if !exists('s:supertab_sid')
-        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
-    endif
-    if !exists('s:word_complete')
-        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
-        if !empty(s:word_complete)
-            call EndWordComplete()
-        endif
-    endif
-endfunction
-
-" ----------------------------------
-function! s:vimim_getsid(scriptname)
-" ----------------------------------
-    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
-    let l:scriptname = a:scriptname
-    " get output of ":scriptnames" in scriptnames_output variable
-    if empty(s:scriptnames_output)
-        let saved_shellslash=&shellslash
-        set shellslash
-        redir => s:scriptnames_output
-        silent scriptnames
-        redir END
-        let &shellslash = saved_shellslash
-    endif
-    for line in split(s:scriptnames_output, "\n")
-        " only do non-blank lines
-        if line =~ l:scriptname
-            " get the first number in the line.
-            let nr = matchstr(line, '\d\+')
-            return nr
-        endif
-    endfor
-    return 0
-endfunction
-
-" ----------------------------------
-function! s:vimim_plugins_fix_stop()
-" ----------------------------------
-    if s:vimim_tab_as_onekey > 1
-        return
-    endif
-    if !empty(s:acp_sid)
-        let ACPMappingDrivenkeys = [
-            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
-            \ '<','>','/','\','<Space>','<BS>','<CR>',]
-        call extend(ACPMappingDrivenkeys, range(10))
-        call extend(ACPMappingDrivenkeys, s:Az_list)
-        for key in ACPMappingDrivenkeys
-            exe printf('iu <silent> %s', key)
-            exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>',
-            \ key, key, s:acp_sid)
-        endfor
-        AcpEnable
-    endif
-    if !empty(s:supertab_sid)
-        let tab = s:supertab_sid
-        if g:SuperTabMappingForward =~ '^<tab>$'
-            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
-        endif
-        if g:SuperTabMappingBackward =~ '^<s-tab>$'
-            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
-        endif
-    endif
 endfunction
 
 " ============================================= }}}
