@@ -330,7 +330,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_plugin_fix = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
@@ -2132,20 +2132,11 @@ function! g:vimim_pumvisible_ctrl_e()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" --------------------------------------
-function! g:vimim_pumvisible_ctrl_e_on()
-" --------------------------------------
-    if s:chinese_input_mode =~ 'dynamic'
-        let s:pumvisible_ctrl_e = 1
-    endif
-    return g:vimim_pumvisible_ctrl_e()
-endfunction
-
 " ---------------------------
 function! g:vimim_backspace()
 " ---------------------------
     let key = '\<BS>'
-    if s:pumvisible_ctrl_e > 0
+    if s:chinese_input_mode =~ 'dynamic'
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
     call s:vimim_super_reset()
@@ -2163,8 +2154,6 @@ function! s:vimim_popupmenu_list(matched_list)
     \&& s:pageup_pagedown != 0
     \&& len(lines) > &pumheight
         let lines = s:vimim_pageup_pagedown(lines)
-    else
-        let s:pageup_pagedown = 0
     endif
     let keyboard = join(s:keyboard_list,"")
     if s:hjkl_n > 0 && s:hjkl_n%2 > 0
@@ -2175,8 +2164,8 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
     endif
     let keyboard_head = get(s:keyboard_list,0)
-    let label = 1
     let tail = 0
+    let label = 1
     let extra_text = ""
     let popupmenu_list = []
     let first_in_list = get(a:matched_list,0)
@@ -2276,10 +2265,6 @@ function! s:vimim_pageup_pagedown(matched_list)
         endif
         let shift = s:pageup_pagedown * first_page
         if length > first_page
-            if shift >= length || shift*(-1) >= length
-                let s:pageup_pagedown = 0
-                return matched_list
-            endif
             let partition = shift
             if shift < 0
                 let partition = length + shift
@@ -4807,7 +4792,6 @@ function! s:vimim_reset_before_anything()
     let s:smart_enter = 0
     let s:show_me_not = 0
     let s:pumvisible_yes = 0
-    let s:pumvisible_ctrl_e = 0
     let s:keyboard_list  = []
     let s:popupmenu_list = []
 endfunction
@@ -5118,7 +5102,7 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    inoremap <BS>    <C-R>=g:vimim_pumvisible_ctrl_e_on()<CR>
+    inoremap <BS>    <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                     \<C-R>=g:vimim_backspace()<CR>
     inoremap <CR>    <C-R>=g:vimim_pumvisible_ctrl_e()<CR>
                     \<C-R>=g:vimim_enter()<CR>
