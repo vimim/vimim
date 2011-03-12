@@ -284,7 +284,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_loop_pageup_pagedown")
-    call add(G, "g:vimim_custom_statusline")
     call add(G, "g:vimim_onekey_nonstop")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_search_next")
@@ -359,7 +358,6 @@ function! s:vimim_for_mom_and_dad()
         return
     endif
     let s:mom_and_dad = 1
-    let s:vimim_plugin_fix = 0
     let s:vimim_tab_as_onekey = 1
     if has("gui_running")
         autocmd! * <buffer>
@@ -1900,9 +1898,6 @@ endfunction
 " --------------------------------
 function! s:vimim_set_statusline()
 " --------------------------------
-    if s:vimim_custom_statusline < 1
-        return
-    endif
     set laststatus=2
     if empty(&statusline)
         set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
