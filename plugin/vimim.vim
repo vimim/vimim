@@ -333,7 +333,6 @@ let s:VimIM += [" ====  for Mom and Dad  ==== {{{"]
 function! s:vimim_for_mom_and_dad()
 " ---------------------------------
     let onekey = ""
-    let s:mom_and_dad = 0
     let buffer = expand("%:p:t")
     if buffer =~ 'vimim.mom.txt'
         startinsert!
@@ -346,7 +345,6 @@ function! s:vimim_for_mom_and_dad()
     else
         return
     endif
-    let s:mom_and_dad = 1
     let s:vimim_tab_as_onekey = 1
     if has("gui_running")
         autocmd! * <buffer>
@@ -3494,7 +3492,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if s:mom_and_dad > 0 || s:vimim_tab_as_onekey > 1
+    if s:vimim_tab_as_onekey > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -3839,9 +3837,6 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if s:mom_and_dad > 0
-        return
-    endif
     for im in s:all_vimim_input_methods
         let dir = s:vimim_data_directory
         if !empty(dir) && isdirectory(dir)
@@ -5079,7 +5074,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_autocmd()
 " ------------------------------------
-    if has("autocmd") && s:mom_and_dad < 1
+    if has("autocmd")
         augroup vimim_auto_chinese_mode
             autocmd BufNewFile *.vimim startinsert
             autocmd BufEnter   *.vimim sil!call <SID>ChineseMode()
