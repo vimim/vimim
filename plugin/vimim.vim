@@ -1040,7 +1040,7 @@ function! s:vimim_tranfer_chinese() range abort
 " ---------------------------------------------
     sil!call s:vimim_backend_initialization_once()
     if empty(s:has_cjk_file)
-        let msg = "no toggle between simplified and tranditional Chinese"
+        " no toggle between simplified and tranditional Chinese
     elseif &encoding == "utf-8"
         call s:vimim_load_cjk_file()
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
@@ -2726,7 +2726,7 @@ function! <SID>vimim_backspace()
 " ------------------------------
     let key = '\<BS>'
     if pumvisible()
-        let key = "\<C-E>"
+        let key  = "\<C-E>"
         let key .= "\<BS>"
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
@@ -3033,7 +3033,7 @@ function! s:vimim_add_apostrophe(keyboard)
     if keyboard =~ "[']"
     \&& keyboard[0:0] != "'"
     \&& keyboard[-1:-1] != "'"
-        let msg = "valid apostrophe is typed"
+        " valid apostrophe is typed
     else
         let keyboard = s:vimim_quanpin_transform(keyboard)
     endif
@@ -3739,7 +3739,7 @@ function! s:vimim_build_datafile_cache()
     endif
     if s:backend[s:ui.root][s:ui.im].root == "datafile"
         if empty(s:backend[s:ui.root][s:ui.im].lines)
-            let msg = "no way to build datafile cache"
+            " no way to build datafile cache
         elseif empty(s:backend[s:ui.root][s:ui.im].cache)
             let im = s:vimim_chinese(s:ui.im)
             let database = s:vimim_chinese('database')
@@ -3759,7 +3759,7 @@ endfunction
 function! s:vimim_load_datafile_cache(progressbar)
 " ------------------------------------------------
     if empty(s:backend[s:ui.root][s:ui.im].cache)
-        let msg = "cache only needs to be loaded once"
+        " cache only needs to be loaded once
     else
         return
     endif
@@ -4333,7 +4333,7 @@ function! s:vimim_set_mycloud()
     endif
     let mycloud = s:vimim_set_mycloud_backend()
     if empty(mycloud)
-        let msg = "mycloud is not available"
+        " mycloud is not available
     else
         let s:ui.root = "cloud"
         let s:ui.im = "mycloud"
@@ -4855,9 +4855,7 @@ if a:start
 
     " take care of seamless English/Chinese input
     let seamless_column = s:vimim_get_seamless(current_positions)
-    if seamless_column < 0
-        let msg = "no need to set seamless"
-    else
+    if seamless_column >= 0
         let len = current_positions[2]-1 - seamless_column
         let keyboard = strpart(current_line, seamless_column, len)
         call s:vimim_set_keyboard_list(seamless_column, keyboard)
@@ -4916,10 +4914,10 @@ else
         endif
     endif
 
-    " [qa] input validation
+    " [qa] user input validation
     if empty(str2nr(keyboard))
-        let msg = "keyboard input is alphabet only"
-    else
+        " keyboard input is alphabet only
+    elseif len(s:keyboard_list) > 0
         let keyboard = get(s:keyboard_list,0)
     endif
     if empty(keyboard) || keyboard !~# s:valid_key
