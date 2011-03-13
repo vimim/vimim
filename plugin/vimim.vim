@@ -3903,66 +3903,6 @@ function! s:vimim_sentence_match_directory(keyboard)
     endif
 endfunction
 
-" --------------------------------------------------------
-function! s:vimim_tool_one_file_per_line(file_in, dir_out)
-" --------------------------------------------------------
-    let dir = s:path .  a:dir_out . '/'
-    if !exists(dir) && !isdirectory(dir)
-        call mkdir(dir)
-    endif
-    for line in readfile(a:file_in)
-        let entries = split(line)
-        let key = get(entries, 0)
-        if match(key, "'") > -1
-            let key = substitute(key,"'",'','g')
-        endif
-        let key_as_filename = dir . key
-        let results = entries[1:]
-        if empty(results)
-            continue
-        endif
-        call writefile(results, key_as_filename)
-    endfor
-endfunction
-
-" --------------------------------------------------------
-function! s:vimim_tool_one_line_per_key(file_in, file_out)
-" --------------------------------------------------------
-    let hash = {}
-    for line in readfile(a:file_in)
-        let lines = split(line)
-        let key = get(lines,0)
-        let values = lines[1:]
-        if has_key(hash, key)
-            let values = hash[key] + values
-            let values = s:vimim_remove_duplication(values)
-        endif
-        let hash[key] = values
-    endfor
-    let results = []
-    for key in keys(hash)
-        let line = key . ' ' . join(hash[key])
-        call add(results, line)
-    endfor
-    call writefile(sort(results), a:file_out)
-endfunction
-
-" ------------------------------------------
-function! s:vimim_remove_duplication(values)
-" ------------------------------------------
-    let cache = {}
-    let results = []
-    for char in a:values
-        if has_key(cache, char) || empty(char)
-            continue
-        else
-            let cache[char] = char
-            call add(results, char)
-        endif
-    endfor
-    return results
-endfunction
-
 " ============================================= }}}
 let s:VimIM += [" ====  backend cloud    ==== {{{"]
 " =================================================
