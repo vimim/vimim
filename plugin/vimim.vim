@@ -2340,18 +2340,6 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_erbi_first_punctuation(keyboard)
-" ------------------------------------------------
-    let chinese_punctuation = 0
-    if len(a:keyboard) == 1
-    \&& a:keyboard =~ "[.,/;]"
-    \&& has_key(s:punctuations, a:keyboard)
-        let chinese_punctuation = s:punctuations[a:keyboard]
-    endif
-    return chinese_punctuation
-endfunction
-
 " Thanks to Politz for creating this sexy plugin:
 " http://www.vim.org/scripts/script.php?script_id=2006
 let s:progressbar = {}
@@ -4964,11 +4952,9 @@ else
     " [wubi] support wubi auto input
     if s:ui.im == 'wubi' || s:ui.im == 'erbi'
         let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
-        if s:ui.im =~ 'erbi'
-            let punctuation = s:vimim_erbi_first_punctuation(keyboard)
-            if !empty(punctuation)
-                return [punctuation]
-            endif
+        if s:ui.im =~ 'erbi' && len(keyboard) == 1
+        \&& keyboard =~ "[.,/;]" && has_key(s:punctuations, keyboard)
+            return [s:punctuations[keyboard]]
         endif
     endif
 
