@@ -2268,9 +2268,7 @@ let s:VimIM += [" ====  miscellaneous    ==== {{{"]
 function! s:vimim_get_valid_im_name(im)
 " -------------------------------------
     let im = a:im
-    if empty(im)
-        let im = 0
-    elseif im =~ '^wubi'
+    if im =~ '^wubi'
         let im = 'wubi'
     elseif im =~ '^pinyin'
         let im = 'pinyin'
