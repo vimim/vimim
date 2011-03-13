@@ -1719,9 +1719,12 @@ function! s:vimim_rotation() range abort
     sil!call s:vimim_backend_initialization_once()
     let lines = getbufline(bufnr("%"), 1, "$")
     let lines = s:vimim_hjkl_rotation(copy(lines))
-    if !empty(lines)
+    if empty(lines)
+        return ""
+    else
+        :%d _
         for line in lines
-            $put=line
+            put=line
         endfor
     endif
 endfunction
