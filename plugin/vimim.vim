@@ -112,7 +112,6 @@ function! s:vimim_initialize_session()
     let s:shuangpin_keycode_chinese = {}
     let s:quantifiers = {}
     let s:current_positions = [0,0,1,0]
-    let s:seamless_positions = []
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
@@ -319,7 +318,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
@@ -1198,7 +1197,10 @@ function! s:vimim_chinesemode_action(switch)
     if empty(a:switch)
         call g:vimim_stop()
         if mode() == 'i'
-            let action = "\<C-O>:redraw\<CR>"
+            let action = '\<C-O>:redraw\<CR>'
+            if pumvisible()
+                let action = '\<C-E>' . action
+            endif
         elseif mode() == 'n'
             :redraw!
         endif
@@ -1218,7 +1220,7 @@ function! s:vimim_chinesemode_action(switch)
         elseif s:chinese_input_mode =~ 'static'
             sil!call s:vimim_static_alphabet_auto_select()
             if pumvisible()
-                let msg = "<C-\> does nothing on popup menu"
+                " <C-\> does nothing on popup menu
             else
                 let action = s:vimim_static_action("")
             endif
@@ -2714,8 +2716,8 @@ function! <SID>vimim_esc()
         let column_end = col('.') - 1
         let range = column_end - column_start
         let key = '\<C-E>' . repeat("\<BS>", range)
-        call g:vimim_reset_after_insert()
     endif
+    call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -4712,6 +4714,7 @@ function! s:vimim_reset_before_anything()
     let s:has_pumvisible = 0
     let s:keyboard_list  = []
     let s:popupmenu_list = []
+    let s:seamless_positions = []
 endfunction
 
 " ------------------------------------
@@ -4989,27 +4992,22 @@ else
         return s:vimim_popupmenu_list(results)
     endif
 
+    " [just_do_it] last try on both cjk and cloud before giving up
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
-        " [cjk] last try before giving up
         let keyboard_head = s:vimim_cjk_sentence_match(keyboard.".")
         if !empty(keyboard_head)
             let results = s:vimim_cjk_match(keyboard_head)
         endif
     elseif s:vimim_cloud_sogou == 1 && keyboard !~# '\L'
-        " [sogou] last try before giving up
         let results = s:vimim_get_cloud_sogou(keyboard, 1)
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
-    endif
-
-    if s:chinese_input_mode =~ 'onekey'
+    elseif s:chinese_input_mode =~ 'onekey'
         call s:vimim_super_reset()
-    else
-        let s:seamless_positions = getpos(".")
     endif
-    return
 
+return
 endif
 endfunction
 
