@@ -20,8 +20,8 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    File: vimim.vim
 "  Author: vimim <vimim@googlegroups.com>
 " License: GNU Lesser General Public License
-"  Readme: VimIM is a Vim plugin designed as an independent IM
-"          (Input Method) to support CJK search and CJK input.
+"  Readme: VimIM is a Vim plugin designed as an independent
+"          IM (Input Method) to support both CJK search and input.
 "
 " "VimIM Features"
 "  (1) Plug & Play: as an independent input method editor
@@ -318,7 +318,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
@@ -1269,7 +1269,8 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_get_seamless(current_positions)
 " -----------------------------------------------
-    if empty(s:seamless_positions) || empty(a:current_positions)
+    if empty(s:seamless_positions)
+    \|| empty(a:current_positions)
         return -1
     endif
     let seamless_bufnum = s:seamless_positions[0]
@@ -1290,15 +1291,11 @@ function! s:vimim_get_seamless(current_positions)
     if empty(len(snip))
         return -1
     endif
-    if snip =~# s:uxxxx
-        " support OneKey after any cjk
-    else
-        for char in split(snip, '\zs')
-            if char !~# s:valid_key
-                return -1
-            endif
-        endfor
-    endif
+    for char in split(snip, '\zs')
+        if char !~# s:valid_key
+            return -1
+        endif
+    endfor
     let s:start_row_before = seamless_lnum
     return seamless_column
 endfunction
@@ -1749,14 +1746,14 @@ function! s:vimim_initialize_encoding()
     \|| &encoding == "euc-tw"
         let s:encoding = "taiwan"
     endif
-" ------------ ----------------- --------------
-" vim encoding datafile encoding s:localization
-" ------------ ----------------- --------------
-"   utf-8          utf-8                0
-"   utf-8          chinese              1
-"   chinese        utf-8                2
-"   chinese        chinese              3
-" ------------ ----------------- --------------
+    " ------------ ----------------- --------------
+    " vim encoding datafile encoding s:localization
+    " ------------ ----------------- --------------
+    "   utf-8          utf-8                0
+    "   utf-8          chinese              1
+    "   chinese        utf-8                2
+    "   chinese        chinese              3
+    " ------------ ----------------- --------------
     let s:localization = 0
     if &encoding == "utf-8"
         if len("datafile_fenc_chinese") > 20110129
@@ -3691,8 +3688,8 @@ endfunction
 function! s:vimim_make_pair_matched_list(oneline)
 " -----------------------------------------------
 " [purpose] break row entry in datafile as pair
-"           input  =>   lively 热闹 活泼
-"           output => ['lively 热闹', 'lively 活泼']
+" input  =>   lively 热闹 活泼
+" output => ['lively 热闹', 'lively 活泼']
 " -----------------------------------------------
     let oneline_list = split(a:oneline)
     let menu = remove(oneline_list, 0)
@@ -4625,7 +4622,7 @@ function! s:vimim_url_xx_to_chinese(xx)
         let output = libcall(s:www_executable, "do_unquote", a:xx)
     else
         let output = substitute(a:xx, '%\(\x\x\)',
-                    \ '\=eval(''"\x''.submatch(1).''"'')','g')
+            \ '\=eval(''"\x''.submatch(1).''"'')','g')
     endif
     return output
 endfunction
