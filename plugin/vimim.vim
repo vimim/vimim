@@ -44,7 +44,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (4) [option] drop a English  datafile:  plugin/vimim.txt
 "
 " "VimIM Usage"
-"  (1) play with easter egg game to rotate poem:
+"  (1) play with a game to rotate poem:
 "      open vim, type i, type vimimpoem, <C-6>, m, m, m, m
 "  (2) play with OneKey, with cjk standard file installed:
 "      open vim, type i, type sssss, <C-6>, 1, 2, 3, 4
@@ -319,7 +319,6 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let g:vimim_chinese_input_mode = 'static'
     if isdirectory('/home/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
@@ -914,9 +913,7 @@ function! s:vimim_cjk_match(keyboard)
         let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
         if len(keyboard) == 1
-            if has_key(s:cjk_cache, keyboard)
-                let msg = "cache is available in memory"
-            else
+            if !has_key(s:cjk_cache, keyboard)
                 let s:cjk_cache[keyboard] = results
                 return results
             endif
@@ -1039,9 +1036,8 @@ endfunction
 function! s:vimim_tranfer_chinese() range abort
 " ---------------------------------------------
 " [usage]   :VimIM
-" [feature] (1) "quick and dirty" way to transfer Chinese to Chinese
-"           (2) 20% of the effort to solve 80% of the problem
-"           (3) 5128/2=2564 Chinese pairs are used for one-to-one mapping
+" (1) "quick and dirty" way to transfer Chinese to Chinese
+" (2) 20% of the effort to solve 80% of the problem using one2one mapping
 " ---------------------------------------------
     sil!call s:vimim_backend_initialization_once()
     if empty(s:has_cjk_file)
