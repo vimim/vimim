@@ -318,7 +318,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
@@ -2794,7 +2794,6 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["menu"] = extra_text
         endif
         let complete_items["word"] = chinese
-        let complete_items["dup"] = 1
         call add(popupmenu_list, complete_items)
     endfor
     if s:chinese_input_mode =~ 'onekey'
@@ -3917,28 +3916,6 @@ function! s:vimim_sentence_match_directory(keyboard)
 endfunction
 
 " --------------------------------------------------------
-function! s:vimim_tool_one_line_per_key(file_in, file_out)
-" --------------------------------------------------------
-    let hash = {}
-    for line in readfile(a:file_in)
-        let lines = split(line)
-        let key = get(lines,0)
-        let values = lines[1:]
-        if has_key(hash, key)
-            let values = hash[key] + values
-            let values = s:vimim_remove_duplication(values)
-        endif
-        let hash[key] = values
-    endfor
-    let results = []
-    for key in keys(hash)
-        let line = key . ' ' . join(hash[key])
-        call add(results, line)
-    endfor
-    call writefile(sort(results), a:file_out)
-endfunction
-
-" --------------------------------------------------------
 function! s:vimim_tool_one_file_per_line(file_in, dir_out)
 " --------------------------------------------------------
     let dir = s:path .  a:dir_out . '/'
@@ -3960,24 +3937,40 @@ function! s:vimim_tool_one_file_per_line(file_in, dir_out)
     endfor
 endfunction
 
-" -------------------------------------------
-function! s:vimim_remove_duplication(chinese)
-" -------------------------------------------
-    if empty(a:chinese)
-        return []
-    endif
+" --------------------------------------------------------
+function! s:vimim_tool_one_line_per_key(file_in, file_out)
+" --------------------------------------------------------
+    let hash = {}
+    for line in readfile(a:file_in)
+        let lines = split(line)
+        let key = get(lines,0)
+        let values = lines[1:]
+        if has_key(hash, key)
+            let values = hash[key] + values
+            let values = s:vimim_remove_duplication(values)
+        endif
+        let hash[key] = values
+    endfor
+    let results = []
+    for key in keys(hash)
+        let line = key . ' ' . join(hash[key])
+        call add(results, line)
+    endfor
+    call writefile(sort(results), a:file_out)
+endfunction
+
+" ------------------------------------------
+function! s:vimim_remove_duplication(values)
+" ------------------------------------------
     let cache = {}
     let results = []
-    for line in a:chinese
-        let characters = split(line)
-        for char in characters
-            if has_key(cache, char) || empty(char)
-                continue
-            else
-                let cache[char] = char
-                call add(results, char)
-            endif
-        endfor
+    for char in a:values
+        if has_key(cache, char) || empty(char)
+            continue
+        else
+            let cache[char] = char
+            call add(results, char)
+        endif
     endfor
     return results
 endfunction
@@ -4941,7 +4934,6 @@ else
         " no english is found for the keyboard input
     else
         call extend(results, s:english_results, 0)
-        let results = s:vimim_remove_duplication(results)
     endif
     if !empty(results)
         return s:vimim_popupmenu_list(results)
