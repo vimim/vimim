@@ -1202,7 +1202,7 @@ function! s:vimim_chinesemode_action()
     sil!call s:vimim_start()
     if s:vimim_chinese_punctuation > -1
         let s:chinese_punctuation = s:vimim_chinese_punctuation%2
-        call s:vimim_punctuation_mapping_on()
+        call s:vimim_punctuation_mapping()
     endif
     if s:chinese_input_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
@@ -1297,10 +1297,8 @@ function! s:vimim_onekey_start()
     let s:chinese_input_mode = "onekey"
     sil!call s:vimim_backend_initialization_once()
     sil!call s:vimim_frontend_initialization()
-    sil!call s:vimim_onekey_pumvisible_capital_on()
-    sil!call s:vimim_onekey_pumvisible_hjkl_on()
-    sil!call s:vimim_onekey_pumvisible_qwert_on()
-    sil!call s:vimim_punctuation_navigation_on()
+    sil!call s:vimim_onekey_pumvisible_mapping()
+    sil!call s:vimim_onekey_punctuation_mapping()
     sil!call s:vimim_start()
 endfunction
 
@@ -1325,6 +1323,30 @@ function! <SID>OneKey()
         endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+" -----------------------------
+function! g:vimim_onekey_dump()
+" -----------------------------
+    let one_line_clipboard = ""
+    let saved_position = getpos(".")
+    for items in s:popupmenu_list
+        let line = printf('%s', items.word)
+        if has_key(items, "abbr")
+            let line = printf('%s', items.abbr)
+            if has_key(items, "menu")
+                let line = printf('%s %s', items.abbr, items.menu)
+            endif
+        endif
+        put=line
+        let one_line_clipboard .= line . "\n"
+    endfor
+    if has("gui_running") && has("win32")
+        let @+ = one_line_clipboard
+    endif
+    call setpos(".", saved_position)
+    call g:vimim_stop()
+    sil!exe "sil!return '\<Esc>'"
 endfunction
 
 " -------------------------------------
@@ -1388,30 +1410,6 @@ function! <SID>vimim_space()
         endif
     endif
     sil!exe 'sil!return "' . space . '"'
-endfunction
-
-" -----------------------------
-function! g:vimim_onekey_dump()
-" -----------------------------
-    let one_line_clipboard = ""
-    let saved_position = getpos(".")
-    for items in s:popupmenu_list
-        let line = printf('%s', items.word)
-        if has_key(items, "abbr")
-            let line = printf('%s', items.abbr)
-            if has_key(items, "menu")
-                let line = printf('%s %s', items.abbr, items.menu)
-            endif
-        endif
-        put=line
-        let one_line_clipboard .= line . "\n"
-    endfor
-    if has("gui_running") && has("win32")
-        let @+ = one_line_clipboard
-    endif
-    call setpos(".", saved_position)
-    call g:vimim_stop()
-    sil!exe "sil!return '\<Esc>'"
 endfunction
 
 " ------------------------------
@@ -1516,40 +1514,32 @@ let s:VimIM += [" ====  hjkl             ==== {{{"]
 " =================================================
 
 " -------------------------------------------
-function! s:vimim_onekey_pumvisible_hjkl_on()
+function! s:vimim_onekey_pumvisible_mapping()
 " -------------------------------------------
-    let hjkl = 'hjkl<>sxmn'
-    for _ in split(hjkl, '\zs')
-        silent!exe 'inoremap <silent> <expr>  ' ._.
-        \ ' <SID>vimim_onekey_pumvisible_hjkl("'._.'")'
+    let map_list = split('hjkl<>sxmn', '\zs')
+    for _ in map_list
+        sil!exe 'inoremap <silent> <expr> ' ._.
+        \ ' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
-endfunction
-
-" --------------------------------------------
-function! s:vimim_onekey_pumvisible_qwert_on()
-" --------------------------------------------
-    let labels = s:qwerty
+    " ---------------------------------------
+    let map_list = s:AZ_list
+    for _ in map_list
+        sil!exe 'inoremap <silent> <expr> ' ._.
+        \ ' <SID>vimim_onkey_capital("'._.'")'
+    endfor
+    " ---------------------------------------
     if s:has_cjk_file > 0
-        let labels += range(10)
+        let map_list = s:qwerty + range(10)
+        for _ in map_list
+            sil!exe 'inoremap <silent> <expr> ' ._.
+            \ ' <SID>vimim_onekey_qwerty("'._.'")'
+        endfor
     endif
-    for _ in labels
-        silent!exe 'inoremap <silent> <expr>    ' ._.
-        \ ' <SID>vimim_onekey_pumvisible_qwerty("'._.'")'
-    endfor
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_onekey_pumvisible_capital_on()
-" ----------------------------------------------
-    for _ in s:AZ_list
-        silent!exe 'inoremap <silent> <expr>    ' ._.
-        \ ' <SID>vimim_onkey_pumvisible_capital("'._.'")'
-    endfor
-endfunction
-
-" ----------------------------------------------
-function! <SID>vimim_onekey_pumvisible_hjkl(key)
-" ----------------------------------------------
+" -----------------------------------
+function! <SID>vimim_onekey_hjkl(key)
+" -----------------------------------
     let hjkl = a:key
     if pumvisible()
         if a:key == 'j'
@@ -1575,36 +1565,32 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" ------------------------------------------------
-function! <SID>vimim_onekey_pumvisible_qwerty(key)
-" ------------------------------------------------
-    let key = a:key
-    if pumvisible()
-        if s:has_cjk_file > 0
-            if key =~ '\l'
-                let key = match(s:qwerty, a:n)
-            endif
-            if empty(len(s:hjkl_s))
-                let s:hjkl_s  = key
-            else
-                let s:hjkl_s .= key
-            endif
-            let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
-        else
-            let key = '\<C-Y>'
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ------------------------------------------------
-function! <SID>vimim_onkey_pumvisible_capital(key)
-" ------------------------------------------------
+" -------------------------------------
+function! <SID>vimim_onkey_capital(key)
+" -------------------------------------
     let key = a:key
     if pumvisible()
         let key  = '\<C-E>'
         let key .= tolower(a:key)
         let key .= '\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" -------------------------------------
+function! <SID>vimim_onekey_qwerty(key)
+" -------------------------------------
+    let key = a:key
+    if pumvisible()
+        if key =~ '\l'
+            let key = match(s:qwerty, a:key)
+        endif
+        if empty(len(s:hjkl_s))
+            let s:hjkl_s  = key
+        else
+            let s:hjkl_s .= key
+        endif
+        let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2105,13 +2091,13 @@ function! <SID>vimim_toggle_punctuation()
 " ---------------------------------------
     let s:chinese_punctuation = (s:chinese_punctuation+1)%2
     call s:vimim_set_statusline()
-    call s:vimim_punctuation_mapping_on()
+    call s:vimim_punctuation_mapping()
     return  ""
 endfunction
 
-" ----------------------------------------
-function! s:vimim_punctuation_mapping_on()
-" ----------------------------------------
+" -------------------------------------
+function! s:vimim_punctuation_mapping()
+" -------------------------------------
     if s:vimim_chinese_punctuation < 0
         return ""
     endif
@@ -2131,15 +2117,15 @@ function! s:vimim_punctuation_mapping_on()
     endif
     for _ in keys(s:punctuations)
         silent!exe 'inoremap <silent> <expr> '    ._.
-        \ ' <SID>vimim_chinese_mode_punctuation("'._.'")'
+        \ ' <SID>vimim_chinese_punctuation_map("'._.'")'
     endfor
-    sil!call s:vimim_punctuation_navigation_on()
+    sil!call s:vimim_onekey_punctuation_mapping()
     return ""
 endfunction
 
-" ------------------------------------------------
-function! <SID>vimim_chinese_mode_punctuation(key)
-" ------------------------------------------------
+" -----------------------------------------------
+function! <SID>vimim_chinese_punctuation_map(key)
+" -----------------------------------------------
     let key = a:key
     if s:chinese_punctuation > 0
         let byte_before = getline(".")[col(".")-2]
@@ -2158,9 +2144,9 @@ function! <SID>vimim_chinese_mode_punctuation(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" -------------------------------------------
-function! s:vimim_punctuation_navigation_on()
-" -------------------------------------------
+" --------------------------------------------
+function! s:vimim_onekey_punctuation_mapping()
+" --------------------------------------------
     if s:vimim_chinese_punctuation < 0
         return ""
     endif
@@ -2177,13 +2163,13 @@ function! s:vimim_punctuation_navigation_on()
     endfor
     for _ in punctuations
         silent!exe 'inoremap <silent> <expr> '   ._.
-        \ ' <SID>vimim_punctuations_navigation("'._.'")'
+        \ ' <SID>vimim_onekey_punctuation_map("'._.'")'
     endfor
 endfunction
 
-" -----------------------------------------------
-function! <SID>vimim_punctuations_navigation(key)
-" -----------------------------------------------
+" ----------------------------------------------
+function! <SID>vimim_onekey_punctuation_map(key)
+" ----------------------------------------------
     let hjkl = a:key
     if pumvisible()
         if a:key =~ ";"
@@ -4606,8 +4592,7 @@ function! g:vimim()
     let s:keyboard_list = []
     let byte_before = getline(".")[col(".")-2]
     if byte_before =~ s:valid_key
-        let key  = '\<C-X>\<C-O>'
-        let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
+        let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
     elseif s:vimim_onekey_hit_and_run > 0
     \&& s:chinese_input_mode =~ 'onekey'
         call g:vimim_stop()
