@@ -317,7 +317,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
@@ -1356,9 +1356,9 @@ function! s:vimim_onekey_action(onekey)
             " transfer English punctuation to Chinese punctuation
             let replacement = punctuations[byte_before]
             if byte_before == "'"
-                let replacement = <SID>vimim_get_single_quote()
+                let replacement = <SID>vimim_get_quote(1)
             elseif byte_before == '"'
-                let replacement = <SID>vimim_get_double_quote()
+                let replacement = <SID>vimim_get_quote(2)
             endif
             let onekey = "\<BS>" . replacement
             sil!exe 'sil!return "' . onekey . '"'
@@ -2131,21 +2131,31 @@ function! s:vimim_punctuation_mapping_on()
 " ----------------------------------------
     if s:vimim_chinese_punctuation < 0
         return ""
-    else
-        call s:vimim_evil_punctuation_mapping_on()
     endif
-    for key in keys(s:punctuations)
-        sil!exe 'inoremap <silent> '. key .'
-        \    <C-R>=<SID>vimim_punctuation_mapping("'. key .'")<CR>'
-        \ . '<C-R>=g:vimim_reset_after_insert()<CR>'
+    if s:chinese_punctuation > 0
+        if empty(s:vimim_latex_suite)
+            inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
+            inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
+        endif
+        if empty(s:vimim_backslash_close_pinyin)
+            sil!exe 'inoremap <Bslash> ' . 
+            \ '<C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . s:evils['\']
+        endif
+    else
+        for _ in keys(s:evils)
+            sil!exe 'iunmap '. _
+        endfor
+    endif
+    for _ in keys(s:punctuations)
+        sil!exe 'inoremap '._.' <C-R>=g:vimim_punctuation("'._.'")<CR>'
     endfor
     sil!call s:vimim_punctuation_navigation_on()
     return ""
 endfunction
 
-" -------------------------------------------
-function! <SID>vimim_punctuation_mapping(key)
-" -------------------------------------------
+" --------------------------------
+function! g:vimim_punctuation(key)
+" --------------------------------
     let key = a:key
     if s:chinese_punctuation > 0
         let byte_before = getline(".")[col(".")-2]
@@ -2159,6 +2169,7 @@ function! <SID>vimim_punctuation_mapping(key)
     endif
     if pumvisible()
         let key = '\<C-Y>' . key
+        call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2216,48 +2227,30 @@ function! <SID>vimim_punctuations_navigation(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_evil_punctuation_mapping_on()
-" ---------------------------------------------
-    if s:chinese_punctuation > 0
-        if empty(s:vimim_latex_suite)
-            inoremap ' <C-R>=<SID>vimim_get_single_quote()<CR>
-            inoremap " <C-R>=<SID>vimim_get_double_quote()<CR>
-        endif
-        if empty(s:vimim_backslash_close_pinyin)
-            sil!exe 'inoremap <Bslash> ' . s:evils['\']
-        endif
-    else
-        for _ in keys(s:evils)
-            sil!exe 'iunmap '. _
-        endfor
+" ----------------------------------
+function! <SID>vimim_get_quote(type)
+" ----------------------------------
+    let key = ""
+    if a:type == 1
+        let key = "'"
+    elseif a:type == 2
+        let key = '"'
     endif
-endfunction
-
-" -------------------------------------
-function! <SID>vimim_get_single_quote()
-" -------------------------------------
-    let key = "'"
+    let quote = ""
     if !has_key(s:evils, key)
         return ""
+    elseif pumvisible()
+        let quote = '\<C-Y>'
     endif
-    let pair = s:evils[key]
-    let pairs = split(pair,'\zs')
-    let s:smart_single_quotes += 1
-    return get(pairs, s:smart_single_quotes % 2)
-endfunction
-
-" -------------------------------------
-function! <SID>vimim_get_double_quote()
-" -------------------------------------
-    let key = '"'
-    if !has_key(s:evils, key)
-        return ""
+    let pairs = split(s:evils[key], '\zs')
+    if a:type == 1
+        let s:smart_single_quotes += 1
+        let quote .= get(pairs, s:smart_single_quotes % 2)
+    elseif a:type == 2
+        let s:smart_double_quotes += 1
+        let quote .= get(pairs, s:smart_double_quotes % 2)
     endif
-    let pair = s:evils[key]
-    let pairs = split(pair,'\zs')
-    let s:smart_double_quotes += 1
-    return get(pairs, s:smart_double_quotes % 2)
+    sil!exe 'sil!return "' . quote . '"'
 endfunction
 
 " ============================================= }}}
