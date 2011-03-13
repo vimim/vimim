@@ -1318,7 +1318,7 @@ function! <SID>OneKey()
         endif
     else
         if pumvisible() && len(s:popupmenu_list) > 0
-            let onekey = '\<C-E>\<C-R>=g:vimim_dump()\<CR>'
+            let onekey = '\<C-E>\<C-R>=g:vimim_onekey_dump()\<CR>'
         else
             sil!call s:vimim_onekey_start()
             let onekey = s:vimim_onekey_action(0)
@@ -1390,9 +1390,9 @@ function! <SID>vimim_space()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-" ----------------------
-function! g:vimim_dump()
-" ----------------------
+" -----------------------------
+function! g:vimim_onekey_dump()
+" -----------------------------
     let one_line_clipboard = ""
     let saved_position = getpos(".")
     for items in s:popupmenu_list
@@ -1489,7 +1489,6 @@ function! s:vimim_onekey_input(keyboard)
     endif
     " [cjk] cjk database works like swiss-army knife
     if s:has_cjk_file > 0
-        " try to search pinyin/digit entries
         let keyboard = s:vimim_cjk_sentence_match(keyboard)
         let results = s:vimim_cjk_match(keyboard)
         if keyboard =~ '^\l\d\d\d\d'
@@ -1519,10 +1518,32 @@ let s:VimIM += [" ====  hjkl             ==== {{{"]
 " -------------------------------------------
 function! s:vimim_onekey_pumvisible_hjkl_on()
 " -------------------------------------------
-    let hjkl = 'jk<>hlmnsx'
+    let hjkl = 'hjkl<>sxmn'
     for _ in split(hjkl, '\zs')
-        sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_onekey_pumvisible_hjkl("'._.'")'
+        silent!exe 'inoremap <silent> <expr>  ' ._.
+        \ ' <SID>vimim_onekey_pumvisible_hjkl("'._.'")'
+    endfor
+endfunction
+
+" --------------------------------------------
+function! s:vimim_onekey_pumvisible_qwert_on()
+" --------------------------------------------
+    let labels = s:qwerty
+    if s:has_cjk_file > 0
+        let labels += range(10)
+    endif
+    for _ in labels
+        silent!exe 'inoremap <silent> <expr>    ' ._.
+        \ ' <SID>vimim_onekey_pumvisible_qwerty("'._.'")'
+    endfor
+endfunction
+
+" ----------------------------------------------
+function! s:vimim_onekey_pumvisible_capital_on()
+" ----------------------------------------------
+    for _ in s:AZ_list
+        silent!exe 'inoremap <silent> <expr>    ' ._.
+        \ ' <SID>vimim_onkey_pumvisible_capital("'._.'")'
     endfor
 endfunction
 
@@ -1539,20 +1560,14 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
             let hjkl  = '\<C-Y>'
             let hjkl .= s:punctuations[nr2char(char2nr(a:key)-16)]
         else
-            if a:key == 'h'
-                let s:hjkl_h += 1
+            if a:key == 's'
+                call g:vimim_reset_after_insert()
             elseif a:key == 'l'
                 let pumheight = &pumheight
                 let &pumheight = s:hjkl_l
                 let s:hjkl_l = pumheight
-            elseif a:key == 's'
-                call g:vimim_reset_after_insert()
-            elseif a:key == 'x'
-                let s:hjkl_x += 1
-            elseif a:key == 'm'
-                let s:hjkl_m += 1
-            elseif a:key == 'n'
-                let s:hjkl_n += 1
+            elseif a:key =~ "[hxmn]"
+                exe 'let s:hjkl_' . a:key . ' += 1'
             endif
             let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
         endif
@@ -1560,48 +1575,26 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-" --------------------------------------------
-function! s:vimim_onekey_pumvisible_qwert_on()
-" --------------------------------------------
-    let labels = s:qwerty
-    if s:has_cjk_file > 0
-        let labels += range(10)
-    endif
-    for _ in labels
-        sil!exe'inoremap <silent>  '._.'
-        \  <C-R>=<SID>vimim_onekey_pumvisible_qwerty("'._.'")<CR>'
-    endfor
-endfunction
-
-" ----------------------------------------------
-function! <SID>vimim_onekey_pumvisible_qwerty(n)
-" ----------------------------------------------
-    let label = a:n
+" ------------------------------------------------
+function! <SID>vimim_onekey_pumvisible_qwerty(key)
+" ------------------------------------------------
+    let key = a:key
     if pumvisible()
         if s:has_cjk_file > 0
-            if label =~ '\l'
-                let label = match(s:qwerty, a:n)
+            if key =~ '\l'
+                let key = match(s:qwerty, a:n)
             endif
             if empty(len(s:hjkl_s))
-                let s:hjkl_s = label
+                let s:hjkl_s  = key
             else
-                let s:hjkl_s .= label
+                let s:hjkl_s .= key
             endif
-            let label = '\<C-E>\<C-R>=g:vimim()\<CR>'
+            let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
         else
-            let label = '\<C-Y>'
+            let key = '\<C-Y>'
         endif
     endif
-    sil!exe 'sil!return "' . label . '"'
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_onekey_pumvisible_capital_on()
-" ----------------------------------------------
-    for _ in s:AZ_list
-        sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_onkey_pumvisible_capital("'._.'")'
-    endfor
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ------------------------------------------------
@@ -2137,15 +2130,16 @@ function! s:vimim_punctuation_mapping_on()
         endfor
     endif
     for _ in keys(s:punctuations)
-        sil!exe 'inoremap '._.' <C-R>=g:vimim_punctuation("'._.'")<CR>'
+        silent!exe 'inoremap <silent> <expr> '    ._.
+        \ ' <SID>vimim_chinese_mode_punctuation("'._.'")'
     endfor
     sil!call s:vimim_punctuation_navigation_on()
     return ""
 endfunction
 
-" --------------------------------
-function! g:vimim_punctuation(key)
-" --------------------------------
+" ------------------------------------------------
+function! <SID>vimim_chinese_mode_punctuation(key)
+" ------------------------------------------------
     let key = a:key
     if s:chinese_punctuation > 0
         let byte_before = getline(".")[col(".")-2]
@@ -2182,8 +2176,8 @@ function! s:vimim_punctuation_navigation_on()
         endif
     endfor
     for _ in punctuations
-        sil!exe 'inoremap <silent> <expr> '._.'
-        \ <SID>vimim_punctuations_navigation("'._.'")'
+        silent!exe 'inoremap <silent> <expr> '   ._.
+        \ ' <SID>vimim_punctuations_navigation("'._.'")'
     endfor
 endfunction
 
@@ -2565,26 +2559,27 @@ function! s:vimim_label_on()
         endfor
     endif
     for _ in labels
-        sil!exe'inoremap<silent> '._.' <C-R>=g:vimim_label("'._.'")<CR>'
+        silent!exe 'inoremap <silent> <expr> '  ._.
+        \  ' <SID>vimim_alphabet_number_label("'._.'")'
     endfor
 endfunction
 
-" ------------------------
-function! g:vimim_label(n)
-" ------------------------
-    let label = a:n
+" ---------------------------------------------
+function! <SID>vimim_alphabet_number_label(key)
+" ---------------------------------------------
+    let key = a:key
     if pumvisible()
-        let n = match(s:abcd, label)
-        if label =~ '\d'
-            let n = label - 1
+        let n = match(s:abcd, key)
+        if key =~ '\d'
+            let n = key - 1
         endif
         let s:has_pumvisible = 1
         let down = repeat("\<Down>", n)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
-        let label = down . yes
+        let key = down . yes
         call g:vimim_reset_after_insert()
     endif
-    sil!exe 'sil!return "' . label . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " --------------------------------
@@ -3016,10 +3011,10 @@ function! s:vimim_toggle_pinyin(keyboard)
     if s:hjkl_n < 1
         return keyboard
     elseif s:hjkl_n % 2 > 0
-        " set pin'yin: woyouyigemeng => wo.you.yi.ge.meng
+        " set pin'yin: woyouyigemeng => wo'you'yi'ge'meng
         let keyboard = s:vimim_quanpin_transform(keyboard)
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
-        " reset pinyin: wo.you.yi.ge.meng => woyouyigemeng
+        " reset pinyin: wo'you'yi'ge'meng => woyouyigemeng
         let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
     endif
     return keyboard
@@ -3047,8 +3042,6 @@ function! s:vimim_quanpin_transform(pinyin)
     let qptable = s:quanpin_table
     if empty(qptable)
         return ""
-    else
-        " start pinyin breakdown: pinyin=>pin'yin
     endif
     let item = a:pinyin
     let pinyinstr = ""
@@ -3550,11 +3543,10 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_sentence_match_cache(keyboard)
 " ----------------------------------------------
-    let keyboard = a:keyboard
-    if empty(keyboard)
-    \|| empty(s:backend[s:ui.root][s:ui.im].cache)
+    if empty(s:backend[s:ui.root][s:ui.im].cache)
         return []
     endif
+    let keyboard = a:keyboard
     if has_key(s:backend[s:ui.root][s:ui.im].cache, keyboard)
         return keyboard
     elseif empty(s:english_results)
@@ -3648,10 +3640,7 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_make_pair_matched_list(oneline)
 " -----------------------------------------------
-" [purpose] break row entry in datafile as pair
-" input  =>   lively 热闹 活泼
-" output => ['lively 热闹', 'lively 活泼']
-" -----------------------------------------------
+" break row entry in datafile into pair list
     let oneline_list = split(a:oneline)
     let menu = remove(oneline_list, 0)
     if empty(menu) || menu =~ '\W'
@@ -3669,9 +3658,8 @@ endfunction
 function! s:vimim_more_pinyin_candidates(keyboard)
 " ------------------------------------------------
 " [purpose] make standard layout for popup menu
-"           input  =>  mamahuhu
-"           output =>  mamahuhu, mama, ma
-" ------------------------------------------------
+" input  =>  mamahuhu
+" output =>  mamahuhu, mama, ma
     if empty(s:english_results)
         " break up keyboard only if it is not english
     else
@@ -4001,9 +3989,8 @@ endfunction
 " ---------------------------
 function! s:vimim_set_sogou()
 " ---------------------------
-" s:vimim_cloud_sogou=0  : default, auto open when no datafile
-" s:vimim_cloud_sogou=-1 : cloud is shut down without condition
-" -------------------------------------------------------------
+    " s:vimim_cloud_sogou=0  : default, auto open when no datafile
+    " s:vimim_cloud_sogou=-1 : cloud is shut down without condition
     if s:ui.root == "cloud" && s:ui.im == "sogou"
         return
     endif
@@ -4114,12 +4101,10 @@ function! s:vimim_magic_tail(keyboard)
         return []
     endif
     let keyboards = []
-    " ----------------------------------------------------
     " <dot> triple play in OneKey:
     "   (1) magic trailing dot => forced-non-cloud in cloud
     "   (2) magic trailing dot => forced-cjk-match
     "   (3) as word partition  => match dot by dot
-    " ----------------------------------------------------
     if magic_tail ==# "."
         " trailing dot => forced-non-cloud
         let s:has_no_internet = 2
@@ -4133,11 +4118,9 @@ function! s:vimim_magic_tail(keyboard)
         endif
         call add(keyboards, 1)
     endif
-    " ----------------------------------------------------
     " <apostrophe> double play in OneKey:
     "   (1) magic trailing apostrophe => cloud at will
     "   (2) as word partition  => match apostrophe by apostrophe
-    " ----------------------------------------------------
     let keyboard = keyboard[:-2]
     call insert(keyboards, keyboard)
     return keyboards
@@ -4265,7 +4248,7 @@ function! s:vimim_do_force_mycloud()
 " let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
-" ----------------------------------
+" --------------------------------------------------------------------
     if s:vimim_mycloud_url =~ '^http\|^dll\|^app'
         return
     else
@@ -4734,7 +4717,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     \|| keyboard !~# s:valid_key
         return []
     endif
-    if s:has_cjk_file < 1 && s:ui.im == 'pinyin'
+    if s:ui.im == 'pinyin'
         let keyboard = s:vimim_toggle_pinyin(keyboard)
     endif
     if s:ui.has_dot == 2
@@ -4967,8 +4950,8 @@ function! s:vimim_helper_mapping_on()
 " -----------------------------------
     inoremap <expr> <CR>    <SID>vimim_enter()
     inoremap <expr> <BS>    <SID>vimim_backspace()
-    inoremap <expr> <C-^>   <SID>vimim_toggle_punctuation()
     inoremap <expr> <Esc>   <SID>vimim_esc()
+    inoremap <expr> <C-^>   <SID>vimim_toggle_punctuation()
     inoremap <expr> <Space> <SID>vimim_space()
 endfunction
 
