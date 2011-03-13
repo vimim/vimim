@@ -1367,9 +1367,9 @@ function! s:vimim_onekey_action(onekey)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" -----------------------
-function! g:vimim_space()
-" -----------------------
+" --------------------------
+function! <SID>vimim_space()
+" --------------------------
 " (1) <Space> after English (valid keys) => trigger keycode menu
 " (2) <Space> after English punctuation  => Chinese punctuation
 " (3) <Space> after popup menu           => insert Chinese
@@ -4984,11 +4984,11 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    inoremap <expr>   <CR>    <SID>vimim_enter()
-    inoremap <expr>   <BS>    <SID>vimim_backspace()
-    inoremap <expr>   <C-^>   <SID>vimim_toggle_punctuation()
-    inoremap <expr>   <Esc>   <SID>vimim_esc()
-    inoremap <silent> <Space> <C-R>=g:vimim_space()<CR>
+    inoremap <expr> <CR>    <SID>vimim_enter()
+    inoremap <expr> <BS>    <SID>vimim_backspace()
+    inoremap <expr> <C-^>   <SID>vimim_toggle_punctuation()
+    inoremap <expr> <Esc>   <SID>vimim_esc()
+    inoremap <expr> <Space> <SID>vimim_space()
 endfunction
 
 " ------------------------------------
