@@ -20,8 +20,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    File: vimim.vim
 "  Author: vimim <vimim@googlegroups.com>
 " License: GNU Lesser General Public License
-"  Readme: VimIM is a Vim plugin designed as an independent
-"          IM (Input Method) to support both CJK search and input.
+"  Readme: VimIM is a Vim plugin as an independent Input Method.
 "
 " "VimIM Features"
 "  (1) Plug & Play: as an independent input method editor
