@@ -317,7 +317,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
@@ -2686,6 +2686,9 @@ function! <SID>vimim_esc()
         let column_end = col('.') - 1
         let range = column_end - column_start
         let key = '\<C-E>' . repeat("\<BS>", range)
+    elseif s:chinese_input_mode =~ 'onekey'
+        call g:vimim_stop()
+        let key = '\<Esc>'
     endif
     call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
@@ -2695,7 +2698,7 @@ endfunction
 function! <SID>vimim_backspace()
 " ------------------------------
     let key = '\<BS>'
-    if pumvisible()
+    if pumvisible() && s:chinese_input_mode !~ 'onekey'
         let key  = "\<C-E>"
         let key .= "\<BS>"
         let key .= '\<C-R>=g:vimim()\<CR>'
@@ -4981,14 +4984,10 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-        inoremap <silent> <Esc> <Esc>:call g:vimim_stop()<CR>
-    else
-        inoremap <expr> <C-^> <SID>vimim_toggle_punctuation()
-        inoremap <expr> <Esc> <SID>vimim_esc()
-    endif
     inoremap <expr>   <CR>    <SID>vimim_enter()
     inoremap <expr>   <BS>    <SID>vimim_backspace()
+    inoremap <expr>   <C-^>   <SID>vimim_toggle_punctuation()
+    inoremap <expr>   <Esc>   <SID>vimim_esc()
     inoremap <silent> <Space> <C-R>=g:vimim_space()<CR>
 endfunction
 
