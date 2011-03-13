@@ -1193,13 +1193,8 @@ function! s:vimim_chinesemode_action(switch)
     let action = ""
     if empty(a:switch)
         call g:vimim_stop()
-        if mode() == 'i'
-            let action = '\<C-O>:redraw\<CR>'
-            if pumvisible()
-                let action = '\<C-E>' . action
-            endif
-        elseif mode() == 'n'
-            :redraw!
+        if mode() == 'n'
+            redraw!
         endif
     else
         sil!call s:vimim_start()
@@ -1547,7 +1542,6 @@ function! <SID>vimim_onekey_pumvisible_hjkl(key)
         elseif a:key =~ "[<>]"
             let hjkl  = '\<C-Y>'
             let hjkl .= s:punctuations[nr2char(char2nr(a:key)-16)]
-            let hjkl .= '\<C-R>=g:vimim_space()\<CR>'
         else
             if a:key == 'h'
                 let s:hjkl_h += 1
@@ -2138,7 +2132,7 @@ function! s:vimim_punctuation_mapping_on()
             inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
         endif
         if empty(s:vimim_backslash_close_pinyin)
-            sil!exe 'inoremap <Bslash> ' . 
+            sil!exe 'inoremap <Bslash> ' .
             \ '<C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . s:evils['\']
         endif
     else
