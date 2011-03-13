@@ -256,6 +256,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_data_directory")
+    call add(G, "g:vimim_onekey_hit_and_run")
     call add(G, "g:vimim_hjkl_directory")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_ctrl_space_to_toggle")
@@ -1155,7 +1156,7 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " =================================================
 " s:chinese_input_mode='onekey'  => (default) OneKey
 " s:chinese_input_mode='dynamic' => (default) dynamic mode
-" s:chinese_input_mode='static'  => OneKey but not hit-and-run
+" s:chinese_input_mode='static'  =>  static chinese input mode
 
 " --------------------------
 function! <SID>ChineseMode()
@@ -1344,6 +1345,7 @@ function! s:vimim_onekey_action(onekey)
         call extend(punctuations, s:evils)
         if has_key(punctuations, byte_before)
             for char in keys(punctuations)
+                " no transfer for punctuation after punctuation
                 if byte_before_before ==# char
                     return " "
                 endif
@@ -4706,6 +4708,9 @@ function! g:vimim()
     if byte_before =~ s:valid_key
         let key  = '\<C-X>\<C-O>'
         let key .= '\<C-R>=g:vimim_menu_select()\<CR>'
+    elseif s:vimim_onekey_hit_and_run > 0
+    \&& s:chinese_input_mode =~ 'onekey'
+        call g:vimim_stop()
     else
         let s:has_pumvisible = 0
     endif
