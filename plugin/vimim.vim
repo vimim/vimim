@@ -253,13 +253,13 @@ function! s:vimim_initialize_global()
 " -----------------------------------
     let G = []
     call add(G, "g:vimim_tab_as_onekey")
+    call add(G, "g:vimim_onekey_hit_and_run")
+    call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_onekey_hit_and_run")
     call add(G, "g:vimim_hjkl_directory")
     call add(G, "g:vimim_chinese_input_mode")
-    call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
@@ -1206,12 +1206,32 @@ function! s:vimim_chinesemode_action(switch)
         if s:chinese_input_mode =~ 'dynamic'
             let s:seamless_positions = getpos(".")
             if s:ui.im =~ 'wubi' || s:ui.im =~ 'erbi'
-                sil!call s:vimim_dynamic_wubi_auto_trigger()
+                " dynamic auto trigger for wubi
+                for char in s:az_list
+                    sil!exe 'inoremap <silent> ' . char .
+                    \ ' <C-R>=g:vimim_wubi_ctrl_e_ctrl_y()<CR>'
+                    \ . char . '<C-R>=g:vimim()<CR>'
+                endfor
             else
-                sil!call s:vimim_dynamic_alphabet_trigger()
+                " dynamic alphabet trigger for all
+                let not_used_valid_keys = "[0-9.']"
+                if s:ui.has_dot == 1
+                    let not_used_valid_keys = "[0-9]"
+                endif
+                for char in s:valid_keys
+                    if char !~# not_used_valid_keys
+                        sil!exe 'inoremap <silent> ' . char .
+                        \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
+                        \ . char . '<C-R>=g:vimim()<CR>'
+                    endif
+                endfor
             endif
         elseif s:chinese_input_mode =~ 'static'
-            sil!call s:vimim_static_alphabet_auto_select()
+            for char in s:Az_list
+                sil!exe 'inoremap <silent> ' . char .
+                \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
+                \ . char . '<C-R>=g:vimim_reset_after_insert()<CR>'
+            endfor
             if pumvisible()
                 " <C-\> does nothing on popup menu
             else
@@ -1231,32 +1251,6 @@ function! s:vimim_static_action(space)
         let space = g:vimim()
     endif
     sil!exe 'sil!return "' . space . '"'
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_static_alphabet_auto_select()
-" ---------------------------------------------
-    for char in s:Az_list
-        sil!exe 'inoremap <silent> ' . char .
-        \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
-        \ . char . '<C-R>=g:vimim_reset_after_insert()<CR>'
-    endfor
-endfunction
-
-" ------------------------------------------
-function! s:vimim_dynamic_alphabet_trigger()
-" ------------------------------------------
-    let not_used_valid_keys = "[0-9.']"
-    if s:ui.has_dot == 1
-        let not_used_valid_keys = "[0-9]"
-    endif
-    for char in s:valid_keys
-        if char !~# not_used_valid_keys
-            sil!exe 'inoremap <silent> ' . char .
-            \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
-            \ . char . '<C-R>=g:vimim()<CR>'
-        endif
-    endfor
 endfunction
 
 " -----------------------------------------------
@@ -2302,16 +2296,6 @@ function! s:vimim_wubi_4char_auto_input(keyboard)
         let s:keyboard_list = [keyboard]
     endif
     return keyboard
-endfunction
-
-" -------------------------------------------
-function! s:vimim_dynamic_wubi_auto_trigger()
-" -------------------------------------------
-    for char in s:az_list
-        sil!exe 'inoremap <silent> ' . char . '
-        \ <C-R>=g:vimim_wubi_ctrl_e_ctrl_y()<CR>'
-        \. char . '<C-R>=g:vimim()<CR>'
-    endfor
 endfunction
 
 " ------------------------------------
@@ -5028,11 +5012,11 @@ function! s:vimim_onekey_mapping_on()
     if !hasmapto('<Plug>VimimOneKey', 'i')
         inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
     endif
-    if s:vimim_tab_as_onekey < 2
-        imap <silent> <C-^> <Plug>VimimOneKey
-    endif
     if s:vimim_tab_as_onekey > 0
         imap <silent> <Tab> <Plug>VimimOneKey
+    endif
+    if s:vimim_tab_as_onekey < 2
+        imap <silent> <C-^> <Plug>VimimOneKey
     endif
     if s:vimim_tab_as_onekey == 2
         xnoremap <silent> <Tab> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
