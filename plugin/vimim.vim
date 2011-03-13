@@ -318,7 +318,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_tab_as_onekey = 2
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
@@ -1183,60 +1183,60 @@ function! <SID>ChineseMode()
         endif
         call s:vimim_set_statusline()
         call s:vimim_build_datafile_cache()
-        let action = s:vimim_chinesemode_action(switch)
+        if empty(switch)
+            call g:vimim_stop()
+            if mode() == 'n'
+                redraw!
+            endif
+        else
+            let action = s:vimim_chinesemode_action()
+        endif
     endif
     sil!exe 'sil!return "' . action . '"'
 endfunction
 
-" ------------------------------------------
-function! s:vimim_chinesemode_action(switch)
-" ------------------------------------------
+" ------------------------------------
+function! s:vimim_chinesemode_action()
+" ------------------------------------
     let action = ""
-    if empty(a:switch)
-        call g:vimim_stop()
-        if mode() == 'n'
-            redraw!
-        endif
-    else
-        sil!call s:vimim_start()
-        if s:vimim_chinese_punctuation > -1
-            let s:chinese_punctuation = s:vimim_chinese_punctuation%2
-            call s:vimim_punctuation_mapping_on()
-        endif
-        if s:chinese_input_mode =~ 'dynamic'
-            let s:seamless_positions = getpos(".")
-            if s:ui.im =~ 'wubi' || s:ui.im =~ 'erbi'
-                " dynamic auto trigger for wubi
-                for char in s:az_list
-                    sil!exe 'inoremap <silent> ' . char .
-                    \ ' <C-R>=g:vimim_wubi_ctrl_e_ctrl_y()<CR>'
-                    \ . char . '<C-R>=g:vimim()<CR>'
-                endfor
-            else
-                " dynamic alphabet trigger for all
-                let not_used_valid_keys = "[0-9.']"
-                if s:ui.has_dot == 1
-                    let not_used_valid_keys = "[0-9]"
-                endif
-                for char in s:valid_keys
-                    if char !~# not_used_valid_keys
-                        sil!exe 'inoremap <silent> ' . char .
-                        \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
-                        \ . char . '<C-R>=g:vimim()<CR>'
-                    endif
-                endfor
-            endif
-        elseif s:chinese_input_mode =~ 'static'
-            for char in s:Az_list
+    sil!call s:vimim_start()
+    if s:vimim_chinese_punctuation > -1
+        let s:chinese_punctuation = s:vimim_chinese_punctuation%2
+        call s:vimim_punctuation_mapping_on()
+    endif
+    if s:chinese_input_mode =~ 'dynamic'
+        let s:seamless_positions = getpos(".")
+        if s:ui.im =~ 'wubi' || s:ui.im =~ 'erbi'
+            " dynamic auto trigger for wubi
+            for char in s:az_list
                 sil!exe 'inoremap <silent> ' . char .
-                \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
-                \ . char . '<C-R>=g:vimim_reset_after_insert()<CR>'
+                \ ' <C-R>=g:vimim_wubi_ctrl_e_ctrl_y()<CR>'
+                \ . char . '<C-R>=g:vimim()<CR>'
             endfor
-            if pumvisible()
-                " <C-\> does nothing on popup menu
-            else
-                let action = s:vimim_static_action("")
+        else
+            " dynamic alphabet trigger for all
+            let not_used_valid_keys = "[0-9.']"
+            if s:ui.has_dot == 1
+                let not_used_valid_keys = "[0-9]"
             endif
+            for char in s:valid_keys
+                if char !~# not_used_valid_keys
+                    sil!exe 'inoremap <silent> ' . char .
+                    \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
+                    \ . char . '<C-R>=g:vimim()<CR>'
+                endif
+            endfor
+        endif
+    elseif s:chinese_input_mode =~ 'static'
+        for char in s:Az_list
+            sil!exe 'inoremap <silent> ' . char .
+            \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
+            \ . char . '<C-R>=g:vimim_reset_after_insert()<CR>'
+        endfor
+        if pumvisible()
+            " <C-\> does nothing on popup menu
+        else
+            let action = s:vimim_static_action("")
         endif
     endif
     sil!exe 'sil!return "' . action . '"'
