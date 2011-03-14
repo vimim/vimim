@@ -242,9 +242,8 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 function! s:vimim_initialize_global()
 " -----------------------------------
     let G = []
-    call add(G, "g:vimim_onekey_is_tab")
+    call add(G, "g:vimim_debug")
     call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_hjkl_directory")
@@ -256,18 +255,19 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_use_cache")
-    call add(G, "g:vimim_debug")
+    call add(G, "g:vimim_digit_4corner")
+    call add(G, "g:vimim_onekey_is_tab")
     " -----------------------------------
     let s:vimimconf = []
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
-    call add(G, "g:vimim_search_next")
-    call add(G, "g:vimim_custom_label")
-    call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_onekey_hit_and_run")
     call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
+    call add(G, "g:vimim_search_next")
+    call add(G, "g:vimim_custom_label")
+    call add(G, "g:vimim_custom_color")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
