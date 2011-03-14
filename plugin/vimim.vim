@@ -11,9 +11,9 @@ let s:url  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let s:url += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
 let s:url += ["http://vimim-data.googlecode.com"]
 let s:url += ["http://groups.google.com/group/vimim"]
+let s:url += ["http://code.google.com/p/vimim/issues/list"]
 let s:url += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
 let s:url += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
-let s:url += ["http://code.google.com/p/vimim/issues/list"]
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
@@ -435,9 +435,9 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "标准字库 " . s:url[1] . " ")
     call add(eggs, "民间词库 " . s:url[2] . " ")
     call add(eggs, "新闻论坛 " . s:url[3] . " ")
-    call add(eggs, "最新主页 " . s:url[4] . " ")
-    call add(eggs, "最新程式 " . s:url[5] . " ")
-    call add(eggs, "错误报告 " . s:url[6] . " ")
+    call add(eggs, "错误报告 " . s:url[4] . " ")
+    call add(eggs, "最新主页 " . s:url[5] . " ")
+    call add(eggs, "最新程式 " . s:url[6] . " ")
     return eggs
 endfunction
 
