@@ -170,7 +170,7 @@ function! s:vimim_chinese(english)
         let chinese = get(s:chinese[key], 0)
         if s:encoding !~ "chinese"
         \&& len(s:chinese[key]) > 1
-        \&& s:vimim_tab_as_onekey < 2
+        \&& s:vimim_onekey_is_tab < 2
             let chinese = get(s:chinese[key], 1)
         endif
     endif
@@ -215,33 +215,23 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_keycode()
 " ------------------------------------
-    let keycode = 0
+    let keycode = "[0-9a-z'.]"
     if empty(s:vimim_shuangpin)
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
     else
         let keycode = s:shuangpin_keycode_chinese.keycode
     endif
-    if empty(keycode)
-        let keycode = "[0-9a-z'.]"
-    endif
     let s:valid_key = copy(keycode)
-    let keycode_real = s:vimim_expand_character_class(keycode)
-    let s:valid_keys = split(keycode_real, '\zs')
-endfunction
-
-" -------------------------------------------------------
-function! s:vimim_expand_character_class(character_class)
-" -------------------------------------------------------
     let character_string = ""
     let i = 0
-    while i < 256
+    while i < 16*16
         let char = nr2char(i)
-        if char =~# a:character_class
+        if char =~# keycode
             let character_string .= char
         endif
         let i += 1
     endwhile
-    return character_string
+    let s:valid_keys = split(character_string, '\zs')
 endfunction
 
 " ============================================= }}}
@@ -252,8 +242,7 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 function! s:vimim_initialize_global()
 " -----------------------------------
     let G = []
-    call add(G, "g:vimim_tab_as_onekey")
-    call add(G, "g:vimim_onekey_hit_and_run")
+    call add(G, "g:vimim_onekey_is_tab")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_data_file")
@@ -276,6 +265,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
+    call add(G, "g:vimim_onekey_hit_and_run")
     call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
     " -----------------------------------
@@ -320,7 +310,8 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory('/home/xma')
         let g:vimim_digit_4corner = 1
-        let g:vimim_tab_as_onekey = 2
+        let g:vimim_onekey_is_tab = 2
+        let g:vimim_onekey_hit_and_run = 1
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
         let g:vimim_data_directory = '/home/vimim/pinyin/'
     endif
@@ -346,7 +337,7 @@ function! s:vimim_for_mom_and_dad()
     else
         return
     endif
-    let s:vimim_tab_as_onekey = 1
+    let s:vimim_onekey_is_tab = 1
     if has("gui_running")
         autocmd! * <buffer>
         autocmd  FocusLost <buffer> sil!wall
@@ -499,7 +490,7 @@ function! s:vimim_egg_vimim()
         let toggle = s:vimim_chinese('auto') . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_CTRL-Space"
-    elseif s:vimim_tab_as_onekey == 2
+    elseif s:vimim_onekey_is_tab == 2
         let toggle = "Tab_as_OneKey_NonStop"
         let im = s:vimim_chinese('onekey') . s:space
         let im .= s:ui.statusline . s:space . "VimIM"
@@ -1092,7 +1083,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
             let new_positions[2] = len(get(split(get(results,-1)),0))+1
             call setpos(".", new_positions)
         endif
-    elseif s:vimim_tab_as_onekey > 0
+    elseif s:vimim_onekey_is_tab > 0
         sil!call s:vimim_numberList()
     endif
 endfunction
@@ -1311,7 +1302,7 @@ function! <SID>OneKey()
     let onekey = ""
     let byte_before = getline(".")[col(".")-2]
     if empty(byte_before) || byte_before =~ '\s'
-        if s:vimim_tab_as_onekey > 0
+        if s:vimim_onekey_is_tab > 0
             let onekey = "\t"
         endif
     else
@@ -2359,7 +2350,7 @@ let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
-    if s:vimim_tab_as_onekey > 1
+    if s:vimim_onekey_is_tab > 1
         return
     endif
     if !exists('s:acp_sid')
@@ -2407,7 +2398,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_plugins_fix_stop()
 " ----------------------------------
-    if s:vimim_tab_as_onekey > 1
+    if s:vimim_onekey_is_tab > 1
         return
     endif
     if !empty(s:acp_sid)
@@ -3432,7 +3423,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if s:vimim_tab_as_onekey > 1
+    if s:vimim_onekey_is_tab > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4890,7 +4881,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_chinesemode_mapping_on()
 " ----------------------------------------
-    if s:vimim_tab_as_onekey < 2
+    if s:vimim_onekey_is_tab < 2
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
             imap <silent> <C-Bslash> <Plug>VimimTrigger
          noremap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
@@ -4912,13 +4903,13 @@ function! s:vimim_onekey_mapping_on()
     if !hasmapto('<Plug>VimimOneKey', 'i')
         inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
     endif
-    if s:vimim_tab_as_onekey > 0
+    if s:vimim_onekey_is_tab > 0
         imap <silent> <Tab> <Plug>VimimOneKey
     endif
-    if s:vimim_tab_as_onekey < 2
+    if s:vimim_onekey_is_tab < 2
         imap <silent> <C-^> <Plug>VimimOneKey
     endif
-    if s:vimim_tab_as_onekey == 2
+    if s:vimim_onekey_is_tab == 2
         xnoremap <silent> <Tab> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     elseif !hasmapto('<C-^>', 'v')
         xnoremap <silent> <C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
