@@ -71,11 +71,11 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_initialize_skin()
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_backend_initialization_once()
-" ---------------------------------------------
-    if empty(s:backend_loaded)
-        let s:backend_loaded = 1
+" ----------------------------------------
+function! s:vimim_backend_initialization()
+" ----------------------------------------
+    if empty(s:backend_loaded_once)
+        let s:backend_loaded_once = 1
     else
         return
     endif
@@ -272,7 +272,7 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
     let g:vimims = []
-    let s:backend_loaded = 0
+    let s:backend_loaded_once = 0
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
@@ -308,7 +308,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -566,7 +566,7 @@ endfunction
 " ---------------------------------------------------
 function! s:vimim_search_chinese_by_english(keyboard)
 " ---------------------------------------------------
-    sil!call s:vimim_backend_initialization_once()
+    sil!call s:vimim_backend_initialization()
     let keyboard = tolower(a:keyboard)
     let cjk_results = []
     let s:english_results = []
@@ -1027,7 +1027,7 @@ function! s:vimim_tranfer_chinese() range abort
 " (1) "quick and dirty" way to transfer Chinese to Chinese
 " (2) 20% of the effort to solve 80% of the problem using one2one mapping
 " ---------------------------------------------
-    sil!call s:vimim_backend_initialization_once()
+    sil!call s:vimim_backend_initialization()
     if empty(s:has_cjk_file)
         " no toggle between simplified and tranditional Chinese
     elseif &encoding == "utf-8"
@@ -1073,7 +1073,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
 " ------------------------------------------
     let range = line("'>") - line("'<")
     if empty(range)
-        sil!call s:vimim_backend_initialization_once()
+        sil!call s:vimim_backend_initialization()
         let results = s:vimim_reverse_lookup(a:keyboard)
         if !empty(results)
             let line = line(".")
@@ -1152,7 +1152,7 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
-    sil!call s:vimim_backend_initialization_once()
+    sil!call s:vimim_backend_initialization()
     sil!call s:vimim_frontend_initialization()
     let s:chinese_input_mode = s:vimim_chinese_input_mode
     let action = ""
@@ -1186,15 +1186,24 @@ function! <SID>ChineseMode()
     sil!exe 'sil!return "' . action . '"'
 endfunction
 
+" ---------------------------------------
+function! <SID>vimim_punctuation_toggle()
+" ---------------------------------------
+    let s:chinese_punctuation = (s:chinese_punctuation+1)%2
+    call s:vimim_set_statusline()
+    call s:vimim_punctuation_mapping()
+    return  ""
+endfunction
+
 " ------------------------------------
 function! s:vimim_chinesemode_action()
 " ------------------------------------
-    let action = ""
-    sil!call s:vimim_start()
+    silent!call s:vimim_start()
     if s:vimim_chinese_punctuation > -1
-        let s:chinese_punctuation = s:vimim_chinese_punctuation%2
-        call s:vimim_punctuation_mapping()
+        inoremap <expr> <C-^> <SID>vimim_punctuation_toggle()
+        silent!call           <SID>vimim_punctuation_toggle()
     endif
+    let action = ""
     if s:chinese_input_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         if s:ui.im =~ 'wubi' || s:ui.im =~ 'erbi'
@@ -1282,24 +1291,13 @@ endfunction
 let s:VimIM += [" ====  OneKey           ==== {{{"]
 " =================================================
 
-" ------------------------------
-function! s:vimim_onekey_start()
-" ------------------------------
-    let s:chinese_input_mode = "onekey"
-    sil!call s:vimim_backend_initialization_once()
-    sil!call s:vimim_frontend_initialization()
-    sil!call s:vimim_onekey_pumvisible_mapping()
-    sil!call s:vimim_onekey_punctuation_mapping()
-    sil!call s:vimim_start()
-endfunction
-
 " ---------------------
 function! <SID>OneKey()
 " ---------------------
 " (1) <OneKey> => start OneKey as "hit and run"
 " (2) <OneKey> => stop  OneKey and print out menu
 " -----------------------------------------------
-    let onekey = ""
+    let onekey = ''
     let byte_before = getline(".")[col(".")-2]
     if empty(byte_before) || byte_before =~ '\s'
         if s:vimim_onekey_is_tab > 0
@@ -1314,6 +1312,17 @@ function! <SID>OneKey()
         endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+" ------------------------------
+function! s:vimim_onekey_start()
+" ------------------------------
+    let s:chinese_input_mode = "onekey"
+    sil!call s:vimim_backend_initialization()
+    sil!call s:vimim_frontend_initialization()
+    sil!call s:vimim_onekey_pumvisible_mapping()
+    sil!call s:vimim_onekey_punctuation_mapping()
+    sil!call s:vimim_start()
 endfunction
 
 " -----------------------------
@@ -1673,7 +1682,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_rotation() range abort
 " --------------------------------------
-    sil!call s:vimim_backend_initialization_once()
+    sil!call s:vimim_backend_initialization()
     let lines = getbufline(bufnr("%"), 1, "$")
     let lines = s:vimim_hjkl_rotation(copy(lines))
     if empty(lines)
@@ -2077,21 +2086,9 @@ function! s:vimim_initialize_frontend_punctuation()
     endfor
 endfunction
 
-" ---------------------------------------
-function! <SID>vimim_toggle_punctuation()
-" ---------------------------------------
-    let s:chinese_punctuation = (s:chinese_punctuation+1)%2
-    call s:vimim_set_statusline()
-    call s:vimim_punctuation_mapping()
-    return  ""
-endfunction
-
 " -------------------------------------
 function! s:vimim_punctuation_mapping()
 " -------------------------------------
-    if s:vimim_chinese_punctuation < 0
-        return ""
-    endif
     if s:chinese_punctuation > 0
         if empty(s:vimim_latex_suite)
             inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
@@ -4867,7 +4864,6 @@ function! s:vimim_helper_mapping_on()
     inoremap <expr> <CR>    <SID>vimim_enter()
     inoremap <expr> <BS>    <SID>vimim_backspace()
     inoremap <expr> <Esc>   <SID>vimim_esc()
-    inoremap <expr> <C-^>   <SID>vimim_toggle_punctuation()
     inoremap <expr> <Space> <SID>vimim_space()
 endfunction
 
