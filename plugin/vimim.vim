@@ -308,7 +308,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -943,83 +943,6 @@ function! s:vimim_get_head(keyboard, partition)
     return head
 endfunction
 
-" ---------------------------------------
-function! s:vimim_cjk_filter_from_cache()
-" ---------------------------------------
-" use 1234567890/qwertyuiop as digit filter
-    call s:vimim_load_cjk_file()
-    let results = s:vimim_cjk_filter_list()
-    if empty(results) && !empty(len(s:hjkl_s))
-        let number_before = strpart(s:hjkl_s,0,len(s:hjkl_s)-1)
-        if len(number_before) > 0
-            let s:hjkl_s = number_before
-            let results = s:vimim_cjk_filter_list()
-        endif
-    endif
-    return results
-endfunction
-
-" ---------------------------------
-function! s:vimim_cjk_filter_list()
-" ---------------------------------
-    let i = 0
-    let foods = []
-    for items in s:popupmenu_list
-        let chinese = s:vimim_cjk_digit_filter(items.word)
-        if empty(chinese)
-            " garbage out
-        else
-            call add(foods, i)
-        endif
-        let i += 1
-    endfor
-    if empty(foods)
-        return []
-    endif
-    let results = []
-    for i in foods
-        let menu = s:popupmenu_list[i].word
-        call add(results, menu)
-    endfor
-    return results
-endfunction
-
-" -----------------------------------------
-function! s:vimim_cjk_digit_filter(chinese)
-" -----------------------------------------
-" smart digital filter: 马力 7712 4002
-"   (1) ma<C-6>         马   => filter with 7712
-"   (2) mali<C-6>       马力 => filter with 7 4002
-" -----------------------------------------
-    let chinese = a:chinese
-    if empty(len(s:hjkl_s)) || empty(chinese)
-        return 0
-    endif
-    let digit_head = ""
-    let digit_tail = ""
-    let words = split(chinese,'\zs')
-    for cjk in words
-        let ddddd = char2nr(cjk)
-        let line = ddddd - 19968
-        if cjk =~ '\w' ||  line < 0 || line > 20902
-            continue
-        else
-            let values = split(s:cjk_lines[line])
-            let column = 1 + s:vimim_digit_4corner
-            let digit = get(values, column)
-            let digit_head .= digit[:0]
-            let digit_tail = digit[1:]
-        endif
-    endfor
-    let number = digit_head . digit_tail
-    let pattern = "^" . s:hjkl_s
-    let matched = match(number, pattern)
-    if matched < 0
-        let chinese = 0
-    endif
-    return chinese
-endfunction
-
 " ---------------------------------------------
 function! s:vimim_tranfer_chinese() range abort
 " ---------------------------------------------
@@ -1442,18 +1365,6 @@ endfunction
 " --------------------------------------
 function! s:vimim_onekey_input(keyboard)
 " --------------------------------------
-    let results = []
-    " [filter] do digital filter within cache memory
-    if s:has_cjk_file > 0
-    \&& len(s:hjkl_s) > 0
-    \&& len(s:popupmenu_list) > 0
-        let results = s:vimim_cjk_filter_from_cache()
-        if empty(results)
-            call g:vimim_reset_after_insert()
-        else
-            return results
-        endif
-    endif
     " [game] turn menu 90 degree for each hjkl_m
     let keyboard = a:keyboard
     let lines = s:vimim_get_hjkl(keyboard)
@@ -1471,6 +1382,7 @@ function! s:vimim_onekey_input(keyboard)
     if keyboard =~ '^\l\+'
         sil!call s:vimim_onekey_english(keyboard, 0)
     endif
+    let results = []
     " [imode] magic i: (1) English number (2) qwerty shortcut
     if keyboard =~# '^i'
         if keyboard =~ '\d'
@@ -1512,6 +1424,149 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  hjkl             ==== {{{"]
 " =================================================
+
+" -----------------------
+function! s:vimim_cache()
+" -----------------------
+    let results = []
+    if s:chinese_input_mode =~ 'onekey'
+        if empty(s:english_results)
+        \&& s:has_cjk_file > 0
+        \&& len(s:hjkl_s) > 0
+        \&& len(s:popupmenu_list) > 0
+            let results = s:vimim_cjk_menu_filter()
+        elseif len(s:matched_list) > 0
+        \&& (s:hjkl_x > 0 || s:hjkl_h > 0 || s:hjkl_l > 0)
+            let results = s:matched_list
+        endif
+    endif
+    if empty(results)
+    \&& s:vimim_custom_label > 0
+    \&& len(s:matched_list) > &pumheight
+    \&& s:pageup_pagedown != 0
+        let results = s:vimim_pageup_pagedown()
+    endif
+    return results
+endfunction
+
+" ---------------------------------
+function! s:vimim_pageup_pagedown()
+" ---------------------------------
+    let matched_list = s:matched_list
+    let length = len(matched_list)
+    let first_page = &pumheight - 1
+    if s:vimim_loop_pageup_pagedown > 0
+        if first_page < 1
+            let first_page = 9
+        endif
+        let shift = s:pageup_pagedown * first_page
+        if length > first_page
+            let partition = shift
+            if shift < 0
+                let partition = length + shift
+            endif
+            let A = matched_list[: partition-1]
+            let B = matched_list[partition :]
+            let matched_list = B + A
+        endif
+    else
+        let page = s:pageup_pagedown * &pumheight
+        if page < 0
+            " no more PageUp after the first page
+            let s:pageup_pagedown += 1
+            let matched_list = matched_list[0 : first_page]
+        elseif page >= length
+            " no more PageDown after the last page
+            let s:pageup_pagedown -= 1
+            let last_page = length / &pumheight
+            if empty(length % &pumheight)
+                let last_page -= 1
+            endif
+            let last_page = last_page * &pumheight
+            let matched_list = matched_list[last_page :]
+        else
+            let matched_list = matched_list[page :]
+        endif
+    endif
+    return matched_list
+endfunction
+
+" ---------------------------------
+function! s:vimim_cjk_menu_filter()
+" ---------------------------------
+" use 1234567890/qwertyuiop as digit filter
+    call s:vimim_load_cjk_file()
+    let results = s:vimim_cjk_filter_list()
+    if empty(results) && !empty(len(s:hjkl_s))
+        let number_before = strpart(s:hjkl_s,0,len(s:hjkl_s)-1)
+        if len(number_before) > 0
+            let s:hjkl_s = number_before
+            let results = s:vimim_cjk_filter_list()
+        endif
+    endif
+    return results
+endfunction
+
+" ---------------------------------
+function! s:vimim_cjk_filter_list()
+" ---------------------------------
+    let i = 0
+    let foods = []
+    for items in s:popupmenu_list
+        let chinese = s:vimim_cjk_digit_filter(items.word)
+        if empty(chinese)
+            " garbage out
+        else
+            call add(foods, i)
+        endif
+        let i += 1
+    endfor
+    if empty(foods)
+        return []
+    endif
+    let results = []
+    for i in foods
+        let menu = s:popupmenu_list[i].word
+        call add(results, menu)
+    endfor
+    return results
+endfunction
+
+" -----------------------------------------
+function! s:vimim_cjk_digit_filter(chinese)
+" -----------------------------------------
+" smart digital filter: 马力 7712 4002
+"   (1) ma<C-6>         马   => filter with 7712
+"   (2) mali<C-6>       马力 => filter with 7 4002
+" -----------------------------------------
+    let chinese = a:chinese
+    if empty(len(s:hjkl_s)) || empty(chinese)
+        return 0
+    endif
+    let digit_head = ""
+    let digit_tail = ""
+    let words = split(chinese,'\zs')
+    for cjk in words
+        let ddddd = char2nr(cjk)
+        let line = ddddd - 19968
+        if cjk =~ '\w' ||  line < 0 || line > 20902
+            continue
+        else
+            let values = split(s:cjk_lines[line])
+            let column = 1 + s:vimim_digit_4corner
+            let digit = get(values, column)
+            let digit_head .= digit[:0]
+            let digit_tail = digit[1:]
+        endif
+    endfor
+    let number = digit_head . digit_tail
+    let pattern = "^" . s:hjkl_s
+    let matched = match(number, pattern)
+    if matched < 0
+        let chinese = 0
+    endif
+    return chinese
+endfunction
 
 " -------------------------------------------
 function! s:vimim_onekey_pumvisible_mapping()
@@ -2665,28 +2720,35 @@ endfunction
 " --------------------------
 function! <SID>vimim_enter()
 " --------------------------
-" (1) single <Enter> ==> seamless
-" (2) double <Enter> ==> <Space>
-" (3) triple <Enter> ==> <Enter>
-" --------------------------------
+    let byte_before = getline(".")[col(".")-2]
+    " <Enter> triple play for OneKey and static mode:
+    "  (1) single <Enter> ==> seamless
+    "  (2) double <Enter> ==> <Space>
+    "  (3) triple <Enter> ==> <Enter>
+    if byte_before =~ '\S'
+        let s:smart_enter += 1
+    endif
+    " <Enter> double play in dynamic mode:
+    "  (1) after English (valid keys)    => Seamless
+    "  (2) after Chinese or double Enter => Enter
+    if s:chinese_input_mode =~ 'dynamic'
+        if byte_before =~ s:valid_key
+            let s:smart_enter = 1
+        else
+            let s:smart_enter = 3
+        endif
+    endif
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
-    endif
-    let byte_before = getline(".")[col(".")-2]
-    if byte_before =~ '\S'
-        let s:smart_enter += 1
-    else
-        let key .= "\<CR>"
     endif
     if s:smart_enter == 1
         " the first <Enter> does seamless
         let s:seamless_positions = getpos(".")
     else
+        let key = "\<CR>"
         if s:smart_enter == 2
-            let key = " "   " the 2nd <Enter> becomes <Space>
-        else
-            let key = "\<CR>"
+            let key = " "
         endif
         let s:smart_enter = 0
     endif
@@ -2699,11 +2761,6 @@ function! s:vimim_popupmenu_list(matched_list)
     let lines = a:matched_list
     if empty(lines)
         return []
-    endif
-    if s:vimim_custom_label > 0
-    \&& s:pageup_pagedown != 0
-    \&& len(lines) > &pumheight
-        let lines = s:vimim_pageup_pagedown(lines)
     endif
     let keyboard = join(s:keyboard_list,"")
     if s:hjkl_n > 0 && s:hjkl_n%2 > 0
@@ -2768,6 +2825,9 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:chinese_input_mode =~ 'onekey'
         let s:popupmenu_list = popupmenu_list
     endif
+    if empty(s:matched_list)
+        let s:matched_list = a:matched_list
+    endif
     return popupmenu_list
 endfunction
 
@@ -2800,48 +2860,6 @@ function! s:vimim_get_labeling(label)
         let labeling = printf(fmt, labeling)
     endif
     return labeling
-endfunction
-
-" ---------------------------------------------
-function! s:vimim_pageup_pagedown(matched_list)
-" ---------------------------------------------
-    let matched_list = a:matched_list
-    let length = len(matched_list)
-    let first_page = &pumheight - 1
-    if s:vimim_loop_pageup_pagedown > 0
-        if first_page < 1
-            let first_page = 9
-        endif
-        let shift = s:pageup_pagedown * first_page
-        if length > first_page
-            let partition = shift
-            if shift < 0
-                let partition = length + shift
-            endif
-            let A = matched_list[: partition-1]
-            let B = matched_list[partition :]
-            let matched_list = B + A
-        endif
-    else
-        let page = s:pageup_pagedown * &pumheight
-        if page < 0
-            " no more PageUp after the first page
-            let s:pageup_pagedown += 1
-            let matched_list = matched_list[0 : first_page]
-        elseif page >= length
-            " no more PageDown after the last page
-            let s:pageup_pagedown -= 1
-            let last_page = length / &pumheight
-            if empty(length % &pumheight)
-                let last_page -= 1
-            endif
-            let last_page = last_page * &pumheight
-            let matched_list = matched_list[last_page :]
-        else
-            let matched_list = matched_list[page :]
-        endif
-    endif
-    return matched_list
 endfunction
 
 " ============================================= }}}
@@ -4551,25 +4569,27 @@ endfunction
 " ---------------------------------------
 function! s:vimim_reset_before_anything()
 " ---------------------------------------
-    let s:hjkl_h = 0
-    let s:hjkl_l = 0
-    let s:hjkl_m = 0
-    let s:hjkl_n = 0
     let s:smart_enter = 0
     let s:show_me_not = 0
     let s:has_pumvisible = 0
-    let s:keyboard_list  = []
+    let s:matched_list = []
     let s:popupmenu_list = []
+    let s:keyboard_list  = []
     let s:seamless_positions = []
 endfunction
 
 " ------------------------------------
 function! g:vimim_reset_after_insert()
 " ------------------------------------
-    let s:hjkl_s = ""
+    let s:hjkl_m = 0
+    let s:hjkl_n = 0
+    let s:hjkl_h = 0
+    let s:hjkl_l = 0
     let s:hjkl_x = 0
-    let s:has_no_internet = 0
+    let s:hjkl_s = ""
+    let s:matched_list = []
     let s:pageup_pagedown = 0
+    let s:has_no_internet = 0
     return ""
 endfunction
 
@@ -4747,9 +4767,14 @@ else
 
     let s:show_me_not = 0
     let s:smart_enter = 0
-    let results = []
     let s:english_results = []
     let keyboard = a:keyboard
+
+    " [cache] less is more
+    let results = s:vimim_cache()
+    if !empty(results)
+        return s:vimim_popupmenu_list(results)
+    endif
 
     " [/grep] slash grep to search cjk
     if s:has_slash_grep > 0
