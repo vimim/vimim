@@ -1006,19 +1006,11 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
             call setpos(".", new_positions)
         endif
     elseif s:vimim_onekey_is_tab > 0
-        sil!call s:vimim_numberList()
+        sil!call s:vimim_onekey_start()
+        let s:hjkl_h = 1
+        execute 'let keys = ":*d\<CR>O.\<C-R>=g:vimim()\<CR>"'
+        call feedkeys(keys)
     endif
-endfunction
-
-" ----------------------------------------
-function! s:vimim_numberList() range abort
-" ----------------------------------------
-    let a=line("'<")|let z=line("'>")|let x=z-a+1|let pre=' '
-    while (a<=z)
-        if match(x,'^9*$')==0|let pre=pre . ' '|endif
-        call setline(z, pre . x . "\t" . getline(z))
-        let z=z-1|let x=x-1
-    endwhile
 endfunction
 
 " ---------------------------------------
@@ -1270,7 +1262,9 @@ function! s:vimim_onekey_action(onekey)
     let current_line = getline(".")
     let byte_before = current_line[col(".")-2]
     let byte_before_before = current_line[col(".")-3]
-    if byte_before_before !~# "[0-9A-z]" && empty(s:ui.has_dot)
+    if empty(s:ui.has_dot)
+    \&& !empty(byte_before_before)
+    \&& byte_before_before !~# "[0-9A-z]"
         let punctuations = s:punctuations
         call extend(punctuations, s:evils)
         if has_key(punctuations, byte_before)
@@ -1360,7 +1354,7 @@ function! s:vimim_onekey_input(keyboard)
     let keyboard = a:keyboard
     let lines = s:vimim_get_hjkl(keyboard)
     if !empty(lines)
-        if s:hjkl_m > 0 && s:hjkl_m%4 > 0
+        if s:hjkl_m % 4 > 0
             for i in range(s:hjkl_m%4)
                 let lines = s:vimim_hjkl_rotation(lines)
             endfor
@@ -1652,7 +1646,9 @@ function! s:vimim_get_hjkl(keyboard)
         let s:show_me_not = 1
         return lines
     endif
-    if keyboard ==# "hjkl"
+    if keyboard ==# "."
+        let lines = split(@",'\n')
+    elseif keyboard ==# "hjkl"
         let lines = getline(1, "$")
     elseif keyboard ==# "hjklk"
         let lines = getline(1, ".")
@@ -2749,19 +2745,20 @@ function! s:vimim_popupmenu_list(matched_list)
     if empty(lines)
         return []
     endif
+    let tail = 0
+    let label = 1
+    let extra_text = ""
+    let popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
-    if s:hjkl_n > 0 && s:hjkl_n%2 > 0
+    if s:hjkl_n % 2 > 0
         if s:show_me_not > 0
             let lines = reverse(copy(lines))
+            let label = len(lines)
         elseif s:ui.im == 'pinyin'
             let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
         endif
     endif
     let keyboard_head = get(s:keyboard_list,0)
-    let tail = 0
-    let label = 1
-    let extra_text = ""
-    let popupmenu_list = []
     let first_in_list = get(a:matched_list,0)
     for chinese in lines
         let complete_items = {}
@@ -2799,12 +2796,16 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:show_me_not > 0
             let complete_items["dup"] = 1
         endif
-        if s:vimim_custom_label > 0
+        if s:vimim_custom_label > 0 && len(lines) > 1
             let labeling = s:vimim_get_labeling(label)
             if !empty(labeling)
                 let complete_items["abbr"] = labeling . chinese
             endif
-            let label += 1
+            if s:hjkl_n % 2 > 0 && s:show_me_not > 0
+                let label -= 1
+            else
+                let label += 1
+            endif
         endif
         if !empty(extra_text)
             let complete_items["menu"] = extra_text
