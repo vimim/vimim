@@ -1674,7 +1674,6 @@ function! s:vimim_get_hjkl(keyboard)
     if empty(lines)
         return []
     else
-        call add(lines,'')
         let s:show_me_not = 1
     endif
     return lines
@@ -1705,7 +1704,7 @@ function! s:vimim_hjkl_rotation(matched_list)
         let line .= spaces
         call add(results, line)
     endfor
-    let rotations = ['']
+    let rotations = []
     for i in range(max/multibyte)
         let column = ''
         for line in reverse(copy(results))
@@ -2766,6 +2765,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let popupmenu_list = []
     let first_in_list = get(a:matched_list,0)
     for chinese in lines
+        let complete_items = {}
         if first_in_list =~ '\s' && s:show_me_not < 1
             let pairs = split(chinese)
             if len(pairs) < 2
@@ -2797,7 +2797,9 @@ function! s:vimim_popupmenu_list(matched_list)
         if empty(chinese)
             let chinese = s:space
         endif
-        let complete_items = {}
+        if s:show_me_not > 0
+            let complete_items["dup"] = 1
+        endif
         if s:vimim_custom_label > 0
             let labeling = s:vimim_get_labeling(label)
             if !empty(labeling)
@@ -2809,9 +2811,6 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["menu"] = extra_text
         endif
         let complete_items["word"] = chinese
-        if s:show_me_not > 0
-            let complete_items["dup"] = 1
-        endif
         call add(popupmenu_list, complete_items)
     endfor
     if s:chinese_input_mode =~ 'onekey'
