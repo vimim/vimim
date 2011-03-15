@@ -408,8 +408,7 @@ endfunction
 " -------------------------------
 function! s:vimim_egg_vimimpoem()
 " -------------------------------
-    let eggs = [""]
-    let eggs += ["白日依山尽"]
+    let eggs  = ["白日依山尽"]
     let eggs += ["黄河入海流"]
     let eggs += ["欲穷千里目"]
     let eggs += ["更上一层楼"]
