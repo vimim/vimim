@@ -126,7 +126,7 @@ function! s:vimim_initialize_session()
     let s:valid_keys = s:az_list
     let s:abcd = "'abcdvfgz"
     let s:qwerty = split('pqwertyuio','\zs')
-    let s:chinese_punctuation = (s:vimim_chinese_punctuation+1)%2
+    let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let s:chinese_mode_switch = 0
 endfunction
 
@@ -150,11 +150,11 @@ endfunction
 function! s:vimim_one_backend_hash()
 " ----------------------------------
     let one_backend_hash = {}
-    let one_backend_hash.root = 0
-    let one_backend_hash.im = 0
-    let one_backend_hash.name = 0
-    let one_backend_hash.chinese = 0
-    let one_backend_hash.directory = 0
+    let one_backend_hash.root = ''
+    let one_backend_hash.im = ''
+    let one_backend_hash.name = ''
+    let one_backend_hash.chinese = ''
+    let one_backend_hash.directory = ''
     let one_backend_hash.lines = []
     let one_backend_hash.cache = {}
     let one_backend_hash.keycode = "[0-9a-z'.]"
@@ -507,6 +507,8 @@ function! s:vimim_egg_vimim()
         let ciku = database . s:vimim_chinese('english') . database
         call add(eggs, ciku . s:english_file)
     endif
+let g:gxy=s:ui.frontends
+"let g:gxy=[['cloud', 'sogou'], ['datafile', 'pinyin']]
     if len(s:ui.frontends) > 0
         for frontend in s:ui.frontends
             let ui_root = get(frontend, 0)
@@ -1076,35 +1078,29 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 function! <SID>ChineseMode()
 " --------------------------
     sil!call s:vimim_backend_initialization()
-    sil!call s:vimim_frontend_initialization()
+    if empty(s:ui.frontends)
+        return
+    endif
+let g:gu1=s:ui.root
+let g:gu2=s:ui.im
+let g:gu=s:ui.frontends
+    let s:chinese_mode_switch += 1
     let s:chinese_input_mode = s:vimim_chinese_input_mode
+    let total = len(s:ui.frontends) + 1
+    let cycle = s:chinese_mode_switch % total
+    let switch = get(s:ui.frontends, cycle-1)
     let action = ""
-    if !empty(s:ui.root) && !empty(s:ui.im)
-        let s:chinese_mode_switch += 1
-        let switch = 0
-        if s:ui.root == 'cloud'
-            let switch = s:chinese_mode_switch % 2
-        else
-            let cycle = len(s:ui.frontends) + 1
-            let switch = s:chinese_mode_switch % cycle
-            let ui = get(s:ui.frontends, switch-1)
-            if empty(ui)
-                let switch = 0
-            else
-                let s:ui.root = get(ui,0)
-                let s:ui.im = get(ui,1)
-            endif
+    if empty(cycle)
+        call g:vimim_stop()
+        if mode() == 'n'
+            redraw!
         endif
+    else
+        let s:ui.root = get(switch,0)
+        let s:ui.im = get(switch,1)
         call s:vimim_set_statusline()
         call s:vimim_build_datafile_cache()
-        if empty(switch)
-            call g:vimim_stop()
-            if mode() == 'n'
-                redraw!
-            endif
-        else
-            let action = s:vimim_chinesemode_action()
-        endif
+        let action = s:vimim_chinesemode_action()
     endif
     sil!exe 'sil!return "' . action . '"'
 endfunction
@@ -1122,9 +1118,10 @@ endfunction
 function! s:vimim_chinesemode_action()
 " ------------------------------------
     silent!call s:vimim_start()
+    sil!call s:vimim_frontend_initialization()
     if s:vimim_chinese_punctuation > -1
         inoremap <expr> <C-^> <SID>vimim_punctuation_toggle()
-        silent!call           <SID>vimim_punctuation_toggle()
+        call s:vimim_punctuation_mapping()
     endif
     let action = ""
     if s:chinese_input_mode =~ 'dynamic'
@@ -1430,15 +1427,11 @@ function! s:vimim_cache()
 " -----------------------
     let results = []
     if s:chinese_input_mode =~ 'onekey'
-        if empty(s:english_results)
-        \&& s:has_cjk_file > 0
-        \&& len(s:hjkl_s) > 0
-        \&& len(s:popupmenu_list) > 0
-            let results = s:vimim_cjk_menu_filter()
-        elseif len(s:matched_list) > 0
-        \&& (s:hjkl_x > 0 || s:hjkl_h > 0 || s:hjkl_l > 0)
-            let results = s:matched_list
-        endif
+    \&& empty(s:english_results)
+    \&& s:has_cjk_file > 0
+    \&& len(s:hjkl_s) > 0
+    \&& len(s:popupmenu_list) > 0
+        let results = s:vimim_cjk_menu_filter()
     endif
     if empty(results)
     \&& s:vimim_custom_label > 0
@@ -1975,9 +1968,10 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['purple']      = ['紫光']
     let s:chinese['plusplus']    = ['加加']
     let s:chinese['flypy']       = ['小鹤','小鶴']
+    let s:chinese['onekey']      = ['点石成金','點石成金']
     let s:chinese['cloudatwill'] = ['想云就云','想雲就雲']
     let s:chinese['mycloud']     = ['自己的云','自己的雲']
-    let s:chinese['onekey']      = ['点石成金','點石成金']
+    let s:chinese['cloud']       = ['云','雲']
     let s:chinese['quick']       = ['速成']
     let s:chinese['phonetic']    = ['注音']
     let s:chinese['array30']     = ['行列']
@@ -2532,9 +2526,9 @@ function! s:vimim_statusline()
         endif
         return s:vimim_get_chinese_im()
     endif
-    if s:vimim_cloud_sogou == 1
+    if s:vimim_cloud_sogou == 1 && s:ui.im == 'sogou'
         let s:ui.statusline = s:backend.cloud.sogou.chinese
-    elseif s:vimim_cloud_sogou == -777
+    elseif s:vimim_cloud_sogou == -777 && s:ui.im == 'mycloud'
         if !empty(s:mycloud_plugin)
             let __getname = s:backend.cloud.mycloud.directory
             let s:ui.statusline .= s:space . __getname
@@ -3469,6 +3463,14 @@ function! s:vimim_set_datafile(im, datafile)
     \|| isdirectory(datafile)
         return
     endif
+    " --------------------------------------
+    if im =~# 'sogou'
+        let s:vimim_cloud_sogou = 1
+        return s:vimim_set_sogou()
+    elseif im =~# 'mycloud'
+        return s:vimim_do_force_mycloud()
+    endif
+    " --------------------------------------
     let s:ui.root = "datafile"
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
@@ -3806,7 +3808,7 @@ function! s:vimim_set_directory(im, dir)
     endif
     let s:ui.root = "directory"
     let s:ui.im = im
-    call add(s:ui.frontends, [s:ui.root, s:ui.im])
+    call insert(s:ui.frontends, [s:ui.root, s:ui.im])
     if empty(s:backend.directory)
         let s:backend.directory[im] = s:vimim_one_backend_hash()
         let s:backend.directory[im].root = "directory"
@@ -3923,17 +3925,15 @@ function! s:vimim_set_sogou()
 " ---------------------------
     " s:vimim_cloud_sogou=0  : default, auto open when no datafile
     " s:vimim_cloud_sogou=-1 : cloud is shut down without condition
-    if s:ui.root == "cloud" && s:ui.im == "sogou"
-        return
-    endif
     let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
     if empty(cloud)
         let s:vimim_cloud_sogou = 0
         let s:backend.cloud = {}
     else
+        let s:mycloud_plugin = 0
         let s:ui.root = "cloud"
         let s:ui.im = "sogou"
-        let s:mycloud_plugin = 0
+        call insert(s:ui.frontends, [s:ui.root, s:ui.im])
     endif
 endfunction
 
@@ -4067,35 +4067,36 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
         endif
     endif
     let keyboard = a:keyboard
-    if keyboard =~ "[^a-z]"
-    \|| s:vimim_cloud_sogou < 1
-    \|| s:has_no_internet > 1
+    if s:vimim_cloud_sogou < 1
         return 0
     endif
-    if s:has_no_internet < 0
-    \|| s:vimim_cloud_sogou == 1
-    \|| get(a:clouds, 1) > 0
+    if keyboard =~ "[^a-z]" || s:has_no_internet > 1
+        return 0
+    endif
+    if s:has_no_internet < 0 || get(a:clouds, 1) > 0
         return 1
     endif
-    let threshold_to_trigger_cloud = len(keyboard)
+    if s:vimim_cloud_sogou == 1 && s:ui.im == 'sogou'
+        return 1
+    endif
     if s:chinese_input_mode !~ 'dynamic' && s:ui.im == 'pinyin'
+        " threshold to trigger cloud automatically
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        let threshold_to_trigger_cloud = len(pinyins)
+        if len(pinyins) > s:vimim_cloud_sogou
+            return 1
+        endif
     endif
-    if threshold_to_trigger_cloud < s:vimim_cloud_sogou
-        return 0
-    endif
-    return 1
+    return 0
 endfunction
 
 " ------------------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard, force)
 " ------------------------------------------------
     let keyboard = a:keyboard
-    if empty(keyboard)
-    \|| keyboard =~# '\L'
-    \|| empty(s:www_executable)
-    \|| (s:vimim_cloud_sogou < 1 && a:force < 1)
+    if  keyboard =~# '\L' || empty(s:www_executable)
+        return []
+    endif
+    if s:vimim_cloud_sogou < 1 && a:force < 1
         return []
     endif
     let sogou_key = 'http://web.pinyin.sogou.com/web_ime/patch.php'
@@ -4201,6 +4202,7 @@ function! s:vimim_set_mycloud()
     else
         let s:ui.root = "cloud"
         let s:ui.im = "mycloud"
+        call insert(s:ui.frontends, [s:ui.root, s:ui.im])
     endif
 endfunction
 
@@ -4827,6 +4829,9 @@ else
 
     " [sogou] to make cloud come true for woyouyigemeng
     let cloud = s:vimim_to_cloud_or_not(keyboard, clouds)
+let g:gggg7= cloud
+let g:gggg8= clouds
+let g:gggg9= keyboard
     if cloud > 0
         let results = s:vimim_get_cloud_sogou(keyboard, cloud)
         if empty(len(results))
