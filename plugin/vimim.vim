@@ -507,8 +507,6 @@ function! s:vimim_egg_vimim()
         let ciku = database . s:vimim_chinese('english') . database
         call add(eggs, ciku . s:english_file)
     endif
-let g:gxy=s:ui.frontends
-"let g:gxy=[['cloud', 'sogou'], ['datafile', 'pinyin']]
     if len(s:ui.frontends) > 0
         for frontend in s:ui.frontends
             let ui_root = get(frontend, 0)
@@ -518,7 +516,7 @@ let g:gxy=s:ui.frontends
             call add(eggs, ciku . datafile)
         endfor
     endif
-    if !empty(im)
+    if len(im) > 0 && len(s:ui.frontends) < 2
         let option = s:vimim_chinese('input') . s:colon . im
         call add(eggs, option)
     endif
@@ -1081,9 +1079,6 @@ function! <SID>ChineseMode()
     if empty(s:ui.frontends)
         return
     endif
-let g:gu1=s:ui.root
-let g:gu2=s:ui.im
-let g:gu=s:ui.frontends
     let s:chinese_mode_switch += 1
     let s:chinese_input_mode = s:vimim_chinese_input_mode
     let total = len(s:ui.frontends) + 1
@@ -4829,9 +4824,6 @@ else
 
     " [sogou] to make cloud come true for woyouyigemeng
     let cloud = s:vimim_to_cloud_or_not(keyboard, clouds)
-let g:gggg7= cloud
-let g:gggg8= clouds
-let g:gggg9= keyboard
     if cloud > 0
         let results = s:vimim_get_cloud_sogou(keyboard, cloud)
         if empty(len(results))
