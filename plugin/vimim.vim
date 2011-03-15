@@ -1642,15 +1642,15 @@ endfunction
 function! s:vimim_get_hjkl(keyboard)
 " ----------------------------------
     let keyboard = a:keyboard
+    " [unicode] support direct unicode/gb/big5 input
+    let lines = s:vimim_get_unicode_list(keyboard)
+    if !empty(lines)
+        return lines
+    endif
     " [eggs] hunt classic easter egg ... vim<C-6>
     let lines = s:vimim_easter_chicken(keyboard)
     if !empty(lines)
         let s:show_me_not = 1
-        return lines
-    endif
-    " [unicode] support direct unicode/gb/big5 input
-    let lines = s:vimim_get_unicode_list(keyboard)
-    if !empty(lines)
         return lines
     endif
     if keyboard ==# "hjkl"
@@ -2809,6 +2809,9 @@ function! s:vimim_popupmenu_list(matched_list)
             let complete_items["menu"] = extra_text
         endif
         let complete_items["word"] = chinese
+        if s:show_me_not > 0
+            let complete_items["dup"] = 1
+        endif
         call add(popupmenu_list, complete_items)
     endfor
     if s:chinese_input_mode =~ 'onekey'
@@ -3844,7 +3847,7 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_get_from_directory(keyboard, dir)
 " -------------------------------------------------
-    if empty(a:dir) || empty(a:keyboard)
+    if empty(a:keyboard) || empty(a:dir)
         return []
     endif
     let results = []
