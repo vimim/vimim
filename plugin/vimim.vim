@@ -1038,25 +1038,28 @@ function! s:vimim_cache()
 " -----------------------
     let results = []
     if s:chinese_input_mode =~ 'onekey'
-    \&& len(s:popupmenu_list) > 0
-    \&& empty(s:english_results)
-    \&& s:has_cjk_file > 0
-    \&& len(s:hjkl_s) > 0
-        let results = s:vimim_cjk_menu_filter()
+        if len(s:popupmenu_list) > 0
+        \&& empty(s:english_results)
+        \&& s:has_cjk_file > 0
+        \&& len(s:hjkl_s) > 0
+            let results = s:vimim_cjk_menu_filter()
+        endif
+        if s:hjkl_l > 0
+        \&& len(s:matched_list) > &pumheight
+            let &pumheight = 0
+            if s:hjkl_l % 2 < 1
+                let &pumheight = s:saved_pumheights[1]
+            endif
+            if s:has_gnuplot > 0
+                let results = s:matched_list
+            endif
+        endif
     endif
     if empty(results)
     \&& s:vimim_custom_label > 0
     \&& len(s:matched_list) > &pumheight
     \&& s:pageup_pagedown != 0
         let results = s:vimim_pageup_pagedown()
-    elseif s:hjkl_l > 0
-    \&& s:chinese_input_mode =~ 'onekey'
-    \&& len(s:matched_list) > &pumheight
-        let &pumheight = 0
-        if s:hjkl_l % 2 < 1
-            let &pumheight = s:saved_pumheights[1]
-        endif
-        let results = s:matched_list
     endif
     return results
 endfunction
