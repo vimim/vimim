@@ -100,7 +100,6 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
-    let s:has_gnuplot = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
     let s:www_libcall = 0
@@ -801,8 +800,8 @@ function! <SID>OneKey()
 " (1) <OneKey> => start OneKey as "hit and run"
 " (2) <OneKey> => stop  OneKey and print out menu
 " -----------------------------------------------
-    let onekey = ''
     let byte_before = getline(".")[col(".")-2]
+    let onekey = ''
     if empty(byte_before) || byte_before =~ '\s'
         if s:vimim_onekey_is_tab > 0
             let onekey = "\t"
@@ -853,13 +852,41 @@ function! g:vimim_onekey_dump()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
+" ---------------------------------
+function! s:vimim_gnuplot(keyboard)
+" ---------------------------------
+    let results = []
+    let dumb = "set terminal dumb;"
+    let gnuplot = "gnuplot -e '" . dumb . a:keyboard . "'"
+    try
+        let results = split(system(gnuplot),'\n')
+    catch
+        let results = []
+        call s:debugs('gnuplot::', v:exception)
+    endtry
+    if !empty(results)
+        let &pumheight = 0
+        let s:hjkl_l = 1
+        let s:show_me_not = 1
+        let results = results[1 : len(results)-1]
+    endif
+    return results
+endfunction
+
 " -------------------------------------
 function! s:vimim_onekey_action(onekey)
 " -------------------------------------
-    let onekey = ""
     let current_line = getline(".")
+    let gnuplot = '^\s*' . 'plot' . '\s\+'
+    let gnuplot = match(current_line, gnuplot)
+    if empty(gnuplot) && executable('gnuplot')
+        " [gnuplot] usage:  plot sin(x)<C-6>
+        let s:has_gnuplot = 1
+        sil!exe 'sil!return "' . g:vimim() . '"'
+    endif
     let byte_before = current_line[col(".")-2]
     let byte_before_before = current_line[col(".")-3]
+    let onekey = ""
     if empty(s:ui.has_dot)
     \&& !empty(byte_before_before)
     \&& byte_before_before !~# "[0-9A-z]"
@@ -4560,6 +4587,7 @@ endfunction
 " ---------------------------------------
 function! s:vimim_reset_before_anything()
 " ---------------------------------------
+    let s:has_gnuplot = 0
     let s:has_pumvisible = 0
     let s:matched_list = []
     let s:popupmenu_list = []
@@ -4596,7 +4624,7 @@ function! g:vimim()
     let key = ""
     let s:keyboard_list = []
     let byte_before = getline(".")[col(".")-2]
-    if byte_before =~ s:valid_key
+    if byte_before =~ s:valid_key || s:has_gnuplot > 0
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
     elseif s:vimim_onekey_hit_and_run > 0
     \&& s:chinese_input_mode =~ 'onekey'
@@ -4692,21 +4720,15 @@ function! VimIM(start, keyboard)
 " ------------------------------
 if a:start
 
+    if s:has_gnuplot > 0
+        return 0
+    endif
+
     let current_positions = getpos(".")
-    let start_column = current_positions[2]-1
     let start_row = current_positions[1]
+    let start_column = current_positions[2]-1
     let current_line = getline(start_row)
     let byte_before = current_line[start_column-1]
-
-    " [gnuplot] state-of-the-art math picture
-    if s:chinese_input_mode =~ 'onekey'
-        let s:has_gnuplot = 0
-        let matched = match(current_line, "^plot ")
-        if empty(matched)
-            let s:has_gnuplot = 1
-            return 0
-        endif
-    endif
 
     " take care of seamless English/Chinese input
     let seamless_column = s:vimim_get_seamless(current_positions)
@@ -4758,19 +4780,16 @@ else
         return s:vimim_popupmenu_list(results)
     endif
 
-    " [init] early start, half done
+    " [initialization] early start, half done
     let keyboard = a:keyboard
     call s:vimim_reset_before_omni()
 
-    " [gnuplot] run gnuplot and get the results
-    if s:has_gnuplot > 0 && executable('gnuplot')
-        let gnuplot = 'gnuplot -e "' . keyboard . '"'
-        let results = split(system(gnuplot),"\n")
-        let &pumheight = 0
-        let s:hjkl_l = 1
-        let s:show_me_not = 1
-        let results = results[1 : len(results)-1]
-        return s:vimim_popupmenu_list(results)
+    " [gnuplot] show the state-of-the-art math picture
+    if s:has_gnuplot > 0
+        let results = s:vimim_gnuplot(keyboard)
+        if !empty(results)
+            return s:vimim_popupmenu_list(results)
+        endif
     endif
 
     " [validation] user keyboard input validation
