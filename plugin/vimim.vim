@@ -887,9 +887,7 @@ function! s:vimim_onekey_action(onekey)
     let byte_before = current_line[col(".")-2]
     let byte_before_before = current_line[col(".")-3]
     let onekey = ""
-    if empty(s:ui.has_dot)
-    \&& !empty(byte_before_before)
-    \&& byte_before_before !~# "[0-9A-z]"
+    if empty(s:ui.has_dot) && byte_before_before !~# "[0-9A-z]"
         let punctuations = s:punctuations
         call extend(punctuations, s:evils)
         if has_key(punctuations, byte_before)
@@ -1275,14 +1273,12 @@ function! s:vimim_get_hjkl(keyboard)
         let s:show_me_not = 1
         return lines
     endif
-    if keyboard ==# "."  && col(".") == 1
+    if keyboard ==# "hjkl"
         let lines = split(getreg('"'),'\n')
-    elseif keyboard ==# "hjkl"
-        let lines = getline(1, "$")
-    elseif keyboard ==# "hjklk"
-        let lines = getline(1, ".")
     elseif keyboard ==# "hjklj"
         let lines = getline(".", "$")
+    elseif keyboard ==# "hjklk"
+        let lines = getline(1, ".")
     else
         " [poem] check entry in special directories first
         let dirs = [s:path, s:vimim_hjkl_directory]
