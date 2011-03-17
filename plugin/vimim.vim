@@ -1278,6 +1278,8 @@ function! s:vimim_get_hjkl(keyboard)
     endif
     if keyboard ==# "hjkl"
         let lines = split(getreg('"'),'\n')
+        call insert(lines,'')
+        call add(lines,'')
     elseif keyboard ==# "hjklj"
         let lines = getline(".", "$")
     elseif keyboard ==# "hjklk"
@@ -1997,7 +1999,7 @@ function! s:vimim_qwertyuiop_1234567890(keyboard)
     " output is '7712' for input uuqw
     if a:keyboard =~ '\d' || s:has_cjk_file < 1
         return 0
-    else
+    endif
     let dddd = ""
     for char in split(a:keyboard, '\zs')
         let digit = match(s:qwerty, char)
@@ -2127,9 +2129,8 @@ function s:vimim_sort_on_last(line1, line2)
         return -1
     elseif line1 > line2
         return 1
-    else
-        return 0
     endif
+    return 0
 endfunction
 
 " ---------------------------------------------
@@ -2759,7 +2760,7 @@ endfunction
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
     let lines = a:matched_list
-    if empty(lines)
+    if empty(lines) || type(lines) != type([])
         return []
     endif
     let tail = 0
@@ -2767,6 +2768,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let extra_text = ""
     let popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
+    let first_in_list = get(lines,0)
     if s:hjkl_n % 2 > 0
         if s:show_me_not > 0
             let lines = reverse(copy(lines))
@@ -2776,7 +2778,6 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
     endif
     let keyboard_head = get(s:keyboard_list,0)
-    let first_in_list = get(a:matched_list,0)
     for chinese in lines
         let complete_items = {}
         if first_in_list =~ '\s' && s:show_me_not < 1
@@ -2807,19 +2808,18 @@ function! s:vimim_popupmenu_list(matched_list)
         else
             let extra_text = get(split(keyboard_head,"_"),0)
         endif
-        if empty(chinese)
-            let chinese = s:space
-        endif
         if s:vimim_custom_label > 0 && len(lines) > 1
             let labeling = s:vimim_get_labeling(label)
-            if !empty(labeling)
-                let complete_items["abbr"] = labeling . chinese
-            endif
-            if s:hjkl_n % 2 > 0 && s:show_me_not > 0
-                let label -= 1
+            if empty(chinese)
+                let labeling = ""
             else
-                let label += 1
+                if s:hjkl_n % 2 > 0 && s:show_me_not > 0
+                    let label -= 1
+                else
+                    let label += 1
+                endif
             endif
+            let complete_items["abbr"] = labeling . chinese
         endif
         if s:show_me_not > 0
             let complete_items["dup"] = 1
@@ -2827,6 +2827,7 @@ function! s:vimim_popupmenu_list(matched_list)
         if !empty(extra_text)
             let complete_items["menu"] = extra_text
         endif
+        let chinese = empty(chinese) ? s:space : chinese
         let complete_items["word"] = chinese
         call add(popupmenu_list, complete_items)
     endfor
@@ -2930,9 +2931,7 @@ function! s:vimim_onekey_english(keyboard, order)
         endif
         let grep_english = '^' . a:keyboard . '\>'
         let matched = match(s:english_lines, grep_english)
-        if matched < 0
-            " no more scan for: dream 梦想
-        else
+        if matched > -1
             let line = s:english_lines[matched]
             let results = split(line)[1:]
             if empty(a:order)
@@ -3486,7 +3485,8 @@ function! s:vimim_set_datafile(im, datafile)
     " --------------------------------------
     let s:ui.root = "datafile"
     let s:ui.im = im
-    call insert(s:ui.frontends, [s:ui.root, s:ui.im])
+    let frontends = [s:ui.root, s:ui.im]
+    call insert(s:ui.frontends, frontends)
     let s:backend.datafile[im] = s:vimim_one_backend_hash()
     let s:backend.datafile[im].root = "datafile"
     let s:backend.datafile[im].im = im
@@ -3576,9 +3576,8 @@ function! s:vimim_sentence_match_cache(keyboard)
     endwhile
     if found > 0
         return keyboard[0 : max-1]
-    else
-        return 0
     endif
+    return 0
 endfunction
 
 " -------------------------------------------------
@@ -3617,9 +3616,8 @@ function! s:vimim_sentence_match_datafile(keyboard)
     endwhile
     if matched < 0
         return 0
-    else
-        return keyboard[0 : max-1]
     endif
+    return keyboard[0 : max-1]
 endfunction
 
 " ---------------------------------------------------
@@ -3821,7 +3819,8 @@ function! s:vimim_set_directory(im, dir)
     endif
     let s:ui.root = "directory"
     let s:ui.im = im
-    call insert(s:ui.frontends, [s:ui.root, s:ui.im])
+    let frontends = [s:ui.root, s:ui.im]
+    call insert(s:ui.frontends, frontends)
     if empty(s:backend.directory)
         let s:backend.directory[im] = s:vimim_one_backend_hash()
         let s:backend.directory[im].root = "directory"
@@ -3905,9 +3904,8 @@ function! s:vimim_sentence_match_directory(keyboard)
     endwhile
     if filereadable(filename)
         return keyboard[0 : max-1]
-    else
-        return 0
     endif
+    return 0
 endfunction
 
 " ============================================= }}}
@@ -3946,7 +3944,8 @@ function! s:vimim_set_sogou()
         let s:mycloud_plugin = 0
         let s:ui.root = "cloud"
         let s:ui.im = "sogou"
-        call insert(s:ui.frontends, [s:ui.root, s:ui.im])
+        let frontends = [s:ui.root, s:ui.im]
+        call insert(s:ui.frontends, frontends)
     endif
 endfunction
 
@@ -3987,8 +3986,6 @@ function! s:vimim_check_http_executable(im)
             let s:www_executable = cloud
             let s:www_libcall = 1
             call s:vimim_do_cloud_if_no_embedded_backend()
-        else
-            return {}
         endif
     endif
     " step 2 of 3: try to find wget
@@ -4207,9 +4204,6 @@ endfunction
 function! s:vimim_set_mycloud()
 " -----------------------------
 " [auto mycloud test] vim mycloud.vimim
-    if s:ui.root == "cloud" && s:ui.im == "mycloud"
-    "   return
-    endif
     let cloud = s:vimim_set_cloud_backend_if_www_executable('mycloud')
     if !empty(cloud)
         let mycloud = s:vimim_check_mycloud_availability()
@@ -4221,8 +4215,8 @@ function! s:vimim_set_mycloud()
             let s:mycloud_plugin = mycloud
             let s:ui.root = "cloud"
             let s:ui.im = "mycloud"
-         "  call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-            let s:ui.frontends = [[s:ui.root, s:ui.im]]
+            let frontends = [s:ui.root, s:ui.im]
+            let s:ui.frontends = [frontends]
         endif
     endif
 endfunction
