@@ -865,7 +865,6 @@ function! s:vimim_gnuplot(keyboard)
     endtry
     if !empty(results)
         let &pumheight = 0
-        let s:hjkl_l = 1
         let s:show_me_not = 1
         let results = results[1 : len(results)-1]
     endif
@@ -879,7 +878,7 @@ function! s:vimim_onekey_action(onekey)
     let gnuplot = '^\s*' . 'plot' . '\s\+'
     let gnuplot = match(current_line, gnuplot)
     if empty(gnuplot) && executable('gnuplot')
-        " [gnuplot] usage:  plot sin(x)<C-6>
+        " [gnuplot] onekey usage:  plot sin(x)/x
         let s:has_gnuplot = 1
         sil!exe 'sil!return "' . g:vimim() . '"'
     endif
@@ -977,6 +976,7 @@ function! s:vimim_onekey_input(keyboard)
     let lines = s:vimim_get_hjkl(keyboard)
     if !empty(lines)
         if s:hjkl_m % 4 > 0
+            let &pumheight = 0
             for i in range(s:hjkl_m%4)
                 let lines = s:vimim_hjkl_rotation(lines)
             endfor
@@ -1035,6 +1035,9 @@ let s:VimIM += [" ====  hjkl             ==== {{{"]
 " -----------------------
 function! s:vimim_cache()
 " -----------------------
+    if s:has_gnuplot > 0 && len(s:matched_list) > 0
+        return s:matched_list
+    endif
     let results = []
     if s:chinese_input_mode =~ 'onekey'
         if len(s:popupmenu_list) > 0
@@ -1043,14 +1046,10 @@ function! s:vimim_cache()
         \&& len(s:hjkl_s) > 0
             let results = s:vimim_cjk_menu_filter()
         endif
-        if s:hjkl_l > 0
-        \&& len(s:matched_list) > &pumheight
+        if s:hjkl_l > 0 && len(s:matched_list) > &pumheight
             let &pumheight = 0
             if s:hjkl_l % 2 < 1
                 let &pumheight = s:saved_pumheights[1]
-            endif
-            if s:has_gnuplot > 0
-                let results = s:matched_list
             endif
         endif
     endif
@@ -4587,9 +4586,10 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_n = 0
     let s:hjkl_x = 0
     let s:hjkl_s = ""
-    let s:matched_list = []
     let s:pageup_pagedown = 0
     let s:has_no_internet = 0
+    let s:matched_list = []
+    let &pumheight = s:saved_pumheights[1]
     return ""
 endfunction
 
