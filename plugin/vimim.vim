@@ -4126,7 +4126,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     let input = cloud . keyboard
     let output = s:vimim_get_from_http(input)
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
-    if empty(output)
+    if empty(output) || output =~ '502 Bad Gateway'
         return []
     endif
     let first  = match(output, '"', 0)
