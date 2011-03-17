@@ -617,10 +617,8 @@ function! s:vimim_search_chinese_by_english(keyboard)
     call extend(results, s:english_results, 0)
     call extend(results, cjk_results)
     if !empty(results)
-        let slash = get(results, 0)
-        if len(results) > 1
-            let slash = join(results, '\|')
-        endif
+        let results = split(substitute(join(results),'\w','','g'))
+        let slash = join(results, '\|')
         if empty(search(slash,'nw'))
             let @/ = a:keyboard
         else
