@@ -2821,14 +2821,9 @@ function! s:vimim_popupmenu_list(matched_list)
             endif
             let complete_items["abbr"] = labeling . chinese
         endif
-        if s:show_me_not > 0
-            let complete_items["dup"] = 1
-        endif
-        if !empty(extra_text)
-            let complete_items["menu"] = extra_text
-        endif
-        let chinese = empty(chinese) ? s:space : chinese
-        let complete_items["word"] = chinese
+        let complete_items["dup"] = 1
+        let complete_items["menu"] = extra_text
+        let complete_items["word"] = empty(chinese) ? s:space : chinese
         call add(popupmenu_list, complete_items)
     endfor
     if s:chinese_input_mode =~ 'onekey'
