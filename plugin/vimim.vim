@@ -63,7 +63,6 @@ let s:path = expand("<sfile>:p:h")."/"
 " -----------------------------------------
 function! s:vimim_frontend_initialization()
 " -----------------------------------------
-    sil!call s:vimim_auto_scan_current_buffer()
     sil!call s:vimim_initialize_shuangpin()
     sil!call s:vimim_initialize_keycode()
     sil!call s:vimim_set_special_im_property()
@@ -91,6 +90,7 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_dictionary_quantifiers()
+    sil!call s:vimim_scan_current_buffer()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_scan_english_datafile()
     sil!call s:vimim_initialize_keycode()
@@ -3724,9 +3724,9 @@ function! s:vimim_load_datafile_cache(progressbar)
     endfor
 endfunction
 
-" ------------------------------------------
-function! s:vimim_auto_scan_current_buffer()
-" ------------------------------------------
+" -------------------------------------
+function! s:vimim_scan_current_buffer()
+" -------------------------------------
     let buffer = expand("%:p:t")
     if buffer =~ '.vimim\>'
         " start zero configuration showcase
@@ -4206,41 +4206,30 @@ endfunction
 " -----------------------------
 function! s:vimim_set_mycloud()
 " -----------------------------
+" [auto mycloud test] vim mycloud.vimim
     if s:ui.root == "cloud" && s:ui.im == "mycloud"
-        return
+    "   return
     endif
-    let mycloud = s:vimim_set_mycloud_backend()
-    if empty(mycloud)
-        " mycloud is not available
-    else
-        let s:ui.root = "cloud"
-        let s:ui.im = "mycloud"
-        call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-    endif
-endfunction
-
-" -------------------------------------
-function! s:vimim_set_mycloud_backend()
-" -------------------------------------
     let cloud = s:vimim_set_cloud_backend_if_www_executable('mycloud')
-    if empty(cloud)
-        return {}
-    endif
-    let mycloud = s:vimim_check_mycloud_availability()
-    if empty(mycloud)
-        let s:backend.cloud = {}
-        return {}
-    else
-        let s:vimim_cloud_sogou = -777
-        let s:mycloud_plugin = mycloud
-        return s:backend.cloud.mycloud
+    if !empty(cloud)
+        let mycloud = s:vimim_check_mycloud_availability()
+        if empty(mycloud)
+            let s:backend.cloud = {}
+            return {}
+        else
+            let s:vimim_cloud_sogou = -777
+            let s:mycloud_plugin = mycloud
+            let s:ui.root = "cloud"
+            let s:ui.im = "mycloud"
+         "  call insert(s:ui.frontends, [s:ui.root, s:ui.im])
+            let s:ui.frontends = [[s:ui.root, s:ui.im]]
+        endif
     endif
 endfunction
 
 " --------------------------------------------
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
-" [auto mycloud test] vim mycloud.vimim
     let cloud = 0
     if empty(s:vimim_mycloud_url)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
@@ -4326,25 +4315,24 @@ function! s:vimim_check_mycloud_plugin_libcall()
 " ----------------------------------------------
     " we do plug-n-play for libcall(), not for system()
     let cloud = s:vimim_get_libvimim()
-    if empty(cloud)
-        return 0
-    endif
-    let s:cloud_plugin_mode = "libcall"
-    let s:cloud_plugin_arg = ""
-    let s:cloud_plugin_func = 'do_getlocal'
-    if filereadable(cloud)
-        if has("win32")
-            " we don't need to strip ".dll" for "win32unix".
-            let cloud = cloud[:-5]
-        endif
-        try
-            let ret = s:vimim_access_mycloud(cloud, "__isvalid")
-            if split(ret, "\t")[0] == "True"
-                return cloud
+    if !empty(cloud)
+        let s:cloud_plugin_mode = "libcall"
+        let s:cloud_plugin_arg = ""
+        let s:cloud_plugin_func = 'do_getlocal'
+        if filereadable(cloud)
+            if has("win32")
+                " we don't need to strip ".dll" for "win32unix".
+                let cloud = cloud[:-5]
             endif
-        catch
-            call s:debugs('libcall_mycloud2::error=',v:exception)
-        endtry
+            try
+                let ret = s:vimim_access_mycloud(cloud, "__isvalid")
+                if split(ret, "\t")[0] == "True"
+                    return cloud
+                endif
+            catch
+                call s:debugs('libcall_mycloud2::error=',v:exception)
+            endtry
+        endif
     endif
     " libcall check failed, we now check system()
     if has("gui_win32")
