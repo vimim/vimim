@@ -1220,7 +1220,7 @@ function! <SID>vimim_onekey_hjkl(key)
         else
             if a:key == 's'
                 call g:vimim_reset_after_insert()
-            elseif a:key =~ "[xhlmn]"
+            elseif a:key =~ "[hlmnx]"
                 exe 'let s:hjkl_' . a:key . ' += 1'
             endif
             let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
@@ -1249,11 +1249,7 @@ function! <SID>vimim_onekey_qwerty(key)
         if key =~ '\l'
             let key = match(s:qwerty, a:key)
         endif
-        if empty(len(s:hjkl_s))
-            let s:hjkl_s  = key
-        else
-            let s:hjkl_s .= key
-        endif
+        let s:hjkl_s .= key
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -3120,7 +3116,7 @@ let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if empty(s:vimim_shuangpin) 
+    if empty(s:vimim_shuangpin)
     \|| !empty(s:shuangpin_table)
         return
     endif
@@ -4619,7 +4615,8 @@ function! g:vimim_menu_select()
     if pumvisible()
         let key = '\<C-P>\<Down>'
         if s:has_gnuplot > 0
-            let key .= '\<Down>\<Down>'
+            let n = s:hjkl_n%2>0 ? len(s:matched_list)-3 : 2
+            let key .= repeat("\<Down>", n)
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
