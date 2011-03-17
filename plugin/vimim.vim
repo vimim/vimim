@@ -2218,7 +2218,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
         " output: lines inside omni window, ready for hjkl
         sil!call s:vimim_onekey_start()
         let s:hjkl_h = 1
-        execute 'let keys = ":*d\<CR>O.\<C-R>=g:vimim()\<CR>"'
+        execute 'let keys = ":*d\<CR>Ohjkl\<C-R>=g:vimim()\<CR>"'
         call feedkeys(keys)
     endif
 endfunction
