@@ -4616,6 +4616,9 @@ function! g:vimim_menu_select()
     let key = ""
     if pumvisible()
         let key = '\<C-P>\<Down>'
+        if s:has_gnuplot > 0
+            let key .= '\<Down>\<Down>'
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
