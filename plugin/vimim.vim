@@ -271,7 +271,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
-    let g:vimims = []
+    let g:vimim = []
     let s:backend_loaded_once = 0
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
@@ -301,7 +301,7 @@ function! s:debugs(key, value)
         let item  = a:key
         let item .= ' = '
         let item .= a:value
-        call add(g:vimims, item)
+        call add(g:vimim, item)
     endif
 endfunction
 
@@ -309,6 +309,7 @@ endfunction
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory('/home/xma')
+        let g:vimim_debug = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
