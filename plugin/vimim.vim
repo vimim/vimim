@@ -214,7 +214,7 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_initialize_keycode()
-" ------------------------------------
+" ------------------------------------ todo
     let keycode = "[0-9a-z'.]"
     if empty(s:vimim_shuangpin)
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
@@ -3120,7 +3120,8 @@ let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if empty(s:vimim_shuangpin) || !empty(s:shuangpin_table)
+    if empty(s:vimim_shuangpin) 
+    \|| !empty(s:shuangpin_table)
         return
     endif
     let s:vimim_imode_pinyin = 0
@@ -4204,8 +4205,9 @@ function! s:vimim_set_mycloud()
             let s:backend.cloud = {}
             return {}
         else
-            let s:vimim_cloud_sogou = -777
             let s:mycloud_plugin = mycloud
+            let s:vimim_cloud_sogou = -777
+            let s:vimim_shuangpin = 0
             let s:ui.root = "cloud"
             let s:ui.im = "mycloud"
             let frontends = [s:ui.root, s:ui.im]
