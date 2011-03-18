@@ -1066,8 +1066,11 @@ endfunction
 function! s:vimim_onekey_menu_format()
 " ------------------------------------
     " use 1234567890/qwertyuiop to control popup textwidth
-    let lines = split(join(s:matched_list),'  ')
-    let filter = 'substitute(' . 'v:val' . ",' ','','g')"
+    let lines = copy(s:matched_list)
+    let filter = 'substitute(' .'v:val'. ",'^\\s\\+\\|\\s\\+$','','g')"
+    call map(lines, filter)
+    let lines = split(join(lines),'  ')
+    let filter = 'substitute(' .'v:val'. ",' ','','g')"
     call map(lines, filter)
     let results = []
     let n = 4 * s:hjkl_s
