@@ -1042,7 +1042,7 @@ function! s:vimim_cache()
         if len(s:popupmenu_list) > 0 && len(s:hjkl_s) > 0
             if s:show_me_not > 0
                 let results = s:vimim_onekey_menu_format()
-            elseif empty(s:english_results) && s:has_cjk_file > 0
+            else
                 let results = s:vimim_onekey_menu_filter()
             endif
         endif
@@ -1072,7 +1072,6 @@ function! s:vimim_onekey_menu_format()
     let results = []
     let n = 4 * s:hjkl_s
     let textwidth = repeat('.', n)
-    let s:hjkl_s = ""
     for line in lines
         let onelines = split(line, textwidth . '\zs')
         call add(onelines, '')
@@ -1139,14 +1138,14 @@ function! s:vimim_cjk_digit_filter(chinese)
     for cjk in words
         let ddddd = char2nr(cjk)
         let line = ddddd - 19968
-        if cjk =~ '\w' ||  line < 0 || line > 20902
+        if cjk =~ '\w' || line < 0 || line > 20902
             continue
         else
             let values = split(s:cjk_lines[line])
             let column = 1 + s:vimim_digit_4corner
             let digit = get(values, column)
             let digit_head .= digit[:0]
-            let digit_tail = digit[1:]
+            let digit_tail  = digit[1:]
         endif
     endfor
     let number = digit_head . digit_tail
@@ -1248,7 +1247,7 @@ function! <SID>vimim_onekey_qwerty(key)
         if key =~ '\l'
             let key = match(s:qwerty, a:key)
         endif
-        let s:hjkl_s .= key
+        let s:hjkl_s = s:show_me_not ? key : s:hjkl_s.key
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
