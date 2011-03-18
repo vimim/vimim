@@ -134,7 +134,7 @@ endfunction
 function! s:vimim_initialize_ui()
 " -------------------------------
     let s:ui = {}
-    let s:ui.im  = ''
+    let s:ui.im = ''
     let s:ui.root = ''
     let s:ui.keycode = ''
     let s:ui.statusline = ''
@@ -196,8 +196,8 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['taijima']  = "[a-z']"
     let s:im_keycode['boshiamy'] = "[][a-z'.,]"
     let s:im_keycode['erbi']     = "[.,a-z';/]"
-    let s:im_keycode['phonetic'] = "[.,0-9a-z;/]"
     let s:im_keycode['array30']  = "[.,0-9a-z;/]"
+    let s:im_keycode['phonetic'] = "[.,0-9a-z;/]"
     " -------------------------------------------
     let vimimkeys = copy(keys(s:im_keycode))
     call add(vimimkeys, 'pinyin_quote_sogou')
@@ -511,7 +511,7 @@ function! s:vimim_egg_vimimenv()
         for frontend in s:ui.frontends
             let ui_root = get(frontend, 0)
             let ui_im = get(frontend, 1)
-            let ciku =  database . s:vimim_chinese(ui_root) . database
+            let ciku = database . s:vimim_chinese(ui_root) . database
             let datafile = s:backend[ui_root][ui_im].name
             call add(eggs, ciku . datafile)
         endfor
@@ -2031,7 +2031,7 @@ function! s:vimim_cjk_match(keyboard)
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_s))
             " cjk pinyin with tone: huan2hai2
-            let grep =  keyboard . '[a-z ]'
+            let grep = keyboard . '[a-z ]'
         else
             let digit = ""
             if keyboard =~ '^\d\+' && keyboard !~ '\D'
@@ -2823,14 +2823,10 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         if s:vimim_custom_label > 0 && len(lines) > 1
             let labeling = s:vimim_get_labeling(label)
-            if empty(chinese)
-                let labeling = ""
+            if s:hjkl_n % 2 > 0 && s:show_me_not > 0
+                let label -= 1
             else
-                if s:hjkl_n % 2 > 0 && s:show_me_not > 0
-                    let label -= 1
-                else
-                    let label += 1
-                endif
+                let label += 1
             endif
             let complete_items["abbr"] = labeling . chinese
         endif
