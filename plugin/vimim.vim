@@ -214,7 +214,7 @@ endfunction
 
 " ------------------------------------
 function! s:vimim_initialize_keycode()
-" ------------------------------------ todo
+" ------------------------------------
     let keycode = "[0-9a-z'.]"
     if empty(s:vimim_shuangpin)
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
@@ -449,9 +449,9 @@ function! s:vimim_egg_vimimvim()
     return map(eggs, filter)
 endfunction
 
-" ---------------------------
-function! s:vimim_egg_vimim()
-" ---------------------------
+" ------------------------------
+function! s:vimim_egg_vimimenv()
+" ------------------------------
     let eggs = []
     let option = "os"
     if has("win32unix")
@@ -1040,11 +1040,12 @@ function! s:vimim_cache()
     endif
     let results = []
     if s:chinese_input_mode =~ 'onekey'
-        if len(s:popupmenu_list) > 0
-        \&& empty(s:english_results)
-        \&& s:has_cjk_file > 0
-        \&& len(s:hjkl_s) > 0
-            let results = s:vimim_cjk_menu_filter()
+        if len(s:popupmenu_list) > 0 && len(s:hjkl_s) > 0
+            if s:show_me_not > 0
+                let results = s:vimim_onekey_menu_format()
+            elseif empty(s:english_results) && s:has_cjk_file > 0
+                let results = s:vimim_onekey_menu_filter()
+            endif
         endif
         if s:hjkl_l > 0 && len(s:matched_list) > &pumheight
             let &pumheight = 0
@@ -1062,52 +1063,32 @@ function! s:vimim_cache()
     return results
 endfunction
 
-" ---------------------------------
-function! s:vimim_pageup_pagedown()
-" ---------------------------------
-    let matched_list = s:matched_list
-    let length = len(matched_list)
-    let first_page = &pumheight - 1
-    if s:vimim_loop_pageup_pagedown > 0
-        if first_page < 1
-            let first_page = 9
-        endif
-        let shift = s:pageup_pagedown * first_page
-        if length > first_page
-            let partition = shift
-            if shift < 0
-                let partition = length + shift
-            endif
-            let A = matched_list[: partition-1]
-            let B = matched_list[partition :]
-            let matched_list = B + A
-        endif
-    else
-        let page = s:pageup_pagedown * &pumheight
-        if page < 0
-            " no more PageUp after the first page
-            let s:pageup_pagedown += 1
-            let matched_list = matched_list[0 : first_page]
-        elseif page >= length
-            " no more PageDown after the last page
-            let s:pageup_pagedown -= 1
-            let last_page = length / &pumheight
-            if empty(length % &pumheight)
-                let last_page -= 1
-            endif
-            let last_page = last_page * &pumheight
-            let matched_list = matched_list[last_page :]
-        else
-            let matched_list = matched_list[page :]
-        endif
+" ------------------------------------
+function! s:vimim_onekey_menu_format()
+" ------------------------------------
+    " use 1234567890/qwertyuiop to control popup textwidth
+    let lines = split(join(s:matched_list),'  ')
+    let filter = 'substitute(' . 'v:val' . ",' ','','g')"
+    call map(lines, filter)
+    let results = []
+    let n = 4 * s:hjkl_s
+    let textwidth = repeat('.', n)
+    let s:hjkl_s = ""
+    for line in lines
+        let onelines = split(line, textwidth . '\zs')
+        call add(onelines, '')
+        call extend(results, onelines)
+    endfor
+    if len(results) > &pumheight
+        let &pumheight = 0
     endif
-    return matched_list
+    return results
 endfunction
 
-" ---------------------------------
-function! s:vimim_cjk_menu_filter()
-" ---------------------------------
-" use 1234567890/qwertyuiop as digit filter
+" ------------------------------------
+function! s:vimim_onekey_menu_filter()
+" ------------------------------------
+    " use 1234567890/qwertyuiop as digital filter
     call s:vimim_load_cjk_file()
     let results = s:vimim_cjk_filter_list()
     if empty(results) && !empty(len(s:hjkl_s))
@@ -1181,28 +1162,63 @@ function! s:vimim_cjk_digit_filter(chinese)
     return chinese
 endfunction
 
+" ---------------------------------
+function! s:vimim_pageup_pagedown()
+" ---------------------------------
+    let matched_list = s:matched_list
+    let length = len(matched_list)
+    let first_page = &pumheight - 1
+    if s:vimim_loop_pageup_pagedown > 0
+        if first_page < 1
+            let first_page = 9
+        endif
+        let shift = s:pageup_pagedown * first_page
+        if length > first_page
+            let partition = shift
+            if shift < 0
+                let partition = length + shift
+            endif
+            let A = matched_list[: partition-1]
+            let B = matched_list[partition :]
+            let matched_list = B + A
+        endif
+    else
+        let page = s:pageup_pagedown * &pumheight
+        if page < 0
+            " no more PageUp after the first page
+            let s:pageup_pagedown += 1
+            let matched_list = matched_list[0 : first_page]
+        elseif page >= length
+            " no more PageDown after the last page
+            let s:pageup_pagedown -= 1
+            let last_page = length / &pumheight
+            if empty(length % &pumheight)
+                let last_page -= 1
+            endif
+            let last_page = last_page * &pumheight
+            let matched_list = matched_list[last_page :]
+        else
+            let matched_list = matched_list[page :]
+        endif
+    endif
+    return matched_list
+endfunction
+
 " -------------------------------------------
 function! s:vimim_onekey_pumvisible_mapping()
 " -------------------------------------------
     let map_list = split('hjkl<>sxmn', '\zs')
     for _ in map_list
-        sil!exe 'inoremap <silent> <expr> ' ._.
-        \ ' <SID>vimim_onekey_hjkl("'._.'")'
+        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
-    " ---------------------------------------
+    let map_list = s:qwerty + range(10)
+    for _ in map_list
+        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwerty("'._.'")'
+    endfor
     let map_list = s:AZ_list
     for _ in map_list
-        sil!exe 'inoremap <silent> <expr> ' ._.
-        \ ' <SID>vimim_onkey_capital("'._.'")'
+        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_capital("'._.'")'
     endfor
-    " ---------------------------------------
-    if s:has_cjk_file > 0
-        let map_list = s:qwerty + range(10)
-        for _ in map_list
-            sil!exe 'inoremap <silent> <expr> ' ._.
-            \ ' <SID>vimim_onekey_qwerty("'._.'")'
-        endfor
-    endif
 endfunction
 
 " -----------------------------------
@@ -1230,18 +1246,6 @@ function! <SID>vimim_onekey_hjkl(key)
 endfunction
 
 " -------------------------------------
-function! <SID>vimim_onkey_capital(key)
-" -------------------------------------
-    let key = a:key
-    if pumvisible()
-        let key  = '\<C-E>'
-        let key .= tolower(a:key)
-        let key .= '\<C-R>=g:vimim()\<CR>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" -------------------------------------
 function! <SID>vimim_onekey_qwerty(key)
 " -------------------------------------
     let key = a:key
@@ -1251,6 +1255,18 @@ function! <SID>vimim_onekey_qwerty(key)
         endif
         let s:hjkl_s .= key
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" --------------------------------------
+function! <SID>vimim_onekey_capital(key)
+" --------------------------------------
+    let key = a:key
+    if pumvisible()
+        let key  = '\<C-E>'
+        let key .= tolower(a:key)
+        let key .= '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1270,13 +1286,13 @@ function! s:vimim_get_hjkl(keyboard)
         let s:show_me_not = 1
         return lines
     endif
-    if keyboard ==# "hjkl"
+    if keyboard ==# "vimim"
         let lines = split(getreg('"'),'\n')
         call insert(lines,'')
         call add(lines,'')
-    elseif keyboard ==# "hjklj"
+    elseif keyboard ==# "vimimj"
         let lines = getline(".", "$")
-    elseif keyboard ==# "hjklk"
+    elseif keyboard ==# "vimimk"
         let lines = getline(1, ".")
     else
         " [poem] check entry in special directories first
@@ -2213,7 +2229,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
         " output: lines inside omni window, ready for hjkl
         sil!call s:vimim_onekey_start()
         let s:hjkl_h = 1
-        execute 'let keys = ":*d\<CR>Ohjkl\<C-R>=g:vimim()\<CR>"'
+        execute 'let keys = ":*d\<CR>Ovimim\<C-R>=g:vimim()\<CR>"'
         call feedkeys(keys)
     endif
 endfunction
