@@ -1063,6 +1063,18 @@ function! s:vimim_cache()
     return results
 endfunction
 
+" ---------------------------------------
+function! s:vimim_omni_hjkl() range abort
+" ---------------------------------------
+" move the buffer to omni window, ready for hjkl
+    :%d
+    sil!call s:vimim_onekey_start()
+    let s:hjkl_l = 1
+    let &pumheight = 0
+    let key = "Ovimim\<C-R>=g:vimim()\<CR>"
+    sil!call feedkeys(key)
+endfunction
+
 " ------------------------------------
 function! s:vimim_onekey_menu_format()
 " ------------------------------------
@@ -1081,6 +1093,7 @@ function! s:vimim_onekey_menu_format()
     endfor
     if len(results) > &pumheight
         let &pumheight = 0
+        let s:hjkl_l = 1
     endif
     return results
 endfunction
@@ -1224,25 +1237,24 @@ endfunction
 " -----------------------------------
 function! <SID>vimim_onekey_hjkl(key)
 " -----------------------------------
-    let hjkl = a:key
+    let key = a:key
     if pumvisible()
         if a:key == 'j'
-            let hjkl  = '\<Down>'
+            let key  = '\<Down>'
         elseif a:key == 'k'
-            let hjkl  = '\<Up>'
+            let key  = '\<Up>'
         elseif a:key =~ "[<>]"
-            let hjkl  = '\<C-Y>'
-            let hjkl .= s:punctuations[nr2char(char2nr(a:key)-16)]
+            let key  = '\<C-Y>'.s:punctuations[nr2char(char2nr(a:key)-16)]
         else
             if a:key == 's'
                 call g:vimim_reset_after_insert()
             elseif a:key =~ "[hlmnx]"
                 exe 'let s:hjkl_' . a:key . ' += 1'
             endif
-            let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
+            let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
         endif
     endif
-    sil!exe 'sil!return "' . hjkl . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " -------------------------------------
@@ -1306,9 +1318,7 @@ function! s:vimim_get_hjkl(keyboard)
             endif
         endfor
     endif
-    if empty(lines)
-        return []
-    else
+    if !empty(lines)
         let s:show_me_not = 1
     endif
     return lines
@@ -1836,11 +1846,11 @@ function! <SID>vimim_onekey_punctuation_map(key)
     let hjkl = a:key
     if pumvisible()
         if a:key =~ ";"
-            let hjkl  = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
+            let hjkl = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
         elseif a:key =~ "[][]"
-            let hjkl  = s:vimim_square_bracket(a:key)
+            let hjkl = s:vimim_square_bracket(a:key)
         elseif a:key =~ "[/?]"
-            let hjkl  = s:vimim_menu_search(a:key)
+            let hjkl = s:vimim_menu_search(a:key)
         elseif a:key =~ "[-,]"
             if s:hjkl_l > 0 && &pumheight < 1
                 let hjkl = '\<PageUp>'
@@ -2228,8 +2238,7 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
         " input:  multiple lines in vim visual mode
         " output: lines inside omni window, ready for hjkl
         sil!call s:vimim_onekey_start()
-        let s:hjkl_h = 1
-        execute 'let keys = ":*d\<CR>Ovimim\<C-R>=g:vimim()\<CR>"'
+        let keys = ":*d\<CR>Ovimim\<C-R>=g:vimim()\<CR>"
         call feedkeys(keys)
     endif
 endfunction
@@ -4940,6 +4949,7 @@ function! s:vimim_onekey_mapping_on()
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_tranfer_chinese()
     :com! -range=% VimiM <line1>,<line2>call s:vimim_rotation()
+    :com! -range=% VIMIM <line1>,<line2>call s:vimim_omni_hjkl()
 endfunction
 
 " ------------------------------------
