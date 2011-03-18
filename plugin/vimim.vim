@@ -864,7 +864,6 @@ function! s:vimim_gnuplot(keyboard)
         call s:debugs('gnuplot::', v:exception)
     endtry
     if !empty(results)
-        let &pumheight = 0
         let s:show_me_not = 1
         let results = results[1 : len(results)-1]
     endif
@@ -1279,10 +1278,8 @@ function! s:vimim_get_hjkl(keyboard)
     " [eggs] hunt classic easter egg ... vim<C-6>
     let lines = s:vimim_easter_chicken(keyboard)
     if !empty(lines)
-        let s:show_me_not = 1
-        return lines
-    endif
-    if keyboard ==# "vimim"
+        " [hjkl] display the buffer inside the omni window
+    elseif keyboard ==# "vimim"
         let lines = split(getreg('"'),'\n')
         call insert(lines,'')
         call add(lines,'')
@@ -1303,8 +1300,6 @@ function! s:vimim_get_hjkl(keyboard)
         endfor
     endif
     if !empty(lines)
-        let &pumheight = 0
-        let s:hjkl_l = 1
         let s:show_me_not = 1
     endif
     return lines
@@ -2784,6 +2779,10 @@ function! s:vimim_popupmenu_list(matched_list)
     let popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
     let first_in_list = get(lines,0)
+    if s:show_me_not > 0
+        let &pumheight = 0
+        let s:hjkl_l = 1
+    endif
     if s:hjkl_n % 2 > 0
         if s:show_me_not > 0
             let lines = reverse(copy(lines))
