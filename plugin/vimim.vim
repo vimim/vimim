@@ -1055,9 +1055,9 @@ function! s:vimim_cache()
         endif
     endif
     if empty(results)
+    \&& s:pageup_pagedown != 0
     \&& s:vimim_custom_label > 0
     \&& len(s:matched_list) > &pumheight
-    \&& s:pageup_pagedown != 0
         let results = s:vimim_pageup_pagedown()
     endif
     return results
@@ -2666,8 +2666,10 @@ function! s:vimim_square_bracket(key)
             let left  = "\<Left>"
             let right = "\<Right>"
         endif
-        let backspace = '\<C-R>=g:vimim_bracket('.i.')\<CR>'
-        let key = '\<C-Y>' . left . backspace . right
+        if s:show_me_not < 1
+            let backspace = '\<C-R>=g:vimim_bracket('.i.')\<CR>'
+            let key = '\<C-Y>' . left . backspace . right
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
