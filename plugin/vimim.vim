@@ -1063,18 +1063,6 @@ function! s:vimim_cache()
     return results
 endfunction
 
-" ---------------------------------------
-function! s:vimim_omni_hjkl() range abort
-" ---------------------------------------
-" move the buffer to omni window, ready for hjkl
-    :%d
-    sil!call s:vimim_onekey_start()
-    let s:hjkl_l = 1
-    let &pumheight = 0
-    let key = "Ovimim\<C-R>=g:vimim()\<CR>"
-    sil!call feedkeys(key)
-endfunction
-
 " ------------------------------------
 function! s:vimim_onekey_menu_format()
 " ------------------------------------
@@ -1091,10 +1079,6 @@ function! s:vimim_onekey_menu_format()
         call add(onelines, '')
         call extend(results, onelines)
     endfor
-    if len(results) > &pumheight
-        let &pumheight = 0
-        let s:hjkl_l = 1
-    endif
     return results
 endfunction
 
@@ -1319,6 +1303,8 @@ function! s:vimim_get_hjkl(keyboard)
         endfor
     endif
     if !empty(lines)
+        let &pumheight = 0
+        let s:hjkl_l = 1
         let s:show_me_not = 1
     endif
     return lines
@@ -1369,13 +1355,12 @@ endfunction
 " --------------------------------------
 function! s:vimim_rotation() range abort
 " --------------------------------------
+" [usage] :VimiM
     sil!call s:vimim_backend_initialization()
-    let lines = getbufline(bufnr("%"), 1, "$")
-    let lines = s:vimim_hjkl_rotation(copy(lines))
-    if empty(lines)
-        return ""
-    else
-        :%d _
+    let lines = getline(a:firstline, a:lastline)
+    let lines = s:vimim_hjkl_rotation(lines)
+    if !empty(lines)
+        :%d
         for line in lines
             put=line
         endfor
@@ -2237,10 +2222,19 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
     else
         " input:  multiple lines in vim visual mode
         " output: lines inside omni window, ready for hjkl
-        sil!call s:vimim_onekey_start()
-        let keys = ":*d\<CR>Ovimim\<C-R>=g:vimim()\<CR>"
-        call feedkeys(keys)
+        :*VIMIM
     endif
+endfunction
+
+" ---------------------------------------
+function! s:vimim_omni_hjkl() range abort
+" ---------------------------------------
+" [usage] :VIMIM
+" move the current buffer to omni window, ready for hjkl
+    sil!exe a:firstline .",". a:lastline . 'd'
+    sil!call s:vimim_onekey_start()
+    let key = "Ovimim\<C-R>=g:vimim()\<CR>"
+    sil!call feedkeys(key)
 endfunction
 
 " ---------------------------------------
