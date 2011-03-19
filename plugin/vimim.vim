@@ -846,8 +846,9 @@ function! g:vimim_onekey_dump()
     if has("gui_running") && has("win32")
         let @+ = one_line_clipboard
     endif
-    call setpos(".", saved_position)
-    call g:vimim_stop()
+    sil!call setpos(".", saved_position)
+    sil!call g:vimim_stop()
+    if getline(".") =~ 'vimim'|d|endif
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
@@ -877,7 +878,7 @@ function! s:vimim_onekey_action(onekey)
     let gnuplot = '^\s*' . 'plot' . '\s\+'
     let gnuplot = match(current_line, gnuplot)
     if empty(gnuplot) && executable('gnuplot')
-        " [gnuplot] onekey usage:  plot sin(x)/x
+        " [gnuplot] usage:  plot sin(x)/x
         let s:has_gnuplot = 1
         sil!exe 'sil!return "' . g:vimim() . '"'
     endif
@@ -1133,7 +1134,7 @@ endfunction
 function! s:vimim_cjk_digit_filter(chinese)
 " -----------------------------------------
 " smart digital filter: 马力 7712 4002
-"   (1) ma<C-6>         马   => filter with 7712
+"   (1)   ma<C-6>       马   => filter with   7712
 "   (2) mali<C-6>       马力 => filter with 7 4002
 " -----------------------------------------
     let chinese = a:chinese
@@ -1291,8 +1292,6 @@ function! s:vimim_get_hjkl(keyboard)
         " [hjkl] display the buffer inside the omni window
     elseif keyboard ==# "vimim"
         let lines = split(getreg('"'),'\n')
-        call insert(lines,'')
-        call add(lines,'')
     elseif keyboard ==# "vimimj"
         let lines = getline(".", "$")
     elseif keyboard ==# "vimimk"
