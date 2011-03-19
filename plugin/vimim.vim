@@ -2773,7 +2773,6 @@ endfunction
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
     let lines = a:matched_list
-let g:g5=lines
     if empty(lines) || type(lines) != type([])
         return []
     endif
