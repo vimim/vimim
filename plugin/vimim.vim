@@ -2788,7 +2788,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let &pumheight = s:show_me_not ? 0 : &pumheight
     if s:hjkl_n % 2 > 0
         if s:show_me_not > 0
-            let lines = reverse(copy(lines))
+            call reverse(lines)
             let label = len(lines)
         elseif s:ui.im == 'pinyin'
             let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
