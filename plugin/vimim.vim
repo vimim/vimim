@@ -4933,8 +4933,8 @@ function! s:vimim_onekey_mapping_on()
         imap <silent> <C-^> <Plug>VimimOneKey
     endif
     if s:vimim_onekey_is_tab == 2
-        xnoremap <silent> <Tab> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
          noremap <silent> <C-^>  :VIMIM<CR>
+        xnoremap <silent> <Tab> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     elseif !hasmapto('<C-^>', 'v')
         xnoremap <silent> <C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
