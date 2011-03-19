@@ -2231,7 +2231,7 @@ endfunction
 function! s:vimim_omni_hjkl() range abort
 " ---------------------------------------
 " [usage] :VIMIM
-" move the current buffer to omni window, ready for hjkl
+" turn the current buffer into omni window, ready for hjkl
     sil!exe a:firstline .",". a:lastline . 'd'
     sil!call s:vimim_onekey_start()
     let key = "Ovimim\<C-R>=g:vimim()\<CR>"
@@ -2843,7 +2843,7 @@ function! s:vimim_popupmenu_list(matched_list)
         let s:popupmenu_list = popupmenu_list
     endif
     if empty(s:matched_list)
-        let s:matched_list = a:matched_list
+        let s:matched_list = lines
     endif
     return popupmenu_list
 endfunction
@@ -4933,6 +4933,7 @@ function! s:vimim_onekey_mapping_on()
     endif
     if s:vimim_onekey_is_tab == 2
         xnoremap <silent> <Tab> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
+         noremap <silent> <C-^>  :VIMIM<CR>
     elseif !hasmapto('<C-^>', 'v')
         xnoremap <silent> <C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
     endif
