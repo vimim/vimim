@@ -1073,6 +1073,7 @@ function! s:vimim_onekey_menu_format()
     let filter = 'substitute(' .'v:val'. ",' ','','g')"
     call map(lines, filter)
     if s:hjkl_s < 0
+        let s:matched_list = copy(lines)
         return lines
     endif
     let n = 4 * s:hjkl_s
@@ -1083,6 +1084,9 @@ function! s:vimim_onekey_menu_format()
         call add(onelines, '')
         call extend(results, onelines)
     endfor
+ "  if empty(s:matched_list)
+        let s:matched_list = copy(results)
+ "  endif
     return results
 endfunction
 
