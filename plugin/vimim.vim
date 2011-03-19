@@ -1072,9 +1072,12 @@ function! s:vimim_onekey_menu_format()
     let lines = split(join(lines),'  ')
     let filter = 'substitute(' .'v:val'. ",' ','','g')"
     call map(lines, filter)
-    let results = []
+    if s:hjkl_s < 0
+        return lines
+    endif
     let n = 4 * s:hjkl_s
     let textwidth = repeat('.', n)
+    let results = []
     for line in lines
         let onelines = split(line, textwidth . '\zs')
         call add(onelines, '')
@@ -1106,9 +1109,7 @@ function! s:vimim_cjk_filter_list()
     let foods = []
     for items in s:popupmenu_list
         let chinese = s:vimim_cjk_digit_filter(items.word)
-        if empty(chinese)
-            " garbage out
-        else
+        if !empty(chinese)
             call add(foods, i)
         endif
         let i += 1
@@ -1235,6 +1236,9 @@ function! <SID>vimim_onekey_hjkl(key)
                 call g:vimim_reset_after_insert()
             elseif a:key =~ "[hlmnx]"
                 exe 'let s:hjkl_' . a:key . ' += 1'
+                if s:hjkl_l > 0 && s:show_me_not > 0
+                    let s:hjkl_s = -1
+                endif
             endif
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
         endif
@@ -2781,10 +2785,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let popupmenu_list = []
     let keyboard = join(s:keyboard_list,"")
     let first_in_list = get(lines,0)
-    if s:show_me_not > 0
-        let &pumheight = 0
-        let s:hjkl_l = 1
-    endif
+    let &pumheight = s:show_me_not ? 0 : &pumheight
     if s:hjkl_n % 2 > 0
         if s:show_me_not > 0
             let lines = reverse(copy(lines))
