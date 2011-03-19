@@ -1048,9 +1048,13 @@ function! s:vimim_cache()
             endif
         endif
         if s:hjkl_l > 0 && len(s:matched_list) > &pumheight
-            let &pumheight = 0
-            if s:hjkl_l % 2 < 1
-                let &pumheight = s:saved_pumheights[1]
+            if s:show_me_not > 0
+                let results = sort(copy(s:matched_list))
+            else
+                let &pumheight = 0
+                if s:hjkl_l % 2 < 1
+                    let &pumheight = s:saved_pumheights[1]
+                endif
             endif
         endif
     endif
@@ -1071,12 +1075,12 @@ function! s:vimim_onekey_menu_format()
     let filter = 'substitute(' .'v:val'. ",'^\\s\\+\\|\\s\\+$','','g')"
     call map(lines, filter)
     let lines = split(join(lines),'  ')
-    if s:hjkl_s < 0 && s:hjkl_l > 0
-        return lines
-    endif
     let filter = 'substitute(' .'v:val'. ",' ','','g')"
     call map(lines, filter)
-    let n = 4 * s:hjkl_s
+    if s:hjkl_s == 1
+        return lines
+    endif
+    let n = s:hjkl_s * (7-s:multibyte)
     let textwidth = repeat('.', n)
     let results = []
     for line in lines
@@ -1237,9 +1241,6 @@ function! <SID>vimim_onekey_hjkl(key)
                 call g:vimim_reset_after_insert()
             elseif a:key =~ "[hlmnx]"
                 exe 'let s:hjkl_' . a:key . ' += 1'
-                if s:hjkl_l > 0 && s:show_me_not > 0
-                    let s:hjkl_s = -1
-                endif
             endif
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
         endif
@@ -1255,7 +1256,7 @@ function! <SID>vimim_onekey_qwerty(key)
         if key =~ '\l'
             let key = match(s:qwerty, a:key)
         endif
-        let s:hjkl_s = s:show_me_not ? key : s:hjkl_s.key
+        let s:hjkl_s = s:show_me_not ? key : s:hjkl_s . key
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
