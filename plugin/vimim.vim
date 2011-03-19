@@ -2225,8 +2225,6 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
             call setpos(".", new_positions)
         endif
     else
-        " input:  multiple lines in vim visual mode
-        " output: lines inside omni window, ready for hjkl
         :*VIMIM
     endif
 endfunction
@@ -2234,8 +2232,8 @@ endfunction
 " ---------------------------------------
 function! s:vimim_omni_hjkl() range abort
 " ---------------------------------------
-" [usage] :VIMIM
-" turn the current buffer into omni window, ready for hjkl
+" input:  multiple lines in vim visual mode
+" output: turn the current buffer into omni window, ready for hjkl
     sil!exe a:firstline .",". a:lastline . 'd'
     sil!call s:vimim_onekey_start()
     let key = "Ovimim\<C-R>=g:vimim()\<CR>"
