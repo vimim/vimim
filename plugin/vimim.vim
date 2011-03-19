@@ -1040,10 +1040,10 @@ function! s:vimim_cache()
     endif
     let results = []
     if s:chinese_input_mode =~ 'onekey'
-        if len(s:popupmenu_list) > 0 && len(s:hjkl_s) > 0
-            if s:show_me_not > 0
+        if len(s:hjkl_s) > 0
+            if len(s:matched_list) > 0 && s:show_me_not > 0
                 let results = s:vimim_onekey_menu_format()
-            else
+            elseif len(s:popupmenu_list) > 0
                 let results = s:vimim_onekey_menu_filter()
             endif
         endif
@@ -1071,12 +1071,11 @@ function! s:vimim_onekey_menu_format()
     let filter = 'substitute(' .'v:val'. ",'^\\s\\+\\|\\s\\+$','','g')"
     call map(lines, filter)
     let lines = split(join(lines),'  ')
-    let filter = 'substitute(' .'v:val'. ",' ','','g')"
-    call map(lines, filter)
-    if s:hjkl_s < 0
-        let s:matched_list = copy(lines)
+    if s:hjkl_s < 0 && s:hjkl_l > 0
         return lines
     endif
+    let filter = 'substitute(' .'v:val'. ",' ','','g')"
+    call map(lines, filter)
     let n = 4 * s:hjkl_s
     let textwidth = repeat('.', n)
     let results = []
@@ -1085,9 +1084,6 @@ function! s:vimim_onekey_menu_format()
         call add(onelines, '')
         call extend(results, onelines)
     endfor
- "  if empty(s:matched_list)
-        let s:matched_list = copy(results)
- "  endif
     return results
 endfunction
 
@@ -2777,6 +2773,7 @@ endfunction
 function! s:vimim_popupmenu_list(matched_list)
 " --------------------------------------------
     let lines = a:matched_list
+let g:g5=lines
     if empty(lines) || type(lines) != type([])
         return []
     endif
@@ -4581,7 +4578,6 @@ function! s:vimim_reset_before_anything()
 " ---------------------------------------
     let s:has_gnuplot = 0
     let s:has_pumvisible = 0
-    let s:matched_list = []
     let s:popupmenu_list = []
     let s:keyboard_list  = []
     let s:seamless_positions = []
