@@ -258,7 +258,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_onekey_is_tab")
     " -----------------------------------
-    let s:vimimconf = []
+    let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
@@ -283,12 +283,14 @@ endfunction
 function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
     for variable in a:options
+        let option = ':let ' . variable .' = '. string(eval(variable))
         let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
-            call add(s:vimimconf, variable .'='. string(eval(variable)))
+            call add(s:vimimrc, '  ' . option)
             exe 'let '. s_variable .'='. variable
             exe 'unlet! ' . variable
         else
+            call add(s:vimimrc, '" ' . option)
             exe 'let '. s_variable . '=' . a:default
         endif
     endfor
@@ -406,6 +408,21 @@ function! s:vimim_easter_chicken(keyboard)
     return []
 endfunction
 
+" http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
+" -----------------------------
+function! s:vimim_egg_vimimrc()
+" -----------------------------
+    return sort(copy(s:vimimrc))
+endfunction
+
+" ------------------------------
+function! s:vimim_egg_vimimvim()
+" ------------------------------
+    let eggs = copy(s:VimIM)
+    let filter = "strpart(" . 'v:val' . ", 0, 29)"
+    return map(eggs, filter)
+endfunction
+
 " -------------------------------
 function! s:vimim_egg_vimimpoem()
 " -------------------------------
@@ -439,14 +456,6 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "最新主页 " . s:url[5] . " ")
     call add(eggs, "最新程式 " . s:url[6] . " ")
     return eggs
-endfunction
-
-" ------------------------------
-function! s:vimim_egg_vimimvim()
-" ------------------------------
-    let eggs = copy(s:VimIM)
-    let filter = "strpart(" . 'v:val' . ", 0, 29)"
-    return map(eggs, filter)
 endfunction
 
 " ------------------------------
@@ -524,11 +533,6 @@ function! s:vimim_egg_vimimenv()
         let sogou = s:vimim_chinese('sogou')
         let option = sogou . s:colon . s:vimim_chinese('cloudatwill')
         call add(eggs, option)
-    endif
-    if !empty(s:vimimconf)
-        call add(eggs, s:vimim_chinese('configure') . s:colon)
-        let filter = '":let " . v:val'
-        call extend(eggs, map(copy(s:vimimconf), filter))
     endif
     call map(eggs, 'v:val . " "')
     return eggs
@@ -848,7 +852,7 @@ function! g:vimim_onekey_dump()
     endif
     sil!call setpos(".", saved_position)
     sil!call g:vimim_stop()
-    if getline(".") =~ 'vimim'|d|endif
+    if getline(".") =~ 'vimim\l\=\>'|d|endif
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
@@ -1581,7 +1585,6 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['yong']        = ['永码','永碼']
     let s:chinese['wu']          = ['吴语','吳語']
     let s:chinese['erbi']        = ['二笔','二筆']
-    let s:chinese['configure']   = ['设置','設置']
     let s:chinese['jidian']      = ['极点','極點']
     let s:chinese['shuangpin']   = ['双拼','雙拼']
     let s:chinese['abc']         = ['智能双打','智能雙打']
