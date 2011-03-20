@@ -479,11 +479,9 @@ function! s:vimim_egg_vimimenv()
     call add(eggs, computer . option)
     let revision = s:vimim_chinese('revision') . s:colon
     let option = get(split($VimIM),1)
-    if !empty(option)
-        let option = "vimim.vim=" . option
-    endif
-    let vim = s:space . s:space . v:progname . "=" . v:version
-    call add(eggs, revision . option . vim)
+    let option = empty(option) ? "" : "vimim.vim=" . option
+    let vim = v:progname . "=" . v:version . s:space
+    call add(eggs, revision . vim . option)
     let encoding = s:vimim_chinese('encoding') . s:colon
     call add(eggs, encoding . &encoding . s:space . &fileencodings)
     if has("gui_running")
