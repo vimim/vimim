@@ -1780,7 +1780,6 @@ function! s:vimim_punctuation_mapping()
         silent!exe 'inoremap <silent> <expr> '    ._.
         \ ' <SID>vimim_chinese_punctuation_map("'._.'")'
     endfor
-    sil!call s:vimim_onekey_punctuation_mapping()
     return ""
 endfunction
 
@@ -1799,8 +1798,20 @@ function! <SID>vimim_chinese_punctuation_map(key)
         endif
     endif
     if pumvisible()
-        let key = '\<C-Y>' . key
-        call g:vimim_reset_after_insert()
+        if a:key =~ "[-=]"
+            if a:key == "-"
+                let s:pageup_pagedown -= 1
+            else
+                let s:pageup_pagedown += 1
+            endif
+            let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
+        else
+            let key = '\<C-Y>' . key
+            if a:key =~ "[][]"
+                let key = s:vimim_square_bracket(a:key)
+            endif
+            call g:vimim_reset_after_insert()
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1811,26 +1822,22 @@ function! s:vimim_onekey_punctuation_mapping()
     if s:vimim_chinese_punctuation < 0
         return ""
     endif
-    let punctuation = "[]-="
-    if s:chinese_input_mode =~ 'onekey'
-        let punctuation .= ".,/?;"
-    endif
-    let punctuations = split(punctuation,'\zs')
+    let special_punctuation = "[]-=.,/?;"
+    let map_list = split(special_punctuation,'\zs')
     for char in s:valid_keys
-        let i = index(punctuations, char)
+        let i = index(map_list, char)
         if i > -1 && char != "."
-            unlet punctuations[i]
+            unlet map_list[i]
         endif
     endfor
-    for _ in punctuations
-        silent!exe 'inoremap <silent> <expr> '   ._.
-        \ ' <SID>vimim_onekey_punctuation_map("'._.'")'
+    for _ in map_list
+        sil!exe 'ino<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
     endfor
 endfunction
 
-" ----------------------------------------------
-function! <SID>vimim_onekey_punctuation_map(key)
-" ----------------------------------------------
+" ------------------------------------------
+function! <SID>vimim_onekey_punctuation(key)
+" ------------------------------------------ todo
     let hjkl = a:key
     if pumvisible()
         if a:key =~ ";"
