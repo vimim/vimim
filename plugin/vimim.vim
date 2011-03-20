@@ -487,7 +487,8 @@ function! s:vimim_egg_vimimenv()
     let encoding = s:vimim_chinese('encoding') . s:colon
     call add(eggs, encoding . &encoding . s:space . &fileencodings)
     if has("gui_running")
-        let option = s:vimim_chinese('font') . s:colon . &guifontwide
+        let font = empty(&guifontwide) ? &guifont : &guifontwide
+        let option = s:vimim_chinese('font') . s:colon . font
         call add(eggs, option)
     endif
     let option = s:vimim_chinese('environment') . s:colon . v:lc_time
