@@ -310,7 +310,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_debug = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
@@ -340,6 +340,7 @@ function! s:vimim_for_mom_and_dad()
     else
         return
     endif
+    let s:vimim_cloud_sogou = -1
     let s:vimim_onekey_is_tab = 1
     if has("gui_running")
         autocmd! * <buffer>
