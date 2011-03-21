@@ -98,8 +98,8 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    let s:clouds = ['sogou','qq','google','baidu']
     let s_vimim_cloud = 0
+    let s:clouds = ['sogou','qq','google','baidu']
     for cloud in s:clouds
         let s_vimim_cloud = eval("s:vimim_cloud_" . cloud)
         if !empty(s_vimim_cloud)
@@ -139,6 +139,7 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdvfgz"
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
+    let s:chinese_im_switch = 0
     let s:chinese_mode_switch = 0
 endfunction
 
@@ -682,27 +683,35 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " s:chinese_input_mode='dynamic' => (default) dynamic mode
 " s:chinese_input_mode='static'  =>  static chinese input mode
 
+" ------------------------------
+function! <SID>vimim_im_switch()
+" ------------------------------ todo
+    let s:chinese_im_switch += 1
+    let s:chinese_mode_switch = 0
+    sil!call <SID>ChineseMode()
+    return ""
+endfunction
+
 " --------------------------
 function! <SID>ChineseMode()
-" -------------------------- todo
+" --------------------------
     sil!call s:vimim_backend_initialization()
+    let s:chinese_input_mode = s:vimim_chinese_input_mode
     if empty(s:ui.frontends)
         return
     endif
-    let s:chinese_mode_switch += 1
-    let s:chinese_input_mode = s:vimim_chinese_input_mode
-    let total = len(s:ui.frontends) + 1
-    let cycle = s:chinese_mode_switch % total
-    let switch = get(s:ui.frontends, cycle-1)
     let action = ""
-    if empty(cycle)
+    let s:chinese_mode_switch += 1
+    if empty(s:chinese_mode_switch % 2)
         call g:vimim_stop()
         if mode() == 'n'
             redraw!
         endif
     else
-        let s:ui.root = get(switch,0)
-        let s:ui.im = get(switch,1)
+        let switch = s:chinese_im_switch % len(s:ui.frontends)
+        let frontends = get(s:ui.frontends, switch)
+        let s:ui.root = get(frontends,0)
+        let s:ui.im = get(frontends,1)
         call s:vimim_set_statusline()
         call s:vimim_build_datafile_cache()
         let action = s:vimim_chinesemode_action()
@@ -4955,6 +4964,7 @@ function! s:vimim_chinesemode_mapping_on()
         inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
             imap <silent> <C-Bslash> <Plug>VimimTrigger
          noremap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
+        inoremap <silent> <expr> <C-H> <SID>vimim_im_switch()
     endif
     if s:vimim_ctrl_space_to_toggle == 1
         if has("gui_running")
