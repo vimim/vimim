@@ -329,7 +329,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_debug = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
@@ -686,9 +686,9 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " ------------------------------
 function! <SID>vimim_im_switch()
 " ------------------------------ todo
-    let s:chinese_im_switch += 1
     let s:chinese_mode_switch = 0
     sil!call <SID>ChineseMode()
+    let s:chinese_im_switch += 1
     return ""
 endfunction
 
