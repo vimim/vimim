@@ -102,6 +102,7 @@ function! s:vimim_initialize_session()
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
+    let s:clouds = ['sogou','qq','google','baidu']
     let s:www_libcall = 0
     let s:www_executable = 0
     let s:cloud_sogou_key = 0
@@ -3502,16 +3503,15 @@ function! s:vimim_set_datafile(im, datafile)
         return
     endif
     " --------------------------------------
-    if im =~# 'sogou'
-        return s:vimim_set_cloud('sogou')
-    elseif im =~# 'qq'
-        return s:vimim_set_cloud('qq')
-    elseif im =~# 'baidu'
-        return s:vimim_set_cloud('baidu')
-    elseif im =~# 'google'
-        return s:vimim_set_cloud('google')
-    elseif im =~# 'mycloud'
-        return s:vimim_do_force_mycloud()
+    for cloud in s:clouds
+        if im =~# cloud
+            return s:vimim_set_cloud(cloud)
+        else
+            continue
+        endif
+    endfor
+    if im =~# 'mycloud'
+        return s:vimim_set_mycloud(1)
     endif
     " --------------------------------------
     let s:ui.root = "datafile"
@@ -3774,16 +3774,16 @@ function! s:vimim_scan_current_buffer()
         let s:vimim_shuangpin = buffers[position][len(shuangpin) :]
     endif
     " --------------------------------------
-    if buffer =~# 'sogou'
-        return s:vimim_set_cloud('sogou')
-    elseif buffer =~# 'qq'
-        return s:vimim_set_cloud('qq')
-    elseif buffer =~# 'baidu'
-        return s:vimim_set_cloud('baidu')
-    elseif buffer =~# 'google'
-        return s:vimim_set_cloud('google')
-    elseif buffer =~# 'mycloud'
-        call s:vimim_do_force_mycloud()
+    for cloud in s:clouds
+        if buffer =~# cloud
+            return s:vimim_set_cloud(cloud)
+        else
+            continue
+        endif
+    endfor
+    if buffer =~# 'mycloud'
+        call s:vimim_set_mycloud(1)
+    endif
     " --------------------------------------
     else
         for input_method in s:all_vimim_input_methods
@@ -3950,15 +3950,11 @@ endfunction
 let s:VimIM += [" ====  backend cloud    ==== {{{"]
 " =================================================
 
-" http://pinyin.sogou.com/cloud/
-" http://py.qq.com/web/
-" http://www.baidu.com/
-" http://www.google.com/transliterate
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
     if empty(s:backend.datafile) && empty(s:backend.directory)
-        call s:vimim_set_mycloud()
+        call s:vimim_set_mycloud(0)
         if empty(s:mycloud_plugin)
             call s:vimim_set_cloud('sogou')
         endif
@@ -4139,9 +4135,10 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     return 0
 endfunction
 
-" ------------------------------------------------
+" ---------------------------------------------
 function! s:vimim_get_cloud_qq(keyboard, force)
-" ------------------------------------------------
+" ---------------------------------------------
+    let url = " http://py.qq.com/web/ "
     let keyboard = a:keyboard
     let results = ['woyouyigemeng 我有一个梦']
     return results
@@ -4150,14 +4147,16 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard, force)
 " ------------------------------------------------
+    let url = " http://www.baidu.com/ "
     let keyboard = a:keyboard
     let results = ['woyouyigemeng 我有一个梦']
     return results
 endfunction
 
-" ------------------------------------------------
+" -------------------------------------------------
 function! s:vimim_get_cloud_google(keyboard, force)
-" ------------------------------------------------
+" -------------------------------------------------
+    let url = " http://www.google.com/transliterate "
     let keyboard = a:keyboard
     let results = ['woyouyigemeng 我有一个梦']
     return results
@@ -4166,6 +4165,7 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard, force)
 " ------------------------------------------------
+    let url = " http://pinyin.sogou.com/cloud/ "
     let keyboard = a:keyboard
     if  keyboard =~# '\L' || empty(s:www_executable)
         return []
@@ -4244,9 +4244,6 @@ let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
 " Thanks to Pan Shizhu for providing all mycloud codes:
 
-" ----------------------------------
-function! s:vimim_do_force_mycloud()
-" ----------------------------------
 " let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
 " let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
 " let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
@@ -4255,19 +4252,13 @@ function! s:vimim_do_force_mycloud()
 " let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
 " let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
-" --------------------------------------------------------------------
-    if s:vimim_mycloud_url =~ '^http\|^dll\|^app'
-        return
-    else
+" --------------------------------
+function! s:vimim_set_mycloud(url)
+" --------------------------------
+    if !empty(a:url)
+        " [auto mycloud test] vim mycloud.vimim
         let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
-        call s:vimim_set_mycloud()
     endif
-endfunction
-
-" -----------------------------
-function! s:vimim_set_mycloud()
-" -----------------------------
-" [auto mycloud test] vim mycloud.vimim
     let cloud = s:vimim_set_cloud_backend_if_www_executable('mycloud')
     if !empty(cloud)
         let mycloud = s:vimim_check_mycloud_availability()
