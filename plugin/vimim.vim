@@ -4,7 +4,7 @@
 "   VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ======================================================
 
-let $VimIM = "easter egg:""  vimim<C-6><C-6>
+let $VimIM = "easter egg:"" vimimenv<C-6><C-6> vimimrc<C-6><C-6>
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 let s:url  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
@@ -329,7 +329,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_debug = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
@@ -4961,10 +4961,10 @@ endfunction
 function! s:vimim_chinesemode_mapping_on()
 " ----------------------------------------
     if s:vimim_onekey_is_tab < 2
-        inoremap <unique> <expr>     <Plug>VimimTrigger <SID>ChineseMode()
-            imap <silent> <C-Bslash> <Plug>VimimTrigger
-         noremap <silent> <C-Bslash> :call <SID>ChineseMode()<CR>
         inoremap <silent> <expr> <C-H> <SID>vimim_im_switch()
+        inoremap <unique> <expr>      <Plug>VimimTrigger <SID>ChineseMode()
+            imap <silent> <C-Bslash>  <Plug>VimimTrigger
+         noremap <silent> <C-Bslash>  :call <SID>ChineseMode()<CR>
     endif
     if s:vimim_ctrl_space_to_toggle == 1
         if has("gui_running")
