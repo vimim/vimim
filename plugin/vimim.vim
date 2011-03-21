@@ -102,7 +102,7 @@ function! s:vimim_initialize_session()
     let s_vimim_cloud = 0
     for cloud in s:clouds
         let s_vimim_cloud = eval("s:vimim_cloud_" . cloud)
-        if s_vimim_cloud == 1
+        if !empty(s_vimim_cloud)
             let s:cloud_default = cloud
             break
         endif
