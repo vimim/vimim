@@ -4114,22 +4114,23 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     if do_cloud > 0
         return 1
     endif
-    let s_vimim_cloud = eval("s:vimim_cloud_" . s:ui.im)
     if s:mom_and_dad > 0
-    \|| s_vimim_cloud < 1
+    \|| s:cloud_default < 1
     \|| keyboard =~ "[^a-z]"
     \|| s:has_no_internet > 1
         return 0
     endif
     if s:has_no_internet < 0
     \|| get(a:clouds, 1) > 0
-    \|| s_vimim_cloud == 1
+    \|| s:cloud_default == 1
         return 1
     endif
-    if s:chinese_input_mode !~ 'dynamic' && s:ui.im == 'pinyin'
+    if s:chinese_input_mode !~ 'dynamic' 
+    \&& s:ui.im == 'pinyin'
+    \&& s:cloud_default == 'sogou'
         " threshold to trigger cloud automatically
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        if len(pinyins) > s_vimim_cloud
+        if len(pinyins) > s:cloud_default
             return 1
         endif
     endif
