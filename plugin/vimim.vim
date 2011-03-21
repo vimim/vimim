@@ -1298,7 +1298,13 @@ function! s:vimim_get_hjkl(keyboard)
     if !empty(lines)
         " [hjkl] display the buffer inside the omni window
     elseif keyboard ==# "vimim"
-        let lines = split(getreg('"'),'\n')
+        let unnamed_register = getreg('"')
+        if !empty(unnamed_register)
+            let lines = split(unnamed_register,'\n')
+            if len(lines) < 2
+                let lines = s:vimim_egg_vimimenv()
+            endif
+        endif
     elseif keyboard ==# "vimimj"
         let lines = getline(".", "$")
     elseif keyboard ==# "vimimk"
@@ -1847,7 +1853,7 @@ endfunction
 
 " ------------------------------------------
 function! <SID>vimim_onekey_punctuation(key)
-" ------------------------------------------ todo
+" ------------------------------------------
     let hjkl = a:key
     if pumvisible()
         if a:key =~ ";"
@@ -2564,13 +2570,6 @@ function! s:vimim_statusline()
         endif
         return s:vimim_get_chinese_im()
     endif
-    for cloud in s:clouds
-        let option = "s:vimim_cloud_" . cloud
-        if eval(option) == 1 && s:ui.im == option
-            let s:ui.statusline = s:backend.cloud[cloud]chinese
-            break
-        endif
-    endfor
     if s:vimim_cloud_sogou == -777 && s:ui.im == 'mycloud'
         if !empty(s:mycloud_plugin)
             let __getname = s:backend.cloud.mycloud.directory
@@ -3517,7 +3516,7 @@ function! s:vimim_set_datafile(im, datafile)
     if im =~# 'mycloud'
         return s:vimim_set_mycloud(1)
     endif
-    " --------------------------------------
+    " -------------------------------------- todo
     let s:ui.root = "datafile"
     let s:ui.im = im
     let frontends = [s:ui.root, s:ui.im]
@@ -4124,21 +4123,14 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     if s:has_no_internet < 0 || get(a:clouds, 1) > 0
         return 1
     endif
-    let s_vimim_clouds = []
-    for cloud in s:clouds
-        let option = "s:vimim_cloud_" . cloud
-        let s_vimim_cloud = eval(option)
-        call add(s_vimim_clouds, s_vimim_cloud)
-        if s_vimim_cloud == 1 && s:ui.im == option
-            return 1
-        else
-            continue
-        endif
-    endfor
+    let s_vimim_cloud = eval("s:vimim_cloud_" . s:ui.im)
+    if s_vimim_cloud == 1
+        return 1
+    endif
     if s:chinese_input_mode !~ 'dynamic' && s:ui.im == 'pinyin'
         " threshold to trigger cloud automatically
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        if len(pinyins) > max(s_vimim_clouds)
+        if len(pinyins) > s_vimim_cloud
             return 1
         endif
     endif
@@ -4269,18 +4261,19 @@ function! s:vimim_set_mycloud(url)
         " [auto mycloud test] vim mycloud.vimim
         let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
     endif
-    let cloud = s:vimim_set_cloud_backend_if_www_executable('mycloud')
+    let im = 'mycloud'
+    let cloud = s:vimim_set_cloud_backend_if_www_executable(im)
     if !empty(cloud)
         let mycloud = s:vimim_check_mycloud_availability()
         if empty(mycloud)
             let s:backend.cloud = {}
             return {}
         else
-            let s:mycloud_plugin = mycloud
-            let s:vimim_cloud_sogou = -777
             let s:vimim_shuangpin = 0
-            let s:ui.root = "cloud"
-            let s:ui.im = "mycloud"
+            let s:vimim_cloud_sogou = -777
+            let s:mycloud_plugin = mycloud
+            let s:ui.root = 'cloud'
+            let s:ui.im = im
             let frontends = [s:ui.root, s:ui.im]
             let s:ui.frontends = [frontends]
         endif
