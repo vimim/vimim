@@ -187,6 +187,9 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['quick']    = "[0-9a-z']"
     let s:im_keycode['wubi']     = "[0-9a-z']"
     let s:im_keycode['sogou']    = "[0-9a-z']"
+    let s:im_keycode['qq']       = "[0-9a-z']"
+    let s:im_keycode['baidu']    = "[0-9a-z']"
+    let s:im_keycode['google']   = "[0-9a-z']"
     let s:im_keycode['mycloud']  = "[0-9a-z]"
     let s:im_keycode['yong']     = "[a-z'.;/]"
     let s:im_keycode['wu']       = "[a-z'.]"
@@ -252,11 +255,14 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_cloud_sogou")
-    call add(G, "g:vimim_mycloud_url")
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_onekey_is_tab")
+    call add(G, "g:vimim_mycloud_url")
+    call add(G, "g:vimim_cloud_sogou")
+    call add(G, "g:vimim_cloud_qq")
+    call add(G, "g:vimim_cloud_baidu")
+    call add(G, "g:vimim_cloud_google")
     " -----------------------------------
     let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
@@ -310,7 +316,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_debug = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
@@ -1594,17 +1600,20 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['plusplus']    = ['加加']
     let s:chinese['flypy']       = ['小鹤','小鶴']
     let s:chinese['onekey']      = ['点石成金','點石成金']
-    let s:chinese['cloudatwill'] = ['想云就云','想雲就雲']
-    let s:chinese['mycloud']     = ['自己的云','自己的雲']
-    let s:chinese['cloud']       = ['云','雲']
     let s:chinese['quick']       = ['速成']
     let s:chinese['phonetic']    = ['注音']
     let s:chinese['array30']     = ['行列']
-    let s:chinese['sogou']       = ['搜狗']
     let s:chinese['pinyin']      = ['拼音']
     let s:chinese['revision']    = ['版本']
     let s:chinese['full_width']  = ['全角']
     let s:chinese['half_width']  = ['半角']
+    let s:chinese['cloudatwill'] = ['想云就云','想雲就雲']
+    let s:chinese['mycloud']     = ['自己的云','自己的雲']
+    let s:chinese['cloud']       = ['云','雲']
+    let s:chinese['sogou']       = ['搜狗']
+    let s:chinese['qq']          = ['腾讯']
+    let s:chinese['baidu']       = ['百度']
+    let s:chinese['google']      = ['谷歌']
 endfunction
 
 " ----------------------------------------
@@ -3494,8 +3503,13 @@ function! s:vimim_set_datafile(im, datafile)
     endif
     " --------------------------------------
     if im =~# 'sogou'
-        let s:vimim_cloud_sogou = 1
-        return s:vimim_set_sogou()
+        return s:vimim_set_cloud('sogou')
+    elseif im =~# 'qq'
+        return s:vimim_set_cloud('qq')
+    elseif im =~# 'baidu'
+        return s:vimim_set_cloud('baidu')
+    elseif im =~# 'google'
+        return s:vimim_set_cloud('google')
     elseif im =~# 'mycloud'
         return s:vimim_do_force_mycloud()
     endif
@@ -3759,11 +3773,18 @@ function! s:vimim_scan_current_buffer()
     if position > -1
         let s:vimim_shuangpin = buffers[position][len(shuangpin) :]
     endif
+    " --------------------------------------
     if buffer =~# 'sogou'
-        let s:vimim_cloud_sogou = 1
-        call s:vimim_set_sogou()
+        return s:vimim_set_cloud('sogou')
+    elseif buffer =~# 'qq'
+        return s:vimim_set_cloud('qq')
+    elseif buffer =~# 'baidu'
+        return s:vimim_set_cloud('baidu')
+    elseif buffer =~# 'google'
+        return s:vimim_set_cloud('google')
     elseif buffer =~# 'mycloud'
         call s:vimim_do_force_mycloud()
+    " --------------------------------------
     else
         for input_method in s:all_vimim_input_methods
             if buffer =~ input_method . '\>'
@@ -3929,13 +3950,17 @@ endfunction
 let s:VimIM += [" ====  backend cloud    ==== {{{"]
 " =================================================
 
+" http://pinyin.sogou.com/cloud/
+" http://py.qq.com/web/
+" http://www.baidu.com/
+" http://www.google.com/transliterate
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
     if empty(s:backend.datafile) && empty(s:backend.directory)
         call s:vimim_set_mycloud()
         if empty(s:mycloud_plugin)
-            call s:vimim_set_sogou()
+            call s:vimim_set_cloud('sogou')
         endif
     endif
     if empty(s:vimim_cloud_sogou)
@@ -3943,19 +3968,21 @@ function! s:vimim_scan_backend_cloud()
     endif
 endfunction
 
-" ---------------------------
-function! s:vimim_set_sogou()
-" ---------------------------
-    " s:vimim_cloud_sogou=0  : default, auto open when no datafile
-    " s:vimim_cloud_sogou=-1 : cloud is shut down without condition
-    let cloud = s:vimim_set_cloud_backend_if_www_executable('sogou')
+" -----------------------------
+function! s:vimim_set_cloud(im)
+" -----------------------------
+" s:vimim_cloud_sogou=0  : default, auto open when no datafile
+" s:vimim_cloud_sogou=-1 : cloud is shut down without condition
+    let im = a:im
+    exe 'let s:vimim_cloud_' . im . ' = 1'
+    let cloud = s:vimim_set_cloud_backend_if_www_executable(im)
     if empty(cloud)
-        let s:vimim_cloud_sogou = 0
+        exe 'let s:vimim_cloud_' . im . ' = 0'
         let s:backend.cloud = {}
     else
         let s:mycloud_plugin = 0
-        let s:ui.root = "cloud"
-        let s:ui.im = "sogou"
+        let s:ui.root = 'cloud'
+        let s:ui.im = im
         let frontends = [s:ui.root, s:ui.im]
         call insert(s:ui.frontends, frontends)
     endif
@@ -4096,7 +4123,10 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     if s:has_no_internet < 0 || get(a:clouds, 1) > 0
         return 1
     endif
-    if s:vimim_cloud_sogou == 1 && s:ui.im == 'sogou'
+    if (s:vimim_cloud_sogou   == 1 && s:ui.im == 'sogou')
+    \|| (s:vimim_cloud_qq     == 1 && s:ui.im == 'qq')
+    \|| (s:vimim_cloud_google == 1 && s:ui.im == 'google')
+    \|| (s:vimim_cloud_baidu  == 1 && s:ui.im == 'baidu')
         return 1
     endif
     if s:chinese_input_mode !~ 'dynamic' && s:ui.im == 'pinyin'
@@ -4107,6 +4137,30 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
         endif
     endif
     return 0
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_get_cloud_qq(keyboard, force)
+" ------------------------------------------------
+    let keyboard = a:keyboard
+    let results = ['woyouyigemeng 我有一个梦']
+    return results
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_get_cloud_baidu(keyboard, force)
+" ------------------------------------------------
+    let keyboard = a:keyboard
+    let results = ['woyouyigemeng 我有一个梦']
+    return results
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_get_cloud_google(keyboard, force)
+" ------------------------------------------------
+    let keyboard = a:keyboard
+    let results = ['woyouyigemeng 我有一个梦']
+    return results
 endfunction
 
 " ------------------------------------------------
