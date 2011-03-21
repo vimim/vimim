@@ -1000,7 +1000,7 @@ function! s:vimim_onekey_input(keyboard)
             if !empty(len(results))
                 return results
             endif
-        elseif s:has_cjk_file > 1 || s:vimim_imode_pinyin > 0
+        elseif s:vimim_imode_pinyin > 0
             let dddd = s:vimim_qwertyuiop_1234567890(keyboard[1:])
             if !empty(dddd)
                 let keyboard = dddd " iypwqwuww => 60212722
@@ -1477,7 +1477,7 @@ endfunction
 function! s:vimim_cjk_property_display(ddddd)
 " -------------------------------------------
     let unicode = printf('u%04x', a:ddddd)
-    if s:has_cjk_file < 1
+    if empty(s:has_cjk_file)
         return unicode . s:space . a:ddddd
     endif
     call s:vimim_load_cjk_file()
@@ -1972,7 +1972,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:has_cjk_file > 1 || s:ui.im == 'pinyin'
+    elseif s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
             " output is 'm7712' for input muuqwxeyqpjeqqq
             let delimiter = match(keyboard, '^\l\l\l\l\l')
@@ -2012,7 +2012,7 @@ endfunction
 function! s:vimim_qwertyuiop_1234567890(keyboard)
 " -----------------------------------------------
     " output is '7712' for input uuqw
-    if a:keyboard =~ '\d' || s:has_cjk_file < 1
+    if a:keyboard =~ '\d' || empty(s:has_cjk_file)
         return 0
     endif
     let dddd = ""
@@ -2898,7 +2898,7 @@ function! s:vimim_scan_english_datafile()
     let s:english_lines = []
     let datafile = "vimim.txt"
     let datafile = s:vimim_check_filereadable(datafile)
-    if s:has_cjk_file > 1 || s:ui.im =~ 'pinyin'
+    if s:ui.im =~ 'pinyin'
         if !empty(datafile)
             let s:english_file = datafile
             let s:has_english_file = 1
@@ -3935,11 +3935,6 @@ function! s:vimim_scan_backend_cloud()
         call s:vimim_set_mycloud()
         if empty(s:mycloud_plugin)
             call s:vimim_set_sogou()
-            if s:has_cjk_file == 1
-                " it seems better to use local cjk
-                let s:has_cjk_file = 2
-                let s:ui.im = 'pinyin'
-            endif
         endif
     endif
     if empty(s:vimim_cloud_sogou)
@@ -4087,10 +4082,8 @@ endfunction
 " -------------------------------------------------
 function! s:vimim_to_cloud_or_not(keyboard, clouds)
 " -------------------------------------------------
-    if s:chinese_input_mode =~ 'onekey'
-        if s:has_cjk_file > 1 && get(a:clouds, 1) < 1
-            return 0
-        endif
+    if s:chinese_input_mode =~ 'onekey' && get(a:clouds, 1) < 1
+        return 0
     endif
     let keyboard = a:keyboard
     if s:vimim_cloud_sogou < 1
