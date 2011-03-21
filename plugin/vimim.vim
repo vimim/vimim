@@ -33,8 +33,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "
 " "VimIM Backend Engines"
 "  (1) [embedded]   VimIM: http://vimim.googlecode.com
-"  (2) [external]   Cloud: http://web.pinyin.sogou.com
-"  (3) [external] myCloud: http://pim-cloud.appspot.com
+"  (2) [external]   up to 4 clouds and mycloud
 "
 " "VimIM Installation"
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
@@ -103,10 +102,10 @@ function! s:vimim_initialize_session()
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
     let s:clouds = ['sogou','qq','google','baidu']
-    let s:www_libcall = 0
-    let s:www_executable = 0
     let s:cloud_sogou_key = 0
     let s:mycloud_plugin = 0
+    let s:www_libcall = 0
+    let s:www_executable = 0
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     let s:shuangpin_keycode_chinese = {}
@@ -204,8 +203,8 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['phonetic'] = "[.,0-9a-z;/]"
     " -------------------------------------------
     let vimimkeys = copy(keys(s:im_keycode))
-    call add(vimimkeys, 'pinyin_quote_sogou')
     call add(vimimkeys, 'pinyin_sogou')
+    call add(vimimkeys, 'pinyin_quote_sogou')
     call add(vimimkeys, 'pinyin_huge')
     call add(vimimkeys, 'pinyin_fcitx')
     call add(vimimkeys, 'pinyin_canton')
@@ -2565,9 +2564,14 @@ function! s:vimim_statusline()
         endif
         return s:vimim_get_chinese_im()
     endif
-    if s:vimim_cloud_sogou == 1 && s:ui.im == 'sogou'
-        let s:ui.statusline = s:backend.cloud.sogou.chinese
-    elseif s:vimim_cloud_sogou == -777 && s:ui.im == 'mycloud'
+    for cloud in s:clouds
+        let option = "s:vimim_cloud_" . cloud
+        if eval(option) == 1 && s:ui.im == option
+            let s:ui.statusline = s:backend.cloud[cloud]chinese
+            break
+        endif
+    endfor
+    if s:vimim_cloud_sogou == -777 && s:ui.im == 'mycloud'
         if !empty(s:mycloud_plugin)
             let __getname = s:backend.cloud.mycloud.directory
             let s:ui.statusline .= s:space . __getname
@@ -3999,6 +4003,7 @@ function! s:vimim_set_cloud_backend_if_www_executable(im)
         let s:backend.cloud[im].im = im
         let s:backend.cloud[im].keycode = s:im_keycode[im]
         let s:backend.cloud[im].chinese = s:vimim_chinese(im)
+        let s:backend.cloud[im].name = s:vimim_chinese(im)
         return cloud
     endif
 endfunction
@@ -4119,16 +4124,21 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     if s:has_no_internet < 0 || get(a:clouds, 1) > 0
         return 1
     endif
-    if (s:vimim_cloud_sogou   == 1 && s:ui.im == 'sogou')
-    \|| (s:vimim_cloud_qq     == 1 && s:ui.im == 'qq')
-    \|| (s:vimim_cloud_google == 1 && s:ui.im == 'google')
-    \|| (s:vimim_cloud_baidu  == 1 && s:ui.im == 'baidu')
-        return 1
-    endif
+    let s_vimim_clouds = []
+    for cloud in s:clouds
+        let option = "s:vimim_cloud_" . cloud
+        let s_vimim_cloud = eval(option)
+        call add(s_vimim_clouds, s_vimim_cloud)
+        if s_vimim_cloud == 1 && s:ui.im == option
+            return 1
+        else
+            continue
+        endif
+    endfor
     if s:chinese_input_mode !~ 'dynamic' && s:ui.im == 'pinyin'
         " threshold to trigger cloud automatically
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        if len(pinyins) > s:vimim_cloud_sogou
+        if len(pinyins) > max(s_vimim_clouds)
             return 1
         endif
     endif
