@@ -98,15 +98,26 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
-    let s:smart_single_quotes = 1
-    let s:smart_double_quotes = 1
     let s:clouds = ['sogou','qq','google','baidu']
-    let s:cloud_default = get(s:clouds,0)
+    let s_vimim_cloud = 0
+    for cloud in s:clouds
+        let s_vimim_cloud = eval("s:vimim_cloud_" . cloud)
+        if s_vimim_cloud == 1
+            let s:cloud_default = cloud
+            break
+        endif
+    endfor
+    if empty(s_vimim_cloud)
+        let s:cloud_default = get(s:clouds,0)
+    endif
     let s:cloud_sogou_key = 0
     let s:mycloud_plugin = 0
     let s:www_libcall = 0
+    " --------------------------------
     let s:www_executable = 0
+    let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
+    let s:smart_single_quotes = 1
+    let s:smart_double_quotes = 1
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     let s:shuangpin_keycode_chinese = {}
@@ -3509,8 +3520,6 @@ function! s:vimim_set_datafile(im, datafile)
     for cloud in s:clouds
         if im =~# cloud
             return s:vimim_set_cloud(cloud)
-        else
-            continue
         endif
     endfor
     if im =~# 'mycloud'
@@ -3780,8 +3789,6 @@ function! s:vimim_scan_current_buffer()
     for cloud in s:clouds
         if buffer =~# cloud
             return s:vimim_set_cloud(cloud)
-        else
-            continue
         endif
     endfor
     if buffer =~# 'mycloud'
@@ -3982,6 +3989,7 @@ function! s:vimim_set_cloud(im)
         let s:backend.cloud = {}
     else
         let s:mycloud_plugin = 0
+        let s:cloud_default = im
         let s:ui.root = 'cloud'
         let s:ui.im = im
         let frontends = [s:ui.root, s:ui.im]
