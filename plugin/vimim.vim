@@ -102,8 +102,8 @@ function! s:vimim_initialize_session()
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
     let s:clouds = ['sogou','qq','google','baidu']
-    let s:cloud_sogou_key = 0
     let s:cloud_default = get(s:clouds,0)
+    let s:cloud_sogou_key = 0
     let s:mycloud_plugin = 0
     let s:www_libcall = 0
     let s:www_executable = 0
@@ -537,7 +537,7 @@ function! s:vimim_egg_vimimenv()
         let option = s:vimim_chinese('input') . s:colon . im
         call add(eggs, option)
     endif
-    if s:vimim_cloud_sogou == 888
+    if eval("s:vimim_cloud_" . s:cloud_default) == 888
         let cloud = s:vimim_chinese(s:cloud_default)
         let option = cloud . s:colon . s:vimim_chinese('cloudatwill')
         call add(eggs, option)
@@ -673,7 +673,7 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 
 " --------------------------
 function! <SID>ChineseMode()
-" --------------------------
+" -------------------------- todo
     sil!call s:vimim_backend_initialization()
     if empty(s:ui.frontends)
         return
@@ -1616,8 +1616,8 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['cloudatwill'] = ['想云就云','想雲就雲']
     let s:chinese['mycloud']     = ['自己的云','自己的雲']
     let s:chinese['cloud']       = ['云','雲']
+    let s:chinese['qq']          = ['QQ']
     let s:chinese['sogou']       = ['搜狗']
-    let s:chinese['qq']          = ['腾讯']
     let s:chinese['baidu']       = ['百度']
     let s:chinese['google']      = ['谷歌']
 endfunction
@@ -3964,8 +3964,8 @@ function! s:vimim_scan_backend_cloud()
             call s:vimim_set_cloud(s:cloud_default)
         endif
     endif
-    if empty(s:vimim_cloud_sogou)
-        let s:vimim_cloud_sogou = 888
+    if empty(eval("s:vimim_cloud_" . s:cloud_default))
+        exe 'let s:vimim_cloud_' . s:cloud_default . ' = 888'
     endif
 endfunction
 
@@ -4012,7 +4012,7 @@ endfunction
 " -----------------------------------------
 function! s:vimim_check_http_executable(im)
 " -----------------------------------------
-    if s:vimim_cloud_sogou < 0
+    if eval("s:vimim_cloud_" . a:im) < 0
         return {}
     endif
     " step 1 of 3: try to find libvimim
@@ -4026,7 +4026,6 @@ function! s:vimim_check_http_executable(im)
         if ret ==# "True"
             let s:www_executable = cloud
             let s:www_libcall = 1
-            call s:vimim_do_cloud_if_no_embedded_backend()
         endif
     endif
     " step 2 of 3: try to find wget
@@ -4052,28 +4051,18 @@ function! s:vimim_check_http_executable(im)
     if empty(s:www_executable)
         return {}
     else
-        call s:vimim_do_cloud_if_no_embedded_backend()
-    endif
-    return s:backend.cloud[a:im]
-endfunction
-
-" -------------------------------------------------
-function! s:vimim_do_cloud_if_no_embedded_backend()
-" -------------------------------------------------
-    if empty(s:backend.datafile) && empty(s:backend.directory)
-        if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
-            exe 'let s:vimim_cloud_' . s:cloud_default . ' = 888'
-        else
-            exe 'let s:vimim_cloud_' . s:cloud_default . ' = 1'
+        if empty(s:backend.datafile) && empty(s:backend.directory)
+            exe 'let s:vimim_cloud_' . a:im . ' = 1'
         endif
     endif
+    return s:backend.cloud[a:im]
 endfunction
 
 " ------------------------------------
 function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
-    if keyboard =~ '\d'
+    if keyboard =~ '\d' || s:chinese_input_mode =~ 'dynamic'
         return []
     endif
     let magic_tail = keyboard[-1:-1]
@@ -4113,8 +4102,9 @@ endfunction
 function! s:vimim_to_cloud_or_not(keyboard, clouds)
 " -------------------------------------------------
     let keyboard = a:keyboard
-    if s:chinese_input_mode =~ 'onekey' && get(a:clouds, 1) < 1
-        return 0
+    let do_cloud = get(a:clouds, 1)
+    if do_cloud > 0
+        return 1
     endif
     let s_vimim_cloud = eval("s:vimim_cloud_" . s:ui.im)
     if s:mom_and_dad > 0
