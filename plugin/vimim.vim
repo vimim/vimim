@@ -4539,14 +4539,15 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 " --------------------------------------
 function! s:vimim_initialize_i_setting()
 " --------------------------------------
-    let s:saved_cpo=&cpo
-    let s:completefunc=&completefunc
-    let s:completeopt=&completeopt
-    let s:saved_lazyredraw=&lazyredraw
-    let s:saved_laststatus=&laststatus
-    let s:saved_hlsearch=&hlsearch
-    let s:saved_smartcase=&smartcase
-    let s:saved_pumheights=[&pumheight,0]
+    let s:saved_cpo         = &cpo
+    let s:saved_omnifunc    = &omnifunc
+    let s:saved_completeopt = &completeopt
+    let s:saved_laststatus  = &laststatus
+    let s:saved_lazyredraw  = &lazyredraw
+    let s:saved_showmatch   = &showmatch
+    let s:saved_smartcase   = &smartcase
+    let s:saved_hlsearch    = &hlsearch
+    let s:saved_pumheights  = [&pumheight,0]
 endfunction
 
 " ------------------------------
@@ -4555,8 +4556,9 @@ function! s:vimim_i_setting_on()
     set omnifunc=VimIM
     set completeopt=menuone
     set nolazyredraw
-    set hlsearch
+    set noshowmatch
     set smartcase
+    set hlsearch
     if empty(&pumheight)
         let &pumheight=9
         let s:saved_pumheights[1]=&pumheight
@@ -4566,14 +4568,15 @@ endfunction
 " -------------------------------
 function! s:vimim_i_setting_off()
 " -------------------------------
-    let &cpo=s:saved_cpo
-    let &completefunc=s:completefunc
-    let &completeopt=s:completeopt
-    let &lazyredraw=s:saved_lazyredraw
-    let &pumheight=get(s:saved_pumheights,0)
-    let &laststatus=s:saved_laststatus
-    let &hlsearch=s:saved_hlsearch
-    let &smartcase=s:saved_smartcase
+    let &cpo         = s:saved_cpo
+    let &omnifunc    = s:saved_omnifunc
+    let &completeopt = s:saved_completeopt
+    let &laststatus  = s:saved_laststatus
+    let &lazyredraw  = s:saved_lazyredraw
+    let &showmatch   = s:saved_showmatch
+    let &smartcase   = s:saved_smartcase
+    let &hlsearch    = s:saved_hlsearch
+    let &pumheight   = get(s:saved_pumheights,0)
 endfunction
 
 " -----------------------
