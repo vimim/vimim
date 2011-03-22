@@ -99,7 +99,7 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s_vimim_cloud = 0
-    let s:clouds = ['sogou','qq','google','baidu']
+    let s:clouds = ['sogou','qq','baidu','google']
     for cloud in s:clouds
         let s_vimim_cloud = eval("s:vimim_cloud_" . cloud)
         if !empty(s_vimim_cloud)
@@ -687,6 +687,10 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 function! <SID>vimim_im_switch()
 " ------------------------------
     let s:chinese_mode_switch = 0
+    if !exists('s:chinese_im_switch')
+    \|| empty(s:chinese_im_switch)
+        let s:chinese_im_switch = 1
+    endif
     sil!call <SID>ChineseMode()
     let s:chinese_im_switch += 1
     return ""
@@ -1636,8 +1640,8 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['cloudatwill'] = ['想云就云','想雲就雲']
     let s:chinese['mycloud']     = ['自己的云','自己的雲']
     let s:chinese['cloud']       = ['云','雲']
-    let s:chinese['qq']          = ['QQ']
     let s:chinese['sogou']       = ['搜狗']
+    let s:chinese['qq']          = ['QQ']
     let s:chinese['baidu']       = ['百度']
     let s:chinese['google']      = ['谷歌']
 endfunction
@@ -3525,30 +3529,24 @@ function! s:vimim_set_datafile(im, datafile)
     \|| isdirectory(datafile)
         return
     endif
-    " --------------------------------------
-    for cloud in s:clouds
-        if im =~# cloud
-            return s:vimim_set_cloud(cloud)
+    if match(s:clouds, im) > -1
+        call s:vimim_set_cloud(im)
+    else
+        let s:ui.root = "datafile"
+        let s:ui.im = im
+        let frontends = [s:ui.root, s:ui.im]
+        call insert(s:ui.frontends, frontends)
+        let s:backend.datafile[im] = s:vimim_one_backend_hash()
+        let s:backend.datafile[im].root = "datafile"
+        let s:backend.datafile[im].im = im
+        let s:backend.datafile[im].name = datafile
+        let s:backend.datafile[im].keycode = s:im_keycode[im]
+        let s:backend.datafile[im].chinese = s:vimim_chinese(im)
+        if empty(s:backend.datafile[im].lines)
+            let s:backend.datafile[im].lines = s:vimim_readfile(datafile)
         endif
-    endfor
-    if im =~# 'mycloud'
-        return s:vimim_set_mycloud(1)
+        call s:vimim_set_special_im_property()
     endif
-    " -------------------------------------- todo
-    let s:ui.root = "datafile"
-    let s:ui.im = im
-    let frontends = [s:ui.root, s:ui.im]
-    call insert(s:ui.frontends, frontends)
-    let s:backend.datafile[im] = s:vimim_one_backend_hash()
-    let s:backend.datafile[im].root = "datafile"
-    let s:backend.datafile[im].im = im
-    let s:backend.datafile[im].name = datafile
-    let s:backend.datafile[im].keycode = s:im_keycode[im]
-    let s:backend.datafile[im].chinese = s:vimim_chinese(im)
-    if empty(s:backend.datafile[im].lines)
-        let s:backend.datafile[im].lines = s:vimim_readfile(datafile)
-    endif
-    call s:vimim_set_special_im_property()
 endfunction
 
 " ----------------------------------------
@@ -3794,35 +3792,13 @@ function! s:vimim_scan_current_buffer()
     if position > -1
         let s:vimim_shuangpin = buffers[position][len(shuangpin) :]
     endif
-    " --------------------------------------
     for cloud in s:clouds
         if buffer =~# cloud
             return s:vimim_set_cloud(cloud)
         endif
     endfor
     if buffer =~# 'mycloud'
-        call s:vimim_set_mycloud(1)
-    endif
-    " --------------------------------------
-    else
-        for input_method in s:all_vimim_input_methods
-            if buffer =~ input_method . '\>'
-                break
-            else
-                continue
-            endif
-        endfor
-        if buffer =~ input_method
-            if buffer =~# 'cache'
-                let s:vimim_use_cache = 1
-            endif
-            for cloud in s:clouds
-                exe 'let s:vimim_cloud_' . cloud . ' = 0'
-            endfor
-            let s:mycloud_plugin = 0
-            let datafile = s:path . "vimim." . input_method . ".txt"
-            call s:vimim_set_datafile(input_method, datafile)
-        endif
+        return s:vimim_set_mycloud(1)
     endif
 endfunction
 
@@ -3973,7 +3949,7 @@ let s:VimIM += [" ====  backend cloud    ==== {{{"]
 
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
-" ------------------------------------
+" ------------------------------------ todo
     if empty(s:backend.datafile) && empty(s:backend.directory)
         call s:vimim_set_mycloud(0)
         if empty(s:mycloud_plugin)
@@ -4008,14 +3984,12 @@ endfunction
 function! s:vimim_set_cloud_if_www_executable(im)
 " -----------------------------------------------
     let im = a:im
-    if empty(s:backend.cloud)
-        let s:backend.cloud[im] = s:vimim_one_backend_hash()
-    endif
+    let s:backend.cloud[im] = s:vimim_one_backend_hash()
     let cloud = s:vimim_check_http_executable(im)
     if empty(cloud)
         return 0
     else
-        let s:backend.cloud[im].root = "cloud"
+        let s:backend.cloud[im].root = 'cloud'
         let s:backend.cloud[im].im = im
         let s:backend.cloud[im].keycode = s:im_keycode[im]
         let s:backend.cloud[im].chinese = s:vimim_chinese(im)
@@ -4122,7 +4096,6 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
         return 1
     endif
     if s:mom_and_dad > 0
-    \|| s:cloud_default < 1
     \|| keyboard =~ "[^a-z]"
     \|| s:has_no_internet > 1
         return 0
@@ -4130,6 +4103,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     if s:has_no_internet < 0
     \|| get(a:clouds, 1) > 0
     \|| s:cloud_default == 1
+    \|| eval("s:vimim_cloud_" . s:ui.im) > 0
         return 1
     endif
     if s:chinese_input_mode !~ 'dynamic'
@@ -4144,12 +4118,25 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     return 0
 endfunction
 
+" ----------------------------------------------
+function! s:vimim_get_cloud(im, keyboard, force)
+" ----------------------------------------------
+    let cloud  = "s:vimim_get_cloud_"
+    let cloud .= a:im
+    let cloud .= "(a:keyboard,a:force)"
+    try
+        return eval(cloud)
+    catch
+        call s:debugs('get_cloud::'.a:im.'::', v:exception)
+    endtry
+endfunction
+
 " ---------------------------------------------
 function! s:vimim_get_cloud_qq(keyboard, force)
 " ---------------------------------------------
     let url = " http://py.qq.com/web/ "
     let keyboard = a:keyboard
-    let results = ['woyouyigemeng 我有一个梦']
+    let results = ['abcdefg QQ也有输入法']
     return results
 endfunction
 
@@ -4158,7 +4145,7 @@ function! s:vimim_get_cloud_baidu(keyboard, force)
 " ------------------------------------------------
     let url = " http://www.baidu.com/ "
     let keyboard = a:keyboard
-    let results = ['woyouyigemeng 我有一个梦']
+    let results = ['abcdefg 百度也有输入法']
     return results
 endfunction
 
@@ -4167,7 +4154,7 @@ function! s:vimim_get_cloud_google(keyboard, force)
 " -------------------------------------------------
     let url = " http://www.google.com/transliterate "
     let keyboard = a:keyboard
-    let results = ['woyouyigemeng 我有一个梦']
+    let results = ['abcdefg 谷歌也有输入法']
     return results
 endfunction
 
@@ -4875,7 +4862,8 @@ else
     " [sogou] to make cloud come true for woyouyigemeng
     let cloud = s:vimim_to_cloud_or_not(keyboard, clouds)
     if cloud > 0
-        let results = s:vimim_get_cloud_sogou(keyboard, cloud)
+    "   let results = s:vimim_get_cloud_sogou(keyboard, cloud)
+        let results = s:vimim_get_cloud(s:ui.im, keyboard, cloud)
         if empty(len(results))
             if s:vimim_cloud_sogou > 2
                 let s:has_no_internet += 1
@@ -4913,8 +4901,8 @@ else
         if !empty(keyboard_head)
             let results = s:vimim_cjk_match(keyboard_head)
         endif
-    elseif s:vimim_cloud_sogou == 1 && keyboard !~# '\L'
-        let results = s:vimim_get_cloud_sogou(keyboard, 1)
+    elseif eval("s:vimim_cloud_".s:ui.im) > 0 && keyboard !~# '\L'
+        let results = s:vimim_get_cloud(s:ui.im, keyboard, 1)
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
