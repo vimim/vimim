@@ -628,7 +628,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
         endif
         if s:vimim_cloud_sogou == 1
             " => slash search from sogou cloud
-            let results = s:vimim_get_cloud_sogou(keyboard, 1)
+            let results = s:vimim_get_cloud_sogou(keyboard)
         elseif !empty(s:mycloud_plugin)
             " => slash search from mycloud
             let results = s:vimim_get_mycloud_plugin(keyboard)
@@ -4124,13 +4124,16 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     return 0
 endfunction
 
-" ----------------------------------------------
-function! s:vimim_get_cloud(im, keyboard, force)
-" ----------------------------------------------
+" ---------------------------------------
+function! s:vimim_get_cloud(im, keyboard)
+" ---------------------------------------
+    if a:keyboard !~# s:valid_key
+    \|| empty(s:www_executable)
+    \|| eval("s:vimim_cloud_" . a:im) < 1
+        return []
+    endif
     let results = []
-    let cloud  = "s:vimim_get_cloud_"
-    let cloud .= a:im
-    let cloud .= "(a:keyboard,a:force)"
+    let cloud  = "s:vimim_get_cloud_" . a:im . "(a:keyboard)"
     try
         let results = eval(cloud)
     catch
@@ -4139,21 +4142,32 @@ function! s:vimim_get_cloud(im, keyboard, force)
     return results
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_get_cloud_sogou(keyboard, force)
-" ------------------------------------------------
-    let url = " http://pinyin.sogou.com/cloud/ "
-    let keyboard = a:keyboard
-    if  keyboard =~# '\L' || empty(s:www_executable)
-        return []
-    endif
-    if s:vimim_cloud_sogou < 1 && a:force < 1
-        return []
-    endif
-    let sogou_key = 'http://web.pinyin.sogou.com/web_ime/patch.php'
+" ------------------------------------
+function! s:vimim_get_from_http(input)
+" ------------------------------------
+    let input = a:input
+    let output = 0
+    try
+        if s:www_libcall > 0
+            let output = libcall(s:www_executable, "do_geturl", input)
+        else
+            let input = '"' . input . '"'
+            let output = system(s:www_executable . input)
+        endif
+    catch
+        let output = 0
+        call s:debugs('sogou::', output ." ". v:exception)
+    endtry
+    return output
+endfunction
+
+" http://pinyin.sogou.com/cloud/
+" -----------------------------------------
+function! s:vimim_get_cloud_sogou(keyboard)
+" -----------------------------------------
     if empty(s:cloud_sogou_key)
+        let sogou_key = 'http://web.pinyin.sogou.com/web_ime/patch.php'
         let output = s:vimim_get_from_http(sogou_key)
-        " only use sogou when we get a valid key
         if empty(output)
             return []
         endif
@@ -4161,7 +4175,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     endif
     let cloud = 'http://web.pinyin.sogou.com/api/py?key='
     let cloud = cloud . s:cloud_sogou_key .'&query='
-    let input = cloud . keyboard
+    let input = cloud . a:keyboard
     let output = s:vimim_get_from_http(input)
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     if empty(output) || output =~ '502 Bad Gateway'
@@ -4186,7 +4200,7 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
         let item_list = split(item, '：')
         if len(item_list) > 1
             let chinese = get(item_list,0)
-            let english = strpart(keyboard, 0, get(item_list,1))
+            let english = strpart(a:keyboard, 0, get(item_list,1))
             let new_item = english . " " . chinese
             call add(matched_list, new_item)
         endif
@@ -4194,52 +4208,27 @@ function! s:vimim_get_cloud_sogou(keyboard, force)
     return matched_list
 endfunction
 
-" ------------------------------------
-function! s:vimim_get_from_http(input)
-" ------------------------------------
-    if empty(s:www_executable)
-        return 0
-    endif
-    let input = a:input
-    let output = 0
-    try
-        if s:www_libcall > 0
-            let output = libcall(s:www_executable, "do_geturl", input)
-        else
-            let input = '"' . input . '"'
-            let output = system(s:www_executable . input)
-        endif
-    catch
-        let output = 0
-        call s:debugs('sogou::', output ." ". v:exception)
-    endtry
-    return output
-endfunction
-
-" -------------------------------------------------
-function! s:vimim_get_cloud_google(keyboard, force)
-" -------------------------------------------------
-    let url = " http://www.google.com/transliterate "
-    let keyboard = a:keyboard
-    let results = ['abcdefg 谷歌输入法']
+" http://www.google.com/transliterate
+" ------------------------------------------
+function! s:vimim_get_cloud_google(keyboard)
+" ------------------------------------------
+    let results = ['google 谷歌输入法']
     return results
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_get_cloud_qq(keyboard, force)
-" ---------------------------------------------
-    let url = " http://py.qq.com/web/ "
-    let keyboard = a:keyboard
-    let results = ['abcdefg QQ输入法']
+" http://py.qq.com/web
+" --------------------------------------
+function! s:vimim_get_cloud_qq(keyboard)
+" --------------------------------------
+    let results = ['qq QQ输入法']
     return results
 endfunction
 
-" ------------------------------------------------
-function! s:vimim_get_cloud_baidu(keyboard, force)
-" ------------------------------------------------
-    let url = " http://www.baidu.com/ "
-    let keyboard = a:keyboard
-    let results = ['abcdefg 百度输入法']
+" http://www.baidu.com
+" -----------------------------------------
+function! s:vimim_get_cloud_baidu(keyboard)
+" -----------------------------------------
+    let results = ['baidu 百度输入法']
     return results
 endfunction
 
@@ -4868,9 +4857,9 @@ else
     endif
 
     " [sogou] to make cloud come true for woyouyigemeng
-    let cloud = s:vimim_to_cloud_or_not(keyboard, clouds)
-    if cloud > 0
-        let results = s:vimim_get_cloud(s:ui.im, keyboard, cloud)
+    let force = s:vimim_to_cloud_or_not(keyboard, clouds)
+    if force > 0
+        let results = s:vimim_get_cloud(s:ui.im, keyboard)
         if empty(len(results))
             if s:vimim_cloud_sogou > 2
                 let s:has_no_internet += 1
@@ -4910,7 +4899,7 @@ else
         endif
     elseif match(s:clouds, s:ui.im) > -1
         if eval("s:vimim_cloud_".s:ui.im) > 0 && keyboard !~# '\L'
-            let results = s:vimim_get_cloud(s:ui.im, keyboard, 1)
+            let results = s:vimim_get_cloud(s:ui.im, keyboard)
         endif
     endif
     if !empty(len(results))
