@@ -4100,10 +4100,14 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     \|| s:has_no_internet > 1
         return 0
     endif
+    if match(s:clouds, s:ui.im) > -1
+       if eval("s:vimim_cloud_" . s:ui.im) > 0
+           return 1
+       endif
+    endif
     if s:has_no_internet < 0
     \|| get(a:clouds, 1) > 0
     \|| s:cloud_default == 1
-    \|| eval("s:vimim_cloud_" . s:ui.im) > 0
         return 1
     endif
     if s:chinese_input_mode !~ 'dynamic'
@@ -4901,8 +4905,10 @@ else
         if !empty(keyboard_head)
             let results = s:vimim_cjk_match(keyboard_head)
         endif
-    elseif eval("s:vimim_cloud_".s:ui.im) > 0 && keyboard !~# '\L'
-        let results = s:vimim_get_cloud(s:ui.im, keyboard, 1)
+    elseif match(s:clouds, s:ui.im) > -1
+        if eval("s:vimim_cloud_".s:ui.im) > 0 && keyboard !~# '\L'
+            let results = s:vimim_get_cloud(s:ui.im, keyboard, 1)
+        endif
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
