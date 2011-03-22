@@ -3949,7 +3949,7 @@ let s:VimIM += [" ====  backend cloud    ==== {{{"]
 
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
-" ------------------------------------ todo
+" ------------------------------------
     if empty(s:backend.datafile) && empty(s:backend.directory)
         call s:vimim_set_mycloud(0)
         if empty(s:mycloud_plugin)
@@ -4125,14 +4125,16 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_get_cloud(im, keyboard, force)
 " ----------------------------------------------
+    let results = []
     let cloud  = "s:vimim_get_cloud_"
     let cloud .= a:im
     let cloud .= "(a:keyboard,a:force)"
     try
-        return eval(cloud)
+        let results = eval(cloud)
     catch
         call s:debugs('get_cloud::'.a:im.'::', v:exception)
     endtry
+    return results
 endfunction
 
 " ---------------------------------------------
@@ -4866,7 +4868,6 @@ else
     " [sogou] to make cloud come true for woyouyigemeng
     let cloud = s:vimim_to_cloud_or_not(keyboard, clouds)
     if cloud > 0
-    "   let results = s:vimim_get_cloud_sogou(keyboard, cloud)
         let results = s:vimim_get_cloud(s:ui.im, keyboard, cloud)
         if empty(len(results))
             if s:vimim_cloud_sogou > 2
