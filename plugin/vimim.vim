@@ -3944,7 +3944,7 @@ function! s:vimim_sentence_match_directory(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  backend cloud    ==== {{{"]
+let s:VimIM += [" ====  backend clouds   ==== {{{"]
 " =================================================
 
 " ------------------------------------
@@ -4137,33 +4137,6 @@ function! s:vimim_get_cloud(im, keyboard, force)
     return results
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_get_cloud_qq(keyboard, force)
-" ---------------------------------------------
-    let url = " http://py.qq.com/web/ "
-    let keyboard = a:keyboard
-    let results = ['abcdefg QQ也有输入法']
-    return results
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_get_cloud_baidu(keyboard, force)
-" ------------------------------------------------
-    let url = " http://www.baidu.com/ "
-    let keyboard = a:keyboard
-    let results = ['abcdefg 百度也有输入法']
-    return results
-endfunction
-
-" -------------------------------------------------
-function! s:vimim_get_cloud_google(keyboard, force)
-" -------------------------------------------------
-    let url = " http://www.google.com/transliterate "
-    let keyboard = a:keyboard
-    let results = ['abcdefg 谷歌也有输入法']
-    return results
-endfunction
-
 " ------------------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard, force)
 " ------------------------------------------------
@@ -4239,6 +4212,33 @@ function! s:vimim_get_from_http(input)
         call s:debugs('sogou::', output ." ". v:exception)
     endtry
     return output
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_get_cloud_google(keyboard, force)
+" -------------------------------------------------
+    let url = " http://www.google.com/transliterate "
+    let keyboard = a:keyboard
+    let results = ['abcdefg 谷歌输入法']
+    return results
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_get_cloud_qq(keyboard, force)
+" ---------------------------------------------
+    let url = " http://py.qq.com/web/ "
+    let keyboard = a:keyboard
+    let results = ['abcdefg QQ输入法']
+    return results
+endfunction
+
+" ------------------------------------------------
+function! s:vimim_get_cloud_baidu(keyboard, force)
+" ------------------------------------------------
+    let url = " http://www.baidu.com/ "
+    let keyboard = a:keyboard
+    let results = ['abcdefg 百度输入法']
+    return results
 endfunction
 
 " ============================================= }}}
