@@ -271,7 +271,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_onekey_is_tab")
-    call add(G, "g:vimim_mycloud_url")
+    call add(G, "g:vimim_cloud_mycloud")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_cloud_qq")
     call add(G, "g:vimim_cloud_baidu")
@@ -685,7 +685,7 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 
 " ------------------------------
 function! <SID>vimim_im_switch()
-" ------------------------------ todo
+" ------------------------------
     let s:chinese_mode_switch = 0
     sil!call <SID>ChineseMode()
     let s:chinese_im_switch += 1
@@ -3988,8 +3988,6 @@ endfunction
 " -----------------------------
 function! s:vimim_set_cloud(im)
 " -----------------------------
-" s:vimim_cloud_sogou=0  : default, auto open when no datafile
-" s:vimim_cloud_sogou=-1 : cloud is shut down without condition
     let im = a:im
     exe 'let s:vimim_cloud_' . im . ' = 1'
     let cloud = s:vimim_set_cloud_if_www_executable(im)
@@ -4134,7 +4132,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     \|| s:cloud_default == 1
         return 1
     endif
-    if s:chinese_input_mode !~ 'dynamic' 
+    if s:chinese_input_mode !~ 'dynamic'
     \&& s:ui.im == 'pinyin'
     \&& s:cloud_default == 'sogou'
         " threshold to trigger cloud automatically
@@ -4255,23 +4253,14 @@ let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
 " Thanks to Pan Shizhu for providing all mycloud codes:
 
-" let g:vimim_mycloud_url = "dll:/data/libvimim.so:192.168.0.1"
-" let g:vimim_mycloud_url = "dll:/home/im/plugin/libmyplugin.so:arg:func"
-" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/libvimim.so"
-" let g:vimim_mycloud_url = "dll:".$HOME."/plugin/cygvimim.dll"
-" let g:vimim_mycloud_url = "app:".$VIM."/src/mycloud/mycloud"
-" let g:vimim_mycloud_url = "app:python d:/mycloud/mycloud.py"
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/ms/"
-" let g:vimim_mycloud_url = "http://pim-cloud.appspot.com/abc/"
 " --------------------------------
 function! s:vimim_set_mycloud(url)
 " --------------------------------
     if !empty(a:url)
         " [auto mycloud test] vim mycloud.vimim
-        let s:vimim_mycloud_url = "http://pim-cloud.appspot.com/qp/"
+        let s:vimim_cloud_mycloud = "http://pim-cloud.appspot.com/qp/"
     endif
-    let im = 'mycloud'
-    let cloud = s:vimim_set_cloud_if_www_executable(im)
+    let cloud = s:vimim_set_cloud_if_www_executable('mycloud')
     if !empty(cloud)
         let mycloud = s:vimim_check_mycloud_availability()
         if empty(mycloud)
@@ -4282,7 +4271,7 @@ function! s:vimim_set_mycloud(url)
             let s:vimim_cloud_sogou = -777
             let s:mycloud_plugin = mycloud
             let s:ui.root = 'cloud'
-            let s:ui.im = im
+            let s:ui.im = 'mycloud'
             let frontends = [s:ui.root, s:ui.im]
             let s:ui.frontends = [frontends]
         endif
@@ -4293,7 +4282,7 @@ endfunction
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
     let cloud = 0
-    if empty(s:vimim_mycloud_url)
+    if empty(s:vimim_cloud_mycloud)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
     else
         let cloud = s:vimim_check_mycloud_plugin_url()
@@ -4421,7 +4410,7 @@ endfunction
 function! s:vimim_check_mycloud_plugin_url()
 " ------------------------------------------
     " we do set-and-play on all systems
-    let part = split(s:vimim_mycloud_url, ':')
+    let part = split(s:vimim_cloud_mycloud, ':')
     let lenpart = len(part)
     if lenpart <= 1
         call s:debugs("invalid_cloud_plugin_url::","")
@@ -4486,7 +4475,7 @@ function! s:vimim_check_mycloud_plugin_url()
             endtry
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
-        let cloud = s:vimim_mycloud_url
+        let cloud = s:vimim_cloud_mycloud
         if !empty(s:www_executable)
             let s:cloud_plugin_mode = "www"
             let ret = s:vimim_access_mycloud(cloud, "__isvalid")
