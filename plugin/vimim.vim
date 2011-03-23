@@ -868,7 +868,7 @@ function! g:vimim_onekey_dump()
 " -----------------------------
     let one_line_clipboard = ""
     let saved_position = getpos(".")
-    let n = virtcol("'<'") - 1
+    let n = virtcol("'<'") - 2
     let space = repeat(" ", n)
     for items in s:popupmenu_list
         let line = printf('%s', items.word)
@@ -1340,7 +1340,7 @@ function! s:vimim_get_hjkl(keyboard)
                 let sum = 'sum=' . sum
                 let len = 'len=' . len
                 let ave = 'ave=' . ave
-                let lines = [sum, len, ave] + lines
+                let lines = [sum, len, ave]
             endif
         endif
     else
@@ -2218,7 +2218,7 @@ function! s:vimim_get_head(keyboard, partition)
 endfunction
 
 " ---------------------------------------------
-function! s:vimim_tranfer_chinese() range abort
+function! s:vimim_chinese_tranfer() range abort
 " ---------------------------------------------
 " [usage]   :VimIM
 " (1) "quick and dirty" way to transfer Chinese to Chinese
@@ -2283,7 +2283,7 @@ function! <SID>vimim_visual_ctrl6()
         " input:  visual block highlighted in vim visual mode
         " output: the highlighted displayed in omni popup window
         let key = "O"
-        let n = virtcol("'<'") - 1
+        let n = virtcol("'<'") - 2
         if n > 0
             let b:space = repeat(" ", n)
             let key .= "\<C-R>=b:space\<CR>"
@@ -4968,22 +4968,20 @@ endfunction
 function! s:vimim_onekey_mapping_on()
 " -----------------------------------
     if !hasmapto('<Plug>VimimOneKey', 'i')
-        inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
+        inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
+        xnoremap<silent><C-^>  y:call <SID>vimim_visual_ctrl6()<CR>
+    endif
+    if s:vimim_onekey_is_tab < 2
+        imap<silent><C-^> <Plug>VimimOneKey
     endif
     if s:vimim_onekey_is_tab > 0
         imap<silent><Tab> <Plug>VimimOneKey
-        if s:vimim_onekey_is_tab == 2
-            xnoremap<silent><Tab> d:call <SID>vimim_visual_ctrl6()<CR>
-        endif
-    endif
-    if s:vimim_onekey_is_tab < 2
-            imap<silent><C-^> <Plug>VimimOneKey
-        xnoremap<silent><C-^> d:call <SID>vimim_visual_ctrl6()<CR>
+        xmap<silent><Tab> <C-^>
     endif
     if s:vimim_search_next > 0
         noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
-    :com! -range=% VimIM <line1>,<line2>call s:vimim_tranfer_chinese()
+    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_tranfer()
     :com! -range=% VimiM <line1>,<line2>call s:vimim_rotation()
 endfunction
 
