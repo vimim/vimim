@@ -2271,7 +2271,8 @@ function! <SID>vimim_visual_ctrl6()
     else
         " input:  visual block highlighted in vim visual mode
         " output: the highlighted displayed in omni popup window
-        let key = "Ovimim\<C-R>=g:vimim()\<CR>"
+        let $space = repeat(" ", virtcol("'<'")-2)
+        let key = "O\<C-R>=$space\<CR>vimim\<C-R>=g:vimim()\<CR>"
         sil!call s:vimim_onekey_start()
         sil!call feedkeys(key)
     endif
