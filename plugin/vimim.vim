@@ -683,9 +683,9 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " s:chinese_input_mode='dynamic' => (default) dynamic mode
 " s:chinese_input_mode='static'  =>  static chinese input mode
 
-" ------------------------------
-function! <SID>vimim_im_switch()
-" ------------------------------
+" --------------------------
+function! <SID>VimIMSwitch()
+" --------------------------
     let s:chinese_mode_switch = 0
     if !exists('s:chinese_im_switch')
     \|| empty(s:chinese_im_switch)
@@ -1324,8 +1324,7 @@ function! s:vimim_get_hjkl(keyboard)
     if !empty(lines)
         " [hjkl] display the buffer inside the omni window
     elseif keyboard ==# "vimim"
-        let unnamed_register = getreg('"')
-        let lines = split(unnamed_register,'\n')
+        let lines = split(getreg('"'),'\n')
         if len(lines) < 2
             let lines = s:vimim_egg_vimimenv()
         endif
@@ -2252,15 +2251,15 @@ function! s:vimim_one2one(chinese)
     endif
 endfunction
 
-" ------------------------------------------
-function! <SID>vimim_visual_ctrl_6(keyboard)
-" ------------------------------------------
-    let range = line("'>") - line("'<")
-    if empty(range)
-        " input:  oneline 马力 highlighted in vim visual mode
-        " output: unicode || 4corner 5stroke pinyin cjjp
+" ---------------------------------
+function! <SID>vimim_visual_ctrl6()
+" ---------------------------------
+    let lines = split(getreg('"'),'\n')
+    if len(lines) < 2
+        " input:  one line 马力 highlighted in vim visual mode
+        " output: unicode || 4corner && 5stroke && pinyin && cjjp
         sil!call s:vimim_backend_initialization()
-        let results = s:vimim_reverse_lookup(a:keyboard)
+        let results = s:vimim_reverse_lookup()
         if !empty(results)
             let line = line(".")
             call setline(line, results)
@@ -2270,25 +2269,18 @@ function! <SID>vimim_visual_ctrl_6(keyboard)
             call setpos(".", new_positions)
         endif
     else
-        :*VIMIM
+        " input:  visual block highlighted in vim visual mode
+        " output: the highlighted displayed in omni popup window
+        let key = "Ovimim\<C-R>=g:vimim()\<CR>"
+        sil!call s:vimim_onekey_start()
+        sil!call feedkeys(key)
     endif
 endfunction
 
-" ---------------------------------------
-function! s:vimim_omni_hjkl() range abort
-" ---------------------------------------
-" input:  multiple lines in vim visual mode
-" output: turn the current buffer into omni window, ready for hjkl
-    sil!exe a:firstline .",". a:lastline . 'd'
-    sil!call s:vimim_onekey_start()
-    let key = "Ovimim\<C-R>=g:vimim()\<CR>"
-    sil!call feedkeys(key)
-endfunction
-
-" ---------------------------------------
-function! s:vimim_reverse_lookup(chinese)
-" ---------------------------------------
-    let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
+" --------------------------------
+function! s:vimim_reverse_lookup()
+" --------------------------------
+    let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
     if empty(chinese)
         return []
     endif
@@ -4939,10 +4931,10 @@ endfunction
 function! s:vimim_chinesemode_mapping_on()
 " ----------------------------------------
     if s:vimim_onekey_is_tab < 2
-        inoremap <silent> <expr> <C-H> <SID>vimim_im_switch()
-        inoremap <unique> <expr>      <Plug>VimimTrigger <SID>ChineseMode()
-            imap <silent> <C-Bslash>  <Plug>VimimTrigger
-         noremap <silent> <C-Bslash>  :call <SID>ChineseMode()<CR>
+        inoremap<silent><expr><C-H>        <SID>VimIMSwitch()
+            imap<silent><C-Bslash>        <Plug>VimIM
+        inoremap<unique><expr><Plug>VimIM <SID>ChineseMode()
+         noremap<silent><C-Bslash>  :call <SID>ChineseMode()<CR>
     endif
     if s:vimim_ctrl_space_to_toggle == 1
         if has("gui_running")
@@ -4962,23 +4954,22 @@ function! s:vimim_onekey_mapping_on()
         inoremap <unique> <expr> <Plug>VimimOneKey <SID>OneKey()
     endif
     if s:vimim_onekey_is_tab > 0
-        imap <silent> <Tab> <Plug>VimimOneKey
+        imap<silent><Tab> <Plug>VimimOneKey
     endif
     if s:vimim_onekey_is_tab < 2
-        imap <silent> <C-^> <Plug>VimimOneKey
+        imap<silent><C-^> <Plug>VimimOneKey
     endif
     if s:vimim_onekey_is_tab == 2
-         noremap <silent> <C-^>  :VIMIM<CR>
-        xnoremap <silent> <Tab> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
+         noremap<silent><C-^> :%d<CR>:call <SID>vimim_visual_ctrl6()<CR>
+        xnoremap<silent><Tab>       y:call <SID>vimim_visual_ctrl6()<CR>
     elseif !hasmapto('<C-^>', 'v')
-        xnoremap <silent> <C-^> y:call <SID>vimim_visual_ctrl_6(@0)<CR>
+        xnoremap<silent><C-^>       y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_search_next > 0
         noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_tranfer_chinese()
     :com! -range=% VimiM <line1>,<line2>call s:vimim_rotation()
-    :com! -range=% VIMIM <line1>,<line2>call s:vimim_omni_hjkl()
 endfunction
 
 " ------------------------------------
