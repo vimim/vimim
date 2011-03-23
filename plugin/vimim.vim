@@ -1327,9 +1327,21 @@ function! s:vimim_get_hjkl(keyboard)
     if !empty(lines)
         " [hjkl] display the buffer inside the omni window
     elseif keyboard ==# "vimim"
-        let lines = split(getreg('"'),'\n')
+        let unnamed_register = getreg('"')
+        let lines = split(unnamed_register)
         if len(lines) < 2
             let lines = s:vimim_egg_vimimenv()
+        else
+            if unnamed_register =~ '\d'
+            \&& join(lines) !~ '[^0-9[:blank:]]'
+                let sum = eval(join(lines,'+'))
+                let len = len(lines)
+                let ave = string(1.0*sum/len)
+                let sum = 'sum=' . sum
+                let len = 'len=' . len
+                let ave = 'ave=' . ave
+                let lines = [sum, len, ave] + lines
+            endif
         endif
     else
         " [poem] check entry in special directories first
