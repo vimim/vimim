@@ -868,6 +868,8 @@ function! g:vimim_onekey_dump()
 " -----------------------------
     let one_line_clipboard = ""
     let saved_position = getpos(".")
+    let n = virtcol("'<'") - 1
+    let space = repeat(" ", n)
     for items in s:popupmenu_list
         let line = printf('%s', items.word)
         if has_key(items, "abbr")
@@ -876,6 +878,7 @@ function! g:vimim_onekey_dump()
                 let line = printf('%s %s', items.abbr, items.menu)
             endif
         endif
+        let line = n>0 ? space.line : line
         put=line
         let one_line_clipboard .= line . "\n"
     endfor
@@ -884,7 +887,7 @@ function! g:vimim_onekey_dump()
     endif
     sil!call setpos(".", saved_position)
     sil!call g:vimim_stop()
-    if getline(".") =~ 'vimim\l\=\>'|d|endif
+    if getline(".") =~ 'vimim\>'|d|endif
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
@@ -1328,10 +1331,6 @@ function! s:vimim_get_hjkl(keyboard)
         if len(lines) < 2
             let lines = s:vimim_egg_vimimenv()
         endif
-    elseif keyboard ==# "vimimj"
-        let lines = getline(".", "$")
-    elseif keyboard ==# "vimimk"
-        let lines = getline(1, ".")
     else
         " [poem] check entry in special directories first
         let dirs = [s:path, s:vimim_hjkl_directory]
@@ -2271,9 +2270,14 @@ function! <SID>vimim_visual_ctrl6()
     else
         " input:  visual block highlighted in vim visual mode
         " output: the highlighted displayed in omni popup window
-        let b:space = repeat(" ", virtcol("'<'")-2)
-        let key = "O\<C-R>=b:space\<CR>vimim\<C-R>=g:vimim()\<CR>"
+        let key = "O"
+        let n = virtcol("'<'") - 1
+        if n > 0
+            let b:space = repeat(" ", n)
+            let key .= "\<C-R>=b:space\<CR>"
+        endif
         sil!call s:vimim_onekey_start()
+        let key .= "vimim\<C-R>=g:vimim()\<CR>"
         sil!call feedkeys(key)
     endif
 endfunction
