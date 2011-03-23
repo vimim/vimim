@@ -2271,8 +2271,8 @@ function! <SID>vimim_visual_ctrl6()
     else
         " input:  visual block highlighted in vim visual mode
         " output: the highlighted displayed in omni popup window
-        let $space = repeat(" ", virtcol("'<'")-2)
-        let key = "O\<C-R>=$space\<CR>vimim\<C-R>=g:vimim()\<CR>"
+        let b:space = repeat(" ", virtcol("'<'")-2)
+        let key = "O\<C-R>=b:space\<CR>vimim\<C-R>=g:vimim()\<CR>"
         sil!call s:vimim_onekey_start()
         sil!call feedkeys(key)
     endif
@@ -4956,15 +4956,13 @@ function! s:vimim_onekey_mapping_on()
     endif
     if s:vimim_onekey_is_tab > 0
         imap<silent><Tab> <Plug>VimimOneKey
+        if s:vimim_onekey_is_tab == 2
+            xnoremap<silent><Tab> d:call <SID>vimim_visual_ctrl6()<CR>
+        endif
     endif
     if s:vimim_onekey_is_tab < 2
-        imap<silent><C-^> <Plug>VimimOneKey
-    endif
-    if s:vimim_onekey_is_tab == 2
-         noremap<silent><C-^> :%d<CR>:call <SID>vimim_visual_ctrl6()<CR>
-        xnoremap<silent><Tab>       y:call <SID>vimim_visual_ctrl6()<CR>
-    elseif !hasmapto('<C-^>', 'v')
-        xnoremap<silent><C-^>       y:call <SID>vimim_visual_ctrl6()<CR>
+            imap<silent><C-^> <Plug>VimimOneKey
+        xnoremap<silent><C-^> d:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_search_next > 0
         noremap <silent> n :call g:vimim_search_next()<CR>n
