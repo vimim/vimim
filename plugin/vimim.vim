@@ -261,6 +261,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_data_file")
+    call add(G, "g:vimim_data_file_encoding")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_hjkl_directory")
     call add(G, "g:vimim_chinese_input_mode")
@@ -962,7 +963,7 @@ function! <SID>vimim_space()
 " (3) <Space> after popup menu           => insert Chinese
 " (4) <Space> after Chinese              => stop OneKeyNonStop
 " ---------------------------------------------------------------
-    let space = ""
+    let space = " "
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         call g:vimim_reset_after_insert()
@@ -1452,13 +1453,15 @@ function! s:vimim_initialize_encoding()
     "   utf-8          utf-8                0
     "   utf-8          chinese              1
     "   chinese        utf-8                2
-    "   chinese        chinese              3
+    "   chinese        chinese              0
     " ------------ ----------------- --------------
     let s:localization = 0
     if &encoding == "utf-8"
         if len("datafile_fenc_chinese") > 20110129
             let s:localization = 1
         endif
+    elseif s:vimim_data_file_encoding =~ s:encoding
+        let s:localization = 0
     else
         let s:localization = 2
     endif
