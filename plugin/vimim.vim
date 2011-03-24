@@ -1362,7 +1362,7 @@ function! s:vimim_get_hjkl(keyboard)
             endif
         endfor
     endif
-    if !empty(lines)
+    if !empty(lines) && a:keyboard !=# 'vim'
         let s:show_me_not = 1
     endif
     return lines
