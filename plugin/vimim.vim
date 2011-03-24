@@ -1329,7 +1329,7 @@ function! s:vimim_get_hjkl(keyboard)
         " [hjkl] display the buffer inside the omni window
     elseif keyboard ==# "vimim"
         let unnamed_register = getreg('"')
-        let lines = split(unnamed_register)
+        let lines = split(unnamed_register,'\n')
         if len(lines) < 2
             let lines = s:vimim_egg_vimimenv()
         else
