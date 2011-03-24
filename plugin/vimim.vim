@@ -962,7 +962,7 @@ function! <SID>vimim_space()
 " (3) <Space> after popup menu           => insert Chinese
 " (4) <Space> after Chinese              => stop OneKeyNonStop
 " ---------------------------------------------------------------
-    let space = " "
+    let space = ""
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         call g:vimim_reset_after_insert()
@@ -2652,8 +2652,8 @@ function! s:vimim_label_on()
         return
     endif
     let labels = range(1,9)
+    let abcd_list = split(s:abcd, '\zs')
     if s:chinese_input_mode =~ 'onekey'
-        let abcd_list = split(s:abcd, '\zs')
         let labels += abcd_list
         if s:has_cjk_file > 0
             let labels = abcd_list
