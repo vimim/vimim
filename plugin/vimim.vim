@@ -1333,14 +1333,21 @@ function! s:vimim_get_hjkl(keyboard)
             let lines = s:vimim_egg_vimimenv()
         else
             if unnamed_register =~ '\d'
-            \&& join(lines) !~ '[^0-9[:blank:]]'
+            \&& join(lines) !~ '[^0-9[:blank:].]'
                 let sum = eval(join(lines,'+'))
                 let len = len(lines)
-                let ave = string(1.0*sum/len)
-                let sum = 'sum=' . sum
-                let len = 'len=' . len
-                let ave = 'ave=' . ave
-                let lines = [sum, len, ave]
+                let ave = 1.0*sum/len
+                let math  = 'sum='
+                let math .= string(len)
+                let math .= '*'
+                let math .= printf('%.2f',ave)
+                let math .= '='
+                if unnamed_register =~ '[.]'
+                    let math .= printf('%.2f',1.0*sum)
+                else
+                    let math .= string(sum)
+                endif
+                let lines   = [math]
             endif
         endif
     else
@@ -2282,10 +2289,10 @@ function! <SID>vimim_visual_ctrl6()
     else
         " input:  visual block highlighted in vim visual mode
         " output: the highlighted displayed in omni popup window
-        let key = "O"
+        let key = "O^\<C-D>"
         let n = virtcol("'<'") - 2
         if n > 0
-            let b:space = repeat(" ", n)
+            let b:space = repeat(" ",n)
             let key .= "\<C-R>=b:space\<CR>"
         endif
         sil!call s:vimim_onekey_start()
@@ -4822,7 +4829,7 @@ else
     let keyboard = a:keyboard
     call s:vimim_reset_before_omni()
 
-    " [gnuplot] show the state-of-the-art math picture
+    " [gnuplot] show the state-of-the-art ascii picture
     if s:has_gnuplot > 0
         let results = s:vimim_gnuplot(keyboard)
         if !empty(results)
