@@ -269,6 +269,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_use_cache")
+    call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_onekey_is_tab")
     call add(G, "g:vimim_cloud_mycloud")
@@ -1189,7 +1190,7 @@ function! s:vimim_cjk_digit_filter(chinese)
         if cjk =~ '\w' || line < 0 || line > 20902
             continue
         else
-            let values = split(s:cjk_lines[line])
+            let values = split(get(s:cjk_lines,line))
             let column = 1 + s:vimim_digit_4corner
             let digit = get(values, column)
             let digit_head .= digit[:0]
@@ -1573,7 +1574,7 @@ function! s:vimim_get_property(chinese, property)
         if property == 'unicode'
             let head = printf('%x', ddddd)
         elseif s:has_cjk_file > 0
-            let values = split(s:cjk_lines[line])
+            let values = split(get(s:cjk_lines,line))
             if property =~ '\d'
                 let head = get(values, property)
             elseif property == 'pinyin'
@@ -2180,7 +2181,7 @@ function! s:vimim_cjk_grep_results(grep)
     let results = []
     let line = match(s:cjk_lines, grep)
     while line > -1
-        let values = split(s:cjk_lines[line])
+        let values = split(get(s:cjk_lines,line))
         let frequency_index = get(values, -1)
         if frequency_index =~ '\l'
             let frequency_index = 9999
@@ -2260,7 +2261,7 @@ function! s:vimim_one2one(chinese)
     if line < 0 || line > 20902
         return a:chinese
     endif
-    let values = split(s:cjk_lines[line])
+    let values = split(get(s:cjk_lines,line))
     let traditional_chinese = get(split(get(values,0),'\zs'),1)
     if empty(traditional_chinese)
         return a:chinese
@@ -3003,7 +3004,7 @@ function! s:vimim_onekey_english(keyboard, order)
         let grep_english = '^' . a:keyboard . '\>'
         let matched = match(s:english_lines, grep_english)
         if matched > -1
-            let line = s:english_lines[matched]
+            let line = get(s:english_lines, matched)
             let results = split(line)[1:]
             if empty(a:order)
                 call extend(s:english_results, results)
@@ -3608,7 +3609,7 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
         elseif a:sentence > 0
             return [candidate]
         endif
-        let oneline = lines[matched]
+        let oneline = get(lines, matched)
         let matched_list = s:vimim_make_pair_matched_list(oneline)
         call extend(results, matched_list)
     endfor
@@ -3697,14 +3698,25 @@ function! s:vimim_get_from_datafile(keyboard, search)
     if matched < 0
         return []
     endif
-    let oneline = lines[matched]
-    let onelines = split(oneline)
-    let results = split(oneline)[1:]
-    if a:search < 1 && len(onelines) > 0 && len(onelines) < 20
-        let extras = s:vimim_more_pinyin_datafile(a:keyboard,0)
-        if len(extras) > 0
-            let results = s:vimim_make_pair_matched_list(oneline)
+    let results = []
+    let more = s:vimim_more_candidates
+    if more > 0
+        for i in range(more)
+            let matched += i
+            let oneline = get(lines, matched)
+            let extras = s:vimim_make_pair_matched_list(oneline)
             call extend(results, extras)
+        endfor
+    else
+        let oneline = get(lines, matched)
+        let onelines = split(oneline)
+        let results = split(oneline)[1:]
+        if a:search < 1 && len(onelines) > 0 && len(onelines) < 20
+            let extras = s:vimim_more_pinyin_datafile(a:keyboard,0)
+            if len(extras) > 0
+                let results = s:vimim_make_pair_matched_list(oneline)
+                call extend(results, extras)
+            endif
         endif
     endif
     return results
