@@ -1870,7 +1870,7 @@ function! <SID>vimim_chinese_punctuation_map(key)
             let key = '\<C-Y>' . key
             if a:key =~ "[][]"
                 let key = s:vimim_square_bracket(a:key)
-            elseif a:key =~ ";"
+            elseif a:key == ";"
                 let key = '\<Down>\<C-Y>'
             endif
             call g:vimim_reset_after_insert()
