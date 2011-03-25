@@ -331,7 +331,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_debug = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
@@ -1456,8 +1456,8 @@ function! s:vimim_initialize_encoding()
     " ------------ ----------------- -------------- -----------
     "   utf-8          utf-8                0          good
     "   chinese        chinese              0          good
-    "   utf-8          chinese              1          bad 
-    "   chinese        utf-8                2          bad 
+    "   utf-8          chinese              1          bad
+    "   chinese        utf-8                2          bad
     " ------------ ----------------- -------------- -----------
     let s:localization = 0
     if &encoding == "utf-8"
@@ -4147,9 +4147,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
            return 1
        endif
     endif
-    if s:has_no_internet < 0
-    \|| get(a:clouds, 1) > 0
-    \|| s:cloud_default == 1
+    if s:has_no_internet < 0 || get(a:clouds, 1) > 0
         return 1
     endif
     if s:chinese_input_mode !~ 'dynamic'
@@ -4157,7 +4155,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     \&& s:cloud_default == 'sogou'
         " threshold to trigger cloud automatically
         let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        if len(pinyins) > s:cloud_default
+        if len(pinyins) > s:vimim_cloud_sogou
             return 1
         endif
     endif
@@ -4902,7 +4900,8 @@ else
     " [sogou] to make cloud come true for woyouyigemeng
     let force = s:vimim_to_cloud_or_not(keyboard, clouds)
     if force > 0
-        let results = s:vimim_get_cloud(s:ui.im, keyboard)
+        let cloud = match(s:clouds,s:ui.im)<0 ? s:cloud_default : s:ui.im
+        let results = s:vimim_get_cloud(cloud, keyboard)
         if empty(len(results))
             if s:vimim_cloud_sogou > 2
                 let s:has_no_internet += 1
@@ -4940,10 +4939,9 @@ else
         if !empty(keyboard_head)
             let results = s:vimim_cjk_match(keyboard_head)
         endif
-    elseif match(s:clouds, s:ui.im) > -1
-        if eval("s:vimim_cloud_".s:ui.im) > 0 && keyboard !~# '\L'
-            let results = s:vimim_get_cloud(s:ui.im, keyboard)
-        endif
+    elseif keyboard !~# '\L'
+        let cloud = match(s:clouds,s:ui.im)<0 ? s:cloud_default : s:ui.im
+        let results = s:vimim_get_cloud(cloud, keyboard)
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
