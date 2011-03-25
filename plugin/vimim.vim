@@ -331,7 +331,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_debug = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
@@ -1095,7 +1095,12 @@ function! s:vimim_cache()
         endif
         if s:hjkl_l > 0 && len(s:matched_list) > &pumheight
             if s:show_me_not > 0
-                let results = sort(copy(s:matched_list))
+                if s:hjkl_l % 2 > 0
+                    for line in s:matched_list
+                        let oneline = join(reverse(split(line,'\zs')),'')
+                        call add(results, oneline)
+                    endfor
+                endif
             else
                 let &pumheight = 0
                 if s:hjkl_l % 2 < 1
