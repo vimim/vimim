@@ -1451,14 +1451,14 @@ function! s:vimim_initialize_encoding()
     \|| &encoding == "euc-tw"
         let s:encoding = "taiwan"
     endif
-    " ------------ ----------------- --------------
-    " vim encoding datafile encoding s:localization
-    " ------------ ----------------- --------------
-    "   utf-8          utf-8                0
-    "   utf-8          chinese              1
-    "   chinese        utf-8                2
-    "   chinese        chinese              0
-    " ------------ ----------------- --------------
+    " ------------ ----------------- -------------- -----------
+    " vim encoding datafile encoding s:localization performance
+    " ------------ ----------------- -------------- -----------
+    "   utf-8          utf-8                0          good
+    "   chinese        chinese              0          good
+    "   utf-8          chinese              1          bad 
+    "   chinese        utf-8                2          bad 
+    " ------------ ----------------- -------------- -----------
     let s:localization = 0
     if &encoding == "utf-8"
         if len("datafile_fenc_chinese") > 20110129
@@ -1468,9 +1468,6 @@ function! s:vimim_initialize_encoding()
         let s:localization = 0
     else
         let s:localization = 2
-    endif
-    if s:localization > 0
-        let warning = "performance hit if &encoding & datafile differs!"
     endif
     let s:multibyte = 2
     if &encoding == "utf-8"
