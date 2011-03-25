@@ -1460,7 +1460,7 @@ function! s:vimim_initialize_encoding()
         if len("datafile_fenc_chinese") > 20110129
             let s:localization = 1
         endif
-    elseif s:vimim_data_file_encoding =~ s:encoding
+    elseif s:vimim_data_file_encoding =~ &encoding
         let s:localization = 0
     else
         let s:localization = 2
