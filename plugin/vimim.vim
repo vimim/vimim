@@ -868,8 +868,7 @@ endfunction
 " -----------------------------
 function! g:vimim_onekey_dump()
 " -----------------------------
-    let one_line_clipboard = ""
-    let saved_position = getpos(".")
+    let lines = []
     let n = virtcol("'<'") - 2
     let space = repeat(" ", n)
     for items in s:popupmenu_list
@@ -881,15 +880,21 @@ function! g:vimim_onekey_dump()
             endif
         endif
         let line = n>0 ? space.line : line
-        put=line
-        let one_line_clipboard .= line . "\n"
+        call add(lines, line)
     endfor
     if has("gui_running") && has("win32")
-        let @+ = one_line_clipboard
+        let @+ = join(lines, "\n")
     endif
-    sil!call setpos(".", saved_position)
+    if getline(".") =~ 'vimim\>'
+        call setline(line("."), lines)
+    else
+        let saved_position = getpos(".")
+        for line in lines
+            put=line
+        endfor
+        call setpos(".", saved_position)
+    endif
     sil!call g:vimim_stop()
-    if getline(".") =~ 'vimim\>'|d|endif
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
@@ -2298,8 +2303,8 @@ function! <SID>vimim_visual_ctrl6()
         let key = "O^\<C-D>"
         let n = virtcol("'<'") - 2
         if n > 0
-            let b:space = repeat(" ",n)
-            let key .= "\<C-R>=b:space\<CR>"
+            let b:ctrl6_space = repeat(" ",n)
+            let key .= "\<C-R>=b:ctrl6_space\<CR>"
         endif
         sil!call s:vimim_onekey_start()
         let key .= "vimim\<C-R>=g:vimim()\<CR>"
