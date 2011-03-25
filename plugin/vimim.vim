@@ -1495,12 +1495,12 @@ function! s:vimim_get_unicode_menu()
 " ----------------------------------
     let byte_before = getline(".")[col(".")-2]
     if empty(byte_before) || byte_before =~# s:valid_key
-        return 0
+        return ""
     endif
     let start = s:multibyte + 1
     let char_before = getline(".")[col(".")-start : col(".")-2]
     let ddddd = char2nr(char_before)
-    let uxxxx = 0
+    let uxxxx = ""
     if ddddd > 127
         let uxxxx = printf('u%04x', ddddd)
     endif
@@ -1611,7 +1611,7 @@ let s:VimIM += [" ====  multibyte        ==== {{{"]
 function! s:vimim_dictionary_chinese()
 " ------------------------------------
     let s:space = "　"
-    let s:colon = "："
+    let s:colon = "︰"
     let s:left  = "【"
     let s:right = "】"
     let s:chinese = {}
@@ -1870,6 +1870,8 @@ function! <SID>vimim_chinese_punctuation_map(key)
             let key = '\<C-Y>' . key
             if a:key =~ "[][]"
                 let key = s:vimim_square_bracket(a:key)
+            elseif a:key =~ ";"
+                let key = '\<Down>\<C-Y>'
             endif
             call g:vimim_reset_after_insert()
         endif
@@ -4224,7 +4226,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
         " support gb and big5 in addition to utf8
         let output = s:vimim_i18n_read(output)
     endif
-    " in  => '我有一个梦：13    +
+    " in  => '我有一个梦 : 13    +  s:colon=uff1a not ufe30
     " out => ['woyouyigemeng 我有一个梦']
     let matched_list = []
     for item in split(output, '\t+')
