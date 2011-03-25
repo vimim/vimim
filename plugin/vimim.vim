@@ -831,6 +831,17 @@ endfunction
 let s:VimIM += [" ====  OneKey           ==== {{{"]
 " =================================================
 
+" ------------------------------
+function! s:vimim_onekey_start()
+" ------------------------------
+    let s:chinese_input_mode = "onekey"
+    sil!call s:vimim_backend_initialization()
+    sil!call s:vimim_frontend_initialization()
+    sil!call s:vimim_onekey_pumvisible_mapping()
+    sil!call s:vimim_onekey_punctuation_mapping()
+    sil!call s:vimim_start()
+endfunction
+
 " ---------------------
 function! <SID>OneKey()
 " ---------------------
@@ -854,17 +865,6 @@ function! <SID>OneKey()
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-" ------------------------------
-function! s:vimim_onekey_start()
-" ------------------------------
-    let s:chinese_input_mode = "onekey"
-    sil!call s:vimim_backend_initialization()
-    sil!call s:vimim_frontend_initialization()
-    sil!call s:vimim_onekey_pumvisible_mapping()
-    sil!call s:vimim_onekey_punctuation_mapping()
-    sil!call s:vimim_start()
-endfunction
-
 " -----------------------------
 function! g:vimim_onekey_dump()
 " -----------------------------
@@ -885,7 +885,7 @@ function! g:vimim_onekey_dump()
     if has("gui_running") && has("win32")
         let @+ = join(lines, "\n")
     endif
-    if getline(".") =~ 'vimim\>'
+    if getline(".") =~ 'vimim\>' && len(lines) < 2
         call setline(line("."), lines)
     else
         let saved_position = getpos(".")
@@ -1339,8 +1339,7 @@ function! s:vimim_get_hjkl(keyboard)
         if len(lines) < 2
             let lines = s:vimim_egg_vimimenv()
         else
-            if unnamed_register =~ '\d'
-            \&& join(lines) !~ '[^0-9[:blank:].]'
+            if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
                 let sum = eval(join(lines,'+'))
                 let len = len(lines)
                 let ave = 1.0*sum/len
@@ -1354,7 +1353,7 @@ function! s:vimim_get_hjkl(keyboard)
                 else
                     let math .= string(sum)
                 endif
-                let lines   = [math]
+                let lines = [math]
             endif
         endif
     else
@@ -2283,7 +2282,9 @@ endfunction
 " ---------------------------------
 function! <SID>vimim_visual_ctrl6()
 " ---------------------------------
-    let lines = split(getreg('"'),'\n')
+    let unnamed_register = getreg('"')
+    let lines = split(unnamed_register,'\n')
+    let new_positions = getpos(".")
     if len(lines) < 2
         " input:  one line 马力 highlighted in vim visual mode
         " output: unicode || 4corner && 5stroke && pinyin && cjjp
@@ -2292,7 +2293,6 @@ function! <SID>vimim_visual_ctrl6()
         if !empty(results)
             let line = line(".")
             call setline(line, results)
-            let new_positions = getpos(".")
             let new_positions[1] = line + len(results) - 1
             let new_positions[2] = len(get(split(get(results,-1)),0))+1
             call setpos(".", new_positions)
@@ -2300,11 +2300,16 @@ function! <SID>vimim_visual_ctrl6()
     else
         " input:  visual block highlighted in vim visual mode
         " output: the highlighted displayed in omni popup window
-        let key = "O^\<C-D>"
+        let key = "O"
+        if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
+            let new_positions[1] = line("'>'")
+            call setpos(".", new_positions)
+            let key = "o"
+        endif
         let n = virtcol("'<'") - 2
         if n > 0
             let b:ctrl6_space = repeat(" ",n)
-            let key .= "\<C-R>=b:ctrl6_space\<CR>"
+            let key .= "^\<C-D>\<C-R>=b:ctrl6_space\<CR>"
         endif
         sil!call s:vimim_onekey_start()
         let key .= "vimim\<C-R>=g:vimim()\<CR>"
