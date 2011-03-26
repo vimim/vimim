@@ -558,6 +558,167 @@ function! s:vimim_egg_vimimenv()
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  games            ==== {{{"]
+" =================================================
+
+" ---------------------------------
+function! s:vimim_gnuplot(keyboard)
+" ---------------------------------
+    let results = []
+    let dumb = "set terminal dumb;"
+    let gnuplot = "gnuplot -e '" . dumb . a:keyboard . "'"
+    try
+        let results = split(system(gnuplot),'\n')
+    catch
+        let results = []
+        call s:debugs('gnuplot::', v:exception)
+    endtry
+    if !empty(results)
+        let s:show_me_not = 1
+        let results = results[1 : len(results)-1]
+    endif
+    return results
+endfunction
+
+" ----------------------------------
+function! s:vimim_get_hjkl(keyboard)
+" ----------------------------------
+    let keyboard = a:keyboard
+    " [unicode] support direct unicode/gb/big5 input
+    let lines = s:vimim_get_unicode_list(keyboard)
+    if !empty(lines)
+        return lines
+    endif
+    " [eggs] hunt classic easter egg ... vim<C-6>
+    let lines = s:vimim_easter_chicken(keyboard)
+    if !empty(lines)
+        " [hjkl] display the buffer inside the omni window
+    elseif keyboard ==# "vimim"
+        let unnamed_register = getreg('"')
+        let lines = split(unnamed_register,'\n')
+        if len(lines) < 2
+            let lines = s:vimim_egg_vimimenv()
+        else
+            if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
+                let sum = eval(join(lines,'+'))
+                let len = len(lines)
+                let ave = 1.0*sum/len
+                let math  = 'sum='
+                let math .= string(len)
+                let math .= '*'
+                let math .= printf('%.2f',ave)
+                let math .= '='
+                if unnamed_register =~ '[.]'
+                    let math .= printf('%.2f',1.0*sum)
+                else
+                    let math .= string(sum)
+                endif
+                let lines = [math]
+            endif
+        endif
+    else
+        " [poem] check entry in special directories first
+        let dirs = [s:path, s:vimim_hjkl_directory]
+        for dir in dirs
+            let lines = s:vimim_get_from_directory(keyboard, dir)
+            if empty(lines)
+                continue
+            else
+                break
+            endif
+        endfor
+    endif
+    if !empty(lines)
+        let s:show_me_not = 1
+    endif
+    return lines
+endfunction
+
+" -------------------------------------------
+function! s:vimim_hjkl_rotation(matched_list)
+" -------------------------------------------
+    let lines = a:matched_list
+    if empty(lines)
+        return []
+    endif
+    let max = max(map(copy(lines), 'strlen(v:val)')) + 1
+    let multibyte = 1
+    if match(lines,'\w') < 0
+        " rotation makes more sense for cjk
+        let multibyte = s:multibyte
+    endif
+    let results = []
+    for line in lines
+        let spaces = ''
+        let gap = (max-len(line))/multibyte
+        if gap > 0
+            for i in range(gap)
+                let spaces .= s:space
+            endfor
+        endif
+        let line .= spaces
+        call add(results, line)
+    endfor
+    let rotations = []
+    for i in range(max/multibyte)
+        let column = ''
+        for line in reverse(copy(results))
+            let lines = split(line,'\zs')
+            let line = get(lines, i)
+            if empty(line)
+                continue
+            else
+                let column .= line
+            endif
+        endfor
+        call add(rotations, column)
+    endfor
+    return rotations
+endfunction
+
+" --------------------------------------
+function! s:vimim_rotation() range abort
+" --------------------------------------
+" [usage] :VimiM
+    sil!call s:vimim_backend_initialization()
+    let lines = getline(a:firstline, a:lastline)
+    let lines = s:vimim_hjkl_rotation(lines)
+    if !empty(lines)
+        :%d
+        for line in lines
+            put=line
+        endfor
+    endif
+endfunction
+
+" ----------------------------
+function! s:bubble_sort(chaos)
+" ----------------------------
+    let chaos = a:chaos
+    let lines = []
+    let swapped = 1
+    while swapped > 0
+        let swapped = 0
+        let i = 0
+        let j = 0
+        while i < len(chaos)
+            while j < i
+                if chaos[i] < chaos[j]
+                    let tmp = chaos[i]
+                    let chaos[i] = chaos[j]
+                    let chaos[j] = tmp
+                    let swapped = 1
+                endif
+                let j += 1
+            endwhile
+            let i += 1
+            call add(lines, join(chaos))
+        endwhile
+    endwhile
+    return lines
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  /search          ==== {{{"]
 " =================================================
 
@@ -893,25 +1054,6 @@ function! g:vimim_onekey_dump()
     endif
     sil!call g:vimim_stop()
     sil!exe "sil!return '\<Esc>'"
-endfunction
-
-" ---------------------------------
-function! s:vimim_gnuplot(keyboard)
-" ---------------------------------
-    let results = []
-    let dumb = "set terminal dumb;"
-    let gnuplot = "gnuplot -e '" . dumb . a:keyboard . "'"
-    try
-        let results = split(system(gnuplot),'\n')
-    catch
-        let results = []
-        call s:debugs('gnuplot::', v:exception)
-    endtry
-    if !empty(results)
-        let s:show_me_not = 1
-        let results = results[1 : len(results)-1]
-    endif
-    return results
 endfunction
 
 " -------------------------------------
@@ -1327,117 +1469,6 @@ function! <SID>vimim_onekey_capital(key)
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ----------------------------------
-function! s:vimim_get_hjkl(keyboard)
-" ----------------------------------
-    let keyboard = a:keyboard
-    " [unicode] support direct unicode/gb/big5 input
-    let lines = s:vimim_get_unicode_list(keyboard)
-    if !empty(lines)
-        return lines
-    endif
-    " [eggs] hunt classic easter egg ... vim<C-6>
-    let lines = s:vimim_easter_chicken(keyboard)
-    if !empty(lines)
-        " [hjkl] display the buffer inside the omni window
-    elseif keyboard ==# "vimim"
-        let unnamed_register = getreg('"')
-        let lines = split(unnamed_register,'\n')
-        if len(lines) < 2
-            let lines = s:vimim_egg_vimimenv()
-        else
-            if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
-                let sum = eval(join(lines,'+'))
-                let len = len(lines)
-                let ave = 1.0*sum/len
-                let math  = 'sum='
-                let math .= string(len)
-                let math .= '*'
-                let math .= printf('%.2f',ave)
-                let math .= '='
-                if unnamed_register =~ '[.]'
-                    let math .= printf('%.2f',1.0*sum)
-                else
-                    let math .= string(sum)
-                endif
-                let lines = [math]
-            endif
-        endif
-    else
-        " [poem] check entry in special directories first
-        let dirs = [s:path, s:vimim_hjkl_directory]
-        for dir in dirs
-            let lines = s:vimim_get_from_directory(keyboard, dir)
-            if empty(lines)
-                continue
-            else
-                break
-            endif
-        endfor
-    endif
-    if !empty(lines)
-        let s:show_me_not = 1
-    endif
-    return lines
-endfunction
-
-" -------------------------------------------
-function! s:vimim_hjkl_rotation(matched_list)
-" -------------------------------------------
-    let lines = a:matched_list
-    if empty(lines)
-        return []
-    endif
-    let max = max(map(copy(lines), 'strlen(v:val)')) + 1
-    let multibyte = 1
-    if match(lines,'\w') < 0
-        " rotation makes more sense for cjk
-        let multibyte = s:multibyte
-    endif
-    let results = []
-    for line in lines
-        let spaces = ''
-        let gap = (max-len(line))/multibyte
-        if gap > 0
-            for i in range(gap)
-                let spaces .= s:space
-            endfor
-        endif
-        let line .= spaces
-        call add(results, line)
-    endfor
-    let rotations = []
-    for i in range(max/multibyte)
-        let column = ''
-        for line in reverse(copy(results))
-            let lines = split(line,'\zs')
-            let line = get(lines, i)
-            if empty(line)
-                continue
-            else
-                let column .= line
-            endif
-        endfor
-        call add(rotations, column)
-    endfor
-    return rotations
-endfunction
-
-" --------------------------------------
-function! s:vimim_rotation() range abort
-" --------------------------------------
-" [usage] :VimiM
-    sil!call s:vimim_backend_initialization()
-    let lines = getline(a:firstline, a:lastline)
-    let lines = s:vimim_hjkl_rotation(lines)
-    if !empty(lines)
-        :%d
-        for line in lines
-            put=line
-        endfor
-    endif
 endfunction
 
 " ============================================= }}}
