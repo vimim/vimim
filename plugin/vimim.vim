@@ -1623,7 +1623,7 @@ let s:VimIM += [" ====  multibyte        ==== {{{"]
 function! s:vimim_dictionary_chinese()
 " ------------------------------------
     let s:space = "　"
-    let s:colon = "︰"
+    let s:colon = "："
     let s:left  = "【"
     let s:right = "】"
     let s:chinese = {}
@@ -4250,7 +4250,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
     " out => ['woyouyigemeng 我有一个梦']
     let matched_list = []
     for item in split(output, '\t+')
-        let item_list = split(item, '：')
+        let item_list = split(item, s:colon)
         if len(item_list) > 1
             let chinese = get(item_list,0)
             let english = strpart(a:keyboard, 0, get(item_list,1))
