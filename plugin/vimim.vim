@@ -194,25 +194,25 @@ endfunction
 function! s:vimim_dictionary_im_keycode()
 " ---------------------------------------
     let s:im_keycode = {}
-    let s:im_keycode['pinyin']   = "[0-9a-z'.]"
-    let s:im_keycode['hangul']   = "[0-9a-z']"
-    let s:im_keycode['xinhua']   = "[0-9a-z']"
-    let s:im_keycode['quick']    = "[0-9a-z']"
-    let s:im_keycode['wubi']     = "[0-9a-z']"
-    let s:im_keycode['sogou']    = "[0-9a-z']"
-    let s:im_keycode['qq']       = "[0-9a-z']"
-    let s:im_keycode['google']   = "[0-9a-z']"
-    let s:im_keycode['mycloud']  = "[0-9a-z]"
-    let s:im_keycode['yong']     = "[a-z'.;/]"
-    let s:im_keycode['wu']       = "[a-z'.]"
-    let s:im_keycode['nature']   = "[a-z'.]"
-    let s:im_keycode['zhengma']  = "[a-z']"
-    let s:im_keycode['cangjie']  = "[a-z']"
-    let s:im_keycode['taijima']  = "[a-z']"
-    let s:im_keycode['boshiamy'] = "[][a-z'.,]"
-    let s:im_keycode['erbi']     = "[.,a-z';/]"
+    let s:im_keycode['pinyin']   = "[.'0-9a-z]"
+    let s:im_keycode['hangul']   = "[.'0-9a-z]"
+    let s:im_keycode['xinhua']   = "[.'0-9a-z]"
+    let s:im_keycode['quick']    = "[.'0-9a-z]"
+    let s:im_keycode['wubi']     = "[.'0-9a-z]"
+    let s:im_keycode['sogou']    = "[.'0-9a-z]"
+    let s:im_keycode['qq']       = "[.'0-9a-z]"
+    let s:im_keycode['google']   = "[.'0-9a-z]"
+    let s:im_keycode['mycloud']  = "[.'0-9a-z]"
+    let s:im_keycode['yong']     = "[.'a-z;/]"
+    let s:im_keycode['wu']       = "[.'a-z]"
+    let s:im_keycode['nature']   = "[.'a-z]"
+    let s:im_keycode['zhengma']  = "[.'a-z]"
+    let s:im_keycode['cangjie']  = "[.'a-z]"
+    let s:im_keycode['taijima']  = "[.'a-z]"
+    let s:im_keycode['erbi']     = "[.'a-z,;/]"
     let s:im_keycode['array30']  = "[.,0-9a-z;/]"
     let s:im_keycode['phonetic'] = "[.,0-9a-z;/]"
+    let s:im_keycode['boshiamy'] = "[][a-z'.,]"
     " -------------------------------------------
     let vimimkeys = copy(keys(s:im_keycode))
     call add(vimimkeys, 'pinyin_sogou')
@@ -330,7 +330,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_debug = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
