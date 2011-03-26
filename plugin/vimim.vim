@@ -2870,7 +2870,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
         endif
     endif
-    let keyboard_head = get(s:keyboard_list,0)
+    let menu = get(s:keyboard_list,0)
     for chinese in lines
         let complete_items = {}
         if first_in_list =~ '\s' && s:show_me_not < 1
@@ -2878,19 +2878,20 @@ function! s:vimim_popupmenu_list(matched_list)
             if len(pairs) < 2
                 continue
             endif
-            let keyboard_head = get(pairs, 0)
             let chinese = get(pairs, 1)
+            let menu = get(pairs, 0)
+            let extra_text = menu
         endif
-        if s:hjkl_s % 2 > 0 && s:has_cjk_file > 0
+        if s:hjkl_s > 0 && s:hjkl_s % 2 > 0 && s:has_cjk_file > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
-        if s:hjkl_h % 2 > 0 && s:show_me_not < 1
+        if s:hjkl_h > 0 && s:hjkl_h % 2 > 0 && s:show_me_not < 1
             let ddddd = char2nr(chinese)
             let extra_text = s:vimim_cjk_property_display(ddddd)
         endif
         if empty(s:mycloud_plugin)
             if !empty(keyboard) && s:show_me_not < 1
-                let keyboard_head_length = len(keyboard_head)
+                let keyboard_head_length = len(menu)
                 if empty(s:ui.has_dot) && keyboard =~ "['.]"
                     " for vimim classic demo: i.have.a.dream
                     let keyboard_head_length += 1
@@ -2899,7 +2900,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 let chinese .= tail
             endif
         else
-            let extra_text = get(split(keyboard_head,"_"),0)
+            let extra_text = get(split(menu,"_"),0)
         endif
         if s:vimim_custom_label > 0 && len(lines) > 1
             let labeling = s:vimim_get_labeling(label)
