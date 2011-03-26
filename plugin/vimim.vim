@@ -81,7 +81,6 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_initialize_encoding()
     sil!call s:vimim_initialize_session()
     sil!call s:vimim_initialize_ui()
-    sil!call s:vimim_initialize_cjk_file()
     sil!call s:vimim_initialize_i_setting()
     sil!call s:vimim_dictionary_chinese()
     sil!call s:vimim_dictionary_punctuation()
@@ -91,6 +90,7 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_scan_current_buffer()
     sil!call s:vimim_scan_backend_cloud()
+    sil!call s:vimim_initialize_cjk_file()
     sil!call s:vimim_scan_english_datafile()
     sil!call s:vimim_initialize_keycode()
 endfunction
@@ -230,7 +230,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_keycode()
 " ------------------------------------
-    let keycode = "[0-9a-z'.]"
+    let keycode = "[.'0-9a-z]"
     if empty(s:vimim_shuangpin)
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
     else
@@ -330,7 +330,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_debug = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
@@ -1279,6 +1279,7 @@ endfunction
 function! <SID>vimim_onekey_hjkl(key)
 " -----------------------------------
     let key = a:key
+    let toggles = split('shlmn','\zs')
     if pumvisible()
         if a:key == 'j'
             let key  = '\<Down>'
@@ -1290,7 +1291,13 @@ function! <SID>vimim_onekey_hjkl(key)
             if a:key == 'x'
                 call g:vimim_reset_after_insert()
             elseif a:key =~ "[shlmn]"
-                exe 'let s:hjkl_' . a:key . ' += 1'
+                for toggle in toggles
+                    if toggle == a:key
+                        exe 'let s:hjkl_' . toggle . ' += 1'
+                    else
+                        exe 'let s:hjkl_' . toggle . ' = 0'
+                    endif
+                endfor
             endif
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
         endif
@@ -1974,6 +1981,9 @@ function! s:vimim_initialize_cjk_file()
     if !empty(datafile)
         let s:cjk_file = datafile
         let s:has_cjk_file = 1
+        if empty(s:backend.datafile) && empty(s:backend.directory)
+            let s:has_cjk_file = 2
+        endif
     endif
 endfunction
 
@@ -2039,7 +2049,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:ui.im == 'pinyin'
+    elseif s:ui.im == 'pinyin' || s:has_cjk_file > 1
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
             " output is 'm7712' for input muuqwxeyqpjeqqq
             let delimiter = match(keyboard, '^\l\l\l\l\l')
@@ -2145,7 +2155,7 @@ function! s:vimim_cjk_match(keyboard)
                 let s:hjkl_x = digit
             endif
         endif
-    elseif s:ui.im == 'pinyin'
+    elseif s:ui.im == 'pinyin' || s:has_cjk_file > 1
         if len(keyboard) == 1 && keyboard !~ '[ai]'
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
@@ -2153,9 +2163,6 @@ function! s:vimim_cjk_match(keyboard)
             " cjk multiple-char-list without frequency: huan2hai2
             " support all cases: /huan /hai /yet /huan2 /hai2
             let grep = '[ 0-9]' . keyboard . '[0-9]'
-        endif
-        if s:ui.root != 'directory'
-            let grep = 0
         endif
     else
         return []
@@ -4146,6 +4153,10 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     \|| s:has_no_internet > 1
         return 0
     endif
+    if s:chinese_input_mode =~ 'onekey'
+    \&& s:has_cjk_file > 1
+        return 0
+    endif
     if match(s:clouds, s:ui.im) > -1
        if eval("s:vimim_cloud_" . s:ui.im) > 0
            return 1
@@ -4738,7 +4749,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     \|| keyboard !~# s:valid_key
         return []
     endif
-    if s:ui.im == 'pinyin'
+    if im == 'pinyin'
         let keyboard = s:vimim_toggle_pinyin(keyboard)
     endif
     if s:ui.has_dot == 2
