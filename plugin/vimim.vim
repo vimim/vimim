@@ -348,7 +348,6 @@ let s:VimIM += [" ====  for Mom and Dad  ==== {{{"]
 function! s:vimim_for_mom_and_dad()
 " ---------------------------------
     let onekey = ""
-    let s:mom_and_dad = 0
     let buffer = expand("%:p:t")
     if buffer =~ 'vimim.mom.txt'
         startinsert!
@@ -361,7 +360,6 @@ function! s:vimim_for_mom_and_dad()
     else
         return
     endif
-    let s:mom_and_dad = 1
     let s:vimim_onekey_is_tab = 1
     if has("gui_running")
         autocmd! * <buffer>
@@ -4148,13 +4146,10 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     if do_cloud > 0
         return 1
     endif
-    if s:mom_and_dad > 0
-    \|| keyboard =~ "[^a-z]"
-    \|| s:has_no_internet > 1
+    if keyboard =~ "[^a-z]" || s:has_no_internet > 1
         return 0
     endif
-    if s:chinese_input_mode =~ 'onekey'
-    \&& s:has_cjk_file > 1
+    if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 1
         return 0
     endif
     if match(s:clouds, s:ui.im) > -1
