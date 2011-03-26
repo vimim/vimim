@@ -269,6 +269,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_use_cache")
+    call add(G, "g:vimim_custom_menu")
     call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_onekey_is_tab")
@@ -2880,7 +2881,9 @@ function! s:vimim_popupmenu_list(matched_list)
             endif
             let chinese = get(pairs, 1)
             let menu = get(pairs, 0)
-            let extra_text = menu
+            if s:vimim_custom_menu > 0
+                let extra_text = menu
+            endif
         endif
         if s:hjkl_s > 0 && s:hjkl_s % 2 > 0 && s:has_cjk_file > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
