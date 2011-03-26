@@ -99,7 +99,7 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s_vimim_cloud = 0
-    let s:clouds = ['sogou','qq','baidu','google']
+    let s:clouds = ['sogou','qq','google']
     for cloud in s:clouds
         let s_vimim_cloud = eval("s:vimim_cloud_" . cloud)
         if !empty(s_vimim_cloud)
@@ -201,7 +201,6 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['wubi']     = "[0-9a-z']"
     let s:im_keycode['sogou']    = "[0-9a-z']"
     let s:im_keycode['qq']       = "[0-9a-z']"
-    let s:im_keycode['baidu']    = "[0-9a-z']"
     let s:im_keycode['google']   = "[0-9a-z']"
     let s:im_keycode['mycloud']  = "[0-9a-z]"
     let s:im_keycode['yong']     = "[a-z'.;/]"
@@ -275,9 +274,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_onekey_is_tab")
     call add(G, "g:vimim_cloud_mycloud")
     call add(G, "g:vimim_cloud_sogou")
-    call add(G, "g:vimim_cloud_qq")
-    call add(G, "g:vimim_cloud_baidu")
     call add(G, "g:vimim_cloud_google")
+    call add(G, "g:vimim_cloud_qq")
     " -----------------------------------
     let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
@@ -1669,7 +1667,6 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['cloud']       = ['云','雲']
     let s:chinese['sogou']       = ['搜狗']
     let s:chinese['qq']          = ['QQ']
-    let s:chinese['baidu']       = ['百度']
     let s:chinese['google']      = ['谷歌']
 endfunction
 
@@ -2913,9 +2910,7 @@ function! s:vimim_popupmenu_list(matched_list)
             endif
             let complete_items["abbr"] = labeling . chinese
         endif
-        if empty(s:english_results)
-            let complete_items["dup"] = 1
-        endif
+        let complete_items["dup"] = 1
         let complete_items["menu"] = extra_text
         let complete_items["word"] = empty(chinese) ? s:space : chinese
         call add(popupmenu_list, complete_items)
@@ -4264,14 +4259,6 @@ endfunction
 function! s:vimim_get_cloud_qq(keyboard)
 " --------------------------------------
     let results = ['qq QQ输入法']
-    return results
-endfunction
-
-" http://www.baidu.com
-" -----------------------------------------
-function! s:vimim_get_cloud_baidu(keyboard)
-" -----------------------------------------
-    let results = ['baidu 百度输入法']
     return results
 endfunction
 
