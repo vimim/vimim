@@ -691,9 +691,9 @@ function! s:vimim_rotation() range abort
     endif
 endfunction
 
-" ----------------------------
-function! s:bubble_sort(chaos)
-" ----------------------------
+" ----------------------------------
+function! s:vimim_bubble_sort(chaos)
+" ----------------------------------
     let chaos = a:chaos
     let lines = []
     let swapped = 1
