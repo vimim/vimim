@@ -691,6 +691,15 @@ function! s:vimim_rotation() range abort
     endif
 endfunction
 
+" ---------------------------------
+function! s:vimim_egg_vimimbubble()
+" ---------------------------------
+    let chaos=[5, 1, 4, 2, 8]
+    let eggs = s:vimim_bubble_sort(chaos)
+    return eggs
+endfunction
+
+" http://en.wikipedia.org/wiki/Bubble_sort
 " ----------------------------------
 function! s:vimim_bubble_sort(chaos)
 " ----------------------------------
