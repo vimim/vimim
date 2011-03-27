@@ -694,23 +694,37 @@ endfunction
 " ---------------------------------
 function! s:vimim_egg_vimimbubble()
 " ---------------------------------
-    let chaos=[5, 1, 4, 2, 8]
-    let eggs = s:vimim_bubble_sort(chaos)
+" a visual representation of how bubble sort works
+" [usage] vimimbubble<C-6> followed by multiple n
+" http://en.wikipedia.org/wiki/Bubble_sort
+    let s:has_bubble_sort = 1
+    let chaos = reverse(range(1,9))
+    let order = s:vimim_bubble_sort(chaos)
+    let egg = get(order, -1)
+    if s:hjkl_n < len(order)
+        let egg = get(order, s:hjkl_n)
+    endif
+    let eggs = ['']
+    let sign = repeat('@',5)
+    for i in split(egg)
+        let egg = repeat(sign ,i)
+        call add(eggs, egg)
+    endfor
     return eggs
 endfunction
 
-" http://en.wikipedia.org/wiki/Bubble_sort
 " ----------------------------------
 function! s:vimim_bubble_sort(chaos)
 " ----------------------------------
     let chaos = a:chaos
-    let lines = []
+    let lines = [join(chaos)]
     let swapped = 1
     while swapped > 0
         let swapped = 0
         let i = 0
         let j = 0
         while i < len(chaos)
+            let old = join(chaos)
             while j < i
                 if chaos[i] < chaos[j]
                     let tmp = chaos[i]
@@ -721,7 +735,10 @@ function! s:vimim_bubble_sort(chaos)
                 let j += 1
             endwhile
             let i += 1
-            call add(lines, join(chaos))
+            let new = join(chaos)
+            if new != old
+                call add(lines, new)
+            endif
         endwhile
     endwhile
     return lines
@@ -2908,7 +2925,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let keyboard = join(s:keyboard_list,"")
     let first_in_list = get(lines,0)
     let &pumheight = s:show_me_not ? 0 : &pumheight
-    if s:hjkl_n % 2 > 0
+    if s:hjkl_n % 2 > 0 && s:has_bubble_sort < 1
         if s:show_me_not > 0
             call reverse(lines)
             let label = len(lines)
@@ -4704,6 +4721,7 @@ function! s:vimim_reset_before_omni()
 " -----------------------------------
     let s:smart_enter = 0
     let s:show_me_not = 0
+    let s:has_bubble_sort = 0
     let s:english_results = []
 endfunction
 
