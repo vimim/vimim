@@ -699,18 +699,19 @@ function! s:vimim_egg_vimimsort()
 "         (1) followed by multiple n for bubble sort
 "         (2) followed by multiple m for merge sort
 "         (3) followed by x for reset
+" -------------------------------
     let chaos = reverse(range(1,9))
     let s:has_vimim_sort = 1
-    let order = chaos
+    let order = [join(chaos)]
     let sort = 0
     if s:hjkl_m > 0
         let sort = s:hjkl_m
-        let s:mergesort_results = [join(chaos)]
+        let s:mergesort_results = []
         call s:vimim_merge_sort(chaos)
-        let order = copy(s:mergesort_results)
-    else
+        let order += s:mergesort_results
+    elseif s:hjkl_n > 0
         let sort = s:hjkl_n
-        let order = s:vimim_bubble_sort(chaos)
+        let order += s:vimim_bubble_sort(chaos)
     endif
     let egg = get(order, -1)
     if sort < len(order)
@@ -729,7 +730,7 @@ endfunction
 function! s:vimim_bubble_sort(chaos)
 " ----------------------------------
     let chaos = a:chaos
-    let lines = [join(chaos)]
+    let lines = []
     let swapped = 1
     while swapped > 0
         let swapped = 0
@@ -771,6 +772,7 @@ function! s:vimim_merge_sort(chaos)
         return results
     endif
 endfunction
+
 " ----------------------------------
 function! s:vimim_merge(left, right)
 " ----------------------------------
