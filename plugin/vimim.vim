@@ -331,7 +331,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_debug = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
@@ -5046,7 +5046,7 @@ endfunction
 function! s:vimim_chinesemode_mapping_on()
 " ----------------------------------------
     if s:vimim_onekey_is_tab < 2
-        inoremap<silent><expr><C-H>        <SID>VimIMSwitch()
+        inoremap<silent><expr><C-X><C-H>  <SID>VimIMSwitch()
             imap<silent><C-Bslash>        <Plug>VimIM
         inoremap<unique><expr><Plug>VimIM <SID>ChineseMode()
          noremap<silent><C-Bslash>  :call <SID>ChineseMode()<CR>
