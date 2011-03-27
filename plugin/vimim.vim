@@ -99,7 +99,7 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s_vimim_cloud = 0
-    let s:clouds = ['sogou','qq','google']
+    let s:clouds = ['sogou','qq','google','baidu']
     for cloud in s:clouds
         let s_vimim_cloud = eval("s:vimim_cloud_" . cloud)
         if !empty(s_vimim_cloud)
@@ -202,6 +202,7 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode['sogou']    = "[.'0-9a-z]"
     let s:im_keycode['qq']       = "[.'0-9a-z]"
     let s:im_keycode['google']   = "[.'0-9a-z]"
+    let s:im_keycode['baidu']    = "[.'0-9a-z]"
     let s:im_keycode['mycloud']  = "[.'0-9a-z]"
     let s:im_keycode['yong']     = "[.'a-z;/]"
     let s:im_keycode['wu']       = "[.'a-z]"
@@ -1731,6 +1732,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['sogou']       = ['搜狗']
     let s:chinese['qq']          = ['QQ']
     let s:chinese['google']      = ['谷歌']
+    let s:chinese['baidu']       = ['百度']
 endfunction
 
 " ----------------------------------------
@@ -4313,6 +4315,14 @@ function! s:vimim_get_cloud_sogou(keyboard)
     return matched_list
 endfunction
 
+" http://py.qq.com/web
+" --------------------------------------
+function! s:vimim_get_cloud_qq(keyboard)
+" --------------------------------------
+    let results = ['qq QQ输入法']
+    return results
+endfunction
+
 " http://www.google.com/transliterate
 " ------------------------------------------
 function! s:vimim_get_cloud_google(keyboard)
@@ -4321,11 +4331,11 @@ function! s:vimim_get_cloud_google(keyboard)
     return results
 endfunction
 
-" http://py.qq.com/web
-" --------------------------------------
-function! s:vimim_get_cloud_qq(keyboard)
-" --------------------------------------
-    let results = ['qq QQ输入法']
+" http://www.baidu.com
+" -----------------------------------------
+function! s:vimim_get_cloud_baidu(keyboard)
+" -----------------------------------------
+    let results = ['baidu 百度输入法']
     return results
 endfunction
 
