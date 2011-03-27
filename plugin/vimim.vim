@@ -695,9 +695,7 @@ endfunction
 " ---------------------------------
 function! s:vimim_egg_vimimbubble()
 " ---------------------------------
-" a visual representation of how bubble sort works
 " [usage] vimimbubble<C-6> followed by multiple n
-" http://en.wikipedia.org/wiki/Bubble_sort
     let s:has_bubble_sort = 1
     let chaos = reverse(range(1,9))
     let order = s:vimim_bubble_sort(chaos)
@@ -706,14 +704,14 @@ function! s:vimim_egg_vimimbubble()
         let egg = get(order, s:hjkl_n)
     endif
     let eggs = ['']
-    let sign = repeat('@',5)
     for i in split(egg)
-        let egg = repeat(sign ,i)
+        let egg = repeat(repeat('@',5) ,i)
         call add(eggs, egg)
     endfor
     return eggs
 endfunction
 
+" http://en.wikipedia.org/wiki/Bubble_sort
 " ----------------------------------
 function! s:vimim_bubble_sort(chaos)
 " ----------------------------------
@@ -2297,9 +2295,9 @@ function! s:vimim_get_head(keyboard, partition)
     return head
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_chinese_tranfer() range abort
-" ---------------------------------------------
+" ----------------------------------------------
+function! s:vimim_chinese_transfer() range abort
+" ----------------------------------------------
 " [usage]   :VimIM
 " (1) "quick and dirty" way to transfer Chinese to Chinese
 " (2) 20% of the effort to solve 80% of the problem using one2one mapping
@@ -5038,18 +5036,18 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_mapping()
 " ------------------------------------
-    sil!call s:vimim_chinesemode_mapping_on()
-    sil!call s:vimim_onekey_mapping_on()
+    sil!call s:vimim_chinesemode_mapping()
+    sil!call s:vimim_onekey_mapping()
 endfunction
 
-" ----------------------------------------
-function! s:vimim_chinesemode_mapping_on()
-" ----------------------------------------
+" -------------------------------------
+function! s:vimim_chinesemode_mapping()
+" -------------------------------------
     if s:vimim_onekey_is_tab < 2
-        inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
-            imap<silent><C-Bslash>            <Plug>VimIM
         inoremap<unique><expr><Plug>VimIM <SID>ChineseMode()
          noremap<silent><C-Bslash>  :call <SID>ChineseMode()<CR>
+            imap<silent><C-Bslash>            <Plug>VimIM
+        inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
     endif
     if s:vimim_ctrl_space_to_toggle == 1
         if has("gui_running")
@@ -5062,24 +5060,24 @@ function! s:vimim_chinesemode_mapping_on()
     endif
 endfunction
 
-" -----------------------------------
-function! s:vimim_onekey_mapping_on()
-" -----------------------------------
+" --------------------------------
+function! s:vimim_onekey_mapping()
+" --------------------------------
     if !hasmapto('<Plug>VimimOneKey', 'i')
         inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
-        xnoremap<silent><C-^>  y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_onekey_is_tab < 2
-        imap<silent><C-^> <Plug>VimimOneKey
+            imap<silent><C-^> <Plug>VimimOneKey
+        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_onekey_is_tab > 0
-        imap<silent><Tab> <Plug>VimimOneKey
-        xmap<silent><Tab> <C-^>
+            imap<silent><Tab> <Plug>VimimOneKey
+        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_search_next > 0
         noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
-    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_tranfer()
+    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% VimiM <line1>,<line2>call s:vimim_rotation()
 endfunction
 
