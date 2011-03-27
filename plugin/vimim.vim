@@ -692,20 +692,33 @@ function! s:vimim_rotation() range abort
     endif
 endfunction
 
-" ---------------------------------
-function! s:vimim_egg_vimimbubble()
-" ---------------------------------
-" [usage] vimimbubble<C-6> followed by multiple n
-    let s:has_bubble_sort = 1
+" -------------------------------
+function! s:vimim_egg_vimimsort()
+" -------------------------------
+" [usage] vimimsort<C-6>
+"         (1) followed by multiple n for bubble sort
+"         (2) followed by multiple m for merge sort
+"         (3) followed by x for reset
     let chaos = reverse(range(1,9))
-    let order = s:vimim_bubble_sort(chaos)
+    let s:has_vimim_sort = 1
+    let order = chaos
+    let sort = 0
+    if s:hjkl_m > 0
+        let sort = s:hjkl_m
+        let s:mergesort_results = [join(chaos)]
+        call s:vimim_merge_sort(chaos)
+        let order = copy(s:mergesort_results)
+    else
+        let sort = s:hjkl_n
+        let order = s:vimim_bubble_sort(chaos)
+    endif
     let egg = get(order, -1)
-    if s:hjkl_n < len(order)
-        let egg = get(order, s:hjkl_n)
+    if sort < len(order)
+        let egg = get(order, sort)
     endif
     let eggs = ['']
     for i in split(egg)
-        let egg = repeat(repeat('@',5) ,i)
+        let egg = repeat(i ,i)
         call add(eggs, egg)
     endfor
     return eggs
@@ -741,6 +754,40 @@ function! s:vimim_bubble_sort(chaos)
         endwhile
     endwhile
     return lines
+endfunction
+
+" http://en.wikipedia.org/wiki/Merge_sort
+" ---------------------------------
+function! s:vimim_merge_sort(chaos)
+" ---------------------------------
+    if len(a:chaos) < 2
+        return a:chaos
+    else
+        let middle = len(a:chaos) / 2
+        let left = s:vimim_merge_sort(a:chaos[: middle-1])
+        let right = s:vimim_merge_sort(a:chaos[middle :])
+        let results = s:vimim_merge(left, right)
+        call add(s:mergesort_results, join(results))
+        return results
+    endif
+endfunction
+" ----------------------------------
+function! s:vimim_merge(left, right)
+" ----------------------------------
+    let i = 0
+    let j = 0
+    let results = []
+    while i < len(a:left) && j < len(a:right)
+        if a:left[i] <= a:right[j]
+            call add(results, a:left[i])
+            let i += 1
+        else
+            call add(results, a:right[j])
+            let j += 1
+        endif
+    endwhile
+    let results += a:left[i :] + a:right[j :]
+    return results
 endfunction
 
 " ============================================= }}}
@@ -1184,7 +1231,7 @@ function! s:vimim_onekey_input(keyboard)
     let keyboard = a:keyboard
     let lines = s:vimim_get_hjkl(keyboard)
     if !empty(lines)
-        if s:hjkl_m % 4 > 0
+        if s:hjkl_m % 4 > 0 && s:has_vimim_sort < 1
             let &pumheight = 0
             for i in range(s:hjkl_m%4)
                 let lines = s:vimim_hjkl_rotation(lines)
@@ -2924,7 +2971,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let keyboard = join(s:keyboard_list,"")
     let first_in_list = get(lines,0)
     let &pumheight = s:show_me_not ? 0 : &pumheight
-    if s:hjkl_n % 2 > 0 && s:has_bubble_sort < 1
+    if s:hjkl_n % 2 > 0 && s:has_vimim_sort < 1
         if s:show_me_not > 0
             call reverse(lines)
             let label = len(lines)
@@ -4728,7 +4775,7 @@ function! s:vimim_reset_before_omni()
 " -----------------------------------
     let s:smart_enter = 0
     let s:show_me_not = 0
-    let s:has_bubble_sort = 0
+    let s:has_vimim_sort = 0
     let s:english_results = []
 endfunction
 
