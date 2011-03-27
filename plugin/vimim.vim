@@ -1461,9 +1461,9 @@ function! <SID>vimim_onekey_hjkl(key)
                 for toggle in toggles
                     if toggle == a:key
                         exe 'let s:hjkl_' . toggle . ' += 1'
-                    else
-                        exe 'let s:hjkl_' . toggle . ' = 0'
                     endif
+                    let s:hjkl_n = toggle == 'm' ? 0 : s:hjkl_n
+                    let s:hjkl_m = toggle == 'n' ? 0 : s:hjkl_m
                 endfor
             endif
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
