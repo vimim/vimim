@@ -971,8 +971,8 @@ endfunction
 function! s:vimim_static_action(space)
 " ------------------------------------
     let space = a:space
-    let byte_before = getline(".")[col(".")-2]
-    if byte_before =~# s:valid_key
+    let one_before = getline(".")[col(".")-2]
+    if one_before =~# s:valid_key
         let space = g:vimim()
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -1033,9 +1033,9 @@ function! <SID>OneKey()
 " (1) <OneKey> => start OneKey as "hit and run"
 " (2) <OneKey> => stop  OneKey and print out menu
 " -----------------------------------------------
-    let byte_before = getline(".")[col(".")-2]
     let onekey = ''
-    if empty(byte_before) || byte_before =~ '\s'
+    let one_before = getline(".")[col(".")-2]
+    if empty(one_before) || one_before =~ '\s'
         if s:vimim_onekey_is_tab > 0
             let onekey = "\t"
         endif
@@ -1094,31 +1094,31 @@ function! s:vimim_onekey_action(onekey)
         let s:has_gnuplot = 1
         sil!exe 'sil!return "' . g:vimim() . '"'
     endif
-    let byte_before = current_line[col(".")-2]
-    let byte_before_before = current_line[col(".")-3]
+    let one_before = current_line[col(".")-2]
+    let two_before = current_line[col(".")-3]
     let onekey = ""
-    if empty(s:ui.has_dot) && byte_before_before !~# "[0-9A-z]"
+    if empty(s:ui.has_dot) && two_before !~# "[0-9a-z]"
         let punctuations = s:punctuations
         call extend(punctuations, s:evils)
-        if has_key(punctuations, byte_before)
+        if has_key(punctuations, one_before)
             for char in keys(punctuations)
                 " no transfer for punctuation after punctuation
-                if byte_before_before ==# char
+                if two_before ==# char || two_before =~ '\u'
                     return " "
                 endif
             endfor
             " transfer English punctuation to Chinese punctuation
-            let replacement = punctuations[byte_before]
-            if byte_before == "'"
+            let replacement = punctuations[one_before]
+            if one_before == "'"
                 let replacement = <SID>vimim_get_quote(1)
-            elseif byte_before == '"'
+            elseif one_before == '"'
                 let replacement = <SID>vimim_get_quote(2)
             endif
             let onekey = "\<BS>" . replacement
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
-    if byte_before =~ s:valid_key
+    if one_before =~ s:valid_key
         let onekey = g:vimim()
     elseif a:onekey < 1
         let onekey = s:vimim_get_unicode_menu()
@@ -1141,9 +1141,8 @@ function! <SID>vimim_space()
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
-        let byte_before = getline(".")[col(".")-2]
-        if byte_before !~ s:valid_key
-        \&& !has_key(s:punctuations, byte_before)
+        let before = getline(".")[col(".")-2]
+        if before !~ s:valid_key && !has_key(s:punctuations, before)
             let space = ""
             call g:vimim_stop()
         else
@@ -1561,8 +1560,8 @@ endfunction
 " ----------------------------------
 function! s:vimim_get_unicode_menu()
 " ----------------------------------
-    let byte_before = getline(".")[col(".")-2]
-    if empty(byte_before) || byte_before =~# s:valid_key
+    let one_before = getline(".")[col(".")-2]
+    if empty(one_before) || one_before =~# s:valid_key
         return ""
     endif
     let start = s:multibyte + 1
@@ -1917,8 +1916,8 @@ function! <SID>vimim_chinese_punctuation_map(key)
 " -----------------------------------------------
     let key = a:key
     if s:chinese_punctuation > 0
-        let byte_before = getline(".")[col(".")-2]
-        if byte_before !~ '\w' || pumvisible()
+        let one_before = getline(".")[col(".")-2]
+        if one_before !~ '\w' || pumvisible()
             if has_key(s:punctuations, a:key)
                 let key = s:punctuations[a:key]
             else
@@ -2878,19 +2877,19 @@ endfunction
 " --------------------------
 function! <SID>vimim_enter()
 " --------------------------
-    let byte_before = getline(".")[col(".")-2]
+    let one_before = getline(".")[col(".")-2]
     " <Enter> triple play for OneKey and static mode:
     "  (1) single <Enter> ==> seamless
     "  (2) double <Enter> ==> <Space>
     "  (3) triple <Enter> ==> <Enter>
-    if byte_before =~ '\S'
+    if one_before =~ '\S'
         let s:smart_enter += 1
     endif
     " <Enter> double play in dynamic mode:
     "  (1) after English (valid keys)    => Seamless
     "  (2) after Chinese or double Enter => Enter
     if s:chinese_input_mode =~ 'dynamic'
-        if byte_before =~ s:valid_key
+        if one_before =~ s:valid_key
             let s:smart_enter = 1
         else
             let s:smart_enter = 3
@@ -4756,8 +4755,8 @@ function! g:vimim()
 " -----------------
     let key = ""
     let s:keyboard_list = []
-    let byte_before = getline(".")[col(".")-2]
-    if byte_before =~ s:valid_key || s:has_gnuplot > 0
+    let one_before = getline(".")[col(".")-2]
+    if one_before =~ s:valid_key || s:has_gnuplot > 0
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
     elseif s:vimim_onekey_hit_and_run > 0
     \&& s:chinese_input_mode =~ 'onekey'
@@ -4865,7 +4864,7 @@ if a:start
     let start_row = current_positions[1]
     let start_column = current_positions[2]-1
     let current_line = getline(start_row)
-    let byte_before = current_line[start_column-1]
+    let one_before = current_line[start_column-1]
 
     " take care of seamless English/Chinese input
     let seamless_column = s:vimim_get_seamless(current_positions)
@@ -4881,21 +4880,21 @@ if a:start
     let all_digit = 1
     let nonsense_pattern = "[0-9.']"
     while start_column > 0
-        if byte_before =~# s:valid_key
+        if one_before =~# s:valid_key
             let start_column -= 1
-            if byte_before !~# nonsense_pattern && s:ui.has_dot < 1
+            if one_before !~# nonsense_pattern && s:ui.has_dot < 1
                 let last_seen_nonsense_column = start_column
                 if all_digit > 0
                     let all_digit = 0
                 endif
             endif
-        elseif byte_before=='\' && s:vimim_backslash_close_pinyin>0
+        elseif one_before=='\' && s:vimim_backslash_close_pinyin>0
             " do nothing for pinyin with leading backslash
             return last_seen_backslash_column
         else
             break
         endif
-        let byte_before = current_line[start_column-1]
+        let one_before = current_line[start_column-1]
     endwhile
     if all_digit < 1
         let start_column = last_seen_nonsense_column
@@ -4983,7 +4982,7 @@ else
         endif
     endif
 
-    " [wubi] support wubi auto input
+    " [wubi] support auto insert for every 4 input
     if s:ui.im == 'wubi' || s:ui.im == 'erbi'
         let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
         if s:ui.im =~ 'erbi' && len(keyboard) == 1
