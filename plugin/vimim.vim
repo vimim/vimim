@@ -1119,7 +1119,7 @@ function! g:vimim_onekey_dump()
                 let line = printf('%s %s', items.abbr, items.menu)
             endif
         endif
-        let line = n>0 ? space.line : line
+        let line = n && s:show_me_not ? space.line : line
         call add(lines, line)
     endfor
     if has("gui_running") && has("win32")
