@@ -700,11 +700,11 @@ function! s:vimim_egg_vimimsort()
 " -------------------------------
 " [usage] vimimsort<C-6>
 "         (1) followed by multiple n for bubble sort
-"         (2) followed by multiple m for merge sort
+"         (2) followed by multiple m for merge  sort
 "         (3) followed by x for reset
 " -------------------------------
-    let chaos = reverse(range(1,9))
     let s:has_vimim_sort = 1
+    let chaos = reverse(range(1,9))
     let order = [join(chaos)]
     let sort = 0
     if s:hjkl_m > 0
