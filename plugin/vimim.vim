@@ -14,6 +14,7 @@ let s:url += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
 let s:url += ["http://vimim-data.googlecode.com"]
 let s:url += ["http://groups.google.com/group/vimim"]
 let s:url += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
+let s:url += ["vimim@googlegroups.com"]
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
@@ -484,6 +485,8 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "民间词库 " . s:url[4] . " ")
     call add(eggs, "新闻论坛 " . s:url[5] . " ")
     call add(eggs, "最新主页 " . s:url[6] . " ")
+    call add(eggs, "论坛邮箱 " . s:url[7] . " ")
+
     return eggs
 endfunction
 
