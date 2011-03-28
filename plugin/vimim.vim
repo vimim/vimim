@@ -1507,8 +1507,8 @@ function! <SID>vimim_onekey_hjkl(key)
                 for toggle in toggles
                     if toggle == a:key
                         exe 'let s:hjkl_' . toggle . ' += 1'
-                        let s:hjkl_n = toggle == 'm' ? 0 : s:hjkl_n
-                        let s:hjkl_m = toggle == 'n' ? 0 : s:hjkl_m
+                        let s:hjkl_n = a:key == 'm' ? 0 : s:hjkl_n
+                        let s:hjkl_m = a:key == 'n' ? 0 : s:hjkl_m
                     endif
                 endfor
             endif
@@ -2024,16 +2024,14 @@ function! <SID>vimim_onekey_punctuation(key)
         elseif a:key =~ "[/?]"
             let hjkl = s:vimim_menu_search(a:key)
         elseif a:key =~ "[-,]"
-            if s:hjkl_l > 0 && &pumheight < 1
-                let hjkl = '\<PageUp>'
-            else
+            let hjkl = '\<PageUp>'
+            if &pumheight > 0
                 let s:pageup_pagedown -= 1
                 let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
             endif
         elseif a:key =~ "[=.]"
-            if s:hjkl_l > 0 && &pumheight < 1
-                let hjkl = '\<PageDown>'
-            else
+            let hjkl = '\<PageDown>'
+            if &pumheight > 0
                 let s:pageup_pagedown += 1
                 let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
             endif
@@ -4823,7 +4821,7 @@ function! g:vimim_menu_select()
     if pumvisible()
         let key = '\<C-P>\<Down>'
         if s:has_gnuplot > 0
-            let n = s:hjkl_n%2>0 ? len(s:matched_list)-3 : 2
+            let n = s:hjkl_n % 2 ? len(s:matched_list)-3 : 2
             let key .= repeat("\<Down>", n)
         endif
     endif
