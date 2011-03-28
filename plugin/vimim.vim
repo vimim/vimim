@@ -564,6 +564,7 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  games            ==== {{{"]
 " =================================================
+" http://vimim.googlecode.com/svn/vimim/vimim.html#game
 
 " ---------------------------------
 function! s:vimim_gnuplot(keyboard)
