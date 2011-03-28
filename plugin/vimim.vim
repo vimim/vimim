@@ -345,6 +345,14 @@ endfunction
 let s:VimIM += [" ====  for Mom and Dad  ==== {{{"]
 " =================================================
 
+" ----------------------------
+function! <SID>vimim_browser()
+" ----------------------------
+    :%d
+    sil!call <SID>vimim_visual_ctrl6()
+    sil!call feedkeys("hi")
+endfunction
+
 " ---------------------------------
 function! s:vimim_for_mom_and_dad()
 " ---------------------------------
@@ -5122,6 +5130,9 @@ function! s:vimim_onekey_mapping()
     if s:vimim_onekey_is_tab > 0
             imap<silent><Tab> <Plug>VimimOneKey
         xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
+        if s:vimim_onekey_is_tab == 2
+            noremap<silent><C-^> :call <SID>vimim_browser()<CR>
+        endif
     endif
     if s:vimim_search_next > 0
         noremap <silent> n :call g:vimim_search_next()<CR>n
