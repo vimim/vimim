@@ -3015,7 +3015,9 @@ function! s:vimim_popupmenu_list(matched_list)
         else
             let extra_text = get(split(menu,"_"),0)
         endif
-        if s:vimim_custom_label > 0 && len(lines) > 1
+        if s:vimim_custom_label > 0
+        \&& s:has_vimim_sort < 1
+        \&& len(lines) > 1
             let labeling = s:vimim_get_labeling(label)
             if s:hjkl_n % 2 > 0 && s:show_me_not > 0
                 let label -= 1
@@ -4777,7 +4779,6 @@ function! s:vimim_reset_before_omni()
 " -----------------------------------
     let s:smart_enter = 0
     let s:show_me_not = 0
-    let s:has_vimim_sort = 0
     let s:english_results = []
 endfunction
 
@@ -4790,6 +4791,7 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_n = 0
     let s:hjkl_s = 0
     let s:hjkl_x = ""
+    let s:has_vimim_sort = 0
     let s:pageup_pagedown = 0
     let s:has_no_internet = 0
     let s:matched_list = []
