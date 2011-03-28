@@ -5101,10 +5101,10 @@ endfunction
 function! s:vimim_chinesemode_mapping()
 " -------------------------------------
     if s:vimim_onekey_is_tab < 2
-        inoremap<unique><expr><Plug>VimIM <SID>ChineseMode()
-         noremap<silent><C-Bslash>  :call <SID>ChineseMode()<CR>
-            imap<silent><C-Bslash>            <Plug>VimIM
-        inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
+        inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
+        inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
+         noremap<silent>       <C-Bslash>   :call <SID>ChineseMode()<CR>
+            imap<silent>       <C-Bslash>   <Plug>VimIM
     endif
     if s:vimim_ctrl_space_to_toggle == 1
         if has("gui_running")
