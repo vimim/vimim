@@ -430,10 +430,10 @@ function! s:vimim_easter_chicken(keyboard)
     return []
 endfunction
 
-" http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
 " -----------------------------
 function! s:vimim_egg_vimimrc()
 " -----------------------------
+    " http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
     return sort(copy(s:vimimrc))
 endfunction
 
@@ -728,10 +728,10 @@ function! s:vimim_egg_vimimsort()
     return eggs
 endfunction
 
-" http://en.wikipedia.org/wiki/Bubble_sort
 " ----------------------------------
 function! s:vimim_bubble_sort(chaos)
 " ----------------------------------
+    " http://en.wikipedia.org/wiki/Bubble_sort
     let chaos = a:chaos
     let lines = []
     let swapped = 1
@@ -760,10 +760,10 @@ function! s:vimim_bubble_sort(chaos)
     return lines
 endfunction
 
-" http://en.wikipedia.org/wiki/Merge_sort
 " ---------------------------------
 function! s:vimim_merge_sort(chaos)
 " ---------------------------------
+    " http://en.wikipedia.org/wiki/Merge_sort
     if len(a:chaos) < 2
         return a:chaos
     else
@@ -4317,10 +4317,10 @@ function! s:vimim_get_from_http(input)
     return output
 endfunction
 
-" http://pinyin.sogou.com/cloud/
 " -----------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
+    " http://pinyin.sogou.com/cloud/
     if empty(s:cloud_sogou_key)
         let sogou_key = 'http://web.pinyin.sogou.com/web_ime/patch.php'
         let output = s:vimim_get_from_http(sogou_key)
@@ -4364,26 +4364,26 @@ function! s:vimim_get_cloud_sogou(keyboard)
     return matched_list
 endfunction
 
-" http://py.qq.com/web
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
 " --------------------------------------
+    " http://py.qq.com/web
     let results = ['qq QQ输入法']
     return results
 endfunction
 
-" http://www.google.com/transliterate
 " ------------------------------------------
 function! s:vimim_get_cloud_google(keyboard)
 " ------------------------------------------
+    " http://www.google.com/transliterate
     let results = ['google 谷歌输入法']
     return results
 endfunction
 
-" http://www.baidu.com
 " -----------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard)
 " -----------------------------------------
+    " http://www.baidu.com
     let results = ['baidu 百度输入法']
     return results
 endfunction
