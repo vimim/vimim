@@ -261,6 +261,7 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_ctrl_space_to_toggle")
+    call add(G, "g:vimim_ctrl_h_to_switch")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_data_file_encoding")
     call add(G, "g:vimim_data_directory")
@@ -5097,10 +5098,14 @@ endfunction
 function! s:vimim_chinesemode_mapping()
 " -------------------------------------
     if s:vimim_onekey_is_tab < 2
-        inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
         inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
          noremap<silent>       <C-Bslash>   :call <SID>ChineseMode()<CR>
             imap<silent>       <C-Bslash>   <Plug>VimIM
+        if s:vimim_ctrl_h_to_switch > 0
+            inoremap<silent><expr> <C-H> <SID>VimIMSwitch()
+        else
+            inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
+        endif
     endif
     if s:vimim_ctrl_space_to_toggle == 1
         if has("gui_running")
