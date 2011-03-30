@@ -14,7 +14,7 @@ let s:url += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
 let s:url += ["http://vimim-data.googlecode.com"]
 let s:url += ["http://groups.google.com/group/vimim"]
 let s:url += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
-let s:url += ["vimim@googlegroups.com"]
+let s:url += ["vimim+subscribe@googlegroups.com"]
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
