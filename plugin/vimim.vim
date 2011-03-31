@@ -3117,7 +3117,7 @@ endfunction
 function! s:vimim_onekey_english(keyboard, order)
 " -----------------------------------------------
     let results = []
-    if s:has_cjk_file > 0 && s:ui.im == 'pinyin'
+    if s:has_cjk_file > 0 || s:ui.im == 'pinyin'
         " select english from vimim.cjk.txt
         let grep_english = '\s' . a:keyboard . '\s'
         let results = s:vimim_cjk_grep_results(grep_english)
