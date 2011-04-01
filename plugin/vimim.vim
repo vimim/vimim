@@ -3135,8 +3135,13 @@ function! s:vimim_onekey_english(keyboard, order)
         if empty(s:english_lines)
             let s:english_lines = s:vimim_readfile(s:english_file)
         endif
-        let grep_english = '^' . a:keyboard
+        let grep_english = '^' . a:keyboard . '\s'
         let matched = match(s:english_lines, grep_english)
+        if matched < 0 && len(a:keyboard) > 3
+            " support english shortcut: both haag haagendazs
+            let grep_english = '^' . a:keyboard
+            let matched = match(s:english_lines, grep_english)
+        endif
         if matched > -1
             let line = get(s:english_lines, matched)
             let results = split(line)
