@@ -3002,8 +3002,11 @@ function! s:vimim_popupmenu_list(matched_list)
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
         if s:hjkl_h > 0 && s:hjkl_h % 2 > 0 && s:show_me_not < 1
-            let ddddd = char2nr(chinese)
-            let extra_text = s:vimim_cjk_property_display(ddddd)
+            let extra_text = menu
+            if empty(s:english_results)
+                let ddddd = char2nr(chinese)
+                let extra_text = s:vimim_cjk_property_display(ddddd)
+            endif
         endif
         if empty(s:mycloud_plugin)
             if !empty(keyboard) && s:show_me_not < 1
@@ -3086,7 +3089,7 @@ function! s:vimim_scan_english_datafile()
     let s:english_lines = []
     let datafile = "vimim.txt"
     let datafile = s:vimim_check_filereadable(datafile)
-    if s:ui.im =~ 'pinyin'
+    if s:ui.im =~ 'pinyin' || s:has_cjk_file > 0
         if !empty(datafile)
             let s:english_file = datafile
             let s:has_english_file = 1
@@ -3118,7 +3121,7 @@ function! s:vimim_onekey_english(keyboard, order)
 " -----------------------------------------------
     let results = []
     if s:has_cjk_file > 0
-        " select english from vimim.cjk.txt
+        " [sql] select english from vimim.cjk.txt
         let grep_english = '\s' . a:keyboard . '\s'
         let results = s:vimim_cjk_grep_results(grep_english)
         if len(results) > 0
@@ -3128,15 +3131,19 @@ function! s:vimim_onekey_english(keyboard, order)
         endif
     endif
     if s:has_english_file > 0
-        " select english from vimim.txt
+        " [sql] select english from vimim.txt
         if empty(s:english_lines)
             let s:english_lines = s:vimim_readfile(s:english_file)
         endif
-        let grep_english = '^' . a:keyboard . '\>'
+        let grep_english = '^' . a:keyboard
         let matched = match(s:english_lines, grep_english)
         if matched > -1
             let line = get(s:english_lines, matched)
-            let results = split(line)[1:]
+            let results = split(line)
+            let menu = get(results, 0)
+            if menu ==# a:keyboard
+                let results = results[1:]
+            endif
             if empty(a:order)
                 call extend(s:english_results, results)
             else
