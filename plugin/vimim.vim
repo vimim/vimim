@@ -1326,8 +1326,7 @@ function! s:vimim_cache()
             endif
         endif
     endif
-    if empty(results)
-    \&& s:pageup_pagedown != 0
+    if s:pageup_pagedown != 0
     \&& s:vimim_custom_label > 0
     \&& len(s:matched_list) > &pumheight
         let results = s:vimim_pageup_pagedown()
