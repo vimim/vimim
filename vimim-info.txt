@@ -1,0 +1,9 @@
+{
+  "name" : "vimim",
+  "version" : "$Revision$",
+  "author" : "VimIM",
+  "maintainer" : "vimim@googlegroups.com",
+  "repository" : {"type": "svn", "url": "http://vimim.googlecode.com/svn/trunk"},
+  "dependencies" : {},
+  "description" : "VimIM -- Input Method by Vim, of Vim, for Vimmers."
+}
