@@ -682,9 +682,9 @@ function! s:vimim_hjkl_rotation(matched_list)
     return rotations
 endfunction
 
-" --------------------------------------
-function! s:vimim_rotation() range abort
-" --------------------------------------
+" ----------------------------------------------
+function! s:vimim_chinese_rotation() range abort
+" ----------------------------------------------
 " [usage] :VimiM
     sil!call s:vimim_backend_initialization()
     let lines = getline(a:firstline, a:lastline)
@@ -2349,7 +2349,7 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_chinese_transfer() range abort
 " ----------------------------------------------
-" [usage]   :VimIM
+" [usage] :VimIM
 " (1) "quick and dirty" way to transfer Chinese to Chinese
 " (2) 20% of the effort to solve 80% of the problem using one2one mapping
 " ---------------------------------------------
@@ -5147,7 +5147,7 @@ function! s:vimim_onekey_mapping()
         noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
-    :com! -range=% VimiM <line1>,<line2>call s:vimim_rotation()
+    :com! -range=% VimiM <line1>,<line2>call s:vimim_chinese_rotation()
 endfunction
 
 " ------------------------------------
