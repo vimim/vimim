@@ -687,6 +687,7 @@ function! s:vimim_chinese_rotation() range abort
 " ----------------------------------------------
 " [usage] :VimiM
     sil!call s:vimim_backend_initialization()
+    :%s#\s*\r\=$##
     let lines = getline(a:firstline, a:lastline)
     let lines = s:vimim_hjkl_rotation(lines)
     if !empty(lines)
