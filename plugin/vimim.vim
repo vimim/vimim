@@ -1107,8 +1107,6 @@ endfunction
 function! g:vimim_onekey_dump()
 " -----------------------------
     let lines = []
-    let n = virtcol("'<'") - 2
-    let space = repeat(" ", n)
     for items in s:popupmenu_list
         let line = printf('%s', items.word)
         if has_key(items, "abbr")
@@ -1117,7 +1115,9 @@ function! g:vimim_onekey_dump()
                 let line = printf('%s %s', items.abbr, items.menu)
             endif
         endif
-        let line = n && s:show_me_not ? space.line : line
+        if get(s:keyboard_list,0) ==# 'vimim'
+            let line = repeat(" ", virtcol("'<'")-2) . line
+        endif
         call add(lines, line)
     endfor
     if has("gui_running") && has("win32")
