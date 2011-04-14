@@ -9,6 +9,7 @@ let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
 let s:url  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let s:url += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
+let s:url += ["http://code.google.com/p/vimim/source/list"]
 let s:url += ["http://code.google.com/p/vimim/issues/list"]
 let s:url += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
 let s:url += ["http://vimim-data.googlecode.com"]
@@ -116,6 +117,7 @@ function! s:vimim_initialize_session()
     let s:www_libcall = 0
     " --------------------------------
     let s:www_executable = 0
+    let s:seamless_positions = []
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -473,12 +475,13 @@ function! s:vimim_egg_vimimhelp()
     let eggs = []
     call add(eggs, "官方网址 " . s:url[0] . " ")
     call add(eggs, "最新程式 " . s:url[1] . " ")
-    call add(eggs, "错误报告 " . s:url[2] . " ")
-    call add(eggs, "标准字库 " . s:url[3] . " ")
-    call add(eggs, "民间词库 " . s:url[4] . " ")
-    call add(eggs, "新闻论坛 " . s:url[5] . " ")
-    call add(eggs, "最新主页 " . s:url[6] . " ")
-    call add(eggs, "论坛邮箱 " . s:url[7] . " ")
+    call add(eggs, "更新报告 " . s:url[2] . " ")
+    call add(eggs, "错误报告 " . s:url[3] . " ")
+    call add(eggs, "标准字库 " . s:url[4] . " ")
+    call add(eggs, "民间词库 " . s:url[5] . " ")
+    call add(eggs, "新闻论坛 " . s:url[6] . " ")
+    call add(eggs, "最新主页 " . s:url[7] . " ")
+    call add(eggs, "论坛邮箱 " . s:url[8] . " ")
 
     return eggs
 endfunction
@@ -4786,7 +4789,6 @@ function! s:vimim_reset_before_anything()
     let s:has_pumvisible = 0
     let s:popupmenu_list = []
     let s:keyboard_list  = []
-    let s:seamless_positions = []
 endfunction
 
 " -----------------------------------
