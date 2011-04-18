@@ -4211,10 +4211,9 @@ function! s:vimim_check_http_executable(im)
     if empty(s:www_executable)
         if executable('curl')
             let s:www_executable = "curl -s "
+        else
+            return {}
         endif
-    endif
-    if empty(s:www_executable)
-        return {}
     endif
     return s:backend.cloud[a:im]
 endfunction
