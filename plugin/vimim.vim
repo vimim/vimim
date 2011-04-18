@@ -4215,10 +4215,6 @@ function! s:vimim_check_http_executable(im)
     endif
     if empty(s:www_executable)
         return {}
-    else
-        if empty(s:backend.datafile) && empty(s:backend.directory)
-            exe 'let s:vimim_cloud_' . a:im . ' = 1'
-        endif
     endif
     return s:backend.cloud[a:im]
 endfunction
