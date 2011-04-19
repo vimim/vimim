@@ -4746,7 +4746,8 @@ function! s:vimim_start()
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
     set noruler
-    highlight! Cursor guifg=bg guibg=green
+    highlight! CursorIM guifg=NONE guibg=green
+    highlight! link Cursor CursorIM
 endfunction
 
 " ----------------------
@@ -4758,7 +4759,7 @@ function! g:vimim_stop()
     sil!call s:vimim_plugins_fix_stop()
     sil!call s:vimim_initialize_mapping()
     set ruler
-    highlight! Cursor guifg=bg guibg=fg
+    highlight! link Cursor NONE
 endfunction
 
 " -----------------------------
