@@ -272,6 +272,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
+    call add(G, "g:vimim_cursor_color")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_custom_menu")
@@ -385,6 +386,11 @@ function! s:vimim_initialize_skin()
     if s:vimim_custom_color < 1
         return
     endif
+    let guibg = 'green'
+    if len(s:vimim_cursor_color) > 1
+        let guibg = s:vimim_cursor_color
+    endif
+    sil!exe 'highlight! vimim_cursor_color guifg=NONE guibg=' . guibg
     if s:vimim_custom_color == 1
         highlight! link PmenuSel Title
     elseif s:vimim_custom_color == 2
@@ -4746,8 +4752,7 @@ function! s:vimim_start()
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
     set noruler
-    highlight! CursorIM guifg=NONE guibg=green
-    highlight! link Cursor CursorIM
+    highlight! link Cursor vimim_cursor_color
 endfunction
 
 " ----------------------
