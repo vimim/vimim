@@ -395,18 +395,6 @@ function! s:vimim_initialize_skin()
     highlight! Pmenu      NONE
 endfunction
 
-" ---------------------------------
-function! s:vimim_cursor_color(yes)
-" ---------------------------------
-    if empty(a:yes)
-        set ruler
-        highlight! Cursor guifg=bg guibg=fg
-    else
-        set noruler
-        highlight! Cursor guifg=bg guibg=green
-    endif
-endfunction
-
 " ---------------------------------------------------------
 function! s:vimim_set_keyboard_list(column_start, keyboard)
 " ---------------------------------------------------------
@@ -4754,21 +4742,23 @@ function! s:vimim_start()
 " -----------------------
     sil!call s:vimim_plugins_fix_start()
     sil!call s:vimim_i_setting_on()
-    sil!call s:vimim_cursor_color(0)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
+    set ruler
+    highlight! Cursor guifg=bg guibg=green
 endfunction
 
 " ----------------------
 function! g:vimim_stop()
 " ----------------------
     sil!call s:vimim_i_setting_off()
-    sil!call s:vimim_cursor_color(1)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_plugins_fix_stop()
     sil!call s:vimim_initialize_mapping()
+    set noruler
+    highlight! Cursor guifg=bg guibg=fg
 endfunction
 
 " -----------------------------
