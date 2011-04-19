@@ -4752,7 +4752,7 @@ function! s:vimim_start()
 " -----------------------
     sil!call s:vimim_plugins_fix_start()
     sil!call s:vimim_i_setting_on()
-    sil!call s:vimim_cursor_color(1)
+    sil!call s:vimim_cursor_color(0)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
@@ -4762,7 +4762,7 @@ endfunction
 function! g:vimim_stop()
 " ----------------------
     sil!call s:vimim_i_setting_off()
-    sil!call s:vimim_cursor_color(0)
+    sil!call s:vimim_cursor_color(1)
     sil!call s:vimim_super_reset()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_plugins_fix_stop()
