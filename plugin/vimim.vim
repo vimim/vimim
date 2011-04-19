@@ -4711,6 +4711,7 @@ function! s:vimim_initialize_i_setting()
     let s:saved_omnifunc    = &omnifunc
     let s:saved_completeopt = &completeopt
     let s:saved_laststatus  = &laststatus
+    let s:saved_statusline  = &statusline
     let s:saved_lazyredraw  = &lazyredraw
     let s:saved_showmatch   = &showmatch
     let s:saved_smartcase   = &smartcase
@@ -4740,6 +4741,7 @@ function! s:vimim_i_setting_off()
     let &omnifunc    = s:saved_omnifunc
     let &completeopt = s:saved_completeopt
     let &laststatus  = s:saved_laststatus
+    let &statusline  = s:saved_statusline
     let &lazyredraw  = s:saved_lazyredraw
     let &showmatch   = s:saved_showmatch
     let &smartcase   = s:saved_smartcase
