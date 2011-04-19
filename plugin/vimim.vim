@@ -1918,7 +1918,7 @@ endfunction
 
 " -------------------------------------------------
 function! s:vimim_initialize_frontend_punctuation()
-" -------------------------------------------------
+" ------------------------------------------------- todo
     for char in s:valid_keys
         if has_key(s:punctuations, char)
             if !empty(s:mycloud_plugin) || s:ui.has_dot == 1
@@ -4210,7 +4210,7 @@ endfunction
 function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
-    if keyboard =~ '\d' || s:chinese_input_mode =~ 'dynamic'
+    if keyboard =~ '\d' || s:chinese_input_mode !~ 'onekey'
         return []
     endif
     let magic_tail = keyboard[-1:-1]
