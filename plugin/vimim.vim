@@ -186,7 +186,7 @@ function! s:vimim_chinese(english)
         let chinese = get(s:chinese[key], 0)
         if s:encoding !~ "chinese"
         \&& len(s:chinese[key]) > 1
-        \&& s:vimim_onekey_is_tab < 2
+        \&& s:vimim_debug > 1
             let chinese = get(s:chinese[key], 1)
         endif
     endif
@@ -336,7 +336,7 @@ endfunction
 function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory('/home/xma')
-        let g:vimim_debug = 1
+        let g:vimim_debug = 2
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -2612,7 +2612,7 @@ let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
-    if s:vimim_onekey_is_tab > 1
+    if s:vimim_debug > 1
         return
     endif
     if !exists('s:acp_sid')
@@ -2660,7 +2660,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_plugins_fix_stop()
 " ----------------------------------
-    if s:vimim_onekey_is_tab > 1
+    if s:vimim_debug > 1
         return
     endif
     if !empty(s:acp_sid)
@@ -3663,7 +3663,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if s:vimim_onekey_is_tab > 1
+    if s:vimim_debug > 1
         return
     endif
     for im in s:all_vimim_input_methods
