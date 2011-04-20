@@ -4705,7 +4705,6 @@ function! s:vimim_initialize_i_setting()
     let s:saved_omnifunc    = &omnifunc
     let s:saved_completeopt = &completeopt
     let s:saved_laststatus  = &laststatus
-    let s:saved_statusline  = &statusline
     let s:saved_lazyredraw  = &lazyredraw
     let s:saved_showmatch   = &showmatch
     let s:saved_smartcase   = &smartcase
@@ -4716,6 +4715,7 @@ endfunction
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
+    let s:saved_statusline  = &statusline
     set omnifunc=VimIM
     set completeopt=menuone
     set nolazyredraw
