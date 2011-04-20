@@ -336,7 +336,6 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-        let g:vimim_onekey_is_tab = 1
     if isdirectory('/home/xma')
         let g:vimim_debug = 2
         let g:vimim_digit_4corner = 1
@@ -4653,18 +4652,9 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     if empty(output)
         return []
     endif
-    return s:vimim_process_mycloud_output(a:keyboard, output)
-endfunction
-
-" --------------------------------------------------------
-function! s:vimim_process_mycloud_output(keyboard, output)
-" --------------------------------------------------------
-" one line typical output:  春梦 8 4420
-    if empty(a:output) || empty(a:keyboard)
-        return []
-    endif
     let menu = []
-    for item in split(a:output, '\n')
+    " one line typical output:  春梦 8 4420
+    for item in split(output, '\n')
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
         if s:localization > 0
@@ -4706,6 +4696,7 @@ function! s:vimim_initialize_i_setting()
     let s:saved_omnifunc    = &omnifunc
     let s:saved_completeopt = &completeopt
     let s:saved_laststatus  = &laststatus
+    let s:saved_statusline  = &statusline
     let s:saved_lazyredraw  = &lazyredraw
     let s:saved_showmatch   = &showmatch
     let s:saved_smartcase   = &smartcase
@@ -4716,7 +4707,6 @@ endfunction
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
-    let s:saved_statusline  = &statusline
     set omnifunc=VimIM
     set completeopt=menuone
     set nolazyredraw
@@ -4867,6 +4857,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     let root = s:ui.root
     if empty(im)
     \|| empty(root)
+    \|| im =~ 'cloud'
     \|| s:show_me_not > 0
     \|| keyboard !~# s:valid_key
         return []
