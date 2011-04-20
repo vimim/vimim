@@ -5104,7 +5104,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_chinesemode_mapping()
 " -------------------------------------
-    if s:vimim_onekey_is_tab < 2
+    if s:vimim_debug < 2
         inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
          noremap<silent>       <C-Bslash>   :call <SID>ChineseMode()<CR>
             imap<silent>       <C-Bslash>   <Plug>VimIM
@@ -5128,13 +5128,9 @@ endfunction
 " --------------------------------
 function! s:vimim_onekey_mapping()
 " --------------------------------
-    if !hasmapto('<Plug>VimimOneKey', 'i')
-        inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
-    endif
-    if s:vimim_onekey_is_tab < 2
-            imap<silent> <C-^> <Plug>VimimOneKey
-        xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
-    endif
+    inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
+        imap<silent> <C-^> <Plug>VimimOneKey
+    xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     if s:vimim_onekey_is_tab > 0
             imap<silent> <Tab> <Plug>VimimOneKey
         xnoremap<silent> <Tab> y:call <SID>vimim_visual_ctrl6()<CR>
