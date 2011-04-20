@@ -309,7 +309,7 @@ endfunction
 function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
     for variable in a:options
-        let option = ':let ' . variable .' = '. string(eval(variable))
+        let option = ':let ' . variable .' = '.string(eval(variable)).' '
         let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
             call add(s:vimimrc, '  ' . option)
@@ -336,6 +336,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
+        let g:vimim_onekey_is_tab = 1
     if isdirectory('/home/xma')
         let g:vimim_debug = 2
         let g:vimim_digit_4corner = 1
@@ -1148,7 +1149,7 @@ function! s:vimim_onekey_action(onekey)
     let two_before = current_line[col(".")-3]
     let onekey = ""
     if empty(s:ui.has_dot) && two_before !~# "[0-9a-z]"
-        let punctuations = s:punctuations
+        let punctuations = copy(s:punctuations)
         call extend(punctuations, s:evils)
         if has_key(punctuations, one_before)
             for char in keys(punctuations)
