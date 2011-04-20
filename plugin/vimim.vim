@@ -4693,6 +4693,7 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 function! s:vimim_initialize_i_setting()
 " --------------------------------------
     let s:saved_cpo         = &cpo
+    let s:saved_iminsert    = &iminsert
     let s:saved_omnifunc    = &omnifunc
     let s:saved_completeopt = &completeopt
     let s:saved_laststatus  = &laststatus
@@ -4709,6 +4710,7 @@ function! s:vimim_i_setting_on()
 " ------------------------------
     set omnifunc=VimIM
     set completeopt=menuone
+    set iminsert=1
     set nolazyredraw
     set noshowmatch
     set smartcase
@@ -4723,6 +4725,7 @@ endfunction
 function! s:vimim_i_setting_off()
 " -------------------------------
     let &cpo         = s:saved_cpo
+    let &iminsert    = s:saved_iminsert
     let &omnifunc    = s:saved_omnifunc
     let &completeopt = s:saved_completeopt
     let &laststatus  = s:saved_laststatus
@@ -4744,6 +4747,7 @@ function! s:vimim_start()
     sil!call s:vimim_helper_mapping_on()
     set noruler
     highlight! link Cursor vimim_cursor_color
+    highlight! CursorIM guifg=NONE guibg=Purple
 endfunction
 
 " ----------------------
