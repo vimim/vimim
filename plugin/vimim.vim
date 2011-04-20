@@ -924,8 +924,7 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 function! <SID>VimIMSwitch()
 " --------------------------
     let s:chinese_mode_switch = 0
-    if !exists('s:chinese_im_switch')
-    \|| empty(s:chinese_im_switch)
+    if !exists('s:chinese_im_switch') || empty(s:chinese_im_switch)
         let s:chinese_im_switch = 1
     endif
     sil!call <SID>ChineseMode()
@@ -944,9 +943,9 @@ function! <SID>ChineseMode()
     let action = ""
     let s:chinese_mode_switch += 1
     if empty(s:chinese_mode_switch % 2)
-        call g:vimim_stop()
+        sil!call g:vimim_stop()
         if mode() == 'n'
-            redraw!
+            :redraw!
         endif
     else
         let switch = s:chinese_im_switch % len(s:ui.frontends)
