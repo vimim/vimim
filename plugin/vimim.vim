@@ -1924,10 +1924,10 @@ endfunction
 
 " -------------------------------------------------
 function! s:vimim_initialize_frontend_punctuation()
-" ------------------------------------------------- todo
+" -------------------------------------------------
     for char in s:valid_keys
         if has_key(s:punctuations, char)
-            if !empty(s:mycloud_plugin) || s:ui.has_dot == 1
+            if s:ui.has_dot == 1
                 unlet s:punctuations[char]
             elseif char !~# "[*.']"
                 unlet s:punctuations[char]
