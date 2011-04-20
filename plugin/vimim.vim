@@ -2707,7 +2707,7 @@ function! IMName()
         if pumvisible()
             return s:vimim_statusline()
         endif
-    else
+    elseif &omnifun ==# 'VimIM'
         return s:vimim_statusline()
     endif
     return ""
