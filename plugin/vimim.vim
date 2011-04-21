@@ -4597,7 +4597,6 @@ function! s:vimim_initialize_i_setting()
     let s:saved_lazyredraw  = &lazyredraw
     let s:saved_showmatch   = &showmatch
     let s:saved_smartcase   = &smartcase
-    let s:saved_hlsearch    = &hlsearch
     let s:saved_pumheights  = [&pumheight,0]
 endfunction
 
@@ -4609,7 +4608,6 @@ function! s:vimim_i_setting_on()
     set nolazyredraw
     set noshowmatch
     set smartcase
-    set hlsearch
     if empty(&pumheight)
         let &pumheight=9
         let s:saved_pumheights[1]=&pumheight
@@ -4627,7 +4625,6 @@ function! s:vimim_i_setting_off()
     let &lazyredraw  = s:saved_lazyredraw
     let &showmatch   = s:saved_showmatch
     let &smartcase   = s:saved_smartcase
-    let &hlsearch    = s:saved_hlsearch
     let &pumheight   = get(s:saved_pumheights,0)
 endfunction
 
