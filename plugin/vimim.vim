@@ -3568,8 +3568,14 @@ function! s:vimim_scan_backend_embedded_datafile()
         if filereadable(datafile)
             call s:vimim_set_datafile(im, datafile)
         else
-            let datafile = 0
-            continue
+            let im = im . "." . &encoding
+            let datafile = s:path . "vimim." . im . ".txt"
+            if filereadable(datafile)
+                call s:vimim_set_datafile(im, datafile)
+            else
+                let datafile = 0
+                continue
+            endif
         endif
     endfor
 endfunction
