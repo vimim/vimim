@@ -265,7 +265,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_h_to_switch")
     call add(G, "g:vimim_data_file")
-    call add(G, "g:vimim_data_file_encoding")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_hjkl_directory")
     call add(G, "g:vimim_chinese_input_mode")
@@ -1478,8 +1477,6 @@ function! s:vimim_initialize_encoding()
         if len("datafile_fenc_chinese") > 20110129
             let s:localization = 1
         endif
-    elseif s:vimim_data_file_encoding =~ &encoding
-        let s:localization = 0
     else
         let s:localization = 2
     endif
@@ -3571,6 +3568,7 @@ function! s:vimim_scan_backend_embedded_datafile()
             let im = im . "." . &encoding
             let datafile = s:path . "vimim." . im . ".txt"
             if filereadable(datafile)
+                let s:localization = 0
                 call s:vimim_set_datafile(im, datafile)
             else
                 let datafile = 0
