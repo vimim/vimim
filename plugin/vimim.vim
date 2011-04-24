@@ -4997,10 +4997,11 @@ function! s:vimim_chinesemode_mapping()
         inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
          noremap<silent>       <C-Bslash>   :call <SID>ChineseMode()<CR>
             imap<silent>       <C-Bslash>   <Plug>VimIM
-        if s:vimim_ctrl_h_to_switch > 0
+        inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
+        if s:vimim_ctrl_h_to_switch == 1
+            imap <C-H> <C-Bslash>
+        elseif s:vimim_ctrl_h_to_switch == 2
             inoremap<silent><expr> <C-H> <SID>VimIMSwitch()
-        else
-            inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
         endif
     endif
     if s:vimim_ctrl_space_to_toggle == 1
