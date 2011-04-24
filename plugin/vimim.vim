@@ -263,7 +263,7 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_ctrl_h_to_switch")
+    call add(G, "g:vimim_ctrl_h_to_toggle")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_hjkl_directory")
@@ -4998,9 +4998,9 @@ function! s:vimim_chinesemode_mapping()
          noremap<silent>       <C-Bslash>   :call <SID>ChineseMode()<CR>
             imap<silent>       <C-Bslash>   <Plug>VimIM
         inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
-        if s:vimim_ctrl_h_to_switch == 1
+        if s:vimim_ctrl_h_to_toggle == 1
             imap <C-H> <C-Bslash>
-        elseif s:vimim_ctrl_h_to_switch == 2
+        elseif s:vimim_ctrl_h_to_toggle == 2
             inoremap<silent><expr> <C-H> <SID>VimIMSwitch()
         endif
     endif
