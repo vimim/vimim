@@ -5012,6 +5012,12 @@ function! s:vimim_chinesemode_mapping()
              map <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
         endif
+    elseif s:vimim_ctrl_space_to_toggle == 2
+        if has("gui_running")
+            inoremap<silent><expr> <C-Space> <SID>VimIMSwitch()
+        elseif has("win32unix")
+            inoremap<silent><expr> <C-@> <SID>VimIMSwitch()
+        endif
     endif
 endfunction
 
