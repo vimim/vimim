@@ -2832,6 +2832,7 @@ function! <SID>vimim_enter()
     "  (2) after Chinese or double Enter => Enter
     if s:chinese_input_mode =~ 'dynamic'
         if one_before =~ s:valid_key
+        \&& !has_key(s:punctuations, one_before)
             let s:smart_enter = 1
         else
             let s:smart_enter = 3
