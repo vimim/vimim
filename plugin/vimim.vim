@@ -1156,7 +1156,7 @@ function! s:vimim_onekey_input(keyboard)
             if !empty(len(results))
                 return results
             endif
-        elseif s:vimim_imode_pinyin > 0
+        elseif s:has_cjk_file > 0
             let dddd = s:vimim_qwertyuiop_1234567890(keyboard[1:])
             if !empty(dddd)
                 let keyboard = dddd " iypwqwuww => 60212722
@@ -1695,28 +1695,28 @@ function! s:vimim_dictionary_quantifiers()
     let s:quantifiers['8'] = '八捌辛⑧⒏⑻'
     let s:quantifiers['9'] = '九玖壬⑨⒐⑼'
     let s:quantifiers['0'] = '〇零癸⑩⒑⑽十拾'
+    let s:quantifiers['s'] = '十拾时升艘扇首双所束手秒'
+    let s:quantifiers['b'] = '百佰步把包杯本笔部班'
+    let s:quantifiers['q'] = '千仟群'
+    let s:quantifiers['w'] = '万位味碗窝晚'
+    let s:quantifiers['h'] = '时毫行盒壶户回'
+    let s:quantifiers['f'] = '分份发封付副幅峰方服'
     let s:quantifiers['a'] = '秒'
-    let s:quantifiers['b'] = '步百佰把包杯本笔部班'
+    let s:quantifiers['n'] = '年'
+    let s:quantifiers['m'] = '月米名枚面门'
+    let s:quantifiers['r'] = '日'
     let s:quantifiers['c'] = '厘次餐场串处床'
     let s:quantifiers['d'] = '第度点袋道滴碟日顶栋堆对朵堵顿'
     let s:quantifiers['e'] = '亿'
-    let s:quantifiers['f'] = '分份发封付副幅峰方服'
     let s:quantifiers['g'] = '个根股管'
-    let s:quantifiers['h'] = '时毫行盒壶户回'
     let s:quantifiers['i'] = '毫'
     let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
     let s:quantifiers['k'] = '克口块棵颗捆孔'
     let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
-    let s:quantifiers['m'] = '月米名枚面门'
-    let s:quantifiers['n'] = '年'
     let s:quantifiers['o'] = '度'
     let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
-    let s:quantifiers['q'] = '千仟群'
-    let s:quantifiers['r'] = '日'
-    let s:quantifiers['s'] = '十拾时升艘扇首双所束手秒'
     let s:quantifiers['t'] = '天吨条头通堂趟台套桶筒贴'
     let s:quantifiers['u'] = '微'
-    let s:quantifiers['w'] = '万位味碗窝晚'
     let s:quantifiers['x'] = '升席些项'
     let s:quantifiers['y'] = '年亿叶月'
     let s:quantifiers['z'] = '种只张株支枝盏座阵桩尊则站幢宗兆'
@@ -1725,7 +1725,7 @@ endfunction
 " ----------------------------------------------
 function! s:vimim_imode_number(keyboard, prefix)
 " ----------------------------------------------
-    " usage: i88<C-6> ii88<C-6> i1g<C-6> isw8ql
+    " usage: i88 ii88 isw8ql iisw8ql
     if empty(s:vimim_imode_pinyin)
         return []
     endif
@@ -1749,13 +1749,12 @@ function! s:vimim_imode_number(keyboard, prefix)
     for char in keyboards
         if has_key(s:quantifiers, char)
             let quantifiers = split(s:quantifiers[char], '\zs')
-            if i ==# 'i'
-                let char = get(quantifiers, 0)
-            elseif i ==# 'I'
-                let char = get(quantifiers, 1)
+            let chinese = get(quantifiers, 0)
+            if i ==# "I" && char =~ '[0-9sbq]'
+                let chinese = get(quantifiers, 1)
             endif
         endif
-        let number .= char
+        let number .= chinese
     endfor
     if empty(number)
         return []
