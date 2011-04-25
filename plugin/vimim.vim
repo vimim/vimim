@@ -822,9 +822,11 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " --------------------------
 function! <SID>VimIMSwitch()
 " --------------------------
-    let s:vimim_im_switch += 1
-    let s:chinese_mode_switch = 1
-    sil!call <SID>ChineseMode()
+    if s:vimim_im_switch > -1
+        let s:vimim_im_switch += 1
+        let s:chinese_mode_switch = 1
+        sil!call <SID>ChineseMode()
+    endif
     return ""
 endfunction
 
