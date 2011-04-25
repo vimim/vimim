@@ -519,7 +519,7 @@ function! s:vimim_egg_vimimenv()
         let toggle = s:vimim_chinese('auto') . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_CTRL-Space"
-    elseif s:vimim_onekey_is_tab > 0
+    elseif s:vimim_onekey_is_tab > 0 && s:vimim_onekey_hit_and_run < 1
         let toggle = "Tab_as_OneKey_NonStop"
         let im = s:vimim_chinese('onekey') . s:space
         let im .= s:ui.statusline . s:space . "VimIM"
