@@ -338,7 +338,7 @@ function! s:vimim_initialize_debug()
     if isdirectory('/home/xma')
         let g:vimim_debug = 2
         let g:vimim_digit_4corner = 1
-        let g:vimim_onekey_is_tab = 2
+        let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
         let g:vimim_data_directory = '/home/vimim/pinyin/'
@@ -519,7 +519,7 @@ function! s:vimim_egg_vimimenv()
         let toggle = s:vimim_chinese('auto') . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_CTRL-Space"
-    elseif s:vimim_onekey_is_tab == 2
+    elseif s:vimim_onekey_is_tab > 0
         let toggle = "Tab_as_OneKey_NonStop"
         let im = s:vimim_chinese('onekey') . s:space
         let im .= s:ui.statusline . s:space . "VimIM"
