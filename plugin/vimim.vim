@@ -142,8 +142,6 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdvfgz"
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
-    let s:chinese_im_switch = 0
-    let s:chinese_mode_switch = 0
 endfunction
 
 " -------------------------------
@@ -290,6 +288,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_onekey_hit_and_run")
     call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
+    call add(G, "g:vimim_im_switch")
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
@@ -298,6 +297,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let g:vimim = []
     let s:backend_loaded_once = 0
+    let s:chinese_mode_switch = 1
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
@@ -822,12 +822,9 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " --------------------------
 function! <SID>VimIMSwitch()
 " --------------------------
-    let s:chinese_mode_switch = 0
-    if !exists('s:chinese_im_switch') || empty(s:chinese_im_switch)
-        let s:chinese_im_switch = 1
-    endif
+    let s:vimim_im_switch += 1
+    let s:chinese_mode_switch = 1
     sil!call <SID>ChineseMode()
-    let s:chinese_im_switch += 1
     return ""
 endfunction
 
@@ -840,14 +837,15 @@ function! <SID>ChineseMode()
         return
     endif
     let action = ""
-    let s:chinese_mode_switch += 1
-    if empty(s:chinese_mode_switch % 2)
+    if empty(s:chinese_mode_switch)
+        let s:chinese_mode_switch = 1
         sil!call g:vimim_stop()
         if mode() == 'n'
             :redraw!
         endif
     else
-        let switch = s:chinese_im_switch % len(s:ui.frontends)
+        let s:chinese_mode_switch = 0
+        let switch = s:vimim_im_switch % len(s:ui.frontends)
         let frontends = get(s:ui.frontends, switch)
         let s:ui.root = get(frontends,0)
         let s:ui.im = get(frontends,1)
