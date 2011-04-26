@@ -280,7 +280,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_cloud_google")
     call add(G, "g:vimim_cloud_qq")
-    call add(G, "g:vimim_im_switch")
     " -----------------------------------
     let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
@@ -292,6 +291,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
+    call add(G, "g:vimim_im_switch")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -335,7 +335,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    if isdirectory('/hhome/xma')
         let g:vimim_debug = 2
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -822,7 +822,7 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " --------------------------
 function! <SID>VimIMSwitch()
 " --------------------------
-    if s:vimim_im_switch > -1
+    if s:vimim_im_switch > 0
         let s:vimim_im_switch += 1
         sil!call <SID>ChineseMode()
     endif
@@ -839,25 +839,15 @@ function! <SID>ChineseMode()
     endif
     let action = ""
     let switch = s:vimim_im_switch % (len(s:ui.frontends)+1)
-    if s:vimim_im_switch > 0 
-        let s:chinese_mode_switch = 1
-        if switch == len(s:ui.frontends)
-            let s:chinese_mode_switch = 0
-        endif
-    endif
     if empty(s:chinese_mode_switch)
-        if s:vimim_im_switch < 1
-            let s:chinese_mode_switch = 1
-        endif
+        let s:chinese_mode_switch = 1
         sil!call g:vimim_stop()
         if mode() == 'n'
             :redraw!
         endif
     else
-        if s:vimim_im_switch < 1
-            let s:chinese_mode_switch = 0
-        endif
-        let frontends = get(s:ui.frontends, switch)
+        let s:chinese_mode_switch = 0
+        let frontends = get(s:ui.frontends, switch-1)
         let s:ui.root = get(frontends,0)
         let s:ui.im = get(frontends,1)
         call s:vimim_set_statusline()
