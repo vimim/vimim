@@ -142,7 +142,6 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdvfgz"
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
-    let s:chinese_mode_switch = 0
 endfunction
 
 " -------------------------------
@@ -281,7 +280,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_cloud_google")
     call add(G, "g:vimim_cloud_qq")
-    call add(G, "g:vimim_im_switch")
     " -----------------------------------
     let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
@@ -293,12 +291,14 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
+    call add(G, "g:vimim_im_switch_english")
+    call add(G, "g:vimim_im_switch")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
     let g:vimim = []
     let s:backend_loaded_once = 0
-    let s:chinese_mode_switch = 1
+    let s:frontends = []
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
@@ -823,78 +823,60 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " --------------------------
 function! <SID>VimIMSwitch()
 " --------------------------
-    if empty(s:vimim_im_switch)
-        let s:vimim_im_switch = 1
+    sil!call s:vimim_backend_initialization()
+    let ime = len(s:ui.frontends)
+    if ime < 1
+        return ""
     endif
-    let s:chinese_mode_switch = 0
-    sil!call <SID>ChineseMode()
+    let ime += s:vimim_im_switch_english
     let s:vimim_im_switch += 1
-    return ""
+    let switch = s:vimim_im_switch % ime
+    if switch < 0
+        return ""
+    elseif switch < ime - s:vimim_im_switch_english
+        let s:frontends = get(s:ui.frontends, switch)
+        let switch += 1
+    else
+        let switch = 0
+    endif
+    return s:vimim_chinese_mode(switch)
 endfunction
-" " --------------------------
-" function! <SID>VimIMSwitch()
-" " --------------------------
-"     if s:vimim_im_switch > -1
-"         let s:chinese_mode_switch = 1
-"         sil!call <SID>ChineseMode()
-"         let s:vimim_im_switch += 1
-"     endif
-"     return ""
-" endfunction
 
 " --------------------------
 function! <SID>ChineseMode()
 " --------------------------
     sil!call s:vimim_backend_initialization()
-    let s:chinese_input_mode = s:vimim_chinese_input_mode
     if empty(s:ui.frontends)
-        return
+        return ""
+    elseif empty(s:frontends)
+        let s:frontends = get(s:ui.frontends, 0)
     endif
+    let toggle = 1
+    if !empty(&omnifunc) && &omnifunc ==# 'VimIM'
+        let toggle = 0
+    endif
+    return s:vimim_chinese_mode(toggle)
+endfunction
+
+" ------------------------------------
+function! s:vimim_chinese_mode(switch)
+" ------------------------------------
     let action = ""
-    let s:chinese_mode_switch += 1
-    if empty(s:chinese_mode_switch % 2)
+    if a:switch < 1
         sil!call g:vimim_stop()
         if mode() == 'n'
             :redraw!
         endif
     else
-        let switch = s:vimim_im_switch % len(s:ui.frontends)
-        let frontends = get(s:ui.frontends, switch)
-        let s:ui.root = get(frontends,0)
-        let s:ui.im = get(frontends,1)
+        let s:chinese_input_mode = s:vimim_chinese_input_mode
+        let s:ui.root = get(s:frontends,0)
+        let s:ui.im = get(s:frontends,1)
         call s:vimim_set_statusline()
         call s:vimim_build_datafile_cache()
         let action = s:vimim_chinesemode_action()
     endif
     sil!exe 'sil!return "' . action . '"'
 endfunction
-" " --------------------------
-" function! <SID>ChineseMode()
-" " --------------------------
-"     sil!call s:vimim_backend_initialization()
-"     let s:chinese_input_mode = s:vimim_chinese_input_mode
-"     if empty(s:ui.frontends)
-"         return
-"     endif
-"     let action = ""
-"     if empty(s:chinese_mode_switch)
-"         let s:chinese_mode_switch = 1
-"         sil!call g:vimim_stop()
-"         if mode() == 'n'
-"             :redraw!
-"         endif
-"     else
-"         let s:chinese_mode_switch = 0
-"         let switch = s:vimim_im_switch % len(s:ui.frontends)
-"         let frontends = get(s:ui.frontends, switch)
-"         let s:ui.root = get(frontends,0)
-"         let s:ui.im = get(frontends,1)
-"         call s:vimim_set_statusline()
-"         call s:vimim_build_datafile_cache()
-"         let action = s:vimim_chinesemode_action()
-"     endif
-"     sil!exe 'sil!return "' . action . '"'
-" endfunction
 
 " ---------------------------------------
 function! <SID>vimim_punctuation_toggle()
