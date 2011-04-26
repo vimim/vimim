@@ -279,8 +279,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud_mycloud")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_cloud_google")
-    call add(G, "g:vimim_im_switch")
     call add(G, "g:vimim_cloud_qq")
+    call add(G, "g:vimim_im_switch")
     " -----------------------------------
     let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
@@ -824,7 +824,6 @@ function! <SID>VimIMSwitch()
 " --------------------------
     if s:vimim_im_switch > -1
         let s:vimim_im_switch += 1
-        let s:chinese_mode_switch = 1
         sil!call <SID>ChineseMode()
     endif
     return ""
@@ -839,15 +838,25 @@ function! <SID>ChineseMode()
         return
     endif
     let action = ""
-    if empty(s:chinese_mode_switch)
+    let switch = s:vimim_im_switch % (len(s:ui.frontends)+1)
+    if s:vimim_im_switch > 0 
         let s:chinese_mode_switch = 1
+        if switch == len(s:ui.frontends)
+            let s:chinese_mode_switch = 0
+        endif
+    endif
+    if empty(s:chinese_mode_switch)
+        if s:vimim_im_switch < 1
+            let s:chinese_mode_switch = 1
+        endif
         sil!call g:vimim_stop()
         if mode() == 'n'
             :redraw!
         endif
     else
-        let s:chinese_mode_switch = 0
-        let switch = s:vimim_im_switch % len(s:ui.frontends)
+        if s:vimim_im_switch < 1
+            let s:chinese_mode_switch = 0
+        endif
         let frontends = get(s:ui.frontends, switch)
         let s:ui.root = get(frontends,0)
         let s:ui.im = get(frontends,1)
