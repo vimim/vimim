@@ -280,6 +280,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_cloud_google")
     call add(G, "g:vimim_cloud_qq")
+    call add(G, "g:vimim_im_switch")
     " -----------------------------------
     let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
@@ -291,7 +292,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
-    call add(G, "g:vimim_im_switch")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -335,7 +335,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/hhome/xma')
+    if isdirectory('/home/xma')
         let g:vimim_debug = 2
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -822,9 +822,10 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 " --------------------------
 function! <SID>VimIMSwitch()
 " --------------------------
-    if s:vimim_im_switch > 0
-        let s:vimim_im_switch += 1
+    if s:vimim_im_switch > -1
+        let s:chinese_mode_switch = 1
         sil!call <SID>ChineseMode()
+        let s:vimim_im_switch += 1
     endif
     return ""
 endfunction
@@ -838,7 +839,6 @@ function! <SID>ChineseMode()
         return
     endif
     let action = ""
-    let switch = s:vimim_im_switch % (len(s:ui.frontends)+1)
     if empty(s:chinese_mode_switch)
         let s:chinese_mode_switch = 1
         sil!call g:vimim_stop()
@@ -847,7 +847,8 @@ function! <SID>ChineseMode()
         endif
     else
         let s:chinese_mode_switch = 0
-        let frontends = get(s:ui.frontends, switch-1)
+        let switch = s:vimim_im_switch % len(s:ui.frontends)
+        let frontends = get(s:ui.frontends, switch)
         let s:ui.root = get(frontends,0)
         let s:ui.im = get(frontends,1)
         call s:vimim_set_statusline()
