@@ -829,12 +829,16 @@ function! <SID>VimIMSwitch()
     if ime < 1
         return ""
     endif
-    let ime += s:vimim_im_switch_english
+    let switch_include_english = 1
+    if s:vimim_im_switch_english % 2 < 1
+        let switch_include_english = 0
+    endif
+    let ime += switch_include_english
     let s:vimim_im_switch += 1
     let switch = s:vimim_im_switch % ime
     if switch < 0
         return ""
-    elseif switch < ime - s:vimim_im_switch_english
+    elseif switch < ime - switch_include_english
         let s:frontends = get(s:ui.frontends, switch)
         let switch += 1
     else
