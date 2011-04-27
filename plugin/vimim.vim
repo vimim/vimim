@@ -101,7 +101,7 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s_vimim_cloud = 0
-    let s:clouds = ['sogou','qq','google','baidu']
+    let s:clouds = ['sogou','qq','google','baidu','mycloud']
     for cloud in s:clouds
         let s_vimim_cloud = eval("s:vimim_cloud_" . cloud)
         if !empty(s_vimim_cloud)
@@ -340,7 +340,7 @@ function! s:vimim_initialize_debug()
         let g:vimim_debug = 2
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
-        let g:vimim_im_switch_english = 0 
+        let g:vimim_im_switch_english = 0
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
         let g:vimim_data_directory = '/home/vimim/pinyin/'
@@ -3888,14 +3888,14 @@ function! s:vimim_scan_current_buffer()
     if position > -1
         let s:vimim_shuangpin = buffers[position][len(shuangpin) :]
     endif
-    for cloud in s:clouds
-        if buffer =~# cloud
-            return s:vimim_set_cloud(cloud)
-        endif
-    endfor
     if buffer =~# 'mycloud'
         return s:vimim_set_mycloud(1)
     endif
+    for im in s:clouds
+        if buffer =~# im
+            return s:vimim_set_cloud(im)
+        endif
+    endfor
 endfunction
 
 " -------------------------------------------------
@@ -4061,6 +4061,10 @@ endfunction
 function! s:vimim_set_cloud(im)
 " -----------------------------
     let im = a:im
+    if im =~ 'mycloud'
+    "   try to add mycloud to the cloud family: s:clouds
+    "   call s:vimim_set_mycloud(0)
+    endif
     exe 'let s:vimim_cloud_' . im . ' = 1'
     let cloud = s:vimim_set_cloud_if_www_executable(im)
     if empty(cloud)
