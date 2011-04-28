@@ -338,6 +338,7 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     if isdirectory('/home/xma')
         let g:vimim_debug = 2
+        let g:vimim_toggle_list = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
@@ -538,13 +539,21 @@ function! s:vimim_egg_vimimenv()
         call add(eggs, ciku . s:english_file)
     endif
     if len(s:ui.frontends) > 0
+        let vimim_toggle_list = "english"
         for frontend in s:ui.frontends
             let ui_root = get(frontend, 0)
             let ui_im = get(frontend, 1)
+            let vimim_toggle_list .= "," . ui_im
             let ciku = database . s:vimim_chinese(ui_root) . database
             let datafile = s:backend[ui_root][ui_im].name
             call add(eggs, ciku . datafile)
         endfor
+        if len(s:ui.frontends) > 1
+            let option  = s:vimim_chinese('option') . s:colon
+            let option .= ":let g:vimim_toggle_list='"
+            let option .= vimim_toggle_list . "'"
+            call add(eggs, option)
+        endif
     endif
     if len(im) > 0 && len(s:ui.frontends) < 2
         let option = s:vimim_chinese('input') . s:colon . im
@@ -834,7 +843,7 @@ function! <SID>VimIMSwitch()
         if empty(s:vimim_toggle_list)
             let custom_im_list = ["english"]
         endif
-        for frontends in s:ui.frontends   
+        for frontends in s:ui.frontends
             let frontend_im = get(frontends, 1)
             call add(custom_im_list, frontend_im)
         endfor
@@ -847,7 +856,7 @@ function! <SID>VimIMSwitch()
         let switch = 0
         let s:frontends = get(s:ui.frontends, 0)
     else
-        for frontends in s:ui.frontends   
+        for frontends in s:ui.frontends
             let frontend_im = get(frontends, 1)
             if frontend_im =~ im
                 let s:frontends = frontends
@@ -1667,6 +1676,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['english']     = ['英文']
     let s:chinese['datafile']    = ['文件']
     let s:chinese['directory']   = ['目录','目錄']
+    let s:chinese['option']      = ['选项','選項']
     let s:chinese['database']    = ['词库','詞庫']
     let s:chinese['standard']    = ['标准','標準']
     let s:chinese['cjk']         = ['字库','字庫']
