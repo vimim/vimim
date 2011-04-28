@@ -280,6 +280,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_cloud_google")
     call add(G, "g:vimim_cloud_qq")
+    call add(G, "g:vimim_toggle_list")
     " -----------------------------------
     let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
@@ -291,14 +292,13 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
-    call add(G, "g:vimim_im_switch_english")
-    call add(G, "g:vimim_im_switch")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
     let g:vimim = []
-    let s:backend_loaded_once = 0
     let s:frontends = []
+    let s:im_toggle = 0
+    let s:backend_loaded_once = 0
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
@@ -340,7 +340,6 @@ function! s:vimim_initialize_debug()
         let g:vimim_debug = 2
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
-        let g:vimim_im_switch_english = 0
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_hjkl_directory = '/home/xma/hjkl/'
         let g:vimim_data_directory = '/home/vimim/pinyin/'
@@ -825,24 +824,36 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 function! <SID>VimIMSwitch()
 " --------------------------
     sil!call s:vimim_backend_initialization()
-    let ime = len(s:ui.frontends)
-    if ime < 1
-        return ""
+    if len(s:ui.frontends) < 2
+        return <SID>ChineseMode()
     endif
-    let english_as_ime = 1
-    if s:vimim_im_switch_english % 2 < 1
-        let english_as_ime = 0
-    endif
-    let ime += english_as_ime
-    let s:vimim_im_switch += 1
-    let switch = s:vimim_im_switch % ime
-    if switch < 0
-        return ""
-    elseif switch < ime - english_as_ime
-        let s:frontends = get(s:ui.frontends, switch)
-        let switch += 1
+    let custom_im_list = []
+    if s:vimim_toggle_list =~ ","
+        let custom_im_list = split(s:vimim_toggle_list, ",")
     else
+        if empty(s:vimim_toggle_list)
+            let custom_im_list = ["english"]
+        endif
+        for frontends in s:ui.frontends   
+            let frontend_im = get(frontends, 1)
+            call add(custom_im_list, frontend_im)
+        endfor
+    endif
+    let switch = s:im_toggle % len(custom_im_list)
+    let s:im_toggle += 1
+    let im = get(custom_im_list, switch)
+    let switch = 1
+    if im =~ 'english'
         let switch = 0
+        let s:frontends = get(s:ui.frontends, 0)
+    else
+        for frontends in s:ui.frontends   
+            let frontend_im = get(frontends, 1)
+            if frontend_im =~ im
+                let s:frontends = frontends
+                break
+            endif
+        endfor
     endif
     return s:vimim_chinese_mode(switch)
 endfunction
@@ -856,11 +867,11 @@ function! <SID>ChineseMode()
     elseif empty(s:frontends)
         let s:frontends = get(s:ui.frontends, 0)
     endif
-    let toggle = 1
+    let switch = 1
     if !empty(&omnifunc) && &omnifunc ==# 'VimIM'
-        let toggle = 0
+        let switch = 0
     endif
-    return s:vimim_chinese_mode(toggle)
+    return s:vimim_chinese_mode(switch)
 endfunction
 
 " ------------------------------------
