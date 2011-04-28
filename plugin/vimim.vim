@@ -384,7 +384,7 @@ endfunction
 " ---------------------------------
 function! s:vimim_initialize_skin()
 " ---------------------------------
-    if s:vimim_custom_color < 1
+    if s:vimim_custom_color < 0
         return
     endif
     let guibg = 'green'
@@ -400,6 +400,21 @@ function! s:vimim_initialize_skin()
     highlight! PmenuSbar  NONE
     highlight! PmenuThumb NONE
     highlight! Pmenu      NONE
+endfunction
+
+" ------------------------------
+function! s:vimim_restore_skin()
+" ------------------------------
+    set ruler
+    highlight! link Cursor NONE
+    if s:vimim_custom_color == 1
+        highlight! link PmenuSel NONE
+    elseif s:vimim_custom_color == 2
+        highlight! link PmenuSel PmenuSel
+    endif
+    highlight! link PmenuSbar  PmenuSbar 
+    highlight! link PmenuThumb PmenuThumb
+    highlight! link Pmenu      Pmenu     
 endfunction
 
 " ---------------------------------------------------------
@@ -4702,8 +4717,7 @@ function! g:vimim_stop()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_plugins_fix_stop()
     sil!call s:vimim_initialize_mapping()
-    set ruler
-    highlight! link Cursor NONE
+    sil!call s:vimim_restore_skin()
 endfunction
 
 " -----------------------------
