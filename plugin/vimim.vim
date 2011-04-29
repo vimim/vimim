@@ -394,12 +394,12 @@ function! s:vimim_initialize_skin()
     sil!exe 'highlight! vimim_cursor_color guifg=NONE guibg=' . guibg
     highlight! vimim_none_color NONE
     if s:vimim_custom_color == 1
-        highlight! link PmenuSel Title
+        highlight! link PmenuSel   Title
         highlight! link PmenuSbar  vimim_none_color
         highlight! link PmenuThumb vimim_none_color
         highlight! link Pmenu      vimim_none_color
     elseif s:vimim_custom_color == 2
-        highlight! link PmenuSel vimim_none_color
+        highlight! link PmenuSel   vimim_none_color
         highlight! link PmenuSbar  vimim_none_color
         highlight! link PmenuThumb vimim_none_color
         highlight! link Pmenu      vimim_none_color
@@ -413,9 +413,12 @@ function! s:vimim_restore_skin()
 " ------------------------------
     set ruler
     highlight! link Cursor NONE
-    highlight! link PmenuSbar  NONE
-    highlight! link PmenuThumb NONE
-    highlight! link Pmenu      NONE
+    if s:vimim_custom_color != 0
+        highlight! link PmenuSel   NONE
+        highlight! link PmenuSbar  NONE
+        highlight! link PmenuThumb NONE
+        highlight! link Pmenu      NONE
+    endif
 endfunction
 
 " ---------------------------------------------------------
