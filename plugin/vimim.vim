@@ -2613,7 +2613,7 @@ function! s:vimim_plugins_fix_start()
     if !exists('s:neocomplcache')
         let s:neocomplcache = s:vimim_getsid('autoload/neocomplcache.vim')
         if !empty(s:neocomplcache)
-            " disable
+            " disable when &omnifunc ==# 'VimIM'
         endif
     endif
 endfunction
