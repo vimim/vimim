@@ -139,7 +139,7 @@ function! s:vimim_initialize_session()
     let s:AZ_list = map(range(A,Z), "nr2char(".'v:val'.")")
     let s:valid_key = 0
     let s:valid_keys = s:az_list
-    let s:abcd = "'abcdvfgz"
+    let s:abcd = "'abcdvfgzs"
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
 endfunction
@@ -2725,7 +2725,7 @@ function! s:vimim_get_chinese_im()
         endif
         let s:ui.statusline .= s:space . punctuation
     endif
-    let statusline = s:left . s:ui.statusline . s:right
+    let statusline  = s:left . s:ui.statusline . s:right
     let statusline .= "VimIM"
     return input_style . statusline
 endfunction
@@ -2736,7 +2736,8 @@ function! s:vimim_label_on()
     if s:vimim_custom_label < 1
         return
     endif
-    let labels = range(1,9)
+    let s:abcd = s:abcd[0 : &pumheight-1]
+    let labels = range(1, len(s:abcd))
     let abcd_list = split(s:abcd, '\zs')
     if s:chinese_input_mode =~ 'onekey'
         let labels += abcd_list
@@ -3013,7 +3014,7 @@ function! s:vimim_get_labeling(label)
             if s:hjkl_h % 2 < 1
                 let labeling = ""
             endif
-        elseif a:label < &pumheight+1
+        elseif a:label < &pumheight + 1
             let label2 = s:abcd[a:label-1]
             if a:label < 2
                 let label2 = "_"
@@ -4670,7 +4671,7 @@ function! s:vimim_initialize_i_setting()
     let s:saved_lazyredraw  = &lazyredraw
     let s:saved_showmatch   = &showmatch
     let s:saved_smartcase   = &smartcase
-    let s:saved_pumheights  = [&pumheight,0]
+    let s:saved_pumheights  = [&pumheight, &pumheight]
 endfunction
 
 " ------------------------------
@@ -4681,9 +4682,12 @@ function! s:vimim_i_setting_on()
     set nolazyredraw
     set noshowmatch
     set smartcase
-    if empty(&pumheight)
-        let &pumheight=9
-        let s:saved_pumheights[1]=&pumheight
+    if &pumheight < 1 || &pumheight > 10
+        let &pumheight = len(s:abcd)
+        if s:has_cjk_file > 0
+            let &pumheight -= 1
+        endif
+        let s:saved_pumheights[1] = &pumheight
     endif
 endfunction
 
@@ -4698,7 +4702,7 @@ function! s:vimim_i_setting_off()
     let &lazyredraw  = s:saved_lazyredraw
     let &showmatch   = s:saved_showmatch
     let &smartcase   = s:saved_smartcase
-    let &pumheight   = get(s:saved_pumheights,0)
+    let &pumheight   = get(s:saved_pumheights, 0)
 endfunction
 
 " -----------------------
