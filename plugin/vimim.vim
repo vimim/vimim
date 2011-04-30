@@ -2562,29 +2562,7 @@ let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " supertab      http://www.vim.org/scripts/script.php?script_id=1643
 " autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
 " word_complete http://www.vim.org/scripts/script.php?script_id=73
-
-" -----------------------------------
-function! s:vimim_plugins_fix_start()
-" -----------------------------------
-    if s:vimim_debug > 1
-        return
-    endif
-    if !exists('s:acp_sid')
-        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
-        if !empty(s:acp_sid)
-            AcpDisable
-        endif
-    endif
-    if !exists('s:supertab_sid')
-        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
-    endif
-    if !exists('s:word_complete')
-        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
-        if !empty(s:word_complete)
-            call EndWordComplete()
-        endif
-    endif
-endfunction
+" neocomplcache http://www.vim.org/scripts/script.php?script_id=5620
 
 " ----------------------------------
 function! s:vimim_getsid(scriptname)
@@ -2609,6 +2587,35 @@ function! s:vimim_getsid(scriptname)
         endif
     endfor
     return 0
+endfunction
+
+" -----------------------------------
+function! s:vimim_plugins_fix_start()
+" -----------------------------------
+    if s:vimim_debug > 1
+        return
+    endif
+    if !exists('s:acp_sid')
+        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+        if !empty(s:acp_sid)
+            AcpDisable
+        endif
+    endif
+    if !exists('s:supertab_sid')
+        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    endif
+    if !exists('s:word_complete')
+        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
+        if !empty(s:word_complete)
+            call EndWordComplete()
+        endif
+    endif
+    if !exists('s:neocomplcache')
+        let s:neocomplcache = s:vimim_getsid('autoload/neocomplcache.vim')
+        if !empty(s:neocomplcache)
+            " disable
+        endif
+    endif
 endfunction
 
 " ----------------------------------
