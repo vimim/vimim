@@ -184,7 +184,7 @@ function! s:vimim_chinese(english)
         let chinese = get(s:chinese[key], 0)
         if s:encoding !~ "chinese"
         \&& len(s:chinese[key]) > 1
-        \&& s:vimim_debug > 1
+        \&& s:vimim_debug < 1
             let chinese = get(s:chinese[key], 1)
         endif
     endif
