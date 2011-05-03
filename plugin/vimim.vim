@@ -269,7 +269,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
-    call add(G, "g:vimim_cursor_color")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_custom_menu")
@@ -387,24 +386,17 @@ function! s:vimim_initialize_skin()
     if s:vimim_custom_color < 0
         return
     endif
-    let guibg = 'green'
-    if len(s:vimim_cursor_color) > 1
-        let guibg = s:vimim_cursor_color
-    endif
-    sil!exe 'highlight! vimim_cursor_color guifg=NONE guibg=' . guibg
+    highlight default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! vimim_none_color NONE
-    if s:vimim_custom_color == 1
-        highlight! link PmenuSel   Title
+    if !empty(s:vimim_custom_color)
+        if s:vimim_custom_color == 1
+            highlight! link PmenuSel   Title
+        elseif s:vimim_custom_color == 2
+            highlight! link PmenuSel   vimim_none_color
+        endif
         highlight! link PmenuSbar  vimim_none_color
         highlight! link PmenuThumb vimim_none_color
         highlight! link Pmenu      vimim_none_color
-    elseif s:vimim_custom_color == 2
-        highlight! link PmenuSel   vimim_none_color
-        highlight! link PmenuSbar  vimim_none_color
-        highlight! link PmenuThumb vimim_none_color
-        highlight! link Pmenu      vimim_none_color
-    else
-        " when s:vimim_custom_color == 0, do nothing
     endif
 endfunction
 
@@ -4721,7 +4713,7 @@ function! s:vimim_start()
     sil!call s:vimim_label_on()
     sil!call s:vimim_helper_mapping_on()
     set noruler
-    highlight! link Cursor vimim_cursor_color
+    highlight! link Cursor CursorIM
 endfunction
 
 " ----------------------
