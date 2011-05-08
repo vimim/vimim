@@ -85,6 +85,7 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_initialize_ui()
     sil!call s:vimim_initialize_i_setting()
     sil!call s:vimim_dictionary_chinese()
+    sil!call s:vimim_dictionary_ecdict()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
     sil!call s:vimim_scan_backend_embedded_datafile()
@@ -1207,7 +1208,9 @@ function! s:vimim_onekey_input(keyboard)
     let results = []
     " [imode] magic i: (1) English number (2) qwerty shortcut
     if keyboard =~# '^i'
-        if keyboard =~ '\d'
+        if keyboard ==# 'itoday' || keyboard ==# 'inow'
+            return s:vimim_imode_today_now(keyboard)
+        elseif keyboard =~ '\d'
             let results = s:vimim_imode_number(keyboard, 'i')
             if !empty(len(results))
                 return results
@@ -1669,6 +1672,63 @@ function! s:vimim_get_property(chinese, property)
         call add(bodies, chinese . spaces)
     endfor
     return [join(headers), join(bodies)]
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====   English2Chinese ==== {{{"]
+" =================================================
+
+let s:translators = {}
+" ------------------------------------------
+function! s:translators.translate(line) dict
+" ------------------------------------------
+    return join(map(split(a:line),'get(self.dict,tolower(v:val),v:val)'),'')
+endfunction
+
+" -----------------------------------------
+function! s:vimim_imode_today_now(keyboard)
+" -----------------------------------------
+    let results = []
+    call add(results, strftime("%Y"))
+    call add(results, 'year')
+    call add(results, substitute(strftime("%m"),'0','',''))
+    call add(results, 'month')
+    call add(results, substitute(strftime("%d"),'0','',''))
+    call add(results, 'day')
+    if a:keyboard ==# 'itoday'
+        call add(results, s:space)
+        call add(results, strftime("%A"))
+    elseif a:keyboard ==# 'inow'
+        call add(results, substitute(strftime("%H"),'0','',''))
+        call add(results, 'hour')
+        call add(results, substitute(strftime("%M"),'0','',''))
+        call add(results, 'minute')
+        call add(results, substitute(strftime("%S"),'0','',''))
+        call add(results, 'second')
+    endif
+    let chinese = copy(s:translators)
+    let chinese.dict = s:ecdict
+    let today = chinese.translate(join(results))
+    return [today]
+endfunction
+
+" -----------------------------------
+function! s:vimim_dictionary_ecdict()
+" -----------------------------------
+    let s:ecdict = {}
+    let s:ecdict['year']='年'
+    let s:ecdict['month']='月'
+    let s:ecdict['day']='日'
+    let s:ecdict['hour']='时'
+    let s:ecdict['minute']='分'
+    let s:ecdict['second']='秒'
+    let s:ecdict['monday']='星期一'
+    let s:ecdict['tuesday']='星期二'
+    let s:ecdict['wednesday']='星期三'
+    let s:ecdict['thursday']='星期四'
+    let s:ecdict['friday']='星期五'
+    let s:ecdict['saturday']='星期六'
+    let s:ecdict['sunday']='星期日'
 endfunction
 
 " ============================================= }}}
