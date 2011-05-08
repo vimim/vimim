@@ -336,13 +336,14 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    if isdirectory('/home/xma')
+    let hjkl = '/home/xma/hjkl/'
+    if isdirectory(hjkl)
         let g:vimim_debug = 2
         let g:vimim_toggle_list = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
-        let g:vimim_hjkl_directory = '/home/xma/hjkl/'
+        let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
     endif
 endfunction
