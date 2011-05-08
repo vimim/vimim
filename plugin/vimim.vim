@@ -1241,7 +1241,7 @@ function! s:vimim_dot_by_dot(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
     let partition = match(keyboard, "[.']")
-    if partition > -1 && empty(s:ui.has_dot)
+    if partition > -1 && empty(s:ui.has_dot) && keyboard =~ '[^0-9.]'
         let keyboard = s:vimim_get_head(keyboard, partition)
     endif
     return keyboard
@@ -2150,7 +2150,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
                 " output is '6021' for input 6021272260021762
                 let head = s:vimim_get_head(keyboard, 4)
             endif
-        elseif keyboard =~ '^\l\+\d\+\>'
+        elseif keyboard =~ '^\l\+\d\+\>' || keyboard =~ '[0-9.]'
             let head = keyboard
         elseif keyboard =~ '^\l\+\d\+'
             " output is 'wo23' for input wo23you40yigemeng
@@ -2241,7 +2241,7 @@ function! s:vimim_cjk_match(keyboard)
             let grep = keyboard . '[a-z ]'
         else
             let digit = ""
-            if keyboard =~ '^\d\+' && keyboard !~ '\D'
+            if keyboard =~ '^\d\+' && keyboard !~ '[^0-9.]'
                 " cjk free-style digit input: 7 77 771 7712"
                 let digit = keyboard
             elseif keyboard =~ '^\l\+\d\+'
