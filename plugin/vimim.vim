@@ -1675,14 +1675,15 @@ function! s:vimim_get_property(chinese, property)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====   English2Chinese ==== {{{"]
+let s:VimIM += [" ====  English2Chinese  ==== {{{"]
 " =================================================
 
 let s:translators = {}
-" ------------------------------------------
-function! s:translators.translate(line) dict
-" ------------------------------------------
-    return join(map(split(a:line),'get(self.dict,tolower(v:val),v:val)'),'')
+" ---------------------------------------------
+function! s:translators.translate(english) dict
+" ---------------------------------------------
+    let inputs = split(a:english)
+    return join(map(inputs,'get(self.dict,tolower(v:val),v:val)'), '')
 endfunction
 
 " -----------------------------------------
