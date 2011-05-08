@@ -2145,13 +2145,10 @@ function! s:vimim_cjk_sentence_match(keyboard)
         let head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
-            " output is '6021' for input 6021272260021762
-            if len(keyboard) % 4 < 1
-                let pattern = '^\d\{' . 4 . '}'
-                let delimiter = match(keyboard, pattern)
-                if delimiter > -1
-                    let head = s:vimim_get_head(keyboard, 4)
-                endif
+            let head = keyboard
+            if len(keyboard) > 4
+                " output is '6021' for input 6021272260021762
+                let head = s:vimim_get_head(keyboard, 4)
             endif
         elseif keyboard =~ '^\l\+\d\+\>'
             let head = keyboard
