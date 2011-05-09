@@ -5017,10 +5017,12 @@ else
     " [onekey] play with nothing but OneKey
     if s:chinese_input_mode =~ 'onekey'
         let results = s:vimim_onekey_input(keyboard)
-        if !empty(len(results)) && empty(s:english_results)
+        if empty(len(results))
+            if s:ui.root == 'cloud' && !empty(s:english_results)
+                return s:vimim_popupmenu_list(s:english_results)
+            endif
+        elseif empty(s:english_results)
             return s:vimim_popupmenu_list(results)
-        elseif empty(s:has_cjk_file) && !empty(s:english_results)
-            return s:vimim_popupmenu_list(s:english_results)
         endif
     endif
 
