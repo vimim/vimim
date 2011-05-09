@@ -3104,11 +3104,9 @@ function! s:vimim_scan_english_datafile()
     let s:english_lines = []
     let datafile = "vimim.txt"
     let datafile = s:vimim_check_filereadable(datafile)
-    if s:ui.im =~ 'pinyin' || s:has_cjk_file > 0
-        if !empty(datafile)
-            let s:english_file = datafile
-            let s:has_english_file = 1
-        endif
+    if !empty(datafile)
+        let s:english_file = datafile
+        let s:has_english_file = 1
     endif
 endfunction
 
@@ -5021,6 +5019,8 @@ else
         let results = s:vimim_onekey_input(keyboard)
         if !empty(len(results)) && empty(s:english_results)
             return s:vimim_popupmenu_list(results)
+        elseif empty(s:has_cjk_file) && !empty(s:english_results)
+            return s:vimim_popupmenu_list(s:english_results)
         endif
     endif
 
