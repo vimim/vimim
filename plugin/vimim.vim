@@ -261,13 +261,14 @@ function! s:vimim_initialize_global()
 " -----------------------------------
     let G = []
     call add(G, "g:vimim_debug")
+    call add(G, "g:vimim_chinese_input_mode")
+    call add(G, "g:vimim_enter_for_seamless")
+    call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_h_to_toggle")
     call add(G, "g:vimim_data_file")
     call add(G, "g:vimim_data_directory")
     call add(G, "g:vimim_hjkl_directory")
-    call add(G, "g:vimim_chinese_input_mode")
-    call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
@@ -342,6 +343,7 @@ function! s:vimim_initialize_debug()
         let g:vimim_toggle_list = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
+        let g:vimim_enter_for_seamless = 1
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
@@ -5109,10 +5111,12 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " -----------------------------------
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
-    inoremap <expr> <CR>    <SID>vimim_enter()
     inoremap <expr> <BS>    <SID>vimim_backspace()
     inoremap <expr> <Esc>   <SID>vimim_esc()
     inoremap <expr> <Space> <SID>vimim_space()
+    if s:vimim_enter_for_seamless > 0
+        inoremap <expr> <CR> <SID>vimim_enter()
+    endif
 endfunction
 
 " ------------------------------------
