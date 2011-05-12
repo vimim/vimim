@@ -5112,8 +5112,10 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 function! s:vimim_helper_mapping_on()
 " -----------------------------------
     inoremap <expr> <BS>    <SID>vimim_backspace()
-    inoremap <expr> <Esc>   <SID>vimim_esc()
     inoremap <expr> <Space> <SID>vimim_space()
+    if has("gui_running")
+        inoremap <expr> <Esc> <SID>vimim_esc()
+    endif
     if s:vimim_enter_for_seamless > 0
         inoremap <expr> <CR> <SID>vimim_enter()
     endif
