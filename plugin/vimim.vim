@@ -263,6 +263,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_enter_for_seamless")
+    call add(G, "g:vimim_esc_is_mapped")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_h_to_toggle")
@@ -343,6 +344,7 @@ function! s:vimim_initialize_debug()
         let g:vimim_toggle_list = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
+        let g:vimim_esc_is_mapped = 1
         let g:vimim_enter_for_seamless = 1
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_hjkl_directory = hjkl
@@ -5113,7 +5115,7 @@ function! s:vimim_helper_mapping_on()
 " -----------------------------------
     inoremap <expr> <BS>    <SID>vimim_backspace()
     inoremap <expr> <Space> <SID>vimim_space()
-    if has("gui_running")
+    if s:vimim_esc_is_mapped > 0
         inoremap <expr> <Esc> <SID>vimim_esc()
     endif
     if s:vimim_enter_for_seamless > 0
