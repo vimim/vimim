@@ -10,7 +10,6 @@ let $VimIM = "$Revision$"
 let s:url  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
 let s:url += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
 let s:url += ["http://code.google.com/p/vimim/source/list"]
-let s:url += ["http://code.google.com/p/vimim/issues/list"]
 let s:url += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
 let s:url += ["http://vimim-data.googlecode.com"]
 let s:url += ["http://groups.google.com/group/vimim"]
@@ -488,13 +487,11 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "官方网址 " . s:url[0] . " ")
     call add(eggs, "最新程式 " . s:url[1] . " ")
     call add(eggs, "更新报告 " . s:url[2] . " ")
-    call add(eggs, "错误报告 " . s:url[3] . " ")
-    call add(eggs, "标准字库 " . s:url[4] . " ")
-    call add(eggs, "民间词库 " . s:url[5] . " ")
-    call add(eggs, "新闻论坛 " . s:url[6] . " ")
-    call add(eggs, "最新主页 " . s:url[7] . " ")
-    call add(eggs, "论坛邮箱 " . s:url[8] . " ")
-
+    call add(eggs, "标准字库 " . s:url[3] . " ")
+    call add(eggs, "民间词库 " . s:url[4] . " ")
+    call add(eggs, "新闻论坛 " . s:url[5] . " ")
+    call add(eggs, "最新主页 " . s:url[6] . " ")
+    call add(eggs, "论坛邮箱 " . s:url[7] . " ")
     return eggs
 endfunction
 
@@ -1073,7 +1070,7 @@ function! g:vimim_onekey_dump()
             endif
         endif
         if get(s:keyboard_list,0) ==# 'vimim'
-            let line = repeat(" ", virtcol("'<'")-2) . line
+          " let line = repeat(" ", virtcol("'<'")-2) . line
         endif
         call add(lines, line)
     endfor
@@ -1361,8 +1358,8 @@ endfunction
 function! s:vimim_cjk_digit_filter(chinese)
 " -----------------------------------------
 " smart digital filter: 马力 7712 4002
-"   (1)   ma<C-6>       马   => filter with   7712
-"   (2) mali<C-6>       马力 => filter with 7 4002
+"   (1) mali<C-6>       马力 => filter with 7 4002
+"   (2)   ma<C-6>       马   => filter with   7712
 " -----------------------------------------
     let chinese = a:chinese
     if empty(len(s:hjkl_x)) || empty(chinese)
@@ -2463,7 +2460,7 @@ function! s:vimim_reverse_lookup()
     let results_digit = s:vimim_get_property(chinese, 1)
     call extend(results, results_digit)
     let results_pinyin = []  " 马力 => ma3 li2
-    let result_cjjp = ""     " 马力 => ml
+    let result_cjjp = ""     "      => ml
     let items = s:vimim_get_property(chinese, 'pinyin')
     if len(items) > 0
         let pinyin_head = get(items,0)
