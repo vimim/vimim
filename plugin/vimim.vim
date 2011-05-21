@@ -261,7 +261,6 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_chinese_input_mode")
-    call add(G, "g:vimim_enter_for_seamless")
     call add(G, "g:vimim_esc_for_correction")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
@@ -288,6 +287,7 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let G = []
     call add(G, "g:vimim_onekey_hit_and_run")
+    call add(G, "g:vimim_enter_for_seamless")
     call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_search_next")
@@ -344,7 +344,6 @@ function! s:vimim_initialize_debug()
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_esc_for_correction = 1
-        let g:vimim_enter_for_seamless = 1
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
