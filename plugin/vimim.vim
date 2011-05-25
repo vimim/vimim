@@ -341,7 +341,6 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_debug = 2
-        let g:vimim_toggle_list = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_esc_for_correction = 1
@@ -4035,9 +4034,6 @@ function! s:vimim_scan_backend_embedded_directory()
         let dir = s:path . im
         if isdirectory(dir)
             call s:vimim_set_directory(im, dir)
-        else
-            let dir = 0
-            continue
         endif
     endfor
 endfunction
