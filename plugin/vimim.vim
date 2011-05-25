@@ -224,6 +224,7 @@ function! s:vimim_dictionary_im_keycode()
     call add(vimimkeys, 'pinyin_canton')
     call add(vimimkeys, 'pinyin_hongkong')
     call add(vimimkeys, 'wubijd')
+    call add(vimimkeys, 'wubihf')
     call add(vimimkeys, 'wubi98')
     call add(vimimkeys, 'wubi2000')
     let s:all_vimim_input_methods = copy(vimimkeys)
@@ -1774,6 +1775,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['wu']          = ['吴语','吳語']
     let s:chinese['erbi']        = ['二笔','二筆']
     let s:chinese['jidian']      = ['极点','極點']
+    let s:chinese['haifeng']     = ['海峰','海峰']
     let s:chinese['shuangpin']   = ['双拼','雙拼']
     let s:chinese['abc']         = ['智能双打','智能雙打']
     let s:chinese['ms']          = ['微软','微軟']
@@ -2751,6 +2753,9 @@ function! s:vimim_statusline()
         elseif datafile =~# 'wubijd'
             let jidian = s:vimim_chinese('jidian')
             let s:ui.statusline = jidian . s:ui.statusline
+        elseif datafile =~# 'wubihf'
+            let haifeng = s:vimim_chinese('haifeng')
+            let s:ui.statusline = haifeng . s:ui.statusline
         endif
         return s:vimim_get_chinese_im()
     endif
