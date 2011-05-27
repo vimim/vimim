@@ -343,8 +343,8 @@ function! s:vimim_initialize_debug()
         let g:vimim_debug = 2
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
-        let g:vimim_esc_for_correction = 1
         let g:vimim_onekey_hit_and_run = 0
+        let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
     endif
@@ -1148,7 +1148,9 @@ function! <SID>vimim_space()
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
         let before = getline(".")[col(".")-2]
-        if before !~ s:valid_key && !has_key(s:punctuations, before)
+        let punctuations = copy(s:punctuations)
+        call extend(punctuations, s:evils)
+        if before !~ s:valid_key && !has_key(punctuations, before)
             let space = ""
             call g:vimim_stop()
         else
