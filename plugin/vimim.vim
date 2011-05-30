@@ -346,7 +346,7 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_debug = 2
-        let g:vimim_custom_label = 0
+        let g:vimim_custom_label = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
@@ -2809,24 +2809,24 @@ function! s:vimim_label_on()
 " --------------------------
     if s:vimim_custom_label < 0
         return
-    endif
-    let s:abcd = s:abcd[0 : &pumheight-1]
-    let labels = range(1, len(s:abcd))
-    let abcd_list = split(s:abcd, '\zs')
-    if s:chinese_input_mode =~ 'onekey'
-        let labels += abcd_list
-        if s:has_cjk_file > 0
-            let labels = abcd_list
-        endif
-        call remove(labels, "'")
-    else
-        for _ in abcd_list
-            sil!exe 'iunmap '. _
-        endfor
-    endif
-    if s:vimim_custom_label > 0
+    elseif s:vimim_custom_label > 0
         let labels = range(1,s:vimim_custom_label)
         let s:abcd = join(labels,'')
+    else
+        let labels = range(1, len(s:abcd))
+        let s:abcd = s:abcd[0 : &pumheight-1]
+        let abcd_list = split(s:abcd, '\zs')
+        if s:chinese_input_mode =~ 'onekey'
+            let labels += abcd_list
+            if s:has_cjk_file > 0
+                let labels = abcd_list
+            endif
+            call remove(labels, "'")
+        else
+            for _ in abcd_list
+                sil!exe 'iunmap '. _
+            endfor
+        endif
     endif
     for _ in labels
         silent!exe 'inoremap <silent> <expr> '  ._.
@@ -3087,9 +3087,9 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:vimim_custom_label > 0
     \&& len(popupmenu_list) > 1
     \&& s:show_me_not < 1
-        let abbr = join(popupmenu_list_one_row[0 : s:vimim_custom_label-1])
-        let popupmenu_list[0].abbr = abbr
-        let popupmenu_list[1].abbr = "_ " . popupmenu_list[0].word
+        let one_list = popupmenu_list_one_row[0 : s:vimim_custom_label-1]
+        let popupmenu_list[0].abbr = join(one_list)
+        let popupmenu_list[1].abbr = s:space
     endif
     return popupmenu_list
 endfunction
