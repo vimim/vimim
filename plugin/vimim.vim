@@ -343,7 +343,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let hjkl = '/home/xma/hjkl/'
+    let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_debug = 2
         let g:vimim_custom_label = 0
@@ -2780,10 +2780,10 @@ function! s:vimim_label_on()
 " --------------------------
     if s:vimim_custom_label < 0
         return
-    elseif s:vimim_custom_label > 0
-        let labels = range(1,s:vimim_custom_label)
-        let s:abcd = join(labels,'')
-    else
+    endif
+    let labels = range(1, s:vimim_custom_label)
+    let s:abcd = join(labels, '')
+    if empty(s:vimim_custom_label)
         let labels = range(1, len(s:abcd))
         let s:abcd = s:abcd[0 : &pumheight-1]
         let abcd_list = split(s:abcd, '\zs')
@@ -3036,13 +3036,18 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         if s:vimim_custom_label > -1 && len(lines) > 1
             let labeling = s:vimim_get_labeling(label)
-            if s:hjkl_n % 2 > 0 && s:show_me_not > 0
+            if s:vimim_custom_label > 0
+                let labeling = label . " "
+            endif
+            if s:hjkl_n % 2 > 0
                 let label -= 1
             else
                 let label += 1
             endif
             let abbr = labeling . chinese
-            let complete_items["abbr"] = abbr
+            if s:show_me_not < 1
+                let complete_items["abbr"] = abbr
+            endif
         endif
         let complete_items["dup"] = 1
         let complete_items["menu"] = extra_text
@@ -3059,9 +3064,11 @@ function! s:vimim_popupmenu_list(matched_list)
     \&& len(popupmenu_list) > 1
     \&& s:show_me_not < 1
         let one_list = popupmenu_list_one_row[0 : s:vimim_custom_label-1]
-        if 1.0 * virtcol(".") / &columns < 0.7
-        \&& len(join(one_list)) < &columns / 4.0
-            let popupmenu_list[0].abbr = join(one_list)
+        let one_popup_row = join(one_list)
+        let cursor_gps = 1.0 * (virtcol(".") % &columns) / &columns
+        let onerow_gps = 1.0 * len(one_popup_row) / &columns
+        if cursor_gps < 0.72 && onerow_gps < 0.5
+            let popupmenu_list[0].abbr = one_popup_row
             for i in range(1, s:vimim_custom_label-1)
                 let popupmenu_list[i].abbr = s:space
             endfor
@@ -3083,7 +3090,7 @@ function! s:vimim_get_labeling(label)
             endif
         elseif a:label < &pumheight + 1
             let label2 = s:abcd[a:label-1]
-            if a:label < 2 && s:vimim_custom_label < 1
+            if a:label < 2
                 let label2 = "_"
             endif
             let labeling .= label2
