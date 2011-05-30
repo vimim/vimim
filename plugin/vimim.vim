@@ -291,9 +291,9 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_enter_for_seamless")
     call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_search_next")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
+    call add(G, "g:vimim_search_next")
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
@@ -304,6 +304,11 @@ function! s:vimim_initialize_global()
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
+    endif
+    if s:vimim_custom_label > 0 && s:vimim_custom_label < 5
+        let s:vimim_custom_label = 5
+    elseif s:vimim_custom_label > 9
+        let s:vimim_custom_label = 9
     endif
 endfunction
 
@@ -341,6 +346,7 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_debug = 2
+        let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
@@ -393,10 +399,10 @@ function! s:vimim_initialize_skin()
     highlight default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! vimim_none_color NONE
     if !empty(s:vimim_custom_color)
-        if s:vimim_custom_color == 1
-            highlight! link PmenuSel   Title
-        elseif s:vimim_custom_color == 2
+        if s:vimim_custom_color == 2 || s:vimim_custom_label > 0
             highlight! link PmenuSel   vimim_none_color
+        elseif s:vimim_custom_color == 1
+            highlight! link PmenuSel   Title
         endif
         highlight! link PmenuSbar  vimim_none_color
         highlight! link PmenuThumb vimim_none_color
@@ -1285,8 +1291,8 @@ function! s:vimim_cache()
         endif
     endif
     if s:pageup_pagedown != 0
-    \&& s:vimim_custom_label > 0
     \&& len(s:matched_list) > &pumheight
+    \&& s:vimim_custom_label > -1
         let results = s:vimim_pageup_pagedown()
     endif
     return results
@@ -1396,7 +1402,11 @@ function! s:vimim_pageup_pagedown()
 " ---------------------------------
     let matched_list = s:matched_list
     let length = len(matched_list)
-    let first_page = &pumheight - 1
+    let one_page = &pumheight
+    if s:vimim_custom_label > 0
+        let one_page = s:vimim_custom_label
+    endif
+    let first_page = one_page - 1
     if s:vimim_loop_pageup_pagedown > 0
         if first_page < 1
             let first_page = 9
@@ -1412,7 +1422,7 @@ function! s:vimim_pageup_pagedown()
             let matched_list = B + A
         endif
     else
-        let page = s:pageup_pagedown * &pumheight
+        let page = s:pageup_pagedown * one_page
         if page < 0
             " no more PageUp after the first page
             let s:pageup_pagedown += 1
@@ -1420,11 +1430,11 @@ function! s:vimim_pageup_pagedown()
         elseif page >= length
             " no more PageDown after the last page
             let s:pageup_pagedown -= 1
-            let last_page = length / &pumheight
-            if empty(length % &pumheight)
+            let last_page = length / one_page
+            if empty(length % one_page)
                 let last_page -= 1
             endif
-            let last_page = last_page * &pumheight
+            let last_page = last_page * one_page
             let matched_list = matched_list[last_page :]
         else
             let matched_list = matched_list[page :]
@@ -2797,7 +2807,7 @@ endfunction
 " --------------------------
 function! s:vimim_label_on()
 " --------------------------
-    if s:vimim_custom_label < 1
+    if s:vimim_custom_label < 0
         return
     endif
     let s:abcd = s:abcd[0 : &pumheight-1]
@@ -2813,6 +2823,10 @@ function! s:vimim_label_on()
         for _ in abcd_list
             sil!exe 'iunmap '. _
         endfor
+    endif
+    if s:vimim_custom_label > 0
+        let labels = range(1,s:vimim_custom_label)
+        let s:abcd = join(labels,'')
     endif
     for _ in labels
         silent!exe 'inoremap <silent> <expr> '  ._.
@@ -2996,6 +3010,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let label = 1
     let extra_text = ""
     let popupmenu_list = []
+    let popupmenu_list_one_row = []
     let keyboard = join(s:keyboard_list,"")
     let first_in_list = get(lines,0)
     let &pumheight = s:show_me_not ? 0 : &pumheight
@@ -3044,14 +3059,19 @@ function! s:vimim_popupmenu_list(matched_list)
         else
             let extra_text = get(split(menu,"_"),0)
         endif
-        if s:vimim_custom_label > 0 && len(lines) > 1
+        if s:vimim_custom_label > 0
+            let abbr = label . "." . chinese
+            call add(popupmenu_list_one_row, abbr)
+        endif
+        if s:vimim_custom_label > -1 && len(lines) > 1
             let labeling = s:vimim_get_labeling(label)
             if s:hjkl_n % 2 > 0 && s:show_me_not > 0
                 let label -= 1
             else
                 let label += 1
             endif
-            let complete_items["abbr"] = labeling . chinese
+            let abbr = labeling . chinese
+            let complete_items["abbr"] = abbr
         endif
         let complete_items["dup"] = 1
         let complete_items["menu"] = extra_text
@@ -3063,6 +3083,13 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     if empty(s:matched_list)
         let s:matched_list = lines
+    endif
+    if s:vimim_custom_label > 0
+    \&& len(popupmenu_list) > 1
+    \&& s:show_me_not < 1
+        let abbr = join(popupmenu_list_one_row[0 : s:vimim_custom_label-1])
+        let popupmenu_list[0].abbr = abbr
+        let popupmenu_list[1].abbr = "_ " . popupmenu_list[0].word
     endif
     return popupmenu_list
 endfunction
@@ -4746,7 +4773,10 @@ function! s:vimim_i_setting_on()
         if s:has_cjk_file > 0
             let &pumheight -= 1
         endif
-        let s:saved_pumheights[1] = &pumheight
+       let s:saved_pumheights[1] = &pumheight
+    endif
+    if s:vimim_custom_label > 0
+        let &pumheight = 2
     endif
 endfunction
 
@@ -4824,7 +4854,9 @@ function! g:vimim_reset_after_insert()
     let s:pageup_pagedown = 0
     let s:has_no_internet = 0
     let s:matched_list = []
-    let &pumheight = s:saved_pumheights[1]
+    if s:vimim_custom_label < 1
+        let &pumheight = s:saved_pumheights[1]
+    endif
     return ""
 endfunction
 
