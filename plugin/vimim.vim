@@ -346,7 +346,7 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_debug = 2
-        let g:vimim_custom_label = 1
+        let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
@@ -3088,8 +3088,13 @@ function! s:vimim_popupmenu_list(matched_list)
     \&& len(popupmenu_list) > 1
     \&& s:show_me_not < 1
         let one_list = popupmenu_list_one_row[0 : s:vimim_custom_label-1]
-        let popupmenu_list[0].abbr = join(one_list)
-        let popupmenu_list[1].abbr = s:space
+        if 1.0 * virtcol(".") / &columns < 0.7
+        \&& len(join(one_list)) < &columns / 4.0
+            let popupmenu_list[0].abbr = join(one_list)
+            for i in range(1, s:vimim_custom_label-1)
+                let popupmenu_list[i].abbr = s:space
+            endfor
+        endif
     endif
     return popupmenu_list
 endfunction
@@ -3107,7 +3112,7 @@ function! s:vimim_get_labeling(label)
             endif
         elseif a:label < &pumheight + 1
             let label2 = s:abcd[a:label-1]
-            if a:label < 2
+            if a:label < 2 && s:vimim_custom_label < 1
                 let label2 = "_"
             endif
             let labeling .= label2
@@ -4776,7 +4781,7 @@ function! s:vimim_i_setting_on()
        let s:saved_pumheights[1] = &pumheight
     endif
     if s:vimim_custom_label > 0
-        let &pumheight = 2
+        let &pumheight = s:vimim_custom_label
     endif
 endfunction
 
