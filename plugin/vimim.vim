@@ -2781,9 +2781,11 @@ function! s:vimim_label_on()
     if s:vimim_custom_label < 0
         return
     endif
-    let labels = range(1, s:vimim_custom_label)
-    let s:abcd = join(labels, '')
-    if empty(s:vimim_custom_label)
+    let labels = range(1, 5)
+    if s:vimim_custom_label > 0
+        let labels = range(1, s:vimim_custom_label)
+        let s:abcd = join(labels, '')
+    elseif s:vimim_custom_label < 1
         let labels = range(1, len(s:abcd))
         let s:abcd = s:abcd[0 : &pumheight-1]
         let abcd_list = split(s:abcd, '\zs')
@@ -3035,17 +3037,17 @@ function! s:vimim_popupmenu_list(matched_list)
             call add(popupmenu_list_one_row, abbr)
         endif
         if s:vimim_custom_label > -1 && len(lines) > 1
-            let labeling = s:vimim_get_labeling(label)
-            if s:vimim_custom_label > 0
-                let labeling = label . " "
+            let labeling = label . " "
+            if s:vimim_custom_label < 1
+                let labeling = s:vimim_get_labeling(label)
             endif
-            if s:hjkl_n % 2 > 0
+            if s:hjkl_n % 2 > 0 && s:show_me_not > 0
                 let label -= 1
             else
                 let label += 1
             endif
-            let abbr = labeling . chinese
             if s:show_me_not < 1
+                let abbr = labeling . chinese
                 let complete_items["abbr"] = abbr
             endif
         endif
