@@ -592,25 +592,6 @@ let s:VimIM += [" ====  games            ==== {{{"]
 " =================================================
 " http://vimim.googlecode.com/svn/vimim/vimim.html#game
 
-" ---------------------------------
-function! s:vimim_gnuplot(keyboard)
-" ---------------------------------
-    let results = []
-    let dumb = "set terminal dumb;"
-    let gnuplot = "gnuplot -e '" . dumb . a:keyboard . "'"
-    try
-        let results = split(system(gnuplot),'\n')
-    catch
-        let results = []
-        call s:debugs('gnuplot::', v:exception)
-    endtry
-    if !empty(results)
-        let s:show_me_not = 1
-        let results = results[1 : len(results)-1]
-    endif
-    return results
-endfunction
-
 " ----------------------------------
 function! s:vimim_get_hjkl(keyboard)
 " ----------------------------------
@@ -1099,13 +1080,6 @@ endfunction
 function! s:vimim_onekey_action(onekey)
 " -------------------------------------
     let current_line = getline(".")
-    let gnuplot = '^\s*' . 'plot' . '\s\+'
-    let gnuplot = match(current_line, gnuplot)
-    if empty(gnuplot) && executable('gnuplot')
-        " [gnuplot] usage:  plot sin(x)/x
-        let s:has_gnuplot = 1
-        sil!exe 'sil!return "' . g:vimim() . '"'
-    endif
     let one_before = current_line[col(".")-2]
     let two_before = current_line[col(".")-3]
     let onekey = ""
@@ -1262,9 +1236,6 @@ let s:VimIM += [" ====  hjkl             ==== {{{"]
 " -----------------------
 function! s:vimim_cache()
 " -----------------------
-    if s:has_gnuplot > 0 && len(s:matched_list) > 0
-        return s:matched_list
-    endif
     let results = []
     if s:chinese_input_mode =~ 'onekey'
         if len(s:hjkl_x) > 0
@@ -4833,7 +4804,6 @@ endfunction
 " ---------------------------------------
 function! s:vimim_reset_before_anything()
 " ---------------------------------------
-    let s:has_gnuplot = 0
     let s:has_pumvisible = 0
     let s:popupmenu_list = []
     let s:keyboard_list  = []
@@ -4871,7 +4841,7 @@ function! g:vimim()
     let key = ""
     let s:keyboard_list = []
     let one_before = getline(".")[col(".")-2]
-    if one_before =~ s:valid_key || s:has_gnuplot > 0
+    if one_before =~ s:valid_key
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
     elseif s:vimim_onekey_hit_and_run > 0
     \&& s:chinese_input_mode =~ 'onekey'
@@ -4888,10 +4858,6 @@ function! g:vimim_menu_select()
     let key = ""
     if pumvisible()
         let key = '\<C-P>\<Down>'
-        if s:has_gnuplot > 0
-            let n = s:hjkl_n % 2 ? len(s:matched_list)-3 : 2
-            let key .= repeat("\<Down>", n)
-        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -4972,10 +4938,6 @@ function! VimIM(start, keyboard)
 " ------------------------------
 if a:start
 
-    if s:has_gnuplot > 0
-        return 0
-    endif
-
     let current_positions = getpos(".")
     let start_row = current_positions[1]
     let start_column = current_positions[2]-1
@@ -5035,14 +4997,6 @@ else
     " [initialization] early start, half done
     let keyboard = a:keyboard
     call s:vimim_reset_before_omni()
-
-    " [gnuplot] show the state-of-the-art ascii picture
-    if s:has_gnuplot > 0
-        let results = s:vimim_gnuplot(keyboard)
-        if !empty(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
 
     " [validation] user keyboard input validation
     if empty(str2nr(keyboard))
