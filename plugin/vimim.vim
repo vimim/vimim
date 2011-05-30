@@ -343,7 +343,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let hjkl = '/hhome/xma/hjkl/'
+    let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_debug = 2
         let g:vimim_custom_label = 0
@@ -3064,11 +3064,10 @@ function! s:vimim_popupmenu_list(matched_list)
     \&& len(popupmenu_list) > 1
     \&& s:show_me_not < 1
         let one_list = popupmenu_list_one_row[0 : s:vimim_custom_label-1]
-        let one_popup_row = join(one_list)
         let cursor_gps = 1.0 * (virtcol(".") % &columns) / &columns
-        let onerow_gps = 1.0 * len(one_popup_row) / &columns
-        if cursor_gps < 0.72 && onerow_gps < 0.5
-            let popupmenu_list[0].abbr = one_popup_row
+        let onerow_gps = 1.0 * len(join(one_list)) / &columns
+        if cursor_gps < 0.72 && onerow_gps < 0.92
+            let popupmenu_list[0].abbr = join(one_list)
             for i in range(1, s:vimim_custom_label-1)
                 let popupmenu_list[i].abbr = s:space
             endfor
