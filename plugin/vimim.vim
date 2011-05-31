@@ -346,14 +346,15 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
-        let g:vimim_cloud_baidu=1
-        let g:vimim_custom_label = 1
+        let g:vimim_cloud_baidu = 0
+        let g:vimim_cloud_google = 1
+        let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
-        let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
+        let g:vimim_hjkl_directory = hjkl
         let g:vimim_debug = 2
     endif
 endfunction
@@ -4430,18 +4431,40 @@ endfunction
 
 " ------------------------------------------
 function! s:vimim_get_cloud_google(keyboard)
-" ------------------------------------------
-" http://www.google.com/transliterate/chinese
-" http://www.google.com/transliterate?tl_app=3&tlqt=1&num=10&langpair=en|zh&text=nihao
-" [{ "ew" : "nihao", "hws" : [ "你好","拟好","你","拟",, " ] },]
-    let results = ['google 谷歌云输入法']
-    return results
+" ------------------------------------------ todo
+    " [usage] :let g:vimim_cloud_google=1
+    " [usage] :let g:vimim_cloud = 'google'
+    " http://www.google.com/transliterate/chinese
+    let cloud  = 'http://www.google.com/transliterate'
+    let cloud .= '?tl_app=3&tlqt=1&num=20&langpair=en|zh&text='
+    let input = cloud . a:keyboard
+    let output = s:vimim_get_from_http(input)
+    let start  = match(output, '[', 2)
+    let end = match(output, ']', 0)
+    if start > 0 && end > 0
+        " [ {"ew":"fuck","hws": ["\u5987\u4EA7\u79D1","\u8D74"]  },]
+        let output = strpart(output, start+3, end-start-3)
+    else
+        return []
+    endif
+    let matched_list = []
+    let output_list = split(output, '","')
+    for item in output_list
+        let chinese = ''
+        for hex in split(item, "\u")
+            let ddddd = str2nr(hex, 16)
+            let chinese .= nr2char(ddddd)
+        endfor
+        call add(matched_list, chinese)
+    endfor
+    return matched_list
 endfunction
 
 " -----------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard)
 " -----------------------------------------
     " [usage] :let g:vimim_cloud_baidu=1
+    " [usage] :let g:vimim_cloud = 'baidu'
     " http://olime.baidu.com/py?rn=0&pn=20&py=fuck
     " [[["妇产科",4],["fuck",4],["复仇",3]],"fu'c'k"]
     let cloud = 'http://olime.baidu.com/py?rn=0&pn=20&py='
