@@ -347,14 +347,14 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud_baidu=1
-        let g:vimim_debug = 2
-        let g:vimim_custom_label = 0
+        let g:vimim_custom_label = 1
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
+        let g:vimim_debug = 2
     endif
 endfunction
 
@@ -3064,15 +3064,21 @@ function! s:vimim_popupmenu_list(matched_list)
     if empty(s:matched_list)
         let s:matched_list = lines
     endif
-    if s:vimim_custom_label > 0
-    \&& len(popupmenu_list) > 1
-    \&& s:show_me_not < 1
-        let one_list = popupmenu_list_one_row[0 : s:vimim_custom_label-1]
+    let height = s:vimim_custom_label
+    if s:show_me_not < 1 && height > 0 && len(popupmenu_list) > 1
+        let one_list = popupmenu_list_one_row[0 : height-1]
         let cursor_gps = 1.0 * (virtcol(".") % &columns) / &columns
         let onerow_gps = 1.0 * len(join(one_list)) / &columns
         if cursor_gps < 0.72 && onerow_gps < 0.92
-            let popupmenu_list[0].abbr = join(one_list)
-            for i in range(1, s:vimim_custom_label-1)
+            let start = 1
+            let display = 0
+            if line("w$") - line(".") < height + 2
+                let start = 0
+                let display = height-1
+            endif
+            let popupmenu_list[display].abbr = join(one_list)
+            let empty_lines = range(start, start+height-2)
+            for i in empty_lines
                 let popupmenu_list[i].abbr = s:space
             endfor
         endif
