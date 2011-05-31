@@ -280,6 +280,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud_mycloud")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_cloud_google")
+    call add(G, "g:vimim_cloud_baidu")
     call add(G, "g:vimim_cloud_qq")
     call add(G, "g:vimim_toggle_list")
     " -----------------------------------
@@ -345,6 +346,7 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
+        let g:vimim_cloud_baidu=1
         let g:vimim_debug = 2
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
@@ -4164,6 +4166,7 @@ function! s:vimim_scan_backend_cloud()
         endif
     endif
     if empty(eval("s:vimim_cloud_" . s:cloud_default))
+        " todo: to define cloud at will
         exe 'let s:vimim_cloud_' . s:cloud_default . ' = 888'
     endif
 endfunction
@@ -4432,10 +4435,29 @@ endfunction
 " -----------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard)
 " -----------------------------------------
-" http://olime.baidu.com/py?rn=0&pn=20&py=fuck
-" [[["妇产科",4],["fuck",4],["福彩",3],["复仇",3]],"fu'c'k"]
-    let results = ['baidu 百度在线输入法']
-    return results
+    " [usage] :let g:vimim_cloud_baidu=1
+    " http://olime.baidu.com/py?rn=0&pn=20&py=fuck
+    " [[["妇产科",4],["fuck",4],["复仇",3]],"fu'c'k"]
+    let cloud = 'http://olime.baidu.com/py?rn=0&pn=20&py='
+    let input = cloud . a:keyboard
+    let output = s:vimim_get_from_http(input)
+    if empty(output) || output =~ '502 Bad Gateway'
+        return []
+    elseif empty(s:localization)
+        let output = iconv(output, "gbk", "utf-8")
+    endif
+    let output_list = eval(output)
+    let matched_list = []
+    for item_list in get(output_list,0)
+        let chinese = get(item_list,0)
+        if chinese =~ '\w'
+            continue
+        endif
+        let english = strpart(a:keyboard, get(item_list,1))
+        let new_item = chinese . english
+        call add(matched_list, new_item)
+    endfor
+    return matched_list
 endfunction
 
 " ============================================= }}}
