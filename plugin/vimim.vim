@@ -298,13 +298,15 @@ function! s:vimim_initialize_global()
     elseif s:vimim_custom_label > 9
         let s:vimim_custom_label = 9
     endif
-    if empty(s:vimim_cloud)
-        let s:vimim_cloud = 'sogou'
-    endif
-    if s:vimim_cloud =~ 'dynamic'
-        let s:vimim_chinese_input_mode = 'dynamic'
-    elseif s:vimim_cloud =~ 'static'
-        let s:vimim_chinese_input_mode = 'static'
+    if s:vimim_cloud > -1
+        if empty(s:vimim_cloud)
+            let s:vimim_cloud = 'sogou'
+        endif
+        if s:vimim_cloud =~ 'dynamic'
+            let s:vimim_chinese_input_mode = 'dynamic'
+        elseif s:vimim_cloud =~ 'static'
+            let s:vimim_chinese_input_mode = 'static'
+        endif
     endif
 endfunction
 
@@ -578,11 +580,13 @@ function! s:vimim_egg_vimimenv()
         let option = input . im
         call add(eggs, option . im)
     endif
-    let cloud = s:vimim_chinese(get(split(s:vimim_cloud,','),0))
-    let option  = input . s:vimim_chinese('cloud') . input
-    let option .=  s:space . cloud . s:space
-    let option .= ':let g:vimim_cloud=' . s:vimim_cloud
-    call add(eggs, option)
+    if s:vimim_cloud > -1
+        let cloud = s:vimim_chinese(get(split(s:vimim_cloud,','),0))
+        let option  = input . s:vimim_chinese('cloud') . input
+        let option .=  s:space . cloud . s:space
+        let option .= ":let g:vimim_cloud='" . s:vimim_cloud . "'"
+        call add(eggs, option)
+    endif
     call map(eggs, 'v:val . " "')
     return eggs
 endfunction
@@ -4021,7 +4025,7 @@ function! s:vimim_scan_current_buffer()
         return s:vimim_set_mycloud(1)
     endif
     for im in s:cloud_clouds
-        if buffer =~# im
+        if buffer =~# im && s:vimim_cloud > -1
             return s:vimim_set_cloud(im)
         endif
     endfor
@@ -4203,6 +4207,9 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_set_cloud_if_www_executable(im)
 " -----------------------------------------------
+    if s:vimim_cloud < 0
+        return 0
+    endif
     let im = a:im
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
     call s:vimim_check_http_executable()
@@ -4221,7 +4228,9 @@ endfunction
 " ---------------------------------------
 function! s:vimim_check_http_executable()
 " ---------------------------------------
-    if s:cloud_ready_flag > 0
+    if s:vimim_cloud < 0
+        return 0
+    elseif s:cloud_ready_flag > 0
         return 1
     endif
     " step 1 of 3: try to find libvimim
