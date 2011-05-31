@@ -102,6 +102,7 @@ function! s:vimim_initialize_session()
 " ------------------------------------
     let s_vimim_cloud = 0
     let s:clouds = ['sogou','qq','google','baidu','mycloud']
+"todo remove
     for cloud in s:clouds
         let s_vimim_cloud = eval("s:vimim_cloud_" . cloud)
         if !empty(s_vimim_cloud)
@@ -112,6 +113,7 @@ function! s:vimim_initialize_session()
     if empty(s_vimim_cloud)
         let s:cloud_default = get(s:clouds,0)
     endif
+" ..................
     let s:cloud_qq_key = 0
     let s:cloud_sogou_key = 0
     let s:mycloud_plugin = 0
@@ -275,10 +277,12 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_custom_menu")
-    call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_onekey_is_tab")
     call add(G, "g:vimim_toggle_list")
+    call add(G, "g:vimim_more_candidates")
+    " -----------------------------------
+    call add(G, "g:vimim_cloud")
     call add(G, "g:vimim_cloud_mycloud")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_cloud_google")
@@ -311,6 +315,11 @@ function! s:vimim_initialize_global()
         let s:vimim_custom_label = 5
     elseif s:vimim_custom_label > 9
         let s:vimim_custom_label = 9
+    endif
+    if empty(s:vimim_cloud)
+        " todo
+        " s:cloud_default == 'sogou'
+        let s:vimim_cloud = 'sogou'
     endif
 endfunction
 
@@ -347,9 +356,8 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
-        let g:vimim_cloud_qq = 1
-        let g:vimim_cloud_baidu = 0
-        let g:vimim_cloud_google = 0
+        let g:vimim_cloud = 'qq'
+        let g:vimim_cloud_qq = 0
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -587,6 +595,8 @@ function! s:vimim_egg_vimimenv()
         let cloud = s:vimim_chinese(s:cloud_default)
         let option = cloud . s:colon . s:vimim_chinese('cloudatwill')
         call add(eggs, option)
+        " todo
+        " print out :let s:vimim_cloud = 'sogou'
     endif
     call map(eggs, 'v:val . " "')
     return eggs
@@ -4386,7 +4396,6 @@ endfunction
 " -----------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
-    " [usage] :let g:vimim_cloud_sogou=1
     " [usage] :let g:vimim_cloud = 'sogou'
     " http://pinyin.sogou.com/cloud/
     if empty(s:cloud_sogou_key)
@@ -4435,7 +4444,6 @@ endfunction
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
 " -------------------------------------- todo
-    " [usage] :let g:vimim_cloud_qq=1
     " [usage] :let g:vimim_cloud = 'qq'
     " http://py.qq.com/web
     if empty(s:cloud_qq_key)
@@ -4471,7 +4479,6 @@ endfunction
 " ------------------------------------------
 function! s:vimim_get_cloud_google(keyboard)
 " ------------------------------------------ todo
-    " [usage] :let g:vimim_cloud_google=1
     " [usage] :let g:vimim_cloud = 'google'
     " http://www.google.com/transliterate/chinese
     let cloud  = 'http://www.google.com/transliterate'
@@ -4502,7 +4509,6 @@ endfunction
 " -----------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard)
 " -----------------------------------------
-    " [usage] :let g:vimim_cloud_baidu=1
     " [usage] :let g:vimim_cloud = 'baidu'
     " http://olime.baidu.com/py?rn=0&pn=20&py=fuck
     " [[["妇产科",4],["fuck",4],["复仇",3]],"fu'c'k"]
@@ -4529,6 +4535,17 @@ function! s:vimim_get_cloud_baidu(keyboard)
         call add(matched_list, new_item)
     endfor
     return matched_list
+endfunction
+
+" ---------------------------------------
+function! s:vimim_get_cloud_all(keyboard)
+" --------------------------------------- todo
+    let keyboard = a:keyboard
+    let results  = s:vimim_get_cloud_sogou(keyboard)
+    let results += s:vimim_get_cloud_qq(keyboard)
+    let results += s:vimim_get_cloud_google(keyboard)
+    let results += s:vimim_get_cloud_baidu(keyboard)
+    return results
 endfunction
 
 " ============================================= }}}
@@ -5144,10 +5161,12 @@ else
         let s:keyboard_list = [keyboard]
     endif
 
-    " [sogou] to make cloud come true for woyouyigemeng
+    " [cloud] to make cloud come true for woyouyigemeng
     let force = s:vimim_to_cloud_or_not(keyboard, clouds)
     if force > 0
         let cloud = match(s:clouds,s:ui.im)<0 ? s:cloud_default : s:ui.im
+        " todo
+        let cloud = s:vimim_cloud
         let results = s:vimim_get_cloud(cloud, keyboard)
         if empty(len(results))
             if s:vimim_cloud_sogou > 2
