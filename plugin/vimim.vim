@@ -4415,23 +4415,26 @@ endfunction
 function! s:vimim_get_cloud_qq(keyboard)
 " --------------------------------------
     " http://py.qq.com/web
-    let results = ['qq QQ输入法']
+    let results = ['qq QQ云输入法']
     return results
 endfunction
 
 " ------------------------------------------
 function! s:vimim_get_cloud_google(keyboard)
 " ------------------------------------------
-    " http://www.google.com/transliterate
-    let results = ['google 谷歌输入法']
+" http://www.google.com/transliterate/chinese
+" http://www.google.com/transliterate?tl_app=3&tlqt=1&num=10&langpair=en|zh&text=nihao
+" [{ "ew" : "nihao", "hws" : [ "你好","拟好","你","拟",, " ] },]
+    let results = ['google 谷歌云输入法']
     return results
 endfunction
 
 " -----------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard)
 " -----------------------------------------
-    " http://www.baidu.com
-    let results = ['baidu 百度输入法']
+" http://olime.baidu.com/py?rn=0&pn=20&py=fuck
+" [[["妇产科",4],["fuck",4],["福彩",3],["复仇",3]],"fu'c'k"]
+    let results = ['baidu 百度在线输入法']
     return results
 endfunction
 
