@@ -112,6 +112,7 @@ function! s:vimim_initialize_session()
     if empty(s_vimim_cloud)
         let s:cloud_default = get(s:clouds,0)
     endif
+    let s:cloud_qq_key = 0
     let s:cloud_sogou_key = 0
     let s:mycloud_plugin = 0
     let s:www_libcall = 0
@@ -277,12 +278,12 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_onekey_is_tab")
+    call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_cloud_mycloud")
     call add(G, "g:vimim_cloud_sogou")
     call add(G, "g:vimim_cloud_google")
     call add(G, "g:vimim_cloud_baidu")
     call add(G, "g:vimim_cloud_qq")
-    call add(G, "g:vimim_toggle_list")
     " -----------------------------------
     let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
@@ -346,8 +347,9 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
+        let g:vimim_cloud_qq = 1
         let g:vimim_cloud_baidu = 0
-        let g:vimim_cloud_google = 1
+        let g:vimim_cloud_google = 0
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -1780,9 +1782,9 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['mycloud']     = ['自己的云','自己的雲']
     let s:chinese['cloud']       = ['云','雲']
     let s:chinese['sogou']       = ['搜狗']
-    let s:chinese['qq']          = ['QQ']
     let s:chinese['google']      = ['谷歌']
     let s:chinese['baidu']       = ['百度']
+    let s:chinese['qq']          = ['QQ']
 endfunction
 
 " ----------------------------------------
@@ -3204,6 +3206,13 @@ function! s:vimim_readfile(datafile)
         return []
     endif
     let lines = readfile(a:datafile)
+    return s:vimim_i18n_read_list(lines)
+endfunction
+
+" -------------------------------------
+function! s:vimim_i18n_read_list(lines)
+" -------------------------------------
+    let lines = a:lines
     if s:localization > 0
         let  results = []
         for line in lines
@@ -4377,6 +4386,8 @@ endfunction
 " -----------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
+    " [usage] :let g:vimim_cloud_sogou=1
+    " [usage] :let g:vimim_cloud = 'sogou'
     " http://pinyin.sogou.com/cloud/
     if empty(s:cloud_sogou_key)
         let sogou_key = 'http://web.pinyin.sogou.com/web_ime/patch.php'
@@ -4402,7 +4413,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
     endif
     if empty(output)
         return []
-    elseif !empty(s:localization)
+    elseif s:localization > 0
         " support gb and big5 in addition to utf8
         let output = s:vimim_i18n_read(output)
     endif
@@ -4423,10 +4434,39 @@ endfunction
 
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
-" --------------------------------------
+" -------------------------------------- todo
+    " [usage] :let g:vimim_cloud_qq=1
+    " [usage] :let g:vimim_cloud = 'qq'
     " http://py.qq.com/web
-    let results = ['qq QQ云输入法']
-    return results
+    if empty(s:cloud_qq_key)
+        let qq_key  = 'http://ime.qq.com/fcgi-bin/getkey'
+        let qq_key .= '?callback=window.QQWebIME.keyback'
+        let output = s:vimim_get_from_http(qq_key)
+        if empty(output) || output =~ '502 Bad Gateway'
+            return []
+        endif
+        let s:cloud_qq_key = get(split(output,'"'),3)
+    endif
+    if len(s:cloud_qq_key) != 32
+        return []
+    endif
+    let cloud = 'http://ime.qq.com/fcgi-bin/getword?key='
+    let cloud = cloud . s:cloud_qq_key .'&q='
+    let input = cloud . a:keyboard
+    let output = s:vimim_get_from_http(input)
+    if empty(output) || output =~ '502 Bad Gateway'
+        return []
+    endif
+    let key = 'rs'
+    let matched_list = []
+    let output_hash = eval(output)
+    if type(output_hash) == type({}) && has_key(output_hash, key)
+        let matched_list = output_hash[key]
+        if s:localization > 0
+            let matched_list = s:vimim_i18n_read_list(matched_list)
+        endif
+    endif
+    return matched_list
 endfunction
 
 " ------------------------------------------
@@ -4476,6 +4516,9 @@ function! s:vimim_get_cloud_baidu(keyboard)
         let output = iconv(output, "gbk", "utf-8")
     endif
     let output_list = eval(output)
+    if type(output_list) != type([])
+        return []
+    endif
     let matched_list = []
     for item_list in get(output_list,0)
         let chinese = get(item_list,0)
