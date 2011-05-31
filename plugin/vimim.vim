@@ -357,7 +357,6 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'qq'
-        let g:vimim_cloud_qq = 0
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -3756,6 +3755,7 @@ function! s:vimim_set_datafile(im, datafile)
     \|| isdirectory(datafile)
         return
     endif
+    " todo
     if match(s:clouds, im) > -1
         call s:vimim_set_cloud(im)
     else
@@ -4225,8 +4225,8 @@ function! s:vimim_set_cloud_if_www_executable(im)
 " -----------------------------------------------
     let im = a:im
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
-    let cloud = s:vimim_check_http_executable(im)
-    if empty(cloud)
+    let clouds = s:vimim_check_http_executable(im)
+    if empty(clouds)
         return 0
     else
         let s:backend.cloud[im].root = 'cloud'
@@ -4234,7 +4234,7 @@ function! s:vimim_set_cloud_if_www_executable(im)
         let s:backend.cloud[im].keycode = s:im_keycode[im]
         let s:backend.cloud[im].chinese = s:vimim_chinese(im)
         let s:backend.cloud[im].name = s:vimim_chinese(im)
-        return cloud
+        return clouds
     endif
 endfunction
 
@@ -4308,8 +4308,10 @@ function! s:vimim_magic_tail(keyboard)
     elseif magic_tail ==# "'"
         " trailing apostrophe => forced-cloud
         let s:has_no_internet -= 2
-        let cloud = s:vimim_set_cloud_if_www_executable(s:cloud_default)
-        if empty(cloud)
+        " todo
+        let cloud = get(split(s:vimim_cloud,','),0)
+        let cloud_set = s:vimim_set_cloud_if_www_executable(cloud)
+        if empty(cloud_set)
             return []
         endif
         call add(keyboards, 1)
@@ -4336,6 +4338,10 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 1
         return 0
     endif
+    " todo
+    if s:vimim_cloud =~ 'dynamic' || s:vimim_cloud =~ 'static'
+        return 1
+    endif
     if match(s:clouds, s:ui.im) > -1
        if eval("s:vimim_cloud_" . s:ui.im) > 0
            return 1
@@ -4356,20 +4362,19 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     return 0
 endfunction
 
-" ---------------------------------------
-function! s:vimim_get_cloud(im, keyboard)
-" ---------------------------------------
-    if a:keyboard !~# s:valid_key
-    \|| empty(s:www_executable)
-    \|| eval("s:vimim_cloud_" . a:im) < 1
+" -----------------------------------
+function! s:vimim_get_cloud(keyboard)
+" -----------------------------------
+    if a:keyboard !~ s:valid_key || empty(s:www_executable)
         return []
     endif
     let results = []
-    let cloud  = "s:vimim_get_cloud_" . a:im . "(a:keyboard)"
+    let cloud = get(split(s:vimim_cloud),0)
+    let get_cloud  = "s:vimim_get_cloud_" . cloud . "(a:keyboard)"
     try
-        let results = eval(cloud)
+        let results = eval(get_cloud)
     catch
-        call s:debugs('get_cloud::'.a:im.'::', v:exception)
+        call s:debugs('get_cloud::' . cloud . '::', v:exception)
     endtry
     return results
 endfunction
@@ -5164,10 +5169,9 @@ else
     " [cloud] to make cloud come true for woyouyigemeng
     let force = s:vimim_to_cloud_or_not(keyboard, clouds)
     if force > 0
-        let cloud = match(s:clouds,s:ui.im)<0 ? s:cloud_default : s:ui.im
-        " todo
-        let cloud = s:vimim_cloud
-        let results = s:vimim_get_cloud(cloud, keyboard)
+      " let cloud = match(s:clouds,s:ui.im)<0 ? s:cloud_default : s:ui.im
+      " " todo
+        let results = s:vimim_get_cloud(keyboard)
         if empty(len(results))
             if s:vimim_cloud_sogou > 2
                 let s:has_no_internet += 1
@@ -5206,8 +5210,7 @@ else
             let results = s:vimim_cjk_match(keyboard_head)
         endif
     elseif keyboard !~# '\L'
-        let cloud = match(s:clouds,s:ui.im)<0 ? s:cloud_default : s:ui.im
-        let results = s:vimim_get_cloud(cloud, keyboard)
+        let results = s:vimim_get_cloud(keyboard)
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
