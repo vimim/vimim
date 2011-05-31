@@ -100,26 +100,29 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    let s_vimim_cloud = 0
-    let s:clouds = ['sogou','qq','google','baidu','mycloud']
 "todo remove
-    for cloud in s:clouds
-        let s_vimim_cloud = eval("s:vimim_cloud_" . cloud)
-        if !empty(s_vimim_cloud)
-            let s:cloud_default = cloud
-            break
-        endif
-    endfor
-    if empty(s_vimim_cloud)
-        let s:cloud_default = get(s:clouds,0)
-    endif
+"   let s_vimim_cloud = 0
+"   let s:clouds = ['sogou','qq','google','baidu','mycloud']
+"   for cloud in s:clouds
+"       let s_vimim_cloud = eval("s:vimim_cloud_" . cloud)
+"       if !empty(s_vimim_cloud)
+"           let s:cloud_default = cloud
+"           break
+"       endif
+"   endfor
+"   if empty(s_vimim_cloud)
+"       let s:cloud_default = get(s:clouds,0)
+"   endif
 " ..................
-    let s:cloud_qq_key = 0
-    let s:cloud_sogou_key = 0
+    let cloud = get(split(s:vimim_cloud),0)
+    let s:cloud_default = cloud
+" ..................
+    let s:cloud_key_qq = 0
+    let s:cloud_key_sogou = 0
     let s:mycloud_plugin = 0
     let s:www_libcall = 0
-    " --------------------------------
     let s:www_executable = 0
+    " --------------------------------
     let s:seamless_positions = []
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:smart_single_quotes = 1
@@ -356,6 +359,7 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
+        let g:vimim_cloud = 'qq,wubi,shuangpin'
         let g:vimim_cloud = 'qq'
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
@@ -1793,7 +1797,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['sogou']       = ['搜狗']
     let s:chinese['google']      = ['谷歌']
     let s:chinese['baidu']       = ['百度']
-    let s:chinese['qq']          = ['QQ']
+    let s:chinese['qq']          = ['腾讯QQ']
 endfunction
 
 " ----------------------------------------
@@ -3755,9 +3759,12 @@ function! s:vimim_set_datafile(im, datafile)
     \|| isdirectory(datafile)
         return
     endif
-    " todo
-    if match(s:clouds, im) > -1
-        call s:vimim_set_cloud(im)
+    if s:vimim_cloud =~ 'dynamic' || s:vimim_cloud =~ 'static'
+        let cloud = get(split(s:vimim_cloud),0)
+        call s:vimim_set_cloud(cloud)
+" todo
+"   if match(s:clouds, im) > -1
+"       call s:vimim_set_cloud(im)
     else
         let s:ui.root = "datafile"
         let s:ui.im = im
@@ -4033,11 +4040,12 @@ function! s:vimim_scan_current_buffer()
     if buffer =~# 'mycloud'
         return s:vimim_set_mycloud(1)
     endif
-    for im in s:clouds
-        if buffer =~# im
-            return s:vimim_set_cloud(im)
-        endif
-    endfor
+" todo
+"   for im in s:clouds
+"       if buffer =~# im
+"           return s:vimim_set_cloud(im)
+"       endif
+"   endfor
 endfunction
 
 " -------------------------------------------------
@@ -4342,11 +4350,12 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     if s:vimim_cloud =~ 'dynamic' || s:vimim_cloud =~ 'static'
         return 1
     endif
-    if match(s:clouds, s:ui.im) > -1
-       if eval("s:vimim_cloud_" . s:ui.im) > 0
-           return 1
-       endif
-    endif
+"todo remove
+""  if match(s:clouds, s:ui.im) > -1
+""     if eval("s:vimim_cloud_" . s:ui.im) > 0
+""         return 1
+""     endif
+""  endif
     if s:has_no_internet < 0 || get(a:clouds, 1) > 0
         return 1
     endif
@@ -4403,19 +4412,18 @@ function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
     " [usage] :let g:vimim_cloud = 'sogou'
     " http://pinyin.sogou.com/cloud/
-    if empty(s:cloud_sogou_key)
-        let sogou_key = 'http://web.pinyin.sogou.com/web_ime/patch.php'
-        let output = s:vimim_get_from_http(sogou_key)
+    if empty(s:cloud_key_sogou)
+        let key_sogou = 'http://web.pinyin.sogou.com/web_ime/patch.php'
+        let output = s:vimim_get_from_http(key_sogou)
         if empty(output)
             return []
         endif
-        let s:cloud_sogou_key = get(split(output, '"'), 1)
+        let s:cloud_key_sogou = get(split(output, '"'), 1)
     endif
-    let cloud = 'http://web.pinyin.sogou.com/api/py?key='
-    let cloud = cloud . s:cloud_sogou_key .'&query='
-    let input = cloud . a:keyboard
+    let input  = 'http://web.pinyin.sogou.com/api/py'
+    let input .= '?key=' . s:cloud_key_sogou
+    let input .= '&query=' . a:keyboard
     let output = s:vimim_get_from_http(input)
-    " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
     if empty(output) || output =~ '502 bad gateway'
         return []
     endif
@@ -4451,20 +4459,24 @@ function! s:vimim_get_cloud_qq(keyboard)
 " -------------------------------------- todo
     " [usage] :let g:vimim_cloud = 'qq'
     " http://py.qq.com/web
-    if empty(s:cloud_qq_key)
-        let qq_key  = 'http://ime.qq.com/fcgi-bin/getkey'
-        let output = s:vimim_get_from_http(qq_key)
+    if empty(s:cloud_key_qq)
+        let key_qq  = 'http://ime.qq.com/fcgi-bin/getkey'
+        let output = s:vimim_get_from_http(key_qq)
         if empty(output) || output =~ '502 bad gateway'
             return []
         endif
-        let s:cloud_qq_key = get(split(output,'"'),3)
+        let s:cloud_key_qq = get(split(output,'"'),3)
     endif
-    if len(s:cloud_qq_key) != 32
+    if len(s:cloud_key_qq) != 32
         return []
     endif
-    let cloud = 'http://ime.qq.com/fcgi-bin/getword?key='
-    let cloud = cloud . s:cloud_qq_key .'&q='
-    let input = cloud . a:keyboard
+    let wubi_flag = 1
+    let tradition_chinese_flag = 1
+    let input = 'http://ime.qq.com/fcgi-bin/getword'
+    let input .= '?key=' . s:cloud_key_qq 
+    let input .= '&wubi=' . wubi_flag
+    let input .= '&jf=' . tradition_chinese_flag
+    let input .= '&q=' . a:keyboard
     let output = s:vimim_get_from_http(input)
     if empty(output) || output =~ '502 bad gateway'
         return []
@@ -4486,9 +4498,12 @@ function! s:vimim_get_cloud_google(keyboard)
 " ------------------------------------------ todo
     " [usage] :let g:vimim_cloud = 'google'
     " http://www.google.com/transliterate/chinese
-    let cloud  = 'http://www.google.com/transliterate'
-    let cloud .= '?tl_app=3&tlqt=1&num=20&langpair=en|zh&text='
-    let input = cloud . a:keyboard
+    let input  = 'http://www.google.com/transliterate'
+    let input .= '?tl_app=3'
+    let input .= '&tlqt=1'
+    let input .= '&num=20'
+    let input .= '&langpair=en|zh'
+    let input .= '&text=' . a:keyboard
     let output = s:vimim_get_from_http(input)
     let start  = match(output, '[', 2)
     let end = match(output, ']', 0)
@@ -4517,8 +4532,10 @@ function! s:vimim_get_cloud_baidu(keyboard)
     " [usage] :let g:vimim_cloud = 'baidu'
     " http://olime.baidu.com/py?rn=0&pn=20&py=fuck
     " [[["妇产科",4],["fuck",4],["复仇",3]],"fu'c'k"]
-    let cloud = 'http://olime.baidu.com/py?rn=0&pn=20&py='
-    let input = cloud . a:keyboard
+    let input  = 'http://olime.baidu.com/py'
+    let input .= '?rn=0'
+    let input .= '&pn=20'
+    let input .= '&py=' . a:keyboard
     let output = s:vimim_get_from_http(input)
     if empty(output) || output =~ '502 bad gateway'
         return []
@@ -4546,11 +4563,20 @@ endfunction
 function! s:vimim_get_cloud_all(keyboard)
 " --------------------------------------- todo
     let keyboard = a:keyboard
-    let results  = s:vimim_get_cloud_sogou(keyboard)
-    let results += s:vimim_get_cloud_qq(keyboard)
-    let results += s:vimim_get_cloud_google(keyboard)
-    let results += s:vimim_get_cloud_baidu(keyboard)
+    let results  = s:vimim_get_cloud_qq(keyboard)
+  " let results += s:vimim_get_cloud_sogou(keyboard)
+  " let results += s:vimim_get_cloud_google(keyboard)
+  " let results += s:vimim_get_cloud_baidu(keyboard)
     return results
+endfunction
+
+" ---------------------------------
+function! s:vimim_egg_vimimclouds()
+" --------------------------------- todo
+    let cloud = 'woyouyigemeng'
+    let eggs = s:vimim_get_cloud_all(cloud)
+    let filter = "strpart(" . 'v:val' . ", 0, 29)"
+    return map(eggs, filter)
 endfunction
 
 " ============================================= }}}
@@ -5169,8 +5195,8 @@ else
     " [cloud] to make cloud come true for woyouyigemeng
     let force = s:vimim_to_cloud_or_not(keyboard, clouds)
     if force > 0
-      " let cloud = match(s:clouds,s:ui.im)<0 ? s:cloud_default : s:ui.im
       " " todo
+      " let cloud = match(s:clouds,s:ui.im)<0 ? s:cloud_default : s:ui.im
         let results = s:vimim_get_cloud(keyboard)
         if empty(len(results))
             if s:vimim_cloud_sogou > 2
