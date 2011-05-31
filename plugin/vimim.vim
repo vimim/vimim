@@ -4402,7 +4402,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
     let input = cloud . a:keyboard
     let output = s:vimim_get_from_http(input)
     " http://web.pinyin.sogou.com/web_ime/get_ajax/woyouyigemeng.key
-    if empty(output) || output =~ '502 Bad Gateway'
+    if empty(output) || output =~ '502 bad gateway'
         return []
     endif
     let first  = match(output, '"', 0)
@@ -4440,9 +4440,8 @@ function! s:vimim_get_cloud_qq(keyboard)
     " http://py.qq.com/web
     if empty(s:cloud_qq_key)
         let qq_key  = 'http://ime.qq.com/fcgi-bin/getkey'
-        let qq_key .= '?callback=window.QQWebIME.keyback'
         let output = s:vimim_get_from_http(qq_key)
-        if empty(output) || output =~ '502 Bad Gateway'
+        if empty(output) || output =~ '502 bad gateway'
             return []
         endif
         let s:cloud_qq_key = get(split(output,'"'),3)
@@ -4454,7 +4453,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     let cloud = cloud . s:cloud_qq_key .'&q='
     let input = cloud . a:keyboard
     let output = s:vimim_get_from_http(input)
-    if empty(output) || output =~ '502 Bad Gateway'
+    if empty(output) || output =~ '502 bad gateway'
         return []
     endif
     let key = 'rs'
@@ -4510,7 +4509,7 @@ function! s:vimim_get_cloud_baidu(keyboard)
     let cloud = 'http://olime.baidu.com/py?rn=0&pn=20&py='
     let input = cloud . a:keyboard
     let output = s:vimim_get_from_http(input)
-    if empty(output) || output =~ '502 Bad Gateway'
+    if empty(output) || output =~ '502 bad gateway'
         return []
     elseif empty(s:localization)
         let output = iconv(output, "gbk", "utf-8")
