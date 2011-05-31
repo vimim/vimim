@@ -341,7 +341,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let hjkl = '/home/xma/hjkl/'
+    let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud,static'
         let g:vimim_cloud = 'sougou,8,dynamic'
@@ -578,7 +578,7 @@ function! s:vimim_egg_vimimenv()
     let input = s:vimim_chinese('input') . s:colon
     if len(im) > 0 && len(s:ui.frontends) < 2
         let option = input . im
-        call add(eggs, option . im)
+        call add(eggs, option)
     endif
     if s:vimim_cloud > -1
         let cloud = s:vimim_chinese(get(split(s:vimim_cloud,','),0))
@@ -3075,7 +3075,9 @@ function! s:vimim_popupmenu_list(matched_list)
         if cursor_gps < 0.72 && onerow_gps < 0.92
             let start = 1
             let display = 0
+            let widow_height = 24
             if line("w$") - line(".") < height + 2
+            \&& line("w$")- line("w0") > widow_height / 2
                 let start = 0
                 let display = height-1
             endif
