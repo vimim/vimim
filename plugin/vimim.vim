@@ -3075,9 +3075,8 @@ function! s:vimim_popupmenu_list(matched_list)
         if cursor_gps < 0.72 && onerow_gps < 0.92
             let start = 1
             let display = 0
-            let widow_height = 24
             if line("w$") - line(".") < height + 2
-            \&& line("w$")- line("w0") > widow_height / 2
+            \&& line("w$") - line("w0") > &lines - height - 2
                 let start = 0
                 let display = height-1
             endif
