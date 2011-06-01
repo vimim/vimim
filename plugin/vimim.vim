@@ -345,8 +345,9 @@ function! s:vimim_initialize_debug()
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud.static'
         let g:vimim_cloud = 'sogou.8.dynamic'
-        let g:vimim_cloud = 'google'
         let g:vimim_cloud = 'qq.wubi.fanti'
+        let g:vimim_cloud = 'qq.shuangpin.abc.dynamic'
+        let g:vimim_cloud = 'google'
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -2745,8 +2746,21 @@ function! s:vimim_statusline()
         endif
         return s:vimim_get_chinese_im()
     endif
+    let shuangpin = s:vimim_chinese('shuangpin')
     if s:vimim_cloud =~ 'wubi'
         let s:ui.statusline .= s:vimim_chinese('wubi')
+    elseif s:vimim_cloud =~ 'shuangpin.abc'
+        let s:ui.statusline .= s:vimim_chinese('abc')
+    elseif s:vimim_cloud =~ 'shuangpin.ms'
+        let s:ui.statusline .= s:vimim_chinese('ms') . shuangpin
+    elseif s:vimim_cloud =~ 'shuangpin.plusplus'
+        let s:ui.statusline .= s:vimim_chinese('plusplus') . shuangpin
+    elseif s:vimim_cloud =~ 'shuangpin.purple'
+        let s:ui.statusline .= s:vimim_chinese('purple') . shuangpin
+    elseif s:vimim_cloud =~ 'shuangpin.flypy'
+        let s:ui.statusline .= s:vimim_chinese('flypy') . shuangpin
+    elseif s:vimim_cloud =~ 'shuangpin.nature'
+        let s:ui.statusline .= s:vimim_chinese('nature') . shuangpin
     endif
     if s:ui.im ==# 'mycloud'
         if !empty(s:cloud_mycloud_plugin)
@@ -4455,15 +4469,33 @@ function! s:vimim_get_cloud_qq(keyboard)
     if len(s:cloud_key_qq) != 32
         return []
     endif
+    let im = 0
+    if s:vimim_cloud =~ 'shuangpin.abc'
+        let im = 121
+    elseif s:vimim_cloud =~ 'shuangpin.ms'
+        let im = 122
+    elseif s:vimim_cloud =~ 'shuangpin.plusplus'
+        let im = 123
+    elseif s:vimim_cloud =~ 'shuangpin.purple'
+        let im = 124
+    elseif s:vimim_cloud =~ 'shuangpin.flypy'
+        let im = 125
+    elseif s:vimim_cloud =~ 'shuangpin.nature'
+        let im = 126
+    endif
     let input  = 'http://ime.qq.com/fcgi-bin/'
     if s:vimim_cloud =~ 'wubi'
         let input .= 'gwb'
     else
         let input .= 'getword'
     endif
-    let jf = s:vimim_cloud =~ 'fanti' ? 1 : 0
     let input .= '?key=' . s:cloud_key_qq
-    let input .= '&jf=' . jf
+    if s:vimim_cloud =~ 'fanti'
+        let input .= '&jf=1' 
+    endif
+    if im > 0
+        let input .= '&im=' . im
+    endif
     let input .= '&q=' . a:keyboard
     let output = s:vimim_get_from_http(input)
     if empty(output) || output =~ '502 bad gateway'
