@@ -264,6 +264,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_custom_menu")
+    call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_onekey_is_tab")
     call add(G, "g:vimim_toggle_list")
@@ -279,7 +280,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_enter_for_seamless")
     call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_search_next")
     " -----------------------------------
@@ -293,10 +293,8 @@ function! s:vimim_initialize_global()
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
     endif
-    if s:vimim_custom_label > 0 && s:vimim_custom_label < 5
+    if s:vimim_custom_label > 0 
         let s:vimim_custom_label = 5
-    elseif s:vimim_custom_label > 9
-        let s:vimim_custom_label = 9
     endif
     if s:vimim_cloud > -1
         if empty(s:vimim_cloud)
@@ -348,7 +346,6 @@ function! s:vimim_initialize_debug()
         let g:vimim_cloud = 'qq.wubi.fanti'
         let g:vimim_cloud = 'qq.shuangpin.abc.dynamic'
         let g:vimim_cloud = 'google'
-        let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
@@ -3085,7 +3082,10 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     let height = s:vimim_custom_label
     if s:show_me_not < 1 && height > 0 && len(popupmenu_list) > 1
-        let one_list = popupmenu_list_one_row[0 : height-1]
+        let one_list = popupmenu_list_one_row
+        if len(one_list) > height
+            let one_list = popupmenu_list_one_row[0 : height-1]
+        endif
         let cursor_gps = 1.0 * (virtcol(".") % &columns) / &columns
         let onerow_gps = 1.0 * len(join(one_list)) / &columns
         if cursor_gps < 0.72 && onerow_gps < 0.92
@@ -4494,6 +4494,7 @@ function! s:vimim_get_cloud_qq(keyboard)
         let input .= '&jf=1' 
     endif
     if im > 0
+        let input .= '&lt=2'
         let input .= '&im=' . im
     endif
     let input .= '&q=' . a:keyboard
@@ -4917,8 +4918,8 @@ endfunction
 " ------------------------------
 function! s:vimim_i_setting_on()
 " ------------------------------
-    set omnifunc=VimIM
     set completeopt=menuone
+    set omnifunc=VimIM
     set nolazyredraw
     set noshowmatch
     set smartcase
