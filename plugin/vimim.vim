@@ -346,7 +346,7 @@ function! s:vimim_initialize_debug()
         let g:vimim_cloud = 'mycloud,static'
         let g:vimim_cloud = 'sogou,8,dynamic'
         let g:vimim_cloud = 'google'
-        let g:vimim_cloud = 'qq,wubi,big5'
+        let g:vimim_cloud = 'qq,wubi,fanti'
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -4442,7 +4442,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
 " --------------------------------------
-    " [usage] :let g:vimim_cloud = 'qq,wubi,big5,dynamic'
+    " [usage] :let g:vimim_cloud = 'qq,wubi,fanti,dynamic'
     " [url]   http://py.qq.com/web
     if empty(s:cloud_key_qq)
         let key_qq  = 'http://ime.qq.com/fcgi-bin/getkey'
@@ -4461,7 +4461,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     else
         let input .= 'getword'
     endif
-    let jf = s:vimim_cloud =~ 'big5' ? 1 : 0
+    let jf = s:vimim_cloud =~ 'fanti' ? 1 : 0
     let input .= '?key=' . s:cloud_key_qq
     let input .= '&jf=' . jf
     let input .= '&q=' . a:keyboard
