@@ -1761,6 +1761,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['jidian']      = ['极点','極點']
     let s:chinese['haifeng']     = ['海峰','海峰']
     let s:chinese['shuangpin']   = ['双拼','雙拼']
+    let s:chinese['mixture']     = ['混合']
     let s:chinese['abc']         = ['智能双打','智能雙打']
     let s:chinese['ms']          = ['微软','微軟']
     let s:chinese['nature']      = ['自然码','自然碼']
@@ -2742,33 +2743,36 @@ function! s:vimim_statusline()
         endif
         return s:vimim_get_chinese_im()
     endif
-    let shuangpin = s:vimim_chinese('shuangpin')
     if len(s:backend.datafile) > 1 || len(s:backend.datafile) > 1
-        " no statusline for cloud if local datafile is found
+        if !empty(s:vimim_shuangpin)
+            let s:ui.statusline .= s:space
+            let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
+        endif
+        " no statusline for cloud if any local datafile is found
     elseif s:vimim_cloud =~ 'wubi'
         let s:ui.statusline .= s:vimim_chinese('wubi')
-    elseif s:vimim_cloud =~ 'shuangpin.abc'
-        let s:ui.statusline .= s:vimim_chinese('abc')
-    elseif s:vimim_cloud =~ 'shuangpin.ms'
-        let s:ui.statusline .= s:vimim_chinese('ms') . shuangpin
-    elseif s:vimim_cloud =~ 'shuangpin.plusplus'
-        let s:ui.statusline .= s:vimim_chinese('plusplus') . shuangpin
-    elseif s:vimim_cloud =~ 'shuangpin.purple'
-        let s:ui.statusline .= s:vimim_chinese('purple') . shuangpin
-    elseif s:vimim_cloud =~ 'shuangpin.flypy'
-        let s:ui.statusline .= s:vimim_chinese('flypy') . shuangpin
-    elseif s:vimim_cloud =~ 'shuangpin.nature'
-        let s:ui.statusline .= s:vimim_chinese('nature') . shuangpin
-    endif
-    if s:ui.im ==# 'mycloud'
-        if !empty(s:cloud_mycloud_plugin)
-            let __getname = s:backend.cloud.mycloud.directory
-            let s:ui.statusline .= s:space . __getname
+    elseif s:vimim_cloud =~ 'shuangpin\|mixture'
+        let shuangpin = s:vimim_chinese('shuangpin')
+        if s:vimim_cloud =~ 'mixture'
+            let shuangpin = s:vimim_chinese('mixture')
+        endif
+        if s:vimim_cloud =~ 'abc'
+            let s:ui.statusline .= s:vimim_chinese('abc')
+        elseif s:vimim_cloud =~ 'ms'
+            let s:ui.statusline .= s:vimim_chinese('ms').shuangpin
+        elseif s:vimim_cloud =~ 'plusplus'
+            let s:ui.statusline .= s:vimim_chinese('plusplus').shuangpin
+        elseif s:vimim_cloud =~ 'purple'
+            let s:ui.statusline .= s:vimim_chinese('purple').shuangpin
+        elseif s:vimim_cloud =~ 'flypy'
+            let s:ui.statusline .= s:vimim_chinese('flypy').shuangpin
+        elseif s:vimim_cloud =~ 'nature'
+            let s:ui.statusline .= s:vimim_chinese('nature').shuangpin
         endif
     endif
-    if !empty(s:vimim_shuangpin)
-        let s:ui.statusline .= s:space
-        let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
+    if s:ui.im ==# 'mycloud' && !empty(s:cloud_mycloud_plugin)
+        let __getname = s:backend.cloud.mycloud.directory
+        let s:ui.statusline .= s:space . __getname
     endif
     return s:vimim_get_chinese_im()
 endfunction
@@ -4470,20 +4474,6 @@ function! s:vimim_get_cloud_qq(keyboard)
     if len(s:cloud_key_qq) != 32
         return []
     endif
-    let im = 0
-    if s:vimim_cloud =~ 'shuangpin.abc'
-        let im = 121
-    elseif s:vimim_cloud =~ 'shuangpin.ms'
-        let im = 122
-    elseif s:vimim_cloud =~ 'shuangpin.plusplus'
-        let im = 123
-    elseif s:vimim_cloud =~ 'shuangpin.purple'
-        let im = 124
-    elseif s:vimim_cloud =~ 'shuangpin.flypy'
-        let im = 125
-    elseif s:vimim_cloud =~ 'shuangpin.nature'
-        let im = 126
-    endif
     let input  = url
     if s:vimim_cloud =~ 'wubi'
         let input .= 'gwb'
@@ -4494,9 +4484,29 @@ function! s:vimim_get_cloud_qq(keyboard)
     if s:vimim_cloud =~ 'fanti'
         let input .= '&jf=1'
     endif
-    if im > 0
-        let input .= '&lt=2'
-        let input .= '&im=' . im
+    if s:vimim_cloud =~ 'shuangpin\|mixture'
+        let md = 2
+        if s:vimim_cloud =~ 'mixture'
+            let md = 3
+        endif
+        if s:vimim_cloud =~ 'abc'
+            let st = 1
+        elseif s:vimim_cloud =~ 'ms'
+            let st = 2
+        elseif s:vimim_cloud =~ 'plusplus'
+            let st = 3
+        elseif s:vimim_cloud =~ 'purple'
+            let st = 4
+        elseif s:vimim_cloud =~ 'flypy'
+            let st = 5
+        elseif s:vimim_cloud =~ 'nature'
+            let st = 6
+        endif
+        let input .= '&md=' . md
+        let input .= '&st=' . st
+    endif
+    if s:vimim_cloud =~ 'fuzzy'
+        let input .= '&mh=1'
     endif
     let input .= '&q=' . a:keyboard
     let output = s:vimim_get_from_http(input)
