@@ -345,8 +345,8 @@ function! s:vimim_initialize_debug()
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud,static'
         let g:vimim_cloud = 'sogou,8,dynamic'
-        let g:vimim_cloud = 'qq,wubi,big5'
         let g:vimim_cloud = 'google'
+        let g:vimim_cloud = 'qq,wubi,big5'
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -583,8 +583,7 @@ function! s:vimim_egg_vimimenv()
     endif
     if s:vimim_cloud > -1
         let cloud = s:vimim_chinese(get(split(s:vimim_cloud,','),0))
-        let option  = input . s:vimim_chinese('cloud') . input
-        let option .=  cloud . s:space
+        let option  = input .  cloud . s:vimim_chinese('cloud') . input
         let option .= ":let g:vimim_cloud='" . s:vimim_cloud . "'"
         call add(eggs, option)
     endif
@@ -1784,7 +1783,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['sogou']       = ['搜狗']
     let s:chinese['google']      = ['谷歌']
     let s:chinese['baidu']       = ['百度']
-    let s:chinese['qq']          = ['腾讯QQ']
+    let s:chinese['qq']          = ['QQ']
 endfunction
 
 " ----------------------------------------
@@ -2746,8 +2745,10 @@ function! s:vimim_statusline()
         endif
         return s:vimim_get_chinese_im()
     endif
-    let cloud = s:vimim_chinese(get(split(s:vimim_cloud,','),0))
-    if cloud ==# 'mycloud' && s:ui.im ==# 'mycloud'
+    if s:vimim_cloud =~ 'wubi'
+        let s:ui.statusline .= s:vimim_chinese('wubi')
+    endif
+    if s:ui.im ==# 'mycloud'
         if !empty(s:cloud_mycloud_plugin)
             let __getname = s:backend.cloud.mycloud.directory
             let s:ui.statusline .= s:space . __getname
@@ -4181,7 +4182,9 @@ function! s:vimim_scan_backend_cloud()
     if empty(s:backend.datafile) && empty(s:backend.directory)
         call s:vimim_set_mycloud(0)
         if empty(s:cloud_mycloud_plugin)
-            let s:vimim_cloud .= ',dynamic'
+            if s:vimim_cloud !~ 'dynamic'
+                let s:vimim_cloud .= ',dynamic'
+            endif
             let cloud = get(split(s:vimim_cloud,','),0)
             call s:vimim_set_cloud(cloud)
         endif
@@ -4439,7 +4442,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
 " --------------------------------------
-    " [usage] :let g:vimim_cloud = 'qq'
+    " [usage] :let g:vimim_cloud = 'qq,wubi,big5,dynamic'
     " [url]   http://py.qq.com/web
     if empty(s:cloud_key_qq)
         let key_qq  = 'http://ime.qq.com/fcgi-bin/getkey'
@@ -4452,10 +4455,14 @@ function! s:vimim_get_cloud_qq(keyboard)
     if len(s:cloud_key_qq) != 32
         return []
     endif
+    let input  = 'http://ime.qq.com/fcgi-bin/'
+    if s:vimim_cloud =~ 'wubi'
+        let input .= 'gwb'
+    else
+        let input .= 'getword'
+    endif
     let jf = s:vimim_cloud =~ 'big5' ? 1 : 0
-    let input = 'http://ime.qq.com/fcgi-bin/getword'
     let input .= '?key=' . s:cloud_key_qq
-    let input .= '&im=' . 'wubi'
     let input .= '&jf=' . jf
     let input .= '&q=' . a:keyboard
     let output = s:vimim_get_from_http(input)
