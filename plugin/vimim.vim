@@ -344,8 +344,8 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud,static'
-        let g:vimim_cloud = 'qq,wubi,big5'
         let g:vimim_cloud = 'sogou,8,dynamic'
+        let g:vimim_cloud = 'qq,wubi,big5'
         let g:vimim_cloud = 'google'
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
@@ -4452,11 +4452,10 @@ function! s:vimim_get_cloud_qq(keyboard)
     if len(s:cloud_key_qq) != 32
         return []
     endif
-    let wubi_flag = 1
     let jf = s:vimim_cloud =~ 'big5' ? 1 : 0
     let input = 'http://ime.qq.com/fcgi-bin/getword'
     let input .= '?key=' . s:cloud_key_qq
-    let input .= '&wubi=' . wubi_flag
+    let input .= '&im=' . 'wubi'
     let input .= '&jf=' . jf
     let input .= '&q=' . a:keyboard
     let output = s:vimim_get_from_http(input)
