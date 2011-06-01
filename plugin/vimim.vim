@@ -293,7 +293,7 @@ function! s:vimim_initialize_global()
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
     endif
-    if s:vimim_custom_label > 0 
+    if s:vimim_custom_label > 0
         let s:vimim_custom_label = 5
     endif
     if s:vimim_cloud > -1
@@ -339,7 +339,8 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let hjkl = '/home/xma/hjkl/'
+let g:vimim_cloud = 'qq.wubi'
+    let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud.static'
         let g:vimim_cloud = 'sogou.8.dynamic'
@@ -927,7 +928,7 @@ function! s:vimim_chinesemode_action()
     let action = ""
     if s:chinese_input_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
-        if s:ui.im =~ 'wubi' || s:ui.im =~ 'erbi'
+        if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
             " dynamic auto trigger for wubi
             for char in s:az_list
                 sil!exe 'inoremap <silent> ' . char .
@@ -977,8 +978,7 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_get_seamless(current_positions)
 " -----------------------------------------------
-    if empty(s:seamless_positions)
-    \|| empty(a:current_positions)
+    if empty(s:seamless_positions) || empty(a:current_positions)
         return -1
     endif
     let seamless_bufnum = s:seamless_positions[0]
@@ -2728,7 +2728,7 @@ function! s:vimim_statusline()
         let s:ui.statusline = s:backend[s:ui.root][s:ui.im].chinese
     endif
     let datafile = s:backend[s:ui.root][s:ui.im].name
-    if s:ui.im =~# 'wubi'
+    if s:ui.im =~ 'wubi'
         if datafile =~# 'wubi98'
             let s:ui.statusline .= '98'
         elseif datafile =~# 'wubi2000'
@@ -2744,7 +2744,9 @@ function! s:vimim_statusline()
         return s:vimim_get_chinese_im()
     endif
     let shuangpin = s:vimim_chinese('shuangpin')
-    if s:vimim_cloud =~ 'wubi'
+    if len(s:backend.datafile) > 1 || len(s:backend.datafile) > 1
+        " no statusline for cloud if local datafile is found
+    elseif s:vimim_cloud =~ 'wubi'
         let s:ui.statusline .= s:vimim_chinese('wubi')
     elseif s:vimim_cloud =~ 'shuangpin.abc'
         let s:ui.statusline .= s:vimim_chinese('abc')
@@ -3407,8 +3409,7 @@ let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if empty(s:vimim_shuangpin)
-    \|| !empty(s:shuangpin_table)
+    if empty(s:vimim_shuangpin) || !empty(s:shuangpin_table)
         return
     endif
     let s:vimim_imode_pinyin = 0
@@ -4491,7 +4492,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     endif
     let input .= '?key=' . s:cloud_key_qq
     if s:vimim_cloud =~ 'fanti'
-        let input .= '&jf=1' 
+        let input .= '&jf=1'
     endif
     if im > 0
         let input .= '&lt=2'
@@ -5239,7 +5240,7 @@ else
     endif
 
     " [wubi] support auto insert for every 4 input
-    if s:ui.im == 'wubi' || s:ui.im == 'erbi'
+    if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
         let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
         if s:ui.im =~ 'erbi' && len(keyboard) == 1
         \&& keyboard =~ "[.,/;]" && has_key(s:punctuations, keyboard)
