@@ -100,7 +100,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    let s:cloud_clouds = ['qq','google','baidu','sogou']
+    let s:cloud_clouds = ['sogou','google','baidu','qq']
     let s:cloud_ready_flag = 0
     let s:cloud_key_qq = 0
     let s:cloud_key_sogou = 0
@@ -340,7 +340,7 @@ endfunction
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------- todo
     let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud,static'
@@ -535,7 +535,7 @@ function! s:vimim_egg_vimimenv()
     let option = s:vimim_chinese('environment') . s:colon . v:lc_time
     call add(eggs, option)
     let im = s:vimim_statusline()
-    let toggle = "i_CTRL-Bslash"
+    let toggle = "i_Ctrl-Bslash"
     let buffer = expand("%:p:t")
     if buffer =~# '.vimim\>'
         let toggle = s:vimim_chinese('auto') . s:space . buffer
@@ -583,7 +583,7 @@ function! s:vimim_egg_vimimenv()
     if s:vimim_cloud > -1
         let cloud = s:vimim_chinese(get(split(s:vimim_cloud,','),0))
         let option  = input . s:vimim_chinese('cloud') . input
-        let option .=  s:space . cloud . s:space
+        let option .=  cloud . s:space
         let option .= ":let g:vimim_cloud='" . s:vimim_cloud . "'"
         call add(eggs, option)
     endif
@@ -4180,7 +4180,7 @@ function! s:vimim_scan_backend_cloud()
     if empty(s:backend.datafile) && empty(s:backend.directory)
         call s:vimim_set_mycloud(0)
         if empty(s:cloud_mycloud_plugin)
-            let s:vimim_cloud .= 'dynamic'
+            let s:vimim_cloud .= ',dynamic'
         endif
     endif
 endfunction
