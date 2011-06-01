@@ -344,8 +344,8 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud,static'
-        let g:vimim_cloud = 'sougou,8,dynamic'
         let g:vimim_cloud = 'qq,wubi,big5'
+        let g:vimim_cloud = 'sogou,8,dynamic'
         let g:vimim_cloud = 'google'
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
