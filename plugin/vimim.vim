@@ -3728,7 +3728,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if s:vimim_debug > 1
+    if s:vimim_debug > 1 || s:vimim_cloud =~ 'dynamic\|static'
         return
     endif
     for im in s:all_vimim_input_methods
@@ -3766,7 +3766,7 @@ function! s:vimim_set_datafile(im, datafile)
     \|| isdirectory(datafile)
         return
     endif
-    if s:vimim_cloud =~ 'dynamic' || s:vimim_cloud =~ 'static'
+    if s:vimim_cloud =~ 'dynamic\|static'
         let cloud = get(split(s:vimim_cloud,'[.]'),0)
         call s:vimim_set_cloud(cloud)
     else
@@ -3919,6 +3919,7 @@ function! s:vimim_get_from_datafile(keyboard, search)
     endif
     let results = []
     let more = s:vimim_more_candidates
+    " http://code.google.com/p/vimim/issues/detail?id=121
     if more > 0
         for i in range(more)
             let matched += i
@@ -4075,6 +4076,9 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
+    if s:vimim_cloud =~ 'dynamic\|static'
+        return
+    endif
     for im in s:all_vimim_input_methods
         let dir = s:vimim_data_directory
         if !empty(dir) && isdirectory(dir)
@@ -4564,7 +4568,6 @@ function! s:vimim_get_cloud_baidu(keyboard)
 " -----------------------------------------
     " [usage] :let g:vimim_cloud = 'baidu'
     " [url]   http://olime.baidu.com/py?rn=0&pn=20&py=fuck
-    " [[["妇产科",4],["fuck",4],["复仇",3]],"fu'c'k"]
     let input  = 'http://olime.baidu.com/py'
     let input .= '?rn=0'
     let input .= '&pn=20'
