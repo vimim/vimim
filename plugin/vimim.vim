@@ -346,7 +346,6 @@ function! s:vimim_initialize_debug()
         let g:vimim_cloud = 'qq.wubi.fanti'
         let g:vimim_cloud = 'qq.shuangpin.abc.dynamic'
         let g:vimim_cloud = 'google'
-        let g:vimim_cloud = 'qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
@@ -4589,6 +4588,9 @@ function! s:vimim_get_cloud_all(keyboard)
         let get_cloud  = "s:vimim_get_cloud_" . cloud . "(keyboard)"
         try
             let outputs = eval(get_cloud)
+            if empty(outputs)
+                continue
+            endif
             let output = substitute(join(outputs[0:8]),'\a','','g')
             let cloud_title = s:vimim_chinese(cloud) . title
             call add(results, s:space)
