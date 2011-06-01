@@ -342,9 +342,9 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud.static'
-        let g:vimim_cloud = 'sogou.8.dynamic'
         let g:vimim_cloud = 'qq.wubi.fanti'
-        let g:vimim_cloud = 'qq.shuangpin.abc.dynamic'
+        let g:vimim_cloud = 'sogou.8.dynamic'
+        let g:vimim_cloud = 'baidu'
         let g:vimim_cloud = 'google'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -2749,13 +2749,12 @@ function! s:vimim_statusline()
             let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
         endif
         " no statusline for cloud if any local datafile is found
+    elseif s:vimim_cloud =~ 'mixture'
+        let s:ui.statusline .= s:vimim_chinese('mixture')
     elseif s:vimim_cloud =~ 'wubi'
         let s:ui.statusline .= s:vimim_chinese('wubi')
-    elseif s:vimim_cloud =~ 'shuangpin\|mixture'
+    elseif s:vimim_cloud =~ 'shuangpin'
         let shuangpin = s:vimim_chinese('shuangpin')
-        if s:vimim_cloud =~ 'mixture'
-            let shuangpin = s:vimim_chinese('mixture')
-        endif
         if s:vimim_cloud =~ 'abc'
             let s:ui.statusline .= s:vimim_chinese('abc')
         elseif s:vimim_cloud =~ 'ms'
@@ -4484,11 +4483,13 @@ function! s:vimim_get_cloud_qq(keyboard)
     if s:vimim_cloud =~ 'fanti'
         let input .= '&jf=1'
     endif
-    if s:vimim_cloud =~ 'shuangpin\|mixture'
+    let md = 0
+    if s:vimim_cloud =~ 'mixture'
+        let md = 3
+    endif
+    if s:vimim_cloud =~ 'shuangpin'
         let md = 2
-        if s:vimim_cloud =~ 'mixture'
-            let md = 3
-        endif
+        let st = 0
         if s:vimim_cloud =~ 'abc'
             let st = 1
         elseif s:vimim_cloud =~ 'ms'
@@ -4502,8 +4503,12 @@ function! s:vimim_get_cloud_qq(keyboard)
         elseif s:vimim_cloud =~ 'nature'
             let st = 6
         endif
+        if st > 0
+            let input .= '&st=' . st
+        endif
+    endif
+    if md > 0
         let input .= '&md=' . md
-        let input .= '&st=' . st
     endif
     if s:vimim_cloud =~ 'fuzzy'
         let input .= '&mh=1'
