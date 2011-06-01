@@ -340,12 +340,12 @@ endfunction
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
-    let hjkl = '/hhome/xma/hjkl/'
+" ----------------------------------
+    let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud,static'
         let g:vimim_cloud = 'sougou,8,dynamic'
-        let g:vimim_cloud = 'qq,wubi,onekey'
+        let g:vimim_cloud = 'qq,wubi,big5'
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -4181,6 +4181,8 @@ function! s:vimim_scan_backend_cloud()
         call s:vimim_set_mycloud(0)
         if empty(s:cloud_mycloud_plugin)
             let s:vimim_cloud .= ',dynamic'
+            let cloud = get(split(s:vimim_cloud,','),0)
+            call s:vimim_set_cloud(cloud)
         endif
     endif
 endfunction
@@ -4450,11 +4452,11 @@ function! s:vimim_get_cloud_qq(keyboard)
         return []
     endif
     let wubi_flag = 1
-    let tradition_chinese_flag = 1
+    let jf = s:vimim_cloud =~ 'big5' ? 1 : 0
     let input = 'http://ime.qq.com/fcgi-bin/getword'
     let input .= '?key=' . s:cloud_key_qq
     let input .= '&wubi=' . wubi_flag
-    let input .= '&jf=' . tradition_chinese_flag
+    let input .= '&jf=' . jf
     let input .= '&q=' . a:keyboard
     let output = s:vimim_get_from_http(input)
     if empty(output) || output =~ '502 bad gateway'
