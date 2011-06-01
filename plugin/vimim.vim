@@ -346,6 +346,7 @@ function! s:vimim_initialize_debug()
         let g:vimim_cloud = 'mycloud,static'
         let g:vimim_cloud = 'sougou,8,dynamic'
         let g:vimim_cloud = 'qq,wubi,big5'
+        let g:vimim_cloud = 'google'
         let g:vimim_custom_label = 0
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -4486,24 +4487,20 @@ function! s:vimim_get_cloud_google(keyboard)
     let input .= '&langpair=en|zh'
     let input .= '&text=' . a:keyboard
     let output = s:vimim_get_from_http(input)
-    let start  = match(output, '[', 2)
-    let end = match(output, ']', 0)
-    if start > 0 && end > 0
-        " [ {"ew":"fuck","hws": ["\u5987\u4EA7\u79D1","\u8D74"]  },]
-        let output = strpart(output, start+3, end-start-3)
-    else
+    let output = substitute(output,'\n','','g')
+    let output_list = eval(output)
+    if type(output_list) != type([])
         return []
     endif
+    let key = 'hws'
     let matched_list = []
-    let output_list = split(output, '","')
-    for item in output_list
-        let chinese = ''
-        for hex in split(item, "\u")
-            let ddddd = str2nr(hex, 16)
-            let chinese .= nr2char(ddddd)
-        endfor
-        call add(matched_list, chinese)
-    endfor
+    let output_hash = get(output_list,0)
+    if type(output_hash) == type({}) && has_key(output_hash, key)
+        let matched_list = output_hash[key]
+        if s:localization > 0
+            let matched_list = s:vimim_i18n_read_list(matched_list)
+        endif
+    endif
     return matched_list
 endfunction
 
