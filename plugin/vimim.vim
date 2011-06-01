@@ -339,14 +339,14 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-let g:vimim_cloud = 'qq.wubi'
-    let hjkl = '/hhome/xma/hjkl/'
+    let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud.static'
         let g:vimim_cloud = 'sogou.8.dynamic'
         let g:vimim_cloud = 'qq.wubi.fanti'
         let g:vimim_cloud = 'qq.shuangpin.abc.dynamic'
         let g:vimim_cloud = 'google'
+        let g:vimim_cloud = 'qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_onekey_hit_and_run = 0
@@ -4459,8 +4459,9 @@ function! s:vimim_get_cloud_qq(keyboard)
 " --------------------------------------
     " [usage] :let g:vimim_cloud = 'qq.wubi.fanti.dynamic'
     " [url]   http://py.qq.com/web
+    let url = 'http://ime.qq.com/fcgi-bin/'
     if empty(s:cloud_key_qq)
-        let key_qq  = 'http://ime.qq.com/fcgi-bin/getkey'
+        let key_qq  = url . 'getkey'
         let output = s:vimim_get_from_http(key_qq)
         if empty(output) || output =~ '502 bad gateway'
             return []
@@ -4484,7 +4485,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     elseif s:vimim_cloud =~ 'shuangpin.nature'
         let im = 126
     endif
-    let input  = 'http://ime.qq.com/fcgi-bin/'
+    let input  = url
     if s:vimim_cloud =~ 'wubi'
         let input .= 'gwb'
     else
