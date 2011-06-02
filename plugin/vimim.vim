@@ -4609,11 +4609,13 @@ function! s:vimim_get_cloud_all(keyboard)
             if empty(outputs)
                 continue
             endif
-            let output = substitute(join(outputs[0:8]),'\a','','g')
-            let cloud_title = s:vimim_chinese(cloud) . title
             call add(results, s:space)
+            let cloud_title = s:vimim_chinese(cloud) . title
             call add(results, cloud_title)
-            call add(results, output)
+            let outputs = outputs[0:8]
+            let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
+            call map(outputs, filter)
+            call add(results, join(outputs))
         catch
             let results = [cloud . '::' . v:exception]
         endtry
