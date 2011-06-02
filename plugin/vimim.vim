@@ -341,7 +341,6 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
-        let g:vimim_cloud = 'mycloud.static'
         let g:vimim_cloud = 'sogou.8.dynamic'
         let g:vimim_cloud = 'baidu'
         let g:vimim_cloud = 'qq'
@@ -4297,7 +4296,7 @@ function! s:vimim_check_http_executable()
         endif
     endif
     let s:cloud_ready_flag = 1
-""" return s:backend.cloud[a:im]
+    return s:backend.cloud[a:im]
 endfunction
 
 " ------------------------------------
@@ -4742,7 +4741,7 @@ endfunction
 function! s:vimim_get_libvimim()
 " ------------------------------
     let cloud = ""
-    if has("win32")
+    if has("win32") || has("win32unix")
         let cloud = "libvimim.dll"
     elseif has("unix")
         let cloud = "libvimim.so"
@@ -4965,7 +4964,7 @@ function! s:vimim_i_setting_on()
         if s:has_cjk_file > 0
             let &pumheight -= 1
         endif
-       let s:saved_pumheights[1] = &pumheight
+        let s:saved_pumheights[1] = &pumheight
     endif
     if s:vimim_custom_label > 0
         let &pumheight = s:vimim_custom_label
@@ -5229,8 +5228,8 @@ else
         let input = keyboard[0:-5]
         let results = s:vimim_get_cloud_all(input)
         if !empty(len(results))
-             let s:show_me_not = 1
-             return s:vimim_popupmenu_list(results)
+            let s:show_me_not = 1
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
