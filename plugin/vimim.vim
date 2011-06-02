@@ -342,9 +342,9 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'mycloud.static'
-        let g:vimim_cloud = 'qq.wubi.fanti'
         let g:vimim_cloud = 'sogou.8.dynamic'
         let g:vimim_cloud = 'baidu'
+        let g:vimim_cloud = 'qq'
         let g:vimim_cloud = 'google'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -4598,27 +4598,34 @@ endfunction
 " ---------------------------------------
 function! s:vimim_get_cloud_all(keyboard)
 " ---------------------------------------
-    let results = []
     let keyboard = a:keyboard
     let title  = s:vimim_chinese('cloud') . s:vimim_chinese('input')
     let title .= s:space . keyboard
+    let results = []
     for cloud in s:cloud_clouds
+        let outputs = []
+        let start = localtime()
         let get_cloud  = "s:vimim_get_cloud_" . cloud . "(keyboard)"
         try
             let outputs = eval(get_cloud)
-            if empty(outputs)
-                continue
-            endif
-            call add(results, s:space)
-            let cloud_title = s:vimim_chinese(cloud) . title
-            call add(results, cloud_title)
-            let outputs = outputs[0:8]
-            let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
-            call map(outputs, filter)
-            call add(results, join(outputs))
         catch
             let results = [cloud . '::' . v:exception]
         endtry
+        if empty(outputs)
+            continue
+        endif
+        let end = localtime()
+        call add(results, s:space)
+        let cloud_title = s:vimim_chinese(cloud) . title
+        let duration = end - start
+        if duration > 0
+            let cloud_title .= s:space . string(duration)
+        endif
+        call add(results, cloud_title)
+        let outputs = outputs[0:8]
+        let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
+        call map(outputs, filter)
+        call add(results, join(outputs))
     endfor
     return results
 endfunction
@@ -4626,8 +4633,8 @@ endfunction
 " ---------------------------------
 function! s:vimim_egg_vimimclouds()
 " ---------------------------------
-    let cloud = 'woyouyigemeng'
-    let eggs = s:vimim_get_cloud_all(cloud)
+    let input = 'woyouyigemeng'
+    let eggs = s:vimim_get_cloud_all(input)
     return eggs
 endfunction
 
@@ -5213,7 +5220,8 @@ else
     " [clouds] extend vimimclouds egg: xxx''''<ctrl+6>
     let magic_tail = keyboard[-4:-1]
     if s:chinese_input_mode =~ 'onekey' && magic_tail ==# "''''"
-        let results = s:vimim_get_cloud_all(keyboard[0:-5])
+        let input = keyboard[0:-5]
+        let results = s:vimim_get_cloud_all(input)
         if !empty(len(results))
              let s:show_me_not = 1
              return s:vimim_popupmenu_list(results)
