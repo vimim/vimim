@@ -4401,7 +4401,12 @@ function! s:vimim_get_from_http(input)
     let output = 0
     try
         if s:cloud_libcall > 0
+            let start = localtime()
             let output = libcall(s:cloud_executable, "do_geturl", input)
+            "[todo] the first time takes long time, upto 12 seconds
+            "s:cloud_executable => C:/home/xma/vim/vimfiles/plugin/libvimim
+            let end = localtime()
+            call add(g:vimim, "[libcall]".input."=".string(end-start))
         else
             let output = system(s:cloud_executable . '"'.input.'"')
         endif
