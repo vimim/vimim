@@ -4742,7 +4742,7 @@ endfunction
 function! s:vimim_get_libvimim()
 " ------------------------------
     let cloud = ""
-    if has("win32") || has("win32unix")
+    if has("win32")
         let cloud = "libvimim.dll"
     elseif has("unix")
         let cloud = "libvimim.so"
