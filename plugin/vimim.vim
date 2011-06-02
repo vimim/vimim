@@ -4225,7 +4225,7 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_set_cloud_if_http_executable(im)
 " ------------------------------------------------
-    call s:vimim_check_http_executable()
+    let s:cloud_ready_flag = s:vimim_check_http_executable()
     if s:cloud_ready_flag < 1
         return 0
     endif
@@ -4278,11 +4278,10 @@ function! s:vimim_check_http_executable()
         if executable('curl')
             let s:cloud_executable = "curl -s "
         else
-            return {}
+            return 0
         endif
     endif
-    let s:cloud_ready_flag = 1
-    return s:backend.cloud[a:im]
+    return 1
 endfunction
 
 " ------------------------------------
@@ -4378,7 +4377,7 @@ function! s:vimim_get_from_http(input)
 " ------------------------------------
     if s:cloud_ready_flag < 1
         let cloud = get(split(s:vimim_cloud,'[.]'),0)
-        call s:vimim_check_http_executable()
+        let s:cloud_ready_flag = s:vimim_check_http_executable()
         if s:cloud_ready_flag < 1
             return 0
         endif
@@ -4862,7 +4861,7 @@ function! s:vimim_check_mycloud_plugin_url()
             endtry
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
-        call s:vimim_check_http_executable()
+        let s:cloud_ready_flag = s:vimim_check_http_executable()
         if s:cloud_ready_flag < 1
             return 0
         endif
