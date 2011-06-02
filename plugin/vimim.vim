@@ -4602,7 +4602,13 @@ function! s:vimim_get_cloud_all(keyboard)
     let title  = s:vimim_chinese('cloud') . s:vimim_chinese('input')
     let title .= s:space . keyboard
     let results = []
-    for cloud in s:cloud_clouds
+    let cloud_clouds = []
+    let len = len(s:cloud_clouds)
+    let random = localtime() % len
+    for i in range(len)
+        call add(cloud_clouds, get(s:cloud_clouds, (random+i)%4))
+    endfor
+    for cloud in cloud_clouds
         let outputs = []
         let start = localtime()
         let get_cloud  = "s:vimim_get_cloud_" . cloud . "(keyboard)"
