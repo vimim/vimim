@@ -4288,9 +4288,6 @@ endfunction
 function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
-    if keyboard =~ '\d' || s:chinese_input_mode !~ 'onekey'
-        return []
-    endif
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
     if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
@@ -4312,6 +4309,8 @@ function! s:vimim_magic_tail(keyboard)
         let cloud_ready = s:vimim_set_cloud_if_http_executable(cloud)
         if empty(cloud_ready)
             return []
+        else
+            let s:onekey_nonstop_cloud = 1
         endif
         call add(keyboards, 1)
     endif
@@ -4330,17 +4329,14 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     let do_cloud = get(a:clouds, 1)
     if do_cloud > 0
         return 1
-    endif
-    if keyboard =~ "[^a-z]"
+    elseif keyboard =~ "[^a-z]"
         return 0
     endif
-    if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 1
-        return 0
-    endif
-    if s:vimim_cloud =~ 'dynamic' || s:vimim_cloud =~ 'static'
-        return 1
-    endif
-    if get(a:clouds, 1) > 0
+    if s:chinese_input_mode =~ 'onekey' 
+        if s:has_cjk_file > 1
+            return 0
+        endif
+    else
         return 1
     endif
     if s:chinese_input_mode !~ 'dynamic'
@@ -5014,6 +5010,7 @@ endfunction
 " ---------------------------------------
 function! s:vimim_reset_before_anything()
 " ---------------------------------------
+    let s:onekey_nonstop_cloud = 0
     let s:has_pumvisible = 0
     let s:popupmenu_list = []
     let s:keyboard_list  = []
@@ -5249,9 +5246,11 @@ else
     endif
 
     " [cloud] magic trailing apostrophe to control cloud
-    let clouds = s:vimim_magic_tail(keyboard)
-    if !empty(len(clouds))
-        let keyboard = get(clouds, 0)
+    if s:chinese_input_mode =~ 'onekey' && keyboard !~ '\d'
+        let clouds = s:vimim_magic_tail(keyboard)
+        if !empty(len(clouds))
+            let keyboard = get(clouds, 0)
+        endif
     endif
 
     " [shuangpin] support 6 major shuangpin
@@ -5262,7 +5261,7 @@ else
 
     " [cloud] to make cloud come true for woyouyigemeng
     let force = s:vimim_to_cloud_or_not(keyboard, clouds)
-    if force > 0
+    if force > 0 || s:onekey_nonstop_cloud > 0
         let results = s:vimim_get_cloud(keyboard)
         if !empty(len(results))
             let s:keyboard_list = [keyboard]
