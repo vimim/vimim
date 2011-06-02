@@ -105,7 +105,6 @@ function! s:vimim_initialize_session()
     let s:cloud_key_qq = 0
     let s:cloud_key_sogou = 0
     let s:cloud_mycloud_plugin = 0
-    let s:cloud_libcall = 0
     let s:cloud_executable = 0
     let s:seamless_positions = []
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
@@ -270,7 +269,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_cloud")
-    call add(G, "g:vimim_cloud_mycloud")
+    call add(G, "g:vimim_mycloud")
     " -----------------------------------
     let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
@@ -578,7 +577,7 @@ function! s:vimim_egg_vimimenv()
         let option = input . im
         call add(eggs, option)
     endif
-    if s:vimim_cloud > -1
+    if len(s:vimim_cloud) > 1
         let cloud = s:vimim_chinese(get(split(s:vimim_cloud,'[.]'),0))
         let option  = input .  cloud . s:vimim_chinese('cloud') . input
         let option .= ":let g:vimim_cloud='" . s:vimim_cloud . "'"
@@ -4041,11 +4040,8 @@ function! s:vimim_scan_current_buffer()
     if position > -1
         let s:vimim_shuangpin = buffers[position][len(shuangpin) :]
     endif
-    if buffer =~# 'mycloud'
-        return s:vimim_set_mycloud(1)
-    endif
     for im in s:cloud_clouds
-        if buffer =~# im && s:vimim_cloud > -1
+        if buffer =~# im
             return s:vimim_set_cloud(im)
         endif
     endfor
@@ -4200,7 +4196,7 @@ let s:VimIM += [" ====  backend clouds   ==== {{{"]
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
     if empty(s:backend.datafile) && empty(s:backend.directory)
-        call s:vimim_set_mycloud(0)
+        call s:vimim_set_mycloud()
         if empty(s:cloud_mycloud_plugin)
             if s:vimim_cloud !~ 'dynamic'
                 let s:vimim_cloud .= '.dynamic'
@@ -4214,42 +4210,33 @@ endfunction
 " -----------------------------
 function! s:vimim_set_cloud(im)
 " -----------------------------
-    let im = a:im
-    if im =~ 'mycloud'
-    "   try to add mycloud to the cloud family: s:cloud_clouds
-    "   call s:vimim_set_mycloud(0)
-    endif
-    let cloud = s:vimim_set_cloud_if_www_executable(im)
+    let cloud = s:vimim_set_cloud_if_http_executable(a:im)
     if empty(cloud)
         let s:backend.cloud = {}
     else
         let s:cloud_mycloud_plugin = 0
         let s:ui.root = 'cloud'
-        let s:ui.im = im
+        let s:ui.im = a:im
         let frontends = [s:ui.root, s:ui.im]
         call insert(s:ui.frontends, frontends)
     endif
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_set_cloud_if_www_executable(im)
-" -----------------------------------------------
-    if s:vimim_cloud < 0
+" ------------------------------------------------
+function! s:vimim_set_cloud_if_http_executable(im)
+" ------------------------------------------------
+    call s:vimim_check_http_executable()
+    if s:cloud_ready_flag < 1
         return 0
     endif
     let im = a:im
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
-    call s:vimim_check_http_executable()
-    if s:cloud_ready_flag < 1
-        return 0
-    else
-        let s:backend.cloud[im].root = 'cloud'
-        let s:backend.cloud[im].im = im
-        let s:backend.cloud[im].keycode = s:im_keycode[im]
-        let s:backend.cloud[im].chinese = s:vimim_chinese(im)
-        let s:backend.cloud[im].name = s:vimim_chinese(im)
-        return 1
-    endif
+    let s:backend.cloud[im].root = 'cloud'
+    let s:backend.cloud[im].im = im
+    let s:backend.cloud[im].keycode = s:im_keycode[im]
+    let s:backend.cloud[im].chinese = s:vimim_chinese(im)
+    let s:backend.cloud[im].name = s:vimim_chinese(im)
+    return 1
 endfunction
 
 " ---------------------------------------
@@ -4270,7 +4257,6 @@ function! s:vimim_check_http_executable()
         let ret = libcall(cloud, "do_geturl", "__isvalid")
         if ret ==# "True"
             let s:cloud_executable = cloud
-            let s:cloud_libcall = 1
         endif
     endif
     " step 2 of 3: try to find wget
@@ -4324,7 +4310,7 @@ function! s:vimim_magic_tail(keyboard)
     elseif magic_tail ==# "'"
         " trailing apostrophe => forced-cloud
         let cloud = get(split(s:vimim_cloud,'[.]'),0)
-        let cloud_ready = s:vimim_set_cloud_if_www_executable(cloud)
+        let cloud_ready = s:vimim_set_cloud_if_http_executable(cloud)
         if empty(cloud_ready)
             return []
         endif
@@ -4400,7 +4386,7 @@ function! s:vimim_get_from_http(input)
     let input = a:input
     let output = 0
     try
-        if s:cloud_libcall > 0
+        if s:cloud_executable =~ 'libvimim'
             let start = localtime()
             let output = libcall(s:cloud_executable, "do_geturl", input)
             "[todo] the first time takes long time, upto 12 seconds
@@ -4653,27 +4639,32 @@ let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
 " Thanks to Pan Shizhu for providing all mycloud codes:
 
-" --------------------------------
-function! s:vimim_set_mycloud(url)
-" --------------------------------
-    if !empty(a:url)
-        " [auto mycloud test] vim mycloud.vimim
-        let s:vimim_cloud_mycloud = "http://pim-cloud.appspot.com/qp/"
-    endif
-    let cloud_ready = s:vimim_set_cloud_if_www_executable('mycloud')
-    if !empty(cloud_ready)
-        let mycloud = s:vimim_check_mycloud_availability()
-        if empty(mycloud)
-            let s:backend.cloud = {}
-            return {}
-        else
-            let s:vimim_shuangpin = 0
-            let s:cloud_mycloud_plugin = mycloud
-            let s:ui.root = 'cloud'
-            let s:ui.im = 'mycloud'
-            let frontends = [s:ui.root, s:ui.im]
-            let s:ui.frontends = [frontends]
-        endif
+" -----------------------------
+function! s:vimim_set_mycloud()
+" -----------------------------
+    let im = 'mycloud'
+    let s:backend.cloud[im] = s:vimim_one_backend_hash()
+    let start = localtime()
+    let mycloud = s:vimim_check_mycloud_availability()
+    let end = localtime()
+    "[todo] check how long it takes to initialize mycloud
+    call add(g:vimim, "vimim_set_mycloud=".string(end-start))
+    if empty(mycloud)
+        let s:cloud_mycloud_plugin = 0
+        let s:backend.cloud = {}
+        return {}
+    else
+        let root = 'cloud'
+        let s:backend.cloud[im].root = root
+        let s:backend.cloud[im].im = im
+        let s:backend.cloud[im].chinese = s:vimim_chinese(im)
+        let s:backend.cloud[im].name = s:vimim_chinese(im)
+        let s:ui.im = im
+        let s:ui.root = root
+        let s:ui.frontends = [[s:ui.root, s:ui.im]]
+        let s:vimim_cloud = 0
+        let s:vimim_shuangpin = 0
+        let s:cloud_mycloud_plugin = mycloud
     endif
 endfunction
 
@@ -4681,13 +4672,12 @@ endfunction
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
     let cloud = 0
-    if empty(s:vimim_cloud_mycloud)
+    if empty(s:vimim_mycloud)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
     else
         let cloud = s:vimim_check_mycloud_plugin_url()
     endif
     if empty(cloud)
-        let s:cloud_mycloud_plugin = 0
         return 0
     endif
     let ret = s:vimim_access_mycloud(cloud, "__getname")
@@ -4695,13 +4685,11 @@ function! s:vimim_check_mycloud_availability()
     let ret = s:vimim_access_mycloud(cloud, "__getkeychars")
     let keycode = split(ret, "\t")[0]
     if empty(keycode)
-        let s:cloud_mycloud_plugin = 0
         return 0
-    else
-        let s:backend.cloud.mycloud.directory = directory
-        let s:backend.cloud.mycloud.keycode = s:im_keycode["mycloud"]
-        return cloud
     endif
+    let s:backend.cloud.mycloud.directory = directory
+    let s:backend.cloud.mycloud.keycode = s:im_keycode["mycloud"]
+    return cloud
 endfunction
 
 " ------------------------------------------
@@ -4720,7 +4708,7 @@ function! s:vimim_access_mycloud(cloud, cmd)
         return system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        if s:cloud_libcall
+        if s:cloud_executable =~ 'libvimim'
             let ret = libcall(executable, "do_geturl", a:cloud.input)
         else
             let ret = system(executable . shellescape(a:cloud.input))
@@ -4809,7 +4797,7 @@ endfunction
 function! s:vimim_check_mycloud_plugin_url()
 " ------------------------------------------
     " we do set-and-play on all systems
-    let part = split(s:vimim_cloud_mycloud, ':')
+    let part = split(s:vimim_mycloud, ':')
     let lenpart = len(part)
     if lenpart <= 1
         call s:debugs("invalid_cloud_plugin_url::","")
@@ -4874,12 +4862,15 @@ function! s:vimim_check_mycloud_plugin_url()
             endtry
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
-        let cloud = s:vimim_cloud_mycloud
+        call s:vimim_check_http_executable()
+        if s:cloud_ready_flag < 1
+            return 0
+        endif
         if !empty(s:cloud_executable)
             let s:cloud_plugin_mode = "www"
-            let ret = s:vimim_access_mycloud(cloud, "__isvalid")
+            let ret = s:vimim_access_mycloud(s:vimim_mycloud, "__isvalid")
             if split(ret, "\t")[0] == "True"
-                return cloud
+                return s:vimim_mycloud
             endif
         endif
     else
@@ -4929,7 +4920,7 @@ endfunction
 function! s:vimim_url_xx_to_chinese(xx)
 " -------------------------------------
     let output = a:xx
-    if s:cloud_libcall > 0
+    if s:cloud_executable =~ 'libvimim'
         let output = libcall(s:cloud_executable, "do_unquote", a:xx)
     else
         let output = substitute(a:xx, '%\(\x\x\)',
