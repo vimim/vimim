@@ -2801,12 +2801,16 @@ function! s:vimim_label_on()
     if s:vimim_custom_label < 0
         return
     endif
-    let labels = range(1, 5)
+    let labels = range(1,5)
     if s:vimim_custom_label > 0
         let labels = range(1, s:vimim_custom_label)
         let s:abcd = join(labels, '')
     elseif s:vimim_custom_label < 1
-        let labels = range(1, len(s:abcd))
+        let single_digit = len(s:abcd)
+        if single_digit > 9
+            let single_digit = 9
+        endif
+        let labels = range(1, single_digit)
         let s:abcd = s:abcd[0 : &pumheight-1]
         let abcd_list = split(s:abcd, '\zs')
         if s:chinese_input_mode =~ 'onekey'
@@ -2814,7 +2818,7 @@ function! s:vimim_label_on()
             if s:has_cjk_file > 0
                 let labels = abcd_list
             endif
-            call remove(labels, "'")
+            call remove(labels, match(labels,"'"))
         else
             for _ in abcd_list
                 sil!exe 'iunmap '. _
@@ -4397,7 +4401,7 @@ function! s:vimim_get_from_http(input)
         if s:cloud_executable =~ 'libvimim'
             let start = localtime()
             let output = libcall(s:cloud_executable, "do_geturl", input)
-            "[todo] the first time takes long time, upto 12 seconds
+            "[warning] the first call takes too long, upto 12 seconds
             "s:cloud_executable => C:/home/xma/vim/vimfiles/plugin/libvimim
             let end = localtime()
             call add(g:vimim, "[libcall]".input."=".string(end-start))
@@ -4653,11 +4657,7 @@ function! s:vimim_set_mycloud()
 " -----------------------------
     let im = 'mycloud'
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
-    let start = localtime()
     let mycloud = s:vimim_check_mycloud_availability()
-    let end = localtime()
-    "[todo] check how long it takes to initialize mycloud
-    call add(g:vimim, "vimim_set_mycloud=".string(end-start))
     if empty(mycloud)
         let s:cloud_mycloud_plugin = 0
         let s:backend.cloud = {}
