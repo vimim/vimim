@@ -100,7 +100,6 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    let s:cloud_clouds = ['sogou','google','baidu','qq']
     let s:cloud_ready_flag = 0
     let s:cloud_key_qq = 0
     let s:cloud_key_sogou = 0
@@ -269,6 +268,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_cloud")
+    call add(G, "g:vimim_clouds")
     call add(G, "g:vimim_mycloud")
     " -----------------------------------
     let s:vimimrc = []
@@ -296,8 +296,11 @@ function! s:vimim_initialize_global()
         let s:vimim_custom_label = 5
     endif
     if s:vimim_cloud > -1
+        if empty(s:vimim_clouds)
+            let s:vimim_clouds = 'sogou,google,baidu,qq'
+        endif
         if empty(s:vimim_cloud)
-            let s:vimim_cloud = 'sogou'
+            let s:vimim_cloud = get(split(s:vimim_clouds,','),0)
         endif
         if s:vimim_cloud =~ 'dynamic'
             let s:vimim_chinese_input_mode = 'dynamic'
@@ -340,14 +343,11 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
-        let g:vimim_cloud = 'sogou.8.dynamic'
-        let g:vimim_cloud = 'baidu'
-        let g:vimim_cloud = 'qq'
-        let g:vimim_cloud = 'google'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
-        let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
+        let g:vimim_onekey_hit_and_run = 0
+        let g:vimim_clouds = 'google,sogou,baidu,qq'
         let g:vimim_data_directory = '/home/vimim/pinyin/'
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_debug = 2
@@ -4040,7 +4040,7 @@ function! s:vimim_scan_current_buffer()
     if position > -1
         let s:vimim_shuangpin = buffers[position][len(shuangpin) :]
     endif
-    for im in s:cloud_clouds
+    for im in split(s:vimim_clouds,',')
         if buffer =~# im
             return s:vimim_set_cloud(im)
         endif
@@ -4290,7 +4290,11 @@ function! s:vimim_magic_tail(keyboard)
     let keyboard = a:keyboard
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
-    if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
+    let last_two = keyboard[-2:-1]
+    let last_three = keyboard[-3:-1]
+    if last_two ==# "''"
+        " play with 2nd choice of clouds family
+    elseif magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
         " play with magic trailing char
     else
         return []
@@ -4305,9 +4309,18 @@ function! s:vimim_magic_tail(keyboard)
         call add(keyboards, -1)
     elseif magic_tail ==# "'"
         " trailing apostrophe => forced-cloud
+        let vimim_clouds = split(s:vimim_clouds,',')
+        if last_three ==# repeat("'",3)
+            let s:vimim_cloud = get(vimim_clouds,2)
+            let keyboard = keyboard[:-3]
+        elseif last_two ==# repeat("'",2)
+            let s:vimim_cloud = get(vimim_clouds,1)
+            let keyboard = keyboard[:-2]
+        endif
         let cloud = get(split(s:vimim_cloud,'[.]'),0)
         let cloud_ready = s:vimim_set_cloud_if_http_executable(cloud)
         if empty(cloud_ready)
+            let keyboard = a:keyboard
             return []
         else
             let s:onekey_nonstop_cloud = 1
@@ -4332,7 +4345,7 @@ function! s:vimim_to_cloud_or_not(keyboard, clouds)
     elseif keyboard =~ "[^a-z]"
         return 0
     endif
-    if s:chinese_input_mode =~ 'onekey' 
+    if s:chinese_input_mode =~ 'onekey'
         if s:has_cjk_file > 1
             return 0
         endif
@@ -4552,7 +4565,7 @@ endfunction
 function! s:vimim_get_cloud_baidu(keyboard)
 " -----------------------------------------
     " [usage] :let g:vimim_cloud = 'baidu'
-    " [url]   http://olime.baidu.com/py?rn=0&pn=20&py=fuck
+    " [url]   http://olime.baidu.com/py?rn=0&pn=20&py=mxj
     let input  = 'http://olime.baidu.com/py'
     let input .= '?rn=0'
     let input .= '&pn=20'
@@ -4587,13 +4600,14 @@ function! s:vimim_get_cloud_all(keyboard)
     let title  = s:vimim_chinese('cloud') . s:vimim_chinese('input')
     let title .= s:space . keyboard
     let results = []
-    let cloud_clouds = []
-    let len = len(s:cloud_clouds)
+    let random_clouds = []
+    let vimim_clouds = split(s:vimim_clouds,',')
+    let len = len(vimim_clouds)
     let random = localtime() % len
     for i in range(len)
-        call add(cloud_clouds, get(s:cloud_clouds, (random+i)%4))
+        call add(random_clouds, get(vimim_clouds, (random+i)%4))
     endfor
-    for cloud in cloud_clouds
+    for cloud in random_clouds
         let outputs = []
         let start = localtime()
         let get_cloud  = "s:vimim_get_cloud_" . cloud . "(keyboard)"
@@ -5214,14 +5228,15 @@ else
         return
     endif
 
-    " [clouds] extend vimimclouds egg: xxx''''<ctrl+6>
-    let magic_tail = keyboard[-4:-1]
-    if s:chinese_input_mode =~ 'onekey' && magic_tail ==# "''''"
-        let input = keyboard[0:-5]
-        let results = s:vimim_get_cloud_all(input)
-        if !empty(len(results))
-            let s:show_me_not = 1
-            return s:vimim_popupmenu_list(results)
+    " [clouds] extend vimimclouds egg: fuck''''
+    if s:chinese_input_mode =~ 'onekey'
+        if keyboard[-4:-1] ==# repeat("'",4)
+            let input = keyboard[0:-5]
+            let results = s:vimim_get_cloud_all(input)
+            if !empty(len(results))
+                let s:show_me_not = 1
+                return s:vimim_popupmenu_list(results)
+            endif
         endif
     endif
 
