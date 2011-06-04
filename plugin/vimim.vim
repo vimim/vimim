@@ -102,14 +102,11 @@ endfunction
 " ------------------------------------
 function! s:vimim_initialize_session()
 " ------------------------------------
-    let s:http_executable = 0
-    let s:cloud_key_qq = 0
-    let s:cloud_key_sogou = 0
-    let s:mycloud_plugin = 0
     let s:seamless_positions = []
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
+    let s:options = {}
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     let s:shuangpin_keycode_chinese = {}
@@ -1246,7 +1243,7 @@ function! s:vimim_cache()
             else
                 let &pumheight = 0
                 if s:hjkl_l % 2 < 1
-                    let &pumheight = s:saved_pumheights[1]
+                    let &pumheight = s:options.pumheights[1]
                 endif
             endif
         endif
@@ -4181,6 +4178,9 @@ let s:VimIM += [" ====  backend clouds   ==== {{{"]
 " -----------------------------------
 function! s:vimim_initialize_clouds()
 " -----------------------------------
+    let s:mycloud_plugin = 0
+    let s:http_executable = 0
+    let s:cloud_keys = {'sogou':0,'qq':0}
     if exists("g:vimim_cloud") && g:vimim_cloud < 0
         " cloud is permanently disabled by user
     else
@@ -4365,8 +4365,10 @@ function! s:vimim_do_cloud_or_not(keyboard)
         if s:has_cjk_file > 1
             return 0
         endif
+    else
+        return 1
     endif
-    return 1
+    return 0
 endfunction
 
 " -----------------------------------
@@ -4422,16 +4424,16 @@ function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
     " [usage] :let g:vimim_cloud = 'sogou'
     " [url]   http://pinyin.sogou.com/cloud/
-    if empty(s:cloud_key_sogou)
+    if empty(s:cloud_keys.sogou)
         let key_sogou = 'http://web.pinyin.sogou.com/web_ime/patch.php'
         let output = s:vimim_get_from_http(key_sogou)
         if empty(output)
             return []
         endif
-        let s:cloud_key_sogou = get(split(output, '"'), 1)
+        let s:cloud_keys.sogou = get(split(output, '"'), 1)
     endif
     let input  = 'http://web.pinyin.sogou.com/api/py'
-    let input .= '?key=' . s:cloud_key_sogou
+    let input .= '?key=' . s:cloud_keys.sogou
     let input .= '&query=' . a:keyboard
     let output = s:vimim_get_from_http(input)
     if empty(output) || output =~ '502 bad gateway'
@@ -4470,15 +4472,15 @@ function! s:vimim_get_cloud_qq(keyboard)
     " [usage] :let g:vimim_cloud = 'qq.wubi.fanti.dynamic'
     " [url]   http://py.qq.com/web
     let url = 'http://ime.qq.com/fcgi-bin/'
-    if empty(s:cloud_key_qq)
+    if empty(s:cloud_keys.qq)
         let key_qq  = url . 'getkey'
         let output = s:vimim_get_from_http(key_qq)
         if empty(output) || output =~ '502 bad gateway'
             return []
         endif
-        let s:cloud_key_qq = get(split(output,'"'),3)
+        let s:cloud_keys.qq = get(split(output,'"'),3)
     endif
-    if len(s:cloud_key_qq) != 32
+    if len(s:cloud_keys.qq) != 32
         return []
     endif
     let input  = url
@@ -4487,7 +4489,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     else
         let input .= 'getword'
     endif
-    let input .= '?key=' . s:cloud_key_qq
+    let input .= '?key=' . s:cloud_keys.qq
     if g:vimim_cloud =~ 'fanti'
         let input .= '&jf=1'
     endif
@@ -4897,19 +4899,17 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     if empty(s:mycloud_plugin)
         return []
     endif
-    let cloud = s:mycloud_plugin
     let output = 0
     try
-        let output = s:vimim_access_mycloud(cloud, a:keyboard)
+        let output = s:vimim_access_mycloud(s:mycloud_plugin, a:keyboard)
     catch
-        let output = 0
         call s:debugs('mycloud::',v:exception)
     endtry
     if empty(output)
         return []
     endif
     let menu = []
-    " one line typical output:  春梦 8 4420
+    " one line output:  春梦 8 4420
     for item in split(output, '\n')
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
@@ -4948,15 +4948,15 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 " --------------------------------------
 function! s:vimim_initialize_i_setting()
 " --------------------------------------
-    let s:saved_cpo         = &cpo
-    let s:saved_omnifunc    = &omnifunc
-    let s:saved_completeopt = &completeopt
-    let s:saved_laststatus  = &laststatus
-    let s:saved_statusline  = &statusline
-    let s:saved_lazyredraw  = &lazyredraw
-    let s:saved_showmatch   = &showmatch
-    let s:saved_smartcase   = &smartcase
-    let s:saved_pumheights  = [&pumheight, &pumheight]
+    let s:options.cpo         = &cpo
+    let s:options.omnifunc    = &omnifunc
+    let s:options.completeopt = &completeopt
+    let s:options.laststatus  = &laststatus
+    let s:options.statusline  = &statusline
+    let s:options.lazyredraw  = &lazyredraw
+    let s:options.showmatch   = &showmatch
+    let s:options.smartcase   = &smartcase
+    let s:options.pumheights  = [&pumheight, &pumheight]
 endfunction
 
 " ------------------------------
@@ -4972,7 +4972,7 @@ function! s:vimim_i_setting_on()
         if s:has_cjk_file > 0
             let &pumheight -= 1
         endif
-        let s:saved_pumheights[1] = &pumheight
+        let s:options.pumheights[1] = &pumheight
     endif
     if s:vimim_custom_label > 0
         let &pumheight = s:vimim_custom_label
@@ -4982,15 +4982,15 @@ endfunction
 " -------------------------------
 function! s:vimim_i_setting_off()
 " -------------------------------
-    let &cpo         = s:saved_cpo
-    let &omnifunc    = s:saved_omnifunc
-    let &completeopt = s:saved_completeopt
-    let &laststatus  = s:saved_laststatus
-    let &statusline  = s:saved_statusline
-    let &lazyredraw  = s:saved_lazyredraw
-    let &showmatch   = s:saved_showmatch
-    let &smartcase   = s:saved_smartcase
-    let &pumheight   = get(s:saved_pumheights, 0)
+    let &cpo         = s:options.cpo
+    let &omnifunc    = s:options.omnifunc
+    let &completeopt = s:options.completeopt
+    let &laststatus  = s:options.laststatus
+    let &statusline  = s:options.statusline
+    let &lazyredraw  = s:options.lazyredraw
+    let &showmatch   = s:options.showmatch
+    let &smartcase   = s:options.smartcase
+    let &pumheight   = get(s:options.pumheights, 0)
 endfunction
 
 " -----------------------
@@ -5053,7 +5053,7 @@ function! g:vimim_reset_after_insert()
     let s:pageup_pagedown = 0
     let s:matched_list = []
     if s:vimim_custom_label < 1
-        let &pumheight = s:saved_pumheights[1]
+        let &pumheight = s:options.pumheights[1]
     endif
     return ""
 endfunction
