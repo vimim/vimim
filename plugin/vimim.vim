@@ -4306,96 +4306,82 @@ endfunction
 function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
-    if keyboard =~ '\d' || s:chinese_input_mode !~ 'onekey'
-        return []
-    endif
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
     let last_two = keyboard[-2:-1]
-    let last_three = keyboard[-3:-1]
     if last_two ==# "''"
         " play with 2nd choice of clouds family
     elseif magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
         " play with magic trailing char
     else
-        return []
+        return keyboard
     endif
-    let keyboards = []
     " <dot> triple play in OneKey:
     "   (1) magic trailing dot => forced-non-cloud in cloud
     "   (2) magic trailing dot => forced-cjk-match
     "   (3) as word partition  => match dot by dot
-    if magic_tail ==# "."
-        " trailing dot => forced-non-cloud
-        call add(keyboards, -1)
-    elseif magic_tail ==# "'"
-        " trailing apostrophe => forced-cloud
-        let vimim_clouds = split(g:vimim_clouds,',')
-        if last_three ==# repeat("'",3)
-            let g:vimim_cloud = get(vimim_clouds,2)
-            let keyboard = keyboard[:-3]
-        elseif last_two ==# repeat("'",2)
-            let g:vimim_cloud = get(vimim_clouds,1)
-            let keyboard = keyboard[:-2]
-        endif
-        let cloud = get(split(g:vimim_cloud,'[.]'),0)
-        let cloud_ready = s:vimim_set_cloud_if_http_executable(cloud)
-        if empty(cloud_ready)
-            let keyboard = a:keyboard
-            return []
-        else
-            let s:onekey_nonstop_cloud = 1
-        endif
-        call add(keyboards, 1)
-    endif
     " <apostrophe> double play in OneKey:
     "   (1) magic trailing apostrophe => cloud at will
     "   (2) as word partition  => match apostrophe by apostrophe
-    let keyboard = keyboard[:-2]
-    call insert(keyboards, keyboard)
-    return keyboards
+    if magic_tail ==# "."
+        " trailing dot => forced-non-cloud
+        let s:onekey_nonstop_cloud = 0
+    elseif magic_tail ==# "'"
+        let cloud = get(split(g:vimim_cloud,'[.]'),0)
+        let cloud_ready = s:vimim_set_cloud_if_http_executable(cloud)
+        if cloud_ready > 0
+            let s:onekey_nonstop_cloud = 1
+            " trailing apostrophe => forced-cloud
+            let vimim_clouds = split(g:vimim_clouds,',')
+            let last_three = keyboard[-3:-1]
+            if last_three ==# repeat("'",3)
+                let g:vimim_cloud = get(vimim_clouds,2)
+                let keyboard = keyboard[:-3]
+            elseif last_two ==# repeat("'",2)
+                let g:vimim_cloud = get(vimim_clouds,1)
+                let keyboard = keyboard[:-2]
+            endif
+        endif
+    endif
+    return keyboard
 endfunction
 
-" -------------------------------------------------
-function! s:vimim_to_cloud_or_not(keyboard, clouds)
-" -------------------------------------------------
-    let keyboard = a:keyboard
-    let do_cloud = get(a:clouds, 1)
-    if do_cloud > 0
-        return 1
-    elseif keyboard =~ "[^a-z]"
+" -----------------------------------------
+function! s:vimim_do_cloud_or_not(keyboard)
+" -----------------------------------------
+    if a:keyboard =~ "[^a-z]"
         return 0
+    elseif s:onekey_nonstop_cloud > 0
+        return 1
+    endif
+    if s:chinese_input_mode !~ 'dynamic'
+    \&& s:ui.im == 'pinyin'
+    \&& g:vimim_cloud =~ '\d'
+        " threshold to trigger cloud automatically
+        let pinyins = s:vimim_get_pinyin_from_pinyin(a:keyboard)
+        if len(pinyins) > get(split(g:vimim_cloud,'[.]'),1)
+            return 1
+        endif
     endif
     if s:chinese_input_mode =~ 'onekey'
         if s:has_cjk_file > 1
             return 0
         endif
-    else
-        return 1
     endif
-    if s:chinese_input_mode !~ 'dynamic'
-    \&& s:ui.im == 'pinyin'
-    \&& get(split(g:vimim_cloud,'[.]'),0) == 'sogou'
-        " threshold to trigger cloud automatically
-        let pinyins = s:vimim_get_pinyin_from_pinyin(keyboard)
-        if len(pinyins) > get(split(g:vimim_cloud,'[.]'),1)
-            return 1
-        endif
-    endif
-    return 0
+    return 1
 endfunction
 
 " -----------------------------------
 function! s:vimim_get_cloud(keyboard)
 " -----------------------------------
     if a:keyboard !~ s:valid_key
-    \|| empty(s:frontends)
-    \|| get(s:frontends,0) !~ 'cloud'
         return []
     endif
     let results = []
-    let im = get(s:frontends,1)
-    let cloud = get(split(im,'[.]'),0)
+    let cloud = get(split(g:vimim_cloud,'[.]'),0)
+    if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
+        let cloud = get(s:frontends,1)
+    endif
     let get_cloud  = "s:vimim_get_cloud_" . cloud . "(a:keyboard)"
     try
         let results = eval(get_cloud)
@@ -5281,9 +5267,8 @@ else
     endif
 
     " [cloud] magic trailing apostrophe to control cloud
-    let clouds = s:vimim_magic_tail(keyboard)
-    if !empty(len(clouds))
-        let keyboard = get(clouds, 0)
+    if s:chinese_input_mode =~ 'onekey' && keyboard !~ '\d'
+        let keyboard = s:vimim_magic_tail(keyboard)
     endif
 
     " [shuangpin] support 6 major shuangpin
@@ -5293,8 +5278,7 @@ else
     endif
 
     " [cloud] to make cloud come true for woyouyigemeng
-    let force = s:vimim_to_cloud_or_not(keyboard, clouds)
-    if force > 0 || s:onekey_nonstop_cloud > 0
+    if s:vimim_do_cloud_or_not(keyboard) > 0
         let results = s:vimim_get_cloud(keyboard)
         if !empty(len(results))
             let s:keyboard_list = [keyboard]
