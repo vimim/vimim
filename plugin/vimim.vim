@@ -4365,8 +4365,13 @@ function! s:vimim_do_cloud_or_not(keyboard)
 " -----------------------------------------
     if a:keyboard =~ "[^a-z]"
         return 0
-    elseif s:onekey_nonstop_cloud > 0
+    endif
+    if s:onekey_nonstop_cloud > 0
+    \|| g:vimim_cloud =~ 'dynamic\|static'
         return 1
+    endif
+    if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 1
+        return 0
     endif
     if s:chinese_input_mode !~ 'dynamic'
     \&& s:ui.im == 'pinyin'
@@ -4376,13 +4381,6 @@ function! s:vimim_do_cloud_or_not(keyboard)
         if len(pinyins) > get(split(g:vimim_cloud,'[.]'),1)
             return 1
         endif
-    endif
-    if s:chinese_input_mode =~ 'onekey'
-        if s:has_cjk_file > 1
-            return 0
-        endif
-    else
-        return 1
     endif
     return 0
 endfunction
