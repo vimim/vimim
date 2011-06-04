@@ -87,11 +87,9 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_dictionary_ecdict()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
-    if g:vimim_cloud !~ 'dynamic\|static'
-        sil!call s:vimim_scan_backend_embedded_datafile()
-        sil!call s:vimim_scan_backend_embedded_directory()
-        sil!call s:vimim_scan_current_buffer()
-    endif
+    sil!call s:vimim_scan_backend_embedded_datafile()
+    sil!call s:vimim_scan_backend_embedded_directory()
+    sil!call s:vimim_scan_current_buffer()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_initialize_cjk_file()
@@ -3718,7 +3716,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if s:vimim_debug > 1
+    if !empty(g:vimim_mycloud) || s:vimim_debug > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4009,6 +4007,9 @@ endfunction
 " -------------------------------------
 function! s:vimim_scan_current_buffer()
 " -------------------------------------
+    if !empty(g:vimim_mycloud)
+        return
+    endif
     let buffer = expand("%:p:t")
     if buffer =~ '.vimim\>'
         " start zero configuration showcase
@@ -4057,6 +4058,9 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
+    if !empty(g:vimim_mycloud)
+        return
+    endif
     for im in s:all_vimim_input_methods
         let dir = s:vimim_data_directory
         if !empty(dir) && isdirectory(dir)
@@ -4203,15 +4207,14 @@ endfunction
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
-    if empty(s:backend.datafile) && empty(s:backend.directory)
+    if !empty(g:vimim_mycloud)
         call s:vimim_set_mycloud()
-        if empty(s:mycloud_plugin)
-            if g:vimim_cloud !~ 'dynamic'
-                let g:vimim_cloud .= '.dynamic'
-            endif
-            let cloud = get(split(g:vimim_cloud,'[.]'),0)
-            call s:vimim_set_cloud(cloud)
+    elseif empty(s:backend.datafile) && empty(s:backend.directory)
+        if g:vimim_cloud !~ 'dynamic'
+            let g:vimim_cloud .= '.dynamic'
         endif
+        let cloud = get(split(g:vimim_cloud,'[.]'),0)
+        call s:vimim_set_cloud(cloud)
     endif
 endfunction
 
