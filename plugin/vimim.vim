@@ -103,10 +103,10 @@ endfunction
 function! s:vimim_initialize_session()
 " ------------------------------------
     let s:cloud_ready_flag = 0
+    let s:cloud_executable = 0
     let s:cloud_key_qq = 0
     let s:cloud_key_sogou = 0
     let s:cloud_mycloud_plugin = 0
-    let s:cloud_executable = 0
     let s:seamless_positions = []
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:smart_single_quotes = 1
@@ -4710,29 +4710,31 @@ endfunction
 " ------------------------------------------
 function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
-"  use the same function to access mycloud by libcall() or system()
-    let executable = s:cloud_executable
+" use the same function to access mycloud by libcall() or system()
+    let ret = "
     if s:cloud_plugin_mode == "libcall"
         let arg = s:cloud_plugin_arg
         if empty(arg)
-            return libcall(a:cloud, s:cloud_plugin_func, a:cmd)
+            let ret = libcall(a:cloud, s:cloud_plugin_func, a:cmd)
         else
-            return libcall(a:cloud, s:cloud_plugin_func, arg." ".a:cmd)
+            let ret = libcall(a:cloud, s:cloud_plugin_func, arg." ".a:cmd)
         endif
     elseif s:cloud_plugin_mode == "system"
-        return system(a:cloud." ".shellescape(a:cmd))
+        let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        if s:cloud_executable =~ 'libvimim'
-            let ret = libcall(executable, "do_geturl", a:cloud.input)
-        else
-            let ret = system(executable . shellescape(a:cloud.input))
+        let http = s:cloud_executable
+        if http =~ 'libvimim'
+            let ret = libcall(http, "do_geturl", a:cloud.input)
+        elseif len(http) > 0
+            let ret = system(http . shellescape(a:cloud.input))
         endif
-        let output = s:vimim_rot13(ret)
-        let ret = s:vimim_url_xx_to_chinese(output)
-        return ret
+        if len(ret) > 0
+            let output = s:vimim_rot13(ret)
+            let ret = s:vimim_url_xx_to_chinese(output)
+        endif
     endif
-    return ""
+    return ret
 endfunction
 
 " -------------------------------
