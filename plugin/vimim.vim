@@ -758,10 +758,10 @@ function! s:vimim_search_chinese_by_english(keyboard)
             sil!call s:vimim_initialize_shuangpin()
             let keyboard = s:vimim_shuangpin_transform(keyboard)
         endif
-        let cloud_im = get(split(g:vimim_cloud,'[.]'),0)
-        if cloud_im =~ 'sogou'
+        if g:vimim_cloud > -1
             " => slash search from sogou cloud
-            let results = s:vimim_get_cloud_sogou(keyboard)
+            let cloud = get(split(g:vimim_cloud,'[.]'),0)
+            let results = s:vimim_get_cloud(keyboard, cloud)
         elseif !empty(s:mycloud_plugin)
             " => slash search from mycloud
             let results = s:vimim_get_mycloud_plugin(keyboard)
@@ -4181,6 +4181,7 @@ function! s:vimim_initialize_clouds()
     let s:mycloud_plugin = 0
     let s:http_executable = 0
     let s:cloud_keys = {'sogou':0,'qq':0}
+    let s:cloud_cache = {'sogou':{},'google':{},'baidu':{},'qq':{}}
     if exists("g:vimim_cloud") && g:vimim_cloud < 0
         " cloud is permanently disabled by user
     else
@@ -4306,9 +4307,8 @@ function! s:vimim_magic_tail(keyboard)
     let keyboard = a:keyboard
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
-    let last_two = keyboard[-2:-1]
-    if last_two ==# "''"
-        " play with 2nd choice of clouds family
+    if last_but_one ==# "'"
+        " play with another choice of clouds family
     elseif magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
         " play with magic trailing char
     else
@@ -4328,16 +4328,15 @@ function! s:vimim_magic_tail(keyboard)
         let cloud = get(split(g:vimim_cloud,'[.]'),0)
         let cloud_ready = s:vimim_set_cloud_if_http_executable(cloud)
         if cloud_ready > 0
-            let s:onekey_nonstop_cloud = 1
             " trailing apostrophe => forced-cloud
-            let vimim_clouds = split(g:vimim_clouds,',')
-            let last_three = keyboard[-3:-1]
-            if last_three ==# repeat("'",3)
-                let g:vimim_cloud = get(vimim_clouds,2)
-                let keyboard = keyboard[:-3]
-            elseif last_two ==# repeat("'",2)
-                let g:vimim_cloud = get(vimim_clouds,1)
+            let s:onekey_nonstop_cloud = 1
+            let keyboard = keyboard[:-2]
+            if last_but_one ==# "'"
                 let keyboard = keyboard[:-2]
+                let clouds = split(g:vimim_clouds,',')
+                let clouds = clouds[1:-1] + clouds[0:0]
+                let g:vimim_clouds = join(clouds,',')
+                let g:vimim_cloud = get(clouds,0)
             endif
         endif
     endif
@@ -4371,23 +4370,27 @@ function! s:vimim_do_cloud_or_not(keyboard)
     return 0
 endfunction
 
-" -----------------------------------
-function! s:vimim_get_cloud(keyboard)
-" -----------------------------------
-    if a:keyboard !~ s:valid_key
+" ------------------------------------------
+function! s:vimim_get_cloud(keyboard, cloud)
+" ------------------------------------------
+    let keyboard = a:keyboard
+    let cloud = a:cloud
+    if keyboard !~ s:valid_key || empty(cloud)
         return []
     endif
     let results = []
-    let cloud = get(split(g:vimim_cloud,'[.]'),0)
-    if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
-        let cloud = get(s:frontends,1)
+    if has_key(s:cloud_cache[cloud], keyboard)
+        return s:cloud_cache[cloud][keyboard]
     endif
-    let get_cloud  = "s:vimim_get_cloud_" . cloud . "(a:keyboard)"
+    let get_cloud  = "s:vimim_get_cloud_" . cloud . "(keyboard)"
     try
         let results = eval(get_cloud)
     catch
         call s:debugs('get_cloud::' . cloud . '::', v:exception)
     endtry
+    if !empty(len(results))
+        let s:cloud_cache[cloud][keyboard] = results
+    endif
     return results
 endfunction
 
@@ -4616,14 +4619,8 @@ function! s:vimim_get_cloud_all(keyboard)
         call add(random_clouds, get(vimim_clouds, (random+i)%4))
     endfor
     for cloud in random_clouds
-        let outputs = []
         let start = localtime()
-        let get_cloud  = "s:vimim_get_cloud_" . cloud . "(keyboard)"
-        try
-            let outputs = eval(get_cloud)
-        catch
-            let results = [cloud . '::' . v:exception]
-        endtry
+        let outputs = s:vimim_get_cloud(keyboard, cloud)
         if empty(outputs)
             continue
         endif
@@ -4635,7 +4632,7 @@ function! s:vimim_get_cloud_all(keyboard)
             let cloud_title .= s:space . string(duration)
         endif
         call add(results, cloud_title)
-        let outputs = outputs[0:8]
+        let outputs = outputs[0:7]
         let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
         call map(outputs, filter)
         call add(results, join(outputs))
@@ -4675,8 +4672,8 @@ function! s:vimim_set_mycloud()
         let s:ui.im = im
         let s:ui.root = root
         let s:ui.frontends = [[s:ui.root, s:ui.im]]
-        let g:vimim_cloud = 0
         let s:vimim_shuangpin = 0
+        let g:vimim_cloud = -1
         let s:mycloud_plugin = mycloud
     endif
 endfunction
@@ -5275,8 +5272,13 @@ else
     endif
 
     " [cloud] to make cloud come true for woyouyigemeng
+    let cloud = 0
     if s:vimim_do_cloud_or_not(keyboard) > 0
-        let results = s:vimim_get_cloud(keyboard)
+        let cloud = get(split(g:vimim_cloud,'[.]'),0)
+        if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
+            let cloud = get(s:frontends,1)
+        endif
+        let results = s:vimim_get_cloud(keyboard, cloud)
         if !empty(len(results))
             let s:keyboard_list = [keyboard]
             return s:vimim_popupmenu_list(results)
@@ -5310,7 +5312,7 @@ else
             let results = s:vimim_cjk_match(keyboard_head)
         endif
     elseif keyboard !~# '\L'
-        let results = s:vimim_get_cloud(keyboard)
+        let results = s:vimim_get_cloud(keyboard, cloud)
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
