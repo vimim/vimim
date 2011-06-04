@@ -332,7 +332,7 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_digit_4corner = 1
-        let g:vimim_onekey_is_tab = 1
+        let g:vimim_onekey_is_tab = 2
         let g:vimim_esc_for_correction = 1
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_clouds = 'google,sogou,baidu,qq'
@@ -526,7 +526,7 @@ function! s:vimim_egg_vimimenv()
         let toggle = s:vimim_chinese('auto') . s:space . buffer
     elseif s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_CTRL-Space"
-    elseif s:vimim_onekey_is_tab > 0 && s:vimim_onekey_hit_and_run < 1
+    elseif s:vimim_onekey_is_tab > 1
         let toggle = "Tab_as_OneKey_NonStop"
         let im = s:vimim_chinese('onekey') . s:space
         let im .= s:ui.statusline . s:space . "VimIM"
@@ -2734,13 +2734,13 @@ function! s:vimim_statusline()
         endif
         return s:vimim_get_chinese_im()
     endif
-    if len(s:backend.datafile) > 1 || len(s:backend.datafile) > 1
+    if len(s:backend.datafile) > 1 || len(s:backend.directory) > 1
         if !empty(s:vimim_shuangpin)
             let s:ui.statusline .= s:space
             let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
         endif
-        " no statusline for cloud if any local datafile is found
-    elseif g:vimim_cloud =~ 'mixture'
+    endif
+    if g:vimim_cloud =~ 'mixture'
         let s:ui.statusline .= s:vimim_chinese('mixture')
     elseif g:vimim_cloud =~ 'wubi'
         let s:ui.statusline .= s:vimim_chinese('wubi')
@@ -2760,7 +2760,7 @@ function! s:vimim_statusline()
             let s:ui.statusline .= s:vimim_chinese('nature').shuangpin
         endif
     endif
-    if s:ui.im ==# 'mycloud' && !empty(s:mycloud_plugin)
+    if !empty(s:mycloud_plugin)
         let __getname = s:backend.cloud.mycloud.directory
         let s:ui.statusline .= s:space . __getname
     endif
@@ -3726,7 +3726,9 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if len(g:vimim_mycloud) > 1 || s:vimim_debug > 1
+    if len(g:vimim_mycloud) > 1
+    \|| g:vimim_cloud =~ 'dynamic\|static'
+    \|| s:vimim_debug > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4017,7 +4019,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_scan_current_buffer()
 " -------------------------------------
-    if len(g:vimim_mycloud) > 1
+    if len(g:vimim_mycloud) > 1 || g:vimim_cloud =~ 'dynamic\|static'
         return
     endif
     let buffer = expand("%:p:t")
@@ -4068,7 +4070,7 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if len(g:vimim_mycloud) > 1
+    if len(g:vimim_mycloud) > 1 || g:vimim_cloud =~ 'dynamic\|static'
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4203,7 +4205,9 @@ function! s:vimim_initialize_clouds()
             let g:vimim_clouds = 'sogou,google,baidu,qq'
         endif
         let clouds = split(g:vimim_clouds,',')
-        let g:vimim_cloud = get(clouds,0)
+        if empty(g:vimim_cloud)
+            let g:vimim_cloud = get(clouds,0)
+        endif
         for mode in ['onekey','static','dynamic']
            if g:vimim_cloud =~ mode
                let s:vimim_chinese_input_mode = mode
@@ -5366,7 +5370,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_chinesemode_mapping()
 " -------------------------------------
-    if s:vimim_debug < 2
+    if s:vimim_onekey_is_tab < 2
         inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
          noremap<silent>       <C-Bslash>   :call <SID>ChineseMode()<CR>
             imap<silent>       <C-Bslash>   <Plug>VimIM
@@ -5398,8 +5402,10 @@ endfunction
 function! s:vimim_onekey_mapping()
 " --------------------------------
     inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
-        imap<silent> <C-^> <Plug>VimimOneKey
-    xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
+    if s:vimim_onekey_is_tab < 2
+            imap<silent> <C-^> <Plug>VimimOneKey
+        xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
+    endif
     if s:vimim_onekey_is_tab > 0
             imap<silent> <Tab> <Plug>VimimOneKey
         xnoremap<silent> <Tab> y:call <SID>vimim_visual_ctrl6()<CR>
