@@ -264,6 +264,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
+    call add(G, "g:vimim_cloud")
+    call add(G, "g:vimim_clouds")
     " -----------------------------------
     let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
@@ -296,11 +298,16 @@ function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
     for variable in a:options
         let option = ':let ' . variable .' = '.string(eval(variable)).' '
-        let s_variable = substitute(variable,"g:","s:",'')
+        let s_variable = variable
+        if match(variable,'cloud') < 0
+            let s_variable = substitute(variable,"g:","s:",'')
+        endif
         if exists(variable)
             call add(s:vimimrc, '  ' . option)
-            exe 'let '. s_variable .'='. variable
-            exe 'unlet! ' . variable
+            if match(variable,'cloud') < 0
+                exe 'let '. s_variable .'='. variable
+                exe 'unlet! ' . variable
+            endif
         else
             call add(s:vimimrc, '" ' . option)
             exe 'let '. s_variable . '=' . a:default
@@ -322,6 +329,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
+   :let g:vimim_mycloud = "http://pim-cloud.appspot.com/qp/"
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_digit_4corner = 1
@@ -3150,6 +3158,9 @@ endfunction
 " -------------------------------------------
 function! s:vimim_check_filereadable(default)
 " -------------------------------------------
+    if len(g:vimim_mycloud) > 1
+        return 0
+    endif
     let default = a:default
     let datafile = s:vimim_hjkl_directory . default
     if filereadable(datafile)
@@ -3716,7 +3727,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if !empty(g:vimim_mycloud) || s:vimim_debug > 1
+    if len(g:vimim_mycloud) > 1 || s:vimim_debug > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4007,7 +4018,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_scan_current_buffer()
 " -------------------------------------
-    if !empty(g:vimim_mycloud)
+    if len(g:vimim_mycloud) > 1
         return
     endif
     let buffer = expand("%:p:t")
@@ -4058,7 +4069,7 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if !empty(g:vimim_mycloud)
+    if len(g:vimim_mycloud) > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4186,15 +4197,14 @@ function! s:vimim_initialize_clouds()
     let s:http_executable = 0
     let s:cloud_keys = {'sogou':0,'qq':0}
     let s:cloud_cache = {'sogou':{},'google':{},'baidu':{},'qq':{}}
-    if exists("g:vimim_cloud") && g:vimim_cloud < 0
+    if g:vimim_cloud < 0
         " public cloud is disabled
     else
-        if !exists("g:vimim_clouds")
+        if empty(g:vimim_clouds)
             let g:vimim_clouds = 'sogou,google,baidu,qq'
         endif
-        if !exists("g:vimim_cloud")
-            let g:vimim_cloud = get(split(g:vimim_clouds,','),0)
-        endif
+        let clouds = split(g:vimim_clouds,',')
+        let g:vimim_cloud = get(clouds,0)
         for mode in ['onekey','static','dynamic']
            if g:vimim_cloud =~ mode
                let s:vimim_chinese_input_mode = mode
@@ -4207,9 +4217,10 @@ endfunction
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
-    if !empty(g:vimim_mycloud)
-        call s:vimim_set_mycloud()
-    elseif empty(s:backend.datafile) && empty(s:backend.directory)
+    if len(g:vimim_mycloud) > 1
+        return s:vimim_set_mycloud()
+    endif
+    if empty(s:backend.datafile) && empty(s:backend.directory)
         if g:vimim_cloud !~ 'dynamic'
             let g:vimim_cloud .= '.dynamic'
         endif
@@ -4687,7 +4698,7 @@ endfunction
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
     let cloud = 0
-    if empty(s:vimim_mycloud)
+    if empty(g:vimim_mycloud)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
     else
         let cloud = s:vimim_check_mycloud_plugin_url()
@@ -4814,7 +4825,7 @@ endfunction
 function! s:vimim_check_mycloud_plugin_url()
 " ------------------------------------------
     " we do set-and-play on all systems
-    let part = split(s:vimim_mycloud, ':')
+    let part = split(g:vimim_mycloud, ':')
     let lenpart = len(part)
     if lenpart <= 1
         call s:debugs("invalid_cloud_plugin_url::","")
@@ -4884,9 +4895,9 @@ function! s:vimim_check_mycloud_plugin_url()
         endif
         if !empty(s:http_executable)
             let s:cloud_plugin_mode = "www"
-            let ret = s:vimim_access_mycloud(s:vimim_mycloud, "__isvalid")
+            let ret = s:vimim_access_mycloud(g:vimim_mycloud, "__isvalid")
             if split(ret, "\t")[0] == "True"
-                return s:vimim_mycloud
+                return g:vimim_mycloud
             endif
         endif
     else
