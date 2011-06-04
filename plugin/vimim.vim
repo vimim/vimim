@@ -4183,7 +4183,7 @@ function! s:vimim_initialize_clouds()
     let s:cloud_keys = {'sogou':0,'qq':0}
     let s:cloud_cache = {'sogou':{},'google':{},'baidu':{},'qq':{}}
     if exists("g:vimim_cloud") && g:vimim_cloud < 0
-        " cloud is permanently disabled by user
+        " public cloud is disabled
     else
         if !exists("g:vimim_clouds")
             let g:vimim_clouds = 'sogou,google,baidu,qq'
@@ -4375,7 +4375,9 @@ function! s:vimim_get_cloud(keyboard, cloud)
 " ------------------------------------------
     let keyboard = a:keyboard
     let cloud = a:cloud
-    if keyboard !~ s:valid_key || empty(cloud)
+    if keyboard !~ s:valid_key
+    \|| empty(cloud)
+    \|| match(g:vimim_clouds,cloud) < 0
         return []
     endif
     let results = []
@@ -4706,7 +4708,7 @@ endfunction
 function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
 " use the same function to access mycloud by libcall() or system()
-    let ret = "
+    let ret = ""
     if s:cloud_plugin_mode == "libcall"
         let arg = s:cloud_plugin_arg
         if empty(arg)
