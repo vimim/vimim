@@ -329,7 +329,6 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-   :let g:vimim_mycloud = "http://pim-cloud.appspot.com/qp/"
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_digit_4corner = 1
