@@ -87,11 +87,13 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_dictionary_ecdict()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
-    sil!call s:vimim_scan_backend_embedded_datafile()
-    sil!call s:vimim_scan_backend_embedded_directory()
-    sil!call s:vimim_dictionary_quantifiers()
-    sil!call s:vimim_scan_current_buffer()
+    if g:vimim_cloud !~ 'dynamic\|static'
+        sil!call s:vimim_scan_backend_embedded_datafile()
+        sil!call s:vimim_scan_backend_embedded_directory()
+        sil!call s:vimim_scan_current_buffer()
+    endif
     sil!call s:vimim_scan_backend_cloud()
+    sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_initialize_cjk_file()
     sil!call s:vimim_scan_english_datafile()
     sil!call s:vimim_initialize_keycode()
@@ -3720,7 +3722,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if s:vimim_debug > 1 || g:vimim_cloud =~ 'dynamic\|static'
+    if s:vimim_debug > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -3752,31 +3754,25 @@ function! s:vimim_set_datafile(im, datafile)
 " ------------------------------------------
     let im = s:vimim_get_valid_im_name(a:im)
     let datafile = a:datafile
-    if empty(im)
-    \|| empty(datafile)
+    if empty(im) || empty(datafile)
     \|| !filereadable(datafile)
     \|| isdirectory(datafile)
         return
     endif
-    if g:vimim_cloud =~ 'dynamic\|static'
-        let cloud = get(split(g:vimim_cloud,'[.]'),0)
-        call s:vimim_set_cloud(cloud)
-    else
-        let s:ui.root = "datafile"
-        let s:ui.im = im
-        let frontends = [s:ui.root, s:ui.im]
-        call insert(s:ui.frontends, frontends)
-        let s:backend.datafile[im] = s:vimim_one_backend_hash()
-        let s:backend.datafile[im].root = "datafile"
-        let s:backend.datafile[im].im = im
-        let s:backend.datafile[im].name = datafile
-        let s:backend.datafile[im].keycode = s:im_keycode[im]
-        let s:backend.datafile[im].chinese = s:vimim_chinese(im)
-        if empty(s:backend.datafile[im].lines)
-            let s:backend.datafile[im].lines = s:vimim_readfile(datafile)
-        endif
-        call s:vimim_set_special_im_property()
+    let s:ui.root = "datafile"
+    let s:ui.im = im
+    let frontends = [s:ui.root, s:ui.im]
+    call insert(s:ui.frontends, frontends)
+    let s:backend.datafile[im] = s:vimim_one_backend_hash()
+    let s:backend.datafile[im].root = "datafile"
+    let s:backend.datafile[im].im = im
+    let s:backend.datafile[im].name = datafile
+    let s:backend.datafile[im].keycode = s:im_keycode[im]
+    let s:backend.datafile[im].chinese = s:vimim_chinese(im)
+    if empty(s:backend.datafile[im].lines)
+        let s:backend.datafile[im].lines = s:vimim_readfile(datafile)
     endif
+    call s:vimim_set_special_im_property()
 endfunction
 
 " ----------------------------------------
@@ -4065,9 +4061,6 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if g:vimim_cloud =~ 'dynamic\|static'
-        return
-    endif
     for im in s:all_vimim_input_methods
         let dir = s:vimim_data_directory
         if !empty(dir) && isdirectory(dir)
