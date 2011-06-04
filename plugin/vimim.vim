@@ -265,8 +265,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_onekey_is_tab")
-    call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_more_candidates")
+    call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
     " -----------------------------------
     let s:vimimrc = []
@@ -326,7 +326,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let hjkl = '/home/xma/hjkl/'
+    let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -822,16 +822,20 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 function! <SID>VimIMSwitch()
 " --------------------------
     sil!call s:vimim_backend_initialization()
+let g:g3=s:ui.frontends """""""let g:g3=[['cloud', 'sogou']]
     if len(s:ui.frontends) < 2
         return <SID>ChineseMode()
     endif
     let custom_im_list = []
+let g:g2= s:vimim_toggle_list
     if s:vimim_toggle_list =~ ","
         let custom_im_list = split(s:vimim_toggle_list, ",")
     else
         if empty(s:vimim_toggle_list)
             let custom_im_list = ["english"]
         endif
+"todo
+let g:g1= s:ui.frontends
         for frontends in s:ui.frontends
             let frontend_im = get(frontends, 1)
             call add(custom_im_list, frontend_im)
@@ -860,6 +864,8 @@ endfunction
 function! <SID>ChineseMode()
 " --------------------------
     sil!call s:vimim_backend_initialization()
+let g:g33=s:ui.frontends
+let g:g34=s:frontends
     if empty(s:ui.frontends)
         return ""
     elseif empty(s:frontends)
@@ -4302,6 +4308,9 @@ endfunction
 function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
     let keyboard = a:keyboard
+    if keyboard =~ '\d' || s:chinese_input_mode !~ 'onekey'
+        return []
+    endif
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
     let last_two = keyboard[-2:-1]
@@ -5271,11 +5280,9 @@ else
     endif
 
     " [cloud] magic trailing apostrophe to control cloud
-    if s:chinese_input_mode =~ 'onekey' && keyboard !~ '\d'
-        let clouds = s:vimim_magic_tail(keyboard)
-        if !empty(len(clouds))
-            let keyboard = get(clouds, 0)
-        endif
+    let clouds = s:vimim_magic_tail(keyboard)
+    if !empty(len(clouds))
+        let keyboard = get(clouds, 0)
     endif
 
     " [shuangpin] support 6 major shuangpin
