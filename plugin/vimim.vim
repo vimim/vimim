@@ -326,7 +326,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let hjkl = '/hhome/xma/hjkl/'
+    let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 1
@@ -822,20 +822,17 @@ let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
 function! <SID>VimIMSwitch()
 " --------------------------
     sil!call s:vimim_backend_initialization()
-let g:g3=s:ui.frontends """""""let g:g3=[['cloud', 'sogou']]
     if len(s:ui.frontends) < 2
         return <SID>ChineseMode()
     endif
     let custom_im_list = []
-let g:g2= s:vimim_toggle_list
     if s:vimim_toggle_list =~ ","
         let custom_im_list = split(s:vimim_toggle_list, ",")
     else
-        if empty(s:vimim_toggle_list)
+        let root = get(get(s:ui.frontends,0),0)
+        if empty(s:vimim_toggle_list) && root != root
             let custom_im_list = ["english"]
         endif
-"todo
-let g:g1= s:ui.frontends
         for frontends in s:ui.frontends
             let frontend_im = get(frontends, 1)
             call add(custom_im_list, frontend_im)
@@ -864,8 +861,6 @@ endfunction
 function! <SID>ChineseMode()
 " --------------------------
     sil!call s:vimim_backend_initialization()
-let g:g33=s:ui.frontends
-let g:g34=s:frontends
     if empty(s:ui.frontends)
         return ""
     elseif empty(s:frontends)
@@ -4238,16 +4233,26 @@ function! s:vimim_set_cloud(im)
         let s:ui.root = 'cloud'
         let s:ui.im = a:im
         let frontends = [s:ui.root, s:ui.im]
-        call insert(s:ui.frontends, frontends)
+        call add(s:ui.frontends, frontends)
+        for im in split(g:vimim_clouds,",")
+            if im == a:im
+                continue
+            endif
+            call s:vimim_set_cloud_if_http_executable(im)
+            let frontends = [s:ui.root, im]
+            call add(s:ui.frontends, frontends)
+        endfor
     endif
 endfunction
 
 " ------------------------------------------------
 function! s:vimim_set_cloud_if_http_executable(im)
 " ------------------------------------------------
-    let s:cloud_ready_flag = s:vimim_check_http_executable()
     if s:cloud_ready_flag < 1
-        return 0
+        let s:cloud_ready_flag = s:vimim_check_http_executable()
+        if s:cloud_ready_flag < 1
+            return 0
+        endif
     endif
     let im = a:im
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
@@ -4391,10 +4396,13 @@ endfunction
 function! s:vimim_get_cloud(keyboard)
 " -----------------------------------
     if a:keyboard !~ s:valid_key
+    \|| empty(s:frontends)
+    \|| get(s:frontends,0) !~ 'cloud'
         return []
     endif
     let results = []
-    let cloud = get(split(g:vimim_cloud,'[.]'),0)
+    let im = get(s:frontends,1)
+    let cloud = get(split(im,'[.]'),0)
     let get_cloud  = "s:vimim_get_cloud_" . cloud . "(a:keyboard)"
     try
         let results = eval(get_cloud)
