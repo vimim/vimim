@@ -298,16 +298,11 @@ function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
     for variable in a:options
         let option = ':let ' . variable .' = '.string(eval(variable)).' '
-        let s_variable = variable
-        if match(variable,'cloud') < 0
-            let s_variable = substitute(variable,"g:","s:",'')
-        endif
+        let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
             call add(s:vimimrc, '  ' . option)
-            if match(variable,'cloud') < 0
-                exe 'let '. s_variable .'='. variable
-                exe 'unlet! ' . variable
-            endif
+            exe 'let '. s_variable .'='. variable
+            exe 'unlet! ' . variable
         else
             call add(s:vimimrc, '" ' . option)
             exe 'let '. s_variable . '=' . a:default
@@ -335,7 +330,7 @@ function! s:vimim_initialize_debug()
         let g:vimim_onekey_is_tab = 2
         let g:vimim_esc_for_correction = 1
         let g:vimim_onekey_hit_and_run = 0
-        let g:vimim_clouds = 'google,sogou,baidu,qq'
+        let s:vimim_clouds = 'google,sogou,baidu,qq'
         let g:vimim_data_directory = '/home/vimim/pinyin/'
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_debug = 2
@@ -565,13 +560,13 @@ function! s:vimim_egg_vimimenv()
         let option = input . im
         call add(eggs, option)
     endif
-    if g:vimim_cloud > -1
-        let cloud = s:vimim_chinese(get(split(g:vimim_cloud,'[.]'),0))
+    if s:vimim_cloud > -1
+        let cloud = s:vimim_chinese(get(split(s:vimim_cloud,'[.]'),0))
         let option  = input .  cloud . s:vimim_chinese('cloud') . input
-        let clouds = option . ":let g:vimim_cloud='" . g:vimim_cloud."'"
+        let clouds = option . ":let s:vimim_cloud='" . s:vimim_cloud."'"
         call add(eggs, clouds)
         let option  = input .  s:vimim_chinese('clouds').s:colon.s:space
-        let cloud = option . ":let g:vimim_clouds='" . g:vimim_clouds ."'"
+        let cloud = option . ":let s:vimim_clouds='" . s:vimim_clouds ."'"
         call add(eggs, cloud)
     endif
     call map(eggs, 'v:val . " "')
@@ -763,9 +758,9 @@ function! s:vimim_search_chinese_by_english(keyboard)
             sil!call s:vimim_initialize_shuangpin()
             let keyboard = s:vimim_shuangpin_transform(keyboard)
         endif
-        if g:vimim_cloud > -1
+        if s:vimim_cloud =~ 'search'
             " => slash search from sogou cloud
-            let cloud = get(split(g:vimim_cloud,'[.]'),0)
+            let cloud = get(split(s:vimim_cloud,'[.]'),0)
             let results = s:vimim_get_cloud(keyboard, cloud)
         elseif !empty(s:mycloud_plugin)
             " => slash search from mycloud
@@ -917,7 +912,7 @@ function! s:vimim_chinesemode_action()
     let action = ""
     if s:chinese_input_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
-        if s:ui.im =~ 'wubi\|erbi' || g:vimim_cloud =~ 'wubi'
+        if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
             " dynamic auto trigger for wubi
             for char in s:az_list
                 sil!exe 'inoremap <silent> ' . char .
@@ -2740,23 +2735,23 @@ function! s:vimim_statusline()
             let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
         endif
     endif
-    if g:vimim_cloud =~ 'mixture'
+    if s:vimim_cloud =~ 'mixture'
         let s:ui.statusline .= s:vimim_chinese('mixture')
-    elseif g:vimim_cloud =~ 'wubi'
+    elseif s:vimim_cloud =~ 'wubi'
         let s:ui.statusline .= s:vimim_chinese('wubi')
-    elseif g:vimim_cloud =~ 'shuangpin'
+    elseif s:vimim_cloud =~ 'shuangpin'
         let shuangpin = s:vimim_chinese('shuangpin')
-        if g:vimim_cloud =~ 'abc'
+        if s:vimim_cloud =~ 'abc'
             let s:ui.statusline .= s:vimim_chinese('abc')
-        elseif g:vimim_cloud =~ 'ms'
+        elseif s:vimim_cloud =~ 'ms'
             let s:ui.statusline .= s:vimim_chinese('ms').shuangpin
-        elseif g:vimim_cloud =~ 'plusplus'
+        elseif s:vimim_cloud =~ 'plusplus'
             let s:ui.statusline .= s:vimim_chinese('plusplus').shuangpin
-        elseif g:vimim_cloud =~ 'purple'
+        elseif s:vimim_cloud =~ 'purple'
             let s:ui.statusline .= s:vimim_chinese('purple').shuangpin
-        elseif g:vimim_cloud =~ 'flypy'
+        elseif s:vimim_cloud =~ 'flypy'
             let s:ui.statusline .= s:vimim_chinese('flypy').shuangpin
-        elseif g:vimim_cloud =~ 'nature'
+        elseif s:vimim_cloud =~ 'nature'
             let s:ui.statusline .= s:vimim_chinese('nature').shuangpin
         endif
     endif
@@ -3157,7 +3152,7 @@ endfunction
 " -------------------------------------------
 function! s:vimim_check_filereadable(default)
 " -------------------------------------------
-    if len(g:vimim_mycloud) > 1
+    if len(s:vimim_mycloud) > 1
         return 0
     endif
     let default = a:default
@@ -3726,8 +3721,8 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if len(g:vimim_mycloud) > 1
-    \|| g:vimim_cloud =~ 'dynamic\|static'
+    if len(s:vimim_mycloud) > 1
+    \|| s:vimim_cloud =~ 'dynamic\|static'
     \|| s:vimim_debug > 1
         return
     endif
@@ -4019,7 +4014,8 @@ endfunction
 " -------------------------------------
 function! s:vimim_scan_current_buffer()
 " -------------------------------------
-    if len(g:vimim_mycloud) > 1 || g:vimim_cloud =~ 'dynamic\|static'
+    if len(s:vimim_mycloud) > 1
+    \|| s:vimim_cloud =~ 'dynamic\|static'
         return
     endif
     let buffer = expand("%:p:t")
@@ -4039,7 +4035,7 @@ function! s:vimim_scan_current_buffer()
     if position > -1
         let s:vimim_shuangpin = buffers[position][len(shuangpin) :]
     endif
-    for im in split(g:vimim_clouds,',')
+    for im in split(s:vimim_clouds,',')
         if buffer =~# im
             return s:vimim_set_cloud(im)
         endif
@@ -4070,7 +4066,8 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if len(g:vimim_mycloud) > 1 || g:vimim_cloud =~ 'dynamic\|static'
+    if len(s:vimim_mycloud) > 1
+    \|| s:vimim_cloud =~ 'dynamic\|static'
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4198,37 +4195,50 @@ function! s:vimim_initialize_clouds()
     let s:http_executable = 0
     let s:cloud_keys = {'sogou':0,'qq':0}
     let s:cloud_cache = {'sogou':{},'google':{},'baidu':{},'qq':{}}
-    if g:vimim_cloud < 0
+    if s:vimim_cloud < 0
         " public cloud is disabled
     else
-        if empty(g:vimim_clouds)
-            let g:vimim_clouds = 'sogou,google,baidu,qq'
+        if empty(s:vimim_clouds)
+            let s:vimim_clouds = 'sogou,google,baidu,qq'
         endif
-        let clouds = split(g:vimim_clouds,',')
-        if empty(g:vimim_cloud)
-            let g:vimim_cloud = get(clouds,0)
+        let clouds = split(s:vimim_clouds,',')
+        if empty(s:vimim_cloud)
+            let s:vimim_cloud = get(clouds,0)
         endif
         for mode in ['onekey','static','dynamic']
-           if g:vimim_cloud =~ mode
+           if s:vimim_cloud =~ mode
                let s:vimim_chinese_input_mode = mode
                break
            endif
-        endif
+        endfor
     endif
 endfunction
 
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
-    if len(g:vimim_mycloud) > 1
+    if len(s:vimim_mycloud) > 1
         return s:vimim_set_mycloud()
     endif
+    let set_cloud = 0
+    if s:vimim_cloud =~ 'dynamic\|static'
+        let set_cloud = 1
+    endif
     if empty(s:backend.datafile) && empty(s:backend.directory)
-        if g:vimim_cloud !~ 'dynamic'
-            let g:vimim_cloud .= '.dynamic'
+        let set_cloud = 1
+        if s:vimim_cloud !~ 'dynamic\|static'
+            let s:vimim_cloud .= '.dynamic'
         endif
-        let cloud = get(split(g:vimim_cloud,'[.]'),0)
+    endif
+    if set_cloud > 0
+        let cloud = get(split(s:vimim_cloud,'[.]'),0)
         call s:vimim_set_cloud(cloud)
+        for mode in ['onekey','static','dynamic']
+           if s:vimim_cloud =~ mode
+               let s:vimim_chinese_input_mode = mode
+               break
+           endif
+        endfor
     endif
 endfunction
 
@@ -4244,7 +4254,7 @@ function! s:vimim_set_cloud(im)
         let s:ui.im = a:im
         let frontends = [s:ui.root, s:ui.im]
         call add(s:ui.frontends, frontends)
-        for im in split(g:vimim_clouds,",")
+        for im in split(s:vimim_clouds,",")
             if im == a:im
                 continue
             endif
@@ -4276,7 +4286,7 @@ endfunction
 " ---------------------------------------
 function! s:vimim_check_http_executable()
 " ---------------------------------------
-    if g:vimim_cloud < 0
+    if s:vimim_cloud < 0
         return 0
     elseif len(s:http_executable) > 1
         return 1
@@ -4342,7 +4352,7 @@ function! s:vimim_magic_tail(keyboard)
         " trailing dot => forced-non-cloud
         let s:onekey_nonstop_cloud = 0
     elseif magic_tail ==# "'"
-        let cloud = get(split(g:vimim_cloud,'[.]'),0)
+        let cloud = get(split(s:vimim_cloud,'[.]'),0)
         let cloud_ready = s:vimim_set_cloud_if_http_executable(cloud)
         if cloud_ready > 0
             " trailing apostrophe => forced-cloud
@@ -4350,10 +4360,10 @@ function! s:vimim_magic_tail(keyboard)
             let keyboard = keyboard[:-2]
             if last_but_one ==# "'"
                 let keyboard = keyboard[:-2]
-                let clouds = split(g:vimim_clouds,',')
+                let clouds = split(s:vimim_clouds,',')
                 let clouds = clouds[1:-1] + clouds[0:0]
-                let g:vimim_clouds = join(clouds,',')
-                let g:vimim_cloud = get(clouds,0)
+                let s:vimim_clouds = join(clouds,',')
+                let s:vimim_cloud = get(clouds,0)
             endif
         endif
     endif
@@ -4367,7 +4377,7 @@ function! s:vimim_do_cloud_or_not(keyboard)
         return 0
     endif
     if s:onekey_nonstop_cloud > 0
-    \|| g:vimim_cloud =~ 'dynamic\|static'
+    \|| s:vimim_cloud =~ 'dynamic\|static'
         return 1
     endif
     if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 1
@@ -4375,10 +4385,10 @@ function! s:vimim_do_cloud_or_not(keyboard)
     endif
     if s:chinese_input_mode !~ 'dynamic'
     \&& s:ui.im == 'pinyin'
-    \&& g:vimim_cloud =~ '\d'
+    \&& s:vimim_cloud =~ '\d'
         " threshold to trigger cloud automatically
         let pinyins = s:vimim_get_pinyin_from_pinyin(a:keyboard)
-        if len(pinyins) > get(split(g:vimim_cloud,'[.]'),1)
+        if len(pinyins) > get(split(s:vimim_cloud,'[.]'),1)
             return 1
         endif
     endif
@@ -4392,7 +4402,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     let cloud = a:cloud
     if keyboard !~ s:valid_key
     \|| empty(cloud)
-    \|| match(g:vimim_clouds,cloud) < 0
+    \|| match(s:vimim_clouds,cloud) < 0
         return []
     endif
     let results = []
@@ -4415,7 +4425,7 @@ endfunction
 function! s:vimim_get_from_http(input)
 " ------------------------------------
     if empty(s:http_executable)
-        let cloud = get(split(g:vimim_cloud,'[.]'),0)
+        let cloud = get(split(s:vimim_cloud,'[.]'),0)
         if empty(s:vimim_check_http_executable())
             return 0
         endif
@@ -4442,7 +4452,7 @@ endfunction
 " -----------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
-    " [usage] :let g:vimim_cloud = 'sogou'
+    " [usage] :let s:vimim_cloud = 'sogou'
     " [url]   http://pinyin.sogou.com/cloud/
     if empty(s:cloud_keys.sogou)
         let key_sogou = 'http://web.pinyin.sogou.com/web_ime/patch.php'
@@ -4489,7 +4499,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
 " --------------------------------------
-    " [usage] :let g:vimim_cloud = 'qq.wubi.fanti.dynamic'
+    " [usage] :let s:vimim_cloud = 'qq.wubi.fanti.dynamic'
     " [url]   http://py.qq.com/web
     let url = 'http://ime.qq.com/fcgi-bin/'
     if empty(s:cloud_keys.qq)
@@ -4504,33 +4514,33 @@ function! s:vimim_get_cloud_qq(keyboard)
         return []
     endif
     let input  = url
-    if g:vimim_cloud =~ 'wubi'
+    if s:vimim_cloud =~ 'wubi'
         let input .= 'gwb'
     else
         let input .= 'getword'
     endif
     let input .= '?key=' . s:cloud_keys.qq
-    if g:vimim_cloud =~ 'fanti'
+    if s:vimim_cloud =~ 'fanti'
         let input .= '&jf=1'
     endif
     let md = 0
-    if g:vimim_cloud =~ 'mixture'
+    if s:vimim_cloud =~ 'mixture'
         let md = 3
     endif
-    if g:vimim_cloud =~ 'shuangpin'
+    if s:vimim_cloud =~ 'shuangpin'
         let md = 2
         let st = 0
-        if g:vimim_cloud =~ 'abc'
+        if s:vimim_cloud =~ 'abc'
             let st = 1
-        elseif g:vimim_cloud =~ 'ms'
+        elseif s:vimim_cloud =~ 'ms'
             let st = 2
-        elseif g:vimim_cloud =~ 'plusplus'
+        elseif s:vimim_cloud =~ 'plusplus'
             let st = 3
-        elseif g:vimim_cloud =~ 'purple'
+        elseif s:vimim_cloud =~ 'purple'
             let st = 4
-        elseif g:vimim_cloud =~ 'flypy'
+        elseif s:vimim_cloud =~ 'flypy'
             let st = 5
-        elseif g:vimim_cloud =~ 'nature'
+        elseif s:vimim_cloud =~ 'nature'
             let st = 6
         endif
         if st > 0
@@ -4540,7 +4550,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     if md > 0
         let input .= '&md=' . md
     endif
-    if g:vimim_cloud =~ 'fuzzy'
+    if s:vimim_cloud =~ 'fuzzy'
         let input .= '&mh=1'
     endif
     let input .= '&q=' . a:keyboard
@@ -4563,7 +4573,7 @@ endfunction
 " ------------------------------------------
 function! s:vimim_get_cloud_google(keyboard)
 " ------------------------------------------
-    " [usage] :let g:vimim_cloud = 'google'
+    " [usage] :let s:vimim_cloud = 'google'
     " [url]   http://www.google.com/transliterate/chinese
     let input  = 'http://www.google.com/transliterate'
     let input .= '?tl_app=3'
@@ -4592,7 +4602,7 @@ endfunction
 " -----------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard)
 " -----------------------------------------
-    " [usage] :let g:vimim_cloud = 'baidu'
+    " [usage] :let s:vimim_cloud = 'baidu'
     " [url]   http://olime.baidu.com/py?rn=0&pn=20&py=mxj
     let input  = 'http://olime.baidu.com/py'
     let input .= '?rn=0'
@@ -4629,7 +4639,7 @@ function! s:vimim_get_cloud_all(keyboard)
     let title .= s:space . keyboard
     let results = []
     let random_clouds = []
-    let vimim_clouds = split(g:vimim_clouds,',')
+    let vimim_clouds = split(s:vimim_clouds,',')
     let len = len(vimim_clouds)
     let random = localtime() % len
     for i in range(len)
@@ -4690,7 +4700,7 @@ function! s:vimim_set_mycloud()
         let s:ui.root = root
         let s:ui.frontends = [[s:ui.root, s:ui.im]]
         let s:vimim_shuangpin = 0
-        let g:vimim_cloud = -1
+        let s:vimim_cloud = -1
         let s:mycloud_plugin = mycloud
     endif
 endfunction
@@ -4699,7 +4709,7 @@ endfunction
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
     let cloud = 0
-    if empty(g:vimim_mycloud)
+    if empty(s:vimim_mycloud)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
     else
         let cloud = s:vimim_check_mycloud_plugin_url()
@@ -4826,7 +4836,7 @@ endfunction
 function! s:vimim_check_mycloud_plugin_url()
 " ------------------------------------------
     " we do set-and-play on all systems
-    let part = split(g:vimim_mycloud, ':')
+    let part = split(s:vimim_mycloud, ':')
     let lenpart = len(part)
     if lenpart <= 1
         call s:debugs("invalid_cloud_plugin_url::","")
@@ -4896,9 +4906,9 @@ function! s:vimim_check_mycloud_plugin_url()
         endif
         if !empty(s:http_executable)
             let s:cloud_plugin_mode = "www"
-            let ret = s:vimim_access_mycloud(g:vimim_mycloud, "__isvalid")
+            let ret = s:vimim_access_mycloud(s:vimim_mycloud, "__isvalid")
             if split(ret, "\t")[0] == "True"
-                return g:vimim_mycloud
+                return s:vimim_mycloud
             endif
         endif
     else
@@ -5291,7 +5301,7 @@ else
     " [cloud] to make cloud come true for woyouyigemeng
     let cloud = 0
     if s:vimim_do_cloud_or_not(keyboard) > 0
-        let cloud = get(split(g:vimim_cloud,'[.]'),0)
+        let cloud = get(split(s:vimim_cloud,'[.]'),0)
         if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
             let cloud = get(s:frontends,1)
         endif
@@ -5303,7 +5313,7 @@ else
     endif
 
     " [wubi] support auto insert for every 4 input
-    if s:ui.im =~ 'wubi\|erbi' || g:vimim_cloud =~ 'wubi'
+    if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
         let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
         if s:ui.im =~ 'erbi' && len(keyboard) == 1
         \&& keyboard =~ "[.,/;]" && has_key(s:punctuations, keyboard)
