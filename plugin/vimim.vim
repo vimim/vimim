@@ -4200,26 +4200,24 @@ let s:VimIM += [" ====  backend clouds   ==== {{{"]
 " -----------------------------------
 function! s:vimim_initialize_clouds()
 " -----------------------------------
+    let s:cloud_onekey = 0
     let s:mycloud_plugin = 0
     let s:http_executable = 0
     let s:cloud_keys = {'sogou':0,'qq':0}
     let s:cloud_cache = {'sogou':{},'google':{},'baidu':{},'qq':{}}
     if s:vimim_cloud < 0
-        " public cloud is disabled
-    else
-        if empty(s:vimim_clouds)
-            let s:vimim_clouds = 'sogou,google,baidu,qq'
-        endif
-        let clouds = split(s:vimim_clouds,',')
-        if empty(s:vimim_cloud)
-            let s:vimim_cloud = get(clouds,0)
-        endif
-        for mode in ['onekey','static','dynamic']
-           if s:vimim_cloud =~ mode
-               let s:vimim_chinese_input_mode = mode
-               break
-           endif
-        endfor
+        return
+    endif
+    if empty(s:vimim_clouds)
+        let s:vimim_clouds = 'sogou,google,baidu,qq'
+    endif
+    let clouds = split(s:vimim_clouds,',')
+    if empty(s:vimim_cloud)
+        let s:vimim_cloud = get(clouds,0)
+    endif
+    call s:vimim_set_cloud_mode()
+    if s:vimim_cloud =~ 'onekey'
+        let s:cloud_onekey = 2
     endif
 endfunction
 
@@ -4242,13 +4240,19 @@ function! s:vimim_scan_backend_cloud()
     if set_cloud > 0
         let cloud = get(split(s:vimim_cloud,'[.]'),0)
         call s:vimim_set_cloud(cloud)
-        for mode in ['onekey','static','dynamic']
-           if s:vimim_cloud =~ mode
-               let s:vimim_chinese_input_mode = mode
-               break
-           endif
-        endfor
+        call s:vimim_set_cloud_mode()
     endif
+endfunction
+
+" --------------------------------
+function! s:vimim_set_cloud_mode()
+" --------------------------------
+    for mode in ['static','dynamic']
+       if s:vimim_cloud =~ mode
+           let s:vimim_chinese_input_mode = mode
+           break
+       endif
+    endfor
 endfunction
 
 " -----------------------------
@@ -4350,29 +4354,33 @@ function! s:vimim_magic_tail(keyboard)
     else
         return keyboard
     endif
-    " <dot> triple play in OneKey:
-    "   (1) magic trailing dot => forced-non-cloud in cloud
-    "   (2) magic trailing dot => forced-cjk-match
-    "   (3) as word partition  => match dot by dot
-    " <apostrophe> double play in OneKey:
-    "   (1) magic trailing apostrophe => cloud at will
-    "   (2) as word partition  => match apostrophe by apostrophe
     if magic_tail ==# "."
-        " trailing dot => forced-non-cloud
-        let s:onekey_nonstop_cloud = 0
+        " <dot> triple play in OneKey:
+        "   (1) magic trailing dot => forced-non-cloud in cloud
+        "   (2) magic trailing dot => forced-cjk-match
+        "   (3) as word partition  => match dot by dot
+        let s:cloud_onekey = 0
     elseif magic_tail ==# "'"
+        " <apostrophe> triple play in OneKey:
+        "   (1) 1 trailing apostrophe => cloud at will
+        "   (2) 2 trailing apostrophe => cloud for ever
+        "   (3) 3 trailing apostrophe => cloud switch
         let cloud = get(split(s:vimim_cloud,'[.]'),0)
         let cloud_ready = s:vimim_set_cloud_if_http_executable(cloud)
         if cloud_ready > 0
             " trailing apostrophe => forced-cloud
-            let s:onekey_nonstop_cloud = 1
+            let last_three = keyboard[-3:-1]
+            let s:cloud_onekey = 1
             let keyboard = keyboard[:-2]
-            if last_but_one ==# "'"
-                let keyboard = keyboard[:-2]
+            if last_three ==# "'''"
+                let keyboard = keyboard[:-3]
                 let clouds = split(s:vimim_clouds,',')
                 let clouds = clouds[1:-1] + clouds[0:0]
                 let s:vimim_clouds = join(clouds,',')
                 let s:vimim_cloud = get(clouds,0)
+            elseif last_but_one ==# "'"
+                let keyboard = keyboard[:-2]
+                let s:cloud_onekey = 2
             endif
         endif
     endif
@@ -4385,7 +4393,7 @@ function! s:vimim_do_cloud_or_not(keyboard)
     if a:keyboard =~ "[^a-z]"
         return 0
     endif
-    if s:onekey_nonstop_cloud > 0
+    if s:cloud_onekey > 0
     \|| s:vimim_cloud =~ 'dynamic\|static'
         return 1
     endif
@@ -5060,7 +5068,7 @@ endfunction
 " ---------------------------------------
 function! s:vimim_reset_before_anything()
 " ---------------------------------------
-    let s:onekey_nonstop_cloud = 0
+    let s:cloud_onekey = s:cloud_onekey>1 ? 2 : 0
     let s:has_pumvisible = 0
     let s:popupmenu_list = []
     let s:keyboard_list  = []
