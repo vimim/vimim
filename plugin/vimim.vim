@@ -701,6 +701,7 @@ function! g:vimim_search_next()
     if english =~ '\<' && english =~ '\>'
         let english = substitute(english,'[<>\\]','','g')
     endif
+    let results = []
     if len(english) > 1
     \&& len(english) < 24
     \&& english =~ '\w'
@@ -710,11 +711,21 @@ function! g:vimim_search_next()
     \&& v:errmsg =~# '^E486: '
         let error = ""
         try
-            sil!call s:vimim_search_chinese_by_english(english)
+            let results = s:vimim_search_chinese_by_english(english)
         catch
             let error = v:exception
         endtry
         echon "/" . english . error
+    endif
+    if !empty(results)
+        let results = split(substitute(join(results),'\w','','g'))
+        let slash = join(results[0:5], '\|')
+        if empty(search(slash,'nw'))
+            let @/ = english
+        else
+            let @/ = slash
+        endif
+        echon "/" . english
     endif
     let v:errmsg = ""
 endfunction
@@ -724,6 +735,20 @@ function! s:vimim_search_chinese_by_english(keyboard)
 " ---------------------------------------------------
     sil!call s:vimim_backend_initialization()
     let keyboard = tolower(a:keyboard)
+    let results = []
+    " 1/2 first try search from cloud/mycloud
+    if s:vimim_cloud =~ 'search'
+        " => slash search from default cloud
+        let cloud = get(split(s:vimim_cloud,'[.]'),0)
+        let results = s:vimim_get_cloud(keyboard, cloud)
+    elseif !empty(s:mycloud_plugin)
+        " => slash search from mycloud
+        let results = s:vimim_get_mycloud_plugin(keyboard)
+    endif
+    if !empty(results)
+        return results
+    endif
+    " 2/2 try search from local datafiles
     let cjk_results = []
     let s:english_results = []
     " => slash search unicode /u808f
@@ -758,14 +783,6 @@ function! s:vimim_search_chinese_by_english(keyboard)
             sil!call s:vimim_initialize_shuangpin()
             let keyboard = s:vimim_shuangpin_transform(keyboard)
         endif
-        if s:vimim_cloud =~ 'search'
-            " => slash search from sogou cloud
-            let cloud = get(split(s:vimim_cloud,'[.]'),0)
-            let results = s:vimim_get_cloud(keyboard, cloud)
-        elseif !empty(s:mycloud_plugin)
-            " => slash search from mycloud
-            let results = s:vimim_get_mycloud_plugin(keyboard)
-        endif
     endif
     if empty(results)
         " => slash search from local datafile or directory
@@ -773,16 +790,6 @@ function! s:vimim_search_chinese_by_english(keyboard)
     endif
     call extend(results, s:english_results, 0)
     call extend(results, cjk_results)
-    if !empty(results)
-        let results = split(substitute(join(results),'\w','','g'))
-        let slash = join(results, '\|')
-        if empty(search(slash,'nw'))
-            let @/ = a:keyboard
-        else
-            let @/ = slash
-        endif
-        echon "/" . a:keyboard
-    endif
 endfunction
 
 " --------------------------------------------
@@ -3404,7 +3411,9 @@ let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
 " --------------------------------------
-    if empty(s:vimim_shuangpin) || !empty(s:shuangpin_table)
+    if empty(s:vimim_shuangpin)
+    \|| !empty(s:shuangpin_table)
+    \|| s:vimim_cloud =~ 'shuangpin'
         return
     endif
     let s:vimim_imode_pinyin = 0
