@@ -325,7 +325,7 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
-        let g:vimim_cloud = 'google,sogou,baidu,qq'
+        let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -4394,7 +4394,7 @@ function! s:vimim_magic_tail(keyboard)
         if cloud_ready > 0
             " trailing apostrophe => forced-cloud
             let last_three = keyboard[-3:-1]
-            let s:cloud_onekey = 1
+            let s:cloud_onekey = 2
             let keyboard = keyboard[:-2]
             if last_three ==# "'''"
                 let keyboard = keyboard[:-3]
@@ -4403,7 +4403,8 @@ function! s:vimim_magic_tail(keyboard)
                 let s:vimim_cloud = join(clouds,',')
             elseif last_but_one ==# "'"
                 let keyboard = keyboard[:-2]
-                let s:cloud_onekey = 2
+            else
+                let s:cloud_onekey = 1
             endif
         endif
     endif
@@ -4681,12 +4682,8 @@ function! s:vimim_get_cloud_all(keyboard)
     let title  = s:vimim_chinese('cloud') . s:vimim_chinese('input')
     let title .= s:space . keyboard
     let results = []
-    let random_clouds = []
-    let random = localtime() % len(s:cloud_defaults)
-    for i in range(len(s:cloud_defaults))
-        call add(random_clouds, get(s:cloud_defaults, (random+i)%4))
-    endfor
-    for cloud in random_clouds
+    let cloud_all = 'google,baidu,sogou,qq'
+    for cloud in split(cloud_all,',')
         let start = localtime()
         let outputs = s:vimim_get_cloud(keyboard, cloud)
         if empty(outputs)
@@ -5342,7 +5339,8 @@ else
     " [cloud] to make cloud come true for woyouyigemeng
     let cloud = 0
     if s:vimim_do_cloud_or_not(keyboard) > 0
-        let cloud = s:cloud_default
+        let clouds = split(s:vimim_cloud,',')
+        let cloud = get(split(get(clouds,0),'[.]'),0)
         if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
             let cloud = get(s:frontends,1)
         endif
