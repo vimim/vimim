@@ -47,8 +47,10 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "      open vim, type i, type vimimpoem, <C-6>, m, m, m, m
 "  (2) play with OneKey, with cjk standard file installed:
 "      open vim, type i, type sssss, <C-6>, 1, 2, 3, 4
-"  (3) play with cloud, without datafile installed:
-"      open vim, type i, type <C-\>, woyouyigemeng
+"  (3) play with multiple clouds simultaneously
+"      open vim, type i, type vimimclouds, <C-6>, <C-6>
+"  (4) play with cloud, without datafile installed:
+"      open vim, type i, type <C-\>, type <C-\>
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -4483,11 +4485,7 @@ function! s:vimim_get_from_http(input)
     endif
     try
         if s:http_executable =~ 'libvimim'
-            let start = localtime()
             let output = libcall(s:http_executable, "do_geturl", input)
-            " [warning] the first call takes too long, upto 12 seconds
-            let end = localtime()
-            call add(g:vimim, "[libcall]".input."=".string(end-start))
         else
             let output = system(s:http_executable . '"'.input.'"')
         endif
@@ -4501,8 +4499,7 @@ endfunction
 " -----------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
-    " [usage] :let s:vimim_cloud = 'sogou'
-    " [url]   http://pinyin.sogou.com/cloud/
+" http://pinyin.sogou.com/cloud/
     if empty(s:cloud_keys.sogou)
         let key_sogou = 'http://web.pinyin.sogou.com/web_ime/patch.php'
         let output = s:vimim_get_from_http(key_sogou)
@@ -4548,8 +4545,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
 " --------------------------------------
-    " [usage] :let s:vimim_cloud = 'qq.wubi.fanti.dynamic'
-    " [url]   http://py.qq.com/web
+" http://py.qq.com/web
     let url = 'http://ime.qq.com/fcgi-bin/'
     if empty(s:cloud_keys.qq)
         let key_qq  = url . 'getkey'
@@ -4622,8 +4618,7 @@ endfunction
 " ------------------------------------------
 function! s:vimim_get_cloud_google(keyboard)
 " ------------------------------------------
-    " [usage] :let s:vimim_cloud = 'google'
-    " [url]   http://www.google.com/transliterate/chinese
+" http://www.google.com/transliterate/chinese
     let input  = 'http://www.google.com/transliterate'
     let input .= '?tl_app=3'
     let input .= '&tlqt=1'
@@ -4651,8 +4646,7 @@ endfunction
 " -----------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard)
 " -----------------------------------------
-    " [usage] :let s:vimim_cloud = 'baidu'
-    " [url]   http://olime.baidu.com/py?rn=0&pn=20&py=mxj
+" http://olime.baidu.com/py?rn=0&pn=20&py=mxj
     let input  = 'http://olime.baidu.com/py'
     let input .= '?rn=0'
     let input .= '&pn=20'
@@ -4707,9 +4701,6 @@ function! s:vimim_get_cloud_all(keyboard)
         call map(outputs, filter)
         call add(results, join(outputs))
     endfor
-    if !empty(results)
-        let s:cloud_onekey = 2
-    endif
     return results
 endfunction
 
@@ -5308,6 +5299,7 @@ else
             let results = s:vimim_get_cloud_all(input)
             if !empty(len(results))
                 let s:show_me_not = 1
+                let s:cloud_onekey = 2
                 return s:vimim_popupmenu_list(results)
             endif
         endif
@@ -5344,7 +5336,7 @@ else
         let s:keyboard_list = [keyboard]
     endif
 
-    " [cloud] to make cloud come true for woyouyigemeng
+    " [cloud] to make dream come true for multiple clouds
     let cloud = 0
     if s:vimim_do_cloud_or_not(keyboard) > 0
         let clouds = split(s:vimim_cloud,',')
