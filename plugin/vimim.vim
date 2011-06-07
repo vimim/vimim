@@ -4460,6 +4460,11 @@ function! s:vimim_get_cloud(keyboard, cloud)
     if !empty(len(results))
         let s:cloud_cache[cloud][keyboard] = results
     endif
+    let whoami = s:vimim_chinese(cloud)
+    if cloud =~ 'sogou'
+       let whoami = cloud . ' ' . whoami
+    endif
+    call add(results, whoami)
     return results
 endfunction
 
@@ -4702,6 +4707,9 @@ function! s:vimim_get_cloud_all(keyboard)
         call map(outputs, filter)
         call add(results, join(outputs))
     endfor
+    if !empty(results)
+        let s:cloud_onekey = 2
+    endif
     return results
 endfunction
 
