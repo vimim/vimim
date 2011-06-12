@@ -567,6 +567,12 @@ function! s:vimim_egg_vimimenv()
         let option .= s:vimim_chinese('cloud') . input
         let option .= ":let g:vimim_cloud='" . s:vimim_cloud."'"
         call add(eggs, option)
+        call s:vimim_check_http_executable()
+        if !empty(s:http_executable)
+            let option  = s:vimim_chinese('tool') . s:colon
+            let option .= "HTTP executable: " . s:http_executable
+            call add(eggs, option)
+        endif
     endif
     call map(eggs, 'v:val . " "')
     return eggs
@@ -1769,6 +1775,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese['mycloud']     = ['自己的云','自己的雲']
     let s:chinese['toggle']      = ['切换','切換']
     let s:chinese['online']      = ['在线','在綫']
+    let s:chinese['tool']        = ['工具']
     let s:chinese['sogou']       = ['搜狗']
     let s:chinese['google']      = ['谷歌']
     let s:chinese['baidu']       = ['百度']
@@ -4477,20 +4484,20 @@ import vim
 import codecs
 import urllib2
 try:
-    cloud = vim.eval("a:cloud")
-    url = vim.eval("a:url")
-    request = urllib2.urlopen(url)
-    response = request.read()
-    res = "'" + str(response) + "'"
-    if cloud == 'baidu':
-        encoding_from = request.headers['content-type'].split('charset=')[-1]
-        encoding_to = 'utf-8'
-        gbk = unicode(response, encoding_from).encode(encoding_to)
-        vim.command("let g:baidu = " + gbk)
-    vim.command("let g:cloud = " + res)
-    request.close()
+  cloud = vim.eval("a:cloud")
+  url = vim.eval("a:url")
+  request = urllib2.urlopen(url)
+  response = request.read()
+  res = "'" + str(response) + "'"
+  if cloud == 'baidu':
+    encoding_from = request.headers['content-type'].split('charset=')[-1]
+    encoding_to = 'utf-8'
+    gbk = unicode(response, encoding_from).encode(encoding_to)
+    vim.command("let g:baidu = " + gbk)
+  vim.command("let g:cloud = " + res)
+  request.close()
 except Exception, e:
-  vim.command("let g:error = " + e)
+  vim.command("let g:vimim_cloud_error = " + e)
 EOF
 return g:cloud
 endfunction
@@ -4523,17 +4530,13 @@ function! s:vimim_get_from_http(input, cloud)
     return output
 endfunction
 
-" web.pinyin.sogou.com/api/py?key=938cdfe9e1e39f8dd5da428b1a6a69cb&query=mxj
+" web.pinyin.sogou.com/api/py?key=938cdfe9e1e39f8dd5da428b1a6a69cb&query=ml
 " -----------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
     if empty(s:cloud_keys.sogou)
         let key_sogou = 'http://web.pinyin.sogou.com/web_ime/patch.php'
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
-     "  if !empty(g:sogou)
-     "      let output = get(g:sogou, 0)
-     "      let g:sogou = []
-     "  endif
         if empty(output)
             return []
         endif
@@ -4543,10 +4546,6 @@ function! s:vimim_get_cloud_sogou(keyboard)
     let input .= '?key=' . s:cloud_keys.sogou
     let input .= '&query=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'sogou')
- "  if !empty(g:sogou)
- "      let output = get(g:sogou, 0)
- "      let g:sogou = []
- "  endif
     if empty(output) || output =~ '502 bad gateway'
         return []
     endif
@@ -4585,10 +4584,6 @@ function! s:vimim_get_cloud_qq(keyboard)
     if empty(s:cloud_keys.qq)
         let key_qq  = url . 'getkey'
         let output = s:vimim_get_from_http(key_qq, 'qq')
-     "  if !empty(g:qq)
-     "      let output = get(g:qq, 0)
-     "      let g:qq = []
-     "  endif
         if empty(output) || output =~ '502 bad gateway'
             return []
         endif
@@ -4639,10 +4634,6 @@ function! s:vimim_get_cloud_qq(keyboard)
     endif
     let input .= '&q=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'qq')
- "  if !empty(g:qq)
- "      let output = get(g:qq, 0)
- "      let g:qq = []
- "  endif
     if empty(output) || output =~ '502 bad gateway'
         return []
     endif
@@ -4669,10 +4660,6 @@ function! s:vimim_get_cloud_google(keyboard)
     let input .= '&langpair=en|zh'
     let input .= '&text=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'google')
-  " if !empty(g:google)
-  "     let output = get(g:google, 0)
-  "     let g:google = []
-  " endif
     let output = substitute(output,'\n','','g')
     let output_list = eval(output)
     if type(output_list) != type([])
@@ -4721,7 +4708,6 @@ function! s:vimim_get_cloud_baidu(keyboard)
         let new_item = chinese . english
         call add(matched_list, new_item)
     endfor
-let g:g8 = copy(matched_list)
     return matched_list
 endfunction
 
