@@ -328,10 +328,6 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
-        let g:vimim_cloud = 'google'
-        let g:vimim_cloud = 'sogou'
-        let g:vimim_cloud = 'qq'
-        let g:vimim_cloud = 'baidu'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -4202,9 +4198,8 @@ let s:VimIM += [" ====  backend clouds   ==== {{{"]
 
 " -----------------------------------
 function! s:vimim_initialize_clouds()
-" ----------------------------------- todo
+" -----------------------------------
     let g:cloud = ""
-    let g:baidu = []
     let cloud_default = 'baidu,sogou,qq,google'
     let cloud_defaults = split(cloud_default,',')
     let s:cloud_default = get(cloud_defaults,0)
@@ -4463,7 +4458,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     catch
         call s:debugs('get_cloud::' . cloud . '::', v:exception)
     endtry
-    if !empty(len(results))
+    if (len(results)) > 2
         let s:cloud_cache[cloud][keyboard] = results
     endif
     let whoami = s:vimim_chinese(cloud)
@@ -4474,24 +4469,24 @@ function! s:vimim_get_cloud(keyboard, cloud)
     return results
 endfunction
 
-" ------------------------------------------
+" -------------------------------------------
 function! s:vimim_get_from_python(url, cloud)
-" ------------------------------------------ todo
+" -------------------------------------------
 python << EOF
 import vim
 import codecs
 import urllib2
 try:
-    url = vim.eval("a:url")
     cloud = vim.eval("a:cloud")
-    request = urllib2.urlopen(url, None, 20)
+    url = vim.eval("a:url")
+    request = urllib2.urlopen(url)
     response = request.read()
     res = "'" + str(response) + "'"
     if cloud == 'baidu':
         encoding_from = request.headers['content-type'].split('charset=')[-1]
         encoding_to = 'utf-8'
-        res = unicode(response, encoding_from).encode(encoding_to)
-        vim.command("let g:baidu = " + res)
+        gbk = unicode(response, encoding_from).encode(encoding_to)
+        vim.command("let g:baidu = " + gbk)
     vim.command("let g:cloud = " + res)
     request.close()
 except Exception, e:
@@ -4585,7 +4580,7 @@ endfunction
 " ime.qq.com/fcgi-bin/getword?key=f0e9756a31396a76a3f40abce1213367&q=mxj
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
-" -------------------------------------- todo
+" --------------------------------------
     let url = 'http://ime.qq.com/fcgi-bin/'
     if empty(s:cloud_keys.qq)
         let key_qq  = url . 'getkey'
@@ -4704,32 +4699,20 @@ function! s:vimim_get_cloud_baidu(keyboard)
     let input .= '&pn=20'
     let input .= '&py=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'baidu')
-
-    let output_list = g:baidu
+    let output_list = get(copy(g:baidu),0)
     if empty(output_list)
         if empty(output) || output =~ '502 bad gateway'
             return []
         elseif empty(s:localization)
             let output = iconv(output, "gbk", "utf-8")
         endif
-        let output_list = eval(output)
+        let output_list = get(eval(output),0)
         if type(output_list) != type([])
             return []
         endif
     endif
-
- "  if empty(output) || output =~ '502 bad gateway'
- "      return []
- "  elseif empty(s:localization) 
- "      let output = iconv(output, "gbk", "utf-8")
- "  endif
- "  let output_list = eval(output)
- "  if type(output_list) != type([])
- "      return []
- "  endif
-
     let matched_list = []
-    for item_list in get(output_list,0)
+    for item_list in output_list
         let chinese = get(item_list,0)
         if chinese =~ '\w'
             continue
@@ -4738,7 +4721,7 @@ function! s:vimim_get_cloud_baidu(keyboard)
         let new_item = chinese . english
         call add(matched_list, new_item)
     endfor
-"   let g:baidu = []
+let g:g8 = copy(matched_list)
     return matched_list
 endfunction
 
@@ -5165,6 +5148,7 @@ endfunction
 " -----------------------------------
 function! s:vimim_reset_before_omni()
 " -----------------------------------
+    let g:baidu = []
     let s:smart_enter = 0
     let s:show_me_not = 0
     let s:english_results = []
