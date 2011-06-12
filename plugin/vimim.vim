@@ -328,6 +328,10 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
+        let g:vimim_cloud = 'google'
+        let g:vimim_cloud = 'sogou'
+        let g:vimim_cloud = 'qq'
+        let g:vimim_cloud = 'baidu'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -4198,7 +4202,9 @@ let s:VimIM += [" ====  backend clouds   ==== {{{"]
 
 " -----------------------------------
 function! s:vimim_initialize_clouds()
-" -----------------------------------
+" ----------------------------------- todo
+    let g:cloud = ""
+    let g:baidu = []
     let cloud_default = 'baidu,sogou,qq,google'
     let cloud_defaults = split(cloud_default,',')
     let s:cloud_default = get(cloud_defaults,0)
@@ -4331,41 +4337,39 @@ function! s:vimim_check_http_executable()
     elseif len(s:http_executable) > 1
         return 1
     endif
-    " step 1 of 3: try to find libvimim
-    let cloud = s:vimim_get_libvimim()
-    if !empty(cloud) && filereadable(cloud)
+    " step 1 of 4: try to find libvimim
+    let libvimim = s:vimim_get_libvimim()
+    if !empty(libvimim) && filereadable(libvimim)
         " in win32, strip the .dll suffix
-        if has("win32") && cloud[-4:] ==? ".dll"
-            let cloud = cloud[:-5]
+        if has("win32") && libvimim[-4:] ==? ".dll"
+            let libvimim = libvimim[:-5]
         endif
-        let ret = libcall(cloud, "do_geturl", "__isvalid")
+        let ret = libcall(libvimim, "do_geturl", "__isvalid")
         if ret ==# "True"
-            let s:http_executable = cloud
+            let s:http_executable = libvimim
         endif
     endif
-    " step 2 of 3: try to find wget
+    " step 2 of 4: try to use dynamic python: +python/dyn +python3/dyn
+    if empty(s:http_executable) && has('python')
+        let s:http_executable = 'python'
+    endif
+    " step 3 of 4: try to find wget
     if empty(s:http_executable)
-        let wget = 0
-        let wget_exe = s:path . "wget.exe"
-        if executable(wget_exe)
+        let wget = 'wget'
+        let wget_exe = s:path . 'wget.exe'
+        if filereadable(wget_exe)
             let wget = wget_exe
-        elseif executable('wget')
-            let wget = "wget"
         endif
-        if !empty(wget)
+        if executable(wget)
             let wget_option = " -qO - --timeout 20 -t 10 "
             let s:http_executable = wget . wget_option
         endif
     endif
-    " step 3 of 3: try to find curl if no wget
-    if empty(s:http_executable)
-        if executable('curl')
-            let s:http_executable = "curl -s "
-        else
-            return 0
-        endif
+    " step 4 of 4: try to find curl if no wget
+    if empty(s:http_executable) && executable('curl')
+        let s:http_executable = "curl -s "
     endif
-    return 1
+    return s:http_executable
 endfunction
 
 " ------------------------------------
@@ -4470,9 +4474,35 @@ function! s:vimim_get_cloud(keyboard, cloud)
     return results
 endfunction
 
-" ------------------------------------
-function! s:vimim_get_from_http(input)
-" ------------------------------------
+" ------------------------------------------
+function! s:vimim_get_from_python(url, cloud)
+" ------------------------------------------ todo
+python << EOF
+import vim
+import codecs
+import urllib2
+try:
+    url = vim.eval("a:url")
+    cloud = vim.eval("a:cloud")
+    request = urllib2.urlopen(url, None, 20)
+    response = request.read()
+    res = "'" + str(response) + "'"
+    if cloud == 'baidu':
+        encoding_from = request.headers['content-type'].split('charset=')[-1]
+        encoding_to = 'utf-8'
+        res = unicode(response, encoding_from).encode(encoding_to)
+        vim.command("let g:baidu = " + res)
+    vim.command("let g:cloud = " + res)
+    request.close()
+except Exception, e:
+  vim.command("let g:error = " + e)
+EOF
+return g:cloud
+endfunction
+
+" -------------------------------------------
+function! s:vimim_get_from_http(input, cloud)
+" -------------------------------------------
     let input = a:input
     let output = 0
     if empty(input)
@@ -4486,23 +4516,29 @@ function! s:vimim_get_from_http(input)
     try
         if s:http_executable =~ 'libvimim'
             let output = libcall(s:http_executable, "do_geturl", input)
+        elseif s:http_executable =~ 'python'
+            let output = s:vimim_get_from_python(input, a:cloud)
         else
             let output = system(s:http_executable . '"'.input.'"')
         endif
     catch
+        call s:debugs('cloud::', output ." ". v:exception)
         let output = 0
-        call s:debugs('sogou::', output ." ". v:exception)
     endtry
     return output
 endfunction
 
+" web.pinyin.sogou.com/api/py?key=938cdfe9e1e39f8dd5da428b1a6a69cb&query=mxj
 " -----------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
-" http://pinyin.sogou.com/cloud/
     if empty(s:cloud_keys.sogou)
         let key_sogou = 'http://web.pinyin.sogou.com/web_ime/patch.php'
-        let output = s:vimim_get_from_http(key_sogou)
+        let output = s:vimim_get_from_http(key_sogou, 'sogou')
+     "  if !empty(g:sogou)
+     "      let output = get(g:sogou, 0)
+     "      let g:sogou = []
+     "  endif
         if empty(output)
             return []
         endif
@@ -4511,7 +4547,11 @@ function! s:vimim_get_cloud_sogou(keyboard)
     let input  = 'http://web.pinyin.sogou.com/api/py'
     let input .= '?key=' . s:cloud_keys.sogou
     let input .= '&query=' . a:keyboard
-    let output = s:vimim_get_from_http(input)
+    let output = s:vimim_get_from_http(input, 'sogou')
+ "  if !empty(g:sogou)
+ "      let output = get(g:sogou, 0)
+ "      let g:sogou = []
+ "  endif
     if empty(output) || output =~ '502 bad gateway'
         return []
     endif
@@ -4542,14 +4582,18 @@ function! s:vimim_get_cloud_sogou(keyboard)
     return matched_list
 endfunction
 
+" ime.qq.com/fcgi-bin/getword?key=f0e9756a31396a76a3f40abce1213367&q=mxj
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
-" --------------------------------------
-" http://py.qq.com/web
+" -------------------------------------- todo
     let url = 'http://ime.qq.com/fcgi-bin/'
     if empty(s:cloud_keys.qq)
         let key_qq  = url . 'getkey'
-        let output = s:vimim_get_from_http(key_qq)
+        let output = s:vimim_get_from_http(key_qq, 'qq')
+     "  if !empty(g:qq)
+     "      let output = get(g:qq, 0)
+     "      let g:qq = []
+     "  endif
         if empty(output) || output =~ '502 bad gateway'
             return []
         endif
@@ -4599,7 +4643,11 @@ function! s:vimim_get_cloud_qq(keyboard)
         let input .= '&mh=1'
     endif
     let input .= '&q=' . a:keyboard
-    let output = s:vimim_get_from_http(input)
+    let output = s:vimim_get_from_http(input, 'qq')
+ "  if !empty(g:qq)
+ "      let output = get(g:qq, 0)
+ "      let g:qq = []
+ "  endif
     if empty(output) || output =~ '502 bad gateway'
         return []
     endif
@@ -4615,17 +4663,21 @@ function! s:vimim_get_cloud_qq(keyboard)
     return matched_list
 endfunction
 
+" google.com/transliterate?tl_app=3&tlqt=1&num=20&langpair=en|zh&text=mxj
 " ------------------------------------------
 function! s:vimim_get_cloud_google(keyboard)
 " ------------------------------------------
-" http://www.google.com/transliterate/chinese
     let input  = 'http://www.google.com/transliterate'
     let input .= '?tl_app=3'
     let input .= '&tlqt=1'
     let input .= '&num=20'
     let input .= '&langpair=en|zh'
     let input .= '&text=' . a:keyboard
-    let output = s:vimim_get_from_http(input)
+    let output = s:vimim_get_from_http(input, 'google')
+  " if !empty(g:google)
+  "     let output = get(g:google, 0)
+  "     let g:google = []
+  " endif
     let output = substitute(output,'\n','','g')
     let output_list = eval(output)
     if type(output_list) != type([])
@@ -4643,24 +4695,39 @@ function! s:vimim_get_cloud_google(keyboard)
     return matched_list
 endfunction
 
+" http://olime.baidu.com/py?rn=0&pn=20&py=mxj
 " -----------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard)
 " -----------------------------------------
-" http://olime.baidu.com/py?rn=0&pn=20&py=mxj
     let input  = 'http://olime.baidu.com/py'
     let input .= '?rn=0'
     let input .= '&pn=20'
     let input .= '&py=' . a:keyboard
-    let output = s:vimim_get_from_http(input)
-    if empty(output) || output =~ '502 bad gateway'
-        return []
-    elseif empty(s:localization)
-        let output = iconv(output, "gbk", "utf-8")
+    let output = s:vimim_get_from_http(input, 'baidu')
+
+    let output_list = g:baidu
+    if empty(output_list)
+        if empty(output) || output =~ '502 bad gateway'
+            return []
+        elseif empty(s:localization)
+            let output = iconv(output, "gbk", "utf-8")
+        endif
+        let output_list = eval(output)
+        if type(output_list) != type([])
+            return []
+        endif
     endif
-    let output_list = eval(output)
-    if type(output_list) != type([])
-        return []
-    endif
+
+ "  if empty(output) || output =~ '502 bad gateway'
+ "      return []
+ "  elseif empty(s:localization) 
+ "      let output = iconv(output, "gbk", "utf-8")
+ "  endif
+ "  let output_list = eval(output)
+ "  if type(output_list) != type([])
+ "      return []
+ "  endif
+
     let matched_list = []
     for item_list in get(output_list,0)
         let chinese = get(item_list,0)
@@ -4671,6 +4738,7 @@ function! s:vimim_get_cloud_baidu(keyboard)
         let new_item = chinese . english
         call add(matched_list, new_item)
     endfor
+"   let g:baidu = []
     return matched_list
 endfunction
 
