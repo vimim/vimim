@@ -4402,7 +4402,6 @@ function! s:vimim_magic_tail(keyboard)
         if cloud_ready > 0
             " trailing apostrophe => forced-cloud
             let last_three = keyboard[-3:-1]
-            let s:cloud_onekey = 2
             let keyboard = keyboard[:-2]
             if last_three ==# "'''"
                 let keyboard = keyboard[:-3]
@@ -4411,6 +4410,7 @@ function! s:vimim_magic_tail(keyboard)
                 let s:vimim_cloud = join(clouds,',')
             elseif last_but_one ==# "'"
                 let keyboard = keyboard[:-2]
+                let s:cloud_onekey = 2
             else
                 let s:cloud_onekey = 1
             endif
@@ -4465,7 +4465,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     catch
         call s:debugs('get_cloud::' . cloud . '::', v:exception)
     endtry
-    if (len(results)) > 2
+    if (len(results)) > 1
         let s:cloud_cache[cloud][keyboard] = results
     endif
     let whoami = s:vimim_chinese(cloud)
@@ -4479,6 +4479,9 @@ endfunction
 " -------------------------------------------
 function! s:vimim_get_from_python(url, cloud)
 " -------------------------------------------
+if has('python') < 1
+    return 0
+endif
 python << EOF
 import vim
 import codecs
@@ -5337,7 +5340,6 @@ else
             let results = s:vimim_get_cloud_all(input)
             if !empty(len(results))
                 let s:show_me_not = 1
-                let s:cloud_onekey = 2
                 return s:vimim_popupmenu_list(results)
             endif
         endif
