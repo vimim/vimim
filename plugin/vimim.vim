@@ -322,11 +322,10 @@ endfunction
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
+" ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
-        let g:vimim_cloud = 'qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -4347,10 +4346,10 @@ try:
       encoding = request.headers['content-type'].split('charset=')[-1]
       gbk = unicode(response, encoding).encode('utf-8')
     vim.command("let g:baidu = " + gbk)
-  elif cloud == 'google':
+  elif cloud == 'qq':
     if vim.eval("&encoding") != 'utf-8':
       res = unicode(res, 'utf-8').encode('utf-8')
-  elif cloud == 'qq':
+  elif cloud == 'google':
     if vim.eval("&encoding") != 'utf-8':
       res = unicode(res, 'utf-8').encode('utf-8')
   vim.command("let g:cloud = " + res)
@@ -4496,12 +4495,15 @@ function! s:vimim_get_cloud_qq(keyboard)
     if empty(output) || output =~ '502 bad gateway'
         return []
     endif
-    let key = 'rs'
-    let matched_list = []
     if s:localization > 0
-        let output = iconv(copy(output), "utf-8", "gbk")
+        let output = iconv(output, "utf-8", "gbk")
     endif
     let output_hash = eval(output)
+    if type(output_hash) != type({})
+        return []
+    endif
+    let key = 'rs'
+    let matched_list = []
     if type(output_hash) == type({}) && has_key(output_hash, key)
         let matched_list = output_hash[key]
     endif
@@ -4519,18 +4521,17 @@ function! s:vimim_get_cloud_google(keyboard)
     let input .= '&langpair=en|zh'
     let input .= '&text=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'google')
-    let output = substitute(output,'\n','','g')
+    let output = join(split(output))
     if s:localization > 0
         " '[{"ew" : "fuck","hws" : ["\u5987\u4EA7\u79D1","\u9644",]},]'
-        let output = iconv(copy(output), "utf-8", "cp936")
+        let output = iconv(output, "utf-8", "gbk")
     endif
-    let output_list = eval(output)
-    if type(output_list) != type([])
+    let output_hash = get(eval(output),0)
+    if type(output_hash) != type({})
         return []
     endif
     let key = 'hws'
     let matched_list = []
-    let output_hash = get(output_list,0)
     if type(output_hash) == type({}) && has_key(output_hash, key)
         let matched_list = output_hash[key]
     endif
