@@ -156,7 +156,6 @@ function! s:vimim_one_backend_hash()
     let one_backend_hash.chinese = ''
     let one_backend_hash.directory = ''
     let one_backend_hash.lines = []
-    let one_backend_hash.cache = {}
     let one_backend_hash.keycode = "[0-9a-z'.]"
     return one_backend_hash
 endfunction
@@ -258,7 +257,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_use_cache")
     call add(G, "g:vimim_custom_menu")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_digit_4corner")
@@ -895,7 +893,6 @@ function! s:vimim_chinese_mode(switch)
         let s:ui.root = get(s:frontends,0)
         let s:ui.im = get(s:frontends,1)
         call s:vimim_set_statusline()
-        call s:vimim_build_datafile_cache()
         let action = s:vimim_chinesemode_action()
     endif
     sil!exe 'sil!return "' . action . '"'
@@ -2533,63 +2530,6 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" Thanks to Politz for creating this sexy plugin:
-" http://www.vim.org/scripts/script.php?script_id=2006
-let s:progressbar = {}
-function! NewSimpleProgressBar(title, max_value, ...)
-    if !has("statusline")
-        return {}
-    endif
-    let winnr = a:0 ? a:1 : winnr()
-    let b = copy(s:progressbar)
-    let b.title = a:title
-    let b.max_value = a:max_value
-    let b.cur_value = 0
-    let b.winnr = winnr
-    let b.items = {
-        \ 'title' : { 'color' : 'Statusline' },
-        \ 'bar' : { 'fillchar' : ' ', 'color' : 'Statusline' ,
-        \           'fillcolor' : 'DiffDelete' , 'bg' : 'Statusline' },
-        \ 'counter' : { 'color' : 'Statusline' } }
-    let b.stl_save = getwinvar(winnr,"&statusline")
-    let b.lst_save = &laststatus"
-    return b
-endfunction
-function! s:progressbar.paint()
-    let max_len = winwidth(self.winnr)-1
-    let t_len = strlen(self.title)+1+1
-    let c_len = 2*strlen(self.max_value)+1+1+1
-    let pb_len = max_len - t_len - c_len - 2
-    let cur_pb_len = (pb_len*self.cur_value)/self.max_value
-    let t_color = self.items.title.color
-    let b_fcolor = self.items.bar.fillcolor
-    let b_color = self.items.bar.color
-    let c_color = self.items.counter.color
-    let fc= strpart(self.items.bar.fillchar." ",0,1)
-    let stl = "%#".t_color."#%-( ".self.title." %)".
-        \"%#".b_color."#|".
-        \"%#".b_fcolor."#%-(".repeat(fc,cur_pb_len)."%)".
-        \"%#".b_color."#".repeat(" ",pb_len-cur_pb_len)."|".
-        \"%=%#".c_color."#%( ".repeat(" ",(strlen(self.max_value)-
-        \strlen(self.cur_value))).self.cur_value."/".self.max_value."  %)"
-    set laststatus=2
-    call setwinvar(self.winnr,"&stl",stl)
-    redraw
-endfunction
-function! s:progressbar.incr( ... )
-    let i = a:0 ? a:1 : 1
-    let i+=self.cur_value
-    let i = i < 0 ? 0 : i > self.max_value ? self.max_value : i
-    let self.cur_value = i
-    call self.paint()
-    return self.cur_value
-endfunction
-function! s:progressbar.restore()
-    call setwinvar(self.winnr,"&stl",self.stl_save)
-    let &laststatus=self.lst_save
-    redraw
-endfunction
-
 " ============================================= }}}
 let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " =================================================
@@ -3790,25 +3730,6 @@ function! s:vimim_set_datafile(im, datafile)
     call s:vimim_set_special_im_property()
 endfunction
 
-" ----------------------------------------
-function! s:vimim_get_from_cache(keyboard)
-" ----------------------------------------
-    let keyboard = a:keyboard
-    if empty(keyboard) || empty(s:backend[s:ui.root][s:ui.im].cache)
-        return []
-    endif
-    let results = []
-    if has_key(s:backend[s:ui.root][s:ui.im].cache, keyboard)
-        let results = s:backend[s:ui.root][s:ui.im].cache[keyboard]
-    endif
-    let extras = s:vimim_more_pinyin_datafile(keyboard,0)
-    if len(extras) > 0
-        call map(results, 'keyboard ." ". v:val')
-        call extend(results, extras)
-    endif
-    return results
-endfunction
-
 " --------------------------------------------------------
 function! s:vimim_more_pinyin_datafile(keyboard, sentence)
 " --------------------------------------------------------
@@ -3836,39 +3757,6 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
         call extend(results, matched_list)
     endfor
     return results
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_sentence_match_cache(keyboard)
-" ----------------------------------------------
-    if empty(s:backend[s:ui.root][s:ui.im].cache)
-        return []
-    endif
-    let keyboard = a:keyboard
-    if has_key(s:backend[s:ui.root][s:ui.im].cache, keyboard)
-        return keyboard
-    elseif empty(s:english_results)
-        " scan more on cache when English is not found
-    else
-        return 0
-    endif
-    let im = s:ui.im
-    let max = len(keyboard)
-    let found = 0
-    while max > 1
-        let max -= 1
-        let head = strpart(keyboard, 0, max)
-        if has_key(s:backend[s:ui.root][s:ui.im].cache, head)
-            let found = 1
-            break
-        else
-            continue
-        endif
-    endwhile
-    if found > 0
-        return keyboard[0 : max-1]
-    endif
-    return 0
 endfunction
 
 " -------------------------------------------------
@@ -3983,46 +3871,6 @@ function! s:vimim_more_pinyin_candidates(keyboard)
         call add(candidates, candidate)
     endfor
     return candidates
-endfunction
-
-" --------------------------------------
-function! s:vimim_build_datafile_cache()
-" --------------------------------------
-    if s:vimim_use_cache < 1
-        return
-    endif
-    if s:backend[s:ui.root][s:ui.im].root == "datafile"
-        if empty(s:backend[s:ui.root][s:ui.im].lines)
-            " no way to build datafile cache
-        elseif empty(s:backend[s:ui.root][s:ui.im].cache)
-            let im = s:vimim_chinese(s:ui.im)
-            let database = s:vimim_chinese('database')
-            let total = len(s:backend[s:ui.root][s:ui.im].lines)
-            let progress = "VimIM loading " . im . database
-            let progressbar = NewSimpleProgressBar(progress, total)
-            try
-                call s:vimim_load_datafile_cache(progressbar)
-            finally
-                call progressbar.restore()
-            endtry
-        endif
-    endif
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_load_datafile_cache(progressbar)
-" ------------------------------------------------
-    if empty(s:backend[s:ui.root][s:ui.im].cache)
-        " cache only needs to be loaded once
-    else
-        return
-    endif
-    for line in s:backend[s:ui.root][s:ui.im].lines
-        call a:progressbar.incr(1)
-        let oneline_list = split(line)
-        let menu = remove(oneline_list, 0)
-        let s:backend[s:ui.root][s:ui.im].cache[menu] = oneline_list
-    endfor
 endfunction
 
 " -------------------------------------
@@ -5239,13 +5087,8 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
             endif
         endif
     elseif root =~# "datafile"
-        if empty(s:backend[root][im].cache)
-            let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
-            let results = s:vimim_get_from_datafile(keyboard2, a:search)
-        else
-            let keyboard2 = s:vimim_sentence_match_cache(keyboard)
-            let results = s:vimim_get_from_cache(keyboard2)
-        endif
+        let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
+        let results = s:vimim_get_from_datafile(keyboard2, a:search)
     endif
     if len(s:keyboard_list) < 2
         if empty(keyboard2)
