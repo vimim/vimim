@@ -322,10 +322,11 @@ endfunction
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------- todo
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
+let g:vimim_cloud = 'baidu'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -4341,9 +4342,10 @@ try:
   response = request.read()
   res = "'" + str(response) + "'"
   if cloud == 'baidu':
-    encoding_from = request.headers['content-type'].split('charset=')[-1]
-    encoding_to = 'utf-8'
-    gbk = unicode(response, encoding_from).encode(encoding_to)
+    gbk = str(response)
+    if vim.eval("&encoding") == 'utf-8':
+      encoding = request.headers['content-type'].split('charset=')[-1]
+      gbk = unicode(response, encoding).encode('utf-8')
     vim.command("let g:baidu = " + gbk)
   vim.command("let g:cloud = " + res)
   request.close()
