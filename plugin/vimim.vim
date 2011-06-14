@@ -2160,8 +2160,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         endif
         if empty(head)
             let a_keyboard = keyboard
-            let magic_tail = keyboard[-1:-1]
-            if magic_tail ==# "."
+            if keyboard[-1:-1] ==# "."
                 "  magic trailing dot to use control cjjp: sssss.
                 let s:hjkl_m += 1
                 let a_keyboard = keyboard[0 : len(keyboard)-2]
@@ -4228,9 +4227,7 @@ function! s:vimim_magic_tail(keyboard)
     let keyboard = a:keyboard
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
-    if last_but_one ==# "'"
-        " play with another choice of clouds family
-    elseif magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z]"
+    if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z']"
         " play with magic trailing char
     else
         return keyboard
@@ -4328,7 +4325,7 @@ endfunction
 function! s:vimim_get_from_python(url, cloud)
 " -------------------------------------------
 if has('python') < 1
-    return 0
+    return ""
 endif
 python << EOF
 import vim
@@ -4343,6 +4340,7 @@ try:
   if cloud == 'baidu':
     gbk = str(response)
     if vim.eval("&encoding") == 'utf-8':
+      encoding = 'gb2312'
       encoding = request.headers['content-type'].split('charset=')[-1]
       gbk = unicode(response, encoding).encode('utf-8')
     vim.command("let g:baidu = " + gbk)
@@ -4350,8 +4348,11 @@ try:
     if vim.eval("&encoding") != 'utf-8':
       res = unicode(res, 'utf-8').encode('utf-8')
   elif cloud == 'google':
+    res = " ".join(res.splitlines())
     if vim.eval("&encoding") != 'utf-8':
-      res = unicode(res, 'utf-8').encode('utf-8')
+      encoding = 'ISO-8859-1'
+      encoding = request.headers['content-type'].split('charset=')[-1]
+      res = unicode(res, encoding).encode('utf-8')
   vim.command("let g:cloud = " + res)
   request.close()
 except Exception, e:
@@ -4514,18 +4515,19 @@ endfunction
 " ------------------------------------------
 function! s:vimim_get_cloud_google(keyboard)
 " ------------------------------------------
-    let input  = 'http://www.google.com/transliterate'
-    let input .= '?tl_app=3'
-    let input .= '&tlqt=1'
+    let input  = 'http://www.google.com/transliterate?'
+    let input  = 'http://www.google.com/transliterate/chinese'
+    let input .= '?langpair=en|zh'
     let input .= '&num=20'
-    let input .= '&langpair=en|zh'
+    let input .= '&tl_app=3'
+    let input .= '&tlqt=1'
     let input .= '&text=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'google')
-    let output = join(split(output))
     if s:localization > 0
         " '[{"ew" : "fuck","hws" : ["\u5987\u4EA7\u79D1","\u9644",]},]'
         let output = iconv(output, "utf-8", "gbk")
     endif
+    let output = join(split(output))
     let output_hash = get(eval(output),0)
     if type(output_hash) != type({})
         return []
