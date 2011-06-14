@@ -336,6 +336,7 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
+        let g:vimim_cloud = 'baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -4350,26 +4351,23 @@ try:
   url = vim.eval("a:url")
   request = urllib2.urlopen(url)
   response = request.read()
-  if cloud == 'sogou':
-    res = "'" + str(response) + "'"
-  elif cloud == 'qq':
-    res = "'" + str(response) + "'"
+  res = "'" + str(response) + "'"
+  if cloud == 'qq':
     if vim.eval("&encoding") != 'utf-8':
       res = unicode(res, 'utf-8').encode('utf-8')
   elif cloud == 'google':
-    res = "'" + str(response) + "'"
-    res = " ".join(res.splitlines())
     if vim.eval("&encoding") != 'utf-8':
-      encoding = 'ISO-8859-1'
-      encoding = request.headers['content-type'].split('charset=')[-1]
-      res = unicode(res, encoding).decode('utf-8')
+      res = unicode(res,"unicode_escape").encode("utf8")
+# elif cloud == 'baidu':
+#   gbk = str(response)
+#   if vim.eval("&encoding") == 'utf-8':
+#     encoding = 'gb2312'
+#     encoding = request.headers['content-type'].split('charset=')[-1]
+#     gbk = unicode(response, encoding).encode('utf-8')
+#   vim.command("let g:baidu = " + gbk)
   elif cloud == 'baidu':
-    gbk = str(response)
     if vim.eval("&encoding") == 'utf-8':
-      encoding = 'gb2312'
-      encoding = request.headers['content-type'].split('charset=')[-1]
-      gbk = unicode(response, encoding).encode('utf-8')
-    vim.command("let g:baidu = " + gbk)
+      res = unicode(res, 'utf-8').encode('utf-8')
   vim.command("let g:cloud = " + res)
   request.close()
 except Exception, e:
@@ -4567,18 +4565,20 @@ function! s:vimim_get_cloud_baidu(keyboard)
     let input .= '&pn=20'
     let input .= '&py=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'baidu')
-    let output_list = get(copy(g:baidu),0)
-    if empty(output_list)
+let g:g1=copy(output)
+ "  let output_list = get(copy(g:baidu),0)
+ "  if empty(output_list)
         if empty(output) || output =~ '502 bad gateway'
             return []
         elseif empty(s:localization)
+            " ['[[["\xc3\xb0\xcf\xd5\xbc\xd2",3]
             let output = iconv(output, "gbk", "utf-8")
         endif
         let output_list = get(eval(output),0)
         if type(output_list) != type([])
             return []
         endif
-    endif
+ "  endif
     let matched_list = []
     for item_list in output_list
         let chinese = get(item_list,0)
