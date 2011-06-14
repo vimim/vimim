@@ -336,6 +336,7 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
+        let g:vimim_cloud = 'baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -4556,7 +4557,10 @@ function! s:vimim_get_cloud_baidu(keyboard)
     let input .= '&pn=20'
     let input .= '&py=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'baidu')
-    let output_list = get(g:baidu, 0)
+    let output_list = []
+    if exists("g:baidu") && type(g:baidu) == type([])
+        let output_list = get(g:baidu,0)
+    endif
     if empty(output_list)
         if empty(output) || output =~ '502 bad gateway'
             return []
@@ -4565,9 +4569,9 @@ function! s:vimim_get_cloud_baidu(keyboard)
             let output = iconv(output, "gbk", "utf-8")
         endif
         let output_list = get(eval(output),0)
-        if type(output_list) != type([])
-            return []
-        endif
+    endif
+    if type(output_list) != type([])
+        return []
     endif
     let matched_list = []
     for item_list in output_list
