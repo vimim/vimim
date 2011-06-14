@@ -327,6 +327,12 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
+" " issue 153
+" :let g:vimim_cloud = 'qq' 
+" :let g:vimim_ctrl_h_to_toggle = 2 
+" :let g:vimim_custom_label = 1 
+" :let g:vimim_latex_suite = 1 
+" :let g:vimim_more_candidates = 10 
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
@@ -3040,15 +3046,20 @@ function! s:vimim_popupmenu_list(matched_list)
         if cursor_gps < 0.72 && onerow_gps < 0.92
             let start = 1
             let display = 0
-            if line("w$") - line(".") < height + 2
-            \&& line("w$") - line("w0") > &lines - height - 2
+            let line1 =  line("w$") - line(".")
+            let line2 =  line("w$") - line("w0")
+            if line1 < height+2 && line2 > &lines-height- 2
                 let start = 0
                 let display = height-1
             endif
-            let popupmenu_list[display].abbr = join(one_list)
+            if display < len(popupmenu_list)
+                let popupmenu_list[display].abbr = join(one_list)
+            endif
             let empty_lines = range(start, start+height-2)
             for i in empty_lines
-                let popupmenu_list[i].abbr = s:space
+                if i < len(popupmenu_list)
+                    let popupmenu_list[i].abbr = s:space
+                endif
             endfor
         endif
     endif
