@@ -336,7 +336,6 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
-        let g:vimim_cloud = 'baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -4200,7 +4199,7 @@ function! s:vimim_check_http_executable()
     elseif len(s:http_executable) > 1
         return 1
     endif
-    " step 1 of 4: try to find libvimim
+    " step 1 of 4: try to find libvimim for mycloud
     let libvimim = s:vimim_get_libvimim()
     if !empty(libvimim) && filereadable(libvimim)
         " in win32, strip the .dll suffix
@@ -4534,7 +4533,11 @@ function! s:vimim_get_cloud_google(keyboard)
     let output = join(split(output))
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
-        let output = iconv(output, "utf-8", "gbk")
+        if s:http_executable =~ 'python'
+            let output = iconv(output, "utf-8", "gbk")
+        else
+            return ["need_Python_Interface_to_Vim"]
+        endif
     endif
     let output_hash = get(eval(output),0)
     if type(output_hash) != type({})
