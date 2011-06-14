@@ -304,7 +304,7 @@ function! s:vimim_set_global_default(options, default)
             call add(s:vimimrc, '" ' . option)
         endif
         let s_variable = substitute(variable,"g:","s:",'')
-        if exists(variable) 
+        if exists(variable)
             exe 'let '. s_variable .'='. variable
             exe 'unlet! ' . variable
         else
@@ -328,15 +328,14 @@ endfunction
 function! s:vimim_initialize_debug()
 " ----------------------------------
 " " issue 153
-" :let g:vimim_cloud = 'qq' 
-" :let g:vimim_ctrl_h_to_toggle = 2 
-" :let g:vimim_custom_label = 1 
-" :let g:vimim_latex_suite = 1 
-" :let g:vimim_more_candidates = 10 
+" :let g:vimim_cloud = 'qq'
+" :let g:vimim_ctrl_h_to_toggle = 2
+" :let g:vimim_custom_label = 1
+" :let g:vimim_latex_suite = 1
+" :let g:vimim_more_candidates = 10
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
-        let g:vimim_cloud = 'baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -4068,7 +4067,6 @@ let s:VimIM += [" ====  backend clouds   ==== {{{"]
 " -----------------------------------
 function! s:vimim_initialize_clouds()
 " -----------------------------------
-"   let g:cloud = ""
     let cloud_default = 'baidu,sogou,qq,google'
     let cloud_defaults = split(cloud_default,',')
     let s:cloud_default = get(cloud_defaults,0)
@@ -4363,11 +4361,10 @@ try:
         else:
             res = unicode(response, 'gbk').encode('utf-8')
         vim.command("let g:baidu = " + res)
-        # --------------------------------
     vim.command("let g:cloud = " + res)
     request.close()
 except Exception, e:
-    vim.command("let g:vimim_cloud_error = " + e)
+    vim.command("let g:vimim_cloud_error = " + str(e))
 EOF
 return g:cloud
 endfunction
@@ -4407,10 +4404,10 @@ function! s:vimim_get_cloud_sogou(keyboard)
     if empty(s:cloud_keys.sogou)
         let key_sogou = 'http://web.pinyin.sogou.com/web_ime/patch.php'
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
-        if empty(output)
+        if empty(output) || output =~ '502 bad gateway'
             return []
         endif
-        let s:cloud_keys.sogou = get(split(output, '"'), 1)
+        let s:cloud_keys.sogou = get(split(output,'"'),1)
     endif
     let input  = 'http://web.pinyin.sogou.com/api/py'
     let input .= '?key=' . s:cloud_keys.sogou
@@ -4425,9 +4422,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
         let output = strpart(output, first+1, second-first-1)
         let output = s:vimim_url_xx_to_chinese(output)
     endif
-    if empty(output)
-        return []
-    elseif s:localization > 0
+    if s:localization > 0
         " support gb and big5 in addition to utf8
         let output = s:vimim_i18n_read(output)
     endif
@@ -4561,9 +4556,7 @@ function! s:vimim_get_cloud_baidu(keyboard)
     let input .= '&pn=20'
     let input .= '&py=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'baidu')
-let g:g1=copy(copy(g:cloud))
-let g:g2=copy(copy(g:baidu))
-    let output_list = get(copy(g:baidu),0)
+    let output_list = get(g:baidu, 0)
     if empty(output_list)
         if empty(output) || output =~ '502 bad gateway'
             return []
@@ -5012,7 +5005,6 @@ endfunction
 " -----------------------------------
 function! s:vimim_reset_before_omni()
 " -----------------------------------
-"   let g:baidu = []
     let s:smart_enter = 0
     let s:show_me_not = 0
     let s:english_results = []
