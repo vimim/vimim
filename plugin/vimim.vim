@@ -296,15 +296,19 @@ endfunction
 function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
     for variable in a:options
-        let option = ':let ' . variable .' = '.string(eval(variable)).' '
-        let s_variable = substitute(variable,"g:","s:",'')
-        if exists(variable)
+        let value = eval(variable)
+        let option = ':let ' . variable .' = '.string(value).' '
+        if exists(variable) && value!=a:default || type(value)==1
             call add(s:vimimrc, '  ' . option)
+        else
+            call add(s:vimimrc, '" ' . option)
+        endif
+        let s_variable = substitute(variable,"g:","s:",'')
+        if exists(variable) 
             exe 'let '. s_variable .'='. variable
             exe 'unlet! ' . variable
         else
-            call add(s:vimimrc, '" ' . option)
-            exe 'let '. s_variable . '=' . a:default
+            exe 'let '. s_variable .'='. a:default
         endif
     endfor
 endfunction
@@ -3928,8 +3932,7 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if len(s:vimim_mycloud) > 1
-    \|| s:vimim_cloud =~ 'dynamic\|static'
+    if len(s:vimim_mycloud) > 1 || s:vimim_cloud =~ 'dynamic\|static'
         return
     endif
     for im in s:all_vimim_input_methods
