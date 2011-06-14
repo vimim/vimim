@@ -4350,23 +4350,26 @@ try:
   url = vim.eval("a:url")
   request = urllib2.urlopen(url)
   response = request.read()
-  res = "'" + str(response) + "'"
-  if cloud == 'baidu':
+  if cloud == 'sogou':
+    res = "'" + str(response) + "'"
+  elif cloud == 'qq':
+    res = "'" + str(response) + "'"
+    if vim.eval("&encoding") != 'utf-8':
+      res = unicode(res, 'utf-8').encode('utf-8')
+  elif cloud == 'google':
+    res = "'" + str(response) + "'"
+    res = " ".join(res.splitlines())
+    if vim.eval("&encoding") != 'utf-8':
+      encoding = 'ISO-8859-1'
+      encoding = request.headers['content-type'].split('charset=')[-1]
+      res = unicode(res, encoding).decode('utf-8')
+  elif cloud == 'baidu':
     gbk = str(response)
     if vim.eval("&encoding") == 'utf-8':
       encoding = 'gb2312'
       encoding = request.headers['content-type'].split('charset=')[-1]
       gbk = unicode(response, encoding).encode('utf-8')
     vim.command("let g:baidu = " + gbk)
-  elif cloud == 'qq':
-    if vim.eval("&encoding") != 'utf-8':
-      res = unicode(res, 'utf-8').encode('utf-8')
-  elif cloud == 'google':
-    res = " ".join(res.splitlines())
-    if vim.eval("&encoding") != 'utf-8':
-      encoding = 'ISO-8859-1'
-      encoding = request.headers['content-type'].split('charset=')[-1]
-      res = unicode(res, encoding).encode('utf-8')
   vim.command("let g:cloud = " + res)
   request.close()
 except Exception, e:
@@ -4449,7 +4452,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
     return matched_list
 endfunction
 
-" ime.qq.com/fcgi-bin/getword?key=f0e9756a31396a76a3f40abce1213367&q=mxj
+" ime.qq.com/fcgi-bin/getword?key=f0e9756a31396a76a3f40abce1213367&q=fuck
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
 " --------------------------------------
@@ -4511,6 +4514,7 @@ function! s:vimim_get_cloud_qq(keyboard)
         return []
     endif
     if s:localization > 0
+        " qq => {"q":"fuck","rs":["\xe5\xa6\x87\xe4\xba"],
         let output = iconv(output, "utf-8", "gbk")
     endif
     let output_hash = eval(output)
@@ -4537,11 +4541,11 @@ function! s:vimim_get_cloud_google(keyboard)
     let input .= '&tlqt=1'
     let input .= '&text=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'google')
+    let output = join(split(output))
     if s:localization > 0
-        " '[{"ew" : "fuck","hws" : ["\u5987\u4EA7\u79D1","\u9644",]},]'
+        " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
         let output = iconv(output, "utf-8", "gbk")
     endif
-    let output = join(split(output))
     let output_hash = get(eval(output),0)
     if type(output_hash) != type({})
         return []
