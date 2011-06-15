@@ -1662,23 +1662,21 @@ function! s:vimim_get_property(chinese, property)
     return [join(headers), join(bodies)]
 endfunction
 
-" ----------------------------------------
-function! s:vimim_unicode_to_utf8(unicode)
-" ----------------------------------------
+" -------------------------------------
+function! s:vimim_unicode_to_utf8(xxxx)
+" -------------------------------------
     " u808f => 32911 => e8828f
-    let unicode = a:unicode
-    let unicode = '808f'
-    let unicode = 32911
+    let ddddd = str2nr(a:xxxx, 16)
     let utf8 = ''
-    if unicode < 128
-        let utf8 .= nr2char(unicode)
-    elseif unicode < 2048
-        let utf8 .= nr2char(192+((unicode-(unicode%64))/64))
-        let utf8 .= nr2char(128+(unicode%64))
+    if ddddd < 128
+        let utf8 .= nr2char(ddddd)
+    elseif ddddd < 2048
+        let utf8 .= nr2char(192+((ddddd-(ddddd%64))/64))
+        let utf8 .= nr2char(128+(ddddd%64))
     else
-        let utf8 .= nr2char(224+((unicode-(unicode%4096))/4096))
-        let utf8 .= nr2char(128+(((unicode%4096)-(unicode%64))/64))
-        let utf8 .= nr2char(128+(unicode%64))
+        let utf8 .= nr2char(224+((ddddd-(ddddd%4096))/4096))
+        let utf8 .= nr2char(128+(((ddddd%4096)-(ddddd%64))/64))
+        let utf8 .= nr2char(128+(ddddd%64))
     endif
     return utf8
 endfunction
@@ -4552,12 +4550,29 @@ function! s:vimim_get_cloud_google(keyboard)
     let input .= '&text=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'google')
     let output = join(split(output))
+    let matched_list = []
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
         if s:http_executable =~? 'Python Interface to Vim'
             let output = iconv(output, "utf-8", "gbk")
         else
-            return ["need_Python_Interface_to_Vim"]
+" ----------------------------------------------------------
+let outputs = split(output)
+let unicode = get(outputs,8)
+let unicodes = split(unicode,",")
+let matched_list = []
+for item in unicodes
+    let utf8 = ""
+    let words = split(item,"\u")
+    for char in words
+        let char = s:vimim_unicode_to_utf8(char)
+        let utf8 .= '\x' . char
+    endfor
+    let output = iconv(utf8, "utf-8", "gbk")
+    call add(matched_list, output)
+endfor
+return matched_list
+" ----------------------------------------------------------
         endif
     endif
     let output_hash = get(eval(output),0)
@@ -4565,7 +4580,6 @@ function! s:vimim_get_cloud_google(keyboard)
         return []
     endif
     let key = 'hws'
-    let matched_list = []
     if type(output_hash) == type({}) && has_key(output_hash, key)
         let matched_list = output_hash[key]
     endif
@@ -4932,8 +4946,9 @@ function! s:vimim_url_xx_to_chinese(xx)
     if s:http_executable =~ 'libvimim'
         let output = libcall(s:http_executable, "do_unquote", a:xx)
     else
-        let output = substitute(a:xx, '%\(\x\x\)',
-            \ '\=eval(''"\x''.submatch(1).''"'')','g')
+        let pat = '%\(\x\x\)'
+        let sub = '\=eval(''"\x''.submatch(1).''"'')'
+        let output = substitute(a:xx, pat, sub, 'g')
     endif
     return output
 endfunction
