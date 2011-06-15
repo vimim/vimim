@@ -1662,25 +1662,6 @@ function! s:vimim_get_property(chinese, property)
     return [join(headers), join(bodies)]
 endfunction
 
-" -------------------------------------
-function! s:vimim_unicode_to_utf8(xxxx)
-" -------------------------------------
-    " u808f => 32911 => e8828f
-    let ddddd = str2nr(a:xxxx, 16)
-    let utf8 = ''
-    if ddddd < 128
-        let utf8 .= nr2char(ddddd)
-    elseif ddddd < 2048
-        let utf8 .= nr2char(192+((ddddd-(ddddd%64))/64))
-        let utf8 .= nr2char(128+(ddddd%64))
-    else
-        let utf8 .= nr2char(224+((ddddd-(ddddd%4096))/4096))
-        let utf8 .= nr2char(128+(((ddddd%4096)-(ddddd%64))/64))
-        let utf8 .= nr2char(128+(ddddd%64))
-    endif
-    return utf8
-endfunction
-
 " ============================================= }}}
 let s:VimIM += [" ====  has('python')    ==== {{{"]
 " =================================================
@@ -1718,6 +1699,25 @@ except Exception, e:
     vim.command("let g:vimim_cloud_error = " + str(e))
 EOF
 return g:cloud
+endfunction
+
+" -------------------------------------
+function! s:vimim_unicode_to_utf8(xxxx)
+" -------------------------------------
+    " u808f => 32911 => e8828f
+    let ddddd = str2nr(a:xxxx, 16)
+    let utf8 = ''
+    if ddddd < 128
+        let utf8 .= nr2char(ddddd)
+    elseif ddddd < 2048
+        let utf8 .= nr2char(192+((ddddd-(ddddd%64))/64))
+        let utf8 .= nr2char(128+(ddddd%64))
+    else
+        let utf8 .= nr2char(224+((ddddd-(ddddd%4096))/4096))
+        let utf8 .= nr2char(128+(((ddddd%4096)-(ddddd%64))/64))
+        let utf8 .= nr2char(128+(ddddd%64))
+    endif
+    return utf8
 endfunction
 
 " ============================================= }}}
