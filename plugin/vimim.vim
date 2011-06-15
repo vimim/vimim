@@ -334,7 +334,7 @@ function! s:vimim_initialize_debug()
 " :let g:vimim_latex_suite = 1
 " :let g:vimim_more_candidates = 10
     let hjkl = '/home/xma/hjkl/'
-    if isdirectory(hhjkl)
+    if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
