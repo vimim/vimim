@@ -4556,32 +4556,25 @@ function! s:vimim_get_cloud_google(keyboard)
         if s:http_executable =~? 'Python Interface to Vim'
             let output = iconv(output, "utf-8", "gbk")
         else
-" ----------------------------------------------------------
-let outputs = split(output)
-let unicode = get(outputs,8)
-let unicodes = split(unicode,",")
-let matched_list = []
-for item in unicodes
-    let utf8 = ""
-    let words = split(item,"\u")
-    for char in words
-        let char = s:vimim_unicode_to_utf8(char)
-        let utf8 .= '\x' . char
-    endfor
-    let output = iconv(utf8, "utf-8", "gbk")
-    call add(matched_list, output)
-endfor
-return matched_list
-" ----------------------------------------------------------
+            let unicodes = split(get(split(output),8),",")
+            for item in unicodes
+                let utf8 = ""
+                for xxxx in split(item,"\u")
+                    let utf8 .= s:vimim_unicode_to_utf8(xxxx)
+                endfor
+                let output = iconv(utf8, "utf-8", "gbk")
+                call add(matched_list, output)
+            endfor
         endif
     endif
-    let output_hash = get(eval(output),0)
-    if type(output_hash) != type({})
-        return []
-    endif
-    let key = 'hws'
-    if type(output_hash) == type({}) && has_key(output_hash, key)
-        let matched_list = output_hash[key]
+    if empty(matched_list)
+        let key = 'hws'
+        let output_hash = get(eval(output),0)
+        if type(output_hash) != type({})
+            return []
+        elseif has_key(output_hash, key)
+            let matched_list = output_hash[key]
+        endif
     endif
     return matched_list
 endfunction
@@ -4942,6 +4935,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_url_xx_to_chinese(xx)
 " -------------------------------------
+    " %E9%A6%AC => \xE9\xA6\xAC =>  馬 u99AC
     let output = a:xx
     if s:http_executable =~ 'libvimim'
         let output = libcall(s:http_executable, "do_unquote", a:xx)
