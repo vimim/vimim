@@ -1682,6 +1682,45 @@ function! s:vimim_unicode_to_utf8(xxxx)
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  has('python')    ==== {{{"]
+" =================================================
+
+" -------------------------------------------
+function! s:vimim_get_from_python(url, cloud)
+" -------------------------------------------
+if has('python') < 1
+    return ""
+endif
+python << EOF
+import vim
+import urllib2
+try:
+    cloud = vim.eval("a:cloud")
+    url = vim.eval("a:url")
+    request = urllib2.urlopen(url)
+    response = request.read()
+    res = "'" + str(response) + "'"
+    if cloud == 'qq':
+        if vim.eval("&encoding") != 'utf-8':
+            res = unicode(res, 'utf-8').encode('utf-8')
+    elif cloud == 'google':
+        if vim.eval("&encoding") != 'utf-8':
+            res = unicode(res,"unicode_escape").encode("utf8")
+    elif cloud == 'baidu':
+        if vim.eval("&encoding") != 'utf-8':
+            res = str(response)
+        else:
+            res = unicode(response, 'gbk').encode('utf-8')
+        vim.command("let g:baidu = " + res)
+    vim.command("let g:cloud = " + res)
+    request.close()
+except Exception, e:
+    vim.command("let g:vimim_cloud_error = " + str(e))
+EOF
+return g:cloud
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  English2Chinese  ==== {{{"]
 " =================================================
 
@@ -3955,6 +3994,49 @@ function! s:vimim_get_im_from_buffer_name(filename)
     return im
 endfunction
 
+" ------------------------------------
+function! s:vimim_magic_tail(keyboard)
+" ------------------------------------
+    let keyboard = a:keyboard
+    let magic_tail = keyboard[-1:-1]
+    let last_but_one = keyboard[-2:-2]
+    if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z']"
+        " play with magic trailing char
+    else
+        return keyboard
+    endif
+    if magic_tail ==# "."
+        " <dot> triple play in OneKey:
+        "   (1) magic trailing dot => forced-non-cloud in cloud
+        "   (2) magic trailing dot => forced-cjk-match
+        "   (3) as word partition  => match dot by dot
+        let s:cloud_onekey = 0
+    elseif magic_tail ==# "'"
+        " <apostrophe> triple play in OneKey:
+        "   (1) 1 trailing apostrophe => cloud at will
+        "   (2) 2 trailing apostrophe => cloud for ever
+        "   (3) 3 trailing apostrophe => cloud switch
+        let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
+        if cloud_ready > 0
+            " trailing apostrophe => forced-cloud
+            let last_three = keyboard[-3:-1]
+            let keyboard = keyboard[:-2]
+            if last_three ==# "'''"
+                let keyboard = keyboard[:-3]
+                let clouds = split(s:vimim_cloud,',')
+                let clouds = clouds[1:-1] + clouds[0:0]
+                let s:vimim_cloud = join(clouds,',')
+            elseif last_but_one ==# "'"
+                let keyboard = keyboard[:-2]
+                let s:cloud_onekey = 2
+            else
+                let s:cloud_onekey = 1
+            endif
+        endif
+    endif
+    return keyboard
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  backend dir      ==== {{{"]
 " =================================================
@@ -4080,7 +4162,7 @@ function! s:vimim_sentence_match_directory(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  backend clouds   ==== {{{"]
+let s:VimIM += [" ====  backend cloud    ==== {{{"]
 " =================================================
 
 " -----------------------------------
@@ -4126,11 +4208,37 @@ function! s:vimim_set_cloud_mode()
     if s:vimim_cloud < 0
         return
     endif
-    for mode in ['static','dynamic']
-       if s:vimim_cloud =~ mode
-           let s:vimim_chinese_input_mode = mode
-           break
-       endif
+    for mode in ["static","dynamic"]
+        if s:vimim_cloud =~ mode
+            let s:vimim_chinese_input_mode = mode
+            break
+        endif
+    endfor
+endfunction
+
+" -----------------------------
+function! s:vimim_set_cloud(im)
+" -----------------------------
+    let im = a:im
+    let cloud = s:vimim_set_cloud_if_http_executable(im)
+    if empty(cloud)
+        let s:backend.cloud = {}
+        return
+    endif
+    let s:mycloud_plugin = 0
+    let s:ui.root = 'cloud'
+    let s:ui.im = im
+    let frontends = [s:ui.root, s:ui.im]
+    call add(s:ui.frontends, frontends)
+    let clouds = split(s:vimim_cloud,',')
+    for cloud in clouds
+        let cloud = get(split(cloud,'[.]'),0)
+        if cloud == im
+            continue
+        endif
+        call s:vimim_set_cloud_if_http_executable(cloud)
+        let frontends = [s:ui.root, cloud]
+        call add(s:ui.frontends, frontends)
     endfor
 endfunction
 
@@ -4161,32 +4269,6 @@ function! s:vimim_scan_backend_cloud()
         call s:vimim_set_cloud(s:cloud_default)
         call s:vimim_set_cloud_mode()
     endif
-endfunction
-
-" -----------------------------
-function! s:vimim_set_cloud(im)
-" -----------------------------
-    let im = a:im
-    let cloud = s:vimim_set_cloud_if_http_executable(im)
-    if empty(cloud)
-        let s:backend.cloud = {}
-        return
-    endif
-    let s:mycloud_plugin = 0
-    let s:ui.root = 'cloud'
-    let s:ui.im = im
-    let frontends = [s:ui.root, s:ui.im]
-    call add(s:ui.frontends, frontends)
-    let clouds = split(s:vimim_cloud,',')
-    for cloud in clouds
-        let cloud = get(split(cloud,'[.]'),0)
-        if cloud == im
-            continue
-        endif
-        call s:vimim_set_cloud_if_http_executable(cloud)
-        let frontends = [s:ui.root, cloud]
-        call add(s:ui.frontends, frontends)
-    endfor
 endfunction
 
 " ------------------------------------------------
@@ -4253,49 +4335,6 @@ function! s:vimim_check_http_executable()
     return s:http_executable
 endfunction
 
-" ------------------------------------
-function! s:vimim_magic_tail(keyboard)
-" ------------------------------------
-    let keyboard = a:keyboard
-    let magic_tail = keyboard[-1:-1]
-    let last_but_one = keyboard[-2:-2]
-    if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z']"
-        " play with magic trailing char
-    else
-        return keyboard
-    endif
-    if magic_tail ==# "."
-        " <dot> triple play in OneKey:
-        "   (1) magic trailing dot => forced-non-cloud in cloud
-        "   (2) magic trailing dot => forced-cjk-match
-        "   (3) as word partition  => match dot by dot
-        let s:cloud_onekey = 0
-    elseif magic_tail ==# "'"
-        " <apostrophe> triple play in OneKey:
-        "   (1) 1 trailing apostrophe => cloud at will
-        "   (2) 2 trailing apostrophe => cloud for ever
-        "   (3) 3 trailing apostrophe => cloud switch
-        let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
-        if cloud_ready > 0
-            " trailing apostrophe => forced-cloud
-            let last_three = keyboard[-3:-1]
-            let keyboard = keyboard[:-2]
-            if last_three ==# "'''"
-                let keyboard = keyboard[:-3]
-                let clouds = split(s:vimim_cloud,',')
-                let clouds = clouds[1:-1] + clouds[0:0]
-                let s:vimim_cloud = join(clouds,',')
-            elseif last_but_one ==# "'"
-                let keyboard = keyboard[:-2]
-                let s:cloud_onekey = 2
-            else
-                let s:cloud_onekey = 1
-            endif
-        endif
-    endif
-    return keyboard
-endfunction
-
 " -----------------------------------------
 function! s:vimim_do_cloud_or_not(keyboard)
 " -----------------------------------------
@@ -4351,41 +4390,6 @@ function! s:vimim_get_cloud(keyboard, cloud)
     endif
     call add(results, whoami)
     return results
-endfunction
-
-" -------------------------------------------
-function! s:vimim_get_from_python(url, cloud)
-" -------------------------------------------
-if has('python') < 1
-    return ""
-endif
-python << EOF
-import vim
-import urllib2
-try:
-    cloud = vim.eval("a:cloud")
-    url = vim.eval("a:url")
-    request = urllib2.urlopen(url)
-    response = request.read()
-    res = "'" + str(response) + "'"
-    if cloud == 'qq':
-        if vim.eval("&encoding") != 'utf-8':
-            res = unicode(res, 'utf-8').encode('utf-8')
-    elif cloud == 'google':
-        if vim.eval("&encoding") != 'utf-8':
-            res = unicode(res,"unicode_escape").encode("utf8")
-    elif cloud == 'baidu':
-        if vim.eval("&encoding") != 'utf-8':
-            res = str(response)
-        else:
-            res = unicode(response, 'gbk').encode('utf-8')
-        vim.command("let g:baidu = " + res)
-    vim.command("let g:cloud = " + res)
-    request.close()
-except Exception, e:
-    vim.command("let g:vimim_cloud_error = " + str(e))
-EOF
-return g:cloud
 endfunction
 
 " -------------------------------------------
@@ -4445,8 +4449,6 @@ function! s:vimim_get_cloud_sogou(keyboard)
         " support gb and big5 in addition to utf8
         let output = s:vimim_i18n_read(output)
     endif
-    " in  => '我有一个梦 : 13    +  s:colon=uff1a not ufe30
-    " out => ['woyouyigemeng 我有一个梦']
     let matched_list = []
     for item in split(output, '\t+')
         let item_list = split(item, s:colon)
