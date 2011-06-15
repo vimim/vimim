@@ -298,11 +298,11 @@ function! s:vimim_set_global_default(options, default)
     for variable in a:options
         let value = eval(variable)
         let option = ':let ' . variable .' = '.string(value).' '
+        let comment = '" '
         if exists(variable) && value!=a:default || type(value)==1
-            call add(s:vimimrc, '  ' . option)
-        else
-            call add(s:vimimrc, '" ' . option)
+            let comment = '  '
         endif
+        call add(s:vimimrc, comment . option)
         let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
             exe 'let '. s_variable .'='. variable
@@ -334,7 +334,7 @@ function! s:vimim_initialize_debug()
 " :let g:vimim_latex_suite = 1
 " :let g:vimim_more_candidates = 10
     let hjkl = '/home/xma/hjkl/'
-    if isdirectory(hjkl)
+    if isdirectory(hhjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
