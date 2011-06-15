@@ -333,7 +333,7 @@ function! s:vimim_initialize_debug()
 " :let g:vimim_custom_label = 1
 " :let g:vimim_latex_suite = 1
 " :let g:vimim_more_candidates = 10
-    let hjkl = '/hoome/xma/hjkl/'
+    let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
@@ -4524,12 +4524,9 @@ function! s:vimim_get_cloud_qq(keyboard)
         " qq => {"q":"fuck","rs":["\xe5\xa6\x87"],
         let output = iconv(output, "utf-8", "gbk")
     endif
-    let output_hash = eval(output)
-    if type(output_hash) != type({})
-        return []
-    endif
     let key = 'rs'
     let matched_list = []
+    let output_hash = eval(output)
     if type(output_hash) == type({}) && has_key(output_hash, key)
         let matched_list = output_hash[key]
     endif
@@ -4564,16 +4561,13 @@ function! s:vimim_get_cloud_google(keyboard)
                 let output = iconv(utf8, "utf-8", "gbk")
                 call add(matched_list, output)
             endfor
+            return matched_list
         endif
     endif
-    if empty(matched_list)
-        let key = 'hws'
-        let output_hash = get(eval(output),0)
-        if type(output_hash) != type({})
-            return []
-        elseif has_key(output_hash, key)
-            let matched_list = output_hash[key]
-        endif
+    let key = 'hws'
+    let output_hash = get(eval(output),0)
+    if type(output_hash) == type({}) && has_key(output_hash, key)
+        let matched_list = output_hash[key]
     endif
     return matched_list
 endfunction
