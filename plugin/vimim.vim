@@ -1662,6 +1662,27 @@ function! s:vimim_get_property(chinese, property)
     return [join(headers), join(bodies)]
 endfunction
 
+" ----------------------------------------
+function! s:vimim_unicode_to_utf8(unicode)
+" ----------------------------------------
+    " u808f => 32911 => e8828f
+    let unicode = a:unicode
+    let unicode = '808f'
+    let unicode = 32911
+    let utf8 = ''
+    if unicode < 128
+        let utf8 .= nr2char(unicode)
+    elseif unicode < 2048
+        let utf8 .= nr2char(192+((unicode-(unicode%64))/64))
+        let utf8 .= nr2char(128+(unicode%64))
+    else
+        let utf8 .= nr2char(224+((unicode-(unicode%4096))/4096))
+        let utf8 .= nr2char(128+(((unicode%4096)-(unicode%64))/64))
+        let utf8 .= nr2char(128+(unicode%64))
+    endif
+    return utf8
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  English2Chinese  ==== {{{"]
 " =================================================
@@ -4503,7 +4524,7 @@ function! s:vimim_get_cloud_qq(keyboard)
         return []
     endif
     if s:localization > 0
-        " qq => {"q":"fuck","rs":["\xe5\xa6\x87\xe4\xba"],
+        " qq => {"q":"fuck","rs":["\xe5\xa6\x87"],
         let output = iconv(output, "utf-8", "gbk")
     endif
     let output_hash = eval(output)
