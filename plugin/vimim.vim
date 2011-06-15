@@ -333,7 +333,7 @@ function! s:vimim_initialize_debug()
 " :let g:vimim_custom_label = 1
 " :let g:vimim_latex_suite = 1
 " :let g:vimim_more_candidates = 10
-    let hjkl = '/home/xma/hjkl/'
+    let hjkl = '/hoome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
@@ -3077,10 +3077,7 @@ function! s:vimim_popupmenu_list(matched_list)
             else
                 let label += 1
             endif
-            if s:show_me_not < 1
-                let abbr = labeling . chinese
-                let complete_items["abbr"] = abbr
-            endif
+            let complete_items["abbr"] = labeling . chinese
         endif
         let complete_items["dup"] = 1
         let complete_items["menu"] = extra_text
