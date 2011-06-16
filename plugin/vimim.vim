@@ -1702,7 +1702,8 @@ import urllib2
 try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
-    request = urllib2.urlopen(url)
+    timeout = 20
+    request = urllib2.urlopen(url, None, timeout)
     response = request.read()
     res = "'" + str(response) + "'"
     if cloud == 'qq':
