@@ -27,6 +27,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (1) Plug & Play: as an independent input method editor
 "  (2) input  of Chinese without mode change
 "  (3) search of Chinese without pop-up window
+"  (4) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
 "
 " "VimIM Frontend UI"
 "  (1) VimIM OneKey: Chinese input without mode change
@@ -34,13 +35,17 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "
 " "VimIM Backend Engines"
 "  (1) [embedded]   VimIM: http://vimim.googlecode.com
-"  (2) [external]   up to 4 clouds and mycloud
+"  (2) [external]   all 4 available clouds and mycloud
 "
 " "VimIM Installation"
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
 "  (2) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
 "  (3) [option] drop a standard directory: plugin/vimim/pinyin/
 "  (4) [option] drop a English  datafile:  plugin/vimim.txt
+"
+" "VimIM Cloud Support"
+"  (1) (Windows) has('python') OR download wget/curl/libvimim.dll
+"  (2) (Linux/Mac) Nothing needs to be installed
 "
 " "VimIM Usage"
 "  (1) play with a game to rotate poem:
@@ -50,7 +55,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (3) play with multiple clouds simultaneously
 "      open vim, type i, type vimimclouds, <C-6>, <C-6>
 "  (4) play with cloud, without datafile installed:
-"      open vim, type i, type <C-\>, type <C-\>
+"      open vim, type i, type <C-\> to open, type <C-\> to close
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -1662,6 +1667,25 @@ function! s:vimim_get_property(chinese, property)
     return [join(headers), join(bodies)]
 endfunction
 
+" -------------------------------------
+function! s:vimim_unicode_to_utf8(xxxx)
+" -------------------------------------
+    " u808f => 32911 => e8828f
+    let ddddd = str2nr(a:xxxx, 16)
+    let utf8 = ''
+    if ddddd < 128
+        let utf8 .= nr2char(ddddd)
+    elseif ddddd < 2048
+        let utf8 .= nr2char(192+((ddddd-(ddddd%64))/64))
+        let utf8 .= nr2char(128+(ddddd%64))
+    else
+        let utf8 .= nr2char(224+((ddddd-(ddddd%4096))/4096))
+        let utf8 .= nr2char(128+(((ddddd%4096)-(ddddd%64))/64))
+        let utf8 .= nr2char(128+(ddddd%64))
+    endif
+    return utf8
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  has('python')    ==== {{{"]
 " =================================================
@@ -1699,25 +1723,6 @@ except Exception, e:
     vim.command("let g:vimim_cloud_error = " + str(e))
 EOF
 return g:cloud
-endfunction
-
-" -------------------------------------
-function! s:vimim_unicode_to_utf8(xxxx)
-" -------------------------------------
-    " u808f => 32911 => e8828f
-    let ddddd = str2nr(a:xxxx, 16)
-    let utf8 = ''
-    if ddddd < 128
-        let utf8 .= nr2char(ddddd)
-    elseif ddddd < 2048
-        let utf8 .= nr2char(192+((ddddd-(ddddd%64))/64))
-        let utf8 .= nr2char(128+(ddddd%64))
-    else
-        let utf8 .= nr2char(224+((ddddd-(ddddd%4096))/4096))
-        let utf8 .= nr2char(128+(((ddddd%4096)-(ddddd%64))/64))
-        let utf8 .= nr2char(128+(ddddd%64))
-    endif
-    return utf8
 endfunction
 
 " ============================================= }}}
