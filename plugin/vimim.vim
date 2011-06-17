@@ -1730,6 +1730,40 @@ EOF
 return g:cloud
 endfunction
 
+" -----------------------
+function! g:vimim_gmail()
+" -----------------------
+if has('python') < 1
+    return ""
+else
+    " [purpose] send email with the current buffer
+    " [usage] :call g:vimim_gmail()
+    " [.vimrc setting]
+    " :let g:gmail_to="vimim@googlegroups.com"
+    " :let g:gmail_from="gmail_from@gmail.com"
+    " :let g:gmail_pass="gmail_from_password"
+endif
+python << GMAIL
+import vim
+import smtplib
+import datetime
+from email.mime.text import MIMEText
+gmail_to   = vim.eval("g:gmail_to")
+gmail_from = vim.eval("g:gmail_from")
+gmail_pass = vim.eval("g:gmail_pass")
+RFC2822 = "\n".join(vim.current.buffer[:])
+email = MIMEText(RFC2822)
+email['From'] = gmail_from
+email['To'] = gmail_to
+email['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y") 
+gmail=smtplib.SMTP('smtp.gmail.com:587')  
+gmail.starttls()  
+gmail.login(gmail_from, gmail_pass)  
+gmail.sendmail(gmail_from, gmail_to, email.as_string())  
+gmail.close()  
+GMAIL
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  English2Chinese  ==== {{{"]
 " =================================================
