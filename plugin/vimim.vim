@@ -1736,30 +1736,32 @@ function! g:vimim_gmail()
 if has('python') < 1
     return ""
 else
-    " [purpose] send email with the current buffer
+    " [dream] to send email with the current buffer
     " [usage] :call g:vimim_gmail()
-    " [.vimrc setting]
-    " :let g:gmail_to="vimim@googlegroups.com"
-    " :let g:gmail_from="gmail_from@gmail.com"
-    " :let g:gmail_pass="gmail_from_password"
+    " [vimrc] :let g:gmails={'login':'','passwd':'','to':''}
 endif
-python << GMAIL
+sil!python << GMAIL
 import vim
 import smtplib
 import datetime
+try:
+    gmails = vim.eval("g:gmails")
+except vim.error:
+    print '  g:gmails={} not in .vimrc '
+gmail_login  = gmails.get("login")
+gmail_passwd = gmails.get("passwd")
+gmail_to     = gmails.get("to")
+gmail_bcc    = gmails.get("bcc","")
 from email.mime.text import MIMEText
-gmail_to   = vim.eval("g:gmail_to")
-gmail_from = vim.eval("g:gmail_from")
-gmail_pass = vim.eval("g:gmail_pass")
 RFC2822 = "\n".join(vim.current.buffer[:])
 email = MIMEText(RFC2822)
-email['From'] = gmail_from
-email['To'] = gmail_to
+email['From'] = gmail_login
 email['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y") 
+to_addrs = [gmail_to] + gmail_bcc.split()
 gmail=smtplib.SMTP('smtp.gmail.com:587')  
 gmail.starttls()  
-gmail.login(gmail_from, gmail_pass)  
-gmail.sendmail(gmail_from, gmail_to, email.as_string())  
+gmail.login(gmail_login, gmail_passwd)  
+gmail.sendmail(gmail_login, to_addrs, email.as_string())  
 gmail.close()  
 GMAIL
 endfunction
