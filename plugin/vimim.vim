@@ -1754,14 +1754,15 @@ gmail_to     = gmails.get("to")
 gmail_bcc    = gmails.get("bcc","")
 from email.mime.text import MIMEText
 RFC2822 = "\n".join(vim.current.buffer[:])
-email = MIMEText(RFC2822)
-email['From'] = gmail_login
-email['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y") 
+msg = MIMEText(RFC2822)
+msg['From'] = gmail_login
+msg['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y") 
+msg.set_charset('utf-8')
 to_addrs = [gmail_to] + gmail_bcc.split()
 gmail=smtplib.SMTP('smtp.gmail.com:587')  
 gmail.starttls()  
 gmail.login(gmail_login, gmail_passwd)  
-gmail.sendmail(gmail_login, to_addrs, email.as_string())  
+gmail.sendmail(gmail_login, to_addrs, msg.as_string())  
 gmail.close()  
 GMAIL
 endfunction
