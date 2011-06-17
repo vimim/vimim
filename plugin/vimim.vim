@@ -284,10 +284,11 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
     let g:vimim = []
-    let s:options = {}
     let s:frontends = []
     let s:im_toggle = 0
     let s:backend_loaded_once = 0
+    let s:pumheight0 = &pumheight
+    let s:pumheight1 = &pumheight
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
@@ -1269,7 +1270,7 @@ function! s:vimim_cache()
             else
                 let &pumheight = 0
                 if s:hjkl_l % 2 < 1
-                    let &pumheight = s:options.pumheightsave
+                    let &pumheight = s:pumheight1
                 endif
             endif
         endif
@@ -4994,16 +4995,14 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 " --------------------------------------
 function! s:vimim_initialize_i_setting()
 " --------------------------------------
-    let s:options.cpo           = &cpo
-    let s:options.omnifunc      = &omnifunc
-    let s:options.completeopt   = &completeopt
-    let s:options.laststatus    = &laststatus
-    let s:options.statusline    = &statusline
-    let s:options.lazyredraw    = &lazyredraw
-    let s:options.showmatch     = &showmatch
-    let s:options.smartcase     = &smartcase
-    let s:options.pumheight     = &pumheight
-    let s:options.pumheightsave = &pumheight
+    let s:cpo         = &cpo
+    let s:omnifunc    = &omnifunc
+    let s:completeopt = &completeopt
+    let s:laststatus  = &laststatus
+    let s:statusline  = &statusline
+    let s:lazyredraw  = &lazyredraw
+    let s:showmatch   = &showmatch
+    let s:smartcase   = &smartcase
 endfunction
 
 " ------------------------------
@@ -5019,7 +5018,7 @@ function! s:vimim_i_setting_on()
         if s:has_cjk_file > 0
             let &pumheight -= 1
         endif
-        let s:options.pumheightsave = &pumheight
+        let s:pumheight1 = &pumheight
     endif
     if s:vimim_custom_label > 0
         let &pumheight = s:vimim_custom_label
@@ -5029,15 +5028,15 @@ endfunction
 " -------------------------------
 function! s:vimim_i_setting_off()
 " -------------------------------
-    let &cpo         = s:options.cpo
-    let &omnifunc    = s:options.omnifunc
-    let &completeopt = s:options.completeopt
-    let &laststatus  = s:options.laststatus
-    let &statusline  = s:options.statusline
-    let &lazyredraw  = s:options.lazyredraw
-    let &showmatch   = s:options.showmatch
-    let &smartcase   = s:options.smartcase
-    let &pumheight   = s:options.pumheight
+    let &cpo         = s:cpo
+    let &omnifunc    = s:omnifunc
+    let &completeopt = s:completeopt
+    let &laststatus  = s:laststatus
+    let &statusline  = s:statusline
+    let &lazyredraw  = s:lazyredraw
+    let &showmatch   = s:showmatch
+    let &smartcase   = s:smartcase
+    let &pumheight   = s:pumheight0
 endfunction
 
 " -----------------------
@@ -5100,9 +5099,7 @@ function! g:vimim_reset_after_insert()
     let s:pageup_pagedown = 0
     let s:matched_list = []
     if s:vimim_custom_label < 1
-        if has_key(s:options, 'pumheightsave')
-            let &pumheight = s:options.pumheightsave
-        endif
+        let &pumheight = s:pumheight1
     endif
     return ""
 endfunction
