@@ -111,7 +111,6 @@ function! s:vimim_initialize_session()
     let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
-    let s:options = {}
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     let s:shuangpin_keycode_chinese = {}
@@ -285,6 +284,7 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
     let g:vimim = []
+    let s:options = {}
     let s:frontends = []
     let s:im_toggle = 0
     let s:backend_loaded_once = 0
@@ -1269,7 +1269,7 @@ function! s:vimim_cache()
             else
                 let &pumheight = 0
                 if s:hjkl_l % 2 < 1
-                    let &pumheight = s:options.pumheights[1]
+                    let &pumheight = s:options.pumheightsave
                 endif
             endif
         endif
@@ -4994,15 +4994,16 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 " --------------------------------------
 function! s:vimim_initialize_i_setting()
 " --------------------------------------
-    let s:options.cpo         = &cpo
-    let s:options.omnifunc    = &omnifunc
-    let s:options.completeopt = &completeopt
-    let s:options.laststatus  = &laststatus
-    let s:options.statusline  = &statusline
-    let s:options.lazyredraw  = &lazyredraw
-    let s:options.showmatch   = &showmatch
-    let s:options.smartcase   = &smartcase
-    let s:options.pumheights  = [&pumheight, &pumheight]
+    let s:options.cpo           = &cpo
+    let s:options.omnifunc      = &omnifunc
+    let s:options.completeopt   = &completeopt
+    let s:options.laststatus    = &laststatus
+    let s:options.statusline    = &statusline
+    let s:options.lazyredraw    = &lazyredraw
+    let s:options.showmatch     = &showmatch
+    let s:options.smartcase     = &smartcase
+    let s:options.pumheight     = &pumheight
+    let s:options.pumheightsave = &pumheight
 endfunction
 
 " ------------------------------
@@ -5018,7 +5019,7 @@ function! s:vimim_i_setting_on()
         if s:has_cjk_file > 0
             let &pumheight -= 1
         endif
-        let s:options.pumheights[1] = &pumheight
+        let s:options.pumheightsave = &pumheight
     endif
     if s:vimim_custom_label > 0
         let &pumheight = s:vimim_custom_label
@@ -5036,7 +5037,7 @@ function! s:vimim_i_setting_off()
     let &lazyredraw  = s:options.lazyredraw
     let &showmatch   = s:options.showmatch
     let &smartcase   = s:options.smartcase
-    let &pumheight   = get(s:options.pumheights, 0)
+    let &pumheight   = s:options.pumheight
 endfunction
 
 " -----------------------
@@ -5099,7 +5100,9 @@ function! g:vimim_reset_after_insert()
     let s:pageup_pagedown = 0
     let s:matched_list = []
     if s:vimim_custom_label < 1
-        let &pumheight = s:options.pumheights[1]
+        if has_key(s:options, 'pumheightsave')
+            let &pumheight = s:options.pumheightsave
+        endif
     endif
     return ""
 endfunction
@@ -5141,7 +5144,9 @@ function! s:vimim_i_map_off()
     call extend(unmap_list, keys(s:punctuations))
     call extend(unmap_list, ['<Esc>','<CR>','<BS>','<Space>'])
     for _ in unmap_list
-        sil!exe 'iunmap '. _
+        if len(maparg(_, 'i')) > 0
+            sil!exe 'iunmap '. _
+        endif
     endfor
 endfunction
 
@@ -5397,7 +5402,6 @@ endfunction
 function! s:vimim_chinesemode_mapping()
 " -------------------------------------
     if s:vimim_onekey_is_tab < 2
-        inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
          noremap<silent>       <C-Bslash>   :call <SID>ChineseMode()<CR>
             imap<silent>       <C-Bslash>   <Plug>VimIM
         inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
@@ -5427,7 +5431,6 @@ endfunction
 " --------------------------------
 function! s:vimim_onekey_mapping()
 " --------------------------------
-    inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
     if s:vimim_onekey_is_tab < 2
             imap<silent> <C-^> <Plug>VimimOneKey
         xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
@@ -5443,9 +5446,13 @@ function! s:vimim_onekey_mapping()
     :com! -range=% VimiM <line1>,<line2>call s:vimim_chinese_rotation()
 endfunction
 
-" ------------------------------------
-function! s:vimim_initialize_autocmd()
-" ------------------------------------
+" -----------------------------------
+function! s:vimim_initialize_plugin()
+" -----------------------------------
+    inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
+    if s:vimim_onekey_is_tab < 2
+        inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
+    endif
     if has("autocmd")
         augroup vimim_auto_chinese_mode
             autocmd BufNewFile *.vimim startinsert
@@ -5458,6 +5465,6 @@ sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_clouds()
 sil!call s:vimim_for_mom_and_dad()
+sil!call s:vimim_initialize_plugin()
 sil!call s:vimim_initialize_mapping()
-sil!call s:vimim_initialize_autocmd()
 " ======================================= }}}
