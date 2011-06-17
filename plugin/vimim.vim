@@ -301,12 +301,16 @@ endfunction
 function! s:vimim_set_global_default(options, default)
 " ----------------------------------------------------
     for variable in a:options
-        let value = eval(variable)
-        let option = ':let ' . variable .' = '.string(value).' '
         let comment = '" '
-        if exists(variable) && value!=a:default || type(value)==1
-            let comment = '  '
+        let default = a:default
+        if exists(variable) 
+            let value = eval(variable)
+            if value!=default || type(value)==1
+                let comment = '  '
+            endif 
+            let default = string(value)
         endif
+        let option = ':let ' . variable .' = '. default .' '
         call add(s:vimimrc, comment . option)
         let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
