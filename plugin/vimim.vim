@@ -1700,9 +1700,46 @@ function! g:vimim_onthefly()
 " --------------------------
 :py import vim, urllib
 :py vimim = vim.eval("tempname()")
-:py url='http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
-:py res = urllib.urlretrieve(url,vimim)
-:py vim.command("source "+ vimim)
+:py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
+:py res = urllib.urlretrieve(url, vimim)
+:py vim.command("source " + vimim)
+endfunction
+
+" -----------------------
+function! g:vimim_gmail()
+" -----------------------
+if has('python') < 1
+    return ""
+else
+    " [dream] to send email with the current buffer
+    " [usage] :call g:vimim_gmail()
+    " [vimrc] :let g:gmails={'login':'','dwssap':'','to':''}
+endif
+sil!python << HERE
+import vim
+import smtplib
+import datetime
+try:
+    gmails = vim.eval("g:gmails")
+except vim.error:
+    print "  g:gmails={} not in .vimrc "
+gmail_login  = gmails.get("login")
+gmail_passwd = gmails.get("passwd")
+gmail_to     = gmails.get("to")
+gmail_bcc    = gmails.get("bcc","")
+gamil_all = [gmail_to] + gmail_bcc.split()
+from email.mime.text import MIMEText
+RFC2822 = "\n".join(vim.current.buffer[:])
+msg = MIMEText(RFC2822)
+msg['From'] = gmail_login
+msg['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y")
+msg.set_charset('utf-8')
+gmail=smtplib.SMTP('smtp.gmail.com:587')
+gmail.starttls()
+gmail.login(gmail_login, gmail_passwd[::-1])
+gmail.sendmail(gmail_login, gamil_all, msg.as_string())
+gmail.close()
+HERE
 endfunction
 
 " -------------------------------------------
@@ -1739,43 +1776,6 @@ except Exception, e:
     vim.command("let g:vimim_cloud_error = " + str(e))
 EOF
 return g:cloud
-endfunction
-
-" -----------------------
-function! g:vimim_gmail()
-" -----------------------
-if has('python') < 1
-    return ""
-else
-    " [dream] to send email with the current buffer
-    " [usage] :call g:vimim_gmail()
-    " [vimrc] :let g:gmails={'login':'','passwd':'','to':''}
-endif
-sil!python << GMAIL
-import vim
-import smtplib
-import datetime
-try:
-    gmails = vim.eval("g:gmails")
-except vim.error:
-    print '  g:gmails={} not in .vimrc '
-gmail_login  = gmails.get("login")
-gmail_passwd = gmails.get("passwd")
-gmail_to     = gmails.get("to")
-gmail_bcc    = gmails.get("bcc","")
-gamil_all = [gmail_to] + gmail_bcc.split()
-from email.mime.text import MIMEText
-RFC2822 = "\n".join(vim.current.buffer[:])
-msg = MIMEText(RFC2822)
-msg['From'] = gmail_login
-msg['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y")
-msg.set_charset('utf-8')
-gmail=smtplib.SMTP('smtp.gmail.com:587')
-gmail.starttls()
-gmail.login(gmail_login, gmail_passwd[::-1])
-gmail.sendmail(gmail_login, gamil_all, msg.as_string())
-gmail.close()
-GMAIL
 endfunction
 
 " ============================================= }}}
