@@ -96,7 +96,6 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_dictionary_im_keycode()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_scan_backend_embedded_directory()
-    sil!call s:vimim_scan_current_buffer()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_dictionary_quantifiers()
     sil!call s:vimim_initialize_cjk_file()
@@ -3698,7 +3697,6 @@ endfunction
 " -----------------------------------
 function! s:vimim_shuangpin_abc(rule)
 " -----------------------------------
-" [auto cloud test] vim sogou.shuangpin_abc.vimim
 " vtpc => shuang pin => double pinyin
     call extend(a:rule[0],{ "zh" : "a", "ch" : "e", "sh" : "v" })
     call extend(a:rule[1],{
@@ -3715,7 +3713,6 @@ endfunction
 " ----------------------------------
 function! s:vimim_shuangpin_ms(rule)
 " ----------------------------------
-" [auto cloud test] vim sogou.shuangpin_ms.vimim
 " vi=>zhi ii=>chi ui=>shi keng=>keneng
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
@@ -3733,7 +3730,6 @@ endfunction
 " --------------------------------------
 function! s:vimim_shuangpin_nature(rule)
 " --------------------------------------
-" [auto cloud test] vim sogou.shuangpin_nature.vimim
 " goal: 'woui' => wo shi => i am
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
@@ -3750,7 +3746,6 @@ endfunction
 " ----------------------------------------
 function! s:vimim_shuangpin_plusplus(rule)
 " ----------------------------------------
-" [auto cloud test] vim sogou.shuangpin_plusplus.vimim
     call extend(a:rule[0],{ "zh" : "v", "ch" : "u", "sh" : "i" })
     call extend(a:rule[1],{
         \"an" : "f", "ao" : "d", "ai" : "s", "ang": "g",
@@ -3766,7 +3761,6 @@ endfunction
 " --------------------------------------
 function! s:vimim_shuangpin_purple(rule)
 " --------------------------------------
-" [auto cloud test] vim sogou.shuangpin_purple.vimim
     call extend(a:rule[0],{ "zh" : "u", "ch" : "a", "sh" : "i" })
     call extend(a:rule[1],{
         \"an" : "r", "ao" : "q", "ai" : "p", "ang": "s",
@@ -3782,7 +3776,6 @@ endfunction
 " -------------------------------------
 function! s:vimim_shuangpin_flypy(rule)
 " -------------------------------------
-" [auto cloud test] vim sogou.shuangpin_flypy.vimim
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "c", "ai" : "d", "ang": "h",
@@ -4000,55 +3993,6 @@ function! s:vimim_more_pinyin_candidates(keyboard)
     return candidates
 endfunction
 
-" -------------------------------------
-function! s:vimim_scan_current_buffer()
-" -------------------------------------
-    if len(s:vimim_mycloud) > 1
-    \|| s:vimim_cloud =~ 'dynamic\|static'
-        return
-    endif
-    let buffer = expand("%:p:t")
-    if buffer =~ '.vimim\>'
-        " start zero configuration showcase
-    else
-        return
-    endif
-    if buffer =~ 'dynamic'
-        let s:vimim_chinese_input_mode = 'dynamic'
-    elseif buffer =~ 'static'
-        let s:vimim_chinese_input_mode = 'static'
-    endif
-    let buffers = split(buffer,'[.]')
-    let shuangpin = 'shuangpin_'
-    let position = match(buffers, shuangpin)
-    if position > -1
-        let s:vimim_shuangpin = buffers[position][len(shuangpin) :]
-    endif
-    for cloud in split(s:vimim_cloud,',')
-        let cloud = get(split(cloud,'[.]'),0)
-        if buffer =~# cloud
-            call s:vimim_set_cloud(cloud)
-        endif
-    endfor
-endfunction
-
-" -------------------------------------------------
-function! s:vimim_get_im_from_buffer_name(filename)
-" -------------------------------------------------
-    let im = 0
-    for key in copy(keys(s:im_keycode))
-        let pattern = '\<' . key . '\>'
-        let matched = match(a:filename, pattern)
-        if matched < 0
-            continue
-        else
-            let im = key
-            break
-        endif
-    endfor
-    return im
-endfunction
-
 " ------------------------------------
 function! s:vimim_magic_tail(keyboard)
 " ------------------------------------
@@ -4220,9 +4164,9 @@ endfunction
 let s:VimIM += [" ====  backend cloud    ==== {{{"]
 " =================================================
 
-" -----------------------------------
-function! s:vimim_initialize_clouds()
-" -----------------------------------
+" ----------------------------------
+function! s:vimim_initialize_cloud()
+" ----------------------------------
     let cloud_default = 'baidu,sogou,qq,google'
     let cloud_defaults = split(cloud_default,',')
     let s:cloud_default = get(cloud_defaults,0)
@@ -5460,17 +5404,11 @@ function! s:vimim_initialize_plugin()
     if s:vimim_onekey_is_tab < 2
         inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
     endif
-    if has("autocmd")
-        augroup vimim_auto_chinese_mode
-            autocmd BufNewFile *.vimim startinsert
-            autocmd BufEnter   *.vimim sil!call <SID>ChineseMode()
-        augroup END
-    endif
 endfunction
 
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
-sil!call s:vimim_initialize_clouds()
+sil!call s:vimim_initialize_cloud()
 sil!call s:vimim_for_mom_and_dad()
 sil!call s:vimim_initialize_plugin()
 sil!call s:vimim_initialize_mapping()
