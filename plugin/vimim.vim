@@ -1695,6 +1695,16 @@ endfunction
 let s:VimIM += [" ====  has('python')    ==== {{{"]
 " =================================================
 
+" --------------------------
+function! g:vimim_onthefly()
+" --------------------------
+:py import vim, urllib
+:py vimim = vim.eval("tempname()")
+:py url='http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
+:py res = urllib.urlretrieve(url,vimim)
+:py vim.command("source "+ vimim)
+endfunction
+
 " -------------------------------------------
 function! s:vimim_get_from_python(url, cloud)
 " -------------------------------------------
