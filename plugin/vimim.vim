@@ -1712,7 +1712,7 @@ if has('python') < 1
 else
     " [dream] to send email with the current buffer
     " [usage] :call g:vimim_gmail()
-    " [vimrc] :let g:gmails={'login':'','dwssap':'','to':''}
+    " [vimrc] :let g:gmails={'login':'','passwd':'','to':''}
 endif
 sil!python << HERE
 import vim
