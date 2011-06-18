@@ -304,11 +304,11 @@ function! s:vimim_set_global_default(options, default)
     for variable in a:options
         let comment = '" '
         let default = a:default
-        if exists(variable) 
+        if exists(variable)
             let value = eval(variable)
             if value!=default || type(value)==1
                 let comment = '  '
-            endif 
+            endif
             let default = string(value)
         endif
         let option = ':let ' . variable .' = '. default .' '
@@ -1758,13 +1758,13 @@ from email.mime.text import MIMEText
 RFC2822 = "\n".join(vim.current.buffer[:])
 msg = MIMEText(RFC2822)
 msg['From'] = gmail_login
-msg['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y") 
+msg['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y")
 msg.set_charset('utf-8')
-gmail=smtplib.SMTP('smtp.gmail.com:587')  
-gmail.starttls()  
-gmail.login(gmail_login, gmail_passwd)  
-gmail.sendmail(gmail_login, gamil_all, msg.as_string())  
-gmail.close()  
+gmail=smtplib.SMTP('smtp.gmail.com:587')
+gmail.starttls()
+gmail.login(gmail_login, gmail_passwd[::-1])
+gmail.sendmail(gmail_login, gamil_all, msg.as_string())
+gmail.close()
 GMAIL
 endfunction
 
@@ -2506,7 +2506,7 @@ function! <SID>vimim_visual_ctrl6()
         " input:  one line 马力 highlighted in vim visual mode
         " output: unicode || 4corner && 5stroke && pinyin && cjjp
         sil!call s:vimim_backend_initialization()
-        let results = s:vimim_reverse_lookup()
+        let results = s:vimim_get_char_property()
         if !empty(results)
             let line = line(".")
             call setline(line, results)
@@ -2534,9 +2534,9 @@ function! <SID>vimim_visual_ctrl6()
     endif
 endfunction
 
-" --------------------------------
-function! s:vimim_reverse_lookup()
-" --------------------------------
+" -----------------------------------
+function! s:vimim_get_char_property()
+" -----------------------------------
     let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
     if empty(chinese)
         return []
