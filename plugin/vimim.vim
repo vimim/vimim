@@ -1703,9 +1703,9 @@ let s:VimIM += [" ====  has('python')    ==== {{{"]
 " :py vim.command("source " + vimim)
 " endfunction
 
-" -----------------------
-function! g:vimim_gmail()
-" -----------------------
+" -----------------------------------
+function! g:vimim_gmail() range abort
+" -----------------------------------
 "" [dream] to send email with the current buffer
 "" [usage] :call g:vimim_gmail()
 "" [vimrc] :let g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
@@ -1713,10 +1713,15 @@ if has('python') < 1
     echo 'No Python Interface to Vim'
     return ""
 endif
+let firstline = a:firstline
+let lastline  = a:lastline
+if lastline - firstline < 1
+    let firstline = 1
+    let lastline = "$"
+endif
+let g:gmails.msg = getline(firstline, lastline)
 sil!python << HERE
 import vim
-import smtplib
-import datetime
 try:
     gmails = vim.eval("g:gmails")
     vim.command("unlet g:gmails.cc")
@@ -1728,21 +1733,24 @@ gmail_passwd = gmails.get("passwd")
 gmail_to     = gmails.get("to")
 gmail_cc     = gmails.get("cc","")
 gmail_bcc    = gmails.get("bcc","")
+gmail_msg    = gmails.get("msg")
 gamil_all = [gmail_to] + gmail_cc.split() + gmail_bcc.split()
+import smtplib
+import datetime
 from email.mime.text import MIMEText
-RFC2822 = "\n".join(vim.current.buffer[:])
-msg = MIMEText(RFC2822)
-msg['From'] = gmail_login
-msg['To'] = gmail_to
-msg['Cc'] = gmail_cc
-msg['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y")
-msg.set_charset('utf-8')
-timeout = 16
-gmail=smtplib.SMTP('smtp.gmail.com', 587, timeout)
-gmail.starttls()
-gmail.login(gmail_login, gmail_passwd[::-1])
-gmail.sendmail(gmail_login, gamil_all, msg.as_string())
-gmail.close()
+rfc2822 = MIMEText("\n".join(gmail_msg))
+rfc2822['From'] = gmail_login
+rfc2822['To'] = gmail_to
+rfc2822['Cc'] = gmail_cc
+rfc2822['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y")
+rfc2822.set_charset('utf-8')
+try:
+    gmail=smtplib.SMTP('smtp.gmail.com', 587, 16)
+    gmail.starttls()
+    gmail.login(gmail_login, gmail_passwd[::-1])
+    gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
+finally:
+    gmail.close()
 HERE
 endfunction
 
