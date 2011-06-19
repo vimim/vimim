@@ -1703,7 +1703,7 @@ function! g:vimim_gmail() range abort
 " -----------------------------------
 "" [dream] to send email with the current buffer
 "" [usage] :call g:vimim_gmail()
-"" [vimrc] :let g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
+"" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
 if has('python') < 1
     echo 'No Python Interface to Vim'
     return ""
