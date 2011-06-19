@@ -1688,20 +1688,15 @@ endfunction
 let s:VimIM += [" ====  has('python')    ==== {{{"]
 " =================================================
 
-" " --------------------------
-" function! g:vimim_onthefly()
-" " --------------------------
-" " [dream] use VimIM without plugin
-" " [usage] :call g:vimim_onthefly()
-" if has('python') < 1
-"     return ""
-" endif
-" :py import vim, urllib
-" :py vimim = vim.eval("tempname()")+'.vim'
-" :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
-" :py res = urllib.urlretrieve(url, vimim)
-" :py vim.command("source " + vimim)
-" endfunction
+"" "" [dream] use VimIM on the fly without plugin
+"" "" [usage] run these 5 lines of python within vim
+"" -------------------------------------------------
+"" :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
+"" :py import vim, urllib
+"" :py vimim = vim.eval("tempname()")+'.vim'
+"" :py urllib.urlretrieve(url, vimim)
+"" :py vim.command("source " + vimim)
+"" -------------------------------------------------
 
 " -----------------------------------
 function! g:vimim_gmail() range abort
