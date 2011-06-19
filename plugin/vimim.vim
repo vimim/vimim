@@ -1735,7 +1735,8 @@ msg['To'] = gmail_to
 msg['Cc'] = gmail_cc
 msg['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y")
 msg.set_charset('utf-8')
-gmail=smtplib.SMTP('smtp.gmail.com:587')
+timeout = 16
+gmail=smtplib.SMTP('smtp.gmail.com', 587, timeout)
 gmail.starttls()
 gmail.login(gmail_login, gmail_passwd[::-1])
 gmail.sendmail(gmail_login, gamil_all, msg.as_string())
