@@ -1714,6 +1714,7 @@ import smtplib
 import datetime
 try:
     gmails = vim.eval("g:gmails")
+    vim.command(":unlet g:gmails.bcc")
 except vim.error:
     print "  g:gmails={} not in .vimrc "
 gmail_login  = gmails.get("login")
