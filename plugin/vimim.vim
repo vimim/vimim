@@ -1691,6 +1691,9 @@ let s:VimIM += [" ====  has('python')    ==== {{{"]
 " --------------------------
 function! g:vimim_onthefly()
 " --------------------------
+if has('python') < 1
+    return ""
+endif
 :py import vim, urllib
 :py vimim = vim.eval("tempname()")+'.vim'
 :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
@@ -1705,6 +1708,7 @@ function! g:vimim_gmail()
 "" [usage] :call g:vimim_gmail()
 "" [vimrc] :let g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
 if has('python') < 1
+    echo 'No Python Interface to Vim'
     return ""
 endif
 sil!python << HERE
