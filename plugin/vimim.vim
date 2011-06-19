@@ -1688,9 +1688,9 @@ endfunction
 let s:VimIM += [" ====  has('python')    ==== {{{"]
 " =================================================
 
-" --------------------------
-function! s:vimim_onthefly()
-" --------------------------
+" -----------------------
+function! VimimOnthefly()
+" -----------------------
 if has('python') < 1
     return ""
 endif
@@ -5403,10 +5403,10 @@ endfunction
 " -----------------------------------
 function! s:vimim_initialize_plugin()
 " -----------------------------------
-    if empty(mapcheck("VimimOneKey"))
+    if !hasmapto("VimimOneKey")
         inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
     endif
-    if s:vimim_onekey_is_tab < 2 && empty(mapcheck("VimIM"))
+    if s:vimim_onekey_is_tab < 2 && !hasmapto("VimIM")
         inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
     endif
 endfunction
