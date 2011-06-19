@@ -1688,6 +1688,7 @@ endfunction
 let s:VimIM += [" ====  has('python')    ==== {{{"]
 " =================================================
 
+if !exists("b:loaded_vimim")
 " -----------------------
 function! VimimOnthefly()
 " -----------------------
@@ -1700,6 +1701,7 @@ endif
 :py res = urllib.urlretrieve(url, vimim)
 :py vim.command("source " + vimim)
 endfunction
+endif
 
 " -----------------------
 function! g:vimim_gmail()
