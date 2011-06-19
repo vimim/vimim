@@ -1704,9 +1704,9 @@ function! g:vimim_gmail()
 if has('python') < 1
     return ""
 else
-    " [dream] to send email with the current buffer
-    " [usage] :call g:vimim_gmail()
-    " [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
+    "" [dream] to send email with the current buffer
+    "" [usage] :call g:vimim_gmail()
+    "" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
 endif
 sil!python << HERE
 import vim
@@ -1714,7 +1714,7 @@ import smtplib
 import datetime
 try:
     gmails = vim.eval("g:gmails")
-    vim.command(":unlet g:gmails.bcc")
+    vim.command("unlet g:gmails.bcc")
 except vim.error:
     print "  g:gmails={} not in .vimrc "
 gmail_login  = gmails.get("login")
