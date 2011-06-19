@@ -336,12 +336,6 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-" " issue 153
-" :let g:vimim_cloud = 'qq'
-" :let g:vimim_ctrl_h_to_toggle = 2
-" :let g:vimim_custom_label = 1
-" :let g:vimim_latex_suite = 1
-" :let g:vimim_more_candidates = 10
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
@@ -1698,7 +1692,7 @@ let s:VimIM += [" ====  has('python')    ==== {{{"]
 function! g:vimim_onthefly()
 " --------------------------
 :py import vim, urllib
-:py vimim = vim.eval("tempname()")
+:py vimim = vim.eval("tempname()")+'.vim'
 :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
 :py res = urllib.urlretrieve(url, vimim)
 :py vim.command("source " + vimim)
