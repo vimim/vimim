@@ -1689,7 +1689,7 @@ let s:VimIM += [" ====  has('python')    ==== {{{"]
 " =================================================
 
 " --------------------------
-function! g:vimim_onthefly()
+function! s:vimim_onthefly()
 " --------------------------
 if has('python') < 1
     return ""
@@ -2431,9 +2431,9 @@ function! s:vimim_cjk_grep_results(grep)
     return results
 endfunction
 
-" -----------------------------------------
-function s:vimim_sort_on_last(line1, line2)
-" -----------------------------------------
+" ------------------------------------------
+function! s:vimim_sort_on_last(line1, line2)
+" ------------------------------------------
     let line1 = get(split(a:line1),-1) + 1
     let line2 = get(split(a:line2),-1) + 1
     if line1 < line2
@@ -5403,8 +5403,10 @@ endfunction
 " -----------------------------------
 function! s:vimim_initialize_plugin()
 " -----------------------------------
-    inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
-    if s:vimim_onekey_is_tab < 2
+    if empty(mapcheck("VimimOneKey"))
+        inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
+    endif
+    if s:vimim_onekey_is_tab < 2 && empty(mapcheck("VimIM"))
         inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
     endif
 endfunction
