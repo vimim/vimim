@@ -4601,7 +4601,7 @@ function! s:vimim_get_cloud_baidu(keyboard)
             return []
         elseif empty(s:localization)
             " ['[[["\xc3\xb0\xcf\xd5\xbc\xd2",3]
-            let output = s:vimim_i18n_read(output)
+            let output = iconv(output, "gbk", "utf-8")
         endif
         let output_list = get(eval(output),0)
     endif
