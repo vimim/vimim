@@ -1771,7 +1771,7 @@ try:
             res = unicode(res, 'utf-8').encode('utf-8')
     elif cloud == 'google':
         if vim.eval("&encoding") != 'utf-8':
-            res = unicode(res,"unicode_escape").encode("utf8")
+            res = unicode(res, 'unicode_escape').encode("utf8")
     elif cloud == 'baidu':
         if vim.eval("&encoding") != 'utf-8':
             res = str(response)
@@ -1781,7 +1781,7 @@ try:
     vim.command("let g:cloud = " + res)
     request.close()
 except Exception, e:
-    vim.command("let g:vimim_cloud_error = " + str(e))
+    vim.command("echo " + str(e))
 EOF
 return g:cloud
 endfunction
