@@ -4533,7 +4533,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     endif
     if s:localization > 0
         " qq => {"q":"fuck","rs":["\xe5\xa6\x87"],
-        let output = iconv(output, "utf-8", "gbk")
+        let output = s:vimim_i18n_read(output)
     endif
     let key = 'rs'
     let matched_list = []
@@ -4561,7 +4561,7 @@ function! s:vimim_get_cloud_google(keyboard)
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
         if s:http_executable =~? 'Python Interface to Vim'
-            let output = iconv(output, "utf-8", "gbk")
+            let output = s:vimim_i18n_read(output)
         else
             let unicodes = split(get(split(output),8),",")
             for item in unicodes
@@ -4569,7 +4569,7 @@ function! s:vimim_get_cloud_google(keyboard)
                 for xxxx in split(item,"\u")
                     let utf8 .= s:vimim_unicode_to_utf8(xxxx)
                 endfor
-                let output = iconv(utf8, "utf-8", "gbk")
+                let output = s:vimim_i18n_read(utf8)
                 call add(matched_list, output)
             endfor
             return matched_list
@@ -4601,7 +4601,7 @@ function! s:vimim_get_cloud_baidu(keyboard)
             return []
         elseif empty(s:localization)
             " ['[[["\xc3\xb0\xcf\xd5\xbc\xd2",3]
-            let output = iconv(output, "gbk", "utf-8")
+            let output = s:vimim_i18n_read(output)
         endif
         let output_list = get(eval(output),0)
     endif
