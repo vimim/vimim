@@ -91,7 +91,6 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_initialize_ui()
     sil!call s:vimim_initialize_i_setting()
     sil!call s:vimim_dictionary_chinese()
-    sil!call s:vimim_dictionary_ecdict()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
     sil!call s:vimim_scan_backend_embedded_datafile()
@@ -445,7 +444,7 @@ endfunction
 " -----------------------------
 function! s:vimim_egg_vimimrc()
 " -----------------------------
-    " http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
+" http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
     return sort(copy(s:vimimrc))
 endfunction
 
@@ -501,16 +500,11 @@ function! s:vimim_egg_vimimenv()
     let option = s:vimim_chinese('datetime') . s:colon . today
     call add(eggs, option)
     let option = "os"
-    if has("win32unix")
-        let option = "cygwin"
-    elseif has("win32")
-        let option = "Windows32"
-    elseif has("win64")
-        let option = "Windows64"
-    elseif has("unix")
-        let option = "unix"
-    elseif has("macunix")
-        let option = "macunix"
+    if has("win32unix")   | let option = "cygwin"
+    elseif has("win32")   | let option = "Windows32"
+    elseif has("win64")   | let option = "Windows64"
+    elseif has("unix")    | let option = "unix"
+    elseif has("macunix") | let option = "macunix"
     endif
     let option .= "_" . &term
     let computer = s:vimim_chinese('computer') . s:colon
@@ -551,7 +545,7 @@ function! s:vimim_egg_vimimenv()
         let ciku = database . s:vimim_chinese('english') . database
         call add(eggs, ciku . s:english_file)
     endif
-    let input = s:vimim_chinese('input') . s:colon
+    let input = s:vimim_chinese('input')
     if len(s:ui.frontends) > 0
         let vimim_toggle_list = "english"
         for frontend in s:ui.frontends
@@ -564,7 +558,7 @@ function! s:vimim_egg_vimimenv()
         endfor
     endif
     if len(im) > 0
-        let option = input . im
+        let option = input . s:colon . im
         call add(eggs, option)
     endif
     if len(s:ui.frontends) > 1
@@ -576,7 +570,7 @@ function! s:vimim_egg_vimimenv()
     if s:vimim_cloud > -1
         let option  = s:vimim_chinese('online') . s:colon
         let option .= s:vimim_chinese(s:cloud_default)
-        let option .= s:vimim_chinese('cloud') . input
+        let option .= s:vimim_chinese('cloud') . input . s:space
         let option .= ":let g:vimim_cloud='" . s:vimim_cloud."'"
         call add(eggs, option)
         call s:vimim_check_http_executable()
@@ -614,7 +608,7 @@ function! s:vimim_get_hjkl(keyboard)
         if len(lines) < 2
             let lines = s:vimim_egg_vimimenv()
         else
-            if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
+            if unnamed_register=~'\d' && join(lines)!~'[^0-9[:blank:].]'
                 let sum = eval(join(lines,'+'))
                 let len = len(lines)
                 let ave = 1.0*sum/len
@@ -1688,23 +1682,21 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  has('python')    ==== {{{"]
 " =================================================
-
-"" "" [dream] use VimIM on the fly without plugin
-"" "" [usage] run these 5 lines of python within vim
-"" -------------------------------------------------
+"" " [dream] use VimIM on the fly without plugin
+"" " [usage] run these 5 lines of python within vim
 "" :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
 "" :py import vim, urllib
 "" :py vimim = vim.eval("tempname()")+'.vim'
 "" :py urllib.urlretrieve(url, vimim)
 "" :py vim.command("source " + vimim)
-"" -------------------------------------------------
+"" " -----------------------------------------------
 
 " -----------------------------------
 function! g:vimim_gmail() range abort
 " -----------------------------------
-"" [dream] to send email with the current buffer
-"" [usage] :call g:vimim_gmail()
-"" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
+" [dream] to send email with the current buffer
+" [usage] :call g:vimim_gmail()
+" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
 if has('python') < 1
     echo 'No Python Interface to Vim'
     return ""
@@ -1819,29 +1811,24 @@ function! s:vimim_imode_today_now(keyboard)
         call add(results, substitute(strftime("%S"),'0','',''))
         call add(results, 'second')
     endif
+    let ecdict = {}
+    let ecdict.year      = '年'
+    let ecdict.month     = '月'
+    let ecdict.day       = '日'
+    let ecdict.hour      = '时'
+    let ecdict.minute    = '分'
+    let ecdict.second    = '秒'
+    let ecdict.monday    = '星期一'
+    let ecdict.tuesday   = '星期二'
+    let ecdict.wednesday = '星期三'
+    let ecdict.thursday  = '星期四'
+    let ecdict.friday    = '星期五'
+    let ecdict.saturday  = '星期六'
+    let ecdict.sunday    = '星期日'
     let chinese = copy(s:translators)
-    let chinese.dict = s:ecdict
-    let today = chinese.translate(join(results))
-    return [today]
-endfunction
-
-" -----------------------------------
-function! s:vimim_dictionary_ecdict()
-" -----------------------------------
-    let s:ecdict = {}
-    let s:ecdict.year      = '年'
-    let s:ecdict.month     = '月'
-    let s:ecdict.day       = '日'
-    let s:ecdict.hour      = '时'
-    let s:ecdict.minute    = '分'
-    let s:ecdict.second    = '秒'
-    let s:ecdict.monday    = '星期一'
-    let s:ecdict.tuesday   = '星期二'
-    let s:ecdict.wednesday = '星期三'
-    let s:ecdict.thursday  = '星期四'
-    let s:ecdict.friday    = '星期五'
-    let s:ecdict.saturday  = '星期六'
-    let s:ecdict.sunday    = '星期日'
+    let chinese.dict = ecdict
+    let today_or_now = chinese.translate(join(results))
+    return [today_or_now]
 endfunction
 
 " ============================================= }}}
@@ -1919,41 +1906,41 @@ function! s:vimim_dictionary_quantifiers()
     if s:vimim_imode_pinyin < 1
         return
     endif
-    let s:quantifiers['1'] = '一壹甲①⒈⑴'
-    let s:quantifiers['2'] = '二贰乙②⒉⑵'
-    let s:quantifiers['3'] = '三叁丙③⒊⑶'
-    let s:quantifiers['4'] = '四肆丁④⒋⑷'
-    let s:quantifiers['5'] = '五伍戊⑤⒌⑸'
-    let s:quantifiers['6'] = '六陆己⑥⒍⑹'
-    let s:quantifiers['7'] = '七柒庚⑦⒎⑺'
-    let s:quantifiers['8'] = '八捌辛⑧⒏⑻'
-    let s:quantifiers['9'] = '九玖壬⑨⒐⑼'
-    let s:quantifiers['0'] = '〇零癸⑩⒑⑽十拾'
-    let s:quantifiers['s'] = '十拾时升艘扇首双所束手秒'
-    let s:quantifiers['b'] = '百佰步把包杯本笔部班'
-    let s:quantifiers['q'] = '千仟群'
-    let s:quantifiers['w'] = '万位味碗窝晚'
-    let s:quantifiers['h'] = '时毫行盒壶户回'
-    let s:quantifiers['f'] = '分份发封付副幅峰方服'
-    let s:quantifiers['a'] = '秒'
-    let s:quantifiers['n'] = '年'
-    let s:quantifiers['m'] = '月米名枚面门'
-    let s:quantifiers['r'] = '日'
-    let s:quantifiers['c'] = '厘次餐场串处床'
-    let s:quantifiers['d'] = '第度点袋道滴碟日顶栋堆对朵堵顿'
-    let s:quantifiers['e'] = '亿'
-    let s:quantifiers['g'] = '个根股管'
-    let s:quantifiers['i'] = '毫'
-    let s:quantifiers['j'] = '斤家具架间件节剂具捲卷茎记'
-    let s:quantifiers['k'] = '克口块棵颗捆孔'
-    let s:quantifiers['l'] = '里粒类辆列轮厘升领缕'
-    let s:quantifiers['o'] = '度'
-    let s:quantifiers['p'] = '磅盆瓶排盘盆匹片篇撇喷'
-    let s:quantifiers['t'] = '天吨条头通堂趟台套桶筒贴'
-    let s:quantifiers['u'] = '微'
-    let s:quantifiers['x'] = '升席些项'
-    let s:quantifiers['y'] = '年亿叶月'
-    let s:quantifiers['z'] = '种只张株支枝盏座阵桩尊则站幢宗兆'
+    let s:quantifiers.1 = '一壹甲①⒈⑴'
+    let s:quantifiers.2 = '二贰乙②⒉⑵'
+    let s:quantifiers.3 = '三叁丙③⒊⑶'
+    let s:quantifiers.4 = '四肆丁④⒋⑷'
+    let s:quantifiers.5 = '五伍戊⑤⒌⑸'
+    let s:quantifiers.6 = '六陆己⑥⒍⑹'
+    let s:quantifiers.7 = '七柒庚⑦⒎⑺'
+    let s:quantifiers.8 = '八捌辛⑧⒏⑻'
+    let s:quantifiers.9 = '九玖壬⑨⒐⑼'
+    let s:quantifiers.0 = '〇零癸⑩⒑⑽十拾'
+    let s:quantifiers.s = '十拾时升艘扇首双所束手秒'
+    let s:quantifiers.b = '百佰步把包杯本笔部班'
+    let s:quantifiers.q = '千仟群'
+    let s:quantifiers.w = '万位味碗窝晚'
+    let s:quantifiers.h = '时毫行盒壶户回'
+    let s:quantifiers.f = '分份发封付副幅峰方服'
+    let s:quantifiers.a = '秒'
+    let s:quantifiers.n = '年'
+    let s:quantifiers.m = '月米名枚面门'
+    let s:quantifiers.r = '日'
+    let s:quantifiers.c = '厘次餐场串处床'
+    let s:quantifiers.d = '第度点袋道滴碟日顶栋堆对朵堵顿'
+    let s:quantifiers.e = '亿'
+    let s:quantifiers.g = '个根股管'
+    let s:quantifiers.i = '毫'
+    let s:quantifiers.j = '斤家具架间件节剂具捲卷茎记'
+    let s:quantifiers.k = '克口块棵颗捆孔'
+    let s:quantifiers.l = '里粒类辆列轮厘升领缕'
+    let s:quantifiers.o = '度'
+    let s:quantifiers.p = '磅盆瓶排盘盆匹片篇撇喷'
+    let s:quantifiers.t = '天吨条头通堂趟台套桶筒贴'
+    let s:quantifiers.u = '微'
+    let s:quantifiers.x = '升席些项'
+    let s:quantifiers.y = '年亿叶月'
+    let s:quantifiers.z = '种只张株支枝盏座阵桩尊则站幢宗兆'
 endfunction
 
 " ----------------------------------------------
@@ -3688,7 +3675,7 @@ endfunction
 " -----------------------------------
 function! s:vimim_shuangpin_generic()
 " -----------------------------------
-" generate the default value of shuangpin table
+    " generate the default value of shuangpin table
     let shengmu_list = {}
     for shengmu in ["b", "p", "m", "f", "d", "t", "l", "n", "g",
                 \"k", "h", "j", "q", "x", "r", "z", "c", "s", "y", "w"]
@@ -4336,7 +4323,7 @@ function! s:vimim_check_http_executable()
             let s:http_executable = wget . wget_option
         endif
     endif
-    " step 4 of 4: try to find curl if no wget
+    " step 4 of 4: try to find curl if wget not available
     if empty(s:http_executable) && executable('curl')
         let s:http_executable = "curl -s "
     endif
@@ -4428,7 +4415,7 @@ function! s:vimim_get_from_http(input, cloud)
     return output
 endfunction
 
-" web.pinyin.sogou.com/api/py?key=938cdfe9e1e39f8dd5da428b1a6a69cb&query=ml
+" web.pinyin.sogou.com/api/py?key=938cdfe9e1e39f8dd5da428b1a6a69cb&query=m
 " -----------------------------------------
 function! s:vimim_get_cloud_sogou(keyboard)
 " -----------------------------------------
@@ -4470,7 +4457,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
     return matched_list
 endfunction
 
-" ime.qq.com/fcgi-bin/getword?key=f0e9756a31396a76a3f40abce1213367&q=fuck
+" ime.qq.com/fcgi-bin/getword?key=f0e9756a31396a76a3f40abce1213367&q=mxj
 " --------------------------------------
 function! s:vimim_get_cloud_qq(keyboard)
 " --------------------------------------
@@ -4939,7 +4926,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_url_xx_to_chinese(xx)
 " -------------------------------------
-    " %E9%A6%AC => \xE9\xA6\xAC =>  馬 u99AC
+    " %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
     let output = a:xx
     if s:http_executable =~ 'libvimim'
         let output = libcall(s:http_executable, "do_unquote", a:xx)
