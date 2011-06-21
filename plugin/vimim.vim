@@ -1683,7 +1683,6 @@ endfunction
 let s:VimIM += [" ====  has('python')    ==== {{{"]
 " =================================================
 "" " [dream] use VimIM on the fly without plugin
-"" " [usage] run these 5 lines of python within vim
 "" :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
 "" :py import vim, urllib
 "" :py vimim = vim.eval("tempname()")+'.vim'
