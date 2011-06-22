@@ -1690,6 +1690,74 @@ let s:VimIM += [" ====  has('python')    ==== {{{"]
 "" :py vim.command("source " + vimim)
 "" " -----------------------------------------------
 
+" ---------------------------------------
+function! s:vimim_mycloud_python_client()
+" ---------------------------------------
+if has('python') < 1
+    return ""
+endif
+python << EOF
+import vim
+vim.command("let g:cloud = " + output)
+EOF
+return g:cloud
+endfunction
+
+" --------------------------------------------
+function! s:vimim_mycloud_app_python(keyboard)
+" --------------------------------------------
+" mycloud = '/home/vimim/svn/mycloud/ibus-mycloud/mycloud.py'
+" mycloud = '/home/vimim/svn/mycloud/vimim-mycloud/mycloud.py'
+" :let g:vimim_mycloud = "app:python " . mycloud
+" --------------------------------------------
+if has('python') < 1
+    return ""
+endif
+python << EOF
+import vim
+keyboard = vim.eval("a:keyboard")
+output = keyboard
+vim.command("let g:cloud = " + output)
+EOF
+return g:cloud
+endfunction
+
+" -------------------------------------------
+function! s:vimim_get_from_python(url, cloud)
+" -------------------------------------------
+if has('python') < 1
+    return ""
+endif
+python << EOF
+import vim
+import urllib2
+try:
+    cloud = vim.eval("a:cloud")
+    url = vim.eval("a:url")
+    timeout = 20
+    request = urllib2.urlopen(url, None, timeout)
+    response = request.read()
+    res = "'" + str(response) + "'"
+    if cloud == 'qq':
+        if vim.eval("&encoding") != 'utf-8':
+            res = unicode(res, 'utf-8').encode('utf-8')
+    elif cloud == 'google':
+        if vim.eval("&encoding") != 'utf-8':
+            res = unicode(res, 'unicode_escape').encode("utf8")
+    elif cloud == 'baidu':
+        if vim.eval("&encoding") != 'utf-8':
+            res = str(response)
+        else:
+            res = unicode(response, 'gbk').encode('utf-8')
+        vim.command("let g:baidu = " + res)
+    vim.command("let g:cloud = " + res)
+    request.close()
+except Exception, e:
+    vim.command("echo " + str(e))
+EOF
+return g:cloud
+endfunction
+
 " -----------------------------------
 function! g:vimim_gmail() range abort
 " -----------------------------------
@@ -1739,42 +1807,6 @@ try:
 finally:
     gmail.close()
 HERE
-endfunction
-
-" -------------------------------------------
-function! s:vimim_get_from_python(url, cloud)
-" -------------------------------------------
-if has('python') < 1
-    return ""
-endif
-python << EOF
-import vim
-import urllib2
-try:
-    cloud = vim.eval("a:cloud")
-    url = vim.eval("a:url")
-    timeout = 20
-    request = urllib2.urlopen(url, None, timeout)
-    response = request.read()
-    res = "'" + str(response) + "'"
-    if cloud == 'qq':
-        if vim.eval("&encoding") != 'utf-8':
-            res = unicode(res, 'utf-8').encode('utf-8')
-    elif cloud == 'google':
-        if vim.eval("&encoding") != 'utf-8':
-            res = unicode(res, 'unicode_escape').encode("utf8")
-    elif cloud == 'baidu':
-        if vim.eval("&encoding") != 'utf-8':
-            res = str(response)
-        else:
-            res = unicode(response, 'gbk').encode('utf-8')
-        vim.command("let g:baidu = " + res)
-    vim.command("let g:cloud = " + res)
-    request.close()
-except Exception, e:
-    vim.command("echo " + str(e))
-EOF
-return g:cloud
 endfunction
 
 " ============================================= }}}
