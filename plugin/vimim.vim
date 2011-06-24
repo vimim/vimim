@@ -1730,12 +1730,12 @@ if has('python') < 1
 endif
 python << EOF
 import vim
-import urllib2
+from urllib2 import urlopen
 try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
     timeout = 20
-    request = urllib2.urlopen(url, None, timeout)
+    request = urlopen(url, None, timeout)
     response = request.read()
     res = "'" + str(response) + "'"
     if cloud == 'qq':
@@ -1790,17 +1790,17 @@ gmail_cc     = gmails.get("cc","")
 gmail_bcc    = gmails.get("bcc","")
 gmail_msg    = gmails.get("msg")
 gamil_all = [gmail_to] + gmail_cc.split() + gmail_bcc.split()
-import smtplib
-import datetime
+from smtplib import SMTP
+from datetime import datetime
 from email.mime.text import MIMEText
 rfc2822 = MIMEText("\n".join(gmail_msg))
 rfc2822['From'] = gmail_login
 rfc2822['To'] = gmail_to
 rfc2822['Cc'] = gmail_cc
-rfc2822['Subject'] = datetime.datetime.now().strftime("%A %m/%d/%Y")
+rfc2822['Subject'] = datetime.now().strftime("%A %m/%d/%Y")
 rfc2822.set_charset('utf-8')
 try:
-    gmail=smtplib.SMTP('smtp.gmail.com', 587, 120)
+    gmail=SMTP('smtp.gmail.com', 587, 120)
     gmail.starttls()
     gmail.login(gmail_login, gmail_passwd[::-1])
     gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
