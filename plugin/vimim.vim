@@ -4340,8 +4340,10 @@ function! s:vimim_check_http_executable()
         endif
     endif
     " step 2 of 4: try to use dynamic python: +python/dyn +python3/dyn
-    if empty(s:http_executable) && has('python')
-        let s:http_executable = 'Python Interface to Vim'
+    if empty(s:http_executable) 
+        if has('python') || has('python3')
+            let s:http_executable = 'Python Interface to Vim'
+        endif
     endif
     " step 3 of 4: try to find wget
     if empty(s:http_executable)
@@ -4435,7 +4437,7 @@ function! s:vimim_get_from_http(input, cloud)
     try
         if s:http_executable =~ 'libvimim'
             let output = libcall(s:http_executable, "do_geturl", input)
-        elseif s:http_executable =~? 'Python Interface to Vim'
+        elseif s:http_executable =~? 'python'
             let output = s:vimim_get_from_python(input, a:cloud)
         else
             let output = system(s:http_executable . '"'.input.'"')
@@ -4579,7 +4581,7 @@ function! s:vimim_get_cloud_google(keyboard)
     let matched_list = []
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
-        if s:http_executable =~? 'Python Interface to Vim'
+        if s:http_executable =~? 'python'
             let output = s:vimim_i18n_read(output)
         else
             let unicodes = split(get(split(output),8),",")
