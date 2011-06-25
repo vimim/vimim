@@ -1696,7 +1696,7 @@ function! s:vimim_mycloud_python_client()
 if has('python') < 1
     return ""
 endif
-python << EOF
+sil!python << EOF
 import vim
 vim.command("let g:cloud = " + output)
 EOF
@@ -1713,7 +1713,7 @@ function! s:vimim_mycloud_app_python(keyboard)
 if has('python') < 1
     return ""
 endif
-python << EOF
+sil!python << EOF
 import vim
 keyboard = vim.eval("a:keyboard")
 output = keyboard
@@ -1728,7 +1728,7 @@ function! s:vimim_get_from_python(url, cloud)
 if has('python') < 1
     return ""
 endif
-python << EOF
+sil!python << EOF
 import vim
 from urllib2 import urlopen
 try:
@@ -1775,7 +1775,7 @@ if lastline - firstline < 1
     let lastline = "$"
 endif
 let g:gmails.msg = getline(firstline, lastline)
-sil!python << HERE
+sil!python << EOF
 import vim
 try:
     gmails = vim.eval('g:gmails')
@@ -1789,7 +1789,7 @@ try:
     gmail_msg    = gmails.get("msg")
     gamil_all = [gmail_to] + gmail_cc.split() + gmail_bcc.split()
 except vim.error:
-    print "  g:gmails={} not in .vimrc "
+    print("vim error: %s" % vim.error)
 if len(gmail_login) > 8:
     from smtplib import SMTP
     from datetime import datetime
@@ -1807,7 +1807,7 @@ if len(gmail_login) > 8:
         gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
     finally:
         gmail.close()
-HERE
+EOF
 endfunction
 
 " ============================================= }}}
