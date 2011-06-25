@@ -1725,17 +1725,19 @@ endfunction
 " -------------------------------------------
 function! s:vimim_get_from_python(url, cloud)
 " -------------------------------------------
-if has('python') < 1
+if has('python') < 1 && has('python3') < 1
     return ""
 endif
-sil!python << EOF
+exe 'sil!python << EOF'
 import vim
-from urllib2 import urlopen
 try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
-    timeout = 20
-    request = urlopen(url, None, timeout)
+    import urllib2
+    request = urllib2.urlopen(url, None, 20)
+  # #py3#  python3 << EOF
+  # import urllib.request
+  # request = urllib.request.urlopen(url)
     response = request.read()
     res = "'" + str(response) + "'"
     if cloud == 'qq':
@@ -1764,7 +1766,7 @@ function! g:vimim_gmail() range abort
 " [dream] to send email with the current buffer
 " [usage] :call g:vimim_gmail()
 " [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
-if has('python') < 1
+if has('python') < 1 && has('python3') < 1
     echo 'No magic Python Interface to Vim'
     return ""
 endif
@@ -1775,7 +1777,11 @@ if lastline - firstline < 1
     let lastline = "$"
 endif
 let g:gmails.msg = getline(firstline, lastline)
-sil!python << EOF
+let python = 'python'
+if has('python3') > 0
+    let python = 'python3'
+endif
+exe 'sil!' . python . ' << EOF'
 import vim
 try:
     gmails = vim.eval('g:gmails')
