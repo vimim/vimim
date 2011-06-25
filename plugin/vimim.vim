@@ -1687,7 +1687,7 @@ let s:VimIM += [" ====  has('python')    ==== {{{"]
 "" :py import vim, urllib
 "" :py vimim = vim.eval("tempname()")+'.vim'
 "" :py urllib.urlretrieve(url, vimim)
-"" :py vim.command("source " + vimim)
+"" :py vim.command("source %s " % vimim)
 "" " -----------------------------------------------
 
 " ---------------------------------------
@@ -1698,7 +1698,7 @@ if has('python') < 1
 endif
 sil!python << EOF
 import vim
-vim.command("let g:cloud = " + output)
+vim.command("let g:cloud = %s" % output)
 EOF
 return g:cloud
 endfunction
@@ -1717,7 +1717,7 @@ sil!python << EOF
 import vim
 keyboard = vim.eval("a:keyboard")
 output = keyboard
-vim.command("let g:cloud = " + output)
+vim.command("let g:cloud = %s" % output)
 EOF
 return g:cloud
 endfunction
@@ -1749,11 +1749,11 @@ try:
             res = str(response)
         else:
             res = unicode(response, 'gbk').encode('utf-8')
-        vim.command("let g:baidu = " + res)
-    vim.command("let g:cloud = " + res)
+        vim.command("sil!let g:baidu = %s" % res)
+    vim.command("sil!let g:cloud = %s" % res)
     request.close()
 except Exception, e:
-    vim.command("echo " + str(e))
+    vim.command("echo %s " % str(e))
 EOF
 return g:cloud
 endfunction
