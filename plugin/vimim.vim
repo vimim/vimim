@@ -1765,7 +1765,7 @@ function! g:vimim_gmail() range abort
 " [usage] :call g:vimim_gmail()
 " [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
 if has('python') < 1
-    echo 'No Python Interface to Vim'
+    echo 'No magic Python Interface to Vim'
     return ""
 endif
 let firstline = a:firstline
@@ -1778,34 +1778,35 @@ let g:gmails.msg = getline(firstline, lastline)
 sil!python << HERE
 import vim
 try:
-    gmails = vim.eval("g:gmails")
-    vim.command("unlet g:gmails.cc")
-    vim.command("unlet g:gmails.bcc")
+    gmails = vim.eval('g:gmails')
+    vim.command('let g:gmails.cc=""')
+    vim.command('let g:gmails.bcc=""')
+    gmail_login  = gmails.get("login","")
+    gmail_passwd = gmails.get("passwd")
+    gmail_to     = gmails.get("to")
+    gmail_cc     = gmails.get("cc","")
+    gmail_bcc    = gmails.get("bcc","")
+    gmail_msg    = gmails.get("msg")
+    gamil_all = [gmail_to] + gmail_cc.split() + gmail_bcc.split()
 except vim.error:
     print "  g:gmails={} not in .vimrc "
-gmail_login  = gmails.get("login")
-gmail_passwd = gmails.get("passwd")
-gmail_to     = gmails.get("to")
-gmail_cc     = gmails.get("cc","")
-gmail_bcc    = gmails.get("bcc","")
-gmail_msg    = gmails.get("msg")
-gamil_all = [gmail_to] + gmail_cc.split() + gmail_bcc.split()
-from smtplib import SMTP
-from datetime import datetime
-from email.mime.text import MIMEText
-rfc2822 = MIMEText("\n".join(gmail_msg))
-rfc2822['From'] = gmail_login
-rfc2822['To'] = gmail_to
-rfc2822['Cc'] = gmail_cc
-rfc2822['Subject'] = datetime.now().strftime("%A %m/%d/%Y")
-rfc2822.set_charset('utf-8')
-try:
-    gmail=SMTP('smtp.gmail.com', 587, 120)
-    gmail.starttls()
-    gmail.login(gmail_login, gmail_passwd[::-1])
-    gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
-finally:
-    gmail.close()
+if len(gmail_login) > 8:
+    from smtplib import SMTP
+    from datetime import datetime
+    from email.mime.text import MIMEText
+    rfc2822 = MIMEText("\n".join(gmail_msg))
+    rfc2822['From'] = gmail_login
+    rfc2822['To'] = gmail_to
+    rfc2822['Cc'] = gmail_cc
+    rfc2822['Subject'] = datetime.now().strftime("%A %m/%d/%Y")
+    rfc2822.set_charset('utf-8')
+    try:
+        gmail=SMTP('smtp.gmail.com', 587, 120)
+        gmail.starttls()
+        gmail.login(gmail_login, gmail_passwd[::-1])
+        gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
+    finally:
+        gmail.close()
 HERE
 endfunction
 
