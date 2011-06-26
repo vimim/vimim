@@ -7,14 +7,14 @@
 let $VimIM = "easter egg:"" vimimenv<C-6><C-6> vimimrc<C-6><C-6>
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
-let s:url  = ["http://vim.sf.net/scripts/script.php?script_id=2506"]
-let s:url += ["http://vimim.googlecode.com/svn/vimim/vimim.vim.html"]
-let s:url += ["http://code.google.com/p/vimim/source/list"]
-let s:url += ["http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"]
-let s:url += ["http://vimim-data.googlecode.com"]
-let s:url += ["http://groups.google.com/group/vimim"]
-let s:url += ["http://vimim.googlecode.com/svn/vimim/vimim.html"]
-let s:url += ["vimim+subscribe@googlegroups.com"]
+let s:url  = " http://vim.sf.net/scripts/script.php?script_id=2506"
+let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
+let s:url .= " http://code.google.com/p/vimim/source/list"
+let s:url .= " http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
+let s:url .= " http://vimim-data.googlecode.com"
+let s:url .= " http://groups.google.com/group/vimim"
+let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.html"
+let s:url .= " vimim+subscribe@googlegroups.com"
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
@@ -481,14 +481,15 @@ endfunction
 function! s:vimim_egg_vimimhelp()
 " -------------------------------
     let eggs = []
-    call add(eggs, "官方网址 " . s:url[0] . " ")
-    call add(eggs, "最新程式 " . s:url[1] . " ")
-    call add(eggs, "更新报告 " . s:url[2] . " ")
-    call add(eggs, "标准字库 " . s:url[3] . " ")
-    call add(eggs, "民间词库 " . s:url[4] . " ")
-    call add(eggs, "新闻论坛 " . s:url[5] . " ")
-    call add(eggs, "最新主页 " . s:url[6] . " ")
-    call add(eggs, "论坛邮箱 " . s:url[7] . " ")
+    let url = split(s:url)
+    call add(eggs, "官方网址 " . get(url,0) . " ")
+    call add(eggs, "最新程式 " . get(url,1) . " ")
+    call add(eggs, "更新报告 " . get(url,2) . " ")
+    call add(eggs, "标准字库 " . get(url,3) . " ")
+    call add(eggs, "民间词库 " . get(url,4) . " ")
+    call add(eggs, "新闻论坛 " . get(url,5) . " ")
+    call add(eggs, "最新主页 " . get(url,6) . " ")
+    call add(eggs, "论坛邮箱 " . get(url,7) . " ")
     return eggs
 endfunction
 
@@ -1696,10 +1697,7 @@ function! s:vimim_mycloud_python_client()
 if has('python') < 1 && has('python3') < 1
     return ""
 endif
-let python = 'python'
-if has('python3') > 0
-    let python = 'python3'
-endif
+let python = has('python3') ? 'python3' : 'python'
 exe 'sil!' . python . ' << EOF'
 import vim
 vim.command("let g:cloud = %s" % output)
@@ -1717,10 +1715,7 @@ function! s:vimim_mycloud_app_python(keyboard)
 if has('python') < 1 && has('python3') < 1
     return ""
 endif
-let python = 'python'
-if has('python3') > 0
-    let python = 'python3'
-endif
+let python = has('python3') ? 'python3' : 'python'
 exe 'sil!' . python . ' << EOF'
 import vim
 keyboard = vim.eval("a:keyboard")
@@ -1775,10 +1770,11 @@ sil!python3 << EOF
 import vim
 import urllib.request
 try:
-    cloud = vim.eval('a:cloud').encode("utf8")
-    url = vim.eval('a:url').encode("utf8")
+    cloud = vim.eval("a:cloud").encode("utf-8")
+    url = vim.eval("a:url").encode("utf-8")
     urlopen = urllib.request.urlopen(url)
-    response = urlopen.read().decode('utf-8')
+  # response = urlopen.read().decode("utf-8")
+    response = urlopen.read().encode("utf-8")
     res = "'" + response + "'"
   # if cloud == 'qq':
   #     if vim.eval("&encoding") != 'utf-8':
@@ -1792,7 +1788,8 @@ try:
   #     else:
   #         res = unicode(response, 'gbk').encode('utf-8')
   #     vim.command("sil!let g:baidu = %s" % res)
-    vim.command("sil!let g:cloud = %s" % res.decode('utf-8'))
+  # vim.command("sil!let g:cloud = %s" % res)
+    vim.command("sil!let g:cloud =   " + res)
     urlopen.close()
 except vim.error:
     print("vim error: %s" % vim.error)
@@ -1817,16 +1814,13 @@ if lastline - firstline < 1
     let lastline = "$"
 endif
 let g:gmails.msg = getline(firstline, lastline)
-let python = 'python'
-if has('python3') > 0
-    let python = 'python3'
-endif
+let python = has('python3') ? 'python3' : 'python'
 exe 'sil!' . python . ' << EOF'
 import vim
 try:
     gmails = vim.eval('g:gmails')
-    vim.command('let g:gmails.cc=""')
-    vim.command('let g:gmails.bcc=""')
+    vim.command('sil!unlet g:gmails.cc')
+    vim.command('sil!unlet g:gmails.bcc')
     gmail_login  = gmails.get("login","")
     gmail_passwd = gmails.get("passwd")
     gmail_to     = gmails.get("to")
@@ -4386,7 +4380,7 @@ function! s:vimim_check_http_executable()
         endif
     endif
     " step 2 of 4: try to use dynamic python: +python/dyn +python3/dyn
-    if empty(s:http_executable) 
+    if empty(s:http_executable)
         if has('python') || has('python3')
             let s:http_executable = 'Python Interface to Vim'
         endif
@@ -4484,7 +4478,7 @@ function! s:vimim_get_from_http(input, cloud)
         if s:http_executable =~ 'libvimim'
             let output = libcall(s:http_executable, "do_geturl", input)
         elseif s:http_executable =~? 'python'
-            if has('python') > 0 
+            if has('python') > 0
                 let output = s:vimim_get_from_python(input, a:cloud)
             elseif has('python3') > 0
                 let output = s:vimim_get_from_python3(input, a:cloud)
