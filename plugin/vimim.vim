@@ -1681,7 +1681,7 @@ function! s:vimim_unicode_to_utf8(xxxx)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  has('python')    ==== {{{"]
+let s:VimIM += [" ====  has('python[3]') ==== {{{"]
 " =================================================
 "" " [dream] use VimIM on the fly without plugin
 "" :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
@@ -1691,24 +1691,9 @@ let s:VimIM += [" ====  has('python')    ==== {{{"]
 "" :py vim.command("source %s " % vimim)
 "" " -----------------------------------------------
 
-" ---------------------------------------
-function! s:vimim_mycloud_python_client()
-" ---------------------------------------
-if has('python') < 1 && has('python3') < 1
-    return ""
-endif
-let python = has('python') ? 'python' : 'python3'
-exe 'sil!' . python . ' << EOF'
-import vim
-vim.command("let g:cloud = %s" % output)
-EOF
-return g:cloud
-endfunction
-
 " --------------------------------------------
 function! s:vimim_mycloud_app_python(keyboard)
 " --------------------------------------------
-" mycloud = '/home/vimim/svn/mycloud/ibus-mycloud/mycloud.py'
 " mycloud = '/home/vimim/svn/mycloud/vimim-mycloud/mycloud.py'
 " :let g:vimim_mycloud = "app:python " . mycloud
 " --------------------------------------------
@@ -1718,16 +1703,19 @@ endif
 let python = has('python') ? 'python' : 'python3'
 exe 'sil!' . python . ' << EOF'
 import vim
-keyboard = vim.eval("a:keyboard")
-output = keyboard
-vim.command("let g:cloud = %s" % output)
+try:
+    keyboard = vim.eval("a:keyboard")
+    output = keyboard
+    vim.command("let g:cloud = %s" % output)
+except vim.error:
+    print("vim error: %s" % vim.error)
 EOF
 return g:cloud
 endfunction
 
-" -------------------------------------------
-function! s:vimim_get_from_python(url, cloud)
-" -------------------------------------------
+" --------------------------------------------
+function! s:vimim_get_from_python2(url, cloud)
+" --------------------------------------------
 sil!python << EOF
 import vim
 import urllib2
@@ -4368,8 +4356,10 @@ function! s:vimim_check_http_executable()
     endif
     " step 2 of 4: try to use dynamic python: +python/dyn +python3/dyn
     if empty(s:http_executable)
-        if has('python') || has('python3')
-            let s:http_executable = 'Python Interface to Vim'
+        if has('python3')
+            let s:http_executable = 'Python3.1 Interface to Vim'
+        elseif has('python')
+            let s:http_executable = 'Python2.7 Interface to Vim'
         endif
     endif
     " step 3 of 4: try to find wget
@@ -4464,12 +4454,10 @@ function! s:vimim_get_from_http(input, cloud)
     try
         if s:http_executable =~ 'libvimim'
             let output = libcall(s:http_executable, "do_geturl", input)
-        elseif s:http_executable =~? 'python'
-            if has('python') > 0
-                let output = s:vimim_get_from_python(input, a:cloud)
-            elseif has('python3') > 0
-                let output = s:vimim_get_from_python3(input, a:cloud)
-            endif
+        elseif s:http_executable =~ 'Python3.1'
+            let output = s:vimim_get_from_python3(input, a:cloud)
+        elseif s:http_executable =~ 'Python2.7'
+            let output = s:vimim_get_from_python2(input, a:cloud)
         else
             let output = system(s:http_executable . '"'.input.'"')
         endif
