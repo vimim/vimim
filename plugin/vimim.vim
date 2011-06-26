@@ -1767,20 +1767,8 @@ try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
     urlopen = urllib.request.urlopen(url)
-    response = urlopen.read().decode("utf-8")
-    res = str(response).encode("utf-8")
-    if cloud == 'qq':
-        if vim.eval("&encoding") != 'utf-8':
-            res = str(res, 'utf-8').encode('utf-8')
-    elif cloud == 'google':
-        if vim.eval("&encoding") != 'utf-8':
-            res = str(res, 'unicode_escape').encode("utf8")
-    elif cloud == 'baidu':
-        if vim.eval("&encoding") != 'utf-8':
-            res = str(response).encode('utf-8')
-        else:
-            res = str(response, 'gbk').encode('utf-8')
-        vim.command("sil!let g:baidu = %s" % res)
+    response = urlopen.read().decode('utf-8')
+    res = "'" + response + "'"
     vim.command("sil!let g:cloud = %s" % res)
     urlopen.close()
 except vim.error:
