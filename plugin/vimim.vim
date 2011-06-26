@@ -1759,7 +1759,7 @@ endfunction
 
 " --------------------------------------------
 function! s:vimim_get_from_python3(url, cloud)
-" -------------------------------------------- todo
+" --------------------------------------------
 python3 << EOF
 import vim
 import urllib.request
@@ -1767,21 +1767,20 @@ try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
     urlopen = urllib.request.urlopen(url)
+    response = urlopen.read()
     if cloud == 'baidu':
-        if vim.eval("&encoding") != 'utf-8':
-            res = str(response, "utf-8", 'ignore').encode('utf-8')
+        if vim.eval("&encoding") == 'utf-8':
+            res = response.decode('gbk')
         else:
-            res = urlopen.read().decode('gbk')
+            res = str(response) # daidu todo
         vim.command("sil!let g:baidu = %s" % res)
     else:
-        response = urlopen.read().decode('utf-8')
-        res = "'" + str(response) + "'"
-        if cloud == 'qq':
+        if cloud == 'google':
             if vim.eval("&encoding") != 'utf-8':
-                res = str(res, 'utf-8', 'ignore').encode('utf-8')
-        elif cloud == 'google':
-            if vim.eval("&encoding") != 'utf-8':
-                res = str(res, 'unicode_escape', 'ignore').encode("utf8")
+                utf8 = str(response.decode('utf-8'))
+                res = utf8.encode("unicode_escape")  # google todo
+        else:
+            res = "'" + str(response.decode('utf-8')) + "'"
         vim.command("sil!let g:cloud = %s" % res)
     urlopen.close()
 except vim.error:
