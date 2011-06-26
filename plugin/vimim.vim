@@ -1767,9 +1767,22 @@ try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
     urlopen = urllib.request.urlopen(url)
-    response = urlopen.read().decode('utf-8')
-    res = "'" + response + "'"
-    vim.command("sil!let g:cloud = %s" % res)
+    if cloud == 'baidu':
+        if vim.eval("&encoding") != 'utf-8':
+            res = str(response, "utf-8", 'ignore').encode('utf-8')
+        else:
+            res = urlopen.read().decode('gbk')
+        vim.command("sil!let g:baidu = %s" % res)
+    else:
+        response = urlopen.read().decode('utf-8')
+        res = "'" + str(response) + "'"
+        if cloud == 'qq':
+            if vim.eval("&encoding") != 'utf-8':
+                res = str(res, 'utf-8', 'ignore').encode('utf-8')
+        elif cloud == 'google':
+            if vim.eval("&encoding") != 'utf-8':
+                res = str(res, 'unicode_escape', 'ignore').encode("utf8")
+        vim.command("sil!let g:cloud = %s" % res)
     urlopen.close()
 except vim.error:
     print("vim error: %s" % vim.error)
