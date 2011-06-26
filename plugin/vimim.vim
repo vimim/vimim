@@ -1693,10 +1693,14 @@ let s:VimIM += [" ====  has('python')    ==== {{{"]
 " ---------------------------------------
 function! s:vimim_mycloud_python_client()
 " ---------------------------------------
-if has('python') < 1
+if has('python') < 1 && has('python3') < 1
     return ""
 endif
-sil!python << EOF
+let python = 'python'
+if has('python3') > 0
+    let python = 'python3'
+endif
+exe 'sil!' . python . ' << EOF'
 import vim
 vim.command("let g:cloud = %s" % output)
 EOF
@@ -1710,10 +1714,14 @@ function! s:vimim_mycloud_app_python(keyboard)
 " mycloud = '/home/vimim/svn/mycloud/vimim-mycloud/mycloud.py'
 " :let g:vimim_mycloud = "app:python " . mycloud
 " --------------------------------------------
-if has('python') < 1
+if has('python') < 1 && has('python3') < 1
     return ""
 endif
-sil!python << EOF
+let python = 'python'
+if has('python3') > 0
+    let python = 'python3'
+endif
+exe 'sil!' . python . ' << EOF'
 import vim
 keyboard = vim.eval("a:keyboard")
 output = keyboard
@@ -1725,20 +1733,17 @@ endfunction
 " -------------------------------------------
 function! s:vimim_get_from_python(url, cloud)
 " -------------------------------------------
-if has('python') < 1 && has('python3') < 1
+if has('python') < 1
     return ""
 endif
-exe 'sil!python << EOF'
+sil!python << EOF
 import vim
+import urllib2
 try:
-    cloud = vim.eval("a:cloud")
-    url = vim.eval("a:url")
-    import urllib2
-    request = urllib2.urlopen(url, None, 20)
-  # #py3#  python3 << EOF
-  # import urllib.request
-  # request = urllib.request.urlopen(url)
-    response = request.read()
+    cloud = vim.eval('a:cloud')
+    url = vim.eval('a:url')
+    urlopen = urllib2.urlopen(url, None, 20)
+    response = urlopen.read()
     res = "'" + str(response) + "'"
     if cloud == 'qq':
         if vim.eval("&encoding") != 'utf-8':
@@ -1753,9 +1758,44 @@ try:
             res = unicode(response, 'gbk').encode('utf-8')
         vim.command("sil!let g:baidu = %s" % res)
     vim.command("sil!let g:cloud = %s" % res)
-    request.close()
-except Exception, e:
-    vim.command("echo %s " % str(e))
+    urlopen.close()
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+return g:cloud
+endfunction
+
+" --------------------------------------------
+function! s:vimim_get_from_python3(url, cloud)
+" -------------------------------------------- todo
+if has('python3') < 1
+    return ""
+endif
+sil!python3 << EOF
+import vim
+import urllib.request
+try:
+    cloud = vim.eval('a:cloud').encode("utf8")
+    url = vim.eval('a:url').encode("utf8")
+    urlopen = urllib.request.urlopen(url)
+    response = urlopen.read().decode('utf-8')
+    res = "'" + response + "'"
+  # if cloud == 'qq':
+  #     if vim.eval("&encoding") != 'utf-8':
+  #         res = unicode(res, 'utf-8').encode('utf-8')
+  # elif cloud == 'google':
+  #     if vim.eval("&encoding") != 'utf-8':
+  #         res = unicode(res, 'unicode_escape').encode("utf8")
+  # elif cloud == 'baidu':
+  #     if vim.eval("&encoding") != 'utf-8':
+  #         res = str(response)
+  #     else:
+  #         res = unicode(response, 'gbk').encode('utf-8')
+  #     vim.command("sil!let g:baidu = %s" % res)
+    vim.command("sil!let g:cloud = %s" % res.decode('utf-8'))
+    urlopen.close()
+except vim.error:
+    print("vim error: %s" % vim.error)
 EOF
 return g:cloud
 endfunction
@@ -4444,7 +4484,11 @@ function! s:vimim_get_from_http(input, cloud)
         if s:http_executable =~ 'libvimim'
             let output = libcall(s:http_executable, "do_geturl", input)
         elseif s:http_executable =~? 'python'
-            let output = s:vimim_get_from_python(input, a:cloud)
+            if has('python') > 0 
+                let output = s:vimim_get_from_python(input, a:cloud)
+            elseif has('python3') > 0
+                let output = s:vimim_get_from_python3(input, a:cloud)
+            endif
         else
             let output = system(s:http_executable . '"'.input.'"')
         endif
