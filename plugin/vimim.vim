@@ -338,6 +338,7 @@ function! s:vimim_initialize_debug()
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
+        let g:vimim_cloud = 'baidu'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -1756,15 +1757,15 @@ try:
     url = vim.eval("a:url")
     urlopen = urllib.request.urlopen(url)
     response = urlopen.read()
-    if cloud == 'baidu':
+    if cloud != 'baidu':
+        res = "'" + str(response.decode('utf-8')) + "'"
+    else:
         if vim.eval("&encoding") != 'utf-8':
             res = str(response)
         else:
             res = response.decode('gbk')
         vim.command("sil!let g:baidu = %s" % res)
-    else:
-        res = "'" + str(response.decode('utf-8')) + "'"
-        vim.command("sil!let g:cloud = %s" % res)
+    vim.command("sil!let g:cloud = %s" % res)
     urlopen.close()
 except vim.error:
     print("vim error: %s" % vim.error)
@@ -4357,9 +4358,9 @@ function! s:vimim_check_http_executable()
     " step 2 of 4: try to use dynamic python: +python/dyn +python3/dyn
     if empty(s:http_executable)
         if has('python3')
-            let s:http_executable = 'Python3.1 Interface to Vim'
+            let s:http_executable = 'Python3 Interface to Vim'
         elseif has('python')
-            let s:http_executable = 'Python2.7 Interface to Vim'
+            let s:http_executable = 'Python2 Interface to Vim'
         endif
     endif
     " step 3 of 4: try to find wget
@@ -4454,9 +4455,9 @@ function! s:vimim_get_from_http(input, cloud)
     try
         if s:http_executable =~ 'libvimim'
             let output = libcall(s:http_executable, "do_geturl", input)
-        elseif s:http_executable =~ 'Python3.1'
+        elseif s:http_executable =~ 'Python3'
             let output = s:vimim_get_from_python3(input, a:cloud)
-        elseif s:http_executable =~ 'Python2.7'
+        elseif s:http_executable =~ 'Python2'
             let output = s:vimim_get_from_python2(input, a:cloud)
         else
             let output = system(s:http_executable . '"'.input.'"')
@@ -4588,7 +4589,6 @@ endfunction
 " ------------------------------------------
 function! s:vimim_get_cloud_google(keyboard)
 " ------------------------------------------
-    let input  = 'http://www.google.com/transliterate?'
     let input  = 'http://www.google.com/transliterate/chinese'
     let input .= '?langpair=en|zh'
     let input .= '&num=20'
@@ -4600,7 +4600,7 @@ function! s:vimim_get_cloud_google(keyboard)
     let matched_list = []
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
-        if has('python') > 0
+        if has('python') > 0 && has('python3') < 1
             let output = s:vimim_i18n_read(output)
         else
             let unicodes = split(get(split(output),8),",")
@@ -4626,7 +4626,7 @@ endfunction
 " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
 " -----------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard)
-" -----------------------------------------
+" ----------------------------------------- todo
     let input  = 'http://olime.baidu.com/py'
     let input .= '?rn=0'
     let input .= '&pn=20'
