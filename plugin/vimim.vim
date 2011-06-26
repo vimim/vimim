@@ -1697,7 +1697,7 @@ function! s:vimim_mycloud_python_client()
 if has('python') < 1 && has('python3') < 1
     return ""
 endif
-let python = has('python3') ? 'python3' : 'python'
+let python = has('python') ? 'python' : 'python3'
 exe 'sil!' . python . ' << EOF'
 import vim
 vim.command("let g:cloud = %s" % output)
@@ -1715,7 +1715,7 @@ function! s:vimim_mycloud_app_python(keyboard)
 if has('python') < 1 && has('python3') < 1
     return ""
 endif
-let python = has('python3') ? 'python3' : 'python'
+let python = has('python') ? 'python' : 'python3'
 exe 'sil!' . python . ' << EOF'
 import vim
 keyboard = vim.eval("a:keyboard")
@@ -1728,9 +1728,6 @@ endfunction
 " -------------------------------------------
 function! s:vimim_get_from_python(url, cloud)
 " -------------------------------------------
-if has('python') < 1
-    return ""
-endif
 sil!python << EOF
 import vim
 import urllib2
@@ -1763,9 +1760,6 @@ endfunction
 " --------------------------------------------
 function! s:vimim_get_from_python3(url, cloud)
 " -------------------------------------------- todo
-if has('python3') < 1
-    return ""
-endif
 sil!python3 << EOF
 import vim
 import urllib.request
@@ -1814,7 +1808,7 @@ if lastline - firstline < 1
     let lastline = "$"
 endif
 let g:gmails.msg = getline(firstline, lastline)
-let python = has('python3') ? 'python3' : 'python'
+let python = has('python') ? 'python' : 'python3'
 exe 'sil!' . python . ' << EOF'
 import vim
 try:
