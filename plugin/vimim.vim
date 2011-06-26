@@ -1828,7 +1828,7 @@ if len(gmail_login) > 8:
     from smtplib import SMTP
     from datetime import datetime
     from email.mime.text import MIMEText
-    rfc2822 = MIMEText("\n".join(gmail_msg))
+    rfc2822 = MIMEText("\n".join(gmail_msg), 'plain')
     rfc2822['From'] = gmail_login
     rfc2822['To'] = gmail_to
     rfc2822['Cc'] = gmail_cc
