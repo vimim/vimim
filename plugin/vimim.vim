@@ -1775,12 +1775,7 @@ try:
             res = str(response) # daidu todo
         vim.command("sil!let g:baidu = %s" % res)
     else:
-        if cloud == 'google':
-            if vim.eval("&encoding") != 'utf-8':
-                utf8 = str(response.decode('utf-8'))
-                res = utf8.encode("unicode_escape")  # google todo
-        else:
-            res = "'" + str(response.decode('utf-8')) + "'"
+        res = "'" + str(response.decode('utf-8')) + "'"
         vim.command("sil!let g:cloud = %s" % res)
     urlopen.close()
 except vim.error:
@@ -4617,7 +4612,7 @@ function! s:vimim_get_cloud_google(keyboard)
     let matched_list = []
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
-        if s:http_executable =~? 'python'
+        if has('python') > 0
             let output = s:vimim_i18n_read(output)
         else
             let unicodes = split(get(split(output),8),",")
