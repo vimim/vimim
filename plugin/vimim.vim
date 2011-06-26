@@ -334,7 +334,7 @@ endfunction
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------- todo
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
@@ -1759,8 +1759,8 @@ endfunction
 
 " --------------------------------------------
 function! s:vimim_get_from_python3(url, cloud)
-" --------------------------------------------
-python3 << EOF
+" -------------------------------------------- todo
+sil!python3 << EOF
 import vim
 import urllib.request
 try:
@@ -1769,10 +1769,10 @@ try:
     urlopen = urllib.request.urlopen(url)
     response = urlopen.read()
     if cloud == 'baidu':
-        if vim.eval("&encoding") == 'utf-8':
-            res = response.decode('gbk')
+        if vim.eval("&encoding") != 'utf-8':
+            res = str(response)
         else:
-            res = str(response) # daidu todo
+            res = response.decode('gbk')
         vim.command("sil!let g:baidu = %s" % res)
     else:
         res = "'" + str(response.decode('utf-8')) + "'"
