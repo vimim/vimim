@@ -1707,11 +1707,10 @@ import vim
 try:
     keyboard = vim.eval("a:keyboard")
     output = keyboard
-    vim.command("let g:cloud = %s" % output)
+    vim.command("return %s" % output)
 except vim.error:
     print("vim error: %s" % vim.error)
 EOF
-return g:cloud
 endfunction
 
 " --------------------------------------------
@@ -1738,12 +1737,11 @@ try:
         else:
             res = unicode(response, 'gbk').encode('utf-8')
         vim.command("sil!let g:baidu = %s" % res)
-    vim.command("sil!let g:cloud = %s" % res)
+    vim.command("return %s" % res)
     urlopen.close()
 except vim.error:
     print("vim error: %s" % vim.error)
 EOF
-return g:cloud
 endfunction
 
 " --------------------------------------------
@@ -1772,12 +1770,11 @@ try:
         else:
             res = response.decode('gbk')
         vim.command("sil!let g:baidu = %s" % res)
-    vim.command("sil!let g:cloud = %s" % res)
+    vim.command("return %s" % res)
     urlopen.close()
 except vim.error:
     print("vim error: %s" % vim.error)
 EOF
-return g:cloud
 endfunction
 
 " -----------------------------------
@@ -4640,8 +4637,6 @@ function! s:vimim_get_cloud_baidu(keyboard)
     let input .= '&pn=20'
     let input .= '&py=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'baidu')
-let g:g1=output
-let g:g2=g:baidu
     let output_list = []
     if exists("g:baidu") && type(g:baidu) == type([])
         let output_list = get(g:baidu,0)
