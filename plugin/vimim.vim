@@ -1736,7 +1736,7 @@ try:
             res = str(response)
         else:
             res = unicode(response, 'gbk').encode('utf-8')
-        vim.command("sil!let g:baidu = %s" % res)
+        vim.command("let g:baidu = %s" % res)
     vim.command("return %s" % res)
     urlopen.close()
 except vim.error:
@@ -1762,7 +1762,7 @@ try:
             res = str(response)
         else:
             res = response.decode('gbk')
-        vim.command("sil!let g:baidu = %s" % res)
+        vim.command("let g:baidu = %s" % res)
     vim.command("return %s" % res)
     urlopen.close()
 except vim.error:
