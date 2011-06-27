@@ -1753,19 +1753,12 @@ import urllib.request
 try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
-    #im.command(":let g:gfuck = %s" % url.encode('utf8'))
     urlopen = urllib.request.urlopen(url)
     response = urlopen.read()
-    res = "fuck"
     if cloud != 'baidu':
         res = "'" + str(response.decode('utf-8')) + "'"
     else:
         if vim.eval("&encoding") != 'utf-8':
-            #es = bytearray(response)
-            #es = response.decode('gbk').encode('utf-8')
-            #es = response.decode('gbk')
-            #es = bytearray(response).decode('gbk')
-            #es = response.decode('gbk')
             res = str(response)
         else:
             res = response.decode('gbk')
