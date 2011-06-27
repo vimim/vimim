@@ -334,11 +334,10 @@ endfunction
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
+" ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
-        let g:vimim_cloud = 'baidu'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -1746,7 +1745,7 @@ endfunction
 
 " --------------------------------------------
 function! s:vimim_get_from_python3(url, cloud)
-" -------------------------------------------- todo
+" --------------------------------------------
 :python3 << EOF
 import vim
 import urllib.request
@@ -1759,7 +1758,7 @@ try:
         res = "'" + str(response.decode('utf-8')) + "'"
     else:
         if vim.eval("&encoding") != 'utf-8':
-            res = str(response)
+            res = str(response)[2:-1]
         else:
             res = response.decode('gbk')
         vim.command("let g:baidu = %s" % res)
@@ -4624,7 +4623,7 @@ endfunction
 " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
 " -----------------------------------------
 function! s:vimim_get_cloud_baidu(keyboard)
-" ----------------------------------------- todo
+" -----------------------------------------
     let input  = 'http://olime.baidu.com/py'
     let input .= '?rn=0'
     let input .= '&pn=20'
