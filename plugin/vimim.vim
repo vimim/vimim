@@ -1701,7 +1701,7 @@ if has('python') < 1 && has('python3') < 1
     return ""
 endif
 let python = has('python3') ? 'python3' : 'python'
-exe python . ' << EOF'
+exe 'silent!' . python . ' << EOF'
 import vim
 try:
     keyboard = vim.eval("a:keyboard")
@@ -1715,7 +1715,7 @@ endfunction
 " --------------------------------------------
 function! s:vimim_get_from_python2(url, cloud)
 " --------------------------------------------
-:python << EOF
+:sil!python << EOF
 import vim
 import urllib2
 try:
@@ -1746,7 +1746,7 @@ endfunction
 " --------------------------------------------
 function! s:vimim_get_from_python3(url, cloud)
 " --------------------------------------------
-:python3 << EOF
+:sil!python3 << EOF
 import vim
 import urllib.request
 try:
