@@ -1701,8 +1701,8 @@ function! s:vimim_mycloud_app_python(keyboard)
 if has('python') < 1 && has('python3') < 1
     return ""
 endif
-let python = has('python') ? 'python' : 'python3'
-exe 'sil!' . python . ' << EOF'
+let python = has('python3') ? 'python3' : 'python'
+exe python . ' << EOF'
 import vim
 try:
     keyboard = vim.eval("a:keyboard")
@@ -1717,7 +1717,7 @@ endfunction
 " --------------------------------------------
 function! s:vimim_get_from_python2(url, cloud)
 " --------------------------------------------
-sil!python << EOF
+:python << EOF
 import vim
 import urllib2
 try:
@@ -1749,18 +1749,25 @@ endfunction
 " --------------------------------------------
 function! s:vimim_get_from_python3(url, cloud)
 " -------------------------------------------- todo
-sil!python3 << EOF
+:python3 << EOF
 import vim
 import urllib.request
 try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
+    #im.command(":let g:gfuck = %s" % url.encode('utf8'))
     urlopen = urllib.request.urlopen(url)
     response = urlopen.read()
+    res = "fuck"
     if cloud != 'baidu':
         res = "'" + str(response.decode('utf-8')) + "'"
     else:
         if vim.eval("&encoding") != 'utf-8':
+            #es = bytearray(response)
+            #es = response.decode('gbk').encode('utf-8')
+            #es = response.decode('gbk')
+            #es = bytearray(response).decode('gbk')
+            #es = response.decode('gbk')
             res = str(response)
         else:
             res = response.decode('gbk')
@@ -1790,8 +1797,8 @@ if lastline - firstline < 1
     let lastline = "$"
 endif
 let g:gmails.msg = getline(firstline, lastline)
-let python = has('python') ? 'python' : 'python3'
-exe 'sil!' . python . ' << EOF'
+let python = has('python3') ? 'python3' : 'python'
+exe python . ' << EOF'
 import vim
 try:
     gmails = vim.eval('g:gmails')
@@ -1810,7 +1817,8 @@ if len(gmail_login) > 8:
     from smtplib import SMTP
     from datetime import datetime
     from email.mime.text import MIMEText
-    rfc2822 = MIMEText("\n".join(gmail_msg), 'plain')
+    msg = str("\n".join(gmail_msg))
+    rfc2822 = MIMEText(msg, 'plain', 'utf-8')
     rfc2822['From'] = gmail_login
     rfc2822['To'] = gmail_to
     rfc2822['Cc'] = gmail_cc
@@ -4632,6 +4640,8 @@ function! s:vimim_get_cloud_baidu(keyboard)
     let input .= '&pn=20'
     let input .= '&py=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'baidu')
+let g:g1=output
+let g:g2=g:baidu
     let output_list = []
     if exists("g:baidu") && type(g:baidu) == type([])
         let output_list = get(g:baidu,0)
