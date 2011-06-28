@@ -4808,19 +4808,22 @@ def parsefunc(keyb, host="localhost", port=10007):
 PYTHON
 endfunction
 
-" ---------------------------------------
-function! s:mycloud_test(cmd, host, port)
-" ---------------------------------------
-python << PYTHON
-cmd  = 'test'
-vim.command("return %s" % cmd)
-PYTHON
+" ------------------------
+function! s:mycloud_test()
+" ------------------------
+:python << EOF
+import vim
+res = 'test'
+try:
+    vim.command("return %s" % res)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
 endfunction
 
 " ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
 " ------------------------------------------------------
-"------------------- how to make paython available here?
 python << PYTHON
 import vim, sys, socket
 host = vim.eval("a:host")
@@ -4831,6 +4834,7 @@ cmd = vim.eval("a:cmd")
 # cmd='__isvalid'
 # cmd='chunmeng'
 # cmd='fuck'
+# -------------------- how to make paython available here?
 # -------------------- todo quick-dirty test
 BUFSIZE = 1024
 data = cmd.encode("base64")
@@ -4879,21 +4883,16 @@ function! s:vimim_access_mycloud(cloud, cmd)
             let ret = libcall(a:cloud, s:cloud_plugin_func, arg." ".a:cmd)
         endif
     elseif s:cloud_plugin_mode == "python"
-" let g:g1='127.0.0.1'
-" let g:g2=0
-" let g:g3='127.0.0.1'
-" let g:g4=10007
-" let g:g5='python'
-let g:g1=copy(a:cloud)
-let g:g2=copy(a:cmd)
-let g:g3=copy(s:cloud_plugin_host)
-let g:g4=copy(s:cloud_plugin_port)
-let g:g5=copy(s:cloud_plugin_mode)
         let host = s:cloud_plugin_host
         let port = s:cloud_plugin_port
  """""" let ret = s:vimim_mycloud_python_client(a:cmd, host, port)
-        let ret = s:mycloud_test(a:cmd, host, port)
-let g:g8=copy(ret) |" todo:  ret is zero
+let g:g1=copy(a:cloud)
+let g:g2=copy(a:cmd)
+let g:g3=copy(host)
+let g:g4=copy(port)
+        let ret = s:mycloud_test()
+let g:g8=copy(ret)
+" todo:  ret is zero
     elseif s:cloud_plugin_mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
@@ -5032,7 +5031,6 @@ function! s:vimim_check_mycloud_plugin_url()
                 let cloud = part[1]
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
 " todo: part = ['py', '127.0.0.1'] good here
-" s:cloud_plugin_mode) => python
 " cloud => 127.0.0.1 ... is it correct?
 let g:g5=copy(ret) |" True using standalone python
                 if split(ret, "\t")[0] == "True"
