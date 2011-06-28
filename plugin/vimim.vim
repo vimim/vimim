@@ -335,9 +335,8 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-"  :let g:vimim_mycloud = "app:python d:/mycloud/mycloud.py"
-"  :let g:vimim_mycloud = "py:/mycloud/mycloud.py"
-   :let g:vimim_mycloud = "http://pim-cloud.appspot.com/qp/"
+" :let g:vimim_mycloud = "http://pim-cloud.appspot.com/qp/"
+" :let g:vimim_mycloud="py:127.0.0.1"
     let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
