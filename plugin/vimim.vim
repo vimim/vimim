@@ -4808,6 +4808,15 @@ def parsefunc(keyb, host="localhost", port=10007):
 PYTHON
 endfunction
 
+" ---------------------------------------
+function! s:mycloud_test(cmd, host, port)
+" ---------------------------------------
+python << PYTHON
+cmd  = 'test'
+vim.command("return %s" % cmd)
+PYTHON
+endfunction
+
 " ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
 " ------------------------------------------------------
@@ -4882,7 +4891,8 @@ let g:g4=copy(s:cloud_plugin_port)
 let g:g5=copy(s:cloud_plugin_mode)
         let host = s:cloud_plugin_host
         let port = s:cloud_plugin_port
-        let ret = s:vimim_mycloud_python_client(a:cmd, host, port)
+ """""" let ret = s:vimim_mycloud_python_client(a:cmd, host, port)
+        let ret = s:mycloud_test(a:cmd, host, port)
 let g:g8=copy(ret) |" todo:  ret is zero
     elseif s:cloud_plugin_mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
