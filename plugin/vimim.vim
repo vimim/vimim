@@ -4811,10 +4811,7 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
 " ------------------------------------------------------
-" ==> let g:host='127.0.0.1'
-" ==> let g:port=10007
-" ==> let g:cmd='__isvalid'
-" -------------------- how to make paython available here?
+"------------------- how to make paython available here?
 python << PYTHON
 import vim, sys, socket
 host = vim.eval("a:host")
@@ -4860,7 +4857,6 @@ if type(ret).__name__ == "str":
 PYTHON
 endfunction
 
-
 " ------------------------------------------
 function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
@@ -4874,8 +4870,19 @@ function! s:vimim_access_mycloud(cloud, cmd)
             let ret = libcall(a:cloud, s:cloud_plugin_func, arg." ".a:cmd)
         endif
     elseif s:cloud_plugin_mode == "python"
-let g:g7=copy(s:cloud_plugin_mode)
-        let ret = s:vimim_mycloud_python_client(a:cmd, s:cloud_plugin_host, s:cloud_plugin_port)
+" let g:g1='127.0.0.1'
+" let g:g2=0
+" let g:g3='127.0.0.1'
+" let g:g4=10007
+" let g:g5='python'
+let g:g1=copy(a:cloud)
+let g:g2=copy(a:cmd)
+let g:g3=copy(s:cloud_plugin_host)
+let g:g4=copy(s:cloud_plugin_port)
+let g:g5=copy(s:cloud_plugin_mode)
+        let host = s:cloud_plugin_host
+        let port = s:cloud_plugin_port
+        let ret = s:vimim_mycloud_python_client(a:cmd, host, port)
 let g:g8=copy(ret) |" todo:  ret is zero
     elseif s:cloud_plugin_mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
