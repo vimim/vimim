@@ -335,7 +335,10 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-    let hjkl = '/home/xma/hjkl/'
+"  :let g:vimim_mycloud = "app:python d:/mycloud/mycloud.py"
+"  :let g:vimim_mycloud = "py:/mycloud/mycloud.py"
+   :let g:vimim_mycloud = "http://pim-cloud.appspot.com/qp/"
+    let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
@@ -4340,7 +4343,15 @@ function! s:vimim_check_http_executable()
     elseif len(s:http_executable) > 1
         return 1
     endif
-    " step 1 of 4: try to find libvimim for mycloud
+    " step 1 of 4: try to use dynamic python: +python/dyn +python3/dyn
+    if empty(s:http_executable)
+        if has('python3')
+            let s:http_executable = 'Python3 Interface to Vim'
+        elseif has('python')
+            let s:http_executable = 'Python2 Interface to Vim'
+        endif
+    endif
+    " step 2 of 4: try to find libvimim for mycloud
     let libvimim = s:vimim_get_libvimim()
     if !empty(libvimim) && filereadable(libvimim)
         " in win32, strip the .dll suffix
@@ -4350,14 +4361,6 @@ function! s:vimim_check_http_executable()
         let ret = libcall(libvimim, "do_geturl", "__isvalid")
         if ret ==# "True"
             let s:http_executable = libvimim
-        endif
-    endif
-    " step 2 of 4: try to use dynamic python: +python/dyn +python3/dyn
-    if empty(s:http_executable)
-        if has('python3')
-            let s:http_executable = 'Python3 Interface to Vim'
-        elseif has('python')
-            let s:http_executable = 'Python2 Interface to Vim'
         endif
     endif
     " step 3 of 4: try to find wget
@@ -4450,12 +4453,12 @@ function! s:vimim_get_from_http(input, cloud)
         endif
     endif
     try
-        if s:http_executable =~ 'libvimim'
-            let output = libcall(s:http_executable, "do_geturl", input)
-        elseif s:http_executable =~ 'Python3'
+        if s:http_executable =~ 'Python3'
             let output = s:vimim_get_from_python3(input, a:cloud)
         elseif s:http_executable =~ 'Python2'
             let output = s:vimim_get_from_python2(input, a:cloud)
+        elseif s:http_executable =~ 'libvimim'
+            let output = libcall(s:http_executable, "do_geturl", input)
         else
             let output = system(s:http_executable . '"'.input.'"')
         endif
@@ -4730,6 +4733,7 @@ endfunction
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
     let cloud = 0
+    call s:vimim_mycloud_python_init()
     if empty(s:vimim_mycloud)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
     else
@@ -4751,8 +4755,10 @@ function! s:vimim_check_mycloud_availability()
 endfunction
 
 " define python functions for mycloud
-if has("python")
+" if has("python")
+" -------------------------------------
 function! s:vimim_mycloud_python_init()
+" -------------------------------------
 python << PYTHON
 import sys
 import socket
@@ -4801,20 +4807,21 @@ def parsefunc(keyb, host="localhost", port=10007):
 PYTHON
 endfunction
 
+" ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
+" ------------------------------------------------------
 python << PYTHON
 import vim
 host = vim.eval("a:host")
 port = vim.eval("a:port")
 cmd = vim.eval("a:cmd")
 ret = parsefunc(cmd, host, port)
-vim.command("let ret = "+ret)
+vim.command("return %s" % ret)
 PYTHON
-return ret
 endfunction
-    " this init just defined those python functions without execute them.
-    call s:vimim_mycloud_python_init()
-endif
+"""    " this init just defined those python functions without execute them.
+"""    call s:vimim_mycloud_python_init()
+"""endif
 
 " ------------------------------------------
 function! s:vimim_access_mycloud(cloud, cmd)
