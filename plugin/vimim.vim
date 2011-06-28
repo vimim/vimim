@@ -4882,6 +4882,16 @@ function! s:vimim_check_mycloud_plugin_url()
                 endif
             endif
         endif
+    elseif part[0] ==# 'py'
+        if !has("python")
+            return 0
+        endif
+        " python 2 support code here
+    elseif part[0] ==# 'py3'
+        if !has("python3")
+            return 0
+        endif
+        " python 3 support code here
     elseif part[0] ==# "dll"
         if len(part[1]) == 1
             let base = 1
