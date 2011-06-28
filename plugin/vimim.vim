@@ -4811,7 +4811,6 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
 " ------------------------------------------------------
-" todo 
 " ==> let g:host='127.0.0.1'
 " ==> let g:port=10007
 " ==> let g:cmd='__isvalid'
@@ -4826,7 +4825,7 @@ cmd = vim.eval("a:cmd")
 # cmd='__isvalid'
 # cmd='chunmeng'
 # cmd='fuck'
-# -------------------- quick-dirty test
+# -------------------- todo quick-dirty test
 BUFSIZE = 1024
 data = cmd.encode("base64")
 addr = host, port
@@ -4837,7 +4836,6 @@ try:
 except Exception, inst:
     s.close()
 for item in data.split("\n"):
-    print(item)  # todo
     if item == "":
         continue
     senddata = item
@@ -4876,8 +4874,9 @@ function! s:vimim_access_mycloud(cloud, cmd)
             let ret = libcall(a:cloud, s:cloud_plugin_func, arg." ".a:cmd)
         endif
     elseif s:cloud_plugin_mode == "python"
+let g:g7=copy(s:cloud_plugin_mode)
         let ret = s:vimim_mycloud_python_client(a:cmd, s:cloud_plugin_host, s:cloud_plugin_port)
-        let g:g8=copy(ret) |" todo:  ret is zero
+let g:g8=copy(ret) |" todo:  ret is zero
     elseif s:cloud_plugin_mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
@@ -5609,62 +5608,3 @@ sil!call s:vimim_for_mom_and_dad()
 sil!call s:vimim_initialize_plugin()
 sil!call s:vimim_initialize_mapping()
 " ======================================= }}}
-
-
-
-"" # ---------------------------- mycloud test
-"" # [server] cd /home/vimim/svn/mycloud/server && qpserver
-"" # [client] :let g:vimim_mycloud="py:127.0.0.1"
-"" # ---------------------------- 
-"" # ------------------ input
-"" host='127.0.0.1'
-"" port=10007
-"" cmd='__isvalid'
-"" cmd='chunmeng'
-"" cmd='fuck'
-"" # ------------------ output
-"" # ZnVjaw==
-"" # ---------------------------- 
-"" import vim
-"" import sys
-"" import socket
-"" # host = vim.eval("a:host")
-"" # port = vim.eval("a:port")
-"" # cmd = vim.eval("a:cmd")
-"" BUFSIZE = 1024
-"" data = cmd.encode("base64")
-"" addr = host, port
-"" ret = ""
-"" s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-"" try:
-""     s.connect(addr)
-"" except Exception, inst:
-""     s.close()
-"" for item in data.split("\n"):
-""     print(item)  # todo
-""     if item == "":
-""         continue
-""     senddata = item
-""     while len(senddata) >= BUFSIZE:
-""         s.send(senddata[0:BUFSIZE])
-""         senddata = senddata[BUFSIZE:]
-""     if senddata[-1:] == "\n":
-""         s.send(senddata)
-""     else:
-""         s.send(senddata+"\n")
-""     cachedata = ""
-""     while cachedata[-1:] != "\n":
-""         data = s.recv(BUFSIZE)
-""         cachedata += data
-""     if cachedata == "server closed\n":
-""         break
-""     ret += cachedata
-"" s.close()
-"" if type(ret).__name__ == "str":
-""     result = ret.decode("base64")
-""     print result
-"" # vim.command("return %s" % result)
-
-
-
-
