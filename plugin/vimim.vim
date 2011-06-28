@@ -338,8 +338,8 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-" :let g:vimim_mycloud="py:127.0.0.1"
-    let hjkl = '/home/xma/hjkl/'
+  :let g:vimim_mycloud="py:127.0.0.1"
+    let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
@@ -576,14 +576,20 @@ function! s:vimim_egg_vimimenv()
         let option  = s:vimim_chinese('online') . s:colon
         let option .= s:vimim_chinese(s:cloud_default)
         let option .= s:vimim_chinese('cloud') . input . s:space
-        let option .= ":let g:vimim_cloud='" . s:vimim_cloud."'"
+        let option .= ':let g:vimim_cloud="' . s:vimim_cloud.'"'
         call add(eggs, option)
-        call s:vimim_check_http_executable()
-        if !empty(s:http_executable)
-            let option  = s:vimim_chinese('tool') . s:colon
-            let option .= "HTTP executable: " . s:http_executable
-            call add(eggs, option)
-        endif
+    endif
+    if len(s:vimim_mycloud) > 1
+        let option  = s:vimim_chinese('online') . s:colon
+        let option .= s:vimim_chinese('mycloud'). s:space . s:space
+        let option .= ':let g:vimim_mycloud="'.s:vimim_mycloud.'"'
+        call add(eggs, option)
+    endif
+    call s:vimim_check_http_executable()
+    if !empty(s:http_executable)
+        let option  = s:vimim_chinese('tool') . s:colon
+        let option .= "HTTP executable: " . s:http_executable
+        call add(eggs, option)
     endif
     call map(eggs, 'v:val . " "')
     return eggs
