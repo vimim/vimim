@@ -4750,6 +4750,72 @@ function! s:vimim_check_mycloud_availability()
     return cloud
 endfunction
 
+" define python functions for mycloud
+if has("python")
+function! s:vimim_mycloud_python_init()
+python << PYTHON
+import sys
+import socket
+BUFSIZE = 1024
+def tcpslice(sendfunc, data):
+    senddata = data
+    while len(senddata) >= BUFSIZE:
+        sendfunc(senddata[0:BUFSIZE])
+        senddata = senddata[BUFSIZE:]
+    if senddata[-1:] == "\n":
+        sendfunc(senddata)
+    else:
+        sendfunc(senddata+"\n")
+def tcpsend(data, host, port):
+    addr = host, port
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect(addr)
+    except Exception, inst:
+        s.close()
+        return None
+    ret = ""
+    for item in data.split("\n"):
+        if item == "":
+            continue
+        tcpslice(s.send, item)
+        cachedata = ""
+        while cachedata[-1:] != "\n":
+            data = s.recv(BUFSIZE)
+            cachedata += data
+        if cachedata == "server closed\n":
+            break
+        ret += cachedata
+    s.close()
+    return ret
+def parsefunc(keyb, host="localhost", port=10007):
+    src = keyb.encode("base64")
+    ret = tcpsend(src, host, port)
+    if type(ret).__name__ == "str":
+        try:
+            return ret.decode("base64")
+        except Exception:
+            return ""
+    else:
+        return ""
+PYTHON
+endfunction
+
+function! s:vimim_mycloud_python_client(cmd, host, port)
+python << PYTHON
+import vim
+host = vim.eval("a:host")
+port = vim.eval("a:port")
+cmd = vim.eval("a:cmd")
+ret = parsefunc(cmd, host, port)
+vim.command("let ret = "+ret)
+PYTHON
+return ret
+endfunction
+    " this init just defined those python functions without execute them.
+    call s:vimim_mycloud_python_init()
+endif
+
 " ------------------------------------------
 function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
@@ -4762,6 +4828,8 @@ function! s:vimim_access_mycloud(cloud, cmd)
         else
             let ret = libcall(a:cloud, s:cloud_plugin_func, arg." ".a:cmd)
         endif
+    elseif s:cloud_plugin_mode == "python"
+        let ret = s:vimim_mycloud_python_client(a:cmd, s:cloud_plugin_host, s:cloud_plugin_port)
     elseif s:cloud_plugin_mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
@@ -4883,15 +4951,32 @@ function! s:vimim_check_mycloud_plugin_url()
             endif
         endif
     elseif part[0] ==# 'py'
-        if !has("python")
-            return 0
+        if has("python")
+            " python 2 support code here
+            if lenpart > 2
+                let s:cloud_plugin_host = part[1]
+                let s:cloud_plugin_port = part[2]
+            elseif lenpart > 1
+                let s:cloud_plugin_host = part[1]
+                let s:cloud_plugin_port = 10007
+            else
+                let s:cloud_plugin_host = "localhost"
+                let s:cloud_plugin_port = 10007
+            endif
+            try
+                let s:cloud_plugin_mode = "python"
+                let ret = s:vimim_access_mycloud(cloud, "__isvalid")
+                if split(ret, "\t")[0] == "True"
+                    return "python"
+                endif
+            catch
+                call s:debugs('python_mycloud1::', v:exception)
+            endtry
         endif
-        " python 2 support code here
     elseif part[0] ==# 'py3'
-        if !has("python3")
-            return 0
+        if has("python3")
+            " python 3 support code here, not implemented now.
         endif
-        " python 3 support code here
     elseif part[0] ==# "dll"
         if len(part[1]) == 1
             let base = 1
