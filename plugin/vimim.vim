@@ -130,6 +130,9 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdvfgzs"
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
+    let s:cloud_plugin_host = 0
+    let s:cloud_plugin_port = 0
+    let s:cloud_plugin_mode = 0
 endfunction
 
 " -------------------------------
@@ -336,7 +339,7 @@ endfunction
 function! s:vimim_initialize_debug()
 " ----------------------------------
 " :let g:vimim_mycloud = "http://pim-cloud.appspot.com/qp/"
-" :let g:vimim_mycloud="py:127.0.0.1"
+  :let g:vimim_mycloud="py:127.0.0.1"
     let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
@@ -1695,9 +1698,6 @@ let s:VimIM += [" ====  has('python[3]') ==== {{{"]
 
 " --------------------------------------------
 function! s:vimim_mycloud_app_python(keyboard)
-" --------------------------------------------
-" mycloud = '/home/vimim/svn/mycloud/vimim-mycloud/mycloud.py'
-" :let g:vimim_mycloud = "app:python " . mycloud
 " --------------------------------------------
 if has('python') < 1 && has('python3') < 1
     return ""
@@ -4733,10 +4733,12 @@ function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
     let cloud = 0
     call s:vimim_mycloud_python_init()
+let g:g1=copy(cloud)
     if empty(s:vimim_mycloud)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
     else
         let cloud = s:vimim_check_mycloud_plugin_url()
+let g:g2=copy(cloud)
     endif
     if empty(cloud)
         return 0
@@ -4809,18 +4811,57 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
 " ------------------------------------------------------
+" todo 
+" ==> let g:host='127.0.0.1'
+" ==> let g:port=10007
+" ==> let g:cmd='__isvalid'
+" -------------------- how to make paython available here?
 python << PYTHON
-import vim
+import vim, sys, socket
 host = vim.eval("a:host")
 port = vim.eval("a:port")
 cmd = vim.eval("a:cmd")
-ret = parsefunc(cmd, host, port)
-vim.command("return %s" % ret)
+# host='127.0.0.1'
+# port=10007
+# cmd='__isvalid'
+# cmd='chunmeng'
+# cmd='fuck'
+# -------------------- quick-dirty test
+BUFSIZE = 1024
+data = cmd.encode("base64")
+addr = host, port
+ret = ""
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+try:
+    s.connect(addr)
+except Exception, inst:
+    s.close()
+for item in data.split("\n"):
+    print(item)  # todo
+    if item == "":
+        continue
+    senddata = item
+    while len(senddata) >= BUFSIZE:
+        s.send(senddata[0:BUFSIZE])
+        senddata = senddata[BUFSIZE:]
+    if senddata[-1:] == "\n":
+        s.send(senddata)
+    else:
+        s.send(senddata+"\n")
+    cachedata = ""
+    while cachedata[-1:] != "\n":
+        data = s.recv(BUFSIZE)
+        cachedata += data
+    if cachedata == "server closed\n":
+        break
+    ret += cachedata
+s.close()
+if type(ret).__name__ == "str":
+    result = ret.decode("base64")
+    vim.command("return %s" % result)
 PYTHON
 endfunction
-"""    " this init just defined those python functions without execute them.
-"""    call s:vimim_mycloud_python_init()
-"""endif
+
 
 " ------------------------------------------
 function! s:vimim_access_mycloud(cloud, cmd)
@@ -4836,6 +4877,7 @@ function! s:vimim_access_mycloud(cloud, cmd)
         endif
     elseif s:cloud_plugin_mode == "python"
         let ret = s:vimim_mycloud_python_client(a:cmd, s:cloud_plugin_host, s:cloud_plugin_port)
+        let g:g8=copy(ret) |" todo:  ret is zero
     elseif s:cloud_plugin_mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
@@ -4971,7 +5013,12 @@ function! s:vimim_check_mycloud_plugin_url()
             endif
             try
                 let s:cloud_plugin_mode = "python"
+                let cloud = part[1]
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
+" todo: part = ['py', '127.0.0.1'] good here
+" s:cloud_plugin_mode) => python
+" cloud => 127.0.0.1 ... is it correct?
+let g:g5=copy(ret) |" True using standalone python
                 if split(ret, "\t")[0] == "True"
                     return "python"
                 endif
@@ -5562,3 +5609,62 @@ sil!call s:vimim_for_mom_and_dad()
 sil!call s:vimim_initialize_plugin()
 sil!call s:vimim_initialize_mapping()
 " ======================================= }}}
+
+
+
+"" # ---------------------------- mycloud test
+"" # [server] cd /home/vimim/svn/mycloud/server && qpserver
+"" # [client] :let g:vimim_mycloud="py:127.0.0.1"
+"" # ---------------------------- 
+"" # ------------------ input
+"" host='127.0.0.1'
+"" port=10007
+"" cmd='__isvalid'
+"" cmd='chunmeng'
+"" cmd='fuck'
+"" # ------------------ output
+"" # ZnVjaw==
+"" # ---------------------------- 
+"" import vim
+"" import sys
+"" import socket
+"" # host = vim.eval("a:host")
+"" # port = vim.eval("a:port")
+"" # cmd = vim.eval("a:cmd")
+"" BUFSIZE = 1024
+"" data = cmd.encode("base64")
+"" addr = host, port
+"" ret = ""
+"" s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+"" try:
+""     s.connect(addr)
+"" except Exception, inst:
+""     s.close()
+"" for item in data.split("\n"):
+""     print(item)  # todo
+""     if item == "":
+""         continue
+""     senddata = item
+""     while len(senddata) >= BUFSIZE:
+""         s.send(senddata[0:BUFSIZE])
+""         senddata = senddata[BUFSIZE:]
+""     if senddata[-1:] == "\n":
+""         s.send(senddata)
+""     else:
+""         s.send(senddata+"\n")
+""     cachedata = ""
+""     while cachedata[-1:] != "\n":
+""         data = s.recv(BUFSIZE)
+""         cachedata += data
+""     if cachedata == "server closed\n":
+""         break
+""     ret += cachedata
+"" s.close()
+"" if type(ret).__name__ == "str":
+""     result = ret.decode("base64")
+""     print result
+"" # vim.command("return %s" % result)
+
+
+
+
