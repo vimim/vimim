@@ -338,8 +338,9 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-  :let g:vimim_mycloud="py:127.0.0.1"
-    let hjkl = '/hhome/xma/hjkl/'
+" cd /home/vimim/svn/mycloud/server && qpserver
+" :let g:vimim_mycloud="py:127.0.0.1"
+    let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
@@ -4714,8 +4715,6 @@ function! s:vimim_set_mycloud()
     let im = 'mycloud'
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
     let mycloud = s:vimim_check_mycloud_availability()
-let g:g75=mycloud
-"todo
     if empty(mycloud)
         let s:mycloud_plugin = 0
         let s:backend.cloud = {}
@@ -4739,14 +4738,10 @@ endfunction
 function! s:vimim_check_mycloud_availability()
 " --------------------------------------------
     let cloud = 0
-    call s:vimim_mycloud_python_init()
-let g:g1=copy(cloud)
     if empty(s:vimim_mycloud)
         let cloud = s:vimim_check_mycloud_plugin_libcall()
     else
         let cloud = s:vimim_check_mycloud_plugin_url()
-let g:g2=copy(cloud)
-"todo
     endif
     if empty(cloud)
         return 0
@@ -4765,7 +4760,9 @@ endfunction
 
 " define python functions for mycloud
 " if has("python")
-" -------------------------------------
+" todo: Is it possible to work out this way?
+"       Can Python and Vim sleep together without agreement?  
+" ------------------------------------- 
 function! s:vimim_mycloud_python_init()
 " -------------------------------------
 python << PYTHON
@@ -4816,68 +4813,51 @@ def parsefunc(keyb, host="localhost", port=10007):
 PYTHON
 endfunction
 
-" ------------------------
-function! s:mycloud_test()
-" ------------------------
-:python << EOF
-import vim
-res = 'test'
-try:
-    vim.command("return %s" % res)
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-endfunction
-
 " ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
 " ------------------------------------------------------
-" -------------------- how to make paython available here?
-" -------------------- todo quick-dirty test
 python << PYTHON
-import vim
-import sys
-import socket
-# host=10007
-# port='__isvalid'
-# cmd ='127.0.0.1'
-host = vim.eval("a:host")
-port = vim.eval("a:port")
-cmd = vim.eval("a:cmd")
+import vim, sys, socket
 BUFSIZE = 1024
-data = cmd.encode("base64")
-addr = host, port
 ret = ""
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
-    s.connect(addr)
-except Exception, inst:
+    HOST = vim.eval("a:host")
+    PORT = int(vim.eval("a:port"))
+    cmd  = vim.eval("a:cmd")
+    data = cmd.encode("base64")
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((HOST, PORT))
+    for item in data.split("\n"):
+        if item == "":
+            continue
+        senddata = item
+        while len(senddata) >= BUFSIZE:
+            s.send(senddata[0:BUFSIZE])
+            senddata = senddata[BUFSIZE:]
+        if senddata[-1:] == "\n":
+            s.send(senddata)
+        else:
+            s.send(senddata+"\n")
+        cachedata = ""
+        while cachedata[-1:] != "\n":
+            data = s.recv(BUFSIZE)
+            cachedata += data
+        if cachedata == "server closed\n":
+            break
+        ret += cachedata
     s.close()
-for item in data.split("\n"):
-    print(item)  # todo
-    if item == "":
-        continue
-    senddata = item
-    while len(senddata) >= BUFSIZE:
-        s.send(senddata[0:BUFSIZE])
-        senddata = senddata[BUFSIZE:]
-    if senddata[-1:] == "\n":
-        s.send(senddata)
-    else:
-        s.send(senddata+"\n")
-    cachedata = ""
-    while cachedata[-1:] != "\n":
-        data = s.recv(BUFSIZE)
-        cachedata += data
-    if cachedata == "server closed\n":
-        break
-    ret += cachedata
-s.close()
-if type(ret).__name__ == "str":
-    result = ret.decode("base64")
-    vim.command("return %s" % result)
+    if type(ret).__name__ == "str":
+        result = "'" + str(ret.decode("base64")) + "'"
+        vim.command("return %s" % result)
+except socket.error, msg:
+    s.close()
 PYTHON
 endfunction
+" let HOST='127.0.0.1'
+" let PORT=10007
+" let cmd='__isvalid'
+" let cmd='fuck'
+" let result = s:vimim_mycloud_python_client(cmd, HOST, 10007)
 
 " ------------------------------------------
 function! s:vimim_access_mycloud(cloud, cmd)
@@ -4894,14 +4874,7 @@ function! s:vimim_access_mycloud(cloud, cmd)
     elseif s:cloud_plugin_mode == "python"
         let host = s:cloud_plugin_host
         let port = s:cloud_plugin_port
-let g:g1=copy(a:cloud)
-let g:g2=copy(a:cmd)
-let g:g3=copy(host)
-let g:g4=copy(port)
         let ret = s:vimim_mycloud_python_client(a:cmd, host, port)
- """""" let ret = s:mycloud_test()
-let g:g8=copy(ret)
-" todo:  ret is zero
     elseif s:cloud_plugin_mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:cloud_plugin_mode == "www"
@@ -5038,10 +5011,7 @@ function! s:vimim_check_mycloud_plugin_url()
             try
                 let s:cloud_plugin_mode = "python"
                 let cloud = part[1]
-let g:g55=copy(part) |" part = ['py', '127.0.0.1'] good here
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
-let g:g54=copy(ret)
-" todo bad here ==> should be True, as shown from standalone python
                 if split(ret, "\t")[0] == "True"
                     return "python"
                 endif
