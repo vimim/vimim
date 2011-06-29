@@ -338,8 +338,8 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-  :let g:vimim_mycloud="py:127.0.0.1"
-    let hjkl = '/hhome/xma/hjkl/'
+" :let g:vimim_mycloud="py:127.0.0.1"
+    let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
@@ -4714,6 +4714,8 @@ function! s:vimim_set_mycloud()
     let im = 'mycloud'
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
     let mycloud = s:vimim_check_mycloud_availability()
+let g:g75=mycloud
+"todo
     if empty(mycloud)
         let s:mycloud_plugin = 0
         let s:backend.cloud = {}
@@ -4744,6 +4746,7 @@ let g:g1=copy(cloud)
     else
         let cloud = s:vimim_check_mycloud_plugin_url()
 let g:g2=copy(cloud)
+"todo
     endif
     if empty(cloud)
         return 0
@@ -4829,18 +4832,17 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
 " ------------------------------------------------------
+let g:g41=a:host  |" let g:g41=a:host
+let g:g42=a:port  |" let g:g42=a:port
+let g:g43=a:cmd   |" let g:g43=a:cmd 
+" cmd='fuck'
+" -------------------- how to make paython available here?
+" -------------------- todo quick-dirty test
 python << PYTHON
 import vim, sys, socket
+cmd  = vim.eval("a:cmd")
 host = vim.eval("a:host")
 port = vim.eval("a:port")
-cmd = vim.eval("a:cmd")
-# host='127.0.0.1'
-# port=10007
-# cmd='__isvalid'
-# cmd='chunmeng'
-# cmd='fuck'
-# -------------------- how to make paython available here?
-# -------------------- todo quick-dirty test
 BUFSIZE = 1024
 data = cmd.encode("base64")
 addr = host, port
@@ -4870,8 +4872,8 @@ for item in data.split("\n"):
     ret += cachedata
 s.close()
 if type(ret).__name__ == "str":
-    result = ret.decode("base64")
-    vim.command("return %s" % result)
+    base64 = ret.decode("base64")
+    vim.command("return %s" % base64)
 PYTHON
 endfunction
 
@@ -4890,12 +4892,12 @@ function! s:vimim_access_mycloud(cloud, cmd)
     elseif s:cloud_plugin_mode == "python"
         let host = s:cloud_plugin_host
         let port = s:cloud_plugin_port
- """""" let ret = s:vimim_mycloud_python_client(a:cmd, host, port)
 let g:g1=copy(a:cloud)
 let g:g2=copy(a:cmd)
 let g:g3=copy(host)
 let g:g4=copy(port)
-        let ret = s:mycloud_test()
+        let ret = s:vimim_mycloud_python_client(a:cmd, host, port)
+ """""" let ret = s:mycloud_test()
 let g:g8=copy(ret)
 " todo:  ret is zero
     elseif s:cloud_plugin_mode == "system"
@@ -5034,10 +5036,10 @@ function! s:vimim_check_mycloud_plugin_url()
             try
                 let s:cloud_plugin_mode = "python"
                 let cloud = part[1]
+let g:g55=copy(part) |" part = ['py', '127.0.0.1'] good here
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
-" todo: part = ['py', '127.0.0.1'] good here
-" cloud => 127.0.0.1 ... is it correct?
-let g:g5=copy(ret) |" True using standalone python
+let g:g54=copy(ret)
+" todo bad here ==> should be True, as shown from standalone python
                 if split(ret, "\t")[0] == "True"
                     return "python"
                 endif
@@ -5466,8 +5468,11 @@ else
     endif
 
     " [mycloud] get chunmeng from mycloud local or www
+let g:g71=s:mycloud_plugin
     if !empty(s:mycloud_plugin)
+let g:g72=s:mycloud_plugin
         let results = s:vimim_get_mycloud_plugin(keyboard)
+let g:g73=s:mycloud_plugin
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
