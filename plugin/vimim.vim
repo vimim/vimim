@@ -4758,16 +4758,11 @@ function! s:vimim_check_mycloud_availability()
     return cloud
 endfunction
 
-" define python functions for mycloud
-" if has("python")
-" todo: Is it possible to work out this way?
-"       Can Python and Vim sleep together without agreement?  
-" ------------------------------------- 
-function! s:vimim_mycloud_python_init()
-" -------------------------------------
+" ------------------------------------------------------
+function! s:vimim_mycloud_python_client(cmd, host, port)
+" ------------------------------------------------------
 python << PYTHON
-import sys
-import socket
+import vim, sys, socket
 BUFSIZE = 1024
 def tcpslice(sendfunc, data):
     senddata = data
@@ -4810,54 +4805,22 @@ def parsefunc(keyb, host="localhost", port=10007):
             return ""
     else:
         return ""
-PYTHON
-endfunction
-
-" ------------------------------------------------------
-function! s:vimim_mycloud_python_client(cmd, host, port)
-" ------------------------------------------------------
-python << PYTHON
-import vim, sys, socket
-BUFSIZE = 1024
-ret = ""
 try:
     HOST = vim.eval("a:host")
     PORT = int(vim.eval("a:port"))
     cmd  = vim.eval("a:cmd")
-    data = cmd.encode("base64")
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((HOST, PORT))
-    for item in data.split("\n"):
-        if item == "":
-            continue
-        senddata = item
-        while len(senddata) >= BUFSIZE:
-            s.send(senddata[0:BUFSIZE])
-            senddata = senddata[BUFSIZE:]
-        if senddata[-1:] == "\n":
-            s.send(senddata)
-        else:
-            s.send(senddata+"\n")
-        cachedata = ""
-        while cachedata[-1:] != "\n":
-            data = s.recv(BUFSIZE)
-            cachedata += data
-        if cachedata == "server closed\n":
-            break
-        ret += cachedata
-    s.close()
-    if type(ret).__name__ == "str":
-        result = "'" + str(ret.decode("base64")) + "'"
-        vim.command("return %s" % result)
-except socket.error, msg:
-    s.close()
+    ret = parsefunc(cmd, HOST, PORT)
+    result = "'" + ret + "'"
+    vim.command("return %s" % result)
+except vim.error:
+    print("vim error: %s" % vim.error)
 PYTHON
 endfunction
 " let HOST='127.0.0.1'
 " let PORT=10007
 " let cmd='__isvalid'
 " let cmd='fuck'
-" let result = s:vimim_mycloud_python_client(cmd, HOST, 10007)
+" let result = s:vimim_mycloud_python_client(cmd, HOST, PORT)
 
 " ------------------------------------------
 function! s:vimim_access_mycloud(cloud, cmd)
