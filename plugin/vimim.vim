@@ -338,8 +338,8 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-" :let g:vimim_mycloud="py:127.0.0.1"
-    let hjkl = '/home/xma/hjkl/'
+  :let g:vimim_mycloud="py:127.0.0.1"
+    let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
@@ -4832,17 +4832,18 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
 " ------------------------------------------------------
-let g:g41=a:host  |" let g:g41=a:host
-let g:g42=a:port  |" let g:g42=a:port
-let g:g43=a:cmd   |" let g:g43=a:cmd 
-" cmd='fuck'
 " -------------------- how to make paython available here?
 " -------------------- todo quick-dirty test
 python << PYTHON
-import vim, sys, socket
-cmd  = vim.eval("a:cmd")
+import vim
+import sys
+import socket
+# host=10007
+# port='__isvalid'
+# cmd ='127.0.0.1'
 host = vim.eval("a:host")
 port = vim.eval("a:port")
+cmd = vim.eval("a:cmd")
 BUFSIZE = 1024
 data = cmd.encode("base64")
 addr = host, port
@@ -4853,6 +4854,7 @@ try:
 except Exception, inst:
     s.close()
 for item in data.split("\n"):
+    print(item)  # todo
     if item == "":
         continue
     senddata = item
@@ -4872,8 +4874,8 @@ for item in data.split("\n"):
     ret += cachedata
 s.close()
 if type(ret).__name__ == "str":
-    base64 = ret.decode("base64")
-    vim.command("return %s" % base64)
+    result = ret.decode("base64")
+    vim.command("return %s" % result)
 PYTHON
 endfunction
 
