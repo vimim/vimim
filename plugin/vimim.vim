@@ -337,7 +337,7 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
 " cd /home/vimim/svn/mycloud/server && qpserver
 " :let g:vimim_mycloud="py:127.0.0.1"
-    let hjkl = '/home/xma/hjkl/'
+    let hjkl = '/hhome/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
@@ -3913,7 +3913,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(keyboard) || empty(lines)
-        return []
+        return 0
     endif
     let pattern = '^' . keyboard . '\s'
     let matched = match(lines, pattern)
@@ -5390,11 +5390,8 @@ else
     endif
 
     " [mycloud] get chunmeng from mycloud local or www
-let g:g71=s:mycloud_plugin
     if !empty(s:mycloud_plugin)
-let g:g72=s:mycloud_plugin
         let results = s:vimim_get_mycloud_plugin(keyboard)
-let g:g73=s:mycloud_plugin
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
