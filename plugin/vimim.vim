@@ -290,6 +290,7 @@ function! s:vimim_initialize_global()
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
+    else
     endif
     if s:vimim_custom_label > 0
         let s:vimim_custom_label = 5
@@ -337,6 +338,7 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
 " cd /home/vimim/svn/mycloud/server && qpserver
 " :let g:vimim_mycloud="py:127.0.0.1"
+" let g:vimim_chinese_input_mode='static'
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
@@ -849,6 +851,7 @@ function! <SID>VimIMSwitch()
     if len(s:ui.frontends) < 2
         return <SID>ChineseMode()
     endif
+    let s:chinese_input_mode = s:vimim_chinese_input_mode
     let custom_im_list = []
     if s:vimim_toggle_list =~ ","
         let custom_im_list = split(s:vimim_toggle_list, ",")
@@ -2869,12 +2872,6 @@ endfunction
 " --------------------------------
 function! s:vimim_get_chinese_im()
 " --------------------------------
-    let input_style = s:vimim_chinese('chinese')
-    if s:vimim_chinese_input_mode =~ 'dynamic'
-        let input_style .= s:vimim_chinese('dynamic')
-    elseif s:vimim_chinese_input_mode =~ 'static'
-        let input_style .= s:vimim_chinese('static')
-    endif
     if s:chinese_input_mode !~ 'onekey'
         let punctuation = s:vimim_chinese('half_width')
         if s:chinese_punctuation > 0
@@ -2884,7 +2881,10 @@ function! s:vimim_get_chinese_im()
     endif
     let statusline  = s:left . s:ui.statusline . s:right
     let statusline .= "VimIM"
-    return input_style . statusline
+    let input_style  = s:vimim_chinese('chinese')
+    let input_style .= s:vimim_chinese(s:vimim_chinese_input_mode)
+    let input_style .= statusline
+    return input_style
 endfunction
 
 " --------------------------
@@ -3823,9 +3823,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if len(s:vimim_mycloud) > 1
-    \|| s:vimim_cloud =~ 'dynamic\|static'
-    \|| s:vimim_debug > 1
+    if len(s:vimim_mycloud) > 1 || s:vimim_debug > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4071,7 +4069,7 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if len(s:vimim_mycloud) > 1 || s:vimim_cloud =~ 'dynamic\|static'
+    if len(s:vimim_mycloud) > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4226,21 +4224,6 @@ function! s:vimim_initialize_cloud()
     endif
     let s:mycloud_plugin = 0
     let s:http_executable = 0
-    call s:vimim_set_cloud_mode()
-endfunction
-
-" --------------------------------
-function! s:vimim_set_cloud_mode()
-" --------------------------------
-    if s:vimim_cloud < 0
-        return
-    endif
-    for mode in ["static","dynamic"]
-        if s:vimim_cloud =~ mode
-            let s:vimim_chinese_input_mode = mode
-            break
-        endif
-    endfor
 endfunction
 
 " -----------------------------
@@ -4281,25 +4264,14 @@ function! s:vimim_scan_backend_cloud()
         return s:vimim_set_mycloud()
     endif
     let set_cloud = 0
-    if s:vimim_cloud =~ 'dynamic\|static'
-        let set_cloud = 1
-    endif
     if empty(s:backend.datafile) && empty(s:backend.directory)
         let set_cloud = 1
-        if s:vimim_cloud !~ 'dynamic\|static'
-            let clouds = split(s:vimim_cloud,',')
-            let cloud = get(clouds,0) . '.dynamic'
-            let clouds = clouds[1:-1]
-            call insert(clouds, cloud)
-            let s:vimim_cloud = join(clouds,',')
-        endif
     endif
     if s:vimim_toggle_list =~ 'cloud'
         let set_cloud = 1
     endif
     if set_cloud > 0
         call s:vimim_set_cloud(s:cloud_default)
-        call s:vimim_set_cloud_mode()
     endif
 endfunction
 
@@ -4377,7 +4349,7 @@ function! s:vimim_do_cloud_or_not(keyboard)
     if s:vimim_cloud < 0 || a:keyboard =~ "[^a-z]"
         return 0
     endif
-    if s:vimim_cloud =~ 'dynamic\|static' || s:cloud_onekey > 0
+    if s:cloud_onekey > 0 || s:ui.root == 'cloud'
         return 1
     endif
     if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 1
