@@ -1831,19 +1831,19 @@ function! s:vimim_imode_today_now(keyboard)
     let results = []
     call add(results, strftime("%Y"))
     call add(results, 'year')
-    call add(results, substitute(strftime("%m"),'0','',''))
+    call add(results, substitute(strftime("%m"),'^0','',''))
     call add(results, 'month')
-    call add(results, substitute(strftime("%d"),'0','',''))
+    call add(results, substitute(strftime("%d"),'^0','',''))
     call add(results, 'day')
     if a:keyboard ==# 'itoday'
         call add(results, s:space)
         call add(results, strftime("%A"))
     elseif a:keyboard ==# 'inow'
-        call add(results, substitute(strftime("%H"),'0','',''))
+        call add(results, substitute(strftime("%H"),'^0','',''))
         call add(results, 'hour')
-        call add(results, substitute(strftime("%M"),'0','',''))
+        call add(results, substitute(strftime("%M"),'^0','',''))
         call add(results, 'minute')
-        call add(results, substitute(strftime("%S"),'0','',''))
+        call add(results, substitute(strftime("%S"),'^0','',''))
         call add(results, 'second')
     endif
     let ecdict = {}
