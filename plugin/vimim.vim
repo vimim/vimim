@@ -4759,7 +4759,7 @@ function! s:vimim_check_mycloud_availability()
 endfunction
 
 " ------------------------------------------------------
-function! s:vimim_mycloud_python_client(cmd, host, port)
+function! s:vimim_mycloud_python_init()
 " ------------------------------------------------------
 python << PYTHON
 import vim, sys, socket
@@ -4805,6 +4805,11 @@ def parsefunc(keyb, host="localhost", port=10007):
             return ""
     else:
         return ""
+PYTHON
+endfunction
+
+function! s:vimim_mycloud_python_client(cmd, host, port)
+python << PYTHON
 try:
     HOST = vim.eval("a:host")
     PORT = int(vim.eval("a:port"))
@@ -4972,6 +4977,7 @@ function! s:vimim_check_mycloud_plugin_url()
                 let s:cloud_plugin_port = 10007
             endif
             try
+                call s:vimim_mycloud_python_init()
                 let s:cloud_plugin_mode = "python"
                 let cloud = part[1]
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
