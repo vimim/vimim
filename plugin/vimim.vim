@@ -130,9 +130,6 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdvfgzs"
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
-    let s:cloud_plugin_host = 0
-    let s:cloud_plugin_port = 0
-    let s:cloud_plugin_mode = 0
 endfunction
 
 " -------------------------------
@@ -1701,24 +1698,6 @@ let s:VimIM += [" ====  has('python[3]') ==== {{{"]
 "" :py urllib.urlretrieve(url, vimim)
 "" :py vim.command("source %s " % vimim)
 "" " -----------------------------------------------
-
-" --------------------------------------------
-function! s:vimim_mycloud_app_python(keyboard)
-" --------------------------------------------
-if has('python') < 1 && has('python3') < 1
-    return ""
-endif
-let python = has('python3') ? 'python3' : 'python'
-exe 'silent!' . python . ' << EOF'
-import vim
-try:
-    keyboard = vim.eval("a:keyboard")
-    output = keyboard
-    vim.command("return %s" % output)
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-endfunction
 
 " --------------------------------------------
 function! s:vimim_get_from_python2(url, cloud)
@@ -4293,6 +4272,12 @@ endfunction
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
+    let s:myclouds = {}
+    let s:myclouds.arg  = 0
+    let s:myclouds.func = 0
+    let s:myclouds.host = 0
+    let s:myclouds.mode = 0
+    let s:myclouds.port = 0
     if len(s:vimim_mycloud) > 1
         return s:vimim_set_mycloud()
     endif
@@ -4758,9 +4743,9 @@ function! s:vimim_check_mycloud_availability()
     return cloud
 endfunction
 
-" ------------------------------------------------------
+" -------------------------------------
 function! s:vimim_mycloud_python_init()
-" ------------------------------------------------------
+" -------------------------------------
 python << PYTHON
 import vim, sys, socket
 BUFSIZE = 1024
@@ -4808,44 +4793,40 @@ def parsefunc(keyb, host="localhost", port=10007):
 PYTHON
 endfunction
 
+" ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
+" ------------------------------------------------------
 python << PYTHON
 try:
     HOST = vim.eval("a:host")
     PORT = int(vim.eval("a:port"))
     cmd  = vim.eval("a:cmd")
     ret = parsefunc(cmd, HOST, PORT)
-    result = "'" + ret + "'"
-    vim.command("return %s" % result)
+    vim.command("return '%s'" % ret)
 except vim.error:
     print("vim error: %s" % vim.error)
 PYTHON
 endfunction
-" let HOST='127.0.0.1'
-" let PORT=10007
-" let cmd='__isvalid'
-" let cmd='fuck'
-" let result = s:vimim_mycloud_python_client(cmd, HOST, PORT)
 
 " ------------------------------------------
 function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
 " use the same function to access mycloud by libcall() or system()
     let ret = ""
-    if s:cloud_plugin_mode == "libcall"
-        let arg = s:cloud_plugin_arg
+    if s:myclouds.mode == "libcall"
+        let arg = s:myclouds.arg
         if empty(arg)
-            let ret = libcall(a:cloud, s:cloud_plugin_func, a:cmd)
+            let ret = libcall(a:cloud, s:myclouds.func, a:cmd)
         else
-            let ret = libcall(a:cloud, s:cloud_plugin_func, arg." ".a:cmd)
+            let ret = libcall(a:cloud, s:myclouds.func, arg." ".a:cmd)
         endif
-    elseif s:cloud_plugin_mode == "python"
-        let host = s:cloud_plugin_host
-        let port = s:cloud_plugin_port
+    elseif s:myclouds.mode == "python"
+        let host = s:myclouds.host
+        let port = s:myclouds.port
         let ret = s:vimim_mycloud_python_client(a:cmd, host, port)
-    elseif s:cloud_plugin_mode == "system"
+    elseif s:myclouds.mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
-    elseif s:cloud_plugin_mode == "www"
+    elseif s:myclouds.mode == "www"
         let input = s:vimim_rot13(a:cmd)
         let http = s:http_executable
         if http =~ 'libvimim'
@@ -4895,9 +4876,9 @@ function! s:vimim_check_mycloud_plugin_libcall()
     " we do plug-n-play for libcall(), not for system()
     let cloud = s:vimim_get_libvimim()
     if !empty(cloud)
-        let s:cloud_plugin_mode = "libcall"
-        let s:cloud_plugin_arg = ""
-        let s:cloud_plugin_func = 'do_getlocal'
+        let s:myclouds.mode = "libcall"
+        let s:myclouds.arg = ""
+        let s:myclouds.func = 'do_getlocal'
         if filereadable(cloud)
             if has("win32")
                 " we don't need to strip ".dll" for "win32unix".
@@ -4926,7 +4907,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
         let cloud = "python " . cloud
     endif
     " in POSIX system, we can use system() for mycloud
-    let s:cloud_plugin_mode = "system"
+    let s:myclouds.mode = "system"
     let ret = s:vimim_access_mycloud(cloud, "__isvalid")
     if split(ret, "\t")[0] == "True"
         return cloud
@@ -4956,7 +4937,7 @@ function! s:vimim_check_mycloud_plugin_url()
             endif
             " in POSIX system, we can use system() for mycloud
             if executable(split(cloud, " ")[0])
-                let s:cloud_plugin_mode = "system"
+                let s:myclouds.mode = "system"
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
                 if split(ret, "\t")[0] == "True"
                     return cloud
@@ -4967,18 +4948,18 @@ function! s:vimim_check_mycloud_plugin_url()
         if has("python")
             " python 2 support code here
             if lenpart > 2
-                let s:cloud_plugin_host = part[1]
-                let s:cloud_plugin_port = part[2]
+                let s:myclouds.host = part[1]
+                let s:myclouds.port = part[2]
             elseif lenpart > 1
-                let s:cloud_plugin_host = part[1]
-                let s:cloud_plugin_port = 10007
+                let s:myclouds.host = part[1]
+                let s:myclouds.port = 10007
             else
-                let s:cloud_plugin_host = "localhost"
-                let s:cloud_plugin_port = 10007
+                let s:myclouds.host = "localhost"
+                let s:myclouds.port = 10007
             endif
             try
                 call s:vimim_mycloud_python_init()
-                let s:cloud_plugin_mode = "python"
+                let s:myclouds.mode = "python"
                 let cloud = part[1]
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
                 if split(ret, "\t")[0] == "True"
@@ -5000,15 +4981,15 @@ function! s:vimim_check_mycloud_plugin_url()
         endif
         " provide function name
         if lenpart >= base+4
-            let s:cloud_plugin_func = part[base+3]
+            let s:myclouds.func = part[base+3]
         else
-            let s:cloud_plugin_func = 'do_getlocal'
+            let s:myclouds.func = 'do_getlocal'
         endif
         " provide argument
         if lenpart >= base+3
-            let s:cloud_plugin_arg = part[base+2]
+            let s:myclouds.arg = part[base+2]
         else
-            let s:cloud_plugin_arg = ""
+            let s:myclouds.arg = ""
         endif
         " provide the dll
         if base == 1
@@ -5017,7 +4998,7 @@ function! s:vimim_check_mycloud_plugin_url()
             let cloud = part[1]
         endif
         if filereadable(cloud)
-            let s:cloud_plugin_mode = "libcall"
+            let s:myclouds.mode = "libcall"
             " strip off the .dll suffix, only required for win32
             if has("win32") && cloud[-4:] ==? ".dll"
                 let cloud = cloud[:-5]
@@ -5036,7 +5017,7 @@ function! s:vimim_check_mycloud_plugin_url()
             return 0
         endif
         if !empty(s:http_executable)
-            let s:cloud_plugin_mode = "www"
+            let s:myclouds.mode = "www"
             let ret = s:vimim_access_mycloud(s:vimim_mycloud, "__isvalid")
             if split(ret, "\t")[0] == "True"
                 return s:vimim_mycloud
