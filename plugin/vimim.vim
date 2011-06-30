@@ -336,9 +336,6 @@ endfunction
 " ----------------------------------
 function! s:vimim_initialize_debug()
 " ----------------------------------
-" cd /home/vimim/svn/mycloud/server && qpserver
-" :let g:vimim_mycloud="py:127.0.0.1"
-" let g:vimim_chinese_input_mode='static'
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
@@ -641,7 +638,7 @@ function! s:vimim_get_hjkl(keyboard)
         let dirs = [s:path, s:vimim_hjkl_directory]
         for dir in dirs
             let lines = s:vimim_get_from_directory(keyboard, dir)
-            if empty(lines)
+            if len(keyboard) < 2 || empty(lines)
                 continue
             else
                 break
@@ -3100,18 +3097,15 @@ function! s:vimim_popupmenu_list(matched_list)
     let extra_text = ""
     let popupmenu_list = []
     let popupmenu_list_one_row = []
-    let keyboard = join(s:keyboard_list,"")
     let first_in_list = get(lines,0)
     let &pumheight = s:show_me_not ? 0 : &pumheight
-    if s:hjkl_n % 2 > 0
-        if s:show_me_not > 0
-            call reverse(lines)
-            let label = len(lines)
-        elseif s:ui.im == 'pinyin'
-            let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
-        endif
+    if s:hjkl_n % 2 > 0 && s:show_me_not > 0
+        call reverse(lines)
+        let label = len(lines)
     endif
     let menu = get(s:keyboard_list,0)
+    let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+    let s:matched_list = lines
     for chinese in lines
         let complete_items = {}
         if first_in_list =~ '\s' && s:show_me_not < 1
@@ -3171,9 +3165,6 @@ function! s:vimim_popupmenu_list(matched_list)
     endfor
     if s:chinese_input_mode =~ 'onekey'
         let s:popupmenu_list = popupmenu_list
-    endif
-    if empty(s:matched_list)
-        let s:matched_list = lines
     endif
     let height = s:vimim_custom_label
     if s:show_me_not < 1 && height > 0 && len(popupmenu_list) > 1
