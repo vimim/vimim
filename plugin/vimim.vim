@@ -337,7 +337,7 @@ function! s:vimim_initialize_debug()
 " ----------------------------------
 " cd /home/vimim/svn/mycloud/server && qpserver
 " :let g:vimim_mycloud="py:127.0.0.1"
-    let hjkl = '/hhome/xma/hjkl/'
+    let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
