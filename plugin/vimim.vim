@@ -130,6 +130,7 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdvfgzs"
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
+    let s:horizontal_display = s:vimim_custom_label>0 ? 5 : 0
 endfunction
 
 " -------------------------------
@@ -291,9 +292,6 @@ function! s:vimim_initialize_global()
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
     else
-    endif
-    if s:vimim_custom_label > 0
-        let s:vimim_custom_label = 5
     endif
 endfunction
 
@@ -759,7 +757,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     if s:vimim_cloud =~ 'search'
         " => slash search from the default cloud
         let results = s:vimim_get_cloud(keyboard, s:cloud_default)
-    elseif !empty(s:mycloud_plugin)
+    elseif !empty(s:mycloud)
         " => slash search from mycloud
         let results = s:vimim_get_mycloud_plugin(keyboard)
     endif
@@ -1384,7 +1382,7 @@ function! s:vimim_pageup_pagedown()
     let length = len(matched_list)
     let one_page = &pumheight
     if s:vimim_custom_label > 0
-        let one_page = s:vimim_custom_label
+        let one_page = s:horizontal_display
     endif
     let first_page = one_page - 1
     if s:vimim_loop_pageup_pagedown > 0
@@ -2922,7 +2920,7 @@ function! s:vimim_statusline()
             let s:ui.statusline .= s:vimim_chinese('nature').shuangpin
         endif
     endif
-    if !empty(s:mycloud_plugin)
+    if !empty(s:mycloud)
         let __getname = s:backend.cloud.mycloud.directory
         let s:ui.statusline .= s:space . __getname
     endif
@@ -2950,14 +2948,12 @@ endfunction
 " --------------------------
 function! s:vimim_label_on()
 " --------------------------
+    let labels = range(1, s:horizontal_display)
     if s:vimim_custom_label < 0
         return
-    endif
-    let labels = range(1,5)
-    if s:vimim_custom_label > 0
-        let labels = range(1, s:vimim_custom_label)
+    elseif s:vimim_custom_label > 0
         let s:abcd = join(labels, '')
-    elseif s:vimim_custom_label < 1
+    else
         let single_digit = len(s:abcd)
         if single_digit > 9
             let single_digit = 9
@@ -3196,7 +3192,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 let extra_text = s:vimim_cjk_property_display(ddddd)
             endif
         endif
-        if empty(s:mycloud_plugin)
+        if empty(s:mycloud)
             if !empty(keyboard) && s:show_me_not < 1
                 let keyboard_head_length = len(menu)
                 if empty(s:ui.has_dot) && keyboard =~ "['.]"
@@ -3233,8 +3229,8 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:chinese_input_mode =~ 'onekey'
         let s:popupmenu_list = popupmenu_list
     endif
-    let height = s:vimim_custom_label
-    if s:show_me_not < 1 && len(popupmenu_list) > 1 && height == 1
+    let height = s:horizontal_display
+    if s:show_me_not < 1 && len(popupmenu_list) > 1 && height > 0
         let one_list = popupmenu_list_one_row
         if len(one_list) > height
             let one_list = popupmenu_list_one_row[0 : height-1]
@@ -4280,7 +4276,7 @@ function! s:vimim_initialize_cloud()
     if s:vimim_cloud =~ 'onekey'
         let s:cloud_onekey = 2
     endif
-    let s:mycloud_plugin = 0
+    let s:mycloud = 0
     let s:http_executable = 0
 endfunction
 
@@ -4293,7 +4289,7 @@ function! s:vimim_set_cloud(im)
         let s:backend.cloud = {}
         return
     endif
-    let s:mycloud_plugin = 0
+    let s:mycloud = 0
     let s:ui.root = 'cloud'
     let s:ui.im = im
     let frontends = [s:ui.root, s:ui.im]
@@ -4313,11 +4309,11 @@ endfunction
 " ------------------------------------
 function! s:vimim_scan_backend_cloud()
 " ------------------------------------
-    let s:myclouds_arg  = 0
-    let s:myclouds_func = 0
-    let s:myclouds_host = 0
-    let s:myclouds_mode = 0
-    let s:myclouds_port = 0
+    let s:mycloud_arg  = 0
+    let s:mycloud_func = 0
+    let s:mycloud_host = 0
+    let s:mycloud_mode = 0
+    let s:mycloud_port = 0
     if len(s:vimim_mycloud) > 1
         return s:vimim_set_mycloud()
     endif
@@ -4730,7 +4726,7 @@ function! s:vimim_set_mycloud()
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
     let mycloud = s:vimim_check_mycloud_availability()
     if empty(mycloud)
-        let s:mycloud_plugin = 0
+        let s:mycloud = 0
         let s:backend.cloud = {}
         return {}
     else
@@ -4744,7 +4740,7 @@ function! s:vimim_set_mycloud()
         let s:ui.frontends = [[s:ui.root, s:ui.im]]
         let s:vimim_shuangpin = 0
         let s:vimim_cloud = -1
-        let s:mycloud_plugin = mycloud
+        let s:mycloud = mycloud
     endif
 endfunction
 
@@ -4777,20 +4773,20 @@ function! s:vimim_access_mycloud(cloud, cmd)
 " ------------------------------------------
 " use the same function to access mycloud by libcall() or system()
     let ret = ""
-    if s:myclouds_mode == "libcall"
-        let arg = s:myclouds_arg
+    if s:mycloud_mode == "libcall"
+        let arg = s:mycloud_arg
         if empty(arg)
-            let ret = libcall(a:cloud, s:myclouds_func, a:cmd)
+            let ret = libcall(a:cloud, s:mycloud_func, a:cmd)
         else
-            let ret = libcall(a:cloud, s:myclouds_func, arg." ".a:cmd)
+            let ret = libcall(a:cloud, s:mycloud_func, arg." ".a:cmd)
         endif
-    elseif s:myclouds_mode == "python"
-        let host = s:myclouds_host
-        let port = s:myclouds_port
+    elseif s:mycloud_mode == "python"
+        let host = s:mycloud_host
+        let port = s:mycloud_port
         let ret = s:vimim_mycloud_python_client(a:cmd, host, port)
-    elseif s:myclouds_mode == "system"
+    elseif s:mycloud_mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
-    elseif s:myclouds_mode == "www"
+    elseif s:mycloud_mode == "www"
         let input = s:vimim_rot13(a:cmd)
         let http = s:http_executable
         if http =~ 'libvimim'
@@ -4840,9 +4836,9 @@ function! s:vimim_check_mycloud_plugin_libcall()
     " we do plug-n-play for libcall(), not for system()
     let cloud = s:vimim_get_libvimim()
     if !empty(cloud)
-        let s:myclouds_mode = "libcall"
-        let s:myclouds_arg = ""
-        let s:myclouds_func = 'do_getlocal'
+        let s:mycloud_mode = "libcall"
+        let s:mycloud_arg = ""
+        let s:mycloud_func = 'do_getlocal'
         if filereadable(cloud)
             if has("win32")
                 " we don't need to strip ".dll" for "win32unix".
@@ -4871,7 +4867,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
         let cloud = "python " . cloud
     endif
     " in POSIX system, we can use system() for mycloud
-    let s:myclouds_mode = "system"
+    let s:mycloud_mode = "system"
     let ret = s:vimim_access_mycloud(cloud, "__isvalid")
     if split(ret, "\t")[0] == "True"
         return cloud
@@ -4901,7 +4897,7 @@ function! s:vimim_check_mycloud_plugin_url()
             endif
             " in POSIX system, we can use system() for mycloud
             if executable(split(cloud, " ")[0])
-                let s:myclouds_mode = "system"
+                let s:mycloud_mode = "system"
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
                 if split(ret, "\t")[0] == "True"
                     return cloud
@@ -4912,18 +4908,18 @@ function! s:vimim_check_mycloud_plugin_url()
         if has("python")
             " python 2 support code here
             if lenpart > 2
-                let s:myclouds_host = part[1]
-                let s:myclouds_port = part[2]
+                let s:mycloud_host = part[1]
+                let s:mycloud_port = part[2]
             elseif lenpart > 1
-                let s:myclouds_host = part[1]
-                let s:myclouds_port = 10007
+                let s:mycloud_host = part[1]
+                let s:mycloud_port = 10007
             else
-                let s:myclouds_host = "localhost"
-                let s:myclouds_port = 10007
+                let s:mycloud_host = "localhost"
+                let s:mycloud_port = 10007
             endif
             try
                 call s:vimim_mycloud_python_init()
-                let s:myclouds_mode = "python"
+                let s:mycloud_mode = "python"
                 let cloud = part[1]
                 let ret = s:vimim_access_mycloud(cloud, "__isvalid")
                 if split(ret, "\t")[0] == "True"
@@ -4945,15 +4941,15 @@ function! s:vimim_check_mycloud_plugin_url()
         endif
         " provide function name
         if lenpart >= base+4
-            let s:myclouds_func = part[base+3]
+            let s:mycloud_func = part[base+3]
         else
-            let s:myclouds_func = 'do_getlocal'
+            let s:mycloud_func = 'do_getlocal'
         endif
         " provide argument
         if lenpart >= base+3
-            let s:myclouds_arg = part[base+2]
+            let s:mycloud_arg = part[base+2]
         else
-            let s:myclouds_arg = ""
+            let s:mycloud_arg = ""
         endif
         " provide the dll
         if base == 1
@@ -4962,7 +4958,7 @@ function! s:vimim_check_mycloud_plugin_url()
             let cloud = part[1]
         endif
         if filereadable(cloud)
-            let s:myclouds_mode = "libcall"
+            let s:mycloud_mode = "libcall"
             " strip off the .dll suffix, only required for win32
             if has("win32") && cloud[-4:] ==? ".dll"
                 let cloud = cloud[:-5]
@@ -4981,7 +4977,7 @@ function! s:vimim_check_mycloud_plugin_url()
             return 0
         endif
         if !empty(s:http_executable)
-            let s:myclouds_mode = "www"
+            let s:mycloud_mode = "www"
             let ret = s:vimim_access_mycloud(s:vimim_mycloud, "__isvalid")
             if split(ret, "\t")[0] == "True"
                 return s:vimim_mycloud
@@ -4996,12 +4992,12 @@ endfunction
 " --------------------------------------------
 function! s:vimim_get_mycloud_plugin(keyboard)
 " --------------------------------------------
-    if empty(s:mycloud_plugin)
+    if empty(s:mycloud)
         return []
     endif
     let output = 0
     try
-        let output = s:vimim_access_mycloud(s:mycloud_plugin, a:keyboard)
+        let output = s:vimim_access_mycloud(s:mycloud, a:keyboard)
     catch
         call s:debugs('mycloud::',v:exception)
     endtry
@@ -5076,7 +5072,7 @@ function! s:vimim_i_setting_on()
         let s:pumheight1 = &pumheight
     endif
     if s:vimim_custom_label > 0
-        let &pumheight = s:vimim_custom_label
+        let &pumheight = s:horizontal_display
     endif
 endfunction
 
@@ -5354,7 +5350,7 @@ else
     endif
 
     " [mycloud] get chunmeng from mycloud local or www
-    if !empty(s:mycloud_plugin)
+    if !empty(s:mycloud)
         let results = s:vimim_get_mycloud_plugin(keyboard)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
