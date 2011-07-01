@@ -3206,7 +3206,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 let tail = strpart(keyboard, keyboard_head_length)
                 let chinese .= tail
             endif
-        else
+        elseif s:vimim_custom_label < 1
             let extra_text = get(split(menu,"_"),0)
         endif
         if s:vimim_custom_label > 0
@@ -3234,7 +3234,7 @@ function! s:vimim_popupmenu_list(matched_list)
         let s:popupmenu_list = popupmenu_list
     endif
     let height = s:vimim_custom_label
-    if s:show_me_not < 1 && height > 0 && len(popupmenu_list) > 1
+    if s:show_me_not < 1 && len(popupmenu_list) > 1 && height == 1
         let one_list = popupmenu_list_one_row
         if len(one_list) > height
             let one_list = popupmenu_list_one_row[0 : height-1]
