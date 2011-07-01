@@ -3161,13 +3161,17 @@ function! s:vimim_popupmenu_list(matched_list)
     let popupmenu_list = []
     let popupmenu_list_one_row = []
     let first_in_list = get(lines,0)
+    let keyboard = join(s:keyboard_list,"")
     let &pumheight = s:show_me_not ? 0 : &pumheight
-    if s:hjkl_n % 2 > 0 && s:show_me_not > 0
-        call reverse(lines)
-        let label = len(lines)
+    if s:hjkl_n % 2 > 0
+        if s:show_me_not > 0
+            call reverse(lines)
+            let label = len(lines)
+        elseif s:ui.im == 'pinyin' || s:ui.root == 'cloud'
+            let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+        endif
     endif
     let menu = get(s:keyboard_list,0)
-    let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
     let s:matched_list = lines
     for chinese in lines
         let complete_items = {}
