@@ -1256,19 +1256,17 @@ function! s:vimim_cache()
                 let results = s:vimim_onekey_menu_filter()
             endif
         endif
-        if s:hjkl_l > 0 && len(s:matched_list) > &pumheight
-            if s:show_me_not > 0
-                if s:hjkl_l % 2 > 0
-                    for line in s:matched_list
-                        let oneline = join(reverse(split(line,'\zs')),'')
-                        call add(results, oneline)
-                    endfor
-                endif
-            else
-                let &pumheight = 0
-                if s:hjkl_l % 2 < 1
-                    let &pumheight = s:pumheight1
-                endif
+        if s:show_me_not > 0
+            if s:hjkl_l % 2 > 0
+                for line in s:matched_list
+                    let oneline = join(reverse(split(line,'\zs')),'')
+                    call add(results, oneline)
+                endfor
+            endif
+        elseif s:hjkl_h > 0 && len(s:matched_list) > &pumheight
+            let &pumheight = 0
+            if s:hjkl_h % 2 < 1
+                let &pumheight = s:pumheight1
             endif
         endif
     endif
@@ -3187,7 +3185,7 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:hjkl_s > 0 && s:hjkl_s % 2 > 0 && s:has_cjk_file > 0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
-        if s:hjkl_h > 0 && s:hjkl_h % 2 > 0 && s:show_me_not < 1
+        if s:hjkl_l > 0 && s:hjkl_l % 2 > 0 && s:show_me_not < 1
             let extra_text = menu
             if empty(s:english_results)
                 let ddddd = char2nr(chinese)
@@ -3283,7 +3281,7 @@ function! s:vimim_get_labeling(label)
                 let labeling = label2
             endif
         endif
-        if s:hjkl_l > 0 && &pumheight < 1
+        if s:hjkl_h > 0 && &pumheight < 1
             let fmt = '%02s '
         endif
     endif
