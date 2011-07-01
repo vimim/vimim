@@ -333,7 +333,8 @@ endfunction
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------- todo
+" let g:vimim_mycloud="py:127.0.0.1"
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
@@ -1815,7 +1816,7 @@ try:
     PORT = int(vim.eval("a:port"))
     cmd  = vim.eval("a:cmd")
     ret = parsefunc(cmd, HOST, PORT)
-    vim.command("return '%s'" % ret)
+    vim.command('return "%s"' % ret)
 except vim.error:
     print("vim error: %s" % vim.error)
 PYTHON
