@@ -333,8 +333,7 @@ endfunction
 
 " ----------------------------------
 function! s:vimim_initialize_debug()
-" ---------------------------------- todo
-" let g:vimim_mycloud="py:127.0.0.1"
+" ----------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
@@ -3203,7 +3202,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 let tail = strpart(keyboard, keyboard_head_length)
                 let chinese .= tail
             endif
-        elseif s:vimim_custom_label < 1
+        elseif s:horizontal_display > 0
             let extra_text = get(split(menu,"_"),0)
         endif
         if s:vimim_custom_label > 0
@@ -4316,17 +4315,18 @@ function! s:vimim_scan_backend_cloud()
     let s:mycloud_mode = 0
     let s:mycloud_port = 0
     if len(s:vimim_mycloud) > 1
-        return s:vimim_set_mycloud()
-    endif
-    let set_cloud = 0
-    if empty(s:backend.datafile) && empty(s:backend.directory)
-        let set_cloud = 1
-    endif
-    if s:vimim_toggle_list =~ 'cloud'
-        let set_cloud = 1
-    endif
-    if set_cloud > 0
-        call s:vimim_set_cloud(s:cloud_default)
+        call s:vimim_set_mycloud_if_pimcloud()
+    else
+        let set_cloud = 0
+        if empty(s:backend.datafile) && empty(s:backend.directory)
+            let set_cloud = 1
+        endif
+        if s:vimim_toggle_list =~ 'cloud'
+            let set_cloud = 1
+        endif
+        if set_cloud > 0
+            call s:vimim_set_cloud(s:cloud_default)
+        endif
     endif
 endfunction
 
@@ -4720,16 +4720,15 @@ let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
 " Thanks to Pan Shizhu for providing all mycloud codes:
 
-" -----------------------------
-function! s:vimim_set_mycloud()
-" -----------------------------
+" -----------------------------------------
+function! s:vimim_set_mycloud_if_pimcloud()
+" -----------------------------------------
     let im = 'mycloud'
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
     let mycloud = s:vimim_check_mycloud_availability()
     if empty(mycloud)
         let s:mycloud = 0
         let s:backend.cloud = {}
-        return {}
     else
         let root = 'cloud'
         let s:backend.cloud[im].root = root
@@ -4757,15 +4756,15 @@ function! s:vimim_check_mycloud_availability()
     if empty(cloud)
         return 0
     endif
-    let ret = s:vimim_access_mycloud(cloud, "__getname")
-    let directory = split(ret, "\t")[0]
     let ret = s:vimim_access_mycloud(cloud, "__getkeychars")
     let keycode = split(ret, "\t")[0]
     if empty(keycode)
         return 0
     endif
+    let ret = s:vimim_access_mycloud(cloud, "__getname")
+    let directory = split(ret, "\t")[0]
     let s:backend.cloud.mycloud.directory = directory
-    let s:backend.cloud.mycloud.keycode = s:im_keycode["mycloud"]
+    let s:backend.cloud.mycloud.keycode = keycode
     return cloud
 endfunction
 
