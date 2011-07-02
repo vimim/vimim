@@ -4681,14 +4681,15 @@ endfunction
 function! s:vimim_get_cloud_all(keyboard)
 " ---------------------------------------
     let results = []
-    let cloud_all = 'google,baidu,sogou,qq'
-    for cloud in split(cloud_all,',')
+    for cloud in ['google', 'baidu', 'sogou', 'qq']
         let start = localtime()
         let outputs = s:vimim_get_cloud(a:keyboard, cloud)
         let end = localtime()
         call add(results, s:space)
-        let title  = s:vimim_chinese(cloud) . s:vimim_chinese('cloud')
-        let title .= s:vimim_chinese('input') . s:space . a:keyboard
+        let title  = a:keyboard . s:space
+        let title .= s:vimim_chinese(cloud) 
+        let title .= s:vimim_chinese('cloud')
+        let title .= s:vimim_chinese('input')
         let duration = end - start
         if duration > 0
             let title .= s:space . string(duration)
