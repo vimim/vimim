@@ -4680,29 +4680,25 @@ endfunction
 " ---------------------------------------
 function! s:vimim_get_cloud_all(keyboard)
 " ---------------------------------------
-    let keyboard = a:keyboard
-    let title  = s:vimim_chinese('cloud') . s:vimim_chinese('input')
-    let title .= s:space . keyboard
     let results = []
     let cloud_all = 'google,baidu,sogou,qq'
     for cloud in split(cloud_all,',')
         let start = localtime()
-        let outputs = s:vimim_get_cloud(keyboard, cloud)
-        if empty(outputs)
-            continue
-        endif
+        let outputs = s:vimim_get_cloud(a:keyboard, cloud)
         let end = localtime()
         call add(results, s:space)
-        let cloud_title = s:vimim_chinese(cloud) . title
+        let title  = s:vimim_chinese(cloud) . s:vimim_chinese('cloud')
+        let title .= s:vimim_chinese('input') . s:space . a:keyboard
         let duration = end - start
         if duration > 0
-            let cloud_title .= s:space . string(duration)
+            let title .= s:space . string(duration)
         endif
-        call add(results, cloud_title)
-        let outputs = outputs[0:7]
+        call add(results, title)
         let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
-        call map(outputs, filter)
-        call add(results, join(outputs))
+        if len(outputs) > 1+1+1+1
+            call map(outputs, filter)
+            call add(results, join(outputs[0:-2]))
+        endif
     endfor
     return results
 endfunction
