@@ -1699,8 +1699,7 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 function! s:vimim_get_from_python2(url, cloud)
 " --------------------------------------------
 :sil!python << EOF
-import vim
-import urllib2
+import vim, urllib2
 try:
     cloud = vim.eval('a:cloud')
     url = vim.eval('a:url')
@@ -1730,8 +1729,7 @@ endfunction
 function! s:vimim_get_from_python3(url, cloud)
 " --------------------------------------------
 :sil!python3 << EOF
-import vim
-import urllib.request
+import vim, urllib.request
 try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
@@ -1806,25 +1804,10 @@ if len(gmail_login) > 8:
 EOF
 endfunction
 
-" ------------------------------------------------------
-function! s:vimim_mycloud_python_client(cmd, host, port)
-" ------------------------------------------------------
-sil!python << PYTHON
-try:
-    HOST = vim.eval("a:host")
-    PORT = int(vim.eval("a:port"))
-    cmd  = vim.eval("a:cmd")
-    ret = parsefunc(cmd, HOST, PORT)
-    vim.command('return "%s"' % ret)
-except vim.error:
-    print("vim error: %s" % vim.error)
-PYTHON
-endfunction
-
 " -------------------------------------
 function! s:vimim_mycloud_python_init()
 " -------------------------------------
-sil!python << PYTHON
+:sil!python << EOF
 import vim, sys, socket
 BUFSIZE = 1024
 def tcpslice(sendfunc, data):
@@ -1868,7 +1851,22 @@ def parsefunc(keyb, host="localhost", port=10007):
             return ""
     else:
         return ""
-PYTHON
+EOF
+endfunction
+
+" ------------------------------------------------------
+function! s:vimim_mycloud_python_client(cmd, host, port)
+" ------------------------------------------------------
+:sil!python << EOF
+try:
+    HOST = vim.eval("a:host")
+    PORT = int(vim.eval("a:port"))
+    cmd  = vim.eval("a:cmd")
+    ret = parsefunc(cmd, HOST, PORT)
+    vim.command('return "%s"' % ret)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
 endfunction
 
 " ============================================= }}}
