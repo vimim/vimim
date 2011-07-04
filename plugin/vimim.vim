@@ -4096,6 +4096,7 @@ function! s:vimim_magic_tail(keyboard)
         let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
         if cloud_ready > 0
             " trailing apostrophe => forced-cloud
+            let s:cloud_onekey = 1
             let last_three = keyboard[-3:-1]
             let keyboard = keyboard[:-2]
             if last_three ==# "'''"
@@ -4106,8 +4107,6 @@ function! s:vimim_magic_tail(keyboard)
             elseif last_but_one ==# "'"
                 let keyboard = keyboard[:-2]
                 let s:cloud_onekey = 2
-            else
-                let s:cloud_onekey = 1
             endif
         endif
     endif
@@ -4634,7 +4633,17 @@ function! s:vimim_get_cloud_google(keyboard)
     if type(output_hash) == type({}) && has_key(output_hash, key)
         let matched_list = output_hash[key]
     endif
-    return matched_list
+    let new_matched_list = []
+    " todo
+    for item in matched_list
+        let yin_yang = item
+        let english = strpart(a:keyboard, len(item))
+        if !empty(english)
+            let yin_yang .= english
+        endif
+        call add(new_matched_list, yin_yang)
+    endfor
+    return new_matched_list
 endfunction
 
 " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
@@ -4669,8 +4678,8 @@ function! s:vimim_get_cloud_baidu(keyboard)
             continue
         endif
         let english = strpart(a:keyboard, get(item_list,1))
-        let new_item = chinese . english
-        call add(matched_list, new_item)
+        let yin_yang = chinese . english
+        call add(matched_list, yin_yang)
     endfor
     return matched_list
 endfunction
