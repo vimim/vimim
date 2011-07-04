@@ -4595,6 +4595,9 @@ function! s:vimim_get_cloud_qq(keyboard)
     if type(output_hash) == type({}) && has_key(output_hash, key)
         let matched_list = output_hash[key]
     endif
+    if s:vimim_cloud !~ 'wubi' && s:vimim_cloud !~ 'shuangpin'
+        let matched_list = s:vimim_cloud_pinyin(a:keyboard, matched_list)
+    endif
     return matched_list
 endfunction
 
@@ -4633,17 +4636,24 @@ function! s:vimim_get_cloud_google(keyboard)
     if type(output_hash) == type({}) && has_key(output_hash, key)
         let matched_list = output_hash[key]
     endif
-    let new_matched_list = []
-    " todo
-    for item in matched_list
-        let yin_yang = item
-        let english = strpart(a:keyboard, len(item))
+    return s:vimim_cloud_pinyin(a:keyboard, matched_list)
+endfunction
+
+" ----------------------------------------------------
+function! s:vimim_cloud_pinyin(keyboard, matched_list)
+" ----------------------------------------------------
+    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
+    let matched_list = []
+    for chinese in a:matched_list
+        let len_chinese = len(split(chinese,'\zs'))
+        let english = join(keyboards[len_chinese :], "")
+        let yin_yang = chinese
         if !empty(english)
             let yin_yang .= english
         endif
-        call add(new_matched_list, yin_yang)
+        call add(matched_list, yin_yang)
     endfor
-    return new_matched_list
+    return matched_list
 endfunction
 
 " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
@@ -4694,7 +4704,7 @@ function! s:vimim_get_cloud_all(keyboard)
         let end = localtime()
         call add(results, s:space)
         let title  = a:keyboard . s:space
-        let title .= s:vimim_chinese(cloud) 
+        let title .= s:vimim_chinese(cloud)
         let title .= s:vimim_chinese('cloud')
         let title .= s:vimim_chinese('input')
         let duration = end - start
