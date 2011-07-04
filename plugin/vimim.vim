@@ -935,7 +935,8 @@ function! s:vimim_chinesemode_action()
     if s:chinese_input_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let clouds = split(s:vimim_cloud,',')
-        let vimim_cloud = get(clouds, match(clouds,s:ui.im))
+        let cloud_in_use = s:ui.root=='cloud' ? match(clouds, s:ui.im) : 0
+        let vimim_cloud = get(clouds, cloud_in_use)
         if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
             " dynamic auto trigger for wubi
             for char in s:az_list
@@ -2904,10 +2905,9 @@ function! s:vimim_statusline()
         endif
     endif
     let clouds = split(s:vimim_cloud,',')
-    let vimim_cloud = get(clouds, match(clouds,s:ui.im))
-    if s:ui.root != 'cloud'
-        "  set statusline if and only if it is cloud
-    elseif vimim_cloud =~ 'mixture'
+    let cloud_in_use = s:ui.root=='cloud' ? match(clouds, s:ui.im) : 0
+    let vimim_cloud = get(clouds, cloud_in_use)
+    if vimim_cloud =~ 'mixture'
         let s:ui.statusline .= s:vimim_chinese('mixture')
     elseif vimim_cloud =~ 'wubi'
         let s:ui.statusline .= s:vimim_chinese('wubi')
@@ -5386,7 +5386,6 @@ else
     if s:chinese_input_mode =~ 'onekey' && keyboard !~ '\d'
         let keyboard = s:vimim_magic_tail(keyboard)
     endif
-
     " [shuangpin] support 6 major shuangpin
     if !empty(s:vimim_shuangpin) && s:has_pumvisible < 1
         let keyboard = s:vimim_shuangpin_transform(keyboard)
@@ -5396,7 +5395,8 @@ else
     " [cloud] to make dream come true for multiple clouds
     let cloud = 0
     let clouds = split(s:vimim_cloud,',')
-    let vimim_cloud = get(clouds, match(clouds,s:ui.im))
+    let cloud_in_use = s:ui.root=='cloud' ? match(clouds, s:ui.im) : 0
+    let vimim_cloud = get(clouds, cloud_in_use)
     if s:vimim_do_cloud_or_not(keyboard) > 0
         let cloud = get(split(vimim_cloud,'[.]'),0)
         if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
