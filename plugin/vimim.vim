@@ -1705,6 +1705,9 @@ import vim, urllib2
 try:
     cloud = vim.eval('a:cloud')
     url = vim.eval('a:url')
+    # proxy = urllib2.ProxyHandler({'http': '127.0.0.1:8000'})
+    # opener = urllib2.build_opener(proxy)
+    # urllib2.install_opener(opener)
     urlopen = urllib2.urlopen(url, None, 20)
     response = urlopen.read()
     res = "'" + str(response) + "'"
