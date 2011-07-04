@@ -934,7 +934,9 @@ function! s:vimim_chinesemode_action()
     let action = ""
     if s:chinese_input_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
-        if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
+        let clouds = split(s:vimim_cloud,',')
+        let vimim_cloud = get(clouds, match(clouds,s:ui.im))
+        if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
             " dynamic auto trigger for wubi
             for char in s:az_list
                 sil!exe 'inoremap <silent> ' . char .
@@ -2898,23 +2900,27 @@ function! s:vimim_statusline()
             let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
         endif
     endif
-    if s:vimim_cloud =~ 'mixture'
+    let clouds = split(s:vimim_cloud,',')
+    let vimim_cloud = get(clouds, match(clouds,s:ui.im))
+    if s:ui.root != 'cloud'
+        "  set statusline if and only if it is cloud
+    elseif vimim_cloud =~ 'mixture'
         let s:ui.statusline .= s:vimim_chinese('mixture')
-    elseif s:vimim_cloud =~ 'wubi'
+    elseif vimim_cloud =~ 'wubi'
         let s:ui.statusline .= s:vimim_chinese('wubi')
-    elseif s:vimim_cloud =~ 'shuangpin'
+    elseif vimim_cloud =~ 'shuangpin'
         let shuangpin = s:vimim_chinese('shuangpin')
-        if s:vimim_cloud =~ 'abc'
+        if vimim_cloud =~ 'abc'
             let s:ui.statusline .= s:vimim_chinese('abc')
-        elseif s:vimim_cloud =~ 'ms'
+        elseif vimim_cloud =~ 'ms'
             let s:ui.statusline .= s:vimim_chinese('ms').shuangpin
-        elseif s:vimim_cloud =~ 'plusplus'
+        elseif vimim_cloud =~ 'plusplus'
             let s:ui.statusline .= s:vimim_chinese('plusplus').shuangpin
-        elseif s:vimim_cloud =~ 'purple'
+        elseif vimim_cloud =~ 'purple'
             let s:ui.statusline .= s:vimim_chinese('purple').shuangpin
-        elseif s:vimim_cloud =~ 'flypy'
+        elseif vimim_cloud =~ 'flypy'
             let s:ui.statusline .= s:vimim_chinese('flypy').shuangpin
-        elseif s:vimim_cloud =~ 'nature'
+        elseif vimim_cloud =~ 'nature'
             let s:ui.statusline .= s:vimim_chinese('nature').shuangpin
         endif
     endif
@@ -4541,33 +4547,35 @@ function! s:vimim_get_cloud_qq(keyboard)
         return []
     endif
     let input  = url
-    if s:vimim_cloud =~ 'wubi'
+    let clouds = split(s:vimim_cloud,',')
+    let vimim_cloud = get(clouds, match(clouds,'qq'))
+    if vimim_cloud =~ 'wubi'
         let input .= 'gwb'
     else
         let input .= 'getword'
     endif
     let input .= '?key=' . s:cloud_keys.qq
-    if s:vimim_cloud =~ 'fanti'
+    if vimim_cloud =~ 'fanti'
         let input .= '&jf=1'
     endif
     let md = 0
-    if s:vimim_cloud =~ 'mixture'
+    if vimim_cloud =~ 'mixture'
         let md = 3
     endif
-    if s:vimim_cloud =~ 'shuangpin'
+    if vimim_cloud =~ 'shuangpin'
         let md = 2
         let st = 0
-        if s:vimim_cloud =~ 'abc'
+        if vimim_cloud =~ 'abc'
             let st = 1
-        elseif s:vimim_cloud =~ 'ms'
+        elseif vimim_cloud =~ 'ms'
             let st = 2
-        elseif s:vimim_cloud =~ 'plusplus'
+        elseif vimim_cloud =~ 'plusplus'
             let st = 3
-        elseif s:vimim_cloud =~ 'purple'
+        elseif vimim_cloud =~ 'purple'
             let st = 4
-        elseif s:vimim_cloud =~ 'flypy'
+        elseif vimim_cloud =~ 'flypy'
             let st = 5
-        elseif s:vimim_cloud =~ 'nature'
+        elseif vimim_cloud =~ 'nature'
             let st = 6
         endif
         if st > 0
@@ -4577,7 +4585,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     if md > 0
         let input .= '&md=' . md
     endif
-    if s:vimim_cloud =~ 'fuzzy'
+    if vimim_cloud =~ 'fuzzy'
         let input .= '&mh=1'
     endif
     let input .= '&q=' . a:keyboard
@@ -4595,7 +4603,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     if type(output_hash) == type({}) && has_key(output_hash, key)
         let matched_list = output_hash[key]
     endif
-    if s:vimim_cloud !~ 'wubi' && s:vimim_cloud !~ 'shuangpin'
+    if vimim_cloud !~ 'wubi' && vimim_cloud !~ 'shuangpin'
         let matched_list = s:vimim_cloud_pinyin(a:keyboard, matched_list)
     endif
     return matched_list
@@ -5384,9 +5392,10 @@ else
 
     " [cloud] to make dream come true for multiple clouds
     let cloud = 0
+    let clouds = split(s:vimim_cloud,',')
+    let vimim_cloud = get(clouds, match(clouds,s:ui.im))
     if s:vimim_do_cloud_or_not(keyboard) > 0
-        let clouds = split(s:vimim_cloud,',')
-        let cloud = get(split(get(clouds,0),'[.]'),0)
+        let cloud = get(split(vimim_cloud,'[.]'),0)
         if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
             let cloud = get(s:frontends,1)
         endif
@@ -5398,7 +5407,7 @@ else
     endif
 
     " [wubi] support auto insert for every 4 input
-    if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
+    if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
         let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
         if s:ui.im =~ 'erbi' && len(keyboard) == 1
         \&& keyboard =~ "[.,/;]" && has_key(s:punctuations, keyboard)
