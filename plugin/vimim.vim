@@ -2748,6 +2748,69 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  debug framework   ==== {{{"]
+" =================================================
+" Thanks to Pan Shizhu for providing all debug codes:
+
+" ------------------------------
+function! s:netlog_python_init()
+" ------------------------------
+:sil!python << PYTHON
+import vim, sys, socket
+BUFSIZE = 1024
+def udpslice(sendfunc, data, addr):
+    senddata = data
+    while len(senddata) >= BUFSIZE:
+        sendfunc(senddata[0:BUFSIZE], addr)
+        senddata = senddata[BUFSIZE:]
+    if senddata[-1:] == "\n":
+        sendfunc(senddata, addr)
+    else:
+        sendfunc(senddata+"\n", addr)
+def udpsend(data):
+    addr = "localhost" , 10007
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(1)
+    try:
+        s.bind(('', 0))
+    except Exception, inst:
+        s.close()
+        return None
+    ret = ""
+    for item in data.split("\n"):
+        if item == "":
+            continue
+        udpslice(s.sendto, item, addr)
+    s.close()
+def netlog(*args):
+    data = " ".join(args)
+    udpsend(data)
+PYTHON
+endfunction
+
+" -------------------
+function! Netlog(...)
+" -------------------
+:sil!python << PYTHON
+try:
+    udpsend(vim.eval("join(a:000)"))
+except vim.error:
+    print("vim error: %s" % vim.error)
+PYTHON
+endfunction
+
+" call s:netlog_python_init()
+" call Netlog('Netlog started at', strftime('%c'))
+" command! -nargs=+ Netlog call Netlog(<q-args>)
+
+" Questions:
+" Can we merge above two function into one?
+" Can we remove :command Netlog ...?
+" Can we use something like I used to send email, to be consistent?
+" [usage] :call g:vimim_gmail()
+
+
+" ============================================= }}}
 let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " =================================================
 " Thanks to frederick.zou for providing codes on this section:
