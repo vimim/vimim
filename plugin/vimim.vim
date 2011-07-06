@@ -5179,9 +5179,6 @@ function! s:vimim_i_setting_on()
     set smartcase
     if &pumheight < 1 || &pumheight > 10
         let &pumheight = len(s:abcd)
-        if s:has_cjk_file > 0
-            let &pumheight -= 1
-        endif
         let s:pumheight1 = &pumheight
     endif
     if s:vimim_custom_label > 0
