@@ -569,13 +569,17 @@ function! s:vimim_egg_vimimenv()
         let option .= ":let g:vimim_mycloud='".s:vimim_mycloud."'"
         call add(eggs, option)
     endif
-    call s:vimim_check_http_executable()
-    if !empty(s:http_executable)
+    let http_executable = s:vimim_check_http_executable()
+    if !empty(http_executable)
         let tool  = s:vimim_chinese('tool') . s:colon
-        let option = tool . "HTTP executable: " . s:http_executable
+        let option = tool . "HTTP executable: " . http_executable
         call add(eggs, option)
-        if s:http_executable =~ 'Python3' && has('python')
-            let http_executable = substitute(s:http_executable,3,2,'')
+        if http_executable =~ 'Python'
+            if http_executable =~ 'Python3' && has('python')
+                let http_executable = substitute(http_executable,3,2,'')
+            elseif http_executable =~ 'Python2' && has('python3')
+                let http_executable = substitute(http_executable,2,3,'')
+            endif
             let option = tool . "HTTP executable: " . http_executable
             call add(eggs, option)
         endif
@@ -4455,10 +4459,10 @@ function! s:vimim_check_http_executable()
     endif
     " step 1 of 4: try to use dynamic python: +python/dyn +python3/dyn
     if empty(s:http_executable)
-        if has('python3')
-            let s:http_executable = 'Python3 Interface to Vim'
-        elseif has('python')
+        if has('python')
             let s:http_executable = 'Python2 Interface to Vim'
+        elseif has('python3')
+            let s:http_executable = 'Python3 Interface to Vim'
         endif
     endif
     " step 2 of 4: try to find libvimim for mycloud
