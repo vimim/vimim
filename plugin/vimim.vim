@@ -284,7 +284,6 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let s:frontends = []
     let s:im_toggle = 0
-    let s:debug_loaded_once = 0
     let s:backend_loaded_once = 0
     let s:pumheight0 = &pumheight
     let s:pumheight1 = &pumheight
@@ -1864,7 +1863,6 @@ except vim.error:
 EOF
 endfunction
 
-
 " ------------------------------
 function! s:netlog_python_init()
 " ------------------------------
@@ -1909,9 +1907,11 @@ function! s:debug(...)
 " [client] :call s:debug('Netlog started at', strftime('%c'))
 if s:vimim_debug < 1 || has('python') < 1
     return
-elseif empty(s:debug_loaded_once)
+endif
+if s:vimim_debug < 10
     call s:netlog_python_init()
-    let s:debug_loaded_once = 1
+    let s:vimim_debug = s:vimim_debug * 10
+    return
 endif
 :sil!python << EOF
 import vim
