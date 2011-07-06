@@ -1905,7 +1905,7 @@ endfunction
 " --------------------
 function! s:debug(...)
 " --------------------
-" [server] ~/vim/vimfiles/plugin/python vimim.py
+" [server] python ~/vim/vimfiles/plugin/logserver.py
 " [client] :call s:debug('Netlog started at', strftime('%c'))
 if s:vimim_debug < 1 || has('python') < 1
     return
