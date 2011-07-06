@@ -4534,7 +4534,6 @@ function! s:vimim_get_from_http(input, cloud)
     catch
         call s:debug('cloud::', output ." ". v:exception)
     endtry
-        call s:debug('outtype::', output ."=". output ."==". type(output) )
     return output
 endfunction
 
