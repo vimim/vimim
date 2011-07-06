@@ -172,7 +172,7 @@ function! s:vimim_chinese(english)
         let chinese = get(s:chinese[key], 0)
         if s:encoding !~ "chinese"
         \&& len(s:chinese[key]) > 1
-        \&& s:vimim_debug < 1
+        \&& s:vimim_hjkl_directory !~ 'xma'
             let chinese = get(s:chinese[key], 1)
         endif
     endif
@@ -282,9 +282,9 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     call s:vimim_set_global_default(G, 1)
     " -----------------------------------
-    let g:vimim = []
     let s:frontends = []
     let s:im_toggle = 0
+    let s:debug_loaded_once = 0
     let s:backend_loaded_once = 0
     let s:pumheight0 = &pumheight
     let s:pumheight1 = &pumheight
@@ -320,20 +320,9 @@ function! s:vimim_set_global_default(options, default)
     endfor
 endfunction
 
-" ----------------------------
-function! s:debugs(key, value)
-" ----------------------------
-    if s:vimim_debug > 0
-        let item  = a:key
-        let item .= ' = '
-        let item .= a:value
-        call add(g:vimim, item)
-    endif
-endfunction
-
-" ----------------------------------
-function! s:vimim_initialize_debug()
-" ----------------------------------
+" ---------------------------------
+function! s:vimim_initialize_self()
+" ---------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
         let g:vimim_cloud = 'google,baidu,sogou,qq'
@@ -343,7 +332,7 @@ function! s:vimim_initialize_debug()
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
-        let g:vimim_debug = 2
+        let g:vimim_debug = 1
     endif
 endfunction
 
@@ -434,7 +423,7 @@ function! s:vimim_easter_chicken(keyboard)
         try
             return eval("s:vimim_egg_" . a:keyboard . "()")
         catch
-            call s:debugs('egg::', v:exception)
+            call s:debug('egg::', v:exception)
         endtry
     endif
     return []
@@ -1742,14 +1731,14 @@ try:
     urlopen = urllib.request.urlopen(url)
     response = urlopen.read()
     if cloud != 'baidu':
-        res = "'" + str(response.decode('utf-8')) + "'"
+        res = str(response.decode('utf-8'))
     else:
         if vim.eval("&encoding") != 'utf-8':
             res = str(response)[2:-1]
         else:
             res = response.decode('gbk')
         vim.command("let g:baidu = %s" % res)
-    vim.command("return %s" % res)
+    vim.command("return '%s'" % res)
     urlopen.close()
 except vim.error:
     print("vim error: %s" % vim.error)
@@ -1870,6 +1859,64 @@ try:
     cmd  = vim.eval("a:cmd")
     ret = parsefunc(cmd, HOST, PORT)
     vim.command('return "%s"' % ret)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+endfunction
+
+
+" ------------------------------
+function! s:netlog_python_init()
+" ------------------------------
+" Thanks to Pan Shizhu for all codes of mycloud and debug.
+:sil!python << EOF
+import sys, socket
+BUFSIZE = 1024
+def udpslice(sendfunc, data, addr):
+    senddata = data
+    while len(senddata) >= BUFSIZE:
+        sendfunc(senddata[0:BUFSIZE], addr)
+        senddata = senddata[BUFSIZE:]
+    if senddata[-1:] == "\n":
+        sendfunc(senddata, addr)
+    else:
+        sendfunc(senddata+"\n", addr)
+def udpsend(data):
+    addr = "localhost", 10007
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(1)
+    try:
+        s.bind(('', 0))
+    except Exception, inst:
+        s.close()
+        return None
+    ret = ""
+    for item in data.split("\n"):
+        if item == "":
+            continue
+        udpslice(s.sendto, item, addr)
+    s.close()
+def netlog(*args):
+    data = " ".join(args)
+    udpsend(data)
+EOF
+endfunction
+
+" --------------------
+function! s:debug(...)
+" --------------------
+" [server] ~/vim/vimfiles/plugin/python vimim.py
+" [client] :call s:debug('Netlog started at', strftime('%c'))
+if s:vimim_debug < 1 || has('python') < 1
+    return
+elseif empty(s:debug_loaded_once)
+    call s:netlog_python_init()
+    let s:debug_loaded_once = 1
+endif
+:sil!python << EOF
+import vim
+try:
+    udpsend(vim.eval("join(a:000)"))
 except vim.error:
     print("vim error: %s" % vim.error)
 EOF
@@ -2748,69 +2795,6 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  debug framework   ==== {{{"]
-" =================================================
-" Thanks to Pan Shizhu for providing all debug codes:
-
-" ------------------------------
-function! s:netlog_python_init()
-" ------------------------------
-:sil!python << PYTHON
-import vim, sys, socket
-BUFSIZE = 1024
-def udpslice(sendfunc, data, addr):
-    senddata = data
-    while len(senddata) >= BUFSIZE:
-        sendfunc(senddata[0:BUFSIZE], addr)
-        senddata = senddata[BUFSIZE:]
-    if senddata[-1:] == "\n":
-        sendfunc(senddata, addr)
-    else:
-        sendfunc(senddata+"\n", addr)
-def udpsend(data):
-    addr = "localhost" , 10007
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(1)
-    try:
-        s.bind(('', 0))
-    except Exception, inst:
-        s.close()
-        return None
-    ret = ""
-    for item in data.split("\n"):
-        if item == "":
-            continue
-        udpslice(s.sendto, item, addr)
-    s.close()
-def netlog(*args):
-    data = " ".join(args)
-    udpsend(data)
-PYTHON
-endfunction
-
-" -------------------
-function! Netlog(...)
-" -------------------
-:sil!python << PYTHON
-try:
-    udpsend(vim.eval("join(a:000)"))
-except vim.error:
-    print("vim error: %s" % vim.error)
-PYTHON
-endfunction
-
-" call s:netlog_python_init()
-" call Netlog('Netlog started at', strftime('%c'))
-" command! -nargs=+ Netlog call Netlog(<q-args>)
-
-" Questions:
-" Can we merge above two function into one?
-" Can we remove :command Netlog ...?
-" Can we use something like I used to send email, to be consistent?
-" [usage] :call g:vimim_gmail()
-
-
-" ============================================= }}}
 let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " =================================================
 " Thanks to frederick.zou for providing codes on this section:
@@ -2847,7 +2831,7 @@ endfunction
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
-    if s:vimim_debug > 1
+    if s:vimim_hjkl_directory =~ 'xma'
         return
     endif
     if !exists('s:acp_sid')
@@ -2876,7 +2860,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_plugins_fix_stop()
 " ----------------------------------
-    if s:vimim_debug > 1
+    if s:vimim_hjkl_directory =~ 'xma'
         return
     endif
     if !empty(s:acp_sid)
@@ -3947,7 +3931,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if len(s:vimim_mycloud) > 1 || s:vimim_debug > 1
+    if len(s:vimim_mycloud) > 1 || s:vimim_hjkl_directory =~ 'xma'
         return
     endif
     for im in s:all_vimim_input_methods
@@ -4511,7 +4495,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     try
         let results = eval(get_cloud)
     catch
-        call s:debugs('get_cloud::' . cloud . '::', v:exception)
+        call s:debug('get_cloud::' . cloud . '::', v:exception)
     endtry
     if (len(results)) > 1
         let s:cloud_cache[cloud][keyboard] = results
@@ -4528,13 +4512,13 @@ endfunction
 function! s:vimim_get_from_http(input, cloud)
 " -------------------------------------------
     let input = a:input
-    let output = 0
+    let output = ""
     if empty(input)
-        return 0
+        return ""
     endif
     if empty(s:http_executable)
         if empty(s:vimim_check_http_executable())
-            return 0
+            return ""
         endif
     endif
     try
@@ -4548,9 +4532,9 @@ function! s:vimim_get_from_http(input, cloud)
             let output = system(s:http_executable . '"'.input.'"')
         endif
     catch
-        call s:debugs('cloud::', output ." ". v:exception)
-        let output = 0
+        call s:debug('cloud::', output ." ". v:exception)
     endtry
+        call s:debug('outtype::', output ."=". output ."==". type(output) )
     return output
 endfunction
 
@@ -4938,7 +4922,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
                     return cloud
                 endif
             catch
-                call s:debugs('libcall_mycloud2::error=',v:exception)
+                call s:debug('libcall_mycloud2::error=',v:exception)
             endtry
         endif
     endif
@@ -4970,7 +4954,7 @@ function! s:vimim_check_mycloud_plugin_url()
     let part = split(s:vimim_mycloud, ':')
     let lenpart = len(part)
     if lenpart <= 1
-        call s:debugs("invalid_cloud_plugin_url::","")
+        call s:debug("invalid_cloud_plugin_url::","")
     elseif part[0] ==# 'app'
         if !has("gui_win32")
             " strip the first root if contains ":"
@@ -5014,7 +4998,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return "python"
                 endif
             catch
-                call s:debugs('python_mycloud1::', v:exception)
+                call s:debug('python_mycloud1::', v:exception)
             endtry
         endif
     elseif part[0] ==# 'py3'
@@ -5057,7 +5041,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return cloud
                 endif
             catch
-                call s:debugs('libcall_mycloud1::', v:exception)
+                call s:debug('libcall_mycloud1::', v:exception)
             endtry
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
@@ -5072,7 +5056,7 @@ function! s:vimim_check_mycloud_plugin_url()
             endif
         endif
     else
-        call s:debugs("invalid_cloud_plugin_url::","")
+        call s:debug("invalid_cloud_plugin_url::","")
     endif
     return 0
 endfunction
@@ -5087,7 +5071,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     try
         let output = s:vimim_access_mycloud(s:mycloud, a:keyboard)
     catch
-        call s:debugs('mycloud::',v:exception)
+        call s:debug('mycloud::',v:exception)
     endtry
     if empty(output)
         return []
@@ -5594,7 +5578,7 @@ function! s:vimim_initialize_plugin()
     endif
 endfunction
 
-sil!call s:vimim_initialize_debug()
+sil!call s:vimim_initialize_self()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
 sil!call s:vimim_for_mom_and_dad()
