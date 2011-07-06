@@ -1886,8 +1886,8 @@ def udpslice(sendfunc, data, addr):
         sendfunc(senddata, addr)
     else:
         sendfunc(senddata+"\n", addr)
-def udpsend(data):
-    addr = "localhost", 10007
+def udpsend(data, host, port):
+    addr = host, port
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.settimeout(1)
     try:
@@ -1947,7 +1947,7 @@ endif
 try:
     level = vim.eval("a:1")
     if checkmask(level):
-        udpsend(vim.eval("join(a:000)"))
+        udpsend(vim.eval("join(a:000)"),"localhost",10007)
 except vim.error:
     print("vim error: %s" % vim.error)
 EOF
