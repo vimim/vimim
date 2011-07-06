@@ -1704,9 +1704,6 @@ import vim, urllib2
 try:
     cloud = vim.eval('a:cloud')
     url = vim.eval('a:url')
-    # proxy = urllib2.ProxyHandler({'http': '127.0.0.1:8000'})
-    # opener = urllib2.build_opener(proxy)
-    # urllib2.install_opener(opener)
     urlopen = urllib2.urlopen(url, None, 20)
     response = urlopen.read()
     res = "'" + str(response) + "'"
@@ -1733,8 +1730,7 @@ endfunction
 function! s:vimim_get_from_python3(url, cloud)
 " --------------------------------------------
 :sil!python3 << EOF
-import vim
-import urllib.request
+import vim, urllib.request
 try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
@@ -1878,7 +1874,7 @@ endfunction
 " ------------------------------
 function! s:netlog_python_init()
 " ------------------------------
-:sil!python << PYTHON
+:sil!python << EOF
 import vim, sys, socket
 BUFSIZE = 1024
 def udpslice(sendfunc, data, addr):
@@ -1931,18 +1927,18 @@ g_level = {'emerg':0,     # system is unusable
            'info':6,      # informational
            'debug':7 }    # debug-level messages
 g_mask = log_upto('info')
-PYTHON
+EOF
 endfunction
 
 " -----------------------
 function! s:setmask(mask)
 " -----------------------
 " [usage] call s:setmask('err,info,debug')
-:sil!python << PYTHON
+:sil!python << EOF
 g_mask = 0
 for item in vim.eval("a:mask").split(","):
     g_mask |= log_mask(item)
-PYTHON
+EOF
 endfunction
 
 " --------------------
