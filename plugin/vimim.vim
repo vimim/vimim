@@ -332,6 +332,7 @@ function! s:vimim_initialize_self()
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
         let g:vimim_debug = 1
+      " let g:vimim_mycloud = 'py:127.0.0.1'
     endif
 endfunction
 
@@ -564,15 +565,20 @@ function! s:vimim_egg_vimimenv()
     endif
     if len(s:vimim_mycloud) > 1
         let option  = s:vimim_chinese('online') . s:colon
-        let option .= s:vimim_chinese('mycloud'). s:space . s:space
+        let option .= s:vimim_chinese('mycloud'). s:space
         let option .= ':let g:vimim_mycloud="'.s:vimim_mycloud.'"'
         call add(eggs, option)
     endif
     call s:vimim_check_http_executable()
     if !empty(s:http_executable)
-        let option  = s:vimim_chinese('tool') . s:colon
-        let option .= "HTTP executable: " . s:http_executable
+        let tool  = s:vimim_chinese('tool') . s:colon
+        let option = tool . "HTTP executable: " . s:http_executable
         call add(eggs, option)
+        if s:http_executable =~ 'Python3' && has('python')
+            let http_executable = substitute(s:http_executable,3,2,'')
+            let option = tool . "HTTP executable: " . http_executable
+            call add(eggs, option)
+        endif
     endif
     call map(eggs, 'v:val . " "')
     return eggs
@@ -4407,7 +4413,7 @@ endfunction
 " ---------------------------------------
 function! s:vimim_check_http_executable()
 " ---------------------------------------
-    if s:vimim_cloud < 0
+    if s:vimim_cloud < 0 && len(s:vimim_mycloud) < 2
         return 0
     elseif len(s:http_executable) > 1
         return 1
