@@ -3046,10 +3046,11 @@ endfunction
 " --------------------------
 function! s:vimim_label_on()
 " --------------------------
-    let labels = range(1, s:horizontal_display)
     if s:vimim_custom_label < 0
         return
-    elseif s:vimim_custom_label > 0
+    endif
+    let labels = range(1, s:horizontal_display)
+    if s:vimim_custom_label > 0
         let s:abcd = join(labels, '')
     else
         let labels = range(1, len(s:abcd))
