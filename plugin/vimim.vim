@@ -423,7 +423,7 @@ function! s:vimim_easter_chicken(keyboard)
         try
             return eval("s:vimim_egg_" . a:keyboard . "()")
         catch
-            call s:debug('egg::', v:exception)
+            call s:debug('err', 'egg::', v:exception)
         endtry
     endif
     return []
@@ -1729,21 +1729,22 @@ endfunction
 function! s:vimim_get_from_python3(url, cloud)
 " --------------------------------------------
 :sil!python3 << EOF
-import vim, urllib.request
+import vim
+import urllib.request
 try:
     cloud = vim.eval("a:cloud")
     url = vim.eval("a:url")
     urlopen = urllib.request.urlopen(url)
     response = urlopen.read()
     if cloud != 'baidu':
-        res = str(response.decode('utf-8'))
+        res = "'" + str(response.decode('utf-8')) + "'"
     else:
         if vim.eval("&encoding") != 'utf-8':
             res = str(response)[2:-1]
         else:
             res = response.decode('gbk')
         vim.command("let g:baidu = %s" % res)
-    vim.command("return '%s'" % res)
+    vim.command("return %s" % res)
     urlopen.close()
 except vim.error:
     print("vim error: %s" % vim.error)
@@ -1857,6 +1858,7 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
 " ------------------------------------------------------
+" Thanks to Pan Shizhu for all codes of mycloud and debug
 :sil!python << EOF
 try:
     HOST = vim.eval("a:host")
@@ -1872,9 +1874,8 @@ endfunction
 " ------------------------------
 function! s:netlog_python_init()
 " ------------------------------
-" Thanks to Pan Shizhu for all codes of mycloud and debug.
-:sil!python << EOF
-import sys, socket
+:sil!python << PYTHON
+import vim, sys, socket
 BUFSIZE = 1024
 def udpslice(sendfunc, data, addr):
     senddata = data
@@ -1903,14 +1904,37 @@ def udpsend(data):
 def netlog(*args):
     data = " ".join(args)
     udpsend(data)
-EOF
+def log_mask(level):
+    pri = g_level.get(level, -1)
+    if pri < 0:
+        return 0
+    else:
+        return 1 << pri
+def log_upto(level):
+    pri = g_level.get(level, -1)
+    return (1 <<(pri+1) ) - 1
+def checkmask(level):
+    if log_mask(level) & g_mask:
+        return True
+    else:
+        return False
+g_level = {'emerg':0,     # system is unusable
+           'alert':1,     # action must be taken immediately
+           'crit':2,      # critical conditions
+           'err':3,       # error conditions
+           'warning':4,   # warning conditions
+           'notice':5,    # normal but significant condition
+           'info':6,      # informational
+           'debug':7 }    # debug-level messages
+g_mask = log_upto('info')
+PYTHON
 endfunction
 
 " --------------------
 function! s:debug(...)
 " --------------------
 " [server] python ~/vim/vimfiles/plugin/logserver.py
-" [client] :call s:debug('Netlog started at', strftime('%c'))
+" [client] :call s:debug('info', 'foo/bar is', foobar, 'and', bar)
 if s:vimim_debug < 1 || has('python') < 1
     return
 endif
@@ -1920,9 +1944,10 @@ if s:vimim_debug < 10
     return
 endif
 :sil!python << EOF
-import vim
 try:
-    udpsend(vim.eval("join(a:000)"))
+    level = vim.eval("a:1")
+    if checkmask(level):
+        udpsend(vim.eval("join(a:000)"))
 except vim.error:
     print("vim error: %s" % vim.error)
 EOF
@@ -4501,7 +4526,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     try
         let results = eval(get_cloud)
     catch
-        call s:debug('get_cloud::' . cloud . '::', v:exception)
+        call s:debug('alert', 'get_cloud::' . cloud . '::', v:exception)
     endtry
     if (len(results)) > 1
         let s:cloud_cache[cloud][keyboard] = results
@@ -4538,7 +4563,7 @@ function! s:vimim_get_from_http(input, cloud)
             let output = system(s:http_executable . '"'.input.'"')
         endif
     catch
-        call s:debug('cloud::', output ." ". v:exception)
+        call s:debug('alert', 'cloud::', output ." ". v:exception)
     endtry
     return output
 endfunction
@@ -4781,6 +4806,7 @@ function! s:vimim_get_cloud_all(keyboard)
             call add(results, join(outputs[0:-2]))
         endif
     endfor
+    :call s:debug('info', 'cloud_results=', results)
     return results
 endfunction
 
@@ -4927,7 +4953,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
                     return cloud
                 endif
             catch
-                call s:debug('libcall_mycloud2::error=',v:exception)
+                call s:debug('alert', 'libcall_mycloud2=',v:exception)
             endtry
         endif
     endif
@@ -4959,7 +4985,7 @@ function! s:vimim_check_mycloud_plugin_url()
     let part = split(s:vimim_mycloud, ':')
     let lenpart = len(part)
     if lenpart <= 1
-        call s:debug("invalid_cloud_plugin_url::","")
+        call s:debug('info', "invalid_cloud_plugin_url")
     elseif part[0] ==# 'app'
         if !has("gui_win32")
             " strip the first root if contains ":"
@@ -5003,7 +5029,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return "python"
                 endif
             catch
-                call s:debug('python_mycloud1::', v:exception)
+                call s:debug('alert', 'python_mycloud::', v:exception)
             endtry
         endif
     elseif part[0] ==# 'py3'
@@ -5046,7 +5072,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return cloud
                 endif
             catch
-                call s:debug('libcall_mycloud1::', v:exception)
+                call s:debug('alert', 'libcall_mycloud::', v:exception)
             endtry
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
@@ -5061,7 +5087,7 @@ function! s:vimim_check_mycloud_plugin_url()
             endif
         endif
     else
-        call s:debug("invalid_cloud_plugin_url::","")
+        call s:debug('alert', "invalid_cloud_plugin_url")
     endif
     return 0
 endfunction
@@ -5076,7 +5102,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     try
         let output = s:vimim_access_mycloud(s:mycloud, a:keyboard)
     catch
-        call s:debug('mycloud::',v:exception)
+        call s:debug('alert', 'mycloud::',v:exception)
     endtry
     if empty(output)
         return []
