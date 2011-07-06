@@ -560,13 +560,13 @@ function! s:vimim_egg_vimimenv()
         let option  = s:vimim_chinese('online') . s:colon
         let option .= s:vimim_chinese(s:cloud_default)
         let option .= s:vimim_chinese('cloud') . input . s:space
-        let option .= ':let g:vimim_cloud="' . s:vimim_cloud.'"'
+        let option .= ":let g:vimim_cloud='" . s:vimim_cloud."'"
         call add(eggs, option)
     endif
     if len(s:vimim_mycloud) > 1
         let option  = s:vimim_chinese('online') . s:colon
         let option .= s:vimim_chinese('mycloud'). s:space
-        let option .= ':let g:vimim_mycloud="'.s:vimim_mycloud.'"'
+        let option .= ":let g:vimim_mycloud='".s:vimim_mycloud."'"
         call add(eggs, option)
     endif
     call s:vimim_check_http_executable()
