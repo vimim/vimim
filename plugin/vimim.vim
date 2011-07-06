@@ -1930,6 +1930,17 @@ g_mask = log_upto('info')
 PYTHON
 endfunction
 
+" -----------------------
+function! s:setmask(mask)
+" -----------------------
+" [usage] call s:setmask('err,info,debug')
+:sil!python << PYTHON
+g_mask = 0
+for item in vim.eval("a:mask").split(","):
+    g_mask |= log_mask(item)
+PYTHON
+endfunction
+
 " --------------------
 function! s:debug(...)
 " --------------------
@@ -1938,9 +1949,11 @@ function! s:debug(...)
 if s:vimim_debug < 1 || has('python') < 1
     return
 endif
-if s:vimim_debug < 10
+if s:vimim_debug < 2
     call s:netlog_python_init()
-    let s:vimim_debug = s:vimim_debug * 10
+    let s:vimim_debug += 1
+endif
+if s:vimim_debug < 2
     return
 endif
 :sil!python << EOF
