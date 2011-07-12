@@ -1765,28 +1765,30 @@ def vimim_gmail():
     gmails = vim.eval('g:gmails')
     vim.command('sil!unlet g:gmails.cc')
     vim.command('sil!unlet g:gmails.bcc')
+    now = datetime.datetime.now().strftime("%A %m/%d/%Y")
     gmail_login  = gmails.get("login","")
+    if len(gmail_login) < 8:
+        return None
     gmail_passwd = gmails.get("passwd")
     gmail_to     = gmails.get("to")
     gmail_cc     = gmails.get("cc","")
     gmail_bcc    = gmails.get("bcc","")
     gmail_msg    = gmails.get("msg")
     gamil_all = [gmail_to] + gmail_cc.split() + gmail_bcc.split()
-    if len(gmail_login) > 8:
-        msg = str("\n".join(gmail_msg))
-        rfc2822 = email.mime.text.MIMEText(msg, 'plain', 'utf-8')
-        rfc2822['From'] = gmail_login
-        rfc2822['To'] = gmail_to
-        rfc2822['Cc'] = gmail_cc
-        rfc2822['Subject'] =  datetime.datetime.now().strftime("%A %m/%d/%Y")
-        rfc2822.set_charset('utf-8')
-        try:
-            gmail = smtplib.SMTP('smtp.gmail.com', 587, 120)
-            gmail.starttls()
-            gmail.login(gmail_login, gmail_passwd[::-1])
-            gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
-        finally:
-            gmail.close()
+    msg = str("\n".join(gmail_msg))
+    rfc2822 = email.mime.text.MIMEText(msg, 'plain', 'utf-8')
+    rfc2822['From'] = gmail_login
+    rfc2822['To'] = gmail_to
+    rfc2822['Cc'] = gmail_cc
+    rfc2822['Subject'] = now
+    rfc2822.set_charset('utf-8')
+    try:
+        gmail = smtplib.SMTP('smtp.gmail.com', 587, 120)
+        gmail.starttls()
+        gmail.login(gmail_login, gmail_passwd[::-1])
+        gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
+    finally:
+        gmail.close()
 vimim_gmail()
 EOF
 endfunction
