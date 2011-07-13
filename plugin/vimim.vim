@@ -1693,7 +1693,25 @@ function! s:vimim_get_from_python(input, datafile)
 python << EOF
 import vim
 datafile = vim.eval('a:datafile')
-def local_load():
+# try:
+#     import cPickle as pickle
+# except:
+#     import pickle
+# def save_to_file(ob, fname):
+#     file = open(fname, 'wb')
+#     cPickle.dump(ob, file, cPickle.HIGHEST_PROTOCOL)
+#     file.close
+# def load_from_file(fname):
+#     try:
+#         file = open(fname, "rb")
+#         p = cPickle.load(file)
+#         file.close()
+#     except Exception:
+#         p = {}
+#     return p
+# let s:quanpin_table = s:vimim_create_quanpin_table()
+# save_to_file(s:quanpin_table, '/tmp/pinyin_table.p')
+def load_local_ciku():
     ciku = {}
     try:
         file = open(datafile)
@@ -1705,15 +1723,21 @@ def local_load():
         print("vim error: %s" % vim.error)
     finally:
         file.close()
+    # pickle_open = open(datafile, 'wb')
+    # pickle.dump(ciku, pickle_open)
     return ciku
-if int(vim.eval('s:backend_loaded_python')) < 1:
-    dictionary = local_load()
-key = vim.eval('a:input')
-res = dictionary.get(key)
-vim.command("return '%s'" % res)
+backend_loaded_python = int(vim.eval('s:backend_loaded_python'))
+if backend_loaded_python == 1:
+    dictionary = load_local_ciku()
+# elif backend_loaded_python == 2:
+#     pickle_open = open(datafile, 'rb')
+#     dictionary = pickle.load(pickle_open)
+if backend_loaded_python > 0:
+    key = vim.eval('a:input')
+    res = dictionary.get(key)
+    vim.command("return '%s'" % res)
 EOF
 endfunction
-
 " ----------------------------------------------
 function! s:vimim_get_from_python2(input, cloud)
 " ----------------------------------------------
@@ -5520,12 +5544,15 @@ else
     endif
 
     " [backend] python embedded backend engine " todo
+    " [test] quanpin.txt:     40MB 1,337,192 lines RAM=140MB
+    " [test] quanpin.pickle: 145MB
+    let datafile = '/home/vimim/svn/mycloud/server/quanpin.pickle'
     let datafile = '/home/vimim/svn/mycloud/server/quanpin.txt'
-    " [test] 1,337,192 lines 40MB  RAM=140MB
     if filereadable(datafile)
+        let s:backend_loaded_python = 1
         let results = split(s:vimim_get_from_python(keyboard,datafile))
         if !empty(results) && get(results,0) != 'None'
-            let s:backend_loaded_python = 1
+            let s:backend_loaded_python = 2
             return s:vimim_popupmenu_list(results)
         endif
     endif
