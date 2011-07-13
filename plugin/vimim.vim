@@ -1692,12 +1692,12 @@ function! s:vimim_get_from_python(input)
 " --------------------------------------
 python << EOF
 import vim
-def load_pinyin():
+def load_pinyin_into_python():
     ciku = {}
     try:
         file = open(vim.eval('s:vimim_pinyin'))
         for line in file:
-            items = line.split(" ")
+            items = line.split()
             ciku[items[0]] = " ".join(items[1:])
     except vim.error:
         print("vim error: %s" % vim.error)
@@ -1706,10 +1706,10 @@ def load_pinyin():
     return ciku
 vimim_pinyin_loaded = int(vim.eval('s:vimim_pinyin_loaded'))
 if vimim_pinyin_loaded == 1:
-    dictionary = load_pinyin()
+   dictionary = load_pinyin_into_python()
 if vimim_pinyin_loaded > 0:
     key = vim.eval('a:input')
-    res = dictionary.get(key)
+    res = dictionary.get(key, None)
     vim.command("return '%s'" % res)
 EOF
 endfunction
@@ -5521,7 +5521,7 @@ else
 
     " [backend] python embedded backend engine
     if !empty(s:vimim_pinyin) && filereadable(s:vimim_pinyin)
-        if !exists("s:vimim_pinyin_loaded") 
+        if !exists('s:vimim_pinyin_loaded') 
             let s:vimim_pinyin_loaded = 1
         endif
         let results = split(s:vimim_get_from_python(keyboard))
