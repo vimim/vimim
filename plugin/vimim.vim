@@ -1686,15 +1686,39 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 "" :py vim.command("source %s " % vimim)
 "" " -----------------------------------------------
 
-" --------------------------------------------
-function! s:vimim_get_from_python2(url, cloud)
-" --------------------------------------------
+" ------------------------------------------------
+function! s:vimim_get_from_python(input, datafile)
+" ------------------------------------------------ todo
+python << EOF
+import vim
+datafile = vim.eval('a:datafile')
+def local_load():
+    ciku = {}
+    try:
+        f = open(datafile)
+        for line in f:
+            items = line.split(" ")
+            key = items[0]
+            ciku[key] = " ".join(items[1:])
+    except vim.error:
+        print("vim error: %s" % vim.error)
+    return ciku
+dictionary = local_load()
+key = vim.eval('a:input')
+res = dictionary.get(key)
+vim.command("return '%s'" % res)
+EOF
+endfunction
+
+" ----------------------------------------------
+function! s:vimim_get_from_python2(input, cloud)
+" ----------------------------------------------
 :sil!python << EOF
 import vim, urllib2
 try:
     cloud = vim.eval('a:cloud')
-    url = vim.eval('a:url')
-    urlopen = urllib2.urlopen(url, None, 20)
+    input = vim.eval('a:input')
+    urlopen = urllib2.urlopen(input, None, 20)
     response = urlopen.read()
     res = "'" + str(response) + "'"
     if cloud == 'qq':
@@ -1716,15 +1740,15 @@ except vim.error:
 EOF
 endfunction
 
-" --------------------------------------------
-function! s:vimim_get_from_python3(url, cloud)
-" --------------------------------------------
+" ----------------------------------------------
+function! s:vimim_get_from_python3(input, cloud)
+" ----------------------------------------------
 :sil!python3 << EOF
 import vim, urllib.request
 try:
     cloud = vim.eval("a:cloud")
-    url = vim.eval("a:url")
-    urlopen = urllib.request.urlopen(url)
+    input = vim.eval("a:input")
+    urlopen = urllib.request.urlopen(input)
     response = urlopen.read()
     if cloud != 'baidu':
         res = "'" + str(response.decode('utf-8')) + "'"
@@ -5488,6 +5512,15 @@ else
         if s:ui.im =~ 'erbi' && len(keyboard) == 1
         \&& keyboard =~ "[.,/;]" && has_key(s:punctuations, keyboard)
             return [s:punctuations[keyboard]]
+        endif
+    endif
+
+    " [backend] python embedded backend engine " todo
+    let datafile = '/home/vimim/svn/mycloud/server/quanpin.txt'
+    if filereadable(datafile)
+        let results = split(s:vimim_get_from_python(keyboard,datafile))
+        if !empty(results)
+            return s:vimim_popupmenu_list(results)
         endif
     endif
 
