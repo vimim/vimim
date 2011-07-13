@@ -1692,24 +1692,19 @@ function! s:vimim_get_from_python(input)
 " --------------------------------------
 python << EOF
 import vim
+dictionary = {}
+def get_pair(line):
+    key, sep, value = line.strip().partition(" ")
+    return key, value
 def load_pinyin_into_python():
-    ciku = {}
-    try:
-        file = open(vim.eval('s:vimim_pinyin'))
-        for line in file:
-            items = line.split()
-            ciku[items[0]] = " ".join(items[1:])
-    except vim.error:
-        print("vim error: %s" % vim.error)
-    finally:
-        file.close()
-    return ciku
+    global dictionary
+    with open(vim.eval('s:vimim_pinyin'),"r") as file:    
+        dictionary = dict(get_pair(line) for line in file)
 vimim_pinyin_loaded = int(vim.eval('s:vimim_pinyin_loaded'))
 if vimim_pinyin_loaded == 1:
-   dictionary = load_pinyin_into_python()
+    load_pinyin_into_python()
 if vimim_pinyin_loaded > 0:
-    key = vim.eval('a:input')
-    res = dictionary.get(key, None)
+    res = dictionary.get(vim.eval('a:input'), None)
     vim.command("return '%s'" % res)
 EOF
 endfunction
