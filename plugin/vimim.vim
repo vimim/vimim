@@ -325,7 +325,7 @@ function! s:vimim_initialize_self()
 " ---------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
-        let g:vimim_pinyin = '/home/vimim/svn/mycloud/server/quanpin.txt'
+        let g:vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
       " let g:vimim_mycloud = 'py:127.0.0.1'
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
@@ -5517,7 +5517,7 @@ else
         " [backend] python embedded backend engine
         let results = split(s:vimim_get_from_python(keyboard))
         if !empty(results)
-            if get(results,0) == 'None'
+            if get(results,0) =~ 'None'
                 let results = []
             else
                 let s:vimim_pinyin_loaded = 1
