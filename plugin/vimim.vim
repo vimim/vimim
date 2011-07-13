@@ -285,6 +285,7 @@ function! s:vimim_initialize_global()
     let s:frontends = []
     let s:im_toggle = 0
     let s:backend_loaded_once = 0
+    let s:backend_loaded_python = 0
     let s:pumheight0 = &pumheight
     let s:pumheight1 = &pumheight
     let s:chinese_input_mode = "onekey"
@@ -1695,15 +1696,18 @@ datafile = vim.eval('a:datafile')
 def local_load():
     ciku = {}
     try:
-        f = open(datafile)
-        for line in f:
+        file = open(datafile)
+        for line in file:
             items = line.split(" ")
             key = items[0]
             ciku[key] = " ".join(items[1:])
     except vim.error:
         print("vim error: %s" % vim.error)
+    finally:
+        file.close()
     return ciku
-dictionary = local_load()
+if int(vim.eval('s:backend_loaded_python')) < 1:
+    dictionary = local_load()
 key = vim.eval('a:input')
 res = dictionary.get(key)
 vim.command("return '%s'" % res)
@@ -5517,9 +5521,11 @@ else
 
     " [backend] python embedded backend engine " todo
     let datafile = '/home/vimim/svn/mycloud/server/quanpin.txt'
+    " [test] 1,337,192 lines 40MB  RAM=140MB
     if filereadable(datafile)
         let results = split(s:vimim_get_from_python(keyboard,datafile))
-        if !empty(results)
+        if !empty(results) && get(results,0) != 'None'
+            let s:backend_loaded_python = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
