@@ -1692,20 +1692,15 @@ function! s:vimim_get_from_python(input)
 " --------------------------------------
 python << EOF
 import vim
-dictionary = {}
-def get_pair(line):
-    key, sep, value = line.strip().partition(" ")
-    return key, value
-def load_pinyin_into_python():
-    global dictionary
+if not int(vim.eval('s:vimim_pinyin_loaded')):
+    dictionary = {}
+    def get_pair(line):
+        key, sep, value = line.strip().partition(" ")
+        return key, value
     with open(vim.eval('s:vimim_pinyin'),"r") as file:    
         dictionary = dict(get_pair(line) for line in file)
-vimim_pinyin_loaded = int(vim.eval('s:vimim_pinyin_loaded'))
-if vimim_pinyin_loaded == 1:
-    load_pinyin_into_python()
-if vimim_pinyin_loaded > 0:
-    res = dictionary.get(vim.eval('a:input'), None)
-    vim.command("return '%s'" % res)
+res = dictionary.get(vim.eval('a:input'), None)
+vim.command("return '%s'" % res)
 EOF
 endfunction
 
@@ -5517,11 +5512,11 @@ else
     " [backend] python embedded backend engine
     if !empty(s:vimim_pinyin) && filereadable(s:vimim_pinyin)
         if !exists('s:vimim_pinyin_loaded') 
-            let s:vimim_pinyin_loaded = 1
+            let s:vimim_pinyin_loaded = 0
         endif
         let results = split(s:vimim_get_from_python(keyboard))
         if !empty(results) && get(results,0) != 'None'
-            let s:vimim_pinyin_loaded = 2
+            let s:vimim_pinyin_loaded = 1
             return s:vimim_popupmenu_list(results)
         endif
     endif
