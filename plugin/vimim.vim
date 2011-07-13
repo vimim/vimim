@@ -1689,7 +1689,7 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 
 " --------------------------------------
 function! s:vimim_get_from_python(input)
-" -------------------------------------- todo
+" --------------------------------------
 python << EOF
 import vim
 def load_pinyin():
@@ -1698,8 +1698,7 @@ def load_pinyin():
         file = open(vim.eval('s:vimim_pinyin'))
         for line in file:
             items = line.split(" ")
-            key = items[0]
-            ciku[key] = " ".join(items[1:])
+            ciku[items[0]] = " ".join(items[1:])
     except vim.error:
         print("vim error: %s" % vim.error)
     finally:
