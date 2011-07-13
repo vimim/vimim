@@ -287,6 +287,7 @@ function! s:vimim_initialize_global()
     let s:im_toggle = 0
     let s:pumheight0 = &pumheight
     let s:pumheight1 = &pumheight
+    let s:vimim_pinyin_loaded = 0
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
@@ -5509,20 +5510,21 @@ else
         endif
     endif
 
-    " [backend] python embedded backend engine
-    if !empty(s:vimim_pinyin) && filereadable(s:vimim_pinyin)
-        if !exists('s:vimim_pinyin_loaded') 
-            let s:vimim_pinyin_loaded = 0
-        endif
+    if empty(s:vimim_pinyin)
+        " [backend] plug-n-play embedded backend engine
+        let results = s:vimim_embedded_backend_engine(keyboard,0)
+    elseif filereadable(s:vimim_pinyin)
+        " [backend] python embedded backend engine
         let results = split(s:vimim_get_from_python(keyboard))
-        if !empty(results) && get(results,0) != 'None'
-            let s:vimim_pinyin_loaded = 1
-            return s:vimim_popupmenu_list(results)
+        if !empty(results)
+            if get(results,0) == 'None'
+                let results = []
+            else
+                let s:vimim_pinyin_loaded = 1
+            endif
         endif
     endif
 
-    " [backend] plug-n-play embedded backend engine
-    let results = s:vimim_embedded_backend_engine(keyboard,0)
     if empty(s:english_results)
         " no english is found for the keyboard input
     else
