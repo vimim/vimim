@@ -249,6 +249,7 @@ function! s:vimim_initialize_global()
 " -----------------------------------
     let G = []
     call add(G, "g:vimim_debug")
+    call add(G, "g:vimim_pinyin")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_esc_for_correction")
     call add(G, "g:vimim_backslash_close_pinyin")
@@ -285,7 +286,7 @@ function! s:vimim_initialize_global()
     let s:frontends = []
     let s:im_toggle = 0
     let s:backend_loaded_once = 0
-    let s:backend_loaded_python = 0
+    let s:vimim_pinyin_loaded = 0
     let s:pumheight0 = &pumheight
     let s:pumheight1 = &pumheight
     let s:chinese_input_mode = "onekey"
@@ -325,6 +326,8 @@ function! s:vimim_initialize_self()
 " ---------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
+        let g:vimim_pinyin = '/home/vimim/svn/mycloud/server/quanpin.txt'
+      " let g:vimim_mycloud = 'py:127.0.0.1'
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
@@ -333,7 +336,6 @@ function! s:vimim_initialize_self()
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
         let g:vimim_debug = 1
-      " let g:vimim_mycloud = 'py:127.0.0.1'
     endif
 endfunction
 
@@ -1687,34 +1689,15 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 "" :py vim.command("source %s " % vimim)
 "" " -----------------------------------------------
 
-" ------------------------------------------------
-function! s:vimim_get_from_python(input, datafile)
-" ------------------------------------------------ todo
+" --------------------------------------
+function! s:vimim_get_from_python(input)
+" -------------------------------------- todo
 python << EOF
 import vim
-datafile = vim.eval('a:datafile')
-# try:
-#     import cPickle as pickle
-# except:
-#     import pickle
-# def save_to_file(ob, fname):
-#     file = open(fname, 'wb')
-#     cPickle.dump(ob, file, cPickle.HIGHEST_PROTOCOL)
-#     file.close
-# def load_from_file(fname):
-#     try:
-#         file = open(fname, "rb")
-#         p = cPickle.load(file)
-#         file.close()
-#     except Exception:
-#         p = {}
-#     return p
-# let s:quanpin_table = s:vimim_create_quanpin_table()
-# save_to_file(s:quanpin_table, '/tmp/pinyin_table.p')
 def load_local_ciku():
     ciku = {}
     try:
-        file = open(datafile)
+        file = open(vim.eval('s:vimim_pinyin'))
         for line in file:
             items = line.split(" ")
             key = items[0]
@@ -1723,21 +1706,17 @@ def load_local_ciku():
         print("vim error: %s" % vim.error)
     finally:
         file.close()
-    # pickle_open = open(datafile, 'wb')
-    # pickle.dump(ciku, pickle_open)
     return ciku
-backend_loaded_python = int(vim.eval('s:backend_loaded_python'))
-if backend_loaded_python == 1:
+vimim_pinyin_loaded = int(vim.eval('s:vimim_pinyin_loaded'))
+if vimim_pinyin_loaded == 1:
     dictionary = load_local_ciku()
-# elif backend_loaded_python == 2:
-#     pickle_open = open(datafile, 'rb')
-#     dictionary = pickle.load(pickle_open)
-if backend_loaded_python > 0:
+if vimim_pinyin_loaded > 0:
     key = vim.eval('a:input')
     res = dictionary.get(key)
     vim.command("return '%s'" % res)
 EOF
 endfunction
+
 " ----------------------------------------------
 function! s:vimim_get_from_python2(input, cloud)
 " ----------------------------------------------
@@ -5543,16 +5522,14 @@ else
         endif
     endif
 
-    " [backend] python embedded backend engine " todo
-    " [test] quanpin.txt:     40MB 1,337,192 lines RAM=140MB
-    " [test] quanpin.pickle: 145MB
-    let datafile = '/home/vimim/svn/mycloud/server/quanpin.pickle'
-    let datafile = '/home/vimim/svn/mycloud/server/quanpin.txt'
-    if filereadable(datafile)
-        let s:backend_loaded_python = 1
-        let results = split(s:vimim_get_from_python(keyboard,datafile))
+    " [backend] python embedded backend engine
+    if !empty(s:vimim_pinyin) && filereadable(s:vimim_pinyin)
+        if s:vimim_pinyin_loaded < 1
+            let s:vimim_pinyin_loaded = 1
+        endif
+        let results = split(s:vimim_get_from_python(keyboard))
         if !empty(results) && get(results,0) != 'None'
-            let s:backend_loaded_python = 2
+            let s:vimim_pinyin_loaded = 2
             return s:vimim_popupmenu_list(results)
         endif
     endif
