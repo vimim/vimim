@@ -5525,9 +5525,7 @@ else
         endif
     endif
 
-    if empty(s:english_results)
-        " no english is found for the keyboard input
-    else
+    if !empty(s:english_results)
         call extend(results, s:english_results, 0)
     endif
     if !empty(results)
