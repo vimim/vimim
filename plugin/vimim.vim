@@ -80,10 +80,10 @@ endfunction
 " ----------------------------------------
 function! s:vimim_backend_initialization()
 " ----------------------------------------
-    if empty(s:backend_loaded_once)
-        let s:backend_loaded_once = 1
-    else
+    if exists("s:vimim_backend_initialization") 
         return
+    else
+        let s:vimim_backend_initialization = 1
     endif
     sil!call s:vimim_super_reset()
     sil!call s:vimim_initialize_encoding()
@@ -285,8 +285,6 @@ function! s:vimim_initialize_global()
     " -----------------------------------
     let s:frontends = []
     let s:im_toggle = 0
-    let s:backend_loaded_once = 0
-    let s:vimim_pinyin_loaded = 0
     let s:pumheight0 = &pumheight
     let s:pumheight1 = &pumheight
     let s:chinese_input_mode = "onekey"
@@ -1694,7 +1692,7 @@ function! s:vimim_get_from_python(input)
 " -------------------------------------- todo
 python << EOF
 import vim
-def load_local_ciku():
+def load_pinyin():
     ciku = {}
     try:
         file = open(vim.eval('s:vimim_pinyin'))
@@ -1709,7 +1707,7 @@ def load_local_ciku():
     return ciku
 vimim_pinyin_loaded = int(vim.eval('s:vimim_pinyin_loaded'))
 if vimim_pinyin_loaded == 1:
-    dictionary = load_local_ciku()
+    dictionary = load_pinyin()
 if vimim_pinyin_loaded > 0:
     key = vim.eval('a:input')
     res = dictionary.get(key)
@@ -5524,7 +5522,7 @@ else
 
     " [backend] python embedded backend engine
     if !empty(s:vimim_pinyin) && filereadable(s:vimim_pinyin)
-        if s:vimim_pinyin_loaded < 1
+        if !exists("s:vimim_pinyin_loaded") 
             let s:vimim_pinyin_loaded = 1
         endif
         let results = split(s:vimim_get_from_python(keyboard))
