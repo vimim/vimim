@@ -332,7 +332,7 @@ function! s:vimim_initialize_self()
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
-        let g:vimim_db = '/home/vimim/svn/mycloud/server/vimim.db'
+      " let g:vimim_db = '/home/vimim/svn/mycloud/server/vimim.db'
     endif
 endfunction
 
@@ -2401,7 +2401,6 @@ function! s:vimim_initialize_cjk_file()
 " -------------------------------------
     let s:has_cjk_file = 0
     let s:cjk_file = 0
-    let s:cjk_cache = {}
     let s:cjk_lines = []
     let datafile = "vimim.cjk.txt"
     let datafile = s:vimim_check_filereadable(datafile)
@@ -2420,7 +2419,7 @@ function! s:vimim_load_cjk_file()
     " load cjk lines and build one char cache
     if empty(s:cjk_lines) && s:has_cjk_file > 0
         let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-    elseif len(s:cjk_cache) > len('cjk_cache')
+    else
         return
     endif
     let cjk = len(s:cjk_lines)
@@ -2430,18 +2429,6 @@ function! s:vimim_load_cjk_file()
     elseif cjk == 20902
         for _ in s:az_list
             call s:vimim_cjk_match(_)
-        endfor
-    elseif cjk > 20902
-        for line in s:cjk_lines[20902: -1]
-            let lines = split(line)
-            let char = get(lines,0)
-            let right = get(lines,1)
-            let results = split(right, '\zs')
-            if has_key(s:cjk_cache, char)
-                let history_results = s:cjk_cache[char]
-                call extend(results, history_results, 0)
-            endif
-            let s:cjk_cache[char] = results
         endfor
     endif
 endfunction
@@ -2534,12 +2521,6 @@ function! s:vimim_cjk_match(keyboard)
         return []
     endif
     let keyboard = a:keyboard
-    if len(keyboard) == 1 && has_key(s:cjk_cache, keyboard)
-        if keyboard =~ '\d'
-            let s:hjkl_x = keyboard
-        endif
-        return s:cjk_cache[keyboard]
-    endif
     let dddddd = 6 - 2 * s:vimim_digit_4corner
     let grep_frequency = '.*' . '\s\d\+$'
     let grep = ""
@@ -2596,12 +2577,6 @@ function! s:vimim_cjk_match(keyboard)
         let results = sort(results, "s:vimim_sort_on_last")
         let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
-        if len(keyboard) == 1
-            if !has_key(s:cjk_cache, keyboard)
-                let s:cjk_cache[keyboard] = results
-                return results
-            endif
-        endif
     endif
     return results
 endfunction
