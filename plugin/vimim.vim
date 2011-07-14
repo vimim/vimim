@@ -328,7 +328,6 @@ function! s:vimim_initialize_self()
     if isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_cloud = 'google,baidu,sogou,qq'
-      " let g:vimim_mycloud = 'py:127.0.0.1'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -336,7 +335,7 @@ function! s:vimim_initialize_self()
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
         let g:vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
-        let g:vimim_db     = '/home/vimim/svn/mycloud/server/pinyin.db'
+        let g:vimim_db     = '/home/vimim/svn/mycloud/server/pinyin2.db'
     endif
 endfunction
 
@@ -1693,12 +1692,10 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 " ----------------------------
 function! g:vimim_make_bsddb()
 " ----------------------------
-python << EOF
-vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
-vimim_db     = '/home/vimim/svn/mycloud/server/pinyin.db'
-import bsddb
-db = bsddb.hashopen(vimim_db, 'n')
-pinyin = open(vimim_pinyin)
+:sil!python << EOF
+import vim, bsddb
+db = bsddb.hashopen(vim.eval('s:vimim_db'),'n')
+pinyin = open(vim.eval('s:vimim_pinyin'))
 for line in pinyin:
     key, sep, value = line.strip().partition(" ")
     db[key] = value
@@ -1709,9 +1706,9 @@ endfunction
 " --------------------------------
 function! s:vimim_get_bsddb(input)
 " --------------------------------
-python << EOF
+:sil!python << EOF
 import vim, bsddb
-db = bsddb.hashopen(vim.eval('s:vimim_db'), 'r')
+db = bsddb.hashopen(vim.eval('s:vimim_db'),'r')
 key = vim.eval('a:input')
 if db.has_key(key):
     vim.command("return '%s'" % db[key])
@@ -1721,7 +1718,7 @@ endfunction
 " --------------------------------------
 function! s:vimim_get_from_memory(input)
 " --------------------------------------
-python << EOF
+:sil!python << EOF
 import vim
 if not int(vim.eval('s:vimim_pinyin_loaded')):
     dictionary = {}
