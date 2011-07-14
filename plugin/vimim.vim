@@ -1295,7 +1295,6 @@ endfunction
 function! s:vimim_onekey_menu_filter()
 " ------------------------------------
     " use 1234567890/qwertyuiop as digital filter
-    call s:vimim_load_cjk_file()
     let results = s:vimim_cjk_filter_list()
     if empty(results) && !empty(len(s:hjkl_x))
         let number_before = strpart(s:hjkl_x,0,len(s:hjkl_x)-1)
@@ -1591,7 +1590,6 @@ function! s:vimim_cjk_property_display(ddddd)
     if empty(s:has_cjk_file)
         return unicode . s:space . a:ddddd
     endif
-    call s:vimim_load_cjk_file()
     let chinese = nr2char(a:ddddd)
     let five = get(s:vimim_get_property(chinese,1),0)
     let four = get(s:vimim_get_property(chinese,2),0)
@@ -2401,25 +2399,14 @@ function! s:vimim_initialize_cjk_file()
     let s:has_cjk_file = 0
     let s:cjk_file = 0
     let s:cjk_lines = []
-    let datafile = "vimim.cjk.txt"
-    let datafile = s:vimim_check_filereadable(datafile)
+    let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
     if !empty(datafile)
         let s:cjk_file = datafile
+        let s:cjk_lines = s:vimim_readfile(s:cjk_file)
         let s:has_cjk_file = 1
         if empty(s:backend.datafile) && empty(s:backend.directory)
             let s:has_cjk_file = 2
         endif
-    endif
-endfunction
-
-" -------------------------------
-function! s:vimim_load_cjk_file()
-" -------------------------------
-    if empty(s:cjk_lines) && s:has_cjk_file > 0
-        let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-    elseif len(s:cjk_lines) < 20902
-        let s:cjk_lines = []
-        let s:has_cjk_file = 0
     endif
 endfunction
 
@@ -2471,7 +2458,6 @@ function! s:vimim_cjk_sentence_match(keyboard)
                 let s:hjkl_m += 1
                 let a_keyboard = keyboard[0 : len(keyboard)-2]
             endif
-            call s:vimim_load_cjk_file()
             let grep = '^' . a_keyboard . '\>'
             let matched = match(s:cjk_lines, grep)
             if s:hjkl_m > 0
@@ -2575,11 +2561,7 @@ endfunction
 function! s:vimim_cjk_grep_results(grep)
 " --------------------------------------
     let grep = a:grep
-    if empty(grep)
-        return []
-    endif
-    call s:vimim_load_cjk_file()
-    if empty(s:has_cjk_file)
+    if empty(grep) || empty(s:has_cjk_file)
         return []
     endif
     let results = []
@@ -2640,7 +2622,6 @@ function! s:vimim_chinese_transfer() range abort
     if empty(s:has_cjk_file)
         " no toggle between simplified and tranditional Chinese
     elseif &encoding == "utf-8"
-        call s:vimim_load_cjk_file()
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
     endif
 endfunction
@@ -2648,7 +2629,6 @@ endfunction
 " ------------------------------------------------
 function! s:vimim_get_traditional_chinese(chinese)
 " ------------------------------------------------
-    call s:vimim_load_cjk_file()
     let chinese = ""
     let chinese_list = split(a:chinese,'\zs')
     for char in chinese_list
@@ -2727,7 +2707,6 @@ function! s:vimim_get_char_property()
     if empty(s:has_cjk_file)
         return results
     endif
-    call s:vimim_load_cjk_file()
     let results_digit = s:vimim_get_property(chinese, 2)
     call extend(results, results_digit)
     let results_digit = s:vimim_get_property(chinese, 1)
