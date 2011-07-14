@@ -249,6 +249,7 @@ function! s:vimim_initialize_global()
 " -----------------------------------
     let G = []
     call add(G, "g:vimim_debug")
+    call add(G, "g:vimim_db")
     call add(G, "g:vimim_pinyin")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_esc_for_correction")
@@ -325,16 +326,17 @@ function! s:vimim_initialize_self()
 " ---------------------------------
     let hjkl = '/home/xma/hjkl/'
     if isdirectory(hjkl)
-        let g:vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
-      " let g:vimim_mycloud = 'py:127.0.0.1'
+        let g:vimim_debug = 1
         let g:vimim_cloud = 'google,baidu,sogou,qq'
+      " let g:vimim_mycloud = 'py:127.0.0.1'
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
-        let g:vimim_debug = 1
+        let g:vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
+        let g:vimim_db     = '/home/vimim/svn/mycloud/server/pinyin.db'
     endif
 endfunction
 
@@ -1701,6 +1703,31 @@ if not int(vim.eval('s:vimim_pinyin_loaded')):
     with open(vim.eval('s:vimim_pinyin'),"r") as file:    
         dictionary = dict(get_pair(line) for line in file)
 res = dictionary.get(vim.eval('a:input'), None)
+vim.command("return '%s'" % res)
+EOF
+endfunction
+
+" ---------------------------
+function! s:vimim_set_bsddb()
+" ---------------------------
+python << EOF
+import vim, bsddb
+db = bsddb.hashopen(vim.eval('s:vimim_db'), 'c')
+file = open(vim.eval('s:vimim_pinyin'))
+for line in file:
+    key, sep, value = line.strip().partition(" ")
+    db[key] = value
+file.close()
+EOF
+endfunction
+
+" --------------------------------
+function! s:vimim_get_bsddb(input)
+" --------------------------------
+python << EOF
+import vim, bsddb
+db = bsddb.hashopen(vim.eval('s:vimim_db'), 'r')
+res = db.set_location(vim.eval('a:input'))[1:]
 vim.command("return '%s'" % res)
 EOF
 endfunction
@@ -5513,6 +5540,8 @@ else
     if empty(s:vimim_pinyin)
         " [backend] plug-n-play embedded backend engine
         let results = s:vimim_embedded_backend_engine(keyboard,0)
+    elseif filereadable(s:vimim_db)
+        let results = split(s:vimim_get_bsddb(keyboard))
     elseif filereadable(s:vimim_pinyin)
         " [backend] python embedded backend engine
         let results = split(s:vimim_get_from_python(keyboard))
