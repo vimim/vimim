@@ -1693,7 +1693,6 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 function! g:vimim_make_bsddb()
 " ----------------------------
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.db
-let s:vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
 :sil!python << EOF
 import vim, bsddb
 db = bsddb.hashopen(vim.eval('s:vimim_db'),'n')
@@ -5539,11 +5538,10 @@ else
         endif
     endif
 
-    if empty(s:vimim_db)
-        " [backend] plug-n-play embedded backend engine
+    " [backend] plug-n-play embedded backend engine
+    if empty(s:vimim_db) && empty(s:vimim_pinyin)
         let results = s:vimim_embedded_backend_engine(keyboard,0)
     elseif filereadable(s:vimim_db)
-        " [backend] python embedded backend engine
         let results = split(s:vimim_get_bsddb(keyboard))
     elseif filereadable(s:vimim_pinyin)
         let results = split(s:vimim_get_from_memory(keyboard))
