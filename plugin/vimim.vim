@@ -2416,20 +2416,11 @@ endfunction
 " -------------------------------
 function! s:vimim_load_cjk_file()
 " -------------------------------
-    " load cjk lines and build one char cache
     if empty(s:cjk_lines) && s:has_cjk_file > 0
         let s:cjk_lines = s:vimim_readfile(s:cjk_file)
-    else
-        return
-    endif
-    let cjk = len(s:cjk_lines)
-    if cjk < 20902
+    elseif len(s:cjk_lines) < 20902
         let s:cjk_lines = []
         let s:has_cjk_file = 0
-    elseif cjk == 20902
-        for _ in s:az_list
-            call s:vimim_cjk_match(_)
-        endfor
     endif
 endfunction
 
