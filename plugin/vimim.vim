@@ -80,7 +80,7 @@ endfunction
 " ----------------------------------------
 function! s:vimim_backend_initialization()
 " ----------------------------------------
-    if exists("s:vimim_backend_initialization") 
+    if exists("s:vimim_backend_initialization")
         return
     else
         let s:vimim_backend_initialization = 1
@@ -1690,34 +1690,19 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 "" :py vim.command("source %s " % vimim)
 "" " -----------------------------------------------
 
-" --------------------------------------
-function! s:vimim_get_from_python(input)
-" --------------------------------------
+" ----------------------------
+function! g:vimim_make_bsddb()
+" ----------------------------
 python << EOF
-import vim
-if not int(vim.eval('s:vimim_pinyin_loaded')):
-    dictionary = {}
-    def get_pair(line):
-        key, sep, value = line.strip().partition(" ")
-        return key, value
-    with open(vim.eval('s:vimim_pinyin'),"r") as file:    
-        dictionary = dict(get_pair(line) for line in file)
-res = dictionary.get(vim.eval('a:input'), None)
-vim.command("return '%s'" % res)
-EOF
-endfunction
-
-" ---------------------------
-function! s:vimim_set_bsddb()
-" ---------------------------
-python << EOF
-import vim, bsddb
-db = bsddb.hashopen(vim.eval('s:vimim_db'), 'c')
-file = open(vim.eval('s:vimim_pinyin'))
-for line in file:
+vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
+vimim_db     = '/home/vimim/svn/mycloud/server/pinyin.db'
+import bsddb
+db = bsddb.hashopen(vimim_db, 'n')
+pinyin = open(vimim_pinyin)
+for line in pinyin:
     key, sep, value = line.strip().partition(" ")
     db[key] = value
-file.close()
+pinyin.close()
 EOF
 endfunction
 
@@ -1727,7 +1712,25 @@ function! s:vimim_get_bsddb(input)
 python << EOF
 import vim, bsddb
 db = bsddb.hashopen(vim.eval('s:vimim_db'), 'r')
-res = db.set_location(vim.eval('a:input'))[1:]
+key = vim.eval('a:input')
+if db.has_key(key):
+    vim.command("return '%s'" % db[key])
+EOF
+endfunction
+
+" --------------------------------------
+function! s:vimim_get_from_memory(input)
+" --------------------------------------
+python << EOF
+import vim
+if not int(vim.eval('s:vimim_pinyin_loaded')):
+    dictionary = {}
+    def get_pair(line):
+        key, sep, value = line.strip().partition(" ")
+        return key, value
+    with open(vim.eval('s:vimim_pinyin'),"r") as file:
+        dictionary = dict(get_pair(line) for line in file)
+res = dictionary.get(vim.eval('a:input'), None)
 vim.command("return '%s'" % res)
 EOF
 endfunction
@@ -5544,20 +5547,14 @@ else
         let results = split(s:vimim_get_bsddb(keyboard))
     elseif filereadable(s:vimim_pinyin)
         " [backend] python embedded backend engine
-        let results = split(s:vimim_get_from_python(keyboard))
-        if !empty(results)
-            if get(results,0) =~ 'None'
-                let results = []
-            else
-                let s:vimim_pinyin_loaded = 1
-            endif
-        endif
+        let results = split(s:vimim_get_from_memory(keyboard))
+        let s:vimim_pinyin_loaded = 1
     endif
 
     if !empty(s:english_results)
         call extend(results, s:english_results, 0)
     endif
-    if !empty(results)
+    if !empty(results) && get(results,0) !~ 'None\|0'
         return s:vimim_popupmenu_list(results)
     endif
 
