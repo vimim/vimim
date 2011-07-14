@@ -332,7 +332,7 @@ function! s:vimim_initialize_self()
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
-      " let g:vimim_db = '/home/vimim/svn/mycloud/server/vimim.db'
+        let g:vimim_db = '/home/vimim/svn/mycloud/server/vimim.db'
     endif
 endfunction
 
@@ -1694,24 +1694,23 @@ import vim, bsddb
 db = bsddb.hashopen(vim.eval('s:vimim_db'),'r')
 key = vim.eval('a:input')
 if db.has_key(key):
-    vim.command("return '%s'" % db[key])
+    value = db[key]
+    vim.command("return '%s'" % value)
 EOF
 endfunction
 
-" ----------------------------
-function! s:vimim_make_bsddb()
-" ----------------------------
 " http://vimim-data.googlecode.com/svn/trunk/data/vimim.db.bz2
+" ----------------------------
+function! g:vimim_make_bsddb()
+" ----------------------------
 :sil!python << EOF
-vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
-vimim_db     = '/home/vimim/svn/mycloud/server/vimim.db'
+file_in  = '/home/vimim/svn/mycloud/server/vimim.txt'
+file_out = '/home/vimim/svn/mycloud/server/vimim.db'
 import bsddb
-db = bsddb.hashopen(vimim_db,'n')
-pinyin = open(vimim_pinyin)
-for line in pinyin:
+db = bsddb.hashopen(file_out,'n')
+for line in open(file_in):
     key, sep, value = line.strip().partition(" ")
     db[key] = value
-pinyin.close()
 EOF
 endfunction
 
