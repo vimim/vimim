@@ -335,7 +335,7 @@ function! s:vimim_initialize_self()
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
         let g:vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
-        let g:vimim_db     = '/home/vimim/svn/mycloud/server/pinyin2.db'
+        let g:vimim_db     = '/home/vimim/svn/mycloud/server/vimim.db'
     endif
 endfunction
 
@@ -1692,6 +1692,8 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 " ----------------------------
 function! g:vimim_make_bsddb()
 " ----------------------------
+" http://vimim-data.googlecode.com/svn/trunk/data/vimim.db
+let s:vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
 :sil!python << EOF
 import vim, bsddb
 db = bsddb.hashopen(vim.eval('s:vimim_db'),'n')
@@ -5537,13 +5539,13 @@ else
         endif
     endif
 
-    if empty(s:vimim_pinyin)
+    if empty(s:vimim_db)
         " [backend] plug-n-play embedded backend engine
         let results = s:vimim_embedded_backend_engine(keyboard,0)
     elseif filereadable(s:vimim_db)
+        " [backend] python embedded backend engine
         let results = split(s:vimim_get_bsddb(keyboard))
     elseif filereadable(s:vimim_pinyin)
-        " [backend] python embedded backend engine
         let results = split(s:vimim_get_from_memory(keyboard))
         let s:vimim_pinyin_loaded = 1
     endif
