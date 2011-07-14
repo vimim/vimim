@@ -250,7 +250,6 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_db")
-    call add(G, "g:vimim_pinyin")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_esc_for_correction")
     call add(G, "g:vimim_backslash_close_pinyin")
@@ -288,7 +287,6 @@ function! s:vimim_initialize_global()
     let s:im_toggle = 0
     let s:pumheight0 = &pumheight
     let s:pumheight1 = &pumheight
-    let s:vimim_pinyin_loaded = 0
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
@@ -334,8 +332,7 @@ function! s:vimim_initialize_self()
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
-        let g:vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
-        let g:vimim_db     = '/home/vimim/svn/mycloud/server/vimim.db'
+        let g:vimim_db = '/home/vimim/svn/mycloud/server/vimim.db'
     endif
 endfunction
 
@@ -1689,21 +1686,6 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 "" :py vim.command("source %s " % vimim)
 "" " -----------------------------------------------
 
-" ----------------------------
-function! g:vimim_make_bsddb()
-" ----------------------------
-" http://vimim-data.googlecode.com/svn/trunk/data/vimim.db
-:sil!python << EOF
-import vim, bsddb
-db = bsddb.hashopen(vim.eval('s:vimim_db'),'n')
-pinyin = open(vim.eval('s:vimim_pinyin'))
-for line in pinyin:
-    key, sep, value = line.strip().partition(" ")
-    db[key] = value
-pinyin.close()
-EOF
-endfunction
-
 " --------------------------------
 function! s:vimim_get_bsddb(input)
 " --------------------------------
@@ -1716,20 +1698,20 @@ if db.has_key(key):
 EOF
 endfunction
 
-" --------------------------------------
-function! s:vimim_get_from_memory(input)
-" --------------------------------------
+" ----------------------------
+function! s:vimim_make_bsddb()
+" ----------------------------
+" http://vimim-data.googlecode.com/svn/trunk/data/vimim.db.bz2
 :sil!python << EOF
-import vim
-if not int(vim.eval('s:vimim_pinyin_loaded')):
-    dictionary = {}
-    def get_pair(line):
-        key, sep, value = line.strip().partition(" ")
-        return key, value
-    with open(vim.eval('s:vimim_pinyin'),"r") as file:
-        dictionary = dict(get_pair(line) for line in file)
-res = dictionary.get(vim.eval('a:input'), None)
-vim.command("return '%s'" % res)
+vimim_pinyin = '/home/vimim/svn/mycloud/server/pinyin.txt'
+vimim_db     = '/home/vimim/svn/mycloud/server/vimim.db'
+import bsddb
+db = bsddb.hashopen(vimim_db,'n')
+pinyin = open(vimim_pinyin)
+for line in pinyin:
+    key, sep, value = line.strip().partition(" ")
+    db[key] = value
+pinyin.close()
 EOF
 endfunction
 
@@ -5539,13 +5521,10 @@ else
     endif
 
     " [backend] plug-n-play embedded backend engine
-    if empty(s:vimim_db) && empty(s:vimim_pinyin)
+    if empty(s:vimim_db)
         let results = s:vimim_embedded_backend_engine(keyboard,0)
     elseif filereadable(s:vimim_db)
         let results = split(s:vimim_get_bsddb(keyboard))
-    elseif filereadable(s:vimim_pinyin)
-        let results = split(s:vimim_get_from_memory(keyboard))
-        let s:vimim_pinyin_loaded = 1
     endif
 
     if !empty(s:english_results)
