@@ -3951,12 +3951,12 @@ function! s:vimim_scan_backend_embedded_datafile()
             endif
         endif
         let datafile = s:path . "vimim." . im
-        if filereadable(datafile . ".txt")
-            let s:vimim_data_file = datafile . ".txt"
-            call s:vimim_set_datafile(im, s:vimim_data_file)
-        elseif filereadable(datafile . ".db")
+        if filereadable(datafile . ".db")
             let s:vimim_data_file = datafile . ".db"
             call s:vimim_set_datafile(im, s:vimim_data_file)
+            break
+        elseif filereadable(datafile . ".txt")
+            call s:vimim_set_datafile(im, datafile . ".txt")
         else
             let im = im . "." . &encoding
             let datafile = s:path . "vimim." . im . ".txt"
@@ -4187,7 +4187,7 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " -------------------------------------------------
 function! s:vimim_scan_backend_embedded_directory()
 " -------------------------------------------------
-    if len(s:vimim_mycloud) > 1
+    if len(s:vimim_mycloud) > 1 || s:vimim_data_file =~ ".db"
         return
     endif
     for im in s:all_vimim_input_methods
@@ -5313,8 +5313,12 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
             endif
         endif
     elseif root =~# "datafile"
-        let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
-        let results = s:vimim_get_from_datafile(keyboard2, a:search)
+       if s:vimim_data_file =~ ".db"
+           let results = split(s:vimim_get_bsddb(keyboard))
+        else
+           let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
+           let results = s:vimim_get_from_datafile(keyboard2, a:search)
+        endif
     endif
     if len(s:keyboard_list) < 2
         if empty(keyboard2)
@@ -5471,12 +5475,7 @@ else
     endif
 
     " [backend] plug-n-play embedded backend engine
-    if empty(s:vimim_data_file)
-        let results = s:vimim_embedded_backend_engine(keyboard,0)
-    elseif filereadable(s:vimim_data_file)
-        let results = split(s:vimim_get_bsddb(keyboard))
-    endif
-
+    let results = s:vimim_embedded_backend_engine(keyboard,0)
     if !empty(s:english_results)
         call extend(results, s:english_results, 0)
     endif
