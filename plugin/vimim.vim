@@ -249,7 +249,6 @@ function! s:vimim_initialize_global()
 " -----------------------------------
     let G = []
     call add(G, "g:vimim_debug")
-    call add(G, "g:vimim_db")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_esc_for_correction")
     call add(G, "g:vimim_backslash_close_pinyin")
@@ -332,7 +331,6 @@ function! s:vimim_initialize_self()
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
-        let g:vimim_db = '/home/vimim/svn/mycloud/server/pinyin.db'
     endif
 endfunction
 
@@ -1686,10 +1684,10 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 
 " --------------------------------
 function! s:vimim_get_bsddb(input)
-" --------------------------------
+" -------------------------------- todo
 :sil!python << EOF
 import vim, bsddb
-db = bsddb.btopen(vim.eval('s:vimim_db'),'r')
+db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
 key = vim.eval('a:input')
 if db.has_key(key):
     value = db[key]
@@ -1700,14 +1698,14 @@ endfunction
 " ----------------------------
 function! s:vimim_make_bsddb()
 " ----------------------------
-" [url]   http://vimim-data.googlecode.com/svn/trunk/data/pinyin.db
+" [url]   http://vimim-data.googlecode.com/svn/trunk/data/vimim.pinyin.db
 " [usage] (1) vim file_in
 "         (2) touch file_out
 "         (3) :call s:vimim_make_bsddb()
-"         (4) /bin/db4.5_dump -p pinyin.db | head
+"         (4) /bin/db4.5_dump -p vimim.pinyin.db | head
 :sil!python << EOF
 file_in  = '/home/vimim/svn/mycloud/server/pinyin.txt'
-file_out = '/home/vimim/svn/mycloud/server/pinyin.db'
+file_out = '/home/vimim/svn/mycloud/server/vimim.pinyin.db'
 import bsddb
 db = bsddb.btopen(file_out,'n')
 for line in sorted(open(file_in).readlines()):
@@ -3942,7 +3940,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " ------------------------------------------------
 function! s:vimim_scan_backend_embedded_datafile()
 " ------------------------------------------------
-    if len(s:vimim_mycloud) > 1 || s:vimim_hjkl_directory =~ 'xma'
+    if len(s:vimim_mycloud) > 1
         return
     endif
     for im in s:all_vimim_input_methods
@@ -3952,17 +3950,21 @@ function! s:vimim_scan_backend_embedded_datafile()
                 call s:vimim_set_datafile(im, datafile)
             endif
         endif
-        let datafile = s:path . "vimim." . im . ".txt"
-        if filereadable(datafile)
-            call s:vimim_set_datafile(im, datafile)
+        let datafile = s:path . "vimim." . im
+        if filereadable(datafile . ".txt")
+            let s:vimim_data_file = datafile . ".txt"
+            call s:vimim_set_datafile(im, s:vimim_data_file)
+        elseif filereadable(datafile . ".db")
+            let s:vimim_data_file = datafile . ".db"
+            call s:vimim_set_datafile(im, s:vimim_data_file)
         else
             let im = im . "." . &encoding
             let datafile = s:path . "vimim." . im . ".txt"
             if filereadable(datafile)
+                let s:vimim_data_file = datafile
+                call s:vimim_set_datafile(im, data_file)
                 let s:localization = 0
-                call s:vimim_set_datafile(im, datafile)
             else
-                let datafile = 0
                 continue
             endif
         endif
@@ -3974,9 +3976,7 @@ function! s:vimim_set_datafile(im, datafile)
 " ------------------------------------------
     let im = s:vimim_get_valid_im_name(a:im)
     let datafile = a:datafile
-    if empty(im) || empty(datafile)
-    \|| !filereadable(datafile)
-    \|| isdirectory(datafile)
+    if empty(im) || isdirectory(datafile)
         return
     endif
     let s:ui.root = "datafile"
@@ -5471,9 +5471,9 @@ else
     endif
 
     " [backend] plug-n-play embedded backend engine
-    if empty(s:vimim_db)
+    if empty(s:vimim_data_file)
         let results = s:vimim_embedded_backend_engine(keyboard,0)
-    elseif filereadable(s:vimim_db)
+    elseif filereadable(s:vimim_data_file)
         let results = split(s:vimim_get_bsddb(keyboard))
     endif
 
