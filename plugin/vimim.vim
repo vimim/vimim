@@ -332,7 +332,7 @@ function! s:vimim_initialize_self()
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
-        let g:vimim_db = '/home/vimim/svn/mycloud/server/vimim.db'
+        let g:vimim_db = '/home/vimim/svn/mycloud/server/pinyin.db'
     endif
 endfunction
 
@@ -1689,7 +1689,7 @@ function! s:vimim_get_bsddb(input)
 " --------------------------------
 :sil!python << EOF
 import vim, bsddb
-db = bsddb.hashopen(vim.eval('s:vimim_db'),'r')
+db = bsddb.btopen(vim.eval('s:vimim_db'),'r')
 key = vim.eval('a:input')
 if db.has_key(key):
     value = db[key]
@@ -1702,10 +1702,10 @@ endfunction
 function! g:vimim_make_bsddb()
 " ----------------------------
 :sil!python << EOF
-file_in  = '/home/vimim/svn/mycloud/server/vimim.txt'
-file_out = '/home/vimim/svn/mycloud/server/vimim.db'
+file_in  = '/home/vimim/svn/mycloud/server/pinyin.txt'
+file_out = '/home/vimim/svn/mycloud/server/pinyin.db'
 import bsddb
-db = bsddb.hashopen(file_out,'n')
+db = bsddb.btopen(file_out,'n')
 for line in open(file_in):
     key, sep, value = line.strip().partition(" ")
     db[key] = value
