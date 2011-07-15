@@ -1697,18 +1697,24 @@ if db.has_key(key):
 EOF
 endfunction
 
-" http://vimim-data.googlecode.com/svn/trunk/data/vimim.db.bz2
 " ----------------------------
-function! g:vimim_make_bsddb()
+function! s:vimim_make_bsddb()
 " ----------------------------
+" [url]   http://vimim-data.googlecode.com/svn/trunk/data/pinyin.db
+" [usage] (1) vim file_in
+"         (2) touch file_out
+"         (3) :call s:vimim_make_bsddb()
+"         (4) /bin/db4.5_dump -p pinyin.db | head
 :sil!python << EOF
 file_in  = '/home/vimim/svn/mycloud/server/pinyin.txt'
 file_out = '/home/vimim/svn/mycloud/server/pinyin.db'
 import bsddb
 db = bsddb.btopen(file_out,'n')
-for line in open(file_in):
+for line in sorted(open(file_in).readlines()):
     key, sep, value = line.strip().partition(" ")
     db[key] = value
+db.sync()
+db.close()
 EOF
 endfunction
 
