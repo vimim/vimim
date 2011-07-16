@@ -321,7 +321,7 @@ endfunction
 " ---------------------------------
 function! s:vimim_initialize_self()
 " ---------------------------------
-    let hjkl = '/home/xma/hjkl/'
+    let hjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_cloud = 'google,baidu,sogou,qq'
