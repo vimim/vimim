@@ -792,6 +792,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     endif
     call extend(results, s:english_results, 0)
     call extend(results, cjk_results)
+    return results
 endfunction
 
 " --------------------------------------------
