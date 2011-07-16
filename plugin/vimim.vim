@@ -930,7 +930,7 @@ function! s:vimim_get_seamless(current_positions)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  OneKey           ==== {{{"]
+let s:VimIM += [" ====  onekey           ==== {{{"]
 " =================================================
 
 " ------------------------------
@@ -4161,7 +4161,6 @@ endfunction
 " ---------------------------------------
 function! s:vimim_make_pair_list(oneline)
 " ---------------------------------------
-" break row entry in datafile into pair list
     if empty(a:oneline)
         return []
     endif
