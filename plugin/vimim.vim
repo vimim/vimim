@@ -1686,8 +1686,8 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 function! s:vimim_get_bsddb(input)
 " -------------------------------- todo
 :sil!python << EOF
-import vim, bsddb
-db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
+# import vim, bsddb
+# db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
 key = vim.eval('a:input')
 if db.has_key(key):
     value = db[key]
@@ -3954,6 +3954,8 @@ function! s:vimim_scan_backend_embedded_datafile()
         if has("python") && filereadable(datafile . ".db")
             let s:vimim_data_file = datafile . ".db"
             call s:vimim_set_datafile(im, s:vimim_data_file)
+            :py import vim, bsddb
+            :py db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
             break
         elseif filereadable(datafile . ".txt")
             call s:vimim_set_datafile(im, datafile . ".txt")
