@@ -3951,7 +3951,7 @@ function! s:vimim_scan_backend_embedded_datafile()
             endif
         endif
         let datafile = s:path . "vimim." . im
-        if filereadable(datafile . ".db")
+        if has("python") && filereadable(datafile . ".db")
             let s:vimim_data_file = datafile . ".db"
             call s:vimim_set_datafile(im, s:vimim_data_file)
             break
