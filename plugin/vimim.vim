@@ -1598,7 +1598,7 @@ function! s:vimim_unicode_to_utf8(xxxx)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  English2Chinese  ==== {{{"]
+let s:VimIM += [" ====  multibyte        ==== {{{"]
 " =================================================
 
 let s:translators = {}
@@ -1649,10 +1649,6 @@ function! s:vimim_imode_today_now(keyboard)
     let today_or_now = chinese.translate(join(results))
     return [today_or_now]
 endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  multibyte        ==== {{{"]
-" =================================================
 
 " ------------------------------------
 function! s:vimim_dictionary_chinese()
