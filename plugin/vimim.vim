@@ -336,82 +336,6 @@ function! s:vimim_initialize_self()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  for Mom and Dad  ==== {{{"]
-" =================================================
-
-" ---------------------------------
-function! s:vimim_for_mom_and_dad()
-" ---------------------------------
-    let onekey = ""
-    let buffer = expand("%:p:t")
-    if buffer =~ 'vimim.mom.txt'
-        startinsert!
-        let s:vimim_digit_4corner = 0
-        let onekey = s:vimim_onekey_action(0)
-        sil!call s:vimim_onekey_start()
-    elseif buffer =~ 'vimim.dad.txt'
-        set noruler
-        let s:vimim_digit_4corner = 1
-    else
-        return
-    endif
-    let s:vimim_onekey_is_tab = 1
-    if has("gui_running")
-        autocmd! * <buffer>
-        autocmd  FocusLost <buffer> sil!wall
-        noremap  <silent>  <Esc> :sil!%y +<CR>
-        set tw=30
-        set lines=24
-        set columns=36
-        set report=12345
-        let &gfn .= ":h24:w12"
-    endif
-    sil!exe 'sil!return "' . onekey . '"'
-endfunction
-
-" ---------------------------------
-function! s:vimim_initialize_skin()
-" ---------------------------------
-    if s:vimim_custom_color < 0
-        return
-    endif
-    highlight default CursorIM guifg=NONE guibg=green gui=NONE
-    highlight! vimim_none_color NONE
-    if !empty(s:vimim_custom_color)
-        if s:vimim_custom_color == 2 || s:vimim_custom_label > 0
-            highlight! link PmenuSel   vimim_none_color
-        elseif s:vimim_custom_color == 1
-            highlight! link PmenuSel   Title
-        endif
-        highlight! link PmenuSbar  vimim_none_color
-        highlight! link PmenuThumb vimim_none_color
-        highlight! link Pmenu      vimim_none_color
-    endif
-endfunction
-
-" ------------------------------
-function! s:vimim_restore_skin()
-" ------------------------------
-    set ruler
-    highlight! link Cursor NONE
-    if s:vimim_custom_color != 0
-        highlight! link PmenuSel   NONE
-        highlight! link PmenuSbar  NONE
-        highlight! link PmenuThumb NONE
-        highlight! link Pmenu      NONE
-    endif
-endfunction
-
-" ---------------------------------------------------------
-function! s:vimim_set_keyboard_list(column_start, keyboard)
-" ---------------------------------------------------------
-    let s:start_column_before = a:column_start
-    if len(s:keyboard_list) < 2
-        let s:keyboard_list = [a:keyboard]
-    endif
-endfunction
-
-" ============================================= }}}
 let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
 
@@ -2428,6 +2352,36 @@ endfunction
 let s:VimIM += [" ====  miscellaneous    ==== {{{"]
 " =================================================
 
+" ---------------------------------
+function! s:vimim_for_mom_and_dad()
+" ---------------------------------
+    let onekey = ""
+    let buffer = expand("%:p:t")
+    if buffer =~ 'vimim.mom.txt'
+        startinsert!
+        let s:vimim_digit_4corner = 0
+        let onekey = s:vimim_onekey_action(0)
+        sil!call s:vimim_onekey_start()
+    elseif buffer =~ 'vimim.dad.txt'
+        set noruler
+        let s:vimim_digit_4corner = 1
+    else
+        return
+    endif
+    let s:vimim_onekey_is_tab = 1
+    if has("gui_running")
+        autocmd! * <buffer>
+        autocmd  FocusLost <buffer> sil!wall
+        noremap  <silent>  <Esc> :sil!%y +<CR>
+        set tw=30
+        set lines=24
+        set columns=36
+        set report=12345
+        let &gfn .= ":h24:w12"
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
 " -------------------------------------
 function! s:vimim_get_valid_im_name(im)
 " -------------------------------------
@@ -2588,6 +2542,48 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
+
+" ---------------------------------
+function! s:vimim_initialize_skin()
+" ---------------------------------
+    if s:vimim_custom_color < 0
+        return
+    endif
+    highlight default CursorIM guifg=NONE guibg=green gui=NONE
+    highlight! vimim_none_color NONE
+    if !empty(s:vimim_custom_color)
+        if s:vimim_custom_color == 2 || s:vimim_custom_label > 0
+            highlight! link PmenuSel   vimim_none_color
+        elseif s:vimim_custom_color == 1
+            highlight! link PmenuSel   Title
+        endif
+        highlight! link PmenuSbar  vimim_none_color
+        highlight! link PmenuThumb vimim_none_color
+        highlight! link Pmenu      vimim_none_color
+    endif
+endfunction
+
+" ------------------------------
+function! s:vimim_restore_skin()
+" ------------------------------
+    set ruler
+    highlight! link Cursor NONE
+    if s:vimim_custom_color != 0
+        highlight! link PmenuSel   NONE
+        highlight! link PmenuSbar  NONE
+        highlight! link PmenuThumb NONE
+        highlight! link Pmenu      NONE
+    endif
+endfunction
+
+" ---------------------------------------------------------
+function! s:vimim_set_keyboard_list(column_start, keyboard)
+" ---------------------------------------------------------
+    let s:start_column_before = a:column_start
+    if len(s:keyboard_list) < 2
+        let s:keyboard_list = [a:keyboard]
+    endif
+endfunction
 
 " --------------------------------
 function! s:vimim_set_statusline()
