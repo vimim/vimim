@@ -40,8 +40,9 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 " "VimIM Installation"
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
 "  (2) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
-"  (3) [option] drop a standard directory: plugin/vimim/pinyin/
-"  (4) [option] drop a English  datafile:  plugin/vimim.txt
+"  (3) [option] drop a standard database:  plugin/vimim.pinyin.db
+"  (4) [option] drop a standard directory: plugin/vimim/pinyin/
+"  (5) [option] drop a English  datafile:  plugin/vimim.txt
 "
 " "VimIM Cloud Support"
 "  (1) (Windows) has('python') OR download wget/curl/libvimim.dll
@@ -1670,331 +1671,6 @@ function! s:vimim_unicode_to_utf8(xxxx)
         let utf8 .= nr2char(128+(ddddd%64))
     endif
     return utf8
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  Python Interface ==== {{{"]
-" =================================================
-"" " [dream] use VimIM on the fly without plugin
-"" :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
-"" :py import vim, urllib
-"" :py vimim = vim.eval("tempname()")+'.vim'
-"" :py urllib.urlretrieve(url, vimim)
-"" :py vim.command("source %s " % vimim)
-"" " -----------------------------------------------
-
-" ---------------------------------------------
-function! s:vimim_get_oneline_from_bsddb(input)
-" ---------------------------------------------
-let g:g3=a:input
-if empty(a:input)
-    return ""
-endif
-:sil!python << EOF
-key = vim.eval('a:input')
-if db.has_key(key):
-    oneline = key + ' ' + db[key]
-    vim.command("return '%s'" % oneline)
-EOF
-endfunction
-
-" ----------------------------
-function! s:vimim_make_bsddb()
-" ----------------------------
-" [url] http://vimim-data.googlecode.com/svn/trunk/data/vimim.pinyin.db
-" [usage] (1) :call s:vimim_make_bsddb()
-"         (2) /bin/db4.5_dump -p vimim.pinyin.db | head
-:sil!python << EOF
-# wget http://vimim-data.googlecode.com/svn/trunk/data/pinyin1234.txt
-# wget http://pimcloud.googlecode.com/hg/server/quanpin2.txt
-# wget http://pimcloud.googlecode.com/hg/server/quanpin3.txt
-# wget http://pimcloud.googlecode.com/hg/server/quanpin4.txt
-# cat quanpin2.txt quanpin3.txt quanpin4.txt | sed "s/'//g" > pinyin.txt
-# cat pinyin1234.txt >> pinyin.txt
-file_in  = '/home/vimim/svn/mycloud/server/pinyin.txt'
-file_out = '/home/vimim/svn/mycloud/server/vimim.pinyin.db'
-import bsddb
-db = bsddb.btopen(file_out,'n')
-for line in sorted(open(file_in).readlines()):
-    key, sep, value = line.strip().partition(" ")
-    key = key.replace("'","")
-    if db.has_key(key):
-       value = db[key] + " " + value
-    db[key] = value
-db.sync()
-db.close()
-EOF
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_get_from_python2(input, cloud)
-" ----------------------------------------------
-:sil!python << EOF
-import vim, urllib2
-try:
-    cloud = vim.eval('a:cloud')
-    input = vim.eval('a:input')
-    urlopen = urllib2.urlopen(input, None, 20)
-    response = urlopen.read()
-    res = "'" + str(response) + "'"
-    if cloud == 'qq':
-        if vim.eval("&encoding") != 'utf-8':
-            res = unicode(res, 'utf-8').encode('utf-8')
-    elif cloud == 'google':
-        if vim.eval("&encoding") != 'utf-8':
-            res = unicode(res, 'unicode_escape').encode("utf8")
-    elif cloud == 'baidu':
-        if vim.eval("&encoding") != 'utf-8':
-            res = str(response)
-        else:
-            res = unicode(response, 'gbk').encode('utf-8')
-        vim.command("let g:baidu = %s" % res)
-    vim.command("return %s" % res)
-    urlopen.close()
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-endfunction
-
-" ----------------------------------------------
-function! s:vimim_get_from_python3(input, cloud)
-" ----------------------------------------------
-:sil!python3 << EOF
-import vim, urllib.request
-try:
-    cloud = vim.eval('a:cloud')
-    input = vim.eval('a:input')
-    urlopen = urllib.request.urlopen(input)
-    response = urlopen.read()
-    if cloud != 'baidu':
-        res = "'" + str(response.decode('utf-8')) + "'"
-    else:
-        if vim.eval("&encoding") != 'utf-8':
-            res = str(response)[2:-1]
-        else:
-            res = response.decode('gbk')
-        vim.command("let g:baidu = %s" % res)
-    vim.command("return %s" % res)
-    urlopen.close()
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-endfunction
-
-" -----------------------------------
-function! g:vimim_gmail() range abort
-" -----------------------------------
-" [dream] to send email with the current buffer
-" [usage] :call g:vimim_gmail()
-" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
-if has('python') < 1 && has('python3') < 1
-    echo 'No magic Python Interface to Vim'
-    return ""
-endif
-let firstline = a:firstline
-let lastline  = a:lastline
-if lastline - firstline < 1
-    let firstline = 1
-    let lastline = "$"
-endif
-let g:gmails.msg = getline(firstline, lastline)
-let python = has('python3') ? 'python3' : 'python'
-exe python . ' << EOF'
-import vim
-from smtplib import SMTP
-from datetime import datetime
-from email.mime.text import MIMEText
-def vimim_gmail():
-    gmails = vim.eval('g:gmails')
-    vim.command('sil!unlet g:gmails.cc')
-    vim.command('sil!unlet g:gmails.bcc')
-    now = datetime.now().strftime("%A %m/%d/%Y")
-    gmail_login  = gmails.get("login","")
-    if len(gmail_login) < 8:
-        return None
-    gmail_passwd = gmails.get("passwd")
-    gmail_to     = gmails.get("to")
-    gmail_cc     = gmails.get("cc","")
-    gmail_bcc    = gmails.get("bcc","")
-    gmail_msg    = gmails.get("msg")
-    gamil_all = [gmail_to] + gmail_cc.split() + gmail_bcc.split()
-    msg = str("\n".join(gmail_msg))
-    rfc2822 = MIMEText(msg, 'plain', 'utf-8')
-    rfc2822['From'] = gmail_login
-    rfc2822['To'] = gmail_to
-    rfc2822['Cc'] = gmail_cc
-    rfc2822['Subject'] = now
-    rfc2822.set_charset('utf-8')
-    try:
-        gmail = SMTP('smtp.gmail.com', 587, 120)
-        gmail.starttls()
-        gmail.login(gmail_login, gmail_passwd[::-1])
-        gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
-    finally:
-        gmail.close()
-vimim_gmail()
-EOF
-endfunction
-
-" -------------------------------------
-function! s:vimim_mycloud_python_init()
-" -------------------------------------
-:sil!python << EOF
-import vim, sys, socket
-BUFSIZE = 1024
-def tcpslice(sendfunc, data):
-    senddata = data
-    while len(senddata) >= BUFSIZE:
-        sendfunc(senddata[0:BUFSIZE])
-        senddata = senddata[BUFSIZE:]
-    if senddata[-1:] == "\n":
-        sendfunc(senddata)
-    else:
-        sendfunc(senddata+"\n")
-def tcpsend(data, host, port):
-    addr = host, port
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        s.connect(addr)
-    except Exception, inst:
-        s.close()
-        return None
-    ret = ""
-    for item in data.split("\n"):
-        if item == "":
-            continue
-        tcpslice(s.send, item)
-        cachedata = ""
-        while cachedata[-1:] != "\n":
-            data = s.recv(BUFSIZE)
-            cachedata += data
-        if cachedata == "server closed\n":
-            break
-        ret += cachedata
-    s.close()
-    return ret
-def parsefunc(keyb, host="localhost", port=10007):
-    src = keyb.encode("base64")
-    ret = tcpsend(src, host, port)
-    if type(ret).__name__ == "str":
-        try:
-            return ret.decode("base64")
-        except Exception:
-            return ""
-    else:
-        return ""
-EOF
-endfunction
-
-" ------------------------------------------------------
-function! s:vimim_mycloud_python_client(cmd, host, port)
-" ------------------------------------------------------
-" Thanks to Pan Shizhu for all codes of mycloud and debug
-:sil!python << EOF
-try:
-    HOST = vim.eval("a:host")
-    PORT = int(vim.eval("a:port"))
-    cmd  = vim.eval("a:cmd")
-    ret = parsefunc(cmd, HOST, PORT)
-    vim.command('return "%s"' % ret)
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-endfunction
-
-" ------------------------------
-function! s:netlog_python_init()
-" ------------------------------
-:sil!python << EOF
-import vim, sys, socket
-BUFSIZE = 1024
-def udpslice(sendfunc, data, addr):
-    senddata = data
-    while len(senddata) >= BUFSIZE:
-        sendfunc(senddata[0:BUFSIZE], addr)
-        senddata = senddata[BUFSIZE:]
-    if senddata[-1:] == "\n":
-        sendfunc(senddata, addr)
-    else:
-        sendfunc(senddata+"\n", addr)
-def udpsend(data, host, port):
-    addr = host, port
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(1)
-    try:
-        s.bind(('', 0))
-    except Exception, inst:
-        s.close()
-        return None
-    ret = ""
-    for item in data.split("\n"):
-        if item == "":
-            continue
-        udpslice(s.sendto, item, addr)
-    s.close()
-def netlog(*args):
-    data = " ".join(args)
-    udpsend(data)
-def log_mask(level):
-    pri = g_level.get(level, -1)
-    if pri < 0:
-        return 0
-    else:
-        return 1 << pri
-def log_upto(level):
-    pri = g_level.get(level, -1)
-    return (1 <<(pri+1) ) - 1
-def checkmask(level):
-    if log_mask(level) & g_mask:
-        return True
-    else:
-        return False
-g_level = {'emerg':0,     # system is unusable
-           'alert':1,     # action must be taken immediately
-           'crit':2,      # critical conditions
-           'err':3,       # error conditions
-           'warning':4,   # warning conditions
-           'notice':5,    # normal but significant condition
-           'info':6,      # informational
-           'debug':7 }    # debug-level messages
-g_mask = log_upto('info')
-EOF
-endfunction
-
-" -----------------------
-function! s:setmask(mask)
-" -----------------------
-" [usage] call s:setmask('err,info,debug')
-:sil!python << EOF
-g_mask = 0
-for item in vim.eval("a:mask").split(","):
-    g_mask |= log_mask(item)
-EOF
-endfunction
-
-" --------------------
-function! s:debug(...)
-" --------------------
-" [server] python ~/vim/vimfiles/plugin/logserver.py
-" [client] :call s:debug('info', 'foo/bar is', foobar, 'and', bar)
-if s:vimim_debug < 1 || has('python') < 1
-    return
-endif
-if s:vimim_debug < 2
-    call s:netlog_python_init()
-    let s:vimim_debug += 1
-endif
-if s:vimim_debug < 2
-    return
-endif
-:sil!python << EOF
-try:
-    level = vim.eval("a:1")
-    if checkmask(level):
-        udpsend(vim.eval("join(a:000)"),"localhost",10007)
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
 endfunction
 
 " ============================================= }}}
@@ -3944,6 +3620,390 @@ function! s:vimim_shuangpin_flypy(rule)
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  Python Interface ==== {{{"]
+" =================================================
+"" " [dream] use VimIM on the fly without plugin
+"" :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
+"" :py import vim, urllib
+"" :py vimim = vim.eval("tempname()")+'.vim'
+"" :py urllib.urlretrieve(url, vimim)
+"" :py vim.command("source %s " % vimim)
+"" " -----------------------------------------------
+
+" ----------------------------------------------
+function! s:vimim_get_from_python2(input, cloud)
+" ----------------------------------------------
+:sil!python << EOF
+import vim, urllib2
+try:
+    cloud = vim.eval('a:cloud')
+    input = vim.eval('a:input')
+    urlopen = urllib2.urlopen(input, None, 20)
+    response = urlopen.read()
+    res = "'" + str(response) + "'"
+    if cloud == 'qq':
+        if vim.eval("&encoding") != 'utf-8':
+            res = unicode(res, 'utf-8').encode('utf-8')
+    elif cloud == 'google':
+        if vim.eval("&encoding") != 'utf-8':
+            res = unicode(res, 'unicode_escape').encode("utf8")
+    elif cloud == 'baidu':
+        if vim.eval("&encoding") != 'utf-8':
+            res = str(response)
+        else:
+            res = unicode(response, 'gbk').encode('utf-8')
+        vim.command("let g:baidu = %s" % res)
+    vim.command("return %s" % res)
+    urlopen.close()
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+endfunction
+
+" ----------------------------------------------
+function! s:vimim_get_from_python3(input, cloud)
+" ----------------------------------------------
+:sil!python3 << EOF
+import vim, urllib.request
+try:
+    cloud = vim.eval('a:cloud')
+    input = vim.eval('a:input')
+    urlopen = urllib.request.urlopen(input)
+    response = urlopen.read()
+    if cloud != 'baidu':
+        res = "'" + str(response.decode('utf-8')) + "'"
+    else:
+        if vim.eval("&encoding") != 'utf-8':
+            res = str(response)[2:-1]
+        else:
+            res = response.decode('gbk')
+        vim.command("let g:baidu = %s" % res)
+    vim.command("return %s" % res)
+    urlopen.close()
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+endfunction
+
+" -----------------------------------
+function! g:vimim_gmail() range abort
+" -----------------------------------
+" [dream] to send email with the current buffer
+" [usage] :call g:vimim_gmail()
+" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
+if has('python') < 1 && has('python3') < 1
+    echo 'No magic Python Interface to Vim'
+    return ""
+endif
+let firstline = a:firstline
+let lastline  = a:lastline
+if lastline - firstline < 1
+    let firstline = 1
+    let lastline = "$"
+endif
+let g:gmails.msg = getline(firstline, lastline)
+let python = has('python3') ? 'python3' : 'python'
+exe python . ' << EOF'
+import vim
+from smtplib import SMTP
+from datetime import datetime
+from email.mime.text import MIMEText
+def vimim_gmail():
+    gmails = vim.eval('g:gmails')
+    vim.command('sil!unlet g:gmails.cc')
+    vim.command('sil!unlet g:gmails.bcc')
+    now = datetime.now().strftime("%A %m/%d/%Y")
+    gmail_login  = gmails.get("login","")
+    if len(gmail_login) < 8:
+        return None
+    gmail_passwd = gmails.get("passwd")
+    gmail_to     = gmails.get("to")
+    gmail_cc     = gmails.get("cc","")
+    gmail_bcc    = gmails.get("bcc","")
+    gmail_msg    = gmails.get("msg")
+    gamil_all = [gmail_to] + gmail_cc.split() + gmail_bcc.split()
+    msg = str("\n".join(gmail_msg))
+    rfc2822 = MIMEText(msg, 'plain', 'utf-8')
+    rfc2822['From'] = gmail_login
+    rfc2822['To'] = gmail_to
+    rfc2822['Cc'] = gmail_cc
+    rfc2822['Subject'] = now
+    rfc2822.set_charset('utf-8')
+    try:
+        gmail = SMTP('smtp.gmail.com', 587, 120)
+        gmail.starttls()
+        gmail.login(gmail_login, gmail_passwd[::-1])
+        gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
+    finally:
+        gmail.close()
+vimim_gmail()
+EOF
+endfunction
+
+" -------------------------------------
+function! s:vimim_mycloud_python_init()
+" -------------------------------------
+:sil!python << EOF
+import vim, sys, socket
+BUFSIZE = 1024
+def tcpslice(sendfunc, data):
+    senddata = data
+    while len(senddata) >= BUFSIZE:
+        sendfunc(senddata[0:BUFSIZE])
+        senddata = senddata[BUFSIZE:]
+    if senddata[-1:] == "\n":
+        sendfunc(senddata)
+    else:
+        sendfunc(senddata+"\n")
+def tcpsend(data, host, port):
+    addr = host, port
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect(addr)
+    except Exception, inst:
+        s.close()
+        return None
+    ret = ""
+    for item in data.split("\n"):
+        if item == "":
+            continue
+        tcpslice(s.send, item)
+        cachedata = ""
+        while cachedata[-1:] != "\n":
+            data = s.recv(BUFSIZE)
+            cachedata += data
+        if cachedata == "server closed\n":
+            break
+        ret += cachedata
+    s.close()
+    return ret
+def parsefunc(keyb, host="localhost", port=10007):
+    src = keyb.encode("base64")
+    ret = tcpsend(src, host, port)
+    if type(ret).__name__ == "str":
+        try:
+            return ret.decode("base64")
+        except Exception:
+            return ""
+    else:
+        return ""
+EOF
+endfunction
+
+" ------------------------------------------------------
+function! s:vimim_mycloud_python_client(cmd, host, port)
+" ------------------------------------------------------
+" Thanks to Pan Shizhu for all codes of mycloud and debug
+:sil!python << EOF
+try:
+    HOST = vim.eval("a:host")
+    PORT = int(vim.eval("a:port"))
+    cmd  = vim.eval("a:cmd")
+    ret = parsefunc(cmd, HOST, PORT)
+    vim.command('return "%s"' % ret)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+endfunction
+
+" ------------------------------
+function! s:netlog_python_init()
+" ------------------------------
+:sil!python << EOF
+import vim, sys, socket
+BUFSIZE = 1024
+def udpslice(sendfunc, data, addr):
+    senddata = data
+    while len(senddata) >= BUFSIZE:
+        sendfunc(senddata[0:BUFSIZE], addr)
+        senddata = senddata[BUFSIZE:]
+    if senddata[-1:] == "\n":
+        sendfunc(senddata, addr)
+    else:
+        sendfunc(senddata+"\n", addr)
+def udpsend(data, host, port):
+    addr = host, port
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(1)
+    try:
+        s.bind(('', 0))
+    except Exception, inst:
+        s.close()
+        return None
+    ret = ""
+    for item in data.split("\n"):
+        if item == "":
+            continue
+        udpslice(s.sendto, item, addr)
+    s.close()
+def netlog(*args):
+    data = " ".join(args)
+    udpsend(data)
+def log_mask(level):
+    pri = g_level.get(level, -1)
+    if pri < 0:
+        return 0
+    else:
+        return 1 << pri
+def log_upto(level):
+    pri = g_level.get(level, -1)
+    return (1 <<(pri+1) ) - 1
+def checkmask(level):
+    if log_mask(level) & g_mask:
+        return True
+    else:
+        return False
+g_level = {'emerg':0,     # system is unusable
+           'alert':1,     # action must be taken immediately
+           'crit':2,      # critical conditions
+           'err':3,       # error conditions
+           'warning':4,   # warning conditions
+           'notice':5,    # normal but significant condition
+           'info':6,      # informational
+           'debug':7 }    # debug-level messages
+g_mask = log_upto('info')
+EOF
+endfunction
+
+" -----------------------
+function! s:setmask(mask)
+" -----------------------
+" [usage] call s:setmask('err,info,debug')
+:sil!python << EOF
+g_mask = 0
+for item in vim.eval("a:mask").split(","):
+    g_mask |= log_mask(item)
+EOF
+endfunction
+
+" --------------------
+function! s:debug(...)
+" --------------------
+" [server] python ~/vim/vimfiles/plugin/logserver.py
+" [client] :call s:debug('info', 'foo/bar is', foobar, 'and', bar)
+if s:vimim_debug < 1 || has('python') < 1
+    return
+endif
+if s:vimim_debug < 2
+    call s:netlog_python_init()
+    let s:vimim_debug += 1
+endif
+if s:vimim_debug < 2
+    return
+endif
+:sil!python << EOF
+try:
+    level = vim.eval("a:1")
+    if checkmask(level):
+        udpsend(vim.eval("join(a:000)"),"localhost",10007)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  backend database ==== {{{"]
+" =================================================
+
+" ----------------------------
+function! s:vimim_make_bsddb()
+" ----------------------------
+" [url] http://vimim-data.googlecode.com/svn/trunk/data/vimim.pinyin.db
+" [usage] (1) :call s:vimim_make_bsddb()
+"         (2) /bin/db4.5_dump -p vimim.pinyin.db | head
+:sil!python << EOF
+# wget http://vimim-data.googlecode.com/svn/trunk/data/pinyin1234.txt
+# wget http://pimcloud.googlecode.com/hg/server/quanpin2.txt
+# wget http://pimcloud.googlecode.com/hg/server/quanpin3.txt
+# wget http://pimcloud.googlecode.com/hg/server/quanpin4.txt
+# cat quanpin2.txt quanpin3.txt quanpin4.txt | sed "s/'//g" > pinyin.txt
+# cat pinyin1234.txt >> pinyin.txt
+file_in  = '/home/vimim/svn/mycloud/server/pinyin.txt'
+file_out = '/home/vimim/svn/mycloud/server/vimim.pinyin.db'
+import bsddb
+db = bsddb.btopen(file_out,'n')
+for line in sorted(open(file_in).readlines()):
+    key, sep, value = line.strip().partition(" ")
+    key = key.replace("'","")
+    if db.has_key(key):
+       value = db[key] + " " + value
+    db[key] = value
+db.sync()
+db.close()
+EOF
+endfunction
+
+" ---------------------------------------------
+function! s:vimim_get_oneline_from_bsddb(input)
+" ---------------------------------------------
+if empty(a:input)
+    return ""
+endif
+:sil!python << EOF
+key = vim.eval('a:input')
+if db.has_key(key):
+    oneline = key + ' ' + db[key]
+    vim.command("return '%s'" % oneline)
+EOF
+endfunction
+
+" -------------------------------------------------
+function! s:vimim_sentence_match_database(keyboard)
+" -------------------------------------------------
+    let keyboard = a:keyboard
+    let oneline = s:vimim_get_oneline_from_bsddb(keyboard)
+    if !empty(oneline)
+        return keyboard
+    elseif !empty(s:english_results)
+        return ""
+    endif
+    let max = len(keyboard)
+    while max > 1
+        let max -= 1
+        let head = strpart(keyboard, 0, max)
+        let oneline = s:vimim_get_oneline_from_bsddb(head)
+        if empty(oneline)
+            continue
+        else
+            break
+        endif
+    endwhile
+    if empty(oneline)
+        return ""
+    endif
+    return keyboard[0 : max-1]
+endfunction
+
+" ---------------------------------------------------
+function! s:vimim_get_from_database(keyboard, search)
+" ---------------------------------------------------
+    let keyboard = a:keyboard
+    let oneline = s:vimim_get_oneline_from_bsddb(keyboard)
+    let results = s:vimim_make_pair_list(oneline)
+    if a:search < 1 && len(results) > 0 && len(results) < 20
+        let candidates = s:vimim_more_pinyin_candidates(keyboard)
+        let extras = []
+        if len(candidates) > 1
+            for candidate in candidates
+                let oneline = s:vimim_get_oneline_from_bsddb(candidate)
+                if empty(oneline)
+                    continue
+                else
+                    let matched_list = s:vimim_make_pair_list(oneline)
+                    if !empty(matched_list)
+                        call extend(extras, matched_list)
+                    endif
+                endif
+            endfor
+        endif
+        if len(extras) > 0
+            call extend(results, extras)
+        endif
+    endif
+    return results
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  backend file     ==== {{{"]
 " =================================================
 
@@ -4036,65 +4096,6 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
         let matched_list = s:vimim_make_pair_list(oneline)
         call extend(results, matched_list)
     endfor
-    return results
-endfunction
-
-" -------------------------------------------------
-function! s:vimim_sentence_match_database(keyboard)
-" -------------------------------------------------
-    let keyboard = a:keyboard
-    let oneline = s:vimim_get_oneline_from_bsddb(keyboard)
-let g:g4=oneline
-    if !empty(oneline)
-        return keyboard
-    elseif !empty(s:english_results)
-        return ""
-    endif
-    let max = len(keyboard)
-    while max > 1
-        let max -= 1
-        let head = strpart(keyboard, 0, max)
-        let oneline = s:vimim_get_oneline_from_bsddb(head)
-        if empty(oneline)
-            continue
-        else
-            break
-        endif
-    endwhile
-    if empty(oneline)
-        return ""
-    endif
-    return keyboard[0 : max-1]
-endfunction
-
-" ---------------------------------------------------
-function! s:vimim_get_from_database(keyboard, search)
-" ---------------------------------------------------
-    let keyboard = a:keyboard
-    let oneline = s:vimim_get_oneline_from_bsddb(keyboard)
-let g:g1=oneline
-    let results = s:vimim_make_pair_list(oneline)
-let g:g2=results
-    if a:search < 1 && len(results) > 0 && len(results) < 20
-        let candidates = s:vimim_more_pinyin_candidates(keyboard)
-        let extras = []
-        if len(candidates) > 1
-            for candidate in candidates
-                let oneline = s:vimim_get_oneline_from_bsddb(candidate)
-                if empty(oneline)
-                    continue
-                else
-                    let matched_list = s:vimim_make_pair_list(oneline)
-                    if !empty(matched_list)
-                        call extend(extras, matched_list)
-                    endif
-                endif
-            endfor
-        endif
-        if len(extras) > 0
-            call extend(results, extras)
-        endif
-    endif
     return results
 endfunction
 
@@ -5389,7 +5390,6 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     elseif root =~# "datafile"
        if s:vimim_data_file =~ ".db"
            let keyboard2 = s:vimim_sentence_match_database(keyboard)
-let g:g33=keyboard2
            let results = s:vimim_get_from_database(keyboard2, a:search)
         else
            let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
