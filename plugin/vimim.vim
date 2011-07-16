@@ -745,7 +745,7 @@ function! s:vimim_slash_search_block(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Chinese Mode     ==== {{{"]
+let s:VimIM += [" ====  chinese mode     ==== {{{"]
 " =================================================
 " s:chinese_input_mode='onekey'  => (default) OneKey
 " s:chinese_input_mode='dynamic' => (default) dynamic mode
@@ -3605,7 +3605,7 @@ function! s:vimim_shuangpin_flypy(rule)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  Python Interface ==== {{{"]
+let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
 "" " [dream] use VimIM on the fly without plugin
 "" :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
