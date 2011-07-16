@@ -4307,10 +4307,8 @@ function! s:vimim_sentence_match_directory(keyboard)
     let filename = s:vimim_data_directory . keyboard
     if filereadable(filename)
         return keyboard
-    elseif empty(s:english_results)
-        " scan more on directory when English is not found
-    else
-        return 0
+    elseif !empty(s:english_results)
+        return ""
     endif
     let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
     if !empty(candidates)
@@ -4333,7 +4331,7 @@ function! s:vimim_sentence_match_directory(keyboard)
     if filereadable(filename)
         return keyboard[0 : max-1]
     endif
-    return 0
+    return ""
 endfunction
 
 " ============================================= }}}
