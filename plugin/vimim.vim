@@ -11,6 +11,7 @@ let s:url  = " http://vim.sf.net/scripts/script.php?script_id=2506"
 let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
 let s:url .= " http://code.google.com/p/vimim/source/list"
 let s:url .= " http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
+let s:url .= " http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db"
 let s:url .= " http://vimim-data.googlecode.com"
 let s:url .= " http://groups.google.com/group/vimim"
 let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.html"
@@ -331,7 +332,9 @@ function! s:vimim_initialize_self()
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
-     "  let g:vimim_data_directory = '/home/vimim/pinyin/'
+        if has("win32unix")
+            let g:vimim_data_directory = '/home/vimim/pinyin/'
+        endif
     endif
 endfunction
 
@@ -397,10 +400,11 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "最新程式 " . get(url,1) . " ")
     call add(eggs, "更新报告 " . get(url,2) . " ")
     call add(eggs, "标准字库 " . get(url,3) . " ")
-    call add(eggs, "民间词库 " . get(url,4) . " ")
-    call add(eggs, "新闻论坛 " . get(url,5) . " ")
-    call add(eggs, "最新主页 " . get(url,6) . " ")
-    call add(eggs, "论坛邮箱 " . get(url,7) . " ")
+    call add(eggs, "拼音词库 " . get(url,4) . " ")
+    call add(eggs, "民间词库 " . get(url,5) . " ")
+    call add(eggs, "新闻论坛 " . get(url,6) . " ")
+    call add(eggs, "最新主页 " . get(url,7) . " ")
+    call add(eggs, "论坛邮箱 " . get(url,8) . " ")
     return eggs
 endfunction
 
@@ -3896,7 +3900,7 @@ function! g:vimim_get_database()
 " [usage] :call g:vimim_get_database()
 :sil!python << EOF
 import vim, urllib
-url = 'http://vimim-data.googlecode.com/svn/trunk/data/vimim.pinyin.db'
+url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db'
 path = vim.eval('s:path') + 'vimim.pinyin.db'
 urllib.urlretrieve(url, path)
 EOF
