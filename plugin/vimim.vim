@@ -1684,7 +1684,10 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 
 " --------------------------------
 function! s:vimim_get_bsddb(input)
-" -------------------------------- todo
+" --------------------------------
+if empty(a:input)
+    return ""
+endif
 :sil!python << EOF
 # import vim, bsddb
 # db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
@@ -3954,8 +3957,8 @@ function! s:vimim_scan_backend_embedded_datafile()
         if has("python") && filereadable(datafile . ".db")
             let s:vimim_data_file = datafile . ".db"
             call s:vimim_set_datafile(im, s:vimim_data_file)
-            :py import vim, bsddb
-            :py db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
+            :python import vim, bsddb
+            :python db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
             break
         elseif filereadable(datafile . ".txt")
             call s:vimim_set_datafile(im, datafile . ".txt")
@@ -4026,13 +4029,40 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
     return results
 endfunction
 
+" --------------------------------------------------
+function! s:vimim_sentence_match_python_db(keyboard)
+" --------------------------------------------------
+    let keyboard = a:keyboard
+    let result = s:vimim_get_bsddb(keyboard)
+    if !empty(result)
+        return keyboard
+    elseif !empty(s:english_results)
+        return ""
+    endif
+    let max = len(keyboard)
+    while max > 1
+        let max -= 1
+        let head = strpart(keyboard, 0, max)
+        let result = s:vimim_get_bsddb(head)
+        if empty(result)
+            continue
+        else
+            break
+        endif
+    endwhile
+    if empty(result)
+        return ""
+    endif
+    return keyboard[0 : max-1]
+endfunction
+
 " -------------------------------------------------
 function! s:vimim_sentence_match_datafile(keyboard)
 " -------------------------------------------------
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
-    if empty(keyboard) || empty(lines)
-        return 0
+    if empty(lines)
+        return ""
     endif
     let pattern = '^' . keyboard . '\s'
     let matched = match(lines, pattern)
@@ -4041,7 +4071,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
     elseif empty(s:english_results)
         " scan more on datafile when English is not found
     else
-        return 0
+        return ""
     endif
     let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
     if !empty(candidates)
@@ -4061,7 +4091,7 @@ function! s:vimim_sentence_match_datafile(keyboard)
         endif
     endwhile
     if matched < 0
-        return 0
+        return ""
     endif
     return keyboard[0 : max-1]
 endfunction
@@ -5314,9 +5344,10 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
                 call extend(results, extras)
             endif
         endif
-    elseif root =~# "datafile"
+    elseif root =~# "datafile" && !empty(keyboard)
        if s:vimim_data_file =~ ".db"
-           let results = split(s:vimim_get_bsddb(keyboard))
+           let keyboard2 = s:vimim_sentence_match_python_db(keyboard)
+           let results = split(s:vimim_get_bsddb(keyboard2))
         else
            let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
            let results = s:vimim_get_from_datafile(keyboard2, a:search)
