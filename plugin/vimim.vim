@@ -1686,6 +1686,7 @@ let s:VimIM += [" ====  Python Interface ==== {{{"]
 " ---------------------------------------------
 function! s:vimim_get_oneline_from_bsddb(input)
 " ---------------------------------------------
+let g:g3=a:input
 if empty(a:input)
     return ""
 endif
@@ -1700,18 +1701,25 @@ endfunction
 " ----------------------------
 function! s:vimim_make_bsddb()
 " ----------------------------
-" [url]   http://vimim-data.googlecode.com/svn/trunk/data/vimim.pinyin.db
-" [usage] (1) vim file_in
-"         (2) touch file_out
-"         (3) :call s:vimim_make_bsddb()
-"         (4) /bin/db4.5_dump -p vimim.pinyin.db | head
+" [url] http://vimim-data.googlecode.com/svn/trunk/data/vimim.pinyin.db
+" [usage] (1) :call s:vimim_make_bsddb()
+"         (2) /bin/db4.5_dump -p vimim.pinyin.db | head
 :sil!python << EOF
+# wget http://vimim-data.googlecode.com/svn/trunk/data/pinyin1234.txt
+# wget http://pimcloud.googlecode.com/hg/server/quanpin2.txt
+# wget http://pimcloud.googlecode.com/hg/server/quanpin3.txt
+# wget http://pimcloud.googlecode.com/hg/server/quanpin4.txt
+# cat quanpin2.txt quanpin3.txt quanpin4.txt | sed "s/'//g" > pinyin.txt
+# cat pinyin1234.txt >> pinyin.txt
 file_in  = '/home/vimim/svn/mycloud/server/pinyin.txt'
 file_out = '/home/vimim/svn/mycloud/server/vimim.pinyin.db'
 import bsddb
 db = bsddb.btopen(file_out,'n')
 for line in sorted(open(file_in).readlines()):
     key, sep, value = line.strip().partition(" ")
+    key = key.replace("'","")
+    if db.has_key(key):
+       value = db[key] + " " + value
     db[key] = value
 db.sync()
 db.close()
@@ -1754,8 +1762,8 @@ function! s:vimim_get_from_python3(input, cloud)
 :sil!python3 << EOF
 import vim, urllib.request
 try:
-    cloud = vim.eval("a:cloud")
-    input = vim.eval("a:input")
+    cloud = vim.eval('a:cloud')
+    input = vim.eval('a:input')
     urlopen = urllib.request.urlopen(input)
     response = urlopen.read()
     if cloud != 'baidu':
@@ -3950,14 +3958,13 @@ function! s:vimim_scan_backend_embedded_datafile()
         if !empty(datafile) && filereadable(datafile)
             if datafile =~ '\<' . im . '\>'
                 call s:vimim_set_datafile(im, datafile)
+                break
             endif
         endif
         let datafile = s:path . "vimim." . im
         if has("python") && filereadable(datafile . ".db")
             let s:vimim_data_file = datafile . ".db"
             call s:vimim_set_datafile(im, s:vimim_data_file)
-            :python import vim, bsddb
-            :python db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
             break
         elseif filereadable(datafile . ".txt")
             call s:vimim_set_datafile(im, datafile . ".txt")
@@ -3973,6 +3980,10 @@ function! s:vimim_scan_backend_embedded_datafile()
             endif
         endif
     endfor
+    if s:vimim_data_file =~ ".db"
+        :python import vim, bsddb
+        :python db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
+    endif
 endfunction
 
 " ------------------------------------------
@@ -4022,7 +4033,7 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
             return [candidate]
         endif
         let oneline = get(lines, matched)
-        let matched_list = s:vimim_make_pair_matched_list(oneline)
+        let matched_list = s:vimim_make_pair_list(oneline)
         call extend(results, matched_list)
     endfor
     return results
@@ -4033,6 +4044,7 @@ function! s:vimim_sentence_match_database(keyboard)
 " -------------------------------------------------
     let keyboard = a:keyboard
     let oneline = s:vimim_get_oneline_from_bsddb(keyboard)
+let g:g4=oneline
     if !empty(oneline)
         return keyboard
     elseif !empty(s:english_results)
@@ -4060,7 +4072,9 @@ function! s:vimim_get_from_database(keyboard, search)
 " ---------------------------------------------------
     let keyboard = a:keyboard
     let oneline = s:vimim_get_oneline_from_bsddb(keyboard)
-    let results = s:vimim_make_pair_matched_list(oneline)
+let g:g1=oneline
+    let results = s:vimim_make_pair_list(oneline)
+let g:g2=results
     if a:search < 1 && len(results) > 0 && len(results) < 20
         let candidates = s:vimim_more_pinyin_candidates(keyboard)
         let extras = []
@@ -4070,8 +4084,10 @@ function! s:vimim_get_from_database(keyboard, search)
                 if empty(oneline)
                     continue
                 else
-                    let matched_list = s:vimim_make_pair_matched_list(oneline)
-                    call extend(extras, matched_list)
+                    let matched_list = s:vimim_make_pair_list(oneline)
+                    if !empty(matched_list)
+                        call extend(extras, matched_list)
+                    endif
                 endif
             endfor
         endif
@@ -4138,7 +4154,7 @@ function! s:vimim_get_from_datafile(keyboard, search)
         for i in range(more)
             let matched += i
             let oneline = get(lines, matched)
-            let extras = s:vimim_make_pair_matched_list(oneline)
+            let extras = s:vimim_make_pair_list(oneline)
             call extend(results, extras)
         endfor
     else
@@ -4148,7 +4164,7 @@ function! s:vimim_get_from_datafile(keyboard, search)
         if a:search < 1 && len(onelines) > 0 && len(onelines) < 20
             let extras = s:vimim_more_pinyin_datafile(a:keyboard,0)
             if len(extras) > 0
-                let results = s:vimim_make_pair_matched_list(oneline)
+                let results = s:vimim_make_pair_list(oneline)
                 call extend(results, extras)
             endif
         endif
@@ -4156,10 +4172,13 @@ function! s:vimim_get_from_datafile(keyboard, search)
     return results
 endfunction
 
-" -----------------------------------------------
-function! s:vimim_make_pair_matched_list(oneline)
-" -----------------------------------------------
+" ---------------------------------------
+function! s:vimim_make_pair_list(oneline)
+" ---------------------------------------
 " break row entry in datafile into pair list
+    if empty(a:oneline)
+        return []
+    endif
     let oneline_list = split(a:oneline)
     let menu = remove(oneline_list, 0)
     if empty(menu) || menu =~ '\W'
@@ -4576,7 +4595,6 @@ endfunction
 function! s:vimim_get_from_http(input, cloud)
 " -------------------------------------------
     let input = a:input
-    let output = ""
     if empty(input)
         return ""
     endif
@@ -4585,6 +4603,7 @@ function! s:vimim_get_from_http(input, cloud)
             return ""
         endif
     endif
+    let output = ""
     try
         if s:http_executable =~ 'Python3'
             let output = s:vimim_get_from_python3(input, a:cloud)
@@ -5370,6 +5389,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     elseif root =~# "datafile"
        if s:vimim_data_file =~ ".db"
            let keyboard2 = s:vimim_sentence_match_database(keyboard)
+let g:g33=keyboard2
            let results = s:vimim_get_from_database(keyboard2, a:search)
         else
            let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
