@@ -455,11 +455,11 @@ function! s:vimim_egg_vimimenv()
     if s:has_cjk_file > 0
         let ciku  = database . s:vimim_chinese('standard')
         let ciku .= s:vimim_chinese('cjk') . s:colon
-        call add(eggs, ciku . s:cjk_file)
+        call add(eggs, ciku . s:cjk_filename)
     endif
     if s:has_english_file > 0
         let ciku = database . s:vimim_chinese('english') . database
-        call add(eggs, ciku . s:english_file)
+        call add(eggs, ciku . s:english_filename)
     endif
     let input = s:vimim_chinese('input')
     if len(s:ui.frontends) > 0
@@ -2010,14 +2010,14 @@ let s:VimIM += [" ====  vimim.cjk.txt    ==== {{{"]
 " -------------------------------------
 function! s:vimim_initialize_cjk_file()
 " -------------------------------------
-    let s:has_cjk_file = 0
-    let s:cjk_file = 0
     let s:cjk_lines = []
+    let s:has_cjk_file = 0
+    let s:cjk_filename = 0
     let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
     if !empty(datafile)
-        let s:cjk_file = datafile
-        let s:cjk_lines = s:vimim_readfile(s:cjk_file)
+        let s:cjk_lines = s:vimim_readfile(datafile)
         let s:has_cjk_file = 1
+        let s:cjk_filename = datafile
         if empty(s:backend.datafile) && empty(s:backend.directory)
             let s:has_cjk_file = 2
         endif
@@ -3036,13 +3036,14 @@ let s:VimIM += [" ====  input english    ==== {{{"]
 " ---------------------------------------
 function! s:vimim_scan_english_datafile()
 " ---------------------------------------
-    let s:has_english_file = 0
-    let s:english_file = 0
     let s:english_lines = []
+    let s:has_english_file = 0
+    let s:english_filename = 0
     let datafile = "vimim.txt"
     let datafile = s:vimim_check_filereadable(datafile)
     if !empty(datafile)
-        let s:english_file = datafile
+        let s:english_lines = s:vimim_readfile(datafile)
+        let s:english_filename = datafile
         let s:has_english_file = 1
     endif
 endfunction
@@ -3085,9 +3086,6 @@ function! s:vimim_onekey_english(keyboard, order)
     endif
     if s:has_english_file > 0
         " [sql] select english from vimim.txt
-        if empty(s:english_lines)
-            let s:english_lines = s:vimim_readfile(s:english_file)
-        endif
         let grep_english = '^' . a:keyboard . '\s'
         let matched = match(s:english_lines, grep_english)
         if matched < 0 && len(a:keyboard) > 3
@@ -3945,6 +3943,7 @@ if key in db:
     oneline = key + ' ' + db[key]
     vim.command("return '%s'" % oneline)
 EOF
+return ""
 endfunction
 
 " -------------------------------------------------
