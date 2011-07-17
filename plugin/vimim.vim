@@ -3925,7 +3925,7 @@ db = bsddb.btopen(file_out,'n')
 for line in sorted(open(file_in).readlines()):
     key, sep, value = line.strip().partition(" ")
     key = key.replace("'","")
-    if db.has_key(key):
+    if key in db:
        value = db[key] + " " + value
     db[key] = value
 db.sync()
@@ -3941,7 +3941,7 @@ if empty(a:input)
 endif
 :sil!python << EOF
 key = vim.eval('a:input')
-if db.has_key(key):
+if key in db:
     oneline = key + ' ' + db[key]
     vim.command("return '%s'" % oneline)
 EOF
