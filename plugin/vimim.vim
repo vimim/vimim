@@ -4185,6 +4185,9 @@ function! s:vimim_make_pair_list(oneline)
     if empty(menu) || menu =~ '\W'
         return []
     endif
+    if !empty(s:english_results)
+        return oneline_list
+    endif
     let results = []
     for chinese in oneline_list
         let menu_chinese = menu .' '. chinese
