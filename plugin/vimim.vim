@@ -248,6 +248,7 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 function! s:vimim_initialize_global()
 " -----------------------------------
     let G = []
+    let s:vimimrc = []
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_esc_for_correction")
@@ -269,7 +270,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_mycloud")
     call add(G, "g:vimim_cloud")
     " -----------------------------------
-    let s:vimimrc = []
     call s:vimim_set_global_default(G, 0)
     " -----------------------------------
     let G = []
@@ -289,7 +289,6 @@ function! s:vimim_initialize_global()
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
-    else
     endif
 endfunction
 
@@ -330,14 +329,14 @@ function! s:vimim_initialize_self()
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
-        if has("win32unix")
+        if has('python') < 1
             let g:vimim_data_directory = '/home/vimim/pinyin/'
         endif
     endif
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  easter eggs      ==== {{{"]
+let s:VimIM += [" ==== hidden easter egg ==== {{{"]
 " =================================================
 
 " ----------------------------------------
@@ -353,10 +352,10 @@ function! s:vimim_easter_chicken(keyboard)
     return []
 endfunction
 
+" http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
 " -----------------------------
 function! s:vimim_egg_vimimrc()
 " -----------------------------
-" http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
     return sort(copy(s:vimimrc))
 endfunction
 
@@ -450,14 +449,14 @@ function! s:vimim_egg_vimimenv()
     let option = s:vimim_chinese('style') . s:colon . toggle
     call add(eggs, option)
     let database = s:vimim_chinese('database') . s:colon
+    if s:has_english_file > 0
+        let ciku = database . s:vimim_chinese('english') . database
+        call add(eggs, ciku . s:english_filename)
+    endif
     if s:has_cjk_file > 0
         let ciku  = database . s:vimim_chinese('standard')
         let ciku .= s:vimim_chinese('cjk') . s:colon
         call add(eggs, ciku . s:cjk_filename)
-    endif
-    if s:has_english_file > 0
-        let ciku = database . s:vimim_chinese('english') . database
-        call add(eggs, ciku . s:english_filename)
     endif
     let input = s:vimim_chinese('input')
     if len(s:ui.frontends) > 0
