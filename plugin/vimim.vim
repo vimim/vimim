@@ -3887,38 +3887,12 @@ let s:VimIM += [" ====  backend database ==== {{{"]
 function! g:vimim_get_database()
 " ------------------------------
 " [usage] :call g:vimim_get_database()
+" [url]   http://vimim.googlecode.com/svn/vimim/vimim.html#database
 :sil!python << EOF
 import vim, urllib
 url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db'
 path = vim.eval('s:path') + 'vimim.pinyin.db'
 urllib.urlretrieve(url, path)
-EOF
-endfunction
-
-" ----------------------------
-function! s:vimim_make_bsddb()
-" ----------------------------
-:python << EOF
-# wget http://vimim-data.googlecode.com/svn/trunk/data/pinyin1234.txt
-# wget http://pimcloud.googlecode.com/hg/server/quanpin2.txt
-# wget http://pimcloud.googlecode.com/hg/server/quanpin3.txt
-# wget http://pimcloud.googlecode.com/hg/server/quanpin4.txt
-# cat quanpin2.txt quanpin3.txt quanpin4.txt | sed "s/'//g" > pinyin.txt
-# cat pinyin1234.txt >> pinyin.txt
-# /bin/db4.5_dump -p vimim.pinyin.db | head
-file_in  = '/home/vimim/svn/mycloud/server/pinyin.txt'
-file_out = '/home/vimim/svn/mycloud/server/vimim.pinyin.db'
-import bsddb
-db = bsddb.btopen(file_out,'n')
-for line in sorted(open(file_in).readlines()):
-    key, sep, value = line.strip().partition(" ")
-    if key in db:
-        if len(value.split()[0]) > len(db[key].split()[0]):
-            value = db[key] + " " + value
-        else:
-            value = value + " " + db[key]
-    db[key] = value
-db.close()
 EOF
 endfunction
 
