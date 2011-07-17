@@ -3898,8 +3898,7 @@ endfunction
 " ----------------------------
 function! s:vimim_make_bsddb()
 " ----------------------------
-" [usage] :call s:vimim_make_bsddb()
-:sil!python << EOF
+:python << EOF
 # wget http://vimim-data.googlecode.com/svn/trunk/data/pinyin1234.txt
 # wget http://pimcloud.googlecode.com/hg/server/quanpin2.txt
 # wget http://pimcloud.googlecode.com/hg/server/quanpin3.txt
@@ -3913,11 +3912,12 @@ import bsddb
 db = bsddb.btopen(file_out,'n')
 for line in sorted(open(file_in).readlines()):
     key, sep, value = line.strip().partition(" ")
-    key = key.replace("'","")
     if key in db:
-       value = db[key] + " " + value
+        if len(value.split()[0]) > len(db[key].split()[0]):
+            value = db[key] + " " + value
+        else:
+            value = value + " " + db[key]
     db[key] = value
-db.sync()
 db.close()
 EOF
 endfunction
