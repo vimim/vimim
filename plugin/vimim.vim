@@ -3896,72 +3896,41 @@ urllib.urlretrieve(url, path)
 EOF
 endfunction
 
-" ---------------------------------------------
-function! s:vimim_get_oneline_from_bsddb(input)
-" ---------------------------------------------
+" ----------------------------------------------------------
+function! s:vimim_sentence_match_database(input, issentence)
+" ----------------------------------------------------------
 if empty(a:input)
     return ""
 endif
 :sil!python << EOF
 key = vim.eval('a:input')
-if key in db:
+if int(vim.eval('a:issentence')) > 0:
+    if key not in db:
+        while key not in db:
+            key = key[:-1]
+    oneline = key
+elif key in db:
     oneline = key + ' ' + db[key]
-    vim.command("return '%s'" % oneline)
+vim.command("return '%s'" % oneline)
 EOF
-return ""
-endfunction
-
-" -------------------------------------------------
-function! s:vimim_sentence_match_database(keyboard)
-" -------------------------------------------------
-    let keyboard = a:keyboard
-    let oneline = s:vimim_get_oneline_from_bsddb(keyboard)
-    if !empty(oneline)
-        return keyboard
-    elseif !empty(s:english_results)
-        return ""
-    endif
-    let max = len(keyboard)
-    while max > 1
-        let max -= 1
-        let head = strpart(keyboard, 0, max)
-        let oneline = s:vimim_get_oneline_from_bsddb(head)
-        if empty(oneline)
-            continue
-        else
-            break
-        endif
-    endwhile
-    if empty(oneline)
-        return ""
-    endif
-    return keyboard[0 : max-1]
 endfunction
 
 " ---------------------------------------------------
 function! s:vimim_get_from_database(keyboard, search)
 " ---------------------------------------------------
     let keyboard = a:keyboard
-    let oneline = s:vimim_get_oneline_from_bsddb(keyboard)
+    let oneline = s:vimim_sentence_match_database(keyboard, 0)
     let results = s:vimim_make_pair_list(oneline)
     if a:search < 1 && len(results) > 0 && len(results) < 20
         let candidates = s:vimim_more_pinyin_candidates(keyboard)
-        let extras = []
         if len(candidates) > 1
-            for candidate in candidates
-                let oneline = s:vimim_get_oneline_from_bsddb(candidate)
-                if empty(oneline)
-                    continue
-                else
-                    let matched_list = s:vimim_make_pair_list(oneline)
-                    if !empty(matched_list)
-                        call extend(extras, matched_list)
-                    endif
+            for candidate in candidates[1:]
+                let oneline = s:vimim_sentence_match_database(candidate, 0)
+                let matched_list = s:vimim_make_pair_list(oneline)
+                if !empty(matched_list)
+                    call extend(results, matched_list)
                 endif
             endfor
-        endif
-        if len(extras) > 0
-            call extend(results, extras)
         endif
     endif
     return results
@@ -5357,7 +5326,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         endif
     elseif root =~# "datafile"
        if s:vimim_data_file =~ ".db"
-           let keyboard2 = s:vimim_sentence_match_database(keyboard)
+           let keyboard2 = s:vimim_sentence_match_database(keyboard, 1)
            let results = s:vimim_get_from_database(keyboard2, a:search)
         else
            let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
