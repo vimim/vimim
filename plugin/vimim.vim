@@ -98,8 +98,7 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_scan_backend_embedded_datafile()
     sil!call s:vimim_scan_backend_embedded_directory()
     sil!call s:vimim_scan_backend_cloud()
-    sil!call s:vimim_dictionary_quantifiers()
-    sil!call s:vimim_initialize_cjk_file()
+    sil!call s:vimim_scan_cjk_file()
     sil!call s:vimim_scan_english_datafile()
     sil!call s:vimim_initialize_keycode()
 endfunction
@@ -114,7 +113,6 @@ function! s:vimim_initialize_session()
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     let s:shuangpin_keycode_chinese = {}
-    let s:quantifiers = {}
     let s:current_positions = [0,0,1,0]
     let s:start_row_before = 0
     let s:start_column_before = 1
@@ -1719,54 +1717,11 @@ function! s:vimim_dictionary_chinese()
     let s:chinese.datetime   = ['日期']
 endfunction
 
-" ----------------------------------------
-function! s:vimim_dictionary_quantifiers()
-" ----------------------------------------
-    if s:vimim_imode_pinyin < 1
-        return
-    endif
-    let s:quantifiers.1 = '一壹甲①⒈⑴'
-    let s:quantifiers.2 = '二贰乙②⒉⑵'
-    let s:quantifiers.3 = '三叁丙③⒊⑶'
-    let s:quantifiers.4 = '四肆丁④⒋⑷'
-    let s:quantifiers.5 = '五伍戊⑤⒌⑸'
-    let s:quantifiers.6 = '六陆己⑥⒍⑹'
-    let s:quantifiers.7 = '七柒庚⑦⒎⑺'
-    let s:quantifiers.8 = '八捌辛⑧⒏⑻'
-    let s:quantifiers.9 = '九玖壬⑨⒐⑼'
-    let s:quantifiers.0 = '〇零癸⑩⒑⑽十拾'
-    let s:quantifiers.s = '十拾时升艘扇首双所束手秒'
-    let s:quantifiers.b = '百佰步把包杯本笔部班'
-    let s:quantifiers.q = '千仟群'
-    let s:quantifiers.w = '万位味碗窝晚'
-    let s:quantifiers.h = '时毫行盒壶户回'
-    let s:quantifiers.f = '分份发封付副幅峰方服'
-    let s:quantifiers.a = '秒'
-    let s:quantifiers.n = '年'
-    let s:quantifiers.m = '月米名枚面门'
-    let s:quantifiers.r = '日'
-    let s:quantifiers.c = '厘次餐场串处床'
-    let s:quantifiers.d = '第度点袋道滴碟日顶栋堆对朵堵顿'
-    let s:quantifiers.e = '亿'
-    let s:quantifiers.g = '个根股管'
-    let s:quantifiers.i = '毫'
-    let s:quantifiers.j = '斤家具架间件节剂具捲卷茎记'
-    let s:quantifiers.k = '克口块棵颗捆孔'
-    let s:quantifiers.l = '里粒类辆列轮厘升领缕'
-    let s:quantifiers.o = '度'
-    let s:quantifiers.p = '磅盆瓶排盘盆匹片篇撇喷'
-    let s:quantifiers.t = '天吨条头通堂趟台套桶筒贴'
-    let s:quantifiers.u = '微'
-    let s:quantifiers.x = '升席些项'
-    let s:quantifiers.y = '年亿叶月'
-    let s:quantifiers.z = '种只张株支枝盏座阵桩尊则站幢宗兆'
-endfunction
-
 " ----------------------------------------------
 function! s:vimim_imode_number(keyboard, prefix)
 " ----------------------------------------------
     " usage: i88 ii88 isw8ql iisw8ql
-    if empty(s:vimim_imode_pinyin)
+    if s:vimim_imode_pinyin < 1
         return []
     endif
     let keyboard = a:keyboard
@@ -1786,12 +1741,50 @@ function! s:vimim_imode_number(keyboard, prefix)
     let keyboards = split(digit_alpha, '\ze')
     let i = ii_keyboard[:0]
     let number = ""
+    let quantifier = {}
+    " ---------------------------------------------------
+    let quantifier.1 = '一壹甲①⒈⑴'
+    let quantifier.2 = '二贰乙②⒉⑵'
+    let quantifier.3 = '三叁丙③⒊⑶'
+    let quantifier.4 = '四肆丁④⒋⑷'
+    let quantifier.5 = '五伍戊⑤⒌⑸'
+    let quantifier.6 = '六陆己⑥⒍⑹'
+    let quantifier.7 = '七柒庚⑦⒎⑺'
+    let quantifier.8 = '八捌辛⑧⒏⑻'
+    let quantifier.9 = '九玖壬⑨⒐⑼'
+    let quantifier.0 = '〇零癸⑩⒑⑽十拾'
+    let quantifier.s = '十拾时升艘扇首双所束手秒'
+    let quantifier.b = '百佰步把包杯本笔部班'
+    let quantifier.q = '千仟群'
+    let quantifier.w = '万位味碗窝晚'
+    let quantifier.h = '时毫行盒壶户回'
+    let quantifier.f = '分份发封付副幅峰方服'
+    let quantifier.a = '秒'
+    let quantifier.n = '年'
+    let quantifier.m = '月米名枚面门'
+    let quantifier.r = '日'
+    let quantifier.c = '厘次餐场串处床'
+    let quantifier.d = '第度点袋道滴碟日顶栋堆对朵堵顿'
+    let quantifier.e = '亿'
+    let quantifier.g = '个根股管'
+    let quantifier.i = '毫'
+    let quantifier.j = '斤家具架间件节剂具捲卷茎记'
+    let quantifier.k = '克口块棵颗捆孔'
+    let quantifier.l = '里粒类辆列轮厘升领缕'
+    let quantifier.o = '度'
+    let quantifier.p = '磅盆瓶排盘盆匹片篇撇喷'
+    let quantifier.t = '天吨条头通堂趟台套桶筒贴'
+    let quantifier.u = '微'
+    let quantifier.x = '升席些项'
+    let quantifier.y = '年亿叶月'
+    let quantifier.z = '种只张株支枝盏座阵桩尊则站幢宗兆'
+    " ---------------------------------------------------
     for char in keyboards
-        if has_key(s:quantifiers, char)
-            let quantifiers = split(s:quantifiers[char], '\zs')
-            let chinese = get(quantifiers, 0)
+        if has_key(quantifier, char)
+            let quantifier_list = split(quantifier[char], '\zs')
+            let chinese = get(quantifier_list, 0)
             if i ==# "I" && char =~ '[0-9sbq]'
-                let chinese = get(quantifiers, 1)
+                let chinese = get(quantifier_list, 1)
             endif
         endif
         let number .= chinese
@@ -1801,16 +1794,15 @@ function! s:vimim_imode_number(keyboard, prefix)
     endif
     let numbers = [number]
     let last_char = keyboard[-1:]
-    if !empty(last_char) && has_key(s:quantifiers, last_char)
-        let quantifier = s:quantifiers[last_char]
-        let quantifiers = split(quantifier, '\zs')
+    if !empty(last_char) && has_key(quantifier, last_char)
+        let quantifier_list = split(quantifier[last_char], '\zs')
         if keyboard =~# '^[ds]\=\d*\l\{1}$'
             if keyboard =~# '^[ds]'
                 let number = strpart(number,0,len(number)-s:multibyte)
             endif
-            let numbers = map(copy(quantifiers), 'number . v:val')
+            let numbers = map(copy(quantifier_list), 'number . v:val')
         elseif keyboard =~# '^\d*$' && len(keyboards)<2 && i ==# 'i'
-            let numbers = quantifiers
+            let numbers = quantifier_list
         endif
     endif
     return numbers
@@ -2007,9 +1999,9 @@ endfunction
 let s:VimIM += [" ====  vimim.cjk.txt    ==== {{{"]
 " =================================================
 
-" -------------------------------------
-function! s:vimim_initialize_cjk_file()
-" -------------------------------------
+" -------------------------------
+function! s:vimim_scan_cjk_file()
+" -------------------------------
     let s:cjk_lines = []
     let s:has_cjk_file = 0
     let s:cjk_filename = 0
@@ -3039,8 +3031,7 @@ function! s:vimim_scan_english_datafile()
     let s:english_lines = []
     let s:has_english_file = 0
     let s:english_filename = 0
-    let datafile = "vimim.txt"
-    let datafile = s:vimim_check_filereadable(datafile)
+    let datafile = s:vimim_check_filereadable("vimim.txt")
     if !empty(datafile)
         let s:english_lines = s:vimim_readfile(datafile)
         let s:english_filename = datafile
