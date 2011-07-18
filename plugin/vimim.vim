@@ -3890,9 +3890,9 @@ function! g:vimim_get_database()
 " [url]   http://vimim.googlecode.com/svn/vimim/vimim.html#database
 :sil!python << EOF
 import vim, urllib
-url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db.bz2'
-path = vim.eval('s:path') + 'vimim.pinyin.db.bz2'
-urllib.urlretrieve(url, path)
+url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db'
+filename = vim.eval('s:path') + 'vimim.pinyin.db'
+urllib.urlretrieve(url, filename)
 EOF
 endfunction
 
