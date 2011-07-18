@@ -127,7 +127,7 @@ function! s:vimim_initialize_session()
     let s:AZ_list = map(range(A,Z), "nr2char(".'v:val'.")")
     let s:valid_key = 0
     let s:valid_keys = s:az_list
-    let s:abcd = "'abcdvfgz"
+    let s:abcd = "'abcdvfgzs"
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let s:horizontal_display = s:vimim_custom_label>0 ? 5 : 0
@@ -2688,7 +2688,7 @@ function! s:vimim_label_on()
     if s:vimim_custom_label > 0
         let s:abcd = join(labels, '')
     else
-        let labels = range(1, len(s:abcd))
+        let labels = range(len(s:abcd))
         let s:abcd = s:abcd[0 : &pumheight-1]
         let abcd_list = split(s:abcd, '\zs')
         if s:chinese_input_mode =~ 'onekey'
@@ -2716,7 +2716,7 @@ function! <SID>vimim_alphabet_number_label(key)
     if pumvisible()
         let n = match(s:abcd, key)
         if key =~ '\d'
-            let n = key - 1
+            let n = key<1 ? 9 : key-1
         endif
         let s:has_pumvisible = 1
         let down = repeat("\<Down>", n)
@@ -3005,6 +3005,8 @@ function! s:vimim_get_labeling(label)
             let label2 = s:abcd[a:label-1]
             if a:label < 2
                 let label2 = "_"
+            elseif a:label == 10
+                let labeling = "0"
             endif
             let labeling .= label2
             if s:has_cjk_file > 0
@@ -5160,6 +5162,9 @@ function! s:vimim_i_setting_on()
     set smartcase
     if &pumheight < 1 || &pumheight > 10
         let &pumheight = len(s:abcd)
+        if s:has_cjk_file > 0
+            let &pumheight -= 1
+        endif
         let s:pumheight1 = &pumheight
     endif
     if s:vimim_custom_label > 0
