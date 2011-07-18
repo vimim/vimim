@@ -3904,8 +3904,9 @@ if empty(a:input)
 endif
 :sil!python << EOF
 key = vim.eval('a:input')
+isenglish = vim.eval('s:english_results')
 if int(vim.eval('a:issentence')) > 0:
-    if key not in db:
+    if key not in db and not isenglish:
         while key not in db:
             key = key[:-1]
     oneline = key
