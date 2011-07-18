@@ -7,15 +7,14 @@
 let $VimIM = "easter egg:"" vimimenv<C-6><C-6> vimimrc<C-6><C-6>
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
-let s:url =" http://vim.sf.net/scripts/script.php?script_id=2506"
-let s:url.=" http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
-let s:url.=" http://code.google.com/p/vimim/source/list"
-let s:url.=" http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
-let s:url.=" http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db"
-let s:url.=" http://vimim-data.googlecode.com"
-let s:url.=" http://groups.google.com/group/vimim"
-let s:url.=" http://vimim.googlecode.com/svn/vimim/vimim.html"
-let s:url.=" vimim+subscribe@googlegroups.com"
+let s:url  =" http://vim.sf.net/scripts/script.php?script_id=2506"
+let s:url .=" http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
+let s:url .=" http://code.google.com/p/vimim/source/list"
+let s:url .=" http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
+let s:url .=" http://vimim-data.googlecode.com"
+let s:url .=" http://groups.google.com/group/vimim"
+let s:url .=" http://vimim.googlecode.com/svn/vimim/vimim.html"
+let s:url .=" vimim+subscribe@googlegroups.com"
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
@@ -397,11 +396,10 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "最新程式 " . get(url,1) )
     call add(eggs, "更新报告 " . get(url,2) )
     call add(eggs, "标准字库 " . get(url,3) )
-    call add(eggs, "拼音词库 " . get(url,4) )
-    call add(eggs, "民间词库 " . get(url,5) )
-    call add(eggs, "新闻论坛 " . get(url,6) )
-    call add(eggs, "最新主页 " . get(url,7) )
-    call add(eggs, "论坛邮箱 " . get(url,8) )
+    call add(eggs, "民间词库 " . get(url,4) )
+    call add(eggs, "新闻论坛 " . get(url,5) )
+    call add(eggs, "最新主页 " . get(url,6) )
+    call add(eggs, "论坛邮箱 " . get(url,7) )
     return eggs
 endfunction
 
@@ -3892,22 +3890,22 @@ function! g:vimim_get_database()
 " [url]   http://vimim.googlecode.com/svn/vimim/vimim.html#database
 :sil!python << EOF
 import vim, urllib
-url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db'
-path = vim.eval('s:path') + 'vimim.pinyin.db'
+url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db.bz2'
+path = vim.eval('s:path') + 'vimim.pinyin.db.bz2'
 urllib.urlretrieve(url, path)
 EOF
 endfunction
 
-" ----------------------------------------------------------
-function! s:vimim_sentence_match_database(input, issentence)
-" ----------------------------------------------------------
+" --------------------------------------------------------
+function! s:vimim_sentence_match_database(input, sentence)
+" --------------------------------------------------------
 if empty(a:input)
     return ""
 endif
 :sil!python << EOF
 key = vim.eval('a:input')
 isenglish = vim.eval('s:english_results')
-if int(vim.eval('a:issentence')) > 0:
+if int(vim.eval('a:sentence')) > 0:
     if key not in db and not isenglish:
         while key not in db:
             key = key[:-1]
@@ -3957,13 +3955,14 @@ function! s:vimim_scan_backend_embedded_datafile()
                 break
             endif
         endif
-        let datafile = s:path . "vimim." . im
-        if has("python") && filereadable(datafile . ".db")
-            let s:vimim_data_file = datafile . ".db"
-            call s:vimim_set_datafile(im, s:vimim_data_file)
+        let dbfile   = s:path . "vimim." . im . ".db"
+        let datafile = s:path . "vimim." . im . ".txt"
+        if has("python") && filereadable(dbfile)
+            let s:vimim_data_file = dbfile
+            call s:vimim_set_datafile(im, dbfile)
             break
-        elseif filereadable(datafile . ".txt")
-            call s:vimim_set_datafile(im, datafile . ".txt")
+        elseif filereadable(datafile)
+            call s:vimim_set_datafile(im, datafile)
         else
             let im = im . "." . &encoding
             let datafile = s:path . "vimim." . im . ".txt"
