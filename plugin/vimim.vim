@@ -1033,7 +1033,13 @@ function! s:vimim_onekey_action(onekey)
     if one_before =~ s:valid_key
         let onekey = g:vimim()
     elseif a:onekey < 1
-        let onekey = s:vimim_get_unicode_menu()
+        let start = col(".") - s:multibyte - 1
+        let char_before = getline(".")[start : start+s:multibyte-1]
+        let ddddd = char2nr(char_before)
+        let onekey = ddddd>127 ? printf('u%04x',ddddd) : ""
+        if !empty(onekey)
+            let onekey .= '\<C-R>=g:vimim()\<CR>'
+        endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -1466,26 +1472,6 @@ function! s:vimim_get_unicode_list(keyboard)
         call add(words, chinese)
     endfor
     return words
-endfunction
-
-" ----------------------------------
-function! s:vimim_get_unicode_menu()
-" ----------------------------------
-    let one_before = getline(".")[col(".")-2]
-    if empty(one_before) || one_before =~# s:valid_key
-        return ""
-    endif
-    let start = s:multibyte + 1
-    let char_before = getline(".")[col(".")-start : col(".")-2]
-    let ddddd = char2nr(char_before)
-    let uxxxx = ""
-    if ddddd > 127
-        let uxxxx = printf('u%04x', ddddd)
-    endif
-    if !empty(uxxxx)
-        let uxxxx .= '\<C-R>=g:vimim()\<CR>'
-    endif
-    sil!exe 'sil!return "' . uxxxx . '"'
 endfunction
 
 " -------------------------------------------
