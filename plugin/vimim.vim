@@ -4696,7 +4696,7 @@ function! s:vimim_get_cloud_google(keyboard)
     let matched_list = []
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
-        if has('python') > 0
+        if has('python') > 0 && s:http_executable =~ 'python'
             let output = s:vimim_i18n_read(output)
         else
             let unicodes = split(get(split(output),8),",")
