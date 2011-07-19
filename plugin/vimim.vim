@@ -3896,6 +3896,8 @@ if int(vim.eval('a:sentence')) > 0:
     oneline = key
 elif key in db:
     oneline = key + ' ' + db.get(key)
+    if vim.eval("&encoding") != 'utf-8':
+        oneline = unicode(oneline, 'utf-8').encode('gbk')
 vim.command("return '%s'" % oneline)
 EOF
 endfunction
@@ -4100,9 +4102,6 @@ function! s:vimim_make_pair_list(oneline)
     let oneline = a:oneline
     if empty(oneline)
         return []
-    endif
-    if s:localization > 0
-        let oneline = s:vimim_i18n_read(oneline)
     endif
     let oneline_list = split(oneline)
     let menu = remove(oneline_list, 0)
