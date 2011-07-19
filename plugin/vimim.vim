@@ -400,6 +400,7 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "新闻论坛 " . get(url,5) )
     call add(eggs, "最新主页 " . get(url,6) )
     call add(eggs, "论坛邮箱 " . get(url,7) )
+    call map(eggs, 'v:val . " "')
     return eggs
 endfunction
 
