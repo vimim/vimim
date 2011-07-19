@@ -1895,8 +1895,6 @@ function! <SID>vimim_chinese_punctuation_map(key)
             let key = '\<C-Y>' . key
             if a:key =~ "[][]"
                 let key = s:vimim_square_bracket(a:key)
-            elseif a:key == ";"
-                let key = '\<Down>\<C-Y>'
             endif
             call g:vimim_reset_after_insert()
         endif
@@ -2380,16 +2378,13 @@ function! s:vimim_set_special_im_property()
     if s:backend[s:ui.root][s:ui.im].name =~# "quote"
         let s:ui.has_dot = 2  " has apostrophe in datafile
     endif
-    if s:ui.im == 'wu'
-    \|| s:ui.im == 'erbi'
-    \|| s:ui.im == 'yong'
-    \|| s:ui.im == 'nature'
-    \|| s:ui.im == 'boshiamy'
-    \|| s:ui.im == 'phonetic'
-    \|| s:ui.im == 'array30'
-        let s:ui.has_dot = 1  " has dot in datafile
-        let s:vimim_chinese_punctuation = -99
-    endif
+    for im in split('wu erbi yong nature boshiamy phonetic array30')
+        if s:ui.im == im
+            let s:ui.has_dot = 1  " has dot in datafile
+            let s:vimim_chinese_punctuation = -99
+            break
+        endif
+    endfor
 endfunction
 
 " -----------------------------------------------
@@ -2680,6 +2675,7 @@ function! s:vimim_label_on()
             endif
             call remove(labels, match(labels,"'"))
         else
+            let labels += [";", "'"]
             for _ in abcd_list
                 sil!exe 'iunmap '. _
             endfor
@@ -2699,11 +2695,15 @@ function! <SID>vimim_alphabet_number_label(key)
         let n = match(s:abcd, key)
         if key =~ '\d'
             let n = key<1 ? 9 : key-1
+        elseif key == ';'
+            let n = 1
+        elseif key == "'"
+            let n = 2
         endif
-        let s:has_pumvisible = 1
         let down = repeat("\<Down>", n)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let key = down . yes
+        let s:has_pumvisible = 1
         call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -5473,10 +5473,6 @@ else
     " [wubi] support auto insert for every 4 input
     if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
         let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
-        if s:ui.im =~ 'erbi' && len(keyboard) == 1
-        \&& keyboard =~ "[.,/;]" && has_key(s:punctuations, keyboard)
-            return [s:punctuations[keyboard]]
-        endif
     endif
 
     " [backend] plug-n-play embedded backend engine
