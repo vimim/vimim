@@ -493,7 +493,7 @@ function! s:vimim_egg_vimimenv()
     endif
     if !empty(s:vimim_check_http_executable())
         let tool  = s:vimim_chinese('tool') . s:colon
-        let title = s:http_executable=~?'python'?'':'HTTP executable: '
+        let title = s:http_executable=~?'python' ? '' : 'HTTP executable: '
         let option = tool . title . s:http_executable
         call add(eggs, option)
     endif
@@ -4696,7 +4696,7 @@ function! s:vimim_get_cloud_google(keyboard)
     let matched_list = []
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
-        if has('python') > 0 && has('python3') < 1
+        if has('python') > 0
             let output = s:vimim_i18n_read(output)
         else
             let unicodes = split(get(split(output),8),",")
