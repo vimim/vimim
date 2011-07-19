@@ -28,13 +28,13 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (2) input  of Chinese without mode change
 "  (3) search of Chinese without pop-up window
 "  (4) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
-"  (5) support huge datafile if using python interface to Vim
+"  (5) support huge datafile if python interface to Vim is used
 "
 " "VimIM Frontend UI"
 "  (1) VimIM OneKey: Chinese input without mode change
 "  (2) VimIM Chinese Input Mode: ['dynamic','static']
 "
-" "VimIM Backend Engines"
+" "VimIM Backend Engine"
 "  (1) [embedded]   VimIM: http://vimim.googlecode.com
 "  (2) [external]   all 4 available clouds and mycloud
 "
@@ -203,7 +203,6 @@ function! s:vimim_dictionary_im_keycode()
     let s:im_keycode.array30  = "[.,0-9a-z;/]"
     let s:im_keycode.phonetic = "[.,0-9a-z;/]"
     let s:im_keycode.boshiamy = "[][a-z'.,]"
-    " -------------------------------------------
     let vimimkeys = copy(keys(s:im_keycode))
     call add(vimimkeys, 'pinyin_sogou')
     call add(vimimkeys, 'pinyin_quote_sogou')
@@ -495,7 +494,7 @@ function! s:vimim_egg_vimimenv()
     endif
     if !empty(s:vimim_check_http_executable())
         let tool  = s:vimim_chinese('tool') . s:colon
-        let title = s:http_executable=~?'python' ? '' : 'HTTP executable: '
+        let title = s:http_executable=~'Python' ? '' : 'HTTP executable: '
         let option = tool . title . s:http_executable
         call add(eggs, option)
     endif
@@ -3896,7 +3895,7 @@ if int(vim.eval('a:sentence')) > 0:
             key = key[:-1]
     oneline = key
 elif key in db:
-    oneline = key + ' ' + db[key]
+    oneline = key + ' ' + db.get(key)
 vim.command("return '%s'" % oneline)
 EOF
 endfunction
@@ -3907,7 +3906,7 @@ function! s:vimim_get_from_database(keyboard, search)
     let keyboard = a:keyboard
     let oneline = s:vimim_sentence_match_database(keyboard, 0)
     let results = s:vimim_make_pair_list(oneline)
-    if a:search < 1 && len(results) > 0 && len(results) < 20
+    if empty(a:search) && len(results) > 0 && len(results) < 20
         let candidates = s:vimim_more_pinyin_candidates(keyboard)
         if len(candidates) > 1
             for candidate in candidates[1:]
@@ -4098,10 +4097,14 @@ endfunction
 " ---------------------------------------
 function! s:vimim_make_pair_list(oneline)
 " ---------------------------------------
-    if empty(a:oneline)
+    let oneline = a:oneline
+    if empty(oneline)
         return []
     endif
-    let oneline_list = split(a:oneline)
+    if s:localization > 0
+        let oneline = s:vimim_i18n_read(oneline)
+    endif
+    let oneline_list = split(oneline)
     let menu = remove(oneline_list, 0)
     if empty(menu) || menu =~ '\W'
         return []
@@ -4681,7 +4684,7 @@ function! s:vimim_get_cloud_google(keyboard)
     let matched_list = []
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
-        if has('python') > 0 && s:http_executable =~ 'python'
+        if has('python') > 0 && s:http_executable =~ 'Python'
             let output = s:vimim_i18n_read(output)
         else
             let unicodes = split(get(split(output),8),",")
