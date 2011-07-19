@@ -1491,9 +1491,6 @@ endfunction
 " -------------------------------------------
 function! s:vimim_get_unicode_ddddd(keyboard)
 " -------------------------------------------
-    if strlen(a:keyboard) != 5
-        return 0
-    endif
     let ddddd = 0
     if a:keyboard =~# '^u\x\{4}$'
         " show hex unicode popup menu: u808f
