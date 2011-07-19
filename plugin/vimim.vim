@@ -7,14 +7,14 @@
 let $VimIM = "easter egg:"" vimimenv<C-6><C-6> vimimrc<C-6><C-6>
 let $VimIM = "$Date$"
 let $VimIM = "$Revision$"
-let s:url  =" http://vim.sf.net/scripts/script.php?script_id=2506"
-let s:url .=" http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
-let s:url .=" http://code.google.com/p/vimim/source/list"
-let s:url .=" http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
-let s:url .=" http://vimim-data.googlecode.com"
-let s:url .=" http://groups.google.com/group/vimim"
-let s:url .=" http://vimim.googlecode.com/svn/vimim/vimim.html"
-let s:url .=" vimim+subscribe@googlegroups.com"
+let s:url  = "http://vim.sf.net/scripts/script.php?script_id=2506"
+let s:url .= "http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
+let s:url .= "http://code.google.com/p/vimim/source/list"
+let s:url .= "http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
+let s:url .= "http://vimim-data.googlecode.com"
+let s:url .= "http://groups.google.com/group/vimim"
+let s:url .= "http://vimim.googlecode.com/svn/vimim/vimim.html"
+let s:url .= "vimim+subscribe@googlegroups.com"
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
@@ -28,6 +28,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (2) input  of Chinese without mode change
 "  (3) search of Chinese without pop-up window
 "  (4) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
+"  (5) support huge datafile if using python interface to Vim
 "
 " "VimIM Frontend UI"
 "  (1) VimIM OneKey: Chinese input without mode change
@@ -335,7 +336,7 @@ function! s:vimim_initialize_self()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ==== hidden easter egg ==== {{{"]
+let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
 
 " ----------------------------------------
