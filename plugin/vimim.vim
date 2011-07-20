@@ -823,7 +823,7 @@ endfunction
 " ------------------------------------
 function! s:vimim_chinesemode_action()
 " ------------------------------------
-    silent!call s:vimim_start()
+    sil!call s:vimim_start()
     sil!call s:vimim_frontend_initialization()
     if s:vimim_chinese_punctuation > -1
         inoremap <expr> <C-^> <SID>vimim_punctuation_toggle()
@@ -1078,8 +1078,7 @@ function! s:vimim_popup_word()
     let column_start = s:start_column_before
     let column_end = col('.') - 1
     let range = column_end - column_start
-    let current_line = getline(".")
-    let chinese = strpart(current_line, column_start, range)
+    let chinese = strpart(getline("."), column_start, range)
     return substitute(chinese,'\w','','g')
 endfunction
 
@@ -1450,16 +1449,9 @@ let s:VimIM += [" ====  unicode          ==== {{{"]
 function! s:vimim_initialize_encoding()
 " -------------------------------------
     let s:encoding = "utf8"
-    if &encoding == "chinese"
-    \|| &encoding == "cp936"
-    \|| &encoding == "gb2312"
-    \|| &encoding == "gbk"
-    \|| &encoding == "euc-cn"
+    if &encoding =~ 'chinese\|cp936\|gb2312\|gbk\|euc-cn'
         let s:encoding = "chinese"
-    elseif &encoding == "taiwan"
-    \|| &encoding == "cp950"
-    \|| &encoding == "big5"
-    \|| &encoding == "euc-tw"
+    elseif &encoding =~ 'taiwan\|cp950\|big5\|euc-tw'
         let s:encoding = "taiwan"
     endif
     " ------------ ----------------- -------------- -----------
@@ -1478,10 +1470,7 @@ function! s:vimim_initialize_encoding()
     else
         let s:localization = 2
     endif
-    let s:multibyte = 2
-    if &encoding == "utf-8"
-        let s:multibyte = 3
-    endif
+    let s:multibyte = &encoding=="utf-8" ? 3 : 2
 endfunction
 
 " ------------------------------------------
