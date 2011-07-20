@@ -315,9 +315,7 @@ function! s:vimim_initialize_self()
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
-        if has('python') < 1
-            let g:vimim_data_directory = '/home/vimim/pinyin/'
-        endif
+        let g:vimim_data_directory = '/home/vimim/pinyin/'
     endif
 endfunction
 
