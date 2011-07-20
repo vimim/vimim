@@ -1145,6 +1145,48 @@ function! s:vimim_dot_by_dot(keyboard)
     return keyboard
 endfunction
 
+" ------------------------------------
+function! s:vimim_magic_tail(keyboard)
+" ------------------------------------
+    let keyboard = a:keyboard
+    let magic_tail = keyboard[-1:-1]
+    let last_but_one = keyboard[-2:-2]
+    if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z']"
+        " play with magic trailing char
+    else
+        return keyboard
+    endif
+    if magic_tail ==# "."
+        " <dot> triple play in OneKey:
+        "   (1) magic trailing dot => forced-non-cloud in cloud
+        "   (2) magic trailing dot => forced-cjk-match
+        "   (3) as word partition  => match dot by dot
+        let s:cloud_onekey = 0
+    elseif magic_tail ==# "'"
+        " <apostrophe> triple play in OneKey:
+        "   (1) 1 trailing apostrophe => cloud at will
+        "   (2) 2 trailing apostrophe => cloud for ever
+        "   (3) 3 trailing apostrophe => cloud switch
+        let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
+        if cloud_ready > 0
+            " trailing apostrophe => forced-cloud
+            let s:cloud_onekey = 1
+            let last_three = keyboard[-3:-1]
+            let keyboard = keyboard[:-2]
+            if last_three ==# "'''"
+                let keyboard = keyboard[:-3]
+                let clouds = split(s:vimim_cloud,',')
+                let clouds = clouds[1:-1] + clouds[0:0]
+                let s:vimim_cloud = join(clouds,',')
+            elseif last_but_one ==# "'"
+                let keyboard = keyboard[:-2]
+                let s:cloud_onekey = 2
+            endif
+        endif
+    endif
+    return keyboard
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  hjkl             ==== {{{"]
 " =================================================
@@ -3252,6 +3294,58 @@ function! s:vimim_create_quanpin_table()
     return table
 endfunction
 
+" ------------------------------------------------
+function! s:vimim_more_pinyin_candidates(keyboard)
+" ------------------------------------------------
+" [purpose] make standard layout for popup menu
+" input  =>  mamahuhu
+" output =>  mamahuhu, mama, ma
+    if empty(s:english_results)
+        " break up keyboard only if it is not english
+    else
+        return []
+    endif
+    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
+    if empty(keyboards) || empty(a:keyboard)
+        return []
+    endif
+    let candidates = []
+    for i in reverse(range(len(keyboards)-1))
+        let candidate = join(keyboards[0 : i], "")
+        call add(candidates, candidate)
+    endfor
+    return candidates
+endfunction
+
+" --------------------------------------------------------
+function! s:vimim_more_pinyin_datafile(keyboard, sentence)
+" --------------------------------------------------------
+    if s:ui.im =~ 'pinyin' && a:keyboard !~ "[.']"
+        " for pinyin with valid keycodes only
+    else
+        return []
+    endif
+    let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
+    if empty(candidates)
+        return []
+    endif
+    let results = []
+    let lines = s:backend[s:ui.root][s:ui.im].lines
+    for candidate in candidates
+        let pattern = '^' . candidate . '\>'
+        let matched = match(lines, pattern, 0)
+        if matched < 0
+            continue
+        elseif a:sentence > 0
+            return [candidate]
+        endif
+        let oneline = get(lines, matched)
+        let matched_list = s:vimim_make_pair_list(oneline)
+        call extend(results, matched_list)
+    endfor
+    return results
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " =================================================
@@ -3809,17 +3903,6 @@ g_mask = log_upto('info')
 EOF
 endfunction
 
-" -----------------------
-function! s:setmask(mask)
-" -----------------------
-" [usage] call s:setmask('err,info,debug')
-:sil!python << EOF
-g_mask = 0
-for item in vim.eval("a:mask").split(","):
-    g_mask |= log_mask(item)
-EOF
-endfunction
-
 " --------------------
 function! s:debug(...)
 " --------------------
@@ -3975,35 +4058,6 @@ function! s:vimim_set_datafile(im, datafile)
     call s:vimim_set_special_im_property()
 endfunction
 
-" --------------------------------------------------------
-function! s:vimim_more_pinyin_datafile(keyboard, sentence)
-" --------------------------------------------------------
-    if s:ui.im =~ 'pinyin' && a:keyboard !~ "[.']"
-        " for pinyin with valid keycodes only
-    else
-        return []
-    endif
-    let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
-    if empty(candidates)
-        return []
-    endif
-    let results = []
-    let lines = s:backend[s:ui.root][s:ui.im].lines
-    for candidate in candidates
-        let pattern = '^' . candidate . '\>'
-        let matched = match(lines, pattern, 0)
-        if matched < 0
-            continue
-        elseif a:sentence > 0
-            return [candidate]
-        endif
-        let oneline = get(lines, matched)
-        let matched_list = s:vimim_make_pair_list(oneline)
-        call extend(results, matched_list)
-    endfor
-    return results
-endfunction
-
 " -------------------------------------------------
 function! s:vimim_sentence_match_datafile(keyboard)
 " -------------------------------------------------
@@ -4099,71 +4153,6 @@ function! s:vimim_make_pair_list(oneline)
         call add(results, menu_chinese)
     endfor
     return results
-endfunction
-
-" ------------------------------------------------
-function! s:vimim_more_pinyin_candidates(keyboard)
-" ------------------------------------------------
-" [purpose] make standard layout for popup menu
-" input  =>  mamahuhu
-" output =>  mamahuhu, mama, ma
-    if empty(s:english_results)
-        " break up keyboard only if it is not english
-    else
-        return []
-    endif
-    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
-    if empty(keyboards) || empty(a:keyboard)
-        return []
-    endif
-    let candidates = []
-    for i in reverse(range(len(keyboards)-1))
-        let candidate = join(keyboards[0 : i], "")
-        call add(candidates, candidate)
-    endfor
-    return candidates
-endfunction
-
-" ------------------------------------
-function! s:vimim_magic_tail(keyboard)
-" ------------------------------------
-    let keyboard = a:keyboard
-    let magic_tail = keyboard[-1:-1]
-    let last_but_one = keyboard[-2:-2]
-    if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z']"
-        " play with magic trailing char
-    else
-        return keyboard
-    endif
-    if magic_tail ==# "."
-        " <dot> triple play in OneKey:
-        "   (1) magic trailing dot => forced-non-cloud in cloud
-        "   (2) magic trailing dot => forced-cjk-match
-        "   (3) as word partition  => match dot by dot
-        let s:cloud_onekey = 0
-    elseif magic_tail ==# "'"
-        " <apostrophe> triple play in OneKey:
-        "   (1) 1 trailing apostrophe => cloud at will
-        "   (2) 2 trailing apostrophe => cloud for ever
-        "   (3) 3 trailing apostrophe => cloud switch
-        let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
-        if cloud_ready > 0
-            " trailing apostrophe => forced-cloud
-            let s:cloud_onekey = 1
-            let last_three = keyboard[-3:-1]
-            let keyboard = keyboard[:-2]
-            if last_three ==# "'''"
-                let keyboard = keyboard[:-3]
-                let clouds = split(s:vimim_cloud,',')
-                let clouds = clouds[1:-1] + clouds[0:0]
-                let s:vimim_cloud = join(clouds,',')
-            elseif last_but_one ==# "'"
-                let keyboard = keyboard[:-2]
-                let s:cloud_onekey = 2
-            endif
-        endif
-    endif
-    return keyboard
 endfunction
 
 " ============================================= }}}
