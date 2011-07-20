@@ -3652,7 +3652,7 @@ function! g:vimim_gmail() range abort
 " -----------------------------------
 " [dream] to send email with the current buffer
 " [usage] :call g:vimim_gmail()
-" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','cc':'','bcc':''}
+" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
 if has('python') < 1 && has('python3') < 1
     echo 'No magic Python Interface to Vim'
     return ""
@@ -3672,7 +3672,6 @@ from datetime import datetime
 from email.mime.text import MIMEText
 def vimim_gmail():
     gmails = vim.eval('g:gmails')
-    vim.command('sil!unlet g:gmails.cc')
     vim.command('sil!unlet g:gmails.bcc')
     now = datetime.now().strftime("%A %m/%d/%Y")
     gmail_login  = gmails.get("login","")
@@ -3680,15 +3679,13 @@ def vimim_gmail():
         return None
     gmail_passwd = gmails.get("passwd")
     gmail_to     = gmails.get("to")
-    gmail_cc     = gmails.get("cc","")
     gmail_bcc    = gmails.get("bcc","")
     gmail_msg    = gmails.get("msg")
-    gamil_all = [gmail_to] + gmail_cc.split() + gmail_bcc.split()
+    gamil_all = [gmail_to] + gmail_bcc.split()
     msg = str("\n".join(gmail_msg))
     rfc2822 = MIMEText(msg, 'plain', 'utf-8')
     rfc2822['From'] = gmail_login
     rfc2822['To'] = gmail_to
-    rfc2822['Cc'] = gmail_cc
     rfc2822['Subject'] = now
     rfc2822.set_charset('utf-8')
     try:
