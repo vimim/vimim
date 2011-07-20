@@ -183,38 +183,25 @@ endfunction
 function! s:vimim_dictionary_im_keycode()
 " ---------------------------------------
     let s:im_keycode = {}
-    let s:im_keycode.pinyin   = "[.'0-9a-z]"
-    let s:im_keycode.hangul   = "[.'0-9a-z]"
-    let s:im_keycode.xinhua   = "[.'0-9a-z]"
-    let s:im_keycode.quick    = "[.'0-9a-z]"
-    let s:im_keycode.wubi     = "[.'0-9a-z]"
-    let s:im_keycode.sogou    = "[.'0-9a-z]"
-    let s:im_keycode.qq       = "[.'0-9a-z]"
-    let s:im_keycode.google   = "[.'0-9a-z]"
-    let s:im_keycode.baidu    = "[.'0-9a-z]"
-    let s:im_keycode.mycloud  = "[.'0-9a-z]"
+    let keys  = split('pinyin hangul xinhua quick wubi')
+    let keys += split('sogou qq google baidu mycloud')
+    for key in keys
+        let s:im_keycode[key] = "[.'0-9a-z]"
+    endfor
+    let keys = split('wu nature zhengma cangjie taijima')
+    for key in keys
+        let s:im_keycode[key] = "[.'a-z]"
+    endfor
     let s:im_keycode.yong     = "[.'a-z;/]"
-    let s:im_keycode.wu       = "[.'a-z]"
-    let s:im_keycode.nature   = "[.'a-z]"
-    let s:im_keycode.zhengma  = "[.'a-z]"
-    let s:im_keycode.cangjie  = "[.'a-z]"
-    let s:im_keycode.taijima  = "[.'a-z]"
     let s:im_keycode.erbi     = "[.'a-z,;/]"
     let s:im_keycode.array30  = "[.,0-9a-z;/]"
     let s:im_keycode.phonetic = "[.,0-9a-z;/]"
     let s:im_keycode.boshiamy = "[][a-z'.,]"
-    let vimimkeys = copy(keys(s:im_keycode))
-    call add(vimimkeys, 'pinyin_sogou')
-    call add(vimimkeys, 'pinyin_quote_sogou')
-    call add(vimimkeys, 'pinyin_huge')
-    call add(vimimkeys, 'pinyin_fcitx')
-    call add(vimimkeys, 'pinyin_canton')
-    call add(vimimkeys, 'pinyin_hongkong')
-    call add(vimimkeys, 'wubijd')
-    call add(vimimkeys, 'wubihf')
-    call add(vimimkeys, 'wubi98')
-    call add(vimimkeys, 'wubi2000')
-    let s:all_vimim_input_methods = copy(vimimkeys)
+    let keys  = copy(keys(s:im_keycode))
+    let keys += split('pinyin_sogou pinyin_quote_sogou pinyin_huge')
+    let keys += split('pinyin_fcitx pinyin_canton pinyin_hongkong')
+    let keys += split('wubijd wubihf wubi98 wubi2000')
+    let s:all_vimim_input_methods = copy(keys)
 endfunction
 
 " ------------------------------------
