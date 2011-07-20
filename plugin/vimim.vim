@@ -422,7 +422,6 @@ function! s:vimim_egg_vimimenv()
     call add(eggs, option)
     let im = s:vimim_statusline()
     let toggle = "i_Ctrl-Bslash"
-    let buffer = expand("%:p:t")
     if s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_CTRL-Space"
     elseif s:vimim_onekey_is_tab > 1
@@ -504,7 +503,7 @@ function! s:vimim_get_hjkl(keyboard)
     " [eggs] hunt classic easter egg ... vim<C-6>
     let lines = s:vimim_easter_chicken(keyboard)
     if !empty(lines)
-        " [hjkl] display the buffer inside the omni window
+        " [hjkl] display buffer inside the omni window
     elseif keyboard ==# "vimim"
         let unnamed_register = getreg('"')
         let lines = split(unnamed_register,'\n')
@@ -1631,19 +1630,19 @@ function! s:vimim_imode_today_now(keyboard)
         call add(results, 'second')
     endif
     let ecdict = {}
-    let ecdict.year      = '年'
-    let ecdict.month     = '月'
-    let ecdict.day       = '日'
-    let ecdict.hour      = '时'
-    let ecdict.minute    = '分'
-    let ecdict.second    = '秒'
+    let ecdict.sunday    = '星期日'
     let ecdict.monday    = '星期一'
     let ecdict.tuesday   = '星期二'
     let ecdict.wednesday = '星期三'
     let ecdict.thursday  = '星期四'
     let ecdict.friday    = '星期五'
     let ecdict.saturday  = '星期六'
-    let ecdict.sunday    = '星期日'
+    let ecdict.year      = '年'
+    let ecdict.month     = '月'
+    let ecdict.day       = '日'
+    let ecdict.hour      = '时'
+    let ecdict.minute    = '分'
+    let ecdict.second    = '秒'
     let chinese = copy(s:translators)
     let chinese.dict = ecdict
     let today_or_now = chinese.translate(join(results))
@@ -1836,7 +1835,6 @@ function! s:vimim_dictionary_punctuation()
     let s:punctuations['.'] = '。'
     let s:punctuations['?'] = '？'
     let s:punctuations['*'] = '﹡'
-    " ------------------------------------
     let s:evils = {}
     if empty(s:vimim_backslash_close_pinyin)
         let s:evils['\'] = '、'
@@ -2339,36 +2337,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  miscellaneous    ==== {{{"]
 " =================================================
-
-" ---------------------------------
-function! s:vimim_for_mom_and_dad()
-" ---------------------------------
-    let onekey = ""
-    let buffer = expand("%:p:t")
-    if buffer =~ 'vimim.mom.txt'
-        startinsert!
-        let s:vimim_digit_4corner = 0
-        let onekey = s:vimim_onekey_action(0)
-        sil!call s:vimim_onekey_start()
-    elseif buffer =~ 'vimim.dad.txt'
-        set noruler
-        let s:vimim_digit_4corner = 1
-    else
-        return
-    endif
-    let s:vimim_onekey_is_tab = 1
-    if has("gui_running")
-        autocmd! * <buffer>
-        autocmd  FocusLost <buffer> sil!wall
-        noremap  <silent>  <Esc> :sil!%y +<CR>
-        set tw=30
-        set lines=24
-        set columns=36
-        set report=12345
-        let &gfn .= ":h24:w12"
-    endif
-    sil!exe 'sil!return "' . onekey . '"'
-endfunction
 
 " -------------------------------------
 function! s:vimim_get_valid_im_name(im)
@@ -5549,7 +5517,6 @@ endfunction
 sil!call s:vimim_initialize_self()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
-sil!call s:vimim_for_mom_and_dad()
 sil!call s:vimim_initialize_plugin()
 sil!call s:vimim_initialize_mapping()
 " ======================================= }}}
