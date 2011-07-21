@@ -4355,7 +4355,7 @@ function! s:vimim_check_http_executable()
     if has('python')
         let s:http_executable = 'Python2 Interface to Vim'
     endif
-    if has('python3') && &number > 0
+    if has('python3') && &relativenumber > 0
         let s:http_executable = 'Python3 Interface to Vim'
     endif
     " step 2 of 4: try to find libvimim for mycloud
