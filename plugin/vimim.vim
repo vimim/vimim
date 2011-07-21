@@ -3913,7 +3913,7 @@ key = vim.eval('a:input')
 isenglish = vim.eval('s:english_results')
 if int(vim.eval('a:sentence')) > 0:
     if key not in db and not isenglish:
-        while key not in db:
+        while key and key not in db:
             key = key[:-1]
     oneline = key
 elif key in db:
