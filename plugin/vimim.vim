@@ -163,17 +163,16 @@ function! s:vimim_one_backend_hash()
     return one_backend_hash
 endfunction
 
-" --------------------------------
-function! s:vimim_chinese(english)
-" --------------------------------
-    let key = a:english
-    let chinese = key
-    if has_key(s:chinese, key)
-        let chinese = get(s:chinese[key], 0)
-        if s:encoding !~ "chinese"
-        \&& len(s:chinese[key]) > 1
-        \&& s:vimim_hjkl_directory !~ 'xma'
-            let chinese = get(s:chinese[key], 1)
+" ----------------------------
+function! s:vimim_chinese(key)
+" ----------------------------
+    let chinese = a:key
+    if has_key(s:chinese, a:key)
+        let chinese = get(s:chinese[a:key], 0)
+        if s:encoding =~ "utf-8"
+        \&& len(s:chinese[a:key]) > 1
+        \&& s:vimim_data_file =~ ".db"
+            let chinese = get(s:chinese[a:key], 1)
         endif
     endif
     return chinese
@@ -2410,7 +2409,7 @@ let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
-    if s:vimim_hjkl_directory =~ 'xma'
+    if g:vimim_debug > 0
         return
     endif
     if !exists('s:acp_sid')
@@ -2458,7 +2457,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_plugins_fix_stop()
 " ----------------------------------
-    if s:vimim_hjkl_directory =~ 'xma'
+    if g:vimim_debug > 0
         return
     endif
     if !empty(s:acp_sid)
