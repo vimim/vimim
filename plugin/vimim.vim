@@ -345,17 +345,14 @@ endfunction
 " ------------------------------
 function! s:vimim_egg_vimimvim()
 " ------------------------------
-    let eggs = copy(s:VimIM)
     let filter = "strpart(" . 'v:val' . ", 0, 29)"
-    return map(eggs, filter)
+    return map(copy(s:VimIM), filter)
 endfunction
 
 " -------------------------------
 function! s:vimim_egg_vimimpoem()
 " -------------------------------
-    let eggs  = ["白日依山尽","黄河入海流"]
-    let eggs += ["欲穷千里目","更上一层楼"]
-    return eggs
+    return split("白日依山尽 黄河入海流 欲穷千里目 更上一层楼")
 endfunction
 
 " -------------------------
@@ -393,11 +390,11 @@ function! s:vimim_egg_vimimenv()
     let option = s:vimim_chinese('datetime') . s:colon . today
     call add(eggs, option)
     let option = "os"
-    if has("win32unix")   | let option = "cygwin"
-    elseif has("win32")   | let option = "Windows32"
-    elseif has("win64")   | let option = "Windows64"
-    elseif has("unix")    | let option = "unix"
-    elseif has("macunix") | let option = "macunix"
+        if has("win32unix") | let option = "cygwin"
+    elseif has("win32")     | let option = "Windows32"
+    elseif has("win64")     | let option = "Windows64"
+    elseif has("unix")      | let option = "unix"
+    elseif has("macunix")   | let option = "macunix"
     endif
     let option .= "_" . &term
     let computer = s:vimim_chinese('computer') . s:colon
@@ -662,7 +659,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     " => slash search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     " => slash search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
-    if empty(ddddd)
+    if empty(ddddd) && !empty(s:has_cjk_file)
         let keyboards = s:vimim_slash_search_block(keyboard)
         if len(keyboards) > 0
             for keyboard in keyboards
@@ -708,9 +705,6 @@ function! s:vimim_slash_search_block(keyboard)
 " /m7712x3610j3111  =>  standard   /search
 " /ma77xia36ji31    =>  free-style /search
 " --------------------------------------------
-    if empty(s:has_cjk_file)
-        return []
-    endif
     let results = []
     let keyboard = a:keyboard
     while len(keyboard) > 1
@@ -1476,8 +1470,7 @@ function! s:vimim_get_unicode_list(keyboard)
         return []
     endif
     let words = []
-    let height = 108
-    for i in range(height)
+    for i in range(108)
         let chinese = nr2char(ddddd+i)
         call add(words, chinese)
     endfor
@@ -1576,7 +1569,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_unicode_to_utf8(xxxx)
 " -------------------------------------
-    " u808f => 32911 => e8828f
+" u808f => 32911 => e8828f
     let ddddd = str2nr(a:xxxx, 16)
     let utf8 = ''
     if ddddd < 128
@@ -2070,7 +2063,7 @@ endfunction
 " -----------------------------------------------
 function! s:vimim_qwertyuiop_1234567890(keyboard)
 " -----------------------------------------------
-    " output is '7712' for input uuqw
+" output is '7712' for input uuqw
     if a:keyboard =~ '\d' || empty(s:has_cjk_file)
         return 0
     endif
@@ -3504,7 +3497,7 @@ endfunction
 " -----------------------------------
 function! s:vimim_shuangpin_generic()
 " -----------------------------------
-    " generate the default value of shuangpin table
+" generate the default value of shuangpin table
     let shengmu_list = {}
     for shengmu in ["b", "p", "m", "f", "d", "t", "l", "n", "g",
                 \"k", "h", "j", "q", "x", "r", "z", "c", "s", "y", "w"]
@@ -3538,7 +3531,7 @@ endfunction
 " ----------------------------------
 function! s:vimim_shuangpin_ms(rule)
 " ----------------------------------
-" vi=>zhi ii=>chi ui=>shi keng=>keneng
+" goal: vi=>zhi ii=>chi ui=>shi keng=>keneng
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
@@ -3616,13 +3609,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
-"" " [dream] use VimIM on the fly without plugin
-"" :py url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.vim'
-"" :py import vim, urllib
-"" :py vimim = vim.eval('tempname()')+'.vim'
-"" :py urllib.urlretrieve(url, vimim)
-"" :py vim.command("source %s " % vimim)
-"" " -----------------------------------------------
 
 " ----------------------------------------------
 function! s:vimim_get_from_python2(input, cloud)
@@ -3707,8 +3693,7 @@ def vimim_gmail():
     vim.command('sil!unlet g:gmails.bcc')
     now = datetime.now().strftime("%A %m/%d/%Y")
     gmail_login  = gmails.get("login","")
-    if len(gmail_login) < 8:
-        return None
+    if len(gmail_login) < 8: return None
     gmail_passwd = gmails.get("passwd")
     gmail_to     = gmails.get("to")
     gmail_bcc    = gmails.get("bcc","")
@@ -3909,8 +3894,7 @@ key = vim.eval('a:input')
 isenglish = vim.eval('s:english_results')
 if int(vim.eval('a:sentence')) > 0:
     if key not in db and not isenglish:
-        while key and key not in db:
-            key = key[:-1]
+        while key and key not in db: key = key[:-1]
     oneline = key
 elif key in db:
     oneline = key + ' ' + db.get(key)
@@ -3982,8 +3966,8 @@ function! s:vimim_scan_backend_embedded_datafile()
     if s:vimim_data_file =~ ".db"
         :python import vim, bsddb
         :python  db =  bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
-     "  :python  db =   anydbm.open(vim.eval('s:vimim_data_file'),'r')
-     "  :python3 db = dbm.dumb.open(vim.eval('s:vimim_data_file'),'r')
+      " :python  db =   anydbm.open(vim.eval('s:vimim_data_file'),'r')
+      " :python3 db = dbm.dumb.open(vim.eval('s:vimim_data_file'),'r')
     endif
 endfunction
 
@@ -4548,18 +4532,12 @@ function! s:vimim_get_cloud_qq(keyboard)
     if vimim_cloud =~ 'shuangpin'
         let md = 2
         let st = 0
-        if vimim_cloud =~ 'abc'
-            let st = 1
-        elseif vimim_cloud =~ 'ms'
-            let st = 2
-        elseif vimim_cloud =~ 'plusplus'
-            let st = 3
-        elseif vimim_cloud =~ 'purple'
-            let st = 4
-        elseif vimim_cloud =~ 'flypy'
-            let st = 5
-        elseif vimim_cloud =~ 'nature'
-            let st = 6
+            if vimim_cloud =~ 'abc'      | let st = 1
+        elseif vimim_cloud =~ 'ms'       | let st = 2
+        elseif vimim_cloud =~ 'plusplus' | let st = 3
+        elseif vimim_cloud =~ 'purple'   | let st = 4
+        elseif vimim_cloud =~ 'flypy'    | let st = 5
+        elseif vimim_cloud =~ 'nature'   | let st = 6
         endif
         if st > 0
             let input .= '&st=' . st
@@ -5033,7 +5011,7 @@ endfunction
 " -------------------------------------
 function! s:vimim_url_xx_to_chinese(xx)
 " -------------------------------------
-    " %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
+" %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
     let output = a:xx
     if s:http_executable =~ 'libvimim'
         let output = libcall(s:http_executable, "do_unquote", a:xx)
@@ -5181,10 +5159,7 @@ endfunction
 " -----------------------------
 function! g:vimim_menu_select()
 " -----------------------------
-    let key = ""
-    if pumvisible()
-        let key = '\<C-P>\<Down>'
-    endif
+    let key = pumvisible() ? '\<C-P>\<Down>' : ""
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
