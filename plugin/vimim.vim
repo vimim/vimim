@@ -44,10 +44,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (3) [option] drop a standard database:  plugin/vimim.pinyin.db
 "  (4) [option] drop a standard directory: plugin/vimim/pinyin/
 "  (5) [option] drop a English  datafile:  plugin/vimim.txt
-"
-" "VimIM Cloud Support"
-"  (1) (Windows) has('python') OR download wget/curl/libvimim.dll
-"  (2) (Linux/Mac) Nothing needs to be installed
+"  (6) [option] (Windows) has('python') OR download wget/curl/libvimim
 "
 " "VimIM Usage"
 "  (1) play with a game to rotate poem:
@@ -329,10 +326,9 @@ function! s:vimim_easter_chicken(keyboard)
         try
             return eval("s:vimim_egg_" . a:keyboard . "()")
         catch
-            call s:debug('err', 'egg::', v:exception)
+            return []
         endtry
     endif
-    return []
 endfunction
 
 " http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
@@ -507,11 +503,8 @@ function! s:vimim_get_hjkl(keyboard)
                 let sum = eval(join(lines,'+'))
                 let len = len(lines)
                 let ave = 1.0*sum/len
-                let math  = 'sum='
-                let math .= string(len)
-                let math .= '*'
-                let math .= printf('%.2f',ave)
-                let math .= '='
+                let math  = 'sum=' . string(len) . '*'
+                let math .= printf('%.2f',ave) . '='
                 if unnamed_register =~ '[.]'
                     let math .= printf('%.2f',1.0*sum)
                 else
@@ -567,8 +560,7 @@ function! s:vimim_hjkl_rotation(matched_list)
     for i in range(max/multibyte)
         let column = ''
         for line in reverse(copy(results))
-            let lines = split(line,'\zs')
-            let line = get(lines, i)
+            let line = get(split(line,'\zs'), i)
             if empty(line)
                 continue
             else
