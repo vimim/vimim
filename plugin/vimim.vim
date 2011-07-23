@@ -4754,13 +4754,11 @@ let s:VimIM += [" ====  core engine      ==== {{{"]
 
 function! VimIM(start, keyboard)
 if a:start
-
     let current_positions = getpos(".")
     let start_row = current_positions[1]
     let start_column = current_positions[2]-1
     let current_line = getline(start_row)
     let one_before = current_line[start_column-1]
-
     " take care of seamless English/Chinese input
     let seamless_column = s:vimim_get_seamless(current_positions)
     if seamless_column >= 0
@@ -4769,7 +4767,6 @@ if a:start
         call s:vimim_set_keyboard_list(seamless_column, keyboard)
         return seamless_column
     endif
-
     let last_seen_nonsense_column = copy(start_column)
     let last_seen_backslash_column = copy(start_column)
     let all_digit = 1
@@ -4794,27 +4791,21 @@ if a:start
     if all_digit < 1
         let start_column = last_seen_nonsense_column
     endif
-
     let s:start_row_before = start_row
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
     let keyboard = strpart(current_line, start_column, len)
     call s:vimim_set_keyboard_list(start_column, keyboard)
-
     return start_column
-
 else
-
     " [cache] less is more
     let results = s:vimim_cache()
     if !empty(results)
         return s:vimim_popupmenu_list(results)
     endif
-
     " [initialization] early start, half done
     let keyboard = a:keyboard
     call s:vimim_reset_before_omni()
-
     " [validation] user keyboard input validation
     if empty(str2nr(keyboard))
         " keyboard input is alphabet only
@@ -4824,7 +4815,6 @@ else
     if empty(keyboard) || keyboard !~# s:valid_key
         return
     endif
-
     " [clouds] extend vimimclouds egg: fuck''''
     if s:chinese_input_mode =~ 'onekey'
         if keyboard[-4:-1] ==# repeat("'",4)
@@ -4836,7 +4826,6 @@ else
             endif
         endif
     endif
-
     " [onekey] play with nothing but OneKey
     if s:chinese_input_mode =~ 'onekey'
         let results = s:vimim_onekey_input(keyboard)
@@ -4848,7 +4837,6 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     endif
-
     " [mycloud] get chunmeng from mycloud local or www
     if !empty(s:mycloud)
         let results = s:vimim_get_mycloud_plugin(keyboard)
@@ -4856,7 +4844,6 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     endif
-
     " [cloud] magic trailing apostrophe to control cloud
     if s:chinese_input_mode =~ 'onekey' && keyboard !~ '\d'
         let keyboard = s:vimim_magic_tail(keyboard)
@@ -4866,7 +4853,6 @@ else
         let keyboard = s:vimim_shuangpin_transform(keyboard)
         let s:keyboard_list = [keyboard]
     endif
-
     " [cloud] to make dream come true for multiple clouds
     let cloud = 0
     let clouds = split(s:vimim_cloud,',')
@@ -4883,12 +4869,10 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     endif
-
     " [wubi] support auto insert for every 4 input
     if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
         let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
     endif
-
     " [backend] plug-n-play embedded backend engine
     let results = s:vimim_embedded_backend_engine(keyboard,0)
     if !empty(s:english_results)
@@ -4897,7 +4881,6 @@ else
     if !empty(results) && get(results,0) !~ 'None\|0'
         return s:vimim_popupmenu_list(results)
     endif
-
     " [just_do_it] last try on both cjk and cloud before giving up
     if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
         let keyboard_head = s:vimim_cjk_sentence_match(keyboard.".")
@@ -4912,7 +4895,6 @@ else
     elseif s:chinese_input_mode =~ 'onekey'
         call s:vimim_super_reset()
     endif
-
 return
 endif
 endfunction
