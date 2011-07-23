@@ -275,7 +275,7 @@ function! s:vimim_set_global_default(options, default)
     endfor
 endfunction
 
-function! s:vimim_initialize_self()
+function! s:vimim_initialize_local()
     let hjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
@@ -3906,12 +3906,9 @@ function! s:vimim_initialize_cloud()
             let s:cloud_default = default
         endif
     endif
-    let s:cloud_onekey = 0
-    if s:vimim_cloud =~ 'onekey'
-        let s:cloud_onekey = 2
-    endif
     let s:mycloud = 0
     let s:http_executable = 0
+    let s:cloud_onekey = s:vimim_cloud=~'onekey' ? 2 : 0
 endfunction
 
 function! s:vimim_set_cloud(im)
@@ -5060,7 +5057,7 @@ function! s:vimim_initialize_plugin()
     endif
 endfunction
 
-sil!call s:vimim_initialize_self()
+sil!call s:vimim_initialize_local()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
 sil!call s:vimim_initialize_plugin()
