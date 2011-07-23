@@ -2690,8 +2690,8 @@ function! s:vimim_popupmenu_list(matched_list)
 endfunction
 
 function! s:vimim_get_labeling(label)
-    let labeling = a:label
     let fmt = '%2s '
+    let labeling = a:label==10 ? "0" : a:label
     if s:chinese_input_mode =~ 'onekey'
         if s:show_me_not > 0
             let fmt = '%02s '
@@ -2699,12 +2699,7 @@ function! s:vimim_get_labeling(label)
                 let labeling = ""
             endif
         elseif a:label < &pumheight + 1
-            let label2 = s:abcd[a:label-1]
-            if a:label < 2
-                let label2 = "_"
-            elseif a:label == 10
-                let labeling = "0"
-            endif
+            let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
             let labeling .= label2
             if s:has_cjk_file > 0
                 let labeling = label2
