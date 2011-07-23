@@ -2380,10 +2380,6 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-" ============================================= }}}
-let s:VimIM += [" ====  plugin conflict  ==== {{{"]
-" =================================================
-
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
 " -----------------------------------
@@ -2405,31 +2401,6 @@ function! s:vimim_plugins_fix_start()
             call EndWordComplete()
         endif
     endif
-endfunction
-
-" ----------------------------------
-function! s:vimim_getsid(scriptname)
-" ----------------------------------
-    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
-    let l:scriptname = a:scriptname
-    " get output of ":scriptnames" in scriptnames_output variable
-    if empty(s:scriptnames_output)
-        let saved_shellslash=&shellslash
-        set shellslash
-        redir => s:scriptnames_output
-        silent scriptnames
-        redir END
-        let &shellslash = saved_shellslash
-    endif
-    for line in split(s:scriptnames_output, "\n")
-        " only do non-blank lines
-        if line =~ l:scriptname
-            " get the first number in the line.
-            let nr = matchstr(line, '\d\+')
-            return nr
-        endif
-    endfor
-    return 0
 endfunction
 
 " ----------------------------------
@@ -2460,6 +2431,31 @@ function! s:vimim_plugins_fix_stop()
             exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
         endif
     endif
+endfunction
+
+" ----------------------------------
+function! s:vimim_getsid(scriptname)
+" ----------------------------------
+    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
+    let l:scriptname = a:scriptname
+    " get output of ":scriptnames" in scriptnames_output variable
+    if empty(s:scriptnames_output)
+        let saved_shellslash=&shellslash
+        set shellslash
+        redir => s:scriptnames_output
+        silent scriptnames
+        redir END
+        let &shellslash = saved_shellslash
+    endif
+    for line in split(s:scriptnames_output, "\n")
+        " only do non-blank lines
+        if line =~ l:scriptname
+            " get the first number in the line.
+            let nr = matchstr(line, '\d\+')
+            return nr
+        endif
+    endfor
+    return 0
 endfunction
 
 " ============================================= }}}
