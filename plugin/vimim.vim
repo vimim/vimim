@@ -156,7 +156,7 @@ function! s:vimim_chinese(key)
         let chinese = get(s:chinese[a:key], 0)
         if s:encoding =~ "utf-8"
         \&& len(s:chinese[a:key]) > 1
-        \&& s:vimim_data_file =~ ".db"
+        \&& g:vimim_debug > 0
             let chinese = get(s:chinese[a:key], 1)
         endif
     endif
@@ -3557,17 +3557,7 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  backend database ==== {{{"]
 " =================================================
-
-function! g:vimim_get_database()
-" [usage] :call g:vimim_get_database()
-" [url]   http://vimim.googlecode.com/svn/vimim/vimim.html#database
-:sil!python << EOF
-import vim, urllib
-url = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db'
-filename = vim.eval('s:path') + 'vimim.pinyin.db'
-urllib.urlretrieve(url, filename)
-EOF
-endfunction
+" http://vimim.googlecode.com/svn/vimim/vimim.html#database
 
 function! s:vimim_sentence_match_database(input, sentence)
 if empty(a:input)
@@ -3623,9 +3613,10 @@ function! s:vimim_scan_backend_embedded_datafile()
                 break
             endif
         endif
+        " http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db
         let dbfile   = s:path . "vimim." . im . ".db"
         let datafile = s:path . "vimim." . im . ".txt"
-        if has("python") && filereadable(dbfile)
+        if filereadable(dbfile)
             let s:vimim_data_file = dbfile
             call s:vimim_set_datafile(im, dbfile)
             break
@@ -3643,11 +3634,9 @@ function! s:vimim_scan_backend_embedded_datafile()
             endif
         endif
     endfor
-    if s:vimim_data_file =~ ".db"
+    if s:vimim_data_file =~ ".db" && has("python")
         :python import vim, bsddb
-        :python  db =  bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
-      " :python  db =   anydbm.open(vim.eval('s:vimim_data_file'),'r')
-      " :python3 db = dbm.dumb.open(vim.eval('s:vimim_data_file'),'r')
+        :python db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
     endif
 endfunction
 
