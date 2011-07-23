@@ -29,14 +29,10 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (3) search of Chinese without pop-up window
 "  (4) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
 "  (5) support huge datafile if python interface to Vim is used
-"
-" "VimIM Frontend UI"
-"  (1) VimIM OneKey: Chinese input without mode change
-"  (2) VimIM Chinese Input Mode: ['dynamic','static']
-"
-" "VimIM Backend Engine"
-"  (1) [embedded]   VimIM: http://vimim.googlecode.com
-"  (2) [external]   all 4 available clouds and mycloud
+"  (6) [frontend] VimIM OneKey: Chinese input without mode change
+"  (7) [frontend] VimIM Chinese Input Mode: ['dynamic','static']
+"  (8) [embedded] VimIM: http://vimim.googlecode.com
+"  (9) [external] all 4 available clouds and mycloud
 "
 " "VimIM Installation"
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
@@ -47,7 +43,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (6) [option] (Windows) has('python') OR download wget/curl/libvimim
 "
 " "VimIM Usage"
-"  (1) play with a game to rotate poem:
+"  (1) play with a game to rotate classic chinese poem:
 "      open vim, type i, type vimimpoem, <C-6>, m, m, m, m
 "  (2) play with OneKey, with cjk standard file installed:
 "      open vim, type i, type sssss, <C-6>, 1, 2, 3, 4
@@ -525,7 +521,7 @@ function! s:vimim_hjkl_rotation(matched_list)
 endfunction
 
 function! s:vimim_chinese_rotation() range abort
-" [usage] :VimiM
+    " [usage] :VimiM
     sil!call s:vimim_backend_initialization()
     :%s#\s*\r\=$##
     let lines = getline(a:firstline, a:lastline)
@@ -2022,9 +2018,9 @@ function! s:vimim_get_head(keyboard, partition)
 endfunction
 
 function! s:vimim_chinese_transfer() range abort
-" [usage] :VimIM
-" (1) "quick and dirty" way to transfer Chinese to Chinese
-" (2) 20% of the effort to solve 80% of the problem using one2one mapping
+    " [usage] :VimIM
+    " (1) "quick and dirty" way to transfer Chinese to Chinese
+    " (2) 20% of the effort to solve 80% of the problem using one2one
     sil!call s:vimim_backend_initialization()
     if empty(s:has_cjk_file)
         " no toggle between simplified and tranditional Chinese
@@ -4600,7 +4596,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
 endfunction
 
 function! s:vimim_url_xx_to_chinese(xx)
-" %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
+    " %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
     let output = a:xx
     if s:http_executable =~ 'libvimim'
         let output = libcall(s:http_executable, "do_unquote", a:xx)
@@ -4731,13 +4727,10 @@ function! g:vimim_menu_select()
 endfunction
 
 function! s:vimim_i_map_off()
-    let unmap_list = range(0,9)
-    call extend(unmap_list, s:AZ_list)
-    call extend(unmap_list, s:valid_keys)
-    call extend(unmap_list, keys(s:evils))
-    call extend(unmap_list, keys(s:punctuations))
-    call extend(unmap_list, ['<Esc>','<CR>','<BS>','<Space>'])
-    for _ in unmap_list
+    let recycles  = range(0,9) + s:AZ_list + s:valid_keys
+    let recycles += keys(s:evils) + keys(s:punctuations)
+    let recycles += ['<Esc>','<CR>','<BS>','<Space>']
+    for _ in recycles
         if len(maparg(_, 'i')) > 0
             sil!exe 'iunmap '. _
         endif
