@@ -2259,7 +2259,7 @@ function! s:vimim_getsid(scriptname)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  user interface   ==== {{{"]
+let s:VimIM += [" ====  user   interface ==== {{{"]
 " =================================================
 
 function! s:vimim_initialize_skin()
