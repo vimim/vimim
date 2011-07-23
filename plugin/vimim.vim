@@ -233,9 +233,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
     call add(G, "g:vimim_cloud")
-    " -----------------------------------
     call s:vimim_set_global_default(G, 0)
-    " -----------------------------------
     let G = []
     call add(G, "g:vimim_onekey_hit_and_run")
     call add(G, "g:vimim_enter_for_seamless")
@@ -243,9 +241,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_search_next")
-    " -----------------------------------
     call s:vimim_set_global_default(G, 1)
-    " -----------------------------------
     let s:frontends = []
     let s:im_toggle = 0
     let s:pumheight0 = &pumheight
@@ -751,7 +747,7 @@ function! s:vimim_chinesemode_action()
     if s:chinese_input_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let clouds = split(s:vimim_cloud,',')
-        let cloud_in_use = s:ui.root=='cloud' ? match(clouds, s:ui.im) : 0
+        let cloud_in_use = s:ui.root=='cloud' ? match(clouds,s:ui.im) : 0
         let vimim_cloud = get(clouds, cloud_in_use)
         if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
             " dynamic auto trigger for wubi
@@ -1266,10 +1262,8 @@ function! <SID>vimim_onekey_hjkl(key)
     let key = a:key
     let toggles = split('shlmn','\zs')
     if pumvisible()
-        if a:key == 'j'
-            let key  = '\<Down>'
-        elseif a:key == 'k'
-            let key  = '\<Up>'
+        if a:key == 'j'        | let key  = '\<Down>'
+        elseif a:key == 'k'    | let key  = '\<Up>'
         elseif a:key =~ "[<>]"
             let key  = '\<C-Y>'.s:punctuations[nr2char(char2nr(a:key)-16)]
         else
@@ -1413,12 +1407,9 @@ function! s:vimim_get_property(chinese, property)
             let head = printf('%x', ddddd)
         elseif s:has_cjk_file > 0
             let values = split(get(s:cjk_lines,line))
-            if property =~ '\d'
-                let head = get(values, property)
-            elseif property == 'pinyin'
-                let head = get(values, 3)
-            elseif property == 'english'
-                let head = join(values[4:-2])
+            if property =~ '\d'          | let head = get(values,property)
+            elseif property == 'pinyin'  | let head = get(values,3)
+            elseif property == 'english' | let head = join(values[4:-2])
             endif
         endif
         if empty(head)
@@ -1439,7 +1430,7 @@ function! s:vimim_get_property(chinese, property)
 endfunction
 
 function! s:vimim_unicode_to_utf8(xxxx)
-" u808f => 32911 => e8828f
+    " u808f => 32911 => e8828f
     let ddddd = str2nr(a:xxxx, 16)
     let utf8 = ''
     if ddddd < 128
@@ -1590,7 +1581,6 @@ function! s:vimim_imode_number(keyboard, prefix)
     let i = ii_keyboard[:0]
     let number = ""
     let quantifier = {}
-    " ---------------------------------------------------
     let quantifier.1 = '一壹甲①⒈⑴'
     let quantifier.2 = '二贰乙②⒉⑵'
     let quantifier.3 = '三叁丙③⒊⑶'
@@ -1626,7 +1616,6 @@ function! s:vimim_imode_number(keyboard, prefix)
     let quantifier.x = '升席些项'
     let quantifier.y = '年亿叶月'
     let quantifier.z = '种只张株支枝盏座阵桩尊则站幢宗兆'
-    " ---------------------------------------------------
     for char in keyboards
         if has_key(quantifier, char)
             let quantifier_list = split(quantifier[char], '\zs')
@@ -1929,7 +1918,6 @@ function! s:vimim_cjk_match(keyboard)
     let dddddd = 6 - 2 * s:vimim_digit_4corner
     let grep_frequency = '.*' . '\s\d\+$'
     let grep = ""
-    " ------------------------------------------------------
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_x))
             " cjk pinyin with tone: huan2hai2
@@ -1976,7 +1964,6 @@ function! s:vimim_cjk_match(keyboard)
     else
         return []
     endif
-    " ------------------------------------------------------
     let results = s:vimim_cjk_grep_results(grep)
     if len(results) > 0
         let results = sort(results, "s:vimim_sort_on_last")
@@ -2370,7 +2357,7 @@ function! s:vimim_statusline()
         endif
     endif
     let clouds = split(s:vimim_cloud,',')
-    let cloud_in_use = s:ui.root=='cloud' ? match(clouds, s:ui.im) : 0
+    let cloud_in_use = s:ui.root=='cloud' ? match(clouds,s:ui.im) : 0
     let vimim_cloud = get(clouds, cloud_in_use)
     if vimim_cloud =~ 'mixture'
         let s:ui.statusline .= s:vimim_chinese('mixture')
@@ -4903,7 +4890,7 @@ else
     " [cloud] to make dream come true for multiple clouds
     let cloud = 0
     let clouds = split(s:vimim_cloud,',')
-    let cloud_in_use = s:ui.root=='cloud' ? match(clouds, s:ui.im) : 0
+    let cloud_in_use = s:ui.root=='cloud' ? match(clouds,s:ui.im) : 0
     let vimim_cloud = get(clouds, cloud_in_use)
     if s:vimim_do_cloud_or_not(keyboard) > 0
         let cloud = get(split(vimim_cloud,'[.]'),0)
