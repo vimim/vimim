@@ -4785,56 +4785,6 @@ endfunction
 let s:VimIM += [" ====  core engine      ==== {{{"]
 " =================================================
 
-function! s:vimim_embedded_backend_engine(keyboard, search)
-    let keyboard = a:keyboard
-    let im = s:ui.im
-    let root = s:ui.root
-    if empty(im) || empty(root) || empty(keyboard)
-    \|| im =~ 'cloud'
-    \|| keyboard !~# s:valid_key
-    \|| s:show_me_not > 0
-        return []
-    endif
-    if im == 'pinyin'
-        let keyboard = s:vimim_toggle_pinyin(keyboard)
-    endif
-    if s:ui.has_dot == 2
-        let keyboard = s:vimim_add_apostrophe(keyboard)
-    endif
-    let results = []
-    let keyboard2 = 0
-    if root =~# "directory"
-        let dir = s:backend[root][im].name
-        let keyboard2 = s:vimim_sentence_match_directory(keyboard)
-        let results = s:vimim_get_from_directory(keyboard2, dir)
-        if keyboard ==# keyboard2 && a:search < 1
-        \&& len(results) > 0 && len(results) < 20
-            let extras = s:vimim_more_pinyin_directory(keyboard, dir)
-            if len(extras) > 0 && len(results) > 0
-                call map(results, 'keyboard ." ". v:val')
-                call extend(results, extras)
-            endif
-        endif
-    elseif root =~# "datafile"
-       if s:vimim_data_file =~ ".db"
-           let keyboard2 = s:vimim_sentence_match_database(keyboard, 1)
-           let results = s:vimim_get_from_database(keyboard2, a:search)
-        else
-           let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
-           let results = s:vimim_get_from_datafile(keyboard2, a:search)
-        endif
-    endif
-    if len(s:keyboard_list) < 2
-        if empty(keyboard2)
-            let s:keyboard_list = [keyboard]
-        elseif len(keyboard2) < len(keyboard)
-            let tail = strpart(keyboard,len(keyboard2))
-            let s:keyboard_list = [keyboard2, tail]
-        endif
-    endif
-    return results
-endfunction
-
 function! VimIM(start, keyboard)
 if a:start
 
@@ -4998,6 +4948,56 @@ else
 
 return
 endif
+endfunction
+
+function! s:vimim_embedded_backend_engine(keyboard, search)
+    let keyboard = a:keyboard
+    let im = s:ui.im
+    let root = s:ui.root
+    if empty(im) || empty(root) || empty(keyboard)
+    \|| im =~ 'cloud'
+    \|| keyboard !~# s:valid_key
+    \|| s:show_me_not > 0
+        return []
+    endif
+    if im == 'pinyin'
+        let keyboard = s:vimim_toggle_pinyin(keyboard)
+    endif
+    if s:ui.has_dot == 2
+        let keyboard = s:vimim_add_apostrophe(keyboard)
+    endif
+    let results = []
+    let keyboard2 = 0
+    if root =~# "directory"
+        let dir = s:backend[root][im].name
+        let keyboard2 = s:vimim_sentence_match_directory(keyboard)
+        let results = s:vimim_get_from_directory(keyboard2, dir)
+        if keyboard ==# keyboard2 && a:search < 1
+        \&& len(results) > 0 && len(results) < 20
+            let extras = s:vimim_more_pinyin_directory(keyboard, dir)
+            if len(extras) > 0 && len(results) > 0
+                call map(results, 'keyboard ." ". v:val')
+                call extend(results, extras)
+            endif
+        endif
+    elseif root =~# "datafile"
+       if s:vimim_data_file =~ ".db"
+           let keyboard2 = s:vimim_sentence_match_database(keyboard, 1)
+           let results = s:vimim_get_from_database(keyboard2, a:search)
+        else
+           let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
+           let results = s:vimim_get_from_datafile(keyboard2, a:search)
+        endif
+    endif
+    if len(s:keyboard_list) < 2
+        if empty(keyboard2)
+            let s:keyboard_list = [keyboard]
+        elseif len(keyboard2) < len(keyboard)
+            let tail = strpart(keyboard,len(keyboard2))
+            let s:keyboard_list = [keyboard2, tail]
+        endif
+    endif
+    return results
 endfunction
 
 " ============================================= }}}
