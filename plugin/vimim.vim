@@ -476,11 +476,6 @@ function! s:vimim_egg_vimimenv()
     return eggs
 endfunction
 
-" ============================================= }}}
-let s:VimIM += [" ====  games            ==== {{{"]
-" =================================================
-" http://vimim.googlecode.com/svn/vimim/vimim.html#game
-
 " ----------------------------------
 function! s:vimim_get_hjkl(keyboard)
 " ----------------------------------
@@ -531,6 +526,7 @@ function! s:vimim_get_hjkl(keyboard)
     return lines
 endfunction
 
+" http://vimim.googlecode.com/svn/vimim/vimim.html#game
 " -------------------------------------------
 function! s:vimim_hjkl_rotation(matched_list)
 " -------------------------------------------
