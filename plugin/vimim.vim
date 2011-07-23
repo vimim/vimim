@@ -2985,25 +2985,6 @@ vim.command("return '%s'" % oneline)
 EOF
 endfunction
 
-function! s:vimim_get_from_database(keyboard, search)
-    let keyboard = a:keyboard
-    let oneline = s:vimim_sentence_match_database(keyboard, 0)
-    let results = s:vimim_make_pair_list(oneline)
-    if empty(a:search) && len(results) > 0 && len(results) < 20
-        let candidates = s:vimim_more_pinyin_candidates(keyboard)
-        if len(candidates) > 1
-            for candidate in candidates[1:]
-                let oneline = s:vimim_sentence_match_database(candidate, 0)
-                let matched_list = s:vimim_make_pair_list(oneline)
-                if !empty(matched_list)
-                    call extend(results, matched_list)
-                endif
-            endfor
-        endif
-    endif
-    return results
-endfunction
-
 " ============================================= }}}
 let s:VimIM += [" ====  input english    ==== {{{"]
 " =================================================
@@ -3713,6 +3694,25 @@ function! s:vimim_get_from_datafile(keyboard, search)
                 let results = s:vimim_make_pair_list(oneline)
                 call extend(results, extras)
             endif
+        endif
+    endif
+    return results
+endfunction
+
+function! s:vimim_get_from_database(keyboard, search)
+    let keyboard = a:keyboard
+    let oneline = s:vimim_sentence_match_database(keyboard, 0)
+    let results = s:vimim_make_pair_list(oneline)
+    if empty(a:search) && len(results) > 0 && len(results) < 20
+        let candidates = s:vimim_more_pinyin_candidates(keyboard)
+        if len(candidates) > 1
+            for candidate in candidates[1:]
+                let oneline = s:vimim_sentence_match_database(candidate, 0)
+                let matched_list = s:vimim_make_pair_list(oneline)
+                if !empty(matched_list)
+                    call extend(results, matched_list)
+                endif
+            endfor
         endif
     endif
     return results
