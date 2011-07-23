@@ -3526,7 +3526,7 @@ EOF
 endfunction
 
 function! s:debug(...)
-" [server] python ~/vim/vimfiles/plugin/logserver.py
+" [server] sdebug(){ /bin/python ~/vim/vimfiles/plugin/sdebug.py ;}
 " [client] :call s:debug('info', 'foo/bar is', foobar, 'and', bar)
 if s:vimim_debug < 1 || has('python') < 1
     return
@@ -3548,11 +3548,7 @@ except vim.error:
 EOF
 endfunction
 
-" ============================================= }}}
-let s:VimIM += [" ====  backend database ==== {{{"]
-" =================================================
 " http://vimim.googlecode.com/svn/vimim/vimim.html#database
-
 function! s:vimim_sentence_match_database(input, sentence)
 if empty(a:input)
     return ""
