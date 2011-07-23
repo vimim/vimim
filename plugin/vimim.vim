@@ -240,8 +240,8 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 1)
     let s:frontends = []
     let s:im_toggle = 0
-    let s:pumheight0 = &pumheight
-    let s:pumheight1 = &pumheight
+    let s:pumheight_saved = &pumheight
+    let s:pumheight = &pumheight
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
@@ -300,8 +300,8 @@ function! s:vimim_easter_chicken(keyboard)
     return []
 endfunction
 
-" http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
 function! s:vimim_egg_vimimrc()
+    " http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
     return sort(copy(s:vimimrc))
 endfunction
 
@@ -480,8 +480,8 @@ function! s:vimim_get_hjkl(keyboard)
     return lines
 endfunction
 
-" http://vimim.googlecode.com/svn/vimim/vimim.html#game
 function! s:vimim_hjkl_rotation(matched_list)
+    " http://vimim.googlecode.com/svn/vimim/vimim.html#game
     let lines = a:matched_list
     if empty(lines)
         return []
@@ -633,9 +633,9 @@ function! s:vimim_search_chinese_by_english(keyboard)
 endfunction
 
 function! s:vimim_slash_search_block(keyboard)
-" /muuqwxeyqpjeqqq  =>  shortcut   /search
-" /m7712x3610j3111  =>  standard   /search
-" /ma77xia36ji31    =>  free-style /search
+    " /muuqwxeyqpjeqqq  =>  shortcut   /search
+    " /m7712x3610j3111  =>  standard   /search
+    " /ma77xia36ji31    =>  free-style /search
     let results = []
     let keyboard = a:keyboard
     while len(keyboard) > 1
@@ -835,8 +835,8 @@ function! s:vimim_onekey_start()
 endfunction
 
 function! <SID>OneKey()
-" (1) <OneKey> => start OneKey as "hit and run"
-" (2) <OneKey> => stop  OneKey and print out menu
+    " (1) <OneKey> => start OneKey as "hit and run"
+    " (2) <OneKey> => stop  OneKey and print out menu
     let onekey = ''
     let one_before = getline(".")[col(".")-2]
     if empty(one_before) || one_before =~ '\s'
@@ -926,10 +926,10 @@ function! s:vimim_onekey_action(onekey)
 endfunction
 
 function! <SID>vimim_space()
-" (1) <Space> after English (valid keys) => trigger keycode menu
-" (2) <Space> after English punctuation  => Chinese punctuation
-" (3) <Space> after popup menu           => insert Chinese
-" (4) <Space> after Chinese              => stop OneKeyNonStop
+    " (1) <Space> after English (valid keys) => trigger keycode menu
+    " (2) <Space> after English punctuation  => Chinese punctuation
+    " (3) <Space> after popup menu           => insert Chinese
+    " (4) <Space> after Chinese              => stop OneKeyNonStop
     let space = " "
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
@@ -1094,7 +1094,7 @@ function! s:vimim_cache()
         elseif s:hjkl_h > 0 && len(s:matched_list) > &pumheight
             let &pumheight = 0
             if s:hjkl_h % 2 < 1
-                let &pumheight = s:pumheight1
+                let &pumheight = s:pumheight
             endif
         endif
     endif
@@ -1163,9 +1163,9 @@ function! s:vimim_cjk_filter_list()
 endfunction
 
 function! s:vimim_cjk_digit_filter(chinese)
-" smart digital filter: 马力 7712 4002
-"   (1) mali<C-6>       马力 => filter with 7 4002
-"   (2)   ma<C-6>       马   => filter with   7712
+    " smart digital filter: 马力 7712 4002
+    "   (1) mali<C-6>       马力 => filter with 7 4002
+    "   (2)   ma<C-6>       马   => filter with   7712
     let chinese = a:chinese
     if empty(len(s:hjkl_x)) || empty(chinese)
         return 0
@@ -1890,7 +1890,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
 endfunction
 
 function! s:vimim_qwertyuiop_1234567890(keyboard)
-" output is '7712' for input uuqw
+    " output is '7712' for input uuqw
     if a:keyboard =~ '\d' || empty(s:has_cjk_file)
         return 0
     endif
@@ -2312,7 +2312,7 @@ function! s:vimim_set_statusline()
 endfunction
 
 function! IMName()
-" This function is for user-defined 'stl' 'statusline'
+    " This function is for user-defined 'stl' 'statusline'
     if s:chinese_input_mode =~ 'onekey'
         if pumvisible()
             return s:vimim_statusline()
@@ -3219,9 +3219,9 @@ function! s:vimim_create_quanpin_table()
 endfunction
 
 function! s:vimim_more_pinyin_candidates(keyboard)
-" [purpose] make standard layout for popup menu
-" input  =>  mamahuhu
-" output =>  mamahuhu, mama, ma
+    " [purpose] make standard layout for popup menu
+    " input  =>  mamahuhu
+    " output =>  mamahuhu, mama, ma
     if empty(s:english_results)
         " break up keyboard only if it is not english
     else
@@ -3462,7 +3462,7 @@ function! s:vimim_create_shuangpin_table(rule)
 endfunction
 
 function! s:vimim_shuangpin_generic()
-" generate the default value of shuangpin table
+    " generate the default value of shuangpin table
     let shengmu_list = {}
     for shengmu in ["b", "p", "m", "f", "d", "t", "l", "n", "g",
                 \"k", "h", "j", "q", "x", "r", "z", "c", "s", "y", "w"]
@@ -3478,7 +3478,7 @@ function! s:vimim_shuangpin_generic()
 endfunction
 
 function! s:vimim_shuangpin_abc(rule)
-" vtpc => shuang pin => double pinyin
+    " goal: vtpc => shuang pin => double pinyin
     call extend(a:rule[0],{ "zh" : "a", "ch" : "e", "sh" : "v" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
@@ -3492,7 +3492,7 @@ function! s:vimim_shuangpin_abc(rule)
 endfunction
 
 function! s:vimim_shuangpin_ms(rule)
-" goal: vi=>zhi ii=>chi ui=>shi keng=>keneng
+    " goal: vi=>zhi ii=>chi ui=>shi keng=>keneng
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
@@ -3507,7 +3507,7 @@ function! s:vimim_shuangpin_ms(rule)
 endfunction
 
 function! s:vimim_shuangpin_nature(rule)
-" goal: 'woui' => wo shi => i am
+    " goal: 'woui' => wo shi => i am
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
@@ -4068,8 +4068,8 @@ function! s:vimim_get_from_http(input, cloud)
     return output
 endfunction
 
-" web.pinyin.sogou.com/api/py?key=938cdfe9e1e39f8dd5da428b1a6a69cb&query=m
 function! s:vimim_get_cloud_sogou(keyboard)
+    " http://web.pinyin.sogou.com/api/py?key=32&query=mxj
     if empty(s:cloud_keys.sogou)
         let key_sogou = 'http://web.pinyin.sogou.com/web_ime/patch.php'
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
@@ -4108,8 +4108,8 @@ function! s:vimim_get_cloud_sogou(keyboard)
     return matched_list
 endfunction
 
-" ime.qq.com/fcgi-bin/getword?key=f0e9756a31396a76a3f40abce1213367&q=mxj
 function! s:vimim_get_cloud_qq(keyboard)
+    " http://ime.qq.com/fcgi-bin/getword?key=32&q=mxj
     let url = 'http://ime.qq.com/fcgi-bin/'
     if empty(s:cloud_keys.qq)
         let key_qq  = url . 'getkey'
@@ -4179,8 +4179,8 @@ function! s:vimim_get_cloud_qq(keyboard)
     return matched_list
 endfunction
 
-" google.com/transliterate?tl_app=3&tlqt=1&num=20&langpair=en|zh&text=mxj
 function! s:vimim_get_cloud_google(keyboard)
+    " http://google.com/transliterate?tl_app=3&tlqt=1&num=20&text=mxj
     let input  = 'http://www.google.com/transliterate/chinese'
     let input .= '?langpair=en|zh'
     let input .= '&num=20'
@@ -4230,8 +4230,8 @@ function! s:vimim_cloud_pinyin(keyboard, matched_list)
     return matched_list
 endfunction
 
-" http://olime.baidu.com/py?rn=0&pn=20&py=mxj
 function! s:vimim_get_cloud_baidu(keyboard)
+    " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
     let input  = 'http://olime.baidu.com/py'
     let input .= '?rn=0'
     let input .= '&pn=20'
@@ -4293,9 +4293,7 @@ function! s:vimim_get_cloud_all(keyboard)
 endfunction
 
 function! s:vimim_egg_vimimclouds()
-    let input = 'woyouyigemeng'
-    let eggs = s:vimim_get_cloud_all(input)
-    return eggs
+    return s:vimim_get_cloud_all('woyouyigemeng')
 endfunction
 
 " ============================================= }}}
@@ -4347,7 +4345,7 @@ function! s:vimim_check_mycloud_availability()
 endfunction
 
 function! s:vimim_access_mycloud(cloud, cmd)
-" use the same function to access mycloud by libcall() or system()
+    " use the same function to access mycloud by libcall() or system()
     let ret = ""
     if s:mycloud_mode == "libcall"
         let arg = s:mycloud_arg
@@ -4571,7 +4569,6 @@ function! s:vimim_get_mycloud_plugin(keyboard)
         return []
     endif
     let menu = []
-    " one line output:  春梦 8 4420
     for item in split(output, '\n')
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
@@ -4629,7 +4626,7 @@ function! s:vimim_i_setting_on()
         if s:has_cjk_file > 0
             let &pumheight -= 1
         endif
-        let s:pumheight1 = &pumheight
+        let s:pumheight = &pumheight
     endif
     if s:vimim_custom_label > 0
         let &pumheight = s:horizontal_display
@@ -4645,7 +4642,7 @@ function! s:vimim_i_setting_off()
     let &lazyredraw  = s:lazyredraw
     let &showmatch   = s:showmatch
     let &smartcase   = s:smartcase
-    let &pumheight   = s:pumheight0
+    let &pumheight   = s:pumheight_saved
 endfunction
 
 function! s:vimim_start()
@@ -4696,7 +4693,7 @@ function! g:vimim_reset_after_insert()
     let s:pageup_pagedown = 0
     let s:matched_list = []
     if s:vimim_custom_label < 1
-        let &pumheight = s:pumheight1
+        let &pumheight = s:pumheight
     endif
     return ""
 endfunction
