@@ -2394,8 +2394,7 @@ function! s:vimim_get_chinese_im()
         endif
         let s:ui.statusline .= s:space . punctuation
     endif
-    let statusline  = s:left . s:ui.statusline . s:right
-    let statusline .= "VimIM"
+    let statusline = s:left . s:ui.statusline . s:right . "VimIM"
     let input_style  = s:vimim_chinese('chinese')
     let input_style .= s:vimim_chinese(s:vimim_chinese_input_mode)
     let input_style .= statusline
@@ -2436,12 +2435,9 @@ function! <SID>vimim_alphabet_number_label(key)
     let key = a:key
     if pumvisible()
         let n = match(s:abcd, key)
-        if key =~ '\d'
-            let n = key<1 ? 9 : key-1
-        elseif key == ';'
-            let n = 1
-        elseif key == "'"
-            let n = 2
+            if key =~ '\d' | let n = key<1 ? 9 : key-1
+        elseif key == ';'  | let n = 1
+        elseif key == "'"  | let n = 2
         endif
         let down = repeat("\<Down>", n)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
@@ -2540,9 +2536,7 @@ endfunction
 function! <SID>vimim_backspace()
     let key = '\<BS>'
     if pumvisible() && s:chinese_input_mode !~ 'onekey'
-        let key  = "\<C-E>"
-        let key .= "\<BS>"
-        let key .= '\<C-R>=g:vimim()\<CR>'
+        let key = '\<C-E>\<BS>\<C-R>=g:vimim()\<CR>'
     endif
     call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
