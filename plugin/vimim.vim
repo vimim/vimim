@@ -326,9 +326,10 @@ function! s:vimim_easter_chicken(keyboard)
         try
             return eval("s:vimim_egg_" . a:keyboard . "()")
         catch
-            return []
+            call s:debugs('egg::', v:exception)
         endtry
     endif
+    return []
 endfunction
 
 " http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
@@ -501,9 +502,8 @@ function! s:vimim_get_hjkl(keyboard)
         else
             if unnamed_register=~'\d' && join(lines)!~'[^0-9[:blank:].]'
                 let sum = eval(join(lines,'+'))
-                let len = len(lines)
-                let ave = 1.0*sum/len
-                let math  = 'sum=' . string(len) . '*'
+                let ave = 1.0*sum/len(lines)
+                let math  = 'sum=' . string(len(lines)) . '*'
                 let math .= printf('%.2f',ave) . '='
                 if unnamed_register =~ '[.]'
                     let math .= printf('%.2f',1.0*sum)
@@ -2383,10 +2383,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  plugin conflict  ==== {{{"]
 " =================================================
-" Thanks to frederick.zou for providing codes on this section:
-" supertab      http://www.vim.org/scripts/script.php?script_id=1643
-" autocomplpop  http://www.vim.org/scripts/script.php?script_id=1879
-" word_complete http://www.vim.org/scripts/script.php?script_id=73
 
 " -----------------------------------
 function! s:vimim_plugins_fix_start()
@@ -3287,7 +3283,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " =================================================
-" Thanks to Pan Shizhu for providing all shuangpin codes:
 
 " --------------------------------------
 function! s:vimim_initialize_shuangpin()
@@ -3761,7 +3756,6 @@ endfunction
 " ------------------------------------------------------
 function! s:vimim_mycloud_python_client(cmd, host, port)
 " ------------------------------------------------------
-" Thanks to Pan Shizhu for all codes of mycloud and debug
 :sil!python << EOF
 try:
     HOST = vim.eval("a:host")
@@ -4694,7 +4688,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
-" Thanks to Pan Shizhu for providing all mycloud codes:
 
 " -----------------------------------------
 function! s:vimim_set_mycloud_if_pimcloud()
