@@ -294,7 +294,7 @@ function! s:vimim_easter_chicken(keyboard)
         try
             return eval("s:vimim_egg_" . a:keyboard . "()")
         catch
-            call s:debugs('egg::', v:exception)
+            call s:debug('alert', 'egg=', a:keyboard, v:exception)
         endtry
     endif
     return []
@@ -433,17 +433,16 @@ function! s:vimim_egg_vimimenv()
 endfunction
 
 function! s:vimim_get_hjkl(keyboard)
-    let keyboard = a:keyboard
     " [unicode] support direct unicode/gb/big5 input
-    let lines = s:vimim_get_unicode_list(keyboard)
+    let lines = s:vimim_get_unicode_list(a:keyboard)
     if !empty(lines)
         return lines
     endif
     " [eggs] hunt classic easter egg ... vim<C-6>
-    let lines = s:vimim_easter_chicken(keyboard)
+    let lines = s:vimim_easter_chicken(a:keyboard)
     if !empty(lines)
         " [hjkl] display buffer inside the omni window
-    elseif keyboard ==# "vimim"
+    elseif a:keyboard ==# "vimim"
         let unnamed_register = getreg('"')
         let lines = split(unnamed_register,'\n')
         if len(lines) < 2
@@ -459,15 +458,15 @@ function! s:vimim_get_hjkl(keyboard)
                 else
                     let math .= string(sum)
                 endif
-                let lines = [math]
+                let lines = [math . " "]
             endif
         endif
     else
         " [poem] check entry in special directories first
         let dirs = [s:path, s:vimim_hjkl_directory]
         for dir in dirs
-            let lines = s:vimim_get_from_directory(keyboard, dir)
-            if len(keyboard) < 2 || empty(lines)
+            let lines = s:vimim_get_from_directory(a:keyboard, dir)
+            if len(a:keyboard) < 2 || empty(lines)
                 continue
             else
                 break
@@ -3058,11 +3057,6 @@ function! s:vimim_readfile(datafile)
         return []
     endif
     let lines = readfile(a:datafile)
-    return s:vimim_i18n_read_list(lines)
-endfunction
-
-function! s:vimim_i18n_read_list(lines)
-    let lines = a:lines
     if s:localization > 0
         let  results = []
         for line in lines
@@ -3806,12 +3800,7 @@ function! s:vimim_get_from_directory(keyboard, dir)
     if empty(a:keyboard) || empty(a:dir)
         return []
     endif
-    let results = []
-    let filename = a:dir . a:keyboard
-    if filereadable(filename)
-        let results = s:vimim_readfile(filename)
-    endif
-    return results
+    return s:vimim_readfile(a:dir . a:keyboard)
 endfunction
 
 function! s:vimim_sentence_match_directory(keyboard)
