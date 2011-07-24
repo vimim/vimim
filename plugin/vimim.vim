@@ -1000,15 +1000,13 @@ function! s:vimim_onekey_input(keyboard)
             if !empty(len(results))
                 return results
             endif
-        elseif s:has_cjk_file > 0
-            let dddd = s:vimim_qwertyuiop_1234567890(keyboard[1:])
-            if !empty(dddd)
-                let keyboard = dddd " iypwqwuww => 60212722
-            endif
         endif
     endif
     " [cjk] cjk database works like swiss-army knife
     if s:has_cjk_file > 0
+        if keyboard =~# '^i'   "| iypwqwuww => 60212722
+            let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
+        endif
         let keyboard = s:vimim_cjk_sentence_match(keyboard)
         let results = s:vimim_cjk_match(keyboard)
         if keyboard =~ '^\l\d\d\d\d'
@@ -1163,8 +1161,8 @@ endfunction
 
 function! s:vimim_cjk_digit_filter(chinese)
     " smart digital filter: 马力 7712 4002
-    "   (1) mali<C-6>       马力 => filter with 7 4002
-    "   (2)   ma<C-6>       马   => filter with   7712
+    "   (1)   ma<C-6>       马   => filter with   7712
+    "   (2) mali<C-6>       马力 => filter with 7 4002
     let chinese = a:chinese
     if empty(len(s:hjkl_x)) || empty(chinese)
         return 0
