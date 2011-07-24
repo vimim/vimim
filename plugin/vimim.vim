@@ -2574,120 +2574,6 @@ function! <SID>vimim_enter()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_popupmenu_list(matched_list)
-    let lines = a:matched_list
-    if empty(lines) || type(lines) != type([])
-        return []
-    endif
-    let tail = 0
-    let label = 1
-    let extra_text = ""
-    let popupmenu_list = []
-    let popupmenu_list_one_row = []
-    let first_in_list = get(lines,0)
-    let keyboard = join(s:keyboard_list,"")
-    let &pumheight = s:show_me_not ? 0 : &pumheight
-    if s:hjkl_n % 2 > 0
-        if s:show_me_not > 0
-            call reverse(lines)
-            let label = len(lines)
-        elseif s:ui.im == 'pinyin' || s:ui.root == 'cloud'
-            let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
-        endif
-    endif
-    let menu = get(s:keyboard_list,0)
-    let s:matched_list = lines
-    for chinese in lines
-        let complete_items = {}
-        if first_in_list =~ '\s' && s:show_me_not < 1
-            let pairs = split(chinese)
-            if len(pairs) < 2
-                continue
-            endif
-            let chinese = get(pairs, 1)
-            let menu = get(pairs, 0)
-            if s:vimim_custom_menu > 0
-                let extra_text = menu
-            endif
-        endif
-        if s:hjkl_s > 0 && s:hjkl_s % 2 > 0 && s:has_cjk_file > 0
-            let chinese = s:vimim_get_traditional_chinese(chinese)
-        endif
-        if s:hjkl_l > 0 && s:hjkl_l % 2 > 0 && s:show_me_not < 1
-            let extra_text = menu
-            if empty(s:english_results)
-                let ddddd = char2nr(chinese)
-                let extra_text = s:vimim_cjk_property_display(ddddd)
-            endif
-        endif
-        if empty(s:mycloud)
-            if !empty(keyboard) && s:show_me_not < 1
-                let keyboard_head_length = len(menu)
-                if empty(s:ui.has_dot) && keyboard =~ "['.]"
-                    " for vimim classic demo: i.have.a.dream
-                    let keyboard_head_length += 1
-                endif
-                let tail = strpart(keyboard, keyboard_head_length)
-                let chinese .= tail
-            endif
-        elseif s:horizontal_display > 0
-            let extra_text = get(split(menu,"_"),0)
-        endif
-        if s:vimim_custom_label > 0
-            let abbr = label . "." . chinese
-            call add(popupmenu_list_one_row, abbr)
-        endif
-        if s:vimim_custom_label > -1 && len(lines) > 1
-            let labeling = label . " "
-            if s:vimim_custom_label < 1
-                let labeling = s:vimim_get_labeling(label)
-            endif
-            if s:hjkl_n % 2 > 0 && s:show_me_not > 0
-                let label -= 1
-            else
-                let label += 1
-            endif
-            let complete_items["abbr"] = labeling . chinese
-        endif
-        let complete_items["dup"] = 1
-        let complete_items["menu"] = extra_text
-        let complete_items["word"] = empty(chinese) ? s:space : chinese
-        call add(popupmenu_list, complete_items)
-    endfor
-    if s:chinese_input_mode =~ 'onekey'
-        let s:popupmenu_list = popupmenu_list
-    endif
-    let height = s:horizontal_display
-    if s:show_me_not < 1 && len(popupmenu_list) > 1 && height > 0
-        let one_list = popupmenu_list_one_row
-        if len(one_list) > height
-            let one_list = popupmenu_list_one_row[0 : height-1]
-        endif
-        let cursor_gps = 1.0 * (virtcol(".") % &columns) / &columns
-        let onerow_gps = 1.0 * len(join(one_list)) / &columns
-        if cursor_gps < 0.72 && onerow_gps < 0.92
-            let start = 1
-            let display = 0
-            let line1 =  line("w$") - line(".")
-            let line2 =  line("w$") - line("w0")
-            if line1 < height+2 && line2 > &lines-height- 2
-                let start = 0
-                let display = height-1
-            endif
-            if display < len(popupmenu_list)
-                let popupmenu_list[display].abbr = join(one_list)
-            endif
-            let empty_lines = range(start, start+height-2)
-            for i in empty_lines
-                if i < len(popupmenu_list)
-                    let popupmenu_list[i].abbr = s:space
-                endif
-            endfor
-        endif
-    endif
-    return popupmenu_list
-endfunction
-
 function! s:vimim_get_labeling(label)
     let fmt = '%2s '
     let labeling = a:label==10 ? "0" : a:label
@@ -4867,6 +4753,120 @@ else
     endif
 return
 endif
+endfunction
+
+function! s:vimim_popupmenu_list(matched_list)
+    let lines = a:matched_list
+    if empty(lines) || type(lines) != type([])
+        return []
+    endif
+    let tail = 0
+    let label = 1
+    let extra_text = ""
+    let popupmenu_list = []
+    let popupmenu_list_one_row = []
+    let first_in_list = get(lines,0)
+    let keyboard = join(s:keyboard_list,"")
+    let &pumheight = s:show_me_not ? 0 : &pumheight
+    if s:hjkl_n % 2 > 0
+        if s:show_me_not > 0
+            call reverse(lines)
+            let label = len(lines)
+        elseif s:ui.im == 'pinyin' || s:ui.root == 'cloud'
+            let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+        endif
+    endif
+    let menu = get(s:keyboard_list,0)
+    let s:matched_list = lines
+    for chinese in lines
+        let complete_items = {}
+        if first_in_list =~ '\s' && s:show_me_not < 1
+            let pairs = split(chinese)
+            if len(pairs) < 2
+                continue
+            endif
+            let chinese = get(pairs, 1)
+            let menu = get(pairs, 0)
+            if s:vimim_custom_menu > 0
+                let extra_text = menu
+            endif
+        endif
+        if s:hjkl_s > 0 && s:hjkl_s % 2 > 0 && s:has_cjk_file > 0
+            let chinese = s:vimim_get_traditional_chinese(chinese)
+        endif
+        if s:hjkl_l > 0 && s:hjkl_l % 2 > 0 && s:show_me_not < 1
+            let extra_text = menu
+            if empty(s:english_results)
+                let ddddd = char2nr(chinese)
+                let extra_text = s:vimim_cjk_property_display(ddddd)
+            endif
+        endif
+        if empty(s:mycloud)
+            if !empty(keyboard) && s:show_me_not < 1
+                let keyboard_head_length = len(menu)
+                if empty(s:ui.has_dot) && keyboard =~ "['.]"
+                    " for vimim classic demo: i.have.a.dream
+                    let keyboard_head_length += 1
+                endif
+                let tail = strpart(keyboard, keyboard_head_length)
+                let chinese .= tail
+            endif
+        elseif s:horizontal_display < 1
+            let extra_text = get(split(menu,"_"),0)
+        endif
+        if s:vimim_custom_label > 0
+            let abbr = label . "." . chinese
+            call add(popupmenu_list_one_row, abbr)
+        endif
+        if s:vimim_custom_label > -1 && len(lines) > 1
+            let labeling = label . " "
+            if s:vimim_custom_label < 1
+                let labeling = s:vimim_get_labeling(label)
+            endif
+            if s:hjkl_n % 2 > 0 && s:show_me_not > 0
+                let label -= 1
+            else
+                let label += 1
+            endif
+            let complete_items["abbr"] = labeling . chinese
+        endif
+        let complete_items["dup"] = 1
+        let complete_items["menu"] = extra_text
+        let complete_items["word"] = empty(chinese) ? s:space : chinese
+        call add(popupmenu_list, complete_items)
+    endfor
+    if s:chinese_input_mode =~ 'onekey'
+        let s:popupmenu_list = popupmenu_list
+    endif
+    let height = s:horizontal_display
+    if s:show_me_not < 1 && len(popupmenu_list) > 1 && height > 0
+        let one_list = popupmenu_list_one_row
+        if len(one_list) > height
+            let one_list = popupmenu_list_one_row[0 : height-1]
+        endif
+        let cursor_gps = 1.0 * (virtcol(".") % &columns) / &columns
+        let onerow_gps = 1.0 * len(join(one_list)) / &columns
+        if cursor_gps < 0.72 && onerow_gps < 0.92
+            let start = 1
+            let display = 0
+            let line1 =  line("w$") - line(".")
+            let line2 =  line("w$") - line("w0")
+            if line1 < height+2 && line2 > &lines-height- 2
+                let start = 0
+                let display = height-1
+            endif
+            if display < len(popupmenu_list)
+                let popupmenu_list[display].abbr = join(one_list)
+            endif
+            let empty_lines = range(start, start+height-2)
+            for i in empty_lines
+                if i < len(popupmenu_list)
+                    let popupmenu_list[i].abbr = s:space
+                endif
+            endfor
+        endif
+    endif
+    return popupmenu_list
 endfunction
 
 function! s:vimim_embedded_backend_engine(keyboard, search)
