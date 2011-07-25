@@ -727,8 +727,7 @@ endfunction
 function! <SID>vimim_punctuation_toggle()
     let s:chinese_punctuation = (s:chinese_punctuation+1)%2
     call s:vimim_set_statusline()
-    call s:vimim_punctuation_mapping()
-    return  ""
+    return s:vimim_punctuation_mapping()
 endfunction
 
 function! s:vimim_chinesemode_action()
@@ -1353,7 +1352,7 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         let ddddd = str2nr(a:keyboard, 10)
     endif
     if empty(ddddd) || ddddd > 0xffff
-        return 0
+        let ddddd = 0
     endif
     return ddddd
 endfunction
@@ -1743,7 +1742,7 @@ endfunction
 
 function! s:vimim_onekey_punctuation_mapping()
     if s:vimim_chinese_punctuation < 0
-        return ""
+        return 0
     endif
     let special_punctuation = "[]-=.,/?;"
     let map_list = split(special_punctuation,'\zs')
@@ -1842,7 +1841,7 @@ function! s:vimim_set_special_im_property()
 endfunction
 
 function! s:vimim_wubi_4char_auto_input(keyboard)
-" wubi non-stop typing by auto selection on each 4th
+    " wubi non-stop typing by auto selection on each 4th
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
         if len(keyboard) > 4
@@ -2962,15 +2961,14 @@ let s:VimIM += [" ====  input pinyin     ==== {{{"]
 " =================================================
 
 function! s:vimim_add_apostrophe(keyboard)
-    let keyboard = a:keyboard
-    if keyboard =~ "[']"
-    \&& keyboard[0:0] != "'"
-    \&& keyboard[-1:-1] != "'"
+    if  a:keyboard =~ "[']"
+    \&& a:keyboard[0:0] != "'"
+    \&& a:keyboard[-1:-1] != "'"
         " valid apostrophe is typed
+        return a:keyboard
     else
-        let keyboard = s:vimim_quanpin_transform(keyboard)
+        return s:vimim_quanpin_transform(a:keyboard)
     endif
-    return keyboard
 endfunction
 
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
@@ -4245,11 +4243,9 @@ function! s:vimim_access_mycloud(cloud, cmd)
 endfunction
 
 function! s:vimim_rot13(keyboard)
-    let rot13 = a:keyboard
     let a = "12345abcdefghijklmABCDEFGHIJKLM"
     let z = "98760nopqrstuvwxyzNOPQRSTUVWXYZ"
-    let rot13 = tr(rot13, a.z, z.a)
-    return rot13
+    return tr(a:keyboard, a.z, z.a)
 endfunction
 
 function! s:vimim_get_libvimim()
@@ -4362,10 +4358,6 @@ function! s:vimim_check_mycloud_plugin_url()
             catch
                 call s:debug('alert', 'python_mycloud::', v:exception)
             endtry
-        endif
-    elseif part[0] ==# 'py3'
-        if has("python3")
-            " python 3 support code here, not implemented now.
         endif
     elseif part[0] ==# "dll"
         if len(part[1]) == 1
@@ -4662,7 +4654,7 @@ else
         let keyboard = get(s:keyboard_list,0)
     endif
     if empty(keyboard) || keyboard !~# s:valid_key
-        return
+        return []
     endif
     " [clouds] extend vimimclouds egg: fuck''''
     if s:chinese_input_mode =~ 'onekey'
@@ -4744,7 +4736,7 @@ else
     elseif s:chinese_input_mode =~ 'onekey'
         call s:vimim_super_reset()
     endif
-return
+return []
 endif
 endfunction
 
@@ -4867,9 +4859,8 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     let im = s:ui.im
     let root = s:ui.root
     if empty(im) || empty(root) || empty(keyboard)
-    \|| im =~ 'cloud'
+    \|| im =~ 'cloud' || s:show_me_not > 0
     \|| keyboard !~# s:valid_key
-    \|| s:show_me_not > 0
         return []
     endif
     if im == 'pinyin'
