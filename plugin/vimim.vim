@@ -1866,9 +1866,7 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
 endfunction
 
 function! s:vimim_plugins_fix_start()
-    if g:vimim_debug > 0
-        return
-    endif
+    if g:vimim_debug>0 |return |endif
     if !exists('s:acp_sid')
         let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
         if !empty(s:acp_sid)
@@ -1887,9 +1885,7 @@ function! s:vimim_plugins_fix_start()
 endfunction
 
 function! s:vimim_plugins_fix_stop()
-    if g:vimim_debug > 0
-        return
-    endif
+    if g:vimim_debug>0 |return |endif
     if !empty(s:acp_sid)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
@@ -2245,10 +2241,7 @@ function! <SID>vimim_enter()
         " the first <Enter> does seamless
         let s:seamless_positions = getpos(".")
     else
-        let key = "\<CR>"
-        if s:smart_enter == 2
-            let key = " "
-        endif
+        let key = s:smart_enter==2 ? " " : "\<CR>"
         let s:smart_enter = 0
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2269,6 +2262,8 @@ function! s:vimim_get_labeling(label)
             if s:has_cjk_file > 0
                 let labeling = label2
             endif
+        elseif a:label == &pumheight + 1 && s:has_cjk_file > 0
+            let labeling = a:label
         endif
         if s:hjkl_h > 0 && &pumheight < 1
             let fmt = '%02s '
