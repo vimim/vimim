@@ -3447,9 +3447,9 @@ function! s:vimim_scan_backend_embedded_datafile()
             endif
         endif
         " http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db
-        let dbfile   = s:path . "vimim." . im . ".db"
         let datafile = s:path . "vimim." . im . ".txt"
-        if filereadable(dbfile)
+        let dbfile = s:vimim_check_filereadable("vimim.".im.".db")
+        if !empty(dbfile)
             let s:vimim_data_file = dbfile
             call s:vimim_set_datafile(im, dbfile)
             break
