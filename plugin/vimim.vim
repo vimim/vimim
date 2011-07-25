@@ -2034,19 +2034,21 @@ function! s:vimim_statusline()
     elseif vimim_cloud =~ 'wubi'
         let s:ui.statusline .= s:vimim_chinese('wubi')
     elseif vimim_cloud =~ 'shuangpin'
-        let shuangpin = s:vimim_chinese('shuangpin')
         if vimim_cloud =~ 'abc'
             let s:ui.statusline .= s:vimim_chinese('abc')
         elseif vimim_cloud =~ 'ms'
-            let s:ui.statusline .= s:vimim_chinese('ms').shuangpin
+            let s:ui.statusline .= s:vimim_chinese('ms')
         elseif vimim_cloud =~ 'plusplus'
-            let s:ui.statusline .= s:vimim_chinese('plusplus').shuangpin
+            let s:ui.statusline .= s:vimim_chinese('plusplus')
         elseif vimim_cloud =~ 'purple'
-            let s:ui.statusline .= s:vimim_chinese('purple').shuangpin
+            let s:ui.statusline .= s:vimim_chinese('purple')
         elseif vimim_cloud =~ 'flypy'
-            let s:ui.statusline .= s:vimim_chinese('flypy').shuangpin
+            let s:ui.statusline .= s:vimim_chinese('flypy')
         elseif vimim_cloud =~ 'nature'
-            let s:ui.statusline .= s:vimim_chinese('nature').shuangpin
+            let s:ui.statusline .= s:vimim_chinese('nature')
+        endif
+        if vimim_cloud !~ 'abc'
+            let s:ui.statusline .= s:vimim_chinese('shuangpin')
         endif
     endif
     if !empty(s:mycloud)
@@ -2753,7 +2755,7 @@ function! s:vimim_chinese_transfer() range abort
     if empty(s:has_cjk_file)
         " no toggle between simplified and tranditional Chinese
     elseif &encoding == "utf-8"
-        exe a:firstline.",".a:lastline.'s/./\=s:vimim_one2one(submatch(0))'
+        exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
 endfunction
 
@@ -2761,12 +2763,12 @@ function! s:vimim_get_traditional_chinese(chinese)
     let chinese = ""
     let chinese_list = split(a:chinese,'\zs')
     for char in chinese_list
-        let chinese .= s:vimim_one2one(char)
+        let chinese .= s:vimim_1to1(char)
     endfor
     return chinese
 endfunction
 
-function! s:vimim_one2one(chinese)
+function! s:vimim_1to1(chinese)
     let ddddd = char2nr(a:chinese)
     let line = ddddd - 19968
     if line < 0 || line > 20902
@@ -3082,8 +3084,8 @@ function! s:vimim_create_quanpin_table()
             let table[key] = key
         endif
     endfor
-    for shengmu in ["b", "p", "m", "f", "d", "t", "l", "n", "g", "k", "h",
-        \"j", "q", "x", "zh", "ch", "sh", "r", "z", "c", "s", "y", "w"]
+    let sheng_mu = "b p m f d t l n g k h j q x zh ch sh r z c s y w"
+    for shengmu in split(sheng_mu)
         let table[shengmu] = shengmu
     endfor
     return table
@@ -3567,13 +3569,13 @@ endfunction
 
 function! s:vimim_get_from_database(keyboard, search)
     let keyboard = a:keyboard
-    let oneline = s:vimim_sentence_match_database(keyboard, 0)
+    let oneline = s:vimim_sentence_match_database(keyboard,0)
     let results = s:vimim_make_pair_list(oneline)
     if empty(a:search) && len(results) > 0 && len(results) < 20
         let candidates = s:vimim_more_pinyin_candidates(keyboard)
         if len(candidates) > 1
             for candidate in candidates[1:]
-                let oneline = s:vimim_sentence_match_database(candidate, 0)
+                let oneline = s:vimim_sentence_match_database(candidate,0)
                 let matched_list = s:vimim_make_pair_list(oneline)
                 if !empty(matched_list)
                     call extend(results, matched_list)
