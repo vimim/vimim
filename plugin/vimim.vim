@@ -2335,7 +2335,7 @@ function! g:vimim_gmail() range abort
 " [dream] to send email with the current buffer
 " [usage] :call g:vimim_gmail()
 " [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
-if has('python') < 2 && has('python3') < 2
+if has('python') < 1 && has('python3') < 1
     echo 'No magic Python Interface to Vim' | return ""
 endif
 let firstline = a:firstline
