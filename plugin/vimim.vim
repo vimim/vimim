@@ -862,10 +862,12 @@ function! g:vimim_onekey_dump()
                 let line = printf('%s %s', items.abbr, items.menu)
             endif
         endif
-        if get(s:keyboard_list,0) ==# 'vimim'
-          " let line = repeat(" ", virtcol("'<'")-2) . line
+        let keyboard = get(s:keyboard_list,0)
+        let space = repeat(" ", virtcol(".")-len(keyboard)-1)
+        if keyboard ==# 'vimim'
+            let space = repeat(" ", virtcol("'<'")-2)
         endif
-        call add(lines, line)
+        call add(lines, space . line)
     endfor
     if has("gui_running") && has("win32")
         let @+ = join(lines, "\n")
@@ -4138,13 +4140,12 @@ function! s:vimim_get_cloud_all(keyboard)
     for cloud in ['google', 'baidu', 'sogou', 'qq']
         let start = localtime()
         let outputs = s:vimim_get_cloud(a:keyboard, cloud)
-        let end = localtime()
         call add(results, s:space)
         let title  = a:keyboard . s:space
         let title .= s:vimim_chinese(cloud)
         let title .= s:vimim_chinese('cloud')
         let title .= s:vimim_chinese('input')
-        let duration = end - start
+        let duration = localtime() - start
         if duration > 0
             let title .= s:space . string(duration)
         endif
@@ -4155,7 +4156,7 @@ function! s:vimim_get_cloud_all(keyboard)
             call add(results, join(outputs[0:-2]))
         endif
     endfor
-    :call s:debug('info', 'cloud_results=', results)
+    call s:debug('info', 'cloud_results=', results)
     return results
 endfunction
 
@@ -4659,8 +4660,8 @@ else
     endif
     " [clouds] extend vimimclouds egg: fuck''''
     if s:chinese_input_mode =~ 'onekey'
-        if keyboard[-4:-1] ==# repeat("'",4)
-            let input = keyboard[0:-5]
+        if keyboard[-4:] ==# "''''" || keyboard[-4:] ==# "iiii"
+            let input = keyboard[:-5]
             let results = s:vimim_get_cloud_all(input)
             if !empty(len(results))
                 let s:show_me_not = 1
