@@ -452,7 +452,7 @@ function! s:vimim_get_hjkl(keyboard)
                 let sum = eval(join(lines,'+'))
                 let ave = 1.0*sum/len(lines)
                 let math  = 'sum=' . string(len(lines)) . '*'
-                let math .= printf('%.2f',ave) . '='
+                let math .= printf('%.2f', ave) . '='
                 if unnamed_register =~ '[.]'
                     let math .= printf('%.2f',1.0*sum)
                 else
@@ -461,11 +461,10 @@ function! s:vimim_get_hjkl(keyboard)
                 let lines = [math . " "]
             endif
         endif
-    else
+    elseif a:keyboard !~ "db"
         " [poem] check entry in special directories first
-        let dirs = [s:path, s:vimim_hjkl_directory]
-        for dir in dirs
-            let lines = s:vimim_get_from_directory(a:keyboard, dir)
+        for dir in [s:vimim_hjkl_directory, s:path]
+            let lines = s:vimim_readfile(dir . a:keyboard)
             if len(a:keyboard) < 2 || empty(lines)
                 continue
             else
@@ -473,9 +472,7 @@ function! s:vimim_get_hjkl(keyboard)
             endif
         endfor
     endif
-    if !empty(lines)
-        let s:show_me_not = 1
-    endif
+    let s:show_me_not = !empty(lines) ? 1 : 0
     return lines
 endfunction
 
@@ -3676,13 +3673,6 @@ function! s:vimim_more_pinyin_directory(keyboard, dir)
     return results
 endfunction
 
-function! s:vimim_get_from_directory(keyboard, dir)
-    if empty(a:keyboard) || empty(a:dir)
-        return []
-    endif
-    return s:vimim_readfile(a:dir . a:keyboard)
-endfunction
-
 function! s:vimim_sentence_match_directory(keyboard)
     let keyboard = a:keyboard
     let filename = s:vimim_data_directory . keyboard
@@ -4150,13 +4140,14 @@ function! s:vimim_get_cloud_all(keyboard)
             let title .= s:space . string(duration)
         endif
         call add(results, title)
-        let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
         if len(outputs) > 1+1+1+1
+            let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
             call map(outputs, filter)
             call add(results, join(outputs[0:-2]))
         endif
     endfor
     call s:debug('info', 'cloud_results=', results)
+    let s:show_me_not = 1
     return results
 endfunction
 
@@ -4658,19 +4649,14 @@ else
     if empty(keyboard) || keyboard !~# s:valid_key
         return []
     endif
-    " [clouds] extend vimimclouds egg: fuck''''
-    if s:chinese_input_mode =~ 'onekey'
-        if keyboard[-4:] ==# "''''" || keyboard[-4:] ==# "iiii"
-            let input = keyboard[:-5]
-            let results = s:vimim_get_cloud_all(input)
-            if !empty(len(results))
-                let s:show_me_not = 1
-                return s:vimim_popupmenu_list(results)
-            endif
-        endif
-    endif
     " [onekey] play with nothing but OneKey
     if s:chinese_input_mode =~ 'onekey'
+       " [clouds] all clouds for any input: fuck'''' or fuckii
+        if keyboard[-4:] ==# "''''" || keyboard[-2:] ==# "ii"
+            let input = keyboard=~"ii" ? keyboard[:-3] : keyboard[:-5]
+            let results = s:vimim_get_cloud_all(input)
+            return s:vimim_popupmenu_list(results)
+        endif
         let results = s:vimim_onekey_input(keyboard)
         if empty(len(results))
             if s:ui.root == 'cloud' && !empty(s:english_results)
@@ -4876,7 +4862,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     if root =~# "directory"
         let dir = s:backend[root][im].name
         let keyboard2 = s:vimim_sentence_match_directory(keyboard)
-        let results = s:vimim_get_from_directory(keyboard2, dir)
+        let results = s:vimim_readfile(dir . keyboard2)
         if keyboard ==# keyboard2 && a:search < 1
         \&& len(results) > 0 && len(results) < 20
             let extras = s:vimim_more_pinyin_directory(keyboard, dir)
