@@ -272,7 +272,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hjkl = simplify(s:path . '../../../hhjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_cloud = 'google,baidu,sogou,qq'
@@ -943,10 +943,7 @@ function! <SID>ChineseMode()
     elseif empty(s:frontends)
         let s:frontends = get(s:ui.frontends, 0)
     endif
-    let switch = 1
-    if !empty(&omnifunc) && &omnifunc ==# 'VimIM'
-        let switch = 0
-    endif
+    let switch = !empty(&omnifunc) && &omnifunc ==# 'VimIM' ? 0 : 1
     return s:vimim_chinese_mode(switch)
 endfunction
 
