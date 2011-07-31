@@ -2168,6 +2168,146 @@ EOF
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  input unicode    ==== {{{"]
+" =================================================
+
+function! s:vimim_initialize_encoding()
+    let s:encoding = "utf8"
+    if &encoding =~ 'chinese\|cp936\|gb2312\|gbk\|euc-cn'
+        let s:encoding = "chinese"
+    elseif &encoding =~ 'taiwan\|cp950\|big5\|euc-tw'
+        let s:encoding = "taiwan"
+    endif
+    " ------------ ----------------- -------------- -----------
+    " vim encoding datafile encoding s:localization performance
+    " ------------ ----------------- -------------- -----------
+    "   utf-8          utf-8                0          good
+    "   chinese        chinese              0          good
+    "   utf-8          chinese              1          bad
+    "   chinese        utf-8                2          bad
+    " ------------ ----------------- -------------- -----------
+    let s:localization = 0
+    if &encoding == "utf-8"
+        if len("datafile_fenc_chinese") > 20110129
+            let s:localization = 1
+        endif
+    else
+        let s:localization = 2
+    endif
+    let s:multibyte = &encoding=="utf-8" ? 3 : 2
+endfunction
+
+function! s:vimim_get_unicode_list(keyboard)
+    let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
+    if ddddd < 8080 || ddddd > 19968+20902
+        return []
+    endif
+    let words = []
+    for i in range(108)
+        let chinese = nr2char(ddddd+i)
+        call add(words, chinese)
+    endfor
+    return words
+endfunction
+
+function! s:vimim_get_unicode_ddddd(keyboard)
+    let ddddd = 0
+    if a:keyboard =~# '^u\x\{4}$'
+        " show hex unicode popup menu: u808f
+        let xxxx = a:keyboard[1:]
+        let ddddd = str2nr(xxxx, 16)
+    elseif a:keyboard =~# '^\d\{5}$'
+        " show decimal unicode popup menu: 32911
+        let ddddd = str2nr(a:keyboard, 10)
+    endif
+    if empty(ddddd) || ddddd > 0xffff
+        let ddddd = 0
+    endif
+    return ddddd
+endfunction
+
+function! s:vimim_cjk_property_display(ddddd)
+    let unicode = printf('u%04x', a:ddddd)
+    if empty(s:has_cjk_file)
+        return unicode . s:space . a:ddddd
+    endif
+    let chinese = nr2char(a:ddddd)
+    let five = get(s:vimim_get_property(chinese,1),0)
+    let four = get(s:vimim_get_property(chinese,2),0)
+    let digit = five
+    if s:vimim_digit_4corner > 0
+        let digit = four
+    endif
+    let pinyin = get(s:vimim_get_property(chinese,'pinyin'),0)
+    let english = get(s:vimim_get_property(chinese,'english'),0)
+    let keyboard_head = get(s:keyboard_list,0)
+    if keyboard_head =~ s:uxxxx
+        let unicode = unicode . s:space
+    else
+        let unicode = ""
+    endif
+    let unicode .= digit . s:space . pinyin
+    if !empty(english)
+        let unicode .= s:space . english
+    endif
+    return unicode
+endfunction
+
+function! s:vimim_get_property(chinese, property)
+    let property = a:property
+    let headers = []
+    let bodies = []
+    for chinese in split(a:chinese, '\zs')
+        let ddddd = char2nr(chinese)
+        let line = ddddd - 19968
+        if line < 0 || line > 20902
+            continue
+        endif
+        let head = ''
+        if property == 'unicode'
+            let head = printf('%x', ddddd)
+        elseif s:has_cjk_file > 0
+            let values = split(get(s:cjk_lines,line))
+            if property =~ '\d'          | let head = get(values,property)
+            elseif property == 'pinyin'  | let head = get(values,3)
+            elseif property == 'english' | let head = join(values[4:-2])
+            endif
+        endif
+        if empty(head)
+            continue
+        endif
+        call add(headers, head)
+        let spaces = ''
+        let gap = len(head)-2
+        if gap > 0
+            let space = ' '
+            for i in range(gap)
+                let spaces .= space
+            endfor
+        endif
+        call add(bodies, chinese . spaces)
+    endfor
+    return [join(headers), join(bodies)]
+endfunction
+
+function! s:vimim_unicode_to_utf8(xxxx)
+    " u808f => 32911 => e8828f
+    let ddddd = str2nr(a:xxxx, 16)
+    let utf8 = ''
+    if ddddd < 128
+        let utf8 .= nr2char(ddddd)
+    elseif ddddd < 2048
+        let utf8 .= nr2char(192+((ddddd-(ddddd%64))/64))
+        let utf8 .= nr2char(128+(ddddd%64))
+    else
+        let utf8 .= nr2char(224+((ddddd-(ddddd%4096))/4096))
+        let utf8 .= nr2char(128+(((ddddd%4096)-(ddddd%64))/64))
+        let utf8 .= nr2char(128+(ddddd%64))
+    endif
+    return utf8
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  input hjkl       ==== {{{"]
 " =================================================
 
@@ -2397,146 +2537,6 @@ function! <SID>vimim_onekey_capital(key)
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  input unicode    ==== {{{"]
-" =================================================
-
-function! s:vimim_initialize_encoding()
-    let s:encoding = "utf8"
-    if &encoding =~ 'chinese\|cp936\|gb2312\|gbk\|euc-cn'
-        let s:encoding = "chinese"
-    elseif &encoding =~ 'taiwan\|cp950\|big5\|euc-tw'
-        let s:encoding = "taiwan"
-    endif
-    " ------------ ----------------- -------------- -----------
-    " vim encoding datafile encoding s:localization performance
-    " ------------ ----------------- -------------- -----------
-    "   utf-8          utf-8                0          good
-    "   chinese        chinese              0          good
-    "   utf-8          chinese              1          bad
-    "   chinese        utf-8                2          bad
-    " ------------ ----------------- -------------- -----------
-    let s:localization = 0
-    if &encoding == "utf-8"
-        if len("datafile_fenc_chinese") > 20110129
-            let s:localization = 1
-        endif
-    else
-        let s:localization = 2
-    endif
-    let s:multibyte = &encoding=="utf-8" ? 3 : 2
-endfunction
-
-function! s:vimim_get_unicode_list(keyboard)
-    let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
-    if ddddd < 8080 || ddddd > 19968+20902
-        return []
-    endif
-    let words = []
-    for i in range(108)
-        let chinese = nr2char(ddddd+i)
-        call add(words, chinese)
-    endfor
-    return words
-endfunction
-
-function! s:vimim_get_unicode_ddddd(keyboard)
-    let ddddd = 0
-    if a:keyboard =~# '^u\x\{4}$'
-        " show hex unicode popup menu: u808f
-        let xxxx = a:keyboard[1:]
-        let ddddd = str2nr(xxxx, 16)
-    elseif a:keyboard =~# '^\d\{5}$'
-        " show decimal unicode popup menu: 32911
-        let ddddd = str2nr(a:keyboard, 10)
-    endif
-    if empty(ddddd) || ddddd > 0xffff
-        let ddddd = 0
-    endif
-    return ddddd
-endfunction
-
-function! s:vimim_cjk_property_display(ddddd)
-    let unicode = printf('u%04x', a:ddddd)
-    if empty(s:has_cjk_file)
-        return unicode . s:space . a:ddddd
-    endif
-    let chinese = nr2char(a:ddddd)
-    let five = get(s:vimim_get_property(chinese,1),0)
-    let four = get(s:vimim_get_property(chinese,2),0)
-    let digit = five
-    if s:vimim_digit_4corner > 0
-        let digit = four
-    endif
-    let pinyin = get(s:vimim_get_property(chinese,'pinyin'),0)
-    let english = get(s:vimim_get_property(chinese,'english'),0)
-    let keyboard_head = get(s:keyboard_list,0)
-    if keyboard_head =~ s:uxxxx
-        let unicode = unicode . s:space
-    else
-        let unicode = ""
-    endif
-    let unicode .= digit . s:space . pinyin
-    if !empty(english)
-        let unicode .= s:space . english
-    endif
-    return unicode
-endfunction
-
-function! s:vimim_get_property(chinese, property)
-    let property = a:property
-    let headers = []
-    let bodies = []
-    for chinese in split(a:chinese, '\zs')
-        let ddddd = char2nr(chinese)
-        let line = ddddd - 19968
-        if line < 0 || line > 20902
-            continue
-        endif
-        let head = ''
-        if property == 'unicode'
-            let head = printf('%x', ddddd)
-        elseif s:has_cjk_file > 0
-            let values = split(get(s:cjk_lines,line))
-            if property =~ '\d'          | let head = get(values,property)
-            elseif property == 'pinyin'  | let head = get(values,3)
-            elseif property == 'english' | let head = join(values[4:-2])
-            endif
-        endif
-        if empty(head)
-            continue
-        endif
-        call add(headers, head)
-        let spaces = ''
-        let gap = len(head)-2
-        if gap > 0
-            let space = ' '
-            for i in range(gap)
-                let spaces .= space
-            endfor
-        endif
-        call add(bodies, chinese . spaces)
-    endfor
-    return [join(headers), join(bodies)]
-endfunction
-
-function! s:vimim_unicode_to_utf8(xxxx)
-    " u808f => 32911 => e8828f
-    let ddddd = str2nr(a:xxxx, 16)
-    let utf8 = ''
-    if ddddd < 128
-        let utf8 .= nr2char(ddddd)
-    elseif ddddd < 2048
-        let utf8 .= nr2char(192+((ddddd-(ddddd%64))/64))
-        let utf8 .= nr2char(128+(ddddd%64))
-    else
-        let utf8 .= nr2char(224+((ddddd-(ddddd%4096))/4096))
-        let utf8 .= nr2char(128+(((ddddd%4096)-(ddddd%64))/64))
-        let utf8 .= nr2char(128+(ddddd%64))
-    endif
-    return utf8
 endfunction
 
 " ============================================= }}}
