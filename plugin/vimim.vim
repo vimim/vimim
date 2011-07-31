@@ -647,7 +647,7 @@ function! s:vimim_slash_search_block(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  onekey           ==== {{{"]
+let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
 function! s:vimim_onekey_start()
@@ -896,11 +896,8 @@ function! s:vimim_magic_tail(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  dynamic | static ==== {{{"]
+let s:VimIM += [" ====  mode: dynamic    ==== {{{"]
 " =================================================
-" s:chinese_input_mode='onekey'  => (default) OneKey
-" s:chinese_input_mode='dynamic' => (default) dynamic mode
-" s:chinese_input_mode='static'  =>  static chinese input mode
 
 function! <SID>VimIMSwitch()
     sil!call s:vimim_backend_initialization()
@@ -975,6 +972,10 @@ function! <SID>vimim_punctuation_toggle()
     call s:vimim_set_statusline()
     return s:vimim_punctuation_mapping()
 endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  mode: static     ==== {{{"]
+" =================================================
 
 function! s:vimim_chinesemode_action()
     sil!call s:vimim_start()
