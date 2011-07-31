@@ -12,7 +12,7 @@ let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
 let s:url .= " http://code.google.com/p/vimim/source/list"
 let s:url .= " http://groups.google.com/group/vimim"
 let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.html"
-let s:url .= " vimim+subscribe@googlegroups.com"
+let s:url .= " vimim@googlegroups.com"
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
