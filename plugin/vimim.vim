@@ -1066,378 +1066,6 @@ function! s:vimim_magic_tail(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  hjkl             ==== {{{"]
-" =================================================
-
-function! s:vimim_cache()
-    let results = []
-    if s:chinese_input_mode =~ 'onekey'
-        if len(s:hjkl_x) > 0
-            if len(s:matched_list) > 0 && s:show_me_not > 0
-                let results = s:vimim_onekey_menu_format()
-            elseif len(s:popupmenu_list) > 0
-                let results = s:vimim_onekey_menu_filter()
-            endif
-        endif
-        if s:show_me_not > 0
-            if s:hjkl_l % 2 > 0
-                for line in s:matched_list
-                    let oneline = join(reverse(split(line,'\zs')),'')
-                    call add(results, oneline)
-                endfor
-            endif
-        elseif s:hjkl_h > 0 && len(s:matched_list) > &pumheight
-            let &pumheight = 0
-            if s:hjkl_h % 2 < 1
-                let &pumheight = s:pumheight
-            endif
-        endif
-    endif
-    if s:pageup_pagedown != 0
-    \&& len(s:matched_list) > &pumheight
-    \&& s:vimim_custom_label > -1
-        let results = s:vimim_pageup_pagedown()
-    endif
-    return results
-endfunction
-
-function! s:vimim_onekey_menu_format()
-    " use 1234567890/qwertyuiop to control popup textwidth
-    let lines = copy(s:matched_list)
-    let filter = 'substitute(' .'v:val'. ",'^\\s\\+\\|\\s\\+$','','g')"
-    call map(lines, filter)
-    let lines = split(join(lines),'  ')
-    let filter = 'substitute(' .'v:val'. ",' ','','g')"
-    call map(lines, filter)
-    if s:hjkl_x == 1
-        return lines
-    endif
-    let n = s:hjkl_x * (7-s:multibyte)
-    let textwidth = repeat('.', n)
-    let results = []
-    for line in lines
-        let onelines = split(line, textwidth . '\zs')
-        call add(onelines, '')
-        call extend(results, onelines)
-    endfor
-    return results
-endfunction
-
-function! s:vimim_onekey_menu_filter()
-    " use 1234567890/qwertyuiop as digital filter
-    let results = s:vimim_cjk_filter_list()
-    if empty(results) && !empty(len(s:hjkl_x))
-        let number_before = strpart(s:hjkl_x,0,len(s:hjkl_x)-1)
-        if len(number_before) > 0
-            let s:hjkl_x = number_before
-            let results = s:vimim_cjk_filter_list()
-        endif
-    endif
-    return results
-endfunction
-
-function! s:vimim_cjk_filter_list()
-    let i = 0
-    let foods = []
-    for items in s:popupmenu_list
-        let chinese = s:vimim_cjk_digit_filter(items.word)
-        if !empty(chinese)
-            call add(foods, i)
-        endif
-        let i += 1
-    endfor
-    if empty(foods)
-        return []
-    endif
-    let results = []
-    for i in foods
-        let menu = s:popupmenu_list[i].word
-        call add(results, menu)
-    endfor
-    return results
-endfunction
-
-function! s:vimim_cjk_digit_filter(chinese)
-    " smart digital filter: 马力 7712 4002
-    "   (1)   ma<C-6>       马   => filter with   7712
-    "   (2) mali<C-6>       马力 => filter with 7 4002
-    let chinese = a:chinese
-    if empty(len(s:hjkl_x)) || empty(chinese)
-        return 0
-    endif
-    let digit_head = ""
-    let digit_tail = ""
-    let words = split(chinese,'\zs')
-    for cjk in words
-        let ddddd = char2nr(cjk)
-        let line = ddddd - 19968
-        if cjk =~ '\w' || line < 0 || line > 20902
-            continue
-        else
-            let values = split(get(s:cjk_lines,line))
-            let column = 1 + s:vimim_digit_4corner
-            let digit = get(values, column)
-            let digit_head .= digit[:0]
-            let digit_tail  = digit[1:]
-        endif
-    endfor
-    let number = digit_head . digit_tail
-    let pattern = "^" . s:hjkl_x
-    let matched = match(number, pattern)
-    if matched < 0
-        let chinese = 0
-    endif
-    return chinese
-endfunction
-
-function! s:vimim_pageup_pagedown()
-    let matched_list = s:matched_list
-    let length = len(matched_list)
-    let one_page = &pumheight
-    if s:vimim_custom_label > 0
-        let one_page = s:horizontal_display
-    endif
-    let first_page = one_page - 1
-    if s:vimim_loop_pageup_pagedown > 0
-        if first_page < 1
-            let first_page = 9
-        endif
-        let shift = s:pageup_pagedown * first_page
-        if length > first_page
-            let partition = shift
-            if shift < 0
-                let partition = length + shift
-            endif
-            let A = matched_list[: partition-1]
-            let B = matched_list[partition :]
-            let matched_list = B + A
-        endif
-    else
-        let page = s:pageup_pagedown * one_page
-        if page < 0
-            " no more PageUp after the first page
-            let s:pageup_pagedown += 1
-            let matched_list = matched_list[0 : first_page]
-        elseif page >= length
-            " no more PageDown after the last page
-            let s:pageup_pagedown -= 1
-            let last_page = length / one_page
-            if empty(length % one_page)
-                let last_page -= 1
-            endif
-            let last_page = last_page * one_page
-            let matched_list = matched_list[last_page :]
-        else
-            let matched_list = matched_list[page :]
-        endif
-    endif
-    return matched_list
-endfunction
-
-function! s:vimim_onekey_pumvisible_mapping()
-    let map_list = split('hjkl<>sxmn', '\zs')
-    for _ in map_list
-        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
-    endfor
-    let map_list = s:qwerty + range(10)
-    for _ in map_list
-        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwerty("'._.'")'
-    endfor
-    let map_list = s:AZ_list
-    for _ in map_list
-        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_capital("'._.'")'
-    endfor
-endfunction
-
-function! <SID>vimim_onekey_hjkl(key)
-    let key = a:key
-    let toggles = split('shlmn','\zs')
-    if pumvisible()
-        if a:key == 'j'        | let key  = '\<Down>'
-        elseif a:key == 'k'    | let key  = '\<Up>'
-        elseif a:key =~ "[<>]"
-            let key  = '\<C-Y>'.s:punctuations[nr2char(char2nr(a:key)-16)]
-        else
-            if a:key == 'x'
-                call g:vimim_reset_after_insert()
-            elseif a:key =~ "[shlmn]"
-                for toggle in toggles
-                    if toggle == a:key
-                        exe 'let s:hjkl_' . toggle . ' += 1'
-                        let s:hjkl_n = a:key == 'm' ? 0 : s:hjkl_n
-                        let s:hjkl_m = a:key == 'n' ? 0 : s:hjkl_m
-                    endif
-                endfor
-            endif
-            let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_onekey_qwerty(key)
-    let key = a:key
-    if pumvisible()
-        if key =~ '\l'
-            let key = match(s:qwerty, a:key)
-        endif
-        let s:hjkl_x = s:show_me_not ? key : s:hjkl_x . key
-        let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_onekey_capital(key)
-    let key = a:key
-    if pumvisible()
-        let key  = '\<C-E>'
-        let key .= tolower(a:key)
-        let key .= '\<C-R>=g:vimim()\<CR>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  unicode          ==== {{{"]
-" =================================================
-
-function! s:vimim_initialize_encoding()
-    let s:encoding = "utf8"
-    if &encoding =~ 'chinese\|cp936\|gb2312\|gbk\|euc-cn'
-        let s:encoding = "chinese"
-    elseif &encoding =~ 'taiwan\|cp950\|big5\|euc-tw'
-        let s:encoding = "taiwan"
-    endif
-    " ------------ ----------------- -------------- -----------
-    " vim encoding datafile encoding s:localization performance
-    " ------------ ----------------- -------------- -----------
-    "   utf-8          utf-8                0          good
-    "   chinese        chinese              0          good
-    "   utf-8          chinese              1          bad
-    "   chinese        utf-8                2          bad
-    " ------------ ----------------- -------------- -----------
-    let s:localization = 0
-    if &encoding == "utf-8"
-        if len("datafile_fenc_chinese") > 20110129
-            let s:localization = 1
-        endif
-    else
-        let s:localization = 2
-    endif
-    let s:multibyte = &encoding=="utf-8" ? 3 : 2
-endfunction
-
-function! s:vimim_get_unicode_list(keyboard)
-    let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
-    if ddddd < 8080 || ddddd > 19968+20902
-        return []
-    endif
-    let words = []
-    for i in range(108)
-        let chinese = nr2char(ddddd+i)
-        call add(words, chinese)
-    endfor
-    return words
-endfunction
-
-function! s:vimim_get_unicode_ddddd(keyboard)
-    let ddddd = 0
-    if a:keyboard =~# '^u\x\{4}$'
-        " show hex unicode popup menu: u808f
-        let xxxx = a:keyboard[1:]
-        let ddddd = str2nr(xxxx, 16)
-    elseif a:keyboard =~# '^\d\{5}$'
-        " show decimal unicode popup menu: 32911
-        let ddddd = str2nr(a:keyboard, 10)
-    endif
-    if empty(ddddd) || ddddd > 0xffff
-        let ddddd = 0
-    endif
-    return ddddd
-endfunction
-
-function! s:vimim_cjk_property_display(ddddd)
-    let unicode = printf('u%04x', a:ddddd)
-    if empty(s:has_cjk_file)
-        return unicode . s:space . a:ddddd
-    endif
-    let chinese = nr2char(a:ddddd)
-    let five = get(s:vimim_get_property(chinese,1),0)
-    let four = get(s:vimim_get_property(chinese,2),0)
-    let digit = five
-    if s:vimim_digit_4corner > 0
-        let digit = four
-    endif
-    let pinyin = get(s:vimim_get_property(chinese,'pinyin'),0)
-    let english = get(s:vimim_get_property(chinese,'english'),0)
-    let keyboard_head = get(s:keyboard_list,0)
-    if keyboard_head =~ s:uxxxx
-        let unicode = unicode . s:space
-    else
-        let unicode = ""
-    endif
-    let unicode .= digit . s:space . pinyin
-    if !empty(english)
-        let unicode .= s:space . english
-    endif
-    return unicode
-endfunction
-
-function! s:vimim_get_property(chinese, property)
-    let property = a:property
-    let headers = []
-    let bodies = []
-    for chinese in split(a:chinese, '\zs')
-        let ddddd = char2nr(chinese)
-        let line = ddddd - 19968
-        if line < 0 || line > 20902
-            continue
-        endif
-        let head = ''
-        if property == 'unicode'
-            let head = printf('%x', ddddd)
-        elseif s:has_cjk_file > 0
-            let values = split(get(s:cjk_lines,line))
-            if property =~ '\d'          | let head = get(values,property)
-            elseif property == 'pinyin'  | let head = get(values,3)
-            elseif property == 'english' | let head = join(values[4:-2])
-            endif
-        endif
-        if empty(head)
-            continue
-        endif
-        call add(headers, head)
-        let spaces = ''
-        let gap = len(head)-2
-        if gap > 0
-            let space = ' '
-            for i in range(gap)
-                let spaces .= space
-            endfor
-        endif
-        call add(bodies, chinese . spaces)
-    endfor
-    return [join(headers), join(bodies)]
-endfunction
-
-function! s:vimim_unicode_to_utf8(xxxx)
-    " u808f => 32911 => e8828f
-    let ddddd = str2nr(a:xxxx, 16)
-    let utf8 = ''
-    if ddddd < 128
-        let utf8 .= nr2char(ddddd)
-    elseif ddddd < 2048
-        let utf8 .= nr2char(192+((ddddd-(ddddd%64))/64))
-        let utf8 .= nr2char(128+(ddddd%64))
-    else
-        let utf8 .= nr2char(224+((ddddd-(ddddd%4096))/4096))
-        let utf8 .= nr2char(128+(((ddddd%4096)-(ddddd%64))/64))
-        let utf8 .= nr2char(128+(ddddd%64))
-    endif
-    return utf8
-endfunction
-
-" ============================================= }}}
 let s:VimIM += [" ====  multibyte        ==== {{{"]
 " =================================================
 
@@ -2537,6 +2165,378 @@ elif key in db:
         oneline = unicode(oneline, 'utf-8').encode('gbk')
 vim.command("return '%s'" % oneline)
 EOF
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  input hjkl       ==== {{{"]
+" =================================================
+
+function! s:vimim_cache()
+    let results = []
+    if s:chinese_input_mode =~ 'onekey'
+        if len(s:hjkl_x) > 0
+            if len(s:matched_list) > 0 && s:show_me_not > 0
+                let results = s:vimim_onekey_menu_format()
+            elseif len(s:popupmenu_list) > 0
+                let results = s:vimim_onekey_menu_filter()
+            endif
+        endif
+        if s:show_me_not > 0
+            if s:hjkl_l % 2 > 0
+                for line in s:matched_list
+                    let oneline = join(reverse(split(line,'\zs')),'')
+                    call add(results, oneline)
+                endfor
+            endif
+        elseif s:hjkl_h > 0 && len(s:matched_list) > &pumheight
+            let &pumheight = 0
+            if s:hjkl_h % 2 < 1
+                let &pumheight = s:pumheight
+            endif
+        endif
+    endif
+    if s:pageup_pagedown != 0
+    \&& len(s:matched_list) > &pumheight
+    \&& s:vimim_custom_label > -1
+        let results = s:vimim_pageup_pagedown()
+    endif
+    return results
+endfunction
+
+function! s:vimim_onekey_menu_format()
+    " use 1234567890/qwertyuiop to control popup textwidth
+    let lines = copy(s:matched_list)
+    let filter = 'substitute(' .'v:val'. ",'^\\s\\+\\|\\s\\+$','','g')"
+    call map(lines, filter)
+    let lines = split(join(lines),'  ')
+    let filter = 'substitute(' .'v:val'. ",' ','','g')"
+    call map(lines, filter)
+    if s:hjkl_x == 1
+        return lines
+    endif
+    let n = s:hjkl_x * (7-s:multibyte)
+    let textwidth = repeat('.', n)
+    let results = []
+    for line in lines
+        let onelines = split(line, textwidth . '\zs')
+        call add(onelines, '')
+        call extend(results, onelines)
+    endfor
+    return results
+endfunction
+
+function! s:vimim_onekey_menu_filter()
+    " use 1234567890/qwertyuiop as digital filter
+    let results = s:vimim_cjk_filter_list()
+    if empty(results) && !empty(len(s:hjkl_x))
+        let number_before = strpart(s:hjkl_x,0,len(s:hjkl_x)-1)
+        if len(number_before) > 0
+            let s:hjkl_x = number_before
+            let results = s:vimim_cjk_filter_list()
+        endif
+    endif
+    return results
+endfunction
+
+function! s:vimim_cjk_filter_list()
+    let i = 0
+    let foods = []
+    for items in s:popupmenu_list
+        let chinese = s:vimim_cjk_digit_filter(items.word)
+        if !empty(chinese)
+            call add(foods, i)
+        endif
+        let i += 1
+    endfor
+    if empty(foods)
+        return []
+    endif
+    let results = []
+    for i in foods
+        let menu = s:popupmenu_list[i].word
+        call add(results, menu)
+    endfor
+    return results
+endfunction
+
+function! s:vimim_cjk_digit_filter(chinese)
+    " smart digital filter: 马力 7712 4002
+    "   (1)   ma<C-6>       马   => filter with   7712
+    "   (2) mali<C-6>       马力 => filter with 7 4002
+    let chinese = a:chinese
+    if empty(len(s:hjkl_x)) || empty(chinese)
+        return 0
+    endif
+    let digit_head = ""
+    let digit_tail = ""
+    let words = split(chinese,'\zs')
+    for cjk in words
+        let ddddd = char2nr(cjk)
+        let line = ddddd - 19968
+        if cjk =~ '\w' || line < 0 || line > 20902
+            continue
+        else
+            let values = split(get(s:cjk_lines,line))
+            let column = 1 + s:vimim_digit_4corner
+            let digit = get(values, column)
+            let digit_head .= digit[:0]
+            let digit_tail  = digit[1:]
+        endif
+    endfor
+    let number = digit_head . digit_tail
+    let pattern = "^" . s:hjkl_x
+    let matched = match(number, pattern)
+    if matched < 0
+        let chinese = 0
+    endif
+    return chinese
+endfunction
+
+function! s:vimim_pageup_pagedown()
+    let matched_list = s:matched_list
+    let length = len(matched_list)
+    let one_page = &pumheight
+    if s:vimim_custom_label > 0
+        let one_page = s:horizontal_display
+    endif
+    let first_page = one_page - 1
+    if s:vimim_loop_pageup_pagedown > 0
+        if first_page < 1
+            let first_page = 9
+        endif
+        let shift = s:pageup_pagedown * first_page
+        if length > first_page
+            let partition = shift
+            if shift < 0
+                let partition = length + shift
+            endif
+            let A = matched_list[: partition-1]
+            let B = matched_list[partition :]
+            let matched_list = B + A
+        endif
+    else
+        let page = s:pageup_pagedown * one_page
+        if page < 0
+            " no more PageUp after the first page
+            let s:pageup_pagedown += 1
+            let matched_list = matched_list[0 : first_page]
+        elseif page >= length
+            " no more PageDown after the last page
+            let s:pageup_pagedown -= 1
+            let last_page = length / one_page
+            if empty(length % one_page)
+                let last_page -= 1
+            endif
+            let last_page = last_page * one_page
+            let matched_list = matched_list[last_page :]
+        else
+            let matched_list = matched_list[page :]
+        endif
+    endif
+    return matched_list
+endfunction
+
+function! s:vimim_onekey_pumvisible_mapping()
+    let map_list = split('hjkl<>sxmn', '\zs')
+    for _ in map_list
+        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
+    endfor
+    let map_list = s:qwerty + range(10)
+    for _ in map_list
+        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwerty("'._.'")'
+    endfor
+    let map_list = s:AZ_list
+    for _ in map_list
+        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_capital("'._.'")'
+    endfor
+endfunction
+
+function! <SID>vimim_onekey_hjkl(key)
+    let key = a:key
+    let toggles = split('shlmn','\zs')
+    if pumvisible()
+        if a:key == 'j'        | let key  = '\<Down>'
+        elseif a:key == 'k'    | let key  = '\<Up>'
+        elseif a:key =~ "[<>]"
+            let key  = '\<C-Y>'.s:punctuations[nr2char(char2nr(a:key)-16)]
+        else
+            if a:key == 'x'
+                call g:vimim_reset_after_insert()
+            elseif a:key =~ "[shlmn]"
+                for toggle in toggles
+                    if toggle == a:key
+                        exe 'let s:hjkl_' . toggle . ' += 1'
+                        let s:hjkl_n = a:key == 'm' ? 0 : s:hjkl_n
+                        let s:hjkl_m = a:key == 'n' ? 0 : s:hjkl_m
+                    endif
+                endfor
+            endif
+            let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_onekey_qwerty(key)
+    let key = a:key
+    if pumvisible()
+        if key =~ '\l'
+            let key = match(s:qwerty, a:key)
+        endif
+        let s:hjkl_x = s:show_me_not ? key : s:hjkl_x . key
+        let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_onekey_capital(key)
+    let key = a:key
+    if pumvisible()
+        let key  = '\<C-E>'
+        let key .= tolower(a:key)
+        let key .= '\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  input unicode    ==== {{{"]
+" =================================================
+
+function! s:vimim_initialize_encoding()
+    let s:encoding = "utf8"
+    if &encoding =~ 'chinese\|cp936\|gb2312\|gbk\|euc-cn'
+        let s:encoding = "chinese"
+    elseif &encoding =~ 'taiwan\|cp950\|big5\|euc-tw'
+        let s:encoding = "taiwan"
+    endif
+    " ------------ ----------------- -------------- -----------
+    " vim encoding datafile encoding s:localization performance
+    " ------------ ----------------- -------------- -----------
+    "   utf-8          utf-8                0          good
+    "   chinese        chinese              0          good
+    "   utf-8          chinese              1          bad
+    "   chinese        utf-8                2          bad
+    " ------------ ----------------- -------------- -----------
+    let s:localization = 0
+    if &encoding == "utf-8"
+        if len("datafile_fenc_chinese") > 20110129
+            let s:localization = 1
+        endif
+    else
+        let s:localization = 2
+    endif
+    let s:multibyte = &encoding=="utf-8" ? 3 : 2
+endfunction
+
+function! s:vimim_get_unicode_list(keyboard)
+    let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
+    if ddddd < 8080 || ddddd > 19968+20902
+        return []
+    endif
+    let words = []
+    for i in range(108)
+        let chinese = nr2char(ddddd+i)
+        call add(words, chinese)
+    endfor
+    return words
+endfunction
+
+function! s:vimim_get_unicode_ddddd(keyboard)
+    let ddddd = 0
+    if a:keyboard =~# '^u\x\{4}$'
+        " show hex unicode popup menu: u808f
+        let xxxx = a:keyboard[1:]
+        let ddddd = str2nr(xxxx, 16)
+    elseif a:keyboard =~# '^\d\{5}$'
+        " show decimal unicode popup menu: 32911
+        let ddddd = str2nr(a:keyboard, 10)
+    endif
+    if empty(ddddd) || ddddd > 0xffff
+        let ddddd = 0
+    endif
+    return ddddd
+endfunction
+
+function! s:vimim_cjk_property_display(ddddd)
+    let unicode = printf('u%04x', a:ddddd)
+    if empty(s:has_cjk_file)
+        return unicode . s:space . a:ddddd
+    endif
+    let chinese = nr2char(a:ddddd)
+    let five = get(s:vimim_get_property(chinese,1),0)
+    let four = get(s:vimim_get_property(chinese,2),0)
+    let digit = five
+    if s:vimim_digit_4corner > 0
+        let digit = four
+    endif
+    let pinyin = get(s:vimim_get_property(chinese,'pinyin'),0)
+    let english = get(s:vimim_get_property(chinese,'english'),0)
+    let keyboard_head = get(s:keyboard_list,0)
+    if keyboard_head =~ s:uxxxx
+        let unicode = unicode . s:space
+    else
+        let unicode = ""
+    endif
+    let unicode .= digit . s:space . pinyin
+    if !empty(english)
+        let unicode .= s:space . english
+    endif
+    return unicode
+endfunction
+
+function! s:vimim_get_property(chinese, property)
+    let property = a:property
+    let headers = []
+    let bodies = []
+    for chinese in split(a:chinese, '\zs')
+        let ddddd = char2nr(chinese)
+        let line = ddddd - 19968
+        if line < 0 || line > 20902
+            continue
+        endif
+        let head = ''
+        if property == 'unicode'
+            let head = printf('%x', ddddd)
+        elseif s:has_cjk_file > 0
+            let values = split(get(s:cjk_lines,line))
+            if property =~ '\d'          | let head = get(values,property)
+            elseif property == 'pinyin'  | let head = get(values,3)
+            elseif property == 'english' | let head = join(values[4:-2])
+            endif
+        endif
+        if empty(head)
+            continue
+        endif
+        call add(headers, head)
+        let spaces = ''
+        let gap = len(head)-2
+        if gap > 0
+            let space = ' '
+            for i in range(gap)
+                let spaces .= space
+            endfor
+        endif
+        call add(bodies, chinese . spaces)
+    endfor
+    return [join(headers), join(bodies)]
+endfunction
+
+function! s:vimim_unicode_to_utf8(xxxx)
+    " u808f => 32911 => e8828f
+    let ddddd = str2nr(a:xxxx, 16)
+    let utf8 = ''
+    if ddddd < 128
+        let utf8 .= nr2char(ddddd)
+    elseif ddddd < 2048
+        let utf8 .= nr2char(192+((ddddd-(ddddd%64))/64))
+        let utf8 .= nr2char(128+(ddddd%64))
+    else
+        let utf8 .= nr2char(224+((ddddd-(ddddd%4096))/4096))
+        let utf8 .= nr2char(128+(((ddddd%4096)-(ddddd%64))/64))
+        let utf8 .= nr2char(128+(ddddd%64))
+    endif
+    return utf8
 endfunction
 
 " ============================================= }}}
