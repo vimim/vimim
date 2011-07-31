@@ -151,7 +151,7 @@ function! s:vimim_chinese(key)
         let chinese = get(s:chinese[a:key], 0)
         if s:encoding =~ "utf-8"
         \&& len(s:chinese[a:key]) > 1
-        \&& g:vimim_debug > 0
+        \&& s:vimim_debug > 0
             let chinese = get(s:chinese[a:key], 1)
         endif
     endif
@@ -1071,7 +1071,7 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
 endfunction
 
 function! s:vimim_plugins_fix_start()
-    if g:vimim_debug>0 |return |endif
+    if s:vimim_debug>0 |return |endif
     if !exists('s:acp_sid')
         let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
         if !empty(s:acp_sid)
@@ -1090,7 +1090,7 @@ function! s:vimim_plugins_fix_start()
 endfunction
 
 function! s:vimim_plugins_fix_stop()
-    if g:vimim_debug>0 |return |endif
+    if s:vimim_debug>0 |return |endif
     if !empty(s:acp_sid)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
