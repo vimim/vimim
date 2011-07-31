@@ -337,7 +337,7 @@ endfunction
 
 function! s:vimim_egg_vimimenv()
     let eggs = []
-    let today = get(s:vimim_imode_today_now('itoday'),0)
+    let today = s:vimim_imode_today_now('itoday')
     let option = s:vimim_chinese('datetime') . s:colon . today
     call add(eggs, option)
     let option = "os"
@@ -538,20 +538,15 @@ function! g:vimim_search_next()
         let english = substitute(english,'[<>\\]','','g')
     endif
     let results = []
-    if len(english) > 1
-    \&& len(english) < 24
-    \&& english =~ '\w'
-    \&& english !~ '\W'
-    \&& english !~ '_'
-    \&& v:errmsg =~# english
-    \&& v:errmsg =~# '^E486: '
-        let error = ""
+    let error = ""
+    if len(english) > 1 && len(english) < 24
+    \&& english =~ '\w' && english !~ '\W' && english !~ '_'
+    \&& v:errmsg =~# english && v:errmsg =~# '^E486: '
         try
             let results = s:vimim_search_chinese_by_english(english)
         catch
             let error = v:exception
         endtry
-        echon "/" . english . error
     endif
     if !empty(results)
         let results = split(substitute(join(results),'\w','','g'))
@@ -561,9 +556,9 @@ function! g:vimim_search_next()
         else
             let @/ = slash
         endif
-        echon "/" . english
     endif
     let v:errmsg = ""
+    echon "/" . english . error
 endfunction
 
 function! s:vimim_search_chinese_by_english(keyboard)
@@ -606,7 +601,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     else
         let cjk_results = [nr2char(ddddd)]
     endif
-    " => slash search english /horse
+    " => slash search english directly: /horse
     if keyboard =~ '^\l\+'
         sil!call s:vimim_onekey_english(a:keyboard, 1)
     endif
@@ -689,8 +684,7 @@ function! s:vimim_imode_today_now(keyboard)
     let ecdict.second    = '秒'
     let chinese = copy(s:translators)
     let chinese.dict = ecdict
-    let today_or_now = chinese.translate(join(results))
-    return [today_or_now]
+    return chinese.translate(join(results))
 endfunction
 
 function! s:vimim_dictionary_chinese()
@@ -1921,12 +1915,10 @@ function! s:vimim_onekey_input(keyboard)
     " [imode] magic i: (1) English number (2) qwerty shortcut
     if keyboard =~# '^i'
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
-            return s:vimim_imode_today_now(keyboard)
+            return [s:vimim_imode_today_now(keyboard)]
         elseif keyboard =~ '\d'
             let results = s:vimim_imode_number(keyboard, 'i')
-            if !empty(len(results))
-                return results
-            endif
+            if !empty(len(results)) | return results | endif
         endif
     endif
     " [cjk] cjk database works like swiss-army knife
