@@ -3910,7 +3910,7 @@ function! s:vimim_get_from_http(input, cloud)
             let output = system(s:http_executable . '"'.input.'"')
         endif
     catch
-        call s:debug('alert', 'cloud::', output ." ". v:exception)
+        call s:debug('alert', 'http_cloud', output ." ". v:exception)
     endtry
     return output
 endfunction
