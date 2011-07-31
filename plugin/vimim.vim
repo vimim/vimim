@@ -647,176 +647,6 @@ function! s:vimim_slash_search_block(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  chinese mode     ==== {{{"]
-" =================================================
-" s:chinese_input_mode='onekey'  => (default) OneKey
-" s:chinese_input_mode='dynamic' => (default) dynamic mode
-" s:chinese_input_mode='static'  =>  static chinese input mode
-
-function! <SID>VimIMSwitch()
-    sil!call s:vimim_backend_initialization()
-    if len(s:ui.frontends) < 2
-        return <SID>ChineseMode()
-    endif
-    let s:chinese_input_mode = s:vimim_chinese_input_mode
-    let custom_im_list = []
-    if s:vimim_toggle_list =~ ","
-        let custom_im_list = split(s:vimim_toggle_list, ",")
-    else
-        if empty(s:vimim_toggle_list)
-            let custom_im_list = ["english"]
-        endif
-        for frontends in s:ui.frontends
-            let frontend_im = get(frontends, 1)
-            call add(custom_im_list, frontend_im)
-        endfor
-    endif
-    let switch = s:im_toggle % len(custom_im_list)
-    let s:im_toggle += 1
-    let im = get(custom_im_list, switch)
-    let switch = 1
-    if im =~ 'english'
-        let switch = 0
-        let s:frontends = get(s:ui.frontends, 0)
-    else
-        for frontends in s:ui.frontends
-            let frontend_im = get(frontends, 1)
-            if frontend_im =~ im
-                let s:frontends = frontends
-                break
-            endif
-        endfor
-    endif
-    return s:vimim_chinese_mode(switch)
-endfunction
-
-function! <SID>ChineseMode()
-    sil!call s:vimim_backend_initialization()
-    if empty(s:ui.frontends)
-        return ""
-    elseif empty(s:frontends)
-        let s:frontends = get(s:ui.frontends, 0)
-    endif
-    let switch = 1
-    if !empty(&omnifunc) && &omnifunc ==# 'VimIM'
-        let switch = 0
-    endif
-    return s:vimim_chinese_mode(switch)
-endfunction
-
-function! s:vimim_chinese_mode(switch)
-    let action = ""
-    if a:switch < 1
-        sil!call g:vimim_stop()
-        if mode() == 'n'
-            :redraw!
-        endif
-    else
-        let s:chinese_input_mode = s:vimim_chinese_input_mode
-        let s:ui.root = get(s:frontends,0)
-        let s:ui.im = get(s:frontends,1)
-        call s:vimim_set_statusline()
-        let action = s:vimim_chinesemode_action()
-    endif
-    sil!exe 'sil!return "' . action . '"'
-endfunction
-
-function! <SID>vimim_punctuation_toggle()
-    let s:chinese_punctuation = (s:chinese_punctuation+1)%2
-    call s:vimim_set_statusline()
-    return s:vimim_punctuation_mapping()
-endfunction
-
-function! s:vimim_chinesemode_action()
-    sil!call s:vimim_start()
-    sil!call s:vimim_frontend_initialization()
-    if s:vimim_chinese_punctuation > -1
-        inoremap <expr> <C-^> <SID>vimim_punctuation_toggle()
-        call s:vimim_punctuation_mapping()
-    endif
-    let action = ""
-    if s:chinese_input_mode =~ 'dynamic'
-        let s:seamless_positions = getpos(".")
-        let clouds = split(s:vimim_cloud,',')
-        let cloud_in_use = s:ui.root=='cloud' ? match(clouds,s:ui.im) : 0
-        let vimim_cloud = get(clouds, cloud_in_use)
-        if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
-            " dynamic auto trigger for wubi
-            for char in s:az_list
-                sil!exe 'inoremap <silent> ' . char .
-                \ ' <C-R>=g:vimim_wubi_ctrl_e_ctrl_y()<CR>'
-                \ . char . '<C-R>=g:vimim()<CR>'
-            endfor
-        else
-            " dynamic alphabet trigger for all
-            let not_used_valid_keys = "[0-9.']"
-            if s:ui.has_dot == 1
-                let not_used_valid_keys = "[0-9]"
-            endif
-            for char in s:valid_keys
-                if char !~# not_used_valid_keys
-                    sil!exe 'inoremap <silent> ' . char .
-                    \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
-                    \ . char . '<C-R>=g:vimim()<CR>'
-                endif
-            endfor
-        endif
-    elseif s:chinese_input_mode =~ 'static'
-        for char in s:Az_list
-            sil!exe 'inoremap <silent> ' . char .
-            \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
-            \ . char . '<C-R>=g:vimim_reset_after_insert()<CR>'
-        endfor
-        if pumvisible()
-            " <C-\> does nothing on popup menu
-        else
-            let action = s:vimim_static_action("")
-        endif
-    endif
-    sil!exe 'sil!return "' . action . '"'
-endfunction
-
-function! s:vimim_static_action(space)
-    let space = a:space
-    let one_before = getline(".")[col(".")-2]
-    if one_before =~# s:valid_key
-        let space = g:vimim()
-    endif
-    sil!exe 'sil!return "' . space . '"'
-endfunction
-
-function! s:vimim_get_seamless(current_positions)
-    if empty(s:seamless_positions) || empty(a:current_positions)
-        return -1
-    endif
-    let seamless_bufnum = s:seamless_positions[0]
-    let seamless_lnum = s:seamless_positions[1]
-    let seamless_off = s:seamless_positions[3]
-    if seamless_bufnum != a:current_positions[0]
-    \|| seamless_lnum != a:current_positions[1]
-    \|| seamless_off != a:current_positions[3]
-        let s:seamless_positions = []
-        return -1
-    endif
-    let seamless_column = s:seamless_positions[2]-1
-    let start_column = a:current_positions[2]-1
-    let len = start_column - seamless_column
-    let start_row = a:current_positions[1]
-    let current_line = getline(start_row)
-    let snip = strpart(current_line, seamless_column, len)
-    if empty(len(snip))
-        return -1
-    endif
-    for char in split(snip, '\zs')
-        if char !~# s:valid_key
-            return -1
-        endif
-    endfor
-    let s:start_row_before = seamless_lnum
-    return seamless_column
-endfunction
-
-" ============================================= }}}
 let s:VimIM += [" ====  onekey           ==== {{{"]
 " =================================================
 
@@ -1063,6 +893,176 @@ function! s:vimim_magic_tail(keyboard)
         endif
     endif
     return keyboard
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  dynamic | static ==== {{{"]
+" =================================================
+" s:chinese_input_mode='onekey'  => (default) OneKey
+" s:chinese_input_mode='dynamic' => (default) dynamic mode
+" s:chinese_input_mode='static'  =>  static chinese input mode
+
+function! <SID>VimIMSwitch()
+    sil!call s:vimim_backend_initialization()
+    if len(s:ui.frontends) < 2
+        return <SID>ChineseMode()
+    endif
+    let s:chinese_input_mode = s:vimim_chinese_input_mode
+    let custom_im_list = []
+    if s:vimim_toggle_list =~ ","
+        let custom_im_list = split(s:vimim_toggle_list, ",")
+    else
+        if empty(s:vimim_toggle_list)
+            let custom_im_list = ["english"]
+        endif
+        for frontends in s:ui.frontends
+            let frontend_im = get(frontends, 1)
+            call add(custom_im_list, frontend_im)
+        endfor
+    endif
+    let switch = s:im_toggle % len(custom_im_list)
+    let s:im_toggle += 1
+    let im = get(custom_im_list, switch)
+    let switch = 1
+    if im =~ 'english'
+        let switch = 0
+        let s:frontends = get(s:ui.frontends, 0)
+    else
+        for frontends in s:ui.frontends
+            let frontend_im = get(frontends, 1)
+            if frontend_im =~ im
+                let s:frontends = frontends
+                break
+            endif
+        endfor
+    endif
+    return s:vimim_chinese_mode(switch)
+endfunction
+
+function! <SID>ChineseMode()
+    sil!call s:vimim_backend_initialization()
+    if empty(s:ui.frontends)
+        return ""
+    elseif empty(s:frontends)
+        let s:frontends = get(s:ui.frontends, 0)
+    endif
+    let switch = 1
+    if !empty(&omnifunc) && &omnifunc ==# 'VimIM'
+        let switch = 0
+    endif
+    return s:vimim_chinese_mode(switch)
+endfunction
+
+function! s:vimim_chinese_mode(switch)
+    let action = ""
+    if a:switch < 1
+        sil!call g:vimim_stop()
+        if mode() == 'n'
+            :redraw!
+        endif
+    else
+        let s:chinese_input_mode = s:vimim_chinese_input_mode
+        let s:ui.root = get(s:frontends,0)
+        let s:ui.im = get(s:frontends,1)
+        call s:vimim_set_statusline()
+        let action = s:vimim_chinesemode_action()
+    endif
+    sil!exe 'sil!return "' . action . '"'
+endfunction
+
+function! <SID>vimim_punctuation_toggle()
+    let s:chinese_punctuation = (s:chinese_punctuation+1)%2
+    call s:vimim_set_statusline()
+    return s:vimim_punctuation_mapping()
+endfunction
+
+function! s:vimim_chinesemode_action()
+    sil!call s:vimim_start()
+    sil!call s:vimim_frontend_initialization()
+    if s:vimim_chinese_punctuation > -1
+        inoremap <expr> <C-^> <SID>vimim_punctuation_toggle()
+        call s:vimim_punctuation_mapping()
+    endif
+    let action = ""
+    if s:chinese_input_mode =~ 'dynamic'
+        let s:seamless_positions = getpos(".")
+        let clouds = split(s:vimim_cloud,',')
+        let cloud_in_use = s:ui.root=='cloud' ? match(clouds,s:ui.im) : 0
+        let vimim_cloud = get(clouds, cloud_in_use)
+        if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
+            " dynamic auto trigger for wubi
+            for char in s:az_list
+                sil!exe 'inoremap <silent> ' . char .
+                \ ' <C-R>=g:vimim_wubi_ctrl_e_ctrl_y()<CR>'
+                \ . char . '<C-R>=g:vimim()<CR>'
+            endfor
+        else
+            " dynamic alphabet trigger for all
+            let not_used_valid_keys = "[0-9.']"
+            if s:ui.has_dot == 1
+                let not_used_valid_keys = "[0-9]"
+            endif
+            for char in s:valid_keys
+                if char !~# not_used_valid_keys
+                    sil!exe 'inoremap <silent> ' . char .
+                    \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
+                    \ . char . '<C-R>=g:vimim()<CR>'
+                endif
+            endfor
+        endif
+    elseif s:chinese_input_mode =~ 'static'
+        for char in s:Az_list
+            sil!exe 'inoremap <silent> ' . char .
+            \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
+            \ . char . '<C-R>=g:vimim_reset_after_insert()<CR>'
+        endfor
+        if pumvisible()
+            " <C-\> does nothing on popup menu
+        else
+            let action = s:vimim_static_action("")
+        endif
+    endif
+    sil!exe 'sil!return "' . action . '"'
+endfunction
+
+function! s:vimim_static_action(space)
+    let space = a:space
+    let one_before = getline(".")[col(".")-2]
+    if one_before =~# s:valid_key
+        let space = g:vimim()
+    endif
+    sil!exe 'sil!return "' . space . '"'
+endfunction
+
+function! s:vimim_get_seamless(current_positions)
+    if empty(s:seamless_positions) || empty(a:current_positions)
+        return -1
+    endif
+    let seamless_bufnum = s:seamless_positions[0]
+    let seamless_lnum = s:seamless_positions[1]
+    let seamless_off = s:seamless_positions[3]
+    if seamless_bufnum != a:current_positions[0]
+    \|| seamless_lnum != a:current_positions[1]
+    \|| seamless_off != a:current_positions[3]
+        let s:seamless_positions = []
+        return -1
+    endif
+    let seamless_column = s:seamless_positions[2]-1
+    let start_column = a:current_positions[2]-1
+    let len = start_column - seamless_column
+    let start_row = a:current_positions[1]
+    let current_line = getline(start_row)
+    let snip = strpart(current_line, seamless_column, len)
+    if empty(len(snip))
+        return -1
+    endif
+    for char in split(snip, '\zs')
+        if char !~# s:valid_key
+            return -1
+        endif
+    endfor
+    let s:start_row_before = seamless_lnum
+    return seamless_column
 endfunction
 
 " ============================================= }}}
