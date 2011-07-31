@@ -10,7 +10,6 @@ let $VimIM = " $Revision$"
 let s:url  = " http://vim.sf.net/scripts/script.php?script_id=2506"
 let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
 let s:url .= " http://code.google.com/p/vimim/source/list"
-let s:url .= " http://vimim-data.googlecode.com"
 let s:url .= " http://groups.google.com/group/vimim"
 let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.html"
 let s:url .= " vimim+subscribe@googlegroups.com"
@@ -328,10 +327,9 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, '官方网址 ' . get(url,0) . ' ' )
     call add(eggs, '最新程式 ' . get(url,1) . ' ' )
     call add(eggs, '更新报告 ' . get(url,2) . ' ' )
-    call add(eggs, '民间词库 ' . get(url,3) . ' ' )
-    call add(eggs, '新闻论坛 ' . get(url,4) . ' ' )
-    call add(eggs, '最新主页 ' . get(url,5) . ' ' )
-    call add(eggs, '论坛邮箱 ' . get(url,6) . ' ' )
+    call add(eggs, '新闻论坛 ' . get(url,3) . ' ' )
+    call add(eggs, '最新主页 ' . get(url,4) . ' ' )
+    call add(eggs, '论坛邮箱 ' . get(url,5) . ' ' )
     return eggs
 endfunction
 
