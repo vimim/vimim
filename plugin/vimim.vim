@@ -1133,8 +1133,7 @@ function! s:vimim_getsid(scriptname)
         " only do non-blank lines
         if line =~ l:scriptname
             " get the first number in the line.
-            let nr = matchstr(line, '\d\+')
-            return nr
+            return matchstr(line, '\d\+')
         endif
     endfor
     return 0
