@@ -1725,9 +1725,9 @@ except vim.error:
 EOF
 endfunction
 
-" http://vimim.googlecode.com/svn/vimim/vimim.html#database
 function! s:vimim_sentence_match_database(input, sentence)
 if empty(a:input)
+    " http://vimim.googlecode.com/svn/vimim/vimim.html#database
     return ""
 endif
 :sil!python << EOF
@@ -2937,7 +2937,7 @@ function! s:vimim_readfile(datafile)
             let line = s:vimim_i18n_read(line)
             call add(results, line)
         endfor
-        let lines = results
+        return results
     endif
     return lines
 endfunction
@@ -2945,9 +2945,9 @@ endfunction
 function! s:vimim_i18n_read(line)
     let line = a:line
     if s:localization == 1
-        let line = iconv(line, "chinese", "utf-8")
+        return iconv(line, "chinese", "utf-8")
     elseif s:localization == 2
-        let line = iconv(line, "utf-8", &enc)
+        return iconv(line, "utf-8", &enc)
     endif
     return line
 endfunction
@@ -4417,7 +4417,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     if empty(output)
         return []
     endif
-    let menu = []
+    let results = []
     for item in split(output, '\n')
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
@@ -4431,9 +4431,9 @@ function! s:vimim_get_mycloud_plugin(keyboard)
         let extra_text = get(item_list,2)
         let english = a:keyboard[get(item_list,1):]
         let new_item = extra_text . " " . chinese . english
-        call add(menu, new_item)
+        call add(results, new_item)
     endfor
-    return menu
+    return results
 endfunction
 
 function! s:vimim_url_xx_to_chinese(xx)
