@@ -4558,7 +4558,10 @@ function! g:vimim_menu_select()
 endfunction
 
 function! s:vimim_i_map_off()
-    let recycles  = range(0,9) + s:AZ_list + s:valid_keys
+    let recycles = range(0,9) + s:valid_keys
+    if s:chinese_input_mode !~ 'dynamic'
+        let recycles += s:AZ_list
+    endif
     let recycles += keys(s:evils) + keys(s:punctuations)
     let recycles += ['<Esc>','<CR>','<BS>','<Space>']
     for _ in recycles
