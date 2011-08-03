@@ -2098,7 +2098,8 @@ function! s:vimim_chinesemode_action()
             endfor
         endif
     elseif s:chinese_input_mode =~ 'static'
-        for char in s:Az_list
+        let map_list = empty(s:vimim_latex_suite) ? s:Az_list : s:az_list
+        for char in map_list
             sil!exe 'inoremap <silent> ' . char .
             \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
             \ . char . '<C-R>=g:vimim_reset_after_insert()<CR>'
@@ -2462,18 +2463,17 @@ function! s:vimim_pageup_pagedown()
 endfunction
 
 function! s:vimim_onekey_pumvisible_mapping()
-    let map_list = split('hjkl<>sxmn', '\zs')
-    for _ in map_list
-        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
+    for _ in split('hjkl<>sxmn', '\zs')
+        exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
-    let map_list = s:qwerty + range(10)
-    for _ in map_list
-        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwerty("'._.'")'
+    for _ in s:qwerty + range(10)
+        exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwerty("'._.'")'
     endfor
-    let map_list = s:AZ_list
-    for _ in map_list
-        sil!exe 'inoremap<expr> '._.' <SID>vimim_onekey_capital("'._.'")'
-    endfor
+    if empty(s:vimim_latex_suite)
+        for _ in s:AZ_list
+            exe 'inoremap<expr> '._.' <SID>vimim_onekey_capital("'._.'")'
+        endfor
+    endif
 endfunction
 
 function! <SID>vimim_onekey_hjkl(key)
@@ -4559,7 +4559,7 @@ endfunction
 
 function! s:vimim_i_map_off()
     let recycles = range(0,9) + s:valid_keys
-    if s:chinese_input_mode !~ 'dynamic'
+    if s:chinese_input_mode !~ 'dynamic' && empty(s:vimim_latex_suite)
         let recycles += s:AZ_list
     endif
     let recycles += keys(s:evils) + keys(s:punctuations)
