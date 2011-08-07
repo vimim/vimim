@@ -1061,17 +1061,7 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_plugins_fix(switch)
-    if s:vimim_digit_4corner > 1
-        return
-    elseif a:switch == 'start'
-        sil!call s:vimim_plugins_fix_start()
-    elseif a:switch == 'stop'
-        sil!call s:vimim_plugins_fix_stop()
-    endif
-endfunction
-
-function! s:vimim_plugins_fix_start()
+function! s:vimim_plugin_conflict_fix_on()
     if !exists('s:acp_sid')
         let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
         if !empty(s:acp_sid)
@@ -1089,7 +1079,7 @@ function! s:vimim_plugins_fix_start()
     endif
 endfunction
 
-function! s:vimim_plugins_fix_stop()
+function! s:vimim_plugin_conflict_fix_off()
     if !empty(s:acp_sid)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
@@ -2211,9 +2201,9 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     elseif a:keyboard =~# '^\d\{5}$'
         " show decimal unicode popup menu: 32911
         let ddddd = str2nr(a:keyboard, 10)
-    elseif a:keyboard =~# '^\x\{4}$' && a:keyboard !~ '^\d\{4}$'
-        " show hex unicode popup menu: 808f
-        if s:vimim_digit_4corner > 1
+    elseif a:keyboard =~# '^\x\{4}$'
+        " show 4 hex unicode popup menu: 808f
+        if s:vimim_digit_4corner > 1 && a:keyboard !~ '^\d\{4}$'
             let ddddd = str2nr(a:keyboard, 16)
         endif
     endif
@@ -4492,7 +4482,7 @@ function! s:vimim_i_setting_off()
 endfunction
 
 function! s:vimim_start()
-    sil!call s:vimim_plugins_fix('start')
+    sil!call s:vimim_plugin_conflict_fix_on()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
@@ -4505,7 +4495,7 @@ function! g:vimim_stop()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_i_map_off()
-    sil!call s:vimim_plugins_fix('stop')
+    sil!call s:vimim_plugin_conflict_fix_off()
     sil!call s:vimim_initialize_mapping()
     sil!call s:vimim_restore_skin()
 endfunction
