@@ -2209,6 +2209,9 @@ function! s:vimim_get_unicode_ddddd(keyboard)
             let keyboard = 'u' . keyboard
         endif
     endif
+    if len(keyboard)==6 && keyboard =~# '^u' |" uwwwwq => 22221
+        let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
+    endif
     let ddddd = 0
     if keyboard =~# '^\d\{5}$'      |" from digit to unicode menu: 32911
         let ddddd = str2nr(keyboard, 10)
@@ -2610,7 +2613,7 @@ endfunction
 
 function! s:vimim_qwertyuiop_1234567890(keyboard)
     " output is '7712' for input uuqw
-    if a:keyboard =~ '\d' || empty(s:has_cjk_file)
+    if a:keyboard =~ '\d'
         return 0
     endif
     let dddd = ""
