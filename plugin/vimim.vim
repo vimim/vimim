@@ -148,8 +148,8 @@ function! s:vimim_chinese(key)
     if has_key(s:chinese, a:key)
         let chinese = get(s:chinese[a:key], 0)
         if s:encoding =~ "utf-8"
+        \&& s:vimim_onekey_is_tab > 1
         \&& len(s:chinese[a:key]) > 1
-        \&& s:vimim_digit_4corner > 1
             let chinese = get(s:chinese[a:key], 1)
         endif
     endif
@@ -220,8 +220,9 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_custom_menu")
     call add(G, "g:vimim_custom_label")
-    call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_onekey_is_tab")
+    call add(G, "g:vimim_hex_unicode")
+    call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
@@ -272,7 +273,8 @@ function! s:vimim_initialize_local()
     let hjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
-        let g:vimim_digit_4corner = 2
+        let g:vimim_hex_unicode = 1
+        let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
@@ -2187,6 +2189,9 @@ function! s:vimim_get_unicode_list(keyboard)
     endif
     let words = []
     for i in range(108/6)
+        if ddddd+i > 40869
+            break
+        endif
         let chinese = nr2char(ddddd+i)
         call add(words, chinese)
     endfor
@@ -2194,18 +2199,21 @@ function! s:vimim_get_unicode_list(keyboard)
 endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
-    let ddddd = 0
-    if a:keyboard =~# '^u\x\{4}$'
-        " show standard hex unicode popup menu: u808f
-        let ddddd = str2nr(a:keyboard[1:], 16)
-    elseif a:keyboard =~# '^\d\{5}$'
-        " show decimal unicode popup menu: 32911
-        let ddddd = str2nr(a:keyboard, 10)
-    elseif a:keyboard =~# '^\x\{4}$'
-        " show 4 hex unicode popup menu: 808f
-        if s:vimim_digit_4corner > 1 && a:keyboard !~ '^\d\{4}$'
-            let ddddd = str2nr(a:keyboard, 16)
+    let keyboard = a:keyboard
+    if s:vimim_hex_unicode > 0 && keyboard =~# '^\x\{4}$'
+        if s:vimim_hex_unicode > 1
+            " from 4 digit-hex to unicode menu: 9999
+            let keyboard = 'u' . keyboard
+        elseif keyboard !~ '^\d\{4}$'
+            " from 4 hex to unicode menu: 9f9f
+            let keyboard = 'u' . keyboard
         endif
+    endif
+    let ddddd = 0
+    if keyboard =~# '^\d\{5}$'      |" from digit to unicode menu: 32911
+        let ddddd = str2nr(keyboard, 10)
+    elseif keyboard =~# '^u\x\{4}$' |" from hex to unicode menu: u808f
+        let ddddd = str2nr(keyboard[1:], 16)
     endif
     if empty(ddddd) || ddddd > 0xffff
         let ddddd = 0
@@ -4589,7 +4597,7 @@ if a:start
     endif
     let last_seen_nonsense_column  = copy(start_column)
     let last_seen_backslash_column = copy(start_column)
-    let nonsense = s:vimim_digit_4corner>1 ? "[a-f0-9.']" : "[0-9.']"
+    let nonsense = s:vimim_hex_unicode>0 ? "[a-f0-9.']" : "[0-9.']"
     let all_digit = 1
     while start_column > 0
         if one_before =~# s:valid_key
