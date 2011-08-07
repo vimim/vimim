@@ -4592,14 +4592,13 @@ if a:start
         call s:vimim_set_keyboard_list(seamless_column, keyboard)
         return seamless_column
     endif
-    let last_seen_nonsense_column = copy(start_column)
+    let last_seen_nonsense_column  = copy(start_column)
     let last_seen_backslash_column = copy(start_column)
     let all_digit = 1
-    let nonsense_pattern = "[0-9.']"
     while start_column > 0
         if one_before =~# s:valid_key
             let start_column -= 1
-            if one_before !~# nonsense_pattern && s:ui.has_dot < 1
+            if one_before !~# "[0-9.']" && s:ui.has_dot < 1
                 let last_seen_nonsense_column = start_column
                 if all_digit > 0
                     let all_digit = 0
