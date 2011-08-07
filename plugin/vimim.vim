@@ -2196,7 +2196,7 @@ function! s:vimim_get_unicode_list(keyboard)
         return []
     endif
     let words = []
-    for i in range(108)
+    for i in range(108/6)
         let chinese = nr2char(ddddd+i)
         call add(words, chinese)
     endfor
@@ -2211,6 +2211,11 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     elseif a:keyboard =~# '^\d\{5}$'
         " show decimal unicode popup menu: 32911
         let ddddd = str2nr(a:keyboard, 10)
+    elseif a:keyboard =~# '^\x\{4}$' && a:keyboard !~ '^\d\{4}$'
+        " show hex unicode popup menu: 808f
+        if s:vimim_digit_4corner > 1
+            let ddddd = str2nr(a:keyboard, 16)
+        endif
     endif
     if empty(ddddd) || ddddd > 0xffff
         let ddddd = 0
@@ -4594,11 +4599,12 @@ if a:start
     endif
     let last_seen_nonsense_column  = copy(start_column)
     let last_seen_backslash_column = copy(start_column)
+    let nonsense = s:vimim_digit_4corner>1 ? "[a-f0-9.']" : "[0-9.']"
     let all_digit = 1
     while start_column > 0
         if one_before =~# s:valid_key
             let start_column -= 1
-            if one_before !~# "[0-9.']" && s:ui.has_dot < 1
+            if one_before !~# nonsense && s:ui.has_dot < 1
                 let last_seen_nonsense_column = start_column
                 if all_digit > 0
                     let all_digit = 0
@@ -4612,7 +4618,7 @@ if a:start
         endif
         let one_before = current_line[start_column-1]
     endwhile
-    if all_digit < 1
+    if all_digit < 1 && current_line[start_column]=~'\d'
         let start_column = last_seen_nonsense_column
     endif
     let s:start_row_before = start_row
