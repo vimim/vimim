@@ -92,7 +92,6 @@ endfunction
 
 function! s:vimim_initialize_session()
     let s:seamless_positions = []
-    let s:uxxxx = '^u\x\x\x\x\|^\d\d\d\d\d\>'
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
     let s:quanpin_table = {}
@@ -150,7 +149,7 @@ function! s:vimim_chinese(key)
         let chinese = get(s:chinese[a:key], 0)
         if s:encoding =~ "utf-8"
         \&& len(s:chinese[a:key]) > 1
-        \&& s:vimim_debug > 0
+        \&& s:vimim_digit_4corner > 1
             let chinese = get(s:chinese[a:key], 1)
         endif
     endif
@@ -273,13 +272,13 @@ function! s:vimim_initialize_local()
     let hjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
-        let g:vimim_cloud = 'google,baidu,sogou,qq'
-        let g:vimim_digit_4corner = 1
+        let g:vimim_digit_4corner = 2
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_data_directory = '/home/vimim/pinyin/'
+        let g:vimim_cloud = 'google,baidu,sogou,qq'
     endif
 endfunction
 
@@ -1062,8 +1061,17 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+function! s:vimim_plugins_fix(switch)
+    if s:vimim_digit_4corner > 1
+        return
+    elseif a:switch == 'start'
+        sil!call s:vimim_plugins_fix_start()
+    elseif a:switch == 'stop'
+        sil!call s:vimim_plugins_fix_stop()
+    endif
+endfunction
+
 function! s:vimim_plugins_fix_start()
-    if s:vimim_debug>0 |return |endif
     if !exists('s:acp_sid')
         let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
         if !empty(s:acp_sid)
@@ -1082,7 +1090,6 @@ function! s:vimim_plugins_fix_start()
 endfunction
 
 function! s:vimim_plugins_fix_stop()
-    if s:vimim_debug>0 |return |endif
     if !empty(s:acp_sid)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
@@ -2199,12 +2206,16 @@ endfunction
 function! s:vimim_get_unicode_ddddd(keyboard)
     let ddddd = 0
     if a:keyboard =~# '^u\x\{4}$'
-        " show hex unicode popup menu: u808f
-        let xxxx = a:keyboard[1:]
-        let ddddd = str2nr(xxxx, 16)
+        " show standard hex unicode popup menu: u808f
+        let ddddd = str2nr(a:keyboard[1:], 16)
     elseif a:keyboard =~# '^\d\{5}$'
         " show decimal unicode popup menu: 32911
         let ddddd = str2nr(a:keyboard, 10)
+    elseif a:keyboard =~# '^\x\{4}$' && a:keyboard !~ '^\d\{4}$'
+        " show hex unicode popup menu: 808f
+        if s:vimim_digit_4corner > 1
+            let ddddd = str2nr(a:keyboard, 16)
+        endif
     endif
     if empty(ddddd) || ddddd > 0xffff
         let ddddd = 0
@@ -2220,15 +2231,11 @@ function! s:vimim_cjk_property_display(ddddd)
     let chinese = nr2char(a:ddddd)
     let five = get(s:vimim_get_property(chinese,1),0)
     let four = get(s:vimim_get_property(chinese,2),0)
-    let digit = five
-    if s:vimim_digit_4corner > 0
-        let digit = four
-    endif
+    let digit = s:vimim_digit_4corner>0 ? four : five
     let pinyin = get(s:vimim_get_property(chinese,'pinyin'),0)
     let english = get(s:vimim_get_property(chinese,'english'),0)
-    let keyboard_head = get(s:keyboard_list,0)
-    if keyboard_head =~ s:uxxxx
-        let unicode = unicode . s:space
+    if get(s:keyboard_list,0) =~ '^u\x\x\x\x\|^\d\d\d\d\d\>'
+        let unicode .= s:space
     else
         let unicode = ""
     endif
@@ -2403,7 +2410,7 @@ function! s:vimim_cjk_digit_filter(chinese)
             continue
         else
             let values = split(get(s:cjk_lines,line))
-            let column = 1 + s:vimim_digit_4corner
+            let column = s:vimim_digit_4corner>0 ? 2 : 1
             let digit = get(values, column)
             let digit_head .= digit[:0]
             let digit_tail  = digit[1:]
@@ -2625,7 +2632,7 @@ function! s:vimim_cjk_match(keyboard)
         return []
     endif
     let keyboard = a:keyboard
-    let dddddd = 6 - 2 * s:vimim_digit_4corner
+    let dddddd = s:vimim_digit_4corner>0 ? 4 : 6
     let grep_frequency = '.*' . '\s\d\+$'
     let grep = ""
     if keyboard =~ '\d'
@@ -4485,7 +4492,7 @@ function! s:vimim_i_setting_off()
 endfunction
 
 function! s:vimim_start()
-    sil!call s:vimim_plugins_fix_start()
+    sil!call s:vimim_plugins_fix('start')
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
@@ -4498,7 +4505,7 @@ function! g:vimim_stop()
     sil!call s:vimim_i_setting_off()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_i_map_off()
-    sil!call s:vimim_plugins_fix_stop()
+    sil!call s:vimim_plugins_fix('stop')
     sil!call s:vimim_initialize_mapping()
     sil!call s:vimim_restore_skin()
 endfunction
@@ -4593,11 +4600,11 @@ if a:start
     let last_seen_nonsense_column = copy(start_column)
     let last_seen_backslash_column = copy(start_column)
     let all_digit = 1
-    let nonsense_pattern = "[0-9.']"
+    let nonsense = s:vimim_digit_4corner>1 ? "[a-f0-9.']" : "[0-9.']"
     while start_column > 0
         if one_before =~# s:valid_key
             let start_column -= 1
-            if one_before !~# nonsense_pattern && s:ui.has_dot < 1
+            if one_before !~# nonsense && s:ui.has_dot < 1
                 let last_seen_nonsense_column = start_column
                 if all_digit > 0
                     let all_digit = 0
