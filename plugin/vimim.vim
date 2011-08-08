@@ -2200,23 +2200,23 @@ endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if s:vimim_hex_unicode > 0 && keyboard =~# '^\x\{4}$'
-        if s:vimim_hex_unicode > 1
-            " from 4 digit-hex to unicode menu: 9999
-            let keyboard = 'u' . keyboard
-        elseif keyboard !~ '^\d\{4}$'
-            " from 4 hex to unicode menu: 9f9f
+    if keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
+        if len(keyboard)==5 || len(keyboard)==6  |" uwwwwq => 22221 囍
+            let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
+            if len(keyboard)==4                  |" uoooo  =>  9999 香
+                let keyboard = 'u' . keyboard
+            endif
+        endif
+    elseif keyboard =~# '^\x\{4}$' && keyboard !~ '^\d\{4}$'
+        if s:vimim_hex_unicode > 0  |" from 4 hex to unicode: 9f9f => 龟
             let keyboard = 'u' . keyboard
         endif
     endif
-    if len(keyboard)==6 && keyboard =~# '^u' |" uwwwwq => 22221
-        let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
-    endif
     let ddddd = 0
-    if keyboard =~# '^\d\{5}$'      |" from digit to unicode menu: 32911
-        let ddddd = str2nr(keyboard, 10)
-    elseif keyboard =~# '^u\x\{4}$' |" from hex to unicode menu: u808f
+    if keyboard =~# '^u\x\{4}$'     |" from hex to unicode:   u808f =>
         let ddddd = str2nr(keyboard[1:], 16)
+    elseif keyboard =~# '^\d\{5}$'  |" from digit to unicode: 32911 =>
+        let ddddd = str2nr(keyboard, 10)
     endif
     if empty(ddddd) || ddddd > 0xffff
         let ddddd = 0
