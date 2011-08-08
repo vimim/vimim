@@ -532,7 +532,7 @@ let s:VimIM += [" ====  /search          ==== {{{"]
 " =================================================
 
 function! g:vimim_search_next()
-    let english = @/
+    let english = substitute(@/,'\s','','g')
     if english =~ '\<' && english =~ '\>'
         let english = substitute(english,'[<>\\]','','g')
     endif
@@ -564,7 +564,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     sil!call s:vimim_backend_initialization()
     let keyboard = tolower(a:keyboard)
     let results = []
-    " 1/2 first try search from cloud/mycloud
+    " 1/3 first try search from cloud/mycloud
     if s:vimim_cloud =~ 'search'
         " => slash search from the default cloud
         let results = s:vimim_get_cloud(keyboard, s:cloud_default)
@@ -575,48 +575,39 @@ function! s:vimim_search_chinese_by_english(keyboard)
     if !empty(results)
         return results
     endif
-    " 2/2 try search from local datafiles
-    let cjk_results = []
-    let s:english_results = []
-    " => slash search unicode /u808f
+    " 2/3 search unicode or cjk => slash search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    " => slash search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
     if empty(ddddd) && !empty(s:has_cjk_file)
+        " => slash search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
         let keyboards = s:vimim_slash_search_block(keyboard)
         if len(keyboards) > 0
             for keyboard in keyboards
                 let chars = s:vimim_cjk_match(keyboard)
                 if len(keyboards) == 1
-                    let cjk_results = copy(chars)
+                    let results = copy(chars)
                 elseif len(chars) > 0
                     let collection = "[" . join(chars,'') . "]"
-                    call add(cjk_results, collection)
+                    call add(results, collection)
                 endif
             endfor
             if len(keyboards) > 1
-                let cjk_results = [join(cjk_results,'')]
+                let results = [join(results,'')]
             endif
         endif
     else
-        let cjk_results = [nr2char(ddddd)]
+        let results = [nr2char(ddddd)]
     endif
-    " => slash search english directly: /horse
-    if keyboard =~ '^\l\+'
+    if !empty(results)
+        return results
+    endif
+    " 3/3 search local datafiles => slash search english: /horse
+    if keyboard =~ '^\l\+' && keyboard !~ '\L'
+        let s:english_results = []
         sil!call s:vimim_onekey_english(a:keyboard, 1)
     endif
-    let results = []
-    if empty(cjk_results) && empty(s:english_results)
-        if !empty(s:vimim_shuangpin)
-            sil!call s:vimim_initialize_shuangpin()
-            let keyboard = s:vimim_shuangpin_transform(keyboard)
-        endif
-    endif
-    if empty(results)
-        " => slash search from local datafile or directory
-        let results = s:vimim_embedded_backend_engine(keyboard,1)
-    endif
+    " => slash search from local datafile or directory
+    let results = s:vimim_embedded_backend_engine(keyboard,1)
     call extend(results, s:english_results, 0)
-    call extend(results, cjk_results)
     return results
 endfunction
 
@@ -2564,7 +2555,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
                 " output is '6021' for input 6021272260021762
                 let head = s:vimim_get_head(keyboard, 4)
             endif
-        elseif keyboard =~ '^\l\+\d\+\>' || keyboard =~ '[0-9.]'
+        elseif keyboard =~ '^\l\+\d\+\>'
             let head = keyboard
         elseif keyboard =~ '^\l\+\d\+'
             " output is 'wo23' for input wo23you40yigemeng
@@ -2579,16 +2570,14 @@ function! s:vimim_cjk_sentence_match(keyboard)
         endif
     elseif s:ui.im == 'pinyin' || s:has_cjk_file > 1
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
-            " output is 'm7712' for input muuqwxeyqpjeqqq
-            let delimiter = match(keyboard, '^\l\l\l\l\l')
-            if delimiter > -1
-                let llll = keyboard[1:4]
-                let dddd = s:vimim_qwertyuiop_1234567890(llll)
-                if !empty(dddd)
-                    let ldddd = keyboard[0:0] . dddd
-                    let keyboard = ldddd . keyboard[5:-1]
-                    let head = s:vimim_get_head(keyboard, 5)
-                endif
+        \&& keyboard =~ '^\l' && keyboard[1:4] !~ '[^pqwertyuio]'
+            " muuqwxeyqpjeqqq => m7712x3610j3111
+            let llll = keyboard[1:4]
+            let dddd = s:vimim_qwertyuiop_1234567890(llll)
+            if !empty(dddd)
+                let ldddd = keyboard[0:0] . dddd
+                let keyboard = ldddd . keyboard[5:-1]
+                let head = s:vimim_get_head(keyboard, 5)
             endif
         endif
         if empty(head)
