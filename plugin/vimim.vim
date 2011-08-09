@@ -554,7 +554,7 @@ function! g:vimim_search_next()
             let @/ = english
         endif
     endif
-    echon "/" . @/
+    echon "/" . english
     let v:errmsg = ""
 endfunction
 
