@@ -532,32 +532,30 @@ let s:VimIM += [" ====  /search          ==== {{{"]
 " =================================================
 
 function! g:vimim_search_next()
-    let english = substitute(@/,'\s','','g')
+    let english = @/
     if english =~ '\<' && english =~ '\>'
         let english = substitute(english,'[<>\\]','','g')
     endif
     let results = []
-    let error = ""
     if len(english) > 1 && len(english) < 24
     \&& english =~ '\w' && english !~ '\W' && english !~ '_'
     \&& v:errmsg =~# english && v:errmsg =~# '^E486: '
         try
             let results = s:vimim_search_chinese_by_english(english)
         catch
-            let error = v:exception
+            call s:debug('alert', 'slash search /', v:exception)
         endtry
     endif
     if !empty(results)
         let results = split(substitute(join(results),'\w','','g'))
         let slash = join(results[0:5], '\|')
+        let @/ = slash
         if empty(search(slash,'nw'))
             let @/ = english
-        else
-            let @/ = slash
         endif
     endif
+    echon "/" . @/
     let v:errmsg = ""
-    echon "/" . english . error
 endfunction
 
 function! s:vimim_search_chinese_by_english(keyboard)
