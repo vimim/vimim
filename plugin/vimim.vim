@@ -221,7 +221,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_menu")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_onekey_is_tab")
-    call add(G, "g:vimim_hex_unicode")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_toggle_list")
@@ -273,7 +272,7 @@ function! s:vimim_initialize_local()
     let hjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
-        let g:vimim_hex_unicode = 1
+        let g:vimim_imode_pinyin = 2
         let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
@@ -994,7 +993,9 @@ function! s:vimim_get_valid_im_name(im)
         let im = 'wubi'
     elseif im =~ '^pinyin'
         let im = 'pinyin'
-        let s:vimim_imode_pinyin = 1
+        if  empty(s:vimim_imode_pinyin)
+            let s:vimim_imode_pinyin = 1
+        endif
     elseif im !~ s:all_vimim_input_methods
         let im = 0
     endif
@@ -2183,7 +2184,7 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     if keyboard =~# '^u'
         let force = -1
         if len(keyboard) == 5
-            if keyboard =~ '[^pqwertyuio]' && s:vimim_hex_unicode > 0
+            if keyboard =~ '[^pqwertyuio]' && s:vimim_imode_pinyin > 1
                 let force = 0   |" uipif =>  u808f   uofof => u9f9f
             else
                 let force = 1   |" uoooo =>  u9999
@@ -2197,7 +2198,7 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         if len(keyboard) == 4
             let keyboard = 'u' . keyboard
         endif
-    elseif len(keyboard) == 4 && s:vimim_hex_unicode > 0
+    elseif len(keyboard) == 4 && s:vimim_imode_pinyin > 1
     \&& keyboard =~# '^\x\{4}$' && keyboard !~ '^\d\{4}$'
         let keyboard = 'u' . keyboard |" from 4 hex to unicode: 9f9f => 龟
     else
@@ -4592,7 +4593,7 @@ if a:start
     endif
     let last_seen_nonsense_column  = copy(start_column)
     let last_seen_backslash_column = copy(start_column)
-    let nonsense = s:vimim_hex_unicode>0 ? "[a-f0-9.']" : "[0-9.']"
+    let nonsense = s:vimim_imode_pinyin>1 ? "[a-f0-9.']" : "[0-9.']"
     let all_digit = 1
     while start_column > 0
         if one_before =~# s:valid_key
