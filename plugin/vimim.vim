@@ -740,6 +740,15 @@ endfunction
 
 function! s:vimim_imode_number(keyboard)
     " usage: i88 ii88 isw8ql iisw8ql
+    let keyboard = a:keyboard
+    if keyboard[0:1] ==# 'ii'
+        let keyboard = 'I' . keyboard[2:]
+    endif
+    let i = keyboard[0:0]
+    let keyboard = keyboard[1:]
+    let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
+    let keyboards = split(dddl, '\ze')
+    let number = ""
     let quantifier = {}
     let quantifier.1 = '一壹甲⒈①⑴'
     let quantifier.2 = '二贰乙⒉②⑵'
@@ -776,15 +785,6 @@ function! s:vimim_imode_number(keyboard)
     let quantifier.x = '升席些项'
     let quantifier.y = '年亿叶月'
     let quantifier.z = '种只张株支枝盏座阵桩尊则站幢宗兆'
-    let keyboard = a:keyboard
-    if keyboard[0:1] ==# 'ii'
-        let keyboard = 'I' . strpart(keyboard,2)
-    endif
-    let i = keyboard[0:0]
-    let keyboard = keyboard[1:]
-    let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
-    let keyboards = split(dddl, '\ze')
-    let number = ""
     for char in keyboards
         if has_key(quantifier, char)
             let quantifier_list = split(quantifier[char], '\zs')
@@ -1891,16 +1891,16 @@ function! s:vimim_onekey_input(keyboard)
     if keyboard =~# '^i'
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             return [s:vimim_imode_today_now(keyboard)]
-        elseif s:vimim_imode_pinyin > -1
+        elseif s:vimim_imode_pinyin > -1 && keyboard =~ '[^pqwertyuio]'
             let results = s:vimim_imode_number(keyboard)
-            if !empty(len(results)) 
-                return results 
+            if !empty(len(results))
+                return results
             endif
         endif
     endif
     " [cjk] cjk database works like swiss-army knife
     if s:has_cjk_file > 0
-        if keyboard =~# '^i'   "| iypwqwuww => 60212722
+        if keyboard =~# '^i' "| 4corner_shortcut: iypwqwuww => 60212722
             let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:],1)
         endif
         let keyboard = s:vimim_cjk_sentence_match(keyboard)
@@ -2608,7 +2608,7 @@ function! s:vimim_qwertyuiop_1234567890(keyboard, only)
     let dddd = ""
     for char in split(a:keyboard, '\zs')
         let digit = match(s:qwerty, char)
-        if digit < 0 
+        if digit < 0
             if a:only > 0
                 return 0
             endif
