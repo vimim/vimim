@@ -637,44 +637,6 @@ function! s:translators.translate(english) dict
     return join(map(inputs,'get(self.dict,tolower(v:val),v:val)'), '')
 endfunction
 
-function! s:vimim_imode_today_now(keyboard)
-    let results = []
-    call add(results, strftime("%Y"))
-    call add(results, 'year')
-    call add(results, substitute(strftime("%m"),'^0','',''))
-    call add(results, 'month')
-    call add(results, substitute(strftime("%d"),'^0','',''))
-    call add(results, 'day')
-    if a:keyboard ==# 'itoday'
-        call add(results, s:space)
-        call add(results, strftime("%A"))
-    elseif a:keyboard ==# 'inow'
-        call add(results, substitute(strftime("%H"),'^0','',''))
-        call add(results, 'hour')
-        call add(results, substitute(strftime("%M"),'^0','',''))
-        call add(results, 'minute')
-        call add(results, substitute(strftime("%S"),'^0','',''))
-        call add(results, 'second')
-    endif
-    let ecdict = {}
-    let ecdict.sunday    = '星期日'
-    let ecdict.monday    = '星期一'
-    let ecdict.tuesday   = '星期二'
-    let ecdict.wednesday = '星期三'
-    let ecdict.thursday  = '星期四'
-    let ecdict.friday    = '星期五'
-    let ecdict.saturday  = '星期六'
-    let ecdict.year      = '年'
-    let ecdict.month     = '月'
-    let ecdict.day       = '日'
-    let ecdict.hour      = '时'
-    let ecdict.minute    = '分'
-    let ecdict.second    = '秒'
-    let chinese = copy(s:translators)
-    let chinese.dict = ecdict
-    return chinese.translate(join(results))
-endfunction
-
 function! s:vimim_dictionary_chinese()
     let s:space = "　"
     let s:colon = "："
@@ -738,39 +700,57 @@ function! s:vimim_dictionary_chinese()
     let s:chinese.datetime   = ['日期']
 endfunction
 
-function! s:vimim_imode_number(keyboard, prefix)
+function! s:vimim_imode_today_now(keyboard)
+    let results = []
+    call add(results, strftime("%Y"))
+    call add(results, 'year')
+    call add(results, substitute(strftime("%m"),'^0','',''))
+    call add(results, 'month')
+    call add(results, substitute(strftime("%d"),'^0','',''))
+    call add(results, 'day')
+    if a:keyboard ==# 'itoday'
+        call add(results, s:space)
+        call add(results, strftime("%A"))
+    elseif a:keyboard ==# 'inow'
+        call add(results, substitute(strftime("%H"),'^0','',''))
+        call add(results, 'hour')
+        call add(results, substitute(strftime("%M"),'^0','',''))
+        call add(results, 'minute')
+        call add(results, substitute(strftime("%S"),'^0','',''))
+        call add(results, 'second')
+    endif
+    let ecdict = {}
+    let ecdict.sunday    = '星期日'
+    let ecdict.monday    = '星期一'
+    let ecdict.tuesday   = '星期二'
+    let ecdict.wednesday = '星期三'
+    let ecdict.thursday  = '星期四'
+    let ecdict.friday    = '星期五'
+    let ecdict.saturday  = '星期六'
+    let ecdict.year      = '年'
+    let ecdict.month     = '月'
+    let ecdict.day       = '日'
+    let ecdict.hour      = '时'
+    let ecdict.minute    = '分'
+    let ecdict.second    = '秒'
+    let chinese = copy(s:translators)
+    let chinese.dict = ecdict
+    return chinese.translate(join(results))
+endfunction
+
+function! s:vimim_imode_number(keyboard)
     " usage: i88 ii88 isw8ql iisw8ql
-    if s:vimim_imode_pinyin < 1
-        return []
-    endif
-    let keyboard = a:keyboard
-    if keyboard[0:1] ==# 'ii'
-        let keyboard = 'I' . strpart(keyboard,2)
-    endif
-    let ii_keyboard = keyboard
-    let keyboard = strpart(keyboard,1)
-    if keyboard !~ '^\d\+' && keyboard !~# '^[ds]'
-    \&& len(substitute(keyboard,'\d','','')) > 1
-        return []
-    endif
-    let digit_alpha = keyboard
-    if keyboard =~# '^\d*\l\{1}$'
-        let digit_alpha = keyboard[:-2]
-    endif
-    let keyboards = split(digit_alpha, '\ze')
-    let i = ii_keyboard[:0]
-    let number = ""
     let quantifier = {}
-    let quantifier.1 = '一壹甲①⒈⑴'
-    let quantifier.2 = '二贰乙②⒉⑵'
-    let quantifier.3 = '三叁丙③⒊⑶'
-    let quantifier.4 = '四肆丁④⒋⑷'
-    let quantifier.5 = '五伍戊⑤⒌⑸'
-    let quantifier.6 = '六陆己⑥⒍⑹'
-    let quantifier.7 = '七柒庚⑦⒎⑺'
-    let quantifier.8 = '八捌辛⑧⒏⑻'
-    let quantifier.9 = '九玖壬⑨⒐⑼'
-    let quantifier.0 = '〇零癸⑩⒑⑽十拾'
+    let quantifier.1 = '一壹甲⒈①⑴'
+    let quantifier.2 = '二贰乙⒉②⑵'
+    let quantifier.3 = '三叁丙⒊③⑶'
+    let quantifier.4 = '四肆丁⒋④⑷'
+    let quantifier.5 = '五伍戊⒌⑤⑸'
+    let quantifier.6 = '六陆己⒍⑥⑹'
+    let quantifier.7 = '七柒庚⒎⑦⑺'
+    let quantifier.8 = '八捌辛⒏⑧⑻'
+    let quantifier.9 = '九玖壬⒐⑨⑼'
+    let quantifier.0 = '〇零癸⒑⑩⑽'
     let quantifier.s = '十拾时升艘扇首双所束手秒'
     let quantifier.b = '百佰步把包杯本笔部班'
     let quantifier.q = '千仟群'
@@ -796,11 +776,20 @@ function! s:vimim_imode_number(keyboard, prefix)
     let quantifier.x = '升席些项'
     let quantifier.y = '年亿叶月'
     let quantifier.z = '种只张株支枝盏座阵桩尊则站幢宗兆'
+    let keyboard = a:keyboard
+    if keyboard[0:1] ==# 'ii'
+        let keyboard = 'I' . strpart(keyboard,2)
+    endif
+    let i = keyboard[0:0]
+    let keyboard = keyboard[1:]
+    let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
+    let keyboards = split(dddl, '\ze')
+    let number = ""
     for char in keyboards
         if has_key(quantifier, char)
             let quantifier_list = split(quantifier[char], '\zs')
             let chinese = get(quantifier_list, 0)
-            if i ==# "I" && char =~ '[0-9sbq]'
+            if i ==# 'I' && char =~ '[0-9sbq]'
                 let chinese = get(quantifier_list, 1)
             endif
         endif
@@ -1902,9 +1891,11 @@ function! s:vimim_onekey_input(keyboard)
     if keyboard =~# '^i'
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             return [s:vimim_imode_today_now(keyboard)]
-        elseif keyboard =~ '\d'
-            let results = s:vimim_imode_number(keyboard, 'i')
-            if !empty(len(results)) | return results | endif
+        elseif s:vimim_imode_pinyin > -1 && keyboard =~ '[0-9sd]'
+            let results = s:vimim_imode_number(keyboard)
+            if !empty(len(results)) 
+                return results 
+            endif
         endif
     endif
     " [cjk] cjk database works like swiss-army knife
