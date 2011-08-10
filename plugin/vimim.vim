@@ -221,7 +221,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_menu")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_onekey_is_tab")
-    call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
@@ -229,6 +228,7 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     let G = []
     call add(G, "g:vimim_onekey_hit_and_run")
+    call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_enter_for_seamless")
     call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
@@ -273,7 +273,6 @@ function! s:vimim_initialize_local()
     if isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
-        let g:vimim_digit_4corner = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
