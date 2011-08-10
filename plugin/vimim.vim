@@ -2192,8 +2192,6 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     elseif len(keyboard) == 4 && s:vimim_imode_pinyin > 1
     \&& keyboard =~# '^\x\{4}$' && keyboard !~ '^\d\{4}$'
         let keyboard = 'u' . keyboard |" from 4 hex to unicode: 9f9f => 龟
-    else
-        return 0
     endif
     let ddddd = 0
     if keyboard =~# '^u\x\{4}$'     |" from hex to unicode:   u808f =>
