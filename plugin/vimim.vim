@@ -1891,7 +1891,7 @@ function! s:vimim_onekey_input(keyboard)
     if keyboard =~# '^i'
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             return [s:vimim_imode_today_now(keyboard)]
-        elseif s:vimim_imode_pinyin > -1 && keyboard =~ '[0-9sd]'
+        elseif s:vimim_imode_pinyin > -1
             let results = s:vimim_imode_number(keyboard)
             if !empty(len(results)) 
                 return results 
@@ -1901,7 +1901,7 @@ function! s:vimim_onekey_input(keyboard)
     " [cjk] cjk database works like swiss-army knife
     if s:has_cjk_file > 0
         if keyboard =~# '^i'   "| iypwqwuww => 60212722
-            let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
+            let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:],1)
         endif
         let keyboard = s:vimim_cjk_sentence_match(keyboard)
         let results = s:vimim_cjk_match(keyboard)
@@ -2180,17 +2180,28 @@ endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
-        if len(keyboard)==5 || len(keyboard)==6  |" uwwwwq => 22221 囍
-            let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
-            if len(keyboard)==4                  |" uoooo  =>  9999 香
-                let keyboard = 'u' . keyboard
+    if keyboard =~# '^u'
+        let force = -1
+        if len(keyboard) == 5
+            if keyboard =~ '[^pqwertyuio]' && s:vimim_hex_unicode > 0
+                let force = 0   |" uipif =>  u808f   uofof => u9f9f
+            else
+                let force = 1   |" uoooo =>  u9999
             endif
+        elseif len(keyboard) == 6 && keyboard !~ '[^pqwertyuio]'
+            let force = 1       |" uwwwwq => 22221
+        else
+            return 0
         endif
-    elseif keyboard =~# '^\x\{4}$' && keyboard !~ '^\d\{4}$'
-        if s:vimim_hex_unicode > 0  |" from 4 hex to unicode: 9f9f => 龟
+        let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:],force)
+        if len(keyboard) == 4
             let keyboard = 'u' . keyboard
         endif
+    elseif len(keyboard) == 4 && s:vimim_hex_unicode > 0
+    \&& keyboard =~# '^\x\{4}$' && keyboard !~ '^\d\{4}$'
+        let keyboard = 'u' . keyboard |" from 4 hex to unicode: 9f9f => 龟
+    else
+        return 0
     endif
     let ddddd = 0
     if keyboard =~# '^u\x\{4}$'     |" from hex to unicode:   u808f =>
@@ -2562,7 +2573,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         \&& keyboard =~ '^\l' && keyboard[1:4] !~ '[^pqwertyuio]'
             " muuqwxeyqpjeqqq => m7712x3610j3111
             let llll = keyboard[1:4]
-            let dddd = s:vimim_qwertyuiop_1234567890(llll)
+            let dddd = s:vimim_qwertyuiop_1234567890(llll,1)
             if !empty(dddd)
                 let ldddd = keyboard[0:0] . dddd
                 let keyboard = ldddd . keyboard[5:-1]
@@ -2589,19 +2600,22 @@ function! s:vimim_cjk_sentence_match(keyboard)
     return head
 endfunction
 
-function! s:vimim_qwertyuiop_1234567890(keyboard)
+function! s:vimim_qwertyuiop_1234567890(keyboard, only)
     " output is '7712' for input uuqw
-    if a:keyboard =~ '\d'
+    if a:keyboard =~ '\d' || a:only < 0
         return 0
     endif
     let dddd = ""
     for char in split(a:keyboard, '\zs')
         let digit = match(s:qwerty, char)
-        if digit < 0
-            return 0
+        if digit < 0 
+            if a:only > 0
+                return 0
+            endif
         else
-            let dddd .= digit
+            let char = digit
         endif
+        let dddd .= char
     endfor
     return dddd
 endfunction
