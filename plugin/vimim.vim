@@ -2732,8 +2732,7 @@ endfunction
 
 function! s:vimim_get_traditional_chinese(chinese)
     let chinese = ""
-    let chinese_list = split(a:chinese,'\zs')
-    for char in chinese_list
+    for char in split(a:chinese, '\zs')
         let chinese .= s:vimim_1to1(char)
     endfor
     return chinese
@@ -3583,20 +3582,17 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_backend_embedded_directory()
-    if len(s:vimim_mycloud) > 1 || s:vimim_data_file =~ ".db"
+    if len(s:vimim_mycloud) > 1 || s:ui.root == "datafile"
         return
     endif
     for im in s:all_vimim_input_methods
-        let dir = s:vimim_data_directory
-        if !empty(dir) && isdirectory(dir)
-            let tail = get(split(dir,"/"), -1)
+        if isdirectory(s:vimim_data_directory)
+            let tail = get(split(s:vimim_data_directory,"/"), -1)
             if tail =~ '\<' . im . '\>'
-                call s:vimim_set_directory(im, dir)
+                call s:vimim_set_directory(im, s:vimim_data_directory)
             endif
-        endif
-        let dir = s:path . im
-        if isdirectory(dir)
-            call s:vimim_set_directory(im, dir)
+        elseif isdirectory(s:path.im)
+            call s:vimim_set_directory(im, s:path.im)
         endif
     endfor
 endfunction
