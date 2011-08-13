@@ -431,6 +431,7 @@ function! s:vimim_get_hjkl(keyboard)
     " [unicode] support direct unicode/gb/big5 input
     let lines = s:vimim_get_unicode_list(a:keyboard)
     if !empty(lines)
+        let s:hjkl_l += 1
         return lines
     endif
     " [eggs] hunt classic easter egg ... vim<C-6>
@@ -2163,6 +2164,10 @@ function! s:vimim_initialize_encoding()
 endfunction
 
 function! s:vimim_get_unicode_list(keyboard)
+    if a:keyboard =~ 'u\d\d\d\d\d'
+        let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
+        return split(chinese, '\zs')
+    endif
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
     if ddddd < 8080 || ddddd > 19968+20902
         return []
@@ -2205,22 +2210,22 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     return ddddd
 endfunction
 
-function! s:vimim_cjk_property_display(ddddd)
+function! s:vimim_cjk_extra_text(ddddd)
     let unicode = printf('u%04x', a:ddddd)
     if empty(s:has_cjk_file)
         return unicode . s:space . a:ddddd
     endif
     let chinese = nr2char(a:ddddd)
-    let five = get(s:vimim_get_property(chinese,1),0)
-    let four = get(s:vimim_get_property(chinese,2),0)
-    let digit = s:vimim_digit_4corner>0 ? four : five
-    let pinyin = get(s:vimim_get_property(chinese,'pinyin'),0)
+    let five    = get(s:vimim_get_property(chinese,1),0)
+    let four    = get(s:vimim_get_property(chinese,2),0)
+    let pinyin  = get(s:vimim_get_property(chinese,'pinyin'),0)
     let english = get(s:vimim_get_property(chinese,'english'),0)
     if get(s:keyboard_list,0) =~ '^u\x\x\x\x\|^\d\d\d\d\d\>'
         let unicode .= s:space
     else
         let unicode = ""
     endif
+    let digit = s:vimim_digit_4corner>0 ? four : five
     let unicode .= digit . s:space . pinyin
     if !empty(english)
         let unicode .= s:space . english
@@ -2479,8 +2484,8 @@ function! <SID>vimim_onekey_hjkl(key)
                 for toggle in toggles
                     if toggle == a:key
                         exe 'let s:hjkl_' . toggle . ' += 1'
-                        let s:hjkl_n = a:key == 'm' ? 0 : s:hjkl_n
-                        let s:hjkl_m = a:key == 'n' ? 0 : s:hjkl_m
+                        let s:hjkl_n = a:key=='m' ? 0 : s:hjkl_n
+                        let s:hjkl_m = a:key=='n' ? 0 : s:hjkl_m
                     endif
                 endfor
             endif
@@ -2753,73 +2758,38 @@ function! s:vimim_1to1(chinese)
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
+    let key = "o"
     let unnamed_register = getreg('"')
-    let lines = split(unnamed_register,'\n')
     let new_positions = getpos(".")
+    sil!call s:vimim_backend_initialization()
+    sil!call s:vimim_onekey_start()
+    let lines = split(unnamed_register,'\n')
     if len(lines) < 2
         " input:  one line 马力 highlighted in vim visual mode
-        " output: unicode || 4corner || 5stroke && pinyin && cjjp
-        sil!call s:vimim_backend_initialization()
-        let results = s:vimim_get_char_property()
-        if !empty(results)
-            let line = line(".")
-            call setline(line, results)
-            let new_positions[1] = line + len(results) - 1
-            let new_positions[2] = len(get(split(get(results,-1)),0))+1
-            call setpos(".", new_positions)
+        " output: display every chinese vertically in moni window
+        let line = get(lines,0)
+        let ddddd = char2nr(get(split(line,'\zs'),0))
+        if ddddd =~ '^\d\d\d\d\d$'
+            let line =  'u' . ddddd
         endif
+        let key .=  line
     else
         " input:  visual block highlighted in vim visual mode
         " output: the highlighted displayed in omni popup window
-        let key = "O"
         if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
             let new_positions[1] = line("'>'")
             call setpos(".", new_positions)
-            let key = "o"
+        else
+            let key = "O"
         endif
         let n = virtcol("'<'") - 2
         if n > 0
-            let b:ctrl6_space = repeat(" ",n)
-            let key .= "^\<C-D>\<C-R>=b:ctrl6_space\<CR>"
+            let key .= "^\<C-D>" . repeat(" ",n)
         endif
-        sil!call s:vimim_onekey_start()
-        let key .= "vimim\<C-R>=g:vimim()\<CR>"
-        sil!call feedkeys(key)
+        let key .= "vimim"
     endif
-endfunction
-
-function! s:vimim_get_char_property()
-    let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
-    if empty(chinese)
-        return []
-    elseif empty(s:has_cjk_file)
-        return s:vimim_get_property(chinese, 'unicode')
-    endif
-    let results = []
-    let digit = s:vimim_digit_4corner>0 ? 2 : 1
-    let results_digit = s:vimim_get_property(chinese, digit)
-    call extend(results, results_digit)  |" 马力 => 7712 4002
-    let results_pinyin = []              |" 马力 => ma3 li2
-    let result_cjjp = ""                 |" 马力 => ml
-    let items = s:vimim_get_property(chinese, 'pinyin')
-    if len(items) > 0
-        let pinyin_head = get(items,0)
-        if !empty(pinyin_head)
-            call add(results_pinyin, pinyin_head)
-            call add(results_pinyin, get(items,1))
-            for pinyin in split(pinyin_head)
-                let result_cjjp .= pinyin[0:0]
-            endfor
-            let result_cjjp .= " ".chinese
-        endif
-    endif
-    if !empty(results_pinyin)
-        call extend(results, results_pinyin)
-        if result_cjjp =~ '\a'
-            call add(results, result_cjjp)
-        endif
-    endif
-    return results
+    let key .= "\<C-R>=g:vimim()\<CR>"
+    sil!call feedkeys(key)
 endfunction
 
 " ============================================= }}}
@@ -4736,7 +4706,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let extra_text = menu
             if empty(s:english_results)
                 let ddddd = char2nr(chinese)
-                let extra_text = s:vimim_cjk_property_display(ddddd)
+                let extra_text = s:vimim_cjk_extra_text(ddddd)
             endif
         endif
         if empty(s:mycloud)
