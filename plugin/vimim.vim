@@ -2229,7 +2229,6 @@ function! s:vimim_cjk_property_display(ddddd)
 endfunction
 
 function! s:vimim_get_property(chinese, property)
-    let property = a:property
     let headers = []
     let bodies = []
     for chinese in split(a:chinese, '\zs')
@@ -2239,13 +2238,13 @@ function! s:vimim_get_property(chinese, property)
             continue
         endif
         let head = ''
-        if property == 'unicode'
+        if a:property == 'unicode'
             let head = printf('%x', ddddd)
         elseif s:has_cjk_file > 0
             let values = split(get(s:cjk_lines,line))
-            if property =~ '\d'          | let head = get(values,property)
-            elseif property == 'pinyin'  | let head = get(values,3)
-            elseif property == 'english' | let head = join(values[4:-2])
+            if a:property =~ '\d' | let head = get(values,a:property)
+            elseif a:property == 'pinyin'  | let head = get(values,3)
+            elseif a:property == 'english' | let head = join(values[4:-2])
             endif
         endif
         if empty(head)
@@ -2759,7 +2758,7 @@ function! <SID>vimim_visual_ctrl6()
     let new_positions = getpos(".")
     if len(lines) < 2
         " input:  one line 马力 highlighted in vim visual mode
-        " output: unicode || 4corner && 5stroke && pinyin && cjjp
+        " output: unicode || 4corner || 5stroke && pinyin && cjjp
         sil!call s:vimim_backend_initialization()
         let results = s:vimim_get_char_property()
         if !empty(results)
@@ -2802,12 +2801,11 @@ function! s:vimim_get_char_property()
     if empty(s:has_cjk_file)
         return results
     endif
-    let results_digit = s:vimim_get_property(chinese, 2)
-    call extend(results, results_digit)
-    let results_digit = s:vimim_get_property(chinese, 1)
-    call extend(results, results_digit)
-    let results_pinyin = []  " 马力 => ma3 li2
-    let result_cjjp = ""     "      => ml
+    let digit = s:vimim_digit_4corner>0 ? 2 : 1
+    let results_digit = s:vimim_get_property(chinese, digit)
+    call extend(results, results_digit)  |" 马力 => 7712 4002
+    let results_pinyin = []              |" 马力 => ma3 li2
+    let result_cjjp = ""                 |" 马力 => ml
     let items = s:vimim_get_property(chinese, 'pinyin')
     if len(items) > 0
         let pinyin_head = get(items,0)
