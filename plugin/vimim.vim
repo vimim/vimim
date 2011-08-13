@@ -4110,6 +4110,7 @@ function! s:vimim_get_cloud_all(keyboard)
         endif
         call add(results, title)
         if len(outputs) > 1+1+1+1
+            let outputs = &number<1 ? outputs[0:8] : outputs
             let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
             call map(outputs, filter)
             call add(results, join(outputs[0:-2]))
