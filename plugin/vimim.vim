@@ -2792,15 +2792,10 @@ function! s:vimim_get_char_property()
     let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
     if empty(chinese)
         return []
+    elseif empty(s:has_cjk_file)
+        return s:vimim_get_property(chinese, 'unicode')
     endif
     let results = []
-    let results_unicode = s:vimim_get_property(chinese, 'unicode')
-    if !empty(results_unicode)
-        call extend(results, results_unicode)
-    endif
-    if empty(s:has_cjk_file)
-        return results
-    endif
     let digit = s:vimim_digit_4corner>0 ? 2 : 1
     let results_digit = s:vimim_get_property(chinese, digit)
     call extend(results, results_digit)  |" 马力 => 7712 4002
