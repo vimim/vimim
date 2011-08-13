@@ -4623,10 +4623,9 @@ else
     endif
     " [onekey] play with nothing but OneKey
     if s:chinese_input_mode =~ 'onekey'
-       " [clouds] all clouds for any input: fuck'''' or fuckii
-        if keyboard[-4:] ==# "''''" || keyboard[-2:] ==# "ii"
-            let input = keyboard=~"ii" ? keyboard[:-3] : keyboard[:-5]
-            let results = s:vimim_get_cloud_all(input)
+       " [clouds] all clouds for any input: fuck''''
+        if keyboard[-4:] ==# "''''"
+            let results = s:vimim_get_cloud_all(keyboard[:-5])
             return s:vimim_popupmenu_list(results)
         endif
         let results = s:vimim_onekey_input(keyboard)
