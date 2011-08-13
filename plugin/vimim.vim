@@ -2759,14 +2759,12 @@ endfunction
 
 function! <SID>vimim_visual_ctrl6()
     let key = "o"
-    let unnamed_register = getreg('"')
-    let new_positions = getpos(".")
-    sil!call s:vimim_backend_initialization()
     sil!call s:vimim_onekey_start()
+    let unnamed_register = getreg('"')
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
-        " input:  one line 马力 highlighted in vim visual mode
-        " output: display every chinese vertically in moni window
+        " input:  one line highlighted in vim visual mode
+        " output: display every chinese vertically in omni window
         let line = get(lines,0)
         let ddddd = char2nr(get(split(line,'\zs'),0))
         if ddddd =~ '^\d\d\d\d\d$'
@@ -2775,8 +2773,9 @@ function! <SID>vimim_visual_ctrl6()
         let key .=  line
     else
         " input:  visual block highlighted in vim visual mode
-        " output: the highlighted displayed in omni popup window
+        " output: display the highlighted in omni window
         if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
+            let new_positions = getpos(".")
             let new_positions[1] = line("'>'")
             call setpos(".", new_positions)
         else
