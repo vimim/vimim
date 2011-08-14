@@ -82,8 +82,7 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_dictionary_chinese()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
-    sil!call s:vimim_scan_backend_embedded_datafile()
-    sil!call s:vimim_scan_backend_embedded_directory()
+    sil!call s:vimim_scan_backend_embedded()
     sil!call s:vimim_scan_backend_cloud()
     sil!call s:vimim_scan_cjk_file()
     sil!call s:vimim_scan_english_datafile()
@@ -271,13 +270,12 @@ endfunction
 function! s:vimim_initialize_local()
     let hjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
+        let g:vimim_hjkl_directory = hjkl
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
-        let g:vimim_hjkl_directory = hjkl
-        let g:vimim_data_directory = '/home/vimim/pinyin/'
         let g:vimim_cloud = 'google,baidu,sogou,qq'
     endif
 endfunction
@@ -3366,7 +3364,7 @@ endfunction
 let s:VimIM += [" ====  backend file     ==== {{{"]
 " =================================================
 
-function! s:vimim_scan_backend_embedded_datafile()
+function! s:vimim_scan_backend_embedded()
     if len(s:vimim_mycloud) > 1
         return
     endif
@@ -3403,6 +3401,21 @@ function! s:vimim_scan_backend_embedded_datafile()
         :python import vim, bsddb
         :python db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
     endif
+    if s:ui.root == "datafile"
+        return
+    else
+        " scan embedded data directory
+    endif
+    for im in s:all_vimim_input_methods
+        if isdirectory(s:vimim_data_directory)
+            let tail = get(split(s:vimim_data_directory,"/"), -1)
+            if tail =~ '\<' . im . '\>'
+                call s:vimim_set_directory(im, s:vimim_data_directory)
+            endif
+        elseif isdirectory(s:path.im)
+            call s:vimim_set_directory(im, s:path.im)
+        endif
+    endfor
 endfunction
 
 function! s:vimim_set_datafile(im, datafile)
@@ -3540,22 +3553,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  backend dir      ==== {{{"]
 " =================================================
-
-function! s:vimim_scan_backend_embedded_directory()
-    if len(s:vimim_mycloud) > 1 || s:ui.root == "datafile"
-        return
-    endif
-    for im in s:all_vimim_input_methods
-        if isdirectory(s:vimim_data_directory)
-            let tail = get(split(s:vimim_data_directory,"/"), -1)
-            if tail =~ '\<' . im . '\>'
-                call s:vimim_set_directory(im, s:vimim_data_directory)
-            endif
-        elseif isdirectory(s:path.im)
-            call s:vimim_set_directory(im, s:path.im)
-        endif
-    endfor
-endfunction
 
 function! s:vimim_set_directory(im, dir)
     let im = s:vimim_get_valid_im_name(a:im)
