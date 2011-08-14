@@ -3789,17 +3789,6 @@ function! s:vimim_do_cloud_or_not(keyboard)
     if s:ui.root == 'cloud'
         return 1
     endif
-    if s:vimim_cloud =~ '\d' && s:chinese_input_mode !~ 'dynamic'
-        let clouds = split(s:vimim_cloud,',')
-        let cloud_at_will = get(get(clouds,0),1)
-        if cloud_at_will !~ '\D'
-            " threshold to trigger cloud automatically
-            let pinyins = s:vimim_get_pinyin_from_pinyin(a:keyboard)
-            if len(pinyins) > cloud_at_will
-                return 1
-            endif
-        endif
-    endif
     return 0
 endfunction
 
