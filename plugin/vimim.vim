@@ -3376,12 +3376,14 @@ function! s:vimim_scan_backend_embedded()
                 break
             endif
         endif
-        " http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db
         let datafile = s:path . "vimim." . im . ".txt"
         let dbfile = s:vimim_check_filereadable("vimim.".im.".db")
-        if !empty(dbfile)
+        " http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db
+        if !empty(dbfile) && has("python")
             let s:vimim_data_file = dbfile
             call s:vimim_set_datafile(im, dbfile)
+            :python import vim, bsddb
+            :python db = bsddb.btopen(vim.eval('dbfile'),'r')
             break
         elseif filereadable(datafile)
             call s:vimim_set_datafile(im, datafile)
@@ -3397,14 +3399,10 @@ function! s:vimim_scan_backend_embedded()
             endif
         endif
     endfor
-    if s:vimim_data_file =~ ".db" && has("python")
-        :python import vim, bsddb
-        :python db = bsddb.btopen(vim.eval('s:vimim_data_file'),'r')
-    endif
     if s:ui.root == "datafile"
         return
     else
-        " scan embedded data directory
+        " scan embedded data directory: /home/vimim/pinyin/
     endif
     for im in s:all_vimim_input_methods
         if isdirectory(s:vimim_data_directory)
@@ -4795,12 +4793,12 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
             endif
         endif
     elseif root =~# "datafile"
-       if s:vimim_data_file =~ ".db"
-           let keyboard2 = s:vimim_sentence_match_database(keyboard, 1)
-           let results = s:vimim_get_from_database(keyboard2, a:search)
+        if s:vimim_data_file =~ ".db"
+            let keyboard2 = s:vimim_sentence_match_database(keyboard, 1)
+            let results = s:vimim_get_from_database(keyboard2, a:search)
         else
-           let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
-           let results = s:vimim_get_from_datafile(keyboard2, a:search)
+            let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
+            let results = s:vimim_get_from_datafile(keyboard2, a:search)
         endif
     endif
     if len(s:keyboard_list) < 2
