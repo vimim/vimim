@@ -3780,11 +3780,14 @@ function! s:vimim_do_cloud_or_not(keyboard)
     if s:vimim_cloud < 0 || a:keyboard =~ "[^a-z]"
         return 0
     endif
-    if s:cloud_onekey > 0 || s:ui.root == 'cloud'
+    if s:cloud_onekey > 0
         return 1
     endif
     if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 1
         return 0
+    endif
+    if s:ui.root == 'cloud'
+        return 1
     endif
     if s:vimim_cloud =~ '\d' && s:chinese_input_mode !~ 'dynamic'
         let clouds = split(s:vimim_cloud,',')
