@@ -1727,7 +1727,7 @@ function! s:vimim_onekey_start()
     sil!call s:vimim_start()
 endfunction
 
-function! <SID>OneKey()
+function! g:vimim_onekey()
     " (1) <OneKey> => start OneKey as "hit and run"
     " (2) <OneKey> => stop  OneKey and print out menu
     let onekey = ''
@@ -2767,10 +2767,8 @@ function! <SID>vimim_visual_ctrl6()
         if ddddd =~ '^\d\d\d\d\d$'
             let line =  'u' . ddddd
         endif
-        let key = "gvc" . line . "\<C-R>=g:vimim()\<CR>" . "l"
-        if s:vimim_onekey_is_tab > 0
-            let key .=  "\<Tab>"
-        endif
+        let key  = "gvc" . line . "\<C-R>=g:vimim()\<CR>" . "l"
+        let key .= "\<C-R>=g:vimim_onekey()\<CR>"
     else
         " input:  visual block highlighted in vim visual mode
         " output: display the highlighted in omni window
@@ -4892,7 +4890,7 @@ endfunction
 
 function! s:vimim_initialize_plugin()
     if !hasmapto("VimimOneKey")
-        inoremap<unique><expr> <Plug>VimimOneKey <SID>OneKey()
+        inoremap<unique><expr> <Plug>VimimOneKey g:vimim_onekey()
     endif
     if s:vimim_onekey_is_tab < 2 && !hasmapto("VimIM")
         inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
