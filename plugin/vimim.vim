@@ -431,7 +431,6 @@ function! s:vimim_get_hjkl(keyboard)
     " [unicode] support direct unicode/gb/big5 input
     let lines = s:vimim_get_unicode_list(a:keyboard)
     if !empty(lines)
-        let s:hjkl_l += 1
         return lines
     endif
     " [eggs] hunt classic easter egg ... vim<C-6>
@@ -2308,10 +2307,7 @@ function! s:vimim_cache()
                 endfor
             endif
         elseif s:hjkl_h > 0 && len(s:matched_list) > &pumheight
-            let &pumheight = 0
-            if s:hjkl_h % 2 < 1
-                let &pumheight = s:pumheight
-            endif
+            let &pumheight = s:hjkl_h%2<1 ? s:pumheight : 0
         endif
     endif
     if s:pageup_pagedown != 0
@@ -2456,7 +2452,7 @@ function! s:vimim_pageup_pagedown()
 endfunction
 
 function! s:vimim_onekey_pumvisible_mapping()
-    for _ in split('hjkl<>sxmn', '\zs')
+    for _ in split('hjklmn<>sx', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
     for _ in s:qwerty + range(10)
@@ -2486,6 +2482,7 @@ function! <SID>vimim_onekey_hjkl(key)
                         exe 'let s:hjkl_' . toggle . ' += 1'
                         let s:hjkl_n = a:key=='m' ? 0 : s:hjkl_n
                         let s:hjkl_m = a:key=='n' ? 0 : s:hjkl_m
+                        break
                     endif
                 endfor
             endif
@@ -2770,7 +2767,7 @@ function! <SID>vimim_visual_ctrl6()
         if ddddd =~ '^\d\d\d\d\d$'
             let line =  'u' . ddddd
         endif
-        let key .=  line
+        let key .= line . "\<C-R>=g:vimim()\<CR>" . "l"
     else
         " input:  visual block highlighted in vim visual mode
         " output: display the highlighted in omni window
@@ -2785,9 +2782,8 @@ function! <SID>vimim_visual_ctrl6()
         if n > 0
             let key .= "^\<C-D>" . repeat(" ",n)
         endif
-        let key .= "vimim"
+        let key .= "vimim" . "\<C-R>=g:vimim()\<CR>"
     endif
-    let key .= "\<C-R>=g:vimim()\<CR>"
     sil!call feedkeys(key)
 endfunction
 
