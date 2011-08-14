@@ -1764,7 +1764,7 @@ function! g:vimim_onekey_dump()
         endif
         call add(lines, space . line)
     endfor
-    if has("gui_running") && has("win32")
+    if has("gui_running") && has("win32") && s:show_me_not != -99
         let @+ = join(lines, "\n")
     endif
     if getline(".") =~ 'vimim\>' && len(lines) < 2
@@ -2165,6 +2165,7 @@ endfunction
 function! s:vimim_get_unicode_list(keyboard)
     if a:keyboard =~ 'u\d\d\d\d\d'
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
+        let s:show_me_not = -99
         return split(chinese, '\zs')
     endif
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
@@ -2172,7 +2173,7 @@ function! s:vimim_get_unicode_list(keyboard)
         return []
     endif
     let words = []
-    for i in range(108/6)
+    for i in range(108/6/2)
         if ddddd+i > 40869
             break
         endif
@@ -2210,13 +2211,11 @@ function! s:vimim_get_unicode_ddddd(keyboard)
 endfunction
 
 function! s:vimim_cjk_extra_text(ddddd)
-    let unicode = printf('u%04x', a:ddddd)
+    let unicode = printf('u%04x', a:ddddd) . s:space . a:ddddd
     if empty(s:has_cjk_file)
-        return unicode . s:space . a:ddddd
+        return unicode
     endif
     let chinese = nr2char(a:ddddd)
-    let five    = get(s:vimim_get_property(chinese,1),0)
-    let four    = get(s:vimim_get_property(chinese,2),0)
     let pinyin  = get(s:vimim_get_property(chinese,'pinyin'),0)
     let english = get(s:vimim_get_property(chinese,'english'),0)
     if get(s:keyboard_list,0) =~ '^u\x\x\x\x\|^\d\d\d\d\d\>'
@@ -2224,7 +2223,8 @@ function! s:vimim_cjk_extra_text(ddddd)
     else
         let unicode = ""
     endif
-    let digit = s:vimim_digit_4corner>0 ? four : five
+    let dddd = s:vimim_digit_4corner>0 ? 2 : 1
+    let digit = get(s:vimim_get_property(chinese,dddd),0)
     let unicode .= digit . s:space . pinyin
     if !empty(english)
         let unicode .= s:space . english
@@ -2755,8 +2755,8 @@ function! s:vimim_1to1(chinese)
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
-    let key = "o"
     sil!call s:vimim_onekey_start()
+    let key = "o"
     let unnamed_register = getreg('"')
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
@@ -2767,7 +2767,10 @@ function! <SID>vimim_visual_ctrl6()
         if ddddd =~ '^\d\d\d\d\d$'
             let line =  'u' . ddddd
         endif
-        let key .= line . "\<C-R>=g:vimim()\<CR>" . "l"
+        let key = "gvc" . line . "\<C-R>=g:vimim()\<CR>" . "l"
+        if s:vimim_onekey_is_tab > 0
+            let key .=  "\<Tab>"
+        endif
     else
         " input:  visual block highlighted in vim visual mode
         " output: display the highlighted in omni window
@@ -4723,7 +4726,9 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         if s:vimim_custom_label > -1 && len(lines) > 1
             let labeling = label . " "
-            if s:vimim_custom_label < 1
+            if s:show_me_not <= -99
+                let labeling = ""
+            elseif s:vimim_custom_label < 1
                 let labeling = s:vimim_get_labeling(label)
             endif
             if s:hjkl_n % 2 > 0 && s:show_me_not > 0
