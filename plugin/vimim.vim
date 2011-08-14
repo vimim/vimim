@@ -2164,13 +2164,19 @@ endfunction
 
 function! s:vimim_get_unicode_list(keyboard)
     if a:keyboard =~ 'u\d\d\d\d\d'
-        let s:show_me_not = -99
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
+        let s:show_me_not = -99
         return split(chinese, '\zs')
     endif
-    let words = []
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
+    if ddddd < 8080 || ddddd > 19968+20902
+        return []
+    endif
+    let words = []
     for i in range(108/6/2)
+        if ddddd+i > 40869
+            break
+        endif
         let chinese = nr2char(ddddd+i)
         call add(words, chinese)
     endfor
@@ -2197,6 +2203,9 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         let ddddd = str2nr(keyboard[1:], 16)
     elseif keyboard =~# '^\d\{5}$'  |" from digit to unicode: 32911 =>
         let ddddd = str2nr(keyboard, 10)
+    endif
+    if empty(ddddd) || ddddd > 0xffff
+        let ddddd = 0
     endif
     return ddddd
 endfunction
