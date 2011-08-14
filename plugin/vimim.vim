@@ -2781,7 +2781,8 @@ function! <SID>vimim_visual_ctrl6()
         endif
         let n = virtcol("'<'") - 2
         if n > 0
-            let key .= "^\<C-D>" . repeat(" ",n)
+            let b:ctrl6_space = repeat(" ", n)
+            let key .= "^\<C-D>\<C-R>=b:ctrl6_space\<CR>"
         endif
         let key .= "vimim" . "\<C-R>=g:vimim()\<CR>"
     endif
