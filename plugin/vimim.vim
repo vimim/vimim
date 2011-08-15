@@ -4867,7 +4867,7 @@ function! s:vimim_onekey_mapping()
         noremap <silent> n :call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
-    :com! -range=% VimiM <line1>,<line2>call s:vimim_chinese_rotation()
+    :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
 endfunction
 
 function! s:vimim_initialize_plugin()
