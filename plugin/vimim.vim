@@ -424,9 +424,9 @@ function! s:vimim_egg_vimimenv()
 endfunction
 
 function! s:vimim_get_hjkl(keyboard)
-    " [unicode] support direct unicode/gb/big5 input
     let lines = s:vimim_get_unicode_list(a:keyboard)
     if !empty(lines)
+        " [unicode] support direct unicode/gb/big5 input
         return lines
     endif
     " [eggs] hunt classic easter egg ... vim<C-6>
