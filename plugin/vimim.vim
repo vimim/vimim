@@ -424,9 +424,9 @@ function! s:vimim_egg_vimimenv()
 endfunction
 
 function! s:vimim_get_hjkl(keyboard)
+    " [unicode] support direct unicode/gb/big5 input
     let lines = s:vimim_get_unicode_list(a:keyboard)
     if !empty(lines)
-        " [unicode] support direct unicode/gb/big5 input
         return lines
     endif
     " [eggs] hunt classic easter egg ... vim<C-6>
@@ -1714,15 +1714,6 @@ endfunction
 let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
-function! s:vimim_onekey_start()
-    let s:chinese_input_mode = "onekey"
-    sil!call s:vimim_backend_initialization()
-    sil!call s:vimim_frontend_initialization()
-    sil!call s:vimim_onekey_pumvisible_mapping()
-    sil!call s:vimim_onekey_punctuation_mapping()
-    sil!call s:vimim_start()
-endfunction
-
 function! g:vimim_onekey()
     " (1) <OneKey> => start OneKey as "hit and run"
     " (2) <OneKey> => stop  OneKey and print out menu
@@ -1736,7 +1727,12 @@ function! g:vimim_onekey()
         if pumvisible() && len(s:popupmenu_list) > 0
             let onekey = '\<C-E>\<C-R>=g:vimim_onekey_dump()\<CR>'
         else
-            sil!call s:vimim_onekey_start()
+            let s:chinese_input_mode = "onekey"
+            sil!call s:vimim_backend_initialization()
+            sil!call s:vimim_frontend_initialization()
+            sil!call s:vimim_onekey_pumvisible_mapping()
+            sil!call s:vimim_onekey_punctuation_mapping()
+            sil!call s:vimim_start()
             let onekey = s:vimim_onekey_action(0)
         endif
     endif
@@ -2160,8 +2156,8 @@ endfunction
 
 function! s:vimim_get_unicode_list(keyboard)
     if a:keyboard =~ 'u\d\d\d\d\d'
-        let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         let s:show_me_not = -99
+        let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
     endif
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
@@ -2751,8 +2747,7 @@ function! s:vimim_1to1(chinese)
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
-    sil!call s:vimim_onekey_start()
-    let key = "o"
+    let key = "gvc"
     let unnamed_register = getreg('"')
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
@@ -2761,26 +2756,26 @@ function! <SID>vimim_visual_ctrl6()
         let line = get(lines,0)
         let ddddd = char2nr(get(split(line,'\zs'),0))
         if ddddd =~ '^\d\d\d\d\d$'
-            let line =  'u' . ddddd
+            let line = 'u' . ddddd
         endif
-        let key  = "gvc" . line . "\<C-R>=g:vimim()\<CR>" . "l"
-        let key .= "\<C-R>=g:vimim_onekey()\<CR>"
+        let key .= line . "\<C-R>=g:vimim_onekey()\<CR>"
+        let key .= "l"  . "\<C-R>=g:vimim_onekey()\<CR>"
     else
         " input:  visual block highlighted in vim visual mode
         " output: display the highlighted in omni window
+        let key = "O"
         if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
             let new_positions = getpos(".")
             let new_positions[1] = line("'>'")
             call setpos(".", new_positions)
-        else
-            let key = "O"
+            let key = "o"
         endif
         let n = virtcol("'<'") - 2
         if n > 0
             let b:ctrl6_space = repeat(" ", n)
             let key .= "^\<C-D>\<C-R>=b:ctrl6_space\<CR>"
         endif
-        let key .= "vimim" . "\<C-R>=g:vimim()\<CR>"
+        let key .= "vimim" . "\<C-R>=g:vimim_onekey()\<CR>"
     endif
     sil!call feedkeys(key)
 endfunction
