@@ -179,10 +179,8 @@ function! s:vimim_dictionary_im_keycode()
 endfunction
 
 function! s:vimim_initialize_keycode()
-    let keycode = "[.'0-9a-z]"
-    if empty(s:vimim_shuangpin)
-        let keycode = s:backend[s:ui.root][s:ui.im].keycode
-    else
+    let keycode = s:backend[s:ui.root][s:ui.im].keycode
+    if !empty(s:vimim_shuangpin)
         let keycode = s:shuangpin_keycode_chinese.keycode
     endif
     let s:valid_key = copy(keycode)
@@ -4430,7 +4428,8 @@ function! g:vimim_stop()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_i_map_off()
     sil!call s:vimim_plugin_conflict_fix_off()
-    sil!call s:vimim_initialize_mapping()
+    sil!call s:vimim_chinesemode_mapping()
+    sil!call s:vimim_onekey_mapping()
     sil!call s:vimim_restore_skin()
 endfunction
 
@@ -4827,11 +4826,6 @@ function! s:vimim_helper_mapping_on()
     endif
 endfunction
 
-function! s:vimim_initialize_mapping()
-    sil!call s:vimim_chinesemode_mapping()
-    sil!call s:vimim_onekey_mapping()
-endfunction
-
 function! s:vimim_chinesemode_mapping()
     if s:vimim_onekey_is_tab < 2
          noremap<silent>       <C-Bslash>   :call <SID>ChineseMode()<CR>
@@ -4889,5 +4883,6 @@ sil!call s:vimim_initialize_local()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
 sil!call s:vimim_initialize_plugin()
-sil!call s:vimim_initialize_mapping()
+sil!call s:vimim_chinesemode_mapping()
+sil!call s:vimim_onekey_mapping()
 " ======================================= }}}
