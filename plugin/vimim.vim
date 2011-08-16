@@ -96,8 +96,8 @@ function! s:vimim_initialize_session()
     let s:az_list = map(az_list, "nr2char(".'v:val'.")")
     let s:AZ_list = map(AZ_list, "nr2char(".'v:val'.")")
     let s:Az_list = s:az_list + s:AZ_list
-    let s:valid_key = 0
     let s:valid_keys = s:az_list
+    let s:valid_key = 0
     let s:abcd = "'abcdvfgzs"
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
@@ -351,7 +351,7 @@ function! s:vimim_egg_vimimenv()
         let toggle = "toggle_with_CTRL-Space"
     elseif s:vimim_onekey_is_tab > 1
         let toggle = "Tab_as_OneKey_NonStop"
-        let im = s:vimim_chinese('onekey') . s:space
+        let im  = s:vimim_chinese('onekey') . s:space
         let im .= s:ui.statusline . s:space . "VimIM"
     endif
     let option = s:vimim_chinese('style') . s:colon . toggle
@@ -402,7 +402,7 @@ function! s:vimim_egg_vimimenv()
         call add(eggs, option)
     endif
     if !empty(s:vimim_check_http_executable())
-        let tool  = s:vimim_chinese('tool') . s:colon
+        let tool = s:vimim_chinese('tool') . s:colon
         let title = s:http_executable=~'Python' ? '' : 'HTTP executable: '
         let option = tool . title . s:http_executable
         call add(eggs, option)
@@ -1083,7 +1083,7 @@ function! s:vimim_getsid(scriptname)
     for line in split(s:scriptnames_output, "\n")
         " only do non-blank lines
         if line =~ l:scriptname
-            " get the first number in the line.
+            " get the first number in the line
             return matchstr(line, '\d\+')
         endif
     endfor
