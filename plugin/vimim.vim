@@ -23,31 +23,22 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "
 " "VimIM Features"
 "  (1) Plug & Play: as an independent input method editor
-"  (2) input  of Chinese without mode change
-"  (3) search of Chinese without pop-up window
+"  (2) input of Chinese without mode change:  OneKey
+"  (3) slash search of Chinese without typing Chinese
 "  (4) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
 "  (5) support huge datafile if python interface to Vim is used
-"  (6) [frontend] VimIM OneKey: Chinese input without mode change
-"  (7) [frontend] VimIM Chinese Input Mode: ['dynamic','static']
-"  (8) [embedded] VimIM: http://vimim.googlecode.com
-"  (9) [external] all 4 available clouds and mycloud
 "
 " "VimIM Installation"
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
 "  (2) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
-"  (3) [option] drop a standard database:  plugin/vimim.pinyin.db
-"  (4) [option] drop a standard directory: plugin/vimim/pinyin/
-"  (5) [option] drop a English  datafile:  plugin/vimim.txt
-"  (6) [option] (Windows) has('python') OR download wget/curl/libvimim
+"  (3) [option] drop a standard directory: plugin/vimim/pinyin/
+"  (4) [option] drop a English  datafile:  plugin/vimim.txt
+"  (5) [option] drop a python2  database:  plugin/vimim.pinyin.db
 "
 " "VimIM Usage"
-"  (1) play with a game to rotate classic chinese poem:
-"      open vim, type i, type vimimpoem, <C-6>, m, m, m, m
-"  (2) play with OneKey, with cjk standard file installed:
+"  (1) play with OneKey, with cjk standard file installed:
 "      open vim, type i, type sssss, <C-6>, 1, 2, 3, 4
-"  (3) play with multiple clouds simultaneously
-"      open vim, type i, type vimimclouds, <C-6>, <C-6>
-"  (4) play with cloud, without datafile installed:
+"  (2) play with cloud, without datafile, with python or wget/curl
 "      open vim, type i, type <C-\> to open, type <C-\> to close
 
 " ============================================= }}}
@@ -100,14 +91,11 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
-    let a = char2nr('a')
-    let z = char2nr('z')
-    let A = char2nr('A')
-    let Z = char2nr('Z')
-    let Az_nr_list = extend(range(A,Z), range(a,z))
-    let s:Az_list = map(Az_nr_list, "nr2char(".'v:val'.")")
-    let s:az_list = map(range(a,z), "nr2char(".'v:val'.")")
-    let s:AZ_list = map(range(A,Z), "nr2char(".'v:val'.")")
+    let az_list = range(char2nr('a'), char2nr('z'))
+    let AZ_list = range(char2nr('A'), char2nr('Z'))
+    let s:az_list = map(az_list, "nr2char(".'v:val'.")")
+    let s:AZ_list = map(AZ_list, "nr2char(".'v:val'.")")
+    let s:Az_list = s:az_list + s:AZ_list
     let s:valid_key = 0
     let s:valid_keys = s:az_list
     let s:abcd = "'abcdvfgzs"
@@ -1371,7 +1359,7 @@ function! <SID>vimim_esc()
         let range = column_end - column_start
         let key = '\<C-E>' . repeat("\<BS>", range)
     endif
-    call s:vimim_super_reset()
+    sil!call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1380,7 +1368,7 @@ function! <SID>vimim_backspace()
     if pumvisible() && s:chinese_input_mode !~ 'onekey'
         let key = '\<C-E>\<BS>\<C-R>=g:vimim()\<CR>'
     endif
-    call s:vimim_super_reset()
+    sil!call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -4596,7 +4584,7 @@ else
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
     elseif s:chinese_input_mode =~ 'onekey'
-        call s:vimim_super_reset()
+        sil!call s:vimim_super_reset()
     endif
 return []
 endif
