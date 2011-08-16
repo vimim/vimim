@@ -2345,9 +2345,9 @@ function! s:vimim_cjk_digit_filter(chinese)
         if cjk =~ '\w' || line < 0 || line > 20902
             continue
         else
-            let values = split(get(s:cjk_lines,line))
-            let column = s:vimim_digit_4corner>0 ? 2 : 1
-            let digit = get(values, column)
+            let values = split(get(s:cjk_lines, line))
+            let dddd = s:vimim_digit_4corner>0 ? 2 : 1
+            let digit = get(values, dddd)
             let digit_head .= digit[:0]
             let digit_tail  = digit[1:]
         endif
@@ -2633,7 +2633,7 @@ function! s:vimim_cjk_grep_results(grep)
     let results = []
     let line = match(s:cjk_lines, grep)
     while line > -1
-        let values = split(get(s:cjk_lines,line))
+        let values = split(get(s:cjk_lines, line))
         let frequency_index = get(values, -1)
         if frequency_index =~ '\l'
             let frequency_index = 9999
@@ -2699,13 +2699,12 @@ function! s:vimim_1to1(chinese)
     if line < 0 || line > 20902
         return a:chinese
     endif
-    let values = split(get(s:cjk_lines,line))
+    let values = split(get(s:cjk_lines, line))
     let traditional_chinese = get(split(get(values,0),'\zs'),1)
     if empty(traditional_chinese)
-        return a:chinese
-    else
-        return traditional_chinese
+        let traditional_chinese = a:chinese
     endif
+    return traditional_chinese
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
