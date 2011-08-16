@@ -1725,7 +1725,7 @@ function! g:vimim_onekey()
         endif
     else
         if pumvisible() && len(s:popupmenu_list) > 0
-            let onekey = '\<C-E>\<C-R>=g:vimim_onekey_dump()\<CR>'
+            let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
         else
             let s:chinese_input_mode = "onekey"
             sil!call s:vimim_backend_initialization()
@@ -2662,7 +2662,7 @@ function! s:vimim_get_head(keyboard, partition)
     endif
     let keyboards = []
     let head = a:keyboard[0 : a:partition-1]
-    let tail  = a:keyboard[a:partition : -1]
+    let tail = a:keyboard[a:partition : -1]
     call add(keyboards, head)
     if !empty(tail)
         call add(keyboards, tail)
