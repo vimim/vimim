@@ -220,8 +220,9 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_search_next")
     call s:vimim_set_global_default(G, 1)
-    let s:frontends = []
     let s:im_toggle = 0
+    let s:frontends = []
+    let s:antonyms = {}
     let s:pumheight_saved = &pumheight
     let s:pumheight = &pumheight
     let s:chinese_input_mode = "onekey"
@@ -2695,24 +2696,57 @@ function! s:vimim_1to1(chinese)
     return traditional_chinese
 endfunction
 
+function! s:vimim_get_antonym(key)
+    if empty(s:antonyms)
+        let antonym = "  金石 阴阳 男女 嫁娶 悲欢 离合 。，
+        \ 大小 多少 上下 左右 前后 冷热 高低 朝暮 奖罚 进退
+        \ 黑白 天地 里外 死活 公私 快慢 奇偶 矛盾 哭笑 借还
+        \ 宽窄 强弱 轻重 缓急 松紧 好坏 美丑 纳吐 善恶 纯杂
+        \ 是非 闲忙 来去 分合 存亡 动静 浓淡 饥饱 赔赚 手脚
+        \ 爱恨 升降 开关 始终 胖瘦 迎送 盈亏 真假 嫩老 净脏
+        \ 虚实 有无 雅俗 稀密 粗细 得失 巧拙 恩怨 恼喜 旦夕
+        \ 新旧 通堵 止行 古今 张弛 曲直 亮暗 亲疏 这那 买卖
+        \ 收放 输赢 逆顺 苦甜 忠奸 纵横 东西 南北 破立 劣优
+        \ 薄厚 可否 文武 推拉 问答 主仆 深浅 牡牝 卷舒 贵贱
+        \ 聚散 干湿 彼此 生熟 单双 首尾 你我 警匪 官民 奢简
+        \ 盛衰 胜败 加减 软硬 反正 祸福 信疑 零整 久暂 跌涨
+        \ 错对 藏露 断续 钝锐 雌雄 醒睡 安危 凹凸 利弊 穿脱
+        \ 尊卑 褒贬 敞盖 臣君 沉浮 耻荣 灵笨 懒勤 吉凶 坤乾"
+        for yinyang in split(antonym)
+            let yy = split(yinyang, '\zs')
+            let s:antonyms[get(yy,0)] = get(yy,1)
+            let s:antonyms[get(yy,1)] = get(yy,0)
+        endfor
+    endif
+    let value = nr2char(32911)
+    if has_key(s:antonyms, a:key)
+        let value = s:antonyms[a:key]
+    endif
+    return value
+endfunction
+
 function! <SID>vimim_visual_ctrl6()
-    let key = "gvc"
+    let key = "O"
     let unnamed_register = getreg('"')
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
         " input:  one line highlighted in vim visual mode
         " output: display every chinese vertically in omni window
         let line = get(lines,0)
-        let ddddd = char2nr(get(split(line,'\zs'),0))
-        if ddddd =~ '^\d\d\d\d\d$'
-            let line = 'u' . ddddd
+        if len(substitute(line,".",".",'g')) == 1
+            let key = "gvr" . s:vimim_get_antonym(line)
+        else
+            let ddddd = char2nr(get(split(line,'\zs'),0))
+            if ddddd =~ '^\d\d\d\d\d$'
+                let line = 'u' . ddddd
+            endif
+            let key  = "gvc"
+            let key .= line . "\<C-R>=g:vimim_onekey()\<CR>"
+            let key .= "l"  . "\<C-R>=g:vimim_onekey()\<CR>"
         endif
-        let key .= line . "\<C-R>=g:vimim_onekey()\<CR>"
-        let key .= "l"  . "\<C-R>=g:vimim_onekey()\<CR>"
     else
         " input:  visual block highlighted in vim visual mode
         " output: display the highlighted in omni window
-        let key = "O"
         if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
             let new_positions = getpos(".")
             let new_positions[1] = line("'>'")
