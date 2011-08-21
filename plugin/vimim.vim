@@ -2720,10 +2720,10 @@ function! s:vimim_build_antonym_hash()
         let s:antonyms[get(yy,0)] = get(yy,1)
         let s:antonyms[get(yy,1)] = get(yy,0)
     endfor
-    let number1 = "〇一二三四五六七八九零壹贰叁肆伍陆柒捌玖"
-    let number2 = "一二三四五六七八九〇壹贰叁肆伍陆柒捌玖零"
-    let numbers1 = split(number1, '\zs')
-    let numbers2 = split(number2, '\zs')
+    let i0 = "〇" | let i9 = "一二三四五六七八九"
+    let I0 = "零" | let I9 = "壹贰叁肆伍陆柒捌玖"
+    let numbers1 = split(i0.i9.I0.I9, '\zs')
+    let numbers2 = split(i9.i0.I9.I0, '\zs')
     for i in range(len(numbers1))
         let s:antonyms[get(numbers1,i)] = get(numbers2,i)
     endfor
@@ -4691,7 +4691,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let abbr = label . "." . chinese
             call add(popupmenu_list_one_row, abbr)
         endif
-        if s:vimim_custom_label > -1 && len(lines) > 1
+        if s:vimim_custom_label > -1
             let labeling = label . " "
             if s:show_me_not <= -99
                 let labeling = ""
