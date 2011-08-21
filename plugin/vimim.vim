@@ -2720,10 +2720,11 @@ function! s:vimim_build_antonym_hash()
         let s:antonyms[get(yy,0)] = get(yy,1)
         let s:antonyms[get(yy,1)] = get(yy,0)
     endfor
-    let i0 = "〇" | let i9 = "一二三四五六七八九"
-    let I0 = "零" | let I9 = "壹贰叁肆伍陆柒捌玖"
-    let numbers1 = split(i0.i9.I0.I9, '\zs')
-    let numbers2 = split(i9.i0.I9.I0, '\zs')
+    let i9 = "一二三四五六七八九" | let i0 = "〇"
+    let I9 = "壹贰叁肆伍陆柒捌玖" | let I0 = "零"
+    let u9 = "甲乙丙丁戊己庚辛壬" | let u0 = "癸"
+    let numbers1 = split(i0.i9.I0.I9.u0.u9, '\zs')
+    let numbers2 = split(i9.i0.I9.I0.u9.u0, '\zs')
     for i in range(len(numbers1))
         let s:antonyms[get(numbers1,i)] = get(numbers2,i)
     endfor
