@@ -2696,60 +2696,57 @@ function! s:vimim_1to1(chinese)
     return traditional_chinese
 endfunction
 
-function! s:vimim_get_antonym(key)
-    if empty(s:antonyms)
-        let antonym = "  阴阳 雌雄 男女 淫娼 嫁娶 悲欢 离合
-        \ 软硬 强弱 里外 上下 左右 前后 快慢 轻重 缓急 正反
-        \ 始终 爱恨 老嫩 胖瘦 迎送 盈亏 真假 升降 进退 开关
-        \ 借还 天地 矛盾 哭笑 松紧 张弛 好坏 美丑 善恶 宽窄
-        \ 大小 多少 死活 公私 奇偶 冷热 高低 朝暮 奖罚 净脏
-        \ 是非 闲忙 来去 分合 存亡 动静 浓淡 饥饱 赔赚 手脚
-        \ 虚实 有无 雅俗 稀密 粗细 得失 巧拙 恩怨 恼喜 旦夕
-        \ 新旧 通堵 止行 古今 纳吐 曲直 亮暗 亲疏 这那 吉凶
-        \ 收放 输赢 逆顺 灵笨 忠奸 纵横 东西 南北 破立 劣优
-        \ 薄厚 尊卑 文武 推拉 问答 主仆 深浅 牡牝 卷舒 贵贱
-        \ 聚散 干湿 彼此 生熟 单双 首尾 奢简 你我 警匪 官民
-        \ 盛衰 胜败 加减 黑白 纯杂 臣君 信疑 零整 久暂 跌涨
-        \ 懒勤 藏露 断续 钝锐 醒睡 安危 凹凸 沉浮 敞盖 坤乾
-        \ 可否 苦甜 穿脱 祸福 耻荣 利弊 褒贬 对错 买卖 金石
-        \ “” ‘’ ＋－ （） 【】 〖〗 《》 ，。"
-        for yinyang in split(antonym)
-            let yy = split(yinyang, '\zs')
-            let s:antonyms[get(yy,0)] = get(yy,1)
-            let s:antonyms[get(yy,1)] = get(yy,0)
-        endfor
-        let number1 = "〇一二三四五六七八九零壹贰叁肆伍陆柒捌玖"
-        let number2 = "一二三四五六七八九〇壹贰叁肆伍陆柒捌玖零"
-        let numbers1 = split(number1, '\zs')
-        let numbers2 = split(number2, '\zs')
-        for i in range(len(numbers1))
-            let s:antonyms[get(numbers1,i)] = get(numbers2,i)
-        endfor
+function! s:vimim_build_antonym_hash()
+    if !empty(s:antonyms)
+        return
     endif
-    if has_key(s:antonyms, a:key)
-        return s:antonyms[a:key]
-    endif
-    return nr2char(32911)
+    let antonym = "  阴阳 雌雄 男女 淫娼 嫁娶 悲欢 离合
+    \ 软硬 强弱 里外 上下 左右 前后 快慢 轻重 缓急 正反
+    \ 始终 爱恨 老嫩 胖瘦 迎送 盈亏 真假 升降 进退 开关
+    \ 借还 天地 矛盾 哭笑 松紧 张弛 好坏 美丑 善恶 宽窄
+    \ 大小 多少 死活 公私 奇偶 冷热 高低 朝暮 奖罚 净脏
+    \ 是非 闲忙 来去 分合 存亡 动静 浓淡 饥饱 赔赚 手脚
+    \ 虚实 有无 雅俗 稀密 粗细 得失 巧拙 恩怨 恼喜 旦夕
+    \ 新旧 通堵 止行 古今 纳吐 曲直 亮暗 亲疏 这那 吉凶
+    \ 收放 输赢 逆顺 灵笨 忠奸 纵横 东西 南北 破立 劣优
+    \ 薄厚 尊卑 文武 推拉 问答 主仆 深浅 牡牝 卷舒 贵贱
+    \ 聚散 干湿 彼此 生熟 单双 首尾 奢简 你我 警匪 官民
+    \ 盛衰 胜败 加减 黑白 纯杂 臣君 信疑 零整 久暂 跌涨
+    \ 懒勤 藏露 断续 钝锐 醒睡 安危 凹凸 沉浮 敞盖 坤乾
+    \ 可否 苦甜 穿脱 祸福 耻荣 利弊 褒贬 对错 买卖 金石
+    \ “” ‘’ ＋－ （） 【】 〖〗 《》 ，。"
+    for yinyang in split(antonym)
+        let yy = split(yinyang, '\zs')
+        let s:antonyms[get(yy,0)] = get(yy,1)
+        let s:antonyms[get(yy,1)] = get(yy,0)
+    endfor
+    let number1 = "〇一二三四五六七八九零壹贰叁肆伍陆柒捌玖"
+    let number2 = "一二三四五六七八九〇壹贰叁肆伍陆柒捌玖零"
+    let numbers1 = split(number1, '\zs')
+    let numbers2 = split(number2, '\zs')
+    for i in range(len(numbers1))
+        let s:antonyms[get(numbers1,i)] = get(numbers2,i)
+    endfor
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
     let key = "O"
+    let onekey = "\<C-R>=g:vimim_onekey()\<CR>"
     let unnamed_register = getreg('"')
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
         " input:  one line highlighted in vim visual mode
         " output: display every chinese vertically in omni window
         let line = get(lines,0)
-        if len(substitute(line,".",".",'g')) == 1
-            let key = "gvr" . s:vimim_get_antonym(line)
+        sil!call s:vimim_build_antonym_hash()
+        if substitute(line,".",".",'g')=="." && has_key(s:antonyms,line)
+            let key = "gvr" . s:antonyms[line]
         else
             let ddddd = char2nr(get(split(line,'\zs'),0))
             if ddddd =~ '^\d\d\d\d\d$'
                 let line = 'u' . ddddd
             endif
-            let key  = "gvc"
-            let key .= line . "\<C-R>=g:vimim_onekey()\<CR>"
-            let key .= "l"  . "\<C-R>=g:vimim_onekey()\<CR>"
+            let key = "gvc" . line . onekey . "l"  . onekey
         endif
     else
         " input:  visual block highlighted in vim visual mode
@@ -2765,7 +2762,7 @@ function! <SID>vimim_visual_ctrl6()
             let b:ctrl6_space = repeat(" ", n)
             let key .= "^\<C-D>\<C-R>=b:ctrl6_space\<CR>"
         endif
-        let key .= "vimim" . "\<C-R>=g:vimim_onekey()\<CR>"
+        let key .= "vimim" . onekey
     endif
     sil!call feedkeys(key)
 endfunction
