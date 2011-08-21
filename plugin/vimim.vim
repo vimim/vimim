@@ -2736,8 +2736,10 @@ function! <SID>vimim_visual_ctrl6()
     let unnamed_register = getreg('"')
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
-        " input:  one line highlighted in vim visual mode
-        " output: display every chinese vertically in omni window
+        " input:  character highlighted within one line
+        " output(1): one      cjk     char  => antonym or number+1
+        " output(2): multiple cjk     chars => print property vertically 
+        " output(3): multiple english chars => cjk in omni window
         let line = get(lines,0)
         sil!call s:vimim_build_antonym_hash()
         if substitute(line,".",".",'g')=="." && has_key(s:antonyms,line)
@@ -2746,11 +2748,12 @@ function! <SID>vimim_visual_ctrl6()
             let ddddd = char2nr(get(split(line,'\zs'),0))
             if ddddd =~ '^\d\d\d\d\d$'
                 let line = 'u' . ddddd
+                let onekey .= "l"  . onekey
             endif
-            let key = "gvc" . line . onekey . "l"  . onekey
+            let key = "gvc" . line . onekey
         endif
     else
-        " input:  visual block highlighted in vim visual mode
+        " input:  highlighted lines as visual block
         " output: display the highlighted in omni window
         if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
             let new_positions = getpos(".")
