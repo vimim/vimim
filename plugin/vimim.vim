@@ -255,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hjkl = simplify(s:path . '../../../hhjkl/')
     if isdirectory(hjkl)
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_debug = 1
@@ -2737,7 +2737,7 @@ function! <SID>vimim_visual_ctrl6()
     if len(lines) < 2
         " input:  character highlighted within one line
         " output(1): one      cjk     char  => antonym or number+1
-        " output(2): multiple cjk     chars => print property vertically 
+        " output(2): multiple cjk     chars => print property vertically
         " output(3): multiple english chars => cjk in omni window
         let line = get(lines,0)
         sil!call s:vimim_build_antonym_hash()
@@ -2872,17 +2872,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  input pinyin     ==== {{{"]
 " =================================================
-
-function! s:vimim_add_apostrophe(keyboard)
-    if  a:keyboard =~ "[']"
-    \&& a:keyboard[0:0] != "'"
-    \&& a:keyboard[-1:-1] != "'"
-        " valid apostrophe is typed
-        return a:keyboard
-    else
-        return s:vimim_quanpin_transform(a:keyboard)
-    endif
-endfunction
 
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
     let keyboard = s:vimim_quanpin_transform(a:keyboard)
@@ -4758,9 +4747,9 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     endif
     if im == 'pinyin'
         let keyboard = s:vimim_toggle_pinyin(keyboard)
-    endif
-    if s:ui.has_dot == 2
-        let keyboard = s:vimim_add_apostrophe(keyboard)
+        if s:ui.has_dot == 2 && keyboard !~ "[']"
+            let keyboard = s:vimim_quanpin_transform(keyboard)
+        endif
     endif
     let results = []
     let keyboard2 = 0
