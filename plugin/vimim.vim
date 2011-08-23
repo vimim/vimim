@@ -882,7 +882,7 @@ function! <SID>vimim_chinese_punctuation_map(key)
         endif
     endif
     if pumvisible()
-        if a:key =~ "[-=]"
+        if a:key =~ "[=-]"
             if a:key == "-"
                 let s:pageup_pagedown -= 1
             else
@@ -1179,7 +1179,7 @@ function! s:vimim_statusline()
         endif
         return s:vimim_get_chinese_im()
     endif
-    if len(s:backend.datafile) > 1 || len(s:backend.directory) > 1
+    if len(s:backend.datafile) > 0 || len(s:backend.directory) > 0
         if !empty(s:vimim_shuangpin)
             let s:ui.statusline .= s:space
             let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
@@ -1809,6 +1809,7 @@ function! <SID>vimim_space()
     let space = " "
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
+        let s:has_pumvisible = 1
         call g:vimim_reset_after_insert()
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
