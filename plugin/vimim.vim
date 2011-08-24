@@ -882,10 +882,13 @@ function! <SID>vimim_chinese_punctuation_map(key)
         endif
     endif
     if pumvisible()
-        if a:key =~ "[=-]"
-            if a:key == "-"
+        let page = s:vimim_loop_pageup_pagedown==2 ? "[<>=-]" : "[=-]"
+        let up   = s:vimim_loop_pageup_pagedown==2 ? "[<-]"   : "[-]"
+        let down = s:vimim_loop_pageup_pagedown==2 ? "[>=]"   : "[=]"
+        if a:key =~ page
+            if a:key =~ up
                 let s:pageup_pagedown -= 1
-            else
+            elseif a:key =~ down
                 let s:pageup_pagedown += 1
             endif
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
