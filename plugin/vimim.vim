@@ -4733,8 +4733,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     let im = s:ui.im
     let root = s:ui.root
     if empty(im) || empty(root) || empty(keyboard)
-    \|| im =~ 'cloud' || s:show_me_not > 0
-    \|| keyboard !~# s:valid_key
+    \|| im =~ 'cloud' || s:show_me_not > 0 || keyboard !~# s:valid_key
         return []
     endif
     if im == 'pinyin'
