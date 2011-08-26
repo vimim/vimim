@@ -3344,60 +3344,50 @@ function! s:vimim_scan_backend_embedded()
     if len(s:vimim_mycloud) > 1
         return
     endif
-    for im in s:all_vimim_input_methods
+    let im = "pinyin"
+    if isdirectory(s:path.im)
+        let s:vimim_data_directory = s:path . im
+    endif
+    if s:vimim_data_directory[-1:] != "/"
+        let s:vimim_data_directory .= "/"
+    endif
+    if isdirectory(s:vimim_data_directory) && filereadable(s:vimim_data_directory.im)
+        return s:vimim_set_directory(im, s:vimim_data_directory)
+    endif
+    let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db"
+    let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
+    if !empty(datafile) && has("python")
+        :python import vim, bsddb
+        :python db = bsddb.btopen(vim.eval('datafile'),'r')
+    else
         let datafile = s:vimim_data_file
-        if !empty(datafile) && filereadable(datafile)
-            if datafile =~ '\<' . im . '\>'
-                call s:vimim_set_datafile(im, datafile)
-                break
-            endif
-        endif
+    endif
+    if !empty(datafile) && filereadable(datafile)
+        let im = get(split(datafile,"[.]"),1)
+        return s:vimim_set_datafile(im, datafile)
+    endif
+    for im in s:all_vimim_input_methods
         let datafile = s:path . "vimim." . im . ".txt"
-        let dbfile = s:vimim_check_filereadable("vimim.".im.".db")
-        " http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db
-        if !empty(dbfile) && has("python")
-            let s:vimim_data_file = dbfile
-            call s:vimim_set_datafile(im, dbfile)
-            :python import vim, bsddb
-            :python db = bsddb.btopen(vim.eval('dbfile'),'r')
-            break
-        elseif filereadable(datafile)
+        if filereadable(datafile)
             call s:vimim_set_datafile(im, datafile)
         else
             let im = im . "." . &encoding
             let datafile = s:path . "vimim." . im . ".txt"
             if filereadable(datafile)
-                let s:vimim_data_file = datafile
                 call s:vimim_set_datafile(im, data_file)
                 let s:localization = 0
-            else
-                continue
             endif
-        endif
-    endfor
-    if s:ui.root == "datafile"
-        return
-    else
-        " scan embedded data directory: /home/vimim/pinyin/
-    endif
-    for im in s:all_vimim_input_methods
-        if isdirectory(s:vimim_data_directory)
-            let tail = get(split(s:vimim_data_directory,"/"), -1)
-            if tail =~ '\<' . im . '\>'
-                call s:vimim_set_directory(im, s:vimim_data_directory)
-            endif
-        elseif isdirectory(s:path.im)
-            call s:vimim_set_directory(im, s:path.im)
         endif
     endfor
 endfunction
 
 function! s:vimim_set_datafile(im, datafile)
-    let im = s:vimim_get_valid_im_name(a:im)
     let datafile = a:datafile
+    let im = s:vimim_get_valid_im_name(a:im)
     if empty(im) || isdirectory(datafile)
         return
     endif
+    let s:vimim_data_file = datafile
     let s:ui.root = "datafile"
     let s:ui.im = im
     let frontends = [s:ui.root, s:ui.im]
@@ -3530,8 +3520,7 @@ let s:VimIM += [" ====  backend dir      ==== {{{"]
 
 function! s:vimim_set_directory(im, dir)
     let im = s:vimim_get_valid_im_name(a:im)
-    let dir = a:dir
-    if empty(im) || empty(dir) || !isdirectory(dir)
+    if empty(im) || empty(a:dir) || !isdirectory(a:dir)
         return
     endif
     let s:ui.root = "directory"
@@ -3541,7 +3530,7 @@ function! s:vimim_set_directory(im, dir)
     if empty(s:backend.directory)
         let s:backend.directory[im] = s:vimim_one_backend_hash()
         let s:backend.directory[im].root = "directory"
-        let s:backend.directory[im].name = s:vimim_data_directory
+        let s:backend.directory[im].name = a:dir
         let s:backend.directory[im].im = im
         let s:backend.directory[im].keycode = s:im_keycode[im]
         let s:backend.directory[im].chinese = s:vimim_chinese(im)
@@ -4651,11 +4640,10 @@ function! s:vimim_popupmenu_list(matched_list)
         let complete_items = {}
         if first_in_list =~ '\s' && s:show_me_not < 1
             let pairs = split(chinese)
-            if len(pairs) < 2
-                continue
+            if len(pairs) > 1
+                let chinese = get(pairs, 1)
+                let menu = get(pairs, 0)
             endif
-            let chinese = get(pairs, 1)
-            let menu = get(pairs, 0)
             if s:vimim_custom_menu > 0
                 let extra_text = menu
             endif
