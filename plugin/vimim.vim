@@ -1286,7 +1286,7 @@ endfunction
 function! s:vimim_menu_search(key)
     let slash = ""
     if pumvisible()
-        let slash = '\<C-Y>\<C-R>=g:vimim_menu_search_on()\<CR>'
+        let slash  = '\<C-Y>\<C-R>=g:vimim_menu_search_on()\<CR>'
         let slash .= a:key . '\<CR>'
     endif
     sil!exe 'sil!return "' . slash . '"'
@@ -1294,10 +1294,7 @@ endfunction
 
 function! g:vimim_menu_search_on()
     let word = s:vimim_popup_word()
-    let @/ = word
-    if empty(word)
-        let @/ = @_
-    endif
+    let @/ = empty(word) ? @_ : word
     let repeat_times = len(word) / s:multibyte
     let row_start = s:start_row_before
     let row_end = line('.')
@@ -1313,14 +1310,9 @@ endfunction
 function! s:vimim_square_bracket(key)
     let key = a:key
     if pumvisible()
-        let i = -1
-        let left  = ""
-        let right = ""
-        if key == "]"
-            let i = 0
-            let left  = "\<Left>"
-            let right = "\<Right>"
-        endif
+        let i     = key=="]" ? 0          : -1
+        let left  = key=="]" ? "\<Left>"  : ""
+        let right = key=="]" ? "\<Right>" : ""
         if s:show_me_not < 1
             let backspace = '\<C-R>=g:vimim_bracket('.i.')\<CR>'
             let key = '\<C-Y>' . left . backspace . right
@@ -1355,14 +1347,14 @@ endfunction
 
 function! <SID>vimim_esc()
     let key = '\<Esc>'
-    if s:chinese_input_mode =~ 'onekey'
-        call g:vimim_stop()
-        let key = '\<Esc>'
-    elseif pumvisible()
+    if pumvisible()
         let column_start = s:start_column_before
         let column_end = col('.') - 1
         let range = column_end - column_start
         let key = '\<C-E>' . repeat("\<BS>", range)
+    elseif s:chinese_input_mode =~ 'onekey'
+        call g:vimim_stop()
+        let key = '\<Esc>'
     endif
     sil!call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
@@ -1370,7 +1362,7 @@ endfunction
 
 function! <SID>vimim_backspace()
     let key = '\<BS>'
-    if pumvisible() && s:chinese_input_mode !~ 'onekey'
+    if pumvisible()
         let key = '\<C-E>\<BS>\<C-R>=g:vimim()\<CR>'
     endif
     sil!call s:vimim_super_reset()
@@ -1386,10 +1378,9 @@ function! <SID>vimim_enter()
     if one_before =~ '\S'
         let s:smart_enter += 1
     endif
-    " <Enter> double play in dynamic mode:
-    "  (1) after English (valid keys)    => Seamless
-    "  (2) after Chinese or double Enter => Enter
     if s:chinese_input_mode =~ 'dynamic'
+         "  (1) after English (valid keys)    => Seamless
+         "  (2) after Chinese or double Enter => Enter
         if one_before =~ s:valid_key
         \&& !has_key(s:punctuations, one_before)
             let s:smart_enter = 1
@@ -1397,10 +1388,7 @@ function! <SID>vimim_enter()
             let s:smart_enter = 3
         endif
     endif
-    let key = ""
-    if pumvisible()
-        let key = "\<C-E>"
-    endif
+    let key = pumvisible() ? "\<C-E>" : ""
     if s:smart_enter == 1
         " the first <Enter> does seamless
         let s:seamless_positions = getpos(".")
@@ -4461,7 +4449,6 @@ if a:start
     let start_column = current_positions[2]-1
     let current_line = getline(start_row)
     let one_before = current_line[start_column-1]
-    " take care of seamless English/Chinese input
     let seamless_column = s:vimim_get_seamless(current_positions)
     if seamless_column >= 0
         let len = current_positions[2]-1 - seamless_column
