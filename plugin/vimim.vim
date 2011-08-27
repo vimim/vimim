@@ -879,7 +879,7 @@ function! <SID>vimim_chinese_punctuation_map(key)
     endif
     if pumvisible()
         let page = s:vimim_loop_pageup_pagedown==2 ? "[<>=-]" : "[=-]"
-        let up   = s:vimim_loop_pageup_pagedown==2 ? "[<-]"   : "[-]"
+        let   up = s:vimim_loop_pageup_pagedown==2 ? "[<-]"   : "[-]"
         let down = s:vimim_loop_pageup_pagedown==2 ? "[>=]"   : "[=]"
         if a:key =~ page
             if a:key =~ up
@@ -2281,8 +2281,7 @@ function! s:vimim_cjk_filter_list()
     let i = 0
     let foods = []
     for items in s:popupmenu_list
-        let chinese = s:vimim_cjk_digit_filter(items.word)
-        if !empty(chinese)
+        if !empty(s:vimim_cjk_digit_filter(items.word))
             call add(foods, i)
         endif
         let i += 1
@@ -2302,13 +2301,12 @@ function! s:vimim_cjk_digit_filter(chinese)
     " smart digital filter: 马力 7712 4002
     "   (1)   ma<C-6>       马   => filter with   7712
     "   (2) mali<C-6>       马力 => filter with 7 4002
-    let chinese = a:chinese
-    if empty(len(s:hjkl_x)) || empty(chinese)
+    if empty(len(s:hjkl_x)) || empty(a:chinese)
         return 0
     endif
     let digit_head = ""
     let digit_tail = ""
-    let words = split(chinese,'\zs')
+    let words = split(a:chinese,'\zs')
     for cjk in words
         let ddddd = char2nr(cjk)
         let line = ddddd - 19968
@@ -2324,11 +2322,10 @@ function! s:vimim_cjk_digit_filter(chinese)
     endfor
     let number = digit_head . digit_tail
     let pattern = "^" . s:hjkl_x
-    let matched = match(number, pattern)
-    if matched < 0
-        let chinese = 0
+    if match(number, pattern) < 0
+        return 0
     endif
-    return chinese
+    return a:chinese
 endfunction
 
 function! s:vimim_pageup_pagedown()
