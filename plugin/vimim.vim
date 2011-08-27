@@ -4,7 +4,7 @@
 "   VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ======================================================
 
-let $VimIM = " easter egg:"" vimimenv<C-6><C-6> vimimrc<C-6><C-6>
+let $VimIM = " easter egg:"" vimim<C-6><C-6> vimimrc<C-6><C-6>
 let $VimIM = " $Date$"
 let $VimIM = " $Revision$"
 let s:url  = " http://vim.sf.net/scripts/script.php?script_id=2506"
@@ -255,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl')
+    let hjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -317,7 +317,7 @@ function! s:vimim_egg_vimimhelp()
     return eggs
 endfunction
 
-function! s:vimim_egg_vimimenv()
+function! s:vimim_egg_vimim()
     let eggs = []
     let today = s:vimim_imode_today_now('itoday')
     let option = s:vimim_chinese('datetime') . s:colon . today
@@ -422,25 +422,21 @@ function! s:vimim_get_hjkl(keyboard)
     let lines = s:vimim_easter_chicken(a:keyboard)
     if !empty(lines)
         " [hjkl] display buffer inside the omni window
- "  elseif a:keyboard ==# "vimim"
- "      let unnamed_register = getreg('"')
- "      let lines = split(unnamed_register,'\n')
- "      if len(lines) < 2
- "          let lines = s:vimim_egg_vimimenv()
- "      else
- "          if unnamed_register=~'\d' && join(lines)!~'[^0-9[:blank:].]'
- "              let sum = eval(join(lines,'+'))
- "              let ave = 1.0*sum/len(lines)
- "              let math  = 'sum=' . string(len(lines)) . '*'
- "              let math .= printf('%.2f', ave) . '='
- "              if unnamed_register =~ '[.]'
- "                  let math .= printf('%.2f',1.0*sum)
- "              else
- "                  let math .= string(sum)
- "              endif
- "              let lines = [math . " "]
- "          endif
- "      endif
+    elseif a:keyboard == 'vimx'
+        let unnamed_register = getreg('"')
+        let lines = split(unnamed_register,'\n')
+        if unnamed_register=~'\d' && join(lines)!~'[^0-9[:blank:].]'
+            let sum = eval(join(lines,'+'))
+            let ave = 1.0*sum/len(lines)
+            let math  = 'sum=' . string(len(lines)) . '*'
+            let math .= printf('%.2f', ave) . '='
+            if unnamed_register =~ '[.]'
+                let math .= printf('%.2f',1.0*sum)
+            else
+                let math .= string(sum)
+            endif
+            let lines = [math . " "]
+        endif
     elseif a:keyboard !~ "db"
         " [poem] check entry in special directories first
         if s:vimim_hjkl_directory[-1:] != "/"
@@ -1745,7 +1741,7 @@ function! g:vimim_onekey_dump()
         endif
         let keyboard = get(s:keyboard_list,0)
         let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-        if keyboard ==# 'vimim'
+        if keyboard ==# 'vimx'
             let space = repeat(" ", virtcol("'<'")-2)
         endif
         call add(lines, space . line)
@@ -1753,7 +1749,7 @@ function! g:vimim_onekey_dump()
     if has("gui_running") && has("win32") && s:show_me_not != -99
         let @+ = join(lines, "\n")
     endif
-    if getline(".") =~ 'vimim\>' && len(lines) < 2
+    if getline(".") =~ 'vimx\>' && len(lines) < 2
         call setline(line("."), lines)
     else
         let saved_position = getpos(".")
@@ -2770,7 +2766,7 @@ function! <SID>vimim_visual_ctrl6()
             let b:ctrl6_space = repeat(" ", n)
             let key .= "^\<C-D>\<C-R>=b:ctrl6_space\<CR>"
         endif
-        let key .= "vimim" . onekey
+        let key .= 'vimx' . onekey
     endif
     sil!call feedkeys(key)
 endfunction
@@ -3352,7 +3348,7 @@ function! s:vimim_scan_backend_embedded()
     if s:vimim_data_directory[-1:] != "/"
         let s:vimim_data_directory .= "/"
     endif
-    if isdirectory(s:vimim_data_directory) 
+    if isdirectory(s:vimim_data_directory)
         if filereadable(s:vimim_data_directory.im)
             return s:vimim_set_directory(im, s:vimim_data_directory)
         endif
