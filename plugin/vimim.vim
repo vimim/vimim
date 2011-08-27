@@ -225,8 +225,8 @@ function! s:vimim_initialize_global()
     let s:im_toggle = 0
     let s:frontends = []
     let s:antonyms = {}
-    let s:pumheight_saved = &pumheight
     let s:pumheight = &pumheight
+    let s:pumheight_saved = &pumheight
     let s:chinese_input_mode = "onekey"
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
@@ -334,8 +334,7 @@ function! s:vimim_egg_vimim()
     elseif has("win32")     | let option = "Windows32"
     elseif has("win64")     | let option = "Windows64"
     elseif has("unix")      | let option = "unix"
-    elseif has("macunix")   | let option = "macunix"
-    endif
+    elseif has("macunix")   | let option = "macunix" | endif
     let option .= "_" . &term
     let computer = s:vimim_chinese('computer') . s:colon
     call add(eggs, computer . option)
@@ -415,8 +414,7 @@ function! s:vimim_egg_vimim()
         let option = tool . title . s:http_executable
         call add(eggs, option)
     endif
-    call map(eggs, 'v:val . " "')
-    return eggs
+    return map(eggs, 'v:val . " "')
 endfunction
 
 function! s:vimim_get_hjkl(keyboard)
@@ -946,11 +944,8 @@ endfunction
 
 function! <SID>vimim_get_quote(type)
     let key = ""
-    if a:type == 1
-        let key = "'"
-    elseif a:type == 2
-        let key = '"'
-    endif
+        if a:type == 1 | let key = "'"
+    elseif a:type == 2 | let key = '"' | endif
     let quote = ""
     if !has_key(s:evils, key)
         return ""
@@ -1003,8 +998,7 @@ function! s:vimim_set_special_im_property()
     endfor
 endfunction
 
-function! s:vimim_wubi_4char_auto_input(keyboard)
-    " wubi non-stop typing by auto selection on each 4th
+function! s:vimim_wubi_auto_input_on_the_4th(keyboard)
     let keyboard = a:keyboard
     if s:chinese_input_mode =~ 'dynamic'
         if len(keyboard) > 4
@@ -1268,8 +1262,7 @@ function! <SID>vimim_alphabet_number_label(key)
         let n = match(s:abcd, key)
             if key =~ '\d' | let n = key<1 ? 9 : key-1
         elseif key == ';'  | let n = 1
-        elseif key == "'"  | let n = 2
-        endif
+        elseif key == "'"  | let n = 2 | endif
         let down = repeat("\<Down>", n)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let key = down . yes
@@ -2401,8 +2394,8 @@ function! <SID>vimim_onekey_hjkl(key)
     let key = a:key
     let toggles = split('shlmn','\zs')
     if pumvisible()
-        if a:key == 'j'        | let key  = '\<Down>'
-        elseif a:key == 'k'    | let key  = '\<Up>'
+            if a:key == 'j' | let key = '\<Down>'
+        elseif a:key == 'k' | let key = '\<Up>'
         elseif a:key =~ "[<>]"
             let key  = '\<C-Y>'.s:punctuations[nr2char(char2nr(a:key)-16)]
         else
@@ -2723,10 +2716,9 @@ function! <SID>vimim_visual_ctrl6()
     let unnamed_register = getreg('"')
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
-        " input:  character highlighted within one line
-        " output(1): one      cjk     char  => antonym or number+1
-        " output(2): multiple cjk     chars => print property vertically
-        " output(3): multiple english chars => cjk in omni window
+        " highlighted one      cjk     char  => antonym or number+1
+        " highlighted multiple cjk     chars => print property vertically
+        " highlighted multiple english chars => cjk in omni window
         let line = get(lines,0)
         sil!call s:vimim_build_antonym_hash()
         if substitute(line,".",".",'g')=="." && has_key(s:antonyms,line)
@@ -2740,8 +2732,7 @@ function! <SID>vimim_visual_ctrl6()
             let key = "gvc" . line . onekey
         endif
     else
-        " input:  highlighted lines as visual block
-        " output: display the highlighted in omni window
+        " highlighted block => display the block in omni window
         if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
             let new_positions = getpos(".")
             let new_positions[1] = line("'>'")
@@ -3846,8 +3837,7 @@ function! s:vimim_get_cloud_qq(keyboard)
         elseif vimim_cloud =~ 'plusplus' | let st = 3
         elseif vimim_cloud =~ 'purple'   | let st = 4
         elseif vimim_cloud =~ 'flypy'    | let st = 5
-        elseif vimim_cloud =~ 'nature'   | let st = 6
-        endif
+        elseif vimim_cloud =~ 'nature'   | let st = 6 | endif
         if st > 0
             let input .= '&st=' . st
         endif
@@ -4395,8 +4385,8 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_n = 0
     let s:hjkl_s = 0
     let s:hjkl_x = ""
-    let s:pageup_pagedown = 0
     let s:matched_list = []
+    let s:pageup_pagedown = 0
     if s:vimim_custom_label < 1
         let &pumheight = s:pumheight
     endif
@@ -4409,8 +4399,7 @@ function! g:vimim()
     let one_before = getline(".")[col(".")-2]
     if one_before =~ s:valid_key
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
-    elseif s:vimim_onekey_hit_and_run > 0
-    \&& s:chinese_input_mode =~ 'onekey'
+    elseif s:vimim_onekey_hit_and_run && s:chinese_input_mode=~'onekey'
         call g:vimim_stop()
     else
         let s:has_pumvisible = 0
@@ -4425,7 +4414,7 @@ endfunction
 
 function! s:vimim_i_map_off()
     let recycles = range(0,9) + s:valid_keys
-    if s:chinese_input_mode !~ 'dynamic' && empty(s:vimim_latex_suite)
+    if s:chinese_input_mode!~'dynamic' && empty(s:vimim_latex_suite)
         let recycles += s:AZ_list
     endif
     let recycles += keys(s:evils) + keys(s:punctuations)
@@ -4553,7 +4542,7 @@ else
     endif
     " [wubi] support auto insert for every 4 input
     if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
-        let keyboard = s:vimim_wubi_4char_auto_input(keyboard)
+        let keyboard = s:vimim_wubi_auto_input_on_the_4th(keyboard)
     endif
     " [backend] plug-n-play embedded backend engine
     let results = s:vimim_embedded_backend_engine(keyboard,0)
