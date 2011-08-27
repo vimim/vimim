@@ -73,10 +73,14 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_dictionary_chinese()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
-    sil!call s:vimim_scan_backend_embedded()
-    sil!call s:vimim_scan_backend_cloud()
-    sil!call s:vimim_scan_cjk_file()
-    sil!call s:vimim_scan_english_datafile()
+    if len(s:vimim_mycloud) > 1
+        sil!call s:vimim_set_mycloud_if_pimcloud()
+    else
+        sil!call s:vimim_scan_backend_embedded()
+        sil!call s:vimim_scan_backend_cloud()
+        sil!call s:vimim_scan_cjk_file()
+        sil!call s:vimim_scan_english_datafile()
+    endif
     sil!call s:vimim_initialize_keycode()
 endfunction
 
@@ -2787,9 +2791,6 @@ function! s:vimim_scan_english_datafile()
 endfunction
 
 function! s:vimim_check_filereadable(default)
-    if len(s:vimim_mycloud) > 1
-        return 0
-    endif
     for dir in [s:vimim_hjkl_directory, s:path]
         let datafile = dir . a:default
         if filereadable(datafile)
@@ -3330,9 +3331,6 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_backend_embedded()
-    if len(s:vimim_mycloud) > 1
-        return
-    endif
     let im = "pinyin"
     if isdirectory(s:path.im)
         let s:vimim_data_directory = s:path . im
@@ -3642,24 +3640,15 @@ function! s:vimim_set_cloud(im)
 endfunction
 
 function! s:vimim_scan_backend_cloud()
-    let s:mycloud_arg  = 0
-    let s:mycloud_func = 0
-    let s:mycloud_host = 0
-    let s:mycloud_mode = 0
-    let s:mycloud_port = 0
-    if len(s:vimim_mycloud) > 1
-        call s:vimim_set_mycloud_if_pimcloud()
-    else
-        let set_cloud = 0
-        if empty(s:backend.datafile) && empty(s:backend.directory)
-            let set_cloud = 1
-        endif
-        if s:vimim_toggle_list =~ 'cloud'
-            let set_cloud = 1
-        endif
-        if set_cloud > 0
-            call s:vimim_set_cloud(s:cloud_default)
-        endif
+    let set_cloud = 0
+    if empty(s:backend.datafile) && empty(s:backend.directory)
+        let set_cloud = 1
+    endif
+    if s:vimim_toggle_list =~ 'cloud'
+        let set_cloud = 1
+    endif
+    if set_cloud > 0
+        call s:vimim_set_cloud(s:cloud_default)
     endif
 endfunction
 
@@ -4030,6 +4019,11 @@ let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
 
 function! s:vimim_set_mycloud_if_pimcloud()
+    let s:mycloud_arg  = 0
+    let s:mycloud_func = 0
+    let s:mycloud_host = 0
+    let s:mycloud_mode = 0
+    let s:mycloud_port = 0
     let im = 'mycloud'
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
     let mycloud = s:vimim_check_mycloud_availability()
