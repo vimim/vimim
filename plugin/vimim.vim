@@ -255,15 +255,15 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hjkl = simplify(s:path . '../../../hjkl')
     if isdirectory(hjkl)
-        let g:vimim_hjkl_directory = hjkl
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
         let g:vimim_esc_for_correction = 1
         let g:vimim_cloud = 'google,baidu,sogou,qq'
+        let g:vimim_hjkl_directory = hjkl
     endif
 endfunction
 
@@ -422,27 +422,30 @@ function! s:vimim_get_hjkl(keyboard)
     let lines = s:vimim_easter_chicken(a:keyboard)
     if !empty(lines)
         " [hjkl] display buffer inside the omni window
-    elseif a:keyboard ==# "vimim"
-        let unnamed_register = getreg('"')
-        let lines = split(unnamed_register,'\n')
-        if len(lines) < 2
-            let lines = s:vimim_egg_vimimenv()
-        else
-            if unnamed_register=~'\d' && join(lines)!~'[^0-9[:blank:].]'
-                let sum = eval(join(lines,'+'))
-                let ave = 1.0*sum/len(lines)
-                let math  = 'sum=' . string(len(lines)) . '*'
-                let math .= printf('%.2f', ave) . '='
-                if unnamed_register =~ '[.]'
-                    let math .= printf('%.2f',1.0*sum)
-                else
-                    let math .= string(sum)
-                endif
-                let lines = [math . " "]
-            endif
-        endif
+ "  elseif a:keyboard ==# "vimim"
+ "      let unnamed_register = getreg('"')
+ "      let lines = split(unnamed_register,'\n')
+ "      if len(lines) < 2
+ "          let lines = s:vimim_egg_vimimenv()
+ "      else
+ "          if unnamed_register=~'\d' && join(lines)!~'[^0-9[:blank:].]'
+ "              let sum = eval(join(lines,'+'))
+ "              let ave = 1.0*sum/len(lines)
+ "              let math  = 'sum=' . string(len(lines)) . '*'
+ "              let math .= printf('%.2f', ave) . '='
+ "              if unnamed_register =~ '[.]'
+ "                  let math .= printf('%.2f',1.0*sum)
+ "              else
+ "                  let math .= string(sum)
+ "              endif
+ "              let lines = [math . " "]
+ "          endif
+ "      endif
     elseif a:keyboard !~ "db"
         " [poem] check entry in special directories first
+        if s:vimim_hjkl_directory[-1:] != "/"
+            let s:vimim_hjkl_directory .= "/"
+        endif
         for dir in [s:vimim_hjkl_directory, s:path]
             let lines = s:vimim_readfile(dir . a:keyboard)
             if len(a:keyboard) < 2 || empty(lines)
@@ -497,7 +500,6 @@ function! s:vimim_hjkl_rotation(matched_list)
 endfunction
 
 function! s:vimim_chinese_rotation() range abort
-    " [usage] :VimiM
     sil!call s:vimim_backend_initialization()
     :%s#\s*\r\=$##
     let lines = getline(a:firstline, a:lastline)
@@ -2667,7 +2669,6 @@ function! s:vimim_get_head(keyboard, partition)
 endfunction
 
 function! s:vimim_chinese_transfer() range abort
-    " [usage] :VimIM
     " (1) "quick and dirty" way to transfer Chinese to Chinese
     " (2) 20% of the effort to solve 80% of the problem using one2one
     sil!call s:vimim_backend_initialization()
@@ -3351,8 +3352,10 @@ function! s:vimim_scan_backend_embedded()
     if s:vimim_data_directory[-1:] != "/"
         let s:vimim_data_directory .= "/"
     endif
-    if isdirectory(s:vimim_data_directory) && filereadable(s:vimim_data_directory.im)
-        return s:vimim_set_directory(im, s:vimim_data_directory)
+    if isdirectory(s:vimim_data_directory) 
+        if filereadable(s:vimim_data_directory.im)
+            return s:vimim_set_directory(im, s:vimim_data_directory)
+        endif
     endif
     let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db"
     let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
