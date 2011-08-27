@@ -197,7 +197,6 @@ function! s:vimim_initialize_global()
     let s:vimimrc = []
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_chinese_input_mode")
-    call add(G, "g:vimim_esc_for_correction")
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_h_to_toggle")
@@ -218,7 +217,6 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_onekey_hit_and_run")
     call add(G, "g:vimim_digit_4corner")
-    call add(G, "g:vimim_enter_for_seamless")
     call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_custom_color")
@@ -271,7 +269,6 @@ function! s:vimim_initialize_local()
         let g:vimim_imode_pinyin = 2
         let g:vimim_onekey_is_tab = 2
         let g:vimim_onekey_hit_and_run = 0
-        let g:vimim_esc_for_correction = 1
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_hjkl_directory = hjkl
     endif
@@ -1118,7 +1115,6 @@ function! s:vimim_initialize_skin()
 endfunction
 
 function! s:vimim_restore_skin()
-    set ruler
     highlight! link Cursor NONE
     if s:vimim_custom_color != 0
         highlight! link PmenuSel   NONE
@@ -4348,6 +4344,7 @@ function! s:vimim_i_setting_off()
     let &showmatch   = s:showmatch
     let &smartcase   = s:smartcase
     let &pumheight   = s:pumheight_saved
+    set ruler
 endfunction
 
 function! s:vimim_start()
@@ -4355,9 +4352,12 @@ function! s:vimim_start()
     sil!call s:vimim_i_setting_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
-    sil!call s:vimim_helper_mapping_on()
-    set noruler
+    inoremap <expr> <BS>    <SID>vimim_backspace()
+    inoremap <expr> <Space> <SID>vimim_space()
+    inoremap <expr> <Esc>   <SID>vimim_esc()
+    inoremap <expr> <CR>    <SID>vimim_enter()
     highlight! link Cursor CursorIM
+    set noruler
 endfunction
 
 function! g:vimim_stop()
@@ -4748,17 +4748,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
-
-function! s:vimim_helper_mapping_on()
-    inoremap <expr> <BS>    <SID>vimim_backspace()
-    inoremap <expr> <Space> <SID>vimim_space()
-    if s:vimim_esc_for_correction > 0 || has("gui_running")
-        inoremap <expr> <Esc> <SID>vimim_esc()
-    endif
-    if s:vimim_enter_for_seamless > 0
-        inoremap <expr> <CR> <SID>vimim_enter()
-    endif
-endfunction
 
 function! s:vimim_chinesemode_mapping()
     if s:vimim_onekey_is_tab < 2
