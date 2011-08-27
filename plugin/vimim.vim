@@ -3420,10 +3420,9 @@ function! s:vimim_get_from_datafile(keyboard, search)
         return []
     endif
     let results = []
-    let more = s:vimim_more_candidates
     " http://code.google.com/p/vimim/issues/detail?id=121
-    if more > 0
-        for i in range(more)
+    if s:vimim_more_candidates > 0
+        for i in range(s:vimim_more_candidates)
             let matched += i
             let oneline = get(lines, matched)
             let extras = s:vimim_make_pair_list(oneline)
