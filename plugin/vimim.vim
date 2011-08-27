@@ -229,6 +229,12 @@ function! s:vimim_initialize_global()
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
     endif
+    if s:vimim_data_directory[-1:] != "/"
+        let s:vimim_data_directory .= "/"
+    endif
+    if s:vimim_hjkl_directory[-1:] != "/"
+        let s:vimim_hjkl_directory .= "/"
+    endif
 endfunction
 
 function! s:vimim_set_global_default(options, default)
@@ -439,17 +445,10 @@ function! s:vimim_get_hjkl(keyboard)
         endif
     elseif a:keyboard !~ "db"
         " [poem] check entry in special directories first
-        if s:vimim_hjkl_directory[-1:] != "/"
-            let s:vimim_hjkl_directory .= "/"
+        let datafile = s:vimim_check_filereadable(a:keyboard)
+        if !empty(datafile)
+            let lines = s:vimim_readfile(datafile)
         endif
-        for dir in [s:vimim_hjkl_directory, s:path]
-            let lines = s:vimim_readfile(dir . a:keyboard)
-            if len(a:keyboard) < 2 || empty(lines)
-                continue
-            else
-                break
-            endif
-        endfor
     endif
     let s:show_me_not = !empty(lines) ? 1 : 0
     return lines
@@ -2791,19 +2790,12 @@ function! s:vimim_check_filereadable(default)
     if len(s:vimim_mycloud) > 1
         return 0
     endif
-    let default = a:default
-    let datafile = s:vimim_hjkl_directory . default
-    if filereadable(datafile)
-        let default = 0
-    else
-        let datafile = s:path . default
+    for dir in [s:vimim_hjkl_directory, s:path]
+        let datafile = dir . a:default
         if filereadable(datafile)
-            let default = 0
+            return datafile
         endif
-    endif
-    if empty(default)
-        return datafile
-    endif
+    endfor
     return 0
 endfunction
 
@@ -3344,9 +3336,6 @@ function! s:vimim_scan_backend_embedded()
     let im = "pinyin"
     if isdirectory(s:path.im)
         let s:vimim_data_directory = s:path . im
-    endif
-    if s:vimim_data_directory[-1:] != "/"
-        let s:vimim_data_directory .= "/"
     endif
     if isdirectory(s:vimim_data_directory)
         if filereadable(s:vimim_data_directory.im)
