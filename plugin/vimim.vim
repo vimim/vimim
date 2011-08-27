@@ -74,7 +74,7 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
     if len(s:vimim_mycloud) > 1
-        sil!call s:vimim_set_mycloud_if_pimcloud()
+        sil!call s:vimim_scan_backend_mycloud()
     else
         sil!call s:vimim_scan_backend_embedded()
         sil!call s:vimim_scan_backend_cloud()
@@ -1495,7 +1495,7 @@ EOF
 endfunction
 
 function! g:vimim_gmail() range abort
-" [dream] to send email with the current buffer
+" [dream] to send email from within the current buffer
 " [usage] :call g:vimim_gmail()
 " [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
 if has('python') < 1 && has('python3') < 1
@@ -4018,7 +4018,7 @@ endfunction
 let s:VimIM += [" ====  backend mycloud  ==== {{{"]
 " =================================================
 
-function! s:vimim_set_mycloud_if_pimcloud()
+function! s:vimim_scan_backend_mycloud()
     let s:mycloud_arg  = 0
     let s:mycloud_func = 0
     let s:mycloud_host = 0
