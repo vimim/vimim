@@ -36,10 +36,10 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (5) [option] drop a python2  database:  plugin/vimim.pinyin.db
 "
 " "VimIM Usage"
-"  (1) play with OneKey, with cjk standard file installed:
+"  (1) play with cloud, without datafile, with python or wget/curl
+"      open vim, type i, type <C-\> to open; type <C-\> to close
+"  (2) play with OneKey, with cjk standard file installed:
 "      open vim, type i, type sssss, <C-6>, 1, 2, 3, 4
-"  (2) play with cloud, without datafile, with python or wget/curl
-"      open vim, type i, type <C-\> to open, type <C-\> to close
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -1624,14 +1624,14 @@ def checkmask(level):
         return True
     else:
         return False
-g_level = {'emerg':0,     # system is unusable
-           'alert':1,     # action must be taken immediately
-           'crit':2,      # critical conditions
-           'err':3,       # error conditions
-           'warning':4,   # warning conditions
-           'notice':5,    # normal but significant condition
-           'info':6,      # informational
-           'debug':7 }    # debug-level messages
+g_level = {'emerg':0,    #  system is unusable
+           'alert':1,    #  action must be taken immediately
+           'crit':2,     #  critical conditions
+           'err':3,      #  error conditions
+           'warning':4,  #  warning conditions
+           'notice':5,   #  normal but significant condition
+           'info':6,     #  informational
+           'debug':7 }   #  debug-level messages
 g_mask = log_upto('info')
 EOF
 endfunction
@@ -4230,7 +4230,7 @@ function! s:vimim_check_mycloud_plugin_url()
         endif
         if !empty(s:http_executable)
             let s:mycloud_mode = "www"
-            let ret = s:vimim_access_mycloud(s:vimim_mycloud, "__isvalid")
+            let ret = s:vimim_access_mycloud(s:vimim_mycloud,"__isvalid")
             if split(ret, "\t")[0] == "True"
                 return s:vimim_mycloud
             endif
@@ -4735,8 +4735,8 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 
 function! s:vimim_chinesemode_mapping()
     if s:vimim_onekey_is_tab < 2
-         noremap<silent>       <C-Bslash>   :call <SID>ChineseMode()<CR>
-            imap<silent>       <C-Bslash>   <Plug>VimIM
+         noremap<silent>  <C-Bslash>  :call <SID>ChineseMode()<CR>
+            imap<silent>  <C-Bslash>  <Plug>VimIM
         inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
         if s:vimim_ctrl_h_to_toggle == 1
             imap <C-H> <C-Bslash>
