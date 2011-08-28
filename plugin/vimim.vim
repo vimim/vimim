@@ -1336,13 +1336,16 @@ endfunction
 
 function! <SID>vimim_esc()
     let key = '\<Esc>'
-    if s:chinese_input_mode =~ 'onekey'
-        call g:vimim_stop()
-    elseif pumvisible()
+    if pumvisible()
         let column_start = s:start_column_before
         let column_end = col('.') - 1
         let range = column_end - column_start
         let key = '\<C-E>' . repeat("\<BS>", range)
+    elseif s:chinese_input_mode =~ 'onekey'
+        if s:vimim_onekey_hit_and_run < 1 && &ruler < 1
+            let key = ''
+        endif
+        call g:vimim_stop()
     endif
     sil!call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
