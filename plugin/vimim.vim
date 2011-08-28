@@ -355,8 +355,8 @@ function! s:vimim_egg_vimim()
     let im = s:vimim_statusline()
     let toggle = "i_Ctrl-Bslash"
     if s:vimim_ctrl_space_to_toggle == 1
-        let toggle = "toggle_with_CTRL-Space"
-    elseif s:vimim_onekey_is_tab > 1
+        let toggle = "toggle_with_Ctrl-Space"
+    elseif s:vimim_onekey_is_tab > 1 && s:vimim_onekey_hit_and_run < 1
         let toggle = "Tab_as_OneKey_NonStop"
         let im  = s:vimim_chinese('onekey') . s:space
         let im .= s:ui.statusline . s:space . "VimIM"
@@ -1882,7 +1882,7 @@ function! s:vimim_dot_by_dot(keyboard)
         return keyboard
     endif
     let partition = match(keyboard, "[.']")
-    if partition > -1 && keyboard[-1:] !~ "[.']" 
+    if partition > -1 && keyboard[-1:] !~ "[.']"
         let keyboard = s:vimim_get_head(keyboard, partition)
     endif
     return keyboard
@@ -4321,7 +4321,7 @@ function! s:vimim_i_setting_on()
     endif
 endfunction
 
-function! s:vimim_i_setting_off()
+function! s:vimim_setting_off()
     let &cpo         = s:cpo
     let &omnifunc    = s:omnifunc
     let &completeopt = s:completeopt
@@ -4348,12 +4348,12 @@ function! s:vimim_start()
 endfunction
 
 function! g:vimim_stop()
-    sil!call s:vimim_i_setting_off()
+    sil!call s:vimim_setting_off()
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_i_map_off()
+    sil!call s:vimim_imap_off()
     sil!call s:vimim_plugin_conflict_fix_off()
-    sil!call s:vimim_chinesemode_mapping()
-    sil!call s:vimim_onekey_mapping()
+    sil!call s:vimim_imap_for_chinesemode()
+    sil!call s:vimim_imap_for_onekey()
     sil!call s:vimim_restore_skin()
 endfunction
 
@@ -4410,7 +4410,7 @@ function! g:vimim_menu_select()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_i_map_off()
+function! s:vimim_imap_off()
     let recycles = range(0,9) + s:valid_keys
     if s:chinese_input_mode!~'dynamic' && empty(s:vimim_latex_suite)
         let recycles += s:AZ_list
@@ -4735,7 +4735,7 @@ endfunction
 let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
-function! s:vimim_chinesemode_mapping()
+function! s:vimim_imap_for_chinesemode()
     if s:vimim_onekey_is_tab < 2
          noremap<silent>  <C-Bslash>  :call <SID>ChineseMode()<CR>
             imap<silent>  <C-Bslash>  <Plug>VimIM
@@ -4763,7 +4763,7 @@ function! s:vimim_chinesemode_mapping()
     endif
 endfunction
 
-function! s:vimim_onekey_mapping()
+function! s:vimim_imap_for_onekey()
     if s:vimim_onekey_is_tab < 2
             imap<silent> <C-^> <Plug>VimimOneKey
         xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
@@ -4783,7 +4783,7 @@ function! s:vimim_initialize_plugin()
     if !hasmapto("VimimOneKey")
         inoremap<unique><expr> <Plug>VimimOneKey g:vimim_onekey()
     endif
-    if s:vimim_onekey_is_tab < 2 && !hasmapto("VimIM")
+    if !hasmapto("VimIM") && s:vimim_onekey_is_tab < 2
         inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
     endif
 endfunction
@@ -4792,6 +4792,6 @@ sil!call s:vimim_initialize_local()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
 sil!call s:vimim_initialize_plugin()
-sil!call s:vimim_chinesemode_mapping()
-sil!call s:vimim_onekey_mapping()
+sil!call s:vimim_imap_for_chinesemode()
+sil!call s:vimim_imap_for_onekey()
 " ======================================= }}}
