@@ -227,7 +227,7 @@ function! s:vimim_initialize_global()
     let s:antonyms = {}
     let s:pumheight = &pumheight
     let s:pumheight_saved = &pumheight
-    let s:chinese_input_mode = "onekey"
+    let s:chinese_input_mode = 'onekey'
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
     endif
@@ -617,10 +617,8 @@ function! s:translators.translate(english) dict
 endfunction
 
 function! s:vimim_dictionary_chinese()
-    let s:space = "　"
-    let s:colon = "："
-    let s:left  = "【"
-    let s:right = "】"
+    let s:space = "　"  |  let s:colon = "："
+    let s:left  = "【"  |  let s:right = "】"
     let s:chinese = {}
     let s:chinese.onekey     = ['点石成金','點石成金']
     let s:chinese.computer   = ['电脑','電腦']
@@ -1481,7 +1479,7 @@ if has('python') < 1 && has('python3') < 1
     echo 'No magic Python Interface to Vim' | return ""
 endif
 let firstline = a:firstline
-let lastline  = a:lastline
+let  lastline = a:lastline
 if lastline - firstline < 1
     let firstline = 1
     let lastline = "$"
@@ -1687,7 +1685,7 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
 function! g:vimim_onekey()
-    " (1) <OneKey> => start OneKey as "hit and run"
+    " (1) <OneKey> => start OneKey as 'hit and run'
     " (2) <OneKey> => stop  OneKey and print out menu
     let onekey = ''
     let one_before = getline(".")[col(".")-2]
@@ -1699,7 +1697,7 @@ function! g:vimim_onekey()
         if pumvisible() && len(s:popupmenu_list) > 0
             let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
         else
-            let s:chinese_input_mode = "onekey"
+            let s:chinese_input_mode = 'onekey'
             sil!call s:vimim_backend_initialization()
             sil!call s:vimim_frontend_initialization()
             sil!call s:vimim_onekey_pumvisible_mapping()
@@ -1871,8 +1869,7 @@ function! s:vimim_onekey_input(keyboard)
         let keyboard = s:vimim_cjk_sentence_match(keyboard)
         let results = s:vimim_cjk_match(keyboard)
         if keyboard =~ '^\l\d\d\d\d'
-        \&& len(results) > 0
-        \&& len(s:english_results) > 0
+        \&& len(s:english_results)>0 && len(results)>0
             call extend(s:english_results, results)
         endif
     endif
@@ -1889,6 +1886,23 @@ function! s:vimim_dot_by_dot(keyboard)
         let keyboard = s:vimim_get_head(keyboard, partition)
     endif
     return keyboard
+endfunction
+
+function! s:vimim_get_head(keyboard, partition)
+    if a:partition < 0
+        return a:keyboard
+    endif
+    let head = a:keyboard[0 : a:partition-1]
+    if len(s:keyboard_list) < 2
+        let keyboards = []
+        call add(keyboards, head)
+        let tail = a:keyboard[a:partition : -1]
+        if !empty(tail)
+            call add(keyboards, tail)
+        endif
+        let s:keyboard_list = copy(keyboards)
+    endif
+    return head
 endfunction
 
 function! s:vimim_magic_tail(keyboard)
@@ -2469,13 +2483,13 @@ function! s:vimim_cjk_sentence_match(keyboard)
         if keyboard =~ '^\d' && keyboard !~ '\D'
             let head = keyboard
             if len(keyboard) > 4
-                " output is '6021' for input 6021272260021762
+                " output is 6021 for input 6021272260021762
                 let head = s:vimim_get_head(keyboard, 4)
             endif
         elseif keyboard =~ '^\l\+\d\+\>'
             let head = keyboard
         elseif keyboard =~ '^\l\+\d\+'
-            " output is 'wo23' for input wo23you40yigemeng
+            " output is wo23 for input wo23you40yigemeng
             let partition = match(keyboard, '\d')
             while partition > -1
                 let partition += 1
@@ -2518,7 +2532,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
 endfunction
 
 function! s:vimim_qwertyuiop_1234567890(keyboard)
-    " output is '7712' for input uuqw
+    " output is 7712 for input uuqw
     if a:keyboard =~ '\d'
         return 0
     endif
@@ -2626,23 +2640,6 @@ function! s:vimim_sort_on_last(line1, line2)
         return 1
     endif
     return 0
-endfunction
-
-function! s:vimim_get_head(keyboard, partition)
-    if a:partition < 0
-        return a:keyboard
-    endif
-    let keyboards = []
-    let head = a:keyboard[0 : a:partition-1]
-    let tail = a:keyboard[a:partition : -1]
-    call add(keyboards, head)
-    if !empty(tail)
-        call add(keyboards, tail)
-    endif
-    if len(s:keyboard_list) < 2
-        let s:keyboard_list = copy(keyboards)
-    endif
-    return head
 endfunction
 
 function! s:vimim_chinese_transfer() range abort
@@ -3716,7 +3713,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     if has_key(s:cloud_cache[cloud], keyboard)
         return s:cloud_cache[cloud][keyboard]
     endif
-    let get_cloud  = "s:vimim_get_cloud_" . cloud . "(keyboard)"
+    let get_cloud = "s:vimim_get_cloud_" . cloud . "(keyboard)"
     try
         let results = eval(get_cloud)
     catch
@@ -3804,7 +3801,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     " http://ime.qq.com/fcgi-bin/getword?key=32&q=mxj
     let url = 'http://ime.qq.com/fcgi-bin/'
     if empty(s:cloud_keys.qq)
-        let key_qq  = url . 'getkey'
+        let key_qq = url . 'getkey'
         let output = s:vimim_get_from_http(key_qq, 'qq')
         if empty(output) || output =~ '502 bad gateway'
             return []
@@ -4666,8 +4663,8 @@ function! s:vimim_popupmenu_list(matched_list)
         if cursor_gps < 0.72 && onerow_gps < 0.92
             let start = 1
             let display = 0
-            let line1 =  line("w$") - line(".")
-            let line2 =  line("w$") - line("w0")
+            let line1 = line("w$") - line(".")
+            let line2 = line("w$") - line("w0")
             if line1 < height+2 && line2 > &lines-height- 2
                 let start = 0
                 let display = height-1
