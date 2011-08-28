@@ -1878,8 +1878,11 @@ endfunction
 
 function! s:vimim_dot_by_dot(keyboard)
     let keyboard = a:keyboard
+    if s:ui.has_dot > 0 || keyboard !~ '[^0-9.]'
+        return keyboard
+    endif
     let partition = match(keyboard, "[.']")
-    if partition > -1 && empty(s:ui.has_dot) && keyboard =~ '[^0-9.]'
+    if partition > -1 && keyboard[-1:] !~ "[.']" 
         let keyboard = s:vimim_get_head(keyboard, partition)
     endif
     return keyboard
@@ -1890,21 +1893,20 @@ function! s:vimim_magic_tail(keyboard)
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
     if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z']"
-        " play with magic trailing char
+        " <dot> triple play in OneKey:
+        "   (1) trailing dot => forced-non-cloud in cloud
+        "   (2) trailing dot => forced-cjk-match
+        "   (3) as word partition  => match dot by dot
+        " <apostrophe> triple play in OneKey:
+        "   (1) one   trailing apostrophe => cloud at will
+        "   (2) two   trailing apostrophe => cloud for ever
+        "   (3) three trailing apostrophe => cloud switch
     else
         return keyboard
     endif
     if magic_tail ==# "."
-        " <dot> triple play in OneKey:
-        "   (1) magic trailing dot => forced-non-cloud in cloud
-        "   (2) magic trailing dot => forced-cjk-match
-        "   (3) as word partition  => match dot by dot
         let s:cloud_onekey = 0
     elseif magic_tail ==# "'"
-        " <apostrophe> triple play in OneKey:
-        "   (1) 1 trailing apostrophe => cloud at will
-        "   (2) 2 trailing apostrophe => cloud for ever
-        "   (3) 3 trailing apostrophe => cloud switch
         let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
         if cloud_ready > 0
             " trailing apostrophe => forced-cloud
@@ -2494,10 +2496,10 @@ function! s:vimim_cjk_sentence_match(keyboard)
         endif
         if empty(head)
             let a_keyboard = keyboard
-            if keyboard[-1:-1] ==# "."
+            if keyboard[-1:] ==# "."
                 "  magic trailing dot to use control cjjp: sssss.
                 let s:hjkl_m += 1
-                let a_keyboard = keyboard[0 : len(keyboard)-2]
+                let a_keyboard = keyboard[:len(keyboard)-2]
             endif
             let grep = '^' . a_keyboard . '\>'
             let matched = match(s:cjk_lines, grep)
