@@ -2507,6 +2507,9 @@ function! s:vimim_cjk_sentence_match(keyboard)
             let matched = match(s:cjk_lines, grep)
             if s:hjkl_m > 0
                 let keyboard = s:vimim_toggle_cjjp(a_keyboard)
+                if len(s:english_results) > 0
+                    let s:english_results = []
+                endif
             elseif matched < 0 && s:has_cjk_file > 0
                 let keyboard = s:vimim_toggle_pinyin(a_keyboard)
             endif
