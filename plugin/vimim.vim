@@ -2579,7 +2579,12 @@ function! s:vimim_cjk_match(keyboard)
             endif
         endif
     elseif s:ui.im == 'pinyin' || s:has_cjk_file > 1
-        if len(keyboard) == 1 && keyboard !~ '[ai]'
+        if len(keyboard) == 1 && keyboard =~ '[uvi]'
+            let u = "东 南 西 北 春 夏 秋 冬"
+            let v = "梅 兰 竹 菊 發 萬 中 囍"
+            let i = "我 你 妳 他 她 它"
+            return split(keyboard=='u' ? u : keyboard=='v' ? v : i)
+        elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
         elseif keyboard =~ '^\l'
