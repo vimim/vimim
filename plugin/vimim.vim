@@ -1091,13 +1091,13 @@ function! s:vimim_initialize_skin()
     if s:vimim_custom_color < 0
         return
     endif
-    highlight default CursorIM guifg=NONE guibg=green gui=NONE
+    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! vimim_none_color NONE
     if !empty(s:vimim_custom_color)
         if s:vimim_custom_color == 2 || s:vimim_custom_label > 0
-            highlight! link PmenuSel   vimim_none_color
+            highlight! link PmenuSel vimim_none_color
         elseif s:vimim_custom_color == 1
-            highlight! link PmenuSel   Title
+            highlight! link PmenuSel Title
         endif
         highlight! link PmenuSbar  vimim_none_color
         highlight! link PmenuThumb vimim_none_color
@@ -1342,7 +1342,6 @@ function! <SID>vimim_esc()
         if s:vimim_midas_touch_non_stop && &ruler<1
             let key = ''
         endif
-        set iminsert=0
         call g:vimim_stop()
     endif
     sil!call s:vimim_super_reset()
@@ -4294,7 +4293,6 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 
 function! s:vimim_initialize_i_setting()
     let s:cpo         = &cpo
-"   let s:iminsert    = &iminsert
     let s:omnifunc    = &omnifunc
     let s:completeopt = &completeopt
     let s:laststatus  = &laststatus
@@ -4305,12 +4303,13 @@ function! s:vimim_initialize_i_setting()
 endfunction
 
 function! s:vimim_i_setting_on()
+    set imdisable
+    set iminsert=0
     set completeopt=menuone
     set omnifunc=VimIM
     set nolazyredraw
     set noshowmatch
     set smartcase
-"   set iminsert=1
     if &pumheight < 1 || &pumheight > 10
         let &pumheight = len(s:abcd)
         if s:has_cjk_file > 0
@@ -4323,10 +4322,9 @@ function! s:vimim_i_setting_on()
     endif
 endfunction
 
-function! s:vimim_setting_off()
+function! s:vimim_restore_setting()
     let &cpo         = s:cpo
     let &omnifunc    = s:omnifunc
-"   let &iminsert    = s:iminsert
     let &completeopt = s:completeopt
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
@@ -4351,7 +4349,7 @@ function! s:vimim_start()
 endfunction
 
 function! g:vimim_stop()
-    sil!call s:vimim_setting_off()
+    sil!call s:vimim_restore_setting()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_imap_off()
     sil!call s:vimim_plugin_conflict_fix_off()
