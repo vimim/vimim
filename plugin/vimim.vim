@@ -1702,7 +1702,7 @@ function! g:vimim_onekey()
             sil!call s:vimim_onekey_pumvisible_mapping()
             sil!call s:vimim_onekey_punctuation_mapping()
             sil!call s:vimim_start()
-            let onekey = s:vimim_onekey_action(0)
+            let onekey = s:vimim_onekey_action(1)
         endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -1767,9 +1767,10 @@ function! s:vimim_onekey_action(onekey)
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
+    let onekey = " "
     if one_before =~ s:valid_key
         let onekey = g:vimim()
-    elseif a:onekey < 1
+    elseif a:onekey > 0
         let start = col(".") - s:multibyte - 1
         let char_before = getline(".")[start : start+s:multibyte-1]
         let ddddd = char2nr(char_before)
@@ -1785,7 +1786,6 @@ function! <SID>vimim_space()
     " (1) <Space> after English (valid keys) => trigger keycode menu
     " (2) <Space> after English punctuation  => Chinese punctuation
     " (3) <Space> after popup menu           => insert Chinese
-    " (4) <Space> after Chinese              => stop OneKeyNonStop
     let space = " "
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
@@ -1797,12 +1797,7 @@ function! <SID>vimim_space()
         let before = getline(".")[col(".")-2]
         let punctuations = copy(s:punctuations)
         call extend(punctuations, s:evils)
-        if before !~ s:valid_key && !has_key(punctuations, before)
-            let space = ""
-            call g:vimim_stop()
-        else
-            let space = s:vimim_onekey_action(1)
-        endif
+        let space = s:vimim_onekey_action(0)
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
