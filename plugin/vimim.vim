@@ -215,10 +215,10 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud")
     call s:vimim_set_global_default(G, 0)
     let G = []
-    call add(G, "g:vimim_onekey_hit_and_run")
-    call add(G, "g:vimim_digit_4corner")
+    call add(G, "g:vimim_midas_touch_non_stop")
     call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
+    call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_search_next")
     call s:vimim_set_global_default(G, 1)
@@ -268,7 +268,6 @@ function! s:vimim_initialize_local()
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
         let g:vimim_onekey_is_tab = 2
-        let g:vimim_onekey_hit_and_run = 0
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_hjkl_directory = hjkl
     endif
@@ -356,8 +355,8 @@ function! s:vimim_egg_vimim()
     let toggle = "i_Ctrl-Bslash"
     if s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_Ctrl-Space"
-    elseif s:vimim_onekey_is_tab > 1 && s:vimim_onekey_hit_and_run < 1
-        let toggle = "Tab_as_OneKey_NonStop"
+    elseif s:vimim_onekey_is_tab > 1 && s:vimim_midas_touch_non_stop
+        let toggle = "Tab_as_MidasTouch_NonStop"
         let im  = s:vimim_chinese('onekey') . s:space
         let im .= s:ui.statusline . s:space . "VimIM"
     endif
@@ -1340,9 +1339,10 @@ function! <SID>vimim_esc()
         let range = column_end - column_start
         let key = '\<C-E>' . repeat("\<BS>", range)
     elseif s:chinese_input_mode =~ 'onekey'
-        if s:vimim_onekey_hit_and_run < 1 && &ruler < 1
+        if s:vimim_midas_touch_non_stop && &ruler<1
             let key = ''
         endif
+        set iminsert=0
         call g:vimim_stop()
     endif
     sil!call s:vimim_super_reset()
@@ -4294,6 +4294,7 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 
 function! s:vimim_initialize_i_setting()
     let s:cpo         = &cpo
+"   let s:iminsert    = &iminsert
     let s:omnifunc    = &omnifunc
     let s:completeopt = &completeopt
     let s:laststatus  = &laststatus
@@ -4309,6 +4310,7 @@ function! s:vimim_i_setting_on()
     set nolazyredraw
     set noshowmatch
     set smartcase
+"   set iminsert=1
     if &pumheight < 1 || &pumheight > 10
         let &pumheight = len(s:abcd)
         if s:has_cjk_file > 0
@@ -4324,6 +4326,7 @@ endfunction
 function! s:vimim_setting_off()
     let &cpo         = s:cpo
     let &omnifunc    = s:omnifunc
+"   let &iminsert    = s:iminsert
     let &completeopt = s:completeopt
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
@@ -4397,7 +4400,7 @@ function! g:vimim()
     let one_before = getline(".")[col(".")-2]
     if one_before =~ s:valid_key
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
-    elseif s:vimim_onekey_hit_and_run && s:chinese_input_mode=~'onekey'
+    elseif s:vimim_midas_touch_non_stop<1 && s:chinese_input_mode=~'onekey'
         call g:vimim_stop()
     else
         let s:has_pumvisible = 0
