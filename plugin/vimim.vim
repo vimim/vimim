@@ -1358,27 +1358,21 @@ function! <SID>vimim_backspace()
 endfunction
 
 function! <SID>vimim_enter()
-    let one_before = getline(".")[col(".")-2]
     " <Enter> triple play for OneKey and static mode:
-    "  (1) single <Enter> ==> seamless
-    "  (2) double <Enter> ==> <Space>
-    "  (3) triple <Enter> ==> <Enter>
-    if one_before =~ '\S'
+    "  (1) single <Enter> after English ==> seamless
+    "  (2) double <Enter> after English ==> <Space>
+    "  (3) <Enter> after Space/Chinese  ==> <Enter>
+    let one_before = getline(".")[col(".")-2]
+    if one_before=~s:valid_key && !has_key(s:punctuations,one_before)
         let s:smart_enter += 1
-    endif
-    if s:chinese_input_mode =~ 'dynamic'
-         "  (1) after English (valid keys)    => Seamless
-         "  (2) after Chinese or double Enter => Enter
-        if one_before =~ s:valid_key
-        \&& !has_key(s:punctuations, one_before)
+        if s:chinese_input_mode =~ 'dynamic'
             let s:smart_enter = 1
-        else
-            let s:smart_enter = 3
         endif
+    elseif s:chinese_input_mode =~ 'dynamic'
+        let s:smart_enter = 3
     endif
     let key = pumvisible() ? "\<C-E>" : ""
     if s:smart_enter == 1
-        " the first <Enter> does seamless
         let s:seamless_positions = getpos(".")
     else
         let key = s:smart_enter==2 ? " " : "\<CR>"
