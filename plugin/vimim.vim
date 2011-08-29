@@ -1601,9 +1601,6 @@ def udpsend(data, host, port):
             continue
         udpslice(s.sendto, item, addr)
     s.close()
-def netlog(*args):
-    data = " ".join(args)
-    udpsend(data)
 def log_mask(level):
     pri = g_level.get(level, -1)
     if pri < 0:
