@@ -3432,11 +3432,14 @@ function! s:vimim_get_from_database(keyboard, search)
     if empty(a:search) && len(results) > 0 && len(results) < 20
         let candidates = s:vimim_more_pinyin_candidates(keyboard)
         if len(candidates) > 1
-            for candidate in candidates[1:]
+            for candidate in candidates
                 let oneline = s:vimim_sentence_match_database(candidate,0)
                 let matched_list = s:vimim_make_pair_list(oneline)
                 if !empty(matched_list)
                     call extend(results, matched_list)
+                endif
+                if len(results) > 60
+                    break
                 endif
             endfor
         endif
@@ -3445,11 +3448,10 @@ function! s:vimim_get_from_database(keyboard, search)
 endfunction
 
 function! s:vimim_make_pair_list(oneline)
-    let oneline = a:oneline
-    if empty(oneline)
+    if empty(a:oneline)
         return []
     endif
-    let oneline_list = split(oneline)
+    let oneline_list = split(a:oneline)
     let menu = remove(oneline_list, 0)
     if empty(menu) || menu =~ '\W'
         return []
@@ -3459,8 +3461,7 @@ function! s:vimim_make_pair_list(oneline)
     endif
     let results = []
     for chinese in oneline_list
-        let menu_chinese = menu .' '. chinese
-        call add(results, menu_chinese)
+        call add(results, menu .' '. chinese)
     endfor
     return results
 endfunction
