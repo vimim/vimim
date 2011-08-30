@@ -2124,7 +2124,7 @@ endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if a:keyboard =~ '^u\+$' && s:ui.im == 'pinyin'
+    if a:keyboard =~ '^u\+$'
         let line = getline(".") " get chinese before u: 馬力uu => 39340
         let start = col(".") -1 - s:multibyte * len(a:keyboard)
         let char_before = line[start : start+s:multibyte-1]
@@ -3690,11 +3690,6 @@ function! s:vimim_get_cloud(keyboard, cloud)
     if (len(results)) > 1
         let s:cloud_cache[cloud][keyboard] = results
     endif
-    let whoami = s:vimim_chinese(cloud)
-    if cloud =~ 'sogou'
-       let whoami = cloud . ' ' . whoami
-    endif
-    call add(results, whoami)
     return results
 endfunction
 
@@ -3940,8 +3935,7 @@ function! s:vimim_get_cloud_all(keyboard)
         if len(outputs) > 1+1+1+1
             let outputs = &number<1 ? outputs[0:8] : outputs
             let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
-            call map(outputs, filter)
-            call add(results, join(outputs[0:-2]))
+            call add(results, join(map(outputs,filter)))
         endif
     endfor
     call s:debug('info', 'cloud_results=', results)
