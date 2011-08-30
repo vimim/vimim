@@ -2117,32 +2117,35 @@ function! s:vimim_get_unicode_list(keyboard)
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
     endif
-    let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
-    if ddddd < 8080 || ddddd > 19968+20902
-        return []
-    endif
     let words = []
-    for i in range(99)
-        if ddddd+i > 40869
-            break
+    if &encoding == "utf-8"
+        let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
+        if ddddd < 8080 || ddddd > 19968+20902
+            return []
         endif
-        let chinese = nr2char(ddddd+i)
-        call add(words, chinese)
-    endfor
+        for i in range(99)
+            if ddddd+i > 40869
+                break
+            endif
+            let chinese = nr2char(ddddd+i)
+            call add(words, chinese)
+        endfor
+    endif
     return words
 endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if a:keyboard == 'u' && s:ui.im == 'pinyin'
-        let start = col(".") - s:multibyte - 1
-        let char_before = getline(".")[start : start+s:multibyte-1]
-        return char2nr(char_before) " from chinese to unicode: 馬u => 39340
+    if a:keyboard =~ '^u\+$' && s:ui.im == 'pinyin'
+        let line = getline(".") " get chinese before u: 馬力uu => 39340
+        let start = col(".") -1 -3*len(a:keyboard)
+        let char_before = line[start : start+2]
+        return char2nr(char_before)
     elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
         if len(keyboard) == 5 || len(keyboard) == 6
             let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
-            if len(keyboard) == 4     " uoooo => u9999  uwwwwq => 22221
-                let keyboard = 'u' . keyboard
+            if len(keyboard) == 4                 " uoooo  => u9999
+                let keyboard = 'u' . keyboard     " uwwwwq => 22221
             endif
         else
             return 0
