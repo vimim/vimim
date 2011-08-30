@@ -1339,10 +1339,7 @@ function! <SID>vimim_esc()
         let range = column_end - column_start
         let key = '\<C-E>' . repeat("\<BS>", range)
     elseif s:chinese_input_mode =~ 'onekey'
-        if s:vimim_midas_touch_non_stop && &ruler<1
-            let key = ''
-        endif
-        call g:vimim_stop()
+        sil!call g:vimim_stop()
     endif
     sil!call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
@@ -1683,7 +1680,10 @@ function! g:vimim_onekey()
     let onekey = ''
     let one_before = getline(".")[col(".")-2]
     if empty(one_before) || one_before =~ '\s'
-        if s:vimim_onekey_is_tab > 0
+        if s:vimim_midas_touch_non_stop && &ruler<1
+            let onekey = ''
+            sil!call g:vimim_stop()
+        elseif s:vimim_onekey_is_tab > 0
             let onekey = "\t"
         endif
     else
