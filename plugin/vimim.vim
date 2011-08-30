@@ -1674,31 +1674,6 @@ endfunction
 let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
-function! g:vimim_onekey()
-    " (1)<OneKey> in insert mode => start OneKey as the Midas touch
-    " (2)<OneKey> in insert mode => stop  OneKey on non-English
-    " (3)<OneKey> in omni   mode => stop  OneKey and print out menu
-    let onekey = ''
-    let one_before = getline(".")[col(".")-2]
-    if pumvisible() && len(s:popupmenu_list) > 0
-        let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-    elseif &ruler < 1
-        let s:seamless_positions = getpos(".")
-        sil!call g:vimim_stop()
-    elseif empty(one_before) || one_before =~ '\s'
-        let onekey = s:vimim_onekey_is_tab>0 ? '\t' : ''
-    else
-        let s:chinese_input_mode = 'onekey'
-        sil!call s:vimim_backend_initialization()
-        sil!call s:vimim_frontend_initialization()
-        sil!call s:vimim_onekey_pumvisible_mapping()
-        sil!call s:vimim_onekey_punctuation_mapping()
-        sil!call s:vimim_start()
-        let onekey = s:vimim_onekey_action(1)
-    endif
-    sil!exe 'sil!return "' . onekey . '"'
-endfunction
-
 function! g:vimim_onekey_dump()
     let lines = []
     for items in s:popupmenu_list
@@ -1732,11 +1707,35 @@ function! g:vimim_onekey_dump()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
-function! s:vimim_onekey_action(onekey)
+function! g:vimim_onekey()
+    " (1)<OneKey> in insert mode => start OneKey as the Midas touch
+    " (2)<OneKey> in insert mode => stop  OneKey on non-English
+    " (3)<OneKey> in omni   mode => stop  OneKey and print out menu
+    let onekey = ''
+    let one_before = getline(".")[col(".")-2]
+    if pumvisible() && len(s:popupmenu_list) > 0
+        let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+    elseif &ruler < 1
+        let s:seamless_positions = getpos(".")
+        sil!call g:vimim_stop()
+    elseif empty(one_before) || one_before =~ '\s'
+        let onekey = s:vimim_onekey_is_tab>0 ? '\t' : ''
+    else
+        let s:chinese_input_mode = 'onekey'
+        sil!call s:vimim_backend_initialization()
+        sil!call s:vimim_frontend_initialization()
+        sil!call s:vimim_onekey_pumvisible_mapping()
+        sil!call s:vimim_onekey_punctuation_mapping()
+        sil!call s:vimim_start()
+        let onekey = s:vimim_onekey_action()
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+function! s:vimim_onekey_action()
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
     let two_before = current_line[col(".")-3]
-    let onekey = ""
     if empty(s:ui.has_dot) && two_before !~# "[0-9a-z']"
         let punctuations = copy(s:punctuations)
         call extend(punctuations, s:evils)
@@ -1758,18 +1757,7 @@ function! s:vimim_onekey_action(onekey)
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
-    let onekey = " "
-    if one_before =~ s:valid_key
-        let onekey = g:vimim()
-    elseif a:onekey > 0
-        let start = col(".") - s:multibyte - 1
-        let char_before = getline(".")[start : start+s:multibyte-1]
-        let ddddd = char2nr(char_before)
-        let onekey = ddddd>127 ? printf('u%04x',ddddd) : ""
-        if !empty(onekey)
-            let onekey .= '\<C-R>=g:vimim()\<CR>'
-        endif
-    endif
+    let onekey = one_before=~s:valid_key ? g:vimim() : " "
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
@@ -1788,7 +1776,7 @@ function! <SID>vimim_space()
         let before = getline(".")[col(".")-2]
         let punctuations = copy(s:punctuations)
         call extend(punctuations, s:evils)
-        let space = s:vimim_onekey_action(0)
+        let space = s:vimim_onekey_action()
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
@@ -2151,7 +2139,11 @@ endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
+    if a:keyboard == 'u'
+        let start = col(".") - s:multibyte - 1
+        let char_before = getline(".")[start : start+s:multibyte-1]
+        return char2nr(char_before)
+    elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
         if len(keyboard) == 5 || len(keyboard) == 6
             let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
             if len(keyboard) == 4   |" uoooo => u9999  uwwwwq => 22221
@@ -2579,8 +2571,8 @@ function! s:vimim_cjk_match(keyboard)
         endif
     elseif s:ui.im == 'pinyin' || s:has_cjk_file > 1
         if len(keyboard) == 1 && keyboard =~ '[uvi]'
-            let u = "东 南 西 北 春 夏 秋 冬"
-            let v = "梅 兰 竹 菊 發 萬 中 囍"
+            let u = "囍 發 萬 中 梅 兰 竹 菊"
+            let v = "春 夏 秋 冬 东 南 西 北"
             let i = "我 你 妳 他 她 它"
             return split(keyboard=='u' ? u : keyboard=='v' ? v : i)
         elseif len(keyboard) == 1
