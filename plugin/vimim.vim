@@ -2118,20 +2118,18 @@ function! s:vimim_initialize_encoding()
 endfunction
 
 function! s:vimim_get_unicode_list(keyboard)
-    let words = []
-    if &encoding == "utf-8"
-        let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
-        if ddddd < 8080 || ddddd > 19968+20902
-            return []
-        endif
-        for i in range(99)
-            if ddddd+i > 40869
-                break
-            endif
-            let chinese = nr2char(ddddd+i)
-            call add(words, chinese)
-        endfor
+    let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
+    if ddddd < 8080 && &encoding == "utf-8"
+        return []
     endif
+    let words = []
+    for i in range(99)
+        if ddddd+i > 40869 && &encoding == "utf-8"
+            break
+        endif
+        let chinese = nr2char(ddddd+i)
+        call add(words, chinese)
+    endfor
     return words
 endfunction
 
@@ -2139,8 +2137,8 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
     if a:keyboard =~ '^u\+$' && s:ui.im == 'pinyin'
         let line = getline(".") " get chinese before u: 馬力uu => 39340
-        let start = col(".") -1 -3*len(a:keyboard)
-        let char_before = line[start : start+2]
+        let start = col(".") -1 - s:multibyte * len(a:keyboard)
+        let char_before = line[start : start+s:multibyte-1]
         return char2nr(char_before)
     elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
         if len(keyboard) == 5 || len(keyboard) == 6
