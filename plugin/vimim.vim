@@ -1384,7 +1384,7 @@ function! s:vimim_get_labeling(label)
     if s:chinese_input_mode =~ 'onekey'
         if s:show_me_not > 0
             let fmt = '%02s '
-            if s:hjkl_h % 2 < 1
+            if s:hjkl_l % 2 < 1
                 let labeling = ""
             endif
         elseif a:label < &pumheight + 1
@@ -1396,7 +1396,7 @@ function! s:vimim_get_labeling(label)
         elseif a:label == &pumheight + 1 && s:has_cjk_file > 0
             let labeling = a:label
         endif
-        if s:hjkl_h > 0 && &pumheight < 1
+        if s:hjkl_l > 0 && &pumheight < 1
             let fmt = '%02s '
         endif
     endif
@@ -1657,7 +1657,7 @@ key = vim.eval('a:input')
 isenglish = vim.eval('s:english_results')
 if int(vim.eval('a:sentence')) > 0:
     partition = int(vim.eval('a:partition'))
-    if partition > 0:
+    if partition > 0 and len(key) > 1:
         key = key[:-partition]
     if key not in db and not isenglish:
         while key and key not in db: key = key[:-1]
@@ -2231,14 +2231,14 @@ function! s:vimim_cache()
             endif
         endif
         if s:show_me_not > 0
-            if s:hjkl_l % 2 > 0
+            if s:hjkl_h % 2 > 0
                 for line in s:matched_list
                     let oneline = join(reverse(split(line,'\zs')),'')
                     call add(results, oneline)
                 endfor
             endif
-        elseif s:hjkl_h > 0 && len(s:matched_list) > &pumheight
-            let &pumheight = s:hjkl_h%2<1 ? s:pumheight : 0
+        elseif s:hjkl_l > 0 && len(s:matched_list) > &pumheight
+            let &pumheight = s:hjkl_l%2<1 ? s:pumheight : 0
         endif
     endif
     if s:pageup_pagedown != 0
@@ -2403,8 +2403,8 @@ function! <SID>vimim_onekey_hjkl(key)
         else
             if a:key == 's'
                 call g:vimim_reset_after_insert()
-            elseif a:key =~ "[xhlmn]"
-                for toggle in split('xhlmn','\zs')
+            elseif a:key =~ "[hlmnx]"
+                for toggle in split('hlmnx','\zs')
                     if toggle == a:key
                         exe 'let s:hjkl_' . toggle . ' += 1'
                         let s:hjkl_n = a:key=='m' ? 0 : s:hjkl_n
@@ -4604,7 +4604,7 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:hjkl_x>0 && s:hjkl_x%2>0 && s:has_cjk_file>0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
-        if s:hjkl_l>0 && s:hjkl_l%2> 0 && len(chinese)==s:multibyte
+        if s:hjkl_h>0 && s:hjkl_h%2>0 && len(chinese)==s:multibyte
             let extra_text = menu
             if empty(s:english_results)
                 let ddddd = char2nr(chinese)
@@ -4711,7 +4711,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         endif
     elseif root =~# "datafile"
         if s:vimim_data_file =~ ".db"
-            let keyboard2 = s:vimim_sentence_database(keyboard,1,s:hjkl_l)
+            let keyboard2 = s:vimim_sentence_database(keyboard,1,s:hjkl_h)
             let results = s:vimim_get_from_database(keyboard2, a:search)
         else
             let keyboard2 = s:vimim_sentence_datafile(keyboard)
@@ -4724,8 +4724,8 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
-            if s:hjkl_l < 1 && s:vimim_data_file =~ ".db"
-                let s:hjkl_l += len(tail)
+            if s:hjkl_h < 1 && s:vimim_data_file =~ ".db"
+                let s:hjkl_h += len(tail)
             endif
         endif
     endif
