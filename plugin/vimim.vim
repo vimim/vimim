@@ -759,7 +759,7 @@ function! s:vimim_imode_number(keyboard)
     let quantifier.t = '天吨条头通堂趟台套桶筒贴'
     let quantifier.u = '微'
     let quantifier.x = '升席些项'
-    let quantifier.y = '年亿叶月'
+    let quantifier.y = '月叶亿'
     let quantifier.z = '种只张株支枝盏座阵桩尊则站幢宗兆'
     for char in keyboards
         if has_key(quantifier, char)
