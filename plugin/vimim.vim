@@ -2720,7 +2720,7 @@ function! <SID>vimim_visual_ctrl6()
             let ddddd = char2nr(get(split(line,'\zs'),0))
             if ddddd =~ '^\d\d\d\d\d$'
                 let line = 'u' . ddddd
-                let onekey .= "l"  . onekey
+                let onekey .= 'h'  . onekey
             endif
             let key = "gvc" . line . onekey
         endif
@@ -4589,6 +4589,7 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     let menu = get(s:keyboard_list,0)
     let s:matched_list = lines
+let g:gg=lines
     for chinese in lines
         let complete_items = {}
         if first_in_list =~ '\s' && s:show_me_not < 1
