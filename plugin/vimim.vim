@@ -2119,7 +2119,7 @@ endfunction
 
 function! s:vimim_get_unicode_list(keyboard)
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
-    if ddddd < 8080 && &encoding == "utf-8"
+    if ddddd < 8080
         return []
     endif
     let words = []
