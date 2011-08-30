@@ -424,7 +424,13 @@ function! s:vimim_get_hjkl(keyboard)
         return split(chinese, '\zs')
     endif
     " [unicode] support direct unicode/gb/big5 input
-    let lines = s:vimim_get_unicode_list(a:keyboard)
+    let lines = []
+    let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
+    if ddddd > 8080
+        for i in range(99)
+            call add(lines, nr2char(ddddd+i))
+        endfor
+    endif
     if !empty(lines)
         return lines
     endif
@@ -750,10 +756,10 @@ function! s:vimim_imode_number(keyboard)
     let quantifier.f = '分份发封付副幅峰方服'
     let quantifier.a = '秒'
     let quantifier.n = '年'
-    let quantifier.m = '月米名枚面门'
+    let quantifier.m = '米名枚面门'
     let quantifier.r = '日'
     let quantifier.c = '厘次餐场串处床'
-    let quantifier.d = '第度点袋道滴碟日顶栋堆对朵堵顿'
+    let quantifier.d = '第度点袋道滴碟顶栋堆对朵堵顿'
     let quantifier.e = '亿'
     let quantifier.g = '个根股管'
     let quantifier.i = '毫'
@@ -2117,22 +2123,6 @@ function! s:vimim_initialize_encoding()
     let s:multibyte = &encoding=="utf-8" ? 3 : 2
 endfunction
 
-function! s:vimim_get_unicode_list(keyboard)
-    let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
-    if ddddd < 8080
-        return []
-    endif
-    let words = []
-    for i in range(99)
-        if ddddd+i > 40869 && &encoding == "utf-8"
-            break
-        endif
-        let chinese = nr2char(ddddd+i)
-        call add(words, chinese)
-    endfor
-    return words
-endfunction
-
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
     if a:keyboard =~ '^u\+$' && s:ui.im == 'pinyin'
@@ -2665,7 +2655,7 @@ function! s:vimim_build_antonym_hash()
     let antonym = "  阴阳 你我 她他 雌雄 男女 淫娼 嫁娶 悲欢
     \ 软硬 强弱 里外 上下 左右 前后 快慢 轻重 缓急 正反 离合
     \ 始终 爱恨 老嫩 胖瘦 迎送 盈亏 真假 升降 进退 开关 穿脱
-    \ 借还 天地 矛盾 哭笑 松紧 张弛 好坏 美丑 善恶 宽窄 苦甜
+    \ 借还 沉浮 矛盾 哭笑 松紧 张弛 好坏 美丑 善恶 宽窄 苦甜
     \ 大小 多少 死活 公私 奇偶 冷热 高低 朝暮 奖罚 净脏 祸福
     \ 是非 闲忙 来去 分合 存亡 动静 浓淡 饥饱 赔赚 手脚 耻荣
     \ 虚实 有无 雅俗 稀密 粗细 得失 巧拙 恩怨 恼喜 旦夕 利弊
@@ -2674,7 +2664,7 @@ function! s:vimim_build_antonym_hash()
     \ 薄厚 尊卑 文武 推拉 问答 主仆 深浅 牡牝 卷舒 贵贱 买卖
     \ 聚散 干湿 彼此 生熟 单双 首尾 奢简 警匪 官民 可否 懒勤
     \ 盛衰 胜败 加减 黑白 纯杂 臣君 信疑 零整 久暂 跌涨 凹凸
-    \ 藏露 断续 钝锐 醒睡 安危 沉浮 敞盖 坤乾 金石
+    \ 藏露 断续 钝锐 醒睡 安危 天地 坤乾 日月 金石
     \ “” ‘’ ＋－ （） 【】 〖〗 《》 ，。"
     for yinyang in split(antonym)
         let yy = split(yinyang, '\zs')
