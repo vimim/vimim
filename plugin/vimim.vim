@@ -417,6 +417,12 @@ function! s:vimim_egg_vimim()
 endfunction
 
 function! s:vimim_get_hjkl(keyboard)
+    " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
+    if a:keyboard =~ 'u\d\d\d\d\d'  
+        let s:show_me_not = -7
+        let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
+        return split(chinese, '\zs')
+    endif
     " [unicode] support direct unicode/gb/big5 input
     let lines = s:vimim_get_unicode_list(a:keyboard)
     if !empty(lines)
@@ -1691,7 +1697,7 @@ function! g:vimim_onekey_dump()
         endif
         call add(lines, space . line)
     endfor
-    if has("gui_running") && has("win32") && s:show_me_not != -9
+    if has("gui_running") && has("win32") && s:show_me_not != -7
         let @+ = join(lines, "\n")
     endif
     if getline(".") =~ 'vimx\>' && len(lines) < 2
@@ -2112,11 +2118,6 @@ function! s:vimim_initialize_encoding()
 endfunction
 
 function! s:vimim_get_unicode_list(keyboard)
-    if a:keyboard =~ 'u\d\d\d\d\d'
-        let s:show_me_not = -9
-        let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
-        return split(chinese, '\zs')
-    endif
     let words = []
     if &encoding == "utf-8"
         let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
@@ -2166,21 +2167,24 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     return ddddd
 endfunction
 
-function! s:vimim_cjk_extra_text(ddddd)
-    let unicode = printf('u%04x', a:ddddd)
-    let line = a:ddddd - 19968
-    if empty(s:has_cjk_file) || line < 0 || line > 20902
-        return unicode . s:space . a:ddddd
-    elseif s:has_cjk_file > 0
-        let values = split(get(s:cjk_lines, line))
-        let dddd = s:vimim_digit_4corner>0 ? 2 : 1
-        let digit = get(values, dddd)
-        let pinyin = get(values, 3)
-        let english = join(values[4:-2])
-        let unicode .= s:space . digit
-        let unicode .= s:space . pinyin
-        if !empty(english)
-            let unicode .= s:space . english
+function! s:vimim_cjk_extra_text(chinese)
+    let ddddd = char2nr(a:chinese)
+    let unicode = printf('u%04x', ddddd) . s:space . ddddd
+    if s:has_cjk_file > 0
+" todo  let line = ddddd - 19968
+        let pattern = "^" . a:chinese
+        let line = match(s:cjk_lines, pattern, 0)
+        if line > -1
+            let values = split(get(s:cjk_lines, line))
+            let dddd = s:vimim_digit_4corner>0 ? 2 : 1
+            let digit = get(values, dddd)
+            let pinyin = get(values, 3)
+            let english = join(values[4:-2])
+            let unicode .= s:space . digit
+            let unicode .= s:space . pinyin
+            if !empty(english)
+                let unicode .= s:space . english
+            endif
         endif
     endif
     return unicode
@@ -2696,7 +2700,7 @@ function! <SID>vimim_visual_ctrl6()
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
         " highlighted one      cjk     char  => antonym or number+1
-        " highlighted multiple cjk     chars => print property vertically
+        " highlighted multiple cjk     chars => print unicode vertically
         " highlighted multiple english chars => cjk in omni window
         let line = get(lines,0)
         sil!call s:vimim_build_antonym_hash()
@@ -4593,8 +4597,7 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:hjkl_h>0 && s:hjkl_h%2>0 && len(chinese)==s:multibyte
             let extra_text = menu
             if empty(s:english_results)
-                let ddddd = char2nr(chinese)
-                let extra_text = s:vimim_cjk_extra_text(ddddd)
+                let extra_text = s:vimim_cjk_extra_text(chinese)
             endif
         endif
         if empty(s:mycloud)
@@ -4616,7 +4619,7 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         if s:vimim_custom_label > -1
             let labeling = label . " "
-            if s:show_me_not <= -9
+            if s:show_me_not <= -7
                 let labeling = ""
             elseif s:vimim_custom_label < 1
                 let labeling = s:vimim_get_labeling(label)
