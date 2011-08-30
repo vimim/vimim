@@ -355,7 +355,7 @@ function! s:vimim_egg_vimim()
     let toggle = "i_Ctrl-Bslash"
     if s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_Ctrl-Space"
-    elseif s:vimim_onekey_is_tab > 1 && s:vimim_midas_touch_non_stop
+    elseif s:vimim_onekey_is_tab > 1
         let toggle = "Tab_as_MidasTouch_NonStop"
         let im  = s:vimim_chinese('onekey') . s:space
         let im .= s:ui.statusline . s:space . "VimIM"
@@ -1680,7 +1680,7 @@ function! g:vimim_onekey()
     let onekey = ''
     let one_before = getline(".")[col(".")-2]
     if empty(one_before) || one_before =~ '\s'
-        if s:vimim_midas_touch_non_stop && &ruler<1
+        if &ruler < 1
             let onekey = ''
             sil!call g:vimim_stop()
         elseif s:vimim_onekey_is_tab > 0
@@ -4589,7 +4589,6 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     let menu = get(s:keyboard_list,0)
     let s:matched_list = lines
-let g:gg=lines
     for chinese in lines
         let complete_items = {}
         if first_in_list =~ '\s' && s:show_me_not < 1
