@@ -2160,8 +2160,8 @@ function! s:vimim_cjk_extra_text(chinese)
     let unicode = printf('u%04x', ddddd) . s:space . ddddd
     if s:has_cjk_file > 0
 " todo  let line = ddddd - 19968
-        let pattern = "^" . a:chinese
-        let line = match(s:cjk_lines, pattern, 0)
+        let grep = "^" . a:chinese
+        let line = match(s:cjk_lines, grep, 0)
         if line > -1
             let values = split(get(s:cjk_lines, line))
             let dddd = s:vimim_digit_4corner>0 ? 2 : 1
@@ -2294,9 +2294,9 @@ function! s:vimim_cjk_digit_filter(chinese)
     let digit_tail = ""
     let words = split(a:chinese,'\zs')
     for cjk in words
-        let ddddd = char2nr(cjk)
-        let line = ddddd - 19968
-        if cjk =~ '\w' || line < 0 || line > 20902
+        let grep = "^" . cjk
+        let line = match(s:cjk_lines, grep, 0)
+        if line < 0
             continue
         else
             let values = split(get(s:cjk_lines, line))
@@ -2485,13 +2485,13 @@ function! s:vimim_cjk_sentence_match(keyboard)
                 let a_keyboard = keyboard[:len(keyboard)-2]
             endif
             let grep = '^' . a_keyboard . '\>'
-            let matched = match(s:cjk_lines, grep)
+            let line = match(s:cjk_lines, grep)
             if s:hjkl_m > 0
                 let keyboard = s:vimim_toggle_cjjp(a_keyboard)
                 if len(s:english_results) > 0
                     let s:english_results = []
                 endif
-            elseif matched < 0 && s:has_cjk_file > 0
+            elseif line < 0 && s:has_cjk_file > 0
                 let keyboard = s:vimim_toggle_pinyin(a_keyboard)
             endif
             let head = s:vimim_dot_by_dot(keyboard)
