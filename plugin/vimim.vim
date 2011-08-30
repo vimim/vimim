@@ -2159,7 +2159,6 @@ function! s:vimim_cjk_extra_text(chinese)
     let ddddd = char2nr(a:chinese)
     let unicode = printf('u%04x', ddddd) . s:space . ddddd
     if s:has_cjk_file > 0
-" todo  let line = ddddd - 19968
         let grep = "^" . a:chinese
         let line = match(s:cjk_lines, grep, 0)
         if line > -1
@@ -2622,22 +2621,15 @@ function! s:vimim_chinese_transfer() range abort
     sil!call s:vimim_backend_initialization()
     if empty(s:has_cjk_file)
         " no toggle between simplified and tranditional Chinese
-    elseif &encoding == "utf-8"
+    else
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
 endfunction
 
-function! s:vimim_get_traditional_chinese(chinese)
-    let chinese = ""
-    for char in split(a:chinese, '\zs')
-        let chinese .= s:vimim_1to1(char)
-    endfor
-    return chinese
-endfunction
-
 function! s:vimim_1to1(chinese)
-    let line = char2nr(a:chinese) - 19968
-    if line < 0 || line > 20902
+    let grep = "^" . a:chinese
+    let line = match(s:cjk_lines, grep, 0)
+    if line < 0
         return a:chinese
     endif
     let values = split(get(s:cjk_lines, line))
@@ -4580,7 +4572,11 @@ function! s:vimim_popupmenu_list(matched_list)
             endif
         endif
         if s:hjkl_x>0 && s:hjkl_x%2>0 && s:has_cjk_file>0
-            let chinese = s:vimim_get_traditional_chinese(chinese)
+            let simplified_traditional = ""
+            for char in split(chinese, '\zs')
+                let simplified_traditional .= s:vimim_1to1(char)
+            endfor
+            let chinese = simplified_traditional
         endif
         if s:hjkl_h>0 && s:hjkl_h%2>0 && len(chinese)==s:multibyte
             let extra_text = menu
