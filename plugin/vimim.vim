@@ -1712,22 +1712,22 @@ function! g:vimim_onekey()
     " (2)<OneKey> in insert mode => stop  OneKey on non-English
     " (3)<OneKey> in omni   mode => stop  OneKey and print out menu
     let onekey = ''
+    let s:chinese_input_mode = 'onekey'
+    sil!call s:vimim_backend_initialization()
     let one_before = getline(".")[col(".")-2]
     if pumvisible() && len(s:popupmenu_list) > 0
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif &ruler < 1
         let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
-    elseif empty(one_before) || one_before =~ '\s'
-        let onekey = s:vimim_onekey_is_tab>0 ? '\t' : ''
-    else
-        let s:chinese_input_mode = 'onekey'
-        sil!call s:vimim_backend_initialization()
+    elseif one_before =~ s:valid_key || has_key(s:punctuations,one_before)
         sil!call s:vimim_frontend_initialization()
         sil!call s:vimim_onekey_pumvisible_mapping()
         sil!call s:vimim_onekey_punctuation_mapping()
         sil!call s:vimim_start()
         let onekey = s:vimim_onekey_action()
+    elseif s:vimim_onekey_is_tab > 0
+        let onekey = '\t'
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -1773,9 +1773,6 @@ function! <SID>vimim_space()
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
-        let before = getline(".")[col(".")-2]
-        let punctuations = copy(s:punctuations)
-        call extend(punctuations, s:evils)
         let space = s:vimim_onekey_action()
     endif
     sil!exe 'sil!return "' . space . '"'
