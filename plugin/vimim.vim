@@ -1650,15 +1650,18 @@ except vim.error:
 EOF
 endfunction
 
-function! s:vimim_sentence_match_database(input, sentence)
+function! s:vimim_sentence_database(input, sentence, partitition)
+" http://vimim.googlecode.com/svn/vimim/vimim.html#database
 if empty(a:input)
-    " http://vimim.googlecode.com/svn/vimim/vimim.html#database
     return ""
 endif
 :sil!python << EOF
 key = vim.eval('a:input')
 isenglish = vim.eval('s:english_results')
 if int(vim.eval('a:sentence')) > 0:
+    partitition = int(vim.eval('a:partitition')) + len(key) - 4
+    if partitition > 0:
+        key = key[:-partitition]
     if key not in db and not isenglish:
         while key and key not in db: key = key[:-1]
     oneline = key
@@ -3356,7 +3359,7 @@ function! s:vimim_set_datafile(im, datafile)
     call s:vimim_set_special_im_property()
 endfunction
 
-function! s:vimim_sentence_match_datafile(keyboard)
+function! s:vimim_sentence_datafile(keyboard)
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
     if empty(lines)
@@ -3427,13 +3430,13 @@ endfunction
 
 function! s:vimim_get_from_database(keyboard, search)
     let keyboard = a:keyboard
-    let oneline = s:vimim_sentence_match_database(keyboard,0)
+    let oneline = s:vimim_sentence_database(keyboard,0,1)
     let results = s:vimim_make_pair_list(oneline)
     if empty(a:search) && len(results) > 0 && len(results) < 20
         let candidates = s:vimim_more_pinyin_candidates(keyboard)
         if len(candidates) > 1
             for candidate in candidates
-                let oneline = s:vimim_sentence_match_database(candidate,0)
+                let oneline = s:vimim_sentence_database(candidate,0,1)
                 let matched_list = s:vimim_make_pair_list(oneline)
                 if !empty(matched_list)
                     call extend(results, matched_list)
@@ -3514,7 +3517,7 @@ function! s:vimim_more_pinyin_directory(keyboard, dir)
     return results
 endfunction
 
-function! s:vimim_sentence_match_directory(keyboard)
+function! s:vimim_sentence_directory(keyboard)
     let keyboard = a:keyboard
     let filename = s:vimim_data_directory . keyboard
     if filereadable(filename)
@@ -4599,10 +4602,10 @@ function! s:vimim_popupmenu_list(matched_list)
                 let extra_text = menu
             endif
         endif
-        if s:hjkl_s > 0 && s:hjkl_s % 2 > 0 && s:has_cjk_file > 0
+        if s:hjkl_s>0 && s:hjkl_s%2>0 && s:has_cjk_file>0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
-        if s:hjkl_l > 0 && s:hjkl_l % 2 > 0 && s:show_me_not < 1
+        if s:hjkl_l>0 && s:hjkl_l%2> 0 && len(chinese)==s:multibyte
             let extra_text = menu
             if empty(s:english_results)
                 let ddddd = char2nr(chinese)
@@ -4697,7 +4700,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
     let keyboard2 = 0
     if root =~# "directory"
         let dir = s:backend[root][im].name
-        let keyboard2 = s:vimim_sentence_match_directory(keyboard)
+        let keyboard2 = s:vimim_sentence_directory(keyboard)
         let results = s:vimim_readfile(dir . keyboard2)
         if keyboard ==# keyboard2 && a:search < 1
         \&& len(results) > 0 && len(results) < 20
@@ -4709,10 +4712,10 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         endif
     elseif root =~# "datafile"
         if s:vimim_data_file =~ ".db"
-            let keyboard2 = s:vimim_sentence_match_database(keyboard, 1)
+            let keyboard2 = s:vimim_sentence_database(keyboard,1,s:hjkl_l)
             let results = s:vimim_get_from_database(keyboard2, a:search)
         else
-            let keyboard2 = s:vimim_sentence_match_datafile(keyboard)
+            let keyboard2 = s:vimim_sentence_datafile(keyboard)
             let results = s:vimim_get_from_datafile(keyboard2, a:search)
         endif
     endif
