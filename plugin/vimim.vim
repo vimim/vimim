@@ -1675,29 +1675,26 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
 function! g:vimim_onekey()
-    " (1) <OneKey> => start OneKey as 'hit and run'
-    " (2) <OneKey> => stop  OneKey and print out menu
+    " (1)<OneKey> in insert mode => start OneKey as the Midas touch
+    " (2)<OneKey> in insert mode => stop  OneKey on non-English
+    " (3)<OneKey> in omni   mode => stop  OneKey and print out menu
     let onekey = ''
     let one_before = getline(".")[col(".")-2]
-    if empty(one_before) || one_before =~ '\s'
-        if &ruler < 1
-            let onekey = ''
-            sil!call g:vimim_stop()
-        elseif s:vimim_onekey_is_tab > 0
-            let onekey = "\t"
-        endif
+    if pumvisible() && len(s:popupmenu_list) > 0
+        let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+    elseif &ruler < 1
+        let s:seamless_positions = getpos(".")
+        sil!call g:vimim_stop()
+    elseif empty(one_before) || one_before =~ '\s'
+        let onekey = s:vimim_onekey_is_tab>0 ? '\t' : ''
     else
-        if pumvisible() && len(s:popupmenu_list) > 0
-            let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-        else
-            let s:chinese_input_mode = 'onekey'
-            sil!call s:vimim_backend_initialization()
-            sil!call s:vimim_frontend_initialization()
-            sil!call s:vimim_onekey_pumvisible_mapping()
-            sil!call s:vimim_onekey_punctuation_mapping()
-            sil!call s:vimim_start()
-            let onekey = s:vimim_onekey_action(1)
-        endif
+        let s:chinese_input_mode = 'onekey'
+        sil!call s:vimim_backend_initialization()
+        sil!call s:vimim_frontend_initialization()
+        sil!call s:vimim_onekey_pumvisible_mapping()
+        sil!call s:vimim_onekey_punctuation_mapping()
+        sil!call s:vimim_start()
+        let onekey = s:vimim_onekey_action(1)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
