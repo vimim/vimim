@@ -4724,7 +4724,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
-            if s:hjkl_l < 1
+            if s:hjkl_l < 1 && s:vimim_data_file =~ ".db"
                 let s:hjkl_l += len(tail)
             endif
         endif
