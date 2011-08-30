@@ -1659,7 +1659,7 @@ endif
 key = vim.eval('a:input')
 isenglish = vim.eval('s:english_results')
 if int(vim.eval('a:sentence')) > 0:
-    partitition = int(vim.eval('a:partitition')) + len(key) - 4
+    partitition = int(vim.eval('a:partitition'))
     if partitition > 0:
         key = key[:-partitition]
     if key not in db and not isenglish:
