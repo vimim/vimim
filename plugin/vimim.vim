@@ -989,7 +989,7 @@ function! s:vimim_set_special_im_property()
     for im in split('wu erbi yong nature boshiamy phonetic array30')
         if s:ui.im == im
             let s:ui.has_dot = 1  " has dot in datafile
-            let s:vimim_chinese_punctuation = -99
+            let s:vimim_chinese_punctuation = -9
             break
         endif
     endfor
@@ -1719,7 +1719,7 @@ function! g:vimim_onekey_dump()
         endif
         call add(lines, space . line)
     endfor
-    if has("gui_running") && has("win32") && s:show_me_not != -99
+    if has("gui_running") && has("win32") && s:show_me_not != -9
         let @+ = join(lines, "\n")
     endif
     if getline(".") =~ 'vimx\>' && len(lines) < 2
@@ -2133,7 +2133,7 @@ endfunction
 
 function! s:vimim_get_unicode_list(keyboard)
     if a:keyboard =~ 'u\d\d\d\d\d'
-        let s:show_me_not = -99
+        let s:show_me_not = -9
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
     endif
@@ -2142,7 +2142,7 @@ function! s:vimim_get_unicode_list(keyboard)
         return []
     endif
     let words = []
-    for i in range(108/6/2)
+    for i in range(99)
         if ddddd+i > 40869
             break
         endif
@@ -2657,8 +2657,7 @@ function! s:vimim_get_traditional_chinese(chinese)
 endfunction
 
 function! s:vimim_1to1(chinese)
-    let ddddd = char2nr(a:chinese)
-    let line = ddddd - 19968
+    let line = char2nr(a:chinese) - 19968
     if line < 0 || line > 20902
         return a:chinese
     endif
@@ -4630,7 +4629,7 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         if s:vimim_custom_label > -1
             let labeling = label . " "
-            if s:show_me_not <= -99
+            if s:show_me_not <= -9
                 let labeling = ""
             elseif s:vimim_custom_label < 1
                 let labeling = s:vimim_get_labeling(label)
