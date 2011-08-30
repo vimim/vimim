@@ -2625,16 +2625,19 @@ function! s:vimim_chinese_transfer() range abort
     endif
 endfunction
 
-function! s:vimim_1to1(chinese)
-    let grep = "^" . a:chinese
+function! s:vimim_1to1(char)
+    if a:char =~ '[\x00-\xff]'
+        return a:char
+    endif
+    let grep = '^' . a:char
     let line = match(s:cjk_lines, grep, 0)
     if line < 0
-        return a:chinese
+        return a:char
     endif
     let values = split(get(s:cjk_lines, line))
     let traditional_chinese = get(split(get(values,0),'\zs'),1)
     if empty(traditional_chinese)
-        let traditional_chinese = a:chinese
+        let traditional_chinese = a:char
     endif
     return traditional_chinese
 endfunction
