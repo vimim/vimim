@@ -1801,11 +1801,10 @@ function! s:vimim_popup_word()
 endfunction
 
 function! s:vimim_onekey_input(keyboard)
-    " [game] turn menu 90 degree for each hjkl_m
     let keyboard = a:keyboard
     let lines = s:vimim_get_hjkl(keyboard)
     if !empty(lines)
-        if s:hjkl_m % 4 > 0
+        if s:hjkl_m % 4 > 0  " [game] turn menu 90 degree on hjkl_m
             let &pumheight = 0
             for i in range(s:hjkl_m%4)
                 let lines = s:vimim_hjkl_rotation(lines)
@@ -1833,13 +1832,12 @@ function! s:vimim_onekey_input(keyboard)
     endif
     " [cjk] cjk database works like swiss-army knife
     if s:has_cjk_file > 0
-        if keyboard =~# '^i' "| 4corner_shortcut: iypwqwuww => 60212722
+        if keyboard =~# '^i' " 4corner_shortcut: iypwqwuww => 60212722
             let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
         endif
         let keyboard = s:vimim_cjk_sentence_match(keyboard)
         let results = s:vimim_cjk_match(keyboard)
-        if keyboard =~ '^\l\d\d\d\d'
-        \&& len(s:english_results)>0 && len(results)>0
+        if keyboard =~ '^\l\d\d\d\d' && len(s:english_results)>0
             call extend(s:english_results, results)
         endif
     endif
@@ -2136,14 +2134,14 @@ endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if a:keyboard == 'u'
+    if a:keyboard == 'u' && s:ui.im == 'pinyin'
         let start = col(".") - s:multibyte - 1
         let char_before = getline(".")[start : start+s:multibyte-1]
-        return char2nr(char_before)
+        return char2nr(char_before) " from chinese to unicode: 馬u => 39340
     elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
         if len(keyboard) == 5 || len(keyboard) == 6
             let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
-            if len(keyboard) == 4   |" uoooo => u9999  uwwwwq => 22221
+            if len(keyboard) == 4     " uoooo => u9999  uwwwwq => 22221
                 let keyboard = 'u' . keyboard
             endif
         else
@@ -2151,12 +2149,12 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         endif
     elseif len(keyboard) == 4 && s:vimim_imode_pinyin > 1
     \&& keyboard =~# '^\x\{4}$' && keyboard !~ '^\d\{4}$'
-        let keyboard = 'u' . keyboard |" from 4 hex to unicode:  9f9f =>
+        let keyboard = 'u' . keyboard  " from 4 hex to unicode:  9f9f =>
     endif
     let ddddd = 0
-    if keyboard =~# '^u\x\{4}$'       |" from   hex to unicode: u808f =>
+    if keyboard =~# '^u\x\{4}$'        " from   hex to unicode: u808f =>
         let ddddd = str2nr(keyboard[1:],16)
-    elseif keyboard =~# '^\d\{5}$'    |" from digit to unicode: 32911 =>
+    elseif keyboard =~# '^\d\{5}$'     " from digit to unicode: 32911 =>
         let ddddd = str2nr(keyboard, 10)
     endif
     if empty(ddddd) || ddddd > 0xffff
