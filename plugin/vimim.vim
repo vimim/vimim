@@ -22,11 +22,10 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  Readme: VimIM is a Vim plugin as an independent Input Method.
 "
 " "VimIM Features"
-"  (1) Plug & Play: as an independent input method editor
-"  (2) input of Chinese without mode change:  OneKey
-"  (3) slash search of Chinese without typing Chinese
-"  (4) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
-"  (5) support huge datafile if python interface to Vim is used
+"  (1) input of Chinese without mode change:  OneKey == MidasTouch
+"  (2) slash search of Chinese without typing Chinese
+"  (3) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
+"  (4) support huge datafile if python interface to Vim is used
 "
 " "VimIM Installation"
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
@@ -39,7 +38,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (1) play with cloud, without datafile, with python or wget/curl
 "      open vim, type i, type <C-\> to open; type <C-\> to close
 "  (2) play with OneKey, with cjk standard file installed:
-"      open vim, type i, type sssss, <C-6>, 1, 2, 3, 4
+"      open vim, type i, type sssss <C-6>, <Space>, 6, <Space> ...
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -418,7 +417,7 @@ endfunction
 
 function! s:vimim_get_hjkl(keyboard)
     " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
-    if a:keyboard =~ 'u\d\d\d\d\d'  
+    if a:keyboard =~ 'u\d\d\d\d\d'
         let s:show_me_not = -7
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
@@ -1720,7 +1719,7 @@ function! g:vimim_onekey_dump()
 endfunction
 
 function! g:vimim_onekey()
-    " (1)<OneKey> in insert mode => start OneKey as the Midas touch
+    " (1)<OneKey> in insert mode => start OneKey as the MidasTouch
     " (2)<OneKey> in insert mode => stop  OneKey on non-English
     " (3)<OneKey> in omni   mode => stop  OneKey and print out menu
     let onekey = ''
