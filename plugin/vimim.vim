@@ -2223,7 +2223,7 @@ let s:VimIM += [" ====  input hjkl       ==== {{{"]
 function! s:vimim_cache()
     let results = []
     if s:chinese_input_mode =~ 'onekey'
-        if len(s:hjkl_x) > 0
+        if len(s:hjkl_s) > 0
             if len(s:matched_list) > 0 && s:show_me_not > 0
                 let results = s:vimim_onekey_menu_format()
             elseif len(s:popupmenu_list) > 0
@@ -2257,10 +2257,10 @@ function! s:vimim_onekey_menu_format()
     let lines = split(join(lines),'  ')
     let filter = 'substitute(' .'v:val'. ",' ','','g')"
     call map(lines, filter)
-    if s:hjkl_x == 1
+    if s:hjkl_s == 1
         return lines
     endif
-    let n = s:hjkl_x * (7-s:multibyte)
+    let n = s:hjkl_s * (7-s:multibyte)
     let textwidth = repeat('.', n)
     let results = []
     for line in lines
@@ -2274,10 +2274,10 @@ endfunction
 function! s:vimim_onekey_menu_filter()
     " use 1234567890/qwertyuiop as digital filter
     let results = s:vimim_cjk_filter_list()
-    if empty(results) && !empty(len(s:hjkl_x))
-        let number_before = strpart(s:hjkl_x,0,len(s:hjkl_x)-1)
+    if empty(results) && !empty(len(s:hjkl_s))
+        let number_before = strpart(s:hjkl_s,0,len(s:hjkl_s)-1)
         if len(number_before) > 0
-            let s:hjkl_x = number_before
+            let s:hjkl_s = number_before
             let results = s:vimim_cjk_filter_list()
         endif
     endif
@@ -2308,7 +2308,7 @@ function! s:vimim_cjk_digit_filter(chinese)
     " smart digital filter: 马力 7712 4002
     "   (1)   ma<C-6>       马   => filter with   7712
     "   (2) mali<C-6>       马力 => filter with 7 4002
-    if empty(len(s:hjkl_x)) || empty(a:chinese)
+    if empty(len(s:hjkl_s)) || empty(a:chinese)
         return 0
     endif
     let digit_head = ""
@@ -2328,7 +2328,7 @@ function! s:vimim_cjk_digit_filter(chinese)
         endif
     endfor
     let number = digit_head . digit_tail
-    let pattern = "^" . s:hjkl_x
+    let pattern = "^" . s:hjkl_s
     if match(number, pattern) < 0
         return 0
     endif
@@ -2426,7 +2426,7 @@ function! <SID>vimim_onekey_qwerty(key)
         if key =~ '\l'
             let key = match(s:qwerty, a:key)
         endif
-        let s:hjkl_x = s:show_me_not ? key : s:hjkl_x . key
+        let s:hjkl_s = s:show_me_not ? key : s:hjkl_s . key
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2548,7 +2548,7 @@ function! s:vimim_cjk_match(keyboard)
     let grep_frequency = '.*' . '\s\d\+$'
     let grep = ""
     if keyboard =~ '\d'
-        if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_x))
+        if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_s))
             " cjk pinyin with tone: huan2hai2
             let grep = keyboard . '[a-z ]'
         else
@@ -2578,7 +2578,7 @@ function! s:vimim_cjk_match(keyboard)
                 endif
             endif
             if len(keyboard) < dddddd && len(string(digit)) > 0
-                let s:hjkl_x = digit
+                let s:hjkl_s = digit
             endif
         endif
     elseif s:ui.im == 'pinyin' || s:has_cjk_file > 1
@@ -4380,8 +4380,8 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_l = 0
     let s:hjkl_m = 0
     let s:hjkl_n = 0
-    let s:hjkl_s = 0
-    let s:hjkl_x = ""
+    let s:hjkl_x = 0
+    let s:hjkl_s = ""
     let s:matched_list = []
     let s:pageup_pagedown = 0
     if s:vimim_custom_label < 1
@@ -4602,7 +4602,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 let extra_text = menu
             endif
         endif
-        if s:hjkl_s>0 && s:hjkl_s%2>0 && s:has_cjk_file>0
+        if s:hjkl_x>0 && s:hjkl_x%2>0 && s:has_cjk_file>0
             let chinese = s:vimim_get_traditional_chinese(chinese)
         endif
         if s:hjkl_l>0 && s:hjkl_l%2> 0 && len(chinese)==s:multibyte
