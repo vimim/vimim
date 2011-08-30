@@ -1650,7 +1650,7 @@ except vim.error:
 EOF
 endfunction
 
-function! s:vimim_sentence_database(input, sentence, partitition)
+function! s:vimim_sentence_database(input, sentence, partition)
 " http://vimim.googlecode.com/svn/vimim/vimim.html#database
 if empty(a:input)
     return ""
@@ -1659,9 +1659,9 @@ endif
 key = vim.eval('a:input')
 isenglish = vim.eval('s:english_results')
 if int(vim.eval('a:sentence')) > 0:
-    partitition = int(vim.eval('a:partitition'))
-    if partitition > 0:
-        key = key[:-partitition]
+    partition = int(vim.eval('a:partition'))
+    if partition > 0:
+        key = key[:-partition]
     if key not in db and not isenglish:
         while key and key not in db: key = key[:-1]
     oneline = key
@@ -2380,7 +2380,7 @@ function! s:vimim_pageup_pagedown()
 endfunction
 
 function! s:vimim_onekey_pumvisible_mapping()
-    for _ in split('hjklmn<>sx', '\zs')
+    for _ in split('hjklmn<>xs', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
     for _ in s:qwerty + range(10)
@@ -2395,17 +2395,16 @@ endfunction
 
 function! <SID>vimim_onekey_hjkl(key)
     let key = a:key
-    let toggles = split('shlmn','\zs')
     if pumvisible()
             if a:key == 'j' | let key = '\<Down>'
         elseif a:key == 'k' | let key = '\<Up>'
         elseif a:key =~ "[<>]"
             let key  = '\<C-Y>'.s:punctuations[nr2char(char2nr(a:key)-16)]
         else
-            if a:key == 'x'
+            if a:key == 's'
                 call g:vimim_reset_after_insert()
-            elseif a:key =~ "[shlmn]"
-                for toggle in toggles
+            elseif a:key =~ "[xhlmn]"
+                for toggle in split('xhlmn','\zs')
                     if toggle == a:key
                         exe 'let s:hjkl_' . toggle . ' += 1'
                         let s:hjkl_n = a:key=='m' ? 0 : s:hjkl_n
@@ -4725,6 +4724,9 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
+            if s:hjkl_l < 1
+                let s:hjkl_l += len(tail)
+            endif
         endif
     endif
     return results
