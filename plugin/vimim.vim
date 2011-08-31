@@ -288,7 +288,6 @@ function! s:vimim_easter_chicken(keyboard)
 endfunction
 
 function! s:vimim_egg_vimimrc()
-    " http://vimim.googlecode.com/svn/vimim/vimim.html#vimimrc
     return sort(copy(s:vimimrc))
 endfunction
 
@@ -299,6 +298,10 @@ endfunction
 
 function! s:vimim_egg_vimimpoem()
     return split(s:mahjong)
+endfunction
+
+function! s:vimim_egg_vimimclouds()
+    return s:vimim_get_cloud_all('woyouyigemeng')
 endfunction
 
 function! s:vimim_egg_vim()
@@ -464,7 +467,6 @@ function! s:vimim_get_hjkl(keyboard)
 endfunction
 
 function! s:vimim_hjkl_rotation(matched_list)
-    " http://vimim.googlecode.com/svn/vimim/vimim.html#game
     let lines = a:matched_list
     if empty(lines)
         return []
@@ -632,6 +634,7 @@ function! s:vimim_dictionary_chinese()
     let s:left  = "【"
     let s:right = "】"
     let s:mahjong = "囍發萬中 春夏秋冬 东南西北 梅兰竹菊"
+    let s:unicode = []
     let s:chinese = {}
     let s:chinese.onekey     = ['点石成金','點石成金']
     let s:chinese.computer   = ['电脑','電腦']
@@ -1662,7 +1665,6 @@ EOF
 endfunction
 
 function! s:vimim_sentence_database(input, sentence, partition)
-" http://vimim.googlecode.com/svn/vimim/vimim.html#database
 if empty(a:input)
     return ""
 endif
@@ -2100,7 +2102,6 @@ let s:VimIM += [" ====  input unicode    ==== {{{"]
 " =================================================
 
 function! s:vimim_initialize_encoding()
-    let s:unicode = []
     let s:encoding = "utf8"
     if &encoding =~ 'chinese\|cp936\|gb2312\|gbk\|euc-cn'
         let s:encoding = "chinese"
@@ -3959,10 +3960,6 @@ function! s:vimim_get_cloud_all(keyboard)
     call s:debug('info', 'cloud_results=', results)
     let s:show_me_not = 1
     return results
-endfunction
-
-function! s:vimim_egg_vimimclouds()
-    return s:vimim_get_cloud_all('woyouyigemeng')
 endfunction
 
 " ============================================= }}}
