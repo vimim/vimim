@@ -296,7 +296,7 @@ function! s:vimim_egg_vimimvim()
     return map(copy(s:VimIM), filter)
 endfunction
 
-function! s:vimim_egg_vimimpoem()
+function! s:vimim_egg_vimimgame()
     return split(s:mahjong)
 endfunction
 
