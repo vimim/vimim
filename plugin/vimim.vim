@@ -621,12 +621,6 @@ endfunction
 let s:VimIM += [" ====  multibyte        ==== {{{"]
 " =================================================
 
-let s:translators = {}
-function! s:translators.translate(english) dict
-    let inputs = split(a:english)
-    return join(map(inputs,'get(self.dict,tolower(v:val),v:val)'), '')
-endfunction
-
 function! s:vimim_build_antonym_hash()
     if !empty(s:antonyms)
         return
@@ -634,29 +628,35 @@ function! s:vimim_build_antonym_hash()
     let antonym = "  阴阳 你我 她他 雌雄 男女 淫娼 嫁娶 悲欢
     \ 软硬 强弱 里外 上下 左右 前后 快慢 轻重 缓急 正反 离合
     \ 始终 爱恨 老嫩 胖瘦 迎送 盈亏 真假 升降 进退 开关 穿脱
-    \ 借还 沉浮 矛盾 哭笑 松紧 张弛 好坏 美丑 善恶 宽窄 苦甜
+    \ 借还 沉浮 矛盾 哭笑 松紧 张弛 好坏 美醜 善恶 宽窄 苦甜
     \ 大小 多少 死活 公私 奇偶 冷热 高低 朝暮 奖罚 净脏 祸福
-    \ 是非 闲忙 来去 分合 存亡 动静 浓淡 饥饱 赔赚 手脚 耻荣
+    \ 是非 闲忙 来去 安危 存亡 动静 浓淡 饥饱 赔赚 手脚 耻荣
     \ 虚实 有无 雅俗 稀密 粗细 得失 巧拙 恩怨 恼喜 旦夕 利弊
     \ 新旧 通堵 止行 古今 纳吐 曲直 亮暗 亲疏 这那 吉凶 褒贬
     \ 收放 输赢 逆顺 灵笨 忠奸 纵横 东西 南北 破立 劣优 对错
     \ 薄厚 尊卑 文武 推拉 问答 主仆 深浅 牡牝 卷舒 贵贱 买卖
     \ 聚散 干湿 彼此 生熟 单双 首尾 奢简 警匪 官民 可否 懒勤
     \ 盛衰 胜败 加减 黑白 纯杂 臣君 信疑 零整 久暂 跌涨 凹凸
-    \ 藏露 断续 钝锐 醒睡 安危 天地 坤乾 日月 红黑 金石
+    \ 藏露 断续 钝锐 醒睡 天地 坤乾 日月 金石
     \ “” ‘’ ＋－ （） 【】 〖〗 《》 ，。"
     for yinyang in split(antonym)
         let yy = split(yinyang, '\zs')
         let s:antonyms[get(yy,0)] = get(yy,1)
         let s:antonyms[get(yy,1)] = get(yy,0)
     endfor
-    let i9 = "一二三四五六七八九" | let i0 = "〇"
-    let I9 = "壹贰叁肆伍陆柒捌玖" | let I0 = "零"
-    let u9 = "甲乙丙丁戊己庚辛壬" | let u0 = "癸"
-    let numbers1 = split(i0.i9.I0.I9.u0.u9, '\zs')
-    let numbers2 = split(i9.i0.I9.I0.u9.u0, '\zs')
-    for i in range(len(numbers1))
-        let s:antonyms[get(numbers1,i)] = get(numbers2,i)
+    let loops  = ["一二三四五六七八九〇"]
+    let loops += ["壹贰叁肆伍陆柒捌玖零"]
+    let loops += ["甲乙丙丁戊己庚辛壬癸"]
+    let loops += ["子丑寅卯辰巳午未申酉戌亥"]
+    let loops += ["鼠牛虎兔龙蛇馬羊猴鸡狗猪"]
+    for loop in loops
+        let items = split(loop, '\zs')
+        for i in range(len(items))
+            let s:antonyms[get(items,i)] = get(items,i+1)
+            if i == len(items) - 1
+                let s:antonyms[get(items,i)] = get(items,0)
+            endif
+        endfor
     endfor
 endfunction
 
@@ -665,6 +665,7 @@ function! s:vimim_dictionary_chinese()
     let s:colon = "："
     let s:left  = "【"
     let s:right = "】"
+    let s:mahjong = "囍發萬中 春夏秋冬 东南西北 梅兰竹菊"
     let s:chinese = {}
     let s:chinese.onekey     = ['点石成金','點石成金']
     let s:chinese.computer   = ['电脑','電腦']
@@ -721,7 +722,12 @@ function! s:vimim_dictionary_chinese()
     let s:chinese.english    = ['英文']
     let s:chinese.datafile   = ['文件']
     let s:chinese.datetime   = ['日期']
-    let s:mahjong = "囍發萬中 春夏秋冬 东南西北 梅兰竹菊"
+endfunction
+
+let s:translators = {}
+function! s:translators.translate(english) dict
+    let inputs = split(a:english)
+    return join(map(inputs,'get(self.dict,tolower(v:val),v:val)'), '')
 endfunction
 
 function! s:vimim_imode_today_now(keyboard)
