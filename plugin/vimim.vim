@@ -215,7 +215,6 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 0)
     let G = []
     call add(G, "g:vimim_midas_touch_non_stop")
-    call add(G, "g:vimim_loop_pageup_pagedown")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_custom_color")
@@ -892,15 +891,9 @@ function! <SID>vimim_chinese_punctuation_map(key)
         endif
     endif
     if pumvisible()
-        let page = s:vimim_loop_pageup_pagedown==2 ? "[<>=-]" : "[=-]"
-        let   up = s:vimim_loop_pageup_pagedown==2 ? "[<-]"   : "[-]"
-        let down = s:vimim_loop_pageup_pagedown==2 ? "[>=]"   : "[=]"
-        if a:key =~ page
-            if a:key =~ up
-                let s:pageup_pagedown -= 1
-            elseif a:key =~ down
-                let s:pageup_pagedown += 1
-            endif
+        if a:key =~ "[=-]"
+            if a:key =~ "[-]"     | let s:pageup_pagedown = -1
+            elseif a:key =~ "[=]" | let s:pageup_pagedown =  1 | endif
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
         else
             let key = '\<C-Y>' . key
@@ -942,19 +935,13 @@ function! <SID>vimim_onekey_punctuation(key)
         elseif a:key =~ "[-,]"
             let hjkl = '\<PageUp>'
             if &pumheight > 0
-                let s:pageup_pagedown -= 1
-                if s:vimim_loop_pageup_pagedown > 0
-                    let s:pageup_pagedown = -1
-                endif
+                let s:pageup_pagedown = -1
                 let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
             endif
         elseif a:key =~ "[=.]"
             let hjkl = '\<PageDown>'
             if &pumheight > 0
-                let s:pageup_pagedown += 1
-                if s:vimim_loop_pageup_pagedown > 0
-                    let s:pageup_pagedown = 1
-                endif
+                let s:pageup_pagedown = 1
                 let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
             endif
         endif
@@ -2348,32 +2335,12 @@ function! s:vimim_pageup_pagedown()
     if one_page < 1
         let one_page = 9
     endif
-    if s:vimim_loop_pageup_pagedown > 0
-        if length > one_page
-            let page = s:pageup_pagedown * one_page
-            let partition = page<0 ? length+page : page
-            let B = matched_list[partition :]
-            let A = matched_list[: partition-1]
-            let matched_list = B + A
-        endif
-    else
+    if length > one_page
         let page = s:pageup_pagedown * one_page
-        if page < 0
-            " no more PageUp after the first page
-            let s:pageup_pagedown += 1
-            let matched_list = matched_list[0 : one_page]
-        elseif page >= length
-            " no more PageDown after the last page
-            let s:pageup_pagedown -= 1
-            let last_page = length / one_page
-            if empty(length % one_page)
-                let last_page -= 1
-            endif
-            let last_page = last_page * one_page
-            let matched_list = matched_list[last_page :]
-        else
-            let matched_list = matched_list[page :]
-        endif
+        let partition = page<0 ? length+page : page
+        let B = matched_list[partition :]
+        let A = matched_list[: partition-1]
+        let matched_list = B + A
     endif
     return matched_list
 endfunction
