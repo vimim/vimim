@@ -2097,6 +2097,8 @@ let s:VimIM += [" ====  input unicode    ==== {{{"]
 " =================================================
 
 function! s:vimim_initialize_encoding()
+    let s:unicode = []
+    let s:mahjong = []
     let s:encoding = "utf8"
     if &encoding =~ 'chinese\|cp936\|gb2312\|gbk\|euc-cn'
         let s:encoding = "chinese"
@@ -2120,6 +2122,25 @@ function! s:vimim_initialize_encoding()
         let s:localization = 2
     endif
     let s:multibyte = &encoding=="utf-8" ? 3 : 2
+endfunction
+
+function! s:vimim_get_unicode()
+    if empty(s:unicode)
+        let u  = "一丨丶丿乙亅二亠人儿入八冂冖冫几凵刀力勹匕匚匸十"
+        let u .= "卜卩厂厶又口囗土士夂夊夕大女子宀寸小尢尸屮山巛工"
+        let u .= "己巾干幺广廴廾弋弓彐彡彳心戈戶手支攴文斗斤方无日"
+        let u .= "曰月木欠止歹殳毋比毛氏气水火爪父爻爿片牙牛犬玄玉"
+        let u .= "瓜瓦甘生用田疋疒癶白皮皿目矛矢石示禸禾穴立竹米糸"
+        let u .= "缶网羊羽老而耒耳聿肉臣自至臼舌舛舟艮色艸虍虫血行"
+        let u .= "衣襾見角言谷豆豕豸貝赤走足身車辛辰辵邑酉釆里金長"
+        let u .= "門阜隶隹雨靑非面革韋韭音頁風飛食首香馬骨高髟鬥鬯"
+        let u .= "鬲鬼魚鳥鹵鹿麥麻黃黍黑黹黽鼎鼓鼠鼻齊齒龍龜龠"
+        let s:unicode = split(u, '\zs')
+    endif
+    if empty(s:mahjong)
+        let u  = "囍發萬中梅兰竹菊春夏秋冬东南西北"
+        let s:mahjong = split(u, '\zs')
+    endif
 endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
@@ -2557,12 +2578,10 @@ function! s:vimim_cjk_match(keyboard)
                 let s:hjkl_s = digit
             endif
         endif
-    elseif s:ui.im == 'pinyin' || s:has_cjk_file > 1
-        if len(keyboard) == 1 && keyboard =~ '[uvi]'
-            let u = "囍 發 萬 中 梅 兰 竹 菊"
-            let v = "春 夏 秋 冬 东 南 西 北"
-            let i = "我 你 妳 他 她 它"
-            return split(keyboard=='u' ? u : keyboard=='v' ? v : i)
+    elseif s:ui.im == 'pinyin' || s:has_cjk_file > 0
+        if len(keyboard) == 1 && keyboard =~ '[uv]'
+            call s:vimim_get_unicode()
+            return keyboard=='u' ? s:unicode : s:mahjong
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
@@ -2658,7 +2677,7 @@ function! s:vimim_build_antonym_hash()
     \ 薄厚 尊卑 文武 推拉 问答 主仆 深浅 牡牝 卷舒 贵贱 买卖
     \ 聚散 干湿 彼此 生熟 单双 首尾 奢简 警匪 官民 可否 懒勤
     \ 盛衰 胜败 加减 黑白 纯杂 臣君 信疑 零整 久暂 跌涨 凹凸
-    \ 藏露 断续 钝锐 醒睡 安危 天地 坤乾 日月 金石
+    \ 藏露 断续 钝锐 醒睡 安危 天地 坤乾 日月 红黑 金石
     \ “” ‘’ ＋－ （） 【】 〖〗 《》 ，。"
     for yinyang in split(antonym)
         let yy = split(yinyang, '\zs')
