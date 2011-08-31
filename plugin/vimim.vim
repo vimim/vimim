@@ -627,6 +627,39 @@ function! s:translators.translate(english) dict
     return join(map(inputs,'get(self.dict,tolower(v:val),v:val)'), '')
 endfunction
 
+function! s:vimim_build_antonym_hash()
+    if !empty(s:antonyms)
+        return
+    endif
+    let antonym = "  阴阳 你我 她他 雌雄 男女 淫娼 嫁娶 悲欢
+    \ 软硬 强弱 里外 上下 左右 前后 快慢 轻重 缓急 正反 离合
+    \ 始终 爱恨 老嫩 胖瘦 迎送 盈亏 真假 升降 进退 开关 穿脱
+    \ 借还 沉浮 矛盾 哭笑 松紧 张弛 好坏 美丑 善恶 宽窄 苦甜
+    \ 大小 多少 死活 公私 奇偶 冷热 高低 朝暮 奖罚 净脏 祸福
+    \ 是非 闲忙 来去 分合 存亡 动静 浓淡 饥饱 赔赚 手脚 耻荣
+    \ 虚实 有无 雅俗 稀密 粗细 得失 巧拙 恩怨 恼喜 旦夕 利弊
+    \ 新旧 通堵 止行 古今 纳吐 曲直 亮暗 亲疏 这那 吉凶 褒贬
+    \ 收放 输赢 逆顺 灵笨 忠奸 纵横 东西 南北 破立 劣优 对错
+    \ 薄厚 尊卑 文武 推拉 问答 主仆 深浅 牡牝 卷舒 贵贱 买卖
+    \ 聚散 干湿 彼此 生熟 单双 首尾 奢简 警匪 官民 可否 懒勤
+    \ 盛衰 胜败 加减 黑白 纯杂 臣君 信疑 零整 久暂 跌涨 凹凸
+    \ 藏露 断续 钝锐 醒睡 安危 天地 坤乾 日月 红黑 金石
+    \ “” ‘’ ＋－ （） 【】 〖〗 《》 ，。"
+    for yinyang in split(antonym)
+        let yy = split(yinyang, '\zs')
+        let s:antonyms[get(yy,0)] = get(yy,1)
+        let s:antonyms[get(yy,1)] = get(yy,0)
+    endfor
+    let i9 = "一二三四五六七八九" | let i0 = "〇"
+    let I9 = "壹贰叁肆伍陆柒捌玖" | let I0 = "零"
+    let u9 = "甲乙丙丁戊己庚辛壬" | let u0 = "癸"
+    let numbers1 = split(i0.i9.I0.I9.u0.u9, '\zs')
+    let numbers2 = split(i9.i0.I9.I0.u9.u0, '\zs')
+    for i in range(len(numbers1))
+        let s:antonyms[get(numbers1,i)] = get(numbers2,i)
+    endfor
+endfunction
+
 function! s:vimim_dictionary_chinese()
     let s:space = "　"
     let s:colon = "："
@@ -730,8 +763,7 @@ function! s:vimim_imode_today_now(keyboard)
 endfunction
 
 function! s:vimim_imode_number(keyboard)
-    " usage: i88 ii88 isw8ql iisw8ql
-    let keyboard = a:keyboard
+    let keyboard = a:keyboard  " sample: i88 ii88 isw8ql iisw8ql
     if keyboard[0:1] ==# 'ii'
         let keyboard = 'I' . keyboard[2:]
     endif
@@ -751,29 +783,29 @@ function! s:vimim_imode_number(keyboard)
     let quantifier.8 = '八捌辛⒏⑧⑻'
     let quantifier.9 = '九玖壬⒐⑨⑼'
     let quantifier.0 = '〇零癸⒑⑩⑽'
-    let quantifier.s = '十拾时升艘扇首双所束手秒'
+    let quantifier.s = '十拾时升艘扇首双所束手'
     let quantifier.b = '百佰步把包杯本笔部班'
     let quantifier.q = '千仟群'
     let quantifier.w = '万位味碗窝晚'
-    let quantifier.h = '时毫行盒壶户回'
+    let quantifier.h = '毫行盒壶户回'
     let quantifier.f = '分份发封付副幅峰方服'
     let quantifier.a = '秒'
     let quantifier.n = '年'
     let quantifier.m = '米名枚面门'
     let quantifier.r = '日'
-    let quantifier.c = '厘次餐场串处床'
+    let quantifier.c = '次餐场串处床'
     let quantifier.d = '第度点袋道滴碟顶栋堆对朵堵顿'
     let quantifier.e = '亿'
     let quantifier.g = '个根股管'
     let quantifier.i = '毫'
     let quantifier.j = '斤家具架间件节剂具捲卷茎记'
     let quantifier.k = '克口块棵颗捆孔'
-    let quantifier.l = '里粒类辆列轮厘升领缕'
+    let quantifier.l = '里粒类辆列轮厘领缕'
     let quantifier.o = '度'
     let quantifier.p = '磅盆瓶排盘盆匹片篇撇喷'
     let quantifier.t = '天吨条头通堂趟台套桶筒贴'
     let quantifier.u = '微'
-    let quantifier.x = '升席些项'
+    let quantifier.x = '席些项'
     let quantifier.y = '月叶亿'
     let quantifier.z = '种只张株支枝盏座阵桩尊则站幢宗兆'
     for char in keyboards
@@ -811,20 +843,18 @@ function! s:vimim_dictionary_punctuation()
     let s:punctuations[':'] = s:colon
     let s:punctuations['['] = s:left
     let s:punctuations[']'] = s:right
+    let s:punctuations['('] = '（'
+    let s:punctuations[')'] = '）'
+    let s:punctuations['{'] = '〖'
+    let s:punctuations['}'] = '〗'
+    let s:punctuations['<'] = '《'
+    let s:punctuations['>'] = '》'
     let s:punctuations['#'] = '＃'
     let s:punctuations['&'] = '＆'
     let s:punctuations['%'] = '％'
     let s:punctuations['$'] = '￥'
     let s:punctuations['!'] = '！'
     let s:punctuations['~'] = '～'
-    let s:punctuations['('] = '（'
-    let s:punctuations[')'] = '）'
-    let s:punctuations['{'] = '〖'
-    let s:punctuations['}'] = '〗'
-    let s:punctuations['^'] = '……'
-    let s:punctuations['_'] = '——'
-    let s:punctuations['<'] = '《'
-    let s:punctuations['>'] = '》'
     let s:punctuations['+'] = "＋"
     let s:punctuations['-'] = '－'
     let s:punctuations['='] = '＝'
@@ -833,6 +863,8 @@ function! s:vimim_dictionary_punctuation()
     let s:punctuations['.'] = '。'
     let s:punctuations['?'] = '？'
     let s:punctuations['*'] = '﹡'
+    let s:punctuations['^'] = '……'
+    let s:punctuations['_'] = '——'
     let s:evils = {}
     if empty(s:vimim_backslash_close_pinyin)
         let s:evils['\'] = '、'
@@ -2612,39 +2644,6 @@ function! s:vimim_1to1(char)
         let traditional_chinese = a:char
     endif
     return traditional_chinese
-endfunction
-
-function! s:vimim_build_antonym_hash()
-    if !empty(s:antonyms)
-        return
-    endif
-    let antonym = "  阴阳 你我 她他 雌雄 男女 淫娼 嫁娶 悲欢
-    \ 软硬 强弱 里外 上下 左右 前后 快慢 轻重 缓急 正反 离合
-    \ 始终 爱恨 老嫩 胖瘦 迎送 盈亏 真假 升降 进退 开关 穿脱
-    \ 借还 沉浮 矛盾 哭笑 松紧 张弛 好坏 美丑 善恶 宽窄 苦甜
-    \ 大小 多少 死活 公私 奇偶 冷热 高低 朝暮 奖罚 净脏 祸福
-    \ 是非 闲忙 来去 分合 存亡 动静 浓淡 饥饱 赔赚 手脚 耻荣
-    \ 虚实 有无 雅俗 稀密 粗细 得失 巧拙 恩怨 恼喜 旦夕 利弊
-    \ 新旧 通堵 止行 古今 纳吐 曲直 亮暗 亲疏 这那 吉凶 褒贬
-    \ 收放 输赢 逆顺 灵笨 忠奸 纵横 东西 南北 破立 劣优 对错
-    \ 薄厚 尊卑 文武 推拉 问答 主仆 深浅 牡牝 卷舒 贵贱 买卖
-    \ 聚散 干湿 彼此 生熟 单双 首尾 奢简 警匪 官民 可否 懒勤
-    \ 盛衰 胜败 加减 黑白 纯杂 臣君 信疑 零整 久暂 跌涨 凹凸
-    \ 藏露 断续 钝锐 醒睡 安危 天地 坤乾 日月 红黑 金石
-    \ “” ‘’ ＋－ （） 【】 〖〗 《》 ，。"
-    for yinyang in split(antonym)
-        let yy = split(yinyang, '\zs')
-        let s:antonyms[get(yy,0)] = get(yy,1)
-        let s:antonyms[get(yy,1)] = get(yy,0)
-    endfor
-    let i9 = "一二三四五六七八九" | let i0 = "〇"
-    let I9 = "壹贰叁肆伍陆柒捌玖" | let I0 = "零"
-    let u9 = "甲乙丙丁戊己庚辛壬" | let u0 = "癸"
-    let numbers1 = split(i0.i9.I0.I9.u0.u9, '\zs')
-    let numbers2 = split(i9.i0.I9.I0.u9.u0, '\zs')
-    for i in range(len(numbers1))
-        let s:antonyms[get(numbers1,i)] = get(numbers2,i)
-    endfor
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
