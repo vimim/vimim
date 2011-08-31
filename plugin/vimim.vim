@@ -632,8 +632,6 @@ function! s:vimim_dictionary_chinese()
     let s:colon = "："
     let s:left  = "【"
     let s:right = "】"
-    let s:mahjong = "囍發萬中 春夏秋冬 东南西北 梅兰竹菊"
-    let s:unicode = []
     let s:chinese = {}
     let s:chinese.onekey     = ['点石成金','點石成金']
     let s:chinese.computer   = ['电脑','電腦']
@@ -690,6 +688,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese.english    = ['英文']
     let s:chinese.datafile   = ['文件']
     let s:chinese.datetime   = ['日期']
+    let s:mahjong = "囍發萬中 春夏秋冬 东南西北 梅兰竹菊"
 endfunction
 
 function! s:vimim_imode_today_now(keyboard)
@@ -2120,21 +2119,6 @@ function! s:vimim_initialize_encoding()
     let s:multibyte = &encoding=="utf-8" ? 3 : 2
 endfunction
 
-function! s:vimim_get_unicode()
-    if empty(s:unicode)
-        let u  = "一丨丶丿乙亅二亠人儿入八冂冖冫几凵刀力勹匕匚匸十"
-        let u .= "卜卩厂厶又口囗土士夂夊夕大女子宀寸小尢尸屮山巛工"
-        let u .= "己巾干幺广廴廾弋弓彐彡彳心戈戶手支攴文斗斤方无日"
-        let u .= "曰月木欠止歹殳毋比毛氏气水火爪父爻爿片牙牛犬玄玉"
-        let u .= "瓜瓦甘生用田疋疒癶白皮皿目矛矢石示禸禾穴立竹米糸"
-        let u .= "缶网羊羽老而耒耳聿肉臣自至臼舌舛舟艮色艸虍虫血行"
-        let u .= "衣襾見角言谷豆豕豸貝赤走足身車辛辰辵邑酉釆里金長"
-        let u .= "門阜隶隹雨靑非面革韋韭音頁風飛食首香馬骨高髟鬥鬯"
-        let u .= "鬲鬼魚鳥鹵鹿麥麻黃黍黑黹黽鼎鼓鼠鼻齊齒龍龜龠"
-        let s:unicode = split(u, '\zs')
-    endif
-endfunction
-
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
     if a:keyboard =~ '^u\+$'
@@ -2510,7 +2494,7 @@ function! s:vimim_cjk_match(keyboard)
     endif
     let keyboard = a:keyboard
     let dddddd = s:vimim_digit_4corner>0 ? 4 : 6
-    let grep_frequency = '.*' . '\s\d\+$'
+    let grep_frequency = '.*' . ' \d\+\( u\)\=$'
     let grep = ""
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_s))
@@ -2546,11 +2530,11 @@ function! s:vimim_cjk_match(keyboard)
                 let s:hjkl_s = digit
             endif
         endif
-    elseif s:ui.im == 'pinyin' || s:has_cjk_file > 0
-        if len(keyboard) == 1 && keyboard =~ '[uv]'
-            call s:vimim_get_unicode()
-            let v = split(join(split(s:mahjong),''),'\zs')
-            return keyboard=='u' ? s:unicode : v
+    elseif s:has_cjk_file > 0
+        if keyboard == 'v'
+            return split(join(split(s:mahjong),''),'\zs')
+        elseif keyboard == 'u' " 214 unicode index
+            let grep = '\s' . keyboard . '$'
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
