@@ -943,12 +943,18 @@ function! <SID>vimim_onekey_punctuation(key)
             let hjkl = '\<PageUp>'
             if &pumheight > 0
                 let s:pageup_pagedown -= 1
+                if s:vimim_loop_pageup_pagedown > 0
+                    let s:pageup_pagedown = -1
+                endif
                 let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
             endif
         elseif a:key =~ "[=.]"
             let hjkl = '\<PageDown>'
             if &pumheight > 0
                 let s:pageup_pagedown += 1
+                if s:vimim_loop_pageup_pagedown > 0
+                    let s:pageup_pagedown = 1
+                endif
                 let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
             endif
         endif
@@ -2241,7 +2247,7 @@ function! s:vimim_cache()
     if s:pageup_pagedown != 0
     \&& len(s:matched_list) > &pumheight
     \&& s:vimim_custom_label > -1
-        let results = s:vimim_pageup_pagedown()
+        return s:vimim_pageup_pagedown()
     endif
     return results
 endfunction
@@ -2339,19 +2345,15 @@ function! s:vimim_pageup_pagedown()
     if s:vimim_custom_label > 0
         let one_page = s:horizontal_display
     endif
-    let first_page = one_page - 1
+    if one_page < 1
+        let one_page = 9
+    endif
     if s:vimim_loop_pageup_pagedown > 0
-        if first_page < 1
-            let first_page = 9
-        endif
-        let shift = s:pageup_pagedown * first_page
-        if length > first_page
-            let partition = shift
-            if shift < 0
-                let partition = length + shift
-            endif
-            let A = matched_list[: partition-1]
+        if length > one_page
+            let page = s:pageup_pagedown * one_page
+            let partition = page<0 ? length+page : page
             let B = matched_list[partition :]
+            let A = matched_list[: partition-1]
             let matched_list = B + A
         endif
     else
@@ -2359,7 +2361,7 @@ function! s:vimim_pageup_pagedown()
         if page < 0
             " no more PageUp after the first page
             let s:pageup_pagedown += 1
-            let matched_list = matched_list[0 : first_page]
+            let matched_list = matched_list[0 : one_page]
         elseif page >= length
             " no more PageDown after the last page
             let s:pageup_pagedown -= 1
@@ -4552,6 +4554,7 @@ function! s:vimim_popupmenu_list(matched_list)
     if empty(lines) || type(lines) != type([])
         return []
     endif
+    let s:matched_list = a:matched_list
     let tail = 0
     let label = 1
     let extra_text = ""
@@ -4569,7 +4572,6 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
     endif
     let menu = get(s:keyboard_list,0)
-    let s:matched_list = lines
     for chinese in lines
         let complete_items = {}
         if first_in_list =~ '\s' && s:show_me_not < 1
