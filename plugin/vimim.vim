@@ -298,7 +298,7 @@ function! s:vimim_egg_vimimvim()
 endfunction
 
 function! s:vimim_egg_vimimpoem()
-    return split("白日依山尽 黄河入海流 欲穷千里目 更上一层楼")
+    return split(s:mahjong)
 endfunction
 
 function! s:vimim_egg_vim()
@@ -627,8 +627,11 @@ function! s:translators.translate(english) dict
 endfunction
 
 function! s:vimim_dictionary_chinese()
-    let s:space = "　"  |  let s:colon = "："
-    let s:left  = "【"  |  let s:right = "】"
+    let s:space = "　"
+    let s:colon = "："
+    let s:left  = "【"
+    let s:right = "】"
+    let s:mahjong = "囍發萬中 春夏秋冬 东南西北 梅兰竹菊"
     let s:chinese = {}
     let s:chinese.onekey     = ['点石成金','點石成金']
     let s:chinese.computer   = ['电脑','電腦']
@@ -2098,7 +2101,6 @@ let s:VimIM += [" ====  input unicode    ==== {{{"]
 
 function! s:vimim_initialize_encoding()
     let s:unicode = []
-    let s:mahjong = []
     let s:encoding = "utf8"
     if &encoding =~ 'chinese\|cp936\|gb2312\|gbk\|euc-cn'
         let s:encoding = "chinese"
@@ -2136,10 +2138,6 @@ function! s:vimim_get_unicode()
         let u .= "門阜隶隹雨靑非面革韋韭音頁風飛食首香馬骨高髟鬥鬯"
         let u .= "鬲鬼魚鳥鹵鹿麥麻黃黍黑黹黽鼎鼓鼠鼻齊齒龍龜龠"
         let s:unicode = split(u, '\zs')
-    endif
-    if empty(s:mahjong)
-        let u  = "囍發萬中梅兰竹菊春夏秋冬东南西北"
-        let s:mahjong = split(u, '\zs')
     endif
 endfunction
 
@@ -2581,7 +2579,8 @@ function! s:vimim_cjk_match(keyboard)
     elseif s:ui.im == 'pinyin' || s:has_cjk_file > 0
         if len(keyboard) == 1 && keyboard =~ '[uv]'
             call s:vimim_get_unicode()
-            return keyboard=='u' ? s:unicode : s:mahjong
+            let v = split(join(split(s:mahjong),''),'\zs')
+            return keyboard=='u' ? s:unicode : v
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
