@@ -224,7 +224,6 @@ function! s:vimim_initialize_global()
     let s:frontends = []
     let s:loops = {}
     let s:numbers = {}
-    let s:antonyms = {}
     let s:quantifiers = {}
     let s:pumheight = &pumheight
     let s:pumheight_saved = &pumheight
@@ -624,7 +623,40 @@ endfunction
 let s:VimIM += [" ====  multibyte        ==== {{{"]
 " =================================================
 
-function! s:vimim_build_antonym_hash()
+function! s:vimim_get_imode_chinese(char_before, insert)
+    let key = a:char_before
+    if empty(s:loops)
+        call s:vimim_build_numbers_loop_hash()
+    endif
+    let results = []
+    if has_key(s:loops, key)
+        let start = key
+        let next = ""
+        while start != next
+            let next = s:loops[key]
+            call add(results, next)
+            let key = next
+        endwhile
+    elseif a:insert > 0
+        let results = split("我 你 妳 他 她 它")
+    endif
+    return results
+endfunction
+
+function! s:vimim_build_numbers_loop_hash()
+    let numbers = s:vimim_get_numbers_list()
+    let antonyms = s:vimim_get_antonym_list()
+    let imode_list = numbers + antonyms
+    for loop in imode_list
+        let loops = split(loop,'\zs')
+        for i in range(len(loops))
+            let j = i==len(loops)-1 ? 0 : i+1
+            let s:loops[loops[i]] = loops[j]
+        endfor
+    endfor
+endfunction
+
+function! s:vimim_get_antonym_list()
     let antonym = "  ，。 “” ‘’ ＋－ （） 【】 〖〗 《》 金石
     \ 阴阳 爱恨 老嫩 雌雄 男女 彼此 穿脱 淫娼 嫁娶 死活 悲欢 离合
     \ 软硬 强弱 里外 上下 左右 前后 快慢 轻重 缓急 正反 坤乾 日月
@@ -637,29 +669,29 @@ function! s:vimim_build_antonym_hash()
     \ 收放 输赢 逆顺 灵笨 忠奸 纵横 东西 南北 破立 劣优 对错 纯杂
     \ 薄厚 尊卑 文武 推拉 问答 主仆 深浅 牡牝 卷舒 贵贱 买卖 臣君
     \ 聚散 干湿 生熟 单双 首尾 奢简 警匪 官民 可否 懒勤 信疑 凹凸"
-    for yinyang in split(antonym)
-        let yy = split(yinyang, '\zs')
-        let s:antonyms[get(yy,0)] = get(yy,1)
-        let s:antonyms[get(yy,1)] = get(yy,0)
-    endfor
+    return split(antonym)
 endfunction
 
-function! s:vimim_build_numbers_loop_hash()
+function! s:vimim_get_numbers_list()
     let items = []
     call s:vimim_build_numbers_hash()
     for i in range(len(s:numbers))
         call add(items, split(s:numbers[i],'\zs'))
     endfor
+    let numbers = []
     for j in range(len(get(items,0)))
-        for i in range(10)
-            let k = i==9 ? 0 : i+1
-            let s:loops[items[i][j]] = items[k][j]
+        let number = ""
+        for line in items
+            let number .= get(line,j)
         endfor
+        call add(numbers, number)
     endfor
+    return numbers
 endfunction
 
 function! s:vimim_build_numbers_hash()
     if empty(s:numbers)
+        let s:numbers.0 = "〇零癸⒑⑩⑽"
         let s:numbers.1 = "一壹甲⒈①⑴"
         let s:numbers.2 = "二贰乙⒉②⑵"
         let s:numbers.3 = "三叁丙⒊③⑶"
@@ -669,7 +701,6 @@ function! s:vimim_build_numbers_hash()
         let s:numbers.7 = "七柒庚⒎⑦⑺"
         let s:numbers.8 = "八捌辛⒏⑧⑻"
         let s:numbers.9 = "九玖壬⒐⑨⑼"
-        let s:numbers.0 = "〇零癸⒑⑩⑽"
     endif
 endfunction
 
@@ -810,30 +841,6 @@ function! s:vimim_imode_today_now(keyboard)
     let chinese = copy(s:translators)
     let chinese.dict = ecdict
     return chinese.translate(join(results))
-endfunction
-
-function! s:vimim_imode_chinese(char_before, insert)
-    let key = a:char_before
-    if empty(s:antonyms)
-        call s:vimim_build_antonym_hash()
-    endif
-    if empty(s:loops)
-        call s:vimim_build_numbers_loop_hash()
-    endif
-    let results = []
-    if has_key(s:loops, key)
-        for i in range(10)
-            let value = s:loops[key]
-            call add(results, value)
-            let key = value
-        endfor
-    elseif has_key(s:antonyms, key)
-        let value = s:antonyms[key]
-        call add(results, value)
-    elseif a:insert > 0
-        let results = split("我 你 妳 他 她 它")
-    endif
-    return results
 endfunction
 
 function! s:vimim_imode_number(keyboard)
@@ -1910,7 +1917,7 @@ function! s:vimim_onekey_input(keyboard)
         elseif keyboard =~# '^i'
             if len(keyboard) == 1
                 let char_before = s:vimim_get_char_before('i')
-                let results = s:vimim_imode_chinese(char_before,1)
+                let results = s:vimim_get_imode_chinese(char_before,1)
             elseif keyboard =~ '[^pqwertyuio]'
                 let results = s:vimim_imode_number(keyboard)
             endif
@@ -2711,7 +2718,7 @@ function! <SID>vimim_visual_ctrl6()
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
         let line = get(lines,0)
-        let results = s:vimim_imode_chinese(line,0)
+        let results = s:vimim_get_imode_chinese(line,0)
         if !empty(results)
             " highlighted one cjk char => antonym or number+1
             let key = "gvr" . get(results,0)
