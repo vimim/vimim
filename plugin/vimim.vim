@@ -1905,10 +1905,12 @@ function! s:vimim_onekey_input(keyboard)
     endif
     let results = []
     " [imode] magic i: (1) English number (2) Chinese number
-    if keyboard =~# '^i'
-        if keyboard ==# 'itoday' || keyboard ==# 'inow'
-            return [s:vimim_imode_today_now(keyboard)]
-        elseif s:vimim_imode_pinyin > 0
+    if keyboard =~# '^[iuv]' && s:vimim_imode_pinyin > 0
+        if keyboard == 'v'
+            let results = split(join(split(s:mahjong),''),'\zs')
+        elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
+            let results = [s:vimim_imode_today_now(keyboard)]
+        elseif keyboard =~# '^i'
             sil!call s:vimim_build_quantifier_hash()
             if len(keyboard) == 1
                 let char_before = s:vimim_get_char_before('i')
@@ -1916,9 +1918,12 @@ function! s:vimim_onekey_input(keyboard)
             elseif keyboard =~ '[^pqwertyuio]'
                 let results = s:vimim_imode_number(keyboard)
             endif
-            if !empty(len(results))
-                return results
-            endif
+        elseif keyboard == 'u' && s:has_cjk_file < 1
+            let unicode = "一 丨 丶 丿 乙"
+            let results = split(unicode)
+        endif
+        if !empty(len(results))
+            return results
         endif
     endif
     " [cjk] cjk database works like swiss-army knife
@@ -2619,9 +2624,7 @@ function! s:vimim_cjk_match(keyboard)
             endif
         endif
     elseif s:has_cjk_file > 0
-        if keyboard == 'v'
-            return split(join(split(s:mahjong),''),'\zs')
-        elseif keyboard == 'u' " 214 standard unicode index
+        if keyboard == 'u' " 214 standard unicode index
             let grep = '\s' . keyboard . '$'
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
@@ -2783,7 +2786,7 @@ function! s:vimim_onekey_english(keyboard, order)
         let grep_english = '^' . a:keyboard . '\s'
         let matched = match(s:english_lines, grep_english)
         if matched < 0 && len(a:keyboard) > 3
-            " support english shortcut: both haag haagendazs
+            " support english shortcut: both haag and haagendazs
             let grep_english = '^' . a:keyboard
             let matched = match(s:english_lines, grep_english)
         endif
@@ -2794,11 +2797,8 @@ function! s:vimim_onekey_english(keyboard, order)
             if menu ==# a:keyboard
                 let results = results[1:]
             endif
-            if empty(a:order)
-                call extend(s:english_results, results)
-            else
-                call extend(s:english_results, results, 0)
-            endif
+            let order = empty(a:order) ? len(s:english_results) : 0
+            call extend(s:english_results, results, order)
         endif
     endif
 endfunction
@@ -3588,6 +3588,7 @@ function! s:vimim_set_cloud(im)
         let s:backend.cloud = {}
         return
     endif
+    let s:vimim_imode_pinyin = 1
     let s:mycloud = 0
     let s:ui.root = 'cloud'
     let s:ui.im = im
