@@ -621,6 +621,37 @@ endfunction
 let s:VimIM += [" ====  chinese imode    ==== {{{"]
 " =================================================
 
+function! s:vimim_get_antonym_list()
+let antonym = "  ，。 “” ‘’ ＋－ （） 【】 〖〗 《》
+\ 阴阳 龙凤 雄雌 男女 嬲嫐 屌屄 淫娼 嫁娶 爱恨 死活 输赢 悲欢离合
+\ 软硬 强弱 深浅 推拉 迎送 里外 正反 前后 进退 快慢 胖瘦 酸甜苦辣
+\ 恩怨 沉浮 高低 断续 松紧 张弛 好坏 美醜 善恶 雅俗 耻荣 轻重缓急
+\ 始终 首尾 盈亏 钝锐 升降 黑白 开关 藏露 醒睡 跌涨 哭笑 上下左右
+\ 虚实 有无 宽窄 稀密 粗细 恼喜 买卖 借还 得失 赔赚 臣君 花草虫鱼
+\ 大小 多少 公私 奇偶 冷热 矛盾 朝暮 奖罚 净脏 祸福 盛衰 加减乘除
+\ 是非 闲忙 来去 安危 存亡 动静 浓淡 饥饱 旦夕 手脚 牡牝 日月天地
+\ 新旧 通堵 止行 古今 纳吐 曲直 亮暗 亲疏 这那 吉凶 褒贬 胜败
+\ 收放 利弊 逆顺 灵笨 忠奸 纵横 破立 优劣 对错 纯杂 真假 老嫩
+\ 薄厚 尊卑 文武 主仆 问答 卷舒 贵贱 巧拙 彼此 坤乾 懒勤 凹凸
+\ 聚散 干湿 生熟 单双 奢简 警匪 官民 可否 信疑 穿脱 金石 "
+return split(antonym)
+endfunction
+
+function! s:vimim_build_numbers_hash()
+    if empty(s:numbers)
+        let s:numbers.0 = "〇零癸⒑⑩⑽"
+        let s:numbers.1 = "一壹甲⒈①⑴"
+        let s:numbers.2 = "二贰乙⒉②⑵"
+        let s:numbers.3 = "三叁丙⒊③⑶"
+        let s:numbers.4 = "四肆丁⒋④⑷"
+        let s:numbers.5 = "五伍戊⒌⑤⑸"
+        let s:numbers.6 = "六陆己⒍⑥⑹"
+        let s:numbers.7 = "七柒庚⒎⑦⑺"
+        let s:numbers.8 = "八捌辛⒏⑧⑻"
+        let s:numbers.9 = "九玖壬⒐⑨⑼"
+    endif
+endfunction
+
 function! s:vimim_get_imode_chinese(char_before, insert)
     let key = a:char_before
     if empty(s:loops)
@@ -655,22 +686,6 @@ function! s:vimim_build_numbers_loop_hash()
     endfor
 endfunction
 
-function! s:vimim_get_antonym_list()
-let antonym = "  ，。 “” ‘’ ＋－ （） 【】 〖〗 《》
-\ 阴阳 龙凤 雄雌 男女 嬲嫐 屌屄 淫娼 嫁娶 爱恨 死活 输赢 悲欢离合
-\ 软硬 强弱 深浅 推拉 迎送 里外 正反 前后 进退 快慢 胖瘦 酸甜苦辣
-\ 恩怨 沉浮 高低 断续 松紧 张弛 好坏 美醜 善恶 雅俗 耻荣 轻重缓急
-\ 始终 首尾 盈亏 钝锐 升降 黑白 开关 藏露 醒睡 跌涨 哭笑 上下左右
-\ 虚实 有无 宽窄 稀密 粗细 恼喜 买卖 借还 得失 赔赚 臣君 花草虫鱼
-\ 大小 多少 公私 奇偶 冷热 矛盾 朝暮 奖罚 净脏 祸福 盛衰 加减乘除
-\ 是非 闲忙 来去 安危 存亡 动静 浓淡 饥饱 旦夕 手脚 牡牝 日月天地
-\ 新旧 通堵 止行 古今 纳吐 曲直 亮暗 亲疏 这那 吉凶 褒贬 胜败
-\ 收放 利弊 逆顺 灵笨 忠奸 纵横 破立 优劣 对错 纯杂 真假 老嫩
-\ 薄厚 尊卑 文武 主仆 问答 卷舒 贵贱 巧拙 彼此 坤乾 懒勤 凹凸
-\ 聚散 干湿 生熟 单双 奢简 警匪 官民 可否 信疑 穿脱 金石 "
-return split(antonym)
-endfunction
-
 function! s:vimim_get_numbers_list()
     let items = []
     call s:vimim_build_numbers_hash()
@@ -686,21 +701,6 @@ function! s:vimim_get_numbers_list()
         call add(numbers, number)
     endfor
     return numbers
-endfunction
-
-function! s:vimim_build_numbers_hash()
-    if empty(s:numbers)
-        let s:numbers.0 = "〇零癸⒑⑩⑽"
-        let s:numbers.1 = "一壹甲⒈①⑴"
-        let s:numbers.2 = "二贰乙⒉②⑵"
-        let s:numbers.3 = "三叁丙⒊③⑶"
-        let s:numbers.4 = "四肆丁⒋④⑷"
-        let s:numbers.5 = "五伍戊⒌⑤⑸"
-        let s:numbers.6 = "六陆己⒍⑥⑹"
-        let s:numbers.7 = "七柒庚⒎⑦⑺"
-        let s:numbers.8 = "八捌辛⒏⑧⑻"
-        let s:numbers.9 = "九玖壬⒐⑨⑼"
-    endif
 endfunction
 
 let s:translators = {}
@@ -1116,10 +1116,11 @@ let s:VimIM += [" ====  user   interface ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_chinese()
-    let s:space = "　"
-    let s:colon = "："
-    let s:left  = "【"
-    let s:right = "】"
+    let s:mahjong = split("囍發萬中 春夏秋冬 东南西北 梅兰竹菊")
+    let s:space   = "　"
+    let s:colon   = "："
+    let s:left    = "【"
+    let s:right   = "】"
     let s:chinese = {}
     let s:chinese.onekey     = ["点石成金","點石成金"]
     let s:chinese.computer   = ["电脑","電腦"]
@@ -1177,7 +1178,6 @@ function! s:vimim_dictionary_chinese()
     let s:chinese.datafile   = ["文件"]
     let s:chinese.mass       = ["海量"]
     let s:chinese.datetime   = ["日期"]
-    let s:mahjong = split("囍發萬中 春夏秋冬 东南西北 梅兰竹菊")
 endfunction
 
 function! s:vimim_initialize_skin()
