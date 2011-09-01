@@ -383,8 +383,9 @@ function! s:vimim_egg_vimim()
             let ui_root = get(frontend, 0)
             let ui_im = get(frontend, 1)
             let vimim_toggle_list .= "," . ui_im
-            let ciku = database . s:vimim_chinese(ui_root) . database
             let datafile = s:backend[ui_root][ui_im].name
+            let mass = datafile=~'db' ? 'mass' : ui_root
+            let ciku = database . s:vimim_chinese(mass) . database
             call add(eggs, ciku . datafile)
         endfor
     endif
@@ -774,6 +775,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese.chinese    = ["中文"]
     let s:chinese.english    = ["英文"]
     let s:chinese.datafile   = ["文件"]
+    let s:chinese.mass       = ["海量"]
     let s:chinese.datetime   = ["日期"]
 endfunction
 
