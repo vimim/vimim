@@ -962,9 +962,9 @@ function! <SID>vimim_chinese_punctuation_map(key)
     endif
     if pumvisible()
         if a:key =~ "[=-]"
-            if a:key =~ "[=]" 
-                let s:pageup_pagedown = 1 
-            elseif a:key =~ "[-]" 
+            if a:key =~ "[=]"
+                let s:pageup_pagedown = 1
+            elseif a:key =~ "[-]"
                 let s:pageup_pagedown = -1
             endif
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
@@ -2207,6 +2207,9 @@ function! s:vimim_get_char_before(keyboard)
     let line = getline(".")
     let start = col(".") -1 - s:multibyte * len(a:keyboard)
     let char_before = line[start : start+s:multibyte-1]
+    if char_before =~ '\w'
+        let char_before = a:keyboard
+    endif
     return char_before
 endfunction
 
