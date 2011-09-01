@@ -103,6 +103,10 @@ function! s:vimim_initialize_session()
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let s:horizontal_display = s:vimim_custom_label>0 ? 5 : 0
+    let s:loops = {}
+    let s:numbers = {}
+    let s:quantifiers = {}
+    let s:mahjong = split("囍發萬中 春夏秋冬 东南西北 梅兰竹菊")
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -220,9 +224,6 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 1)
     let s:im_toggle = 0
     let s:frontends = []
-    let s:loops = {}
-    let s:numbers = {}
-    let s:quantifiers = {}
     let s:pumheight = &pumheight
     let s:pumheight_saved = &pumheight
     let s:chinese_input_mode = 'onekey'
@@ -639,25 +640,34 @@ endfunction
 
 function! s:vimim_build_numbers_hash()
     if empty(s:numbers)
-        let s:numbers.0 = "〇零癸⒑⑩⑽"
-        let s:numbers.1 = "一壹甲⒈①⑴"
-        let s:numbers.2 = "二贰乙⒉②⑵"
-        let s:numbers.3 = "三叁丙⒊③⑶"
-        let s:numbers.4 = "四肆丁⒋④⑷"
-        let s:numbers.5 = "五伍戊⒌⑤⑸"
-        let s:numbers.6 = "六陆己⒍⑥⑹"
-        let s:numbers.7 = "七柒庚⒎⑦⑺"
-        let s:numbers.8 = "八捌辛⒏⑧⑻"
-        let s:numbers.9 = "九玖壬⒐⑨⑼"
+        let s:numbers.1 = "一①甲⑴壹"
+        let s:numbers.2 = "二②乙⑵贰"
+        let s:numbers.3 = "三③丙⑶叁"
+        let s:numbers.4 = "四④丁⑷肆"
+        let s:numbers.5 = "五⑤戊⑸伍"
+        let s:numbers.6 = "六⑥己⑹陆"
+        let s:numbers.7 = "七⑦庚⑺柒"
+        let s:numbers.8 = "八⑧辛⑻捌"
+        let s:numbers.9 = "九⑨壬⑼玖"
+        let s:numbers.0 = "〇⑩癸⑽零"
     endif
 endfunction
 
 function! s:vimim_get_imode_chinese(char_before, insert)
-    let key = a:char_before
     if empty(s:loops)
-        call s:vimim_build_numbers_loop_hash()
+        let antonyms = s:vimim_get_antonym_list()
+        let numbers  = s:vimim_get_numbers_list()
+        let imode_list = s:mahjong + numbers + antonyms
+        for loop in imode_list
+            let loops = split(loop,'\zs')
+            for i in range(len(loops))
+                let j = i==len(loops)-1 ? 0 : i+1
+                let s:loops[loops[i]] = loops[j]
+            endfor
+        endfor
     endif
     let results = []
+    let key = a:char_before
     if has_key(s:loops, key)
         let start = key
         let next = ""
@@ -667,23 +677,10 @@ function! s:vimim_get_imode_chinese(char_before, insert)
             let key = next
         endwhile
     elseif a:insert > 0
-        let i = "我 你 妳 他 她 它"
-        let results = split(i)
+        let i_english = "我 你 妳 他 她 它"
+        let results = split(i_english)
     endif
     return results
-endfunction
-
-function! s:vimim_build_numbers_loop_hash()
-    let antonyms = s:vimim_get_antonym_list()
-    let numbers  = s:vimim_get_numbers_list()
-    let imode_list = s:mahjong + numbers + antonyms
-    for loop in imode_list
-        let loops = split(loop,'\zs')
-        for i in range(len(loops))
-            let j = i==len(loops)-1 ? 0 : i+1
-            let s:loops[loops[i]] = loops[j]
-        endfor
-    endfor
 endfunction
 
 function! s:vimim_get_numbers_list()
@@ -825,16 +822,16 @@ let s:VimIM += [" ====  punctuation      ==== {{{"]
 
 function! s:vimim_dictionary_punctuation()
     let s:punctuations = {}
+    let s:punctuations['{'] = "〖"  | let s:space = "　"
+    let s:punctuations['}'] = "〗"  | let s:colon = "："
+    let s:punctuations['<'] = "《"  | let s:left  = "【"
+    let s:punctuations['>'] = "》"  | let s:right = "】"
     let s:punctuations['@'] = s:space
     let s:punctuations[':'] = s:colon
     let s:punctuations['['] = s:left
     let s:punctuations[']'] = s:right
     let s:punctuations['('] = "（"
     let s:punctuations[')'] = "）"
-    let s:punctuations['{'] = "〖"
-    let s:punctuations['}'] = "〗"
-    let s:punctuations['<'] = "《"
-    let s:punctuations['>'] = "》"
     let s:punctuations['#'] = "＃"
     let s:punctuations['&'] = "＆"
     let s:punctuations['%'] = "％"
@@ -1116,11 +1113,6 @@ let s:VimIM += [" ====  user   interface ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_chinese()
-    let s:mahjong = split("囍發萬中 春夏秋冬 东南西北 梅兰竹菊")
-    let s:space   = "　"
-    let s:colon   = "："
-    let s:left    = "【"
-    let s:right   = "】"
     let s:chinese = {}
     let s:chinese.onekey     = ["点石成金","點石成金"]
     let s:chinese.computer   = ["电脑","電腦"]
