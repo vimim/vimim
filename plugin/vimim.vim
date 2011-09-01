@@ -223,6 +223,8 @@ function! s:vimim_initialize_global()
     let s:im_toggle = 0
     let s:frontends = []
     let s:antonyms = {}
+    let s:quantifiers = {}
+    let s:numbers = {}
     let s:pumheight = &pumheight
     let s:pumheight_saved = &pumheight
     let s:chinese_input_mode = 'onekey'
@@ -621,6 +623,53 @@ endfunction
 let s:VimIM += [" ====  multibyte        ==== {{{"]
 " =================================================
 
+function! s:vimim_build_numbers_hash()
+    let s:numbers.1 = '一壹甲⒈①⑴'
+    let s:numbers.2 = '二贰乙⒉②⑵'
+    let s:numbers.3 = '三叁丙⒊③⑶'
+    let s:numbers.4 = '四肆丁⒋④⑷'
+    let s:numbers.5 = '五伍戊⒌⑤⑸'
+    let s:numbers.6 = '六陆己⒍⑥⑹'
+    let s:numbers.7 = '七柒庚⒎⑦⑺'
+    let s:numbers.8 = '八捌辛⒏⑧⑻'
+    let s:numbers.9 = '九玖壬⒐⑨⑼'
+    let s:numbers.0 = '〇零癸⒑⑩⑽'
+endfunction
+
+function! s:vimim_build_quantifier_hash()
+    if empty(s:quantifiers)
+        call s:vimim_build_numbers_hash()
+        let s:quantifiers = copy(s:numbers)
+    else
+        return
+    endif
+    let s:quantifiers.s = '十拾时升艘扇首双所束手'
+    let s:quantifiers.b = '百佰步把包杯本笔部班'
+    let s:quantifiers.q = '千仟群'
+    let s:quantifiers.w = '万位味碗窝晚'
+    let s:quantifiers.h = '毫行盒壶户回'
+    let s:quantifiers.f = '分份发封付副幅峰方服'
+    let s:quantifiers.a = '秒'
+    let s:quantifiers.n = '年'
+    let s:quantifiers.m = '米名枚面门'
+    let s:quantifiers.r = '日'
+    let s:quantifiers.c = '次餐场串处床'
+    let s:quantifiers.d = '第度点袋道滴碟顶栋堆对朵堵顿'
+    let s:quantifiers.e = '亿'
+    let s:quantifiers.g = '个根股管'
+    let s:quantifiers.i = '毫'
+    let s:quantifiers.j = '斤家具架间件节剂具捲卷茎记'
+    let s:quantifiers.k = '克口块棵颗捆孔'
+    let s:quantifiers.l = '里粒类辆列轮厘领缕'
+    let s:quantifiers.o = '度'
+    let s:quantifiers.p = '磅盆瓶排盘盆匹片篇撇喷'
+    let s:quantifiers.t = '天吨条头通堂趟台套桶筒贴'
+    let s:quantifiers.u = '微'
+    let s:quantifiers.x = '席些项'
+    let s:quantifiers.y = '月叶亿'
+    let s:quantifiers.z = '种只张株支枝盏座阵桩尊则站幢宗兆'
+endfunction
+
 function! s:vimim_build_antonym_hash()
     if !empty(s:antonyms)
         return
@@ -778,45 +827,9 @@ function! s:vimim_imode_number(keyboard)
     let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
     let keyboards = split(dddl, '\ze')
     let number = ""
-    let quantifier = {}
-    let quantifier.1 = '一壹甲⒈①⑴'
-    let quantifier.2 = '二贰乙⒉②⑵'
-    let quantifier.3 = '三叁丙⒊③⑶'
-    let quantifier.4 = '四肆丁⒋④⑷'
-    let quantifier.5 = '五伍戊⒌⑤⑸'
-    let quantifier.6 = '六陆己⒍⑥⑹'
-    let quantifier.7 = '七柒庚⒎⑦⑺'
-    let quantifier.8 = '八捌辛⒏⑧⑻'
-    let quantifier.9 = '九玖壬⒐⑨⑼'
-    let quantifier.0 = '〇零癸⒑⑩⑽'
-    let quantifier.s = '十拾时升艘扇首双所束手'
-    let quantifier.b = '百佰步把包杯本笔部班'
-    let quantifier.q = '千仟群'
-    let quantifier.w = '万位味碗窝晚'
-    let quantifier.h = '毫行盒壶户回'
-    let quantifier.f = '分份发封付副幅峰方服'
-    let quantifier.a = '秒'
-    let quantifier.n = '年'
-    let quantifier.m = '米名枚面门'
-    let quantifier.r = '日'
-    let quantifier.c = '次餐场串处床'
-    let quantifier.d = '第度点袋道滴碟顶栋堆对朵堵顿'
-    let quantifier.e = '亿'
-    let quantifier.g = '个根股管'
-    let quantifier.i = '毫'
-    let quantifier.j = '斤家具架间件节剂具捲卷茎记'
-    let quantifier.k = '克口块棵颗捆孔'
-    let quantifier.l = '里粒类辆列轮厘领缕'
-    let quantifier.o = '度'
-    let quantifier.p = '磅盆瓶排盘盆匹片篇撇喷'
-    let quantifier.t = '天吨条头通堂趟台套桶筒贴'
-    let quantifier.u = '微'
-    let quantifier.x = '席些项'
-    let quantifier.y = '月叶亿'
-    let quantifier.z = '种只张株支枝盏座阵桩尊则站幢宗兆'
     for char in keyboards
-        if has_key(quantifier, char)
-            let quantifier_list = split(quantifier[char], '\zs')
+        if has_key(s:quantifiers, char)
+            let quantifier_list = split(s:quantifiers[char], '\zs')
             let chinese = get(quantifier_list, 0)
             if i ==# 'I' && char =~ '[0-9sbq]'
                 let chinese = get(quantifier_list, 1)
@@ -829,8 +842,8 @@ function! s:vimim_imode_number(keyboard)
     endif
     let numbers = [number]
     let last_char = keyboard[-1:]
-    if !empty(last_char) && has_key(quantifier, last_char)
-        let quantifier_list = split(quantifier[last_char], '\zs')
+    if !empty(last_char) && has_key(s:quantifiers, last_char)
+        let quantifier_list = split(s:quantifiers[last_char], '\zs')
         if keyboard =~# '^[ds]\=\d*\l\{1}$'
             if keyboard =~# '^[ds]'
                 let number = strpart(number,0,len(number)-s:multibyte)
@@ -1869,7 +1882,8 @@ function! s:vimim_onekey_input(keyboard)
     if keyboard =~# '^i'
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             return [s:vimim_imode_today_now(keyboard)]
-        elseif s:vimim_imode_pinyin > -1 && keyboard =~ '[^pqwertyuio]'
+        elseif s:vimim_imode_pinyin > 0 && keyboard =~ '[^pqwertyuio]'
+            sil!call s:vimim_build_quantifier_hash()
             let results = s:vimim_imode_number(keyboard)
             if !empty(len(results))
                 return results
