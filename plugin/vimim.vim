@@ -624,38 +624,19 @@ endfunction
 let s:VimIM += [" ====  multibyte        ==== {{{"]
 " =================================================
 
-function! s:vimim_build_numbers_hash()
-    if empty(s:numbers)
-        let s:numbers.0 = "〇零癸⒑⑩⑽"
-        let s:numbers.1 = "一壹甲⒈①⑴"
-        let s:numbers.2 = "二贰乙⒉②⑵"
-        let s:numbers.3 = "三叁丙⒊③⑶"
-        let s:numbers.4 = "四肆丁⒋④⑷"
-        let s:numbers.5 = "五伍戊⒌⑤⑸"
-        let s:numbers.6 = "六陆己⒍⑥⑹"
-        let s:numbers.7 = "七柒庚⒎⑦⑺"
-        let s:numbers.8 = "八捌辛⒏⑧⑻"
-        let s:numbers.9 = "九玖壬⒐⑨⑼"
-    endif
-endfunction
-
 function! s:vimim_build_antonym_hash()
-    if !empty(s:antonyms)
-        return
-    endif
-    let antonym = "  阴阳 爱恨 老嫩 雌雄 男女 彼此 穿脱 淫娼 嫁娶
-    \ 软硬 强弱 里外 上下 左右 前后 快慢 轻重 缓急 正反 悲欢 离合
-    \ 始终 胖瘦 迎送 盈亏 真假 升降 进退 开关 藏露 醒睡 凹凸 钝锐
+    let antonym = "  ，。 “” ‘’ ＋－ （） 【】 〖〗 《》 金石
+    \ 阴阳 爱恨 老嫩 雌雄 男女 彼此 穿脱 淫娼 嫁娶 死活 悲欢 离合
+    \ 软硬 强弱 里外 上下 左右 前后 快慢 轻重 缓急 正反 坤乾 日月
+    \ 始终 胖瘦 迎送 盈亏 真假 升降 进退 开关 藏露 醒睡 跌涨 钝锐
     \ 借还 沉浮 矛盾 哭笑 松紧 张弛 好坏 美醜 善恶 宽窄 苦甜 断续
-    \ 大小 多少 死活 公私 奇偶 冷热 高低 朝暮 奖罚 净脏 祸福 盛衰
+    \ 大小 多少 公私 奇偶 冷热 高低 朝暮 奖罚 净脏 祸福 盛衰 天地
     \ 是非 闲忙 来去 安危 存亡 动静 浓淡 饥饱 赔赚 手脚 耻荣 加减
     \ 虚实 有无 雅俗 稀密 粗细 得失 巧拙 恩怨 恼喜 旦夕 利弊 胜败
     \ 新旧 通堵 止行 古今 纳吐 曲直 亮暗 亲疏 这那 吉凶 褒贬 黑白
     \ 收放 输赢 逆顺 灵笨 忠奸 纵横 东西 南北 破立 劣优 对错 纯杂
     \ 薄厚 尊卑 文武 推拉 问答 主仆 深浅 牡牝 卷舒 贵贱 买卖 臣君
-    \ 聚散 干湿 生熟 单双 首尾 奢简 警匪 官民 可否 懒勤 信疑 跌涨
-    \ 坤乾 日月 天地 金石
-    \ “” ‘’ ＋－ （） 【】 〖〗 《》 ，。"
+    \ 聚散 干湿 生熟 单双 首尾 奢简 警匪 官民 可否 懒勤 信疑 凹凸"
     for yinyang in split(antonym)
         let yy = split(yinyang, '\zs')
         let s:antonyms[get(yy,0)] = get(yy,1)
@@ -664,9 +645,6 @@ function! s:vimim_build_antonym_hash()
 endfunction
 
 function! s:vimim_build_numbers_loop_hash()
-    if !empty(s:loops)
-        return
-    endif
     let items = []
     call s:vimim_build_numbers_hash()
     for i in range(len(s:numbers))
@@ -680,13 +658,24 @@ function! s:vimim_build_numbers_loop_hash()
     endfor
 endfunction
 
-function! s:vimim_build_quantifier_hash()
-    if empty(s:quantifiers)
-        call s:vimim_build_numbers_hash()
-        let s:quantifiers = copy(s:numbers)
-    else
-        return
+function! s:vimim_build_numbers_hash()
+    if empty(s:numbers)
+        let s:numbers.1 = "一壹甲⒈①⑴"
+        let s:numbers.2 = "二贰乙⒉②⑵"
+        let s:numbers.3 = "三叁丙⒊③⑶"
+        let s:numbers.4 = "四肆丁⒋④⑷"
+        let s:numbers.5 = "五伍戊⒌⑤⑸"
+        let s:numbers.6 = "六陆己⒍⑥⑹"
+        let s:numbers.7 = "七柒庚⒎⑦⑺"
+        let s:numbers.8 = "八捌辛⒏⑧⑻"
+        let s:numbers.9 = "九玖壬⒐⑨⑼"
+        let s:numbers.0 = "〇零癸⒑⑩⑽"
     endif
+endfunction
+
+function! s:vimim_build_quantifier_hash()
+    call s:vimim_build_numbers_hash()
+    let s:quantifiers = copy(s:numbers)
     let s:quantifiers.a = "秒"
     let s:quantifiers.b = "百佰步把包杯本笔部班"
     let s:quantifiers.c = "次餐场串处床"
@@ -824,10 +813,14 @@ function! s:vimim_imode_today_now(keyboard)
 endfunction
 
 function! s:vimim_imode_chinese(char_before, insert)
-    let results = []
     let key = a:char_before
-    call s:vimim_build_antonym_hash()
-    call s:vimim_build_numbers_loop_hash()
+    if empty(s:antonyms)
+        call s:vimim_build_antonym_hash()
+    endif
+    if empty(s:loops)
+        call s:vimim_build_numbers_loop_hash()
+    endif
+    let results = []
     if has_key(s:loops, key)
         for i in range(10)
             let value = s:loops[key]
@@ -853,6 +846,9 @@ function! s:vimim_imode_number(keyboard)
     let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
     let keyboards = split(dddl, '\ze')
     let number = ""
+    if empty(s:quantifiers)
+        call s:vimim_build_quantifier_hash()
+    endif
     for char in keyboards
         if has_key(s:quantifiers, char)
             let quantifier_list = split(s:quantifiers[char], '\zs')
@@ -961,15 +957,16 @@ function! <SID>vimim_chinese_punctuation_map(key)
         if one_before !~ '\w' || pumvisible()
             if has_key(s:punctuations, a:key)
                 let key = s:punctuations[a:key]
-            else
-                let key = a:key
             endif
         endif
     endif
     if pumvisible()
         if a:key =~ "[=-]"
-            if a:key =~ "[-]"     | let s:pageup_pagedown = -1
-            elseif a:key =~ "[=]" | let s:pageup_pagedown =  1 | endif
+            if a:key =~ "[=]" 
+                let s:pageup_pagedown = 1 
+            elseif a:key =~ "[-]" 
+                let s:pageup_pagedown = -1
+            endif
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
         else
             let key = '\<C-Y>' . key
@@ -1911,7 +1908,6 @@ function! s:vimim_onekey_input(keyboard)
         elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
         elseif keyboard =~# '^i'
-            sil!call s:vimim_build_quantifier_hash()
             if len(keyboard) == 1
                 let char_before = s:vimim_get_char_before('i')
                 let results = s:vimim_imode_chinese(char_before,1)
@@ -1919,7 +1915,7 @@ function! s:vimim_onekey_input(keyboard)
                 let results = s:vimim_imode_number(keyboard)
             endif
         elseif keyboard == 'u' && s:has_cjk_file < 1
-            let unicode = "一 丨 丶 丿 乙"
+            let unicode = "一 圣 性 楊 版 答 葬 走 隐"
             let results = split(unicode)
         endif
         if !empty(len(results))
