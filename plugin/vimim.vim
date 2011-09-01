@@ -20,8 +20,6 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  Author: vimim <vimim@googlegroups.com>
 " License: GNU Lesser General Public License
 "  Readme: VimIM is a Vim plugin as an independent Input Method.
-"
-" "VimIM Features"
 "  (1) input of Chinese without mode change:  OneKey == MidasTouch
 "  (2) slash search of Chinese without typing Chinese
 "  (3) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
@@ -298,7 +296,7 @@ function! s:vimim_egg_vimimvim()
 endfunction
 
 function! s:vimim_egg_vimimgame()
-    return split(s:mahjong)
+    return s:mahjong
 endfunction
 
 function! s:vimim_egg_vimimclouds()
@@ -620,7 +618,7 @@ function! s:vimim_slash_search_block(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  multibyte        ==== {{{"]
+let s:VimIM += [" ====  chinese imode    ==== {{{"]
 " =================================================
 
 function! s:vimim_get_imode_chinese(char_before, insert)
@@ -638,15 +636,16 @@ function! s:vimim_get_imode_chinese(char_before, insert)
             let key = next
         endwhile
     elseif a:insert > 0
-        let results = split("我 你 妳 他 她 它")
+        let i = "我 你 妳 他 她 它"
+        let results = split(i)
     endif
     return results
 endfunction
 
 function! s:vimim_build_numbers_loop_hash()
-    let numbers = s:vimim_get_numbers_list()
     let antonyms = s:vimim_get_antonym_list()
-    let imode_list = numbers + antonyms
+    let numbers  = s:vimim_get_numbers_list()
+    let imode_list = s:mahjong + numbers + antonyms
     for loop in imode_list
         let loops = split(loop,'\zs')
         for i in range(len(loops))
@@ -702,101 +701,6 @@ function! s:vimim_build_numbers_hash()
         let s:numbers.8 = "八捌辛⒏⑧⑻"
         let s:numbers.9 = "九玖壬⒐⑨⑼"
     endif
-endfunction
-
-function! s:vimim_build_quantifier_hash()
-    call s:vimim_build_numbers_hash()
-    let s:quantifiers = copy(s:numbers)
-    let s:quantifiers.a = "秒"
-    let s:quantifiers.b = "百佰步把包杯本笔部班"
-    let s:quantifiers.c = "次餐场串处床"
-    let s:quantifiers.d = "第度点袋道滴碟顶栋堆对朵堵顿"
-    let s:quantifiers.e = "亿"
-    let s:quantifiers.f = "分份发封付副幅峰方服"
-    let s:quantifiers.g = "个根股管"
-    let s:quantifiers.h = "毫行盒壶户回"
-    let s:quantifiers.i = "毫"
-    let s:quantifiers.j = "斤家具架间件节剂具捲卷茎记"
-    let s:quantifiers.k = "克口块棵颗捆孔"
-    let s:quantifiers.l = "里粒类辆列轮厘领缕"
-    let s:quantifiers.m = "米名枚面门"
-    let s:quantifiers.n = "年"
-    let s:quantifiers.o = "度"
-    let s:quantifiers.p = "磅盆瓶排盘盆匹片篇撇喷"
-    let s:quantifiers.q = "千仟群"
-    let s:quantifiers.r = "日"
-    let s:quantifiers.s = "十拾时升艘扇首双所束手"
-    let s:quantifiers.t = "天吨条头通堂趟台套桶筒贴"
-    let s:quantifiers.u = "微"
-    let s:quantifiers.w = "万位味碗窝晚"
-    let s:quantifiers.x = "席些项"
-    let s:quantifiers.y = "月叶亿"
-    let s:quantifiers.z = "种只张株支枝盏座阵桩尊则站幢宗兆"
-endfunction
-
-function! s:vimim_dictionary_chinese()
-    let s:space = "　"
-    let s:colon = "："
-    let s:left  = "【"
-    let s:right = "】"
-    let s:mahjong = "囍發萬中 春夏秋冬 东南西北 梅兰竹菊"
-    let s:chinese = {}
-    let s:chinese.onekey     = ["点石成金","點石成金"]
-    let s:chinese.computer   = ["电脑","電腦"]
-    let s:chinese.database   = ["词库","詞庫"]
-    let s:chinese.cjk        = ["字库","字庫"]
-    let s:chinese.directory  = ["目录","目錄"]
-    let s:chinese.option     = ["选项","選項"]
-    let s:chinese.standard   = ["标准","標準"]
-    let s:chinese.encoding   = ["编码","編碼"]
-    let s:chinese.env        = ["环境","環境"]
-    let s:chinese.input      = ["输入","輸入"]
-    let s:chinese.font       = ["字体","字體"]
-    let s:chinese.static     = ["静态","靜態"]
-    let s:chinese.dynamic    = ["动态","動態"]
-    let s:chinese.style      = ["风格","風格"]
-    let s:chinese.erbi       = ["二笔","二筆"]
-    let s:chinese.wubi       = ["五笔","五筆"]
-    let s:chinese.hangul     = ["韩文","韓文"]
-    let s:chinese.xinhua     = ["新华","新華"]
-    let s:chinese.zhengma    = ["郑码","鄭碼"]
-    let s:chinese.cangjie    = ["仓颉","倉頡"]
-    let s:chinese.yong       = ["永码","永碼"]
-    let s:chinese.wu         = ["吴语","吳語"]
-    let s:chinese.jidian     = ["极点","極點"]
-    let s:chinese.haifeng    = ["海峰","海峰"]
-    let s:chinese.shuangpin  = ["双拼","雙拼"]
-    let s:chinese.boshiamy   = ["呒虾米","嘸蝦米"]
-    let s:chinese.newcentury = ["新世纪","新世紀"]
-    let s:chinese.taijima    = ["太极码","太極碼"]
-    let s:chinese.abc        = ["智能双打","智能雙打"]
-    let s:chinese.ms         = ["微软","微軟"]
-    let s:chinese.nature     = ["自然码","自然碼"]
-    let s:chinese.mixture    = ["混合"]
-    let s:chinese.purple     = ["紫光"]
-    let s:chinese.plusplus   = ["加加"]
-    let s:chinese.flypy      = ["小鹤","小鶴"]
-    let s:chinese.quick      = ["速成"]
-    let s:chinese.array30    = ["行列"]
-    let s:chinese.phonetic   = ["注音"]
-    let s:chinese.pinyin     = ["拼音"]
-    let s:chinese.revision   = ["版本"]
-    let s:chinese.full_width = ["全角"]
-    let s:chinese.half_width = ["半角"]
-    let s:chinese.mycloud    = ["自己的云","自己的雲"]
-    let s:chinese.cloud      = ["云","雲"]
-    let s:chinese.toggle     = ["切换","切換"]
-    let s:chinese.online     = ["在线","在綫"]
-    let s:chinese.tool       = ["工具"]
-    let s:chinese.sogou      = ["搜狗"]
-    let s:chinese.google     = ["谷歌"]
-    let s:chinese.baidu      = ["百度"]
-    let s:chinese.qq         = ["QQ"]
-    let s:chinese.chinese    = ["中文"]
-    let s:chinese.english    = ["英文"]
-    let s:chinese.datafile   = ["文件"]
-    let s:chinese.mass       = ["海量"]
-    let s:chinese.datetime   = ["日期"]
 endfunction
 
 let s:translators = {}
@@ -884,6 +788,40 @@ function! s:vimim_imode_number(keyboard)
     endif
     return numbers
 endfunction
+
+function! s:vimim_build_quantifier_hash()
+    call s:vimim_build_numbers_hash()
+    let s:quantifiers = copy(s:numbers)
+    let s:quantifiers.a = "秒"
+    let s:quantifiers.b = "百佰步把包杯本笔部班"
+    let s:quantifiers.c = "次餐场串处床"
+    let s:quantifiers.d = "第度点袋道滴碟顶栋堆对朵堵顿"
+    let s:quantifiers.e = "亿"
+    let s:quantifiers.f = "分份发封付副幅峰方服"
+    let s:quantifiers.g = "个根股管"
+    let s:quantifiers.h = "毫行盒壶户回"
+    let s:quantifiers.i = "毫"
+    let s:quantifiers.j = "斤家具架间件节剂具捲卷茎记"
+    let s:quantifiers.k = "克口块棵颗捆孔"
+    let s:quantifiers.l = "里粒类辆列轮厘领缕"
+    let s:quantifiers.m = "米名枚面门"
+    let s:quantifiers.n = "年"
+    let s:quantifiers.o = "度"
+    let s:quantifiers.p = "磅盆瓶排盘盆匹片篇撇喷"
+    let s:quantifiers.q = "千仟群"
+    let s:quantifiers.r = "日"
+    let s:quantifiers.s = "十拾时升艘扇首双所束手"
+    let s:quantifiers.t = "天吨条头通堂趟台套桶筒贴"
+    let s:quantifiers.u = "微"
+    let s:quantifiers.w = "万位味碗窝晚"
+    let s:quantifiers.x = "席些项"
+    let s:quantifiers.y = "月叶亿"
+    let s:quantifiers.z = "种只张株支枝盏座阵桩尊则站幢宗兆"
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  punctuation      ==== {{{"]
+" =================================================
 
 function! s:vimim_dictionary_punctuation()
     let s:punctuations = {}
@@ -1176,6 +1114,71 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  user   interface ==== {{{"]
 " =================================================
+
+function! s:vimim_dictionary_chinese()
+    let s:space = "　"
+    let s:colon = "："
+    let s:left  = "【"
+    let s:right = "】"
+    let s:chinese = {}
+    let s:chinese.onekey     = ["点石成金","點石成金"]
+    let s:chinese.computer   = ["电脑","電腦"]
+    let s:chinese.database   = ["词库","詞庫"]
+    let s:chinese.cjk        = ["字库","字庫"]
+    let s:chinese.directory  = ["目录","目錄"]
+    let s:chinese.option     = ["选项","選項"]
+    let s:chinese.standard   = ["标准","標準"]
+    let s:chinese.encoding   = ["编码","編碼"]
+    let s:chinese.env        = ["环境","環境"]
+    let s:chinese.input      = ["输入","輸入"]
+    let s:chinese.font       = ["字体","字體"]
+    let s:chinese.static     = ["静态","靜態"]
+    let s:chinese.dynamic    = ["动态","動態"]
+    let s:chinese.style      = ["风格","風格"]
+    let s:chinese.erbi       = ["二笔","二筆"]
+    let s:chinese.wubi       = ["五笔","五筆"]
+    let s:chinese.hangul     = ["韩文","韓文"]
+    let s:chinese.xinhua     = ["新华","新華"]
+    let s:chinese.zhengma    = ["郑码","鄭碼"]
+    let s:chinese.cangjie    = ["仓颉","倉頡"]
+    let s:chinese.yong       = ["永码","永碼"]
+    let s:chinese.wu         = ["吴语","吳語"]
+    let s:chinese.jidian     = ["极点","極點"]
+    let s:chinese.haifeng    = ["海峰","海峰"]
+    let s:chinese.shuangpin  = ["双拼","雙拼"]
+    let s:chinese.boshiamy   = ["呒虾米","嘸蝦米"]
+    let s:chinese.newcentury = ["新世纪","新世紀"]
+    let s:chinese.taijima    = ["太极码","太極碼"]
+    let s:chinese.abc        = ["智能双打","智能雙打"]
+    let s:chinese.ms         = ["微软","微軟"]
+    let s:chinese.nature     = ["自然码","自然碼"]
+    let s:chinese.mixture    = ["混合"]
+    let s:chinese.purple     = ["紫光"]
+    let s:chinese.plusplus   = ["加加"]
+    let s:chinese.flypy      = ["小鹤","小鶴"]
+    let s:chinese.quick      = ["速成"]
+    let s:chinese.array30    = ["行列"]
+    let s:chinese.phonetic   = ["注音"]
+    let s:chinese.pinyin     = ["拼音"]
+    let s:chinese.revision   = ["版本"]
+    let s:chinese.full_width = ["全角"]
+    let s:chinese.half_width = ["半角"]
+    let s:chinese.mycloud    = ["自己的云","自己的雲"]
+    let s:chinese.cloud      = ["云","雲"]
+    let s:chinese.toggle     = ["切换","切換"]
+    let s:chinese.online     = ["在线","在綫"]
+    let s:chinese.tool       = ["工具"]
+    let s:chinese.sogou      = ["搜狗"]
+    let s:chinese.google     = ["谷歌"]
+    let s:chinese.baidu      = ["百度"]
+    let s:chinese.qq         = ["QQ"]
+    let s:chinese.chinese    = ["中文"]
+    let s:chinese.english    = ["英文"]
+    let s:chinese.datafile   = ["文件"]
+    let s:chinese.mass       = ["海量"]
+    let s:chinese.datetime   = ["日期"]
+    let s:mahjong = split("囍發萬中 春夏秋冬 东南西北 梅兰竹菊")
+endfunction
 
 function! s:vimim_initialize_skin()
     if s:vimim_custom_color < 0
@@ -1909,9 +1912,9 @@ function! s:vimim_onekey_input(keyboard)
     endif
     let results = []
     " [imode] magic i: (1) English number (2) Chinese number
-    if keyboard =~# '^[iuv]' && s:vimim_imode_pinyin > 0
-        if keyboard == 'v'
-            let results = split(join(split(s:mahjong),''),'\zs')
+    if keyboard =~# '^[iu]' && s:vimim_imode_pinyin > 0
+        if keyboard ==# 'ii' " plays mahjong at will
+            let results = s:mahjong
         elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
         elseif keyboard =~# '^i'
