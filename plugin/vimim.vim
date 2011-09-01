@@ -430,7 +430,7 @@ function! s:vimim_get_hjkl(keyboard)
     let lines = []
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
     if ddddd > 8080
-        for i in range(99)
+        for i in range(214)
             call add(lines, nr2char(ddddd+i))
         endfor
     endif
@@ -2619,7 +2619,7 @@ function! s:vimim_cjk_match(keyboard)
     elseif s:has_cjk_file > 0
         if keyboard == 'v'
             return split(join(split(s:mahjong),''),'\zs')
-        elseif keyboard == 'u' " 214 unicode index
+        elseif keyboard == 'u' " 214 standard unicode index
             let grep = '\s' . keyboard . '$'
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
@@ -4529,6 +4529,7 @@ else
     " [backend] plug-n-play embedded backend engine
     let results = s:vimim_embedded_backend_engine(keyboard,0)
     if !empty(s:english_results)
+        let s:keyboard_list = [keyboard]
         call extend(results, s:english_results, 0)
     endif
     if !empty(results) && get(results,0) !~ 'None\|0'
