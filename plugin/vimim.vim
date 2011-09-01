@@ -2722,7 +2722,7 @@ function! <SID>vimim_visual_ctrl6()
             let ddddd = char2nr(get(split(line,'\zs'),0))
             if ddddd =~ '^\d\d\d\d\d$'
                 let line = 'u' . ddddd
-                let onekey .= 'h'  . onekey
+                let onekey =  onekey . 'h'  . onekey
             endif
             let key = "gvc" . line . onekey
         endif
@@ -4622,7 +4622,11 @@ function! s:vimim_popupmenu_list(matched_list)
             let abbr = label . "." . chinese
             call add(popupmenu_list_one_row, abbr)
         endif
-        if s:vimim_custom_label > -1 && len(lines) > 1
+        let hjkl_h = 0
+        if len(lines)>1 || get(s:keyboard_list,0)=~'^u\d\d\d\d\d$'
+            let hjkl_h = 1
+        endif
+        if hjkl_h > 0 && s:vimim_custom_label > -1
             let labeling = label . " "
             if s:show_me_not <= -7
                 let labeling = ""
