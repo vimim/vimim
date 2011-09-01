@@ -668,16 +668,13 @@ function! s:vimim_build_numbers_loop_hash()
     endif
     let items = []
     call s:vimim_build_numbers_hash()
-    for i in range(len(1234567890))
+    for i in range(len(s:numbers))
         call add(items, split(s:numbers[i],'\zs'))
     endfor
     for j in range(len(get(items,0)))
         for i in range(10)
-            if i == 9
-                let s:loops[items[i][j]] = items[0][j]
-            else
-                let s:loops[items[i][j]] = items[i+1][j]
-            endif
+            let k = i==9 ? 0 : i+1
+            let s:loops[items[i][j]] = items[k][j]
         endfor
     endfor
 endfunction
