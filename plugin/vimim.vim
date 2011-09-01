@@ -72,13 +72,13 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_dictionary_chinese()
     sil!call s:vimim_dictionary_punctuation()
     sil!call s:vimim_dictionary_im_keycode()
+    sil!call s:vimim_scan_cjk_file()
+    sil!call s:vimim_scan_english_datafile()
     if len(s:vimim_mycloud) > 1
         sil!call s:vimim_scan_backend_mycloud()
     else
         sil!call s:vimim_scan_backend_embedded()
         sil!call s:vimim_scan_backend_cloud()
-        sil!call s:vimim_scan_cjk_file()
-        sil!call s:vimim_scan_english_datafile()
     endif
     sil!call s:vimim_initialize_keycode()
 endfunction
@@ -406,8 +406,7 @@ function! s:vimim_egg_vimim()
         call add(eggs, option)
     endif
     if len(s:vimim_mycloud) > 1
-        let option  = online . s:vimim_chinese('mine')
-        let option .= s:vimim_chinese('cloud') . s:space
+        let option  = online . s:vimim_chinese('mycloud') . s:space
         let option .= ":let g:vimim_mycloud='".s:vimim_mycloud."'"
         call add(eggs, option)
     endif
@@ -624,24 +623,19 @@ endfunction
 let s:VimIM += [" ====  multibyte        ==== {{{"]
 " =================================================
 
-function! s:vimim_build_numbers_loop_hash()
-    if !empty(s:loops)
-        return
+function! s:vimim_build_numbers_hash()
+    if empty(s:numbers)
+        let s:numbers.0 = "〇零癸⒑⑩⑽"
+        let s:numbers.1 = "一壹甲⒈①⑴"
+        let s:numbers.2 = "二贰乙⒉②⑵"
+        let s:numbers.3 = "三叁丙⒊③⑶"
+        let s:numbers.4 = "四肆丁⒋④⑷"
+        let s:numbers.5 = "五伍戊⒌⑤⑸"
+        let s:numbers.6 = "六陆己⒍⑥⑹"
+        let s:numbers.7 = "七柒庚⒎⑦⑺"
+        let s:numbers.8 = "八捌辛⒏⑧⑻"
+        let s:numbers.9 = "九玖壬⒐⑨⑼"
     endif
-    let items = []
-    call s:vimim_build_numbers_hash()
-    for i in range(len(1234567890))
-        call add(items, split(s:numbers[i],'\zs'))
-    endfor
-    for j in range(len(get(items,0)))
-        for i in range(10)
-            if i == 9
-                let s:loops[items[i][j]] = items[0][j]
-            else
-                let s:loops[items[i][j]] = items[i+1][j]
-            endif
-        endfor
-    endfor
 endfunction
 
 function! s:vimim_build_antonym_hash()
@@ -668,19 +662,24 @@ function! s:vimim_build_antonym_hash()
     endfor
 endfunction
 
-function! s:vimim_build_numbers_hash()
-    if empty(s:numbers)
-        let s:numbers.0 = "〇零癸⒑⑩⑽"
-        let s:numbers.1 = "一壹甲⒈①⑴"
-        let s:numbers.2 = "二贰乙⒉②⑵"
-        let s:numbers.3 = "三叁丙⒊③⑶"
-        let s:numbers.4 = "四肆丁⒋④⑷"
-        let s:numbers.5 = "五伍戊⒌⑤⑸"
-        let s:numbers.6 = "六陆己⒍⑥⑹"
-        let s:numbers.7 = "七柒庚⒎⑦⑺"
-        let s:numbers.8 = "八捌辛⒏⑧⑻"
-        let s:numbers.9 = "九玖壬⒐⑨⑼"
+function! s:vimim_build_numbers_loop_hash()
+    if !empty(s:loops)
+        return
     endif
+    let items = []
+    call s:vimim_build_numbers_hash()
+    for i in range(len(1234567890))
+        call add(items, split(s:numbers[i],'\zs'))
+    endfor
+    for j in range(len(get(items,0)))
+        for i in range(10)
+            if i == 9
+                let s:loops[items[i][j]] = items[0][j]
+            else
+                let s:loops[items[i][j]] = items[i+1][j]
+            endif
+        endfor
+    endfor
 endfunction
 
 function! s:vimim_build_quantifier_hash()
@@ -766,7 +765,7 @@ function! s:vimim_dictionary_chinese()
     let s:chinese.revision   = ["版本"]
     let s:chinese.full_width = ["全角"]
     let s:chinese.half_width = ["半角"]
-    let s:chinese.mine       = ["自己的","自己的"]
+    let s:chinese.mycloud    = ["自己的云","自己的雲"]
     let s:chinese.cloud      = ["云","雲"]
     let s:chinese.toggle     = ["切换","切換"]
     let s:chinese.online     = ["在线","在綫"]
@@ -1906,7 +1905,7 @@ function! s:vimim_onekey_input(keyboard)
         sil!call s:vimim_onekey_english(keyboard, 0)
     endif
     let results = []
-    " [imode] magic i: (1) English number (2) qwerty shortcut
+    " [imode] magic i: (1) English number (2) Chinese number
     if keyboard =~# '^i'
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             return [s:vimim_imode_today_now(keyboard)]
@@ -4614,7 +4613,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 let tail = strpart(keyboard, keyboard_head_length)
                 let chinese .= tail
             endif
-        elseif s:horizontal_display < 1
+        elseif s:horizontal_display < 1 && s:show_me_not < 1
             let extra_text = get(split(menu,"_"),0)
         endif
         if s:vimim_custom_label > 0
