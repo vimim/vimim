@@ -222,10 +222,9 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 1)
     let s:im_toggle = 0
     let s:frontends = []
-    let s:midas = {}
     let s:loops = {}
-    let s:antonyms = {}
     let s:numbers = {}
+    let s:antonyms = {}
     let s:quantifiers = {}
     let s:pumheight = &pumheight
     let s:pumheight_saved = &pumheight
@@ -625,6 +624,26 @@ endfunction
 let s:VimIM += [" ====  multibyte        ==== {{{"]
 " =================================================
 
+function! s:vimim_build_numbers_loop_hash()
+    if !empty(s:loops)
+        return
+    endif
+    let items = []
+    call s:vimim_build_numbers_hash()
+    for i in range(len(1234567890))
+        call add(items, split(s:numbers[i],'\zs'))
+    endfor
+    for j in range(len(get(items,0)))
+        for i in range(10)
+            if i == 9
+                let s:loops[items[i][j]] = items[0][j]
+            else
+                let s:loops[items[i][j]] = items[i+1][j]
+            endif
+        endfor
+    endfor
+endfunction
+
 function! s:vimim_build_antonym_hash()
     if !empty(s:antonyms)
         return
@@ -646,26 +665,6 @@ function! s:vimim_build_antonym_hash()
         let yy = split(yinyang, '\zs')
         let s:antonyms[get(yy,0)] = get(yy,1)
         let s:antonyms[get(yy,1)] = get(yy,0)
-    endfor
-endfunction
-
-function! s:vimim_build_numbers_loop_hash()
-    if !empty(s:loops)
-        return
-    endif
-    let items = []
-    call s:vimim_build_numbers_hash()
-    for i in range(len(1234567890))
-        call add(items, split(s:numbers[i],'\zs'))
-    endfor
-    for j in range(len(get(items,0)))
-        for i in range(10)
-            if i == 9
-                let s:loops[items[i][j]] = items[0][j]
-            else
-                let s:loops[items[i][j]] = items[i+1][j]
-            endif
-        endfor
     endfor
 endfunction
 
@@ -826,21 +825,21 @@ function! s:vimim_imode_today_now(keyboard)
     return chinese.translate(join(results))
 endfunction
 
-function! s:vimim_imode_chinese()
+function! s:vimim_imode_chinese(char_before, insert)
     let results = []
-    let char_before = s:vimim_get_char_before('i')
+    let key = a:char_before
     call s:vimim_build_antonym_hash()
     call s:vimim_build_numbers_loop_hash()
-    if has_key(s:loops, char_before)
+    if has_key(s:loops, key)
         for i in range(10)
-            let value = s:loops[char_before]
+            let value = s:loops[key]
             call add(results, value)
-            let char_before = value
+            let key = value
         endfor
-    elseif has_key(s:antonyms, char_before)
-        let value = s:antonyms[char_before]
+    elseif has_key(s:antonyms, key)
+        let value = s:antonyms[key]
         call add(results, value)
-    else
+    elseif a:insert > 0
         let results = split("我 你 妳 他 她 它")
     endif
     return results
@@ -1914,7 +1913,8 @@ function! s:vimim_onekey_input(keyboard)
         elseif s:vimim_imode_pinyin > 0
             sil!call s:vimim_build_quantifier_hash()
             if len(keyboard) == 1
-                let results = s:vimim_imode_chinese()
+                let char_before = s:vimim_get_char_before('i')
+                let results = s:vimim_imode_chinese(char_before,1)
             elseif keyboard =~ '[^pqwertyuio]'
                 let results = s:vimim_imode_number(keyboard)
             endif
@@ -2710,19 +2710,13 @@ function! <SID>vimim_visual_ctrl6()
     let unnamed_register = getreg('"')
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
-        " highlighted one      cjk     char  => antonym or number+1
-        " highlighted multiple cjk     chars => print unicode vertically
-        " highlighted multiple english chars => cjk in omni window
         let line = get(lines,0)
-        if empty(s:midas)
-            call s:vimim_build_antonym_hash()
-            let s:midas = copy(s:antonyms)
-            call s:vimim_build_numbers_loop_hash()
-            call extend(s:midas, s:loops)
-        endif
-        if substitute(line,".",".",'g')=="." && has_key(s:midas,line)
-            let key = "gvr" . s:midas[line]
+        let results = s:vimim_imode_chinese(line,0)
+        if !empty(results)
+            " highlighted one cjk char => antonym or number+1
+            let key = "gvr" . get(results,0)
         else
+            " highlighted many cjk chars => print char property
             let ddddd = char2nr(get(split(line,'\zs'),0))
             if ddddd =~ '^\d\d\d\d\d$'
                 let line = 'u' . ddddd
