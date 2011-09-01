@@ -830,7 +830,8 @@ endfunction
 
 function! s:vimim_imode_chinese()
     let results = []
-    let char_before = s:vimim_get_onechar_before('i')
+    let char_before = s:vimim_get_char_before('i')
+    call s:vimim_build_numbers_loop_hash()
     if has_key(s:loops, char_before)
         for i in range(10)
             let value = s:loops[char_before]
@@ -2201,7 +2202,7 @@ function! s:vimim_initialize_encoding()
     let s:multibyte = &encoding=="utf-8" ? 3 : 2
 endfunction
 
-function! s:vimim_get_onechar_before(keyboard)
+function! s:vimim_get_char_before(keyboard)
     let line = getline(".")
     let start = col(".") -1 - s:multibyte * len(a:keyboard)
     let char_before = line[start : start+s:multibyte-1]
@@ -2211,7 +2212,7 @@ endfunction
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
     if a:keyboard =~ '^u\+$' " get chinese before u: 馬力uu => 39340
-        let char_before = s:vimim_get_onechar_before(keyboard)
+        let char_before = s:vimim_get_char_before(keyboard)
         return char2nr(char_before)
     elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
         if len(keyboard) == 5 || len(keyboard) == 6
