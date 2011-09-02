@@ -2682,16 +2682,16 @@ function! <SID>vimim_visual_ctrl6()
     if len(lines) < 2
         let line = get(lines,0)
         if len(substitute(line,'.','.','g')) > 1
-            " highlighted many cjk chars => print char property
+            " highlight multiple chinese => show property of each
+            let s:seamless_positions = getpos("'<'")
             let ddddd = char2nr(get(split(line,'\zs'),0))
-            if ddddd =~ '^\d\d\d\d\d$'
-                let line = 'u' . ddddd
-            endif
-            let key = "gvc" . line . onekey . 'h'
+            let uddddd = "gvc" . 'u'.ddddd . onekey . 'h'
+            let dddd = "gvc" . line . onekey
+            let key = ddddd=~'\d\d\d\d\d' ? uddddd : dddd
         else
-            " highlighted one cjk char => antonym or number loop
+            " highlight one chinese => get antonym or number loop
             let results = s:vimim_get_imode_chinese(line,0)
-            let key = empty(results) ? "ga" : "gvr".get(results,0)
+            let key = empty(results) ? "ga" : "gvr".get(results,0)."ga"
         endif
     elseif match(lines,'\d')>-1 && join(lines) !~ '[^0-9[:blank:].]'
         " highlighted digital block => math :: sum=6*1=6
