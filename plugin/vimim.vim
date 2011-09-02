@@ -352,11 +352,11 @@ function! s:vimim_egg_vimim()
     let option = s:vimim_chinese('style') . s:colon . toggle
     call add(eggs, option)
     let database = s:vimim_chinese('database') . s:colon
-    if s:has_english_file > 0
+    if !empty(s:english_filename)
         let ciku = database . s:vimim_chinese('english') . database
         call add(eggs, ciku . s:english_filename)
     endif
-    if s:has_cjk_file > 0
+    if !empty(s:cjk_filename)
         let ciku  = database . s:vimim_chinese('standard')
         let ciku .= s:vimim_chinese('cjk') . s:colon
         call add(eggs, ciku . s:cjk_filename)
@@ -441,7 +441,7 @@ function! s:vimim_get_hjkl(keyboard)
             elseif keyboard =~ '[^pqwertyuio]'
                 let lines = s:vimim_imode_number(keyboard)
             endif
-        elseif keyboard == 'u' && s:has_cjk_file < 1
+        elseif keyboard == 'u' && empty(s:cjk_filename)
             let unicode = "一 圣 性 楊 版 答 葬 走 隐"
             let lines = split(unicode)
         endif
@@ -556,7 +556,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     endif
     " 2/3 search unicode or cjk => slash search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if empty(ddddd) && !empty(s:has_cjk_file)
+    if empty(ddddd) && !empty(s:cjk_filename)
         " => slash search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
         let keyboards = s:vimim_slash_search_block(keyboard)
         if len(keyboards) > 0
@@ -985,7 +985,7 @@ function! s:vimim_get_valid_im_name(im)
 endfunction
 
 function! s:vimim_set_special_im_property()
-    if  s:ui.im == 'pinyin' || s:has_cjk_file > 0
+    if  s:ui.im == 'pinyin' || !empty(s:cjk_filename)
         let s:quanpin_table = s:vimim_create_quanpin_table()
     endif
     if s:backend[s:ui.root][s:ui.im].name =~# "quote"
@@ -1313,7 +1313,7 @@ function! s:vimim_label_on()
         let abcd_list = split(s:abcd, '\zs')
         if s:chinese_input_mode =~ 'onekey'
             let labels += abcd_list
-            if s:has_cjk_file > 0
+            if !empty(s:cjk_filename)
                 let labels = abcd_list
             endif
             call remove(labels, match(labels,"'"))
@@ -1467,10 +1467,10 @@ function! s:vimim_get_labeling(label)
         elseif a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
             let labeling .= label2
-            if s:has_cjk_file > 0
+            if !empty(s:cjk_filename)
                 let labeling = label2
             endif
-        elseif a:label == &pumheight + 1 && s:has_cjk_file > 0
+        elseif a:label == &pumheight + 1 && !empty(s:cjk_filename)
             let labeling = a:label
         endif
         if s:hjkl_l > 0 && &pumheight < 1
@@ -1881,7 +1881,7 @@ function! s:vimim_onekey_input(keyboard)
         sil!call s:vimim_onekey_english(keyboard, 0)
     endif
     " [cjk] cjk database works like swiss-army knife
-    if s:has_cjk_file > 0
+    if !empty(s:cjk_filename)
         if keyboard =~# '^i' " 4corner_shortcut: iypwqwuww => 60212722
             let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
         endif
@@ -2204,7 +2204,7 @@ endfunction
 function! s:vimim_cjk_extra_text(chinese)
     let ddddd = char2nr(a:chinese)
     let unicode = printf('u%04x', ddddd) . s:space . ddddd
-    if s:has_cjk_file > 0
+    if !empty(s:cjk_filename)
         let grep = "^" . a:chinese
         let line = match(s:cjk_lines, grep, 0)
         if line > -1
@@ -2447,13 +2447,11 @@ let s:VimIM += [" ====  input cjk        ==== {{{"]
 
 function! s:vimim_scan_cjk_file()
     let s:cjk_lines = []
-    let s:has_cjk_file = 0
     let s:cjk_filename = 0
     " http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt
     let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
     if !empty(datafile)
         let s:cjk_lines = s:vimim_readfile(datafile)
-        let s:has_cjk_file = 1
         let s:cjk_filename = datafile
     endif
 endfunction
@@ -2483,7 +2481,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:ui.im == 'pinyin' || s:has_cjk_file > 0
+    elseif s:ui.im == 'pinyin' || !empty(s:cjk_filename)
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
         \&& keyboard =~ '^\l' && keyboard[1:4] !~ '[^pqwertyuio]'
             " muuqwxeyqpjeqqq => m7712x3610j3111
@@ -2509,7 +2507,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
                 if len(s:english_results) > 0
                     let s:english_results = []
                 endif
-            elseif line < 0 && s:has_cjk_file > 0
+            elseif line < 0 && !empty(s:cjk_filename)
                 let keyboard = s:vimim_toggle_pinyin(a_keyboard)
             endif
             let head = s:vimim_dot_by_dot(keyboard)
@@ -2536,7 +2534,7 @@ function! s:vimim_qwertyuiop_1234567890(keyboard)
 endfunction
 
 function! s:vimim_cjk_match(keyboard)
-    if empty(s:has_cjk_file)
+    if empty(s:cjk_filename)
         return []
     endif
     let keyboard = a:keyboard
@@ -2575,7 +2573,7 @@ function! s:vimim_cjk_match(keyboard)
                 let s:hjkl_s = digit
             endif
         endif
-    elseif s:has_cjk_file > 0
+    elseif !empty(s:cjk_filename)
         if keyboard == 'u' " 214 standard unicode index
             let grep = '\s' . keyboard . '$'
         elseif len(keyboard) == 1
@@ -2600,7 +2598,7 @@ endfunction
 
 function! s:vimim_cjk_grep_results(grep)
     let grep = a:grep
-    if empty(grep) || empty(s:has_cjk_file)
+    if empty(grep) || empty(s:cjk_filename)
         return []
     endif
     let results = []
@@ -2633,9 +2631,7 @@ function! s:vimim_chinese_transfer() range abort
     " (1) "quick and dirty" way to transfer Chinese to Chinese
     " (2) 20% of the effort to solve 80% of the problem using one2one
     sil!call s:vimim_backend_initialization()
-    if empty(s:has_cjk_file)
-        " no toggle between simplified and tranditional Chinese
-    else
+    if !empty(s:cjk_filename)
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
 endfunction
@@ -2679,7 +2675,7 @@ function! <SID>vimim_visual_ctrl6()
             if empty(results)
                 let line = -1
                 sil!call s:vimim_backend_initialization()
-                if s:has_cjk_file > 0
+                if !empty(s:cjk_filename)
                     let line = match(s:cjk_lines, "^".chinese)
                 endif
                 if line < 0
@@ -2716,13 +2712,11 @@ let s:VimIM += [" ====  input english    ==== {{{"]
 
 function! s:vimim_scan_english_datafile()
     let s:english_lines = []
-    let s:has_english_file = 0
     let s:english_filename = 0
     let datafile = s:vimim_check_filereadable("vimim.txt")
     if !empty(datafile)
         let s:english_lines = s:vimim_readfile(datafile)
         let s:english_filename = datafile
-        let s:has_english_file = 1
     endif
 endfunction
 
@@ -2738,7 +2732,7 @@ endfunction
 
 function! s:vimim_onekey_english(keyboard, order)
     let results = []
-    if s:has_cjk_file > 0
+    if !empty(s:cjk_filename)
         " [sql] select english from vimim.cjk.txt
         let grep_english = '\s' . a:keyboard . '\s'
         let results = s:vimim_cjk_grep_results(grep_english)
@@ -2748,7 +2742,7 @@ function! s:vimim_onekey_english(keyboard, order)
             let s:english_results = copy(results)
         endif
     endif
-    if s:has_english_file > 0
+    if !empty(s:english_filename)
         " [sql] select english from vimim.txt
         let grep_english = '^' . a:keyboard . '\s'
         let matched = match(s:english_lines, grep_english)
@@ -3652,7 +3646,7 @@ function! s:vimim_do_cloud_or_not(keyboard)
     if s:cloud_onekey > 0
         return 1
     endif
-    if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 0
+    if s:chinese_input_mode=~'onekey' && !empty(s:cjk_filename)
         return 0
     endif
     if s:ui.root == 'cloud'
@@ -4263,7 +4257,7 @@ function! s:vimim_i_setting_on()
     set smartcase
     if &pumheight < 1 || &pumheight > 10
         let &pumheight = len(s:abcd)
-        if s:has_cjk_file > 0
+        if !empty(s:cjk_filename)
             let &pumheight -= 1
         endif
         let s:pumheight = &pumheight
@@ -4504,7 +4498,7 @@ else
         return s:vimim_popupmenu_list(results)
     endif
     " [just_do_it] last try on both cjk and cloud before giving up
-    if s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
+    if !empty(s:cjk_filename) && s:chinese_input_mode=~'onekey'
         let keyboard_head = s:vimim_cjk_sentence_match(keyboard.".")
         if !empty(keyboard_head)
             let results = s:vimim_cjk_match(keyboard_head)
@@ -4556,7 +4550,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 let extra_text = menu
             endif
         endif
-        if s:hjkl_x>0 && s:hjkl_x%2>0 && s:has_cjk_file>0
+        if s:hjkl_x>0 && s:hjkl_x%2>0 && !empty(s:cjk_filename)
             let simplified_traditional = ""
             for char in split(chinese, '\zs')
                 let simplified_traditional .= s:vimim_1to1(char)
