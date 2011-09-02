@@ -445,15 +445,10 @@ function! s:vimim_get_hjkl(keyboard)
         let lines = split(unnamed_register,'\n')
         if unnamed_register=~'\d' && join(lines)!~'[^0-9[:blank:].]'
             let sum = eval(join(lines,'+'))
-            let ave = 1.0*sum/len(lines)
-            let math  = 'sum=' . string(len(lines)) . '*'
-            let math .= printf('%.2f', ave) . '='
-            if unnamed_register =~ '[.]'
-                let math .= printf('%.2f',1.0*sum)
-            else
-                let math .= string(sum)
-            endif
-            let lines = [math . " "]
+            let line = string(1.0*sum/len(lines)) . "=" . string(sum)
+            let line = substitute(line, '[.]0\+', '', 'g')
+            let line = 'sum=' . string(len(lines)) . '*' . line
+            let lines = [line . " "]
         endif
     elseif a:keyboard !~ "db"
         " [poem] check entry in special directories first
@@ -1778,7 +1773,7 @@ function! g:vimim_onekey_dump()
     if has("gui_running") && has("win32") && s:show_me_not != -7
         let @+ = join(lines, "\n")
     endif
-    if getline(".") =~ '^vimim.' && len(lines) < 2
+    if getline(".") =~# 'vimim.' && len(lines) < 2
         call setline(line("."), lines)
     else
         let saved_position = getpos(".")
