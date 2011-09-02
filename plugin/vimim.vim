@@ -436,20 +436,12 @@ function! s:vimim_get_hjkl(keyboard)
     if !empty(lines)
         return lines
     endif
-    " [eggs] hunt classic easter egg ... vim<C-6>
     let lines = s:vimim_easter_chicken(a:keyboard)
     if !empty(lines)
+        " [eggs] hunt classic easter egg ... vim<C-6>
+    elseif a:keyboard == 'vim.'
         " [hjkl] display buffer inside the omni window
-    elseif a:keyboard == 'vimim.'
-        let unnamed_register = getreg('"')
-        let lines = split(unnamed_register,'\n')
-        if unnamed_register=~'\d' && join(lines)!~'[^0-9[:blank:].]'
-            let sum = eval(join(lines,'+'))
-            let line = string(1.0*sum/len(lines)) . "=" . string(sum)
-            let line = substitute(line, '[.]0\+', '', 'g')
-            let line = 'sum=' . string(len(lines)) . '*' . line
-            let lines = [line . " "]
-        endif
+        let lines = split(getreg('"'), '\n')
     elseif a:keyboard !~ "db"
         " [poem] check entry in special directories first
         let datafile = s:vimim_check_filereadable(a:keyboard)
@@ -1765,17 +1757,12 @@ function! g:vimim_onekey_dump()
         endif
         let keyboard = get(s:keyboard_list,0)
         let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-        if keyboard ==# 'vimim.'
-            let space = repeat(" ", virtcol("'<'")-2)
-        endif
         call add(lines, space . line)
     endfor
     if has("gui_running") && has("win32") && s:show_me_not != -7
         let @+ = join(lines, "\n")
     endif
-    if getline(".") =~# 'vimim.' && len(lines) < 2
-        call setline(line("."), lines)
-    else
+    if len(lines) > 1
         let saved_position = getpos(".")
         for line in lines
             put=line
@@ -2702,7 +2689,7 @@ function! s:vimim_1to1(char)
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
-    let key = "O"
+    let key = ""
     let onekey = "\<C-R>=g:vimim_onekey()\<CR>"
     let unnamed_register = getreg('"')
     let lines = split(unnamed_register,'\n')
@@ -2721,20 +2708,23 @@ function! <SID>vimim_visual_ctrl6()
             let results = s:vimim_get_imode_chinese(line,0)
             let key = empty(results) ? "ga" : "gvr".get(results,0)
         endif
+    elseif unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
+        " highlighted digital block => math :: sum=6*1=6
+        let new_positions = getpos(".")
+        let new_positions[1] = line("'>'")
+        call setpos(".", new_positions)
+        let sum = eval(join(lines,'+'))
+        let line = string(1.0*sum/len(lines)) . "=" . string(sum)
+        let line = substitute(line, '[.]0\+', '', 'g')
+        let line = string(len(lines)) . '*' . line
+        let column = virtcol("'<'") - 1
+        let space = "\<C-R>=repeat(' '," . column . ")\<CR>"
+        let key = "o^\<C-D>" . space . line . "\<Esc>"
     else
         " highlighted block => display the block in omni window
-        if unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
-            let new_positions = getpos(".")
-            let new_positions[1] = line("'>'")
-            call setpos(".", new_positions)
-            let key = "o"
-        endif
-        let n = virtcol("'<'") - 2
-        if n > 0
-            let b:ctrl6_space = repeat(" ", n)
-            let key .= "^\<C-D>\<C-R>=b:ctrl6_space\<CR>"
-        endif
-        let key .= 'vimim.' . onekey
+        let column = virtcol("'<'") - 2
+        let space = "\<C-R>=repeat(' '," . column . ")\<CR>"
+        let key = "O^\<C-D>" . space . 'vim.' . onekey
     endif
     sil!call feedkeys(key)
 endfunction
