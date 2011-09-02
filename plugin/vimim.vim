@@ -1744,7 +1744,9 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
 function! g:vimim_onekey_dump()
-    let lines = []
+    let saved_position = getpos(".")
+    let keyboard = get(s:keyboard_list,0)
+    let space = repeat(" ", virtcol(".")-len(keyboard)-1)
     for items in s:popupmenu_list
         let line = printf('%s', items.word)
         if has_key(items, "abbr")
@@ -1753,20 +1755,9 @@ function! g:vimim_onekey_dump()
                 let line = printf('%s %s', items.abbr, items.menu)
             endif
         endif
-        let keyboard = get(s:keyboard_list,0)
-        let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-        call add(lines, space . line)
+        put=space.line
     endfor
-    if has("gui_running") && has("win32") && s:show_me_not != -7
-        let @+ = join(lines, "\n")
-    endif
-    if len(lines) > 1
-        let saved_position = getpos(".")
-        for line in lines
-            put=line
-        endfor
-        call setpos(".", saved_position)
-    endif
+    call setpos(".", saved_position)
     sil!call g:vimim_stop()
     sil!exe "sil!return '\<Esc>'"
 endfunction
