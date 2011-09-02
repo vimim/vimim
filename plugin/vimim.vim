@@ -627,16 +627,16 @@ let s:VimIM += [" ====  chinese imode    ==== {{{"]
 
 function! s:vimim_build_numbers_hash()
     if empty(s:numbers)
-        let s:numbers.1 = "一①甲⑴壹"
-        let s:numbers.2 = "二②乙⑵贰"
-        let s:numbers.3 = "三③丙⑶叁"
-        let s:numbers.4 = "四④丁⑷肆"
-        let s:numbers.5 = "五⑤戊⑸伍"
-        let s:numbers.6 = "六⑥己⑹陆"
-        let s:numbers.7 = "七⑦庚⑺柒"
-        let s:numbers.8 = "八⑧辛⑻捌"
-        let s:numbers.9 = "九⑨壬⑼玖"
-        let s:numbers.0 = "〇⑩癸⑽零"
+        let s:numbers.1 = "一壹⑴①甲"
+        let s:numbers.2 = "二贰⑵②乙"
+        let s:numbers.3 = "三叁⑶③丙"
+        let s:numbers.4 = "四肆⑷④丁"
+        let s:numbers.5 = "五伍⑸⑤戊"
+        let s:numbers.6 = "六陆⑹⑥己"
+        let s:numbers.7 = "七柒⑺⑦庚"
+        let s:numbers.8 = "八捌⑻⑧辛"
+        let s:numbers.9 = "九玖⑼⑨壬"
+        let s:numbers.0 = "〇零⑽⑩癸"
     endif
 endfunction
 
