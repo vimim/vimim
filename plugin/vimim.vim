@@ -1156,10 +1156,9 @@ function! s:vimim_chinese(key)
     let chinese = a:key
     if has_key(s:chinese, a:key)
         let twins = split(s:chinese[a:key])
-        if len(twins) > 1 && s:vimim_imode_pinyin > 1
+        let chinese = get(twins,0)
+        if len(twins) > 1 && s:vimim_imode_pinyin < 2
             let chinese = get(twins,1)
-        else
-            let chinese = get(twins,0)
         endif
     endif
     return chinese
