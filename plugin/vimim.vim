@@ -2694,12 +2694,13 @@ function! <SID>vimim_visual_ctrl6()
             let key = empty(results) ? "ga" : "gvr".get(results,0)."ga"
         endif
     elseif match(lines,'\d')>-1 && join(lines) !~ '[^0-9[:blank:].]'
-        " highlighted digital block => math :: sum=6*1=6
+        " highlighted digital block => count*average=summary
         let new_positions = getpos(".")
         let new_positions[1] = line("'>'")
         call setpos(".", new_positions)
         let sum = eval(join(lines,'+'))
-        let line = string(1.0*sum/len(lines)) . "=" . string(sum)
+        let ave = printf("%.2f", 1.0*sum/len(lines)) 
+        let line = ave . "=" . string(sum)
         let line = substitute(line, '[.]0\+', '', 'g')
         let line = string(len(lines)) . '*' . line
         let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
