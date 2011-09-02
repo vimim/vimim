@@ -1169,26 +1169,27 @@ function! s:vimim_initialize_skin()
         return
     endif
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
-    highlight! vimim_none_color NONE
+    highlight! link Cursor CursorIM
     if !empty(s:vimim_custom_color)
         if s:vimim_custom_color == 2 || s:vimim_custom_label > 0
-            highlight! link PmenuSel vimim_none_color
+            highlight! PmenuSel NONE
         elseif s:vimim_custom_color == 1
-            highlight! link PmenuSel Title
+            highlight! PmenuSel Title
         endif
-        highlight! link PmenuSbar  vimim_none_color
-        highlight! link PmenuThumb vimim_none_color
-        highlight! link Pmenu      vimim_none_color
+        highlight! PmenuSbar  NONE
+        highlight! PmenuThumb NONE
+        highlight! Pmenu      NONE
     endif
 endfunction
 
 function! s:vimim_restore_skin()
+    set ruler
     highlight! link Cursor NONE
     if s:vimim_custom_color != 0
-        highlight! link PmenuSel   NONE
-        highlight! link PmenuSbar  NONE
-        highlight! link PmenuThumb NONE
-        highlight! link Pmenu      NONE
+        highlight! clear PmenuSel   
+        highlight! clear PmenuSbar  
+        highlight! clear PmenuThumb 
+        highlight! clear Pmenu      
     endif
 endfunction
 
@@ -1787,6 +1788,7 @@ function! g:vimim_onekey()
         sil!call s:vimim_onekey_pumvisible_mapping()
         sil!call s:vimim_onekey_punctuation_mapping()
         sil!call s:vimim_start()
+        set noruler
         let onekey = s:vimim_onekey_action()
     elseif s:vimim_onekey_is_tab > 0
         let onekey = '\t'
@@ -4271,7 +4273,6 @@ function! s:vimim_restore_setting()
     let &showmatch   = s:showmatch
     let &smartcase   = s:smartcase
     let &pumheight   = s:pumheight_saved
-    set ruler
 endfunction
 
 function! s:vimim_start()
@@ -4283,8 +4284,6 @@ function! s:vimim_start()
     inoremap <expr> <Space> <SID>vimim_space()
     inoremap <expr> <Esc>   <SID>vimim_esc()
     inoremap <expr> <CR>    <SID>vimim_enter()
-    highlight! link Cursor CursorIM
-    set noruler
 endfunction
 
 function! g:vimim_stop()
