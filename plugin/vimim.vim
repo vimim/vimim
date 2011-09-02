@@ -2548,7 +2548,6 @@ function! s:vimim_cjk_match(keyboard)
     let grep_frequency = '.*' . ' \d\+\( u\)\=$'
     let grep = ""
     if keyboard =~ '\d'
-        let dddd = s:vimim_digit_4corner>0 ? 4 : 6
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_s))
             " cjk pinyin with tone: huan2hai2
             let grep = keyboard . '[a-z ]'
@@ -2562,11 +2561,11 @@ function! s:vimim_cjk_match(keyboard)
                 let digit = substitute(keyboard,'\a','','g')
             endif
             if !empty(digit)
-                let space = dddd - len(digit)
-                let grep  = '\s' . digit . '\d\{' . space . '}\s'
-                if dddd == 6
-                    let grep .= '\d\d\d\d\s'
-                endif
+                let stroke5 = '\d\d\d\d\s'  " 5stroke :: li1234
+                let space = '\d\{' . string(4-len(digit)) . '}'
+                let space = len(digit)==4 ? "" : space
+                let dddd = '\s' . digit . space . '\s'
+                let grep = s:vimim_digit_4corner<1 ? dddd.stroke5 : dddd
                 let alpha = substitute(keyboard,'\d','','g')
                 if !empty(alpha)
                     " search le or yue from le4yue4
@@ -2577,7 +2576,7 @@ function! s:vimim_cjk_match(keyboard)
                     let grep .= grep_frequency
                 endif
             endif
-            if len(keyboard) < dddd && len(string(digit)) > 0
+            if len(keyboard) < 4 && len(string(digit)) > 0
                 let s:hjkl_s = digit
             endif
         endif
