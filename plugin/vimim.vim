@@ -2690,9 +2690,8 @@ function! <SID>vimim_visual_ctrl6()
             let ddddd = char2nr(get(split(line,'\zs'),0))
             if ddddd =~ '^\d\d\d\d\d$'
                 let line = 'u' . ddddd
-                let onekey =  onekey . 'h'  . onekey
             endif
-            let key = "gvc" . line . onekey
+            let key = "gvc" . line . onekey . 'h'
         else
             " highlighted one cjk char => antonym or number loop
             let results = s:vimim_get_imode_chinese(line,0)
