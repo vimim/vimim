@@ -419,30 +419,48 @@ function! s:vimim_egg_vimim()
 endfunction
 
 function! s:vimim_get_hjkl(keyboard)
+    let keyboard = a:keyboard
     " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
-    if a:keyboard =~ 'u\d\d\d\d\d'
+    if keyboard =~ 'u\d\d\d\d\d'
         let s:show_me_not = -7
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
     endif
     " [unicode] support direct unicode/gb/big5 input
-    let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
+    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if ddddd > 8080
         let lines = []
-        for i in range(214)
+        for i in range(99)
             call add(lines, nr2char(ddddd+i))
         endfor
         return lines
     endif
-    let lines = s:vimim_easter_chicken(a:keyboard)
+    let lines = s:vimim_easter_chicken(keyboard)
     if !empty(lines)
         " [eggs] hunt classic easter egg ... vim<C-6>
-    elseif a:keyboard == 'vimim.'
+    elseif keyboard == 'vimim.'
         " [hjkl] display buffer inside the omni window
         let lines = split(getreg('"'), '\n')
-    elseif a:keyboard !~ "db"
+    elseif keyboard=~#'^[iu]' && s:vimim_imode_pinyin>0
+        " [imode] magic i: (1) English number (2) Chinese number
+        if keyboard ==# 'ii' " plays mahjong at will
+            let lines = s:mahjong
+        elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
+            let lines = [s:vimim_imode_today_now(keyboard)]
+        elseif keyboard =~# '^i'
+            if len(keyboard) == 1
+                let char_before = s:vimim_get_char_before('i')
+                let lines = s:vimim_get_imode_chinese(char_before,1)
+            elseif keyboard =~ '[^pqwertyuio]'
+                let lines = s:vimim_imode_number(keyboard)
+            endif
+        elseif keyboard == 'u' && s:has_cjk_file < 1
+            let unicode = "一 圣 性 楊 版 答 葬 走 隐"
+            let lines = split(unicode)
+        endif
+    elseif keyboard !~ "db"
         " [poem] check entry in special directories first
-        let datafile = s:vimim_check_filereadable(a:keyboard)
+        let datafile = s:vimim_check_filereadable(keyboard)
         if !empty(datafile)
             let lines = s:vimim_readfile(datafile)
         endif
@@ -1873,40 +1891,18 @@ function! s:vimim_onekey_input(keyboard)
     if keyboard =~ '^\l\+'
         sil!call s:vimim_onekey_english(keyboard, 0)
     endif
-    let results = []
-    " [imode] magic i: (1) English number (2) Chinese number
-    if keyboard =~# '^[iu]' && s:vimim_imode_pinyin > 0
-        if keyboard ==# 'ii' " plays mahjong at will
-            let results = s:mahjong
-        elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
-            let results = [s:vimim_imode_today_now(keyboard)]
-        elseif keyboard =~# '^i'
-            if len(keyboard) == 1
-                let char_before = s:vimim_get_char_before('i')
-                let results = s:vimim_get_imode_chinese(char_before,1)
-            elseif keyboard =~ '[^pqwertyuio]'
-                let results = s:vimim_imode_number(keyboard)
-            endif
-        elseif keyboard == 'u' && s:has_cjk_file < 1
-            let unicode = "一 圣 性 楊 版 答 葬 走 隐"
-            let results = split(unicode)
-        endif
-        if !empty(len(results))
-            return results
-        endif
-    endif
     " [cjk] cjk database works like swiss-army knife
     if s:has_cjk_file > 0
         if keyboard =~# '^i' " 4corner_shortcut: iypwqwuww => 60212722
             let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
         endif
         let keyboard = s:vimim_cjk_sentence_match(keyboard)
-        let results = s:vimim_cjk_match(keyboard)
+        let lines = s:vimim_cjk_match(keyboard)
         if keyboard =~ '^\l\d\d\d\d' && len(s:english_results)>0
-            call extend(s:english_results, results)
+            call extend(s:english_results, lines)
         endif
     endif
-    return results
+    return lines
 endfunction
 
 function! s:vimim_dot_by_dot(keyboard)
