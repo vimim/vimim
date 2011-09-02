@@ -131,19 +131,6 @@ function! s:vimim_one_backend_hash()
     return one_backend_hash
 endfunction
 
-function! s:vimim_chinese(key)
-    let chinese = a:key
-    if has_key(s:chinese, a:key)
-        let chinese = get(s:chinese[a:key], 0)
-        if s:encoding =~ "utf-8"
-        \&& s:vimim_onekey_is_tab > 1
-        \&& len(s:chinese[a:key]) > 1
-            let chinese = get(s:chinese[a:key], 1)
-        endif
-    endif
-    return chinese
-endfunction
-
 function! s:vimim_dictionary_im_keycode()
     let s:im_keycode = {}
     let keys  = split('pinyin hangul xinhua quick wubi')
@@ -642,7 +629,7 @@ endfunction
 
 function! s:vimim_get_antonym_list()
     let antonym  = " ，。 “” ‘’ （） 【】 〖〗 《》"
-    let antonym .= " 加减乘除 危安 败胜 凶吉 真假 石金 "
+    let antonym .= " 加减乘除 危安 胜败 凶吉 真假 石金 "
     return split(antonym)
 endfunction
 
@@ -1158,11 +1145,24 @@ function! s:vimim_dictionary_chinese()
     let s:chinese.google     = ["谷歌"]
     let s:chinese.baidu      = ["百度"]
     let s:chinese.qq         = ["QQ"]
-    let s:chinese.chinese    = ["中文"]
-    let s:chinese.english    = ["英文"]
     let s:chinese.datafile   = ["文件"]
     let s:chinese.mass       = ["海量"]
     let s:chinese.datetime   = ["日期"]
+    let s:chinese.english    = ["英文"]
+    let s:chinese.chinese    = ["中文"]
+endfunction
+
+function! s:vimim_chinese(key)
+    let chinese = a:key
+    if has_key(s:chinese, a:key)
+        let chinese = get(s:chinese[a:key], 0)
+        if s:encoding =~ "utf-8"
+        \&& s:vimim_onekey_is_tab > 1
+        \&& len(s:chinese[a:key]) > 1
+            let chinese = get(s:chinese[a:key], 1)
+        endif
+    endif
+    return chinese
 endfunction
 
 function! s:vimim_initialize_skin()
