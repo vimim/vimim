@@ -642,8 +642,7 @@ endfunction
 
 function! s:vimim_get_antonym_list()
     let antonym  = " ，。 “” ‘’ （） 【】 〖〗 《》"
-    let antonym .= " 加减乘除 阴阳 屌屄 死活 胜败 金石 "
-    let antonym .= " 酸甜苦辣 输赢 凸凹 安危 凶吉 真假 "
+    let antonym .= " 加减乘除 危安 败胜 凶吉 真假 石金 "
     return split(antonym)
 endfunction
 
