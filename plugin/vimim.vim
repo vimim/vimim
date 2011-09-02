@@ -2457,9 +2457,6 @@ function! s:vimim_scan_cjk_file()
         let s:cjk_lines = s:vimim_readfile(datafile)
         let s:has_cjk_file = 1
         let s:cjk_filename = datafile
-        if empty(s:backend.datafile) && empty(s:backend.directory)
-            let s:has_cjk_file = 2
-        endif
     endif
 endfunction
 
@@ -2488,7 +2485,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:ui.im == 'pinyin' || s:has_cjk_file > 1
+    elseif s:ui.im == 'pinyin' || s:has_cjk_file > 0
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
         \&& keyboard =~ '^\l' && keyboard[1:4] !~ '[^pqwertyuio]'
             " muuqwxeyqpjeqqq => m7712x3610j3111
@@ -2670,17 +2667,32 @@ function! <SID>vimim_visual_ctrl6()
     let lines = split(getreg('"'), '\n')
     if len(lines) < 2
         let line = get(lines,0)
+        let chinese = get(split(line,'\zs'),0)
         if len(substitute(line,'.','.','g')) > 1
             " highlight multiple chinese => show property of each
             let s:seamless_positions = getpos("'<'")
-            let ddddd = char2nr(get(split(line,'\zs'),0))
+            let ddddd = char2nr(chinese)
             let uddddd = "gvc" . 'u'.ddddd . onekey . 'h'
             let dddd = "gvc" . line . onekey
             let key = ddddd=~'\d\d\d\d\d' ? uddddd : dddd
         else
             " highlight one chinese => get antonym or number loop
             let results = s:vimim_get_imode_chinese(line,0)
-            let key = empty(results) ? "ga" : "gvr".get(results,0)."ga"
+            if empty(results)
+                let line = -1
+                sil!call s:vimim_backend_initialization()
+                if s:has_cjk_file > 0
+                    let line = match(s:cjk_lines, "^".chinese)
+                endif
+                if line < 0
+                    let key = "ga"
+                else
+                    echo get(s:cjk_lines, line)
+                endif
+            else
+                let chinese = get(results,0)
+                let key = "gvr" . chinese . "ga"
+            endif
         endif
     elseif match(lines,'\d')>-1 && join(lines) !~ '[^0-9[:blank:].]'
         " highlighted digital block => count*average=summary
@@ -3642,7 +3654,7 @@ function! s:vimim_do_cloud_or_not(keyboard)
     if s:cloud_onekey > 0
         return 1
     endif
-    if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 1
+    if s:chinese_input_mode =~ 'onekey' && s:has_cjk_file > 0
         return 0
     endif
     if s:ui.root == 'cloud'
