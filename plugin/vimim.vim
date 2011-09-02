@@ -1094,72 +1094,72 @@ let s:VimIM += [" ====  user   interface ==== {{{"]
 
 function! s:vimim_dictionary_chinese()
     let s:chinese = {}
-    let s:chinese.onekey     = ["点石成金","點石成金"]
-    let s:chinese.computer   = ["电脑","電腦"]
-    let s:chinese.database   = ["词库","詞庫"]
-    let s:chinese.cjk        = ["字库","字庫"]
-    let s:chinese.directory  = ["目录","目錄"]
-    let s:chinese.option     = ["选项","選項"]
-    let s:chinese.standard   = ["标准","標準"]
-    let s:chinese.encoding   = ["编码","編碼"]
-    let s:chinese.env        = ["环境","環境"]
-    let s:chinese.input      = ["输入","輸入"]
-    let s:chinese.font       = ["字体","字體"]
-    let s:chinese.static     = ["静态","靜態"]
-    let s:chinese.dynamic    = ["动态","動態"]
-    let s:chinese.style      = ["风格","風格"]
-    let s:chinese.erbi       = ["二笔","二筆"]
-    let s:chinese.wubi       = ["五笔","五筆"]
-    let s:chinese.hangul     = ["韩文","韓文"]
-    let s:chinese.xinhua     = ["新华","新華"]
-    let s:chinese.zhengma    = ["郑码","鄭碼"]
-    let s:chinese.cangjie    = ["仓颉","倉頡"]
-    let s:chinese.yong       = ["永码","永碼"]
-    let s:chinese.wu         = ["吴语","吳語"]
-    let s:chinese.jidian     = ["极点","極點"]
-    let s:chinese.haifeng    = ["海峰","海峰"]
-    let s:chinese.shuangpin  = ["双拼","雙拼"]
-    let s:chinese.boshiamy   = ["呒虾米","嘸蝦米"]
-    let s:chinese.newcentury = ["新世纪","新世紀"]
-    let s:chinese.taijima    = ["太极码","太極碼"]
-    let s:chinese.abc        = ["智能双打","智能雙打"]
-    let s:chinese.ms         = ["微软","微軟"]
-    let s:chinese.nature     = ["自然码","自然碼"]
-    let s:chinese.mixture    = ["混合"]
-    let s:chinese.purple     = ["紫光"]
-    let s:chinese.plusplus   = ["加加"]
-    let s:chinese.flypy      = ["小鹤","小鶴"]
-    let s:chinese.quick      = ["速成"]
-    let s:chinese.array30    = ["行列"]
-    let s:chinese.phonetic   = ["注音"]
-    let s:chinese.pinyin     = ["拼音"]
-    let s:chinese.revision   = ["版本"]
-    let s:chinese.full_width = ["全角"]
-    let s:chinese.half_width = ["半角"]
-    let s:chinese.mycloud    = ["自己的云","自己的雲"]
-    let s:chinese.cloud      = ["云","雲"]
-    let s:chinese.toggle     = ["切换","切換"]
-    let s:chinese.online     = ["在线","在綫"]
-    let s:chinese.tool       = ["工具"]
-    let s:chinese.sogou      = ["搜狗"]
-    let s:chinese.google     = ["谷歌"]
-    let s:chinese.baidu      = ["百度"]
-    let s:chinese.qq         = ["QQ"]
-    let s:chinese.datafile   = ["文件"]
-    let s:chinese.mass       = ["海量"]
-    let s:chinese.datetime   = ["日期"]
-    let s:chinese.english    = ["英文"]
-    let s:chinese.chinese    = ["中文"]
+    let s:chinese.onekey     = "点石成金 點石成金"
+    let s:chinese.computer   = "电脑 電腦"
+    let s:chinese.database   = "词库 詞庫"
+    let s:chinese.cjk        = "字库 字庫"
+    let s:chinese.directory  = "目录 目錄"
+    let s:chinese.option     = "选项 選項"
+    let s:chinese.standard   = "标准 標準"
+    let s:chinese.encoding   = "编码 編碼"
+    let s:chinese.env        = "环境 環境"
+    let s:chinese.input      = "输入 輸入"
+    let s:chinese.font       = "字体 字體"
+    let s:chinese.static     = "静态 靜態"
+    let s:chinese.dynamic    = "动态 動態"
+    let s:chinese.style      = "风格 風格"
+    let s:chinese.erbi       = "二笔 二筆"
+    let s:chinese.wubi       = "五笔 五筆"
+    let s:chinese.hangul     = "韩文 韓文"
+    let s:chinese.xinhua     = "新华 新華"
+    let s:chinese.zhengma    = "郑码 鄭碼"
+    let s:chinese.cangjie    = "仓颉 倉頡"
+    let s:chinese.yong       = "永码 永碼"
+    let s:chinese.wu         = "吴语 吳語"
+    let s:chinese.jidian     = "极点 極點"
+    let s:chinese.haifeng    = "海峰 海峰"
+    let s:chinese.shuangpin  = "双拼 雙拼"
+    let s:chinese.boshiamy   = "呒虾米 嘸蝦米"
+    let s:chinese.newcentury = "新世纪 新世紀"
+    let s:chinese.taijima    = "太极码 太極碼"
+    let s:chinese.abc        = "智能双打 智能雙打"
+    let s:chinese.ms         = "微软 微軟"
+    let s:chinese.nature     = "自然码 自然碼"
+    let s:chinese.mixture    = "混合"
+    let s:chinese.purple     = "紫光"
+    let s:chinese.plusplus   = "加加"
+    let s:chinese.flypy      = "小鹤 小鶴"
+    let s:chinese.quick      = "速成"
+    let s:chinese.array30    = "行列"
+    let s:chinese.phonetic   = "注音"
+    let s:chinese.pinyin     = "拼音"
+    let s:chinese.revision   = "版本"
+    let s:chinese.full_width = "全角"
+    let s:chinese.half_width = "半角"
+    let s:chinese.mycloud    = "自己的云 自己的雲"
+    let s:chinese.cloud      = "云 雲"
+    let s:chinese.toggle     = "切换 切換"
+    let s:chinese.online     = "在线 在綫"
+    let s:chinese.tool       = "工具"
+    let s:chinese.sogou      = "搜狗"
+    let s:chinese.google     = "谷歌"
+    let s:chinese.baidu      = "百度"
+    let s:chinese.qq         = "QQ"
+    let s:chinese.datafile   = "文件"
+    let s:chinese.mass       = "海量"
+    let s:chinese.datetime   = "日期"
+    let s:chinese.english    = "英文"
+    let s:chinese.chinese    = "中文"
 endfunction
 
 function! s:vimim_chinese(key)
     let chinese = a:key
     if has_key(s:chinese, a:key)
-        let chinese = get(s:chinese[a:key], 0)
-        if s:encoding =~ "utf-8"
-        \&& s:vimim_onekey_is_tab > 1
-        \&& len(s:chinese[a:key]) > 1
-            let chinese = get(s:chinese[a:key], 1)
+        let twins = split(s:chinese[a:key])
+        if len(twins) > 1 && s:vimim_imode_pinyin > 1
+            let chinese = get(twins,1)
+        else
+            let chinese = get(twins,0)
         endif
     endif
     return chinese
