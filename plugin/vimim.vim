@@ -439,7 +439,11 @@ function! s:vimim_get_hjkl(keyboard)
                 let char_before = s:vimim_get_char_before('i')
                 let lines = s:vimim_get_imode_chinese(char_before,1)
             elseif keyboard =~ '[^pqwertyuio]'
-                let lines = s:vimim_imode_number(keyboard)
+                sil!call s:vimim_onekey_english(a:keyboard, 0)
+                if empty(s:english_results)
+                    let lines = s:vimim_imode_number(keyboard)
+                endif
+                let s:english_results = []
             endif
         elseif keyboard == 'u' && empty(s:cjk_filename)
             let unicode = "一 圣 性 楊 版 答 葬 走 隐"
@@ -2913,16 +2917,14 @@ function! s:vimim_create_quanpin_table()
 endfunction
 
 function! s:vimim_more_pinyin_candidates(keyboard)
-    " [purpose] make standard layout for popup menu
+    " [purpose] if not english, make standard layout for popup menu
     " input  =>  mamahuhu
     " output =>  mamahuhu, mama, ma
-    if empty(s:english_results)
-        " break up keyboard only if it is not english
-    else
+    if !empty(s:english_results)
         return []
     endif
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
-    if empty(keyboards) || empty(a:keyboard)
+    if empty(a:keyboard) || empty(keyboards)
         return []
     endif
     let candidates = []
@@ -3320,17 +3322,13 @@ endfunction
 function! s:vimim_sentence_datafile(keyboard)
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
-    if empty(lines)
+    if empty(lines) || !empty(s:english_results)
         return ""
     endif
     let pattern = '^' . keyboard . '\s'
     let matched = match(lines, pattern)
     if matched > -1
         return keyboard
-    elseif empty(s:english_results)
-        " scan more on datafile when English is not found
-    else
-        return ""
     endif
     let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
     if !empty(candidates)
