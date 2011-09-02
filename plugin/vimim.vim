@@ -728,12 +728,9 @@ function! s:vimim_imode_today_now(keyboard)
 endfunction
 
 function! s:vimim_imode_number(keyboard)
-    let keyboard = a:keyboard  " sample: i88 ii88 isw8ql iisw8ql
-    if keyboard[0:1] ==# 'ii'
-        let keyboard = 'I' . keyboard[2:]
-    endif
-    let i = keyboard[0:0]
-    let keyboard = keyboard[1:]
+    let keyboard = a:keyboard 
+    let ii = keyboard[0:1] " sample: i88 ii88 isw8ql iisw8ql
+    let keyboard = ii==#'ii' ? keyboard[2:] : keyboard[1:]
     let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
     let keyboards = split(dddl, '\ze')
     let number = ""
@@ -744,7 +741,7 @@ function! s:vimim_imode_number(keyboard)
         if has_key(s:quantifiers, char)
             let quantifier_list = split(s:quantifiers[char], '\zs')
             let chinese = get(quantifier_list, 0)
-            if i ==# 'I' && char =~ '[0-9sbq]'
+            if ii ==# 'ii' && char =~ '[0-9sbq]'
                 let chinese = get(quantifier_list, 1)
             endif
         endif
@@ -762,7 +759,7 @@ function! s:vimim_imode_number(keyboard)
                 let number = strpart(number,0,len(number)-s:multibyte)
             endif
             let numbers = map(copy(quantifier_list), 'number . v:val')
-        elseif keyboard =~# '^\d*$' && len(keyboards)<2 && i ==# 'i'
+        elseif keyboard =~# '^\d*$' && len(keyboards)<2 && ii != 'ii'
             let numbers = quantifier_list
         endif
     endif
