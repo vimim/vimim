@@ -625,22 +625,6 @@ endfunction
 let s:VimIM += [" ====  chinese imode    ==== {{{"]
 " =================================================
 
-function! s:vimim_get_antonym_list()
-let antonym = "  ，。 “” ‘’ ＋－ （） 【】 〖〗 《》
-\ 阴阳 龙凤 雄雌 男女 嬲嫐 屌屄 淫娼 嫁娶 爱恨 死活 输赢 悲欢离合
-\ 软硬 强弱 深浅 推拉 迎送 里外 正反 前后 进退 快慢 胖瘦 酸甜苦辣
-\ 恩怨 沉浮 高低 断续 松紧 张弛 好坏 美醜 善恶 雅俗 耻荣 轻重缓急
-\ 始终 首尾 盈亏 钝锐 升降 黑白 开关 藏露 醒睡 跌涨 哭笑 上下左右
-\ 虚实 有无 宽窄 稀密 粗细 恼喜 买卖 借还 得失 赔赚 臣君 花草虫鱼
-\ 大小 多少 公私 奇偶 冷热 矛盾 朝暮 奖罚 净脏 祸福 盛衰 加减乘除
-\ 是非 闲忙 来去 安危 存亡 动静 浓淡 饥饱 旦夕 手脚 牡牝 日月天地
-\ 新旧 通堵 止行 古今 纳吐 曲直 亮暗 亲疏 这那 吉凶 褒贬 胜败
-\ 收放 利弊 逆顺 灵笨 忠奸 纵横 破立 优劣 对错 纯杂 真假 老嫩
-\ 薄厚 尊卑 文武 主仆 问答 卷舒 贵贱 巧拙 彼此 坤乾 懒勤 凹凸
-\ 聚散 干湿 生熟 单双 奢简 警匪 官民 可否 信疑 穿脱 金石 "
-return split(antonym)
-endfunction
-
 function! s:vimim_build_numbers_hash()
     if empty(s:numbers)
         let s:numbers.1 = "一①甲⑴壹"
@@ -654,6 +638,13 @@ function! s:vimim_build_numbers_hash()
         let s:numbers.9 = "九⑨壬⑼玖"
         let s:numbers.0 = "〇⑩癸⑽零"
     endif
+endfunction
+
+function! s:vimim_get_antonym_list()
+    let antonym  = " ，。 “” ‘’ （） 【】 〖〗 《》"
+    let antonym .= " 加减乘除 阴阳 屌屄 死活 胜败 金石 "
+    let antonym .= " 酸甜苦辣 输赢 凸凹 安危 凶吉 真假 "
+    return split(antonym)
 endfunction
 
 function! s:vimim_get_imode_chinese(char_before, insert)
@@ -680,8 +671,8 @@ function! s:vimim_get_imode_chinese(char_before, insert)
             let key = next
         endwhile
     elseif a:insert > 0
-        let i_english = "我 你 妳 他 她 它"
-        let results = split(i_english)
+        let i_in_english = "我 你 妳 他 她 它"
+        let results = split(i_in_english)
     endif
     return results
 endfunction
@@ -2698,7 +2689,7 @@ function! <SID>vimim_visual_ctrl6()
         let new_positions[1] = line("'>'")
         call setpos(".", new_positions)
         let sum = eval(join(lines,'+'))
-        let ave = printf("%.2f", 1.0*sum/len(lines)) 
+        let ave = printf("%.2f", 1.0*sum/len(lines))
         let line = ave . "=" . string(sum)
         let line = substitute(line, '[.]0\+', '', 'g')
         let line = string(len(lines)) . '*' . line
