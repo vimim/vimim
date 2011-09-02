@@ -426,14 +426,12 @@ function! s:vimim_get_hjkl(keyboard)
         return split(chinese, '\zs')
     endif
     " [unicode] support direct unicode/gb/big5 input
-    let lines = []
     let ddddd = s:vimim_get_unicode_ddddd(a:keyboard)
     if ddddd > 8080
+        let lines = []
         for i in range(214)
             call add(lines, nr2char(ddddd+i))
         endfor
-    endif
-    if !empty(lines)
         return lines
     endif
     let lines = s:vimim_easter_chicken(a:keyboard)
@@ -2221,7 +2219,7 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     elseif keyboard =~# '^\d\{5}$'     " from digit to unicode: 32911 =>
         let ddddd = str2nr(keyboard, 10)
     endif
-    if empty(ddddd) || ddddd > 0xffff
+    if ddddd > 0xffff
         let ddddd = 0
     endif
     return ddddd
@@ -2569,10 +2567,10 @@ function! s:vimim_cjk_match(keyboard)
         return []
     endif
     let keyboard = a:keyboard
-    let dddddd = s:vimim_digit_4corner>0 ? 4 : 6
     let grep_frequency = '.*' . ' \d\+\( u\)\=$'
     let grep = ""
     if keyboard =~ '\d'
+        let dddd = s:vimim_digit_4corner>0 ? 4 : 6
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_s))
             " cjk pinyin with tone: huan2hai2
             let grep = keyboard . '[a-z ]'
@@ -2586,10 +2584,10 @@ function! s:vimim_cjk_match(keyboard)
                 let digit = substitute(keyboard,'\a','','g')
             endif
             if !empty(digit)
-                let space = dddddd - len(digit)
+                let space = dddd - len(digit)
                 let grep  = '\s' . digit
                 let grep .= '\d\{' . space . '}\s'
-                if dddddd == 6
+                if dddd == 6
                     let grep .= '\d\d\d\d\s'
                 endif
                 let alpha = substitute(keyboard,'\d','','g')
@@ -2602,7 +2600,7 @@ function! s:vimim_cjk_match(keyboard)
                     let grep .= grep_frequency
                 endif
             endif
-            if len(keyboard) < dddddd && len(string(digit)) > 0
+            if len(keyboard) < dddd && len(string(digit)) > 0
                 let s:hjkl_s = digit
             endif
         endif
@@ -2691,8 +2689,9 @@ endfunction
 function! <SID>vimim_visual_ctrl6()
     let key = ""
     let onekey = "\<C-R>=g:vimim_onekey()\<CR>"
-    let unnamed_register = getreg('"')
-    let lines = split(unnamed_register,'\n')
+    let column = virtcol("'<'") - 2
+    let space = "\<C-R>=repeat(' '," . column . ")\<CR>"
+    let lines = split(getreg('"'), '\n')
     if len(lines) < 2
         let line = get(lines,0)
         if len(substitute(line,'.','.','g')) > 1
@@ -2708,7 +2707,7 @@ function! <SID>vimim_visual_ctrl6()
             let results = s:vimim_get_imode_chinese(line,0)
             let key = empty(results) ? "ga" : "gvr".get(results,0)
         endif
-    elseif unnamed_register =~ '\d' && join(lines) !~ '[^0-9[:blank:].]'
+    elseif match(lines,'\d')>-1 && join(lines) !~ '[^0-9[:blank:].]'
         " highlighted digital block => math :: sum=6*1=6
         let new_positions = getpos(".")
         let new_positions[1] = line("'>'")
@@ -2717,13 +2716,9 @@ function! <SID>vimim_visual_ctrl6()
         let line = string(1.0*sum/len(lines)) . "=" . string(sum)
         let line = substitute(line, '[.]0\+', '', 'g')
         let line = string(len(lines)) . '*' . line
-        let column = virtcol("'<'") - 1
-        let space = "\<C-R>=repeat(' '," . column . ")\<CR>"
-        let key = "o^\<C-D>" . space . line . "\<Esc>"
+        let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else
         " highlighted block => display the block in omni window
-        let column = virtcol("'<'") - 2
-        let space = "\<C-R>=repeat(' '," . column . ")\<CR>"
         let key = "O^\<C-D>" . space . 'vimim.' . onekey
     endif
     sil!call feedkeys(key)
