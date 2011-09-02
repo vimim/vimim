@@ -2572,8 +2572,7 @@ function! s:vimim_cjk_match(keyboard)
             endif
             if !empty(digit)
                 let space = dddd - len(digit)
-                let grep  = '\s' . digit
-                let grep .= '\d\{' . space . '}\s'
+                let grep  = '\s' . digit . '\d\{' . space . '}\s'
                 if dddd == 6
                     let grep .= '\d\d\d\d\s'
                 endif
@@ -3469,12 +3468,10 @@ function! s:vimim_more_pinyin_directory(keyboard, dir)
         let filename = a:dir . candidate
         if filereadable(filename)
             let matches = s:vimim_readfile(filename)
-        elseif s:has_cjk_file > 0 && s:chinese_input_mode =~ 'onekey'
+        elseif s:chinese_input_mode =~ 'onekey'
             let matches = s:vimim_cjk_match(candidate)[0:20]
         endif
-        if empty(matches)
-            continue
-        else
+        if !empty(matches)
             call map(matches, 'candidate ." ". v:val')
             call extend(results, matches)
         endif
