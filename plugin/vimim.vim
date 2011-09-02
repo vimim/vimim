@@ -439,7 +439,7 @@ function! s:vimim_get_hjkl(keyboard)
     let lines = s:vimim_easter_chicken(a:keyboard)
     if !empty(lines)
         " [eggs] hunt classic easter egg ... vim<C-6>
-    elseif a:keyboard == 'vim.'
+    elseif a:keyboard == 'vimim.'
         " [hjkl] display buffer inside the omni window
         let lines = split(getreg('"'), '\n')
     elseif a:keyboard !~ "db"
@@ -2724,7 +2724,7 @@ function! <SID>vimim_visual_ctrl6()
         " highlighted block => display the block in omni window
         let column = virtcol("'<'") - 2
         let space = "\<C-R>=repeat(' '," . column . ")\<CR>"
-        let key = "O^\<C-D>" . space . 'vim.' . onekey
+        let key = "O^\<C-D>" . space . 'vimim.' . onekey
     endif
     sil!call feedkeys(key)
 endfunction
