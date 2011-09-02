@@ -103,10 +103,6 @@ function! s:vimim_initialize_session()
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let s:horizontal_display = s:vimim_custom_label>0 ? 5 : 0
-    let s:loops = {}
-    let s:numbers = {}
-    let s:quantifiers = {}
-    let s:mahjong = split("囍發萬中 春夏秋冬 东南西北 梅兰竹菊")
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -224,6 +220,9 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default(G, 1)
     let s:im_toggle = 0
     let s:frontends = []
+    let s:loops = {}
+    let s:numbers = {}
+    let s:quantifiers = {}
     let s:pumheight = &pumheight
     let s:pumheight_saved = &pumheight
     let s:chinese_input_mode = 'onekey'
@@ -236,6 +235,7 @@ function! s:vimim_initialize_global()
     if s:vimim_hjkl_directory[-1:] != "/"
         let s:vimim_hjkl_directory .= "/"
     endif
+    let s:mahjong = split("囍發萬中 春夏秋冬 东南西北 梅兰竹菊")
 endfunction
 
 function! s:vimim_set_global_default(options, default)
@@ -440,7 +440,7 @@ function! s:vimim_get_hjkl(keyboard)
     let lines = s:vimim_easter_chicken(a:keyboard)
     if !empty(lines)
         " [hjkl] display buffer inside the omni window
-    elseif a:keyboard == 'vimx'
+    elseif a:keyboard == 'vimim.'
         let unnamed_register = getreg('"')
         let lines = split(unnamed_register,'\n')
         if unnamed_register=~'\d' && join(lines)!~'[^0-9[:blank:].]'
@@ -1770,7 +1770,7 @@ function! g:vimim_onekey_dump()
         endif
         let keyboard = get(s:keyboard_list,0)
         let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-        if keyboard ==# 'vimx'
+        if keyboard ==# 'vimim.'
             let space = repeat(" ", virtcol("'<'")-2)
         endif
         call add(lines, space . line)
@@ -1778,7 +1778,7 @@ function! g:vimim_onekey_dump()
     if has("gui_running") && has("win32") && s:show_me_not != -7
         let @+ = join(lines, "\n")
     endif
-    if getline(".") =~ 'vimx\>' && len(lines) < 2
+    if getline(".") =~ '^vimim.' && len(lines) < 2
         call setline(line("."), lines)
     else
         let saved_position = getpos(".")
@@ -2223,8 +2223,8 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
         if len(keyboard) == 5 || len(keyboard) == 6
             let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
-            if len(keyboard) == 4                 " uoooo  => u9999
-                let keyboard = 'u' . keyboard     " uwwwwq => 22221
+            if len(keyboard) == 4              " uoooo  => u9999
+                let keyboard = 'u' . keyboard  " uwwwwq => 22221
             endif
         else
             return 0
@@ -2713,11 +2713,7 @@ function! <SID>vimim_visual_ctrl6()
     let lines = split(unnamed_register,'\n')
     if len(lines) < 2
         let line = get(lines,0)
-        let results = s:vimim_get_imode_chinese(line,0)
-        if !empty(results)
-            " highlighted one cjk char => antonym or number+1
-            let key = "gvr" . get(results,0)
-        else
+        if len(substitute(line,'.','.','g')) > 1
             " highlighted many cjk chars => print char property
             let ddddd = char2nr(get(split(line,'\zs'),0))
             if ddddd =~ '^\d\d\d\d\d$'
@@ -2725,6 +2721,10 @@ function! <SID>vimim_visual_ctrl6()
                 let onekey =  onekey . 'h'  . onekey
             endif
             let key = "gvc" . line . onekey
+        else
+            " highlighted one cjk char => antonym or number loop
+            let results = s:vimim_get_imode_chinese(line,0)
+            let key = empty(results) ? "ga" : "gvr".get(results,0)
         endif
     else
         " highlighted block => display the block in omni window
@@ -2739,7 +2739,7 @@ function! <SID>vimim_visual_ctrl6()
             let b:ctrl6_space = repeat(" ", n)
             let key .= "^\<C-D>\<C-R>=b:ctrl6_space\<CR>"
         endif
-        let key .= 'vimx' . onekey
+        let key .= 'vimim.' . onekey
     endif
     sil!call feedkeys(key)
 endfunction
