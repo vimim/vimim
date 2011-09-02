@@ -443,7 +443,6 @@ function! s:vimim_get_hjkl(keyboard)
                 if empty(s:english_results)
                     let lines = s:vimim_imode_number(keyboard)
                 endif
-                let s:english_results = []
             endif
         elseif keyboard == 'u' && empty(s:cjk_filename)
             let unicode = "一 圣 性 楊 版 答 葬 走 隐"
@@ -1881,7 +1880,7 @@ function! s:vimim_onekey_input(keyboard)
     " [dot_by_dot] i.have.a.dream
     let keyboard = s:vimim_dot_by_dot(keyboard)
     " [english] english cannot be ignored
-    if keyboard =~ '^\l\+'
+    if keyboard =~ '^\l\+' && empty(s:english_results)
         sil!call s:vimim_onekey_english(keyboard, 0)
     endif
     " [cjk] cjk database works like swiss-army knife
