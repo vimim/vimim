@@ -1177,8 +1177,7 @@ endfunction
 function! s:vimim_set_omni_color()
     if s:vimim_custom_color < 0
         return
-    endif
-    if !empty(s:vimim_custom_color)
+    elseif s:vimim_custom_color > 0
         highlight! vimim_none_color NONE
         if s:vimim_custom_color == 2 || s:vimim_custom_label > 0
             highlight! link PmenuSel vimim_none_color
@@ -1192,13 +1191,12 @@ function! s:vimim_set_omni_color()
 endfunction
 
 function! s:vimim_restore_skin()
-    if s:vimim_custom_color < 0
-        return
+    if s:vimim_custom_color > -1
+        highlight! link PmenuSel   NONE
+        highlight! link PmenuSbar  NONE
+        highlight! link PmenuThumb NONE
+        highlight! link Pmenu      NONE
     endif
-    highlight! link PmenuSel   NONE
-    highlight! link PmenuSbar  NONE
-    highlight! link PmenuThumb NONE
-    highlight! link Pmenu      NONE
 endfunction
 
 function! s:vimim_set_keyboard_list(column_start, keyboard)
