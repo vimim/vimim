@@ -1481,24 +1481,19 @@ let s:VimIM += [" ====  python interface ==== {{{"]
 
 function! s:vimim_database_init()
 :sil!python << EOF
-def grep(string,list):
-  expr = re.compile(string)
-  return [elem for elem in list if expr.match(elem)]
-def getkey(key, partition):
+def getstone(key, partition):
   isenglish = vim.eval('s:english_results')
   if partition > 0 and len(key) > 1:
       key = key[:-partition]
   if key not in db and not isenglish:
       while key and key not in db: key = key[:-1]
   return key
-def getchinese(key):
+def getgold(key):
   if key in db:
       chinese = key + ' ' + db.get(key)
       if vim.eval("&encoding") != 'utf-8':
         chinese = unicode(chinese, 'utf-8').encode('gbk')
   else:
-      # english = db.keys()
-      # chinese = grep(key,english)
       chinese = key
   return chinese
 EOF
@@ -3264,7 +3259,7 @@ function! s:vimim_scan_backend_embedded()
     let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db"
     let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
     if !empty(datafile) && has("python")
-        :python import vim, bsddb, re
+        :python import vim, bsddb
         :python db = bsddb.btopen(vim.eval('datafile'),'r')
         :call s:vimim_database_init()
     else
@@ -3379,7 +3374,7 @@ endfunction
 
 function! s:vimim_get_from_database(keyboard, search)
     function! s:vimim_get_chinese_from_bsd(stone)
-        :python gold = getchinese(vim.eval('a:stone'))
+        :python gold = getgold(vim.eval('a:stone'))
         :python vim.command("return '%s'" % gold)
     endfunction
     let oneline = s:vimim_get_chinese_from_bsd(a:keyboard)
@@ -4664,7 +4659,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         if s:vimim_data_file =~ ".db"
             :python keyboard = vim.eval('keyboard')
             :python partition = int(vim.eval('s:hjkl_h'))
-            :python keyboard2 = getkey(keyboard, partition)
+            :python keyboard2 = getstone(keyboard, partition)
             :python vim.command("let keyboard2 = '%s'" % keyboard2)
             let results = s:vimim_get_from_database(keyboard2, a:search)
         else
