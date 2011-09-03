@@ -256,8 +256,8 @@ function! s:vimim_initialize_local()
         let g:vimim_onekey_is_tab = 2
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_hjkl_directory = hjkl
-        let g:vimim_custom_color = -1
-        call s:vimim_default_omni_color()
+        let g:vimim_custom_color = 0
+        call g:vimim_default_omni_color()
     endif
 endfunction
 
@@ -1167,35 +1167,20 @@ function! s:vimim_chinese(key)
     return chinese
 endfunction
 
-function! s:vimim_default_omni_color()
-    highlight! link PmenuSel Title
+function! g:vimim_default_omni_color()
     highlight! PmenuSbar  NONE
     highlight! PmenuThumb NONE
     highlight! Pmenu      NONE
+    highlight! link PmenuSel Title
 endfunction
 
 function! s:vimim_set_omni_color()
-    if s:vimim_custom_color < 0
-        return
-    elseif s:vimim_custom_color > 0
-        highlight! vimim_none_color NONE
-        if s:vimim_custom_color == 2 || s:vimim_custom_label > 0
-            highlight! link PmenuSel vimim_none_color
-        elseif s:vimim_custom_color % 2 > 0
-            highlight! link PmenuSel Title
-        endif
-        highlight! link PmenuSbar  vimim_none_color
-        highlight! link PmenuThumb vimim_none_color
-        highlight! link Pmenu      vimim_none_color
+    if s:vimim_custom_color > 0
+        call g:vimim_default_omni_color()
     endif
-endfunction
-
-function! s:vimim_restore_skin()
-    if s:vimim_custom_color > -1
-        highlight! link PmenuSel   NONE
-        highlight! link PmenuSbar  NONE
-        highlight! link PmenuThumb NONE
-        highlight! link Pmenu      NONE
+    if s:vimim_custom_color > 1 || s:vimim_custom_label > 0
+        highlight!      PmenuSel NONE
+        highlight! link PmenuSel NONE
     endif
 endfunction
 
@@ -4303,7 +4288,6 @@ function! g:vimim_stop()
     sil!call s:vimim_plugin_conflict_fix_off()
     sil!call s:vimim_imap_for_chinesemode()
     sil!call s:vimim_imap_for_onekey()
-    sil!call s:vimim_restore_skin()
 endfunction
 
 function! s:vimim_super_reset()
