@@ -49,11 +49,11 @@ let b:loaded_vimim = 1
 let s:path = expand("<sfile>:p:h")."/"
 
 function! s:vimim_frontend_initialization()
-    sil!call s:vimim_initialize_shuangpin()
-    sil!call s:vimim_initialize_keycode()
+    sil!call s:vimim_set_shuangpin()
+    sil!call s:vimim_set_keycode()
     sil!call s:vimim_set_special_im_property()
-    sil!call s:vimim_initialize_frontend_punctuation()
-    sil!call s:vimim_initialize_skin()
+    sil!call s:vimim_set_cursor_punctuation()
+    sil!call s:vimim_set_omni_color()
 endfunction
 
 function! s:vimim_backend_initialization()
@@ -78,7 +78,7 @@ function! s:vimim_backend_initialization()
         sil!call s:vimim_scan_backend_embedded()
         sil!call s:vimim_scan_backend_cloud()
     endif
-    sil!call s:vimim_initialize_keycode()
+    sil!call s:vimim_set_keycode()
 endfunction
 
 function! s:vimim_initialize_session()
@@ -154,7 +154,7 @@ function! s:vimim_dictionary_im_keycode()
     let s:all_vimim_input_methods = copy(keys)
 endfunction
 
-function! s:vimim_initialize_keycode()
+function! s:vimim_set_keycode()
     let keycode = s:backend[s:ui.root][s:ui.im].keycode
     if !empty(s:vimim_shuangpin)
         let keycode = s:shuangpin_keycode_chinese.keycode
@@ -257,10 +257,7 @@ function! s:vimim_initialize_local()
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_custom_color = -1
-        highlight!      Pmenu      NONE
-        highlight!      PmenuSbar  NONE
-        highlight!      PmenuThumb NONE
-        highlight! link PmenuSel   Title
+        call s:vimim_default_omni_color()
     endif
 endfunction
 
@@ -843,7 +840,8 @@ function! s:vimim_dictionary_punctuation()
     endif
 endfunction
 
-function! s:vimim_initialize_frontend_punctuation()
+function! s:vimim_set_cursor_punctuation()
+    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     for char in s:valid_keys
         if has_key(s:punctuations, char)
             if s:ui.has_dot == 1
@@ -1169,16 +1167,22 @@ function! s:vimim_chinese(key)
     return chinese
 endfunction
 
-function! s:vimim_initialize_skin()
-    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
-    highlight! vimim_none_color NONE
+function! s:vimim_default_omni_color()
+    highlight! link PmenuSel Title
+    highlight! PmenuSbar  NONE
+    highlight! PmenuThumb NONE
+    highlight! Pmenu      NONE
+endfunction
+
+function! s:vimim_set_omni_color()
     if s:vimim_custom_color < 0
         return
     endif
     if !empty(s:vimim_custom_color)
+        highlight! vimim_none_color NONE
         if s:vimim_custom_color == 2 || s:vimim_custom_label > 0
             highlight! link PmenuSel vimim_none_color
-        elseif s:vimim_custom_color == 1
+        elseif s:vimim_custom_color % 2 > 0
             highlight! link PmenuSel Title
         endif
         highlight! link PmenuSbar  vimim_none_color
@@ -1188,14 +1192,13 @@ function! s:vimim_initialize_skin()
 endfunction
 
 function! s:vimim_restore_skin()
-    set ruler
-    highlight! link Cursor NONE
-    if s:vimim_custom_color > 0
-        highlight! link PmenuSel   NONE
-        highlight! link PmenuSbar  NONE
-        highlight! link PmenuThumb NONE
-        highlight! link Pmenu      NONE
+    if s:vimim_custom_color < 0
+        return
     endif
+    highlight! link PmenuSel   NONE
+    highlight! link PmenuSbar  NONE
+    highlight! link PmenuThumb NONE
+    highlight! link Pmenu      NONE
 endfunction
 
 function! s:vimim_set_keyboard_list(column_start, keyboard)
@@ -1793,7 +1796,6 @@ function! g:vimim_onekey()
         sil!call s:vimim_onekey_pumvisible_mapping()
         sil!call s:vimim_onekey_punctuation_mapping()
         sil!call s:vimim_start()
-        set noruler
         let onekey = s:vimim_onekey_action()
     elseif s:vimim_onekey_is_tab > 0
         let onekey = '\t'
@@ -2969,7 +2971,7 @@ endfunction
 let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 " =================================================
 
-function! s:vimim_initialize_shuangpin()
+function! s:vimim_set_shuangpin()
     if empty(s:vimim_shuangpin)
     \|| !empty(s:shuangpin_table)
     \|| s:vimim_cloud =~ 'shuangpin'
@@ -4248,7 +4250,7 @@ function! s:vimim_initialize_i_setting()
     let s:smartcase   = &smartcase
 endfunction
 
-function! s:vimim_i_setting_on()
+function! s:vimim_setting_on()
     set imdisable
     set iminsert=0
     set completeopt=menuone
@@ -4266,6 +4268,7 @@ function! s:vimim_i_setting_on()
     if s:vimim_custom_label > 0
         let &pumheight = s:horizontal_display
     endif
+    set noruler
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
@@ -4280,11 +4283,13 @@ function! s:vimim_restore_setting()
     let &showmatch   = s:showmatch
     let &smartcase   = s:smartcase
     let &pumheight   = s:pumheight_saved
+    set ruler
+    highlight! link Cursor NONE
 endfunction
 
 function! s:vimim_start()
     sil!call s:vimim_plugin_conflict_fix_on()
-    sil!call s:vimim_i_setting_on()
+    sil!call s:vimim_setting_on()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_label_on()
     inoremap <expr> <BS>    <SID>vimim_backspace()
