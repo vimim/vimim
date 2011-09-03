@@ -2429,7 +2429,7 @@ function! <SID>vimim_onekey_capital(key)
     if pumvisible()
         let key = '\<C-E>' . lower . trigger
     elseif &ru < 1
-        let key = lower . '\<End>' . trigger
+        let key = lower . '\<C-[>ea' . trigger
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
