@@ -1482,17 +1482,17 @@ let s:VimIM += [" ====  python interface ==== {{{"]
 function! s:vimim_database_init()
 :sil!python << EOF
 def getstone(key, partition):
-  isenglish = vim.eval('s:english_results')
-  if partition > 0 and len(key) > 1:
-      key = key[:-partition]
-  if key not in db and not isenglish:
-      while key and key not in db: key = key[:-1]
-  return key
+    isenglish = vim.eval('s:english_results')
+    if partition > 0 and len(key) > 1:
+        key = key[:-partition]
+    if key not in db and not isenglish:
+        while key and key not in db: key = key[:-1]
+    return key
 def getgold(key):
   if key in db:
       chinese = key + ' ' + db.get(key)
       if vim.eval("&encoding") != 'utf-8':
-        chinese = unicode(chinese, 'utf-8').encode('gbk')
+          chinese = unicode(chinese, 'utf-8').encode('gbk')
   else:
       chinese = key
   return chinese
@@ -2428,6 +2428,7 @@ function! <SID>vimim_onekey_capital(key)
         let key .= tolower(a:key)
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
+    let s:hjkl_h = 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
