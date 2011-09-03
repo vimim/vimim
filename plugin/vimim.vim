@@ -1734,6 +1734,8 @@ elif key in db:
     oneline = key + ' ' + db.get(key)
     if vim.eval("&encoding") != 'utf-8':
         oneline = unicode(oneline, 'utf-8').encode('gbk')
+else:
+    oneline = key
 vim.command("return '%s'" % oneline)
 EOF
 endfunction
@@ -2907,7 +2909,7 @@ endfunction
 function! s:vimim_more_pinyin_candidates(keyboard)
     " [purpose] if not english, make standard layout for popup menu
     " input  =>  mamahuhu
-    " output =>  mamahuhu, mama, ma
+    " output =>  mamahu, mama
     if !empty(s:english_results)
         return []
     endif
@@ -2920,14 +2922,15 @@ function! s:vimim_more_pinyin_candidates(keyboard)
         let candidate = join(keyboards[0 : i], "")
         call add(candidates, candidate)
     endfor
+    if len(candidates) > 2
+        let candidates = candidates[0 : len(candidates)-2]
+    endif
     return candidates
 endfunction
 
 function! s:vimim_more_pinyin_datafile(keyboard, sentence)
-    if s:ui.im =~ 'pinyin' && a:keyboard !~ "[.']"
-        " for pinyin with valid keycodes only
-    else
-        return []
+    if s:ui.im !~ 'pinyin'
+        return []   " for pinyin with valid keycodes only
     endif
     let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
     if empty(candidates)
@@ -3385,7 +3388,7 @@ function! s:vimim_get_from_database(keyboard, search)
                 if !empty(matched_list)
                     call extend(results, matched_list)
                 endif
-                if len(results) > 60
+                if len(results) > 20*2
                     break
                 endif
             endfor
