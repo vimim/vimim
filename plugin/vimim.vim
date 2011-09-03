@@ -2423,12 +2423,14 @@ endfunction
 
 function! <SID>vimim_onekey_capital(key)
     let key = a:key
-    if pumvisible()
-        let key  = '\<C-E>'
-        let key .= tolower(a:key)
-        let key .= '\<C-R>=g:vimim()\<CR>'
-    endif
     let s:hjkl_h = 0
+    let lower = tolower(key)
+    let trigger = '\<C-R>=g:vimim()\<CR>'
+    if pumvisible()
+        let key = '\<C-E>' . lower . trigger
+    elseif &ru < 1
+        let key = lower . '\<End>' . trigger
+    endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
