@@ -256,6 +256,11 @@ function! s:vimim_initialize_local()
         let g:vimim_onekey_is_tab = 2
         let g:vimim_cloud = 'google,baidu,sogou,qq'
         let g:vimim_hjkl_directory = hjkl
+        let g:vimim_custom_color = -1
+        highlight!      Pmenu      NONE
+        highlight!      PmenuSbar  NONE
+        highlight!      PmenuThumb NONE
+        highlight! link PmenuSel   Title
     endif
 endfunction
 
@@ -728,7 +733,7 @@ function! s:vimim_imode_today_now(keyboard)
 endfunction
 
 function! s:vimim_imode_number(keyboard)
-    let keyboard = a:keyboard 
+    let keyboard = a:keyboard
     let ii = keyboard[0:1] " sample: i88 ii88 isw8ql iisw8ql
     let keyboard = ii==#'ii' ? keyboard[2:] : keyboard[1:]
     let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
@@ -1165,31 +1170,31 @@ function! s:vimim_chinese(key)
 endfunction
 
 function! s:vimim_initialize_skin()
+    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
+    highlight! vimim_none_color NONE
     if s:vimim_custom_color < 0
         return
     endif
-    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
-    highlight! link Cursor CursorIM
     if !empty(s:vimim_custom_color)
         if s:vimim_custom_color == 2 || s:vimim_custom_label > 0
-            highlight! PmenuSel NONE
+            highlight! link PmenuSel vimim_none_color
         elseif s:vimim_custom_color == 1
-            highlight! PmenuSel Title
+            highlight! link PmenuSel Title
         endif
-        highlight! PmenuSbar  NONE
-        highlight! PmenuThumb NONE
-        highlight! Pmenu      NONE
+        highlight! link PmenuSbar  vimim_none_color
+        highlight! link PmenuThumb vimim_none_color
+        highlight! link Pmenu      vimim_none_color
     endif
 endfunction
 
 function! s:vimim_restore_skin()
     set ruler
     highlight! link Cursor NONE
-    if s:vimim_custom_color != 0
-        highlight! clear PmenuSel   
-        highlight! clear PmenuSbar  
-        highlight! clear PmenuThumb 
-        highlight! clear Pmenu      
+    if s:vimim_custom_color > 0
+        highlight! link PmenuSel   NONE
+        highlight! link PmenuSbar  NONE
+        highlight! link PmenuThumb NONE
+        highlight! link Pmenu      NONE
     endif
 endfunction
 
@@ -4261,6 +4266,8 @@ function! s:vimim_i_setting_on()
     if s:vimim_custom_label > 0
         let &pumheight = s:horizontal_display
     endif
+    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
+    highlight! link Cursor CursorIM
 endfunction
 
 function! s:vimim_restore_setting()
