@@ -1479,6 +1479,31 @@ endfunction
 let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
 
+function! s:vimim_database_init()
+:sil!python << EOF
+def grep(string,list):
+  expr = re.compile(string)
+  return [elem for elem in list if expr.match(elem)]
+def getkey(key, partition):
+  isenglish = vim.eval('s:english_results')
+  if partition > 0 and len(key) > 1:
+      key = key[:-partition]
+  if key not in db and not isenglish:
+      while key and key not in db: key = key[:-1]
+  return key
+def getchinese(key):
+  if key in db:
+      chinese = key + ' ' + db.get(key)
+      if vim.eval("&encoding") != 'utf-8':
+        chinese = unicode(chinese, 'utf-8').encode('gbk')
+  else:
+      # english = db.keys()
+      # chinese = grep(key,english)
+      chinese = key
+  return chinese
+EOF
+endfunction
+
 function! s:vimim_get_from_python2(input, cloud)
 :sil!python << EOF
 import vim, urllib2
@@ -1713,30 +1738,6 @@ try:
         udpsend(vim.eval("join(a:000)"),"localhost",10007)
 except vim.error:
     print("vim error: %s" % vim.error)
-EOF
-endfunction
-
-function! s:vimim_sentence_database(input, sentence, partition)
-if empty(a:input)
-    return ""
-endif
-:sil!python << EOF
-key = vim.eval('a:input')
-isenglish = vim.eval('s:english_results')
-if int(vim.eval('a:sentence')) > 0:
-    partition = int(vim.eval('a:partition'))
-    if partition > 0 and len(key) > 1:
-        key = key[:-partition]
-    if key not in db and not isenglish:
-        while key and key not in db: key = key[:-1]
-    oneline = key
-elif key in db:
-    oneline = key + ' ' + db.get(key)
-    if vim.eval("&encoding") != 'utf-8':
-        oneline = unicode(oneline, 'utf-8').encode('gbk')
-else:
-    oneline = key
-vim.command("return '%s'" % oneline)
 EOF
 endfunction
 
@@ -3263,8 +3264,9 @@ function! s:vimim_scan_backend_embedded()
     let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db"
     let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
     if !empty(datafile) && has("python")
-        :python import vim, bsddb
+        :python import vim, bsddb, re
         :python db = bsddb.btopen(vim.eval('datafile'),'r')
+        :call s:vimim_database_init()
     else
         let datafile = s:vimim_data_file
     endif
@@ -3376,14 +3378,17 @@ function! s:vimim_get_from_datafile(keyboard, search)
 endfunction
 
 function! s:vimim_get_from_database(keyboard, search)
-    let keyboard = a:keyboard
-    let oneline = s:vimim_sentence_database(keyboard,0,1)
+    function! s:vimim_get_chinese_from_bsd(stone)
+        :python gold = getchinese(vim.eval('a:stone'))
+        :python vim.command("return '%s'" % gold)
+    endfunction
+    let oneline = s:vimim_get_chinese_from_bsd(a:keyboard)
     let results = s:vimim_make_pair_list(oneline)
     if empty(a:search) && len(results) > 0 && len(results) < 20
-        let candidates = s:vimim_more_pinyin_candidates(keyboard)
+        let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
         if len(candidates) > 1
             for candidate in candidates
-                let oneline = s:vimim_sentence_database(candidate,0,1)
+                let oneline = s:vimim_get_chinese_from_bsd(candidate)
                 let matched_list = s:vimim_make_pair_list(oneline)
                 if !empty(matched_list)
                     call extend(results, matched_list)
@@ -4657,7 +4662,10 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         endif
     elseif root =~# "datafile"
         if s:vimim_data_file =~ ".db"
-            let keyboard2 = s:vimim_sentence_database(keyboard,1,s:hjkl_h)
+            :python keyboard = vim.eval('keyboard')
+            :python partition = int(vim.eval('s:hjkl_h'))
+            :python keyboard2 = getkey(keyboard, partition)
+            :python vim.command("let keyboard2 = '%s'" % keyboard2)
             let results = s:vimim_get_from_database(keyboard2, a:search)
         else
             let keyboard2 = s:vimim_sentence_datafile(keyboard)
