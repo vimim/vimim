@@ -204,7 +204,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_search_next")
     call s:vimim_set_global_default(G, 1)
-    let s:onekey = 0
     let s:im_toggle = 0
     let s:frontends = []
     let s:loops = {}
@@ -1781,7 +1780,7 @@ function! g:vimim_onekey()
         sil!call s:vimim_onekey_mapping_pumvisible()
         sil!call s:vimim_onekey_mapping_punctuation()
         sil!call s:vimim_start()
-        let s:onekey += 1
+        let s:onekey = 1
         let onekey = s:vimim_onekey_action(0)
     endif
     sil!exe 'sil!return "' . onekey . '"'
