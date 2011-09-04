@@ -1772,19 +1772,19 @@ function! g:vimim_onekey()
     elseif &ruler < 1
         let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
-    elseif one_before =~ s:valid_key || has_key(s:punctuations,one_before)
+    elseif s:vimim_onekey_is_tab > 0 && one_before =~ '\s'
+        let onekey = '\t'
+    else
         sil!call s:vimim_frontend_initialization()
         sil!call s:vimim_onekey_pumvisible_mapping()
         sil!call s:vimim_onekey_punctuation_mapping()
         sil!call s:vimim_start()
-        let onekey = s:vimim_onekey_action()
-    elseif s:vimim_onekey_is_tab > 0
-        let onekey = '\t'
+        let onekey = s:vimim_onekey_action(0)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! s:vimim_onekey_action()
+function! s:vimim_onekey_action(space)
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
     let two_before = current_line[col(".")-3]
@@ -1809,7 +1809,10 @@ function! s:vimim_onekey_action()
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
-    let onekey = one_before=~s:valid_key ? g:vimim() : " "
+    let onekey = a:space ? " " : ""
+    if one_before =~ s:valid_key
+        let onekey = g:vimim()
+    endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
@@ -1826,7 +1829,7 @@ function! <SID>vimim_space()
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
         let right_arrow = s:vimim_get_right_arrow()
-        let space = right_arrow . s:vimim_onekey_action()
+        let space = right_arrow . s:vimim_onekey_action(1)
     endif
     sil!exe 'sil!return "' . space . '"'
 endfunction
@@ -2174,9 +2177,9 @@ function! s:vimim_initialize_encoding()
 endfunction
 
 function! s:vimim_get_char_before(keyboard)
-    let line = getline(".")
+    let current_line = getline(".")
     let start = col(".") -1 - s:multibyte * len(a:keyboard)
-    let char_before = line[start : start+s:multibyte-1]
+    let char_before = current_line[start : start+s:multibyte-1]
     if char_before =~ '\w'
         let char_before = a:keyboard
     endif
