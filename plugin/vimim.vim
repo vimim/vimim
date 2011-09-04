@@ -1160,7 +1160,7 @@ function! s:vimim_chinese(key)
     if has_key(s:status, chinese)
         let twins = split(s:status[chinese])
         let chinese = get(twins,0)
-        if len(twins) > 1 && s:vimim_onekey_is_tab < 2
+        if len(twins) > 1 && s:vimim_imode_pinyin < 2
             let chinese = get(twins,1)
         endif
     endif
@@ -1772,7 +1772,10 @@ function! g:vimim_onekey()
     elseif &ruler < 1
         let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
-    elseif s:vimim_onekey_is_tab>0 && one_before !~ s:valid_key
+    elseif s:vimim_onekey_is_tab > 0
+        \&& one_before !~ s:valid_key
+        \&& !has_key(s:evils,one_before)
+        \&& !has_key(s:punctuations,one_before)
         let onekey = '\t'
     else
         sil!call s:vimim_frontend_initialization()
@@ -1799,13 +1802,11 @@ function! s:vimim_onekey_action(space)
                 endif
             endfor
             " transfer English punctuation to Chinese punctuation
-            let replacement = punctuations[one_before]
-            if one_before == "'"
-                let replacement = <SID>vimim_get_quote(1)
-            elseif one_before == '"'
-                let replacement = <SID>vimim_get_quote(2)
+            let bs = punctuations[one_before]
+                if one_before == "'" |let bs = <SID>vimim_get_quote(1)
+            elseif one_before == '"' |let bs = <SID>vimim_get_quote(2)
             endif
-            let onekey = "\<BS>" . replacement
+            let onekey = "\<BS>" . bs
             sil!exe 'sil!return "' . onekey . '"'
         endif
     endif
@@ -3566,7 +3567,9 @@ function! s:vimim_set_cloud(im)
         let s:backend.cloud = {}
         return
     endif
-    let s:vimim_imode_pinyin = 1
+    if  empty(s:vimim_imode_pinyin)
+        let s:vimim_imode_pinyin = 1
+    endif
     let s:mycloud = 0
     let s:ui.root = 'cloud'
     let s:ui.im = im
