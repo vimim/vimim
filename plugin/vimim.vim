@@ -1300,14 +1300,11 @@ function! s:vimim_label_on()
     if s:vimim_custom_label > 0
         let s:abcd = join(labels, '')
     else
-        let labels = range(len(s:abcd))
+        let labels = range(10)
         let s:abcd = s:abcd[0 : &pumheight-2] . s:abcd[-1:]
         let abcd_list = split(s:abcd, '\zs')
         if s:chinese_input_mode =~ 'onekey'
             let labels += abcd_list
-            if !empty(s:cjk_filename)
-                let labels = abcd_list
-            endif
             call remove(labels, match(labels,"'"))
         else
             let labels += [";", "'"]
@@ -1333,7 +1330,11 @@ function! <SID>vimim_alphabet_number_label(key)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let key = down . yes
         let s:has_pumvisible = 1
-        call g:vimim_reset_after_insert()
+        if s:chinese_input_mode =~ 'onekey' && a:key =~ '\d'
+            call g:vimim_stop()
+        else
+            call g:vimim_reset_after_insert()
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1449,7 +1450,10 @@ endfunction
 
 function! s:vimim_get_labeling(label)
     let fmt = '%2s '
-    let labeling = a:label==10 ? "0" : a:label
+    let labeling = a:label
+    if a:label == 10 && empty(s:cjk_filename) && empty(s:hjkl_l%2)
+        let labeling = "0"
+    endif
     if s:chinese_input_mode =~ 'onekey'
         if s:show_me_not > 0
             let fmt = '%02s '
@@ -1459,11 +1463,6 @@ function! s:vimim_get_labeling(label)
         elseif a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
             let labeling .= label2
-            if !empty(s:cjk_filename)
-                let labeling = label2
-            endif
-        elseif a:label == &pumheight + 1 && !empty(s:cjk_filename)
-            let labeling = a:label
         endif
         if s:hjkl_l > 0 && &pumheight < 1
             let fmt = '%02s '
