@@ -1825,9 +1825,31 @@ function! <SID>vimim_space()
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
-        let space = s:vimim_onekey_action()
+        let right_arrow = s:vimim_get_right_arrow()
+        let space = right_arrow . s:vimim_onekey_action()
     endif
     sil!exe 'sil!return "' . space . '"'
+endfunction
+
+function! s:vimim_get_right_arrow()
+    let current_line = getline(".")
+    let current_column = col(".")-1
+    let start_column = current_column
+    let before = current_line[current_column-1]
+    let cursor = current_line[current_column]
+    let n = 0  " to trigger word under cursor
+    if before =~ '\l' && cursor =~ '\l'
+        while cursor =~ '\l'
+            let current_column += 1
+            let cursor = current_line[current_column]
+        endwhile
+        let n = current_column - start_column
+    endif
+    let right_arrow = ""
+    if n > 0 && n < 72
+        let right_arrow = repeat("\<Right>", n)
+    endif
+    return right_arrow
 endfunction
 
 function! g:vimim_menu_to_clip()
@@ -2429,7 +2451,8 @@ function! <SID>vimim_onekey_capital(key)
     if pumvisible()
         let key = '\<C-E>' . lower . trigger
     elseif &ru < 1
-        let key = lower . '\<C-[>ea' . trigger
+        let right_arrow = s:vimim_get_right_arrow()
+        let key = lower . right_arrow . trigger
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
