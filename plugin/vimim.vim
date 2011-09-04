@@ -904,9 +904,9 @@ function! <SID>vimim_chinese_punctuation_map(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_onekey_punctuation_mapping()
+function! s:vimim_onekey_mapping_punctuation()
     if s:vimim_chinese_punctuation < 0
-        return 0
+        return
     endif
     let special_punctuation = "[]-=.,/?;"
     let map_list = split(special_punctuation,'\zs')
@@ -1761,7 +1761,7 @@ endfunction
 
 function! g:vimim_onekey()
     " (1)<OneKey> in insert mode => start OneKey as the MidasTouch
-    " (2)<OneKey> in insert mode => stop  OneKey on non-English
+    " (2)<OneKey> in OneKey mode => stop  OneKey
     " (3)<OneKey> in omni   mode => stop  OneKey and print out menu
     let onekey = ''
     let s:chinese_input_mode = 'onekey'
@@ -1772,12 +1772,12 @@ function! g:vimim_onekey()
     elseif &ruler < 1
         let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
-    elseif s:vimim_onekey_is_tab > 0 && one_before =~ '\s'
+    elseif s:vimim_onekey_is_tab>0 && one_before !~ s:valid_key
         let onekey = '\t'
     else
         sil!call s:vimim_frontend_initialization()
-        sil!call s:vimim_onekey_pumvisible_mapping()
-        sil!call s:vimim_onekey_punctuation_mapping()
+        sil!call s:vimim_onekey_mapping_pumvisible()
+        sil!call s:vimim_onekey_mapping_punctuation()
         sil!call s:vimim_start()
         let onekey = s:vimim_onekey_action(0)
     endif
@@ -2394,7 +2394,7 @@ function! s:vimim_pageup_pagedown()
     return matched_list
 endfunction
 
-function! s:vimim_onekey_pumvisible_mapping()
+function! s:vimim_onekey_mapping_pumvisible()
     for _ in split('hjklmn<>xs', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
