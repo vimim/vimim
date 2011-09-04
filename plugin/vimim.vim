@@ -199,7 +199,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud")
     call s:vimim_set_global_default(G, 0)
     let G = []
-    call add(G, "g:vimim_midas_touch_non_stop")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_custom_color")
@@ -4360,8 +4359,6 @@ function! g:vimim()
     let one_before = getline(".")[col(".")-2]
     if one_before =~ s:valid_key
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
-    elseif s:vimim_midas_touch_non_stop<1 && s:chinese_input_mode=~'onekey'
-        call g:vimim_stop()
     else
         let s:has_pumvisible = 0
     endif
