@@ -2395,7 +2395,8 @@ function! s:vimim_onekey_pumvisible_mapping()
     for _ in split('hjklmn<>xs', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
-    for _ in s:qwerty + range(10)
+    let qwerty = s:vimim_onekey_is_tab==2 ? s:qwerty : s:qwerty+range(10)
+    for _ in qwerty
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwerty("'._.'")'
     endfor
     if empty(s:vimim_latex_suite)
