@@ -99,7 +99,7 @@ function! s:vimim_initialize_session()
     let s:Az_list = s:az_list + s:AZ_list
     let s:valid_keys = s:az_list
     let s:valid_key = 0
-    let s:abcd = "'abcdvfgzs"
+    let s:abcd = "'abcdvfgsz"
     let s:qwerty = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let s:horizontal_display = s:vimim_custom_label>0 ? 5 : 0
@@ -1301,7 +1301,7 @@ function! s:vimim_label_on()
         let s:abcd = join(labels, '')
     else
         let labels = range(len(s:abcd))
-        let s:abcd = s:abcd[0 : &pumheight-1]
+        let s:abcd = s:abcd[0 : &pumheight-2] . s:abcd[-1:]
         let abcd_list = split(s:abcd, '\zs')
         if s:chinese_input_mode =~ 'onekey'
             let labels += abcd_list
