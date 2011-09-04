@@ -2219,21 +2219,17 @@ endfunction
 
 function! s:vimim_cjk_extra_text(chinese)
     let ddddd = char2nr(a:chinese)
-    let unicode = printf('u%04x', ddddd) . s:space . ddddd
+    let unicode = ddddd . s:space . printf('u%04x',ddddd)
     if !empty(s:cjk_filename)
         let grep = "^" . a:chinese
         let line = match(s:cjk_lines, grep, 0)
         if line > -1
-            let values = split(get(s:cjk_lines, line))
-            let dddd = s:vimim_digit_4corner>0 ? 2 : 1
-            let digit = get(values, dddd)
-            let pinyin = get(values, 3)
-            let english = join(values[4:-2])
-            let unicode .= s:space . digit
-            let unicode .= s:space . pinyin
-            if !empty(english)
-                let unicode .= s:space . english
-            endif
+            let values  = split(get(s:cjk_lines, line))
+            let dddd    = s:vimim_digit_4corner>0 ? 2 : 1
+            let digit   = s:space . get(values, dddd)
+            let pinyin  = s:space . get(values, 3)
+            let english = s:space . join(values[4:-2])
+            let unicode = unicode . digit . pinyin . english
         endif
     endif
     return unicode
@@ -2559,11 +2555,11 @@ function! s:vimim_cjk_match(keyboard)
         return []
     endif
     let keyboard = a:keyboard
-    let grep_frequency = '.*' . ' \d\+\( u\)\=$'
+    let grep_frequency = '.*' . '\s\d\+$'
     let grep = ""
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_s))
-            " cjk pinyin with tone: huan2hai2
+            " cjk pinyin with tone: huan2hai2 yi1
             let grep = keyboard . '[a-z ]'
         else
             let digit = ""
@@ -2596,7 +2592,7 @@ function! s:vimim_cjk_match(keyboard)
         endif
     elseif !empty(s:cjk_filename)
         if keyboard == 'u' " 214 standard unicode index
-            let grep = '\s' . keyboard . '$'
+            let grep = '\s\d\d\d\d\s\d\d\d\d\su\s'
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
@@ -2618,12 +2614,11 @@ function! s:vimim_cjk_match(keyboard)
 endfunction
 
 function! s:vimim_cjk_grep_results(grep)
-    let grep = a:grep
-    if empty(grep) || empty(s:cjk_filename)
+    if empty(a:grep) || empty(s:cjk_filename)
         return []
     endif
     let results = []
-    let line = match(s:cjk_lines, grep)
+    let line = match(s:cjk_lines, a:grep)
     while line > -1
         let values = split(get(s:cjk_lines, line))
         let frequency_index = get(values, -1)
@@ -2632,7 +2627,7 @@ function! s:vimim_cjk_grep_results(grep)
         endif
         let chinese_frequency = get(values,0) . ' ' . frequency_index
         call add(results, chinese_frequency)
-        let line = match(s:cjk_lines, grep, line+1)
+        let line = match(s:cjk_lines, a:grep, line+1)
     endwhile
     return results
 endfunction
@@ -2753,7 +2748,7 @@ endfunction
 
 function! s:vimim_onekey_english(keyboard, order)
     let results = []
-    if !empty(s:cjk_filename)
+    if !empty(s:cjk_filename) && a:keyboard !~ '\d'
         " [sql] select english from vimim.cjk.txt
         let grep_english = '\s' . a:keyboard . '\s'
         let results = s:vimim_cjk_grep_results(grep_english)
@@ -4580,7 +4575,7 @@ function! s:vimim_popupmenu_list(matched_list)
             endfor
             let chinese = simplified_traditional
         endif
-        if s:hjkl_h>0 && s:hjkl_h%2>0 && len(chinese)==s:multibyte
+        if s:hjkl_h>0 && s:hjkl_h%2>0 && len(chinese)%s:multibyte<1
             let extra_text = menu
             if empty(s:english_results)
                 let extra_text = s:vimim_cjk_extra_text(chinese)
