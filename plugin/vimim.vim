@@ -204,6 +204,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_search_next")
     call s:vimim_set_global_default(G, 1)
+    let s:onekey = 0
     let s:im_toggle = 0
     let s:frontends = []
     let s:loops = {}
@@ -1767,7 +1768,7 @@ function! g:vimim_onekey()
     let one_before = getline(".")[col(".")-2]
     if pumvisible() && len(s:popupmenu_list) > 0
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-    elseif &ruler < 1
+    elseif s:onekey > 0
         let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
     elseif s:vimim_onekey_is_tab > 0
@@ -1780,6 +1781,7 @@ function! g:vimim_onekey()
         sil!call s:vimim_onekey_mapping_pumvisible()
         sil!call s:vimim_onekey_mapping_punctuation()
         sil!call s:vimim_start()
+        let s:onekey += 1
         let onekey = s:vimim_onekey_action(0)
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -2444,7 +2446,7 @@ endfunction
 
 function! <SID>vimim_onekey_capital(key)
     let key = a:key
-    let s:hjkl_h = 0
+    let s:hjkl_h = -1
     let lower = tolower(key)
     let trigger = '\<C-R>=g:vimim()\<CR>'
     if pumvisible()
@@ -4260,6 +4262,7 @@ function! s:vimim_initialize_i_setting()
     let s:lazyredraw  = &lazyredraw
     let s:showmatch   = &showmatch
     let s:smartcase   = &smartcase
+    let s:ruler       = &ruler
 endfunction
 
 function! s:vimim_setting_on()
@@ -4269,7 +4272,7 @@ function! s:vimim_setting_on()
     set omnifunc=VimIM
     set nolazyredraw
     set noshowmatch
-    set smartcase
+    set noruler
     if &pumheight < 1 || &pumheight > 10
         let &pumheight = len(s:abcd)
         if !empty(s:cjk_filename)
@@ -4280,7 +4283,6 @@ function! s:vimim_setting_on()
     if s:vimim_custom_label > 0
         let &pumheight = s:horizontal_display
     endif
-    set noruler
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
@@ -4295,7 +4297,7 @@ function! s:vimim_restore_setting()
     let &showmatch   = s:showmatch
     let &smartcase   = s:smartcase
     let &pumheight   = s:pumheight_saved
-    set ruler
+    let &ruler       = s:ruler
     highlight! link Cursor NONE
 endfunction
 
@@ -4327,6 +4329,7 @@ endfunction
 
 function! s:vimim_reset_before_anything()
     let s:cloud_onekey = s:cloud_onekey>1 ? 2 : 0
+    let s:onekey = 0
     let s:has_pumvisible = 0
     let s:popupmenu_list = []
     let s:keyboard_list  = []
@@ -4697,7 +4700,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
-            if s:hjkl_h < 1 && s:vimim_data_file =~ ".db"
+            if empty(s:hjkl_h) && s:vimim_data_file =~ ".db"
                 let s:hjkl_h += len(tail)
             endif
         endif
