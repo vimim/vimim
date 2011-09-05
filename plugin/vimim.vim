@@ -205,7 +205,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_search_next")
     call s:vimim_set_global_default(G, 1)
     let s:im_toggle = 0
-    let s:conekey_cloud = 0
+    let s:onekey_cloud = 0
     let s:frontends = []
     let s:loops = {}
     let s:numbers = {}
@@ -1953,12 +1953,12 @@ function! s:vimim_magic_tail(keyboard)
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
     if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z']"
-        let s:conekey_cloud = 0
+        let s:onekey_cloud = 0
         let keyboard = keyboard[:-2]
         if magic_tail ==# "'"
             let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
             if cloud_ready > 0
-                let s:conekey_cloud = 1  " forced-cloud
+                let s:onekey_cloud = 1  " forced-cloud
                 if last_but_one ==# "'"  " switch-cloud
                     let keyboard = keyboard[:-2]
                     let clouds = split(s:vimim_cloud,',')
@@ -3649,7 +3649,7 @@ function! s:vimim_do_cloud_or_not(keyboard)
     if s:vimim_cloud < 0 || a:keyboard =~ "[^a-z]"
         return 0
     endif
-    if s:conekey_cloud > 0
+    if s:onekey_cloud > 0
         return 1
     endif
     if s:chinese_input_mode=~'onekey' && !empty(s:cjk_filename)
