@@ -906,25 +906,28 @@ endfunction
 
 function! <SID>vimim_onekey_punctuation(key)
     let hjkl = a:key
-    if pumvisible()
-        if a:key =~ ";"
-            let hjkl = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
-        elseif a:key =~ "[][]"
-            let hjkl = s:vimim_square_bracket(a:key)
-        elseif a:key =~ "[/?]"
-            let hjkl = s:vimim_menu_search(a:key)
-        elseif a:key =~ "[-,]"
-            let hjkl = '\<PageUp>'
-            if &pumheight > 0
-                let s:pageup_pagedown = -1
-                let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
-            endif
-        elseif a:key =~ "[=.]"
-            let hjkl = '\<PageDown>'
-            if &pumheight > 0
-                let s:pageup_pagedown = 1
-                let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
-            endif
+    if !pumvisible()
+        return hjkl
+    endif
+    if a:key =~ ";"
+        let hjkl = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
+    elseif a:key =~ "[][]"
+        let hjkl = s:vimim_square_bracket(a:key)
+    elseif a:key =~ "[/?]"
+        let hjkl = s:vimim_menu_search(a:key)
+    elseif a:key =~ "[-,]"
+        let hjkl = '\<PageUp>'
+        if &pumheight > 0
+            let s:pageup_pagedown = -1
+            let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
+        endif
+    elseif a:key =~ "'"
+        let hjkl = a:key . '\<C-R>=g:vimim()\<CR>'
+    elseif a:key =~ "[=.]"
+        let hjkl = '\<PageDown>'
+        if &pumheight > 0
+            let s:pageup_pagedown = 1
+            let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -1802,13 +1805,13 @@ function! <SID>vimim_space()
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
-        call g:vimim_reset_after_insert()
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
         let right_arrow = s:vimim_get_right_arrow()
         let space = right_arrow . s:vimim_onekey_action(1)
     endif
+    call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
@@ -1827,7 +1830,9 @@ function! s:vimim_get_right_arrow()
         let n = current_column - start_column
     endif
     let right_arrow = ""
+    let s:onekey_caps_lock = 1
     if n > 0 && n < 72
+        let s:onekey_caps_lock = 0
         let right_arrow = repeat("\<Right>", n)
     endif
     return right_arrow
@@ -2059,10 +2064,8 @@ function! s:vimim_chinesemode_action()
             \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
             \ . char . '<C-R>=g:vimim_reset_after_insert()<CR>'
         endfor
-        if pumvisible()
-            " <C-\> does nothing on popup menu
-        else
-            let action = s:vimim_static_action("")
+        if !pumvisible()
+            let action = s:vimim_static_action(action)
         endif
     endif
     sil!exe 'sil!return "' . action . '"'
@@ -2360,20 +2363,21 @@ function! s:vimim_onekey_mapping()
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps("'._.'")'
         endfor
     endif
-    if s:vimim_chinese_punctuation < 0
-        return
-    endif
-    let special_punctuation = "[]-=.,/?;"
-    let map_list = split(special_punctuation,'\zs')
-    for char in s:valid_keys
-        let i = index(map_list, char)
-        if i > -1 && char != "."
-            unlet map_list[i]
-        endif
-    endfor
-    for _ in map_list
+    let onekey_punctuation = "[]-=.,/?;'"
+    for _ in split(onekey_punctuation,'\zs')
         sil!exe 'ino<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
     endfor
+    if empty(s:vimim_backslash_close_pinyin)
+        inoremap <expr> <Bslash>  <SID>vimim_onekey_bslash_seamless()
+    endif
+endfunction
+
+function! <SID>vimim_onekey_bslash_seamless()
+    let bslash = '\\'
+    if pumvisible()
+        let bslash = '\<C-Y>'
+    endif
+    sil!exe 'sil!return "' . bslash . '"'
 endfunction
 
 function! <SID>vimim_onekey_hjkl(key)
@@ -2421,8 +2425,7 @@ function! <SID>vimim_onekey_caps(key)
     let trigger = '\<C-R>=g:vimim()\<CR>'
     if pumvisible()
         let key = '\<C-E>' . lower . trigger
-    elseif s:onekey > 0
-        let s:onekey_caps_lock = 1
+    else
         let right_arrow = s:vimim_get_right_arrow()
         let key = lower . right_arrow . trigger
     endif
