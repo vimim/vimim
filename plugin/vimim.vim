@@ -1374,6 +1374,11 @@ function! g:vimim_bracket(offset)
     let delete_char = ""
     if repeat_times > 0 && row_end == row_start
         let delete_char = repeat("\<BS>", repeat_times)
+        if a:offset > 0  " omni bslash for seamless
+            let left = repeat("\<Left>", repeat_times-1)
+            let right = repeat("\<Right>", repeat_times)
+            let delete_char = left . "\<BS>" . right
+        endif
     endif
     if repeat_times < 1
         let current_line = getline(".")
@@ -2368,14 +2373,14 @@ function! s:vimim_onekey_mapping()
         sil!exe 'ino<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
     endfor
     if empty(s:vimim_backslash_close_pinyin)
-        inoremap <expr> <Bslash>  <SID>vimim_onekey_bslash_seamless()
+        inoremap <expr> <Bslash>  <SID>vimim_onekey_omni_bslash_seamless()
     endif
 endfunction
 
-function! <SID>vimim_onekey_bslash_seamless()
+function! <SID>vimim_onekey_omni_bslash_seamless()
     let bslash = '\\'
-    if pumvisible()
-        let bslash = '\<C-Y>'
+    if pumvisible() && s:show_me_not < 1
+        let bslash = '\<C-Y>\<C-R>=g:vimim_bracket(1)\<CR>'
     endif
     sil!exe 'sil!return "' . bslash . '"'
 endfunction
