@@ -1330,7 +1330,7 @@ function! <SID>vimim_alphabet_number_label(key)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let key = down . yes
         let s:has_pumvisible = 1
-        if s:chinese_input_mode =~ 'onekey' && a:key =~ '\d'
+        if s:onekey == 1 && a:key =~ '\d'
             call g:vimim_stop()
         else
             call g:vimim_reset_after_insert()
@@ -1460,7 +1460,7 @@ function! s:vimim_get_labeling(label)
             if s:hjkl_l % 2 < 1
                 let labeling = ""
             endif
-        elseif a:label < &pumheight + 1
+        elseif a:label < &pumheight + 1 && s:onekey == 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
             let labeling .= label2
         endif
@@ -1488,13 +1488,13 @@ def getstone(key, partition):
         while key and key not in db: key = key[:-1]
     return key
 def getgold(key):
-  if key in db:
-      chinese = key + ' ' + db.get(key)
-      if vim.eval("&encoding") != 'utf-8':
-          chinese = unicode(chinese, 'utf-8').encode('gbk')
-  else:
-      chinese = key
-  return chinese
+    if key in db:
+        chinese = key + ' ' + db.get(key)
+        if vim.eval("&encoding") != 'utf-8':
+            chinese = unicode(chinese, 'utf-8').encode('gbk')
+    else:
+        chinese = key
+    return chinese
 EOF
 endfunction
 
@@ -1571,7 +1571,7 @@ from datetime import datetime
 from email.mime.text import MIMEText
 def vimim_gmail():
     gmails = vim.eval('g:gmails')
-    vim.command('unlet g:gmails.bcc')
+    vim.command('sil!unlet g:gmails.bcc')
     now = datetime.now().strftime("%A %m/%d/%Y")
     gmail_login  = gmails.get("login","")
     if len(gmail_login) < 8: return None
@@ -1591,8 +1591,6 @@ def vimim_gmail():
         gmail.starttls()
         gmail.login(gmail_login, gmail_passwd[::-1])
         gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
-    except SMTPException:
-        print "The Zen of Python"
     finally:
         gmail.close()
 vimim_gmail()
@@ -2137,21 +2135,15 @@ endfunction
 let s:VimIM += [" ====  input unicode    ==== {{{"]
 " =================================================
 
+" ------------ ----------------- -------------- -----------
+" vim encoding datafile encoding s:localization performance
+" ------------ ----------------- -------------- -----------
+"   utf-8          utf-8                0          good
+"   chinese        chinese              0          good
+"   utf-8          chinese              1          bad
+"   chinese        utf-8                2          bad
+" ------------ ----------------- -------------- -----------
 function! s:vimim_initialize_encoding()
-    let s:encoding = "utf8"
-    if &encoding =~ 'chinese\|cp936\|gb2312\|gbk\|euc-cn'
-        let s:encoding = "chinese"
-    elseif &encoding =~ 'taiwan\|cp950\|big5\|euc-tw'
-        let s:encoding = "taiwan"
-    endif
-    " ------------ ----------------- -------------- -----------
-    " vim encoding datafile encoding s:localization performance
-    " ------------ ----------------- -------------- -----------
-    "   utf-8          utf-8                0          good
-    "   chinese        chinese              0          good
-    "   utf-8          chinese              1          bad
-    "   chinese        utf-8                2          bad
-    " ------------ ----------------- -------------- -----------
     let s:localization = 0
     if &encoding == "utf-8"
         if len("datafile_fenc_chinese") > 20110129
@@ -2434,11 +2426,12 @@ endfunction
 function! <SID>vimim_onekey_capital(key)
     let key = a:key
     let s:hjkl_h = 0
+    let s:onekey = 2
     let lower = tolower(key)
     let trigger = '\<C-R>=g:vimim()\<CR>'
     if pumvisible()
         let key = '\<C-E>' . lower . trigger
-    elseif &ru < 1
+    elseif s:onekey > 0
         let right_arrow = s:vimim_get_right_arrow()
         let key = lower . right_arrow . trigger
     endif
@@ -3925,6 +3918,7 @@ function! s:vimim_get_cloud_all(keyboard)
     endfor
     call s:debug('info', 'cloud_results=', results)
     let s:show_me_not = 1
+    let s:onekey_cloud = 1
     return results
 endfunction
 
