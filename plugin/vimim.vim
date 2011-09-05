@@ -2499,7 +2499,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:ui.im == 'pinyin'
+    elseif s:ui.im == 'pinyin' || s:ui.root == 'cloud'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
         \&& keyboard =~ '^\l' && keyboard[1:4] !~ '[^pqwertyuio]'
             " muuqwxeyqpjeqqq => m7712x3610j3111
