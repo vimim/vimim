@@ -1373,13 +1373,7 @@ function! g:vimim_bracket(offset)
     let row_start = s:start_row_before
     let delete_char = ""
     if repeat_times > 0 && row_end == row_start
-        if a:offset > 0  " omni bslash for seamless
-            let left = repeat("\<Left>", repeat_times-1)
-            let right = repeat("\<Right>", repeat_times-1)
-            let delete_char = left . "\<BS>" . right
-        else
-            let delete_char = repeat("\<BS>", repeat_times)
-        endif
+        let delete_char = repeat("\<BS>", repeat_times)
     endif
     if repeat_times < 1
         let current_line = getline(".")
@@ -2381,7 +2375,7 @@ endfunction
 function! <SID>vimim_onekey_omni_bslash_seamless()
     let bslash = '\\'
     if pumvisible() && s:show_me_not < 1
-        let bslash = '\<C-Y>\<C-R>=g:vimim_bracket(1)\<CR>'
+        let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
     endif
     sil!exe 'sil!return "' . bslash . '"'
 endfunction
@@ -4456,7 +4450,9 @@ else
         endif
         let results = s:vimim_onekey_input(keyboard)
         if empty(len(results))
-            if s:ui.root == 'cloud' && !empty(s:english_results)
+            if s:ui.root == 'cloud' 
+            \&& s:onekey_cloud < 1 
+            \&& !empty(s:english_results)
                 return s:vimim_popupmenu_list(s:english_results)
             endif
         elseif empty(s:english_results)
