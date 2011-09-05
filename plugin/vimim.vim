@@ -585,7 +585,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
         return results
     endif
     " 3/3 search local datafiles => slash search english: /horse
-    if keyboard =~ '^\l\+' && keyboard !~ '\L'
+    if keyboard =~ '^\l\+' && keyboard !~# '\L'
         let s:english_results = []
         sil!call s:vimim_onekey_english(a:keyboard, 1)
     endif
@@ -1571,7 +1571,7 @@ from datetime import datetime
 from email.mime.text import MIMEText
 def vimim_gmail():
     gmails = vim.eval('g:gmails')
-    vim.command('sil!unlet g:gmails.bcc')
+    vim.command('unlet g:gmails.bcc')
     now = datetime.now().strftime("%A %m/%d/%Y")
     gmail_login  = gmails.get("login","")
     if len(gmail_login) < 8: return None
@@ -1892,8 +1892,6 @@ function! s:vimim_onekey_input(keyboard)
         endif
         return lines
     endif
-    " [dot_by_dot] i.have.a.dream
-    let keyboard = s:vimim_dot_by_dot(keyboard)
     " [english] english cannot be ignored
     if keyboard =~ '^\l\+' && empty(s:english_results)
         sil!call s:vimim_onekey_english(keyboard, 0)
@@ -1914,11 +1912,8 @@ endfunction
 
 function! s:vimim_dot_by_dot(keyboard)
     let keyboard = a:keyboard
-    if s:ui.has_dot > 0 || keyboard !~ '[^0-9.]'
-        return keyboard
-    endif
     let partition = match(keyboard, "[.']")
-    if partition > -1 && keyboard[-1:] !~ "[.']"
+    if partition > -1 && empty(s:ui.has_dot)
         let keyboard = s:vimim_get_head(keyboard, partition)
     endif
     return keyboard
@@ -1958,7 +1953,7 @@ function! s:vimim_magic_tail(keyboard)
         if magic_tail ==# "'"
             let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
             if cloud_ready > 0
-                let s:onekey_cloud = 1  " forced-cloud
+                let s:onekey_cloud = 1   " forced-cloud
                 if last_but_one ==# "'"  " switch-cloud
                     let keyboard = keyboard[:-2]
                     let clouds = split(s:vimim_cloud,',')
@@ -3646,16 +3641,13 @@ function! s:vimim_check_http_executable()
 endfunction
 
 function! s:vimim_do_cloud_or_not(keyboard)
-    if s:vimim_cloud < 0 || a:keyboard =~ "[^a-z]"
+    if s:vimim_cloud < 0 || a:keyboard =~ '\L'
         return 0
-    endif
-    if s:onekey_cloud > 0
+    elseif s:onekey_cloud > 0
         return 1
-    endif
-    if s:chinese_input_mode=~'onekey' && !empty(s:cjk_filename)
+    elseif s:onekey > 0 && !empty(s:cjk_filename)
         return 0
-    endif
-    if s:ui.root == 'cloud'
+    elseif s:ui.root == 'cloud'
         return 1
     endif
     return 0
@@ -4441,12 +4433,29 @@ else
     if empty(keyboard) || keyboard !~# s:valid_key
         return []
     endif
+    " [mycloud] get chunmeng from mycloud local or www
+    if !empty(s:mycloud)
+        let results = s:vimim_get_mycloud_plugin(keyboard)
+        if !empty(len(results))
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
     " [onekey] play with nothing but OneKey
     if s:chinese_input_mode =~ 'onekey'
        " [clouds] all clouds for any input: fuck''''
         if keyboard[-4:] ==# "''''"
             let results = s:vimim_get_cloud_all(keyboard[:-5])
             return s:vimim_popupmenu_list(results)
+        endif
+        " [cloud] magic trailing apostrophe to control cloud
+        if empty(s:ui.has_dot)
+            let magic_tail = keyboard[-1:-1]
+            if magic_tail =~ "[.']" && keyboard !~ '\d'
+                let keyboard = s:vimim_magic_tail(keyboard)
+            else
+                " [dot_by_dot] i.have.a.dream
+                let keyboard = s:vimim_dot_by_dot(keyboard)
+            endif
         endif
         let results = s:vimim_onekey_input(keyboard)
         if empty(len(results))
@@ -4456,17 +4465,6 @@ else
         elseif empty(s:english_results)
             return s:vimim_popupmenu_list(results)
         endif
-    endif
-    " [mycloud] get chunmeng from mycloud local or www
-    if !empty(s:mycloud)
-        let results = s:vimim_get_mycloud_plugin(keyboard)
-        if !empty(len(results))
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-    " [cloud] magic trailing apostrophe to control cloud
-    if s:chinese_input_mode =~ 'onekey' && keyboard !~ '\d'
-        let keyboard = s:vimim_magic_tail(keyboard)
     endif
     " [shuangpin] support 6 major shuangpin
     if !empty(s:vimim_shuangpin) && s:has_pumvisible < 1
@@ -4666,7 +4664,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
             endif
         endif
     elseif root =~# "datafile"
-        if s:vimim_data_file =~ ".db" && keyboard !~ '\L'
+        if s:vimim_data_file =~ ".db" && keyboard !~# '\L'
             :python keyboard = vim.eval('keyboard')
             :python partition = int(vim.eval('s:hjkl_h'))
             :python keyboard2 = getstone(keyboard, partition)
