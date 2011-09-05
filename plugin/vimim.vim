@@ -248,7 +248,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hhjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -1244,32 +1244,34 @@ function! s:vimim_statusline()
             let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
         endif
     endif
-    let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-    if vimim_cloud =~ 'mixture'
-        let s:ui.statusline .= s:vimim_chinese('mixture')
-    elseif vimim_cloud =~ 'wubi'
-        let s:ui.statusline .= s:vimim_chinese('wubi')
-    elseif vimim_cloud =~ 'shuangpin'
-        if vimim_cloud =~ 'abc'
-            let s:ui.statusline .= s:vimim_chinese('abc')
-        elseif vimim_cloud =~ 'ms'
-            let s:ui.statusline .= s:vimim_chinese('ms')
-        elseif vimim_cloud =~ 'plusplus'
-            let s:ui.statusline .= s:vimim_chinese('plusplus')
-        elseif vimim_cloud =~ 'purple'
-            let s:ui.statusline .= s:vimim_chinese('purple')
-        elseif vimim_cloud =~ 'flypy'
-            let s:ui.statusline .= s:vimim_chinese('flypy')
-        elseif vimim_cloud =~ 'nature'
-            let s:ui.statusline .= s:vimim_chinese('nature')
-        endif
-        if vimim_cloud !~ 'abc'
-            let s:ui.statusline .= s:vimim_chinese('shuangpin')
-        endif
-    endif
     if !empty(s:mycloud)
         let __getname = s:backend.cloud.mycloud.directory
         let s:ui.statusline .= s:space . __getname
+    elseif s:ui.root == 'cloud'
+        let vimim_cloud = get(split(s:vimim_cloud,','), 0)
+        if vimim_cloud =~ 'mixture'
+            let s:ui.statusline .= s:vimim_chinese('mixture')
+        elseif vimim_cloud =~ 'wubi'
+            let s:ui.statusline .= s:vimim_chinese('wubi')
+        elseif vimim_cloud =~ 'shuangpin'
+            if vimim_cloud =~ 'abc'
+                let s:ui.statusline .= s:vimim_chinese('abc')
+            elseif vimim_cloud =~ 'ms'
+                let s:ui.statusline .= s:vimim_chinese('ms')
+            elseif vimim_cloud =~ 'plusplus'
+                let s:ui.statusline .= s:vimim_chinese('plusplus')
+            elseif vimim_cloud =~ 'purple'
+                let s:ui.statusline .= s:vimim_chinese('purple')
+            elseif vimim_cloud =~ 'flypy'
+                let s:ui.statusline .= s:vimim_chinese('flypy')
+            elseif vimim_cloud =~ 'nature'
+                let s:ui.statusline .= s:vimim_chinese('nature')
+            endif
+            if vimim_cloud !~ 'abc'
+                let s:ui.statusline .= s:vimim_chinese('shuangpin')
+            endif
+        endif
+        let s:ui.statusline .= s:vimim_chinese('cloud')
     endif
     return s:vimim_get_chinese_im()
 endfunction
