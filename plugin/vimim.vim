@@ -2446,7 +2446,7 @@ endfunction
 
 function! <SID>vimim_onekey_capital(key)
     let key = a:key
-    let s:hjkl_h = -1
+    let s:hjkl_h = 0
     let lower = tolower(key)
     let trigger = '\<C-R>=g:vimim()\<CR>'
     if pumvisible()
@@ -4576,11 +4576,8 @@ function! s:vimim_popupmenu_list(matched_list)
             endfor
             let chinese = simplified_traditional
         endif
-        if s:hjkl_h>0 && s:hjkl_h%2>0 && len(chinese)%s:multibyte<1
-            let extra_text = menu
-            if empty(s:english_results)
-                let extra_text = s:vimim_cjk_extra_text(chinese)
-            endif
+        if s:hjkl_h>0 && s:hjkl_h%2>0 && len(chinese)==s:multibyte
+            let extra_text = s:vimim_cjk_extra_text(chinese)
         endif
         if empty(s:mycloud)
             if !empty(keyboard) && s:show_me_not < 1
