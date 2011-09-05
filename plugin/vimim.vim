@@ -745,8 +745,8 @@ function! s:vimim_imode_number(keyboard)
             if ii ==# 'ii' && char =~ '[0-9sbq]'
                 let chinese = get(quantifier_list, 1)
             endif
+            let number .= chinese
         endif
-        let number .= chinese
     endfor
     if empty(number)
         return []
@@ -1941,38 +1941,29 @@ function! s:vimim_get_head(keyboard, partition)
 endfunction
 
 function! s:vimim_magic_tail(keyboard)
+    " <dot> triple play in OneKey:
+    "   (1) trailing dot => forced-non-cloud in cloud
+    "   (2) trailing dot => forced-cjk-match
+    "   (3) as word partition  => match dot by dot
+    " <apostrophe> double play in OneKey:
+    "   (1) one trailing apostrophe => cloud at will
+    "   (2) two trailing apostrophe => cloud switch
     let keyboard = a:keyboard
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
     if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z']"
-        " <dot> triple play in OneKey:
-        "   (1) trailing dot => forced-non-cloud in cloud
-        "   (2) trailing dot => forced-cjk-match
-        "   (3) as word partition  => match dot by dot
-        " <apostrophe> triple play in OneKey:
-        "   (1) one   trailing apostrophe => cloud at will
-        "   (2) two   trailing apostrophe => cloud for ever
-        "   (3) three trailing apostrophe => cloud switch
-    else
-        return keyboard
-    endif
-    if magic_tail ==# "."
         let s:cloud_onekey = 0
-    elseif magic_tail ==# "'"
-        let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
-        if cloud_ready > 0
-            " trailing apostrophe => forced-cloud
-            let s:cloud_onekey = 1
-            let last_three = keyboard[-3:-1]
-            let keyboard = keyboard[:-2]
-            if last_three ==# "'''"
-                let keyboard = keyboard[:-3]
-                let clouds = split(s:vimim_cloud,',')
-                let clouds = clouds[1:-1] + clouds[0:0]
-                let s:vimim_cloud = join(clouds,',')
-            elseif last_but_one ==# "'"
-                let keyboard = keyboard[:-2]
-                let s:cloud_onekey = 2
+        let keyboard = keyboard[:-2]
+        if magic_tail ==# "'"
+            let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
+            if cloud_ready > 0
+                let s:cloud_onekey = 1   " forced-cloud
+                if last_but_one ==# "'"  " switch-cloud
+                    let keyboard = keyboard[:-2]
+                    let clouds = split(s:vimim_cloud,',')
+                    let clouds = clouds[1:-1] + clouds[0:0]
+                    let s:vimim_cloud = join(clouds,',')
+                endif
             endif
         endif
     endif
@@ -2513,7 +2504,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         endif
         if empty(head)
             let a_keyboard = keyboard
-            if keyboard[-1:] ==# "."
+            if keyboard[-1:] =~ '[.]'
                 "  magic trailing dot to use control cjjp: sssss.
                 let s:hjkl_m += 1
                 let a_keyboard = keyboard[:len(keyboard)-2]
@@ -3294,7 +3285,7 @@ function! s:vimim_scan_backend_embedded()
         let datafile = s:vimim_data_file
     endif
     if !empty(datafile) && filereadable(datafile)
-        let im = get(split(datafile,"[.]"),1)
+        let im = get(split(datafile,'[.]'),1)
         return s:vimim_set_datafile(im, datafile)
     endif
     for im in s:all_vimim_input_methods
@@ -3554,7 +3545,6 @@ function! s:vimim_initialize_cloud()
     endif
     let s:mycloud = 0
     let s:http_executable = 0
-    let s:cloud_onekey = s:vimim_cloud=~'onekey' ? 2 : 0
 endfunction
 
 function! s:vimim_set_cloud(im)
@@ -4330,8 +4320,8 @@ function! s:vimim_super_reset()
 endfunction
 
 function! s:vimim_reset_before_anything()
-    let s:cloud_onekey = s:cloud_onekey>1 ? 2 : 0
     let s:onekey = 0
+    let s:cloud_onekey = 0
     let s:has_pumvisible = 0
     let s:popupmenu_list = []
     let s:keyboard_list  = []
