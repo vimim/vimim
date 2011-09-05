@@ -205,6 +205,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_search_next")
     call s:vimim_set_global_default(G, 1)
     let s:im_toggle = 0
+    let s:conekey_cloud = 0
     let s:frontends = []
     let s:loops = {}
     let s:numbers = {}
@@ -248,7 +249,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = simplify(s:path . '../../../hjkl/')
+    let hjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -1952,12 +1953,12 @@ function! s:vimim_magic_tail(keyboard)
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
     if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z']"
-        let s:cloud_onekey = 0
+        let s:conekey_cloud = 0
         let keyboard = keyboard[:-2]
         if magic_tail ==# "'"
             let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
             if cloud_ready > 0
-                let s:cloud_onekey = 1   " forced-cloud
+                let s:conekey_cloud = 1  " forced-cloud
                 if last_but_one ==# "'"  " switch-cloud
                     let keyboard = keyboard[:-2]
                     let clouds = split(s:vimim_cloud,',')
@@ -2580,8 +2581,8 @@ function! s:vimim_cjk_match(keyboard)
                 let s:hjkl_s = digit
             endif
         endif
-    elseif !empty(s:cjk_filename)
-        if keyboard == 'u' " 214 standard unicode index
+    else
+        if keyboard ==# 'u'       " 214 standard unicode index
             let grep = '\s\d\d\d\d\s\d\d\d\d\su\s'
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
@@ -2591,8 +2592,6 @@ function! s:vimim_cjk_match(keyboard)
             " support all cases: /huan /hai /yet /huan2 /hai2
             let grep = '[ 0-9]' . keyboard . '[0-9]'
         endif
-    else
-        return []
     endif
     let results = s:vimim_cjk_grep_results(grep)
     if len(results) > 0
@@ -3650,7 +3649,7 @@ function! s:vimim_do_cloud_or_not(keyboard)
     if s:vimim_cloud < 0 || a:keyboard =~ "[^a-z]"
         return 0
     endif
-    if s:cloud_onekey > 0
+    if s:conekey_cloud > 0
         return 1
     endif
     if s:chinese_input_mode=~'onekey' && !empty(s:cjk_filename)
@@ -4277,7 +4276,7 @@ function! s:vimim_setting_on()
     highlight! link Cursor CursorIM
 endfunction
 
-function! s:vimim_restore_setting()
+function! s:vimim_setting_off()
     let &cpo         = s:cpo
     let &omnifunc    = s:omnifunc
     let &completeopt = s:completeopt
@@ -4303,7 +4302,7 @@ function! s:vimim_start()
 endfunction
 
 function! g:vimim_stop()
-    sil!call s:vimim_restore_setting()
+    sil!call s:vimim_setting_off()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_imap_off()
     sil!call s:vimim_plugin_conflict_fix_off()
@@ -4319,7 +4318,6 @@ endfunction
 
 function! s:vimim_reset_before_anything()
     let s:onekey = 0
-    let s:cloud_onekey = 0
     let s:has_pumvisible = 0
     let s:popupmenu_list = []
     let s:keyboard_list  = []
@@ -4668,7 +4666,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
             endif
         endif
     elseif root =~# "datafile"
-        if s:vimim_data_file =~ ".db"
+        if s:vimim_data_file =~ ".db" && keyboard !~ '\L'
             :python keyboard = vim.eval('keyboard')
             :python partition = int(vim.eval('s:hjkl_h'))
             :python keyboard2 = getstone(keyboard, partition)
