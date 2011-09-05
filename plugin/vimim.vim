@@ -1316,7 +1316,7 @@ function! <SID>vimim_alphabet_number_label(key)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let key = down . yes
         let s:has_pumvisible = 1
-        if s:onekey > 0 && s:onekey_caps_lock < 1 && a:key =~ '\d'
+        if s:onekey > 0 && a:key =~ '\d'
             call g:vimim_stop()
         else
             call g:vimim_reset_after_insert()
@@ -1452,7 +1452,7 @@ function! s:vimim_get_labeling(label)
             if s:hjkl_l % 2 < 1
                 let labeling = ""
             endif
-        elseif s:onekey_caps_lock < 1 && a:label < &pumheight + 1
+        elseif a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
             let labeling .= label2
         endif
@@ -1799,7 +1799,7 @@ function! s:vimim_onekey_action(space)
         endif
     endif
     let onekey = a:space ? " " : ""
-    if one_before =~ s:valid_key
+    if one_before =~# s:valid_key
         let onekey = g:vimim()
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -1819,7 +1819,7 @@ function! <SID>vimim_space()
         let right_arrow = s:vimim_get_right_arrow()
         let space = right_arrow . s:vimim_onekey_action(1)
     endif
-    call g:vimim_reset_after_insert()
+    sil!call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
@@ -1838,9 +1838,7 @@ function! s:vimim_get_right_arrow()
         let n = current_column - start_column
     endif
     let right_arrow = ""
-    let s:onekey_caps_lock = 1
     if n > 0 && n < 72
-        let s:onekey_caps_lock = 0
         let right_arrow = repeat("\<Right>", n)
     endif
     return right_arrow
@@ -2428,14 +2426,11 @@ endfunction
 
 function! <SID>vimim_onekey_caps(key)
     let key = a:key
-    let s:hjkl_h = 0
-    let lower = tolower(key)
-    let trigger = '\<C-R>=g:vimim()\<CR>'
     if pumvisible()
+        let s:hjkl_h = 0
+        let lower = tolower(key)
+        let trigger = '\<C-R>=g:vimim()\<CR>'
         let key = '\<C-E>' . lower . trigger
-    else
-        let right_arrow = s:vimim_get_right_arrow()
-        let key = lower . right_arrow . trigger
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -4327,7 +4322,6 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_s = ""
     let s:matched_list = []
     let s:pageup_pagedown = 0
-    let s:onekey_caps_lock = 0
     if s:vimim_custom_label < 1
         let &pumheight = s:pumheight
     endif
@@ -4338,7 +4332,7 @@ function! g:vimim()
     let key = ""
     let s:keyboard_list = []
     let one_before = getline(".")[col(".")-2]
-    if one_before =~ s:valid_key
+    if one_before =~# s:valid_key
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
     else
         let s:has_pumvisible = 0
