@@ -204,7 +204,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_search_next")
     call s:vimim_set_global_default(G, 1)
-    let s:database = 0
     let s:im_toggle = 0
     let s:frontends = []
     let s:loops = {}
@@ -371,7 +370,7 @@ function! s:vimim_egg_vimim()
             let ui_im = get(frontend, 1)
             let vimim_toggle_list .= "," . ui_im
             let datafile = s:backend[ui_root][ui_im].name
-            let mass = s:database ? 'mass' : ui_root
+            let mass = datafile=~"db" ? 'mass' : ui_root
             let ciku = database . s:vimim_chinese(mass) . database
             call add(eggs, ciku . datafile)
         endfor
@@ -400,7 +399,7 @@ function! s:vimim_egg_vimim()
     endif
     if !empty(s:vimim_check_http_executable())
         let tool = s:vimim_chinese('tool') . s:colon
-        let title = s:http_executable=~'Python' ? '' : 'HTTP executable: '
+        let title = s:http_executable=~'Python' ? '' : "HTTP executable: "
         let option = tool . title . s:http_executable
         call add(eggs, option)
     endif
@@ -450,7 +449,7 @@ function! s:vimim_get_hjkl(keyboard)
             let unicode = "一 圣 性 楊 版 答 葬 走 隐"
             let lines = split(unicode)
         endif
-    elseif keyboard !~ 'db'
+    elseif keyboard !~ "db"
         " [poem] check entry in special directories first
         let datafile = s:vimim_check_filereadable(keyboard)
         if !empty(datafile)
@@ -563,7 +562,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd) && !empty(s:cjk_filename)
         " => slash search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
-        let keyboards = s:vimim_slash_search_block(keyboard)
+        let keyboards = s:vimim_cjk_slash_search_block(keyboard)
         if len(keyboards) > 0
             for keyboard in keyboards
                 let chars = s:vimim_cjk_match(keyboard)
@@ -595,7 +594,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     return results
 endfunction
 
-function! s:vimim_slash_search_block(keyboard)
+function! s:vimim_cjk_slash_search_block(keyboard)
     " /muuqwxeyqpjeqqq  =>  shortcut   /search
     " /m7712x3610j3111  =>  standard   /search
     " /ma77xia36ji31    =>  free-style /search
@@ -1482,7 +1481,7 @@ function! s:vimim_database_init()
 :sil!python << EOF
 def getstone(key, partition):
     isenglish = vim.eval('s:english_results')
-    if partition > 0 and len(key) > 1:
+    if partition > 0 and len(key) > 2:
         key = key[:-partition]
     if key not in db and not isenglish:
         while key and key not in db: key = key[:-1]
@@ -2465,7 +2464,7 @@ let s:VimIM += [" ====  input cjk        ==== {{{"]
 function! s:vimim_scan_cjk_file()
     let s:cjk_lines = []
     let s:cjk_filename = 0
-    let db = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt'
+    let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
     let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
     if !empty(datafile)
         let s:cjk_lines = s:vimim_readfile(datafile)
@@ -2498,7 +2497,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:ui.im == 'pinyin' || !empty(s:cjk_filename)
+    elseif s:ui.im == 'pinyin'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
         \&& keyboard =~ '^\l' && keyboard[1:4] !~ '[^pqwertyuio]'
             " muuqwxeyqpjeqqq => m7712x3610j3111
@@ -2524,7 +2523,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
                 if len(s:english_results) > 0
                     let s:english_results = []
                 endif
-            elseif line < 0 && !empty(s:cjk_filename)
+            elseif line < 0
                 let keyboard = s:vimim_toggle_pinyin(a_keyboard)
             endif
             let head = s:vimim_dot_by_dot(keyboard)
@@ -2593,7 +2592,7 @@ function! s:vimim_cjk_match(keyboard)
     elseif !empty(s:cjk_filename)
         if keyboard == 'u' " 214 standard unicode index
             let grep = '\s\d\d\d\d\s\d\d\d\d\su\s'
-        elseif len(keyboard) == 1 && empty(s:database)
+        elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
         elseif keyboard =~ '^\l'
@@ -2729,7 +2728,7 @@ let s:VimIM += [" ====  input english    ==== {{{"]
 function! s:vimim_scan_english_datafile()
     let s:english_lines = []
     let s:english_filename = 0
-    let db = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.txt'
+    let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.txt"
     let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
     if !empty(datafile)
         let s:english_lines = s:vimim_readfile(datafile)
@@ -3283,13 +3282,12 @@ function! s:vimim_scan_backend_embedded()
             return s:vimim_set_directory(im, s:vimim_data_directory)
         endif
     endif
-    let db = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db'
+    let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db"
     let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
     if !empty(datafile) && has("python")
         :python import vim, bsddb
         :python db = bsddb.btopen(vim.eval('datafile'),'r')
         :call s:vimim_database_init()
-        let s:database = 1
     else
         let datafile = s:vimim_data_file
     endif
@@ -3720,7 +3718,7 @@ function! s:vimim_get_from_http(input, cloud)
             let output = system(s:http_executable . '"'.input.'"')
         endif
     catch
-        call s:debug('alert', 'http_cloud', output ." ". v:exception)
+        call s:debug('alert', "http_cloud", output ." ". v:exception)
     endtry
     return output
 endfunction
@@ -3728,7 +3726,7 @@ endfunction
 function! s:vimim_get_cloud_sogou(keyboard)
     " http://web.pinyin.sogou.com/api/py?key=32&query=mxj
     if empty(s:cloud_keys.sogou)
-        let key_sogou = 'http://web.pinyin.sogou.com/web_ime/patch.php'
+        let key_sogou = "http://web.pinyin.sogou.com/web_ime/patch.php"
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
         if empty(output) || output =~ '502 bad gateway'
             return []
@@ -4682,7 +4680,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
             endif
         endif
     elseif root =~# "datafile"
-        if s:database > 0
+        if s:vimim_data_file =~ ".db"
             :python keyboard = vim.eval('keyboard')
             :python partition = int(vim.eval('s:hjkl_h'))
             :python keyboard2 = getstone(keyboard, partition)
@@ -4699,7 +4697,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
-            if empty(s:hjkl_h) && s:database > 0
+            if empty(s:hjkl_h) && s:vimim_data_file =~ ".db"
                 let s:hjkl_h += len(tail)
             endif
         endif
