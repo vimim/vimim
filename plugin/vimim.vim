@@ -204,6 +204,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_color")
     call add(G, "g:vimim_search_next")
     call s:vimim_set_global_default(G, 1)
+    let s:database = 0
     let s:im_toggle = 0
     let s:frontends = []
     let s:loops = {}
@@ -370,7 +371,7 @@ function! s:vimim_egg_vimim()
             let ui_im = get(frontend, 1)
             let vimim_toggle_list .= "," . ui_im
             let datafile = s:backend[ui_root][ui_im].name
-            let mass = datafile=~'db' ? 'mass' : ui_root
+            let mass = s:database ? 'mass' : ui_root
             let ciku = database . s:vimim_chinese(mass) . database
             call add(eggs, ciku . datafile)
         endfor
@@ -449,7 +450,7 @@ function! s:vimim_get_hjkl(keyboard)
             let unicode = "一 圣 性 楊 版 答 葬 走 隐"
             let lines = split(unicode)
         endif
-    elseif keyboard !~ "db"
+    elseif keyboard !~ 'db'
         " [poem] check entry in special directories first
         let datafile = s:vimim_check_filereadable(keyboard)
         if !empty(datafile)
@@ -2464,8 +2465,8 @@ let s:VimIM += [" ====  input cjk        ==== {{{"]
 function! s:vimim_scan_cjk_file()
     let s:cjk_lines = []
     let s:cjk_filename = 0
-    " http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt
-    let datafile = s:vimim_check_filereadable("vimim.cjk.txt")
+    let db = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt'
+    let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
     if !empty(datafile)
         let s:cjk_lines = s:vimim_readfile(datafile)
         let s:cjk_filename = datafile
@@ -2592,7 +2593,7 @@ function! s:vimim_cjk_match(keyboard)
     elseif !empty(s:cjk_filename)
         if keyboard == 'u' " 214 standard unicode index
             let grep = '\s\d\d\d\d\s\d\d\d\d\su\s'
-        elseif len(keyboard) == 1
+        elseif len(keyboard) == 1 && empty(s:database)
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
         elseif keyboard =~ '^\l'
@@ -2728,7 +2729,8 @@ let s:VimIM += [" ====  input english    ==== {{{"]
 function! s:vimim_scan_english_datafile()
     let s:english_lines = []
     let s:english_filename = 0
-    let datafile = s:vimim_check_filereadable("vimim.txt")
+    let db = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.txt'
+    let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
     if !empty(datafile)
         let s:english_lines = s:vimim_readfile(datafile)
         let s:english_filename = datafile
@@ -3281,12 +3283,13 @@ function! s:vimim_scan_backend_embedded()
             return s:vimim_set_directory(im, s:vimim_data_directory)
         endif
     endif
-    let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db"
+    let db = 'http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db'
     let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
     if !empty(datafile) && has("python")
         :python import vim, bsddb
         :python db = bsddb.btopen(vim.eval('datafile'),'r')
         :call s:vimim_database_init()
+        let s:database = 1
     else
         let datafile = s:vimim_data_file
     endif
@@ -3374,8 +3377,8 @@ function! s:vimim_get_from_datafile(keyboard, search)
         return []
     endif
     let results = []
-    " http://code.google.com/p/vimim/issues/detail?id=121
     if s:vimim_more_candidates > 0
+        " http://code.google.com/p/vimim/issues/detail?id=121
         for i in range(s:vimim_more_candidates)
             let matched += i
             let oneline = get(lines, matched)
@@ -4682,7 +4685,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
             endif
         endif
     elseif root =~# "datafile"
-        if s:vimim_data_file =~ ".db"
+        if s:database > 0
             :python keyboard = vim.eval('keyboard')
             :python partition = int(vim.eval('s:hjkl_h'))
             :python keyboard2 = getstone(keyboard, partition)
@@ -4699,7 +4702,7 @@ function! s:vimim_embedded_backend_engine(keyboard, search)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
-            if empty(s:hjkl_h) && s:vimim_data_file =~ ".db"
+            if empty(s:hjkl_h) && s:database > 0
                 let s:hjkl_h += len(tail)
             endif
         endif
