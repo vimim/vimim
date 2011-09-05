@@ -417,7 +417,7 @@ function! s:vimim_get_hjkl(keyboard)
     endif
     " [unicode] support direct unicode/gb/big5 input
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if ddddd > 8080
+    if ddddd > 0
         let lines = []
         for i in range(99)
             call add(lines, nr2char(ddddd+i))
@@ -2197,7 +2197,8 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     elseif keyboard =~# '^\d\{5}$'     " from digit to unicode: 32911 =>
         let ddddd = str2nr(keyboard, 10)
     endif
-    if ddddd > 0xffff
+    let max = &encoding=="utf-8" ? 19968+20902 : 0xffff
+    if ddddd < 8080 || ddddd > max
         let ddddd = 0
     endif
     return ddddd
