@@ -1590,6 +1590,8 @@ def vimim_gmail():
         gmail.starttls()
         gmail.login(gmail_login, gmail_passwd[::-1])
         gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
+    except SMTPException:
+        print "The Zen of Python"
     finally:
         gmail.close()
 vimim_gmail()
