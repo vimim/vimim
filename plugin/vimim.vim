@@ -254,7 +254,7 @@ function! s:vimim_initialize_local()
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
         let g:vimim_onekey_is_tab = 2
-        let g:vimim_cloud = 'google,baidu,sogou,qq'
+        let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_hjkl_directory = hjkl
         let g:vimim_custom_color = 0
         call g:vimim_default_omni_color()
@@ -410,7 +410,7 @@ endfunction
 function! s:vimim_get_hjkl(keyboard)
     let keyboard = a:keyboard
     " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
-    if keyboard =~ 'u\d\d\d\d\d'
+    if keyboard =~# 'u\d\d\d\d\d'
         let s:show_me_not = -7
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
@@ -585,7 +585,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
         return results
     endif
     " 3/3 search local datafiles => slash search english: /horse
-    if keyboard =~ '^\l\+' && keyboard !~# '\L'
+    if keyboard =~# '^\l\+' && keyboard !~# '\L'
         let s:english_results = []
         sil!call s:vimim_onekey_english(a:keyboard, 1)
     endif
@@ -743,7 +743,7 @@ function! s:vimim_imode_number(keyboard)
         if has_key(s:quantifiers, char)
             let quantifier_list = split(s:quantifiers[char], '\zs')
             let chinese = get(quantifier_list, 0)
-            if ii ==# 'ii' && char =~ '[0-9sbq]'
+            if ii ==# 'ii' && char =~# '[0-9sbq]'
                 let chinese = get(quantifier_list, 1)
             endif
             let number .= chinese
@@ -1785,7 +1785,7 @@ function! s:vimim_onekey_action(space)
         if has_key(punctuations, one_before)
             for char in keys(punctuations)
                 " no transfer for punctuation after punctuation
-                if two_before ==# char || two_before =~ '\u'
+                if two_before ==# char || two_before =~# '\u'
                     return " "
                 endif
             endfor
@@ -1830,8 +1830,8 @@ function! s:vimim_get_right_arrow()
     let before = current_line[current_column-1]
     let cursor = current_line[current_column]
     let n = 0  " to trigger word under cursor
-    if before =~ '\l' && cursor =~ '\l'
-        while cursor =~ '\l'
+    if before =~# '\l' && cursor =~# '\l'
+        while cursor =~# '\l'
             let current_column += 1
             let cursor = current_line[current_column]
         endwhile
@@ -1879,7 +1879,7 @@ function! s:vimim_onekey_input(keyboard)
         return lines
     endif
     " [english] english cannot be ignored
-    if keyboard =~ '^\l\+' && empty(s:english_results)
+    if keyboard =~# '^\l\+' && empty(s:english_results)
         sil!call s:vimim_onekey_english(keyboard, 0)
     endif
     " [cjk] cjk database works like swiss-army knife
@@ -1889,7 +1889,7 @@ function! s:vimim_onekey_input(keyboard)
         endif
         let keyboard = s:vimim_cjk_sentence_match(keyboard)
         let lines = s:vimim_cjk_match(keyboard)
-        if keyboard =~ '^\l\d\d\d\d' && len(s:english_results)>0
+        if keyboard =~# '^\l\d\d\d\d' && len(s:english_results)>0
             call extend(s:english_results, lines)
         endif
     endif
@@ -1933,7 +1933,7 @@ function! s:vimim_magic_tail(keyboard)
     let keyboard = a:keyboard
     let magic_tail = keyboard[-1:-1]
     let last_but_one = keyboard[-2:-2]
-    if magic_tail =~ "[.']" && last_but_one =~ "[0-9a-z']"
+    if magic_tail =~# "[.']" && last_but_one =~# "[0-9a-z']"
         let s:onekey_cloud = 0
         let keyboard = keyboard[:-2]
         if magic_tail ==# "'"
@@ -2145,7 +2145,7 @@ function! s:vimim_get_char_before(keyboard)
     let current_line = getline(".")
     let start = col(".") -1 - s:multibyte * len(a:keyboard)
     let char_before = current_line[start : start+s:multibyte-1]
-    if char_before =~ '\w'
+    if char_before =~# '\w'
         let char_before = a:keyboard
     endif
     return char_before
@@ -2153,7 +2153,7 @@ endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if a:keyboard =~ '^u\+$' " get chinese before u: 馬力uu => 39340
+    if a:keyboard =~# '^u\+$' " get chinese before u: 馬力uu => 39340
         let char_before = s:vimim_get_char_before(keyboard)
         return char2nr(char_before)
     elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
@@ -2389,22 +2389,27 @@ endfunction
 function! <SID>vimim_onekey_hjkl(key)
     let key = a:key
     if pumvisible()
-            if a:key == 'j' | let key = '\<Down>'
-        elseif a:key == 'k' | let key = '\<Up>'
+            if a:key ==# 'j' | let key = '\<Down>'
+        elseif a:key ==# 'k' | let key = '\<Up>'
         elseif a:key =~ "[<>]"
             let key  = '\<C-Y>'.s:punctuations[nr2char(char2nr(a:key)-16)]
         else
-            if a:key == 's'
+            if a:key ==# 's'
                 call g:vimim_reset_after_insert()
-            elseif a:key =~ "[hlmnx]"
+            elseif a:key =~# "[hlmnx]"
                 for toggle in split('hlmnx','\zs')
                     if toggle == a:key
                         exe 'let s:hjkl_' . toggle . ' += 1'
-                        let s:hjkl_n = a:key=='m' ? 0 : s:hjkl_n
-                        let s:hjkl_m = a:key=='n' ? 0 : s:hjkl_m
                         break
                     endif
                 endfor
+                if a:key ==# 'm'
+                    let s:hjkl_n = 0
+                    let s:onekey_cloud = 0
+                elseif a:key ==# 'n'
+                    let s:hjkl_m = 0
+                    let s:onekey_cloud = 0
+                endif
             endif
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
         endif
@@ -2415,7 +2420,7 @@ endfunction
 function! <SID>vimim_onekey_qwerty(key)
     let key = a:key
     if pumvisible()
-        if key =~ '\l'
+        if key =~# '\l'
             let key = match(s:qwerty, a:key)
         endif
         let s:hjkl_s = s:show_me_not ? key : s:hjkl_s . key
@@ -2462,14 +2467,14 @@ function! s:vimim_cjk_sentence_match(keyboard)
                 " output is 6021 for input 6021272260021762
                 let head = s:vimim_get_head(keyboard, 4)
             endif
-        elseif keyboard =~ '^\l\+\d\+\>'
+        elseif keyboard =~# '^\l\+\d\+\>'
             let head = keyboard
-        elseif keyboard =~ '^\l\+\d\+'
+        elseif keyboard =~# '^\l\+\d\+'
             " output is wo23 for input wo23you40yigemeng
             let partition = match(keyboard, '\d')
             while partition > -1
                 let partition += 1
-                if keyboard[partition : partition] =~ '\D'
+                if keyboard[partition : partition] =~# '\D'
                     break
                 endif
             endwhile
@@ -2477,7 +2482,7 @@ function! s:vimim_cjk_sentence_match(keyboard)
         endif
     elseif s:ui.im == 'pinyin' || s:ui.root == 'cloud'
         if len(keyboard)%5 < 1 && keyboard !~ "[.']"
-        \&& keyboard =~ '^\l' && keyboard[1:4] !~ '[^pqwertyuio]'
+        \&& keyboard =~# '^\l' && keyboard[1:4] !~ '[^pqwertyuio]'
             " muuqwxeyqpjeqqq => m7712x3610j3111
             let llll = keyboard[1:4]
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
@@ -2543,7 +2548,7 @@ function! s:vimim_cjk_match(keyboard)
             if keyboard =~ '^\d\+' && keyboard !~ '[^0-9.]'
                 " cjk free-style digit input: 7 77 771 7712"
                 let digit = keyboard
-            elseif keyboard =~ '^\l\+\d\+'
+            elseif keyboard =~# '^\l\+\d\+'
                 " cjk free-style input/search: ma7 ma77 ma771 ma7712
                 let digit = substitute(keyboard,'\a','','g')
             endif
@@ -2573,7 +2578,7 @@ function! s:vimim_cjk_match(keyboard)
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
-        elseif keyboard =~ '^\l'
+        elseif keyboard =~# '^\l'
             " cjk multiple-char-list without frequency: huan2hai2
             " support all cases: /huan /hai /yet /huan2 /hai2
             let grep = '[ 0-9]' . keyboard . '[0-9]'
@@ -2597,7 +2602,7 @@ function! s:vimim_cjk_grep_results(grep)
     while line > -1
         let values = split(get(s:cjk_lines, line))
         let frequency_index = get(values, -1)
-        if frequency_index =~ '\l'
+        if frequency_index =~# '\l'
             let frequency_index = 9999
         endif
         let chinese_frequency = get(values,0) . ' ' . frequency_index
@@ -3405,7 +3410,7 @@ function! s:vimim_make_pair_list(oneline)
     endif
     let oneline_list = split(a:oneline)
     let menu = remove(oneline_list, 0)
-    if empty(menu) || menu =~ '\W'
+    if empty(menu) || menu =~# '\W'
         return []
     endif
     if !empty(s:english_results)
@@ -3882,7 +3887,7 @@ function! s:vimim_get_cloud_baidu(keyboard)
     let matched_list = []
     for item_list in output_list
         let chinese = get(item_list,0)
-        if chinese =~ '\w'
+        if chinese =~# '\w'
             continue
         endif
         let english = strpart(a:keyboard, get(item_list,1))
