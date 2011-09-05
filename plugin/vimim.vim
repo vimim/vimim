@@ -342,7 +342,7 @@ function! s:vimim_egg_vimim()
     let option = s:vimim_chinese('env') . s:colon . v:lc_time
     call add(eggs, option)
     let im = s:vimim_statusline()
-    let toggle = "i_Ctrl-Bslash"
+    let toggle = "toggle_with_Ctrl-Bslash"
     if s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_Ctrl-Space"
     elseif s:vimim_onekey_is_tab > 1
