@@ -4693,9 +4693,9 @@ function! s:vimim_imap_for_onekey()
             imap<silent> <C-^> <Plug>VimimOneKey
         xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     else
-            imap<silent> <C-^> <Tab>
-            imap<silent> <Tab> <Plug>VimimOneKey
+        inoremap<silent> <C-^> <Tab>
         xnoremap<silent> <Tab> y:call <SID>vimim_visual_ctrl6()<CR>
+            imap<silent> <Tab> <Plug>VimimOneKey
     endif
     if s:vimim_search_next > 0
         noremap <silent> n :call g:vimim_search_next()<CR>n
