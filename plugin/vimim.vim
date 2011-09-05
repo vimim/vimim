@@ -1373,11 +1373,12 @@ function! g:vimim_bracket(offset)
     let row_start = s:start_row_before
     let delete_char = ""
     if repeat_times > 0 && row_end == row_start
-        let delete_char = repeat("\<BS>", repeat_times)
         if a:offset > 0  " omni bslash for seamless
             let left = repeat("\<Left>", repeat_times-1)
-            let right = repeat("\<Right>", repeat_times)
+            let right = repeat("\<Right>", repeat_times-1)
             let delete_char = left . "\<BS>" . right
+        else
+            let delete_char = repeat("\<BS>", repeat_times)
         endif
     endif
     if repeat_times < 1
@@ -1762,6 +1763,8 @@ function! g:vimim_onekey()
     elseif s:onekey > 0
         let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
+    elseif s:vimim_onekey_is_tab > 0 && one_before =~ '\s'
+        let onekey = '\t'
     else
         sil!call s:vimim_frontend_initialization()
         sil!call s:vimim_onekey_mapping()
@@ -4693,9 +4696,8 @@ function! s:vimim_imap_for_onekey()
             imap<silent> <C-^> <Plug>VimimOneKey
         xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     else
-        inoremap<silent> <C-^> <Tab>
-        xnoremap<silent> <Tab> y:call <SID>vimim_visual_ctrl6()<CR>
             imap<silent> <Tab> <Plug>VimimOneKey
+        xnoremap<silent> <Tab> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_search_next > 0
         noremap <silent> n :call g:vimim_search_next()<CR>n
