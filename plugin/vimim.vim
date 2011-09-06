@@ -1823,7 +1823,7 @@ function! s:vimim_get_right_arrow()
     let start_column = current_column
     let before = current_line[current_column-1]
     let cursor = current_line[current_column]
-    let n = 0  " to trigger word under cursor
+    let n = 0  " to trigger Word under cursor
     if before =~# '\l' && cursor =~# '\l'
         while cursor =~# '\l'
             let current_column += 1
@@ -2401,7 +2401,7 @@ function! <SID>vimim_onekey_qwerty(key)
     let key = a:key
     if pumvisible()
         if key =~# '\l'
-            let key = match(s:qwerty, a:key)
+            let key = match(s:qwerty, key)
         endif
         let s:hjkl_s = s:show_me_not ? key : s:hjkl_s . key
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
