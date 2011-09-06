@@ -1891,6 +1891,9 @@ function! s:vimim_onekey_input(keyboard)
 endfunction
 
 function! s:vimim_dot_by_dot(keyboard)
+    " <dot> double play in OneKey:
+    "   (1) trailing dot => forced-cjk-match
+    "   (2) as word partition  => match dot by dot
     let keyboard = a:keyboard
     let partition = match(keyboard, "[.']")
     if partition > -1 && empty(s:ui.has_dot)
@@ -1916,32 +1919,20 @@ function! s:vimim_get_head(keyboard, partition)
     return head
 endfunction
 
-function! s:vimim_magic_tail(keyboard)
-    " <dot> triple play in OneKey:
-    "   (1) trailing dot => forced-non-cloud in cloud
-    "   (2) trailing dot => forced-cjk-match
-    "   (3) as word partition  => match dot by dot
+function! s:vimim_magic_apostrophe_tail(keyboard)
     " <apostrophe> double play in OneKey:
-    "   (1) one trailing apostrophe => cloud at will
-    "   (2) two trailing apostrophe => cloud switch
-    let keyboard = a:keyboard
-    let magic_tail = keyboard[-1:-1]
-    let last_but_one = keyboard[-2:-2]
-    if magic_tail =~# "[.']" && last_but_one =~# "[0-9a-z']"
-        let s:onekey_cloud = 0
+    "   (1) one trailing apostrophe => toggle cloud and non-cloud
+    "   (2) two trailing apostrophe => switch among clouds
+    let s:onekey_cloud += 1
+    let keyboard = a:keyboard[:-2]
+    if empty(s:vimim_check_http_executable())
+        return keyboard 
+    elseif keyboard[-1:] ==# "'"
         let keyboard = keyboard[:-2]
-        if magic_tail ==# "'"
-            let cloud_ready = s:vimim_set_cloud_if_http_executable(0)
-            if cloud_ready > 0
-                let s:onekey_cloud = 1   " forced-cloud
-                if last_but_one ==# "'"  " switch-cloud
-                    let keyboard = keyboard[:-2]
-                    let clouds = split(s:vimim_cloud,',')
-                    let clouds = clouds[1:-1] + clouds[0:0]
-                    let s:vimim_cloud = join(clouds,',')
-                endif
-            endif
-        endif
+        let s:onekey_cloud = 1
+        let clouds = split(s:vimim_cloud,',')
+        let clouds = clouds[1:-1] + clouds[0:0]
+        let s:vimim_cloud = join(clouds,',')
     endif
     return keyboard
 endfunction
@@ -2385,25 +2376,20 @@ function! <SID>vimim_onekey_hjkl(key)
     if pumvisible()
             if a:key ==# 'j' | let key = '\<Down>'
         elseif a:key ==# 'k' | let key = '\<Up>'
-        elseif a:key =~ "[<>]"
+        elseif a:key =~# "[<>]"
             let key  = '\<C-Y>'.s:punctuations[nr2char(char2nr(a:key)-16)]
         else
             if a:key ==# 's'
                 call g:vimim_reset_after_insert()
             elseif a:key =~# "[hlmnx]"
                 for toggle in split('hlmnx','\zs')
-                    if toggle == a:key
+                    if toggle ==# a:key
                         exe 'let s:hjkl_' . toggle . ' += 1'
+                        let s:hjkl_n = a:key==#'m' ? 0 : s:hjkl_n
+                        let s:hjkl_m = a:key==#'n' ? 0 : s:hjkl_m
                         break
                     endif
                 endfor
-                if a:key ==# 'm'
-                    let s:hjkl_n = 0
-                    let s:onekey_cloud = 0
-                elseif a:key ==# 'n'
-                    let s:hjkl_m = 0
-                    let s:onekey_cloud = 0
-                endif
             endif
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
         endif
@@ -3589,17 +3575,13 @@ function! s:vimim_set_cloud_if_http_executable(im)
 endfunction
 
 function! s:vimim_check_http_executable()
+    let http_executable = 0
     if s:vimim_cloud < 0 && len(s:vimim_mycloud) < 2
         return 0
+    elseif len(s:http_executable) > 2
+        return s:http_executable
     endif
-    " step 1 of 4: try to use dynamic python: +python/dyn +python3/dyn
-    if has('python')
-        let s:http_executable = 'Python2 Interface to Vim'
-    endif
-    if has('python3') && &relativenumber > 0
-        let s:http_executable = 'Python3 Interface to Vim'
-    endif
-    " step 2 of 4: try to find libvimim for mycloud
+    " step 1 of 4: try to find libvimim for mycloud
     let libvimim = s:vimim_get_libvimim()
     if !empty(libvimim) && filereadable(libvimim)
         " in win32, strip the .dll suffix
@@ -3608,11 +3590,20 @@ function! s:vimim_check_http_executable()
         endif
         let ret = libcall(libvimim, "do_geturl", "__isvalid")
         if ret ==# "True"
-            let s:http_executable = libvimim
+            let http_executable = libvimim
+        endif
+    endif
+    " step 2 of 4: try to use dynamic python:
+    if empty(http_executable)
+        if has('python')  " +python/dyn
+            let http_executable = 'Python2 Interface to Vim'
+        endif
+        if has('python3') && &relativenumber>0  " +python3/dyn
+            let http_executable = 'Python3 Interface to Vim'
         endif
     endif
     " step 3 of 4: try to find wget
-    if empty(s:http_executable)
+    if empty(http_executable)
         let wget = 'wget'
         let wget_exe = s:path . 'wget.exe'
         if filereadable(wget_exe)
@@ -3620,20 +3611,21 @@ function! s:vimim_check_http_executable()
         endif
         if executable(wget)
             let wget_option = " -qO - --timeout 20 -t 10 "
-            let s:http_executable = wget . wget_option
+            let http_executable = wget . wget_option
         endif
     endif
     " step 4 of 4: try to find curl if wget not available
-    if empty(s:http_executable) && executable('curl')
-        let s:http_executable = "curl -s "
+    if empty(http_executable) && executable('curl')
+        let http_executable = "curl -s "
     endif
-    return s:http_executable
+    let s:http_executable = copy(http_executable)
+    return http_executable
 endfunction
 
 function! s:vimim_do_cloud_or_not(keyboard)
     if s:vimim_cloud < 0 || a:keyboard =~ '\L'
         return 0
-    elseif s:onekey_cloud > 0
+    elseif s:onekey_cloud % 2 > 0
         return 1
     elseif s:onekey > 0 && !empty(s:cjk_filename)
         return 0
@@ -4441,8 +4433,8 @@ else
         " [cloud] magic trailing apostrophe to control cloud
         if empty(s:ui.has_dot)
             let magic_tail = keyboard[-1:-1]
-            if magic_tail =~ "[.']" && keyboard !~ '\d'
-                let keyboard = s:vimim_magic_tail(keyboard)
+            if magic_tail =~ "'" && keyboard !~ '\d'
+                let keyboard = s:vimim_magic_apostrophe_tail(keyboard)
             else
                 " [dot_by_dot] i.have.a.dream
                 let keyboard = s:vimim_dot_by_dot(keyboard)
@@ -4451,7 +4443,7 @@ else
         let results = s:vimim_onekey_input(keyboard)
         if empty(len(results))
             if s:ui.root == 'cloud' 
-            \&& s:onekey_cloud < 1 
+            \&& s:onekey_cloud % 2 < 1 
             \&& !empty(s:english_results)
                 return s:vimim_popupmenu_list(s:english_results)
             endif
