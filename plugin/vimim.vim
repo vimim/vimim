@@ -440,7 +440,7 @@ function! s:vimim_get_hjkl(keyboard)
             if len(keyboard) == 1
                 let char_before = s:vimim_get_char_before('i')
                 let lines = s:vimim_get_imode_chinese(char_before,1)
-            elseif keyboard =~ '[^pqwertyuio]' && empty(s:english_results)
+            elseif empty(s:english_results)
                 let lines = s:vimim_imode_number(keyboard)
             endif
         elseif keyboard == 'u' && empty(s:cjk_filename)
@@ -2698,6 +2698,7 @@ function! s:vimim_onekey_english(keyboard)
         let grep = '^' . a:keyboard
         let matched = match(s:english_lines, grep)
     endif
+    let results = []
     if matched > -1
         let oneline = get(s:english_lines, matched)
         let results = split(oneline)
@@ -2705,9 +2706,8 @@ function! s:vimim_onekey_english(keyboard)
         if menu == a:keyboard
             let results = results[1:]
         endif
-        call extend(s:english_results, results, 0)
     endif
-    return s:english_results
+    return results
 endfunction
 
 function! s:vimim_readfile(datafile)
@@ -4386,9 +4386,8 @@ else
     endif
     if empty(keyboard) || keyboard !~# s:valid_key
         return []
-    else
-       " [english] English cannot be ignored!
-       sil!call s:vimim_onekey_english(keyboard)
+    else                 " [english] English cannot be ignored!
+        let s:english_results = s:vimim_onekey_english(keyboard)
     endif
     " [mycloud] get chunmeng from mycloud local or www
     if !empty(s:mycloud)
