@@ -1884,7 +1884,7 @@ function! s:vimim_onekey_input(keyboard)
         let keyboard = s:vimim_cjk_sentence_match(keyboard)
         let lines = s:vimim_cjk_match(keyboard)
         if keyboard =~# '^\l\d\d\d\d' && len(s:english_results)>0
-            call extend(s:english_results, lines)
+            call extend(s:english_results, lines)  " arrow a4492
         endif
     endif
     return lines
@@ -1926,7 +1926,7 @@ function! s:vimim_magic_apostrophe_tail(keyboard)
     let s:onekey_cloud += 1
     let keyboard = a:keyboard[:-2]
     if empty(s:vimim_check_http_executable())
-        return keyboard 
+        return keyboard
     elseif keyboard[-1:] ==# "'"
         let keyboard = keyboard[:-2]
         let s:onekey_cloud = 1
@@ -2564,31 +2564,25 @@ function! s:vimim_cjk_match(keyboard)
             let grep = '[ 0-9]' . keyboard . '[0-9]'
         endif
     endif
-    let results = s:vimim_cjk_grep_results(grep)
+    let results = []
+    if !empty(grep)
+        let line = match(s:cjk_lines, grep)
+        while line > -1
+            let values = split(get(s:cjk_lines, line))
+            let frequency = get(values, -1)
+            if frequency =~ '\l'
+                let frequency = 9999
+            endif
+            let chinese_frequency = get(values,0) . ' ' . frequency
+            call add(results, chinese_frequency)
+            let line = match(s:cjk_lines, grep, line+1)
+        endwhile
+    endif
     if len(results) > 0
         let results = sort(results, "s:vimim_sort_on_last")
         let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
     endif
-    return results
-endfunction
-
-function! s:vimim_cjk_grep_results(grep)
-    if empty(a:grep) || empty(s:cjk_filename)
-        return []
-    endif
-    let results = []
-    let line = match(s:cjk_lines, a:grep)
-    while line > -1
-        let values = split(get(s:cjk_lines, line))
-        let frequency_index = get(values, -1)
-        if frequency_index =~# '\l'
-            let frequency_index = 9999
-        endif
-        let chinese_frequency = get(values,0) . ' ' . frequency_index
-        call add(results, chinese_frequency)
-        let line = match(s:cjk_lines, a:grep, line+1)
-    endwhile
     return results
 endfunction
 
@@ -2709,16 +2703,6 @@ endfunction
 
 function! s:vimim_onekey_english(keyboard, order)
     let results = []
-    if !empty(s:cjk_filename) && a:keyboard !~ '\d'
-        " [sql] select english from vimim.cjk.txt
-        let grep_english = '\s' . a:keyboard . '\s'
-        let results = s:vimim_cjk_grep_results(grep_english)
-        if len(results) > 0
-            let filter = "strpart(".'v:val'.", 0, s:multibyte)"
-            call map(results, filter)
-            let s:english_results = copy(results)
-        endif
-    endif
     if !empty(s:english_filename)
         " [sql] select english from vimim.txt
         let grep_english = '^' . a:keyboard . '\s'
@@ -4442,8 +4426,8 @@ else
         endif
         let results = s:vimim_onekey_input(keyboard)
         if empty(len(results))
-            if s:ui.root == 'cloud' 
-            \&& s:onekey_cloud % 2 < 1 
+            if s:ui.root == 'cloud'
+            \&& s:onekey_cloud % 2 < 1
             \&& !empty(s:english_results)
                 return s:vimim_popupmenu_list(s:english_results)
             endif
@@ -4687,7 +4671,7 @@ function! s:vimim_imap_for_onekey()
         xnoremap<silent> <Tab> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_search_next > 0
-        noremap <silent> n :call g:vimim_search_next()<CR>n
+         noremap<silent> n :call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
