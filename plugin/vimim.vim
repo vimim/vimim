@@ -255,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hhjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -439,7 +439,7 @@ function! s:vimim_get_hjkl(keyboard)
     elseif keyboard == 'vimim.'
         " [hjkl] display buffer inside the omni window
         let lines = split(getreg('"'), '\n')
-    elseif keyboard= ~#' ^[iu]' && s:vimim_imode_pinyin > 0
+    elseif keyboard =~# '^[iu]' && s:vimim_imode_pinyin > 0
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'ii' " plays mahjong at will
             let lines = s:mahjong
