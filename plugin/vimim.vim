@@ -1780,7 +1780,7 @@ function! g:vimim_onekey()
     elseif s:onekey > 0
         let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
-    elseif s:vimim_onekey_is_tab > 0 && one_before =~ '\s'
+    elseif s:vimim_onekey_is_tab && one_before=~'\s' || empty(one_before)
         let onekey = '\t'
     else
         sil!call s:vimim_frontend_initialization()
