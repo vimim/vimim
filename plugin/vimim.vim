@@ -2527,7 +2527,7 @@ function! s:vimim_cjk_match(keyboard)
                 let digit = substitute(keyboard,'\a','','g')
             endif
             if !empty(digit)
-                let stroke5 = '\d\d\d\d\s'  " 5stroke :: li1234
+                let stroke5 = '\d\d\d\d\s'  " 5stroke => li1234
                 let space = '\d\{' . string(4-len(digit)) . '}'
                 let space = len(digit)==4 ? "" : space
                 let dddd = '\s' . digit . space . '\s'
@@ -3648,7 +3648,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     try
         let results = eval(get_cloud)
     catch
-        call s:debug('alert', 'get_cloud::' . cloud . '::', v:exception)
+        call s:debug('alert', 'get_cloud='.cloud.'=', v:exception)
     endtry
     if (len(results)) > 1 && empty(s:english_results)
         let s:cloud_cache[cloud][keyboard] = results
@@ -4106,7 +4106,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return "python"
                 endif
             catch
-                call s:debug('alert', 'python_mycloud::', v:exception)
+                call s:debug('alert', 'python_mycloud=', v:exception)
             endtry
         endif
     elseif part[0] ==# "dll"
@@ -4145,7 +4145,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return cloud
                 endif
             catch
-                call s:debug('alert', 'libcall_mycloud::', v:exception)
+                call s:debug('alert', 'libcall_mycloud=', v:exception)
             endtry
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
@@ -4170,7 +4170,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     try
         let output = s:vimim_access_mycloud(s:mycloud, a:keyboard)
     catch
-        call s:debug('alert', 'mycloud::',v:exception)
+        call s:debug('alert', 'mycloud=', v:exception)
     endtry
     if empty(output)
         return []
@@ -4523,6 +4523,7 @@ function! s:vimim_popupmenu_list(matched_list)
             call extend(lines, s:english_results, 0)
         endif
     endif
+    let s:english_results = []
     let s:matched_list = lines
     let keyboard = join(s:keyboard_list,"")
     let &pumheight = s:show_me_not ? 0 : &pumheight
