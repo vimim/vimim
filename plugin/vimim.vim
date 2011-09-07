@@ -2419,7 +2419,6 @@ endfunction
 function! <SID>vimim_onekey_caps(key)
     let key = a:key
     if pumvisible()
-        let s:hjkl_h = 0
         let lower = tolower(key)
         let trigger = '\<C-R>=g:vimim()\<CR>'
         let key = '\<C-E>' . lower . trigger
@@ -4528,6 +4527,10 @@ function! s:vimim_popupmenu_list(matched_list)
     let keyboard = join(s:keyboard_list,"")
     let &pumheight = s:show_me_not ? 0 : &pumheight
     let menu = get(s:keyboard_list,0)
+    let hjkl_h = 0
+    if len(lines) > 1 || menu =~ '^u\d\d\d\d\d$'
+        let hjkl_h = 1
+    endif
     if s:hjkl_n % 2 > 0
         if s:show_me_not > 0
             call reverse(lines)
@@ -4574,10 +4577,6 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:vimim_custom_label > 0
             let abbr = label . "." . chinese
             call add(popupmenu_list_one_row, abbr)
-        endif
-        let hjkl_h = 0
-        if len(lines)>1 || get(s:keyboard_list,0)=~'^u\d\d\d\d\d$'
-            let hjkl_h = 1
         endif
         if hjkl_h > 0 && s:vimim_custom_label > -1
             let labeling = label . " "
