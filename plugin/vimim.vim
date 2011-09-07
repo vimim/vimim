@@ -2443,22 +2443,6 @@ function! s:vimim_onekey_cjk(keyboard)
                 let head = s:vimim_get_head(keyboard, 5)
             endif
         endif
-        if empty(head)
-            let a_keyboard = keyboard
-            if keyboard[-1:] =~ '[.]'
-                "  magic trailing dot to use control cjjp: sssss.
-                let s:hjkl_m += 1
-                let a_keyboard = keyboard[:len(keyboard)-2]
-            endif
-            let grep = '^' . a_keyboard . '\>'
-            let line = match(s:cjk_lines, grep)
-            if s:hjkl_m > 0
-                let keyboard = s:vimim_toggle_cjjp(a_keyboard)
-            elseif line < 0
-                let keyboard = s:vimim_toggle_pinyin(a_keyboard)
-            endif
-            let head = s:vimim_dot_by_dot(keyboard)
-        endif
     endif
     return head
 endfunction
@@ -2732,9 +2716,25 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
     return []
 endfunction
 
+function! s:vimim_hjkl_m_hjkl_n(keyboard)
+    let keyboard = a:keyboard
+    let a_keyboard = a:keyboard
+    if keyboard[-1:] =~ '[.]'
+        "  magic trailing dot to use control cjjp: sssss.
+        let s:hjkl_m += 1
+        let a_keyboard = keyboard[:len(keyboard)-2]
+    endif
+    if s:hjkl_m > 0       " s's's's's's
+        let keyboard = s:vimim_toggle_cjjp(a_keyboard)
+    elseif s:hjkl_n > 0   " shi'shi'shi
+        let keyboard = s:vimim_toggle_pinyin(a_keyboard)
+    endif
+    return s:vimim_dot_by_dot(keyboard)
+endfunction
+
 function! s:vimim_toggle_pinyin(keyboard)
     let keyboard = a:keyboard
-    if s:hjkl_n < 1
+    if s:hjkl_n < 1 || s:vimim_imode_pinyin < 1
         return keyboard
     elseif s:hjkl_n % 2 > 0
         " set pin'yin: woyouyigemeng => wo'you'yi'ge'meng
@@ -4392,8 +4392,8 @@ else
             endif
             return s:vimim_popupmenu_list(results)
         endif
-        " [clouds] all clouds for any input: fuck''''
         if keyboard[-4:] ==# "''''"
+            " [clouds] all clouds for any input: fuck''''
             let results = s:vimim_get_cloud_all(keyboard[:-5])
             return s:vimim_popupmenu_list(results)
         elseif empty(s:ui.has_dot)
@@ -4401,15 +4401,18 @@ else
             if magic_tail =~ "'" && keyboard !~ '\d'
                 " [cloud] magic trailing apostrophe to control cloud
                 let keyboard = s:vimim_magic_apostrophe_tail(keyboard)
-            elseif match(keyboard, "[.']") > -1
+            elseif match(keyboard, "[.']") > -1 && magic_tail !~ '[.]'
                 " [local] wo.you.yi.ge.meng
                 let keyboard = s:vimim_dot_by_dot(keyboard)
             endif
         endif
     endif
-    " [cjk] cjk database works like swiss-army knife
-    if s:chinese_input_mode =~ 'onekey' && empty(s:english_results)
+    " [cjk] The cjk database works like swiss-army knife.
+    if s:chinese_input_mode =~ 'onekey'
         let keyboard = s:vimim_onekey_cjk(keyboard)
+        if empty(keyboard)
+            let keyboard = s:vimim_hjkl_m_hjkl_n(a:keyboard)
+        endif
         let results = s:vimim_cjk_match(keyboard)
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
