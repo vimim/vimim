@@ -100,7 +100,7 @@ function! s:vimim_initialize_session()
     let s:valid_keys = s:az_list
     let s:valid_key = 0
     let s:abcd = "'abcdvfgxz"
-    let s:qwerty = split('pqwertyuio','\zs')
+    let s:qwer = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let s:horizontal_display = s:vimim_custom_label>0 ? 5 : 0
 endfunction
@@ -255,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = simplify(s:path . '../../../hjkl/')
+    let hjkl = simplify(s:path . '../../../hjkl/')
     if isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -1306,11 +1306,11 @@ function! s:vimim_label_on()
     endif
     for _ in labels
         silent!exe 'inoremap <silent> <expr> '  ._.
-        \  ' <SID>vimim_alphabet_number_label("'._.'")'
+        \  ' <SID>vimim_abcdvfgxz_1234567890_label("'._.'")'
     endfor
 endfunction
 
-function! <SID>vimim_alphabet_number_label(key)
+function! <SID>vimim_abcdvfgxz_1234567890_label(key)
     let key = a:key
     if pumvisible()
         let n = match(s:abcd, key)
@@ -1325,6 +1325,24 @@ function! <SID>vimim_alphabet_number_label(key)
             call g:vimim_stop()
         else
             call g:vimim_reset_after_insert()
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_qwer_hitrun(key)
+    let key = a:key
+    if pumvisible()
+        let digit = match(s:qwer, key) - 1
+        if digit < 0
+            let digit = 9
+        endif
+        let down = repeat("\<Down>", digit)
+        let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
+        let key = down . yes
+        let s:has_pumvisible = 1
+        if s:onekey > 0
+            call g:vimim_stop()
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2320,10 +2338,15 @@ function! s:vimim_onekey_mapping()
     for _ in split('hjklmn<>xs', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
-    let qwerty = s:vimim_imode_pinyin==2 ? s:qwerty : s:qwerty+range(10)
-    for _ in qwerty
-        exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwerty("'._.'")'
-    endfor
+    if empty(s:cjk_filename)
+        for _ in s:qwer
+            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hitrun("'._.'")'
+        endfor
+    else
+        for _ in s:qwer
+            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hjkl_s("'._.'")'
+        endfor
+    endif
     if empty(s:vimim_latex_suite)
         for _ in s:AZ_list
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps("'._.'")'
@@ -2372,11 +2395,11 @@ function! <SID>vimim_onekey_hjkl(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! <SID>vimim_onekey_qwerty(key)
+function! <SID>vimim_qwer_hjkl_s(key)
     let key = a:key
     if pumvisible()
-        if key =~# '\l'
-            let key = match(s:qwerty, key)
+        if key =~ '\l'
+            let key = match(s:qwer, key)
         endif
         let s:hjkl_s = s:show_me_not ? key : s:hjkl_s . key
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
@@ -2464,7 +2487,7 @@ function! s:vimim_qwertyuiop_1234567890(keyboard)
     endif
     let dddd = ""
     for char in split(a:keyboard, '\zs')
-        let digit = match(s:qwerty, char)
+        let digit = match(s:qwer, char)
         if digit < 0
             return 0
         else
