@@ -155,21 +155,27 @@ function! s:vimim_dictionary_im_keycode()
 endfunction
 
 function! s:vimim_set_keycode()
-    let keycode = s:backend[s:ui.root][s:ui.im].keycode
-    if !empty(s:vimim_shuangpin)
+    let keycode = ""
+    let keycode_string = ""
+    if empty(s:ui.root)
+        let keycode = "[0-9a-z'.]"
+        let s:vimim_imode_pinyin = 1
+    else
+        let keycode = s:backend[s:ui.root][s:ui.im].keycode
+    endif
+    if !empty(s:vimim_shuangpin) && !empty(s:shuangpin_keycode_chinese)
         let keycode = s:shuangpin_keycode_chinese.keycode
     endif
-    let s:valid_key = copy(keycode)
-    let character_string = ""
     let i = 0
     while i < 16*16
         let char = nr2char(i)
         if char =~# keycode
-            let character_string .= char
+            let keycode_string .= char
         endif
         let i += 1
     endwhile
-    let s:valid_keys = split(character_string, '\zs')
+    let s:valid_key  = copy(keycode)
+    let s:valid_keys = split(keycode_string, '\zs')
 endfunction
 
 " ============================================= }}}
@@ -375,6 +381,9 @@ function! s:vimim_egg_vimim()
             let ciku = database . s:vimim_chinese(mass) . database
             call add(eggs, ciku . datafile)
         endfor
+    else
+        let ciku = database . s:vimim_chinese('unicode') . database
+        call add(eggs, ciku . "UNICODE")
     endif
     if len(im) > 0
         let option = input . s:colon . im
@@ -430,7 +439,7 @@ function! s:vimim_get_hjkl(keyboard)
     elseif keyboard == 'vimim.'
         " [hjkl] display buffer inside the omni window
         let lines = split(getreg('"'), '\n')
-    elseif keyboard=~#'^[iu]' && s:vimim_imode_pinyin>0
+    elseif keyboard= ~#' ^[iu]' && s:vimim_imode_pinyin > 0
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'ii' " plays mahjong at will
             let lines = s:mahjong
@@ -1131,6 +1140,7 @@ function! s:vimim_dictionary_chinese()
     let s:status.qq         = "QQ"
     let s:status.datafile   = "文件"
     let s:status.mass       = "海量"
+    let s:status.unicode    = "统一码 萬國碼"
     let s:status.datetime   = "日期"
     let s:status.english    = "英文"
     let s:status.chinese    = "中文"
@@ -2655,7 +2665,7 @@ endfunction
 
 function! s:vimim_english(keyboard)
     if empty(s:english_filename)
-        return ""
+        return []
     endif
     " [sql] select english from vimim.txt
     let grep = '^' . a:keyboard . '\s\+'
