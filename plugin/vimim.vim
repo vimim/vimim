@@ -256,7 +256,7 @@ endfunction
 
 function! s:vimim_initialize_local()
     let hjkl = simplify(s:path . '../../../hjkl/')
-    if isdirectory(hjkl)
+    if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
         let g:vimim_onekey_is_tab = 2
@@ -1502,9 +1502,12 @@ def getstone(key, partition):
     return key
 def getgold(key):
     if key in db:
-        chinese = key + ' ' + db.get(key)
-        if vim.eval("&encoding") != 'utf-8':
-            chinese = unicode(chinese, 'utf-8').encode('gbk')
+        chinese = db.get(key)
+        encoding = vim.eval("&encoding")
+        if encoding != 'utf-8':
+            chinese = unicode(chinese,'utf-8','ignore')
+            chinese = chinese.encode(encoding,'ignore')
+        chinese = key + ' ' + chinese
     else:
         chinese = key
     return chinese
@@ -1514,23 +1517,24 @@ endfunction
 function! s:vimim_get_from_python2(input, cloud)
 :sil!python << EOF
 import vim, urllib2
+cloud = vim.eval('a:cloud')
+input = vim.eval('a:input')
+encoding = vim.eval("&encoding")
 try:
-    cloud = vim.eval('a:cloud')
-    input = vim.eval('a:input')
     urlopen = urllib2.urlopen(input, None, 20)
     response = urlopen.read()
     res = "'" + str(response) + "'"
     if cloud == 'qq':
-        if vim.eval("&encoding") != 'utf-8':
+        if encoding != 'utf-8':
             res = unicode(res, 'utf-8').encode('utf-8')
     elif cloud == 'google':
-        if vim.eval("&encoding") != 'utf-8':
+        if encoding != 'utf-8':
             res = unicode(res, 'unicode_escape').encode("utf8")
     elif cloud == 'baidu':
-        if vim.eval("&encoding") != 'utf-8':
+        if encoding != 'utf-8':
             res = str(response)
         else:
-            res = unicode(response, 'gbk').encode('utf-8')
+            res = unicode(response, 'gbk').encode(encoding)
         vim.command("let g:baidu = %s" % res)
     vim.command("return %s" % res)
     urlopen.close()
