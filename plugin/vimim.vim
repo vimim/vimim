@@ -913,21 +913,26 @@ function! <SID>vimim_onekey_punctuation(key)
     if !pumvisible()
         return hjkl
     endif
-    if a:key =~ ";"
+    if hjkl == ";"
         let hjkl = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
-    elseif a:key =~ "[][]"
-        let hjkl = s:vimim_square_bracket(a:key)
-    elseif a:key =~ "[/?]"
-        let hjkl = s:vimim_menu_search(a:key)
-    elseif a:key =~ "[-,]"
+    elseif hjkl == "'"
+        let hjkl = hjkl . '\<C-R>=g:vimim()\<CR>'
+    elseif hjkl == "~"
+        let s:hjkl_tilde += 1
+        let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
+    elseif hjkl =~ "[<>]"
+        let hjkl = '\<C-Y>'.s:punctuations[nr2char(char2nr(hjkl)-16)]
+    elseif hjkl =~ "[][]"
+        let hjkl = s:vimim_square_bracket(hjkl)
+    elseif hjkl =~ "[/?]"
+        let hjkl = s:vimim_menu_search(hjkl)
+    elseif hjkl =~ "[-,]"
         let hjkl = '\<PageUp>'
         if &pumheight > 0
             let s:pageup_pagedown = -1
             let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
         endif
-    elseif a:key =~ "'"
-        let hjkl = a:key . '\<C-R>=g:vimim()\<CR>'
-    elseif a:key =~ "[=.]"
+    elseif hjkl =~ "[=.]"
         let hjkl = '\<PageDown>'
         if &pumheight > 0
             let s:pageup_pagedown = 1
@@ -1292,7 +1297,6 @@ function! s:vimim_label_on()
         let s:abcd = join(labels, '')
     else
         let labels = range(10)
-        let s:abcd = s:abcd[0 : &pumheight-2] . s:abcd[-1:]
         let abcd_list = split(s:abcd, '\zs')
         if s:chinese_input_mode =~ 'onekey'
             let labels += abcd_list
@@ -1460,7 +1464,7 @@ endfunction
 function! s:vimim_get_labeling(label)
     let fmt = '%2s '
     let labeling = a:label
-    if a:label == 10 && empty(s:cjk_filename) && empty(s:hjkl_l%2)
+    if a:label == 10 && empty(s:hjkl_l%2)
         let labeling = "0"
     endif
     if s:chinese_input_mode =~ 'onekey'
@@ -2335,9 +2339,6 @@ function! s:vimim_pageup_pagedown()
 endfunction
 
 function! s:vimim_onekey_mapping()
-    for _ in split('hjklmn<>xs', '\zs')
-        exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
-    endfor
     if empty(s:cjk_filename)
         for _ in s:qwer
             exe 'inoremap<expr> '._.' <SID>vimim_qwer_hitrun("'._.'")'
@@ -2352,12 +2353,14 @@ function! s:vimim_onekey_mapping()
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps("'._.'")'
         endfor
     endif
-    let onekey_punctuation = "[]-=.,/?;'"
-    for _ in split(onekey_punctuation,'\zs')
-        sil!exe 'ino<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
+    for _ in split('hjklmns', '\zs')
+        exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
+    endfor
+    for _ in split("[]-=.,/?;~'<>", '\zs')
+        exe 'inoremap<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
     endfor
     if empty(s:vimim_backslash_close_pinyin)
-        inoremap <expr> <Bslash>  <SID>vimim_onekey_omni_bslash_seamless()
+        inoremap <expr> <Bslash> <SID>vimim_onekey_omni_bslash_seamless()
     endif
 endfunction
 
@@ -2370,29 +2373,31 @@ function! <SID>vimim_onekey_omni_bslash_seamless()
 endfunction
 
 function! <SID>vimim_onekey_hjkl(key)
-    let key = a:key
-    if pumvisible()
-            if a:key ==# 'j' | let key = '\<Down>'
-        elseif a:key ==# 'k' | let key = '\<Up>'
-        elseif a:key =~# "[<>]"
-            let key  = '\<C-Y>'.s:punctuations[nr2char(char2nr(a:key)-16)]
-        else
-            if a:key ==# 's'
-                call g:vimim_reset_after_insert()
-            elseif a:key =~# "[hlmnx]"
-                for toggle in split('hlmnx','\zs')
-                    if toggle ==# a:key
-                        exe 'let s:hjkl_' . toggle . ' += 1'
-                        let s:hjkl_n = a:key==#'m' ? 0 : s:hjkl_n
-                        let s:hjkl_m = a:key==#'n' ? 0 : s:hjkl_m
-                        break
-                    endif
-                endfor
-            endif
-            let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
-        endif
+    let hjkl = a:key
+    if !pumvisible()
+        return hjkl
     endif
-    sil!exe 'sil!return "' . key . '"'
+    if hjkl ==# 'j'
+        let hjkl = '\<Down>'
+    elseif hjkl ==# 'k'
+        let hjkl = '\<Up>'
+    else
+        if hjkl ==# 's'
+            call g:vimim_reset_after_insert()
+        elseif hjkl ==# 'h'
+            let s:hjkl_h += 1
+        elseif hjkl ==# 'l'
+            let s:hjkl_l += 1
+        elseif hjkl ==# 'm'
+            let s:hjkl_m += 1
+            let s:hjkl_n = 0
+        elseif hjkl ==# 'n'
+            let s:hjkl_n += 1
+            let s:hjkl_m = 0
+        endif
+        let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
 function! <SID>vimim_qwer_hjkl_s(key)
@@ -4224,9 +4229,6 @@ function! s:vimim_setting_on()
     set noruler
     if &pumheight < 1 || &pumheight > 10
         let &pumheight = len(s:abcd)
-        if !empty(s:cjk_filename)
-            let &pumheight -= 1
-        endif
         let s:pumheight = &pumheight
     endif
     if s:vimim_custom_label > 0
@@ -4295,8 +4297,8 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_l = 0
     let s:hjkl_m = 0
     let s:hjkl_n = 0
-    let s:hjkl_x = 0
     let s:hjkl_s = ""
+    let s:hjkl_tilde = 0
     let s:matched_list = []
     let s:pageup_pagedown = 0
     if s:vimim_custom_label < 1
@@ -4541,14 +4543,14 @@ function! s:vimim_popupmenu_list(matched_list)
                 let extra_text = menu
             endif
         endif
-        if s:hjkl_x>0 && s:hjkl_x%2>0 && !empty(s:cjk_filename)
+        if s:hjkl_tilde && s:hjkl_tilde%2 && !empty(s:cjk_filename)
             let simplified_traditional = ""
             for char in split(chinese, '\zs')
                 let simplified_traditional .= s:vimim_1to1(char)
             endfor
             let chinese = simplified_traditional
         endif
-        if s:hjkl_h>0 && s:hjkl_h%2>0 && len(chinese)==s:multibyte
+        if s:hjkl_h && s:hjkl_h%2 && len(chinese)==s:multibyte
             let extra_text = s:vimim_cjk_extra_text(chinese)
         endif
         if empty(s:mycloud)
