@@ -416,9 +416,9 @@ function! s:vimim_get_hjkl(keyboard)
         return split(chinese, '\zs')
     endif
     " [unicode] support direct unicode/gb/big5 input
+    let lines = []
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if ddddd > 0
-        let lines = []
         for i in range(99)
             call add(lines, nr2char(ddddd+i))
         endfor
@@ -582,7 +582,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
         return results
     endif
     " 3/3 search datafile and english: /ma and /horse
-    let results = s:vimim_onekey_english(keyboard)
+    let results = s:vimim_english(keyboard)
     if empty(results)
         let s:search = 1
         let results = s:vimim_embedded_backend_engine(keyboard)
@@ -597,7 +597,7 @@ function! s:vimim_cjk_slash_search_block(keyboard)
     let results = []
     let keyboard = a:keyboard
     while len(keyboard) > 1
-        let keyboard2 = s:vimim_cjk_sentence_match(keyboard)
+        let keyboard2 = s:vimim_onekey_cjk(keyboard)
         if empty(keyboard2)
             break
         else
@@ -1855,29 +1855,6 @@ function! s:vimim_popup_word()
     return substitute(chinese,'\w','','g')
 endfunction
 
-function! s:vimim_onekey_input(keyboard)
-    let keyboard = a:keyboard
-    let lines = s:vimim_get_hjkl(keyboard)
-    if !empty(lines)
-        if s:hjkl_m % 4 > 0  " [game] turn menu 90 degree on hjkl_m
-            let &pumheight = 0
-            for i in range(s:hjkl_m%4)
-                let lines = s:vimim_hjkl_rotation(lines)
-            endfor
-        endif
-        return lines
-    endif
-    if !empty(s:cjk_filename)
-        " [cjk] cjk database works like swiss-army knife
-        if keyboard =~# '^i' " 4corner_shortcut: iypwqwuww => 60212722
-            let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
-        endif
-        let keyboard = s:vimim_cjk_sentence_match(keyboard)
-        let lines = s:vimim_cjk_match(keyboard)
-    endif
-    return lines
-endfunction
-
 function! s:vimim_dot_by_dot(keyboard)
     " <dot> double play in OneKey:
     "   (1) trailing dot => forced-cjk-match
@@ -2423,8 +2400,14 @@ function! s:vimim_scan_cjk_file()
     endif
 endfunction
 
-function! s:vimim_cjk_sentence_match(keyboard)
+function! s:vimim_onekey_cjk(keyboard)
+    if empty(s:cjk_filename)
+        return 0
+    endif
     let keyboard = a:keyboard
+    if keyboard =~# '^i' " 4corner_shortcut: iypwqwuww => 60212722
+        let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
+    endif
     let head = 0
     if s:show_me_not > 0 || len(keyboard) == 1
         let head = keyboard
@@ -2498,10 +2481,10 @@ function! s:vimim_qwertyuiop_1234567890(keyboard)
 endfunction
 
 function! s:vimim_cjk_match(keyboard)
-    if empty(s:cjk_filename)
+    let keyboard = a:keyboard
+    if empty(keyboard) || empty(s:cjk_filename)
         return []
     endif
-    let keyboard = a:keyboard
     let grep_frequency = '.*' . '\s\d\+$'
     let grep = ""
     if keyboard =~ '\d'
@@ -2686,7 +2669,7 @@ function! s:vimim_check_filereadable(default)
     return 0
 endfunction
 
-function! s:vimim_onekey_english(keyboard)
+function! s:vimim_english(keyboard)
     if empty(s:english_filename)
         return ""
     endif
@@ -4386,8 +4369,8 @@ else
     endif
     if empty(keyboard) || keyboard !~# s:valid_key
         return []
-    else                 " [english] English cannot be ignored!
-        let s:english_results = s:vimim_onekey_english(keyboard)
+    else    " [english] English cannot be ignored!
+        let s:english_results = s:vimim_english(keyboard)
     endif
     " [mycloud] get chunmeng from mycloud local or www
     if !empty(s:mycloud)
@@ -4398,8 +4381,19 @@ else
     endif
     " [onekey] play with nothing but OneKey
     if s:chinese_input_mode =~ 'onekey'
+        " [game] turn menu 90 degree on hjkl_m
+        let results = s:vimim_get_hjkl(keyboard)
+        if !empty(results)
+            if s:hjkl_m % 4 > 0
+                let &pumheight = 0
+                for i in range(s:hjkl_m%4)
+                    let results = s:vimim_hjkl_rotation(results)
+                endfor
+            endif
+            return s:vimim_popupmenu_list(results)
+        endif
+        " [clouds] all clouds for any input: fuck''''
         if keyboard[-4:] ==# "''''"
-            " [clouds] all clouds for any input: fuck''''
             let results = s:vimim_get_cloud_all(keyboard[:-5])
             return s:vimim_popupmenu_list(results)
         elseif empty(s:ui.has_dot)
@@ -4412,11 +4406,13 @@ else
                 let keyboard = s:vimim_dot_by_dot(keyboard)
             endif
         endif
-        if empty(s:english_results)
-            let results = s:vimim_onekey_input(keyboard)
-            if !empty(len(results))
-                return s:vimim_popupmenu_list(results)
-            endif
+    endif
+    " [cjk] cjk database works like swiss-army knife
+    if s:chinese_input_mode =~ 'onekey' && empty(s:english_results)
+        let keyboard = s:vimim_onekey_cjk(keyboard)
+        let results = s:vimim_cjk_match(keyboard)
+        if !empty(len(results))
+            return s:vimim_popupmenu_list(results)
         endif
     endif
     " [shuangpin] support 6 major shuangpin
@@ -4450,8 +4446,8 @@ else
         return s:vimim_popupmenu_list([""])
     endif
     " [just_do_it] last try on both cjk and cloud before giving up
-    if !empty(s:cjk_filename) && s:chinese_input_mode=~'onekey'
-        let keyboard_head = s:vimim_cjk_sentence_match(keyboard.".")
+    if s:chinese_input_mode=~'onekey'
+        let keyboard_head = s:vimim_onekey_cjk(keyboard.".")
         if !empty(keyboard_head)
             let results = s:vimim_cjk_match(keyboard_head)
         endif
@@ -4594,14 +4590,17 @@ function! s:vimim_popupmenu_list(matched_list)
 endfunction
 
 function! s:vimim_embedded_backend_engine(keyboard)
-    let keyboard = a:keyboard
     let im = s:ui.im
     let root = s:ui.root
-    if empty(im) || empty(root) || empty(keyboard)
-    \|| im =~ 'cloud' || s:show_me_not > 0 || keyboard !~# s:valid_key
+    let keyboard = a:keyboard
+    if empty(im)
+    \|| empty(root)
+    \|| empty(keyboard)
+    \|| im =~ 'cloud'
+    \|| s:show_me_not > 0
+    \|| keyboard !~# s:valid_key
         return []
-    endif
-    if im == 'pinyin'
+    elseif im == 'pinyin'
         let keyboard = s:vimim_toggle_pinyin(keyboard)
         if s:ui.has_dot == 2 && keyboard !~ "[']"
             let keyboard = s:vimim_quanpin_transform(keyboard)
