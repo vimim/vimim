@@ -438,10 +438,13 @@ function! s:vimim_get_hjkl(keyboard)
         " [eggs] hunt classic easter egg ... vim<C-6>
     elseif keyboard ==# "''" " plays mahjong at will
         let results = s:mahjong
-    elseif keyboard == 'vimim.'
+    elseif keyboard ==# "''''"
         " [hjkl] display buffer inside the omni window
         let results = split(getreg('"'), '\n')
-    elseif keyboard =~# '^[iu]' && s:vimim_imode_pinyin > 0
+    elseif keyboard ==# 'u' && empty(s:cjk_filename)
+        let unicode_index = "一 圣 性 楊 版 答 葬 走 隐"
+        let results = split(unicode_index)
+    elseif keyboard =~# '^i' && s:vimim_imode_pinyin > 0
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
@@ -452,11 +455,8 @@ function! s:vimim_get_hjkl(keyboard)
                 let i_in_english = "我 你 妳 他 她 它"
                 let results = split(i_in_english)
             endif
-        elseif keyboard =~# '^i' && empty(s:english_results)
+        elseif empty(s:english_results)
             let results = s:vimim_imode_number(keyboard)
-        elseif keyboard ==# 'u' && empty(s:cjk_filename)
-            let unicode = "一 圣 性 楊 版 答 葬 走 隐"
-            let results = split(unicode)
         endif
     elseif keyboard !~ "db"
         " [poem] check entry in special directories first
@@ -2124,10 +2124,9 @@ function! s:vimim_initialize_encoding()
 endfunction
 
 function! s:vimim_get_char_before(keyboard)
-    let current_line = getline(".")
     let start = col(".") -1 - s:multibyte * len(a:keyboard)
-    let char_before = current_line[start : start+s:multibyte-1]
-    if char_before =~# '\w'
+    let char_before = getline(".")[start : start+s:multibyte-1]
+    if char_before =~ '\w'
         let char_before = a:keyboard
     endif
     return char_before
@@ -2135,7 +2134,7 @@ endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if a:keyboard =~# '^u\+$' " get chinese before u: 馬力uu => 39340
+    if a:keyboard =~# '^u\+$' " chinese umode: 馬力uu => 39340
         let char_before = s:vimim_get_char_before(keyboard)
         return char2nr(char_before)
     elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
@@ -2660,7 +2659,7 @@ function! <SID>vimim_visual_ctrl6()
         let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else
         " highlighted block => display the block in omni window
-        let key = "O^\<C-D>" . space . 'vimim.' . onekey
+        let key = "O^\<C-D>" . space . "''''" . onekey
     endif
     sil!call feedkeys(key)
 endfunction
