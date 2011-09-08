@@ -1500,7 +1500,7 @@ function! s:vimim_get_bsddb()
 endfunction
 
 function! s:vimim_get_stone_from_bsddb(keyboard)
-    if empty(a:keyboard) || a:keyboard != s:valid_key
+    if empty(a:keyboard) || a:keyboard !~ s:valid_key
         return ""
     endif
     :python keyboard = vim.eval('a:keyboard')
@@ -1510,7 +1510,7 @@ function! s:vimim_get_stone_from_bsddb(keyboard)
 endfunction
 
 function! s:vimim_get_gold_from_bsddb(stone)
-    if empty(a:stone) || a:stone != s:valid_key
+    if empty(a:stone) || a:stone !~ s:valid_key
         return ""
     endif
     :python gold = getgold(vim.eval('a:stone'))
@@ -3382,7 +3382,7 @@ function! s:vimim_get_from_database(keyboard)
         return []
     endif
     let oneline = s:vimim_get_gold_from_bsddb(a:keyboard)
-    if empty(oneline) || oneline != '\S'
+    if empty(oneline) || oneline !~ '\S'
         return []
     endif
     let results = s:vimim_make_pair_list(oneline)
@@ -3405,7 +3405,7 @@ function! s:vimim_get_from_database(keyboard)
 endfunction
 
 function! s:vimim_make_pair_list(oneline)
-    if empty(a:oneline) || a:oneline != '\S'
+    if empty(a:oneline) || a:oneline !~ '\S'
         return []
     endif
     let oneline_list = split(a:oneline)
