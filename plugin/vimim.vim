@@ -1489,6 +1489,7 @@ let s:VimIM += [" ====  python interface ==== {{{"]
 
 function! s:vimim_database_init()
 :sil!python << EOF
+encoding = vim.eval("&encoding")
 def getstone(key, partition):
     isenglish = vim.eval('s:english_results')
     if partition > 0 and len(key) > 2:
@@ -1499,7 +1500,6 @@ def getstone(key, partition):
 def getgold(key):
     if key in db:
         chinese = db.get(key)
-        encoding = vim.eval("&encoding")
         if encoding != 'utf-8':
             chinese = unicode(chinese,'utf-8','ignore')
             chinese = chinese.encode(encoding,'ignore')
