@@ -376,7 +376,7 @@ function! s:vimim_egg_vimim()
             let ui_im = get(frontend, 1)
             let vimim_toggle_list .= "," . ui_im
             let datafile = s:backend[ui_root][ui_im].name
-            let mass = datafile=~"db" ? 'mass' : ui_root
+            let mass = datafile=~"bsddb" ? 'mass' : ui_root
             let ciku = database . s:vimim_chinese(mass) . database
             call add(eggs, ciku . datafile)
         endfor
@@ -458,7 +458,7 @@ function! s:vimim_get_hjkl(keyboard)
         elseif empty(s:english_results)
             let results = s:vimim_imode_number(keyboard)
         endif
-    elseif keyboard !~ ".db"
+    elseif keyboard !~ ".bsddb"
         " [poem] check entry in special directories first
         let datafile = s:vimim_check_filereadable(keyboard)
         if !empty(datafile)
@@ -3241,7 +3241,7 @@ function! s:vimim_scan_backend_embedded()
             return s:vimim_set_directory(im, s:vimim_data_directory)
         endif
     endif
-    let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.pinyin.db"
+    let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.utf8.bsddb"
     let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
     if !empty(datafile) && has("python")
         :python import vim, bsddb
@@ -4666,7 +4666,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
             endif
         endif
     elseif root =~# "datafile"
-        if s:vimim_data_file =~ ".db"
+        if s:vimim_data_file =~ ".bsddb"
             let keyboard2 = s:vimim_get_stone_from_bsd(keyboard)
             let results = s:vimim_get_from_database(keyboard2)
         else
@@ -4680,7 +4680,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
-            if empty(s:hjkl_h) && s:vimim_data_file =~ ".db"
+            if empty(s:hjkl_h) && s:vimim_data_file =~ ".bsddb"
                 let s:hjkl_h += len(tail)
             endif
         endif
