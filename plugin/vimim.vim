@@ -1442,13 +1442,15 @@ function! <SID>vimim_enter()
     "  (2) double <Enter> after English ==> <Space>
     "  (3) <Enter> after Space/Chinese  ==> <Enter>
     let one_before = getline(".")[col(".")-2]
-    if one_before=~s:valid_key && !has_key(s:punctuations,one_before)
+    if one_before =~ s:valid_key
         let s:smart_enter += 1
-        if s:chinese_input_mode =~ 'dynamic'
+    endif
+    if s:chinese_input_mode =~ 'dynamic'
+        if one_before =~ s:valid_key
             let s:smart_enter = 1
+        else
+            let s:smart_enter = 3
         endif
-    elseif s:chinese_input_mode =~ 'dynamic'
-        let s:smart_enter = 3
     endif
     let key = pumvisible() ? "\<C-E>" : ""
     if s:smart_enter == 1
