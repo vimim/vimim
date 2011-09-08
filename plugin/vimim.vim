@@ -425,46 +425,48 @@ function! s:vimim_get_hjkl(keyboard)
         return split(chinese, '\zs')
     endif
     " [unicode] support direct unicode/gb/big5 input
-    let lines = []
+    let results = []
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if ddddd > 0
         for i in range(99)
-            call add(lines, nr2char(ddddd+i))
+            call add(results, nr2char(ddddd+i))
         endfor
-        return lines
+        return results
     endif
-    let lines = s:vimim_easter_chicken(keyboard)
-    if !empty(lines)
+    let results = s:vimim_easter_chicken(keyboard)
+    if !empty(results)
         " [eggs] hunt classic easter egg ... vim<C-6>
     elseif keyboard == 'vimim.'
         " [hjkl] display buffer inside the omni window
-        let lines = split(getreg('"'), '\n')
+        let results = split(getreg('"'), '\n')
     elseif keyboard =~# '^[iu]' && s:vimim_imode_pinyin > 0
         " [imode] magic i: (1) English number (2) Chinese number
-        if keyboard ==# 'ii' " plays mahjong at will
-            let lines = s:mahjong
-        elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
-            let lines = [s:vimim_imode_today_now(keyboard)]
-        elseif keyboard =~# '^i'
-            if len(keyboard) == 1
-                let char_before = s:vimim_get_char_before('i')
-                let lines = s:vimim_get_imode_chinese(char_before,1)
-            elseif empty(s:english_results)
-                let lines = s:vimim_imode_number(keyboard)
+        if keyboard ==# 'itoday' || keyboard ==# 'inow'
+            let results = [s:vimim_imode_today_now(keyboard)]
+        elseif keyboard ==# 'ii' " plays mahjong at will
+            let results = s:mahjong
+        elseif keyboard ==# 'i'  " 石i => 石金
+            let char_before = s:vimim_get_char_before('i')
+            let results = s:vimim_get_imode_chinese(char_before)
+            if empty(results)
+                let i_in_english = "我 你 妳 他 她 它"
+                let results = split(i_in_english)
             endif
-        elseif keyboard == 'u' && empty(s:cjk_filename)
+        elseif keyboard =~# '^i' && empty(s:english_results)
+            let results = s:vimim_imode_number(keyboard)
+        elseif keyboard ==# 'u' && empty(s:cjk_filename)
             let unicode = "一 圣 性 楊 版 答 葬 走 隐"
-            let lines = split(unicode)
+            let results = split(unicode)
         endif
     elseif keyboard !~ "db"
         " [poem] check entry in special directories first
         let datafile = s:vimim_check_filereadable(keyboard)
         if !empty(datafile)
-            let lines = s:vimim_readfile(datafile)
+            let results = s:vimim_readfile(datafile)
         endif
     endif
-    let s:show_me_not = !empty(lines) ? 1 : 0
-    return lines
+    let s:show_me_not = !empty(results) ? 1 : 0
+    return results
 endfunction
 
 function! s:vimim_hjkl_rotation(matched_list)
@@ -642,7 +644,7 @@ function! s:vimim_get_antonym_list()
     return split(antonym)
 endfunction
 
-function! s:vimim_get_imode_chinese(char_before, insert)
+function! s:vimim_get_imode_chinese(char_before)
     if empty(s:loops)
         let antonyms = s:vimim_get_antonym_list()
         let numbers  = s:vimim_get_numbers_list()
@@ -665,9 +667,6 @@ function! s:vimim_get_imode_chinese(char_before, insert)
             call add(results, next)
             let key = next
         endwhile
-    elseif a:insert > 0
-        let i_in_english = "我 你 妳 他 她 它"
-        let results = split(i_in_english)
     endif
     return results
 endfunction
@@ -2634,7 +2633,7 @@ function! <SID>vimim_visual_ctrl6()
             let key = ddddd=~'\d\d\d\d\d' ? uddddd : dddd
         else
             " highlight one chinese => get antonym or number loop
-            let results = s:vimim_get_imode_chinese(line,0)
+            let results = s:vimim_get_imode_chinese(line)
             if empty(results)
                 let line = -1
                 sil!call s:vimim_backend_initialization()
@@ -4527,9 +4526,9 @@ function! s:vimim_popupmenu_list(matched_list)
     let keyboard = join(s:keyboard_list,"")
     let &pumheight = s:show_me_not ? 0 : &pumheight
     let menu = get(s:keyboard_list,0)
-    let hjkl_h = 0
+    let custom_label = 0
     if len(lines) > 1 || menu =~ '^u\d\d\d\d\d$'
-        let hjkl_h = 1
+        let custom_label = 1
     endif
     if s:hjkl_n % 2 > 0
         if s:show_me_not > 0
@@ -4578,7 +4577,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let abbr = label . "." . chinese
             call add(popupmenu_list_one_row, abbr)
         endif
-        if hjkl_h > 0 && s:vimim_custom_label > -1
+        if custom_label > 0 && s:vimim_custom_label > -1
             let labeling = label . " "
             if s:show_me_not <= -7
                 let labeling = ""
