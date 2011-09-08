@@ -1298,7 +1298,9 @@ function! s:vimim_label_on()
         else
             let labels += [";", "'"]
             for _ in abcd_list
-                sil!exe 'iunmap ' . _
+                if hasmapto(_)
+                    exe 'iunmap ' . _
+                endif
             endfor
         endif
     endif
@@ -1498,14 +1500,16 @@ def getstone(key, partition):
         while key and key not in db: key = key[:-1]
     return key
 def getgold(key):
+    chinese = key
     if key in db:
-        chinese = db.get(key)
-        if encoding != 'utf-8':
-            chinese = unicode(chinese,'utf-8','ignore')
-            chinese = chinese.encode(encoding,'ignore')
-        chinese = key + ' ' + chinese
-    else:
-        chinese = key
+        try:
+            chinese = db.get(key)
+            if encoding != 'utf-8':
+                chinese = unicode(chinese,'utf-8','ignore')
+                chinese = chinese.encode(encoding,'ignore')
+            chinese = key + ' ' + chinese
+        except:
+            pass
     return chinese
 EOF
 endfunction
