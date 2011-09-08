@@ -1490,10 +1490,10 @@ let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
 
 function! s:vimim_get_bsddb()
-    let bsddb = "vimim.utf8.bsddb"       " wc=55,230,464
+    let bsddb = "vimim.gbk.bsddb"       " wc=46,694,400
     let datafile = s:vimim_check_filereadable(bsddb)
     if empty(datafile)
-        let bsddb = "vimim.gbk.bsddb"    " wc=46,694,400
+        let bsddb = "vimim.utf8.bsddb"  " wc=55,230,464
         let datafile = s:vimim_check_filereadable(bsddb)
     endif
     return datafile
