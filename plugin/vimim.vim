@@ -458,7 +458,7 @@ function! s:vimim_get_hjkl(keyboard)
         elseif empty(s:english_results)
             let results = s:vimim_imode_number(keyboard)
         endif
-    elseif keyboard !~ ".bsddb"
+    else
         " [poem] check entry in special directories first
         let datafile = s:vimim_check_filereadable(keyboard)
         if !empty(datafile)
@@ -1489,32 +1489,44 @@ endfunction
 let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
 
-function! s:vimim_get_stone_from_bsd(keyboard)
+function! s:vimim_get_bsddb()
+    let bsddb = "vimim.utf8.bsddb"
+    let datafile = s:vimim_check_filereadable(bsddb)
+    if empty(datafile)
+        let bsddb = "vimim.gbk.bsddb"
+        let datafile = s:vimim_check_filereadable(bsddb)
+    endif
+    return datafile
+endfunction
+
+function! s:vimim_get_stone_from_bsddb(keyboard)
     :python keyboard = vim.eval('a:keyboard')
     :python partition = int(vim.eval('s:hjkl_h'))
     :python stone = getstone(keyboard, partition)
     :python vim.command("return '%s'" % stone)
 endfunction
 
-function! s:vimim_get_gold_from_bsd(stone)
+function! s:vimim_get_gold_from_bsddb(stone)
     :python gold = getgold(vim.eval('a:stone'))
     :python vim.command("return '%s'" % gold)
 endfunction
 
-function! s:vimim_database_init()
+function! s:vimim_initialize_bsddb(datafile)
 :sil!python << EOF
+import vim, bsddb
+edw = bsddb.btopen(vim.eval('a:datafile'),'r')
 encoding = vim.eval("&encoding")
 def getstone(key, partition):
     isenglish = vim.eval('s:english_results')
     if partition > 0 and len(key) > 2:
         key = key[:-partition]
-    if key not in db and not isenglish:
-        while key and key not in db: key = key[:-1]
+    if key not in edw and not isenglish:
+        while key and key not in edw: key = key[:-1]
     return key
 def getgold(key):
     chinese = key
-    if key in db:
-        chinese = db.get(key)
+    if key in edw:
+        chinese = edw.get(key)
         if encoding != 'utf-8':
             chinese = unicode(chinese,'utf-8','ignore')
             chinese = chinese.encode(encoding,'ignore')
@@ -2444,8 +2456,8 @@ let s:VimIM += [" ====  input cjk        ==== {{{"]
 function! s:vimim_scan_cjk_file()
     let s:cjk_lines = []
     let s:cjk_filename = 0
-    let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
-    let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
+    let cjk = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
+    let datafile = s:vimim_check_filereadable(get(split(cjk,"/"),-1))
     if !empty(datafile)
         let s:cjk_lines = s:vimim_readfile(datafile)
         let s:cjk_filename = datafile
@@ -2687,8 +2699,8 @@ let s:VimIM += [" ====  input english    ==== {{{"]
 function! s:vimim_scan_english_datafile()
     let s:english_lines = []
     let s:english_filename = 0
-    let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.txt"
-    let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
+    let english = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.txt"
+    let datafile = s:vimim_check_filereadable(get(split(english,"/"),-1))
     if !empty(datafile)
         let s:english_lines = s:vimim_readfile(datafile)
         let s:english_filename = datafile
@@ -3241,12 +3253,9 @@ function! s:vimim_scan_backend_embedded()
             return s:vimim_set_directory(im, s:vimim_data_directory)
         endif
     endif
-    let db = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.utf8.bsddb"
-    let datafile = s:vimim_check_filereadable(get(split(db,"/"),-1))
+    let datafile = s:vimim_get_bsddb()
     if !empty(datafile) && has("python")
-        :python import vim, bsddb
-        :python db = bsddb.btopen(vim.eval('datafile'),'r')
-        :call s:vimim_database_init()
+        call s:vimim_initialize_bsddb(datafile)
     else
         let datafile = s:vimim_data_file
     endif
@@ -3358,13 +3367,13 @@ function! s:vimim_get_from_datafile(keyboard)
 endfunction
 
 function! s:vimim_get_from_database(keyboard)
-    let oneline = s:vimim_get_gold_from_bsd(a:keyboard)
+    let oneline = s:vimim_get_gold_from_bsddb(a:keyboard)
     let results = s:vimim_make_pair_list(oneline)
     if s:search < 1 && len(results) > 0 && len(results) < 20
         let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
         if len(candidates) > 1
             for candidate in candidates
-                let oneline = s:vimim_get_gold_from_bsd(candidate)
+                let oneline = s:vimim_get_gold_from_bsddb(candidate)
                 let matched_list = s:vimim_make_pair_list(oneline)
                 if !empty(matched_list)
                     call extend(results, matched_list)
@@ -4667,7 +4676,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
         endif
     elseif root =~# "datafile"
         if s:vimim_data_file =~ ".bsddb"
-            let keyboard2 = s:vimim_get_stone_from_bsd(keyboard)
+            let keyboard2 = s:vimim_get_stone_from_bsddb(keyboard)
             let results = s:vimim_get_from_database(keyboard2)
         else
             let keyboard2 = s:vimim_sentence_datafile(keyboard)
