@@ -1489,14 +1489,14 @@ endfunction
 let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
 
-function! s:vimim_get_english_from_bsd(keyboard)
+function! s:vimim_get_stone_from_bsd(keyboard)
     :python keyboard = vim.eval('a:keyboard')
     :python partition = int(vim.eval('s:hjkl_h'))
     :python stone = getstone(keyboard, partition)
     :python vim.command("return '%s'" % stone)
 endfunction
 
-function! s:vimim_get_chinese_from_bsd(stone)
+function! s:vimim_get_gold_from_bsd(stone)
     :python gold = getgold(vim.eval('a:stone'))
     :python vim.command("return '%s'" % gold)
 endfunction
@@ -3358,13 +3358,13 @@ function! s:vimim_get_from_datafile(keyboard)
 endfunction
 
 function! s:vimim_get_from_database(keyboard)
-    let oneline = s:vimim_get_chinese_from_bsd(a:keyboard)
+    let oneline = s:vimim_get_gold_from_bsd(a:keyboard)
     let results = s:vimim_make_pair_list(oneline)
     if s:search < 1 && len(results) > 0 && len(results) < 20
         let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
         if len(candidates) > 1
             for candidate in candidates
-                let oneline = s:vimim_get_chinese_from_bsd(candidate)
+                let oneline = s:vimim_get_gold_from_bsd(candidate)
                 let matched_list = s:vimim_make_pair_list(oneline)
                 if !empty(matched_list)
                     call extend(results, matched_list)
@@ -4667,7 +4667,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
         endif
     elseif root =~# "datafile"
         if s:vimim_data_file =~ ".db"
-            let keyboard2 = s:vimim_get_english_from_bsd(keyboard)
+            let keyboard2 = s:vimim_get_stone_from_bsd(keyboard)
             let results = s:vimim_get_from_database(keyboard2)
         else
             let keyboard2 = s:vimim_sentence_datafile(keyboard)
