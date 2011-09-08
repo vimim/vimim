@@ -127,7 +127,7 @@ function! s:vimim_one_backend_hash()
     let one_backend_hash.chinese = ''
     let one_backend_hash.directory = ''
     let one_backend_hash.lines = []
-    let one_backend_hash.keycode = "[0-9a-z'.]"
+    let one_backend_hash.keycode = "[0-9a-z']"
     return one_backend_hash
 endfunction
 
@@ -136,7 +136,7 @@ function! s:vimim_dictionary_im_keycode()
     let keys  = split('pinyin hangul xinhua quick wubi')
     let keys += split('sogou qq google baidu mycloud')
     for key in keys
-        let s:im_keycode[key] = "[.'0-9a-z]"
+        let s:im_keycode[key] = "[0-9a-z']"
     endfor
     let keys = split('wu nature zhengma cangjie taijima')
     for key in keys
@@ -144,8 +144,8 @@ function! s:vimim_dictionary_im_keycode()
     endfor
     let s:im_keycode.yong     = "[.'a-z;/]"
     let s:im_keycode.erbi     = "[.'a-z,;/]"
-    let s:im_keycode.array30  = "[.,0-9a-z;/]"
-    let s:im_keycode.phonetic = "[.,0-9a-z;/]"
+    let s:im_keycode.array30  = "[.,a-z0-9;/]"
+    let s:im_keycode.phonetic = "[.,a-z0-9;/]"
     let s:im_keycode.boshiamy = "[][a-z'.,]"
     let keys  = copy(keys(s:im_keycode))
     let keys += split('pinyin_sogou pinyin_quote_sogou pinyin_huge')
@@ -158,7 +158,7 @@ function! s:vimim_set_keycode()
     let keycode = ""
     let keycode_string = ""
     if empty(s:ui.root)
-        let keycode = "[0-9a-z'.]"
+        let keycode = "[0-9a-z']"
         let s:vimim_imode_pinyin = 1
     else
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
@@ -1303,7 +1303,7 @@ function! s:vimim_label_on()
         else
             let labels += [";", "'"]
             for _ in abcd_list
-                sil!exe 'iunmap '. _
+                sil!exe 'iunmap ' . _
             endfor
         endif
     endif
@@ -1365,7 +1365,7 @@ function! g:vimim_menu_search_on()
     let @/ = empty(word) ? @_ : word
     let repeat_times = len(word) / s:multibyte
     let row_start = s:start_row_before
-    let row_end = line('.')
+    let row_end = line(".")
     let delete_chars = ""
     if repeat_times > 0 && row_end == row_start
         let delete_chars = repeat("\<BS>", repeat_times)
@@ -1378,11 +1378,11 @@ endfunction
 function! s:vimim_square_bracket(key)
     let key = a:key
     if pumvisible()
-        let i     = key=="]" ? 0          : -1
+        let _     = key=="]" ? 0          : -1
         let left  = key=="]" ? "\<Left>"  : ""
         let right = key=="]" ? "\<Right>" : ""
         if s:show_me_not < 1
-            let backspace = '\<C-R>=g:vimim_bracket('.i.')\<CR>'
+            let backspace = '\<C-R>=g:vimim_bracket('._.')\<CR>'
             let key = '\<C-Y>' . left . backspace . right
         endif
     endif
@@ -1390,12 +1390,12 @@ function! s:vimim_square_bracket(key)
 endfunction
 
 function! g:vimim_bracket(offset)
-    let column_end = col('.')-1
+    let column_end = col(".")-1
     let column_start = s:start_column_before
     let range = column_end - column_start
     let repeat_times = range / s:multibyte
     let repeat_times += a:offset
-    let row_end = line('.')
+    let row_end = line(".")
     let row_start = s:start_row_before
     let delete_char = ""
     if repeat_times > 0 && row_end == row_start
@@ -1419,7 +1419,7 @@ function! <SID>vimim_esc()
         sil!call g:vimim_stop()
     elseif pumvisible()
         let column_start = s:start_column_before
-        let column_end = col('.') - 1
+        let column_end = col(".") - 1
         let range = column_end - column_start
         let key = '\<C-E>' . repeat("\<BS>", range)
         sil!call s:vimim_super_reset()
@@ -1805,7 +1805,7 @@ function! s:vimim_onekey_action(space)
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
     let two_before = current_line[col(".")-3]
-    if empty(s:ui.has_dot) && two_before !~# "[0-9a-z']"
+    if empty(s:ui.has_dot) && two_before !~# s:valid_key
         let punctuations = copy(s:punctuations)
         call extend(punctuations, s:evils)
         if has_key(punctuations, one_before)
@@ -1886,18 +1886,18 @@ function! s:vimim_popup_word()
         return ""
     endif
     let column_start = s:start_column_before
-    let column_end = col('.') - 1
+    let column_end = col(".") - 1
     let range = column_end - column_start
     let chinese = strpart(getline("."), column_start, range)
     return substitute(chinese,'\w','','g')
 endfunction
 
-function! s:vimim_dot_by_dot(keyboard)
+function! s:vimim_quote_by_quote(keyboard)
     " <dot> double play in OneKey:
     "   (1) trailing dot => forced-cjk-match
     "   (2) as word partition  => match dot by dot
     let keyboard = a:keyboard
-    let partition = match(keyboard, "[.']")
+    let partition = match(keyboard, "[']")
     if partition > -1 && empty(s:ui.has_dot)
         let keyboard = s:vimim_get_head(keyboard, partition)
     endif
@@ -2038,7 +2038,7 @@ function! s:vimim_chinesemode_action()
             endfor
         else
             " dynamic alphabet trigger for all
-            let not_used_valid_keys = "[0-9.']"
+            let not_used_valid_keys = "[0-9']"
             if s:ui.has_dot == 1
                 let not_used_valid_keys = "[0-9]"
             endif
@@ -2249,7 +2249,7 @@ function! s:vimim_onekey_menu_format()
         return lines
     endif
     let n = s:hjkl_s * (7-s:multibyte)
-    let textwidth = repeat('.', n)
+    let textwidth = repeat(".", n)
     let results = []
     for line in lines
         let onelines = split(line, textwidth . '\zs')
@@ -2474,7 +2474,7 @@ function! s:vimim_onekey_cjk(keyboard)
             let head = s:vimim_get_head(keyboard, partition)
         endif
     elseif s:ui.im == 'pinyin' || s:ui.root == 'cloud'
-        if len(keyboard)%5 < 1 && keyboard !~ "[.']"
+        if len(keyboard)%5 < 1 && keyboard !~ "[']"
         \&& keyboard =~# '^\l' && keyboard[1:4] !~ '[^pqwertyuio]'
             " muuqwxeyqpjeqqq => m7712x3610j3111
             let llll = keyboard[1:4]
@@ -2519,7 +2519,7 @@ function! s:vimim_cjk_match(keyboard)
             let grep = keyboard . '[a-z ]'
         else
             let digit = ""
-            if keyboard =~ '^\d\+' && keyboard !~ '[^0-9.]'
+            if keyboard =~ '^\d\+' && keyboard !~ '[^0-9]'
                 " cjk free-style digit input: 7 77 771 7712"
                 let digit = keyboard
             elseif keyboard =~# '^\l\+\d\+'
@@ -2760,32 +2760,12 @@ endfunction
 
 function! s:vimim_hjkl_m_hjkl_n(keyboard)
     let keyboard = a:keyboard
-    let a_keyboard = a:keyboard
-    if keyboard[-1:] =~ '[.]'
-        "  magic trailing dot to use control cjjp: sssss.
-        let s:hjkl_m += 1
-        let a_keyboard = keyboard[:len(keyboard)-2]
-    endif
     if s:hjkl_m > 0       " s's's's's's
-        let keyboard = s:vimim_toggle_cjjp(a_keyboard)
+        let keyboard = s:vimim_toggle_cjjp(keyboard)
     elseif s:hjkl_n > 0   " shi'shi'shi
-        let keyboard = s:vimim_toggle_pinyin(a_keyboard)
+        let keyboard = s:vimim_toggle_pinyin(keyboard)
     endif
-    return s:vimim_dot_by_dot(keyboard)
-endfunction
-
-function! s:vimim_toggle_pinyin(keyboard)
-    let keyboard = a:keyboard
-    if s:hjkl_n < 1 || s:vimim_imode_pinyin < 1
-        return keyboard
-    elseif s:hjkl_n % 2 > 0
-        " set pin'yin: woyouyigemeng => wo'you'yi'ge'meng
-        let keyboard = s:vimim_quanpin_transform(keyboard)
-    elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
-        " reset pinyin: wo'you'yi'ge'meng => woyouyigemeng
-        let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
-    endif
-    return keyboard
+    return s:vimim_quote_by_quote(keyboard)
 endfunction
 
 function! s:vimim_toggle_cjjp(keyboard)
@@ -2797,6 +2777,20 @@ function! s:vimim_toggle_cjjp(keyboard)
         let keyboard = join(split(keyboard,'\zs'),"'")
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
         " reset cjjp: w'y'y'g'm => wyygm
+        let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+    endif
+    return keyboard
+endfunction
+
+function! s:vimim_toggle_pinyin(keyboard)
+    let keyboard = a:keyboard
+    if s:hjkl_n < 1 || s:vimim_imode_pinyin < 1
+        return keyboard
+    elseif s:hjkl_n % 2 > 0
+        " set pin'yin: woyouyigemeng => wo'you'yi'ge'meng
+        let keyboard = s:vimim_quanpin_transform(keyboard)
+    elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
+        " reset pinyin: wo'you'yi'ge'meng => woyouyigemeng
         let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
     endif
     return keyboard
@@ -2944,7 +2938,7 @@ function! s:vimim_set_shuangpin()
     let rules = s:vimim_shuangpin_generic()
     let chinese = ""
     let shuangpin = s:vimim_chinese('shuangpin')
-    let keycode = "[0-9a-z'.]"
+    let keycode = "[0-9a-z']"
     if s:vimim_shuangpin == 'abc'
         let rules = s:vimim_shuangpin_abc(rules)
         let s:vimim_imode_pinyin = 1
@@ -2953,7 +2947,7 @@ function! s:vimim_set_shuangpin()
     elseif s:vimim_shuangpin == 'ms'
         let rules = s:vimim_shuangpin_ms(rules)
         let chinese = s:vimim_chinese('ms')
-        let keycode = "[0-9a-z'.;]"
+        let keycode = "[0-9a-z';]"
     elseif s:vimim_shuangpin == 'nature'
         let rules = s:vimim_shuangpin_nature(rules)
         let chinese = s:vimim_chinese('nature')
@@ -2963,7 +2957,7 @@ function! s:vimim_set_shuangpin()
     elseif s:vimim_shuangpin == 'purple'
         let rules = s:vimim_shuangpin_purple(rules)
         let chinese = s:vimim_chinese('purple')
-        let keycode = "[0-9a-z'.;]"
+        let keycode = "[0-9a-z';]"
     elseif s:vimim_shuangpin == 'flypy'
         let rules = s:vimim_shuangpin_flypy(rules)
         let chinese = s:vimim_chinese('flypy')
@@ -4362,7 +4356,7 @@ if a:start
     endif
     let last_seen_nonsense_column  = copy(start_column)
     let last_seen_backslash_column = copy(start_column)
-    let nonsense = s:vimim_imode_pinyin>1 ? "[a-f0-9.']" : "[0-9.']"
+    let nonsense = s:vimim_imode_pinyin>1 ? "[a-f0-9']" : "[0-9']"
     let all_digit = 1
     while start_column > 0
         if one_before =~# s:valid_key
@@ -4440,9 +4434,9 @@ else
             if magic_tail =~ "'" && keyboard !~ '\d'
                 " [cloud] magic trailing apostrophe to control cloud
                 let keyboard = s:vimim_magic_apostrophe_tail(keyboard)
-            elseif match(keyboard, "[.']") > -1 && magic_tail !~ '[.]'
-                " [local] wo.you.yi.ge.meng
-                let keyboard = s:vimim_dot_by_dot(keyboard)
+            elseif keyboard =~ "'"
+                " [local] wo'you'yi'ge'meng
+                let keyboard = s:vimim_quote_by_quote(keyboard)
             endif
         endif
     endif
@@ -4489,7 +4483,8 @@ else
     endif
     " [just_do_it] last try on both cjk and cloud before giving up
     if s:chinese_input_mode=~'onekey'
-        let keyboard_head = s:vimim_onekey_cjk(keyboard.".")
+        let s:hjkl_m = 1
+        let keyboard_head = s:vimim_onekey_cjk(keyboard)
         if !empty(keyboard_head)
             let results = s:vimim_cjk_match(keyboard_head)
         endif
@@ -4565,7 +4560,7 @@ function! s:vimim_popupmenu_list(matched_list)
         if empty(s:mycloud)
             if !empty(keyboard) && s:show_me_not < 1
                 let keyboard_head_length = len(menu)
-                if empty(s:ui.has_dot) && keyboard =~ "['.]"
+                if empty(s:ui.has_dot) && keyboard =~ "[']"
                     " for vimim classic: i.have.a.dream
                     let keyboard_head_length += 1
                 endif
