@@ -436,6 +436,8 @@ function! s:vimim_get_hjkl(keyboard)
     let results = s:vimim_easter_chicken(keyboard)
     if !empty(results)
         " [eggs] hunt classic easter egg ... vim<C-6>
+    elseif keyboard ==# "''" " plays mahjong at will
+        let results = s:mahjong
     elseif keyboard == 'vimim.'
         " [hjkl] display buffer inside the omni window
         let results = split(getreg('"'), '\n')
@@ -443,8 +445,6 @@ function! s:vimim_get_hjkl(keyboard)
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
-        elseif keyboard ==# 'ii' " plays mahjong at will
-            let results = s:mahjong
         elseif keyboard ==# 'i'  " 石i => 石金
             let char_before = s:vimim_get_char_before('i')
             let results = s:vimim_get_imode_chinese(char_before)
