@@ -774,28 +774,23 @@ endfunction
 function! s:vimim_build_quantifier_hash()
     call s:vimim_build_numbers_hash()
     let s:quantifiers = copy(s:numbers)
-    let s:quantifiers.a = "秒"
     let s:quantifiers.b = "百佰步把包杯本笔部班"
     let s:quantifiers.c = "次餐场串处床"
     let s:quantifiers.d = "第度点袋道滴碟顶栋堆对朵堵顿"
-    let s:quantifiers.e = "亿"
     let s:quantifiers.f = "分份发封付副幅峰方服"
     let s:quantifiers.g = "个根股管"
-    let s:quantifiers.h = "毫行盒壶户回"
-    let s:quantifiers.i = "毫"
+    let s:quantifiers.h = "行盒壶户回毫"
     let s:quantifiers.j = "斤家具架间件节剂具捲卷茎记"
     let s:quantifiers.k = "克口块棵颗捆孔"
     let s:quantifiers.l = "里粒类辆列轮厘领缕"
-    let s:quantifiers.m = "米名枚面门"
+    let s:quantifiers.m = "米名枚面门秒"
     let s:quantifiers.n = "年"
-    let s:quantifiers.o = "度"
     let s:quantifiers.p = "磅盆瓶排盘盆匹片篇撇喷"
     let s:quantifiers.q = "千仟群"
     let s:quantifiers.r = "日"
     let s:quantifiers.s = "十拾时升艘扇首双所束手"
     let s:quantifiers.t = "天吨条头通堂趟台套桶筒贴"
-    let s:quantifiers.u = "微"
-    let s:quantifiers.w = "万位味碗窝晚"
+    let s:quantifiers.w = "万位味碗窝晚微"
     let s:quantifiers.x = "席些项"
     let s:quantifiers.y = "月叶亿"
     let s:quantifiers.z = "种只张株支枝盏座阵桩尊则站幢宗兆"
@@ -2447,7 +2442,7 @@ function! s:vimim_onekey_cjk(keyboard)
         return 0
     endif
     let keyboard = a:keyboard
-    if keyboard =~# '^i' " 4corner_shortcut: iypwqwuww => 60212722
+    if keyboard =~# '^i' " 4corner_shortcut: iuuqwuqew => 77127132
         let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
     endif
     let head = 0
