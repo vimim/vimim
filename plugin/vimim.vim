@@ -228,7 +228,6 @@ function! s:vimim_initialize_global()
     if s:vimim_hjkl_directory[-1:] != "/"
         let s:vimim_hjkl_directory .= "/"
     endif
-    let s:mahjong = split("囍發萬中 春夏秋冬 东南西北 梅兰竹菊")
 endfunction
 
 function! s:vimim_set_global_default(options, default)
@@ -292,7 +291,7 @@ function! s:vimim_egg_vimimvim()
 endfunction
 
 function! s:vimim_egg_vimimgame()
-    return s:mahjong
+    return split(s:mahjong)
 endfunction
 
 function! s:vimim_egg_vimimclouds()
@@ -436,14 +435,16 @@ function! s:vimim_get_hjkl(keyboard)
     let results = s:vimim_easter_chicken(keyboard)
     if !empty(results)
         " [eggs] hunt classic easter egg ... vim<C-6>
-    elseif keyboard ==# "''" " plays mahjong at will
-        let results = s:mahjong
     elseif keyboard ==# "''''"
         " [hjkl] display buffer inside the omni window
         let results = split(getreg('"'), '\n')
-    elseif keyboard ==# 'u' && empty(s:cjk_filename)
-        let unicode_index = "一 圣 性 楊 版 答 葬 走 隐"
-        let results = split(unicode_index)
+    elseif keyboard ==# "''" " plays mahjong at will
+        let results = split(s:mahjong)
+    elseif keyboard ==# '^u\+$'
+        let results = []
+        if empty(s:cjk_filename)
+            let results = split(s:mahjong)
+        endif
     elseif keyboard =~# '^i' && s:vimim_imode_pinyin > 0
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
@@ -452,13 +453,12 @@ function! s:vimim_get_hjkl(keyboard)
             let char_before = s:vimim_get_char_before('i')
             let results = s:vimim_get_imode_chinese(char_before)
             if empty(results)
-                let i_in_english = "我 你 妳 他 她 它"
-                let results = split(i_in_english)
+                let results = ["我"]
             endif
         elseif empty(s:english_results)
             let results = s:vimim_imode_number(keyboard)
         endif
-    elseif keyboard !~ "db"
+    elseif keyboard !~ ".db"
         " [poem] check entry in special directories first
         let datafile = s:vimim_check_filereadable(keyboard)
         if !empty(datafile)
@@ -648,7 +648,7 @@ function! s:vimim_get_imode_chinese(char_before)
     if empty(s:loops)
         let antonyms = s:vimim_get_antonym_list()
         let numbers  = s:vimim_get_numbers_list()
-        let imode_list = s:mahjong + numbers + antonyms
+        let imode_list = split(s:mahjong) + numbers + antonyms
         for loop in imode_list
             let loops = split(loop,'\zs')
             for i in range(len(loops))
@@ -2129,8 +2129,11 @@ endfunction
 
 function! s:vimim_get_char_before(keyboard)
     let start = col(".") -1 - s:multibyte * len(a:keyboard)
+    let byte_before = getline(".")[col(".")-len(a:keyboard)-1]
     let char_before = getline(".")[start : start+s:multibyte-1]
-    if char_before =~ '\w'
+    if byte_before =~ '\s'
+        let char_before = a:keyboard[0:0]
+    elseif char_before =~ '\w'
         let char_before = a:keyboard
     endif
     return char_before
@@ -2441,10 +2444,10 @@ function! s:vimim_scan_cjk_file()
 endfunction
 
 function! s:vimim_onekey_cjk(keyboard)
-    if empty(s:cjk_filename)
+    let keyboard = a:keyboard
+    if empty(s:cjk_filename) || keyboard =~ "[']"
         return 0
     endif
-    let keyboard = a:keyboard
     if keyboard =~# '^i' " 4corner_shortcut: iuuqwuqew => 77127132
         let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
     endif
@@ -2472,8 +2475,8 @@ function! s:vimim_onekey_cjk(keyboard)
             let head = s:vimim_get_head(keyboard, partition)
         endif
     elseif s:ui.im == 'pinyin' || s:ui.root == 'cloud'
-        if len(keyboard)%5 < 1 && keyboard !~ "[']"
-        \&& keyboard =~# '^\l' && keyboard[1:4] !~ '[^pqwertyuio]'
+        if  keyboard =~# '^\l'    && len(keyboard)%5 < 1
+        \&& keyboard !~# '^\l\+$' && keyboard[1:4] !~ '[^pqwertyuio]'
             " muuqwxeyqpjeqqq => m7712x3610j3111
             let llll = keyboard[1:4]
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
@@ -2545,7 +2548,7 @@ function! s:vimim_cjk_match(keyboard)
             endif
         endif
     else
-        if keyboard ==# 'u'   " 214 standard unicode index
+        if keyboard =~# '^u\+$'  " 214 standard unicode index
             let grep = '\s\d\d\d\d\s\d\d\d\d\su\s'
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
@@ -3427,8 +3430,6 @@ function! s:vimim_more_pinyin_directory(keyboard, dir)
         let filename = a:dir . candidate
         if filereadable(filename)
             let matches = s:vimim_readfile(filename)
-        elseif s:chinese_input_mode =~ 'onekey'
-            let matches = s:vimim_cjk_match(candidate)[0:20]
         endif
         if !empty(matches)
             call map(matches, 'candidate ." ". v:val')
@@ -4446,6 +4447,10 @@ else
         endif
         let results = s:vimim_cjk_match(keyboard)
         if !empty(len(results))
+            if keyboard =~# '^u\+$' " cycle 214 unicode: u uu uuu
+                let next = (len(keyboard)-1)*20
+                let results = results[next :] + results[: next-1]
+            endif
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -4735,6 +4740,7 @@ function! s:vimim_initialize_plugin()
     if !hasmapto("VimimOneKey")
         inoremap<unique><expr> <Plug>VimimOneKey g:vimim_onekey()
     endif
+    let s:mahjong = "囍發萬中 春夏秋冬 东南西北 梅兰竹菊"
 endfunction
 
 sil!call s:vimim_initialize_local()
