@@ -1490,10 +1490,10 @@ let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
 
 function! s:vimim_get_bsddb()
-    let bsddb = "vimim.utf8.bsddb"
+    let bsddb = "vimim.utf8.bsddb"     " wc=55,230,464
     let datafile = s:vimim_check_filereadable(bsddb)
     if empty(datafile)
-        let bsddb = "vimim.gbk.bsddb"
+        let bsddb = "vimim.gbk.bsddb"  " wc=46,694,400
         let datafile = s:vimim_check_filereadable(bsddb)
     endif
     return datafile
@@ -1515,6 +1515,7 @@ function! s:vimim_initialize_bsddb(datafile)
 :sil!python << EOF
 import vim, bsddb
 edw = bsddb.btopen(vim.eval('a:datafile'),'r')
+vimim_data_file = vim.eval("s:vimim_data_file")
 encoding = vim.eval("&encoding")
 def getstone(key, partition):
     isenglish = vim.eval('s:english_results')
