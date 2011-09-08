@@ -1489,6 +1489,18 @@ endfunction
 let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
 
+function! s:vimim_get_english_from_bsd(keyboard)
+    :python keyboard = vim.eval('a:keyboard')
+    :python partition = int(vim.eval('s:hjkl_h'))
+    :python stone = getstone(keyboard, partition)
+    :python vim.command("return '%s'" % stone)
+endfunction
+
+function! s:vimim_get_chinese_from_bsd(stone)
+    :python gold = getgold(vim.eval('a:stone'))
+    :python vim.command("return '%s'" % gold)
+endfunction
+
 function! s:vimim_database_init()
 :sil!python << EOF
 encoding = vim.eval("&encoding")
@@ -1502,14 +1514,11 @@ def getstone(key, partition):
 def getgold(key):
     chinese = key
     if key in db:
-        try:
-            chinese = db.get(key)
-            if encoding != 'utf-8':
-                chinese = unicode(chinese,'utf-8','ignore')
-                chinese = chinese.encode(encoding,'ignore')
-            chinese = key + ' ' + chinese
-        except:
-            pass
+        chinese = db.get(key)
+        if encoding != 'utf-8':
+            chinese = unicode(chinese,'utf-8','ignore')
+            chinese = chinese.encode(encoding,'ignore')
+        chinese = key + ' ' + chinese
     return chinese
 EOF
 endfunction
@@ -3349,10 +3358,6 @@ function! s:vimim_get_from_datafile(keyboard)
 endfunction
 
 function! s:vimim_get_from_database(keyboard)
-    function! s:vimim_get_chinese_from_bsd(stone)
-        :python gold = getgold(vim.eval('a:stone'))
-        :python vim.command("return '%s'" % gold)
-    endfunction
     let oneline = s:vimim_get_chinese_from_bsd(a:keyboard)
     let results = s:vimim_make_pair_list(oneline)
     if s:search < 1 && len(results) > 0 && len(results) < 20
@@ -4661,11 +4666,8 @@ function! s:vimim_embedded_backend_engine(keyboard)
             endif
         endif
     elseif root =~# "datafile"
-        if s:vimim_data_file =~ ".db" && keyboard !~# '\L'
-            :python keyboard = vim.eval('keyboard')
-            :python partition = int(vim.eval('s:hjkl_h'))
-            :python keyboard2 = getstone(keyboard, partition)
-            :python vim.command("let keyboard2 = '%s'" % keyboard2)
+        if s:vimim_data_file =~ ".db"
+            let keyboard2 = s:vimim_get_english_from_bsd(keyboard)
             let results = s:vimim_get_from_database(keyboard2)
         else
             let keyboard2 = s:vimim_sentence_datafile(keyboard)
