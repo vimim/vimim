@@ -1500,6 +1500,9 @@ function! s:vimim_get_bsddb()
 endfunction
 
 function! s:vimim_get_stone_from_bsddb(keyboard)
+    if empty(a:keyboard) || a:keyboard != s:valid_key
+        return ""
+    endif
     :python keyboard = vim.eval('a:keyboard')
     :python partition = int(vim.eval('s:hjkl_h'))
     :python stone = getstone(keyboard, partition)
@@ -1507,6 +1510,9 @@ function! s:vimim_get_stone_from_bsddb(keyboard)
 endfunction
 
 function! s:vimim_get_gold_from_bsddb(stone)
+    if empty(a:stone) || a:stone != s:valid_key
+        return ""
+    endif
     :python gold = getgold(vim.eval('a:stone'))
     :python vim.command("return '%s'" % gold)
 endfunction
@@ -3372,7 +3378,13 @@ function! s:vimim_get_from_datafile(keyboard)
 endfunction
 
 function! s:vimim_get_from_database(keyboard)
+    if empty(a:keyboard)
+        return []
+    endif
     let oneline = s:vimim_get_gold_from_bsddb(a:keyboard)
+    if empty(oneline) || oneline != '\S'
+        return []
+    endif
     let results = s:vimim_make_pair_list(oneline)
     if s:search < 1 && len(results) > 0 && len(results) < 20
         let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
@@ -3393,7 +3405,7 @@ function! s:vimim_get_from_database(keyboard)
 endfunction
 
 function! s:vimim_make_pair_list(oneline)
-    if empty(a:oneline)
+    if empty(a:oneline) || a:oneline != '\S'
         return []
     endif
     let oneline_list = split(a:oneline)
