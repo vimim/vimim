@@ -2437,15 +2437,17 @@ function! <SID>vimim_onekey_hjkl(key)
         elseif hjkl ==# 'h'
             let s:hjkl_h += 1
             let s:hjkl_l = 0
-        elseif hjkl ==# 'l'
-            let s:hjkl_l += 1
+        else
             let s:hjkl_h = 0
-        elseif hjkl ==# 'm'
-            let s:hjkl_m += 1
-            let s:hjkl_n = 0
-        elseif hjkl ==# 'n'
-            let s:hjkl_n += 1
-            let s:hjkl_m = 0
+            if hjkl ==# 'l'
+                let s:hjkl_l += 1
+            elseif hjkl ==# 'm'
+                let s:hjkl_m += 1
+                let s:hjkl_n = 0
+            elseif hjkl ==# 'n'
+                let s:hjkl_n += 1
+                let s:hjkl_m = 0
+            endif
         endif
         let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
     endif
