@@ -2821,9 +2821,11 @@ endfunction
 
 function! s:vimim_hjkl_m_hjkl_n(keyboard)
     let keyboard = a:keyboard
-    if s:hjkl_m > 0       " s's's's's's
+    if s:hjkl_m < 1
+        return keyboard
+    elseif s:hjkl_m > 0      " s's's's's's
         let keyboard = s:vimim_toggle_cjjp(keyboard)
-    elseif s:hjkl_n > 0   " shi'shi'shi
+    elseif s:hjkl_n > 0  " shi'shi'shi
         let keyboard = s:vimim_toggle_pinyin(keyboard)
     endif
     return s:vimim_quote_by_quote(keyboard)
@@ -4495,7 +4497,12 @@ else
             let keyboard = s:vimim_hjkl_m_hjkl_n(a:keyboard)
         endif
         let results = s:vimim_cjk_match(keyboard)
-        if !empty(len(results))
+        if empty(len(results))
+            if empty(s:english_results) && keyboard =~ '^\l\d\d\d\d$'
+                let s:hjkl_m = 1      " aeiou => a3897 => aeiou
+                let keyboard = s:vimim_hjkl_m_hjkl_n(a:keyboard)
+            endif
+        else
             return s:vimim_popupmenu_list(results)
         endif
     endif
