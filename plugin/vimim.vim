@@ -27,10 +27,10 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "
 " "VimIM Installation"
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
-"  (2) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
-"  (3) [option] drop a standard directory: plugin/vimim/pinyin/
-"  (4) [option] drop a English  datafile:  plugin/vimim.txt
-"  (5) [option] drop a python2  database:  plugin/vimim.pinyin.db
+"  (2) [option] drop a English  datafile:  plugin/vimim.txt
+"  (3) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
+"  (4) [option] drop a python2  database:  plugin/vimim.utf8.bsddb
+"  (5) [option] drop a standard directory: plugin/vimim/pinyin/
 "
 " "VimIM Usage"
 "  (1) play with cloud, without datafile, with python or wget/curl
@@ -982,7 +982,7 @@ function! s:vimim_get_valid_im_name(im)
 endfunction
 
 function! s:vimim_set_special_im_property()
-    if  s:ui.im == 'pinyin' || !empty(s:cjk_filename)
+    if s:vimim_imode_pinyin > 0
         let s:quanpin_table = s:vimim_create_quanpin_table()
     endif
     if s:backend[s:ui.root][s:ui.im].name =~# "quote"
@@ -1493,16 +1493,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
-
-function! s:vimim_get_bsddb()
-    let bsddb = "vimim.gbk.bsddb"       " wc=46,694,400
-    let datafile = s:vimim_check_filereadable(bsddb)
-    if empty(datafile)
-        let bsddb = "vimim.utf8.bsddb"  " wc=55,230,464
-        let datafile = s:vimim_check_filereadable(bsddb)
-    endif
-    return datafile
-endfunction
 
 function! s:vimim_get_stone_from_bsddb(keyboard)
     if empty(a:keyboard) || a:keyboard !~ s:valid_key
@@ -2521,7 +2511,7 @@ function! s:vimim_onekey_cjk(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:ui.im == 'pinyin' || s:ui.root == 'cloud'
+    elseif s:vimim_imode_pinyin > 0
         if  keyboard =~# '^\l' && len(keyboard)%5 < 1
         \&& keyboard[0:0] !~ '[iuv]'
         \&& keyboard[1:4] !~ '[^pqwertyuio]'
@@ -3284,6 +3274,18 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 
 function! s:vimim_scan_backend_embedded()
     let im = "pinyin"
+    if has("python")  " bsddb is from Python 2 only
+        let bsddb = "vimim.gbk.bsddb"       " wc=46,694,400
+        let datafile = s:vimim_check_filereadable(bsddb)
+        if empty(datafile)
+            let bsddb = "vimim.utf8.bsddb"  " wc=55,230,464
+            let datafile = s:vimim_check_filereadable(bsddb)
+        endif
+        if !empty(datafile)
+            call s:vimim_initialize_bsddb(datafile)
+            return s:vimim_set_datafile(im, datafile)
+        endif
+    endif
     if isdirectory(s:path.im)
         let s:vimim_data_directory = s:path . im
     endif
@@ -3291,11 +3293,6 @@ function! s:vimim_scan_backend_embedded()
         if filereadable(s:vimim_data_directory.im)
             return s:vimim_set_directory(im, s:vimim_data_directory)
         endif
-    endif
-    let datafile = s:vimim_get_bsddb()
-    if !empty(datafile) && has("python")
-        call s:vimim_initialize_bsddb(datafile)
-        return s:vimim_set_datafile(im, datafile)
     endif
     let datafile = s:vimim_data_file
     if !empty(datafile) && filereadable(datafile)
@@ -4534,15 +4531,20 @@ else
     elseif !empty(s:english_results)
         return s:vimim_popupmenu_list([""])
     endif
-    " [just_do_it] last try on both cjk and cloud before giving up
-    if s:chinese_input_mode=~'onekey'
-        let s:hjkl_m = 1
+    " [The Last Resort] cjk letter by letter: s's's's's
+    if s:chinese_input_mode=~'onekey' && !empty(s:cjk_filename)
         let keyboard_head = s:vimim_onekey_cjk(keyboard)
-        if !empty(keyboard_head)
-            let results = s:vimim_cjk_match(keyboard_head)
+        if empty(keyboard_head)
+            let s:hjkl_m = 1
+            let keyboard = s:vimim_hjkl_m_hjkl_n(keyboard)
         endif
-    elseif keyboard !~# '\L'
-        let results = s:vimim_get_cloud(keyboard, cloud)
+        if !empty(keyboard)
+            let results = s:vimim_cjk_match(keyboard)
+        endif
+    endif
+    " [The Last Resort] cloud forever
+    if empty(results) && keyboard !~# '\L'
+        let results = s:vimim_get_cloud(keyboard, s:cloud_default)
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
@@ -4584,7 +4586,7 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:show_me_not > 0
             call reverse(lines)
             let label = len(lines)
-        elseif s:ui.im == 'pinyin' || s:ui.root == 'cloud'
+        elseif s:vimim_imode_pinyin > 0
             let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
         endif
     endif
