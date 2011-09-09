@@ -2821,9 +2821,7 @@ endfunction
 
 function! s:vimim_hjkl_m_hjkl_n(keyboard)
     let keyboard = a:keyboard
-    if s:hjkl_m < 1
-        return keyboard
-    elseif s:hjkl_m > 0      " s's's's's's
+    if s:hjkl_m > 0      " s's's's's's
         let keyboard = s:vimim_toggle_cjjp(keyboard)
     elseif s:hjkl_n > 0  " shi'shi'shi
         let keyboard = s:vimim_toggle_pinyin(keyboard)
