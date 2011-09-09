@@ -2251,7 +2251,7 @@ function! s:vimim_cache()
     let results = []
     if s:chinese_input_mode =~ 'onekey'
         if len(s:hjkl_s) > 0
-            if len(s:matched_list) > 0 && s:show_me_not > 0
+            if s:show_me_not > 0 && len(s:matched_list) > 0
                 let results = s:vimim_onekey_menu_format()
             elseif len(s:popupmenu_list) > 0
                 let results = s:vimim_onekey_menu_filter()
@@ -2341,13 +2341,13 @@ function! s:vimim_cjk_digit_filter(chinese)
     " smart digital filter: 马力 7712 4002
     "   (1)   ma<C-6>       马   => filter with   7712
     "   (2) mali<C-6>       马力 => filter with 7 4002
-    if empty(len(s:hjkl_s)) || empty(a:chinese)
+    let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
+    if empty(len(s:hjkl_s)) || empty(chinese)
         return 0
     endif
     let digit_head = ""
     let digit_tail = ""
-    let words = split(a:chinese,'\zs')
-    for cjk in words
+    for cjk in split(chinese,'\zs')
         let grep = "^" . cjk
         let line = match(s:cjk_lines, grep, 0)
         if line < 0
