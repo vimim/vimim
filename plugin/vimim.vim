@@ -256,7 +256,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = simplify(s:path . '../../../hjkl/')
+    let hjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -2597,8 +2597,8 @@ function! s:vimim_cjk_match(keyboard)
             endif
         endif
     else
-        if keyboard =~# '^u\+$'  " 214 standard unicode index
-            let grep = '\s\d\d\d\d\s\d\d\d\d\su\s'
+        if keyboard =~# '^u\+$'
+            let grep = ' u '      " 214 standard unicode index
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
