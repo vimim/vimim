@@ -1805,7 +1805,7 @@ endfunction
 function! g:vimim_onekey()
     " (1)<OneKey> in insert mode => start OneKey as the MidasTouch
     " (2)<OneKey> in OneKey mode => stop  OneKey
-    " (3)<OneKey> in omni   mode => stop  OneKey and print out menu
+    " (3)<OneKey> in omni window => stop  OneKey and print out menu
     let onekey = ''
     let s:chinese_input_mode = 'onekey'
     sil!call s:vimim_backend_initialization()
@@ -4457,7 +4457,8 @@ else
     endif
     if empty(keyboard) || keyboard !~# s:valid_key
         return []
-    else   " [english] English cannot be ignored!
+    elseif s:hjkl_m > 0 || s:hjkl_n > 0   
+        " [english] English cannot be ignored!
         let s:english_results = s:vimim_english(keyboard)
     endif
     " [mycloud] get chunmeng from mycloud local or www
