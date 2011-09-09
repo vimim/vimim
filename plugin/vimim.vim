@@ -2523,8 +2523,9 @@ function! s:vimim_onekey_cjk(keyboard)
             let head = s:vimim_get_head(keyboard, partition)
         endif
     elseif s:ui.im == 'pinyin' || s:ui.root == 'cloud'
-        if  keyboard =~# '^\l'    && len(keyboard)%5 < 1
-        \&& keyboard !~# '^\l\+$' && keyboard[1:4] !~ '[^pqwertyuio]'
+        if  keyboard =~# '^\l' && len(keyboard)%5 < 1
+        \&& keyboard[0:0] !~ '[iuv]'
+        \&& keyboard[1:4] !~ '[^pqwertyuio]'
             " muuqwxeyqpjeqqq => m7712x3610j3111
             let llll = keyboard[1:4]
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
@@ -3702,7 +3703,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     catch
         call s:debug('alert', 'get_cloud='.cloud.'=', v:exception)
     endtry
-    if (len(results)) > 1 && empty(s:english_results)
+    if len(results) > 1 && empty(s:english_results)
         let s:cloud_cache[cloud][keyboard] = results
     endif
     return results
@@ -4460,7 +4461,7 @@ else
     endif
     if empty(keyboard) || keyboard !~# s:valid_key
         return []
-    else    " [english] English cannot be ignored!
+    else   " [english] English cannot be ignored!
         let s:english_results = s:vimim_english(keyboard)
     endif
     " [mycloud] get chunmeng from mycloud local or www
@@ -4560,7 +4561,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let popupmenu_list_one_row = []
     let first_in_list = get(lines,0)
     if !empty(s:english_results)
-        if empty(first_in_list)
+        if first_in_list =~ '\w'
             let lines = s:english_results
         else
             call extend(lines, s:english_results, 0)
