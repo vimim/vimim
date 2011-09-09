@@ -2269,6 +2269,12 @@ function! s:vimim_cache()
             endif
         elseif s:hjkl_l > 0 && len(s:matched_list) > &pumheight
             let &pumheight = s:hjkl_l%2<1 ? s:pumheight : 0
+        elseif s:hjkl_h > 0
+            let first = split(get(s:matched_list,0))
+            let cjk = len(first)>1 ? get(first,1) : get(first,0)
+            if len(cjk) == s:multibyte
+                let results = s:matched_list
+            endif
         endif
     endif
     if s:pageup_pagedown != 0
@@ -2433,8 +2439,10 @@ function! <SID>vimim_onekey_hjkl(key)
             call g:vimim_reset_after_insert()
         elseif hjkl ==# 'h'
             let s:hjkl_h += 1
+            let s:hjkl_l = 0
         elseif hjkl ==# 'l'
             let s:hjkl_l += 1
+            let s:hjkl_h = 0
         elseif hjkl ==# 'm'
             let s:hjkl_m += 1
             let s:hjkl_n = 0
@@ -2606,7 +2614,9 @@ function! s:vimim_cjk_match(keyboard)
         while line > -1
             let values = split(get(s:cjk_lines, line))
             let frequency = get(values, -1)
-            if frequency =~ '\l'
+            if keyboard =~# '^u\+$'
+                let frequency = ""
+            elseif frequency =~ '\l'
                 let frequency = 9999
             endif
             let chinese_frequency = get(values,0) . ' ' . frequency
@@ -2618,6 +2628,10 @@ function! s:vimim_cjk_match(keyboard)
         let results = sort(results, "s:vimim_sort_on_last")
         let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
+        if keyboard =~# '^uu\+$'    " cycle 214 unicode: u uu uuu
+            let next = (len(keyboard)-1)*20
+            let results = results[next :] + results[: next-1]
+        endif
     endif
     return results
 endfunction
@@ -4477,10 +4491,6 @@ else
         endif
         let results = s:vimim_cjk_match(keyboard)
         if !empty(len(results))
-            if keyboard =~# '^u\+$' " cycle 214 unicode: u uu uuu
-                let next = (len(keyboard)-1)*20
-                let results = results[next :] + results[: next-1]
-            endif
             return s:vimim_popupmenu_list(results)
         endif
     endif
