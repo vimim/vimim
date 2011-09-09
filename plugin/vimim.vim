@@ -104,7 +104,8 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     let s:cjk_cache = {}
-    let s:cjk_cache.i = ["我"]
+    let s:cjk_cache.i = ["我","　"]
+    let s:cjk_cache.v = ["　"]
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -421,7 +422,6 @@ function! s:vimim_get_hjkl(keyboard)
     let keyboard = a:keyboard
     " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
     if keyboard =~# 'u\d\d\d\d\d'
-        let s:show_me_not = -7
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
     endif
@@ -452,7 +452,7 @@ function! s:vimim_get_hjkl(keyboard)
         elseif keyboard ==# 'i'           " 一i => 一二
             let char_before = s:vimim_get_char_before(keyboard)
             let results = s:vimim_get_imode_chinese(char_before,1)
-        elseif empty(s:english_results) && keyboard !~ "'"
+        elseif keyboard =~ '\d' && empty(s:english_results)
             let results = s:vimim_imode_number(keyboard)
         endif
     else
@@ -645,7 +645,7 @@ endfunction
 
 function! s:vimim_get_antonym_list()
     let antonym  = " ，。 “” ‘’ （） 【】 〖〗 《》"
-    let antonym .= " 加减乘除 危安 胜败 凶吉 真假 石金 "
+    let antonym .= " 酸甜苦辣 危安 胜败 凶吉 真假 石金 "
     return split(antonym)
 endfunction
 
@@ -653,8 +653,7 @@ function! s:vimim_get_imode_chinese(char_before,number)
     if empty(s:loops)
         let antonyms = s:vimim_get_antonym_list()   " 石 => 金
         let numbers  = s:vimim_get_numbers_list()   " 七 => 八
-        let all_list = numbers + antonyms + split(s:mahjong)
-        let imode_list = a:number ? numbers : all_list
+        let imode_list = a:number ? numbers : numbers+antonyms
         for loop in imode_list
             let loops = split(loop,'\zs')
             for i in range(len(loops))
@@ -4625,9 +4624,7 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         if custom_label > 0 && s:vimim_custom_label > -1
             let labeling = label . " "
-            if s:show_me_not <= -7
-                let labeling = ""
-            elseif s:vimim_custom_label < 1
+            if s:vimim_custom_label < 1
                 let labeling = s:vimim_get_labeling(label)
             endif
             if s:hjkl_n % 2 > 0 && s:show_me_not > 0
