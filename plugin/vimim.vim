@@ -4719,7 +4719,10 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
             if empty(s:hjkl_h) && s:vimim_data_file =~ ".bsddb"
-                let s:hjkl_h += len(tail)
+                let cjk = get(split(get(results,0)),1)
+                if len(cjk) > s:multibyte
+                    let s:hjkl_h += len(tail)
+                endif
             endif
         endif
     endif
