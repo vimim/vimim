@@ -85,6 +85,7 @@ function! s:vimim_initialize_session()
     let s:seamless_positions = []
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
+    let s:cjk_cache = {}
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     let s:shuangpin_keycode_chinese = {}
@@ -2558,6 +2559,9 @@ endfunction
 
 function! s:vimim_cjk_match(keyboard)
     let keyboard = a:keyboard
+    if has_key(s:cjk_cache,keyboard)
+        return s:cjk_cache[keyboard]
+    endif
     if empty(keyboard) || empty(s:cjk_filename)
         return []
     endif
@@ -2631,6 +2635,9 @@ function! s:vimim_cjk_match(keyboard)
         if keyboard =~# '^uu\+$'    " cycle 214 unicode: u uu uuu
             let next = (len(keyboard)-1)*20
             let results = results[next :] + results[: next-1]
+        endif
+        if len(keyboard) == 1
+            let s:cjk_cache[keyboard] = results
         endif
     endif
     return results
