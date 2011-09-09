@@ -82,13 +82,8 @@ function! s:vimim_backend_initialization()
 endfunction
 
 function! s:vimim_initialize_session()
-    let s:seamless_positions = []
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
-    let s:cjk_cache = {}
-    let s:quanpin_table = {}
-    let s:shuangpin_table = {}
-    let s:shuangpin_keycode_chinese = {}
     let s:current_positions = [0,0,1,0]
     let s:start_row_before = 0
     let s:start_column_before = 1
@@ -104,6 +99,12 @@ function! s:vimim_initialize_session()
     let s:qwer = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let s:horizontal_display = s:vimim_custom_label>0 ? 5 : 0
+    let s:seamless_positions = []
+    let s:shuangpin_keycode_chinese = {}
+    let s:shuangpin_table = {}
+    let s:quanpin_table = {}
+    let s:cjk_cache = {}
+    let s:cjk_cache.i = ["我"]
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -255,7 +256,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hhjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -449,12 +450,9 @@ function! s:vimim_get_hjkl(keyboard)
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
         elseif keyboard ==# 'i'           " 一i => 一二
-            let char_before = s:vimim_get_char_before('i')
+            let char_before = s:vimim_get_char_before(keyboard)
             let results = s:vimim_get_imode_chinese(char_before,1)
-            if empty(results)
-                let results = ["我"]
-            endif
-        elseif empty(s:english_results)
+        elseif empty(s:english_results) && keyboard !~ "'"
             let results = s:vimim_imode_number(keyboard)
         endif
     else
@@ -2181,8 +2179,8 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     if a:keyboard =~# '^u\+$' " chinese umode: 馬力uu => 39340
         let char_before = s:vimim_get_char_before(keyboard)
         if empty(s:cjk_filename) && empty(char_before) || char_before=~'\w'
-            return char2nr('一')
-        ednif
+            let char_before = '一'
+        endif
         return char2nr(char_before)
     elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
         if len(keyboard) == 5 || len(keyboard) == 6
