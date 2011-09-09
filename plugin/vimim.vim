@@ -435,9 +435,12 @@ function! s:vimim_get_hjkl(keyboard)
     let results = s:vimim_easter_chicken(keyboard)
     if !empty(results)
         " [eggs] hunt classic easter egg ... vim<C-6>
-    elseif keyboard ==# "''''"
+    elseif keyboard ==# "'''"
         " [hjkl] display buffer inside the omni window
         let results = split(getreg('"'), '\n')
+    elseif keyboard[-4:] ==# "''''"
+        " [clouds] all clouds for any input: fuck''''
+        let results = s:vimim_get_cloud_all(keyboard[:-5])
     elseif keyboard ==# "''" " plays mahjong at will
         let results = split(s:mahjong)
     elseif keyboard ==# '^u\+$'
@@ -449,9 +452,9 @@ function! s:vimim_get_hjkl(keyboard)
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
-        elseif keyboard ==# 'i'  " 石i => 石金
+        elseif keyboard ==# 'i'           " 一i => 一二
             let char_before = s:vimim_get_char_before('i')
-            let results = s:vimim_get_imode_chinese(char_before)
+            let results = s:vimim_get_imode_chinese(char_before,1)
             if empty(results)
                 let results = ["我"]
             endif
@@ -465,7 +468,15 @@ function! s:vimim_get_hjkl(keyboard)
             let results = s:vimim_readfile(datafile)
         endif
     endif
-    let s:show_me_not = !empty(results) ? 1 : 0
+    if !empty(results) && keyboard !~ '^i'
+        let s:show_me_not = 1
+        if s:hjkl_m % 4 > 0
+            let &pumheight = 0
+            for i in range(s:hjkl_m%4)
+                let results = s:vimim_hjkl_rotation(results)
+            endfor
+        endif
+    endif
     return results
 endfunction
 
@@ -644,11 +655,12 @@ function! s:vimim_get_antonym_list()
     return split(antonym)
 endfunction
 
-function! s:vimim_get_imode_chinese(char_before)
+function! s:vimim_get_imode_chinese(char_before,number)
     if empty(s:loops)
-        let antonyms = s:vimim_get_antonym_list()
-        let numbers  = s:vimim_get_numbers_list()
-        let imode_list = split(s:mahjong) + numbers + antonyms
+        let antonyms = s:vimim_get_antonym_list()   " 石 => 金
+        let numbers  = s:vimim_get_numbers_list()   " 七 => 八
+        let all_list = numbers + antonyms + split(s:mahjong)
+        let imode_list = a:number ? numbers : all_list
         for loop in imode_list
             let loops = split(loop,'\zs')
             for i in range(len(loops))
@@ -1461,10 +1473,7 @@ endfunction
 
 function! s:vimim_get_labeling(label)
     let fmt = '%2s '
-    let labeling = a:label
-    if a:label == 10 && empty(s:hjkl_l%2)
-        let labeling = "0"
-    endif
+    let labeling = a:label==10 ? "0" : a:label
     if s:chinese_input_mode =~ 'onekey'
         if s:show_me_not > 0
             let fmt = '%02s '
@@ -1475,8 +1484,11 @@ function! s:vimim_get_labeling(label)
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
             let labeling .= label2
         endif
-        if s:hjkl_l > 0 && &pumheight < 1
+        if s:hjkl_l%2 > 0 && &pumheight < 1
             let fmt = '%02s '
+        endif
+        if labeling == '0'
+            let labeling = '10'
         endif
     endif
     if !empty(labeling)
@@ -1924,9 +1936,6 @@ function! s:vimim_popup_word()
 endfunction
 
 function! s:vimim_quote_by_quote(keyboard)
-    " <dot> double play in OneKey:
-    "   (1) trailing dot => forced-cjk-match
-    "   (2) as word partition  => match dot by dot
     let keyboard = a:keyboard
     let partition = match(keyboard, "[']")
     if partition > -1 && empty(s:ui.has_dot)
@@ -2668,7 +2677,7 @@ function! <SID>vimim_visual_ctrl6()
             let key = ddddd=~'\d\d\d\d\d' ? uddddd : dddd
         else
             " highlight one chinese => get antonym or number loop
-            let results = s:vimim_get_imode_chinese(line)
+            let results = s:vimim_get_imode_chinese(line,0)
             if empty(results)
                 let line = -1
                 sil!call s:vimim_backend_initialization()
@@ -2698,7 +2707,7 @@ function! <SID>vimim_visual_ctrl6()
         let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else
         " highlighted block => display the block in omni window
-        let key = "O^\<C-D>" . space . "''''" . onekey
+        let key = "O^\<C-D>" . space . "'''" . onekey
     endif
     sil!call feedkeys(key)
 endfunction
@@ -4444,22 +4453,12 @@ else
     endif
     " [onekey] play with nothing but OneKey
     if s:chinese_input_mode =~ 'onekey'
-        " [game] turn menu 90 degree on hjkl_m
         let results = s:vimim_get_hjkl(keyboard)
         if !empty(results)
-            if s:hjkl_m % 4 > 0
-                let &pumheight = 0
-                for i in range(s:hjkl_m%4)
-                    let results = s:vimim_hjkl_rotation(results)
-                endfor
-            endif
+            " [game] turn menu 90 degree on hjkl_m
             return s:vimim_popupmenu_list(results)
         endif
-        if keyboard[-4:] ==# "''''"
-            " [clouds] all clouds for any input: fuck''''
-            let results = s:vimim_get_cloud_all(keyboard[:-5])
-            return s:vimim_popupmenu_list(results)
-        elseif empty(s:ui.has_dot)
+        if empty(s:ui.has_dot)
             let magic_tail = keyboard[-1:-1]
             if magic_tail =~ "'" && keyboard !~ '\d'
                 " [cloud] magic trailing apostrophe to control cloud
