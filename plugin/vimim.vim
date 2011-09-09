@@ -444,11 +444,6 @@ function! s:vimim_get_hjkl(keyboard)
         let results = s:vimim_get_cloud_all(keyboard[:-5])
     elseif keyboard ==# "''" " plays mahjong at will
         let results = split(s:mahjong)
-    elseif keyboard ==# '^u\+$'
-        let results = []
-        if empty(s:cjk_filename)
-            let results = split(s:mahjong)
-        endif
     elseif keyboard =~# '^i' && s:vimim_imode_pinyin > 0
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
@@ -2185,6 +2180,9 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
     if a:keyboard =~# '^u\+$' " chinese umode: 馬力uu => 39340
         let char_before = s:vimim_get_char_before(keyboard)
+        if empty(s:cjk_filename) && empty(char_before) || char_before=~'\w'
+            return char2nr('一')
+        ednif
         return char2nr(char_before)
     elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
         if len(keyboard) == 5 || len(keyboard) == 6
