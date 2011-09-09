@@ -547,7 +547,7 @@ function! g:vimim_search_next()
     endif
     if !empty(results)
         let results = split(substitute(join(results),'\w','','g'))
-        let slash = join(results[0:5], '\|')
+        let slash = join(results[0:8], '\|')
         let @/ = slash
         if empty(search(slash,'nw'))
             let @/ = english
@@ -562,7 +562,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     let keyboard = tolower(a:keyboard)
     let results = []
     " 1/3 first try search from cloud/mycloud
-    if s:vimim_cloud =~ 'search'
+    if s:vimim_cloud =~ 'search' || s:ui.root == 'cloud'
         " /search from the default cloud
         let results = s:vimim_get_cloud(keyboard, s:cloud_default)
     elseif !empty(s:mycloud)
@@ -4337,13 +4337,13 @@ endfunction
 
 function! s:vimim_reset_before_anything()
     let s:onekey = 0
-    let s:search = 0
     let s:has_pumvisible = 0
     let s:popupmenu_list = []
     let s:keyboard_list  = []
 endfunction
 
 function! s:vimim_reset_before_omni()
+    let s:search = 0
     let s:smart_enter = 0
     let s:show_me_not = 0
     let s:english_results = []
@@ -4745,7 +4745,7 @@ function! s:vimim_imap_for_onekey()
         xnoremap<silent> <Tab> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_search_next > 0
-         noremap<silent> n :call g:vimim_search_next()<CR>n
+         noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
