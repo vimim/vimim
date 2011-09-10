@@ -1938,13 +1938,13 @@ endfunction
 
 function! s:vimim_magic_apostrophe_tail(keyboard)
     " <apostrophe> double play in OneKey:
-    "   (1) one trailing apostrophe => toggle cloud and non-cloud
-    "   (2) two trailing apostrophe => switch among clouds
+    "   (1) one trailing apostrophe => open cloud
+    "   (2) two trailing apostrophe => switch to next cloud
     let s:onekey_cloud = 1
     let keyboard = a:keyboard[:-2]
     if empty(s:vimim_check_http_executable())
         let s:onekey_cloud = 0
-        return keyboard
+        let keyboard = substitute(keyboard,"'",'','g')
     elseif keyboard[-1:] ==# "'"
         let keyboard = keyboard[:-2]
         let clouds = split(s:vimim_cloud,',')
@@ -2834,10 +2834,10 @@ endfunction
 function! s:vimim_toggle_cjjp(keyboard)
     let keyboard = a:keyboard
     if s:hjkl_m % 2 > 0
-        let s:onekey_cloud = 0
         " set cjjp:   wyygm => w'y'y'g'm
         let keyboard = substitute(keyboard,"'","",'g')
         let keyboard = join(split(keyboard,'\zs'),"'")
+        let s:onekey_cloud = 0
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
         " reset cjjp: w'y'y'g'm => wyygm
         let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
@@ -3959,7 +3959,6 @@ function! s:vimim_get_cloud_all(keyboard)
         endif
     endfor
     call s:debug('info', 'cloud_results=', results)
-    let s:onekey_cloud = 1
     return results
 endfunction
 
