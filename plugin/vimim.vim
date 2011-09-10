@@ -188,6 +188,7 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 function! s:vimim_initialize_global()
     let G = []
     let s:vimimrc = []
+    let s:vimimdefaults = []
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_backslash_close_pinyin")
@@ -229,17 +230,21 @@ endfunction
 
 function! s:vimim_set_global_default(options, default)
     for variable in a:options
-        let comment = '" '
+        let configuration = 0
         let default = a:default
         if exists(variable)
             let value = eval(variable)
             if value!=default || type(value)==1
-                let comment = '  '
+                let configuration = 1
             endif
             let default = string(value)
         endif
         let option = ':let ' . variable .' = '. default .' '
-        call add(s:vimimrc, comment . option)
+        if configuration
+            call add(s:vimimrc, '  ' . option)
+        else
+            call add(s:vimimdefaults, '" ' . option)
+        endif
         let s_variable = substitute(variable,"g:","s:",'')
         if exists(variable)
             exe 'let '. s_variable .'='. variable
@@ -258,7 +263,6 @@ function! s:vimim_initialize_local()
         let g:vimim_onekey_is_tab = 2
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_hjkl_directory = hjkl
-        let g:vimim_custom_color = 0
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -279,7 +283,8 @@ function! s:vimim_easter_chicken(keyboard)
 endfunction
 
 function! s:vimim_egg_vimimrc()
-    return sort(copy(s:vimimrc))
+    let vimimrc = s:vimimdefaults + s:vimimrc
+    return sort(vimimrc)
 endfunction
 
 function! s:vimim_egg_vimimvim()
@@ -364,9 +369,9 @@ function! s:vimim_egg_vimim()
         let ciku  = database . s:vimim_chinese('standard')
         let ciku .= s:vimim_chinese('cjk') . s:colon
         if s:vimim_digit_4corner
-            let im .= s:vimim_chinese('4corner')
+            let im .= s:space . s:vimim_chinese('4corner')
         else
-            let im .= s:vimim_chinese('5strokes')
+            let im .= s:space . s:vimim_chinese('5strokes')
         endif
         call add(eggs, ciku . s:cjk_filename)
     endif
@@ -413,6 +418,15 @@ function! s:vimim_egg_vimim()
         let title = s:http_executable=~'Python' ? '' : "HTTP executable: "
         let option = tool . title . s:http_executable
         call add(eggs, option)
+    endif
+    let option = s:vimim_chinese('setup') . s:colon . "vimimrc " 
+    if empty(s:vimimrc)
+        call add(eggs, option . "all defaults")
+    else
+        call add(eggs, option)
+        for rc in s:vimimrc
+            call add(eggs, s:space . s:space . s:colon . rc[2:])
+        endfor
     endif
     return map(eggs, 'v:val . " "')
 endfunction
@@ -1101,7 +1115,7 @@ function! s:vimim_dictionary_status()
     let s:status.cjk        = "字库 字庫"
     let s:status.database   = "词库 詞庫"
     let s:status.directory  = "目录 目錄"
-    let s:status.option     = "选项 選項"
+    let s:status.setup      = "设置 設置"
     let s:status.encoding   = "编码 編碼"
     let s:status.env        = "环境 環境"
     let s:status.revision   = "版本"
