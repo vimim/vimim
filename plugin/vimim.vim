@@ -52,7 +52,6 @@ function! s:vimim_frontend_initialization()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_set_special_im_property()
-    sil!call s:vimim_set_cursor_punctuation()
     sil!call s:vimim_set_omni_color()
 endfunction
 
@@ -256,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hhjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -853,19 +852,6 @@ function! s:vimim_dictionary_punctuations()
     endif
 endfunction
 
-function! s:vimim_set_cursor_punctuation()
-    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
-    for char in s:valid_keys
-        if has_key(s:punctuations, char)
-            if s:ui.has_dot == 1
-                unlet s:punctuations[char]
-            elseif char !~# "[*.']"
-                unlet s:punctuations[char]
-            endif
-        endif
-    endfor
-endfunction
-
 function! s:vimim_punctuation_mapping()
     if s:chinese_punctuation > 0
         if empty(s:vimim_latex_suite)
@@ -1190,6 +1176,7 @@ function! g:vimim_default_omni_color()
 endfunction
 
 function! s:vimim_set_omni_color()
+    highlight default CursorIM guifg=NONE guibg=green gui=NONE
     if s:vimim_custom_color > 0
         call g:vimim_default_omni_color()
     endif
@@ -1320,13 +1307,6 @@ function! s:vimim_label_on()
         if s:chinese_input_mode =~ 'onekey'
             let labels += abcd_list
             call remove(labels, match(labels,"'"))
-        else
-            let labels += [";", "'"]
-            for _ in abcd_list
-                if hasmapto(_)
-                    exe 'iunmap ' . _
-                endif
-            endfor
         endif
     endif
     for _ in labels
@@ -1477,7 +1457,11 @@ function! s:vimim_get_labeling(label)
             endif
         elseif a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
-            let labeling .= label2
+            if s:onekey_cloud < 1
+                let labeling = labeling . label2
+            else
+                let labeling = label2 . labeling
+            endif
         endif
         if s:hjkl_l%2 > 0 && &pumheight < 1
             let fmt = '%02s '
@@ -1958,13 +1942,13 @@ function! s:vimim_magic_apostrophe_tail(keyboard)
     " <apostrophe> double play in OneKey:
     "   (1) one trailing apostrophe => toggle cloud and non-cloud
     "   (2) two trailing apostrophe => switch among clouds
-    let s:onekey_cloud += 1
+    let s:onekey_cloud = 1
     let keyboard = a:keyboard[:-2]
     if empty(s:vimim_check_http_executable())
+        let s:onekey_cloud = 0
         return keyboard
     elseif keyboard[-1:] ==# "'"
         let keyboard = keyboard[:-2]
-        let s:onekey_cloud = 1
         let clouds = split(s:vimim_cloud,',')
         let clouds = clouds[1:-1] + clouds[0:0]
         let s:vimim_cloud = join(clouds,',')
@@ -2854,6 +2838,7 @@ function! s:vimim_toggle_cjjp(keyboard)
     if s:hjkl_m % 2 > 0
         " set cjjp:   wyygm => w'y'y'g'm
         let keyboard = join(split(keyboard,'\zs'),"'")
+        let s:onekey_cloud = 0
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
         " reset cjjp: w'y'y'g'm => wyygm
         let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
@@ -3368,7 +3353,6 @@ function! s:vimim_set_datafile(im, datafile)
     if datafile =~ ".txt" && empty(s:backend.datafile[im].lines)
         let s:backend.datafile[im].lines = s:vimim_readfile(datafile)
     endif
-    call s:vimim_set_special_im_property()
 endfunction
 
 function! s:vimim_sentence_datafile(keyboard)
@@ -3507,7 +3491,6 @@ function! s:vimim_set_directory(im, dir)
         let s:backend.directory[im].keycode = s:im_keycode[im]
         let s:backend.directory[im].chinese = s:vimim_chinese(im)
     endif
-    call s:vimim_set_special_im_property()
 endfunction
 
 function! s:vimim_more_pinyin_directory(keyboard, dir)
@@ -3610,6 +3593,7 @@ function! s:vimim_set_cloud(im)
         let s:vimim_imode_pinyin = 1
     endif
     let s:mycloud = 0
+    let s:onekey_cloud = 1
     let s:ui.root = 'cloud'
     let s:ui.im = im
     let frontends = [s:ui.root, s:ui.im]
@@ -3704,19 +3688,6 @@ function! s:vimim_check_http_executable()
     endif
     let s:http_executable = copy(http_executable)
     return http_executable
-endfunction
-
-function! s:vimim_do_cloud_or_not(keyboard)
-    if s:vimim_cloud < 0 || a:keyboard =~ '\L'
-        return 0
-    elseif s:onekey_cloud % 2 > 0
-        return 1
-    elseif s:onekey > 0 && !empty(s:cjk_filename)
-        return 0
-    elseif s:ui.root == 'cloud'
-        return 1
-    endif
-    return 0
 endfunction
 
 function! s:vimim_get_cloud(keyboard, cloud)
@@ -4546,7 +4517,7 @@ else
     endif
     " [cloud] to make dream come true for multiple clouds
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-    if s:vimim_do_cloud_or_not(keyboard) > 0
+    if s:onekey_cloud > 0
         let cloud = get(split(vimim_cloud,'[.]'),0)
         if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
             let cloud = get(s:frontends,1)
@@ -4557,7 +4528,7 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     endif
-    " [wubi] support auto insert for every 4 input
+    " [wubi] support auto insert on the 4th
     if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
         let keyboard = s:vimim_wubi_auto_input_on_the_4th(keyboard)
     endif
