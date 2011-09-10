@@ -2811,9 +2811,9 @@ endfunction
 
 function! s:vimim_hjkl_m_hjkl_n(keyboard)
     let keyboard = a:keyboard
-    if s:hjkl_m > 0      " s's's's's's
+    if s:hjkl_m > 0                   " s's's's's's
         let keyboard = s:vimim_toggle_cjjp(keyboard)
-    elseif s:hjkl_n > 0  " shi'shi'shi
+    elseif s:hjkl_n > 0               " shi'shi'shi
         let keyboard = s:vimim_toggle_pinyin(keyboard)
     endif
     return s:vimim_quote_by_quote(keyboard)
@@ -2821,9 +2821,7 @@ endfunction
 
 function! s:vimim_toggle_cjjp(keyboard)
     let keyboard = a:keyboard
-    if s:hjkl_m < 1
-        return keyboard
-    elseif s:hjkl_m % 2 > 0
+    if s:hjkl_m % 2 > 0
         " set cjjp:   wyygm => w'y'y'g'm
         let keyboard = join(split(keyboard,'\zs'),"'")
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
@@ -4461,13 +4459,6 @@ else
         " [english] English cannot be ignored!
         let s:english_results = s:vimim_english(keyboard)
     endif
-    " [mycloud] get chunmeng from mycloud local or www
-    if !empty(s:mycloud)
-        let results = s:vimim_get_mycloud_plugin(keyboard)
-        if !empty(len(results))
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
     " [onekey] play with nothing but OneKey
     if s:chinese_input_mode =~ 'onekey'
         let results = s:vimim_get_hjkl(keyboard)
@@ -4502,13 +4493,19 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     endif
+    " [mycloud] get chunmeng from mycloud local or www
+    if !empty(s:mycloud)
+        let results = s:vimim_get_mycloud_plugin(keyboard)
+        if !empty(len(results))
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
     " [shuangpin] support 6 major shuangpin
     if !empty(s:vimim_shuangpin) && s:has_pumvisible < 1
         let keyboard = s:vimim_shuangpin_transform(keyboard)
         let s:keyboard_list = [keyboard]
     endif
     " [cloud] to make dream come true for multiple clouds
-    let cloud = 0
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
     if s:vimim_do_cloud_or_not(keyboard) > 0
         let cloud = get(split(vimim_cloud,'[.]'),0)
@@ -4613,11 +4610,11 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:hjkl_h && s:hjkl_h%2 && len(chinese)==s:multibyte
             let extra_text = s:vimim_cjk_extra_text(chinese)
         endif
-        if empty(s:mycloud)
+        if empty(s:mycloud) ||  keyboard =~ "[']"
             if !empty(keyboard) && s:show_me_not < 1
                 let keyboard_head_length = len(menu)
                 if empty(s:ui.has_dot) && keyboard =~ "[']"
-                    " for vimim classic: i.have.a.dream
+                    " for vimim classic: i'have'a'dream
                     let keyboard_head_length += 1
                 endif
                 let tail = strpart(keyboard, keyboard_head_length)
@@ -4692,7 +4689,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
     \|| s:show_me_not > 0
     \|| keyboard !~# s:valid_key
         return []
-    elseif im == 'pinyin'
+    elseif s:vimim_imode_pinyin
         let keyboard = s:vimim_toggle_pinyin(keyboard)
         if s:ui.has_dot == 2 && keyboard !~ "[']"
             let keyboard = s:vimim_quanpin_transform(keyboard)
