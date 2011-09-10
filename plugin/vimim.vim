@@ -357,7 +357,7 @@ function! s:vimim_egg_vimim()
     elseif s:vimim_onekey_is_tab > 1
         let toggle = "toggle_with_Tab_for_midas_touch"
         let im  = s:vimim_chinese('onekey') . s:space
-        let im .= s:ui.statusline . s:space . "VimIM"
+        let im .= s:ui.statusline . s:space
     endif
     let option = s:vimim_chinese('style') . s:colon . toggle
     call add(eggs, option)
@@ -366,9 +366,16 @@ function! s:vimim_egg_vimim()
         let ciku = database . s:vimim_chinese('english') . database
         call add(eggs, ciku . s:english_filename)
     endif
-    if !empty(s:cjk_filename)
+    if empty(s:cjk_filename)
+        let im .= "VimIM"
+    else
         let ciku  = database . s:vimim_chinese('standard')
         let ciku .= s:vimim_chinese('cjk') . s:colon
+        if s:vimim_digit_4corner
+            let im .= s:vimim_chinese('4corner')
+        else
+            let im .= s:vimim_chinese('5strokes')
+        endif
         call add(eggs, ciku . s:cjk_filename)
     endif
     let input = s:vimim_chinese('input')
@@ -1101,13 +1108,14 @@ function! s:vimim_dictionary_chinese()
     let s:status = {}
     let s:status.onekey     = "点石成金 點石成金"
     let s:status.computer   = "电脑 電腦"
-    let s:status.database   = "词库 詞庫"
+    let s:status.standard   = "标准 標準"
     let s:status.cjk        = "字库 字庫"
+    let s:status.database   = "词库 詞庫"
     let s:status.directory  = "目录 目錄"
     let s:status.option     = "选项 選項"
-    let s:status.standard   = "标准 標準"
     let s:status.encoding   = "编码 編碼"
     let s:status.env        = "环境 環境"
+    let s:status.revision   = "版本"
     let s:status.input      = "输入 輸入"
     let s:status.font       = "字体 字體"
     let s:status.static     = "静态 靜態"
@@ -1115,6 +1123,8 @@ function! s:vimim_dictionary_chinese()
     let s:status.style      = "风格 風格"
     let s:status.erbi       = "二笔 二筆"
     let s:status.wubi       = "五笔 五筆"
+    let s:status.5strokes   = "五笔画 五筆畫"
+    let s:status.4corner    = "四角号码 四角號碼"
     let s:status.hangul     = "韩文 韓文"
     let s:status.xinhua     = "新华 新華"
     let s:status.zhengma    = "郑码 鄭碼"
@@ -1122,7 +1132,7 @@ function! s:vimim_dictionary_chinese()
     let s:status.yong       = "永码 永碼"
     let s:status.wu         = "吴语 吳語"
     let s:status.jidian     = "极点 極點"
-    let s:status.haifeng    = "海峰 海峰"
+    let s:status.haifeng    = "海峰"
     let s:status.shuangpin  = "双拼 雙拼"
     let s:status.boshiamy   = "呒虾米 嘸蝦米"
     let s:status.newcentury = "新世纪 新世紀"
@@ -1138,7 +1148,6 @@ function! s:vimim_dictionary_chinese()
     let s:status.array30    = "行列"
     let s:status.phonetic   = "注音"
     let s:status.pinyin     = "拼音"
-    let s:status.revision   = "版本"
     let s:status.full_width = "全角"
     let s:status.half_width = "半角"
     let s:status.mycloud    = "自己的云 自己的雲"
