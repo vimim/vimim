@@ -456,7 +456,7 @@ function! s:vimim_get_hjkl(keyboard)
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
-        elseif keyboard ==# 'i'           " 一i => 一二
+        elseif keyboard ==# 'i'  " 一i => 一二
             let char_before = s:vimim_get_char_before(keyboard)
             let results = s:vimim_get_imode_chinese(char_before,1)
         elseif keyboard =~ '\d' && empty(s:english_results)
@@ -483,9 +483,6 @@ endfunction
 
 function! s:vimim_hjkl_rotation(matched_list)
     let lines = a:matched_list
-    if empty(lines)
-        return []
-    endif
     let max = max(map(copy(lines), 'strlen(v:val)')) + 1
     let multibyte = 1
     if match(lines,'\w') < 0
@@ -524,8 +521,8 @@ function! s:vimim_chinese_rotation() range abort
     sil!call s:vimim_backend_initialization()
     :%s#\s*\r\=$##
     let lines = getline(a:firstline, a:lastline)
-    let lines = s:vimim_hjkl_rotation(lines)
     if !empty(lines)
+        :let lines = s:vimim_hjkl_rotation(lines)
         :%d
         for line in lines
             put=line
