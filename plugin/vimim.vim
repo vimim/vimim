@@ -1455,10 +1455,10 @@ function! s:vimim_get_labeling(label)
             endif
         elseif a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
-            if s:onekey_cloud < 1
-                let labeling = labeling . label2
-            else
+            if s:onekey_cloud
                 let labeling = label2 . labeling
+            else
+                let labeling = labeling . label2
             endif
         endif
         if s:hjkl_l%2 > 0 && &pumheight < 1
@@ -2834,7 +2834,9 @@ endfunction
 function! s:vimim_toggle_cjjp(keyboard)
     let keyboard = a:keyboard
     if s:hjkl_m % 2 > 0
+        let s:onekey_cloud = 0
         " set cjjp:   wyygm => w'y'y'g'm
+        let keyboard = substitute(keyboard,"'","",'g')
         let keyboard = join(split(keyboard,'\zs'),"'")
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
         " reset cjjp: w'y'y'g'm => wyygm
