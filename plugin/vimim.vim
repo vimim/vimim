@@ -257,7 +257,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = simplify(s:path . '../../../hjkl/')
+    let hjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -941,6 +941,14 @@ function! <SID>vimim_onekey_punctuation(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
+function! <SID>vimim_onekey_omni_bslash_seamless()
+    let bslash = '\\'
+    if pumvisible() && s:show_me_not < 1
+        let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
+    endif
+    sil!exe 'sil!return "' . bslash . '"'
+endfunction
+
 function! <SID>vimim_get_quote(type)
     let key = ""
         if a:type == 1 | let key = "'"
@@ -1330,24 +1338,6 @@ function! <SID>vimim_abcdvfgxz_1234567890_label(key)
             call g:vimim_stop()
         else
             call g:vimim_reset_after_insert()
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_qwer_hitrun(key)
-    let key = a:key
-    if pumvisible()
-        let digit = match(s:qwer, key) - 1
-        if digit < 0
-            let digit = 9
-        endif
-        let down = repeat("\<Down>", digit)
-        let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
-        let key = down . yes
-        let s:has_pumvisible = 1
-        if s:onekey > 0
-            call g:vimim_stop()
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2403,12 +2393,49 @@ function! s:vimim_onekey_mapping()
     endif
 endfunction
 
-function! <SID>vimim_onekey_omni_bslash_seamless()
-    let bslash = '\\'
-    if pumvisible() && s:show_me_not < 1
-        let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
+function! <SID>vimim_qwer_hitrun(key)
+    let key = a:key
+    if pumvisible()
+        let digit = match(s:qwer, key) - 1
+        if digit < 0
+            let digit = 9
+        endif
+        let down = repeat("\<Down>", digit)
+        let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
+        let key = down . yes
+        let s:has_pumvisible = 1
+        if s:onekey > 0
+            call g:vimim_stop()
+        endif
     endif
-    sil!exe 'sil!return "' . bslash . '"'
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_qwer_hjkl_s(key)
+    let key = a:key
+    if pumvisible()
+        let digit = match(s:qwer, key)
+        if s:vimim_digit_4corner < 1
+            if digit < 1
+                let digit = 5  " qwert/12345 for five strokes
+            elseif digit > 5
+                let digit -= 5 " yuiop/12345 for five strokes
+            endif
+        endif
+        let s:hjkl_s = s:show_me_not ? digit : s:hjkl_s . digit
+        let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_onekey_caps(key)
+    let key = a:key
+    if pumvisible()
+        let lower = tolower(key)
+        let trigger = '\<C-R>=g:vimim()\<CR>'
+        let key = '\<C-E>' . lower . trigger
+    endif
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! <SID>vimim_onekey_hjkl(key)
@@ -2441,28 +2468,6 @@ function! <SID>vimim_onekey_hjkl(key)
         let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-function! <SID>vimim_qwer_hjkl_s(key)
-    let key = a:key
-    if pumvisible()
-        if key =~ '\l'
-            let key = match(s:qwer, key)
-        endif
-        let s:hjkl_s = s:show_me_not ? key : s:hjkl_s . key
-        let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_onekey_caps(key)
-    let key = a:key
-    if pumvisible()
-        let lower = tolower(key)
-        let trigger = '\<C-R>=g:vimim()\<CR>'
-        let key = '\<C-E>' . lower . trigger
-    endif
-    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ============================================= }}}
@@ -2569,7 +2574,7 @@ function! s:vimim_cjk_match(keyboard)
                 let digit = substitute(keyboard,'\a','','g')
             endif
             if !empty(digit)
-                let stroke5 = '\d\d\d\d\s'  " 5stroke => li1234
+                let stroke5 = '\d\d\d\d\s'     " five strokes => li12345
                 let space = '\d\{' . string(4-len(digit)) . '}'
                 let space = len(digit)==4 ? "" : space
                 let dddd = '\s' . digit . space . '\s'
