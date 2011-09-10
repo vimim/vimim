@@ -1483,21 +1483,27 @@ let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
 
 function! s:vimim_get_stone_from_bsddb(stone)
-    if empty(a:stone) || a:stone !~ s:valid_key
-        return ""
-    endif
-    :python stone = vim.eval('a:stone')
-    :python partition = int(vim.eval('s:hjkl_h'))
-    :python marble = getstone(stone, partition)
-    :python vim.command("return '%s'" % marble)
+:sil!python << EOF
+try:
+    stone = vim.eval('a:stone')
+    partition = int(vim.eval('s:hjkl_h'))
+    marble = getstone(stone, partition)
+    vim.command("return '%s'" % marble)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+return ""
 endfunction
 
 function! s:vimim_get_gold_from_bsddb(stone)
-    if empty(a:stone) || a:stone !~ s:valid_key
-        return ""
-    endif
-    :python gold = getgold(vim.eval('a:stone'))
-    :python vim.command("return '%s'" % gold)
+:sil!python << EOF
+try:
+    gold = getgold(vim.eval('a:stone'))
+    vim.command("return '%s'" % gold)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+return ""
 endfunction
 
 function! s:vimim_initialize_bsddb(datafile)
@@ -1515,7 +1521,7 @@ def getstone(stone, partition):
     return stone
 def getgold(stone):
     gold = stone
-    if stone in edw:
+    if stone and stone in edw:
          gold = edw.get(stone)
          if encoding == 'utf-8':
                if datafile.find("gbk") > 0:
@@ -1556,6 +1562,7 @@ try:
 except vim.error:
     print("vim error: %s" % vim.error)
 EOF
+return ""
 endfunction
 
 function! s:vimim_get_from_python3(input, cloud)
@@ -1579,6 +1586,7 @@ try:
 except vim.error:
     print("vim error: %s" % vim.error)
 EOF
+return ""
 endfunction
 
 function! g:vimim_gmail() range abort
@@ -2948,7 +2956,9 @@ function! s:vimim_more_pinyin_candidates(keyboard)
     let candidates = []
     for i in reverse(range(len(keyboards)-1))
         let candidate = join(keyboards[0 : i], "")
-        call add(candidates, candidate)
+        if !empty(candidate)
+            call add(candidates, candidate)
+        endif
     endfor
     if len(candidates) > 2
         let candidates = candidates[0 : len(candidates)-2]
@@ -3426,6 +3436,9 @@ function! s:vimim_get_from_database(keyboard)
         if len(candidates) > 1
             for candidate in candidates
                 let oneline = s:vimim_get_gold_from_bsddb(candidate)
+                if empty(oneline) || oneline !~ '\S'
+                    continue
+                endif
                 let matched_list = s:vimim_make_pair_list(oneline)
                 if !empty(matched_list)
                     call extend(results, matched_list)
@@ -4716,7 +4729,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
             endif
         endif
     elseif s:ui.root =~# "datafile"
-        if s:vimim_data_file =~ ".bsddb"
+        if s:vimim_data_file =~ "bsddb"
             let keyboard2 = s:vimim_get_stone_from_bsddb(keyboard)
             let results = s:vimim_get_from_database(keyboard2)
         else
