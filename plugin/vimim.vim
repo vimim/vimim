@@ -67,9 +67,9 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_initialize_session()
     sil!call s:vimim_initialize_ui()
     sil!call s:vimim_initialize_i_setting()
-    sil!call s:vimim_dictionary_chinese()
-    sil!call s:vimim_dictionary_punctuation()
-    sil!call s:vimim_dictionary_im_keycode()
+    sil!call s:vimim_dictionary_status()
+    sil!call s:vimim_dictionary_punctuations()
+    sil!call s:vimim_dictionary_keycodes()
     sil!call s:vimim_scan_cjk_file()
     sil!call s:vimim_scan_english_datafile()
     if len(s:vimim_mycloud) > 1
@@ -134,7 +134,7 @@ function! s:vimim_one_backend_hash()
     return one_backend_hash
 endfunction
 
-function! s:vimim_dictionary_im_keycode()
+function! s:vimim_dictionary_keycodes()
     let s:im_keycode = {}
     let keys  = split('pinyin hangul xinhua quick wubi')
     let keys += split('sogou qq google baidu mycloud')
@@ -812,7 +812,7 @@ endfunction
 let s:VimIM += [" ====  punctuation      ==== {{{"]
 " =================================================
 
-function! s:vimim_dictionary_punctuation()
+function! s:vimim_dictionary_punctuations()
     let s:punctuations = {}
     let s:punctuations['{'] = "〖"  | let s:space = "　"
     let s:punctuations['}'] = "〗"  | let s:colon = "："
@@ -1104,7 +1104,7 @@ endfunction
 let s:VimIM += [" ====  user   interface ==== {{{"]
 " =================================================
 
-function! s:vimim_dictionary_chinese()
+function! s:vimim_dictionary_status()
     let s:status = {}
     let s:status.onekey     = "点石成金 點石成金"
     let s:status.computer   = "电脑 電腦"
@@ -3963,7 +3963,6 @@ function! s:vimim_get_cloud_all(keyboard)
         endif
     endfor
     call s:debug('info', 'cloud_results=', results)
-    let s:show_me_not = 1
     let s:onekey_cloud = 1
     return results
 endfunction
@@ -4693,15 +4692,10 @@ function! s:vimim_popupmenu_list(matched_list)
 endfunction
 
 function! s:vimim_embedded_backend_engine(keyboard)
-    let im = s:ui.im
-    let root = s:ui.root
     let keyboard = a:keyboard
-    if empty(im)
-    \|| empty(root)
-    \|| empty(keyboard)
-    \|| im =~ 'cloud'
+    if empty(s:ui.im) || empty(s:ui.root) || empty(keyboard)
+    \|| s:ui.im =~ 'cloud' || keyboard !~# s:valid_key
     \|| s:show_me_not > 0
-    \|| keyboard !~# s:valid_key
         return []
     elseif s:vimim_imode_pinyin
         let keyboard = s:vimim_toggle_pinyin(keyboard)
@@ -4711,8 +4705,8 @@ function! s:vimim_embedded_backend_engine(keyboard)
     endif
     let results = []
     let keyboard2 = 0
-    if root =~# "directory"
-        let dir = s:backend[root][im].name
+    if s:ui.root =~# "directory"
+        let dir = s:backend[s:ui.root][s:ui.im].name
         let keyboard2 = s:vimim_sentence_directory(keyboard)
         let results = s:vimim_readfile(dir . keyboard2)
         if keyboard==#keyboard2 && len(results)>0 && len(results)<20
@@ -4722,7 +4716,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
                 call extend(results, extras)
             endif
         endif
-    elseif root =~# "datafile"
+    elseif s:ui.root =~# "datafile"
         if s:vimim_data_file =~ ".bsddb"
             let keyboard2 = s:vimim_get_stone_from_bsddb(keyboard)
             let results = s:vimim_get_from_database(keyboard2)
@@ -4802,7 +4796,7 @@ function! s:vimim_initialize_plugin()
     if !hasmapto("VimimOneKey")
         inoremap<unique><expr> <Plug>VimimOneKey g:vimim_onekey()
     endif
-    let s:mahjong = "囍發萬中 春夏秋冬 东南西北 梅兰竹菊"
+    let s:mahjong = "春夏秋冬 梅兰竹菊 東南西北 中發白囍"
 endfunction
 
 sil!call s:vimim_initialize_local()
