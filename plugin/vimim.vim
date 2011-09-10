@@ -257,7 +257,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hhjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -1494,14 +1494,14 @@ endfunction
 let s:VimIM += [" ====  python interface ==== {{{"]
 " =================================================
 
-function! s:vimim_get_stone_from_bsddb(keyboard)
-    if empty(a:keyboard) || a:keyboard !~ s:valid_key
+function! s:vimim_get_stone_from_bsddb(stone)
+    if empty(a:stone) || a:stone !~ s:valid_key
         return ""
     endif
-    :python keyboard = vim.eval('a:keyboard')
+    :python stone = vim.eval('a:stone')
     :python partition = int(vim.eval('s:hjkl_h'))
-    :python stone = getstone(keyboard, partition)
-    :python vim.command("return '%s'" % stone)
+    :python marble = getstone(stone, partition)
+    :python vim.command("return '%s'" % marble)
 endfunction
 
 function! s:vimim_get_gold_from_bsddb(stone)
@@ -1518,26 +1518,26 @@ import vim, bsddb
 encoding = vim.eval("&encoding")
 datafile = vim.eval('a:datafile')
 edw = bsddb.btopen(datafile,'r')
-def getstone(key, partition):
+def getstone(stone, partition):
     isenglish = vim.eval('s:english_results')
-    if partition > 0 and len(key) > 2:
-        key = key[:-partition]
-    if key not in edw and not isenglish:
-        while key and key not in edw: key = key[:-1]
-    return key
-def getgold(key):
-    cjk = key
-    if key in edw:
-         cjk = edw.get(key)
+    if partition > 0 and len(stone) > 2:
+        stone = stone[:-partition]
+    if stone not in edw and not isenglish:
+        while stone and stone not in edw: stone = stone[:-1]
+    return stone
+def getgold(stone):
+    gold = stone
+    if stone in edw:
+         gold = edw.get(stone)
          if encoding == 'utf-8':
                if datafile.find("gbk") > 0:
-                   cjk = unicode(cjk,'gb18030','ignore')
-                   cjk = cjk.encode(encoding,'ignore')
+                   gold = unicode(gold,'gb18030','ignore')
+                   gold = gold.encode(encoding,'ignore')
          elif datafile.find("utf8") > 0:
-               cjk = unicode(cjk,'utf-8','ignore')
-               cjk = cjk.encode(encoding,'ignore')
-    cjk = key + ' ' + cjk
-    return cjk
+               gold = unicode(gold,'utf-8','ignore')
+               gold = gold.encode(encoding,'ignore')
+    gold = stone + ' ' + gold
+    return gold
 EOF
 endfunction
 
