@@ -225,12 +225,6 @@ function! s:vimim_initialize_global()
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
     endif
-    if s:vimim_data_directory[-1:] != "/"
-        let s:vimim_data_directory .= "/"
-    endif
-    if s:vimim_hjkl_directory[-1:] != "/"
-        let s:vimim_hjkl_directory .= "/"
-    endif
 endfunction
 
 function! s:vimim_set_global_default(options, default)
@@ -366,9 +360,7 @@ function! s:vimim_egg_vimim()
         let ciku = database . s:vimim_chinese('english') . database
         call add(eggs, ciku . s:english_filename)
     endif
-    if empty(s:cjk_filename)
-        let im .= "VimIM"
-    else
+    if !empty(s:cjk_filename)
         let ciku  = database . s:vimim_chinese('standard')
         let ciku .= s:vimim_chinese('cjk') . s:colon
         if s:vimim_digit_4corner
@@ -2749,6 +2741,11 @@ endfunction
 
 function! s:vimim_check_filereadable(default)
     for dir in [s:vimim_hjkl_directory, s:path]
+        if empty(dir)
+            continue
+        elseif dir[-1:] != "/"
+            let dir .= "/"
+        endif
         let datafile = dir . a:default
         if filereadable(datafile)
             return datafile
@@ -3283,6 +3280,7 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 
 function! s:vimim_scan_backend_embedded()
     let im = "pinyin"
+    " (1/3) scan bsddb database as edw: enterprise data warehouse
     if has("python")  " bsddb is from Python 2 only
         let bsddb = "vimim.gbk.bsddb"       " wc=46,694,400
         let datafile = s:vimim_check_filereadable(bsddb)
@@ -3295,14 +3293,20 @@ function! s:vimim_scan_backend_embedded()
             return s:vimim_set_datafile(im, datafile)
         endif
     endif
-    if isdirectory(s:path.im)
-        let s:vimim_data_directory = s:path . im
+    " (2/3) scan directory database
+    let dir = s:path . im
+    if !isdirectory(dir)
+        let dir = s:vimim_data_directory
     endif
-    if isdirectory(s:vimim_data_directory)
-        if filereadable(s:vimim_data_directory.im)
-            return s:vimim_set_directory(im, s:vimim_data_directory)
+    if !empty(dir) && isdirectory(dir)
+        if dir[-1:] != "/"
+            let dir .= "/"
+        endif
+        if filereadable(dir . im)
+            return s:vimim_set_directory(im, dir)
         endif
     endif
+    " (3/3) scan all supported data files
     let datafile = s:vimim_data_file
     if !empty(datafile) && filereadable(datafile)
         let im = get(split(datafile,'[.]'),1)
@@ -3310,15 +3314,12 @@ function! s:vimim_scan_backend_embedded()
     endif
     for im in s:all_vimim_input_methods
         let datafile = s:path . "vimim." . im . ".txt"
+        if !filereadable(datafile)
+            let im2 = im . "." . &encoding
+            let datafile = s:path . "vimim." . im2 . ".txt"
+        endif
         if filereadable(datafile)
             call s:vimim_set_datafile(im, datafile)
-        else
-            let im = im . "." . &encoding
-            let datafile = s:path . "vimim." . im . ".txt"
-            if filereadable(datafile)
-                call s:vimim_set_datafile(im, data_file)
-                let s:localization = 0
-            endif
         endif
     endfor
 endfunction
@@ -3329,7 +3330,7 @@ function! s:vimim_set_datafile(im, datafile)
     if empty(im) || isdirectory(datafile)
         return
     endif
-    let s:vimim_data_file = datafile
+    let s:vimim_data_file = copy(datafile)
     let s:ui.root = "datafile"
     let s:ui.im = im
     let frontends = [s:ui.root, s:ui.im]
@@ -3466,6 +3467,7 @@ function! s:vimim_set_directory(im, dir)
     if empty(im) || empty(a:dir) || !isdirectory(a:dir)
         return
     endif
+    let s:vimim_data_directory = copy(a:dir)
     let s:ui.root = "directory"
     let s:ui.im = im
     let frontends = [s:ui.root, s:ui.im]
