@@ -255,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = simplify(s:path . '../../../hjkl/')
+    let hjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -348,32 +348,7 @@ function! s:vimim_egg_vimim()
     endif
     let option = s:vimim_chinese('env') . s:colon . v:lc_time
     call add(eggs, option)
-    let im = s:vimim_statusline()
-    let toggle = "toggle_with_Ctrl-Bslash"
-    if s:vimim_ctrl_space_to_toggle == 1
-        let toggle = "toggle_with_Ctrl-Space"
-    elseif s:vimim_onekey_is_tab > 1
-        let toggle = "toggle_with_Tab_for_midas_touch"
-        let im  = s:vimim_chinese('onekey') . s:space
-        let im .= s:ui.statusline . s:space
-    endif
-    let option = s:vimim_chinese('style') . s:colon . toggle
-    call add(eggs, option)
     let database = s:vimim_chinese('database') . s:colon
-    if !empty(s:english_filename)
-        let ciku = database . s:vimim_chinese('english') . database
-        call add(eggs, ciku . s:english_filename)
-    endif
-    if !empty(s:cjk_filename)
-        let ciku  = database . s:vimim_chinese('standard')
-        let ciku .= s:vimim_chinese('cjk') . s:colon
-        if s:vimim_digit_4corner
-            let im .= s:space . s:vimim_chinese('4corner')
-        else
-            let im .= s:space . s:vimim_chinese('5strokes')
-        endif
-        call add(eggs, ciku . s:cjk_filename)
-    endif
     let input = s:vimim_chinese('input')
     if len(s:ui.frontends) > 0
         let vimim_toggle_list = "english"
@@ -390,10 +365,33 @@ function! s:vimim_egg_vimim()
         let ciku = database . s:vimim_chinese('unicode') . database
         call add(eggs, ciku . "UNICODE")
     endif
-    if len(im) > 0
-        let option = input . s:colon . im
-        call add(eggs, option)
+    if !empty(s:english_filename)
+        let ciku = database . s:vimim_chinese('english') . database
+        call add(eggs, ciku . s:english_filename)
     endif
+    let im = s:vimim_statusline()
+    let toggle = "toggle_with_Ctrl-Bslash"
+    if s:vimim_ctrl_space_to_toggle == 1
+        let toggle = "toggle_with_Ctrl-Space"
+    elseif s:vimim_onekey_is_tab > 1
+        let toggle = "toggle_with_Tab_for_midas_touch"
+        let im = s:vimim_chinese('onekey') . s:space . s:ui.statusline
+    endif
+    let style = s:vimim_chinese('style') . s:colon . toggle
+    if !empty(s:cjk_filename)
+        let ciku  = database . s:vimim_chinese('standard')
+        let ciku .= s:vimim_chinese('cjk') . s:colon
+        if s:vimim_digit_4corner
+            let im .= s:space . s:vimim_chinese('4corner')
+        else
+            let im .= s:space . s:vimim_chinese('5strokes')
+        endif
+        call add(eggs, ciku . s:cjk_filename)
+    endif
+    if len(im) > 0
+        call add(eggs, input . s:colon . im)
+    endif
+    call add(eggs, style)
     if len(s:ui.frontends) > 1
         let option  = s:vimim_chinese('toggle') . s:colon
         let option .= ":let g:vimim_toggle_list='"
@@ -2838,7 +2836,6 @@ function! s:vimim_toggle_cjjp(keyboard)
     if s:hjkl_m % 2 > 0
         " set cjjp:   wyygm => w'y'y'g'm
         let keyboard = join(split(keyboard,'\zs'),"'")
-        let s:onekey_cloud = 0
     elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
         " reset cjjp: w'y'y'g'm => wyygm
         let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
@@ -3594,8 +3591,8 @@ function! s:vimim_set_cloud(im)
     endif
     let s:mycloud = 0
     let s:onekey_cloud = 1
-    let s:ui.root = 'cloud'
     let s:ui.im = im
+    let s:ui.root = 'cloud'
     let frontends = [s:ui.root, s:ui.im]
     call add(s:ui.frontends, frontends)
     let clouds = split(s:vimim_cloud,',')
