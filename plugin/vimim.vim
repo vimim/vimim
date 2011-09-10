@@ -2747,7 +2747,7 @@ function! s:vimim_check_filereadable(default)
 endfunction
 
 function! s:vimim_english(keyboard)
-    if empty(s:english_filename)
+    if empty(s:english_filename) || s:hjkl_m || s:hjkl_n
         return []
     endif
     " [sql] select english from vimim.txt
@@ -4455,7 +4455,7 @@ else
     endif
     if empty(keyboard) || keyboard !~# s:valid_key
         return []
-    elseif s:hjkl_m > 0 || s:hjkl_n > 0   
+    else
         " [english] English cannot be ignored!
         let s:english_results = s:vimim_english(keyboard)
     endif
