@@ -29,7 +29,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
 "  (2) [option] drop a English  datafile:  plugin/vimim.txt
 "  (3) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
-"  (4) [option] drop a python2  database:  plugin/vimim.utf8.bsddb
+"  (4) [option] drop a python2  database:  plugin/vimim.gbk.bsddb
 "  (5) [option] drop a standard directory: plugin/vimim/pinyin/
 "
 " "VimIM Usage"
@@ -4347,7 +4347,9 @@ endfunction
 
 function! g:vimim()
     let key = ""
-    let s:keyboard_list = []
+    if empty(s:pageup_pagedown)
+        let s:keyboard_list = []
+    endif
     let one_before = getline(".")[col(".")-2]
     if one_before =~# s:valid_key
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
