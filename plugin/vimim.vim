@@ -905,11 +905,6 @@ function! <SID>vimim_onekey_punctuation(key)
     endif
     if hjkl == ";"
         let hjkl = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
-    elseif hjkl == "'"
-        let hjkl = hjkl . '\<C-R>=g:vimim()\<CR>'
-    elseif hjkl == "~"
-        let s:hjkl_tilde += 1
-        let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
     elseif hjkl =~ "[<>]"
         let hjkl = '\<C-Y>'.s:punctuations[nr2char(char2nr(hjkl)-16)]
     elseif hjkl =~ "[][]"
@@ -917,17 +912,25 @@ function! <SID>vimim_onekey_punctuation(key)
     elseif hjkl =~ "[/?]"
         let hjkl = s:vimim_menu_search(hjkl)
     elseif hjkl =~ "[-,]"
-        let hjkl = '\<PageUp>'
         if &pumheight > 0
             let s:pageup_pagedown = -1
-            let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
+        else
+            let hjkl = '\<PageUp>'
         endif
     elseif hjkl =~ "[=.]"
-        let hjkl = '\<PageDown>'
         if &pumheight > 0
             let s:pageup_pagedown = 1
-            let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
+        else
+            let hjkl = '\<PageDown>'
         endif
+    elseif hjkl == "~"
+        let s:hjkl_tilde += 1
+    elseif hjkl == "'"
+        let s:onekey_cloud += 1
+        " todo
+    endif
+    if hjkl == a:key
+        let hjkl = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
@@ -1457,6 +1460,7 @@ function! s:vimim_get_labeling(label)
             else
                 let labeling = labeling . label2
             endif
+            " todo
         endif
         if s:hjkl_l%2 > 0 && &pumheight < 1
             let fmt = '%02s '
@@ -1908,15 +1912,6 @@ function! s:vimim_popup_word()
     let range = column_end - column_start
     let chinese = strpart(getline("."), column_start, range)
     return substitute(chinese,'\w','','g')
-endfunction
-
-function! s:vimim_quote_by_quote(keyboard)
-    let keyboard = a:keyboard
-    let partition = match(keyboard, "[']")
-    if partition > -1 && empty(s:ui.has_dot)
-        let keyboard = s:vimim_get_head(keyboard, partition)
-    endif
-    return keyboard
 endfunction
 
 function! s:vimim_get_head(keyboard, partition)
@@ -2823,38 +2818,26 @@ endfunction
 
 function! s:vimim_hjkl_m_hjkl_n(keyboard)
     let keyboard = a:keyboard
-    if s:hjkl_m > 0                   " s's's's's's
-        let keyboard = s:vimim_toggle_cjjp(keyboard)
-    elseif s:hjkl_n > 0               " shi'shi'shi
-        let keyboard = s:vimim_toggle_pinyin(keyboard)
+    if s:hjkl_m > 0 && s:hjkl_m % 2 > 0
+        " toggle cjjp: sssss <=> s's's's's
+        let keyboard = substitute(keyboard,"'","",'g')
+        let keyboard = join(split(keyboard,'\zs'),"'")
+        let s:onekey_cloud = 0
+    elseif s:hjkl_n > 0 && s:hjkl_n % 2 > 0
+        " toggle pinyin: woyouyigemeng <=> wo'you'yi'ge'meng
+        let keyboard = s:vimim_quanpin_transform(keyboard)
+        let s:onekey_cloud = 0
+    elseif s:ui.root == 'cloud'
+        let s:onekey_cloud = 1
     endif
     return s:vimim_quote_by_quote(keyboard)
 endfunction
 
-function! s:vimim_toggle_cjjp(keyboard)
+function! s:vimim_quote_by_quote(keyboard)
     let keyboard = a:keyboard
-    if s:hjkl_m % 2 > 0
-        " set cjjp:   wyygm => w'y'y'g'm
-        let keyboard = substitute(keyboard,"'","",'g')
-        let keyboard = join(split(keyboard,'\zs'),"'")
-        let s:onekey_cloud = 0
-    elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
-        " reset cjjp: w'y'y'g'm => wyygm
-        let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
-    endif
-    return keyboard
-endfunction
-
-function! s:vimim_toggle_pinyin(keyboard)
-    let keyboard = a:keyboard
-    if s:hjkl_n < 1 || s:vimim_imode_pinyin < 1
-        return keyboard
-    elseif s:hjkl_n % 2 > 0
-        " set pin'yin: woyouyigemeng => wo'you'yi'ge'meng
-        let keyboard = s:vimim_quanpin_transform(keyboard)
-    elseif len(s:keyboard_list) > 0 && get(s:keyboard_list,0) =~ "'"
-        " reset pinyin: wo'you'yi'ge'meng => woyouyigemeng
-        let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
+    let partition = match(keyboard, "[']")
+    if partition > -1 && empty(s:ui.has_dot)
+        let keyboard = s:vimim_get_head(keyboard, partition)
     endif
     return keyboard
 endfunction
@@ -4692,11 +4675,8 @@ function! s:vimim_embedded_backend_engine(keyboard)
     \|| s:ui.im =~ 'cloud' || keyboard !~# s:valid_key
     \|| s:show_me_not > 0
         return []
-    elseif s:vimim_imode_pinyin
-        let keyboard = s:vimim_toggle_pinyin(keyboard)
-        if s:ui.has_dot == 2 && keyboard !~ "[']"
-            let keyboard = s:vimim_quanpin_transform(keyboard)
-        endif
+    elseif s:ui.has_dot == 2 && keyboard !~ "[']"
+        let keyboard = s:vimim_quanpin_transform(keyboard)
     endif
     let results = []
     let keyboard2 = 0
