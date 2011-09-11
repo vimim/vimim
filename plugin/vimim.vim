@@ -255,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hhjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -367,44 +367,44 @@ function! s:vimim_egg_vimim()
         let ciku = database . s:vimim_chinese('english') . database
         call add(eggs, ciku . s:english_filename)
     endif
-    let im = s:vimim_statusline()
+    let style = s:vimim_chinese('style') . s:colon
+    if !empty(s:cjk_filename)
+        let ciku  = database . s:vimim_chinese('standard')
+        let ciku .= s:vimim_chinese('cjk') . s:colon
+        if s:vimim_digit_4corner
+            let style .= s:vimim_chinese('4corner') . s:space
+        else
+            let style .= s:vimim_chinese('5strokes'). s:space
+        endif
+        call add(eggs, ciku . s:cjk_filename)
+    endif
     let toggle = "toggle_with_Ctrl-Bslash"
+    let im = s:vimim_statusline()
     if s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_Ctrl-Space"
     elseif s:vimim_onekey_is_tab > 1
         let toggle = "toggle_with_Tab_for_midas_touch"
         let im = s:vimim_chinese('onekey') . s:space . s:ui.statusline
     endif
-    let style = s:vimim_chinese('style') . s:colon . toggle
-    if !empty(s:cjk_filename)
-        let ciku  = database . s:vimim_chinese('standard')
-        let ciku .= s:vimim_chinese('cjk') . s:colon
-        if s:vimim_digit_4corner
-            let im .= s:space . s:vimim_chinese('4corner')
-        else
-            let im .= s:space . s:vimim_chinese('5strokes')
-        endif
-        call add(eggs, ciku . s:cjk_filename)
-    endif
+    call add(eggs, style . toggle)
     if len(im) > 0
         call add(eggs, input . s:colon . im)
     endif
-    call add(eggs, style)
+    let network  = s:vimim_chinese('network') . s:colon
+    if s:vimim_cloud > -1
+        let option  = network . s:vimim_chinese(s:cloud_default)
+        let option .= s:vimim_chinese('cloud') . input . s:space
+        let option .= ":let g:vimim_cloud='" . s:vimim_cloud."'"
+        call add(eggs, option)
+    endif
     if len(s:ui.frontends) > 1
         let option  = s:vimim_chinese('toggle') . s:colon
         let option .= ":let g:vimim_toggle_list='"
         let option .= vimim_toggle_list . "'"
         call add(eggs, option)
     endif
-    let online  = s:vimim_chinese('online') . s:colon
-    if s:vimim_cloud > -1
-        let option  = online . s:vimim_chinese(s:cloud_default)
-        let option .= s:vimim_chinese('cloud') . input . s:space
-        let option .= ":let g:vimim_cloud='" . s:vimim_cloud."'"
-        call add(eggs, option)
-    endif
     if len(s:vimim_mycloud) > 1
-        let option  = online . s:vimim_chinese('mycloud') . s:space
+        let option  = network . s:vimim_chinese('mycloud') . s:space
         let option .= ":let g:vimim_mycloud='".s:vimim_mycloud."'"
         call add(eggs, option)
     endif
@@ -1144,7 +1144,7 @@ function! s:vimim_dictionary_status()
     let s:status.mycloud    = "自己的云 自己的雲"
     let s:status.cloud      = "云 雲"
     let s:status.toggle     = "切换 切換"
-    let s:status.online     = "在线 在綫"
+    let s:status.network    = "联网 聯網"
     let s:status.tool       = "工具"
     let s:status.sogou      = "搜狗"
     let s:status.google     = "谷歌"
