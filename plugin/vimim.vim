@@ -271,13 +271,11 @@ let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
 
 function! s:vimim_easter_chicken(keyboard)
-    if a:keyboard ==# "vim" || a:keyboard =~# "^vimim"
-        try
-            return eval("s:vimim_egg_" . a:keyboard . "()")
-        catch
-            call s:debug('alert', 'egg=', a:keyboard, v:exception)
-        endtry
-    endif
+    try
+        return eval("s:vimim_egg_" . a:keyboard . "()")
+    catch
+        call s:debug('alert', 'egg=', a:keyboard, v:exception)
+    endtry
     return []
 endfunction
 
@@ -430,31 +428,45 @@ endfunction
 
 function! s:vimim_get_hjkl(keyboard)
     let keyboard = a:keyboard
+    let poem = s:vimim_check_filereadable(keyboard)
+    let results = []
+    if keyboard ==# "vim" || keyboard =~# "^vimim"
+        " [eggs] hunt classic easter egg ... vim<C-6>
+        let results = s:vimim_easter_chicken(keyboard)
+    elseif keyboard ==# "''"
+        " [game] plays mahjong at will
+        let results = split(s:mahjong)
+    elseif keyboard ==# "'''"
+        " [hjkl] display buffer inside the omni window
+        let results = split(getreg('"'), '\n')
+    elseif !empty(poem)
+        " [poem] play any entry in hjkl directories
+        let results = s:vimim_readfile(poem)
+    endif
+    if !empty(results)
+        let s:show_me_not = 1
+        if s:hjkl_m % 4 > 0
+            let &pumheight = 0
+            for i in range(s:hjkl_m%4)
+                let results = s:vimim_hjkl_rotation(results)
+            endfor
+        endif
+        return results
+    endif
     " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
     if keyboard =~# 'u\d\d\d\d\d'
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
     endif
     " [unicode] support direct unicode/gb/big5 input
-    let results = []
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if ddddd > 0
         for i in range(99)
             call add(results, nr2char(ddddd+i))
         endfor
-        return results
-    endif
-    let results = s:vimim_easter_chicken(keyboard)
-    if !empty(results)
-        " [eggs] hunt classic easter egg ... vim<C-6>
-    elseif keyboard ==# "'''"
-        " [hjkl] display buffer inside the omni window
-        let results = split(getreg('"'), '\n')
     elseif keyboard[-4:] ==# "''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif keyboard ==# "''" " plays mahjong at will
-        let results = split(s:mahjong)
     elseif keyboard =~# '^i' && s:vimim_imode_pinyin > 0
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
@@ -464,21 +476,6 @@ function! s:vimim_get_hjkl(keyboard)
             let results = s:vimim_get_imode_chinese(char_before,1)
         elseif keyboard =~ '\d' && empty(s:english_results)
             let results = s:vimim_imode_number(keyboard)
-        endif
-    else
-        " [poem] check entry in special directories first
-        let datafile = s:vimim_check_filereadable(keyboard)
-        if !empty(datafile)
-            let results = s:vimim_readfile(datafile)
-        endif
-    endif
-    if !empty(results) && keyboard !~ '^i'
-        let s:show_me_not = 1
-        if s:hjkl_m % 4 > 0
-            let &pumheight = 0
-            for i in range(s:hjkl_m%4)
-                let results = s:vimim_hjkl_rotation(results)
-            endfor
         endif
     endif
     return results
