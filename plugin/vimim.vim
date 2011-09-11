@@ -1493,8 +1493,7 @@ function! s:vimim_get_stone_from_bsddb(stone)
 :sil!python << EOF
 try:
     stone = vim.eval('a:stone')
-    partition = int(vim.eval('s:hjkl_n'))
-    marble = getstone(stone, partition)
+    marble = getstone(stone)
     vim.command("return '%s'" % marble)
 except vim.error:
     print("vim error: %s" % vim.error)
@@ -1519,10 +1518,8 @@ import vim, bsddb
 encoding = vim.eval("&encoding")
 datafile = vim.eval('a:datafile')
 edw = bsddb.btopen(datafile,'r')
-def getstone(stone, partition):
+def getstone(stone):
     isenglish = vim.eval('s:english_results')
-    if partition > 0 and len(stone) > 2:
-        stone = stone[:-partition]
     if stone not in edw and not isenglish:
         while stone and stone not in edw: stone = stone[:-1]
     return stone
@@ -2230,7 +2227,7 @@ function! s:vimim_cache()
             endif
         elseif s:hjkl_h > 0 && len(s:matched_list) > &pumheight
             let &pumheight = s:hjkl_h%2<1 ? s:pumheight : 0
-        elseif s:hjkl_n > 0  " todo
+        elseif s:hjkl_n > 0
             let first = split(get(s:matched_list,0))
             let cjk = len(first)>1 ? get(first,1) : get(first,0)
             if len(cjk) == s:multibyte
@@ -2428,18 +2425,18 @@ function! <SID>vimim_onekey_hjkl(key)
     endif
     if hjkl ==# 'l' " :help Ctrl-L
         call g:vimim_reset_after_insert()
-    elseif hjkl ==# 'h'    " toggle label height
-        let s:hjkl_h += 1
     elseif hjkl ==# 'j'
         let hjkl = '\<Down>'
     elseif hjkl ==# 'k'
         let hjkl = '\<Up>'
+    elseif hjkl ==# 'h'    " toggle label height
+        let s:hjkl_h += 1
     elseif hjkl ==# 'x'    " toggle chinese/taiwan
         let s:hjkl_x += 1
     elseif hjkl ==# 'm'    " toggle c'j'j'p
         let s:hjkl_m += 1
         let s:hjkl_n = 0
-    elseif hjkl ==# 'n'    " toggle pin'yin
+    elseif hjkl ==# 'n'    " go to next match
         let s:hjkl_n += 1
         let s:hjkl_m = 0
     endif
@@ -2808,7 +2805,7 @@ function! s:vimim_hjkl_m_hjkl_n(keyboard)
     elseif s:ui.root == 'cloud'
         let s:onekey_cloud = 1
     endif
-    if s:hjkl_n > 0 && s:onekey_cloud
+    if s:hjkl_n > 0
         " redefine match: jsjsxx => ['jsjsx', 'jsjs', 'jsj', 'js']
         let candidates = s:vimim_more_pinyin_candidates(keyboard)
         let head = get(candidates, s:hjkl_n-1)
@@ -4531,6 +4528,7 @@ else
         let keyboard_head = s:vimim_onekey_cjk(keyboard)
         if empty(keyboard_head)
             let s:hjkl_m = 1
+            let s:hjkl_n = 0
             let keyboard = s:vimim_hjkl_m_hjkl_n(keyboard)
         endif
         if !empty(keyboard)
