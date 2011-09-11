@@ -1882,6 +1882,9 @@ function! s:vimim_get_right_arrow()
     if n > 0 && n < 72
         let right_arrow = repeat("\<Right>", n)
     endif
+    if current_line[current_column] == "'"
+        let right_arrow .= '\<Delete>'
+    endif
     return right_arrow
 endfunction
 
