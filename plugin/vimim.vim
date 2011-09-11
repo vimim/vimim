@@ -414,7 +414,7 @@ function! s:vimim_egg_vimim()
         let option = tool . title . s:http_executable
         call add(eggs, option)
     endif
-    let option = s:vimim_chinese('setup') . s:colon . "vimimrc " 
+    let option = s:vimim_chinese('setup') . s:colon . "vimimrc "
     if empty(s:vimimrc)
         call add(eggs, option . "all defaults")
     else
@@ -928,7 +928,10 @@ function! <SID>vimim_onekey_punctuation(key)
         let s:hjkl_tilde += 1
     elseif hjkl == "'"
         let s:onekey_cloud += 1
-        " todo
+        if s:onekey_cloud > 1
+            let clouds = split(s:vimim_cloud,',')
+            let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
+        endif
     endif
     if hjkl == a:key
         let hjkl = '\<C-R>=g:vimim()\<CR>'
@@ -1456,11 +1459,17 @@ function! s:vimim_get_labeling(label)
             endif
         elseif a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
-            if s:onekey_cloud > 0    " capital label for cloud
-                if label2 != s:cloud_default[0:0]
-                    let label2 = toupper(label2)
-                elseif label2 == 'z' && s:cloud_default=~'qq'
-                    let label2 = 0   " label 00 for QQ
+            if s:onekey_cloud > 0
+                " onekey label bb for cloud Baidu
+                " onekey label gg for cloud Google
+                " onekey label ss for cloud Sogou
+                " onekey label 00 for cloud QQ
+                let vimim_cloud = get(split(s:vimim_cloud,','), 0)
+                let cloud = get(split(vimim_cloud,'[.]'),0)
+                if label2 == cloud[0:0]  " b/g/s
+                    let labeling = label2
+                elseif label2 == 'z' && cloud =~ 'qq'
+                    let label2 = '0'
                 endif
             endif
             let labeling = labeling . label2
@@ -1936,18 +1945,13 @@ endfunction
 
 function! s:vimim_magic_apostrophe_tail(keyboard)
     " <apostrophe> double play in OneKey:
-    "   (1) one trailing apostrophe => open cloud
-    "   (2) two trailing apostrophe => switch to next cloud
+    "   (1) [insert] one trailing apostrophe => open cloud
+    "   (2) [omni]   apostrophe switches to the next cloud
     let s:onekey_cloud = 1
     let keyboard = a:keyboard[:-2]
     if empty(s:vimim_check_http_executable())
         let s:onekey_cloud = 0
         let keyboard = substitute(keyboard,"'",'','g')
-    elseif keyboard[-1:] ==# "'"
-        let keyboard = keyboard[:-2]
-        let clouds = split(s:vimim_cloud,',')
-        let clouds = clouds[1:-1] + clouds[0:0]
-        let s:vimim_cloud = join(clouds,',')
     endif
     return keyboard
 endfunction
