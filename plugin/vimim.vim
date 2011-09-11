@@ -94,7 +94,7 @@ function! s:vimim_initialize_session()
     let s:Az_list = s:az_list + s:AZ_list
     let s:valid_keys = s:az_list
     let s:valid_key = 0
-    let s:abcd = "'abcdvfgxz"
+    let s:abcd = "'abcdvfgsz"
     let s:qwer = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let s:horizontal_display = s:vimim_custom_label>0 ? 5 : 0
@@ -1310,11 +1310,11 @@ function! s:vimim_label_on()
     endif
     for _ in labels
         silent!exe 'inoremap <silent> <expr> '  ._.
-        \  ' <SID>vimim_abcdvfgxz_1234567890_label("'._.'")'
+        \  ' <SID>vimim_abcdvfgsz_1234567890_label("'._.'")'
     endfor
 endfunction
 
-function! <SID>vimim_abcdvfgxz_1234567890_label(key)
+function! <SID>vimim_abcdvfgsz_1234567890_label(key)
     let key = a:key
     if pumvisible()
         let n = match(s:abcd, key)
@@ -1451,19 +1451,21 @@ function! s:vimim_get_labeling(label)
     if s:chinese_input_mode =~ 'onekey'
         if s:show_me_not > 0
             let fmt = '%02s '
-            if s:hjkl_l % 2 < 1
+            if s:hjkl_h % 2 < 1
                 let labeling = ""
             endif
         elseif a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
-            if s:onekey_cloud
-                let labeling = label2 . labeling
-            else
-                let labeling = labeling . label2
+            if s:onekey_cloud > 0    " capital label for cloud
+                if label2 != s:cloud_default[0:0]
+                    let label2 = toupper(label2)
+                elseif label2 == 'z' && s:cloud_default=~'qq'
+                    let label2 = 0   " label 00 for QQ
+                endif
             endif
-            " todo
+            let labeling = labeling . label2
         endif
-        if s:hjkl_l%2 > 0 && &pumheight < 1
+        if s:hjkl_h%2 > 0 && &pumheight < 1
             let fmt = '%02s '
         endif
         if labeling == '0'
@@ -1484,7 +1486,7 @@ function! s:vimim_get_stone_from_bsddb(stone)
 :sil!python << EOF
 try:
     stone = vim.eval('a:stone')
-    partition = int(vim.eval('s:hjkl_h'))
+    partition = int(vim.eval('s:hjkl_x'))
     marble = getstone(stone, partition)
     vim.command("return '%s'" % marble)
 except vim.error:
@@ -2227,7 +2229,7 @@ let s:VimIM += [" ====  input hjkl       ==== {{{"]
 function! s:vimim_cache()
     let results = []
     if s:chinese_input_mode =~ 'onekey'
-        if len(s:hjkl_s) > 0
+        if len(s:hjkl_l) > 0
             if s:show_me_not > 0 && len(s:matched_list) > 0
                 let results = s:vimim_onekey_menu_format()
             elseif len(s:popupmenu_list) > 0
@@ -2235,15 +2237,15 @@ function! s:vimim_cache()
             endif
         endif
         if s:show_me_not > 0
-            if s:hjkl_h % 2 > 0
+            if s:hjkl_x % 2 > 0
                 for line in s:matched_list
                     let oneline = join(reverse(split(line,'\zs')),'')
                     call add(results, oneline)
                 endfor
             endif
-        elseif s:hjkl_l > 0 && len(s:matched_list) > &pumheight
-            let &pumheight = s:hjkl_l%2<1 ? s:pumheight : 0
-        elseif s:hjkl_h > 0
+        elseif s:hjkl_h > 0 && len(s:matched_list) > &pumheight
+            let &pumheight = s:hjkl_h%2<1 ? s:pumheight : 0
+        elseif s:hjkl_x > 0
             let first = split(get(s:matched_list,0))
             let cjk = len(first)>1 ? get(first,1) : get(first,0)
             if len(cjk) == s:multibyte
@@ -2267,10 +2269,10 @@ function! s:vimim_onekey_menu_format()
     let lines = split(join(lines),'  ')
     let filter = 'substitute(' .'v:val'. ",' ','','g')"
     call map(lines, filter)
-    if s:hjkl_s == 1
+    if s:hjkl_l == 1
         return lines
     endif
-    let n = s:hjkl_s * (7-s:multibyte)
+    let n = s:hjkl_l * (7-s:multibyte)
     let textwidth = repeat(".", n)
     let results = []
     for line in lines
@@ -2284,10 +2286,10 @@ endfunction
 function! s:vimim_onekey_menu_filter()
     " use 1234567890/qwertyuiop as digital filter
     let results = s:vimim_cjk_filter_list()
-    if empty(results) && !empty(len(s:hjkl_s))
-        let number_before = strpart(s:hjkl_s,0,len(s:hjkl_s)-1)
+    if empty(results) && !empty(len(s:hjkl_l))
+        let number_before = strpart(s:hjkl_l,0,len(s:hjkl_l)-1)
         if len(number_before) > 0
-            let s:hjkl_s = number_before
+            let s:hjkl_l = number_before
             let results = s:vimim_cjk_filter_list()
         endif
     endif
@@ -2319,7 +2321,7 @@ function! s:vimim_cjk_digit_filter(chinese)
     "   (1)   ma<C-6>       马   => filter with   7712
     "   (2) mali<C-6>       马力 => filter with 7 4002
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
-    if empty(len(s:hjkl_s)) || empty(chinese)
+    if empty(len(s:hjkl_l)) || empty(chinese)
         return 0
     endif
     let digit_head = ""
@@ -2338,7 +2340,7 @@ function! s:vimim_cjk_digit_filter(chinese)
         endif
     endfor
     let number = digit_head . digit_tail
-    let pattern = "^" . s:hjkl_s
+    let pattern = "^" . s:hjkl_l
     if match(number, pattern) < 0
         return 0
     endif
@@ -2372,7 +2374,7 @@ function! s:vimim_onekey_mapping()
         endfor
     else
         for _ in s:qwer
-            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hjkl_s("'._.'")'
+            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hjkl_x("'._.'")'
         endfor
     endif
     if empty(s:vimim_latex_suite)
@@ -2380,7 +2382,7 @@ function! s:vimim_onekey_mapping()
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps("'._.'")'
         endfor
     endif
-    for _ in split('hjklmns', '\zs')
+    for _ in split('hjklmnx', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
     for _ in split("[]-=.,/?;~'<>", '\zs')
@@ -2409,7 +2411,7 @@ function! <SID>vimim_qwer_hitrun(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! <SID>vimim_qwer_hjkl_s(key)
+function! <SID>vimim_qwer_hjkl_x(key)
     let key = a:key
     if pumvisible()
         let digit = match(s:qwer, key)
@@ -2420,7 +2422,7 @@ function! <SID>vimim_qwer_hjkl_s(key)
                 let digit -= 5 " yuiop/12345 for five strokes
             endif
         endif
-        let s:hjkl_s = s:show_me_not ? digit : s:hjkl_s . digit
+        let s:hjkl_l = s:show_me_not ? digit : s:hjkl_l . digit
         let key = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2439,26 +2441,26 @@ function! <SID>vimim_onekey_hjkl(key)
     if !pumvisible()
         return hjkl
     endif
-    if hjkl ==# 'j'
-        let hjkl = '\<Down>'
-    elseif hjkl ==# 'k'
-        let hjkl = '\<Up>'
-    elseif hjkl ==# 's'
+    if hjkl ==# 'l'       " :help Ctrl-L
         call g:vimim_reset_after_insert()
+    elseif hjkl ==# 'j'   " :help j
+        let hjkl = '\<Down>'
+    elseif hjkl ==# 'k'   " :help k
+        let hjkl = '\<Up>'
+    elseif hjkl ==# 'x'   ":help x Delete
+        let s:hjkl_x += 1
+        let s:hjkl_h = 0
     elseif hjkl ==# 'h'
         let s:hjkl_h += 1
-        let s:hjkl_l = 0
-    elseif hjkl ==# 'l'
-        let s:hjkl_l += 1
-        let s:hjkl_h = 0
+        let s:hjkl_x = 0
     elseif hjkl ==# 'm'
         let s:hjkl_m += 1
         let s:hjkl_n = 0
-        let s:hjkl_h = 0
+        let s:hjkl_x = 0
     elseif hjkl ==# 'n'
         let s:hjkl_n += 1
         let s:hjkl_m = 0
-        let s:hjkl_h = 0
+        let s:hjkl_x = 0
     endif
     if hjkl == a:key
         let hjkl = '\<C-R>=g:vimim()\<CR>'
@@ -2557,7 +2559,7 @@ function! s:vimim_cjk_match(keyboard)
     let grep_frequency = '.*' . '\s\d\+$'
     let grep = ""
     if keyboard =~ '\d'
-        if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_s))
+        if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_l))
             " cjk pinyin with tone: huan2hai2 yi1
             let grep = keyboard . '[a-z ]'
         else
@@ -2586,7 +2588,7 @@ function! s:vimim_cjk_match(keyboard)
                 endif
             endif
             if len(keyboard) < 4 && len(string(digit)) > 0
-                let s:hjkl_s = digit
+                let s:hjkl_l = digit
             endif
         endif
     else
@@ -4334,11 +4336,11 @@ function! s:vimim_reset_before_omni()
 endfunction
 
 function! g:vimim_reset_after_insert()
-    let s:hjkl_h = 0
-    let s:hjkl_l = 0
+    let s:hjkl_x = 0
     let s:hjkl_m = 0
     let s:hjkl_n = 0
-    let s:hjkl_s = ""
+    let s:hjkl_h = 0
+    let s:hjkl_l = ""
     let s:hjkl_tilde = 0
     let s:matched_list = []
     let s:pageup_pagedown = 0
@@ -4597,7 +4599,7 @@ function! s:vimim_popupmenu_list(matched_list)
             endfor
             let chinese = simplified_traditional
         endif
-        if s:hjkl_h && s:hjkl_h%2 && len(chinese)==s:multibyte
+        if s:hjkl_x && s:hjkl_x%2 && len(chinese)==s:multibyte
             let extra_text = s:vimim_cjk_extra_text(chinese)
         endif
         if empty(s:mycloud) ||  keyboard =~ "[']"
@@ -4705,10 +4707,10 @@ function! s:vimim_embedded_backend_engine(keyboard)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
-            if empty(s:hjkl_h) && s:vimim_data_file =~ ".bsddb"
+            if empty(s:hjkl_x) && s:vimim_data_file =~ ".bsddb"
                 let cjk = get(split(get(results,0)),1)
                 if len(cjk) > s:multibyte
-                    let s:hjkl_h += len(tail)
+                    let s:hjkl_x += len(tail)
                 endif
             endif
         endif
