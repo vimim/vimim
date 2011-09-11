@@ -879,21 +879,22 @@ function! <SID>vimim_chinese_punctuation_map(key)
             endif
         endif
     endif
-    if pumvisible()
-        if a:key =~ "[=-]"
-            if a:key =~ "[=]"
-                let s:pageup_pagedown = 1
-            elseif a:key =~ "[-]"
-                let s:pageup_pagedown = -1
-            endif
-            let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
-        else
-            let key = '\<C-Y>' . key
-            if a:key =~ "[][]"
-                let key = s:vimim_square_bracket(a:key)
-            endif
-            call g:vimim_reset_after_insert()
+    if !pumvisible()
+        return key
+    endif
+    if a:key =~ "[=-]"
+        if a:key =~ "[=]"
+            let s:pageup_pagedown = 1
+        elseif a:key =~ "[-]"
+            let s:pageup_pagedown = -1
         endif
+        let key = '\<C-R>=g:vimim()\<CR>'
+    else
+        let key = '\<C-Y>' . key
+        if a:key =~ "[][]"
+            let key = s:vimim_square_bracket(a:key)
+        endif
+        call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -911,17 +912,17 @@ function! <SID>vimim_onekey_punctuation(key)
         let hjkl = s:vimim_square_bracket(hjkl)
     elseif hjkl =~ "[/?]"
         let hjkl = s:vimim_menu_search(hjkl)
-    elseif hjkl =~ "[-,]"
-        if &pumheight > 0
-            let s:pageup_pagedown = -1
-        else
-            let hjkl = '\<PageUp>'
-        endif
     elseif hjkl =~ "[=.]"
         if &pumheight > 0
             let s:pageup_pagedown = 1
         else
             let hjkl = '\<PageDown>'
+        endif
+    elseif hjkl =~ "[-,]"
+        if &pumheight > 0
+            let s:pageup_pagedown = -1
+        else
+            let hjkl = '\<PageUp>'
         endif
     elseif hjkl == "~"
         let s:hjkl_tilde += 1
@@ -2420,7 +2421,7 @@ function! <SID>vimim_qwer_hjkl_s(key)
             endif
         endif
         let s:hjkl_s = s:show_me_not ? digit : s:hjkl_s . digit
-        let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
+        let key = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2428,9 +2429,7 @@ endfunction
 function! <SID>vimim_onekey_caps(key)
     let key = a:key
     if pumvisible()
-        let lower = tolower(key)
-        let trigger = '\<C-R>=g:vimim()\<CR>'
-        let key = '\<C-E>' . lower . trigger
+        let key = tolower(key) . '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2444,25 +2443,25 @@ function! <SID>vimim_onekey_hjkl(key)
         let hjkl = '\<Down>'
     elseif hjkl ==# 'k'
         let hjkl = '\<Up>'
-    else
-        if hjkl ==# 's'
-            call g:vimim_reset_after_insert()
-        elseif hjkl ==# 'h'
-            let s:hjkl_h += 1
-            let s:hjkl_l = 0
-        else
-            let s:hjkl_h = 0
-            if hjkl ==# 'l'
-                let s:hjkl_l += 1
-            elseif hjkl ==# 'm'
-                let s:hjkl_m += 1
-                let s:hjkl_n = 0
-            elseif hjkl ==# 'n'
-                let s:hjkl_n += 1
-                let s:hjkl_m = 0
-            endif
-        endif
-        let hjkl = '\<C-E>\<C-R>=g:vimim()\<CR>'
+    elseif hjkl ==# 's'
+        call g:vimim_reset_after_insert()
+    elseif hjkl ==# 'h'
+        let s:hjkl_h += 1
+        let s:hjkl_l = 0
+    elseif hjkl ==# 'l'
+        let s:hjkl_l += 1
+        let s:hjkl_h = 0
+    elseif hjkl ==# 'm'
+        let s:hjkl_m += 1
+        let s:hjkl_n = 0
+        let s:hjkl_h = 0
+    elseif hjkl ==# 'n'
+        let s:hjkl_n += 1
+        let s:hjkl_m = 0
+        let s:hjkl_h = 0
+    endif
+    if hjkl == a:key
+        let hjkl = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
