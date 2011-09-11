@@ -4568,7 +4568,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let keyboard = join(s:keyboard_list,"")
     let menu = get(s:keyboard_list,0)
     let custom_label = 0
-    if empty(s:show_me_not) && len(lines)>1
+    if empty(s:show_me_not) && len(lines)>1 && s:vimim_custom_label>-1
         let custom_label = 1
     else
         let &pumheight = 0
@@ -4611,11 +4611,11 @@ function! s:vimim_popupmenu_list(matched_list)
         elseif s:horizontal_display < 1 && empty(s:show_me_not)
             let extra_text = get(split(menu,"_"),0)
         endif
-        if s:vimim_custom_label > 0
+        if s:vimim_custom_label
             let abbr = label . "." . chinese
             call add(popupmenu_list_one_row, abbr)
         endif
-        if custom_label > 0 && s:vimim_custom_label > -1
+        if custom_label
             let labeling = label . " "
             if s:vimim_custom_label < 1
                 let labeling = s:vimim_get_labeling(label)
