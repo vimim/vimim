@@ -255,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = simplify(s:path . '../../../hjkl/')
+    let hjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -924,8 +924,6 @@ function! <SID>vimim_onekey_punctuation(key)
         else
             let hjkl = '\<PageUp>'
         endif
-    elseif hjkl == "~"
-        let s:hjkl_tilde += 1
     elseif hjkl == "'"
         let s:onekey_cloud += 1
         if s:onekey_cloud > 1
@@ -1495,7 +1493,7 @@ function! s:vimim_get_stone_from_bsddb(stone)
 :sil!python << EOF
 try:
     stone = vim.eval('a:stone')
-    partition = int(vim.eval('s:hjkl_x'))
+    partition = int(vim.eval('s:hjkl_n'))
     marble = getstone(stone, partition)
     vim.command("return '%s'" % marble)
 except vim.error:
@@ -1926,23 +1924,6 @@ function! s:vimim_popup_word()
     return substitute(chinese,'\w','','g')
 endfunction
 
-function! s:vimim_get_head(keyboard, partition)
-    if a:partition < 0
-        return a:keyboard
-    endif
-    let head = a:keyboard[0 : a:partition-1]
-    if len(s:keyboard_list) < 2
-        let keyboards = []
-        call add(keyboards, head)
-        let tail = a:keyboard[a:partition : -1]
-        if !empty(tail)
-            call add(keyboards, tail)
-        endif
-        let s:keyboard_list = copy(keyboards)
-    endif
-    return head
-endfunction
-
 function! s:vimim_magic_apostrophe_tail(keyboard)
     " <apostrophe> double play in OneKey:
     "   (1) [insert] one trailing apostrophe => open cloud
@@ -2232,16 +2213,16 @@ let s:VimIM += [" ====  input hjkl       ==== {{{"]
 
 function! s:vimim_cache()
     let results = []
-    if s:chinese_input_mode =~ 'onekey'
+    if s:chinese_input_mode=~'onekey' && len(s:matched_list)
         if len(s:hjkl_l) > 0
-            if s:show_me_not > 0 && len(s:matched_list) > 0
+            if s:show_me_not > 0
                 let results = s:vimim_onekey_menu_format()
             elseif len(s:popupmenu_list) > 0
                 let results = s:vimim_onekey_menu_filter()
             endif
         endif
         if s:show_me_not > 0
-            if s:hjkl_x % 2 > 0
+            if s:hjkl_n % 2 > 0
                 for line in s:matched_list
                     let oneline = join(reverse(split(line,'\zs')),'')
                     call add(results, oneline)
@@ -2249,7 +2230,7 @@ function! s:vimim_cache()
             endif
         elseif s:hjkl_h > 0 && len(s:matched_list) > &pumheight
             let &pumheight = s:hjkl_h%2<1 ? s:pumheight : 0
-        elseif s:hjkl_x > 0
+        elseif s:hjkl_n > 0  " todo
             let first = split(get(s:matched_list,0))
             let cjk = len(first)>1 ? get(first,1) : get(first,0)
             if len(cjk) == s:multibyte
@@ -2389,7 +2370,7 @@ function! s:vimim_onekey_mapping()
     for _ in split('hjklmnx', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
-    for _ in split("[]-=.,/?;~'<>", '\zs')
+    for _ in split("[]-=.,/?;'<>", '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
     endfor
     if empty(s:vimim_backslash_close_pinyin)
@@ -2445,26 +2426,22 @@ function! <SID>vimim_onekey_hjkl(key)
     if !pumvisible()
         return hjkl
     endif
-    if hjkl ==# 'l'       " :help Ctrl-L
+    if hjkl ==# 'l' " :help Ctrl-L
         call g:vimim_reset_after_insert()
-    elseif hjkl ==# 'j'   " :help j
-        let hjkl = '\<Down>'
-    elseif hjkl ==# 'k'   " :help k
-        let hjkl = '\<Up>'
-    elseif hjkl ==# 'x'   ":help x Delete
-        let s:hjkl_x += 1
-        let s:hjkl_h = 0
-    elseif hjkl ==# 'h'
+    elseif hjkl ==# 'h'    " toggle label height
         let s:hjkl_h += 1
-        let s:hjkl_x = 0
-    elseif hjkl ==# 'm'
+    elseif hjkl ==# 'j'
+        let hjkl = '\<Down>'
+    elseif hjkl ==# 'k'
+        let hjkl = '\<Up>'
+    elseif hjkl ==# 'x'    " toggle chinese/taiwan
+        let s:hjkl_x += 1
+    elseif hjkl ==# 'm'    " toggle c'j'j'p
         let s:hjkl_m += 1
         let s:hjkl_n = 0
-        let s:hjkl_x = 0
-    elseif hjkl ==# 'n'
+    elseif hjkl ==# 'n'    " toggle pin'yin
         let s:hjkl_n += 1
         let s:hjkl_m = 0
-        let s:hjkl_x = 0
     endif
     if hjkl == a:key
         let hjkl = '\<C-R>=g:vimim()\<CR>'
@@ -2828,12 +2805,18 @@ function! s:vimim_hjkl_m_hjkl_n(keyboard)
         let keyboard = substitute(keyboard,"'","",'g')
         let keyboard = join(split(keyboard,'\zs'),"'")
         let s:onekey_cloud = 0
-    elseif s:hjkl_n > 0 && s:hjkl_n % 2 > 0
-        " toggle pinyin: woyouyigemeng <=> wo'you'yi'ge'meng
-        let keyboard = s:vimim_quanpin_transform(keyboard)
-        let s:onekey_cloud = 0
     elseif s:ui.root == 'cloud'
         let s:onekey_cloud = 1
+    endif
+    if s:hjkl_n > 0 && s:onekey_cloud
+        " redefine match: jsjsxx => ['jsjsx', 'jsjs', 'jsj', 'js']
+        let candidates = s:vimim_more_pinyin_candidates(keyboard)
+        let head = get(candidates, s:hjkl_n-1)
+        if empty(head)
+            let head = keyboard[0:0]
+        endif
+        let tail = strpart(keyboard, len(head))
+        let keyboard = head . "'" . tail
     endif
     return s:vimim_quote_by_quote(keyboard)
 endfunction
@@ -2845,6 +2828,23 @@ function! s:vimim_quote_by_quote(keyboard)
         let keyboard = s:vimim_get_head(keyboard, partition)
     endif
     return keyboard
+endfunction
+
+function! s:vimim_get_head(keyboard, partition)
+    if a:partition < 0
+        return a:keyboard
+    endif
+    let head = a:keyboard[0 : a:partition-1]
+    if len(s:keyboard_list) < 2
+        let keyboards = []
+        call add(keyboards, head)
+        let tail = a:keyboard[a:partition : -1]
+        if !empty(tail)
+            call add(keyboards, tail)
+        endif
+        let s:keyboard_list = copy(keyboards)
+    endif
+    return head
 endfunction
 
 function! s:vimim_quanpin_transform(pinyin)
@@ -4345,7 +4345,6 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_n = 0
     let s:hjkl_h = 0
     let s:hjkl_l = ""
-    let s:hjkl_tilde = 0
     let s:matched_list = []
     let s:pageup_pagedown = 0
     if s:vimim_custom_label < 1
@@ -4510,7 +4509,9 @@ else
         endif
         let results = s:vimim_get_cloud(keyboard, cloud)
         if !empty(len(results))
-            let s:keyboard_list = [keyboard]
+            if len(s:keyboard_list) < 2
+                let s:keyboard_list = [keyboard]
+            endif
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -4596,14 +4597,14 @@ function! s:vimim_popupmenu_list(matched_list)
                 let extra_text = menu
             endif
         endif
-        if s:hjkl_tilde && s:hjkl_tilde%2 && !empty(s:cjk_filename)
+        if s:hjkl_x && s:hjkl_x%2 && !empty(s:cjk_filename)
             let simplified_traditional = ""
             for char in split(chinese, '\zs')
                 let simplified_traditional .= s:vimim_1to1(char)
             endfor
             let chinese = simplified_traditional
         endif
-        if s:hjkl_x && s:hjkl_x%2 && len(chinese)==s:multibyte
+        if s:hjkl_n && s:hjkl_n%2 && len(chinese)==s:multibyte
             let extra_text = s:vimim_cjk_extra_text(chinese)
         endif
         if empty(s:mycloud) ||  keyboard =~ "[']"
@@ -4711,10 +4712,10 @@ function! s:vimim_embedded_backend_engine(keyboard)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
-            if empty(s:hjkl_x) && s:vimim_data_file =~ ".bsddb"
+            if empty(s:hjkl_n) && s:vimim_data_file =~ ".bsddb"
                 let cjk = get(split(get(results,0)),1)
                 if len(cjk) > s:multibyte
-                    let s:hjkl_x += len(tail)
+                    let s:hjkl_n += len(tail)
                 endif
             endif
         endif
