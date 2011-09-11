@@ -939,7 +939,7 @@ endfunction
 
 function! <SID>vimim_onekey_omni_bslash_seamless()
     let bslash = '\\'
-    if pumvisible() && s:show_me_not < 1
+    if pumvisible() && empty(s:show_me_not)
         let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
     endif
     sil!exe 'sil!return "' . bslash . '"'
@@ -1365,7 +1365,7 @@ function! s:vimim_square_bracket(key)
         let _     = key=="]" ? 0          : -1
         let left  = key=="]" ? "\<Left>"  : ""
         let right = key=="]" ? "\<Right>" : ""
-        if s:show_me_not < 1
+        if empty(s:show_me_not)
             let backspace = '\<C-R>=g:vimim_bracket('._.')\<CR>'
             let key = '\<C-Y>' . left . backspace . right
         endif
@@ -1450,12 +1450,7 @@ function! s:vimim_get_labeling(label)
     let fmt = '%2s '
     let labeling = a:label==10 ? "0" : a:label
     if s:chinese_input_mode =~ 'onekey'
-        if s:show_me_not > 0
-            let fmt = '%02s '
-            if s:hjkl_h % 2 < 1
-                let labeling = ""
-            endif
-        elseif a:label < &pumheight + 1
+        if a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
             if s:onekey_cloud > 0
                 " onekey label bb for cloud Baidu
@@ -2210,16 +2205,16 @@ let s:VimIM += [" ====  input hjkl       ==== {{{"]
 
 function! s:vimim_cache()
     let results = []
-    if s:chinese_input_mode=~'onekey' && len(s:matched_list)
+    if s:chinese_input_mode=~'onekey'
         if len(s:hjkl_l) > 0
-            if s:show_me_not > 0
+            if s:show_me_not
                 let results = s:vimim_onekey_menu_format()
             elseif len(s:popupmenu_list) > 0
                 let results = s:vimim_onekey_menu_filter()
             endif
         endif
-        if s:show_me_not > 0
-            if s:hjkl_n % 2 > 0
+        if s:show_me_not
+            if s:hjkl_h % 2 > 0 && len(s:matched_list)
                 for line in s:matched_list
                     let oneline = join(reverse(split(line,'\zs')),'')
                     call add(results, oneline)
@@ -2356,7 +2351,7 @@ function! s:vimim_onekey_mapping()
         endfor
     else
         for _ in s:qwer
-            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hjkl_x("'._.'")'
+            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hjkl("'._.'")'
         endfor
     endif
     if empty(s:vimim_latex_suite)
@@ -2393,7 +2388,7 @@ function! <SID>vimim_qwer_hitrun(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! <SID>vimim_qwer_hjkl_x(key)
+function! <SID>vimim_qwer_hjkl(key)
     let key = a:key
     if pumvisible()
         let digit = match(s:qwer, key)
@@ -2470,7 +2465,7 @@ function! s:vimim_onekey_cjk(keyboard)
         let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
     endif
     let head = 0
-    if s:show_me_not > 0 || len(keyboard) == 1
+    if s:show_me_not || len(keyboard) == 1
         let head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
@@ -4569,23 +4564,19 @@ function! s:vimim_popupmenu_list(matched_list)
     let s:english_results = []
     let s:matched_list = lines
     let keyboard = join(s:keyboard_list,"")
-    let &pumheight = s:show_me_not ? 0 : &pumheight
     let menu = get(s:keyboard_list,0)
     let custom_label = 0
-    if len(lines) > 1 || menu =~ '^u\d\d\d\d\d$'
+    if empty(s:show_me_not) && len(lines)>1
         let custom_label = 1
-    endif
-    if s:hjkl_n % 2 > 0
-        if s:show_me_not > 0
+    else
+        let &pumheight = 0
+        if s:hjkl_n % 2 > 0
             call reverse(lines)
-            let label = len(lines)
-        elseif s:vimim_imode_pinyin > 0
-            let keyboard = join(split(join(s:keyboard_list,""),"'"),"")
         endif
     endif
     for chinese in lines
         let complete_items = {}
-        if first_in_list =~ '\s' && s:show_me_not < 1
+        if first_in_list =~ '\s' && empty(s:show_me_not)
             let pairs = split(chinese)
             if len(pairs) > 1
                 let chinese = get(pairs, 1)
@@ -4606,7 +4597,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let extra_text = s:vimim_cjk_extra_text(chinese)
         endif
         if empty(s:mycloud) ||  keyboard =~ "[']"
-            if !empty(keyboard) && s:show_me_not < 1
+            if !empty(keyboard) && empty(s:show_me_not)
                 let keyboard_head_length = len(menu)
                 if empty(s:ui.has_dot) && keyboard =~ "[']"
                     " for vimim classic: i'have'a'dream
@@ -4615,7 +4606,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 let tail = strpart(keyboard, keyboard_head_length)
                 let chinese .= tail
             endif
-        elseif s:horizontal_display < 1 && s:show_me_not < 1
+        elseif s:horizontal_display < 1 && empty(s:show_me_not)
             let extra_text = get(split(menu,"_"),0)
         endif
         if s:vimim_custom_label > 0
@@ -4627,7 +4618,7 @@ function! s:vimim_popupmenu_list(matched_list)
             if s:vimim_custom_label < 1
                 let labeling = s:vimim_get_labeling(label)
             endif
-            if s:hjkl_n % 2 > 0 && s:show_me_not > 0
+            if s:hjkl_n % 2 > 0 && s:show_me_not
                 let label -= 1
             else
                 let label += 1
@@ -4643,7 +4634,7 @@ function! s:vimim_popupmenu_list(matched_list)
         let s:popupmenu_list = popupmenu_list
     endif
     let height = s:horizontal_display
-    if s:show_me_not < 1 && len(popupmenu_list) > 1 && height > 0
+    if height && empty(s:show_me_not) && len(popupmenu_list)>1
         let one_list = popupmenu_list_one_row
         if len(one_list) > height
             let one_list = popupmenu_list_one_row[0 : height-1]
@@ -4676,8 +4667,7 @@ endfunction
 function! s:vimim_embedded_backend_engine(keyboard)
     let keyboard = a:keyboard
     if empty(s:ui.im) || empty(s:ui.root) || empty(keyboard)
-    \|| s:ui.im =~ 'cloud' || keyboard !~# s:valid_key
-    \|| s:show_me_not > 0
+    \|| s:ui.im=~'cloud' || keyboard!~#s:valid_key || s:show_me_not
         return []
     elseif s:ui.has_dot == 2 && keyboard !~ "[']"
         let keyboard = s:vimim_quanpin_transform(keyboard)
