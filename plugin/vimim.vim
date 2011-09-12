@@ -899,13 +899,16 @@ function! <SID>vimim_chinese_punctuation_map(key)
     if !pumvisible()
         return key
     endif
-    if a:key =~ "[=-]"
-        if a:key =~ "[=]"
+    if a:key =~ "[;=-]"
+        let yes = ''
+        if a:key == ";"
+            let yes = '\<Down>\<C-Y>'
+        elseif a:key == "="
             let s:pageup_pagedown = 1
-        elseif a:key =~ "[-]"
+        elseif a:key == "-"
             let s:pageup_pagedown = -1
         endif
-        let key = '\<C-R>=g:vimim()\<CR>'
+        let key = yes . '\<C-R>=g:vimim()\<CR>'
     else
         let key = '\<C-Y>' . key
         if a:key =~ "[][]"
@@ -923,10 +926,10 @@ function! <SID>vimim_onekey_punctuation(key)
     endif
     if hjkl == ';'
         let hjkl = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
-    elseif hjkl =~ "[<>]"
-        let hjkl = '\<C-Y>'.s:punctuations[nr2char(char2nr(hjkl)-16)]
     elseif hjkl =~ "[][]"
         let hjkl = s:vimim_square_bracket(hjkl)
+    elseif hjkl =~ "[<>]"
+        let hjkl = '\<C-Y>'.s:punctuations[nr2char(char2nr(hjkl)-16)]
     elseif hjkl =~ "[/?]"
         let hjkl = s:vimim_menu_search(hjkl)
     elseif hjkl =~ "[=.]"
