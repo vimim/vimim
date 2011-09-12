@@ -255,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hhjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -347,7 +347,6 @@ function! s:vimim_egg_vimim()
     let option = s:vimim_chinese('env') . s:colon . v:lc_time
     call add(eggs, option)
     let database = s:vimim_chinese('database') . s:colon
-    let input = s:vimim_chinese('input')
     if len(s:ui.frontends) > 0
         let vimim_toggle_list = "english"
         for frontend in s:ui.frontends
@@ -388,30 +387,25 @@ function! s:vimim_egg_vimim()
     endif
     call add(eggs, style . toggle)
     if len(im) > 0
-        call add(eggs, input . s:colon . im)
+        let input = s:vimim_chinese('input') . s:colon . im . s:space
+        if s:vimim_cloud > -1 && empty(s:onekey_cloud)
+            let input .= s:vimim_chinese(s:cloud_default)
+            let input .= s:vimim_chinese('cloud')
+        elseif len(s:vimim_mycloud) > 1
+            let input .= s:vimim_chinese('mycloud')
+        endif
+        call add(eggs, input)
     endif
-    let network  = s:vimim_chinese('network') . s:colon
-    if s:vimim_cloud > -1
-        let option  = network . s:vimim_chinese(s:cloud_default)
-        let option .= s:vimim_chinese('cloud') . input . s:space
-        let option .= ":let g:vimim_cloud='" . s:vimim_cloud."'"
+    if !empty(s:vimim_check_http_executable())
+        let network  = s:vimim_chinese('network') . s:colon
+        let title = s:http_executable=~'Python' ? '' : "HTTP executable: "
+        let option = network . title . s:http_executable
         call add(eggs, option)
     endif
     if len(s:ui.frontends) > 1
         let option  = s:vimim_chinese('toggle') . s:colon
         let option .= ":let g:vimim_toggle_list='"
         let option .= vimim_toggle_list . "'"
-        call add(eggs, option)
-    endif
-    if len(s:vimim_mycloud) > 1
-        let option  = network . s:vimim_chinese('mycloud') . s:space
-        let option .= ":let g:vimim_mycloud='".s:vimim_mycloud."'"
-        call add(eggs, option)
-    endif
-    if !empty(s:vimim_check_http_executable())
-        let tool = s:vimim_chinese('tool') . s:colon
-        let title = s:http_executable=~'Python' ? '' : "HTTP executable: "
-        let option = tool . title . s:http_executable
         call add(eggs, option)
     endif
     let option = s:vimim_chinese('setup') . s:colon . "vimimrc "
@@ -1160,7 +1154,6 @@ function! s:vimim_dictionary_status()
     let s:status.cloud      = "云 雲"
     let s:status.toggle     = "切换 切換"
     let s:status.network    = "联网 聯網"
-    let s:status.tool       = "工具"
     let s:status.sogou      = "搜狗"
     let s:status.google     = "谷歌"
     let s:status.baidu      = "百度"
@@ -1824,7 +1817,7 @@ function! g:vimim_onekey()
     let one_before = getline(".")[col(".")-2]
     if pumvisible() && len(s:popupmenu_list) > 0
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-    elseif s:onekey > 0
+    elseif s:onekey
         let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
     elseif s:vimim_onekey_is_tab && one_before=~'\s' || empty(one_before)
@@ -2391,7 +2384,7 @@ function! <SID>vimim_qwer_hitrun(key)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let key = down . yes
         let s:has_pumvisible = 1
-        if s:onekey > 0
+        if s:onekey
             call g:vimim_stop()
         endif
     endif
@@ -4463,7 +4456,7 @@ else
         let s:english_results = s:vimim_english(keyboard)
     endif
     " [onekey] play with nothing but OneKey
-    if s:chinese_input_mode =~ 'onekey'
+    if s:onekey
         let results = s:vimim_get_hjkl(keyboard)
         if !empty(results)
             " [game] turn menu 90 degree on hjkl_m
@@ -4503,7 +4496,7 @@ else
     endif
     " [cloud] to make dream come true for multiple clouds
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-    if s:onekey_cloud > 0
+    if s:onekey_cloud
         let cloud = get(split(vimim_cloud,'[.]'),0)
         if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
             let cloud = get(s:frontends,1)
@@ -4545,7 +4538,7 @@ else
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
-    elseif s:chinese_input_mode =~ 'onekey'
+    elseif s:onekey
         sil!call s:vimim_super_reset()
     endif
 return []
@@ -4639,10 +4632,10 @@ function! s:vimim_popupmenu_list(matched_list)
         let complete_items["word"] = empty(chinese) ? s:space : chinese
         call add(popupmenu_list, complete_items)
     endfor
-    if s:chinese_input_mode =~ 'onekey'
+    if s:onekey
         let s:popupmenu_list = popupmenu_list
     endif
-    if empty(s:hjkl_n) && len(s:keyboard_list) > 1
+    if s:onekey && empty(s:hjkl_n) && len(s:keyboard_list) > 1
         let s:hjkl_n = len(get(s:keyboard_list,1))
     endif
     let height = s:horizontal_display
