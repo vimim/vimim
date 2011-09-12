@@ -1814,14 +1814,15 @@ function! g:vimim_onekey()
     " (3)<OneKey> in omni window => stop  OneKey and print out menu
     let onekey = ''
     let s:chinese_input_mode = 'onekey'
-    let before = getline(".")[col(".")-2]
+    let space_before = getline(".")[col(".")-2]
+    let space_before = space_before=~'\s' || empty(space_before) ? 1 : 0
     sil!call s:vimim_backend_initialization()
     if pumvisible() && len(s:popupmenu_list) > 0
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif s:onekey
         let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
-    elseif s:vimim_onekey_is_tab && (before=~'\s' || empty(before))
+    elseif s:vimim_onekey_is_tab && space_before
         let onekey = '\t'
     else
         sil!call s:vimim_frontend_initialization()
