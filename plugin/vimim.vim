@@ -1467,7 +1467,7 @@ function! s:vimim_get_labeling(label)
             endif
             let labeling = labeling . label2
         endif
-        if s:hjkl_h%2 > 0 && &pumheight < 1
+        if s:hjkl_h%2  && empty(&pumheight)
             let fmt = '%02s '
         endif
         if labeling == '0'
@@ -3832,14 +3832,14 @@ endfunction
 
 function! s:vimim_get_cloud_google(keyboard)
     " http://google.com/transliterate?tl_app=3&tlqt=1&num=20&text=mxj
+    " http://translate.google.com/?sl=en&tl=zh-CN#en|zh-CN|fuck'
     let input  = 'http://www.google.com/transliterate/chinese'
     let input .= '?langpair=en|zh'
     let input .= '&num=20'
     let input .= '&tl_app=3'
     let input .= '&tlqt=1'
     let input .= '&text=' . a:keyboard
-    let output = s:vimim_get_from_http(input, 'google')
-    let output = join(split(output))
+    let output = join(split(s:vimim_get_from_http(input,'google')))
     let matched_list = []
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
@@ -4266,7 +4266,7 @@ function! s:vimim_setting_on()
     set nolazyredraw
     set noshowmatch
     set noruler
-    if &pumheight < 1 || &pumheight > 10
+    if empty(&pumheight) || &pumheight > 9
         let &pumheight = len(s:abcd)
         let s:pumheight = &pumheight
     endif
