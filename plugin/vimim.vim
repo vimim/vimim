@@ -426,6 +426,22 @@ function! s:vimim_egg_vimim()
     return map(eggs, 'v:val . " "')
 endfunction
 
+function! s:vimim_get_keyboard_without_quote(keyboard)
+    let keyboard = a:keyboard
+    if !empty(s:ui.has_dot)
+        return keyboard
+    endif
+    let magic_tail = keyboard[-1:-1]
+    if magic_tail =~ "'" && keyboard !~ '\d'
+        " [cloud] magic trailing apostrophe to control cloud
+        let keyboard = s:vimim_magic_apostrophe_tail(keyboard)
+    elseif keyboard =~ "'"
+        " [local] wo'you'yi'ge'meng
+        let keyboard = s:vimim_quote_by_quote(keyboard)
+    endif
+    return keyboard
+endfunction
+
 function! s:vimim_get_hjkl(keyboard)
     let keyboard = a:keyboard
     let poem = s:vimim_check_filereadable(keyboard)
@@ -455,7 +471,7 @@ function! s:vimim_get_hjkl(keyboard)
     endif
     " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
     if keyboard =~# 'u\d\d\d\d\d'
-        let s:hjkl_n += 1
+        let s:hjkl_n = 1
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
     endif
@@ -2215,15 +2231,15 @@ function! s:vimim_cache()
             endif
         endif
         if s:show_me_not
-            if s:hjkl_h % 2 > 0 && len(s:matched_list)
+            if s:hjkl_h%2 && len(s:matched_list)
                 for line in s:matched_list
                     let oneline = join(reverse(split(line,'\zs')),'')
                     call add(results, oneline)
                 endfor
             endif
-        elseif s:hjkl_h > 0 && len(s:matched_list) > &pumheight
+        elseif s:hjkl_h && len(s:matched_list)>&pumheight
             let &pumheight = s:hjkl_h%2<1 ? s:pumheight : 0
-        elseif s:hjkl_n > 0
+        elseif s:hjkl_n
             let first = split(get(s:matched_list,0))
             let cjk = len(first)>1 ? get(first,1) : get(first,0)
             if len(cjk) == s:multibyte
@@ -2231,9 +2247,7 @@ function! s:vimim_cache()
             endif
         endif
     endif
-    if s:pageup_pagedown != 0
-    \&& len(s:matched_list) > &pumheight
-    \&& s:vimim_custom_label > -1
+    if !empty(s:pageup_pagedown) && s:vimim_custom_label > -1
         return s:vimim_pageup_pagedown()
     endif
     return results
@@ -2410,6 +2424,7 @@ function! <SID>vimim_onekey_caps(key)
     let key = a:key
     if pumvisible()
         let key = tolower(key) . '\<C-R>=g:vimim()\<CR>'
+        let s:hjkl_n = 0
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2793,7 +2808,10 @@ endfunction
 
 function! s:vimim_hjkl_m_hjkl_n(keyboard)
     let keyboard = a:keyboard
-    if s:hjkl_m > 0 && s:hjkl_m % 2 > 0
+    if empty(s:hjkl_m) && empty(s:hjkl_n)
+        return keyboard
+    endif
+    if s:hjkl_m % 2 > 0
         " toggle cjjp: sssss <=> s's's's's
         let keyboard = substitute(keyboard,"'","",'g')
         let keyboard = join(split(keyboard,'\zs'),"'")
@@ -4333,10 +4351,10 @@ function! s:vimim_reset_before_omni()
 endfunction
 
 function! g:vimim_reset_after_insert()
-    let s:hjkl_x = 0
+    let s:hjkl_h = 0
     let s:hjkl_m = 0
     let s:hjkl_n = 0
-    let s:hjkl_h = 0
+    let s:hjkl_x = 0
     let s:hjkl_l = ""
     let s:matched_list = []
     let s:pageup_pagedown = 0
@@ -4456,24 +4474,17 @@ else
             " [game] turn menu 90 degree on hjkl_m
             return s:vimim_popupmenu_list(results)
         endif
-        if empty(s:ui.has_dot)
-            let magic_tail = keyboard[-1:-1]
-            if magic_tail =~ "'" && keyboard !~ '\d'
-                " [cloud] magic trailing apostrophe to control cloud
-                let keyboard = s:vimim_magic_apostrophe_tail(keyboard)
-            elseif keyboard =~ "'"
-                " [local] wo'you'yi'ge'meng
-                let keyboard = s:vimim_quote_by_quote(keyboard)
-            endif
+        let keyboard2 = s:vimim_get_keyboard_without_quote(keyboard)
+        if keyboard != keyboard2
+            let keyboard = keyboard2
+        else
+            let keyboard = s:vimim_onekey_cjk(keyboard)
+             " [cjk] The cjk database works like swiss-army knife.
+             if empty(keyboard)
+                 let keyboard = s:vimim_hjkl_m_hjkl_n(a:keyboard)
+             endif
+             let results = s:vimim_cjk_match(keyboard)
         endif
-    endif
-    " [cjk] The cjk database works like swiss-army knife.
-    if s:chinese_input_mode =~ 'onekey'
-        let keyboard = s:vimim_onekey_cjk(keyboard)
-        if empty(keyboard)
-            let keyboard = s:vimim_hjkl_m_hjkl_n(a:keyboard)
-        endif
-        let results = s:vimim_cjk_match(keyboard)
         if empty(len(results))
             if empty(s:english_results) && keyboard =~ '^\l\d\d\d\d$'
                 let s:hjkl_m = 1      " aeiou => a3897 => aeiou
@@ -4706,7 +4717,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
             if empty(s:hjkl_n) && s:vimim_data_file =~ ".bsddb"
                 let cjk = get(split(get(results,0)),1)
                 if len(cjk) > s:multibyte
-                    let s:hjkl_n += len(tail)
+                    let s:hjkl_n = len(tail)
                 endif
             endif
         endif
