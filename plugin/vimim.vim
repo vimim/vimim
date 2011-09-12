@@ -103,8 +103,7 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     let s:cjk_cache = {}
-    let s:cjk_cache.i = ["我","　"]
-    let s:cjk_cache.v = ["　"]
+    let s:cjk_cache.i = ["我"]
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -1815,14 +1814,14 @@ function! g:vimim_onekey()
     " (3)<OneKey> in omni window => stop  OneKey and print out menu
     let onekey = ''
     let s:chinese_input_mode = 'onekey'
+    let before = getline(".")[col(".")-2]
     sil!call s:vimim_backend_initialization()
-    let one_before = getline(".")[col(".")-2]
     if pumvisible() && len(s:popupmenu_list) > 0
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif s:onekey
         let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
-    elseif s:vimim_onekey_is_tab && one_before=~'\s' || empty(one_before)
+    elseif s:vimim_onekey_is_tab && (before=~'\s' || empty(before))
         let onekey = '\t'
     else
         sil!call s:vimim_frontend_initialization()
@@ -1850,8 +1849,8 @@ function! s:vimim_onekey_action(space)
             endfor
             " transfer English punctuation to Chinese punctuation
             let bs = punctuations[one_before]
-                if one_before == "'" |let bs = <SID>vimim_get_quote(1)
-            elseif one_before == '"' |let bs = <SID>vimim_get_quote(2)
+                if one_before == "'" | let bs = <SID>vimim_get_quote(1)
+            elseif one_before == '"' | let bs = <SID>vimim_get_quote(2)
             endif
             let onekey = "\<BS>" . bs
             sil!exe 'sil!return "' . onekey . '"'
@@ -2794,23 +2793,17 @@ endfunction
 
 function! s:vimim_hjkl_m_n(keyboard)
     let keyboard = a:keyboard
-    if empty(s:hjkl_m) && empty(s:hjkl_n)
-        return keyboard
-    elseif s:hjkl_m
-        if s:hjkl_m % 2
+    if s:hjkl_m
+        if s:hjkl_m % 2  " toggle cjjp: sssss <=> s's's's's
             " toggle cjjp: sssss <=> s's's's's
             let keyboard = substitute(keyboard,"'","",'g')
             let keyboard = join(split(keyboard,'\zs'),"'")
-            let s:onekey_cloud = 0
-        elseif s:ui.root == 'cloud'
-            let s:onekey_cloud = 1
         endif
-    elseif s:hjkl_n
+    elseif s:hjkl_n      " redefine match: jsjsxx => ['jsjsx', 'jsjs']
         let items = get(s:popupmenu_list,0)             " jsjs'xx
         let words = get(items, "word")                  " jsjsxx
         let tail = len(substitute(words,'\L','','g'))       " xx
         let head = keyboard[: -tail-1]   " 'jsjsxx'[:-3]='jsjs'
-        " redefine match: jsjsxx => ['jsjsx', 'jsjs', 'jsj', 'js']
         let candidates = s:vimim_more_pinyin_candidates(head)
         let head = get(candidates, 0)             " jsj
         if empty(head)
@@ -2818,6 +2811,8 @@ function! s:vimim_hjkl_m_n(keyboard)
         endif
         let tail = strpart(keyboard, len(head))   " sxx
         let keyboard = head . "'" . tail          " jsj'sxx
+    else
+        return keyboard
     endif
     return s:vimim_quote_by_quote(keyboard)
 endfunction
@@ -4537,6 +4532,9 @@ else
     if empty(results) && keyboard !~# '\L'
         let results = s:vimim_get_cloud(keyboard, s:cloud_default)
     endif
+    if empty(results) && keyboard =~ '\l' && len(keyboard)==1
+        let results = ["　"]
+    endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
     elseif s:onekey
@@ -4586,7 +4584,7 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:hjkl_n && s:hjkl_n%2 && len(chinese)==s:multibyte
             let extra_text = s:vimim_cjk_extra_text(chinese)
         endif
-        if empty(s:show_me_not) && len(lines)>1
+        if empty(s:show_me_not)
             if first_in_list =~ '\s'
                 let pairs = split(chinese)
                 if len(pairs) > 1
@@ -4618,7 +4616,9 @@ function! s:vimim_popupmenu_list(matched_list)
                 let labeling = s:vimim_get_labeling(label)
             endif
             let labeling = printf('%2s ', labeling)
-            let complete_items["abbr"] = labeling . chinese
+            if s:onekey && len(lines) > 1
+                let complete_items["abbr"] = labeling . chinese
+            endif
             let label += 1
         endif
         let complete_items["dup"] = 1
