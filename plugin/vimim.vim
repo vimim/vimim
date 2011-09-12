@@ -2224,6 +2224,7 @@ function! s:vimim_cache()
     let results = []
     if s:chinese_input_mode=~'onekey'
         if len(s:hjkl_l) > 0
+            let s:hjkl_n = 0
             if s:show_me_not
                 let results = s:vimim_onekey_menu_format()
             elseif len(s:popupmenu_list) > 0
@@ -2239,12 +2240,6 @@ function! s:vimim_cache()
             endif
         elseif s:hjkl_h && len(s:matched_list)>&pumheight
             let &pumheight = s:hjkl_h%2<1 ? s:pumheight : 0
-        elseif s:hjkl_n
-            let first = split(get(s:matched_list,0))
-            let cjk = len(first)>1 ? get(first,1) : get(first,0)
-            if len(cjk) == s:multibyte
-                let results = s:matched_list
-            endif
         endif
     endif
     if !empty(s:pageup_pagedown) && s:vimim_custom_label > -1
@@ -2423,8 +2418,8 @@ endfunction
 function! <SID>vimim_onekey_caps(key)
     let key = a:key
     if pumvisible()
-        let key = tolower(key) . '\<C-R>=g:vimim()\<CR>'
         let s:hjkl_n = 0
+        let key = tolower(key) . '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -4340,7 +4335,7 @@ function! s:vimim_reset_before_anything()
     let s:onekey = 0
     let s:has_pumvisible = 0
     let s:popupmenu_list = []
-    let s:keyboard_list  = []
+    let s:keyboard_list = []
 endfunction
 
 function! s:vimim_reset_before_omni()
@@ -4647,6 +4642,9 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:chinese_input_mode =~ 'onekey'
         let s:popupmenu_list = popupmenu_list
     endif
+    if empty(s:hjkl_n) && len(s:keyboard_list) > 1
+        let s:hjkl_n = len(get(s:keyboard_list,1))
+    endif
     let height = s:horizontal_display
     if height && empty(s:show_me_not) && len(popupmenu_list)>1
         let one_list = popupmenu_list_one_row
@@ -4714,12 +4712,6 @@ function! s:vimim_embedded_backend_engine(keyboard)
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
             let s:keyboard_list = [keyboard2, tail]
-            if empty(s:hjkl_n) && s:vimim_data_file =~ ".bsddb"
-                let cjk = get(split(get(results,0)),1)
-                if len(cjk) > s:multibyte
-                    let s:hjkl_n = len(tail)
-                endif
-            endif
         endif
     endif
     return results
