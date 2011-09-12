@@ -255,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = simplify(s:path . '../../../hjkl/')
+    let hhhjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -915,7 +915,7 @@ function! <SID>vimim_onekey_punctuation(key)
     if !pumvisible()
         return hjkl
     endif
-    if hjkl == ";"
+    if hjkl == ';'
         let hjkl = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
     elseif hjkl =~ "[<>]"
         let hjkl = '\<C-Y>'.s:punctuations[nr2char(char2nr(hjkl)-16)]
@@ -935,7 +935,7 @@ function! <SID>vimim_onekey_punctuation(key)
         else
             let hjkl = '\<PageUp>'
         endif
-    elseif hjkl == "'"
+    elseif hjkl == "'"   " cycle bb/gg/ss/00 clouds
         let s:onekey_cloud += 1
         if s:onekey_cloud > 1
             let clouds = split(s:vimim_cloud,',')
@@ -943,6 +943,7 @@ function! <SID>vimim_onekey_punctuation(key)
         endif
     endif
     if hjkl == a:key
+        let s:hjkl_n = 0
         let hjkl = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -1329,9 +1330,9 @@ function! <SID>vimim_abcdvfgsz_1234567890_label(key)
     let key = a:key
     if pumvisible()
         let n = match(s:abcd, key)
-            if key =~ '\d' | let n = key<1 ? 9 : key-1
-        elseif key == ';'  | let n = 1
-        elseif key == "'"  | let n = 2 | endif
+        if key =~ '\d'
+            let n = key<1 ? 9 : key-1
+        endif
         let down = repeat("\<Down>", n)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let key = down . yes
