@@ -1466,9 +1466,8 @@ function! <SID>vimim_enter()
 endfunction
 
 function! s:vimim_get_labeling(label)
-    let fmt = '%2s '
     let labeling = a:label==10 ? "0" : a:label
-    if s:chinese_input_mode =~ 'onekey'
+    if s:onekey
         if a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
             if s:onekey_cloud > 0
@@ -1486,15 +1485,9 @@ function! s:vimim_get_labeling(label)
             endif
             let labeling = labeling . label2
         endif
-        if s:hjkl_h%2  && empty(&pumheight)
-            let fmt = '%02s '
-        endif
         if labeling == '0'
             let labeling = '10'
         endif
-    endif
-    if !empty(labeling)
-        let labeling = printf(fmt, labeling)
     endif
     return labeling
 endfunction
@@ -4571,31 +4564,18 @@ function! s:vimim_popupmenu_list(matched_list)
             call extend(lines, s:english_results, 0)
         endif
     endif
-    let s:english_results = []
-    let s:matched_list = lines
-    let keyboard = join(s:keyboard_list,"")
-    let menu = get(s:keyboard_list,0)
-    let custom_label = 0
-    if empty(s:show_me_not) && len(lines)>1 && s:vimim_custom_label>-1
-        let custom_label = 1
-    else
+    if s:show_me_not
         let &pumheight = 0
         if s:hjkl_n % 2 > 0
             call reverse(lines)
         endif
     endif
+    let s:english_results = []
+    let s:matched_list = lines
+    let keyboard = join(s:keyboard_list,"")
+    let menu = get(s:keyboard_list,0)
     for chinese in lines
         let complete_items = {}
-        if first_in_list =~ '\s' && empty(s:show_me_not)
-            let pairs = split(chinese)
-            if len(pairs) > 1
-                let chinese = get(pairs, 1)
-                let menu = get(pairs, 0)
-            endif
-            if s:vimim_custom_menu > 0
-                let extra_text = menu
-            endif
-        endif
         if s:hjkl_x && s:hjkl_x%2 && !empty(s:cjk_filename)
             let simplified_traditional = ""
             for char in split(chinese, '\zs')
@@ -4606,34 +4586,40 @@ function! s:vimim_popupmenu_list(matched_list)
         if s:hjkl_n && s:hjkl_n%2 && len(chinese)==s:multibyte
             let extra_text = s:vimim_cjk_extra_text(chinese)
         endif
-        if empty(s:mycloud) ||  keyboard =~ "[']"
-            if !empty(keyboard) && empty(s:show_me_not)
-                let keyboard_head_length = len(menu)
-                if empty(s:ui.has_dot) && keyboard =~ "[']"
-                    " for vimim classic: i'have'a'dream
-                    let keyboard_head_length += 1
+        if empty(s:show_me_not) && len(lines)>1
+            if first_in_list =~ '\s'
+                let pairs = split(chinese)
+                if len(pairs) > 1
+                    let chinese = get(pairs, 1)
+                    let menu = get(pairs, 0)
                 endif
-                let tail = strpart(keyboard, keyboard_head_length)
-                let chinese .= tail
+                if s:vimim_custom_menu > 0
+                    let extra_text = menu
+                endif
             endif
-        elseif s:horizontal_display < 1 && empty(s:show_me_not)
-            let extra_text = get(split(menu,"_"),0)
-        endif
-        if s:vimim_custom_label
-            let abbr = label . "." . chinese
-            call add(popupmenu_list_one_row, abbr)
-        endif
-        if custom_label
-            let labeling = label . " "
-            if s:vimim_custom_label < 1
+            if empty(s:mycloud) ||  keyboard =~ "[']"
+                if !empty(keyboard)
+                    let keyboard_head_length = len(menu)
+                    if empty(s:ui.has_dot) && keyboard =~ "[']"
+                        " for vimim classic: i'have'a'dream
+                        let keyboard_head_length += 1
+                    endif
+                    let tail = strpart(keyboard, keyboard_head_length)
+                    let chinese .= tail
+                endif
+            elseif s:horizontal_display < 1
+                let extra_text = get(split(menu,"_"),0)
+            endif
+            let labeling = label
+            if s:vimim_custom_label
+                let abbr = label . "." . chinese
+                call add(popupmenu_list_one_row, abbr)
+            elseif empty(s:vimim_custom_label) && keyboard!~'u\d\d\d\d\d'
                 let labeling = s:vimim_get_labeling(label)
             endif
-            if s:hjkl_n % 2 > 0 && s:show_me_not
-                let label -= 1
-            else
-                let label += 1
-            endif
+            let labeling = printf('%2s ', labeling)
             let complete_items["abbr"] = labeling . chinese
+            let label += 1
         endif
         let complete_items["dup"] = 1
         let complete_items["menu"] = extra_text
