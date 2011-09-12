@@ -255,7 +255,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhhjkl = simplify(s:path . '../../../hjkl/')
+    let hjkl = simplify(s:path . '../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
@@ -943,7 +943,6 @@ function! <SID>vimim_onekey_punctuation(key)
         endif
     endif
     if hjkl == a:key
-        let s:hjkl_n = 0
         let hjkl = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -2218,7 +2217,6 @@ function! s:vimim_cache()
     let results = []
     if s:chinese_input_mode=~'onekey'
         if len(s:hjkl_l) > 0
-            let s:hjkl_n = 0
             if s:show_me_not
                 let results = s:vimim_onekey_menu_format()
             elseif len(s:popupmenu_list) > 0
@@ -2412,7 +2410,6 @@ endfunction
 function! <SID>vimim_onekey_caps(key)
     let key = a:key
     if pumvisible()
-        let s:hjkl_n = 0
         let key = tolower(key) . '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2435,10 +2432,8 @@ function! <SID>vimim_onekey_hjkl(key)
         let s:hjkl_x += 1
     elseif hjkl ==# 'm'    " toggle c'j'j'p
         let s:hjkl_m += 1
-        let s:hjkl_n = 0
     elseif hjkl ==# 'n'    " go to next match
         let s:hjkl_n += 1
-        let s:hjkl_m = 0
     endif
     if hjkl == a:key
         let hjkl = '\<C-R>=g:vimim()\<CR>'
@@ -2795,28 +2790,32 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
     return []
 endfunction
 
-function! s:vimim_hjkl_m_hjkl_n(keyboard)
+function! s:vimim_hjkl_m_n(keyboard)
     let keyboard = a:keyboard
     if empty(s:hjkl_m) && empty(s:hjkl_n)
         return keyboard
-    endif
-    if s:hjkl_m % 2 > 0
-        " toggle cjjp: sssss <=> s's's's's
-        let keyboard = substitute(keyboard,"'","",'g')
-        let keyboard = join(split(keyboard,'\zs'),"'")
-        let s:onekey_cloud = 0
-    elseif s:ui.root == 'cloud'
-        let s:onekey_cloud = 1
-    endif
-    if s:hjkl_n > 0
+    elseif s:hjkl_m
+        if s:hjkl_m % 2
+            " toggle cjjp: sssss <=> s's's's's
+            let keyboard = substitute(keyboard,"'","",'g')
+            let keyboard = join(split(keyboard,'\zs'),"'")
+            let s:onekey_cloud = 0
+        elseif s:ui.root == 'cloud'
+            let s:onekey_cloud = 1
+        endif
+    elseif s:hjkl_n
+        let items = get(s:popupmenu_list,0)             " jsjs'xx
+        let words = get(items, "word")                  " jsjsxx
+        let tail = len(substitute(words,'\L','','g'))       " xx
+        let head = keyboard[: -tail-1]   " 'jsjsxx'[:-3]='jsjs'
         " redefine match: jsjsxx => ['jsjsx', 'jsjs', 'jsj', 'js']
-        let candidates = s:vimim_more_pinyin_candidates(keyboard)
-        let head = get(candidates, s:hjkl_n-1)
+        let candidates = s:vimim_more_pinyin_candidates(head)
+        let head = get(candidates, 0)             " jsj
         if empty(head)
             let head = keyboard[0:0]
         endif
-        let tail = strpart(keyboard, len(head))
-        let keyboard = head . "'" . tail
+        let tail = strpart(keyboard, len(head))   " sxx
+        let keyboard = head . "'" . tail          " jsj'sxx
     endif
     return s:vimim_quote_by_quote(keyboard)
 endfunction
@@ -4470,14 +4469,14 @@ else
             let keyboard = s:vimim_onekey_cjk(keyboard)
              " [cjk] The cjk database works like swiss-army knife.
              if empty(keyboard)
-                 let keyboard = s:vimim_hjkl_m_hjkl_n(a:keyboard)
+                 let keyboard = s:vimim_hjkl_m_n(a:keyboard)
              endif
              let results = s:vimim_cjk_match(keyboard)
         endif
         if empty(len(results))
             if empty(s:english_results) && keyboard =~ '^\l\d\d\d\d$'
                 let s:hjkl_m = 1      " aeiou => a3897 => aeiou
-                let keyboard = s:vimim_hjkl_m_hjkl_n(a:keyboard)
+                let keyboard = s:vimim_hjkl_m_n(a:keyboard)
             endif
         else
             return s:vimim_popupmenu_list(results)
@@ -4526,8 +4525,7 @@ else
         let keyboard_head = s:vimim_onekey_cjk(keyboard)
         if empty(keyboard_head)
             let s:hjkl_m = 1
-            let s:hjkl_n = 0
-            let keyboard = s:vimim_hjkl_m_hjkl_n(keyboard)
+            let keyboard = s:vimim_hjkl_m_n(keyboard)
         endif
         if !empty(keyboard)
             let results = s:vimim_cjk_match(keyboard)
@@ -4635,9 +4633,6 @@ function! s:vimim_popupmenu_list(matched_list)
     endfor
     if s:onekey
         let s:popupmenu_list = popupmenu_list
-    endif
-    if s:onekey && empty(s:hjkl_n) && len(s:keyboard_list) > 1
-        let s:hjkl_n = len(get(s:keyboard_list,1))
     endif
     let height = s:horizontal_display
     if height && empty(s:show_me_not) && len(popupmenu_list)>1
