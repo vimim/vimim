@@ -455,6 +455,7 @@ function! s:vimim_get_hjkl(keyboard)
     endif
     " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
     if keyboard =~# 'u\d\d\d\d\d'
+        let s:hjkl_n += 1
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
     endif
