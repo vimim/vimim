@@ -377,25 +377,31 @@ function! s:vimim_egg_vimim()
         endif
         call add(eggs, ciku . s:cjk_filename)
     endif
-    let toggle = "toggle_with_Ctrl-Bslash"
+    let input = s:vimim_chinese('input') . s:colon
     let im = s:vimim_statusline()
-    if s:vimim_ctrl_space_to_toggle == 1
-        let toggle = "toggle_with_Ctrl-Space"
-    elseif s:vimim_onekey_is_tab > 1
-        let toggle = "toggle_with_Tab_for_midas_touch"
-        let im = s:vimim_chinese('onekey') . s:space . s:ui.statusline
-    endif
-    call add(eggs, style . toggle)
-    if len(im) > 0
-        let input = s:vimim_chinese('input') . s:colon . im . s:space
+    if empty(im)
+        let input .= s:vimim_chinese('onekey')
+    else
+        let toggle = "toggle_with_Ctrl-Bslash"
+        if s:vimim_onekey_is_tab > 1
+            let toggle = "toggle_with_Tab_for_midas_touch"
+            let input .= s:vimim_chinese('onekey') . s:space
+            let input .= s:ui.statusline . s:space
+        else
+            if s:vimim_ctrl_space_to_toggle == 1
+                let toggle = "toggle_with_Ctrl-Space"
+            endif
+            let input .=  im . s:space
+        endif
+        call add(eggs, style . toggle)
         if s:vimim_cloud > -1 && empty(s:onekey_cloud)
             let input .= s:vimim_chinese(s:cloud_default)
             let input .= s:vimim_chinese('cloud')
         elseif len(s:vimim_mycloud) > 1
             let input .= s:vimim_chinese('mycloud')
         endif
-        call add(eggs, input)
     endif
+    call add(eggs, input)
     if !empty(s:vimim_check_http_executable())
         let network  = s:vimim_chinese('network') . s:colon
         let title = s:http_executable=~'Python' ? '' : "HTTP executable: "
@@ -1290,7 +1296,7 @@ function! s:vimim_statusline()
 endfunction
 
 function! s:vimim_get_chinese_im()
-    if s:chinese_input_mode !~ 'onekey'
+    if empty(s:onekey)
         let punctuation = s:vimim_chinese('half_width')
         if s:chinese_punctuation > 0
             let punctuation = s:vimim_chinese('full_width')
