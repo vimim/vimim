@@ -4614,16 +4614,17 @@ function! s:vimim_popupmenu_list(matched_list)
                 let extra_text = get(split(menu,"_"),0)
             endif
             let labeling = label
-            if s:vimim_custom_label
+            if s:vimim_custom_label > 0
                 let abbr = label . "." . chinese
                 call add(popupmenu_list_one_row, abbr)
-            elseif empty(s:vimim_custom_label) && keyboard!~'u\d\d\d\d\d'
+            elseif empty(s:vimim_custom_label)
                 let labeling = s:vimim_get_labeling(label)
             endif
             let labeling = printf('%2s ', labeling)
-            if s:onekey && len(lines) > 1
-                let complete_items["abbr"] = labeling . chinese
+            if s:onekey && len(lines) < 2
+                let labeling = ""
             endif
+            let complete_items["abbr"] = labeling . chinese
             let label += 1
         else
             let &pumheight = 0
