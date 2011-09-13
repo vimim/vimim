@@ -4463,17 +4463,21 @@ else
     endif
     " [onekey] play with nothing but OneKey
     if s:onekey
+        " [game] turn menu 90 degree on hjkl_m
         let results = s:vimim_get_hjkl(keyboard)
         if !empty(results)
-            " [game] turn menu 90 degree on hjkl_m
             return s:vimim_popupmenu_list(results)
         endif
+        " [quote] quote_by_quote: wo'you'yi'ge'meng
         let keyboard2 = s:vimim_get_keyboard_without_quote(keyboard)
         if keyboard != keyboard2
             let keyboard = keyboard2
+            if has_key(s:cjk_cache,keyboard)      " s's's's's'
+                let results = s:cjk_cache[keyboard]
+            endif
         else
-            let keyboard = s:vimim_onekey_cjk(keyboard)
             " [cjk] The cjk database works like swiss-army knife.
+            let keyboard = s:vimim_onekey_cjk(keyboard)
             if empty(keyboard)
                 let keyboard = s:vimim_hjkl_m(a:keyboard,0)
             endif
