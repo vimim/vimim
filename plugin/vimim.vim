@@ -257,7 +257,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
@@ -3288,7 +3288,15 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 
 function! s:vimim_scan_backend_embedded()
     let im = "pinyin"
-    " (1/3) scan bsddb database as edw: enterprise data warehouse
+    " (1/3) scan directory database
+    let dir = s:plugin . im
+    if isdirectory(dir)
+        let dir .= "/"
+        if filereadable(dir . im)
+            return s:vimim_set_directory(im, dir)
+        endif
+    endif
+    " (2/3) scan bsddb database as edw: enterprise data warehouse
     if has("python")  " bsddb is from Python 2 only
         let bsddb = "vimim.gbk.bsddb"       " wc=46,694,400
         let datafile = s:vimim_check_filereadable(bsddb)
@@ -3299,14 +3307,6 @@ function! s:vimim_scan_backend_embedded()
         if !empty(datafile)
             call s:vimim_initialize_bsddb(datafile)
             return s:vimim_set_datafile(im, datafile)
-        endif
-    endif
-    " (2/3) scan directory database
-    let dir = s:plugin . im
-    if isdirectory(dir)
-        let dir .= "/"
-        if filereadable(dir . im)
-            return s:vimim_set_directory(im, dir)
         endif
     endif
     " (3/3) scan all supported data files
