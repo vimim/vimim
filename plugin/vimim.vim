@@ -193,8 +193,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_h_to_toggle")
     call add(G, "g:vimim_data_file")
-    call add(G, "g:vimim_data_directory")
-    call add(G, "g:vimim_hjkl_directory")
+    call add(G, "g:vimim_plugin_directory")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
@@ -259,7 +258,7 @@ function! s:vimim_initialize_local()
         let g:vimim_imode_pinyin = 2
         let g:vimim_onekey_is_tab = 2
         let g:vimim_cloud = 'google,sogou,baidu,qq'
-        let g:vimim_hjkl_directory = hjkl
+        let g:vimim_plugin_directory = hjkl
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -2211,7 +2210,6 @@ function! s:vimim_get_unicode_ddddd(keyboard)
 endfunction
 
 function! s:vimim_cjk_extra_text(chinese)
-let g:g1=a:chinese
     let ddddd = char2nr(a:chinese)
     let unicode = ddddd . s:space . printf('u%04x',ddddd)
     if !empty(s:cjk_filename)
@@ -2758,7 +2756,7 @@ function! s:vimim_scan_english_datafile()
 endfunction
 
 function! s:vimim_check_filereadable(default)
-    for dir in [s:vimim_hjkl_directory, s:path]
+    for dir in [s:vimim_plugin_directory, s:path]
         if empty(dir)
             continue
         elseif dir[-1:] != "/"
@@ -3308,12 +3306,10 @@ function! s:vimim_scan_backend_embedded()
     " (2/3) scan directory database
     let dir = s:path . im
     if !isdirectory(dir)
-        let dir = s:vimim_data_directory
+        let dir = s:vimim_plugin_directory . im
     endif
     if !empty(dir) && isdirectory(dir)
-        if dir[-1:] != "/"
-            let dir .= "/"
-        endif
+        let dir .= "/"
         if filereadable(dir . im)
             return s:vimim_set_directory(im, dir)
         endif
@@ -3481,7 +3477,6 @@ function! s:vimim_set_directory(im, dir)
     if empty(im) || empty(a:dir) || !isdirectory(a:dir)
         return
     endif
-    let s:vimim_data_directory = copy(a:dir)
     let s:ui.root = "directory"
     let s:ui.im = im
     let frontends = [s:ui.root, s:ui.im]
@@ -3520,22 +3515,25 @@ function! s:vimim_more_pinyin_directory(keyboard, dir)
 endfunction
 
 function! s:vimim_sentence_directory(keyboard)
-    let keyboard = a:keyboard
-    let filename = s:vimim_data_directory . keyboard
+    let directory = s:backend.directory[s:ui.im].name
+    if empty(directory)
+        return ""
+    endif
+    let filename = directory . a:keyboard
     if filereadable(filename)
-        return keyboard
+        return a:keyboard
     elseif !empty(s:english_results)
         return ""
     endif
-    let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
+    let candidates = s:vimim_more_pinyin_datafile(a:keyboard,1)
     if !empty(candidates)
         return get(candidates,0)
     endif
-    let max = len(keyboard)
+    let max = len(a:keyboard)
     while max > 1
         let max -= 1
-        let head = strpart(keyboard, 0, max)
-        let filename = s:vimim_data_directory . head
+        let head = strpart(a:keyboard, 0, max)
+        let filename = directory . head
         " workaround: filereadable("/filename.") returns true
         if filereadable(filename)
             if head[-1:-1] != "."
@@ -3546,7 +3544,7 @@ function! s:vimim_sentence_directory(keyboard)
         endif
     endwhile
     if filereadable(filename)
-        return keyboard[0 : max-1]
+        return a:keyboard[0 : max-1]
     endif
     return ""
 endfunction
@@ -3711,7 +3709,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     catch
         call s:debug('alert', 'get_cloud='.cloud.'=', v:exception)
     endtry
-    if len(results) > 1 && empty(s:english_results)
+    if len(results) > 1 && empty(s:english_results)  " todo
         let s:cloud_cache[cloud][keyboard] = results
     endif
     return results
@@ -4526,7 +4524,7 @@ else
     let results = s:vimim_embedded_backend_engine(keyboard)
     if !empty(results) && get(results,0) !~ 'None\|0'
         return s:vimim_popupmenu_list(results)
-    elseif !empty(s:english_results)
+    elseif !empty(s:english_results)          " todo
         return s:vimim_popupmenu_list([""])
     endif
     " [the last resort]
@@ -4588,7 +4586,7 @@ function! s:vimim_popupmenu_list(matched_list)
             if s:hjkl_h && s:hjkl_h%2 && len(chinese)==s:multibyte
                 let menu = s:vimim_cjk_extra_text(chinese)
             endif
-            if empty(s:mycloud) 
+            if empty(s:mycloud)
                 let tail = get(split(s:keyboard,","),1)
                 if !empty(tail)
                     let chinese .= tail
