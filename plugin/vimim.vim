@@ -470,7 +470,6 @@ function! s:vimim_get_hjkl(keyboard)
     endif
     " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
     if keyboard =~# 'u\d\d\d\d\d'
-        let s:hjkl_h = 1
         let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
         return split(chinese, '\zs')
     endif
@@ -4442,13 +4441,14 @@ if a:start
 else
     " [cache] less is more
     let results = s:vimim_cache()
-    if !empty(results)
+    if empty(results)
+        call s:vimim_reset_before_omni()
+    else
         return s:vimim_popupmenu_list(results)
     endif
     let results = []
     " [initialization] early start, half done
     let keyboard = a:keyboard
-    call s:vimim_reset_before_omni()
     " [validation] user keyboard input validation
     if empty(str2nr(keyboard))
         " keyboard input is alphabet only
