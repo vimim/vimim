@@ -434,7 +434,7 @@ function! s:vimim_get_keyboard_without_quote(keyboard)
     if magic_tail =~ "'" && keyboard !~ '\d'
         " [cloud] magic trailing apostrophe to control cloud
         let keyboard = s:vimim_magic_apostrophe_tail(keyboard)
-    elseif keyboard =~ "'"
+    elseif keyboard =~ "'" && empty(s:onekey_cloud)
         " [local] wo'you'yi'ge'meng
         let keyboard = s:vimim_quote_by_quote(keyboard)
     endif
@@ -2217,23 +2217,28 @@ let s:VimIM += [" ====  input hjkl       ==== {{{"]
 
 function! s:vimim_cache()
     let results = []
-    if s:chinese_input_mode=~'onekey'
+    if s:onekey
         if len(s:hjkl_l) > 0
             if s:show_me_not
                 let results = s:vimim_onekey_menu_format()
             elseif len(s:popupmenu_list) > 0
                 let results = s:vimim_onekey_menu_filter()
             endif
+            return results
         endif
-        if s:show_me_not
-            if s:hjkl_h%2 && len(s:matched_list)
+        if s:show_me_not && len(s:matched_list)
+            if s:hjkl_h
+                let s:hjkl_h -= 1
                 for line in s:matched_list
                     let oneline = join(reverse(split(line,'\zs')),'')
                     call add(results, oneline)
                 endfor
+            elseif s:hjkl_n
+                let s:hjkl_n -= 1
+                let results = reverse(copy(s:matched_list))
             endif
         elseif s:hjkl_h && len(s:matched_list)>&pumheight
-            let &pumheight = s:hjkl_h%2<1 ? s:pumheight : 0
+            let &pumheight = empty(s:hjkl_h) ? s:pumheight : 0
         endif
     endif
     if !empty(s:pageup_pagedown) && s:vimim_custom_label > -1
@@ -4563,12 +4568,6 @@ function! s:vimim_popupmenu_list(matched_list)
             call extend(lines, s:english_results, 0)
         endif
     endif
-    if s:show_me_not
-        let &pumheight = 0
-        if s:hjkl_n % 2 > 0
-            call reverse(lines)
-        endif
-    endif
     let s:english_results = []
     let s:matched_list = lines
     let keyboard = join(s:keyboard_list,"")
@@ -4621,6 +4620,8 @@ function! s:vimim_popupmenu_list(matched_list)
                 let complete_items["abbr"] = labeling . chinese
             endif
             let label += 1
+        else
+            let &pumheight = 0
         endif
         let complete_items["dup"] = 1
         let complete_items["menu"] = extra_text
