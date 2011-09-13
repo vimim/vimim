@@ -2800,11 +2800,11 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
     return []
 endfunction
 
-function! s:vimim_hjkl_m_h(keyboard)
+function! s:vimim_hjkl_m(keyboard, hjkl_m)
     let keyboard = a:keyboard
+    let s:hjkl_m = a:hjkl_m ? 1 : s:hjkl_m
     if s:hjkl_m
         if s:hjkl_m % 2  " toggle cjjp: sssss <=> s's's's's
-            " toggle cjjp: sssss <=> s's's's's
             let keyboard = substitute(keyboard,"'","",'g')
             let keyboard = join(split(keyboard,'\zs'),"'")
         endif
@@ -4473,16 +4473,15 @@ else
             let keyboard = keyboard2
         else
             let keyboard = s:vimim_onekey_cjk(keyboard)
-             " [cjk] The cjk database works like swiss-army knife.
-             if empty(keyboard)
-                 let keyboard = s:vimim_hjkl_m_h(a:keyboard)
-             endif
-             let results = s:vimim_cjk_match(keyboard)
+            " [cjk] The cjk database works like swiss-army knife.
+            if empty(keyboard)
+                let keyboard = s:vimim_hjkl_m(a:keyboard,0)
+            endif
+            let results = s:vimim_cjk_match(keyboard)
         endif
-        if empty(len(results))
+        if empty(len(results))  " aeiou => a3897 => aeiou
             if empty(s:english_results) && keyboard =~ '^\l\d\d\d\d$'
-                let s:hjkl_m = 1      " aeiou => a3897 => aeiou
-                let keyboard = s:vimim_hjkl_m_h(a:keyboard)
+                let keyboard = s:vimim_hjkl_m(a:keyboard,1)
             endif
         else
             return s:vimim_popupmenu_list(results)
@@ -4526,14 +4525,13 @@ else
     elseif !empty(s:english_results)
         return s:vimim_popupmenu_list([""])
     endif
-    " [The Last Resort] cjk letter by letter: s's's's's
-    if s:chinese_input_mode=~'onekey' && !empty(s:cjk_filename)
+    " [The Last Resort] cjk letter by letter: sssss
+    if s:onekey 
         let keyboard_head = s:vimim_onekey_cjk(keyboard)
         if empty(keyboard_head)
-            let s:hjkl_m = 1
-            let keyboard = s:vimim_hjkl_m_h(keyboard)
+            let keyboard = s:vimim_hjkl_m(keyboard,1)
         endif
-        if !empty(keyboard)
+        if !empty(keyboard) && !empty(s:cjk_filename)
             let results = s:vimim_cjk_match(keyboard)
         endif
     endif
