@@ -46,7 +46,7 @@ if exists("b:loaded_vimim") || &cp || v:version<700
 endif
 scriptencoding utf-8
 let b:loaded_vimim = 1
-let s:path = expand("<sfile>:p:h")."/"
+let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_frontend_initialization()
     sil!call s:vimim_set_shuangpin()
@@ -192,8 +192,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_h_to_toggle")
-    call add(G, "g:vimim_data_file")
-    call add(G, "g:vimim_plugin_directory")
+    call add(G, "g:vimim_plugin_folder")
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
@@ -221,6 +220,12 @@ function! s:vimim_initialize_global()
     let s:chinese_input_mode = 'onekey'
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
+    endif
+    if isdirectory(s:vimim_plugin_folder)
+        let s:plugin = s:vimim_plugin_folder
+    endif
+    if s:plugin[-1:] != "/"
+        let s:plugin .= "/"
     endif
 endfunction
 
@@ -252,13 +257,13 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:path . '../../../hjkl/')
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
+        let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
         let g:vimim_imode_pinyin = 2
         let g:vimim_onekey_is_tab = 2
-        let g:vimim_cloud = 'google,sogou,baidu,qq'
-        let g:vimim_plugin_directory = hjkl
+        let g:vimim_plugin_folder = hjkl
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -416,7 +421,7 @@ function! s:vimim_egg_vimim()
         call add(eggs, option . "all defaults")
     else
         call add(eggs, option)
-        for rc in s:vimimrc
+        for rc in sort(s:vimimrc)
             call add(eggs, s:space . s:space . s:colon . rc[2:])
         endfor
     endif
@@ -2756,17 +2761,10 @@ function! s:vimim_scan_english_datafile()
 endfunction
 
 function! s:vimim_check_filereadable(default)
-    for dir in [s:vimim_plugin_directory, s:path]
-        if empty(dir)
-            continue
-        elseif dir[-1:] != "/"
-            let dir .= "/"
-        endif
-        let datafile = dir . a:default
-        if filereadable(datafile)
-            return datafile
-        endif
-    endfor
+    let datafile = s:plugin . a:default
+    if filereadable(datafile)
+        return datafile
+    endif
     return 0
 endfunction
 
@@ -3304,27 +3302,19 @@ function! s:vimim_scan_backend_embedded()
         endif
     endif
     " (2/3) scan directory database
-    let dir = s:path . im
-    if !isdirectory(dir)
-        let dir = s:vimim_plugin_directory . im
-    endif
-    if !empty(dir) && isdirectory(dir)
+    let dir = s:plugin . im
+    if isdirectory(dir)
         let dir .= "/"
         if filereadable(dir . im)
             return s:vimim_set_directory(im, dir)
         endif
     endif
     " (3/3) scan all supported data files
-    let datafile = s:vimim_data_file
-    if !empty(datafile) && filereadable(datafile)
-        let im = get(split(datafile,'[.]'),1)
-        return s:vimim_set_datafile(im, datafile)
-    endif
     for im in s:all_vimim_input_methods
-        let datafile = s:path . "vimim." . im . ".txt"
+        let datafile = s:plugin . "vimim." . im . ".txt"
         if !filereadable(datafile)
             let im2 = im . "." . &encoding
-            let datafile = s:path . "vimim." . im2 . ".txt"
+            let datafile = s:plugin . "vimim." . im2 . ".txt"
         endif
         if filereadable(datafile)
             call s:vimim_set_datafile(im, datafile)
@@ -3338,7 +3328,6 @@ function! s:vimim_set_datafile(im, datafile)
     if empty(im) || isdirectory(datafile)
         return
     endif
-    let s:vimim_data_file = copy(datafile)
     let s:ui.root = "datafile"
     let s:ui.im = im
     let frontends = [s:ui.root, s:ui.im]
@@ -3674,7 +3663,7 @@ function! s:vimim_check_http_executable()
     " step 3 of 4: try to find wget
     if empty(http_executable)
         let wget = 'wget'
-        let wget_exe = s:path . 'wget.exe'
+        let wget_exe = s:plugin . 'wget.exe'
         if filereadable(wget_exe)
             let wget = wget_exe
         endif
@@ -4064,7 +4053,7 @@ function! s:vimim_get_libvimim()
     else
         return ""
     endif
-    let cloud = s:path . cloud
+    let cloud = s:plugin . cloud
     if filereadable(cloud)
         return cloud
     endif
@@ -4098,7 +4087,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
         return 0
     endif
     " on linux, we do plug-n-play
-    let cloud = s:path . "mycloud/mycloud"
+    let cloud = s:plugin . "mycloud/mycloud"
     if !executable(cloud)
         if !executable("python")
             return 0
@@ -4672,7 +4661,8 @@ function! s:vimim_embedded_backend_engine(keyboard)
             endif
         endif
     elseif s:ui.root =~# "datafile"
-        if s:vimim_data_file =~ "bsddb"
+        let datafile = s:backend[s:ui.root][s:ui.im].name
+        if datafile =~ "bsddb"
             let head = s:vimim_get_stone_from_bsddb(keyboard)
             let results = s:vimim_get_from_database(head)
         else
