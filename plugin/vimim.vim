@@ -198,7 +198,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_custom_menu")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_onekey_is_tab")
     call add(G, "g:vimim_more_candidates")
@@ -432,7 +431,8 @@ function! s:vimim_get_keyboard_but_quote_tail(keyboard)
     endif
     let one_tail = keyboard[-1:]
     let two_tail = keyboard[-2:]
-    if two_tail == "''"
+    let last_third = keyboard[-3:-3]
+    if two_tail == "''" && last_third!="'"
         let keyboard = s:vimim_two_tail_quote(keyboard)
     elseif one_tail == "'"
         " [cloud] magic trailing quote to control cloud
@@ -791,7 +791,7 @@ function! s:vimim_imode_number(keyboard)
                 let number = strpart(number,0,len(number)-s:multibyte)
             endif
             let numbers = map(copy(quantifier_list), 'number . v:val')
-        elseif keyboard =~# '^\d*$' && len(keyboards)<2 && ii != 'ii'
+        elseif keyboard =~# '^\d*$' && s:keyboard!~'\s' && ii != 'ii'
             let numbers = quantifier_list
         endif
     endif
@@ -1025,7 +1025,7 @@ function! s:vimim_wubi_auto_input_on_the_4th(keyboard)
             let start = 4*((len(keyboard)-1)/4)
             let keyboard = strpart(keyboard, start)
         endif
-        let s:keyboard_list = [keyboard]
+        let s:keyboard = keyboard
     endif
     return keyboard
 endfunction
@@ -1034,7 +1034,7 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
     let key = ""
     if pumvisible()
         let key = '\<C-E>'
-        if empty(len(get(s:keyboard_list,0))%4)
+        if empty(len(get(split(s:keyboard),0))%4)
             let key = '\<C-Y>'
         endif
     endif
@@ -1204,8 +1204,8 @@ endfunction
 
 function! s:vimim_set_keyboard_list(column_start, keyboard)
     let s:start_column_before = a:column_start
-    if len(s:keyboard_list) < 2
-        let s:keyboard_list = [a:keyboard]
+    if s:keyboard !~ '\s'
+        let s:keyboard = a:keyboard
     endif
 endfunction
 
@@ -1786,7 +1786,7 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 
 function! g:vimim_onekey_dump()
     let saved_position = getpos(".")
-    let keyboard = get(s:keyboard_list,0)
+    let keyboard = get(split(s:keyboard),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
     for items in s:popupmenu_list
         let line = printf('%s', items.word)
@@ -1923,21 +1923,6 @@ function! s:vimim_popup_word()
     return substitute(chinese,'\w','','g')
 endfunction
 
-" todo
-function! s:vimim_two_tail_quote(keyboard)
-    let keyboard = a:keyboard
-    let head = keyboard[:0]
-    let tail = keyboard[1:]
-    if tail =~ '\l'
-        let keyboard = head . "'" . tail
-        let keyboard = s:vimim_quote_by_quote(keyboard)
-    else
-        let keyboard = head
-        let s:keyboard_list = [head]
-    endif
-    return keyboard
-endfunction
-
 function! s:vimim_one_tail_quote(keyboard)
     " <apostrophe> double play in OneKey:
     "   (1) [insert] one trailing apostrophe => open cloud
@@ -1952,6 +1937,42 @@ function! s:vimim_one_tail_quote(keyboard)
         let s:onekey_cloud = 0
     endif
     return keyboard
+endfunction
+
+function! s:vimim_two_tail_quote(keyboard)
+    let head = a:keyboard[:0]
+    let tail = a:keyboard[1:]
+    let s:keyboard = head . " " . tail
+    if len(tail) < 3
+        let s:keyboard = head
+    endif
+    return head
+endfunction
+
+function! s:vimim_quote_by_quote(keyboard)
+    if !empty(s:ui.has_dot)
+        return a:keyboard
+    endif
+    let keyboards = split(a:keyboard,"'")
+    let head = get(keyboards,0)
+    let tail = join(keyboards[1:],"'")
+    let s:keyboard = head . " " . tail
+    return head
+endfunction
+
+function! s:vimim_get_head(keyboard, partition)
+    if a:partition < 0
+        return a:keyboard
+    endif
+    let head = a:keyboard[0 : a:partition-1]
+    if s:keyboard !~ '\s'
+        let s:keyboard = head
+        let tail = a:keyboard[a:partition : -1]
+        if !empty(tail)
+            let s:keyboard = head . " " . tail
+        endif
+    endif
+    return head
 endfunction
 
 " ============================================= }}}
@@ -2813,30 +2834,15 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
     return []
 endfunction
 
-function! s:vimim_hjkl_m_sssss(keyboard, hjkl_m)
+function! s:vimim_hjkl_partition(keyboard, hjkl_m)
     let keyboard = a:keyboard
+    let two_tail = keyboard[-2:]
+    let last_third = keyboard[-3:-3]
     let s:hjkl_m = a:hjkl_m ? 1 : s:hjkl_m
-    if s:hjkl_m
-        if s:hjkl_m % 2 
-            let keyboard .= "''"          " sssss''
-        else
-            let keyboard = keyboard[:-3]  " sssss
-        endif
-    endif
-    return keyboard
-endfunction
-
-function! s:vimim_hjkl_m(keyboard, hjkl_m)
-    let keyboard = a:keyboard
-    let s:hjkl_m = a:hjkl_m ? 1 : s:hjkl_m
-    if s:hjkl_m
-        if s:hjkl_m % 2  " toggle cjjp: sssss <=> s's's's's
-            let keyboard = substitute(keyboard,"'","",'g')
-            let keyboard = join(split(keyboard,'\zs'),"'")
-        endif
-    elseif s:hjkl_h      " redefine match: jsjsxx => ['jsjsx', 'jsjs']
-        let items = get(s:popupmenu_list,0)             " jsjs'xx
-        let words = get(items, "word")                  " jsjsxx
+    if s:hjkl_h      " redefine match: jsjsxx => ['jsjsx', 'jsjs']
+        let s:hjkl_h -= 1
+        let items = get(s:popupmenu_list,0)       " jsjs'xx
+        let words = get(items, "word")            " jsjsxx
         let tail = len(substitute(words,'\L','','g'))       " xx
         let head = keyboard[: -tail-1]   " 'jsjsxx'[:-3]='jsjs'
         let candidates = s:vimim_more_pinyin_candidates(head)
@@ -2846,36 +2852,15 @@ function! s:vimim_hjkl_m(keyboard, hjkl_m)
         endif
         let tail = strpart(keyboard, len(head))   " sxx
         let keyboard = head . "'" . tail          " jsj'sxx
-    else
-        return keyboard
-    endif
-    return s:vimim_quote_by_quote(keyboard)
-endfunction
-
-function! s:vimim_quote_by_quote(keyboard)
-    let keyboard = a:keyboard
-    let partition = match(keyboard, "[']")
-    if partition > -1 && empty(s:ui.has_dot)
-        let keyboard = s:vimim_get_head(keyboard, partition)
+        let keyboard = s:vimim_quote_by_quote(keyboard)
+    elseif s:hjkl_m
+        if s:hjkl_m % 2
+            let keyboard .= "''"          " sssss''
+        elseif two_tail=="''" && last_third!="'"
+            let keyboard = keyboard[:-3]  " sssss
+        endif
     endif
     return keyboard
-endfunction
-
-function! s:vimim_get_head(keyboard, partition)
-    if a:partition < 0
-        return a:keyboard
-    endif
-    let head = a:keyboard[0 : a:partition-1]
-    if len(s:keyboard_list) < 2
-        let keyboards = []
-        call add(keyboards, head)
-        let tail = a:keyboard[a:partition : -1]
-        if !empty(tail)
-            call add(keyboards, tail)
-        endif
-        let s:keyboard_list = copy(keyboards)
-    endif
-    return head
 endfunction
 
 function! s:vimim_quanpin_transform(pinyin)
@@ -4360,7 +4345,7 @@ function! s:vimim_reset_before_anything()
     let s:onekey = 0
     let s:has_pumvisible = 0
     let s:popupmenu_list = []
-    let s:keyboard_list = []
+    let s:keyboard = ""
 endfunction
 
 function! s:vimim_reset_before_omni()
@@ -4387,7 +4372,7 @@ endfunction
 function! g:vimim()
     let key = ""
     if empty(s:pageup_pagedown)
-        let s:keyboard_list = []
+        let s:keyboard = ""
     endif
     let one_before = getline(".")[col(".")-2]
     if one_before =~# s:valid_key
@@ -4479,8 +4464,8 @@ else
     " [validation] user keyboard input validation
     if empty(str2nr(keyboard))
         " keyboard input is alphabet only
-    elseif len(s:keyboard_list) > 0
-        let keyboard = get(s:keyboard_list,0)
+    elseif s:keyboard =~ '\s'
+        let keyboard = get(split(s:keyboard),0)
     endif
     if empty(keyboard) || keyboard !~# s:valid_key
         return []
@@ -4496,31 +4481,13 @@ else
             return s:vimim_popupmenu_list(results)
         endif
         " [character] sssss => sssss'' => s'ssss''
-        let keyboard = s:vimim_hjkl_m_sssss(keyboard,0)
+        let keyboard = s:vimim_hjkl_partition(keyboard,0)
         " [quote] quote_by_quote: wo'you'yi'ge'meng
-let g:g1=copy(keyboard)
-        let keyboard2 = s:vimim_get_keyboard_but_quote_tail(keyboard)
-let g:g2=copy(keyboard2)
-        if keyboard != keyboard2
-            let keyboard = keyboard2
-            if has_key(s:cjk_cache,keyboard)      " s's's's's'
-                let results = s:cjk_cache[keyboard]
-            endif
-        else
-            " [cjk] The cjk database works like swiss-army knife.
-            let keyboard2 = s:vimim_onekey_cjk(keyboard)
-let g:g3=copy(keyboard)
-     "      if empty(keyboard)
-     " todo     let keyboard = s:vimim_hjkl_m(a:keyboard,0)
-     "      endif
-            let results = s:vimim_cjk_match(keyboard2)
-let g:g4=copy(results)
-        endif
-        if empty(len(results))  " aeiou => a3897 => aeiou
-     "      if empty(s:english_results) && keyboard =~ '^\l\d\d\d\d$'
-     " todo     let keyboard = s:vimim_hjkl_m(a:keyboard,1)
-     "      endif
-        else
+        let keyboard = s:vimim_get_keyboard_but_quote_tail(keyboard)
+        " [cjk] The cjk database works like swiss-army knife.
+        let keyboard2 = s:vimim_onekey_cjk(keyboard)
+        let results = s:vimim_cjk_match(keyboard2)
+        if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -4534,7 +4501,7 @@ let g:g4=copy(results)
     " [shuangpin] support 6 major shuangpin
     if !empty(s:vimim_shuangpin) && s:has_pumvisible < 1
         let keyboard = s:vimim_shuangpin_transform(keyboard)
-        let s:keyboard_list = [keyboard]
+        let s:keyboard = keyboard
     endif
     " [cloud] to make dream come true for multiple clouds
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
@@ -4545,8 +4512,8 @@ let g:g4=copy(results)
         endif
         let results = s:vimim_get_cloud(keyboard, cloud)
         if !empty(len(results))
-            if len(s:keyboard_list) < 2
-                let s:keyboard_list = [keyboard]
+            if s:keyboard !~ '\s'
+                let s:keyboard = keyboard
             endif
             return s:vimim_popupmenu_list(results)
         endif
@@ -4562,19 +4529,13 @@ let g:g4=copy(results)
     elseif !empty(s:english_results)
         return s:vimim_popupmenu_list([""])
     endif
-    " [The Last Resort] cjk letter by letter: sssss
-    if s:onekey 
-        let keyboard_head = s:vimim_onekey_cjk(keyboard)
-        if empty(keyboard_head)
-            let keyboard = s:vimim_hjkl_m(keyboard,1)
+    " [the last resort]
+    if s:onekey
+        let keyboard = s:vimim_two_tail_quote(keyboard)
+        let results = s:vimim_cjk_match(keyboard) " letter by letter: sssss
+        if empty(results) && keyboard !~# '\L'    " cloud forever
+            let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
-        if !empty(keyboard) && !empty(s:cjk_filename)
-            let results = s:vimim_cjk_match(keyboard)
-        endif
-    endif
-    " [The Last Resort] cloud forever
-    if empty(results) && keyboard !~# '\L'
-        let results = s:vimim_get_cloud(keyboard, s:cloud_default)
     endif
     if empty(results) && keyboard =~ '\l' && len(keyboard)==1
         let results = ["　"]
@@ -4595,7 +4556,6 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     let tail = 0
     let label = 1
-    let extra_text = ""
     let popupmenu_list = []
     let popupmenu_list_one_row = []
     let first_in_list = get(lines,0)
@@ -4608,8 +4568,8 @@ function! s:vimim_popupmenu_list(matched_list)
     endif
     let s:english_results = []
     let s:matched_list = lines
-    let keyboard = join(s:keyboard_list,"")
-    let menu = get(s:keyboard_list,0)
+    let keyboard = join(split(s:keyboard),"")
+    let menu = get(split(s:keyboard),0)
     for chinese in lines
         let complete_items = {}
         if s:hjkl_n && s:hjkl_n%2 && !empty(s:cjk_filename)
@@ -4620,7 +4580,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let chinese = simplified_traditional
         endif
         if s:hjkl_h && s:hjkl_h%2 && len(chinese)==s:multibyte
-            let extra_text = s:vimim_cjk_extra_text(chinese)
+            let menu = s:vimim_cjk_extra_text(chinese)
         endif
         if empty(s:show_me_not)
             if first_in_list =~ '\s'
@@ -4629,22 +4589,14 @@ function! s:vimim_popupmenu_list(matched_list)
                     let chinese = get(pairs, 1)
                     let menu = get(pairs, 0)
                 endif
-                if s:vimim_custom_menu > 0
-                    let extra_text = menu
-                endif
             endif
-            if empty(s:mycloud) ||  keyboard =~ "[']"
-                if !empty(keyboard)
-                    let keyboard_head_length = len(menu)
-                    if empty(s:ui.has_dot) && keyboard =~ "[']"
-                        " for vimim classic: i'have'a'dream
-                        let keyboard_head_length += 1
-                    endif
-                    let tail = strpart(keyboard, keyboard_head_length)
+            if empty(s:mycloud)
+                if s:keyboard =~ '\s'
+                    let tail = get(split(s:keyboard),1)
                     let chinese .= tail
                 endif
             elseif s:horizontal_display < 1
-                let extra_text = get(split(menu,"_"),0)
+                let menu = get(split(menu,"_"),0)
             endif
             let labeling = label
             if s:vimim_custom_label
@@ -4663,7 +4615,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let &pumheight = 0
         endif
         let complete_items["dup"] = 1
-        let complete_items["menu"] = extra_text
+        let complete_items["menu"] = menu
         let complete_items["word"] = empty(chinese) ? s:space : chinese
         call add(popupmenu_list, complete_items)
     endfor
@@ -4731,12 +4683,12 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let results = s:vimim_get_from_datafile(keyboard2)
         endif
     endif
-    if len(s:keyboard_list) < 2
+    if s:keyboard !~ '\s'
         if empty(keyboard2)
-            let s:keyboard_list = [keyboard]
+            let s:keyboard = keyboard
         elseif len(keyboard2) < len(keyboard)
             let tail = strpart(keyboard,len(keyboard2))
-            let s:keyboard_list = [keyboard2, tail]
+            let s:keyboard = keyboard2 . " " . tail
         endif
     endif
     return results
