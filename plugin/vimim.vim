@@ -97,7 +97,7 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdvfgsz"
     let s:qwer = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
-    let s:horizontal_display = s:vimim_custom_label>0 ? 5 : 0
+    let s:horizontal_display = s:vimim_custom_label ? 5 : 0
     let s:seamless_positions = []
     let s:shuangpin_keycode_chinese = {}
     let s:shuangpin_table = {}
@@ -425,15 +425,18 @@ function! s:vimim_egg_vimim()
     return map(eggs, 'v:val . " "')
 endfunction
 
-function! s:vimim_get_keyboard_without_quote(keyboard)
+function! s:vimim_get_keyboard_but_quote_tail(keyboard)
     let keyboard = a:keyboard
-    if !empty(s:ui.has_dot)
+    if !empty(s:ui.has_dot) || keyboard =~ '\d'
         return keyboard
     endif
-    let magic_tail = keyboard[-1:-1]
-    if magic_tail =~ "'" && keyboard !~ '\d'
-        " [cloud] magic trailing apostrophe to control cloud
-        let keyboard = s:vimim_magic_apostrophe_tail(keyboard)
+    let one_tail = keyboard[-1:]
+    let two_tail = keyboard[-2:]
+    if two_tail == "''"
+        let keyboard = s:vimim_two_tail_quote(keyboard)
+    elseif one_tail == "'"
+        " [cloud] magic trailing quote to control cloud
+        let keyboard = s:vimim_one_tail_quote(keyboard)
     elseif keyboard =~ "'" && empty(s:onekey_cloud)
         " [local] wo'you'yi'ge'meng
         let keyboard = s:vimim_quote_by_quote(keyboard)
@@ -943,11 +946,7 @@ function! <SID>vimim_onekey_punctuation(key)
             let hjkl = '\<PageUp>'
         endif
     elseif hjkl == "'"   " cycle bb/gg/ss/00 clouds
-        let s:onekey_cloud += 1
-        if s:onekey_cloud > 1
-            let clouds = split(s:vimim_cloud,',')
-            let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
-        endif
+        call s:vimim_one_tail_quote(0)
     endif
     if hjkl == a:key
         let hjkl = '\<C-R>=g:vimim()\<CR>'
@@ -1197,7 +1196,7 @@ function! s:vimim_set_omni_color()
     if s:vimim_custom_color > 0
         call g:vimim_default_omni_color()
     endif
-    if s:vimim_custom_color > 1 || s:vimim_custom_label > 0
+    if s:vimim_custom_color > 1 || s:vimim_custom_label
         highlight!      PmenuSel NONE
         highlight! link PmenuSel NONE
     endif
@@ -1312,11 +1311,8 @@ function! s:vimim_get_chinese_im()
 endfunction
 
 function! s:vimim_label_on()
-    if s:vimim_custom_label < 0
-        return
-    endif
     let labels = range(1, s:horizontal_display)
-    if s:vimim_custom_label > 0
+    if s:vimim_custom_label
         let s:abcd = join(labels, '')
     else
         let labels = range(10)
@@ -1927,15 +1923,33 @@ function! s:vimim_popup_word()
     return substitute(chinese,'\w','','g')
 endfunction
 
-function! s:vimim_magic_apostrophe_tail(keyboard)
+" todo
+function! s:vimim_two_tail_quote(keyboard)
+    let keyboard = a:keyboard
+    let head = keyboard[:0]
+    let tail = keyboard[1:]
+    if tail =~ '\l'
+        let keyboard = head . "'" . tail
+        let keyboard = s:vimim_quote_by_quote(keyboard)
+    else
+        let keyboard = head
+        let s:keyboard_list = [head]
+    endif
+    return keyboard
+endfunction
+
+function! s:vimim_one_tail_quote(keyboard)
     " <apostrophe> double play in OneKey:
     "   (1) [insert] one trailing apostrophe => open cloud
     "   (2) [omni]   apostrophe switches to the next cloud
-    let s:onekey_cloud = 1
     let keyboard = a:keyboard[:-2]
+    let s:onekey_cloud += 1
+    if s:onekey_cloud > 1
+        let clouds = split(s:vimim_cloud,',')
+        let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
+    endif
     if empty(s:vimim_check_http_executable())
         let s:onekey_cloud = 0
-        let keyboard = substitute(keyboard,"'",'','g')
     endif
     return keyboard
 endfunction
@@ -2243,7 +2257,7 @@ function! s:vimim_cache()
             endif
         endif
     endif
-    if !empty(s:pageup_pagedown) && s:vimim_custom_label > -1
+    if !empty(s:pageup_pagedown)
         return s:vimim_pageup_pagedown()
     endif
     return results
@@ -2339,7 +2353,7 @@ function! s:vimim_pageup_pagedown()
     let matched_list = s:matched_list
     let length = len(matched_list)
     let one_page = &pumheight
-    if s:vimim_custom_label > 0
+    if s:vimim_custom_label
         let one_page = s:horizontal_display
     endif
     if one_page < 1
@@ -2797,6 +2811,19 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
         return results
     endif
     return []
+endfunction
+
+function! s:vimim_hjkl_m_sssss(keyboard, hjkl_m)
+    let keyboard = a:keyboard
+    let s:hjkl_m = a:hjkl_m ? 1 : s:hjkl_m
+    if s:hjkl_m
+        if s:hjkl_m % 2 
+            let keyboard .= "''"          " sssss''
+        else
+            let keyboard = keyboard[:-3]  " sssss
+        endif
+    endif
+    return keyboard
 endfunction
 
 function! s:vimim_hjkl_m(keyboard, hjkl_m)
@@ -4282,7 +4309,7 @@ function! s:vimim_setting_on()
         let &pumheight = len(s:abcd)
         let s:pumheight = &pumheight
     endif
-    if s:vimim_custom_label > 0
+    if s:vimim_custom_label
         let &pumheight = s:horizontal_display
     endif
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
@@ -4351,7 +4378,7 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_x = ""   " reset
     let s:matched_list = []
     let s:pageup_pagedown = 0
-    if s:vimim_custom_label < 1
+    if empty(s:vimim_custom_label)
         let &pumheight = s:pumheight
     endif
     return ""
@@ -4468,8 +4495,12 @@ else
         if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
+        " [character] sssss => sssss'' => s'ssss''
+        let keyboard = s:vimim_hjkl_m_sssss(keyboard,0)
         " [quote] quote_by_quote: wo'you'yi'ge'meng
-        let keyboard2 = s:vimim_get_keyboard_without_quote(keyboard)
+let g:g1=copy(keyboard)
+        let keyboard2 = s:vimim_get_keyboard_but_quote_tail(keyboard)
+let g:g2=copy(keyboard2)
         if keyboard != keyboard2
             let keyboard = keyboard2
             if has_key(s:cjk_cache,keyboard)      " s's's's's'
@@ -4477,16 +4508,18 @@ else
             endif
         else
             " [cjk] The cjk database works like swiss-army knife.
-            let keyboard = s:vimim_onekey_cjk(keyboard)
-            if empty(keyboard)
-                let keyboard = s:vimim_hjkl_m(a:keyboard,0)
-            endif
-            let results = s:vimim_cjk_match(keyboard)
+            let keyboard2 = s:vimim_onekey_cjk(keyboard)
+let g:g3=copy(keyboard)
+     "      if empty(keyboard)
+     " todo     let keyboard = s:vimim_hjkl_m(a:keyboard,0)
+     "      endif
+            let results = s:vimim_cjk_match(keyboard2)
+let g:g4=copy(results)
         endif
         if empty(len(results))  " aeiou => a3897 => aeiou
-            if empty(s:english_results) && keyboard =~ '^\l\d\d\d\d$'
-                let keyboard = s:vimim_hjkl_m(a:keyboard,1)
-            endif
+     "      if empty(s:english_results) && keyboard =~ '^\l\d\d\d\d$'
+     " todo     let keyboard = s:vimim_hjkl_m(a:keyboard,1)
+     "      endif
         else
             return s:vimim_popupmenu_list(results)
         endif
@@ -4614,10 +4647,10 @@ function! s:vimim_popupmenu_list(matched_list)
                 let extra_text = get(split(menu,"_"),0)
             endif
             let labeling = label
-            if s:vimim_custom_label > 0
+            if s:vimim_custom_label
                 let abbr = label . "." . chinese
                 call add(popupmenu_list_one_row, abbr)
-            elseif empty(s:vimim_custom_label)
+            else
                 let labeling = s:vimim_get_labeling(label)
             endif
             let labeling = printf('%2s ', labeling)
