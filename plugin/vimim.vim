@@ -197,7 +197,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_custom_label")
     call add(G, "g:vimim_onekey_is_tab")
-    call add(G, "g:vimim_more_candidates")
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
     call add(G, "g:vimim_cloud")
@@ -255,7 +254,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = '/home/xma/hjkl'
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
@@ -3396,26 +3395,27 @@ function! s:vimim_get_from_datafile(keyboard)
     if matched < 0
         return []
     endif
-    let results = []
-    if s:vimim_more_candidates > 0
-        " http://code.google.com/p/vimim/issues/detail?id=121
-        for i in range(s:vimim_more_candidates)
+    let oneline = get(lines, matched)
+    let results = split(oneline)[1:]
+    if s:search || len(results) > 10
+        return results
+    endif
+    let more = len('http://code.google.com/p/vimim/issues/detail?id=121')/10
+    if s:ui.im =~ 'pinyin'
+        let extras = s:vimim_more_pinyin_datafile(a:keyboard,0)
+        if len(extras) > 0
+            let results = s:vimim_make_pair_list(oneline)
+            call extend(results, extras)
+        endif
+    elseif len(results) < more
+        let results = []
+        let s:show_extra_menu = 1
+        for i in range(more)
             let matched += i
             let oneline = get(lines, matched)
             let extras = s:vimim_make_pair_list(oneline)
             call extend(results, extras)
         endfor
-    else
-        let oneline = get(lines, matched)
-        let onelines = split(oneline)
-        let results = split(oneline)[1:]
-        if s:search < 1 && len(onelines) > 0 && len(onelines) < 20
-            let extras = s:vimim_more_pinyin_datafile(a:keyboard,0)
-            if len(extras) > 0
-                let results = s:vimim_make_pair_list(oneline)
-                call extend(results, extras)
-            endif
-        endif
     endif
     return results
 endfunction
@@ -4341,6 +4341,7 @@ function! s:vimim_reset_before_anything()
     let s:onekey = 0
     let s:keyboard = ""
     let s:has_pumvisible = 0
+    let s:show_extra_menu = 0
     let s:pattern_not_found = 0
     let s:popupmenu_list = []
 endfunction
@@ -4575,11 +4576,14 @@ function! s:vimim_popupmenu_list(matched_list)
             if keyboard ==# chinese
                 continue
             endif
+            let menu = ""
             if first_in_list =~ '\s'
                 let pairs = split(chinese)
                 let chinese = get(pairs,1)
+                if s:show_extra_menu
+                    let menu = get(pairs,0)
+                endif
             endif
-            let menu = ""
             if s:hjkl_h && s:hjkl_h%2 && len(chinese)==s:multibyte
                 let menu = s:vimim_cjk_extra_text(chinese)
             endif
