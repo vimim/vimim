@@ -257,7 +257,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
@@ -4517,7 +4517,7 @@ else
         if empty(results) && empty(s:english_results) " cloud forever
             let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
-        if empty(results) && keyboard =~ '\l\{1}'
+        if empty(results) && len(keyboard) == 1
             let results = split(join(split(s:mahjong),""),'\zs')
         endif
     endif
@@ -4541,7 +4541,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let popupmenu_list = []
     let popupmenu_list_one_row = []
     let keyboard = join(split(s:keyboard,","),"")
-    if keyboard =~ '\l\{1}' && !has_key(s:cjk_cache,keyboard)
+    if len(keyboard) == 1 && !has_key(s:cjk_cache,keyboard)
         let s:cjk_cache[keyboard] = lines
     endif
     let first_in_list = get(lines,0)
