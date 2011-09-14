@@ -257,7 +257,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = '/home/xma/hjkl'
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
@@ -994,7 +994,6 @@ function! s:vimim_get_valid_im_name(im)
     let im = a:im
     if im =~ '^wubi'
         let im = 'wubi'
-        let s:imode_pinyin = 0
     elseif im =~ '^pinyin'
         let im = 'pinyin'
     elseif im !~ s:all_vimim_input_methods
@@ -1005,7 +1004,7 @@ endfunction
 
 function! s:vimim_set_special_im_property()
     if s:backend[s:ui.root][s:ui.im].name =~# "quote"
-        let s:ui.has_dot = 2  " has apostrophe in datafile
+        let s:ui.has_dot = 2      " has apostrophe in datafile
     endif
     for im in split('wu erbi yong nature boshiamy phonetic array30')
         if s:ui.im == im
@@ -1015,7 +1014,7 @@ function! s:vimim_set_special_im_property()
         endif
     endfor
     let s:imode_pinyin = 0
-    if s:ui.im =~ 'pinyin' || s:ui.root == 'cloud'
+    if s:ui.im =~ 'pinyin' || s:onekey_cloud
         let s:imode_pinyin = 1
         if empty(s:quanpin_table)
             let s:quanpin_table = s:vimim_create_quanpin_table()
@@ -1945,6 +1944,10 @@ function! s:vimim_one_tail_quote(keyboard)
 endfunction
 
 function! s:vimim_two_tail_quote(keyboard)
+    let two_tail = a:keyboard[-2:]
+    if two_tail != "''"
+        return a:keyboard
+    endif
     let head = a:keyboard[:0]
     let tail = a:keyboard[1:]
     let s:keyboard = head . "," . tail
@@ -3358,7 +3361,6 @@ function! s:vimim_sentence_datafile(keyboard)
     if !empty(candidates)
         return get(candidates,0)
     endif
-    " wo'you'yige'meng works in this algorithm
     let max = len(keyboard)
     while max > 1
         let max -= 1
@@ -3694,7 +3696,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     catch
         call s:debug('alert', 'get_cloud='.cloud.'=', v:exception)
     endtry
-    if len(results) > 1 && empty(s:english_results)
+    if !empty(results) && empty(s:english_results)
         let s:cloud_cache[cloud][keyboard] = results
     endif
     return results
@@ -4509,15 +4511,14 @@ else
     if !empty(results) && get(results,0) !~ 'None\|0'
         return s:vimim_popupmenu_list(results)
     endif
-    " [the last resort] try both cjk and cloud
-    if s:onekey
+    if s:onekey   " [the last resort] try both cjk and cloud
         let keyboard = s:vimim_two_tail_quote(keyboard)
-        let results = s:vimim_cjk_match(keyboard) " letter by letter: sssss
-        if empty(results) && keyboard !~# '\L'    " cloud forever
+        let results = s:vimim_cjk_match(keyboard)     " char by char: sssss
+        if empty(results) && empty(s:english_results) " cloud forever
             let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
     endif
-    if empty(results) && keyboard =~ '\l' && len(keyboard)==1
+    if empty(results) && len(keyboard)==1 && keyboard =~ '\l'
         let results = ["　"]
     endif
     if !empty(len(results))
