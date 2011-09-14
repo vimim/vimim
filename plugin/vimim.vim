@@ -3446,8 +3446,7 @@ function! s:vimim_make_pair_list(oneline)
     let menu = remove(oneline_list, 0)
     if empty(menu) || menu =~# '\W'
         return []
-    endif
-    if !empty(s:english_results)
+    elseif !empty(s:english_results)
         return oneline_list
     endif
     let results = []
@@ -3695,7 +3694,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     catch
         call s:debug('alert', 'get_cloud='.cloud.'=', v:exception)
     endtry
-    if len(results) > 1 && empty(s:english_results)  " todo
+    if len(results) > 1 && empty(s:english_results)
         let s:cloud_cache[cloud][keyboard] = results
     endif
     return results
@@ -4495,25 +4494,22 @@ else
             let cloud = get(s:frontends,1)
         endif
         let results = s:vimim_get_cloud(keyboard, cloud)
-        if !empty(len(results))
-            if s:keyboard !~ ','
-                let s:keyboard = keyboard
-            endif
-            return s:vimim_popupmenu_list(results)
+        if !empty(len(results)) && s:keyboard !~ ','
+            let s:keyboard = keyboard
         endif
     endif
-    " [wubi] support auto insert on the 4th
-    if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
-        let keyboard = s:vimim_wubi_auto_input_on_the_4th(keyboard)
+    if empty(results)
+        " [wubi] support auto insert on the 4th
+        if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
+            let keyboard = s:vimim_wubi_auto_input_on_the_4th(keyboard)
+        endif
+        " [backend] plug-n-play embedded backend engine
+        let results = s:vimim_embedded_backend_engine(keyboard)
     endif
-    " [backend] plug-n-play embedded backend engine
-    let results = s:vimim_embedded_backend_engine(keyboard)
     if !empty(results) && get(results,0) !~ 'None\|0'
         return s:vimim_popupmenu_list(results)
-    elseif !empty(s:english_results)          " todo
-        return s:vimim_popupmenu_list([""])
     endif
-    " [the last resort]
+    " [the last resort] try both cjk and cloud
     if s:onekey
         let keyboard = s:vimim_two_tail_quote(keyboard)
         let results = s:vimim_cjk_match(keyboard) " letter by letter: sssss
@@ -4534,24 +4530,17 @@ endif
 endfunction
 
 function! s:vimim_popupmenu_list(matched_list)
-    let lines = a:matched_list
+    let lines = s:english_results + a:matched_list
     if empty(lines) || type(lines) != type([])
         return []
+    else
+        let s:matched_list = lines
     endif
     let label = 1
     let popupmenu_list = []
     let popupmenu_list_one_row = []
-    let first_in_list = get(lines,0)
-    if !empty(s:english_results)
-        if first_in_list =~ '\w'
-            let lines = s:english_results
-        else
-            call extend(lines, s:english_results, 0)
-        endif
-    endif
-    let s:english_results = []
-    let s:matched_list = lines
     let keyboard = join(split(s:keyboard,","),"")
+    let first_in_list = get(lines,0)
     for chinese in lines
         let complete_items = {}
         if s:hjkl_n && s:hjkl_n%2 && !empty(s:cjk_filename)
@@ -4562,11 +4551,12 @@ function! s:vimim_popupmenu_list(matched_list)
             let chinese = simplified_traditional
         endif
         if empty(s:show_me_not)
+            if keyboard ==# chinese
+                continue
+            endif
             if first_in_list =~ '\s'
                 let pairs = split(chinese)
-                if len(pairs) > 1
-                    let chinese = get(pairs,1)
-                endif
+                let chinese = get(pairs,1)
             endif
             let menu = ""
             if s:hjkl_h && s:hjkl_h%2 && len(chinese)==s:multibyte
