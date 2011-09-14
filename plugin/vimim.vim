@@ -1857,23 +1857,30 @@ function! s:vimim_onekey_action(space)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
+function! g:vimim_pattern_not_found()
+    if s:pattern_not_found
+        let s:pattern_not_found = 0
+        return ' '
+    endif
+    return ''
+endfunction
+
 function! <SID>vimim_space()
     " (1) <Space> after English (valid keys) => trigger keycode menu
     " (2) <Space> after English punctuation  => Chinese punctuation
     " (3) <Space> after popup menu           => insert Chinese
+    " (4) <Space> after pattern not found    => <Space>
     let space = " "
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
-    elseif s:pattern_not_found
-        let s:pattern_not_found = 0
-        let space = " "
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
         let right_arrow = s:vimim_get_right_arrow()
         let space = right_arrow . s:vimim_onekey_action(1)
     endif
+    let space .= '\<C-R>=g:vimim_pattern_not_found()\<CR>'
     sil!call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . space . '"'
 endfunction
@@ -4423,8 +4430,7 @@ if a:start
                     let all_digit = 0
                 endif
             endif
-        elseif one_before=='\'
-            " do nothing for pinyin with leading backslash
+        elseif one_before == '\'  " do nothing if leading backslash found
             let s:pattern_not_found = 1
             return last_seen_backslash_column
         else
@@ -4535,7 +4541,7 @@ else
         return s:vimim_popupmenu_list(results)
     elseif s:onekey
         sil!call s:vimim_super_reset()
-        let s:pattern_not_found += 1
+        let s:pattern_not_found = 1
     endif
 return []
 endif
