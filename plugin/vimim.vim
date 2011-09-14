@@ -450,19 +450,34 @@ endfunction
 function! s:vimim_get_hjkl(keyboard)
     let keyboard = a:keyboard
     let poem = s:vimim_check_filereadable(keyboard)
+    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     let results = []
     if keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
+    elseif !empty(poem)
+        " [poem] play any entry in hjkl directories
+        let results = s:vimim_readfile(poem)
     elseif keyboard ==# "''"
         " [game] plays mahjong at will
         let results = split(s:mahjong)
     elseif keyboard ==# "'''"
         " [hjkl] display buffer inside the omni window
         let results = split(getreg('"'), '\n')
-    elseif !empty(poem)
-        " [poem] play any entry in hjkl directories
-        let results = s:vimim_readfile(poem)
+    elseif keyboard[-4:] ==# "''''"
+        " [clouds] all clouds for any input: fuck''''
+        let results = s:vimim_get_cloud_all(keyboard[:-5])
+    elseif keyboard =~# 'u\d\d\d\d\d'
+        " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
+        let sentence = substitute(getreg('"'),'[\x00-\xff]','','g')
+        for chinese in split(sentence,'\zs')
+            let menu = s:vimim_cjk_extra_text(chinese) " todo fill up
+            call add(results, chinese . " " . menu)
+        endfor
+    elseif ddddd > 0
+        for i in range(99)
+            call add(results, nr2char(ddddd+i))
+        endfor
     endif
     if !empty(results)
         let s:show_me_not = 1
@@ -472,24 +487,14 @@ function! s:vimim_get_hjkl(keyboard)
                 let results = s:vimim_hjkl_rotation(results)
             endfor
         endif
-        return results
     endif
-    " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
-    if keyboard =~# 'u\d\d\d\d\d'
-        let chinese = substitute(getreg('"'),'[\x00-\xff]','','g')
-        return split(chinese, '\zs')
-    endif
-    " [unicode] support direct unicode/gb/big5 input
-    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if ddddd > 0
-        for i in range(99)
-            call add(results, nr2char(ddddd+i))
-        endfor
-    elseif keyboard[-4:] ==# "''''"
-        " [clouds] all clouds for any input: fuck''''
-        let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif keyboard =~# '^i' && s:imode_pinyin
-        " [imode] magic i: (1) English number (2) Chinese number
+    return results
+endfunction
+
+function! s:vimim_get_imode_results(keyboard)
+    let keyboard = a:keyboard
+    let results = []
+    if keyboard =~# '^i' && s:imode_pinyin
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
         elseif keyboard ==# 'i'  " 一i => 一二
@@ -2269,15 +2274,15 @@ function! s:vimim_cache()
             return results
         endif
         if s:show_me_not
-            if s:hjkl_l
-                let s:hjkl_l -= 1
-                let results = reverse(copy(s:matched_list))
-            elseif s:hjkl_h && len(s:matched_list)
+            if s:hjkl_h && len(s:matched_list)
                 let s:hjkl_h -= 1
                 for line in s:matched_list
                     let oneline = join(reverse(split(line,'\zs')),'')
                     call add(results, oneline)
                 endfor
+            elseif s:hjkl_l
+                let s:hjkl_l -= 1
+                let results = reverse(copy(s:matched_list))
             endif
         elseif s:hjkl_l
             let &pumheight = s:pumheight
@@ -2413,7 +2418,7 @@ function! s:vimim_onekey_mapping()
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps("'._.'")'
         endfor
     endif
-    for _ in split('hjklmnx', '\zs')
+    for _ in split('xhjklmn', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
     for _ in split("[]-=.,/?;'<>", '\zs')
@@ -2706,7 +2711,7 @@ function! <SID>vimim_visual_ctrl6()
             " highlight multiple chinese => show property of each
             let s:seamless_positions = getpos("'<'")
             let ddddd = char2nr(chinese)
-            let uddddd = "gvc" . 'u'.ddddd . onekey . 'h'
+            let uddddd = "gvc" . 'u'.ddddd . onekey
             let dddd = "gvc" . line . onekey
             let key = ddddd=~'\d\d\d\d\d' ? uddddd : dddd
         else
@@ -4341,11 +4346,11 @@ function! s:vimim_reset_before_omni()
 endfunction
 
 function! g:vimim_reset_after_insert()
+    let s:hjkl_x = ""   " reset
     let s:hjkl_h = 0    " ctrl-h for "jsjsxx"
     let s:hjkl_l = 0    " toggle label
     let s:hjkl_m = 0    " toggle cjjp/cjjp''
     let s:hjkl_n = 0    " toggle simplified/traditional
-    let s:hjkl_x = ""   " reset
     let s:matched_list = []
     let s:pageup_pagedown = 0
     if empty(s:vimim_custom_label)
@@ -4462,6 +4467,10 @@ else
     if s:onekey
         " [game] turn menu 90 degree on hjkl_m
         let results = s:vimim_get_hjkl(keyboard)
+        if empty(results)
+            " [imode] magic i: (1) English number (2) Chinese number
+            let results = s:vimim_get_imode_results(keyboard)
+        endif
         if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
