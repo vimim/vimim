@@ -446,15 +446,15 @@ endfunction
 function! s:vimim_get_hjkl(keyboard)
     let keyboard = a:keyboard
     let poem = s:vimim_check_filereadable(keyboard)
-    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+    let uddddd = s:vimim_get_unicode_ddddd(keyboard)
     let results = []
     let sentence = ""
-    if keyboard ==# "vim" || keyboard =~# "^vimim"
-        " [eggs] hunt classic easter egg ... vim<C-6>
-        let results = s:vimim_easter_chicken(keyboard)
-    elseif !empty(poem)
+    if !empty(poem)
         " [poem] play any entry in hjkl directories
         let results = s:vimim_readfile(poem)
+    elseif keyboard ==# "vim" || keyboard =~# "^vimim"
+        " [eggs] hunt classic easter egg ... vim<C-6>
+        let results = s:vimim_easter_chicken(keyboard)
     elseif keyboard ==# "''"
         " [game] plays mahjong at will
         let results = split(s:mahjong)
@@ -467,9 +467,9 @@ function! s:vimim_get_hjkl(keyboard)
     elseif keyboard =~# 'u\d\d\d\d\d'
         " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
         let sentence = substitute(getreg('"'),'[\x00-\xff]','','g')
-    elseif ddddd > 0
+    elseif uddddd > 0
         for i in range(10)
-            let sentence .= nr2char(ddddd+i)
+            let sentence .= nr2char(uddddd+i)
         endfor
     endif
     if !empty(sentence)
@@ -2188,7 +2188,7 @@ endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if a:keyboard =~# '^u\+$' " chinese umode: 馬力uu => 39340
+    if keyboard =~# '^u\+$' " chinese umode: 馬力uu => 39340
         let char_before = s:vimim_get_char_before(keyboard)
         if empty(s:cjk_filename) && empty(char_before) || char_before=~'\w'
             let char_before = '一'
@@ -4590,18 +4590,15 @@ function! s:vimim_popupmenu_list(matched_list)
                 let menu = get(split(s:keyboard,","),0)
                 let menu = get(split(menu,"_"),0)
             endif
-            let labeling = label
             if s:vimim_one_row_menu
                 let abbr = label . "." . chinese
                 call add(popupmenu_list_one_row, abbr)
-            else
-                let labeling = s:vimim_get_labeling(label)
             endif
-            let label += 1
-            let labeling = printf('%2s ', labeling)
+            let labeling = printf('%2s ', s:vimim_get_labeling(label))
             if s:onekey && len(lines) < 2
                 let labeling = ""
             endif
+            let label += 1
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
         else
