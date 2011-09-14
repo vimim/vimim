@@ -4516,9 +4516,9 @@ else
         if empty(results) && empty(s:english_results) " cloud forever
             let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
-    endif
-    if empty(results) && len(keyboard)==1 && keyboard =~ '\l'
-        let results = split(join(split(s:mahjong),""),'\zs')
+        if empty(results) && len(keyboard)==1 && keyboard =~ '\l'
+            let results = split(join(split(s:mahjong),""),'\zs')
+        endif
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
