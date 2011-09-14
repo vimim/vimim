@@ -206,7 +206,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_custom_color")
-    call add(G, "g:vimim_search_next")
     call s:vimim_set_global_default(G, 1)
     let s:im_toggle = 0
     let s:onekey_cloud = 0
@@ -4689,15 +4688,13 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
 function! s:vimim_imap_for_onekey()
+    noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     if s:vimim_onekey_is_tab < 1
             imap<silent> <C-^> <Plug>VimimOneKey
         xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     else
             imap<silent> <Tab> <Plug>VimimOneKey
         xnoremap<silent> <Tab> y:call <SID>vimim_visual_ctrl6()<CR>
-    endif
-    if s:vimim_search_next > 0
-         noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
