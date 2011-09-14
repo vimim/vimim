@@ -795,7 +795,7 @@ function! s:vimim_imode_number(keyboard)
                 let number = strpart(number,0,len(number)-s:multibyte)
             endif
             let numbers = map(copy(quantifier_list), 'number . v:val')
-        elseif keyboard =~# '^\d*$' && s:keyboard!~',' && ii != 'ii'
+        elseif keyboard =~# '^\d*$' && len(keyboards)<2 && ii != 'ii'
             let numbers = quantifier_list
         endif
     endif
