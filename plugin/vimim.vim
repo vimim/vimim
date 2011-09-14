@@ -98,7 +98,6 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdvfgsz"
     let s:qwer = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
-    let s:horizontal_display = s:vimim_custom_label ? 5 : 0
     let s:seamless_positions = []
     let s:shuangpin_keycode_chinese = {}
     let s:shuangpin_table = {}
@@ -195,7 +194,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_plugin_folder")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_custom_label")
+    call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_onekey_is_tab")
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
@@ -254,7 +253,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
@@ -1193,7 +1192,7 @@ function! s:vimim_set_omni_color()
     if s:vimim_custom_color > 0
         call g:vimim_default_omni_color()
     endif
-    if s:vimim_custom_color > 1 || s:vimim_custom_label
+    if s:vimim_custom_color > 1 || s:vimim_one_row_menu
         highlight!      PmenuSel NONE
         highlight! link PmenuSel NONE
     endif
@@ -1308,9 +1307,9 @@ function! s:vimim_get_chinese_im()
 endfunction
 
 function! s:vimim_label_on()
-    let labels = range(1, s:horizontal_display)
-    if s:vimim_custom_label
-        let s:abcd = join(labels, '')
+    let labels = range(1,5)
+    if s:vimim_one_row_menu
+        let s:abcd = join(labels,'')
     else
         let labels = range(10)
         let abcd_list = split(s:abcd, '\zs')
@@ -1474,7 +1473,7 @@ function! s:vimim_get_labeling(label)
                     let label2 = '0'
                 endif
             endif
-            let labeling = labeling . label2
+            let labeling .= label2
         endif
         if labeling == '0'
             let labeling = '10'
@@ -2385,11 +2384,11 @@ function! s:vimim_pageup_pagedown()
     let matched_list = s:matched_list
     let length = len(matched_list)
     let one_page = &pumheight
-    if s:vimim_custom_label
-        let one_page = s:horizontal_display
-    endif
     if one_page < 1
         let one_page = 9
+    endif
+    if s:vimim_one_row_menu
+        let one_page = 5
     endif
     if length > one_page
         let page = s:pageup_pagedown * one_page
@@ -4286,12 +4285,9 @@ function! s:vimim_setting_on()
     set nolazyredraw
     set noshowmatch
     set noruler
-    if empty(&pumheight) || &pumheight > 9
-        let &pumheight = len(s:abcd)
+    if empty(&pumheight) || &pumheight > 9 || s:vimim_one_row_menu
+        let &pumheight = s:vimim_one_row_menu ? 5 : len(s:abcd)
         let s:pumheight = &pumheight
-    endif
-    if s:vimim_custom_label
-        let &pumheight = s:horizontal_display
     endif
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
@@ -4361,9 +4357,7 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_n = 0    " toggle simplified/traditional
     let s:matched_list = []
     let s:pageup_pagedown = 0
-    if empty(s:vimim_custom_label)
-        let &pumheight = s:pumheight
-    endif
+    let &pumheight = s:pumheight
     return ""
 endfunction
 
@@ -4592,12 +4586,12 @@ function! s:vimim_popupmenu_list(matched_list)
                 if !empty(tail)
                     let chinese .= tail
                 endif
-            elseif empty(s:horizontal_display)
+            elseif empty(s:vimim_one_row_menu)
                 let menu = get(split(s:keyboard,","),0)
                 let menu = get(split(menu,"_"),0)
             endif
             let labeling = label
-            if s:vimim_custom_label
+            if s:vimim_one_row_menu
                 let abbr = label . "." . chinese
                 call add(popupmenu_list_one_row, abbr)
             else
@@ -4620,7 +4614,7 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:onekey
         let s:popupmenu_list = popupmenu_list
     endif
-    let height = s:horizontal_display
+    let height = 5*s:vimim_one_row_menu
     if height && empty(s:show_me_not) && len(popupmenu_list)>1
         let one_list = popupmenu_list_one_row
         if len(one_list) > height
