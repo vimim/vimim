@@ -81,6 +81,7 @@ function! s:vimim_backend_initialization()
 endfunction
 
 function! s:vimim_initialize_session()
+    let s:imode_pinyin = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
     let s:current_positions = [0,0,1,0]
@@ -160,7 +161,7 @@ function! s:vimim_set_keycode()
     let keycode_string = ""
     if empty(s:ui.root)
         let keycode = "[0-9a-z']"
-        let s:vimim_imode_pinyin = 1
+        let s:imode_pinyin = 1
     else
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
     endif
@@ -193,7 +194,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_h_to_toggle")
     call add(G, "g:vimim_plugin_folder")
-    call add(G, "g:vimim_imode_pinyin")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_custom_label")
@@ -261,7 +261,6 @@ function! s:vimim_initialize_local()
     if exists('hjkl') && isdirectory(hjkl)
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
-        let g:vimim_imode_pinyin = 2
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
         call g:vimim_default_omni_color()
@@ -489,7 +488,7 @@ function! s:vimim_get_hjkl(keyboard)
     elseif keyboard[-4:] ==# "''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif keyboard =~# '^i' && s:vimim_imode_pinyin > 0
+    elseif keyboard =~# '^i' && s:imode_pinyin
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
@@ -995,11 +994,9 @@ function! s:vimim_get_valid_im_name(im)
     let im = a:im
     if im =~ '^wubi'
         let im = 'wubi'
+        let s:imode_pinyin = 0
     elseif im =~ '^pinyin'
         let im = 'pinyin'
-        if  empty(s:vimim_imode_pinyin)
-            let s:vimim_imode_pinyin = 1
-        endif
     elseif im !~ s:all_vimim_input_methods
         let im = 0
     endif
@@ -1007,9 +1004,6 @@ function! s:vimim_get_valid_im_name(im)
 endfunction
 
 function! s:vimim_set_special_im_property()
-    if s:vimim_imode_pinyin > 0
-        let s:quanpin_table = s:vimim_create_quanpin_table()
-    endif
     if s:backend[s:ui.root][s:ui.im].name =~# "quote"
         let s:ui.has_dot = 2  " has apostrophe in datafile
     endif
@@ -1020,6 +1014,13 @@ function! s:vimim_set_special_im_property()
             break
         endif
     endfor
+    let s:imode_pinyin = 0
+    if s:ui.im =~ 'pinyin' || s:ui.root == 'cloud'
+        let s:imode_pinyin = 1
+        if empty(s:quanpin_table)
+            let s:quanpin_table = s:vimim_create_quanpin_table()
+        endif
+    endif
 endfunction
 
 function! s:vimim_wubi_auto_input_on_the_4th(keyboard)
@@ -1181,7 +1182,7 @@ function! s:vimim_chinese(key)
     if has_key(s:status, chinese)
         let twins = split(s:status[chinese])
         let chinese = get(twins,0)
-        if len(twins) > 1 && s:vimim_imode_pinyin < 2
+        if len(twins) > 1 && s:vimim_onekey_is_tab < 2
             let chinese = get(twins,1)
         endif
     endif
@@ -2197,7 +2198,7 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         else
             return 0
         endif
-    elseif len(keyboard) == 4 && s:vimim_imode_pinyin > 1
+    elseif len(keyboard) == 4 && s:vimim_onekey_is_tab > 1
     \&& keyboard =~# '^\x\{4}$' && keyboard !~ '^\d\{4}$'
         let keyboard = 'u' . keyboard  " from 4 hex to unicode:  9f9f =>
     endif
@@ -2535,7 +2536,7 @@ function! s:vimim_onekey_cjk(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:vimim_imode_pinyin > 0
+    elseif s:imode_pinyin
         if  keyboard =~# '^\l' && len(keyboard)%5 < 1
         \&& keyboard[0:0] !~ '[iuv]'
         \&& keyboard[1:4] !~ '[^pqwertyuio]'
@@ -2860,9 +2861,8 @@ function! s:vimim_hjkl_partition(keyboard, hjkl_m)
 endfunction
 
 function! s:vimim_quanpin_transform(pinyin)
-    let qptable = s:quanpin_table
-    if empty(qptable)
-        return ""
+    if empty(s:quanpin_table)
+        let s:quanpin_table = s:vimim_create_quanpin_table()
     endif
     let item = a:pinyin
     let pinyinstr = ""
@@ -2880,11 +2880,11 @@ function! s:vimim_quanpin_transform(pinyin)
             endif
             let end = index+i
             let matchstr = item[index : end-1]
-            if has_key(qptable, matchstr)
+            if has_key(s:quanpin_table, matchstr)
                 let tempstr = item[end-1 : end]
                 " special case for fanguo, which should be fan'guo
                 if tempstr == "gu" || tempstr == "nu" || tempstr == "ni"
-                    if has_key(qptable, matchstr[:-2])
+                    if has_key(s:quanpin_table, matchstr[:-2])
                         let i -= 1
                         let matchstr = matchstr[:-2]
                     endif
@@ -2899,12 +2899,12 @@ function! s:vimim_quanpin_transform(pinyin)
                     \ || (tempstr4 == "nong" || tempstr3 == "nou")
                     \ || (tempstr == "ga" || tempstr == "na")
                     \ || tempstr2 == "ier"
-                    if has_key(qptable, matchstr[:-2])
+                    if has_key(s:quanpin_table, matchstr[:-2])
                         let i -= 1
                         let matchstr = matchstr[:-2]
                     endif
                 endif
-                let pinyinstr .= "'" . qptable[matchstr]
+                let pinyinstr .= "'" . s:quanpin_table[matchstr]
                 let index += i
                 break
             elseif i == 1
@@ -2999,14 +2999,14 @@ function! s:vimim_set_shuangpin()
     \|| s:vimim_cloud =~ 'shuangpin'
         return
     endif
-    let s:vimim_imode_pinyin = 0
+    let s:imode_pinyin = 0
     let rules = s:vimim_shuangpin_generic()
     let chinese = ""
     let shuangpin = s:vimim_chinese('shuangpin')
     let keycode = "[0-9a-z']"
     if s:vimim_shuangpin == 'abc'
         let rules = s:vimim_shuangpin_abc(rules)
-        let s:vimim_imode_pinyin = 1
+        let s:imode_pinyin = 1
         let chinese = s:vimim_chinese('abc')
         let shuangpin = ""
     elseif s:vimim_shuangpin == 'ms'
@@ -3578,9 +3578,6 @@ function! s:vimim_set_cloud(im)
     if empty(cloud)
         let s:backend.cloud = {}
         return
-    endif
-    if  empty(s:vimim_imode_pinyin)
-        let s:vimim_imode_pinyin = 1
     endif
     let s:mycloud = 0
     let s:onekey_cloud = 1
@@ -4409,7 +4406,7 @@ if a:start
     endif
     let last_seen_nonsense_column  = copy(start_column)
     let last_seen_backslash_column = copy(start_column)
-    let nonsense = s:vimim_imode_pinyin>1 ? "[a-f0-9']" : "[0-9']"
+    let nonsense = s:vimim_onekey_is_tab>1 ? "[a-f0-9']" : "[0-9']"
     let all_digit = 1
     while start_column > 0
         if one_before =~# s:valid_key
