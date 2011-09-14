@@ -452,6 +452,7 @@ function! s:vimim_get_hjkl(keyboard)
     let poem = s:vimim_check_filereadable(keyboard)
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     let results = []
+    let sentence = ""
     if keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
@@ -470,13 +471,16 @@ function! s:vimim_get_hjkl(keyboard)
     elseif keyboard =~# 'u\d\d\d\d\d'
         " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
         let sentence = substitute(getreg('"'),'[\x00-\xff]','','g')
-        for chinese in split(sentence,'\zs')
-            let menu = s:vimim_cjk_extra_text(chinese) " todo fill up
-            call add(results, chinese . " " . menu)
-        endfor
     elseif ddddd > 0
-        for i in range(99)
-            call add(results, nr2char(ddddd+i))
+        for i in range(10)
+            let sentence .= nr2char(ddddd+i)
+        endfor
+    endif
+    if !empty(sentence)
+        for chinese in split(sentence,'\zs')
+            let menu  = s:vimim_cjk_extra_text(chinese)
+            let menu .= repeat(" ", 38-len(menu))
+            call add(results, chinese . " " . menu)
         endfor
     endif
     if !empty(results)
@@ -507,16 +511,15 @@ function! s:vimim_get_imode_results(keyboard)
     return results
 endfunction
 
-function! s:vimim_hjkl_rotation(matched_list)
-    let lines = a:matched_list
-    let max = max(map(copy(lines), 'strlen(v:val)')) + 1
+function! s:vimim_hjkl_rotation(lines)
+    let max = max(map(copy(a:lines), 'strlen(v:val)')) + 1
     let multibyte = 1
-    if match(lines,'\w') < 0
+    if match(a:lines,'\w') < 0
         " rotation makes more sense for cjk
         let multibyte = s:multibyte
     endif
     let results = []
-    for line in lines
+    for line in a:lines
         let spaces = ''
         let gap = (max-len(line))/multibyte
         if gap > 0
@@ -2234,7 +2237,7 @@ function! s:vimim_cjk_extra_text(chinese)
             let dddd    = s:vimim_digit_4corner>0 ? 2 : 1
             let digit   = s:space . get(values, dddd)
             let pinyin  = s:space . get(values, 3)
-            let english = s:space . join(values[4:-2])
+            let english = " " . join(values[4:-2])
             let unicode = unicode . digit . pinyin . english
         endif
     endif
@@ -3933,7 +3936,7 @@ endfunction
 
 function! s:vimim_get_cloud_all(keyboard)
     let results = []
-    for cloud in ['google', 'baidu', 'sogou', 'qq']
+    for cloud in s:cloud_defaults
         let start = localtime()
         let outputs = s:vimim_get_cloud(a:keyboard, cloud)
         call add(results, s:space)
@@ -3947,11 +3950,12 @@ function! s:vimim_get_cloud_all(keyboard)
         endif
         call add(results, title)
         if len(outputs) > 1+1+1+1
-            let outputs = &number<1 ? outputs[0:8] : outputs
+            let outputs = &number<1 ? outputs[0:9] : outputs
             let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
             call add(results, join(map(outputs,filter)))
         endif
     endfor
+    call add(results, s:space)
     call s:debug('info', 'cloud_results=', results)
     return results
 endfunction
@@ -4597,11 +4601,11 @@ function! s:vimim_popupmenu_list(matched_list)
                 let labeling = ""
             endif
             let complete_items["abbr"] = labeling . chinese
-            let complete_items["dup"] = 1
             let complete_items["menu"] = menu
         else
             let &pumheight = 0
         endif
+        let complete_items["dup"] = 1
         let complete_items["word"] = empty(chinese) ? s:space : chinese
         call add(popupmenu_list, complete_items)
     endfor
