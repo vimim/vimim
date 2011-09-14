@@ -2773,7 +2773,7 @@ function! s:vimim_check_filereadable(default)
 endfunction
 
 function! s:vimim_english(keyboard)
-    if empty(s:english_filename) || s:hjkl_m || s:hjkl_h
+    if empty(s:english_filename) || s:hjkl_m || s:hjkl_n
         return []
     endif
     " [sql] select english from vimim.txt
@@ -2835,12 +2835,17 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
     return []
 endfunction
 
-function! s:vimim_hjkl_partition(keyboard, hjkl_m)
+function! s:vimim_hjkl_partition(keyboard)
     let keyboard = a:keyboard
-    let two_tail = keyboard[-2:]
-    let last_third = keyboard[-3:-3]
-    let s:hjkl_m = a:hjkl_m ? 1 : s:hjkl_m
-    if s:hjkl_h      " redefine match: jsjsxx => ['jsjsx', 'jsjs']
+    if s:hjkl_m
+        let two_tail = keyboard[-2:]
+        let last_third = keyboard[-3:-3]
+        if s:hjkl_m % 2 && two_tail!="''"
+            let keyboard .= "''"          " sssss''
+        elseif last_third!="'"
+            let keyboard = keyboard[:-3]  " sssss
+        endif
+    elseif s:hjkl_h      " redefine match: jsjsxx => ['jsjsx', 'jsjs']
         let items = get(s:popupmenu_list,0)       " jsjs'xx
         let words = get(items, "word")            " jsjsxx
         let tail = len(substitute(words,'\L','','g'))       " xx
@@ -2853,12 +2858,6 @@ function! s:vimim_hjkl_partition(keyboard, hjkl_m)
         let tail = strpart(keyboard, len(head))   " sxx
         let keyboard = head . "'" . tail          " jsj'sxx
         let keyboard = s:vimim_quote_by_quote(keyboard)
-    elseif s:hjkl_m
-        if s:hjkl_m % 2
-            let keyboard .= "''"          " sssss''
-        elseif two_tail=="''" && last_third!="'"
-            let keyboard = keyboard[:-3]  " sssss
-        endif
     endif
     return keyboard
 endfunction
@@ -4466,7 +4465,7 @@ else
             return s:vimim_popupmenu_list(results)
         endif
         " [character] sssss => sssss'' => s'ssss''
-        let keyboard = s:vimim_hjkl_partition(keyboard,0)
+        let keyboard = s:vimim_hjkl_partition(keyboard)
         " [quote] quote_by_quote: wo'you'yi'ge'meng
         let keyboard = s:vimim_get_keyboard_but_quote_tail(keyboard)
         " [cjk] The cjk database works like swiss-army knife.
@@ -4519,7 +4518,7 @@ else
         endif
     endif
     if empty(results) && len(keyboard)==1 && keyboard =~ '\l'
-        let results = ["　"]
+        let results = split(join(split(s:mahjong),""),'\zs')
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
