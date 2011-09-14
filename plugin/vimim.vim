@@ -190,7 +190,6 @@ function! s:vimim_initialize_global()
     let s:vimimdefaults = []
     call add(G, "g:vimim_debug")
     call add(G, "g:vimim_chinese_input_mode")
-    call add(G, "g:vimim_backslash_close_pinyin")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_h_to_toggle")
     call add(G, "g:vimim_plugin_folder")
@@ -867,10 +866,8 @@ function! s:vimim_dictionary_punctuations()
     let s:punctuations['^'] = "……"
     let s:punctuations['_'] = "——"
     let s:evils = {}
-    if empty(s:vimim_backslash_close_pinyin)
-        let s:evils['\'] = "、"
-    endif
     if empty(s:vimim_latex_suite)
+        let s:evils['\'] = "、"
         let s:evils["'"] = "‘’"
         let s:evils['"'] = "“”"
     endif
@@ -881,8 +878,6 @@ function! s:vimim_punctuation_mapping()
         if empty(s:vimim_latex_suite)
             inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
             inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
-        endif
-        if empty(s:vimim_backslash_close_pinyin)
             sil!exe 'inoremap <Bslash> ' .
             \ '<C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . s:evils['\']
         endif
@@ -963,14 +958,6 @@ function! <SID>vimim_onekey_punctuation(key)
         let hjkl = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-function! <SID>vimim_onekey_omni_bslash_seamless()
-    let bslash = '\\'
-    if pumvisible() && empty(s:show_me_not)
-        let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
-    endif
-    sil!exe 'sil!return "' . bslash . '"'
 endfunction
 
 function! <SID>vimim_get_quote(type)
@@ -1879,6 +1866,9 @@ function! <SID>vimim_space()
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
+    elseif s:pattern_not_found
+        let s:pattern_not_found = 0
+        let space = " "
     elseif s:chinese_input_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:chinese_input_mode =~ 'onekey'
@@ -2427,9 +2417,15 @@ function! s:vimim_onekey_mapping()
     for _ in split("[]-=.,/?;'<>", '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
     endfor
-    if empty(s:vimim_backslash_close_pinyin)
-        inoremap <expr> <Bslash> <SID>vimim_onekey_omni_bslash_seamless()
+    inoremap <expr> <Bslash> <SID>vimim_onekey_omni_bslash_seamless()
+endfunction
+
+function! <SID>vimim_onekey_omni_bslash_seamless()
+    let bslash = '\\'
+    if pumvisible() && empty(s:show_me_not)
+        let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
     endif
+    sil!exe 'sil!return "' . bslash . '"'
 endfunction
 
 function! <SID>vimim_qwer_hitrun(key)
@@ -4339,6 +4335,7 @@ function! s:vimim_reset_before_anything()
     let s:onekey = 0
     let s:keyboard = ""
     let s:has_pumvisible = 0
+    let s:pattern_not_found = 0
     let s:popupmenu_list = []
 endfunction
 
@@ -4427,8 +4424,9 @@ if a:start
                     let all_digit = 0
                 endif
             endif
-        elseif one_before=='\' && s:vimim_backslash_close_pinyin>0
+        elseif one_before=='\'
             " do nothing for pinyin with leading backslash
+            let s:pattern_not_found = 1
             return last_seen_backslash_column
         else
             break
@@ -4538,6 +4536,7 @@ else
         return s:vimim_popupmenu_list(results)
     elseif s:onekey
         sil!call s:vimim_super_reset()
+        let s:pattern_not_found += 1
     endif
 return []
 endif
