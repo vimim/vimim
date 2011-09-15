@@ -253,7 +253,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = '/home/xma/hjkl'
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @V
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -867,20 +867,18 @@ function! s:vimim_dictionary_punctuations()
     let s:punctuations['_'] = "——"
     let s:evils = {}
     if empty(s:vimim_latex_suite)
-        let s:evils['\'] = "、"
+        let s:evils['|'] = "、"
         let s:evils["'"] = "‘’"
         let s:evils['"'] = "“”"
     endif
 endfunction
 
 function! s:vimim_punctuation_mapping()
-    if s:chinese_punctuation > 0
-        if empty(s:vimim_latex_suite)
-            inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
-            inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
-            sil!exe 'inoremap <Bslash> ' .
-            \ '<C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . s:evils['\']
-        endif
+    if s:chinese_punctuation > 0 && empty(s:vimim_latex_suite)
+        inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
+        inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
+        exe 'inoremap <Bar> ' .
+        \ '<C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . s:evils['|']
     else
         for _ in keys(s:evils)
             sil!exe 'iunmap '. _
@@ -908,7 +906,7 @@ function! <SID>vimim_chinese_punctuation_map(key)
     endif
     if a:key =~ "[;=-]"
         let yes = ''
-        if a:key == ";"
+        if a:key == ";"  " the 2nd choice
             let yes = '\<Down>\<C-Y>'
         elseif a:key == "="
             let s:pageup_pagedown = 1
@@ -921,7 +919,6 @@ function! <SID>vimim_chinese_punctuation_map(key)
         if a:key =~ "[][]"
             let key = s:vimim_square_bracket(a:key)
         endif
-        call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -955,6 +952,7 @@ function! <SID>vimim_onekey_punctuation(key)
         call s:vimim_last_one_quote(0)
     endif
     if hjkl == a:key
+        call g:vimim_reset_after_insert()
         let hjkl = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -972,8 +970,12 @@ function! <SID>vimim_get_quote(type)
     endif
     let pairs = split(s:evils[key], '\zs')
     if a:type == 1
-        let s:smart_single_quotes += 1
-        let quote .= get(pairs, s:smart_single_quotes % 2)
+        if s:onekey
+            let s:smart_single_quotes += 1
+            let quote .= get(pairs, s:smart_single_quotes % 2)
+        else
+            let quote = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
+        endif
     elseif a:type == 2
         let s:smart_double_quotes += 1
         let quote .= get(pairs, s:smart_double_quotes % 2)
@@ -1377,10 +1379,8 @@ function! s:vimim_square_bracket(key)
         let _     = key=="]" ? 0          : -1
         let left  = key=="]" ? "\<Left>"  : ""
         let right = key=="]" ? "\<Right>" : ""
-        if empty(s:show_me_not)
-            let backspace = '\<C-R>=g:vimim_bracket('._.')\<CR>'
-            let key = '\<C-Y>' . left . backspace . right
-        endif
+        let backspace = '\<C-R>=g:vimim_bracket('._.')\<CR>'
+        let key = '\<C-Y>' . left . backspace . right
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1428,7 +1428,6 @@ function! <SID>vimim_backspace()
     if pumvisible()
         let key = '\<C-E>\<BS>\<C-R>=g:vimim()\<CR>'
     endif
-    sil!call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1831,25 +1830,9 @@ function! s:vimim_onekey_action(space)
     endif
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
-    let two_before = current_line[col(".")-3]
-    if empty(s:ui.has_dot) && two_before !~ s:valid_key
-        let punctuations = copy(s:punctuations)
-        call extend(punctuations, s:evils)
-        if has_key(punctuations, one_before)
-            for char in keys(punctuations)
-                " no transfer for punctuation after punctuation
-                if two_before ==# char || two_before =~# '\u'
-                    return " "
-                endif
-            endfor
-            " transfer English punctuation to Chinese punctuation
-            let bs = punctuations[one_before]
-                if one_before == "'" | let bs = <SID>vimim_get_quote(1)
-            elseif one_before == '"' | let bs = <SID>vimim_get_quote(2)
-            endif
-            let onekey = "\<BS>" . bs
-            sil!exe 'sil!return "' . onekey . '"'
-        endif
+    let onekey = s:vimim_onekey_evil_action()
+    if !empty(onekey)
+        sil!exe 'sil!return "' . onekey . '"'
     endif
     let onekey = a:space ? " " : ""
     if one_before =~# s:valid_key
@@ -1857,6 +1840,33 @@ function! s:vimim_onekey_action(space)
             let onekey = s:vimim_get_right_space()
         endif
         let onekey .= g:vimim()
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+function! s:vimim_onekey_evil_action()
+    let current_line = getline(".")
+    let one_before = current_line[col(".")-2]
+    let two_before = current_line[col(".")-3]
+    if two_before =~ s:valid_key || !empty(s:ui.has_dot)
+        return ""
+    endif
+    let onekey = ""
+    let punctuations = copy(s:punctuations)
+    call extend(punctuations, s:evils)
+    if has_key(punctuations, one_before)
+        for char in keys(punctuations)
+            " no transfer for punctuation after punctuation
+            if two_before ==# char || two_before =~# '\u'
+                return " "
+            endif
+        endfor
+        " transfer English punctuation to Chinese punctuation
+        let bs = punctuations[one_before]
+            if one_before == "'" | let bs = <SID>vimim_get_quote(1)
+        elseif one_before == '"' | let bs = <SID>vimim_get_quote(2)
+        endif
+        let onekey = "\<BS>" . bs
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
