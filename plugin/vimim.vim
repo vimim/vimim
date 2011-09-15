@@ -446,9 +446,7 @@ endfunction
 function! s:vimim_get_hjkl(keyboard)
     let keyboard = a:keyboard
     let poem = s:vimim_check_filereadable(keyboard)
-    let uddddd = s:vimim_get_unicode_ddddd(keyboard)
     let results = []
-    let sentence = ""
     if !empty(poem)
         " [poem] play any entry in hjkl directories
         let results = s:vimim_readfile(poem)
@@ -467,17 +465,13 @@ function! s:vimim_get_hjkl(keyboard)
     elseif keyboard =~# 'u\d\d\d\d\d'
         " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
         let sentence = substitute(getreg('"'),'[\x00-\xff]','','g')
-    elseif uddddd > 0
-        for i in range(10)
-            let sentence .= nr2char(uddddd+i)
-        endfor
-    endif
-    if !empty(sentence)
-        for chinese in split(sentence,'\zs')
-            let menu  = s:vimim_cjk_extra_text(chinese)
-            let menu .= repeat(" ", 38-len(menu))
-            call add(results, chinese . " " . menu)
-        endfor
+        if !empty(sentence)
+            for chinese in split(sentence,'\zs')
+                let menu  = s:vimim_cjk_extra_text(chinese)
+                let menu .= repeat(" ", 38-len(menu))
+                call add(results, chinese . " " . menu)
+            endfor
+        endif
     endif
     if !empty(results)
         let s:show_me_not = 1
@@ -491,10 +485,17 @@ function! s:vimim_get_hjkl(keyboard)
     return results
 endfunction
 
-function! s:vimim_get_imode_results(keyboard)
+function! s:vimim_get_imode_umode(keyboard)
     let keyboard = a:keyboard
     let results = []
-    if keyboard =~# '^i' && s:imode_pinyin
+    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+    if ddddd
+        " [umode] magic u: 馬力uu => 39340
+        for i in range(99)
+            call add(results, nr2char(ddddd+i))
+        endfor
+    elseif keyboard =~# '^i' && s:imode_pinyin
+        " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
         elseif keyboard ==# 'i'  " 一i => 一二
@@ -1829,7 +1830,7 @@ function! s:vimim_onekey_action(space)
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
     let two_before = current_line[col(".")-3]
-    if empty(s:ui.has_dot) && two_before !~# s:valid_key
+    if empty(s:ui.has_dot) && two_before !~ s:valid_key
         let punctuations = copy(s:punctuations)
         call extend(punctuations, s:evils)
         if has_key(punctuations, one_before)
@@ -2142,7 +2143,7 @@ function! s:vimim_get_seamless(current_positions)
         return -1
     endif
     for char in split(snip, '\zs')
-        if char !~# s:valid_key
+        if char !~ s:valid_key
             return -1
         endif
     endfor
@@ -2188,7 +2189,7 @@ endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if keyboard =~# '^u\+$' " chinese umode: 馬力uu => 39340
+    if keyboard =~# '^u\+$'
         let char_before = s:vimim_get_char_before(keyboard)
         if empty(s:cjk_filename) && empty(char_before) || char_before=~'\w'
             let char_before = '一'
@@ -2775,7 +2776,7 @@ function! s:vimim_check_filereadable(default)
 endfunction
 
 function! s:vimim_english(keyboard)
-    if empty(s:english_filename) || s:hjkl_m || s:hjkl_n
+    if empty(s:english_filename)
         return []
     endif
     " [sql] select english from vimim.txt
@@ -4456,9 +4457,9 @@ else
     elseif s:keyboard =~ ','
         let keyboard = get(split(s:keyboard,","),0)
     endif
-    if empty(keyboard) || keyboard !~# s:valid_key
+    if empty(keyboard) || keyboard !~ s:valid_key
         return []
-    else
+    elseif empty(s:hjkl_m) && empty(s:hjkl_h)
         " [english] English cannot be ignored!
         let s:english_results = s:vimim_english(keyboard)
     endif
@@ -4467,8 +4468,7 @@ else
         " [game] turn menu 90 degree on hjkl_m
         let results = s:vimim_get_hjkl(keyboard)
         if empty(results)
-            " [imode] magic i: (1) English number (2) Chinese number
-            let results = s:vimim_get_imode_results(keyboard)
+            let results = s:vimim_get_imode_umode(keyboard)
         endif
         if !empty(results)
             return s:vimim_popupmenu_list(results)
@@ -4575,8 +4575,10 @@ function! s:vimim_popupmenu_list(matched_list)
                     let menu = get(pairs,0)
                 endif
             endif
-            if s:hjkl_h && s:hjkl_h%2 && len(chinese)==s:multibyte
-                let menu = s:vimim_cjk_extra_text(chinese)
+            if s:hjkl_h && s:hjkl_h % 2 
+                if len(chinese)==s:multibyte && empty(s:english_results)
+                    let menu = s:vimim_cjk_extra_text(chinese)
+                endif
             endif
             if empty(s:mycloud)
                 let tail = get(split(s:keyboard,","),1)
