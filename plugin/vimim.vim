@@ -282,12 +282,13 @@ function! s:vimim_egg_vimimvim()
     return map(copy(s:VimIM), filter)
 endfunction
 
-function! s:vimim_egg_vimimgame()
-    return split(s:mahjong)
-endfunction
-
 function! s:vimim_egg_vimimclouds()
     return s:vimim_get_cloud_all('woyouyigemeng')
+endfunction
+
+function! s:vimim_egg_vimimgame()
+    let mahjong = "春夏秋冬 梅兰竹菊 東南西北 中發白囍"
+    return split(mahjong)
 endfunction
 
 function! s:vimim_egg_vim()
@@ -460,8 +461,7 @@ function! s:vimim_get_hjkl_game(keyboard)
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
     elseif keyboard ==# "''"
-        " [game] plays mahjong at will
-        let results = split(s:mahjong)
+        let results = s:vimim_egg_vimimgame()
     elseif keyboard[-4:] ==# "''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
@@ -4724,7 +4724,6 @@ function! s:vimim_initialize_plugin()
     if !hasmapto("VimimOneKey")
         inoremap<unique><expr> <Plug>VimimOneKey g:vimim_onekey()
     endif
-    let s:mahjong = "春夏秋冬 梅兰竹菊 東南西北 中發白囍"
 endfunction
 
 sil!call s:vimim_initialize_local()
