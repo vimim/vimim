@@ -334,7 +334,7 @@ function! s:vimim_egg_vimim()
     let encoding = s:vimim_chinese('encoding') . s:colon
     call add(eggs, encoding . &encoding . s:space . &fileencodings)
     if has("gui_running")
-        let font = empty(&guifontwide) ? &guifont : &guifontwide
+        let font = len(&gfw) ? &gfw : len(&gfn) ? &gfn : &guicursor
         let option = s:vimim_chinese('font') . s:colon . font
         call add(eggs, option)
     endif
