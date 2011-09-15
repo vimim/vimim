@@ -433,7 +433,7 @@ function! s:vimim_get_keyboard_but_quote(keyboard)
         let keyboard = s:vimim_quote_by_quote(keyboard)
     elseif keyboard[-1:] == "'"  " one tail
         " [cloud] magic trailing quote to control cloud
-        let keyboard = s:vimim_last_one_quote(keyboard)
+        let keyboard = s:vimim_last_quote(keyboard)
     elseif keyboard =~ "'"
         " [local] wo'you'yi'ge'meng
         let keyboard = s:vimim_quote_by_quote(keyboard)
@@ -948,7 +948,7 @@ function! <SID>vimim_onekey_punctuation(key)
             let hjkl = '\<PageUp>'
         endif
     elseif hjkl == "'"   " cycle bb/gg/ss/00 clouds
-        call s:vimim_last_one_quote(0)
+        call s:vimim_last_quote(0)
     endif
     if hjkl == a:key
         call g:vimim_reset_after_insert()
@@ -1896,19 +1896,20 @@ endfunction
 
 function! <SID>vimim_space()
     " (1) <Space> after English (valid keys) => trigger keycode menu
-    " (2) <Space> after English punctuation  => Chinese punctuation
+    " (2) <Space> after English punctuation  => get Chinese punctuation
     " (3) <Space> after popup menu           => insert Chinese
     " (4) <Space> after pattern not found    => <Space>
     let space = " "
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
-    elseif s:chinese_mode =~ 'static'
-        let space = s:vimim_static_action(space)
-    elseif s:chinese_mode =~ 'onekey'
-        let space = s:vimim_onekey_action(1)
-    endif
-    if s:chinese_mode !~ 'dynamic'
+        call g:vimim_reset_after_insert()
+    elseif s:chinese_mode !~ 'dynamic'
+        if s:chinese_mode =~ 'static'
+            let space = s:vimim_static_action(space)
+        elseif s:chinese_mode =~ 'onekey'
+            let space = s:vimim_onekey_action(1)
+        endif
         let space .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -2430,13 +2431,8 @@ endfunction
 function! s:vimim_hjkl_partition(keyboard)
     let keyboard = a:keyboard
     if s:hjkl_m
-        if keyboard[-2:] == "''"  " two tail quote
-            let keyboard = substitute(keyboard,"'","",'g')
-        endif
-        if len(keyboard) < 2
-            let s:hjkl_m = 0
-        elseif s:hjkl_m % 2
-            let keyboard .= "''"  " sssss => sssss''
+        if s:hjkl_m % 2     " sssss => sssss''
+            let keyboard .= "''"
         endif
     elseif s:hjkl_h      " redefine match: jsjsxx => ['jsjsx','jsjs']
         let items = get(s:popupmenu_list,0)          " jsjs'xx
@@ -2455,7 +2451,18 @@ function! s:vimim_hjkl_partition(keyboard)
     return keyboard
 endfunction
 
-function! s:vimim_last_one_quote(keyboard)
+function! s:vimim_quote_by_quote(keyboard)
+    if !empty(s:ui.has_dot)
+        return a:keyboard
+    endif
+    let keyboards = split(a:keyboard,"'")
+    let head = get(keyboards,0)
+    let tail = join(keyboards[1:],"'")
+    let s:keyboard = head . "," . tail
+    return head
+endfunction
+
+function! s:vimim_last_quote(keyboard)
     " <apostrophe> double play in OneKey:
     "   (1) [insert] one trailing apostrophe => open cloud
     "   (2) [omni]   apostrophe switches to the next cloud
@@ -2469,17 +2476,6 @@ function! s:vimim_last_one_quote(keyboard)
         let s:onekey_cloud = 0
     endif
     return keyboard
-endfunction
-
-function! s:vimim_quote_by_quote(keyboard)
-    if !empty(s:ui.has_dot)
-        return a:keyboard
-    endif
-    let keyboards = split(a:keyboard,"'")
-    let head = get(keyboards,0)
-    let tail = join(keyboards[1:],"'")
-    let s:keyboard = head . "," . tail
-    return head
 endfunction
 
 function! s:vimim_get_head(keyboard, partition)
