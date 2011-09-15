@@ -496,7 +496,7 @@ function! s:vimim_get_imode_umode(keyboard)
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
-        elseif keyboard ==# 'i'  " 一i => 一二
+        elseif keyboard ==# 'ii'  " 一i => 一二
             let char_before = s:vimim_get_char_before(keyboard)
             let results = s:vimim_get_imode_chinese(char_before,1)
         elseif keyboard =~ '\d' && empty(s:english_results)
@@ -2176,13 +2176,15 @@ function! s:vimim_initialize_encoding()
 endfunction
 
 function! s:vimim_get_char_before(keyboard)
-    let start = col(".") -1 - s:multibyte * len(a:keyboard)
-    let byte_before = getline(".")[col(".")-len(a:keyboard)-1]
+    let keyboard = a:keyboard
+    let counts = keyboard=='ii' ? len(keyboard)-1 : len(keyboard)
+    let start = col(".") -1 - s:multibyte * counts 
+    let byte_before = getline(".")[col(".")- counts -1]
     let char_before = getline(".")[start : start+s:multibyte-1]
     if byte_before =~ '\s'
-        let char_before = a:keyboard[0:0]
+        let char_before = keyboard[0:0]
     elseif char_before =~ '\w'
-        let char_before = a:keyboard
+        let char_before = keyboard
     endif
     return char_before
 endfunction
