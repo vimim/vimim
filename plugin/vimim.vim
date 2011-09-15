@@ -2327,6 +2327,26 @@ function! s:vimim_cache()
     return results
 endfunction
 
+function! s:vimim_pageup_pagedown()
+    let matched_list = s:matched_list
+    let length = len(matched_list)
+    let one_page = &pumheight
+    if one_page < 1
+        let one_page = 9
+    endif
+    if s:one_row_menu
+        let one_page = 5
+    endif
+    if length > one_page
+        let page = s:pageup_pagedown * one_page
+        let partition = page<0 ? length+page : page
+        let B = matched_list[partition :]
+        let A = matched_list[: partition-1]
+        let matched_list = B + A
+    endif
+    return matched_list
+endfunction
+
 function! s:vimim_onekey_menu_format()
     " use 1234567890/qwertyuiop to control popup textwidth
     let lines = copy(s:matched_list)
@@ -2411,26 +2431,6 @@ function! s:vimim_cjk_digit_filter(chinese)
         return 0
     endif
     return a:chinese
-endfunction
-
-function! s:vimim_pageup_pagedown()
-    let matched_list = s:matched_list
-    let length = len(matched_list)
-    let one_page = &pumheight
-    if one_page < 1
-        let one_page = 9
-    endif
-    if s:one_row_menu
-        let one_page = 5
-    endif
-    if length > one_page
-        let page = s:pageup_pagedown * one_page
-        let partition = page<0 ? length+page : page
-        let B = matched_list[partition :]
-        let A = matched_list[: partition-1]
-        let matched_list = B + A
-    endif
-    return matched_list
 endfunction
 
 function! s:vimim_hjkl_partition(keyboard)
