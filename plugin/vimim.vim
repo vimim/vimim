@@ -213,7 +213,7 @@ function! s:vimim_initialize_global()
     let s:quantifiers = {}
     let s:pumheight = &pumheight
     let s:pumheight_saved = &pumheight
-    let s:chinese_input_mode = 'onekey'
+    let s:chinese_mode = 'onekey'
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
     endif
@@ -1015,7 +1015,7 @@ endfunction
 
 function! s:vimim_wubi_auto_input_on_the_4th(keyboard)
     let keyboard = a:keyboard
-    if s:chinese_input_mode =~ 'dynamic'
+    if s:chinese_mode =~ 'dynamic'
         if len(keyboard) > 4
             let start = 4*((len(keyboard)-1)/4)
             let keyboard = strpart(keyboard, start)
@@ -1219,7 +1219,7 @@ endfunction
 
 function! IMName()
     " This function is for user-defined 'stl' 'statusline'
-    if s:chinese_input_mode =~ 'onekey'
+    if s:chinese_mode =~ 'onekey'
         if pumvisible()
             return s:vimim_statusline()
         endif
@@ -1312,7 +1312,7 @@ function! s:vimim_label_on()
     else
         let labels = range(10)
         let abcd_list = split(s:abcd, '\zs')
-        if s:chinese_input_mode =~ 'onekey'
+        if s:chinese_mode =~ 'onekey'
             let labels += abcd_list
             call remove(labels, match(labels,"'"))
         endif
@@ -1407,7 +1407,7 @@ endfunction
 
 function! <SID>vimim_esc()
     let key = '\<Esc>'
-    if s:chinese_input_mode =~ 'onekey'
+    if s:chinese_mode =~ 'onekey'
         sil!call g:vimim_stop()
     elseif pumvisible()
         let column_start = s:start_column_before
@@ -1429,26 +1429,23 @@ function! <SID>vimim_backspace()
 endfunction
 
 function! <SID>vimim_enter()
-    " <Enter> triple play for OneKey and static mode:
+    " <Enter> double play
     "  (1) single <Enter> after English ==> seamless
-    "  (2) double <Enter> after English ==> <Space>
-    "  (3) <Enter> after Space/Chinese  ==> <Enter>
+    "  (2) otherwise, or double <Enter> ==> <Enter>
     let one_before = getline(".")[col(".")-2]
-    if one_before =~ s:valid_key
+    let key = ""
+    if pumvisible()
+        let key = "\<C-E>"
+        let s:smart_enter = 1
+    elseif one_before =~ s:valid_key
         let s:smart_enter += 1
+    else
+        let s:smart_enter = 0
     endif
-    if s:chinese_input_mode =~ 'dynamic'
-        if one_before =~ s:valid_key
-            let s:smart_enter = 1
-        else
-            let s:smart_enter = 3
-        endif
-    endif
-    let key = pumvisible() ? "\<C-E>" : ""
     if s:smart_enter == 1
         let s:seamless_positions = getpos(".")
     else
-        let key = s:smart_enter==2 ? " " : "\<CR>"
+        let key = "\<CR>"
         let s:smart_enter = 0
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -1803,7 +1800,7 @@ function! g:vimim_onekey()
     " (2)<OneKey> in OneKey mode => stop  OneKey
     " (3)<OneKey> in omni window => stop  OneKey and print out menu
     let onekey = ''
-    let s:chinese_input_mode = 'onekey'
+    let s:chinese_mode = 'onekey'
     let space_before = getline(".")[col(".")-2]
     let space_before = space_before=~'\s' || empty(space_before) ? 1 : 0
     sil!call s:vimim_backend_initialization()
@@ -1825,6 +1822,9 @@ function! g:vimim_onekey()
 endfunction
 
 function! s:vimim_onekey_action(space)
+    if s:seamless_positions == getpos(".")
+        return " "
+    endif
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
     let two_before = current_line[col(".")-3]
@@ -1854,14 +1854,6 @@ function! s:vimim_onekey_action(space)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! g:vimim_pattern_not_found()
-    if s:pattern_not_found
-        let s:pattern_not_found = 0
-        return ' '
-    endif
-    return ''
-endfunction
-
 function! <SID>vimim_space()
     " (1) <Space> after English (valid keys) => trigger keycode menu
     " (2) <Space> after English punctuation  => Chinese punctuation
@@ -1871,16 +1863,15 @@ function! <SID>vimim_space()
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
-    elseif s:chinese_input_mode =~ 'static'
+    elseif s:chinese_mode =~ 'static'
         let space = s:vimim_static_action(space)
-    elseif s:chinese_input_mode =~ 'onekey'
+    elseif s:chinese_mode =~ 'onekey'
         let right_arrow = s:vimim_get_right_arrow()
         let space = right_arrow . s:vimim_onekey_action(1)
     endif
-    if s:chinese_input_mode !~ 'dynamic'
-        let space .= '\<C-R>=g:vimim_pattern_not_found()\<CR>'
+    if s:chinese_mode !~ 'dynamic'
+        let space .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
     endif
-    sil!call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
@@ -1995,7 +1986,7 @@ function! <SID>VimIMSwitch()
     if len(s:ui.frontends) < 2
         return <SID>ChineseMode()
     endif
-    let s:chinese_input_mode = s:vimim_chinese_input_mode
+    let s:chinese_mode = s:vimim_chinese_input_mode
     let custom_im_list = []
     if s:vimim_toggle_list =~ ","
         let custom_im_list = split(s:vimim_toggle_list, ",")
@@ -2046,7 +2037,7 @@ function! s:vimim_chinese_mode(switch)
             :redraw!
         endif
     else
-        let s:chinese_input_mode = s:vimim_chinese_input_mode
+        let s:chinese_mode = s:vimim_chinese_input_mode
         let s:ui.root = get(s:frontends,0)
         let s:ui.im = get(s:frontends,1)
         call s:vimim_set_statusline()
@@ -2073,7 +2064,7 @@ function! s:vimim_chinesemode_action()
         call s:vimim_punctuation_mapping()
     endif
     let action = ""
-    if s:chinese_input_mode =~ 'dynamic'
+    if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
         if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
@@ -2097,7 +2088,7 @@ function! s:vimim_chinesemode_action()
                 endif
             endfor
         endif
-    elseif s:chinese_input_mode =~ 'static'
+    elseif s:chinese_mode =~ 'static'
         let map_list = empty(s:vimim_latex_suite) ? s:Az_list : s:az_list
         for char in map_list
             sil!exe 'inoremap <silent> ' . char .
@@ -2127,7 +2118,9 @@ function! s:vimim_get_seamless(current_positions)
     let seamless_bufnum = s:seamless_positions[0]
     let seamless_lnum = s:seamless_positions[1]
     let seamless_off = s:seamless_positions[3]
-    if seamless_bufnum != a:current_positions[0]
+    let smart_enter = s:chinese_mode=~'dynamic' ? 1 : s:smart_enter
+    if empty(smart_enter)
+    \|| seamless_bufnum != a:current_positions[0]
     \|| seamless_lnum != a:current_positions[1]
     \|| seamless_off != a:current_positions[3]
         let s:seamless_positions = []
@@ -2178,7 +2171,7 @@ endfunction
 function! s:vimim_get_char_before(keyboard)
     let keyboard = a:keyboard
     let counts = keyboard=='ii' ? len(keyboard)-1 : len(keyboard)
-    let start = col(".") -1 - s:multibyte * counts 
+    let start = col(".") -1 - s:multibyte * counts
     let byte_before = getline(".")[col(".")- counts -1]
     let char_before = getline(".")[start : start+s:multibyte-1]
     if byte_before =~ '\s'
@@ -4344,7 +4337,6 @@ endfunction
 
 function! s:vimim_reset_before_omni()
     let s:search = 0
-    let s:smart_enter = 0
     let s:show_me_not = 0
     let s:english_results = []
 endfunction
@@ -4355,9 +4347,14 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_l = 0    " toggle label
     let s:hjkl_m = 0    " toggle cjjp/cjjp''
     let s:hjkl_n = 0    " toggle simplified/traditional
+    let s:smart_enter = 0
     let s:matched_list = []
     let s:pageup_pagedown = 0
     let &pumheight = s:pumheight
+    if s:pattern_not_found
+        let s:pattern_not_found = 0
+        return ' '
+    endif
     return ""
 endfunction
 
@@ -4382,7 +4379,7 @@ endfunction
 
 function! s:vimim_imap_off()
     let recycles = range(0,9) + s:valid_keys
-    if s:chinese_input_mode!~'dynamic' && empty(s:vimim_latex_suite)
+    if s:chinese_mode!~'dynamic' && empty(s:vimim_latex_suite)
         let recycles += s:AZ_list
     endif
     let recycles += keys(s:evils) + keys(s:punctuations)
@@ -4495,7 +4492,7 @@ else
         endif
     endif
     " [shuangpin] support 6 major shuangpin
-    if !empty(s:vimim_shuangpin) && s:has_pumvisible < 1
+    if !empty(s:vimim_shuangpin) && empty(s:has_pumvisible)
         let keyboard = s:vimim_shuangpin_transform(keyboard)
         let s:keyboard = keyboard
     endif
