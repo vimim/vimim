@@ -253,7 +253,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @V
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -422,20 +422,19 @@ function! s:vimim_egg_vimim()
     return map(eggs, 'v:val . " "')
 endfunction
 
-function! s:vimim_get_keyboard_but_quote_tail(keyboard)
+function! s:vimim_get_keyboard_but_quote(keyboard)
     let keyboard = a:keyboard
     if !empty(s:ui.has_dot) || keyboard =~ '\d'
         return keyboard
     endif
-    let one_tail = keyboard[-1:]
-    let two_tail = keyboard[-2:]
-    let last_third = keyboard[-3:-3]
-    if two_tail == "''" && last_third != "'"  " sssss'' => s'ssss''
-        let keyboard = s:vimim_last_two_quote(keyboard)
-    elseif one_tail == "'"
+    if keyboard[-2:] == "''"     " two tail  sssss''
+        let keyboard = substitute(keyboard,"'","",'g')
+        let keyboard = join(split(keyboard,'\zs'),"'")
+        let keyboard = s:vimim_quote_by_quote(keyboard)
+    elseif keyboard[-1:] == "'"  " one tail
         " [cloud] magic trailing quote to control cloud
         let keyboard = s:vimim_last_one_quote(keyboard)
-    elseif keyboard =~ "'" && empty(s:onekey_cloud)
+    elseif keyboard =~ "'"
         " [local] wo'you'yi'ge'meng
         let keyboard = s:vimim_quote_by_quote(keyboard)
     endif
@@ -2431,10 +2430,8 @@ endfunction
 function! s:vimim_hjkl_partition(keyboard)
     let keyboard = a:keyboard
     if s:hjkl_m
-        let two_tail = keyboard[-2:]
-        let last_third = keyboard[-3:-3]
-        if two_tail == "''" && last_third != "'"
-            let keyboard = keyboard[:-3]
+        if keyboard[-2:] == "''"  " two tail quote
+            let keyboard = substitute(keyboard,"'","",'g')
         endif
         if len(keyboard) < 2
             let s:hjkl_m = 0
@@ -2472,21 +2469,6 @@ function! s:vimim_last_one_quote(keyboard)
         let s:onekey_cloud = 0
     endif
     return keyboard
-endfunction
-
-function! s:vimim_last_two_quote(keyboard)
-    let keyboard = a:keyboard
-    let two_tail = keyboard[-2:]
-    if len(keyboard) < 3 || two_tail != "''"
-        return keyboard
-    endif
-    let head = keyboard[:0]
-    let tail = keyboard[1:]
-    let s:keyboard = head . "," . tail
-    if len(tail) < 3
-        let s:keyboard = head
-    endif
-    return head
 endfunction
 
 function! s:vimim_quote_by_quote(keyboard)
@@ -4478,8 +4460,7 @@ else
         " [english] English cannot be ignored!
         let s:english_results = s:vimim_english(keyboard)
     endif
-    " [game] hjkl_m for rotation hjkl_l/hjkl_h for reverse
-    if s:onekey
+    if s:onekey " [game] play with hjkl
         let results = s:vimim_get_hjkl_game(keyboard)
         if !empty(results)
             return s:vimim_popupmenu_list(results)
@@ -4495,10 +4476,10 @@ else
     elseif s:onekey  " [onekey] play with nothing but onekey
         let results = s:vimim_get_imode_umode(keyboard)
         if empty(results)
-            " [character] sssss => sssss'' => s'ssss''
+            " [character]  sssss'' => s's's's's
             let keyboard = s:vimim_hjkl_partition(keyboard)
             " [quote] quote_by_quote: wo'you'yi'ge'meng
-            let keyboard = s:vimim_get_keyboard_but_quote_tail(keyboard)
+            let keyboard = s:vimim_get_keyboard_but_quote(keyboard)
             " [cjk] The cjk database works like swiss-army knife.
             let keyboard2 = s:vimim_onekey_cjk(keyboard)
             let results = s:vimim_cjk_match(keyboard2)
@@ -4536,9 +4517,9 @@ else
         return s:vimim_popupmenu_list(results)
     endif
     if s:onekey  " [the last resort] try both cjk and cloud
-        let keyboard = s:vimim_last_two_quote(keyboard)
-        let results = s:vimim_cjk_match(keyboard)     " sssss''
-        if empty(results) && empty(s:english_results) " cloud forever
+        let keyboard = s:vimim_get_keyboard_but_quote(keyboard."''")
+        let results = s:vimim_cjk_match(keyboard)        " forced sssss''
+        if empty(results) && empty(s:english_results)    " forced cloud
             let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
     endif
