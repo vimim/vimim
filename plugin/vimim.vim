@@ -1877,7 +1877,9 @@ function! <SID>vimim_space()
         let right_arrow = s:vimim_get_right_arrow()
         let space = right_arrow . s:vimim_onekey_action(1)
     endif
-    let space .= '\<C-R>=g:vimim_pattern_not_found()\<CR>'
+    if s:chinese_input_mode !~ 'dynamic'
+        let space .= '\<C-R>=g:vimim_pattern_not_found()\<CR>'
+    endif
     sil!call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . space . '"'
 endfunction
@@ -4527,7 +4529,7 @@ else
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
-    elseif s:onekey
+    else
         let s:pattern_not_found = 1
     endif
 return []
