@@ -2270,21 +2270,18 @@ function! s:vimim_cache()
             endif
             return results
         endif
-        if s:show_me_not
-            if s:hjkl_h && len(s:matched_list)
-                let s:hjkl_h -= 1
+        if empty(s:show_me_not) && s:hjkl_l
+            let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
+        elseif len(s:matched_list)
+            if s:hjkl_h
+                let s:hjkl_h = 0
                 for line in s:matched_list
                     let oneline = join(reverse(split(line,'\zs')),'')
                     call add(results, oneline)
                 endfor
             elseif s:hjkl_l
-                let s:hjkl_l -= 1
+                let s:hjkl_l = 0
                 let results = reverse(copy(s:matched_list))
-            endif
-        elseif s:hjkl_l
-            let &pumheight = s:pumheight
-            if s:hjkl_l % 2
-                let &pumheight = 0
             endif
         endif
     endif
