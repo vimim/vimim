@@ -255,6 +255,7 @@ endfunction
 function! s:vimim_initialize_local()
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
+        :redir @V
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
@@ -429,7 +430,7 @@ function! s:vimim_get_keyboard_but_quote_tail(keyboard)
     let one_tail = keyboard[-1:]
     let two_tail = keyboard[-2:]
     let last_third = keyboard[-3:-3]
-    if two_tail == "''" && last_third != "'"
+    if two_tail == "''" && last_third != "'"  " sssss'' => s'ssss''
         let keyboard = s:vimim_last_two_quote(keyboard)
     elseif one_tail == "'"
         " [cloud] magic trailing quote to control cloud
@@ -441,9 +442,10 @@ function! s:vimim_get_keyboard_but_quote_tail(keyboard)
     return keyboard
 endfunction
 
-function! s:vimim_get_hjkl(keyboard)
+function! s:vimim_get_hjkl_game(keyboard)
     let keyboard = a:keyboard
     let poem = s:vimim_check_filereadable(keyboard)
+    let unname_register = getreg('"')
     let results = []
     if !empty(poem)
         " [poem] play any entry in hjkl directories
@@ -454,26 +456,28 @@ function! s:vimim_get_hjkl(keyboard)
     elseif keyboard ==# "''"
         " [game] plays mahjong at will
         let results = split(s:mahjong)
-    elseif keyboard ==# "'''"
-        " [hjkl] display buffer inside the omni window
-        let results = split(getreg('"'), '\n')
     elseif keyboard[-4:] ==# "''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif keyboard =~# 'u\d\d\d\d\d'
-        " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
-        let sentence = substitute(getreg('"'),'[\x00-\xff]','','g')
-        if !empty(sentence)
-            for chinese in split(sentence,'\zs')
-                let menu  = s:vimim_cjk_extra_text(chinese)
-                let menu .= repeat(" ", 38-len(menu))
-                call add(results, chinese . " " . menu)
-            endfor
+    elseif len(unname_register) > 8
+        if keyboard ==# "'''"
+            " [hjkl] display buffer inside the omni window
+            let results = split(unname_register, '\n')
+        elseif keyboard =~# 'u\d\d\d\d\d'
+            " [visual] " vimim_visual_ctrl6: highlighted multiple cjk
+            let line = substitute(unname_register,'[\x00-\xff]','','g')
+            if !empty(line)
+                for chinese in split(line,'\zs')
+                    let menu  = s:vimim_cjk_extra_text(chinese)
+                    let menu .= repeat(" ", 38-len(menu))
+                    call add(results, chinese . " " . menu)
+                endfor
+            endif
         endif
     endif
     if !empty(results)
         let s:show_me_not = 1
-        if s:hjkl_m % 4 > 0
+        if s:hjkl_m % 4
             let &pumheight = 0
             for i in range(s:hjkl_m%4)
                 let results = s:vimim_hjkl_rotation(results)
@@ -1414,7 +1418,7 @@ function! <SID>vimim_esc()
         let column_end = col(".") - 1
         let range = column_end - column_start
         let key = '\<C-E>' . repeat("\<BS>", range)
-        sil!call s:vimim_super_reset()
+        sil!call g:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1424,7 +1428,7 @@ function! <SID>vimim_backspace()
     if pumvisible()
         let key = '\<C-E>\<BS>\<C-R>=g:vimim()\<CR>'
     endif
-    sil!call s:vimim_super_reset()
+    sil!call g:vimim_reset_after_insert()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1849,33 +1853,15 @@ function! s:vimim_onekey_action(space)
     endif
     let onekey = a:space ? " " : ""
     if one_before =~# s:valid_key
-        let onekey = g:vimim()
+        if a:space
+            let onekey = s:vimim_get_right_space()
+        endif
+        let onekey .= g:vimim()
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! <SID>vimim_space()
-    " (1) <Space> after English (valid keys) => trigger keycode menu
-    " (2) <Space> after English punctuation  => Chinese punctuation
-    " (3) <Space> after popup menu           => insert Chinese
-    " (4) <Space> after pattern not found    => <Space>
-    let space = " "
-    if pumvisible()
-        let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
-        let s:has_pumvisible = 1
-    elseif s:chinese_mode =~ 'static'
-        let space = s:vimim_static_action(space)
-    elseif s:chinese_mode =~ 'onekey'
-        let right_arrow = s:vimim_get_right_arrow()
-        let space = right_arrow . s:vimim_onekey_action(1)
-    endif
-    if s:chinese_mode !~ 'dynamic'
-        let space .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
-    endif
-    sil!exe 'sil!return "' . space . '"'
-endfunction
-
-function! s:vimim_get_right_arrow()
+function! s:vimim_get_right_space()
     let current_line = getline(".")
     let current_column = col(".")-1
     let start_column = current_column
@@ -1891,12 +1877,32 @@ function! s:vimim_get_right_arrow()
     endif
     let right_arrow = ""
     if n > 0 && n < 72
-        let right_arrow = repeat("\<Right>", n)
+        let right_arrow = repeat("\<Right>",n)
     endif
     if current_line[current_column] == "'"
         let right_arrow .= '\<Delete>'
     endif
-    return right_arrow
+    sil!exe 'sil!return "' . right_arrow . '"'
+endfunction
+
+function! <SID>vimim_space()
+    " (1) <Space> after English (valid keys) => trigger keycode menu
+    " (2) <Space> after English punctuation  => Chinese punctuation
+    " (3) <Space> after popup menu           => insert Chinese
+    " (4) <Space> after pattern not found    => <Space>
+    let space = " "
+    if pumvisible()
+        let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
+        let s:has_pumvisible = 1
+    elseif s:chinese_mode =~ 'static'
+        let space = s:vimim_static_action(space)
+    elseif s:chinese_mode =~ 'onekey'
+        let space = s:vimim_onekey_action(1)
+    endif
+    if s:chinese_mode !~ 'dynamic'
+        let space .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
+    endif
+    sil!exe 'sil!return "' . space . '"'
 endfunction
 
 function! g:vimim_menu_to_clip()
@@ -1921,60 +1927,79 @@ function! s:vimim_popup_word()
     return substitute(chinese,'\w','','g')
 endfunction
 
-function! s:vimim_last_one_quote(keyboard)
-    " <apostrophe> double play in OneKey:
-    "   (1) [insert] one trailing apostrophe => open cloud
-    "   (2) [omni]   apostrophe switches to the next cloud
-    let keyboard = a:keyboard[:-2]
-    let s:onekey_cloud += 1
-    if s:onekey_cloud > 1
-        let clouds = split(s:vimim_cloud,',')
-        let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
+function! s:vimim_onekey_mapping()
+    if empty(s:cjk_filename)
+        for _ in s:qwer
+            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hitrun("'._.'")'
+        endfor
+    else
+        for _ in s:qwer
+            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hjkl("'._.'")'
+        endfor
     endif
-    if empty(s:vimim_check_http_executable())
-        let s:onekey_cloud = 0
+    if empty(s:vimim_latex_suite)
+        for _ in s:AZ_list
+            exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps("'._.'")'
+        endfor
     endif
-    return keyboard
+    for _ in split('xhjklmn', '\zs')
+        exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
+    endfor
+    for _ in split("[]-=.,/?;'<>", '\zs')
+        exe 'inoremap<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
+    endfor
+    inoremap <expr> <Bslash> <SID>vimim_onekey_omni_bslash_seamless()
 endfunction
 
-function! s:vimim_last_two_quote(keyboard)
-    let two_tail = a:keyboard[-2:]
-    if two_tail != "''"
-        return a:keyboard
+function! <SID>vimim_onekey_omni_bslash_seamless()
+    let bslash = '\\'
+    if pumvisible() && empty(s:show_me_not)
+        let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
     endif
-    let head = a:keyboard[:0]
-    let tail = a:keyboard[1:]
-    let s:keyboard = head . "," . tail
-    if len(tail) < 3
-        let s:keyboard = head
-    endif
-    return head
+    sil!exe 'sil!return "' . bslash . '"'
 endfunction
 
-function! s:vimim_quote_by_quote(keyboard)
-    if !empty(s:ui.has_dot)
-        return a:keyboard
-    endif
-    let keyboards = split(a:keyboard,"'")
-    let head = get(keyboards,0)
-    let tail = join(keyboards[1:],"'")
-    let s:keyboard = head . "," . tail
-    return head
-endfunction
-
-function! s:vimim_get_head(keyboard, partition)
-    if a:partition < 0
-        return a:keyboard
-    endif
-    let head = a:keyboard[0 : a:partition-1]
-    if s:keyboard !~ ','
-        let s:keyboard = head
-        let tail = a:keyboard[a:partition : -1]
-        if !empty(tail)
-            let s:keyboard = head . "," . tail
+function! <SID>vimim_qwer_hitrun(key)
+    let key = a:key
+    if pumvisible()
+        let digit = match(s:qwer, key) - 1
+        if digit < 0
+            let digit = 9
+        endif
+        let down = repeat("\<Down>", digit)
+        let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
+        let key = down . yes
+        let s:has_pumvisible = 1
+        if s:onekey
+            call g:vimim_stop()
         endif
     endif
-    return head
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_qwer_hjkl(key)
+    let key = a:key
+    if pumvisible()
+        let digit = match(s:qwer, key)
+        if s:vimim_digit_4corner < 1
+            if digit < 1
+                let digit = 5  " qwert/12345 for five strokes
+            elseif digit > 5
+                let digit -= 5 " yuiop/12345 for five strokes
+            endif
+        endif
+        let s:hjkl_x = s:show_me_not ? digit : s:hjkl_x . digit
+        let key = '\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_onekey_caps(key)
+    let key = a:key
+    if pumvisible()
+        let key = tolower(key) . '\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ============================================= }}}
@@ -2359,7 +2384,7 @@ function! s:vimim_cjk_digit_filter(chinese)
             continue
         else
             let values = split(get(s:cjk_lines, line))
-            let dddd = s:vimim_digit_4corner>0 ? 2 : 1
+            let dddd = s:vimim_digit_4corner ? 2 : 1
             let digit = get(values, dddd)
             let digit_head .= digit[:0]
             let digit_tail  = digit[1:]
@@ -2393,79 +2418,91 @@ function! s:vimim_pageup_pagedown()
     return matched_list
 endfunction
 
-function! s:vimim_onekey_mapping()
-    if empty(s:cjk_filename)
-        for _ in s:qwer
-            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hitrun("'._.'")'
-        endfor
-    else
-        for _ in s:qwer
-            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hjkl("'._.'")'
-        endfor
-    endif
-    if empty(s:vimim_latex_suite)
-        for _ in s:AZ_list
-            exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps("'._.'")'
-        endfor
-    endif
-    for _ in split('xhjklmn', '\zs')
-        exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
-    endfor
-    for _ in split("[]-=.,/?;'<>", '\zs')
-        exe 'inoremap<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
-    endfor
-    inoremap <expr> <Bslash> <SID>vimim_onekey_omni_bslash_seamless()
-endfunction
-
-function! <SID>vimim_onekey_omni_bslash_seamless()
-    let bslash = '\\'
-    if pumvisible() && empty(s:show_me_not)
-        let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
-    endif
-    sil!exe 'sil!return "' . bslash . '"'
-endfunction
-
-function! <SID>vimim_qwer_hitrun(key)
-    let key = a:key
-    if pumvisible()
-        let digit = match(s:qwer, key) - 1
-        if digit < 0
-            let digit = 9
+function! s:vimim_hjkl_partition(keyboard)
+    let keyboard = a:keyboard
+    if s:hjkl_m
+        let two_tail = keyboard[-2:]
+        let last_third = keyboard[-3:-3]
+        if two_tail == "''" && last_third != "'"
+            let keyboard = keyboard[:-3]
         endif
-        let down = repeat("\<Down>", digit)
-        let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
-        let key = down . yes
-        let s:has_pumvisible = 1
-        if s:onekey
-            call g:vimim_stop()
+        if len(keyboard) < 2
+            let s:hjkl_m = 0
+        elseif s:hjkl_m % 2
+            let keyboard .= "''"  " sssss => sssss''
         endif
+    elseif s:hjkl_h      " redefine match: jsjsxx => ['jsjsx','jsjs']
+        let items = get(s:popupmenu_list,0)          " jsjs'xx
+        let words = get(items, "word")               " jsjsxx
+        let tail = len(substitute(words,'\L','','g'))    " xx
+        let head = keyboard[: -tail-1]  " 'jsjsxx'[:-3]='jsjs'
+        let candidates = s:vimim_more_pinyin_candidates(head)
+        let head = get(candidates, 0)                " jsj
+        if empty(head)
+            let head = keyboard[0:0]
+        endif
+        let tail = strpart(keyboard, len(head))      " sxx
+        let keyboard = head . "'" . tail             " jsj'sxx
+        let keyboard = s:vimim_quote_by_quote(keyboard)
     endif
-    sil!exe 'sil!return "' . key . '"'
+    return keyboard
 endfunction
 
-function! <SID>vimim_qwer_hjkl(key)
-    let key = a:key
-    if pumvisible()
-        let digit = match(s:qwer, key)
-        if s:vimim_digit_4corner < 1
-            if digit < 1
-                let digit = 5  " qwert/12345 for five strokes
-            elseif digit > 5
-                let digit -= 5 " yuiop/12345 for five strokes
-            endif
-        endif
-        let s:hjkl_x = s:show_me_not ? digit : s:hjkl_x . digit
-        let key = '\<C-R>=g:vimim()\<CR>'
+function! s:vimim_last_one_quote(keyboard)
+    " <apostrophe> double play in OneKey:
+    "   (1) [insert] one trailing apostrophe => open cloud
+    "   (2) [omni]   apostrophe switches to the next cloud
+    let keyboard = a:keyboard[:-2]
+    let s:onekey_cloud += 1
+    if s:onekey_cloud > 1
+        let clouds = split(s:vimim_cloud,',')
+        let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
     endif
-    sil!exe 'sil!return "' . key . '"'
+    if empty(s:vimim_check_http_executable())
+        let s:onekey_cloud = 0
+    endif
+    return keyboard
 endfunction
 
-function! <SID>vimim_onekey_caps(key)
-    let key = a:key
-    if pumvisible()
-        let key = tolower(key) . '\<C-R>=g:vimim()\<CR>'
+function! s:vimim_last_two_quote(keyboard)
+    let keyboard = a:keyboard
+    let two_tail = keyboard[-2:]
+    if len(keyboard) < 3 || two_tail != "''"
+        return keyboard
     endif
-    sil!exe 'sil!return "' . key . '"'
+    let head = keyboard[:0]
+    let tail = keyboard[1:]
+    let s:keyboard = head . "," . tail
+    if len(tail) < 3
+        let s:keyboard = head
+    endif
+    return head
+endfunction
+
+function! s:vimim_quote_by_quote(keyboard)
+    if !empty(s:ui.has_dot)
+        return a:keyboard
+    endif
+    let keyboards = split(a:keyboard,"'")
+    let head = get(keyboards,0)
+    let tail = join(keyboards[1:],"'")
+    let s:keyboard = head . "," . tail
+    return head
+endfunction
+
+function! s:vimim_get_head(keyboard, partition)
+    if a:partition < 0
+        return a:keyboard
+    endif
+    let head = a:keyboard[0 : a:partition-1]
+    if s:keyboard !~ ','
+        let s:keyboard = head
+        let tail = a:keyboard[a:partition : -1]
+        if !empty(tail)
+            let s:keyboard = head . "," . tail
+        endif
+    endif
+    return head
 endfunction
 
 function! <SID>vimim_onekey_hjkl(key)
@@ -2831,37 +2868,6 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
         return results
     endif
     return []
-endfunction
-
-function! s:vimim_hjkl_partition(keyboard)
-    let keyboard = a:keyboard
-    if s:hjkl_m
-        if len(keyboard) < 2
-            let s:html_m = 0
-        else
-            let two_tail = keyboard[-2:]
-            let last_third = keyboard[-3:-3]
-            if s:hjkl_m % 2 && two_tail != "''"
-                let keyboard .= "''"          " => sssss''
-            elseif last_third != "'"          " => sssss
-                let keyboard = keyboard[:-3]
-            endif
-        endif
-    elseif s:hjkl_h      " redefine match: jsjsxx => ['jsjsx','jsjs']
-        let items = get(s:popupmenu_list,0)          " jsjs'xx
-        let words = get(items, "word")               " jsjsxx
-        let tail = len(substitute(words,'\L','','g'))    " xx
-        let head = keyboard[: -tail-1]  " 'jsjsxx'[:-3]='jsjs'
-        let candidates = s:vimim_more_pinyin_candidates(head)
-        let head = get(candidates, 0)                " jsj
-        if empty(head)
-            let head = keyboard[0:0]
-        endif
-        let tail = strpart(keyboard, len(head))      " sxx
-        let keyboard = head . "'" . tail             " jsj'sxx
-        let keyboard = s:vimim_quote_by_quote(keyboard)
-    endif
-    return keyboard
 endfunction
 
 function! s:vimim_quanpin_transform(pinyin)
@@ -4464,7 +4470,7 @@ else
     endif
     " [game] hjkl_m for rotation hjkl_l/hjkl_h for reverse
     if s:onekey
-        let results = s:vimim_get_hjkl(keyboard)
+        let results = s:vimim_get_hjkl_game(keyboard)
         if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
@@ -4472,7 +4478,7 @@ else
     " [mycloud] get chunmeng from mycloud local or www
     if !empty(s:mycloud)
         let results = s:vimim_get_mycloud_plugin(keyboard)
-        if !empty(len(results))
+        if !empty(results)
             let s:show_extra_menu = 1
             return s:vimim_popupmenu_list(results)
         endif
@@ -4487,7 +4493,7 @@ else
             let keyboard2 = s:vimim_onekey_cjk(keyboard)
             let results = s:vimim_cjk_match(keyboard2)
         endif
-        if !empty(len(results))
+        if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -4504,7 +4510,7 @@ else
             let cloud = get(s:frontends,1)
         endif
         let results = s:vimim_get_cloud(keyboard, cloud)
-        if !empty(len(results)) && s:keyboard !~ ','
+        if !empty(results) && s:keyboard !~ ','
             let s:keyboard = keyboard
         endif
     endif
@@ -4521,15 +4527,15 @@ else
     endif
     if s:onekey  " [the last resort] try both cjk and cloud
         let keyboard = s:vimim_last_two_quote(keyboard)
-        let results = s:vimim_cjk_match(keyboard)     " char by char: ssss
+        let results = s:vimim_cjk_match(keyboard)     " sssss''
         if empty(results) && empty(s:english_results) " cloud forever
             let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
     endif
-    if !empty(len(results))
-        return s:vimim_popupmenu_list(results)
-    else
+    if empty(results)
         let s:pattern_not_found = 1
+    else
+        return s:vimim_popupmenu_list(results)
     endif
 return []
 endif
@@ -4572,14 +4578,14 @@ function! s:vimim_popupmenu_list(matched_list)
                 endif
             endif
             if empty(s:mycloud)
+                let tail = get(split(s:keyboard,","),1)
+                if !empty(tail)
+                    let chinese .= tail
+                endif
                 if s:hjkl_h && s:hjkl_h % 2
                     if len(chinese)==s:multibyte && empty(s:english_results)
                         let menu = s:vimim_cjk_extra_text(chinese)
                     endif
-                endif
-                let tail = get(split(s:keyboard,","),1)
-                if !empty(tail)
-                    let chinese .= tail
                 endif
             endif
             if s:vimim_one_row_menu
