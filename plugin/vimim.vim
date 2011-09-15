@@ -934,7 +934,9 @@ function! <SID>vimim_onekey_punctuation(key)
     if !pumvisible()
         return hjkl
     endif
-    if hjkl == ';'
+    if hjkl == "'"   " cycle bb/gg/ss/00 clouds
+        call s:vimim_last_quote(0)
+    elseif hjkl == ';'
         let hjkl = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
     elseif hjkl =~ "[][]"
         let hjkl = s:vimim_square_bracket(hjkl)
@@ -943,22 +945,19 @@ function! <SID>vimim_onekey_punctuation(key)
     elseif hjkl =~ "[/?]"
         let hjkl = s:vimim_menu_search(hjkl)
     elseif hjkl =~ "[=.]"
-        if &pumheight > 0
+        if &pumheight
             let s:pageup_pagedown = 1
         else
             let hjkl = '\<PageDown>'
         endif
     elseif hjkl =~ "[-,]"
-        if &pumheight > 0
+        if &pumheight
             let s:pageup_pagedown = -1
         else
             let hjkl = '\<PageUp>'
         endif
-    elseif hjkl == "'"   " cycle bb/gg/ss/00 clouds
-        call s:vimim_last_quote(0)
     endif
     if hjkl == a:key
-        call g:vimim_reset_after_insert()
         let hjkl = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
@@ -2339,7 +2338,7 @@ function! s:vimim_pageup_pagedown()
     endif
     if length > one_page
         let page = s:pageup_pagedown * one_page
-        let partition = page<0 ? length+page : page
+        let partition = page ? page : length+page
         let B = matched_list[partition :]
         let A = matched_list[: partition-1]
         let matched_list = B + A
