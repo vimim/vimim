@@ -394,8 +394,6 @@ function! s:vimim_egg_vimim()
         if s:vimim_cloud > -1 && empty(s:onekey_cloud)
             let input .= s:vimim_chinese(s:cloud_default)
             let input .= s:vimim_chinese('cloud')
-        elseif len(s:vimim_mycloud) > 1
-            let input .= s:vimim_chinese('mycloud')
         endif
     endif
     call add(eggs, input)
@@ -2271,9 +2269,7 @@ function! s:vimim_cache()
             endif
             return results
         endif
-        if empty(s:show_me_not) && s:hjkl_l
-            let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
-        elseif len(s:matched_list)
+        if s:show_me_not
             if s:hjkl_h
                 let s:hjkl_h = 0
                 for line in s:matched_list
@@ -2284,6 +2280,8 @@ function! s:vimim_cache()
                 let s:hjkl_l = 0
                 let results = reverse(copy(s:matched_list))
             endif
+        elseif s:hjkl_l
+            let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
         endif
     endif
     if !empty(s:pageup_pagedown)
@@ -4423,7 +4421,7 @@ if a:start
                     let all_digit = 0
                 endif
             endif
-        elseif one_before == '\'  " do nothing if leading backslash found
+        elseif one_before == '\' " do nothing if leading backslash found
             let s:pattern_not_found = 1
             return last_seen_backslash_column
         else
@@ -4463,30 +4461,31 @@ else
         " [english] English cannot be ignored!
         let s:english_results = s:vimim_english(keyboard)
     endif
-    " [onekey] play with nothing but OneKey
+    " [game] hjkl_m for rotation hjkl_l/hjkl_h for reverse
     if s:onekey
-        " [game] turn menu 90 degree on hjkl_m
         let results = s:vimim_get_hjkl(keyboard)
-        if empty(results)
-            let results = s:vimim_get_imode_umode(keyboard)
-        endif
         if !empty(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-        " [character] sssss => sssss'' => s'ssss''
-        let keyboard = s:vimim_hjkl_partition(keyboard)
-        " [quote] quote_by_quote: wo'you'yi'ge'meng
-        let keyboard = s:vimim_get_keyboard_but_quote_tail(keyboard)
-        " [cjk] The cjk database works like swiss-army knife.
-        let keyboard2 = s:vimim_onekey_cjk(keyboard)
-        let results = s:vimim_cjk_match(keyboard2)
-        if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
     endif
     " [mycloud] get chunmeng from mycloud local or www
     if !empty(s:mycloud)
         let results = s:vimim_get_mycloud_plugin(keyboard)
+        if !empty(len(results))
+            let s:show_extra_menu = 1
+            return s:vimim_popupmenu_list(results)
+        endif
+    elseif s:onekey  " [onekey] play with nothing but onekey
+        let results = s:vimim_get_imode_umode(keyboard)
+        if empty(results)
+            " [character] sssss => sssss'' => s'ssss''
+            let keyboard = s:vimim_hjkl_partition(keyboard)
+            " [quote] quote_by_quote: wo'you'yi'ge'meng
+            let keyboard = s:vimim_get_keyboard_but_quote_tail(keyboard)
+            " [cjk] The cjk database works like swiss-army knife.
+            let keyboard2 = s:vimim_onekey_cjk(keyboard)
+            let results = s:vimim_cjk_match(keyboard2)
+        endif
         if !empty(len(results))
             return s:vimim_popupmenu_list(results)
         endif
@@ -4519,20 +4518,16 @@ else
     if !empty(results) && get(results,0) !~ 'None\|0'
         return s:vimim_popupmenu_list(results)
     endif
-    if s:onekey   " [the last resort] try both cjk and cloud
+    if s:onekey  " [the last resort] try both cjk and cloud
         let keyboard = s:vimim_last_two_quote(keyboard)
         let results = s:vimim_cjk_match(keyboard)     " char by char: ssss
         if empty(results) && empty(s:english_results) " cloud forever
             let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
-        if empty(results) && len(keyboard) == 1
-            let results = split(join(split(s:mahjong),""),'\zs')
-        endif
     endif
     if !empty(len(results))
         return s:vimim_popupmenu_list(results)
     elseif s:onekey
-        sil!call s:vimim_super_reset()
         let s:pattern_not_found = 1
     endif
 return []
@@ -4575,21 +4570,19 @@ function! s:vimim_popupmenu_list(matched_list)
                     let menu = get(pairs,0)
                 endif
             endif
-            if s:hjkl_h && s:hjkl_h % 2 
-                if len(chinese)==s:multibyte && empty(s:english_results)
-                    let menu = s:vimim_cjk_extra_text(chinese)
-                endif
-            endif
             if empty(s:mycloud)
+                if s:hjkl_h && s:hjkl_h % 2
+                    if len(chinese)==s:multibyte && empty(s:english_results)
+                        let menu = s:vimim_cjk_extra_text(chinese)
+                    endif
+                endif
                 let tail = get(split(s:keyboard,","),1)
                 if !empty(tail)
                     let chinese .= tail
                 endif
-            elseif empty(s:vimim_one_row_menu)
-                let menu = get(split(s:keyboard,","),0)
-                let menu = get(split(menu,"_"),0)
             endif
             if s:vimim_one_row_menu
+                let menu = ""
                 let abbr = label . "." . chinese
                 call add(popupmenu_list_one_row, abbr)
             endif
