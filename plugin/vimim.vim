@@ -48,13 +48,6 @@ scriptencoding utf-8
 let b:loaded_vimim = 1
 let s:plugin = expand("<sfile>:p:h")
 
-function! s:vimim_frontend_initialization()
-    sil!call s:vimim_set_shuangpin()
-    sil!call s:vimim_set_keycode()
-    sil!call s:vimim_set_special_im_property()
-    sil!call s:vimim_set_omni_color()
-endfunction
-
 function! s:vimim_backend_initialization()
     if exists("s:vimim_backend_initialization")
         return
@@ -81,6 +74,7 @@ function! s:vimim_backend_initialization()
 endfunction
 
 function! s:vimim_initialize_session()
+    let s:one_row_menu = 0
     let s:imode_pinyin = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -205,8 +199,9 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
-    let s:im_toggle = 0
+    let s:onekey = 0
     let s:onekey_cloud = 0
+    let s:im_toggle = 0
     let s:frontends = []
     let s:loops = {}
     let s:numbers = {}
@@ -428,6 +423,10 @@ function! s:vimim_get_keyboard_but_quote(keyboard)
         return keyboard
     endif
     if keyboard[-2:] == "''"     " two tail  sssss''
+        let head = keyboard[:-3]
+        if len(head) == 1
+            return head
+        endif
         let keyboard = substitute(keyboard,"'","",'g')
         let keyboard = join(split(keyboard,'\zs'),"'")
         let keyboard = s:vimim_quote_by_quote(keyboard)
@@ -439,6 +438,14 @@ function! s:vimim_get_keyboard_but_quote(keyboard)
         let keyboard = s:vimim_quote_by_quote(keyboard)
     endif
     return keyboard
+endfunction
+
+function! s:vimim_quote_by_quote(keyboard)
+    let keyboards = split(a:keyboard,"'")
+    let head = get(keyboards,0)
+    let tail = join(keyboards[1:],"'")
+    let s:keyboard = head . "," . tail
+    return head
 endfunction
 
 function! s:vimim_get_hjkl_game(keyboard)
@@ -998,7 +1005,7 @@ function! s:vimim_get_valid_im_name(im)
     return im
 endfunction
 
-function! s:vimim_set_special_im_property()
+function! s:vimim_set_special_property()
     if s:backend[s:ui.root][s:ui.im].name =~# "quote"
         let s:ui.has_dot = 2      " has apostrophe in datafile
     endif
@@ -1196,7 +1203,7 @@ function! s:vimim_set_omni_color()
     if s:vimim_custom_color > 0
         call g:vimim_default_omni_color()
     endif
-    if s:vimim_custom_color > 1 || s:vimim_one_row_menu
+    if s:vimim_custom_color > 1 || s:one_row_menu
         highlight!      PmenuSel NONE
         highlight! link PmenuSel NONE
     endif
@@ -1310,14 +1317,12 @@ function! s:vimim_get_chinese_im()
     return input_style
 endfunction
 
-function! s:vimim_label_on()
+function! s:vimim_set_omni_label()
     let labels = range(1,5)
-    if s:vimim_one_row_menu
-        let s:abcd = join(labels,'')
-    else
+    if empty(s:one_row_menu)
         let labels = range(10)
         let abcd_list = split(s:abcd, '\zs')
-        if s:chinese_mode =~ 'onekey'
+        if s:onekey
             let labels += abcd_list
             call remove(labels, match(labels,"'"))
         endif
@@ -1339,7 +1344,7 @@ function! <SID>vimim_abcdvfgsz_1234567890_label(key)
         let yes = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let key = down . yes
         let s:has_pumvisible = 1
-        if s:onekey > 0 && a:key =~ '\d'
+        if s:onekey && a:key =~ '\d'
             call g:vimim_stop()
         else
             call g:vimim_reset_after_insert()
@@ -1458,7 +1463,7 @@ function! s:vimim_get_labeling(label)
     if s:onekey
         if a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
-            if s:onekey_cloud > 0
+            if s:onekey_cloud
                 " onekey label bb for cloud Baidu
                 " onekey label gg for cloud Google
                 " onekey label ss for cloud Sogou
@@ -1814,10 +1819,10 @@ function! g:vimim_onekey()
     elseif s:vimim_onekey_is_tab && space_before
         let onekey = '\t'
     else
-        sil!call s:vimim_frontend_initialization()
-        sil!call s:vimim_onekey_mapping()
-        sil!call s:vimim_start()
         let s:onekey = 1
+        let s:one_row_menu = 0
+        sil!call s:vimim_start()
+        sil!call s:vimim_onekey_mapping()
         let onekey = s:vimim_onekey_action(0)
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -2072,6 +2077,7 @@ function! s:vimim_chinese_mode(switch)
             :redraw!
         endif
     else
+        let s:onekey = 0
         let s:chinese_mode = s:vimim_chinese_input_mode
         let s:ui.root = get(s:frontends,0)
         let s:ui.im = get(s:frontends,1)
@@ -2093,7 +2099,6 @@ let s:VimIM += [" ====  mode: static     ==== {{{"]
 
 function! s:vimim_chinesemode_action()
     sil!call s:vimim_start()
-    sil!call s:vimim_frontend_initialization()
     if s:vimim_chinese_punctuation > -1
         inoremap <expr> <C-^> <SID>vimim_punctuation_toggle()
         call s:vimim_punctuation_mapping()
@@ -2415,7 +2420,7 @@ function! s:vimim_pageup_pagedown()
     if one_page < 1
         let one_page = 9
     endif
-    if s:vimim_one_row_menu
+    if s:one_row_menu
         let one_page = 5
     endif
     if length > one_page
@@ -2449,17 +2454,6 @@ function! s:vimim_hjkl_partition(keyboard)
         let keyboard = s:vimim_quote_by_quote(keyboard)
     endif
     return keyboard
-endfunction
-
-function! s:vimim_quote_by_quote(keyboard)
-    if !empty(s:ui.has_dot)
-        return a:keyboard
-    endif
-    let keyboards = split(a:keyboard,"'")
-    let head = get(keyboards,0)
-    let tail = join(keyboards[1:],"'")
-    let s:keyboard = head . "," . tail
-    return head
 endfunction
 
 function! s:vimim_last_quote(keyboard)
@@ -3694,6 +3688,9 @@ function! s:vimim_get_cloud(keyboard, cloud)
     endtry
     if !empty(results) && empty(s:english_results)
         let s:cloud_cache[cloud][keyboard] = results
+        if s:keyboard !~ ','
+            let s:keyboard = keyboard
+        endif
     endif
     return results
 endfunction
@@ -4264,7 +4261,7 @@ function! s:vimim_initialize_i_setting()
     let s:ruler       = &ruler
 endfunction
 
-function! s:vimim_setting_on()
+function! s:vimim_set_vim()
     set imdisable
     set iminsert=0
     set completeopt=menuone
@@ -4272,15 +4269,17 @@ function! s:vimim_setting_on()
     set nolazyredraw
     set noshowmatch
     set noruler
-    if empty(&pumheight) || &pumheight > 9 || s:vimim_one_row_menu
-        let &pumheight = s:vimim_one_row_menu ? 5 : len(s:abcd)
-        let s:pumheight = &pumheight
+    let s:one_row_menu = 0
+    if empty(s:vimim_one_row_menu) && empty(s:onekey)
+        let s:one_row_menu = 1
     endif
+    let &pumheight = s:one_row_menu==1 ? 5 : 10
+    let s:pumheight = &pumheight
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
 
-function! s:vimim_setting_off()
+function! s:vimim_restore_vim()
     let &cpo         = s:cpo
     let &omnifunc    = s:omnifunc
     let &completeopt = s:completeopt
@@ -4296,9 +4295,13 @@ endfunction
 
 function! s:vimim_start()
     sil!call s:vimim_plugin_conflict_fix_on()
-    sil!call s:vimim_setting_on()
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_label_on()
+    sil!call s:vimim_set_vim()
+    sil!call s:vimim_set_shuangpin()
+    sil!call s:vimim_set_keycode()
+    sil!call s:vimim_set_special_property()
+    sil!call s:vimim_set_omni_color()
+    sil!call s:vimim_set_omni_label()
     inoremap <expr> <BS>    <SID>vimim_backspace()
     inoremap <expr> <Space> <SID>vimim_space()
     inoremap <expr> <Esc>   <SID>vimim_esc()
@@ -4306,7 +4309,7 @@ function! s:vimim_start()
 endfunction
 
 function! g:vimim_stop()
-    sil!call s:vimim_setting_off()
+    sil!call s:vimim_restore_vim()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_imap_off()
     sil!call s:vimim_plugin_conflict_fix_off()
@@ -4321,7 +4324,6 @@ function! s:vimim_super_reset()
 endfunction
 
 function! s:vimim_reset_before_anything()
-    let s:onekey = 0
     let s:keyboard = ""
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
@@ -4372,6 +4374,7 @@ function! g:vimim_menu_select()
 endfunction
 
 function! s:vimim_imap_off()
+    let s:onekey = 0
     let recycles = range(0,9) + s:valid_keys
     if s:chinese_mode!~'dynamic' && empty(s:vimim_latex_suite)
         let recycles += s:AZ_list
@@ -4497,9 +4500,9 @@ else
             let cloud = get(s:frontends,1)
         endif
         let results = s:vimim_get_cloud(keyboard, cloud)
-        if !empty(results) && s:keyboard !~ ','
-            let s:keyboard = keyboard
-        endif
+      " if !empty(results) && s:keyboard !~ ','
+      "     let s:keyboard = keyboard
+      " endif
     endif
     if empty(results)
         " [wubi] support auto insert on the 4th
@@ -4575,7 +4578,7 @@ function! s:vimim_popupmenu_list(matched_list)
                     endif
                 endif
             endif
-            if s:vimim_one_row_menu
+            if s:one_row_menu
                 let menu = ""
                 let abbr = label . "." . chinese
                 call add(popupmenu_list_one_row, abbr)
@@ -4597,8 +4600,8 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:onekey
         let s:popupmenu_list = popupmenu_list
     endif
-    let height = 5*s:vimim_one_row_menu
-    if height && empty(s:show_me_not) && len(popupmenu_list)>1
+    if s:one_row_menu && empty(s:show_me_not) && len(popupmenu_list)>1
+        let height = 5
         let one_list = popupmenu_list_one_row
         if len(one_list) > height
             let one_list = popupmenu_list_one_row[0 : height-1]
