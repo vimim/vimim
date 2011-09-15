@@ -248,7 +248,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = '/home/xma/hjkl'
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @V
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -1966,7 +1966,7 @@ endfunction
 
 function! <SID>vimim_onekey_omni_bslash_seamless()
     let bslash = '\\'
-    if pumvisible() && empty(s:show_me_not)
+    if pumvisible()
         let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
     endif
     sil!exe 'sil!return "' . bslash . '"'
@@ -4272,7 +4272,7 @@ function! s:vimim_set_vim()
         let s:one_row_menu = 0
     endif
     let &pumheight = s:one_row_menu==1 ? 5 : 10
-    let s:pumheight = &pumheight
+    let s:pumheight = copy(&pumheight)
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
@@ -4537,8 +4537,8 @@ function! s:vimim_popupmenu_list(matched_list)
         let s:matched_list = lines
     endif
     let label = 1
+    let one_list = []
     let popupmenu_list = []
-    let popupmenu_list_one_row = []
     let keyboard = join(split(s:keyboard,","),"")
     if len(keyboard) == 1 && !has_key(s:cjk_cache,keyboard)
         let s:cjk_cache[keyboard] = lines
@@ -4570,8 +4570,8 @@ function! s:vimim_popupmenu_list(matched_list)
                 if !empty(tail)
                     let chinese .= tail
                 endif
-                if s:hjkl_h && s:hjkl_h % 2
-                    if len(chinese)==s:multibyte && empty(s:english_results)
+                if s:hjkl_h && s:hjkl_h%2 && empty(s:english_results)
+                    if len(chinese)==s:multibyte
                         let menu = s:vimim_cjk_extra_text(chinese)
                     endif
                 endif
@@ -4579,7 +4579,7 @@ function! s:vimim_popupmenu_list(matched_list)
             if s:one_row_menu
                 let menu = ""
                 let abbr = label . "." . chinese
-                call add(popupmenu_list_one_row, abbr)
+                call add(one_list, abbr)
             endif
             let labeling = printf('%2s ', s:vimim_get_labeling(label))
             if s:onekey && len(lines) < 2
@@ -4597,34 +4597,39 @@ function! s:vimim_popupmenu_list(matched_list)
     endfor
     if s:onekey
         let s:popupmenu_list = popupmenu_list
+    elseif s:one_row_menu && len(popupmenu_list) > 1
+        let popupmenu_list = s:vimim_one_row(one_list, popupmenu_list)
     endif
-    if s:one_row_menu && empty(s:show_me_not) && len(popupmenu_list)>1
-        let height = 5
-        let one_list = popupmenu_list_one_row
-        if len(one_list) > height
-            let one_list = popupmenu_list_one_row[0 : height-1]
+    return popupmenu_list
+endfunction
+
+function! s:vimim_one_row(one_list, popupmenu_list)
+    let height = 5
+    let one_list = a:one_list
+    if len(one_list) > height
+        let one_list = one_list[:height-1]
+    endif
+    let popupmenu_list = a:popupmenu_list
+    let cursor_gps = 1.0 * (virtcol(".") % &columns) / &columns
+    let onerow_gps = 1.0 * len(join(one_list)) / &columns
+    if cursor_gps < 0.72 && onerow_gps < 0.92
+        let start = 1
+        let display = 0
+        let line1 = line("w$") - line(".")
+        let line2 = line("w$") - line("w0")
+        if line1 < height+2 && line2 > &lines-height- 2
+            let start = 0
+            let display = height-1
         endif
-        let cursor_gps = 1.0 * (virtcol(".") % &columns) / &columns
-        let onerow_gps = 1.0 * len(join(one_list)) / &columns
-        if cursor_gps < 0.72 && onerow_gps < 0.92
-            let start = 1
-            let display = 0
-            let line1 = line("w$") - line(".")
-            let line2 = line("w$") - line("w0")
-            if line1 < height+2 && line2 > &lines-height- 2
-                let start = 0
-                let display = height-1
-            endif
-            if display < len(popupmenu_list)
-                let popupmenu_list[display].abbr = join(one_list)
-            endif
-            let empty_lines = range(start, start+height-2)
-            for i in empty_lines
-                if i < len(popupmenu_list)
-                    let popupmenu_list[i].abbr = s:space
-                endif
-            endfor
+        if display < len(popupmenu_list)
+            let popupmenu_list[display].abbr = join(one_list)
         endif
+        let empty_lines = range(start, start+height-2)
+        for i in empty_lines
+            if i < len(popupmenu_list)
+                let popupmenu_list[i].abbr = s:space
+            endif
+        endfor
     endif
     return popupmenu_list
 endfunction
