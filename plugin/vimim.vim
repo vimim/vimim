@@ -188,13 +188,13 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_plugin_folder")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_latex_suite")
-    call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_onekey_is_tab")
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
     call add(G, "g:vimim_cloud")
     call s:vimim_set_global_default(G, 0)
     let G = []
+    call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_custom_color")
@@ -1819,7 +1819,6 @@ function! g:vimim_onekey()
         let onekey = '\t'
     else
         let s:onekey = 1
-        let s:one_row_menu = 0
         sil!call s:vimim_start()
         sil!call s:vimim_onekey_mapping()
         let onekey = s:vimim_onekey_action(0)
@@ -4268,9 +4267,9 @@ function! s:vimim_set_vim()
     set nolazyredraw
     set noshowmatch
     set noruler
-    let s:one_row_menu = 0
-    if empty(s:vimim_one_row_menu) && empty(s:onekey)
-        let s:one_row_menu = 1
+    let s:one_row_menu = 1
+    if empty(s:vimim_one_row_menu) || s:onekey
+        let s:one_row_menu = 0
     endif
     let &pumheight = s:one_row_menu==1 ? 5 : 10
     let s:pumheight = &pumheight
