@@ -35,8 +35,8 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 " "VimIM Usage"
 "  (1) play with cloud, without datafile, with python or wget/curl
 "      open vim, type i, type <C-\> to open; type <C-\> to close
-"  (2) play with OneKey, with cjk standard file installed:
-"      open vim, type i, type sssss <C-6>, <Space>, 6, <Space> ...
+"  (2) play with OneKey
+"      open vim, type i, type sssss <C-6>, m, type alphabetical label
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -248,7 +248,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @V
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -455,7 +455,7 @@ function! s:vimim_get_hjkl_game(keyboard)
     let unname_register = getreg('"')
     let results = []
     if !empty(poem)
-        " [poem] play any entry in hjkl directories
+        " [poem] play any entry in the hjkl directory
         let results = s:vimim_readfile(poem)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
@@ -1436,8 +1436,8 @@ endfunction
 
 function! <SID>vimim_enter()
     " <Enter> double play
-    "  (1) single <Enter> after English ==> seamless
-    "  (2) otherwise, or double <Enter> ==> <Enter>
+    "  (1) single <Enter> after English => seamless
+    "  (2) otherwise, or double <Enter> => <Enter>
     let one_before = getline(".")[col(".")-2]
     let key = ""
     if pumvisible()
@@ -1459,7 +1459,7 @@ endfunction
 
 function! <SID>vimim_backslash()
     " <backslash> double play
-    "   (1) [insert] disable omni window 
+    "   (1) [insert] disable omni window
     "   (2) [omni]   insert Chinese and remove Space before
     let bslash = '\\'
     if pumvisible()
@@ -4457,7 +4457,7 @@ else
         " [english] English cannot be ignored!
         let s:english_results = s:vimim_english(keyboard)
     endif
-    if s:onekey " [game] play with hjkl
+    if s:onekey      " play with hjkl game
         let results = s:vimim_get_hjkl_game(keyboard)
         if !empty(results)
             return s:vimim_popupmenu_list(results)
@@ -4470,7 +4470,7 @@ else
             let s:show_extra_menu = 1
             return s:vimim_popupmenu_list(results)
         endif
-    elseif s:onekey  " [onekey] play with nothing but onekey
+    elseif s:onekey  " play with nothing but onekey
         let results = s:vimim_get_imode_umode(keyboard)
         if empty(results)
             " [character]  sssss'' => s's's's's
