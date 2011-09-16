@@ -199,7 +199,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
-    let s:onekey = 0
     let s:onekey_cloud = 0
     let s:im_toggle = 0
     let s:frontends = []
@@ -1839,6 +1838,7 @@ function! g:vimim_onekey()
     elseif s:vimim_onekey_is_tab && space_before
         let onekey = '\t'
     else
+        sil!call s:vimim_super_reset()
         let s:onekey = 1
         sil!call s:vimim_start()
         sil!call s:vimim_onekey_mapping()
@@ -2084,7 +2084,6 @@ function! s:vimim_chinese_mode(switch)
             :redraw!
         endif
     else
-        let s:onekey = 0
         let s:chinese_mode = s:vimim_chinese_input_mode
         let s:ui.root = get(s:frontends,0)
         let s:ui.im = get(s:frontends,1)
@@ -2105,6 +2104,7 @@ let s:VimIM += [" ====  mode: static     ==== {{{"]
 " =================================================
 
 function! s:vimim_chinesemode_action()
+    sil!call s:vimim_super_reset()
     sil!call s:vimim_start()
     if s:vimim_chinese_punctuation > -1
         inoremap <expr> <C-^> <SID>vimim_punctuation_toggle()
@@ -2649,7 +2649,7 @@ function! s:vimim_cjk_match(keyboard)
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
-        elseif keyboard =~# '^\l' && s:onekey > 2  " nothing but cjk
+        elseif keyboard =~# '^\l'
             " cjk multiple-char-list without frequency: huan2hai2
             " support all cases: /huan /hai /yet /huan2 /hai2
             let grep = '[ 0-9]' . keyboard . '[0-9]'
@@ -4302,7 +4302,6 @@ endfunction
 
 function! s:vimim_start()
     sil!call s:vimim_plugin_conflict_fix_on()
-    sil!call s:vimim_super_reset()
     sil!call s:vimim_set_vim()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
@@ -4333,6 +4332,7 @@ endfunction
 
 function! s:vimim_reset_before_anything()
     let s:keyboard = ""
+    let s:onekey = 0
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
     let s:pattern_not_found = 0
@@ -4382,7 +4382,6 @@ function! g:vimim_menu_select()
 endfunction
 
 function! s:vimim_imap_off()
-    let s:onekey = 0
     let keys = range(0,9) + s:valid_keys
     if s:chinese_mode!~'dynamic' && empty(s:vimim_latex_suite)
         let keys += s:AZ_list
