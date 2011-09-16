@@ -4539,15 +4539,16 @@ endif
 endfunction
 
 function! s:vimim_popupmenu_list(matched_list)
-    let keyboard = join(split(s:keyboard,","),"")
-    let lines = s:english_results
-    if get(a:matched_list,0) != keyboard
-        let lines += a:matched_list
+    let matched_list = a:matched_list
+    if len(matched_list) < 2 && get(matched_list,0) !~ '\W'
+        let matched_list = []
     endif
+    let lines = s:english_results + matched_list
     if empty(lines) || type(lines) != type([])
         return []
     else
         let s:matched_list = lines
+        let keyboard = join(split(s:keyboard,","),"")
         if len(keyboard) == 1 && !has_key(s:cjk_cache,keyboard)
             let s:cjk_cache[keyboard] = lines
         endif
