@@ -199,7 +199,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
-    let s:onekey_cloud = 0
     let s:im_toggle = 0
     let s:frontends = []
     let s:loops = {}
@@ -387,7 +386,7 @@ function! s:vimim_egg_vimim()
             let input .=  im . s:space
         endif
         call add(eggs, style . toggle)
-        if s:vimim_cloud > -1 && empty(s:onekey_cloud)
+        if s:vimim_cloud > -1 && s:onekey < 2
             let input .= s:vimim_chinese(s:cloud_default)
             let input .= s:vimim_chinese('cloud')
         endif
@@ -430,8 +429,9 @@ function! s:vimim_get_keyboard_but_quote(keyboard)
         let keyboard = substitute(keyboard,"'","",'g')
         let keyboard = join(split(keyboard,'\zs'),"'")
         let keyboard = s:vimim_quote_by_quote(keyboard)
-    elseif keyboard[-1:] == "'"  " one tail
+    elseif keyboard[-1:] == "'"
         " [cloud] magic trailing quote to control cloud
+        let s:onekey = s:onekey==1 ? 2 : s:onekey
         let keyboard = s:vimim_last_quote(keyboard)
     elseif keyboard =~ "'"
         " [local] wo'you'yi'ge'meng
@@ -933,8 +933,9 @@ function! <SID>vimim_onekey_punctuation(key)
     if !pumvisible()
         return hjkl
     endif
-    if hjkl == "'"   " cycle bb/gg/ss/00 clouds
-        call s:vimim_last_quote(0)
+    if hjkl == "'"  " cycle through bb/gg/ss/00 clouds
+        let s:onekey = s:onekey==1 ? 2 : 3
+        call s:vimim_last_quote("action_on_omni_popup")
     elseif hjkl == ';'
         let hjkl = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
     elseif hjkl =~ "[][]"
@@ -1017,7 +1018,7 @@ function! s:vimim_set_special_property()
         endif
     endfor
     let s:imode_pinyin = 0
-    if s:ui.im =~ 'pinyin' || s:onekey_cloud
+    if s:ui.im =~ 'pinyin' || s:onekey > 1
         let s:imode_pinyin = 1
         if empty(s:quanpin_table)
             let s:quanpin_table = s:vimim_create_quanpin_table()
@@ -1467,7 +1468,7 @@ function! <SID>vimim_enter()
 endfunction
 
 function! <SID>vimim_backslash()
-    " <backslash> double play
+    " <Backslash> double play
     "   (1) [insert] disable omni window
     "   (2) [omni]   insert Chinese and remove Space before
     let bslash = '\\'
@@ -1482,7 +1483,7 @@ function! s:vimim_get_labeling(label)
     if s:onekey
         if a:label < &pumheight + 1
             let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
-            if s:onekey_cloud
+            if s:onekey > 1
                 " onekey label bb for cloud Baidu
                 " onekey label gg for cloud Google
                 " onekey label ss for cloud Sogou
@@ -1839,7 +1840,7 @@ function! g:vimim_onekey()
         let onekey = '\t'
     else
         sil!call s:vimim_super_reset()
-        let s:onekey = 1
+        let s:onekey = s:ui.root=='cloud' ? 2 : 1
         sil!call s:vimim_start()
         sil!call s:vimim_onekey_mapping()
         let onekey = s:vimim_onekey_action(0)
@@ -2465,18 +2466,16 @@ endfunction
 
 function! s:vimim_last_quote(keyboard)
     " <apostrophe> double play in OneKey:
-    "   (1) [insert] one trailing apostrophe => open cloud
-    "   (2) [omni]   apostrophe switches to the next cloud
-    let keyboard = a:keyboard[:-2]
-    let s:onekey_cloud += 1
-    if s:onekey_cloud > 1
+    "   (1) [insert] open cloud if one trailing quote
+    "   (2) [omni]   switch to the next cloud
+    if s:onekey > 2
         let clouds = split(s:vimim_cloud,',')
         let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
     endif
     if empty(s:vimim_check_http_executable())
-        let s:onekey_cloud = 0
+        let s:onekey = 1
     endif
-    return keyboard
+    return a:keyboard[:-2]
 endfunction
 
 function! s:vimim_get_head(keyboard, partition)
@@ -3578,7 +3577,6 @@ function! s:vimim_set_cloud(im)
         return
     endif
     let s:mycloud = 0
-    let s:onekey_cloud = 1
     let s:ui.im = im
     let s:ui.root = 'cloud'
     let frontends = [s:ui.root, s:ui.im]
@@ -4357,7 +4355,7 @@ function! g:vimim_reset_after_insert()
     let &pumheight = s:pumheight
     if s:pattern_not_found
         let s:pattern_not_found = 0
-        return ' '
+        return " "
     endif
     return ""
 endfunction
@@ -4501,15 +4499,12 @@ else
     endif
     " [cloud] to make dream come true for multiple clouds
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-    if s:onekey_cloud
+    if s:onekey > 1
         let cloud = get(split(vimim_cloud,'[.]'),0)
         if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
             let cloud = get(s:frontends,1)
         endif
         let results = s:vimim_get_cloud(keyboard, cloud)
-      " if !empty(results) && s:keyboard !~ ','
-      "     let s:keyboard = keyboard
-      " endif
     endif
     if empty(results)
         " [wubi] support auto insert on the 4th
@@ -4646,7 +4641,7 @@ endfunction
 function! s:vimim_embedded_backend_engine(keyboard)
     let keyboard = a:keyboard
     if empty(s:ui.im) || empty(s:ui.root) || empty(keyboard)
-    \|| s:ui.im=~'cloud' || keyboard!~#s:valid_key || s:show_me_not
+    \|| keyboard!~#s:valid_key || s:ui.root=~'cloud' || s:show_me_not
         return []
     elseif s:ui.has_dot == 2 && keyboard !~ "[']"
         let keyboard = s:vimim_quanpin_transform(keyboard)
