@@ -248,7 +248,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = '/home/xma/hjkl'
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @V
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -1457,6 +1457,17 @@ function! <SID>vimim_enter()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+function! <SID>vimim_backslash()
+    " <backslash> double play
+    "   (1) [insert] disable omni window 
+    "   (2) [omni]   insert Chinese and remove Space before
+    let bslash = '\\'
+    if pumvisible()
+        let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
+    endif
+    sil!exe 'sil!return "' . bslash . '"'
+endfunction
+
 function! s:vimim_get_labeling(label)
     let labeling = a:label==10 ? "0" : a:label
     if s:onekey
@@ -1961,15 +1972,6 @@ function! s:vimim_onekey_mapping()
     for _ in split("[]-=.,/?;'<>", '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
     endfor
-    inoremap <expr> <Bslash> <SID>vimim_onekey_omni_bslash_seamless()
-endfunction
-
-function! <SID>vimim_onekey_omni_bslash_seamless()
-    let bslash = '\\'
-    if pumvisible()
-        let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
-    endif
-    sil!exe 'sil!return "' . bslash . '"'
 endfunction
 
 function! <SID>vimim_qwer_hitrun(key)
@@ -4297,10 +4299,11 @@ function! s:vimim_start()
     sil!call s:vimim_set_special_property()
     sil!call s:vimim_set_omni_color()
     sil!call s:vimim_set_omni_label()
-    inoremap <expr> <BS>    <SID>vimim_backspace()
-    inoremap <expr> <Space> <SID>vimim_space()
-    inoremap <expr> <Esc>   <SID>vimim_esc()
-    inoremap <expr> <CR>    <SID>vimim_enter()
+    inoremap <expr> <BS>     <SID>vimim_backspace()
+    inoremap <expr> <CR>     <SID>vimim_enter()
+    inoremap <expr> <Esc>    <SID>vimim_esc()
+    inoremap <expr> <Space>  <SID>vimim_space()
+    inoremap <expr> <Bslash> <SID>vimim_backslash()
 endfunction
 
 function! g:vimim_stop()
