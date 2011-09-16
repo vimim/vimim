@@ -1201,10 +1201,10 @@ function! s:vimim_set_omni_color()
     highlight default CursorIM guifg=NONE guibg=green gui=NONE
     if s:vimim_custom_color > 0
         call g:vimim_default_omni_color()
-    endif
-    if s:vimim_custom_color > 1 || s:one_row_menu
-        highlight!      PmenuSel NONE
-        highlight! link PmenuSel NONE
+        if s:vimim_custom_color > 1 || s:one_row_menu
+            highlight!      PmenuSel NONE
+            highlight! link PmenuSel NONE
+        endif
     endif
 endfunction
 
