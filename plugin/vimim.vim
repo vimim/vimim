@@ -4372,15 +4372,14 @@ function! g:vimim_menu_select()
 endfunction
 
 function! s:vimim_imap_off()
-    let s:onekey = 0
-    let recycles = range(0,9) + s:valid_keys
+    let keys = range(0,9) + s:valid_keys
     if s:chinese_mode!~'dynamic' && empty(s:vimim_latex_suite)
-        let recycles += s:AZ_list
+        let keys += s:AZ_list
     endif
-    let recycles += keys(s:evils) + keys(s:punctuations)
-    let recycles += ['<Esc>','<CR>','<BS>','<Space>']
-    for _ in recycles
-        if len(maparg(_, 'i')) > 0
+    let keys += keys(s:evils) + keys(s:punctuations)
+    let keys += ['<Esc>','<CR>','<BS>','<Space>','<Bar>','<Bslash>']
+    for _ in keys
+        if len(maparg(_, 'i'))
             sil!exe 'iunmap '. _
         endif
     endfor
