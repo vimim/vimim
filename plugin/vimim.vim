@@ -246,7 +246,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = '/home/xma/hjkl'
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @V
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -1325,14 +1325,10 @@ function! s:vimim_get_chinese_im()
 endfunction
 
 function! s:vimim_set_omni_label()
-    let labels = range(1,5)
-    if empty(s:one_row_menu)
-        let labels = range(10)
-        let abcd_list = split(s:abcd, '\zs')
-        if s:onekey
-            let labels += abcd_list
-            call remove(labels, match(labels,"'"))
-        endif
+    let labels = range(10)
+    if s:onekey
+        let labels += split(s:abcd, '\zs')
+        call remove(labels, match(labels,"'"))
     endif
     for _ in labels
         silent!exe 'inoremap <silent> <expr> '  ._.
