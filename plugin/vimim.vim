@@ -248,7 +248,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @V
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -341,12 +341,12 @@ function! s:vimim_egg_vimim()
     let option = s:vimim_chinese('env') . s:colon . v:lc_time
     call add(eggs, option)
     let database = s:vimim_chinese('database') . s:colon
+    let vimim_toggle_list = ""
     if len(s:ui.frontends) > 0
-        let vimim_toggle_list = "english"
         for frontend in s:ui.frontends
             let ui_root = get(frontend, 0)
             let ui_im = get(frontend, 1)
-            let vimim_toggle_list .= "," . ui_im
+            let vimim_toggle_list .=  ui_im . ","
             let datafile = s:backend[ui_root][ui_im].name
             let mass = datafile=~"bsddb" ? 'mass' : ui_root
             let ciku = database . s:vimim_chinese(mass) . database
@@ -403,7 +403,7 @@ function! s:vimim_egg_vimim()
     if len(s:ui.frontends) > 1
         let option  = s:vimim_chinese('toggle') . s:colon
         let option .= ":let g:vimim_toggle_list='"
-        let option .= vimim_toggle_list . "'"
+        let option .= vimim_toggle_list[:-2] . "'"
         call add(eggs, option)
     endif
     let option = s:vimim_chinese('setup') . s:colon . "vimimrc "
@@ -2029,9 +2029,6 @@ function! <SID>VimIMSwitch()
     if s:vimim_toggle_list =~ ","
         let custom_im_list = split(s:vimim_toggle_list, ",")
     else
-        if empty(s:vimim_toggle_list)
-            let custom_im_list = ["english"]
-        endif
         for frontends in s:ui.frontends
             let frontend_im = get(frontends, 1)
             call add(custom_im_list, frontend_im)
