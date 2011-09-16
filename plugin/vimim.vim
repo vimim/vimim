@@ -35,7 +35,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 " "VimIM Usage"
 "  (1) play with cloud, without datafile, with python or wget/curl
 "      open vim, type i, type <C-\> to open; type <C-\> to close
-"  (2) play with OneKey
+"  (2) play with OneKey: Midas touch
 "      open vim, type i, type sssss <C-6>, m, type alphabetical label
 
 " ============================================= }}}
@@ -1199,11 +1199,17 @@ function! g:vimim_default_omni_color()
     highlight! link PmenuSel Title
 endfunction
 
-function! s:vimim_set_omni_color()
-    highlight default CursorIM guifg=NONE guibg=green gui=NONE
+function! s:vimim_skin(color)
+    let color = 1
+    if s:vimim_custom_color > 1
+    \|| s:one_row_menu
+    \|| s:show_me_not
+    \|| empty(a:color)
+        let color = 0
+    endif
     if s:vimim_custom_color > 0
         call g:vimim_default_omni_color()
-        if s:vimim_custom_color > 1 || s:one_row_menu
+        if empty(color)
             highlight!      PmenuSel NONE
             highlight! link PmenuSel NONE
         endif
@@ -4304,7 +4310,6 @@ function! s:vimim_start()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_set_special_property()
-    sil!call s:vimim_set_omni_color()
     sil!call s:vimim_set_omni_label()
     inoremap <expr> <BS>     <SID>vimim_backspace()
     inoremap <expr> <CR>     <SID>vimim_enter()
@@ -4499,7 +4504,7 @@ else
     endif
     " [cloud] to make dream come true for multiple clouds
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-    if s:onekey > 1
+    if s:onekey > 1 || s:ui.root == 'cloud'
         let cloud = get(split(vimim_cloud,'[.]'),0)
         if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
             let cloud = get(s:frontends,1)
@@ -4534,19 +4539,25 @@ endif
 endfunction
 
 function! s:vimim_popupmenu_list(matched_list)
-    let lines = s:english_results + a:matched_list
+    let keyboard = join(split(s:keyboard,","),"")
+    let lines = s:english_results
+    if get(a:matched_list,0) != keyboard
+        let lines += a:matched_list
+    endif
     if empty(lines) || type(lines) != type([])
         return []
     else
         let s:matched_list = lines
+        if len(keyboard) == 1 && !has_key(s:cjk_cache,keyboard)
+            let s:cjk_cache[keyboard] = lines
+        endif
+        " [skin] no color is the best color
+        let color = len(lines)<2 ? 0 : 1
+        sil!call s:vimim_skin(color)
     endif
     let label = 1
     let one_list = []
     let popupmenu_list = []
-    let keyboard = join(split(s:keyboard,","),"")
-    if len(keyboard) == 1 && !has_key(s:cjk_cache,keyboard)
-        let s:cjk_cache[keyboard] = lines
-    endif
     let first_in_list = get(lines,0)
     for chinese in lines
         let complete_items = {}
@@ -4586,7 +4597,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 call add(one_list, abbr)
             endif
             let labeling = printf('%2s ', s:vimim_get_labeling(label))
-            if s:onekey && len(lines) < 2
+            if s:onekey && empty(color)
                 let labeling = ""
             endif
             let label += 1
