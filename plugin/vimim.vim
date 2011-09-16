@@ -4382,6 +4382,7 @@ function! g:vimim_menu_select()
 endfunction
 
 function! s:vimim_imap_off()
+    let s:onekey = 0
     let keys = range(0,9) + s:valid_keys
     if s:chinese_mode!~'dynamic' && empty(s:vimim_latex_suite)
         let keys += s:AZ_list
