@@ -244,6 +244,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
+ "  let g:vimim_show_me_not = 1
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @v
@@ -491,10 +492,11 @@ endfunction
 
 function! s:vimim_get_umode_chinese(char_before, keyboard)
     let results = []
-    if empty(a:char_before)  || a:char_before !~ '\W'
+    let char_before = a:char_before
+    if empty(char_before)  || char_before !~ '\W'
         if a:keyboard ==# 'u'  " 214 standard unicode index
             if empty(s:cjk_filename)
-                let a:char_before = '一'
+                let char_before = '一'
             else
                 let results = s:vimim_cjk_match('u')
             endif
@@ -502,7 +504,7 @@ function! s:vimim_get_umode_chinese(char_before, keyboard)
             let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
         endif
     else
-        let results = s:vimim_get_unicode_list(char2nr(a:char_before))
+        let results = s:vimim_get_unicode_list(char2nr(char_before))
     endif
     return results
 endfunction
@@ -1208,9 +1210,9 @@ function! s:vimim_skin(color)
     if s:show_label_not
         let color = 0
         let &pumheight = 0
-    elseif s:vimim_show_me_not
+    elseif s:vimim_show_me_not && s:chinese_mode !~ 'dynamic'
         let &pumheight = 1
-    elseif s:onekey && s:hjkl_l
+    elseif s:hjkl_l
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
     endif
     if empty(a:color) || s:vimim_custom_color > 1
