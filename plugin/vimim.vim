@@ -458,8 +458,6 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
-    elseif keyboard ==# "''"
-        let results = s:vimim_egg_vimimgame()
     elseif keyboard[-4:] ==# "''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
@@ -490,25 +488,20 @@ function! s:vimim_get_hjkl_game(keyboard)
     return results
 endfunction
 
-function! s:vimim_get_imode_umode(keyboard)
-    let keyboard = a:keyboard
+function! s:vimim_get_umode_chinese(char_before, keyboard)
     let results = []
-    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if ddddd
-        " [umode] magic u: 馬力uu => 39340
-        for i in range(99)
-            call add(results, nr2char(ddddd+i))
-        endfor
-    elseif keyboard =~# '^i' && s:imode_pinyin
-        " [imode] magic i: (1) English number (2) Chinese number
-        if keyboard ==# 'itoday' || keyboard ==# 'inow'
-            let results = [s:vimim_imode_today_now(keyboard)]
-        elseif keyboard ==# 'ii'  " 一ii => 一二
-            let char_before = s:vimim_get_char_before(keyboard)
-            let results = s:vimim_get_imode_chinese(char_before,1)
-        elseif keyboard =~ '\d' && empty(s:english_results)
-            let results = s:vimim_imode_number(keyboard)
+    if empty(a:char_before)  || a:char_before !~ '\W'
+        if a:keyboard ==# 'u'  " 214 standard unicode index
+            if empty(s:cjk_filename)
+                let a:char_before = '一'
+            else
+                let results = s:vimim_cjk_match('u')
+            endif
+        elseif a:keyboard ==# 'uu' " easter egg
+            let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
         endif
+    else
+        let results = s:vimim_get_unicode_list(char2nr(a:char_before))
     endif
     return results
 endfunction
@@ -709,7 +702,7 @@ function! s:vimim_get_imode_chinese(char_before, number)
         endwhile
     endif
     if empty(results) && a:number
-        let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
+        let results = s:vimim_egg_vimimgame()
     endif
     return results
 endfunction
@@ -2245,17 +2238,19 @@ function! s:vimim_get_char_before(keyboard)
     return char_before
 endfunction
 
+function! s:vimim_get_unicode_list(ddddd)
+    let results = []
+    if a:ddddd
+        for i in range(99)
+            call add(results, nr2char(a:ddddd+i))
+        endfor
+    endif
+    return results
+endfunction
+
 function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
-    if keyboard =~# '^u\+$'
-        let char_before = s:vimim_get_char_before(keyboard)
-        if empty(char_before) || char_before=~'\w'
-            return 0
-        elseif empty(s:cjk_filename)
-            let char_before = '一'
-        endif
-        return char2nr(char_before)
-    elseif keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
+    if keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
         if len(keyboard) == 5 || len(keyboard) == 6
             let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
             if len(keyboard) == 4              " uoooo  => u9999
@@ -2269,9 +2264,9 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         let keyboard = 'u' . keyboard  " from 4 hex to unicode:  9f9f =>
     endif
     let ddddd = 0
-    if keyboard =~# '^u\x\{4}$'        " from   hex to unicode: u808f =>
+    if keyboard =~# '^u\x\{4}$'        "  u808f => 32911
         let ddddd = str2nr(keyboard[1:],16)
-    elseif keyboard =~# '^\d\{5}$'     " from digit to unicode: 32911 =>
+    elseif keyboard =~# '^\d\{5}$'     "  32911 => 32911
         let ddddd = str2nr(keyboard, 10)
     endif
     let max = &encoding=="utf-8" ? 19968+20902 : 0xffff
@@ -2279,6 +2274,27 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         let ddddd = 0
     endif
     return ddddd
+endfunction
+
+function! s:vimim_get_imode_umode(keyboard)
+    let keyboard = a:keyboard
+    let results = []
+    if keyboard =~# '^u\+$'
+        " [umode] magic u: 馬力uu => 39340
+        let char_before = s:vimim_get_char_before(keyboard)
+        let results = s:vimim_get_umode_chinese(char_before, keyboard)
+    elseif keyboard =~# '^i' && s:imode_pinyin
+        " [imode] magic i: (1) English number (2) Chinese number
+        if keyboard ==# 'itoday' || keyboard ==# 'inow'
+            let results = [s:vimim_imode_today_now(keyboard)]
+        elseif keyboard ==# 'ii'  " 一ii => 一二
+            let char_before = s:vimim_get_char_before(keyboard)
+            let results = s:vimim_get_imode_chinese(char_before,1)
+        elseif keyboard =~ '\d' && empty(s:english_results)
+            let results = s:vimim_imode_number(keyboard)
+        endif
+    endif
+    return results
 endfunction
 
 function! s:vimim_cjk_extra_text(chinese)
@@ -4480,7 +4496,12 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     elseif s:onekey  " play with nothing but onekey
-        let results = s:vimim_get_imode_umode(keyboard)
+        let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+        if ddddd
+            let results = s:vimim_get_unicode_list(ddddd)
+        else
+            let results = s:vimim_get_imode_umode(keyboard)
+        endif
         if empty(results)
             " [character]  sssss'' => s's's's's
             let keyboard = s:vimim_hjkl_partition(keyboard)
