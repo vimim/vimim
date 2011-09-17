@@ -4661,17 +4661,20 @@ function! s:vimim_one_row(one_list, popupmenu_list)
     let max = &columns - virtcol(".") % &columns
     let min = 3*5 + 2*5
     let row2 = join(a:one_list[1:])
-    if max < min || len(row2) > min
+    if max < min 
         return popupmenu_list
     endif
-    let &pumheight = 2
     if max < len(join(a:one_list)) + 4
+        if len(row2) > min
+            return popupmenu_list
+        endif
         let popupmenu_list[0].abbr = get(a:one_list,0)
         let popupmenu_list[1].abbr = row2
     else
         let popupmenu_list[0].abbr = join(a:one_list)
         let popupmenu_list[1].abbr = s:space
     endif
+    let &pumheight = 2
     return popupmenu_list
 endfunction
 
