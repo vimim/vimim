@@ -74,6 +74,7 @@ function! s:vimim_backend_initialization()
 endfunction
 
 function! s:vimim_initialize_session()
+    let s:pumheight = 10
     let s:pumheight_saved = &pumheight
     let s:imode_pinyin = 0
     let s:smart_single_quotes = 1
@@ -191,13 +192,13 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
     call add(G, "g:vimim_cloud")
+    call add(G, "g:show_menu_not")
     call s:vimim_set_global_default(G, 0)
     let G = []
     call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
-    let s:pumheight = 10
     let s:im_toggle = 0
     let s:frontends = []
     let s:loops = {}
@@ -245,9 +246,10 @@ endfunction
 function! s:vimim_initialize_local()
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
-        :redir @M
+        :redir @v
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
+        let g:show_menu_not = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
         call g:vimim_default_omni_color()
@@ -1204,6 +1206,8 @@ function! s:vimim_skin(color)
     if s:show_label_not
         let color = 0
         let &pumheight = 0
+    elseif s:show_menu_not
+        let &pumheight = 1
     elseif s:onekey && s:hjkl_l
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
     endif
@@ -4370,7 +4374,6 @@ endfunction
 
 function! s:vimim_reset_before_omni()
     let s:search = 0
-    let s:show_menu_not = 0
     let s:show_label_not = 0
     let s:english_results = []
 endfunction
@@ -4643,9 +4646,6 @@ function! s:vimim_popupmenu_list(matched_list)
         call add(popupmenu_list, complete_items)
     endfor
     if s:onekey
-        if s:show_menu_not
-            let &pumheight = 1
-        endif
         let s:popupmenu_list = popupmenu_list
     elseif menu_in_one_row
         return s:vimim_one_row(one_list, popupmenu_list[0:4])
