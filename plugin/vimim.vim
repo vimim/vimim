@@ -1857,8 +1857,9 @@ function! g:vimim_onekey()
 endfunction
 
 function! s:vimim_onekey_action(space)
+    let space = a:space ? " " : ""
     if s:seamless_positions == getpos(".")
-        return " "
+        return space
     endif
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
@@ -1866,7 +1867,7 @@ function! s:vimim_onekey_action(space)
     if !empty(onekey)
         sil!exe 'sil!return "' . onekey . '"'
     endif
-    let onekey = a:space ? " " : ""
+    let onekey = space
     if one_before =~# s:valid_key
         if a:space
             let onekey = s:vimim_get_right_space()
