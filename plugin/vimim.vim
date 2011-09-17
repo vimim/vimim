@@ -93,6 +93,7 @@ function! s:vimim_initialize_session()
     let s:abcd = "'abcdvfgsz"
     let s:qwer = split('pqwertyuio','\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
+    let s:show_me_not = s:vimim_show_me_not
     let s:seamless_positions = []
     let s:shuangpin_keycode_chinese = {}
     let s:shuangpin_table = {}
@@ -1210,7 +1211,7 @@ function! s:vimim_skin(color)
     if s:show_label_not
         let color = 0
         let &pumheight = 0
-    elseif s:vimim_show_me_not && s:chinese_mode !~ 'dynamic'
+    elseif s:show_me_not && s:chinese_mode !~ 'dynamic'
         let &pumheight = 1
     elseif s:hjkl_l
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
@@ -1853,8 +1854,9 @@ function! g:vimim_onekey()
     if pumvisible() && len(s:popupmenu_list) > 0
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif s:onekey
-        if s:vimim_show_me_not
-            let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+        if s:show_me_not
+            let s:show_me_not = 0
+            let onekey = '\<C-P>\<C-R>=g:vimim()\<CR>'
         else
             let s:seamless_positions = getpos(".")
             sil!call g:vimim_stop()
@@ -4391,6 +4393,9 @@ function! g:vimim_reset_after_insert()
     let s:smart_enter = 0
     let s:matched_list = []
     let s:pageup_pagedown = 0
+    if s:vimim_show_me_not
+       let s:show_me_not = 1
+    endif
     if s:pattern_not_found
         let s:pattern_not_found = 0
         return " "
