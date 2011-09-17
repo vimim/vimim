@@ -192,7 +192,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
     call add(G, "g:vimim_cloud")
-    call add(G, "g:show_menu_not")
+    call add(G, "g:vimim_show_menu_not")
     call s:vimim_set_global_default(G, 0)
     let G = []
     call add(G, "g:vimim_chinese_punctuation")
@@ -249,9 +249,9 @@ function! s:vimim_initialize_local()
         :redir @v
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
-        let g:show_menu_not = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
+        let g:vimim_show_menu_not = 1
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -457,6 +457,8 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
+    elseif keyboard[-2:] ==# "''"
+        let results = s:vimim_egg_vimimgame()
     elseif keyboard[-4:] ==# "''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
@@ -1206,7 +1208,7 @@ function! s:vimim_skin(color)
     if s:show_label_not
         let color = 0
         let &pumheight = 0
-    elseif s:show_menu_not
+    elseif s:vimim_show_menu_not
         let &pumheight = 1
     elseif s:onekey && s:hjkl_l
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
@@ -1849,7 +1851,7 @@ function! g:vimim_onekey()
     if pumvisible() && len(s:popupmenu_list) > 0
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif s:onekey
-        if s:show_menu_not
+        if s:vimim_show_menu_not
             let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
         else
             let s:seamless_positions = getpos(".")
