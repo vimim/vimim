@@ -194,8 +194,8 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud")
     call s:vimim_set_global_default(G, 0)
     let G = []
-    call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_chinese_punctuation")
+    call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
     let s:im_toggle = 0
@@ -1194,13 +1194,11 @@ endfunction
 
 function! s:vimim_skin(color)
     let color = 1
+    let &pumheight = 10
     let menu_in_one_row = 0
     if empty(s:onekey) && s:vimim_one_row_menu
         let color = 0
         let menu_in_one_row = 1
-    endif
-    let &pumheight = 10
-    if menu_in_one_row
         let &pumheight = 5
     endif
     let s:pumheight = copy(&pumheight)
