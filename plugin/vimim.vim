@@ -243,7 +243,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = '/home/xma/hjkl'
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @V
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -476,7 +476,7 @@ function! s:vimim_get_hjkl_game(keyboard)
         endif
     endif
     if !empty(results)
-        let s:show_me_not = 1
+        let s:show_label_not = 1
         if s:hjkl_m % 4
             for i in range(s:hjkl_m%4)
                 let results = s:vimim_hjkl_rotation(results)
@@ -871,7 +871,7 @@ function! s:vimim_dictionary_punctuations()
 endfunction
 
 function! s:vimim_punctuation_mapping()
-    if s:chinese_punctuation > 0 
+    if s:chinese_punctuation > 0
     \&& s:vimim_chinese_punctuation !~ 'latex'
         inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
         inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
@@ -1204,7 +1204,7 @@ function! s:vimim_skin(color)
         let &pumheight = 5
     endif
     let s:pumheight = copy(&pumheight)
-    if s:show_me_not
+    if s:show_label_not
         let color = 0
         let &pumheight = 0
     elseif s:onekey && s:hjkl_l
@@ -1499,6 +1499,7 @@ function! s:vimim_get_labeling(label)
             let vimim_cloud = get(split(s:vimim_cloud,','), 0)
             let cloud = get(split(vimim_cloud,'[.]'),0)
             if label2 == cloud[0:0]  " b/g/s
+                let label2 = toupper(label2)
                 let labeling = label2
             elseif label2 == 'z' && cloud =~ 'qq'
                 let label2 = '0'
@@ -1841,8 +1842,12 @@ function! g:vimim_onekey()
     if pumvisible() && len(s:popupmenu_list) > 0
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif s:onekey
-        let s:seamless_positions = getpos(".")
-        sil!call g:vimim_stop()
+        if s:show_menu_not
+            let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+        else
+            let s:seamless_positions = getpos(".")
+            sil!call g:vimim_stop()
+        endif
     elseif s:vimim_onekey_is_tab && space_before
         let onekey = '\t'
     else
@@ -2022,7 +2027,7 @@ function! <SID>vimim_qwer_hjkl(key)
                 let digit -= 5 " yuiop/12345 for five strokes
             endif
         endif
-        let s:hjkl_n = s:show_me_not ? digit : s:hjkl_n . digit
+        let s:hjkl_n = s:show_label_not ? digit : s:hjkl_n . digit
         let key = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2347,14 +2352,14 @@ function! s:vimim_cache()
     endif
     let results = []
     if len(s:hjkl_n) > 0
-        if s:show_me_not
+        if s:show_label_not
             let results = s:vimim_onekey_menu_format()
         elseif len(s:popupmenu_list) > 0
             let results = s:vimim_onekey_menu_filter()
         endif
         return results
     endif
-    if s:show_me_not
+    if s:show_label_not
         if s:hjkl_h
             let s:hjkl_h = 0
             for line in s:matched_list
@@ -2372,7 +2377,7 @@ endfunction
 function! s:vimim_pageup_pagedown()
     let matched_list = s:matched_list
     let length = len(matched_list)
-    let one_page = &pumheight ? &pumheight : 9
+    let one_page = &pumheight<6 ? 5 : 10
     if length > one_page
         let page = s:pageup_pagedown * one_page
         let partition = page ? page : length+page
@@ -2575,7 +2580,7 @@ function! s:vimim_onekey_cjk(keyboard)
         let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
     endif
     let head = 0
-    if s:show_me_not || len(keyboard) == 1
+    if s:show_label_not || len(keyboard) == 1
         let head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
@@ -4364,7 +4369,8 @@ endfunction
 
 function! s:vimim_reset_before_omni()
     let s:search = 0
-    let s:show_me_not = 0
+    let s:show_menu_not = 0
+    let s:show_label_not = 0
     let s:english_results = []
 endfunction
 
@@ -4596,7 +4602,7 @@ function! s:vimim_popupmenu_list(matched_list)
             endfor
             let chinese = simplified_traditional
         endif
-        if empty(s:show_me_not)
+        if empty(s:show_label_not)
             if keyboard ==# chinese
                 continue
             endif
@@ -4619,14 +4625,14 @@ function! s:vimim_popupmenu_list(matched_list)
                     endif
                 endif
             endif
-            if menu_in_one_row
+            if menu_in_one_row && len(one_list) < 5
                 let menu = ""
                 let abbr = label . "." . chinese
                 call add(one_list, abbr)
             endif
-            let labeling = printf('%2s ', s:vimim_get_labeling(label))
-            if s:onekey && empty(color)
-                let labeling = ""
+            let labeling = ""
+            if color
+                let labeling = printf('%2s ', s:vimim_get_labeling(label))
             endif
             let label += 1
             let complete_items["abbr"] = labeling . chinese
@@ -4637,40 +4643,33 @@ function! s:vimim_popupmenu_list(matched_list)
         call add(popupmenu_list, complete_items)
     endfor
     if s:onekey
+        if s:show_menu_not
+            let &pumheight = 1
+        endif
         let s:popupmenu_list = popupmenu_list
     elseif menu_in_one_row
-        let popupmenu_list = s:vimim_one_row(one_list, popupmenu_list)
+        return s:vimim_one_row(one_list, popupmenu_list[0:4])
     endif
     return popupmenu_list
 endfunction
 
 function! s:vimim_one_row(one_list, popupmenu_list)
-    let height = 5
     let one_list = a:one_list
-    if len(one_list) > height
-        let one_list = one_list[:height-1]
-    endif
     let popupmenu_list = a:popupmenu_list
-    let cursor_gps = 1.0 * (virtcol(".") % &columns) / &columns
-    let onerow_gps = 1.0 * len(join(one_list)) / &columns
-    if cursor_gps < 0.72 && onerow_gps < 0.92
-        let start = 1
-        let display = 0
-        let line1 = line("w$") - line(".")
-        let line2 = line("w$") - line("w0")
-        if line1 < height+2 && line2 > &lines-height- 2
-            let start = 0
-            let display = height-1
-        endif
-        if display < len(popupmenu_list)
-            let popupmenu_list[display].abbr = join(one_list)
-        endif
-        let empty_lines = range(start, start+height-2)
-        for i in empty_lines
-            if i < len(popupmenu_list)
-                let popupmenu_list[i].abbr = s:space
-            endif
-        endfor
+    let max = &columns - virtcol(".") % &columns
+    let min = 3*5 + 2*5
+    let bottom = line("w$") - line(".")
+    let row2 = join(one_list[1:])
+    if max < min || len(row2) > min || bottom < 8
+        return popupmenu_list
+    endif
+    let &pumheight = 2
+    if max < len(join(one_list)) + 4
+        let popupmenu_list[0].abbr = get(one_list,0)
+        let popupmenu_list[1].abbr = row2
+    else
+        let popupmenu_list[0].abbr = join(one_list)
+        let popupmenu_list[1].abbr = s:space
     endif
     return popupmenu_list
 endfunction
@@ -4678,7 +4677,9 @@ endfunction
 function! s:vimim_embedded_backend_engine(keyboard)
     let keyboard = a:keyboard
     if empty(s:ui.im) || empty(s:ui.root) || empty(keyboard)
-    \|| keyboard!~#s:valid_key || s:ui.root=~'cloud' || s:show_me_not
+    \|| keyboard !~# s:valid_key
+    \|| s:ui.root =~ 'cloud'
+    \|| s:show_label_not
         return []
     elseif s:ui.has_dot == 2 && keyboard !~ "[']"
         let keyboard = s:vimim_quanpin_transform(keyboard)
