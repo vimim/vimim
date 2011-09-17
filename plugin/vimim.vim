@@ -1425,7 +1425,7 @@ endfunction
 
 function! <SID>vimim_esc()
     let hjkl = '\<Esc>'
-    if s:chinese_mode =~ 'onekey'
+    if s:onekey
         sil!call g:vimim_stop()
     elseif pumvisible()
         let hjkl = s:vimim_onekey_esc()
@@ -1940,7 +1940,7 @@ function! <SID>vimim_space()
     elseif s:chinese_mode !~ 'dynamic'
         if s:chinese_mode =~ 'static'
             let space = s:vimim_static_action(space)
-        elseif s:chinese_mode =~ 'onekey'
+        elseif s:onekey
             let space = s:vimim_onekey_action(1)
         endif
         let space .= '\<C-R>=g:vimim_reset_after_insert()\<CR>'
@@ -2074,17 +2074,6 @@ function! <SID>VimIMSwitch()
     return s:vimim_chinese_mode(switch)
 endfunction
 
-function! <SID>ChineseMode()
-    sil!call s:vimim_backend_initialization()
-    if empty(s:ui.frontends)
-        return ""
-    elseif empty(s:frontends)
-        let s:frontends = get(s:ui.frontends, 0)
-    endif
-    let switch = !empty(&omnifunc) && &omnifunc==#'VimIM' ? 0 : 1
-    return s:vimim_chinese_mode(switch)
-endfunction
-
 function! s:vimim_chinese_mode(switch)
     let action = ""
     if a:switch < 1
@@ -2100,6 +2089,17 @@ function! s:vimim_chinese_mode(switch)
         let action = s:vimim_chinesemode_action()
     endif
     sil!exe 'sil!return "' . action . '"'
+endfunction
+
+function! <SID>ChineseMode()
+    sil!call s:vimim_backend_initialization()
+    if empty(s:ui.frontends)
+        return ""
+    elseif empty(s:frontends)
+        let s:frontends = get(s:ui.frontends, 0)
+    endif
+    let switch = !empty(&omnifunc) && &omnifunc==#'VimIM' ? 0 : 1
+    return s:vimim_chinese_mode(switch)
 endfunction
 
 function! <SID>vimim_punctuation_toggle()
