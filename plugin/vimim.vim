@@ -197,7 +197,6 @@ function! s:vimim_initialize_global()
     let G = []
     call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_digit_4corner")
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
     let s:im_toggle = 0
@@ -361,10 +360,10 @@ function! s:vimim_egg_vimim()
     if !empty(s:cjk_filename)
         let ciku  = database . s:vimim_chinese('standard')
         let ciku .= s:vimim_chinese('cjk') . s:colon
-        if s:vimim_digit_4corner
+        if s:cjk_filename =~ "vimim.cjk.txt"
             let style .= s:vimim_chinese('4corner') . s:space
-        else
-            let style .= s:vimim_chinese('5strokes'). s:space
+        elseif s:cjk_filename =~ "vimim.cjkv.txt"
+            let style .= s:vimim_chinese('5strokes'). s:space.s:space
         endif
         call add(eggs, ciku . s:cjk_filename)
     endif
@@ -2016,7 +2015,7 @@ function! <SID>vimim_qwer_hjkl(key)
     let key = a:key
     if pumvisible()
         let digit = match(s:qwer, key)
-        if s:vimim_digit_4corner < 1
+        if s:cjk_filename =~ "vimim.cjkv.txt"
             if digit < 1
                 let digit = 5  " qwert/12345 for five strokes
             elseif digit > 5
@@ -2306,7 +2305,7 @@ function! s:vimim_cjk_extra_text(chinese)
         let line = match(s:cjk_lines, grep, 0)
         if line > -1
             let values  = split(get(s:cjk_lines, line))
-            let dddd    = s:vimim_digit_4corner>0 ? 2 : 1
+            let dddd    = s:cjk_filename=~"cjkv" ? 1 : 2
             let digit   = s:space . get(values, dddd)
             let pinyin  = s:space . get(values, 3)
             let english = " " . join(values[4:-2])
@@ -2453,7 +2452,7 @@ function! s:vimim_cjk_digit_filter(chinese)
             continue
         else
             let values = split(get(s:cjk_lines, line))
-            let dddd = s:vimim_digit_4corner ? 2 : 1
+            let dddd = s:cjk_filename=~"cjkv" ? 1 : 2
             let digit = get(values, dddd)
             let digit_head .= digit[:0]
             let digit_tail  = digit[1:]
@@ -2554,6 +2553,10 @@ function! s:vimim_scan_cjk_file()
     let s:cjk_filename = 0
     let cjk = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
     let datafile = s:vimim_check_filereadable(get(split(cjk,"/"),-1))
+    if empty(datafile)
+        let cjk = "vimim.cjkv.txt" " for 5 strokes
+        let datafile = s:vimim_check_filereadable(cjk)
+    endif
     if !empty(datafile)
         let s:cjk_lines = s:vimim_readfile(datafile)
         let s:cjk_filename = datafile
@@ -2653,7 +2656,7 @@ function! s:vimim_cjk_match(keyboard)
                 let space = '\d\{' . string(4-len(digit)) . '}'
                 let space = len(digit)==4 ? "" : space
                 let dddd = '\s' . digit . space . '\s'
-                let grep = s:vimim_digit_4corner<1 ? dddd.stroke5 : dddd
+                let grep = s:cjk_filename=~"cjkv" ? dddd.stroke5 : dddd
                 let alpha = substitute(keyboard,'\d','','g')
                 if !empty(alpha)
                     " search le or yue from le4yue4
