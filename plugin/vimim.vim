@@ -245,7 +245,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @V
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -503,7 +503,7 @@ function! s:vimim_get_imode_umode(keyboard)
         " [imode] magic i: (1) English number (2) Chinese number
         if keyboard ==# 'itoday' || keyboard ==# 'inow'
             let results = [s:vimim_imode_today_now(keyboard)]
-        elseif keyboard ==# 'ii'  " 一i => 一二
+        elseif keyboard ==# 'ii'  " 一ii => 一二
             let char_before = s:vimim_get_char_before(keyboard)
             let results = s:vimim_get_imode_chinese(char_before,1)
         elseif keyboard =~ '\d' && empty(s:english_results)
@@ -674,7 +674,7 @@ function! s:vimim_build_numbers_hash()
         let s:numbers.7 = "七柒⑺⑦庚"
         let s:numbers.8 = "八捌⑻⑧辛"
         let s:numbers.9 = "九玖⑼⑨壬"
-        let s:numbers.0 = "〇零⑽⑩癸"
+        let s:numbers.0 = "十拾⑽⑩癸"
     endif
 endfunction
 
@@ -684,7 +684,7 @@ function! s:vimim_get_antonym_list()
     return split(antonym)
 endfunction
 
-function! s:vimim_get_imode_chinese(char_before,number)
+function! s:vimim_get_imode_chinese(char_before, number)
     if empty(s:loops)
         let antonyms = s:vimim_get_antonym_list()   " 石 => 金
         let numbers  = s:vimim_get_numbers_list()   " 七 => 八
@@ -707,6 +707,9 @@ function! s:vimim_get_imode_chinese(char_before,number)
             call add(results, next)
             let key = next
         endwhile
+    endif
+    if empty(results) && a:number
+        let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
     endif
     return results
 endfunction
@@ -2246,7 +2249,9 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     let keyboard = a:keyboard
     if keyboard =~# '^u\+$'
         let char_before = s:vimim_get_char_before(keyboard)
-        if empty(s:cjk_filename) && empty(char_before) || char_before=~'\w'
+        if empty(char_before) || char_before=~'\w'
+            return 0
+        elseif empty(s:cjk_filename)
             let char_before = '一'
         endif
         return char2nr(char_before)
@@ -2316,31 +2321,31 @@ let s:VimIM += [" ====  input hjkl       ==== {{{"]
 " =================================================
 
 function! s:vimim_cache()
-    let results = []
-    if s:onekey
-        if len(s:hjkl_n) > 0
-            if s:show_me_not
-                let results = s:vimim_onekey_menu_format()
-            elseif len(s:popupmenu_list) > 0
-                let results = s:vimim_onekey_menu_filter()
-            endif
-            return results
-        endif
-        if s:show_me_not
-            if s:hjkl_h
-                let s:hjkl_h = 0
-                for line in s:matched_list
-                    let oneline = join(reverse(split(line,'\zs')),'')
-                    call add(results, oneline)
-                endfor
-            elseif s:hjkl_l
-                let s:hjkl_l = 0
-                let results = reverse(copy(s:matched_list))
-            endif
-        endif
-    endif
     if !empty(s:pageup_pagedown)
         return s:vimim_pageup_pagedown()
+    elseif empty(s:onekey)
+        return []
+    endif
+    let results = []
+    if len(s:hjkl_n) > 0
+        if s:show_me_not
+            let results = s:vimim_onekey_menu_format()
+        elseif len(s:popupmenu_list) > 0
+            let results = s:vimim_onekey_menu_filter()
+        endif
+        return results
+    endif
+    if s:show_me_not
+        if s:hjkl_h
+            let s:hjkl_h = 0
+            for line in s:matched_list
+                let oneline = join(reverse(split(line,'\zs')),'')
+                call add(results, oneline)
+            endfor
+        elseif s:hjkl_l
+            let s:hjkl_l = 0
+            let results = reverse(copy(s:matched_list))
+        endif
     endif
     return results
 endfunction
@@ -2648,7 +2653,7 @@ function! s:vimim_cjk_match(keyboard)
         endif
     else
         if keyboard =~# '^u\+$'
-            let grep = ' u '      " 214 standard unicode index
+            let grep = ' u\( \|$\)'  " 214 standard unicode index
         elseif len(keyboard) == 1
             " cjk one-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
@@ -4461,7 +4466,7 @@ else
         " [english] English cannot be ignored!
         let s:english_results = s:vimim_english(keyboard)
     endif
-    if s:onekey      " play with hjkl game
+    if s:onekey      " play with hjkl
         let results = s:vimim_get_hjkl_game(keyboard)
         if !empty(results)
             return s:vimim_popupmenu_list(results)
