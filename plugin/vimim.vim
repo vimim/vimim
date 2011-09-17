@@ -4657,20 +4657,19 @@ function! s:vimim_popupmenu_list(matched_list)
 endfunction
 
 function! s:vimim_one_row(one_list, popupmenu_list)
-    let one_list = a:one_list
     let popupmenu_list = a:popupmenu_list
     let max = &columns - virtcol(".") % &columns
     let min = 3*5 + 2*5
-    let row2 = join(one_list[1:])
+    let row2 = join(a:one_list[1:])
     if max < min || len(row2) > min
         return popupmenu_list
     endif
     let &pumheight = 2
-    if max < len(join(one_list)) + 4
-        let popupmenu_list[0].abbr = get(one_list,0)
+    if max < len(join(a:one_list)) + 4
+        let popupmenu_list[0].abbr = get(a:one_list,0)
         let popupmenu_list[1].abbr = row2
     else
-        let popupmenu_list[0].abbr = join(one_list)
+        let popupmenu_list[0].abbr = join(a:one_list)
         let popupmenu_list[1].abbr = s:space
     endif
     return popupmenu_list
@@ -4781,4 +4780,3 @@ sil!call s:vimim_initialize_plugin()
 sil!call s:vimim_imap_for_chinesemode()
 sil!call s:vimim_imap_for_onekey()
 " ======================================= }}}
-" E121: Undefined variable: s:pumheight
