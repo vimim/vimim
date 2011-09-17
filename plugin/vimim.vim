@@ -75,7 +75,6 @@ endfunction
 
 function! s:vimim_initialize_session()
     let s:pumheight_saved = &pumheight
-    let s:pumheight = 10
     let s:imode_pinyin = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
@@ -198,6 +197,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
+    let s:pumheight = 10
     let s:im_toggle = 0
     let s:frontends = []
     let s:loops = {}
@@ -245,7 +245,7 @@ endfunction
 function! s:vimim_initialize_local()
     let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
-        :redir @V
+        :redir @M
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
@@ -1407,7 +1407,13 @@ function! g:vimim_bracket(offset)
     let row_start = s:start_row_before
     let delete_char = ""
     if repeat_times > 0 && row_end == row_start
-        let delete_char = repeat("\<BS>", repeat_times)
+        if a:offset > 0  " omni bslash for seamless
+            let left = repeat("\<Left>", repeat_times-1)
+            let right = repeat("\<Right>", repeat_times-1)
+            let delete_char = left . "\<BS>" . right
+        else
+            let delete_char = repeat("\<BS>", repeat_times)
+        endif
     endif
     if repeat_times < 1
         let current_line = getline(".")
@@ -1480,7 +1486,7 @@ function! <SID>vimim_backslash()
     "   (2) [omni]   insert Chinese and remove Space before
     let bslash = '\\'
     if pumvisible()
-        let bslash = '\<C-Y>\<C-Left>\<BS>\<End>'
+        let bslash = '\<C-Y>\<C-R>=g:vimim_bracket('.1.')\<CR>'
     endif
     sil!exe 'sil!return "' . bslash . '"'
 endfunction
@@ -4374,14 +4380,13 @@ endfunction
 
 function! g:vimim_reset_after_insert()
     let s:hjkl_n = ""     " reset
-    let s:hjkl_h = 0      " ctrl-h for "jsjsxx"
+    let s:hjkl_h = 0      " ctrl-h for jsjsxx
     let s:hjkl_l = 0      " toggle label
     let s:hjkl_m = 0      " toggle cjjp/cjjp''
     let s:hjkl_star = 0   " toggle simplified/traditional
     let s:smart_enter = 0
     let s:matched_list = []
     let s:pageup_pagedown = 0
-    let &pumheight = s:pumheight
     if s:pattern_not_found
         let s:pattern_not_found = 0
         return " "
@@ -4656,9 +4661,8 @@ function! s:vimim_one_row(one_list, popupmenu_list)
     let popupmenu_list = a:popupmenu_list
     let max = &columns - virtcol(".") % &columns
     let min = 3*5 + 2*5
-    let bottom = line("w$") - line(".")
     let row2 = join(one_list[1:])
-    if max < min || len(row2) > min || bottom < 8
+    if max < min || len(row2) > min
         return popupmenu_list
     endif
     let &pumheight = 2
@@ -4777,3 +4781,4 @@ sil!call s:vimim_initialize_plugin()
 sil!call s:vimim_imap_for_chinesemode()
 sil!call s:vimim_imap_for_onekey()
 " ======================================= }}}
+" E121: Undefined variable: s:pumheight
