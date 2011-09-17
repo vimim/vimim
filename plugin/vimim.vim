@@ -188,7 +188,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_h_to_toggle")
     call add(G, "g:vimim_plugin_folder")
     call add(G, "g:vimim_shuangpin")
-    call add(G, "g:vimim_latex_suite")
     call add(G, "g:vimim_onekey_is_tab")
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
@@ -864,7 +863,7 @@ function! s:vimim_dictionary_punctuations()
     let s:punctuations['^'] = "……"
     let s:punctuations['_'] = "——"
     let s:evils = {}
-    if empty(s:vimim_latex_suite)
+    if s:vimim_chinese_punctuation !~ 'latex'
         let s:evils['|'] = "、"
         let s:evils["'"] = "‘’"
         let s:evils['"'] = "“”"
@@ -872,7 +871,8 @@ function! s:vimim_dictionary_punctuations()
 endfunction
 
 function! s:vimim_punctuation_mapping()
-    if s:chinese_punctuation > 0 && empty(s:vimim_latex_suite)
+    if s:chinese_punctuation > 0 
+    \&& s:vimim_chinese_punctuation !~ 'latex'
         inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
         inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
         exe 'inoremap <Bar> ' .
@@ -1980,7 +1980,7 @@ function! s:vimim_onekey_mapping()
             exe 'inoremap<expr> '._.' <SID>vimim_qwer_hjkl("'._.'")'
         endfor
     endif
-    if empty(s:vimim_latex_suite)
+    if s:vimim_chinese_punctuation !~ 'latex'
         for _ in s:AZ_list
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps("'._.'")'
         endfor
@@ -2145,7 +2145,10 @@ function! s:vimim_chinesemode_action()
             endfor
         endif
     elseif s:chinese_mode =~ 'static'
-        let map_list = empty(s:vimim_latex_suite) ? s:Az_list : s:az_list
+        let map_list = s:Az_list
+        if s:vimim_chinese_punctuation =~ 'latex'
+            let map_list = s:az_list
+        endif
         for char in map_list
             sil!exe 'inoremap <silent> ' . char .
             \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
@@ -4403,7 +4406,8 @@ endfunction
 
 function! s:vimim_imap_off()
     let keys = range(0,9) + s:valid_keys
-    if s:chinese_mode!~'dynamic' && empty(s:vimim_latex_suite)
+    if s:chinese_mode !~ 'dynamic'
+    \&& s:vimim_chinese_punctuation !~ 'latex'
         let keys += s:AZ_list
     endif
     let keys += keys(s:evils) + keys(s:punctuations)
