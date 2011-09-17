@@ -243,7 +243,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @M
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -336,12 +336,10 @@ function! s:vimim_egg_vimim()
     let option = s:vimim_chinese('env') . s:colon . v:lc_time
     call add(eggs, option)
     let database = s:vimim_chinese('database') . s:colon
-    let vimim_toggle_list = ""
     if len(s:ui.frontends) > 0
         for frontend in s:ui.frontends
             let ui_root = get(frontend, 0)
             let ui_im = get(frontend, 1)
-            let vimim_toggle_list .=  ui_im . ","
             let datafile = s:backend[ui_root][ui_im].name
             let mass = datafile=~"bsddb" ? 'mass' : ui_root
             let ciku = database . s:vimim_chinese(mass) . database
@@ -395,10 +393,11 @@ function! s:vimim_egg_vimim()
         let option = network . title . s:http_executable
         call add(eggs, option)
     endif
-    if len(s:ui.frontends) > 1
+    let custom_im_list = s:vimim_get_custom_im_list()
+    if !empty(custom_im_list)
         let option  = s:vimim_chinese('toggle') . s:colon
         let option .= ":let g:vimim_toggle_list='"
-        let option .= vimim_toggle_list[:-2] . "'"
+        let option .= join(custom_im_list,",") . "'"
         call add(eggs, option)
     endif
     let option = s:vimim_chinese('setup') . s:colon . "vimimrc "
@@ -2055,15 +2054,7 @@ function! <SID>VimIMSwitch()
         return <SID>ChineseMode()
     endif
     let s:chinese_mode = s:vimim_chinese_input_mode
-    let custom_im_list = []
-    if s:vimim_toggle_list =~ ","
-        let custom_im_list = split(s:vimim_toggle_list, ",")
-    else
-        for frontends in s:ui.frontends
-            let frontend_im = get(frontends, 1)
-            call add(custom_im_list, frontend_im)
-        endfor
-    endif
+    let custom_im_list = s:vimim_get_custom_im_list()
     let switch = s:im_toggle % len(custom_im_list)
     let s:im_toggle += 1
     let im = get(custom_im_list, switch)
@@ -2081,6 +2072,19 @@ function! <SID>VimIMSwitch()
         endfor
     endif
     return s:vimim_chinese_mode(switch)
+endfunction
+
+function! s:vimim_get_custom_im_list()
+    let custom_im_list = []
+    if s:vimim_toggle_list =~ ","
+        let custom_im_list = split(s:vimim_toggle_list, ",")
+    else
+        for frontends in s:ui.frontends
+            let frontend_im = get(frontends, 1)
+            call add(custom_im_list, frontend_im)
+        endfor
+    endif
+    return custom_im_list
 endfunction
 
 function! s:vimim_chinese_mode(switch)
@@ -3635,14 +3639,7 @@ function! s:vimim_set_cloud(im)
 endfunction
 
 function! s:vimim_scan_backend_cloud()
-    let set_cloud = 0
     if empty(s:backend.datafile) && empty(s:backend.directory)
-        let set_cloud = 1
-    endif
-    if s:vimim_toggle_list =~ 'cloud'
-        let set_cloud = 1
-    endif
-    if set_cloud > 0
         call s:vimim_set_cloud(s:cloud_default)
     endif
 endfunction
