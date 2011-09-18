@@ -358,7 +358,12 @@ function! s:vimim_egg_vimim()
     endif
     let style = s:vimim_chinese('style') . s:colon
     if s:vimim_show_me_not > 0
-        let style .= s:vimim_chinese('menuless') . s:space
+        if s:vimim_show_me_not == 2
+            let style .= s:vimim_chinese('zero')
+        else
+            let style .= s:vimim_chinese('without')
+        endif
+        let style .= s:vimim_chinese('menu') . s:space
     endif
     if !empty(s:cjk_filename)
         let ciku  = database . s:vimim_chinese('standard')
@@ -1127,7 +1132,9 @@ let s:VimIM += [" ====  user   interface ==== {{{"]
 function! s:vimim_dictionary_status()
     let s:status = {}
     let s:status.onekey     = "点石成金 點石成金"
-    let s:status.menuless   = "无菜单 無菜單"
+    let s:status.zero       = "零"
+    let s:status.without    = "无 無"
+    let s:status.menu       = "菜单 菜單"
     let s:status.computer   = "电脑 電腦"
     let s:status.standard   = "标准 標準"
     let s:status.cjk        = "字库 字庫"
