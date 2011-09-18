@@ -630,10 +630,12 @@ function! s:vimim_search_chinese_by_english(keyboard)
         return results
     endif
     " 3/3 search datafile and english: /ma and /horse
-    let results = s:vimim_english(keyboard)
-    if empty(results)
+    let oneline = s:vimim_english(keyboard)
+    if empty(oneline)
         let s:search = 1
         let results = s:vimim_embedded_backend_engine(keyboard)
+    else
+        let results = split(oneline)
     endif
     return results
 endfunction
@@ -2852,7 +2854,7 @@ endfunction
 
 function! s:vimim_english(keyboard)
     if empty(s:english_filename)
-        return []
+        return 0
     endif
     " [sql] select english from vimim.txt
     let grep = '^' . a:keyboard . '\s\+'
@@ -2862,16 +2864,14 @@ function! s:vimim_english(keyboard)
         let grep = '^' . a:keyboard
         let matched = match(s:english_lines, grep)
     endif
-    let results = []
+    let oneline = ""
     if matched > -1
         let oneline = get(s:english_lines, matched)
-        let results = split(oneline)
-        let menu = get(results, 0)
-        if menu == a:keyboard
-            let results = results[1:]
+        if a:keyboard != get(split(oneline),0)
+            let oneline = a:keyboard . " " . oneline
         endif
     endif
-    return results
+    return oneline
 endfunction
 
 function! s:vimim_readfile(datafile)
@@ -3466,7 +3466,7 @@ function! s:vimim_get_from_database(keyboard)
         return []
     endif
     let oneline = s:vimim_get_gold_from_bsddb(a:keyboard)
-    if empty(oneline) || oneline !~ '\S'
+    if empty(oneline) " || get(split(oneline),1) =~ '\w'
         return []
     endif
     let results = s:vimim_make_pair_list(oneline)
@@ -3475,7 +3475,7 @@ function! s:vimim_get_from_database(keyboard)
         if len(candidates) > 1
             for candidate in candidates
                 let oneline = s:vimim_get_gold_from_bsddb(candidate)
-                if empty(oneline) || oneline !~ '\S'
+                if empty(oneline) || match(oneline,' ') < 0
                     continue
                 endif
                 let matched_list = s:vimim_make_pair_list(oneline)
@@ -3492,16 +3492,11 @@ function! s:vimim_get_from_database(keyboard)
 endfunction
 
 function! s:vimim_make_pair_list(oneline)
-    if empty(a:oneline) || a:oneline !~ '\S'
+    if empty(a:oneline) || match(a:oneline,' ') < 0
         return []
     endif
     let oneline_list = split(a:oneline)
     let menu = remove(oneline_list, 0)
-    if empty(menu) || menu =~# '\W'
-        return []
-    elseif !empty(s:english_results)
-        return oneline_list
-    endif
     let results = []
     for chinese in oneline_list
         call add(results, menu .' '. chinese)
@@ -4506,7 +4501,8 @@ else
         return []
     elseif empty(s:hjkl_m) && empty(s:hjkl_h)
         " [english] English cannot be ignored!
-        let s:english_results = s:vimim_english(keyboard)
+        let oneline = s:vimim_english(keyboard)
+        let s:english_results = s:vimim_make_pair_list(oneline)
     endif
     if s:onekey      " play with hjkl
         let results = s:vimim_get_hjkl_game(keyboard)
@@ -4584,8 +4580,9 @@ endfunction
 
 function! s:vimim_popupmenu_list(matched_list)
     let matched_list = a:matched_list
-    if len(matched_list) < 2 && get(matched_list,0) !~ '\W'
-        let matched_list = []
+    let pairs = split(get(matched_list,0))
+    if get(pairs,0) == get(pairs,1)
+        let matched_list = []  " s:english_results ["color color"]
     endif
     let lines = s:english_results + matched_list
     if empty(lines) || type(lines) != type([])
@@ -4667,7 +4664,7 @@ function! s:vimim_one_row(one_list, popupmenu_list)
     let max = &columns - virtcol(".") % &columns
     let min = 3*5 + 2*5
     let row2 = join(a:one_list[1:])
-    if max < min 
+    if max < min
         return popupmenu_list
     endif
     if max < len(join(a:one_list)) + 4
