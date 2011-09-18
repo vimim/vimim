@@ -59,7 +59,7 @@ function! s:vimim_backend_initialization()
     sil!call s:vimim_initialize_session()
     sil!call s:vimim_initialize_ui()
     sil!call s:vimim_initialize_i_setting()
-    sil!call s:vimim_dictionary_status()
+    sil!call s:vimim_dictionary_statusline()
     sil!call s:vimim_dictionary_punctuations()
     sil!call s:vimim_dictionary_keycodes()
     sil!call s:vimim_scan_cjk_file()
@@ -1115,7 +1115,7 @@ endfunction
 let s:VimIM += [" ====  user   interface ==== {{{"]
 " =================================================
 
-function! s:vimim_dictionary_status()
+function! s:vimim_dictionary_statusline()
     let s:status = {}
     let s:status.onekey     = "点石成金 點石成金"
     let s:status.computer   = "电脑 電腦"
@@ -1208,8 +1208,6 @@ function! s:vimim_skin(color)
     if s:show_me_not
         let color = 0
         let &pumheight = 0
-    elseif s:onekey && s:vimim_menuless && &number
-        let &pumheight = 1
     elseif s:hjkl_l
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
     endif
@@ -1224,13 +1222,6 @@ function! s:vimim_skin(color)
         endif
     endif
     return menu_in_one_row
-endfunction
-
-function! s:vimim_set_keyboard_list(column_start, keyboard)
-    let s:start_column_before = a:column_start
-    if s:keyboard !~ ','
-        let s:keyboard = a:keyboard
-    endif
 endfunction
 
 function! s:vimim_set_statusline()
@@ -1974,7 +1965,7 @@ function! <SID>vimim_space()
         if s:chinese_mode =~ 'static'
             let space = s:vimim_static_action(space)
         elseif s:onekey
-            let space = s:vimim_get_cursor()
+            let space  = s:vimim_get_cursor()
             let space .= s:vimim_onekey_action(1)
         endif
         let space .= g:vimim_reset_after_insert()
@@ -2215,6 +2206,13 @@ function! s:vimim_static_action(space)
         let space = g:vimim()
     endif
     sil!exe 'sil!return "' . space . '"'
+endfunction
+
+function! s:vimim_set_keyboard_list(column_start, keyboard)
+    let s:start_column_before = a:column_start
+    if s:keyboard !~ ','
+        let s:keyboard = a:keyboard
+    endif
 endfunction
 
 function! s:vimim_get_seamless(current_positions)
@@ -4296,6 +4294,7 @@ function! s:vimim_initialize_i_setting()
     let s:completeopt = &completeopt
     let s:laststatus  = &laststatus
     let s:statusline  = &statusline
+    let s:titlestring = &titlestring
     let s:lazyredraw  = &lazyredraw
     let s:showmatch   = &showmatch
     let s:smartcase   = &smartcase
@@ -4310,6 +4309,7 @@ function! s:vimim_set_vim()
     set nolazyredraw
     set noshowmatch
     set noruler
+    set title
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
@@ -4320,6 +4320,7 @@ function! s:vimim_restore_vim()
     let &completeopt = s:completeopt
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
+    let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
     let &showmatch   = s:showmatch
     let &smartcase   = s:smartcase
@@ -4589,13 +4590,14 @@ function! s:vimim_popupmenu_list(matched_list)
     if len(lines) == 1
         let color = 0
         if len(get(lines,0)) == s:multibyte
-            call add(lines, s:space) " for menuless
+            call add(lines, s:space) " for menu-less
         endif
     endif
     " [skin] menu in one row might be better
     let menu_in_one_row = s:vimim_skin(color)
     let label = 1
     let one_list = []
+    let two_list = []
     let popupmenu_list = []
     for chinese in lines
         let complete_items = {}
@@ -4614,7 +4616,7 @@ function! s:vimim_popupmenu_list(matched_list)
             let pairs = split(chinese)
             if len(pairs) > 1
                 let chinese = get(pairs,1)
-                if s:show_extra_menu
+                if s:show_extra_menu && empty(menu_in_one_row)
                     let menu = get(pairs,0)
                 endif
             endif
@@ -4629,14 +4631,15 @@ function! s:vimim_popupmenu_list(matched_list)
                     endif
                 endif
             endif
-            if menu_in_one_row && len(one_list) < 5
-                let menu = ""
-                let abbr = label . "." . chinese
-                call add(one_list, abbr)
-            endif
             let labeling = ""
             if color
                 let labeling = printf('%2s ', s:vimim_get_labeling(label))
+            endif
+            if len(one_list) < 20
+                call add(one_list, label . "." . chinese)
+            endif
+            if len(two_list) < 10
+                call add(two_list, labeling . "." . chinese)
             endif
             let label += 1
             let complete_items["abbr"] = labeling . chinese
@@ -4648,8 +4651,14 @@ function! s:vimim_popupmenu_list(matched_list)
     endfor
     if s:onekey
         let s:popupmenu_list = popupmenu_list
+        if empty(s:show_me_not) && s:vimim_menuless && &number
+            let &pumheight = 1
+            let &titlestring = join(one_list)
+        else
+            let &titlestring = join(two_list)
+        endif
     elseif menu_in_one_row
-        return s:vimim_one_row(one_list, popupmenu_list[0:4])
+        return s:vimim_one_row(one_list[0:4], popupmenu_list[0:4])
     endif
     return popupmenu_list
 endfunction
