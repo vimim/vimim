@@ -98,7 +98,7 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     let s:cjk_cache = {}
-    let s:cjk_cache.i = ["我","　"]
+    let s:cjk_cache.i = ["我"]
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -4594,7 +4594,13 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
     endif
     " [skin] no color is the best color
-    let color = len(lines)<2 ? 0 : 1
+    let color = 1
+    if len(lines) == 1
+        let color = 0
+        if len(get(lines,0)) == s:multibyte
+            call add(lines, s:space) " for menuless
+        endif
+    endif
     " [skin] menu in one row might be better
     let menu_in_one_row = s:vimim_skin(color)
     let label = 1
@@ -4627,7 +4633,7 @@ function! s:vimim_popupmenu_list(matched_list)
                     let chinese .= tail
                 endif
                 if s:hjkl_h && s:hjkl_h%2 && empty(s:english_results)
-                    if len(chinese)==s:multibyte
+                    if len(chinese) == s:multibyte
                         let menu = s:vimim_cjk_extra_text(chinese)
                     endif
                 endif
