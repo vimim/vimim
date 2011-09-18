@@ -3374,12 +3374,8 @@ function! s:vimim_scan_backend_embedded()
     endif
     " (2/3) scan bsddb database as edw: enterprise data warehouse
     if has("python")  " bsddb is from Python 2 only
-        let bsddb = "vimim.gbk.bsddb"       " wc=46,694,400
+        let bsddb = "vimim.gbk.bsddb"   " wc=46,694,400
         let datafile = s:vimim_check_filereadable(bsddb)
-        if empty(datafile)
-            let bsddb = "vimim.utf8.bsddb"  " wc=55,230,464
-            let datafile = s:vimim_check_filereadable(bsddb)
-        endif
         if !empty(datafile)
             call s:vimim_initialize_bsddb(datafile)
             return s:vimim_set_datafile(im, datafile)
