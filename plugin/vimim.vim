@@ -99,7 +99,7 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     let s:cjk_cache = {}
-    let s:cjk_cache.i = ["我"]
+    let s:cjk_cache.i = ["我","　"]
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -245,7 +245,6 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-"   let g:vimim_show_me_not = 1
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @v
@@ -4389,7 +4388,7 @@ function! g:vimim_reset_after_insert()
     let s:matched_list = []
     let s:pageup_pagedown = 0
     if s:vimim_show_me_not
-       let s:show_me_not = 1
+       let s:show_me_not = s:vimim_show_me_not
     endif
     if s:pattern_not_found
         let s:pattern_not_found = 0
