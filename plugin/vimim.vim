@@ -252,7 +252,7 @@ function! s:vimim_initialize_local()
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
-        let g:vimim_show_me_not = 1
+        let g:vimim_show_me_not = 2
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -1864,9 +1864,11 @@ function! g:vimim_onekey()
     if pumvisible() && len(s:popupmenu_list) > 0
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif s:onekey
-        if s:show_me_not
+        if s:show_me_not == 1
             let s:show_me_not = 0
             let onekey = '\<C-P>\<C-R>=g:vimim()\<CR>'
+        elseif s:show_me_not == 2
+            let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
         else
             let s:seamless_positions = getpos(".")
             sil!call g:vimim_stop()
