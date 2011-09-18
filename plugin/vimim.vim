@@ -252,7 +252,7 @@ function! s:vimim_initialize_local()
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
-        let g:vimim_show_me_not = 2
+        let g:vimim_show_me_not = 1
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -1234,7 +1234,7 @@ function! s:vimim_skin(color)
     if empty(a:color) || s:vimim_custom_color > 1
         let color = 0
     endif
-    if s:vimim_custom_color && s:vimim_show_me_not < 2
+    if s:vimim_custom_color
         call g:vimim_default_omni_color()
         if empty(color)
             highlight!      PmenuSel NONE
@@ -1518,7 +1518,7 @@ endfunction
 
 function! s:vimim_get_labeling(label)
     let labeling = a:label==10 ? "0" : a:label
-    if s:onekey && a:label < 11
+    if s:onekey && a:label < 11 && s:vimim_show_me_not < 2
         let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
         if s:onekey > 1
             " onekey label bb for cloud Baidu
@@ -1873,9 +1873,9 @@ function! g:vimim_onekey()
     elseif s:onekey
         if s:show_me_not == 1
             let s:show_me_not = 0
-            let onekey = '\<C-P>\<C-R>=g:vimim()\<CR>'
+            let onekey = '\<C-E>\<C-R>=g:vimim()\<CR>'
         elseif s:show_me_not == 2
-            let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+            let onekey = '\<C-N>'
         else
             let s:seamless_positions = getpos(".")
             sil!call g:vimim_stop()
@@ -4363,13 +4363,13 @@ function! s:vimim_start()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_set_special_property()
+    inoremap <expr> <Esc>    <SID>vimim_esc()
     inoremap <expr> <Space>  <SID>vimim_space()
     if s:vimim_show_me_not < 2
         sil!call s:vimim_plugin_conflict_fix_on()
         sil!call s:vimim_map_omni_label()
         inoremap <expr> <BS>     <SID>vimim_backspace()
         inoremap <expr> <CR>     <SID>vimim_enter()
-        inoremap <expr> <Esc>    <SID>vimim_esc()
         inoremap <expr> <Bslash> <SID>vimim_backslash()
     endif
 endfunction
@@ -4383,6 +4383,7 @@ function! g:vimim_stop()
         sil!call s:vimim_imap_for_chinesemode()
         sil!call s:vimim_imap_for_onekey()
     else
+        iunmap <Esc>
         iunmap <Space>
     endif
 endfunction
