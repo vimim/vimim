@@ -4304,7 +4304,7 @@ endfunction
 function! s:vimim_set_vim()
     set imdisable
     set iminsert=0
-    set completeopt=menuone
+    set completeopt=menu
     set omnifunc=VimIM
     set nolazyredraw
     set noshowmatch
@@ -4585,15 +4585,8 @@ function! s:vimim_popupmenu_list(matched_list)
             let s:cjk_cache[keyboard] = lines
         endif
     endif
-    " [skin] no color is the best color
-    let color = 1
-    if len(lines) == 1
-        let color = 0
-        if len(get(lines,0)) == s:multibyte
-            call add(lines, s:space) " for menu-less
-        endif
-    endif
-    " [skin] menu in one row might be better
+    " [skin] no color is the best color along with one row menu
+    let color = len(lines)<2 ? 0 : 1
     let menu_in_one_row = s:vimim_skin(color)
     let label = 1
     let one_list = []
