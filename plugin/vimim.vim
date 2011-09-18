@@ -4627,7 +4627,6 @@ function! s:vimim_popupmenu_list(matched_list)
     let label = 1
     let one_list = []
     let popupmenu_list = []
-    let first_in_list = get(lines,0)
     for chinese in lines
         let complete_items = {}
         if s:hjkl_star && s:hjkl_star%2 && !empty(s:cjk_filename)
@@ -4642,8 +4641,8 @@ function! s:vimim_popupmenu_list(matched_list)
                 continue
             endif
             let menu = ""
-            if first_in_list =~ '\s'
-                let pairs = split(chinese)
+            let pairs = split(chinese)
+            if len(pairs) > 1
                 let chinese = get(pairs,1)
                 if s:show_extra_menu
                     let menu = get(pairs,0)
