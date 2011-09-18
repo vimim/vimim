@@ -252,7 +252,7 @@ function! s:vimim_initialize_local()
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
-        let g:vimim_show_me_not = 2
+        let g:vimim_show_me_not = 1
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -357,37 +357,43 @@ function! s:vimim_egg_vimim()
         call add(eggs, ciku . s:english_filename)
     endif
     let style = s:vimim_chinese('style') . s:colon
+    if s:vimim_show_me_not > 0
+        let style .= s:vimim_chinese('menuless') . s:space
+    endif
     if !empty(s:cjk_filename)
         let ciku  = database . s:vimim_chinese('standard')
         let ciku .= s:vimim_chinese('cjk') . s:colon
-        if s:cjk_filename =~ "vimim.cjk.txt"
-            let style .= s:vimim_chinese('4corner') . s:space
-        elseif s:cjk_filename =~ "vimim.cjkv.txt"
-            let style .= s:vimim_chinese('5strokes'). s:space.s:space
-        endif
         call add(eggs, ciku . s:cjk_filename)
     endif
     let input = s:vimim_chinese('input') . s:colon
     let im = s:vimim_statusline()
+    let toggle = "toggle_for_midas_touch"
+    if s:vimim_onekey_is_tab > 0
+       let toggle = "toggle_with_Tab_for_midas_touch"
+     endif
     if empty(im)
-        let input .= s:vimim_chinese('onekey')
+        let input .= s:vimim_chinese('onekey') . s:space
+        if s:vimim_onekey_is_tab == 2
+            let input .= s:vimim_chinese(s:ui.im) . s:space
+        endif
     else
         let toggle = "toggle_with_Ctrl-Bslash"
-        if s:vimim_onekey_is_tab > 1
-            let toggle = "toggle_with_Tab_for_midas_touch"
-            let input .= s:vimim_chinese('onekey') . s:space
-            let input .= s:ui.statusline . s:space
-        else
-            if s:vimim_ctrl_space_to_toggle == 1
-                let toggle = "toggle_with_Ctrl-Space"
-            endif
-            let input .=  im . s:space
+        if s:vimim_ctrl_space_to_toggle == 1
+            let toggle = "toggle_with_Ctrl-Space"
         endif
-        call add(eggs, style . toggle)
-        if s:vimim_cloud > -1 && s:onekey < 2
-            let input .= s:vimim_chinese(s:cloud_default)
-            let input .= s:vimim_chinese('cloud')
+        let input .=  im . s:space
+    endif
+    call add(eggs, style . toggle)
+    if !empty(s:cjk_filename)
+        if s:cjk_filename =~ "vimim.cjk.txt"
+            let input .= s:vimim_chinese('4corner') . s:space
+        elseif s:cjk_filename =~ "vimim.cjkv.txt"
+            let input .= s:vimim_chinese('5strokes'). s:space
         endif
+    endif
+    if s:vimim_cloud > -1 && s:onekey < 2
+        let input .= s:vimim_chinese(s:cloud_default)
+        let input .= s:vimim_chinese('cloud')
     endif
     call add(eggs, input)
     if !empty(s:vimim_check_http_executable())
@@ -1121,6 +1127,7 @@ let s:VimIM += [" ====  user   interface ==== {{{"]
 function! s:vimim_dictionary_status()
     let s:status = {}
     let s:status.onekey     = "点石成金 點石成金"
+    let s:status.menuless   = "无菜单 無菜單"
     let s:status.computer   = "电脑 電腦"
     let s:status.standard   = "标准 標準"
     let s:status.cjk        = "字库 字庫"
@@ -1264,6 +1271,8 @@ endfunction
 
 function! s:vimim_statusline()
     if empty(s:ui.root) || empty(s:ui.im)
+    \|| s:vimim_show_me_not > 1
+    \|| s:vimim_onekey_is_tab > 1
         return ""
     endif
     if has_key(s:im_keycode, s:ui.im)
@@ -2090,6 +2099,9 @@ endfunction
 
 function! s:vimim_get_custom_im_list()
     let custom_im_list = []
+    if s:vimim_show_me_not == 2 || s:vimim_onekey_is_tab == 2
+        return []
+    endif
     if s:vimim_toggle_list =~ ","
         let custom_im_list = split(s:vimim_toggle_list, ",")
     else
