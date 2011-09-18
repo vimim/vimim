@@ -1227,7 +1227,7 @@ function! s:vimim_skin(color)
     if empty(a:color) || s:vimim_custom_color > 1
         let color = 0
     endif
-    if s:vimim_custom_color > 0
+    if s:vimim_custom_color && s:vimim_show_me_not < 2
         call g:vimim_default_omni_color()
         if empty(color)
             highlight!      PmenuSel NONE
