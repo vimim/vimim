@@ -252,7 +252,7 @@ function! s:vimim_initialize_local()
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
-        let g:vimim_show_me_not = 1
+        let g:vimim_show_me_not = 2
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -458,11 +458,11 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
-    elseif keyboard[-2:] ==# "''"
-        let results = s:vimim_egg_vimimgame()
     elseif keyboard[-4:] ==# "''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
+    elseif keyboard[-2:] ==# "''"
+        let results = s:vimim_egg_vimimgame()
     elseif len(unname_register) > 8
         if keyboard ==# "'''"
             " [hjkl] display buffer inside the omni window
@@ -1338,7 +1338,7 @@ function! s:vimim_get_chinese_im()
     return input_style
 endfunction
 
-function! s:vimim_set_omni_label()
+function! s:vimim_map_omni_label()
     let labels = range(10)
     if s:onekey
         let labels += split(s:abcd, '\zs')
@@ -1990,6 +1990,9 @@ function! s:vimim_popup_word()
 endfunction
 
 function! s:vimim_onekey_mapping()
+    if s:vimim_show_me_not > 1
+        return
+    endif
     if empty(s:cjk_filename)
         for _ in s:qwer
             exe 'inoremap<expr> '._.' <SID>vimim_qwer_hitrun("'._.'")'
@@ -4335,26 +4338,32 @@ function! s:vimim_restore_vim()
 endfunction
 
 function! s:vimim_start()
-    sil!call s:vimim_plugin_conflict_fix_on()
     sil!call s:vimim_set_vim()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_set_special_property()
-    sil!call s:vimim_set_omni_label()
-    inoremap <expr> <BS>     <SID>vimim_backspace()
-    inoremap <expr> <CR>     <SID>vimim_enter()
-    inoremap <expr> <Esc>    <SID>vimim_esc()
     inoremap <expr> <Space>  <SID>vimim_space()
-    inoremap <expr> <Bslash> <SID>vimim_backslash()
+    if s:vimim_show_me_not < 2
+        sil!call s:vimim_plugin_conflict_fix_on()
+        sil!call s:vimim_map_omni_label()
+        inoremap <expr> <BS>     <SID>vimim_backspace()
+        inoremap <expr> <CR>     <SID>vimim_enter()
+        inoremap <expr> <Esc>    <SID>vimim_esc()
+        inoremap <expr> <Bslash> <SID>vimim_backslash()
+    endif
 endfunction
 
 function! g:vimim_stop()
     sil!call s:vimim_restore_vim()
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_imap_off()
-    sil!call s:vimim_plugin_conflict_fix_off()
-    sil!call s:vimim_imap_for_chinesemode()
-    sil!call s:vimim_imap_for_onekey()
+    if s:vimim_show_me_not < 2
+        sil!call s:vimim_imap_off()
+        sil!call s:vimim_plugin_conflict_fix_off()
+        sil!call s:vimim_imap_for_chinesemode()
+        sil!call s:vimim_imap_for_onekey()
+    else
+        iunmap <Space>
+    endif
 endfunction
 
 function! s:vimim_super_reset()
@@ -4742,6 +4751,9 @@ function! s:vimim_imap_for_onekey()
 endfunction
 
 function! s:vimim_imap_for_chinesemode()
+    if s:vimim_show_me_not > 1
+        return
+    endif
     if s:vimim_onekey_is_tab < 2
          noremap<silent>  <C-Bslash>  :call <SID>ChineseMode()<CR>
             imap<silent>  <C-Bslash>  <Plug>VimIM
