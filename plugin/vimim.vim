@@ -271,7 +271,15 @@ function! s:vimim_easter_chicken(keyboard)
 endfunction
 
 function! s:vimim_egg_vimimrc()
-    let vimimrc = s:vimimdefaults + s:vimimrc
+    let vimimrc = copy(s:vimimdefaults)
+    let index = match(vimimrc, 'g:vimim_toggle_list')
+    let custom_im_list = s:vimim_get_custom_im_list()
+    if index && !empty(custom_im_list)
+        let toggle = join(custom_im_list,",")
+        let value = vimimrc[index][:-3]
+        let vimimrc[index] = value . "'" . toggle . "'"
+    endif
+    let vimimrc += s:vimimrc
     return sort(vimimrc)
 endfunction
 
@@ -405,13 +413,6 @@ function! s:vimim_egg_vimim()
         let network  = s:vimim_chinese('network') . s:colon
         let title = s:http_executable=~'Python' ? '' : "HTTP executable: "
         let option = network . title . s:http_executable
-        call add(eggs, option)
-    endif
-    let custom_im_list = s:vimim_get_custom_im_list()
-    if !empty(custom_im_list)
-        let option  = s:vimim_chinese('toggle') . s:colon
-        let option .= ":let g:vimim_toggle_list='"
-        let option .= join(custom_im_list,",") . "'"
         call add(eggs, option)
     endif
     let option = s:vimim_chinese('setup') . s:colon . "vimimrc "
@@ -1180,7 +1181,6 @@ function! s:vimim_dictionary_status()
     let s:status.half_width = "半角"
     let s:status.mycloud    = "自己的云 自己的雲"
     let s:status.cloud      = "云 雲"
-    let s:status.toggle     = "切换 切換"
     let s:status.network    = "联网 聯網"
     let s:status.sogou      = "搜狗"
     let s:status.google     = "谷歌"
@@ -2108,12 +2108,9 @@ endfunction
 
 function! s:vimim_get_custom_im_list()
     let custom_im_list = []
-    if s:vimim_show_me_not == 2 || s:vimim_onekey_is_tab == 2
-        return []
-    endif
     if s:vimim_toggle_list =~ ","
         let custom_im_list = split(s:vimim_toggle_list, ",")
-    else
+    elseif len(s:ui.frontends) > 1
         for frontends in s:ui.frontends
             let frontend_im = get(frontends, 1)
             call add(custom_im_list, frontend_im)
