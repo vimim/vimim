@@ -4597,7 +4597,6 @@ function! s:vimim_popupmenu_list(matched_list)
     let menu_in_one_row = s:vimim_skin(color)
     let label = 1
     let one_list = []
-    let two_list = []
     let popupmenu_list = []
     for chinese in lines
         let complete_items = {}
@@ -4638,9 +4637,6 @@ function! s:vimim_popupmenu_list(matched_list)
             if len(one_list) < 20
                 call add(one_list, label . "." . chinese)
             endif
-            if len(two_list) < 10
-                call add(two_list, labeling . "." . chinese)
-            endif
             let label += 1
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
@@ -4654,8 +4650,6 @@ function! s:vimim_popupmenu_list(matched_list)
         if empty(s:show_me_not) && s:vimim_menuless && &number
             let &pumheight = 1
             let &titlestring = join(one_list)
-        else
-            let &titlestring = join(two_list)
         endif
     elseif menu_in_one_row
         return s:vimim_one_row(one_list[0:4], popupmenu_list[0:4])
