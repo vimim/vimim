@@ -889,6 +889,32 @@ function! s:vimim_dictionary_punctuations()
     endif
 endfunction
 
+function! s:vimim_common_punctuation(key)
+    let hjkl = a:key
+    if !pumvisible()
+        return hjkl
+    endif
+    if hjkl =~ "[][]"
+        let hjkl = s:vimim_square_bracket(hjkl)
+    elseif hjkl =~ "[=.]"
+        if &pumheight
+            let s:pageup_pagedown = 1
+        else
+            let hjkl = '\<PageDown>'
+        endif
+    elseif hjkl =~ "[-,]"
+        if &pumheight
+            let s:pageup_pagedown = -1
+        else
+            let hjkl = '\<PageUp>'
+        endif
+    endif
+    if hjkl == a:key
+        let hjkl = '\<C-R>=g:vimim()\<CR>'
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
 function! s:vimim_punctuation_mapping()
     if s:chinese_punctuation > 0
     \&& s:vimim_chinese_punctuation !~ 'latex'
@@ -918,23 +944,11 @@ function! <SID>vimim_chinese_punctuation(key)
             endif
         endif
     endif
-    if !pumvisible()
-        return key
-    endif
-    if a:key =~ "[;=-]"
-        let yes = ''
+    if pumvisible()
         if a:key == ";"  " the 2nd choice
-            let yes = '\<Down>\<C-Y>'
-        elseif a:key == "="
-            let s:pageup_pagedown = 1
-        elseif a:key == "-"
-            let s:pageup_pagedown = -1
-        endif
-        let key = yes . '\<C-R>=g:vimim()\<CR>'
-    else
-        let key = '\<C-Y>' . key
-        if a:key =~ "[][]"
-            let key = s:vimim_square_bracket(a:key)
+            let key = '\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
+        else
+            let key = '\<C-Y>' . key
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -950,25 +964,11 @@ function! <SID>vimim_onekey_punctuation(key)
         call s:vimim_last_quote("action_on_omni_popup")
     elseif hjkl == ';'
         let hjkl = '\<C-Y>\<C-R>=g:vimim_menu_to_clip()\<CR>'
-    elseif hjkl =~ "[][]"
-        let hjkl = s:vimim_square_bracket(hjkl)
     elseif hjkl =~ "[<>]"
         let hjkl = '\<C-Y>'.s:punctuations[nr2char(char2nr(hjkl)-16)]
     elseif hjkl =~ "[/?]"
         let hjkl = s:vimim_menu_search(hjkl)
-    elseif hjkl =~ "[=.]"
-        if &pumheight
-            let s:pageup_pagedown = 1
-        else
-            let hjkl = '\<PageDown>'
-        endif
-    elseif hjkl =~ "[-,]"
-        if &pumheight
-            let s:pageup_pagedown = -1
-        else
-            let hjkl = '\<PageUp>'
-        endif
-    elseif hjkl ==# '*' && !empty(s:cjk_filename)
+    elseif hjkl ==# '*'
         let s:hjkl_star += 1
     endif
     if hjkl == a:key
@@ -992,7 +992,7 @@ function! <SID>vimim_get_quote(type)
         if s:onekey
             let s:smart_single_quotes += 1
             let quote .= get(pairs, s:smart_single_quotes % 2)
-        else
+        else  " the 3rd choice
             let quote = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
         endif
     elseif a:type == 2
@@ -2028,7 +2028,11 @@ function! s:vimim_onekey_mapping()
     for _ in split('xhjklmn', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl("'._.'")'
     endfor
-    for _ in split("[]-=.,/?;'<>*", '\zs')
+    let onekey_punctuation = "/?;'<>"
+    if !empty(s:cjk_filename)
+        let onekey_punctuation .= "*"
+    endif
+    for _ in split(onekey_punctuation, '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_punctuation("'._.'")'
     endfor
 endfunction
@@ -2159,11 +2163,11 @@ let s:VimIM += [" ====  mode: static     ==== {{{"]
 
 function! s:vimim_chinesemode_action()
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_start()
     if s:vimim_chinese_punctuation > -1
         inoremap <expr> <C-^> <SID>vimim_punctuation_toggle()
         call s:vimim_punctuation_mapping()
     endif
+    sil!call s:vimim_start()
     let action = ""
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
@@ -4356,6 +4360,13 @@ function! s:vimim_start()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_set_special_property()
+    let common_punctuation = "[]=-"  " pageup/pagedown for all modes
+    if s:onekey
+        let common_punctuation .= ".,"
+    endif
+    for _ in split(common_punctuation, '\zs')
+        exe 'inoremap<expr> '._.' <SID>vimim_common_punctuation("'._.'")'
+    endfor
     inoremap <expr> <Esc>    <SID>vimim_esc()
     inoremap <expr> <Space>  <SID>vimim_space()
     if s:vimim_show_me_not < 2
@@ -4683,20 +4694,22 @@ endfunction
 
 function! s:vimim_one_row(one_list, popupmenu_list)
     let popupmenu_list = a:popupmenu_list
-    let max = &columns - virtcol(".") % &columns
-    let min = 3*5 + 2*5
-    let row2 = join(a:one_list[1:])
-    if max < min
-        return popupmenu_list
+    let column = virtcol(".")
+    if column > &columns
+        let column = virtcol(".") % &columns
     endif
-    if max < len(join(a:one_list)) + 4
-        if len(row2) > min
+    let spaces = &columns - column
+    let minimum = &columns/2.5
+    let row1 = join(a:one_list)
+    let row2 = join(a:one_list[1:])
+    if spaces < len(row1) + 4
+        if  len(row2) > spaces || len(row2) > minimum
             return popupmenu_list
         endif
         let popupmenu_list[0].abbr = get(a:one_list,0)
         let popupmenu_list[1].abbr = row2
     else
-        let popupmenu_list[0].abbr = join(a:one_list)
+        let popupmenu_list[0].abbr = row1
         let popupmenu_list[1].abbr = s:space
     endif
     let &pumheight = 2
