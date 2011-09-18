@@ -245,7 +245,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
- "  let g:vimim_show_me_not = 1
+"   let g:vimim_show_me_not = 1
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @v
@@ -4581,8 +4581,8 @@ endfunction
 function! s:vimim_popupmenu_list(matched_list)
     let matched_list = a:matched_list
     let pairs = split(get(matched_list,0))
-    if get(pairs,0) == get(pairs,1)
-        let matched_list = []  " s:english_results ["color color"]
+    if len(pairs) == 2 && get(pairs,0) == get(pairs,1)
+        let matched_list = [] " s:english_results ["color color"]
     endif
     let lines = s:english_results + matched_list
     if empty(lines) || type(lines) != type([])
