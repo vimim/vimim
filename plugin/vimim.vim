@@ -1186,7 +1186,7 @@ function! g:vimim_default_omni_color()
     highlight! PmenuSbar  NONE
     highlight! PmenuThumb NONE
     highlight! Pmenu      NONE
-    highlight! link PmenuSel Title
+    highlight! link PmenuSel NonText
 endfunction
 
 function! s:vimim_skin(color)
