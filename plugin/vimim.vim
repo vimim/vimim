@@ -1407,8 +1407,8 @@ function! s:vimim_square_bracket(key)
         let _     = key=="]" ? 0          : -1
         let left  = key=="]" ? "\<Left>"  : ""
         let right = key=="]" ? "\<Right>" : ""
-        let backspace = '\<C-R>=g:vimim_bracket('._.')\<CR>'
-        let key = '\<C-Y>' . left . backspace . right
+        let bs = '\<C-R>=g:vimim_bracket('._.')\<CR>'
+        let key = '\<C-Y>' . left . bs . right
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1468,7 +1468,7 @@ endfunction
 function! <SID>vimim_backspace()
     let key = '\<BS>'
     if pumvisible()
-        let key = '\<C-E>\<BS>\<C-R>=g:vimim()\<CR>'
+        let key .= g:vimim()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1653,7 +1653,7 @@ if lastline - firstline < 1
     let lastline = "$"
 endif
 let g:gmails.msg = getline(firstline, lastline)
-let python = has('python3') && &relativenumber>0 ? 'python3' : 'python'
+let python = has('python3') && &relativenumber ? 'python3' : 'python'
 exe python . ' << EOF'
 import vim
 from smtplib import SMTP
@@ -1850,9 +1850,8 @@ endfunction
 
 function! g:vimim_onekey()
     " (1)<OneKey> in insert mode => start OneKey as the MidasTouch
-    " (2)<OneKey> in OneKey mode => stop  OneKey
+    " (2)<OneKey> in OneKey mode => stop  OneKey and in insert mode
     " (3)<OneKey> in omni window => stop  OneKey and print out menu
-    " (4)<OneKey> in menuless    => toggle &number/&relativenumber
     let onekey = ''
     let s:chinese_mode = 'onekey'
     let space_before = getline(".")[col(".")-2]
@@ -1861,17 +1860,8 @@ function! g:vimim_onekey()
     if pumvisible() && len(s:popupmenu_list)
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif s:onekey
-        if s:vimim_menuless && &number
-            set relativenumber
-            let &pumheight = 10
-            let onekey = '\<C-E>\<C-R>=g:vimim()\<CR>'
-        elseif s:vimim_menuless && &relativenumber
-            set number
-            set norelativenumber
-        else
-            let s:seamless_positions = getpos(".")
-            sil!call g:vimim_stop()
-        endif
+        let s:seamless_positions = getpos(".")
+        sil!call g:vimim_stop()
     elseif s:vimim_onekey_is_tab && space_before
         let onekey = '\t'
     else
@@ -1898,7 +1888,7 @@ function! s:vimim_onekey_action(space)
     let onekey = space
     if one_before =~# s:valid_key
         let onekey = g:vimim()
-    elseif s:vimim_menuless && &number
+    elseif &pumheight == 1
         let onekey = '\<C-N>'
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -3679,7 +3669,7 @@ function! s:vimim_check_http_executable()
     endif
     " step 2 of 4: try to use dynamic python:
     if empty(http_executable)
-        if has('python')  " +python/dyn
+        if has('python')                     " +python/dyn
             let http_executable = 'Python2 Interface to Vim'
         endif
         if has('python3') && &relativenumber " +python3/dyn
@@ -4334,8 +4324,8 @@ function! s:vimim_start()
     sil!call s:vimim_plugin_conflict_on()
     sil!call s:vimim_map_omni_page_label()
     inoremap <expr> <BS>     <SID>vimim_backspace()
-    inoremap <expr> <CR>     <SID>vimim_enter()
     inoremap <expr> <Bslash> <SID>vimim_backslash()
+    inoremap <expr> <CR>     <SID>vimim_enter()
     inoremap <expr> <Esc>    <SID>vimim_esc()
     inoremap <expr> <Space>  <SID>vimim_space()
 endfunction
