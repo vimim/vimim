@@ -446,20 +446,20 @@ endfunction
 
 function! s:vimim_get_hjkl_game(keyboard)
     let keyboard = a:keyboard
-    let poem = s:vimim_check_filereadable(keyboard)
-    let unname_register = getreg('"')
     let results = []
+    let unname_register = getreg('"')
+    let poem = s:vimim_check_filereadable(keyboard)
     if !empty(poem)
-        " [poem] flirt any entry in the hjkl directory
+        " [hjkl] flirt non-dot files in the hjkl directory
         let results = s:vimim_readfile(poem)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
+    elseif keyboard ==# "''"
+        let results = s:vimim_egg_vimimgame()
     elseif keyboard[-4:] ==# "''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif keyboard[-2:] ==# "''"
-        let results = s:vimim_egg_vimimgame()
     elseif len(unname_register) > 8
         if keyboard ==# "'''"
             " [hjkl] display buffer inside the omni window
@@ -2877,14 +2877,13 @@ function! s:vimim_readfile(datafile)
     if !filereadable(a:datafile)
         return []
     endif
-    let lines = readfile(a:datafile)
-    if s:localization > 0
-        let  results = []
-        for line in lines
-            let line = s:vimim_i18n_read(line)
-            call add(results, line)
+    let lines = []
+    if s:localization
+        for line in readfile(a:datafile)
+            call add(lines, s:vimim_i18n_read(line))
         endfor
-        return results
+    else
+        return readfile(a:datafile)
     endif
     return lines
 endfunction
