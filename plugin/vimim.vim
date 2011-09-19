@@ -2276,6 +2276,16 @@ function! s:vimim_initialize_encoding()
     let s:multibyte = &encoding=="utf-8" ? 3 : 2
 endfunction
 
+function! s:vimim_i18n_read(line)
+    let line = a:line
+    if s:localization == 1
+        return iconv(line, "chinese", "utf-8")
+    elseif s:localization == 2
+        return iconv(line, "utf-8", &enc)
+    endif
+    return line
+endfunction
+
 function! s:vimim_get_char_before(keyboard)
     let keyboard = a:keyboard
     let counts = keyboard=='ii' ? len(keyboard)-1 : len(keyboard)
@@ -2886,16 +2896,6 @@ function! s:vimim_readfile(datafile)
         return results
     endif
     return lines
-endfunction
-
-function! s:vimim_i18n_read(line)
-    let line = a:line
-    if s:localization == 1
-        return iconv(line, "chinese", "utf-8")
-    elseif s:localization == 2
-        return iconv(line, "utf-8", &enc)
-    endif
-    return line
 endfunction
 
 " ============================================= }}}
@@ -3713,9 +3713,7 @@ endfunction
 function! s:vimim_get_cloud(keyboard, cloud)
     let keyboard = a:keyboard
     let cloud = a:cloud
-    if keyboard !~ s:valid_key
-    \|| empty(cloud)
-    \|| match(s:vimim_cloud,cloud) < 0
+    if keyboard!~s:valid_key || empty(cloud) || match(s:vimim_cloud,cloud)<0
         return []
     endif
     let results = []
@@ -3977,7 +3975,7 @@ function! s:vimim_get_cloud_all(keyboard)
         endif
         call add(results, title)
         if len(outputs) > 1+1+1+1
-            let outputs = &number ? outputs[0:9] : outputs[0:9]
+            let outputs = &number ? outputs : outputs[0:9]
             let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
             call add(results, join(map(outputs,filter)))
         endif
