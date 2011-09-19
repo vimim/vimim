@@ -4743,42 +4743,32 @@ function! s:vimim_imap_for_chinesemode()
 endfunction
 
 function! s:vimim_imap_for_ctrl_space()
-    if s:vimim_ctrl_space_to_toggle == 1
-        if has("gui_running")
+    if s:vimim_ctrl_space_to_toggle == 1 && has("gui_running")
              map <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
-        elseif has("win32unix")
+    elseif s:vimim_ctrl_space_to_toggle == 1 && has("win32unix")
              map <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
-        endif
-    elseif s:vimim_ctrl_space_to_toggle == 3
-        if has("gui_running")
+    elseif s:vimim_ctrl_space_to_toggle == 2 && has("gui_running")
+            inoremap<expr> <C-Space> <SID>VimIMSwitch()
+    elseif s:vimim_ctrl_space_to_toggle == 2 && has("win32unix")
+            inoremap<expr> <C-@>     <SID>VimIMSwitch()
+    elseif s:vimim_ctrl_space_to_toggle == 3 && has("gui_running")
             imap <C-Space> <C-^>
-        elseif has("win32unix")
-            imap   <C-@>   <C-^>
-        endif
-    elseif s:vimim_ctrl_space_to_toggle == 2
-        if has("gui_running")
-            inoremap<silent><expr> <C-Space> <SID>VimIMSwitch()
-        elseif has("win32unix")
-            inoremap<silent><expr> <C-@> <SID>VimIMSwitch()
-        endif
+    elseif s:vimim_ctrl_space_to_toggle == 3 && has("win32unix")
+            imap <C-@> <C-^>
     endif
 endfunction
 
-function! s:vimim_initialize_plugin()
-    if !hasmapto("VimIM") && s:vimim_onekey_is_tab < 2
-        inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
-    endif
-    if !hasmapto("VimimOneKey")
-        inoremap<unique><expr> <Plug>VimimOneKey g:vimim_onekey()
-    endif
+function! s:vimim_plug_and_play()
+    inoremap<unique><expr> <Plug>VimIM     <SID>ChineseMode()
+    inoremap<unique><expr> <Plug>VimimOneKey g:vimim_onekey()
 endfunction
 
 sil!call s:vimim_initialize_local()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
-sil!call s:vimim_initialize_plugin()
+sil!call s:vimim_plug_and_play()
 sil!call s:vimim_imap_for_onekey()
 sil!call s:vimim_imap_for_chinesemode()
 sil!call s:vimim_imap_for_ctrl_space()
