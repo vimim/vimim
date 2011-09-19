@@ -4646,6 +4646,7 @@ function! s:vimim_popupmenu_list(matched_list)
         call add(popupmenu_list, complete_items)
     endfor
     if s:onekey
+        let &titlestring = ""
         let s:popupmenu_list = popupmenu_list
         if empty(s:show_me_not) && s:vimim_menuless && &number
             let &pumheight = 1
