@@ -1870,7 +1870,7 @@ function! s:vimim_onekey_action(space)
     let onekey = space
     if one_before =~# s:valid_key
         let onekey = g:vimim()
-    elseif &pumheight == 1
+    elseif empty(s:show_me_not) && s:vimim_menuless && &number
         let onekey = '\<C-N>'
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -3700,7 +3700,9 @@ endfunction
 function! s:vimim_get_cloud(keyboard, cloud)
     let keyboard = a:keyboard
     let cloud = a:cloud
-    if keyboard!~s:valid_key || empty(cloud) || match(s:vimim_cloud,cloud)<0
+    if keyboard !~ s:valid_key 
+    \|| empty(cloud) 
+    \|| match(s:vimim_cloud,cloud) < 0
         return []
     endif
     let results = []
