@@ -942,9 +942,11 @@ function! <SID>vimim_onekey_punctuation_map(key)
     if !pumvisible()
         return hjkl
     endif
-    if hjkl == "'"  " cycle through bb/gg/ss/00 clouds
-        let s:onekey = s:onekey==1 ? 2 : 3
-        call s:vimim_last_quote("action_on_omni_popup")
+    if hjkl == "'"  " cycle through BB/GG/SS/00 clouds
+        if s:keyboard[-1:] != "'"
+            let s:onekey = s:onekey==1 ? 2 : 3
+            call s:vimim_last_quote("action_on_omni_popup")
+        endif
     elseif hjkl ==# '*'
         let s:hjkl_star += 1
     elseif hjkl == ';'
@@ -1512,9 +1514,9 @@ function! s:vimim_get_labeling(label)
     if s:onekey && a:label < 11
         let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
         if s:onekey > 1
-            " onekey label bb for cloud Baidu
-            " onekey label gg for cloud Google
-            " onekey label ss for cloud Sogou
+            " onekey label BB for cloud Baidu
+            " onekey label GG for cloud Google
+            " onekey label SS for cloud Sogou
             " onekey label 00 for cloud QQ
             let vimim_cloud = get(split(s:vimim_cloud,','), 0)
             let cloud = get(split(vimim_cloud,'[.]'),0)
@@ -1871,7 +1873,6 @@ function! g:vimim_onekey()
             set number
             set norelativenumber
         else
-            let s:seamless_positions = getpos(".")
             sil!call g:vimim_stop()
         endif
     elseif s:vimim_onekey_is_tab && space_before
@@ -1888,9 +1889,6 @@ endfunction
 
 function! s:vimim_onekey_action(space)
     let space = a:space ? " " : ""
-    if s:seamless_positions == getpos(".")
-        return space
-    endif
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
     let onekey = s:vimim_onekey_evil_action()
@@ -2553,7 +2551,7 @@ endfunction
 
 function! s:vimim_last_quote(keyboard)
     " (1) [insert] open cloud if one trailing quote
-    " (2) [omni]   switch to the next cloud
+    " (2) [omni]   switch to the next cloud: 'google,sogou,baidu,qq'
     if s:onekey > 2
         let clouds = split(s:vimim_cloud,',')
         let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
@@ -2685,7 +2683,6 @@ function! s:vimim_cjk_match(keyboard)
             elseif keyboard =~# '^\l\+\d\+'
                 " cjk free style input/search: ma7 ma77 ma771 ma7712
                 let digit = substitute(keyboard,'\a','','g')
-let g:g1=digit
             endif
             if !empty(digit)
                 let stroke5 = '\d\d\d\d\s'     " five strokes => li12345
@@ -4305,7 +4302,7 @@ endfunction
 function! s:vimim_set_vim()
     set imdisable
     set iminsert=0
-    set completeopt=menu
+    set completeopt=menuone
     set omnifunc=VimIM
     set nolazyredraw
     set noshowmatch
@@ -4370,6 +4367,7 @@ endfunction
 
 function! s:vimim_reset_before_omni()
     let s:search = 0
+    let s:smart_enter = 0
     let s:show_me_not = 0
     let s:english_results = []
 endfunction
@@ -4380,7 +4378,6 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_l = 0      " toggle label
     let s:hjkl_m = 0      " toggle cjjp/cjjp''
     let s:hjkl_star = 0   " toggle simplified/traditional
-    let s:smart_enter = 0
     let s:matched_list = []
     let s:pageup_pagedown = 0
     if s:pattern_not_found
@@ -4476,17 +4473,16 @@ else
     " [cache] less is more
     let results = s:vimim_cache()
     if empty(results)
-        call s:vimim_reset_before_omni()
+        sil!call s:vimim_reset_before_omni()
     else
         return s:vimim_popupmenu_list(results)
     endif
-    let results = []
     " [initialization] early start, half done
     let keyboard = a:keyboard
     " [validation] user keyboard input validation
     if empty(str2nr(keyboard))
-        " keyboard input is alphabet only
-    elseif s:keyboard =~ ','
+        " input is alphabet only, not good for 23554022100080204420
+    else
         let keyboard = get(split(s:keyboard,","),0)
     endif
     if empty(keyboard) || keyboard !~ s:valid_key
@@ -4642,7 +4638,9 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:onekey
         let &titlestring = ""
         let s:popupmenu_list = popupmenu_list
+        set completeopt=menuone
         if empty(s:show_me_not) && s:vimim_menuless && &number
+            set completeopt=menu
             let &pumheight = 1
             let &titlestring = join(one_list)
         endif
