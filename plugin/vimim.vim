@@ -669,7 +669,7 @@ function! s:vimim_build_numbers_hash()
         let s:numbers.7 = "七柒⑺⑦庚"
         let s:numbers.8 = "八捌⑻⑧辛"
         let s:numbers.9 = "九玖⑼⑨壬"
-        let s:numbers.0 = "十拾⑽⑩癸"
+        let s:numbers.0 = "〇零⑽⑩癸"
     endif
 endfunction
 
