@@ -1386,7 +1386,7 @@ function! g:vimim_menu_to_clip()
             let @+ = word
         endif
     endif
-    call g:vimim_stop()
+    sil!call g:vimim_stop()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
@@ -1860,7 +1860,6 @@ function! g:vimim_onekey()
     if pumvisible() && len(s:popupmenu_list)
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif s:onekey
-        let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
     elseif s:vimim_onekey_is_tab && space_before
         let onekey = '\t'
