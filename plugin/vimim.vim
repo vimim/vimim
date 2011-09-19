@@ -29,8 +29,8 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (1) drop this vim script to plugin/:    plugin/vimim.vim
 "  (2) [option] drop a English  datafile:  plugin/vimim.txt
 "  (3) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
-"  (4) [option] drop a python2  database:  plugin/vimim.gbk.bsddb
-"  (5) [option] drop a standard directory: plugin/vimim/pinyin/
+"  (4) [option] drop a standard directory: plugin/vimim/pinyin/
+"  (5) [option] drop a python2  database:  plugin/vimim.gbk.bsddb
 "
 " "VimIM Usage"
 "  (1) play with cloud, without datafile, with python or wget/curl
@@ -363,9 +363,13 @@ function! s:vimim_egg_vimim()
         call add(eggs, ciku . s:english_filename)
     endif
     if !empty(s:cjk_filename)
-        let ciku  = database . s:vimim_chinese('standard')
-        let ciku .= s:vimim_chinese('cjk') . s:colon
-        call add(eggs, ciku . s:cjk_filename)
+        let ciku  = database
+        if s:cjk_filename =~ "vimim.cjk.txt"
+            let ciku .= s:vimim_chinese('4corner')
+        elseif s:cjk_filename =~ "vimim.cjkv.txt"
+            let ciku .= s:vimim_chinese('5strokes')
+        endif
+        call add(eggs, ciku . s:colon . s:cjk_filename)
     endif
     let toggle = "toggle_with_Ctrl-Bslash"
     if s:vimim_ctrl_space_to_toggle == 1
@@ -377,17 +381,11 @@ function! s:vimim_egg_vimim()
     call add(eggs, style . toggle)
     let input = s:vimim_chinese('input') . s:colon
     if s:vimim_onekey_is_tab == 2
-        let input .= s:vimim_chinese('onekey') . s:space
-        let input .= s:vimim_chinese(s:ui.im) . s:space
+        let input .= s:vimim_chinese('onekey')  . s:space
+        let input .= s:vimim_chinese('english') . s:space
+        let input .= s:vimim_chinese(s:ui.im)   . s:space
     else
         let input .=  s:vimim_statusline() . s:space
-    endif
-    if !empty(s:cjk_filename)
-        if s:cjk_filename =~ "vimim.cjk.txt"
-            let input .= s:vimim_chinese('4corner') . s:space
-        elseif s:cjk_filename =~ "vimim.cjkv.txt"
-            let input .= s:vimim_chinese('5strokes'). s:space
-        endif
     endif
     if s:vimim_cloud > -1 && s:onekey < 2
         let input .= s:vimim_chinese(s:cloud_default)
@@ -1119,8 +1117,6 @@ function! s:vimim_dictionary_statusline()
     let s:status = {}
     let s:status.onekey     = "点石成金 點石成金"
     let s:status.computer   = "电脑 電腦"
-    let s:status.standard   = "标准 標準"
-    let s:status.cjk        = "字库 字庫"
     let s:status.database   = "词库 詞庫"
     let s:status.directory  = "目录 目錄"
     let s:status.setup      = "设置 設置"
