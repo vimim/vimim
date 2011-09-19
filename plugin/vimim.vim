@@ -4759,19 +4759,17 @@ function! s:vimim_imap_for_ctrl_space()
              map <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
         endif
+    elseif s:vimim_ctrl_space_to_toggle == 3
+        if has("gui_running")
+            imap <C-Space> <C-^>
+        elseif has("win32unix")
+            imap   <C-@>   <C-^>
+        endif
     elseif s:vimim_ctrl_space_to_toggle == 2
         if has("gui_running")
             inoremap<silent><expr> <C-Space> <SID>VimIMSwitch()
         elseif has("win32unix")
             inoremap<silent><expr> <C-@> <SID>VimIMSwitch()
-        endif
-    elseif s:vimim_ctrl_space_to_toggle == 3
-        if has("gui_running")
-             map <C-Space> <C-^>
-            imap <C-Space> <C-^>
-        elseif has("win32unix")
-             map <C-@> <C-^>
-            imap <C-@> <C-^>
         endif
     endif
 endfunction
@@ -4789,7 +4787,7 @@ sil!call s:vimim_initialize_local()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
 sil!call s:vimim_initialize_plugin()
+sil!call s:vimim_imap_for_onekey()
 sil!call s:vimim_imap_for_chinesemode()
 sil!call s:vimim_imap_for_ctrl_space()
-sil!call s:vimim_imap_for_onekey()
 " ======================================= }}}
