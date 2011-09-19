@@ -1869,6 +1869,7 @@ function! g:vimim_onekey()
             set number
             set norelativenumber
         else
+            let s:seamless_positions = getpos(".")
             sil!call g:vimim_stop()
         endif
     elseif s:vimim_onekey_is_tab && space_before
@@ -1885,6 +1886,9 @@ endfunction
 
 function! s:vimim_onekey_action(space)
     let space = a:space ? " " : ""
+    if s:seamless_positions == getpos(".")
+        return space  " space is space after enter
+    endif
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
     let onekey = s:vimim_onekey_evil_action()
@@ -1894,6 +1898,8 @@ function! s:vimim_onekey_action(space)
     let onekey = space
     if one_before =~# s:valid_key
         let onekey = g:vimim()
+    elseif s:vimim_menuless && &number
+        let onekey = '\<C-N>'
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -4629,7 +4635,7 @@ function! s:vimim_popupmenu_list(matched_list)
         let s:popupmenu_list = popupmenu_list
         if empty(s:show_me_not) && s:vimim_menuless && &number
             let &pumheight = 1
-            let &titlestring = join(one_list)
+            let &titlestring = s:space.keyboard.s:space.join(one_list)
         endif
     elseif menu_in_one_row
         return s:vimim_one_row(one_list[0:4], popupmenu_list[0:4])
