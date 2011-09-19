@@ -35,7 +35,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 " "VimIM Usage"
 "  (1) play with cloud, without datafile, with python or wget/curl
 "      open vim, type i, type <C-\> to open; type <C-\> to close
-"  (2) play with OneKey: Midas touch
+"  (2) flirt with OneKey: Midas touch
 "      open vim, type i, type sssss <C-6>, m, type alphabetical label
 
 " ============================================= }}}
@@ -450,7 +450,7 @@ function! s:vimim_get_hjkl_game(keyboard)
     let unname_register = getreg('"')
     let results = []
     if !empty(poem)
-        " [poem] play any entry in the hjkl directory
+        " [poem] flirt any entry in the hjkl directory
         let results = s:vimim_readfile(poem)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
@@ -1480,9 +1480,8 @@ function! <SID>vimim_backspace()
 endfunction
 
 function! <SID>vimim_enter()
-    " <Enter> double play
-    "  (1) single <Enter> after English => seamless
-    "  (2) otherwise, or double <Enter> => <Enter>
+    " (1) single <Enter> after English => seamless
+    " (2) otherwise, or double <Enter> => <Enter>
     let one_before = getline(".")[col(".")-2]
     let key = ""
     if pumvisible()
@@ -1503,9 +1502,8 @@ function! <SID>vimim_enter()
 endfunction
 
 function! <SID>vimim_backslash()
-    " <Backslash> double play
-    "   (1) [insert] disable omni window
-    "   (2) [omni]   insert Chinese and remove Space before
+    " (1) [insert] disable omni window
+    " (2) [omni]   insert Chinese and remove Space before
     let bslash = '\\'
     if pumvisible()
         let bslash = '\<C-Y>\<C-R>=g:vimim_bracket('.1.')\<CR>'
@@ -1860,6 +1858,7 @@ function! g:vimim_onekey()
     " (1)<OneKey> in insert mode => start OneKey as the MidasTouch
     " (2)<OneKey> in OneKey mode => stop  OneKey
     " (3)<OneKey> in omni window => stop  OneKey and print out menu
+    " (4)<OneKey> in menuless    => toggle &number/&relativenumber
     let onekey = ''
     let s:chinese_mode = 'onekey'
     let space_before = getline(".")[col(".")-2]
@@ -1868,8 +1867,17 @@ function! g:vimim_onekey()
     if pumvisible() && len(s:popupmenu_list)
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif s:onekey
-        let s:seamless_positions = getpos(".")
-        sil!call g:vimim_stop()
+        if s:vimim_menuless && &number
+            set relativenumber
+            let &pumheight = 10
+            let onekey = '\<C-E>\<C-R>=g:vimim()\<CR>'
+        elseif s:vimim_menuless && &relativenumber
+            set number
+            set norelativenumber
+        else
+            let s:seamless_positions = getpos(".")
+            sil!call g:vimim_stop()
+        endif
     elseif s:vimim_onekey_is_tab && space_before
         let onekey = '\t'
     else
@@ -2538,9 +2546,8 @@ function! s:vimim_hjkl_partition(keyboard)
 endfunction
 
 function! s:vimim_last_quote(keyboard)
-    " <apostrophe> double play in OneKey:
-    "   (1) [insert] open cloud if one trailing quote
-    "   (2) [omni]   switch to the next cloud
+    " (1) [insert] open cloud if one trailing quote
+    " (2) [omni]   switch to the next cloud
     if s:onekey > 2
         let clouds = split(s:vimim_cloud,',')
         let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
@@ -3683,7 +3690,7 @@ function! s:vimim_check_http_executable()
         if has('python')  " +python/dyn
             let http_executable = 'Python2 Interface to Vim'
         endif
-        if has('python3') && &relativenumber>0  " +python3/dyn
+        if has('python3') && &relativenumber " +python3/dyn
             let http_executable = 'Python3 Interface to Vim'
         endif
     endif
@@ -3974,7 +3981,7 @@ function! s:vimim_get_cloud_all(keyboard)
         endif
         call add(results, title)
         if len(outputs) > 1+1+1+1
-            let outputs = &number<1 ? outputs[0:9] : outputs
+            let outputs = &number ? outputs[0:9] : outputs[0:9]
             let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
             call add(results, join(map(outputs,filter)))
         endif
@@ -4495,7 +4502,7 @@ else
         let oneline = s:vimim_english(keyboard)
         let s:english_results = s:vimim_make_pair_list(oneline)
     endif
-    if s:onekey      " play with hjkl
+    if s:onekey      " flirt with hjkl
         let results = s:vimim_get_hjkl_game(keyboard)
         if !empty(results)
             return s:vimim_popupmenu_list(results)
