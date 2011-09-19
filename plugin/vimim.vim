@@ -90,8 +90,8 @@ function! s:vimim_initialize_session()
     let s:Az_list = s:az_list + s:AZ_list
     let s:valid_keys = s:az_list
     let s:valid_key = 0
-    let s:abcd = "'abcdvfgsz"
-    let s:qwer = split('pqwertyuio','\zs')
+    let s:abcd = split("'abcdvfgsz",'\zs')
+    let s:qwer = split("pqwertyuio",'\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let s:seamless_positions = []
     let s:shuangpin_keycode_chinese = {}
@@ -733,24 +733,18 @@ function! s:translators.translate(english) dict
 endfunction
 
 function! s:vimim_imode_today_now(keyboard)
-    let results = []
-    call add(results, strftime("%Y"))
-    call add(results, 'year')
-    call add(results, substitute(strftime("%m"),'^0','',''))
-    call add(results, 'month')
-    call add(results, substitute(strftime("%d"),'^0','',''))
-    call add(results, 'day')
+    let time  = strftime("%Y") . ' year  ' 
+    let time .= strftime("%m") . ' month '
+    let time .= strftime("%d") . ' day   '
     if a:keyboard ==# 'itoday'
-        call add(results, s:space)
-        call add(results, strftime("%A"))
+        let time .= s:space .' '. strftime("%A")
     elseif a:keyboard ==# 'inow'
-        call add(results, substitute(strftime("%H"),'^0','',''))
-        call add(results, 'hour')
-        call add(results, substitute(strftime("%M"),'^0','',''))
-        call add(results, 'minute')
-        call add(results, substitute(strftime("%S"),'^0','',''))
-        call add(results, 'second')
+        let time .= strftime("%H") . ' hour   ' 
+        let time .= strftime("%M") . ' minute '
+        let time .= strftime("%S") . ' second '
     endif
+    let results = split(time)
+    let filter = "substitute(" . 'v:val' . ",'^0','','')"
     let ecdict = {}
     let ecdict.sunday    = "星期日"
     let ecdict.monday    = "星期一"
@@ -767,7 +761,7 @@ function! s:vimim_imode_today_now(keyboard)
     let ecdict.second    = "秒"
     let chinese = copy(s:translators)
     let chinese.dict = ecdict
-    return chinese.translate(join(results))
+    return chinese.translate(join(map(results, filter)))
 endfunction
 
 function! s:vimim_imode_number(keyboard)
@@ -939,7 +933,7 @@ function! <SID>vimim_chinese_punctuation_map(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! <SID>vimim_onekey_punctuation_map(key)
+function! <SID>vimim_onekey_slash_map(key)
     let hjkl = a:key
     if !pumvisible()
         return hjkl
@@ -1330,7 +1324,7 @@ function! s:vimim_map_omni_page_label()
     let common_punctuation = "[]=-"
     if s:onekey
         let common_punctuation .= ".,"
-        let labels += split(s:abcd, '\zs')
+        let labels += s:abcd
         call remove(labels, match(labels,"'"))
     endif
     for _ in split(common_punctuation, '\zs')
@@ -1514,7 +1508,7 @@ endfunction
 function! s:vimim_get_labeling(label)
     let labeling = a:label==10 ? "0" : a:label
     if s:onekey && a:label < 11
-        let label2 = a:label<2 ? "_" : s:abcd[a:label-1]
+        let label2 = a:label<2 ? "_" : get(s:abcd,a:label-1)
         if s:onekey > 1
             " onekey label BB for cloud Baidu
             " onekey label GG for cloud Google
@@ -1978,15 +1972,13 @@ function! <SID>vimim_space()
 endfunction
 
 function! s:vimim_onekey_mapping()
-    if empty(s:cjk_filename)
-        for _ in s:qwer
-            exe 'inoremap<expr> '._.' <SID>vimim_qwer_hitrun_map("'._.'")'
-        endfor
-    else
-        for _ in s:qwer
+    for _ in s:qwer
+        if empty(s:cjk_filename)
+            exe 'inoremap<expr> '._.' <SID>vimim_qwer_stop_map("'._.'")'
+        else
             exe 'inoremap<expr> '._.' <SID>vimim_qwer_hjkl_map("'._.'")'
-        endfor
-    endif
+        endif
+    endfor
     if s:vimim_chinese_punctuation !~ 'latex'
         for _ in s:AZ_list
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps_map("'._.'")'
@@ -2000,11 +1992,11 @@ function! s:vimim_onekey_mapping()
         let onekey_punctuation .= "*"
     endif
     for _ in split(onekey_punctuation, '\zs')
-        exe 'inoremap<expr> '._.' <SID>vimim_onekey_punctuation_map("'._.'")'
+        exe 'inoremap<expr> '._.' <SID>vimim_onekey_slash_map("'._.'")'
     endfor
 endfunction
 
-function! <SID>vimim_qwer_hitrun_map(key)
+function! <SID>vimim_qwer_stop_map(key)
     let key = a:key
     if pumvisible()
         let digit = match(s:qwer, key) - 1
