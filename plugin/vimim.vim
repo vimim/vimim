@@ -414,7 +414,7 @@ endfunction
 
 function! s:vimim_get_keyboard_but_quote(keyboard)
     let keyboard = a:keyboard
-    if !empty(s:ui.has_dot) || keyboard =~ '\d'
+    if s:ui.has_dot || keyboard =~ '\d'
         return keyboard
     endif
     if keyboard[-2:] == "''"     " two tail  sssss''
@@ -733,13 +733,13 @@ function! s:translators.translate(english) dict
 endfunction
 
 function! s:vimim_imode_today_now(keyboard)
-    let time  = strftime("%Y") . ' year  ' 
+    let time  = strftime("%Y") . ' year  '
     let time .= strftime("%m") . ' month '
     let time .= strftime("%d") . ' day   '
     if a:keyboard ==# 'itoday'
         let time .= s:space .' '. strftime("%A")
     elseif a:keyboard ==# 'inow'
-        let time .= strftime("%H") . ' hour   ' 
+        let time .= strftime("%H") . ' hour   '
         let time .= strftime("%M") . ' minute '
         let time .= strftime("%S") . ' second '
     endif
@@ -1643,7 +1643,7 @@ function! g:vimim_gmail() range abort
 " [dream] to send email from within the current buffer
 " [usage] :call g:vimim_gmail()
 " [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
-if has('python') < 1 && has('python3') < 1
+if empty(has('python')) && empty(has('python3'))
     echo 'No magic Python Interface to Vim' | return ""
 endif
 let firstline = a:firstline
@@ -1805,7 +1805,7 @@ endfunction
 function! s:debug(...)
 " [server] sdebug(){ /bin/python ~/vim/vimfiles/plugin/sdebug.py ;}
 " [client] :call s:debug('info', 'foo/bar is', foobar, 'and', bar)
-if s:vimim_debug < 1 || has('python') < 1
+if s:vimim_debug < 1 || empty(has('python'))
     return
 endif
 if s:vimim_debug < 2
@@ -4440,7 +4440,7 @@ if a:start
     while start_column > 0
         if one_before =~# s:valid_key
             let start_column -= 1
-            if one_before !~# nonsense && s:ui.has_dot < 1
+            if one_before !~# nonsense && empty(s:ui.has_dot)
                 let last_seen_nonsense_column = start_column
                 if all_digit > 0
                     let all_digit = 0
@@ -4567,17 +4567,19 @@ function! s:vimim_popupmenu_list(matched_list)
         let matched_list = [] " s:english_results ["color color"]
     endif
     let lines = s:english_results + matched_list
+    let keyboards = split(s:keyboard,",")
+    let keyboard = join(keyboards,"")
+    let tail = get(keyboards,1)
     if empty(lines) || type(lines) != type([])
         return []
     else
         let s:matched_list = lines
-        let keyboard = join(split(s:keyboard,","),"")
         if len(keyboard) == 1 && !has_key(s:cjk_cache,keyboard)
             let s:cjk_cache[keyboard] = lines
         endif
     endif
-    " [skin] no color is the best color along with one row menu
-    let color = len(lines)<2 ? 0 : 1
+    " [skin] no color seems the best color
+    let color = len(lines)<2 && empty(tail) ? 0 : 1
     let menu_in_one_row = s:vimim_skin(color)
     let label = 1
     let one_list = []
@@ -4592,9 +4594,6 @@ function! s:vimim_popupmenu_list(matched_list)
             let chinese = simplified_traditional
         endif
         if empty(s:show_me_not)
-            if keyboard ==# chinese
-                continue
-            endif
             let menu = ""
             let pairs = split(chinese)
             if len(pairs) > 1
@@ -4604,10 +4603,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 endif
             endif
             if empty(s:mycloud)
-                let tail = get(split(s:keyboard,","),1)
-                if !empty(tail)
-                    let chinese .= tail
-                endif
+                let chinese .= empty(tail) ? '' : tail
                 if s:hjkl_h && s:hjkl_h%2 && empty(s:english_results)
                     if len(chinese) == s:multibyte
                         let menu = s:vimim_cjk_extra_text(chinese)
@@ -4615,7 +4611,7 @@ function! s:vimim_popupmenu_list(matched_list)
                 endif
             endif
             let labeling = ""
-            if color
+            if color && empty(tail)
                 let labeling = printf('%2s ', s:vimim_get_labeling(label))
             endif
             if len(one_list) < 20
@@ -4718,15 +4714,13 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 
 function! s:vimim_imap_for_onekey()
     noremap<silent> n :sil!call g:vimim_search_next()<CR>n
-    if s:vimim_onekey_is_tab < 1
-            imap<silent> <C-^> <Plug>VimimOneKey
-        xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
-    else
+    if s:vimim_onekey_is_tab
             imap<silent> <Tab> <Plug>VimimOneKey
         xnoremap<silent> <Tab> y:call <SID>vimim_visual_ctrl6()<CR>
+    else
+            imap<silent> <C-^> <Plug>VimimOneKey
+        xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
-    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
-    :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
 endfunction
 
 function! s:vimim_imap_for_chinesemode()
@@ -4763,6 +4757,8 @@ endfunction
 function! s:vimim_plug_and_play()
     inoremap<unique><expr> <Plug>VimIM     <SID>ChineseMode()
     inoremap<unique><expr> <Plug>VimimOneKey g:vimim_onekey()
+    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
+    :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
 endfunction
 
 sil!call s:vimim_initialize_local()
