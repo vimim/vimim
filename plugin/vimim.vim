@@ -417,7 +417,9 @@ function! s:vimim_get_keyboard_but_quote(keyboard)
     if s:ui.has_dot || keyboard =~ '\d'
         return keyboard
     endif
-    if keyboard[-2:] == "''"     " two tail  sssss''
+    if keyboard[:0] == "'"        " remove leading quote 'quote
+        let keyboard = keyboard[1:]
+    elseif keyboard[-2:] == "''"  " two tail quote sssss''
         let head = keyboard[:-3]
         if len(head) == 1
             return head
@@ -1237,7 +1239,7 @@ function! IMName()
         if pumvisible()
             return s:vimim_statusline()
         endif
-    elseif !empty(&omnifunc) && &omnifunc ==# 'VimIM'
+    elseif !empty(&completefunc) && &completefunc ==# 'VimIM'
         return s:vimim_statusline()
     endif
     return ""
@@ -2127,7 +2129,7 @@ function! <SID>ChineseMode()
     elseif empty(s:frontends)
         let s:frontends = get(s:ui.frontends, 0)
     endif
-    let switch = !empty(&omnifunc) && &omnifunc==#'VimIM' ? 0 : 1
+    let switch = !empty(&completefunc) && &completefunc==#'VimIM' ? 0 : 1
     return s:vimim_chinese_mode(switch)
 endfunction
 
@@ -4275,16 +4277,16 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
 function! s:vimim_initialize_i_setting()
-    let s:cpo         = &cpo
-    let s:omnifunc    = &omnifunc
-    let s:completeopt = &completeopt
-    let s:laststatus  = &laststatus
-    let s:statusline  = &statusline
-    let s:titlestring = &titlestring
-    let s:lazyredraw  = &lazyredraw
-    let s:showmatch   = &showmatch
-    let s:smartcase   = &smartcase
-    let s:ruler       = &ruler
+    let s:cpo          = &cpo
+    let s:completefunc = &completefunc
+    let s:completeopt  = &completeopt
+    let s:laststatus   = &laststatus
+    let s:statusline   = &statusline
+    let s:titlestring  = &titlestring
+    let s:lazyredraw   = &lazyredraw
+    let s:showmatch    = &showmatch
+    let s:smartcase    = &smartcase
+    let s:ruler        = &ruler
 endfunction
 
 function! s:vimim_set_vim()
@@ -4294,24 +4296,24 @@ function! s:vimim_set_vim()
     set imdisable
     set noshowmatch
     set nolazyredraw
-    set omnifunc=VimIM
+    set completefunc=VimIM
     set completeopt=menuone
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
 
 function! s:vimim_restore_vim()
-    let &cpo         = s:cpo
-    let &omnifunc    = s:omnifunc
-    let &completeopt = s:completeopt
-    let &laststatus  = s:laststatus
-    let &statusline  = s:statusline
-    let &titlestring = s:titlestring
-    let &lazyredraw  = s:lazyredraw
-    let &showmatch   = s:showmatch
-    let &smartcase   = s:smartcase
-    let &pumheight   = s:pumheight_saved
-    let &ruler       = s:ruler
+    let &cpo          = s:cpo
+    let &completefunc = s:completefunc
+    let &completeopt  = s:completeopt
+    let &laststatus   = s:laststatus
+    let &statusline   = s:statusline
+    let &titlestring  = s:titlestring
+    let &lazyredraw   = s:lazyredraw
+    let &showmatch    = s:showmatch
+    let &smartcase    = s:smartcase
+    let &pumheight    = s:pumheight_saved
+    let &ruler        = s:ruler
     highlight! link Cursor NONE
 endfunction
 
@@ -4382,7 +4384,7 @@ function! g:vimim()
     endif
     let one_before = getline(".")[col(".")-2]
     if one_before =~# s:valid_key
-        let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
+        let key = '\<C-X>\<C-U>\<C-R>=g:vimim_menu_select()\<CR>'
     else
         let s:has_pumvisible = 0
     endif
