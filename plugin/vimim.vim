@@ -244,8 +244,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-:let g:vimim_ctrl_space_to_toggle=3  
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @v
         let g:vimim_cloud = 'google,sogou,baidu,qq'
