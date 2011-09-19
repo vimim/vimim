@@ -244,7 +244,8 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = '/home/xma/hjkl'
+:let g:vimim_ctrl_space_to_toggle=3  
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @v
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -374,6 +375,8 @@ function! s:vimim_egg_vimim()
     let toggle = "toggle_with_Ctrl-Bslash"
     if s:vimim_ctrl_space_to_toggle == 1
         let toggle = "toggle_with_Ctrl-Space"
+    elseif s:vimim_ctrl_space_to_toggle == 3
+        let toggle = "toggle_with_Ctrl-Space_for_midas_touch"
     elseif s:vimim_onekey_is_tab > 0
        let toggle = "toggle_with_Tab_for_midas_touch"
     endif
@@ -4746,6 +4749,9 @@ function! s:vimim_imap_for_chinesemode()
             inoremap<silent><expr> <C-H> <SID>VimIMSwitch()
         endif
     endif
+endfunction
+
+function! s:vimim_imap_for_ctrl_space()
     if s:vimim_ctrl_space_to_toggle == 1
         if has("gui_running")
              map <C-Space> <C-Bslash>
@@ -4759,6 +4765,14 @@ function! s:vimim_imap_for_chinesemode()
             inoremap<silent><expr> <C-Space> <SID>VimIMSwitch()
         elseif has("win32unix")
             inoremap<silent><expr> <C-@> <SID>VimIMSwitch()
+        endif
+    elseif s:vimim_ctrl_space_to_toggle == 3
+        if has("gui_running")
+             map <C-Space> <C-^>
+            imap <C-Space> <C-^>
+        elseif has("win32unix")
+             map <C-@> <C-^>
+            imap <C-@> <C-^>
         endif
     endif
 endfunction
@@ -4777,5 +4791,6 @@ sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
 sil!call s:vimim_initialize_plugin()
 sil!call s:vimim_imap_for_chinesemode()
+sil!call s:vimim_imap_for_ctrl_space()
 sil!call s:vimim_imap_for_onekey()
 " ======================================= }}}
