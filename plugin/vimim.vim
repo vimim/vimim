@@ -396,8 +396,8 @@ function! s:vimim_egg_vimim()
     call add(eggs, input)
     if !empty(s:vimim_check_http_executable())
         let network  = s:vimim_chinese('network') . s:colon
-        let title = s:http_executable=~'Python' ? '' : "HTTP executable: "
-        let option = network . title . s:http_executable
+        let http = s:http_executable=~'Python' ? '' : "HTTP executable: "
+        let option = network . http . s:http_executable
         call add(eggs, option)
     endif
     let option = s:vimim_chinese('setup') . s:colon . "vimimrc "
@@ -1829,25 +1829,6 @@ endfunction
 let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
-function! g:vimim_onekey_dump()
-    let saved_position = getpos(".")
-    let keyboard = get(split(s:keyboard,","),0)
-    let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-    for items in s:popupmenu_list
-        let line = printf('%s', items.word)
-        if has_key(items, "abbr")
-            let line = printf('%s', items.abbr)
-            if has_key(items, "menu")
-                let line = printf('%s %s', items.abbr, items.menu)
-            endif
-        endif
-        put=space.line
-    endfor
-    call setpos(".", saved_position)
-    sil!call g:vimim_stop()
-    sil!exe "sil!return '\<Esc>'"
-endfunction
-
 function! g:vimim_onekey()
     " (1)<OneKey> in insert mode => start OneKey as the MidasTouch
     " (2)<OneKey> in OneKey mode => stop  OneKey and in insert mode
@@ -1891,6 +1872,25 @@ function! s:vimim_onekey_action(space)
         let onekey = '\<C-N>'
     endif
     sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+function! g:vimim_onekey_dump()
+    let saved_position = getpos(".")
+    let keyboard = get(split(s:keyboard,","),0)
+    let space = repeat(" ", virtcol(".")-len(keyboard)-1)
+    for items in s:popupmenu_list
+        let line = printf('%s', items.word)
+        if has_key(items, "abbr")
+            let line = printf('%s', items.abbr)
+            if has_key(items, "menu")
+                let line = printf('%s %s', items.abbr, items.menu)
+            endif
+        endif
+        put=space.line
+    endfor
+    call setpos(".", saved_position)
+    sil!call g:vimim_stop()
+    sil!exe "sil!return '\<Esc>'"
 endfunction
 
 function! s:vimim_onekey_evil_action()
@@ -4290,11 +4290,12 @@ endfunction
 function! s:vimim_set_vim()
     set title
     set noruler
+    set smartcase
     set imdisable
-    set iminsert=0
     set noshowmatch
     set nolazyredraw
     set omnifunc=VimIM
+    set completeopt=menuone
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
