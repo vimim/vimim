@@ -4288,14 +4288,13 @@ function! s:vimim_initialize_i_setting()
 endfunction
 
 function! s:vimim_set_vim()
+    set title
+    set noruler
     set imdisable
     set iminsert=0
-    set completeopt=menu
-    set omnifunc=VimIM
-    set nolazyredraw
     set noshowmatch
-    set noruler
-    set title
+    set nolazyredraw
+    set omnifunc=VimIM
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
@@ -4621,9 +4620,11 @@ function! s:vimim_popupmenu_list(matched_list)
     endfor
     if s:onekey
         let &titlestring = ""
+        set completeopt=menuone    " for hjkl_n refresh
         let s:popupmenu_list = popupmenu_list
         if empty(s:show_me_not) && s:vimim_menuless && &number
             let &pumheight = 1
+            set completeopt=menu   " for direct insert
             let &titlestring = s:space.keyboard.s:space.join(one_list)
         endif
     elseif menu_in_one_row
