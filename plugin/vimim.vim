@@ -4296,7 +4296,7 @@ endfunction
 function! s:vimim_set_vim()
     set imdisable
     set iminsert=0
-    set completeopt=menuone
+    set completeopt=menu
     set omnifunc=VimIM
     set nolazyredraw
     set noshowmatch
@@ -4628,9 +4628,7 @@ function! s:vimim_popupmenu_list(matched_list)
     if s:onekey
         let &titlestring = ""
         let s:popupmenu_list = popupmenu_list
-        set completeopt=menuone
         if empty(s:show_me_not) && s:vimim_menuless && &number
-            set completeopt=menu
             let &pumheight = 1
             let &titlestring = join(one_list)
         endif
