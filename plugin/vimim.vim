@@ -1911,7 +1911,7 @@ function! s:vimim_cjk_digit_filter(chinese)
             continue
         else
             let values = split(get(s:cjk_lines, line))
-            let dddd = s:cjk_filename=~"cjkv" ? 1 : 2
+            let dddd = s:cjk_filename=~"cjkv" ? 2 : 1
             let digit = get(values, dddd)
             let digit_head .= digit[:0]
             let digit_tail  = digit[1:]
@@ -2542,7 +2542,7 @@ function! s:vimim_cjk_extra_text(chinese)
         let line = match(s:cjk_lines, grep, 0)
         if line > -1
             let values  = split(get(s:cjk_lines, line))
-            let dddd    = s:cjk_filename=~"cjkv" ? 1 : 2
+            let dddd    = s:cjk_filename=~"cjkv" ? 2 : 1
             let digit   = s:space . get(values, dddd)
             let pinyin  = s:space . get(values, 3)
             let english = " " . join(values[4:-2])
@@ -2681,7 +2681,7 @@ function! s:vimim_cjk_match(keyboard)
                 let space = '\d\{' . string(4-len(digit)) . '}'
                 let space = len(digit)==4 ? "" : space
                 let dddd = '\s' . digit . space . '\s'
-                let grep = s:cjk_filename=~"cjkv" ? dddd.stroke5 : dddd
+                let grep = s:cjk_filename=~"cjkv" ? dddd : dddd.stroke5
                 let alpha = substitute(keyboard,'\d','','g')
                 if !empty(alpha)
                     " search le or yue from le4yue4
@@ -2793,15 +2793,18 @@ function! <SID>vimim_visual_ctrl6()
             " highlight one chinese => get antonym or number loop
             let results = s:vimim_get_imode_chinese(line,0)
             if empty(results)
-                let line = -1
+                let line = ""
                 sil!call s:vimim_backend_initialization()
                 if !empty(s:cjk_filename)
-                    let line = match(s:cjk_lines, "^".chinese)
+                    let index = match(s:cjk_lines, "^".chinese)
+                    let line = get(s:cjk_lines, index)
                 endif
-                if line < 0
+                if empty(line)
                     let key = "ga"
+                elseif has("gui_running")
+                    let &titlestring = s:space.s:space.line
                 else
-                    echo get(s:cjk_lines, line)
+                    echo line
                 endif
             else
                 let chinese = get(results,0)
