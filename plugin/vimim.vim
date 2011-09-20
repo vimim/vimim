@@ -1468,7 +1468,7 @@ function! s:vimim_onekey_esc()
 endfunction
 
 function! <SID>vimim_backspace()
-    let key = '\<BS>'
+    let key = '\<Left>\<Delete>' " workarond for <BS> bug
     if pumvisible()
         let key .= g:vimim()
     endif
