@@ -1842,7 +1842,8 @@ function! g:vimim_onekey()
     sil!call s:vimim_backend_initialization()
     if pumvisible() && len(s:popupmenu_list)
         let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-    elseif s:onekey
+    elseif s:onekey  " onekey exclusively for switch
+        let s:seamless_positions = getpos(".")
         sil!call g:vimim_stop()
     elseif s:vimim_onekey_is_tab && space_before
         let onekey = '\t'
@@ -1870,7 +1871,7 @@ function! s:vimim_onekey_action(space)
     let onekey = space
     if one_before =~# s:valid_key
         let onekey = g:vimim()
-    elseif empty(s:show_me_not) && s:vimim_menuless && &number
+    elseif empty(s:show_me_not) && s:vimim_menuless && &relativenumber
         let onekey = '\<C-N>'
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -4627,7 +4628,7 @@ function! s:vimim_popupmenu_list(matched_list)
         let &titlestring = ""
         set completeopt=menuone    " for hjkl_n refresh
         let s:popupmenu_list = popupmenu_list
-        if empty(s:show_me_not) && s:vimim_menuless && &number
+        if empty(s:show_me_not) && s:vimim_menuless && &relativenumber
             let &pumheight = 1
             set completeopt=menu   " for direct insert
             let &titlestring = s:space.keyboard.s:space.join(one_list)
