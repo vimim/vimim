@@ -1,6 +1,6 @@
-﻿" ======================================================
-  :let s:logo =      " VimIM —— Vim 中文輸入法 "
-" ======================================================
+﻿" ==========================================================
+  :let s:logo =        " VimIM —— Vim 中文輸入法 "
+" ==========================================================
 
 let $VimIM = " easter egg:"" vimim<C-6><C-6> vimimrc<C-6><C-6>
 let $VimIM = " $Date$"
@@ -247,8 +247,8 @@ endfunction
 function! s:vimim_initialize_local()
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
-        :redir @v
         nmap O i<Plug>VimimOneKey<Plug>VimimOneKey
+        :redir @o
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
