@@ -4575,10 +4575,12 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
     endif
     " [laziness] *i_CTRL-N* for Vim Insert mode completion
-    if s:onekey && len(keyboard) > 3 && keyboard !~ '\L'
+    if s:onekey && len(keyboard) > 8 && keyboard !~ '\L'
         if !has_key(s:buffer.cache, keyboard)
             let s:buffer.cache[keyboard] = keyboard
-            call writefile(keys(s:buffer.cache), s:buffer.tempname)
+            if filewritable(s:buffer.tempname)
+                call writefile(keys(s:buffer.cache), s:buffer.tempname)
+            endif
         endif
     endif
     " [skin] no color seems the best color
