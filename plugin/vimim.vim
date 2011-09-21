@@ -99,6 +99,8 @@ function! s:vimim_initialize_session()
     let s:quanpin_table = {}
     let s:cjk_cache = {}
     let s:cjk_cache.i = ["我"]
+    let s:space = "　"
+    let s:logo = s:space . join(s:vimim_egg_vimimgame(),s:space)
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -247,14 +249,14 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @v
         nmap I i<Plug>VimimOneKey<Plug>VimimOneKey
-        let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
+        let g:vimim_cloud = 'google,sogou,baidu,qq'
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -295,7 +297,7 @@ function! s:vimim_egg_vimimclouds()
 endfunction
 
 function! s:vimim_egg_vimimgame()
-    let mahjong = "春夏秋冬 梅兰竹菊 東南西北 中發白囍"
+    let mahjong = "春夏秋冬 梅兰竹菊 中發白囍 東南西北"
     return split(mahjong)
 endfunction
 
@@ -817,14 +819,14 @@ let s:VimIM += [" ====  punctuation      ==== {{{"]
 
 function! s:vimim_dictionary_punctuations()
     let s:punctuations = {}
-    let s:punctuations['{'] = "〖"  | let s:space = "　"
-    let s:punctuations['}'] = "〗"  | let s:colon = "："
-    let s:punctuations['<'] = "《"  | let s:left  = "【"
-    let s:punctuations['>'] = "》"  | let s:right = "】"
-    let s:punctuations['@'] = s:space
-    let s:punctuations[':'] = s:colon
-    let s:punctuations['['] = s:left
+    let s:punctuations['@'] = s:space | let s:colon = "："
+    let s:punctuations[':'] = s:colon | let s:left  = "【"
+    let s:punctuations['['] = s:left  | let s:right = "】"
     let s:punctuations[']'] = s:right
+    let s:punctuations['{'] = "〖"
+    let s:punctuations['}'] = "〗"
+    let s:punctuations['<'] = "《"
+    let s:punctuations['>'] = "》"
     let s:punctuations['('] = "（"
     let s:punctuations[')'] = "）"
     let s:punctuations['#'] = "＃"
@@ -2026,10 +2028,9 @@ function! s:vimim_midas_touch(tab)
         if s:show_me_not
             let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
         else    " to toggle between menu and menuless
-            let logo = s:space . join(s:vimim_egg_vimimgame(),s:space)
             let s:menuless = pumvisible() ? 1 : s:menuless ? 0 : 1
-            let &titlestring = s:menuless ? logo : ""
-            let onekey = '\<C-E>' . g:vimim()
+            let &titlestring = s:menuless ? s:logo : ""
+            let onekey = '\<C-X>\<C-O>'
         endif
     elseif a:tab
         let onekey = '\t'
@@ -2058,7 +2059,7 @@ function! s:vimim_onekey_action(space)
     if one_before =~# s:valid_key
         let onekey = g:vimim()
     elseif empty(s:show_me_not) && s:menuless
-        let onekey = '\<C-O>'
+        let onekey = '\<C-O>'  " use <Space> to cycle
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
