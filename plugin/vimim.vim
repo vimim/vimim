@@ -214,8 +214,8 @@ function! s:vimim_initialize_global()
         let s:plugin .= "/"
     endif
     let s:buffer = {}
-    let s:buffer.tempname = tempname()
-    let s:buffer.cache = {}
+    let s:buffer.lines = []
+    let s:buffer.filename = s:plugin . "vimim.tmp"
 endfunction
 
 function! s:vimim_set_global_default(options, default)
@@ -4283,7 +4283,7 @@ function! s:vimim_set_vim()
     set noruler
     set imdisable
     set noshowmatch
-    let &complete = ".,k" . s:buffer.tempname
+    let &complete = ".,k" . s:buffer.filename
     set nolazyredraw
     set omnifunc=VimIM
     set completeopt=menuone
@@ -4561,6 +4561,18 @@ return []
 endif
 endfunction
 
+function! s:vimim_save_keyboard()
+    if filereadable(s:buffer.filename) && s:keyboard =~ '^\l\l\l\l\+$'
+        let results = sort(readfile(s:buffer.filename))
+        if match(results, "^" . keyboard . "$") < 0
+            if filewritable(s:buffer.filename)
+                call add(results, keyboard)
+                call writefile(results, s:buffer.filename)
+            endif
+        endif
+    endif
+endfunction
+
 function! s:vimim_popupmenu_list(matched_list)
     let keyboards = split(s:keyboard,",")
     let keyboard = join(keyboards,"")
@@ -4575,13 +4587,8 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
     endif
     " [laziness] *i_CTRL-N* for Vim Insert mode completion
-    if s:onekey && len(keyboard) > 8 && keyboard !~ '\L'
-        if !has_key(s:buffer.cache, keyboard)
-            let s:buffer.cache[keyboard] = keyboard
-            if filewritable(s:buffer.tempname)
-                call writefile(keys(s:buffer.cache), s:buffer.tempname)
-            endif
-        endif
+    if s:onekey && get(split(get(lines,0)),0) !~ '\l'
+        sil!call s:vimim_save_keyboard()
     endif
     " [skin] no color seems the best color
     let color = len(lines)<2 && empty(tail) ? 0 : 1
