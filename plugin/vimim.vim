@@ -2027,7 +2027,7 @@ function! s:vimim_midas_touch(tab)
     if s:onekey
         if s:show_me_not
             let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-        else    " to toggle between menu and menuless
+        else  " to toggle between onekey menu and menuless
             let s:menuless = pumvisible() ? 1 : s:menuless ? 0 : 1
             let &titlestring = s:menuless ? s:logo : ""
             let onekey = '\<C-X>\<C-O>'
@@ -2816,7 +2816,7 @@ function! <SID>vimim_visual_ctrl6()
                 let line = get(s:cjk.lines, index)
             endif
             if has("gui_running")
-                let &titlestring = s:space . s:space . line
+                let &titlestring = s:space . line
             else
                 echo line
             endif
