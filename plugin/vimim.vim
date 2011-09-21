@@ -1,5 +1,5 @@
 ﻿" ======================================================
-"               " VimIM —— Vim 中文輸入法 "
+let s:logo = "    VimIM —— Vim 中文輸入法            "
 " ------------------------------------------------------
 "   VimIM -- Input Method by Vim, of Vim, for Vimmers
 " ======================================================
@@ -99,8 +99,6 @@ function! s:vimim_initialize_session()
     let s:quanpin_table = {}
     let s:cjk_cache = {}
     let s:cjk_cache.i = ["我"]
-    let s:space = "　"
-    let s:logo = s:space . join(s:vimim_egg_vimimgame(),s:space)
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -818,7 +816,7 @@ let s:VimIM += [" ====  punctuation      ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_punctuations()
-    let s:punctuations = {}
+    let s:punctuations = {}           | let s:space = "　"
     let s:punctuations['@'] = s:space | let s:colon = "："
     let s:punctuations[':'] = s:colon | let s:left  = "【"
     let s:punctuations['['] = s:left  | let s:right = "】"
