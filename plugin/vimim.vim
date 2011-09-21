@@ -1,7 +1,5 @@
 ﻿" ======================================================
-let s:logo = "    VimIM —— Vim 中文輸入法            "
-" ------------------------------------------------------
-"   VimIM -- Input Method by Vim, of Vim, for Vimmers
+  :let s:logo =      " VimIM —— Vim 中文輸入法 "
 " ======================================================
 
 let $VimIM = " easter egg:"" vimim<C-6><C-6> vimimrc<C-6><C-6>
@@ -250,7 +248,7 @@ function! s:vimim_initialize_local()
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @v
-        nmap I i<Plug>VimimOneKey<Plug>VimimOneKey
+        nmap O i<Plug>VimimOneKey<Plug>VimimOneKey
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
