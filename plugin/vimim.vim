@@ -938,12 +938,10 @@ function! <SID>vimim_onekey_map(key)
             let s:onekey = s:onekey==1 ? 2 : 3
             call s:vimim_last_quote("action_on_omni_popup")
         endif
-    elseif hjkl ==# '*'
-        let s:hjkl_star += 1
+    elseif hjkl ==# ':'
+        let s:hjkl__ += 1
     elseif hjkl == ';'
         let hjkl = '\<C-Y>\<C-R>=g:vimim_copy_to_clipboard()\<CR>'
-    elseif hjkl ==# ':'
-        let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif hjkl =~ "[<>]"
         let hjkl = '\<C-Y>' . s:punctuations[nr2char(char2nr(hjkl)-16)]
     elseif hjkl =~ "[/?]"
@@ -2030,7 +2028,7 @@ function! s:vimim_midas_touch(tab)
     let s:chinese_mode = 'onekey'
     let onekey = ''
     if s:onekey
-        if s:show_me_not
+        if empty(&pumheight)
             let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
         elseif pumvisible()
             let s:menuless = 1
@@ -2189,9 +2187,9 @@ function! s:vimim_onekey_mapping()
     for _ in split('xhjklmn', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
     endfor
-    let onekey_punctuation = "/?;'<>:"
+    let onekey_punctuation = "/?;'<>"
     if !empty(s:cjk.filename)
-        let onekey_punctuation .= "*"
+        let onekey_punctuation .= ":"
     endif
     for _ in split(onekey_punctuation, '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_map("'._.'")'
@@ -4348,11 +4346,11 @@ function! s:vimim_reset_before_omni()
 endfunction
 
 function! g:vimim_reset_after_insert()
-    let s:hjkl_n = ""     " reset
-    let s:hjkl_h = 0      " ctrl-h for jsjsxx
-    let s:hjkl_l = 0      " toggle label
-    let s:hjkl_m = 0      " toggle cjjp/cjjp''
-    let s:hjkl_star = 0   " toggle simplified/traditional
+    let s:hjkl_n = ""   " reset
+    let s:hjkl_h = 0    " ctrl-h for jsjsxx
+    let s:hjkl_l = 0    " toggle label
+    let s:hjkl_m = 0    " toggle cjjp/cjjp''
+    let s:hjkl__ = 0    " toggle simplified/traditional
     let s:matched_list = []
     let s:pageup_pagedown = 0
     if s:pattern_not_found
@@ -4582,7 +4580,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let popupmenu_list = []
     for chinese in lines
         let complete_items = {}
-        if s:hjkl_star && s:hjkl_star%2 && !empty(s:cjk.filename)
+        if s:hjkl__ && s:hjkl__%2 && !empty(s:cjk.filename)
             let simplified_traditional = ""
             for char in split(chinese, '\zs')
                 let simplified_traditional .= s:vimim_1to1(char)
