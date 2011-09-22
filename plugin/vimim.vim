@@ -248,7 +248,7 @@ function! s:vimim_initialize_local()
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @i
-        nmap I i<Plug>VimimOneKey<Plug>VimimOneKey
+        nmap gi i<Plug>VimimOneKey<Plug>VimimOneKey
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
