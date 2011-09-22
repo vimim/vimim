@@ -4347,7 +4347,7 @@ endfunction
 function! s:vimim_reset_before_anything()
     let s:keyboard = ""
     let s:onekey = 0
-    let s:menuless = 0
+    let s:menuless = 1    " todo
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
     let s:pattern_not_found = 0
@@ -4724,12 +4724,11 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 
 function! s:vimim_imap_for_onekey()
     noremap<silent> n :sil!call g:vimim_search_next()<CR>n
-    if s:vimim_onekey_is_tab
-            imap<silent> <Tab> <Plug>VimimOneTab
-        xnoremap<silent> <Tab> y:call <SID>vimim_visual_ctrl6()<CR>
-    else
             imap<silent> <C-^> <Plug>VimimOneKey
         xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
+    if s:vimim_onekey_is_tab
+            imap<silent> <Tab> <Plug>VimimOneTab
+            xmap<silent> <Tab> <C-^>
     endif
 endfunction
 
