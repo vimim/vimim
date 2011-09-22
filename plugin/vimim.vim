@@ -434,7 +434,7 @@ function! s:vimim_get_hjkl_game(keyboard)
     let unname_register = getreg('"')
     let poem = s:vimim_check_filereadable(keyboard)
     if !empty(poem)
-        " [hjkl] flirt non-dot files in the hjkl directory
+        " [hjkl] flirt any non-dot file in the hjkl directory
         let results = s:vimim_readfile(poem)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
@@ -3485,11 +3485,8 @@ function! s:vimim_more_pinyin_directory(keyboard, dir)
     endif
     let results = []
     for candidate in candidates
-        let matches = []
         let filename = a:dir . candidate
-        if filereadable(filename)
-            let matches = s:vimim_readfile(filename)
-        endif
+        let matches = s:vimim_readfile(filename)
         if !empty(matches)
             call map(matches, 'candidate ." ". v:val')
             call extend(results, matches)
