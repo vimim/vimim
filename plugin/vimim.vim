@@ -244,7 +244,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @i
         nmap gi i<Plug>VimimOneKey<Plug>VimimOneKey
@@ -828,7 +828,7 @@ let s:VimIM += [" ====  punctuation      ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_punctuations()
-    let s:punctuations = {} 
+    let s:punctuations = {}
     let s:punctuations['@'] = s:space | let s:colon = "："
     let s:punctuations[':'] = s:colon | let s:left  = "【"
     let s:punctuations['['] = s:left  | let s:right = "】"
@@ -2082,6 +2082,9 @@ function! g:vimim_onekey_dump()
     let saved_position = getpos(".")
     let keyboard = get(split(s:keyboard,","),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
+    if s:onekey > 1
+        let space = ""
+    endif
     for items in s:popupmenu_list
         let line = printf('%s', items.word)
         if has_key(items, "abbr")
@@ -3953,9 +3956,7 @@ function! s:vimim_get_cloud_all(keyboard)
             call add(results, join(map(outputs,filter)))
         endif
     endfor
-    call add(results, s:space)
-    call s:debug('info', 'cloud_results=', results)
-    return results
+    return results + [s:space]
 endfunction
 
 " ============================================= }}}
