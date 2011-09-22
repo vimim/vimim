@@ -4541,7 +4541,7 @@ function! s:vimim_popupmenu_list(matched_list)
         return []
     else
         let s:matched_list = lines
-        if !has_key(s:cjk_cache, keyboard)
+        if empty(s:show_me_not) && !has_key(s:cjk_cache, keyboard)
             let s:cjk_cache[keyboard] = lines
         endif
     endif
@@ -4596,7 +4596,7 @@ function! s:vimim_popupmenu_list(matched_list)
         let &titlestring = ""
         set completeopt=menuone  " for hjkl_n refresh
         let s:popupmenu_list = popupmenu_list
-        if empty(s:show_me_not) && s:menuless
+        if s:menuless && empty(s:show_me_not)
             let &pumheight = 1
             set completeopt=menu  " for direct insert
             let &titlestring = s:space.keyboard.s:space.join(one_list)
