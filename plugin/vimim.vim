@@ -318,17 +318,17 @@ endfunction
 function! s:vimim_egg_vimim()
     let eggs = []
     let today = s:vimim_imode_today_now('itoday')
-    let option = s:vimim_chinese('datetime') . s:colon . today
-    call add(eggs, option)
-    let option = "os"
-        if has("win32unix") | let option = "cygwin"
-    elseif has("win32")     | let option = "Windows32"
-    elseif has("win64")     | let option = "Windows64"
-    elseif has("unix")      | let option = "unix"
-    elseif has("macunix")   | let option = "macunix" | endif
-    let option .= "_" . &term
+    let datetime = s:vimim_chinese('datetime') . s:colon . today
+    call add(eggs, datetime)
+    let os = "os"
+        if has("win32unix") | let os = "cygwin"
+    elseif has("win32")     | let os = "Windows32"
+    elseif has("win64")     | let os = "Windows64"
+    elseif has("unix")      | let os = "unix"
+    elseif has("macunix")   | let os = "macunix" | endif
+    let os .= "_" . &term
     let computer = s:vimim_chinese('computer') . s:colon
-    call add(eggs, computer . option)
+    call add(eggs, computer . os)
     let revision = s:vimim_chinese('revision') . s:colon
     let option = get(split($VimIM),1)
     let option = empty(option) ? "" : "vimim.vim=" . option
@@ -336,13 +336,8 @@ function! s:vimim_egg_vimim()
     call add(eggs, revision . vim . option)
     let encoding = s:vimim_chinese('encoding') . s:colon
     call add(eggs, encoding . &encoding . s:space . &fileencodings)
-    if has("gui_running")
-        let font = len(&gfw) ? &gfw : len(&gfn) ? &gfn : &guicursor
-        let option = s:vimim_chinese('font') . s:colon . font
-        call add(eggs, option)
-    endif
-    let option = s:vimim_chinese('env') . s:colon . v:lc_time
-    call add(eggs, option)
+    let evn = s:vimim_chinese('env') . s:colon . v:lc_time
+    call add(eggs, evn)
     let database = s:vimim_chinese('database') . s:colon
     if len(s:ui.frontends) > 0
         for frontend in s:ui.frontends
@@ -384,16 +379,16 @@ function! s:vimim_egg_vimim()
     endif
     call add(eggs, input)
     if !empty(s:vimim_check_http_executable())
-        let network  = s:vimim_chinese('network') . s:colon
         let http = s:http_executable=~'Python' ? '' : "HTTP executable: "
-        let option = network . http . s:http_executable
-        call add(eggs, option)
+        let network  = s:vimim_chinese('network') . s:colon
+        let network .= http . s:http_executable
+        call add(eggs, network)
     endif
-    let option = s:vimim_chinese('setup') . s:colon . "vimimrc "
+    let setup = s:vimim_chinese('setup') . s:colon . "vimimrc "
     if empty(s:vimimrc)
-        call add(eggs, option . "all defaults")
+        call add(eggs, setup . "all defaults")
     else
-        call add(eggs, option)
+        call add(eggs, setup)
         for rc in sort(s:vimimrc)
             call add(eggs, s:space . s:space . s:colon . rc[2:])
         endfor
@@ -1385,7 +1380,6 @@ function! s:vimim_dictionary_statusline()
     let s:status.env        = "环境 環境"
     let s:status.revision   = "版本"
     let s:status.input      = "输入 輸入"
-    let s:status.font       = "字体 字體"
     let s:status.static     = "静态 靜態"
     let s:status.dynamic    = "动态 動態"
     let s:status.erbi       = "二笔 二筆"
