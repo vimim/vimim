@@ -97,6 +97,8 @@ function! s:vimim_initialize_session()
     let s:quanpin_table = {}
     let s:cjk_cache = {}
     let s:cjk_cache.i = ["我"]
+    let s:space = "　"
+    let s:today = s:vimim_imode_today_now('itoday')
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -242,7 +244,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hhjkl = '/home/xma/hjkl'
+    let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @i
         nmap gi i<Plug>VimimOneKey<Plug>VimimOneKey
@@ -317,9 +319,8 @@ endfunction
 
 function! s:vimim_egg_vimim()
     let eggs = []
-    let today = s:vimim_imode_today_now('itoday')
-    let datetime = s:vimim_chinese('datetime') . s:colon . today
-    call add(eggs, datetime)
+    let today = s:vimim_chinese('datetime') . s:colon . s:today
+    call add(eggs, today)
     let os = "os"
         if has("win32unix") | let os = "cygwin"
     elseif has("win32")     | let os = "Windows32"
@@ -639,6 +640,31 @@ function! s:vimim_build_numbers_hash()
     endif
 endfunction
 
+function! s:vimim_build_quantifier_hash()
+    call s:vimim_build_numbers_hash()
+    let s:quantifiers = copy(s:numbers)
+    let s:quantifiers.b = "百佰步把包杯本笔部班"
+    let s:quantifiers.c = "次餐场串处床"
+    let s:quantifiers.d = "第度点袋道滴碟顶栋堆对朵堵顿"
+    let s:quantifiers.f = "分份发封付副幅峰方服"
+    let s:quantifiers.g = "个根股管"
+    let s:quantifiers.h = "行盒壶户回毫"
+    let s:quantifiers.j = "斤家具架间件节剂具捲卷茎记"
+    let s:quantifiers.k = "克口块棵颗捆孔"
+    let s:quantifiers.l = "里粒类辆列轮厘领缕"
+    let s:quantifiers.m = "米名枚面门秒"
+    let s:quantifiers.n = "年"
+    let s:quantifiers.p = "磅盆瓶排盘盆匹片篇撇喷"
+    let s:quantifiers.q = "千仟群"
+    let s:quantifiers.r = "日"
+    let s:quantifiers.s = "十拾时升艘扇首双所束手"
+    let s:quantifiers.t = "天吨条头通堂趟台套桶筒贴"
+    let s:quantifiers.w = "万位味碗窝晚微"
+    let s:quantifiers.x = "席些项"
+    let s:quantifiers.y = "月叶亿"
+    let s:quantifiers.z = "种只张株支枝盏座阵桩尊则站幢宗兆"
+endfunction
+
 function! s:vimim_imode_loop()
     if !empty(s:loops)
         return
@@ -761,29 +787,40 @@ function! s:vimim_imode_number(keyboard)
     return numbers
 endfunction
 
-function! s:vimim_build_quantifier_hash()
-    call s:vimim_build_numbers_hash()
-    let s:quantifiers = copy(s:numbers)
-    let s:quantifiers.b = "百佰步把包杯本笔部班"
-    let s:quantifiers.c = "次餐场串处床"
-    let s:quantifiers.d = "第度点袋道滴碟顶栋堆对朵堵顿"
-    let s:quantifiers.f = "分份发封付副幅峰方服"
-    let s:quantifiers.g = "个根股管"
-    let s:quantifiers.h = "行盒壶户回毫"
-    let s:quantifiers.j = "斤家具架间件节剂具捲卷茎记"
-    let s:quantifiers.k = "克口块棵颗捆孔"
-    let s:quantifiers.l = "里粒类辆列轮厘领缕"
-    let s:quantifiers.m = "米名枚面门秒"
-    let s:quantifiers.n = "年"
-    let s:quantifiers.p = "磅盆瓶排盘盆匹片篇撇喷"
-    let s:quantifiers.q = "千仟群"
-    let s:quantifiers.r = "日"
-    let s:quantifiers.s = "十拾时升艘扇首双所束手"
-    let s:quantifiers.t = "天吨条头通堂趟台套桶筒贴"
-    let s:quantifiers.w = "万位味碗窝晚微"
-    let s:quantifiers.x = "席些项"
-    let s:quantifiers.y = "月叶亿"
-    let s:quantifiers.z = "种只张株支枝盏座阵桩尊则站幢宗兆"
+function! s:vimim_get_imode_results(keyboard)
+    let keyboard = a:keyboard
+    let results = []
+    if keyboard ==# 'itoday' || keyboard ==# 'inow'
+        let results = [s:vimim_imode_today_now(keyboard)]
+    elseif keyboard =~ '\d'
+        let results = s:vimim_imode_number(keyboard)
+    elseif keyboard =~# '^iii\='
+        let char_before = ""
+        let byte_before = getline(".")[col(".")]
+        if byte_before !~ '\s'
+            let start = col(".") -1 - s:multibyte
+            let char_before = getline(".")[start : start+s:multibyte-1]
+            if char_before =~ '\w'
+                let char_before = keyboard
+            endif
+        endif
+        if keyboard ==# 'ii'  " 一ii  => 一二
+            let results = s:vimim_imode_chinese(char_before)
+           if empty(results)
+               let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
+           endif
+        elseif keyboard ==# 'iii'   " 马iii => 马马
+            if empty(char_before) || char_before !~ '\W'
+                if !empty(s:cjk.filename) " 214 standard unicode index
+                    let results = s:vimim_cjk_match('u')
+                endif
+            else
+                let ddddd = char2nr(char_before)
+                let results = s:vimim_unicode_list(ddddd)
+            endif
+        endif
+    endif
+    return results
 endfunction
 
 " ============================================= }}}
@@ -791,7 +828,7 @@ let s:VimIM += [" ====  punctuation      ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_punctuations()
-    let s:punctuations = {}           | let s:space = "　"
+    let s:punctuations = {} 
     let s:punctuations['@'] = s:space | let s:colon = "："
     let s:punctuations[':'] = s:colon | let s:left  = "【"
     let s:punctuations['['] = s:left  | let s:right = "】"
@@ -2008,8 +2045,7 @@ function! s:vimim_midas_touch(tab)
         endif
         let &titlestring = s:logo
         if s:menuless
-            let &titlestring .= s:space . s:space
-            let &titlestring .= s:vimim_imode_today_now('itoday')
+            let &titlestring .= s:space . s:space . s:today
         endif
     elseif a:tab
         let onekey = '\t'
@@ -2324,9 +2360,8 @@ function! s:vimim_chinesemode_action()
         call s:vimim_punctuation_mapping()
     endif
     sil!call s:vimim_start()
-    let &titlestring  = s:logo . s:space . s:space
-    let &titlestring .= s:vimim_imode_today_now('itoday')
     let action = ""
+    let &titlestring = s:logo . s:space . s:space . s:today
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
@@ -2487,42 +2522,6 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         let ddddd = 0
     endif
     return ddddd
-endfunction
-
-function! s:vimim_get_imode_results(keyboard)
-    let keyboard = a:keyboard
-    let results = []
-    if keyboard ==# 'itoday' || keyboard ==# 'inow'
-        let results = [s:vimim_imode_today_now(keyboard)]
-    elseif keyboard =~ '\d'
-        let results = s:vimim_imode_number(keyboard)
-    elseif keyboard =~# '^iii\='
-        let char_before = ""
-        let byte_before = getline(".")[col(".")]
-        if byte_before !~ '\s'
-            let start = col(".") -1 - s:multibyte
-            let char_before = getline(".")[start : start+s:multibyte-1]
-            if char_before =~ '\w'
-                let char_before = keyboard
-            endif
-        endif
-        if keyboard ==# 'ii'  " 一ii  => 一二
-            let results = s:vimim_imode_chinese(char_before)
-           if empty(results)
-               let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
-           endif
-        elseif keyboard ==# 'iii'   " 马iii => 马马
-            if empty(char_before) || char_before !~ '\W'
-                if !empty(s:cjk.filename) " 214 standard unicode index
-                    let results = s:vimim_cjk_match('u')
-                endif
-            else
-                let ddddd = char2nr(char_before)
-                let results = s:vimim_unicode_list(ddddd)
-            endif
-        endif
-    endif
-    return results
 endfunction
 
 function! s:vimim_cjk_extra_text(chinese)
