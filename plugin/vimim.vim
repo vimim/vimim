@@ -433,7 +433,6 @@ function! s:vimim_get_hjkl_game(keyboard)
     let results = []
     let unname_register = getreg('"')
     let poem = s:vimim_check_filereadable(keyboard)
-let g:g1=copy(keyboard)
     if !empty(poem)
         " [hjkl] flirt non-dot files in the hjkl directory
         let results = s:vimim_readfile(poem)
@@ -1474,7 +1473,7 @@ function! g:vimim_default_omni_color()
 endfunction
 
 function! s:vimim_skin(color)
-    let color = 1
+    let color = a:color
     let &pumheight = 10
     let menu_in_one_row = 0
     if empty(s:onekey) && s:vimim_one_row_menu
@@ -1487,9 +1486,6 @@ function! s:vimim_skin(color)
         let &pumheight = 0
     elseif s:hjkl_l
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
-    endif
-    if empty(a:color) || s:vimim_custom_color > 1
-        let color = 0
     endif
     if s:vimim_custom_color
         call g:vimim_default_omni_color()
@@ -4688,51 +4684,53 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
 function! s:vimim_imap_for_onekey()
-    noremap<silent> n :sil!call g:vimim_search_next()<CR>n
-            imap<silent> <C-^> <Plug>VimimOneKey
-        xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
+    inoremap<unique><expr> <Plug>VimimOneKey <SID>vimim_onekey(0)
+        imap<silent> <C-^> <Plug>VimimOneKey
+    xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     if s:vimim_tab_as_onekey
-            imap<silent> <Tab> <Plug>VimimOneTab
-            xmap<silent> <Tab> <C-^>
+        inoremap<unique><expr> <Plug>VimimOneTab <SID>vimim_onekey(1)
+            imap<silent><Tab>  <Plug>VimimOneTab
     endif
 endfunction
 
 function! s:vimim_imap_for_chinesemode()
-    if s:vimim_plugin_folder =~ 'hjkl'
-        return
-    endif
-    inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
-     noremap<silent>  <C-Bslash>  :call <SID>ChineseMode()<CR>
-        imap<silent>  <C-Bslash>  <Plug>VimIM
-    inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
-    if s:vimim_ctrl_h_to_toggle == 1
-        imap <C-H> <C-Bslash>
-    elseif s:vimim_ctrl_h_to_toggle == 2
-        inoremap<silent><expr> <C-H> <SID>VimIMSwitch()
+    if s:vimim_plugin_folder !~ 'hjkl'
+               inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
+            imap<silent>  <C-Bslash>  <Plug>VimIM
+         noremap<silent>  <C-Bslash>     :call <SID>ChineseMode()<CR>
+        inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
     endif
 endfunction
 
-function! s:vimim_imap_for_ctrl_space()
-    if s:vimim_ctrl_space_to_toggle == 1 && has("gui_running")
-             map <C-Space> <C-Bslash>
+function! s:vimim_imap_ctrl_h_ctrl_space()
+    if has("gui_running")
+        if s:vimim_ctrl_h_to_toggle == 1
+            imap <C-H> <C-Bslash>
+        elseif s:vimim_ctrl_h_to_toggle == 2
+            imap <C-H> <C-X><C-Bslash>
+        endif
+        if s:vimim_ctrl_space_to_toggle == 1
+            map  <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
-    elseif s:vimim_ctrl_space_to_toggle == 1 && has("win32unix")
-             map <C-@> <C-Bslash>
-            imap <C-@> <C-Bslash>
-    elseif s:vimim_ctrl_space_to_toggle == 2 && has("gui_running")
-            inoremap<expr> <C-Space> <SID>VimIMSwitch()
-    elseif s:vimim_ctrl_space_to_toggle == 2 && has("win32unix")
-            inoremap<expr> <C-@>     <SID>VimIMSwitch()
-    elseif s:vimim_ctrl_space_to_toggle == 3 && has("gui_running")
+        elseif s:vimim_ctrl_space_to_toggle == 2
+            imap <C-Space> <C-X><C-Bslash>
+        elseif s:vimim_ctrl_space_to_toggle == 3
             imap <C-Space> <C-^>
-    elseif s:vimim_ctrl_space_to_toggle == 3 && has("win32unix")
+        endif
+    elseif has("win32unix")
+        if s:vimim_ctrl_space_to_toggle == 1
+            map  <C-@> <C-Bslash>
+            imap <C-@> <C-Bslash>
+        elseif s:vimim_ctrl_space_to_toggle == 2
+            imap <C-@> <C-X><C-Bslash>
+        elseif s:vimim_ctrl_space_to_toggle == 3
             imap <C-@> <C-^>
+        endif
     endif
 endfunction
 
 function! s:vimim_plug_and_play()
-    inoremap<unique><expr> <Plug>VimimOneKey <SID>vimim_onekey(0)
-    inoremap<unique><expr> <Plug>VimimOneTab <SID>vimim_onekey(1)
+    :noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
 endfunction
@@ -4740,8 +4738,8 @@ endfunction
 sil!call s:vimim_initialize_local()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
-sil!call s:vimim_plug_and_play()
 sil!call s:vimim_imap_for_onekey()
 sil!call s:vimim_imap_for_chinesemode()
-sil!call s:vimim_imap_for_ctrl_space()
+sil!call s:vimim_imap_ctrl_h_ctrl_space()
+sil!call s:vimim_plug_and_play()
 " ======================================= }}}
