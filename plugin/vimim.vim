@@ -247,7 +247,7 @@ function! s:vimim_initialize_local()
         :redir @i
         nmap gi i<Plug>VimimOneKey<Plug>VimimOneKey
         let g:vimim_debug = 1
-        let g:vimim_onekey_is_tab = 2
+        let g:vimim_onekey_is_tab = 1
         let g:vimim_plugin_folder = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         call g:vimim_default_omni_color()
@@ -370,18 +370,8 @@ function! s:vimim_egg_vimim()
         endif
         call add(eggs, ciku . s:colon . s:cjk.filename)
     endif
-    let toggle = "toggle_with_Ctrl-Bslash"
-    if s:vimim_ctrl_space_to_toggle == 1
-        let toggle = "toggle_with_Ctrl-Space"
-    elseif s:vimim_ctrl_space_to_toggle == 3
-        let toggle = "toggle_with_Ctrl-Space_for_midas_touch"
-    elseif s:vimim_onekey_is_tab > 0
-       let toggle = "toggle_with_Tab_for_midas_touch"
-    endif
-    let style = s:vimim_chinese('style') . s:colon
-    call add(eggs, style . toggle)
     let input = s:vimim_chinese('input') . s:colon
-    if s:vimim_onekey_is_tab == 2
+    if s:vimim_plugin_folder =~ 'hjkl'
         let input .= s:vimim_chinese('onekey')  . s:space
         let input .= s:vimim_chinese('english') . s:space
         let input .= s:vimim_chinese(s:ui.im)   . s:space
@@ -620,7 +610,7 @@ endfunction
 function! s:vimim_cjk_slash_search_block(keyboard)
     " /muuqwxeyqpjeqqq  =>  shortcut   /search
     " /m7712x3610j3111  =>  standard   /search
-    " /ma77xia36ji31    =>  free-style /search
+    " /ma77xia36ji31    =>  free style /search
     let results = []
     let keyboard = a:keyboard
     while len(keyboard) > 1
@@ -1398,7 +1388,6 @@ function! s:vimim_dictionary_statusline()
     let s:status.font       = "字体 字體"
     let s:status.static     = "静态 靜態"
     let s:status.dynamic    = "动态 動態"
-    let s:status.style      = "风格 風格"
     let s:status.erbi       = "二笔 二筆"
     let s:status.wubi       = "五笔 五筆"
     let s:status.5strokes   = "五笔画 五筆畫"
@@ -1448,7 +1437,7 @@ function! s:vimim_chinese(key)
     if has_key(s:status, chinese)
         let twins = split(s:status[chinese])
         let chinese = get(twins,0)
-        if len(twins) > 1 && s:vimim_onekey_is_tab < 2
+        if len(twins) > 1 && empty(s:vimim_debug)
             let chinese = get(twins,1)
         endif
     endif
@@ -2020,7 +2009,7 @@ function! s:vimim_midas_touch(tab)
             let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
         elseif pumvisible()
             let s:menuless = 1
-            let onekey = '\<C-Y>' 
+            let onekey = '\<C-Y>'
         elseif s:menuless
             let s:menuless = 0
             let onekey = '\<C-X>\<C-O>'
@@ -2489,9 +2478,9 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         else
             return 0
         endif
-    elseif len(keyboard) == 4 && s:vimim_onekey_is_tab > 1
+    elseif len(keyboard) == 4 && s:vimim_plugin_folder =~ 'hjkl'
     \&& keyboard =~# '^\x\{4}$' && keyboard !~ '^\d\{4}$'
-        let keyboard = 'u' . keyboard  " from 4 hex to unicode:  9f9f =>
+        let keyboard = 'u' . keyboard  " from 4 hex to unicode: 9f9f =>
     endif
     let ddddd = 0
     if keyboard =~# '^u\x\{4}$'        "  u808f => 32911
@@ -4440,7 +4429,10 @@ if a:start
     endif
     let last_seen_nonsense_column  = copy(start_column)
     let last_seen_backslash_column = copy(start_column)
-    let nonsense = s:vimim_onekey_is_tab>1 ? "[a-f0-9']" : "[0-9']"
+    let nonsense = "[0-9']"
+    if s:vimim_plugin_folder =~ 'hjkl'
+        let nonsense = "[a-f0-9']"
+    endif
     let all_digit = 1
     while start_column > 0
         if one_before =~# s:valid_key
@@ -4742,7 +4734,7 @@ function! s:vimim_imap_for_onekey()
 endfunction
 
 function! s:vimim_imap_for_chinesemode()
-    if s:vimim_onekey_is_tab < 2
+    if s:vimim_plugin_folder =~ 'hjkl'
          noremap<silent>  <C-Bslash>  :call <SID>ChineseMode()<CR>
             imap<silent>  <C-Bslash>  <Plug>VimIM
         inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
