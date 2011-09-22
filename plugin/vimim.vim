@@ -244,6 +244,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
+:let g:vimim_ctrl_h_to_toggle=3                " 用 ctrl+h     点石成金
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @I
@@ -4703,12 +4704,14 @@ function! s:vimim_imap_for_chinesemode()
 endfunction
 
 function! s:vimim_imap_ctrl_h_ctrl_space()
+    if s:vimim_ctrl_h_to_toggle == 1
+        imap <C-H> <C-Bslash>
+    elseif s:vimim_ctrl_h_to_toggle == 2
+        imap <C-H> <C-X><C-Bslash>
+    elseif s:vimim_ctrl_h_to_toggle == 3
+        imap <C-H> <C-^>
+    endif
     if has("gui_running")
-        if s:vimim_ctrl_h_to_toggle == 1
-            imap <C-H> <C-Bslash>
-        elseif s:vimim_ctrl_h_to_toggle == 2
-            imap <C-H> <C-X><C-Bslash>
-        endif
         if s:vimim_ctrl_space_to_toggle == 1
             map  <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
