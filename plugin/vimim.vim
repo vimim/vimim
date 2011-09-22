@@ -246,8 +246,7 @@ endfunction
 function! s:vimim_initialize_local()
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
-        :redir @i
-        nmap gi i<C-^><C-^>
+        :redir @I
         let g:vimim_debug = 1
         let g:vimim_tab_as_onekey = 1
         let g:vimim_plugin_folder = hjkl
@@ -2013,6 +2012,7 @@ function! <SID>vimim_onekey(tab)
     let s:chinese_mode = 'onekey'
     let onekey = '\<Left>\<Right>'
     let before = getline(".")[col(".")-2]
+    let &titlestring = s:logo
     if s:onekey
         if pumvisible()
             if empty(&pumheight)
@@ -2029,18 +2029,18 @@ function! <SID>vimim_onekey(tab)
         else
             let s:menuless = 1
         endif
-        let &titlestring = s:logo
-        if s:menuless
-            let &titlestring .= s:space . s:space . s:today
-        endif
     elseif empty(a:tab) ? 0 : empty(before)||before=~'\s' ? 1 : 0
         let onekey = '\t'
     else
         sil!call s:vimim_super_reset()
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
+        let s:menuless = a:tab ? 1 : 0
         sil!call s:vimim_start()
         sil!call s:vimim_onekey_mapping()
         let onekey = s:vimim_onekey_action(0)
+    endif
+    if s:menuless
+        let &titlestring .= s:space . s:space . s:today
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
