@@ -244,7 +244,6 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-:let g:vimim_ctrl_h_to_toggle=3                " 用 ctrl+h     点石成金
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @I
