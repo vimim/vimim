@@ -247,8 +247,8 @@ endfunction
 function! s:vimim_initialize_local()
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
-        nmap O i<Plug>VimimOneKey<Plug>VimimOneKey
-        :redir @o
+        :redir @i
+        nmap I i<Plug>VimimOneKey<Plug>VimimOneKey
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 2
         let g:vimim_plugin_folder = hjkl
@@ -2013,21 +2013,27 @@ function! g:vimim_onetab()
 endfunction
 
 function! s:vimim_midas_touch(tab)
-    " (1)<OneKey> in insert mode   => start MidasTouch
-    " (2)<OneKey> in menuless mode => start MidasTouch
-    " (3)<OneKey> in omni window   => start menuless, if input
-    " (4)<OneKey> in omni window   => print out, if hjkl
+    " (1) <OneKey> in insert mode   => start MidasTouch popup
+    " (2) <OneKey> in menuless mode => start MidasTouch popup
+    " (3) <OneKey> in omni window   => start menuless, if input
+    " (4) <OneKey> in omni window   => print out, if hjkl
     sil!call s:vimim_backend_initialization()
     let s:chinese_mode = 'onekey'
     let onekey = ''
     if s:onekey
         if s:show_me_not
             let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-        else  " to toggle between onekey menu and menuless
-            let s:menuless = pumvisible() ? 1 : s:menuless ? 0 : 1
-            let &titlestring = s:menuless ? s:logo : ""
+        elseif pumvisible()
+            let s:menuless = 1
+            let onekey = '\<C-Y>' 
+        elseif s:menuless
+            let s:menuless = 0
             let onekey = '\<C-X>\<C-O>'
+        else
+            let s:menuless = 1
+            let onekey = '\<Left>\<Right>'
         endif
+        let &titlestring = s:menuless ? s:logo : ""
     elseif a:tab
         let onekey = '\t'
     else
@@ -2055,7 +2061,7 @@ function! s:vimim_onekey_action(space)
     if one_before =~# s:valid_key
         let onekey = g:vimim()
     elseif empty(s:show_me_not) && s:menuless
-        let onekey = '\<C-O>'  " use <Space> to cycle
+        let onekey = '\<C-N>'  " use <Space> to cycle
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -4658,11 +4664,11 @@ function! s:vimim_popupmenu_list(matched_list)
     endfor
     if s:onekey
         let &titlestring = ""
-        set completeopt=menuone    " for hjkl_n refresh
+        set completeopt=menuone  " for hjkl_n refresh
         let s:popupmenu_list = popupmenu_list
         if empty(s:show_me_not) && s:menuless
             let &pumheight = 1
-            set completeopt=menu   " for direct insert
+            set completeopt=menu  " for direct insert
             let &titlestring = s:space.keyboard.s:space.join(one_list)
         endif
     elseif menu_in_one_row
