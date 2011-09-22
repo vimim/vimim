@@ -1,13 +1,16 @@
-﻿:let s:logo = " VimIM —— Vim 中文輸入法 "
-:let $VimIM = " easter egg:"" vimim<C-6><C-6> vimimrc<C-6><C-6>
-:let $VimIM = " $Date$"
-:let $VimIM = " $Revision$"
-:let s:url  = " http://vim.sf.net/scripts/script.php?script_id=2506"
-:let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
-:let s:url .= " http://code.google.com/p/vimim/source/list"
-:let s:url .= " http://groups.google.com/group/vimim"
-:let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.html"
-:let s:url .= " vimim@googlegroups.com"
+﻿" ==========================================================
+let s:logo =         " VimIM —— Vim 中文輸入法 "
+" ==========================================================
+
+let s:egg  = " easter egg: vimim ctrl+6 ctrl+6 "
+let s:egg  = " $Date$"
+let s:egg  = " $Revision$"
+let s:url  = " http://vim.sf.net/scripts/script.php?script_id=2506"
+let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
+let s:url .= " http://code.google.com/p/vimim/source/list"
+let s:url .= " http://groups.google.com/group/vimim"
+let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.html"
+let s:url .= " vimim@googlegroups.com"
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
@@ -328,7 +331,7 @@ function! s:vimim_egg_vimim()
     let computer = s:vimim_chinese('computer') . s:colon
     call add(eggs, computer . os)
     let revision = s:vimim_chinese('revision') . s:colon
-    let option = get(split($VimIM),1)
+    let option = get(split(s:egg),1)
     let option = empty(option) ? "" : "vimim.vim=" . option
     let vim = v:progname . "=" . v:version . s:space
     call add(eggs, revision . vim . option)
