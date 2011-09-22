@@ -31,10 +31,10 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (5) [option] drop a python2  database:  plugin/vimim.gbk.bsddb
 "
 " "VimIM Usage"
-"  (1) play with cloud, without datafile, with python or wget/curl
-"      open vim, type i, type <C-\> to open; type <C-\> to close
-"  (2) flirt with OneKey: Midas touch
-"      open vim, type i, type sssss <C-6>, m, type alphabetical label
+"  (1) play in OneKey
+"      open vim, type i, type <C-6> to switch
+"  (2) play in Chinese dynamic/static mode
+"      open vim, type i, type <C-\> to switch
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -3569,6 +3569,12 @@ function! s:vimim_initialize_cloud()
     let s:http_executable = 0
 endfunction
 
+function! s:vimim_scan_backend_cloud()
+    if empty(s:backend.datafile) && empty(s:backend.directory)
+        call s:vimim_set_cloud(s:cloud_default)
+    endif
+endfunction
+
 function! s:vimim_set_cloud(im)
     let im = a:im
     let cloud = s:vimim_set_cloud_if_http_executable(im)
@@ -3591,12 +3597,6 @@ function! s:vimim_set_cloud(im)
         let frontends = [s:ui.root, cloud]
         call add(s:ui.frontends, frontends)
     endfor
-endfunction
-
-function! s:vimim_scan_backend_cloud()
-    if empty(s:backend.datafile) && empty(s:backend.directory)
-        call s:vimim_set_cloud(s:cloud_default)
-    endif
 endfunction
 
 function! s:vimim_set_cloud_if_http_executable(im)
