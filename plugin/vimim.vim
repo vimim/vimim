@@ -367,12 +367,10 @@ function! s:vimim_egg_vimim()
         call add(eggs, ciku . s:colon . s:cjk.filename)
     endif
     let input = s:vimim_chinese('input') . s:colon
-    if s:vimim_plugin_folder =~ 'hjkl'
-        let input .= s:vimim_chinese('onekey')  . s:space
-        let input .= s:vimim_chinese('english') . s:space
-        let input .= s:vimim_chinese(s:ui.im)   . s:space
+    if hasmapto("VimIM",'i')
+        let input .=  s:vimim_statusline()     . s:space
     else
-        let input .=  s:vimim_statusline() . s:space
+        let input .= s:vimim_chinese('onekey') . s:space
     endif
     if s:vimim_cloud > -1 && s:onekey < 2
         let input .= s:vimim_chinese(s:cloud_default)
@@ -436,15 +434,14 @@ function! s:vimim_get_hjkl_game(keyboard)
     let results = []
     let unname_register = getreg('"')
     let poem = s:vimim_check_filereadable(keyboard)
+let g:g1=copy(keyboard)
     if !empty(poem)
         " [hjkl] flirt non-dot files in the hjkl directory
         let results = s:vimim_readfile(poem)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
-    elseif keyboard ==# "''"
-        let results = s:vimim_egg_vimimgame()
-    elseif keyboard[-4:] ==# "''''"
+    elseif keyboard =~# "^\\l\\+''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
     elseif len(unname_register) > 8  " vimim_visual_ctrl6
@@ -462,6 +459,8 @@ function! s:vimim_get_hjkl_game(keyboard)
                 endfor
             endif
         endif
+    elseif keyboard =~ "^''\\+$"  " black hole
+        let results = s:vimim_egg_vimimgame()
     endif
     if !empty(results)
         let s:show_me_not = 1
@@ -2082,7 +2081,7 @@ function! g:vimim_onekey_dump()
     let saved_position = getpos(".")
     let keyboard = get(split(s:keyboard,","),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-    if s:onekey > 1
+    if has_key(s:cloud_cache[s:cloud_default], keyboard)
         let space = ""
     endif
     for items in s:popupmenu_list
@@ -2509,12 +2508,9 @@ function! s:vimim_get_unicode_ddddd(keyboard)
         else
             return 0
         endif
-    elseif len(keyboard) == 4 && s:vimim_plugin_folder =~ 'hjkl'
-    \&& keyboard =~# '^\x\{4}$' && keyboard !~ '^\d\{4}$'
-        let keyboard = 'u' . keyboard  " from 4 hex to unicode: 9f9f =>
     endif
     let ddddd = 0
-    if keyboard =~# '^u\x\{4}$'        "  u808f => 32911
+    if keyboard =~# '^u\x\{4}$'        "  u808f => 32911  u9f9f =>
         let ddddd = str2nr(keyboard[1:],16)
     elseif keyboard =~# '^\d\{5}$'     "  32911 => 32911
         let ddddd = str2nr(keyboard, 10)
@@ -4416,15 +4412,11 @@ if a:start
     endif
     let last_seen_nonsense_column  = copy(start_column)
     let last_seen_backslash_column = copy(start_column)
-    let nonsense = "[0-9']"
-    if s:vimim_plugin_folder =~ 'hjkl'
-        let nonsense = "[a-f0-9']"
-    endif
     let all_digit = 1
     while start_column > 0
         if one_before =~# s:valid_key
             let start_column -= 1
-            if one_before !~# nonsense && empty(s:ui.has_dot)
+            if one_before !~# "[0-9']" && empty(s:ui.has_dot)
                 let last_seen_nonsense_column = start_column
                 if all_digit > 0
                     let all_digit = 0
@@ -4720,15 +4712,17 @@ function! s:vimim_imap_for_onekey()
 endfunction
 
 function! s:vimim_imap_for_chinesemode()
-    if s:vimim_plugin_folder !~ 'hjkl'
-         noremap<silent>  <C-Bslash>  :call <SID>ChineseMode()<CR>
-            imap<silent>  <C-Bslash>  <Plug>VimIM
-        inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
-        if s:vimim_ctrl_h_to_toggle == 1
-            imap <C-H> <C-Bslash>
-        elseif s:vimim_ctrl_h_to_toggle == 2
-            inoremap<silent><expr> <C-H> <SID>VimIMSwitch()
-        endif
+    if s:vimim_plugin_folder =~ 'hjkl'
+        return
+    endif
+    inoremap<unique><expr> <Plug>VimIM  <SID>ChineseMode()
+     noremap<silent>  <C-Bslash>  :call <SID>ChineseMode()<CR>
+        imap<silent>  <C-Bslash>  <Plug>VimIM
+    inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
+    if s:vimim_ctrl_h_to_toggle == 1
+        imap <C-H> <C-Bslash>
+    elseif s:vimim_ctrl_h_to_toggle == 2
+        inoremap<silent><expr> <C-H> <SID>VimIMSwitch()
     endif
 endfunction
 
@@ -4751,7 +4745,6 @@ function! s:vimim_imap_for_ctrl_space()
 endfunction
 
 function! s:vimim_plug_and_play()
-    inoremap<unique><expr> <Plug>VimIM     <SID>ChineseMode()
     inoremap<unique><expr> <Plug>VimimOneKey g:vimim_onekey()
     inoremap<unique><expr> <Plug>VimimOneTab g:vimim_onetab()
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
