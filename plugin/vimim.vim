@@ -2028,7 +2028,7 @@ function! s:vimim_midas_touch(tab)
     let s:chinese_mode = 'onekey'
     let onekey = ''
     if s:onekey
-        if empty(&pumheight)
+        if s:show_me_not ? 1 : s:hjkl_l&&s:hjkl_l%2 ? 1 : 0
             let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
         elseif pumvisible()
             let s:menuless = 1
