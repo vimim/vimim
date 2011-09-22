@@ -1,16 +1,13 @@
-﻿" ==========================================================
-  :let s:logo =        " VimIM —— Vim 中文輸入法 "
-" ==========================================================
-
-let $VimIM = " easter egg:"" vimim<C-6><C-6> vimimrc<C-6><C-6>
-let $VimIM = " $Date$"
-let $VimIM = " $Revision$"
-let s:url  = " http://vim.sf.net/scripts/script.php?script_id=2506"
-let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
-let s:url .= " http://code.google.com/p/vimim/source/list"
-let s:url .= " http://groups.google.com/group/vimim"
-let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.html"
-let s:url .= " vimim@googlegroups.com"
+﻿:let s:logo = " VimIM —— Vim 中文輸入法 "
+:let $VimIM = " easter egg:"" vimim<C-6><C-6> vimimrc<C-6><C-6>
+:let $VimIM = " $Date$"
+:let $VimIM = " $Revision$"
+:let s:url  = " http://vim.sf.net/scripts/script.php?script_id=2506"
+:let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.vim.html"
+:let s:url .= " http://code.google.com/p/vimim/source/list"
+:let s:url .= " http://groups.google.com/group/vimim"
+:let s:url .= " http://vimim.googlecode.com/svn/vimim/vimim.html"
+:let s:url .= " vimim@googlegroups.com"
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
