@@ -2017,7 +2017,12 @@ function! s:vimim_midas_touch(tab)
             let s:menuless = 1
             let onekey = '\<Left>\<Right>'
         endif
-        let &titlestring = s:menuless ? s:logo : ""
+        let logo = s:menuless ? s:logo .s:space : s:logo
+        let &titlestring = s:logo
+        if s:menuless
+            let &titlestring .= s:space . s:space
+            let &titlestring .= s:vimim_imode_today_now('itoday')
+        endif
     elseif a:tab
         let onekey = '\t'
     else
@@ -4347,7 +4352,7 @@ endfunction
 function! s:vimim_reset_before_anything()
     let s:keyboard = ""
     let s:onekey = 0
-    let s:menuless = 1    " todo
+    let s:menuless = 0
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
     let s:pattern_not_found = 0
