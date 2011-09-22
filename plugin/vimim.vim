@@ -242,7 +242,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = '/home/xma/hjkl'
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @i
         nmap gi i<Plug>VimimOneKey<Plug>VimimOneKey
@@ -2011,7 +2011,6 @@ function! s:vimim_midas_touch(tab)
             let s:menuless = 1
             let onekey = '\<Left>\<Right>'
         endif
-        let logo = s:menuless ? s:logo .s:space : s:logo
         let &titlestring = s:logo
         if s:menuless
             let &titlestring .= s:space . s:space
@@ -2330,7 +2329,8 @@ function! s:vimim_chinesemode_action()
         call s:vimim_punctuation_mapping()
     endif
     sil!call s:vimim_start()
-    let &titlestring = s:logo
+    let &titlestring  = s:logo . s:space . s:space
+    let &titlestring .= s:vimim_imode_today_now('itoday')
     let action = ""
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
@@ -4732,7 +4732,7 @@ function! s:vimim_imap_for_onekey()
 endfunction
 
 function! s:vimim_imap_for_chinesemode()
-    if s:vimim_plugin_folder =~ 'hjkl'
+    if s:vimim_plugin_folder !~ 'hjkl'
          noremap<silent>  <C-Bslash>  :call <SID>ChineseMode()<CR>
             imap<silent>  <C-Bslash>  <Plug>VimIM
         inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
