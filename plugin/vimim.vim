@@ -244,7 +244,7 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = '/home/xma/hjkl'
+    let hhjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @i
         nmap gi i<Plug>VimimOneKey<Plug>VimimOneKey
@@ -1488,7 +1488,6 @@ function! s:vimim_skin(color)
     endif
     let s:pumheight = copy(&pumheight)
     if s:show_me_not
-        let color = 0
         let &pumheight = 0
     elseif s:hjkl_l
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
