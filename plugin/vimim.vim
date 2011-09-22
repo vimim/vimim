@@ -247,7 +247,7 @@ function! s:vimim_initialize_local()
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
         :redir @i
-        nmap gi i<Plug>VimimOneKey<Plug>VimimOneKey
+        nmap gi i<C-^><C-^>
         let g:vimim_debug = 1
         let g:vimim_onekey_is_tab = 1
         let g:vimim_plugin_folder = hjkl
@@ -1678,8 +1678,7 @@ function! g:vimim_bracket(offset)
         endif
     endif
     if repeat_times < 1
-        let current_line = getline(".")
-        let chinese = strpart(current_line, column_start, s:multibyte)
+        let chinese = strpart(getline("."), column_start, s:multibyte)
         let delete_char = chinese
         if empty(a:offset)
             let chinese = s:left . chinese . s:right
@@ -1723,8 +1722,8 @@ endfunction
 function! <SID>vimim_enter()
     " (1) single <Enter> after English => seamless
     " (2) otherwise, or double <Enter> => <Enter>
-    let one_before = getline(".")[col(".")-2]
     let key = ""
+    let one_before = getline(".")[col(".")-2]
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
@@ -2005,27 +2004,15 @@ endfunction
 let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
-function! g:vimim_onekey()
-    return s:vimim_midas_touch(0)
-endfunction
-
-function! g:vimim_onetab()
-    let tab_is_tab_on_space = 0
-    let space_before = getline(".")[col(".")-2]
-    if empty(space_before) || space_before =~ '\s'
-        let tab_is_tab_on_space = 1
-    endif
-    return s:vimim_midas_touch(tab_is_tab_on_space)
-endfunction
-
-function! s:vimim_midas_touch(tab)
+function! <SID>vimim_onekey(tab)
     " (1) <OneKey> in insert mode   => start MidasTouch popup
     " (2) <OneKey> in menuless mode => start MidasTouch popup
     " (3) <OneKey> in omni window   => start menuless, if input
     " (4) <OneKey> in omni window   => print out, if hjkl
     sil!call s:vimim_backend_initialization()
     let s:chinese_mode = 'onekey'
-    let onekey = ''
+    let onekey = '\<Left>\<Right>'
+    let before = getline(".")[col(".")-2]
     if s:onekey
         if pumvisible()
             if empty(&pumheight)
@@ -2036,16 +2023,17 @@ function! s:vimim_midas_touch(tab)
             endif
         elseif s:menuless
             let s:menuless = 0
-            let onekey = '\<C-X>\<C-O>'
+            if before =~# s:valid_key
+                let onekey = g:vimim()
+            endif
         else
             let s:menuless = 1
-            let onekey = '\<Left>\<Right>'
         endif
         let &titlestring = s:logo
         if s:menuless
             let &titlestring .= s:space . s:space . s:today
         endif
-    elseif a:tab
+    elseif empty(a:tab) ? 0 : empty(before)||before=~'\s' ? 1 : 0
         let onekey = '\t'
     else
         sil!call s:vimim_super_reset()
@@ -2062,14 +2050,12 @@ function! s:vimim_onekey_action(space)
     if s:seamless_positions == getpos(".")
         return space  " space is space after enter
     endif
-    let current_line = getline(".")
-    let one_before = current_line[col(".")-2]
     let onekey = s:vimim_onekey_evil_action()
     if !empty(onekey)
         sil!exe 'sil!return "' . onekey . '"'
     endif
     let onekey = space
-    if one_before =~# s:valid_key
+    if getline(".")[col(".")-2] =~# s:valid_key
         let onekey = g:vimim()
     elseif empty(s:show_me_not) && s:menuless
         let onekey = '\<C-N>'  " use <Space> to cycle
@@ -2081,7 +2067,7 @@ function! g:vimim_onekey_dump()
     let saved_position = getpos(".")
     let keyboard = get(split(s:keyboard,","),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-    if has_key(s:cloud_cache[s:cloud_default], keyboard)
+    if getline(".")[col(".")-2] =~ "'"
         let space = ""
     endif
     for items in s:popupmenu_list
@@ -4745,8 +4731,8 @@ function! s:vimim_imap_for_ctrl_space()
 endfunction
 
 function! s:vimim_plug_and_play()
-    inoremap<unique><expr> <Plug>VimimOneKey g:vimim_onekey()
-    inoremap<unique><expr> <Plug>VimimOneTab g:vimim_onetab()
+    inoremap<unique><expr> <Plug>VimimOneKey <SID>vimim_onekey(0)
+    inoremap<unique><expr> <Plug>VimimOneTab <SID>vimim_onekey(1)
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
 endfunction
