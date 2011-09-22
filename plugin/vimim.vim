@@ -188,7 +188,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_h_to_toggle")
     call add(G, "g:vimim_plugin_folder")
     call add(G, "g:vimim_shuangpin")
-    call add(G, "g:vimim_onekey_is_tab")
+    call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
     call add(G, "g:vimim_cloud")
@@ -249,7 +249,7 @@ function! s:vimim_initialize_local()
         :redir @i
         nmap gi i<C-^><C-^>
         let g:vimim_debug = 1
-        let g:vimim_onekey_is_tab = 1
+        let g:vimim_tab_as_onekey = 1
         let g:vimim_plugin_folder = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         call g:vimim_default_omni_color()
@@ -4691,7 +4691,7 @@ function! s:vimim_imap_for_onekey()
     noremap<silent> n :sil!call g:vimim_search_next()<CR>n
             imap<silent> <C-^> <Plug>VimimOneKey
         xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
-    if s:vimim_onekey_is_tab
+    if s:vimim_tab_as_onekey
             imap<silent> <Tab> <Plug>VimimOneTab
             xmap<silent> <Tab> <C-^>
     endif
