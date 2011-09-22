@@ -92,7 +92,7 @@ function! s:vimim_initialize_session()
     let s:qwer = split("pqwertyuio",'\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let s:seamless_positions = []
-    let s:shuangpin_keycode_chinese = {}
+    let s:shuangpin_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     let s:cjk_cache = {}
@@ -159,8 +159,8 @@ function! s:vimim_set_keycode()
     else
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
     endif
-    if !empty(s:vimim_shuangpin) && !empty(s:shuangpin_keycode_chinese)
-        let keycode = s:shuangpin_keycode_chinese.keycode
+    if !empty(s:vimim_shuangpin) && !empty(s:shuangpin_chinese)
+        let keycode = s:shuangpin_chinese.keycode
     endif
     let i = 0
     while i < 16*16
@@ -1545,12 +1545,6 @@ function! s:vimim_statusline()
         endif
         return s:vimim_get_chinese_im()
     endif
-    if len(s:backend.datafile) > 0 || len(s:backend.directory) > 0
-        if !empty(s:vimim_shuangpin)
-            let s:ui.statusline .= s:space
-            let s:ui.statusline .= s:shuangpin_keycode_chinese.chinese
-        endif
-    endif
     if !empty(s:mycloud)
         let __getname = s:backend.cloud.mycloud.directory
         let s:ui.statusline .= s:space . __getname
@@ -1579,6 +1573,9 @@ function! s:vimim_statusline()
             endif
         endif
         let s:ui.statusline .= s:vimim_chinese('cloud')
+    endif
+    if !empty(s:vimim_shuangpin)
+        let s:ui.statusline .= s:space . s:shuangpin_chinese.chinese
     endif
     return s:vimim_get_chinese_im()
 endfunction
@@ -3036,8 +3033,8 @@ function! s:vimim_set_shuangpin()
         let chinese = s:vimim_chinese('flypy')
     endif
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
-    let s:shuangpin_keycode_chinese.chinese = chinese . shuangpin
-    let s:shuangpin_keycode_chinese.keycode = keycode
+    let s:shuangpin_chinese.chinese = chinese . shuangpin
+    let s:shuangpin_chinese.keycode = keycode
 endfunction
 
 function! s:vimim_shuangpin_transform(keyboard)
