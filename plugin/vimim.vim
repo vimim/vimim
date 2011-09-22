@@ -639,40 +639,12 @@ function! s:vimim_build_numbers_hash()
     endif
 endfunction
 
-function! s:vimim_get_antonym_list()
+function! s:vimim_imode_loop()
+    if !empty(s:loops)
+        return
+    endif
     let antonym  = " ，。 “” ‘’ （） 【】 〖〗 《》"
-    let antonym .= " 酸甜苦辣 危安 胜败 凶吉 真假 石金 "
-    return split(antonym)
-endfunction
-
-function! s:vimim_imode_chinese(char_before)
-    if empty(s:loops)
-        let numbers  = s:vimim_get_numbers_list()  " 七 => 八
-        let antonyms = s:vimim_get_antonym_list()  " 石 => 金
-        let imode_list = numbers + antonyms
-        for loop in imode_list
-            let loops = split(loop,'\zs')
-            for i in range(len(loops))
-                let j = i==len(loops)-1 ? 0 : i+1
-                let s:loops[loops[i]] = loops[j]
-            endfor
-        endfor
-    endif
-    let results = []
-    let char_before = a:char_before
-    if has_key(s:loops, char_before)
-        let start = char_before
-        let next = ""
-        while start != next
-            let next = s:loops[char_before]
-            call add(results, next)
-            let char_before = next
-        endwhile
-    endif
-    return results
-endfunction
-
-function! s:vimim_get_numbers_list()
+    let antonym .= " 危安 胜败 凶吉 真假 石金 "
     let items = []
     call s:vimim_build_numbers_hash()
     for i in range(len(s:numbers))
@@ -686,7 +658,30 @@ function! s:vimim_get_numbers_list()
         endfor
         call add(numbers, number)
     endfor
-    return numbers
+    let imode_list = numbers + split(antonym)
+    for loop in imode_list
+        let loops = split(loop,'\zs')
+        for i in range(len(loops))
+            let j = i==len(loops)-1 ? 0 : i+1
+            let s:loops[loops[i]] = loops[j]
+        endfor
+    endfor
+endfunction
+
+function! s:vimim_imode_chinese(char_before)
+    call s:vimim_imode_loop()
+    let results = []
+    let char_before = a:char_before
+    if has_key(s:loops, char_before)
+        let start = char_before
+        let next = ""
+        while start != next
+            let next = s:loops[char_before]
+            call add(results, next)
+            let char_before = next
+        endwhile
+    endif
+    return results
 endfunction
 
 let s:translators = {}
@@ -2511,7 +2506,7 @@ function! s:vimim_get_imode_results(keyboard)
                 let char_before = keyboard
             endif
         endif
-        if keyboard ==# 'ii'        " 一ii  => 一二
+        if keyboard ==# 'ii'  " 一ii  => 一二
             let results = s:vimim_imode_chinese(char_before)
            if empty(results)
                let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
@@ -2795,16 +2790,10 @@ function! <SID>vimim_visual_ctrl6()
                 let line = get(results,0)
                 let key = "gvr" . line . "ga"
             endif
-            if empty(s:cjk.filename)
-                let key = "ga"
-            else
+            if !empty(s:cjk.filename)
                 let index = match(s:cjk.lines, "^".line)
                 let line = get(s:cjk.lines, index)
-            endif
-            if has("gui_running")
                 let &titlestring = s:space . line
-            else
-                echo line
             endif
         endif
     elseif match(lines,'\d')>-1 && join(lines) !~ '[^0-9[:blank:].]'
