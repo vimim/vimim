@@ -1581,13 +1581,11 @@ function! s:vimim_statusline()
 endfunction
 
 function! s:vimim_get_chinese_im()
-    if empty(s:onekey)
-        let punctuation = s:vimim_chinese('half_width')
-        if s:chinese_punctuation > 0
-            let punctuation = s:vimim_chinese('full_width')
-        endif
-        let s:ui.statusline .= s:space . punctuation
+    let punctuation = s:vimim_chinese('half_width')
+    if s:chinese_punctuation > 0
+        let punctuation = s:vimim_chinese('full_width')
     endif
+    let s:ui.statusline .= s:space . punctuation
     let statusline = s:left . s:ui.statusline . s:right . "VimIM"
     let input_style  = s:vimim_chinese('chinese')
     let input_style .= s:vimim_chinese(s:vimim_chinese_input_mode)
@@ -2347,6 +2345,7 @@ function! s:vimim_chinesemode_action()
         call s:vimim_punctuation_mapping()
     endif
     sil!call s:vimim_start()
+    let &titlestring = s:logo
     let action = ""
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
