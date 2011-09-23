@@ -2053,7 +2053,7 @@ function! g:vimim_onekey_dump()
     let keyboard = get(split(s:keyboard,","),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
     if getline(".")[col(".")-2] =~ "'"
-        let space = ""
+        let space = ""  " no need to format to print out cloud
     endif
     for items in s:popupmenu_list
         let line = printf('%s', items.word)
@@ -4516,12 +4516,12 @@ function! s:vimim_popupmenu_list(matched_list)
     let lines = a:matched_list
     if empty(lines) || type(lines) != type([])
         return []
-    else
-        let s:matched_list = lines
-        if empty(s:show_me_not) && !has_key(s:cjk_cache, keyboard)
-            let s:cjk_cache[keyboard] = lines
-        endif
+    elseif empty(keyboard)
+        " E713: Cannot use empty key for Ditionary
+    elseif empty(s:show_me_not) && !has_key(s:cjk_cache, keyboard)
+        let s:cjk_cache[keyboard] = lines
     endif
+    let s:matched_list = lines
     " [skin] no color seems the best color
     let color = len(lines)<2 && empty(tail) ? 0 : 1
     let menu_in_one_row = s:vimim_skin(color)
