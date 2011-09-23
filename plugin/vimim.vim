@@ -1893,7 +1893,7 @@ function! s:vimim_hjkl_partition(keyboard)
             let keyboard = "'" . keyboard
         endif
     elseif s:hjkl_h      " redefine match: jsjsxx => ['jsjsx','jsjs']
-        let items = get(s:popup_list,0)          " jsjs'xx
+        let items = get(s:popup_list,0)              " jsjs'xx
         let words = get(items, "word")               " jsjsxx
         let tail = len(substitute(words,'\L','','g'))    " xx
         let head = keyboard[: -tail-1]  " 'jsjsxx'[:-3]='jsjs'
@@ -2958,8 +2958,7 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
             return [candidate]
         endif
         let oneline = get(lines, matched)
-        let match_list = s:vimim_make_pairs(oneline)
-        call extend(results, match_list)
+        call extend(results, s:vimim_make_pairs(oneline))
     endfor
     return results
 endfunction
@@ -4555,7 +4554,7 @@ function! s:vimim_popupmenu_list(match_list)
             let &titlestring = s:space.keyboard.s:space.join(one_list)
         endif
     elseif menu_in_one_row
-        return s:vimim_one_row(one_list[0:4], popup_list[0:4])
+        let popup_list = s:vimim_one_row(one_list[0:4], popup_list[0:4])
     endif
     return popup_list
 endfunction
