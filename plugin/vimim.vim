@@ -98,6 +98,7 @@ function! s:vimim_initialize_session()
     let s:cjk_cache = {}
     let s:cjk_cache.i = ["我"]
     let s:space = "　"
+    let s:colon = "："
     let s:today = s:vimim_imode_today_now('itoday')
 endfunction
 
@@ -244,15 +245,15 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
+        set pastetoggle=<C-Bslash>
+        :redir @a
+        nmap a a<C-^><C-^>
         let g:vimim_tab_as_onekey = 1
         let g:vimim_plugin_folder = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_debug = 1
-        :redir @i
-        nmap gi i<C-^><C-^>
-        set pastetoggle=<C-Bslash>
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -369,7 +370,7 @@ function! s:vimim_egg_vimim()
     endif
     let input = s:vimim_chinese('input') . s:colon
     if hasmapto("VimIM",'i')
-        let input .=  s:vimim_statusline()     . s:space
+        let input .=  s:vimim_statusline() . s:space
     else
         let input .= s:vimim_chinese('onekey') . s:space
     endif
@@ -469,6 +470,7 @@ function! s:vimim_get_hjkl_game(keyboard)
                 let results = s:vimim_hjkl_rotation(results)
             endfor
         endif
+        let results = [s:space] + results + [s:space]
     endif
     return results
 endfunction
@@ -828,10 +830,10 @@ let s:VimIM += [" ====  punctuation      ==== {{{"]
 
 function! s:vimim_dictionary_punctuations()
     let s:punctuations = {}
-    let s:punctuations['@'] = s:space | let s:colon = "："
-    let s:punctuations[':'] = s:colon | let s:left  = "【"
-    let s:punctuations['['] = s:left  | let s:right = "】"
-    let s:punctuations[']'] = s:right
+    let s:punctuations['@'] = s:space
+    let s:punctuations[':'] = s:colon
+    let s:punctuations['['] = "【"
+    let s:punctuations[']'] = "】"
     let s:punctuations['{'] = "〖"
     let s:punctuations['}'] = "〗"
     let s:punctuations['<'] = "《"
@@ -1519,7 +1521,7 @@ function! IMName()
             return s:vimim_statusline()
         endif
     elseif !empty(&omnifunc) && &omnifunc ==# 'VimIM'
-        return s:vimim_statusline()
+        return s:space . s:vimim_statusline()
     endif
     return ""
 endfunction
@@ -1557,19 +1559,13 @@ function! s:vimim_statusline()
         elseif vimim_cloud =~ 'wubi'
             let s:ui.statusline .= s:vimim_chinese('wubi')
         elseif vimim_cloud =~ 'shuangpin'
-            if vimim_cloud =~ 'abc'
-                let s:ui.statusline .= s:vimim_chinese('abc')
-            elseif vimim_cloud =~ 'ms'
-                let s:ui.statusline .= s:vimim_chinese('ms')
-            elseif vimim_cloud =~ 'plusplus'
-                let s:ui.statusline .= s:vimim_chinese('plusplus')
-            elseif vimim_cloud =~ 'purple'
-                let s:ui.statusline .= s:vimim_chinese('purple')
-            elseif vimim_cloud =~ 'flypy'
-                let s:ui.statusline .= s:vimim_chinese('flypy')
-            elseif vimim_cloud =~ 'nature'
-                let s:ui.statusline .= s:vimim_chinese('nature')
-            endif
+            let shuangpin_all = 'abc ms plusplus purple flypy nature'
+            for shuangpin in split(shuangpin_all)
+                if vimim_cloud =~ shuangpin
+                    let s:ui.statusline .= s:vimim_chinese(shuangpin)
+                    break
+                endif
+            endfor
             if vimim_cloud !~ 'abc'
                 let s:ui.statusline .= s:vimim_chinese('shuangpin')
             endif
@@ -1588,10 +1584,9 @@ function! s:vimim_get_chinese_im()
         let punctuation = s:vimim_chinese('full_width')
     endif
     let s:ui.statusline .= s:space . punctuation
-    let statusline = s:left . s:ui.statusline . s:right . "VimIM"
     let input_style  = s:vimim_chinese('chinese')
     let input_style .= s:vimim_chinese(s:vimim_chinese_input_mode)
-    let input_style .= statusline
+    let input_style .= s:space . s:ui.statusline . s:space . "VimIM"
     return input_style
 endfunction
 
@@ -1647,7 +1642,7 @@ function! s:vimim_square_bracket(key)
         let _     = key=="]" ? 0          : -1
         let left  = key=="]" ? "\<Left>"  : ""
         let right = key=="]" ? "\<Right>" : ""
-        let bs = '\<C-R>=g:vimim_bracket('._.')\<CR>'
+        let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
         let key = '\<C-Y>' . left . bs . right
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -1661,25 +1656,20 @@ function! g:vimim_bracket(offset)
     let repeat_times += a:offset
     let row_end = line(".")
     let row_start = s:start_row_before
-    let delete_char = ""
+    let cursor = ""
     if repeat_times > 0 && row_end == row_start
         if a:offset > 0  " omni bslash for seamless
             let left = repeat("\<Left>", repeat_times-1)
             let right = repeat("\<Right>", repeat_times-1)
-            let delete_char = left . "\<BS>" . right
+            let cursor = left . "\<BS>" . right
         else
-            let delete_char = repeat("\<BS>", repeat_times)
+            let cursor = repeat("\<BS>", repeat_times)
         endif
     endif
     if repeat_times < 1
-        let chinese = strpart(getline("."), column_start, s:multibyte)
-        let delete_char = chinese
-        if empty(a:offset)
-            let chinese = s:left . chinese . s:right
-            let delete_char = "\<Right>\<BS>" . chinese . "\<Left>"
-        endif
+        let cursor = strpart(getline("."), column_start, s:multibyte)
     endif
-    return delete_char
+    return cursor
 endfunction
 
 function! <SID>vimim_esc()
@@ -3013,8 +3003,8 @@ function! s:vimim_set_shuangpin()
     let keycode = "[0-9a-z']"
     if s:vimim_shuangpin == 'abc'
         let rules = s:vimim_shuangpin_abc(rules)
-        let s:imode_pinyin = 1
         let chinese = s:vimim_chinese('abc')
+        let s:imode_pinyin = 1
         let shuangpin = ""
     elseif s:vimim_shuangpin == 'ms'
         let rules = s:vimim_shuangpin_ms(rules)
@@ -3026,13 +3016,13 @@ function! s:vimim_set_shuangpin()
     elseif s:vimim_shuangpin == 'plusplus'
         let rules = s:vimim_shuangpin_plusplus(rules)
         let chinese = s:vimim_chinese('plusplus')
+    elseif s:vimim_shuangpin == 'flypy'
+        let rules = s:vimim_shuangpin_flypy(rules)
+        let chinese = s:vimim_chinese('flypy')
     elseif s:vimim_shuangpin == 'purple'
         let rules = s:vimim_shuangpin_purple(rules)
         let chinese = s:vimim_chinese('purple')
         let keycode = "[0-9a-z';]"
-    elseif s:vimim_shuangpin == 'flypy'
-        let rules = s:vimim_shuangpin_flypy(rules)
-        let chinese = s:vimim_chinese('flypy')
     endif
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
     let s:shuangpin_chinese.chinese = chinese . shuangpin
