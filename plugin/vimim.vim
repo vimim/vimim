@@ -32,9 +32,9 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "
 " "VimIM Usage"
 "  (1) play in OneKey
-"      open vim, type i, type <C-6> to switch
+"      (in vim insert mode) trigger <C-6> to switch
 "  (2) play in Chinese dynamic/static mode
-"      open vim, type i, type <C-\> to switch
+"      (in vim insert mode) trigger <C-\> to switch
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -221,7 +221,7 @@ function! s:vimim_set_global_default(options, default)
         let default = a:default
         if exists(variable)
             let value = eval(variable)
-            if value!=default || type(value)==1
+            if value != default || type(value) == type("")
                 let configuration = 1
             endif
             let default = string(value)
@@ -232,10 +232,10 @@ function! s:vimim_set_global_default(options, default)
         else
             call add(s:vimimdefaults, '" ' . option)
         endif
-        let s_variable = substitute(variable,"g:","s:",'')
+        let s_variable = substitute(variable, "g:", "s:", '')
         if exists(variable)
-            exe 'let '. s_variable .'='. variable
-            exe 'unlet! ' . variable
+            exe   'let  ' . s_variable .'='. variable
+            exe 'unlet! ' .   variable
         else
             exe 'let '. s_variable .'='. a:default
         endif
@@ -793,7 +793,7 @@ function! s:vimim_get_imode_results(keyboard)
         let results = [s:vimim_imode_today_now(keyboard)]
     elseif keyboard =~ '\d'
         let results = s:vimim_imode_number(keyboard)
-    elseif keyboard =~# '^iii\='
+    elseif keyboard ==# 'ii' || keyboard ==# 'u'
         let char_before = ""
         let byte_before = getline(".")[col(".")]
         if byte_before !~ '\s'
@@ -803,12 +803,12 @@ function! s:vimim_get_imode_results(keyboard)
                 let char_before = keyboard
             endif
         endif
-        if keyboard ==# 'ii'  " 一ii  => 一二
+        if keyboard ==# 'ii'      " 一ii  =>  一二
             let results = s:vimim_imode_chinese(char_before)
            if empty(results)
                let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
            endif
-        elseif keyboard ==# 'iii'   " 马iii => 马马
+        elseif keyboard ==# 'u'   " 马u   =>  马马
             if empty(char_before) || char_before !~ '\W'
                 if !empty(s:cjk.filename) " 214 standard unicode index
                     let results = s:vimim_cjk_match('u')
@@ -952,10 +952,10 @@ function! <SID>vimim_onekey_map(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-function! <SID>vimim_get_quote(type)
+function! <SID>vimim_get_quote(quote)
     let key = ""
-        if a:type == 1 | let key = "'"
-    elseif a:type == 2 | let key = '"' | endif
+        if a:quote == 1 | let key = "'"
+    elseif a:quote == 2 | let key = '"' | endif
     let quote = ""
     if !has_key(s:evils, key)
         return ""
@@ -963,14 +963,14 @@ function! <SID>vimim_get_quote(type)
         let quote = '\<C-Y>'
     endif
     let pairs = split(s:evils[key], '\zs')
-    if a:type == 1
+    if a:quote == 1
         if s:onekey
             let s:smart_single_quotes += 1
             let quote .= get(pairs, s:smart_single_quotes % 2)
         else  " the 3rd choice
             let quote = '\<Down>\<Down>\<C-Y>' . g:vimim()
         endif
-    elseif a:type == 2
+    elseif a:quote == 2
         let s:smart_double_quotes += 1
         let quote .= get(pairs, s:smart_double_quotes % 2)
     endif
@@ -4425,9 +4425,11 @@ else
         let ddddd = s:vimim_get_unicode_ddddd(keyboard)
         if ddddd
             let results = s:vimim_unicode_list(ddddd)
-        elseif keyboard =~# '^i' && s:imode_pinyin
+        elseif s:imode_pinyin
             " [imode] magic i: (1) English number (2) Chinese number
-            let results = s:vimim_get_imode_results(keyboard)
+            if keyboard =~# '^i' || keyboard ==# 'u' 
+                let results = s:vimim_get_imode_results(keyboard)
+            endif
         endif
         if empty(results)
             " [character]  sssss'' => s's's's's
