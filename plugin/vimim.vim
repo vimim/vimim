@@ -246,14 +246,14 @@ endfunction
 function! s:vimim_initialize_local()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
-        set pastetoggle=<C-Bslash>
-        nmap gi i<C-^><C-^>
+        :set pastetoggle=<C-Bslash>
+        :nmap  gi i<C-^><C-^>
         :redir @i
+        :call g:vimim_default_omni_color()
         let g:vimim_plugin_folder = hjkl
         let g:vimim_tab_as_onekey = 1
         let g:vimim_debug = 1
         let g:vimim_cloud = 'google,sogou,baidu,qq'
-        :call g:vimim_default_omni_color()
     endif
 endfunction
 
@@ -4644,7 +4644,7 @@ endfunction
 
 function! s:vimim_imap_for_chinesemode()
     if &pastetoggle == nr2char(28)
-        return " <C-Bslash> is already used
+        return
     endif
     inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
     imap<silent><C-Bslash> <Plug>VimIM
