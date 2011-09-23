@@ -326,8 +326,8 @@ function! s:vimim_egg_vimim()
         if has("win32unix") | let os = "cygwin"
     elseif has("win32")     | let os = "Windows32"
     elseif has("win64")     | let os = "Windows64"
-    elseif has("unix")      | let os = "unix"
-    elseif has("macunix")   | let os = "macunix" | endif
+    elseif has("macunix")   | let os = "macunix"
+    elseif has("unix")      | let os = "unix" | endif
     let computer = s:vimim_chinese('computer') . s:colon
     call add(eggs, computer . os . "_" . &term)
     let revision = s:vimim_chinese('revision') . s:colon
@@ -3570,7 +3570,7 @@ function! s:vimim_check_http_executable()
     let http_executable = 0
     if s:vimim_cloud < 0 && len(s:vimim_mycloud) < 2
         return 0
-    elseif len(s:http_executable) > 2
+    elseif len(s:http_executable) > 3
         return s:http_executable
     endif
     " step 1 of 4: try to find libvimim for mycloud
@@ -3595,10 +3595,10 @@ function! s:vimim_check_http_executable()
         endif
     endif
     " step 3 of 4: try to find wget
-    if empty(http_executable)
+    if empty(http_executable) || has("macunix")
         let wget = 'wget'
         let wget_exe = s:plugin . 'wget.exe'
-        if filereadable(wget_exe)
+        if filereadable(wget_exe) && executable(wget_exe)
             let wget = wget_exe
         endif
         if executable(wget)
@@ -3934,7 +3934,7 @@ function! s:vimim_check_mycloud_availability()
 endfunction
 
 function! s:vimim_access_mycloud(cloud, cmd)
-    " use the same function to access mycloud by libcall() or system()
+    " same function to access mycloud by libcall() or system()
     let ret = ""
     if s:mycloud_mode == "libcall"
         let arg = s:mycloud_arg
