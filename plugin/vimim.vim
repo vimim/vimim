@@ -95,6 +95,7 @@ function! s:vimim_initialize_session()
     let s:shuangpin_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
+    let s:shuangpin_all = 'abc ms plusplus purple flypy nature'
     let s:space = "　"
     let s:colon = "："
     let s:today = s:vimim_imode_today_now('itoday')
@@ -245,7 +246,7 @@ endfunction
 function! s:vimim_initialize_local()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
-     "  set pastetoggle=<C-Bslash>
+        set pastetoggle=<C-Bslash>
         nmap gi i<C-^><C-^>
         :redir @i
         let g:vimim_plugin_folder = hjkl
@@ -1551,24 +1552,21 @@ function! s:vimim_statusline()
         let __getname = s:backend.cloud.mycloud.directory
         let s:ui.statusline .= s:space . __getname
     elseif s:ui.root == 'cloud'
+        let s:ui.statusline .= s:vimim_chinese('cloud') . s:space
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
         if vimim_cloud =~ 'mixture'
             let s:ui.statusline .= s:vimim_chinese('mixture')
         elseif vimim_cloud =~ 'wubi'
             let s:ui.statusline .= s:vimim_chinese('wubi')
-        elseif vimim_cloud =~ 'shuangpin'
-            let shuangpin_all = 'abc ms plusplus purple flypy nature'
-            for shuangpin in split(shuangpin_all)
-                if vimim_cloud =~ shuangpin
-                    let s:ui.statusline .= s:vimim_chinese(shuangpin)
-                    break
-                endif
-            endfor
+        elseif vimim_cloud =~ 'shuangpin' " qq.shuangpin.ms => ms
+            let shuangpin = get(split(vimim_cloud,"[.]"),-1)
+            if match(split(s:shuangpin_all),shuangpin) > -1
+                let s:ui.statusline .= s:vimim_chinese(shuangpin)
+            endif
             if vimim_cloud !~ 'abc'
                 let s:ui.statusline .= s:vimim_chinese('shuangpin')
             endif
         endif
-        let s:ui.statusline .= s:vimim_chinese('cloud')
     endif
     if !empty(s:vimim_shuangpin)
         let s:ui.statusline = s:shuangpin_chinese.chinese
@@ -2983,8 +2981,7 @@ function! s:vimim_set_shuangpin()
     endif
     let chinese = ""
     let rules = s:vimim_shuangpin_generic()
-    let shuangpin_all = 'abc ms plusplus purple flypy nature'
-    for shuangpin in split(shuangpin_all)
+    for shuangpin in split(s:shuangpin_all)
         if s:vimim_shuangpin == shuangpin
             let rules = eval("s:vimim_shuangpin_" . shuangpin . "(rules)")
             let chinese = s:vimim_chinese(shuangpin)
@@ -3528,12 +3525,12 @@ endfunction
 
 function! s:vimim_scan_backend_cloud()
     if empty(s:backend.datafile) && empty(s:backend.directory)
-        call s:vimim_set_cloud(s:cloud_default)
+        call s:vimim_set_cloud()
     endif
 endfunction
 
-function! s:vimim_set_cloud(im)
-    let im = a:im
+function! s:vimim_set_cloud()
+    let im = s:cloud_default
     let cloud = s:vimim_set_cloud_if_http_executable(im)
     if empty(cloud)
         let s:backend.cloud = {}
@@ -3728,8 +3725,8 @@ function! s:vimim_get_cloud_qq(keyboard)
         return []
     endif
     let input  = url
-    let clouds = split(s:vimim_cloud,',')
-    let vimim_cloud = get(clouds, match(clouds,'qq'))
+    let clouds = split(s:vimim_cloud,',')             " qq.shuangpin.abc,google
+    let vimim_cloud = get(clouds, match(clouds,'qq')) " qq.shuangpin.abc
     if vimim_cloud =~ 'wubi'
         let input .= 'gwb'
     else
@@ -3745,13 +3742,8 @@ function! s:vimim_get_cloud_qq(keyboard)
     endif
     if vimim_cloud =~ 'shuangpin'
         let md = 2
-        let st = 0
-            if vimim_cloud =~ 'abc'      | let st = 1
-        elseif vimim_cloud =~ 'ms'       | let st = 2
-        elseif vimim_cloud =~ 'plusplus' | let st = 3
-        elseif vimim_cloud =~ 'purple'   | let st = 4
-        elseif vimim_cloud =~ 'flypy'    | let st = 5
-        elseif vimim_cloud =~ 'nature'   | let st = 6 | endif
+        let shuangpin = get(split(vimim_cloud,"[.]"),-1)   " qq.shuangpin.ms => ms
+        let st = match(split(s:shuangpin_all),shuangpin)+1 "              ms => 2
         if st > 0
             let input .= '&st=' . st
         endif
