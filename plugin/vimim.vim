@@ -95,8 +95,6 @@ function! s:vimim_initialize_session()
     let s:shuangpin_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
-    let s:cjk_cache = {}
-    let s:cjk_cache.i = ["我"]
     let s:space = "　"
     let s:colon = "："
     let s:today = s:vimim_imode_today_now('itoday')
@@ -445,6 +443,8 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard =~# "^\\l\\+''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
+    elseif keyboard =~ "^''''\\+$"  " black hole
+        let results = s:vimim_egg_vimimgame()
     elseif len(unname_register) > 8  " vimim_visual_ctrl6
         if keyboard ==# "'''"
             " [hjkl] display buffer inside the omni window
@@ -460,8 +460,6 @@ function! s:vimim_get_hjkl_game(keyboard)
                 endfor
             endif
         endif
-    elseif keyboard =~ "^''\\+$"  " black hole
-        let results = s:vimim_egg_vimimgame()
     endif
     if !empty(results)
         let s:show_me_not = 1
@@ -2632,7 +2630,6 @@ function! s:vimim_cjk_match(keyboard)
                     " search le or yue from le4yue4
                     let grep .= '\(\l\+\d\)\=' . alpha
                 elseif len(keyboard) == 1
-                    " one-char-list by frequency y72/yue72 l72/le72
                     " search l or y from le4yue4 music happy 426
                     let grep .= grep_frequency
                 endif
@@ -2736,7 +2733,7 @@ function! <SID>vimim_visual_ctrl6()
             let s:seamless_positions = getpos("'<'")
             let ddddd = char2nr(chinese)
             let uddddd = "gvc" . 'u'.ddddd . onekey
-            let dddd = "gvc" . line . onekey
+            let dddd   = "gvc" .    line   . onekey
             let key = ddddd=~'\d\d\d\d\d' ? uddddd : dddd
         else
             " highlight one chinese => get antonym or number loop
@@ -3515,10 +3512,8 @@ function! s:vimim_initialize_cloud()
     let s:cloud_default = get(cloud_defaults,0)
     let s:cloud_defaults = copy(cloud_defaults)
     let s:cloud_keys = {}
-    let s:cloud_cache = {}
     for cloud in cloud_defaults
         let s:cloud_keys[cloud] = 0
-        let s:cloud_cache[cloud] = {}
     endfor
     if empty(s:vimim_cloud)
         let s:vimim_cloud = cloud_default
@@ -3645,9 +3640,6 @@ function! s:vimim_get_cloud(keyboard, cloud)
         return []
     endif
     let results = []
-    if has_key(s:cloud_cache[cloud], keyboard)
-        return s:cloud_cache[cloud][keyboard]
-    endif
     let get_cloud = "s:vimim_get_cloud_" . cloud . "(keyboard)"
     try
         let results = eval(get_cloud)
@@ -3655,7 +3647,6 @@ function! s:vimim_get_cloud(keyboard, cloud)
         call s:debug('alert', 'get_cloud='.cloud.'=', v:exception)
     endtry
     if !empty(results)
-        let s:cloud_cache[cloud][keyboard] = results
         if s:keyboard !~ ','
             let s:keyboard = keyboard
         endif
@@ -4396,7 +4387,7 @@ if a:start
     call s:vimim_set_keyboard_list(start_column, keyboard)
     return start_column
 else
-    " [cache] less is more
+    " [hjkl] less is more
     let results = s:vimim_cache()
     if empty(results)
         sil!call s:vimim_reset_before_omni()
@@ -4492,12 +4483,9 @@ else
         if empty(results)                           " forced cloud
             let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
-        if empty(results)
-            if has_key(s:cjk_cache,keyboard)
-                let results = s:cjk_cache[keyboard]
-            elseif len(keyboard) == 1
-                let results = [s:space] " u'v'i'have'a'dream
-            endif
+        if empty(results) && len(keyboard) == 1
+            let i = keyboard=='i' ? "我" : s:space
+            let results = [i] " u'v'i'have'a'dream
         endif
     endif
     if empty(results)
@@ -4516,10 +4504,6 @@ function! s:vimim_popupmenu_list(matched_list)
     let lines = a:matched_list
     if empty(lines) || type(lines) != type([])
         return []
-    elseif empty(keyboard)
-        " E713: Cannot use empty key for Ditionary
-    elseif empty(s:show_me_not) && !has_key(s:cjk_cache, keyboard)
-        let s:cjk_cache[keyboard] = lines
     endif
     let s:matched_list = lines
     " [skin] no color seems the best color
