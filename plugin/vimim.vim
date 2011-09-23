@@ -243,11 +243,6 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-" let g:vimim_shuangpin = 'abc'
-" let g:vimim_shuangpin = 'ms'
-" let g:vimim_shuangpin = 'nature'
-" let g:vimim_shuangpin = 'plusplus'
-" let g:vimim_shuangpin = 'purple'
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
      "  set pastetoggle=<C-Bslash>
@@ -2996,29 +2991,6 @@ function! s:vimim_set_shuangpin()
             break
         endif
     endfor
-""  if s:vimim_shuangpin == 'abc'
-""      let rules = s:vimim_shuangpin_abc(rules)
-""      let chinese = s:vimim_chinese('abc')
-""      let s:imode_pinyin = 1
-""      let shuangpin = ""
-""  elseif s:vimim_shuangpin == 'ms'
-""      let rules = s:vimim_shuangpin_ms(rules)
-""      let chinese = s:vimim_chinese('ms')
-""      let keycode = "[0-9a-z';]"
-""  elseif s:vimim_shuangpin == 'nature'
-""      let rules = s:vimim_shuangpin_nature(rules)
-""      let chinese = s:vimim_chinese('nature')
-""  elseif s:vimim_shuangpin == 'plusplus'
-""      let rules = s:vimim_shuangpin_plusplus(rules)
-""      let chinese = s:vimim_chinese('plusplus')
-""  elseif s:vimim_shuangpin == 'flypy'
-""      let rules = s:vimim_shuangpin_flypy(rules)
-""      let chinese = s:vimim_chinese('flypy')
-""  elseif s:vimim_shuangpin == 'purple'
-""      let rules = s:vimim_shuangpin_purple(rules)
-""      let chinese = s:vimim_chinese('purple')
-""      let keycode = "[0-9a-z';]"
-""  endif
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
     let s:imode_pinyin = 0
     if s:vimim_shuangpin == 'abc'
