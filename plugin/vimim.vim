@@ -248,13 +248,13 @@ function! s:vimim_initialize_local()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         set pastetoggle=<C-Bslash>
-        nmap a a<C-^><C-^>
-        :redir @a
+        nmap gi i<C-^><C-^>
+        :redir @i
         let g:vimim_plugin_folder = hjkl
         let g:vimim_tab_as_onekey = 1
         let g:vimim_debug = 1
         let g:vimim_cloud = 'google,sogou,baidu,qq'
-        call g:vimim_default_omni_color()
+        :call g:vimim_default_omni_color()
     endif
 endfunction
 
@@ -2469,22 +2469,11 @@ function! s:vimim_unicode_list(ddddd)
 endfunction
 
 function! s:vimim_get_unicode_ddddd(keyboard)
-    let keyboard = a:keyboard
-    if keyboard =~# '^u' && keyboard !~ '[^pqwertyuio]'
-        if len(keyboard) == 5 || len(keyboard) == 6
-            let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
-            if len(keyboard) == 4              " uoooo  => u9999
-                let keyboard = 'u' . keyboard  " uwwwwq => 22221
-            endif
-        else
-            return 0
-        endif
-    endif
     let ddddd = 0
-    if keyboard =~# '^u\x\{4}$'        "  u808f => 32911  u9f9f =>
-        let ddddd = str2nr(keyboard[1:],16)
-    elseif keyboard =~# '^\d\{5}$'     "  32911 => 32911
-        let ddddd = str2nr(keyboard, 10)
+    if a:keyboard =~# '^u\x\{4}$'        "  u9f9f => 40863
+        let ddddd = str2nr(a:keyboard[1:],16)
+    elseif a:keyboard =~# '^\d\{5}$'     "  32911 => 32911
+        let ddddd = str2nr(a:keyboard, 10)
     endif
     let max = &encoding=="utf-8" ? 19968+20902 : 0xffff
     if ddddd < 8080 || ddddd > max
@@ -2579,11 +2568,10 @@ function! s:vimim_get_cjk_head(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:imode_pinyin
+    elseif s:imode_pinyin " muuqwxeyqpjeqqq => m7712x3610j3111
         if  keyboard =~# '^\l' && len(keyboard)%5 < 1
         \&& keyboard[0:0] !~ '[iuv]'
         \&& keyboard[1:4] !~ '[^pqwertyuio]'
-            " muuqwxeyqpjeqqq => m7712x3610j3111
             let llll = keyboard[1:4]
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
             if !empty(dddd)
