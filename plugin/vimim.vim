@@ -245,15 +245,15 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
-let hjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
         set pastetoggle=<C-Bslash>
-        :redir @a
         nmap a a<C-^><C-^>
-        let g:vimim_tab_as_onekey = 1
+        :redir @a
         let g:vimim_plugin_folder = hjkl
-        let g:vimim_cloud = 'google,sogou,baidu,qq'
+        let g:vimim_tab_as_onekey = 1
         let g:vimim_debug = 1
+        let g:vimim_cloud = 'google,sogou,baidu,qq'
         call g:vimim_default_omni_color()
     endif
 endfunction
