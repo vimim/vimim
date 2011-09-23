@@ -2977,40 +2977,53 @@ let s:VimIM += [" ====  input shuangpin  ==== {{{"]
 
 function! s:vimim_set_shuangpin()
     if empty(s:vimim_shuangpin)
-    \|| !empty(s:shuangpin_table)
     \|| s:vimim_cloud =~ 'shuangpin'
+    \|| !empty(s:shuangpin_table)
         return
     endif
-    let s:imode_pinyin = 0
-    let rules = s:vimim_shuangpin_generic()
     let chinese = ""
-    let shuangpin = s:vimim_chinese('shuangpin')
-    let keycode = "[0-9a-z']"
+    let rules = s:vimim_shuangpin_generic()
+    let shuangpin_all = 'abc ms plusplus purple flypy nature'
+    for shuangpin in split(shuangpin_all)
+        let rules = eval("s:vimim_shuangpin_" . shuangpin . "(rules)")
+        let chinese = s:vimim_chinese(shuangpin)
+        break
+    endfor
+""  if s:vimim_shuangpin == 'abc'
+""      let rules = s:vimim_shuangpin_abc(rules)
+""      let chinese = s:vimim_chinese('abc')
+""      let s:imode_pinyin = 1
+""      let shuangpin = ""
+""  elseif s:vimim_shuangpin == 'ms'
+""      let rules = s:vimim_shuangpin_ms(rules)
+""      let chinese = s:vimim_chinese('ms')
+""      let keycode = "[0-9a-z';]"
+""  elseif s:vimim_shuangpin == 'nature'
+""      let rules = s:vimim_shuangpin_nature(rules)
+""      let chinese = s:vimim_chinese('nature')
+""  elseif s:vimim_shuangpin == 'plusplus'
+""      let rules = s:vimim_shuangpin_plusplus(rules)
+""      let chinese = s:vimim_chinese('plusplus')
+""  elseif s:vimim_shuangpin == 'flypy'
+""      let rules = s:vimim_shuangpin_flypy(rules)
+""      let chinese = s:vimim_chinese('flypy')
+""  elseif s:vimim_shuangpin == 'purple'
+""      let rules = s:vimim_shuangpin_purple(rules)
+""      let chinese = s:vimim_chinese('purple')
+""      let keycode = "[0-9a-z';]"
+""  endif
+    let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
+    let s:imode_pinyin = 0
     if s:vimim_shuangpin == 'abc'
-        let rules = s:vimim_shuangpin_abc(rules)
-        let chinese = s:vimim_chinese('abc')
         let s:imode_pinyin = 1
-        let shuangpin = ""
-    elseif s:vimim_shuangpin == 'ms'
-        let rules = s:vimim_shuangpin_ms(rules)
-        let chinese = s:vimim_chinese('ms')
-        let keycode = "[0-9a-z';]"
-    elseif s:vimim_shuangpin == 'nature'
-        let rules = s:vimim_shuangpin_nature(rules)
-        let chinese = s:vimim_chinese('nature')
-    elseif s:vimim_shuangpin == 'plusplus'
-        let rules = s:vimim_shuangpin_plusplus(rules)
-        let chinese = s:vimim_chinese('plusplus')
-    elseif s:vimim_shuangpin == 'flypy'
-        let rules = s:vimim_shuangpin_flypy(rules)
-        let chinese = s:vimim_chinese('flypy')
-    elseif s:vimim_shuangpin == 'purple'
-        let rules = s:vimim_shuangpin_purple(rules)
-        let chinese = s:vimim_chinese('purple')
+    else
+        let chinese .= s:vimim_chinese('shuangpin')
+    endif
+    let s:shuangpin_chinese.chinese = chinese
+    let keycode = "[0-9a-z']"
+    if s:vimim_shuangpin =~ 'ms\|purple'
         let keycode = "[0-9a-z';]"
     endif
-    let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
-    let s:shuangpin_chinese.chinese = chinese . shuangpin
     let s:shuangpin_chinese.keycode = keycode
 endfunction
 
