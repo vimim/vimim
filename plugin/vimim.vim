@@ -328,9 +328,8 @@ function! s:vimim_egg_vimim()
     elseif has("win64")     | let os = "Windows64"
     elseif has("unix")      | let os = "unix"
     elseif has("macunix")   | let os = "macunix" | endif
-    let os .= "_" . &term
     let computer = s:vimim_chinese('computer') . s:colon
-    call add(eggs, computer . os)
+    call add(eggs, computer . os . "_" . &term)
     let revision = s:vimim_chinese('revision') . s:colon
     let option = get(split(s:egg),1)
     let option = empty(option) ? "" : "vimim.vim=" . option
@@ -401,17 +400,12 @@ function! s:vimim_get_keyboard_but_quote(keyboard)
     if s:ui.has_dot || keyboard =~ '\d'
         return keyboard
     endif
-    if keyboard[:0] == "'"        " remove leading quote 'quote
-        let keyboard = keyboard[1:]
-    elseif keyboard[-2:] == "''"  " two tail quote sssss''
-        let head = keyboard[:-3]
-        if len(head) == 1
-            return head
-        endif
+    if keyboard =~ "'" . '\l\+'   " 'sssss
+        " [cloud] magic leading quote to control shoupin
         let keyboard = substitute(keyboard,"'","",'g')
         let keyboard = join(split(keyboard,'\zs'),"'")
         let keyboard = s:vimim_quote_by_quote(keyboard)
-    elseif keyboard[-1:] == "'"
+    elseif keyboard[-1:] == "'"   " sssss'
         " [cloud] magic trailing quote to control cloud
         let s:onekey = s:onekey==1 ? 2 : s:onekey
         let keyboard = s:vimim_last_quote(keyboard)
@@ -1894,8 +1888,8 @@ endfunction
 function! s:vimim_hjkl_partition(keyboard)
     let keyboard = a:keyboard
     if s:hjkl_m
-        if s:hjkl_m % 2     " sssss => sssss''
-            let keyboard .= "''"
+        if s:hjkl_m % 2     " sssss => 'sssss
+            let keyboard = "'" . keyboard
         endif
     elseif s:hjkl_h      " redefine match: jsjsxx => ['jsjsx','jsjs']
         let items = get(s:popupmenu_list,0)          " jsjs'xx
@@ -4471,8 +4465,8 @@ else
     endif
     " [the last resort] try both cjk and cloud
     if s:onekey && empty(results)
-        let keyboard = s:vimim_get_keyboard_but_quote(keyboard."''")
-        let results = s:vimim_cjk_match(keyboard)   " forced sssss''
+        let keyboard = s:vimim_get_keyboard_but_quote("'".keyboard)
+        let results = s:vimim_cjk_match(keyboard)   " forced shoupin
         if empty(results)                           " forced cloud
             let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
@@ -4497,8 +4491,12 @@ function! s:vimim_popupmenu_list(matched_list)
     let lines = a:matched_list
     if empty(lines) || type(lines) != type([])
         return []
+    else
+        let s:matched_list = lines
+        if keyboard =~ "'"
+            let s:menuless = 0
+        endif
     endif
-    let s:matched_list = lines
     " [skin] no color seems the best color
     let color = len(lines)<2 && empty(tail) ? 0 : 1
     let menu_in_one_row = s:vimim_skin(color)
