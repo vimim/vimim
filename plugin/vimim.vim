@@ -243,9 +243,14 @@ function! s:vimim_set_global_default(options, default)
 endfunction
 
 function! s:vimim_initialize_local()
+" let g:vimim_shuangpin = 'abc'
+" let g:vimim_shuangpin = 'ms'
+" let g:vimim_shuangpin = 'nature'
+" let g:vimim_shuangpin = 'plusplus'
+" let g:vimim_shuangpin = 'purple'
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if exists('hjkl') && isdirectory(hjkl)
-        set pastetoggle=<C-Bslash>
+     "  set pastetoggle=<C-Bslash>
         nmap gi i<C-^><C-^>
         :redir @i
         let g:vimim_plugin_folder = hjkl
@@ -1571,7 +1576,7 @@ function! s:vimim_statusline()
         let s:ui.statusline .= s:vimim_chinese('cloud')
     endif
     if !empty(s:vimim_shuangpin)
-        let s:ui.statusline .= s:space . s:shuangpin_chinese.chinese
+        let s:ui.statusline = s:shuangpin_chinese.chinese
     endif
     return s:vimim_get_chinese_im()
 endfunction
@@ -2985,9 +2990,11 @@ function! s:vimim_set_shuangpin()
     let rules = s:vimim_shuangpin_generic()
     let shuangpin_all = 'abc ms plusplus purple flypy nature'
     for shuangpin in split(shuangpin_all)
-        let rules = eval("s:vimim_shuangpin_" . shuangpin . "(rules)")
-        let chinese = s:vimim_chinese(shuangpin)
-        break
+        if s:vimim_shuangpin == shuangpin
+            let rules = eval("s:vimim_shuangpin_" . shuangpin . "(rules)")
+            let chinese = s:vimim_chinese(shuangpin)
+            break
+        endif
     endfor
 ""  if s:vimim_shuangpin == 'abc'
 ""      let rules = s:vimim_shuangpin_abc(rules)
@@ -3021,7 +3028,7 @@ function! s:vimim_set_shuangpin()
     endif
     let s:shuangpin_chinese.chinese = chinese
     let keycode = "[0-9a-z']"
-    if s:vimim_shuangpin =~ 'ms\|purple'
+    if s:vimim_shuangpin == 'ms' || s:vimim_shuangpin == 'purple'
         let keycode = "[0-9a-z';]"
     endif
     let s:shuangpin_chinese.keycode = keycode
