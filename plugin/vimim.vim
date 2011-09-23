@@ -1929,7 +1929,7 @@ function! s:vimim_get_head(keyboard, partition)
         return a:keyboard
     endif
     let head = a:keyboard[0 : a:partition-1]
-    if s:keyboard !~ ' '
+    if s:keyboard !~ '\S\s\S'
         let s:keyboard = head
         let tail = a:keyboard[a:partition : -1]
         if !empty(tail)
@@ -2377,7 +2377,7 @@ endfunction
 
 function! s:vimim_set_keyboard_list(column_start, keyboard)
     let s:start_column_before = a:column_start
-    if s:keyboard !~ ' '
+    if s:keyboard !~ '\S\s\S'
         let s:keyboard = a:keyboard
     endif
 endfunction
@@ -3630,7 +3630,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
         call s:debug('alert', 'get_cloud='.cloud.'=', v:exception)
     endtry
     if !empty(results)
-        if s:keyboard !~ ' '
+        if s:keyboard !~ '\S\s\S'
             let s:keyboard = keyboard
         endif
     endif
@@ -4617,7 +4617,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let results = s:vimim_get_from_datafile(head)
         endif
     endif
-    if s:keyboard !~ ' '
+    if s:keyboard !~ '\S\s\S'
         if empty(head)
             let s:keyboard = keyboard
         elseif len(head) < len(keyboard)
