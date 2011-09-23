@@ -246,11 +246,13 @@ endfunction
 function! s:vimim_initialize_local()
     let hjkl = '/home/xma/hjkl'
     if exists('hjkl') && isdirectory(hjkl)
-        :redir @I
-        let g:vimim_debug = 1
         let g:vimim_tab_as_onekey = 1
         let g:vimim_plugin_folder = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
+        let g:vimim_debug = 1
+        :redir @i
+        nmap gi i<C-^><C-^>
+        set pastetoggle=<C-Bslash>
         call g:vimim_default_omni_color()
     endif
 endfunction
@@ -4678,22 +4680,23 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
 function! s:vimim_imap_for_onekey()
-    inoremap<unique><expr> <Plug>VimimOneKey <SID>vimim_onekey(0)
-        imap<silent> <C-^> <Plug>VimimOneKey
-    xnoremap<silent> <C-^> y:call <SID>vimim_visual_ctrl6()<CR>
+    inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
+    imap<silent><C-^>     <Plug>VimimOneKey
+    xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     if s:vimim_tab_as_onekey
         inoremap<unique><expr> <Plug>VimimOneTab <SID>vimim_onekey(1)
-            imap<silent><Tab>  <Plug>VimimOneTab
+        imap<silent><Tab>      <Plug>VimimOneTab
     endif
 endfunction
 
 function! s:vimim_imap_for_chinesemode()
-    if s:vimim_plugin_folder !~ 'hjkl'
-               inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
-            imap<silent>  <C-Bslash>  <Plug>VimIM
-         noremap<silent>  <C-Bslash>     :call <SID>ChineseMode()<CR>
-        inoremap<silent><expr> <C-X><C-Bslash> <SID>VimIMSwitch()
+    if &pastetoggle == nr2char(28)
+        return " <C-Bslash> is already used
     endif
+    inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
+    imap<silent><C-Bslash> <Plug>VimIM
+    noremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
+    inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
 endfunction
 
 function! s:vimim_imap_ctrl_h_ctrl_space()
