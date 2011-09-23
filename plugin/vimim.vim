@@ -322,12 +322,12 @@ function! s:vimim_egg_vimim()
     let eggs = []
     let today = s:vimim_chinese('datetime') . s:colon . s:today
     call add(eggs, today)
-    let os = "os"
-        if has("win32unix") | let os = "cygwin"
-    elseif has("win32")     | let os = "Windows32"
-    elseif has("win64")     | let os = "Windows64"
-    elseif has("macunix")   | let os = "macunix"
-    elseif has("unix")      | let os = "unix" | endif
+    let os = 'os'
+        if has('win32unix') | let os = 'cygwin'
+    elseif has('win32')     | let os = 'Windows32'
+    elseif has('win64')     | let os = 'Windows64'
+    elseif has('macunix')   | let os = 'macunix'
+    elseif has('unix')      | let os = 'unix' | endif
     let computer = s:vimim_chinese('computer') . s:colon
     call add(eggs, computer . os . "_" . &term)
     let revision = s:vimim_chinese('revision') . s:colon
@@ -1573,7 +1573,8 @@ function! s:vimim_get_chinese_im()
     if s:chinese_punctuation > 0
         let punctuation = s:vimim_chinese('full_width')
     endif
-    let s:ui.statusline .= s:space . punctuation
+    let space = get(split(s:ui.statusline,'\zs'),-1)==s:space ? "" : s:space 
+    let s:ui.statusline .= space . punctuation
     let input_style  = s:vimim_chinese('chinese')
     let input_style .= s:vimim_chinese(s:vimim_chinese_input_mode)
     let input_style .= s:space . s:ui.statusline . s:space . "VimIM"
