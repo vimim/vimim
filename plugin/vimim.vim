@@ -786,38 +786,38 @@ function! s:vimim_imode_number(keyboard)
     return numbers
 endfunction
 
-function! s:vimim_get_imode_results(keyboard)
-    let keyboard = a:keyboard
-    let results = []
-    if keyboard ==# 'itoday' || keyboard ==# 'inow'
-        let results = [s:vimim_imode_today_now(keyboard)]
-    elseif keyboard =~ '\d'
-        let results = s:vimim_imode_number(keyboard)
-    elseif keyboard ==# 'ii' || keyboard ==# 'u'
-        let char_before = ""
-        let byte_before = getline(".")[col(".")]
-        if byte_before !~ '\s'
-            let start = col(".") -1 - s:multibyte
-            let char_before = getline(".")[start : start+s:multibyte-1]
-            if char_before =~ '\w'
-                let char_before = keyboard
-            endif
+function! s:vimim_get_char_before()
+    let char_before = ""
+    let byte_before = getline(".")[col(".")]
+    if byte_before !~ '\s'
+        let start = col(".") -1 - s:multibyte
+        let char_before = getline(".")[start : start+s:multibyte-1]
+        if char_before =~ '\w'
+            let char_before = byte_before
         endif
-        if keyboard ==# 'ii'      " 一ii  =>  一二
-            let results = s:vimim_imode_chinese(char_before)
-           if empty(results)
-               let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
-           endif
-        elseif keyboard ==# 'u'   " 马u   =>  马马
-            if empty(char_before) || char_before !~ '\W'
-                if !empty(s:cjk.filename) " 214 standard unicode index
-                    let results = s:vimim_cjk_match('u')
-                endif
-            else
-                let ddddd = char2nr(char_before)
-                let results = s:vimim_unicode_list(ddddd)
-            endif
+    endif
+    return char_before
+endfunction
+
+function! s:vimim_get_char_before_ii()
+    let char_before = s:vimim_get_char_before()
+    let results = s:vimim_imode_chinese(char_before)
+    if empty(results)  "  一ii => 一二
+        let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
+    endif
+    return results
+endfunction
+
+function! s:vimim_get_char_before_u()
+    let char_before = s:vimim_get_char_before()
+    let results = []   " 马u => 马马
+    if empty(char_before) || char_before !~ '\W'
+        if !empty(s:cjk.filename) " 214 standard unicode index
+            let results = s:vimim_cjk_match('u')
         endif
+    else
+        let ddddd = char2nr(char_before)
+        let results = s:vimim_unicode_list(ddddd)
     endif
     return results
 endfunction
@@ -4425,10 +4425,17 @@ else
         let ddddd = s:vimim_get_unicode_ddddd(keyboard)
         if ddddd
             let results = s:vimim_unicode_list(ddddd)
-        elseif s:imode_pinyin
-            " [imode] magic i: (1) English number (2) Chinese number
-            if keyboard =~# '^i' || keyboard ==# 'u' 
-                let results = s:vimim_get_imode_results(keyboard)
+        elseif s:imode_pinyin " [imode] number in chinese
+            if keyboard =~# '^i'
+                if keyboard ==# 'itoday' || keyboard ==# 'inow'
+                    let results = [s:vimim_imode_today_now(keyboard)]
+                elseif keyboard =~ '\d'
+                    let results = s:vimim_imode_number(keyboard)
+                elseif keyboard ==# 'ii'
+                    let results = s:vimim_get_char_before_ii()
+                endif
+            elseif keyboard ==# 'u'
+                let results = s:vimim_get_char_before_u()
             endif
         endif
         if empty(results)
