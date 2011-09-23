@@ -420,7 +420,7 @@ function! s:vimim_quote_by_quote(keyboard)
     let keyboards = split(a:keyboard,"'")
     let head = get(keyboards,0)
     let tail = join(keyboards[1:],"'")
-    let s:keyboard = head . "," . tail
+    let s:keyboard = head . " " . tail
     return head
 endfunction
 
@@ -747,11 +747,11 @@ function! s:vimim_imode_number(keyboard)
     let ii = keyboard[0:1] " sample: i88 ii88 isw8ql iisw8ql
     let keyboard = ii==#'ii' ? keyboard[2:] : keyboard[1:]
     let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
-    let keyboards = split(dddl, '\ze')
-    let number = ""
     if empty(s:quantifiers)
         call s:vimim_build_quantifier_hash()
     endif
+    let number = ""
+    let keyboards = split(dddl, '\ze')
     for char in keyboards
         if has_key(s:quantifiers, char)
             let quantifier_list = split(s:quantifiers[char], '\zs')
@@ -1024,7 +1024,7 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
     let key = ""
     if pumvisible()
         let key = '\<C-E>'
-        if empty(len(get(split(s:keyboard,","),0))%4)
+        if empty(len(get(split(s:keyboard),0))%4)
             let key = '\<C-Y>'
         endif
     endif
@@ -1928,11 +1928,11 @@ function! s:vimim_get_head(keyboard, partition)
         return a:keyboard
     endif
     let head = a:keyboard[0 : a:partition-1]
-    if s:keyboard !~ ','
+    if s:keyboard !~ ' '
         let s:keyboard = head
         let tail = a:keyboard[a:partition : -1]
         if !empty(tail)
-            let s:keyboard = head . "," . tail
+            let s:keyboard = head . " " . tail
         endif
     endif
     return head
@@ -2040,7 +2040,7 @@ endfunction
 
 function! g:vimim_onekey_dump()
     let saved_position = getpos(".")
-    let keyboard = get(split(s:keyboard,","),0)
+    let keyboard = get(split(s:keyboard),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
     if getline(".")[col(".")-2] =~ "'"
         let space = ""  " no need to format to print out cloud
@@ -2064,7 +2064,7 @@ function! s:vimim_onekey_evil_action()
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
     let two_before = current_line[col(".")-3]
-    if two_before =~ s:valid_key || !empty(s:ui.has_dot)
+    if two_before =~ s:valid_key || s:ui.has_dot
         return ""
     endif
     let onekey = ""
@@ -2376,7 +2376,7 @@ endfunction
 
 function! s:vimim_set_keyboard_list(column_start, keyboard)
     let s:start_column_before = a:column_start
-    if s:keyboard !~ ','
+    if s:keyboard !~ ' '
         let s:keyboard = a:keyboard
     endif
 endfunction
@@ -3630,7 +3630,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
         call s:debug('alert', 'get_cloud='.cloud.'=', v:exception)
     endtry
     if !empty(results)
-        if s:keyboard !~ ','
+        if s:keyboard !~ ' '
             let s:keyboard = keyboard
         endif
     endif
@@ -3806,8 +3806,8 @@ function! s:vimim_get_cloud_google(keyboard)
 endfunction
 
 function! s:vimim_cloud_pinyin(keyboard, matched_list)
-    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
     let matched_list = []
+    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
     for chinese in a:matched_list
         let len_chinese = len(split(chinese,'\zs'))
         let english = join(keyboards[len_chinese :], "")
@@ -4378,7 +4378,7 @@ else
     if empty(str2nr(keyboard))
         " input is alphabet only, not good for 23554022100080204420
     else
-        let keyboard = get(split(s:keyboard,","),0)
+        let keyboard = get(split(s:keyboard),0)
     endif
     if empty(keyboard) || keyboard !~ s:valid_key
         return []
@@ -4485,7 +4485,7 @@ endif
 endfunction
 
 function! s:vimim_popupmenu_list(matched_list)
-    let keyboards = split(s:keyboard,",")
+    let keyboards = split(s:keyboard)
     let keyboard = join(keyboards,"")
     let tail = get(keyboards,1)
     let lines = a:matched_list
@@ -4617,12 +4617,12 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let results = s:vimim_get_from_datafile(head)
         endif
     endif
-    if s:keyboard !~ ','
+    if s:keyboard !~ ' '
         if empty(head)
             let s:keyboard = keyboard
         elseif len(head) < len(keyboard)
             let tail = strpart(keyboard,len(head))
-            let s:keyboard = head . "," . tail
+            let s:keyboard = head . " " . tail
         endif
     endif
     return results
