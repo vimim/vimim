@@ -435,13 +435,13 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
-    elseif keyboard =~# "^\\l\\+''''"
+    elseif keyboard =~# "''"
+        let results = s:vimim_egg_vimimgame()
+    elseif keyboard =~# '^\l\+' . "''''"
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif keyboard =~ "^''''\\+$"  " black hole
-        let results = s:vimim_egg_vimimgame()
     elseif len(unname_register) > 8  " vimim_visual_ctrl6
-        if keyboard ==# "'''"
+        if keyboard ==# "''''"
             " [hjkl] display buffer inside the omni window
             let results = split(unname_register, '\n')
         elseif keyboard =~# 'u\d\d\d\d\d'
@@ -1766,7 +1766,7 @@ function! s:vimim_cache()
     if len(s:hjkl_n) > 0
         if s:show_me_not
             let results = s:vimim_onekey_menu_format()
-        elseif len(s:popupmenu_list) > 0
+        elseif len(s:popup_list) > 0
             let results = s:vimim_onekey_menu_filter()
         endif
         return results
@@ -1774,35 +1774,35 @@ function! s:vimim_cache()
     if s:show_me_not
         if s:hjkl_h
             let s:hjkl_h = 0
-            for line in s:matched_list
+            for line in s:match_list
                 let oneline = join(reverse(split(line,'\zs')),'')
                 call add(results, oneline)
             endfor
         elseif s:hjkl_l
             let s:hjkl_l = 0
-            let results = reverse(copy(s:matched_list))
+            let results = reverse(copy(s:match_list))
         endif
     endif
     return results
 endfunction
 
 function! s:vimim_pageup_pagedown()
-    let matched_list = s:matched_list
-    let length = len(matched_list)
+    let match_list = s:match_list
+    let length = len(match_list)
     let one_page = &pumheight<6 ? 5 : 10
     if length > one_page
         let page = s:pageup_pagedown * one_page
         let partition = page ? page : length+page
-        let B = matched_list[partition :]
-        let A = matched_list[: partition-1]
-        let matched_list = B + A
+        let B = match_list[partition :]
+        let A = match_list[: partition-1]
+        let match_list = B + A
     endif
-    return matched_list
+    return match_list
 endfunction
 
 function! s:vimim_onekey_menu_format()
     " use 1234567890/qwertyuiop to control popup textwidth
-    let lines = copy(s:matched_list)
+    let lines = copy(s:match_list)
     let filter = 'substitute(' .'v:val'. ",'^\\s\\+\\|\\s\\+$','','g')"
     call map(lines, filter)
     let lines = split(join(lines),'  ')
@@ -1838,7 +1838,7 @@ endfunction
 function! s:vimim_cjk_filter_list()
     let i = 0
     let foods = []
-    for items in s:popupmenu_list
+    for items in s:popup_list
         if !empty(s:vimim_cjk_digit_filter(items.word))
             call add(foods, i)
         endif
@@ -1849,7 +1849,7 @@ function! s:vimim_cjk_filter_list()
     endif
     let results = []
     for i in foods
-        let menu = s:popupmenu_list[i].word
+        let menu = s:popup_list[i].word
         call add(results, menu)
     endfor
     return results
@@ -1893,7 +1893,7 @@ function! s:vimim_hjkl_partition(keyboard)
             let keyboard = "'" . keyboard
         endif
     elseif s:hjkl_h      " redefine match: jsjsxx => ['jsjsx','jsjs']
-        let items = get(s:popupmenu_list,0)          " jsjs'xx
+        let items = get(s:popup_list,0)          " jsjs'xx
         let words = get(items, "word")               " jsjsxx
         let tail = len(substitute(words,'\L','','g'))    " xx
         let head = keyboard[: -tail-1]  " 'jsjsxx'[:-3]='jsjs'
@@ -2046,7 +2046,7 @@ function! g:vimim_onekey_dump()
     if getline(".")[col(".")-2] =~ "'"
         let space = ""  " no need to format to print out cloud
     endif
-    for items in s:popupmenu_list
+    for items in s:popup_list
         let line = printf('%s', items.word)
         if has_key(items, "abbr")
             let line = printf('%s', items.abbr)
@@ -2755,7 +2755,7 @@ function! <SID>vimim_visual_ctrl6()
         let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else
         " highlighted block => display the block in omni window
-        let key = "O^\<C-D>" . space . "'''" . onekey
+        let key = "O^\<C-D>" . space . "''''" . onekey
     endif
     sil!call feedkeys(key)
 endfunction
@@ -2958,8 +2958,8 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
             return [candidate]
         endif
         let oneline = get(lines, matched)
-        let matched_list = s:vimim_make_pairs(oneline)
-        call extend(results, matched_list)
+        let match_list = s:vimim_make_pairs(oneline)
+        call extend(results, match_list)
     endfor
     return results
 endfunction
@@ -3387,9 +3387,9 @@ function! s:vimim_get_from_database(keyboard)
                 if empty(oneline) || match(oneline,' ') < 0
                     continue
                 endif
-                let matched_list = s:vimim_make_pairs(oneline)
-                if !empty(matched_list)
-                    call extend(results, matched_list)
+                let match_list = s:vimim_make_pairs(oneline)
+                if !empty(match_list)
+                    call extend(results, match_list)
                 endif
                 if len(results) > 20*2
                     break
@@ -3692,17 +3692,17 @@ function! s:vimim_get_cloud_sogou(keyboard)
         " support gb and big5 in addition to utf8
         let output = s:vimim_i18n_read(output)
     endif
-    let matched_list = []
+    let match_list = []
     for item in split(output, '\t+')
         let item_list = split(item, s:colon)
         if len(item_list) > 1
             let chinese = get(item_list,0)
             let english = strpart(a:keyboard, 0, get(item_list,1))
             let new_item = english . " " . chinese
-            call add(matched_list, new_item)
+            call add(match_list, new_item)
         endif
     endfor
-    return matched_list
+    return match_list
 endfunction
 
 function! s:vimim_get_cloud_qq(keyboard)
@@ -3759,15 +3759,15 @@ function! s:vimim_get_cloud_qq(keyboard)
         let output = s:vimim_i18n_read(output)
     endif
     let key = 'rs'
-    let matched_list = []
+    let match_list = []
     let output_hash = eval(output)
     if type(output_hash) == type({}) && has_key(output_hash, key)
-        let matched_list = output_hash[key]
+        let match_list = output_hash[key]
     endif
     if vimim_cloud !~ 'wubi' && vimim_cloud !~ 'shuangpin'
-        let matched_list = s:vimim_cloud_pinyin(a:keyboard, matched_list)
+        let match_list = s:vimim_cloud_pinyin(a:keyboard, match_list)
     endif
-    return matched_list
+    return match_list
 endfunction
 
 function! s:vimim_get_cloud_google(keyboard)
@@ -3780,7 +3780,7 @@ function! s:vimim_get_cloud_google(keyboard)
     let input .= '&tlqt=1'
     let input .= '&text=' . a:keyboard
     let output = join(split(s:vimim_get_from_http(input,'google')))
-    let matched_list = []
+    let match_list = []
     if s:localization > 0
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
         if s:http_executable =~ 'Python2'
@@ -3793,32 +3793,32 @@ function! s:vimim_get_cloud_google(keyboard)
                     let utf8 .= s:vimim_unicode_to_utf8(xxxx)
                 endfor
                 let output = s:vimim_i18n_read(utf8)
-                call add(matched_list, output)
+                call add(match_list, output)
             endfor
-            return matched_list
+            return match_list
         endif
     endif
     let key = 'hws'
     let output_hash = get(eval(output),0)
     if type(output_hash) == type({}) && has_key(output_hash, key)
-        let matched_list = output_hash[key]
+        let match_list = output_hash[key]
     endif
-    return s:vimim_cloud_pinyin(a:keyboard, matched_list)
+    return s:vimim_cloud_pinyin(a:keyboard, match_list)
 endfunction
 
-function! s:vimim_cloud_pinyin(keyboard, matched_list)
-    let matched_list = []
+function! s:vimim_cloud_pinyin(keyboard, match_list)
+    let match_list = []
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
-    for chinese in a:matched_list
+    for chinese in a:match_list
         let len_chinese = len(split(chinese,'\zs'))
         let english = join(keyboards[len_chinese :], "")
         let yin_yang = chinese
         if !empty(english)
             let yin_yang .= english
         endif
-        call add(matched_list, yin_yang)
+        call add(match_list, yin_yang)
     endfor
-    return matched_list
+    return match_list
 endfunction
 
 function! s:vimim_get_cloud_baidu(keyboard)
@@ -3844,7 +3844,7 @@ function! s:vimim_get_cloud_baidu(keyboard)
     if type(output_list) != type([])
         return []
     endif
-    let matched_list = []
+    let match_list = []
     for item_list in output_list
         let chinese = get(item_list,0)
         if chinese =~# '\w'
@@ -3852,9 +3852,9 @@ function! s:vimim_get_cloud_baidu(keyboard)
         endif
         let english = strpart(a:keyboard, get(item_list,1))
         let yin_yang = chinese . english
-        call add(matched_list, yin_yang)
+        call add(match_list, yin_yang)
     endfor
-    return matched_list
+    return match_list
 endfunction
 
 function! s:vimim_get_cloud_all(keyboard)
@@ -4260,7 +4260,7 @@ function! s:vimim_reset_before_anything()
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
     let s:pattern_not_found = 0
-    let s:popupmenu_list = []
+    let s:popup_list = []
 endfunction
 
 function! s:vimim_reset_before_omni()
@@ -4275,7 +4275,7 @@ function! g:vimim_reset_after_insert()
     let s:hjkl_l = 0    " toggle label
     let s:hjkl_m = 0    " toggle cjjp/cjjp''
     let s:hjkl__ = 0    " toggle simplified/traditional
-    let s:matched_list = []
+    let s:match_list = []
     let s:pageup_pagedown = 0
     if s:pattern_not_found
         let s:pattern_not_found = 0
@@ -4485,15 +4485,15 @@ return []
 endif
 endfunction
 
-function! s:vimim_popupmenu_list(matched_list)
+function! s:vimim_popupmenu_list(match_list)
     let keyboards = split(s:keyboard)
     let keyboard = join(keyboards,"")
     let tail = get(keyboards,1)
-    let lines = a:matched_list
+    let lines = a:match_list
     if empty(lines) || type(lines) != type([])
         return []
     else
-        let s:matched_list = lines
+        let s:match_list = lines
         if keyboard =~ "'"
             let s:menuless = 0
         endif
@@ -4503,7 +4503,7 @@ function! s:vimim_popupmenu_list(matched_list)
     let menu_in_one_row = s:vimim_skin(color)
     let label = 1
     let one_list = []
-    let popupmenu_list = []
+    let popup_list = []
     for chinese in lines
         let complete_items = {}
         if s:hjkl__ && s:hjkl__%2 && !empty(s:cjk.filename)
@@ -4543,25 +4543,25 @@ function! s:vimim_popupmenu_list(matched_list)
         endif
         let complete_items["dup"] = 1
         let complete_items["word"] = empty(chinese) ? s:space : chinese
-        call add(popupmenu_list, complete_items)
+        call add(popup_list, complete_items)
     endfor
     if s:onekey
         let &titlestring = ""
         set completeopt=menuone  " for hjkl_n refresh
-        let s:popupmenu_list = popupmenu_list
+        let s:popup_list = popup_list
         if s:menuless && empty(s:show_me_not)
             let &pumheight = 1
             set completeopt=menu  " for direct insert
             let &titlestring = s:space.keyboard.s:space.join(one_list)
         endif
     elseif menu_in_one_row
-        return s:vimim_one_row(one_list[0:4], popupmenu_list[0:4])
+        return s:vimim_one_row(one_list[0:4], popup_list[0:4])
     endif
-    return popupmenu_list
+    return popup_list
 endfunction
 
-function! s:vimim_one_row(one_list, popupmenu_list)
-    let popupmenu_list = a:popupmenu_list
+function! s:vimim_one_row(one_list, popup_list)
+    let popup_list = a:popup_list
     let column = virtcol(".")
     if column > &columns
         let column = virtcol(".") % &columns
@@ -4572,16 +4572,16 @@ function! s:vimim_one_row(one_list, popupmenu_list)
     let row2 = join(a:one_list[1:])
     if spaces < len(row1) + 4
         if  len(row2) > spaces || len(row2) > minimum
-            return popupmenu_list
+            return popup_list
         endif
-        let popupmenu_list[0].abbr = get(a:one_list,0)
-        let popupmenu_list[1].abbr = row2
+        let popup_list[0].abbr = get(a:one_list,0)
+        let popup_list[1].abbr = row2
     else
-        let popupmenu_list[0].abbr = row1
-        let popupmenu_list[1].abbr = s:space
+        let popup_list[0].abbr = row1
+        let popup_list[1].abbr = s:space
     endif
     let &pumheight = 2
-    return popupmenu_list
+    return popup_list
 endfunction
 
 function! s:vimim_embedded_backend_engine(keyboard)
