@@ -40,13 +40,11 @@ let s:VimIM += [" ====  initialization   ==== {{{"]
 " =================================================
 
 function! s:vimim_bare_bones_vimrc()
-    " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
-    " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
     set cpoptions=Bce$ go=cirMehf noloadplugins shellslash
     set gcr=a:blinkon0 mouse=nicr shm=aoOstTAI ambiwidth=double
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
-    let $PATH.='C:/Python27;C:/Python31;C:/Windows/system32;'
+    let $PATH='C:/Python27;C:/Python31;C:/Windows/system32;'
 endfunction
 
 if exists("b:loaded_vimim") || v:version<700
@@ -54,14 +52,16 @@ if exists("b:loaded_vimim") || v:version<700
 elseif &compatible
     call s:vimim_bare_bones_vimrc()
 endif
-scriptencoding utf-8
 let b:loaded_vimim = 1
+scriptencoding utf-8
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
+" gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
+" gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-     "  :set pastetoggle=<C-Bslash>
+        :set pastetoggle=<C-Bslash>
         :nmap  gi i<C-^><C-^>
         :redir @i
         :call g:vimim_default_omni_color()
@@ -93,6 +93,12 @@ function! s:vimim_initialize_plugin()
 endfunction
 
 function! s:vimim_initialize_session()
+    let s:logo = " VimIM —— Vim 中文輸入法 "
+    let s:today = s:vimim_imode_today_now('itoday')
+    let s:shuangpin_all = 'abc ms plusplus purple flypy nature'
+    let s:shuangpin_table = {}
+    let s:shuangpin_chinese = {}
+    let s:quanpin_table = {}
     let s:pumheight = 10
     let s:pumheight_saved = &pumheight
     let s:smart_single_quotes = 1
@@ -101,23 +107,17 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
+    let s:valid_keyboard = ""
+    let s:valid_keys = s:az_list
+    let s:abcd = split("'abcdvfgsz",'\zs')
+    let s:qwer = split("pqwertyuio",'\zs')
+    let s:seamless_positions = []
+    let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let az_list = range(char2nr('a'), char2nr('z'))
     let AZ_list = range(char2nr('A'), char2nr('Z'))
     let s:az_list = map(az_list, "nr2char(".'v:val'.")")
     let s:AZ_list = map(AZ_list, "nr2char(".'v:val'.")")
     let s:Az_list = s:az_list + s:AZ_list
-    let s:valid_keyboard = ""
-    let s:valid_keys = s:az_list
-    let s:abcd = split("'abcdvfgsz",'\zs')
-    let s:qwer = split("pqwertyuio",'\zs')
-    let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
-    let s:seamless_positions = []
-    let s:shuangpin_chinese = {}
-    let s:shuangpin_table = {}
-    let s:quanpin_table = {}
-    let s:shuangpin_all = 'abc ms plusplus purple flypy nature'
-    let s:today = s:vimim_imode_today_now('itoday')
-    let s:logo = " VimIM —— Vim 中文輸入法 "
 endfunction
 
 function! s:vimim_initialize_ui()
