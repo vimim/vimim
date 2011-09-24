@@ -1,15 +1,15 @@
-﻿" ==========================================================
-let s:logo =         " VimIM —— Vim 中文輸入法 "
-" ==========================================================
-let s:egg  = ' easter egg: ' " vimim ctrl+6 ctrl+6
-let s:egg  = ' $Date$'
-let s:egg  = ' $Revision$'
-let s:url  = ' vimim@googlegroups.com'
-let s:url .= ' http://vim.sf.net/scripts/script.php?script_id=2506'
-let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
-let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.html'
-let s:url .= ' http://groups.google.com/group/vimim'
-let s:url .= ' http://code.google.com/p/vimim/source/list'
+﻿" =============================================================
+: let s:logo =          " VimIM —— Vim 中文輸入法 "
+" =============================================================
+: let s:egg  = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
+: let s:egg  = ' $Date$'
+: let s:egg  = ' $Revision$'
+: let s:url  = ' vimim@googlegroups.com '
+: let s:url .= ' http://vim.sf.net/scripts/script.php?script_id=2506  '
+: let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html '
+: let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.html '
+: let s:url .= ' http://groups.google.com/group/vimim '
+: let s:url .= ' http://code.google.com/p/vimim/source/list '
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
