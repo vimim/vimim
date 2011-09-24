@@ -38,26 +38,40 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
 " =================================================
-function! g:vimim_bare_bones_vimrc()
+
+function! s:vimim_bare_bones_vimrc()
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
-    set cpoptions=Bce$ fo=crqlt1n go=cirMehf shellslash
+    set cpoptions=Bce$ go=cirMehf noloadplugins shellslash
     set gcr=a:blinkon0 mouse=nicr shm=aoOstTAI ambiwidth=double
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
+    let $PATH.='C:/Python27;C:/Python31;C:/Windows/system32;'
 endfunction
 
 if exists("b:loaded_vimim") || v:version<700
     finish
 elseif &compatible
-    call g:vimim_bare_bones_vimrc()
+    call s:vimim_bare_bones_vimrc()
 endif
 scriptencoding utf-8
 let b:loaded_vimim = 1
 let s:plugin = expand("<sfile>:p:h")
-let s:logo = " VimIM —— Vim 中文輸入法 "
 
-function! s:vimim_backend_initialization()
+function! s:vimim_initialize_debug()
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+    if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
+     "  :set pastetoggle=<C-Bslash>
+        :nmap  gi i<C-^><C-^>
+        :redir @i
+        :call g:vimim_default_omni_color()
+        let g:vimim_plugin_folder = hjkl
+        let g:vimim_tab_as_onekey = 1
+        let g:vimim_cloud = 'google,sogou,baidu,qq'
+    endif
+endfunction
+
+function! s:vimim_initialize_plugin()
     sil!call s:vimim_initialize_encoding()
     sil!call s:vimim_scan_cjk_file()
     sil!call s:vimim_scan_english_datafile()
@@ -75,6 +89,7 @@ function! s:vimim_backend_initialization()
         sil!call s:vimim_scan_backend_cloud()
     endif
     sil!call s:vimim_set_keycode()
+    sil!call s:vimim_plug_and_play()
 endfunction
 
 function! s:vimim_initialize_session()
@@ -102,6 +117,7 @@ function! s:vimim_initialize_session()
     let s:quanpin_table = {}
     let s:shuangpin_all = 'abc ms plusplus purple flypy nature'
     let s:today = s:vimim_imode_today_now('itoday')
+    let s:logo = " VimIM —— Vim 中文輸入法 "
 endfunction
 
 function! s:vimim_initialize_ui()
@@ -201,13 +217,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
-    let s:frontends = []
-    let s:loops = {}
-    let s:numbers = {}
-    let s:quantifiers = {}
-    let s:onekey = 0
-    let s:im_toggle = 0
-    let s:chinese_mode = 'onekey'
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
     endif
@@ -217,6 +226,15 @@ function! s:vimim_initialize_global()
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
     endif
+    let s:chinese_mode = 'onekey'
+    let s:onekey = 0
+    let s:frontends = []
+    let s:loops = {}
+    let s:numbers = {}
+    let s:quantifiers = {}
+    let s:im_toggle = 0
+    let s:colon = "："
+    let s:space = "　"
 endfunction
 
 function! s:vimim_set_global_default(options, default)
@@ -244,19 +262,6 @@ function! s:vimim_set_global_default(options, default)
             exe 'let '. s_variable .'='. a:default
         endif
     endfor
-endfunction
-
-function! s:vimim_initialize_local()
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
-    if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-     "  :set pastetoggle=<C-Bslash>
-        :nmap  gi i<C-^><C-^>
-        :redir @i
-        :call g:vimim_default_omni_color()
-        let g:vimim_plugin_folder = hjkl
-        let g:vimim_tab_as_onekey = 1
-        let g:vimim_cloud = 'google,sogou,baidu,qq'
-    endif
 endfunction
 
 " ============================================= }}}
@@ -506,7 +511,6 @@ function! s:vimim_hjkl_rotation(lines)
 endfunction
 
 function! s:vimim_chinese_rotation() range abort
-"   sil!call s:vimim_backend_initialization()
     :%s#\s*\r\=$##
     let lines = getline(a:firstline, a:lastline)
     if !empty(lines)
@@ -550,7 +554,6 @@ function! g:vimim_search_next()
 endfunction
 
 function! s:vimim_search_chinese_by_english(keyboard)
-"   sil!call s:vimim_backend_initialization()
     let keyboard = tolower(a:keyboard)
     let results = []
     " 1/3 first try search from cloud/mycloud
@@ -1983,7 +1986,6 @@ function! <SID>vimim_onekey(tab)
     " (2) <OneKey> in menuless mode => start MidasTouch popup
     " (3) <OneKey> in omni window   => start menuless, if input
     " (4) <OneKey> in omni window   => print out, if hjkl
-"   sil!call s:vimim_backend_initialization()
     let s:chinese_mode = 'onekey'
     let onekey = '\<Left>\<Right>'
     let before = getline(".")[col(".")-2]
@@ -2233,7 +2235,6 @@ let s:VimIM += [" ====  mode: dynamic    ==== {{{"]
 " =================================================
 
 function! <SID>VimIMSwitch()
-"   sil!call s:vimim_backend_initialization()
     if len(s:ui.frontends) < 2
         return <SID>ChineseMode()
     endif
@@ -2294,8 +2295,6 @@ function! <SID>ChineseMode()
         if pumvisible()
             return ""
         endif
-"   else
-"       sil!call s:vimim_backend_initialization()
     endif
     if empty(s:ui.frontends)
         return ""
@@ -2513,8 +2512,6 @@ let s:VimIM += [" ====  input cjk        ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_cjk_file()
-    let s:space = "　"
-    let s:colon = "："
     let s:imode_pinyin = 0
     let s:cjk = {}
     let s:cjk.filename = ""
@@ -2690,7 +2687,6 @@ endfunction
 function! s:vimim_chinese_transfer() range abort
     " (1) "quick and dirty" way to transfer Chinese to Chinese
     " (2) 20% of the effort to solve 80% of the problem using one2one
-"   sil!call s:vimim_backend_initialization()
     if !empty(s:cjk.filename)
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
@@ -2714,7 +2710,6 @@ function! s:vimim_1to1(char)
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
-"   sil!call s:vimim_backend_initialization()
     let s:onekey = 1
     sil!call s:vimim_start()
     sil!call s:vimim_onekey_mapping()
@@ -3267,11 +3262,10 @@ function! s:vimim_scan_backend_embedded()
         endif
     endif
     " (2/3) scan bsddb database as edw: enterprise data warehouse
-    if has("python")  " bsddb is from Python 2 only
+    if has("python")      " bsddb is from Python 2 only
         let bsddb = "vimim.gbk.bsddb"   " wc=46,694,400
         let datafile = s:vimim_check_filereadable(bsddb)
         if !empty(datafile)
-            call s:vimim_initialize_bsddb(datafile)
             return s:vimim_set_datafile(im, datafile)
         endif
     endif
@@ -4632,6 +4626,10 @@ function! s:vimim_embedded_backend_engine(keyboard)
     elseif s:ui.root =~# "datafile"
         let datafile = s:backend[s:ui.root][s:ui.im].name
         if datafile =~ "bsddb"
+            if !exists("s:bsddb_4MB_in_memory_50MB_on_disk")
+                let s:bsddb_4MB_in_memory_50MB_on_disk = 1
+                sil!call s:vimim_initialize_bsddb(datafile)
+            endif
             let head = s:vimim_get_stone_from_bsddb(keyboard)
             let results = s:vimim_get_from_database(head)
         else
@@ -4709,12 +4707,11 @@ function! s:vimim_plug_and_play()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
 endfunction
 
-sil!call s:vimim_initialize_local()
+sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
+sil!call s:vimim_initialize_plugin()
 sil!call s:vimim_imap_for_onekey()
 sil!call s:vimim_imap_for_chinesemode()
 sil!call s:vimim_imap_ctrl_h_ctrl_space()
-sil!call s:vimim_plug_and_play()
-sil!call s:vimim_backend_initialization()
 " ======================================= }}}
