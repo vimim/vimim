@@ -45,7 +45,6 @@ function! g:vimim_bare_bones_vimrc()
     set gcr=a:blinkon0 mouse=nicr shm=aoOstTAI ambiwidth=double
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
-    nn  Q :q!<CR>
 endfunction
 
 if exists("b:loaded_vimim") || v:version<700
@@ -59,11 +58,6 @@ let s:plugin = expand("<sfile>:p:h")
 let s:logo = " VimIM —— Vim 中文輸入法 "
 
 function! s:vimim_backend_initialization()
-    if exists("s:vimim_backend_initialization")
-        return
-    else
-        let s:vimim_backend_initialization = 1
-    endif
     sil!call s:vimim_initialize_encoding()
     sil!call s:vimim_scan_cjk_file()
     sil!call s:vimim_scan_english_datafile()
@@ -97,8 +91,8 @@ function! s:vimim_initialize_session()
     let s:az_list = map(az_list, "nr2char(".'v:val'.")")
     let s:AZ_list = map(AZ_list, "nr2char(".'v:val'.")")
     let s:Az_list = s:az_list + s:AZ_list
+    let s:valid_keyboard = ""
     let s:valid_keys = s:az_list
-    let s:valid_key = 0
     let s:abcd = split("'abcdvfgsz",'\zs')
     let s:qwer = split("pqwertyuio",'\zs')
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
@@ -179,7 +173,7 @@ function! s:vimim_set_keycode()
         endif
         let i += 1
     endwhile
-    let s:valid_key  = copy(keycode)
+    let s:valid_keyboard  = copy(keycode)
     let s:valid_keys = split(keycode_string, '\zs')
 endfunction
 
@@ -255,7 +249,7 @@ endfunction
 function! s:vimim_initialize_local()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        :set pastetoggle=<C-Bslash>
+     "  :set pastetoggle=<C-Bslash>
         :nmap  gi i<C-^><C-^>
         :redir @i
         :call g:vimim_default_omni_color()
@@ -512,7 +506,7 @@ function! s:vimim_hjkl_rotation(lines)
 endfunction
 
 function! s:vimim_chinese_rotation() range abort
-    sil!call s:vimim_backend_initialization()
+"   sil!call s:vimim_backend_initialization()
     :%s#\s*\r\=$##
     let lines = getline(a:firstline, a:lastline)
     if !empty(lines)
@@ -556,7 +550,7 @@ function! g:vimim_search_next()
 endfunction
 
 function! s:vimim_search_chinese_by_english(keyboard)
-    sil!call s:vimim_backend_initialization()
+"   sil!call s:vimim_backend_initialization()
     let keyboard = tolower(a:keyboard)
     let results = []
     " 1/3 first try search from cloud/mycloud
@@ -1707,7 +1701,7 @@ function! <SID>vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
-    elseif one_before =~ s:valid_key
+    elseif one_before =~# s:valid_keyboard
         let s:smart_enter += 1
     else
         let s:smart_enter = 0
@@ -1989,7 +1983,7 @@ function! <SID>vimim_onekey(tab)
     " (2) <OneKey> in menuless mode => start MidasTouch popup
     " (3) <OneKey> in omni window   => start menuless, if input
     " (4) <OneKey> in omni window   => print out, if hjkl
-    sil!call s:vimim_backend_initialization()
+"   sil!call s:vimim_backend_initialization()
     let s:chinese_mode = 'onekey'
     let onekey = '\<Left>\<Right>'
     let before = getline(".")[col(".")-2]
@@ -2004,7 +1998,7 @@ function! <SID>vimim_onekey(tab)
             endif
         elseif s:menuless
             let s:menuless = 0
-            if before =~# s:valid_key
+            if before =~# s:valid_keyboard
                 let onekey = g:vimim()
             endif
         else
@@ -2036,7 +2030,8 @@ function! s:vimim_onekey_action(space)
         sil!exe 'sil!return "' . onekey . '"'
     endif
     let onekey = space
-    if getline(".")[col(".")-2] =~# s:valid_key
+    let one_before = getline(".")[col(".")-2]
+    if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
     elseif empty(s:show_me_not) && s:menuless
         let onekey = '\<C-N>'  " use <Space> to cycle
@@ -2070,7 +2065,7 @@ function! s:vimim_onekey_evil_action()
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
     let two_before = current_line[col(".")-3]
-    if two_before =~ s:valid_key || s:ui.has_dot
+    if two_before =~# s:valid_keyboard || s:ui.has_dot
         return ""
     endif
     let onekey = ""
@@ -2238,7 +2233,7 @@ let s:VimIM += [" ====  mode: dynamic    ==== {{{"]
 " =================================================
 
 function! <SID>VimIMSwitch()
-    sil!call s:vimim_backend_initialization()
+"   sil!call s:vimim_backend_initialization()
     if len(s:ui.frontends) < 2
         return <SID>ChineseMode()
     endif
@@ -2299,8 +2294,8 @@ function! <SID>ChineseMode()
         if pumvisible()
             return ""
         endif
-    else
-        sil!call s:vimim_backend_initialization()
+"   else
+"       sil!call s:vimim_backend_initialization()
     endif
     if empty(s:ui.frontends)
         return ""
@@ -2374,7 +2369,7 @@ let s:VimIM += [" ====  mode: static     ==== {{{"]
 function! s:vimim_static_action(space)
     let space = a:space
     let one_before = getline(".")[col(".")-2]
-    if one_before =~# s:valid_key
+    if one_before =~# s:valid_keyboard
         let space = g:vimim()
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -2412,7 +2407,7 @@ function! s:vimim_get_seamless(current_positions)
         return -1
     endif
     for char in split(snip, '\zs')
-        if char !~ s:valid_key
+        if char !~ s:valid_keyboard
             return -1
         endif
     endfor
@@ -2695,7 +2690,7 @@ endfunction
 function! s:vimim_chinese_transfer() range abort
     " (1) "quick and dirty" way to transfer Chinese to Chinese
     " (2) 20% of the effort to solve 80% of the problem using one2one
-    sil!call s:vimim_backend_initialization()
+"   sil!call s:vimim_backend_initialization()
     if !empty(s:cjk.filename)
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
@@ -2719,7 +2714,7 @@ function! s:vimim_1to1(char)
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
-    sil!call s:vimim_backend_initialization()
+"   sil!call s:vimim_backend_initialization()
     let s:onekey = 1
     sil!call s:vimim_start()
     sil!call s:vimim_onekey_mapping()
@@ -3627,7 +3622,7 @@ endfunction
 function! s:vimim_get_cloud(keyboard, cloud)
     let keyboard = a:keyboard
     let cloud = a:cloud
-    if keyboard !~ s:valid_key
+    if keyboard !~ s:valid_keyboard
     \|| empty(cloud)
     \|| match(s:vimim_cloud,cloud) < 0
         return []
@@ -4299,7 +4294,7 @@ function! g:vimim()
         let s:keyboard = ""
     endif
     let one_before = getline(".")[col(".")-2]
-    if one_before =~# s:valid_key
+    if one_before =~# s:valid_keyboard
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
     else
         let s:has_pumvisible = 0
@@ -4349,7 +4344,7 @@ if a:start
     let last_seen_backslash_column = copy(start_column)
     let all_digit = 1
     while start_column
-        if one_before =~# s:valid_key
+        if one_before =~# s:valid_keyboard
             let start_column -= 1
             if one_before !~# "[0-9']" && empty(s:ui.has_dot)
                 let last_seen_nonsense_column = start_column
@@ -4390,7 +4385,7 @@ else
     else
         let keyboard = get(split(s:keyboard),0)
     endif
-    if empty(keyboard) || keyboard !~ s:valid_key
+    if empty(keyboard) || keyboard !~ s:valid_keyboard
         return []
     else
         " [english] first check if it is english or not
@@ -4613,7 +4608,7 @@ endfunction
 function! s:vimim_embedded_backend_engine(keyboard)
     let keyboard = a:keyboard
     if empty(s:ui.im) || empty(s:ui.root) || empty(keyboard)
-    \|| keyboard !~# s:valid_key
+    \|| keyboard !~# s:valid_keyboard
     \|| s:ui.root =~ 'cloud'
     \|| s:show_me_not
         return []
@@ -4721,4 +4716,5 @@ sil!call s:vimim_imap_for_onekey()
 sil!call s:vimim_imap_for_chinesemode()
 sil!call s:vimim_imap_ctrl_h_ctrl_space()
 sil!call s:vimim_plug_and_play()
+sil!call s:vimim_backend_initialization()
 " ======================================= }}}
