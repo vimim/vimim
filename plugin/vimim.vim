@@ -330,11 +330,11 @@ function! s:vimim_egg_vimim()
     elseif has('unix')      | let os = 'unix' | endif
     let computer = s:vimim_chinese('computer') . s:colon
     call add(eggs, computer . os . "_" . &term)
-    let revision = s:vimim_chinese('revision') . s:colon
-    let option = get(split(s:egg),1)
-    let option = empty(option) ? "" : "vimim.vim=" . option
-    let vim = v:progname . "=" . v:version . s:space
-    call add(eggs, revision . vim . option)
+    let revision = get(split(s:egg),1)
+    let revision = empty(revision) ?  ""  : "vimim.vim=" . revision
+    let revision = v:progname ."=". v:version  . s:space . revision
+    let revision = s:vimim_chinese('revision') . s:colon . revision
+    call add(eggs, revision)
     let encoding = s:vimim_chinese('encoding') . s:colon
     call add(eggs, encoding . &encoding . s:space . &fileencodings)
     let evn = s:vimim_chinese('env') . s:colon . v:lc_time
@@ -383,11 +383,11 @@ function! s:vimim_egg_vimim()
         let network .= http . s:http_executable
         call add(eggs, network)
     endif
-    let setup = s:vimim_chinese('setup') . s:colon . "vimimrc "
+    let option = s:vimim_chinese('option') . s:colon . "vimimrc "
     if empty(s:vimimrc)
-        call add(eggs, setup . "all defaults")
+        call add(eggs, option . "all defaults")
     else
-        call add(eggs, setup)
+        call add(eggs, option)
         for rc in sort(s:vimimrc)
             call add(eggs, s:space . s:space . s:colon . rc[2:])
         endfor
@@ -1399,7 +1399,7 @@ function! s:vimim_dictionary_statusline()
     let s:status.computer   = "电脑 電腦"
     let s:status.database   = "词库 詞庫"
     let s:status.directory  = "目录 目錄"
-    let s:status.setup      = "设置 設置"
+    let s:status.option     = "选项 選項"
     let s:status.encoding   = "编码 編碼"
     let s:status.env        = "环境 環境"
     let s:status.revision   = "版本"
