@@ -91,18 +91,18 @@ vietnam    越南
 vietnamese 越南语 越南人
 virginia   弗吉尼亚
 
-color  颜色 色 彩色
+color  颜色 彩色 色
 red    红色 红 朱 赤
 black  黑色 黑
 yellow 黄色 黄
 green  绿色 绿
-blue   蓝色 蓝 兰色
-violet 紫色 紫罗兰色
-purple 紫色 紫 紫红色
+blue   蓝色 蓝
+violet 紫色
+purple 紫色 紫
 white  白色 白
 grey   灰色 灰
 pink   粉红 桃色
-golden 金色的 金黄色的
+golden 金色 金色的
 
 gb       国标 国标码
 big5     大五码
@@ -146,8 +146,7 @@ address 住址 地址 攀谈 致敬
 adjust 调整
 admire 欣赏 赞叹
 admission 许可
-admit 入场 承认
-adultery 奸
+admit 入场
 advance 先进 高级
 advantage 优势 优点 利益
 adventure 奇遇
@@ -161,6 +160,7 @@ affiliate 互联网营销模式 分销联盟
 afghanistan 阿富汗
 afraid 害怕 恐怕 担忧
 africa 非洲
+before 以前 以往 从前 曾经 早先 先头
 after 以后
 afternoon 下午
 again 又 再次 重新 再三
@@ -170,16 +170,14 @@ ago 以前
 agree 一致 同意 承认 赞成
 agreement 一致 合同
 agriculture 农 农业
-aid 支持 帮助
 aids 艾滋病
-aim 瞄准 指望 目的
 air 空气
 airplane 飞机
 airport 飞机场
 alabama 阿拉巴马
 alarm 警报
 alaska 阿拉斯加
-alcohol 酒 酒精
+alcohol 酒精 酒
 algebra 代数学
 algorithm 算法
 alike 相似
@@ -203,9 +201,17 @@ ammo 弹药 军火
 among 之中
 amount 总计
 amour 恋情 私通 偷情 性爱
+target 目标 靶子 靶标 对准 枪靶 意图
+quota 配额 限额 定额 指标
+goal 球门 终点 目的 目标
+sake 理由 缘故
+aim 瞄准
+purpose 目的 企图
+zen 禅
+candidate 候选人
 refresh 刷新 提神
 setup 设置 配置
-mobile 移动 流动 飘忽 手机
+mobile 移动 流动 手机
 cellphone 手机
 amplitude 幅度
 amuse 欢喜 高兴
@@ -218,6 +224,10 @@ anchor 锚
 ancient 古代
 and 和
 andorra 安道尔
+bill  比尔 帐单
+mike  麦克 麦克风 话筒
+david 大为 大卫
+angie 安琪
 angel 天使 安琪儿
 angle 角
 angry 生气 愤怒
@@ -225,10 +235,10 @@ animal 动物 禽兽 畜生
 announcement 宣布 宣告 布告 广播 通知
 another 另一个
 answer 回答 答案 答覆
-ant 蚁 蚂蚁
+ant 蚂蚁
 antonym 反义词
 anxious 忧虑 渴望
-any 任一 任何
+any 任何 任一
 anyhow 反正
 anyone 任何人
 apartment 公寓
@@ -288,7 +298,6 @@ assist 助手 补助
 assistant 助手
 associate 联想
 assume 假设 假定 承担 设想 臆断 臆测 意想
-astonishment 吃惊 惊愕
 astound 惊愕
 astray 走错
 at 在
@@ -411,7 +420,6 @@ bigger 越来越大
 biggest 最大的
 bikini 比基尼 三点式
 bind 装钉 捆
-bingo 中奖了 猜中了
 biography 传
 bird 鸟
 birth 诞生
@@ -623,7 +631,7 @@ chairman 主席
 chalk 粉笔
 chamber 会议室 房间
 champion 冠军 优胜者
-chance 机会 偶然 偶然性
+chance 机会 偶然
 chanel 香奈尔
 change 变化 改变
 channel 通道 海峡 航道
@@ -954,7 +962,6 @@ design 设计 图样 企图
 desire 愿望
 desk 书桌 写字台
 despair 绝望 断念
-destiny 目的
 destroy 破坏 灭亡
 detail 细节 详细 详尽
 detention 留校 拘留 扣押 监禁 留堂
@@ -1010,7 +1017,7 @@ divide 划分 隔开
 divorce 离婚 分离
 djibouti 吉布提
 dna 脱氧核糖核酸
-do 作 做 干
+do 作 做 干 搞
 dock 造船厂 船坞
 doctor 博士 医生
 dog 狗 犬
@@ -1151,7 +1158,6 @@ eve 夕 暮
 even 即使 甚至
 evening 晚上好 傍晚 黄昏
 event 事件 大事
-ever 曾经
 every 每个
 everybody 每个人
 everything 所有 全体 凡是
@@ -1160,7 +1166,7 @@ evidence 证据
 evil 恶 祸害 弊病 邪恶
 exact 精确 正确
 exactly 正好
-examine 测验 考试 调查
+examine 测验 调查
 example 例如 例子
 exceed 胜过 超过
 excel 胜过
@@ -1338,7 +1344,7 @@ front 前线 前面
 frost 霜
 fruit 水果 果实 禁果
 fry 油炸 油煎
-fuck 奸 肏 搞 姦 操 日 交配 交媾 嘿咻 ♀♂ 上入下肉
+fuck 肏 姦 奸 操 性交 交配 交媾
 fuel 燃料
 fun 开心 玩笑 兴趣
 function 函数 功能
@@ -1411,7 +1417,6 @@ glue 胶
 gmt 格林尼治时间
 gnaw 啃咬
 go 去
-goal 球门 终点 目的 目标
 gold 金 黄金
 golden 金色的 金黄色的
 goldengate 金门 金门桥
@@ -1443,10 +1448,8 @@ grateful 感谢
 gratitude 谢意
 grave 严肃 严重
 great 伟大 巨大
-greaterthan ＞ ≥
 greece 希腊
-greed 贪心
-greedy 贪
+greed 贪心 贪
 greendam 绿坝 绿霸
 grief 伤心 悲伤 不幸
 grind 碾 擂 磨
@@ -1454,7 +1457,7 @@ groan 呻吟
 grocer 杂货
 ground 地面 土地
 group 小组 集团
-groupsex 群交
+groupsex 群交 换妻
 grow 生长 长成
 growl 咆哮
 guarantee 保证 包管
@@ -1487,7 +1490,7 @@ handbag 手提包
 handkerchief 手帕 手绢
 handle 把手 办理
 handshake 招呼
-handsome 漂亮 俊俏
+handsome 俊俏
 hang 吊 悬
 happen 发生 碰巧
 happiness 幸福
@@ -1521,7 +1524,7 @@ headcut 理发 剪头发
 heal 医治 治疗
 health 健康 健全
 heap 堆积
-hear 听 听见 听闻
+hear 听见 听闻 听
 heart 心 心脏
 hearty 恳切 衷心
 heat 加热
@@ -1564,9 +1567,9 @@ hole 窟窿 孔穴 洞 穴
 holiday 节日 假日
 holistic 整体 全部
 holistic 整体 整体主义的
-hollow 凹 中空
+hollow 中空 凹
 hollywood 好莱坞
-holy 圣 神圣
+holy 神圣 圣
 homework 作业
 honest 诚实 老实 正直
 honey 蜜糖 蜂蜜 蜜蜂
@@ -1574,7 +1577,7 @@ honor 名誉
 hoop 滕圈 铁环
 hop 跳跃
 hope 希望 相信
-horizon 地平线 水平
+horizon 地平线
 horn 号角
 hornet 马蜂 胡蜂
 horrible 可怕 可恶
@@ -1689,7 +1692,6 @@ integrate 集成
 intelligence 智能
 intelligent 知识分子
 intend 打算 想要
-intent 意图 意思
 intercourse 性交
 interest 兴趣 利息
 interface 接口 界面
@@ -2145,7 +2147,7 @@ newyork 纽约
 newzealand 新西兰
 next 下次 其次
 nfc 近场通信 近距离无线通信
-nice 美好 漂亮 善良
+nice 美好 善良
 niece 外甥女 侄女
 niger 尼日尔
 nigeria 尼日利亚
@@ -2207,7 +2209,7 @@ often 经常 常常 时常 往往 每每 不时
 ohio 俄亥俄
 oil 油
 oklahoma 俄克拉何马
-old 年老 从前 老 旧
+old 年老 老 旧
 oldman 老翁
 olive 撖榄
 olympic 奥林匹克
@@ -2218,13 +2220,13 @@ ominous 不吉利
 omit 省略 遗漏 删去
 omni 全方位 万能补全 智能补全
 on 上面
-once 一旦 一次 从前 曾经
+once 一旦 从前
 online 在线
 only 只有 唯一
 ons 一夜情
-opaque    不透明
+opaque 不透明
 opec 欧佩克
-open 开 打开 开启 开着
+open 打开 开 开启
 opera 歌剧
 operate 操作 动作 开刀 手术
 operater 调度员
@@ -2362,6 +2364,7 @@ peru 秘鲁
 pet 宠物 爱畜
 petn 季戊四醇
 pfizer 辉瑞
+phone 电话
 phase 相位
 phd 博士 博士学位
 philippines 菲律宾
@@ -2477,7 +2480,6 @@ president 总裁 总统 主持 议长
 press 压 按
 pressure 压力 压强 应力
 pretend 借口 假装 妄想
-pretty 漂亮
 prevent 防止 阻止
 price 价钱
 priest 牧师 僧人
@@ -2533,7 +2535,6 @@ punctuation 标点
 puncture 准时 按时
 punish 处罚 惩
 pure 纯粹
-purpose 目的 企图
 purse 钱袋 荷包
 push 推
 pussy 屄 普世 小猫咪 女阴 阴户
@@ -2554,7 +2555,6 @@ quiet 温和 静 谧
 quite 完全
 quiver 摇动
 quiver 震 颤
-quota 行市
 quotation 引用 语录
 quote 单引号 引用 援引 摘引 断字符号
 rabbit 兔子
@@ -2724,7 +2724,6 @@ safe 安全 保险箱
 sage 圣人 先哲 贤能 鼠尾草 洋紫苏
 sail 航行 帆
 sailor 水手 海员
-sake 理由 目的 缘故
 salary 工资
 sale 出卖 销售
 salt 盐
@@ -2797,11 +2796,11 @@ serve 服务 合用 侍候
 server 服务器 伺服器
 service 服务 杀必死
 set 集合 集 放
-settle 搞妥 搞踮
+settle 搞踮 搞妥
 several 几个
 severe 严格 剧烈
 sew 缝
-sex 性 性欲 性别 交媾 性交 换妻 群交
+sex 性 ♀ ♂ 性别 性欲 嘿咻
 sexual 性欲
 sexy 性感的
 sf 旧金山
@@ -2996,7 +2995,7 @@ stare 疑视
 start 出发 开始 起动
 starve 饿死 挨饿
 stat 统计
-state 州 状态 情形
+state 状态 情形 州
 static 静态 靜態
 station 车站
 statistics 统计 统计学
@@ -3076,7 +3075,7 @@ support 支持 扶养 拥护 支撑
 suppose 假定 假设 猜想
 sure 确实 的确 当然
 surface 表面
-surprise 惊奇 意外 吃惊
+surprise 惊奇 惊异 惊讶 惊愕 吃惊
 surrender 投降
 surround 包围 围绕
 sushi 寿司
@@ -3093,7 +3092,7 @@ swift 迅速
 swim 游泳
 swine 猪猡 下流坯
 swineflu 猪流感
-swing 秋千 换妻 摆动 摇摆
+swing 秋千 摆动 摇摆
 swiss 瑞士
 swissarmy 瑞士军刀
 switch 开关
@@ -3131,7 +3130,6 @@ technology 技术
 telegraph 电报
 telephone 电话
 tell 告诉 嘱咐
-tellurium 碲
 temper 脾气
 temperature 温度
 temple 庙 庙寺
@@ -3168,7 +3166,7 @@ thesis 论文
 theta θ Θ
 they 他们 她们 它们
 thick 厚 密 浓
-thief 贼 盗贼
+thief 小偷 盗贼
 thin 瘦 薄
 thing 事情 东西
 think 考虑 以为 思 想
@@ -3468,7 +3466,7 @@ window 窗 窗户 窗口
 windows 微软视窗
 wine 葡萄酒
 wing 翅膀
-wink 眼色 眨眼
+wink 眨眼
 wipe 抹 擦
 wire 电线
 wisconsin 威斯康星
@@ -3486,10 +3484,10 @@ wood 木 柴
 wooden 木制
 wool 羊毛
 word 字 词
-work 劳动 工作
+work 工作 劳动
 workaround 歪招
 worker 工人 工作者
-world 世界 人间
+world 世界
 worldwar 世界大战
 worse 更坏 越来越坏
 worth 价值
@@ -3520,13 +3518,13 @@ yet 还 仍然
 yield 供给 产
 yoga 瑜珈
 yosemite 优胜美地 国家公园
-you 你 妳 您
+you 你
 yuga 瑜伽
 zebra 斑马
 zinc 锌
 zombie 僵尸 行尸走肉
 zone 区域 地带
 zoo 动物园
-zoology   动物学
+zoology 动物学
 
 
