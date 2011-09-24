@@ -1889,13 +1889,13 @@ endfunction
 function! s:vimim_hjkl_partition(keyboard)
     let keyboard = a:keyboard
     if s:hjkl_m
-        if s:hjkl_m % 2     " sssss => 'sssss
+        if s:hjkl_m % 2                                 " sssss => 'sssss
             let keyboard = "'" . keyboard
         endif
-    elseif s:hjkl_h      " redefine match: jsjsxx => ['jsjsx','jsjs']
-        let items = get(s:popup_list,0)              " jsjs'xx
-        let words = get(items, "word")               " jsjsxx
-        let tail = len(substitute(words,'\L','','g'))    " xx
+    elseif s:hjkl_h         " redefine match: jsjsxx => ['jsjsx','jsjs']
+        let items = get(s:popup_list,0)                 " jsjs'xx
+        let words = get(items, "word")                  " jsjsxx
+        let tail = len(substitute(words,'\L','','g'))       " xx
         let head = keyboard[: -tail-1]  " 'jsjsxx'[:-3]='jsjs'
         let candidates = s:vimim_more_pinyin_candidates(head)
         let head2  = get(candidates,0)
