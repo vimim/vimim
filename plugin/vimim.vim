@@ -1,15 +1,15 @@
-﻿" =============================================================
-: let s:logo =          " VimIM —— Vim 中文輸入法 "
-" =============================================================
-: let s:egg  = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
-: let s:egg  = ' $Date$'
-: let s:egg  = ' $Revision$'
-: let s:url  = ' vimim@googlegroups.com '
-: let s:url .= ' http://vim.sf.net/scripts/script.php?script_id=2506  '
-: let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html '
-: let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.html '
-: let s:url .= ' http://groups.google.com/group/vimim '
-: let s:url .= ' http://code.google.com/p/vimim/source/list '
+﻿" ===========================================================
+"                   VimIM —— Vim 中文輸入法
+" ===========================================================
+let s:egg  = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
+let s:egg  = ' $Date$'
+let s:egg  = ' $Revision$'
+let s:url  = ' vimim@googlegroups.com '
+let s:url .= ' http://vim.sf.net/scripts/script.php?script_id=2506'
+let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
+let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.html'
+let s:url .= ' http://groups.google.com/group/vimim'
+let s:url .= ' http://code.google.com/p/vimim/source/list'
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
@@ -56,7 +56,7 @@ endif
 scriptencoding utf-8
 let b:loaded_vimim = 1
 let s:plugin = expand("<sfile>:p:h")
-let g:gg=s:plugin
+let s:logo = " VimIM —— Vim 中文輸入法 "
 
 function! s:vimim_backend_initialization()
     if exists("s:vimim_backend_initialization")
@@ -2317,10 +2317,6 @@ function! <SID>vimim_punctuation_toggle()
     return s:vimim_punctuation_mapping()
 endfunction
 
-" ============================================= }}}
-let s:VimIM += [" ====  mode: static     ==== {{{"]
-" =================================================
-
 function! s:vimim_chinesemode_action()
     sil!call s:vimim_super_reset()
     if s:vimim_chinese_punctuation > -1
@@ -2370,6 +2366,10 @@ function! s:vimim_chinesemode_action()
     endif
     sil!exe 'sil!return "' . action . '"'
 endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  mode: static     ==== {{{"]
+" =================================================
 
 function! s:vimim_static_action(space)
     let space = a:space
