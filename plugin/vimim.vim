@@ -38,12 +38,25 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
 " =================================================
-if exists("b:loaded_vimim") || &cp || v:version<700
+function! g:vimim_bare_bones_vimrc()
+    " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
+    " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
+    set cpoptions=Bce$ fo=crqlt1n go=cirMehf shellslash
+    set gcr=a:blinkon0 mouse=nicr shm=aoOstTAI ambiwidth=double
+    set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
+    set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
+    nn  Q :q!<CR>
+endfunction
+
+if exists("b:loaded_vimim") || v:version<700
     finish
+elseif &compatible
+    call g:vimim_bare_bones_vimrc()
 endif
 scriptencoding utf-8
 let b:loaded_vimim = 1
 let s:plugin = expand("<sfile>:p:h")
+let g:gg=s:plugin
 
 function! s:vimim_backend_initialization()
     if exists("s:vimim_backend_initialization")
@@ -241,7 +254,7 @@ endfunction
 
 function! s:vimim_initialize_local()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
-    if exists('hjkl') && isdirectory(hjkl)
+    if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :set pastetoggle=<C-Bslash>
         :nmap  gi i<C-^><C-^>
         :redir @i
