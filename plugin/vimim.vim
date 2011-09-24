@@ -1451,7 +1451,7 @@ function! s:vimim_chinese(key)
     if has_key(s:status, chinese)
         let twins = split(s:status[chinese])
         let chinese = get(twins,0)
-        if len(twins) > 1 && !empty(s:vimim_plugin_folder)
+        if len(twins) > 1 && empty(s:vimim_plugin_folder)
             let chinese = get(twins,1)
         endif
     endif
