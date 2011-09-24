@@ -252,7 +252,6 @@ function! s:vimim_initialize_local()
         :call g:vimim_default_omni_color()
         let g:vimim_plugin_folder = hjkl
         let g:vimim_tab_as_onekey = 1
-        let g:vimim_debug = 1
         let g:vimim_cloud = 'google,sogou,baidu,qq'
     endif
 endfunction
@@ -1309,6 +1308,29 @@ except vim.error:
 EOF
 endfunction
 
+function! s:debug(...)
+" [server] sdebug(){ /bin/python ~/vim/vimfiles/plugin/sdebug.py ;}
+" [client] :call s:debug('info', 'foo/bar is', foobar, 'and', bar)
+if empty(s:vimim_debug) || empty(has('python'))
+    return
+endif
+if s:vimim_debug < 2
+    call s:netlog_python_init()
+    let s:vimim_debug += 1
+endif
+if s:vimim_debug < 2
+    return
+endif
+:sil!python << EOF
+try:
+    level = vim.eval("a:1")
+    if checkmask(level):
+        udpsend(vim.eval("join(a:000)"),"localhost",10007)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+endfunction
+
 function! s:netlog_python_init()
 :sil!python << EOF
 import vim, sys, socket
@@ -1360,29 +1382,6 @@ g_level = {'emerg':0,    #  system is unusable
            'info':6,     #  informational
            'debug':7 }   #  debug-level messages
 g_mask = log_upto('info')
-EOF
-endfunction
-
-function! s:debug(...)
-" [server] sdebug(){ /bin/python ~/vim/vimfiles/plugin/sdebug.py ;}
-" [client] :call s:debug('info', 'foo/bar is', foobar, 'and', bar)
-if s:vimim_debug < 1 || empty(has('python'))
-    return
-endif
-if s:vimim_debug < 2
-    call s:netlog_python_init()
-    let s:vimim_debug += 1
-endif
-if s:vimim_debug < 2
-    return
-endif
-:sil!python << EOF
-try:
-    level = vim.eval("a:1")
-    if checkmask(level):
-        udpsend(vim.eval("join(a:000)"),"localhost",10007)
-except vim.error:
-    print("vim error: %s" % vim.error)
 EOF
 endfunction
 
