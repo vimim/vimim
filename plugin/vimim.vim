@@ -74,7 +74,6 @@ endfunction
 function! s:vimim_initialize_session()
     let s:pumheight = 10
     let s:pumheight_saved = &pumheight
-    let s:imode_pinyin = 0
     let s:smart_single_quotes = 1
     let s:smart_double_quotes = 1
     let s:current_positions = [0,0,1,0]
@@ -96,8 +95,6 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     let s:shuangpin_all = 'abc ms plusplus purple flypy nature'
-    let s:space = "　"
-    let s:colon = "："
     let s:today = s:vimim_imode_today_now('itoday')
 endfunction
 
@@ -399,7 +396,7 @@ function! s:vimim_get_keyboard_but_quote(keyboard)
     if s:ui.has_dot || keyboard =~ '\d'
         return keyboard
     endif
-    if keyboard =~ "'" . '\l\+'   " 'sssss
+    if keyboard =~ "'" . '\l\l\+'   " 'sssss
         " [cloud] magic leading quote to control shoupin
         let keyboard = substitute(keyboard,"'","",'g')
         let keyboard = join(split(keyboard,'\zs'),"'")
@@ -2509,9 +2506,13 @@ let s:VimIM += [" ====  input cjk        ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_cjk_file()
+    let s:space = "　"
+    let s:colon = "："
+    let s:imode_pinyin = 0
     let s:cjk = {}
     let s:cjk.filename = ""
     let s:cjk.lines = []
+    let s:cjk.one = {}
     let cjk = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
     let datafile = s:vimim_check_filereadable(get(split(cjk,"/"),-1))
     if empty(datafile)
@@ -2521,6 +2522,7 @@ function! s:vimim_scan_cjk_file()
     if !empty(datafile)
         let s:cjk.lines = s:vimim_readfile(datafile)
         let s:cjk.filename = datafile
+        let s:imode_pinyin = 1
     endif
 endfunction
 
@@ -2631,7 +2633,7 @@ function! s:vimim_cjk_match(keyboard)
         if keyboard =~# '^u\+$'
             let grep = ' u\( \|$\)'  " 214 standard unicode index
         elseif len(keyboard) == 1
-            " cjk one-char-list by frequency y72/yue72 l72/le72
+            " cjk single-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
         elseif keyboard =~# '^\l'
             " cjk multiple-char-list without frequency: huan2hai2
@@ -4378,10 +4380,11 @@ else
     endif
     if empty(keyboard) || keyboard !~ s:valid_key
         return []
+    else
+        " [english] first check if it is english or not
+        let s:english.line = s:vimim_get_english(keyboard)
     endif
-    " [english] first check if it is english or not
-    let s:english.line = s:vimim_get_english(keyboard)
-    " [egg] " only flirt with hjkl in onekey
+    " [egg] flirt with hjkl with onekey onley
     if s:onekey
         let results = s:vimim_get_hjkl_game(keyboard)
         if !empty(results)
@@ -4395,7 +4398,9 @@ else
             let s:show_extra_menu = 1
             return s:vimim_popupmenu_list(results)
         endif
-    elseif s:onekey  " play with nothing but onekey
+    endif
+    " [onekey] play with nothing but onekey
+    if s:onekey
         let ddddd = s:vimim_get_unicode_ddddd(keyboard)
         if ddddd
             let results = s:vimim_unicode_list(ddddd)
@@ -4408,7 +4413,7 @@ else
                 elseif keyboard ==# 'ii'
                     let results = s:vimim_get_char_before_ii()
                 endif
-            elseif keyboard ==# 'u'
+            elseif keyboard ==# 'u'  " no cache as it is dynamic
                 let results = s:vimim_get_char_before_u()
             endif
         endif
@@ -4419,11 +4424,20 @@ else
             let keyboard = s:vimim_get_keyboard_but_quote(keyboard)
             " [cjk] The cjk database works like swiss-army knife.
             let head = s:vimim_get_cjk_head(keyboard)
-            let results = s:vimim_cjk_match(head)
+            if empty(head)
+                "  zero tolerance for zero
+            elseif has_key(s:cjk.one, head)
+                let results = s:cjk.one[head]
+            else
+                let results = s:vimim_cjk_match(head)
+            endif
         endif
-        if !empty(results)
-            return s:vimim_popupmenu_list(results)
-        endif
+    elseif len(keyboard) < 3 && has_key(s:cjk.one, keyboard)
+        " [cache] abcdefghijklmnopqrstuvwxyz
+        let results = s:cjk.one[keyboard]
+    endif
+    if !empty(results)
+        return s:vimim_popupmenu_list(results)
     endif
     " [shuangpin] support 6 major shuangpin
     if !empty(s:vimim_shuangpin) && empty(s:has_pumvisible)
@@ -4461,12 +4475,13 @@ else
     endif
     " [the last resort] try both cjk and cloud
     if s:onekey && empty(results)
-        let keyboard = s:vimim_get_keyboard_but_quote("'".keyboard)
-        let results = s:vimim_cjk_match(keyboard)   " forced shoupin
-        if empty(results)                           " forced cloud
-            let results = s:vimim_get_cloud(keyboard, s:cloud_default)
-        endif
-        if empty(results) && len(keyboard) == 1
+        if len(keyboard) > 1
+            let keyboard = s:vimim_get_keyboard_but_quote("'".keyboard)
+            let results = s:vimim_cjk_match(keyboard)   " forced shoupin
+            if empty(results)                           " forced cloud
+                let results = s:vimim_get_cloud(keyboard, s:cloud_default)
+            endif
+        else
             let i = keyboard=='i' ? "我" : s:space
             let results = [i] " u'v'i'have'a'dream
         endif
@@ -4483,6 +4498,7 @@ endfunction
 function! s:vimim_popupmenu_list(match_list)
     let keyboards = split(s:keyboard)
     let keyboard = join(keyboards,"")
+    let head = get(keyboards,0)
     let tail = get(keyboards,1)
     let lines = a:match_list
     if empty(lines) || type(lines) != type([])
@@ -4491,6 +4507,9 @@ function! s:vimim_popupmenu_list(match_list)
         let s:match_list = lines
         if keyboard =~ "'"
             let s:menuless = 0
+        endif
+        if len(head)==1 && head!='u' && !has_key(s:cjk.one,head)
+            let s:cjk.one[head] = lines
         endif
     endif
     " [skin] no color seems the best color
