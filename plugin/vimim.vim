@@ -40,8 +40,8 @@ let s:VimIM += [" ====  initialization   ==== {{{"]
 " =================================================
 
 function! s:vimim_bare_bones_vimrc()
-    set cpoptions=Bce$ go=cirMehf noloadplugins shellslash
-    set gcr=a:blinkon0 mouse=nicr shm=aoOstTAI ambiwidth=double
+    set cpoptions=Bce$ go=cirMehf shm=aoOstTAI noloadplugins
+    set gcr=a:blinkon0 mouse=nicr shellslash noswapfile viminfo=
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
     let $PATH='C:/Python27;C:/Python31;C:/Windows/system32;'
