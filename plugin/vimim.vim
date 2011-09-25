@@ -381,27 +381,23 @@ function! s:vimim_get_keyboard_but_quote(keyboard)
         return keyboard
     endif
     if keyboard =~ '^\l\l\+' . "''" . '$'   " sssss''
-        " [shoupin] double dot to control shoupin
+        " [shoupin] two trailing quote to control shoupin
         let keyboard = substitute(keyboard,"'","",'g')
-        let keyboard = join(split(keyboard,'\zs'),"'")
-        let keyboard = s:vimim_quote_by_quote(keyboard)
-    elseif keyboard[-1:] == "'"                "  sssss'
-        " [cloud] magic trailing quote to control cloud
+        let keyboard = join(split(keyboard,'\zs'), "'")
+    endif
+    if keyboard[-1:] == "'"                 " sssss'
+        " [cloud] one trailing quote to control cloud
         let s:onekey = s:onekey==1 ? 2 : s:onekey
         let keyboard = s:vimim_last_quote(keyboard)
     elseif keyboard =~ "'"
-        " [local] (1/2) wo'you'yi'ge'meng
-        let keyboard = s:vimim_quote_by_quote(keyboard)
+        " [quote] (1/2) quote_by_quote: wo'you'yi'ge'meng
+        let keyboards = split(a:keyboard,"'")
+        let head = get(keyboards,0)
+        let tail = join(keyboards[1:],"'")
+        let s:keyboard = head . " " . tail
+        return head
     endif
     return keyboard
-endfunction
-
-function! s:vimim_quote_by_quote(keyboard)
-    let keyboards = split(a:keyboard,"'")
-    let head = get(keyboards,0)
-    let tail = join(keyboards[1:],"'")
-    let s:keyboard = head . " " . tail
-    return head
 endfunction
 
 function! s:vimim_get_hjkl_game(keyboard)
@@ -1891,9 +1887,9 @@ function! s:vimim_hjkl_partition(keyboard)
         elseif !empty(candidates)
             let head = get(candidates,0)
         endif
-        let tail = strpart(keyboard, len(head))         " sxx
-        let keyboard = head . "'" . tail                " jsj'sxx
-        let keyboard = s:vimim_quote_by_quote(keyboard) " uwine
+        let tail = strpart(keyboard, len(head))
+        let s:keyboard = head . " " . tail       " jsj sxx
+        return head
     endif
     return keyboard
 endfunction
@@ -4418,7 +4414,7 @@ else
         if empty(results)
             " [character]  sssss'' => s's's's's
             let keyboard = s:vimim_hjkl_partition(keyboard)
-            " [quote] (2/2) wo'you'yi'ge'meng
+            " [quote] (2/2) quote_by_quote: wo'you'yi'ge'meng
             let keyboard = s:vimim_get_keyboard_but_quote(keyboard)
             " [cjk] The cjk database works like swiss-army knife.
             let head = s:vimim_get_cjk_head(keyboard)
@@ -4496,15 +4492,15 @@ endfunction
 
 function! s:vimim_popupmenu_list(match_list)
     let keyboards = split(s:keyboard)   " ['ma','li']
-    let keyboard = join(keyboards, "")  "   mali
-    let head = get(keyboards,0)         "  'ma'
-    let tail = get(keyboards,1)         "  'li'
+    let keyboard = join(keyboards, "")
+    let head = get(keyboards,0)
+    let tail = len(keyboards)<2 ? "" : get(keyboards,1)
     let lines = a:match_list
     if empty(lines) || type(lines) != type([])
         return []
     else
         let s:match_list = lines
-        if s:keyboard =~ " "
+        if keyboard =~ "'" || tail =~ '\d'
             let s:menuless = 0
         endif
         if len(head) == 1 && !has_key(s:cjk.one, head)
