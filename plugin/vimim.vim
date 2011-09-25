@@ -44,17 +44,17 @@ function! s:vimim_bare_bones_vimrc()
     set gcr=a:blinkon0 mouse=nicr shellslash noswapfile viminfo=
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
-    let $PATH='C:/Python27;C:/Python31;C:/Windows/system32;'
+    let $PATH='/Python27;/Python31;/Windows/system32;'
 endfunction
 
-if exists("b:loaded_vimim") || v:version<700
+if exists("b:vimim") || v:version < 700
     finish
 elseif &compatible
     call s:vimim_bare_bones_vimrc()
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
 endif
-let b:loaded_vimim = 1
+let b:vimim = 39340
 scriptencoding utf-8
 let s:plugin = expand("<sfile>:p:h")
 
