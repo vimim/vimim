@@ -364,7 +364,7 @@ function! s:vimim_egg_vimim()
         let ciku = database . s:vimim_chinese('english') . database
         call add(eggs, ciku . s:english.filename)
     endif
-    if !empty(s:cjk.filename)
+    if !empty(s:vimim_cjk())
         let ciku  = database
         if s:cjk.filename =~ "vimim.cjk.txt"
             let ciku .= s:vimim_chinese('4corner')
@@ -579,7 +579,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     endif
     " 2/3 search unicode or cjk /search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if empty(ddddd) && !empty(s:cjk.filename)
+    if empty(ddddd) && !empty(s:vimim_cjk())
         " /search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
         let keyboards = s:vimim_cjk_slash_search_block(keyboard)
         if len(keyboards)
@@ -814,7 +814,7 @@ function! s:vimim_get_same_char_before()
     let char_before = s:vimim_get_char_before()
     let results = []
     if empty(char_before) || char_before !~ '\W'
-        if !empty(s:cjk.filename) " 214 standard unicode index
+        if !empty(s:vimim_cjk()) " 214 standard unicode index
             let results = s:vimim_cjk_match('u')
         endif
     else
@@ -1785,7 +1785,7 @@ function! s:vimim_cache()
     if len(s:hjkl_n)
         if s:show_me_not
             let results = s:vimim_onekey_menu_format()
-        elseif len(s:popup_list)
+        elseif len(s:popup_list) && !empty(s:vimim_cjk())
             let results = s:vimim_onekey_menu_filter()
         endif
         return results
@@ -2164,7 +2164,7 @@ endfunction
 
 function! s:vimim_onekey_mapping()
     for _ in s:qwer
-        if empty(s:cjk.filename)
+        if empty(s:vimim_cjk())
             exe 'inoremap<expr> '._.' <SID>vimim_qwer_stop_map("'._.'")'
         else
             exe 'inoremap<expr> '._.' <SID>vimim_qwer_hjkl_map("'._.'")'
@@ -2179,7 +2179,7 @@ function! s:vimim_onekey_mapping()
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
     endfor
     let onekey_punctuation = "/?;'<>*"
-    if !empty(s:cjk.filename)
+    if !empty(s:vimim_cjk())
         let onekey_punctuation .= ":"
     endif
     for _ in split(onekey_punctuation, '\zs')
@@ -2502,13 +2502,13 @@ function! s:vimim_cjk_extra_text(chinese)
     let ddddd = char2nr(a:chinese)
     let xxxx  = printf('u%04x',ddddd)
     let unicode = ddddd . s:space . xxxx
-    if !empty(s:cjk.filename)
+    if !empty(s:vimim_cjk())
         let grep = "^" . a:chinese
         let line = match(s:cjk.lines, grep, 0)
         if line < 0
             return unicode
         endif
-        let values  = split(get(s:cjk.lines,line))
+        let values  = split(get(s:cjk.lines, line))
         let dddd    = s:cjk.filename=~"cjkv" ? 2 : 1
         let digit   = get(values, dddd)
         let pinyin  = get(values,3) . " " . join(values[4:-2])
@@ -2551,15 +2551,23 @@ function! s:vimim_scan_cjk_file()
         let datafile = s:vimim_check_filereadable(cjk)
     endif
     if !empty(datafile)
-        let s:cjk.lines = s:vimim_readfile(datafile)
         let s:cjk.filename = datafile
         let s:imode_pinyin = 1
     endif
 endfunction
 
+function! s:vimim_cjk()
+    if empty(s:cjk.filename)
+        return 0
+    elseif empty(s:cjk.lines)
+        let s:cjk.lines = s:vimim_readfile(s:cjk.filename)
+    endif
+    return 1
+endfunction
+
 function! s:vimim_get_cjk_head(keyboard)
     let keyboard = a:keyboard
-    if empty(s:cjk.filename) || !empty(s:english.line) || keyboard=~"'"
+    if empty(s:vimim_cjk()) || !empty(s:english.line) || keyboard=~"'"
         return 0
     endif
     if keyboard =~# '^i' " 4corner_shortcut: iuuqwuqew => 77127132
@@ -2624,7 +2632,7 @@ endfunction
 
 function! s:vimim_cjk_match(keyboard)
     let keyboard = a:keyboard
-    if empty(keyboard) || empty(s:cjk.filename)
+    if empty(keyboard) || empty(s:vimim_cjk())
         return []
     endif
     let grep_frequency = '.*' . '\s\d\+$'
@@ -2693,10 +2701,6 @@ function! s:vimim_cjk_match(keyboard)
         let results = sort(results, "s:vimim_sort_on_last")
         let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
-        if keyboard =~# '^uu\+$'    " cycle 214 unicode: u uu uuu
-            let next = (len(keyboard)-1)*20
-            let results = results[next :] + results[: next-1]
-        endif
     endif
     return results
 endfunction
@@ -2715,7 +2719,7 @@ endfunction
 function! s:vimim_chinese_transfer() range abort
     " (1) "quick and dirty" way to transfer Chinese to Chinese
     " (2) 20% of the effort to solve 80% of the problem using one2one
-    if !empty(s:cjk.filename)
+    if !empty(s:vimim_cjk())
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
 endfunction
@@ -2764,7 +2768,7 @@ function! <SID>vimim_visual_ctrl6()
                 let line = get(results,0)
                 let key = "gvr" . line . "ga"
             endif
-            if !empty(s:cjk.filename)
+            if !empty(s:vimim_cjk())
                 let index = match(s:cjk.lines, "^".line)
                 let line = get(s:cjk.lines, index)
                 let &titlestring = s:space . line
@@ -3470,10 +3474,10 @@ function! s:vimim_more_pinyin_directory(keyboard, dir)
     let results = []
     for candidate in candidates
         let filename = a:dir . candidate
-        let matches = s:vimim_readfile(filename)
-        if !empty(matches)
-            call map(matches, 'candidate ." ". v:val')
-            call extend(results, matches)
+        let lines = s:vimim_readfile(filename)
+        if !empty(lines)
+            call map(lines, 'candidate ." ". v:val')
+            call extend(results, lines)
         endif
     endfor
     return results
@@ -4452,7 +4456,7 @@ else
                 let results = s:vimim_cjk_match(head)
             endif
         endif
-    elseif len(keyboard) < 3 && has_key(s:cjk.one, keyboard)
+    elseif len(keyboard) < 2 && has_key(s:cjk.one, keyboard)
         " [cache] abcdefghijklmnopqrstuvwxyz
         let results = s:cjk.one[keyboard]
     endif
@@ -4540,7 +4544,7 @@ function! s:vimim_popupmenu_list(match_list)
     let popup_list = []
     for chinese in lines
         let complete_items = {}
-        if s:hjkl__ && s:hjkl__%2 && !empty(s:cjk.filename)
+        if s:hjkl__ && s:hjkl__%2 && !empty(s:vimim_cjk())
             let simplified_traditional = ""
             for char in split(chinese, '\zs')
                 let simplified_traditional .= s:vimim_1to1(char)
