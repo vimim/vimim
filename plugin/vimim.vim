@@ -72,7 +72,7 @@ function! s:vimim_initialize_debug()
 endfunction
 
 
-function! s:vimim_initialize_session()
+function! s:vimim_start_session()
     let s:logo = " VimIM —— Vim 中文輸入法 "
     let s:today = s:vimim_imode_today_now('itoday')
     let s:shuangpin_all = 'abc ms plusplus purple flypy nature'
@@ -98,9 +98,6 @@ function! s:vimim_initialize_session()
     let s:Az_list = s:az_list + s:AZ_list
     let s:valid_keys = s:az_list
     let s:valid_keyboard = ""
-endfunction
-
-function! s:vimim_initialize_ui()
     let s:ui = {}
     let s:ui.im = ''
     let s:ui.root = ''
@@ -210,10 +207,6 @@ function! s:vimim_initialize_global()
     let s:onekey = 0
     let s:im_toggle = 0
     let s:frontends = []
-    let s:loops = {}
-    let s:quantifiers = {}
-    let s:colon = "："
-    let s:space = "　"
 endfunction
 
 function! s:vimim_set_global_default(options, default)
@@ -614,6 +607,7 @@ let s:VimIM += [" ====  chinese imode    ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_numbers()
+    let s:loops = {}
     let s:numbers = {}
     let s:numbers.1 = "一壹⑴①甲"
     let s:numbers.2 = "二贰⑵②乙"
@@ -625,9 +619,6 @@ function! s:vimim_dictionary_numbers()
     let s:numbers.8 = "八捌⑻⑧辛"
     let s:numbers.9 = "九玖⑼⑨壬"
     let s:numbers.0 = "〇零⑽⑩癸"
-endfunction
-
-function! s:vimim_build_quantifier_hash()
     let s:quantifiers = copy(s:numbers)
     let s:quantifiers.b = "百佰步把包杯本笔部班"
     let s:quantifiers.c = "次餐场串处床"
@@ -738,9 +729,6 @@ function! s:vimim_imode_number(keyboard)
     let ii = keyboard[0:1] " sample: i88 ii88 isw8ql iisw8ql
     let keyboard = ii==#'ii' ? keyboard[2:] : keyboard[1:]
     let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
-    if empty(s:quantifiers)
-        call s:vimim_build_quantifier_hash()
-    endif
     let number = ""
     let keyboards = split(dddl, '\ze')
     for char in keyboards
@@ -818,17 +806,19 @@ let s:VimIM += [" ====  punctuation      ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_punctuations()
+    let s:space = "　"
+    let s:colon = "："
     let s:punctuations = {}
     let s:punctuations['@'] = s:space
     let s:punctuations[':'] = s:colon
+    let s:punctuations['('] = "（"
+    let s:punctuations[')'] = "）"
     let s:punctuations['['] = "【"
     let s:punctuations[']'] = "】"
     let s:punctuations['{'] = "〖"
     let s:punctuations['}'] = "〗"
     let s:punctuations['<'] = "《"
     let s:punctuations['>'] = "》"
-    let s:punctuations['('] = "（"
-    let s:punctuations[')'] = "）"
     let s:punctuations['#'] = "＃"
     let s:punctuations['&'] = "＆"
     let s:punctuations['%'] = "％"
@@ -1032,7 +1022,7 @@ function! g:vimim_wubi_ctrl_e_ctrl_y()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_plugin_conflict_on()
+function! s:vimim_set_plugin_conflict()
     if !exists('s:acp_sid')
         let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
         if !empty(s:acp_sid)
@@ -1050,7 +1040,7 @@ function! s:vimim_plugin_conflict_on()
     endif
 endfunction
 
-function! s:vimim_plugin_conflict_off()
+function! s:vimim_restore_plugin_conflict()
     if !empty(s:acp_sid)
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
@@ -1511,7 +1501,7 @@ function! IMName()
         if pumvisible()
             return s:vimim_statusline()
         endif
-    elseif !empty(&omnifunc) && &omnifunc ==# 'VimIM'
+    elseif &omnifunc ==# 'VimIM'
         return s:space . s:vimim_statusline()
     endif
     return ""
@@ -2048,8 +2038,6 @@ function! s:vimim_onekey_evil_action()
         let onekey = "''''''" "  <==  , , comma comma for game
     elseif two_before == nr2char(46) && one_before == nr2char(46)
         let onekey = "'''''"  "  <==  . . dot dot for cjk
-    elseif two_before == nr2char(46) && one_before == nr2char(44)
-        let onekey = "'''"    "  <==  . , dot comma for number
     endif
     if !empty(onekey) " [game] comma/dot => quotes => popup menu
         return "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
@@ -2306,7 +2294,7 @@ function! <SID>ChineseMode()
     elseif empty(s:frontends)
         let s:frontends = get(s:ui.frontends, 0)
     endif
-    let switch = !empty(&omnifunc) && &omnifunc==#'VimIM' ? 0 : 1
+    let switch = &omnifunc ==# 'VimIM' ? 0 : 1
     return s:vimim_chinese_mode(switch)
 endfunction
 
@@ -2319,7 +2307,7 @@ endfunction
 function! s:vimim_chinesemode_action()
     sil!call s:vimim_super_reset()
     if s:vimim_chinese_punctuation > -1
-        inoremap <expr> <C-^> <SID>vimim_punctuation_toggle()
+        inoremap<expr><C-^> <SID>vimim_punctuation_toggle()
         call s:vimim_punctuation_mapping()
     endif
     sil!call s:vimim_start()
@@ -2741,7 +2729,6 @@ function! <SID>vimim_visual_ctrl6()
             let key = ddddd=~'\d\d\d\d\d' ? uddddd : dddd
         else
             " highlight one chinese => get antonym or number loop
-            sil!call s:vimim_restore_vim()
             let results = s:vimim_imode_chinese(line)
             if !empty(results)
                 let line = get(results,0)
@@ -4204,7 +4191,7 @@ endfunction
 let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
-function! s:vimim_initialize_i_setting()
+function! s:vimim_save_vimrc()
     let s:cpo         = &cpo
     let s:omnifunc    = &omnifunc
     let s:complete    = &complete
@@ -4215,7 +4202,7 @@ function! s:vimim_initialize_i_setting()
     let s:lazyredraw  = &lazyredraw
 endfunction
 
-function! s:vimim_set_vim()
+function! s:vimim_set_vimrc()
     set title
     set imdisable
     set noshowmatch
@@ -4227,7 +4214,7 @@ function! s:vimim_set_vim()
     highlight! link Cursor CursorIM
 endfunction
 
-function! s:vimim_restore_vim()
+function! s:vimim_restore_vimrc()
     let &cpo         = s:cpo
     let &omnifunc    = s:omnifunc
     let &complete    = s:complete
@@ -4241,11 +4228,11 @@ function! s:vimim_restore_vim()
 endfunction
 
 function! s:vimim_start()
-    sil!call s:vimim_set_vim()
+    sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_set_special_property()
-    sil!call s:vimim_plugin_conflict_on()
+    sil!call s:vimim_set_plugin_conflict()
     sil!call s:vimim_map_omni_page_label()
     inoremap <expr> <BS>     <SID>vimim_backspace()
     inoremap <expr> <Bslash> <SID>vimim_backslash()
@@ -4255,12 +4242,10 @@ function! s:vimim_start()
 endfunction
 
 function! s:vimim_stop()
-    sil!call s:vimim_restore_vim()
+    sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_imap_off()
-    sil!call s:vimim_plugin_conflict_off()
-    sil!call s:vimim_imap_for_chinesemode()
-    sil!call s:vimim_imap_for_onekey()
+    sil!call s:vimim_restore_imap()
+    sil!call s:vimim_restore_plugin_conflict()
 endfunction
 
 function! s:vimim_super_reset()
@@ -4319,7 +4304,8 @@ function! g:vimim_menu_select()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_imap_off()
+function! s:vimim_restore_imap()
+    imap<silent><C-^> <Plug>VimimOneKey
     let keys = range(0,9) + s:valid_keys
     if s:chinese_mode !~ 'dynamic'
     \&& s:vimim_chinese_punctuation !~ 'latex'
@@ -4676,13 +4662,12 @@ function! s:vimim_imap_for_onekey()
 endfunction
 
 function! s:vimim_imap_for_chinesemode()
-    if &pastetoggle == nr2char(28)
-        return
+    if &pastetoggle != nr2char(28)
+        inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
+        imap<silent><C-Bslash> <Plug>VimIM
+        noremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
+        inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
     endif
-    inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
-    imap<silent><C-Bslash> <Plug>VimIM
-    noremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
-    inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
 endfunction
 
 function! s:vimim_imap_ctrl_h_ctrl_space()
@@ -4724,16 +4709,15 @@ sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
 sil!call s:vimim_initialize_encoding()
-sil!call s:vimim_scan_cjk_file()
-sil!call s:vimim_scan_english_datafile()
-sil!call s:vimim_super_reset()
-sil!call s:vimim_initialize_session()
-sil!call s:vimim_initialize_ui()
-sil!call s:vimim_initialize_i_setting()
 sil!call s:vimim_dictionary_statusline()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
+sil!call s:vimim_scan_cjk_file()
+sil!call s:vimim_scan_english_datafile()
+sil!call s:vimim_super_reset()
+sil!call s:vimim_start_session()
+sil!call s:vimim_save_vimrc()
 sil!call s:vimim_scan_backend_mycloud()
 sil!call s:vimim_scan_backend_embedded()
 sil!call s:vimim_scan_backend_cloud()
