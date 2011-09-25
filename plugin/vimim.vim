@@ -951,6 +951,11 @@ function! <SID>vimim_onekey_map(key)
         endif
     elseif hjkl ==# ':'
         let s:hjkl__ += 1
+    elseif hjkl ==# '*'
+        if &pumheight
+            let s:popup_list = s:popup_list[:&pumheight-1]
+        endif
+        let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif hjkl == ';'
         let hjkl = '\<C-Y>\<C-R>=g:vimim_copy_to_clipboard()\<CR>'
     elseif hjkl =~ "[<>]"
@@ -2094,14 +2099,14 @@ function! g:vimim_onekey_dump()
     let keyboard = get(split(s:keyboard),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
     if getline(".")[col(".")-2] =~ "'"
-        let space = ""  " no need to format to print out cloud
+        let space = ""  " no need to format if cloud
     endif
     for items in s:popup_list
         let line = printf('%s', items.word)
         if has_key(items, "abbr")
             let line = printf('%s', items.abbr)
             if has_key(items, "menu")
-                let line = printf('%s %s', items.abbr, items.menu)
+                let line = printf('%s  %s', items.abbr, items.menu)
             endif
         endif
         put=space.line
@@ -2173,7 +2178,7 @@ function! s:vimim_onekey_mapping()
     for _ in split('xhjklmn', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
     endfor
-    let onekey_punctuation = "/?;'<>"
+    let onekey_punctuation = "/?;'<>*"
     if !empty(s:cjk.filename)
         let onekey_punctuation .= ":"
     endif
@@ -2495,18 +2500,19 @@ endfunction
 
 function! s:vimim_cjk_extra_text(chinese)
     let ddddd = char2nr(a:chinese)
-    let unicode = ddddd . s:space . printf('u%04x',ddddd)
+    let xxxx  = printf('u%04x',ddddd)
+    let unicode = ddddd . s:space . xxxx
     if !empty(s:cjk.filename)
         let grep = "^" . a:chinese
         let line = match(s:cjk.lines, grep, 0)
-        if line > -1
-            let values  = split(get(s:cjk.lines, line))
-            let dddd    = s:cjk.filename=~"cjkv" ? 2 : 1
-            let digit   = s:space . get(values, dddd)
-            let pinyin  = s:space . get(values, 3)
-            let english = " " . join(values[4:-2])
-            let unicode = unicode . digit . pinyin . english
+        if line < 0
+            return unicode
         endif
+        let values  = split(get(s:cjk.lines,line))
+        let dddd    = s:cjk.filename=~"cjkv" ? 2 : 1
+        let digit   = get(values, dddd)
+        let pinyin  = get(values,3) . " " . join(values[4:-2])
+        let unicode = digit . s:space . xxxx . s:space . pinyin
     endif
     return unicode
 endfunction
@@ -2589,6 +2595,7 @@ function! s:vimim_get_cjk_head(keyboard)
             let llll = keyboard[1:4]
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
             if !empty(dddd)
+                let s:menuless = 1
                 let ldddd = keyboard[0:0] . dddd
                 let keyboard = ldddd . keyboard[5:-1]
                 let head = s:vimim_get_head(keyboard, 5)
