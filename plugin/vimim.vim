@@ -71,26 +71,6 @@ function! s:vimim_initialize_debug()
     endif
 endfunction
 
-function! s:vimim_initialize_plugin()
-    sil!call s:vimim_initialize_encoding()
-    sil!call s:vimim_scan_cjk_file()
-    sil!call s:vimim_scan_english_datafile()
-    sil!call s:vimim_super_reset()
-    sil!call s:vimim_initialize_session()
-    sil!call s:vimim_initialize_ui()
-    sil!call s:vimim_initialize_i_setting()
-    sil!call s:vimim_dictionary_statusline()
-    sil!call s:vimim_dictionary_punctuations()
-    sil!call s:vimim_dictionary_keycodes()
-    if len(s:vimim_mycloud) > 1
-        sil!call s:vimim_scan_backend_mycloud()
-    else
-        sil!call s:vimim_scan_backend_embedded()
-        sil!call s:vimim_scan_backend_cloud()
-    endif
-    sil!call s:vimim_set_keycode()
-    sil!call s:vimim_plug_and_play()
-endfunction
 
 function! s:vimim_initialize_session()
     let s:logo = " VimIM —— Vim 中文輸入法 "
@@ -3284,6 +3264,9 @@ let s:VimIM += [" ====  backend file     ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_backend_embedded()
+    if len(s:vimim_mycloud) > 1
+        return
+    endif
     let im = "pinyin"
     " (1/3) scan directory database
     let dir = s:plugin . im
@@ -3549,7 +3532,9 @@ function! s:vimim_initialize_cloud()
 endfunction
 
 function! s:vimim_scan_backend_cloud()
-    if empty(s:backend.datafile) && empty(s:backend.directory)
+    if len(s:vimim_mycloud) < 2
+    \&& empty(s:backend.datafile)
+    \&& empty(s:backend.directory)
         call s:vimim_set_cloud()
     endif
 endfunction
@@ -3599,7 +3584,7 @@ endfunction
 
 function! s:vimim_check_http_executable()
     let http_executable = 0
-    if s:vimim_cloud < 0 && len(s:vimim_mycloud) < 2
+    if s:vimim_cloud < 0 && len(s:vimim_mycloud) < 3
         return 0
     elseif len(s:http_executable) > 3
         return s:http_executable
@@ -3923,6 +3908,9 @@ function! s:vimim_scan_backend_mycloud()
     let s:mycloud_host = 0
     let s:mycloud_mode = 0
     let s:mycloud_port = 0
+    if len(s:vimim_mycloud) < 2
+        return
+    endif
     let im = 'mycloud'
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
     let mycloud = s:vimim_check_mycloud_availability()
@@ -4735,7 +4723,21 @@ endfunction
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
-sil!call s:vimim_initialize_plugin()
+sil!call s:vimim_initialize_encoding()
+sil!call s:vimim_scan_cjk_file()
+sil!call s:vimim_scan_english_datafile()
+sil!call s:vimim_super_reset()
+sil!call s:vimim_initialize_session()
+sil!call s:vimim_initialize_ui()
+sil!call s:vimim_initialize_i_setting()
+sil!call s:vimim_dictionary_statusline()
+sil!call s:vimim_dictionary_punctuations()
+sil!call s:vimim_dictionary_keycodes()
+sil!call s:vimim_scan_backend_mycloud()
+sil!call s:vimim_scan_backend_embedded()
+sil!call s:vimim_scan_backend_cloud()
+sil!call s:vimim_set_keycode()
+sil!call s:vimim_plug_and_play()
 sil!call s:vimim_imap_for_onekey()
 sil!call s:vimim_imap_for_chinesemode()
 sil!call s:vimim_imap_ctrl_h_ctrl_space()
