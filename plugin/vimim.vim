@@ -4495,16 +4495,16 @@ endif
 endfunction
 
 function! s:vimim_popupmenu_list(match_list)
-    let keyboards = split(s:keyboard)
-    let keyboard = join(keyboards,"")
-    let head = get(keyboards,0)
-    let tail = get(keyboards,1)
+    let keyboards = split(s:keyboard)   " ['ma','li']
+    let keyboard = join(keyboards, "")  "   mali
+    let head = get(keyboards,0)         "  'ma'
+    let tail = get(keyboards,1)         "  'li'
     let lines = a:match_list
     if empty(lines) || type(lines) != type([])
         return []
     else
         let s:match_list = lines
-        if keyboard =~ "'"
+        if s:keyboard =~ " "
             let s:menuless = 0
         endif
         if len(head) == 1 && !has_key(s:cjk.one, head)
