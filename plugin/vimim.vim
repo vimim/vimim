@@ -51,14 +51,14 @@ if exists("b:loaded_vimim") || v:version<700
     finish
 elseif &compatible
     call s:vimim_bare_bones_vimrc()
+    " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
+    " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
 endif
 let b:loaded_vimim = 1
 scriptencoding utf-8
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-" gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
-" gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :set pastetoggle=<C-Bslash>
@@ -347,7 +347,10 @@ function! s:vimim_egg_vimim()
     let evn = s:vimim_chinese('env') . s:colon . v:lc_time
     call add(eggs, evn)
     let database = s:vimim_chinese('database') . s:colon
-    if len(s:ui.frontends)
+    if empty(s:ui.frontends)
+        let ciku = database . s:vimim_chinese('unicode') . database
+        call add(eggs, ciku . "UNICODE")
+    else
         for frontend in s:ui.frontends
             let ui_root = get(frontend, 0)
             let ui_im = get(frontend, 1)
@@ -356,9 +359,6 @@ function! s:vimim_egg_vimim()
             let ciku = database . s:vimim_chinese(mass) . database
             call add(eggs, ciku . datafile)
         endfor
-    else
-        let ciku = database . s:vimim_chinese('unicode') . database
-        call add(eggs, ciku . "UNICODE")
     endif
     if !empty(s:english.filename)
         let ciku = database . s:vimim_chinese('english') . database
@@ -383,7 +383,9 @@ function! s:vimim_egg_vimim()
         let input .= s:vimim_chinese(s:cloud_default)
         let input .= s:vimim_chinese('cloud')
     endif
-    call add(eggs, input)
+    if len(s:ui.frontends)
+        call add(eggs, input)
+    endif
     if !empty(s:vimim_check_http_executable())
         let http = s:http_executable=~'Python' ? '' : "HTTP executable: "
         let network  = s:vimim_chinese('network') . s:colon
@@ -4192,12 +4194,10 @@ function! s:vimim_initialize_i_setting()
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
     let s:lazyredraw  = &lazyredraw
-    let s:ruler       = &ruler
 endfunction
 
 function! s:vimim_set_vim()
     set title
-    set noruler
     set imdisable
     set noshowmatch
     let &complete = "."
@@ -4218,7 +4218,6 @@ function! s:vimim_restore_vim()
     let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheight_saved
-    let &ruler       = s:ruler
     highlight! link Cursor NONE
 endfunction
 
