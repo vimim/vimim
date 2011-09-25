@@ -62,8 +62,8 @@ function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :set pastetoggle=<C-Bslash>
-        :nmap  gi i<C-^><C-^>
         :redir @i
+        :nmap  gi i<Plug>VimimOneKey<Plug>VimimOneKey
         :call g:vimim_default_omni_color()
         let g:vimim_plugin_folder = hjkl
         let g:vimim_tab_as_onekey = 1
@@ -409,12 +409,12 @@ function! s:vimim_get_keyboard_but_quote(keyboard)
     if s:ui.has_dot || keyboard =~ '\d'
         return keyboard
     endif
-    if keyboard =~ "'" . '\l\l\+'   " 'sssss
-        " [cloud] magic leading quote to control shoupin
+    if keyboard =~ '^\l\l\+' . "''" . '$'   " sssss''
+        " [shoupin] double dot to control shoupin
         let keyboard = substitute(keyboard,"'","",'g')
         let keyboard = join(split(keyboard,'\zs'),"'")
         let keyboard = s:vimim_quote_by_quote(keyboard)
-    elseif keyboard[-1:] == "'"   " sssss'
+    elseif keyboard[-1:] == "'"                "  sssss'
         " [cloud] magic trailing quote to control cloud
         let s:onekey = s:onekey==1 ? 2 : s:onekey
         let keyboard = s:vimim_last_quote(keyboard)
@@ -436,10 +436,10 @@ endfunction
 function! s:vimim_get_hjkl_game(keyboard)
     let keyboard = a:keyboard
     let results = []
-    if keyboard ==# "'''"
-        let results = s:vimim_get_number_before_plus_one()
-    elseif keyboard ==# "''"
+    if keyboard ==# "'''''"
         let results = s:vimim_get_same_char_before()
+    elseif keyboard ==# "'''"
+        let results = s:vimim_get_number_before_plus_one()
     endif
     if !empty(results)
         return results
@@ -452,9 +452,9 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
-    elseif keyboard =~# "^'''''" . '\+$'  " black hole
+    elseif keyboard =~# "^''''''" . '\+$'  " black hole
         let results = s:vimim_egg_vimimgame()
-    elseif keyboard =~# '^\l\+' . "''''"
+    elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
     elseif len(unname_register) > 8  " vimim_visual_ctrl6
@@ -810,7 +810,7 @@ function! s:vimim_get_char_before()
 endfunction
 
 function! s:vimim_get_same_char_before()
-    " [game]  马,, ==> 马''  ==> 马马
+    " [game]  马''''' => 马马
     let char_before = s:vimim_get_char_before()
     let results = []
     if empty(char_before) || char_before !~ '\W'
@@ -825,7 +825,7 @@ function! s:vimim_get_same_char_before()
 endfunction
 
 function! s:vimim_get_number_before_plus_one()
-    " [game]  七,. ==> 七''' ==> 七八
+    " [game]  七''' => 七八
     let char_before = s:vimim_get_char_before()
     let results = s:vimim_imode_chinese(char_before)
     if empty(results)
@@ -2066,11 +2066,11 @@ function! s:vimim_onekey_evil_action()
     if two_before =~# s:valid_keyboard || s:ui.has_dot
         return onekey
     elseif two_before == nr2char(44) && one_before == nr2char(44)
-        let onekey = "''"            "  <==  , , comma comma
-    elseif two_before == nr2char(44) && one_before == nr2char(46)
-        let onekey = "'''"           "  <==  , . comma dot
-    elseif one_before == nr2char(46) && two_before == nr2char(46)
-        let onekey = "'''''"         "  <==  . . dot dot for game
+        let onekey = "''''''" "  <==  , , comma comma for game
+    elseif two_before == nr2char(46) && one_before == nr2char(46)
+        let onekey = "'''''"  "  <==  . . dot dot for cjk
+    elseif two_before == nr2char(46) && one_before == nr2char(44)
+        let onekey = "'''"    "  <==  . , dot comma for number
     endif
     if !empty(onekey) " [game] comma/dot => quotes => popup menu
         return "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
@@ -3892,7 +3892,9 @@ function! s:vimim_get_cloud_all(keyboard)
     for cloud in s:cloud_defaults
         let start = localtime()
         let outputs = s:vimim_get_cloud(a:keyboard, cloud)
-        call add(results, s:space)
+        if len(results) > 1
+            call add(results, s:space)
+        endif
         let title  = a:keyboard . s:space
         let title .= s:vimim_chinese(cloud)
         let title .= s:vimim_chinese('cloud')
@@ -3908,7 +3910,7 @@ function! s:vimim_get_cloud_all(keyboard)
             call add(results, join(map(outputs,filter)))
         endif
     endfor
-    return results + [s:space]
+    return results
 endfunction
 
 " ============================================= }}}
