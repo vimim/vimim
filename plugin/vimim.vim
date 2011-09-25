@@ -59,6 +59,7 @@ scriptencoding utf-8
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
+:let g:vimim_chinese_input_mode='static'
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :set pastetoggle=<C-Bslash>
@@ -70,7 +71,6 @@ function! s:vimim_initialize_debug()
         let g:vimim_cloud = 'google,sogou,baidu,qq'
     endif
 endfunction
-
 
 function! s:vimim_start_session()
     let s:logo = " VimIM —— Vim 中文輸入法 "
@@ -900,7 +900,7 @@ function! <SID>vimim_chinese_punctuation_map(key)
     endif
     if pumvisible()
         if a:key == ";"  " the 2nd choice
-            let key = '\<Down>\<C-Y>' . g:vimim()
+            let key = '\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
         else
             let key = '\<C-Y>' . key
         endif
@@ -954,7 +954,7 @@ function! <SID>vimim_get_quote(quote)
             let s:smart_single_quotes += 1
             let quote .= get(pairs, s:smart_single_quotes % 2)
         else  " the 3rd choice
-            let quote = '\<Down>\<Down>\<C-Y>' . g:vimim()
+            let quote = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
         endif
     elseif a:quote == 2
         let s:smart_double_quotes += 1
@@ -1952,7 +1952,7 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
             let n = key<1 ? 9 : key-1
         endif
         let down = repeat("\<Down>", n)
-        let key = down . '\<C-Y>' . g:vimim()
+        let key = down . '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
         if s:onekey && a:key =~ '\d'
             sil!call s:vimim_stop()
