@@ -436,6 +436,14 @@ endfunction
 function! s:vimim_get_hjkl_game(keyboard)
     let keyboard = a:keyboard
     let results = []
+    if keyboard ==# "'''"
+        let results = s:vimim_get_number_before_plus_one()
+    elseif keyboard ==# "''"
+        let results = s:vimim_get_same_char_before()
+    endif
+    if !empty(results)
+        return results
+    endif
     let unname_register = getreg('"')
     let poem = s:vimim_check_filereadable(keyboard)
     if !empty(poem)
@@ -444,7 +452,7 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
-    elseif keyboard =~# "''"
+    elseif keyboard =~# "^'''''" . '\+$'  " black hole
         let results = s:vimim_egg_vimimgame()
     elseif keyboard =~# '^\l\+' . "''''"
         " [clouds] all clouds for any input: fuck''''
@@ -801,18 +809,10 @@ function! s:vimim_get_char_before()
     return char_before
 endfunction
 
-function! s:vimim_get_char_before_ii()
+function! s:vimim_get_same_char_before()
+    " [game]  马,, ==> 马''  ==> 马马
     let char_before = s:vimim_get_char_before()
-    let results = s:vimim_imode_chinese(char_before)
-    if empty(results)  "  一ii => 一二
-        let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
-    endif
-    return results
-endfunction
-
-function! s:vimim_get_char_before_u()
-    let char_before = s:vimim_get_char_before()
-    let results = []   " 马u => 马马
+    let results = []
     if empty(char_before) || char_before !~ '\W'
         if !empty(s:cjk.filename) " 214 standard unicode index
             let results = s:vimim_cjk_match('u')
@@ -820,6 +820,16 @@ function! s:vimim_get_char_before_u()
     else
         let ddddd = char2nr(char_before)
         let results = s:vimim_unicode_list(ddddd)
+    endif
+    return results
+endfunction
+
+function! s:vimim_get_number_before_plus_one()
+    " [game]  七,. ==> 七''' ==> 七八
+    let char_before = s:vimim_get_char_before()
+    let results = s:vimim_imode_chinese(char_before)
+    if empty(results)
+        let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
     endif
     return results
 endfunction
@@ -2043,6 +2053,42 @@ function! s:vimim_onekey_action(space)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
+function! s:vimim_onekey_evil_action()
+    let onekey = ""
+    let current_line = getline(".")
+    let one_before = current_line[col(".")-2]
+    let two_before = current_line[col(".")-3]
+    if two_before =~# s:valid_keyboard || s:ui.has_dot
+        return onekey
+    elseif two_before == nr2char(44) && one_before == nr2char(44)
+        let onekey = "''"            "  <==  , , comma comma
+    elseif two_before == nr2char(44) && one_before == nr2char(46)
+        let onekey = "'''"           "  <==  , . comma dot
+    elseif one_before == nr2char(46) && two_before == nr2char(46)
+        let onekey = "'''''"         "  <==  . . dot dot for game
+    endif
+    if !empty(onekey) " [game] comma/dot => quotes => popup menu
+        return "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
+    endif
+    let punctuations = copy(s:punctuations)
+    call extend(punctuations, s:evils)
+    if has_key(punctuations, one_before)
+        for char in keys(punctuations)
+            " no transfer for punctuation after punctuation
+            if two_before ==# char || two_before =~# '\u'
+                return " "
+            endif
+        endfor
+        " transfer English punctuation to Chinese punctuation
+        let bs = punctuations[one_before]
+            if one_before == "'" | let bs = <SID>vimim_get_quote(1)
+        elseif one_before == '"' | let bs = <SID>vimim_get_quote(2)
+        endif
+        let onekey = "\<BS>" . bs
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
 function! g:vimim_onekey_dump()
     let saved_position = getpos(".")
     let keyboard = get(split(s:keyboard),0)
@@ -2063,33 +2109,6 @@ function! g:vimim_onekey_dump()
     call setpos(".", saved_position)
     sil!call s:vimim_stop()
     sil!exe "sil!return '\<Esc>'"
-endfunction
-
-function! s:vimim_onekey_evil_action()
-    let current_line = getline(".")
-    let one_before = current_line[col(".")-2]
-    let two_before = current_line[col(".")-3]
-    if two_before =~# s:valid_keyboard || s:ui.has_dot
-        return ""
-    endif
-    let onekey = ""
-    let punctuations = copy(s:punctuations)
-    call extend(punctuations, s:evils)
-    if has_key(punctuations, one_before)
-        for char in keys(punctuations)
-            " no transfer for punctuation after punctuation
-            if two_before ==# char || two_before =~# '\u'
-                return " "
-            endif
-        endfor
-        " transfer English punctuation to Chinese punctuation
-        let bs = punctuations[one_before]
-            if one_before == "'" | let bs = <SID>vimim_get_quote(1)
-        elseif one_before == '"' | let bs = <SID>vimim_get_quote(2)
-        endif
-        let onekey = "\<BS>" . bs
-    endif
-    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 function! s:vimim_get_cursor()
@@ -4404,17 +4423,11 @@ else
         let ddddd = s:vimim_get_unicode_ddddd(keyboard)
         if ddddd
             let results = s:vimim_unicode_list(ddddd)
-        elseif s:imode_pinyin " [imode] number in chinese
-            if keyboard =~# '^i'
-                if keyboard ==# 'itoday' || keyboard ==# 'inow'
-                    let results = [s:vimim_imode_today_now(keyboard)]
-                elseif keyboard =~ '\d'
-                    let results = s:vimim_imode_number(keyboard)
-                elseif keyboard ==# 'ii'
-                    let results = s:vimim_get_char_before_ii()
-                endif
-            elseif keyboard ==# 'u'  " no cache as it is dynamic
-                let results = s:vimim_get_char_before_u()
+        elseif s:imode_pinyin && keyboard =~# '^i'
+            if keyboard ==# 'itoday' || keyboard ==# 'inow'
+                let results = [s:vimim_imode_today_now(keyboard)]
+            elseif keyboard =~ '\d'
+                let results = s:vimim_imode_number(keyboard)
             endif
         endif
         if empty(results)
@@ -4508,7 +4521,7 @@ function! s:vimim_popupmenu_list(match_list)
         if keyboard =~ "'"
             let s:menuless = 0
         endif
-        if len(head)==1 && head!='u' && !has_key(s:cjk.one,head)
+        if len(head) == 1 && !has_key(s:cjk.one, head)
             let s:cjk.one[head] = lines
         endif
     endif
