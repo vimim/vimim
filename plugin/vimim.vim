@@ -208,11 +208,10 @@ function! s:vimim_initialize_global()
     endif
     let s:chinese_mode = 'onekey'
     let s:onekey = 0
+    let s:im_toggle = 0
     let s:frontends = []
     let s:loops = {}
-    let s:numbers = {}
     let s:quantifiers = {}
-    let s:im_toggle = 0
     let s:colon = "："
     let s:space = "　"
 endfunction
@@ -614,23 +613,21 @@ endfunction
 let s:VimIM += [" ====  chinese imode    ==== {{{"]
 " =================================================
 
-function! s:vimim_build_numbers_hash()
-    if empty(s:numbers)
-        let s:numbers.1 = "一壹⑴①甲"
-        let s:numbers.2 = "二贰⑵②乙"
-        let s:numbers.3 = "三叁⑶③丙"
-        let s:numbers.4 = "四肆⑷④丁"
-        let s:numbers.5 = "五伍⑸⑤戊"
-        let s:numbers.6 = "六陆⑹⑥己"
-        let s:numbers.7 = "七柒⑺⑦庚"
-        let s:numbers.8 = "八捌⑻⑧辛"
-        let s:numbers.9 = "九玖⑼⑨壬"
-        let s:numbers.0 = "〇零⑽⑩癸"
-    endif
+function! s:vimim_dictionary_numbers()
+    let s:numbers = {}
+    let s:numbers.1 = "一壹⑴①甲"
+    let s:numbers.2 = "二贰⑵②乙"
+    let s:numbers.3 = "三叁⑶③丙"
+    let s:numbers.4 = "四肆⑷④丁"
+    let s:numbers.5 = "五伍⑸⑤戊"
+    let s:numbers.6 = "六陆⑹⑥己"
+    let s:numbers.7 = "七柒⑺⑦庚"
+    let s:numbers.8 = "八捌⑻⑧辛"
+    let s:numbers.9 = "九玖⑼⑨壬"
+    let s:numbers.0 = "〇零⑽⑩癸"
 endfunction
 
 function! s:vimim_build_quantifier_hash()
-    call s:vimim_build_numbers_hash()
     let s:quantifiers = copy(s:numbers)
     let s:quantifiers.b = "百佰步把包杯本笔部班"
     let s:quantifiers.c = "次餐场串处床"
@@ -661,7 +658,6 @@ function! s:vimim_imode_loop()
     let antonym  = " ，。 “” ‘’ （） 【】 〖〗 《》"
     let antonym .= " 危安 胜败 凶吉 真假 石金 "
     let items = []
-    call s:vimim_build_numbers_hash()
     for i in range(len(s:numbers))
         call add(items, split(s:numbers[i],'\zs'))
     endfor
@@ -809,7 +805,10 @@ function! s:vimim_get_number_before_plus_one()
     let char_before = s:vimim_get_char_before()
     let results = s:vimim_imode_chinese(char_before)
     if empty(results)
-        let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
+        for i in range(1,len(s:numbers))
+            let i = i==10 ? 0 : i
+            call add(results, get(split(s:numbers[i],'\zs'),1))
+        endfor
     endif
     return results
 endfunction
@@ -4495,9 +4494,10 @@ else
             if empty(results)                           " forced cloud
                 let results = s:vimim_get_cloud(keyboard, s:cloud_default)
             endif
+        elseif keyboard == 'i'   " for abcdefghijklmnopqrstuvwxyz''
+            let results = split(repeat("我 ",10))
         else
-            let i = keyboard=='i' ? "我" : s:space
-            let results = [i] " u'v'i'have'a'dream
+            let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
         endif
     endif
     if empty(results)
@@ -4732,6 +4732,7 @@ sil!call s:vimim_initialize_ui()
 sil!call s:vimim_initialize_i_setting()
 sil!call s:vimim_dictionary_statusline()
 sil!call s:vimim_dictionary_punctuations()
+sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
 sil!call s:vimim_scan_backend_mycloud()
 sil!call s:vimim_scan_backend_embedded()
