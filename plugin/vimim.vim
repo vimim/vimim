@@ -107,17 +107,17 @@ function! s:vimim_initialize_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
-    let s:valid_keyboard = ""
-    let s:valid_keys = s:az_list
     let s:abcd = split("'abcdvfgsz",'\zs')
     let s:qwer = split("pqwertyuio",'\zs')
     let s:seamless_positions = []
     let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
-    let az_list = range(char2nr('a'), char2nr('z'))
-    let AZ_list = range(char2nr('A'), char2nr('Z'))
+    let   az_list = range(char2nr('a'), char2nr('z'))
+    let   AZ_list = range(char2nr('A'), char2nr('Z'))
     let s:az_list = map(az_list, "nr2char(".'v:val'.")")
     let s:AZ_list = map(AZ_list, "nr2char(".'v:val'.")")
     let s:Az_list = s:az_list + s:AZ_list
+    let s:valid_keys = s:az_list
+    let s:valid_keyboard = ""
 endfunction
 
 function! s:vimim_initialize_ui()
