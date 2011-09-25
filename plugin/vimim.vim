@@ -59,7 +59,6 @@ scriptencoding utf-8
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-:let g:vimim_chinese_input_mode='static'
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :set pastetoggle=<C-Bslash>
