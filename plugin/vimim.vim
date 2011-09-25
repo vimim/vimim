@@ -1888,8 +1888,8 @@ endfunction
 function! s:vimim_hjkl_partition(keyboard)
     let keyboard = a:keyboard
     if s:hjkl_m
-        if s:hjkl_m % 2                                 " sssss => 'sssss
-            let keyboard = "'" . keyboard
+        if s:hjkl_m % 2                                 " sssss => sssss''
+            let keyboard = keyboard . "''"
         endif
     elseif s:hjkl_h         " redefine match: jsjsxx => ['jsjsx','jsjs']
         let items = get(s:popup_list,0)                 " jsjs'xx
@@ -4490,7 +4490,7 @@ else
     " [the last resort] try both cjk and cloud
     if s:onekey && empty(results)
         if len(keyboard) > 1
-            let keyboard = s:vimim_get_keyboard_but_quote("'".keyboard)
+            let keyboard = s:vimim_get_keyboard_but_quote(keyboard."''")
             let results = s:vimim_cjk_match(keyboard)   " forced shoupin
             if empty(results)                           " forced cloud
                 let results = s:vimim_get_cloud(keyboard, s:cloud_default)
