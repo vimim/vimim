@@ -72,7 +72,7 @@ function! s:vimim_initialize_debug()
 endfunction
 
 function! s:vimim_start_session()
-    let s:logo = " VimIM —— Vim 中文輸入法 "
+    let s:logo = " VimIM 中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
     let s:shuangpin_all = 'abc ms plusplus purple flypy nature'
     let s:shuangpin_table = {}
