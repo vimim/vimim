@@ -844,7 +844,7 @@ endfunction
 function! s:vimim_titlestring(index)
     let index = s:title + a:index
     let hightlight = s:left . '\|' . s:right
-    let titlestring = substitute(&titlestring,hightlight,' ','g')
+    let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
     let words = split(titlestring)
     let hightlight = get(words, index)
     if !empty(hightlight) && index > -1
@@ -4570,14 +4570,12 @@ function! s:vimim_popupmenu_list(match_list)
             if empty(s:mycloud)
                 let chinese .= empty(tail) ? '' : tail
             endif
-            if len(one_list) < 20
-                let label_in_one_row = s:menuless ? " " : label . "."
-                call add(one_list, label_in_one_row . chinese)
-            endif
             let label2 = s:vimim_get_labeling(label)
             let labeling = color ? printf('%2s ',label2) : ""
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
+            let label_in_one_row = s:menuless ? " " : label . "."
+            call add(one_list, label_in_one_row . chinese)
             let label += 1
         endif
         let complete_items["dup"] = 1
