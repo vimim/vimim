@@ -78,6 +78,7 @@ function! s:vimim_start_session()
     let s:shuangpin_table = {}
     let s:shuangpin_chinese = {}
     let s:quanpin_table = {}
+    let s:title = 0
     let s:pumheight = 10
     let s:pumheight_saved = &pumheight
     let s:smart_single_quotes = 1
@@ -803,15 +804,17 @@ let s:VimIM += [" ====  punctuation      ==== {{{"]
 function! s:vimim_dictionary_punctuations()
     let s:space = "　"
     let s:colon = "："
+    let s:left  = "【"
+    let s:right = "】"
     let s:punctuations = {}
     let s:punctuations['@'] = s:space
     let s:punctuations[':'] = s:colon
-    let s:punctuations['('] = "（"
-    let s:punctuations[')'] = "）"
-    let s:punctuations['['] = "【"
-    let s:punctuations[']'] = "】"
+    let s:punctuations['['] = s:left
+    let s:punctuations[']'] = s:right
     let s:punctuations['{'] = "〖"
     let s:punctuations['}'] = "〗"
+    let s:punctuations['('] = "（"
+    let s:punctuations[')'] = "）"
     let s:punctuations['<'] = "《"
     let s:punctuations['>'] = "》"
     let s:punctuations['#'] = "＃"
@@ -838,30 +841,55 @@ function! s:vimim_dictionary_punctuations()
     endif
 endfunction
 
-function! <SID>vimim_page_bracket_map(key)
-    let hjkl = a:key
-    if !pumvisible()
-        return hjkl
+function! s:vimim_titlestring(index)
+    let index = s:title + a:index
+    let hightlight = s:left . '\|' . s:right
+    let titlestring = substitute(&titlestring,hightlight,' ','g')
+    let words = split(titlestring)
+    let hightlight = get(words, index)
+    if !empty(hightlight) && index > -1
+        let key = get(words,0) . '  '
+        let left = join(words[1 : index-1])
+        let right = join(words[index+1 :])
+        let hightlight = s:left . hightlight . s:right
+        let titlestring = key . left . hightlight . right
+        let s:title = index
     endif
-    if hjkl =~ "[][]"
-        let hjkl = s:vimim_square_bracket(hjkl)
-    elseif hjkl =~ "[=.]"
+    return titlestring
+endfunction
+
+function! <SID>vimim_page_map(key)
+    let key = a:key
+    if !pumvisible()
+        " workaround as no way to detect if completion is active
+        let char_before = s:vimim_get_char_before()
+        if s:onekey && s:menuless && char_before =~ '\W'
+            if key == "."       " 4 for pagedown
+                let key = repeat('\<C-N>', 4)
+                let &titlestring = s:vimim_titlestring(4)
+            elseif key == ","   " 2 for pageup
+                let key = repeat('\<C-P>', 2)
+                let &titlestring = s:vimim_titlestring(-2)
+            endif
+        endif
+    elseif key =~ "[][]"
+        let key = s:vimim_square_bracket(key)
+    elseif key =~ "[=.]"
         if &pumheight
             let s:pageup_pagedown = 1
+            let key = g:vimim()
         else
-            let hjkl = '\<PageDown>'
+            let key = '\<PageDown>'
         endif
-    elseif hjkl =~ "[-,]"
+    elseif key =~ "[-,]"
         if &pumheight
             let s:pageup_pagedown = -1
+            let key = g:vimim()
         else
-            let hjkl = '\<PageUp>'
+            let key = '\<PageUp>'
         endif
     endif
-    if hjkl == a:key
-        let hjkl = g:vimim()
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_punctuation_mapping()
@@ -1931,7 +1959,7 @@ function! s:vimim_map_omni_page_label()
         call remove(labels, match(labels,"'"))
     endif
     for _ in split(common_punctuation, '\zs')
-        exe 'inoremap<expr> '._.' <SID>vimim_page_bracket_map("'._.'")'
+        exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
     endfor
     for _ in labels
         silent!exe 'inoremap <silent> <expr> '  ._.
@@ -1998,7 +2026,7 @@ function! <SID>vimim_onekey(tab)
         let onekey = s:vimim_onekey_action(0)
     endif
     if s:menuless
-        let &titlestring .= s:space . s:space . s:today
+        let &titlestring = s:logo . s:space . s:space . s:today
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -2017,7 +2045,8 @@ function! s:vimim_onekey_action(space)
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
     elseif empty(s:show_me_not) && s:menuless
-        let onekey = '\<C-N>'  " use <Space> to cycle
+        let onekey = '\<C-N>' " use <Space> to cycle
+        let &titlestring = s:vimim_titlestring(1)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -4542,7 +4571,8 @@ function! s:vimim_popupmenu_list(match_list)
                 let chinese .= empty(tail) ? '' : tail
             endif
             if len(one_list) < 20
-                call add(one_list, label . "." . chinese)
+                let label_in_one_row = s:menuless ? " " : label . "."
+                call add(one_list, label_in_one_row . chinese)
             endif
             let label2 = s:vimim_get_labeling(label)
             let labeling = color ? printf('%2s ',label2) : ""
@@ -4561,7 +4591,9 @@ function! s:vimim_popupmenu_list(match_list)
         if s:menuless && empty(s:show_me_not)
             let &pumheight = 1
             set completeopt=menu  " for direct insert
-            let &titlestring = s:space.keyboard.s:space.join(one_list)
+            let s:title = 0
+            let &titlestring = s:space . keyboard . '  ' . join(one_list)
+            let &titlestring = s:vimim_titlestring(1)
         endif
     elseif menu_in_one_row
         let popup_list = s:vimim_one_row(one_list[0:4], popup_list[0:4])
