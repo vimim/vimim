@@ -4657,8 +4657,9 @@ function! s:vimim_imap_for_onekey()
     imap<silent><C-^>     <Plug>VimimOneKey
     xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     if s:vimim_tab_as_onekey
-        inoremap<unique><expr> <Plug>VimimOneTab <SID>vimim_onekey(1)
-        imap<silent><Tab>      <Plug>VimimOneTab
+        inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
+        imap<silent><Tab>     <Plug>VimimOneTab
+        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
 endfunction
 
