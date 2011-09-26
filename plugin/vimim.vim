@@ -842,21 +842,21 @@ function! s:vimim_dictionary_punctuations()
 endfunction
 
 function! s:vimim_titlestring(index)
-    let index = s:title + a:index
-    let english_here = s:right . s:space
-    if match(&titlestring, english_here) > -1
-        let index += 1 " jump over space between english and pinyin
-    endif
     let hightlight = s:left . '\|' . s:right
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
     let words = split(titlestring)
+    let index = s:title + a:index
+    let hightlight = get(words, index)
+    if hightlight == s:space
+        let index += 1
+    endif
     let hightlight = get(words, index)
     if !empty(hightlight) && index > -1
-        let key = get(words,0) . '  '
+        let keyboard = get(words,0) . '  '
         let left = join(words[1 : index-1])
         let right = join(words[index+1 :])
         let hightlight = s:left . hightlight . s:right
-        let titlestring = key . left . hightlight . right
+        let titlestring = keyboard . left . hightlight . right
         let s:title = index
     endif
     return titlestring
@@ -1718,7 +1718,10 @@ function! <SID>vimim_enter()
         let key = "\<C-E>"
         let s:smart_enter = 1
     elseif one_before =~# s:valid_keyboard
-        let s:smart_enter += 1
+        let s:smart_enter = 1
+        if s:seamless_positions == getpos(".")
+            let s:smart_enter += 1
+        endif
     else
         let s:smart_enter = 0
     endif
@@ -4264,6 +4267,7 @@ function! s:vimim_reset_before_anything()
     let s:keyboard = ""
     let s:onekey = 0
     let s:menuless = 0
+    let s:smart_enter = 0
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
     let s:pattern_not_found = 0
@@ -4272,12 +4276,11 @@ endfunction
 
 function! s:vimim_reset_before_omni()
     let s:english.line = ""
-    let s:smart_enter = 0
     let s:show_me_not = 0
 endfunction
 
 function! g:vimim_reset_after_insert()
-    let s:hjkl_n = ""   " reset
+    let s:hjkl_n = ""   " reset for no nothing
     let s:hjkl_h = 0    " ctrl-h for jsjsxx
     let s:hjkl_l = 0    " toggle label
     let s:hjkl_m = 0    " toggle cjjp/cjjp''
