@@ -2006,7 +2006,6 @@ function! <SID>vimim_onekey(tab)
     let s:chinese_mode = 'onekey'
     let onekey = '\<Left>\<Right>'
     let before = getline(".")[col(".")-2]
-    let &titlestring = s:logo
     if s:onekey
         if pumvisible()
             if empty(&pumheight)
@@ -2023,6 +2022,7 @@ function! <SID>vimim_onekey(tab)
         else
             let s:menuless = 1
         endif
+        let &titlestring = s:logo
     elseif empty(a:tab) ? 0 : empty(before)||before=~'\s' ? 1 : 0
         let onekey = '\t'
     else
@@ -2052,6 +2052,7 @@ function! s:vimim_onekey_action(space)
     let one_before = getline(".")[col(".")-2]
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
+        let &titlestring = s:logo
     elseif empty(s:show_me_not) && s:menuless
         let onekey = '\<C-N>' " use <Space> to cycle
         let &titlestring = s:vimim_titlestring(1)
@@ -4559,7 +4560,7 @@ function! s:vimim_popupmenu_list(match_list)
         call add(popup_list, complete_items)
     endfor
     if s:onekey
-        let &titlestring = ""
+        let &titlestring = s:logo
         set completeopt=menuone  " for hjkl_n refresh
         let s:popup_list = popup_list
         if s:menuless && empty(s:show_me_not)
