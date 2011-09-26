@@ -74,10 +74,6 @@ endfunction
 function! s:vimim_start_session()
     let s:logo = " VimIM 中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
-    let s:shuangpin_all = 'abc ms plusplus purple flypy nature'
-    let s:shuangpin_table = {}
-    let s:shuangpin_chinese = {}
-    let s:quanpin_table = {}
     let s:title = 0
     let s:pumheight = 10
     let s:pumheight_saved = &pumheight
@@ -87,6 +83,10 @@ function! s:vimim_start_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
+    let s:shuangpin_all = 'abc ms plusplus purple flypy nature'
+    let s:shuangpin_table = {}
+    let s:shuangpin_chinese = {}
+    let s:quanpin_table = {}
     let s:abcd = split("'abcdvfgsz",'\zs')
     let s:qwer = split("pqwertyuio",'\zs')
     let s:seamless_positions = []
@@ -843,6 +843,10 @@ endfunction
 
 function! s:vimim_titlestring(index)
     let index = s:title + a:index
+    let english_here = s:right . s:space
+    if match(&titlestring, english_here) > -1
+        let index += 1 " jump over space between english and pinyin
+    endif
     let hightlight = s:left . '\|' . s:right
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
     let words = split(titlestring)
@@ -1755,10 +1759,11 @@ function! s:vimim_get_labeling(label)
                 let label2 = '0'
             endif
         endif
-        let labeling .= label2
-        if labeling == '0'
-            let labeling = '10'
-        endif
+        let labeling = empty(labeling) ? '10' : labeling . label2
+    endif
+    if s:onekey && !empty(s:english.line)
+        let english = a:label<len(split(s:english.line)) ? '*' : ' '
+        let labeling = english . labeling
     endif
     return labeling
 endfunction
@@ -4466,12 +4471,7 @@ else
         if s:keyboard !~ "'"  " english color
             let s:keyboard = keyboard
         endif
-        if empty(results)
-            let results = s:vimim_make_pairs(s:english.line)
-        else
-            let line = s:english.line . ' ' . s:space
-            let results = s:vimim_make_pairs(line) + results
-        endif
+        let results = s:vimim_make_pairs(s:english.line) + results
     endif
     " [the last resort] try both cjk and cloud
     if s:onekey && empty(results)
@@ -4551,7 +4551,13 @@ function! s:vimim_popupmenu_list(match_list)
             let labeling = color ? printf('%2s ',label2) : ""
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
-            let label_in_one_row = s:menuless ? " " : label . "."
+            let label_in_one_row = " "
+            if len(split(s:english.line)) == label  " English flag
+                let label_in_one_row = " " . s:space . " "
+            endif
+            if empty(s:menuless)
+                let label_in_one_row = label . "."
+            endif
             call add(one_list, label_in_one_row . chinese)
             let label += 1
         endif
