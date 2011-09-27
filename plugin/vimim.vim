@@ -63,7 +63,6 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :set pastetoggle=<C-Bslash>
         :redir @i
-        :nmap  gi i<C-^><C-^>
         :call g:vimim_default_omni_color()
         let g:vimim_plugin_folder = hjkl
         let g:vimim_tab_as_onekey = 1
@@ -74,7 +73,7 @@ endfunction
 function! s:vimim_start_session()
     let s:logo = " VimIM 中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
-    let s:title = 0
+    let s:menuless_cursor = 0
     let s:pumheight = 10
     let s:pumheight_saved = &pumheight
     let s:smart_single_quotes = 1
@@ -843,23 +842,25 @@ function! s:vimim_dictionary_punctuations()
     endif
 endfunction
 
-function! s:vimim_titlestring(index)
+function! s:vimim_titlestring(cursor)
     let hightlight = s:left . '\|' . s:right
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
     let words = split(titlestring)
-    let index = s:title + a:index
-    let hightlight = get(words, index)
+    let cursor = s:menuless_cursor + a:cursor
+    let hightlight = get(words, cursor)
     if hightlight == s:space
-        let index += 1
+        let cursor += 1
     endif
-    let hightlight = get(words, index)
-    if !empty(hightlight) && index > -1
-        let keyboard = get(words,0) . '  '
-        let left = join(words[1 : index-1])
-        let right = join(words[index+1 :])
+    let hightlight = get(words, cursor)
+    let keyboard = get(words,0)
+    if !empty(hightlight) && keyboard !~ 'VimIM'
+        let left = join(words[1 : cursor-1])
+        let right = join(words[cursor+1 :])
         let hightlight = s:left . hightlight . s:right
-        let titlestring = keyboard . left . hightlight . right
-        let s:title = index
+        let titlestring = keyboard .'  '. left . hightlight . right
+        let s:menuless_cursor = cursor
+    else
+        let s:pattern_not_found = 1
     endif
     return titlestring
 endfunction
@@ -2040,7 +2041,10 @@ function! <SID>vimim_onekey(tab)
         let onekey = s:vimim_onekey_action(0)
     endif
     if s:menuless
-        let &titlestring = s:logo . s:space . s:space . s:today
+        let cloud  = s:vimim_chinese(s:cloud_default)
+        let cloud .= s:vimim_chinese('cloud') . s:space
+        let cloud  = s:onekey > 1 ? cloud : s:space
+        let &titlestring = s:logo . s:space . cloud . s:today
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -2059,10 +2063,13 @@ function! s:vimim_onekey_action(space)
         endif
     endif
     let onekey = space
+    let char_before = s:vimim_get_char_before()
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
         let &titlestring = s:logo
     elseif s:menuless && empty(s:show_me_not)
+        \&& char_before =~ '\W' && one_before !~ '\s'
+        \&& match(values(s:punctuations), char_before) < 0
         let onekey = '\<C-N>' " use Space to cycle
         let &titlestring = s:vimim_titlestring(1)
     endif
@@ -2125,6 +2132,7 @@ function! g:vimim_onekey_dump()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
+" todo
 function! s:vimim_get_cursor()
     let current_line = getline(".")
     let current_column = col(".")-1
@@ -4581,7 +4589,7 @@ function! s:vimim_popupmenu_list(match_list)
         if s:menuless && empty(s:show_me_not)
             let &pumheight = 1
             set completeopt=menu  " for direct insert
-            let s:title = 0
+            let s:menuless_cursor = 0
             let &titlestring = s:space . keyboard . '  ' . join(one_list)
             let &titlestring = s:vimim_titlestring(1)
         endif
@@ -4717,6 +4725,7 @@ function! s:vimim_imap_ctrl_h_ctrl_space()
 endfunction
 
 function! s:vimim_plug_and_play()
+    :nmap  gi  i<C-^><C-^>
     :noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
