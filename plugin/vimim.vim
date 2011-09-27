@@ -63,7 +63,7 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :set pastetoggle=<C-Bslash>
         :redir @i
-        :nmap  gi i<Plug>VimimOneKey<Plug>VimimOneKey
+        :nmap  gi i<C-^><C-^>
         :call g:vimim_default_omni_color()
         let g:vimim_plugin_folder = hjkl
         let g:vimim_tab_as_onekey = 1
