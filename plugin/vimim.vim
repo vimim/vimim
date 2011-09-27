@@ -2801,7 +2801,9 @@ function! s:vimim_get_english(keyboard)
     " [sql] select english from vimim.txt
     let grep = '^' . keyboard . '\s\+'
     let matched = match(s:english.lines, grep)
-    if matched < 0 && len(keyboard) > 3
+    " [pinyin] cong for pinyin only and congr => congratuation
+    let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
+    if matched < 0 && !empty(keyboards) && len(keyboard) > 3
         let grep = '^' . keyboard   " both haag and haagendazs
         let matched = match(s:english.lines, grep)
     endif
