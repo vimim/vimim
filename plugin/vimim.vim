@@ -401,17 +401,19 @@ function! s:vimim_get_head_without_quote(keyboard)
     return keyboard
 endfunction
 
-function! s:vimim_get_hjkl_game(keyboard)
-    let keyboard = a:keyboard
+function! s:vimim_game_char_before(keyboard)
     let results = []
-    if keyboard ==# "'''''"
+    if a:keyboard ==# "'''''"
         let results = s:vimim_get_same_char_before()
-    elseif keyboard ==# "'''"
+    elseif a:keyboard ==# "'''"
         let results = s:vimim_get_number_before_plus_one()
     endif
-    if !empty(results)
-        return results
-    endif
+    return results
+endfunction
+
+function! s:vimim_game_hjkl(keyboard)
+    let keyboard = a:keyboard
+    let results = []
     let unname_register = getreg('"')
     let poem = s:vimim_check_filereadable(keyboard)
     if !empty(poem)
@@ -4394,9 +4396,12 @@ else
         " [english] first check if it is english or not
         let s:english.line = s:vimim_get_english(keyboard)
     endif
-    " [egg] flirt with hjkl with onekey onley
+    " [egg] flirt with hjkl with onekey only
     if s:onekey
-        let results = s:vimim_get_hjkl_game(keyboard)
+        let results = s:vimim_game_char_before(keyboard)
+        if empty(results)
+            let results = s:vimim_game_hjkl(keyboard)
+        endif
         if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
