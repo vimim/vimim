@@ -864,33 +864,21 @@ endfunction
 
 function! <SID>vimim_page_map(key)
     let key = a:key
-    if !pumvisible()
-        " workaround as no way to detect if completion is active
-        let char_before = s:vimim_get_char_before()
-        if s:onekey && s:menuless && char_before =~ '\W'
-            if key == "."       " 4 for pagedown
-                let key = repeat('\<C-N>', 4)
-                let &titlestring = s:vimim_titlestring(4)
-            elseif key == ","   " 2 for pageup
-                let key = repeat('\<C-P>', 2)
-                let &titlestring = s:vimim_titlestring(-2)
-            endif
-        endif
-    elseif key =~ "[][]"
-        let key = s:vimim_square_bracket(key)
-    elseif key =~ "[=.]"
-        if &pumheight
-            let s:pageup_pagedown = 1
-            let key = g:vimim()
-        else
+    if pumvisible()
+        if key =~ "[][]"
+            let key = s:vimim_square_bracket(key)
+        elseif key =~ "[=.]"
             let key = '\<PageDown>'
-        endif
-    elseif key =~ "[-,]"
-        if &pumheight
-            let s:pageup_pagedown = -1
-            let key = g:vimim()
-        else
+            if &pumheight
+                let s:pageup_pagedown = 1
+                let key = g:vimim()
+            endif
+        elseif key =~ "[-,]"
             let key = '\<PageUp>'
+            if &pumheight
+                let s:pageup_pagedown = -1
+                let key = g:vimim()
+            endif
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -938,15 +926,17 @@ endfunction
 function! <SID>vimim_onekey_map(key)
     let hjkl = a:key
     if !pumvisible()
-        return hjkl
-    endif
-    if hjkl == "'"  " cycle through BB/GG/SS/00 clouds
-        if s:keyboard[-1:] != "'"
-            let s:onekey = s:onekey==1 ? 2 : 3
-            call s:vimim_last_quote("action_on_omni_popup")
+        " workaround as no way to detect if completion is active
+        let char_before = s:vimim_get_char_before()
+        if s:onekey && s:menuless && char_before =~ '\W'
+            if hjkl == ">"       " 4 for pagedown
+                let hjkl = repeat('\<C-N>', 4)
+                let &titlestring = s:vimim_titlestring(4)
+            elseif hjkl == "<"   " 2 for pageup
+                let hjkl = repeat('\<C-P>', 2)
+                let &titlestring = s:vimim_titlestring(-2)
+            endif
         endif
-    elseif hjkl ==# ':'
-        let s:hjkl__ += 1
     elseif hjkl ==# '*'
         if &pumheight
             let s:popup_list = s:popup_list[:&pumheight-1]
@@ -958,8 +948,14 @@ function! <SID>vimim_onekey_map(key)
         let hjkl = '\<C-Y>' . s:punctuations[nr2char(char2nr(hjkl)-16)]
     elseif hjkl =~ "[/?]"
         let hjkl = s:vimim_menu_search(hjkl)
-    endif
-    if hjkl == a:key
+    elseif hjkl ==# ':'  " toggle simplified/traditional transfer
+        let s:hjkl__ += 1
+        let hjkl = g:vimim()
+    elseif hjkl == "'"   " cycle through BB/GG/SS/00 clouds
+        if s:keyboard[-1:] != "'"
+            let s:onekey = s:onekey==1 ? 2 : 3
+            call s:vimim_last_quote("action_on_omni_popup")
+        endif
         let hjkl = g:vimim()
     endif
     sil!exe 'sil!return "' . hjkl . '"'
