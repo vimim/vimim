@@ -2046,36 +2046,39 @@ function! <SID>vimim_onekey(tab)
 endfunction
 
 function! s:vimim_onekey_action(space)
+    let current_line = getline(".")
+    let one_before = current_line[col(".")-2]
+    let two_before = current_line[col(".")-3]
     let space = a:space ? " " : ""
     if s:seamless_positions == getpos(".")
         return space  " space is space after enter
-    endif
-    let onekey = s:vimim_onekey_evil_action()
-    if !empty(onekey)
-        sil!exe 'sil!return "' . onekey . '"'
+    elseif empty(s:ui.has_dot)
+        let onekey = s:vimim_onekey_evil(one_before, two_before)
+        if !empty(onekey)
+            sil!exe 'sil!return "' . onekey . '"'
+        endif
     endif
     let onekey = space
-    let one_before = getline(".")[col(".")-2]
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
         let &titlestring = s:logo
-    elseif empty(s:show_me_not) && s:menuless
-        let onekey = '\<C-N>' " use <Space> to cycle
+    elseif s:menuless && empty(s:show_me_not)
+        let onekey = '\<C-N>' " use Space to cycle
         let &titlestring = s:vimim_titlestring(1)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! s:vimim_onekey_evil_action()
+function! s:vimim_onekey_evil(one_before, two_before)
+    if a:one_before =~ s:valid_keyboard
+        return ""
+    elseif a:two_before =~ s:valid_keyboard
+        return " "
+    endif
     let onekey = ""
-    let current_line = getline(".")
-    let one_before = current_line[col(".")-2]
-    let two_before = current_line[col(".")-3]
-    if two_before =~# s:valid_keyboard || s:ui.has_dot
-        return onekey
-    elseif two_before == nr2char(44) && one_before == nr2char(44)
+    if a:two_before == nr2char(44) && a:one_before == nr2char(44)
         let onekey = "''''''" "  <==  , , comma comma for game
-    elseif two_before == nr2char(46) && one_before == nr2char(46)
+    elseif a:two_before == nr2char(46) && a:one_before == nr2char(46)
         let onekey = "'''''"  "  <==  . . dot dot for cjk
     endif
     if !empty(onekey) " [game] comma/dot => quotes => popup menu
@@ -2083,17 +2086,17 @@ function! s:vimim_onekey_evil_action()
     endif
     let punctuations = copy(s:punctuations)
     call extend(punctuations, s:evils)
-    if has_key(punctuations, one_before)
+    if has_key(punctuations, a:one_before)
         for char in keys(punctuations)
             " no transfer for punctuation after punctuation
-            if two_before ==# char || two_before =~# '\u'
+            if a:two_before ==# char || a:two_before =~# '\u'
                 return " "
             endif
         endfor
         " transfer English punctuation to Chinese punctuation
-        let bs = punctuations[one_before]
-            if one_before == "'" | let bs = <SID>vimim_get_quote(1)
-        elseif one_before == '"' | let bs = <SID>vimim_get_quote(2)
+        let bs = punctuations[a:one_before]
+            if a:one_before == "'" | let bs = <SID>vimim_get_quote(1)
+        elseif a:one_before == '"' | let bs = <SID>vimim_get_quote(2)
         endif
         let onekey = "\<BS>" . bs
     endif
