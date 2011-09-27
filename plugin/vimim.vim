@@ -11,7 +11,50 @@ let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.html'
 let s:url .= ' http://code.google.com/p/vimim/source/list'
 let s:url .= ' http://groups.google.com/group/vimim'
 
-let s:VimIM  = [" ====  introduction     ==== {{{"]
+" ============================================= }}}
+let s:VimIM  = [" ====  vimimrc sample   ==== {{{"]
+" =================================================
+
+" :let g:vimim_tab_as_onekey=1               " Tab键为点石成金
+" :let g:vimim_one_row_menu=1                " 缺省：菜单横排
+" :let g:vimim_custom_color=1                " 缺省：VimIM颜色
+" :let g:vimim_custom_color=0                " 关闭菜单颜色选项
+" :let g:vimim_chinese_input_mode='static'   " 中文静态输入模式
+" :let g:vimim_toggle_list='wubi,pinyin'     " 设定循环先后次序
+" :let g:vimim_plugin_folder=0               " 缺省是Vim plugin
+" :let g:vimim_chinese_punctuation=1         " 缺省：全角标点
+" :let g:vimim_ctrl_space_to_toggle=1        " 使用 ctrl+space 开关输入法
+" :let g:vimim_ctrl_space_to_toggle=2        " 使用 ctrl+space 切换输入法
+" :let g:vimim_ctrl_space_to_toggle=3        " 使用 ctrl+space 点石成金
+" :let g:vimim_ctrl_h_to_toggle=1            " 使用 ctrl+h     开关输入法
+" :let g:vimim_ctrl_h_to_toggle=2            " 使用 ctrl+h     切换输入法
+" :let g:vimim_ctrl_h_to_toggle=3            " 使用 ctrl+h     点石成金
+" :let g:vimim_shuangpin='abc'               " 双拼：智能ABC
+" :let g:vimim_shuangpin='ms'                " 双拼：微软
+" :let g:vimim_shuangpin='nature'            " 双拼：自然码
+" :let g:vimim_shuangpin='plusplus'          " 双拼：拼音加加
+" :let g:vimim_shuangpin='purple'            " 双拼：紫光
+" :let g:vimim_shuangpin='flypy'             " 双拼：小鹤
+" :let g:vimim_cloud='baidu'                 " 缺省：百度云输入
+" :let g:vimim_cloud='google'                " 谷歌云输入
+" :let g:vimim_cloud='sogou'                 " 搜狗云输入
+" :let g:vimim_cloud='qq'                    " QQ云输入
+" :let g:vimim_cloud='sogou.dynamic'         " 搜狗纯云输入，动态
+" :let g:vimim_cloud='sogou.static'          " 搜狗纯云输入，静态
+" :let g:vimim_cloud='qq.fanti'              " QQ云输入，开启繁体
+" :let g:vimim_cloud='qq.mixture'            " QQ云输入，开启混合模式
+" :let g:vimim_cloud='qq.fuzzy'              " QQ云输入，开启模糊音
+" :let g:vimim_cloud='qq.wubi'               " QQ云输入，五笔
+" :let g:vimim_cloud='qq.shuangpin.abc'      " QQ云输入，双拼智能ABC
+" :let g:vimim_cloud='qq.shuangpin.ms'       " QQ云输入，双拼微软2003
+" :let g:vimim_cloud='qq.shuangpin.plusplus' " QQ云输入，双拼拼音加加
+" :let g:vimim_cloud='qq.shuangpin.purple'   " QQ云输入，双拼紫光拼音
+" :let g:vimim_cloud='qq.shuangpin.flypy'    " QQ云输入，双拼小鹤双拼
+" :let g:vimim_cloud='qq.shuangpin.nature'   " QQ云输入，双拼自然码
+" :let g:vimim_cloud=-1                      " 彻底关闭云输入
+
+" ============================================= }}}
+let s:VimIM += [" ====  introduction     ==== {{{"]
 " =================================================
 "    File: vimim.vim
 "  Author: vimim <vimim@googlegroups.com>
