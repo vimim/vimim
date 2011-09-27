@@ -932,6 +932,8 @@ function! <SID>vimim_onekey_map(key)
         " workaround as no way to detect if completion is active
         let char_before = s:vimim_get_char_before()
         if s:onekey && s:menuless && char_before =~ '\W'
+        \&& match(values(s:punctuations), char_before) < 0
+        \&& empty(s:pattern_not_found)
             if hjkl == ">"       " 4 for pagedown
                 let hjkl = repeat('\<C-N>', 4)
                 let &titlestring = s:vimim_titlestring(4)
@@ -2068,8 +2070,9 @@ function! s:vimim_onekey_action(space)
         let onekey = g:vimim()
         let &titlestring = s:logo
     elseif s:menuless && empty(s:show_me_not)
-        \&& char_before =~ '\W' && one_before !~ '\s'
+        \&& one_before !~ '\s' && char_before =~ '\W'
         \&& match(values(s:punctuations), char_before) < 0
+        \&& empty(s:pattern_not_found)
         let onekey = '\<C-N>' " use Space to cycle
         let &titlestring = s:vimim_titlestring(1)
     endif
@@ -2077,11 +2080,6 @@ function! s:vimim_onekey_action(space)
 endfunction
 
 function! s:vimim_onekey_evil(one_before, two_before)
-    if a:one_before =~ s:valid_keyboard
-        return ""
-    elseif a:two_before =~ s:valid_keyboard
-        return " "
-    endif
     let onekey = ""
     if a:two_before == nr2char(44) && a:one_before == nr2char(44)
         let onekey = "''''''" "  <==  , , comma comma for game
@@ -2091,13 +2089,19 @@ function! s:vimim_onekey_evil(one_before, two_before)
     if !empty(onekey) " [game] comma/dot => quotes => popup menu
         return "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
     endif
+    if a:one_before =~ "[0-9a-z]"
+        return ""
+    elseif a:two_before =~ "[0-9a-z]"
+        return " "
+    endif
     let punctuations = copy(s:punctuations)
     call extend(punctuations, s:evils)
     if has_key(punctuations, a:one_before)
         for char in keys(punctuations)
-            " no transfer for punctuation after punctuation
-            if a:two_before ==# char || a:two_before =~# '\u'
-                return " "
+            if a:two_before ==# "'"
+                return ""  " no nothing if double quotes
+            elseif a:two_before ==# char || a:two_before =~# '\u'
+                return " " " no transfer if punctuation after punctuation
             endif
         endfor
         " transfer English punctuation to Chinese punctuation
