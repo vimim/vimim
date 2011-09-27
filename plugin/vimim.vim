@@ -842,29 +842,6 @@ function! s:vimim_dictionary_punctuations()
     endif
 endfunction
 
-function! s:vimim_titlestring(cursor)
-    let hightlight = s:left . '\|' . s:right
-    let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
-    let words = split(titlestring)
-    let cursor = s:menuless_cursor + a:cursor
-    let hightlight = get(words, cursor)
-    if hightlight == s:space
-        let cursor += 1
-    endif
-    let hightlight = get(words, cursor)
-    let keyboard = get(words,0)
-    if !empty(hightlight) && keyboard !~ 'VimIM'
-        let left = join(words[1 : cursor-1])
-        let right = join(words[cursor+1 :])
-        let hightlight = s:left . hightlight . s:right
-        let titlestring = keyboard .'  '. left . hightlight . right
-        let s:menuless_cursor = cursor
-    else
-        let s:pattern_not_found = 1
-    endif
-    return titlestring
-endfunction
-
 function! <SID>vimim_page_map(key)
     let key = a:key
     if pumvisible()
@@ -929,20 +906,9 @@ endfunction
 function! <SID>vimim_onekey_map(key)
     let hjkl = a:key
     if !pumvisible()
-        " workaround as no way to detect if completion is active
-        let char_before = s:vimim_get_char_before()
-        if s:onekey && s:menuless && char_before =~ '\W'
-        \&& match(values(s:punctuations), char_before) < 0
-        \&& empty(s:pattern_not_found)
-            if hjkl == ">"       " 4 for pagedown
-                let hjkl = repeat('\<C-N>', 4)
-                let &titlestring = s:vimim_titlestring(4)
-            elseif hjkl == "<"   " 2 for pageup
-                let hjkl = repeat('\<C-P>', 2)
-                let &titlestring = s:vimim_titlestring(-2)
-            endif
-        endif
-    elseif hjkl ==# '*'
+        return hjkl
+    endif
+    if hjkl ==# '*'
         if &pumheight
             let s:popup_list = s:popup_list[:&pumheight-1]
         endif
@@ -2014,7 +1980,7 @@ function! <SID>vimim_onekey(tab)
     " (4) <OneKey> in omni window   => print out, if hjkl
     let s:chinese_mode = 'onekey'
     let onekey = '\<Left>\<Right>'
-    let before = getline(".")[col(".")-2]
+    let one_before = getline(".")[col(".")-2]
     if s:onekey
         if pumvisible()
             if empty(&pumheight)
@@ -2025,22 +1991,27 @@ function! <SID>vimim_onekey(tab)
             endif
         elseif s:menuless
             let s:menuless = 0
-            if before =~# s:valid_keyboard
+            if one_before =~# s:valid_keyboard
                 let onekey = g:vimim()
             endif
         else
             let s:menuless = 1
         endif
         let &titlestring = s:logo
-    elseif empty(a:tab) ? 0 : empty(before)||before=~'\s' ? 1 : 0
+    elseif a:tab == 1 && (empty(one_before) || one_before=~'\s')
         let onekey = '\t'
     else
         sil!call s:vimim_super_reset()
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab ? 1 : 0
         sil!call s:vimim_start()
-        sil!call s:vimim_onekey_mapping()
-        let onekey = s:vimim_onekey_action(0)
+        if a:tab == 2
+            inoremap < <C-R>=<SID>vimim_menuless_page("<")<CR>
+            inoremap > <C-R>=<SID>vimim_menuless_page(">")<CR>
+        else
+            sil!call s:vimim_onekey_mapping()
+            let onekey = s:vimim_onekey_action(0)
+        endif
     endif
     if s:menuless
         let cloud  = s:vimim_chinese(s:cloud_default)
@@ -2052,12 +2023,12 @@ function! <SID>vimim_onekey(tab)
 endfunction
 
 function! s:vimim_onekey_action(space)
+    let space = a:space ? " " : ""
     let current_line = getline(".")
     let one_before = current_line[col(".")-2]
     let two_before = current_line[col(".")-3]
-    let space = a:space ? " " : ""
     if s:seamless_positions == getpos(".")
-        return space  " space is space after enter
+        return space  "  space is space after enter
     elseif empty(s:ui.has_dot)
         let onekey = s:vimim_onekey_evil(one_before, two_before)
         if !empty(onekey)
@@ -2069,14 +2040,56 @@ function! s:vimim_onekey_action(space)
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
         let &titlestring = s:logo
-    elseif s:menuless && empty(s:show_me_not)
-        \&& one_before !~ '\s' && char_before =~ '\W'
-        \&& match(values(s:punctuations), char_before) < 0
-        \&& empty(s:pattern_not_found)
-        let onekey = '\<C-N>' " use Space to cycle
-        let &titlestring = s:vimim_titlestring(1)
+    elseif one_before !~ '\s'
+        let onekey = <SID>vimim_menuless_page("_")
     endif
     sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+function! <SID>vimim_menuless_page(key)
+    let key = a:key
+    " workaround as no way to detect if completion is active
+    let char_before = s:vimim_get_char_before()
+    if s:onekey && s:menuless && empty(s:show_me_not)
+    \&& empty(s:pattern_not_found) && char_before =~ '\W'
+    \&& match(values(s:punctuations), char_before) < 0
+        if key == "_"           " use space to cycle
+            let key = repeat('\<C-N>', 1)
+            let &titlestring = s:vimim_titlestring(1)
+        elseif key == "<"       " 2 for pageup
+            let key = repeat('\<C-P>', 2)
+            let &titlestring = s:vimim_titlestring(-2)
+        elseif key == ">"       " 4 for pagedown
+            let key = repeat('\<C-N>', 4)
+            let &titlestring = s:vimim_titlestring(4)
+        endif
+    elseif key == "_"
+        let key = " "
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! s:vimim_titlestring(cursor)
+    let hightlight = s:left . '\|' . s:right
+    let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
+    let words = split(titlestring)
+    let cursor = s:menuless_cursor + a:cursor
+    let hightlight = get(words, cursor)
+    if hightlight == s:space
+        let cursor += 1
+    endif
+    let hightlight = get(words, cursor)
+    let keyboard = get(words,0)
+    if !empty(hightlight) && keyboard !~ 'VimIM'
+        let left = join(words[1 : cursor-1])
+        let right = join(words[cursor+1 :])
+        let hightlight = s:left . hightlight . s:right
+        let titlestring = keyboard .'  '. left . hightlight . right
+        let s:menuless_cursor = cursor
+    else
+        let s:pattern_not_found = 1
+    endif
+    return titlestring
 endfunction
 
 function! s:vimim_onekey_evil(one_before, two_before)
@@ -2136,7 +2149,6 @@ function! g:vimim_onekey_dump()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
-" todo
 function! s:vimim_get_cursor()
     let current_line = getline(".")
     let current_column = col(".")-1
@@ -4680,6 +4692,7 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
 function! s:vimim_imap_for_onekey()
+    inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
     inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
     imap<silent><C-^>     <Plug>VimimOneKey
     xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
@@ -4729,7 +4742,7 @@ function! s:vimim_imap_ctrl_h_ctrl_space()
 endfunction
 
 function! s:vimim_plug_and_play()
-    :nmap  gi  i<C-^><C-^>
+    :nmap  gi  i<Plug>VimimOneAct
     :noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
