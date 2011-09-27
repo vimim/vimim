@@ -11,10 +11,8 @@ let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.html'
 let s:url .= ' http://code.google.com/p/vimim/source/list'
 let s:url .= ' http://groups.google.com/group/vimim'
 
-" ============================================= }}}
-let s:VimIM  = [" ====  vimimrc sample   ==== {{{"]
+let s:VimIM  = [" ====  vimimrc samples  ==== {{{"]
 " =================================================
-
 " :let g:vimim_tab_as_onekey=1               " Tab键为点石成金
 " :let g:vimim_one_row_menu=1                " 缺省：菜单横排
 " :let g:vimim_custom_color=1                " 缺省：VimIM颜色
