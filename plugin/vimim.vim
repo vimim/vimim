@@ -1644,25 +1644,25 @@ function! g:vimim_bracket(offset)
 endfunction
 
 function! <SID>vimim_esc()
-    let hjkl = '\<Esc>'
+    let key = '\<Esc>'
     if s:onekey
         sil!call s:vimim_stop()
     elseif pumvisible()
-        let hjkl = s:vimim_onekey_esc()
+        let key = s:vimim_onekey_esc()
         sil!call s:vimim_reset_after_insert()
     endif
-    sil!exe 'sil!return "' . hjkl . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_onekey_esc()
-    let hjkl = '\<C-E>'
+    let key = '\<C-E>'
     let column_start = s:start_column_before
     let column_end = col(".") - 1
     let range = column_end - column_start
     if range
-        let hjkl .= repeat("\<BS>", range)
+        let key .= repeat("\<BS>", range)
     endif
-    return hjkl
+    return key
 endfunction
 
 function! <SID>vimim_backspace()
@@ -1677,12 +1677,15 @@ endfunction
 function! <SID>vimim_enter()
     " (1) single <Enter> after English => seamless
     " (2) otherwise, or double <Enter> => <Enter>
+    " (3) [menuless]    double <Enter> => <Space>
     let key = ""
     let one_before = getline(".")[col(".")-2]
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
-    elseif one_before =~# s:valid_keyboard || s:menuless
+    elseif s:menuless
+        let s:smart_enter += 1
+    elseif one_before =~# s:valid_keyboard
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -1693,11 +1696,16 @@ function! <SID>vimim_enter()
     if s:smart_enter == 1
         let s:seamless_positions = getpos(".")
     elseif s:menuless
-        let key = s:smart_enter == 2 ? " " : "\<CR>"
+        if s:smart_enter == 2
+          let key = " "
+        else
+          let key = "\<CR>"
+          let s:smart_enter = 0
+        endif
     else
         let key = "\<CR>"
+        let s:smart_enter = s:smart_enter == 1 ? 1 : 0
     endif
-    let s:smart_enter = s:smart_enter == 1 ? 1 : 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -2005,12 +2013,16 @@ function! <SID>vimim_onekey(tab)
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
         sil!call s:vimim_start()
-        if a:tab == 2
-            inoremap < <C-R>=<SID>vimim_menuless_page("<")<CR>
-            inoremap > <C-R>=<SID>vimim_menuless_page(">")<CR>
-            if col("$") - col(".") < 2
-                let onekey = '\<Right>'
+        if a:tab == 2  " gi for menuless
+            let cursor = getline(".")[col(".")-1] =~ '\l' ? 2 : 4
+            if col(".") < 2
+                let onekey = '\<Right>\<Left>' " gi at the first column
+            elseif col("$") - col(".") < cursor
+                let onekey = '\<Right>'        " gi at end of cursor line
             endif
+            for _ in range(10)
+                exe 'inoremap<expr> '._.' <SID>vimim_menuless("'._.'")'
+            endfor
         else
             let onekey = s:vimim_onekey_action(0)
         endif
@@ -2045,28 +2057,21 @@ function! s:vimim_onekey_action(space)
         let onekey = g:vimim()
         let &titlestring = s:logo
     elseif one_before !~ '\s'
-        let onekey = <SID>vimim_menuless_page("_")
+        let onekey = <SID>vimim_menuless(space)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! <SID>vimim_menuless_page(key)
-    let key = a:key == "_" ? " " : a:key
+function! <SID>vimim_menuless(key)
+    let key = a:key == " " ? 2 : a:key
     " workaround as no way to detect if completion is active
     let char_before = s:vimim_get_char_before()
     if s:onekey && s:menuless && empty(s:show_me_not)
     \&& empty(s:pattern_not_found) && char_before =~ '\W'
     \&& match(values(s:punctuations_all), char_before) < 0
-        if key == " "           " use space to cycle
-            let key = repeat('\<C-N>', 1)
-            let &titlestring = s:vimim_titlestring(1)
-        elseif key == "<"       " 2 for pageup
-            let key = repeat('\<C-P>', 2)
-            let &titlestring = s:vimim_titlestring(-2)
-        elseif key == ">"       " 4 for pagedown
-            let key = repeat('\<C-N>', 4)
-            let &titlestring = s:vimim_titlestring(4)
-        endif
+        let cursor = key < 1 ? 9 : key-1
+        let key = repeat('\<C-N>', cursor)
+        let &titlestring = s:vimim_titlestring(cursor)
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2077,19 +2082,16 @@ function! s:vimim_titlestring(cursor)
     let words = split(titlestring)
     let cursor = s:cursor_at_menuless + a:cursor
     let hightlight = get(words, cursor)
-    if hightlight == s:space
-        let cursor += 1
-    endif
-    let hightlight = get(words, cursor)
-    let keyboard = get(words,0)
-    if !empty(hightlight) && keyboard !~ 'VimIM'
+    if empty(hightlight)
+        let s:pattern_not_found = 1
+    else
         let left = join(words[1 : cursor-1])
         let right = join(words[cursor+1 :])
+        let hightlight = substitute(hightlight, '\d', '', '')
         let hightlight = s:left . hightlight . s:right
+        let keyboard = get(words,0)
         let titlestring = keyboard .'  '. left . hightlight . right
         let s:cursor_at_menuless = cursor
-    else
-        let s:pattern_not_found = 1
     endif
     return titlestring
 endfunction
@@ -4556,10 +4558,7 @@ function! s:vimim_popupmenu_list(match_list)
             let labeling = color ? printf('%2s ',label2) : ""
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
-            let label_in_one_row = " "
-            if len(split(s:english.line)) == label  " English flag
-                let label_in_one_row = " " . s:space . " "
-            endif
+            let label_in_one_row = label < 11 ? label2[:-2] : ""
             if empty(s:menuless)
                 let label_in_one_row = label . "."
             endif
