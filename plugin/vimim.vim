@@ -1682,7 +1682,7 @@ function! <SID>vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
-    elseif one_before =~# s:valid_keyboard
+    elseif one_before =~# s:valid_keyboard || s:menuless
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -1692,10 +1692,12 @@ function! <SID>vimim_enter()
     endif
     if s:smart_enter == 1
         let s:seamless_positions = getpos(".")
+    elseif s:menuless
+        let key = s:smart_enter == 2 ? " " : "\<CR>"
     else
         let key = "\<CR>"
-        let s:smart_enter = 0
     endif
+    let s:smart_enter = s:smart_enter == 1 ? 1 : 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -2006,18 +2008,21 @@ function! <SID>vimim_onekey(tab)
         if a:tab == 2
             inoremap < <C-R>=<SID>vimim_menuless_page("<")<CR>
             inoremap > <C-R>=<SID>vimim_menuless_page(">")<CR>
+            if col("$") - col(".") < 2
+                let onekey = '\<Right>'
+            endif
         else
             let onekey = s:vimim_onekey_action(0)
         endif
     endif
     if s:menuless
-        if s:menuless < 2
-            sil!call s:vimim_onekey_mapping()
-        endif
         let cloud  = s:vimim_chinese(s:cloud_default)
         let cloud .= s:vimim_chinese('cloud') . s:space
         let cloud  = s:onekey > 1 ? cloud : s:space
         let &titlestring = s:logo . s:space . cloud . s:today
+    endif
+    if s:menuless < 2
+        sil!call s:vimim_onekey_mapping()
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
