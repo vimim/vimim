@@ -838,6 +838,8 @@ function! s:vimim_dictionary_punctuations()
         let s:evils["'"] = "‘’"
         let s:evils['"'] = "“”"
     endif
+    let s:punctuations_all = copy(s:punctuations)
+    call extend(s:punctuations_all, s:evils)
 endfunction
 
 function! <SID>vimim_page_map(key)
@@ -2046,13 +2048,13 @@ function! s:vimim_onekey_action(space)
 endfunction
 
 function! <SID>vimim_menuless_page(key)
-    let key = a:key
+    let key = a:key == "_" ? " " : a:key
     " workaround as no way to detect if completion is active
     let char_before = s:vimim_get_char_before()
     if s:onekey && s:menuless && empty(s:show_me_not)
     \&& empty(s:pattern_not_found) && char_before =~ '\W'
-    \&& match(values(s:punctuations), char_before) < 0
-        if key == "_"           " use space to cycle
+    \&& match(values(s:punctuations_all), char_before) < 0
+        if key == " "           " use space to cycle
             let key = repeat('\<C-N>', 1)
             let &titlestring = s:vimim_titlestring(1)
         elseif key == "<"       " 2 for pageup
@@ -2062,8 +2064,6 @@ function! <SID>vimim_menuless_page(key)
             let key = repeat('\<C-N>', 4)
             let &titlestring = s:vimim_titlestring(4)
         endif
-    elseif key == "_"
-        let key = " "
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2106,10 +2106,8 @@ function! s:vimim_onekey_evil(one_before, two_before)
     elseif a:two_before =~ "[0-9a-z]"
         return " "
     endif
-    let punctuations = copy(s:punctuations)
-    call extend(punctuations, s:evils)
-    if has_key(punctuations, a:one_before)
-        for char in keys(punctuations)
+    if has_key(s:punctuations_all, a:one_before)
+        for char in keys(s:punctuations_all)
             if a:two_before ==# "'"
                 return ""  " no nothing if double quotes
             elseif a:two_before ==# char || a:two_before =~# '\u'
@@ -2117,9 +2115,11 @@ function! s:vimim_onekey_evil(one_before, two_before)
             endif
         endfor
         " transfer English punctuation to Chinese punctuation
-        let bs = punctuations[a:one_before]
-            if a:one_before == "'" | let bs = <SID>vimim_get_quote(1)
-        elseif a:one_before == '"' | let bs = <SID>vimim_get_quote(2)
+        let bs = s:punctuations_all[a:one_before]
+        if a:one_before == "'" 
+            let bs = <SID>vimim_get_quote(1)
+        elseif a:one_before == '"' 
+            let bs = <SID>vimim_get_quote(2)
         endif
         let onekey = "\<BS>" . bs
     endif
@@ -4279,7 +4279,6 @@ endfunction
 function! s:vimim_reset_before_omni()
     let s:english.line = ""
     let s:show_me_not = 0
-    let s:pattern_not_found = 0
 endfunction
 
 function! s:vimim_reset_after_insert()
