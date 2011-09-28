@@ -1671,6 +1671,7 @@ function! <SID>vimim_backspace()
     if pumvisible()
         let backspace .= g:vimim()
     endif
+    call s:vimim_get_menuless_title()
     sil!exe 'sil!return "' . backspace . '"'
 endfunction
 
@@ -1706,6 +1707,7 @@ function! <SID>vimim_enter()
         let key = "\<CR>"
         let s:smart_enter = s:smart_enter == 1 ? 1 : 0
     endif
+    call s:vimim_get_menuless_title()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1987,7 +1989,7 @@ function! <SID>vimim_onekey(tab)
     " (3) <OneKey> in omni window   => start menuless, if input
     " (4) <OneKey> in omni window   => print out, if hjkl
     let s:chinese_mode = 'onekey'
-    let onekey = '\<Left>\<Right>'
+    let onekey = '\<Right>\<Left>'
     let one_before = getline(".")[col(".")-2]
     if s:onekey
         if pumvisible()
@@ -2005,7 +2007,7 @@ function! <SID>vimim_onekey(tab)
         else
             let s:menuless = 1
         endif
-        let &titlestring = s:logo
+        call s:vimim_get_menuless_title()
     elseif a:tab == 1 && (empty(one_before) || one_before=~'\s')
         let onekey = '\t'
     else
@@ -2014,9 +2016,9 @@ function! <SID>vimim_onekey(tab)
         let s:menuless = a:tab
         sil!call s:vimim_start()
         if a:tab == 2  " gi for menuless
-            let cursor = getline(".")[col(".")-1] =~ '\l' ? 2 : 4
-            if col(".") < 2
-                let onekey = '\<Right>\<Left>' " gi at the first column
+            let cursor = getline(".")[col(".")-1] =~ '\w' ? 2 : 4
+            if col(".") < 2 && line(".") > 1
+                let onekey = '\<Left>\<Right>' " gi at the first column
             elseif col("$") - col(".") < cursor
                 let onekey = '\<Right>'        " gi at end of cursor line
             endif
@@ -2027,16 +2029,22 @@ function! <SID>vimim_onekey(tab)
             let onekey = s:vimim_onekey_action(0)
         endif
     endif
+    call s:vimim_get_menuless_title()
+    if s:menuless < 2
+        sil!call s:vimim_onekey_mapping()
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+function! s:vimim_get_menuless_title()
     if s:menuless
         let cloud  = s:vimim_chinese(s:cloud_default)
         let cloud .= s:vimim_chinese('cloud') . s:space
         let cloud  = s:onekey > 1 ? cloud : s:space
         let &titlestring = s:logo . s:space . cloud . s:today
-    endif
-    if s:menuless < 2
-        sil!call s:vimim_onekey_mapping()
-    endif
-    sil!exe 'sil!return "' . onekey . '"'
+    else
+        let &titlestring = s:logo
+    end
 endfunction
 
 function! s:vimim_onekey_action(space)
@@ -2063,12 +2071,13 @@ function! s:vimim_onekey_action(space)
 endfunction
 
 function! <SID>vimim_menuless(key)
-    let key = a:key == " " ? 2 : a:key
     " workaround as no way to detect if completion is active
+    let key = a:key
     let char_before = s:vimim_get_char_before()
     if s:onekey && s:menuless && empty(s:show_me_not)
     \&& empty(s:pattern_not_found) && char_before =~ '\W'
     \&& match(values(s:punctuations_all), char_before) < 0
+        let key = key == " " ? 2 : key
         let cursor = key < 1 ? 9 : key-1
         let key = repeat('\<C-N>', cursor)
         let &titlestring = s:vimim_titlestring(cursor)
