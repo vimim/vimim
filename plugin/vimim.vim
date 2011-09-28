@@ -32,17 +32,17 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 function! s:vimim_egg_vimimhelp()
     let eggs = []
     let url = split(s:url)
-    call add(eggs, '默认热键：　i_CTRL-^　点石成金       ')
-    call add(eggs, '默认热键：　i_CTRL-\　中文输入模式   ')
-    call add(eggs, '默认热键：　n 　　　　无菜单中文搜索 ')
-    call add(eggs, '默认热键：　gi　　　　无菜单中文输入 ')
-    call add(eggs, "　 ")
-    call add(eggs, "论坛邮箱 " . get(url,0) . ' ' )
-    call add(eggs, "官方网址 " . get(url,1) . ' ' )
-    call add(eggs, "最新程式 " . get(url,2) . ' ' )
-    call add(eggs, "最新主页 " . get(url,3) . ' ' )
-    call add(eggs, "错误报告 " . get(url,4) . ' ' )
-    call add(eggs, "新闻论坛 " . get(url,5) . ' ' )
+    call add(eggs, '默认热键：点石成金模式　　i_CTRL-^ ')
+    call add(eggs, '默认热键：中文输入模式　　i_CTRL-\ ')
+    call add(eggs, '默认热键：无菜单中文搜索　n 　　　 ')
+    call add(eggs, '默认热键：无菜单中文输入　gi　　　 ')
+    call add(eggs, '')
+    call add(eggs, "论坛邮箱： " . get(url,0) . ' ' )
+    call add(eggs, "官方网址： " . get(url,1) . ' ' )
+    call add(eggs, "最新程式： " . get(url,2) . ' ' )
+    call add(eggs, "最新主页： " . get(url,3) . ' ' )
+    call add(eggs, "错误报告： " . get(url,4) . ' ' )
+    call add(eggs, "新闻论坛： " . get(url,5) . ' ' )
     return eggs
 endfunction
 
