@@ -287,6 +287,11 @@ endfunction
 function! s:vimim_egg_vimimhelp()
     let eggs = []
     let url = split(s:url)
+    call add(eggs, '默认热键：　i_CTRL-^　点石成金       ')
+    call add(eggs, '默认热键：　i_CTRL-\　中文输入模式   ')
+    call add(eggs, '默认热键：　n 　　　　无菜单中文搜索 ')
+    call add(eggs, '默认热键：　gi　　　　无菜单中文输入 ')
+    call add(eggs, "　 ")
     call add(eggs, "论坛邮箱 " . get(url,0) . ' ' )
     call add(eggs, "官方网址 " . get(url,1) . ' ' )
     call add(eggs, "最新程式 " . get(url,2) . ' ' )
