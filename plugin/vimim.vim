@@ -426,7 +426,7 @@ function! s:vimim_game_hjkl(keyboard)
     elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif len(unname_register) > 8  " vimim_visual_ctrl6
+    elseif len(unname_register) > 3  " vimim_visual_ctrl6
         if keyboard ==# "''''"
             " [hjkl] display buffer inside the omni window
             let results = split(unname_register, '\n')
@@ -2743,37 +2743,35 @@ function! s:vimim_1to1(char)
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
-    let s:onekey = 1
-    sil!call s:vimim_start()
-    sil!call s:vimim_onekey_mapping()
-    let onekey = "\<C-R>=g:vimim()\<CR>"
-    let key = ""
     let column = virtcol("'<'") - 2
     let space = "\<C-R>=repeat(' '," . column . ")\<CR>"
     let lines = split(getreg('"'), '\n')
-    if len(lines) < 2
-        let line = get(lines,0)
-        let chinese = get(split(line,'\zs'),0)
-        if len(substitute(line,'.','.','g')) > 1
-            " highlight multiple chinese => show property of each
-            let s:seamless_positions = getpos("'<'")
-            let ddddd = char2nr(chinese)
-            let uddddd = "gvc" . 'u'.ddddd . onekey
-            let dddd   = "gvc" .    line   . onekey
-            let key = ddddd=~'\d\d\d\d\d' ? uddddd : dddd
-        else
-            " highlight one chinese => get antonym or number loop
-            let results = s:vimim_imode_chinese(line)
-            if !empty(results)
-                let line = get(results,0)
-                let key = "gvr" . line . "ga"
-            endif
-            if !empty(s:vimim_cjk())
-                let index = match(s:cjk.lines, "^".line)
-                let line = get(s:cjk.lines, index)
-                let &titlestring = s:space . line
-            endif
+    let line = get(lines,0)
+    let key = ""
+    if len(lines) == 1 && len(line) == s:multibyte
+        " highlight one chinese => get antonym or number loop
+        let results = s:vimim_imode_chinese(line)
+        if !empty(results)
+            let key = "gvr" . line . "ga"
         endif
+        if !empty(s:vimim_cjk())
+            let line = match(s:cjk.lines, "^".line)
+            let &titlestring = s:space . get(s:cjk.lines,line)
+        endif
+        return feedkeys(key)
+    endif
+    let s:onekey = 1
+    let onekey = "\<C-R>=g:vimim()\<CR>"
+    sil!call s:vimim_start()
+    sil!call s:vimim_onekey_mapping()
+    if len(lines) < 2
+        " highlight multiple chinese => show property of each
+        let chinese = get(split(line,'\zs'),0)
+        let s:seamless_positions = getpos("'<'")
+        let ddddd = char2nr(chinese)
+        let uddddd = "gvc" . 'u'.ddddd . onekey
+        let dddd   = "gvc" .    line   . onekey
+        let key = ddddd=~'\d\d\d\d\d' ? uddddd : dddd
     elseif match(lines,'\d')>-1 && join(lines) !~ '[^0-9[:blank:].]'
         " highlighted digital block => count*average=summary
         let new_positions = getpos(".")
