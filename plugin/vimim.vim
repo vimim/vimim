@@ -28,12 +28,23 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (3) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
 "  (4) [option] drop a standard directory: plugin/vimim/pinyin/
 "  (5) [option] drop a python2  database:  plugin/vimim.gbk.bsddb
-"
-" "VimIM Usage"
-"  (1) play in OneKey
-"      (in vim insert mode) trigger <C-6> to switch
-"  (2) play in Chinese dynamic/static mode
-"      (in vim insert mode) trigger <C-\> to switch
+ 
+function! s:vimim_egg_vimimhelp()
+    let eggs = []
+    let url = split(s:url)
+    call add(eggs, '默认热键：　i_CTRL-^　点石成金       ')
+    call add(eggs, '默认热键：　i_CTRL-\　中文输入模式   ')
+    call add(eggs, '默认热键：　n 　　　　无菜单中文搜索 ')
+    call add(eggs, '默认热键：　gi　　　　无菜单中文输入 ')
+    call add(eggs, "　 ")
+    call add(eggs, "论坛邮箱 " . get(url,0) . ' ' )
+    call add(eggs, "官方网址 " . get(url,1) . ' ' )
+    call add(eggs, "最新程式 " . get(url,2) . ' ' )
+    call add(eggs, "最新主页 " . get(url,3) . ' ' )
+    call add(eggs, "错误报告 " . get(url,4) . ' ' )
+    call add(eggs, "新闻论坛 " . get(url,5) . ' ' )
+    return eggs
+endfunction
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -238,23 +249,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
-
-function! s:vimim_egg_vimimhelp()
-    let eggs = []
-    let url = split(s:url)
-    call add(eggs, '默认热键：　i_CTRL-^　点石成金       ')
-    call add(eggs, '默认热键：　i_CTRL-\　中文输入模式   ')
-    call add(eggs, '默认热键：　n 　　　　无菜单中文搜索 ')
-    call add(eggs, '默认热键：　gi　　　　无菜单中文输入 ')
-    call add(eggs, "　 ")
-    call add(eggs, "论坛邮箱 " . get(url,0) . ' ' )
-    call add(eggs, "官方网址 " . get(url,1) . ' ' )
-    call add(eggs, "最新程式 " . get(url,2) . ' ' )
-    call add(eggs, "最新主页 " . get(url,3) . ' ' )
-    call add(eggs, "错误报告 " . get(url,4) . ' ' )
-    call add(eggs, "新闻论坛 " . get(url,5) . ' ' )
-    return eggs
-endfunction
 
 function! s:vimim_egg_vim()
     let eggs  = ["vi    文本編輯器"]
