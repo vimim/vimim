@@ -1080,7 +1080,7 @@ function! s:vimim_getsid(scriptname)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  python interface ==== {{{"]
+let s:VimIM += [" ====  python           ==== {{{"]
 " =================================================
 
 function! s:vimim_get_stone_from_bsddb(stone)
@@ -1370,7 +1370,7 @@ EOF
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  user   interface ==== {{{"]
+let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_statusline()
@@ -1703,7 +1703,7 @@ function! s:vimim_get_labeling(label)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  user   hjkl      ==== {{{"]
+let s:VimIM += [" ====  hjkl             ==== {{{"]
 " =================================================
 
 function! s:vimim_cache()
@@ -1934,7 +1934,7 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  menuless input   ==== {{{"]
+let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
 function! <SID>vimim_menuless(key)
