@@ -73,7 +73,7 @@ endfunction
 function! s:vimim_start_session()
     let s:logo = " VimIM 中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
-    let s:menuless_cursor = 0
+    let s:cursor_at_menuless = 0
     let s:pumheight = 10
     let s:pumheight_saved = &pumheight
     let s:smart_single_quotes = 1
@@ -771,25 +771,23 @@ function! s:vimim_get_char_before()
 endfunction
 
 function! s:vimim_get_same_char_before()
-    " [game]  马''''' => 马马
-    let char_before = s:vimim_get_char_before()
     let results = []
+    let char_before = s:vimim_get_char_before()
     if empty(char_before) || char_before !~ '\W'
         if !empty(s:vimim_cjk()) " 214 standard unicode index
             let results = s:vimim_cjk_match('u')
         endif
     else
-        let ddddd = char2nr(char_before)
+        let ddddd = char2nr(char_before) " [game] 马''''' => 马马
         let results = s:vimim_unicode_list(ddddd)
     endif
     return results
 endfunction
 
 function! s:vimim_get_number_before_plus_one()
-    " [game]  七''' => 七八
     let char_before = s:vimim_get_char_before()
     let results = s:vimim_imode_chinese(char_before)
-    if empty(results)
+    if empty(results)                    " [game] 七'''   => 七八
         for i in range(1,len(s:numbers))
             let i = i==10 ? 0 : i
             call add(results, get(split(s:numbers[i],'\zs'),1))
@@ -1651,7 +1649,7 @@ function! <SID>vimim_esc()
         sil!call s:vimim_stop()
     elseif pumvisible()
         let hjkl = s:vimim_onekey_esc()
-        sil!call g:vimim_reset_after_insert()
+        sil!call s:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
@@ -1963,7 +1961,7 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
             sil!call s:vimim_stop()
         else
             let key .= '\<C-R>=g:vimim()\<CR>'
-            sil!call g:vimim_reset_after_insert()
+            sil!call s:vimim_reset_after_insert()
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2003,17 +2001,19 @@ function! <SID>vimim_onekey(tab)
     else
         sil!call s:vimim_super_reset()
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
-        let s:menuless = a:tab ? 1 : 0
+        let s:menuless = a:tab
         sil!call s:vimim_start()
         if a:tab == 2
             inoremap < <C-R>=<SID>vimim_menuless_page("<")<CR>
             inoremap > <C-R>=<SID>vimim_menuless_page(">")<CR>
         else
-            sil!call s:vimim_onekey_mapping()
             let onekey = s:vimim_onekey_action(0)
         endif
     endif
     if s:menuless
+        if s:menuless < 2
+            sil!call s:vimim_onekey_mapping()
+        endif
         let cloud  = s:vimim_chinese(s:cloud_default)
         let cloud .= s:vimim_chinese('cloud') . s:space
         let cloud  = s:onekey > 1 ? cloud : s:space
@@ -2036,7 +2036,6 @@ function! s:vimim_onekey_action(space)
         endif
     endif
     let onekey = space
-    let char_before = s:vimim_get_char_before()
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
         let &titlestring = s:logo
@@ -2073,7 +2072,7 @@ function! s:vimim_titlestring(cursor)
     let hightlight = s:left . '\|' . s:right
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
     let words = split(titlestring)
-    let cursor = s:menuless_cursor + a:cursor
+    let cursor = s:cursor_at_menuless + a:cursor
     let hightlight = get(words, cursor)
     if hightlight == s:space
         let cursor += 1
@@ -2085,7 +2084,7 @@ function! s:vimim_titlestring(cursor)
         let right = join(words[cursor+1 :])
         let hightlight = s:left . hightlight . s:right
         let titlestring = keyboard .'  '. left . hightlight . right
-        let s:menuless_cursor = cursor
+        let s:cursor_at_menuless = cursor
     else
         let s:pattern_not_found = 1
     endif
@@ -2095,9 +2094,9 @@ endfunction
 function! s:vimim_onekey_evil(one_before, two_before)
     let onekey = ""
     if a:two_before == nr2char(44) && a:one_before == nr2char(44)
-        let onekey = "''''''" "  <==  , , comma comma for game
+        let onekey = "''''''"  "  <==  ,, comma comma for game
     elseif a:two_before == nr2char(46) && a:one_before == nr2char(46)
-        let onekey = "'''''"  "  <==  . . dot dot for cjk
+        let onekey = "'''''"   "  <==  .. dot dot for cjk
     endif
     if !empty(onekey) " [game] comma/dot => quotes => popup menu
         return "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
@@ -2155,18 +2154,21 @@ function! <SID>vimim_space()
     " (3) <Space> after popup menu           => insert Chinese
     " (4) <Space> after pattern not found    => <Space>
     let space = " "
+    if s:pattern_not_found
+        let s:pattern_not_found = 0
+        return space
+    endif
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
-        call g:vimim_reset_after_insert()
-    elseif s:chinese_mode !~ 'dynamic'
-        if s:chinese_mode =~ 'static'
-            let space = s:vimim_static_action(space)
-        elseif s:onekey
-            let space = s:vimim_onekey_action(1)
-        endif
-        let space .= g:vimim_reset_after_insert()
+    elseif s:chinese_mode =~ 'dynamic'
+        return space
+    elseif s:chinese_mode =~ 'static'
+        let space = s:vimim_static_action(space)
+    elseif s:onekey
+        let space = s:vimim_onekey_action(1)
     endif
+    call s:vimim_reset_after_insert()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
@@ -2216,7 +2218,7 @@ function! <SID>vimim_onekey_hjkl_map(key)
         return hjkl
     endif
     if hjkl ==# 'n'
-        call g:vimim_reset_after_insert()
+        call s:vimim_reset_after_insert()
     elseif hjkl ==# 'x'
         let hjkl = s:vimim_onekey_esc()
     elseif hjkl ==# 'm'
@@ -2241,6 +2243,7 @@ let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
 function! s:vimim_chinesemode_action()
+    sil!call s:vimim_set_plugin_conflict()
     sil!call s:vimim_super_reset()
     if s:vimim_chinese_punctuation > -1
         inoremap<expr><C-^> <SID>vimim_punctuation_toggle()
@@ -2280,8 +2283,7 @@ function! s:vimim_chinesemode_action()
         endif
         for char in map_list
             sil!exe 'inoremap <silent> ' . char .
-            \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>'
-            \ . char . '<C-R>=g:vimim_reset_after_insert()<CR>'
+            \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . char
         endfor
         if !pumvisible()
             let action = s:vimim_static_action(action)
@@ -2332,6 +2334,7 @@ function! s:vimim_chinese_mode(switch)
     let action = ""
     if empty(a:switch)
         sil!call s:vimim_stop()
+        sil!call s:vimim_restore_plugin_conflict()
         imap<silent><C-^> <Plug>VimimOneKey
         if mode() == 'n'
             :redraw!
@@ -4242,7 +4245,6 @@ function! s:vimim_start()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_set_special_property()
-    sil!call s:vimim_set_plugin_conflict()
     sil!call s:vimim_map_omni_page_label()
     inoremap <expr> <BS>     <SID>vimim_backspace()
     inoremap <expr> <Bslash> <SID>vimim_backslash()
@@ -4255,13 +4257,12 @@ function! s:vimim_stop()
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
     sil!call s:vimim_restore_imap()
-    sil!call s:vimim_restore_plugin_conflict()
 endfunction
 
 function! s:vimim_super_reset()
     sil!call s:vimim_reset_before_anything()
     sil!call s:vimim_reset_before_omni()
-    sil!call g:vimim_reset_after_insert()
+    sil!call s:vimim_reset_after_insert()
 endfunction
 
 function! s:vimim_reset_before_anything()
@@ -4278,9 +4279,10 @@ endfunction
 function! s:vimim_reset_before_omni()
     let s:english.line = ""
     let s:show_me_not = 0
+    let s:pattern_not_found = 0
 endfunction
 
-function! g:vimim_reset_after_insert()
+function! s:vimim_reset_after_insert()
     let s:hjkl_n = ""   " reset for no nothing
     let s:hjkl_h = 0    " ctrl-h for jsjsxx
     let s:hjkl_l = 0    " toggle label
@@ -4288,11 +4290,6 @@ function! g:vimim_reset_after_insert()
     let s:hjkl__ = 0    " toggle simplified/traditional
     let s:match_list = []
     let s:pageup_pagedown = 0
-    if s:pattern_not_found
-        let s:pattern_not_found = 0
-        return " "
-    endif
-    return ""
 endfunction
 
 function! g:vimim()
@@ -4401,7 +4398,7 @@ else
     " [egg] flirt with hjkl with onekey only
     if s:onekey
         let results = s:vimim_game_char_before(keyboard)
-        if empty(results)
+        if empty(results) && s:menuless < 2
             let results = s:vimim_game_hjkl(keyboard)
         endif
         if !empty(results)
@@ -4513,7 +4510,7 @@ function! s:vimim_popupmenu_list(match_list)
     else
         let s:match_list = lines
         if keyboard =~ "'" || tail =~ '\d'
-            let s:menuless = 0
+            let s:menuless = s:menuless > 1 ? 2 : 0
         endif
         if len(head) == 1 && !has_key(s:cjk.one, head)
             let s:cjk.one[head] = lines
@@ -4578,7 +4575,7 @@ function! s:vimim_popupmenu_list(match_list)
         if s:menuless && empty(s:show_me_not)
             let &pumheight = 1
             set completeopt=menu  " for direct insert
-            let s:menuless_cursor = 0
+            let s:cursor_at_menuless = 0
             let &titlestring = s:space . keyboard . '  ' . join(one_list)
             let &titlestring = s:vimim_titlestring(1)
         endif
