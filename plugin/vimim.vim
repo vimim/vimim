@@ -21,14 +21,13 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (2) slash search of Chinese without typing Chinese
 "  (3) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
 "  (4) support huge datafile if python interface to Vim is used
-"
 " "VimIM Installation"
-"  (1) drop this vim script to plugin/:    plugin/vimim.vim
+"  (1) drop the vimim.vim to the plugin/:  plugin/vimim.vim
 "  (2) [option] drop a English  datafile:  plugin/vimim.txt
 "  (3) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
 "  (4) [option] drop a standard directory: plugin/vimim/pinyin/
 "  (5) [option] drop a python2  database:  plugin/vimim.gbk.bsddb
- 
+
 function! s:vimim_egg_vimimhelp()
     let eggs = []
     let url = split(s:url)
@@ -2115,9 +2114,9 @@ function! s:vimim_onekey_evil(one_before, two_before)
         endfor
         " transfer English punctuation to Chinese punctuation
         let bs = s:punctuations_all[a:one_before]
-        if a:one_before == "'" 
+        if a:one_before == "'"
             let bs = <SID>vimim_get_quote(1)
-        elseif a:one_before == '"' 
+        elseif a:one_before == '"'
             let bs = <SID>vimim_get_quote(2)
         endif
         let onekey = "\<BS>" . bs
