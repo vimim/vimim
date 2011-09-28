@@ -1665,52 +1665,6 @@ function! s:vimim_onekey_esc()
     return key
 endfunction
 
-function! <SID>vimim_backspace()
-    " <BS> has special meaning in all 3 states of *popupmenu-completion*
-    let backspace = '\<Left>\<Delete>'
-    if pumvisible()
-        let backspace .= g:vimim()
-    endif
-    call s:vimim_get_menuless_title()
-    sil!exe 'sil!return "' . backspace . '"'
-endfunction
-
-function! <SID>vimim_enter()
-    " (1) single <Enter> after English => seamless
-    " (2) otherwise, or double <Enter> => <Enter>
-    " (3) [menuless]    double <Enter> => <Space>
-    let key = ""
-    let one_before = getline(".")[col(".")-2]
-    if pumvisible()
-        let key = "\<C-E>"
-        let s:smart_enter = 1
-    elseif s:menuless
-        let s:smart_enter += 1
-    elseif one_before =~# s:valid_keyboard
-        let s:smart_enter = 1
-        if s:seamless_positions == getpos(".")
-            let s:smart_enter += 1
-        endif
-    else
-        let s:smart_enter = 0
-    endif
-    if s:smart_enter == 1
-        let s:seamless_positions = getpos(".")
-    elseif s:menuless
-        if s:smart_enter == 2
-          let key = " "
-        else
-          let key = "\<CR>"
-          let s:smart_enter = 0
-        endif
-    else
-        let key = "\<CR>"
-        let s:smart_enter = s:smart_enter == 1 ? 1 : 0
-    endif
-    call s:vimim_get_menuless_title()
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 function! <SID>vimim_backslash()
     " (1) [insert] disable omni window
     " (2) [omni]   insert Chinese and remove Space before
@@ -1980,6 +1934,138 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  menuless input   ==== {{{"]
+" =================================================
+
+function! <SID>vimim_menuless(key)
+    " workaround as no way to detect if completion is active
+    let key = a:key
+    let char_before = s:vimim_get_char_before()
+    if s:onekey && s:menuless && empty(s:show_me_not)
+    \&& empty(s:pattern_not_found) && char_before =~ '\W'
+    \&& match(values(s:punctuations_all), char_before) < 0
+        let cursor = a:key==" " ? 1 : key < 1 ? 9 : key-1
+        let key = repeat('\<C-N>', cursor)
+        call s:vimim_titlestring(cursor)
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! s:vimim_titlestring(cursor)
+    let hightlight = s:left . '\|' . s:right
+    let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
+    let words = split(titlestring)
+    let cursor = s:cursor_at_menuless + a:cursor
+    let hightlight = get(words, cursor)
+    if empty(hightlight)
+        let s:pattern_not_found = 1
+    else
+        let left = join(words[1 : cursor-1])
+        let right = join(words[cursor+1 :])
+        let hightlight = substitute(hightlight, '\d', '', '')
+        let hightlight = s:left . hightlight . s:right
+        let keyboard = get(words,0)
+        let titlestring = keyboard .'  '. left . hightlight . right
+        let s:cursor_at_menuless = cursor
+    endif
+    let &titlestring = titlestring
+endfunction
+
+function! s:vimim_get_menuless_title()
+    let &titlestring = s:logo
+    if s:menuless
+        let cloud  = s:vimim_chinese(s:cloud_default)
+        let cloud .= s:vimim_chinese('cloud') . s:space
+        let cloud  = s:onekey > 1 ? cloud : s:space
+        let &titlestring = s:logo . s:space . cloud . s:today
+    end
+endfunction
+
+function! s:vimim_menuless_cursor()
+    let onekey = '\<Right>\<Left>'
+    if col(".") < 2 && line(".") > 1
+        let onekey = '\<Left>\<Right>' " gi at the first column
+    endif
+    if s:menuless > 1
+        let cursor = getline(".")[col(".")-1] =~ '\w' ? 2 : 4
+        if col("$") - col(".") < cursor
+            let onekey = '\<Right>'    " gi at end of cursor line
+        endif
+    endif
+    return onekey
+endfunction
+
+function! <SID>vimim_space()
+    " (1) <Space> after English (valid keys) => trigger keycode menu
+    " (2) <Space> after English punctuation  => get Chinese punctuation
+    " (3) <Space> after popup menu           => insert Chinese
+    " (4) <Space> after pattern not found    => <Space>
+    let space = " "
+    if s:pattern_not_found
+        let s:pattern_not_found = 0
+        return space
+    endif
+    if pumvisible()
+        let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
+        let s:has_pumvisible = 1
+    elseif s:chinese_mode =~ 'dynamic'
+        return space
+    elseif s:chinese_mode =~ 'static'
+        let space = s:vimim_static_action(space)
+    elseif s:onekey
+        let space = s:vimim_onekey_action(1)
+    endif
+    call s:vimim_reset_after_insert()
+    sil!exe 'sil!return "' . space . '"'
+endfunction
+
+function! <SID>vimim_backspace()
+    " <BS> has special meaning in all 3 states of *popupmenu-completion*
+    let backspace = '\<Left>\<Delete>'
+    if pumvisible()
+        let backspace .= g:vimim()
+    endif
+    call s:vimim_get_menuless_title()
+    sil!exe 'sil!return "' . backspace . '"'
+endfunction
+
+function! <SID>vimim_enter()
+    " (1) single <Enter> after English => seamless
+    " (2) otherwise, or double <Enter> => <Enter>
+    " (3) [menuless]    double <Enter> => <Space>
+    let key = ""
+    let one_before = getline(".")[col(".")-2]
+    if pumvisible()
+        let key = "\<C-E>"
+        let s:smart_enter = 1
+    elseif s:menuless
+        let s:smart_enter += 1
+    elseif one_before =~# s:valid_keyboard
+        let s:smart_enter = 1
+        if s:seamless_positions == getpos(".")
+            let s:smart_enter += 1
+        endif
+    else
+        let s:smart_enter = 0
+    endif
+    if s:smart_enter == 1
+        let s:seamless_positions = getpos(".")
+    elseif s:menuless
+        if s:smart_enter == 2
+          let key = " "
+        else
+          let key = "\<CR>"
+          let s:smart_enter = 0
+        endif
+    else
+        let key = "\<CR>"
+        let s:smart_enter = s:smart_enter == 1 ? 1 : 0
+    endif
+    call s:vimim_get_menuless_title()
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
@@ -1989,7 +2075,7 @@ function! <SID>vimim_onekey(tab)
     " (3) <OneKey> in omni window   => start menuless, if input
     " (4) <OneKey> in omni window   => print out, if hjkl
     let s:chinese_mode = 'onekey'
-    let onekey = '\<Right>\<Left>'
+    let onekey = s:vimim_menuless_cursor()
     let one_before = getline(".")[col(".")-2]
     if s:onekey
         if pumvisible()
@@ -2015,13 +2101,8 @@ function! <SID>vimim_onekey(tab)
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
         sil!call s:vimim_start()
-        if a:tab == 2  " gi for menuless
-            let cursor = getline(".")[col(".")-1] =~ '\w' ? 2 : 4
-            if col(".") < 2 && line(".") > 1
-                let onekey = '\<Left>\<Right>' " gi at the first column
-            elseif col("$") - col(".") < cursor
-                let onekey = '\<Right>'        " gi at end of cursor line
-            endif
+        if a:tab == 2
+            let onekey = s:vimim_menuless_cursor()
             for _ in range(10)
                 exe 'inoremap<expr> '._.' <SID>vimim_menuless("'._.'")'
             endfor
@@ -2034,17 +2115,6 @@ function! <SID>vimim_onekey(tab)
         sil!call s:vimim_onekey_mapping()
     endif
     sil!exe 'sil!return "' . onekey . '"'
-endfunction
-
-function! s:vimim_get_menuless_title()
-    if s:menuless
-        let cloud  = s:vimim_chinese(s:cloud_default)
-        let cloud .= s:vimim_chinese('cloud') . s:space
-        let cloud  = s:onekey > 1 ? cloud : s:space
-        let &titlestring = s:logo . s:space . cloud . s:today
-    else
-        let &titlestring = s:logo
-    end
 endfunction
 
 function! s:vimim_onekey_action(space)
@@ -2068,41 +2138,6 @@ function! s:vimim_onekey_action(space)
         let onekey = <SID>vimim_menuless(space)
     endif
     sil!exe 'sil!return "' . onekey . '"'
-endfunction
-
-function! <SID>vimim_menuless(key)
-    " workaround as no way to detect if completion is active
-    let key = a:key
-    let char_before = s:vimim_get_char_before()
-    if s:onekey && s:menuless && empty(s:show_me_not)
-    \&& empty(s:pattern_not_found) && char_before =~ '\W'
-    \&& match(values(s:punctuations_all), char_before) < 0
-        let key = key == " " ? 2 : key
-        let cursor = key < 1 ? 9 : key-1
-        let key = repeat('\<C-N>', cursor)
-        let &titlestring = s:vimim_titlestring(cursor)
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! s:vimim_titlestring(cursor)
-    let hightlight = s:left . '\|' . s:right
-    let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
-    let words = split(titlestring)
-    let cursor = s:cursor_at_menuless + a:cursor
-    let hightlight = get(words, cursor)
-    if empty(hightlight)
-        let s:pattern_not_found = 1
-    else
-        let left = join(words[1 : cursor-1])
-        let right = join(words[cursor+1 :])
-        let hightlight = substitute(hightlight, '\d', '', '')
-        let hightlight = s:left . hightlight . s:right
-        let keyboard = get(words,0)
-        let titlestring = keyboard .'  '. left . hightlight . right
-        let s:cursor_at_menuless = cursor
-    endif
-    return titlestring
 endfunction
 
 function! s:vimim_onekey_evil(one_before, two_before)
@@ -2160,30 +2195,6 @@ function! g:vimim_onekey_dump()
     call setpos(".", saved_position)
     sil!call s:vimim_stop()
     sil!exe "sil!return '\<Esc>'"
-endfunction
-
-function! <SID>vimim_space()
-    " (1) <Space> after English (valid keys) => trigger keycode menu
-    " (2) <Space> after English punctuation  => get Chinese punctuation
-    " (3) <Space> after popup menu           => insert Chinese
-    " (4) <Space> after pattern not found    => <Space>
-    let space = " "
-    if s:pattern_not_found
-        let s:pattern_not_found = 0
-        return space
-    endif
-    if pumvisible()
-        let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
-        let s:has_pumvisible = 1
-    elseif s:chinese_mode =~ 'dynamic'
-        return space
-    elseif s:chinese_mode =~ 'static'
-        let space = s:vimim_static_action(space)
-    elseif s:onekey
-        let space = s:vimim_onekey_action(1)
-    endif
-    call s:vimim_reset_after_insert()
-    sil!exe 'sil!return "' . space . '"'
 endfunction
 
 function! s:vimim_onekey_mapping()
@@ -2265,7 +2276,7 @@ function! s:vimim_chinesemode_action()
     endif
     sil!call s:vimim_start()
     let action = ""
-    let &titlestring = s:logo . s:space . s:space . s:today
+    call s:vimim_get_menuless_title()
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
@@ -4587,7 +4598,7 @@ function! s:vimim_popupmenu_list(match_list)
             set completeopt=menu  " for direct insert
             let s:cursor_at_menuless = 0
             let &titlestring = s:space . keyboard . '  ' . join(one_list)
-            let &titlestring = s:vimim_titlestring(1)
+            call s:vimim_titlestring(1)
         endif
     elseif menu_in_one_row
         let popup_list = s:vimim_one_row(one_list[0:4], popup_list[0:4])
