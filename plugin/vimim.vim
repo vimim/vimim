@@ -836,8 +836,8 @@ function! s:vimim_dictionary_punctuations()
         let s:evils["'"] = "‘’"
         let s:evils['"'] = "“”"
     endif
-    let s:punctuations_all = copy(s:punctuations)
-    call extend(s:punctuations_all, s:evils)
+    let s:evils_all = copy(s:punctuations)
+    call extend(s:evils_all, s:evils)
 endfunction
 
 function! <SID>vimim_page_map(key)
@@ -1941,13 +1941,14 @@ function! <SID>vimim_menuless(key)
     " workaround as no way to detect if completion is active
     let key = a:key
     let char_before = s:vimim_get_char_before()
-    if s:onekey && s:menuless && empty(s:show_me_not)
-    \&& empty(s:pattern_not_found) && char_before =~ '\W'
-    \&& match(values(s:punctuations_all), char_before) < 0
+    if char_before =~ '\W' && match(values(s:evils_all),char_before)<0
+    \&& s:onekey && s:menuless && empty(s:smart_enter)
+    \&& empty(s:pattern_not_found) && empty(s:show_me_not)
         let cursor = a:key==" " ? 1 : key < 1 ? 9 : key-1
         let key = repeat('\<C-N>', cursor)
         call s:vimim_titlestring(cursor)
     endif
+    let s:smart_enter = 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -2038,9 +2039,7 @@ function! <SID>vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
-    elseif s:menuless
-        let s:smart_enter += 1
-    elseif one_before =~# s:valid_keyboard
+    elseif s:menuless || one_before =~# s:valid_keyboard
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -2050,16 +2049,9 @@ function! <SID>vimim_enter()
     endif
     if s:smart_enter == 1
         let s:seamless_positions = getpos(".")
-    elseif s:menuless
-        if s:smart_enter == 2
-          let key = " "
-        else
-          let key = "\<CR>"
-          let s:smart_enter = 0
-        endif
     else
         let key = "\<CR>"
-        let s:smart_enter = s:smart_enter == 1 ? 1 : 0
+        let s:smart_enter = 0
     endif
     call s:vimim_get_menuless_title()
     sil!exe 'sil!return "' . key . '"'
@@ -2155,8 +2147,8 @@ function! s:vimim_onekey_evil(one_before, two_before)
     elseif a:two_before =~ "[0-9a-z]"
         return " "
     endif
-    if has_key(s:punctuations_all, a:one_before)
-        for char in keys(s:punctuations_all)
+    if has_key(s:evils_all, a:one_before)
+        for char in keys(s:evils_all)
             if a:two_before ==# "'"
                 return ""  " no nothing if double quotes
             elseif a:two_before ==# char || a:two_before =~# '\u'
@@ -2164,7 +2156,7 @@ function! s:vimim_onekey_evil(one_before, two_before)
             endif
         endfor
         " transfer English punctuation to Chinese punctuation
-        let bs = s:punctuations_all[a:one_before]
+        let bs = s:evils_all[a:one_before]
         if a:one_before == "'"
             let bs = <SID>vimim_get_quote(1)
         elseif a:one_before == '"'
