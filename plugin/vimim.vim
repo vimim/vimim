@@ -2149,30 +2149,6 @@ function! g:vimim_onekey_dump()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
-function! s:vimim_get_cursor()
-    let current_line = getline(".")
-    let current_column = col(".")-1
-    let start_column = current_column
-    let before = current_line[current_column-1]
-    let cursor = current_line[current_column]
-    let n = 0  " to trigger Word under cursor
-    if before =~# '\l' && cursor =~# '\l'
-        while cursor =~# '\l'
-            let current_column += 1
-            let cursor = current_line[current_column]
-        endwhile
-        let n = current_column - start_column
-    endif
-    let right_arrow = ""
-    if n && n < 72
-        let right_arrow = repeat("\<Right>",n)
-    endif
-    if current_line[current_column] == "'"
-        let right_arrow .= '\<Delete>'
-    endif
-    sil!exe 'sil!return "' . right_arrow . '"'
-endfunction
-
 function! <SID>vimim_space()
     " (1) <Space> after English (valid keys) => trigger keycode menu
     " (2) <Space> after English punctuation  => get Chinese punctuation
@@ -2187,8 +2163,7 @@ function! <SID>vimim_space()
         if s:chinese_mode =~ 'static'
             let space = s:vimim_static_action(space)
         elseif s:onekey
-            let space  = s:vimim_get_cursor()
-            let space .= s:vimim_onekey_action(1)
+            let space = s:vimim_onekey_action(1)
         endif
         let space .= g:vimim_reset_after_insert()
     endif
@@ -2355,8 +2330,9 @@ endfunction
 
 function! s:vimim_chinese_mode(switch)
     let action = ""
-    if a:switch < 1
+    if empty(a:switch)
         sil!call s:vimim_stop()
+        imap<silent><C-^> <Plug>VimimOneKey
         if mode() == 'n'
             :redraw!
         endif
@@ -4339,7 +4315,6 @@ function! g:vimim_menu_select()
 endfunction
 
 function! s:vimim_restore_imap()
-    imap<silent><C-^> <Plug>VimimOneKey
     let keys = range(0,9) + s:valid_keys
     if s:chinese_mode !~ 'dynamic'
     \&& s:vimim_chinese_punctuation !~ 'latex'
@@ -4689,28 +4664,29 @@ endfunction
 let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
-function! s:vimim_imap_for_onekey()
-    inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
-    inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
-    imap<silent><C-^>     <Plug>VimimOneKey
-    xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
-    if s:vimim_tab_as_onekey
-        inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
-        imap<silent><Tab>     <Plug>VimimOneTab
-        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
-    endif
-endfunction
-
-function! s:vimim_imap_for_chinesemode()
+function! s:vimim_plug_and_play()
     if &pastetoggle != nr2char(28)
+        inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
+        imap<silent><C-^>     <Plug>VimimOneKey
+        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
         inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
         imap<silent><C-Bslash> <Plug>VimIM
         noremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
         inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
     endif
+    if s:vimim_tab_as_onekey
+        inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
+        imap<silent><Tab>     <Plug>VimimOneTab
+        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
+    endif
+    inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
+    :nmap  gi            i<Plug>VimimOneAct
+    :noremap<silent> n :sil!call g:vimim_search_next()<CR>n
+    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
+    :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
 endfunction
 
-function! s:vimim_imap_ctrl_h_ctrl_space()
+function! s:vimim_ctrl_h_ctrl_space()
     if s:vimim_ctrl_h_to_toggle == 1
         imap <C-H> <C-Bslash>
     elseif s:vimim_ctrl_h_to_toggle == 2
@@ -4739,13 +4715,6 @@ function! s:vimim_imap_ctrl_h_ctrl_space()
     endif
 endfunction
 
-function! s:vimim_plug_and_play()
-    :nmap  gi  i<Plug>VimimOneAct
-    :noremap<silent> n :sil!call g:vimim_search_next()<CR>n
-    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
-    :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
-endfunction
-
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
@@ -4764,7 +4733,5 @@ sil!call s:vimim_scan_backend_embedded()
 sil!call s:vimim_scan_backend_cloud()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_plug_and_play()
-sil!call s:vimim_imap_for_onekey()
-sil!call s:vimim_imap_for_chinesemode()
-sil!call s:vimim_imap_ctrl_h_ctrl_space()
+sil!call s:vimim_ctrl_h_ctrl_space()
 " ======================================= }}}
