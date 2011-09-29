@@ -1972,7 +1972,7 @@ function! s:vimim_titlestring(cursor)
     let &titlestring = titlestring
 endfunction
 
-function! s:vimim_get_menuless_title()
+function! g:vimim_refresh_titlestring()
     let &titlestring = s:logo
     if s:menuless
         let cloud  = s:vimim_chinese(s:cloud_default)
@@ -1980,6 +1980,7 @@ function! s:vimim_get_menuless_title()
         let cloud  = s:onekey > 1 ? cloud : s:space
         let &titlestring = s:logo . s:space . cloud . s:today
     end
+    return ""
 endfunction
 
 function! s:vimim_menuless_cursor()
@@ -2026,7 +2027,7 @@ function! <SID>vimim_backspace()
     if pumvisible()
         let backspace .= g:vimim()
     endif
-    call s:vimim_get_menuless_title()
+    call g:vimim_refresh_titlestring()
     sil!exe 'sil!return "' . backspace . '"'
 endfunction
 
@@ -2053,7 +2054,7 @@ function! <SID>vimim_enter()
         let key = "\<CR>"
         let s:smart_enter = 0
     endif
-    call s:vimim_get_menuless_title()
+    call g:vimim_refresh_titlestring()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -2067,7 +2068,7 @@ function! <SID>vimim_onekey(tab)
     " (3) <OneKey> in omni window   => start menuless, if input
     " (4) <OneKey> in omni window   => print out, if hjkl
     let s:chinese_mode = 'onekey'
-    let onekey = '\<C-O>mi'  " refresh titlestring
+    let onekey = ""
     let one_before = getline(".")[col(".")-2]
     if s:onekey
         if pumvisible()
@@ -2085,7 +2086,7 @@ function! <SID>vimim_onekey(tab)
         else
             let s:menuless = 1
         endif
-        call s:vimim_get_menuless_title()
+        call g:vimim_refresh_titlestring()
     elseif a:tab == 1 && (empty(one_before) || one_before=~'\s')
         let onekey = '\t'
     else
@@ -2099,9 +2100,11 @@ function! <SID>vimim_onekey(tab)
             let onekey = s:vimim_onekey_action(0)
         endif
     endif
-    call s:vimim_get_menuless_title()
     if s:menuless < 2
         sil!call s:vimim_onekey_mapping()
+    endif
+    if empty(onekey)
+        let onekey = '\<C-R>=g:vimim_refresh_titlestring()\<CR>'
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -2265,7 +2268,7 @@ function! s:vimim_chinesemode_action()
     endif
     sil!call s:vimim_start()
     let action = ""
-    call s:vimim_get_menuless_title()
+    call s:vimim_refresh_titlestring()
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
