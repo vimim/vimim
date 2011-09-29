@@ -447,7 +447,7 @@ function! s:vimim_game_hjkl(keyboard)
         endif
     endif
     if !empty(results)
-        let s:show_me_not = 1
+        let s:show_me_not = s:menuless < 2 ? 1 : 0
         if s:hjkl_m % 4
             for i in range(s:hjkl_m%4)
                 let results = s:vimim_hjkl_rotation(results)
@@ -613,7 +613,6 @@ function! s:vimim_dictionary_punctuations()
     let s:left  = "【"
     let s:right = "】"
     let s:punctuations = {}
-    let s:punctuations['@'] = s:space
     let s:punctuations[':'] = s:colon
     let s:punctuations['['] = s:left
     let s:punctuations[']'] = s:right
@@ -1901,13 +1900,13 @@ function! s:vimim_imode_number(keyboard)
 endfunction
 
 function! s:vimim_get_char_before()
-    let char_before = ""
     let byte_before = getline(".")[col(".")]
+    let char_before = ""
     if byte_before !~ '\s'
         let start = col(".") -1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
-        if char_before =~ '\w'
-            let char_before = byte_before
+        if empty(char_before) || char_before !~ '[^\x00-\xff]'
+            let char_before = ""
         endif
     endif
     return char_before
@@ -1916,10 +1915,8 @@ endfunction
 function! s:vimim_get_same_char_before()
     let results = []
     let char_before = s:vimim_get_char_before()
-    if empty(char_before) || char_before !~ '\W'
-        if !empty(s:vimim_cjk()) " 214 standard unicode index
-            let results = s:vimim_cjk_match('u')
-        endif
+    if empty(char_before) && !empty(s:vimim_cjk())
+        let results = s:vimim_cjk_match('u') " 214 standard unicode index
     else
         let ddddd = char2nr(char_before) " [game] 马''''' => 马马
         let results = s:vimim_unicode_list(ddddd)
@@ -1930,8 +1927,8 @@ endfunction
 function! s:vimim_get_number_before_plus_one()
     let char_before = s:vimim_get_char_before()
     let results = s:vimim_imode_chinese(char_before)
-    if empty(results)                    " [game] 七'''   => 七八
-        for i in range(1,len(s:numbers))
+    if empty(results)                    " [game] 七''' => 七八
+        for i in range(1,len(s:numbers)) "        壹''' => 壹贰
             let i = i==10 ? 0 : i
             call add(results, get(split(s:numbers[i],'\zs'),1))
         endfor
@@ -1947,9 +1944,9 @@ function! <SID>vimim_menuless(key)
     " workaround as no way to detect if completion is active
     let key = a:key
     let char_before = s:vimim_get_char_before()
-    if char_before =~ '\W' && match(values(s:evils_all),char_before)<0
-    \&& s:onekey && s:menuless && empty(s:smart_enter)
-    \&& empty(s:pattern_not_found) && empty(s:show_me_not)
+    if s:onekey && s:menuless && empty(s:smart_enter)
+    \&& empty(s:pattern_not_found) && !empty(char_before)
+    \&& match(values(s:evils_all),char_before) < 0 
         let cursor = a:key==" " ? 1 : key < 1 ? 9 : key-1
         let key = repeat('\<C-N>', cursor)
         call s:vimim_titlestring(cursor)
@@ -2671,11 +2668,12 @@ function! s:vimim_cjk_match(keyboard)
             endif
         endif
     else
-        if keyboard =~# '^u\+$'
-            let grep = ' u\( \|$\)'  " 214 standard unicode index
-        elseif len(keyboard) == 1
+        if len(keyboard) == 1
             " cjk single-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
+            if keyboard == 'u'  "  214 standard unicode index
+                let grep = ' u\( \|$\)' 
+            endif
         elseif keyboard =~# '^\l'
             " cjk multiple-char-list without frequency: huan2hai2
             " support all cases: /huan /hai /yet /huan2 /hai2
@@ -2688,9 +2686,7 @@ function! s:vimim_cjk_match(keyboard)
         while line > -1
             let values = split(get(s:cjk.lines, line))
             let frequency = get(values, -1)
-            if keyboard =~# '^u\+$'
-                let frequency = ""
-            elseif frequency =~ '\l'
+            if frequency =~ '\l'
                 let frequency = 9999
             endif
             let chinese_frequency = get(values,0) . ' ' . frequency
@@ -2698,11 +2694,11 @@ function! s:vimim_cjk_match(keyboard)
             let line = match(s:cjk.lines, grep, line+1)
         endwhile
     endif
-    if len(results)
+    if len(results) && keyboard != 'u'
         let results = sort(results, "s:vimim_sort_on_last")
+    endif
         let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
-    endif
     return results
 endfunction
 
@@ -3566,7 +3562,6 @@ function! s:vimim_set_cloud()
         let s:backend.cloud = {}
         return
     endif
-    let s:mycloud = 0
     let s:ui.im = im
     let s:ui.root = 'cloud'
     let frontends = [s:ui.root, s:ui.im]
@@ -4418,7 +4413,7 @@ else
     " [egg] flirt with hjkl with onekey only
     if s:onekey
         let results = s:vimim_game_char_before(keyboard)
-        if empty(results) && s:menuless < 2
+        if empty(results)
             let results = s:vimim_game_hjkl(keyboard)
         endif
         if !empty(results)
@@ -4479,7 +4474,9 @@ else
         if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
             let cloud = get(s:frontends,1)
         endif
-        let results = s:vimim_get_cloud(keyboard, cloud)
+        if empty(s:english.line)
+            let results = s:vimim_get_cloud(keyboard, cloud)
+        endif
     endif
     if empty(results)
         " [wubi] support auto insert on the 4th
