@@ -17,17 +17,17 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  Author: vimim <vimim@googlegroups.com>
 " License: GNU Lesser General Public License
 "  Readme: VimIM is a Vim plugin as an independent Input Method.
-"  (1) input of Chinese without mode change:  OneKey == MidasTouch
-"  (2) slash search of Chinese without typing Chinese
-"  (3) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
-"  (4) support huge datafile if python interface to Vim is used
-" "VimIM Installation"
-"  (1) drop the vimim.vim to the plugin/:  plugin/vimim.vim
-"  (2) [option] drop any supported datafiles, for example:
-       :let s:download = {}
-       :let s:download.english = "vimim.txt"
-       :let s:download.cjk     = "vimim.cjk.txt"
-       :let s:download.bsddb   = "vimim.gbk.bsddb"
+"    (1) input of Chinese without mode change: OneKey == MidasTouch
+"    (2) slash search of Chinese without typing Chinese
+"    (3) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
+"    (4) support huge datafile if python interface to Vim is used
+"  Installation:
+"    (1) drop the vimim.vim to the plugin/:  plugin/vimim.vim
+"    (2) [option] drop any supported datafiles, for example:
+         :let s:download = {}
+         :let s:download.english = "vimim.txt"
+         :let s:download.cjk     = "vimim.cjk.txt"
+         :let s:download.bsddb   = "vimim.gbk.bsddb"
 
 function! s:vimim_egg_vimimhelp()
     let eggs = []
