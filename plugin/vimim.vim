@@ -45,9 +45,9 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "错误报告： " . get(url,4))
     call add(eggs, "新闻论坛： " . get(url,5))
     call add(eggs, '')
-    call add(eggs, "词库下载： " . http . s:download.english)
-    call add(eggs, "词库下载： " . http . s:download.cjk    )
-    call add(eggs, "词库下载： " . http . s:download.bsddb  )
+    call add(eggs, "海量詞庫： " . http . s:download.bsddb  )
+    call add(eggs, "英文詞庫： " . http . s:download.english)
+    call add(eggs, "四角號碼： " . http . s:download.cjk    )
     return map(eggs, 'v:val . " "')
 endfunction
 
@@ -2547,11 +2547,9 @@ function! s:vimim_scan_cjk_file()
     let s:cjk.filename = ""
     let s:cjk.lines = []
     let s:cjk.one = {}
-    let cjk = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.cjk.txt"
-    let datafile = s:vimim_check_filereadable(get(split(cjk,"/"),-1))
-    if empty(datafile)
-        let cjk = "vimim.cjkv.txt" " for 5 strokes
-        let datafile = s:vimim_check_filereadable(cjk)
+    let datafile = s:vimim_check_filereadable(s:download.cjk)
+    if empty(datafile)  " for 5 strokes
+        let datafile = s:vimim_check_filereadable("vimim.cjkv.txt")
     endif
     if !empty(datafile)
         let s:cjk.filename = datafile
@@ -2801,18 +2799,17 @@ function! s:vimim_scan_english_datafile()
     let s:english.filename = ""
     let s:english.line = ""
     let s:english.lines = []
-    let english = "http://vimim.googlecode.com/svn/trunk/plugin/vimim.txt"
-    let datafile = s:vimim_check_filereadable(get(split(english,"/"),-1))
+    let datafile = s:vimim_check_filereadable(s:download.english)
     if !empty(datafile)
         let s:english.lines = s:vimim_readfile(datafile)
         let s:english.filename = datafile
     endif
 endfunction
 
-function! s:vimim_check_filereadable(default)
-    let datafile = s:plugin . a:default
-    if filereadable(datafile)
-        return datafile
+function! s:vimim_check_filereadable(file)
+    let datafile_in_full_path = s:plugin . a:file
+    if filereadable(datafile_in_full_path)
+        return datafile_in_full_path
     endif
     return 0
 endfunction
@@ -3301,9 +3298,8 @@ function! s:vimim_scan_backend_embedded()
         endif
     endif
     " (2/3) scan bsddb database as edw: enterprise data warehouse
-    if has("python")      " bsddb is from Python 2 only
-        let bsddb = "vimim.gbk.bsddb"   " wc=46,694,400
-        let datafile = s:vimim_check_filereadable(bsddb)
+    if has("python") " bsddb is from Python 2 only in 46,694,400 Bytes
+        let datafile = s:vimim_check_filereadable(s:download.bsddb)
         if !empty(datafile)
             return s:vimim_set_datafile(im, datafile)
         endif
