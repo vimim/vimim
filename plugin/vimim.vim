@@ -1984,15 +1984,15 @@ endfunction
 
 function! s:vimim_menuless_cursor()
     let onekey = '\<Right>\<Left>'
+    let cursor = getline(".")[col(".")-1] =~ '\w' ? 2 : 4
     if col(".") < 2 && line(".") > 1
         let onekey = '\<Left>\<Right>' " gi at the first column
+    elseif col("$") - col(".") < cursor
+        let onekey = '\<Right>'        " gi at end of cursor line
     endif
-    if s:menuless > 1
-        let cursor = getline(".")[col(".")-1] =~ '\w' ? 2 : 4
-        if col("$") - col(".") < cursor
-            let onekey = '\<Right>'    " gi at end of cursor line
-        endif
-    endif
+    for _ in range(10)
+        exe 'inoremap<expr> '._.' <SID>vimim_menuless("'._.'")'
+    endfor
     return onekey
 endfunction
 
@@ -2067,7 +2067,7 @@ function! <SID>vimim_onekey(tab)
     " (3) <OneKey> in omni window   => start menuless, if input
     " (4) <OneKey> in omni window   => print out, if hjkl
     let s:chinese_mode = 'onekey'
-    let onekey = s:vimim_menuless_cursor()
+    let onekey = '\<C-O>mi'  " refresh titlestring
     let one_before = getline(".")[col(".")-2]
     if s:onekey
         if pumvisible()
@@ -2093,11 +2093,8 @@ function! <SID>vimim_onekey(tab)
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
         sil!call s:vimim_start()
-        if a:tab == 2
+        if s:menuless == 2
             let onekey = s:vimim_menuless_cursor()
-            for _ in range(10)
-                exe 'inoremap<expr> '._.' <SID>vimim_menuless("'._.'")'
-            endfor
         else
             let onekey = s:vimim_onekey_action(0)
         endif
