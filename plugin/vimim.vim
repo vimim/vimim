@@ -23,26 +23,32 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  (4) support huge datafile if python interface to Vim is used
 " "VimIM Installation"
 "  (1) drop the vimim.vim to the plugin/:  plugin/vimim.vim
-"  (2) [option] drop a English  datafile:  plugin/vimim.txt
-"  (3) [option] drop a standard cjk file:  plugin/vimim.cjk.txt
-"  (4) [option] drop a standard directory: plugin/vimim/pinyin/
-"  (5) [option] drop a python2  database:  plugin/vimim.gbk.bsddb
+"  (2) [option] drop any supported datafiles, for example:
+       :let s:download = {}
+       :let s:download.english = "vimim.txt"
+       :let s:download.cjk     = "vimim.cjk.txt"
+       :let s:download.bsddb   = "vimim.gbk.bsddb"
 
 function! s:vimim_egg_vimimhelp()
     let eggs = []
+    let http = "http://vimim.googlecode.com/svn/trunk/plugin/"
     let url = split(s:url)
     call add(eggs, '默认热键：点石成金模式　　i_CTRL-^　')
     call add(eggs, '默认热键：中文输入模式　　i_CTRL-\　')
     call add(eggs, '默认热键：无菜单中文搜索　n 　')
     call add(eggs, '默认热键：无菜单中文输入　gi　')
     call add(eggs, '')
-    call add(eggs, "论坛邮箱： " . get(url,0) . ' ' )
-    call add(eggs, "官方网址： " . get(url,1) . ' ' )
-    call add(eggs, "最新程式： " . get(url,2) . ' ' )
-    call add(eggs, "最新主页： " . get(url,3) . ' ' )
-    call add(eggs, "错误报告： " . get(url,4) . ' ' )
-    call add(eggs, "新闻论坛： " . get(url,5) . ' ' )
-    return eggs
+    call add(eggs, "论坛邮箱： " . get(url,0))
+    call add(eggs, "官方网址： " . get(url,1))
+    call add(eggs, "最新程式： " . get(url,2))
+    call add(eggs, "最新主页： " . get(url,3))
+    call add(eggs, "错误报告： " . get(url,4))
+    call add(eggs, "新闻论坛： " . get(url,5))
+    call add(eggs, '')
+    call add(eggs, "词库下载： " . http . s:download.english)
+    call add(eggs, "词库下载： " . http . s:download.cjk    )
+    call add(eggs, "词库下载： " . http . s:download.bsddb  )
+    return map(eggs, 'v:val . " "')
 endfunction
 
 " ============================================= }}}
@@ -356,9 +362,9 @@ function! s:vimim_egg_vimim()
         call add(eggs, input)
     endif
     if !empty(s:vimim_check_http_executable())
-        let http = s:http_executable=~'Python' ? '' : "HTTP executable: "
+        let exe = s:http_executable=~'Python' ? '' : "HTTP executable: "
         let network  = s:vimim_chinese('network') . s:colon
-        let network .= http . s:http_executable
+        let network .= exe . s:http_executable
         call add(eggs, network)
     endif
     let option = s:vimim_chinese('option') . s:colon . "vimimrc "
@@ -3990,11 +3996,11 @@ function! s:vimim_access_mycloud(cloud, cmd)
         let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:mycloud_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        let http = s:http_executable
-        if http =~ 'libvimim'
-            let ret = libcall(http, "do_geturl", a:cloud.input)
-        elseif len(http)
-            let ret = system(http . shellescape(a:cloud.input))
+        let exe = s:http_executable
+        if exe =~ 'libvimim'
+            let ret = libcall(exe, "do_geturl", a:cloud.input)
+        elseif len(exe)
+            let ret = system(exe . shellescape(a:cloud.input))
         endif
         if len(ret)
             let output = s:vimim_rot13(ret)
