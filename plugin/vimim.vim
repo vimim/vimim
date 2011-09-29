@@ -2821,14 +2821,16 @@ function! s:vimim_get_english(keyboard)
     let matched = match(s:english.lines, grep)
     " [pinyin] cong for pinyin only and congr => congratuation
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
-    if matched < 0 && !empty(keyboards) && len(keyboard) > 3
+    if matched < 0 && len(keyboard) > 3
         let grep = '^' . keyboard   " both haag and haagendazs
         let matched = match(s:english.lines, grep)
     endif
     let oneline = ""
     if matched > -1
         let oneline = get(s:english.lines, matched)
-        if keyboard != get(split(oneline),0)
+        if keyboard != get(split(oneline),0) " no surprise in menuless
+            let pairs = split(oneline)       " haag 哈根达斯 haagendazs
+            let oneline = join(pairs[1:] + pairs[:0])
             let oneline = keyboard . " " . oneline
         endif
     endif
@@ -4525,9 +4527,6 @@ function! s:vimim_popupmenu_list(match_list)
         return []
     else
         let s:match_list = lines
-        if keyboard =~ "'" || tail =~ '\d'
-            let s:menuless = s:menuless > 1 ? 2 : 0
-        endif
         if len(head) == 1 && !has_key(s:cjk.one, head)
             let s:cjk.one[head] = lines
         endif
