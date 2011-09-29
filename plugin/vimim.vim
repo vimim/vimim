@@ -2438,7 +2438,7 @@ function! s:vimim_get_seamless(current_positions)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  input unicode    ==== {{{"]
+let s:VimIM += [" ====  input: unicode   ==== {{{"]
 " =================================================
 
 " ------------ ----------------- -------------- -----------
@@ -2532,7 +2532,7 @@ function! s:vimim_unicode_to_utf8(xxxx)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  input cjk        ==== {{{"]
+let s:VimIM += [" ====  input: cjk       ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_cjk_file()
@@ -2787,7 +2787,7 @@ function! <SID>vimim_visual_ctrl6()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  input english    ==== {{{"]
+let s:VimIM += [" ====  input: english   ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_english_datafile()
@@ -2851,7 +2851,7 @@ function! s:vimim_readfile(datafile)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  input pinyin     ==== {{{"]
+let s:VimIM += [" ====  input: pinyin    ==== {{{"]
 " =================================================
 
 function! s:vimim_get_pinyin_from_pinyin(keyboard)
@@ -2992,7 +2992,7 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  input shuangpin  ==== {{{"]
+let s:VimIM += [" ====  input: shuangpin ==== {{{"]
 " =================================================
 
 function! s:vimim_set_shuangpin()
@@ -3276,7 +3276,7 @@ function! s:vimim_shuangpin_flypy(rule)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  backend file     ==== {{{"]
+let s:VimIM += [" ====  backend: file    ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_backend_embedded()
@@ -3443,7 +3443,7 @@ function! s:vimim_make_pairs(oneline)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  backend dir      ==== {{{"]
+let s:VimIM += [" ====  backend: dir     ==== {{{"]
 " =================================================
 
 function! s:vimim_set_directory(im, dir)
@@ -3516,7 +3516,7 @@ function! s:vimim_sentence_directory(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  backend cloud    ==== {{{"]
+let s:VimIM += [" ====  backend: cloud   ==== {{{"]
 " =================================================
 
 function! s:vimim_initialize_cloud()
@@ -3915,7 +3915,7 @@ function! s:vimim_get_cloud_all(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  backend mycloud  ==== {{{"]
+let s:VimIM += [" ====  backend: mycloud ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_backend_mycloud()
