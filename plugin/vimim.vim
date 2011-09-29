@@ -384,15 +384,17 @@ function! s:vimim_get_head_without_quote(keyboard)
     if s:ui.has_dot || keyboard =~ '\d'
         return keyboard
     endif
-    if keyboard =~ '^\l\l\+' . "''" . '$'   " sssss''
-        " [shoupin] two trailing quote to control shoupin
+    if keyboard =~ '^\l\l\+' . "'''" . '$'  " hjkl_m sssss'''
+        " [shoupin] three trailing quote to control shoupin
         let keyboard = substitute(keyboard, "'", "", 'g')
         let keyboard = join(split(keyboard,'\zs'), "'")
     endif
-    if keyboard[-1:] == "'"                 " sssss'
-        " [cloud] one trailing quote to control cloud
-        let s:onekey = s:onekey==1 ? 2 : s:onekey
-        let keyboard = s:vimim_last_quote(keyboard)
+    if keyboard[-2:] == "''"     " [local] two tail quotes to close cloud
+        let s:onekey = 1
+        let keyboard = keyboard[:-3]
+    elseif keyboard[-1:] == "'"  " [cloud] one tail quote to control cloud
+        call s:vimim_last_quote()
+        let keyboard = keyboard[:-2]
     elseif keyboard =~ "'"
         " [quote] (1/2) quote_by_quote: wo'you'yi'ge'meng
         let keyboards = split(keyboard,"'")
@@ -404,16 +406,6 @@ function! s:vimim_get_head_without_quote(keyboard)
     return keyboard
 endfunction
 
-function! s:vimim_game_char_before(keyboard)
-    let results = []
-    if a:keyboard ==# "'''''"
-        let results = s:vimim_get_same_char_before()
-    elseif a:keyboard ==# "'''"
-        let results = s:vimim_get_number_before_plus_one()
-    endif
-    return results
-endfunction
-
 function! s:vimim_game_hjkl(keyboard)
     let keyboard = a:keyboard
     let results = []
@@ -422,10 +414,12 @@ function! s:vimim_game_hjkl(keyboard)
     if !empty(poem)
         " [hjkl] flirt any non-dot file in the hjkl directory
         let results = s:vimim_readfile(poem)
+    elseif keyboard ==# "'''''"
+        return s:vimim_get_same_char_before()
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
-    elseif keyboard =~# "^''''''" . '\+$'  " black hole
+    elseif keyboard =~# "''''''" . '\+$'  " black hole
         let results = s:vimim_egg_vimimgame()
     elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
         " [clouds] all clouds for any input: fuck''''
@@ -446,8 +440,8 @@ function! s:vimim_game_hjkl(keyboard)
             endif
         endif
     endif
-    if !empty(results)
-        let s:show_me_not = s:menuless < 2 ? 1 : 0
+    if !empty(results) && s:menuless < 2
+        let s:show_me_not = 1
         if s:hjkl_m % 4
             for i in range(s:hjkl_m%4)
                 let results = s:vimim_hjkl_rotation(results)
@@ -728,10 +722,10 @@ function! <SID>vimim_onekey_map(key)
     elseif hjkl ==# ':'  " toggle simplified/traditional transfer
         let s:hjkl__ += 1
         let hjkl = g:vimim()
-    elseif hjkl == "'"   " cycle through BB/GG/SS/00 clouds
+    elseif hjkl == "'"  " omni cycle through BB/GG/SS/00 clouds
         if s:keyboard[-1:] != "'"
-            let s:onekey = s:onekey==1 ? 2 : 3
-            call s:vimim_last_quote("action_on_omni_popup")
+"           let s:onekey = s:onekey==1 ? 2 : 3
+            call s:vimim_last_quote()
         endif
         let hjkl = g:vimim()
     endif
@@ -740,8 +734,11 @@ endfunction
 
 function! <SID>vimim_get_quote(quote)
     let key = ""
-        if a:quote == 1 | let key = "'"
-    elseif a:quote == 2 | let key = '"' | endif
+    if a:quote == 1
+        let key = "'"
+    elseif a:quote == 2
+        let key = '"'
+    endif
     let quote = ""
     if !has_key(s:evils, key)
         return ""
@@ -1654,8 +1651,8 @@ endfunction
 function! s:vimim_hjkl_partition(keyboard)
     let keyboard = a:keyboard
     if s:hjkl_m
-        if s:hjkl_m % 2               " sssss => sssss''
-            let keyboard = keyboard . "''"
+        if s:hjkl_m % 2
+            let keyboard = keyboard . "'''"   " sssss => sssss'''
         endif
     elseif s:hjkl_h         " redefine match: jsjsxx => ['jsjsx','jsjs']
         let items = get(s:popup_list,0)                 " jsjs'xx
@@ -1676,17 +1673,18 @@ function! s:vimim_hjkl_partition(keyboard)
     return keyboard
 endfunction
 
-function! s:vimim_last_quote(keyboard)
-    " (1) [insert] open cloud if one trailing quote
+function! s:vimim_last_quote()
+    " (1) [insert] one tail quote: open open and cycle cloud
     " (2) [omni]   switch to the next cloud: 'google,sogou,baidu,qq'
-    if s:onekey > 2
-        let clouds = split(s:vimim_cloud,',')
-        let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
-    endif
     if empty(s:vimim_check_http_executable())
         let s:onekey = 1
+    else
+        let s:onekey = s:onekey==1 ? 2 : 3
+        if s:onekey > 2
+            let clouds = split(s:vimim_cloud,',')
+            let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
+        endif
     endif
-    return a:keyboard[:-2]
 endfunction
 
 function! s:vimim_get_head(keyboard, partition)
@@ -1899,13 +1897,14 @@ function! s:vimim_imode_number(keyboard)
     return numbers
 endfunction
 
-function! s:vimim_get_char_before()
-    let byte_before = getline(".")[col(".")]
+function! s:vimim_char_before()
     let char_before = ""
-    if byte_before !~ '\s'
-        let start = col(".") -1 - s:multibyte
+    let one_before = getline(".")[col(".")-2]
+    if one_before !~ '\s'
+        let start = col(".") - 1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
-        if empty(char_before) || char_before !~ '[^\x00-\xff]'
+        if char_before !~ '[^\x00-\xff]'
+        \|| match(values(s:evils_all),char_before) > -1
             let char_before = ""
         endif
     endif
@@ -1914,24 +1913,12 @@ endfunction
 
 function! s:vimim_get_same_char_before()
     let results = []
-    let char_before = s:vimim_get_char_before()
+    let char_before = s:vimim_char_before()
     if empty(char_before) && !empty(s:vimim_cjk())
-        let results = s:vimim_cjk_match('u') " 214 standard unicode index
+        let results = s:vimim_cjk_match('u') " 214 unicode index
     else
-        let ddddd = char2nr(char_before) " [game] 马''''' => 马马
+        let ddddd = char2nr(char_before)
         let results = s:vimim_unicode_list(ddddd)
-    endif
-    return results
-endfunction
-
-function! s:vimim_get_number_before_plus_one()
-    let char_before = s:vimim_get_char_before()
-    let results = s:vimim_imode_chinese(char_before)
-    if empty(results)                    " [game] 七''' => 七八
-        for i in range(1,len(s:numbers)) "        壹''' => 壹贰
-            let i = i==10 ? 0 : i
-            call add(results, get(split(s:numbers[i],'\zs'),1))
-        endfor
     endif
     return results
 endfunction
@@ -1939,52 +1926,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
-
-function! <SID>vimim_menuless(key)
-    " workaround as no way to detect if completion is active
-    let key = a:key
-    let char_before = s:vimim_get_char_before()
-    if s:onekey && s:menuless && empty(s:smart_enter)
-    \&& empty(s:pattern_not_found) && !empty(char_before)
-    \&& match(values(s:evils_all),char_before) < 0 
-        let cursor = a:key==" " ? 1 : key < 1 ? 9 : key-1
-        let key = repeat('\<C-N>', cursor)
-        call s:vimim_titlestring(cursor)
-    endif
-    let s:smart_enter = 0
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! s:vimim_titlestring(cursor)
-    let hightlight = s:left . '\|' . s:right
-    let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
-    let words = split(titlestring)
-    let cursor = s:cursor_at_menuless + a:cursor
-    let hightlight = get(words, cursor)
-    if empty(hightlight)
-        let s:pattern_not_found = 1
-    else
-        let left = join(words[1 : cursor-1])
-        let right = join(words[cursor+1 :])
-        let hightlight = substitute(hightlight, '\d', '', '')
-        let hightlight = s:left . hightlight . s:right
-        let keyboard = get(words,0)
-        let titlestring = keyboard .'  '. left . hightlight . right
-        let s:cursor_at_menuless = cursor
-    endif
-    let &titlestring = titlestring
-endfunction
-
-function! g:vimim_refresh_titlestring()
-    let &titlestring = s:logo
-    if s:menuless
-        let cloud  = s:vimim_chinese(s:cloud_default)
-        let cloud .= s:vimim_chinese('cloud') . s:space
-        let cloud  = s:onekey > 1 ? cloud : s:space
-        let &titlestring = s:logo . s:space . cloud . s:today
-    end
-    return ""
-endfunction
 
 function! s:vimim_menuless_cursor()
     let onekey = '\<Right>\<Left>'
@@ -1998,6 +1939,57 @@ function! s:vimim_menuless_cursor()
         exe 'inoremap<expr> '._.' <SID>vimim_menuless("'._.'")'
     endfor
     return onekey
+endfunction
+
+function! g:vimim_refresh_titlestring()
+    let cloud  = s:space
+    if s:onekey > 1
+        let cloud .= s:vimim_chinese(get(split(s:vimim_cloud,','),0))
+        let cloud .= s:vimim_chinese('cloud') . s:space
+    endif
+    let &titlestring = s:logo . cloud
+    if s:menuless
+        let &titlestring .= s:today
+    end
+    return ""
+endfunction
+
+function! <SID>vimim_menuless(key)
+    " workaround as no way to detect if completion is active
+    let key = a:key
+    let go = empty(s:vimim_char_before()) ? 0 : 1
+    let go = s:keyboard =~ "'" || s:keyboard == "u3000" ? 1 : go
+    if go && s:onekey && s:menuless && empty(s:smart_enter)
+        let cursor = a:key == " " ? 1 : key < 1 ? 9 : key-1
+        let key = repeat('\<C-N>', cursor)
+        call s:vimim_titlestring(cursor)
+    endif
+    let s:smart_enter = 0
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! s:vimim_titlestring(cursor)
+    let hightlight = s:left . '\|' . s:right
+    let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
+    let words = split(titlestring)
+    let cursor = s:cursor_at_menuless + a:cursor
+    let hightlight = get(words, cursor)
+    if !empty(hightlight)
+        let left = join(words[1 : cursor-1])
+        let right = join(words[cursor+1 :])
+        let hightlight = substitute(hightlight, '\d', '', '')
+        let hightlight = s:left . hightlight . s:right
+        let keyboard = get(words,0)
+        let titlestring = keyboard .'  '. left . hightlight . right
+        let s:cursor_at_menuless = cursor
+    endif
+    let cloud = ""
+    if s:onekey > 1
+        let cloud = get(split(s:vimim_cloud,','),0)
+        let cloud = s:vimim_chinese(cloud) . s:vimim_chinese('cloud')
+        let cloud = s:space . cloud
+    endif
+    let &titlestring = cloud . titlestring
 endfunction
 
 function! <SID>vimim_space()
@@ -2114,13 +2106,14 @@ endfunction
 
 function! s:vimim_onekey_action(space)
     let space = a:space ? " " : ""
-    let current_line = getline(".")
-    let one_before = current_line[col(".")-2]
-    let two_before = current_line[col(".")-3]
+    let one_before = getline(".")[col(".")-2]
     if s:seamless_positions == getpos(".")
         return space  "  space is space after enter
     elseif empty(s:ui.has_dot)
-        let onekey = s:vimim_onekey_evil(one_before, two_before)
+        let onekey = s:vimim_onekey_dot_dot()
+        if empty(onekey) && one_before !~ "[0-9a-z]"
+            let onekey = s:vimim_onekey_evils()
+        endif
         if !empty(onekey)
             sil!exe 'sil!return "' . onekey . '"'
         endif
@@ -2128,41 +2121,66 @@ function! s:vimim_onekey_action(space)
     let onekey = space
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
-        let &titlestring = s:logo
+        call g:vimim_refresh_titlestring()
     elseif one_before !~ '\s'
         let onekey = <SID>vimim_menuless(space)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! s:vimim_onekey_evil(one_before, two_before)
-    let onekey = ""
-    if a:two_before == nr2char(44) && a:one_before == nr2char(44)
-        let onekey = "''''''"  "  <==  ,, comma comma for game
-    elseif a:two_before == nr2char(46) && a:one_before == nr2char(46)
-        let onekey = "'''''"   "  <==  .. dot dot for cjk
+function! s:vimim_onekey_dot_dot()
+    " [game] double dot or comma => quotes => popup menu
+    let onekey = 0
+    let three_before  = getline(".")[col(".")-4 : col(".")-4]
+    let before_before = getline(".")[col(".")-3 : col(".")-2]
+    if before_before != ".." && before_before != ",,"
+        return 0
     endif
-    if !empty(onekey) " [game] comma/dot => quotes => popup menu
+    if empty(three_before) || three_before =~ '\s' || col(".") < 6
+        if before_before == ".."
+            let onekey = 'u'         " <= ..   dot dot for 214 unicode
+        elseif before_before == ",,"
+            let onekey = 'v'         " <= ,,   comma comma for mahjong
+        endif
+    elseif three_before =~ "[0-9a-z]"
+        if before_before == ".."
+            let onekey = "'''"       " <= xx.. for hjkl_m
+        elseif before_before == ",,"
+            let onekey = "'''''''"   " <= xx,, for mahjong
+        endif
+    else
+        if before_before == ".."
+            let onekey = "'''''"     " <= 香.. for same cjk
+        elseif before_before == ",,"
+            let onekey = 'u3000'     " <= 龟,, for punctuations
+        endif
+    endif
+    if !empty(onekey)
         return "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
     endif
-    if a:one_before =~ "[0-9a-z]"
+    return onekey
+endfunction
+
+function! s:vimim_onekey_evils()
+    let one_before = getline(".")[col(".")-2]
+    let two_before = getline(".")[col(".")-3]
+    if one_before == "'" && two_before =~ s:valid_keyboard
         return ""
-    elseif a:two_before =~ "[0-9a-z]"
+    elseif two_before =~ "[0-9a-z]"
         return " "
     endif
-    if has_key(s:evils_all, a:one_before)
+    let onekey = ""
+    if has_key(s:evils_all, one_before)
         for char in keys(s:evils_all)
-            if a:two_before ==# "'"
-                return ""  " no nothing if double quotes
-            elseif a:two_before ==# char || a:two_before =~# '\u'
+            if two_before ==# char || two_before =~# '\u'
                 return " " " no transfer if punctuation after punctuation
             endif
         endfor
         " transfer English punctuation to Chinese punctuation
-        let bs = s:evils_all[a:one_before]
-        if a:one_before == "'"
+        let bs = s:evils_all[one_before]
+        if one_before == "'"
             let bs = <SID>vimim_get_quote(1)
-        elseif a:one_before == '"'
+        elseif one_before == '"'
             let bs = <SID>vimim_get_quote(2)
         endif
         let onekey = "\<BS>" . bs
@@ -2672,7 +2690,7 @@ function! s:vimim_cjk_match(keyboard)
             " cjk single-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
             if keyboard == 'u'  "  214 standard unicode index
-                let grep = ' u\( \|$\)' 
+                let grep = ' u\( \|$\)'
             endif
         elseif keyboard =~# '^\l'
             " cjk multiple-char-list without frequency: huan2hai2
@@ -4412,10 +4430,7 @@ else
     endif
     " [egg] flirt with hjkl with onekey only
     if s:onekey
-        let results = s:vimim_game_char_before(keyboard)
-        if empty(results)
-            let results = s:vimim_game_hjkl(keyboard)
-        endif
+        let results = s:vimim_game_hjkl(keyboard)
         if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
@@ -4496,7 +4511,7 @@ else
     " [the last resort] try both cjk and cloud
     if s:onekey && empty(results)
         if len(keyboard) > 1
-            let keyboard = s:vimim_get_head_without_quote(keyboard."''")
+            let keyboard = s:vimim_get_head_without_quote(keyboard."'''")
             let results = s:vimim_cjk_match(keyboard)   " forced shoupin
             if empty(results)                           " forced cloud
                 let results = s:vimim_get_cloud(keyboard, s:cloud_default)
@@ -4580,7 +4595,7 @@ function! s:vimim_popupmenu_list(match_list)
         call add(popup_list, complete_items)
     endfor
     if s:onekey
-        let &titlestring = s:logo
+        call g:vimim_refresh_titlestring()
         set completeopt=menuone  " for hjkl_n refresh
         let s:popup_list = popup_list
         if s:menuless && empty(s:show_me_not)
