@@ -4474,7 +4474,9 @@ else
         " [cache] abcdefghijklmnopqrstuvwxyz
         let results = s:cjk.one[keyboard]
     endif
-    if !empty(results)
+    if empty(results)
+        let s:keyboard = keyboard
+    else
         return s:vimim_popupmenu_list(results)
     endif
     " [shuangpin] support 6 major shuangpin
