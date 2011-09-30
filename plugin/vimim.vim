@@ -4673,9 +4673,6 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 
 function! s:vimim_plug_and_play()
     if &pastetoggle != nr2char(28)
-        inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
-        imap<silent><C-^>     <Plug>VimimOneKey
-        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
         inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
         imap<silent><C-Bslash> <Plug>VimIM
         noremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
@@ -4685,6 +4682,10 @@ function! s:vimim_plug_and_play()
         inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
         imap<silent><Tab>     <Plug>VimimOneTab
         xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
+    else
+        inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
+        imap<silent><C-^>     <Plug>VimimOneKey
+        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
     :nmap  gi            i<Plug>VimimOneAct
