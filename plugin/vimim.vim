@@ -52,34 +52,10 @@ let b:vimim = 39340
 scriptencoding utf-8
 let s:plugin = expand("<sfile>:p:h")
 
-function! s:vimim_egg_vimimhelp()
-    let eggs = []
-    let http = "http://vimim.googlecode.com/svn/trunk/plugin/"
-    let url = split(s:url)
-    call add(eggs, '默认热键：点石成金模式　　i_CTRL-^　')
-    call add(eggs, '默认热键：中文输入模式　　i_CTRL-\　')
-    call add(eggs, '默认热键：无菜单中文搜索　n 　')
-    call add(eggs, '默认热键：无菜单中文输入　gi　')
-    call add(eggs, '')
-    call add(eggs, "论坛邮箱： " . get(url,0))
-    call add(eggs, "官方网址： " . get(url,1))
-    call add(eggs, "最新程式： " . get(url,2))
-    call add(eggs, "最新主页： " . get(url,3))
-    call add(eggs, "错误报告： " . get(url,4))
-    call add(eggs, "新闻论坛： " . get(url,5))
-    call add(eggs, '')
-    call add(eggs, "海量詞庫： " . http . s:download.bsddb  )
-    call add(eggs, "英文詞庫： " . http . s:download.english)
-    call add(eggs, "四角號碼： " . http . s:download.cjk    )
-    return map(eggs, 'v:val . " "')
-endfunction
-
 function! s:vimim_initialize_debug()
-" let g:vimim_mycloud="py:127.0.0.1"
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :set pastetoggle=<C-Bslash>
-" todo
         :redir @i
         :call g:vimim_omni_color()
         let g:vimim_plugin_folder = hjkl
@@ -256,6 +232,28 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
+
+function! s:vimim_egg_vimimhelp()
+    let eggs = []
+    let http = "http://vimim.googlecode.com/svn/trunk/plugin/"
+    let url = split(s:url)
+    call add(eggs, '默认热键：点石成金模式　　i_CTRL-^　')
+    call add(eggs, '默认热键：中文输入模式　　i_CTRL-\　')
+    call add(eggs, '默认热键：无菜单中文搜索　n 　')
+    call add(eggs, '默认热键：无菜单中文输入　gi　')
+    call add(eggs, '')
+    call add(eggs, "论坛邮箱： " . get(url,0))
+    call add(eggs, "官方网址： " . get(url,1))
+    call add(eggs, "最新程式： " . get(url,2))
+    call add(eggs, "最新主页： " . get(url,3))
+    call add(eggs, "错误报告： " . get(url,4))
+    call add(eggs, "新闻论坛： " . get(url,5))
+    call add(eggs, '')
+    call add(eggs, "海量詞庫： " . http . s:download.bsddb  )
+    call add(eggs, "英文詞庫： " . http . s:download.english)
+    call add(eggs, "四角號碼： " . http . s:download.cjk    )
+    return map(eggs, 'v:val . " "')
+endfunction
 
 function! s:vimim_egg_vim()
     let eggs  = ["vi    文本編輯器"]
@@ -1213,7 +1211,6 @@ function! s:vimim_dictionary_statusline()
     let s:title.flypy      = "小鹤     小鶴"
     let s:title.network    = "联网     聯網"
     let s:title.cloud      = "云       雲"
-    let s:title.mixture    = "混合"
     let s:title.haifeng    = "海峰"
     let s:title.purple     = "紫光"
     let s:title.plusplus   = "加加"
@@ -1227,8 +1224,8 @@ function! s:vimim_dictionary_statusline()
     let s:title.revision   = "版本"
     let s:title.mass       = "海量"
     let s:title.datetime   = "日期"
-    let s:title.full_width = "全角"
-    let s:title.half_width = "半角"
+    let s:title.fullwidth  = "全角"
+    let s:title.halfwidth  = "半角"
     let s:title.english    = "英文"
     let s:title.chinese    = "中文"
     let s:title.qq         = "QQ"
@@ -1315,27 +1312,21 @@ function! s:vimim_get_title()
         if datafile =~# 'wubi98'
             let statusline .= '98'
         elseif datafile =~# 'wubi2000'
-            let newcentury = s:vimim_chinese('newcentury')
-            let statusline = newcentury . statusline
+            let statusline .= s:vimim_chinese('newcentury')
         elseif datafile =~# 'wubijd'
-            let jidian = s:vimim_chinese('jidian')
-            let statusline = jidian . statusline
+            let statusline .= s:vimim_chinese('jidian')
         elseif datafile =~# 'wubihf'
-            let haifeng = s:vimim_chinese('haifeng')
-            let statusline = haifeng . statusline
+            let statusline .= s:vimim_chinese('haifeng')
         endif
     elseif !empty(s:mycloud)
         let __getname = s:backend.cloud.mycloud.directory
         let statusline .= s:space . __getname
     elseif s:ui.root == 'cloud' || s:onekey > 1
         let vimim_cloud = get(split(s:vimim_cloud,','),0)
-        let cloud  = s:vimim_chinese(vimim_cloud)
+        let cloud  = s:vimim_chinese(get(split(vimim_cloud,"[.]"),0))
         let cloud .= s:vimim_chinese('cloud')
         let statusline = s:space . cloud
-
-        if vimim_cloud =~ 'mixture'
-            let statusline .= s:space . s:vimim_chinese('mixture')
-        elseif vimim_cloud =~ 'wubi'
+        if vimim_cloud =~ 'wubi'          " g:vimim_cloud='qq.wubi'
             let statusline .= s:space . s:vimim_chinese('wubi')
         elseif vimim_cloud =~ 'shuangpin' " qq.shuangpin.ms => ms
             let shuangpin = get(split(vimim_cloud,"[.]"),-1)
@@ -1348,21 +1339,14 @@ function! s:vimim_get_title()
         endif
     endif
     if !empty(s:vimim_shuangpin)
-        let statusline .= s:shuangpin_chinese.chinese
+        let statusline = s:space . s:shuangpin_chinese.chinese
     endif
     return statusline . s:space
 endfunction
 
 function! s:vimim_statusline()
-""  let punctuation = s:vimim_chinese('half_width')
-""  if s:chinese_punctuation
-""      let punctuation = s:vimim_chinese('full_width')
-""  endif
-""  let space = get(split(s:ui.statusline,'\zs'),-1)==s:space ? "" : s:space
-""  " todo
-
-    let s:ui.statusline = s:vimim_get_title() 
-    let punctuation = s:chinese_punctuation ? 'full_width' : half_width
+    let s:ui.statusline = s:vimim_get_title()
+    let punctuation = s:chinese_punctuation ? 'fullwidth' : 'halfwidth'
     let punctuation = s:vimim_chinese(punctuation)
     let statusline  = s:vimim_chinese('chinese')
     let statusline .= s:vimim_chinese(s:vimim_chinese_input_mode)
