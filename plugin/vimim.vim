@@ -622,168 +622,6 @@ function! s:vimim_getsid(scriptname)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  punctuation      ==== {{{"]
-" =================================================
-
-function! s:vimim_dictionary_punctuations()
-    let s:space = "　"
-    let s:colon = "："
-    let s:left  = "【"
-    let s:right = "】"
-    let s:punctuations = {}
-    let s:punctuations[':'] = s:colon
-    let s:punctuations['['] = s:left
-    let s:punctuations[']'] = s:right
-    let s:punctuations['{'] = "〖"
-    let s:punctuations['}'] = "〗"
-    let s:punctuations['('] = "（"
-    let s:punctuations[')'] = "）"
-    let s:punctuations['<'] = "《"
-    let s:punctuations['>'] = "》"
-    let s:punctuations['#'] = "＃"
-    let s:punctuations['&'] = "＆"
-    let s:punctuations['%'] = "％"
-    let s:punctuations['$'] = "￥"
-    let s:punctuations['!'] = "！"
-    let s:punctuations['~'] = "～"
-    let s:punctuations['+'] = "＋"
-    let s:punctuations['-'] = "－"
-    let s:punctuations['='] = "＝"
-    let s:punctuations[';'] = "；"
-    let s:punctuations[','] = "，"
-    let s:punctuations['.'] = "。"
-    let s:punctuations['?'] = "？"
-    let s:punctuations['*'] = "﹡"
-    let s:punctuations['^'] = "……"
-    let s:punctuations['_'] = "——"
-    let s:evils = {}
-    if s:vimim_chinese_punctuation !~ 'latex'
-        let s:evils['|'] = "、"
-        let s:evils["'"] = "‘’"
-        let s:evils['"'] = "“”"
-    endif
-    let s:evils_all = copy(s:punctuations)
-    call extend(s:evils_all, s:evils)
-endfunction
-
-function! <SID>vimim_page_map(key)
-    let key = a:key
-    if pumvisible()
-        if key =~ "[][]"
-            let key = s:vimim_square_bracket(key)
-        elseif key =~ "[=.]"
-            let key = '\<PageDown>'
-            if &pumheight
-                let s:pageup_pagedown = 1
-                let key = g:vimim()
-            endif
-        elseif key =~ "[-,]"
-            let key = '\<PageUp>'
-            if &pumheight
-                let s:pageup_pagedown = -1
-                let key = g:vimim()
-            endif
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! s:vimim_punctuation_mapping()
-    if s:chinese_punctuation
-    \&& s:vimim_chinese_punctuation !~ 'latex'
-        inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
-        inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
-        exe 'inoremap <Bar> ' .
-        \ '<C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . s:evils['|']
-    else
-        for _ in keys(s:evils)
-            sil!exe 'iunmap '. _
-        endfor
-    endif
-    for _ in keys(s:punctuations)
-        silent!exe 'inoremap <silent> <expr> '    ._.
-        \ ' <SID>vimim_chinese_punctuation_map("'._.'")'
-    endfor
-    return ""
-endfunction
-
-function! <SID>vimim_chinese_punctuation_map(key)
-    let key = a:key
-    if s:chinese_punctuation
-        let one_before = getline(".")[col(".")-2]
-        if one_before !~ '\w' || pumvisible()
-            if has_key(s:punctuations, a:key)
-                let key = s:punctuations[a:key]
-            endif
-        endif
-    endif
-    if pumvisible()
-        if a:key == ";"  " the 2nd choice
-            let key = '\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
-        else
-            let key = '\<C-Y>' . key
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_onekey_map(key)
-    let hjkl = a:key
-    if !pumvisible()
-        return hjkl
-    endif
-    if hjkl ==# '*'
-        if &pumheight
-            let s:popup_list = s:popup_list[:&pumheight-1]
-        endif
-        let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-    elseif hjkl == ';'
-        let hjkl = '\<C-Y>\<C-R>=g:vimim_clipboard()\<CR>'
-    elseif hjkl =~ "[<>]"
-        let hjkl = '\<C-Y>' . s:punctuations[nr2char(char2nr(hjkl)-16)]
-    elseif hjkl =~ "[/?]"
-        let hjkl = s:vimim_menu_search(hjkl)
-    elseif hjkl ==# ':'  " toggle simplified/traditional transfer
-        let s:hjkl__ += 1
-        let hjkl = g:vimim()
-    elseif hjkl == "'"  " omni cycle through BB/GG/SS/00 clouds
-        if s:keyboard[-1:] != "'"
-            call s:vimim_last_quote()
-        endif
-        let hjkl = g:vimim()
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
-function! <SID>vimim_get_quote(quote)
-    let key = ""
-    if a:quote == 1
-        let key = "'"
-    elseif a:quote == 2
-        let key = '"'
-    endif
-    let quote = ""
-    if !has_key(s:evils, key)
-        return ""
-    elseif pumvisible()
-        let quote = '\<C-Y>'
-    endif
-    let pairs = split(s:evils[key], '\zs')
-    if a:quote == 1
-        if s:onekey
-            let s:smart_single_quotes += 1
-            let quote .= get(pairs, s:smart_single_quotes % 2)
-        else  " the 3rd choice
-            let quote = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
-        endif
-    elseif a:quote == 2
-        let s:smart_double_quotes += 1
-        let quote .= get(pairs, s:smart_double_quotes % 2)
-    endif
-    sil!exe 'sil!return "' . quote . '"'
-endfunction
-
-" ============================================= }}}
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
@@ -1106,6 +944,168 @@ function! s:vimim_get_labeling(label)
         let labeling = english . labeling
     endif
     return labeling
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  punctuation      ==== {{{"]
+" =================================================
+
+function! s:vimim_dictionary_punctuations()
+    let s:space = "　"
+    let s:colon = "："
+    let s:left  = "【"
+    let s:right = "】"
+    let s:punctuations = {}
+    let s:punctuations[':'] = s:colon
+    let s:punctuations['['] = s:left
+    let s:punctuations[']'] = s:right
+    let s:punctuations['{'] = "〖"
+    let s:punctuations['}'] = "〗"
+    let s:punctuations['('] = "（"
+    let s:punctuations[')'] = "）"
+    let s:punctuations['<'] = "《"
+    let s:punctuations['>'] = "》"
+    let s:punctuations['#'] = "＃"
+    let s:punctuations['&'] = "＆"
+    let s:punctuations['%'] = "％"
+    let s:punctuations['$'] = "￥"
+    let s:punctuations['!'] = "！"
+    let s:punctuations['~'] = "～"
+    let s:punctuations['+'] = "＋"
+    let s:punctuations['-'] = "－"
+    let s:punctuations['='] = "＝"
+    let s:punctuations[';'] = "；"
+    let s:punctuations[','] = "，"
+    let s:punctuations['.'] = "。"
+    let s:punctuations['?'] = "？"
+    let s:punctuations['*'] = "﹡"
+    let s:punctuations['^'] = "……"
+    let s:punctuations['_'] = "——"
+    let s:evils = {}
+    if s:vimim_chinese_punctuation !~ 'latex'
+        let s:evils['|'] = "、"
+        let s:evils["'"] = "‘’"
+        let s:evils['"'] = "“”"
+    endif
+    let s:evils_all = copy(s:punctuations)
+    call extend(s:evils_all, s:evils)
+endfunction
+
+function! <SID>vimim_page_map(key)
+    let key = a:key
+    if pumvisible()
+        if key =~ "[][]"
+            let key = s:vimim_square_bracket(key)
+        elseif key =~ "[=.]"
+            let key = '\<PageDown>'
+            if &pumheight
+                let s:pageup_pagedown = 1
+                let key = g:vimim()
+            endif
+        elseif key =~ "[-,]"
+            let key = '\<PageUp>'
+            if &pumheight
+                let s:pageup_pagedown = -1
+                let key = g:vimim()
+            endif
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! s:vimim_punctuation_mapping()
+    if s:chinese_punctuation
+    \&& s:vimim_chinese_punctuation !~ 'latex'
+        inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
+        inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
+        exe 'inoremap <Bar> ' .
+        \ '<C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . s:evils['|']
+    else
+        for _ in keys(s:evils)
+            sil!exe 'iunmap '. _
+        endfor
+    endif
+    for _ in keys(s:punctuations)
+        silent!exe 'inoremap <silent> <expr> '    ._.
+        \ ' <SID>vimim_chinese_punctuation_map("'._.'")'
+    endfor
+    return ""
+endfunction
+
+function! <SID>vimim_chinese_punctuation_map(key)
+    let key = a:key
+    if s:chinese_punctuation
+        let one_before = getline(".")[col(".")-2]
+        if one_before !~ '\w' || pumvisible()
+            if has_key(s:punctuations, a:key)
+                let key = s:punctuations[a:key]
+            endif
+        endif
+    endif
+    if pumvisible()
+        if a:key == ";"  " the 2nd choice
+            let key = '\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
+        else
+            let key = '\<C-Y>' . key
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_onekey_map(key)
+    let hjkl = a:key
+    if !pumvisible()
+        return hjkl
+    endif
+    if hjkl ==# '*'
+        if &pumheight
+            let s:popup_list = s:popup_list[:&pumheight-1]
+        endif
+        let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+    elseif hjkl == ';'
+        let hjkl = '\<C-Y>\<C-R>=g:vimim_clipboard()\<CR>'
+    elseif hjkl =~ "[<>]"
+        let hjkl = '\<C-Y>' . s:punctuations[nr2char(char2nr(hjkl)-16)]
+    elseif hjkl =~ "[/?]"
+        let hjkl = s:vimim_menu_search(hjkl)
+    elseif hjkl ==# ':'  " toggle simplified/traditional transfer
+        let s:hjkl__ += 1
+        let hjkl = g:vimim()
+    elseif hjkl == "'"  " omni cycle through BB/GG/SS/00 clouds
+        if s:keyboard[-1:] != "'"
+            call s:vimim_last_quote()
+        endif
+        let hjkl = g:vimim()
+    endif
+    sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
+function! <SID>vimim_get_quote(quote)
+    let key = ""
+    if a:quote == 1
+        let key = "'"
+    elseif a:quote == 2
+        let key = '"'
+    endif
+    let quote = ""
+    if !has_key(s:evils, key)
+        return ""
+    elseif pumvisible()
+        let quote = '\<C-Y>'
+    endif
+    let pairs = split(s:evils[key], '\zs')
+    if a:quote == 1
+        if s:onekey
+            let s:smart_single_quotes += 1
+            let quote .= get(pairs, s:smart_single_quotes % 2)
+        else  " the 3rd choice
+            let quote = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
+        endif
+    elseif a:quote == 2
+        let s:smart_double_quotes += 1
+        let quote .= get(pairs, s:smart_double_quotes % 2)
+    endif
+    sil!exe 'sil!return "' . quote . '"'
 endfunction
 
 " ============================================= }}}
