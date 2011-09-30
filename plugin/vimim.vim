@@ -164,76 +164,6 @@ function! s:vimim_set_keycode()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  customization    ==== {{{"]
-" =================================================
-
-function! s:vimim_initialize_global()
-    let G = []
-    let s:vimimrc = []
-    let s:vimimdefaults = []
-    call add(G, "g:vimim_debug")
-    call add(G, "g:vimim_chinese_input_mode")
-    call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_ctrl_h_to_toggle")
-    call add(G, "g:vimim_plugin_folder")
-    call add(G, "g:vimim_shuangpin")
-    call add(G, "g:vimim_tab_as_onekey")
-    call add(G, "g:vimim_toggle_list")
-    call add(G, "g:vimim_mycloud")
-    call add(G, "g:vimim_cloud")
-    call s:vimim_set_global_default(G, 0)
-    let G = []
-    call add(G, "g:vimim_chinese_punctuation")
-    call add(G, "g:vimim_one_row_menu")
-    call add(G, "g:vimim_custom_color")
-    call s:vimim_set_global_default(G, 1)
-    if empty(s:vimim_chinese_input_mode)
-        let s:vimim_chinese_input_mode = 'dynamic'
-    endif
-    if isdirectory(s:vimim_plugin_folder)
-        let s:plugin = s:vimim_plugin_folder
-    endif
-    if s:plugin[-1:] != "/"
-        let s:plugin .= "/"
-    endif
-    let s:chinese_mode = 'onekey'
-    let s:onekey = 0
-    let s:im_toggle = 0
-    let s:frontends = []
-    let s:download = {}
-    let s:download.english = "vimim.txt"
-    let s:download.cjk     = "vimim.cjk.txt"
-    let s:download.bsddb   = "vimim.gbk.bsddb"
-endfunction
-
-function! s:vimim_set_global_default(options, default)
-    for variable in a:options
-        let configuration = 0
-        let default = a:default
-        if exists(variable)
-            let value = eval(variable)
-            if value != default || type(value) == type("")
-                let configuration = 1
-            endif
-            let default = string(value)
-        endif
-        let option = ':let ' . variable .' = '. default .' '
-        if configuration
-            call add(s:vimimrc, '  ' . option)
-        else
-            call add(s:vimimdefaults, '" ' . option)
-        endif
-        let s_variable = substitute(variable, "g:", "s:", '')
-        if exists(variable)
-            exe   'let  ' . s_variable .'='. variable
-            exe 'unlet! ' .   variable
-        else
-            exe 'let '. s_variable .'='. a:default
-        endif
-    endfor
-endfunction
-
-" ============================================= }}}
 let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
 
@@ -502,6 +432,196 @@ function! s:vimim_chinese_rotation() range abort
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  customization    ==== {{{"]
+" =================================================
+
+function! s:vimim_initialize_global()
+    let G = []
+    let s:vimimrc = []
+    let s:vimimdefaults = []
+    call add(G, "g:vimim_debug")
+    call add(G, "g:vimim_chinese_input_mode")
+    call add(G, "g:vimim_ctrl_space_to_toggle")
+    call add(G, "g:vimim_ctrl_h_to_toggle")
+    call add(G, "g:vimim_plugin_folder")
+    call add(G, "g:vimim_shuangpin")
+    call add(G, "g:vimim_tab_as_onekey")
+    call add(G, "g:vimim_toggle_list")
+    call add(G, "g:vimim_mycloud")
+    call add(G, "g:vimim_cloud")
+    call s:vimim_set_global_default(G, 0)
+    let G = []
+    call add(G, "g:vimim_chinese_punctuation")
+    call add(G, "g:vimim_one_row_menu")
+    call add(G, "g:vimim_custom_color")
+    call s:vimim_set_global_default(G, 1)
+    if empty(s:vimim_chinese_input_mode)
+        let s:vimim_chinese_input_mode = 'dynamic'
+    endif
+    if isdirectory(s:vimim_plugin_folder)
+        let s:plugin = s:vimim_plugin_folder
+    endif
+    if s:plugin[-1:] != "/"
+        let s:plugin .= "/"
+    endif
+    let s:chinese_mode = 'onekey'
+    let s:onekey = 0
+    let s:im_toggle = 0
+    let s:frontends = []
+    let s:download = {}
+    let s:download.english = "vimim.txt"
+    let s:download.cjk     = "vimim.cjk.txt"
+    let s:download.bsddb   = "vimim.gbk.bsddb"
+endfunction
+
+function! s:vimim_set_global_default(options, default)
+    for variable in a:options
+        let configuration = 0
+        let default = a:default
+        if exists(variable)
+            let value = eval(variable)
+            if value != default || type(value) == type("")
+                let configuration = 1
+            endif
+            let default = string(value)
+        endif
+        let option = ':let ' . variable .' = '. default .' '
+        if configuration
+            call add(s:vimimrc, '  ' . option)
+        else
+            call add(s:vimimdefaults, '" ' . option)
+        endif
+        let s_variable = substitute(variable, "g:", "s:", '')
+        if exists(variable)
+            exe   'let  ' . s_variable .'='. variable
+            exe 'unlet! ' .   variable
+        else
+            exe 'let '. s_variable .'='. a:default
+        endif
+    endfor
+endfunction
+
+function! s:vimim_get_valid_im_name(im)
+    let im = a:im
+    if im =~ '^wubi'
+        let im = 'wubi'
+    elseif im =~ '^pinyin'
+        let im = 'pinyin'
+    elseif im !~ s:all_vimim_input_methods
+        let im = 0
+    endif
+    return im
+endfunction
+
+function! s:vimim_set_special_property()
+    if s:backend[s:ui.root][s:ui.im].name =~# "quote"
+        let s:ui.has_dot = 2      " has apostrophe in datafile
+    endif
+    for im in split('wu erbi yong nature boshiamy phonetic array30')
+        if s:ui.im == im
+            let s:ui.has_dot = 1  " has dot in datafile
+            let s:vimim_chinese_punctuation = -9
+            break
+        endif
+    endfor
+    let s:imode_pinyin = 0
+    if s:ui.im =~ 'pinyin' || s:onekey > 1
+        let s:imode_pinyin = 1
+        if empty(s:quanpin_table)
+            let s:quanpin_table = s:vimim_create_quanpin_table()
+        endif
+    endif
+endfunction
+
+function! s:vimim_wubi_auto_input_on_the_4th(keyboard)
+    let keyboard = a:keyboard
+    if s:chinese_mode =~ 'dynamic'
+        if len(keyboard) > 4
+            let start = 4*((len(keyboard)-1)/4)
+            let keyboard = strpart(keyboard, start)
+        endif
+        let s:keyboard = keyboard
+    endif
+    return keyboard
+endfunction
+
+function! g:vimim_wubi()
+    let key = ""
+    if pumvisible()
+        let key = '\<C-E>'
+        if empty(len(get(split(s:keyboard),0))%4)
+            let key = '\<C-Y>'
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! s:vimim_set_plugin_conflict()
+    if !exists('s:acp_sid')
+        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+        if !empty(s:acp_sid)
+            AcpDisable
+        endif
+    endif
+    if !exists('s:supertab_sid')
+        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    endif
+    if !exists('s:word_complete')
+        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
+        if !empty(s:word_complete)
+            call EndWordComplete()
+        endif
+    endif
+endfunction
+
+function! s:vimim_restore_plugin_conflict()
+    if !empty(s:acp_sid)
+        let ACPMappingDrivenkeys = [
+            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
+            \ '<','>','/','\','<Space>','<BS>','<CR>',]
+        call extend(ACPMappingDrivenkeys, range(10))
+        call extend(ACPMappingDrivenkeys, s:Az_list)
+        for key in ACPMappingDrivenkeys
+            exe printf('iu <silent> %s', key)
+            exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>',
+            \ key, key, s:acp_sid)
+        endfor
+        AcpEnable
+    endif
+    if !empty(s:supertab_sid)
+        let tab = s:supertab_sid
+        if g:SuperTabMappingForward =~ '^<tab>$'
+            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
+        endif
+        if g:SuperTabMappingBackward =~ '^<s-tab>$'
+            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
+        endif
+    endif
+endfunction
+
+function! s:vimim_getsid(scriptname)
+    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
+    let l:scriptname = a:scriptname
+    " get output of ":scriptnames" in scriptnames_output variable
+    if empty(s:scriptnames_output)
+        let saved_shellslash=&shellslash
+        set shellslash
+        redir => s:scriptnames_output
+        silent scriptnames
+        redir END
+        let &shellslash = saved_shellslash
+    endif
+    for line in split(s:scriptnames_output, "\n")
+        " only do non-blank lines
+        if line =~ l:scriptname
+            " get the first number in the line
+            return matchstr(line, '\d\+')
+        endif
+    endfor
+    return 0
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  /search          ==== {{{"]
 " =================================================
 
@@ -759,130 +879,6 @@ function! <SID>vimim_get_quote(quote)
         let quote .= get(pairs, s:smart_double_quotes % 2)
     endif
     sil!exe 'sil!return "' . quote . '"'
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  miscellaneous    ==== {{{"]
-" =================================================
-
-function! s:vimim_get_valid_im_name(im)
-    let im = a:im
-    if im =~ '^wubi'
-        let im = 'wubi'
-    elseif im =~ '^pinyin'
-        let im = 'pinyin'
-    elseif im !~ s:all_vimim_input_methods
-        let im = 0
-    endif
-    return im
-endfunction
-
-function! s:vimim_set_special_property()
-    if s:backend[s:ui.root][s:ui.im].name =~# "quote"
-        let s:ui.has_dot = 2      " has apostrophe in datafile
-    endif
-    for im in split('wu erbi yong nature boshiamy phonetic array30')
-        if s:ui.im == im
-            let s:ui.has_dot = 1  " has dot in datafile
-            let s:vimim_chinese_punctuation = -9
-            break
-        endif
-    endfor
-    let s:imode_pinyin = 0
-    if s:ui.im =~ 'pinyin' || s:onekey > 1
-        let s:imode_pinyin = 1
-        if empty(s:quanpin_table)
-            let s:quanpin_table = s:vimim_create_quanpin_table()
-        endif
-    endif
-endfunction
-
-function! s:vimim_wubi_auto_input_on_the_4th(keyboard)
-    let keyboard = a:keyboard
-    if s:chinese_mode =~ 'dynamic'
-        if len(keyboard) > 4
-            let start = 4*((len(keyboard)-1)/4)
-            let keyboard = strpart(keyboard, start)
-        endif
-        let s:keyboard = keyboard
-    endif
-    return keyboard
-endfunction
-
-function! g:vimim_wubi()
-    let key = ""
-    if pumvisible()
-        let key = '\<C-E>'
-        if empty(len(get(split(s:keyboard),0))%4)
-            let key = '\<C-Y>'
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! s:vimim_set_plugin_conflict()
-    if !exists('s:acp_sid')
-        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
-        if !empty(s:acp_sid)
-            AcpDisable
-        endif
-    endif
-    if !exists('s:supertab_sid')
-        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
-    endif
-    if !exists('s:word_complete')
-        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
-        if !empty(s:word_complete)
-            call EndWordComplete()
-        endif
-    endif
-endfunction
-
-function! s:vimim_restore_plugin_conflict()
-    if !empty(s:acp_sid)
-        let ACPMappingDrivenkeys = [
-            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
-            \ '<','>','/','\','<Space>','<BS>','<CR>',]
-        call extend(ACPMappingDrivenkeys, range(10))
-        call extend(ACPMappingDrivenkeys, s:Az_list)
-        for key in ACPMappingDrivenkeys
-            exe printf('iu <silent> %s', key)
-            exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>',
-            \ key, key, s:acp_sid)
-        endfor
-        AcpEnable
-    endif
-    if !empty(s:supertab_sid)
-        let tab = s:supertab_sid
-        if g:SuperTabMappingForward =~ '^<tab>$'
-            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
-        endif
-        if g:SuperTabMappingBackward =~ '^<s-tab>$'
-            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
-        endif
-    endif
-endfunction
-
-function! s:vimim_getsid(scriptname)
-    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
-    let l:scriptname = a:scriptname
-    " get output of ":scriptnames" in scriptnames_output variable
-    if empty(s:scriptnames_output)
-        let saved_shellslash=&shellslash
-        set shellslash
-        redir => s:scriptnames_output
-        silent scriptnames
-        redir END
-        let &shellslash = saved_shellslash
-    endif
-    for line in split(s:scriptnames_output, "\n")
-        " only do non-blank lines
-        if line =~ l:scriptname
-            " get the first number in the line
-            return matchstr(line, '\d\+')
-        endif
-    endfor
-    return 0
 endfunction
 
 " ============================================= }}}
