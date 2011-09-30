@@ -882,296 +882,6 @@ function! <SID>vimim_get_quote(quote)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  python           ==== {{{"]
-" =================================================
-
-function! s:vimim_get_stone_from_bsddb(stone)
-:sil!python << EOF
-try:
-    stone = vim.eval('a:stone')
-    marble = getstone(stone)
-    vim.command("return '%s'" % marble)
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-return ""
-endfunction
-
-function! s:vimim_get_gold_from_bsddb(stone)
-:sil!python << EOF
-try:
-    gold = getgold(vim.eval('a:stone'))
-    vim.command("return '%s'" % gold)
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-return ""
-endfunction
-
-function! s:vimim_initialize_bsddb(datafile)
-:sil!python << EOF
-import vim, bsddb
-encoding = vim.eval("&encoding")
-datafile = vim.eval('a:datafile')
-edw = bsddb.btopen(datafile,'r')
-def getstone(stone):
-    if stone not in edw:
-        while stone and stone not in edw: stone = stone[:-1]
-    return stone
-def getgold(stone):
-    gold = stone
-    if stone and stone in edw:
-         gold = edw.get(stone)
-         if encoding == 'utf-8':
-               if datafile.find("gbk"):
-                   gold = unicode(gold,'gb18030','ignore')
-                   gold = gold.encode(encoding,'ignore')
-    gold = stone + ' ' + gold
-    return gold
-EOF
-endfunction
-
-function! s:vimim_get_from_python2(input, cloud)
-:sil!python << EOF
-import vim, urllib2
-cloud = vim.eval('a:cloud')
-input = vim.eval('a:input')
-encoding = vim.eval("&encoding")
-try:
-    urlopen = urllib2.urlopen(input, None, 20)
-    response = urlopen.read()
-    res = "'" + str(response) + "'"
-    if cloud == 'qq':
-        if encoding != 'utf-8':
-            res = unicode(res, 'utf-8').encode('utf-8')
-    elif cloud == 'google':
-        if encoding != 'utf-8':
-            res = unicode(res, 'unicode_escape').encode("utf8")
-    elif cloud == 'baidu':
-        if encoding != 'utf-8':
-            res = str(response)
-        else:
-            res = unicode(response, 'gbk').encode(encoding)
-        vim.command("let g:baidu = %s" % res)
-    vim.command("return %s" % res)
-    urlopen.close()
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-return ""
-endfunction
-
-function! s:vimim_get_from_python3(input, cloud)
-:sil!python3 << EOF
-import vim, urllib.request
-try:
-    cloud = vim.eval('a:cloud')
-    input = vim.eval('a:input')
-    urlopen = urllib.request.urlopen(input)
-    response = urlopen.read()
-    if cloud != 'baidu':
-        res = "'" + str(response.decode('utf-8')) + "'"
-    else:
-        if vim.eval("&encoding") != 'utf-8':
-            res = str(response)[2:-1]
-        else:
-            res = response.decode('gbk')
-        vim.command("let g:baidu = %s" % res)
-    vim.command("return %s" % res)
-    urlopen.close()
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-return ""
-endfunction
-
-function! g:vimim_gmail() range abort
-" [dream] to send email from within the current buffer
-" [usage] :call g:vimim_gmail()
-" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
-if empty(has('python')) && empty(has('python3'))
-    echo 'No magic Python Interface to Vim' | return ""
-endif
-let firstline = a:firstline
-let  lastline = a:lastline
-if lastline - firstline < 1
-    let firstline = 1
-    let lastline = "$"
-endif
-let g:gmails.msg = getline(firstline, lastline)
-let python = has('python3') && &relativenumber ? 'python3' : 'python'
-exe python . ' << EOF'
-import vim
-from smtplib import SMTP
-from datetime import datetime
-from email.mime.text import MIMEText
-def vimim_gmail():
-    gmails = vim.eval('g:gmails')
-    vim.command('sil!unlet g:gmails.bcc')
-    now = datetime.now().strftime("%A %m/%d/%Y")
-    gmail_login  = gmails.get("login","")
-    if len(gmail_login) < 8: return None
-    gmail_passwd = gmails.get("passwd")
-    gmail_to     = gmails.get("to")
-    gmail_bcc    = gmails.get("bcc","")
-    gmail_msg    = gmails.get("msg")
-    gamil_all = [gmail_to] + gmail_bcc.split()
-    msg = str("\n".join(gmail_msg))
-    rfc2822 = MIMEText(msg, 'plain', 'utf-8')
-    rfc2822['From'] = gmail_login
-    rfc2822['To'] = gmail_to
-    rfc2822['Subject'] = now
-    rfc2822.set_charset('utf-8')
-    try:
-        gmail = SMTP('smtp.gmail.com', 587, 120)
-        gmail.starttls()
-        gmail.login(gmail_login, gmail_passwd[::-1])
-        gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
-    finally:
-        gmail.close()
-vimim_gmail()
-EOF
-endfunction
-
-function! s:vimim_mycloud_python_init()
-:sil!python << EOF
-import vim, sys, socket
-BUFSIZE = 1024
-def tcpslice(sendfunc, data):
-    senddata = data
-    while len(senddata) >= BUFSIZE:
-        sendfunc(senddata[0:BUFSIZE])
-        senddata = senddata[BUFSIZE:]
-    if senddata[-1:] == "\n":
-        sendfunc(senddata)
-    else:
-        sendfunc(senddata+"\n")
-def tcpsend(data, host, port):
-    addr = host, port
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        s.connect(addr)
-    except Exception, inst:
-        s.close()
-        return None
-    ret = ""
-    for item in data.split("\n"):
-        if item == "":
-            continue
-        tcpslice(s.send, item)
-        cachedata = ""
-        while cachedata[-1:] != "\n":
-            data = s.recv(BUFSIZE)
-            cachedata += data
-        if cachedata == "server closed\n":
-            break
-        ret += cachedata
-    s.close()
-    return ret
-def parsefunc(keyb, host="localhost", port=10007):
-    src = keyb.encode("base64")
-    ret = tcpsend(src, host, port)
-    if type(ret).__name__ == "str":
-        try:
-            return ret.decode("base64")
-        except Exception:
-            return ""
-    else:
-        return ""
-EOF
-endfunction
-
-function! s:vimim_mycloud_python_client(cmd, host, port)
-:sil!python << EOF
-try:
-    HOST = vim.eval("a:host")
-    PORT = int(vim.eval("a:port"))
-    cmd  = vim.eval("a:cmd")
-    ret = parsefunc(cmd, HOST, PORT)
-    vim.command('return "%s"' % ret)
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-endfunction
-
-function! s:debug(...)
-" [server] sdebug(){ /bin/python ~/vim/vimfiles/plugin/sdebug.py ;}
-" [client] :call s:debug('info', 'foo/bar is', foobar, 'and', bar)
-if empty(s:vimim_debug) || empty(has('python'))
-    return
-endif
-if s:vimim_debug < 2
-    call s:netlog_python_init()
-    let s:vimim_debug += 1
-endif
-if s:vimim_debug < 2
-    return
-endif
-:sil!python << EOF
-try:
-    level = vim.eval("a:1")
-    if checkmask(level):
-        udpsend(vim.eval("join(a:000)"),"localhost",10007)
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-endfunction
-
-function! s:netlog_python_init()
-:sil!python << EOF
-import vim, sys, socket
-BUFSIZE = 1024
-def udpslice(sendfunc, data, addr):
-    senddata = data
-    while len(senddata) >= BUFSIZE:
-        sendfunc(senddata[0:BUFSIZE], addr)
-        senddata = senddata[BUFSIZE:]
-    if senddata[-1:] == "\n":
-        sendfunc(senddata, addr)
-    else:
-        sendfunc(senddata+"\n", addr)
-def udpsend(data, host, port):
-    addr = host, port
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(1)
-    try:
-        s.bind(('', 0))
-    except Exception, inst:
-        s.close()
-        return None
-    ret = ""
-    for item in data.split("\n"):
-        if item == "":
-            continue
-        udpslice(s.sendto, item, addr)
-    s.close()
-def log_mask(level):
-    pri = g_level.get(level, -1)
-    if pri < 0:
-        return 0
-    else:
-        return 1 << pri
-def log_upto(level):
-    pri = g_level.get(level, -1)
-    return (1 <<(pri+1) ) - 1
-def checkmask(level):
-    if log_mask(level) & g_mask:
-        return True
-    else:
-        return False
-g_level = {'emerg':0,    #  system is unusable
-           'alert':1,    #  action must be taken immediately
-           'crit':2,     #  critical conditions
-           'err':3,      #  error conditions
-           'warning':4,  #  warning conditions
-           'notice':5,   #  normal but significant condition
-           'info':6,     #  informational
-           'debug':7 }   #  debug-level messages
-g_mask = log_upto('info')
-EOF
-endfunction
-
-" ============================================= }}}
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
@@ -1726,6 +1436,296 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  python           ==== {{{"]
+" =================================================
+
+function! s:vimim_get_stone_from_bsddb(stone)
+:sil!python << EOF
+try:
+    stone = vim.eval('a:stone')
+    marble = getstone(stone)
+    vim.command("return '%s'" % marble)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+return ""
+endfunction
+
+function! s:vimim_get_gold_from_bsddb(stone)
+:sil!python << EOF
+try:
+    gold = getgold(vim.eval('a:stone'))
+    vim.command("return '%s'" % gold)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+return ""
+endfunction
+
+function! s:vimim_initialize_bsddb(datafile)
+:sil!python << EOF
+import vim, bsddb
+encoding = vim.eval("&encoding")
+datafile = vim.eval('a:datafile')
+edw = bsddb.btopen(datafile,'r')
+def getstone(stone):
+    if stone not in edw:
+        while stone and stone not in edw: stone = stone[:-1]
+    return stone
+def getgold(stone):
+    gold = stone
+    if stone and stone in edw:
+         gold = edw.get(stone)
+         if encoding == 'utf-8':
+               if datafile.find("gbk"):
+                   gold = unicode(gold,'gb18030','ignore')
+                   gold = gold.encode(encoding,'ignore')
+    gold = stone + ' ' + gold
+    return gold
+EOF
+endfunction
+
+function! s:vimim_get_from_python2(input, cloud)
+:sil!python << EOF
+import vim, urllib2
+cloud = vim.eval('a:cloud')
+input = vim.eval('a:input')
+encoding = vim.eval("&encoding")
+try:
+    urlopen = urllib2.urlopen(input, None, 20)
+    response = urlopen.read()
+    res = "'" + str(response) + "'"
+    if cloud == 'qq':
+        if encoding != 'utf-8':
+            res = unicode(res, 'utf-8').encode('utf-8')
+    elif cloud == 'google':
+        if encoding != 'utf-8':
+            res = unicode(res, 'unicode_escape').encode("utf8")
+    elif cloud == 'baidu':
+        if encoding != 'utf-8':
+            res = str(response)
+        else:
+            res = unicode(response, 'gbk').encode(encoding)
+        vim.command("let g:baidu = %s" % res)
+    vim.command("return %s" % res)
+    urlopen.close()
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+return ""
+endfunction
+
+function! s:vimim_get_from_python3(input, cloud)
+:sil!python3 << EOF
+import vim, urllib.request
+try:
+    cloud = vim.eval('a:cloud')
+    input = vim.eval('a:input')
+    urlopen = urllib.request.urlopen(input)
+    response = urlopen.read()
+    if cloud != 'baidu':
+        res = "'" + str(response.decode('utf-8')) + "'"
+    else:
+        if vim.eval("&encoding") != 'utf-8':
+            res = str(response)[2:-1]
+        else:
+            res = response.decode('gbk')
+        vim.command("let g:baidu = %s" % res)
+    vim.command("return %s" % res)
+    urlopen.close()
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+return ""
+endfunction
+
+function! g:vimim_gmail() range abort
+" [dream] to send email from within the current buffer
+" [usage] :call g:vimim_gmail()
+" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
+if empty(has('python')) && empty(has('python3'))
+    echo 'No magic Python Interface to Vim' | return ""
+endif
+let firstline = a:firstline
+let  lastline = a:lastline
+if lastline - firstline < 1
+    let firstline = 1
+    let lastline = "$"
+endif
+let g:gmails.msg = getline(firstline, lastline)
+let python = has('python3') && &relativenumber ? 'python3' : 'python'
+exe python . ' << EOF'
+import vim
+from smtplib import SMTP
+from datetime import datetime
+from email.mime.text import MIMEText
+def vimim_gmail():
+    gmails = vim.eval('g:gmails')
+    vim.command('sil!unlet g:gmails.bcc')
+    now = datetime.now().strftime("%A %m/%d/%Y")
+    gmail_login  = gmails.get("login","")
+    if len(gmail_login) < 8: return None
+    gmail_passwd = gmails.get("passwd")
+    gmail_to     = gmails.get("to")
+    gmail_bcc    = gmails.get("bcc","")
+    gmail_msg    = gmails.get("msg")
+    gamil_all = [gmail_to] + gmail_bcc.split()
+    msg = str("\n".join(gmail_msg))
+    rfc2822 = MIMEText(msg, 'plain', 'utf-8')
+    rfc2822['From'] = gmail_login
+    rfc2822['To'] = gmail_to
+    rfc2822['Subject'] = now
+    rfc2822.set_charset('utf-8')
+    try:
+        gmail = SMTP('smtp.gmail.com', 587, 120)
+        gmail.starttls()
+        gmail.login(gmail_login, gmail_passwd[::-1])
+        gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
+    finally:
+        gmail.close()
+vimim_gmail()
+EOF
+endfunction
+
+function! s:vimim_mycloud_python_init()
+:sil!python << EOF
+import vim, sys, socket
+BUFSIZE = 1024
+def tcpslice(sendfunc, data):
+    senddata = data
+    while len(senddata) >= BUFSIZE:
+        sendfunc(senddata[0:BUFSIZE])
+        senddata = senddata[BUFSIZE:]
+    if senddata[-1:] == "\n":
+        sendfunc(senddata)
+    else:
+        sendfunc(senddata+"\n")
+def tcpsend(data, host, port):
+    addr = host, port
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.connect(addr)
+    except Exception, inst:
+        s.close()
+        return None
+    ret = ""
+    for item in data.split("\n"):
+        if item == "":
+            continue
+        tcpslice(s.send, item)
+        cachedata = ""
+        while cachedata[-1:] != "\n":
+            data = s.recv(BUFSIZE)
+            cachedata += data
+        if cachedata == "server closed\n":
+            break
+        ret += cachedata
+    s.close()
+    return ret
+def parsefunc(keyb, host="localhost", port=10007):
+    src = keyb.encode("base64")
+    ret = tcpsend(src, host, port)
+    if type(ret).__name__ == "str":
+        try:
+            return ret.decode("base64")
+        except Exception:
+            return ""
+    else:
+        return ""
+EOF
+endfunction
+
+function! s:vimim_mycloud_python_client(cmd, host, port)
+:sil!python << EOF
+try:
+    HOST = vim.eval("a:host")
+    PORT = int(vim.eval("a:port"))
+    cmd  = vim.eval("a:cmd")
+    ret = parsefunc(cmd, HOST, PORT)
+    vim.command('return "%s"' % ret)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+endfunction
+
+function! s:debug(...)
+" [server] sdebug(){ /bin/python ~/vim/vimfiles/plugin/sdebug.py ;}
+" [client] :call s:debug('info', 'foo/bar is', foobar, 'and', bar)
+if empty(s:vimim_debug) || empty(has('python'))
+    return
+endif
+if s:vimim_debug < 2
+    call s:netlog_python_init()
+    let s:vimim_debug += 1
+endif
+if s:vimim_debug < 2
+    return
+endif
+:sil!python << EOF
+try:
+    level = vim.eval("a:1")
+    if checkmask(level):
+        udpsend(vim.eval("join(a:000)"),"localhost",10007)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+endfunction
+
+function! s:netlog_python_init()
+:sil!python << EOF
+import vim, sys, socket
+BUFSIZE = 1024
+def udpslice(sendfunc, data, addr):
+    senddata = data
+    while len(senddata) >= BUFSIZE:
+        sendfunc(senddata[0:BUFSIZE], addr)
+        senddata = senddata[BUFSIZE:]
+    if senddata[-1:] == "\n":
+        sendfunc(senddata, addr)
+    else:
+        sendfunc(senddata+"\n", addr)
+def udpsend(data, host, port):
+    addr = host, port
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(1)
+    try:
+        s.bind(('', 0))
+    except Exception, inst:
+        s.close()
+        return None
+    ret = ""
+    for item in data.split("\n"):
+        if item == "":
+            continue
+        udpslice(s.sendto, item, addr)
+    s.close()
+def log_mask(level):
+    pri = g_level.get(level, -1)
+    if pri < 0:
+        return 0
+    else:
+        return 1 << pri
+def log_upto(level):
+    pri = g_level.get(level, -1)
+    return (1 <<(pri+1) ) - 1
+def checkmask(level):
+    if log_mask(level) & g_mask:
+        return True
+    else:
+        return False
+g_level = {'emerg':0,    #  system is unusable
+           'alert':1,    #  action must be taken immediately
+           'crit':2,     #  critical conditions
+           'err':3,      #  error conditions
+           'warning':4,  #  warning conditions
+           'notice':5,   #  normal but significant condition
+           'info':6,     #  informational
+           'debug':7 }   #  debug-level messages
+g_mask = log_upto('info')
+EOF
 endfunction
 
 " ============================================= }}}
