@@ -1927,16 +1927,23 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
 function! g:vimim_titlestring()
-    let cloud  = s:space
-    if s:onekey > 1
-        let cloud .= s:vimim_chinese(get(split(s:vimim_cloud,','),0))
-        let cloud .= s:vimim_chinese('cloud') . s:space
-    endif
+    let cloud = s:vimim_get_titlestring_cloud()
     let &titlestring = s:logo . cloud
     if s:menuless
-        let &titlestring .= s:today
-    end
+        let &titlestring = s:logo . cloud . s:today
+    endif
     return ""
+endfunction
+
+function! s:vimim_get_titlestring_cloud()
+    let cloud  = s:space
+    if len(s:vimim_mycloud) > 1
+        let cloud .= s:vimim_chinese('mycloud')
+    elseif s:onekey > 1
+        let cloud .= s:vimim_chinese(get(split(s:vimim_cloud,','),0))
+        let cloud .= s:vimim_chinese('cloud')
+    endif
+    return cloud . s:space
 endfunction
 
 function! <SID>vimim_menuless(key)
@@ -1966,13 +1973,9 @@ function! s:vimim_set_titlestring(cursor)
     let left = join(words[1 : cursor-1])
     let right = join(words[cursor+1 :])
     let keyboard = get(words, 0)
-    let titlestring = keyboard .'  '. left . hightlight . right
-    let vimim = "VimIM" . s:space
-    if s:onekey > 1
-        let cloud  = s:vimim_chinese(get(split(s:vimim_cloud,','),0))
-        let vimim .= cloud . s:vimim_chinese('cloud') . s:space
-    endif
     let s:cursor_at_menuless = cursor
+    let vimim = "VimIM" . s:vimim_get_titlestring_cloud()
+    let titlestring = keyboard .'  '. left . hightlight . right
     let &titlestring = vimim . ' ' . titlestring
 endfunction
 
@@ -3146,7 +3149,7 @@ function! s:vimim_create_shuangpin_table(rule)
         if !has_key(sptable, sp1)
             if key[0] == "'"
                 let key = key[1:]
-            end
+            endif
             let sptable[sp1] = key
         endif
     endfor
@@ -3180,7 +3183,7 @@ function! s:vimim_create_shuangpin_table(rule)
             let sptable[value] = ""
         else
             let sptable[value] = key
-        end
+        endif
     endfor
     return sptable
 endfunction
@@ -3757,7 +3760,7 @@ function! s:vimim_get_cloud_qq(keyboard)
         return []
     endif
     let input  = url
-    let clouds = split(s:vimim_cloud,',')             " qq.shuangpin.abc,google
+    let clouds = split(s:vimim_cloud,',')    "  qq.shuangpin.abc,google
     let vimim_cloud = get(clouds, match(clouds,'qq')) " qq.shuangpin.abc
     if vimim_cloud =~ 'wubi'
         let input .= 'gwb'
