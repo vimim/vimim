@@ -642,7 +642,8 @@ function! g:vimim_search_next()
     endif
     if !empty(results)
         let results = split(substitute(join(results),'\w','','g'))
-        let slash = join(results[0:8], '\|')
+        call sort(results, "s:vimim_sort_on_length")
+        let slash = join(results[0:9], '\|')
         let @/ = slash
         if empty(search(slash,'nw'))
             let @/ = english
@@ -651,6 +652,10 @@ function! g:vimim_search_next()
     echon "/" . english
     let v:errmsg = ""
 endfunction
+
+func! s:vimim_sort_on_length(i1, i2)
+    return len(a:i2) - len(a:i1)
+endfunc
 
 function! s:vimim_search_chinese_by_english(keyboard)
     let keyboard = tolower(a:keyboard)
