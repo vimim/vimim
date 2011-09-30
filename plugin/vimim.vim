@@ -26,8 +26,8 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
 "  Usage: vim i vimimhelp ctrl+6 ctrl+6
 "    (1) [vim normal mode] gi
-"    (2) [vim insert mode] ctrl+6 
-"    (3) [vim insert mode] ctrl+\ 
+"    (2) [vim insert mode] ctrl+6
+"    (3) [vim insert mode] ctrl+\
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -1426,6 +1426,10 @@ function! <SID>vimim_backspace()
     let backspace = '\<Left>\<Delete>'
     if pumvisible()
         let backspace .= g:vimim()
+    endif
+    if s:menuless && s:smart_enter && s:onekey
+        let s:smart_enter = "menuless_correction"
+        let backspace = '\<C-E>\<C-R>=g:vimim()\<CR>\<BS>'
     endif
     call g:vimim_titlestring()
     sil!exe 'sil!return "' . backspace . '"'
@@ -4390,6 +4394,11 @@ if a:start
     call s:vimim_set_keyboard_list(start_column, keyboard)
     return start_column
 else
+    " [menuless correction] enter + basckspace = correction
+    if s:smart_enter =~ "menuless_correction"
+        let s:smart_enter = 0
+        return [s:space]
+    endif
     " [hjkl] less is more
     let results = s:vimim_cache()
     if empty(results)
