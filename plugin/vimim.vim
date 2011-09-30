@@ -22,12 +22,12 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (3) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
 "    (4) support huge datafile if python interface to Vim is used
 "  Installation:
-"    (1) drop the vimim.vim to the plugin folder:  plugin/vimim.vim
-"    (2) [option] drop any supported datafiles: vimimhelp ctrl+6 ctrl+6
-         :let s:download = {}
-         :let s:download.english = "vimim.txt"
-         :let s:download.cjk     = "vimim.cjk.txt"
-         :let s:download.bsddb   = "vimim.gbk.bsddb"
+"    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
+"    (2) [option] drop supported datafiles, like: plugin/vimim.txt
+"  Usage: vim i vimimhelp ctrl+6 ctrl+6
+"    (1) [vim normal mode] gi
+"    (2) [vim insert mode] ctrl+6 
+"    (3) [vim insert mode] ctrl+\ 
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -200,6 +200,10 @@ function! s:vimim_initialize_global()
     let s:onekey = 0
     let s:im_toggle = 0
     let s:frontends = []
+    let s:download = {}
+    let s:download.english = "vimim.txt"
+    let s:download.cjk     = "vimim.cjk.txt"
+    let s:download.bsddb   = "vimim.gbk.bsddb"
 endfunction
 
 function! s:vimim_set_global_default(options, default)
