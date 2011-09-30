@@ -1928,17 +1928,6 @@ endfunction
 let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
-function! s:vimim_menuless_cursor()
-    let onekey = '\<Right>\<Left>'
-    let cursor = getline(".")[col(".")-1] =~ '\w' ? 2 : 4
-    if col(".") < 2 && line(".") > 1
-        let onekey = '\<Left>\<Right>' " gi at the first column
-    elseif col("$") - col(".") < cursor
-        let onekey = '\<Right>'        " gi at end of cursor line
-    endif
-    return onekey
-endfunction
-
 function! g:vimim_refresh_titlestring()
     let cloud  = s:space
     if s:onekey > 1
@@ -2083,13 +2072,14 @@ function! <SID>vimim_onekey(tab)
         let onekey = '\t'
     else
         sil!call s:vimim_super_reset()
+        let cursor = getline(".")[col(".")-1] =~ '\w' ? 1 : s:multibyte
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
         sil!call s:vimim_start()
         if s:menuless < 2
             let onekey = s:vimim_onekey_action(0)
-        else
-            let onekey = s:vimim_menuless_cursor()
+        elseif col("$") - col(".") < cursor + 1
+            let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
     if s:menuless < 2
@@ -4244,6 +4234,7 @@ function! s:vimim_save_vimrc()
     let s:omnifunc    = &omnifunc
     let s:complete    = &complete
     let s:completeopt = &completeopt
+    let s:whichwrap   = &whichwrap
     let s:laststatus  = &laststatus
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
@@ -4254,9 +4245,10 @@ function! s:vimim_set_vimrc()
     set title
     set imdisable
     set noshowmatch
-    let &complete = "."
+    set whichwrap=<,>
     set nolazyredraw
     set omnifunc=VimIM
+    set complete=.
     set completeopt=menuone
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
@@ -4265,6 +4257,7 @@ endfunction
 function! s:vimim_restore_vimrc()
     let &cpo         = s:cpo
     let &omnifunc    = s:omnifunc
+    let &whichwrap   = s:whichwrap
     let &complete    = s:complete
     let &completeopt = s:completeopt
     let &laststatus  = s:laststatus
