@@ -1971,25 +1971,24 @@ endfunction
 function! s:vimim_titlestring(cursor)
     let hightlight = s:left . '\|' . s:right
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
-    let words = split(titlestring)
+    let words = split(titlestring)[1:]
     let cursor = s:cursor_at_menuless + a:cursor
     let hightlight = get(words, cursor)
     if !empty(hightlight)
-        let left = join(words[1 : cursor-1])
-        let right = join(words[cursor+1 :])
         let hightlight = substitute(hightlight, '\d', '', '')
         let hightlight = s:left . hightlight . s:right
-        let keyboard = get(words,0)
-        let titlestring = keyboard .'  '. left . hightlight . right
-        let s:cursor_at_menuless = cursor
     endif
-    let cloud = ""
+    let left = join(words[1 : cursor-1])
+    let right = join(words[cursor+1 :])
+    let keyboard = get(words, 0)
+    let titlestring = keyboard .'  '. left . hightlight . right
+    let vimim = "VimIM" . s:space
     if s:onekey > 1
-        let cloud = get(split(s:vimim_cloud,','),0)
-        let cloud = s:vimim_chinese(cloud) . s:vimim_chinese('cloud')
-        let cloud = s:space . cloud
+        let cloud  = s:vimim_chinese(get(split(s:vimim_cloud,','),0))
+        let vimim .= cloud . s:vimim_chinese('cloud') . s:space
     endif
-    let &titlestring = cloud . titlestring
+    let s:cursor_at_menuless = cursor
+    let &titlestring = vimim . ' ' . titlestring
 endfunction
 
 function! <SID>vimim_space()
@@ -4604,7 +4603,8 @@ function! s:vimim_popupmenu_list(match_list)
             let &pumheight = 1
             set completeopt=menu  " for direct insert
             let s:cursor_at_menuless = 0
-            let &titlestring = s:space . keyboard . '  ' . join(one_list)
+            let vimim = "VimIM" . s:space . '  ' .  keyboard . '  '
+            let &titlestring = vimim . join(one_list)
             call s:vimim_titlestring(1)
         endif
     elseif menu_in_one_row
