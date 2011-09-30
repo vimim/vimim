@@ -2089,13 +2089,13 @@ function! <SID>vimim_onekey(tab)
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
         sil!call s:vimim_start()
-        if s:menuless == 2
+        if s:menuless
             let onekey = s:vimim_menuless_cursor()
         else
             let onekey = s:vimim_onekey_action(0)
         endif
     endif
-    if s:menuless < 2
+    if empty(s:menuless)
         sil!call s:vimim_onekey_mapping()
     endif
     if empty(onekey)
