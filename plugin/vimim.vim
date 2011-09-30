@@ -1936,9 +1936,6 @@ function! s:vimim_menuless_cursor()
     elseif col("$") - col(".") < cursor
         let onekey = '\<Right>'        " gi at end of cursor line
     endif
-    for _ in range(10)
-        exe 'inoremap<expr> '._.' <SID>vimim_menuless("'._.'")'
-    endfor
     return onekey
 endfunction
 
@@ -2089,14 +2086,18 @@ function! <SID>vimim_onekey(tab)
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
         sil!call s:vimim_start()
-        if s:menuless
-            let onekey = s:vimim_menuless_cursor()
-        else
+        if s:menuless < 2
             let onekey = s:vimim_onekey_action(0)
+        else
+            let onekey = s:vimim_menuless_cursor()
         endif
     endif
-    if empty(s:menuless)
+    if s:menuless < 2
         sil!call s:vimim_onekey_mapping()
+    else
+        for _ in range(10)
+            exe 'inoremap<expr> '._.' <SID>vimim_menuless("'._.'")'
+        endfor
     endif
     if empty(onekey)
         let onekey = '\<C-R>=g:vimim_refresh_titlestring()\<CR>'
