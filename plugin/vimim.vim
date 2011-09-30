@@ -3761,10 +3761,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     if vimim_cloud =~ 'fanti'
         let input .= '&jf=1'
     endif
-    let md = 0
-    if vimim_cloud =~ 'mixture'
-        let md = 3
-    endif
+    let md = vimim_cloud =~ 'mixture' ? 3 : 0
     if vimim_cloud =~ 'shuangpin'
         let md = 2  " qq.shuangpin.ms => ms
         let shuangpin = get(split(vimim_cloud,"[.]"),-1)
@@ -4013,8 +4010,6 @@ function! s:vimim_get_libvimim()
         let cloud = "libvimim.dll"
     elseif has("unix")
         let cloud = "libvimim.so"
-    else
-        return ""
     endif
     let cloud = s:plugin . cloud
     if filereadable(cloud)
