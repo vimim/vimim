@@ -79,7 +79,7 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :set pastetoggle=<C-Bslash>
         :redir @i
-        :call g:vimim_default_omni_color()
+        :call g:vimim_omni_color()
         let g:vimim_plugin_folder = hjkl
         let g:vimim_tab_as_onekey = 1
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -714,7 +714,7 @@ function! <SID>vimim_onekey_map(key)
         endif
         let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif hjkl == ';'
-        let hjkl = '\<C-Y>\<C-R>=g:vimim_copy_to_clipboard()\<CR>'
+        let hjkl = '\<C-Y>\<C-R>=g:vimim_clipboard()\<CR>'
     elseif hjkl =~ "[<>]"
         let hjkl = '\<C-Y>' . s:punctuations[nr2char(char2nr(hjkl)-16)]
     elseif hjkl =~ "[/?]"
@@ -724,7 +724,6 @@ function! <SID>vimim_onekey_map(key)
         let hjkl = g:vimim()
     elseif hjkl == "'"  " omni cycle through BB/GG/SS/00 clouds
         if s:keyboard[-1:] != "'"
-"           let s:onekey = s:onekey==1 ? 2 : 3
             call s:vimim_last_quote()
         endif
         let hjkl = g:vimim()
@@ -808,7 +807,7 @@ function! s:vimim_wubi_auto_input_on_the_4th(keyboard)
     return keyboard
 endfunction
 
-function! g:vimim_wubi_ctrl_e_ctrl_y()
+function! g:vimim_wubi()
     let key = ""
     if pumvisible()
         let key = '\<C-E>'
@@ -1247,7 +1246,7 @@ function! s:vimim_chinese(key)
     return chinese
 endfunction
 
-function! g:vimim_default_omni_color()
+function! g:vimim_omni_color()
     highlight! PmenuSbar  NONE
     highlight! PmenuThumb NONE
     highlight! Pmenu      NONE
@@ -1270,7 +1269,7 @@ function! s:vimim_skin(color)
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
     endif
     if s:vimim_custom_color
-        call g:vimim_default_omni_color()
+        call g:vimim_omni_color()
         if empty(color)
             highlight!      PmenuSel NONE
             highlight! link PmenuSel NONE
@@ -1390,7 +1389,7 @@ function! g:vimim_menu_search_on()
     sil!exe 'sil!return "' . slash . '"'
 endfunction
 
-function! g:vimim_copy_to_clipboard()
+function! g:vimim_clipboard()
     let word = s:vimim_popup_word()
     if !empty(word)
         if has("gui_running") && has("win32")
@@ -1674,7 +1673,7 @@ function! s:vimim_hjkl_partition(keyboard)
 endfunction
 
 function! s:vimim_last_quote()
-    " (1) [insert] one tail quote: open open and cycle cloud
+    " (1) [insert] one tail quote: open cloud or switch cloud
     " (2) [omni]   switch to the next cloud: 'google,sogou,baidu,qq'
     if empty(s:vimim_check_http_executable())
         let s:onekey = 1
@@ -1783,8 +1782,6 @@ function! s:vimim_imode_loop()
     if !empty(s:loops)
         return
     endif
-    let antonym  = " ，。 “” ‘’ （） 【】 〖〗 《》"
-    let antonym .= " 危安 胜败 凶吉 真假 石金 "
     let items = []
     for i in range(len(s:numbers))
         call add(items, split(s:numbers[i],'\zs'))
@@ -1797,6 +1794,7 @@ function! s:vimim_imode_loop()
         endfor
         call add(numbers, number)
     endfor
+    let antonym = " ，。 “” ‘’ （） 【】 〖〗 《》 胜败 真假 石金"
     let imode_list = numbers + split(antonym)
     for loop in imode_list
         let loops = split(loop,'\zs')
@@ -1928,7 +1926,7 @@ endfunction
 let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
-function! g:vimim_refresh_titlestring()
+function! g:vimim_titlestring()
     let cloud  = s:space
     if s:onekey > 1
         let cloud .= s:vimim_chinese(get(split(s:vimim_cloud,','),0))
@@ -1949,13 +1947,13 @@ function! <SID>vimim_menuless(key)
     if go && s:onekey && s:menuless && empty(s:smart_enter)
         let cursor = a:key == " " ? 1 : key < 1 ? 9 : key-1
         let key = repeat('\<C-N>', cursor)
-        call s:vimim_titlestring(cursor)
+        call s:vimim_set_titlestring(cursor)
     endif
     let s:smart_enter = 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_titlestring(cursor)
+function! s:vimim_set_titlestring(cursor)
     let hightlight = s:left . '\|' . s:right
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
     let words = split(titlestring)[1:]
@@ -2008,7 +2006,7 @@ function! <SID>vimim_backspace()
     if pumvisible()
         let backspace .= g:vimim()
     endif
-    call g:vimim_refresh_titlestring()
+    call g:vimim_titlestring()
     sil!exe 'sil!return "' . backspace . '"'
 endfunction
 
@@ -2035,7 +2033,7 @@ function! <SID>vimim_enter()
         let key = "\<CR>"
         let s:smart_enter = 0
     endif
-    call g:vimim_refresh_titlestring()
+    call g:vimim_titlestring()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -2067,7 +2065,7 @@ function! <SID>vimim_onekey(tab)
         else
             let s:menuless = 1
         endif
-        call g:vimim_refresh_titlestring()
+        call g:vimim_titlestring()
     elseif a:tab == 1 && (empty(one_before) || one_before=~'\s')
         let onekey = '\t'
     else
@@ -2090,7 +2088,7 @@ function! <SID>vimim_onekey(tab)
         endfor
     endif
     if empty(onekey)
-        let onekey = '\<C-R>=g:vimim_refresh_titlestring()\<CR>'
+        let onekey = '\<C-R>=g:vimim_titlestring()\<CR>'
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -2112,7 +2110,7 @@ function! s:vimim_onekey_action(space)
     let onekey = space
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
-        call g:vimim_refresh_titlestring()
+        call g:vimim_titlestring()
     elseif one_before !~ '\s'
         let onekey = <SID>vimim_menuless(space)
     endif
@@ -2280,7 +2278,7 @@ function! s:vimim_chinesemode_action()
     endif
     sil!call s:vimim_start()
     let action = ""
-    call g:vimim_refresh_titlestring()
+    call g:vimim_titlestring()
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
@@ -2288,7 +2286,7 @@ function! s:vimim_chinesemode_action()
             " dynamic auto trigger for wubi
             for char in s:az_list
                 sil!exe 'inoremap <silent> ' . char .
-                \ ' <C-R>=g:vimim_wubi_ctrl_e_ctrl_y()<CR>'
+                \ ' <C-R>=g:vimim_wubi()<CR>'
                 \ . char . '<C-R>=g:vimim()<CR>'
             endfor
         else
@@ -4242,14 +4240,12 @@ function! s:vimim_save_vimrc()
 endfunction
 
 function! s:vimim_set_vimrc()
-    set title
-    set imdisable
-    set noshowmatch
+    set title visualbell imdisable noshowmatch
     set whichwrap=<,>
     set nolazyredraw
-    set omnifunc=VimIM
     set complete=.
     set completeopt=menuone
+    set omnifunc=VimIM
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
@@ -4326,14 +4322,14 @@ function! g:vimim()
     endif
     let one_before = getline(".")[col(".")-2]
     if one_before =~# s:valid_keyboard
-        let key = '\<C-X>\<C-O>\<C-R>=g:vimim_menu_select()\<CR>'
+        let key = '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>'
     else
         let s:has_pumvisible = 0
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! g:vimim_menu_select()
+function! g:vimim_omni()
     let key = pumvisible() ? '\<C-P>\<Down>' : ""
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -4589,7 +4585,7 @@ function! s:vimim_popupmenu_list(match_list)
         call add(popup_list, complete_items)
     endfor
     if s:onekey
-        call g:vimim_refresh_titlestring()
+        call g:vimim_titlestring()
         set completeopt=menuone  " for hjkl_n refresh
         let s:popup_list = popup_list
         if s:menuless && empty(s:show_me_not)
@@ -4598,7 +4594,7 @@ function! s:vimim_popupmenu_list(match_list)
             let s:cursor_at_menuless = 0
             let vimim = "VimIM" . s:space . '  ' .  keyboard . '  '
             let &titlestring = vimim . join(one_list)
-            call s:vimim_titlestring(1)
+            call s:vimim_set_titlestring(1)
         endif
     elseif menu_in_one_row
         let popup_list = s:vimim_one_row(one_list[0:4], popup_list[0:4])
