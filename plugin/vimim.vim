@@ -1904,7 +1904,8 @@ function! s:vimim_char_before()
         let start = col(".") - 1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
         if char_before !~ '[^\x00-\xff]'
-        \|| match(values(s:evils_all),char_before) > -1
+            let char_before = ""
+        elseif match(values(s:evils_all),char_before) > -1
             let char_before = ""
         endif
     endif
