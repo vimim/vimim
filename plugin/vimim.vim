@@ -1183,7 +1183,7 @@ function! s:vimim_get_labeling(label)
     let labeling = a:label==10 ? "0" : a:label
     if s:onekey && a:label < 11
         let label2 = a:label<2 ? "_" : get(s:abcd,a:label-1)
-        if s:onekey > 1
+        if s:onekey > 1 && empty(s:menuless)
             " onekey label BB for cloud Baidu
             " onekey label GG for cloud Google
             " onekey label SS for cloud Sogou
