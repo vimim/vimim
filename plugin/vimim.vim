@@ -78,7 +78,7 @@ function! s:vimim_initialize_debug()
 " let g:vimim_mycloud="py:127.0.0.1"
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-"       :set pastetoggle=<C-Bslash>
+        :set pastetoggle=<C-Bslash>
 " todo
         :redir @i
         :call g:vimim_omni_color()
@@ -352,6 +352,7 @@ function! s:vimim_egg_vimim()
         let input .=  s:vimim_statusline() . s:space
     else
         let input .= s:vimim_chinese('onekey') . s:space
+        let input .= s:vimim_chinese('menuless') . s:space
     endif
     if s:vimim_cloud > -1 && s:onekey < 2
         let input .= s:vimim_chinese(s:cloud_default)
@@ -1177,65 +1178,66 @@ let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_statusline()
-    let s:status = {}
-    let s:status.onekey     = "点石成金 點石成金"
-    let s:status.4corner    = "四角号码 四角號碼"
-    let s:status.abc        = "智能双打 智能雙打"
-    let s:status.mycloud    = "自己的云 自己的雲"
-    let s:status.5strokes   = "五笔画   五筆畫"
-    let s:status.boshiamy   = "呒虾米   嘸蝦米"
-    let s:status.newcentury = "新世纪   新世紀"
-    let s:status.taijima    = "太极码   太極碼"
-    let s:status.nature     = "自然码   自然碼"
-    let s:status.computer   = "电脑     電腦"
-    let s:status.directory  = "目录     目錄"
-    let s:status.datafile   = "文件     文本"
-    let s:status.database   = "词库     詞庫"
-    let s:status.option     = "选项     選項"
-    let s:status.encoding   = "编码     編碼"
-    let s:status.env        = "环境     環境"
-    let s:status.input      = "输入     輸入"
-    let s:status.static     = "静态     靜態"
-    let s:status.dynamic    = "动态     動態"
-    let s:status.erbi       = "二笔     二筆"
-    let s:status.wubi       = "五笔     五筆"
-    let s:status.hangul     = "韩文     韓文"
-    let s:status.xinhua     = "新华     新華"
-    let s:status.zhengma    = "郑码     鄭碼"
-    let s:status.cangjie    = "仓颉     倉頡"
-    let s:status.yong       = "永码     永碼"
-    let s:status.wu         = "吴语     吳語"
-    let s:status.jidian     = "极点     極點"
-    let s:status.shuangpin  = "双拼     雙拼"
-    let s:status.ms         = "微软     微軟"
-    let s:status.flypy      = "小鹤     小鶴"
-    let s:status.network    = "联网     聯網"
-    let s:status.cloud      = "云       雲"
-    let s:status.mixture    = "混合"
-    let s:status.haifeng    = "海峰"
-    let s:status.purple     = "紫光"
-    let s:status.plusplus   = "加加"
-    let s:status.quick      = "速成"
-    let s:status.array30    = "行列"
-    let s:status.phonetic   = "注音"
-    let s:status.pinyin     = "拼音"
-    let s:status.sogou      = "搜狗"
-    let s:status.google     = "谷歌"
-    let s:status.baidu      = "百度"
-    let s:status.revision   = "版本"
-    let s:status.mass       = "海量"
-    let s:status.datetime   = "日期"
-    let s:status.full_width = "全角"
-    let s:status.half_width = "半角"
-    let s:status.english    = "英文"
-    let s:status.chinese    = "中文"
-    let s:status.qq         = "QQ"
+    let s:title = {}
+    let s:title.onekey     = "点石成金 點石成金"
+    let s:title.4corner    = "四角号码 四角號碼"
+    let s:title.abc        = "智能双打 智能雙打"
+    let s:title.mycloud    = "自己的云 自己的雲"
+    let s:title.5strokes   = "五笔画   五筆畫"
+    let s:title.boshiamy   = "呒虾米   嘸蝦米"
+    let s:title.newcentury = "新世纪   新世紀"
+    let s:title.taijima    = "太极码   太極碼"
+    let s:title.nature     = "自然码   自然碼"
+    let s:title.menuless   = "无菜单   無菜單"
+    let s:title.computer   = "电脑     電腦"
+    let s:title.directory  = "目录     目錄"
+    let s:title.datafile   = "文件     文本"
+    let s:title.database   = "词库     詞庫"
+    let s:title.option     = "选项     選項"
+    let s:title.encoding   = "编码     編碼"
+    let s:title.env        = "环境     環境"
+    let s:title.input      = "输入     輸入"
+    let s:title.static     = "静态     靜態"
+    let s:title.dynamic    = "动态     動態"
+    let s:title.erbi       = "二笔     二筆"
+    let s:title.wubi       = "五笔     五筆"
+    let s:title.hangul     = "韩文     韓文"
+    let s:title.xinhua     = "新华     新華"
+    let s:title.zhengma    = "郑码     鄭碼"
+    let s:title.cangjie    = "仓颉     倉頡"
+    let s:title.yong       = "永码     永碼"
+    let s:title.wu         = "吴语     吳語"
+    let s:title.jidian     = "极点     極點"
+    let s:title.shuangpin  = "双拼     雙拼"
+    let s:title.ms         = "微软     微軟"
+    let s:title.flypy      = "小鹤     小鶴"
+    let s:title.network    = "联网     聯網"
+    let s:title.cloud      = "云       雲"
+    let s:title.mixture    = "混合"
+    let s:title.haifeng    = "海峰"
+    let s:title.purple     = "紫光"
+    let s:title.plusplus   = "加加"
+    let s:title.quick      = "速成"
+    let s:title.array30    = "行列"
+    let s:title.phonetic   = "注音"
+    let s:title.pinyin     = "拼音"
+    let s:title.sogou      = "搜狗"
+    let s:title.google     = "谷歌"
+    let s:title.baidu      = "百度"
+    let s:title.revision   = "版本"
+    let s:title.mass       = "海量"
+    let s:title.datetime   = "日期"
+    let s:title.full_width = "全角"
+    let s:title.half_width = "半角"
+    let s:title.english    = "英文"
+    let s:title.chinese    = "中文"
+    let s:title.qq         = "QQ"
 endfunction
 
 function! s:vimim_chinese(key)
     let chinese = a:key
-    if has_key(s:status, chinese)
-        let twins = split(s:status[chinese])
+    if has_key(s:title, chinese)
+        let twins = split(s:title[chinese])
         let chinese = get(twins,0)
         if len(twins) > 1 && empty(s:vimim_plugin_folder)
             let chinese = get(twins,1)
@@ -1326,10 +1328,6 @@ function! s:vimim_get_title()
         let __getname = s:backend.cloud.mycloud.directory
         let statusline .= s:space . __getname
     elseif s:ui.root == 'cloud' || s:onekey > 1
-
-    "   let statusline .= s:vimim_chinese('cloud') . s:space
-    "   todo
-
         let vimim_cloud = get(split(s:vimim_cloud,','),0)
         let cloud  = s:vimim_chinese(vimim_cloud)
         let cloud .= s:vimim_chinese('cloud')
@@ -1935,34 +1933,13 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
 function! g:vimim_titlestring()
-  " let title = s:vimim_get_titlestring()
-  " let title  = s:space . s:vimim_get_title()
-
-    let title  = s:vimim_get_title()
+    let title = s:logo . s:vimim_get_title()
     if s:menuless
-        let &titlestring = s:logo . title . s:space . s:today
+        let &titlestring = title . s:space . s:today
     else
-        let &titlestring = s:logo . title
+        let &titlestring = title
     endif
     return ""
-endfunction
-
-function! s:vimim_get_titlestring()
-    let title  = s:space
-let g:g8 = s:vimim_get_title()
-let g:g7 = s:ui.root
-let g:g6 = s:ui.im
- "  if len(s:vimim_mycloud) > 1
- "      let title .= s:vimim_chinese('mycloud')
- "  elseif s:onekey > 1
- "      let title .= s:vimim_chinese(get(split(s:vimim_cloud,','),0))
- "      let title .= s:vimim_chinese('cloud')
- "  else
- "      let statusline = s:vimim_get_title()
- "      let title = len(statusline) ? s:space . statusline : ""
- "      " todo
- "  endif
-    return title . s:space
 endfunction
 
 function! <SID>vimim_menuless(key)
@@ -1977,8 +1954,6 @@ function! <SID>vimim_menuless(key)
     endif
     if s:onekey && s:menuless && empty(s:smart_enter)
     \&& empty(s:pattern_not_found) && char_before
- "" \&& (!empty(s:vimim_char_before()) 
- "" \|| s:keyboard=~"'" || s:keyboard == "u3000"))
         let cursor = a:key == " " ? 1 : key < 1 ? 9 : key-1
         let key = repeat('\<C-N>', cursor)
         call s:vimim_set_titlestring(cursor)
@@ -1996,7 +1971,7 @@ function! s:vimim_set_titlestring(cursor)
     let words = split(titlestring)[1:]
     let hightlight = get(words, cursor)
     let title = ""
-    if !empty(hightlight) || len(words) < 2
+    if !empty(hightlight) && len(words) > 1
         let hightlight = substitute(hightlight, '\d', '', '')
         let hightlight = s:left . hightlight . s:right
         let left = join(words[1 : cursor-1])
@@ -2004,8 +1979,10 @@ function! s:vimim_set_titlestring(cursor)
         let keyboard = get(words, 0)
         let s:cursor_at_menuless = cursor
         let title = keyboard .'  '. left . hightlight . right
+        let &titlestring = s:logo[:4] . s:vimim_get_title() . ' ' . title
+    else
+        call g:vimim_titlestring()
     endif
-    let &titlestring = s:logo[:4] . s:vimim_get_title() . ' ' . title
 endfunction
 
 function! <SID>vimim_space()
@@ -2143,12 +2120,8 @@ function! s:vimim_onekey_action(space)
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
         call g:vimim_titlestring()
-    elseif one_before !~ '\s'
+    else
         let onekey = <SID>vimim_menuless(space)
-" todo
-"       if onekey == space
-"           call g:vimim_titlestring()
-"       endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -4631,7 +4604,6 @@ function! s:vimim_popupmenu_list(match_list)
             let vimim = "VimIM" . s:space . '  ' .  keyboard . '  '
             let &titlestring = vimim . join(one_list)
             call s:vimim_set_titlestring(1)
-            " todo
         endif
     elseif menu_in_one_row
         let popup_list = s:vimim_one_row(one_list[0:4], popup_list[0:4])
