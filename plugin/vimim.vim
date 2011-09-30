@@ -17,11 +17,11 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  Author: vimim <vimim@googlegroups.com>
 " License: GNU Lesser General Public License
 "  Readme: VimIM is a Vim plugin as an independent Input Method.
-"    (1) input of Chinese without mode change: OneKey == MidasTouch
-"    (2) slash search of Chinese without typing Chinese
-"    (3) support 4 clouds: Google/Baidu/Sogou/QQ cloud input
-"    (4) support huge datafile if python interface to Vim is used
-"  Installation:
+"    (1) do Chinese input without mode change: Midas touch
+"    (2) do Chinese search without typing Chinese: slash search
+"    (3) support Google/Baidu/Sogou/QQ cloud input
+"    (4) support bsd database with python interface to Vim
+"  Installation: plug and play
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
 "  Usage: vim i vimimhelp ctrl+6 ctrl+6
