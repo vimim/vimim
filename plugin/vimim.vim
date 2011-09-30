@@ -2290,7 +2290,7 @@ function! s:vimim_chinesemode_action()
     endif
     sil!call s:vimim_start()
     let action = ""
-    call s:vimim_refresh_titlestring()
+    call g:vimim_refresh_titlestring()
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
