@@ -622,109 +622,6 @@ function! s:vimim_getsid(scriptname)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  /search          ==== {{{"]
-" =================================================
-
-function! g:vimim_search_next()
-    let english = @/
-    if english =~ '\<' && english =~ '\>'
-        let english = substitute(english,'[<>\\]','','g')
-    endif
-    let results = []
-    if len(english) > 1 && len(english) < 24
-    \&& english =~ '\w' && english !~ '\W' && english !~ '_'
-    \&& v:errmsg =~# english && v:errmsg =~# '^E486: '
-        try
-            let results = s:vimim_search_chinese_by_english(english)
-        catch
-            call s:debug('alert', 'slash search /', v:exception)
-        endtry
-    endif
-    if !empty(results)
-        let results = split(substitute(join(results),'\w','','g'))
-        call sort(results, "s:vimim_sort_on_length")
-        let slash = join(results[0:9], '\|')
-        let @/ = slash
-        if empty(search(slash,'nw'))
-            let @/ = english
-        endif
-    endif
-    echon "/" . english
-    let v:errmsg = ""
-endfunction
-
-func! s:vimim_sort_on_length(i1, i2)
-    return len(a:i2) - len(a:i1)
-endfunc
-
-function! s:vimim_search_chinese_by_english(keyboard)
-    let keyboard = tolower(a:keyboard)
-    let results = []
-    " 1/3 first try search from cloud/mycloud
-    if s:vimim_cloud =~ 'search' || s:ui.root == 'cloud'
-        " /search from the default cloud
-        let results = s:vimim_get_cloud(keyboard, s:cloud_default)
-    elseif !empty(s:mycloud)
-        " /search from mycloud
-        let results = s:vimim_get_mycloud_plugin(keyboard)
-    endif
-    if !empty(results)
-        return results
-    endif
-    " 2/3 search unicode or cjk /search unicode /u808f
-    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if empty(ddddd) && !empty(s:vimim_cjk())
-        " /search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
-        let keyboards = s:vimim_cjk_slash_search_block(keyboard)
-        if len(keyboards)
-            for keyboard in keyboards
-                let chars = s:vimim_cjk_match(keyboard)
-                if len(keyboards) == 1
-                    let results = copy(chars)
-                elseif len(chars)
-                    let collection = "[" . join(chars,'') . "]"
-                    call add(results, collection)
-                endif
-            endfor
-            if len(keyboards) > 1
-                let results = [join(results,'')]
-            endif
-        endif
-    else
-        let results = [nr2char(ddddd)]
-    endif
-    if !empty(results)
-        return results
-    endif
-    " 3/3 search datafile and english: /ma and /horse
-    let s:english.line = s:vimim_get_english(keyboard)
-    if empty(s:english.line)
-        let results = s:vimim_embedded_backend_engine(keyboard)
-    else
-        let results = split(s:english.line)
-    endif
-    return results
-endfunction
-
-function! s:vimim_cjk_slash_search_block(keyboard)
-    " /muuqwxeyqpjeqqq  =>  shortcut   /search
-    " /m7712x3610j3111  =>  standard   /search
-    " /ma77xia36ji31    =>  free style /search
-    let results = []
-    let keyboard = a:keyboard
-    while len(keyboard) > 1
-        let head = s:vimim_get_cjk_head(keyboard)
-        if empty(head)
-            break
-        else
-            call add(results, head)
-            let keyboard = strpart(keyboard,len(head))
-        endif
-    endwhile
-    return results
-endfunction
-
-" ============================================= }}}
 let s:VimIM += [" ====  punctuation      ==== {{{"]
 " =================================================
 
@@ -4214,6 +4111,109 @@ function! s:vimim_url_xx_to_chinese(xx)
         let output = substitute(a:xx, pat, sub, 'g')
     endif
     return output
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  /search          ==== {{{"]
+" =================================================
+
+function! g:vimim_search_next()
+    let english = @/
+    if english =~ '\<' && english =~ '\>'
+        let english = substitute(english,'[<>\\]','','g')
+    endif
+    let results = []
+    if len(english) > 1 && len(english) < 24
+    \&& english =~ '\w' && english !~ '\W' && english !~ '_'
+    \&& v:errmsg =~# english && v:errmsg =~# '^E486: '
+        try
+            let results = s:vimim_search_chinese_by_english(english)
+        catch
+            call s:debug('alert', 'slash search /', v:exception)
+        endtry
+    endif
+    if !empty(results)
+        let results = split(substitute(join(results),'\w','','g'))
+        call sort(results, "s:vimim_sort_on_length")
+        let slash = join(results[0:9], '\|')
+        let @/ = slash
+        if empty(search(slash,'nw'))
+            let @/ = english
+        endif
+    endif
+    echon "/" . english
+    let v:errmsg = ""
+endfunction
+
+func! s:vimim_sort_on_length(i1, i2)
+    return len(a:i2) - len(a:i1)
+endfunc
+
+function! s:vimim_search_chinese_by_english(keyboard)
+    let keyboard = tolower(a:keyboard)
+    let results = []
+    " 1/3 first try search from cloud/mycloud
+    if s:vimim_cloud =~ 'search' || s:ui.root == 'cloud'
+        " /search from the default cloud
+        let results = s:vimim_get_cloud(keyboard, s:cloud_default)
+    elseif !empty(s:mycloud)
+        " /search from mycloud
+        let results = s:vimim_get_mycloud_plugin(keyboard)
+    endif
+    if !empty(results)
+        return results
+    endif
+    " 2/3 search unicode or cjk /search unicode /u808f
+    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+    if empty(ddddd) && !empty(s:vimim_cjk())
+        " /search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
+        let keyboards = s:vimim_cjk_slash_search_block(keyboard)
+        if len(keyboards)
+            for keyboard in keyboards
+                let chars = s:vimim_cjk_match(keyboard)
+                if len(keyboards) == 1
+                    let results = copy(chars)
+                elseif len(chars)
+                    let collection = "[" . join(chars,'') . "]"
+                    call add(results, collection)
+                endif
+            endfor
+            if len(keyboards) > 1
+                let results = [join(results,'')]
+            endif
+        endif
+    else
+        let results = [nr2char(ddddd)]
+    endif
+    if !empty(results)
+        return results
+    endif
+    " 3/3 search datafile and english: /ma and /horse
+    let s:english.line = s:vimim_get_english(keyboard)
+    if empty(s:english.line)
+        let results = s:vimim_embedded_backend_engine(keyboard)
+    else
+        let results = split(s:english.line)
+    endif
+    return results
+endfunction
+
+function! s:vimim_cjk_slash_search_block(keyboard)
+    " /muuqwxeyqpjeqqq  =>  shortcut   /search
+    " /m7712x3610j3111  =>  standard   /search
+    " /ma77xia36ji31    =>  free style /search
+    let results = []
+    let keyboard = a:keyboard
+    while len(keyboard) > 1
+        let head = s:vimim_get_cjk_head(keyboard)
+        if empty(head)
+            break
+        else
+            call add(results, head)
+            let keyboard = strpart(keyboard,len(head))
+        endif
+    endwhile
+    return results
 endfunction
 
 " ============================================= }}}
