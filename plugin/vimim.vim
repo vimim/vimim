@@ -75,9 +75,11 @@ scriptencoding utf-8
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
+" let g:vimim_mycloud="py:127.0.0.1"
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        :set pastetoggle=<C-Bslash>
+"       :set pastetoggle=<C-Bslash>
+" todo
         :redir @i
         :call g:vimim_omni_color()
         let g:vimim_plugin_folder = hjkl
@@ -87,7 +89,7 @@ function! s:vimim_initialize_debug()
 endfunction
 
 function! s:vimim_start_session()
-    let s:logo = " VimIM 中文輸入法"
+    let s:logo = "VimIM　中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
     let s:cursor_at_menuless = 0
     let s:pumheight = 10
@@ -319,13 +321,10 @@ function! s:vimim_egg_vimim()
     call add(eggs, revision)
     let encoding = s:vimim_chinese('encoding') . s:colon
     call add(eggs, encoding . &encoding . s:space . &fileencodings)
-    let evn = s:vimim_chinese('env') . s:colon . v:lc_time
-    call add(eggs, evn)
+    let env = s:vimim_chinese('env') . s:colon . v:lc_time
+    call add(eggs, env)
     let database = s:vimim_chinese('database') . s:colon
-    if empty(s:ui.frontends)
-        let ciku = database . s:vimim_chinese('unicode') . database
-        call add(eggs, ciku . "UNICODE")
-    else
+    if !empty(s:ui.frontends)
         for frontend in s:ui.frontends
             let ui_root = get(frontend, 0)
             let ui_im = get(frontend, 1)
@@ -1183,7 +1182,6 @@ function! s:vimim_dictionary_statusline()
     let s:status.4corner    = "四角号码 四角號碼"
     let s:status.abc        = "智能双打 智能雙打"
     let s:status.mycloud    = "自己的云 自己的雲"
-    let s:status.unicode    = "统一码   萬國碼"
     let s:status.5strokes   = "五笔画   五筆畫"
     let s:status.boshiamy   = "呒虾米   嘸蝦米"
     let s:status.newcentury = "新世纪   新世紀"
@@ -1303,66 +1301,76 @@ function! IMName()
     return ""
 endfunction
 
-function! s:vimim_statusline()
+function! s:vimim_get_title()
+    let statusline = s:space
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
-    endif
-    if has_key(s:im_keycode, s:ui.im)
-        let s:ui.statusline = s:backend[s:ui.root][s:ui.im].chinese
+    elseif has_key(s:im_keycode, s:ui.im)
+        let statusline .= s:backend[s:ui.root][s:ui.im].chinese
     endif
     let datafile = s:backend[s:ui.root][s:ui.im].name
     if s:ui.im =~ 'wubi'
         if datafile =~# 'wubi98'
-            let s:ui.statusline .= '98'
+            let statusline .= '98'
         elseif datafile =~# 'wubi2000'
             let newcentury = s:vimim_chinese('newcentury')
-            let s:ui.statusline = newcentury . s:ui.statusline
+            let statusline = newcentury . statusline
         elseif datafile =~# 'wubijd'
             let jidian = s:vimim_chinese('jidian')
-            let s:ui.statusline = jidian . s:ui.statusline
+            let statusline = jidian . statusline
         elseif datafile =~# 'wubihf'
             let haifeng = s:vimim_chinese('haifeng')
-            let s:ui.statusline = haifeng . s:ui.statusline
+            let statusline = haifeng . statusline
         endif
-        return s:vimim_get_chinese_im()
-    endif
-    if !empty(s:mycloud)
+    elseif !empty(s:mycloud)
         let __getname = s:backend.cloud.mycloud.directory
-        let s:ui.statusline .= s:space . __getname
-    elseif s:ui.root == 'cloud'
-        let s:ui.statusline .= s:vimim_chinese('cloud') . s:space
-        let vimim_cloud = get(split(s:vimim_cloud,','), 0)
+        let statusline .= s:space . __getname
+    elseif s:ui.root == 'cloud' || s:onekey > 1
+
+    "   let statusline .= s:vimim_chinese('cloud') . s:space
+    "   todo
+
+        let vimim_cloud = get(split(s:vimim_cloud,','),0)
+        let cloud  = s:vimim_chinese(vimim_cloud)
+        let cloud .= s:vimim_chinese('cloud')
+        let statusline = s:space . cloud
+
         if vimim_cloud =~ 'mixture'
-            let s:ui.statusline .= s:vimim_chinese('mixture')
+            let statusline .= s:space . s:vimim_chinese('mixture')
         elseif vimim_cloud =~ 'wubi'
-            let s:ui.statusline .= s:vimim_chinese('wubi')
+            let statusline .= s:space . s:vimim_chinese('wubi')
         elseif vimim_cloud =~ 'shuangpin' " qq.shuangpin.ms => ms
             let shuangpin = get(split(vimim_cloud,"[.]"),-1)
             if match(split(s:shuangpin_all),shuangpin) > -1
-                let s:ui.statusline .= s:vimim_chinese(shuangpin)
+                let statusline .= s:space . s:vimim_chinese(shuangpin)
             endif
             if vimim_cloud !~ 'abc'
-                let s:ui.statusline .= s:vimim_chinese('shuangpin')
+                let statusline .= s:space . s:vimim_chinese('shuangpin')
             endif
         endif
     endif
     if !empty(s:vimim_shuangpin)
-        let s:ui.statusline = s:shuangpin_chinese.chinese
+        let statusline .= s:shuangpin_chinese.chinese
     endif
-    return s:vimim_get_chinese_im()
+    return statusline . s:space
 endfunction
 
-function! s:vimim_get_chinese_im()
-    let punctuation = s:vimim_chinese('half_width')
-    if s:chinese_punctuation
-        let punctuation = s:vimim_chinese('full_width')
-    endif
-    let space = get(split(s:ui.statusline,'\zs'),-1)==s:space ? "" : s:space
-    let s:ui.statusline .= space . punctuation
-    let input_style  = s:vimim_chinese('chinese')
-    let input_style .= s:vimim_chinese(s:vimim_chinese_input_mode)
-    let input_style .= s:space . s:ui.statusline . s:space . "VimIM"
-    return input_style
+function! s:vimim_statusline()
+""  let punctuation = s:vimim_chinese('half_width')
+""  if s:chinese_punctuation
+""      let punctuation = s:vimim_chinese('full_width')
+""  endif
+""  let space = get(split(s:ui.statusline,'\zs'),-1)==s:space ? "" : s:space
+""  " todo
+
+    let s:ui.statusline = s:vimim_get_title() 
+    let punctuation = s:chinese_punctuation ? 'full_width' : half_width
+    let punctuation = s:vimim_chinese(punctuation)
+    let statusline  = s:vimim_chinese('chinese')
+    let statusline .= s:vimim_chinese(s:vimim_chinese_input_mode)
+    let statusline .= s:ui.statusline . punctuation
+    let statusline .= s:space . "VimIM"
+    return statusline
 endfunction
 
 function! s:vimim_menu_search(key)
@@ -1927,56 +1935,77 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
 function! g:vimim_titlestring()
-    let cloud = s:vimim_get_titlestring_cloud()
-    let &titlestring = s:logo . cloud
+  " let title = s:vimim_get_titlestring()
+  " let title  = s:space . s:vimim_get_title()
+
+    let title  = s:vimim_get_title()
     if s:menuless
-        let &titlestring = s:logo . cloud . s:today
+        let &titlestring = s:logo . title . s:space . s:today
+    else
+        let &titlestring = s:logo . title
     endif
     return ""
 endfunction
 
-function! s:vimim_get_titlestring_cloud()
-    let cloud  = s:space
-    if len(s:vimim_mycloud) > 1
-        let cloud .= s:vimim_chinese('mycloud')
-    elseif s:onekey > 1
-        let cloud .= s:vimim_chinese(get(split(s:vimim_cloud,','),0))
-        let cloud .= s:vimim_chinese('cloud')
-    endif
-    return cloud . s:space
+function! s:vimim_get_titlestring()
+    let title  = s:space
+let g:g8 = s:vimim_get_title()
+let g:g7 = s:ui.root
+let g:g6 = s:ui.im
+ "  if len(s:vimim_mycloud) > 1
+ "      let title .= s:vimim_chinese('mycloud')
+ "  elseif s:onekey > 1
+ "      let title .= s:vimim_chinese(get(split(s:vimim_cloud,','),0))
+ "      let title .= s:vimim_chinese('cloud')
+ "  else
+ "      let statusline = s:vimim_get_title()
+ "      let title = len(statusline) ? s:space . statusline : ""
+ "      " todo
+ "  endif
+    return title . s:space
 endfunction
 
 function! <SID>vimim_menuless(key)
     " workaround as no way to detect if completion is active
     let key = a:key
-    let go = empty(s:vimim_char_before()) ? 0 : 1
-    let go = s:keyboard =~ "'" || s:keyboard == "u3000" ? 1 : go
-    if go && s:onekey && s:menuless && empty(s:smart_enter)
+    let char_before = 1
+    if empty(s:vimim_char_before())
+        let char_before = 0
+        if  s:keyboard=~"'" || s:keyboard == "u3000"
+            let char_before = 1
+        endif
+    endif
+    if s:onekey && s:menuless && empty(s:smart_enter)
+    \&& empty(s:pattern_not_found) && char_before
+ "" \&& (!empty(s:vimim_char_before()) 
+ "" \|| s:keyboard=~"'" || s:keyboard == "u3000"))
         let cursor = a:key == " " ? 1 : key < 1 ? 9 : key-1
         let key = repeat('\<C-N>', cursor)
         call s:vimim_set_titlestring(cursor)
+    else
+        call g:vimim_titlestring()
     endif
     let s:smart_enter = 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_set_titlestring(cursor)
+    let cursor = s:cursor_at_menuless + a:cursor
     let hightlight = s:left . '\|' . s:right
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
     let words = split(titlestring)[1:]
-    let cursor = s:cursor_at_menuless + a:cursor
     let hightlight = get(words, cursor)
-    if !empty(hightlight)
+    let title = ""
+    if !empty(hightlight) || len(words) < 2
         let hightlight = substitute(hightlight, '\d', '', '')
         let hightlight = s:left . hightlight . s:right
+        let left = join(words[1 : cursor-1])
+        let right = join(words[cursor+1 :])
+        let keyboard = get(words, 0)
+        let s:cursor_at_menuless = cursor
+        let title = keyboard .'  '. left . hightlight . right
     endif
-    let left = join(words[1 : cursor-1])
-    let right = join(words[cursor+1 :])
-    let keyboard = get(words, 0)
-    let s:cursor_at_menuless = cursor
-    let vimim = "VimIM" . s:vimim_get_titlestring_cloud()
-    let titlestring = keyboard .'  '. left . hightlight . right
-    let &titlestring = vimim . ' ' . titlestring
+    let &titlestring = s:logo[:4] . s:vimim_get_title() . ' ' . title
 endfunction
 
 function! <SID>vimim_space()
@@ -2116,6 +2145,10 @@ function! s:vimim_onekey_action(space)
         call g:vimim_titlestring()
     elseif one_before !~ '\s'
         let onekey = <SID>vimim_menuless(space)
+" todo
+"       if onekey == space
+"           call g:vimim_titlestring()
+"       endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -4598,6 +4631,7 @@ function! s:vimim_popupmenu_list(match_list)
             let vimim = "VimIM" . s:space . '  ' .  keyboard . '  '
             let &titlestring = vimim . join(one_list)
             call s:vimim_set_titlestring(1)
+            " todo
         endif
     elseif menu_in_one_row
         let popup_list = s:vimim_one_row(one_list[0:4], popup_list[0:4])
