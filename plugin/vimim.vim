@@ -1444,190 +1444,6 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  imode            ==== {{{"]
-" =================================================
-
-function! s:vimim_dictionary_numbers()
-    let s:loops = {}
-    let s:numbers = {}
-    let s:numbers.1 = "一壹⑴①甲"
-    let s:numbers.2 = "二贰⑵②乙"
-    let s:numbers.3 = "三叁⑶③丙"
-    let s:numbers.4 = "四肆⑷④丁"
-    let s:numbers.5 = "五伍⑸⑤戊"
-    let s:numbers.6 = "六陆⑹⑥己"
-    let s:numbers.7 = "七柒⑺⑦庚"
-    let s:numbers.8 = "八捌⑻⑧辛"
-    let s:numbers.9 = "九玖⑼⑨壬"
-    let s:numbers.0 = "〇零⑽⑩癸"
-    let s:quantifiers = copy(s:numbers)
-    let s:quantifiers.b = "百佰步把包杯本笔部班"
-    let s:quantifiers.c = "次餐场串处床"
-    let s:quantifiers.d = "第度点袋道滴碟顶栋堆对朵堵顿"
-    let s:quantifiers.f = "分份发封付副幅峰方服"
-    let s:quantifiers.g = "个根股管"
-    let s:quantifiers.h = "行盒壶户回毫"
-    let s:quantifiers.j = "斤家具架间件节剂具捲卷茎记"
-    let s:quantifiers.k = "克口块棵颗捆孔"
-    let s:quantifiers.l = "里粒类辆列轮厘领缕"
-    let s:quantifiers.m = "米名枚面门秒"
-    let s:quantifiers.n = "年"
-    let s:quantifiers.p = "磅盆瓶排盘盆匹片篇撇喷"
-    let s:quantifiers.q = "千仟群"
-    let s:quantifiers.r = "日"
-    let s:quantifiers.s = "十拾时升艘扇首双所束手"
-    let s:quantifiers.t = "天吨条头通堂趟台套桶筒贴"
-    let s:quantifiers.w = "万位味碗窝晚微"
-    let s:quantifiers.x = "席些项"
-    let s:quantifiers.y = "月叶亿"
-    let s:quantifiers.z = "种只张株支枝盏座阵桩尊则站幢宗兆"
-endfunction
-
-function! s:vimim_imode_loop()
-    if !empty(s:loops)
-        return
-    endif
-    let items = []
-    for i in range(len(s:numbers))
-        call add(items, split(s:numbers[i],'\zs'))
-    endfor
-    let numbers = []
-    for j in range(len(get(items,0)))
-        let number = ""
-        for line in items
-            let number .= get(line,j)
-        endfor
-        call add(numbers, number)
-    endfor
-    let antonym = " ，。 “” ‘’ （） 【】 〖〗 《》 胜败 真假 石金"
-    let imode_list = numbers + split(antonym)
-    for loop in imode_list
-        let loops = split(loop,'\zs')
-        for i in range(len(loops))
-            let j = i==len(loops)-1 ? 0 : i+1
-            let s:loops[loops[i]] = loops[j]
-        endfor
-    endfor
-endfunction
-
-function! s:vimim_imode_chinese(char_before)
-    call s:vimim_imode_loop()
-    let results = []
-    let char_before = a:char_before
-    if has_key(s:loops, char_before)
-        let start = char_before
-        let next = ""
-        while start != next
-            let next = s:loops[char_before]
-            call add(results, next)
-            let char_before = next
-        endwhile
-    endif
-    return results
-endfunction
-
-let s:translators = {}
-function! s:translators.translate(english) dict
-    let inputs = split(a:english)
-    return join(map(inputs,'get(self.dict,tolower(v:val),v:val)'), '')
-endfunction
-
-function! s:vimim_imode_today_now(keyboard)
-    let time  = strftime("%Y") . ' year  '
-    let time .= strftime("%m") . ' month '
-    let time .= strftime("%d") . ' day   '
-    if a:keyboard ==# 'itoday'
-        let time .= s:space .' '. strftime("%A")
-    elseif a:keyboard ==# 'inow'
-        let time .= strftime("%H") . ' hour   '
-        let time .= strftime("%M") . ' minute '
-        let time .= strftime("%S") . ' second '
-    endif
-    let results = split(time)
-    let filter = "substitute(" . 'v:val' . ",'^0','','')"
-    let ecdict = {}
-    let ecdict.sunday    = "星期日"
-    let ecdict.monday    = "星期一"
-    let ecdict.tuesday   = "星期二"
-    let ecdict.wednesday = "星期三"
-    let ecdict.thursday  = "星期四"
-    let ecdict.friday    = "星期五"
-    let ecdict.saturday  = "星期六"
-    let ecdict.year      = "年"
-    let ecdict.month     = "月"
-    let ecdict.day       = "日"
-    let ecdict.hour      = "时"
-    let ecdict.minute    = "分"
-    let ecdict.second    = "秒"
-    let chinese = copy(s:translators)
-    let chinese.dict = ecdict
-    return chinese.translate(join(map(results, filter)))
-endfunction
-
-function! s:vimim_imode_number(keyboard)
-    let keyboard = a:keyboard
-    let ii = keyboard[0:1] " sample: i88 ii88 isw8ql iisw8ql
-    let keyboard = ii==#'ii' ? keyboard[2:] : keyboard[1:]
-    let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
-    let number = ""
-    let keyboards = split(dddl, '\ze')
-    for char in keyboards
-        if has_key(s:quantifiers, char)
-            let quantifier_list = split(s:quantifiers[char], '\zs')
-            let chinese = get(quantifier_list, 0)
-            if ii ==# 'ii' && char =~# '[0-9sbq]'
-                let chinese = get(quantifier_list, 1)
-            endif
-            let number .= chinese
-        endif
-    endfor
-    if empty(number)
-        return []
-    endif
-    let numbers = [number]
-    let last_char = keyboard[-1:]
-    if !empty(last_char) && has_key(s:quantifiers, last_char)
-        let quantifier_list = split(s:quantifiers[last_char], '\zs')
-        if keyboard =~# '^[ds]\=\d*\l\{1}$'
-            if keyboard =~# '^[ds]'
-                let number = strpart(number,0,len(number)-s:multibyte)
-            endif
-            let numbers = map(copy(quantifier_list), 'number . v:val')
-        elseif keyboard =~# '^\d*$' && len(keyboards)<2 && ii != 'ii'
-            let numbers = quantifier_list
-        endif
-    endif
-    return numbers
-endfunction
-
-function! s:vimim_char_before()
-    let char_before = ""
-    let one_before = getline(".")[col(".")-2]
-    if one_before !~ '\s'
-        let start = col(".") - 1 - s:multibyte
-        let char_before = getline(".")[start : start+s:multibyte-1]
-        if char_before !~ '[^\x00-\xff]'
-            let char_before = ""
-        elseif match(values(s:evils_all),char_before) > -1
-            let char_before = ""
-        endif
-    endif
-    return char_before
-endfunction
-
-function! s:vimim_get_same_char_before()
-    let results = []
-    let char_before = s:vimim_char_before()
-    if empty(char_before) && !empty(s:vimim_cjk())
-        let results = s:vimim_cjk_match('u') " 214 unicode index
-    else
-        let ddddd = char2nr(char_before)
-        let results = s:vimim_unicode_list(ddddd)
-    endif
-    return results
-endfunction
-
-" ============================================= }}}
 let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
@@ -2153,6 +1969,190 @@ function! s:vimim_get_seamless(current_positions)
     endfor
     let s:start_row_before = seamless_lnum
     return seamless_column
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  imode            ==== {{{"]
+" =================================================
+
+function! s:vimim_dictionary_numbers()
+    let s:loops = {}
+    let s:numbers = {}
+    let s:numbers.1 = "一壹⑴①甲"
+    let s:numbers.2 = "二贰⑵②乙"
+    let s:numbers.3 = "三叁⑶③丙"
+    let s:numbers.4 = "四肆⑷④丁"
+    let s:numbers.5 = "五伍⑸⑤戊"
+    let s:numbers.6 = "六陆⑹⑥己"
+    let s:numbers.7 = "七柒⑺⑦庚"
+    let s:numbers.8 = "八捌⑻⑧辛"
+    let s:numbers.9 = "九玖⑼⑨壬"
+    let s:numbers.0 = "〇零⑽⑩癸"
+    let s:quantifiers = copy(s:numbers)
+    let s:quantifiers.b = "百佰步把包杯本笔部班"
+    let s:quantifiers.c = "次餐场串处床"
+    let s:quantifiers.d = "第度点袋道滴碟顶栋堆对朵堵顿"
+    let s:quantifiers.f = "分份发封付副幅峰方服"
+    let s:quantifiers.g = "个根股管"
+    let s:quantifiers.h = "行盒壶户回毫"
+    let s:quantifiers.j = "斤家具架间件节剂具捲卷茎记"
+    let s:quantifiers.k = "克口块棵颗捆孔"
+    let s:quantifiers.l = "里粒类辆列轮厘领缕"
+    let s:quantifiers.m = "米名枚面门秒"
+    let s:quantifiers.n = "年"
+    let s:quantifiers.p = "磅盆瓶排盘盆匹片篇撇喷"
+    let s:quantifiers.q = "千仟群"
+    let s:quantifiers.r = "日"
+    let s:quantifiers.s = "十拾时升艘扇首双所束手"
+    let s:quantifiers.t = "天吨条头通堂趟台套桶筒贴"
+    let s:quantifiers.w = "万位味碗窝晚微"
+    let s:quantifiers.x = "席些项"
+    let s:quantifiers.y = "月叶亿"
+    let s:quantifiers.z = "种只张株支枝盏座阵桩尊则站幢宗兆"
+endfunction
+
+function! s:vimim_imode_loop()
+    if !empty(s:loops)
+        return
+    endif
+    let items = []
+    for i in range(len(s:numbers))
+        call add(items, split(s:numbers[i],'\zs'))
+    endfor
+    let numbers = []
+    for j in range(len(get(items,0)))
+        let number = ""
+        for line in items
+            let number .= get(line,j)
+        endfor
+        call add(numbers, number)
+    endfor
+    let antonym = " ，。 “” ‘’ （） 【】 〖〗 《》 胜败 真假 石金"
+    let imode_list = numbers + split(antonym)
+    for loop in imode_list
+        let loops = split(loop,'\zs')
+        for i in range(len(loops))
+            let j = i==len(loops)-1 ? 0 : i+1
+            let s:loops[loops[i]] = loops[j]
+        endfor
+    endfor
+endfunction
+
+function! s:vimim_imode_chinese(char_before)
+    call s:vimim_imode_loop()
+    let results = []
+    let char_before = a:char_before
+    if has_key(s:loops, char_before)
+        let start = char_before
+        let next = ""
+        while start != next
+            let next = s:loops[char_before]
+            call add(results, next)
+            let char_before = next
+        endwhile
+    endif
+    return results
+endfunction
+
+let s:translators = {}
+function! s:translators.translate(english) dict
+    let inputs = split(a:english)
+    return join(map(inputs,'get(self.dict,tolower(v:val),v:val)'), '')
+endfunction
+
+function! s:vimim_imode_today_now(keyboard)
+    let time  = strftime("%Y") . ' year  '
+    let time .= strftime("%m") . ' month '
+    let time .= strftime("%d") . ' day   '
+    if a:keyboard ==# 'itoday'
+        let time .= s:space .' '. strftime("%A")
+    elseif a:keyboard ==# 'inow'
+        let time .= strftime("%H") . ' hour   '
+        let time .= strftime("%M") . ' minute '
+        let time .= strftime("%S") . ' second '
+    endif
+    let results = split(time)
+    let filter = "substitute(" . 'v:val' . ",'^0','','')"
+    let ecdict = {}
+    let ecdict.sunday    = "星期日"
+    let ecdict.monday    = "星期一"
+    let ecdict.tuesday   = "星期二"
+    let ecdict.wednesday = "星期三"
+    let ecdict.thursday  = "星期四"
+    let ecdict.friday    = "星期五"
+    let ecdict.saturday  = "星期六"
+    let ecdict.year      = "年"
+    let ecdict.month     = "月"
+    let ecdict.day       = "日"
+    let ecdict.hour      = "时"
+    let ecdict.minute    = "分"
+    let ecdict.second    = "秒"
+    let chinese = copy(s:translators)
+    let chinese.dict = ecdict
+    return chinese.translate(join(map(results, filter)))
+endfunction
+
+function! s:vimim_imode_number(keyboard)
+    let keyboard = a:keyboard
+    let ii = keyboard[0:1] " sample: i88 ii88 isw8ql iisw8ql
+    let keyboard = ii==#'ii' ? keyboard[2:] : keyboard[1:]
+    let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
+    let number = ""
+    let keyboards = split(dddl, '\ze')
+    for char in keyboards
+        if has_key(s:quantifiers, char)
+            let quantifier_list = split(s:quantifiers[char], '\zs')
+            let chinese = get(quantifier_list, 0)
+            if ii ==# 'ii' && char =~# '[0-9sbq]'
+                let chinese = get(quantifier_list, 1)
+            endif
+            let number .= chinese
+        endif
+    endfor
+    if empty(number)
+        return []
+    endif
+    let numbers = [number]
+    let last_char = keyboard[-1:]
+    if !empty(last_char) && has_key(s:quantifiers, last_char)
+        let quantifier_list = split(s:quantifiers[last_char], '\zs')
+        if keyboard =~# '^[ds]\=\d*\l\{1}$'
+            if keyboard =~# '^[ds]'
+                let number = strpart(number,0,len(number)-s:multibyte)
+            endif
+            let numbers = map(copy(quantifier_list), 'number . v:val')
+        elseif keyboard =~# '^\d*$' && len(keyboards)<2 && ii != 'ii'
+            let numbers = quantifier_list
+        endif
+    endif
+    return numbers
+endfunction
+
+function! s:vimim_char_before()
+    let char_before = ""
+    let one_before = getline(".")[col(".")-2]
+    if one_before !~ '\s'
+        let start = col(".") - 1 - s:multibyte
+        let char_before = getline(".")[start : start+s:multibyte-1]
+        if char_before !~ '[^\x00-\xff]'
+            let char_before = ""
+        elseif match(values(s:evils_all),char_before) > -1
+            let char_before = ""
+        endif
+    endif
+    return char_before
+endfunction
+
+function! s:vimim_get_same_char_before()
+    let results = []
+    let char_before = s:vimim_char_before()
+    if empty(char_before) && !empty(s:vimim_cjk())
+        let results = s:vimim_cjk_match('u') " 214 unicode index
+    else
+        let ddddd = char2nr(char_before)
+        let results = s:vimim_unicode_list(ddddd)
+    endif
+    return results
 endfunction
 
 " ============================================= }}}
