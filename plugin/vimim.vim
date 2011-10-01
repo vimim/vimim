@@ -58,6 +58,7 @@ function! s:vimim_initialize_debug()
         :redir @i
         :call g:vimim_omni_color()
         let g:vimim_map = 'gi,search'
+    "   let g:vimim_map='gi'
         let g:vimim_tab_as_onekey = 1
         let g:vimim_plugin_folder = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -1393,9 +1394,9 @@ function! s:vimim_menuless_map(key)
         endif
     else
         let s:hjkl_n = ""
-        let s:smart_enter = 0
         call g:vimim_title()
     endif
+    let s:smart_enter = 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1554,7 +1555,7 @@ function! s:vimim_onekey_action(space)
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
         call g:vimim_title()
-    elseif s:onekey && s:menuless
+    elseif s:menuless
         let onekey = s:vimim_menuless_map(space)
     endif
     sil!exe 'sil!return "' . onekey . '"'
