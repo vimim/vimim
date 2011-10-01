@@ -332,6 +332,7 @@ function! s:vimim_get_head_without_quote(keyboard)
         let keyboards = split(keyboard,"'")
         let head = get(keyboards,0)
         let tail = join(keyboards[1:],"'")
+        let tail = len(tail) == 1 ? "'" . tail : tail
         let s:keyboard = head . " " . tail
         return head
     endif
@@ -1360,7 +1361,7 @@ function! <SID>vimim_menuless(key)
     let char_before = 1
     if empty(s:vimim_char_before())
         let char_before = 0
-        if  s:keyboard=~"'" || s:keyboard == "u3000"
+        if  s:keyboard =~ "'" || s:keyboard == 'u3000'
             let char_before = 1
         endif
     endif
@@ -1421,20 +1422,6 @@ function! <SID>vimim_space()
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
-function! <SID>vimim_backspace()
-    " <BS> has special meaning in all 3 states of *popupmenu-completion*
-    let backspace = '\<Left>\<Delete>'
-    if pumvisible()
-        let backspace .= g:vimim()
-    endif
-    if s:menuless && s:smart_enter && s:onekey
-        let s:smart_enter = "menuless_correction"
-        let backspace = '\<C-E>\<C-R>=g:vimim()\<CR>\<BS>'
-    endif
-    call g:vimim_titlestring()
-    sil!exe 'sil!return "' . backspace . '"'
-endfunction
-
 function! <SID>vimim_enter()
     " (1) single <Enter> after English => seamless
     " (2) otherwise, or double <Enter> => <Enter>
@@ -1460,6 +1447,20 @@ function! <SID>vimim_enter()
     endif
     call g:vimim_titlestring()
     sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_backspace()
+    " <BS> has special meaning in all 3 states of *popupmenu-completion*
+    let backspace = '\<Left>\<Delete>'
+    if pumvisible()
+        let backspace .= g:vimim()
+    endif
+    if s:menuless && s:smart_enter && s:onekey
+        let s:smart_enter = "menuless_correction"
+        let backspace = '\<C-E>\<C-R>=g:vimim()\<CR>\<BS>'
+    endif
+    call g:vimim_titlestring()
+    sil!exe 'sil!return "' . backspace . '"'
 endfunction
 
 " ============================================= }}}
@@ -1499,18 +1500,18 @@ function! <SID>vimim_onekey(tab)
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
         sil!call s:vimim_start()
-        if s:menuless < 2
+        if a:tab < 2
             let onekey = s:vimim_onekey_action(0)
         elseif col("$") - col(".") < cursor + 1
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
-    if s:menuless < 2
-        sil!call s:vimim_onekey_mapping()
-    else
+    if s:menuless
         for _ in range(10)
             exe 'inoremap<expr> '._.' <SID>vimim_menuless("'._.'")'
         endfor
+    else
+        sil!call s:vimim_onekey_mapping()
     endif
     if empty(onekey)
         let onekey = '\<C-R>=g:vimim_titlestring()\<CR>'
