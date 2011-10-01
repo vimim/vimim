@@ -1308,18 +1308,22 @@ endfunction
 
 function! s:vimim_map_omni_page_label()
     let labels = range(10)
-    let common_punctuation = "[]=-"
-    if s:onekey
-        let common_punctuation .= ".,"
+    if s:onekey && s:vimim_map != 'gi'
         let labels += s:abcd
         call remove(labels, match(labels,"'"))
     endif
-    for _ in split(common_punctuation, '\zs')
-        exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
-    endfor
     for _ in labels
         silent!exe 'inoremap <silent> <expr> '  ._.
         \ ' <SID>vimim_abcdvfgsz_1234567890_map("'._.'")'
+    endfor
+    let common_punctuation = "[]=-"
+    if s:vimim_map == 'gi'
+        let common_punctuation = ""
+    elseif s:onekey
+        let common_punctuation .= ".,"
+    endif
+    for _ in split(common_punctuation, '\zs')
+        exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
     endfor
 endfunction
 
@@ -1627,6 +1631,9 @@ function! g:vimim_onekey_dump()
 endfunction
 
 function! s:vimim_onekey_overall_map()
+    if s:vimim_map == 'gi'
+        return
+    endif
     if s:vimim_chinese_punctuation !~ 'latex'
         for _ in s:AZ_list
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps_map("'._.'")'
