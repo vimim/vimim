@@ -1125,7 +1125,7 @@ function! s:vimim_cache()
     endif
     let results = []
     if len(s:hjkl_n)
-        if s:show_me_not
+        if s:show_me_not && empty(s:menuless)
             let results = s:vimim_onekey_menu_textwidth()
         elseif len(s:popup_list) && !empty(s:vimim_cjk())
             let results = s:vimim_onekey_menu_filter()
@@ -1194,11 +1194,8 @@ function! s:vimim_onekey_menu_filter()
     " use 1234567890/qwertyuiop as digital filter
     let results = s:vimim_cjk_filter_list()
     if empty(results) && !empty(len(s:hjkl_n))
-        let number_before = strpart(s:hjkl_n, 0, len(s:hjkl_n)-1)
-        if len(number_before)
-            let s:hjkl_n = number_before
-            let results = s:vimim_cjk_filter_list()
-        endif
+        let s:hjkl_n = s:hjkl_n[:-2]
+        let results = s:vimim_cjk_filter_list()
     endif
     return results
 endfunction
@@ -1384,8 +1381,7 @@ function! s:vimim_menuless_map(key)
                 let key = repeat('\<C-N>', cursor) 
             endif
         else                           " 1234567890 for menuless 4corner filter
-            let s:hjkl_n .= s:show_me_not ? digit : s:hjkl_n . digit
-            " how to stop if no more match?
+            let s:hjkl_n = s:show_me_not ? digit : s:hjkl_n . digit
         endif
         call s:vimim_set_titlestring(cursor)
     else
