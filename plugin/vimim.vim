@@ -58,7 +58,7 @@ function! s:vimim_initialize_debug()
         :redir @i
         :call g:vimim_omni_color()
         let g:vimim_map = 'gi,search'
-    "   let g:vimim_map='gi'
+     "  let g:vimim_map='gi'
         let g:vimim_tab_as_onekey = 1
         let g:vimim_plugin_folder = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -1383,15 +1383,15 @@ function! s:vimim_menuless_map(key)
     endif
     if empty(s:smart_enter) && empty(s:pattern_not_found) && char_before
         let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
+        let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
         if empty(s:vimim_cjk())  " 1 for refreshing
-            let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
             if a:key =~ '[02-9]' " 234567890 for menuless selection
                 let key = repeat('\<C-N>', cursor)
             endif
-            call s:vimim_set_titlestring(cursor)
         else               " 1234567890 for menuless 4corner filter
             let s:hjkl_n = s:show_me_not ? digit : s:hjkl_n . digit
         endif
+        call s:vimim_set_titlestring(cursor)
     else
         let s:hjkl_n = ""
         call g:vimim_title()
