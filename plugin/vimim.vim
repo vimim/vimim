@@ -387,17 +387,12 @@ endfunction
 
 function! s:vimim_hjkl_rotation(lines)
     let max = max(map(copy(a:lines), 'strlen(v:val)')) + 1
-    let multibyte = 1
-    if match(a:lines,'\w') < 0
-        " rotation makes more sense for cjk
-        let multibyte = s:multibyte
-    endif
+    let multibyte = match(a:lines,'\w') < 0 ? s:multibyte : 1
     let results = []
     for line in a:lines
-        let spaces = ''
-        let gap = (max-len(line))/multibyte
-        if gap
-            for i in range(gap)
+        let spaces = ''   " rotation makes more sense for cjk
+        if (max-len(line))/multibyte
+            for i in range((max-len(line))/multibyte)
                 let spaces .= s:space
             endfor
         endif
@@ -1349,7 +1344,7 @@ endfunction
 let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
-function! g:vimim_titlestring()
+function! g:vimim_title()
     let title = s:logo . s:vimim_get_title()
     if s:menuless
         let &titlestring = title . s:space . s:today
@@ -1365,7 +1360,7 @@ function! <SID>vimim_menuless(key)
     let char_before = 1
     if empty(s:vimim_char_before())
         let char_before = 0
-        if  s:keyboard =~ "'" || s:keyboard == 'u3000'
+        if s:keyboard =~ "'" || s:keyboard == 'u3000'
             let char_before = 1
         endif
     endif
@@ -1375,12 +1370,13 @@ function! <SID>vimim_menuless(key)
         let key = repeat('\<C-N>', cursor)
         if a:key == 1 " digit one does refresh
             let key = '\<C-E>\<C-X>\<C-O>'
+        else
+            call s:vimim_set_titlestring(cursor)
         endif
-        call s:vimim_set_titlestring(cursor)
     else
-        call g:vimim_titlestring()
+        let s:smart_enter = 0
+        call g:vimim_title()
     endif
-    let s:smart_enter = 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1401,7 +1397,7 @@ function! s:vimim_set_titlestring(cursor)
         let title = keyboard .'  '. left . hightlight . right
         let &titlestring = s:logo[:4] . s:vimim_get_title() . ' ' . title
     else
-        call g:vimim_titlestring()
+        call g:vimim_title()
     endif
 endfunction
 
@@ -1452,12 +1448,12 @@ function! <SID>vimim_enter()
         let key = "\<CR>"
         let s:smart_enter = 0
     endif
-    call g:vimim_titlestring()
+    call g:vimim_title()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! <SID>vimim_backspace()
-    " <BS> has special meaning in all 3 states of *popupmenu-completion*
+    " <BS> has special meaning in all 3 states of popupmenu-completion
     let backspace = '\<Left>\<Delete>'
     if pumvisible()
         let backspace .= g:vimim()
@@ -1466,7 +1462,7 @@ function! <SID>vimim_backspace()
         let s:smart_enter = "menuless_correction"
         let backspace  = '\<C-E>\<C-R>=g:vimim()\<CR>' . backspace
     endif
-    call g:vimim_titlestring()
+    call g:vimim_title()
     sil!exe 'sil!return "' . backspace . '"'
 endfunction
 
@@ -1498,7 +1494,7 @@ function! <SID>vimim_onekey(tab)
         else
             let s:menuless = 1
         endif
-        call g:vimim_titlestring()
+        call g:vimim_title()
     elseif a:tab == 1 && (empty(one_before) || one_before=~'\s')
         let onekey = '\t'
     else
@@ -1509,13 +1505,13 @@ function! <SID>vimim_onekey(tab)
         sil!call s:vimim_start()
         if a:tab < 2
             let onekey = s:vimim_onekey_action(0)
-        elseif col("$") - col(".") < cursor + 1
+        elseif col("$")-col(".") && col("$")-col(".") < cursor+1
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
     sil!call s:vimim_onekey_overall_map()
     if empty(onekey)
-        let onekey = '\<C-R>=g:vimim_titlestring()\<CR>'
+        let onekey = '\<C-R>=g:vimim_title()\<CR>'
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -1537,7 +1533,7 @@ function! s:vimim_onekey_action(space)
     let onekey = space
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
-        call g:vimim_titlestring()
+        call g:vimim_title()
     else
         let onekey = <SID>vimim_menuless(2)
     endif
@@ -1715,7 +1711,7 @@ function! s:vimim_chinesemode_action()
     endif
     sil!call s:vimim_start()
     let action = ""
-    call g:vimim_titlestring()
+    call g:vimim_title()
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
@@ -4602,7 +4598,7 @@ function! s:vimim_popupmenu_list(match_list)
         call add(popup_list, complete_items)
     endfor
     if s:onekey
-        call g:vimim_titlestring()
+        call g:vimim_title()
         set completeopt=menuone  " for hjkl_n refresh
         let s:popup_list = popup_list
         if s:menuless && empty(s:show_me_not)
