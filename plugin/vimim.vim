@@ -750,12 +750,16 @@ function! IMName()
     return ""
 endfunction
 
-function! s:vimim_get_title()
+function! s:vimim_get_title(digit)
     let statusline = s:space
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
     elseif has_key(s:im_keycode, s:ui.im)
-        let statusline .= s:backend[s:ui.root][s:ui.im].chinese
+        let im_in_chinese = s:backend[s:ui.root][s:ui.im].chinese
+        if a:digit
+            let im_in_chinese = s:vimim_chinese('4corner')
+        endif
+        let statusline .= im_in_chinese
     endif
     let datafile = s:backend[s:ui.root][s:ui.im].name
     if s:ui.im =~ 'wubi'
@@ -798,7 +802,7 @@ function! s:vimim_get_title()
 endfunction
 
 function! s:vimim_statusline()
-    let s:ui.statusline = s:vimim_get_title()
+    let s:ui.statusline = s:vimim_get_title(0)
     let punctuation = s:chinese_punctuation ? 'fullwidth' : 'halfwidth'
     let punctuation = s:vimim_chinese(punctuation)
     let statusline  = s:vimim_chinese('chinese')
@@ -1197,6 +1201,9 @@ function! s:vimim_onekey_menu_filter()
         let s:hjkl_n = s:hjkl_n[:-2]
         let results = s:vimim_cjk_filter_list()
     endif
+    if s:menuless && s:keyboard =~ "'"
+        let s:keyboard = get(split(s:keyboard),1)
+    endif
     return results
 endfunction
 
@@ -1353,7 +1360,7 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
 function! g:vimim_title()
-    let title = s:logo . s:vimim_get_title()
+    let title = s:logo . s:vimim_get_title(0)
     if s:menuless
         let &titlestring = title  . s:space . s:today
     else
@@ -1374,16 +1381,16 @@ function! s:vimim_menuless_map(key)
         endif
     endif
     if empty(s:smart_enter) && empty(s:pattern_not_found) && char_before
-        let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
-        let key    = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
-        if empty(s:vimim_cjk())        "         1 for refreshing 
-            if a:key =~ '[234567890]'  " 234567890 for menuless selection
-                let key = repeat('\<C-N>', cursor) 
+        let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
+        if empty(s:vimim_cjk())  " 1 for refreshing
+            let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
+            if a:key =~ '[02-9]' " 234567890 for menuless selection
+                let key = repeat('\<C-N>', cursor)
             endif
-        else                           " 1234567890 for menuless 4corner filter
+            call s:vimim_set_titlestring(cursor)
+        else               " 1234567890 for menuless 4corner filter
             let s:hjkl_n = s:show_me_not ? digit : s:hjkl_n . digit
         endif
-        call s:vimim_set_titlestring(cursor)
     else
         let s:hjkl_n = ""
         let s:smart_enter = 0
@@ -1393,10 +1400,10 @@ function! s:vimim_menuless_map(key)
 endfunction
 
 function! s:vimim_set_titlestring(cursor)
-    let cursor = s:cursor_at_menuless + a:cursor
     let hightlight = s:left . '\|' . s:right
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
     let words = split(titlestring)[1:]
+    let cursor = s:cursor_at_menuless + a:cursor
     let hightlight = get(words, cursor)
     let title = ""
     if !empty(hightlight) && len(words) > 1
@@ -1404,10 +1411,11 @@ function! s:vimim_set_titlestring(cursor)
         let hightlight = s:left . hightlight . s:right
         let left = join(words[1 : cursor-1])
         let right = join(words[cursor+1 :])
-        let keyboard = get(words, 0)
         let s:cursor_at_menuless = cursor
+        let keyboard = get(words,0)=='0' ? "" : get(words,0)
         let title = keyboard .'  '. left . hightlight . right
-        let &titlestring = s:logo[:4] . s:vimim_get_title() . ' ' . title
+        let d = len(s:hjkl_n) ? 1 : 0
+        let &titlestring = s:logo[:4] . s:vimim_get_title(d) .' '. title
     else
         call g:vimim_title()
     endif
@@ -1560,7 +1568,7 @@ function! s:vimim_onekey_dot_dot()
     if before_before != ".." && before_before != ",,"
         return 0
     endif
-    if empty(three_before) || three_before =~ '\s' || col(".") < 6
+    if empty(three_before) || three_before =~ '\s' || col(".") < 5
         if before_before == ".."
             let onekey = 'u'         " <= ..   dot dot for 214 unicode
         elseif before_before == ",,"
