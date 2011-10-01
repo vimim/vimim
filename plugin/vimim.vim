@@ -912,7 +912,6 @@ function! s:vimim_onekey_esc()
     return key
 endfunction
 
-" todo
 function! <SID>vimim_backslash()
     " (1) [insert] disable omni window
     " (2) [omni]   insert Chinese and remove Space before
@@ -1346,7 +1345,7 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
             let key .= '\<C-R>=g:vimim()\<CR>'
             sil!call s:vimim_reset_after_insert()
         endif
-    elseif s:onekey && s:menuless && key =~ '\d'
+    elseif s:onekey && s:menuless && empty(s:show_me_not) && key =~ '\d'
         let key = s:vimim_menuless_map(key)
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -1368,7 +1367,8 @@ endfunction
 
 function! s:vimim_menuless_map(key)
     " workaround as no way to detect if completion is active
-    let key = a:key == " " ? 2 : a:key
+    let key = a:key
+    let digit = key == " " ? '' : key
     let char_before = 1
     if empty(s:vimim_char_before())
         let char_before = 0
@@ -1377,16 +1377,20 @@ function! s:vimim_menuless_map(key)
         endif
     endif
     if empty(s:smart_enter) && empty(s:pattern_not_found) && char_before
-        let cursor = key < 1 ? 9 : key-1
-        let key = repeat('\<C-N>', cursor)
-        if a:key == 1 " digit one does refresh
-            let key = '\<C-E>\<C-X>\<C-O>'
-        else
-            call s:vimim_set_titlestring(cursor)
+        let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
+        let key    = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
+        if empty(s:vimim_cjk())        "         1 for refreshing 
+            if a:key =~ '[234567890]'  " 234567890 for menuless selection
+                let key = repeat('\<C-N>', cursor) 
+            endif
+        else                           " 1234567890 for menuless 4corner filter
+            let s:hjkl_n .= s:show_me_not ? digit : s:hjkl_n . digit
+            " how to stop if no more match?
         endif
+        call s:vimim_set_titlestring(cursor)
     else
+        let s:hjkl_n = ""
         let s:smart_enter = 0
-        let key = a:key
         call g:vimim_title()
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -4285,7 +4289,6 @@ function! s:vimim_start()
     inoremap <expr> <Esc>    <SID>vimim_esc()
     inoremap <expr> <Space>  <SID>vimim_space()
     inoremap <expr> <Bslash> <SID>vimim_backslash()
-" todo
 endfunction
 
 function! s:vimim_stop()
@@ -4595,6 +4598,8 @@ function! s:vimim_popupmenu_list(match_list)
             let label_in_one_row = label < 11 ? label2[:-2] : ""
             if empty(s:menuless)
                 let label_in_one_row = label . "."
+            elseif !empty(s:vimim_cjk())
+                let label_in_one_row = ""
             endif
             call add(one_list, label_in_one_row . chinese)
             let label += 1
