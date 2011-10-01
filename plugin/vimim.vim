@@ -4752,4 +4752,4 @@ sil!call s:vimim_scan_backend_cloud()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_plug_and_play()
 sil!call s:vimim_ctrl_h_ctrl_space()
-" ======================================= }}}
+" ============================================= }}}
