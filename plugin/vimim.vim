@@ -912,12 +912,15 @@ function! s:vimim_onekey_esc()
     return key
 endfunction
 
+" todo
 function! <SID>vimim_backslash()
     " (1) [insert] disable omni window
     " (2) [omni]   insert Chinese and remove Space before
     let bslash = '\\'
     if pumvisible()
         let bslash = '\<C-Y>\<C-R>=g:vimim_bracket('.1.')\<CR>'
+    elseif s:menuless
+        let bslash = '\<C-Left>\<Left>\<Delete>\<C-Right>'
     endif
     sil!exe 'sil!return "' . bslash . '"'
 endfunction
@@ -1365,7 +1368,7 @@ endfunction
 
 function! s:vimim_menuless_map(key)
     " workaround as no way to detect if completion is active
-    let key = a:key
+    let key = a:key == " " ? 2 : a:key
     let char_before = 1
     if empty(s:vimim_char_before())
         let char_before = 0
@@ -1383,6 +1386,7 @@ function! s:vimim_menuless_map(key)
         endif
     else
         let s:smart_enter = 0
+        let key = a:key
         call g:vimim_title()
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -1543,7 +1547,7 @@ function! s:vimim_onekey_action(space)
         let onekey = g:vimim()
         call g:vimim_title()
     elseif s:onekey && s:menuless
-        let onekey = s:vimim_menuless_map(2)
+        let onekey = s:vimim_menuless_map(space)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -4276,13 +4280,12 @@ function! s:vimim_start()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_set_special_property()
     sil!call s:vimim_map_omni_page_label()
-    inoremap <expr> <Space>  <SID>vimim_space()
     inoremap <expr> <BS>     <SID>vimim_backspace()
     inoremap <expr> <CR>     <SID>vimim_enter()
-    if s:vimim_map != 'gi'
-        inoremap <expr> <Esc>    <SID>vimim_esc()
-        inoremap <expr> <Bslash> <SID>vimim_backslash()
-    endif
+    inoremap <expr> <Esc>    <SID>vimim_esc()
+    inoremap <expr> <Space>  <SID>vimim_space()
+    inoremap <expr> <Bslash> <SID>vimim_backslash()
+" todo
 endfunction
 
 function! s:vimim_stop()
@@ -4343,11 +4346,11 @@ function! g:vimim_omni()
 endfunction
 
 function! s:vimim_restore_imap()
-    let keys = range(10) + ['<CR>','<BS>','<Space>']
+    let keys = range(10) + ['<Esc>','<BS>','<Space>','<CR>','<Bslash>']
     if s:vimim_map != 'gi'
         let keys += keys(s:evils_all)
         let keys += s:valid_keys
-        let keys += ['<Esc>','<Bslash>','<Bar>']
+        let keys += ['<Bar>']
         if s:chinese_mode !~ 'dynamic'
         \&& s:vimim_chinese_punctuation !~ 'latex'
             let keys += s:AZ_list
