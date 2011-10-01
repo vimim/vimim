@@ -1627,16 +1627,16 @@ function! g:vimim_onekey_dump()
 endfunction
 
 function! s:vimim_onekey_overall_map()
-    if s:vimim_map =~ 'gi' && s:menuless
+    if s:menuless
         for _ in range(10)
             exe 'inoremap<expr> '._.' <SID>vimim_menuless("'._.'")'
         endfor
     endif
-    if s:vimim_map =~ 'hjkl' && empty(s:menuless)
+    if empty(s:menuless)
         " play with onekey hjkl
     else
         return
-    elseif
+    endif
     if s:vimim_chinese_punctuation !~ 'latex'
         for _ in s:AZ_list
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps_map("'._.'")'
@@ -1650,7 +1650,7 @@ function! s:vimim_onekey_overall_map()
         let onekey_punctuation .= ":"
         let qwer = s:cjk.filename=~"cjkv" ? s:qwer[1:5] : s:qwer
         for _ in qwer
-            exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwert_map("'._.'")'
+            exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwer_map("'._.'")'
         endfor
     endif
     for _ in split(onekey_punctuation, '\zs')
@@ -1658,7 +1658,7 @@ function! s:vimim_onekey_overall_map()
     endfor
 endfunction
 
-function! <SID>vimim_onekey_qwert_map(key)
+function! <SID>vimim_onekey_qwer_map(key)
     let key = a:key
     if pumvisible()
         let digit = match(s:qwer, key)
