@@ -1367,8 +1367,11 @@ function! <SID>vimim_menuless(key)
     endif
     if s:onekey && s:menuless && empty(s:smart_enter)
     \&& empty(s:pattern_not_found) && char_before
-        let cursor = a:key == " " ? 1 : key < 1 ? 9 : key-1
+        let cursor = key < 1 ? 9 : key-1
         let key = repeat('\<C-N>', cursor)
+        if key == 1 " digit one does refresh
+            let key = '\<C-E>\<C-X>\<C-O>'
+        endif
         call s:vimim_set_titlestring(cursor)
     else
         call g:vimim_titlestring()
@@ -1441,9 +1444,6 @@ function! <SID>vimim_enter()
     endif
     if s:smart_enter == 1
         let s:seamless_positions = getpos(".")
-    elseif s:smart_enter == 2 && s:menuless && !empty(s:vimim_char_before())
-        let s:smart_enter = 0
-        let key = '\<C-E>\<C-R>=g:vimim_space()\<CR>'
     else
         let key = "\<CR>"
         let s:smart_enter = 0
@@ -1541,7 +1541,7 @@ function! g:vimim_onekey_action(space)
         let onekey = g:vimim()
         call g:vimim_titlestring()
     else
-        let onekey = <SID>vimim_menuless(space)
+        let onekey = <SID>vimim_menuless(2)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
