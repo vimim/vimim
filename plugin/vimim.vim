@@ -4279,8 +4279,10 @@ function! s:vimim_start()
     inoremap <expr> <Space>  <SID>vimim_space()
     inoremap <expr> <BS>     <SID>vimim_backspace()
     inoremap <expr> <CR>     <SID>vimim_enter()
-    inoremap <expr> <Esc>    <SID>vimim_esc()
-    inoremap <expr> <Bslash> <SID>vimim_backslash()
+    if s:vimim_map != 'gi'
+        inoremap <expr> <Esc>    <SID>vimim_esc()
+        inoremap <expr> <Bslash> <SID>vimim_backslash()
+    endif
 endfunction
 
 function! s:vimim_stop()
@@ -4341,11 +4343,11 @@ function! g:vimim_omni()
 endfunction
 
 function! s:vimim_restore_imap()
-    let keys = range(10) + ['<Esc>','<CR>','<BS>','<Space>']
+    let keys = range(10) + ['<CR>','<BS>','<Space>']
     if s:vimim_map != 'gi'
         let keys += keys(s:evils_all)
         let keys += s:valid_keys
-        let keys += ['<Bar>','<Bslash>']
+        let keys += ['<Esc>','<Bslash>','<Bar>']
         if s:chinese_mode !~ 'dynamic'
         \&& s:vimim_chinese_punctuation !~ 'latex'
             let keys += s:AZ_list
@@ -4711,7 +4713,7 @@ function! s:vimim_plug_and_play()
     if s:vimim_map =~ 'search' || s:vimim_map == 'gi'
         noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     endif
-    if s:vimim_tab_as_onekey
+    if s:vimim_tab_as_onekey && s:vimim_map != 'gi'
         inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
         imap<silent><Tab>     <Plug>VimimOneTab
         xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
