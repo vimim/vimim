@@ -57,7 +57,7 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :redir @i
         :call g:vimim_omni_color()
-        let g:vimim_map = 'gi,hjkl,search'
+        let g:vimim_map = 'gi,search'
         let g:vimim_tab_as_onekey = 1
         let g:vimim_plugin_folder = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -453,7 +453,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
     if empty(s:vimim_map)
-        let s:vimim_map = 'ctrl+6,ctrl+bslash,gi,hjkl,search'
+        let s:vimim_map = 'ctrl+6,ctrl+bslash,gi,search'
     endif
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
@@ -4342,7 +4342,7 @@ endfunction
 
 function! s:vimim_restore_imap()
     let keys = range(10) + ['<Esc>','<CR>','<BS>','<Space>']
-    if s:vimim_map =~ 'hjkl' || s:vimim_map =~ 'ctrl+bslash'
+    if s:vimim_map != 'gi'
         let keys += keys(s:evils_all)
         let keys += s:valid_keys
         let keys += ['<Bar>','<Bslash>']
@@ -4708,7 +4708,7 @@ function! s:vimim_plug_and_play()
         inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
         nmap  gi            i<Plug>VimimOneAct
     endif
-    if s:vimim_map =~ 'search'
+    if s:vimim_map =~ 'search' || s:vimim_map == 'gi'
         noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     endif
     if s:vimim_tab_as_onekey
