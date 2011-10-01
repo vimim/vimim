@@ -1396,7 +1396,6 @@ function! s:vimim_menuless_map(key)
         let s:hjkl_n = ""
         call g:vimim_title()
     endif
-    let s:smart_enter = 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1428,7 +1427,8 @@ function! <SID>vimim_space()
     " (3) <Space> after popup menu           => insert Chinese
     " (4) <Space> after pattern not found    => <Space>
     let space = " "
-    if s:pattern_not_found
+    if s:pattern_not_found || s:smart_enter
+        let s:smart_enter = 0
         let s:pattern_not_found = 0
         return space
     endif
