@@ -791,6 +791,9 @@ function! s:vimim_get_title()
     if !empty(s:vimim_shuangpin)
         let statusline = s:space . s:shuangpin_chinese.chinese
     endif
+    if s:show_me_not
+        let statusline = s:space . 'hjkl'
+    endif
     return statusline . s:space
 endfunction
 
@@ -1316,7 +1319,7 @@ function! s:vimim_map_omni_page_label()
     endfor
     for _ in labels
         silent!exe 'inoremap <silent> <expr> '  ._.
-        \  ' <SID>vimim_abcdvfgsz_1234567890_map("'._.'")'
+        \ ' <SID>vimim_abcdvfgsz_1234567890_map("'._.'")'
     endfor
 endfunction
 
@@ -1336,6 +1339,8 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
             let key .= '\<C-R>=g:vimim()\<CR>'
             sil!call s:vimim_reset_after_insert()
         endif
+    elseif s:onekey && s:menuless && key =~ '\d'
+        let key = s:vimim_menuless_map(key)
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1347,14 +1352,14 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 function! g:vimim_title()
     let title = s:logo . s:vimim_get_title()
     if s:menuless
-        let &titlestring = title . s:space . s:today
+        let &titlestring = title  . s:space . s:today
     else
         let &titlestring = title
     endif
     return ""
 endfunction
 
-function! <SID>vimim_menuless(key)
+function! s:vimim_menuless_map(key)
     " workaround as no way to detect if completion is active
     let key = a:key
     let char_before = 1
@@ -1364,8 +1369,7 @@ function! <SID>vimim_menuless(key)
             let char_before = 1
         endif
     endif
-    if s:onekey && s:menuless && empty(s:smart_enter)
-    \&& empty(s:pattern_not_found) && char_before
+    if empty(s:smart_enter) && empty(s:pattern_not_found) && char_before
         let cursor = key < 1 ? 9 : key-1
         let key = repeat('\<C-N>', cursor)
         if a:key == 1 " digit one does refresh
@@ -1503,7 +1507,7 @@ function! <SID>vimim_onekey(tab)
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
         sil!call s:vimim_start()
-        if a:tab < 2
+        if s:menuless < 2
             let onekey = s:vimim_onekey_action(0)
         elseif col("$")-col(".") && col("$")-col(".") < cursor+1
             let onekey = '\<Right>' " gi at the end of the cursor line
@@ -1534,8 +1538,8 @@ function! s:vimim_onekey_action(space)
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
         call g:vimim_title()
-    else
-        let onekey = <SID>vimim_menuless(2)
+    elseif s:onekey && s:menuless
+        let onekey = s:vimim_menuless_map(2)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -1623,16 +1627,6 @@ function! g:vimim_onekey_dump()
 endfunction
 
 function! s:vimim_onekey_overall_map()
-    if s:menuless
-        for _ in range(10)
-            exe 'inoremap<expr> '._.' <SID>vimim_menuless("'._.'")'
-        endfor
-    endif
-    if empty(s:menuless)
-        " play with onekey hjkl
-    else
-        return
-    endif
     if s:vimim_chinese_punctuation !~ 'latex'
         for _ in s:AZ_list
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps_map("'._.'")'
@@ -4342,7 +4336,7 @@ endfunction
 function! s:vimim_restore_imap()
     let keys = range(10) + ['<Esc>','<CR>','<BS>','<Space>']
     if s:vimim_map =~ 'hjkl' || s:vimim_map =~ 'ctrl+bslash'
-        let keys += keys(s:evils_all) 
+        let keys += keys(s:evils_all)
         let keys += s:valid_keys
         let keys += ['<Bar>','<Bslash>']
         if s:chinese_mode !~ 'dynamic'
