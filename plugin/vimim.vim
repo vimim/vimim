@@ -55,8 +55,7 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        let g:vimim_map = 'gi'
-        let g:vimim_map = 'gi,search'
+        let g:vimim_map = 'search,gi'
         let g:vimim_tab_as_onekey = 1
         let g:vimim_plugin_folder = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -170,12 +169,14 @@ let s:VimIM += [" ====  easter eggs      ==== {{{"]
 
 function! s:vimim_egg_vimimhelp()
     let eggs = []
+    let default = ":let g:vimim_map = '" . s:default_vimim_map . "'"
     let http = "http://vimim.googlecode.com/svn/trunk/plugin/"
     let url = split(s:url)
-    call add(eggs, '默认热键：点石成金模式　　i_CTRL-^　')
-    call add(eggs, '默认热键：中文输入模式　　i_CTRL-\　')
+    call add(eggs, '默认热键：点石成金模式　　i_ctrl+6　')
+    call add(eggs, '默认热键：中文输入模式　　i_ctrl+\　')
     call add(eggs, '默认热键：无菜单中文搜索　n 　')
     call add(eggs, '默认热键：无菜单中文输入　gi　')
+    call add(eggs, "热键设置： " . default)
     call add(eggs, '')
     call add(eggs, "论坛邮箱： " . get(url,0))
     call add(eggs, "官方网址： " . get(url,1))
@@ -453,9 +454,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
-    if empty(s:vimim_map)
-        let s:vimim_map = 'ctrl+6,ctrl+bslash,gi,search'
-    endif
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
     endif
@@ -464,6 +462,10 @@ function! s:vimim_initialize_global()
     endif
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
+    endif
+    let s:default_vimim_map = 'ctrl+6,ctrl+bslash,search,gi'
+    if empty(s:vimim_map)
+        let s:vimim_map = s:default_vimim_map
     endif
     let s:chinese_mode = 'onekey'
     let s:onekey = 0
@@ -4719,12 +4721,12 @@ function! s:vimim_plug_and_play()
         imap<silent><C-^>     <Plug>VimimOneKey
         xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
+    if s:vimim_map =~ 'search' || s:vimim_map == 'gi'
+        noremap<silent> n :sil!call g:vimim_search_next()<CR>n
+    endif
     if s:vimim_map =~ 'gi'
         inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
         nmap  gi             i<Plug>VimimOneAct
-    endif
-    if s:vimim_map =~ 'search' || s:vimim_map == 'gi'
-        noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     endif
     if s:vimim_tab_as_onekey && s:vimim_map != 'gi'
         inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
