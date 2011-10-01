@@ -1464,7 +1464,7 @@ function! <SID>vimim_backspace()
     endif
     if s:menuless && s:smart_enter && s:onekey
         let s:smart_enter = "menuless_correction"
-        let backspace = '\<C-E>\<C-R>=g:vimim()\<CR>\<BS>'
+        let backspace  = '\<C-E>\<C-R>=g:vimim()\<CR>' . backspace
     endif
     call g:vimim_titlestring()
     sil!exe 'sil!return "' . backspace . '"'
@@ -2659,7 +2659,7 @@ function! s:vimim_shuangpin_transform(keyboard)
     let size = strlen(keyboard)
     let ptr = 0
     let output = ""
-    let bchar = ""    " work-around for sogou
+    let bchar = ""    " workaround for sogou
     while ptr < size
         if keyboard[ptr] !~ "[a-z;]"
             " bypass all non-characters, i.e. 0-9 and A-Z are bypassed
@@ -4409,7 +4409,7 @@ if a:start
     call s:vimim_set_keyboard_list(start_column, keyboard)
     return start_column
 else
-    " [menuless correction] enter + basckspace = correction
+    " [menuless] enter + basckspace = correction
     if s:smart_enter =~ "menuless_correction"
         let s:smart_enter = 0
         return [s:space]
