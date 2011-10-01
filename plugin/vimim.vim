@@ -55,13 +55,13 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        :redir @i
-        :call g:vimim_omni_color()
+        let g:vimim_map = 'gi'
         let g:vimim_map = 'gi,search'
-     "  let g:vimim_map='gi'
         let g:vimim_tab_as_onekey = 1
         let g:vimim_plugin_folder = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
+        :call g:vimim_omni_color()
+        :redir @i
     endif
 endfunction
 
@@ -4721,7 +4721,7 @@ function! s:vimim_plug_and_play()
     endif
     if s:vimim_map =~ 'gi'
         inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
-        nmap  gi            i<Plug>VimimOneAct
+        nmap  gi             i<Plug>VimimOneAct
     endif
     if s:vimim_map =~ 'search' || s:vimim_map == 'gi'
         noremap<silent> n :sil!call g:vimim_search_next()<CR>n
