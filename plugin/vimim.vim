@@ -1398,7 +1398,7 @@ function! s:vimim_set_titlestring(cursor)
     endif
 endfunction
 
-function! <SID>vimim_space()
+function! g:vimim_space()
     " (1) <Space> after English (valid keys) => trigger keycode menu
     " (2) <Space> after English punctuation  => get Chinese punctuation
     " (3) <Space> after popup menu           => insert Chinese
@@ -1416,7 +1416,7 @@ function! <SID>vimim_space()
     elseif s:chinese_mode =~ 'static'
         let space = s:vimim_static_action(space)
     elseif s:onekey
-        let space = s:vimim_onekey_action(1)
+        let space = g:vimim_onekey_action(1)
     endif
     call s:vimim_reset_after_insert()
     sil!exe 'sil!return "' . space . '"'
@@ -1441,6 +1441,9 @@ function! <SID>vimim_enter()
     endif
     if s:smart_enter == 1
         let s:seamless_positions = getpos(".")
+    elseif s:smart_enter == 2 && s:menuless && !empty(s:vimim_char_before())
+        let s:smart_enter = 0
+        let key = '\<C-E>\<C-R>=g:vimim_space()\<CR>'
     else
         let key = "\<CR>"
         let s:smart_enter = 0
@@ -1501,7 +1504,7 @@ function! <SID>vimim_onekey(tab)
         let s:menuless = a:tab
         sil!call s:vimim_start()
         if a:tab < 2
-            let onekey = s:vimim_onekey_action(0)
+            let onekey = g:vimim_onekey_action(0)
         elseif col("$") - col(".") < cursor + 1
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
@@ -1519,7 +1522,7 @@ function! <SID>vimim_onekey(tab)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! s:vimim_onekey_action(space)
+function! g:vimim_onekey_action(space)
     let space = a:space ? " " : ""
     let one_before = getline(".")[col(".")-2]
     if s:seamless_positions == getpos(".")
@@ -4268,11 +4271,11 @@ function! s:vimim_start()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_set_special_property()
     sil!call s:vimim_map_omni_page_label()
+    inoremap <expr> <Space>  g:vimim_space()
     inoremap <expr> <BS>     <SID>vimim_backspace()
-    inoremap <expr> <Bslash> <SID>vimim_backslash()
     inoremap <expr> <CR>     <SID>vimim_enter()
     inoremap <expr> <Esc>    <SID>vimim_esc()
-    inoremap <expr> <Space>  <SID>vimim_space()
+    inoremap <expr> <Bslash> <SID>vimim_backslash()
 endfunction
 
 function! s:vimim_stop()
