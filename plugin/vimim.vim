@@ -175,11 +175,11 @@ function! s:vimim_egg_vimimhelp()
     let default = ":let g:vimim_map = '" . s:default_vimim_map . "'"
     let http = "http://vimim.googlecode.com/svn/trunk/plugin/"
     let url = split(s:url)
-    call add(eggs, '默认热键：点石成金模式　　i_ctrl+6　')
-    call add(eggs, '默认热键：中文输入模式　　i_ctrl+\　')
-    call add(eggs, '默认热键：无菜单中文搜索　n 　')
-    call add(eggs, '默认热键：无菜单中文输入　gi　')
-    call add(eggs, "热键设置： " . default)
+    call add(eggs, '默认热键： ctrl+6 （Vim插入模式）点石成金')
+    call add(eggs, '默认热键： ctrl+\ （Vim插入模式）中文输入')
+    call add(eggs, '默认热键： 　n 　 （Vim正常模式）无菜单中文搜索')
+    call add(eggs, '默认热键： 　gi　 （Vim正常模式）无菜单中文输入')
+    call add(eggs, '热键设置： ' . default)
     call add(eggs, '')
     call add(eggs, "论坛邮箱： " . get(url,0))
     call add(eggs, "官方网址： " . get(url,1))
@@ -285,9 +285,9 @@ function! s:vimim_egg_vimim()
         call add(eggs, ciku . s:colon . s:cjk.filename)
     endif
     let input = s:vimim_chinese('input') . s:colon
-    if hasmapto("VimIM",'i')
+    if s:vimim_map =~ 'ctrl+bslash'
         let input .=  s:vimim_statusline() . s:space
-    else
+    elseif s:vimim_map =~ 'gi'
         let input .= s:vimim_chinese('onekey')   . s:space
         let input .= s:vimim_chinese('menuless') . s:space
     endif
@@ -939,10 +939,10 @@ function! s:vimim_get_labeling(label)
     if s:onekey && a:label < 11
         let label2 = a:label<2 ? "_" : get(s:abcd,a:label-1)
         if s:onekey > 1 && empty(s:menuless)
-            " onekey label BB for cloud Baidu
-            " onekey label GG for cloud Google
-            " onekey label SS for cloud Sogou
-            " onekey label 00 for cloud QQ
+            " onekey popup label BB for cloud Baidu
+            " onekey popup label GG for cloud Google
+            " onekey popup label SS for cloud Sogou
+            " onekey popup label 00 for cloud QQ
             let vimim_cloud = get(split(s:vimim_cloud,','), 0)
             let cloud = get(split(vimim_cloud,'[.]'),0)
             if label2 == cloud[0:0]  " b/g/s
@@ -4184,7 +4184,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     let keyboard = tolower(a:keyboard)
     let results = []
     " 1/3 first try search from cloud/mycloud
-    if s:vimim_cloud =~ 'search' || s:ui.root == 'cloud'
+    if s:onekey > 1 || s:ui.root == 'cloud'
         " /search from the default cloud
         let results = s:vimim_get_cloud(keyboard, s:cloud_default)
     elseif !empty(s:mycloud)
