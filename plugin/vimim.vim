@@ -174,31 +174,31 @@ function! s:vimim_egg_vimimhelp()
     let default = ":let g:vimim_map = '" . s:default_vimim_map . "'"
     let http = "http://vimim.googlecode.com/svn/trunk/plugin/"
     let url = split(s:url)
-    call add(eggs, '默认热键： ctrl+6 （Vim插入模式）点石成金')
-    call add(eggs, '默认热键： ctrl+\ （Vim插入模式）中文输入')
-    call add(eggs, '默认热键： 　n 　 （Vim正常模式）无菜单中文搜索')
-    call add(eggs, '默认热键： 　gi　 （Vim正常模式）无菜单中文输入')
-    call add(eggs, '热键设置： ' . default)
+    call add(eggs, '默认热键：ctrl+6（Vim插入模式）点石成金')
+    call add(eggs, '默认热键：ctrl+\（Vim插入模式）中文输入')
+    call add(eggs, '默认热键：　n 　（Vim正常模式）无菜单中文搜索')
+    call add(eggs, '默认热键：　gi　（Vim正常模式）无菜单中文输入')
+    call add(eggs, '热键设置：' . default)
     call add(eggs, '')
-    call add(eggs, "论坛邮箱： " . get(url,0))
-    call add(eggs, "官方网址： " . get(url,1))
-    call add(eggs, "最新程式： " . get(url,2))
-    call add(eggs, "最新主页： " . get(url,3))
-    call add(eggs, "错误报告： " . get(url,4))
-    call add(eggs, "新闻论坛： " . get(url,5))
+    call add(eggs, "论坛邮箱：" . get(url,0))
+    call add(eggs, "官方网址：" . get(url,1))
+    call add(eggs, "最新程式：" . get(url,2))
+    call add(eggs, "最新主页：" . get(url,3))
+    call add(eggs, "错误报告：" . get(url,4))
+    call add(eggs, "新闻论坛：" . get(url,5))
     call add(eggs, '')
-    call add(eggs, "海量詞庫： " . http . s:download.bsddb  )
-    call add(eggs, "英文詞庫： " . http . s:download.english)
-    call add(eggs, "四角號碼： " . http . s:download.cjk    )
-    return map(eggs, 'v:val . " "')
+    call add(eggs, "海量詞庫：" . http . s:download.bsddb  )
+    call add(eggs, "英文詞庫：" . http . s:download.english)
+    call add(eggs, "四角號碼：" . http . s:download.cjk    )
+    return map(eggs, 'v:val . s:space')
 endfunction
 
 function! s:vimim_egg_vim()
-    let eggs  = ["vi    文本編輯器"]
-    let eggs += ["vim   最牛文本編輯器"]
-    let eggs += ["vim   精力"]
-    let eggs += ["vim   生氣"]
-    let eggs += ["vimim 中文輸入法"]
+    let eggs  = ["vi　文本編輯器　"]
+    let eggs += ["vim　最牛文本編輯器　"]
+    let eggs += ["vim　精力　"]
+    let eggs += ["vim　生氣　"]
+    let eggs += ["vimim　中文輸入法　"]
     return eggs
 endfunction
 
@@ -312,7 +312,7 @@ function! s:vimim_egg_vimim()
             call add(eggs, s:space . s:space . s:colon . rc[2:])
         endfor
     endif
-    return map(eggs, 'v:val . " "')
+    return map(eggs, 'v:val . s:space')
 endfunction
 
 function! s:vimim_get_head_without_quote(keyboard)
@@ -378,7 +378,7 @@ function! s:vimim_game_hjkl(keyboard)
         endif
     endif
     if !empty(results) && s:menuless < 2
-        let s:show_me_not = 1
+        let s:touch_me_not = 1
         if s:hjkl_m % 4
             for i in range(s:hjkl_m%4)
                 let results = s:vimim_hjkl_rotation(results)
@@ -721,7 +721,7 @@ function! s:vimim_skin(color)
         let &pumheight = 5
     endif
     let s:pumheight = copy(&pumheight)
-    if s:show_me_not
+    if s:touch_me_not
         let &pumheight = 0
     elseif s:hjkl_l
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
@@ -806,7 +806,7 @@ function! s:vimim_get_title(digit)
     if !empty(s:vimim_shuangpin)
         let statusline = s:space . s:shuangpin_chinese.chinese
     endif
-    if s:show_me_not
+    if s:touch_me_not
         let statusline = s:space . 'hjkl'
     endif
     return statusline . s:space
@@ -1117,14 +1117,14 @@ function! s:vimim_cache()
     endif
     let results = []
     if len(s:hjkl_n)
-        if s:show_me_not && empty(s:menuless)
+        if s:touch_me_not && empty(s:menuless)
             let results = s:vimim_onekey_menu_textwidth()
         elseif len(s:popup_list) && !empty(s:vimim_cjk())
             let results = s:vimim_onekey_menu_filter()
         endif
         return results
     endif
-    if s:show_me_not
+    if s:touch_me_not
         if s:hjkl_h
             let s:hjkl_h = 0
             for line in s:match_list
@@ -1154,7 +1154,7 @@ function! s:vimim_pageup_pagedown()
 endfunction
 
 function! s:vimim_onekey_menu_textwidth()
-    " [game] use qwertyuiop to control popup textwidth if s:show_me_not
+    " [game] use qwertyuiop to control popup textwidth if s:touch_me_not
     let lines = copy(s:match_list)
     let filter = 'substitute(' .'v:val'. ",'^\\s\\+\\|\\s\\+$','','g')"
     call map(lines, filter)
@@ -1328,13 +1328,18 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
         if key =~ '\d'
             let n = key<1 ? 9 : key-1
         endif
+        let key = '\<C-R>=g:vimim()\<CR>'
         let down = repeat("\<Down>", n)
-        let key = down . '\<C-Y>'
         let s:has_pumvisible = 1
-        if s:onekey && a:key =~ '\d' && empty(s:show_me_not)
-            sil!call s:vimim_stop()
+        if s:onekey && a:key =~ '\d'
+            if s:touch_me_not && !empty(s:vimim_cjk())
+                let s:hjkl_n = a:key
+            else
+                let key = down . '\<C-Y>'
+                sil!call s:vimim_stop()
+            endif
         else
-            let key .= '\<C-R>=g:vimim()\<CR>'
+            let key = down . '\<C-Y>' . key
             sil!call s:vimim_reset_after_insert()
         endif
     elseif s:onekey && s:menuless && key =~ '\d'
@@ -1381,7 +1386,7 @@ function! s:vimim_menuless_map(key)
                 let key = repeat('\<C-N>', cursor)
             endif
         else               " 1234567890 for menuless 4corner filter
-            let s:hjkl_n = s:show_me_not ? digit : s:hjkl_n . digit
+            let s:hjkl_n = s:touch_me_not ? digit : s:hjkl_n . digit
         endif
         call s:vimim_set_titlestring(cursor)
     else
@@ -1399,7 +1404,7 @@ function! s:vimim_set_titlestring(cursor)
     let hightlight = get(words, cursor)
     let title = ""
     if !empty(hightlight) && len(words) > 1
-        let hightlight = substitute(hightlight, '\d', '', '')
+        let hightlight = substitute(hightlight, '\d\+', '', '')
         let hightlight = s:left . hightlight . s:right
         let left = join(words[1 : cursor-1])
         let right = join(words[cursor+1 :])
@@ -1517,7 +1522,7 @@ function! <SID>vimim_onekey(tab)
             if empty(&pumheight)
                 let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
             else
-                let s:menuless = 1
+                let s:menuless = empty(a:tab) ? 1 : a:tab
                 let onekey = '\<C-Y>'
             endif
         elseif s:menuless
@@ -1526,7 +1531,7 @@ function! <SID>vimim_onekey(tab)
                 let onekey = g:vimim()
             endif
         else
-            let s:menuless = 1
+            let s:menuless = empty(a:tab) ? 1 : a:tab
         endif
         call g:vimim_title()
     elseif a:tab == 1 && (empty(one_before) || one_before=~'\s')
@@ -1685,7 +1690,7 @@ function! <SID>vimim_onekey_qwer_map(key)
     let key = a:key
     if pumvisible()
         let digit = match(s:qwer, key)
-        let s:hjkl_n = s:show_me_not ? digit : s:hjkl_n . digit
+        let s:hjkl_n = s:touch_me_not ? digit : s:hjkl_n . digit
         let key = g:vimim()
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2214,7 +2219,7 @@ function! s:vimim_get_cjk_head(keyboard)
         let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
     endif
     let head = 0
-    if s:show_me_not || len(keyboard) == 1
+    if s:touch_me_not || len(keyboard) == 1
         let head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
@@ -2243,7 +2248,6 @@ function! s:vimim_get_cjk_head(keyboard)
             let llll = keyboard[1:4]
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
             if !empty(dddd)
-                let s:menuless = 1
                 let ldddd = keyboard[0:0] . dddd
                 let keyboard = ldddd . keyboard[5:-1]
                 let head = s:vimim_get_head(keyboard, 5)
@@ -4318,7 +4322,7 @@ endfunction
 
 function! s:vimim_reset_before_omni()
     let s:english.line = ""
-    let s:show_me_not = 0
+    let s:touch_me_not = 0
 endfunction
 
 function! s:vimim_reset_after_insert()
@@ -4567,20 +4571,21 @@ function! s:vimim_popupmenu_list(match_list)
     let popup_list = []
     for chinese in lines
         let complete_items = {}
-        if s:hjkl__ && s:hjkl__%2 && !empty(s:vimim_cjk())
+        if !empty(s:vimim_cjk()) && s:hjkl__ && s:hjkl__%2
             let simplified_traditional = ""
             for char in split(chinese, '\zs')
                 let simplified_traditional .= s:vimim_1to1(char)
             endfor
             let chinese = simplified_traditional
         endif
-        if empty(s:show_me_not)
+        if empty(s:touch_me_not)
             let menu = ""
             let pairs = split(chinese)
-            if len(pairs) > 1
+            let pair_left = get(pairs,0)
+            if len(pairs) > 1 && pair_left !~ '[^\x00-\xff]'
                 let chinese = get(pairs,1)
                 if s:show_extra_menu && empty(menu_in_one_row)
-                    let menu = get(pairs,0)
+                    let menu = pair_left
                 endif
             endif
             if s:hjkl_h && s:hjkl_h%2
@@ -4597,15 +4602,19 @@ function! s:vimim_popupmenu_list(match_list)
             let labeling = color ? printf('%2s ',label2) : ""
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
-            let label_in_one_row = label < 11 ? label2[:-2] : ""
-            if empty(s:menuless)
-                let label_in_one_row = label . "."
-            elseif !empty(s:vimim_cjk())
-                let label_in_one_row = ""
-            endif
-            call add(one_list, label_in_one_row . chinese)
-            let label += 1
         endif
+        let label_in_one_row = label . "."
+        if s:menuless
+            let label_in_one_row = ""
+            if empty(s:vimim_cjk()) && empty(s:touch_me_not)
+                let label_in_one_row = label2
+                if label < 11
+                    let label_in_one_row = label2[:-2]
+                endif
+            endif
+        endif
+        call add(one_list, label_in_one_row . chinese)
+        let label += 1
         let complete_items["dup"] = 1
         let complete_items["word"] = empty(chinese) ? s:space : chinese
         call add(popup_list, complete_items)
@@ -4614,7 +4623,7 @@ function! s:vimim_popupmenu_list(match_list)
         call g:vimim_title()
         set completeopt=menuone  " for hjkl_n refresh
         let s:popup_list = popup_list
-        if s:menuless && empty(s:show_me_not)
+        if s:menuless && empty(s:touch_me_not) || s:menuless == 2
             let &pumheight = 1
             set completeopt=menu  " for direct insert
             let s:cursor_at_menuless = 0
@@ -4655,7 +4664,7 @@ endfunction
 function! s:vimim_embedded_backend_engine(keyboard)
     let keyboard = a:keyboard
     if empty(s:ui.im)   || empty(s:ui.root)
-    \|| s:show_me_not   || s:ui.root =~ 'cloud'
+    \|| s:touch_me_not  || s:ui.root =~ 'cloud'
     \|| empty(keyboard) || keyboard !~# s:valid_keyboard
         return []
     elseif s:ui.has_dot == 2 && keyboard !~ "[']"
