@@ -377,10 +377,9 @@ function! s:vimim_game_hjkl(keyboard)
             endif
         endif
     endif
-  " if !empty(results) && s:menuless < 2
-     " todo
     if !empty(results)
         let s:touch_me_not = 1
+        let s:touch_me_first_time += 1
         if s:hjkl_m % 4
             for i in range(s:hjkl_m%4)
                 let results = s:vimim_hjkl_rotation(results)
@@ -1539,6 +1538,7 @@ function! <SID>vimim_onekey(tab)
         let cursor = getline(".")[col(".")-1] =~ '\w' ? 1 : s:multibyte
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
+        let s:touch_me_first_time = a:tab == 2 ? -32911 : 0
         sil!call s:vimim_start()
         if s:menuless < 2
             let onekey = s:vimim_onekey_action(0)
@@ -2133,7 +2133,7 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     let ddddd = 0
     if a:keyboard =~# '^u\x\{4}$'        "  u9f9f => 40863
         let ddddd = str2nr(a:keyboard[1:],16)
-    elseif a:keyboard =~# '^\d\{5}$'     "  32911 => 32911
+    elseif a:keyboard =~# '^\d\{5}$'     "  39532 => 39532
         let ddddd = str2nr(a:keyboard, 10)
     endif
     let max = &encoding=="utf-8" ? 19968+20902 : 0xffff
@@ -4312,6 +4312,7 @@ function! s:vimim_reset_before_anything()
     let s:onekey = 0
     let s:menuless = 0
     let s:smart_enter = 0
+    let s:touch_me_first_time = 0
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
     let s:pattern_not_found = 0
@@ -4621,9 +4622,7 @@ function! s:vimim_popupmenu_list(match_list)
         call g:vimim_title()
         set completeopt=menuone  " for hjkl_n refresh
         let s:popup_list = popup_list
-        if s:menuless
-    "   if s:menuless && empty(s:touch_me_not) || s:menuless == 2
-    " todo
+        if s:menuless && s:touch_me_first_time != 1
             let &pumheight = 1
             set completeopt=menu  " for direct insert
             let s:cursor_at_menuless = 0
