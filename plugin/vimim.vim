@@ -26,8 +26,9 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
 "  Usage: vim i vimimhelp ctrl+6 ctrl+6
 "    (1) [vim normal mode] gi
-"    (2) [vim insert mode] ctrl+6
-"    (3) [vim insert mode] ctrl+\
+"    (2) [vim normal mode] n (after /search)
+"    (3) [vim insert mode] ctrl+6
+"    (4) [vim insert mode] ctrl+\
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -275,9 +276,9 @@ function! s:vimim_egg_vimim()
     endif
     if !empty(s:vimim_cjk())
         let ciku  = database
-        if s:cjk.filename =~ "vimim.cjk.txt"
+        if s:cjk.filename =~ s:download.cjk
             let ciku .= s:vimim_chinese('4corner')
-        elseif s:cjk.filename =~ "vimim.cjkv.txt"
+        elseif s:cjk.filename =~ "cjkv"
             let ciku .= s:vimim_chinese('5strokes') . s:space
         endif
         call add(eggs, ciku . s:colon . s:cjk.filename)
@@ -3305,17 +3306,17 @@ function! s:vimim_get_from_datafile(keyboard)
     if !empty(s:english.line) || len(results) > 10
         return results
     endif
-    let more = len('http://code.google.com/p/vimim/issues/detail?id=121')/10
+    let more = len('http://code.google.com/p/vimim/issues/detail?id=121')
     if s:ui.im =~ 'pinyin'
         let extras = s:vimim_more_pinyin_datafile(a:keyboard,0)
         if len(extras)
             let results = s:vimim_make_pairs(oneline)
             call extend(results, extras)
         endif
-    elseif len(results) < more
+    elseif len(results) < more/10
         let results = []
         let s:show_extra_menu = 1
-        for i in range(more)
+        for i in range(more)/10
             let matched += i
             let oneline = get(lines, matched)
             let extras = s:vimim_make_pairs(oneline)
