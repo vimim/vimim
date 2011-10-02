@@ -696,7 +696,7 @@ function! s:vimim_chinese(key)
     if has_key(s:title, chinese)
         let twins = split(s:title[chinese])
         let chinese = get(twins,0)
-        if len(twins) > 1 && empty(s:vimim_plugin)
+        if len(twins) > 1 && s:vimim_map != 'gi,tab,search'
             let chinese = get(twins,1)
         endif
     endif
@@ -1479,8 +1479,6 @@ function! <SID>vimim_backslash()
     let bslash = '\\'
     if pumvisible()
         let bslash = '\<C-Y>\<C-R>=g:vimim_bracket('.1.')\<CR>'
-    elseif s:menuless
-        let bslash = '\<C-Left>\<Left>\<Delete>\<C-Right>'
     endif
     sil!exe 'sil!return "' . bslash . '"'
 endfunction
