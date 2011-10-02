@@ -1183,7 +1183,7 @@ function! s:vimim_onekey_menu_textwidth()
 endfunction
 
 function! s:vimim_onekey_menu_filter()
-    " use 1234567890/qwertyuiop as digital filter
+    " use 1234567890 (menuless) qwertyuiop (omni popup) as digital filter
     let results = s:vimim_cjk_filter_list()
     if empty(results) && !empty(len(s:hjkl_n))
         let s:hjkl_n = s:hjkl_n[:-2]
@@ -1331,14 +1331,19 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
         let down = repeat("\<Down>", n)
         let key = down . '\<C-Y>'
         let s:has_pumvisible = 1
-        if s:onekey && a:key =~ '\d'
+        if s:onekey && a:key =~ '\d' && empty(s:show_me_not)
             sil!call s:vimim_stop()
         else
             let key .= '\<C-R>=g:vimim()\<CR>'
             sil!call s:vimim_reset_after_insert()
         endif
-    elseif s:onekey && s:menuless && empty(s:show_me_not) && key =~ '\d'
-        let key = s:vimim_menuless_map(key)
+    elseif s:onekey && s:menuless && key =~ '\d'
+        if s:pattern_not_found || s:smart_enter
+            let s:smart_enter = 0
+            let s:pattern_not_found = 0
+        else
+            let key = s:vimim_menuless_map(key)
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
