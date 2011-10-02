@@ -60,7 +60,7 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call g:vimim_omni_color()
         :redir @i
-        let g:vimim_plugin_folder = hjkl
+        let g:vimim_plugin = hjkl
         let g:vimim_map = 'gi,tab,search'
     endif
 endfunction
@@ -443,7 +443,7 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_chinese_input_mode")
     call add(G, "g:vimim_ctrl_space_to_toggle")
     call add(G, "g:vimim_ctrl_h_to_toggle")
-    call add(G, "g:vimim_plugin_folder")
+    call add(G, "g:vimim_plugin")
     call add(G, "g:vimim_shuangpin")
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
@@ -457,8 +457,8 @@ function! s:vimim_initialize_global()
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
     endif
-    if isdirectory(s:vimim_plugin_folder)
-        let s:plugin = s:vimim_plugin_folder
+    if isdirectory(s:vimim_plugin)
+        let s:plugin = s:vimim_plugin
     endif
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
@@ -696,7 +696,7 @@ function! s:vimim_chinese(key)
     if has_key(s:title, chinese)
         let twins = split(s:title[chinese])
         let chinese = get(twins,0)
-        if len(twins) > 1 && empty(s:vimim_plugin_folder)
+        if len(twins) > 1 && empty(s:vimim_plugin)
             let chinese = get(twins,1)
         endif
     endif
