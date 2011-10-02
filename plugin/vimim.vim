@@ -377,7 +377,9 @@ function! s:vimim_game_hjkl(keyboard)
             endif
         endif
     endif
-    if !empty(results) && s:menuless < 2
+  " if !empty(results) && s:menuless < 2
+     " todo
+    if !empty(results)
         let s:touch_me_not = 1
         if s:hjkl_m % 4
             for i in range(s:hjkl_m%4)
@@ -1116,16 +1118,10 @@ function! s:vimim_cache()
         return []
     endif
     let results = []
-    if len(s:hjkl_n)
-        if s:touch_me_not && empty(s:menuless)
-            let results = s:vimim_onekey_menu_textwidth()
-        elseif len(s:popup_list) && !empty(s:vimim_cjk())
-            let results = s:vimim_onekey_menu_filter()
-        endif
-        return results
-    endif
     if s:touch_me_not
-        if s:hjkl_h
+        if len(s:hjkl_n)
+            let results = s:vimim_onekey_menu_textwidth()
+        elseif s:hjkl_h
             let s:hjkl_h = 0
             for line in s:match_list
                 let oneline = join(reverse(split(line,'\zs')),'')
@@ -1135,6 +1131,8 @@ function! s:vimim_cache()
             let s:hjkl_l = 0
             let results = reverse(copy(s:match_list))
         endif
+    elseif len(s:hjkl_n) && !empty(s:vimim_cjk())
+        let results = s:vimim_onekey_menu_filter()
     endif
     return results
 endfunction
@@ -4623,7 +4621,9 @@ function! s:vimim_popupmenu_list(match_list)
         call g:vimim_title()
         set completeopt=menuone  " for hjkl_n refresh
         let s:popup_list = popup_list
-        if s:menuless && empty(s:touch_me_not) || s:menuless == 2
+        if s:menuless
+    "   if s:menuless && empty(s:touch_me_not) || s:menuless == 2
+    " todo
             let &pumheight = 1
             set completeopt=menu  " for direct insert
             let s:cursor_at_menuless = 0
