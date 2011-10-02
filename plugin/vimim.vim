@@ -58,12 +58,10 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        let g:vimim_map = 'search,gi'
-        let g:vimim_tab_as_onekey = 1
-        let g:vimim_plugin_folder = hjkl
-        let g:vimim_cloud = 'google,sogou,baidu,qq'
         :call g:vimim_omni_color()
         :redir @i
+        let g:vimim_plugin_folder = hjkl
+        let g:vimim_map = 'gi,tab,search'
     endif
 endfunction
 
@@ -447,7 +445,6 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_ctrl_h_to_toggle")
     call add(G, "g:vimim_plugin_folder")
     call add(G, "g:vimim_shuangpin")
-    call add(G, "g:vimim_tab_as_onekey")
     call add(G, "g:vimim_toggle_list")
     call add(G, "g:vimim_mycloud")
     call add(G, "g:vimim_cloud")
@@ -469,6 +466,13 @@ function! s:vimim_initialize_global()
     let s:default_vimim_map = 'ctrl+6,ctrl+bslash,search,gi'
     if empty(s:vimim_map)
         let s:vimim_map = s:default_vimim_map
+    endif
+    let s:default_vimim_cloud = 'baidu,sogou,qq,google'
+    if empty(s:vimim_cloud)
+        let s:vimim_cloud = s:default_vimim_cloud
+        if s:vimim_map == 'gi,tab,search'
+            let s:vimim_cloud = 'google,sogou,baidu,qq'
+        endif
     endif
     let s:chinese_mode = 'onekey'
     let s:onekey = 0
@@ -3444,31 +3448,24 @@ let s:VimIM += [" ====  backend: cloud   ==== {{{"]
 " =================================================
 
 function! s:vimim_initialize_cloud()
-    let cloud_default = 'baidu,sogou,qq,google'
-    let cloud_defaults = split(cloud_default,',')
+    let s:http_executable = 0
+    let cloud_defaults = split(s:default_vimim_cloud,',')
     let s:cloud_default = get(cloud_defaults,0)
-    let s:cloud_defaults = copy(cloud_defaults)
     let s:cloud_keys = {}
     for cloud in cloud_defaults
         let s:cloud_keys[cloud] = 0
     endfor
-    if empty(s:vimim_cloud)
-        let s:vimim_cloud = cloud_default
-    else
-        let clouds = split(s:vimim_cloud,',')
-        for cloud in clouds
-            let cloud = get(split(cloud,'[.]'),0)
-            call remove(cloud_defaults, match(cloud_defaults,cloud))
-        endfor
-        let clouds += cloud_defaults
-        let s:vimim_cloud = join(clouds,',')
-        let default = get(split(get(clouds,0),'[.]'),0)
-        if match(cloud_default, default) > -1
-            let s:cloud_default = default
-        endif
+    let clouds = split(s:vimim_cloud,',')
+    for cloud in clouds
+        let cloud = get(split(cloud,'[.]'),0)
+        call remove(cloud_defaults, match(cloud_defaults,cloud))
+    endfor
+    let clouds += cloud_defaults
+    let s:vimim_cloud = join(clouds,',')
+    let default = get(split(get(clouds,0),'[.]'),0)
+    if match(s:default_vimim_cloud, default) > -1
+        let s:cloud_default = default
     endif
-    let s:mycloud = 0
-    let s:http_executable = 0
 endfunction
 
 function! s:vimim_scan_backend_cloud()
@@ -3810,7 +3807,7 @@ endfunction
 
 function! s:vimim_get_cloud_all(keyboard)
     let results = []
-    for cloud in s:cloud_defaults
+    for cloud in split(s:default_vimim_cloud,',')
         let start = localtime()
         let outputs = s:vimim_get_cloud(a:keyboard, cloud)
         if len(results) > 1
@@ -3839,6 +3836,7 @@ let s:VimIM += [" ====  backend: mycloud ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_backend_mycloud()
+    let s:mycloud = 0
     let s:mycloud_arg  = 0
     let s:mycloud_func = 0
     let s:mycloud_host = 0
@@ -3851,7 +3849,6 @@ function! s:vimim_scan_backend_mycloud()
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
     let mycloud = s:vimim_check_mycloud_availability()
     if empty(mycloud)
-        let s:mycloud = 0
         let s:backend.cloud = {}
     else
         let root = 'cloud'
@@ -4704,28 +4701,28 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
 function! s:vimim_plug_and_play()
-    if s:vimim_map =~ 'ctrl+6'
+    if s:vimim_map =~ 'ctrl+bslash'
         inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
         imap<silent><C-Bslash> <Plug>VimIM
         noremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
         inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
     endif
-    if s:vimim_map =~ 'ctrl+bslash'
+    if s:vimim_map =~ 'ctrl+6'
         inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
         imap<silent><C-^>     <Plug>VimimOneKey
         xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
-    if s:vimim_map =~ 'search' || s:vimim_map == 'gi'
-        noremap<silent> n :sil!call g:vimim_search_next()<CR>n
+    if s:vimim_map =~ 'tab'
+        inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
+        imap<silent><Tab>     <Plug>VimimOneTab
+        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_map =~ 'gi'
         inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
         nmap  gi             i<Plug>VimimOneAct
     endif
-    if s:vimim_tab_as_onekey && s:vimim_map != 'gi'
-        inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
-        imap<silent><Tab>     <Plug>VimimOneTab
-        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
+    if s:vimim_map =~ 'search' || s:vimim_map == 'gi'
+        noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
