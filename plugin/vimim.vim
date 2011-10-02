@@ -900,17 +900,6 @@ function! g:vimim_bracket(offset)
     return cursor
 endfunction
 
-function! <SID>vimim_esc()
-    let key = '\<Esc>'
-    if s:onekey
-        sil!call s:vimim_stop()
-    elseif pumvisible()
-        let key = s:vimim_onekey_esc()
-        sil!call s:vimim_reset_after_insert()
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 function! s:vimim_onekey_esc()
     let key = '\<C-E>'
     let column_start = s:start_column_before
@@ -920,18 +909,6 @@ function! s:vimim_onekey_esc()
         let key .= repeat("\<BS>", range)
     endif
     return key
-endfunction
-
-function! <SID>vimim_backslash()
-    " (1) [insert] disable omni window
-    " (2) [omni]   insert Chinese and remove Space before
-    let bslash = '\\'
-    if pumvisible()
-        let bslash = '\<C-Y>\<C-R>=g:vimim_bracket('.1.')\<CR>'
-    elseif s:menuless
-        let bslash = '\<C-Left>\<Left>\<Delete>\<C-Right>'
-    endif
-    sil!exe 'sil!return "' . bslash . '"'
 endfunction
 
 function! s:vimim_get_labeling(label)
@@ -1492,6 +1469,29 @@ function! <SID>vimim_backspace()
     sil!exe 'sil!return "' . backspace . '"'
 endfunction
 
+function! <SID>vimim_backslash()
+    " (1) [insert] disable omni window
+    " (2) [omni]   insert Chinese and remove Space before
+    let bslash = '\\'
+    if pumvisible()
+        let bslash = '\<C-Y>\<C-R>=g:vimim_bracket('.1.')\<CR>'
+    elseif s:menuless
+        let bslash = '\<C-Left>\<Left>\<Delete>\<C-Right>'
+    endif
+    sil!exe 'sil!return "' . bslash . '"'
+endfunction
+
+function! <SID>vimim_esc()
+    let key = '\<Esc>'
+    if s:onekey
+        sil!call s:vimim_stop()
+    elseif pumvisible()
+        let key = s:vimim_onekey_esc()
+        sil!call s:vimim_reset_after_insert()
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
@@ -1693,26 +1693,17 @@ endfunction
 
 function! <SID>vimim_onekey_hjkl_map(key)
     let hjkl = a:key
-    if !pumvisible()
-        return hjkl
-    endif
-    if hjkl ==# 'n'
-        call s:vimim_reset_after_insert()
-    elseif hjkl ==# 'x'
-        let hjkl = s:vimim_onekey_esc()
-    elseif hjkl ==# 'm'
-        let s:hjkl_m += 1
-    elseif hjkl ==# 'h'
-        let s:hjkl_h += 1
-    elseif hjkl ==# 'j'
-        let hjkl = '\<Down>'
-    elseif hjkl ==# 'k'
-        let hjkl = '\<Up>'
-    elseif hjkl ==# 'l'
-        let s:hjkl_l += 1
-    endif
-    if hjkl == a:key
-        let hjkl = g:vimim()
+    if pumvisible()
+            if hjkl ==# 'n' | call s:vimim_reset_after_insert()
+        elseif hjkl ==# 'x' | let hjkl = s:vimim_onekey_esc()
+        elseif hjkl ==# 'm' | let s:hjkl_m += 1
+        elseif hjkl ==# 'h' | let s:hjkl_h += 1
+        elseif hjkl ==# 'j' | let hjkl = '\<Down>'
+        elseif hjkl ==# 'k' | let hjkl = '\<Up>'
+        elseif hjkl ==# 'l' | let s:hjkl_l += 1 | endif
+        if hjkl == a:key
+            let hjkl = g:vimim()
+        endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
