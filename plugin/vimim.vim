@@ -85,7 +85,6 @@ function! s:vimim_start_session()
     let s:abcd = split("'abcdvfgsz",'\zs')
     let s:qwer = split("pqwertyuio",'\zs')
     let s:seamless_positions = []
-    let s:chinese_punctuation = s:vimim_chinese_punctuation % 2
     let   az_list = range(char2nr('a'), char2nr('z'))
     let   AZ_list = range(char2nr('A'), char2nr('Z'))
     let s:az_list = map(az_list, "nr2char(".'v:val'.")")
@@ -452,12 +451,15 @@ function! s:vimim_initialize_global()
     call add(G, "g:vimim_cloud")
     call s:vimim_set_global_default(G, 0)
     let G = []
-    call add(G, "g:vimim_chinese_punctuation")
     call add(G, "g:vimim_one_row_menu")
     call add(G, "g:vimim_custom_color")
     call s:vimim_set_global_default(G, 1)
     if empty(s:vimim_chinese_input_mode)
         let s:vimim_chinese_input_mode = 'dynamic'
+    endif
+    let s:chinese_punctuation = 1
+    if s:vimim_chinese_input_mode =~ 'no-punctuation'
+        let s:chinese_punctuation = 0
     endif
     if isdirectory(s:vimim_plugin)
         let s:plugin = s:vimim_plugin
@@ -532,7 +534,7 @@ function! s:vimim_set_special_property()
     for im in split('wu erbi yong nature boshiamy phonetic array30')
         if s:ui.im == im
             let s:ui.has_dot = 1  " has dot in datafile
-            let s:vimim_chinese_punctuation = -9
+            let s:vimim_chinese_input_mode .= ',no-punctuation'
             break
         endif
     endfor
@@ -815,10 +817,11 @@ endfunction
 
 function! s:vimim_statusline()
     let s:ui.statusline = s:vimim_get_title(0)
+    let input_mode  = get(split(s:vimim_chinese_input_mode,','),0)
     let punctuation = s:chinese_punctuation ? 'fullwidth' : 'halfwidth'
     let punctuation = s:vimim_chinese(punctuation)
     let statusline  = s:vimim_chinese('chinese')
-    let statusline .= s:vimim_chinese(s:vimim_chinese_input_mode)
+    let statusline .= s:vimim_chinese(input_mode)
     let statusline .= s:ui.statusline . punctuation
     let statusline .= s:space . "VimIM"
     return statusline
@@ -980,7 +983,7 @@ function! s:vimim_dictionary_punctuations()
     let s:punctuations['^'] = "……"
     let s:punctuations['_'] = "——"
     let s:evils = {}
-    if s:vimim_chinese_punctuation !~ 'latex'
+    if s:vimim_chinese_input_mode !~ 'latex'
         let s:evils['|'] = "、"
         let s:evils["'"] = "‘’"
         let s:evils['"'] = "“”"
@@ -1013,7 +1016,7 @@ endfunction
 
 function! s:vimim_punctuation_mapping()
     if s:chinese_punctuation
-    \&& s:vimim_chinese_punctuation !~ 'latex'
+    \&& s:vimim_chinese_input_mode !~ 'latex'
         inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
         inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
         exe 'inoremap <Bar> ' .
@@ -1631,7 +1634,7 @@ function! s:vimim_onekey_overall_map()
     if s:vimim_map == 'gi'
         return
     endif
-    if s:vimim_chinese_punctuation !~ 'latex'
+    if s:vimim_chinese_input_mode !~ 'latex'
         for _ in s:AZ_list
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps_map("'._.'")'
         endfor
@@ -1684,7 +1687,7 @@ let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 function! s:vimim_chinesemode_action()
     sil!call s:vimim_set_plugin_conflict()
     sil!call s:vimim_super_reset()
-    if s:vimim_chinese_punctuation > -1
+    if s:vimim_chinese_input_mode !~ 'no-punctuation'
         inoremap<expr><C-^> <SID>vimim_punctuation_toggle()
         call s:vimim_punctuation_mapping()
     endif
@@ -1717,7 +1720,7 @@ function! s:vimim_chinesemode_action()
         endif
     elseif s:chinese_mode =~ 'static'
         let map_list = s:Az_list
-        if s:vimim_chinese_punctuation =~ 'latex'
+        if s:vimim_chinese_input_mode =~ 'latex'
             let map_list = s:az_list
         endif
         for char in map_list
@@ -1735,7 +1738,10 @@ function! <SID>VimIMSwitch()
     if len(s:ui.frontends) < 2
         return <SID>ChineseMode()
     endif
-    let s:chinese_mode = s:vimim_chinese_input_mode
+    let s:chinese_mode = 'dynamic'
+    if s:vimim_chinese_input_mode =~ 'static'
+        let s:chinese_mode = 'static'
+    endif
     let custom_im_list = s:vimim_get_custom_im_list()
     let switch = s:im_toggle % len(custom_im_list)
     let s:im_toggle += 1
@@ -1779,7 +1785,10 @@ function! s:vimim_chinese_mode(switch)
             :redraw!
         endif
     else
-        let s:chinese_mode = s:vimim_chinese_input_mode
+        let s:chinese_mode = 'dynamic'
+        if s:vimim_chinese_input_mode =~ 'static'
+            let s:chinese_mode = 'static'
+        endif
         let s:ui.root = get(s:frontends,0)
         let s:ui.im = get(s:frontends,1)
         call s:vimim_set_statusline()
@@ -4323,7 +4332,7 @@ function! s:vimim_restore_imap()
         let keys += s:valid_keys
         let keys += ['<Bar>']
         if s:chinese_mode !~ 'dynamic'
-        \&& s:vimim_chinese_punctuation !~ 'latex'
+        \&& s:vimim_chinese_input_mode !~ 'latex'
             let keys += s:AZ_list
         endif
     endif
