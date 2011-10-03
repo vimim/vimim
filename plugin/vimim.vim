@@ -1357,8 +1357,7 @@ function! <SID>vimim_space()
     " (3) <Space> after popup menu           => insert Chinese
     " (4) <Space> after pattern not found    => <Space>
     let space = " "
-    if s:pattern_not_found || s:smart_enter
-        let s:smart_enter = 0
+    if s:pattern_not_found
         let s:pattern_not_found = 0
         return space
     endif
@@ -1494,6 +1493,7 @@ function! s:vimim_onekey_action(space)
     let space = a:space ? " " : ""
     let one_before = getline(".")[col(".")-2]
     if s:seamless_positions == getpos(".")
+        let s:smart_enter = 0
         return space  "  space is space after enter
     elseif empty(s:ui.has_dot)
         let onekey = s:vimim_onekey_dot_dot()
