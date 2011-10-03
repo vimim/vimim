@@ -52,8 +52,8 @@ elseif &compatible
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
 endif
-let b:vimim = 39340
 scriptencoding utf-8
+let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
@@ -2585,6 +2585,7 @@ function! s:vimim_set_shuangpin()
     if len(split(s:vimim_shuangpin)) == 6
     \|| s:vimim_cloud =~ 'shuangpin'
     \|| !empty(s:shuangpin_table)
+    \|| !empty(s:mycloud)
         return
     endif
     let chinese = ""
@@ -3801,7 +3802,6 @@ function! s:vimim_scan_backend_mycloud()
         let s:ui.im = im
         let s:ui.root = root
         let s:ui.frontends = [[s:ui.root, s:ui.im]]
-        let s:vimim_shuangpin = 0
         let s:vimim_cloud = -1
         let s:mycloud = mycloud
     endif
