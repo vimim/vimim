@@ -1478,8 +1478,9 @@ function! <SID>vimim_onekey(tab)
     " (2) <OneKey> in menuless mode => start MidasTouch popup
     " (3) <OneKey> in omni window   => start menuless, if input
     " (4) <OneKey> in omni window   => print out, if hjkl
-    let s:chinese_mode = 'onekey'
     let onekey = ""
+    let s:chinese_mode = 'onekey'
+    let one_cursor = getline(".")[col(".")-1]
     let one_before = getline(".")[col(".")-2]
     if s:onekey
         if pumvisible()
@@ -1502,14 +1503,14 @@ function! <SID>vimim_onekey(tab)
         let onekey = '\t'
     else
         sil!call s:vimim_super_reset()
-        let cursor = getline(".")[col(".")-1] =~ '\w' ? 1 : s:multibyte
+        let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
         let s:touch_me_first_time = a:tab == 2 ? -32911 : 0
         sil!call s:vimim_start()
         if s:menuless < 2
             let onekey = s:vimim_onekey_action(0)
-        elseif col("$")-col(".") && col("$")-col(".") < cursor+1
+        elseif col("$")-col(".") && col("$")-col(".") < one_cursor + 1
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
@@ -3540,24 +3541,19 @@ function! s:vimim_check_http_executable()
 endfunction
 
 function! s:vimim_get_cloud(keyboard, cloud)
-    let keyboard = a:keyboard
-    let cloud = a:cloud
-    if keyboard !~ s:valid_keyboard
-    \|| empty(cloud)
-    \|| match(s:vimim_cloud,cloud) < 0
+    if a:keyboard !~ s:valid_keyboard
+    \|| empty(a:cloud) || match(s:vimim_cloud, a:cloud) < 0
         return []
     endif
     let results = []
-    let get_cloud = "s:vimim_get_cloud_" . cloud . "(keyboard)"
+    let get_cloud = "s:vimim_get_cloud_" . a:cloud . "(a:keyboard)"
     try
         let results = eval(get_cloud)
     catch
-        call s:debug('alert', 'get_cloud='.cloud.'=', v:exception)
+        call s:debug('alert', 'get_cloud='. a:cloud.'=', v:exception)
     endtry
-    if !empty(results)
-        if s:keyboard !~ '\S\s\S'
-            let s:keyboard = keyboard
-        endif
+    if !empty(results) && s:keyboard !~ '\S\s\S'
+        let s:keyboard = a:keyboard
     endif
     return results
 endfunction
