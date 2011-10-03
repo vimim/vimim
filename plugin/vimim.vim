@@ -57,7 +57,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call g:vimim_omni_color()
         :redir @i
@@ -4513,6 +4513,8 @@ function! s:vimim_popupmenu_list(match_list)
             endfor
             let chinese = simplified_traditional
         endif
+        let label2 = s:vimim_get_labeling(label)
+        let labeling = color ? printf('%2s ',label2) : ""
         if empty(s:touch_me_not)
             let menu = ""
             let pairs = split(chinese)
@@ -4533,17 +4535,15 @@ function! s:vimim_popupmenu_list(match_list)
             if empty(s:mycloud)
                 let chinese .= empty(tail) ? '' : tail
             endif
-            let label2 = s:vimim_get_labeling(label)
-            let labeling = color ? printf('%2s ',label2) : ""
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
         endif
         let label_in_one_row = label . "."
         if s:menuless
             let label_in_one_row = ""
-            if empty(s:vimim_cjk()) && empty(s:touch_me_not)
+            if empty(s:vimim_cjk())
                 let label_in_one_row = label2
-                if label < 11
+                if label < 11   " 234567890 for menuless selection
                     let label_in_one_row = label2[:-2]
                 endif
             endif
