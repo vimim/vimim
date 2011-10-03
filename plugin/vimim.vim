@@ -57,7 +57,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call g:vimim_omni_color()
         :redir @i
@@ -2402,16 +2402,16 @@ function! s:vimim_get_english(keyboard)
     endif
     " [sql] select english from vimim.txt
     let grep = '^' . keyboard . '\s\+'
-    let matched = match(s:english.lines, grep)
+    let cursor = match(s:english.lines, grep)
     " [pinyin] cong for pinyin only and congr => congratuation
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
-    if matched < 0 && len(keyboard) > 3
+    if cursor < 0 && len(keyboard) > 3
         let grep = '^' . keyboard   " both haag and haagendazs
-        let matched = match(s:english.lines, grep)
+        let cursor = match(s:english.lines, grep)
     endif
     let oneline = ""
-    if matched > -1
-        let oneline = get(s:english.lines, matched)
+    if cursor > -1
+        let oneline = get(s:english.lines, cursor)
         if keyboard != get(split(oneline),0) " no surprise in menuless
             let pairs = split(oneline)       " haag 哈根达斯 haagendazs
             let oneline = join(pairs[1:] + pairs[:0])
@@ -2565,13 +2565,13 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
     let lines = s:backend[s:ui.root][s:ui.im].lines
     for candidate in candidates
         let pattern = '^' . candidate . '\>'
-        let matched = match(lines, pattern, 0)
-        if matched < 0
+        let cursor = match(lines, pattern, 0)
+        if cursor < 0
             continue
         elseif a:sentence
             return [candidate]
         endif
-        let oneline = get(lines, matched)
+        let oneline = get(lines, cursor)
         call extend(results, s:vimim_make_pairs(oneline))
     endfor
     return results
@@ -3217,8 +3217,8 @@ function! s:vimim_sentence_datafile(keyboard)
         return ""
     endif
     let pattern = '^' . keyboard . '\s'
-    let matched = match(lines, pattern)
-    if matched > -1
+    let cursor = match(lines, pattern)
+    if cursor > -1
         return keyboard
     endif
     let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
@@ -3230,14 +3230,14 @@ function! s:vimim_sentence_datafile(keyboard)
         let max -= 1
         let head = strpart(keyboard, 0, max)
         let pattern = '^' . head . '\s'
-        let matched = match(lines, pattern)
-        if matched < 0
+        let cursor = match(lines, pattern)
+        if cursor < 0
             continue
         else
             break
         endif
     endwhile
-    if matched < 0
+    if cursor < 0
         return ""
     endif
     return keyboard[0 : max-1]
@@ -3246,11 +3246,11 @@ endfunction
 function! s:vimim_get_from_datafile(keyboard)
     let lines = s:backend[s:ui.root][s:ui.im].lines
     let pattern = '^' . a:keyboard . '\s'
-    let matched = match(lines, pattern)
-    if matched < 0
+    let cursor = match(lines, pattern)
+    if cursor < 0
         return []
     endif
-    let oneline = get(lines, matched)
+    let oneline = get(lines, cursor)
     let results = split(oneline)[1:]
     if !empty(s:english.line) || len(results) > 10
         return results
@@ -3265,9 +3265,9 @@ function! s:vimim_get_from_datafile(keyboard)
     elseif len(results) < more/10
         let results = []
         let s:show_extra_menu = 1
-        for i in range(more)/10
-            let matched += i
-            let oneline = get(lines, matched)
+        for i in range(more/10)
+            let cursor += i
+            let oneline = get(lines, cursor)
             let extras = s:vimim_make_pairs(oneline)
             call extend(results, extras)
         endfor
