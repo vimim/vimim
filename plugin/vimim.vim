@@ -1117,21 +1117,19 @@ function! s:vimim_cache()
         return []
     endif
     let results = []
-    if s:touch_me_not
-        if len(s:hjkl_n)
-            let results = s:vimim_onekey_menu_textwidth()
-        elseif s:hjkl_h
-            let s:hjkl_h = 0
-            for line in s:match_list
-                let oneline = join(reverse(split(line,'\zs')),'')
-                call add(results, oneline)
-            endfor
-        elseif s:hjkl_l
-            let s:hjkl_l = 0
-            let results = reverse(copy(s:match_list))
-        endif
+    if s:hjkl_n > 90 - 1
+        let results = s:vimim_onekey_menu_textwidth()
     elseif len(s:hjkl_n) && !empty(s:vimim_cjk())
         let results = s:vimim_onekey_menu_filter()
+    elseif s:touch_me_not && s:hjkl_h
+        let s:hjkl_h = 0
+        for line in s:match_list
+            let oneline = join(reverse(split(line,'\zs')),'')
+            call add(results, oneline)
+        endfor
+    elseif s:touch_me_not && s:hjkl_l
+       let s:hjkl_l = 0
+       let results = reverse(copy(s:match_list))
     endif
     return results
 endfunction
@@ -1159,10 +1157,11 @@ function! s:vimim_onekey_menu_textwidth()
     let filter = 'substitute(' .'v:val'. ",' ','','g')"
     call map(lines, filter)
     let results = []
-    let n = (s:hjkl_n-1) * (8-s:multibyte) " 1*5 2*5 3*5 5*5 5*5 6*5 7*5
-    if s:hjkl_n > 8                        " o/9 for one row
-        return lines                       " q/1 for one column
-    elseif s:hjkl_n == 0                   " p/0 for print number
+    let hjkl_n = s:hjkl_n - 90
+    let n = (hjkl_n-1) * (8-s:multibyte) " 1*5 2*5 3*5 5*5 5*5 6*5 7*5
+    if hjkl_n > 8                        " o/9 for one row
+        return lines                     " q/1 for one column
+    elseif hjkl_n == 0                   " p/0 for print number
         for line in range(1, len(s:match_list))
             let label = printf('%2s ', line)
             let line = label . get(s:match_list, line-1)
@@ -1180,7 +1179,7 @@ function! s:vimim_onekey_menu_textwidth()
 endfunction
 
 function! s:vimim_onekey_menu_filter()
-    " use 1234567890 (menuless) qwertyuiop (omni popup) as digital filter
+    " use 1234567890 (menuless) and qwertyuiop (omni popup) as filter
     let results = s:vimim_cjk_filter_list()
     if empty(results) && !empty(len(s:hjkl_n))
         let s:hjkl_n = s:hjkl_n[:-2]
@@ -1382,8 +1381,8 @@ function! s:vimim_menuless_map(key)
             if a:key =~ '[02-9]' " 234567890 for menuless selection
                 let key = repeat('\<C-N>', cursor)
             endif
-        else               " 1234567890 for menuless 4corner filter
-            let s:hjkl_n = s:touch_me_not ? digit : s:hjkl_n . digit
+        elseif s:hjkl_n < 90     " 1234567890 for menuless 4corner filter
+            let s:hjkl_n .= digit
         endif
         call s:vimim_set_titlestring(cursor)
     else
@@ -1688,7 +1687,12 @@ function! <SID>vimim_onekey_qwer_map(key)
     let key = a:key
     if pumvisible()
         let digit = match(s:qwer, key)
-        let s:hjkl_n = s:touch_me_not ? digit : s:hjkl_n . digit
+        if s:touch_me_not
+            let s:hjkl_n = 90 + digit
+        endif
+        if s:hjkl_n < 90
+            let s:hjkl_n .= digit
+        endif
         let key = g:vimim()
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -4312,7 +4316,6 @@ function! s:vimim_reset_before_anything()
     let s:onekey = 0
     let s:menuless = 0
     let s:smart_enter = 0
-    let s:touch_me_first_time = 0
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
     let s:pattern_not_found = 0
@@ -4332,6 +4335,7 @@ function! s:vimim_reset_after_insert()
     let s:hjkl__ = 0    " toggle simplified/traditional
     let s:match_list = []
     let s:pageup_pagedown = 0
+    let s:touch_me_first_time = 0
 endfunction
 
 function! g:vimim()
@@ -4429,6 +4433,7 @@ else
     if empty(results)
         sil!call s:vimim_reset_before_omni()
     else
+        let s:touch_me_first_time = 1
         return s:vimim_popupmenu_list(results)
     endif
     " [initialization] early start, half done
