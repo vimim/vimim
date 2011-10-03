@@ -173,22 +173,11 @@ function! s:vimim_egg_vimimhelp()
     let default = ":let g:vimim_map = " . string(s:rc["g:vimim_map"])
     let http = "http://vimim.googlecode.com/svn/trunk/plugin/"
     let url = split(s:url)
-    call add(eggs, '默认热键：ctrl+6（Vim插入模式）点石成金')
-    call add(eggs, '默认热键：ctrl+\（Vim插入模式）中文输入')
-    call add(eggs, '默认热键：　n 　（Vim正常模式）无菜单中文搜索')
-    call add(eggs, '默认热键：　gi　（Vim正常模式）无菜单中文输入')
+    call add(eggs, '默认热键：ctrl+6 （Vim插入模式）点石成金')
+    call add(eggs, '默认热键：ctrl+\ （Vim插入模式）中文输入')
+    call add(eggs, '默认热键：　n 　 （Vim正常模式）无菜单中文搜索')
+    call add(eggs, '默认热键：　gi　 （Vim正常模式）无菜单中文输入')
     call add(eggs, '热键设置：' . default)
-    call add(eggs, '')
-    call add(eggs, "论坛邮箱：" . get(url,0))
-    call add(eggs, "官方网址：" . get(url,1))
-    call add(eggs, "最新程式：" . get(url,2))
-    call add(eggs, "最新主页：" . get(url,3))
-    call add(eggs, "错误报告：" . get(url,4))
-    call add(eggs, "新闻论坛：" . get(url,5))
-    call add(eggs, '')
-    call add(eggs, "海量詞庫：" . http . s:download.bsddb  )
-    call add(eggs, "英文詞庫：" . http . s:download.english)
-    call add(eggs, "四角號碼：" . http . s:download.cjk    )
     let vimimrc = copy(s:vimimdefaults)
     let index = match(vimimrc, 'g:vimim_toggle_list')
     let custom_im_list = s:vimim_get_custom_im_list()
@@ -197,8 +186,17 @@ function! s:vimim_egg_vimimhelp()
         let value = vimimrc[index][:-3]
         let vimimrc[index] = value . "'" . toggle . "'"
     endif
+    let eggs += [''] + sort(vimimrc + s:vimimrc) + ['']
+    call add(eggs, "海量詞庫：" . http . s:download.bsddb  )
+    call add(eggs, "英文詞庫：" . http . s:download.english)
+    call add(eggs, "四角號碼：" . http . s:download.cjk    )
     call add(eggs, '')
-    let eggs += sort(vimimrc + s:vimimrc)
+    call add(eggs, "官方网址：" . get(url,1))
+    call add(eggs, "最新程式：" . get(url,2))
+    call add(eggs, "最新主页：" . get(url,3))
+    call add(eggs, "错误报告：" . get(url,4))
+    call add(eggs, "新闻论坛：" . get(url,5))
+    call add(eggs, "论坛邮箱：" . get(url,0))
     return map(eggs, 'v:val . s:space')
 endfunction
 
@@ -300,10 +298,8 @@ function! s:vimim_egg_vimim()
         call add(eggs, network)
     endif
     let option = s:vimim_chinese('option') . s:colon . "vimimhelp "
-    if empty(s:vimimrc)
-        call add(eggs, option . "all defaults")
-    else
-        call add(eggs, option)
+    call add(eggs, option)
+    if !empty(s:vimimrc)
         for rc in sort(s:vimimrc)
             call add(eggs, s:space . s:space . s:colon . rc[2:])
         endfor
@@ -448,6 +444,9 @@ function! s:vimim_initialize_global()
     let s:chinese_punctuation = 1
     if s:vimim_chinese_input_mode =~ 'no-punctuation'
         let s:chinese_punctuation = 0
+    endif
+    if isdirectory(s:vimim_plugin)
+        let s:plugin = s:vimim_plugin
     endif
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
