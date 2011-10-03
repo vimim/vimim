@@ -63,6 +63,7 @@ function! s:vimim_initialize_debug()
         :redir @i
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'gi,tab,search'
+        let g:vimim_cloud = 'google,sogou,baidu,qq'
     endif
 endfunction
 
@@ -78,7 +79,6 @@ function! s:vimim_start_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
-    let s:shuangpin_all = 'abc ms plusplus purple flypy nature'
     let s:shuangpin_table = {}
     let s:shuangpin_chinese = {}
     let s:quanpin_table = {}
@@ -149,7 +149,7 @@ function! s:vimim_set_keycode()
     else
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
     endif
-    if !empty(s:vimim_shuangpin) && !empty(s:shuangpin_chinese)
+    if len(split(s:vimim_shuangpin)) != 6 && !empty(s:shuangpin_chinese)
         let keycode = s:shuangpin_chinese.keycode
     endif
     let i = 0
@@ -170,7 +170,7 @@ let s:VimIM += [" ====  easter eggs      ==== {{{"]
 
 function! s:vimim_egg_vimimhelp()
     let eggs = []
-    let default = ":let g:vimim_map = '" . s:default_vimim_map . "'"
+    let default = ":let g:vimim_map = " . string(s:rc["g:vimim_map"])
     let http = "http://vimim.googlecode.com/svn/trunk/plugin/"
     let url = split(s:url)
     call add(eggs, '默认热键：ctrl+6（Vim插入模式）点石成金')
@@ -189,6 +189,16 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "海量詞庫：" . http . s:download.bsddb  )
     call add(eggs, "英文詞庫：" . http . s:download.english)
     call add(eggs, "四角號碼：" . http . s:download.cjk    )
+    let vimimrc = copy(s:vimimdefaults)
+    let index = match(vimimrc, 'g:vimim_toggle_list')
+    let custom_im_list = s:vimim_get_custom_im_list()
+    if index && !empty(custom_im_list)
+        let toggle = join(custom_im_list,",")
+        let value = vimimrc[index][:-3]
+        let vimimrc[index] = value . "'" . toggle . "'"
+    endif
+    call add(eggs, '')
+    let eggs += sort(vimimrc + s:vimimrc)
     return map(eggs, 'v:val . s:space')
 endfunction
 
@@ -213,19 +223,6 @@ function! s:vimim_easter_chicken(keyboard)
         call s:debug('alert', 'egg=', a:keyboard, v:exception)
     endtry
     return []
-endfunction
-
-function! s:vimim_egg_vimimrc()
-    let vimimrc = copy(s:vimimdefaults)
-    let index = match(vimimrc, 'g:vimim_toggle_list')
-    let custom_im_list = s:vimim_get_custom_im_list()
-    if index && !empty(custom_im_list)
-        let toggle = join(custom_im_list,",")
-        let value = vimimrc[index][:-3]
-        let vimimrc[index] = value . "'" . toggle . "'"
-    endif
-    let vimimrc += s:vimimrc
-    return sort(vimimrc)
 endfunction
 
 function! s:vimim_egg_vimimvim()
@@ -302,7 +299,7 @@ function! s:vimim_egg_vimim()
         let network .= exe . s:http_executable
         call add(eggs, network)
     endif
-    let option = s:vimim_chinese('option') . s:colon . "vimimrc "
+    let option = s:vimim_chinese('option') . s:colon . "vimimhelp "
     if empty(s:vimimrc)
         call add(eggs, option . "all defaults")
     else
@@ -436,47 +433,24 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 " =================================================
 
 function! s:vimim_initialize_global()
-    let G = []
-    let s:vimimrc = []
-    let s:vimimdefaults = []
-    call add(G, "g:vimim_map")
-    call add(G, "g:vimim_debug")
-    call add(G, "g:vimim_chinese_input_mode")
-    call add(G, "g:vimim_ctrl_space_to_toggle")
-    call add(G, "g:vimim_ctrl_h_to_toggle")
-    call add(G, "g:vimim_plugin")
-    call add(G, "g:vimim_shuangpin")
-    call add(G, "g:vimim_toggle_list")
-    call add(G, "g:vimim_mycloud")
-    call add(G, "g:vimim_cloud")
-    call s:vimim_set_global_default(G, 0)
-    let G = []
-    call add(G, "g:vimim_one_row_menu")
-    call add(G, "g:vimim_custom_color")
-    call s:vimim_set_global_default(G, 1)
-    if empty(s:vimim_chinese_input_mode)
-        let s:vimim_chinese_input_mode = 'dynamic'
-    endif
+    let s:rc = {}
+    let s:rc["g:vimim_map"] = 'ctrl+6,ctrl+bslash,search,gi'
+    let s:rc["g:vimim_map_extra"] = 'available: ctrl+h or ctrl+space'
+    let s:rc["g:vimim_cloud"] = 'baidu,sogou,qq,google'
+    let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
+    let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
+    let s:rc["g:vimim_plugin"] = s:plugin
+    let s:rc["g:vimim_skin"] = 'one-row,color'
+    let s:rc["g:vimim_toggle_list"] = 0
+    let s:rc["g:vimim_mycloud"] = 0
+    let s:rc["g:vimim_debug"] = 0
+    call s:vimim_set_global_default()
     let s:chinese_punctuation = 1
     if s:vimim_chinese_input_mode =~ 'no-punctuation'
         let s:chinese_punctuation = 0
     endif
-    if isdirectory(s:vimim_plugin)
-        let s:plugin = s:vimim_plugin
-    endif
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
-    endif
-    let s:default_vimim_map = 'ctrl+6,ctrl+bslash,search,gi'
-    if empty(s:vimim_map)
-        let s:vimim_map = s:default_vimim_map
-    endif
-    let s:default_vimim_cloud = 'baidu,sogou,qq,google'
-    if empty(s:vimim_cloud)
-        let s:vimim_cloud = s:default_vimim_cloud
-        if s:vimim_map == 'gi,tab,search'
-            let s:vimim_cloud = 'google,sogou,baidu,qq'
-        endif
     endif
     let s:chinese_mode = 'onekey'
     let s:onekey = 0
@@ -488,29 +462,22 @@ function! s:vimim_initialize_global()
     let s:download.bsddb   = "vimim.gbk.bsddb"
 endfunction
 
-function! s:vimim_set_global_default(options, default)
-    for variable in a:options
-        let configuration = 0
-        let default = a:default
+function! s:vimim_set_global_default()
+    let s:vimimrc = []
+    let s:vimimdefaults = []
+    for variable in keys(s:rc)
+        let s_variable = substitute(copy(variable), "g:", "s:", '')
         if exists(variable)
-            let value = eval(variable)
-            if value != default || type(value) == type("")
-                let configuration = 1
-            endif
-            let default = string(value)
-        endif
-        let option = ':let ' . variable .' = '. default .' '
-        if configuration
-            call add(s:vimimrc, '  ' . option)
-        else
-            call add(s:vimimdefaults, '" ' . option)
-        endif
-        let s_variable = substitute(variable, "g:", "s:", '')
-        if exists(variable)
-            exe   'let  ' . s_variable .'='. variable
+            let value = string(eval(variable))
+            let vimimrc = ':let ' . variable .' = '. value .' '
+            call add(s:vimimrc, '  ' . vimimrc)
+            exe   'let  ' . s_variable .'='. value
             exe 'unlet! ' .   variable
         else
-            exe 'let '. s_variable .'='. a:default
+            let default = string(s:rc[variable])
+            let vimimrc = ':let ' . variable .' = '. default .' '
+            call add(s:vimimdefaults, '" ' . vimimrc)
+            exe 'let '. s_variable .'='. default
         endif
     endfor
 endfunction
@@ -717,10 +684,10 @@ endfunction
 function! s:vimim_skin(color)
     let color = a:color
     let &pumheight = 10
-    let menu_in_one_row = 0
-    if empty(s:onekey) && s:vimim_one_row_menu
+    let one_row_menu = 0
+    if empty(s:onekey) && s:vimim_skin =~ 'one-row'
         let color = 0
-        let menu_in_one_row = 1
+        let one_row_menu = 1
         let &pumheight = 5
     endif
     let s:pumheight = copy(&pumheight)
@@ -729,14 +696,14 @@ function! s:vimim_skin(color)
     elseif s:hjkl_l
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
     endif
-    if s:vimim_custom_color
+    if s:vimim_skin =~ 'color'
         call g:vimim_omni_color()
         if empty(color)
             highlight!      PmenuSel NONE
             highlight! link PmenuSel NONE
         endif
     endif
-    return menu_in_one_row
+    return one_row_menu
 endfunction
 
 function! s:vimim_set_statusline()
@@ -798,7 +765,7 @@ function! s:vimim_get_title(digit)
             let statusline .= s:space . s:vimim_chinese('wubi')
         elseif vimim_cloud =~ 'shuangpin' " qq.shuangpin.ms => ms
             let shuangpin = get(split(vimim_cloud,"[.]"),-1)
-            if match(split(s:shuangpin_all),shuangpin) > -1
+            if match(split(s:rc["g:vimim_shuangpin"]),shuangpin) > -1
                 let statusline .= s:space . s:vimim_chinese(shuangpin)
             endif
             if vimim_cloud !~ 'abc'
@@ -806,7 +773,7 @@ function! s:vimim_get_title(digit)
             endif
         endif
     endif
-    if !empty(s:vimim_shuangpin)
+    if len(split(s:vimim_shuangpin)) != 6
         let statusline = s:space . s:shuangpin_chinese.chinese
     endif
     if s:touch_me_not
@@ -2618,14 +2585,14 @@ let s:VimIM += [" ====  input: shuangpin ==== {{{"]
 " =================================================
 
 function! s:vimim_set_shuangpin()
-    if empty(s:vimim_shuangpin)
+    if len(split(s:vimim_shuangpin)) == 6
     \|| s:vimim_cloud =~ 'shuangpin'
     \|| !empty(s:shuangpin_table)
         return
     endif
     let chinese = ""
     let rules = s:vimim_shuangpin_generic()
-    for shuangpin in split(s:shuangpin_all)
+    for shuangpin in split(s:rc["g:vimim_shuangpin"])
         if s:vimim_shuangpin == shuangpin
             let rules = eval("s:vimim_shuangpin_" . shuangpin . "(rules)")
             let chinese = s:vimim_chinese(shuangpin)
@@ -3432,7 +3399,7 @@ let s:VimIM += [" ====  backend: cloud   ==== {{{"]
 
 function! s:vimim_initialize_cloud()
     let s:http_executable = 0
-    let cloud_defaults = split(s:default_vimim_cloud,',')
+    let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
     let s:cloud_default = get(cloud_defaults,0)
     let s:cloud_keys = {}
     for cloud in cloud_defaults
@@ -3446,7 +3413,7 @@ function! s:vimim_initialize_cloud()
     let clouds += cloud_defaults
     let s:vimim_cloud = join(clouds,',')
     let default = get(split(get(clouds,0),'[.]'),0)
-    if match(s:default_vimim_cloud, default) > -1
+    if match(s:rc["g:vimim_cloud"], default) > -1
         let s:cloud_default = default
     endif
 endfunction
@@ -3664,7 +3631,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     if vimim_cloud =~ 'shuangpin'
         let md = 2  " qq.shuangpin.ms => ms
         let shuangpin = get(split(vimim_cloud,"[.]"),-1)
-        let st = match(split(s:shuangpin_all),shuangpin)+1  " ms => 2
+        let st = match(split(s:rc["g:vimim_shuangpin"]),shuangpin)+1
         if st
             let input .= '&st=' . st
         endif
@@ -3785,7 +3752,7 @@ endfunction
 
 function! s:vimim_get_cloud_all(keyboard)
     let results = []
-    for cloud in split(s:default_vimim_cloud,',')
+    for cloud in split(s:rc["g:vimim_cloud"],',')
         let start = localtime()
         let outputs = s:vimim_get_cloud(a:keyboard, cloud)
         if len(results) > 1
@@ -4467,7 +4434,7 @@ else
         return s:vimim_popupmenu_list(results)
     endif
     " [shuangpin] support 6 major shuangpin
-    if !empty(s:vimim_shuangpin) && empty(s:has_pumvisible)
+    if len(split(s:vimim_shuangpin)) != 6 && empty(s:has_pumvisible)
         let keyboard = s:vimim_shuangpin_transform(keyboard)
         let s:keyboard = keyboard
     endif
@@ -4713,30 +4680,30 @@ function! s:vimim_plug_and_play()
 endfunction
 
 function! s:vimim_ctrl_h_ctrl_space()
-    if s:vimim_ctrl_h_to_toggle == 1
-        imap <C-H> <C-Bslash>
-    elseif s:vimim_ctrl_h_to_toggle == 2
-        imap <C-H> <C-X><C-Bslash>
-    elseif s:vimim_ctrl_h_to_toggle == 3
+    if s:vimim_map_extra =~ 'ctrl+h_as_ctrl+6'
         imap <C-H> <C-^>
+    elseif s:vimim_map_extra =~ 'ctrl+h_as_ctrl+bslash'
+        imap <C-H> <C-Bslash>
+    elseif s:vimim_map_extra =~ 'ctrl+h_to_clycle'
+        imap <C-H> <C-X><C-Bslash>
     endif
     if has("gui_running")
-        if s:vimim_ctrl_space_to_toggle == 1
+        if s:vimim_map_extra =~ 'ctrl+space_as_ctrl+6'
+            imap <C-Space> <C-^>
+        elseif s:vimim_map_extra =~ 'ctrl+space_as_ctrl+bslash'
             map  <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
-        elseif s:vimim_ctrl_space_to_toggle == 2
+        elseif s:vimim_map_extra =~ 'ctrl+space_to_clycle'
             imap <C-Space> <C-X><C-Bslash>
-        elseif s:vimim_ctrl_space_to_toggle == 3
-            imap <C-Space> <C-^>
         endif
     elseif has("win32unix")
-        if s:vimim_ctrl_space_to_toggle == 1
+        if s:vimim_map_extra =~ 'ctrl+space_as_ctrl+6'
+            imap <C-@> <C-^>
+        elseif s:vimim_map_extra =~ 'ctrl+space_as_ctrl+bslash'
             map  <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
-        elseif s:vimim_ctrl_space_to_toggle == 2
+        elseif s:vimim_map_extra =~ 'ctrl+space_to_clycle'
             imap <C-@> <C-X><C-Bslash>
-        elseif s:vimim_ctrl_space_to_toggle == 3
-            imap <C-@> <C-^>
         endif
     endif
 endfunction
