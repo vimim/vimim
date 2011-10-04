@@ -62,8 +62,8 @@ function! s:vimim_initialize_debug()
         :call g:vimim_omni_color()
         :redir @i
         let g:vimim_plugin = hjkl
-        let g:vimim_map = 'gi,tab,search'
         let g:vimim_cloud = 'google,sogou,baidu,qq'
+        let g:vimim_map = 'gi,tab,search'
     endif
 endfunction
 
@@ -810,7 +810,7 @@ function! g:vimim_menu_search_on()
     let row_end = line(".")
     let delete_chars = ""
     if repeat_times && row_end == row_start
-        let delete_chars = repeat("\<BS>", repeat_times)
+        let delete_chars = repeat("\<Left>\<Delete>", repeat_times)
     endif
     let slash = delete_chars . "\<Esc>"
     sil!call s:vimim_stop()
@@ -852,7 +852,7 @@ function! s:vimim_square_bracket(key)
 endfunction
 
 function! g:vimim_bracket(offset)
-    let column_end = col(".")-1
+    let column_end = col(".") - 1
     let column_start = s:start_column_before
     let range = column_end - column_start
     let repeat_times = range / s:multibyte
@@ -864,9 +864,9 @@ function! g:vimim_bracket(offset)
         if a:offset  " omni bslash for seamless
             let left = repeat("\<Left>", repeat_times-1)
             let right = repeat("\<Right>", repeat_times-1)
-            let cursor = left . "\<BS>" . right
+            let cursor = left . "\<Left>\<Delete>" . right
         else
-            let cursor = repeat("\<BS>", repeat_times)
+            let cursor = repeat("\<Left>\<Delete>", repeat_times)
         endif
     endif
     if repeat_times < 1
@@ -881,7 +881,7 @@ function! s:vimim_onekey_esc()
     let column_end = col(".") - 1
     let range = column_end - column_start
     if range
-        let key .= repeat("\<BS>", range)
+        let key .= repeat("\<Left>\<Delete>", range)
     endif
     return key
 endfunction
@@ -918,36 +918,16 @@ let s:VimIM += [" ====  punctuations     ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_punctuations()
-    let s:space = "　"
-    let s:colon = "："
-    let s:left  = "【"
-    let s:right = "】"
     let s:punctuations = {}
-    let s:punctuations[':'] = s:colon
-    let s:punctuations['['] = s:left
-    let s:punctuations[']'] = s:right
-    let s:punctuations['{'] = "〖"
-    let s:punctuations['}'] = "〗"
-    let s:punctuations['('] = "（"
-    let s:punctuations[')'] = "）"
-    let s:punctuations['<'] = "《"
-    let s:punctuations['>'] = "》"
-    let s:punctuations['#'] = "＃"
-    let s:punctuations['&'] = "＆"
-    let s:punctuations['%'] = "％"
-    let s:punctuations['$'] = "￥"
-    let s:punctuations['!'] = "！"
-    let s:punctuations['~'] = "～"
-    let s:punctuations['+'] = "＋"
-    let s:punctuations['-'] = "－"
-    let s:punctuations['='] = "＝"
-    let s:punctuations[';'] = "；"
-    let s:punctuations[','] = "，"
-    let s:punctuations['.'] = "。"
-    let s:punctuations['?'] = "？"
-    let s:punctuations['*'] = "﹡"
     let s:punctuations['^'] = "……"
     let s:punctuations['_'] = "——"
+    let single = '{ } ( ) < > [ ] : # & % $ ! ~ + - = ; , . ? * '
+    let double = '〖〗（）《》【】：＃＆％￥！～＋－＝；，。？﹡'
+    let singles = split(single)
+    let doubles = split(double, '\zs')
+    for i in range(len(singles))
+        let s:punctuations[get(singles,i)] = get(doubles,i)
+    endfor
     let s:evils = {}
     if s:vimim_chinese_input_mode !~ 'latex'
         let s:evils['|'] = "、"
@@ -956,6 +936,10 @@ function! s:vimim_dictionary_punctuations()
     endif
     let s:evils_all = copy(s:punctuations)
     call extend(s:evils_all, s:evils)
+    let s:colon = s:punctuations[':']
+    let s:left  = s:punctuations['[']
+    let s:right = s:punctuations[']']
+    let s:space = "　"
 endfunction
 
 function! <SID>vimim_page_map(key)
@@ -976,6 +960,8 @@ function! <SID>vimim_page_map(key)
                 let key = g:vimim()
             endif
         endif
+    elseif empty(s:onekey) && s:chinese_punctuation && key =~ "[][=-]"
+        let key = <SID>vimim_chinese_punctuation_map(key)
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1247,7 +1233,7 @@ function! s:vimim_map_omni_page_label()
         silent!exe 'inoremap <silent> <expr> '  ._.
         \ ' <SID>vimim_abcdvfgsz_1234567890_map("'._.'")'
     endfor
-    let common_punctuation = "[]=-"
+    let common_punctuation = "][=-"
     if s:vimim_map == 'gi'
         let common_punctuation = ""
     elseif s:onekey
@@ -1576,7 +1562,7 @@ function! s:vimim_onekey_evils()
         elseif one_before == '"'
             let bs = <SID>vimim_get_quote(2)
         endif
-        let onekey = "\<BS>" . bs
+        let onekey = "\<Left>\<Delete>" . bs
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
