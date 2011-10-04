@@ -198,18 +198,10 @@ function! s:vimim_egg_vimimhelp()
     let url = split(s:url)
     call add(eggs, '默认热键：ctrl+6 （Vim插入模式）点石成金')
     call add(eggs, '默认热键：ctrl+\ （Vim插入模式）中文输入')
-    call add(eggs, '默认热键：　n 　 （Vim正常模式）无菜单中文搜索')
-    call add(eggs, '默认热键：　gi　 （Vim正常模式）无菜单中文输入')
+    call add(eggs, '默认热键：　n 　 （Vim正常模式）无菜单窗中文搜索')
+    call add(eggs, '默认热键：　gi　 （Vim正常模式）无菜单窗中文输入')
     call add(eggs, '热键设置：' . default)
-    let vimimrc = copy(s:vimimdefaults)
-    let index = match(vimimrc, 'g:vimim_toggle_list')
-    let custom_im_list = s:vimim_get_custom_im_list()
-    if index && !empty(custom_im_list)
-        let toggle = join(custom_im_list,",")
-        let value = vimimrc[index][:-3]
-        let vimimrc[index] = value . "'" . toggle . "'"
-    endif
-    let eggs += [''] + sort(vimimrc + s:vimimrc) + ['']
+    let eggs += [''] + s:vimim_egg_vimimrc() + ['']
     call add(eggs, "海量詞庫：" . http . s:download.bsddb  )
     call add(eggs, "英文詞庫：" . http . s:download.english)
     call add(eggs, "四角號碼：" . http . s:download.cjk    )
@@ -221,6 +213,19 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "新闻论坛：" . get(url,5))
     call add(eggs, "论坛邮箱：" . get(url,0))
     return map(eggs, 'v:val . s:space')
+endfunction
+
+function! s:vimim_egg_vimimrc()
+    let vimimrc = copy(s:vimimdefaults)
+    let index = match(vimimrc, 'g:vimim_toggle_list')
+    let custom_im_list = s:vimim_get_custom_im_list()
+    if index && !empty(custom_im_list)
+        let toggle = join(custom_im_list,",")
+        let value = vimimrc[index][:-3]
+        let vimimrc[index] = value . "'" . toggle . "'"
+    endif
+    let vimimrc += s:vimimrc
+    return sort(vimimrc)
 endfunction
 
 function! s:vimim_egg_vim()
@@ -452,7 +457,7 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 function! s:vimim_initialize_global()
     let s:rc = {}
     let s:rc["g:vimim_map"] = 'ctrl+6,ctrl+bslash,search,gi'
-    let s:rc["g:vimim_map_extra"] = 'available: ctrl+h or ctrl+space'
+    let s:rc["g:vimim_map_extra"] = 'ctrl+h or ctrl+space'
     let s:rc["g:vimim_cloud"] = 'baidu,sogou,qq,google'
     let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
     let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
