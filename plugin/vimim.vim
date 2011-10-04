@@ -1115,10 +1115,14 @@ endfunction
 
 function! s:vimim_onekey_menu_filter()
     " use 1234567890 (menuless) and qwertyuiop (omni popup) as filter
-    let results = s:vimim_cjk_filter_list()
-    if empty(results) && !empty(len(s:hjkl_n))
-        let s:hjkl_n = s:hjkl_n[:-2]
-        let results = s:vimim_cjk_filter_list()
+    let results = s:vimim_cjk_filter_list(s:hjkl_n)
+    if empty(results) && len(s:hjkl_n) > 1
+        if len(s:hjkl_n) > 2
+            let s:hjkl_n = ""
+            return []
+        else
+            let results = s:vimim_cjk_filter_list(s:hjkl_n[:-2])
+        endif
     endif
     if s:menuless && s:keyboard =~ "'"
         let s:keyboard = get(split(s:keyboard),1)
@@ -1126,11 +1130,11 @@ function! s:vimim_onekey_menu_filter()
     return results
 endfunction
 
-function! s:vimim_cjk_filter_list()
+function! s:vimim_cjk_filter_list(hjkl_n)
     let i = 0
     let foods = []
     for items in s:popup_list
-        if !empty(s:vimim_cjk_digit_filter(items.word))
+        if !empty(s:vimim_cjk_digit_filter(items.word,a:hjkl_n))
             call add(foods, i)
         endif
         let i += 1
@@ -1146,12 +1150,12 @@ function! s:vimim_cjk_filter_list()
     return results
 endfunction
 
-function! s:vimim_cjk_digit_filter(chinese)
+function! s:vimim_cjk_digit_filter(chinese, hjkl_n)
     " smart digital filter: 马力 7712 4002
     "   (1)   ma<C-6>       马   => filter with   7712
     "   (2) mali<C-6>       马力 => filter with 7 4002
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
-    if empty(len(s:hjkl_n)) || empty(chinese)
+    if empty(len(a:hjkl_n)) || empty(chinese)
         return 0
     endif
     let digit_head = ""
@@ -1170,7 +1174,7 @@ function! s:vimim_cjk_digit_filter(chinese)
         endif
     endfor
     let number = digit_head . digit_tail
-    let pattern = "^" . s:hjkl_n
+    let pattern = "^" . a:hjkl_n
     if match(number, pattern) < 0
         return 0
     endif
@@ -3260,17 +3264,17 @@ function! s:vimim_get_from_datafile(keyboard)
     if !empty(s:english.line) || len(results) > 10
         return results
     endif
-    let more = len('http://code.google.com/p/vimim/issues/detail?id=121')
+    let more = 'http://code.google.com/p/vimim/issues/detail?id=121'
     if s:ui.im =~ 'pinyin'
         let extras = s:vimim_more_pinyin_datafile(a:keyboard,0)
         if len(extras)
             let results = s:vimim_make_pairs(oneline)
             call extend(results, extras)
         endif
-    elseif len(results) < more/10
+    elseif len(results) < len(more/10)
         let results = []
         let s:show_extra_menu = 1
-        for i in range(more/10)
+        for i in range(len(more/10))
             let cursor += i
             let oneline = get(lines, cursor)
             let extras = s:vimim_make_pairs(oneline)
