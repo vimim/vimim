@@ -59,8 +59,12 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        :call g:vimim_omni_color()
-        :redir @+>>
+        if has("gui_running") && has("win32")
+            :redir @+>>
+        else
+            :redir @i
+        endif
+        call g:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_map = 'gi,tab,search'
