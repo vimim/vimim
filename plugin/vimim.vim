@@ -1340,9 +1340,9 @@ function! s:vimim_menuless_map(key)
 endfunction
 
 function! s:vimim_set_titlestring(cursor)
-    let hightlight = s:left . '\|' . s:right . '\|' . "[a-z']" 
+    let hightlight = s:left . '\|' . s:right
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
-    let words = split(titlestring)[1:]
+    let words = split(substitute(titlestring,"'",'','g'))[1:]
     let cursor = s:cursor_at_menuless + a:cursor
     let hightlight = get(words, cursor)
     let title = ""
@@ -3114,7 +3114,8 @@ function! s:vimim_sentence_datafile(keyboard)
     if empty(lines)
         return ""
     endif
-    let pattern = '^' . keyboard . '\s'
+    let fuzzy = s:ui.im =~ 'pinyin' ? '\s' : ""
+    let pattern = '^' . keyboard . fuzzy
     let cursor = match(lines, pattern)
     if cursor > -1
         return keyboard
@@ -3143,7 +3144,8 @@ endfunction
 
 function! s:vimim_get_from_datafile(keyboard)
     let lines = s:backend[s:ui.root][s:ui.im].lines
-    let pattern = '^' . a:keyboard . '\s'
+    let fuzzy = s:ui.im =~ 'pinyin' ? '\s' : ""
+    let pattern = '^' . a:keyboard . fuzzy
     let cursor = match(lines, pattern)
     if cursor < 0
         return []
@@ -3153,17 +3155,17 @@ function! s:vimim_get_from_datafile(keyboard)
     if !empty(s:english.line) || len(results) > 10
         return results
     endif
-    let more = 'http://code.google.com/p/vimim/issues/detail?id=121'
     if s:ui.im =~ 'pinyin'
         let extras = s:vimim_more_pinyin_datafile(a:keyboard,0)
         if len(extras)
             let results = s:vimim_make_pairs(oneline)
             call extend(results, extras)
         endif
-    elseif len(results) < len(more/10)
+    elseif len(results) < 5  " get more if less
+        "  http://code.google.com/p/vimim/issues/detail?id=121
         let results = []
         let s:show_extra_menu = 1
-        for i in range(len(more/10))
+        for i in range(5)
             let cursor += i
             let oneline = get(lines, cursor)
             let extras = s:vimim_make_pairs(oneline)
@@ -4370,7 +4372,9 @@ function! s:vimim_popupmenu_list(match_list)
         return []
     else
         let s:match_list = lines
-        if len(head) == 1 && !has_key(s:cjk.one, head)
+        if len(head) == 1 
+        \&& !empty(s:vimim_cjk())
+        \&& !has_key(s:cjk.one, head)
             let s:cjk.one[head] = lines
         endif
     endif
