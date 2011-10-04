@@ -70,7 +70,6 @@ endfunction
 function! s:vimim_debug(...)
     " [.vimrc] :redir @+>>
     " [client] :sil!call s:vimim_debug(s:vimim_egg_vimim())
-    " [client]                   Debug s:vimim_egg_vimim()
     sil!echo "\n::::::::::::::::::::::::"
     if len(a:000) > 1
         sil!echo join(a:000, " :: ")
@@ -4185,26 +4184,6 @@ function! s:vimim_reset_after_insert()
     let s:pageup_pagedown = 0
 endfunction
 
-function! g:vimim()
-    let key = ""
-    if empty(s:pageup_pagedown)
-        let s:keyboard = ""
-    endif
-    let one_before = getline(".")[col(".")-2]
-    if one_before =~# s:valid_keyboard
-        let key = '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>'
-    else
-        let s:has_pumvisible = 0
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! g:vimim_omni()
-    let key = pumvisible() ? '\<C-P>\<Down>' : ""
-    let s:smart_enter = 0  " s:menuless: gi ma enter li space 2
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 function! s:vimim_restore_imap()
     let keys = range(10) + ['<Esc>','<BS>','<Space>','<CR>','<Bslash>']
     if s:vimim_map != 'gi'
@@ -4560,38 +4539,29 @@ function! s:vimim_embedded_backend_engine(keyboard)
     return results
 endfunction
 
+function! g:vimim_omni()
+    let key = pumvisible() ? '\<C-P>\<Down>' : ""
+    let s:smart_enter = 0  " s:menuless: gi ma enter li space 2
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! g:vimim()
+    let key = ""
+    if empty(s:pageup_pagedown)
+        let s:keyboard = ""
+    endif
+    let one_before = getline(".")[col(".")-2]
+    if one_before =~# s:valid_keyboard
+        let key = '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>'
+    else
+        let s:has_pumvisible = 0
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
-
-function! s:vimim_plug_and_play()
-    if s:vimim_map =~ 'ctrl+bslash'
-        inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
-        imap<silent><C-Bslash> <Plug>VimIM
-        noremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
-        inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
-    endif
-    if s:vimim_map =~ 'ctrl+6'
-        inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
-        imap<silent><C-^>     <Plug>VimimOneKey
-        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
-    endif
-    if s:vimim_map =~ 'tab'
-        inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
-        imap<silent><Tab>     <Plug>VimimOneTab
-        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
-    endif
-    if s:vimim_map =~ 'gi'
-        inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
-        nmap  gi             i<Plug>VimimOneAct
-    endif
-    if s:vimim_map =~ 'search' || s:vimim_map == 'gi'
-        noremap<silent> n :sil!call g:vimim_search_next()<CR>n
-    endif
-    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
-    :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
-    :com! -nargs=* Debug :sil!call s:vimim_debug(<args>)
-endfunction
 
 function! s:vimim_ctrl_h_ctrl_space()
     if s:vimim_map_extra =~ 'ctrl+h_as_ctrl+6'
@@ -4620,6 +4590,35 @@ function! s:vimim_ctrl_h_ctrl_space()
             imap <C-@> <C-X><C-Bslash>
         endif
     endif
+endfunction
+
+function! s:vimim_plug_and_play()
+    if s:vimim_map =~ 'ctrl+bslash'
+        inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
+        imap<silent><C-Bslash> <Plug>VimIM
+        noremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
+        inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
+    endif
+    if s:vimim_map =~ 'ctrl+6'
+        inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
+        imap<silent><C-^>     <Plug>VimimOneKey
+        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
+    endif
+    if s:vimim_map =~ 'tab'
+        inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
+        imap<silent><Tab>     <Plug>VimimOneTab
+        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
+    endif
+    if s:vimim_map =~ 'gi'
+        inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
+        nmap  gi             i<Plug>VimimOneAct
+    endif
+    if s:vimim_map =~ 'search' || s:vimim_map == 'gi'
+        noremap<silent> n :sil!call g:vimim_search_next()<CR>n
+    endif
+    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
+    :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
+    :com! -nargs=* Debug :sil!call s:vimim_debug(<args>)
 endfunction
 
 sil!call s:vimim_initialize_debug()
