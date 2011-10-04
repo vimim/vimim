@@ -343,10 +343,10 @@ function! s:vimim_get_head_without_quote(keyboard)
         let keyboard = substitute(keyboard, "'", "", 'g')
         let keyboard = join(split(keyboard,'\zs'), "'")
     endif
-    if keyboard[-2:] == "''"     " [local] two tail quotes to close cloud
+    if keyboard[-2:] == "''"    " [local] two tail quotes to close cloud
         let s:onekey = 1
         let keyboard = keyboard[:-3]
-    elseif keyboard[-1:] == "'"  " [cloud] one tail quote to control cloud
+    elseif keyboard[-1:] == "'" " [cloud] one tail quote to control cloud
         call s:vimim_last_quote()
         let keyboard = keyboard[:-2]
     elseif keyboard =~ "'"
@@ -881,8 +881,8 @@ function! g:vimim_bracket(offset)
     let cursor = ""
     if repeat_times && row_end == row_start
         if a:offset  " omni bslash for seamless
-            let left = repeat("\<Left>", repeat_times-1)
-            let right = repeat("\<Right>", repeat_times-1)
+            let right  = repeat("\<Right>", repeat_times-1)
+            let left   = repeat("\<Left>",  repeat_times-1)
             let cursor = left . "\<Left>\<Delete>" . right
         else
             let cursor = repeat("\<Left>\<Delete>", repeat_times)
@@ -1121,7 +1121,8 @@ function! s:vimim_pageup_pagedown()
 endfunction
 
 function! s:vimim_onekey_menu_filter()
-    " use 1234567890 (menuless) and qwertyuiop (omni popup) as filter
+    " use 1234567890 as filter for menuless
+    " use qwertyuiop as filter for omni popup
     let results = s:vimim_cjk_filter_list(s:hjkl_n)
     if empty(results) && len(s:hjkl_n) > 1
         if len(s:hjkl_n) > 2
@@ -1327,7 +1328,7 @@ function! s:vimim_menuless_map(key)
             if a:key =~ '[02-9]' " 234567890 for menuless selection
                 let key = repeat('\<C-N>', cursor)
             endif
-        else                     " 1234567890 for menuless 4corner filter
+        else                     " 1234567890 for menuless filter
             let s:hjkl_n .= digit
         endif
         call s:vimim_set_titlestring(cursor)
@@ -1387,7 +1388,6 @@ endfunction
 function! <SID>vimim_enter()
     " (1) single <Enter> after English => seamless
     " (2) otherwise, or double <Enter> => <Enter>
-    " (3) [menuless]    double <Enter> => <Space>
     let key = ""
     let one_before = getline(".")[col(".")-2]
     if pumvisible()
@@ -1571,7 +1571,7 @@ function! s:vimim_onekey_evils()
     if has_key(s:evils_all, one_before)
         for char in keys(s:evils_all)
             if two_before ==# char || two_before =~# '\u'
-                return " " " no transfer if punctuation after punctuation
+                return " " " no transfer if punctuation punctuation
             endif
         endfor
         " transfer English punctuation to Chinese punctuation
@@ -1676,20 +1676,15 @@ function! s:vimim_chinesemode_action()
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
         if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
-            " dynamic auto trigger for wubi
             for char in s:az_list
                 sil!exe 'inoremap <silent> ' . char .
                 \ ' <C-R>=g:vimim_wubi()<CR>'
                 \ . char . '<C-R>=g:vimim()<CR>'
             endfor
-        else
-            " dynamic alphabet trigger for all
-            let not_used_valid_keys = "[0-9']"
-            if s:ui.has_dot == 1
-                let not_used_valid_keys = "[0-9]"
-            endif
+        else    " dynamic alphabet trigger for all but wubi
+            let not_used_keys = s:ui.has_dot == 1 ? "[0-9]" : "[0-9']"
             for char in s:valid_keys
-                if char !~# not_used_valid_keys
+                if char !~# not_used_keys
                     sil!exe 'inoremap <silent> ' . char .
                     \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
                     \ . char . '<C-R>=g:vimim()<CR>'
@@ -2232,7 +2227,7 @@ function! s:vimim_cjk_match(keyboard)
                 let digit = substitute(keyboard,'\a','','g')
             endif
             if !empty(digit)
-                let stroke5 = '\d\d\d\d\s'     " five strokes => li12345
+                let stroke5 = '\d\d\d\d\s'  " five strokes => li12345
                 let space = '\d\{' . string(4-len(digit)) . '}'
                 let space = len(digit)==4 ? "" : space
                 let dddd = '\s' . digit . space . '\s'
@@ -2410,8 +2405,8 @@ function! s:vimim_get_english(keyboard)
     let oneline = ""
     if cursor > -1
         let oneline = get(s:english.lines, cursor)
-        if keyboard != get(split(oneline),0) " no surprise in menuless
-            let pairs = split(oneline)       " haag 哈根达斯 haagendazs
+        if keyboard != get(split(oneline),0) " no surprise if menuless
+            let pairs = split(oneline)       " haag haagendazs
             let oneline = join(pairs[1:] + pairs[:0])
             let oneline = keyboard . " " . oneline
         endif
@@ -2647,50 +2642,35 @@ endfunction
 "-----------------------------------
 function! s:vimim_get_pinyin_table()
 "-----------------------------------
-" List of all valid pinyin.  Note: Don't change this function!
-return [
-\"'a", "'ai", "'an", "'ang", "'ao", 'ba', 'bai', 'ban', 'bang', 'bao',
-\'bei', 'ben', 'beng', 'bi', 'bian', 'biao', 'bie', 'bin', 'bing', 'bo',
-\'bu', 'ca', 'cai', 'can', 'cang', 'cao', 'ce', 'cen', 'ceng', 'cha',
-\'chai', 'chan', 'chang', 'chao', 'che', 'chen', 'cheng', 'chi', 'chong',
-\'chou', 'chu', 'chua', 'chuai', 'chuan', 'chuang', 'chui', 'chun', 'chuo',
-\'ci', 'cong', 'cou', 'cu', 'cuan', 'cui', 'cun', 'cuo', 'da', 'dai',
-\'dan', 'dang', 'dao', 'de', 'dei', 'deng', 'di', 'dia', 'dian', 'diao',
-\'die', 'ding', 'diu', 'dong', 'dou', 'du', 'duan', 'dui', 'dun', 'duo',
-\"'e", "'ei", "'en", "'er", 'fa', 'fan', 'fang', 'fe', 'fei', 'fen',
-\'feng', 'fiao', 'fo', 'fou', 'fu', 'ga', 'gai', 'gan', 'gang', 'gao',
-\'ge', 'gei', 'gen', 'geng', 'gong', 'gou', 'gu', 'gua', 'guai', 'guan',
-\'guang', 'gui', 'gun', 'guo', 'ha', 'hai', 'han', 'hang', 'hao', 'he',
-\'hei', 'hen', 'heng', 'hong', 'hou', 'hu', 'hua', 'huai', 'huan', 'huang',
-\'hui', 'hun', 'huo', "'i", 'ji', 'jia', 'jian', 'jiang', 'jiao', 'jie',
-\'jin', 'jing', 'jiong', 'jiu', 'ju', 'juan', 'jue', 'jun', 'ka', 'kai',
-\'kan', 'kang', 'kao', 'ke', 'ken', 'keng', 'kong', 'kou', 'ku', 'kua',
-\'kuai', 'kuan', 'kuang', 'kui', 'kun', 'kuo', 'la', 'lai', 'lan', 'lang',
-\'lao', 'le', 'lei', 'leng', 'li', 'lia', 'lian', 'liang', 'liao', 'lie',
-\'lin', 'ling', 'liu', 'long', 'lou', 'lu', 'luan', 'lue', 'lun', 'luo',
-\'lv', 'ma', 'mai', 'man', 'mang', 'mao', 'me', 'mei', 'men', 'meng', 'mi',
-\'mian', 'miao', 'mie', 'min', 'ming', 'miu', 'mo', 'mou', 'mu', 'na',
-\'nai', 'nan', 'nang', 'nao', 'ne', 'nei', 'nen', 'neng', "'ng", 'ni',
-\'nian', 'niang', 'niao', 'nie', 'nin', 'ning', 'niu', 'nong', 'nou', 'nu',
-\'nuan', 'nue', 'nuo', 'nv', "'o", "'ou", 'pa', 'pai', 'pan', 'pang',
-\'pao', 'pei', 'pen', 'peng', 'pi', 'pian', 'piao', 'pie', 'pin', 'ping',
-\'po', 'pou', 'pu', 'qi', 'qia', 'qian', 'qiang', 'qiao', 'qie', 'qin',
-\'qing', 'qiong', 'qiu', 'qu', 'quan', 'que', 'qun', 'ran', 'rang', 'rao',
-\'re', 'ren', 'reng', 'ri', 'rong', 'rou', 'ru', 'ruan', 'rui', 'run',
-\'ruo', 'sa', 'sai', 'san', 'sang', 'sao', 'se', 'sen', 'seng', 'sha',
-\'shai', 'shan', 'shang', 'shao', 'she', 'shei', 'shen', 'sheng', 'shi',
-\'shou', 'shu', 'shua', 'shuai', 'shuan', 'shuang', 'shui', 'shun', 'shuo',
-\'si', 'song', 'sou', 'su', 'suan', 'sui', 'sun', 'suo', 'ta', 'tai',
-\'tan', 'tang', 'tao', 'te', 'teng', 'ti', 'tian', 'tiao', 'tie', 'ting',
-\'tong', 'tou', 'tu', 'tuan', 'tui', 'tun', 'tuo', "'u", "'v", 'wa', 'wai',
-\'wan', 'wang', 'wei', 'wen', 'weng', 'wo', 'wu', 'xi', 'xia', 'xian',
-\'xiang', 'xiao', 'xie', 'xin', 'xing', 'xiong', 'xiu', 'xu', 'xuan',
-\'xue', 'xun', 'ya', 'yan', 'yang', 'yao', 'ye', 'yi', 'yin', 'ying', 'yo',
-\'yong', 'you', 'yu', 'yuan', 'yue', 'yun', 'za', 'zai', 'zan', 'zang',
-\'zao', 'ze', 'zei', 'zen', 'zeng', 'zha', 'zhai', 'zhan', 'zhang', 'zhao',
-\'zhe', 'zhen', 'zheng', 'zhi', 'zhong', 'zhou', 'zhu', 'zhua', 'zhuai',
-\'zhuan', 'zhuang', 'zhui', 'zhun', 'zhuo', 'zi', 'zong', 'zou', 'zu',
-\'zuan', 'zui', 'zun', 'zuo']
+" List of all valid pinyin. Result of 33 lines is same as 48 lines
+return split(" 'a 'ai 'an 'ang 'ao ba bai ban bang bao bei ben
+\ beng bi bian biao bie bin bing bo bu ca cai can cang cao ce cen
+\ ceng cha chai chan chang chao che chen cheng chi chong chou chu
+\ chua chuai chuan chuang chui chun chuo ci cong cou cu cuan cui
+\ cun cuo da dai dan dang dao de dei deng di dia dian diao die
+\ ding diu dong dou du duan dui dun duo 'e 'ei 'en 'er fa fan fang
+\ fe fei fen feng fiao fo fou fu ga gai gan gang gao ge gei gen
+\ geng gong gou gu gua guai guan guang gui gun guo ha hai han hang
+\ hao he hei hen heng hong hou hu hua huai huan huang hui hun huo
+\ 'i ji jia jian jiang jiao jie jin jing jiong jiu ju juan jue jun
+\ ka kai kan kang kao ke ken keng kong kou ku kua kuai kuan kuang
+\ kui kun kuo la lai lan lang lao le lei leng li lia lian liang
+\ liao lie lin ling liu long lou lu luan lue lun luo lv ma mai man
+\ mang mao me mei men meng mi mian miao mie min ming miu mo mou mu
+\ na nai nan nang nao ne nei nen neng 'ng ni nian niang niao nie
+\ nin ning niu nong nou nu nuan nue nuo nv 'o 'ou pa pai pan pang
+\ pao pei pen peng pi pian piao pie pin ping po pou pu qi qia qian
+\ qiang qiao qie qin qing qiong qiu qu quan que qun ran rang rao
+\ re ren reng ri rong rou ru ruan rui run ruo sa sai san sang sao
+\ se sen seng sha shai shan shang shao she shei shen sheng shi
+\ shou shu shua shuai shuan shuang shui shun shuo si song sou su
+\ suan sui sun suo ta tai tan tang tao te teng ti tian tiao tie
+\ ting tong tou tu tuan tui tun tuo 'u 'v wa wai wan wang wei wen
+\ weng wo wu xi xia xian xiang xiao xie xin xing xiong xiu xu xuan
+\ xue xun ya yan yang yao ye yi yin ying yo yong you yu yuan yue
+\ yun za zai zan zang zao ze zei zen zeng zha zhai zhan zhang zhao
+\ zhe zhen zheng zhi zhong zhou zhu zhua zhuai zhuan zhuang zhui
+\ zhun zhuo zi zong zou zu zuan zui zun zuo ")
 endfunction
 
 function! s:vimim_create_shuangpin_table(rule)
@@ -2803,7 +2783,7 @@ function! s:vimim_shuangpin_ms(rule)
         \"iao": "c", "ian": "m", "iang" : "d", "iong" : "s",
         \"un" : "p", "ua" : "w", "uo" : "o", "ue" : "t", "ui" : "v",
         \"uai": "y", "uan": "r", "uang" : "d" ,
-        \"v" : "y"} )
+        \"v"  : "y"} )
     return a:rule
 endfunction
 
