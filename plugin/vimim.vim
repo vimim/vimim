@@ -63,12 +63,12 @@ function! s:vimim_initialize_debug()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_map = 'gi,tab,search'
-        :redir @i
+        :redir @p
     endif
 endfunction
 
 function! s:vimim_debug(...)
-    " [.vimrc] :redir @+>>   (append messages to clipboard)
+    " [.vimrc] :redir @+>>
     " [client] :sil!call s:vimim_debug(s:vimim_egg_vimim())
     " [client]                   Debug s:vimim_egg_vimim()
     sil!echo "\n::::::::::::::::::::::::"
@@ -78,11 +78,11 @@ function! s:vimim_debug(...)
         let data = a:1
         if type(data) == type({})
             for key in keys(data)
-               sil!echo key . ': ' . data[key]
+                sil!echo key . ': ' . data[key]
             endfor
         elseif type(data) == type([])
             for line in data
-               sil!echo line
+                sil!echo line
             endfor
         else
             sil!echo string(data)
