@@ -1274,9 +1274,9 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
             sil!call s:vimim_reset_after_insert()
         endif
     elseif s:onekey && s:menuless && key =~ '\d'
-        if s:pattern_not_found || s:smart_enter
-            let s:smart_enter = 0
+        if s:pattern_not_found
             let s:pattern_not_found = 0
+            let key .= '\<C-R>=g:vimim_title()\<CR>'
         else
             let key = s:vimim_menuless_map(key)
         endif
@@ -1309,7 +1309,7 @@ function! s:vimim_menuless_map(key)
             let char_before = 1
         endif
     endif
-    if empty(s:smart_enter) && empty(s:pattern_not_found) && char_before
+    if empty(s:pattern_not_found) && char_before
         let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
         let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
         if empty(s:vimim_cjk())  " 1 for refreshing
@@ -1396,7 +1396,7 @@ function! <SID>vimim_enter()
         let key = "\<CR>"
         let s:smart_enter = 0
     endif
-    call g:vimim_title()
+    let key .= '\<C-R>=g:vimim_title()\<CR>'
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1406,11 +1406,14 @@ function! <SID>vimim_backspace()
     if pumvisible()
         let backspace .= g:vimim()
     endif
-    if s:menuless && s:smart_enter && s:onekey
-        let s:smart_enter = "menuless_correction"
-        let backspace  = '\<C-E>\<C-R>=g:vimim()\<CR>' . backspace
+    if s:menuless && s:onekey
+        if s:smart_enter
+            let s:smart_enter = "menuless_correction"
+            let backspace  = '\<C-E>\<C-R>=g:vimim()\<CR>' . backspace
+        else
+            let backspace .= '\<C-R>=g:vimim_title()\<CR>'
+        endif
     endif
-    call g:vimim_title()
     sil!exe 'sil!return "' . backspace . '"'
 endfunction
 
@@ -1806,8 +1809,7 @@ function! s:vimim_get_seamless(current_positions)
     let seamless_bufnum = s:seamless_positions[0]
     let seamless_lnum = s:seamless_positions[1]
     let seamless_off = s:seamless_positions[3]
-    let smart_enter = s:chinese_mode=~'dynamic' ? 1 : s:smart_enter
-    if empty(smart_enter)
+    if s:chinese_mode =~ 'dynamic'
     \|| seamless_bufnum != a:current_positions[0]
     \|| seamless_lnum != a:current_positions[1]
     \|| seamless_off != a:current_positions[3]
@@ -1821,6 +1823,9 @@ function! s:vimim_get_seamless(current_positions)
     let current_line = getline(start_row)
     let snip = strpart(current_line, seamless_column, len)
     if empty(len(snip))
+        return -1
+    elseif s:menuless && s:smart_enter && snip =~ '^\d\+\l\+'
+        let s:smart_enter = 0
         return -1
     endif
     for char in split(snip, '\zs')
@@ -4286,6 +4291,7 @@ endfunction
 
 function! g:vimim_omni()
     let key = pumvisible() ? '\<C-P>\<Down>' : ""
+    let s:smart_enter = 0  " s:menuless: gi ma enter li space 2
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -4345,7 +4351,7 @@ if a:start
         endif
         let one_before = current_line[start_column-1]
     endwhile
-    if all_digit < 1 && current_line[start_column]=~'\d'
+    if all_digit < 1 && current_line[start_column] =~ '\d'
         let start_column = last_seen_nonsense_column
     endif
     let s:start_row_before = start_row
