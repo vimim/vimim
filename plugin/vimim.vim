@@ -71,24 +71,28 @@ function! s:vimim_initialize_debug()
     endif
 endfunction
 
-function! s:debug(data)
+function! s:vimim_debug(...)
     " [.vimrc] :redir @+>>  (append messages to clipboard)
-    " [client] :sil!call s:debug(s:vimim_egg_vimimgame())
-    " [client] :sil!echo 'simple is powerful =>' . v:errmsg
-    let data = a:data
-    sil!echo ' ========================== '
-    if type(data) == type({})
-        for key in keys(data)
-           sil!echo key . ': ' . data[key]
-        endfor
-    elseif type(data) == type([])
-        for line in data
-           sil!echo line
-        endfor
-    elseif type(data) == type("")
-        sil!echo data
+    " [client] :sil!call s:vimim_debug(s:vimim_egg_vimim())
+    " [client]                   Debug s:vimim_egg_vimim()
+    sil!echo "\n::::::::::::::::::::::::"
+    if len(a:000) > 1
+        sil!echo join(a:000, " :: ")
+    else
+        let data = a:1
+        if type(data) == type({})
+            for key in keys(data)
+               sil!echo key . ': ' . data[key]
+            endfor
+        elseif type(data) == type([])
+            for line in data
+               sil!echo line
+            endfor
+        else
+            sil!echo string(data)
+        endif
     endif
-    sil!echo ' ========================== '
+    sil!echo "::::::::::::::::::::::::\n"
 endfunction
 
 function! s:vimim_start_session()
@@ -240,7 +244,7 @@ function! s:vimim_easter_chicken(keyboard)
     try
         return eval("s:vimim_egg_" . a:keyboard . "()")
     catch
-        call s:debug('alert', 'egg=', a:keyboard, v:exception)
+        :sil!call s:vimim_debug('egg', a:keyboard, v:exception)
     endtry
     return []
 endfunction
@@ -461,7 +465,6 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_skin"] = 'one-row,color'
     let s:rc["g:vimim_toggle_list"] = 0
     let s:rc["g:vimim_mycloud"] = 0
-    let s:rc["g:vimim_debug"] = 0
     call s:vimim_set_global_default()
     let s:chinese_punctuation = 1
     if s:vimim_chinese_input_mode =~ 'no-punctuation'
@@ -3440,7 +3443,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     try
         let results = eval(get_cloud)
     catch
-        call s:debug('alert', 'get_cloud='. a:cloud.'=', v:exception)
+        :sil!call s:vimim_debug('get_cloud', a:cloud, v:exception)
     endtry
     if !empty(results) && s:keyboard !~ '\S\s\S'
         let s:keyboard = a:keyboard
@@ -3470,7 +3473,7 @@ function! s:vimim_get_from_http(input, cloud)
             let output = system(s:http_executable . '"'.input.'"')
         endif
     catch
-        call s:debug('alert', "http_cloud", output ." ". v:exception)
+        :sil!call s:vimim_debug("http exception", v:exception)
     endtry
     return output
 endfunction
@@ -3815,7 +3818,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
                     return cloud
                 endif
             catch
-                call s:debug('alert', 'libcall_mycloud2=',v:exception)
+                :sil!call s:vimim_debug('libcall_mycloud2', v:exception)
             endtry
         endif
     endif
@@ -3845,7 +3848,7 @@ function! s:vimim_check_mycloud_plugin_url()
     let part = split(s:vimim_mycloud, ':')
     let lenpart = len(part)
     if lenpart <= 1
-        call s:debug('info', "invalid_cloud_plugin_url")
+        :sil!call s:vimim_debug('info', "invalid_cloud_plugin_url")
     elseif part[0] ==# 'app'
         if !has("gui_win32")
             " strip the first root if contains ":"
@@ -3889,7 +3892,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return "python"
                 endif
             catch
-                call s:debug('alert', 'python_mycloud=', v:exception)
+                :sil!call s:vimim_debug('python_mycloud=', v:exception)
             endtry
         endif
     elseif part[0] ==# "dll"
@@ -3928,7 +3931,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return cloud
                 endif
             catch
-                call s:debug('alert', 'libcall_mycloud=', v:exception)
+                :sil!call s:vimim_debug('libcall_mycloud', v:exception)
             endtry
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
@@ -3943,7 +3946,7 @@ function! s:vimim_check_mycloud_plugin_url()
             endif
         endif
     else
-        call s:debug('alert', "invalid_cloud_plugin_url")
+        :sil!call s:vimim_debug('alert', "invalid_cloud_plugin_url")
     endif
     return 0
 endfunction
@@ -3953,7 +3956,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     try
         let output = s:vimim_access_mycloud(s:mycloud, a:keyboard)
     catch
-        call s:debug('alert', 'mycloud=', v:exception)
+        :sil!call s:vimim_debug('alert', 'mycloud=', v:exception)
     endtry
     if empty(output)
         return []
@@ -3966,7 +3969,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
             let chinese = s:vimim_i18n_read(chinese)
         endif
         if empty(chinese) || get(item_list,1,-1)<0
-            " bypass the debug line which have -1
+            " bypass the breakpoint line which have -1
             continue
         endif
         let extra_text = get(item_list,2)
@@ -4006,7 +4009,7 @@ function! g:vimim_search_next()
         try
             let results = s:vimim_search_chinese_by_english(english)
         catch
-            call s:debug('alert', 'slash search /', v:exception)
+            :sil!call s:vimim_debug('slash search /', v:exception)
         endtry
     endif
     if !empty(results)
@@ -4591,6 +4594,7 @@ function! s:vimim_plug_and_play()
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
+    :com! -nargs=* Debug :sil!call s:vimim_debug(<args>)
 endfunction
 
 function! s:vimim_ctrl_h_ctrl_space()
@@ -4640,5 +4644,5 @@ sil!call s:vimim_scan_backend_cloud()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_plug_and_play()
 sil!call s:vimim_ctrl_h_ctrl_space()
-sil!call s:debug(s:vimim_egg_vimim())
 " ============================================= }}}
+Debug s:vimim_egg_vimim()
