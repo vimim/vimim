@@ -59,7 +59,7 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        call g:vimim_omni_color()
+        call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_map = 'gi,tab,search'
@@ -688,7 +688,7 @@ function! s:vimim_chinese(key)
     return chinese
 endfunction
 
-function! g:vimim_omni_color()
+function! s:vimim_omni_color()
     highlight! PmenuSbar  NONE
     highlight! PmenuThumb NONE
     highlight! Pmenu      NONE
@@ -711,7 +711,7 @@ function! s:vimim_skin(color)
         let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
     endif
     if s:vimim_skin =~ 'color'
-        call g:vimim_omni_color()
+        call s:vimim_omni_color()
         if empty(color)
             highlight!      PmenuSel NONE
             highlight! link PmenuSel NONE
