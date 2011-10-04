@@ -457,6 +457,8 @@ function! s:vimim_initialize_global()
     let s:download.english = "vimim.txt"
     let s:download.cjk     = "vimim.cjk.txt"
     let s:download.bsddb   = "vimim.gbk.bsddb"
+    let s:localization = &encoding =~ "utf-8" ? 0 : 2
+    let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
 endfunction
 
 function! s:vimim_set_global_default()
@@ -2028,26 +2030,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  input: unicode   ==== {{{"]
 " =================================================
-
-" ------------ ----------------- -------------- -----------
-" vim encoding datafile encoding s:localization performance
-" ------------ ----------------- -------------- -----------
-"   utf-8          utf-8                0          good
-"   chinese        chinese              0          good
-"   utf-8          chinese              1          bad
-"   chinese        utf-8                2          bad
-" ------------ ----------------- -------------- -----------
-function! s:vimim_initialize_encoding()
-    let s:localization = 0
-    if &encoding == "utf-8"
-        if len("datafile_fenc_chinese") > 20110129
-            let s:localization = 1
-        endif
-    else
-        let s:localization = 2
-    endif
-    let s:multibyte = &encoding=="utf-8" ? 3 : 2
-endfunction
 
 function! s:vimim_i18n_read(line)
     let line = a:line
@@ -4718,7 +4700,6 @@ endfunction
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
-sil!call s:vimim_initialize_encoding()
 sil!call s:vimim_dictionary_statusline()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
