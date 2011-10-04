@@ -59,20 +59,16 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        if has("gui_running") && has("win32")
-            :redir @+>>
-        else
-            :redir @i
-        endif
         call g:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_map = 'gi,tab,search'
+        :redir @i
     endif
 endfunction
 
 function! s:vimim_debug(...)
-    " [.vimrc] :redir @+>>  (append messages to clipboard)
+    " [.vimrc] :redir @+>>   (append messages to clipboard)
     " [client] :sil!call s:vimim_debug(s:vimim_egg_vimim())
     " [client]                   Debug s:vimim_egg_vimim()
     sil!echo "\n::::::::::::::::::::::::"
