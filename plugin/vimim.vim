@@ -4116,11 +4116,8 @@ endfunction
 
 function! s:vimim_set_vimrc()
     set title visualbell imdisable noshowmatch
-    set whichwrap=<,>
-    set nolazyredraw
-    set complete=.
-    set completeopt=menuone
-    set omnifunc=VimIM
+    set whichwrap=<,> nolazyredraw complete=.
+    set omnifunc=VimIM  completeopt=menuone
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
