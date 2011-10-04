@@ -605,7 +605,7 @@ endfunction
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
-function! s:vimim_dictionary_statusline()
+function! s:vimim_dictionary_titles()
     let s:title = {}
     let s:title.onekey     = "点石成金 點石成金"
     let s:title.4corner    = "四角号码 四角號碼"
@@ -641,24 +641,16 @@ function! s:vimim_dictionary_statusline()
     let s:title.flypy      = "小鹤     小鶴"
     let s:title.network    = "联网     聯網"
     let s:title.cloud      = "云       雲"
-    let s:title.haifeng    = "海峰"
-    let s:title.purple     = "紫光"
-    let s:title.plusplus   = "加加"
-    let s:title.quick      = "速成"
-    let s:title.array30    = "行列"
-    let s:title.phonetic   = "注音"
-    let s:title.pinyin     = "拼音"
-    let s:title.sogou      = "搜狗"
-    let s:title.google     = "谷歌"
-    let s:title.baidu      = "百度"
-    let s:title.revision   = "版本"
-    let s:title.mass       = "海量"
-    let s:title.datetime   = "日期"
-    let s:title.fullwidth  = "全角"
-    let s:title.halfwidth  = "半角"
-    let s:title.english    = "英文"
-    let s:title.chinese    = "中文"
-    let s:title.qq         = "QQ"
+    let single  = ' pinyin fullwidth halfwidth english chinese purple'
+    let single .= ' plusplus quick haifeng phonetic array30 revision'
+    let single .= ' mass datetime google baidu sogou qq'
+    let double  = ' 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰'
+    let double .= ' 注音 行列 版本 海量 日期 谷歌 百度 搜狗 QQ'
+    let singles = split(single)
+    let doubles = split(double)
+    for i in range(len(singles))
+        let s:title[get(singles,i)] = get(doubles,i)
+    endfor
 endfunction
 
 function! s:vimim_chinese(key)
@@ -4686,7 +4678,7 @@ endfunction
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
-sil!call s:vimim_dictionary_statusline()
+sil!call s:vimim_dictionary_titles()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
