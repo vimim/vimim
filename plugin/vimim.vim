@@ -2857,27 +2857,52 @@ endfunction
 let s:VimIM += [" ====  python           ==== {{{"]
 " =================================================
 
-function! s:vimim_get_stone_from_bsddb(stone)
-:sil!python << EOF
-try:
-    stone = vim.eval('a:stone')
-    marble = getstone(stone)
-    vim.command("return '%s'" % marble)
-except vim.error:
-    print("vim error: %s" % vim.error)
+function! g:vimim_gmail() range abort
+" [dream] to send email from within the current buffer
+" [usage] :call g:vimim_gmail()
+" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
+if empty(has('python')) && empty(has('python3'))
+    echo 'No magic Python Interface to Vim' | return ""
+endif
+let firstline = a:firstline
+let  lastline = a:lastline
+if lastline - firstline < 1
+    let firstline = 1
+    let lastline = "$"
+endif
+let g:gmails.msg = getline(firstline, lastline)
+let python = has('python3') && &relativenumber ? 'python3' : 'python'
+exe python . ' << EOF'
+import vim
+from smtplib import SMTP
+from datetime import datetime
+from email.mime.text import MIMEText
+def vimim_gmail():
+    gmails = vim.eval('g:gmails')
+    vim.command('sil!unlet g:gmails.bcc')
+    now = datetime.now().strftime("%A %m/%d/%Y")
+    gmail_login  = gmails.get("login","")
+    if len(gmail_login) < 8: return None
+    gmail_passwd = gmails.get("passwd")
+    gmail_to     = gmails.get("to")
+    gmail_bcc    = gmails.get("bcc","")
+    gmail_msg    = gmails.get("msg")
+    gamil_all = [gmail_to] + gmail_bcc.split()
+    msg = str("\n".join(gmail_msg))
+    rfc2822 = MIMEText(msg, 'plain', 'utf-8')
+    rfc2822['From'] = gmail_login
+    rfc2822['To'] = gmail_to
+    rfc2822['Subject'] = now
+    rfc2822.set_charset('utf-8')
+    try:
+        gmail = SMTP('smtp.gmail.com', 587, 120)
+        gmail.starttls()
+        gmail.login(gmail_login, gmail_passwd[::-1])
+        gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
+    finally:
+        gmail.close()
+vimim_gmail()
 EOF
-return ""
-endfunction
-
-function! s:vimim_get_gold_from_bsddb(stone)
-:sil!python << EOF
-try:
-    gold = getgold(vim.eval('a:stone'))
-    vim.command("return '%s'" % gold)
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-return ""
 endfunction
 
 function! s:vimim_initialize_bsddb(datafile)
@@ -2901,6 +2926,29 @@ def getgold(stone):
     gold = stone + ' ' + gold
     return gold
 EOF
+endfunction
+
+function! s:vimim_get_stone_from_bsddb(stone)
+:sil!python << EOF
+try:
+    stone = vim.eval('a:stone')
+    marble = getstone(stone)
+    vim.command("return '%s'" % marble)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+return ""
+endfunction
+
+function! s:vimim_get_gold_from_bsddb(stone)
+:sil!python << EOF
+try:
+    gold = getgold(vim.eval('a:stone'))
+    vim.command("return '%s'" % gold)
+except vim.error:
+    print("vim error: %s" % vim.error)
+EOF
+return ""
 endfunction
 
 function! s:vimim_get_from_python2(input, cloud)
@@ -2955,54 +3003,6 @@ except vim.error:
     print("vim error: %s" % vim.error)
 EOF
 return ""
-endfunction
-
-function! g:vimim_gmail() range abort
-" [dream] to send email from within the current buffer
-" [usage] :call g:vimim_gmail()
-" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
-if empty(has('python')) && empty(has('python3'))
-    echo 'No magic Python Interface to Vim' | return ""
-endif
-let firstline = a:firstline
-let  lastline = a:lastline
-if lastline - firstline < 1
-    let firstline = 1
-    let lastline = "$"
-endif
-let g:gmails.msg = getline(firstline, lastline)
-let python = has('python3') && &relativenumber ? 'python3' : 'python'
-exe python . ' << EOF'
-import vim
-from smtplib import SMTP
-from datetime import datetime
-from email.mime.text import MIMEText
-def vimim_gmail():
-    gmails = vim.eval('g:gmails')
-    vim.command('sil!unlet g:gmails.bcc')
-    now = datetime.now().strftime("%A %m/%d/%Y")
-    gmail_login  = gmails.get("login","")
-    if len(gmail_login) < 8: return None
-    gmail_passwd = gmails.get("passwd")
-    gmail_to     = gmails.get("to")
-    gmail_bcc    = gmails.get("bcc","")
-    gmail_msg    = gmails.get("msg")
-    gamil_all = [gmail_to] + gmail_bcc.split()
-    msg = str("\n".join(gmail_msg))
-    rfc2822 = MIMEText(msg, 'plain', 'utf-8')
-    rfc2822['From'] = gmail_login
-    rfc2822['To'] = gmail_to
-    rfc2822['Subject'] = now
-    rfc2822.set_charset('utf-8')
-    try:
-        gmail = SMTP('smtp.gmail.com', 587, 120)
-        gmail.starttls()
-        gmail.login(gmail_login, gmail_passwd[::-1])
-        gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
-    finally:
-        gmail.close()
-vimim_gmail()
-EOF
 endfunction
 
 function! s:vimim_mycloud_python_init()
