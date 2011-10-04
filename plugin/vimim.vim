@@ -4102,6 +4102,14 @@ endfunction
 let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
+function! s:vimim_set_vimrc()
+    set title visualbell imdisable noshowmatch
+    set whichwrap=<,> nolazyredraw complete=.
+    set omnifunc=VimIM  completeopt=menuone
+    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
+    highlight! link Cursor CursorIM
+endfunction
+
 function! s:vimim_save_vimrc()
     let s:cpo         = &cpo
     let s:omnifunc    = &omnifunc
@@ -4112,14 +4120,6 @@ function! s:vimim_save_vimrc()
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
     let s:lazyredraw  = &lazyredraw
-endfunction
-
-function! s:vimim_set_vimrc()
-    set title visualbell imdisable noshowmatch
-    set whichwrap=<,> nolazyredraw complete=.
-    set omnifunc=VimIM  completeopt=menuone
-    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
-    highlight! link Cursor CursorIM
 endfunction
 
 function! s:vimim_restore_vimrc()
@@ -4133,7 +4133,6 @@ function! s:vimim_restore_vimrc()
     let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheight_saved
-    highlight! link Cursor NONE
 endfunction
 
 function! s:vimim_start()
@@ -4189,11 +4188,12 @@ function! s:vimim_reset_after_insert()
 endfunction
 
 function! s:vimim_restore_imap()
-    let keys = range(10) + ['<Esc>','<BS>','<Space>','<CR>','<Bslash>']
+    highlight! link Cursor NONE
+    let keys  = range(10)
+    let keys += split('<Esc> <BS> <Space> <CR> <Bar> <Bslash>')
     if s:vimim_map != 'gi'
         let keys += keys(s:evils_all)
         let keys += s:valid_keys
-        let keys += ['<Bar>']
         if s:chinese_mode !~ 'dynamic'
         \&& s:vimim_chinese_input_mode !~ 'latex'
             let keys += s:AZ_list
