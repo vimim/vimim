@@ -1334,7 +1334,7 @@ function! s:vimim_menuless_map(key)
 endfunction
 
 function! s:vimim_set_titlestring(cursor)
-    let hightlight = s:left . '\|' . s:right
+    let hightlight = s:left . '\|' . s:right . '\|' . "[0-9a-z']" 
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
     let words = split(titlestring)[1:]
     let cursor = s:cursor_at_menuless + a:cursor
