@@ -2177,6 +2177,8 @@ function! s:vimim_get_cjk_head(keyboard)
                 let keyboard = ldddd . keyboard[5:-1]
                 let head = s:vimim_get_head(keyboard, 5)
             endif
+        else  " get single character from cjk
+            let head = keyboard
         endif
     endif
     return head
@@ -2255,7 +2257,7 @@ function! s:vimim_cjk_match(keyboard)
             if keyboard == 'u'  "  214 standard unicode index
                 let grep = ' u\( \|$\)'
             endif
-        elseif keyboard =~# '^\l'
+        elseif keyboard =~# '^\l\+'
             " cjk multiple-char-list without frequency: huan2hai2
             " support all cases: /huan /hai /yet /huan2 /hai2
             let grep = '[ 0-9]' . keyboard . '[0-9]'
