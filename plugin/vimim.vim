@@ -68,14 +68,27 @@ function! s:vimim_initialize_debug()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_map = 'gi,tab,search'
-    "   call s:debug('todo', s:vimim_egg_vimimgame())
     endif
 endfunction
 
-function! s:debug(...)
+function! s:debug(data)
     " [.vimrc] :redir @+>>  (append messages to clipboard)
-    " [client] :call s:debug('simple is powerful =>', v:errmsg)
-    sil!echoerr join(a:000, " :: ")
+    " [client] :sil!call s:debug(s:vimim_egg_vimimgame())
+    " [client] :sil!echo 'simple is powerful =>' . v:errmsg
+    let data = a:data
+    sil!echo ' ========================== '
+    if type(data) == type({})
+        for key in keys(data)
+           sil!echo key . ': ' . data[key]
+        endfor
+    elseif type(data) == type([])
+        for line in data
+           sil!echo line
+        endfor
+    elseif type(data) == type("")
+        sil!echo data
+    endif
+    sil!echo ' ========================== '
 endfunction
 
 function! s:vimim_start_session()
@@ -4627,4 +4640,5 @@ sil!call s:vimim_scan_backend_cloud()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_plug_and_play()
 sil!call s:vimim_ctrl_h_ctrl_space()
+sil!call s:debug(s:vimim_egg_vimim())
 " ============================================= }}}
