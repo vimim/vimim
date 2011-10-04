@@ -201,9 +201,9 @@ function! s:vimim_egg_vimimhelp()
 endfunction
 
 function! s:vimim_egg_vim()
-    let eggs  = ["经典文本編輯器　vi　  "]
-    let eggs += ["最牛文本編輯器　vim　 "]
-    let eggs += ["Vim 中文輸入法　vimim "]
+    let eggs  = ["经典文本編輯器　vi   "]
+    let eggs += ["最牛文本編輯器　vim  "]
+    let eggs += ["Vim中文輸入法　vimim "]
     return eggs
 endfunction
 
