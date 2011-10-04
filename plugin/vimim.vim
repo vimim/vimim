@@ -68,13 +68,14 @@ function! s:vimim_initialize_debug()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_map = 'gi,tab,search'
+    "   call s:debug('todo', s:vimim_egg_vimimgame())
     endif
 endfunction
 
 function! s:debug(...)
     " [.vimrc] :redir @+>>  (append messages to clipboard)
     " [client] :call s:debug('simple is powerful =>', v:errmsg)
-    echo join(a:000, " :: ")
+    sil!echoerr join(a:000, " :: ")
 endfunction
 
 function! s:vimim_start_session()
@@ -661,7 +662,6 @@ function! s:vimim_dictionary_titles()
     for i in range(len(singles))
         let s:title[get(singles,i)] = get(doubles,i)
     endfor
-    call s:debug('todo', 's:title', values(s:title))
 endfunction
 
 function! s:vimim_chinese(key)
