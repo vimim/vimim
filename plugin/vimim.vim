@@ -60,11 +60,17 @@ function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call g:vimim_omni_color()
-        :redir @i
+        :redir @+>>
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_map = 'gi,tab,search'
     endif
+endfunction
+
+function! s:debug(...)
+    " [.vimrc] :redir @+>>  (append messages to clipboard)
+    " [client] :call s:debug('simple is powerful =>', v:errmsg)
+    echo join(a:000, " :: ")
 endfunction
 
 function! s:vimim_start_session()
@@ -651,6 +657,7 @@ function! s:vimim_dictionary_titles()
     for i in range(len(singles))
         let s:title[get(singles,i)] = get(doubles,i)
     endfor
+    call s:debug('todo', 's:title', values(s:title))
 endfunction
 
 function! s:vimim_chinese(key)
@@ -3041,83 +3048,6 @@ try:
     vim.command('return "%s"' % ret)
 except vim.error:
     print("vim error: %s" % vim.error)
-EOF
-endfunction
-
-function! s:debug(...)
-" [server] sdebug(){ /bin/python ~/vim/vimfiles/plugin/sdebug.py ;}
-" [client] :call s:debug('info', 'foo/bar is', foobar, 'and', bar)
-if empty(s:vimim_debug) || empty(has('python'))
-    return
-endif
-if s:vimim_debug < 2
-    call s:netlog_python_init()
-    let s:vimim_debug += 1
-endif
-if s:vimim_debug < 2
-    return
-endif
-:sil!python << EOF
-try:
-    level = vim.eval("a:1")
-    if checkmask(level):
-        udpsend(vim.eval("join(a:000)"),"localhost",10007)
-except vim.error:
-    print("vim error: %s" % vim.error)
-EOF
-endfunction
-
-function! s:netlog_python_init()
-:sil!python << EOF
-import vim, sys, socket
-BUFSIZE = 1024
-def udpslice(sendfunc, data, addr):
-    senddata = data
-    while len(senddata) >= BUFSIZE:
-        sendfunc(senddata[0:BUFSIZE], addr)
-        senddata = senddata[BUFSIZE:]
-    if senddata[-1:] == "\n":
-        sendfunc(senddata, addr)
-    else:
-        sendfunc(senddata+"\n", addr)
-def udpsend(data, host, port):
-    addr = host, port
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(1)
-    try:
-        s.bind(('', 0))
-    except Exception, inst:
-        s.close()
-        return None
-    ret = ""
-    for item in data.split("\n"):
-        if item == "":
-            continue
-        udpslice(s.sendto, item, addr)
-    s.close()
-def log_mask(level):
-    pri = g_level.get(level, -1)
-    if pri < 0:
-        return 0
-    else:
-        return 1 << pri
-def log_upto(level):
-    pri = g_level.get(level, -1)
-    return (1 <<(pri+1) ) - 1
-def checkmask(level):
-    if log_mask(level) & g_mask:
-        return True
-    else:
-        return False
-g_level = {'emerg':0,    #  system is unusable
-           'alert':1,    #  action must be taken immediately
-           'crit':2,     #  critical conditions
-           'err':3,      #  error conditions
-           'warning':4,  #  warning conditions
-           'notice':5,   #  normal but significant condition
-           'info':6,     #  informational
-           'debug':7 }   #  debug-level messages
-g_mask = log_upto('info')
 EOF
 endfunction
 
