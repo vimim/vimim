@@ -59,10 +59,10 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
+        :redir @p
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
-        :redir @p
         let g:vimim_map = 'gi,tab,search'
     endif
 endfunction
@@ -77,7 +77,7 @@ function! s:vimim_debug(...)
         let data = a:1
         if type(data) == type({})
             for key in keys(data)
-                sil!echo key . ': ' . data[key]
+                sil!echo key . '::' . data[key]
             endfor
         elseif type(data) == type([])
             for line in data
@@ -688,7 +688,7 @@ function! s:vimim_chinese(key)
     if has_key(s:title, chinese)
         let twins = split(s:title[chinese])
         let chinese = get(twins,0)
-        if len(twins) > 1 && s:vimim_map != 'gi,tab,search'
+        if len(twins) > 1 && s:vimim_cloud !~ '^google'
             let chinese = get(twins,1)
         endif
     endif
@@ -1299,6 +1299,8 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
 function! g:vimim_title()
+    " titlestring works if terminal supports setting window titles
+    " [all GUI versions]  [Win32 console]  [non-empty 't_ts']
     let title = s:logo . s:vimim_get_title(0)
     if s:menuless && empty(s:touch_me_not)
         let &titlestring = title  . s:space . s:today
@@ -1354,6 +1356,9 @@ function! s:vimim_set_titlestring(cursor)
         let title = keyboard .'  '. left . hightlight . right
         let d = len(s:hjkl_n) ? 1 : 0
         let &titlestring = s:logo[:4] . s:vimim_get_title(d) .' '. title
+        let screen = s:vimim_get_title(d) .' '. title
+        " todo: if xterm screen, then let screen = ""
+        let &titlestring = s:logo[:4] . screen
     else
         call g:vimim_title()
     endif
@@ -1494,6 +1499,9 @@ function! <SID>vimim_onekey(tab)
     sil!call s:vimim_onekey_overall_map()
     if empty(onekey) || onekey =~ 'Right'
         let onekey .= '\<C-R>=g:vimim_title()\<CR>'
+    endif
+    if &term =~ 'ansi'   " todo: how to tell vim in running screen?
+        let s:menuless = 0
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
