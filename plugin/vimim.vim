@@ -172,7 +172,7 @@ function! s:vimim_set_keycode()
     else
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
     endif
-    if len(split(s:vimim_shuangpin)) != 6 && !empty(s:shuangpin_chinese)
+    if !empty(s:vimim_shuangpin) && !empty(s:shuangpin_chinese)
         let keycode = s:shuangpin_chinese.keycode
     endif
     let i = 0
@@ -395,9 +395,8 @@ function! s:vimim_game_hjkl(keyboard)
             endif
         endif
     endif
-    if !empty(results)
+    if !empty(results) && s:vimim_map != 'gi'
         let s:touch_me_not = 1
-        let s:touch_me_first_time += 1
         if s:hjkl_m % 4
             for i in range(s:hjkl_m%4)
                 let results = s:vimim_hjkl_rotation(results)
@@ -503,7 +502,11 @@ function! s:vimim_set_global_default()
             let default = string(s:rc[variable])
             let vimimrc = ':let ' . variable .' = '. default .' '
             call add(s:vimimdefaults, '" ' . vimimrc)
-            exe 'let '. s_variable .'='. default
+            if variable == "g:vimim_shuangpin"
+                exe 'let '. s_variable . " ='' "
+            else
+                exe 'let '. s_variable .'='. default
+            endif
         endif
     endfor
 endfunction
@@ -791,11 +794,8 @@ function! s:vimim_get_title(digit)
             endif
         endif
     endif
-    if len(split(s:vimim_shuangpin)) != 6
+    if !empty(s:vimim_shuangpin)
         let statusline = s:space . s:shuangpin_chinese.chinese
-    endif
-    if s:touch_me_not
-        let statusline = s:space . 'hjkl'
     endif
     return statusline . s:space
 endfunction
@@ -925,7 +925,7 @@ function! s:vimim_get_labeling(label)
         endif
         let labeling = empty(labeling) ? '10' : labeling . label2
     endif
-    if s:onekey && !empty(s:english.line)
+    if s:onekey && !empty(s:english.line)  " sexy english flag
         let english = a:label<len(split(s:english.line)) ? '*' : ' '
         let labeling = english . labeling
     endif
@@ -1302,7 +1302,7 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 
 function! g:vimim_title()
     let title = s:logo . s:vimim_get_title(0)
-    if s:menuless
+    if s:menuless && empty(s:touch_me_not)
         let &titlestring = title  . s:space . s:today
     else
         let &titlestring = title
@@ -1476,6 +1476,7 @@ function! <SID>vimim_onekey(tab)
                 let onekey = g:vimim()
             endif
         else
+            let s:touch_me_not = 0
             let s:menuless = empty(a:tab) ? 1 : a:tab
         endif
         call g:vimim_title()
@@ -1486,7 +1487,6 @@ function! <SID>vimim_onekey(tab)
         let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
         let s:menuless = a:tab
-        let s:touch_me_first_time = a:tab == 2 ? -32911 : 0
         sil!call s:vimim_start()
         if s:menuless < 2
             let onekey = s:vimim_onekey_action(0)
@@ -2557,7 +2557,7 @@ function! s:vimim_more_pinyin_candidates(keyboard)
     " [purpose] if not english, make standard layout for popup menu
     " input  =>  mamahuhu
     " output =>  mamahu, mama
-    if !empty(s:english.line) || len(split(s:vimim_shuangpin)) != 6
+    if !empty(s:vimim_shuangpin) || !empty(s:english.line)
         return []
     endif
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
@@ -2606,8 +2606,8 @@ let s:VimIM += [" ====  input: shuangpin ==== {{{"]
 " =================================================
 
 function! s:vimim_set_shuangpin()
-    if len(split(s:vimim_shuangpin)) == 6
-    \|| s:vimim_cloud =~ 'shuangpin'
+    if s:vimim_cloud =~ 'shuangpin'
+    \||  empty(s:vimim_shuangpin)
     \|| !empty(s:shuangpin_table)
     \|| !empty(s:mycloud)
         return
@@ -4147,7 +4147,6 @@ function! s:vimim_reset_before_anything()
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
     let s:pattern_not_found = 0
-    let s:touch_me_first_time = 0
     let s:popup_list = []
 endfunction
 
@@ -4309,7 +4308,7 @@ else
         return s:vimim_popupmenu_list(results)
     endif
     " [shuangpin] support 6 major shuangpin
-    if len(split(s:vimim_shuangpin)) != 6 && empty(s:has_pumvisible)
+    if !empty(s:vimim_shuangpin) && empty(s:has_pumvisible)
         let keyboard = s:vimim_shuangpin_transform(keyboard)
         let s:keyboard = keyboard
     endif
@@ -4372,7 +4371,7 @@ function! s:vimim_popupmenu_list(match_list)
         return []
     else
         let s:match_list = lines
-        if len(head) == 1 
+        if len(head) == 1
         \&& !empty(s:vimim_cjk())
         \&& !has_key(s:cjk.one, head)
             let s:cjk.one[head] = lines
@@ -4415,11 +4414,6 @@ function! s:vimim_popupmenu_list(match_list)
             if empty(s:mycloud)
                 let chinese .= empty(tail) ? '' : tail
             endif
-            if len(split(s:vimim_shuangpin)) != 6
-                if s:ui.root == 'cloud' || s:onekey > 1
-                    let chinese = substitute(chinese, '\l', '', 'g')
-                endif
-            endif
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
         endif
@@ -4443,7 +4437,11 @@ function! s:vimim_popupmenu_list(match_list)
         call g:vimim_title()
         set completeopt=menuone  " for hjkl_n refresh
         let s:popup_list = popup_list
-        if s:menuless && s:touch_me_first_time != 1
+
+        if s:touch_me_not
+             let s:menuless = 0
+        endif
+        if s:menuless && empty(s:touch_me_not)
             let &pumheight = 1
             set completeopt=menu  " for direct insert
             let s:cursor_at_menuless = 0
