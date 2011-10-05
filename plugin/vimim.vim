@@ -2557,7 +2557,7 @@ function! s:vimim_more_pinyin_candidates(keyboard)
     " [purpose] if not english, make standard layout for popup menu
     " input  =>  mamahuhu
     " output =>  mamahu, mama
-    if !empty(s:english.line)
+    if !empty(s:english.line) || len(split(s:vimim_shuangpin)) != 6
         return []
     endif
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
@@ -4414,6 +4414,11 @@ function! s:vimim_popupmenu_list(match_list)
             endif
             if empty(s:mycloud)
                 let chinese .= empty(tail) ? '' : tail
+            endif
+            if len(split(s:vimim_shuangpin)) != 6
+                if s:ui.root == 'cloud' || s:onekey > 1
+                    let chinese = substitute(chinese, '\l', '', 'g')
+                endif
             endif
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
