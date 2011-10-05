@@ -229,9 +229,9 @@ function! s:vimim_egg_vimimrc()
 endfunction
 
 function! s:vimim_egg_vim()
-    let eggs  = ["经典文本編輯器　vi   "]
-    let eggs += ["最牛文本編輯器　vim  "]
-    let eggs += ["Vim中文輸入法　vimim "]
+    let eggs  = [" vi    文本編輯器 "]
+    let eggs += [" vim   最牛編輯器 "]
+    let eggs += [" vimim 中文輸入法 "]
     return eggs
 endfunction
 
@@ -1123,54 +1123,34 @@ endfunction
 function! s:vimim_onekey_menu_filter()
     " use 1234567890 as filter for menuless
     " use qwertyuiop as filter for omni popup
-    let results = s:vimim_cjk_filter_list(s:hjkl_n)
-    if empty(results) && len(s:hjkl_n) > 1
-        if len(s:hjkl_n) > 2
-            let s:hjkl_n = ""
-            return []
-        else
-            let results = s:vimim_cjk_filter_list(s:hjkl_n[:-2])
+    let results = []
+    for items in s:popup_list
+        let chinese = items.word
+        if !empty(s:vimim_check_digit_match_cjk(chinese))
+            call add(results, chinese)
         endif
-    endif
-    if s:menuless && s:keyboard =~ "'"
+    endfor
+    if empty(results)
+        let s:hjkl_n = ""
+    elseif s:menuless && s:keyboard =~ "'"
         let s:keyboard = get(split(s:keyboard),1)
     endif
     return results
 endfunction
 
-function! s:vimim_cjk_filter_list(hjkl_n)
-    let i = 0
-    let foods = []
-    for items in s:popup_list
-        if !empty(s:vimim_cjk_digit_filter(items.word,a:hjkl_n))
-            call add(foods, i)
-        endif
-        let i += 1
-    endfor
-    if empty(foods)
-        return []
-    endif
-    let results = []
-    for i in foods
-        let menu = s:popup_list[i].word
-        call add(results, menu)
-    endfor
-    return results
-endfunction
-
-function! s:vimim_cjk_digit_filter(chinese, hjkl_n)
+function! s:vimim_check_digit_match_cjk(chinese)
     " smart digital filter: 马力 7712 4002
     "   (1)   ma<C-6>       马   => filter with   7712
     "   (2) mali<C-6>       马力 => filter with 7 4002
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
-    if empty(len(a:hjkl_n)) || empty(chinese)
+    if empty(len(s:hjkl_n)) || empty(chinese)
         return 0
     endif
     let digit_head = ""
     let digit_tail = ""
     for cjk in split(chinese,'\zs')
         let grep = "^" . cjk
-        let line = match(s:cjk.lines, grep, 0)
+        let line = match(s:cjk.lines, grep)
         if line < 0
             continue
         else
@@ -1182,11 +1162,11 @@ function! s:vimim_cjk_digit_filter(chinese, hjkl_n)
         endif
     endfor
     let number = digit_head . digit_tail
-    let pattern = "^" . a:hjkl_n
+    let pattern = "^" . s:hjkl_n
     if match(number, pattern) < 0
         return 0
     endif
-    return a:chinese
+    return 1
 endfunction
 
 function! s:vimim_hjkl_partition(keyboard)
@@ -1300,7 +1280,7 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 
 function! g:vimim_title()
     " titlestring works if terminal supports setting window titles
-    " [all GUI versions]  [Win32 console]  [non-empty 't_ts']
+    " [all GUI versions] [Win32 console] [non-empty t_ts] [not gnu screen]
     let title = s:logo . s:vimim_get_title(0)
     if s:menuless && empty(s:touch_me_not)
         let &titlestring = title  . s:space . s:today
@@ -1311,17 +1291,12 @@ function! g:vimim_title()
 endfunction
 
 function! s:vimim_menuless_map(key)
-    " workaround as no way to detect if completion is active
-    let key = a:key
+    let key = a:key    " workaround to detect if completion is active
     let digit = key == " " ? '' : key
-    let char_before = 1
-    if empty(s:vimim_char_before())
-        let char_before = 0
-        if s:keyboard =~ "'" || s:keyboard == 'u3000'
-            let char_before = 1
-        endif
-    endif
-    if empty(s:pattern_not_found) && char_before
+    if s:pattern_not_found
+        " gi \backslash space space
+        " gi ma space enter space
+    elseif !empty(s:vimim_char_before()) || s:keyboard =~ "'"
         let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
         let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
         if empty(s:vimim_cjk())  " 1 for refreshing
@@ -2325,7 +2300,7 @@ function! <SID>vimim_visual_ctrl6()
         " highlight one chinese => get antonym or number loop
         let results = s:vimim_imode_chinese(line)
         if !empty(results)
-            let key = "gvr" . line . "ga"
+            let key = "gvr" . get(results,0) . "ga"
         endif
         if !empty(s:vimim_cjk())
             let line = match(s:cjk.lines, "^".line)
