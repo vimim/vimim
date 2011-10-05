@@ -62,8 +62,8 @@ function! s:vimim_initialize_debug()
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
-        let g:vimim_map = 'gi,tab,search'
         :redir @p
+        let g:vimim_map = 'gi,tab,search'
     endif
 endfunction
 
@@ -395,7 +395,7 @@ function! s:vimim_game_hjkl(keyboard)
             endif
         endif
     endif
-    if !empty(results) && s:vimim_map != 'gi'
+    if !empty(results)
         let s:touch_me_not = 1
         if s:hjkl_m % 4
             for i in range(s:hjkl_m%4)
@@ -1245,7 +1245,7 @@ endfunction
 
 function! s:vimim_map_omni_page_label()
     let labels = range(10)
-    if s:onekey && s:vimim_map != 'gi'
+    if s:onekey
         let labels += s:abcd
         call remove(labels, match(labels,"'"))
     endif
@@ -1254,9 +1254,7 @@ function! s:vimim_map_omni_page_label()
         \ ' <SID>vimim_abcdvfgsz_1234567890_map("'._.'")'
     endfor
     let common_punctuation = "][=-"
-    if s:vimim_map == 'gi'
-        let common_punctuation = ""
-    elseif s:onekey
+    if s:onekey
         let common_punctuation .= ".,"
     endif
     for _ in split(common_punctuation, '\zs')
@@ -1608,9 +1606,6 @@ function! g:vimim_onekey_dump()
 endfunction
 
 function! s:vimim_onekey_overall_map()
-    if s:vimim_map == 'gi'
-        return
-    endif
     if s:vimim_chinese_input_mode !~ 'latex'
         for _ in s:AZ_list
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps_map("'._.'")'
@@ -4168,13 +4163,11 @@ function! s:vimim_restore_imap()
     highlight! link Cursor NONE
     let keys  = range(10)
     let keys += split('<Esc> <BS> <Space> <CR> <Bar> <Bslash>')
-    if s:vimim_map != 'gi'
-        let keys += keys(s:evils_all)
-        let keys += s:valid_keys
-        if s:chinese_mode !~ 'dynamic'
-        \&& s:vimim_chinese_input_mode !~ 'latex'
-            let keys += s:AZ_list
-        endif
+    let keys += keys(s:evils_all)
+    let keys += s:valid_keys
+    if s:chinese_mode !~ 'dynamic'
+    \&& s:vimim_chinese_input_mode !~ 'latex'
+        let keys += s:AZ_list
     endif
     for _ in keys
         if len(maparg(_, 'i'))
@@ -4443,9 +4436,8 @@ function! s:vimim_popupmenu_list(match_list)
             let vimim = "VimIM" . s:space . '  ' .  keyboard . '  '
             let &titlestring = vimim . join(one_list)
             call s:vimim_set_titlestring(1)
-        else
-            let s:touch_me_not = 0
-            call g:vimim_title()
+        elseif s:touch_me_not
+            let &titlestring = s:logo . s:space . s:today
         endif
     elseif menu_in_one_row
         let popup_list = s:vimim_one_row(one_list[0:4], popup_list[0:4])
@@ -4599,7 +4591,7 @@ function! s:vimim_plug_and_play()
         inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
         nmap  gi             i<Plug>VimimOneAct
     endif
-    if s:vimim_map =~ 'search' || s:vimim_map == 'gi'
+    if s:vimim_map =~ 'search'
         noremap<silent> n :sil!call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
