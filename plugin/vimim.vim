@@ -1356,9 +1356,6 @@ function! s:vimim_set_titlestring(cursor)
         let title = keyboard .'  '. left . hightlight . right
         let d = len(s:hjkl_n) ? 1 : 0
         let &titlestring = s:logo[:4] . s:vimim_get_title(d) .' '. title
-        let screen = s:vimim_get_title(d) .' '. title
-        " todo: if xterm screen, then let screen = ""
-        let &titlestring = s:logo[:4] . screen
     else
         call g:vimim_title()
     endif
@@ -1500,8 +1497,8 @@ function! <SID>vimim_onekey(tab)
     if empty(onekey) || onekey =~ 'Right'
         let onekey .= '\<C-R>=g:vimim_title()\<CR>'
     endif
-    if &term =~ 'ansi'   " todo: how to tell vim in running screen?
-        let s:menuless = 0
+    if &term == "screen"
+        let s:menuless = 0  " vim popup sleeps in peace with gnu screen
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
