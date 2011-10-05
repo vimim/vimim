@@ -1476,7 +1476,6 @@ function! <SID>vimim_onekey(tab)
                 let onekey = g:vimim()
             endif
         else
-            let s:touch_me_not = 0
             let s:menuless = empty(a:tab) ? 1 : a:tab
         endif
         call g:vimim_title()
@@ -4437,10 +4436,6 @@ function! s:vimim_popupmenu_list(match_list)
         call g:vimim_title()
         set completeopt=menuone  " for hjkl_n refresh
         let s:popup_list = popup_list
-
-        if s:touch_me_not
-             let s:menuless = 0
-        endif
         if s:menuless && empty(s:touch_me_not)
             let &pumheight = 1
             set completeopt=menu  " for direct insert
@@ -4448,6 +4443,9 @@ function! s:vimim_popupmenu_list(match_list)
             let vimim = "VimIM" . s:space . '  ' .  keyboard . '  '
             let &titlestring = vimim . join(one_list)
             call s:vimim_set_titlestring(1)
+        else
+            let s:touch_me_not = 0
+            call g:vimim_title()
         endif
     elseif menu_in_one_row
         let popup_list = s:vimim_one_row(one_list[0:4], popup_list[0:4])
