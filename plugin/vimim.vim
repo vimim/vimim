@@ -1428,7 +1428,7 @@ function! <SID>vimim_onekey(tab)
     " (1) <OneKey> in insert mode   => start MidasTouch popup
     " (2) <OneKey> in menuless mode => start MidasTouch popup
     " (3) <OneKey> in omni window   => start menuless, if input
-    " (4) <OneKey> in omni window   => print out, if hjkl
+    " (4) <OneKey> in omni window   => start print,    if hjkl
     let onekey = ""
     let s:chinese_mode = 'onekey'
     let one_cursor = getline(".")[col(".")-1]
