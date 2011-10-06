@@ -388,8 +388,6 @@ function! s:vimim_game_hjkl(keyboard)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
-    elseif keyboard =~# "''''''" . '\+$'  " black hole
-        let results = s:vimim_egg_vimimgame()
     elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
@@ -1266,7 +1264,7 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 
 function! g:vimim_title()
     " titlestring works if terminal supports setting window titles
-    " [all GUI versions] [Win32 console] [non-empty t_ts] [not gnu screen]
+    " [all GUI versions] [Win32 console] [non-empty t_ts] [!screen]
     let title = s:logo . s:vimim_get_title(0)
     if s:menuless && empty(s:touch_me_not)
         let &titlestring = title  . s:space . s:today
@@ -1303,7 +1301,10 @@ endfunction
 function! s:vimim_set_titlestring(cursor)
     let hightlight = s:left . '\|' . s:right
     let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
-    let words = split(substitute(titlestring,"'",'','g'))[1:]
+    if titlestring !~ '\s\+' . "'" . '\+\s\+'
+        let titlestring = substitute(titlestring,"'",'','g')
+    endif
+    let words = split(titlestring)[1:]
     let cursor = s:cursor_at_menuless + a:cursor
     let hightlight = get(words, cursor)
     let title = ""
@@ -1487,34 +1488,19 @@ function! s:vimim_onekey_action(space)
 endfunction
 
 function! s:vimim_onekey_dot_dot()
-    " [game] double dot or comma => quotes => popup menu
+    " [game] dot dot => quotes => popup menu
     let three_before  = getline(".")[col(".")-4 : col(".")-4]
     let before_before = getline(".")[col(".")-3 : col(".")-2]
-    if before_before != ".." && before_before != ",,"
-        return 0
-    endif
     let onekey = 0
-    if empty(three_before) || three_before =~ '\s' || col(".") < 5
-        if before_before == ".."
-            let onekey = 'u'         " <= ..   dot dot for 214 unicode
-        elseif before_before == ",,"
-            let onekey = 'v'         " <= ,,   comma comma for mahjong
+    if before_before == ".."
+        if empty(three_before) || three_before =~ '\s' || col(".") < 5
+            let onekey = "''"      "  <=    .. for mahjong
+        elseif three_before =~ "[0-9a-z]"
+            let onekey = "'''"     "  <=  xx.. for hjkl_m
+        else
+            let onekey = "'''''"   "  <=  香.. for same cjk
         endif
-    elseif three_before =~ "[0-9a-z]"
-        if before_before == ".."
-            let onekey = "'''"       " <= xx.. for hjkl_m
-        elseif before_before == ",,"
-            let onekey = "'''''''"   " <= xx,, for mahjong
-        endif
-    else
-        if before_before == ".."
-            let onekey = "'''''"     " <= 香.. for same cjk
-        elseif before_before == ",,"
-            let onekey = 'u3000'     " <= 龟,, for punctuations
-        endif
-    endif
-    if !empty(onekey)
-        return "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
+        let onekey = "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
     endif
     return onekey
 endfunction
@@ -4296,7 +4282,7 @@ else
         elseif keyboard == 'i'   " for abcdefghijklmnopqrstuvwxyz''
             let results = split(repeat("我 ",10))
         else
-            let results = split(join(s:vimim_egg_vimimgame(),""),'\zs')
+            let results = split(join(s:vimim_egg_vimimgame(),"　"),'\zs')
         endif
     endif
     if empty(results)
