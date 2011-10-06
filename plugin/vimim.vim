@@ -1277,9 +1277,11 @@ endfunction
 function! s:vimim_menuless_map(key)
     let key = a:key    " workaround to detect if completion is active
     let digit = key == " " ? '' : key
-    if s:pattern_not_found
-        " gi \backslash space space
-        " gi ma space enter space
+    if s:pattern_not_found  " gi \backslash space space
+                            " gi ma space enter space
+    elseif s:smart_enter    " gi ma space enter 77 ma space
+        let s:smart_enter = 0
+        let s:seamless_positions = []
     elseif !empty(s:vimim_char_before()) || s:keyboard =~ "'"
         let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
         let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
@@ -1772,9 +1774,6 @@ function! s:vimim_get_seamless(current_positions)
     let current_line = getline(start_row)
     let snip = strpart(current_line, seamless_column, len)
     if empty(len(snip))
-        return -1
-    elseif s:menuless && s:smart_enter && snip =~ '^\d\+\l\+'
-        let s:smart_enter = 0
         return -1
     endif
     for char in split(snip, '\zs')
@@ -2780,9 +2779,9 @@ let s:VimIM += [" ====  python           ==== {{{"]
 " =================================================
 
 function! g:vimim_gmail() range abort
-" [dream] to send email from within the current buffer
+" [dream] one click to send email from within the current vim buffer
 " [usage] :call g:vimim_gmail()
-" [vimrc] :let  g:gmails={'login':'','passwd':'','to':'','bcc':''}
+" [vimrc] :let  g:gmails={'login':'x','passwd':'x','to':'x','bcc':'x'}
 if empty(has('python')) && empty(has('python3'))
     echo 'No magic Python Interface to Vim' | return ""
 endif
@@ -4165,9 +4164,8 @@ if a:start
     call s:vimim_set_keyboard_list(start_column, keyboard)
     return start_column
 else
-    " [menuless] enter + basckspace = correction
+    " [menuless] gi mamahuhuhu space enter basckspace
     if s:smart_enter =~ "menuless_correction"
-        let s:smart_enter = 0
         return [s:space]
     endif
     " [hjkl] less is more
@@ -4458,12 +4456,6 @@ function! s:vimim_embedded_backend_engine(keyboard)
     return results
 endfunction
 
-function! g:vimim_omni()
-    let key = pumvisible() ? '\<C-P>\<Down>' : ""
-    let s:smart_enter = 0  " s:menuless: gi ma enter li space 2
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 function! g:vimim()
     let key = ""
     if empty(s:pageup_pagedown)
@@ -4475,6 +4467,12 @@ function! g:vimim()
     else
         let s:has_pumvisible = 0
     endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! g:vimim_omni()
+    let key = pumvisible() ? '\<C-P>\<Down>' : ""
+    let s:smart_enter = 0  " s:menuless: gi ma enter li space 2
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
