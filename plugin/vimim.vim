@@ -1677,7 +1677,10 @@ function! <SID>VimIMSwitch()
             let frontend_im = get(frontends, 1)
             if frontend_im =~ im
                 let s:frontends = frontends
-                call s:vimim_set_vimim_cloud(im)
+                let clouds = split(s:vimim_cloud,',')
+                let cloud_last = remove(clouds, im)
+                let clouds += [cloud_last]
+                let s:vimim_cloud = join(clouds,',')
                 break
             endif
         endfor
@@ -3262,14 +3265,6 @@ function! s:vimim_initialize_cloud()
     if match(s:rc["g:vimim_cloud"], default) > -1
         let s:cloud_default = default
     endif
-endfunction
-
-function! s:vimim_set_vimim_cloud(cloud)
-    let im = a:cloud
-    let clouds = split(s:vimim_cloud,',')
-    call remove(clouds, im)
-    call insert(clouds, im)
-    let s:vimim_cloud = join(clouds,',')
 endfunction
 
 function! s:vimim_scan_backend_cloud()
