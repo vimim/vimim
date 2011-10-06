@@ -102,9 +102,10 @@ function! s:vimim_start_session()
     let s:start_row_before = 0
     let s:start_column_before = 1
     let s:scriptnames_output = 0
-    let s:shuangpin_table = {}
     let s:shuangpin_chinese = {}
+    let s:shuangpin_table = {}
     let s:quanpin_table = {}
+    let s:imode_pinyin = 0
     let s:abcd = split("'abcdvfgsz",'\zs')
     let s:qwer = split("pqwertyuio",'\zs')
     let s:seamless_positions = []
@@ -164,10 +165,9 @@ function! s:vimim_dictionary_keycodes()
 endfunction
 
 function! s:vimim_set_keycode()
-    let s:imode_pinyin = 0
     for im in split('wu erbi yong nature boshiamy phonetic array30')
         if s:ui.im == im
-            let s:ui.has_dot = 1  " has dot in datafile
+            let s:ui.has_dot = 1  " has english dot in datafile
             let s:vimim_chinese_input_mode .= ',no-punctuation'
             break
         endif
@@ -175,17 +175,8 @@ function! s:vimim_set_keycode()
     if s:backend[s:ui.root][s:ui.im].name =~# "quote"
         let s:ui.has_dot = 2      " has apostrophe in datafile
     endif
-    if s:ui.im =~ 'pinyin' || s:onekey > 1
-        let s:imode_pinyin = 1
-        if empty(s:quanpin_table)
-            let s:quanpin_table = s:vimim_create_quanpin_table()
-        endif
-    endif
-    let keycode = ""
-    if empty(s:ui.root)
-        let keycode = "[0-9a-z']"
-        let s:imode_pinyin = 1
-    else
+    let keycode = "[0-9a-z']"
+    if !empty(s:ui.root)
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
     endif
     if !empty(s:vimim_shuangpin) && !empty(s:shuangpin_chinese)
@@ -202,6 +193,12 @@ function! s:vimim_set_keycode()
     endwhile
     let s:valid_keyboard  = copy(keycode)
     let s:valid_keys = split(keycode_string, '\zs')
+    let s:imode_pinyin = 0
+    if s:ui.im =~ 'pinyin' || !empty(s:vimim_cjk())
+    \|| s:onekey > 1
+    \|| s:vimim_shuangpin == 'abc'
+        let s:imode_pinyin = 1
+    endif
 endfunction
 
 " ============================================= }}}
@@ -2076,7 +2073,6 @@ let s:VimIM += [" ====  input: cjk       ==== {{{"]
 " =================================================
 
 function! s:vimim_scan_cjk_file()
-    let s:imode_pinyin = 0
     let s:cjk = {}
     let s:cjk.filename = ""
     let s:cjk.lines = []
@@ -2087,7 +2083,6 @@ function! s:vimim_scan_cjk_file()
     endif
     if !empty(datafile)
         let s:cjk.filename = datafile
-        let s:imode_pinyin = 1
     endif
 endfunction
 
@@ -2480,8 +2475,8 @@ function! s:vimim_quanpin_transform(pinyin)
                     \ || (tempstr == "ne" && tempstr3 != "ner")
                     \ || (tempstr4 == "gong" || tempstr3 == "gou")
                     \ || (tempstr4 == "nong" || tempstr3 == "nou")
-                    \ || (tempstr == "ga" || tempstr == "na")
-                    \ || tempstr2 == "ier"
+                    \ || (tempstr  == "ga"   || tempstr == "na")
+                    \ ||  tempstr2 == "ier"
                     if has_key(s:quanpin_table, matchstr[:-2])
                         let i -= 1
                         let matchstr = matchstr[:-2]
@@ -2592,10 +2587,7 @@ function! s:vimim_set_shuangpin()
         endif
     endfor
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
-    let s:imode_pinyin = 0
-    if s:vimim_shuangpin == 'abc'
-        let s:imode_pinyin = 1
-    else
+    if s:vimim_shuangpin != 'abc'
         let chinese .= s:vimim_chinese('shuangpin')
     endif
     let s:shuangpin_chinese.chinese = chinese
@@ -3131,11 +3123,10 @@ function! s:vimim_get_from_datafile(keyboard)
             let results = s:vimim_make_pairs(oneline)
             call extend(results, extras)
         endif
-    elseif len(results) < 5  " get more if less
-        "  http://code.google.com/p/vimim/issues/detail?id=121
+    else  " http://code.google.com/p/vimim/issues/detail?id=121
         let results = []
         let s:show_extra_menu = 1
-        for i in range(5)
+        for i in range(10)  " get more if less
             let cursor += i
             let oneline = get(lines, cursor)
             let extras = s:vimim_make_pairs(oneline)
@@ -4328,7 +4319,7 @@ endif
 endfunction
 
 function! s:vimim_popupmenu_list(match_list)
-    let keyboards = split(s:keyboard)   " ['ma','li']
+    let keyboards = split(s:keyboard)   " ma li => ['ma','li']
     let keyboard = join(keyboards, "")
     let head = get(keyboards,0)
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
