@@ -164,8 +164,24 @@ function! s:vimim_dictionary_keycodes()
 endfunction
 
 function! s:vimim_set_keycode()
+    let s:imode_pinyin = 0
+    for im in split('wu erbi yong nature boshiamy phonetic array30')
+        if s:ui.im == im
+            let s:ui.has_dot = 1  " has dot in datafile
+            let s:vimim_chinese_input_mode .= ',no-punctuation'
+            break
+        endif
+    endfor
+    if s:backend[s:ui.root][s:ui.im].name =~# "quote"
+        let s:ui.has_dot = 2      " has apostrophe in datafile
+    endif
+    if s:ui.im =~ 'pinyin' || s:onekey > 1
+        let s:imode_pinyin = 1
+        if empty(s:quanpin_table)
+            let s:quanpin_table = s:vimim_create_quanpin_table()
+        endif
+    endif
     let keycode = ""
-    let keycode_string = ""
     if empty(s:ui.root)
         let keycode = "[0-9a-z']"
         let s:imode_pinyin = 1
@@ -176,6 +192,7 @@ function! s:vimim_set_keycode()
         let keycode = s:shuangpin_chinese.keycode
     endif
     let i = 0
+    let keycode_string = ""
     while i < 16*16
         let char = nr2char(i)
         if char =~# keycode
@@ -523,26 +540,6 @@ function! s:vimim_get_valid_im_name(im)
     return im
 endfunction
 
-function! s:vimim_set_special_property()
-    if s:backend[s:ui.root][s:ui.im].name =~# "quote"
-        let s:ui.has_dot = 2      " has apostrophe in datafile
-    endif
-    for im in split('wu erbi yong nature boshiamy phonetic array30')
-        if s:ui.im == im
-            let s:ui.has_dot = 1  " has dot in datafile
-            let s:vimim_chinese_input_mode .= ',no-punctuation'
-            break
-        endif
-    endfor
-    let s:imode_pinyin = 0
-    if s:ui.im =~ 'pinyin' || s:onekey > 1
-        let s:imode_pinyin = 1
-        if empty(s:quanpin_table)
-            let s:quanpin_table = s:vimim_create_quanpin_table()
-        endif
-    endif
-endfunction
-
 function! s:vimim_wubi_auto_input_on_the_4th(keyboard)
     let keyboard = a:keyboard
     if s:chinese_mode =~ 'dynamic'
@@ -746,7 +743,7 @@ function! IMName()
         if pumvisible()
             return s:vimim_statusline()
         endif
-    elseif !empty(&omnifunc) && &omnifunc ==# 'VimIM'
+    elseif &omnifunc ==# 'VimIM'
         return s:space . s:vimim_statusline()
     endif
     return ""
@@ -1198,7 +1195,7 @@ endfunction
 
 function! s:vimim_last_quote()
     " (1) [insert] one tail quote: open cloud or switch cloud
-    " (2) [omni]   switch to the next cloud: 'google,sogou,baidu,qq'
+    " (2) [omni]   one tail quote: switch to the next cloud
     if empty(s:vimim_check_http_executable())
         let s:onekey = 1
     else
@@ -1507,12 +1504,12 @@ endfunction
 
 function! s:vimim_onekey_dot_dot()
     " [game] double dot or comma => quotes => popup menu
-    let onekey = 0
     let three_before  = getline(".")[col(".")-4 : col(".")-4]
     let before_before = getline(".")[col(".")-3 : col(".")-2]
     if before_before != ".." && before_before != ",,"
         return 0
     endif
+    let onekey = 0
     if empty(three_before) || three_before =~ '\s' || col(".") < 5
         if before_before == ".."
             let onekey = 'u'         " <= ..   dot dot for 214 unicode
@@ -1758,7 +1755,7 @@ function! <SID>ChineseMode()
     elseif empty(s:frontends)
         let s:frontends = get(s:ui.frontends, 0)
     endif
-    let switch = !empty(&omnifunc) && &omnifunc==#'VimIM' ? 0 : 1
+    let switch = &omnifunc == #'VimIM' ? 0 : 1
     return s:vimim_chinese_mode(switch)
 endfunction
 
@@ -4094,7 +4091,6 @@ function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
-    sil!call s:vimim_set_special_property()
     sil!call s:vimim_map_omni_page_label()
     inoremap <expr> <BS>     <SID>vimim_backspace()
     inoremap <expr> <CR>     <SID>vimim_enter()
@@ -4588,15 +4584,14 @@ sil!call s:vimim_dictionary_titles()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
+sil!call s:vimim_save_vimrc()
 sil!call s:vimim_scan_cjk_file()
 sil!call s:vimim_scan_english_datafile()
 sil!call s:vimim_super_reset()
 sil!call s:vimim_start_session()
-sil!call s:vimim_save_vimrc()
 sil!call s:vimim_scan_backend_mycloud()
 sil!call s:vimim_scan_backend_embedded()
 sil!call s:vimim_scan_backend_cloud()
-sil!call s:vimim_set_keycode()
 sil!call s:vimim_plug_and_play()
 sil!call s:vimim_ctrl_h_ctrl_space()
 " ============================================= }}}
