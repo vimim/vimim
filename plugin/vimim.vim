@@ -1126,19 +1126,21 @@ function! s:vimim_onekey_menu_filter()
     let results = []
     for items in s:popup_list
         let chinese = items.word
-        if !empty(s:vimim_check_digit_match_cjk(chinese))
+        if !empty(s:vimim_check_if_digit_match_cjk(chinese))
             call add(results, chinese)
         endif
     endfor
     if empty(results)
         let s:hjkl_n = ""
     elseif s:menuless && s:keyboard =~ "'"
-        let s:keyboard = get(split(s:keyboard),1)
+        if len(split(s:keyboard)) > 1
+            let s:keyboard = get(split(s:keyboard),1)
+        endif
     endif
     return results
 endfunction
 
-function! s:vimim_check_digit_match_cjk(chinese)
+function! s:vimim_check_if_digit_match_cjk(chinese)
     " smart digital filter: 马力 7712 4002
     "   (1)   ma<C-6>       马   => filter with   7712
     "   (2) mali<C-6>       马力 => filter with 7 4002
