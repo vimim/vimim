@@ -1538,7 +1538,7 @@ function! g:vimim_onekey_dump()
     let saved_position = getpos(".")
     let keyboard = get(split(s:keyboard),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-    if getline(".")[col(".")-2] =~ "'"
+    if getline(".")[col(".")-2] =~ "'" || s:keyboard =~ '^vimim'
         let space = ""  " no need to format if cloud
     endif
     for items in s:popup_list
