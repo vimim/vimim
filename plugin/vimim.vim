@@ -664,7 +664,7 @@ function! s:vimim_dictionary_titles()
     let single .= " plusplus quick haifeng phonetic array30  revision"
     let single .= " mass  datetime  google  baidu  sogou  qq "
     let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 "
-    let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 QQ   "
+    let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ "
     let singles = split(single)
     let doubles = split(double)
     for i in range(len(singles))
@@ -677,7 +677,7 @@ function! s:vimim_chinese(key)
     if has_key(s:title, chinese)
         let twins = split(s:title[chinese])
         let chinese = get(twins,0)
-        if len(twins) > 1 && s:vimim_cloud !~ '^google'
+        if len(twins) > 1 && s:vimim_map =~ 'ctrl+bslash'
             let chinese = get(twins,1)
         endif
     endif
@@ -1663,10 +1663,6 @@ function! <SID>VimIMSwitch()
     if len(s:ui.frontends) < 2
         return <SID>ChineseMode()
     endif
-    let s:chinese_mode = 'dynamic'
-    if s:vimim_chinese_input_mode =~ 'static'
-        let s:chinese_mode = 'static'
-    endif
     let custom_im_list = s:vimim_get_custom_im_list()
     let switch = s:im_toggle % len(custom_im_list)
     let s:im_toggle += 1
@@ -1680,6 +1676,7 @@ function! <SID>VimIMSwitch()
             let frontend_im = get(frontends, 1)
             if frontend_im =~ im
                 let s:frontends = frontends
+                call s:vimim_set_vimim_cloud(im)
                 break
             endif
         endfor
@@ -3266,6 +3263,14 @@ function! s:vimim_initialize_cloud()
     endif
 endfunction
 
+function! s:vimim_set_vimim_cloud(cloud)
+    let im = a:cloud
+    let clouds = split(s:vimim_cloud,',')
+    call remove(clouds, im)
+    call insert(clouds, im)
+    let s:vimim_cloud = join(clouds,',')
+endfunction
+
 function! s:vimim_scan_backend_cloud()
     if len(s:vimim_mycloud) < 2
     \&& empty(s:backend.datafile)
@@ -4480,7 +4485,7 @@ function! s:vimim_ctrl_h_ctrl_space()
     elseif s:vimim_map_extra =~ 'ctrl+h_as_ctrl+bslash'
         imap <C-H> <C-Bslash>
     elseif s:vimim_map_extra =~ 'ctrl+h_to_clycle'
-        imap <C-H> <C-X><C-Bslash>
+        imap <C-H> <C-X><C-X>
     endif
     if has("gui_running")
         if s:vimim_map_extra =~ 'ctrl+space_as_ctrl+6'
@@ -4489,7 +4494,7 @@ function! s:vimim_ctrl_h_ctrl_space()
             map  <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
         elseif s:vimim_map_extra =~ 'ctrl+space_to_clycle'
-            imap <C-Space> <C-X><C-Bslash>
+            imap <C-Space> <C-X><C-X>
         endif
     elseif has("win32unix")
         if s:vimim_map_extra =~ 'ctrl+space_as_ctrl+6'
@@ -4498,7 +4503,7 @@ function! s:vimim_ctrl_h_ctrl_space()
             map  <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
         elseif s:vimim_map_extra =~ 'ctrl+space_to_clycle'
-            imap <C-@> <C-X><C-Bslash>
+            imap <C-@> <C-X><C-X>
         endif
     endif
 endfunction
@@ -4507,8 +4512,8 @@ function! s:vimim_plug_and_play()
     if s:vimim_map =~ 'ctrl+bslash'
         inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
         imap<silent><C-Bslash> <Plug>VimIM
-        noremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
-        inoremap<silent><expr><C-X><C-Bslash> <SID>VimIMSwitch()
+        noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
+        inoremap<silent><expr><C-X><C-X> <SID>VimIMSwitch()
     endif
     if s:vimim_map =~ 'ctrl+6'
         inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
