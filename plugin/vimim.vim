@@ -642,24 +642,24 @@ function! s:vimim_dictionary_titles()
     let s:title.5strokes   = "五笔画   五筆畫"
     let s:title.menuless   = "无菜单   無菜單"
     let single  = " computer directory datafile database option  env "
-    let single .= " encoding input     static   dynamic  erbi    wubi"      
-    let single .= " hangul   xinhua    zhengma  cangjie  yong    wu  "        
-    let single .= " jidian   shuangpin cloud    flypy    network ms  "     
+    let single .= " encoding input     static   dynamic  erbi    wubi"
+    let single .= " hangul   xinhua    zhengma  cangjie  yong    wu  "
+    let single .= " jidian   shuangpin cloud    flypy    network ms  "
     let double  = " 电脑,電腦 目录,目錄 文件,文本 词库,詞庫 选项,選項"
     let double .= " 环境,環境 编码,編碼 输入,輸入 静态,靜態 动态,動態"
     let double .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
     let double .= " 仓颉,倉頡 永码,永碼 吴语,吳語 极点,極點 双拼,雙拼"
-    let double .= " 云,雲     小鹤,小鶴 联网,聯網 微软,微軟          "
+    let double .= " 云,雲     小鹤,小鶴 联网,聯網 微软,微軟 "
     let singles = split(single)
     let doubles = split(double)
     for i in range(len(singles))
         let s:title[get(singles,i)] = join(split(get(doubles,i),','))
     endfor
     let single  = " pinyin fullwidth halfwidth english chinese purple"
-    let single .= " plusplus quick haifeng phonetic array30 revision "
-    let single .= " mass datetime google baidu sogou qq              "
-    let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰     "
-    let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 QQ       "
+    let single .= " plusplus quick haifeng phonetic array30  revision"
+    let single .= " mass  datetime  google  baidu  sogou  qq "
+    let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 "
+    let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 QQ   "
     let singles = split(single)
     let doubles = split(double)
     for i in range(len(singles))
