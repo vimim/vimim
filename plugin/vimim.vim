@@ -378,26 +378,33 @@ endfunction
 function! s:vimim_game_hjkl(keyboard)
     let keyboard = a:keyboard
     let results = []
-    let unname_register = getreg('"')
     let poem = s:vimim_check_filereadable(keyboard)
-    if !empty(poem)
+    if keyboard ==# "''"
+        return split(join(s:vimim_egg_vimimgame(),""),'\zs')
+    elseif keyboard ==# "'''''"
+        let char_before = s:vimim_char_before()
+        if empty(char_before) && !empty(s:vimim_cjk())
+            return s:vimim_cjk_match('u') " 214 unicode index
+        else
+            let ddddd = char2nr(char_before)
+            return s:vimim_unicode_list(ddddd)
+        endif
+    elseif !empty(poem)
         " [hjkl] flirt any non-dot file in the hjkl directory
         let results = s:vimim_readfile(poem)
-    elseif keyboard ==# "'''''"
-        return s:vimim_get_same_char_before()
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         " [eggs] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
     elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif len(unname_register) > 3  " vimim_visual_ctrl6
-        if keyboard ==# "''''"
+    elseif len(getreg('"')) > 3  " vimim_visual_ctrl6
+        if keyboard ==# "''''"   " unname_register
             " [hjkl] display buffer inside the omni window
-            let results = split(unname_register, '\n')
+            let results = split(getreg('"'), '\n')
         elseif keyboard =~# 'u\d\d\d\d\d'
             " [cjk]  display highlighted multiple cjk
-            let line = substitute(unname_register,'[\x00-\xff]','','g')
+            let line = substitute(getreg('"'),'[\x00-\xff]','','g')
             if !empty(line)
                 for chinese in split(line,'\zs')
                     let menu  = s:vimim_cjk_extra_text(chinese)
@@ -1955,18 +1962,6 @@ function! s:vimim_char_before()
         endif
     endif
     return char_before
-endfunction
-
-function! s:vimim_get_same_char_before()
-    let results = []
-    let char_before = s:vimim_char_before()
-    if empty(char_before) && !empty(s:vimim_cjk())
-        let results = s:vimim_cjk_match('u') " 214 unicode index
-    else
-        let ddddd = char2nr(char_before)
-        let results = s:vimim_unicode_list(ddddd)
-    endif
-    return results
 endfunction
 
 " ============================================= }}}
@@ -4277,10 +4272,9 @@ else
             if empty(results)                           " forced cloud
                 let results = s:vimim_get_cloud(keyboard, s:cloud_default)
             endif
-        elseif keyboard == 'i'   " for abcdefghijklmnopqrstuvwxyz''
-            let results = split(repeat("我 ",10))
-        else
-            let results = split(join(s:vimim_egg_vimimgame(),"　"),'\zs')
+        else    " for onekey continuity: abcdefghijklmnopqrstuvwxyz..
+            let i = keyboard == 'i' ? "我" : s:space
+            let results = split(repeat(i,5),'\zs')
         endif
     endif
     if empty(results)
