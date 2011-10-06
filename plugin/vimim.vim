@@ -2038,6 +2038,12 @@ function! s:vimim_unicode_to_utf8(xxxx)
     return utf8
 endfunction
 
+function! s:vimim_rot13(keyboard)
+    let a = "12345abcdefghijklmABCDEFGHIJKLM"
+    let z = "98760nopqrstuvwxyzNOPQRSTUVWXYZ"
+    return tr(a:keyboard, a.z, z.a)
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  input: cjk       ==== {{{"]
 " =================================================
@@ -3390,6 +3396,19 @@ function! s:vimim_get_from_http(input, cloud)
     return output
 endfunction
 
+function! s:vimim_url_xx_to_chinese(xx)
+    " %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
+    let output = a:xx
+    if s:http_executable =~ 'libvimim'
+        let output = libcall(s:http_executable, "do_unquote", a:xx)
+    else
+        let pat = '%\(\x\x\)'
+        let sub = '\=eval(''"\x''.submatch(1).''"'')'
+        let output = substitute(a:xx, pat, sub, 'g')
+    endif
+    return output
+endfunction
+
 function! s:vimim_get_cloud_sogou(keyboard)
     " http://web.pinyin.sogou.com/api/py?key=32&query=mxj
     if empty(s:cloud_keys.sogou)
@@ -3692,12 +3711,6 @@ function! s:vimim_access_mycloud(cloud, cmd)
     return ret
 endfunction
 
-function! s:vimim_rot13(keyboard)
-    let a = "12345abcdefghijklmABCDEFGHIJKLM"
-    let z = "98760nopqrstuvwxyzNOPQRSTUVWXYZ"
-    return tr(a:keyboard, a.z, z.a)
-endfunction
-
 function! s:vimim_get_libvimim()
     let cloud = ""
     if has("win32") || has("win32unix")
@@ -3890,19 +3903,6 @@ function! s:vimim_get_mycloud_plugin(keyboard)
         call add(results, new_item)
     endfor
     return results
-endfunction
-
-function! s:vimim_url_xx_to_chinese(xx)
-    " %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
-    let output = a:xx
-    if s:http_executable =~ 'libvimim'
-        let output = libcall(s:http_executable, "do_unquote", a:xx)
-    else
-        let pat = '%\(\x\x\)'
-        let sub = '\=eval(''"\x''.submatch(1).''"'')'
-        let output = substitute(a:xx, pat, sub, 'g')
-    endif
-    return output
 endfunction
 
 " ============================================= }}}
