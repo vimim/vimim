@@ -35,7 +35,7 @@ let s:VimIM += [" ====  initialization   ==== {{{"]
 " =================================================
 
 function! s:vimim_bare_bones_vimrc()
-    set cpoptions=Bce$ go=cirMehf shm=aoOstTAI noloadplugins
+    set cpoptions=Bce$ go=cirMehf shm=aoOstTAI noloadplugins hlsearch
     set gcr=a:blinkon0 mouse=nicr shellslash noswapfile viminfo=
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
@@ -4525,7 +4525,7 @@ function! s:vimim_plug_and_play()
         nmap  gi             i<Plug>VimimOneAct
     endif
     if s:vimim_map =~ 'search'
-        noremap<silent> n :sil!call g:vimim_search_next()<CR>n
+        noremap<silent> n :call g:vimim_search_next()<CR>n
     endif
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
