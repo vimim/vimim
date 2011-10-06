@@ -1755,7 +1755,7 @@ function! <SID>ChineseMode()
     elseif empty(s:frontends)
         let s:frontends = get(s:ui.frontends, 0)
     endif
-    let switch = &omnifunc == #'VimIM' ? 0 : 1
+    let switch = &omnifunc ==# 'VimIM' ? 0 : 1
     return s:vimim_chinese_mode(switch)
 endfunction
 
