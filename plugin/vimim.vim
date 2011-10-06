@@ -930,8 +930,8 @@ function! s:vimim_dictionary_punctuations()
     let s:punctuations = {}
     let s:punctuations['^'] = "……"
     let s:punctuations['_'] = "——"
-    let single = '{ } ( ) < > [ ] : # & % $ ! ~ + - = ; , . ? * '
-    let double = '〖〗（）《》【】：＃＆％￥！～＋－＝；，。？﹡'
+    let single = '@ : # & % $ ! ~ + - = ; , . ? * { } ( ) < > [ ] '
+    let double = '　：＃＆％￥！～＋－＝；，。？﹡〖〗（）《》【】'
     let singles = split(single)
     let doubles = split(double, '\zs')
     for i in range(len(singles))
@@ -945,10 +945,10 @@ function! s:vimim_dictionary_punctuations()
     endif
     let s:evils_all = copy(s:punctuations)
     call extend(s:evils_all, s:evils)
-    let s:colon = s:punctuations[':']
     let s:left  = s:punctuations['[']
     let s:right = s:punctuations[']']
-    let s:space = "　"
+    let s:colon = s:punctuations[':']
+    let s:space = s:punctuations['@']
 endfunction
 
 function! <SID>vimim_page_map(key)
