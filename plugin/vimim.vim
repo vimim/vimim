@@ -1949,21 +1949,6 @@ function! s:vimim_imode_number(keyboard)
     return numbers
 endfunction
 
-function! s:vimim_char_before()
-    let char_before = ""
-    let one_before = getline(".")[col(".")-2]
-    if one_before !~ '\s'
-        let start = col(".") - 1 - s:multibyte
-        let char_before = getline(".")[start : start+s:multibyte-1]
-        if char_before !~ '[^\x00-\xff]'
-            let char_before = ""
-        elseif match(values(s:evils_all),char_before) > -1
-            let char_before = ""
-        endif
-    endif
-    return char_before
-endfunction
-
 " ============================================= }}}
 let s:VimIM += [" ====  input: unicode   ==== {{{"]
 " =================================================
@@ -2036,6 +2021,34 @@ function! s:vimim_unicode_to_utf8(xxxx)
         let utf8 .= nr2char(128+(ddddd%64))
     endif
     return utf8
+endfunction
+
+function! s:vimim_url_xx_to_chinese(xx)
+    " %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
+    let output = a:xx
+    if s:http_executable =~ 'libvimim'
+        let output = libcall(s:http_executable, "do_unquote", output)
+    else
+        let pat = '%\(\x\x\)'
+        let sub = '\=eval(''"\x''.submatch(1).''"'')'
+        let output = substitute(output, pat, sub, 'g')
+    endif
+    return output
+endfunction
+
+function! s:vimim_char_before()
+    let char_before = ""
+    let one_before = getline(".")[col(".")-2]
+    if one_before !~ '\s'
+        let start = col(".") - 1 - s:multibyte
+        let char_before = getline(".")[start : start+s:multibyte-1]
+        if char_before !~ '[^\x00-\xff]'
+            let char_before = ""
+        elseif match(values(s:evils_all),char_before) > -1
+            let char_before = ""
+        endif
+    endif
+    return char_before
 endfunction
 
 function! s:vimim_rot13(keyboard)
@@ -3393,19 +3406,6 @@ function! s:vimim_get_from_http(input, cloud)
     catch
         sil!call s:vimim_debug("http exception", v:exception)
     endtry
-    return output
-endfunction
-
-function! s:vimim_url_xx_to_chinese(xx)
-    " %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
-    let output = a:xx
-    if s:http_executable =~ 'libvimim'
-        let output = libcall(s:http_executable, "do_unquote", a:xx)
-    else
-        let pat = '%\(\x\x\)'
-        let sub = '\=eval(''"\x''.submatch(1).''"'')'
-        let output = substitute(a:xx, pat, sub, 'g')
-    endif
     return output
 endfunction
 
