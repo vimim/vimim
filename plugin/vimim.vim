@@ -63,7 +63,7 @@ function! s:vimim_initialize_debug()
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
-        let g:vimim_map = 'gi,tab,search'
+        let g:vimim_map = 'tab,search,gi'
     endif
 endfunction
 
