@@ -1464,15 +1464,12 @@ function! <SID>vimim_onekey(tab)
         if s:menuless < 2
             let onekey = s:vimim_onekey_action(0)
         elseif col("$")-col(".") && col("$")-col(".") < one_cursor + 1
-            let onekey  = '\<Right>' " gi at the end of the cursor line
+            let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
     sil!call s:vimim_onekey_overall_map()
     if empty(onekey) || onekey =~ 'Right'
         let onekey .= '\<C-R>=g:vimim_title()\<CR>'
-    endif
-    if &term == "screen"
-        let s:menuless = 0  " vim popup sleeps in peace with gnu screen
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
