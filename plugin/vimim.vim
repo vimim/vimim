@@ -261,7 +261,7 @@ function! s:vimim_easter_chicken(keyboard)
     try
         return eval("s:vimim_egg_" . a:keyboard . "()")
     catch
-        :sil!call s:vimim_debug('egg', a:keyboard, v:exception)
+        sil!call s:vimim_debug('egg', a:keyboard, v:exception)
     endtry
     return []
 endfunction
@@ -3397,7 +3397,7 @@ function! s:vimim_get_cloud(keyboard, cloud)
     try
         let results = eval(get_cloud)
     catch
-        :sil!call s:vimim_debug('get_cloud', a:cloud, v:exception)
+        sil!call s:vimim_debug('get_cloud', a:cloud, v:exception)
     endtry
     if !empty(results) && s:keyboard !~ '\S\s\S'
         let s:keyboard = a:keyboard
@@ -3427,7 +3427,7 @@ function! s:vimim_get_from_http(input, cloud)
             let output = system(s:http_executable . '"'.input.'"')
         endif
     catch
-        :sil!call s:vimim_debug("http exception", v:exception)
+        sil!call s:vimim_debug("http exception", v:exception)
     endtry
     return output
 endfunction
@@ -3772,7 +3772,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
                     return cloud
                 endif
             catch
-                :sil!call s:vimim_debug('libcall_mycloud2', v:exception)
+                sil!call s:vimim_debug('libcall_mycloud2', v:exception)
             endtry
         endif
     endif
@@ -3802,7 +3802,7 @@ function! s:vimim_check_mycloud_plugin_url()
     let part = split(s:vimim_mycloud, ':')
     let lenpart = len(part)
     if lenpart <= 1
-        :sil!call s:vimim_debug('info', "invalid_cloud_plugin_url")
+        sil!call s:vimim_debug('info', "invalid_cloud_plugin_url")
     elseif part[0] ==# 'app'
         if !has("gui_win32")
             " strip the first root if contains ":"
@@ -3846,7 +3846,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return "python"
                 endif
             catch
-                :sil!call s:vimim_debug('python_mycloud=', v:exception)
+                sil!call s:vimim_debug('python_mycloud=', v:exception)
             endtry
         endif
     elseif part[0] ==# "dll"
@@ -3885,7 +3885,7 @@ function! s:vimim_check_mycloud_plugin_url()
                     return cloud
                 endif
             catch
-                :sil!call s:vimim_debug('libcall_mycloud', v:exception)
+                sil!call s:vimim_debug('libcall_mycloud', v:exception)
             endtry
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
@@ -3900,7 +3900,7 @@ function! s:vimim_check_mycloud_plugin_url()
             endif
         endif
     else
-        :sil!call s:vimim_debug('alert', "invalid_cloud_plugin_url")
+        sil!call s:vimim_debug('alert', "invalid_cloud_plugin_url")
     endif
     return 0
 endfunction
@@ -3910,7 +3910,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     try
         let output = s:vimim_access_mycloud(s:mycloud, a:keyboard)
     catch
-        :sil!call s:vimim_debug('alert', 'mycloud=', v:exception)
+        sil!call s:vimim_debug('alert', 'mycloud=', v:exception)
     endtry
     if empty(output)
         return []
@@ -3963,7 +3963,7 @@ function! g:vimim_search_next()
         try
             let results = s:vimim_search_chinese_by_english(english)
         catch
-            :sil!call s:vimim_debug('slash search /', v:exception)
+            sil!call s:vimim_debug('slash search /', v:exception)
         endtry
     endif
     if !empty(results)
@@ -4055,9 +4055,8 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
 function! s:vimim_set_vimrc()
-    set title visualbell imdisable noshowmatch
-    set whichwrap=<,> nolazyredraw complete=.
-    set omnifunc=VimIM  completeopt=menuone
+    set title imdisable noshowmatch nolazyredraw whichwrap=<,>
+    set omnifunc=VimIM  completeopt=menuone  complete=.
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
@@ -4130,8 +4129,8 @@ endfunction
 function! s:vimim_reset_after_insert()
     let s:hjkl_n = ""   " reset for no nothing
     let s:hjkl_h = 0    " ctrl-h for jsjsxx
-    let s:hjkl_l = 0    " toggle label
-    let s:hjkl_m = 0    " toggle cjjp/cjjp''
+    let s:hjkl_l = 0    " toggle label length
+    let s:hjkl_m = 0    " toggle cjjp/c'j'j'p
     let s:hjkl__ = 0    " toggle simplified/traditional
     let s:match_list = []
     let s:pageup_pagedown = 0
@@ -4218,7 +4217,7 @@ else
     let keyboard = a:keyboard
     " [validation] user keyboard input validation
     if empty(str2nr(keyboard))
-        " input is alphabet only, not good for 23554022100080204420
+        " input is alphabet only, bad for 23554022100080204420
     else
         let keyboard = get(split(s:keyboard),0)
     endif
@@ -4335,7 +4334,7 @@ function! s:vimim_popupmenu_list(match_list)
     let keyboards = split(s:keyboard)   " ['ma','li']
     let keyboard = join(keyboards, "")
     let head = get(keyboards,0)
-    let tail = len(keyboards)<2 ? "" : get(keyboards,1)
+    let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
     let lines = a:match_list
     if empty(lines) || type(lines) != type([])
         return []
@@ -4348,7 +4347,7 @@ function! s:vimim_popupmenu_list(match_list)
         endif
     endif
     " [skin] no color seems the best color
-    let color = len(lines)<2 && empty(tail) ? 0 : 1
+    let color = len(lines) < 2 && empty(tail) ? 0 : 1
     let menu_in_one_row = s:vimim_skin(color)
     let label = 1
     let one_list = []
