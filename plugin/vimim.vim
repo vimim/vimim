@@ -35,8 +35,8 @@ let s:VimIM += [" ====  initialization   ==== {{{"]
 " =================================================
 
 function! s:vimim_bare_bones_vimrc()
-    set cpoptions=Bce$ go=cirMehf shm=aoOstTAI noloadplugins hlsearch
-    set gcr=a:blinkon0 mouse=nicr shellslash noswapfile viminfo=
+    set cpoptions=Bce$ go=cirMehf shm=aoOstTAI noloadplugins
+    set gcr=a:blinkon0 mouse=nicr hlsearch noswapfile viminfo=
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
     let $PATH='/bin/;/Python27;/Python31;/Windows/system32'
@@ -99,7 +99,6 @@ function! s:vimim_initialize_session()
     let s:current_positions = [0,0,1,0]
     let s:start_row_before = 0
     let s:start_column_before = 1
-    let s:scriptnames_output = 0
     let s:shuangpin_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
@@ -322,9 +321,9 @@ function! s:vimim_egg_vimim()
         call add(eggs, input)
     endif
     if !empty(s:vimim_check_http_executable())
-        let exe = s:http_executable=~'Python' ? '' : "HTTP executable: "
+        let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
         let network  = s:vimim_chinese('network') . s:colon
-        let network .= exe . s:http_executable
+        let network .= exe . s:http_exe
         call add(eggs, network)
     endif
     let option = s:vimim_chinese('option') . s:colon . "vimimhelp "
@@ -600,21 +599,12 @@ endfunction
 
 function! s:vimim_getsid(scriptname)
     " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
-    let l:scriptname = a:scriptname
-    " get output of ":scriptnames" in scriptnames_output variable
-    if empty(s:scriptnames_output)
-        let saved_shellslash=&shellslash
-        set shellslash
-        redir => s:scriptnames_output
-        silent scriptnames
-        redir END
-        let &shellslash = saved_shellslash
-    endif
-    for line in split(s:scriptnames_output, "\n")
-        " only do non-blank lines
-        if line =~ l:scriptname
-            " get the first number in the line
-            return matchstr(line, '\d\+')
+    redir => scriptnames_output
+    silent scriptnames
+    redir END
+    for line in split(scriptnames_output, "\n")
+        if line =~ a:scriptname           " only do non-blank lines
+            return matchstr(line, '\d\+') " get the first number
         endif
     endfor
     return 0
@@ -2007,8 +1997,8 @@ endfunction
 function! s:vimim_url_xx_to_chinese(xx)
     " %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
     let output = a:xx
-    if s:http_executable =~ 'libvimim'
-        let output = libcall(s:http_executable, "do_unquote", output)
+    if s:http_exe =~ 'libvimim'
+        let output = libcall(s:http_exe, "do_unquote", output)
     else
         let pat = '%\(\x\x\)'
         let sub = '\=eval(''"\x''.submatch(1).''"'')'
@@ -3227,7 +3217,7 @@ let s:VimIM += [" ====  backend: cloud   ==== {{{"]
 " =================================================
 
 function! s:vimim_initialize_cloud()
-    let s:http_executable = 0
+    let s:http_exe = ""
     let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
     let s:cloud_default = get(cloud_defaults,0)
     let s:cloud_keys = {}
@@ -3279,7 +3269,7 @@ function! s:vimim_set_cloud()
 endfunction
 
 function! s:vimim_set_cloud_if_http_executable(im)
-    if empty(s:http_executable)
+    if empty(s:http_exe)
         if empty(s:vimim_check_http_executable())
             return 0
         endif
@@ -3298,11 +3288,11 @@ function! s:vimim_set_cloud_if_http_executable(im)
 endfunction
 
 function! s:vimim_check_http_executable()
-    let http_executable = 0
+    let http_executable = ""
     if s:vimim_cloud < 0 && len(s:vimim_mycloud) < 3
         return 0
-    elseif len(s:http_executable) > 3
-        return s:http_executable
+    elseif len(s:http_exe) > 3
+        return s:http_exe
     endif
     " step 1 of 4: try to find libvimim for mycloud
     let libvimim = s:vimim_get_libvimim()
@@ -3341,13 +3331,14 @@ function! s:vimim_check_http_executable()
     if empty(http_executable) && executable('curl')
         let http_executable = "curl -s "
     endif
-    let s:http_executable = copy(http_executable)
+    let s:http_exe = copy(http_executable)
     return http_executable
 endfunction
 
 function! s:vimim_get_cloud(keyboard, cloud)
     if a:keyboard !~ s:valid_keyboard
-    \|| empty(a:cloud) || match(s:vimim_cloud, a:cloud) < 0
+    \|| empty(a:cloud) 
+    \|| match(s:vimim_cloud, a:cloud) < 0
         return []
     endif
     let results = []
@@ -3364,30 +3355,27 @@ function! s:vimim_get_cloud(keyboard, cloud)
 endfunction
 
 function! s:vimim_get_from_http(input, cloud)
-    let input = a:input
-    if empty(input)
+    if empty(a:input)
         return ""
-    endif
-    if empty(s:http_executable)
+    elseif empty(s:http_exe)
         if empty(s:vimim_check_http_executable())
             return ""
         endif
     endif
-    let output = ""
     try
-        if s:http_executable =~ 'Python3'
-            let output = s:vimim_get_from_python3(input, a:cloud)
-        elseif s:http_executable =~ 'Python2'
-            let output = s:vimim_get_from_python2(input, a:cloud)
-        elseif s:http_executable =~ 'libvimim'
-            let output = libcall(s:http_executable, "do_geturl", input)
-        else
-            let output = system(s:http_executable . '"'.input.'"')
+        if s:http_exe =~ 'Python3'
+            return s:vimim_get_from_python3(a:input, a:cloud)
+        elseif s:http_exe =~ 'Python2'
+            return s:vimim_get_from_python2(a:input, a:cloud)
+        elseif s:http_exe =~ 'libvimim'
+            return libcall(s:http_exe, "do_geturl", a:input)
+        elseif len(s:http_exe)
+            return system(s:http_exe . shellescape(a:input))
         endif
     catch
-        sil!call s:vimim_debug("http exception", v:exception)
+        sil!call s:vimim_debug("s:http_exe exception", v:exception)
     endtry
-    return output
+    return ""
 endfunction
 
 function! s:vimim_get_cloud_sogou(keyboard)
@@ -3505,7 +3493,7 @@ function! s:vimim_get_cloud_google(keyboard)
     let match_list = []
     if s:localization
         " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
-        if s:http_executable =~ 'Python2'
+        if s:http_exe =~ 'Python2'
             let output = s:vimim_i18n_read(output)
         else
             let unicodes = split(get(split(output),8),",")
@@ -3678,11 +3666,10 @@ function! s:vimim_access_mycloud(cloud, cmd)
         let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:mycloud_mode == "www"
         let input = s:vimim_rot13(a:cmd)
-        let exe = s:http_executable
-        if exe =~ 'libvimim'
-            let ret = libcall(exe, "do_geturl", a:cloud.input)
-        elseif len(exe)
-            let ret = system(exe . shellescape(a:cloud.input))
+        if s:http_exe =~ 'libvimim'
+            let ret = libcall(s:http_exe, "do_geturl", a:cloud.input)
+        elseif len(s:http_exe)
+            let ret = system(s:http_exe . shellescape(a:cloud.input))
         endif
         if len(ret)
             let output = s:vimim_rot13(ret)
@@ -3844,7 +3831,7 @@ function! s:vimim_check_mycloud_plugin_url()
         if empty(s:vimim_check_http_executable())
             return 0
         endif
-        if !empty(s:http_executable)
+        if !empty(s:http_exe)
             let s:mycloud_mode = "www"
             let ret = s:vimim_access_mycloud(s:vimim_mycloud,"__isvalid")
             if split(ret, "\t")[0] == "True"
@@ -3995,7 +3982,7 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 
 function! s:vimim_set_vimrc()
     set title imdisable noshowmatch nolazyredraw whichwrap=<,>
-    set omnifunc=VimIM  completeopt=menuone  complete=.
+    set shellslash omnifunc=VimIM completeopt=menuone complete=.
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
@@ -4009,6 +3996,7 @@ function! s:vimim_save_vimrc()
     let s:laststatus  = &laststatus
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
+    let s:shellslash  = &shellslash 
     let s:lazyredraw  = &lazyredraw
 endfunction
 
@@ -4020,7 +4008,7 @@ function! s:vimim_restore_vimrc()
     let &completeopt = s:completeopt
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
-    let &titlestring = s:titlestring
+    let &shellslash  = s:shellslash
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheight_saved
 endfunction
