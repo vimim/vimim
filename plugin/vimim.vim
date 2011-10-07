@@ -1479,10 +1479,7 @@ function! s:vimim_onekey_action(space)
         let s:smart_enter = 0
         return space  "  space is space after enter
     elseif empty(s:ui.has_dot)
-        let onekey = s:vimim_onekey_dot_dot()
-        if empty(onekey) && one_before !~ "[0-9a-z]"
-            let onekey = s:vimim_onekey_evils()
-        endif
+        let onekey = s:vimim_onekey_evils()
         if !empty(onekey)
             sil!exe 'sil!return "' . onekey . '"'
         endif
@@ -1497,33 +1494,30 @@ function! s:vimim_onekey_action(space)
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! s:vimim_onekey_dot_dot()
-    " [game] dot dot => quotes => popup menu
-    let three_before  = getline(".")[col(".")-4 : col(".")-4]
-    let before_before = getline(".")[col(".")-3 : col(".")-2]
-    let onekey = 0
-    if before_before == ".."
-        if empty(three_before) || three_before =~ '\s' || col(".") < 5
+function! s:vimim_onekey_evils()
+    let onekey = ""
+    let one_before = getline(".")[col(".")-2]
+    let two_before = getline(".")[col(".")-3]
+    if getline(".")[col(".")-3 : col(".")-2] == ".."  " before_before
+        " [game] dot dot => quotes => popup menu
+        let three_before  = getline(".")[col(".")-4]
+        if col(".") < 5 || empty(three_before) || three_before =~ '\s'
             let onekey = "''"      "  <=    .. for mahjong
         elseif three_before =~ "[0-9a-z]"
             let onekey = "'''"     "  <=  xx.. for hjkl_m
         else
             let onekey = "'''''"   "  <=  香.. for same cjk
         endif
-        let onekey = "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
+        return  "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
     endif
-    return onekey
-endfunction
-
-function! s:vimim_onekey_evils()
-    let one_before = getline(".")[col(".")-2]
-    let two_before = getline(".")[col(".")-3]
-    if one_before == "'" && two_before =~ s:valid_keyboard
+    " [punctuation] punctuations can be made not so evil
+    if one_before =~ "[0-9a-z]" || two_before =~ '\s'
+        return ""
+    elseif one_before == "'" && two_before =~ s:valid_keyboard
         return ""
     elseif two_before =~ "[0-9a-z]"
         return " "
     endif
-    let onekey = ""
     if has_key(s:evils_all, one_before)
         for char in keys(s:evils_all)
             if two_before ==# char || two_before =~# '\u'
