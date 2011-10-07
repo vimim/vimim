@@ -25,10 +25,11 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
 "  Usage: vim i vimimhelp ctrl+6 ctrl+6
-"    (1) [vim normal mode] gi
-"    (2) [vim normal mode] n (after /search)
-"    (3) [vim insert mode] ctrl+6
-"    (4) [vim insert mode] ctrl+\
+"    (1) [vim normal mode]  gi             (for menuless input)
+"    (2) [vim normal mode]  n              (for slash search)
+"    (3) [vim insert mode]  ctrl+6         (for onekey omni popup)
+"    (4) [vim insert mode]  ctrl+\         (for dynamic chinese mode)
+"    (5) [vim insert mode]  ctrl+x ctrl+x  (for input methods switch)
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
