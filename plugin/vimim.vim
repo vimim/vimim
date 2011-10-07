@@ -25,10 +25,10 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
 "  Usage: vim i vimimhelp ctrl+6 ctrl+6
-"    (1) [vim normal mode]  gi             (for menuless input)
-"    (2) [vim normal mode]  n              (for slash search)
-"    (3) [vim insert mode]  ctrl+6         (for onekey omni popup)
-"    (4) [vim insert mode]  ctrl+\         (for dynamic chinese mode)
+"    (1) [vim normal mode]  gi      (for menuless chinese input)
+"    (2) [vim normal mode]  n       (for menuless slash search)
+"    (3) [vim insert mode]  ctrl+6  (for onekey omni popup)
+"    (4) [vim insert mode]  ctrl+\  (for dynamic chinese mode)
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -119,7 +119,6 @@ function! s:vimim_start_session()
     let s:ui.im = ''
     let s:ui.root = ''
     let s:ui.keycode = ''
-    let s:ui.statusline = ''
     let s:ui.has_dot = 0
     let s:ui.frontends = []
     let s:backend = {}
@@ -741,13 +740,13 @@ function! IMName()
     return ""
 endfunction
 
-function! s:vimim_get_title(digit)
+function! s:vimim_get_title()
     let statusline = s:space
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
     elseif has_key(s:im_keycode, s:ui.im)
         let im_in_chinese = s:backend[s:ui.root][s:ui.im].chinese
-        if a:digit
+        if len(s:hjkl_n)
             let im_in_chinese = s:vimim_chinese('4corner')
         endif
         let statusline .= im_in_chinese
@@ -790,13 +789,12 @@ function! s:vimim_get_title(digit)
 endfunction
 
 function! s:vimim_statusline()
-    let s:ui.statusline = s:vimim_get_title(0)
     let input_mode  = get(split(s:vimim_chinese_input_mode,','),0)
     let punctuation = s:chinese_punctuation ? 'fullwidth' : 'halfwidth'
     let punctuation = s:vimim_chinese(punctuation)
     let statusline  = s:vimim_chinese('chinese')
     let statusline .= s:vimim_chinese(input_mode)
-    let statusline .= s:ui.statusline . punctuation
+    let statusline .= s:vimim_get_title() . punctuation
     let statusline .= s:space . "VimIM"
     return statusline
 endfunction
@@ -1271,7 +1269,7 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 function! g:vimim_title()
     " titlestring works if terminal supports setting window titles
     " [all GUI versions] [Win32 console] [non-empty t_ts] [!screen]
-    let title = s:logo . s:vimim_get_title(0)
+    let title = s:logo . s:vimim_get_title()
     if s:menuless && empty(s:touch_me_not)
         let &titlestring = title  . s:space . s:today
     else
@@ -1324,8 +1322,7 @@ function! s:vimim_set_titlestring(cursor)
         let s:cursor_at_menuless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
         let title = keyboard .'  '. left . hightlight . right
-        let d = len(s:hjkl_n) ? 1 : 0
-        let &titlestring = s:logo[:4] . s:vimim_get_title(d) .' '. title
+        let &titlestring = s:logo[:4] . s:vimim_get_title() .' '. title
     else
         call g:vimim_title()
     endif
