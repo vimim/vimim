@@ -1603,7 +1603,6 @@ function! s:vimim_chinesemode_warmup()
         inoremap<expr><C-^> <SID>vimim_punctuation_toggle()
         call s:vimim_punctuation_mapping()
     endif
-    inoremap<silent><expr><C-H> <SID>VimIMSwitch()
     sil!call s:vimim_start()
     sil!call g:vimim_title()
 endfunction
@@ -1657,7 +1656,6 @@ endfunction
 
 function! <SID>VimIMSwitch()
     if len(s:ui.frontends) < 2
-        " always to english   todo
         return <SID>ChineseMode()
     endif
     let custom_im_list = s:vimim_get_custom_im_list()
@@ -4058,8 +4056,7 @@ endfunction
 function! s:vimim_restore_imap()
     highlight! link Cursor NONE
     let keys  = range(10)
-    let keys += split('<Esc> <Space> <BS> <CR> <Bslash>')
-    let keys += split('<Bar> <C-H>')
+    let keys += split('<Esc> <Space> <BS> <CR> <Bslash> <Bar>')
     let keys += keys(s:evils_all)
     let keys += s:valid_keys
     if s:chinese_mode !~ 'dynamic'
@@ -4441,6 +4438,8 @@ function! s:vimim_map_extra_ctrl_h()
         imap <C-H> <C-^>
     elseif s:vimim_map_extra =~ 'ctrl+h_as_ctrl+bslash'
         imap <C-H> <C-Bslash>
+    elseif s:vimim_map_extra =~ 'ctrl+h_to_cycle'
+        imap <C-H> <C-X><C-X>
     endif
 endfunction
 
@@ -4451,6 +4450,8 @@ function! s:vimim_map_extra_ctrl_space()
         elseif s:vimim_map_extra =~ 'ctrl+space_as_ctrl+bslash'
             map  <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
+        elseif s:vimim_map_extra =~ 'ctrl+space_to_cycle'
+            imap <C-Space> <C-X><C-X>
         endif
     elseif has("win32unix")
         if s:vimim_map_extra =~ 'ctrl+space_as_ctrl+6'
@@ -4458,15 +4459,18 @@ function! s:vimim_map_extra_ctrl_space()
         elseif s:vimim_map_extra =~ 'ctrl+space_as_ctrl+bslash'
             map  <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
+        elseif s:vimim_map_extra =~ 'ctrl+space_to_cycle'
+            imap <C-@> <C-X><C-X>
         endif
     endif
 endfunction
 
 function! s:vimim_map_plug_and_play()
     if s:vimim_map =~ 'ctrl+bslash'
-             imap<silent><C-Bslash> <Plug>VimIM
-          noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
-        inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
+           inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
+           imap<silent><C-Bslash> <Plug>VimIM
+        noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
+        inoremap<silent><expr><C-X><C-X> <SID>VimIMSwitch()
     endif
     if s:vimim_map =~ 'ctrl+6'
             inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
