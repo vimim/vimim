@@ -4,8 +4,7 @@
 let s:egg  = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
 let s:egg  = ' $Date$'
 let s:egg  = ' $Revision$'
-let s:url  = ' vimim@googlegroups.com '
-let s:url .= ' http://vim.sf.net/scripts/script.php?script_id=2506'
+let s:url  = ' http://vim.sf.net/scripts/script.php?script_id=2506'
 let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
 let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.html'
 let s:url .= ' http://code.google.com/p/vimim/source/list'
@@ -196,23 +195,21 @@ let s:VimIM += [" ====  easter eggs      ==== {{{"]
 function! s:vimim_egg_vimimhelp()
     let eggs = []
     let default = ":let g:vimim_map = " . string(s:rc["g:vimim_map"])
-    let http = "http://vimim.googlecode.com/svn/trunk/plugin/"
-    let url = split(s:url)
     call add(eggs, '默认热键（Vim正常模式）：  　gi　   无菜单窗中文输入')
     call add(eggs, '默认热键（Vim正常模式）：  　n 　   无菜单窗中文搜索')
     call add(eggs, '默认热键（Vim插入模式）：  ctrl+6   点石成金')
     call add(eggs, '默认热键（Vim插入模式）：  ctrl+\   中文动态')
     call add(eggs, '热键设置：' . default)
     let eggs += [''] + s:vimim_egg_vimimrc() + ['']
-    call add(eggs, "论坛邮箱：" . get(url,0))
-    call add(eggs, "官方网址：" . get(url,1))
-    call add(eggs, "最新程式：" . get(url,2))
-    call add(eggs, "最新主页：" . get(url,3))
-    call add(eggs, "错误报告：" . get(url,4))
-    call add(eggs, "新闻论坛：" . get(url,5))
-    call add(eggs, "海量詞庫：" . http . s:download.bsddb  )
-    call add(eggs, "英文詞庫：" . http . s:download.english)
-    call add(eggs, "四角號碼：" . http . s:download.cjk    )
+    let url = "http://vimim.googlecode.com/svn/trunk/plugin/"
+    call add(eggs, "官方网址：" . get(split(s:url),0))
+    call add(eggs, "最新程式：" . get(split(s:url),1))
+    call add(eggs, "最新主页：" . get(split(s:url),2))
+    call add(eggs, "错误报告：" . get(split(s:url),3))
+    call add(eggs, "新闻论坛：" . get(split(s:url),4))
+    call add(eggs, "海量词库：" . url . s:download.bsddb  )
+    call add(eggs, "英文词库：" . url . s:download.english)
+    call add(eggs, "四角號碼：" . url . s:download.cjk    )
     return map(eggs, 'v:val . s:space')
 endfunction
 
