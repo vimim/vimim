@@ -56,14 +56,14 @@ seven     七 柒
 eight     八 捌
 nine      九 玖
 ten       十 拾
-eleven    十一 十一个
-twelve    十二 十二个
+eleven    十一
+twelve    十二
 numbers   一二三四五六七八九十 壹贰叁肆伍陆柒捌玖拾
 
+tulip     郁金香
 poppy     罂粟花
 jasmine   茉莉花
 rose      玫瑰花
-tulip     郁金香
 camellia  山茶花
 hawthorn  山楂花
 vanilla   香子兰 香草
@@ -73,18 +73,15 @@ lamborghini 兰博基尼
 chrysler    克莱斯勒
 volkswagen  大众汽车
 
-czt        长珠潭
 canton     广州
 hongkong   香港
 macau      澳门
-la         洛杉矶
+losangeles 洛杉矶
 turandot   图兰朵
-america    美国 美洲
 austin     奥斯汀
 australia  澳大利亚 澳洲
 austria    奥地利
 baghdad    巴格达
-bahamas    巴哈马
 belgium    比利时
 california 加利福尼亚
 vietnam    越南
@@ -140,7 +137,7 @@ act 动作 扮演
 action 举动 作用 行为 动作
 activate 激活
 ad 广告
-add 加 添 加上 加入 附加 添加
+add 加 加上 加入 附加 添加
 addition 加法 附加
 address 住址 地址 攀谈 致敬
 adjust 调整
@@ -201,6 +198,12 @@ ammo 弹药 军火
 among 之中
 amount 总计
 amour 恋情 私通 偷情 性爱
+broadvision 宏道资讯
+greencard 绿卡
+backspace 退格键
+space 空白 空间 空格键
+menu 菜单
+menuless 无菜单
 target 目标 靶子 靶标 对准 枪靶 意图
 quota 配额 限额 定额 指标
 goal 球门 终点 目的 目标
@@ -664,7 +667,7 @@ chimney 囱 烟囱
 chimpanzee 黑猩猩
 chin 下巴 下腭 颏
 china 中国 天朝 吃拿
-chinese 汉字 中文 汉语 中文 中国人
+chinese 汉字 中文 汉语 中国人
 chip 芯片
 chlorine 氯
 choice 选择 选项
@@ -684,7 +687,6 @@ city 城市 都市 城 市
 civil 国内 市民
 civilization 文明
 claim 号称 主张
-clap 敲打
 clarkson 克拉克森大学
 class 阶级 年级
 classic 经典 古典
@@ -693,7 +695,7 @@ classroom 教室
 clause 从句 短句
 claw 爪
 clay 泥土 粘土
-clean 干净 清洁
+clean 干净 清洁 整洁
 cleaning 扫除
 clear 清楚 澄清
 clearly 显然 明明
@@ -784,7 +786,7 @@ confirm 确认
 conflict 冲突 矛盾
 confucious 孔夫子
 confuse 混淆
-congratuation 祝贺
+congratulation 祝贺
 conjuncture 结合 连接词
 connect 接合 联络
 connecticut 康涅狄格
@@ -1135,7 +1137,7 @@ envelope 信封 包络
 environment 环境
 envy 妒忌 羡慕
 eq 情商
-equal 公平 相等
+equal 等于 相等 公平
 era 时代
 erase 擦掉 删掉 抹除
 eraser 橡皮
@@ -1221,7 +1223,7 @@ farmer 农夫 农民 农场主
 farther 更远 远一点
 fast 迅速 结实 牢固 快 捷
 fasten 绑 绑札
-fat 肥胖 减肥 脂肪
+fat 肥 肥胖 减肥 脂肪
 fatal 致命
 fatchoy 发财
 fate 命运 宿命
@@ -1347,7 +1349,7 @@ fry 油炸 油煎
 fuck 肏 姦 奸 操 性交 交配 交媾
 fuel 燃料
 fun 开心 玩笑 兴趣
-function 函数 功能
+function 功能 函数
 fund 基金
 funny 滑稽 有趣
 fur 皮毛 裘皮
@@ -1545,7 +1547,7 @@ her 她的
 here 此地 这儿 这里
 hero 英雄
 hi 嗨 你好
-hide 躲避 隐蔽 隐藏
+hide 躲避 隐蔽 隐藏 藏有
 high 高
 higher 更高 越来越高
 highest 最高
@@ -1594,7 +1596,7 @@ house 房 房子
 househusband 全职爸爸 家庭妇男 家庭主夫
 housewife 全职妈妈 家庭主妇
 houston 休斯敦
-how 怎么办 肿么办 怎样 怎么 如何 多么
+how 怎么 如何 多么 怎么办 肿么办
 however 然而 但是 可是
 huge 巨大
 hum 哼哼 嗡嗡
@@ -2001,7 +2003,6 @@ memoranda 备忘录
 memory 记忆 内存 记忆体
 mend 修补 订正 改订
 mention 谈到 提及
-menu 菜单
 mercury 汞
 mere 不过 仅仅
 merge 浸淹
@@ -2100,11 +2101,9 @@ my 我的
 myanmar 缅甸
 myself 我自己
 nagoya 名古屋
-nail 指甲
-nail 钉
-nake 裸体 裸露
-naked 裸
-name 名 名字 姓名 名称 命名
+nail 钉 钉子 趾甲 指甲
+nake 裸 裸体 裸露
+naming 名 名字 姓名 名称 命名
 narcissism 自恋 自赏 自我陶醉
 narrow 狭隘 狭窄
 nasty 肮脏 卑鄙 讨厌
@@ -2116,7 +2115,6 @@ navy 军舰 海军
 nazi 卐 纳粹
 near 接近 附近
 nearly 几乎 差不多 近乎
-neat 整洁
 nebraska 内布拉斯加
 necessary 必要的 必须的
 neck 颈 脖子
@@ -2173,7 +2171,8 @@ note 【注】 注意 备忘录 笔记
 notebook 笔记簿 笔记本电脑
 notice 注意 公告 通知
 novel 小说 新奇
-now   inow   现在
+now   现在 inow
+today 今天 itoday
 nude 裸 裸体 裸妹
 number 数字 号码
 numerous 许多 众多
@@ -2209,7 +2208,7 @@ often 经常 常常 时常 往往 每每 不时
 ohio 俄亥俄
 oil 油
 oklahoma 俄克拉何马
-old 年老 老 旧
+old 老 旧 年老
 oldman 老翁
 olive 撖榄
 olympic 奥林匹克
@@ -2404,8 +2403,8 @@ plastic 塑料
 plat 平台
 plate 底片 板 碟
 platform 月台
-play 玩 玩耍 演奏 戏
-player 玩家
+play 玩 玩耍 演奏
+player 玩家 玩法
 pleasant 舒适 愉快
 please 请
 pleasure 快乐 高兴
@@ -2878,7 +2877,7 @@ skeleton 骨架 骨骼 尸骨 骨头架子
 ski 滑雪 雪撬
 skilful 巧妙
 skill 技巧 技能 技艺 本事 身手 本领 熟练 手法 功夫
-skin 皮 肤 皮肤
+skin 皮 皮肤
 skirt 裙 裙子
 skull 髅
 sky 天 天空
@@ -2949,7 +2948,6 @@ sour 酸
 source 源
 southafrica 南非
 sow 播种
-space 空白 空间 空格键
 spade 铲
 spain 西班牙
 spanish 西班牙文 西班牙的
@@ -3188,7 +3186,6 @@ thus 于是 如此
 tibet 西藏 吐蕃
 ticket 车票 入场券
 tide 潮 潮流 时势
-tidy 整洁
 tie 领带
 tiger 老虎
 tile 瓦砖
@@ -3205,7 +3202,6 @@ title 标题 头衔
 to 到
 toast 烤面包
 tobacco 烟草
-today itoday 今天
 toe 脚趾 鞋尖
 toefl 托福
 tofu 豆腐
@@ -3265,8 +3261,8 @@ triangle 三角形
 trick 诡计 骗术
 trigger 激活 触发 启动 扳机
 trip 旅行
-triumph 凯旋 胜利
-troop 军队
+troop 军队 部队
+arms 武器 军火 军备 武装 兵器
 trouble 麻烦 烦恼 扰乱
 trouser 裤子
 truck 卡车
@@ -3296,7 +3292,7 @@ uganda 乌干达
 ugly 丑 难看
 umbrella 伞 雨伞
 umpire 公正人
-uncle 伯 叔 舅
+uncle 舅舅 叔叔 伯伯
 under 之下
 understand 明白 了解 懂得
 unfortunate 不幸 倒霉
@@ -3359,7 +3355,7 @@ verse 诗句 韵文
 version 版本
 vertical 纵
 verticle 竖 垂直 绝顶
-very 很 非常 极其
+very 非常 很
 vessel 容器 器皿 船只
 vest 背心
 veteran 老兵
@@ -3368,7 +3364,7 @@ vice 副
 victory 胜利 凯旋
 video 视频 录像
 view 风景 意见 见解
-vigra 威哥
+vigra 威哥 威妹 伟哥
 village 村庄 乡
 violate 破坏 侵害 污辱
 violent 猛烈 暴力
@@ -3418,7 +3414,6 @@ way 办法 方案 方式 方法 道路
 we 我们
 weak 有病 虚弱
 wealth 财富
-weapon 武器
 wear 疲乏 磨损 穿戴
 weather 天气 气候
 weave 织
@@ -3429,7 +3424,7 @@ welcome 欢迎 迎接
 well 好 井
 wet 湿
 whale 鲸
-what 什么 怎样
+what 什么
 whatever 什么都 无论 什么都
 wheat 小麦
 wheel 轮 毂
@@ -3518,7 +3513,7 @@ yet 还 仍然
 yield 供给 产
 yoga 瑜珈
 yosemite 优胜美地 国家公园
-you 你
+you 你 妳
 yuga 瑜伽
 zebra 斑马
 zinc 锌
@@ -3526,5 +3521,3 @@ zombie 僵尸 行尸走肉
 zone 区域 地带
 zoo 动物园
 zoology 动物学
-
-
