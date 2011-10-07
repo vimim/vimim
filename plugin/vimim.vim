@@ -59,7 +59,6 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        :redir @p
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -3288,7 +3287,7 @@ function! s:vimim_set_cloud_if_http_executable(im)
 endfunction
 
 function! s:vimim_check_http_executable()
-    let http_executable = ""
+    let http_exe = ""
     if s:vimim_cloud < 0 && len(s:vimim_mycloud) < 3
         return 0
     elseif len(s:http_exe) > 3
@@ -3303,20 +3302,20 @@ function! s:vimim_check_http_executable()
         endif
         let ret = libcall(libvimim, "do_geturl", "__isvalid")
         if ret ==# "True"
-            let http_executable = libvimim
+            let http_exe = libvimim
         endif
     endif
     " step 2 of 4: try to use dynamic python:
-    if empty(http_executable)
+    if empty(http_exe)
         if has('python')                     " +python/dyn
-            let http_executable = 'Python2 Interface to Vim'
+            let http_exe = 'Python2 Interface to Vim'
         endif
         if has('python3') && &relativenumber " +python3/dyn
-            let http_executable = 'Python3 Interface to Vim'
+            let http_exe = 'Python3 Interface to Vim'
         endif
     endif
     " step 3 of 4: try to find wget
-    if empty(http_executable) || has("macunix")
+    if empty(http_exe) || has("macunix")
         let wget = 'wget'
         let wget_exe = s:plugin . 'wget.exe'
         if filereadable(wget_exe) && executable(wget_exe)
@@ -3324,20 +3323,20 @@ function! s:vimim_check_http_executable()
         endif
         if executable(wget)
             let wget_option = " -qO - --timeout 20 -t 10 "
-            let http_executable = wget . wget_option
+            let http_exe = wget . wget_option
         endif
     endif
     " step 4 of 4: try to find curl if wget not available
-    if empty(http_executable) && executable('curl')
-        let http_executable = "curl -s "
+    if empty(http_exe) && executable('curl')
+        let http_exe = "curl -s "
     endif
-    let s:http_exe = copy(http_executable)
-    return http_executable
+    let s:http_exe = copy(http_exe)
+    return http_exe
 endfunction
 
 function! s:vimim_get_cloud(keyboard, cloud)
     if a:keyboard !~ s:valid_keyboard
-    \|| empty(a:cloud) 
+    \|| empty(a:cloud)
     \|| match(s:vimim_cloud, a:cloud) < 0
         return []
     endif
@@ -3601,9 +3600,9 @@ function! s:vimim_scan_backend_mycloud()
     let s:mycloud = 0
     let s:mycloud_arg  = 0
     let s:mycloud_func = 0
-    let s:mycloud_host = 0
     let s:mycloud_mode = 0
-    let s:mycloud_port = 0
+    let s:mycloud_host = "localhost"
+    let s:mycloud_port = 10007
     if len(s:vimim_mycloud) < 2
         return
     endif
@@ -3697,8 +3696,8 @@ function! s:vimim_check_mycloud_plugin_libcall()
     " we do plug-n-play for libcall(), not for system()
     let cloud = s:vimim_get_libvimim()
     if !empty(cloud)
-        let s:mycloud_mode = "libcall"
         let s:mycloud_arg = ""
+        let s:mycloud_mode = "libcall"
         let s:mycloud_func = 'do_getlocal'
         if filereadable(cloud)
             if has("win32")
@@ -3771,10 +3770,6 @@ function! s:vimim_check_mycloud_plugin_url()
                 let s:mycloud_port = part[2]
             elseif lenpart > 1
                 let s:mycloud_host = part[1]
-                let s:mycloud_port = 10007
-            else
-                let s:mycloud_host = "localhost"
-                let s:mycloud_port = 10007
             endif
             try
                 call s:vimim_mycloud_python_init()
@@ -3789,28 +3784,24 @@ function! s:vimim_check_mycloud_plugin_url()
             endtry
         endif
     elseif part[0] ==# "dll"
+        let base = 0
         if len(part[1]) == 1
             let base = 1
-        else
-            let base = 0
         endif
         " provide function name
+        let s:mycloud_func = 'do_getlocal'
         if lenpart >= base+4
             let s:mycloud_func = part[base+3]
-        else
-            let s:mycloud_func = 'do_getlocal'
         endif
         " provide argument
+        let s:mycloud_arg = ""
         if lenpart >= base+3
             let s:mycloud_arg = part[base+2]
-        else
-            let s:mycloud_arg = ""
         endif
         " provide the dll
+        let cloud = part[1]
         if base == 1
-            let cloud = part[1] . ':' . part[2]
-        else
-            let cloud = part[1]
+            let cloud .= ':' . part[2]
         endif
         if filereadable(cloud)
             let s:mycloud_mode = "libcall"
@@ -3849,7 +3840,7 @@ function! s:vimim_get_mycloud_plugin(keyboard)
     try
         let output = s:vimim_access_mycloud(s:mycloud, a:keyboard)
     catch
-        sil!call s:vimim_debug('alert', 'mycloud=', v:exception)
+        sil!call s:vimim_debug('alert', 'mycloud', v:exception)
     endtry
     if empty(output)
         return []
@@ -3861,9 +3852,8 @@ function! s:vimim_get_mycloud_plugin(keyboard)
         if s:localization
             let chinese = s:vimim_i18n_read(chinese)
         endif
-        if empty(chinese) || get(item_list,1,-1)<0
-            " bypass the breakpoint line which have -1
-            continue
+        if empty(chinese) || get(item_list,1,-1) < 0
+            continue  " bypass the breakpoint line which have -1
         endif
         let extra_text = get(item_list,2)
         let english = a:keyboard[get(item_list,1):]
@@ -3996,7 +3986,7 @@ function! s:vimim_save_vimrc()
     let s:laststatus  = &laststatus
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
-    let s:shellslash  = &shellslash 
+    let s:shellslash  = &shellslash
     let s:lazyredraw  = &lazyredraw
 endfunction
 
@@ -4519,4 +4509,5 @@ sil!call s:vimim_scan_backend_cloud()
 sil!call s:vimim_plug_and_play()
 sil!call s:vimim_ctrl_h_ctrl_space()
 " ============================================= }}}
+:redir @p
 Debug s:vimim_egg_vimim()
