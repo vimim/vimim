@@ -2328,7 +2328,7 @@ function! s:vimim_get_english(keyboard)
     let grep = '^' . keyboard . '\s\+'
     let cursor = match(s:english.lines, grep)
     " [pinyin]  cong  => cong 
-    " [english] congr => congratuation  haag => haagendazs
+    " [english] congr => congratulation  haag => haagendazs
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
     if cursor < 0 && len(keyboard) > 3 && len(keyboards)
         let grep = '^' . keyboard
