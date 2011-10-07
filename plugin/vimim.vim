@@ -93,11 +93,10 @@ endfunction
 function! s:vimim_start_session()
     let s:logo = "VimIM　中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
+    let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:cursor_at_menuless = 0
     let s:pumheight = 10
     let s:pumheight_saved = &pumheight
-    let s:smart_single_quotes = 1
-    let s:smart_double_quotes = 1
     let s:current_positions = [0,0,1,0]
     let s:start_row_before = 0
     let s:start_column_before = 1
@@ -1055,15 +1054,16 @@ function! <SID>vimim_get_quote(quote)
         let quote = '\<C-Y>'
     endif
     let pairs = split(s:evils[key], '\zs')
-    if a:quote == 1       " the 3rd choice
-        let quote = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
+    if a:quote == 1
         if s:onekey
-            let s:smart_single_quotes += 1
-            let quote .= get(pairs, s:smart_single_quotes % 2)
+            let s:smart_quotes.single += 1
+            let quote .= get(pairs, s:smart_quotes.single % 2)
+        else    " the 3rd choice
+            let quote = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
         endif
     elseif a:quote == 2
-        let s:smart_double_quotes += 1
-        let quote .= get(pairs, s:smart_double_quotes % 2)
+        let s:smart_quotes.double += 1
+        let quote .= get(pairs, s:smart_quotes.double % 2)
     endif
     sil!exe 'sil!return "' . quote . '"'
 endfunction
