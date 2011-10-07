@@ -93,8 +93,7 @@ function! s:vimim_initialize_session()
     let s:logo = "VimIM　中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
     let s:cursor_at_menuless = 0
-    let s:pumheight = 10
-    let s:pumheight_saved = &pumheight
+    let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
     let s:start_row_before = 0
     let s:start_column_before = 1
@@ -104,7 +103,6 @@ function! s:vimim_initialize_session()
     let s:imode_pinyin = 0
     let s:abcd = split("'abcdvfgsz",'\zs')
     let s:qwer = split("pqwertyuio",'\zs')
-    let s:seamless_positions = []
     let   az_list = range(char2nr('a'), char2nr('z'))
     let   AZ_list = range(char2nr('A'), char2nr('Z'))
     let s:az_list = map(az_list, "nr2char(".'v:val'.")")
@@ -112,6 +110,7 @@ function! s:vimim_initialize_session()
     let s:Az_list = s:az_list + s:AZ_list
     let s:valid_keys = s:az_list
     let s:valid_keyboard = ""
+    let s:pumheights = { 'current' : 10, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'directory':{}, 'datafile':{}, 'cloud':{} }
     let s:ui = { 'root':'', 'im':'', 'has_dot':0, 'frontends':[] }
@@ -679,11 +678,11 @@ function! s:vimim_skin(color)
         let one_row_menu = 1
         let &pumheight = 5
     endif
-    let s:pumheight = copy(&pumheight)
+    let s:pumheights.current = copy(&pumheight)
     if s:touch_me_not
         let &pumheight = 0
     elseif s:hjkl_l
-        let &pumheight = s:hjkl_l%2 ? 0 : s:pumheight
+        let &pumheight = s:hjkl_l%2 ? 0 : s:pumheights.current
     endif
     if s:vimim_skin =~ 'color'
         call s:vimim_omni_color()
@@ -4000,7 +3999,7 @@ function! s:vimim_restore_vimrc()
     let &statusline  = s:statusline
     let &shellslash  = s:shellslash
     let &lazyredraw  = s:lazyredraw
-    let &pumheight   = s:pumheight_saved
+    let &pumheight   = s:pumheights.saved
 endfunction
 
 function! s:vimim_start()
