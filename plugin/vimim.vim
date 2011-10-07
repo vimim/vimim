@@ -56,7 +56,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -367,12 +367,15 @@ function! s:vimim_game_hjkl(keyboard)
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
     elseif keyboard ==# "'''''"
         let char_before = s:vimim_char_before()
-        if empty(char_before) && !empty(s:vimim_cjk())
-            return s:vimim_cjk_match('u') " 214 unicode index
-        else
-            let ddddd = char2nr(char_before)
-            return s:vimim_unicode_list(ddddd)
+        if empty(char_before) 
+            if empty(s:vimim_cjk())
+                let char_before = '一'
+            else " 214 standard unicode index
+                return s:vimim_cjk_match('u')
+            endif
         endif
+        let ddddd = char2nr(char_before)
+        return s:vimim_unicode_list(ddddd)
     elseif !empty(poem)
         " [hjkl] flirt any non-dot file in the hjkl directory
         let results = s:vimim_readfile(poem)
