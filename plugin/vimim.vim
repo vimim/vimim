@@ -1370,6 +1370,9 @@ endfunction
 function! <SID>vimim_esc()
     let key = '\<Esc>'
     if s:onekey
+        if s:menuless
+            :sil!y+
+        endif
         sil!call s:vimim_stop()
     elseif pumvisible()
         let key = s:vimim_onekey_esc()
