@@ -129,15 +129,15 @@ function! s:vimim_start_session()
 endfunction
 
 function! s:vimim_one_backend_hash()
-    let one_backend_hash = {}
-    let one_backend_hash.root = ''
-    let one_backend_hash.im = ''
-    let one_backend_hash.name = ''
-    let one_backend_hash.chinese = ''
-    let one_backend_hash.directory = ''
-    let one_backend_hash.lines = []
-    let one_backend_hash.keycode = "[0-9a-z']"
-    return one_backend_hash
+    let backends = {}
+    let backends.root = ''
+    let backends.im = ''
+    let backends.name = ''
+    let backends.chinese = ''
+    let backends.directory = ''
+    let backends.lines = []
+    let backends.keycode = "[0-9a-z']"
+    return backends
 endfunction
 
 function! s:vimim_dictionary_keycodes()
@@ -164,7 +164,8 @@ function! s:vimim_dictionary_keycodes()
 endfunction
 
 function! s:vimim_set_keycode()
-    for im in split('wu erbi yong nature boshiamy phonetic array30')
+    let dot_im = 'wu erbi yong nature boshiamy phonetic array30'
+    for im in split(dot_im)
         if s:ui.im == im
             let s:ui.has_dot = 1  " has english dot in datafile
             let s:vimim_chinese_input_mode .= ',no-punctuation'
@@ -213,7 +214,6 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, '默认热键（Vim正常模式）：  　n 　   无菜单窗中文搜索')
     call add(eggs, '默认热键（Vim插入模式）：  ctrl+6   点石成金')
     call add(eggs, '默认热键（Vim插入模式）：  ctrl+\   中文动态')
-    call add(eggs, '默认热键（Vim插入模式）：  ctrl+xx  输入法切换')
     call add(eggs, '热键设置：' . default)
     let eggs += [''] + s:vimim_egg_vimimrc() + ['']
     call add(eggs, "海量詞庫：" . http . s:download.bsddb  )
@@ -393,7 +393,7 @@ function! s:vimim_game_hjkl(keyboard)
         " [hjkl] flirt any non-dot file in the hjkl directory
         let results = s:vimim_readfile(poem)
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
-        " [eggs] hunt classic easter egg ... vim<C-6>
+        " [hidden] hunt classic easter egg ... vim<C-6>
         let results = s:vimim_easter_chicken(keyboard)
     elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
         " [clouds] all clouds for any input: fuck''''
