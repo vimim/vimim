@@ -1786,6 +1786,7 @@ function! s:vimim_dictionary_numbers()
     let s:numbers.9 = "九玖⑼⑨壬"
     let s:numbers.0 = "〇零⑽⑩癸"
     let s:quantifiers = copy(s:numbers)
+    let s:quantifiers.2 .= "两俩"
     let s:quantifiers.b = "百佰步把包杯本笔部班"
     let s:quantifiers.c = "次餐场串处床"
     let s:quantifiers.d = "第度点袋道滴碟顶栋堆对朵堵顿"
@@ -1799,7 +1800,7 @@ function! s:vimim_dictionary_numbers()
     let s:quantifiers.n = "年"
     let s:quantifiers.p = "磅盆瓶排盘盆匹片篇撇喷"
     let s:quantifiers.q = "千仟群"
-    let s:quantifiers.r = "日"
+    let s:quantifiers.r = "日人"
     let s:quantifiers.s = "十拾时升艘扇首双所束手"
     let s:quantifiers.t = "天吨条头通堂趟台套桶筒贴"
     let s:quantifiers.w = "万位味碗窝晚微"
@@ -2326,10 +2327,11 @@ function! s:vimim_get_english(keyboard)
     " [sql] select english from vimim.txt
     let grep = '^' . keyboard . '\s\+'
     let cursor = match(s:english.lines, grep)
-    " [pinyin] cong for pinyin only and congr => congratuation
+    " [pinyin]  cong  => cong 
+    " [english] congr => congratuation  haag => haagendazs
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
-    if cursor < 0 && len(keyboard) > 3
-        let grep = '^' . keyboard   " both haag and haagendazs
+    if cursor < 0 && len(keyboard) > 3 && len(keyboards)
+        let grep = '^' . keyboard
         let cursor = match(s:english.lines, grep)
     endif
     let oneline = ""
