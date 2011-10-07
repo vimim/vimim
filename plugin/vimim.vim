@@ -29,7 +29,6 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (2) [vim normal mode]  n              (for slash search)
 "    (3) [vim insert mode]  ctrl+6         (for onekey omni popup)
 "    (4) [vim insert mode]  ctrl+\         (for dynamic chinese mode)
-"    (5) [vim insert mode]  ctrl+x ctrl+x  (for input methods switch)
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -215,7 +214,6 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, '默认热键（Vim正常模式）：  　n 　   无菜单窗中文搜索')
     call add(eggs, '默认热键（Vim插入模式）：  ctrl+6   点石成金')
     call add(eggs, '默认热键（Vim插入模式）：  ctrl+\   中文动态')
-    call add(eggs, '默认热键（Vim插入模式）：  ctrl+xx  输入法切换')
     call add(eggs, '热键设置：' . default)
     let eggs += [''] + s:vimim_egg_vimimrc() + ['']
     call add(eggs, "海量詞庫：" . http . s:download.bsddb  )
