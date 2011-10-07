@@ -4434,7 +4434,7 @@ function! s:vimim_ctrl_h_ctrl_space()
         imap <C-H> <C-^>
     elseif s:vimim_map_extra =~ 'ctrl+h_as_ctrl+bslash'
         imap <C-H> <C-Bslash>
-    elseif s:vimim_map_extra =~ 'ctrl+h_to_clycle'
+    elseif s:vimim_map_extra =~ 'ctrl+h_to_cycle'
         imap <C-H> <C-X><C-X>
     endif
     if has("gui_running")
@@ -4443,7 +4443,7 @@ function! s:vimim_ctrl_h_ctrl_space()
         elseif s:vimim_map_extra =~ 'ctrl+space_as_ctrl+bslash'
             map  <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
-        elseif s:vimim_map_extra =~ 'ctrl+space_to_clycle'
+        elseif s:vimim_map_extra =~ 'ctrl+space_to_cycle'
             imap <C-Space> <C-X><C-X>
         endif
     elseif has("win32unix")
@@ -4452,7 +4452,7 @@ function! s:vimim_ctrl_h_ctrl_space()
         elseif s:vimim_map_extra =~ 'ctrl+space_as_ctrl+bslash'
             map  <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
-        elseif s:vimim_map_extra =~ 'ctrl+space_to_clycle'
+        elseif s:vimim_map_extra =~ 'ctrl+space_to_cycle'
             imap <C-@> <C-X><C-X>
         endif
     endif
