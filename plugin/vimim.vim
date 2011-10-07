@@ -1005,10 +1005,9 @@ function! <SID>vimim_chinese_punctuation_map(key)
         endif
     endif
     if pumvisible()
+        let key = '\<C-Y>' . key
         if a:key == ";"  " the 2nd choice
             let key = '\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
-        else
-            let key = '\<C-Y>' . key
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -1056,12 +1055,11 @@ function! <SID>vimim_get_quote(quote)
         let quote = '\<C-Y>'
     endif
     let pairs = split(s:evils[key], '\zs')
-    if a:quote == 1
+    if a:quote == 1       " the 3rd choice
+        let quote = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
         if s:onekey
             let s:smart_single_quotes += 1
             let quote .= get(pairs, s:smart_single_quotes % 2)
-        else  " the 3rd choice
-            let quote = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
         endif
     elseif a:quote == 2
         let s:smart_double_quotes += 1
@@ -1099,7 +1097,7 @@ endfunction
 function! s:vimim_pageup_pagedown()
     let match_list = s:match_list
     let length = len(match_list)
-    let one_page = &pumheight<6 ? 5 : 10
+    let one_page = &pumheight < 6 ? 5 : 10
     if length > one_page
         let page = s:pageup_pagedown * one_page
         let partition = page ? page : length+page
