@@ -56,7 +56,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -1580,16 +1580,46 @@ endfunction
 let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
-function! s:vimim_chinesemode_action()
+function! s:vimim_chinese_mode(switch)
+    if a:switch
+        sil!call s:vimim_chinesemode_start()
+    else
+        sil!call s:vimim_chinesemode_stop()
+    endif
+    return ""
+endfunction
+
+function! s:vimim_chinesemode_warmup()
+    let s:chinese_mode = 'dynamic'
+    if s:vimim_chinese_input_mode =~ 'static'
+        let s:chinese_mode = 'static'
+    endif
+    let s:ui.root = get(s:frontends,0)
+    let s:ui.im = get(s:frontends,1)
+    sil!call s:vimim_set_statusline()
     sil!call s:vimim_set_plugin_conflict()
     sil!call s:vimim_super_reset()
     if s:vimim_chinese_input_mode !~ 'no-punctuation'
         inoremap<expr><C-^> <SID>vimim_punctuation_toggle()
         call s:vimim_punctuation_mapping()
     endif
+    inoremap<silent><expr><C-H> <SID>VimIMSwitch()
     sil!call s:vimim_start()
-    let action = ""
-    call g:vimim_title()
+    sil!call g:vimim_title()
+endfunction
+
+function! s:vimim_chinesemode_stop()
+    sil!call s:vimim_stop()
+    sil!call s:vimim_restore_plugin_conflict()
+    sil!call s:vimim_map_extra_ctrl_h()
+    imap<silent><C-^> <Plug>VimimOneKey
+    if mode() == 'n'
+        :redraw!
+    endif
+endfunction
+
+function! s:vimim_chinesemode_start()
+    sil!call s:vimim_chinesemode_warmup()
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
@@ -1619,14 +1649,15 @@ function! s:vimim_chinesemode_action()
             \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . char
         endfor
         if !pumvisible()
-            let action = s:vimim_static_action(action)
+            return s:vimim_static_action("")
         endif
     endif
-    sil!exe 'sil!return "' . action . '"'
+    return ""
 endfunction
 
 function! <SID>VimIMSwitch()
     if len(s:ui.frontends) < 2
+        " always to english   todo
         return <SID>ChineseMode()
     endif
     let custom_im_list = s:vimim_get_custom_im_list()
@@ -1653,41 +1684,6 @@ function! <SID>VimIMSwitch()
     return s:vimim_chinese_mode(switch)
 endfunction
 
-function! s:vimim_get_custom_im_list()
-    let custom_im_list = []
-    if s:vimim_toggle_list =~ ","
-        let custom_im_list = split(s:vimim_toggle_list, ",")
-    elseif len(s:ui.frontends) > 1
-        for frontends in s:ui.frontends
-            let frontend_im = get(frontends, 1)
-            call add(custom_im_list, frontend_im)
-        endfor
-    endif
-    return custom_im_list
-endfunction
-
-function! s:vimim_chinese_mode(switch)
-    let action = ""
-    if empty(a:switch)
-        sil!call s:vimim_stop()
-        sil!call s:vimim_restore_plugin_conflict()
-        imap<silent><C-^> <Plug>VimimOneKey
-        if mode() == 'n'
-            :redraw!
-        endif
-    else
-        let s:chinese_mode = 'dynamic'
-        if s:vimim_chinese_input_mode =~ 'static'
-            let s:chinese_mode = 'static'
-        endif
-        let s:ui.root = get(s:frontends,0)
-        let s:ui.im = get(s:frontends,1)
-        call s:vimim_set_statusline()
-        let action = s:vimim_chinesemode_action()
-    endif
-    sil!exe 'sil!return "' . action . '"'
-endfunction
-
 function! <SID>ChineseMode()
     if s:onekey
         sil!call s:vimim_stop()
@@ -1702,6 +1698,19 @@ function! <SID>ChineseMode()
     endif
     let switch = &omnifunc ==# 'VimIM' ? 0 : 1
     return s:vimim_chinese_mode(switch)
+endfunction
+
+function! s:vimim_get_custom_im_list()
+    let custom_im_list = []
+    if s:vimim_toggle_list =~ ","
+        let custom_im_list = split(s:vimim_toggle_list, ",")
+    elseif len(s:ui.frontends) > 1
+        for frontends in s:ui.frontends
+            let frontend_im = get(frontends, 1)
+            call add(custom_im_list, frontend_im)
+        endfor
+    endif
+    return custom_im_list
 endfunction
 
 function! <SID>vimim_punctuation_toggle()
@@ -4049,7 +4058,8 @@ endfunction
 function! s:vimim_restore_imap()
     highlight! link Cursor NONE
     let keys  = range(10)
-    let keys += split('<Esc> <BS> <Space> <CR> <Bar> <Bslash>')
+    let keys += split('<Esc> <Space> <BS> <CR> <Bslash>')
+    let keys += split('<Bar> <C-H>')
     let keys += keys(s:evils_all)
     let keys += s:valid_keys
     if s:chinese_mode !~ 'dynamic'
@@ -4426,7 +4436,7 @@ endfunction
 let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
-function! s:vimim_ctrl_h_ctrl_space()
+function! s:vimim_map_extra_ctrl_h()
     if s:vimim_map_extra =~ 'ctrl+h_as_ctrl+6'
         imap <C-H> <C-^>
     elseif s:vimim_map_extra =~ 'ctrl+h_as_ctrl+bslash'
@@ -4434,6 +4444,9 @@ function! s:vimim_ctrl_h_ctrl_space()
     elseif s:vimim_map_extra =~ 'ctrl+h_to_cycle'
         imap <C-H> <C-X><C-X>
     endif
+endfunction
+
+function! s:vimim_map_extra_ctrl_space()
     if has("gui_running")
         if s:vimim_map_extra =~ 'ctrl+space_as_ctrl+6'
             imap <C-Space> <C-^>
@@ -4455,7 +4468,7 @@ function! s:vimim_ctrl_h_ctrl_space()
     endif
 endfunction
 
-function! s:vimim_plug_and_play()
+function! s:vimim_map_plug_and_play()
     if s:vimim_map =~ 'ctrl+bslash'
         inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
         imap<silent><C-Bslash> <Plug>VimIM
@@ -4499,8 +4512,9 @@ sil!call s:vimim_initialize_session()
 sil!call s:vimim_scan_backend_mycloud()
 sil!call s:vimim_scan_backend_embedded()
 sil!call s:vimim_scan_backend_cloud()
-sil!call s:vimim_plug_and_play()
-sil!call s:vimim_ctrl_h_ctrl_space()
+sil!call s:vimim_map_plug_and_play()
+sil!call s:vimim_map_extra_ctrl_h()
+sil!call s:vimim_map_extra_ctrl_space()
 " ============================================= }}}
 :redir @p
 Debug s:vimim_egg_vimim()
