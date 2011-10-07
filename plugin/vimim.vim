@@ -2451,9 +2451,8 @@ function! s:vimim_quanpin_transform(pinyin)
     endwhile
     if pinyinstr[0] == "'"
         return pinyinstr[1:]
-    else
-        return pinyinstr
     endif
+    return pinyinstr
 endfunction
 
 function! s:vimim_create_quanpin_table()
@@ -2474,10 +2473,11 @@ function! s:vimim_create_quanpin_table()
 endfunction
 
 function! s:vimim_more_pinyin_candidates(keyboard)
-    " [purpose] if not english, make standard layout for popup menu
-    " input  =>  mamahuhu
-    " output =>  mamahu, mama
-    if !empty(s:vimim_shuangpin) || !empty(s:english.line)
+    if empty(s:vimim_shuangpin) && empty(s:english.line)
+        " [purpose] make standard layout for popup menu
+        " input  =>  mamahuhu
+        " output =>  mamahu, mama
+    else
         return []
     endif
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
@@ -2582,9 +2582,8 @@ function! s:vimim_shuangpin_transform(keyboard)
     endwhile
     if output[0] == "'"
         return output[1:]
-    else
-        return output
     endif
+    return output
 endfunction
 
 function! s:vimim_create_shuangpin_table(rule)
@@ -2659,8 +2658,8 @@ endfunction
 function! s:vimim_shuangpin_generic()
     " generate the default value of shuangpin table
     let shengmu_list = {}
-    for shengmu in ["b", "p", "m", "f", "d", "t", "l", "n", "g",
-                \"k", "h", "j", "q", "x", "r", "z", "c", "s", "y", "w"]
+    let sheng_mu = "b p m f d t l n g k h j q x r z c s y w"
+    for shengmu in split(sheng_mu)
         let shengmu_list[shengmu] = shengmu
     endfor
     let shengmu_list["'"] = "o"
@@ -2668,8 +2667,8 @@ function! s:vimim_shuangpin_generic()
     for yunmu in ["a", "o", "e", "i", "u", "v"]
         let yunmu_list[yunmu] = yunmu
     endfor
-    let s:shuangpin_rule = [shengmu_list, yunmu_list]
-    return s:shuangpin_rule
+    let shuangpin_rule = [shengmu_list, yunmu_list]
+    return shuangpin_rule
 endfunction
 
 function! s:vimim_shuangpin_abc(rule)
@@ -2954,12 +2953,12 @@ def parsefunc(keyb, host="localhost", port=10007):
 EOF
 endfunction
 
-function! s:vimim_mycloud_python_client(cmd, host, port)
+function! s:vimim_mycloud_python_client(cmd)
 :sil!python << EOF
 try:
-    HOST = vim.eval("a:host")
-    PORT = int(vim.eval("a:port"))
     cmd  = vim.eval("a:cmd")
+    HOST = vim.eval("s:mycloud_host")
+    PORT = int(vim.eval("s:mycloud_port"))
     ret = parsefunc(cmd, HOST, PORT)
     vim.command('return "%s"' % ret)
 except vim.error:
@@ -3654,9 +3653,7 @@ function! s:vimim_access_mycloud(cloud, cmd)
             let ret = libcall(a:cloud, s:mycloud_func, arg." ".a:cmd)
         endif
     elseif s:mycloud_mode == "python"
-        let host = s:mycloud_host
-        let port = s:mycloud_port
-        let ret = s:vimim_mycloud_python_client(a:cmd, host, port)
+        let ret = s:vimim_mycloud_python_client(a:cmd)
     elseif s:mycloud_mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:mycloud_mode == "www"
