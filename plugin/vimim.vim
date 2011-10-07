@@ -90,10 +90,9 @@ function! s:vimim_debug(...)
     sil!echo "::::::::::::::::::::::::\n"
 endfunction
 
-function! s:vimim_start_session()
+function! s:vimim_initialize_session()
     let s:logo = "VimIM　中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
-    let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:cursor_at_menuless = 0
     let s:pumheight = 10
     let s:pumheight_saved = &pumheight
@@ -115,16 +114,9 @@ function! s:vimim_start_session()
     let s:Az_list = s:az_list + s:AZ_list
     let s:valid_keys = s:az_list
     let s:valid_keyboard = ""
-    let s:ui = {}
-    let s:ui.im = ''
-    let s:ui.root = ''
-    let s:ui.keycode = ''
-    let s:ui.has_dot = 0
-    let s:ui.frontends = []
-    let s:backend = {}
-    let s:backend.directory = {}
-    let s:backend.datafile  = {}
-    let s:backend.cloud     = {}
+    let s:smart_quotes = { 'single' : 1, 'double' : 1 }
+    let s:backend = { 'directory':{}, 'datafile':{}, 'cloud':{} }
+    let s:ui = { 'root':'', 'im':'', 'has_dot':0, 'frontends':[] }
 endfunction
 
 function! s:vimim_one_backend_hash()
@@ -4533,7 +4525,7 @@ sil!call s:vimim_save_vimrc()
 sil!call s:vimim_scan_cjk_file()
 sil!call s:vimim_scan_english_datafile()
 sil!call s:vimim_super_reset()
-sil!call s:vimim_start_session()
+sil!call s:vimim_initialize_session()
 sil!call s:vimim_scan_backend_mycloud()
 sil!call s:vimim_scan_backend_embedded()
 sil!call s:vimim_scan_backend_cloud()
