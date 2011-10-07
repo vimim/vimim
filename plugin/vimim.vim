@@ -3984,11 +3984,12 @@ endfunction
 function! s:vimim_restore_vimrc()
     let &cpo         = s:cpo
     let &omnifunc    = s:omnifunc
-    let &whichwrap   = s:whichwrap
     let &complete    = s:complete
     let &completeopt = s:completeopt
+    let &whichwrap   = s:whichwrap
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
+    let &titlestring = s:titlestring
     let &shellslash  = s:shellslash
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheights.saved
