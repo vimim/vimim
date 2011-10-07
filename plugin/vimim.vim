@@ -4441,8 +4441,6 @@ function! s:vimim_map_extra_ctrl_h()
         imap <C-H> <C-^>
     elseif s:vimim_map_extra =~ 'ctrl+h_as_ctrl+bslash'
         imap <C-H> <C-Bslash>
-    elseif s:vimim_map_extra =~ 'ctrl+h_to_cycle'
-        imap <C-H> <C-X><C-X>
     endif
 endfunction
 
@@ -4453,8 +4451,6 @@ function! s:vimim_map_extra_ctrl_space()
         elseif s:vimim_map_extra =~ 'ctrl+space_as_ctrl+bslash'
             map  <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
-        elseif s:vimim_map_extra =~ 'ctrl+space_to_cycle'
-            imap <C-Space> <C-X><C-X>
         endif
     elseif has("win32unix")
         if s:vimim_map_extra =~ 'ctrl+space_as_ctrl+6'
@@ -4462,27 +4458,24 @@ function! s:vimim_map_extra_ctrl_space()
         elseif s:vimim_map_extra =~ 'ctrl+space_as_ctrl+bslash'
             map  <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
-        elseif s:vimim_map_extra =~ 'ctrl+space_to_cycle'
-            imap <C-@> <C-X><C-X>
         endif
     endif
 endfunction
 
 function! s:vimim_map_plug_and_play()
     if s:vimim_map =~ 'ctrl+bslash'
+             imap<silent><C-Bslash> <Plug>VimIM
+          noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
         inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
-        imap<silent><C-Bslash> <Plug>VimIM
-        noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
-        inoremap<silent><expr><C-X><C-X> <SID>VimIMSwitch()
     endif
     if s:vimim_map =~ 'ctrl+6'
-        inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
-        imap<silent><C-^>     <Plug>VimimOneKey
+            inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
+            imap<silent><C-^>     <Plug>VimimOneKey
         xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_map =~ 'tab'
-        inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
-        imap<silent><Tab>     <Plug>VimimOneTab
+            inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
+            imap<silent><Tab>     <Plug>VimimOneTab
         xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
     endif
     if s:vimim_map =~ 'gi'
