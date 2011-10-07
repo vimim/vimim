@@ -788,7 +788,11 @@ function! s:vimim_menu_search(key)
 endfunction
 
 function! g:vimim_menu_search_on()
-    let word = s:vimim_popup_word()
+    let column_start = s:start_column_before
+    let column_end = col(".") - 1
+    let range = column_end - column_start
+    let chinese = strpart(getline("."), column_start, range)
+    let word = substitute(chinese,'\w','','g')
     let @/ = empty(word) ? @_ : word
     let repeat_times = len(word) / s:multibyte
     let row_start = s:start_row_before
@@ -800,28 +804,6 @@ function! g:vimim_menu_search_on()
     let slash = delete_chars . "\<Esc>"
     sil!call s:vimim_stop()
     sil!exe 'sil!return "' . slash . '"'
-endfunction
-
-function! g:vimim_clipboard()
-    let word = s:vimim_popup_word()
-    if !empty(word)
-        if has("gui_running") && has("win32")
-            let @+ = word
-        endif
-    endif
-    sil!call s:vimim_stop()
-    sil!exe "sil!return '\<Esc>'"
-endfunction
-
-function! s:vimim_popup_word()
-    if pumvisible()
-        return ""
-    endif
-    let column_start = s:start_column_before
-    let column_end = col(".") - 1
-    let range = column_end - column_start
-    let chinese = strpart(getline("."), column_start, range)
-    return substitute(chinese,'\w','','g')
 endfunction
 
 function! s:vimim_square_bracket(key)
@@ -1000,7 +982,8 @@ function! <SID>vimim_onekey_evil_map(key)
         endif
         let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
     elseif hjkl == ';'
-        let hjkl = '\<C-Y>\<C-R>=g:vimim_clipboard()\<CR>'
+        sil!call s:vimim_stop()
+        let hjkl = '\<C-Y>\<Esc>:sil!y+\<CR>'
     elseif hjkl =~ "[<>]"
         let hjkl = '\<C-Y>' . s:punctuations[nr2char(char2nr(hjkl)-16)]
     elseif hjkl =~ "[/?]"
