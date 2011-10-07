@@ -1569,6 +1569,50 @@ endfunction
 let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
+function! <SID>ChineseMode()
+    if s:onekey
+        sil!call s:vimim_stop()
+        if pumvisible()
+            return ""
+        endif
+    endif
+    if empty(s:ui.frontends)
+        return ""
+    elseif empty(s:frontends)
+        let s:frontends = get(s:ui.frontends, 0)
+    endif
+    let switch = &omnifunc ==# 'VimIM' ? 0 : 1
+    return s:vimim_chinese_mode(switch)
+endfunction
+
+function! <SID>VimIMSwitch()
+    if len(s:ui.frontends) < 2
+        return <SID>ChineseMode()
+    endif
+    let custom_im_list = s:vimim_get_custom_im_list()
+    let switch = s:im_toggle % len(custom_im_list)
+    let s:im_toggle += 1
+    let im = get(custom_im_list, switch)
+    let switch = 1
+    if im =~ 'english'
+        let switch = 0
+        let s:frontends = get(s:ui.frontends, 0)
+    else
+        for frontends in s:ui.frontends
+            let frontend_im = get(frontends, 1)
+            if frontend_im =~ im
+                let s:frontends = frontends
+                let clouds = split(s:vimim_cloud,',')
+                let cloud_last = remove(clouds, im)
+                let clouds += [cloud_last]
+                let s:vimim_cloud = join(clouds,',')
+                break
+            endif
+        endfor
+    endif
+    return s:vimim_chinese_mode(switch)
+endfunction
+
 function! s:vimim_chinese_mode(switch)
     if a:switch
         sil!call s:vimim_chinesemode_start()
@@ -1578,7 +1622,7 @@ function! s:vimim_chinese_mode(switch)
     return ""
 endfunction
 
-function! s:vimim_chinesemode_warmup()
+function! s:vimim_chinesemode_start()
     let s:chinese_mode = 'dynamic'
     if s:vimim_chinese_input_mode =~ 'static'
         let s:chinese_mode = 'static'
@@ -1594,20 +1638,6 @@ function! s:vimim_chinesemode_warmup()
     endif
     sil!call s:vimim_start()
     sil!call g:vimim_title()
-endfunction
-
-function! s:vimim_chinesemode_stop()
-    sil!call s:vimim_stop()
-    sil!call s:vimim_restore_plugin_conflict()
-    sil!call s:vimim_map_extra_ctrl_h()
-    imap<silent><C-^> <Plug>VimimOneKey
-    if mode() == 'n'
-        :redraw!
-    endif
-endfunction
-
-function! s:vimim_chinesemode_start()
-    sil!call s:vimim_chinesemode_warmup()
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
@@ -1643,48 +1673,14 @@ function! s:vimim_chinesemode_start()
     return ""
 endfunction
 
-function! <SID>VimIMSwitch()
-    if len(s:ui.frontends) < 2
-        return <SID>ChineseMode()
+function! s:vimim_chinesemode_stop()
+    sil!call s:vimim_stop()
+    sil!call s:vimim_restore_plugin_conflict()
+    sil!call s:vimim_map_extra_ctrl_h()
+    imap<silent><C-^> <Plug>VimimOneKey
+    if mode() == 'n'
+        :redraw!
     endif
-    let custom_im_list = s:vimim_get_custom_im_list()
-    let switch = s:im_toggle % len(custom_im_list)
-    let s:im_toggle += 1
-    let im = get(custom_im_list, switch)
-    let switch = 1
-    if im =~ 'english'
-        let switch = 0
-        let s:frontends = get(s:ui.frontends, 0)
-    else
-        for frontends in s:ui.frontends
-            let frontend_im = get(frontends, 1)
-            if frontend_im =~ im
-                let s:frontends = frontends
-                let clouds = split(s:vimim_cloud,',')
-                let cloud_last = remove(clouds, im)
-                let clouds += [cloud_last]
-                let s:vimim_cloud = join(clouds,',')
-                break
-            endif
-        endfor
-    endif
-    return s:vimim_chinese_mode(switch)
-endfunction
-
-function! <SID>ChineseMode()
-    if s:onekey
-        sil!call s:vimim_stop()
-        if pumvisible()
-            return ""
-        endif
-    endif
-    if empty(s:ui.frontends)
-        return ""
-    elseif empty(s:frontends)
-        let s:frontends = get(s:ui.frontends, 0)
-    endif
-    let switch = &omnifunc ==# 'VimIM' ? 0 : 1
-    return s:vimim_chinese_mode(switch)
 endfunction
 
 function! s:vimim_get_custom_im_list()
