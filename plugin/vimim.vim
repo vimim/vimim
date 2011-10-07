@@ -94,8 +94,8 @@ function! s:vimim_initialize_session()
     let s:cursor_at_menuless = 0
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
-    let s:start_row_before = 0
-    let s:start_column_before = 1
+    let s:row_start = 0
+    let s:column_start = 1
     let s:shuangpin_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
@@ -367,7 +367,7 @@ function! s:vimim_game_hjkl(keyboard)
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
     elseif keyboard ==# "'''''"
         let char_before = s:vimim_char_before()
-        if empty(char_before) 
+        if empty(char_before)
             if empty(s:vimim_cjk())
                 let char_before = '一'
             else " 214 standard unicode index
@@ -529,7 +529,7 @@ function! s:vimim_get_valid_im_name(im)
     return im
 endfunction
 
-function! s:vimim_wubi_auto_input_on_the_4th(keyboard)
+function! s:vimim_wubi_auto_on_the_4th(keyboard)
     let keyboard = a:keyboard
     if s:chinese_mode =~ 'dynamic'
         if len(keyboard) > 4
@@ -788,17 +788,13 @@ function! s:vimim_menu_search(key)
 endfunction
 
 function! g:vimim_menu_search_on()
-    let column_start = s:start_column_before
-    let column_end = col(".") - 1
-    let range = column_end - column_start
-    let chinese = strpart(getline("."), column_start, range)
+    let range = col(".") - 1 - s:column_start
+    let chinese = strpart(getline("."), s:column_start, range)
     let word = substitute(chinese,'\w','','g')
     let @/ = empty(word) ? @_ : word
     let repeat_times = len(word) / s:multibyte
-    let row_start = s:start_row_before
-    let row_end = line(".")
     let delete_chars = ""
-    if repeat_times && row_end == row_start
+    if repeat_times && line(".") == s:row_start
         let delete_chars = repeat("\<Left>\<Delete>", repeat_times)
     endif
     let slash = delete_chars . "\<Esc>"
@@ -819,15 +815,10 @@ function! s:vimim_square_bracket(key)
 endfunction
 
 function! g:vimim_bracket(offset)
-    let column_end = col(".") - 1
-    let column_start = s:start_column_before
-    let range = column_end - column_start
-    let repeat_times = range / s:multibyte
-    let repeat_times += a:offset
-    let row_end = line(".")
-    let row_start = s:start_row_before
     let cursor = ""
-    if repeat_times && row_end == row_start
+    let range = col(".") - 1 - s:column_start
+    let repeat_times = range / s:multibyte + a:offset
+    if repeat_times && line(".") == s:row_start
         if a:offset  " omni bslash for seamless
             let right  = repeat("\<Right>", repeat_times-1)
             let left   = repeat("\<Left>",  repeat_times-1)
@@ -835,18 +826,15 @@ function! g:vimim_bracket(offset)
         else
             let cursor = repeat("\<Left>\<Delete>", repeat_times)
         endif
-    endif
-    if repeat_times < 1
-        let cursor = strpart(getline("."), column_start, s:multibyte)
+    elseif repeat_times < 1
+        let cursor = strpart(getline("."), s:column_start, s:multibyte)
     endif
     return cursor
 endfunction
 
 function! s:vimim_onekey_esc()
     let key = '\<C-E>'
-    let column_start = s:start_column_before
-    let column_end = col(".") - 1
-    let range = column_end - column_start
+    let range = col(".") - 1 - s:column_start
     if range
         let key .= repeat("\<Left>\<Delete>", range)
     endif
@@ -1712,7 +1700,7 @@ function! s:vimim_static_action(space)
 endfunction
 
 function! s:vimim_set_keyboard_list(column_start, keyboard)
-    let s:start_column_before = a:column_start
+    let s:column_start = a:column_start
     if s:keyboard !~ '\S\s\S'
         let s:keyboard = a:keyboard
     endif
@@ -1746,7 +1734,7 @@ function! s:vimim_get_seamless(current_positions)
             return -1
         endif
     endfor
-    let s:start_row_before = seamless_lnum
+    let s:row_start = seamless_lnum
     return seamless_column
 endfunction
 
@@ -2309,7 +2297,7 @@ function! s:vimim_get_english(keyboard)
     " [sql] select english from vimim.txt
     let grep = '^' . keyboard . '\s\+'
     let cursor = match(s:english.lines, grep)
-    " [pinyin]  cong  => cong 
+    " [pinyin]  cong  => cong
     " [english] congr => congratulation  haag => haagendazs
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
     if cursor < 0 && len(keyboard) > 3 && len(keyboards)
@@ -2347,10 +2335,7 @@ endfunction
 let s:VimIM += [" ====  input: pinyin    ==== {{{"]
 " =================================================
 
-"-----------------------------------
-function! s:vimim_get_pinyin_table()
-"-----------------------------------
-" List of all valid pinyin. Result is identical: 30 vs 48 lines
+function! s:vimim_get_all_valid_pinyin_list()
 return split(" 'a 'ai 'an 'ang 'ao ba bai ban bang bao bei ben beng bi
 \ bian biao bie bin bing bo bu ca cai can cang cao ce cen ceng cha chai
 \ chan chang chao che chen cheng chi chong chou chu chua chuai chuan
@@ -2450,7 +2435,7 @@ function! s:vimim_quanpin_transform(pinyin)
 endfunction
 
 function! s:vimim_create_quanpin_table()
-    let pinyin_list = s:vimim_get_pinyin_table()
+    let pinyin_list = s:vimim_get_all_valid_pinyin_list()
     let table = {}
     for key in pinyin_list
         if key[0] == "'"
@@ -2581,7 +2566,7 @@ function! s:vimim_shuangpin_transform(keyboard)
 endfunction
 
 function! s:vimim_create_shuangpin_table(rule)
-    let pinyin_list = s:vimim_get_pinyin_table()
+    let pinyin_list = s:vimim_get_all_valid_pinyin_list()
     let rules = a:rule
     let sptable = {}
     " generate table for shengmu-yunmu pairs match
@@ -4099,7 +4084,7 @@ if a:start
     if all_digit < 1 && current_line[start_column] =~ '\d'
         let start_column = last_seen_nonsense_column
     endif
-    let s:start_row_before = start_row
+    let s:row_start = start_row
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
     let keyboard = strpart(current_line, start_column, len)
@@ -4199,7 +4184,7 @@ else
     if empty(results)
         " [wubi] support auto insert on the 4th
         if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
-            let keyboard = s:vimim_wubi_auto_input_on_the_4th(keyboard)
+            let keyboard = s:vimim_wubi_auto_on_the_4th(keyboard)
         endif
         " [backend] plug-n-play embedded backend engine
         let results = s:vimim_embedded_backend_engine(keyboard)
