@@ -979,11 +979,6 @@ function! <SID>vimim_onekey_evil_map(key)
     elseif hjkl ==# ':'  " toggle simplified/traditional transfer
         let s:hjkl__ += 1
         let hjkl = g:vimim()
-    elseif hjkl == "'"  " omni cycle through BB/GG/SS/00 clouds
-        if s:keyboard[-1:] != "'"
-            call s:vimim_last_quote()
-        endif
-        let hjkl = g:vimim()
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
@@ -1014,6 +1009,23 @@ function! <SID>vimim_get_quote(quote)
         let quote .= get(pairs, s:smart_quotes.double % 2)
     endif
     sil!exe 'sil!return "' . quote . '"'
+endfunction
+
+function! <SID>vimim_apostrophe_map()
+    let key = ""
+    if pumvisible()
+        let key = g:vimim()
+    endif
+    let one_before = getline(".")[col(".")-2]
+    if one_before =~ '\s' || s:smart_enter
+        let s:onekey = 1  " gi ma space quote enter quote
+        let s:smart_enter = 0
+    elseif s:keyboard[-1:] != "'"
+        call s:vimim_last_quote()
+        let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
+    endif
+    let key .= '\<C-R>=g:vimim_title()\<CR>'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ============================================= }}}
@@ -1413,6 +1425,7 @@ function! <SID>vimim_onekey(tab)
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
+    inoremap<expr> ' <SID>vimim_apostrophe_map()
     sil!call s:vimim_onekey_overall_map()
     if empty(onekey) || onekey =~ 'Right'
         let onekey .= '\<C-R>=g:vimim_title()\<CR>'
@@ -1515,7 +1528,7 @@ function! s:vimim_onekey_overall_map()
     for _ in split('hjklmnx', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
     endfor
-    let onekey_punctuation = "/?;'<>*"
+    let onekey_punctuation = "/?;<>*"
     if !empty(s:vimim_cjk())
         let onekey_punctuation .= ":"
         let qwer = s:cjk.filename=~"cjkv" ? s:qwer[1:5] : s:qwer
@@ -4083,6 +4096,9 @@ if a:start
     endwhile
     if all_digit < 1 && current_line[start_column] =~ '\d'
         let start_column = last_seen_nonsense_column
+    endif
+    if current_line[start_column] == "'"
+        let start_column += 1 " ignore leading quote
     endif
     let s:row_start = start_row
     let s:current_positions = current_positions
