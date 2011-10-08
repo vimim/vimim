@@ -56,7 +56,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -909,12 +909,10 @@ function! <SID>vimim_page_map(key)
 endfunction
 
 function! s:vimim_punctuation_mapping()
-    if s:chinese_punctuation
-    \&& s:vimim_chinese_input_mode !~ 'latex'
-        inoremap ' <C-R>=<SID>vimim_get_quote(1)<CR>
-        inoremap " <C-R>=<SID>vimim_get_quote(2)<CR>
-        exe 'inoremap <Bar> ' .
-        \ '<C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . s:evils['|']
+    if s:chinese_punctuation && s:vimim_chinese_input_mode !~ 'latex'
+        inoremap   '   <C-R>=<SID>vimim_get_single_quote()<CR>
+        inoremap   "   <C-R>=<SID>vimim_get_double_quote()<CR>
+        inoremap <Bar> <C-R>=<SID>vimim_get_bslash()<CR>
     else
         for _ in keys(s:evils)
             sil!exe 'iunmap '. _
@@ -924,7 +922,6 @@ function! s:vimim_punctuation_mapping()
         silent!exe 'inoremap <silent> <expr> '    ._.
         \ ' <SID>vimim_chinese_punctuation_map("'._.'")'
     endfor
-    return ""
 endfunction
 
 function! <SID>vimim_chinese_punctuation_map(key)
@@ -975,30 +972,45 @@ function! <SID>vimim_onekey_evil_map(key)
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
 
-function! <SID>vimim_get_quote(quote)
-    let key = '"'
-    if a:quote == 1
-        let key = "'"
+function! <SID>vimim_get_single_quote()
+    let key = ""
+    let evil = "'"
+    if !has_key(s:evils, evil)
+        return ""
+    elseif pumvisible()  " the 3rd choice
+        let key = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
+    else
+        let pairs = split(s:evils[evil], '\zs')
+        let s:smart_quotes.single += 1
+        let key .= get(pairs, s:smart_quotes.single % 2)
     endif
-    let quote = ""
-    if !has_key(s:evils, key)
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_get_double_quote()
+    let key = ""
+    let evil = '"'
+    if !has_key(s:evils, evil)
         return ""
     elseif pumvisible()
-        let quote = '\<C-Y>'
+        let key = '\<C-Y>'
     endif
-    let pairs = split(s:evils[key], '\zs')
-    if a:quote == 1
-        if s:onekey
-            let s:smart_quotes.single += 1
-            let quote .= get(pairs, s:smart_quotes.single % 2)
-        else    " the 3rd choice
-            let quote = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
-        endif
-    elseif a:quote == 2
-        let s:smart_quotes.double += 1
-        let quote .= get(pairs, s:smart_quotes.double % 2)
+    let pairs = split(s:evils[evil], '\zs')
+    let s:smart_quotes.double += 1
+    let key .= get(pairs, s:smart_quotes.double % 2)
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_get_bslash()
+    let key = ""
+    let evil = '|'
+    if !has_key(s:evils, evil)
+        return ""
+    elseif pumvisible()
+        let key = '\<C-Y>'
     endif
-    sil!exe 'sil!return "' . quote . '"'
+    let key .= s:evils[evil]
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ============================================= }}}
@@ -1470,9 +1482,9 @@ function! s:vimim_onekey_evils()
         " transfer English punctuation to Chinese punctuation
         let bs = s:evils_all[one_before]
         if one_before == "'"
-            let bs = <SID>vimim_get_quote(1)
+            let bs = <SID>vimim_get_single_quote()
         elseif one_before == '"'
-            let bs = <SID>vimim_get_quote(2)
+            let bs = <SID>vimim_get_double_quote()
         endif
         let onekey = "\<Left>\<Delete>" . bs
     endif
@@ -1682,7 +1694,8 @@ endfunction
 function! <SID>vimim_punctuation_toggle()
     let s:chinese_punctuation = (s:chinese_punctuation+1)%2
     call s:vimim_set_statusline()
-    return s:vimim_punctuation_mapping()
+    call s:vimim_punctuation_mapping()
+    return ""
 endfunction
 
 function! s:vimim_static_action(space)
@@ -1790,7 +1803,7 @@ function! s:vimim_imode_loop()
         endfor
         call add(numbers, number)
     endfor
-    let antonym = " ，。 “” ‘’ （） 【】 〖〗 《》 胜败 真假 石金"
+    let antonym = "，。 “” ‘’ （） 【】 〖〗 《》 胜败 真假 石金"
     let imode_list = numbers + split(antonym)
     for loop in imode_list
         let loops = split(loop,'\zs')
@@ -4027,8 +4040,9 @@ function! s:vimim_restore_imap()
     let keys += split('<Esc> <Space> <BS> <CR> <Bslash> <Bar>')
     let keys += keys(s:evils_all)
     let keys += s:valid_keys
-    if s:chinese_mode !~ 'dynamic'
-    \&& s:vimim_chinese_input_mode !~ 'latex'
+    if s:chinese_mode =~ 'dynamic'
+        " special mapping for dynamic chinese mode
+    elseif s:vimim_chinese_input_mode !~ 'latex'
         let keys += s:AZ_list
     endif
     for _ in keys
