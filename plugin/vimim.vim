@@ -1,5 +1,5 @@
 ﻿" ===========================================================
-let s:logo =         " VimIM —— Vim 中文輸入法 "
+"                   VimIM —— Vim 中文輸入法
 " ===========================================================
 let s:egg  = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
 let s:egg  = ' $Date$'
@@ -24,10 +24,10 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
 "  Usage: vim i vimimhelp ctrl+6 ctrl+6
-"    (1) [vim normal mode]  gi      (for menuless chinese input)
-"    (2) [vim normal mode]  n       (for menuless slash search)
-"    (3) [vim insert mode]  ctrl+6  (for onekey omni popup)
-"    (4) [vim insert mode]  ctrl+\  (for dynamic chinese mode)
+"    (1) (vim normal mode)  gi      (for menuless chinese input)
+"    (2) (vim normal mode)  n       (for menuless slash search)
+"    (3) (vim insert mode)  ctrl+6  (for onekey omni popup)
+"    (4) (vim insert mode)  ctrl+\  (for dynamic chinese mode)
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -89,8 +89,7 @@ function! s:vimim_debug(...)
 endfunction
 
 function! s:vimim_initialize_session()
-    let s:motto = get(split(s:logo),0) . s:space
-    let s:logo = s:motto . get(split(s:logo),-1)
+    let s:logo = "VimIM　中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
     let s:cursor_at_menuless = 0
     let s:seamless_positions = []
@@ -196,10 +195,10 @@ let s:VimIM += [" ====  easter eggs      ==== {{{"]
 function! s:vimim_egg_vimimhelp()
     let eggs = s:vimim_egg_vim() + ['']
     let default = ":let g:vimim_map = " . string(s:rc["g:vimim_map"])
-    call add(eggs, '默认热键（Vim正常模式）： 　gi　  无菜单窗中文输入')
-    call add(eggs, '默认热键（Vim正常模式）： 　n 　  无菜单窗中文搜索')
-    call add(eggs, '默认热键（Vim插入模式）： ctrl+6  点石成金')
-    call add(eggs, '默认热键（Vim插入模式）： ctrl+\  中文动态')
+    call add(eggs, '默认热键 ctrl+6 （Vim插入模式）点石成金')
+    call add(eggs, '默认热键 ctrl+\ （Vim插入模式）中文动态')
+    call add(eggs, '默认热键 　n 　 （Vim正常模式）无菜单窗中文搜索')
+    call add(eggs, '默认热键 　gi　 （Vim正常模式）无菜单窗中文输入')
     call add(eggs, '热键设置：' . default)
     let eggs += [''] + s:vimim_egg_vimimrc() + ['']
     let url = "http://vimim.googlecode.com/svn/trunk/plugin/"
@@ -215,7 +214,8 @@ function! s:vimim_egg_vimimhelp()
 endfunction
 
 function! s:vimim_egg_vim()
-    return split("vim　　文本編輯器 " . s:logo)
+    let logo = "Vim　　文本編輯器"
+    return [logo, s:logo]
 endfunction
 
 function! s:vimim_egg_vimimrc()
@@ -1259,7 +1259,7 @@ function! s:vimim_set_titlestring(cursor)
         let s:cursor_at_menuless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
         let title = keyboard .'  '. left . hightlight . right
-        let &titlestring = s:motto . s:vimim_get_title() .' '. title
+        let &titlestring = s:logo[:4] . s:vimim_get_title() .' '. title
     else
         call g:vimim_title()
     endif
@@ -1351,7 +1351,7 @@ function! <SID>vimim_esc()
             :y
             if len(@") > 3
                 :let @+ = @"[:-2]
-                :let &titlestring = s:motto . @+ . s:space . len(@+)
+                :let &titlestring = s:logo[:4].s:space.@+.s:space.len(@+)
             endif
         endif
     elseif pumvisible()
