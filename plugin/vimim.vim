@@ -341,7 +341,10 @@ function! s:vimim_get_head_without_quote(keyboard)
         let keyboard = substitute(keyboard, "'", "", 'g')
         let keyboard = join(split(keyboard,'\zs'), "'")
     endif
-    if keyboard[-1:] == "'" " [cloud] one tail quote to control cloud
+    if keyboard[-2:] == "''"    " [local] two tail quotes to close cloud
+        let s:onekey = 1
+        let keyboard = keyboard[:-3]
+    elseif keyboard[-1:] == "'" " [cloud] one tail quote to control cloud
         call s:vimim_last_quote()
         let keyboard = keyboard[:-2]
     elseif keyboard =~ "'"
@@ -360,12 +363,12 @@ function! s:vimim_game_hjkl(keyboard)
     let keyboard = a:keyboard
     let results = []
     let poem = s:vimim_check_filereadable(keyboard)
-    if keyboard ==# "''"
+    if keyboard == "'"
         return split(s:evils["'"], '\zs')
-    elseif keyboard ==# "'''''"
+    elseif keyboard == "'''''"
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
-    elseif keyboard ==# "''''''"
-        let char_before = s:vimim_char_before(1)
+    elseif keyboard == "''"
+        let char_before = s:vimim_char_before()
         if empty(char_before)
             if empty(s:vimim_cjk())
                 let char_before = '一'
@@ -1008,16 +1011,13 @@ function! <SID>vimim_apostrophe_map()
         let key = g:vimim()
     else
         let one_before = getline(".")[col(".")-2]
-        let char_before = s:vimim_char_before(0)
         if  s:smart_enter
             let s:smart_enter = 0  " gi ma space quote enter quote
             let s:onekey = 1
             let key = ""
-        elseif empty(char_before)
-        \|| empty(one_before)
-        \|| one_before =~ '\s'
-        \|| has_key(s:evils_all, one_before)
+        elseif empty(one_before) || one_before =~ '\s'
             let s:onekey = 1       " gi quote space quote space
+            let key = "'"
         elseif s:keyboard[-1:] != "'"
             call s:vimim_last_quote()
             let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
@@ -1247,7 +1247,7 @@ function! s:vimim_menuless_map(key)
     elseif s:smart_enter    " gi ma space enter 77 ma space
         let s:smart_enter = 0
         let s:seamless_positions = []
-    elseif !empty(s:vimim_char_before(1)) || s:keyboard =~ "'"
+    elseif !empty(s:vimim_char_before()) || s:keyboard =~ "'"
         let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
         let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
         if empty(s:vimim_cjk())  " 1 for refreshing
@@ -1474,23 +1474,20 @@ function! s:vimim_onekey_evils()
         " [game] dot dot => quotes => popup menu
         let three_before  = getline(".")[col(".")-4]
         if col(".") < 5 || empty(three_before) || three_before =~ '\s'
-            let onekey = "'''''"   "  <=    .. for mahjong
+            let onekey = "'''''"    "  <=    .. for mahjong
         elseif three_before =~ "[0-9a-z]"
-            let onekey = "'''"     "  <=  xx.. for hjkl_m
+            let onekey = "'''"      "  <=  xx.. for hjkl_m
         else
-            let onekey = "''''''"  "  <=  香.. for same cjk
+            let onekey = "''"       "  <=  香.. for same cjk
         endif
         return  "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
     endif
-    " [punctuation] punctuations can be made not so evil
-    if one_before =~ "[0-9a-z]" || two_before =~ '\s'
-        return ""
-    elseif one_before == "'" && two_before =~ s:valid_keyboard
+    " [..] punctuations can be made not so evil ..
+    if one_before =~ s:valid_keyboard || two_before =~ '\s'
         return ""
     elseif two_before =~ "[0-9a-z]"
         return " "
-    endif
-    if has_key(s:evils_all, one_before)
+    elseif has_key(s:evils_all, one_before)
         for char in keys(s:evils_all)
             if two_before ==# char || two_before =~# '\u'
                 return " " " no transfer if punctuation punctuation
@@ -1498,9 +1495,7 @@ function! s:vimim_onekey_evils()
         endfor
         " transfer English punctuation to Chinese punctuation
         let bs = s:evils_all[one_before]
-        if one_before == "'"
-            let bs = <SID>vimim_get_quote(1)
-        elseif one_before == '"'
+        if one_before == '"'
             let bs = <SID>vimim_get_quote(2)
         endif
         let onekey = "\<Left>\<Delete>" . bs
@@ -2007,13 +2002,13 @@ function! s:vimim_url_xx_to_chinese(xx)
     return output
 endfunction
 
-function! s:vimim_char_before(chinese)
+function! s:vimim_char_before()
     let char_before = ""
     let one_before = getline(".")[col(".")-2]
     if one_before !~ '\s'
         let start = col(".") - 1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
-        if char_before !~ '[^\x00-\xff]' && a:chinese
+        if char_before !~ '[^\x00-\xff]' 
             let char_before = ""
         elseif match(values(s:evils_all),char_before) > -1
             let char_before = ""
