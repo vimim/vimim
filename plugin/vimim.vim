@@ -363,9 +363,7 @@ function! s:vimim_game_hjkl(keyboard)
     let keyboard = a:keyboard
     let results = []
     let poem = s:vimim_check_filereadable(keyboard)
-    if keyboard == "'"
-        return split(s:evils["'"], '\zs')
-    elseif keyboard == "'''''"
+    if keyboard == "'''''"
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
     elseif keyboard == "''"
         let char_before = s:vimim_char_before()
@@ -972,6 +970,11 @@ function! <SID>vimim_onekey_evil_map(key)
     elseif hjkl ==# ':'  " toggle simplified/traditional transfer
         let s:hjkl__ += 1
         let hjkl = g:vimim()
+    elseif hjkl == "'"  " omni cycle through BB/GG/SS/00 clouds
+        if s:keyboard[-1:] != "'"
+            call s:vimim_last_quote()
+        endif
+        let hjkl = g:vimim()
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
@@ -1000,31 +1003,6 @@ function! <SID>vimim_get_quote(quote)
         let quote .= get(pairs, s:smart_quotes.double % 2)
     endif
     sil!exe 'sil!return "' . quote . '"'
-endfunction
-
-function! <SID>vimim_apostrophe_map()
-    let key = "'"
-    if pumvisible()  " omni cycle through BB/GG/SS/00 clouds
-        if s:keyboard[-1:] != "'"
-            call s:vimim_last_quote()
-        endif
-        let key = g:vimim()
-    else
-        let one_before = getline(".")[col(".")-2]
-        if  s:smart_enter
-            let s:smart_enter = 0  " gi ma space quote enter quote
-            let s:onekey = 1
-            let key = ""
-        elseif empty(one_before) || one_before =~ '\s'
-            let s:onekey = 1       " gi quote space quote space
-            let key = "'"
-        elseif s:keyboard[-1:] != "'"
-            call s:vimim_last_quote()
-            let key = '\<C-E>\<C-R>=g:vimim()\<CR>'
-        endif
-        let key .= '\<C-R>=g:vimim_title()\<CR>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ============================================= }}}
@@ -1436,7 +1414,6 @@ function! <SID>vimim_onekey(tab)
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
-    inoremap<expr> ' <SID>vimim_apostrophe_map()
     sil!call s:vimim_onekey_overall_map()
     if empty(onekey) || onekey =~ 'Right'
         let onekey .= '\<C-R>=g:vimim_title()\<CR>'
@@ -1483,7 +1460,9 @@ function! s:vimim_onekey_evils()
         return  "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
     endif
     " [..] punctuations can be made not so evil ..
-    if one_before =~ s:valid_keyboard || two_before =~ '\s'
+    if one_before =~ "[0-9a-z]" || two_before =~ '\s'
+        return ""
+    elseif one_before == "'" && two_before =~ s:valid_keyboard
         return ""
     elseif two_before =~ "[0-9a-z]"
         return " "
@@ -1495,7 +1474,9 @@ function! s:vimim_onekey_evils()
         endfor
         " transfer English punctuation to Chinese punctuation
         let bs = s:evils_all[one_before]
-        if one_before == '"'
+        if one_before == "'"
+            let bs = <SID>vimim_get_quote(1)
+        elseif one_before == '"'
             let bs = <SID>vimim_get_quote(2)
         endif
         let onekey = "\<Left>\<Delete>" . bs
