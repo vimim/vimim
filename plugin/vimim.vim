@@ -56,7 +56,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -832,15 +832,6 @@ function! g:vimim_bracket(offset)
     return cursor
 endfunction
 
-function! s:vimim_onekey_esc()
-    let key = '\<C-E>'
-    let range = col(".") - 1 - s:column_start
-    if range
-        let key .= repeat("\<Left>\<Delete>", range)
-    endif
-    return key
-endfunction
-
 function! s:vimim_get_labeling(label)
     let labeling = a:label==10 ? "0" : a:label
     if s:onekey && a:label < 11
@@ -1370,15 +1361,27 @@ endfunction
 function! <SID>vimim_esc()
     let key = '\<Esc>'
     if s:onekey
-        if s:menuless
-            :sil!y+
-        endif
+        let menuless = s:menuless " copy to clipboard and display
         sil!call s:vimim_stop()
+        if menuless
+            :y+
+            :let @+ = @+[:-2]
+            :let &titlestring = s:space . @+ . s:space . len(@+)
+        endif
     elseif pumvisible()
         let key = s:vimim_onekey_esc()
         sil!call s:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! s:vimim_onekey_esc()
+    let key = '\<C-E>'
+    let range = col(".") - 1 - s:column_start
+    if range
+        let key .= repeat("\<Left>\<Delete>", range)
+    endif
+    return key
 endfunction
 
 " ============================================= }}}
