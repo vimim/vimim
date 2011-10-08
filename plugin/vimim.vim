@@ -34,8 +34,8 @@ let s:VimIM += [" ====  initialization   ==== {{{"]
 " =================================================
 
 function! s:vimim_bare_bones_vimrc()
-    set cpoptions=Bce$ go=cirMehf shm=aoOstTAI noloadplugins
-    set gcr=a:blinkon0 mouse=nicr hlsearch noswapfile viminfo=
+    set cpoptions=Bce$ go=cirMehf shm=aoOstTAI noloadplugins hlsearch
+    set gcr=a:blinkon0 mouse=nicr shellslash noswapfile viminfo=
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
     let $PATH='/bin/;/Python27;/Python31;/Windows/system32'
@@ -194,12 +194,10 @@ let s:VimIM += [" ====  easter eggs      ==== {{{"]
 
 function! s:vimim_egg_vimimhelp()
     let eggs = s:vimim_egg_vim() + ['']
-    let default = ":let g:vimim_map = " . string(s:rc["g:vimim_map"])
     call add(eggs, '默认热键 ctrl+6 （Vim插入模式）点石成金')
     call add(eggs, '默认热键 ctrl+\ （Vim插入模式）中文动态')
     call add(eggs, '默认热键 　n 　 （Vim正常模式）无菜单窗中文搜索')
     call add(eggs, '默认热键 　gi　 （Vim正常模式）无菜单窗中文输入')
-    call add(eggs, '热键设置：' . default)
     let eggs += [''] + s:vimim_egg_vimimrc() + ['']
     let url = "http://vimim.googlecode.com/svn/trunk/plugin/"
     call add(eggs, "官方网址：" . get(split(s:url),0))
@@ -3943,8 +3941,8 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
 function! s:vimim_set_vimrc()
-    set title imdisable noshowmatch nolazyredraw whichwrap=<,>
-    set shellslash omnifunc=VimIM completeopt=menuone complete=.
+    set title imdisable noshowmatch shellslash nolazyredraw
+    set whichwrap=<,> complete=. completeopt=menuone omnifunc=VimIM
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link Cursor CursorIM
 endfunction
