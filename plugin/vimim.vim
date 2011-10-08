@@ -1,5 +1,5 @@
 ﻿" ===========================================================
-"                   VimIM —— Vim 中文輸入法
+let s:logo =         " VimIM —— Vim 中文輸入法 "
 " ===========================================================
 let s:egg  = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
 let s:egg  = ' $Date$'
@@ -89,7 +89,8 @@ function! s:vimim_debug(...)
 endfunction
 
 function! s:vimim_initialize_session()
-    let s:logo = "VimIM　中文輸入法"
+    let s:motto = get(split(s:logo),0) . s:space
+    let s:logo = s:motto . get(split(s:logo),-1)
     let s:today = s:vimim_imode_today_now('itoday')
     let s:cursor_at_menuless = 0
     let s:seamless_positions = []
@@ -193,7 +194,7 @@ let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
 
 function! s:vimim_egg_vimimhelp()
-    let eggs = []
+    let eggs = s:vimim_egg_vim() + ['']
     let default = ":let g:vimim_map = " . string(s:rc["g:vimim_map"])
     call add(eggs, '默认热键（Vim正常模式）： 　gi　  无菜单窗中文输入')
     call add(eggs, '默认热键（Vim正常模式）： 　n 　  无菜单窗中文搜索')
@@ -213,6 +214,10 @@ function! s:vimim_egg_vimimhelp()
     return map(eggs, 'v:val . s:space')
 endfunction
 
+function! s:vimim_egg_vim()
+    return split("vim　　文本編輯器 " . s:logo)
+endfunction
+
 function! s:vimim_egg_vimimrc()
     let vimimrc = copy(s:vimimdefaults)
     let index = match(vimimrc, 'g:vimim_toggle_list')
@@ -224,13 +229,6 @@ function! s:vimim_egg_vimimrc()
     endif
     let vimimrc += s:vimimrc
     return sort(vimimrc)
-endfunction
-
-function! s:vimim_egg_vim()
-    let eggs  = [" vi    文本編輯器 "]
-    let eggs += [" vim   最牛編輯器 "]
-    let eggs += [" vimim 中文輸入法 "]
-    return eggs
 endfunction
 
 function! s:vimim_egg_vimimgame()
@@ -1261,7 +1259,7 @@ function! s:vimim_set_titlestring(cursor)
         let s:cursor_at_menuless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
         let title = keyboard .'  '. left . hightlight . right
-        let &titlestring = s:logo[:4] . s:vimim_get_title() .' '. title
+        let &titlestring = s:motto . s:vimim_get_title() .' '. title
     else
         call g:vimim_title()
     endif
@@ -1349,10 +1347,12 @@ function! <SID>vimim_esc()
     if s:onekey
         let menuless = s:menuless " copy to clipboard and display
         sil!call s:vimim_stop()
-        if menuless
-            :sil!y+
-            :let @+ = @+[:-2]
-            :let &titlestring = s:space . @+ . s:space . len(@+)
+        if menuless && has("gui_running") && has("win32")
+            :y
+            if len(@") > 3
+                :let @+ = @"[:-2]
+                :let &titlestring = s:motto . @+ . s:space . len(@+)
+            endif
         endif
     elseif pumvisible()
         let key = s:vimim_onekey_esc()
@@ -1989,7 +1989,7 @@ function! s:vimim_char_before()
     if one_before !~ '\s'
         let start = col(".") - 1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
-        if char_before !~ '[^\x00-\xff]' 
+        if char_before !~ '[^\x00-\xff]'
             let char_before = ""
         elseif match(values(s:evils_all),char_before) > -1
             let char_before = ""
