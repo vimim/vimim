@@ -56,7 +56,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -1364,7 +1364,7 @@ function! <SID>vimim_esc()
         let menuless = s:menuless " copy to clipboard and display
         sil!call s:vimim_stop()
         if menuless
-            :y+
+            :sil!y+
             :let @+ = @+[:-2]
             :let &titlestring = s:space . @+ . s:space . len(@+)
         endif
