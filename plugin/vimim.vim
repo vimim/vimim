@@ -1343,23 +1343,20 @@ endfunction
 function! <SID>vimim_esc()
     let key = '\<Esc>'
     if s:onekey
-        let menuless = s:menuless " copy to clipboard and display
-        sil!call s:vimim_stop()
-        if menuless && has("gui_running") && has("win32")
-            :y
-            if len(@") > 3
-                :let @+ = @"[:-2]
-                :let &titlestring = s:logo[:4].s:space.@+.s:space.len(@+)
-            endif
+        :y
+        if has("gui_running") && has("win32") && len(@") > 3
+            :let @+ = @"[:-2] " copy to clipboard and display
+            let key .= ':echo @+\<CR>'
         endif
+        sil!call s:vimim_stop()
     elseif pumvisible()
-        let key = s:vimim_onekey_esc()
+        let key = s:vimim_esc_correction()
         sil!call s:vimim_reset_after_insert()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_onekey_esc()
+function! s:vimim_esc_correction()
     let key = '\<C-E>'
     let range = col(".") - 1 - s:column_start
     if range
@@ -1538,7 +1535,7 @@ function! <SID>vimim_onekey_hjkl_map(key)
     let hjkl = a:key
     if pumvisible()
             if hjkl ==# 'n' | call s:vimim_reset_after_insert()
-        elseif hjkl ==# 'x' | let hjkl = s:vimim_onekey_esc()
+        elseif hjkl ==# 'x' | let hjkl = s:vimim_esc_correction()
         elseif hjkl ==# 'm' | let s:hjkl_m += 1
         elseif hjkl ==# 'h' | let s:hjkl_h += 1
         elseif hjkl ==# 'j' | let hjkl = '\<Down>'
