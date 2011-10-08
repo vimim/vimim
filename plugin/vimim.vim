@@ -56,7 +56,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -2016,7 +2016,7 @@ endfunction
 let s:VimIM += [" ====  input: cjk       ==== {{{"]
 " =================================================
 
-function! s:vimim_scan_cjk_file()
+function! s:vimim_scan_datafile_cjk()
     let s:cjk = {}
     let s:cjk.filename = ""
     let s:cjk.lines = []
@@ -2277,7 +2277,7 @@ endfunction
 let s:VimIM += [" ====  input: english   ==== {{{"]
 " =================================================
 
-function! s:vimim_scan_english_datafile()
+function! s:vimim_scan_datafile_english()
     let s:english = {}
     let s:english.filename = ""
     let s:english.line = ""
@@ -4484,8 +4484,8 @@ sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
 sil!call s:vimim_save_vimrc()
-sil!call s:vimim_scan_cjk_file()
-sil!call s:vimim_scan_english_datafile()
+sil!call s:vimim_scan_datafile_cjk()
+sil!call s:vimim_scan_datafile_english()
 sil!call s:vimim_super_reset()
 sil!call s:vimim_initialize_session()
 sil!call s:vimim_scan_backend_mycloud()
