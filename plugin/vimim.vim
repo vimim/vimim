@@ -196,6 +196,7 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, '默认热键 ctrl+\ （Vim插入模式）中文动态')
     call add(eggs, '默认热键 　n 　 （Vim正常模式）无菜单窗中文搜索')
     call add(eggs, '默认热键 　gi　 （Vim正常模式）无菜单窗中文输入')
+    call add(eggs, '默认热键（专用于输入法切换）ctrl+x ctrl+x')
     let eggs += [''] + s:vimim_egg_vimimrc() + ['']
     let url = "http://vimim.googlecode.com/svn/trunk/plugin/"
     call add(eggs, "官方网址：" . get(split(s:url),0))
