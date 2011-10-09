@@ -331,7 +331,7 @@ function! s:vimim_get_head_without_quote(keyboard)
         let s:onekey = 1
         let keyboard = keyboard[:-3]
     elseif keyboard[-1:] == "'" " [cloud] one tail quote to control cloud
-        call s:vimim_last_quote()
+        call s:vimim_last_quote_to_force_cloud()
         let keyboard = keyboard[:-2]
     elseif keyboard =~ "'"
         " [quote] (1/2) quote_by_quote: wo'you'yi'ge'meng
@@ -598,7 +598,7 @@ endfunction
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
-function! s:vimim_dictionary_titles()
+function! s:vimim_dictionary_statusline()
     let s:title = {}
     let s:title.onekey     = "点石成金 點石成金"
     let s:title.4corner    = "四角号码 四角號碼"
@@ -943,21 +943,20 @@ function! <SID>vimim_onekey_evil_map(key)
             let s:popup_list = s:popup_list[:&pumheight-1]
         endif
         let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-    elseif hjkl == ';'
-        sil!call s:vimim_stop()
-        let hjkl = '\<C-Y>\<Esc>:sil!y+\<CR>'
     elseif hjkl =~ "[<>]"
         let hjkl = '\<C-Y>' . s:punctuations[nr2char(char2nr(hjkl)-16)]
     elseif hjkl =~ "[/?]"
         let hjkl = s:vimim_menu_search(hjkl)
-    elseif hjkl ==# ':'  " toggle simplified/traditional transfer
+    elseif hjkl ==# ';'  " toggle simplified/traditional transfer
         let s:hjkl__ += 1
         let hjkl = g:vimim()
     elseif hjkl == "'"  " omni cycle through BB/GG/SS/00 clouds
         if s:keyboard[-1:] != "'"
-            call s:vimim_last_quote()
+            call s:vimim_last_quote_to_force_cloud()
         endif
-        let hjkl = '\<C-R>=g:vimim()\<CR>\<C-R>=g:vimim_title()\<CR>'
+        " todo
+     "  let hjkl = '\<C-R>=g:vimim()\<CR>\<C-R>=g:vimim_title()\<CR>'
+        let hjkl = '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
@@ -1106,7 +1105,7 @@ function! s:vimim_hjkl_partition(keyboard)
     return keyboard
 endfunction
 
-function! s:vimim_last_quote()
+function! s:vimim_last_quote_to_force_cloud()
     " (1) [insert] one tail quote: open cloud or switch cloud
     " (2) [omni]   one tail quote: switch to the next cloud
     if empty(s:vimim_check_http_executable())
@@ -1117,6 +1116,10 @@ function! s:vimim_last_quote()
             let clouds = split(s:vimim_cloud,',')
             let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
         endif
+"       call g:vimim_title()
+        " todo
+        echo s:logo
+        let &titlestring = s:logo
     endif
 endfunction
 
@@ -1195,6 +1198,7 @@ function! g:vimim_title()
     if s:menuless && empty(s:touch_me_not)
         let titlestring .= s:space . s:today
     endif
+    " todo
     if &term == 'screen' " best efforts for gun screen
         echo titlestring
     else                 " if terminal supports setting window titles
@@ -1496,9 +1500,8 @@ function! s:vimim_onekey_all_maps()
     for _ in split('hjklmnx', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
     endfor
-    let onekey_punctuation = "/?;<>*'"
+    let onekey_punctuation = "/?<>*';"
     if !empty(s:vimim_cjk())
-        let onekey_punctuation .= ":"
         let qwer = s:cjk.filename=~"cjkv" ? s:qwer[1:5] : s:qwer
         for _ in qwer
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwer_map("'._.'")'
@@ -4459,7 +4462,7 @@ endfunction
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_cloud()
-sil!call s:vimim_dictionary_titles()
+sil!call s:vimim_dictionary_statusline()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
