@@ -94,8 +94,6 @@ function! s:vimim_initialize_session()
     let s:cursor_at_menuless = 0
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
-    let s:row_start = 0
-    let s:column_start = 1
     let s:shuangpin_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
@@ -109,6 +107,7 @@ function! s:vimim_initialize_session()
     let s:Az_list = s:az_list + s:AZ_list
     let s:valid_keys = s:az_list
     let s:valid_keyboard = ""
+    let s:starts = { 'row' : 0, 'column' : 1 }
     let s:pumheights = { 'current' : 10, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'directory':{}, 'datafile':{}, 'cloud':{} }
@@ -776,13 +775,13 @@ function! s:vimim_menu_search(key)
 endfunction
 
 function! g:vimim_menu_search_on()
-    let range = col(".") - 1 - s:column_start
-    let chinese = strpart(getline("."), s:column_start, range)
+    let range = col(".") - 1 - s:starts.column
+    let chinese = strpart(getline("."), s:starts.column, range)
     let word = substitute(chinese,'\w','','g')
     let @/ = empty(word) ? @_ : word
     let repeat_times = len(word) / s:multibyte
     let delete_chars = ""
-    if repeat_times && line(".") == s:row_start
+    if repeat_times && line(".") == s:starts.row
         let delete_chars = repeat("\<Left>\<Delete>", repeat_times)
     endif
     let slash = delete_chars . "\<Esc>"
@@ -804,9 +803,9 @@ endfunction
 
 function! g:vimim_bracket(offset)
     let cursor = ""
-    let range = col(".") - 1 - s:column_start
+    let range = col(".") - 1 - s:starts.column
     let repeat_times = range / s:multibyte + a:offset
-    if repeat_times && line(".") == s:row_start
+    if repeat_times && line(".") == s:starts.row
         if a:offset  " omni bslash for seamless
             let right  = repeat("\<Right>", repeat_times-1)
             let left   = repeat("\<Left>",  repeat_times-1)
@@ -815,7 +814,7 @@ function! g:vimim_bracket(offset)
             let cursor = repeat("\<Left>\<Delete>", repeat_times)
         endif
     elseif repeat_times < 1
-        let cursor = strpart(getline("."), s:column_start, s:multibyte)
+        let cursor = strpart(getline("."), s:starts.column, s:multibyte)
     endif
     return cursor
 endfunction
@@ -1362,7 +1361,7 @@ endfunction
 
 function! s:vimim_esc_correction()
     let key = '\<C-E>'
-    let range = col(".") - 1 - s:column_start
+    let range = col(".") - 1 - s:starts.column
     if range
         let key .= repeat("\<Left>\<Delete>", range)
     endif
@@ -1700,7 +1699,7 @@ function! s:vimim_static_action(space)
 endfunction
 
 function! s:vimim_set_keyboard_list(column_start, keyboard)
-    let s:column_start = a:column_start
+    let s:starts.column = a:column_start
     if s:keyboard !~ '\S\s\S'
         let s:keyboard = a:keyboard
     endif
@@ -1734,7 +1733,7 @@ function! s:vimim_get_seamless(current_positions)
             return -1
         endif
     endfor
-    let s:row_start = seamless_lnum
+    let s:starts.row = seamless_lnum
     return seamless_column
 endfunction
 
@@ -4085,7 +4084,7 @@ if a:start
     if all_digit < 1 && current_line[start_column] =~ '\d'
         let start_column = last_seen_nonsense_column
     endif
-    let s:row_start = start_row
+    let s:starts.row = start_row
     let s:current_positions = current_positions
     let len = current_positions[2]-1 - start_column
     let keyboard = strpart(current_line, start_column, len)
