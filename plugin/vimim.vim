@@ -1622,7 +1622,7 @@ function! s:vimim_chinesemode_start()
         call s:vimim_punctuation_mapping()
     endif
     sil!call s:vimim_start()
-    sil!call g:vimim_title()
+    let &titlestring = s:logo . s:vimim_get_title()
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
