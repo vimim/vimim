@@ -823,12 +823,8 @@ endfunction
 function! s:vimim_get_labeling(label)
     let labeling = a:label==10 ? "0" : a:label
     if s:onekey && a:label < 11
-        let label2 = a:label<2 ? "_" : get(s:abcd,a:label-1)
+        let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
         let labeling = empty(labeling) ? '10' : labeling . label2
-    endif
-    if s:onekey && !empty(s:english.line)  " sexy english flag
-        let english = a:label < len(split(s:english.line)) ? '*' : ' '
-        let labeling = english . labeling
     endif
     return labeling
 endfunction
@@ -1564,7 +1560,7 @@ function! <SID>VimIMRotation()
     endif
     let custom_im_toggle_list = s:vimim_get_custom_im_list()
     let custom_frontends = []
-    for im in custom_im_toggle_list 
+    for im in custom_im_toggle_list
         if im =~ 'english'
             call add(custom_frontends, [])
             continue
@@ -4215,7 +4211,6 @@ function! s:vimim_popupmenu_list(match_list)
             let chinese = simplified_traditional
         endif
         let label2 = s:vimim_get_labeling(label)
-        let labeling = color ? printf('%2s ',label2) : ""
         if empty(s:touch_me_not)
             let menu = ""
             let pairs = split(chinese)
@@ -4233,18 +4228,23 @@ function! s:vimim_popupmenu_list(match_list)
                     let menu = s:vimim_cjk_extra_text(char)
                 endif
             endif
+            let english = ' '  " sexy english flag
+            if !empty(s:english.line) && match(split(s:english.line), chinese) > -1
+                let english = '*'
+            endif
+            let label2 = english . label2
+            let labeling = color ? printf('%2s ',label2) : ""
             let chinese .= empty(tail) ? '' : tail
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
         endif
         let label_in_one_row = label . "."
         if s:menuless
-            let label_in_one_row = ""
-            if empty(s:vimim_cjk())
-                let label_in_one_row = label2
-                if label < 11   " 234567890 for menuless selection
-                    let label_in_one_row = label2[:-2]
-                endif
+            let label_in_one_row = label2
+            if s:vimim_cjk()    " only display english flag for menuless 4corner
+                let label_in_one_row = substitute(label_in_one_row,'\w','','g')
+            elseif label < 11   " 234567890 for menuless selection
+                let label_in_one_row = label2[:-2]
             endif
         endif
         call add(one_list, label_in_one_row . chinese)
