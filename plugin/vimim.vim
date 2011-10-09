@@ -60,7 +60,7 @@ function! s:vimim_initialize_debug()
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
-        let g:vimim_map = 'tab,search,gi'
+      " let g:vimim_map = 'tab,search,gi'
     endif
 endfunction
 
@@ -822,20 +822,6 @@ function! s:vimim_get_labeling(label)
     let labeling = a:label==10 ? "0" : a:label
     if s:onekey && a:label < 11
         let label2 = a:label<2 ? "_" : get(s:abcd,a:label-1)
-        if s:onekey > 1 && empty(s:menuless)
-            " onekey popup label BB for cloud Baidu
-            " onekey popup label GG for cloud Google
-            " onekey popup label SS for cloud Sogou
-            " onekey popup label 00 for cloud QQ
-            let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-            let cloud = get(split(vimim_cloud,'[.]'),0)
-            if label2 == cloud[0:0]  " b/g/s
-                let label2 = toupper(label2)
-                let labeling = label2
-            elseif label2 == 'z' && cloud =~ 'qq'
-                let label2 = '0'
-            endif
-        endif
         let labeling = empty(labeling) ? '10' : labeling . label2
     endif
     if s:onekey && !empty(s:english.line)  " sexy english flag
@@ -954,9 +940,7 @@ function! <SID>vimim_onekey_evil_map(key)
         if s:keyboard[-1:] != "'"
             call s:vimim_last_quote_to_force_cloud()
         endif
-        " todo
-     "  let hjkl = '\<C-R>=g:vimim()\<CR>\<C-R>=g:vimim_title()\<CR>'
-        let hjkl = '\<C-R>=g:vimim()\<CR>'
+        let hjkl = g:vimim()
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
@@ -1116,10 +1100,6 @@ function! s:vimim_last_quote_to_force_cloud()
             let clouds = split(s:vimim_cloud,',')
             let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
         endif
-"       call g:vimim_title()
-        " todo
-        echo s:logo
-        let &titlestring = s:logo
     endif
 endfunction
 
@@ -1181,7 +1161,6 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
     elseif s:onekey && s:menuless && key =~ '\d'
         if s:pattern_not_found
             let s:pattern_not_found = 0
-            let key .= '\<C-R>=g:vimim_title()\<CR>'
         else
             let key = s:vimim_menuless_map(key)
         endif
@@ -1198,11 +1177,11 @@ function! g:vimim_title()
     if s:menuless && empty(s:touch_me_not)
         let titlestring .= s:space . s:today
     endif
-    " todo
-    if &term == 'screen' " best efforts for gun screen
-        echo titlestring
-    else                 " if terminal supports setting window titles
-        let &titlestring = titlestring  " [all GUI versions]
+    if &term == 'screen'      " best efforts for gun screen
+        echo titlestring[:50]
+    else                      " if terminal can set window titles
+        let &titlestring = titlestring       " [all GUI versions]
+        :redraw
     endif
     return ""
 endfunction
@@ -1228,7 +1207,6 @@ function! s:vimim_menuless_map(key)
         call s:vimim_set_titlestring(cursor)
     else
         let s:hjkl_n = ""
-        call g:vimim_title()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1252,8 +1230,6 @@ function! s:vimim_set_titlestring(cursor)
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
         let title = keyboard .'  '. left . hightlight . right
         let &titlestring = s:logo[:4] . s:vimim_get_title() .' '. title
-    else
-        call g:vimim_title()
     endif
 endfunction
 
@@ -1341,7 +1317,7 @@ function! <SID>vimim_esc()
         if has("gui_running") && has("win32")
             let @+ = @0[:-2] " copy to clipboard and display
         endif
-        let key .= ':echo @0[:-2]\<CR>'
+        let key .= ':echo @0[:-2][:50]\<CR>'
         sil!call s:vimim_stop()
     elseif pumvisible()
         let key = s:vimim_esc_correction()
@@ -1646,7 +1622,6 @@ function! s:vimim_chinesemode_start()
         call s:vimim_punctuation_mapping()
     endif
     sil!call s:vimim_start()
-    sil!call g:vimim_title()
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
