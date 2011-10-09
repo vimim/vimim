@@ -60,7 +60,7 @@ function! s:vimim_initialize_debug()
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
-      " let g:vimim_map = 'tab,search,gi'
+        let g:vimim_map = 'tab,search,gi'
     endif
 endfunction
 
@@ -1178,7 +1178,7 @@ function! g:vimim_title()
         let titlestring .= s:space . s:today
     endif
     if &term == 'screen'      " best efforts for gun screen
-        echo titlestring[:50]
+        echo titlestring
     else                      " if terminal can set window titles
         let &titlestring = titlestring       " [all GUI versions]
         :redraw
@@ -1622,6 +1622,7 @@ function! s:vimim_chinesemode_start()
         call s:vimim_punctuation_mapping()
     endif
     sil!call s:vimim_start()
+    sil!call g:vimim_title()
     if s:chinese_mode =~ 'dynamic'
         let s:seamless_positions = getpos(".")
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
