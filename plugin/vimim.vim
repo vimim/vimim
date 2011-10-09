@@ -1552,7 +1552,10 @@ endfunction
 
 function! s:vimim_onekey_engine(keyboard)
     let keyboard = a:keyboard
-    let results = []
+    let results = s:vimim_get_hjkl_game(keyboard)
+    if !empty(results)
+        return results " [egg] " only flirt with hjkl
+    endif
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if ddddd
         let results = s:vimim_unicode_list(ddddd)
@@ -4148,10 +4151,10 @@ else
         " [english] first check if it is english or not
         let s:english.line = s:vimim_get_english(keyboard)
     endif
-    " [egg] " only flirt with hjkl in onekey
+    " [onekey] plays with nothing but onekey
     if s:onekey
-        let results = s:vimim_get_hjkl_game(keyboard)
-        if !empty(results)
+        let results = s:vimim_onekey_engine(keyboard)
+        if len(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -4163,14 +4166,7 @@ else
             return s:vimim_popupmenu_list(results)
         endif
     endif
-    " [onekey] plays with nothing but onekey
-    if s:onekey
-        let results = s:vimim_onekey_engine(keyboard)
-        if len(results)
-            return s:vimim_popupmenu_list(results)
-        endif
-    endif
-    " [shuangpin] support 6 major shuangpin
+    " [shuangpin] support 6 major shuangpin rules
     if !empty(s:vimim_shuangpin) && empty(s:has_pumvisible)
         let keyboard = s:vimim_shuangpin_transform(keyboard)
         let s:keyboard = keyboard
