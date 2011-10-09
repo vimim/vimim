@@ -217,9 +217,9 @@ endfunction
 function! s:vimim_egg_vimimrc()
     let vimimrc = copy(s:vimimdefaults)
     let index = match(vimimrc, 'g:vimim_toggle_list')
-    let custom_im_list = s:vimim_get_custom_im_list()
-    if index && !empty(custom_im_list)
-        let toggle = join(custom_im_list,",")
+    let custom_im_toggle_list = s:vimim_get_custom_im_list()
+    if index && !empty(custom_im_toggle_list)
+        let toggle = join(custom_im_toggle_list,",")
         let value = vimimrc[index][:-3]
         let vimimrc[index] = value . "'" . toggle . "'"
     endif
@@ -470,7 +470,6 @@ function! s:vimim_initialize_global()
     let s:chinese_mode = 'onekey'
     let s:onekey = 0
     let s:im_toggle = 0
-    let s:frontends = []
     let s:download = {}
     let s:download.english = "vimim.txt"
     let s:download.cjk     = "vimim.cjk.txt"
@@ -731,8 +730,10 @@ function! s:vimim_get_title()
         let __getname = s:backend.cloud.mycloud.directory
         let statusline .= s:space . __getname
     elseif s:ui.root == 'cloud' || s:onekey > 1
-        let vimim_cloud = get(split(s:vimim_cloud,','),0)
-        let cloud  = s:vimim_chinese(get(split(vimim_cloud,"[.]"),0))
+        let clouds = split(s:vimim_cloud,',')
+        let index = match(clouds, s:cloud_default)
+        let vimim_cloud = get(clouds, index)
+        let cloud  = s:vimim_chinese(s:cloud_default)
         let cloud .= s:vimim_chinese('cloud')
         let statusline = s:space . cloud
         if vimim_cloud =~ 'wubi'          " g:vimim_cloud='qq.wubi'
@@ -825,7 +826,7 @@ function! s:vimim_get_labeling(label)
         let labeling = empty(labeling) ? '10' : labeling . label2
     endif
     if s:onekey && !empty(s:english.line)  " sexy english flag
-        let english = a:label<len(split(s:english.line)) ? '*' : ' '
+        let english = a:label < len(split(s:english.line)) ? '*' : ' '
         let labeling = english . labeling
     endif
     return labeling
@@ -1368,9 +1369,11 @@ function! <SID>vimim_onekey(tab)
     elseif a:tab == 1 && (empty(one_before) || one_before=~'\s')
         let onekey = '\t'
     else
-        sil!call s:vimim_super_reset()
-        let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
+        call s:vimim_super_reset()
+        let s:onekey = 1
+        call <SID>VimIMRotation()
         let s:onekey = s:ui.root=='cloud' ? 2 : 1
+        let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
         let s:menuless = a:tab
         sil!call s:vimim_start()
         if s:menuless < 2
@@ -1554,6 +1557,41 @@ endfunction
 let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
+function! <SID>VimIMRotation()
+    if len(s:ui.frontends) < 2 && empty(s:onekey)
+        return <SID>ChineseMode()
+    endif
+    let custom_im_toggle_list = s:vimim_get_custom_im_list()
+    let custom_frontends = []
+    for im in custom_im_toggle_list 
+        if im =~ 'english'
+            call add(custom_frontends, [])
+            continue
+        endif
+        for frontends in s:ui.frontends
+            if get(frontends,1) =~ im
+                call add(custom_frontends, frontends)
+            endif
+        endfor
+    endfor
+    let switch = s:im_toggle % len(custom_frontends)
+    let frontends = get(custom_frontends, switch)
+    if empty(frontends)
+        return s:vimim_chinese_mode(0)
+    endif
+    let s:im_toggle += 1
+    let s:ui.root = get(frontends, 0)
+    let s:ui.im   = get(frontends, 1)
+    if s:ui.root == 'cloud'
+        let s:cloud_default = s:ui.im
+    endif
+    if s:onekey
+        return g:vimim_title()
+    else
+        return s:vimim_chinese_mode(1)
+    endif
+endfunction
+
 function! <SID>ChineseMode()
     if s:onekey
         sil!call s:vimim_stop()
@@ -1563,38 +1601,13 @@ function! <SID>ChineseMode()
     endif
     if empty(s:ui.frontends)
         return ""
-    elseif empty(s:frontends)
-        let s:frontends = get(s:ui.frontends, 0)
+    else
+        let s:im_toggle = 1
+        let frontends = get(s:ui.frontends, 0)
+        let s:ui.root = get(frontends, 0)
+        let s:ui.im   = get(frontends, 1)
     endif
     let switch = &omnifunc ==# 'VimIM' ? 0 : 1
-    return s:vimim_chinese_mode(switch)
-endfunction
-
-function! <SID>VimIMSwitch()
-    if len(s:ui.frontends) < 2
-        return <SID>ChineseMode()
-    endif
-    let custom_im_list = s:vimim_get_custom_im_list()
-    let switch = s:im_toggle % len(custom_im_list)
-    let s:im_toggle += 1
-    let im = get(custom_im_list, switch)
-    let switch = 1
-    if im =~ 'english'
-        let switch = 0
-        let s:frontends = get(s:ui.frontends, 0)
-    else
-        for frontends in s:ui.frontends
-            let frontend_im = get(frontends, 1)
-            if frontend_im =~ im
-                let s:frontends = frontends
-                let clouds = split(s:vimim_cloud,',')
-                let cloud_last = remove(clouds, im)
-                let clouds += [cloud_last]
-                let s:vimim_cloud = join(clouds,',')
-                break
-            endif
-        endfor
-    endif
     return s:vimim_chinese_mode(switch)
 endfunction
 
@@ -1612,8 +1625,6 @@ function! s:vimim_chinesemode_start()
     if s:vimim_chinese_input_mode =~ 'static'
         let s:chinese_mode = 'static'
     endif
-    let s:ui.root = get(s:frontends,0)
-    let s:ui.im = get(s:frontends,1)
     sil!call s:vimim_set_statusline()
     sil!call s:vimim_set_plugin_conflict()
     sil!call s:vimim_super_reset()
@@ -1669,16 +1680,16 @@ function! s:vimim_chinesemode_stop()
 endfunction
 
 function! s:vimim_get_custom_im_list()
-    let custom_im_list = []
+    let custom_im_toggle_list = []
     if s:vimim_toggle_list =~ ","
-        let custom_im_list = split(s:vimim_toggle_list, ",")
+        let custom_im_toggle_list = split(s:vimim_toggle_list, ",")
     elseif len(s:ui.frontends) > 1
         for frontends in s:ui.frontends
             let frontend_im = get(frontends, 1)
-            call add(custom_im_list, frontend_im)
+            call add(custom_im_toggle_list, frontend_im)
         endfor
     endif
-    return custom_im_list
+    return custom_im_toggle_list
 endfunction
 
 function! <SID>vimim_punctuation_toggle()
@@ -3207,15 +3218,7 @@ function! s:vimim_initialize_cloud()
     endif
 endfunction
 
-function! s:vimim_scan_backend_cloud()
-    if len(s:vimim_mycloud) < 2
-    \&& empty(s:backend.datafile)
-    \&& empty(s:backend.directory)
-        call s:vimim_set_cloud()
-    endif
-endfunction
-
-function! s:vimim_set_cloud()
+function! s:vimim_set_clouds()
     let im = s:cloud_default
     let cloud = s:vimim_set_cloud_if_http_executable(im)
     if empty(cloud)
@@ -3224,14 +3227,9 @@ function! s:vimim_set_cloud()
     endif
     let s:ui.im = im
     let s:ui.root = 'cloud'
-    let frontends = [s:ui.root, s:ui.im]
-    call add(s:ui.frontends, frontends)
     let clouds = split(s:vimim_cloud,',')
     for cloud in clouds
         let cloud = get(split(cloud,'[.]'),0)
-        if cloud == im
-            continue
-        endif
         call s:vimim_set_cloud_if_http_executable(cloud)
         let frontends = [s:ui.root, cloud]
         call add(s:ui.frontends, frontends)
@@ -4002,6 +4000,7 @@ function! s:vimim_reset_before_anything()
     let s:keyboard = ""
     let s:onekey = 0
     let s:menuless = 0
+    let s:im_toggle = 0
     let s:smart_enter = 0
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
@@ -4141,12 +4140,8 @@ else
     " [cloud] to make dream come true for multiple clouds
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
     if s:ui.root == 'cloud' || s:onekey > 1
-        let cloud = get(split(vimim_cloud,'[.]'),0)
-        if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
-            let cloud = get(s:frontends,1)
-        endif
         if empty(s:english.line)
-            let results = s:vimim_get_cloud(keyboard, cloud)
+            let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
     endif
     " [engine] try all local backend engines
@@ -4410,7 +4405,6 @@ function! s:vimim_map_plug_and_play()
            inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
            imap<silent><C-Bslash> <Plug>VimIM
         noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
-        inoremap<silent><expr><C-X><C-X> <SID>VimIMSwitch()
     endif
     if s:vimim_map =~ 'ctrl+6'
             inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
@@ -4429,8 +4423,9 @@ function! s:vimim_map_plug_and_play()
     if s:vimim_map =~ 'search'
         noremap<silent> n :call g:vimim_search_next()<CR>n
     endif
-    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
+    inoremap<silent><expr><C-X><C-X> <SID>VimIMRotation()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
+    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -nargs=* Debug :sil!call s:vimim_debug(<args>)
 endfunction
 
@@ -4448,7 +4443,7 @@ sil!call s:vimim_super_reset()
 sil!call s:vimim_initialize_session()
 sil!call s:vimim_scan_backend_mycloud()
 sil!call s:vimim_scan_backend_embedded()
-sil!call s:vimim_scan_backend_cloud()
+sil!call s:vimim_set_clouds()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_map_plug_and_play()
 sil!call s:vimim_map_extra_ctrl_h()
