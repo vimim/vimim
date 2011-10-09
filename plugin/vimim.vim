@@ -1706,14 +1706,13 @@ function! s:vimim_set_keyboard_list(column_start, keyboard)
 endfunction
 
 function! s:vimim_get_seamless(current_positions)
-    if empty(s:seamless_positions) || empty(a:current_positions)
+    if empty(s:seamless_positions)
         return -1
     endif
     let seamless_bufnum = s:seamless_positions[0]
     let seamless_lnum = s:seamless_positions[1]
     let seamless_off = s:seamless_positions[3]
-    if s:chinese_mode =~ 'dynamic'
-    \|| seamless_bufnum != a:current_positions[0]
+    if seamless_bufnum != a:current_positions[0]
     \|| seamless_lnum != a:current_positions[1]
     \|| seamless_off != a:current_positions[3]
         let s:seamless_positions = []
