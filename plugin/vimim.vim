@@ -38,10 +38,9 @@ function! s:vimim_bare_bones_vimrc()
     set gcr=a:blinkon0 mouse=nicr shellslash noswapfile viminfo=
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
-    let $PATH='/bin/;/Python27;/Python31;/Windows/system32'
-    if has("unix")
-        let $PATH='/usr/local/bin:/bin:/usr/bin:/usr/sbin:.:'
-    endif
+    let unix = '/usr/local/bin:/usr/bin:/bin:.'
+    let windows = '/bin/;/Python27;/Python31;/Windows/system32;.'
+    let $PATH = has("unix") ? unix : windows
 endfunction
 
 if exists("b:vimim") || v:version < 700
@@ -1346,10 +1345,10 @@ function! <SID>vimim_esc()
     let key = '\<Esc>'
     if s:onekey
         :y
-        if has("gui_running") && has("win32") && len(@") > 3
-            :let @+ = @"[:-2] " copy to clipboard and display
-            let key .= ':echo @+\<CR>'
+        if has("gui_running") && has("win32")
+            let @+ = @0[:-2] " copy to clipboard and display
         endif
+        let key .= ':echo @0[:-2]\<CR>'
         sil!call s:vimim_stop()
     elseif pumvisible()
         let key = s:vimim_esc_correction()
