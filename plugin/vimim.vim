@@ -1107,7 +1107,6 @@ function! s:vimim_hjkl_partition(keyboard)
         let tail = len(substitute(words,'\L','','g'))       " xx
         let head = keyboard[: -tail-1]  " 'jsjsxx'[:-3]='jsjs'
         let candidates = s:vimim_more_pinyin_candidates(head)
-        let head2  = get(candidates,0)
         if empty(head)
             let head = keyboard[0:0]
         elseif !empty(candidates)
@@ -1553,10 +1552,7 @@ endfunction
 
 function! s:vimim_onekey_engine(keyboard)
     let keyboard = a:keyboard
-    let results = s:vimim_game_hjkl(keyboard)
-    if len(results)
-        return results " [egg] flirt with hjkl
-    endif
+    let results = []
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if ddddd
         let results = s:vimim_unicode_list(ddddd)
@@ -4152,10 +4148,10 @@ else
         " [english] first check if it is english or not
         let s:english.line = s:vimim_get_english(keyboard)
     endif
-    " [onekey] plays with nothing but onekey
+    " [egg] " only flirt with hjkl in onekey
     if s:onekey
-        let results = s:vimim_onekey_engine(keyboard)
-        if len(results)
+        let results = s:vimim_get_hjkl_game(keyboard)
+        if !empty(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -4164,6 +4160,13 @@ else
         let results = s:vimim_get_mycloud_plugin(keyboard)
         if len(results)
             let s:show_extra_menu = 1
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+    " [onekey] plays with nothing but onekey
+    if s:onekey
+        let results = s:vimim_onekey_engine(keyboard)
+        if len(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
@@ -4183,6 +4186,7 @@ else
             let results = s:vimim_get_cloud(keyboard, cloud)
         endif
     endif
+    " [engine] try all local backend engines
     if empty(results)
         " [wubi] support auto insert on the 4th
         if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
