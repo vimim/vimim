@@ -1317,29 +1317,29 @@ endfunction
 
 function! <SID>vimim_backspace()
     " <BS> has special meaning in all 3 states of popupmenu-completion
-    let backspace = '\<Left>\<Delete>'
+    let key = '\<Left>\<Delete>'
     if pumvisible()
-        let backspace .= g:vimim()
+        let key .= '\<C-R>=g:vimim()\<CR>'
     endif
-    if s:menuless && s:onekey
+    if s:menuless
         if s:smart_enter
             let s:smart_enter = "menuless_correction"
-            let backspace  = '\<C-E>\<C-R>=g:vimim()\<CR>' . backspace
+            let key  = '\<C-E>\<C-R>=g:vimim()\<CR>' . key
         else
-            let backspace .= '\<C-R>=g:vimim_title()\<CR>'
+            let key .= '\<C-R>=g:vimim_title()\<CR>'
         endif
     endif
-    sil!exe 'sil!return "' . backspace . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! <SID>vimim_backslash()
     " (1) [insert] disable omni window
     " (2) [omni]   insert Chinese and remove Space before
-    let bslash = '\\'
+    let key = '\\'
     if pumvisible()
-        let bslash = '\<C-Y>\<C-R>=g:vimim_bracket('.1.')\<CR>'
+        let key = '\<C-Y>\<C-R>=g:vimim_bracket('.1.')\<CR>'
     endif
-    sil!exe 'sil!return "' . bslash . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! <SID>vimim_esc()
