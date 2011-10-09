@@ -298,7 +298,7 @@ function! s:vimim_egg_vimim()
             let input .= s:vimim_chinese('onekey')   . s:space
             let input .= s:vimim_chinese('menuless') . s:space
         endif
-        if s:vimim_cloud > -1 && s:onekey < 2
+        if s:ui.root != 'cloud' && s:onekey < 2
             let input .= s:vimim_chinese(s:cloud_default)
             let input .= s:vimim_chinese('cloud')
         endif
@@ -3910,7 +3910,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     let keyboard = tolower(a:keyboard)
     let results = []
     " 1/3 first try search from cloud/mycloud
-    if s:onekey > 1 || s:ui.root == 'cloud'
+    if s:ui.root == 'cloud' || s:onekey > 1
         " /search from the default cloud
         let results = s:vimim_get_cloud(keyboard, s:cloud_default)
     elseif !empty(s:mycloud)
@@ -4176,7 +4176,7 @@ else
     endif
     " [cloud] to make dream come true for multiple clouds
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-    if s:onekey > 1 || s:ui.root == 'cloud'
+    if s:ui.root == 'cloud' || s:onekey > 1
         let cloud = get(split(vimim_cloud,'[.]'),0)
         if !empty(s:frontends) && get(s:frontends,0) =~ 'cloud'
             let cloud = get(s:frontends,1)
