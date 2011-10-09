@@ -4236,9 +4236,7 @@ function! s:vimim_popupmenu_list(match_list)
                     let menu = s:vimim_cjk_extra_text(char)
                 endif
             endif
-            if empty(s:mycloud)
-                let chinese .= empty(tail) ? '' : tail
-            endif
+            let chinese .= empty(tail) ? '' : tail
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
         endif
