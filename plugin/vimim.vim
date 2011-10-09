@@ -1203,13 +1203,14 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 " =================================================
 
 function! g:vimim_title()
-    " titlestring works if terminal supports setting window titles
-    " [all GUI versions] [Win32 console] [non-empty t_ts] [!screen]
-    let title = s:logo . s:vimim_get_title()
+    let titlestring = s:logo . s:vimim_get_title()
     if s:menuless && empty(s:touch_me_not)
-        let &titlestring = title  . s:space . s:today
-    else
-        let &titlestring = title
+        let titlestring .= s:space . s:today
+    endif
+    if &term == 'screen'  " best efforts for gun screen
+        echo titlestring
+    else        " if terminal supports setting window titles
+        let &titlestring = titlestring  " [all GUI versions]
     endif
     return ""
 endfunction
