@@ -1570,7 +1570,7 @@ function! s:vimim_onekey_engine(keyboard)
         " [cache] abcdefghijklmnopqrstuvwxyz
         let results = s:cjk.one[keyboard]
     elseif empty(results)
-        " [character]  sssss'' => s's's's's
+        " [character]  sssss.. => sssss''' => s's's's's
         let keyboard = s:vimim_hjkl_partition(keyboard)
         " [quote] (2/2) quote_by_quote: wo'you'yi'ge'meng
         let keyboard = s:vimim_get_head_without_quote(keyboard)
@@ -3343,20 +3343,21 @@ function! s:vimim_check_http_executable()
 endfunction
 
 function! s:vimim_get_cloud(keyboard, cloud)
-    if a:keyboard !~ s:valid_keyboard
+    let keyboard = a:keyboard[:0] == "'" ? a:keyboard[1:] : a:keyboard
+    if keyboard !~ s:valid_keyboard   " leading quote is evil
     \|| empty(a:cloud)
     \|| match(s:vimim_cloud, a:cloud) < 0
         return []
     endif
+    let get_cloud = "s:vimim_get_cloud_" . a:cloud . "(keyboard)"
     let results = []
-    let get_cloud = "s:vimim_get_cloud_" . a:cloud . "(a:keyboard)"
     try
         let results = eval(get_cloud)
     catch
         sil!call s:vimim_debug('get_cloud', a:cloud, v:exception)
     endtry
     if !empty(results) && s:keyboard !~ '\S\s\S'
-        let s:keyboard = a:keyboard
+        let s:keyboard = keyboard
     endif
     return results
 endfunction
@@ -4156,6 +4157,8 @@ else
         let results = s:vimim_onekey_engine(keyboard)
         if len(results)
             return s:vimim_popupmenu_list(results)
+        elseif s:keyboard =~ "'"     " to support ssss.. for cloud
+            let keyboard = s:vimim_get_head_without_quote(keyboard)
         endif
     endif
     " [mycloud] get chunmeng from mycloud local or www
