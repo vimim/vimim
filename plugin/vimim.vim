@@ -254,27 +254,36 @@ endfunction
 
 function! s:vimim_egg_vimim()
     let eggs = []
-    let today = s:vimim_chinese('datetime') . s:colon . s:today
-    call add(eggs, today)
-    let os = 'os'
-        if has('win32unix') | let os = 'cygwin'
-    elseif has('win32')     | let os = 'Windows32'
-    elseif has('win64')     | let os = 'Windows64'
-    elseif has('macunix')   | let os = 'macunix'
-    elseif has('unix')      | let os = 'unix' | endif
+    let os = " win32unix win32 win64 macunix unix x11 "
+    call add(eggs, s:vimim_chinese('date') . s:colon . s:today)
+    for computer in split(os)
+        if has(computer)
+            let os = computer
+            break
+        endif
+    endfor
     let computer = s:vimim_chinese('computer') . s:colon
-    call add(eggs, computer . os . "_" . &term)
+    call add(eggs, computer . os . s:space . &term)
     let revision = get(split(s:egg),1)
     let revision = empty(revision) ?  ""  : "vimim.vim=" . revision
     let revision = v:progname ."=". v:version  . s:space . revision
-    let revision = s:vimim_chinese('revision') . s:colon . revision
-    call add(eggs, revision)
+    call add(eggs, s:vimim_chinese('revision') . s:colon . revision)
     let encoding = s:vimim_chinese('encoding') . s:colon
     call add(eggs, encoding . &encoding . s:space . &fileencodings)
-    let env = s:vimim_chinese('env') . s:colon . v:lc_time
-    call add(eggs, env)
+    call add(eggs, s:vimim_chinese('env') . s:colon . v:lc_time)
     let database = s:vimim_chinese('database') . s:colon
-    if !empty(s:ui.frontends)
+    if !empty(s:vimim_cjk())
+        let ciku = s:vimim_chinese('4corner')
+        if s:cjk.filename =~ "cjkv"
+            let ciku = s:vimim_chinese('5strokes') . s:space
+        endif
+        call add(eggs, database . ciku . s:colon . s:cjk.filename)
+    endif
+    if !empty(s:english.filename)
+        let ciku = database . s:vimim_chinese('english') . database
+        call add(eggs, ciku . s:english.filename)
+    endif
+    if len(s:ui.frontends)
         for frontend in s:ui.frontends
             let ui_root = get(frontend, 0)
             let ui_im = get(frontend, 1)
@@ -283,42 +292,25 @@ function! s:vimim_egg_vimim()
             let ciku = database . s:vimim_chinese(mass) . database
             call add(eggs, ciku . datafile)
         endfor
-    endif
-    if !empty(s:english.filename)
-        let ciku = database . s:vimim_chinese('english') . database
-        call add(eggs, ciku . s:english.filename)
-    endif
-    if !empty(s:vimim_cjk())
-        let ciku  = database
-        if s:cjk.filename =~ s:download.cjk
-            let ciku .= s:vimim_chinese('4corner')
-        elseif s:cjk.filename =~ "cjkv"
-            let ciku .= s:vimim_chinese('5strokes') . s:space
+        let input = s:vimim_chinese('input') . s:colon
+        if s:vimim_map =~ 'ctrl+bslash'
+            let input .=  s:vimim_statusline() . s:space
+        elseif s:vimim_map =~ 'gi'
+            let input .= s:vimim_chinese('onekey')   . s:space
+            let input .= s:vimim_chinese('menuless') . s:space
         endif
-        call add(eggs, ciku . s:colon . s:cjk.filename)
-    endif
-    let input = s:vimim_chinese('input') . s:colon
-    if s:vimim_map =~ 'ctrl+bslash'
-        let input .=  s:vimim_statusline() . s:space
-    elseif s:vimim_map =~ 'gi'
-        let input .= s:vimim_chinese('onekey')   . s:space
-        let input .= s:vimim_chinese('menuless') . s:space
-    endif
-    if s:vimim_cloud > -1 && s:onekey < 2
-        let input .= s:vimim_chinese(s:cloud_default)
-        let input .= s:vimim_chinese('cloud')
-    endif
-    if len(s:ui.frontends)
+        if s:vimim_cloud > -1 && s:onekey < 2
+            let input .= s:vimim_chinese(s:cloud_default)
+            let input .= s:vimim_chinese('cloud')
+        endif
         call add(eggs, input)
     endif
     if !empty(s:vimim_check_http_executable())
         let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
         let network  = s:vimim_chinese('network') . s:colon
-        let network .= exe . s:http_exe
-        call add(eggs, network)
+        call add(eggs, network . exe . s:http_exe)
     endif
-    let option = s:vimim_chinese('option') . s:colon . "vimimhelp "
-    call add(eggs, option)
+    call add(eggs, s:vimim_chinese('option') . s:colon . "vimimhelp")
     if !empty(s:vimimrc)
         for rc in sort(s:vimimrc)
             call add(eggs, s:space . s:space . s:colon . rc[2:])
@@ -636,7 +628,7 @@ function! s:vimim_dictionary_titles()
     endfor
     let single  = " pinyin fullwidth halfwidth english chinese purple"
     let single .= " plusplus quick haifeng phonetic array30  revision"
-    let single .= " mass  datetime  google  baidu  sogou  qq "
+    let single .= " mass  date  google  baidu  sogou  qq "
     let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 "
     let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ "
     let singles = split(single)
@@ -4407,7 +4399,7 @@ endfunction
 
 function! g:vimim_omni()
     let key = pumvisible() ? '\<C-P>\<Down>' : ""
-    let s:smart_enter = 0  " s:menuless: gi ma enter li space 2
+    let s:smart_enter = 0  " s:menuless: gi ma enter li space 3
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
