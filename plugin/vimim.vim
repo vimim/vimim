@@ -957,7 +957,7 @@ function! <SID>vimim_onekey_evil_map(key)
         if s:keyboard[-1:] != "'"
             call s:vimim_last_quote()
         endif
-        let hjkl = g:vimim()
+        let hjkl = '\<C-R>=g:vimim()\<CR>\<C-R>=g:vimim_title()\<CR>'
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
@@ -1207,9 +1207,9 @@ function! g:vimim_title()
     if s:menuless && empty(s:touch_me_not)
         let titlestring .= s:space . s:today
     endif
-    if &term == 'screen'  " best efforts for gun screen
+    if &term == 'screen' " best efforts for gun screen
         echo titlestring
-    else        " if terminal supports setting window titles
+    else                 " if terminal supports setting window titles
         let &titlestring = titlestring  " [all GUI versions]
     endif
     return ""
@@ -1433,7 +1433,6 @@ function! s:vimim_onekey_action(space)
     let onekey = space
     if one_before =~# s:valid_keyboard
         let onekey = g:vimim()
-        call g:vimim_title()
     elseif s:menuless
         let onekey = s:vimim_menuless_map(space)
     endif
@@ -1512,7 +1511,7 @@ function! s:vimim_onekey_all_maps()
     for _ in split('hjklmnx', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
     endfor
-    let onekey_punctuation = "/?;<>*"
+    let onekey_punctuation = "/?;<>*'"
     if !empty(s:vimim_cjk())
         let onekey_punctuation .= ":"
         let qwer = s:cjk.filename=~"cjkv" ? s:qwer[1:5] : s:qwer
