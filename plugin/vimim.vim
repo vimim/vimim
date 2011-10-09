@@ -1458,11 +1458,8 @@ function! s:vimim_onekey_evils()
         endfor
         " transfer English punctuation to Chinese punctuation
         let bs = s:evils_all[one_before]
-        if one_before == "'"
-            let bs = <SID>vimim_get_single_quote()
-        elseif one_before == '"'
-            let bs = <SID>vimim_get_double_quote()
-        endif
+        let bs = one_before == "'" ? <SID>vimim_get_single_quote() : bs
+        let bs = one_before == '"' ? <SID>vimim_get_double_quote() : bs
         let onekey = "\<Left>\<Delete>" . bs
     endif
     sil!exe 'sil!return "' . onekey . '"'
