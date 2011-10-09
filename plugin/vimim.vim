@@ -346,7 +346,7 @@ function! s:vimim_get_head_without_quote(keyboard)
     return keyboard
 endfunction
 
-function! s:vimim_game_hjkl(keyboard)
+function! s:vimim_get_hjkl_game(keyboard)
     let keyboard = a:keyboard
     let results = []
     let poem = s:vimim_check_filereadable(keyboard)
