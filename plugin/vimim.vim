@@ -1412,7 +1412,7 @@ function! <SID>vimim_onekey(tab)
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
-    sil!call s:vimim_onekey_overall_map()
+    sil!call s:vimim_onekey_all_maps()
     if empty(onekey) || onekey =~ 'Right'
         let onekey .= '\<C-R>=g:vimim_title()\<CR>'
     endif
@@ -1504,7 +1504,7 @@ function! g:vimim_onekey_dump()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
-function! s:vimim_onekey_overall_map()
+function! s:vimim_onekey_all_maps()
     if s:vimim_chinese_input_mode !~ 'latex'
         for _ in s:AZ_list
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps_map("'._.'")'
@@ -1549,6 +1549,43 @@ function! <SID>vimim_onekey_hjkl_map(key)
         endif
     endif
     sil!exe 'sil!return "' . hjkl . '"'
+endfunction
+
+function! s:vimim_onekey_engine(keyboard)
+    let keyboard = a:keyboard
+    let results = s:vimim_game_hjkl(keyboard)
+    if len(results)
+        return results " [egg] flirt with hjkl
+    endif
+    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+    if ddddd
+        let results = s:vimim_unicode_list(ddddd)
+    elseif s:imode_pinyin && keyboard =~# '^i'
+        if keyboard ==# 'itoday' || keyboard ==# 'inow'
+            let results = [s:vimim_imode_today_now(keyboard)]
+        elseif keyboard =~ '\d'
+            let results = s:vimim_imode_number(keyboard)
+        endif
+    endif
+    if len(keyboard) < 2 && has_key(s:cjk.one, keyboard)
+        " [cache] abcdefghijklmnopqrstuvwxyz
+        let results = s:cjk.one[keyboard]
+    elseif empty(results)
+        " [character]  sssss'' => s's's's's
+        let keyboard = s:vimim_hjkl_partition(keyboard)
+        " [quote] (2/2) quote_by_quote: wo'you'yi'ge'meng
+        let keyboard = s:vimim_get_head_without_quote(keyboard)
+        " [cjk] The cjk database works like swiss-army knife.
+        let head = s:vimim_get_cjk_head(keyboard)
+        if empty(head)
+            "  zero tolerance for zero
+        elseif has_key(s:cjk.one, head)
+            let results = s:cjk.one[head]
+        else
+            let results = s:vimim_cjk_match(head)
+        endif
+    endif
+    return results
 endfunction
 
 " ============================================= }}}
@@ -2236,7 +2273,7 @@ function! <SID>vimim_visual_ctrl6()
     let s:onekey = 1
     let onekey = "\<C-R>=g:vimim()\<CR>"
     sil!call s:vimim_start()
-    sil!call s:vimim_onekey_overall_map()
+    sil!call s:vimim_onekey_all_maps()
     if len(lines) < 2
         " highlight multiple chinese => show property of each
         let chinese = get(split(line,'\zs'),0)
@@ -4115,54 +4152,20 @@ else
         " [english] first check if it is english or not
         let s:english.line = s:vimim_get_english(keyboard)
     endif
-    " [egg] flirt with hjkl with onekey only
+    " [onekey] plays with nothing but onekey
     if s:onekey
-        let results = s:vimim_game_hjkl(keyboard)
-        if !empty(results)
+        let results = s:vimim_onekey_engine(keyboard)
+        if len(results)
             return s:vimim_popupmenu_list(results)
         endif
     endif
     " [mycloud] get chunmeng from mycloud local or www
     if !empty(s:mycloud)
         let results = s:vimim_get_mycloud_plugin(keyboard)
-        if !empty(results)
+        if len(results)
             let s:show_extra_menu = 1
             return s:vimim_popupmenu_list(results)
         endif
-    endif
-    " [onekey] play with nothing but onekey
-    if s:onekey
-        let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-        if ddddd
-            let results = s:vimim_unicode_list(ddddd)
-        elseif s:imode_pinyin && keyboard =~# '^i'
-            if keyboard ==# 'itoday' || keyboard ==# 'inow'
-                let results = [s:vimim_imode_today_now(keyboard)]
-            elseif keyboard =~ '\d'
-                let results = s:vimim_imode_number(keyboard)
-            endif
-        endif
-        if empty(results)
-            " [character]  sssss'' => s's's's's
-            let keyboard = s:vimim_hjkl_partition(keyboard)
-            " [quote] (2/2) quote_by_quote: wo'you'yi'ge'meng
-            let keyboard = s:vimim_get_head_without_quote(keyboard)
-            " [cjk] The cjk database works like swiss-army knife.
-            let head = s:vimim_get_cjk_head(keyboard)
-            if empty(head)
-                "  zero tolerance for zero
-            elseif has_key(s:cjk.one, head)
-                let results = s:cjk.one[head]
-            else
-                let results = s:vimim_cjk_match(head)
-            endif
-        endif
-    elseif len(keyboard) < 2 && has_key(s:cjk.one, keyboard)
-        " [cache] abcdefghijklmnopqrstuvwxyz
-        let results = s:cjk.one[keyboard]
-    endif
-    if !empty(results)
-        return s:vimim_popupmenu_list(results)
     endif
     " [shuangpin] support 6 major shuangpin
     if !empty(s:vimim_shuangpin) && empty(s:has_pumvisible)
