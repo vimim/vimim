@@ -902,7 +902,7 @@ function! s:vimim_punctuation_mapping()
     if s:chinese_punctuation && s:vimim_chinese_input_mode !~ 'latex'
         inoremap   '   <C-R>=<SID>vimim_get_single_quote()<CR>
         inoremap   "   <C-R>=<SID>vimim_get_double_quote()<CR>
-        inoremap <Bar> <C-R>=<SID>vimim_get_bslash()<CR>
+        inoremap <Bar> <C-R>=pumvisible() ? "\<lt>C-Y>、" : "、"<CR>
     else
         for _ in keys(s:evils)
             sil!exe 'iunmap '. _
@@ -988,18 +988,6 @@ function! <SID>vimim_get_double_quote()
     let pairs = split(s:evils[evil], '\zs')
     let s:smart_quotes.double += 1
     let key .= get(pairs, s:smart_quotes.double % 2)
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_get_bslash()
-    let key = ""
-    let evil = '|'
-    if !has_key(s:evils, evil)
-        return ""
-    elseif pumvisible()
-        let key = '\<C-Y>'
-    endif
-    let key .= s:evils[evil]
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
