@@ -292,7 +292,7 @@ function! s:vimim_egg_vimim()
             call add(eggs, ciku . datafile)
         endfor
         let input = s:vimim_chinese('input') . s:colon
-        if s:vimim_map =~ 'ctrl+bslash'
+        if s:vimim_map =~ 'ctrl_bslash'
             let input .=  s:vimim_statusline() . s:space
         elseif s:vimim_map =~ 'gi'
             let input .= s:vimim_chinese('onekey')   . s:space
@@ -448,8 +448,8 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 
 function! s:vimim_initialize_global()
     let s:rc = {}
-    let s:rc["g:vimim_map"] = 'ctrl+6,ctrl+bslash,search,gi'
-    let s:rc["g:vimim_map_extra"] = 'ctrl+h or ctrl+space'
+    let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
+    let s:rc["g:vimim_map_extra"] = 'ctrl_h or ctrl_space'
     let s:rc["g:vimim_cloud"] = 'baidu,sogou,qq,google'
     let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
     let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
@@ -641,7 +641,7 @@ function! s:vimim_chinese(key)
     if has_key(s:title, chinese)
         let twins = split(s:title[chinese])
         let chinese = get(twins,0)
-        if len(twins) > 1 && s:vimim_map =~ 'ctrl+bslash'
+        if len(twins) > 1 && s:vimim_map =~ 'ctrl_bslash'
             let chinese = get(twins,1)
         endif
     endif
@@ -732,8 +732,7 @@ function! s:vimim_get_title()
         let statusline .= s:space . __getname
     elseif s:ui.root == 'cloud' || s:onekey > 1
         let clouds = split(s:vimim_cloud,',')
-        let index = match(clouds, s:cloud_default)
-        let vimim_cloud = get(clouds, index)
+        let vimim_cloud = get(clouds, match(clouds, s:cloud_default))
         let cloud  = s:vimim_chinese(s:cloud_default)
         let cloud .= s:vimim_chinese('cloud')
         let statusline = s:space . cloud
@@ -3216,8 +3215,7 @@ function! s:vimim_set_background_clouds()
     if empty(s:vimim_check_http_executable())
         return 0
     endif
-    let clouds = split(s:vimim_cloud,',')
-    for cloud in clouds
+    for cloud in split(s:vimim_cloud,',')
         let im = get(split(cloud,'[.]'),0)
         let s:ui.im = im
         let s:ui.root = 'cloud'
@@ -3972,7 +3970,6 @@ function! s:vimim_reset_before_anything()
     let s:keyboard = ""
     let s:onekey = 0
     let s:menuless = 0
-    let s:im_toggle = 0
     let s:smart_enter = 0
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
@@ -4345,39 +4342,39 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
 function! s:vimim_map_extra_ctrl_h()
-    if s:vimim_map_extra =~ 'ctrl+h_as_ctrl+6'
+    if s:vimim_map_extra =~ 'ctrl_h_as_ctrl_6'
         imap <C-H> <C-^>
-    elseif s:vimim_map_extra =~ 'ctrl+h_as_ctrl+bslash'
+    elseif s:vimim_map_extra =~ 'ctrl_h_as_ctrl_bslash'
         imap <C-H> <C-Bslash>
-    elseif s:vimim_map_extra =~ 'ctrl+h_to_cycle'
+    elseif s:vimim_map_extra =~ 'ctrl_h_to_rotate'
         imap <C-H> <C-X><C-X>
     endif
 endfunction
 
 function! s:vimim_map_extra_ctrl_space()
     if has("gui_running")
-        if s:vimim_map_extra =~ 'ctrl+space_as_ctrl+6'
+        if s:vimim_map_extra =~ 'ctrl_space_as_ctrl_6'
             imap <C-Space> <C-^>
-        elseif s:vimim_map_extra =~ 'ctrl+space_as_ctrl+bslash'
+        elseif s:vimim_map_extra =~ 'ctrl_space_as_ctrl_bslash'
             map  <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
-        elseif s:vimim_map_extra =~ 'ctrl+space_to_cycle'
+        elseif s:vimim_map_extra =~ 'ctrl_space_to_rotate'
             imap <C-Space> <C-X><C-X>
         endif
     elseif has("win32unix")
-        if s:vimim_map_extra =~ 'ctrl+space_as_ctrl+6'
+        if s:vimim_map_extra =~ 'ctrl_space_as_ctrl_6'
             imap <C-@> <C-^>
-        elseif s:vimim_map_extra =~ 'ctrl+space_as_ctrl+bslash'
+        elseif s:vimim_map_extra =~ 'ctrl_space_as_ctrl_bslash'
             map  <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
-        elseif s:vimim_map_extra =~ 'ctrl+space_to_cycle'
+        elseif s:vimim_map_extra =~ 'ctrl_space_to_rotate'
             imap <C-@> <C-X><C-X>
         endif
     endif
 endfunction
 
 function! s:vimim_map_plug_and_play()
-    if s:vimim_map =~ 'ctrl+bslash'
+    if s:vimim_map =~ 'ctrl_bslash'
            inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
            imap<silent><C-Bslash> <Plug>VimIM
         noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
