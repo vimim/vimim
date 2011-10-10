@@ -57,7 +57,7 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        call s:vimim_omni_color()
+        :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
         let g:vimim_map = 'tab,search,gi'
@@ -99,8 +99,8 @@ function! s:vimim_initialize_session()
     let s:imode_pinyin = 0
     let s:abcd = split("'abcdvfgsz",'\zs')
     let s:qwer = split("pqwertyuio",'\zs')
-    let   az_list = range(char2nr('a'), char2nr('z'))
-    let   AZ_list = range(char2nr('A'), char2nr('Z'))
+    let az_list = range(char2nr('a'), char2nr('z'))
+    let AZ_list = range(char2nr('A'), char2nr('Z'))
     let s:az_list = map(az_list, "nr2char(".'v:val'.")")
     let s:AZ_list = map(AZ_list, "nr2char(".'v:val'.")")
     let s:Az_list = s:az_list + s:AZ_list
@@ -178,7 +178,7 @@ function! s:vimim_set_keycode()
     let s:valid_keyboard  = copy(keycode)
     let s:valid_keys = split(keycode_string, '\zs')
     let s:imode_pinyin = 0
-    if s:ui.im =~ 'pinyin' || !empty(s:vimim_cjk())
+    if s:ui.im =~ 'pinyin' || s:vimim_cjk()
     \|| s:onekey > 1
     \|| s:vimim_shuangpin == 'abc'
         let s:imode_pinyin = 1
@@ -270,7 +270,7 @@ function! s:vimim_egg_vimim()
     call add(eggs, encoding . &encoding . s:space . &fileencodings)
     call add(eggs, s:vimim_chinese('env') . s:colon . v:lc_time)
     let database = s:vimim_chinese('database') . s:colon
-    if !empty(s:vimim_cjk())
+    if s:vimim_cjk()
         let ciku = s:vimim_chinese('4corner')
         if s:cjk.filename =~ "cjkv"
             let ciku = s:vimim_chinese('5strokes') . s:space
@@ -981,7 +981,7 @@ function! s:vimim_cache()
         return []
     endif
     let results = []
-    if len(s:hjkl_n) && !empty(s:vimim_cjk())
+    if len(s:hjkl_n) && s:vimim_cjk()
         let results = s:vimim_onekey_menu_filter()
     elseif s:touch_me_not && s:hjkl_h
         let s:hjkl_h = 0
@@ -1146,7 +1146,7 @@ function! <SID>vimim_abcdvfgsz_1234567890_map(key)
         let down = repeat("\<Down>", n)
         let s:has_pumvisible = 1
         if s:onekey && a:key =~ '\d'
-            if s:touch_me_not && !empty(s:vimim_cjk())
+            if s:touch_me_not && s:vimim_cjk()
                 let s:hjkl_n .= a:key
             else
                 let key = down . '\<C-Y>'
@@ -1477,7 +1477,7 @@ function! s:vimim_onekey_all_maps()
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
     endfor
     let onekey_punctuation = "/?<>*';"
-    if !empty(s:vimim_cjk())
+    if s:vimim_cjk()
         let qwer = s:cjk.filename=~"cjkv" ? s:qwer[1:5] : s:qwer
         for _ in qwer
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwer_map("'._.'")'
@@ -1943,7 +1943,7 @@ function! s:vimim_cjk_extra_text(chinese)
     let ddddd = char2nr(a:chinese)
     let xxxx  = printf('u%04x',ddddd)
     let unicode = ddddd . s:space . xxxx
-    if !empty(s:vimim_cjk())
+    if s:vimim_cjk()
         let grep = "^" . a:chinese
         let line = match(s:cjk.lines, grep, 0)
         if line < 0
@@ -2200,7 +2200,7 @@ endfunction
 function! s:vimim_chinese_transfer() range abort
     " (1) "quick and dirty" way to transfer Chinese to Chinese
     " (2) 20% of the effort to solve 80% of the problem using one2one
-    if !empty(s:vimim_cjk())
+    if s:vimim_cjk()
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
 endfunction
@@ -2234,7 +2234,7 @@ function! <SID>vimim_visual_ctrl6()
         if !empty(results)
             let key = "gvr" . get(results,0) . "ga"
         endif
-        if !empty(s:vimim_cjk())
+        if s:vimim_cjk()
             let line = match(s:cjk.lines, "^".line)
             let &titlestring = s:space . get(s:cjk.lines,line)
         endif
@@ -3854,7 +3854,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     endif
     " 2/3 search unicode or cjk /search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if empty(ddddd) && !empty(s:vimim_cjk())
+    if empty(ddddd) && s:vimim_cjk()
         " /search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
         let keyboards = s:vimim_cjk_slash_search_block(keyboard)
         if len(keyboards)
@@ -4162,9 +4162,7 @@ function! s:vimim_popupmenu_list(match_list)
         return []
     else
         let s:match_list = lines
-        if len(head) == 1
-        \&& !empty(s:vimim_cjk())
-        \&& !has_key(s:cjk.one, head)
+        if len(head) == 1 && s:vimim_cjk() && !has_key(s:cjk.one,head)
             let s:cjk.one[head] = lines
         endif
     endif
@@ -4176,7 +4174,7 @@ function! s:vimim_popupmenu_list(match_list)
     let popup_list = []
     for chinese in lines
         let complete_items = {}
-        if !empty(s:vimim_cjk()) && s:hjkl__ && s:hjkl__%2
+        if s:vimim_cjk() && s:hjkl__ && s:hjkl__%2
             let simplified_traditional = ""
             for char in split(chinese, '\zs')
                 let simplified_traditional .= s:vimim_1to1(char)
@@ -4422,5 +4420,5 @@ sil!call s:vimim_map_plug_and_play()
 sil!call s:vimim_map_extra_ctrl_h()
 sil!call s:vimim_map_extra_ctrl_space()
 " ============================================= }}}
-:redir @p
+redir @p
 Debug s:vimim_egg_vimim()
