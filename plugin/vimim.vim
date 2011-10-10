@@ -727,7 +727,7 @@ function! s:vimim_get_title()
         elseif datafile =~# 'wubihf'
             let statusline .= s:vimim_chinese('haifeng')
         endif
-    elseif !empty(s:mycloud)
+    elseif s:ui.im == 'mycloud'
         let __getname = s:backend.cloud.mycloud.directory
         let statusline .= s:space . __getname
     elseif s:ui.root == 'cloud' || s:onekey > 1
@@ -1680,7 +1680,7 @@ function! s:vimim_get_custom_im_list()
     let custom_im_toggle_list = []
     if s:vimim_toggle_list =~ ","
         let custom_im_toggle_list = split(s:vimim_toggle_list, ",")
-    elseif len(s:ui.frontends) > 1
+    elseif len(s:ui.frontends)
         for frontends in s:ui.frontends
             let frontend_im = get(frontends, 1)
             call add(custom_im_toggle_list, frontend_im)
@@ -2513,7 +2513,7 @@ function! s:vimim_set_shuangpin()
     if s:vimim_cloud =~ 'shuangpin'
     \||  empty(s:vimim_shuangpin)
     \|| !empty(s:shuangpin_table)
-    \|| !empty(s:mycloud)
+    \|| s:ui.im == 'mycloud'
         return
     endif
     let chinese = ""
@@ -2954,7 +2954,7 @@ endfunction
 let s:VimIM += [" ====  backend: file    ==== {{{"]
 " =================================================
 
-function! s:vimim_scan_backend_embedded()
+function! s:vimim_set_backend_embedded()
     if len(s:vimim_mycloud) > 1
         return
     endif
@@ -3194,7 +3194,7 @@ endfunction
 let s:VimIM += [" ====  backend: cloud   ==== {{{"]
 " =================================================
 
-function! s:vimim_initialize_cloud()
+function! s:vimim_set_background_clouds()
     let s:http_exe = ""
     let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
     let s:cloud_default = get(cloud_defaults,0)
@@ -3213,43 +3213,23 @@ function! s:vimim_initialize_cloud()
     if match(s:rc["g:vimim_cloud"], default) > -1
         let s:cloud_default = default
     endif
-endfunction
-
-function! s:vimim_set_clouds()
-    let im = s:cloud_default
-    let cloud = s:vimim_set_cloud_if_http_executable(im)
-    if empty(cloud)
-        let s:backend.cloud = {}
-        return
+    if empty(s:vimim_check_http_executable())
+        return 0
     endif
-    let s:ui.im = im
-    let s:ui.root = 'cloud'
     let clouds = split(s:vimim_cloud,',')
     for cloud in clouds
-        let cloud = get(split(cloud,'[.]'),0)
-        call s:vimim_set_cloud_if_http_executable(cloud)
-        let frontends = [s:ui.root, cloud]
+        let im = get(split(cloud,'[.]'),0)
+        let s:ui.im = im
+        let s:ui.root = 'cloud'
+        let frontends = [s:ui.root, s:ui.im]
         call add(s:ui.frontends, frontends)
+        let s:backend.cloud[im] = s:vimim_one_backend_hash()
+        let s:backend.cloud[im].root = 'cloud'
+        let s:backend.cloud[im].im = im
+        let s:backend.cloud[im].keycode = s:im_keycode[im]
+        let s:backend.cloud[im].chinese = s:vimim_chinese(im)
+        let s:backend.cloud[im].name = s:vimim_chinese(im)
     endfor
-endfunction
-
-function! s:vimim_set_cloud_if_http_executable(im)
-    if empty(s:http_exe)
-        if empty(s:vimim_check_http_executable())
-            return 0
-        endif
-    endif
-    let im = a:im
-    if empty(im)
-        let im = s:cloud_default
-    endif
-    let s:backend.cloud[im] = s:vimim_one_backend_hash()
-    let s:backend.cloud[im].root = 'cloud'
-    let s:backend.cloud[im].im = im
-    let s:backend.cloud[im].keycode = s:im_keycode[im]
-    let s:backend.cloud[im].chinese = s:vimim_chinese(im)
-    let s:backend.cloud[im].name = s:vimim_chinese(im)
-    return 1
 endfunction
 
 function! s:vimim_check_http_executable()
@@ -3563,8 +3543,7 @@ endfunction
 let s:VimIM += [" ====  backend: mycloud ==== {{{"]
 " =================================================
 
-function! s:vimim_scan_backend_mycloud()
-    let s:mycloud = 0
+function! s:vimim_set_backend_mycloud()
     let s:mycloud_arg  = 0
     let s:mycloud_func = 0
     let s:mycloud_mode = 0
@@ -3587,8 +3566,6 @@ function! s:vimim_scan_backend_mycloud()
         let s:ui.im = im
         let s:ui.root = root
         let s:ui.frontends = [[s:ui.root, s:ui.im]]
-        let s:vimim_cloud = -1
-        let s:mycloud = mycloud
     endif
 endfunction
 
@@ -3868,11 +3845,9 @@ function! s:vimim_search_chinese_by_english(keyboard)
     let keyboard = tolower(a:keyboard)
     let results = []
     " 1/3 first try search from cloud/mycloud
-    if s:ui.root == 'cloud' || s:onekey > 1
-        " /search from the default cloud
+    if s:ui.root == 'cloud' || s:onekey > 1 " /search from default cloud
         let results = s:vimim_get_cloud(keyboard, s:cloud_default)
-    elseif !empty(s:mycloud)
-        " /search from mycloud
+    elseif s:ui.im == 'mycloud'             " /search from mycloud
         let results = s:vimim_get_mycloud_plugin(keyboard)
     endif
     if !empty(results)
@@ -4122,7 +4097,7 @@ else
         endif
     endif
     " [mycloud] get chunmeng from mycloud local or www
-    if !empty(s:mycloud)
+    if s:ui.im == 'mycloud'
         let results = s:vimim_get_mycloud_plugin(keyboard)
         if len(results)
             let s:show_extra_menu = 1
@@ -4432,7 +4407,6 @@ endfunction
 
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
-sil!call s:vimim_initialize_cloud()
 sil!call s:vimim_dictionary_statusline()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
@@ -4442,9 +4416,9 @@ sil!call s:vimim_scan_datafile_cjk()
 sil!call s:vimim_scan_datafile_english()
 sil!call s:vimim_super_reset()
 sil!call s:vimim_initialize_session()
-sil!call s:vimim_scan_backend_mycloud()
-sil!call s:vimim_scan_backend_embedded()
-sil!call s:vimim_set_clouds()
+sil!call s:vimim_set_backend_mycloud()
+sil!call s:vimim_set_backend_embedded()
+sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_map_plug_and_play()
 sil!call s:vimim_map_extra_ctrl_h()
