@@ -1368,7 +1368,7 @@ function! <SID>vimim_onekey(tab)
         call s:vimim_super_reset()
         let s:onekey = 1
         call <SID>VimIMRotation()
-        let s:onekey = s:ui.root=='cloud' ? 2 : 1
+        let s:onekey = s:ui.root == 'cloud' ? 2 : 1
         let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
         let s:menuless = a:tab
         sil!call s:vimim_start()
@@ -3197,38 +3197,37 @@ function! s:vimim_set_background_clouds()
     let s:http_exe = ""
     let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
     let s:cloud_default = get(cloud_defaults,0)
-"   let s:cloud_keys = {}
-"   for cloud in cloud_defaults
-"       let s:cloud_keys[cloud] = 0
-"   endfor
-"   let clouds = split(s:vimim_cloud,',')
-"   for cloud in clouds
-"       let cloud = get(split(cloud,'[.]'),0)
-"       call remove(cloud_defaults, match(cloud_defaults,cloud))
-"   endfor
-"   let clouds += cloud_defaults
-"   let s:vimim_cloud = join(clouds,',')
-"   let default = get(split(get(clouds,0),'[.]'),0)
-"   if match(s:rc["g:vimim_cloud"], default) > -1
-"       let s:cloud_default = default
-"   endif
-"   if empty(s:vimim_check_http_executable())
-"       return 0
-"   endif
-"   for cloud in split(s:vimim_cloud,',')
-"       let im = get(split(cloud,'[.]'),0)
-"       let s:ui.im = im
-"       let s:ui.root = 'cloud'
-"       let frontends = [s:ui.root, s:ui.im]
-"       call add(s:ui.frontends, frontends)
-"       let s:backend.cloud[im] = s:vimim_one_backend_hash()
-"       let s:backend.cloud[im].root = 'cloud'
-"       let s:backend.cloud[im].im = im
-"       let s:backend.cloud[im].keycode = s:im_keycode[im]
-"       let s:backend.cloud[im].chinese = s:vimim_chinese(im)
-"       let s:backend.cloud[im].name = s:vimim_chinese(im)
-"   endfor
-" todo
+    let s:cloud_keys = {}
+    for cloud in cloud_defaults
+        let s:cloud_keys[cloud] = 0
+    endfor
+    let clouds = split(s:vimim_cloud,',')
+    for cloud in clouds
+        let cloud = get(split(cloud,'[.]'),0)
+        call remove(cloud_defaults, match(cloud_defaults,cloud))
+    endfor
+    let clouds += cloud_defaults
+    let s:vimim_cloud = join(clouds,',')
+    let default = get(split(get(clouds,0),'[.]'),0)
+    if match(s:rc["g:vimim_cloud"], default) > -1
+        let s:cloud_default = default
+    endif
+    if empty(s:vimim_check_http_executable())
+        return 0
+    endif
+    for cloud in split(s:vimim_cloud,',')
+        let im = get(split(cloud,'[.]'),0)
+        let s:ui.im = im
+        let s:ui.root = 'cloud'
+        let frontends = [s:ui.root, s:ui.im]
+        call add(s:ui.frontends, frontends)
+        let s:backend.cloud[im] = s:vimim_one_backend_hash()
+        let s:backend.cloud[im].root = 'cloud'
+        let s:backend.cloud[im].im = im
+        let s:backend.cloud[im].keycode = s:im_keycode[im]
+        let s:backend.cloud[im].chinese = s:vimim_chinese(im)
+        let s:backend.cloud[im].name = s:vimim_chinese(im)
+    endfor
 endfunction
 
 function! s:vimim_check_http_executable()
