@@ -57,6 +57,7 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
+        :redir @p
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -4416,5 +4417,4 @@ sil!call s:vimim_map_plug_and_play()
 sil!call s:vimim_map_extra_ctrl_h()
 sil!call s:vimim_map_extra_ctrl_space()
 " ============================================= }}}
-redir @p
 Debug s:vimim_egg_vimim()
