@@ -55,7 +55,8 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+:let g:vimim_mycloud = "py:127.0.0.1"
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -3197,37 +3198,38 @@ function! s:vimim_set_background_clouds()
     let s:http_exe = ""
     let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
     let s:cloud_default = get(cloud_defaults,0)
-    let s:cloud_keys = {}
-    for cloud in cloud_defaults
-        let s:cloud_keys[cloud] = 0
-    endfor
-    let clouds = split(s:vimim_cloud,',')
-    for cloud in clouds
-        let cloud = get(split(cloud,'[.]'),0)
-        call remove(cloud_defaults, match(cloud_defaults,cloud))
-    endfor
-    let clouds += cloud_defaults
-    let s:vimim_cloud = join(clouds,',')
-    let default = get(split(get(clouds,0),'[.]'),0)
-    if match(s:rc["g:vimim_cloud"], default) > -1
-        let s:cloud_default = default
-    endif
-    if empty(s:vimim_check_http_executable())
-        return 0
-    endif
-    for cloud in split(s:vimim_cloud,',')
-        let im = get(split(cloud,'[.]'),0)
-        let s:ui.im = im
-        let s:ui.root = 'cloud'
-        let frontends = [s:ui.root, s:ui.im]
-        call add(s:ui.frontends, frontends)
-        let s:backend.cloud[im] = s:vimim_one_backend_hash()
-        let s:backend.cloud[im].root = 'cloud'
-        let s:backend.cloud[im].im = im
-        let s:backend.cloud[im].keycode = s:im_keycode[im]
-        let s:backend.cloud[im].chinese = s:vimim_chinese(im)
-        let s:backend.cloud[im].name = s:vimim_chinese(im)
-    endfor
+"   let s:cloud_keys = {}
+"   for cloud in cloud_defaults
+"       let s:cloud_keys[cloud] = 0
+"   endfor
+"   let clouds = split(s:vimim_cloud,',')
+"   for cloud in clouds
+"       let cloud = get(split(cloud,'[.]'),0)
+"       call remove(cloud_defaults, match(cloud_defaults,cloud))
+"   endfor
+"   let clouds += cloud_defaults
+"   let s:vimim_cloud = join(clouds,',')
+"   let default = get(split(get(clouds,0),'[.]'),0)
+"   if match(s:rc["g:vimim_cloud"], default) > -1
+"       let s:cloud_default = default
+"   endif
+"   if empty(s:vimim_check_http_executable())
+"       return 0
+"   endif
+"   for cloud in split(s:vimim_cloud,',')
+"       let im = get(split(cloud,'[.]'),0)
+"       let s:ui.im = im
+"       let s:ui.root = 'cloud'
+"       let frontends = [s:ui.root, s:ui.im]
+"       call add(s:ui.frontends, frontends)
+"       let s:backend.cloud[im] = s:vimim_one_backend_hash()
+"       let s:backend.cloud[im].root = 'cloud'
+"       let s:backend.cloud[im].im = im
+"       let s:backend.cloud[im].keycode = s:im_keycode[im]
+"       let s:backend.cloud[im].chinese = s:vimim_chinese(im)
+"       let s:backend.cloud[im].name = s:vimim_chinese(im)
+"   endfor
+" todo
 endfunction
 
 function! s:vimim_check_http_executable()
@@ -3552,8 +3554,7 @@ function! s:vimim_set_backend_mycloud()
     endif
     let im = 'mycloud'
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
-    let mycloud = s:vimim_check_mycloud_availability()
-    if empty(mycloud)
+    if empty(s:vimim_check_mycloud_availability())
         let s:backend.cloud = {}
     else
         let root = 'cloud'
@@ -3777,8 +3778,9 @@ endfunction
 
 function! s:vimim_get_mycloud_plugin(keyboard)
     let output = 0
+    let mycloud = s:vimim_check_mycloud_availability()
     try
-        let output = s:vimim_access_mycloud(s:mycloud, a:keyboard)
+        let output = s:vimim_access_mycloud(mycloud, a:keyboard)
     catch
         sil!call s:vimim_debug('alert', 'mycloud', v:exception)
     endtry
@@ -4379,7 +4381,7 @@ function! s:vimim_map_plug_and_play()
            imap<silent><C-Bslash> <Plug>VimIM
         noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
     endif
-    if s:vimim_map =~ 'ctrl+6'
+    if s:vimim_map =~ 'ctrl_6'
             inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
             imap<silent><C-^>     <Plug>VimimOneKey
         xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
