@@ -207,7 +207,7 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "海量词库：" . url . s:download.bsddb)
     call add(eggs, "英文词库：" . url . s:download.english)
     call add(eggs, "四角號碼：" . url . s:download.cjk)
-    return map(eggs, 'v:val . s:space')
+    return map(eggs, 'v:val . " "')
 endfunction
 
 function! s:vimim_egg_vim()
