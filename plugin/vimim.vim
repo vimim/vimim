@@ -179,8 +179,7 @@ function! s:vimim_set_keycode()
     let s:valid_keys = split(keycode_string, '\zs')
     let s:imode_pinyin = 0
     if s:ui.im =~ 'pinyin' || s:vimim_cjk()
-    \|| s:onekey > 1
-    \|| s:vimim_shuangpin == 'abc'
+    \|| s:onekey > 1 || s:vimim_shuangpin == 'abc'
         let s:imode_pinyin = 1
     endif
 endfunction
@@ -2510,10 +2509,8 @@ let s:VimIM += [" ====  input: shuangpin ==== {{{"]
 " =================================================
 
 function! s:vimim_set_shuangpin()
-    if s:vimim_cloud =~ 'shuangpin'
-    \||  empty(s:vimim_shuangpin)
-    \|| !empty(s:shuangpin_table)
-    \|| s:ui.im == 'mycloud'
+    if s:vimim_cloud =~ 'shuangpin' || s:ui.im == 'mycloud'
+    \|| !empty(s:shuangpin_table)   || empty(s:vimim_shuangpin)
         return
     endif
     let chinese = ""
@@ -2998,7 +2995,7 @@ function! s:vimim_set_datafile(im, datafile)
     let frontends = [s:ui.root, s:ui.im]
     call insert(s:ui.frontends, frontends)
     let s:backend.datafile[im] = s:vimim_one_backend_hash()
-    let s:backend.datafile[im].root = "datafile"
+    let s:backend.datafile[im].root = s:ui.root
     let s:backend.datafile[im].im = im
     let s:backend.datafile[im].name = datafile
     let s:backend.datafile[im].keycode = s:im_keycode[im]
@@ -3132,7 +3129,7 @@ function! s:vimim_set_directory(im, dir)
     call insert(s:ui.frontends, frontends)
     if empty(s:backend.directory)
         let s:backend.directory[im] = s:vimim_one_backend_hash()
-        let s:backend.directory[im].root = "directory"
+        let s:backend.directory[im].root = s:ui.root
         let s:backend.directory[im].name = a:dir
         let s:backend.directory[im].im = im
         let s:backend.directory[im].keycode = s:im_keycode[im]
@@ -3218,12 +3215,12 @@ function! s:vimim_set_background_clouds()
     endif
     for cloud in split(s:vimim_cloud,',')
         let im = get(split(cloud,'[.]'),0)
-        let s:ui.im = im
         let s:ui.root = 'cloud'
+        let s:ui.im = im
         let frontends = [s:ui.root, s:ui.im]
         call add(s:ui.frontends, frontends)
         let s:backend.cloud[im] = s:vimim_one_backend_hash()
-        let s:backend.cloud[im].root = 'cloud'
+        let s:backend.cloud[im].root = s:ui.root
         let s:backend.cloud[im].im = im
         let s:backend.cloud[im].keycode = s:im_keycode[im]
         let s:backend.cloud[im].chinese = s:vimim_chinese(im)
@@ -3282,8 +3279,7 @@ endfunction
 function! s:vimim_get_cloud(keyboard, cloud)
     let keyboard = a:keyboard[:0] == "'" ? a:keyboard[1:] : a:keyboard
     if keyboard !~ s:valid_keyboard   " leading quote is evil
-    \|| empty(a:cloud)
-    \|| match(s:vimim_cloud, a:cloud) < 0
+    \|| empty(a:cloud) || match(s:vimim_cloud, a:cloud) < 0
         return []
     endif
     let get_cloud = "s:vimim_get_cloud_" . a:cloud . "(keyboard)"
@@ -3548,7 +3544,7 @@ function! s:vimim_set_backend_mycloud()
     let s:mycloud_mode = 0
     let s:mycloud_host = "localhost"
     let s:mycloud_port = 10007
-    if len(s:vimim_mycloud) < 2
+    if len(s:vimim_mycloud) < 3
         return
     endif
     let im = 'mycloud'
@@ -3556,14 +3552,14 @@ function! s:vimim_set_backend_mycloud()
     if empty(s:vimim_check_mycloud_availability())
         let s:backend.cloud = {}
     else
-        let root = 'cloud'
-        let s:backend.cloud[im].root = root
+        let s:ui.root = 'cloud'
+        let s:ui.im = im
+        let frontends = [s:ui.root, s:ui.im]
+        call insert(s:ui.frontends, frontends)
+        let s:backend.cloud[im].root = s:ui.root
         let s:backend.cloud[im].im = im
         let s:backend.cloud[im].name    = s:vimim_chinese(im)
         let s:backend.cloud[im].chinese = s:vimim_chinese(im)
-        let s:ui.im = im
-        let s:ui.root = root
-        let s:ui.frontends = [[s:ui.root, s:ui.im]]
     endif
 endfunction
 
