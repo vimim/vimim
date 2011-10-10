@@ -314,7 +314,7 @@ function! s:vimim_egg_vimim()
             call add(eggs, s:space . s:space . s:colon . rc[2:])
         endfor
     endif
-    return map(eggs, 'v:val . s:space')
+    return map(eggs, 'v:val . " " ')
 endfunction
 
 function! s:vimim_get_head_without_quote(keyboard)
@@ -1095,6 +1095,8 @@ function! s:vimim_last_quote_to_force_cloud()
         if s:onekey > 2
             let clouds = split(s:vimim_cloud,',')
             let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
+            let default = get(split(s:vimim_cloud,','),0)
+            let s:cloud_default = get(split(default,'[.]'),0)
         endif
     endif
 endfunction
