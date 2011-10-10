@@ -127,14 +127,13 @@ endfunction
 
 function! s:vimim_dictionary_keycodes()
     let s:im_keycode = {}
-    let keys  = split('pinyin hangul xinhua quick wubi')
-    let keys += split('sogou qq google baidu mycloud')
-    for key in keys
-        let s:im_keycode[key] = "[0-9a-z']"
+    let key26  = ' google sogou baidu qq '
+    let key26 .= ' wu nature zhengma taijima wubi cangjie '
+    for key in split(key26)
+        let s:im_keycode[key] = "[a-z']"
     endfor
-    let keys = split('wu nature zhengma cangjie taijima')
-    for key in keys
-        let s:im_keycode[key] = "[.'a-z]"
+    for key in split('pinyin hangul xinhua quick mycloud')
+        let s:im_keycode[key] = "[0-9a-z']"
     endfor
     let s:im_keycode.yong     = "[.'a-z;/]"
     let s:im_keycode.erbi     = "[.'a-z,;/]"
