@@ -443,7 +443,7 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 function! s:vimim_initialize_global()
     let s:rc = {}
     let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
-    let s:rc["g:vimim_map_extra"] = 'ctrl_h or ctrl_space'
+    let s:rc["g:vimim_map_extra"] = 'ctrl_space'
     let s:rc["g:vimim_cloud"] = 'baidu,sogou,qq,google'
     let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
     let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
@@ -1547,9 +1547,8 @@ function! <SID>VimIMRotation()
     if len(s:ui.frontends) < 2 && empty(s:onekey)
         return <SID>ChineseMode()
     endif
-    let custom_im_toggle_list = s:vimim_get_custom_im_list()
     let custom_frontends = []
-    for im in custom_im_toggle_list
+    for im in s:vimim_get_custom_im_list()
         if im =~ 'english'
             call add(custom_frontends, [])
             continue
@@ -1560,12 +1559,12 @@ function! <SID>VimIMRotation()
             endif
         endfor
     endfor
+    let s:im_toggle += 1
     let switch = s:im_toggle % len(custom_frontends)
     let frontends = get(custom_frontends, switch)
     if empty(frontends)
         return s:vimim_chinese_mode(0)
     endif
-    let s:im_toggle += 1
     let s:ui.root = get(frontends, 0)
     let s:ui.im   = get(frontends, 1)
     if s:ui.root == 'cloud'
@@ -4326,14 +4325,6 @@ endfunction
 let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
-function! s:vimim_map_extra_ctrl_h()
-    if s:vimim_map_extra =~ 'ctrl_h_as_ctrl_6'
-        imap <C-H> <C-^>
-    elseif s:vimim_map_extra =~ 'ctrl_h_as_ctrl_bslash'
-        imap <C-H> <C-Bslash>
-    endif
-endfunction
-
 function! s:vimim_map_extra_ctrl_space()
     if has("gui_running")
         if s:vimim_map_extra =~ 'ctrl_space_as_ctrl_6'
@@ -4396,7 +4387,6 @@ sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_map_plug_and_play()
-sil!call s:vimim_map_extra_ctrl_h()
 sil!call s:vimim_map_extra_ctrl_space()
 " ============================================= }}}
 Debug s:vimim_egg_vimim()
