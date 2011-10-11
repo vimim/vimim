@@ -418,7 +418,6 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 function! s:vimim_initialize_global()
     let s:rc = {}
     let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
-    let s:rc["g:vimim_map_extra"] = 'ctrl_space'
     let s:rc["g:vimim_cloud"] = 'baidu,sogou,qq,google'
     let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
     let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
@@ -4339,24 +4338,6 @@ function! s:vimim_map_plug_and_play()
     :com! -nargs=* Debug :sil!call s:vimim_debug(<args>)
 endfunction
 
-function! s:vimim_map_extra_ctrl_space()
-    if has("gui_running")
-        if s:vimim_map_extra =~ 'ctrl_space_as_ctrl_6'
-            imap <C-Space> <C-^>
-        elseif s:vimim_map_extra =~ 'ctrl_space_as_ctrl_bslash'
-            map  <C-Space> <C-Bslash>
-            imap <C-Space> <C-Bslash>
-        endif
-    elseif has("win32unix")
-        if s:vimim_map_extra =~ 'ctrl_space_as_ctrl_6'
-            imap <C-@> <C-^>
-        elseif s:vimim_map_extra =~ 'ctrl_space_as_ctrl_bslash'
-            map  <C-@> <C-Bslash>
-            imap <C-@> <C-Bslash>
-        endif
-    endif
-endfunction
-
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_dictionary_statusline()
@@ -4373,7 +4354,6 @@ sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_map_plug_and_play()
-sil!call s:vimim_map_extra_ctrl_space()
 " ============================================= }}}
 :redir @p
 Debug s:vimim_egg_vimim()
