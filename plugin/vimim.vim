@@ -4054,7 +4054,7 @@ else
         let results = s:vimim_onekey_engine(keyboard)
         if len(results)
             return s:vimim_popupmenu_list(results)
-        elseif s:keyboard =~ "'"     " to support ssss.. for cloud
+        elseif get(split(s:keyboard),1) =~ "'"  " ssss.. for cloud
             let keyboard = s:vimim_hjkl_partition(keyboard)
             let keyboard = s:vimim_get_head_without_quote(keyboard)
         endif
