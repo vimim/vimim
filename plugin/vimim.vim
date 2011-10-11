@@ -1431,11 +1431,6 @@ function! g:vimim_onekey_dump()
 endfunction
 
 function! s:vimim_onekey_all_maps()
-    if s:vimim_chinese_input_mode !~ 'latex'
-        for _ in s:AZ_list
-            exe 'inoremap<expr> '._.' <SID>vimim_onekey_caps_map("'._.'")'
-        endfor
-    endif
     for _ in split('hjklmnx', '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
     endfor
@@ -1449,14 +1444,6 @@ function! s:vimim_onekey_all_maps()
     for _ in split(onekey_punctuation, '\zs')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_evil_map("'._.'")'
     endfor
-endfunction
-
-function! <SID>vimim_onekey_caps_map(key)
-    let key = a:key
-    if pumvisible()
-        let key = tolower(key) . g:vimim()
-    endif
-    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! <SID>vimim_onekey_hjkl_map(key)
@@ -3950,9 +3937,8 @@ function! s:vimim_restore_imap()
     let keys += split('<Esc> <Space> <BS> <CR> <Bslash> <Bar>')
     let keys += keys(s:evils_all)
     let keys += s:valid_keys
-    if s:chinese_mode =~ 'dynamic'
-        " no special mapping for dynamic chinese mode
-    elseif s:vimim_chinese_input_mode !~ 'latex'
+    if s:chinese_mode =~ 'static' 
+    \&& s:vimim_chinese_input_mode !~ 'latex'
         let keys += s:AZ_list
     endif
     for _ in keys
