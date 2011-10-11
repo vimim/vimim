@@ -207,6 +207,15 @@ function! s:vimim_egg_vimimgame()
     return split(mahjong)
 endfunction
 
+function! s:vimim_egg_vimimclouds()
+    return s:vimim_get_cloud_all('woyouyigemeng')
+endfunction
+
+function! s:vimim_egg_vimimvim()
+    let filter = "strpart(" . 'v:val' . ", 0, 29)"
+    return map(copy(s:VimIM), filter)
+endfunction
+
 function! s:vimim_egg_vimimrc()
     let vimimrc = copy(s:vimimdefaults)
     let index = match(vimimrc, 'g:vimim_toggle_list')
@@ -220,23 +229,13 @@ function! s:vimim_egg_vimimrc()
     return sort(vimimrc)
 endfunction
 
-function! s:vimim_egg_vimimvim()
-    let filter = "strpart(" . 'v:val' . ", 0, 29)"
-    return map(copy(s:VimIM), filter)
-endfunction
-
-function! s:vimim_egg_vimimclouds()
-    return s:vimim_get_cloud_all('woyouyigemeng')
-endfunction
-
 function! s:vimim_egg_vimim()
     let eggs = []
-    let os = " win32unix win32 win64 macunix unix x11 "
     call add(eggs, s:vimim_chinese('date') . s:colon . s:today)
+    let os = "win32unix win32 win64 macunix unix x11"
     for computer in split(os)
         if has(computer)
-            let os = computer
-            break
+            let os = computer | break
         endif
     endfor
     let computer = s:vimim_chinese('computer') . s:colon
@@ -261,13 +260,9 @@ function! s:vimim_egg_vimim()
         call add(eggs, ciku . s:english.filename)
     endif
     if len(s:ui.frontends)
-        for frontend in s:ui.frontends
-            let ui_root = get(frontend, 0)
-            let ui_im = get(frontend, 1)
-            let datafile = s:backend[ui_root][ui_im].name
-            let mass = datafile=~"bsddb" ? 'mass' : ui_root
-            let ciku = database . s:vimim_chinese(mass) . database
-            call add(eggs, ciku . datafile)
+        for [root, im] in s:ui.frontends
+            let ciku = database . s:vimim_chinese(root) . database
+            call add(eggs, ciku . s:backend[root][im].name)
         endfor
         let input = s:vimim_chinese('input') . s:colon
         if s:vimim_map =~ 'ctrl_bslash'
@@ -600,9 +595,9 @@ function! s:vimim_dictionary_statusline()
     endfor
     let single  = " pinyin fullwidth halfwidth english chinese purple"
     let single .= " plusplus quick wubihf wubi98 phonetic array30"
-    let single .= " revision mass date google baidu sogou qq "
-    let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 98"
-    let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
+    let single .= " revision date google baidu sogou qq "
+    let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰"
+    let double .= " 98   注音 行列 版本 日期 谷歌 百度 搜狗 ＱＱ"
     let singles = split(single)
     let doubles = split(double)
     for i in range(len(singles))
@@ -982,8 +977,8 @@ function! s:vimim_pageup_pagedown()
 endfunction
 
 function! s:vimim_onekey_menu_filter()
-    " use 1234567890 as filter for menuless
-    " use qwertyuiop as filter for omni popup
+    " use 1234567890 as filter in menuless
+    " use qwertyuiop as filter in omni popup
     let results = []
     for items in s:popup_list
         let chinese = items.word
@@ -1384,11 +1379,11 @@ function! s:vimim_onekey_evils()
         " [game] dot dot => quotes => popup menu
         let three_before  = getline(".")[col(".")-4]
         if col(".") < 5 || empty(three_before) || three_before =~ '\s'
-            let onekey = "'''''"    "  <=    .. for mahjong
+            let onekey = "'''''"    "  <=    .. plays mahjong
         elseif three_before =~ "[0-9a-z]"
-            let onekey = "'''"      "  <=  xx.. for hjkl_m
+            let onekey = "'''"      "  <=  xx.. plays hjkl_m
         else
-            let onekey = "''"       "  <=  香.. for same cjk
+            let onekey = "''"       "  <=  香.. plays same cjk
         endif
         return  "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
     endif
@@ -1530,8 +1525,7 @@ function! <SID>vimim_rotation()
     let custom_frontends = []
     for im in s:vimim_get_custom_im_list()
         if im =~ 'english'
-            call add(custom_frontends, [])
-            continue
+            call add(custom_frontends, []) | continue
         endif
         for frontends in s:ui.frontends
             if match(frontends, im) > -1
@@ -1650,8 +1644,7 @@ function! s:vimim_get_custom_im_list()
         let custom_im_toggle_list = split(s:vimim_toggle_list, ",")
     elseif len(s:ui.frontends)
         for frontends in s:ui.frontends
-            let frontend_im = get(frontends, 1)
-            call add(custom_im_toggle_list, frontend_im)
+            call add(custom_im_toggle_list, get(frontends,1))
         endfor
     endif
     return custom_im_toggle_list
@@ -1987,7 +1980,7 @@ function! s:vimim_scan_datafile_cjk()
     let s:cjk.lines = []
     let s:cjk.one = {}
     let datafile = s:vimim_check_filereadable(s:download.cjk)
-    if empty(datafile)  " for 5 strokes
+    if empty(datafile)  " for 5 strokes instead of 4 corner
         let datafile = s:vimim_check_filereadable("vimim.cjkv.txt")
     endif
     if !empty(datafile)
@@ -2054,11 +2047,10 @@ function! s:vimim_get_cjk_head(keyboard)
 endfunction
 
 function! s:vimim_qwertyuiop_1234567890(keyboard)
-    " output is 7712 for input uuqw
     if a:keyboard =~ '\d'
         return 0
     endif
-    let dddd = ""
+    let dddd = ""   " output is 7712 for input uuqw
     for char in split(a:keyboard, '\zs')
         let digit = match(s:qwer, char)
         if digit < 0
@@ -2614,7 +2606,7 @@ function! s:vimim_shuangpin_generic()
     endfor
     let shengmu_list["'"] = "o"
     let yunmu_list = {}
-    for yunmu in ["a", "o", "e", "i", "u", "v"]
+    for yunmu in split("a o e i u v")
         let yunmu_list[yunmu] = yunmu
     endfor
     let shuangpin_rule = [shengmu_list, yunmu_list]
@@ -3029,8 +3021,8 @@ function! s:vimim_get_from_datafile(keyboard)
     else  " http://code.google.com/p/vimim/issues/detail?id=121
         let results = []
         let s:show_extra_menu = 1
-        for i in range(10)  " get more if less
-            let cursor += i
+        for i in range(10)
+            let cursor += i     " get more if less
             let oneline = get(lines, cursor)
             let extras = s:vimim_make_pairs(oneline)
             call extend(results, extras)
@@ -3406,7 +3398,7 @@ function! s:vimim_get_cloud_google(keyboard)
             let unicodes = split(get(split(output),8),",")
             for item in unicodes
                 let utf8 = ""
-                for xxxx in split(item,"\u")
+                for xxxx in split(item, "\u")
                     let utf8 .= s:vimim_unicode_to_utf8(xxxx)
                 endfor
                 let output = s:vimim_i18n_read(utf8)
@@ -3476,7 +3468,7 @@ endfunction
 
 function! s:vimim_get_cloud_all(keyboard)
     let results = []
-    for cloud in split(s:rc["g:vimim_cloud"],',')
+    for cloud in split(s:rc["g:vimim_cloud"], ',')
         let start = localtime()
         let outputs = s:vimim_get_cloud(a:keyboard, cloud)
         if len(results) > 1
@@ -3602,7 +3594,6 @@ function! s:vimim_check_mycloud_plugin_libcall()
         let s:mycloud_func = 'do_getlocal'
         if filereadable(cloud)
             if has("win32")
-                " we don't need to strip ".dll" for "win32unix".
                 let cloud = cloud[:-5]
             endif
             try
@@ -3945,7 +3936,7 @@ function! s:vimim_reset_before_omni()
 endfunction
 
 function! s:vimim_reset_after_insert()
-    let s:hjkl_n = ""   " reset for no nothing
+    let s:hjkl_n = ""   " reset  for nothing
     let s:hjkl_h = 0    " ctrl-h for jsjsxx
     let s:hjkl_l = 0    " toggle label length
     let s:hjkl_m = 0    " toggle cjjp/c'j'j'p
@@ -3961,7 +3952,7 @@ function! s:vimim_restore_imap()
     let keys += keys(s:evils_all)
     let keys += s:valid_keys
     if s:chinese_mode =~ 'dynamic'
-        " special mapping for dynamic chinese mode
+        " no special mapping for dynamic chinese mode
     elseif s:vimim_chinese_input_mode !~ 'latex'
         let keys += s:AZ_list
     endif
@@ -4187,7 +4178,7 @@ function! s:vimim_popupmenu_list(match_list)
     endfor
     if s:onekey
         call g:vimim_title()
-        set completeopt=menuone  " for hjkl_n refresh
+        set completeopt=menuone   " for hjkl_n refresh
         let s:popup_list = popup_list
         if s:menuless && empty(s:touch_me_not)
             let &pumheight = 1
