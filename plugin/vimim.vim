@@ -3809,7 +3809,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     let keyboard = tolower(a:keyboard)
     let results = []
     " 1/3 first try search from cloud/mycloud
-    if s:ui.root == 'cloud' || s:onekey > 1 " /search from default cloud
+    if s:ui.root == 'cloud' || s:onekey > 1 " /search from cloud
         let results = s:vimim_get_cloud(keyboard, s:cloud_default)
     elseif s:ui.im == 'mycloud'             " /search from mycloud
         let results = s:vimim_get_mycloud_plugin(keyboard)
@@ -4164,9 +4164,9 @@ function! s:vimim_popupmenu_list(match_list)
                     let menu = s:vimim_cjk_extra_text(char)
                 endif
             endif
-            let english = ' '  " sexy english flag
-            if !empty(s:english.line) && match(split(s:english.line), chinese) > -1
-                let english = '*'
+            let english = '*'  " sexy english flag
+            if match(split(s:english.line), chinese) < 0
+                let english = ' '
             endif
             let label2 = english . label2
             let labeling = color ? printf('%2s ',label2) : ""
@@ -4174,16 +4174,16 @@ function! s:vimim_popupmenu_list(match_list)
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
         endif
-        let label_in_one_row = label . "."
+        let onerow_label = label . "."
         if s:menuless
-            let label_in_one_row = label2
-            if s:vimim_cjk()    " only display english flag for menuless 4corner
-                let label_in_one_row = substitute(label_in_one_row,'\w','','g')
+            let onerow_label = label2
+            if s:vimim_cjk() " display english flag if menuless 4corner
+                let onerow_label = substitute(onerow_label,'\w','','g')
             elseif label < 11   " 234567890 for menuless selection
-                let label_in_one_row = label2[:-2]
+                let onerow_label = label2[:-2]
             endif
         endif
-        call add(one_list, label_in_one_row . chinese)
+        call add(one_list, onerow_label . chinese)
         let label += 1
         let complete_items["dup"] = 1
         let complete_items["word"] = empty(chinese) ? s:space : chinese
