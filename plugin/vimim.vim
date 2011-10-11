@@ -144,7 +144,7 @@ function! s:vimim_dictionary_keycodes()
     let keys  = copy(keys(s:im_keycode))
     let keys += split('pinyin_sogou pinyin_quote_sogou pinyin_huge')
     let keys += split('pinyin_fcitx pinyin_canton pinyin_hongkong')
-    let keys += split('wubijd wubihf wubi98 wubi2000')
+    let keys += split('wubi98 wubi2000 wubijd wubihf')
     let s:all_vimim_input_methods = copy(keys)
 endfunction
 
@@ -195,7 +195,6 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, '默认热键 ctrl+\ （Vim插入模式）中文动态')
     call add(eggs, '默认热键 　n 　 （Vim正常模式）无菜单窗中文搜索')
     call add(eggs, '默认热键 　gi　 （Vim正常模式）无菜单窗中文输入')
-    call add(eggs, '默认热键（专用于输入法切换）ctrl+x ctrl+x')
     let eggs += [''] + s:vimim_egg_vimimrc() + ['']
     let url = "http://vimim.googlecode.com/svn/trunk/plugin/"
     call add(eggs, "官方网址：" . get(split(s:url),0))
@@ -296,10 +295,6 @@ function! s:vimim_egg_vimim()
         elseif s:vimim_map =~ 'gi'
             let input .= s:vimim_chinese('onekey')   . s:space
             let input .= s:vimim_chinese('menuless') . s:space
-        endif
-        if s:ui.root != 'cloud' && s:onekey < 2
-            let input .= s:vimim_chinese(s:cloud_default)
-            let input .= s:vimim_chinese('cloud')
         endif
         call add(eggs, input)
     endif
@@ -604,7 +599,7 @@ function! s:vimim_dictionary_statusline()
     let s:title.abc        = "智能双打 智能雙打"
     let s:title.mycloud    = "自己的云 自己的雲"
     let s:title.boshiamy   = "呒虾米   嘸蝦米"
-    let s:title.newcentury = "新世纪   新世紀"
+    let s:title.wubi2000   = "新世纪   新世紀"
     let s:title.taijima    = "太极码   太極碼"
     let s:title.nature     = "自然码   自然碼"
     let s:title.5strokes   = "五笔画   五筆畫"
@@ -612,7 +607,7 @@ function! s:vimim_dictionary_statusline()
     let single  = " computer directory datafile database option  env "
     let single .= " encoding input     static   dynamic  erbi    wubi"
     let single .= " hangul   xinhua    zhengma  cangjie  yong    wu  "
-    let single .= " jidian   shuangpin cloud    flypy    network ms  "
+    let single .= " wubijd   shuangpin cloud    flypy    network ms  "
     let double  = " 电脑,電腦 目录,目錄 文件,文本 词库,詞庫 选项,選項"
     let double .= " 环境,環境 编码,編碼 输入,輸入 静态,靜態 动态,動態"
     let double .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
@@ -624,10 +619,10 @@ function! s:vimim_dictionary_statusline()
         let s:title[get(singles,i)] = join(split(get(doubles,i),','))
     endfor
     let single  = " pinyin fullwidth halfwidth english chinese purple"
-    let single .= " plusplus quick haifeng phonetic array30  revision"
-    let single .= " mass  date  google  baidu  sogou  qq "
-    let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 "
-    let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ "
+    let single .= " plusplus quick wubihf wubi98 phonetic array30"
+    let single .= " revision mass date google baidu sogou qq "
+    let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 98"
+    let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
     let singles = split(single)
     let doubles = split(double)
     for i in range(len(singles))
@@ -717,15 +712,11 @@ function! s:vimim_get_title()
     endif
     let datafile = s:backend[s:ui.root][s:ui.im].name
     if s:ui.im =~ 'wubi'
-        if datafile =~# 'wubi98'
-            let statusline .= '98'
-        elseif datafile =~# 'wubi2000'
-            let statusline .= s:vimim_chinese('newcentury')
-        elseif datafile =~# 'wubijd'
-            let statusline .= s:vimim_chinese('jidian')
-        elseif datafile =~# 'wubihf'
-            let statusline .= s:vimim_chinese('haifeng')
-        endif
+        for wubi in split('wubi98 wubi2000 wubijd wubihf')
+            if get(split(datafile,'/'),-1) =~ wubi
+                let statusline .= s:vimim_chinese(wubi)
+            endif
+        endfor
     elseif s:ui.im == 'mycloud'
         let __getname = s:backend.cloud.mycloud.directory
         let statusline .= s:space . __getname
@@ -1116,31 +1107,31 @@ function! s:vimim_get_head(keyboard, partition)
     return head
 endfunction
 
-function! s:vimim_map_omni_page_label()
+function! s:vimim_common_map()
     let labels = range(10)
+    let punctuation = " ] [ = - "
     if s:onekey
         let labels += s:abcd
+        let punctuation .= " . , "
         call remove(labels, match(labels,"'"))
     endif
     for _ in labels
-        silent!exe 'inoremap <silent> <expr> '  ._.
-        \ ' <SID>vimim_abcdvfgsz_1234567890_map("'._.'")'
+        exe 'inoremap<expr> '._.' <SID>vimim_label_map("'._.'")'
     endfor
-    let common_punctuation = "][=-"
-    if s:onekey
-        let common_punctuation .= ".,"
-    endif
-    for _ in split(common_punctuation, '\zs')
+    for _ in split(punctuation)
         exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
     endfor
+    if !hasmapto('<C-H>', 'i')
+        inoremap<expr><C-H> <SID>VimIMRotation()
+    endif
 endfunction
 
-function! <SID>vimim_abcdvfgsz_1234567890_map(key)
-    let key = a:key
+function! <SID>vimim_label_map(key)
+    let key = a:key  " abcdvfgsz 1234567890
     if pumvisible()
         let n = match(s:abcd, key)
         if key =~ '\d'
-            let n = key<1 ? 9 : key-1
+            let n = key < 1 ? 9 : key - 1
         endif
         let key = '\<C-R>=g:vimim()\<CR>'
         let down = repeat("\<Down>", n)
@@ -1367,8 +1358,6 @@ function! <SID>vimim_onekey(tab)
         let onekey = '\t'
     else
         call s:vimim_super_reset()
-        let s:onekey = 1
-        call <SID>VimIMRotation()
         let s:onekey = s:ui.root == 'cloud' ? 2 : 1
         let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
         let s:menuless = a:tab
@@ -3944,7 +3933,7 @@ function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
-    sil!call s:vimim_map_omni_page_label()
+    sil!call s:vimim_common_map()
     inoremap <expr> <BS>     <SID>vimim_backspace()
     inoremap <expr> <CR>     <SID>vimim_enter()
     inoremap <expr> <Esc>    <SID>vimim_esc()
@@ -4342,8 +4331,6 @@ function! s:vimim_map_extra_ctrl_h()
         imap <C-H> <C-^>
     elseif s:vimim_map_extra =~ 'ctrl_h_as_ctrl_bslash'
         imap <C-H> <C-Bslash>
-    elseif s:vimim_map_extra =~ 'ctrl_h_to_rotate'
-        imap <C-H> <C-X><C-X>
     endif
 endfunction
 
@@ -4354,8 +4341,6 @@ function! s:vimim_map_extra_ctrl_space()
         elseif s:vimim_map_extra =~ 'ctrl_space_as_ctrl_bslash'
             map  <C-Space> <C-Bslash>
             imap <C-Space> <C-Bslash>
-        elseif s:vimim_map_extra =~ 'ctrl_space_to_rotate'
-            imap <C-Space> <C-X><C-X>
         endif
     elseif has("win32unix")
         if s:vimim_map_extra =~ 'ctrl_space_as_ctrl_6'
@@ -4363,8 +4348,6 @@ function! s:vimim_map_extra_ctrl_space()
         elseif s:vimim_map_extra =~ 'ctrl_space_as_ctrl_bslash'
             map  <C-@> <C-Bslash>
             imap <C-@> <C-Bslash>
-        elseif s:vimim_map_extra =~ 'ctrl_space_to_rotate'
-            imap <C-@> <C-X><C-X>
         endif
     endif
 endfunction
@@ -4392,7 +4375,6 @@ function! s:vimim_map_plug_and_play()
     if s:vimim_map =~ 'search'
         noremap<silent> n :call g:vimim_search_next()<CR>n
     endif
-    inoremap<silent><expr><C-X><C-X> <SID>VimIMRotation()
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
     :com! -nargs=* Debug :sil!call s:vimim_debug(<args>)
@@ -4410,8 +4392,8 @@ sil!call s:vimim_scan_datafile_english()
 sil!call s:vimim_super_reset()
 sil!call s:vimim_initialize_session()
 sil!call s:vimim_set_backend_mycloud()
-sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_background_clouds()
+sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_map_plug_and_play()
 sil!call s:vimim_map_extra_ctrl_h()
