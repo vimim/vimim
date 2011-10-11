@@ -57,7 +57,6 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        :redir @p
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_cloud = 'google,sogou,baidu,qq'
@@ -189,28 +188,23 @@ endfunction
 let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
 
-function! s:vimim_egg_vimimhelp()
-    let eggs = s:vimim_egg_vim() + ['']
-    call add(eggs, '默认热键 ctrl+6 （Vim插入模式）点石成金')
-    call add(eggs, '默认热键 ctrl+\ （Vim插入模式）中文动态')
-    call add(eggs, '默认热键 　n 　 （Vim正常模式）无菜单窗中文搜索')
-    call add(eggs, '默认热键 　gi　 （Vim正常模式）无菜单窗中文输入')
-    let eggs += [''] + s:vimim_egg_vimimrc() + ['']
-    let url = "http://vimim.googlecode.com/svn/trunk/plugin/"
-    call add(eggs, "官方网址：" . get(split(s:url),0))
-    call add(eggs, "最新程式：" . get(split(s:url),1))
-    call add(eggs, "最新主页：" . get(split(s:url),2))
-    call add(eggs, "错误报告：" . get(split(s:url),3))
-    call add(eggs, "新闻论坛：" . get(split(s:url),4))
-    call add(eggs, "海量词库：" . url . s:download.bsddb)
-    call add(eggs, "英文词库：" . url . s:download.english)
-    call add(eggs, "四角號碼：" . url . s:download.cjk)
-    return map(eggs, 'v:val . " "')
+function! s:vimim_easter_chicken(keyboard)
+    try
+        return eval("s:vimim_egg_" . a:keyboard . "()")
+    catch
+        sil!call s:vimim_debug('egg', a:keyboard, v:exception)
+    endtry
+    return []
 endfunction
 
 function! s:vimim_egg_vim()
     let logo = "Vim　　文本編輯器"
     return [logo, s:logo]
+endfunction
+
+function! s:vimim_egg_vimimgame()
+    let mahjong = "春夏秋冬 梅兰竹菊 中發白囍 東南西北"
+    return split(mahjong)
 endfunction
 
 function! s:vimim_egg_vimimrc()
@@ -224,20 +218,6 @@ function! s:vimim_egg_vimimrc()
     endif
     let vimimrc += s:vimimrc
     return sort(vimimrc)
-endfunction
-
-function! s:vimim_egg_vimimgame()
-    let mahjong = "春夏秋冬 梅兰竹菊 中發白囍 東南西北"
-    return split(mahjong)
-endfunction
-
-function! s:vimim_easter_chicken(keyboard)
-    try
-        return eval("s:vimim_egg_" . a:keyboard . "()")
-    catch
-        sil!call s:vimim_debug('egg', a:keyboard, v:exception)
-    endtry
-    return []
 endfunction
 
 function! s:vimim_egg_vimimvim()
@@ -4325,6 +4305,53 @@ endfunction
 let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
+function! s:vimim_egg_vimimhelp()
+    let eggs = s:vimim_egg_vim() + ['']
+    call add(eggs, '默认热键 ctrl+6 （Vim插入模式）点石成金')
+    call add(eggs, '默认热键 ctrl+\ （Vim插入模式）中文动态')
+    call add(eggs, '默认热键 　n 　 （Vim正常模式）无菜单窗中文搜索')
+    call add(eggs, '默认热键 　gi　 （Vim正常模式）无菜单窗中文输入')
+    let eggs += [''] + s:vimim_egg_vimimrc() + ['']
+    let url = "http://vimim.googlecode.com/svn/trunk/plugin/"
+    call add(eggs, "官方网址：" . get(split(s:url),0))
+    call add(eggs, "最新程式：" . get(split(s:url),1))
+    call add(eggs, "最新主页：" . get(split(s:url),2))
+    call add(eggs, "错误报告：" . get(split(s:url),3))
+    call add(eggs, "新闻论坛：" . get(split(s:url),4))
+    call add(eggs, "海量词库：" . url . s:download.bsddb)
+    call add(eggs, "英文词库：" . url . s:download.english)
+    call add(eggs, "四角號碼：" . url . s:download.cjk)
+    return map(eggs, 'v:val . " "')
+endfunction
+
+function! s:vimim_map_plug_and_play()
+    if s:vimim_map =~ 'ctrl_6'
+            inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
+            imap<silent><C-^>     <Plug>VimimOneKey
+        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
+    endif
+    if s:vimim_map =~ 'ctrl_bslash'
+           inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
+           imap<silent><C-Bslash> <Plug>VimIM
+        noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
+    endif
+    if s:vimim_map =~ 'search'
+        noremap<silent> n :call g:vimim_search_next()<CR>n
+    endif
+    if s:vimim_map =~ 'gi'
+        inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
+        nmap  gi             i<Plug>VimimOneAct
+    endif
+    if s:vimim_map =~ 'tab'
+            inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
+            imap<silent><Tab>     <Plug>VimimOneTab
+        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
+    endif
+    :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
+    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
+    :com! -nargs=* Debug :sil!call s:vimim_debug(<args>)
+endfunction
+
 function! s:vimim_map_extra_ctrl_space()
     if has("gui_running")
         if s:vimim_map_extra =~ 'ctrl_space_as_ctrl_6'
@@ -4341,34 +4368,6 @@ function! s:vimim_map_extra_ctrl_space()
             imap <C-@> <C-Bslash>
         endif
     endif
-endfunction
-
-function! s:vimim_map_plug_and_play()
-    if s:vimim_map =~ 'ctrl_bslash'
-           inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
-           imap<silent><C-Bslash> <Plug>VimIM
-        noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
-    endif
-    if s:vimim_map =~ 'ctrl_6'
-            inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
-            imap<silent><C-^>     <Plug>VimimOneKey
-        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
-    endif
-    if s:vimim_map =~ 'tab'
-            inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
-            imap<silent><Tab>     <Plug>VimimOneTab
-        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
-    endif
-    if s:vimim_map =~ 'gi'
-        inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
-        nmap  gi             i<Plug>VimimOneAct
-    endif
-    if s:vimim_map =~ 'search'
-        noremap<silent> n :call g:vimim_search_next()<CR>n
-    endif
-    :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
-    :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
-    :com! -nargs=* Debug :sil!call s:vimim_debug(<args>)
 endfunction
 
 sil!call s:vimim_initialize_debug()
@@ -4389,4 +4388,5 @@ sil!call s:vimim_set_keycode()
 sil!call s:vimim_map_plug_and_play()
 sil!call s:vimim_map_extra_ctrl_space()
 " ============================================= }}}
+:redir @p
 Debug s:vimim_egg_vimim()
