@@ -59,7 +59,7 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
-        let g:vimim_cloud = 'google,sogou,baidu,qq'
+        let g:vimim_cloud = 'google,sogou,qq,baidu'
         let g:vimim_map = 'tab,search,gi'
     endif
 endfunction
@@ -1102,7 +1102,7 @@ function! s:vimim_common_map()
         exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
     endfor
     if !hasmapto('<C-H>', 'i')
-        inoremap<expr><C-H> <SID>VimIMRotation()
+        inoremap<expr><C-H> <SID>vimim_rotation()
     endif
 endfunction
 
@@ -1523,7 +1523,7 @@ endfunction
 let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
-function! <SID>VimIMRotation()
+function! <SID>vimim_rotation()
     if len(s:ui.frontends) < 2 && empty(s:onekey)
         return <SID>ChineseMode()
     endif
@@ -1534,7 +1534,7 @@ function! <SID>VimIMRotation()
             continue
         endif
         for frontends in s:ui.frontends
-            if get(frontends,1) =~ im
+            if match(frontends, im) > -1
                 call add(custom_frontends, frontends)
             endif
         endfor
@@ -1545,8 +1545,8 @@ function! <SID>VimIMRotation()
     if empty(frontends)
         return s:vimim_chinese_mode(0)
     endif
-    let s:ui.root = get(frontends, 0)
-    let s:ui.im   = get(frontends, 1)
+    let s:ui.root = get(frontends,0)
+    let s:ui.im   = get(frontends,1)
     if s:ui.root == 'cloud'
         let s:cloud_default = s:ui.im
     endif
@@ -2961,8 +2961,7 @@ function! s:vimim_set_datafile(im, datafile)
     endif
     let s:ui.root = "datafile"
     let s:ui.im = im
-    let frontends = [s:ui.root, s:ui.im]
-    call insert(s:ui.frontends, frontends)
+    call insert(s:ui.frontends, [s:ui.root, s:ui.im])
     let s:backend.datafile[im] = s:vimim_one_backend_hash()
     let s:backend.datafile[im].root = s:ui.root
     let s:backend.datafile[im].im = im
@@ -3094,8 +3093,7 @@ function! s:vimim_set_directory(im, dir)
     endif
     let s:ui.root = "directory"
     let s:ui.im = im
-    let frontends = [s:ui.root, s:ui.im]
-    call insert(s:ui.frontends, frontends)
+    call insert(s:ui.frontends, [s:ui.root, s:ui.im])
     if empty(s:backend.directory)
         let s:backend.directory[im] = s:vimim_one_backend_hash()
         let s:backend.directory[im].root = s:ui.root
@@ -3182,12 +3180,11 @@ function! s:vimim_set_background_clouds()
     if empty(s:vimim_check_http_executable())
         return 0
     endif
-    for cloud in split(s:vimim_cloud,',')
+    for cloud in reverse(split(s:vimim_cloud,','))
         let im = get(split(cloud,'[.]'),0)
         let s:ui.root = 'cloud'
         let s:ui.im = im
-        let frontends = [s:ui.root, s:ui.im]
-        call add(s:ui.frontends, frontends)
+        call insert(s:ui.frontends, [s:ui.root, s:ui.im])
         let s:backend.cloud[im] = s:vimim_one_backend_hash()
         let s:backend.cloud[im].root = s:ui.root
         let s:backend.cloud[im].im = im
@@ -3523,8 +3520,7 @@ function! s:vimim_set_backend_mycloud()
     else
         let s:ui.root = 'cloud'
         let s:ui.im = im
-        let frontends = [s:ui.root, s:ui.im]
-        call insert(s:ui.frontends, frontends)
+        call insert(s:ui.frontends, [s:ui.root, s:ui.im])
         let s:backend.cloud[im].root = s:ui.root
         let s:backend.cloud[im].im = im
         let s:backend.cloud[im].name    = s:vimim_chinese(im)
