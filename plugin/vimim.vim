@@ -475,18 +475,6 @@ function! s:vimim_get_valid_im_name(im)
     return im
 endfunction
 
-function! s:vimim_wubi_auto_on_the_4th(keyboard)
-    let keyboard = a:keyboard
-    if s:chinese_mode =~ 'dynamic'
-        if len(keyboard) > 4
-            let start = 4*((len(keyboard)-1)/4)
-            let keyboard = strpart(keyboard, start)
-        endif
-        let s:keyboard = keyboard
-    endif
-    return keyboard
-endfunction
-
 function! g:vimim_wubi()
     let key = ""
     if pumvisible()
@@ -1480,6 +1468,9 @@ function! <SID>vimim_rotation()
             let s:cloud_default = s:ui.im
         endif
     endif
+    if s:menuless
+        let s:onekey = s:ui.root == 'cloud' ? 2 : 1
+    endif
     if s:onekey
         return g:vimim_title()
     else
@@ -1534,8 +1525,7 @@ function! s:vimim_chinesemode_start()
         let vimim_cloud = get(split(s:vimim_cloud,','), 0)
         if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
             for char in s:az_list
-                sil!exe 'inoremap <silent> ' . char .
-                \ ' <C-R>=g:vimim_wubi()<CR>'
+                sil!exe 'inoremap ' . char . ' <C-R>=g:vimim_wubi()<CR>'
                 \ . char . '<C-R>=g:vimim()<CR>'
             endfor
         else    " dynamic alphabet trigger for all but wubi
@@ -1563,7 +1553,6 @@ endfunction
 function! s:vimim_chinesemode_stop()
     sil!call s:vimim_stop()
     sil!call s:vimim_restore_plugin_conflict()
-    sil!call s:vimim_map_extra_ctrl_h()
     imap<silent><C-^> <Plug>VimimOneKey
     if mode() == 'n'
         :redraw!
@@ -3985,7 +3974,11 @@ else
     if empty(results)
         " [wubi] support auto insert on the 4th
         if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
-            let keyboard = s:vimim_wubi_auto_on_the_4th(keyboard)
+            if s:chinese_mode =~ 'dynamic' && len(keyboard) > 4
+                let start = 4*((len(keyboard)-1)/4)
+                let keyboard = strpart(keyboard, start)
+                let s:keyboard = keyboard
+            endif
         endif
         " [backend] plug-n-play embedded backend engine
         let results = s:vimim_embedded_backend_engine(keyboard)
