@@ -297,13 +297,7 @@ function! s:vimim_get_head_without_quote(keyboard)
         let keyboard = substitute(keyboard, "'", "", 'g')
         let keyboard = join(split(keyboard,'\zs'), "'")
     endif
-    if keyboard[-2:] == "''"    " [local] two tail quotes to close cloud
-        let s:onekey = 1
-        let keyboard = keyboard[:-3]
-    elseif keyboard[-1:] == "'" " [cloud] one tail quote to control cloud
-        call s:vimim_last_quote_to_force_cloud()
-        let keyboard = keyboard[:-2]
-    elseif keyboard =~ "'"
+    if keyboard =~ "'" && keyboard[-1:] != "'"
         " [quote] (1/2) quote_by_quote: wo'you'yi'ge'meng
         let keyboards = split(keyboard,"'")
         let head = get(keyboards,0)
@@ -898,24 +892,27 @@ endfunction
 
 function! <SID>vimim_onekey_evil_map(key)
     let hjkl = a:key
-    if !pumvisible()
-        return hjkl
-    endif
-    if hjkl ==# '*'
-        if &pumheight
-            let s:popup_list = s:popup_list[:&pumheight-1]
+    if pumvisible()
+        if hjkl ==# '*'
+            if &pumheight
+                let s:popup_list = s:popup_list[:&pumheight-1]
+            endif
+            let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+        elseif hjkl =~ "[/?]"
+            let hjkl = s:vimim_menu_search(hjkl)
+        elseif hjkl ==# ';'  " toggle simplified/traditional transfer
+            let s:hjkl__ += 1
+            let hjkl = g:vimim()
+        elseif hjkl == "'"  && s:keyboard[-1:] != "'"
+            let s:onekey = s:onekey==1 ? 2 : 3
+            if s:onekey > 2  " quote: switch to the next cloud
+                let clouds = split(s:vimim_cloud,',')
+                let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
+                let default = get(split(s:vimim_cloud,','),0)
+                let s:cloud_default = get(split(default,'[.]'),0)
+            endif
+            let hjkl = g:vimim()
         endif
-        let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-    elseif hjkl =~ "[/?]"
-        let hjkl = s:vimim_menu_search(hjkl)
-    elseif hjkl ==# ';'  " toggle simplified/traditional transfer
-        let s:hjkl__ += 1
-        let hjkl = g:vimim()
-    elseif hjkl == "'"  " omni cycle through BB/GG/SS/00 clouds
-        if s:keyboard[-1:] != "'"
-            call s:vimim_last_quote_to_force_cloud()
-        endif
-        let hjkl = g:vimim()
     endif
     sil!exe 'sil!return "' . hjkl . '"'
 endfunction
@@ -1062,22 +1059,6 @@ function! s:vimim_hjkl_partition(keyboard)
         return head
     endif
     return keyboard
-endfunction
-
-function! s:vimim_last_quote_to_force_cloud()
-    " (1) [insert] one tail quote: open cloud or switch cloud
-    " (2) [omni]   one tail quote: switch to the next cloud
-    if empty(s:vimim_check_http_executable())
-        let s:onekey = 1
-    else
-        let s:onekey = s:onekey==1 ? 2 : 3
-        if s:onekey > 2
-            let clouds = split(s:vimim_cloud,',')
-            let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
-            let default = get(split(s:vimim_cloud,','),0)
-            let s:cloud_default = get(split(default,'[.]'),0)
-        endif
-    endif
 endfunction
 
 function! s:vimim_get_head(keyboard, partition)
@@ -1531,16 +1512,24 @@ function! <SID>vimim_rotation()
             endif
         endfor
     endfor
+    if s:menuless
+        let custom_frontends = custom_frontends[0:1]
+    endif
     let s:im_toggle += 1
     let switch = s:im_toggle % len(custom_frontends)
     let frontends = get(custom_frontends, switch)
     if empty(frontends)
         return s:vimim_chinese_mode(0)
+    else
+        let s:ui.root = get(frontends,0)
+        let s:ui.im   = get(frontends,1)
     endif
-    let s:ui.root = get(frontends,0)
-    let s:ui.im   = get(frontends,1)
     if s:ui.root == 'cloud'
-        let s:cloud_default = s:ui.im
+        if s:menuless
+            let s:ui.im = s:cloud_default
+        else
+            let s:cloud_default = s:ui.im
+        endif
     endif
     if s:onekey
         return g:vimim_title()
@@ -1993,7 +1982,7 @@ endfunction
 
 function! s:vimim_get_cjk_head(keyboard)
     let keyboard = a:keyboard
-    if empty(s:vimim_cjk()) || !empty(s:english.line) || keyboard=~"'"
+    if empty(s:vimim_cjk()) || !empty(s:english.line) || keyboard =~ "'"
         return 0
     endif
     if keyboard =~# '^i' " 4corner_shortcut: iuuqwuqew => 77127132
@@ -4026,7 +4015,7 @@ else
         let s:english.line = s:vimim_get_english(keyboard)
     endif
     " [onekey] plays with nothing but onekey
-    if s:onekey
+    if s:onekey == 1
         let results = s:vimim_onekey_engine(keyboard)
         if len(results)
             return s:vimim_popupmenu_list(results)
@@ -4050,7 +4039,7 @@ else
     endif
     " [cloud] to make dream come true for multiple clouds
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-    if s:ui.root == 'cloud' || s:onekey > 1
+    if s:onekey > 1 || (s:onekey < 1 && s:ui.root == 'cloud')
         if empty(s:english.line)
             let results = s:vimim_get_cloud(keyboard, s:cloud_default)
         endif
