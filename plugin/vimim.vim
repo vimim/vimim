@@ -59,7 +59,6 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
-        let g:vimim_cloud = 'google,sogou,qq,baidu'
         let g:vimim_map = 'tab,search,gi'
     endif
 endfunction
@@ -407,10 +406,10 @@ let s:VimIM += [" ====  customization    ==== {{{"]
 
 function! s:vimim_initialize_global()
     let s:rc = {}
+    let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
     let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
-    let s:rc["g:vimim_cloud"] = 'baidu,sogou,qq,google'
-    let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
     let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
+    let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
     let s:rc["g:vimim_plugin"] = s:plugin
     let s:rc["g:vimim_skin"] = 'one-row,color'
     let s:rc["g:vimim_punctuation"] = 1
