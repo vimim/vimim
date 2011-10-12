@@ -99,10 +99,7 @@ function! s:vimim_initialize_session()
     let s:imode_pinyin = 0
     let s:abcd = split("'abcdvfgxz",'\zs')
     let s:qwer = split("pqwertyuio",'\zs')
-    let az_list = range(char2nr('a'), char2nr('z'))
-    let AZ_list = range(char2nr('A'), char2nr('Z'))
-    let s:az_list = map(az_list, "nr2char(".'v:val'.")")
-    let s:AZ_list = map(AZ_list, "nr2char(".'v:val'.")")
+    let s:az_list = map(range(97,122),"nr2char(".'v:val'.")")
     let s:valid_keys = s:az_list
     let s:valid_keyboard = ""
     let s:starts = { 'row' : 0, 'column' : 1 }
@@ -507,8 +504,9 @@ function! s:vimim_restore_plugin_conflict()
         let ACPMappingDrivenkeys = [
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
             \ '<','>','/','\','<Space>','<BS>','<CR>',]
+        let AZ_list = map(range(65,90), "nr2char(".'v:val'.")")
         call extend(ACPMappingDrivenkeys, range(10))
-        call extend(ACPMappingDrivenkeys, s:az_list + s:AZ_list)
+        call extend(ACPMappingDrivenkeys, s:az_list + AZ_list)
         for key in ACPMappingDrivenkeys
             exe printf('iu <silent> %s', key)
             exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>',
