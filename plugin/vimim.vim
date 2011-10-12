@@ -460,11 +460,9 @@ endfunction
 
 function! s:vimim_get_valid_im_name(im)
     let im = a:im
-    if im =~ '^wubi'
-        let im = 'wubi'
-    elseif im =~ '^pinyin'
-        let im = 'pinyin'
-    elseif im !~ s:all_vimim_input_methods
+        if im =~ '^wubi'   | let im = 'wubi'
+    elseif im =~ '^pinyin' | let im = 'pinyin'
+    elseif match(s:all_vimim_input_methods, im) < 0
         let im = 0
     endif
     return im
@@ -517,16 +515,16 @@ function! s:vimim_restore_plugin_conflict()
     if !empty(s:supertab_sid)
         let tab = s:supertab_sid
         if g:SuperTabMappingForward =~ '^<tab>$'
-            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>", tab)
+            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>",tab)
         endif
         if g:SuperTabMappingBackward =~ '^<s-tab>$'
-            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>", tab)
+            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>",tab)
         endif
     endif
 endfunction
 
 function! s:vimim_getsid(scriptname)
-    " use s:getsid to get script sid, translate <SID> to <SNR>N_ style
+    " use s:getsid to get script sid, translate <SID> to <SNR>N_
     redir => scriptnames_output
     silent scriptnames
     redir END
@@ -768,18 +766,14 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  punctuations     ==== {{{"]
 " =================================================
-" let g:vimim_punctuation = 0  "  close all punctuations
-" let g:vimim_punctuation = 1  "  chinese punctuations: minimum
-" let g:vimim_punctuation = 2  "  chinese punctuations: most
-" let g:vimim_punctuation = 3  "  chinese punctuations: all
 
 function! s:vimim_dictionary_punctuations()
     let s:space = '　'
     let s:colon = '：'
-    let s:evils = {}         " exception if it is passed around
-    let s:all_evils = {}     " onekey uses all punctuations
-    let s:punctuations = {}  " chinese mode uses minimum by default
-    if s:vimim_punctuation < 1
+    let s:evils = {}            " exception if it is passed around
+    let s:all_evils = {}        " onekey uses all punctuations
+    let s:punctuations = {}     " chinese mode uses minimum by default
+    if s:vimim_punctuation < 1  " close all evil punctuations
         return
     endif
     let evil_punctuations = {}
@@ -803,10 +797,10 @@ function! s:vimim_dictionary_punctuations()
         let most_punctuations[get(singles,i)] = get(doubles,i)
     endfor
     call extend(s:punctuations, mini_punctuations)
-    if s:vimim_punctuation > 1
+    if s:vimim_punctuation > 1    " :let g:vimim_punctuation = 2
         call extend(s:punctuations, most_punctuations)
     endif
-    if s:vimim_punctuation > 2
+    if s:vimim_punctuation > 2    " :let g:vimim_punctuation = 3
         let s:evils = copy(evil_punctuations)
     endif
     call extend(s:all_evils, mini_punctuations)
