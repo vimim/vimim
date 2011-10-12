@@ -817,31 +817,11 @@ function! s:vimim_dictionary_punctuations()
     call extend(s:all_evils, s:evils)
 endfunction
 
-function! <SID>vimim_page_map(key)
-    let key = a:key
-    if pumvisible()
-        if key =~ "[][]"
-            let key = s:vimim_square_bracket(key)
-        elseif key =~ "[=.]"
-            let key = '\<PageDown>'
-            if &pumheight
-                let s:pageup_pagedown = 1
-                let key = g:vimim()
-            endif
-        elseif key =~ "[-,]"
-            let key = '\<PageUp>'
-            if &pumheight
-                let s:pageup_pagedown = -1
-                let key = g:vimim()
-            endif
-        endif
-    elseif empty(s:onekey) && s:chinese_punctuation && key =~ "[][=-]"
-        let key = <SID>vimim_chinese_punctuation_map(key)
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 function! s:vimim_punctuations_maps()
+    for _ in keys(s:punctuations) + [";", "'"]
+        silent!exe 'inoremap <silent> <expr> '    ._.
+        \ ' <SID>vimim_chinese_punctuation_map("'._.'")'
+    endfor
     if !empty(s:evils)
         inoremap   '   <C-R>=<SID>vimim_get_single_quote()<CR>
         inoremap   "   <C-R>=<SID>vimim_get_double_quote()<CR>
@@ -851,10 +831,6 @@ function! s:vimim_punctuations_maps()
             sil!exe 'iunmap '. _
         endfor
     endif
-    for _ in keys(s:punctuations)
-        silent!exe 'inoremap <silent> <expr> '    ._.
-        \ ' <SID>vimim_chinese_punctuation_map("'._.'")'
-    endfor
 endfunction
 
 function! <SID>vimim_chinese_punctuation_map(key)
@@ -869,8 +845,10 @@ function! <SID>vimim_chinese_punctuation_map(key)
     endif
     if pumvisible()
         let key = '\<C-Y>' . key
-        if a:key == ";"  " the 2nd choice
+        if a:key == ";"      " the 2nd choice
             let key = '\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
+        elseif a:key == "'"  " the 3rd choice
+            let key = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -881,7 +859,7 @@ function! <SID>vimim_get_single_quote()
     let evil = "'"
     if !has_key(s:evils, evil)
         return ""
-    elseif pumvisible()  " the 3rd choice
+    elseif pumvisible()  " the 3rd choice plus
         let key = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
     else
         let pairs = split(s:evils[evil], '\zs')
@@ -1011,7 +989,7 @@ function! s:vimim_get_head(keyboard, partition)
     return head
 endfunction
 
-function! s:vimim_common_map()
+function! s:vimim_common_maps()
     let labels = range(10)
     let punctuation = " ] [ = - "
     if s:onekey
@@ -1057,6 +1035,30 @@ function! <SID>vimim_label_map(key)
         else
             let key = s:vimim_menuless_map(key)
         endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_page_map(key)
+    let key = a:key
+    if pumvisible()
+        if key =~ "[][]"
+            let key = s:vimim_square_bracket(key)
+        elseif key =~ "[=.]"
+            let key = '\<PageDown>'
+            if &pumheight
+                let s:pageup_pagedown = 1
+                let key = g:vimim()
+            endif
+        elseif key =~ "[-,]"
+            let key = '\<PageUp>'
+            if &pumheight
+                let s:pageup_pagedown = -1
+                let key = g:vimim()
+            endif
+        endif
+    elseif empty(s:onekey) && s:chinese_punctuation && key =~ "[][=-]"
+        let key = <SID>vimim_chinese_punctuation_map(key)
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1572,7 +1574,7 @@ function! s:vimim_get_custom_im_list()
 endfunction
 
 function! <SID>vimim_punctuation_toggle()
-    let s:chinese_punctuation = (s:chinese_punctuation+1)%2
+    let s:chinese_punctuation = (s:chinese_punctuation+1) % 2
     call s:vimim_set_statusline()
     call s:vimim_punctuations_maps()
     return ""
@@ -3809,7 +3811,7 @@ function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
-    sil!call s:vimim_common_map()
+    sil!call s:vimim_common_maps()
     inoremap <expr> <BS>     <SID>vimim_backspace()
     inoremap <expr> <CR>     <SID>vimim_enter()
     inoremap <expr> <Esc>    <SID>vimim_esc()
