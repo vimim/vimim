@@ -59,6 +59,7 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
+        let g:vimim_punctuations = 3
         let g:vimim_cloud = 'google,sogou,qq,baidu'
         let g:vimim_map = 'tab,search,gi'
     endif
@@ -103,7 +104,6 @@ function! s:vimim_initialize_session()
     let AZ_list = range(char2nr('A'), char2nr('Z'))
     let s:az_list = map(az_list, "nr2char(".'v:val'.")")
     let s:AZ_list = map(AZ_list, "nr2char(".'v:val'.")")
-    let s:Az_list = s:az_list + s:AZ_list
     let s:valid_keys = s:az_list
     let s:valid_keyboard = ""
     let s:starts = { 'row' : 0, 'column' : 1 }
@@ -152,7 +152,7 @@ function! s:vimim_set_keycode()
     for im in split(dot_im)
         if s:ui.im == im
             let s:ui.has_dot = 1  " has english dot in datafile
-            let s:vimim_chinese_input_mode .= ',no-punctuation'
+            let s:vimim_punctuation = 0
             break
         endif
     endfor
@@ -423,13 +423,11 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
     let s:rc["g:vimim_plugin"] = s:plugin
     let s:rc["g:vimim_skin"] = 'one-row,color'
+    let s:rc["g:vimim_punctuations"] = 1
     let s:rc["g:vimim_toggle_list"] = 0
     let s:rc["g:vimim_mycloud"] = 0
     call s:vimim_set_global_default()
     let s:chinese_punctuation = 1
-    if s:vimim_chinese_input_mode =~ 'no-punctuation'
-        let s:chinese_punctuation = 0
-    endif
     if isdirectory(s:vimim_plugin)
         let s:plugin = s:vimim_plugin
     endif
@@ -530,7 +528,7 @@ function! s:vimim_restore_plugin_conflict()
             \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
             \ '<','>','/','\','<Space>','<BS>','<CR>',]
         call extend(ACPMappingDrivenkeys, range(10))
-        call extend(ACPMappingDrivenkeys, s:Az_list)
+        call extend(ACPMappingDrivenkeys, s:az_list + s:AZ_list)
         for key in ACPMappingDrivenkeys
             exe printf('iu <silent> %s', key)
             exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>',
@@ -788,6 +786,9 @@ function! s:vimim_get_labeling(label)
     if s:onekey && a:label < 11
         let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
         let labeling = empty(labeling) ? '10' : labeling . label2
+        if s:vimim_cjk()
+            let labeling = label2
+        endif
     endif
     return labeling
 endfunction
@@ -795,30 +796,45 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  punctuations     ==== {{{"]
 " =================================================
+" let g:vimim_punctuations = 0  "  close all punctuations
+" let g:vimim_punctuations = 1  "  chinese punctuations: minimum
+" let g:vimim_punctuations = 2  "  chinese punctuations: most
+" let g:vimim_punctuations = 3  "  chinese punctuations: all
 
 function! s:vimim_dictionary_punctuations()
-    let s:punctuations = {}
-    let s:punctuations['^'] = "……"
-    let s:punctuations['_'] = "——"
-    let single = '@ : # & % $ ! ~ + - = ; , . ? * { } ( ) < > [ ] '
-    let double = '　：＃＆％￥！～＋－＝；，。？﹡〖〗（）《》【】'
-    let singles = split(single)
-    let doubles = split(double, '\zs')
-    for i in range(len(singles))
-        let s:punctuations[get(singles,i)] = get(doubles,i)
-    endfor
+    let s:space = '　'
+    let s:colon = '：'
+    let s:left  = '【'
+    let s:right = '】'
     let s:evils = {}
-    if s:vimim_chinese_input_mode !~ 'latex'
+    let s:punctuations = {}
+    if s:vimim_punctuation < 1
+        return
+    else
+        let s:punctuations[','] = '，'
+        let s:punctuations['.'] = '。'
+        let s:punctuations['+'] = "＋"
+        let s:punctuations['-'] = '－'
+        let s:punctuations['~'] = '～'
+        let s:punctuations['^'] = "……"
+        let s:punctuations['_'] = "——"
+    endif
+    if s:vimim_punctuation > 1
+        let single = '# & % $ ! = ; ? * { } ( ) < > [ ] : @ '
+        let double = '＃＆％￥！＝；？﹡〖〗（）《》【】：　'
+        let singles = split(single)
+        let doubles = split(double, '\zs')
+        for i in range(len(singles))
+            let s:punctuations[get(singles,i)] = get(doubles,i)
+        endfor
+    endif
+    if s:vimim_punctuation > 2
         let s:evils['|'] = "、"
         let s:evils["'"] = "‘’"
         let s:evils['"'] = "“”"
     endif
-    let s:evils_all = copy(s:punctuations)
-    call extend(s:evils_all, s:evils)
-    let s:left  = s:punctuations['[']
-    let s:right = s:punctuations[']']
-    let s:colon = s:punctuations[':']
-    let s:space = s:punctuations['@']
+    let s:all_evils = copy(s:punctuations)
+    call extend(s:all_evils, s:evils)
 endfunction
 
 function! <SID>vimim_page_map(key)
@@ -845,8 +861,8 @@ function! <SID>vimim_page_map(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_punctuation_mapping()
-    if s:chinese_punctuation && s:vimim_chinese_input_mode !~ 'latex'
+function! s:vimim_punctuations_maps()
+    if !empty(s:evils)
         inoremap   '   <C-R>=<SID>vimim_get_single_quote()<CR>
         inoremap   "   <C-R>=<SID>vimim_get_double_quote()<CR>
         inoremap <Bar> <C-R>=pumvisible() ? "\<lt>C-Y>、" : "、"<CR>
@@ -1109,7 +1125,7 @@ function! <SID>vimim_label_map(key)
         let down = repeat("\<Down>", n)
         let s:has_pumvisible = 1
         if s:onekey && a:key =~ '\d'
-            if s:touch_me_not && s:vimim_cjk()
+            if s:vimim_cjk()
                 let s:hjkl_n .= a:key
             else
                 let key = down . '\<C-Y>'
@@ -1391,14 +1407,14 @@ function! s:vimim_onekey_evils()
         return ""
     elseif two_before =~ "[0-9a-z]"
         return " "
-    elseif has_key(s:evils_all, one_before)
-        for char in keys(s:evils_all)
+    elseif has_key(s:all_evils, one_before)
+        for char in keys(s:all_evils)
             if two_before ==# char || two_before =~# '\u'
                 return " " " no transfer if punctuation punctuation
             endif
         endfor
         " transfer English punctuation to Chinese punctuation
-        let bs = s:evils_all[one_before]
+        let bs = s:all_evils[one_before]
         let bs = one_before == "'" ? <SID>vimim_get_single_quote() : bs
         let bs = one_before == '"' ? <SID>vimim_get_double_quote() : bs
         let onekey = "\<Left>\<Delete>" . bs
@@ -1569,9 +1585,9 @@ function! s:vimim_chinesemode_start()
     sil!call s:vimim_set_statusline()
     sil!call s:vimim_set_plugin_conflict()
     sil!call s:vimim_super_reset()
-    if s:vimim_chinese_input_mode !~ 'no-punctuation'
+    if s:vimim_punctuation
         inoremap<expr><C-^> <SID>vimim_punctuation_toggle()
-        call s:vimim_punctuation_mapping()
+        call s:vimim_punctuations_maps()
     endif
     sil!call s:vimim_start()
     let &titlestring = s:logo . s:vimim_get_title()
@@ -1595,11 +1611,7 @@ function! s:vimim_chinesemode_start()
             endfor
         endif
     elseif s:chinese_mode =~ 'static'
-        let map_list = s:Az_list
-        if s:vimim_chinese_input_mode =~ 'latex'
-            let map_list = s:az_list
-        endif
-        for char in map_list
+        for char in s:az_list  " avoid mapping caps
             sil!exe 'inoremap <silent> ' . char .
             \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . char
         endfor
@@ -1635,7 +1647,7 @@ endfunction
 function! <SID>vimim_punctuation_toggle()
     let s:chinese_punctuation = (s:chinese_punctuation+1)%2
     call s:vimim_set_statusline()
-    call s:vimim_punctuation_mapping()
+    call s:vimim_punctuations_maps()
     return ""
 endfunction
 
@@ -1939,7 +1951,7 @@ function! s:vimim_char_before()
         let char_before = getline(".")[start : start+s:multibyte-1]
         if char_before !~ '[^\x00-\xff]'
             let char_before = ""
-        elseif match(values(s:evils_all),char_before) > -1
+        elseif match(values(s:all_evils),char_before) > -1
             let char_before = ""
         endif
     endif
@@ -3931,12 +3943,8 @@ function! s:vimim_restore_imap()
     highlight! link Cursor NONE
     let keys  = range(10)
     let keys += split('<Esc> <Space> <BS> <CR> <Bslash> <Bar>')
-    let keys += keys(s:evils_all)
     let keys += s:valid_keys
-    if s:chinese_mode =~ 'static'
-    \&& s:vimim_chinese_input_mode !~ 'latex'
-        let keys += s:AZ_list
-    endif
+    let keys += keys(s:all_evils)
     for _ in keys
         if len(maparg(_, 'i'))
             sil!exe 'iunmap '. _
