@@ -55,7 +55,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -780,7 +780,7 @@ function! s:vimim_get_labeling(label)
     if s:onekey && a:label < 11
         let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
         let labeling = empty(labeling) ? '10' : labeling . label2
-        if s:vimim_cjk()
+        if s:vimim_cjk() && empty(s:hjkl_l)
             let labeling = label2
         endif
     endif
@@ -1305,7 +1305,7 @@ function! <SID>vimim_onekey(tab)
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
-    sil!call s:vimim_onekey_all_maps()
+    sil!call s:vimim_onekey_hjkl_maps()
     if empty(onekey) || onekey =~ 'Right'
         let onekey .= '\<C-R>=g:vimim_title()\<CR>'
     endif
@@ -1393,41 +1393,41 @@ function! g:vimim_onekey_dump()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
-function! s:vimim_onekey_all_maps()
+function! s:vimim_onekey_hjkl_maps()
+    let onekey_list = split('h j k l m n / ? *')
     if s:vimim_cjk()
-        for _ in s:qwer
-            exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwer_map("'._.'")'
-        endfor
+        let onekey_list += s:qwer + ['x']
     endif
-    for _ in split('h j k l m n x / ? *')
+    for _ in onekey_list
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
     endfor
 endfunction
 
 function! <SID>vimim_onekey_hjkl_map(key)
-    let hjkl = a:key
+    let key = a:key
     if pumvisible()
-            if hjkl ==# 'n' | call s:vimim_reset_after_insert()
-        elseif hjkl ==# 'm' | let s:hjkl_m += 1
-        elseif hjkl ==# 'h' | let s:hjkl_h += 1
-        elseif hjkl ==# 'j' | let hjkl = '\<Down>'
-        elseif hjkl ==# 'k' | let hjkl = '\<Up>'
-        elseif hjkl ==# 'l' | let s:hjkl_l += 1 | endif
-        if hjkl ==# '*'
+            if key ==# 'x' | let s:hjkl__ += 1
+        elseif key ==# 'n' | call s:vimim_reset_after_insert()
+        elseif key ==# 'm' | let s:hjkl_m += 1 
+        elseif key ==# 'h' | let s:hjkl_h += 1
+        elseif key ==# 'j' | let key = '\<Down>'
+        elseif key ==# 'k' | let key = '\<Up>'
+        elseif key ==# 'l' | let s:hjkl_l += 1
+        elseif key ==# '*'
             if &pumheight
                 let s:popup_list = s:popup_list[:&pumheight-1]
             endif
-            let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-        elseif hjkl =~ "[/?]"
-            let hjkl = s:vimim_menu_search(hjkl)
-        elseif hjkl ==# 'x' && s:vimim_cjk()
-            let s:hjkl__ += 1  " toggle simplified/traditional
+            let key = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+        elseif key =~ "[/?]"
+            let key = s:vimim_menu_search(key)
+        elseif match(s:qwer, key) > -1
+            let s:hjkl_n .= match(s:qwer, key)
         endif
-        if hjkl == a:key
-            let hjkl = g:vimim()
+        if key == a:key
+            let key = '\<C-R>=g:vimim()\<CR>'
         endif
     endif
-    sil!exe 'sil!return "' . hjkl . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_onekey_engine(keyboard)
@@ -2019,16 +2019,6 @@ function! s:vimim_qwertyuiop_1234567890(keyboard)
     return dddd
 endfunction
 
-function! <SID>vimim_onekey_qwer_map(key)
-    let key = a:key
-    if pumvisible()
-        let digit = match(s:qwer, key)
-        let s:hjkl_n .= digit
-        let key = '\<C-R>=g:vimim()\<CR>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 function! s:vimim_cjk_match(keyboard)
     let keyboard = a:keyboard
     if empty(keyboard) || empty(s:vimim_cjk())
@@ -2160,7 +2150,7 @@ function! <SID>vimim_visual_ctrl6()
     let s:onekey = 1
     let onekey = "\<C-R>=g:vimim()\<CR>"
     sil!call s:vimim_start()
-    sil!call s:vimim_onekey_all_maps()
+    sil!call s:vimim_onekey_hjkl_maps()
     if len(lines) < 2
         " highlight multiple chinese => show property of each
         let chinese = get(split(line,'\zs'),0)
