@@ -890,8 +890,6 @@ function! <SID>vimim_onekey_evil_map(key)
             let s:popup_list = s:popup_list[:&pumheight-1]
         endif
         let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-    elseif hjkl =~ "[<>]"
-        let hjkl = '\<C-Y>' . s:punctuations[nr2char(char2nr(hjkl)-16)]
     elseif hjkl =~ "[/?]"
         let hjkl = s:vimim_menu_search(hjkl)
     elseif hjkl ==# ';'  " toggle simplified/traditional transfer
@@ -1431,17 +1429,15 @@ function! g:vimim_onekey_dump()
 endfunction
 
 function! s:vimim_onekey_all_maps()
-    for _ in split('hjklmnx', '\zs')
-        exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
-    endfor
-    let onekey_punctuation = "/?<>*';"
     if s:vimim_cjk()
-        let qwer = s:cjk.filename=~"cjkv" ? s:qwer[1:5] : s:qwer
-        for _ in qwer
+        for _ in s:qwer
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwer_map("'._.'")'
         endfor
     endif
-    for _ in split(onekey_punctuation, '\zs')
+    for _ in split('h j k l m n x')
+        exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
+    endfor
+    for _ in split("/ ? * ; '")
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_evil_map("'._.'")'
     endfor
 endfunction
@@ -3937,7 +3933,7 @@ function! s:vimim_restore_imap()
     let keys += split('<Esc> <Space> <BS> <CR> <Bslash> <Bar>')
     let keys += keys(s:evils_all)
     let keys += s:valid_keys
-    if s:chinese_mode =~ 'static' 
+    if s:chinese_mode =~ 'static'
     \&& s:vimim_chinese_input_mode !~ 'latex'
         let keys += s:AZ_list
     endif
