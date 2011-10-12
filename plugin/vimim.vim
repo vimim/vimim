@@ -798,8 +798,6 @@ let s:VimIM += [" ====  punctuations     ==== {{{"]
 function! s:vimim_dictionary_punctuations()
     let s:space = '　'
     let s:colon = '：'
-    let s:left  = '【'
-    let s:right = '】'
     let s:evils = {}
     let s:punctuations = {}
     if s:vimim_punctuation < 1
@@ -1143,8 +1141,7 @@ function! s:vimim_menuless_map(key)
 endfunction
 
 function! s:vimim_set_titlestring(cursor)
-    let hightlight = s:left . '\|' . s:right
-    let titlestring = substitute(&titlestring, hightlight, ' ', 'g')
+    let titlestring = substitute(&titlestring, '【\|】', ' ', 'g')
     if titlestring !~ '\s\+' . "'" . '\+\s\+'
         let titlestring = substitute(titlestring,"'",'','g')
     endif
@@ -1154,7 +1151,7 @@ function! s:vimim_set_titlestring(cursor)
     let title = ""
     if !empty(hightlight) && len(words) > 1
         let hightlight = substitute(hightlight, '\d\+', '', '')
-        let hightlight = s:left . hightlight . s:right
+        let hightlight = '【' . hightlight . '】'
         let left = join(words[1 : cursor-1])
         let right = join(words[cursor+1 :])
         let s:cursor_at_menuless = cursor
@@ -3247,8 +3244,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
         let output = strpart(output, first+1, second-first-1)
         let output = s:vimim_url_xx_to_chinese(output)
     endif
-    if s:localization
-        " support gb and big5 in addition to utf8
+    if s:localization  " support gb and big5 in addition to utf8
         let output = s:vimim_i18n_read(output)
     endif
     let match_list = []
