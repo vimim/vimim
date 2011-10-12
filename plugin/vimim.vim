@@ -97,7 +97,7 @@ function! s:vimim_initialize_session()
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     let s:imode_pinyin = 0
-    let s:abcd = split("'abcdvfgsz",'\zs')
+    let s:abcd = split("'abcdvfgxz",'\zs')
     let s:qwer = split("pqwertyuio",'\zs')
     let az_list = range(char2nr('a'), char2nr('z'))
     let AZ_list = range(char2nr('A'), char2nr('Z'))
@@ -1009,7 +1009,7 @@ function! s:vimim_common_maps()
 endfunction
 
 function! <SID>vimim_label_map(key)
-    let key = a:key  " abcdvfgsz 1234567890
+    let key = a:key  " abcdvfgxz 1234567890
     if pumvisible()
         let n = match(s:abcd, key)
         if key =~ '\d'
@@ -1349,7 +1349,7 @@ endfunction
 function! s:vimim_onekey_hjkl_maps()
     let onekey_list = split('h j k l m n / ? *')
     if s:vimim_cjk()
-        let onekey_list += s:qwer + ['x']
+        let onekey_list += s:qwer + ['s']
     endif
     for _ in onekey_list
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
@@ -1359,7 +1359,7 @@ endfunction
 function! <SID>vimim_onekey_hjkl_map(key)
     let key = a:key
     if pumvisible()
-            if key ==# 'x' | let s:hjkl__ += 1
+            if key ==# 's' | let s:hjkl__ += 1
         elseif key ==# 'n' | call s:vimim_reset_after_insert()
         elseif key ==# 'm' | let s:hjkl_m += 1
         elseif key ==# 'h' | let s:hjkl_h += 1
