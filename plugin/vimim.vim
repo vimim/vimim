@@ -429,7 +429,6 @@ function! s:vimim_initialize_global()
     let s:chinese_mode = 'onekey'
     let s:toggle_punctuation = 1
     let s:toggle_im = 0
-    let s:onekey = 0
     let s:download = {}
     let s:download.english = "vimim.txt"
     let s:download.cjk     = "vimim.cjk.txt"
@@ -1347,7 +1346,7 @@ function! g:vimim_onekey_dump()
 endfunction
 
 function! s:vimim_onekey_hjkl_maps()
-    let onekey_list = split('h j k l m n / ? *')
+    let onekey_list = split("h j k l m n / ? ;")
     if s:vimim_cjk()
         let onekey_list += s:qwer + ['s']
     endif
@@ -1359,17 +1358,15 @@ endfunction
 function! <SID>vimim_onekey_hjkl_map(key)
     let key = a:key
     if pumvisible()
-            if key ==# 's' | let s:hjkl__ += 1
-        elseif key ==# 'n' | call s:vimim_reset_after_insert()
+            if key ==# 'n' | call s:vimim_reset_after_insert()
         elseif key ==# 'm' | let s:hjkl_m += 1
-        elseif key ==# 'h' | let s:hjkl_h += 1
-        elseif key ==# 'j' | let key = '\<Down>'
-        elseif key ==# 'k' | let key = '\<Up>'
-        elseif key ==# 'l' | let s:hjkl_l += 1
-        elseif key ==# '*'
-            if &pumheight
-                let s:popup_list = s:popup_list[:&pumheight-1]
-            endif
+        elseif key ==# 'h' | let s:hjkl_h += 1   " h
+        elseif key ==# 'j' | let key = '\<Down>' " j
+        elseif key ==# 'k' | let key = '\<Up>'   " k
+        elseif key ==# 'l' | let s:hjkl_l += 1   " l
+        elseif key ==# 's' | let s:hjkl__ += 1   " simplified/traditional
+        elseif key ==# ';'                       " dump out omni popup
+            let s:popup_list = s:popup_list[:&pumheight-1]
             let key = '\<C-R>=g:vimim_onekey_dump()\<CR>'
         elseif key =~ "[/?]"
             let key = s:vimim_menu_search(key)
@@ -2076,10 +2073,7 @@ function! s:vimim_1to1(char)
     endif
     let values = split(get(s:cjk.lines, line))
     let traditional_chinese = get(split(get(values,0),'\zs'),1)
-    if empty(traditional_chinese)
-        let traditional_chinese = a:char
-    endif
-    return traditional_chinese
+    return empty(traditional_chinese) ? a:char : traditional_chinese
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
