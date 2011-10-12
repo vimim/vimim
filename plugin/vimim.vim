@@ -59,7 +59,7 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
-        let g:vimim_punctuations = 3
+        let g:vimim_punctuation = 3
         let g:vimim_cloud = 'google,sogou,qq,baidu'
         let g:vimim_map = 'tab,search,gi'
     endif
@@ -417,7 +417,7 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
     let s:rc["g:vimim_plugin"] = s:plugin
     let s:rc["g:vimim_skin"] = 'one-row,color'
-    let s:rc["g:vimim_punctuations"] = 1
+    let s:rc["g:vimim_punctuation"] = 1
     let s:rc["g:vimim_toggle_list"] = 0
     let s:rc["g:vimim_mycloud"] = 0
     call s:vimim_set_global_default()
@@ -790,10 +790,10 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  punctuations     ==== {{{"]
 " =================================================
-" let g:vimim_punctuations = 0  "  close all punctuations
-" let g:vimim_punctuations = 1  "  chinese punctuations: minimum
-" let g:vimim_punctuations = 2  "  chinese punctuations: most
-" let g:vimim_punctuations = 3  "  chinese punctuations: all
+" let g:vimim_punctuation = 0  "  close all punctuations
+" let g:vimim_punctuation = 1  "  chinese punctuations: minimum
+" let g:vimim_punctuation = 2  "  chinese punctuations: most
+" let g:vimim_punctuation = 3  "  chinese punctuations: all
 
 function! s:vimim_dictionary_punctuations()
     let s:space = '　'
