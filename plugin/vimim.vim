@@ -55,7 +55,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -890,33 +890,6 @@ function! <SID>vimim_chinese_punctuation_map(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! <SID>vimim_onekey_evil_map(key)
-    let hjkl = a:key
-    if pumvisible()
-        if hjkl ==# '*'
-            if &pumheight
-                let s:popup_list = s:popup_list[:&pumheight-1]
-            endif
-            let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
-        elseif hjkl =~ "[/?]"
-            let hjkl = s:vimim_menu_search(hjkl)
-        elseif hjkl ==# ';'  " toggle simplified/traditional transfer
-            let s:hjkl__ += 1
-            let hjkl = g:vimim()
-        elseif hjkl == "'"  && s:keyboard[-1:] != "'"
-            let s:onekey = s:onekey==1 ? 2 : 3
-            if s:onekey > 2  " quote: switch to the next cloud
-                let clouds = split(s:vimim_cloud,',')
-                let s:vimim_cloud = join(clouds[1:-1]+clouds[0:0],',')
-                let default = get(split(s:vimim_cloud,','),0)
-                let s:cloud_default = get(split(default,'[.]'),0)
-            endif
-            let hjkl = g:vimim()
-        endif
-    endif
-    sil!exe 'sil!return "' . hjkl . '"'
-endfunction
-
 function! <SID>vimim_get_single_quote()
     let key = ""
     let evil = "'"
@@ -1278,19 +1251,14 @@ function! <SID>vimim_esc()
         let key .= ':echo @0[:-2][:50]\<CR>'
         sil!call s:vimim_stop()
     elseif pumvisible()
-        let key = s:vimim_esc_correction()
-        sil!call s:vimim_reset_after_insert()
+        let key = '\<C-E>'   " <Esc> one key correction
+        let range = col(".") - 1 - s:starts.column
+        if range  
+            let key .= repeat("\<Left>\<Delete>", range)
+            sil!call s:vimim_reset_after_insert()
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! s:vimim_esc_correction()
-    let key = '\<C-E>'
-    let range = col(".") - 1 - s:starts.column
-    if range
-        let key .= repeat("\<Left>\<Delete>", range)
-    endif
-    return key
 endfunction
 
 " ============================================= }}}
@@ -1431,11 +1399,8 @@ function! s:vimim_onekey_all_maps()
             exe 'inoremap<expr> '._.' <SID>vimim_onekey_qwer_map("'._.'")'
         endfor
     endif
-    for _ in split('h j k l m n x')
+    for _ in split('h j k l m n x / ? *')
         exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
-    endfor
-    for _ in split("/ ? * ; '")
-        exe 'inoremap<expr> '._.' <SID>vimim_onekey_evil_map("'._.'")'
     endfor
 endfunction
 
@@ -1443,12 +1408,21 @@ function! <SID>vimim_onekey_hjkl_map(key)
     let hjkl = a:key
     if pumvisible()
             if hjkl ==# 'n' | call s:vimim_reset_after_insert()
-        elseif hjkl ==# 'x' | let hjkl = s:vimim_esc_correction()
         elseif hjkl ==# 'm' | let s:hjkl_m += 1
         elseif hjkl ==# 'h' | let s:hjkl_h += 1
         elseif hjkl ==# 'j' | let hjkl = '\<Down>'
         elseif hjkl ==# 'k' | let hjkl = '\<Up>'
         elseif hjkl ==# 'l' | let s:hjkl_l += 1 | endif
+        if hjkl ==# '*'
+            if &pumheight
+                let s:popup_list = s:popup_list[:&pumheight-1]
+            endif
+            let hjkl = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+        elseif hjkl =~ "[/?]"
+            let hjkl = s:vimim_menu_search(hjkl)
+        elseif hjkl ==# 'x' && s:vimim_cjk()
+            let s:hjkl__ += 1  " toggle simplified/traditional
+        endif
         if hjkl == a:key
             let hjkl = g:vimim()
         endif
