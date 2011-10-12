@@ -178,8 +178,8 @@ function! s:vimim_set_keycode()
     let s:valid_keyboard  = copy(keycode)
     let s:valid_keys = split(keycode_string, '\zs')
     let s:imode_pinyin = 0
-    if s:ui.im =~ 'pinyin' || s:vimim_cjk()
-    \|| s:onekey > 1 || s:vimim_shuangpin == 'abc'
+    if s:ui.im =~ 'pinyin' || s:ui.root == 'cloud'
+    \|| s:vimim_cjk() || s:vimim_shuangpin == 'abc'
         let s:imode_pinyin = 1
     endif
 endfunction
@@ -674,7 +674,7 @@ function! s:vimim_get_title()
     elseif s:ui.im == 'mycloud'
         let __getname = s:backend.cloud.mycloud.directory
         let statusline .= s:space . __getname
-    elseif s:ui.root == 'cloud' || s:onekey > 1
+    elseif s:ui.root == 'cloud'
         let clouds = split(s:vimim_cloud,',')
         let vimim_cloud = get(clouds, match(clouds, s:cloud_default))
         let cloud  = s:vimim_chinese(s:cloud_default)
@@ -1029,7 +1029,7 @@ function! <SID>vimim_label_map(key)
             let key = down . '\<C-Y>' . key
             sil!call s:vimim_reset_after_insert()
         endif
-    elseif s:onekey && s:menuless && key =~ '\d'
+    elseif s:menuless && key =~ '\d'
         if s:pattern_not_found
             let s:pattern_not_found = 0
         else
@@ -1216,7 +1216,7 @@ function! <SID>vimim_esc()
     elseif pumvisible()
         let key = '\<C-E>'   " <Esc> one key correction
         let range = col(".") - 1 - s:starts.column
-        if range  
+        if range
             let key .= repeat("\<Left>\<Delete>", range)
             sil!call s:vimim_reset_after_insert()
         endif
@@ -1258,8 +1258,8 @@ function! <SID>vimim_onekey(tab)
         let onekey = '\t'
     else
         call s:vimim_super_reset()
-        let s:onekey = s:ui.root == 'cloud' ? 2 : 1
         let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
+        let s:onekey = 1
         let s:menuless = a:tab
         sil!call s:vimim_start()
         if s:menuless < 2
@@ -1371,7 +1371,7 @@ function! <SID>vimim_onekey_hjkl_map(key)
     if pumvisible()
             if key ==# 'x' | let s:hjkl__ += 1
         elseif key ==# 'n' | call s:vimim_reset_after_insert()
-        elseif key ==# 'm' | let s:hjkl_m += 1 
+        elseif key ==# 'm' | let s:hjkl_m += 1
         elseif key ==# 'h' | let s:hjkl_h += 1
         elseif key ==# 'j' | let key = '\<Down>'
         elseif key ==# 'k' | let key = '\<Up>'
@@ -1437,6 +1437,7 @@ let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
 function! <SID>vimim_rotation()
+                let g:g8=s:ui.frontends
     if len(s:ui.frontends) < 2 && empty(s:onekey)
         return <SID>ChineseMode()
     endif
@@ -1463,17 +1464,14 @@ function! <SID>vimim_rotation()
         let s:ui.root = get(frontends,0)
         let s:ui.im   = get(frontends,1)
     endif
-    if s:ui.root == 'cloud'
+    if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
         if s:menuless
             let s:ui.im = s:cloud_default
         else
             let s:cloud_default = s:ui.im
         endif
     endif
-    if s:menuless
-        let s:onekey = s:ui.root == 'cloud' ? 2 : 1
-    endif
-    if s:onekey
+    if s:onekey || s:menuless
         return g:vimim_title()
     else
         return s:vimim_chinese_mode(1)
@@ -3085,9 +3083,9 @@ function! s:vimim_set_background_clouds()
     if empty(s:vimim_check_http_executable())
         return 0
     endif
+    let s:ui.root = 'cloud'
     for cloud in reverse(split(s:vimim_cloud,','))
         let im = get(split(cloud,'[.]'),0)
-        let s:ui.root = 'cloud'
         let s:ui.im = im
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
         let s:backend.cloud[im] = s:vimim_one_backend_hash()
@@ -3419,14 +3417,13 @@ function! s:vimim_set_backend_mycloud()
     endif
     let im = 'mycloud'
     let s:backend.cloud[im] = s:vimim_one_backend_hash()
-    if empty(s:vimim_check_mycloud_availability())
-        let s:backend.cloud = {}
-    else
+    let cloud_default = s:vimim_check_mycloud_availability()
+    if !empty(cloud_default)
         let s:ui.root = 'cloud'
         let s:ui.im = im
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
         let s:backend.cloud[im].root = s:ui.root
-        let s:backend.cloud[im].im = im
+        let s:backend.cloud[im].im = cloud_default
         let s:backend.cloud[im].name    = s:vimim_chinese(im)
         let s:backend.cloud[im].chinese = s:vimim_chinese(im)
     endif
@@ -3639,9 +3636,9 @@ function! s:vimim_check_mycloud_plugin_url()
     return 0
 endfunction
 
-function! s:vimim_get_mycloud_plugin(keyboard)
+function! s:vimim_get_mycloud(keyboard)
     let output = 0
-    let mycloud = s:vimim_check_mycloud_availability()
+    let mycloud = s:backend.cloud.mycloud.im
     try
         let output = s:vimim_access_mycloud(mycloud, a:keyboard)
     catch
@@ -3708,10 +3705,10 @@ function! s:vimim_search_chinese_by_english(keyboard)
     let keyboard = tolower(a:keyboard)
     let results = []
     " 1/3 first try search from cloud/mycloud
-    if s:ui.root == 'cloud' || s:onekey > 1 " /search from cloud
+    if s:ui.im == 'mycloud'             " /search from mycloud
+        let results = s:vimim_get_mycloud(keyboard)
+    elseif s:ui.root == 'cloud'         " /search from cloud
         let results = s:vimim_get_cloud(keyboard, s:cloud_default)
-    elseif s:ui.im == 'mycloud'             " /search from mycloud
-        let results = s:vimim_get_mycloud_plugin(keyboard)
     endif
     if !empty(results)
         return results
@@ -3944,7 +3941,7 @@ else
         let s:english.line = s:vimim_get_english(keyboard)
     endif
     " [onekey] plays with nothing but onekey
-    if s:onekey == 1
+    if s:onekey
         let results = s:vimim_onekey_engine(keyboard)
         if len(results)
             return s:vimim_popupmenu_list(results)
@@ -3954,7 +3951,7 @@ else
     endif
     " [mycloud] get chunmeng from mycloud local or www
     if s:ui.im == 'mycloud'
-        let results = s:vimim_get_mycloud_plugin(keyboard)
+        let results = s:vimim_get_mycloud(keyboard)
         if len(results)
             let s:show_extra_menu = 1
             return s:vimim_popupmenu_list(results)
@@ -3967,10 +3964,8 @@ else
     endif
     " [cloud] to make dream come true for multiple clouds
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-    if s:onekey > 1 || (s:onekey < 1 && s:ui.root == 'cloud')
-        if empty(s:english.line)
-            let results = s:vimim_get_cloud(keyboard, s:cloud_default)
-        endif
+    if s:ui.root == 'cloud' && empty(s:english.line)
+        let results = s:vimim_get_cloud(keyboard, s:cloud_default)
     endif
     " [engine] try all local backend engines
     if empty(results)
@@ -4260,8 +4255,8 @@ sil!call s:vimim_scan_datafile_cjk()
 sil!call s:vimim_scan_datafile_english()
 sil!call s:vimim_super_reset()
 sil!call s:vimim_initialize_session()
-sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_background_clouds()
+sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_map_plug_and_play()
