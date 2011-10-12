@@ -915,8 +915,8 @@ function! s:vimim_pageup_pagedown()
 endfunction
 
 function! s:vimim_onekey_menu_filter()
-    " use 1234567890 as filter in menuless
-    " use qwertyuiop as filter in omni popup
+    " only use 1234567890 as filter in menuless
+    " also use qwertyuiop as filter in omni popup
     let results = []
     for items in s:popup_list
         let chinese = items.word
@@ -936,15 +936,15 @@ endfunction
 
 function! s:vimim_check_if_digit_match_cjk(chinese)
     " smart digital filter: 马力 7712 4002
-    "   (1)   ma<C-6>       马   => filter with   7712
-    "   (2) mali<C-6>       马力 => filter with 7 4002
+    "   (1) gi ma           马   => filter with   7712
+    "   (2) gi mali         马力 => filter with 7 4002
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
     if empty(len(s:hjkl_n)) || empty(chinese)
         return 0
     endif
     let digit_head = ""
     let digit_tail = ""
-    for cjk in split(chinese,'\zs')
+    for cjk in split(chinese, '\zs')
         let grep = "^" . cjk
         let line = match(s:cjk.lines, grep)
         if line < 0
@@ -984,8 +984,8 @@ function! s:vimim_common_maps()
     let labels = range(10)
     let punctuation = " ] [ = - "
     if s:onekey
-        let labels += s:abcd
         let punctuation .= " . , "
+        let labels += s:abcd
         call remove(labels, match(labels,"'"))
     endif
     for _ in labels
@@ -994,9 +994,6 @@ function! s:vimim_common_maps()
     for _ in split(punctuation)
         exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
     endfor
-    if !hasmapto('<C-H>', 'i')
-        inoremap<expr><C-H> <SID>vimim_rotation()
-    endif
 endfunction
 
 function! <SID>vimim_label_map(key)
@@ -3788,12 +3785,13 @@ function! s:vimim_start()
     inoremap <expr> <Space> <SID>vimim_space()
     inoremap <expr> <BS>    <SID>vimim_backspace()
     inoremap <expr> <CR>    <SID>vimim_enter()
+    inoremap <expr> <C-H>   <SID>vimim_rotation()
 endfunction
 
 function! s:vimim_stop()
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_restore_imap()
+    sil!call s:vimim_imap_off()
 endfunction
 
 function! s:vimim_super_reset()
@@ -3819,7 +3817,7 @@ function! s:vimim_reset_before_omni()
 endfunction
 
 function! s:vimim_reset_after_insert()
-    let s:hjkl_n = ""   " reset  for nothing
+    let s:hjkl_n = ""   "  reset for nothing
     let s:hjkl_h = 0    " ctrl-h for jsjsxx
     let s:hjkl_l = 0    " toggle label length
     let s:hjkl_m = 0    " toggle cjjp/c'j'j'p
@@ -3828,10 +3826,10 @@ function! s:vimim_reset_after_insert()
     let s:pageup_pagedown = 0
 endfunction
 
-function! s:vimim_restore_imap()
+function! s:vimim_imap_off()
     highlight! link Cursor NONE
     let keys  = range(10)
-    let keys += split('<Esc> <Space> <BS> <CR>')
+    let keys += split('<Esc> <Space> <BS> <CR> <C-H>')
     let keys += s:valid_keys
     let keys += keys(s:evils)
     let keys += keys(s:punctuations)
