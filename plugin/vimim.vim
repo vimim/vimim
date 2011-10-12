@@ -1008,30 +1008,6 @@ function! s:vimim_check_if_digit_match_cjk(chinese)
     return 1
 endfunction
 
-function! s:vimim_hjkl_partition(keyboard)
-    let keyboard = a:keyboard
-    if s:hjkl_m
-        if s:hjkl_m % 2
-            let keyboard = keyboard . "'''"   " sssss => sssss'''
-        endif
-    elseif s:hjkl_h         " redefine match: jsjsxx => ['jsjsx','jsjs']
-        let items = get(s:popup_list,0)                 " jsjs'xx
-        let words = get(items, "word")                  " jsjsxx
-        let tail = len(substitute(words,'\L','','g'))       " xx
-        let head = keyboard[: -tail-1]  " 'jsjsxx'[:-3]='jsjs'
-        let candidates = s:vimim_more_pinyin_candidates(head)
-        if empty(head)
-            let head = keyboard[0:0]
-        elseif !empty(candidates)
-            let head = get(candidates,0)
-        endif
-        let tail = strpart(keyboard, len(head))
-        let s:keyboard = head . " " . tail    " jsj sxx
-        return head
-    endif
-    return keyboard
-endfunction
-
 function! s:vimim_get_head(keyboard, partition)
     if a:partition < 0
         return a:keyboard
@@ -1448,7 +1424,9 @@ function! s:vimim_onekey_engine(keyboard)
         let results = s:cjk.one[keyboard]
     elseif empty(results)
         " [character]  sssss.. => sssss''' => s's's's's
-        let keyboard = s:vimim_hjkl_partition(keyboard)
+        if s:hjkl_m && s:hjkl_m % 2
+            let keyboard = keyboard . "'''"
+        endif
         " [quote] (2/2) quote_by_quote: wo'you'yi'ge'meng
         let keyboard = s:vimim_get_head_without_quote(keyboard)
         " [cjk] The cjk database works like swiss-army knife.
@@ -3980,7 +3958,6 @@ else
         if len(results)
             return s:vimim_popupmenu_list(results)
         elseif get(split(s:keyboard),1) =~ "'"  " ssss.. for cloud
-            let keyboard = s:vimim_hjkl_partition(keyboard)
             let keyboard = s:vimim_get_head_without_quote(keyboard)
         endif
     endif
