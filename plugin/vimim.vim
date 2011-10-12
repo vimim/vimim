@@ -59,7 +59,6 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
-        let g:vimim_punctuation = 3
         let g:vimim_cloud = 'google,sogou,qq,baidu'
         let g:vimim_map = 'tab,search,gi'
     endif
@@ -421,7 +420,6 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_toggle_list"] = 0
     let s:rc["g:vimim_mycloud"] = 0
     call s:vimim_set_global_default()
-    let s:chinese_punctuation = 1
     if isdirectory(s:vimim_plugin)
         let s:plugin = s:vimim_plugin
     endif
@@ -429,8 +427,9 @@ function! s:vimim_initialize_global()
         let s:plugin .= "/"
     endif
     let s:chinese_mode = 'onekey'
+    let s:toggle_punctuation = 1
+    let s:toggle_im = 0
     let s:onekey = 0
-    let s:im_toggle = 0
     let s:download = {}
     let s:download.english = "vimim.txt"
     let s:download.cjk     = "vimim.cjk.txt"
@@ -700,7 +699,7 @@ endfunction
 
 function! s:vimim_statusline()
     let input_mode  = get(split(s:vimim_chinese_input_mode,','),0)
-    let punctuation = s:chinese_punctuation ? 'fullwidth' : 'halfwidth'
+    let punctuation = s:toggle_punctuation ? 'fullwidth' : 'halfwidth'
     let punctuation = s:vimim_chinese(punctuation)
     let statusline  = s:vimim_chinese('chinese')
     let statusline .= s:vimim_chinese(input_mode)
@@ -736,9 +735,9 @@ endfunction
 function! s:vimim_square_bracket(key)
     let key = a:key
     if pumvisible()
-        let _     = key=="]" ? 0          : -1
         let left  = key=="]" ? "\<Left>"  : ""
         let right = key=="]" ? "\<Right>" : ""
+        let _ = key=="]" ? 0 : -1
         let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
         let key = '\<C-Y>' . left . bs . right
     endif
@@ -750,13 +749,7 @@ function! g:vimim_bracket(offset)
     let range = col(".") - 1 - s:starts.column
     let repeat_times = range / s:multibyte + a:offset
     if repeat_times && line(".") == s:starts.row
-        if a:offset  " omni bslash for seamless
-            let right  = repeat("\<Right>", repeat_times-1)
-            let left   = repeat("\<Left>",  repeat_times-1)
-            let cursor = left . "\<Left>\<Delete>" . right
-        else
-            let cursor = repeat("\<Left>\<Delete>", repeat_times)
-        endif
+        let cursor = repeat("\<Left>\<Delete>", repeat_times)
     elseif repeat_times < 1
         let cursor = strpart(getline("."), s:starts.column, s:multibyte)
     endif
@@ -786,35 +779,42 @@ let s:VimIM += [" ====  punctuations     ==== {{{"]
 function! s:vimim_dictionary_punctuations()
     let s:space = '　'
     let s:colon = '：'
-    let s:evils = {}
-    let s:punctuations = {}
+    let s:evils = {}         " exception if it is passed around
+    let s:all_evils = {}     " onekey uses all punctuations
+    let s:punctuations = {}  " chinese mode uses minimum by default
     if s:vimim_punctuation < 1
         return
-    else
-        let s:punctuations[','] = '，'
-        let s:punctuations['.'] = '。'
-        let s:punctuations['+'] = "＋"
-        let s:punctuations['-'] = '－'
-        let s:punctuations['~'] = '～'
-        let s:punctuations['^'] = "……"
-        let s:punctuations['_'] = "——"
     endif
+    let evil_punctuations = {}
+    let evil_punctuations['\'] = "、"
+    let evil_punctuations["'"] = "‘’"
+    let evil_punctuations['"'] = "“”"
+    let mini_punctuations = {}
+    let single = "  , .  +  -  ~  ^    _    "
+    let double = " ， 。 ＋ － ～ …… —— "
+    let singles = split(single)
+    let doubles = split(double)
+    for i in range(len(singles))
+        let mini_punctuations[get(singles,i)] = get(doubles,i)
+    endfor
+    let most_punctuations = {}
+    let single = "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
+    let double = "＃＆％￥！＝；？﹡〖〗（）《》【】：　"
+    let singles = split(single)
+    let doubles = split(double, '\zs')
+    for i in range(len(singles))
+        let most_punctuations[get(singles,i)] = get(doubles,i)
+    endfor
+    call extend(s:punctuations, mini_punctuations)
     if s:vimim_punctuation > 1
-        let single = '# & % $ ! = ; ? * { } ( ) < > [ ] : @ '
-        let double = '＃＆％￥！＝；？﹡〖〗（）《》【】：　'
-        let singles = split(single)
-        let doubles = split(double, '\zs')
-        for i in range(len(singles))
-            let s:punctuations[get(singles,i)] = get(doubles,i)
-        endfor
+        call extend(s:punctuations, most_punctuations)
     endif
     if s:vimim_punctuation > 2
-        let s:evils['|'] = "、"
-        let s:evils["'"] = "‘’"
-        let s:evils['"'] = "“”"
+        let s:evils = copy(evil_punctuations)
     endif
-    let s:all_evils = copy(s:punctuations)
-    call extend(s:all_evils, s:evils)
+    call extend(s:all_evils, mini_punctuations)
+    call extend(s:all_evils, most_punctuations)
+    call extend(s:all_evils, evil_punctuations)
 endfunction
 
 function! s:vimim_punctuations_maps()
@@ -823,9 +823,9 @@ function! s:vimim_punctuations_maps()
         \ ' <SID>vimim_chinese_punctuation_map("'._.'")'
     endfor
     if !empty(s:evils)
-        inoremap   '   <C-R>=<SID>vimim_get_single_quote()<CR>
-        inoremap   "   <C-R>=<SID>vimim_get_double_quote()<CR>
-        inoremap <Bar> <C-R>=pumvisible() ? "\<lt>C-Y>、" : "、"<CR>
+        inoremap    '     <C-R>=<SID>vimim_get_single_quote()<CR>
+        inoremap    "     <C-R>=<SID>vimim_get_double_quote()<CR>
+        inoremap <Bslash> <C-R>=pumvisible() ? "\<lt>C-Y>、" : "、"<CR>
     else
         for _ in keys(s:evils)
             sil!exe 'iunmap '. _
@@ -835,7 +835,7 @@ endfunction
 
 function! <SID>vimim_chinese_punctuation_map(key)
     let key = a:key
-    if s:chinese_punctuation
+    if s:toggle_punctuation
         let one_before = getline(".")[col(".")-2]
         if one_before !~ '\w' || pumvisible()
             if has_key(s:punctuations, a:key)
@@ -1057,7 +1057,7 @@ function! <SID>vimim_page_map(key)
                 let key = g:vimim()
             endif
         endif
-    elseif empty(s:onekey) && s:chinese_punctuation && key =~ "[][=-]"
+    elseif empty(s:onekey) && s:toggle_punctuation && key =~ "[][=-]"
         let key = <SID>vimim_chinese_punctuation_map(key)
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -1190,16 +1190,6 @@ function! <SID>vimim_backspace()
         else
             let key .= '\<C-R>=g:vimim_title()\<CR>'
         endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_backslash()
-    " (1) [insert] disable omni window
-    " (2) [omni]   insert Chinese and remove Space before
-    let key = '\\'
-    if pumvisible()
-        let key = '\<C-Y>\<C-R>=g:vimim_bracket('.1.')\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1437,7 +1427,6 @@ let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
 function! <SID>vimim_rotation()
-                let g:g8=s:ui.frontends
     if len(s:ui.frontends) < 2 && empty(s:onekey)
         return <SID>ChineseMode()
     endif
@@ -1455,8 +1444,8 @@ function! <SID>vimim_rotation()
     if s:menuless
         let custom_frontends = custom_frontends[0:1]
     endif
-    let s:im_toggle += 1
-    let switch = s:im_toggle % len(custom_frontends)
+    let s:toggle_im += 1
+    let switch = s:toggle_im % len(custom_frontends)
     let frontends = get(custom_frontends, switch)
     if empty(frontends)
         return s:vimim_chinese_mode(0)
@@ -1488,7 +1477,7 @@ function! <SID>ChineseMode()
     if empty(s:ui.frontends)
         return ""
     else
-        let s:im_toggle = 1
+        let s:toggle_im = 1
         let frontends = get(s:ui.frontends, 0)
         let s:ui.root = get(frontends, 0)
         let s:ui.im   = get(frontends, 1)
@@ -1572,7 +1561,7 @@ function! s:vimim_get_custom_im_list()
 endfunction
 
 function! <SID>vimim_punctuation_toggle()
-    let s:chinese_punctuation = (s:chinese_punctuation+1) % 2
+    let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
     call s:vimim_set_statusline()
     call s:vimim_punctuations_maps()
     return ""
@@ -3813,7 +3802,6 @@ function! s:vimim_start()
     inoremap <expr> <CR>     <SID>vimim_enter()
     inoremap <expr> <Esc>    <SID>vimim_esc()
     inoremap <expr> <Space>  <SID>vimim_space()
-    inoremap <expr> <Bslash> <SID>vimim_backslash()
 endfunction
 
 function! s:vimim_stop()
@@ -3859,7 +3847,8 @@ function! s:vimim_restore_imap()
     let keys  = range(10)
     let keys += split('<Esc> <Space> <BS> <CR> <Bslash> <Bar>')
     let keys += s:valid_keys
-    let keys += keys(s:all_evils)
+    let keys += keys(s:evils)
+    let keys += keys(s:punctuations)
     for _ in keys
         if len(maparg(_, 'i'))
             sil!exe 'iunmap '. _
