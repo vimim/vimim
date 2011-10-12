@@ -3798,10 +3798,10 @@ function! s:vimim_start()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_common_maps()
-    inoremap <expr> <BS>     <SID>vimim_backspace()
-    inoremap <expr> <CR>     <SID>vimim_enter()
-    inoremap <expr> <Esc>    <SID>vimim_esc()
-    inoremap <expr> <Space>  <SID>vimim_space()
+    inoremap <expr> <Esc>   <SID>vimim_esc()
+    inoremap <expr> <Space> <SID>vimim_space()
+    inoremap <expr> <BS>    <SID>vimim_backspace()
+    inoremap <expr> <CR>    <SID>vimim_enter()
 endfunction
 
 function! s:vimim_stop()
@@ -3845,7 +3845,7 @@ endfunction
 function! s:vimim_restore_imap()
     highlight! link Cursor NONE
     let keys  = range(10)
-    let keys += split('<Esc> <Space> <BS> <CR> <Bslash> <Bar>')
+    let keys += split('<Esc> <Space> <BS> <CR>')
     let keys += s:valid_keys
     let keys += keys(s:evils)
     let keys += keys(s:punctuations)
