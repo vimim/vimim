@@ -256,7 +256,8 @@ function! s:vimim_egg_vimim()
     endif
     if len(s:ui.frontends)
         for [root, im] in s:ui.frontends
-            let ciku = database . s:vimim_chinese(root) . database
+            let mass = s:backend[root][im].name=~"bsddb" ? 'mass' : root
+            let ciku = database . s:vimim_chinese(mass) . database
             call add(eggs, ciku . s:backend[root][im].name)
         endfor
         let input = s:vimim_chinese('input') . s:colon
@@ -567,9 +568,9 @@ function! s:vimim_dictionary_statusline()
     endfor
     let single  = " pinyin fullwidth halfwidth english chinese purple"
     let single .= " plusplus quick wubihf wubi98 phonetic array30"
-    let single .= " revision date google baidu sogou qq "
-    let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰"
-    let double .= " 98   注音 行列 版本 日期 谷歌 百度 搜狗 ＱＱ"
+    let single .= " revision mass date google baidu sogou qq "
+    let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 98"
+    let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
     let singles = split(single)
     let doubles = split(double)
     for i in range(len(singles))
