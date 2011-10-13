@@ -286,19 +286,19 @@ function! s:vimim_get_head_without_quote(keyboard)
     if s:ui.has_dot || keyboard =~ '\d'
         return keyboard
     endif
-    if keyboard =~ '^\l\l\+' . "'''" . '$'  " hjkl_m sssss'''
-        " [shoupin] three trailing quote to control shoupin
+    if s:hjkl_m && s:hjkl_m % 2 || keyboard =~ '^\l\l\+'."'''".'$'
+        " [shoupin] hjkl_m or 3 tail quotes to control shoupin
+        "    hjkl_m || sssss..  =>  sssss'''  =>  s's's's's
         let keyboard = substitute(keyboard, "'", "", 'g')
         let keyboard = join(split(keyboard,'\zs'), "'")
     endif
     if keyboard =~ "'" && keyboard[-1:] != "'"
         " [quote] (1/2) quote_by_quote: wo'you'yi'ge'meng
         let keyboards = split(keyboard,"'")
-        let head = get(keyboards,0)
+        let keyboard = get(keyboards,0)
         let tail = join(keyboards[1:],"'")
         let tail = len(tail) == 1 ? "'" . tail : tail
-        let s:keyboard = head . " " . tail
-        return head
+        let s:keyboard = keyboard . " " . tail
     endif
     return keyboard
 endfunction
@@ -825,7 +825,7 @@ endfunction
 function! <SID>vimim_chinese_punctuation_map(key)
     let key = a:key
     if s:toggle_punctuation
-        if pumvisible() || s:vimim_one_before() !~ '\w'
+        if pumvisible() || s:vimim_byte_before() !~ '\w'
             if has_key(s:punctuations, a:key)
                 let key = s:punctuations[a:key]
             endif
@@ -906,18 +906,14 @@ function! s:vimim_onekey_digit_filter(results)
     " only use 1234567890 as filter in menuless
     " also use qwertyuiop as filter in omni popup
     let results = []
-    for items in a:results
-        let chinese = get(split(items),1)   " mali 马力
+    for chinese in a:results
         if !empty(s:vimim_check_if_digit_match_cjk(chinese))
             call add(results, chinese)
         endif
     endfor
     if empty(results)
         let s:hjkl_n = ""
-    elseif s:menuless && s:keyboard =~ "'"
-        if len(split(s:keyboard)) > 1
-            let s:keyboard = get(split(s:keyboard),1)
-        endif
+        return a:results
     endif
     return results
 endfunction
@@ -1133,7 +1129,7 @@ function! <SID>vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
-    elseif s:menuless || s:vimim_one_before() =~# s:valid_keyboard
+    elseif s:menuless || s:vimim_byte_before() =~# s:valid_keyboard
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -1210,15 +1206,15 @@ function! <SID>vimim_onekey(tab)
             endif
         elseif s:menuless
             let s:menuless = 0
-            if s:vimim_one_before() =~# s:valid_keyboard
+            if s:vimim_byte_before() =~# s:valid_keyboard
                 let onekey = g:vimim()
             endif
         else
             let s:menuless = empty(a:tab) ? 1 : a:tab
         endif
         call g:vimim_title()
-    elseif a:tab == 1 && ( empty(s:vimim_one_before())
-                             \|| s:vimim_one_before() =~ '\s' )
+    elseif a:tab == 1 && ( empty(s:vimim_byte_before())
+                             \|| s:vimim_byte_before() =~ '\s' )
         let onekey = '\t'
     else
         call s:vimim_super_reset()
@@ -1251,7 +1247,7 @@ function! s:vimim_onekey_action(space)
         endif
     endif
     let onekey = space
-    if s:vimim_one_before() =~# s:valid_keyboard
+    if s:vimim_byte_before() =~# s:valid_keyboard
         let onekey = g:vimim()
     elseif s:menuless
         let onekey = s:vimim_menuless_map(space)
@@ -1261,7 +1257,7 @@ endfunction
 
 function! s:vimim_onekey_evils()
     let onekey = ""
-    let one_before = s:vimim_one_before()
+    let one_before = s:vimim_byte_before()
     let two_before = getline(".")[col(".")-3]
     if getline(".")[col(".")-3 : col(".")-2] == ".."  " before_before
         " [game] dot dot => quotes => popup menu
@@ -1301,7 +1297,7 @@ function! g:vimim_onekey_dump()
     let saved_position = getpos(".")
     let keyboard = get(split(s:keyboard),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-    if s:vimim_one_before() =~ "'" || s:keyboard =~ '^vimim'
+    if s:vimim_byte_before() =~ "'" || s:keyboard =~ '^vimim'
         let space = ""  " no need to format if cloud
     endif
     for items in s:popup_list
@@ -1371,10 +1367,6 @@ function! s:vimim_onekey_engine(keyboard)
         endif
     endif
     if empty(results)
-        " [character]  sssss.. => sssss''' => s's's's's
-        if s:hjkl_m && s:hjkl_m % 2
-            let keyboard = keyboard . "'''"
-        endif
         " [quote] (2/2) quote_by_quote: wo'you'yi'ge'meng
         let keyboard = s:vimim_get_head_without_quote(keyboard)
         " [cjk] The cjk database works like swiss-army knife.
@@ -1388,7 +1380,7 @@ function! s:vimim_onekey_engine(keyboard)
     return results
 endfunction
 
-function! s:vimim_one_before()
+function! s:vimim_byte_before()
     return getline(".")[col(".")-2]
 endfunction
 
@@ -1539,7 +1531,7 @@ endfunction
 
 function! s:vimim_static_action(space)
     let space = a:space
-    if s:vimim_one_before() =~# s:valid_keyboard
+    if s:vimim_byte_before() =~# s:valid_keyboard
         let space = g:vimim()
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -1830,7 +1822,7 @@ endfunction
 
 function! s:vimim_char_before()
     let char_before = ""
-    if s:vimim_one_before() !~ '\s'
+    if s:vimim_byte_before() !~ '\s'
         let start = col(".") - 1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
         if char_before !~ '[^\x00-\xff]'
@@ -3888,8 +3880,8 @@ else
         let results = s:vimim_onekey_engine(keyboard)
         if len(results)
             return s:vimim_popupmenu_list(results)
-        elseif len(s:hjkl_n)     " mali in mali74
-            let keyboard = get(split(keyboard,'\d'),0)
+        elseif len(s:hjkl_n) && s:keyboard !~ "'"
+            let keyboard = get(split(keyboard,'\d'),0)  " mali74
         elseif get(split(s:keyboard),1) =~ "'"  " ssss.. for cloud
             let keyboard = s:vimim_get_head_without_quote(keyboard)
         endif
@@ -3954,26 +3946,23 @@ return []
 endif
 endfunction
 
-function! s:vimim_popupmenu_list(match_list)
-    let keyboards = split(s:keyboard)   " ma li => ['ma','li']
-    let keyboard = join(keyboards, "")
-    let head = get(keyboards,0)
-    let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
-    let lines = a:match_list
-    if empty(lines) || type(lines) != type([])
+function! s:vimim_popupmenu_list(lines)
+    if empty(a:lines) || type(a:lines) != type([])
         return []
-    elseif s:vimim_cjk() && len(s:hjkl_n)
-        let sexy_lines = s:vimim_onekey_digit_filter(lines)
-        let lines = empty(sexy_lines) ? lines : sexy_lines
+    endif
+    let s:match_list = a:lines
+    if s:vimim_cjk() && len(s:hjkl_n)
+        let s:match_list = s:vimim_onekey_digit_filter(a:lines)
     endif
     " [skin] no color seems the best color
-    let color = len(lines) < 2 && empty(tail) ? 0 : 1
+    let keyboards = split(s:keyboard)   " mmmm => ['m',"m'm'm"]
+    let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
+    let color = len(s:match_list) < 2 && empty(tail) ? 0 : 1
     let menu_in_one_row = s:vimim_skin(color)
     let label = 1
     let one_list = []
     let popup_list = []
-    let s:match_list = lines
-    for chinese in lines
+    for chinese in s:match_list
         let complete_items = {}
         if s:vimim_cjk() && s:hjkl__ && s:hjkl__%2
             let simplified_traditional = ""
@@ -4033,7 +4022,7 @@ function! s:vimim_popupmenu_list(match_list)
             let &pumheight = 1
             set completeopt=menu  " for direct insert
             let s:cursor_at_menuless = 0
-            let vimim = "VimIM" . s:space . '  ' .  keyboard . '  '
+            let vimim = "VimIM" .s:space.'  '.join(keyboards,"").'  '
             let &titlestring = vimim . join(one_list)
             call s:vimim_set_titlestring(1)
         elseif s:touch_me_not
@@ -4122,7 +4111,7 @@ function! g:vimim()
     if empty(s:pageup_pagedown)
         let s:keyboard = ""
     endif
-    if s:vimim_one_before() =~# s:valid_keyboard
+    if s:vimim_byte_before() =~# s:valid_keyboard
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>'
     else
         let s:has_pumvisible = 0
