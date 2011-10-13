@@ -3948,11 +3948,10 @@ endif
 endfunction
 
 function! s:vimim_popupmenu_list(lines)
+    let s:match_list = a:lines
     if empty(a:lines) || type(a:lines) != type([])
         return []
-    endif
-    let s:match_list = a:lines
-    if s:vimim_cjk() && len(s:hjkl_n)
+    elseif s:vimim_cjk() && len(s:hjkl_n)
         let s:match_list = s:vimim_onekey_digit_filter(a:lines)
     endif
     " [skin] no color seems the best color
@@ -4026,6 +4025,7 @@ function! s:vimim_popupmenu_list(lines)
             let vimim = "VimIM" .s:space.'  '.join(keyboards,"").'  '
             let &titlestring = vimim . join(one_list)
             call s:vimim_set_titlestring(1)
+            Debug s:match_list
         elseif s:touch_me_not
             let &titlestring = s:logo . s:space . s:today
         endif
