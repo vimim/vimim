@@ -824,8 +824,7 @@ endfunction
 function! <SID>vimim_chinese_punctuation_map(key)
     let key = a:key
     if s:toggle_punctuation
-        let one_before = getline(".")[col(".")-2]
-        if one_before !~ '\w' || pumvisible()
+        if pumvisible() || getline(".")[col(".")-2] !~ '\w'
             if has_key(s:punctuations, a:key)
                 let key = s:punctuations[a:key]
             endif
@@ -1140,11 +1139,10 @@ function! <SID>vimim_enter()
     " (1) single <Enter> after English => seamless
     " (2) otherwise, or double <Enter> => <Enter>
     let key = ""
-    let one_before = getline(".")[col(".")-2]
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
-    elseif s:menuless || one_before =~# s:valid_keyboard
+    elseif s:menuless || getline(".")[col(".")-2] =~# s:valid_keyboard
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -1252,7 +1250,6 @@ endfunction
 
 function! s:vimim_onekey_action(space)
     let space = a:space ? " " : ""
-    let one_before = getline(".")[col(".")-2]
     if s:seamless_positions == getpos(".")
         let s:smart_enter = 0
         return space  "  space is space after enter
@@ -1263,7 +1260,7 @@ function! s:vimim_onekey_action(space)
         endif
     endif
     let onekey = space
-    if one_before =~# s:valid_keyboard
+    if getline(".")[col(".")-2] =~# s:valid_keyboard
         let onekey = g:vimim()
     elseif s:menuless
         let onekey = s:vimim_menuless_map(space)
@@ -1552,8 +1549,7 @@ endfunction
 
 function! s:vimim_static_action(space)
     let space = a:space
-    let one_before = getline(".")[col(".")-2]
-    if one_before =~# s:valid_keyboard
+    if getline(".")[col(".")-2] =~# s:valid_keyboard
         let space = g:vimim()
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -1844,8 +1840,7 @@ endfunction
 
 function! s:vimim_char_before()
     let char_before = ""
-    let one_before = getline(".")[col(".")-2]
-    if one_before !~ '\s'
+    if getline(".")[col(".")-2] !~ '\s'
         let start = col(".") - 1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
         if char_before !~ '[^\x00-\xff]'
@@ -4135,8 +4130,7 @@ function! g:vimim()
     if empty(s:pageup_pagedown)
         let s:keyboard = ""
     endif
-    let one_before = getline(".")[col(".")-2]
-    if one_before =~# s:valid_keyboard
+    if getline(".")[col(".")-2] =~# s:valid_keyboard
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>'
     else
         let s:has_pumvisible = 0
