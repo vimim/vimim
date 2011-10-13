@@ -3058,7 +3058,7 @@ function! s:vimim_set_background_clouds()
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
         let s:backend.cloud[im] = s:vimim_one_backend_hash()
         let s:backend.cloud[im].root = s:ui.root
-        let s:backend.cloud[im].im = 0  " reserved for key
+        let s:backend.cloud[im].im = 0  " used for cloud key
         let s:backend.cloud[im].keycode = s:im_keycode[im]
         let s:backend.cloud[im].chinese = s:vimim_chinese(im)
         let s:backend.cloud[im].name = s:vimim_chinese(im)
@@ -3158,7 +3158,7 @@ endfunction
 
 function! s:vimim_get_cloud_sogou(keyboard)
     " http://web.pinyin.sogou.com/api/py?key=32&query=mxj
-    if empty(s:backend.cloud.sogou.im)
+    if empty(s:backend.cloud.sogou.im)  " cloud key
         let key_sogou = "http://web.pinyin.sogou.com/web_ime/patch.php"
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
         if empty(output) || output =~ '502 bad gateway'
@@ -3198,7 +3198,7 @@ endfunction
 function! s:vimim_get_cloud_qq(keyboard)
     " http://ime.qq.com/fcgi-bin/getword?key=32&q=mxj
     let url = 'http://ime.qq.com/fcgi-bin/'
-    if empty(s:backend.cloud.qq.im)
+    if empty(s:backend.cloud.qq.im)  " cloud key
         let key_qq = url . 'getkey'
         let output = s:vimim_get_from_http(key_qq, 'qq')
         if empty(output) || output =~ '502 bad gateway'
