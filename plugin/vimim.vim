@@ -4015,11 +4015,11 @@ function! s:vimim_popupmenu_list(lines)
         set completeopt=menuone   " for hjkl_n refresh
         let s:popup_list = popup_list
         if s:menuless && empty(s:touch_me_not)
-            let &pumheight = 1
             set completeopt=menu  " for direct insert
             let s:cursor_at_menuless = 0
             let vimim = "VimIM" .s:space.'  '.join(keyboards,"").'  '
             let &titlestring = vimim . join(one_list)
+            let &pumheight = 1
             call s:vimim_set_titlestring(1)
             Debug s:match_list
         elseif s:touch_me_not
