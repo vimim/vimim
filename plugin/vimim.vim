@@ -283,7 +283,7 @@ endfunction
 
 function! s:vimim_get_head_without_quote(keyboard)
     let keyboard = a:keyboard
-    if s:ui.has_dot || keyboard =~ '\d'
+    if s:ui.has_dot || keyboard =~ '\d' || s:ui.root == 'cloud'
         return keyboard
     endif
     if s:hjkl_m && s:hjkl_m % 2 || keyboard =~ '^\l\l\+'."'''".'$'
@@ -650,11 +650,12 @@ function! s:vimim_get_title()
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
     elseif has_key(s:im_keycode, s:ui.im)
-        let im_in_chinese = s:backend[s:ui.root][s:ui.im].chinese
-        if len(s:hjkl_n)
-            let im_in_chinese = s:vimim_chinese('4corner')
+        let im = s:backend[s:ui.root][s:ui.im].chinese
+        if s:menuless && len(s:cjk.filename)
+            let im = len(s:english.line) ? '*'      : ''
+            let im = len(s:hjkl_n)       ? s:hjkl_n : im
         endif
-        let statusline .= im_in_chinese
+        let statusline .= im
     endif
     let datafile = s:backend[s:ui.root][s:ui.im].name
     if s:ui.im =~ 'wubi'
@@ -664,14 +665,13 @@ function! s:vimim_get_title()
             endif
         endfor
     elseif s:ui.im == 'mycloud'
-        let __getname = s:backend.cloud.mycloud.directory
-        let statusline .= s:space . __getname
+        let statusline .= s:space . s:backend.cloud.mycloud.directory
     elseif s:ui.root == 'cloud'
-        let clouds = split(s:vimim_cloud,',')
-        let vimim_cloud = get(clouds, match(clouds, s:cloud_default))
         let cloud  = s:vimim_chinese(s:cloud_default)
         let cloud .= s:vimim_chinese('cloud')
         let statusline = s:space . cloud
+        let clouds = split(s:vimim_cloud,',')
+        let vimim_cloud = get(clouds, match(clouds, s:cloud_default))
         if vimim_cloud =~ 'wubi'          " g:vimim_cloud='qq.wubi'
             let statusline .= s:space . s:vimim_chinese('wubi')
         elseif vimim_cloud =~ 'shuangpin' " qq.shuangpin.ms => ms
@@ -1013,9 +1013,9 @@ function! g:vimim_title()
     if s:menuless && empty(s:touch_me_not)
         let titlestring .= s:space . s:today
     endif
-    if &term == 'screen'      " best efforts for gun screen
+    if &term == 'screen'     " best efforts for gun screen
         echo titlestring
-    else                      " if terminal can set window titles
+    else                     " if terminal can set window titles
         let &titlestring = titlestring       " [all GUI versions]
         :redraw
     endif
@@ -1064,7 +1064,7 @@ function! s:vimim_set_titlestring(cursor)
         let s:cursor_at_menuless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
         let title = keyboard .'  '. left . hightlight . right
-        let &titlestring = s:logo[:4] . s:vimim_get_title() .' '. title
+        let &titlestring = "VimIM" . s:vimim_get_title() .' '. title
     endif
 endfunction
 
@@ -2859,7 +2859,7 @@ function! s:vimim_get_from_datafile(keyboard)
     endif
     let oneline = get(lines, cursor)
     let results = split(oneline)[1:]
-    if !empty(s:english.line) || len(results) > 10
+    if len(s:english.line) || len(results) > 10
         return results
     endif
     if s:ui.im =~ 'pinyin'
@@ -3080,18 +3080,19 @@ function! s:vimim_check_http_executable()
     return http_exe
 endfunction
 
-function! s:vimim_get_cloud(keyboard, cloud)
-    let keyboard = a:keyboard[:0] == "'" ? a:keyboard[1:] : a:keyboard
-    if keyboard !~ s:valid_keyboard   " leading quote is evil
-    \|| empty(a:cloud) || match(s:vimim_cloud, a:cloud) < 0
+function! s:vimim_get_cloud(keyboard)
+    let keyboard = a:keyboard  " remove evil leading/trailing quote
+    let keyboard = keyboard[:0]  == "'" ? keyboard[1:]  : keyboard
+    let keyboard = keyboard[-1:] == "'" ? keyboard[:-2] : keyboard
+    if keyboard !~ s:valid_keyboard || empty(s:cloud_default) 
         return []
     endif
-    let get_cloud = "s:vimim_get_cloud_" . a:cloud . "(keyboard)"
+    let cloud = "s:vimim_get_cloud_" . s:cloud_default . "(keyboard)"
     let results = []
     try
-        let results = eval(get_cloud)
+        let results = eval(cloud)
     catch
-        sil!call s:vimim_debug('get_cloud', a:cloud, v:exception)
+        sil!call s:vimim_debug(s:cloud_default, v:exception)
     endtry
     if !empty(results) && s:keyboard !~ '\S\s\S'
         let s:keyboard = keyboard
@@ -3313,7 +3314,8 @@ function! s:vimim_get_cloud_all(keyboard)
     let results = []
     for cloud in split(s:rc["g:vimim_cloud"], ',')
         let start = localtime()
-        let outputs = s:vimim_get_cloud(a:keyboard, cloud)
+        let s:cloud_default = cloud
+        let outputs = s:vimim_get_cloud(a:keyboard)
         if len(results) > 1
             call add(results, s:space)
         endif
@@ -3638,17 +3640,17 @@ function! s:vimim_search_chinese_by_english(keyboard)
     let keyboard = tolower(a:keyboard)
     let results = []
     " 1/3 first try search from cloud/mycloud
-    if s:ui.im == 'mycloud'             " /search from mycloud
+    if s:ui.im == 'mycloud'     " /search from mycloud
         let results = s:vimim_get_mycloud(keyboard)
-    elseif s:ui.root == 'cloud'         " /search from cloud
-        let results = s:vimim_get_cloud(keyboard, s:cloud_default)
+    elseif s:ui.root == 'cloud' || keyboard[-1:] == "'"
+        let results = s:vimim_get_cloud(keyboard)
     endif
-    if !empty(results)
+    if len(results)
         return results
     endif
     " 2/3 search unicode or cjk /search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if empty(ddddd) && s:vimim_cjk()  " /m7712x3610j3111 /muuqwxeyqpjeqqq
+    if empty(ddddd) && s:vimim_cjk() " /m7712x3610j3111 /muuqwxeyqpjeqqq
         let keyboards = s:vimim_cjk_slash_search_block(keyboard)
         if len(keyboards)
             for keyboard in keyboards
@@ -3667,7 +3669,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     else
         let results = [nr2char(ddddd)]
     endif
-    if !empty(results)
+    if len(results)
         return results
     endif
     " 3/3 search datafile and english: /ma and /horse
@@ -3897,14 +3899,13 @@ else
         let s:keyboard = keyboard
     endif
     " [cloud] to make dream come true for multiple clouds
-    let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-    if s:ui.root == 'cloud' && empty(s:english.line)
-        let results = s:vimim_get_cloud(keyboard, s:cloud_default)
+    if s:ui.root == 'cloud' || keyboard[-1:] == "'"
+        let results = s:vimim_get_cloud(keyboard)
     endif
-    " [engine] try all local backend engines
+    " [engine] try all local backend datafiles or directory
     if empty(results)
         " [wubi] support auto insert on the 4th
-        if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
+        if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
             if s:chinese_mode =~ 'dynamic' && len(keyboard) > 4
                 let start = 4*((len(keyboard)-1)/4)
                 let keyboard = strpart(keyboard, start)
@@ -3915,7 +3916,7 @@ else
         let results = s:vimim_embedded_backend_engine(keyboard)
     endif
     " [english] English cannot be ignored!
-    if !empty(s:english.line)
+    if len(s:english.line)
         if s:keyboard !~ "'"  " english color
             let s:keyboard = keyboard
         endif
@@ -3925,9 +3926,9 @@ else
     if s:onekey && empty(results)
         if len(keyboard) > 1
             let shoupin = s:vimim_get_head_without_quote(keyboard."'''")
-            let results = s:vimim_cjk_match(shoupin)    " forced shoupin
-            if empty(results)                           " forced cloud
-                let results = s:vimim_get_cloud(keyboard, s:cloud_default)
+            let results = s:vimim_cjk_match(shoupin)   " forced shoupin
+            if empty(results)                          " forced cloud
+                let results = s:vimim_get_cloud(keyboard)
             endif
         else    " for onekey continuity: abcdefghijklmnopqrstuvwxyz..
             let i = keyboard == 'i' ? "我" : s:space
