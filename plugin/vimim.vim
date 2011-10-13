@@ -3827,17 +3827,19 @@ function! s:vimim_reset_after_insert()
 endfunction
 
 function! s:vimim_imap_off()
-    highlight! link Cursor NONE
     let keys  = range(10)
     let keys += split('<Esc> <Space> <BS> <CR> <C-H>')
-    let keys += s:valid_keys
     let keys += keys(s:evils)
     let keys += keys(s:punctuations)
+    if s:chinese_mode =~ 'dynamic'
+        let keys += s:valid_keys
+    endif
     for _ in keys
         if len(maparg(_, 'i'))
             sil!exe 'iunmap '. _
         endif
     endfor
+    highlight! link Cursor NONE
 endfunction
 
 " ============================================= }}}
