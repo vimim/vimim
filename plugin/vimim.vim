@@ -55,7 +55,8 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+:let g:vimim_mycloud = "py:127.0.0.1"
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -1905,7 +1906,7 @@ function! s:vimim_get_cjk_head(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:imode_pinyin && empty(s:english.line) 
+    elseif s:imode_pinyin && empty(s:english.line)
         " muuqwxeyqpjeqqq => m7712x3610j3111
         if  keyboard =~# '^\l' && len(keyboard)%5 < 1
         \&& match(s:sheng_mu, keyboard[0:0]) > -1
@@ -3082,7 +3083,7 @@ function! s:vimim_get_cloud(keyboard)
     let keyboard = a:keyboard  " remove evil leading/trailing quote
     let keyboard = keyboard[:0]  == "'" ? keyboard[1:]  : keyboard
     let keyboard = keyboard[-1:] == "'" ? keyboard[:-2] : keyboard
-    if keyboard !~ s:valid_keyboard || empty(s:cloud_default) 
+    if keyboard !~ s:valid_keyboard || empty(s:cloud_default)
         return []
     endif
     let cloud = "s:vimim_get_cloud_" . s:cloud_default . "(keyboard)"
@@ -3352,19 +3353,19 @@ function! s:vimim_set_backend_mycloud()
         let mycloud = s:vimim_check_mycloud_plugin_url()
     endif
     if !empty(mycloud)
-        let im = 'mycloud'
         let s:ui.root = 'cloud'
-        let s:ui.im = im
+        let s:ui.im = 'mycloud'
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-        let s:backend.cloud[im] = s:vimim_one_backend_hash()
-        let s:backend.cloud[im].root = s:ui.root
-        let s:backend.cloud[im].im = mycloud
-        let s:backend.cloud[im].name    = s:vimim_chinese(im)
-        let s:backend.cloud[im].chinese = s:vimim_chinese(im)
+        let s:backend.cloud.mycloud = s:vimim_one_backend_hash()
+        let s:backend.cloud.mycloud.root = s:ui.root
+        let s:backend.cloud.mycloud.im = mycloud
+        let s:backend.cloud.mycloud.name    = s:vimim_chinese(s:ui.im)
+        let s:backend.cloud.mycloud.chinese = s:vimim_chinese(s:ui.im)
         let ret = s:vimim_access_mycloud(mycloud, "__getkeychars")
-        let s:backend.cloud.[im].keycode = split(ret,"\t")[0]
+        let s:backend.cloud.mycloud.keycode = split(ret,"\t")[0]
         let ret = s:vimim_access_mycloud(mycloud, "__getname")
-        let s:backend.cloud.[im].directory = split(ret,"\t")[0]
+        let s:backend.cloud.mycloud.directory = split(ret,"\t")[0]
+        let g22=s:backend.cloud.mycloud.directory
     endif
 endfunction
 
