@@ -105,6 +105,7 @@ function! s:vimim_initialize_session()
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'directory':{}, 'datafile':{}, 'cloud':{} }
     let s:ui = { 'root':'', 'im':'', 'has_dot':0, 'frontends':[] }
+    let s:sheng_mu = "b p m f d t l n g k h j q x r z c s y w"
 endfunction
 
 function! s:vimim_one_backend_hash()
@@ -875,47 +876,38 @@ let s:VimIM += [" ====  hjkl             ==== {{{"]
 " =================================================
 
 function! s:vimim_cache()
-    if !empty(s:pageup_pagedown)
-        return s:vimim_pageup_pagedown()
-    elseif empty(s:onekey)
-        return []
-    endif
     let results = []
-    if s:vimim_cjk() && len(s:hjkl_n)
-        let results = s:vimim_onekey_menu_filter()
-    elseif s:touch_me_not && s:hjkl_h
-        let s:hjkl_h = 0
-        for line in s:match_list
-            let oneline = join(reverse(split(line,'\zs')),'')
-            call add(results, oneline)
-        endfor
-    elseif s:touch_me_not && s:hjkl_l
-       let s:hjkl_l = 0
-       let results = reverse(copy(s:match_list))
+    if !empty(s:pageup_pagedown)
+        let length = len(s:match_list)
+        let one_page = &pumheight < 6 ? 5 : 10
+        if length > one_page
+            let page = s:pageup_pagedown * one_page
+            let partition = page ? page : length+page
+            let B = s:match_list[partition :]
+            let A = s:match_list[: partition-1]
+            let results = B + A
+        endif
+    elseif s:onekey && s:touch_me_not
+        if s:hjkl_h
+            let s:hjkl_h = 0
+            for line in s:match_list
+                let oneline = join(reverse(split(line,'\zs')),'')
+                call add(results, oneline)
+            endfor
+        elseif s:hjkl_l
+            let s:hjkl_l = 0
+            let results = reverse(copy(s:match_list))
+        endif
     endif
     return results
 endfunction
 
-function! s:vimim_pageup_pagedown()
-    let match_list = s:match_list
-    let length = len(match_list)
-    let one_page = &pumheight < 6 ? 5 : 10
-    if length > one_page
-        let page = s:pageup_pagedown * one_page
-        let partition = page ? page : length+page
-        let B = match_list[partition :]
-        let A = match_list[: partition-1]
-        let match_list = B + A
-    endif
-    return match_list
-endfunction
-
-function! s:vimim_onekey_menu_filter()
+function! s:vimim_onekey_digit_filter(results)
     " only use 1234567890 as filter in menuless
     " also use qwertyuiop as filter in omni popup
     let results = []
-    for items in s:popup_list
-        let chinese = items.word
+    for items in a:results
+        let chinese = get(split(items),1)   " mali 马力
         if !empty(s:vimim_check_if_digit_match_cjk(chinese))
             call add(results, chinese)
         endif
@@ -931,9 +923,8 @@ function! s:vimim_onekey_menu_filter()
 endfunction
 
 function! s:vimim_check_if_digit_match_cjk(chinese)
-    " smart digital filter: 马力 7712 4002
-    "   (1) gi ma           马   => filter with   7712
-    "   (2) gi mali         马力 => filter with 7 4002
+    " (1) gi ma   马   => filter with   7712  <=>  mali 7 4
+    " (2) gi mali 马力 => filter with 7 4002  <=>  mali74
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
     if empty(len(s:hjkl_n)) || empty(chinese)
         return 0
@@ -1395,7 +1386,7 @@ function! s:vimim_onekey_engine(keyboard)
             "  zero tolerance for zero
         elseif has_key(s:cjk.one, head)
             let results = s:cjk.one[head]
-        else
+        elseif empty(s:hjkl_n)
             let results = s:vimim_cjk_match(head)
         endif
     endif
@@ -1908,7 +1899,15 @@ function! s:vimim_get_cjk_head(keyboard)
                 let head = s:vimim_get_head(keyboard, 4)
             endif
         elseif keyboard =~# '^\l\+\d\+\>'
-            let head = keyboard
+            let head = keyboard        "  ma7 ma77 ma771 ma7712
+            let digit = match(keyboard,'\d')
+            let alpha = keyboard[0 : digit-1]
+            let digit = keyboard[digit :]
+            let keyboards = s:vimim_get_pinyin_from_pinyin(alpha)
+            if len(keyboards)
+                let s:hjkl_n = digit   " 74 in mali74
+                return alpha
+            endif
         elseif keyboard =~# '^\l\+\d\+'
             " output is wo23 for input wo23you40yigemeng
             let partition = match(keyboard, '\d')
@@ -1922,7 +1921,7 @@ function! s:vimim_get_cjk_head(keyboard)
         endif
     elseif s:imode_pinyin " muuqwxeyqpjeqqq => m7712x3610j3111
         if  keyboard =~# '^\l' && len(keyboard)%5 < 1
-        \&& keyboard[0:0] !~ '[iuv]'
+        \&& match(s:sheng_mu, keyboard[0:0]) > -1
         \&& keyboard[1:4] !~ '[^pqwertyuio]'
             let llll = keyboard[1:4]
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
@@ -1962,14 +1961,13 @@ function! s:vimim_cjk_match(keyboard)
     let grep_frequency = '.*' . '\s\d\+$'
     let grep = ""
     if keyboard =~ '\d'
-        if keyboard =~# '^\l\l\+[1-5]\>' && empty(len(s:hjkl_n))
+        if keyboard =~# '^\l\l\+[1-4]\>' && empty(len(s:hjkl_n))
             " cjk pinyin with tone: huan2hai2 yi1
             let grep = keyboard . '[a-z ]'
         else
             let digit = ""
             if keyboard =~ '^\d\+' && keyboard !~ '[^0-9]'
-                " cjk free style digit input: 7 77 771 7712"
-                let digit = keyboard
+                let digit = keyboard   " free style digit: 7 77 771 7712
             elseif keyboard =~# '^\l\+\d\+'
                 " cjk free style input/search: ma7 ma77 ma771 ma7712
                 let digit = substitute(keyboard,'\a','','g')
@@ -1982,15 +1980,10 @@ function! s:vimim_cjk_match(keyboard)
                 let grep = s:cjk.filename =~ "cjkv" ? dddd : dddd.stroke5
                 let alpha = substitute(keyboard,'\d','','g')
                 if !empty(alpha)
-                    " search le or yue from le4yue4
-                    let grep .= '\(\l\+\d\)\=' . alpha
+                    let grep .= '\(\l\+\d\)\=' . alpha " le/yue: le4yue4
                 elseif len(keyboard) == 1
-                    " search l or y from le4yue4 music happy 426
-                    let grep .= grep_frequency
+                    let grep .= grep_frequency   " grep l/y: happy music
                 endif
-            endif
-            if len(keyboard) < 4 && len(string(digit))
-                let s:hjkl_n = digit
             endif
         endif
     else
@@ -2020,11 +2013,13 @@ function! s:vimim_cjk_match(keyboard)
             let line = match(s:cjk.lines, grep, line+1)
         endwhile
     endif
-    if len(results) && keyboard != 'u'
-        let results = sort(results, "s:vimim_sort_on_last")
-    endif
+    if len(results)
+        if keyboard != 'u'
+            let results = sort(results, "s:vimim_sort_on_last")
+        endif
         let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
         call map(results, filter)
+    endif
     return results
 endfunction
 
@@ -2288,8 +2283,7 @@ function! s:vimim_create_quanpin_table()
             let table[key] = key
         endif
     endfor
-    let sheng_mu = "b p m f d t l n g k h j q x zh ch sh r z c s y w"
-    for shengmu in split(sheng_mu)
+    for shengmu in split(s:sheng_mu) + split("zh ch sh")
         let table[shengmu] = shengmu
     endfor
     return table
@@ -2476,8 +2470,7 @@ endfunction
 function! s:vimim_shuangpin_generic()
     " generate the default value of shuangpin table
     let shengmu_list = {}
-    let sheng_mu = "b p m f d t l n g k h j q x r z c s y w"
-    for shengmu in split(sheng_mu)
+    for shengmu in split(s:sheng_mu)
         let shengmu_list[shengmu] = shengmu
     endfor
     let shengmu_list["'"] = "o"
@@ -3901,6 +3894,8 @@ else
         let results = s:vimim_onekey_engine(keyboard)
         if len(results)
             return s:vimim_popupmenu_list(results)
+        elseif len(s:hjkl_n)     " mali in mali74
+            let keyboard = get(split(keyboard,'\d'),0)
         elseif get(split(s:keyboard),1) =~ "'"  " ssss.. for cloud
             let keyboard = s:vimim_get_head_without_quote(keyboard)
         endif
@@ -3978,6 +3973,10 @@ function! s:vimim_popupmenu_list(match_list)
         if len(head) == 1 && s:vimim_cjk() && !has_key(s:cjk.one,head)
             let s:cjk.one[head] = lines
         endif
+    endif
+    " [filter] digital filter: mali 74
+    if s:vimim_cjk() && len(s:hjkl_n)
+        let lines = s:vimim_onekey_digit_filter(lines)
     endif
     " [skin] no color seems the best color
     let color = len(lines) < 2 && empty(tail) ? 0 : 1
