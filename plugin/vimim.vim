@@ -3037,10 +3037,6 @@ function! s:vimim_set_background_clouds()
     let s:http_exe = ""
     let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
     let s:cloud_default = get(cloud_defaults,0)
-    let s:cloud_keys = {}
-    for cloud in cloud_defaults
-        let s:cloud_keys[cloud] = 0
-    endfor
     let clouds = split(s:vimim_cloud,',')
     for cloud in clouds
         let cloud = get(split(cloud,'[.]'),0)
@@ -3062,7 +3058,7 @@ function! s:vimim_set_background_clouds()
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
         let s:backend.cloud[im] = s:vimim_one_backend_hash()
         let s:backend.cloud[im].root = s:ui.root
-        let s:backend.cloud[im].im = im
+        let s:backend.cloud[im].im = 0  " reserved for key
         let s:backend.cloud[im].keycode = s:im_keycode[im]
         let s:backend.cloud[im].chinese = s:vimim_chinese(im)
         let s:backend.cloud[im].name = s:vimim_chinese(im)
@@ -3162,16 +3158,16 @@ endfunction
 
 function! s:vimim_get_cloud_sogou(keyboard)
     " http://web.pinyin.sogou.com/api/py?key=32&query=mxj
-    if empty(s:cloud_keys.sogou)
+    if empty(s:backend.cloud.sogou.im)
         let key_sogou = "http://web.pinyin.sogou.com/web_ime/patch.php"
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
         if empty(output) || output =~ '502 bad gateway'
             return []
         endif
-        let s:cloud_keys.sogou = get(split(output,'"'),1)
+        let s:backend.cloud.sogou.im = get(split(output,'"'),1)
     endif
     let input  = 'http://web.pinyin.sogou.com/api/py'
-    let input .= '?key=' . s:cloud_keys.sogou
+    let input .= '?key=' . s:backend.cloud.sogou.im
     let input .= '&query=' . a:keyboard
     let output = s:vimim_get_from_http(input, 'sogou')
     if empty(output) || output =~ '502 bad gateway'
@@ -3202,15 +3198,15 @@ endfunction
 function! s:vimim_get_cloud_qq(keyboard)
     " http://ime.qq.com/fcgi-bin/getword?key=32&q=mxj
     let url = 'http://ime.qq.com/fcgi-bin/'
-    if empty(s:cloud_keys.qq)
+    if empty(s:backend.cloud.qq.im)
         let key_qq = url . 'getkey'
         let output = s:vimim_get_from_http(key_qq, 'qq')
         if empty(output) || output =~ '502 bad gateway'
             return []
         endif
-        let s:cloud_keys.qq = get(split(output,'"'),3)
+        let s:backend.cloud.qq.im = get(split(output,'"'),3)
     endif
-    if len(s:cloud_keys.qq) != 32
+    if len(s:backend.cloud.qq.im) != 32
         return []
     endif
     let input  = url
@@ -3221,7 +3217,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     else
         let input .= 'getword'
     endif
-    let input .= '?key=' . s:cloud_keys.qq
+    let input .= '?key=' . s:backend.cloud.qq.im
     if vimim_cloud =~ 'fanti'
         let input .= '&jf=1'
     endif
@@ -3817,11 +3813,11 @@ function! s:vimim_reset_before_omni()
 endfunction
 
 function! s:vimim_reset_after_insert()
-    let s:hjkl_n = ""   "  reset for nothing
-    let s:hjkl_h = 0    " ctrl-h for jsjsxx
-    let s:hjkl_l = 0    " toggle label length
-    let s:hjkl_m = 0    " toggle cjjp/c'j'j'p
-    let s:hjkl__ = 0    " toggle simplified/traditional
+    let s:hjkl_n = ""   "   reset for nothing
+    let s:hjkl_h = 0    "  ctrl-h for jsjsxx
+    let s:hjkl_l = 0    "  toggle label length
+    let s:hjkl_m = 0    "  toggle cjjp/c'j'j'p
+    let s:hjkl__ = 0    "  toggle simplified/traditional
     let s:match_list = []
     let s:pageup_pagedown = 0
 endfunction
@@ -3831,9 +3827,7 @@ function! s:vimim_imap_off()
     let keys += split('<Esc> <Space> <BS> <CR> <C-H>')
     let keys += keys(s:evils)
     let keys += keys(s:punctuations)
-    if s:chinese_mode =~ 'dynamic'
-        let keys += s:valid_keys
-    endif
+    let keys += s:valid_keys
     for _ in keys
         if len(maparg(_, 'i'))
             sil!exe 'iunmap '. _
