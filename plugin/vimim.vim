@@ -2936,14 +2936,12 @@ function! s:vimim_set_directory(im, dir)
     let s:ui.root = "directory"
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-    if empty(s:backend.directory)
-        let s:backend.directory[im] = s:vimim_one_backend_hash()
-        let s:backend.directory[im].root = s:ui.root
-        let s:backend.directory[im].name = a:dir
-        let s:backend.directory[im].im = im
-        let s:backend.directory[im].keycode = s:im_keycode[im]
-        let s:backend.directory[im].chinese = s:vimim_chinese(im)
-    endif
+    let s:backend.directory[im] = s:vimim_one_backend_hash()
+    let s:backend.directory[im].root = s:ui.root
+    let s:backend.directory[im].name = a:dir
+    let s:backend.directory[im].im = im
+    let s:backend.directory[im].keycode = s:im_keycode[im]
+    let s:backend.directory[im].chinese = s:vimim_chinese(im)
 endfunction
 
 function! s:vimim_more_pinyin_directory(keyboard, dir)
@@ -3347,43 +3345,27 @@ function! s:vimim_set_backend_mycloud()
     let s:mycloud_mode = 0
     let s:mycloud_host = "localhost"
     let s:mycloud_port = 10007
-    if len(s:vimim_mycloud) < 3
-        return
+    let mycloud = 0
+    if empty(s:vimim_mycloud)
+        let mycloud = s:vimim_check_mycloud_plugin_libcall()
+    else
+        let mycloud = s:vimim_check_mycloud_plugin_url()
     endif
-    let im = 'mycloud'
-    let s:backend.cloud[im] = s:vimim_one_backend_hash()
-    let cloud_default = s:vimim_check_mycloud_availability()
-    if !empty(cloud_default)
+    if !empty(mycloud)
+        let im = 'mycloud'
         let s:ui.root = 'cloud'
         let s:ui.im = im
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
+        let s:backend.cloud[im] = s:vimim_one_backend_hash()
         let s:backend.cloud[im].root = s:ui.root
-        let s:backend.cloud[im].im = cloud_default
+        let s:backend.cloud[im].im = mycloud
         let s:backend.cloud[im].name    = s:vimim_chinese(im)
         let s:backend.cloud[im].chinese = s:vimim_chinese(im)
+        let ret = s:vimim_access_mycloud(mycloud, "__getkeychars")
+        let s:backend.cloud.[im].keycode = split(ret,"\t")[0]
+        let ret = s:vimim_access_mycloud(mycloud, "__getname")
+        let s:backend.cloud.[im].directory = split(ret,"\t")[0]
     endif
-endfunction
-
-function! s:vimim_check_mycloud_availability()
-    let cloud = 0
-    if empty(s:vimim_mycloud)
-        let cloud = s:vimim_check_mycloud_plugin_libcall()
-    else
-        let cloud = s:vimim_check_mycloud_plugin_url()
-    endif
-    if empty(cloud)
-        return 0
-    endif
-    let ret = s:vimim_access_mycloud(cloud, "__getkeychars")
-    let keycode = split(ret, "\t")[0]
-    if empty(keycode)
-        return 0
-    endif
-    let ret = s:vimim_access_mycloud(cloud, "__getname")
-    let directory = split(ret, "\t")[0]
-    let s:backend.cloud.mycloud.directory = directory
-    let s:backend.cloud.mycloud.keycode = keycode
-    return cloud
 endfunction
 
 function! s:vimim_access_mycloud(cloud, cmd)
