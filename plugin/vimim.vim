@@ -173,8 +173,8 @@ function! s:vimim_set_keycode()
     let s:valid_keyboard  = copy(keycode)
     let s:valid_keys = split(keycode_string, '\zs')
     let s:imode_pinyin = 0
-    if s:ui.im =~ 'pinyin' || s:ui.root == 'cloud'
-    \|| s:vimim_cjk() || s:vimim_shuangpin == 'abc'
+    if s:ui.im =~ 'pinyin'  || s:ui.root == 'cloud'
+    \|| len(s:cjk.filename) || s:vimim_shuangpin == 'abc'
         let s:imode_pinyin = 1
     endif
 endfunction
@@ -243,7 +243,7 @@ function! s:vimim_egg_vimim()
     call add(eggs, encoding . &encoding . s:space . &fileencodings)
     call add(eggs, s:vimim_chinese('env') . s:colon . v:lc_time)
     let database = s:vimim_chinese('database') . s:colon
-    if s:vimim_cjk()
+    if len(s:cjk.filename)
         let digit = s:cjk.filename =~ "cjkv" ? '5strokes' : '4corner'
         let digit = s:vimim_chinese(digit)
         call add(eggs, database . digit . s:colon . s:cjk.filename)
@@ -312,7 +312,7 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard == "''"
         let char_before = s:vimim_char_before()
         if empty(char_before)
-            if s:vimim_cjk()             " 214 standard unicode index
+            if s:vimim_cjk()    " 214 standard unicode index
                 return s:vimim_cjk_match('u')
             else
                 let char_before = '一'
@@ -754,7 +754,7 @@ function! s:vimim_get_labeling(label)
     if s:onekey && a:label < 11
         let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
         let labeling = empty(labeling) ? '10' : labeling . label2
-        if s:vimim_cjk() && empty(s:hjkl_l)
+        if len(s:cjk.filename) && empty(s:hjkl_l)
             let labeling = label2
         endif
     endif
@@ -918,36 +918,6 @@ function! s:vimim_onekey_digit_filter(results)
     return results
 endfunction
 
-function! s:vimim_check_if_digit_match_cjk(chinese)
-    " (1) gi ma   马   => filter with   7712  <=>  mali 7 4
-    " (2) gi mali 马力 => filter with 7 4002  <=>  mali74
-    let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
-    if empty(len(s:hjkl_n)) || empty(chinese)
-        return 0
-    endif
-    let digit_head = ""
-    let digit_tail = ""
-    for cjk in split(chinese, '\zs')
-        let grep = "^" . cjk
-        let line = match(s:cjk.lines, grep)
-        if line < 0
-            continue
-        else
-            let values = split(get(s:cjk.lines, line))
-            let dddd = s:cjk.filename =~ "cjkv" ? 2 : 1
-            let digit = get(values, dddd)
-            let digit_head .= digit[:0]
-            let digit_tail  = digit[1:]
-        endif
-    endfor
-    let number = digit_head . digit_tail
-    let pattern = "^" . s:hjkl_n
-    if match(number, pattern) < 0
-        return 0
-    endif
-    return 1
-endfunction
-
 function! s:vimim_get_head(keyboard, partition)
     if a:partition < 0
         return a:keyboard
@@ -990,7 +960,7 @@ function! <SID>vimim_label_map(key)
         let down = repeat("\<Down>", n)
         let s:has_pumvisible = 1
         if s:onekey && a:key =~ '\d'
-            if s:vimim_cjk()
+            if len(s:cjk.filename)
                 let s:hjkl_n .= a:key
             else
                 let key = down . '\<C-Y>'
@@ -1063,7 +1033,7 @@ function! s:vimim_menuless_map(key)
     elseif !empty(s:vimim_char_before()) || s:keyboard =~ "'"
         let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
         let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
-        if s:vimim_cjk()
+        if len(s:cjk.filename)
             let s:hjkl_n .= digit   " 1234567890 for menuless filter
         else
             if a:key =~ '[02-9]'    "  234567890 for menuless selection
@@ -1317,7 +1287,7 @@ endfunction
 
 function! s:vimim_onekey_hjkl_maps()
     let onekey_list = split("h j k l m n / ? ;")
-    if s:vimim_cjk()
+    if len(s:cjk.filename)
         let onekey_list += s:qwer + ['s']
     endif
     for _ in onekey_list
@@ -1771,25 +1741,6 @@ function! s:vimim_get_unicode_ddddd(keyboard)
     return ddddd
 endfunction
 
-function! s:vimim_cjk_extra_text(chinese)
-    let ddddd = char2nr(a:chinese)
-    let xxxx  = printf('u%04x',ddddd)
-    let unicode = ddddd . s:space . xxxx
-    if s:vimim_cjk()
-        let grep = "^" . a:chinese
-        let line = match(s:cjk.lines, grep, 0)
-        if line < 0
-            return unicode
-        endif
-        let values  = split(get(s:cjk.lines, line))
-        let dddd    = s:cjk.filename =~ "cjkv" ? 2 : 1
-        let digit   = get(values, dddd)
-        let pinyin  = get(values,3) . " " . join(values[4:-2])
-        let unicode = digit . s:space . xxxx . s:space . pinyin
-    endif
-    return unicode
-endfunction
-
 function! s:vimim_unicode_to_utf8(xxxx)
     " u808f => 32911 => e8828f
     let ddddd = str2nr(a:xxxx, 16)
@@ -1866,9 +1817,58 @@ function! s:vimim_cjk()
     return 1
 endfunction
 
+function! s:vimim_check_if_digit_match_cjk(chinese)
+    " (1) gi ma   马   => filter with   7712  <=>  mali 7 4
+    " (2) gi mali 马力 => filter with 7 4002  <=>  mali74
+    let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
+    if empty(len(s:hjkl_n)) || empty(chinese)
+        return 0
+    endif
+    let digit_head = ""
+    let digit_tail = ""
+    for cjk in split(chinese, '\zs')
+        let grep = "^" . cjk
+        let line = match(s:cjk.lines, grep)
+        if line < 0
+            continue
+        else
+            let values = split(get(s:cjk.lines, line))
+            let dddd = s:cjk.filename =~ "cjkv" ? 2 : 1
+            let digit = get(values, dddd)
+            let digit_head .= digit[:0]
+            let digit_tail  = digit[1:]
+        endif
+    endfor
+    let number = digit_head . digit_tail
+    let pattern = "^" . s:hjkl_n
+    if match(number, pattern) < 0
+        return 0
+    endif
+    return 1
+endfunction
+
+function! s:vimim_cjk_extra_text(chinese)
+    let ddddd = char2nr(a:chinese)
+    let xxxx  = printf('u%04x',ddddd)
+    let unicode = ddddd . s:space . xxxx
+    if s:vimim_cjk()
+        let grep = "^" . a:chinese
+        let line = match(s:cjk.lines, grep, 0)
+        if line < 0
+            return unicode
+        endif
+        let values  = split(get(s:cjk.lines, line))
+        let dddd    = s:cjk.filename =~ "cjkv" ? 2 : 1
+        let digit   = get(values, dddd)
+        let pinyin  = get(values,3) . " " . join(values[4:-2])
+        let unicode = digit . s:space . xxxx . s:space . pinyin
+    endif
+    return unicode
+endfunction
+
 function! s:vimim_get_cjk_head(keyboard)
     let keyboard = a:keyboard
-    if empty(s:vimim_cjk()) || keyboard =~ "'"
+    if empty(s:cjk.filename) || keyboard =~ "'"
         return 0
     endif
     if keyboard =~# '^i' " 4corner_shortcut: iuuqwuqew => 77127132
@@ -4002,9 +4002,9 @@ function! s:vimim_popupmenu_list(lines)
         let onerow_label = label . "."
         if s:menuless
             let onerow_label = label2
-            if s:vimim_cjk()        " display english flag if menuless
+            if s:vimim_cjk()     " display english flag if menuless
                 let onerow_label = substitute(onerow_label,'\w','','g')
-            elseif label < 11   " 234567890 for menuless selection
+            elseif label < 11    " 234567890 for menuless selection
                 let onerow_label = label2[:-2]
             endif
         endif
