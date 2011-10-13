@@ -3201,13 +3201,11 @@ function! s:vimim_get_cloud_qq(keyboard)
     if empty(s:backend.cloud.qq.im)  " cloud key
         let key_qq = url . 'getkey'
         let output = s:vimim_get_from_http(key_qq, 'qq')
-        if empty(output) || output =~ '502 bad gateway'
+        let key_qq = get(split(output,'"'),3)
+        if len(key_qq) != 32
             return []
         endif
-        let s:backend.cloud.qq.im = get(split(output,'"'),3)
-    endif
-    if len(s:backend.cloud.qq.im) != 32
-        return []
+        let s:backend.cloud.qq.im = key_qq
     endif
     let input  = url
     let clouds = split(s:vimim_cloud,',')    "  qq.shuangpin.abc,google
