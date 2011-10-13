@@ -115,7 +115,7 @@ function! s:vimim_one_backend_hash()
     let backends.chinese = ''
     let backends.directory = ''
     let backends.lines = []
-    let backends.keycode = "[0-9a-z']"
+    let backends.keycode = "[0-9a-z]"
     return backends
 endfunction
 
@@ -727,9 +727,9 @@ endfunction
 function! s:vimim_square_bracket(key)
     let key = a:key
     if pumvisible()
-        let left  = key=="]" ? "\<Left>"  : ""
-        let right = key=="]" ? "\<Right>" : ""
-        let _ = key=="]" ? 0 : -1
+        let left  = key == "]" ? "\<Left>"  : ""
+        let right = key == "]" ? "\<Right>" : ""
+        let _ = key == "]" ? 0 : -1
         let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
         let key = '\<C-Y>' . left . bs . right
     endif
@@ -749,7 +749,7 @@ function! g:vimim_bracket(offset)
 endfunction
 
 function! s:vimim_get_labeling(label)
-    let labeling = a:label==10 ? "0" : a:label
+    let labeling = a:label == 10 ? "0" : a:label
     if s:onekey && a:label < 11
         let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
         let labeling = empty(labeling) ? '10' : labeling . label2
@@ -2322,11 +2322,8 @@ function! s:vimim_more_pinyin_candidates(keyboard)
 endfunction
 
 function! s:vimim_more_pinyin_datafile(keyboard, sentence)
-    if s:ui.im !~ 'pinyin'
-        return []  " for pinyin with valid keycodes only
-    endif
     let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
-    if empty(candidates)
+    if empty(candidates) || s:ui.im !~ 'pinyin'
         return []
     endif
     let results = []
@@ -2793,9 +2790,6 @@ let s:VimIM += [" ====  backend: file    ==== {{{"]
 " =================================================
 
 function! s:vimim_set_backend_embedded()
-    if len(s:vimim_mycloud) > 1
-        return
-    endif
     let im = "pinyin"
     " (1/3) scan directory database
     let dir = s:plugin . im
