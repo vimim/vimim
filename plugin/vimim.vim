@@ -1868,7 +1868,7 @@ endfunction
 
 function! s:vimim_get_cjk_head(keyboard)
     let keyboard = a:keyboard
-    if empty(s:vimim_cjk()) || !empty(s:english.line) || keyboard =~ "'"
+    if empty(s:vimim_cjk()) || keyboard =~ "'"
         return 0
     endif
     if keyboard =~# '^i' " 4corner_shortcut: iuuqwuqew => 77127132
@@ -1905,7 +1905,8 @@ function! s:vimim_get_cjk_head(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:imode_pinyin " muuqwxeyqpjeqqq => m7712x3610j3111
+    elseif s:imode_pinyin && empty(s:english.line) 
+        " muuqwxeyqpjeqqq => m7712x3610j3111
         if  keyboard =~# '^\l' && len(keyboard)%5 < 1
         \&& match(s:sheng_mu, keyboard[0:0]) > -1
         \&& keyboard[1:4] !~ '[^pqwertyuio]'
@@ -2126,7 +2127,7 @@ function! s:vimim_get_english(keyboard)
     " [english] congr => congratulation  haag => haagendazs
     let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
     if cursor < 0 && len(keyboard) > 3 && len(keyboards)
-        let grep = '^' . keyboard
+        let grep = '^' . get(split(keyboard,'\d'),0) " mxj7 => mxj
         let cursor = match(s:english.lines, grep)
     endif
     let oneline = ""
