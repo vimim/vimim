@@ -95,7 +95,6 @@ function! s:vimim_initialize_session()
     let s:shuangpin_chinese = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
-    let s:imode_pinyin = 0
     let s:abcd = split("'abcdvfgxz",'\zs')
     let s:qwer = split("pqwertyuio",'\zs')
     let s:az_list = map(range(97,122),"nr2char(".'v:val'.")")
@@ -244,11 +243,9 @@ function! s:vimim_egg_vimim()
     call add(eggs, s:vimim_chinese('env') . s:colon . v:lc_time)
     let database = s:vimim_chinese('database') . s:colon
     if s:vimim_cjk()
-        let ciku = s:vimim_chinese('4corner')
-        if s:cjk.filename =~ "cjkv"
-            let ciku = s:vimim_chinese('5strokes') . s:space
-        endif
-        call add(eggs, database . ciku . s:colon . s:cjk.filename)
+        let digit = s:cjk.filename =~ "cjkv" ? '5strokes' : '4corner'
+        let digit = s:vimim_chinese(digit)
+        call add(eggs, database . digit . s:colon . s:cjk.filename)
     endif
     if !empty(s:english.filename)
         let ciku = database . s:vimim_chinese('english') . database
@@ -314,10 +311,10 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard == "''"
         let char_before = s:vimim_char_before()
         if empty(char_before)
-            if empty(s:vimim_cjk())
-                let char_before = '一'
-            else " 214 standard unicode index
+            if s:vimim_cjk()             " 214 standard unicode index
                 return s:vimim_cjk_match('u')
+            else
+                let char_before = '一'
             endif
         endif
         let ddddd = char2nr(char_before)
@@ -546,11 +543,11 @@ function! s:vimim_dictionary_statusline()
     let s:title.4corner    = "四角号码 四角號碼"
     let s:title.abc        = "智能双打 智能雙打"
     let s:title.mycloud    = "自己的云 自己的雲"
+    let s:title.5strokes   = "五笔画　 五筆畫　"
     let s:title.boshiamy   = "呒虾米   嘸蝦米"
     let s:title.wubi2000   = "新世纪   新世紀"
     let s:title.taijima    = "太极码   太極碼"
     let s:title.nature     = "自然码   自然碼"
-    let s:title.5strokes   = "五笔画   五筆畫"
     let s:title.menuless   = "无菜单   無菜單"
     let single  = " computer directory datafile database option  env "
     let single .= " encoding input     static   dynamic  erbi    wubi"
@@ -885,7 +882,7 @@ function! s:vimim_cache()
         return []
     endif
     let results = []
-    if len(s:hjkl_n) && s:vimim_cjk()
+    if s:vimim_cjk() && len(s:hjkl_n)
         let results = s:vimim_onekey_menu_filter()
     elseif s:touch_me_not && s:hjkl_h
         let s:hjkl_h = 0
@@ -951,7 +948,7 @@ function! s:vimim_check_if_digit_match_cjk(chinese)
             continue
         else
             let values = split(get(s:cjk.lines, line))
-            let dddd = s:cjk.filename=~"cjkv" ? 2 : 1
+            let dddd = s:cjk.filename =~ "cjkv" ? 2 : 1
             let digit = get(values, dddd)
             let digit_head .= digit[:0]
             let digit_tail  = digit[1:]
@@ -1080,12 +1077,12 @@ function! s:vimim_menuless_map(key)
     elseif !empty(s:vimim_char_before()) || s:keyboard =~ "'"
         let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
         let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
-        if empty(s:vimim_cjk())  " 1 for refreshing
-            if a:key =~ '[02-9]' " 234567890 for menuless selection
+        if s:vimim_cjk()
+            let s:hjkl_n .= digit   " 1234567890 for menuless filter
+        else
+            if a:key =~ '[02-9]'    "  234567890 for menuless selection
                 let key = repeat('\<C-N>', cursor)
             endif
-        else                     " 1234567890 for menuless filter
-            let s:hjkl_n .= digit
         endif
         call s:vimim_set_titlestring(cursor)
     else
@@ -1807,7 +1804,7 @@ function! s:vimim_cjk_extra_text(chinese)
             return unicode
         endif
         let values  = split(get(s:cjk.lines, line))
-        let dddd    = s:cjk.filename=~"cjkv" ? 2 : 1
+        let dddd    = s:cjk.filename =~ "cjkv" ? 2 : 1
         let digit   = get(values, dddd)
         let pinyin  = get(values,3) . " " . join(values[4:-2])
         let unicode = digit . s:space . xxxx . s:space . pinyin
@@ -1983,7 +1980,7 @@ function! s:vimim_cjk_match(keyboard)
                 let space = '\d\{' . string(4-len(digit)) . '}'
                 let space = len(digit)==4 ? "" : space
                 let dddd = '\s' . digit . space . '\s'
-                let grep = s:cjk.filename=~"cjkv" ? dddd : dddd.stroke5
+                let grep = s:cjk.filename =~ "cjkv" ? dddd : dddd.stroke5
                 let alpha = substitute(keyboard,'\d','','g')
                 if !empty(alpha)
                     " search le or yue from le4yue4
@@ -3681,8 +3678,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     endif
     " 2/3 search unicode or cjk /search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if empty(ddddd) && s:vimim_cjk()
-        " /search cjk /m7712x3610j3111 /muuqwxeyqpjeqqq
+    if empty(ddddd) && s:vimim_cjk()  " /m7712x3610j3111 /muuqwxeyqpjeqqq
         let keyboards = s:vimim_cjk_slash_search_block(keyboard)
         if len(keyboards)
             for keyboard in keyboards
@@ -3957,8 +3953,8 @@ else
     " [the last resort] try both cjk and cloud
     if s:onekey && empty(results)
         if len(keyboard) > 1
-            let keyboard = s:vimim_get_head_without_quote(keyboard."'''")
-            let results = s:vimim_cjk_match(keyboard)   " forced shoupin
+            let shoupin = s:vimim_get_head_without_quote(keyboard."'''")
+            let results = s:vimim_cjk_match(shoupin)    " forced shoupin
             if empty(results)                           " forced cloud
                 let results = s:vimim_get_cloud(keyboard, s:cloud_default)
             endif
@@ -4036,7 +4032,7 @@ function! s:vimim_popupmenu_list(match_list)
         let onerow_label = label . "."
         if s:menuless
             let onerow_label = label2
-            if s:vimim_cjk() " display english flag if menuless 4corner
+            if s:vimim_cjk()        " display english flag if menuless
                 let onerow_label = substitute(onerow_label,'\w','','g')
             elseif label < 11   " 234567890 for menuless selection
                 let onerow_label = label2[:-2]
