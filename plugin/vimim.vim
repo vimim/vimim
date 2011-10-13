@@ -1370,10 +1370,7 @@ function! s:vimim_onekey_engine(keyboard)
             let results = s:vimim_imode_number(keyboard)
         endif
     endif
-    if len(keyboard) < 2 && has_key(s:cjk.one, keyboard)
-        " [cache] abcdefghijklmnopqrstuvwxyz
-        let results = s:cjk.one[keyboard]
-    elseif empty(results)
+    if empty(results)
         " [character]  sssss.. => sssss''' => s's's's's
         if s:hjkl_m && s:hjkl_m % 2
             let keyboard = keyboard . "'''"
@@ -1384,8 +1381,6 @@ function! s:vimim_onekey_engine(keyboard)
         let head = s:vimim_get_cjk_head(keyboard)
         if empty(head)
             "  zero tolerance for zero
-        elseif has_key(s:cjk.one, head)
-            let results = s:cjk.one[head]
         elseif empty(s:hjkl_n)
             let results = s:vimim_cjk_match(head)
         endif
@@ -1861,7 +1856,6 @@ function! s:vimim_scan_datafile_cjk()
     let s:cjk = {}
     let s:cjk.filename = ""
     let s:cjk.lines = []
-    let s:cjk.one = {}
     let datafile = s:vimim_check_filereadable(s:download.cjk)
     if empty(datafile)  " for 5 strokes instead of 4 corner
         let datafile = s:vimim_check_filereadable("vimim.cjkv.txt")
@@ -3968,15 +3962,9 @@ function! s:vimim_popupmenu_list(match_list)
     let lines = a:match_list
     if empty(lines) || type(lines) != type([])
         return []
-    else
-        let s:match_list = lines
-        if len(head) == 1 && s:vimim_cjk() && !has_key(s:cjk.one,head)
-            let s:cjk.one[head] = lines
-        endif
-    endif
-    " [filter] digital filter: mali 74
-    if s:vimim_cjk() && len(s:hjkl_n)
-        let lines = s:vimim_onekey_digit_filter(lines)
+    elseif s:vimim_cjk() && len(s:hjkl_n)
+        let sexy_lines = s:vimim_onekey_digit_filter(lines)
+        let lines = empty(sexy_lines) ? lines : sexy_lines
     endif
     " [skin] no color seems the best color
     let color = len(lines) < 2 && empty(tail) ? 0 : 1
@@ -3984,6 +3972,7 @@ function! s:vimim_popupmenu_list(match_list)
     let label = 1
     let one_list = []
     let popup_list = []
+    let s:match_list = lines
     for chinese in lines
         let complete_items = {}
         if s:vimim_cjk() && s:hjkl__ && s:hjkl__%2
