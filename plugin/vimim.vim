@@ -306,7 +306,7 @@ endfunction
 function! s:vimim_get_hjkl_game(keyboard)
     let keyboard = a:keyboard
     let results = []
-    let poem = s:vimim_check_filereadable(keyboard)
+    let poem = s:vimim_filereadable(keyboard)
     if keyboard == "'''''"
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
     elseif keyboard == "''"
@@ -1350,10 +1350,6 @@ function! s:vimim_onekey_engine(keyboard)
     return results
 endfunction
 
-function! s:vimim_byte_before()
-    return getline(".")[col(".")-2]
-endfunction
-
 " ============================================= }}}
 let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
@@ -1785,6 +1781,10 @@ function! s:vimim_char_before()
     return char_before
 endfunction
 
+function! s:vimim_byte_before()
+    return getline(".")[col(".")-2]
+endfunction
+
 function! s:vimim_rot13(keyboard)
     let a = "12345abcdefghijklmABCDEFGHIJKLM"
     let z = "98760nopqrstuvwxyzNOPQRSTUVWXYZ"
@@ -1799,9 +1799,9 @@ function! s:vimim_scan_datafile_cjk()
     let s:cjk = {}
     let s:cjk.filename = ""
     let s:cjk.lines = []
-    let datafile = s:vimim_check_filereadable(s:download.cjk)
+    let datafile = s:vimim_filereadable(s:download.cjk)
     if empty(datafile)  " for 5 strokes instead of 4 corner
-        let datafile = s:vimim_check_filereadable("vimim.cjkv.txt")
+        let datafile = s:vimim_filereadable("vimim.cjkv.txt")
     endif
     if !empty(datafile)
         let s:cjk.filename = datafile
@@ -2097,28 +2097,17 @@ let s:VimIM += [" ====  input: english   ==== {{{"]
 
 function! s:vimim_scan_datafile_english()
     let s:english = {}
-    let s:english.filename = ""
     let s:english.line = ""
     let s:english.lines = []
-    let datafile = s:vimim_check_filereadable(s:download.english)
-    if !empty(datafile)
-        let s:english.lines = s:vimim_readfile(datafile)
-        let s:english.filename = datafile
-    endif
-endfunction
-
-function! s:vimim_check_filereadable(file)
-    let datafile_in_full_path = s:plugin . a:file
-    if filereadable(datafile_in_full_path)
-        return datafile_in_full_path
-    endif
-    return 0
+    let s:english.filename = s:vimim_filereadable(s:download.english)
 endfunction
 
 function! s:vimim_get_english(keyboard)
     let keyboard = a:keyboard
-    if empty(s:english.filename) || empty(keyboard)
+    if empty(s:english.filename)
         return ""  " english: obama/now/version/ice/o2
+    elseif empty(s:english.lines)
+        let s:english.lines = s:vimim_readfile(s:english.filename)
     endif
     " [sql] select english from vimim.txt
     let grep = '^' . keyboard . '\s\+'
@@ -2140,6 +2129,14 @@ function! s:vimim_get_english(keyboard)
         endif
     endif
     return oneline
+endfunction
+
+function! s:vimim_filereadable(file)
+    let datafile_in_full_path = s:plugin . a:file
+    if filereadable(datafile_in_full_path)
+        return datafile_in_full_path
+    endif
+    return ""
 endfunction
 
 function! s:vimim_readfile(datafile)
@@ -2780,7 +2777,7 @@ function! s:vimim_set_backend_embedded()
     endif
     " (2/3) scan bsddb database as edw: enterprise data warehouse
     if has("python") " bsddb is from Python 2 only in 46,694,400 Bytes
-        let datafile = s:vimim_check_filereadable(s:download.bsddb)
+        let datafile = s:vimim_filereadable(s:download.bsddb)
         if !empty(datafile)
             return s:vimim_set_datafile(im, datafile)
         endif
@@ -3872,8 +3869,7 @@ else
     endif
     if empty(keyboard) || keyboard !~ s:valid_keyboard
         return []
-    else
-        " [english] first check if it is english or not
+    else   " [english] first check if it is english or not
         let s:english.line = s:vimim_get_english(keyboard)
     endif
     " [onekey] plays with nothing but onekey
