@@ -824,7 +824,7 @@ endfunction
 function! <SID>vimim_chinese_punctuation_map(key)
     let key = a:key
     if s:toggle_punctuation
-        if pumvisible() || getline(".")[col(".")-2] !~ '\w'
+        if pumvisible() || s:vimim_one_before() !~ '\w'
             if has_key(s:punctuations, a:key)
                 let key = s:punctuations[a:key]
             endif
@@ -1142,7 +1142,7 @@ function! <SID>vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
-    elseif s:menuless || getline(".")[col(".")-2] =~# s:valid_keyboard
+    elseif s:menuless || s:vimim_one_before() =~# s:valid_keyboard
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -1209,7 +1209,6 @@ function! <SID>vimim_onekey(tab)
     let onekey = ""
     let s:chinese_mode = 'onekey'
     let one_cursor = getline(".")[col(".")-1]
-    let one_before = getline(".")[col(".")-2]
     if s:onekey
         if pumvisible()
             if empty(&pumheight)
@@ -1220,14 +1219,15 @@ function! <SID>vimim_onekey(tab)
             endif
         elseif s:menuless
             let s:menuless = 0
-            if one_before =~# s:valid_keyboard
+            if s:vimim_one_before() =~# s:valid_keyboard
                 let onekey = g:vimim()
             endif
         else
             let s:menuless = empty(a:tab) ? 1 : a:tab
         endif
         call g:vimim_title()
-    elseif a:tab == 1 && (empty(one_before) || one_before=~'\s')
+    elseif a:tab == 1 && ( empty(s:vimim_one_before())
+                             \|| s:vimim_one_before() =~ '\s' )
         let onekey = '\t'
     else
         call s:vimim_super_reset()
@@ -1260,7 +1260,7 @@ function! s:vimim_onekey_action(space)
         endif
     endif
     let onekey = space
-    if getline(".")[col(".")-2] =~# s:valid_keyboard
+    if s:vimim_one_before() =~# s:valid_keyboard
         let onekey = g:vimim()
     elseif s:menuless
         let onekey = s:vimim_menuless_map(space)
@@ -1270,7 +1270,7 @@ endfunction
 
 function! s:vimim_onekey_evils()
     let onekey = ""
-    let one_before = getline(".")[col(".")-2]
+    let one_before = s:vimim_one_before()
     let two_before = getline(".")[col(".")-3]
     if getline(".")[col(".")-3 : col(".")-2] == ".."  " before_before
         " [game] dot dot => quotes => popup menu
@@ -1310,7 +1310,7 @@ function! g:vimim_onekey_dump()
     let saved_position = getpos(".")
     let keyboard = get(split(s:keyboard),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-    if getline(".")[col(".")-2] =~ "'" || s:keyboard =~ '^vimim'
+    if s:vimim_one_before() =~ "'" || s:keyboard =~ '^vimim'
         let space = ""  " no need to format if cloud
     endif
     for items in s:popup_list
@@ -1400,6 +1400,10 @@ function! s:vimim_onekey_engine(keyboard)
         endif
     endif
     return results
+endfunction
+
+function! s:vimim_one_before()
+    return getline(".")[col(".")-2]
 endfunction
 
 " ============================================= }}}
@@ -1549,7 +1553,7 @@ endfunction
 
 function! s:vimim_static_action(space)
     let space = a:space
-    if getline(".")[col(".")-2] =~# s:valid_keyboard
+    if s:vimim_one_before() =~# s:valid_keyboard
         let space = g:vimim()
     endif
     sil!exe 'sil!return "' . space . '"'
@@ -1840,7 +1844,7 @@ endfunction
 
 function! s:vimim_char_before()
     let char_before = ""
-    if getline(".")[col(".")-2] !~ '\s'
+    if s:vimim_one_before() !~ '\s'
         let start = col(".") - 1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
         if char_before !~ '[^\x00-\xff]'
@@ -4130,7 +4134,7 @@ function! g:vimim()
     if empty(s:pageup_pagedown)
         let s:keyboard = ""
     endif
-    if getline(".")[col(".")-2] =~# s:valid_keyboard
+    if s:vimim_one_before() =~# s:valid_keyboard
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>'
     else
         let s:has_pumvisible = 0
