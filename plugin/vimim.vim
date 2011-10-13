@@ -1011,7 +1011,7 @@ let s:VimIM += [" ====  mode: menuless   ==== {{{"]
 function! g:vimim_title()
     let titlestring = s:logo . s:vimim_get_title()
     if s:menuless && empty(s:touch_me_not)
-        let titlestring .= s:space . s:today
+        let titlestring .= s:today
     endif
     if &term == 'screen'     " best efforts for gun screen
         echo titlestring
@@ -4006,7 +4006,7 @@ function! s:vimim_popupmenu_list(lines)
             call s:vimim_set_titlestring(1)
             Debug s:match_list
         elseif s:touch_me_not
-            let &titlestring = s:logo . s:space . s:today
+            let &titlestring = s:logo . s:today
         endif
     elseif menu_in_one_row
         let popup_list = s:vimim_one_row(one_list[0:4], popup_list[0:4])
