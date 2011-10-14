@@ -907,7 +907,7 @@ function! s:vimim_onekey_digit_filter(results)
     " also use qwertyuiop as filter in omni popup
     let results = []
     for chinese in a:results
-        if !empty(s:vimim_check_if_digit_match_cjk(chinese))
+        if s:vimim_digit_for_cjk(chinese,0)
             call add(results, chinese)
         endif
     endfor
@@ -1048,19 +1048,16 @@ function! s:vimim_menuless_map(key)
 endfunction
 
 function! s:vimim_set_titlestring(cursor)
-    let titlestring = substitute(&titlestring, '【\|】', ' ', 'g')
+    let titlestring = substitute(&titlestring, s:colon, ' ', 'g')
     if titlestring !~ '\s\+' . "'" . '\+\s\+'
         let titlestring = substitute(titlestring,"'",'','g')
     endif
     let words = split(titlestring)[1:]
     let cursor = s:cursor_at_menuless + a:cursor
     let hightlight = get(words, cursor)
-    let title = ""
     if !empty(hightlight) && len(words) > 1
-        let hightlight = substitute(hightlight, '\d\+', '', '')
-        let hightlight = '【' . hightlight . '】'
-        let left = join(words[1 : cursor-1])
-        let right = join(words[cursor+1 :])
+        let left = join(words[1 : cursor-1]) . s:colon
+        let right = s:colon . join(words[cursor+1 :])
         let s:cursor_at_menuless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
         let title = keyboard .'  '. left . hightlight . right
@@ -1817,13 +1814,10 @@ function! s:vimim_cjk()
     return 1
 endfunction
 
-function! s:vimim_check_if_digit_match_cjk(chinese)
+function! s:vimim_digit_for_cjk(chinese, info)
     " (1) gi ma   马   => filter with   7712  <=>  mali 7 4
     " (2) gi mali 马力 => filter with 7 4002  <=>  mali74
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
-    if empty(len(s:hjkl_n)) || empty(chinese)
-        return 0
-    endif
     let digit_head = ""
     let digit_tail = ""
     for cjk in split(chinese, '\zs')
@@ -1834,17 +1828,16 @@ function! s:vimim_check_if_digit_match_cjk(chinese)
         else
             let values = split(get(s:cjk.lines, line))
             let dddd = s:cjk.filename =~ "cjkv" ? 2 : 1
-            let digit = get(values, dddd)
-            let digit_head .= digit[:0]
-            let digit_tail  = digit[1:]
+            let digit_head .= get(values,dddd)[:0]
+            let digit_tail  = get(values,dddd)[1:]
         endif
     endfor
-    let number = digit_head . digit_tail
+    let digit = digit_head . digit_tail
     let pattern = "^" . s:hjkl_n
-    if match(number, pattern) < 0
+    if empty(a:info) && match(digit, pattern) < 0
         return 0
     endif
-    return 1
+    return digit
 endfunction
 
 function! s:vimim_cjk_extra_text(chinese)
@@ -3973,8 +3966,10 @@ function! s:vimim_popupmenu_list(lines)
         let onerow_label = label . "."
         if s:menuless
             let onerow_label = label2
-            if s:vimim_cjk()     " display english flag if menuless
-                let onerow_label = substitute(onerow_label,'\w','','g')
+            if s:vimim_cjk()     " display english flag plus 4corner
+                let star = substitute(onerow_label,'\w','','g')
+                let digit = s:vimim_digit_for_cjk(chinese,1)
+                let onerow_label = star . digit[:3]
             elseif label < 11    " 234567890 for menuless selection
                 let onerow_label = label2[:-2]
             endif
