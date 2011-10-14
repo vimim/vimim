@@ -55,8 +55,7 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-  :let g:vimim_mycloud = "py:127.0.0.1"
-    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
