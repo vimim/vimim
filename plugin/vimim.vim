@@ -538,15 +538,15 @@ let s:VimIM += [" ====  user interface   ==== {{{"]
 
 function! s:vimim_dictionary_statusline()
     let s:title = {}
-    let s:title.onekey     = "点石成金 點石成金"
-    let s:title.cjk        = "标准字库 標準字庫"
-    let s:title.abc        = "智能双打 智能雙打"
-    let s:title.mycloud    = "自己的云 自己的雲"
-    let s:title.windowless = "无菜单窗 無菜單窗"
-    let s:title.boshiamy   = "呒虾米   嘸蝦米"
-    let s:title.wubi2000   = "新世纪   新世紀"
-    let s:title.taijima    = "太极码   太極碼"
-    let s:title.nature     = "自然码   自然碼"
+    let s:title.windowless = "无菜单窗,無菜單窗"
+    let s:title.onekey     = "点石成金,點石成金"
+    let s:title.cjk        = "标准字库,標準字庫"
+    let s:title.abc        = "智能双打,智能雙打"
+    let s:title.mycloud    = "自己的云,自己的雲"
+    let s:title.boshiamy   = "呒虾米,嘸蝦米"
+    let s:title.wubi2000   = "新世纪,新世紀"
+    let s:title.taijima    = "太极码,太極碼"
+    let s:title.nature     = "自然码,自然碼"
     let single  = " computer directory datafile database option  env "
     let single .= " encoding input     static   dynamic  erbi    wubi"
     let single .= " hangul   xinhua    zhengma  cangjie  yong    wu  "
@@ -556,28 +556,20 @@ function! s:vimim_dictionary_statusline()
     let double .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
     let double .= " 仓颉,倉頡 永码,永碼 吴语,吳語 极点,極點 双拼,雙拼"
     let double .= " 云,雲     小鹤,小鶴 联网,聯網 微软,微軟 "
-    let singles = split(single)
-    let doubles = split(double)
-    for i in range(len(singles))
-        let s:title[get(singles,i)] = join(split(get(doubles,i),','))
-    endfor
+    call extend(s:title, s:vimim_single_double_hash(single, double))
     let single  = " pinyin fullwidth halfwidth english chinese purple"
     let single .= " plusplus quick wubihf wubi98 phonetic array30"
     let single .= " revision mass date google baidu sogou qq "
     let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 98"
     let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
-    let singles = split(single)
-    let doubles = split(double)
-    for i in range(len(singles))
-        let s:title[get(singles,i)] = get(doubles,i)
-    endfor
+    call extend(s:title, s:vimim_single_double_hash(single, double))
 endfunction
 
 function! s:vimim_chinese(key)
     let chinese = a:key
     if has_key(s:title, chinese)
-        let twins = split(s:title[chinese])
-        let chinese = get(twins,0)
+        let twins = split(s:title[chinese], ",")
+        let chinese = get(twins, 0)
         if len(twins) > 1 && s:vimim_map =~ 'ctrl_bslash'
             let chinese = get(twins,1)
         endif
@@ -775,22 +767,12 @@ function! s:vimim_dictionary_punctuations()
     let evil_punctuations['\'] = "、"
     let evil_punctuations["'"] = "‘’"
     let evil_punctuations['"'] = "“”"
-    let mini_punctuations = {}
     let single = "  , .  +  -  ~  ^    _    "
     let double = " ， 。 ＋ － ～ …… —— "
-    let singles = split(single)
-    let doubles = split(double)
-    for i in range(len(singles))
-        let mini_punctuations[get(singles,i)] = get(doubles,i)
-    endfor
-    let most_punctuations = {}
+    let mini_punctuations = s:vimim_single_double_hash(single, double)
     let single = "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
-    let double = "＃＆％￥！＝；？﹡〖〗（）《》【】：　"
-    let singles = split(single)
-    let doubles = split(double, '\zs')
-    for i in range(len(singles))
-        let most_punctuations[get(singles,i)] = get(doubles,i)
-    endfor
+    let double = "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
+    let most_punctuations = s:vimim_single_double_hash(single, double)
     call extend(s:punctuations, mini_punctuations)
     if s:vimim_punctuation > 1    " :let g:vimim_punctuation = 2
         call extend(s:punctuations, most_punctuations)
@@ -1636,22 +1618,12 @@ function! s:vimim_imode_today_now(keyboard)
     endif
     let results = split(time)
     let filter = "substitute(" . 'v:val' . ",'^0','','')"
-    let ecdict = {}
-    let ecdict.sunday    = "星期日"
-    let ecdict.monday    = "星期一"
-    let ecdict.tuesday   = "星期二"
-    let ecdict.wednesday = "星期三"
-    let ecdict.thursday  = "星期四"
-    let ecdict.friday    = "星期五"
-    let ecdict.saturday  = "星期六"
-    let ecdict.year      = "年"
-    let ecdict.month     = "月"
-    let ecdict.day       = "日"
-    let ecdict.hour      = "时"
-    let ecdict.minute    = "分"
-    let ecdict.second    = "秒"
+    let single  = " sunday monday tuesday wednesday thursday friday"
+    let single .= " saturday year month day hour minute second"
+    let double  = " 星期日 星期一 星期二 星期三 星期四 星期五"
+    let double .= " 星期六 年 月 日 时 分 秒"
     let chinese = copy(s:translators)
-    let chinese.dict = ecdict
+    let chinese.dict = s:vimim_single_double_hash(single, double)
     return chinese.translate(join(map(results, filter)))
 endfunction
 
@@ -1775,6 +1747,16 @@ endfunction
 
 function! s:vimim_byte_before()
     return getline(".")[col(".")-2]
+endfunction
+
+function! s:vimim_single_double_hash(single, double)
+    let hash = {}
+    let singles = split(a:single)
+    let doubles = split(a:double)
+    for i in range(len(singles))
+        let hash[get(singles,i)] = get(doubles,i)
+    endfor
+    return hash
 endfunction
 
 function! s:vimim_rot13(keyboard)
