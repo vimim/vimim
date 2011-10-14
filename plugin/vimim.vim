@@ -2944,6 +2944,31 @@ function! s:vimim_set_directory(im, dir)
     let s:backend.directory[im].chinese = s:vimim_chinese(im)
 endfunction
 
+function! s:vimim_sentence_directory(keyboard, directory)
+    let filename = a:directory . a:keyboard
+    if filereadable(filename)
+        return a:keyboard
+    endif
+    let max = len(a:keyboard)
+    while max > 1
+        let max -= 1
+        let head = strpart(a:keyboard, 0, max)
+        let filename = a:directory . head
+        " workaround: filereadable("/filename.") returns true
+        if filereadable(filename)
+            if head[-1:-1] != "."
+                break
+            endif
+        else
+            continue
+        endif
+    endwhile
+    if filereadable(filename)
+        return a:keyboard[0 : max-1]
+    endif
+    return ""
+endfunction
+
 function! s:vimim_more_pinyin_directory(keyboard, dir)
     let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
     if empty(candidates)
@@ -2961,41 +2986,8 @@ function! s:vimim_more_pinyin_directory(keyboard, dir)
     return results
 endfunction
 
-function! s:vimim_sentence_directory(keyboard)
-    let directory = s:backend.directory[s:ui.im].name
-    if empty(directory)
-        return ""
-    endif
-    let filename = directory . a:keyboard
-    if filereadable(filename)
-        return a:keyboard
-    endif
-    let candidates = s:vimim_more_pinyin_datafile(a:keyboard,1)
-    if !empty(candidates)
-        return get(candidates,0)
-    endif
-    let max = len(a:keyboard)
-    while max > 1
-        let max -= 1
-        let head = strpart(a:keyboard, 0, max)
-        let filename = directory . head
-        " workaround: filereadable("/filename.") returns true
-        if filereadable(filename)
-            if head[-1:-1] != "."
-                break
-            endif
-        else
-            continue
-        endif
-    endwhile
-    if filereadable(filename)
-        return a:keyboard[0 : max-1]
-    endif
-    return ""
-endfunction
-
 " ============================================= }}}
-let s:VimIM += [" ====  backend: cloud   ==== {{{"]
+let s:VimIM += [" ====  backend: clouds  ==== {{{"]
 " =================================================
 
 function! s:vimim_set_background_clouds()
@@ -4051,7 +4043,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
     let head = 0
     if s:ui.root =~# "directory"
         let dir = s:backend[s:ui.root][s:ui.im].name
-        let head = s:vimim_sentence_directory(keyboard)
+        let head = s:vimim_sentence_directory(keyboard, dir)
         let results = s:vimim_readfile(dir . head)
         if empty(s:english.line) && keyboard ==# head
         \&& len(results) && len(results) < 20
