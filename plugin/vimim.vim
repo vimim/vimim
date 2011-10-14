@@ -328,8 +328,7 @@ function! s:vimim_get_hjkl_game(keyboard)
                 let char_before = '一'
             endif
         endif
-        let ddddd = char2nr(char_before)
-        return s:vimim_unicode_list(ddddd)
+        return s:vimim_unicode_list(char2nr(char_before))
     elseif !empty(poem)
         " [hjkl] flirt any non-dot file in the hjkl directory
         let results = s:vimim_readfile(poem)
@@ -1326,17 +1325,15 @@ function! s:vimim_onekey_engine(keyboard)
     let keyboard = a:keyboard
     let results = s:vimim_get_hjkl_game(keyboard)
     if !empty(results)
-        return results " [egg] " only flirt with hjkl
+        return results
     endif
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if ddddd
         let results = s:vimim_unicode_list(ddddd)
-    elseif s:imode_pinyin && keyboard =~# '^i'
-        if keyboard ==# 'itoday' || keyboard ==# 'inow'
-            let results = [s:vimim_imode_today_now(keyboard)]
-        elseif keyboard =~ '\d'
-            let results = s:vimim_imode_number(keyboard)
-        endif
+    elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
+        let results = [s:vimim_imode_today_now(keyboard)]
+    elseif s:imode_pinyin && keyboard =~# '^i' && keyboard =~ '\d'
+        let results = s:vimim_imode_number(keyboard)
     endif
     if empty(results)
         " [quote] (2/2) quote_by_quote: wo'you'yi'ge'meng
@@ -1581,7 +1578,8 @@ function! s:vimim_dictionary_numbers()
     let s:quantifiers.w = "万位味碗窝晚微"
     let s:quantifiers.x = "席些项"
     let s:quantifiers.y = "月叶亿"
-    let s:quantifiers.z = "种只张株支枝盏座阵桩尊则站幢宗兆"
+    let s:quantifiers.z = "种只张株支总枝盏座阵桩尊则站幢宗兆"
+
 endfunction
 
 function! s:vimim_imode_loop()
@@ -1836,6 +1834,7 @@ function! s:vimim_cjk_extra_text(chinese)
     let xxxx  = printf('u%04x', ddddd)
     let unicode = ddddd . s:space . xxxx
     if s:vimim_cjk()
+        let unicode = repeat(s:space,3) . xxxx . s:space . ddddd
         let line = match(s:cjk.lines, "^" . a:chinese)
         if line > -1
             let values  = split(get(s:cjk.lines, line))
