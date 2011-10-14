@@ -1031,11 +1031,11 @@ function! s:vimim_menuless_map(key)
     let key = a:key    " workaround to detect if completion is active
     let digit = key == " " ? '' : key
     if s:pattern_not_found  " gi \backslash space space
-                            " gi ma space enter space
+        " make space smart  " gi ma space enter space
     elseif s:smart_enter    " gi ma space enter 77 ma space
         let s:smart_enter = 0
-        let s:seamless_positions = []
-    elseif !empty(s:vimim_char_before()) || s:keyboard =~ "'"
+        let s:seamless_positions = []       " gi wubihua space 8
+    elseif !empty(s:vimim_char_before()) || s:keyboard =~ " "
         let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
         let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
         if len(s:cjk.filename)
