@@ -346,7 +346,7 @@ function! s:vimim_get_hjkl_game(keyboard)
         elseif keyboard =~# 'u\d\d\d\d\d'
             " [cjk]  display highlighted multiple cjk
             let line = substitute(getreg('"'),'[\x00-\xff]','','g')
-            if !empty(line)
+            if len(line)
                 for chinese in split(line,'\zs')
                     let menu  = s:vimim_cjk_extra_text(chinese)
                     let menu .= repeat(" ", 38-len(menu))
@@ -1833,18 +1833,17 @@ endfunction
 
 function! s:vimim_cjk_extra_text(chinese)
     let ddddd = char2nr(a:chinese)
-    let xxxx  = printf('u%04x',ddddd)
+    let xxxx  = printf('u%04x', ddddd)
     let unicode = ddddd . s:space . xxxx
     if s:vimim_cjk()
-        let grep = "^" . a:chinese
-        let line = match(s:cjk.lines, grep, 0)
-        if line < 0
-            return unicode
+        let line = match(s:cjk.lines, "^" . a:chinese)
+        if line > -1
+            let values  = split(get(s:cjk.lines, line))
+            let digit   = get(values, 1)
+            let frequency = get(values, -1) !~ '\D' ? 1 : 0
+            let pinyin  = join(frequency ? values[2:-2] : values[2:])
+            let unicode = digit . s:space . xxxx . s:space . pinyin
         endif
-        let values  = split(get(s:cjk.lines, line))
-        let digit   = get(values,1)
-        let pinyin  = get(values,3) . " " . join(values[4:-2])
-        let unicode = digit . s:space . xxxx . s:space . pinyin
     endif
     return unicode
 endfunction
@@ -2051,11 +2050,10 @@ function! <SID>vimim_visual_ctrl6()
         let chinese = get(split(line,'\zs'),0)
         let s:seamless_positions = getpos("'<'")
         let ddddd = char2nr(chinese)
-        let uddddd = "gvc" . 'u'.ddddd . onekey
-        let dddd   = "gvc" .    line   . onekey
-        let key = ddddd=~'\d\d\d\d\d' ? uddddd : dddd
-    elseif match(lines,'\d')>-1 && join(lines) !~ '[^0-9[:blank:].]'
-        " highlighted digital block => count*average=summary
+        let key = ddddd =~ '\d\d\d\d\d' ? 'u'.ddddd : line
+        let key = "gvc" . key . onekey
+    elseif match(lines,'\d') > -1 && join(lines) !~ '[^0-9[:blank:].]'
+        " highlight digit block => count*average=summary
         let new_positions = getpos(".")
         let new_positions[1] = line("'>'")
         call setpos(".", new_positions)
