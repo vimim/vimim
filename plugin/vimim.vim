@@ -69,19 +69,16 @@ function! s:vimim_debug(...)
     sil!echo "\n::::::::::::::::::::::::"
     if len(a:000) > 1
         sil!echo join(a:000, " :: ")
+    elseif type(a:1) == type({})
+        for key in keys(a:1)
+            sil!echo key . '::' . a:1[key]
+        endfor
+    elseif type(a:1) == type([])
+        for line in a:1
+            sil!echo line
+        endfor
     else
-        let data = a:1
-        if type(data) == type({})
-            for key in keys(data)
-                sil!echo key . '::' . data[key]
-            endfor
-        elseif type(data) == type([])
-            for line in data
-                sil!echo line
-            endfor
-        else
-            sil!echo string(data)
-        endif
+        sil!echo string(a:1)
     endif
     sil!echo "::::::::::::::::::::::::\n"
 endfunction
