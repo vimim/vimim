@@ -24,8 +24,8 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
 "  Usage: vim i vimimhelp ctrl+6 ctrl+6
-"    (1) (vim normal mode)  gi      (for menuless chinese input)
-"    (2) (vim normal mode)  n       (for menuless slash search)
+"    (1) (vim normal mode)  gi      (for windowless chinese input)
+"    (2) (vim normal mode)  n       (for windowless slash search)
 "    (3) (vim insert mode)  ctrl+6  (for onekey omni popup)
 "    (4) (vim insert mode)  ctrl+\  (for dynamic chinese mode)
 
@@ -272,8 +272,8 @@ function! s:vimim_egg_vimim()
         if s:vimim_map =~ 'ctrl_bslash'
             let input .=  s:vimim_statusline() . s:space
         elseif s:vimim_map =~ 'gi'
-            let input .= s:vimim_chinese('onekey')   . s:space
-            let input .= s:vimim_chinese('menuless') . s:space
+            let input .= s:vimim_chinese('onekey')     . s:space
+            let input .= s:vimim_chinese('windowless') . s:space
         endif
         call add(eggs, input)
     endif
@@ -549,11 +549,11 @@ function! s:vimim_dictionary_statusline()
     let s:title.cjk        = "标准字库 標準字庫"
     let s:title.abc        = "智能双打 智能雙打"
     let s:title.mycloud    = "自己的云 自己的雲"
+    let s:title.windowless = "无菜单窗 無菜單窗"
     let s:title.boshiamy   = "呒虾米   嘸蝦米"
     let s:title.wubi2000   = "新世纪   新世紀"
     let s:title.taijima    = "太极码   太極碼"
     let s:title.nature     = "自然码   自然碼"
-    let s:title.menuless   = "无菜单   無菜單"
     let single  = " computer directory datafile database option  env "
     let single .= " encoding input     static   dynamic  erbi    wubi"
     let single .= " hangul   xinhua    zhengma  cangjie  yong    wu  "
@@ -655,7 +655,7 @@ function! s:vimim_get_title()
         return ""
     elseif has_key(s:im_keycode, s:ui.im)
         let im = s:backend[s:ui.root][s:ui.im].chinese
-        if s:menuless && len(s:cjk.filename)
+        if s:windowless && len(s:cjk.filename)
             let im = len(s:english.line) ? '*'      : ''
             let im = len(s:hjkl_n)       ? s:hjkl_n : im
         endif
@@ -907,8 +907,8 @@ function! s:vimim_cache()
 endfunction
 
 function! s:vimim_onekey_digit_filter(results)
-    " only use 1234567890 as filter in menuless
-    " also use qwertyuiop as filter in omni popup
+    " only use 1234567890 as filter for windowless
+    " also use qwertyuiop as filter for omni popup
     let results = []
     for chinese in a:results
         if s:vimim_digit_for_cjk(chinese,0)
@@ -974,7 +974,7 @@ function! <SID>vimim_label_map(key)
             let key = down . '\<C-Y>' . key
             sil!call s:vimim_reset_after_insert()
         endif
-    elseif s:menuless && key =~ '\d'
+    elseif s:windowless && key =~ '\d'
         if s:pattern_not_found
             let s:pattern_not_found = 0
         else
@@ -1009,12 +1009,12 @@ function! <SID>vimim_page_map(key)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  mode: menuless   ==== {{{"]
+let s:VimIM += [" ====  mode: windowless ==== {{{"]
 " =================================================
 
 function! g:vimim_title()
     let titlestring = s:logo . s:vimim_get_title()
-    if s:menuless && empty(s:touch_me_not)
+    if s:windowless && empty(s:touch_me_not)
         let titlestring .= s:today
     endif
     if &term == 'screen'     " best efforts for gun screen
@@ -1038,9 +1038,9 @@ function! s:vimim_menuless_map(key)
         let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
         let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
         if len(s:cjk.filename)
-            let s:hjkl_n .= digit   " 1234567890 for menuless filter
+            let s:hjkl_n .= digit   " 1234567890 for windowless filter
         else
-            if a:key =~ '[02-9]'    "  234567890 for menuless selection
+            if a:key =~ '[02-9]'    "  234567890 for windowless selection
                 let key = repeat('\<C-N>', cursor)
             endif
         endif
@@ -1100,7 +1100,7 @@ function! <SID>vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
-    elseif s:menuless || s:vimim_byte_before() =~# s:valid_keyboard
+    elseif s:windowless || s:vimim_byte_before() =~# s:valid_keyboard
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -1124,7 +1124,7 @@ function! <SID>vimim_backspace()
     if pumvisible()
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
-    if s:menuless
+    if s:windowless
         if s:smart_enter
             let s:smart_enter = "menuless_correction"
             let key  = '\<C-E>\<C-R>=g:vimim()\<CR>' . key
@@ -1160,10 +1160,10 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
 function! <SID>vimim_onekey(tab)
-    " (1) <OneKey> in insert mode   => start MidasTouch popup
-    " (2) <OneKey> in menuless mode => start MidasTouch popup
-    " (3) <OneKey> in omni window   => start menuless, if input
-    " (4) <OneKey> in omni window   => start print,    if hjkl
+    " (1) <OneKey> in insert mode     => start MidasTouch popup
+    " (2) <OneKey> in windowless mode => start MidasTouch popup
+    " (3) <OneKey> in omni window     => start windowless if input
+    " (4) <OneKey> in omni window     => start print if hjkl
     let onekey = ""
     let s:chinese_mode = 'onekey'
     let one_cursor = getline(".")[col(".")-1]
@@ -1172,16 +1172,16 @@ function! <SID>vimim_onekey(tab)
             if empty(&pumheight)
                 let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
             else
-                let s:menuless = empty(a:tab) ? 1 : a:tab
+                let s:windowless = empty(a:tab) ? 1 : a:tab
                 let onekey = '\<C-Y>'
             endif
-        elseif s:menuless
-            let s:menuless = 0
+        elseif s:windowless
+            let s:windowless = 0
             if s:vimim_byte_before() =~# s:valid_keyboard
                 let onekey = g:vimim()
             endif
         else
-            let s:menuless = empty(a:tab) ? 1 : a:tab
+            let s:windowless = empty(a:tab) ? 1 : a:tab
         endif
         call g:vimim_title()
     elseif a:tab == 1 && ( empty(s:vimim_byte_before())
@@ -1191,9 +1191,9 @@ function! <SID>vimim_onekey(tab)
         call s:vimim_super_reset()
         let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
         let s:onekey = 1
-        let s:menuless = a:tab
+        let s:windowless = a:tab
         sil!call s:vimim_start()
-        if s:menuless < 2
+        if s:windowless < 2
             let onekey = s:vimim_onekey_action(0)
         elseif col("$")-col(".") && col("$")-col(".") < one_cursor + 1
             let onekey = '\<Right>' " gi at the end of the cursor line
@@ -1220,7 +1220,7 @@ function! s:vimim_onekey_action(space)
     let onekey = space
     if s:vimim_byte_before() =~# s:valid_keyboard
         let onekey = g:vimim()
-    elseif s:menuless
+    elseif s:windowless
         let onekey = s:vimim_menuless_map(space)
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -1368,7 +1368,7 @@ function! <SID>vimim_rotation()
             endif
         endfor
     endfor
-    if s:menuless
+    if s:windowless
         let custom_frontends = custom_frontends[0:1]
     endif
     let s:toggle_im += 1
@@ -1381,13 +1381,13 @@ function! <SID>vimim_rotation()
         let s:ui.im   = get(frontends,1)
     endif
     if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
-        if s:menuless
+        if s:windowless
             let s:ui.im = s:cloud_default
         else
             let s:cloud_default = s:ui.im
         endif
     endif
-    if s:onekey || s:menuless
+    if s:onekey || s:windowless
         return g:vimim_title()
     else
         return s:vimim_chinese_mode(1)
@@ -1579,7 +1579,6 @@ function! s:vimim_dictionary_numbers()
     let s:quantifiers.x = "席些项"
     let s:quantifiers.y = "月叶亿"
     let s:quantifiers.z = "种只张株支总枝盏座阵桩尊则站幢宗兆"
-
 endfunction
 
 function! s:vimim_imode_loop()
@@ -2093,7 +2092,7 @@ function! s:vimim_get_english(keyboard)
     let oneline = ""
     if cursor > -1
         let oneline = get(s:english.lines, cursor)
-        if keyboard != get(split(oneline),0) " no surprise if menuless
+        if keyboard != get(split(oneline),0) " no surprise if windowless
             let pairs = split(oneline)       " haag haagendazs
             let oneline = join(pairs[1:] + pairs[:0])
             let oneline = keyboard . " " . oneline
@@ -3710,7 +3709,7 @@ endfunction
 function! s:vimim_reset_before_anything()
     let s:keyboard = ""
     let s:onekey = 0
-    let s:menuless = 0
+    let s:windowless = 0
     let s:smart_enter = 0
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
@@ -3795,7 +3794,7 @@ if a:start
     call s:vimim_set_keyboard_list(start_column, keyboard)
     return start_column
 else
-    " [menuless] gi mamahuhuhu space enter basckspace
+    " [windowless] gi mamahuhuhu space enter basckspace
     if s:smart_enter =~ "menuless_correction"
         return [s:space]
     endif
@@ -3942,13 +3941,13 @@ function! s:vimim_popupmenu_list(lines)
             let complete_items["menu"] = menu
         endif
         let onerow_label = label . "."
-        if s:menuless
+        if s:windowless
             let onerow_label = label2
             if s:vimim_cjk()     " display english flag plus 4corner
                 let star = substitute(onerow_label,'\w','','g')
                 let digit = s:vimim_digit_for_cjk(chinese,1)
                 let onerow_label = star . digit[:3]
-            elseif label < 11    " 234567890 for menuless selection
+            elseif label < 11    " 234567890 for windowless selection
                 let onerow_label = label2[:-2]
             endif
         endif
@@ -3962,7 +3961,7 @@ function! s:vimim_popupmenu_list(lines)
         call g:vimim_title()
         set completeopt=menuone   " for hjkl_n refresh
         let s:popup_list = popup_list
-        if s:menuless && empty(s:touch_me_not)
+        if s:windowless && empty(s:touch_me_not)
             set completeopt=menu  " for direct insert
             let s:cursor_at_menuless = 0
             let vimim = "VimIM" .s:space.'  '.join(keyboards,"").'  '
@@ -4066,7 +4065,7 @@ endfunction
 
 function! g:vimim_omni()
     let key = pumvisible() ? '\<C-P>\<Down>' : ""
-    let s:smart_enter = 0  " s:menuless: gi ma enter li space 3
+    let s:smart_enter = 0  " s:windowless: gi ma enter li space 3
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
