@@ -4045,12 +4045,12 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, '默认热键 　n 　 （Vim正常模式）无菜单窗中文搜索')
     call add(eggs, '默认热键 　gi　 （Vim正常模式）无菜单窗中文输入')
     let eggs += [''] + s:vimim_egg_vimimrc() + ['']
-    call add(eggs, "官方网址：" . get(split(s:url),0))
-    call add(eggs, "最新程式：" . get(split(s:url),1))
-    call add(eggs, "最新主页：" . get(split(s:url),2))
-    call add(eggs, "错误报告：" . get(split(s:url),3))
-    call add(eggs, "新闻论坛：" . get(split(s:url),4))
-    return map(eggs, 'v:val . " "')
+    call add(eggs, "官方网址： " . get(split(s:url),0))
+    call add(eggs, "最新程式： " . get(split(s:url),1))
+    call add(eggs, "最新主页： " . get(split(s:url),2))
+    call add(eggs, "错误报告： " . get(split(s:url),3))
+    call add(eggs, "新闻论坛： " . get(split(s:url),4))
+    return map(eggs, 'v:val .  " "')
 endfunction
 
 function! s:vimim_map_plug_and_play()
