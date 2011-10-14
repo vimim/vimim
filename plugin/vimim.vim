@@ -55,7 +55,8 @@ let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+  :let g:vimim_mycloud = "py:127.0.0.1"
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         :call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
@@ -86,7 +87,7 @@ function! s:vimim_debug(...)
     sil!echo "::::::::::::::::::::::::\n"
 endfunction
 
-function! s:vimim_initialize_session()
+function! s:vimim_set_current_session()
     let s:logo = "VimIM　中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
     let s:cursor_at_menuless = 0
@@ -103,9 +104,20 @@ function! s:vimim_initialize_session()
     let s:starts = { 'row' : 0, 'column' : 1 }
     let s:pumheights = { 'current' : 10, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
-    let s:backend = { 'directory':{}, 'datafile':{}, 'cloud':{} }
+    let s:backend = { 'cloud':{}, 'datafile':{}, 'directory':{}  }
     let s:ui = { 'root':'', 'im':'', 'has_dot':0, 'frontends':[] }
     let s:sheng_mu = "b p m f d t l n g k h j q x r z c s y w"
+    let s:download = {}
+    let s:download.english = "vimim.txt"
+    let s:download.cjk     = "vimim.cjk.txt"
+    let s:download.bsddb   = "vimim.gbk.bsddb"
+    let s:cjk = {}
+    let s:cjk.lines = []
+    let s:cjk.filename = s:vimim_filereadable(s:download.cjk)
+    let s:english = {}
+    let s:english.lines = []
+    let s:english.line = ""
+    let s:english.filename = s:vimim_filereadable(s:download.english)
 endfunction
 
 function! s:vimim_one_backend_hash()
@@ -244,11 +256,10 @@ function! s:vimim_egg_vimim()
     call add(eggs, s:vimim_chinese('env') . s:colon . v:lc_time)
     let database = s:vimim_chinese('database') . s:colon
     if len(s:cjk.filename)
-        let digit = s:cjk.filename =~ "cjkv" ? '5strokes' : '4corner'
-        let digit = s:vimim_chinese(digit)
-        call add(eggs, database . digit . s:colon . s:cjk.filename)
+        let ciku = database . s:vimim_chinese('cjk') . s:colon
+        call add(eggs, ciku . s:cjk.filename)
     endif
-    if !empty(s:english.filename)
+    if len(s:english.filename)
         let ciku = database . s:vimim_chinese('english') . database
         call add(eggs, ciku . s:english.filename)
     endif
@@ -424,10 +435,6 @@ function! s:vimim_initialize_global()
     let s:chinese_mode = 'onekey'
     let s:toggle_punctuation = 1
     let s:toggle_im = 0
-    let s:download = {}
-    let s:download.english = "vimim.txt"
-    let s:download.cjk     = "vimim.cjk.txt"
-    let s:download.bsddb   = "vimim.gbk.bsddb"
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
 endfunction
@@ -541,10 +548,9 @@ let s:VimIM += [" ====  user interface   ==== {{{"]
 function! s:vimim_dictionary_statusline()
     let s:title = {}
     let s:title.onekey     = "点石成金 點石成金"
-    let s:title.4corner    = "四角号码 四角號碼"
+    let s:title.cjk        = "标准字库 標準字庫"
     let s:title.abc        = "智能双打 智能雙打"
     let s:title.mycloud    = "自己的云 自己的雲"
-    let s:title.5strokes   = "五笔画　 五筆畫　"
     let s:title.boshiamy   = "呒虾米   嘸蝦米"
     let s:title.wubi2000   = "新世纪   新世紀"
     let s:title.taijima    = "太极码   太極碼"
@@ -1792,19 +1798,6 @@ endfunction
 let s:VimIM += [" ====  input: cjk       ==== {{{"]
 " =================================================
 
-function! s:vimim_scan_datafile_cjk()
-    let s:cjk = {}
-    let s:cjk.filename = ""
-    let s:cjk.lines = []
-    let datafile = s:vimim_filereadable(s:download.cjk)
-    if empty(datafile)  " for 5 strokes instead of 4 corner
-        let datafile = s:vimim_filereadable("vimim.cjkv.txt")
-    endif
-    if !empty(datafile)
-        let s:cjk.filename = datafile
-    endif
-endfunction
-
 function! s:vimim_cjk()
     if empty(s:cjk.filename)
         return 0
@@ -1827,9 +1820,8 @@ function! s:vimim_digit_for_cjk(chinese, info)
             continue
         else
             let values = split(get(s:cjk.lines, line))
-            let dddd = s:cjk.filename =~ "cjkv" ? 2 : 1
-            let digit_head .= get(values,dddd)[:0]
-            let digit_tail  = get(values,dddd)[1:]
+            let digit_head .= get(values,1)[:0]
+            let digit_tail  = get(values,1)[1:]
         endif
     endfor
     let digit = digit_head . digit_tail
@@ -1851,8 +1843,7 @@ function! s:vimim_cjk_extra_text(chinese)
             return unicode
         endif
         let values  = split(get(s:cjk.lines, line))
-        let dddd    = s:cjk.filename =~ "cjkv" ? 2 : 1
-        let digit   = get(values, dddd)
+        let digit   = get(values,1)
         let pinyin  = get(values,3) . " " . join(values[4:-2])
         let unicode = digit . s:space . xxxx . s:space . pinyin
     endif
@@ -1953,16 +1944,14 @@ function! s:vimim_cjk_match(keyboard)
                 let digit = substitute(keyboard,'\a','','g')
             endif
             if !empty(digit)
-                let stroke5 = '\d\d\d\d\s'  " five strokes => li12345
                 let space = '\d\{' . string(4-len(digit)) . '}'
                 let space = len(digit)==4 ? "" : space
-                let dddd = '\s' . digit . space . '\s'
-                let grep = s:cjk.filename =~ "cjkv" ? dddd : dddd.stroke5
+                let grep = '\s\+' . digit . space . '\s'
                 let alpha = substitute(keyboard,'\d','','g')
-                if !empty(alpha)
-                    let grep .= '\(\l\+\d\)\=' . alpha " le/yue: le4yue4
+                if len(alpha)
+                    let grep .= '\(\l\+\d\)\=' . alpha " le|yue: le4yue4
                 elseif len(keyboard) == 1
-                    let grep .= grep_frequency   " grep l/y: happy music
+                    let grep .= grep_frequency   " grep l|y: happy music
                 endif
             endif
         endif
@@ -2087,13 +2076,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  input: english   ==== {{{"]
 " =================================================
-
-function! s:vimim_scan_datafile_english()
-    let s:english = {}
-    let s:english.line = ""
-    let s:english.lines = []
-    let s:english.filename = s:vimim_filereadable(s:download.english)
-endfunction
 
 function! s:vimim_get_english(keyboard)
     let keyboard = a:keyboard
@@ -3010,8 +2992,8 @@ function! s:vimim_set_background_clouds()
         let s:backend.cloud[im].root = s:ui.root
         let s:backend.cloud[im].im = 0  " used for cloud key
         let s:backend.cloud[im].keycode = s:im_keycode[im]
+        let s:backend.cloud[im].name    = s:vimim_chinese(im)
         let s:backend.cloud[im].chinese = s:vimim_chinese(im)
-        let s:backend.cloud[im].name = s:vimim_chinese(im)
     endfor
 endfunction
 
@@ -3422,7 +3404,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
         return 0
     endif
     " on linux, we do plug-n-play
-    let cloud = s:plugin . "mycloud/mycloud"
+    let cloud = s:plugin . 'mycloud/mycloud'
     if !executable(cloud)
         if !executable("python")
             return 0
@@ -4111,7 +4093,7 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "新闻论坛：" . get(split(s:url),4))
     call add(eggs, "海量词库：" . url . s:download.bsddb)
     call add(eggs, "英文词库：" . url . s:download.english)
-    call add(eggs, "四角號碼：" . url . s:download.cjk)
+    call add(eggs, "标准字库：" . url . s:download.cjk)
     return map(eggs, 'v:val . " "')
 endfunction
 
@@ -4150,10 +4132,8 @@ sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
 sil!call s:vimim_save_vimrc()
-sil!call s:vimim_scan_datafile_cjk()
-sil!call s:vimim_scan_datafile_english()
 sil!call s:vimim_super_reset()
-sil!call s:vimim_initialize_session()
+sil!call s:vimim_set_current_session()
 sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_backend_embedded()
