@@ -103,17 +103,13 @@ function! s:vimim_set_current_session()
     let s:backend = { 'cloud':{}, 'datafile':{}, 'directory':{}  }
     let s:ui = { 'root':'', 'im':'', 'has_dot':0, 'frontends':[] }
     let s:sheng_mu = "b p m f d t l n g k h j q x r z c s y w"
-    let s:download = {}
-    let s:download.english = "vimim.txt"
-    let s:download.cjk     = "vimim.cjk.txt"
-    let s:download.bsddb   = "vimim.gbk.bsddb"
     let s:cjk = {}
     let s:cjk.lines = []
-    let s:cjk.filename = s:vimim_filereadable(s:download.cjk)
+    let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
     let s:english = {}
     let s:english.lines = []
     let s:english.line = ""
-    let s:english.filename = s:vimim_filereadable(s:download.english)
+    let s:english.filename = s:vimim_filereadable("vimim.txt")
 endfunction
 
 function! s:vimim_one_backend_hash()
@@ -2099,9 +2095,9 @@ function! s:vimim_get_english(keyboard)
 endfunction
 
 function! s:vimim_filereadable(file)
-    let datafile_in_full_path = s:plugin . a:file
-    if filereadable(datafile_in_full_path)
-        return datafile_in_full_path
+    let full_path_datafile = s:plugin . a:file
+    if filereadable(full_path_datafile)
+        return full_path_datafile
     endif
     return ""
 endfunction
@@ -2734,7 +2730,7 @@ function! s:vimim_set_backend_embedded()
     endif
     " (2/3) scan bsddb database as edw: enterprise data warehouse
     if has("python") " bsddb is from Python 2 only in 46,694,400 Bytes
-        let datafile = s:vimim_filereadable(s:download.bsddb)
+        let datafile = s:vimim_filereadable("vimim.gbk.bsddb")
         if !empty(datafile)
             return s:vimim_set_datafile(im, datafile)
         endif
@@ -4049,15 +4045,11 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, '默认热键 　n 　 （Vim正常模式）无菜单窗中文搜索')
     call add(eggs, '默认热键 　gi　 （Vim正常模式）无菜单窗中文输入')
     let eggs += [''] + s:vimim_egg_vimimrc() + ['']
-    let url = "http://vimim.googlecode.com/svn/trunk/plugin/"
     call add(eggs, "官方网址：" . get(split(s:url),0))
     call add(eggs, "最新程式：" . get(split(s:url),1))
     call add(eggs, "最新主页：" . get(split(s:url),2))
     call add(eggs, "错误报告：" . get(split(s:url),3))
     call add(eggs, "新闻论坛：" . get(split(s:url),4))
-    call add(eggs, "海量词库：" . url . s:download.bsddb)
-    call add(eggs, "英文词库：" . url . s:download.english)
-    call add(eggs, "标准字库：" . url . s:download.cjk)
     return map(eggs, 'v:val . " "')
 endfunction
 
