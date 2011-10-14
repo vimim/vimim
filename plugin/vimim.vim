@@ -2993,7 +2993,6 @@ function! s:vimim_set_background_clouds()
 endfunction
 
 function! s:vimim_check_http_executable()
-    let http_exe = ""
     if s:vimim_cloud < 0 && len(s:vimim_mycloud) < 3
         return 0
     elseif len(s:http_exe) > 3
@@ -3001,27 +3000,20 @@ function! s:vimim_check_http_executable()
     endif
     " step 1 of 4: try to find libvimim for mycloud
     let libvimim = s:vimim_get_libvimim()
-    if !empty(libvimim) && filereadable(libvimim)
-        " in win32, strip the .dll suffix
-        if has("win32") && libvimim[-4:] ==? ".dll"
-            let libvimim = libvimim[:-5]
-        endif
-        let ret = libcall(libvimim, "do_geturl", "__isvalid")
-        if ret ==# "True"
-            let http_exe = libvimim
-        endif
+    if libcall(libvimim, "do_geturl", "__isvalid") ==# "True"
+        let s:http_exe = libvimim
     endif
     " step 2 of 4: try to use dynamic python:
-    if empty(http_exe)
+    if empty(s:http_exe)
         if has('python')                     " +python/dyn
-            let http_exe = 'Python2 Interface to Vim'
+            let s:http_exe = 'Python2 Interface to Vim'
         endif
         if has('python3') && &relativenumber " +python3/dyn
-            let http_exe = 'Python3 Interface to Vim'
+            let s:http_exe = 'Python3 Interface to Vim'
         endif
     endif
     " step 3 of 4: try to find wget
-    if empty(http_exe) || has("macunix")
+    if empty(s:http_exe) || has("macunix")
         let wget = 'wget'
         let wget_exe = s:plugin . 'wget.exe'
         if filereadable(wget_exe) && executable(wget_exe)
@@ -3029,15 +3021,14 @@ function! s:vimim_check_http_executable()
         endif
         if executable(wget)
             let wget_option = " -qO - --timeout 20 -t 10 "
-            let http_exe = wget . wget_option
+            let s:http_exe = wget . wget_option
         endif
     endif
     " step 4 of 4: try to find curl if wget not available
-    if empty(http_exe) && executable('curl')
-        let http_exe = "curl -s "
+    if empty(s:http_exe) && executable('curl')
+        let s:http_exe = "curl -s "
     endif
-    let s:http_exe = copy(http_exe)
-    return http_exe
+    return s:http_exe
 endfunction
 
 function! s:vimim_get_cloud(keyboard)
@@ -3063,10 +3054,8 @@ endfunction
 function! s:vimim_get_from_http(input, cloud)
     if empty(a:input)
         return ""
-    elseif empty(s:http_exe)
-        if empty(s:vimim_check_http_executable())
-            return ""
-        endif
+    elseif empty(s:vimim_check_http_executable())
+        return ""
     endif
     try
         if s:http_exe =~ 'Python3'
@@ -3326,7 +3315,6 @@ function! s:vimim_set_backend_mycloud()
         let s:backend.cloud.mycloud.keycode = split(ret,"\t")[0]
         let ret = s:vimim_access_mycloud(mycloud, "__getname")
         let s:backend.cloud.mycloud.directory = split(ret,"\t")[0]
-        let g22=s:backend.cloud.mycloud.directory
     endif
 endfunction
 
@@ -3360,15 +3348,19 @@ function! s:vimim_access_mycloud(cloud, cmd)
 endfunction
 
 function! s:vimim_get_libvimim()
-    let cloud = ""
+    let libvimim = ""
     if has("win32") || has("win32unix")
-        let cloud = "libvimim.dll"
+        let libvimim = "libvimim.dll"
     elseif has("unix")
-        let cloud = "libvimim.so"
+        let libvimim = "libvimim.so"
     endif
-    let cloud = s:plugin . cloud
-    if filereadable(cloud)
-        return cloud
+    let libvimim = s:plugin . libvimim
+    if filereadable(libvimim)
+        " in win32, strip the .dll suffix
+        if has("win32") && libvimim[-4:] ==? ".dll"
+            let libvimim = libvimim[:-5]
+        endif
+        return libvimim
     endif
     return ""
 endfunction
@@ -3380,18 +3372,9 @@ function! s:vimim_check_mycloud_plugin_libcall()
         let s:mycloud_arg = ""
         let s:mycloud_mode = "libcall"
         let s:mycloud_func = 'do_getlocal'
-        if filereadable(cloud)
-            if has("win32")
-                let cloud = cloud[:-5]
-            endif
-            try
-                let ret = s:vimim_access_mycloud(cloud, "__isvalid")
-                if split(ret, "\t")[0] == "True"
-                    return cloud
-                endif
-            catch
-                sil!call s:vimim_debug('libcall_mycloud2', v:exception)
-            endtry
+        let ret = s:vimim_access_mycloud(cloud, "__isvalid")
+        if split(ret, "\t")[0] == "True"
+            return cloud
         endif
     endif
     " libcall check failed, we now check system()
@@ -3504,7 +3487,7 @@ function! s:vimim_check_mycloud_plugin_url()
         endif
         if !empty(s:http_exe)
             let s:mycloud_mode = "www"
-            let ret = s:vimim_access_mycloud(s:vimim_mycloud,"__isvalid")
+            let ret = s:vimim_access_mycloud(s:vimim_mycloud, "__isvalid")
             if split(ret, "\t")[0] == "True"
                 return s:vimim_mycloud
             endif
