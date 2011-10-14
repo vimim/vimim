@@ -3519,13 +3519,12 @@ let s:VimIM += [" ====  /search          ==== {{{"]
 " =================================================
 
 function! g:vimim_search_next()
+    let results = []
     let english = @/
     if english =~ '\<' && english =~ '\>'
         let english = substitute(english,'[<>\\]','','g')
     endif
-    let results = []
-    if len(english) > 1 && len(english) < 24
-    \&& english =~ '\w' && english !~ '\W' && english !~ '_'
+    if len(english) > 1 && len(english) < 20 && english !~ "[^0-9a-z']"
     \&& v:errmsg =~# english && v:errmsg =~# '^E486: '
         try
             let results = s:vimim_search_chinese_by_english(english)
