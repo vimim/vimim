@@ -2295,25 +2295,22 @@ function! s:vimim_set_shuangpin()
     \|| !empty(s:shuangpin_table)   || empty(s:vimim_shuangpin)
         return
     endif
-    let chinese = ""
     let rules = s:vimim_shuangpin_generic()
     for shuangpin in split(s:rc["g:vimim_shuangpin"])
         if s:vimim_shuangpin == shuangpin
             let rules = eval("s:vimim_shuangpin_" . shuangpin . "(rules)")
-            let chinese = s:vimim_chinese(shuangpin)
+            let s:shuangpin_chinese.chinese = s:vimim_chinese(shuangpin)
             break
         endif
     endfor
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
     if s:vimim_shuangpin != 'abc'
-        let chinese .= s:vimim_chinese('shuangpin')
+        let s:shuangpin_chinese.chinese .= s:vimim_chinese('shuangpin')
     endif
-    let s:shuangpin_chinese.chinese = chinese
-    let keycode = "[0-9a-z']"
+    let s:shuangpin_chinese.keycode = "[0-9a-z']"
     if s:vimim_shuangpin == 'ms' || s:vimim_shuangpin == 'purple'
-        let keycode = "[0-9a-z';]"
+        let s:shuangpin_chinese.keycode = "[0-9a-z';]"
     endif
-    let s:shuangpin_chinese.keycode = keycode
 endfunction
 
 function! s:vimim_shuangpin_transform(keyboard)
@@ -2328,17 +2325,15 @@ function! s:vimim_shuangpin_transform(keyboard)
             let output .= keyboard[ptr]
             let ptr += 1
         else
+            let sp1 = keyboard[ptr]
             if keyboard[ptr+1] =~ "[a-z;]"
-                let sp1 = keyboard[ptr].keyboard[ptr+1]
-            else
-                let sp1 = keyboard[ptr]
+                let sp1 .= keyboard[ptr+1]
             endif
             if has_key(s:shuangpin_table, sp1)
                 " the last odd shuangpin code are output as only shengmu
                 let output .= bchar . s:shuangpin_table[sp1]
             else
-                " invalid shuangpin code are preserved
-                let output .= sp1
+                let output .= sp1 " invalid shuangpin code are preserved
             endif
             let ptr += strlen(sp1)
         endif
@@ -2358,12 +2353,11 @@ function! s:vimim_create_shuangpin_table(rule)
         if key !~ "['a-z]*"
             continue
         endif
+        let shengmu = key[0]
+        let yunmu = key[1:]
         if key[1] == "h"
             let shengmu = key[:1]
             let yunmu = key[2:]
-        else
-            let shengmu = key[0]
-            let yunmu = key[1:]
         endif
         if has_key(rules[0], shengmu)
             let shuangpin_shengmu = rules[0][shengmu]
@@ -2384,10 +2378,7 @@ function! s:vimim_create_shuangpin_table(rule)
         endif
     endfor
     " the jxqy+v special case handling
-    if s:vimim_shuangpin == 'abc'
-    \|| s:vimim_shuangpin == 'purple'
-    \|| s:vimim_shuangpin == 'nature'
-    \|| s:vimim_shuangpin == 'flypy'
+    if match(split("abc purple nature flypy"), s:vimim_shuangpin) > -1
         let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
         call extend(sptable, jxqy)
     elseif s:vimim_shuangpin == 'ms'
@@ -2409,10 +2400,9 @@ function! s:vimim_create_shuangpin_table(rule)
     endif
     " generate table for shengmu-only match
     for [key, value] in items(rules[0])
+        let sptable[value] = key
         if key[0] == "'"
             let sptable[value] = ""
-        else
-            let sptable[value] = key
         endif
     endfor
     return sptable
@@ -2434,7 +2424,7 @@ function! s:vimim_shuangpin_generic()
 endfunction
 
 function! s:vimim_shuangpin_abc(rule)
-    " goal: vtpc => shuang pin => double pinyin
+    " test: vtpc => shuang pin => double pinyin
     call extend(a:rule[0],{ "zh" : "a", "ch" : "e", "sh" : "v" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
@@ -2448,7 +2438,7 @@ function! s:vimim_shuangpin_abc(rule)
 endfunction
 
 function! s:vimim_shuangpin_ms(rule)
-    " goal: vi=>zhi ii=>chi ui=>shi keng=>keneng
+    " test: vi=>zhi ii=>chi ui=>shi keng=>keneng
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
@@ -2463,7 +2453,7 @@ function! s:vimim_shuangpin_ms(rule)
 endfunction
 
 function! s:vimim_shuangpin_nature(rule)
-    " goal: 'woui' => wo shi => i am
+    " test: 'woui' => wo shi => i am
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
     call extend(a:rule[1],{
         \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
