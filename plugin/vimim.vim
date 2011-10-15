@@ -2629,36 +2629,6 @@ endfunction
 let s:VimIM += [" ====  backend: file    ==== {{{"]
 " =================================================
 
-function! s:vimim_set_backend_embedded()
-    let im = "pinyin"
-    " (1/3) scan directory database
-    let dir = s:plugin . im
-    if isdirectory(dir)
-        let dir .= "/"
-        if filereadable(dir . im)
-            return s:vimim_set_directory(im, dir)
-        endif
-    endif
-    " (2/3) scan bsddb database as edw: enterprise data warehouse
-    if has("python") " bsddb is from Python 2 only in 46,694,400 Bytes
-        let datafile = s:vimim_filereadable("vimim.gbk.bsddb")
-        if !empty(datafile)
-            return s:vimim_set_datafile(im, datafile)
-        endif
-    endif
-    " (3/3) scan all supported data files
-    for im in s:all_vimim_input_methods
-        let datafile = s:plugin . "vimim." . im . ".txt"
-        if !filereadable(datafile)
-            let im2 = im . "." . &encoding
-            let datafile = s:plugin . "vimim." . im2 . ".txt"
-        endif
-        if filereadable(datafile)
-            call s:vimim_set_datafile(im, datafile)
-        endif
-    endfor
-endfunction
-
 function! s:vimim_set_datafile(im, datafile)
     let datafile = a:datafile
     let im = s:vimim_get_valid_im_name(a:im)
@@ -3600,6 +3570,36 @@ function! s:vimim_imap_off()
         endif
     endfor
     highlight! link Cursor NONE
+endfunction
+
+function! s:vimim_set_backend_embedded()
+    let im = "pinyin"
+    " (1/3) scan directory database
+    let dir = s:plugin . im
+    if isdirectory(dir)
+        let dir .= "/"
+        if filereadable(dir . im)
+            return s:vimim_set_directory(im, dir)
+        endif
+    endif
+    " (2/3) scan bsddb database as edw: enterprise data warehouse
+    if has("python") " bsddb is from Python 2 only in 46,694,400 Bytes
+        let datafile = s:vimim_filereadable("vimim.gbk.bsddb")
+        if !empty(datafile)
+            return s:vimim_set_datafile(im, datafile)
+        endif
+    endif
+    " (3/3) scan all supported data files
+    for im in s:all_vimim_input_methods
+        let datafile = s:plugin . "vimim." . im . ".txt"
+        if !filereadable(datafile)
+            let im2 = im . "." . &encoding
+            let datafile = s:plugin . "vimim." . im2 . ".txt"
+        endif
+        if filereadable(datafile)
+            call s:vimim_set_datafile(im, datafile)
+        endif
+    endfor
 endfunction
 
 " ============================================= }}}
