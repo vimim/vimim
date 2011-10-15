@@ -721,10 +721,6 @@ function! s:vimim_punctuations_maps()
         inoremap    '     <C-R>=<SID>vimim_get_single_quote()<CR>
         inoremap    "     <C-R>=<SID>vimim_get_double_quote()<CR>
         inoremap <Bslash> <C-R>=pumvisible() ? "\<lt>C-Y>、" : "、"<CR>
-    else
-        for _ in keys(s:evils)
-            sil!exe 'iunmap '. _
-        endfor
     endif
 endfunction
 
@@ -822,21 +818,6 @@ function! s:vimim_onekey_digit_filter(results)
         return a:results
     endif
     return results
-endfunction
-
-function! s:vimim_get_head(keyboard, partition)
-    if a:partition < 0
-        return a:keyboard
-    endif
-    let head = a:keyboard[0 : a:partition-1]
-    if s:keyboard !~ '\S\s\S'
-        let s:keyboard = head
-        let tail = a:keyboard[a:partition : -1]
-        if !empty(tail)
-            let s:keyboard = head . " " . tail
-        endif
-    endif
-    return head
 endfunction
 
 function! s:vimim_common_maps()
@@ -1826,6 +1807,21 @@ function! s:vimim_get_cjk_head(keyboard)
             endif
         else  " get single character from cjk
             let head = keyboard
+        endif
+    endif
+    return head
+endfunction
+
+function! s:vimim_get_head(keyboard, partition)
+    if a:partition < 0
+        return a:keyboard
+    endif
+    let head = a:keyboard[0 : a:partition-1]
+    if s:keyboard !~ '\S\s\S'
+        let s:keyboard = head
+        let tail = a:keyboard[a:partition : -1]
+        if !empty(tail)
+            let s:keyboard = head . " " . tail
         endif
     endif
     return head
