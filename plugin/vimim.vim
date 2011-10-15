@@ -63,33 +63,37 @@ function! s:vimim_initialize_debug()
     endif
 endfunction
 
-function! s:vimim_debug(...)
-    " [.vimrc] :redir @+>>
-    " [client] :sil!call s:vimim_debug(s:vimim_egg_vimim())
-    sil!echo "\n::::::::::::::::::::::::"
-    if len(a:000) > 1
-        sil!echo join(a:000, " :: ")
-    elseif type(a:1) == type({})
-        for key in keys(a:1)
-            sil!echo key . '::' . a:1[key]
-        endfor
-    elseif type(a:1) == type([])
-        for line in a:1
-            sil!echo line
-        endfor
-    else
-        sil!echo string(a:1)
-    endif
-    sil!echo "::::::::::::::::::::::::\n"
-endfunction
-
-function! s:vimim_set_current_session()
+function! s:vimim_initialize_global()
+    let s:space = '　'
+    let s:colon = '：'
     let s:logo = "VimIM　中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
+    let s:rc = {}
+    let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
+    let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
+    let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
+    let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
+    let s:rc["g:vimim_plugin"] = s:plugin
+    let s:rc["g:vimim_skin"] = 'one-row,color'
+    let s:rc["g:vimim_punctuation"] = 1
+    let s:rc["g:vimim_toggle_list"] = 0
+    let s:rc["g:vimim_mycloud"] = 0
+    call s:vimim_set_global_default()
+    if isdirectory(s:vimim_plugin)
+        let s:plugin = s:vimim_plugin
+    endif
+    if s:plugin[-1:] != "/"
+        let s:plugin .= "/"
+    endif
+    let s:localization = &encoding =~ "utf-8" ? 0 : 2
+    let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
+    let s:chinese_mode = 'onekey'
+    let s:toggle_punctuation = 1
+    let s:toggle_im = 0
     let s:cursor_at_menuless = 0
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
-    let s:shuangpin_chinese = {}
+    let s:shuangpin = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     let s:abcd = split("'abcdvfgxz",'\zs')
@@ -112,6 +116,26 @@ function! s:vimim_set_current_session()
     let s:shengmu_list = split('b p m f d t l n g k h j q x r z c s y w')
     let s:sp_key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue '
     let s:sp_key .= ' uan iu uai ong eng iang ui ai an ao iao ian uang '
+endfunction
+
+function! s:vimim_debug(...)
+    " [.vimrc] :redir @+>>
+    " [client] :sil!call s:vimim_debug(s:vimim_egg_vimim())
+    sil!echo "\n::::::::::::::::::::::::"
+    if len(a:000) > 1
+        sil!echo join(a:000, " :: ")
+    elseif type(a:1) == type({})
+        for key in keys(a:1)
+            sil!echo key . '::' . a:1[key]
+        endfor
+    elseif type(a:1) == type([])
+        for line in a:1
+            sil!echo line
+        endfor
+    else
+        sil!echo string(a:1)
+    endif
+    sil!echo "::::::::::::::::::::::::\n"
 endfunction
 
 function! s:vimim_one_backend_hash()
@@ -164,8 +188,8 @@ function! s:vimim_set_keycode()
     if !empty(s:ui.root)
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
     endif
-    if !empty(s:vimim_shuangpin) && !empty(s:shuangpin_chinese)
-        let keycode = s:shuangpin_chinese.keycode
+    if len(s:vimim_shuangpin) && len(s:shuangpin)
+        let keycode = s:shuangpin.keycode
     endif
     let i = 0
     let keycode_string = ""
@@ -183,6 +207,108 @@ function! s:vimim_set_keycode()
     \|| len(s:cjk.filename) || s:vimim_shuangpin == 'abc'
         let s:imode_pinyin = 1
     endif
+endfunction
+
+function! s:vimim_set_global_default()
+    let s:vimimrc = []
+    let s:vimimdefaults = []
+    for variable in keys(s:rc)
+        let s_variable = substitute(copy(variable), "g:", "s:", '')
+        if exists(variable)
+            let value = string(eval(variable))
+            let vimimrc = ':let ' . variable .' = '. value .' '
+            call add(s:vimimrc, '  ' . vimimrc)
+            exe   'let  ' . s_variable .'='. value
+            exe 'unlet! ' .   variable
+        else
+            let default = string(s:rc[variable])
+            let vimimrc = ':let ' . variable .' = '. default .' '
+            call add(s:vimimdefaults, '" ' . vimimrc)
+            if variable == "g:vimim_shuangpin"
+                exe 'let '. s_variable . " = '' "
+            else
+                exe 'let '. s_variable .'='. default
+            endif
+        endif
+    endfor
+endfunction
+
+function! s:vimim_get_valid_im_name(im)
+    let im = a:im
+        if im =~ '^wubi'   | let im = 'wubi'
+    elseif im =~ '^pinyin' | let im = 'pinyin'
+    elseif match(s:all_vimim_input_methods, im) < 0
+        let im = 0
+    endif
+    return im
+endfunction
+
+function! g:vimim_wubi()
+    let key = ""
+    if pumvisible()
+        let key = '\<C-E>'
+        if empty(len(get(split(s:keyboard),0))%4)
+            let key = '\<C-Y>'
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! s:vimim_set_plugin_conflict()
+    if !exists('s:acp_sid')
+        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
+        if !empty(s:acp_sid)
+            AcpDisable
+        endif
+    endif
+    if !exists('s:supertab_sid')
+        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
+    endif
+    if !exists('s:word_complete')
+        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
+        if !empty(s:word_complete)
+            call EndWordComplete()
+        endif
+    endif
+endfunction
+
+function! s:vimim_restore_plugin_conflict()
+    if !empty(s:acp_sid)
+        let ACPMappingDrivenkeys = [
+            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
+            \ '<','>','/','\','<Space>','<BS>','<CR>',]
+        let AZ_list = map(range(65,90), "nr2char(".'v:val'.")")
+        call extend(ACPMappingDrivenkeys, range(10))
+        call extend(ACPMappingDrivenkeys, s:az_list + AZ_list)
+        for key in ACPMappingDrivenkeys
+            exe printf('iu <silent> %s', key)
+            exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>',
+            \ key, key, s:acp_sid)
+        endfor
+        AcpEnable
+    endif
+    if !empty(s:supertab_sid)
+        let tab = s:supertab_sid
+        if g:SuperTabMappingForward =~ '^<tab>$'
+            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>",tab)
+        endif
+        if g:SuperTabMappingBackward =~ '^<s-tab>$'
+            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>",tab)
+        endif
+    endif
+endfunction
+
+function! s:vimim_getsid(scriptname)
+    " use s:getsid to get script sid, translate <SID> to <SNR>N_
+    redir => scriptnames_output
+    silent scriptnames
+    redir END
+    for line in split(scriptnames_output, "\n")
+        if line =~ a:scriptname           " only do non-blank lines
+            return matchstr(line, '\d\+') " get the first number
+        endif
+    endfor
+    return 0
 endfunction
 
 " ============================================= }}}
@@ -404,137 +530,6 @@ function! s:vimim_chinese_rotation() range abort
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  customization    ==== {{{"]
-" =================================================
-
-function! s:vimim_initialize_global()
-    let s:rc = {}
-    let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
-    let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
-    let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
-    let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
-    let s:rc["g:vimim_plugin"] = s:plugin
-    let s:rc["g:vimim_skin"] = 'one-row,color'
-    let s:rc["g:vimim_punctuation"] = 1
-    let s:rc["g:vimim_toggle_list"] = 0
-    let s:rc["g:vimim_mycloud"] = 0
-    call s:vimim_set_global_default()
-    if isdirectory(s:vimim_plugin)
-        let s:plugin = s:vimim_plugin
-    endif
-    if s:plugin[-1:] != "/"
-        let s:plugin .= "/"
-    endif
-    let s:chinese_mode = 'onekey'
-    let s:toggle_punctuation = 1
-    let s:toggle_im = 0
-    let s:localization = &encoding =~ "utf-8" ? 0 : 2
-    let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
-endfunction
-
-function! s:vimim_set_global_default()
-    let s:vimimrc = []
-    let s:vimimdefaults = []
-    for variable in keys(s:rc)
-        let s_variable = substitute(copy(variable), "g:", "s:", '')
-        if exists(variable)
-            let value = string(eval(variable))
-            let vimimrc = ':let ' . variable .' = '. value .' '
-            call add(s:vimimrc, '  ' . vimimrc)
-            exe   'let  ' . s_variable .'='. value
-            exe 'unlet! ' .   variable
-        else
-            let default = string(s:rc[variable])
-            let vimimrc = ':let ' . variable .' = '. default .' '
-            call add(s:vimimdefaults, '" ' . vimimrc)
-            if variable == "g:vimim_shuangpin"
-                exe 'let '. s_variable . " ='' "
-            else
-                exe 'let '. s_variable .'='. default
-            endif
-        endif
-    endfor
-endfunction
-
-function! s:vimim_get_valid_im_name(im)
-    let im = a:im
-        if im =~ '^wubi'   | let im = 'wubi'
-    elseif im =~ '^pinyin' | let im = 'pinyin'
-    elseif match(s:all_vimim_input_methods, im) < 0
-        let im = 0
-    endif
-    return im
-endfunction
-
-function! g:vimim_wubi()
-    let key = ""
-    if pumvisible()
-        let key = '\<C-E>'
-        if empty(len(get(split(s:keyboard),0))%4)
-            let key = '\<C-Y>'
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! s:vimim_set_plugin_conflict()
-    if !exists('s:acp_sid')
-        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
-        if !empty(s:acp_sid)
-            AcpDisable
-        endif
-    endif
-    if !exists('s:supertab_sid')
-        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
-    endif
-    if !exists('s:word_complete')
-        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
-        if !empty(s:word_complete)
-            call EndWordComplete()
-        endif
-    endif
-endfunction
-
-function! s:vimim_restore_plugin_conflict()
-    if !empty(s:acp_sid)
-        let ACPMappingDrivenkeys = [
-            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
-            \ '<','>','/','\','<Space>','<BS>','<CR>',]
-        let AZ_list = map(range(65,90), "nr2char(".'v:val'.")")
-        call extend(ACPMappingDrivenkeys, range(10))
-        call extend(ACPMappingDrivenkeys, s:az_list + AZ_list)
-        for key in ACPMappingDrivenkeys
-            exe printf('iu <silent> %s', key)
-            exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>',
-            \ key, key, s:acp_sid)
-        endfor
-        AcpEnable
-    endif
-    if !empty(s:supertab_sid)
-        let tab = s:supertab_sid
-        if g:SuperTabMappingForward =~ '^<tab>$'
-            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>",tab)
-        endif
-        if g:SuperTabMappingBackward =~ '^<s-tab>$'
-            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>",tab)
-        endif
-    endif
-endfunction
-
-function! s:vimim_getsid(scriptname)
-    " use s:getsid to get script sid, translate <SID> to <SNR>N_
-    redir => scriptnames_output
-    silent scriptnames
-    redir END
-    for line in split(scriptnames_output, "\n")
-        if line =~ a:scriptname           " only do non-blank lines
-            return matchstr(line, '\d\+') " get the first number
-        endif
-    endfor
-    return 0
-endfunction
-
-" ============================================= }}}
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
@@ -675,8 +670,8 @@ function! s:vimim_get_title()
             endif
         endif
     endif
-    if !empty(s:vimim_shuangpin)
-        let statusline = s:space . s:shuangpin_chinese.chinese
+    if len(s:vimim_shuangpin) && len(s:shuangpin)
+        let statusline = s:space . s:shuangpin.chinese
     endif
     return statusline . s:space
 endfunction
@@ -757,8 +752,6 @@ let s:VimIM += [" ====  punctuations     ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_punctuations()
-    let s:space = '　'
-    let s:colon = '：'
     let s:evils = {}            " exception if it is passed around
     let s:all_evils = {}        " onekey uses all punctuations
     let s:punctuations = {}     " chinese mode uses minimum by default
@@ -2278,17 +2271,17 @@ function! s:vimim_set_shuangpin()
     for shuangpin in split(s:rc["g:vimim_shuangpin"])
         if s:vimim_shuangpin == shuangpin
             let rules = eval("s:vimim_shuangpin_" . shuangpin . "(rules)")
-            let s:shuangpin_chinese.chinese = s:vimim_chinese(shuangpin)
+            let s:shuangpin.chinese = s:vimim_chinese(shuangpin)
             break
         endif
     endfor
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
     if s:vimim_shuangpin != 'abc'
-        let s:shuangpin_chinese.chinese .= s:vimim_chinese('shuangpin')
+        let s:shuangpin.chinese .= s:vimim_chinese('shuangpin')
     endif
-    let s:shuangpin_chinese.keycode = "[0-9a-z']"
+    let s:shuangpin.keycode = "[0-9a-z']"
     if s:vimim_shuangpin == 'ms' || s:vimim_shuangpin == 'purple'
-        let s:shuangpin_chinese.keycode = "[0-9a-z';]"
+        let s:shuangpin.keycode = "[0-9a-z';]"
     endif
 endfunction
 
@@ -3746,7 +3739,7 @@ else
         endif
     endif
     " [shuangpin] support 6 major shuangpin rules
-    if !empty(s:vimim_shuangpin) && empty(s:has_pumvisible)
+    if len(s:vimim_shuangpin) && empty(s:has_pumvisible)
         let keyboard = s:vimim_shuangpin_transform(keyboard)
         let s:keyboard = keyboard
     endif
@@ -4032,7 +4025,6 @@ sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
 sil!call s:vimim_save_vimrc()
 sil!call s:vimim_super_reset()
-sil!call s:vimim_set_current_session()
 sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_backend_embedded()
