@@ -2366,11 +2366,9 @@ function! s:vimim_create_shuangpin_table(rule)
     endif
     " the flypy shuangpin special case handling
     if s:vimim_shuangpin == 'flypy'
-        let flypy = {"aa" : "a", "oo" : "o", "ee" : "e",
-                    \"an" : "an", "ao" : "ao", "ai" : "ai", "ah": "ang",
-                    \"os" : "ong","ou" : "ou",
-                    \"en" : "en", "er" : "er", "ei" : "ei", "eg": "eng" }
-        call extend(sptable, flypy)
+        let key   = 'ou eg  er an ao ai aa en oo os  ah  ee ei'
+        let value = 'ou eng er an ao ai a  en o  ong ang e  ei'
+        call extend(sptable, s:vimim_key_value_hash(key, value))
     endif
     " the nature shuangpin special case handling
     if s:vimim_shuangpin == 'nature'
