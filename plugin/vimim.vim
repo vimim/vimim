@@ -685,16 +685,7 @@ function! s:vimim_statusline()
     return statusline
 endfunction
 
-function! s:vimim_menu_search(key)
-    let slash = ""
-    if pumvisible()
-        let slash  = '\<C-Y>\<C-R>=g:vimim_menu_search_on()\<CR>'
-        let slash .= a:key . '\<CR>'
-    endif
-    sil!exe 'sil!return "' . slash . '"'
-endfunction
-
-function! g:vimim_menu_search_on()
+function! g:vimim_slash()
     let range = col(".") - 1 - s:starts.column
     let chinese = strpart(getline("."), s:starts.column, range)
     let word = substitute(chinese,'\w','','g')
@@ -1273,12 +1264,12 @@ function! <SID>vimim_onekey_hjkl_map(key)
         elseif key ==# 'j' | let key = '\<Down>' " j
         elseif key ==# 'k' | let key = '\<Up>'   " k
         elseif key ==# 'l' | let s:hjkl_l += 1   " l
-        elseif key ==# 's' | let s:hjkl__ += 1   " simplified/traditional
-        elseif key ==# ';'                       " dump out omni popup
+        elseif key ==# 's' | let s:hjkl__ += 1   " s/t transfer
+        elseif key ==# ';'                       " dump omni popup
             let s:popup_list = s:popup_list[:&pumheight-1]
             let key = '\<C-R>=g:vimim_onekey_dump()\<CR>'
         elseif key =~ "[/?]"
-            let key = s:vimim_menu_search(key)
+            let key = '\<C-Y>\<C-R>=g:vimim_slash()\<CR>' . key . '\<CR>'
         elseif match(s:qwer, key) > -1
             let s:hjkl_n .= match(s:qwer, key)
         endif
