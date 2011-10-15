@@ -700,18 +700,6 @@ function! g:vimim_slash()
     sil!exe 'sil!return "' . slash . '"'
 endfunction
 
-function! s:vimim_square_bracket(key)
-    let key = a:key
-    if pumvisible()
-        let left  = key == "]" ? "\<Left>"  : ""
-        let right = key == "]" ? "\<Right>" : ""
-        let _ = key == "]" ? 0 : -1
-        let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
-        let key = '\<C-Y>' . left . bs . right
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 function! g:vimim_bracket(offset)
     let cursor = ""
     let range = col(".") - 1 - s:starts.column
@@ -947,7 +935,11 @@ function! <SID>vimim_page_map(key)
     let key = a:key
     if pumvisible()
         if key =~ "[][]"
-            let key = s:vimim_square_bracket(key)
+            let left  = key == "]" ? "\<Left>"  : ""
+            let right = key == "]" ? "\<Right>" : ""
+            let _ = key == "]" ? 0 : -1
+            let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
+            let key = '\<C-Y>' . left . bs . right
         elseif key =~ "[=.]"
             let key = '\<PageDown>'
             if &pumheight
