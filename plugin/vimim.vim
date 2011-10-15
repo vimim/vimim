@@ -57,7 +57,6 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab,search,gi'
     endif
@@ -74,7 +73,6 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
     let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
     let s:rc["g:vimim_plugin"] = s:plugin
-    let s:rc["g:vimim_skin"] = 'one-row,color'
     let s:rc["g:vimim_punctuation"] = 1
     let s:rc["g:vimim_toggle_list"] = 0
     let s:rc["g:vimim_mycloud"] = 0
@@ -509,6 +507,17 @@ endfunction
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
+function! s:vimim_set_color()
+    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
+    highlight! link Cursor CursorIM
+    if has("win32") || has("win32unix")
+        highlight! PmenuSbar  NONE
+        highlight! PmenuThumb NONE
+        highlight! Pmenu      NONE
+        highlight! link PmenuSel NonText
+    endif
+endfunction
+
 function! s:vimim_dictionary_statusline()
     let s:title = {}
     let s:title.windowless = "无菜单窗,無菜單窗"
@@ -548,38 +557,6 @@ function! s:vimim_chinese(key)
         endif
     endif
     return chinese
-endfunction
-
-function! s:vimim_omni_color()
-    highlight! PmenuSbar  NONE
-    highlight! PmenuThumb NONE
-    highlight! Pmenu      NONE
-    highlight! link PmenuSel NonText
-endfunction
-
-function! s:vimim_skin(color)
-    let color = a:color
-    let &pumheight = 10
-    let one_row_menu = 0
-    if empty(s:onekey) && s:vimim_skin =~ 'one-row'
-        let color = 0
-        let one_row_menu = 1
-        let &pumheight = 5
-    endif
-    let s:pumheights.current = copy(&pumheight)
-    if s:touch_me_not
-        let &pumheight = 0
-    elseif s:hjkl_l
-        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
-    endif
-    if s:vimim_skin =~ 'color'
-        call s:vimim_omni_color()
-        if empty(color)
-            highlight!      PmenuSel NONE
-            highlight! link PmenuSel NONE
-        endif
-    endif
-    return one_row_menu
 endfunction
 
 function! s:vimim_set_statusline()
@@ -3475,10 +3452,11 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
 function! s:vimim_set_vimrc()
-    set title imdisable noshowmatch shellslash nolazyredraw
-    set whichwrap=<,> complete=. completeopt=menuone omnifunc=VimIM
-    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
-    highlight! link Cursor CursorIM
+    set title imdisable noshowmatch
+    set shellslash nolazyredraw
+    set whichwrap=<,> complete=.
+    set completeopt=menuone
+    set omnifunc=VimIM
 endfunction
 
 function! s:vimim_save_vimrc()
@@ -3510,6 +3488,7 @@ endfunction
 
 function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
+    sil!call s:vimim_set_color()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_common_maps()
@@ -3746,11 +3725,16 @@ function! s:vimim_popupmenu_list(lines)
     elseif s:vimim_cjk() && len(s:hjkl_n)
         let s:match_list = s:vimim_onekey_digit_filter(a:lines)
     endif
-    " [skin] no color seems the best color
     let keyboards = split(s:keyboard)   " mmmm => ['m',"m'm'm"]
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
-    let color = len(s:match_list) < 2 && empty(tail) ? 0 : 1
-    let menu_in_one_row = s:vimim_skin(color)
+    " [popup] it is art to set up popup menu height
+    let &pumheight = empty(s:onekey) ? 5 : 10
+    let s:pumheights.current = copy(&pumheight)
+    if s:touch_me_not
+        let &pumheight = 0
+    elseif s:hjkl_l
+        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
+    endif
     let label = 1
     let one_list = []
     let popup_list = []
@@ -3770,7 +3754,7 @@ function! s:vimim_popupmenu_list(lines)
             let pair_left = get(pairs,0)
             if len(pairs) > 1 && pair_left !~ '[^\x00-\xff]'
                 let chinese = get(pairs,1)
-                if s:show_extra_menu && empty(menu_in_one_row)
+                if s:show_extra_menu
                     let menu = pair_left
                 endif
             endif
@@ -3786,7 +3770,7 @@ function! s:vimim_popupmenu_list(lines)
                 let english = ' '
             endif
             let label2 = english . label2
-            let labeling = color ? printf('%2s ',label2) : ""
+            let labeling = printf('%2s ',label2)
             let chinese .= empty(tail) ? '' : tail
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
@@ -3823,33 +3807,7 @@ function! s:vimim_popupmenu_list(lines)
         elseif s:touch_me_not
             let &titlestring = s:logo . s:today
         endif
-    elseif menu_in_one_row
-        let popup_list = s:vimim_one_row(one_list[0:4], popup_list[0:4])
     endif
-    return popup_list
-endfunction
-
-function! s:vimim_one_row(one_list, popup_list)
-    let popup_list = a:popup_list
-    let column = virtcol(".")
-    if column > &columns
-        let column = virtcol(".") % &columns
-    endif
-    let spaces = &columns - column
-    let minimum = &columns/2.5
-    let row1 = join(a:one_list)
-    let row2 = join(a:one_list[1:])
-    if spaces < len(row1) + 4
-        if  len(row2) > spaces || len(row2) > minimum
-            return popup_list
-        endif
-        let popup_list[0].abbr = get(a:one_list,0)
-        let popup_list[1].abbr = row2
-    else
-        let popup_list[0].abbr = row1
-        let popup_list[1].abbr = s:space
-    endif
-    let &pumheight = 2
     return popup_list
 endfunction
 
