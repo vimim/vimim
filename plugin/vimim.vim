@@ -3661,9 +3661,7 @@ else
     else
         return s:vimim_popupmenu_list(results)
     endif
-    " [initialization] early start, half done
     let keyboard = a:keyboard
-    " [validation] user keyboard input validation
     if empty(str2nr(keyboard))
         " input is alphabet only, bad for 23554022100080204420
     else
@@ -3674,8 +3672,7 @@ else
     else   " [english] first check if it is english or not
         let s:english.line = s:vimim_get_english(keyboard)
     endif
-    " [onekey] plays with nothing but onekey
-    if s:onekey
+    if s:onekey  " [onekey] plays with nothing but onekey
         let results = s:vimim_onekey_engine(keyboard)
         if len(results)
             return s:vimim_popupmenu_list(results)
@@ -3685,8 +3682,7 @@ else
             let keyboard = s:vimim_get_head_without_quote(keyboard)
         endif
     endif
-    " [mycloud] get chunmeng from mycloud local or www
-    if s:ui.im == 'mycloud'
+    if s:ui.im == 'mycloud'  " [mycloud] get chunmeng from local or www
         let results = s:vimim_get_mycloud(keyboard)
         if len(results)
             let s:show_extra_menu = 1
@@ -3702,7 +3698,6 @@ else
     if s:ui.root == 'cloud' || keyboard[-1:] == "'"
         let results = s:vimim_get_cloud(keyboard)
     endif
-    " [engine] try all local backend datafiles or directory
     if empty(results)
         " [wubi] support auto insert on the 4th
         if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
@@ -3722,7 +3717,7 @@ else
         endif
         let results = s:vimim_make_pairs(s:english.line) + results
     endif
-    " [the last resort] try both cjk and cloud
+    " [the_last_resort] try both cjk and cloud
     if s:onekey && empty(results)
         if len(keyboard) > 1
             let shoupin = s:vimim_get_head_without_quote(keyboard."'''")
@@ -3824,7 +3819,7 @@ function! s:vimim_popupmenu_list(lines)
             let &titlestring = vimim . join(one_list)
             let &pumheight = 1
             call s:vimim_set_titlestring(1)
-            Debug s:match_list
+            Debug s:match_list[:2]
         elseif s:touch_me_not
             let &titlestring = s:logo . s:today
         endif
