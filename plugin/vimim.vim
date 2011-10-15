@@ -410,28 +410,6 @@ function! s:vimim_egg_vimim()
     return map(eggs, 'v:val . " " ')
 endfunction
 
-function! s:vimim_get_head_without_quote(keyboard)
-    let keyboard = a:keyboard
-    if s:ui.has_dot || keyboard =~ '\d' || s:ui.root == 'cloud'
-        return keyboard
-    endif
-    if s:hjkl_m && s:hjkl_m % 2 || keyboard =~ '^\l\l\+'."'''".'$'
-        " [shoupin] hjkl_m or 3 tail quotes to control shoupin
-        "    hjkl_m || sssss..  =>  sssss'''  =>  s's's's's
-        let keyboard = substitute(keyboard, "'", "", 'g')
-        let keyboard = join(split(keyboard,'\zs'), "'")
-    endif
-    if keyboard =~ "'" && keyboard[-1:] != "'"
-        " [quote] (1/2) quote_by_quote: wo'you'yi'ge'meng
-        let keyboards = split(keyboard,"'")
-        let keyboard = get(keyboards,0)
-        let tail = join(keyboards[1:],"'")
-        let tail = len(tail) == 1 ? "'" . tail : tail
-        let s:keyboard = keyboard . " " . tail
-    endif
-    return keyboard
-endfunction
-
 function! s:vimim_get_hjkl_game(keyboard)
     let keyboard = a:keyboard
     let results = []
@@ -592,7 +570,7 @@ function! s:vimim_skin(color)
     if s:touch_me_not
         let &pumheight = 0
     elseif s:hjkl_l
-        let &pumheight = s:hjkl_l%2 ? 0 : s:pumheights.current
+        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
     endif
     if s:vimim_skin =~ 'color'
         call s:vimim_omni_color()
@@ -717,8 +695,8 @@ function! s:vimim_get_labeling(label)
     if s:onekey && a:label < 11
         let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
         let labeling = empty(labeling) ? '10' : labeling . label2
-        if len(s:cjk.filename) && empty(s:hjkl_l)
-            let labeling = label2
+        if len(s:cjk.filename) && empty(s:hjkl_l%2)
+            let labeling = " " . label2
         endif
     endif
     return labeling
@@ -1024,7 +1002,7 @@ function! <SID>vimim_space()
     " (1) <Space> after English (valid keys) => trigger keycode menu
     " (2) <Space> after English punctuation  => get Chinese punctuation
     " (3) <Space> after popup menu           => insert Chinese
-    " (4) <Space> after pattern not found    => <Space>
+    " (4) <Space> after pattern not found    => Space
     let space = " "
     if s:pattern_not_found
         let s:pattern_not_found = 0
@@ -1096,7 +1074,7 @@ function! <SID>vimim_esc()
         let key .= ':echo @0[:-2][:50]\<CR>'
         sil!call s:vimim_stop()
     elseif pumvisible()
-        let key = '\<C-E>'   " <Esc> one key correction
+        let key = '\<C-E>'   " <Esc> as one key correction
         let range = col(".") - 1 - s:starts.column
         if range
             let key .= repeat("\<Left>\<Delete>", range)
@@ -1298,6 +1276,28 @@ function! s:vimim_onekey_engine(keyboard)
         endif
     endif
     return results
+endfunction
+
+function! s:vimim_get_head_without_quote(keyboard)
+    let keyboard = a:keyboard
+    if s:ui.has_dot || keyboard =~ '\d' || s:ui.root == 'cloud'
+        return keyboard
+    endif
+    if s:hjkl_m && s:hjkl_m % 2 || keyboard =~ '^\l\l\+'."'''".'$'
+        " [shoupin] hjkl_m or 3 tail quotes to control shoupin
+        "    hjkl_m || sssss..  =>  sssss'''  =>  s's's's's
+        let keyboard = substitute(keyboard, "'", "", 'g')
+        let keyboard = join(split(keyboard,'\zs'), "'")
+    endif
+    if keyboard =~ "'" && keyboard[-1:] != "'"
+        " [quote] (1/2) quote_by_quote: wo'you'yi'ge'meng
+        let keyboards = split(keyboard,"'")
+        let keyboard = get(keyboards,0)
+        let tail = join(keyboards[1:],"'")
+        let tail = len(tail) == 1 ? "'" . tail : tail
+        let s:keyboard = keyboard . " " . tail
+    endif
+    return keyboard
 endfunction
 
 " ============================================= }}}
