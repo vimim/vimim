@@ -1874,7 +1874,7 @@ function! s:vimim_cjk_match(keyboard)
                 endif
             endif
         endif
-    else
+    elseif s:ui.im != 'mycloud'
         if len(keyboard) == 1
             " cjk single-char-list by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
@@ -3930,8 +3930,8 @@ sil!call s:vimim_dictionary_keycodes()
 sil!call s:vimim_save_vimrc()
 sil!call s:vimim_super_reset()
 sil!call s:vimim_set_background_clouds()
-sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_backend_embedded()
+sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_keycode()
 sil!call s:vimim_map_plug_and_play()
 " ============================================= }}}
