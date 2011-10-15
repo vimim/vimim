@@ -2364,8 +2364,7 @@ function! s:vimim_create_shuangpin_table(rule)
         let jxqy = {"jv" : "jue", "qv" : "que", "xv" : "xue", "yv" : "yue"}
         call extend(sptable, jxqy)
     endif
-    " the flypy shuangpin special case handling
-    if s:vimim_shuangpin == 'flypy'
+    if s:vimim_shuangpin == 'flypy'  " flypy special case handling
         let key   = 'ou eg  er an ao ai aa en oo os  ah  ee ei'
         let value = 'ou eng er an ao ai a  en o  ong ang e  ei'
         call extend(sptable, s:vimim_key_value_hash(key, value))
