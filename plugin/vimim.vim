@@ -2268,14 +2268,6 @@ function! s:vimim_set_shuangpin()
     let rules = s:vimim_shuangpin_generic()
     let rules = s:vimim_get_shuangpin_rules(s:vimim_shuangpin, rules)
     let s:shuangpin.chinese = s:vimim_chinese(s:vimim_shuangpin)
-""  for shuangpin in split(s:rc["g:vimim_shuangpin"])
-""      if s:vimim_shuangpin == shuangpin
-""       "  let rules = eval("s:vimim_shuangpin_" . shuangpin . "(rules)")
-""          let rules = s:vimim_get_shuangpin_rules(shuangpin, rules)
-""          let s:shuangpin.chinese = s:vimim_chinese(shuangpin)
-""          break
-""      endif
-""  endfor
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
     if s:vimim_shuangpin != 'abc'
         let s:shuangpin.chinese .= s:vimim_chinese('shuangpin')
@@ -2398,17 +2390,14 @@ function! s:vimim_get_shuangpin_rules(shuangpin, rules)
     let key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue '
     let key .= ' uan iu uai ong eng iang ui ai an ao iao ian uang '
     let v = ''  " various value to almost the same key set
-    if a:shuangpin == 'ms'
-        " test: vi=>zhi ii=>chi ui=>shi keng=>keneng
+    if a:shuangpin == 'ms'         " test: vi=>zhi ii=>chi ui=>shi
         let v = 'b z h f s w r g w x ; p o n t r q y s g d v l j k c m d y'
         call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
         let key .= 'v'  " microsoft shuangpin has one additional key
-    elseif a:shuangpin == 'abc'
-        " test: vtpc => shuang pin => double pinyin
+    elseif a:shuangpin == 'abc'    " test: vtpc => shuang pin => double pinyin
         let v = 'b q h f s d r g d x y n o c m p r c s g t m l j k z w t'
         call extend(rules[0], { "zh" : "a", "ch" : "e", "sh" : "v" })
-    elseif a:shuangpin == 'nature'
-        " test: 'woui' => wo shi => i am
+    elseif a:shuangpin == 'nature' " test: 'woui' => wo shi => i am
         let v = 'b z h f s w r g w x y p o n t r q y s g d v l j k c m d'
         call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
     elseif a:shuangpin == 'plusplus'
@@ -2424,51 +2413,6 @@ function! s:vimim_get_shuangpin_rules(shuangpin, rules)
     call extend(rules[1], s:vimim_key_value_hash(key, v))
     return rules
 endfunction
-
-"  function! s:vimim_shuangpin_ms(rule)
-"      " test: vi=>zhi ii=>chi ui=>shi keng=>keneng
-"      let value = 'b z h f s w r g w x ; p o n t r q y s g d v l j k c m d y'
-"      call extend(a:rule[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
-"      call extend(a:rule[1], s:vimim_key_value_hash(s:sp_key.'v', value))
-"      return a:rule
-"  endfunction
-"  
-"  function! s:vimim_shuangpin_abc(rule)
-"      " test: vtpc => shuang pin => double pinyin
-"      let value = 'b q h f s d r g d x y n o c m p r c s g t m l j k z w t'
-"      call extend(a:rule[0], { "zh" : "a", "ch" : "e", "sh" : "v" })
-"      call extend(a:rule[1], s:vimim_key_value_hash(s:sp_key, value))
-"      return a:rule
-"  endfunction
-"  
-"  function! s:vimim_shuangpin_nature(rule)
-"      " test: 'woui' => wo shi => i am
-"      let value = 'b z h f s w r g w x y p o n t r q y s g d v l j k c m d'
-"      call extend(a:rule[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
-"      call extend(a:rule[1], s:vimim_key_value_hash(s:sp_key, value))
-"      return a:rule
-"  endfunction
-"  
-"  function! s:vimim_shuangpin_plusplus(rule)
-"      let value = 'p w g r y b q t b m q z o l x c n x y t h v s f d k j h'
-"      call extend(a:rule[0], { "zh" : "v", "ch" : "u", "sh" : "i" })
-"      call extend(a:rule[1], s:vimim_key_value_hash(s:sp_key, value))
-"      return a:rule
-"  endfunction
-"  
-"  function! s:vimim_shuangpin_purple(rule)
-"      let value = 'z k s w h x j t x d ; m o y n l j y h t g n p r q b f g'
-"      call extend(a:rule[0], { "zh" : "u", "ch" : "a", "sh" : "i" })
-"      call extend(a:rule[1], s:vimim_key_value_hash(s:sp_key, value))
-"      return a:rule
-"  endfunction
-"  
-"  function! s:vimim_shuangpin_flypy(rule)
-"      let value = 'z w h f s x r g x p k y o b t r q k s g l v d j c n m l'
-"      call extend(a:rule[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
-"      call extend(a:rule[1], s:vimim_key_value_hash(s:sp_key, value))
-"      return a:rule
-"  endfunction
 
 " ============================================= }}}
 let s:VimIM += [" ====  python           ==== {{{"]
