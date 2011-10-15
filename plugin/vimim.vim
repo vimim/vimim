@@ -1606,6 +1606,12 @@ function! s:translators.translate(english) dict
 endfunction
 
 function! s:vimim_imode_today_now(keyboard)
+    let single  = " year sunday monday tuesday wednesday thursday"
+    let single .= " friday saturday month day hour minute second"
+    let double  = join(split("年 日 一 二 三 四 五 六"), " 星期")
+    let double .= " 月 日 时 分 秒"
+    let chinese = copy(s:translators)
+    let chinese.dict = s:vimim_single_double_hash(single, double)
     let time  = strftime("%Y") . ' year  '
     let time .= strftime("%m") . ' month '
     let time .= strftime("%d") . ' day   '
@@ -1616,15 +1622,8 @@ function! s:vimim_imode_today_now(keyboard)
         let time .= strftime("%M") . ' minute '
         let time .= strftime("%S") . ' second '
     endif
-    let results = split(time)
     let filter = "substitute(" . 'v:val' . ",'^0','','')"
-    let single  = " sunday monday tuesday wednesday thursday friday"
-    let single .= " saturday year month day hour minute second"
-    let double  = " 星期日 星期一 星期二 星期三 星期四 星期五"
-    let double .= " 星期六 年 月 日 时 分 秒"
-    let chinese = copy(s:translators)
-    let chinese.dict = s:vimim_single_double_hash(single, double)
-    return chinese.translate(join(map(results, filter)))
+    return chinese.translate(join(map(split(time), filter)))
 endfunction
 
 function! s:vimim_imode_number(keyboard)
