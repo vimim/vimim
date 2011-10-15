@@ -1029,7 +1029,7 @@ function! <SID>vimim_esc()
         if has("gui_running") && has("win32")
             let @+ = @0[:-2] " copy to clipboard and display
         endif
-        let key .= ':echo @0[:-2][:50]\<CR>'
+        let key .= ':echo @0[:-2][:51]\<CR>'
         sil!call s:vimim_stop()
     elseif pumvisible()
         let key = '\<C-E>'   " <Esc> as one key correction
