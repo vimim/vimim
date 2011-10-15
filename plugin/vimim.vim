@@ -57,7 +57,7 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        :call s:vimim_omni_color()
+        call s:vimim_omni_color()
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab,search,gi'
     endif
@@ -2262,7 +2262,7 @@ let s:VimIM += [" ====  input: shuangpin ==== {{{"]
 
 function! s:vimim_set_shuangpin()
     if s:vimim_cloud =~ 'shuangpin' || s:ui.im == 'mycloud'
-    \|| !empty(s:shuangpin_table)   || empty(s:vimim_shuangpin)
+    \|| empty(s:vimim_shuangpin)    || !empty(s:shuangpin_table)
         return
     endif
     let rules = s:vimim_shuangpin_generic()
@@ -2390,14 +2390,14 @@ function! s:vimim_get_shuangpin_rules(shuangpin, rules)
     let key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue '
     let key .= ' uan iu uai ong eng iang ui ai an ao iao ian uang '
     let v = ''  " various value to almost the same key set
-    if a:shuangpin == 'ms'         " test: vi=>zhi ii=>chi ui=>shi
+    if a:shuangpin == 'ms'         " test: viui => zhishi
         let v = 'b z h f s w r g w x ; p o n t r q y s g d v l j k c m d y'
         call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
         let key .= 'v'  " microsoft shuangpin has one additional key
-    elseif a:shuangpin == 'abc'    " test: vtpc => shuang pin => double pinyin
+    elseif a:shuangpin == 'abc'    " test: vtpc => shuang pin
         let v = 'b q h f s d r g d x y n o c m p r c s g t m l j k z w t'
         call extend(rules[0], { "zh" : "a", "ch" : "e", "sh" : "v" })
-    elseif a:shuangpin == 'nature' " test: 'woui' => wo shi => i am
+    elseif a:shuangpin == 'nature' " test: woui => wo shi => i am
         let v = 'b z h f s w r g w x y p o n t r q y s g d v l j k c m d'
         call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
     elseif a:shuangpin == 'plusplus'
