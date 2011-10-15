@@ -556,13 +556,13 @@ function! s:vimim_dictionary_statusline()
     let double .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
     let double .= " 仓颉,倉頡 永码,永碼 吴语,吳語 极点,極點 双拼,雙拼"
     let double .= " 云,雲     小鹤,小鶴 联网,聯網 微软,微軟 "
-    call extend(s:title, s:vimim_single_double_hash(single, double))
+    call extend(s:title, s:vimim_key_value_hash(single, double))
     let single  = " pinyin fullwidth halfwidth english chinese purple"
     let single .= " plusplus quick wubihf wubi98 phonetic array30"
     let single .= " revision mass date google baidu sogou qq "
     let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 98"
     let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
-    call extend(s:title, s:vimim_single_double_hash(single, double))
+    call extend(s:title, s:vimim_key_value_hash(single, double))
 endfunction
 
 function! s:vimim_chinese(key)
@@ -769,10 +769,10 @@ function! s:vimim_dictionary_punctuations()
     let evil_punctuations['"'] = "“”"
     let single = "  , .  +  -  ~  ^    _    "
     let double = " ， 。 ＋ － ～ …… —— "
-    let mini_punctuations = s:vimim_single_double_hash(single, double)
+    let mini_punctuations = s:vimim_key_value_hash(single, double)
     let single = "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
     let double = "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
-    let most_punctuations = s:vimim_single_double_hash(single, double)
+    let most_punctuations = s:vimim_key_value_hash(single, double)
     call extend(s:punctuations, mini_punctuations)
     if s:vimim_punctuation > 1    " :let g:vimim_punctuation = 2
         call extend(s:punctuations, most_punctuations)
@@ -1611,7 +1611,7 @@ function! s:vimim_imode_today_now(keyboard)
     let double  = join(split("年 日 一 二 三 四 五 六"), " 星期")
     let double .= " 月 日 时 分 秒"
     let chinese = copy(s:translators)
-    let chinese.dict = s:vimim_single_double_hash(single, double)
+    let chinese.dict = s:vimim_key_value_hash(single, double)
     let time  = strftime("%Y") . ' year  '
     let time .= strftime("%m") . ' month '
     let time .= strftime("%d") . ' day   '
@@ -1748,7 +1748,7 @@ function! s:vimim_byte_before()
     return getline(".")[col(".")-2]
 endfunction
 
-function! s:vimim_single_double_hash(single, double)
+function! s:vimim_key_value_hash(single, double)
     let hash = {}
     let singles = split(a:single)
     let doubles = split(a:double)
@@ -2402,83 +2402,58 @@ endfunction
 
 function! s:vimim_shuangpin_abc(rule)
     " test: vtpc => shuang pin => double pinyin
-    call extend(a:rule[0],{ "zh" : "a", "ch" : "e", "sh" : "v" })
-    call extend(a:rule[1],{
-        \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
-        \"ong": "s", "ou" : "b",
-        \"en" : "f", "er" : "r", "ei" : "q", "eng": "g", "ng" : "g",
-        \"ia" : "d", "iu" : "r", "ie" : "x", "in" : "c", "ing": "y",
-        \"iao": "z", "ian": "w", "iang": "t", "iong" : "s",
-        \"un" : "n", "ua" : "d", "uo" : "o", "ue" : "m", "ui" : "m",
-        \"uai": "c", "uan": "p", "uang": "t" } )
+    let key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue uan'
+    let key .= ' iu uai ong eng iang ui ai an ao iao ian uang '
+    let value = 'b q h f s d r g d x y n o c m p r c s g t m l j k z w t'
+    call extend(a:rule[0], { "zh" : "a", "ch" : "e", "sh" : "v" })
+    call extend(a:rule[1], s:vimim_key_value_hash(key, value))
     return a:rule
 endfunction
 
 function! s:vimim_shuangpin_ms(rule)
     " test: vi=>zhi ii=>chi ui=>shi keng=>keneng
+    let key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue uan'
+    let key .= ' iu uai ong eng iang ui ai an ao iao v ian uang'
+    let value = 'b z h f s w r g w x ; p o n t r q y s g d v l j k c y m d'
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
-    call extend(a:rule[1],{
-        \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
-        \"ong": "s", "ou" : "b",
-        \"en" : "f", "er" : "r", "ei" : "z", "eng": "g", "ng" : "g",
-        \"ia" : "w", "iu" : "q", "ie" : "x", "in" : "n", "ing": ";",
-        \"iao": "c", "ian": "m", "iang" : "d", "iong" : "s",
-        \"un" : "p", "ua" : "w", "uo" : "o", "ue" : "t", "ui" : "v",
-        \"uai": "y", "uan": "r", "uang" : "d" ,
-        \"v"  : "y"} )
+    call extend(a:rule[1], s:vimim_key_value_hash(key, value))
     return a:rule
 endfunction
 
 function! s:vimim_shuangpin_nature(rule)
     " test: 'woui' => wo shi => i am
+    let key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue uan'
+    let key .= ' iu uai ong eng iang ui ai an ao iao ian uang '
+    let value = 'b z h f s w r g w x y p o n t r q y s g d v l j k c m d'
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
-    call extend(a:rule[1],{
-        \"an" : "j", "ao" : "k", "ai" : "l", "ang": "h",
-        \"ong": "s", "ou" : "b",
-        \"en" : "f", "er" : "r", "ei" : "z", "eng": "g", "ng" : "g",
-        \"ia" : "w", "iu" : "q", "ie" : "x", "in" : "n", "ing": "y",
-        \"iao": "c", "ian": "m", "iang" : "d", "iong" : "s",
-        \"un" : "p", "ua" : "w", "uo" : "o", "ue" : "t", "ui" : "v",
-        \"uai": "y", "uan": "r", "uang" : "d" } )
+    call extend(a:rule[1], s:vimim_key_value_hash(key, value))
     return a:rule
 endfunction
 
 function! s:vimim_shuangpin_plusplus(rule)
+    let key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue uan'
+    let key .= ' iu uai ong eng iang ui ai an ao iao ian uang'
+    let value = 'p w g r y b q t b m q z o l x c n x y t h v s f d k j h'
     call extend(a:rule[0],{ "zh" : "v", "ch" : "u", "sh" : "i" })
-    call extend(a:rule[1],{
-        \"an" : "f", "ao" : "d", "ai" : "s", "ang": "g",
-        \"ong": "y", "ou" : "p",
-        \"en" : "r", "er" : "q", "ei" : "w", "eng": "t", "ng" : "t",
-        \"ia" : "b", "iu" : "n", "ie" : "m", "in" : "l", "ing": "q",
-        \"iao": "k", "ian": "j", "iang" : "h", "iong" : "y",
-        \"un" : "z", "ua" : "b", "uo" : "o", "ue" : "x", "ui" : "v",
-        \"uai": "x", "uan": "c", "uang" : "h" } )
+    call extend(a:rule[1], s:vimim_key_value_hash(key, value))
     return a:rule
 endfunction
 
 function! s:vimim_shuangpin_purple(rule)
+    let key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue uan'
+    let key .= ' iu uai ong eng iang ui ai an ao iao ian uang '
+    let value = 'z k s w h x j t x d ; m o y n l j y h t g n p r q b f g'
     call extend(a:rule[0],{ "zh" : "u", "ch" : "a", "sh" : "i" })
-    call extend(a:rule[1],{
-        \"an" : "r", "ao" : "q", "ai" : "p", "ang": "s",
-        \"ong": "h", "ou" : "z",
-        \"en" : "w", "er" : "j", "ei" : "k", "eng": "t", "ng" : "t",
-        \"ia" : "x", "iu" : "j", "ie" : "d", "in" : "y", "ing": ";",
-        \"iao": "b", "ian": "f", "iang" : "g", "iong" : "h",
-        \"un" : "m", "ua" : "x", "uo" : "o", "ue" : "n", "ui" : "n",
-        \"uai": "y", "uan": "l", "uang" : "g"} )
+    call extend(a:rule[1], s:vimim_key_value_hash(key, value))
     return a:rule
 endfunction
 
 function! s:vimim_shuangpin_flypy(rule)
+    let key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue uan'
+    let key .= ' iu uai ong eng iang ui ai an ao iao ian uang'
+    let value = 'z w h f s x r g x p k y o b t r q k s g l v d j c n m l'
     call extend(a:rule[0],{ "zh" : "v", "ch" : "i", "sh" : "u" })
-    call extend(a:rule[1],{
-        \"an" : "j", "ao" : "c", "ai" : "d", "ang": "h",
-        \"ong": "s", "ou" : "z",
-        \"en" : "f", "er" : "r", "ei" : "w", "eng": "g", "ng" : "g",
-        \"ia" : "x", "iu" : "q", "ie" : "p", "in" : "b", "ing": "k",
-        \"iao": "n", "ian": "m", "iang" : "l", "iong" : "s",
-        \"un" : "y", "ua" : "x", "uo" : "o", "ue" : "t", "ui" : "v",
-        \"uai": "k", "uan": "r", "uang" : "l" } )
+    call extend(a:rule[1], s:vimim_key_value_hash(key, value))
     return a:rule
 endfunction
 
