@@ -2123,15 +2123,6 @@ return split(" 'a 'ai 'an 'ang 'ao ba bai ban bang bao bei ben beng bi
 \ zhua zhuai zhuan zhuang zhui zhun zhuo zi zong zou zu zuan zui zun zuo")
 endfunction
 
-function! s:vimim_get_pinyin_from_pinyin(keyboard)
-    let keyboard = s:vimim_quanpin_transform(a:keyboard)
-    let results = split(keyboard, "'")
-    if len(results) > 1
-        return results
-    endif
-    return []
-endfunction
-
 function! s:vimim_quanpin_transform(pinyin)
     if empty(s:quanpin_table)
         let s:quanpin_table = s:vimim_create_quanpin_table()
@@ -2210,6 +2201,36 @@ function! s:vimim_create_quanpin_table()
     return table
 endfunction
 
+function! s:vimim_more_pinyin_datafile(keyboard, sentence)
+    let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
+    if empty(candidates) || s:ui.im !~ 'pinyin'
+        return []
+    endif
+    let results = []
+    let lines = s:backend[s:ui.root][s:ui.im].lines
+    for candidate in candidates
+        let pattern = '^' . candidate . '\>'
+        let cursor = match(lines, pattern, 0)
+        if cursor < 0
+            continue
+        elseif a:sentence
+            return [candidate]
+        endif
+        let oneline = get(lines, cursor)
+        call extend(results, s:vimim_make_pairs(oneline))
+    endfor
+    return results
+endfunction
+
+function! s:vimim_get_pinyin_from_pinyin(keyboard)
+    let keyboard = s:vimim_quanpin_transform(a:keyboard)
+    let results = split(keyboard, "'")
+    if len(results) > 1
+        return results
+    endif
+    return []
+endfunction
+
 function! s:vimim_more_pinyin_candidates(keyboard)
     if empty(s:vimim_shuangpin) && empty(s:english.line)
         " [purpose] make standard layout for popup menu
@@ -2235,25 +2256,19 @@ function! s:vimim_more_pinyin_candidates(keyboard)
     return candidates
 endfunction
 
-function! s:vimim_more_pinyin_datafile(keyboard, sentence)
-    let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
-    if empty(candidates) || s:ui.im !~ 'pinyin'
-        return []
-    endif
-    let results = []
-    let lines = s:backend[s:ui.root][s:ui.im].lines
-    for candidate in candidates
-        let pattern = '^' . candidate . '\>'
-        let cursor = match(lines, pattern, 0)
-        if cursor < 0
-            continue
-        elseif a:sentence
-            return [candidate]
+function! s:vimim_cloud_pinyin(keyboard, match_list)
+    let match_list = []
+    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
+    for chinese in a:match_list
+        let len_chinese = len(split(chinese,'\zs'))
+        let english = join(keyboards[len_chinese :], "")
+        let yin_yang = chinese
+        if !empty(english)
+            let yin_yang .= english
         endif
-        let oneline = get(lines, cursor)
-        call extend(results, s:vimim_make_pairs(oneline))
+        call add(match_list, yin_yang)
     endfor
-    return results
+    return match_list
 endfunction
 
 " ============================================= }}}
@@ -3104,21 +3119,6 @@ function! s:vimim_get_cloud_google(keyboard)
     return s:vimim_cloud_pinyin(a:keyboard, match_list)
 endfunction
 
-function! s:vimim_cloud_pinyin(keyboard, match_list)
-    let match_list = []
-    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
-    for chinese in a:match_list
-        let len_chinese = len(split(chinese,'\zs'))
-        let english = join(keyboards[len_chinese :], "")
-        let yin_yang = chinese
-        if !empty(english)
-            let yin_yang .= english
-        endif
-        call add(match_list, yin_yang)
-    endfor
-    return match_list
-endfunction
-
 function! s:vimim_get_cloud_baidu(keyboard)
     " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
     let input  = 'http://olime.baidu.com/py'
@@ -3218,22 +3218,18 @@ function! s:vimim_access_mycloud(cloud, cmd)
     " same function to access mycloud by libcall() or system()
     let ret = ""
     if s:mycloud_mode == "libcall"
-        let arg = s:mycloud_arg
-        if empty(arg)
-            let ret = libcall(a:cloud, s:mycloud_func, a:cmd)
-        else
-            let ret = libcall(a:cloud, s:mycloud_func, arg." ".a:cmd)
-        endif
+        let cmd = empty(s:mycloud_arg) ? a:cmd : s:mycloud_arg." ".a:cmd
+        let ret = libcall(a:cloud, s:mycloud_func, cmd)
     elseif s:mycloud_mode == "python"
         let ret = s:vimim_mycloud_python_client(a:cmd)
     elseif s:mycloud_mode == "system"
         let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:mycloud_mode == "www"
-        let input = s:vimim_rot13(a:cmd)
+        let input = a:cloud . s:vimim_rot13(a:cmd)
         if s:http_exe =~ 'libvimim'
-            let ret = libcall(s:http_exe, "do_geturl", a:cloud.input)
+            let ret = libcall(s:http_exe, "do_geturl", input)
         elseif len(s:http_exe)
-            let ret = system(s:http_exe . shellescape(a:cloud.input))
+            let ret = system(s:http_exe . shellescape(input))
         endif
         if len(ret)
             let output = s:vimim_rot13(ret)
@@ -3352,8 +3348,7 @@ function! s:vimim_check_mycloud_plugin_url()
         if lenpart >= base+4
             let s:mycloud_func = part[base+3]
         endif
-        " provide argument
-        let s:mycloud_arg = ""
+        let s:mycloud_arg = ""  " provide argument
         if lenpart >= base+3
             let s:mycloud_arg = part[base+2]
         endif
