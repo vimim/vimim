@@ -8,7 +8,6 @@ let s:url  = ' http://vim.sf.net/scripts/script.php?script_id=2506'
 let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
 let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.html'
 let s:url .= ' http://code.google.com/p/vimim/source/list'
-let s:url .= ' http://groups.google.com/group/vimim'
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
@@ -3867,7 +3866,6 @@ function! s:vimim_egg_vimimhelp()
     call add(eggs, "最新程式： " . get(split(s:url),1))
     call add(eggs, "最新主页： " . get(split(s:url),2))
     call add(eggs, "错误报告： " . get(split(s:url),3))
-    call add(eggs, "新闻论坛： " . get(split(s:url),4))
     return map(eggs, 'v:val .  " "')
 endfunction
 
