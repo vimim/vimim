@@ -88,7 +88,6 @@ function! s:vimim_initialize_global()
     let s:cursor_at_menuless = 0
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
-    let s:shuangpin = {}
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
     let s:abcd = split("'abcdvfgxz",'\zs')
@@ -126,18 +125,6 @@ function! s:vimim_debug(...)
         sil!echo string(a:1)
     endif
     sil!echo "::::::::::::::::::::::::\n"
-endfunction
-
-function! s:vimim_backend_hash()
-    let backends = {}
-    let backends.root = ''
-    let backends.im = ''
-    let backends.name = ''
-    let backends.chinese = ''
-    let backends.directory = ''
-    let backends.lines = []
-    let backends.keycode = "[0-9a-z]"
-    return backends
 endfunction
 
 function! s:vimim_dictionary_keycodes()
@@ -178,8 +165,11 @@ function! s:vimim_set_keycode()
     if !empty(s:ui.root)
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
     endif
-    if len(s:vimim_shuangpin) && len(s:shuangpin)
-        let keycode = s:shuangpin.keycode
+    if len(s:vimim_shuangpin)
+        let keycode = "[0-9a-z']"
+        if s:vimim_shuangpin == 'ms' || s:vimim_shuangpin == 'purple'
+            let keycode = "[0-9a-z';]"
+        endif
     endif
     let i = 0
     let keycode_string = ""
@@ -617,8 +607,12 @@ function! s:vimim_get_title()
             endif
         endif
     endif
-    if len(s:vimim_shuangpin) && len(s:shuangpin)
-        let statusline = s:space . s:shuangpin.chinese
+    if len(s:vimim_shuangpin)
+        let shuangpin = s:vimim_chinese(s:vimim_shuangpin)
+        if s:vimim_shuangpin !~ 'abc'
+            let shuangpin .= s:vimim_chinese('shuangpin')
+        endif
+        let statusline = s:space . shuangpin
     endif
     return statusline . s:space
 endfunction
@@ -1790,7 +1784,7 @@ function! s:vimim_get_cjk_head(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:imode_pinyin && empty(s:english.line) 
+    elseif s:imode_pinyin && empty(s:english.line)
         " muuqwxeyqpjeqqq => m7712x3610j3111   " awwwr arrow color
         if keyboard =~# '^\l' && len(keyboard)%5 < 1
             let llll = keyboard[1:4]
@@ -2228,20 +2222,12 @@ let s:VimIM += [" ====  input: shuangpin ==== {{{"]
 
 function! s:vimim_set_shuangpin()
     if s:vimim_cloud =~ 'shuangpin' || s:ui.im == 'mycloud'
-    \|| empty(s:vimim_shuangpin)    || !empty(s:shuangpin_table)
+    \|| empty(s:vimim_shuangpin) || !empty(s:shuangpin_table)
         return
     endif
     let rules = s:vimim_shuangpin_generic()
     let rules = s:vimim_get_shuangpin_rules(s:vimim_shuangpin, rules)
-    let s:shuangpin.chinese = s:vimim_chinese(s:vimim_shuangpin)
     let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
-    if s:vimim_shuangpin != 'abc'
-        let s:shuangpin.chinese .= s:vimim_chinese('shuangpin')
-    endif
-    let s:shuangpin.keycode = "[0-9a-z']"
-    if s:vimim_shuangpin == 'ms' || s:vimim_shuangpin == 'purple'
-        let s:shuangpin.keycode = "[0-9a-z';]"
-    endif
 endfunction
 
 function! s:vimim_shuangpin_transform(keyboard)
@@ -2740,8 +2726,8 @@ function! s:vimim_set_directory(im, dir)
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
     let s:backend.directory[im] = s:vimim_backend_hash()
     let s:backend.directory[im].root = s:ui.root
-    let s:backend.directory[im].name = a:dir
     let s:backend.directory[im].im = im
+    let s:backend.directory[im].name = a:dir
     let s:backend.directory[im].keycode = s:im_keycode[im]
     let s:backend.directory[im].chinese = s:vimim_chinese(im)
 endfunction
@@ -3547,6 +3533,18 @@ function! s:vimim_set_backend_embedded()
             call s:vimim_set_datafile(im, datafile)
         endif
     endfor
+endfunction
+
+function! s:vimim_backend_hash()
+    let backends = {}
+    let backends.lines = []
+    let backends.im = ''
+    let backends.root = ''
+    let backends.name = ''
+    let backends.chinese = ''
+    let backends.keycode = ''
+    let backends.directory = ''
+    return backends
 endfunction
 
 " ============================================= }}}
