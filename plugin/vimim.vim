@@ -1,4 +1,4 @@
-﻿" ===========================================================
+" ===========================================================
 "                   VimIM —— Vim 中文輸入法
 " ===========================================================
 let s:egg  = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
@@ -3166,6 +3166,14 @@ function! s:vimim_access_mycloud(cloud, cmd)
     return ret
 endfunction
 
+function! s:vimim_access_mycloud_isvalid(cloud)
+    let ret = s:vimim_access_mycloud(a:cloud, "__isvalid")
+    if split(ret, "\t")[0] == "True"
+        return 1
+    endif
+    return 0
+endfunction
+
 function! s:vimim_get_libvimim()
     let libvimim = ""
     if has("win32") || has("win32unix")
@@ -3191,8 +3199,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
         let s:mycloud_arg = ""
         let s:mycloud_mode = "libcall"
         let s:mycloud_func = 'do_getlocal'
-        let ret = s:vimim_access_mycloud(cloud, "__isvalid")
-        if split(ret, "\t")[0] == "True"
+        if s:vimim_access_mycloud_isvalid(cloud)
             return cloud
         endif
     endif
@@ -3210,8 +3217,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
     endif
     " in POSIX system, we can use system() for mycloud
     let s:mycloud_mode = "system"
-    let ret = s:vimim_access_mycloud(cloud, "__isvalid")
-    if split(ret, "\t")[0] == "True"
+    if s:vimim_access_mycloud_isvalid(cloud)
         return cloud
     endif
     return 0
@@ -3227,10 +3233,9 @@ function! s:vimim_check_mycloud_plugin_url()
         if !has("gui_win32")
             " strip the first root if contains ":"
             if lenpart == 3
+                let cloud = part[1] . ':' . part[2]
                 if part[1][0] == '/'
-                    let cloud = part[1][1:] . ':' .  part[2]
-                else
-                    let cloud = part[1] . ':' . part[2]
+                    let cloud = part[1][1:] . ':' . part[2]
                 endif
             elseif lenpart == 2
                 let cloud = part[1]
@@ -3238,8 +3243,7 @@ function! s:vimim_check_mycloud_plugin_url()
             " in POSIX system, we can use system() for mycloud
             if executable(split(cloud, " ")[0])
                 let s:mycloud_mode = "system"
-                let ret = s:vimim_access_mycloud(cloud, "__isvalid")
-                if split(ret, "\t")[0] == "True"
+                if s:vimim_access_mycloud_isvalid(cloud)
                     return cloud
                 endif
             endif
@@ -3256,9 +3260,7 @@ function! s:vimim_check_mycloud_plugin_url()
             try
                 call s:vimim_mycloud_python_init()
                 let s:mycloud_mode = "python"
-                let cloud = part[1]
-                let ret = s:vimim_access_mycloud(cloud, "__isvalid")
-                if split(ret, "\t")[0] == "True"
+                if s:vimim_access_mycloud_isvalid(part[1])
                     return "python"
                 endif
             catch
@@ -3290,23 +3292,14 @@ function! s:vimim_check_mycloud_plugin_url()
             if has("win32") && cloud[-4:] ==? ".dll"
                 let cloud = cloud[:-5]
             endif
-            try
-                let ret = s:vimim_access_mycloud(cloud, "__isvalid")
-                if split(ret, "\t")[0] == "True"
-                    return cloud
-                endif
-            catch
-                sil!call s:vimim_debug('libcall_mycloud', v:exception)
-            endtry
+            if s:vimim_access_mycloud_isvalid(cloud)
+                return cloud
+            endif
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
-        if empty(s:vimim_check_http_executable())
-            return 0
-        endif
-        if !empty(s:http_exe)
+        if !empty(s:vimim_check_http_executable()) && !empty(s:http_exe)
             let s:mycloud_mode = "www"
-            let ret = s:vimim_access_mycloud(s:vimim_mycloud, "__isvalid")
-            if split(ret, "\t")[0] == "True"
+            if s:vimim_access_mycloud_isvalid(s:vimim_mycloud)
                 return s:vimim_mycloud
             endif
         endif
