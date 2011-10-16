@@ -1029,7 +1029,7 @@ function! <SID>vimim_esc()
         if has("gui_running") && has("win32")
             let @+ = @0[:-2] " copy to clipboard and display
         endif
-        let key .= ':echo @0[:-2][:51]\<CR>'
+        let key .= ':echo @0[:-2][:60]\<CR>'
         sil!call s:vimim_stop()
     elseif pumvisible()
         let key = '\<C-E>'   " <Esc> as one key correction
@@ -3799,7 +3799,7 @@ function! s:vimim_popupmenu_list(lines)
             let &titlestring = vimim . join(one_list)
             let &pumheight = 1
             call s:vimim_set_titlestring(1)
-            Debug s:match_list[:2]
+            Debug s:match_list[:4]
         elseif s:touch_me_not
             let &titlestring = s:logo . s:today
         endif
