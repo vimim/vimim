@@ -94,7 +94,7 @@ function! s:vimim_initialize_global()
     let s:qwer = split("pqwertyuio",'\zs')
     let s:az_list = map(range(97,122),"nr2char(".'v:val'.")")
     let s:valid_keys = s:az_list
-    let s:valid_keyboard = ""
+    let s:valid_keyboard = "[0-9a-z']"
     let s:starts = { 'row' : 0, 'column' : 1 }
     let s:pumheights = { 'current' : 10, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
@@ -3851,10 +3851,10 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 function! s:vimim_egg_vimimhelp()
     let eggs = s:vimim_egg_vim() + ['']
     call add(eggs, "官址："    . get(split(s:url),0))
-    call add(eggs, '热键：　gi　 (Vim normal mode) 无菜单窗输入')
-    call add(eggs, '热键：　n 　 (Vim normal mode) 无菜单窗搜索')
-    call add(eggs, '热键：ctrl+6 (Vim insert mode) 点石成金')
-    call add(eggs, '热键：ctrl+\ (Vim insert mode) 中文动态')
+    call add(eggs, '热键：　gi　 (vim normal mode) 无菜单窗输入')
+    call add(eggs, '热键：　n 　 (vim normal mode) 无菜单窗搜索')
+    call add(eggs, '热键：ctrl+6 (vim insert mode) 点石成金')
+    call add(eggs, '热键：ctrl+\ (vim insert mode) 中文动态')
     call add(eggs, "程式："    . get(split(s:url),1))
     return map(eggs + [''] + s:vimim_egg_vimimrc(), 'v:val .  " "')
 endfunction
@@ -3898,7 +3898,6 @@ sil!call s:vimim_super_reset()
 sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_backend_mycloud()
-sil!call s:vimim_set_keycode()
 sil!call s:vimim_map_plug_and_play()
 " ============================================= }}}
 :redir @p
