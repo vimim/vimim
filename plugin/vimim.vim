@@ -134,7 +134,7 @@ function! s:vimim_debug(...)
     sil!echo "::::::::::::::::::::::::\n"
 endfunction
 
-function! s:vimim_one_backend_hash()
+function! s:vimim_backend_hash()
     let backends = {}
     let backends.root = ''
     let backends.im = ''
@@ -715,7 +715,7 @@ endfunction
 function! s:vimim_punctuations_maps()
     for _ in keys(s:punctuations) + [";", "'"]
         silent!exe 'inoremap <silent> <expr> '    ._.
-        \ ' <SID>vimim_chinese_punctuation_map("'._.'")'
+        \ ' <SID>vimim_punctuation_map("'._.'")'
     endfor
     if !empty(s:evils)
         inoremap    '     <C-R>=<SID>vimim_get_single_quote()<CR>
@@ -724,7 +724,7 @@ function! s:vimim_punctuations_maps()
     endif
 endfunction
 
-function! <SID>vimim_chinese_punctuation_map(key)
+function! <SID>vimim_punctuation_map(key)
     let key = a:key
     if s:toggle_punctuation
         if pumvisible() || s:vimim_byte_before() !~ '\w'
@@ -890,7 +890,7 @@ function! <SID>vimim_page_map(key)
             endif
         endif
     elseif empty(s:onekey) && s:toggle_punctuation && key =~ "[][=-]"
-        let key = <SID>vimim_chinese_punctuation_map(key)
+        let key = <SID>vimim_punctuation_map(key)
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1057,7 +1057,7 @@ function! <SID>vimim_onekey(tab)
     if s:onekey
         if pumvisible()
             if empty(&pumheight)
-                let onekey = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+                let onekey = '\<C-R>=g:vimim_screenshot()\<CR>'
             else
                 let s:windowless = empty(a:tab) ? 1 : a:tab
                 let onekey = '\<C-Y>'
@@ -1151,7 +1151,7 @@ function! s:vimim_onekey_evils()
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! g:vimim_onekey_dump()
+function! g:vimim_screenshot()
     let saved_position = getpos(".")
     let keyboard = get(split(s:keyboard),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
@@ -1195,7 +1195,7 @@ function! <SID>vimim_onekey_hjkl_map(key)
         elseif key ==# 's' | let s:hjkl__ += 1   " s/t transfer
         elseif key ==# ';'                       " dump omni popup
             let s:popup_list = s:popup_list[:&pumheight-1]
-            let key = '\<C-R>=g:vimim_onekey_dump()\<CR>'
+            let key = '\<C-R>=g:vimim_screenshot()\<CR>'
         elseif key =~ "[/?]"
             let key = '\<C-Y>\<C-R>=g:vimim_slash()\<CR>' . key . '\<CR>'
         elseif match(s:qwer, key) > -1
@@ -2609,7 +2609,7 @@ function! s:vimim_set_datafile(im, datafile)
     let s:ui.root = "datafile"
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-    let s:backend.datafile[im] = s:vimim_one_backend_hash()
+    let s:backend.datafile[im] = s:vimim_backend_hash()
     let s:backend.datafile[im].root = s:ui.root
     let s:backend.datafile[im].im = im
     let s:backend.datafile[im].name = datafile
@@ -2741,7 +2741,7 @@ function! s:vimim_set_directory(im, dir)
     let s:ui.root = "directory"
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-    let s:backend.directory[im] = s:vimim_one_backend_hash()
+    let s:backend.directory[im] = s:vimim_backend_hash()
     let s:backend.directory[im].root = s:ui.root
     let s:backend.directory[im].name = a:dir
     let s:backend.directory[im].im = im
@@ -2818,7 +2818,7 @@ function! s:vimim_set_background_clouds()
         let im = get(split(cloud,'[.]'),0)
         let s:ui.im = im
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-        let s:backend.cloud[im] = s:vimim_one_backend_hash()
+        let s:backend.cloud[im] = s:vimim_backend_hash()
         let s:backend.cloud[im].root = s:ui.root
         let s:backend.cloud[im].im = 0  " used for cloud key
         let s:backend.cloud[im].keycode = s:im_keycode[im]
@@ -3126,7 +3126,7 @@ function! s:vimim_set_backend_mycloud()
         let s:ui.root = 'cloud'
         let s:ui.im = 'mycloud'
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-        let s:backend.cloud.mycloud = s:vimim_one_backend_hash()
+        let s:backend.cloud.mycloud = s:vimim_backend_hash()
         let s:backend.cloud.mycloud.root = s:ui.root
         let s:backend.cloud.mycloud.im = mycloud
         let s:backend.cloud.mycloud.name    = s:vimim_chinese(s:ui.im)
