@@ -64,24 +64,8 @@ function! s:vimim_initialize_global()
     let s:colon = '：'
     let s:logo = "VimIM　中文輸入法"
     let s:today = s:vimim_imode_today_now('itoday')
-    let s:rc = {}
-    let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
-    let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
-    let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
-    let s:rc["g:vimim_chinese_input_mode"] = 'dynamic'
-    let s:rc["g:vimim_plugin"] = s:plugin
-    let s:rc["g:vimim_punctuation"] = 1
-    let s:rc["g:vimim_toggle_list"] = 0
-    let s:rc["g:vimim_mycloud"] = 0
-    call s:vimim_set_global_default()
-    if isdirectory(s:vimim_plugin)
-        let s:plugin = s:vimim_plugin
-    endif
-    if s:plugin[-1:] != "/"
-        let s:plugin .= "/"
-    endif
-    let s:localization = &encoding =~ "utf-8" ? 0 : 2
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
+    let s:localization = &encoding =~ "utf-8" ? 0 : 2
     let s:chinese_mode = 'onekey'
     let s:toggle_punctuation = 1
     let s:toggle_im = 0
@@ -98,9 +82,24 @@ function! s:vimim_initialize_global()
     let s:starts = { 'row' : 0, 'column' : 1 }
     let s:pumheights = { 'current' : 10, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
-    let s:backend = { 'cloud':{}, 'datafile':{}, 'directory':{}  }
-    let s:ui = { 'root':'', 'im':'', 'has_dot':0, 'frontends':[] }
+    let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {}  }
+    let s:ui = { 'root' : '', 'im' : '', 'has_dot' : 0, 'frontends' : [] }
     let s:shengmu_list = split('b p m f d t l n g k h j q x r z c s y w')
+    let s:rc = { "g:vimim_chinese_input_mode" : 'dynamic' }
+    let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
+    let s:rc["g:vimim_punctuation"] = 1
+    let s:rc["g:vimim_toggle_list"] = 0
+    let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
+    let s:rc["g:vimim_plugin"] = s:plugin
+    let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
+    let s:rc["g:vimim_mycloud"] = 0
+    call s:vimim_set_global_default()
+    if isdirectory(s:vimim_plugin)
+        let s:plugin = s:vimim_plugin
+    endif
+    if s:plugin[-1:] != "/"
+        let s:plugin .= "/"
+    endif
     let s:english = { 'lines' : [], 'line' : "" }
     let s:english.filename = s:vimim_filereadable("vimim.txt")
     let s:cjk = { 'lines' : [] }
@@ -182,7 +181,6 @@ function! s:vimim_set_keycode()
     endwhile
     let s:valid_keyboard  = copy(keycode)
     let s:valid_keys = split(keycode_string, '\zs')
-    endif
 endfunction
 
 function! s:vimim_set_global_default()
