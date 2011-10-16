@@ -3159,7 +3159,6 @@ function! s:vimim_get_libvimim()
     endif
     let libvimim = s:plugin . libvimim
     if filereadable(libvimim)
-        " in win32, strip the .dll suffix
         if has("win32") && libvimim[-4:] ==? ".dll"
             let libvimim = libvimim[:-5]
         endif
@@ -3345,7 +3344,7 @@ function! g:vimim_search_next()
     let v:errmsg = ""
 endfunction
 
-func! s:vimim_sort_on_length(i1, i2)
+function! s:vimim_sort_on_length(i1, i2)
     return len(a:i2) - len(a:i1)
 endfunc
 
@@ -3364,9 +3363,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     " 2/3 search unicode or cjk /search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd) && s:vimim_cjk()
-        " /muuqwxeyqpjeqqq  =>  shortcut   /search
-        " /m7712x3610j3111  =>  standard   /search
-        " /ma77xia36ji31    =>  free style /search
+        " /muuqwxeyqpjeqqq /m7712x3610j3111 /ma77xia36ji31    
         while len(keyboard) > 1
             let head = s:vimim_get_cjk_head(keyboard)
             if empty(head)
@@ -3403,8 +3400,10 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 
 function! s:vimim_set_vimrc()
     set title imdisable noshowmatch
-    set shellslash nolazyredraw
-    set whichwrap=<,> complete=.
+    set shellslash
+    set nolazyredraw
+    set whichwrap=<,>
+    set complete=.
     set completeopt=menuone
     set omnifunc=VimIM
 endfunction
@@ -3843,7 +3842,7 @@ function! s:vimim_egg_vimimhelp()
     return map(eggs + [''] + s:vimim_egg_vimimrc(), 'v:val .  " "')
 endfunction
 
-function! s:vimim_map_plug_and_play()
+function! s:vimim_plug_and_play()
     if s:vimim_map =~ 'ctrl_6'
             inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
             imap<silent><C-^>     <Plug>VimimOneKey
@@ -3882,7 +3881,7 @@ sil!call s:vimim_super_reset()
 sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_backend_mycloud()
-sil!call s:vimim_map_plug_and_play()
+sil!call s:vimim_plug_and_play()
 " ============================================= }}}
 :redir @p
 Debug s:vimim_egg_vimim()
