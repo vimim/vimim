@@ -1793,11 +1793,9 @@ function! s:vimim_get_cjk_head(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:imode_pinyin && empty(s:english.line)
-        " muuqwxeyqpjeqqq => m7712x3610j3111   " todo a2224 awwwr
+    elseif s:imode_pinyin && empty(s:english.line) 
+        " muuqwxeyqpjeqqq => m7712x3610j3111   " awwwr arrow color
         if keyboard =~# '^\l' && len(keyboard)%5 < 1
-        \&& match(s:shengmu_list, keyboard[0:0]) > -1
-        \&& keyboard[1:4] !~ '[^pqwertyuio]'
             let llll = keyboard[1:4]
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
             if !empty(dddd)
