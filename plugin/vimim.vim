@@ -3855,12 +3855,12 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 
 function! s:vimim_egg_vimimhelp()
     let eggs = s:vimim_egg_vim() + ['']
-    call add(eggs, "官方网址：" .    get(split(s:url),0))
-    call add(eggs, '默认热键：　gi　 （Vim正常模式）无菜单窗中文输入')
-    call add(eggs, '默认热键：　n 　 （Vim正常模式）无菜单窗中文搜索')
-    call add(eggs, '默认热键：ctrl+6 （Vim插入模式）点石成金')
-    call add(eggs, '默认热键：ctrl+\ （Vim插入模式）中文动态')
-    call add(eggs, "最新程式：" .    get(split(s:url),1))
+    call add(eggs, "官址："    . get(split(s:url),0))
+    call add(eggs, '热键：　gi　 (Vim normal mode) 无菜单窗输入')
+    call add(eggs, '热键：　n 　 (Vim normal mode) 无菜单窗搜索')
+    call add(eggs, '热键：ctrl+6 (Vim insert mode) 点石成金')
+    call add(eggs, '热键：ctrl+\ (Vim insert mode) 中文动态')
+    call add(eggs, "程式："    . get(split(s:url),1))
     return map(eggs + [''] + s:vimim_egg_vimimrc(), 'v:val .  " "')
 endfunction
 
