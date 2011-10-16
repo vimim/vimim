@@ -1794,7 +1794,7 @@ function! s:vimim_get_cjk_head(keyboard)
             let head = s:vimim_get_head(keyboard, partition)
         endif
     elseif s:imode_pinyin && empty(s:english.line)
-        " muuqwxeyqpjeqqq => m7712x3610j3111
+        " muuqwxeyqpjeqqq => m7712x3610j3111   " todo a2224 awwwr
         if keyboard =~# '^\l' && len(keyboard)%5 < 1
         \&& match(s:shengmu_list, keyboard[0:0]) > -1
         \&& keyboard[1:4] !~ '[^pqwertyuio]'
@@ -3393,21 +3393,23 @@ function! s:vimim_search_chinese_by_english(keyboard)
     endif
     " 2/3 search unicode or cjk /search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if empty(ddddd) && s:vimim_cjk() " /m7712x3610j3111 /muuqwxeyqpjeqqq
-        let keyboards = s:vimim_cjk_slash_search_block(keyboard)
-        if len(keyboards)
-            for keyboard in keyboards
-                let chars = s:vimim_cjk_match(keyboard)
-                if len(keyboards) == 1
-                    let results = copy(chars)
-                elseif len(chars)
-                    let collection = "[" . join(chars,'') . "]"
-                    call add(results, collection)
-                endif
-            endfor
-            if len(keyboards) > 1
-                let results = [join(results,'')]
+    if empty(ddddd) && s:vimim_cjk()
+        " /muuqwxeyqpjeqqq  =>  shortcut   /search
+        " /m7712x3610j3111  =>  standard   /search
+        " /ma77xia36ji31    =>  free style /search
+        while len(keyboard) > 1
+            let head = s:vimim_get_cjk_head(keyboard)
+            if empty(head)
+                break
+            else
+                let chars = s:vimim_cjk_match(head)
+                let collection = "[" . join(chars,'') . "]"
+                call add(results, collection)
+                let keyboard = strpart(keyboard,len(head))
             endif
+        endwhile
+        if len(results) > 1
+            let results = [join(results,'')]
         endif
     else
         let results = [nr2char(ddddd)]
@@ -3422,24 +3424,6 @@ function! s:vimim_search_chinese_by_english(keyboard)
     else
         let results = split(s:english.line)
     endif
-    return results
-endfunction
-
-function! s:vimim_cjk_slash_search_block(keyboard)
-    " /muuqwxeyqpjeqqq  =>  shortcut   /search
-    " /m7712x3610j3111  =>  standard   /search
-    " /ma77xia36ji31    =>  free style /search
-    let results = []
-    let keyboard = a:keyboard
-    while len(keyboard) > 1
-        let head = s:vimim_get_cjk_head(keyboard)
-        if empty(head)
-            break
-        else
-            call add(results, head)
-            let keyboard = strpart(keyboard,len(head))
-        endif
-    endwhile
     return results
 endfunction
 
