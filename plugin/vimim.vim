@@ -1027,12 +1027,15 @@ function! <SID>vimim_esc()
     if s:onekey
         :y
         if has("gui_running") && has("win32")
-            let @+ = @0[:-2] " copy to clipboard and display
+            sil!let @+ = @0[:-2] " copy to clipboard and display
         endif
-        let key .= ':echo @0[:-2][:60]\<CR>'
+        if &columns > 60
+            let echo = join(split(@0[:-2],'\zs')[:&columns/2/2],"")
+            let key .= ":echo " . string(echo) . "\<CR>"
+        endif
         sil!call s:vimim_stop()
     elseif pumvisible()
-        let key = '\<C-E>'   " <Esc> as one key correction
+        let key = '\<C-E>'   " use <Esc> as one key correction
         let range = col(".") - 1 - s:starts.column
         if range
             let key .= repeat("\<Left>\<Delete>", range)
@@ -3470,11 +3473,11 @@ function! s:vimim_start()
     sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_common_maps()
-    inoremap <expr> <Esc>   <SID>vimim_esc()
-    inoremap <expr> <Space> <SID>vimim_space()
-    inoremap <expr> <BS>    <SID>vimim_backspace()
-    inoremap <expr> <CR>    <SID>vimim_enter()
-    inoremap <expr> <C-H>   <SID>vimim_rotation()
+    inoremap <silent> <expr> <Esc>   <SID>vimim_esc()
+    inoremap <silent> <expr> <Space> <SID>vimim_space()
+    inoremap <silent> <expr> <BS>    <SID>vimim_backspace()
+    inoremap <silent> <expr> <CR>    <SID>vimim_enter()
+    inoremap <silent> <expr> <C-H>   <SID>vimim_rotation()
 endfunction
 
 function! s:vimim_stop()
