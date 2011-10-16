@@ -101,14 +101,11 @@ function! s:vimim_initialize_global()
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'cloud':{}, 'datafile':{}, 'directory':{}  }
     let s:ui = { 'root':'', 'im':'', 'has_dot':0, 'frontends':[] }
-    let s:cjk = {}
-    let s:cjk.lines = []
-    let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
-    let s:english = {}
-    let s:english.lines = []
-    let s:english.line = ""
-    let s:english.filename = s:vimim_filereadable("vimim.txt")
     let s:shengmu_list = split('b p m f d t l n g k h j q x r z c s y w')
+    let s:english = { 'lines' : [], 'line' : "" }
+    let s:english.filename = s:vimim_filereadable("vimim.txt")
+    let s:cjk = { 'lines' : [] }
+    let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
 endfunction
 
 function! s:vimim_debug(...)
