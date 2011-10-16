@@ -182,10 +182,6 @@ function! s:vimim_set_keycode()
     endwhile
     let s:valid_keyboard  = copy(keycode)
     let s:valid_keys = split(keycode_string, '\zs')
-    let s:imode_pinyin = 0
-    if s:ui.im =~ 'pinyin'  || s:ui.root == 'cloud'
-    \|| len(s:cjk.filename) || s:vimim_shuangpin == 'abc'
-        let s:imode_pinyin = 1
     endif
 endfunction
 
@@ -1210,8 +1206,11 @@ function! s:vimim_onekey_engine(keyboard)
         let results = s:vimim_unicode_list(ddddd)
     elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
         let results = [s:vimim_imode_today_now(keyboard)]
-    elseif s:imode_pinyin && keyboard =~# '^i' && keyboard =~ '\d'
-        let results = s:vimim_imode_number(keyboard)
+    elseif keyboard =~# '^i' && keyboard =~ '\d'
+        if s:ui.im =~ 'pinyin'  || s:ui.root == 'cloud'
+        \|| len(s:cjk.filename) || s:vimim_shuangpin == 'abc'
+            let results = s:vimim_imode_number(keyboard)
+        endif
     endif
     if empty(results)
         " [quote] (2/2) quote_by_quote: wo'you'yi'ge'meng
@@ -1784,12 +1783,11 @@ function! s:vimim_get_cjk_head(keyboard)
             endwhile
             let head = s:vimim_get_head(keyboard, partition)
         endif
-    elseif s:imode_pinyin && empty(s:english.line)
-        " muuqwxeyqpjeqqq => m7712x3610j3111   " awwwr arrow color
+    elseif empty(s:english.line) " muuqwxeyqpjeqqq => m7712x3610j3111
         if keyboard =~# '^\l' && len(keyboard)%5 < 1
-            let llll = keyboard[1:4]
+            let llll = keyboard[1:4]  " awwwr arrow color
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
-            if !empty(dddd)
+            if !empty(dddd) 
                 let ldddd = keyboard[0:0] . dddd
                 let keyboard = ldddd . keyboard[5:-1]
                 let head = s:vimim_get_head(keyboard, 5)
@@ -2592,7 +2590,7 @@ function! s:vimim_set_datafile(im, datafile)
     let s:ui.root = "datafile"
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-    let s:backend.datafile[im] = s:vimim_backend_hash()
+    let s:backend.datafile[im] = {}
     let s:backend.datafile[im].root = s:ui.root
     let s:backend.datafile[im].im = im
     let s:backend.datafile[im].name = datafile
@@ -2724,7 +2722,7 @@ function! s:vimim_set_directory(im, dir)
     let s:ui.root = "directory"
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-    let s:backend.directory[im] = s:vimim_backend_hash()
+    let s:backend.directory[im] = {}
     let s:backend.directory[im].root = s:ui.root
     let s:backend.directory[im].im = im
     let s:backend.directory[im].name = a:dir
@@ -2801,7 +2799,7 @@ function! s:vimim_set_background_clouds()
         let im = get(split(cloud,'[.]'),0)
         let s:ui.im = im
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-        let s:backend.cloud[im] = s:vimim_backend_hash()
+        let s:backend.cloud[im] = {}
         let s:backend.cloud[im].root = s:ui.root
         let s:backend.cloud[im].im = 0  " used for cloud key
         let s:backend.cloud[im].keycode = s:im_keycode[im]
@@ -3109,7 +3107,7 @@ function! s:vimim_set_backend_mycloud()
         let s:ui.root = 'cloud'
         let s:ui.im = 'mycloud'
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-        let s:backend.cloud.mycloud = s:vimim_backend_hash()
+        let s:backend.cloud.mycloud = {}
         let s:backend.cloud.mycloud.root = s:ui.root
         let s:backend.cloud.mycloud.im = mycloud
         let s:backend.cloud.mycloud.name    = s:vimim_chinese(s:ui.im)
@@ -3533,18 +3531,6 @@ function! s:vimim_set_backend_embedded()
             call s:vimim_set_datafile(im, datafile)
         endif
     endfor
-endfunction
-
-function! s:vimim_backend_hash()
-    let backends = {}
-    let backends.lines = []
-    let backends.im = ''
-    let backends.root = ''
-    let backends.name = ''
-    let backends.chinese = ''
-    let backends.keycode = ''
-    let backends.directory = ''
-    return backends
 endfunction
 
 " ============================================= }}}
