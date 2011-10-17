@@ -390,7 +390,11 @@ function! s:vimim_get_hjkl_game(keyboard)
     let keyboard = a:keyboard
     let results = []
     let poem = s:vimim_filereadable(keyboard)
-    if keyboard == "'''''"
+    if s:vimim_get_unicode_ddddd(keyboard)
+        return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
+    elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
+        return [s:vimim_imode_today_now(keyboard)]
+    elseif keyboard == "'''''"
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
     elseif keyboard == "''"
         let char_before = s:vimim_char_before()
@@ -1193,32 +1197,18 @@ function! <SID>vimim_onekey_hjkl_map(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_onekey_engine(keyboard)
+function! s:vimim_cjk_engine(keyboard)
     let keyboard = a:keyboard
-    let results = s:vimim_get_hjkl_game(keyboard)
-    if !empty(results)
-        return results
-    endif
-    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if ddddd
-        let results = s:vimim_unicode_list(ddddd)
-    elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
-        let results = [s:vimim_imode_today_now(keyboard)]
-    elseif keyboard =~# '^i' && keyboard =~ '\d'
-        if s:ui.im =~ 'pinyin'  || s:ui.root == 'cloud'
-        \|| len(s:cjk.filename) || s:vimim_shuangpin == 'abc'
-            let results = s:vimim_imode_number(keyboard)
-        endif
-    endif
-    if empty(results)
-        " [quote] (2/2) quote_by_quote: wo'you'yi'ge'meng
+    let results = []
+    if keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
+        let results = s:vimim_imode_number(keyboard)
+    else
         let keyboard = s:vimim_get_head_without_quote(keyboard)
-        " [cjk] The cjk database works like swiss-army knife.
         let head = s:vimim_get_cjk_head(keyboard)
         if empty(head)
             "  zero tolerance for zero
         elseif empty(s:hjkl_n)
-            let results = s:vimim_cjk_match(head)
+            let results = s:vimim_cjk_match(head)  " swiss-army knife
         endif
     endif
     return results
@@ -1236,7 +1226,7 @@ function! s:vimim_get_head_without_quote(keyboard)
         let keyboard = join(split(keyboard,'\zs'), "'")
     endif
     if keyboard =~ "'" && keyboard[-1:] != "'"
-        " [quote] (1/2) quote_by_quote: wo'you'yi'ge'meng
+        " [quote] quote_by_quote: wo'you'yi'ge'meng
         let keyboards = split(keyboard,"'")
         let keyboard = get(keyboards,0)
         let tail = join(keyboards[1:],"'")
@@ -2594,17 +2584,12 @@ function! s:vimim_set_datafile(im, datafile)
     let s:backend.datafile[im].name = datafile
     let s:backend.datafile[im].keycode = s:im_keycode[im]
     let s:backend.datafile[im].chinese = s:vimim_chinese(im)
-    if datafile =~ ".txt" && empty(s:backend.datafile[im].lines)
-        let s:backend.datafile[im].lines = s:vimim_readfile(datafile)
-    endif
+    let s:backend.datafile[im].lines = []
 endfunction
 
 function! s:vimim_sentence_datafile(keyboard)
     let keyboard = a:keyboard
     let lines = s:backend[s:ui.root][s:ui.im].lines
-    if empty(lines)
-        return ""
-    endif
     let fuzzy = s:ui.im =~ 'pinyin' ? '\s' : ""
     let pattern = '^' . keyboard . fuzzy
     let cursor = match(lines, pattern)
@@ -2755,7 +2740,7 @@ endfunction
 
 function! s:vimim_more_pinyin_directory(keyboard, dir)
     let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
-    if empty(candidates)
+    if empty(candidates) || len(s:english.line)
         return []
     endif
     let results = []
@@ -3600,8 +3585,15 @@ else
     else   " [english] first check if it is english or not
         let s:english.line = s:vimim_get_english(keyboard)
     endif
-    if s:onekey  " [onekey] plays with nothing but onekey
-        let results = s:vimim_onekey_engine(keyboard)
+    if s:onekey  " [game] made life less boring
+        let results = s:vimim_get_hjkl_game(keyboard)
+        if len(results)
+            return s:vimim_popupmenu_list(results)
+        endif
+    endif
+   " [cjk] why not make cjk to both static and dynamic mode?
+    if len(s:cjk.filename) || s:ui.im =~ 'pinyin'
+        let results = s:vimim_cjk_engine(keyboard)
         if len(results)
             return s:vimim_popupmenu_list(results)
         elseif len(s:hjkl_n) && s:keyboard !~ "'"
@@ -3769,12 +3761,12 @@ function! s:vimim_embedded_backend_engine(keyboard)
     endif
     let results = []
     let head = 0
+    let backend = s:backend[s:ui.root][s:ui.im]
     if s:ui.root =~# "directory"
-        let dir = s:backend[s:ui.root][s:ui.im].name
+        let dir = backend.name
         let head = s:vimim_sentence_directory(keyboard, dir)
         let results = s:vimim_readfile(dir . head)
-        if empty(s:english.line) && keyboard ==# head
-        \&& len(results) && len(results) < 20
+        if keyboard ==# head && len(results) && len(results) < 20
             let extras = s:vimim_more_pinyin_directory(keyboard, dir)
             if len(extras) && len(results)
                 call map(results, 'keyboard ." ". v:val')
@@ -3782,7 +3774,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
             endif
         endif
     elseif s:ui.root =~# "datafile"
-        let datafile = s:backend[s:ui.root][s:ui.im].name
+        let datafile = backend.name
         if datafile =~ "bsddb"
             if !exists("s:bsddb_4MB_in_memory_50MB_on_disk")
                 let s:bsddb_4MB_in_memory_50MB_on_disk = 1
@@ -3791,6 +3783,9 @@ function! s:vimim_embedded_backend_engine(keyboard)
             let head = s:vimim_get_stone_from_bsddb(keyboard)
             let results = s:vimim_get_from_database(head)
         else
+            if empty(backend.lines)
+                let backend.lines = s:vimim_readfile(datafile)
+            endif
             let head = s:vimim_sentence_datafile(keyboard)
             let results = s:vimim_get_from_datafile(head)
         endif
@@ -3876,9 +3871,9 @@ sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
 sil!call s:vimim_save_vimrc()
 sil!call s:vimim_super_reset()
-sil!call s:vimim_set_background_clouds()
+"il!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_embedded()
-sil!call s:vimim_set_backend_mycloud()
+"il!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_plug_and_play()
 " ============================================= }}}
 :redir @p
