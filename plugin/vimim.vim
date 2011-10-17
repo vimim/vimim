@@ -3871,9 +3871,9 @@ sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
 sil!call s:vimim_save_vimrc()
 sil!call s:vimim_super_reset()
-"il!call s:vimim_set_background_clouds()
+sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_embedded()
-"il!call s:vimim_set_backend_mycloud()
+sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_plug_and_play()
 " ============================================= }}}
 :redir @p
