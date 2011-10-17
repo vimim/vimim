@@ -3658,7 +3658,7 @@ else
             let results = split(repeat(i,5),'\zs')
         endif
     endif
-    if empty(results)
+    if s:onekey && empty(results)
         let s:pattern_not_found = 1
     else
         return s:vimim_popupmenu_list(results)
