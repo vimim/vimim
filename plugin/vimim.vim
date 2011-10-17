@@ -67,24 +67,24 @@ function! s:vimim_initialize_global()
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
     let s:chinese_mode = 'onekey'
-    let s:toggle_punctuation = 1
     let s:toggle_im = 0
+    let s:toggle_punctuation = 1
     let s:cursor_at_menuless = 0
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
     let s:shuangpin_table = {}
     let s:quanpin_table = {}
-    let s:abcd = split("'abcdvfgxz",'\zs')
-    let s:qwer = split("pqwertyuio",'\zs')
+    let s:abcd = split("'abcdvfgxz", '\zs')
+    let s:qwer = split("pqwertyuio", '\zs')
     let s:az_list = map(range(97,122),"nr2char(".'v:val'.")")
     let s:valid_keys = s:az_list
     let s:valid_keyboard = "[0-9a-z']"
+    let s:shengmu_list = split('b p m f d t l n g k h j q x r z c s y w')
     let s:starts = { 'row' : 0, 'column' : 1 }
     let s:pumheights = { 'current' : 10, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
-    let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {}  }
+    let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
     let s:ui = { 'root' : '', 'im' : '', 'has_dot' : 0, 'frontends' : [] }
-    let s:shengmu_list = split('b p m f d t l n g k h j q x r z c s y w')
     let s:rc = { "g:vimim_chinese_input_mode" : 'dynamic' }
     let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
     let s:rc["g:vimim_punctuation"] = 1
@@ -791,7 +791,7 @@ function! s:vimim_onekey_digit_filter(results)
         endif
     endfor
     if empty(results)
-        let s:hjkl_n = ""
+        let s:hjkl_n = ""   " make it recyclable
         return a:results
     endif
     return results
@@ -884,7 +884,7 @@ function! g:vimim_title()
     if &term == 'screen'     " best efforts for gun screen
         echo titlestring
     else                     " if terminal can set window titles
-        let &titlestring = titlestring       " [all GUI versions]
+        let &titlestring = titlestring        " all GUI versions
         :redraw
     endif
     return ""
@@ -1726,7 +1726,7 @@ endfunction
 function! s:vimim_get_cjk_head(keyboard)
     let keyboard = a:keyboard
     if empty(s:cjk.filename) || keyboard =~ "'"
-        return 0
+        return ""
     endif
     if keyboard =~# '^i' " 4corner_shortcut: iuuqwuqew => 77127132
         let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
@@ -1795,7 +1795,7 @@ endfunction
 
 function! s:vimim_qwertyuiop_1234567890(keyboard)
     if a:keyboard =~ '\d'
-        return 0
+        return ""
     endif
     let dddd = ""   " output is 7712 for input uuqw
     for char in split(a:keyboard, '\zs')
