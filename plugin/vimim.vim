@@ -1785,7 +1785,7 @@ function! s:vimim_get_cjk_head(keyboard)
         if keyboard =~# '^\l' && len(keyboard)%5 < 1
             let llll = keyboard[1:4]  " awwwr arrow color
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
-            if !empty(dddd) 
+            if !empty(dddd)
                 let ldddd = keyboard[0:0] . dddd
                 let keyboard = ldddd . keyboard[5:-1]
                 let head = s:vimim_get_head(keyboard, 5)
@@ -3363,7 +3363,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     " 2/3 search unicode or cjk /search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if empty(ddddd) && s:vimim_cjk()
-        " /muuqwxeyqpjeqqq /m7712x3610j3111 /ma77xia36ji31    
+        " /muuqwxeyqpjeqqq /m7712x3610j3111 /ma77xia36ji31
         while len(keyboard) > 1
             let head = s:vimim_get_cjk_head(keyboard)
             if empty(head)
@@ -3645,25 +3645,23 @@ else
         endif
         let results = s:vimim_make_pairs(s:english.line) + results
     endif
-    " [the_last_resort] try both cjk and cloud
+    " [the_last_resort] either force shoupin or force cloud
     if s:onekey && empty(results)
         if len(keyboard) > 1
             let shoupin = s:vimim_get_head_without_quote(keyboard."'''")
-            let results = s:vimim_cjk_match(shoupin)   " forced shoupin
-            if empty(results)                          " forced cloud
+            let results = s:vimim_cjk_match(shoupin)
+            if empty(results)
                 let results = s:vimim_get_cloud(keyboard)
             endif
         else    " for onekey continuity: abcdefghijklmnopqrstuvwxyz..
             let i = keyboard == 'i' ? "我" : s:space
             let results = split(repeat(i,5),'\zs')
         endif
+        if empty(results)
+            let s:pattern_not_found = 1
+        endif
     endif
-    if s:onekey && empty(results)
-        let s:pattern_not_found = 1
-    else
-        return s:vimim_popupmenu_list(results)
-    endif
-return []
+    return s:vimim_popupmenu_list(results)
 endif
 endfunction
 
