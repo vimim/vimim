@@ -670,16 +670,12 @@ let s:VimIM += [" ====  punctuations     ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_punctuations()
-    let s:evils = {}            " exception if it is passed around
+    let s:evils = {}            " exception if passed around
     let s:all_evils = {}        " onekey uses all punctuations
     let s:punctuations = {}     " chinese mode uses minimum by default
     if s:vimim_punctuation < 1  " close all evil punctuations
         return
     endif
-    let evil_punctuations = {}
-    let evil_punctuations['\'] = "、"
-    let evil_punctuations["'"] = "‘’"
-    let evil_punctuations['"'] = "“”"
     let single = "  , .  +  -  ~  ^    _    "
     let double = " ， 。 ＋ － ～ …… —— "
     let mini_punctuations = s:vimim_key_value_hash(single, double)
@@ -690,12 +686,13 @@ function! s:vimim_dictionary_punctuations()
     if s:vimim_punctuation > 1    " :let g:vimim_punctuation = 2
         call extend(s:punctuations, most_punctuations)
     endif
+    let evils = { '\' : "、", "'" : "‘’", '"' : "“”" }
     if s:vimim_punctuation > 2    " :let g:vimim_punctuation = 3
-        let s:evils = copy(evil_punctuations)
+        let s:evils = copy(evils)
     endif
     call extend(s:all_evils, mini_punctuations)
     call extend(s:all_evils, most_punctuations)
-    call extend(s:all_evils, evil_punctuations)
+    call extend(s:all_evils, evils)
 endfunction
 
 function! s:vimim_punctuations_maps()
@@ -732,13 +729,10 @@ endfunction
 
 function! <SID>vimim_get_single_quote()
     let key = ""
-    let evil = "'"
-    if !has_key(s:evils, evil)
-        return ""
-    elseif pumvisible()  " the 3rd choice plus
+    if pumvisible()  " the 3rd choice plus
         let key = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
     else
-        let pairs = split(s:evils[evil], '\zs')
+        let pairs = split(s:all_evils["'"], '\zs')
         let s:smart_quotes.single += 1
         let key .= get(pairs, s:smart_quotes.single % 2)
     endif
@@ -747,13 +741,10 @@ endfunction
 
 function! <SID>vimim_get_double_quote()
     let key = ""
-    let evil = '"'
-    if !has_key(s:evils, evil)
-        return ""
-    elseif pumvisible()
+    if pumvisible()
         let key = '\<C-Y>'
     endif
-    let pairs = split(s:evils[evil], '\zs')
+    let pairs = split(s:all_evils['"'], '\zs')
     let s:smart_quotes.double += 1
     let key .= get(pairs, s:smart_quotes.double % 2)
     sil!exe 'sil!return "' . key . '"'
