@@ -566,6 +566,81 @@ function! s:vimim_get_labeling(label)
     return labeling
 endfunction
 
+function! s:vimim_common_maps()
+    let labels = range(10)
+    let punctuation = " ] [ = - "
+    if s:onekey
+        let punctuation .= " . , "
+        let labels += s:abcd
+        call remove(labels, match(labels,"'"))
+    endif
+    for _ in labels
+        exe 'inoremap<expr> '._.' <SID>vimim_label_map("'._.'")'
+    endfor
+    for _ in split(punctuation)
+        exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
+    endfor
+endfunction
+
+function! <SID>vimim_label_map(key)
+    let key = a:key  " abcdvfgxz 1234567890
+    if pumvisible()
+        let n = match(s:abcd, key)
+        if key =~ '\d'
+            let n = key < 1 ? 9 : key - 1
+        endif
+        let key = '\<C-R>=g:vimim()\<CR>'
+        let down = repeat("\<Down>", n)
+        let s:has_pumvisible = 1
+        if s:onekey && a:key =~ '\d'
+            if len(s:cjk.filename)
+                let s:hjkl_n .= a:key
+            else
+                let key = down . '\<C-Y>'
+                sil!call s:vimim_stop()
+            endif
+        else
+            let key = down . '\<C-Y>' . key
+            sil!call s:vimim_reset_after_insert()
+        endif
+    elseif s:windowless && key =~ '\d'
+        if s:pattern_not_found
+            let s:pattern_not_found = 0
+        else
+            let key = s:vimim_menuless_map(key)
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_page_map(key)
+    let key = a:key
+    if pumvisible()
+        if key =~ "[][]"
+            let left  = key == "]" ? "\<Left>"  : ""
+            let right = key == "]" ? "\<Right>" : ""
+            let _ = key == "]" ? 0 : -1
+            let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
+            let key = '\<C-Y>' . left . bs . right
+        elseif key =~ "[=.]"
+            let key = '\<PageDown>'
+            if &pumheight
+                let s:pageup_pagedown = 1
+                let key = g:vimim()
+            endif
+        elseif key =~ "[-,]"
+            let key = '\<PageUp>'
+            if &pumheight
+                let s:pageup_pagedown = -1
+                let key = g:vimim()
+            endif
+        endif
+    elseif empty(s:onekey) && s:toggle_punctuation && key =~ "[][=-]"
+        let key = <SID>vimim_punctuation_map(key)
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  punctuations     ==== {{{"]
 " =================================================
@@ -1123,81 +1198,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
-
-function! s:vimim_common_maps()
-    let labels = range(10)
-    let punctuation = " ] [ = - "
-    if s:onekey
-        let punctuation .= " . , "
-        let labels += s:abcd
-        call remove(labels, match(labels,"'"))
-    endif
-    for _ in labels
-        exe 'inoremap<expr> '._.' <SID>vimim_label_map("'._.'")'
-    endfor
-    for _ in split(punctuation)
-        exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
-    endfor
-endfunction
-
-function! <SID>vimim_label_map(key)
-    let key = a:key  " abcdvfgxz 1234567890
-    if pumvisible()
-        let n = match(s:abcd, key)
-        if key =~ '\d'
-            let n = key < 1 ? 9 : key - 1
-        endif
-        let key = '\<C-R>=g:vimim()\<CR>'
-        let down = repeat("\<Down>", n)
-        let s:has_pumvisible = 1
-        if s:onekey && a:key =~ '\d'
-            if len(s:cjk.filename)
-                let s:hjkl_n .= a:key
-            else
-                let key = down . '\<C-Y>'
-                sil!call s:vimim_stop()
-            endif
-        else
-            let key = down . '\<C-Y>' . key
-            sil!call s:vimim_reset_after_insert()
-        endif
-    elseif s:windowless && key =~ '\d'
-        if s:pattern_not_found
-            let s:pattern_not_found = 0
-        else
-            let key = s:vimim_menuless_map(key)
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_page_map(key)
-    let key = a:key
-    if pumvisible()
-        if key =~ "[][]"
-            let left  = key == "]" ? "\<Left>"  : ""
-            let right = key == "]" ? "\<Right>" : ""
-            let _ = key == "]" ? 0 : -1
-            let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
-            let key = '\<C-Y>' . left . bs . right
-        elseif key =~ "[=.]"
-            let key = '\<PageDown>'
-            if &pumheight
-                let s:pageup_pagedown = 1
-                let key = g:vimim()
-            endif
-        elseif key =~ "[-,]"
-            let key = '\<PageUp>'
-            if &pumheight
-                let s:pageup_pagedown = -1
-                let key = g:vimim()
-            endif
-        endif
-    elseif empty(s:onekey) && s:toggle_punctuation && key =~ "[][=-]"
-        let key = <SID>vimim_punctuation_map(key)
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
 
 function! <SID>vimim_im_switch()
     if len(s:ui.frontends) < 2 && empty(s:onekey)
