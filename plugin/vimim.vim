@@ -372,11 +372,9 @@ function! s:vimim_egg_vimim()
         endif
         call add(eggs, input)
     endif
-    if !empty(s:vimim_check_http_executable())
-        let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
-        let network  = s:vimim_chinese('network') . s:colon
-        call add(eggs, network . exe . s:http_exe)
-    endif
+    let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
+    let network  = s:vimim_chinese('network') . s:colon
+    call add(eggs, network . exe . s:http_exe)
     call add(eggs, s:vimim_chinese('option') . s:colon . "vimimhelp")
     if !empty(s:vimimrc)
         for rc in sort(s:vimimrc)
@@ -2725,21 +2723,20 @@ function! s:vimim_set_background_clouds()
     if match(s:rc["g:vimim_cloud"], default) > -1
         let s:cloud_default = default
     endif
-    if empty(s:vimim_check_http_executable())
-        return 0
+    if !empty(s:vimim_check_http_executable())
+        let s:ui.root = 'cloud'
+        for cloud in reverse(split(s:vimim_cloud,','))
+            let im = get(split(cloud,'[.]'),0)
+            let s:ui.im = im
+            call insert(s:ui.frontends, [s:ui.root, s:ui.im])
+            let s:backend.cloud[im] = {}
+            let s:backend.cloud[im].root = s:ui.root
+            let s:backend.cloud[im].im = 0  " used for cloud key
+            let s:backend.cloud[im].keycode = s:im_keycode[im]
+            let s:backend.cloud[im].name    = s:vimim_chinese(im)
+            let s:backend.cloud[im].chinese = s:vimim_chinese(im)
+        endfor
     endif
-    let s:ui.root = 'cloud'
-    for cloud in reverse(split(s:vimim_cloud,','))
-        let im = get(split(cloud,'[.]'),0)
-        let s:ui.im = im
-        call insert(s:ui.frontends, [s:ui.root, s:ui.im])
-        let s:backend.cloud[im] = {}
-        let s:backend.cloud[im].root = s:ui.root
-        let s:backend.cloud[im].im = 0  " used for cloud key
-        let s:backend.cloud[im].keycode = s:im_keycode[im]
-        let s:backend.cloud[im].name    = s:vimim_chinese(im)
-        let s:backend.cloud[im].chinese = s:vimim_chinese(im)
-    endfor
 endfunction
 
 function! s:vimim_check_http_executable()
@@ -2802,9 +2799,7 @@ function! s:vimim_get_cloud(keyboard)
 endfunction
 
 function! s:vimim_get_from_http(input, cloud)
-    if empty(a:input)
-        return ""
-    elseif empty(s:vimim_check_http_executable())
+    if empty(a:input) || empty(s:vimim_check_http_executable())
         return ""
     endif
     try
