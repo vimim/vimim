@@ -2352,9 +2352,13 @@ endfunction
 
 function! s:vimim_initialize_bsddb(datafile)
 :sil!python << EOF
-import vim, bsddb
+import vim
 encoding = vim.eval("&encoding")
 datafile = vim.eval('a:datafile')
+try:
+    import bsddb3 as bsddb
+except ImportError:
+    import bsddb as bsddb
 edw = bsddb.btopen(datafile,'r')
 def getstone(stone):
     if stone not in edw:
