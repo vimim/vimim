@@ -3743,7 +3743,6 @@ endfunction
 function! s:vimim_embedded_backend_engine(keyboard)
     let keyboard = a:keyboard
     if empty(s:ui.im)   || empty(s:ui.root)
-    \|| s:touch_me_not  || s:ui.root =~ 'cloud'
     \|| empty(keyboard) || keyboard !~# s:valid_keyboard
         return []
     elseif s:ui.has_dot == 2 && keyboard !~ "[']"
