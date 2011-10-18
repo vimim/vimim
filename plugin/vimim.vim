@@ -783,22 +783,6 @@ function! s:vimim_cache()
     return results
 endfunction
 
-function! s:vimim_onekey_digit_filter(results)
-    " only use 1234567890 as filter for windowless
-    " also use qwertyuiop as filter for omni popup
-    let results = []
-    for chinese in a:results
-        if s:vimim_digit_for_cjk(chinese,0)
-            call add(results, chinese)
-        endif
-    endfor
-    if empty(results)
-        let s:hjkl_n = ""   " make it recyclable
-        return a:results
-    endif
-    return results
-endfunction
-
 function! s:vimim_common_maps()
     let labels = range(10)
     let punctuation = " ] [ = - "
@@ -1665,11 +1649,9 @@ function! s:vimim_cjk()
 endfunction
 
 function! s:vimim_digit_for_cjk(chinese, info)
-    " (1) gi ma   马   => filter with   7712  <=>  mali 7 4
-    " (2) gi mali 马力 => filter with 7 4002  <=>  mali74
+    let digit_head = ""   " gi ma   马   =>   7712  <=>  mali 7 4
+    let digit_tail = ""   " gi mali 马力 => 7 4002  <=>  mali74
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
-    let digit_head = ""
-    let digit_tail = ""
     for cjk in split(chinese, '\zs')
         let grep = "^" . cjk
         let line = match(s:cjk.lines, grep)
@@ -3629,7 +3611,19 @@ function! s:vimim_popupmenu_list(lines)
     if empty(a:lines) || type(a:lines) != type([])
         return []
     elseif s:vimim_cjk() && len(s:hjkl_n)
-        let s:match_list = s:vimim_onekey_digit_filter(a:lines)
+        " only use 1234567890 as filter for windowless
+        " also use qwertyuiop as filter for omni popup
+        let results = []
+        for chinese in a:lines
+            if s:vimim_digit_for_cjk(chinese,0)
+                call add(results, chinese)
+            endif
+        endfor
+        if empty(results)
+            let s:hjkl_n = ""  " make digits recyclable
+        else
+            let s:match_list = results
+        endif
     endif
     let keyboards = split(s:keyboard)   " mmmm => ['m',"m'm'm"]
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
