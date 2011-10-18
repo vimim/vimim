@@ -939,13 +939,12 @@ function! <SID>vimim_space()
     " (3) <Space> after popup menu           => insert Chinese
     " (4) <Space> after pattern not found    => Space
     let space = " "
-    if s:pattern_not_found
-        let s:pattern_not_found = 0
-        return space
-    endif
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
+    elseif s:pattern_not_found
+        let s:pattern_not_found = 0
+        return space
     elseif s:chinese_mode =~ 'dynamic'
         return space
     elseif s:chinese_mode =~ 'static'
