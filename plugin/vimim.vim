@@ -394,6 +394,8 @@ function! s:vimim_get_hjkl_game(keyboard)
         return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
     elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
         return [s:vimim_imode_today_now(keyboard)]
+    elseif keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
+        let results = s:vimim_imode_number(keyboard)
     elseif keyboard == "'''''"
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
     elseif keyboard == "''"
@@ -1185,23 +1187,6 @@ function! <SID>vimim_onekey_hjkl_map(key)
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! s:vimim_cjk_engine(keyboard)
-    let keyboard = a:keyboard
-    let results = []
-    if keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
-        let results = s:vimim_imode_number(keyboard)
-    else
-        let keyboard = s:vimim_get_head_without_quote(keyboard)
-        let head = s:vimim_get_cjk_head(keyboard)
-        if empty(head)
-            "  zero tolerance for zero
-        elseif empty(s:hjkl_n)
-            let results = s:vimim_cjk_match(head)  " swiss-army knife
-        endif
-    endif
-    return results
 endfunction
 
 function! s:vimim_get_head_without_quote(keyboard)
@@ -2066,23 +2051,17 @@ function! s:vimim_quanpin_transform(pinyin)
             let matchstr = item[index : end-1]
             if has_key(s:quanpin_table, matchstr)
                 let tempstr = item[end-1 : end]
-                " special case for fanguo, which should be fan'guo
-                if tempstr == "gu" || tempstr == "nu" || tempstr == "ni"
-                    if has_key(s:quanpin_table, matchstr[:-2])
-                        let i -= 1
-                        let matchstr = matchstr[:-2]
-                    endif
-                endif
-                " follow ibus' rule
+                " follow ibus' rule, plus special case for fan'guo
                 let tempstr2 = item[end-2 : end+1]
                 let tempstr3 = item[end-1 : end+1]
                 let tempstr4 = item[end-1 : end+2]
                 if (tempstr == "ge" && tempstr3 != "ger")
-                    \ || (tempstr == "ne" && tempstr3 != "ner")
-                    \ || (tempstr4 == "gong" || tempstr3 == "gou")
-                    \ || (tempstr4 == "nong" || tempstr3 == "nou")
-                    \ || (tempstr  == "ga"   || tempstr == "na")
-                    \ ||  tempstr2 == "ier"
+                \ || (tempstr == "ne" && tempstr3 != "ner")
+                \ || (tempstr4 == "gong" || tempstr3 == "gou")
+                \ || (tempstr4 == "nong" || tempstr3 == "nou")
+                \ || (tempstr  == "ga"   || tempstr == "na")
+                \ ||  tempstr2 == "ier"  || tempstr == "ni"
+                \ ||  tempstr == "gu"    || tempstr == "nu"
                     if has_key(s:quanpin_table, matchstr[:-2])
                         let i -= 1
                         let matchstr = matchstr[:-2]
@@ -3093,8 +3072,7 @@ function! s:vimim_set_backend_mycloud()
 endfunction
 
 function! s:vimim_access_mycloud(cloud, cmd)
-    " same function to access mycloud by libcall() or system()
-    let ret = ""
+    let ret = ""   " access mycloud by either libcall() or system()
     if s:mycloud_mode == "libcall"
         let cmd = empty(s:mycloud_arg) ? a:cmd : s:mycloud_arg." ".a:cmd
         let ret = libcall(a:cloud, s:mycloud_func, cmd)
@@ -3575,15 +3553,15 @@ else
     else   " [english] first check if it is english or not
         let s:english.line = s:vimim_get_english(keyboard)
     endif
-    if s:onekey  " [game] made life less boring
+    if s:onekey        " [game] made life less boring
         let results = s:vimim_get_hjkl_game(keyboard)
-        if len(results)
-            return s:vimim_popupmenu_list(results)
+        if empty(results) && len(s:cjk.filename)
+            let head = s:vimim_get_head_without_quote(keyboard)
+            let head = s:vimim_get_cjk_head(head)
+            if !empty(head) && empty(s:hjkl_n)
+                let results = s:vimim_cjk_match(head)
+            endif
         endif
-    endif
-   " [cjk] why not make cjk to both static and dynamic mode?
-    if len(s:cjk.filename) || s:ui.im =~ 'pinyin'
-        let results = s:vimim_cjk_engine(keyboard)
         if len(results)
             return s:vimim_popupmenu_list(results)
         elseif len(s:hjkl_n) && s:keyboard !~ "'"
@@ -3609,12 +3587,11 @@ else
         let results = s:vimim_get_cloud(keyboard)
     endif
     if empty(results)
-        " [wubi] support auto insert on the 4th
         if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
             if s:chinese_mode =~ 'dynamic' && len(keyboard) > 4
                 let start = 4*((len(keyboard)-1)/4)
                 let keyboard = strpart(keyboard, start)
-                let s:keyboard = keyboard
+                let s:keyboard = keyboard  " wubi auto insert on the 4th
             endif
         endif
         " [backend] plug-n-play embedded backend engine
@@ -3622,8 +3599,8 @@ else
     endif
     " [english] English cannot be ignored!
     if len(s:english.line)
-        if s:keyboard !~ "'"  " english color
-            let s:keyboard = keyboard
+        if s:keyboard !~ "'"
+            let s:keyboard = keyboard  " english color is color
         endif
         let results = s:vimim_make_pairs(s:english.line) + results
     endif
@@ -3656,7 +3633,6 @@ function! s:vimim_popupmenu_list(lines)
     endif
     let keyboards = split(s:keyboard)   " mmmm => ['m',"m'm'm"]
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
-    " [popup] it is art to set up popup menu height
     let &pumheight = empty(s:onekey) ? 5 : 10
     let s:pumheights.current = copy(&pumheight)
     if s:touch_me_not
