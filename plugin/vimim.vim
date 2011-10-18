@@ -386,107 +386,6 @@ function! s:vimim_egg_vimim()
     return map(eggs, 'v:val . " " ')
 endfunction
 
-function! s:vimim_get_hjkl_game(keyboard)
-    let keyboard = a:keyboard
-    let results = []
-    let poem = s:vimim_filereadable(keyboard)
-    if s:vimim_get_unicode_ddddd(keyboard)
-        return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
-    elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
-        return [s:vimim_imode_today_now(keyboard)]
-    elseif keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
-        let results = s:vimim_imode_number(keyboard)
-    elseif keyboard == "'''''"
-        return split(join(s:vimim_egg_vimimgame(),""),'\zs')
-    elseif keyboard == "''"
-        let char_before = s:vimim_char_before()
-        if empty(char_before)
-            if s:vimim_cjk()    " 214 standard unicode index
-                return s:vimim_cjk_match('u')
-            else
-                let char_before = '一'
-            endif
-        endif
-        return s:vimim_unicode_list(char2nr(char_before))
-    elseif !empty(poem)
-        " [hjkl] flirt any non-dot file in the hjkl directory
-        let results = s:vimim_readfile(poem)
-    elseif keyboard ==# "vim" || keyboard =~# "^vimim"
-        " [hidden] hunt classic easter egg ... vim<C-6>
-        let results = s:vimim_easter_chicken(keyboard)
-    elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
-        " [clouds] all clouds for any input: fuck''''
-        let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif len(getreg('"')) > 3  " vimim_visual_ctrl6
-        if keyboard ==# "''''"   " unname_register
-            " [hjkl] display buffer inside the omni window
-            let results = split(getreg('"'), '\n')
-        elseif keyboard =~# 'u\d\d\d\d\d'
-            " [cjk]  display highlighted multiple cjk
-            let line = substitute(getreg('"'),'[\x00-\xff]','','g')
-            if len(line)
-                for chinese in split(line,'\zs')
-                    let menu  = s:vimim_cjk_extra_text(chinese)
-                    let menu .= repeat(" ", 38-len(menu))
-                    call add(results, chinese . " " . menu)
-                endfor
-            endif
-        endif
-    endif
-    if !empty(results)
-        let s:touch_me_not = 1
-        if s:hjkl_m % 4
-            for i in range(s:hjkl_m%4)
-                let results = s:vimim_hjkl_rotation(results)
-            endfor
-        endif
-        let results = [s:space] + results + [s:space]
-    endif
-    return results
-endfunction
-
-function! s:vimim_hjkl_rotation(lines)
-    let max = max(map(copy(a:lines), 'strlen(v:val)')) + 1
-    let multibyte = match(a:lines,'\w') < 0 ? s:multibyte : 1
-    let results = []
-    for line in a:lines
-        let spaces = ''   " rotation makes more sense for cjk
-        if (max-len(line))/multibyte
-            for i in range((max-len(line))/multibyte)
-                let spaces .= s:space
-            endfor
-        endif
-        let line .= spaces
-        call add(results, line)
-    endfor
-    let rotations = []
-    for i in range(max/multibyte)
-        let column = ''
-        for line in reverse(copy(results))
-            let line = get(split(line,'\zs'), i)
-            if empty(line)
-                continue
-            else
-                let column .= line
-            endif
-        endfor
-        call add(rotations, column)
-    endfor
-    return rotations
-endfunction
-
-function! s:vimim_chinese_rotation() range abort
-    :%s#\s*\r\=$##
-    let lines = getline(a:firstline, a:lastline)
-    if !empty(lines)
-        :let lines = s:vimim_hjkl_rotation(lines)
-        :%d
-        for line in lines
-            put=line
-        endfor
-    endif
-endfunction
-
 " ============================================= }}}
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
@@ -783,79 +682,105 @@ function! s:vimim_cache()
     return results
 endfunction
 
-function! s:vimim_common_maps()
-    let labels = range(10)
-    let punctuation = " ] [ = - "
-    if s:onekey
-        let punctuation .= " . , "
-        let labels += s:abcd
-        call remove(labels, match(labels,"'"))
-    endif
-    for _ in labels
-        exe 'inoremap<expr> '._.' <SID>vimim_label_map("'._.'")'
-    endfor
-    for _ in split(punctuation)
-        exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
-    endfor
-endfunction
-
-function! <SID>vimim_label_map(key)
-    let key = a:key  " abcdvfgxz 1234567890
-    if pumvisible()
-        let n = match(s:abcd, key)
-        if key =~ '\d'
-            let n = key < 1 ? 9 : key - 1
-        endif
-        let key = '\<C-R>=g:vimim()\<CR>'
-        let down = repeat("\<Down>", n)
-        let s:has_pumvisible = 1
-        if s:onekey && a:key =~ '\d'
-            if len(s:cjk.filename)
-                let s:hjkl_n .= a:key
+function! s:vimim_get_hjkl_game(keyboard)
+    let keyboard = a:keyboard
+    let results = []
+    let poem = s:vimim_filereadable(keyboard)
+    if s:vimim_get_unicode_ddddd(keyboard)
+        return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
+    elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
+        return [s:vimim_imode_today_now(keyboard)]
+    elseif keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
+        let results = s:vimim_imode_number(keyboard)
+    elseif keyboard == "'''''"
+        return split(join(s:vimim_egg_vimimgame(),""),'\zs')
+    elseif keyboard == "''"
+        let char_before = s:vimim_char_before()
+        if empty(char_before)
+            if s:vimim_cjk()    " 214 standard unicode index
+                return s:vimim_cjk_match('u')
             else
-                let key = down . '\<C-Y>'
-                sil!call s:vimim_stop()
+                let char_before = '一'
             endif
-        else
-            let key = down . '\<C-Y>' . key
-            sil!call s:vimim_reset_after_insert()
         endif
-    elseif s:windowless && key =~ '\d'
-        if s:pattern_not_found
-            let s:pattern_not_found = 0
-        else
-            let key = s:vimim_menuless_map(key)
+        return s:vimim_unicode_list(char2nr(char_before))
+    elseif !empty(poem)
+        " [hjkl] flirt any non-dot file in the hjkl directory
+        let results = s:vimim_readfile(poem)
+    elseif keyboard ==# "vim" || keyboard =~# "^vimim"
+        " [hidden] hunt classic easter egg ... vim<C-6>
+        let results = s:vimim_easter_chicken(keyboard)
+    elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
+        " [clouds] all clouds for any input: fuck''''
+        let results = s:vimim_get_cloud_all(keyboard[:-5])
+    elseif len(getreg('"')) > 3  " vimim_visual_ctrl6
+        if keyboard ==# "''''"   " unname_register
+            " [hjkl] display buffer inside the omni window
+            let results = split(getreg('"'), '\n')
+        elseif keyboard =~# 'u\d\d\d\d\d'
+            " [cjk]  display highlighted multiple cjk
+            let line = substitute(getreg('"'),'[\x00-\xff]','','g')
+            if len(line)
+                for chinese in split(line,'\zs')
+                    let menu  = s:vimim_cjk_extra_text(chinese)
+                    let menu .= repeat(" ", 38-len(menu))
+                    call add(results, chinese . " " . menu)
+                endfor
+            endif
         endif
     endif
-    sil!exe 'sil!return "' . key . '"'
+    if !empty(results)
+        let s:touch_me_not = 1
+        if s:hjkl_m % 4
+            for i in range(s:hjkl_m%4)
+                let results = s:vimim_hjkl_rotation(results)
+            endfor
+        endif
+        let results = [s:space] + results + [s:space]
+    endif
+    return results
 endfunction
 
-function! <SID>vimim_page_map(key)
-    let key = a:key
-    if pumvisible()
-        if key =~ "[][]"
-            let left  = key == "]" ? "\<Left>"  : ""
-            let right = key == "]" ? "\<Right>" : ""
-            let _ = key == "]" ? 0 : -1
-            let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
-            let key = '\<C-Y>' . left . bs . right
-        elseif key =~ "[=.]"
-            let key = '\<PageDown>'
-            if &pumheight
-                let s:pageup_pagedown = 1
-                let key = g:vimim()
-            endif
-        elseif key =~ "[-,]"
-            let key = '\<PageUp>'
-            if &pumheight
-                let s:pageup_pagedown = -1
-                let key = g:vimim()
-            endif
+function! s:vimim_hjkl_rotation(lines)
+    let max = max(map(copy(a:lines), 'strlen(v:val)')) + 1
+    let multibyte = match(a:lines,'\w') < 0 ? s:multibyte : 1
+    let results = []
+    for line in a:lines
+        let spaces = ''   " rotation makes more sense for cjk
+        if (max-len(line))/multibyte
+            for i in range((max-len(line))/multibyte)
+                let spaces .= s:space
+            endfor
         endif
-    elseif empty(s:onekey) && s:toggle_punctuation && key =~ "[][=-]"
-        let key = <SID>vimim_punctuation_map(key)
+        let line .= spaces
+        call add(results, line)
+    endfor
+    let rotations = []
+    for i in range(max/multibyte)
+        let column = ''
+        for line in reverse(copy(results))
+            let line = get(split(line,'\zs'), i)
+            if empty(line)
+                continue
+            else
+                let column .= line
+            endif
+        endfor
+        call add(rotations, column)
+    endfor
+    return rotations
+endfunction
+
+function! s:vimim_chinese_rotation() range abort
+    :%s#\s*\r\=$##
+    let lines = getline(a:firstline, a:lastline)
+    if !empty(lines)
+        :let lines = s:vimim_hjkl_rotation(lines)
+        :%d
+        for line in lines
+            put=line
+        endfor
     endif
-    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ============================================= }}}
@@ -1199,7 +1124,82 @@ endfunction
 let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
-function! <SID>vimim_rotation()
+function! s:vimim_common_maps()
+    let labels = range(10)
+    let punctuation = " ] [ = - "
+    if s:onekey
+        let punctuation .= " . , "
+        let labels += s:abcd
+        call remove(labels, match(labels,"'"))
+    endif
+    for _ in labels
+        exe 'inoremap<expr> '._.' <SID>vimim_label_map("'._.'")'
+    endfor
+    for _ in split(punctuation)
+        exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
+    endfor
+endfunction
+
+function! <SID>vimim_label_map(key)
+    let key = a:key  " abcdvfgxz 1234567890
+    if pumvisible()
+        let n = match(s:abcd, key)
+        if key =~ '\d'
+            let n = key < 1 ? 9 : key - 1
+        endif
+        let key = '\<C-R>=g:vimim()\<CR>'
+        let down = repeat("\<Down>", n)
+        let s:has_pumvisible = 1
+        if s:onekey && a:key =~ '\d'
+            if len(s:cjk.filename)
+                let s:hjkl_n .= a:key
+            else
+                let key = down . '\<C-Y>'
+                sil!call s:vimim_stop()
+            endif
+        else
+            let key = down . '\<C-Y>' . key
+            sil!call s:vimim_reset_after_insert()
+        endif
+    elseif s:windowless && key =~ '\d'
+        if s:pattern_not_found
+            let s:pattern_not_found = 0
+        else
+            let key = s:vimim_menuless_map(key)
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_page_map(key)
+    let key = a:key
+    if pumvisible()
+        if key =~ "[][]"
+            let left  = key == "]" ? "\<Left>"  : ""
+            let right = key == "]" ? "\<Right>" : ""
+            let _ = key == "]" ? 0 : -1
+            let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
+            let key = '\<C-Y>' . left . bs . right
+        elseif key =~ "[=.]"
+            let key = '\<PageDown>'
+            if &pumheight
+                let s:pageup_pagedown = 1
+                let key = g:vimim()
+            endif
+        elseif key =~ "[-,]"
+            let key = '\<PageUp>'
+            if &pumheight
+                let s:pageup_pagedown = -1
+                let key = g:vimim()
+            endif
+        endif
+    elseif empty(s:onekey) && s:toggle_punctuation && key =~ "[][=-]"
+        let key = <SID>vimim_punctuation_map(key)
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_im_switch()
     if len(s:ui.frontends) < 2 && empty(s:onekey)
         return <SID>ChineseMode()
     endif
@@ -3380,7 +3380,7 @@ function! s:vimim_start()
     inoremap <silent> <expr> <Space> <SID>vimim_space()
     inoremap <silent> <expr> <BS>    <SID>vimim_backspace()
     inoremap <silent> <expr> <CR>    <SID>vimim_enter()
-    inoremap <silent> <expr> <C-H>   <SID>vimim_rotation()
+    inoremap <silent> <expr> <C-H>   <SID>vimim_im_switch()
 endfunction
 
 function! s:vimim_stop()
