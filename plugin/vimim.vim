@@ -764,7 +764,7 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
         return [s:vimim_imode_today_now(keyboard)]
     elseif keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
-        let results = s:vimim_imode_number(keyboard)
+        return s:vimim_imode_number(keyboard)
     elseif keyboard == "'''''"
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
     elseif keyboard == "''"
