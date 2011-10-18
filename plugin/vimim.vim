@@ -3361,7 +3361,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     endif
     " 3/3 search datafile and english: /ma and /horse
     let s:english.line = s:vimim_get_english(keyboard)
-    if empty(s:english.line)
+    if empty(s:english.line) && keyboard =~ s:valid_keyboard
         let results = s:vimim_embedded_backend_engine(keyboard)
     else
         let results = split(s:english.line)
@@ -3742,8 +3742,7 @@ endfunction
 
 function! s:vimim_embedded_backend_engine(keyboard)
     let keyboard = a:keyboard
-    if empty(s:ui.im)   || empty(s:ui.root)
-    \|| empty(keyboard) || keyboard !~# s:valid_keyboard
+    if empty(s:ui.im) || empty(s:ui.root)
         return []
     elseif s:ui.has_dot == 2 && keyboard !~ "[']"
         let keyboard = s:vimim_quanpin_transform(keyboard)
