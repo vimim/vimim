@@ -136,10 +136,11 @@ function! s:vimim_dictionary_keycodes()
     for key in split('pinyin hangul xinhua quick mycloud')
         let s:im_keycode[key] = "[0-9a-z']"
     endfor
+    for key in split('array30 phonetic')
+        let s:im_keycode[key] = "[.,a-z0-9;/]"
+    endfor
     let s:im_keycode.yong     = "[.'a-z;/]"
     let s:im_keycode.erbi     = "[.'a-z,;/]"
-    let s:im_keycode.array30  = "[.,a-z0-9;/]"
-    let s:im_keycode.phonetic = "[.,a-z0-9;/]"
     let s:im_keycode.boshiamy = "[][a-z'.,]"
     let keys  = copy(keys(s:im_keycode))
     let keys += split('pinyin_sogou pinyin_quote_sogou pinyin_huge')
@@ -157,12 +158,13 @@ function! s:vimim_set_keycode()
             break
         endif
     endfor
-    if s:backend[s:ui.root][s:ui.im].name =~# "quote"
-        let s:ui.has_dot = 2      " has apostrophe in datafile
-    endif
     let keycode = "[0-9a-z']"
     if !empty(s:ui.root)
-        let keycode = s:backend[s:ui.root][s:ui.im].keycode
+        let backend = s:backend[s:ui.root][s:ui.im]
+        let keycode = backend.keycode
+        if backend.name =~ "quote"
+            let s:ui.has_dot = 2  " has apostrophe in datafile
+        endif
     endif
     if len(s:vimim_shuangpin)
         let keycode = "[0-9a-z']"
@@ -466,21 +468,22 @@ function! IMName()
 endfunction
 
 function! s:vimim_get_title()
-    let statusline = s:space
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
-    elseif has_key(s:im_keycode, s:ui.im)
-        let im = s:backend[s:ui.root][s:ui.im].chinese
+    endif
+    let statusline = s:space
+    let backend = s:backend[s:ui.root][s:ui.im]
+    if has_key(s:im_keycode, s:ui.im)
+        let im = backend.chinese
         if s:windowless && len(s:cjk.filename)
             let im = len(s:english.line) ? '*'      : ''
             let im = len(s:hjkl_n)       ? s:hjkl_n : im
         endif
         let statusline .= im
     endif
-    let datafile = s:backend[s:ui.root][s:ui.im].name
     if s:ui.im =~ 'wubi'
         for wubi in split('wubi98 wubi2000 wubijd wubihf')
-            if get(split(datafile,'/'),-1) =~ wubi
+            if get(split(backend.name, '/'),-1) =~ wubi
                 let statusline .= s:vimim_chinese(wubi)
             endif
         endfor
@@ -671,7 +674,7 @@ endfunction
 
 function! s:vimim_punctuations_maps()
     for _ in keys(s:punctuations) + [";", "'"]
-        silent!exe 'inoremap <silent> <expr> '    ._.
+        silent!exe 'inoremap <silent> <expr> '   ._.
         \ ' <SID>vimim_punctuation_map("'._.'")'
     endfor
     if !empty(s:evils)
@@ -1105,8 +1108,7 @@ function! s:vimim_onekey_evils()
                 return " " " no transfer if punctuation punctuation
             endif
         endfor
-        " transfer English punctuation to Chinese punctuation
-        let bs = s:all_evils[one_before]
+        let bs = s:all_evils[one_before] " turn into Chinese punctuation
         let bs = one_before == "'" ? <SID>vimim_get_single_quote() : bs
         let bs = one_before == '"' ? <SID>vimim_get_double_quote() : bs
         let onekey = "\<Left>\<Delete>" . bs
@@ -1177,8 +1179,7 @@ function! s:vimim_get_head_without_quote(keyboard)
         return keyboard
     endif
     if s:hjkl_m && s:hjkl_m % 2 || keyboard =~ '^\l\l\+'."'''".'$'
-        " [shoupin] hjkl_m or 3 tail quotes to control shoupin
-        "    hjkl_m || sssss..  =>  sssss'''  =>  s's's's's
+        " [shoupin] hjkl_m || sssss..  =>  sssss'''  =>  s's's's's
         let keyboard = substitute(keyboard, "'", "", 'g')
         let keyboard = join(split(keyboard,'\zs'), "'")
     endif
@@ -1701,22 +1702,20 @@ function! s:vimim_get_cjk_head(keyboard)
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
             let head = keyboard
-            if len(keyboard) > 4
-                " output is 6021 for input 6021272260021762
+            if len(keyboard) > 4  " output is 6021 for input 60212722
                 let head = s:vimim_get_head(keyboard, 4)
             endif
         elseif keyboard =~# '^\l\+\d\+\>'
-            let head = keyboard        "  ma7 ma77 ma771 ma7712
+            let head = keyboard         " ma7 ma77 ma771 ma7712
             let digit = match(keyboard,'\d')
             let alpha = keyboard[0 : digit-1]
             let digit = keyboard[digit :]
             let keyboards = s:vimim_get_pinyin_from_pinyin(alpha)
             if len(keyboards)
-                let s:hjkl_n = digit   " 74 in mali74
+                let s:hjkl_n = digit    " 74 in mali74
                 return alpha
             endif
-        elseif keyboard =~# '^\l\+\d\+'
-            " output is wo23 for input wo23you40yigemeng
+        elseif keyboard =~# '^\l\+\d\+' " wo23 for input wo23you40yigemeng
             let partition = match(keyboard, '\d')
             while partition > -1
                 let partition += 1
@@ -1782,8 +1781,7 @@ function! s:vimim_cjk_match(keyboard)
     let grep = ""
     if keyboard =~ '\d'
         if keyboard =~# '^\l\l\+[1-4]\>' && empty(len(s:hjkl_n))
-            " cjk pinyin with tone: huan2hai2 yi1
-            let grep = keyboard . '[a-z ]'
+            let grep = keyboard . '[a-z ]'  " cjk pinyin: huan2hai2 yi1
         else
             let digit = ""
             if keyboard =~ '^\d\+' && keyboard !~ '[^0-9]'
@@ -1812,8 +1810,7 @@ function! s:vimim_cjk_match(keyboard)
                 let grep = ' u\( \|$\)'
             endif
         elseif keyboard =~# '^\l\+'
-            " cjk multiple-char-list without frequency: huan2hai2
-            " support all cases: /huan /hai /yet /huan2 /hai2
+            " cjk multiple-char-list: /huan /hai /yet /huan2 /hai2
             let grep = '[ 0-9]' . keyboard . '[0-9]'
         endif
     endif
@@ -1853,7 +1850,7 @@ function! s:vimim_sort_on_last(line1, line2)
 endfunction
 
 function! s:vimim_chinese_transfer() range abort
-    " (1) "quick and dirty" way to transfer Chinese to Chinese
+    " (1) quick and dirty way to transfer Chinese to Chinese
     " (2) 20% of the effort to solve 80% of the problem using one2one
     if s:vimim_cjk()
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
@@ -2087,16 +2084,16 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
         return []
     endif
     let results = []
-    let lines = s:backend[s:ui.root][s:ui.im].lines
+    let backend = s:backend[s:ui.root][s:ui.im]
     for candidate in candidates
         let pattern = '^' . candidate . '\>'
-        let cursor = match(lines, pattern, 0)
+        let cursor = match(backend.lines, pattern, 0)
         if cursor < 0
             continue
         elseif a:sentence
             return [candidate]
         endif
-        let oneline = get(lines, cursor)
+        let oneline = get(backend.lines, cursor)
         call extend(results, s:vimim_make_pairs(oneline))
     endfor
     return results
@@ -2538,10 +2535,10 @@ endfunction
 
 function! s:vimim_sentence_datafile(keyboard)
     let keyboard = a:keyboard
-    let lines = s:backend[s:ui.root][s:ui.im].lines
+    let backend = s:backend[s:ui.root][s:ui.im]
     let fuzzy = s:ui.im =~ 'pinyin' ? '\s' : ""
     let pattern = '^' . keyboard . fuzzy
-    let cursor = match(lines, pattern)
+    let cursor = match(backend.lines, pattern)
     if cursor > -1
         return keyboard
     endif
@@ -2554,7 +2551,7 @@ function! s:vimim_sentence_datafile(keyboard)
         let max -= 1
         let head = strpart(keyboard, 0, max)
         let pattern = '^' . head . '\s'
-        let cursor = match(lines, pattern)
+        let cursor = match(backend.lines, pattern)
         if cursor < 0
             continue
         else
@@ -2568,14 +2565,14 @@ function! s:vimim_sentence_datafile(keyboard)
 endfunction
 
 function! s:vimim_get_from_datafile(keyboard)
-    let lines = s:backend[s:ui.root][s:ui.im].lines
     let fuzzy = s:ui.im =~ 'pinyin' ? '\s' : ""
     let pattern = '^' . a:keyboard . fuzzy
-    let cursor = match(lines, pattern)
+    let backend = s:backend[s:ui.root][s:ui.im]
+    let cursor = match(backend.lines, pattern)
     if cursor < 0
         return []
     endif
-    let oneline = get(lines, cursor)
+    let oneline = get(backend.lines, cursor)
     let results = split(oneline)[1:]
     if len(s:english.line) || len(results) > 10
         return results
@@ -2591,7 +2588,7 @@ function! s:vimim_get_from_datafile(keyboard)
         let s:show_extra_menu = 1
         for i in range(10)
             let cursor += i     " get more if less
-            let oneline = get(lines, cursor)
+            let oneline = get(backend.lines, cursor)
             let extras = s:vimim_make_pairs(oneline)
             call extend(results, extras)
         endfor
@@ -3571,7 +3568,7 @@ else
                 let s:keyboard = keyboard  " wubi auto insert on the 4th
             endif
         endif
-        " [backend] plug-n-play embedded backend engine
+        " [backend] plug-n-play embedded file/directory engine
         let results = s:vimim_embedded_backend_engine(keyboard)
     endif
     " [english] English cannot be ignored!
