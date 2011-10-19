@@ -1648,13 +1648,15 @@ let s:VimIM += [" ====  input: cjk       ==== {{{"]
 " =================================================
 
 function! s:vimim_cjk()
-    if len(s:cjk.filename) && empty(s:cjk.lines)
+    if empty(s:cjk.filename)
+        return 0
+    elseif empty(s:cjk.lines)
         let s:cjk.lines = s:vimim_readfile(s:cjk.filename)
-        if len(s:cjk.lines) == 20902
-            return 1
+        if len(s:cjk.lines) != 20902
+            return 0
         endif
     endif
-    return 0
+    return 1
 endfunction
 
 function! s:vimim_digit_for_cjk(chinese, info)
