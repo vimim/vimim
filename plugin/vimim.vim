@@ -929,6 +929,9 @@ function! <SID>vimim_space()
     if pumvisible()
         let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
+        if s:onekey && empty(s:cjk.filename)
+            sil!call s:vimim_stop()
+        endif
     elseif s:pattern_not_found
         let s:pattern_not_found = 0
         return space
