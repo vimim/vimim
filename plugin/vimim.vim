@@ -568,7 +568,7 @@ function! s:vimim_get_labeling(label)
     if s:onekey && a:label < 11
         let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
         let labeling = empty(labeling) ? '10' : labeling . label2
-        if len(s:cjk.filename) && empty(s:hjkl_l%2)
+        if empty(s:cjk.filename) && empty(s:hjkl_l%2)
             let labeling = " " . label2
         endif
     endif
@@ -598,20 +598,22 @@ function! <SID>vimim_label_map(key)
         if key =~ '\d'
             let n = key < 1 ? 9 : key - 1
         endif
+        let yes = repeat("\<Down>", n). '\<C-Y>'
         let key = '\<C-R>=g:vimim()\<CR>'
-        let down = repeat("\<Down>", n)
         let s:has_pumvisible = 1
         if s:onekey
             if len(s:cjk.filename)   "  abcdvfgxz as continuous
                 if a:key =~ '\d'     " 1234567890 as filter
                     let s:hjkl_n .= a:key   
+                else
+                    let key = yes
                 endif
             else
-                let key = down . '\<C-Y>'
+                let key = yes
                 sil!call s:vimim_stop()
             endif
         else
-            let key = down . '\<C-Y>' . key
+            let key = yes . key
             sil!call s:vimim_reset_after_insert()
         endif
     elseif s:windowless && key =~ '\d'
@@ -1646,12 +1648,13 @@ let s:VimIM += [" ====  input: cjk       ==== {{{"]
 " =================================================
 
 function! s:vimim_cjk()
-    if empty(s:cjk.filename)
-        return 0
-    elseif empty(s:cjk.lines)
+    if len(s:cjk.filename) && empty(s:cjk.lines)
         let s:cjk.lines = s:vimim_readfile(s:cjk.filename)
+        if len(s:cjk.lines) == 20902
+            return 1
+        endif
     endif
-    return 1
+    return 0
 endfunction
 
 function! s:vimim_digit_for_cjk(chinese, info)
