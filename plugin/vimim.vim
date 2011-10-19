@@ -420,22 +420,22 @@ function! s:vimim_dictionary_statusline()
     let s:title.wubi2000   = "新世纪,新世紀"
     let s:title.taijima    = "太极码,太極碼"
     let s:title.nature     = "自然码,自然碼"
-    let single  = " computer directory datafile database option  env "
-    let single .= " encoding input     static   dynamic  erbi    wubi"
-    let single .= " hangul   xinhua    zhengma  cangjie  yong    wu  "
-    let single .= " wubijd   shuangpin cloud    flypy    network ms  "
-    let double  = " 电脑,電腦 目录,目錄 文件,文本 词库,詞庫 选项,選項"
-    let double .= " 环境,環境 编码,編碼 输入,輸入 静态,靜態 动态,動態"
-    let double .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
-    let double .= " 仓颉,倉頡 永码,永碼 吴语,吳語 极点,極點 双拼,雙拼"
-    let double .= " 云,雲     小鹤,小鶴 联网,聯網 微软,微軟 "
-    call extend(s:title, s:vimim_key_value_hash(single, double))
-    let single  = " pinyin fullwidth halfwidth english chinese purple"
-    let single .= " plusplus quick wubihf wubi98 phonetic array30"
-    let single .= " revision mass date google baidu sogou qq "
-    let double  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 98"
-    let double .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
-    call extend(s:title, s:vimim_key_value_hash(single, double))
+    let one  = " computer directory datafile database option  env "
+    let one .= " encoding input     static   dynamic  erbi    wubi"
+    let one .= " hangul   xinhua    zhengma  cangjie  yong    wu  "
+    let one .= " wubijd   shuangpin cloud    flypy    network ms  "
+    let two  = " 电脑,電腦 目录,目錄 文件,文本 词库,詞庫 选项,選項"
+    let two .= " 环境,環境 编码,編碼 输入,輸入 静态,靜態 动态,動態"
+    let two .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
+    let two .= " 仓颉,倉頡 永码,永碼 吴语,吳語 极点,極點 双拼,雙拼"
+    let two .= " 云,雲     小鹤,小鶴 联网,聯網 微软,微軟 "
+    call extend(s:title, s:vimim_key_value_hash(one, two))
+    let one  = " pinyin fullwidth halfwidth english chinese purple"
+    let one .= " plusplus quick wubihf wubi98 phonetic array30"
+    let one .= " revision mass date google baidu sogou qq "
+    let two  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 98"
+    let two .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
+    call extend(s:title, s:vimim_key_value_hash(one, two))
 endfunction
 
 function! s:vimim_chinese(key)
@@ -665,12 +665,12 @@ function! s:vimim_dictionary_punctuations()
     if s:vimim_punctuation < 1  " close all evil punctuations
         return
     endif
-    let single = "  , .  +  -  ~  ^    _    "
-    let double = " ， 。 ＋ － ～ …… —— "
-    let mini_punctuations = s:vimim_key_value_hash(single, double)
-    let single = "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
-    let double = "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
-    let most_punctuations = s:vimim_key_value_hash(single, double)
+    let one = "  , .  +  -  ~  ^    _    "
+    let two = " ， 。 ＋ － ～ …… —— "
+    let mini_punctuations = s:vimim_key_value_hash(one, two)
+    let one = "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
+    let two = "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
+    let most_punctuations = s:vimim_key_value_hash(one, two)
     call extend(s:punctuations, mini_punctuations)
     if s:vimim_punctuation > 1    " :let g:vimim_punctuation = 2
         call extend(s:punctuations, most_punctuations)
@@ -707,10 +707,9 @@ function! <SID>vimim_punctuation_map(key)
     endif
     if pumvisible()
         let key = '\<C-Y>' . key
-        if a:key == ";"      " the 2nd choice
-            let key = '\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
-        elseif a:key == "'"  " the 3rd choice
-            let key = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
+        if a:key =~ "[;']"
+            let down = a:key == ";" ? "" : '\<Down>'
+            let key = down . '\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -945,12 +944,11 @@ function! <SID>vimim_space()
             sil!call s:vimim_stop()
         endif
     elseif s:pattern_not_found
-        let s:pattern_not_found = 0
-        return space
     elseif s:chinese_mode =~ 'dynamic'
-        return space
     elseif s:chinese_mode =~ 'static'
-        let space = s:vimim_static_action(space)
+        if s:vimim_byte_before() =~# s:valid_keyboard
+            let space = g:vimim()
+        endif
     elseif s:onekey
         let space = s:vimim_onekey_action(1)
     endif
@@ -1310,7 +1308,7 @@ function! s:vimim_chinesemode_start()
             \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . char
         endfor
         if !pumvisible()
-            return s:vimim_static_action("")
+            return g:vimim()
         endif
     endif
     return ""
@@ -1342,14 +1340,6 @@ function! <SID>vimim_punctuation_toggle()
     call s:vimim_set_statusline()
     call s:vimim_punctuations_maps()
     return ""
-endfunction
-
-function! s:vimim_static_action(space)
-    let space = a:space
-    if s:vimim_byte_before() =~# s:valid_keyboard
-        let space = g:vimim()
-    endif
-    sil!exe 'sil!return "' . space . '"'
 endfunction
 
 function! s:vimim_set_keyboard_list(column_start, keyboard)
@@ -1481,12 +1471,12 @@ function! s:translators.translate(english) dict
 endfunction
 
 function! s:vimim_imode_today_now(keyboard)
-    let single  = " year sunday monday tuesday wednesday thursday"
-    let single .= " friday saturday month day hour minute second"
-    let double  = join(split("年 日 一 二 三 四 五 六"), " 星期")
-    let double .= " 月 日 时 分 秒"
+    let one  = " year sunday monday tuesday wednesday thursday"
+    let one .= " friday saturday month day hour minute second"
+    let two  = join(split("年 日 一 二 三 四 五 六"), " 星期")
+    let two .= " 月 日 时 分 秒"
     let chinese = copy(s:translators)
-    let chinese.dict = s:vimim_key_value_hash(single, double)
+    let chinese.dict = s:vimim_key_value_hash(one, two)
     let time  = strftime("%Y") . ' year  '
     let time .= strftime("%m") . ' month '
     let time .= strftime("%d") . ' day   '
@@ -3406,7 +3396,6 @@ function! s:vimim_reset_before_anything()
     let s:smart_enter = 0
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
-    let s:pattern_not_found = 0
     let s:popup_list = []
 endfunction
 
@@ -3423,6 +3412,7 @@ function! s:vimim_reset_after_insert()
     let s:hjkl__ = 0    "  toggle simplified/traditional
     let s:match_list = []
     let s:pageup_pagedown = 0
+    let s:pattern_not_found = 0
 endfunction
 
 function! s:vimim_imap_off()
@@ -3591,7 +3581,7 @@ else
         let results = s:vimim_make_pairs(s:english.line) + results
     endif
     " [the_last_resort] either force shoupin or force cloud
-    if s:onekey && empty(results)
+    if empty(results) && s:onekey
         if len(keyboard) > 1
             let shoupin = s:vimim_get_head_without_quote(keyboard."'''")
             let results = s:vimim_cjk_match(shoupin)
@@ -3602,9 +3592,8 @@ else
             let i = keyboard == 'i' ? "我" : s:space
             let results = split(repeat(i,5),'\zs')
         endif
-        if empty(results)
-            let s:pattern_not_found = 1
-        endif
+    elseif empty(results) && s:chinese_mode =~ 'static'
+        let s:pattern_not_found = 1
     endif
     return s:vimim_popupmenu_list(results)
 endif
