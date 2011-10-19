@@ -604,7 +604,7 @@ function! <SID>vimim_label_map(key)
         if s:onekey
             if len(s:cjk.filename)   "  abcdvfgxz as continuous
                 if a:key =~ '\d'     " 1234567890 as filter
-                    let s:hjkl_n .= a:key   
+                    let s:hjkl_n .= a:key
                 else
                     let key = yes
                 endif
@@ -1089,7 +1089,7 @@ function! s:vimim_onekey_action(space)
 endfunction
 
 function! s:vimim_onekey_evils()
-    let onekey = ""
+    let onekey = ""  " punctuations can be made not so evil ..
     let one_before = s:vimim_byte_before()
     let two_before = getline(".")[col(".")-3]
     if getline(".")[col(".")-3 : col(".")-2] == ".."  " before_before
@@ -1102,15 +1102,11 @@ function! s:vimim_onekey_evils()
         else
             let onekey = "''"       "  <=  香.. plays same cjk
         endif
-        return  "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
-    endif
-    " [..] punctuations can be made not so evil ..
-    if one_before =~ "[0-9a-z]" || two_before =~ '\s'
-        return ""
-    elseif one_before == "'" && two_before =~ s:valid_keyboard
-        return ""
+        let onekey = "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
+    elseif one_before == "'" && two_before =~ '\l'  " ma' forced cloud
+    elseif one_before =~ "[0-9a-z]"                 " nothing
     elseif two_before =~ "[0-9a-z]"
-        return " "
+        let onekey = " "  " ma,space => ma, space
     elseif has_key(s:all_evils, one_before)
         for char in keys(s:all_evils)
             if two_before ==# char || two_before =~# '\u'
