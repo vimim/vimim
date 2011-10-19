@@ -1015,19 +1015,13 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 function! <SID>vimim_onekey(tab)
     " (1) <OneKey> in insert mode     => start MidasTouch popup
     " (2) <OneKey> in windowless mode => start MidasTouch popup
-    " (3) <OneKey> in omni window     => start windowless if input
-    " (4) <OneKey> in omni window     => start print if hjkl
+    " (3) <OneKey> in omni window     => start print
     let onekey = ""
     let s:chinese_mode = 'onekey'
     let one_cursor = getline(".")[col(".")-1]
     if s:onekey
         if pumvisible()
-            if empty(&pumheight)
-                let onekey = '\<C-R>=g:vimim_screenshot()\<CR>'
-            else
-                let s:windowless = empty(a:tab) ? 1 : a:tab
-                let onekey = '\<C-Y>'
-            endif
+            let onekey = '\<C-R>=g:vimim_screenshot()\<CR>'
         elseif s:windowless
             let s:windowless = 0
             if s:vimim_byte_before() =~# s:valid_keyboard
