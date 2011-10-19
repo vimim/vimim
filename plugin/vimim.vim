@@ -360,11 +360,19 @@ function! s:vimim_egg_vimim()
         call add(eggs, ciku . s:english.filename)
     endif
     if len(s:ui.frontends)
+        let cloud = ""
         for [root, im] in s:ui.frontends
             let mass = s:backend[root][im].name=~"bsddb" ? 'mass' : root
             let ciku = database . s:vimim_chinese(mass) . database
-            call add(eggs, ciku . s:backend[root][im].name)
+            if root == "cloud"
+                let cloud .= s:space . s:backend[root][im].name
+            else
+                call add(eggs, ciku . s:backend[root][im].name)
+            endif
         endfor
+        if len(cloud)
+            call add(eggs, ciku . cloud)
+        endif
         let input = s:vimim_chinese('input') . s:colon
         if s:vimim_map =~ 'ctrl_bslash'
             let input .=  s:vimim_statusline() . s:space
