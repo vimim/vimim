@@ -1122,12 +1122,12 @@ function! s:vimim_onekey_evils()
 endfunction
 
 function! g:vimim_screenshot()
-    let saved_position = getpos(".")
     let keyboard = get(split(s:keyboard),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
     if s:vimim_byte_before() =~ "'" || s:keyboard =~ '^vimim'
         let space = ""  " no need to format if cloud
     endif
+    let saved_position = getpos(".")
     for items in s:popup_list
         let line = printf('%s', items.word)
         if has_key(items, "abbr")
