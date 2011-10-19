@@ -584,7 +584,7 @@ function! s:vimim_common_maps()
 endfunction
 
 function! <SID>vimim_label_map(key)
-    let key = a:key  " abcdvfgxz 1234567890
+    let key = a:key
     if pumvisible()
         let n = match(s:abcd, key)
         if key =~ '\d'
@@ -593,9 +593,11 @@ function! <SID>vimim_label_map(key)
         let key = '\<C-R>=g:vimim()\<CR>'
         let down = repeat("\<Down>", n)
         let s:has_pumvisible = 1
-        if s:onekey && a:key =~ '\d'
-            if len(s:cjk.filename)
-                let s:hjkl_n .= a:key
+        if s:onekey
+            if len(s:cjk.filename)   "  abcdvfgxz as continuous
+                if a:key =~ '\d'     " 1234567890 as filter
+                    let s:hjkl_n .= a:key   
+                endif
             else
                 let key = down . '\<C-Y>'
                 sil!call s:vimim_stop()
