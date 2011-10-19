@@ -568,7 +568,7 @@ function! s:vimim_get_labeling(label)
     if s:onekey && a:label < 11
         let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
         let labeling = empty(labeling) ? '10' : labeling . label2
-        if empty(s:cjk.filename) && empty(s:hjkl_l%2)
+        if len(s:cjk.filename) && empty(s:hjkl_l%2)
             let labeling = " " . label2
         endif
     endif
