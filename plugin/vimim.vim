@@ -277,8 +277,8 @@ function! s:vimim_getsid(scriptname)
     silent scriptnames
     redir END
     for line in split(scriptnames_output, "\n")
-        if line =~ a:scriptname           " only do non-blank lines
-            return matchstr(line, '\d\+') " get the first number
+        if line =~ a:scriptname
+            return matchstr(line, '\d\+')
         endif
     endfor
     return 0
@@ -683,8 +683,7 @@ endfunction
 
 function! s:vimim_punctuations_maps()
     for _ in keys(s:punctuations) + [";", "'"]
-        silent!exe 'inoremap <silent> <expr> '   ._.
-        \ ' <SID>vimim_punctuation_map("'._.'")'
+        exe 'inoremap <expr> '._.' <SID>vimim_punctuation_map("'._.'")'
     endfor
     if !empty(s:evils)
         inoremap    '     <C-R>=<SID>vimim_get_single_quote()<CR>
@@ -805,7 +804,7 @@ function! s:vimim_get_hjkl_game(keyboard)
             " [cjk]  display highlighted multiple cjk
             let line = substitute(getreg('"'),'[\x00-\xff]','','g')
             if len(line)
-                for chinese in split(line,'\zs')
+                for chinese in split(line, '\zs')
                     let menu  = s:vimim_cjk_extra_text(chinese)
                     let menu .= repeat(" ", 38-len(menu))
                     call add(results, chinese . " " . menu)
@@ -816,7 +815,7 @@ function! s:vimim_get_hjkl_game(keyboard)
     if !empty(results)
         let s:touch_me_not = 1
         if s:hjkl_m % 4
-            for i in range(s:hjkl_m%4)
+            for i in range(s:hjkl_m % 4)
                 let results = s:vimim_hjkl_rotation(results)
             endfor
         endif
@@ -3445,12 +3444,12 @@ function! s:vimim_set_backend_embedded()
     endif
     " (3/3) scan all supported data files
     for im in s:all_vimim_input_methods
-        let datafile = s:plugin . "vimim." . im . ".txt"
-        if !filereadable(datafile)
-            let im2 = im . "." . &encoding
-            let datafile = s:plugin . "vimim." . im2 . ".txt"
+        let datafile = s:vimim_filereadable("vimim." .im. ".txt")
+        if empty(datafile)
+            let filename = "vimim." . im . "." . &encoding . ".txt"
+            let datafile = s:vimim_filereadable(filename)
         endif
-        if filereadable(datafile)
+        if !empty(datafile)
             call s:vimim_set_datafile(im, datafile)
         endif
     endfor
