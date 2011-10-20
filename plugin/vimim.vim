@@ -331,58 +331,57 @@ endfunction
 
 function! s:vimim_egg_vimim()
     let eggs = []
-    call add(eggs, s:vimim_chinese('date') . s:colon . s:today)
+    call add(eggs, s:chinese('date') . s:colon . s:today)
     let os = "win32unix win32 win64 macunix unix x11"
     for computer in split(os)
         if has(computer)
             let os = computer | break
         endif
     endfor
-    let computer = s:vimim_chinese('computer') . s:colon
-    call add(eggs, computer . os . s:space . &term)
+    call add(eggs, s:chinese('computer') .s:colon. os .s:space. &term)
     let revision = get(split(s:egg),1)
     let revision = empty(revision) ?  ""  : "vimim.vim=" . revision
     let revision = v:progname ."=". v:version  . s:space . revision
-    call add(eggs, s:vimim_chinese('revision') . s:colon . revision)
-    let encoding = s:vimim_chinese('encoding') . s:colon
-    call add(eggs, encoding . &encoding . s:space . &fileencodings)
-    call add(eggs, s:vimim_chinese('env') . s:colon . v:lc_time)
-    let database = s:vimim_chinese('database') . s:colon
+    call add(eggs, s:chinese('revision') . s:colon . revision)
+    let encoding = s:chinese('encoding') . s:colon . &encoding
+    call add(eggs, encoding . s:space . &fileencodings)
+    call add(eggs, s:chinese('env') . s:colon . v:lc_time)
+    let database = s:chinese('database') . s:colon
     if len(s:cjk.filename)
-        let ciku = database . s:vimim_chinese('cjk') . s:colon
+        let ciku = database . s:chinese('cjk') . s:colon
         call add(eggs, ciku . s:cjk.filename)
     endif
     if len(s:english.filename)
-        let ciku = database . s:vimim_chinese('english') . database
+        let ciku = database . s:chinese('english') . database
         call add(eggs, ciku . s:english.filename)
     endif
     if len(s:ui.frontends)
         let cloud = ""
         for [root, im] in s:ui.frontends
-            let mass = s:backend[root][im].name=~"bsddb" ? 'mass' : root
-            let ciku = database . s:vimim_chinese(mass) . database
+            let name = s:backend[root][im].name
+            let mass = name =~ "bsddb" ? 'mass' : root
+            let ciku = database . s:chinese(mass) . database
             if root == "cloud"
-                let cloud .= s:space . s:backend[root][im].name
+                let cloud .= s:space . name . s:chinese('cloud')
             else
-                call add(eggs, ciku . s:backend[root][im].name)
+                call add(eggs, ciku . name)
             endif
         endfor
         if len(cloud)
             call add(eggs, ciku . cloud)
         endif
-        let input = s:vimim_chinese('input') . s:colon
+        let input = s:chinese('input') . s:colon
         if s:vimim_map =~ 'ctrl_bslash'
             let input .=  s:vimim_statusline() . s:space
         elseif s:vimim_map =~ 'gi'
-            let input .= s:vimim_chinese('onekey')     . s:space
-            let input .= s:vimim_chinese('windowless') . s:space
+            let input .= s:chinese('onekey')     . s:space
+            let input .= s:chinese('windowless') . s:space
         endif
         call add(eggs, input)
     endif
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
-    let network  = s:vimim_chinese('network') . s:colon
-    call add(eggs, network . exe . s:http_exe)
-    call add(eggs, s:vimim_chinese('option') . s:colon . "vimimhelp")
+    call add(eggs, s:chinese('network') . s:colon . exe . s:http_exe)
+    call add(eggs, s:chinese('option')  . s:colon . "vimimhelp")
     if !empty(s:vimimrc)
         for rc in sort(s:vimimrc)
             call add(eggs, s:space . s:space . s:colon . rc[2:])
@@ -435,7 +434,7 @@ function! s:vimim_dictionary_statusline()
     call extend(s:title, s:vimim_key_value_hash(one, two))
 endfunction
 
-function! s:vimim_chinese(key)
+function! s:chinese(key)
     let chinese = a:key
     if has_key(s:title, chinese)
         let twins = split(s:title[chinese], ",")
@@ -489,33 +488,32 @@ function! s:vimim_get_title()
     if s:ui.im =~ 'wubi'
         for wubi in split('wubi98 wubi2000 wubijd wubihf')
             if get(split(backend.name, '/'),-1) =~ wubi
-                let statusline .= s:vimim_chinese(wubi)
+                let statusline .= s:chinese(wubi)
             endif
         endfor
     elseif s:ui.im == 'mycloud'
         let statusline .= s:space . s:backend.cloud.mycloud.directory
     elseif s:ui.root == 'cloud'
-        let cloud  = s:vimim_chinese(s:cloud_default)
-        let cloud .= s:vimim_chinese('cloud')
+        let cloud  = s:chinese(s:cloud_default) . s:chinese('cloud')
         let statusline = s:space . cloud
         let clouds = split(s:vimim_cloud,',')
         let vimim_cloud = get(clouds, match(clouds, s:cloud_default))
         if vimim_cloud =~ 'wubi'          " g:vimim_cloud='qq.wubi'
-            let statusline .= s:space . s:vimim_chinese('wubi')
+            let statusline .= s:space . s:chinese('wubi')
         elseif vimim_cloud =~ 'shuangpin' " qq.shuangpin.ms => ms
             let shuangpin = get(split(vimim_cloud,"[.]"),-1)
             if match(split(s:rc["g:vimim_shuangpin"]),shuangpin) > -1
-                let statusline .= s:space . s:vimim_chinese(shuangpin)
+                let statusline .= s:space . s:chinese(shuangpin)
             endif
             if vimim_cloud !~ 'abc'
-                let statusline .= s:space . s:vimim_chinese('shuangpin')
+                let statusline .= s:space . s:chinese('shuangpin')
             endif
         endif
     endif
     if len(s:vimim_shuangpin)
-        let shuangpin = s:vimim_chinese(s:vimim_shuangpin)
+        let shuangpin = s:chinese(s:vimim_shuangpin)
         if s:vimim_shuangpin !~ 'abc'
-            let shuangpin .= s:vimim_chinese('shuangpin')
+            let shuangpin .= s:chinese('shuangpin')
         endif
         let statusline = s:space . shuangpin
     endif
@@ -525,11 +523,9 @@ endfunction
 function! s:vimim_statusline()
     let input_mode  = get(split(s:vimim_chinese_input_mode,','),0)
     let punctuation = s:toggle_punctuation ? 'fullwidth' : 'halfwidth'
-    let punctuation = s:vimim_chinese(punctuation)
-    let statusline  = s:vimim_chinese('chinese')
-    let statusline .= s:vimim_chinese(input_mode)
-    let statusline .= s:vimim_get_title() . punctuation
-    let statusline .= s:space . "VimIM"
+    let punctuation = s:chinese(punctuation) . s:space
+    let statusline  = s:chinese('chinese') . s:chinese(input_mode)
+    let statusline .= s:vimim_get_title() . punctuation . "VimIM"
     return statusline
 endfunction
 
@@ -2527,7 +2523,7 @@ function! s:vimim_set_datafile(im, datafile)
     let s:backend.datafile[im].im = im
     let s:backend.datafile[im].name = datafile
     let s:backend.datafile[im].keycode = s:im_keycode[im]
-    let s:backend.datafile[im].chinese = s:vimim_chinese(im)
+    let s:backend.datafile[im].chinese = s:chinese(im)
     let s:backend.datafile[im].lines = []
 endfunction
 
@@ -2654,7 +2650,7 @@ function! s:vimim_set_directory(im, dir)
     let s:backend.directory[im].im = im
     let s:backend.directory[im].name = a:dir
     let s:backend.directory[im].keycode = s:im_keycode[im]
-    let s:backend.directory[im].chinese = s:vimim_chinese(im)
+    let s:backend.directory[im].chinese = s:chinese(im)
 endfunction
 
 function! s:vimim_sentence_directory(keyboard, directory)
@@ -2728,8 +2724,8 @@ function! s:vimim_set_background_clouds()
             let s:backend.cloud[im].root = s:ui.root
             let s:backend.cloud[im].im = 0  " used for cloud key
             let s:backend.cloud[im].keycode = s:im_keycode[im]
-            let s:backend.cloud[im].name    = s:vimim_chinese(im)
-            let s:backend.cloud[im].chinese = s:vimim_chinese(im)
+            let s:backend.cloud[im].name    = s:chinese(im)
+            let s:backend.cloud[im].chinese = s:chinese(im)
         endfor
     endif
 endfunction
@@ -2993,10 +2989,8 @@ function! s:vimim_get_cloud_all(keyboard)
         if len(results) > 1
             call add(results, s:space)
         endif
-        let title  = a:keyboard . s:space
-        let title .= s:vimim_chinese(cloud)
-        let title .= s:vimim_chinese('cloud')
-        let title .= s:vimim_chinese('input')
+        let title  = a:keyboard . s:space . s:chinese(cloud)
+        let title .= s:chinese('cloud') . s:chinese('input')
         let duration = localtime() - start
         if duration
             let title .= s:space . string(duration)
@@ -3034,8 +3028,8 @@ function! s:vimim_set_backend_mycloud()
         let s:backend.cloud.mycloud = {}
         let s:backend.cloud.mycloud.root = s:ui.root
         let s:backend.cloud.mycloud.im = mycloud
-        let s:backend.cloud.mycloud.name    = s:vimim_chinese(s:ui.im)
-        let s:backend.cloud.mycloud.chinese = s:vimim_chinese(s:ui.im)
+        let s:backend.cloud.mycloud.name    = s:chinese(s:ui.im)
+        let s:backend.cloud.mycloud.chinese = s:chinese(s:ui.im)
         let ret = s:vimim_access_mycloud(mycloud, "__getkeychars")
         let s:backend.cloud.mycloud.keycode = split(ret,"\t")[0]
         let ret = s:vimim_access_mycloud(mycloud, "__getname")
@@ -3515,9 +3509,7 @@ else
         return s:vimim_popupmenu_list(results)
     endif
     let keyboard = a:keyboard
-    if empty(str2nr(keyboard))
-        " input is alphabet only, bad for 23554022100080204420
-    else
+    if !empty(str2nr(keyboard)) " for digit input: 23554022100080204420
         let keyboard = get(split(s:keyboard),0)
     endif
     if empty(keyboard) || keyboard !~ s:valid_keyboard
