@@ -81,7 +81,7 @@ function! s:vimim_initialize_global()
     let s:valid_keyboard = "[0-9a-z']"
     let s:shengmu_list = split('b p m f d t l n g k h j q x r z c s y w')
     let s:starts = { 'row' : 0, 'column' : 1 }
-    let s:pumheights = { 'current' : 10, 'saved' : &pumheight }
+    let s:pumheights = { 'current' : &pumheight, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
     let s:ui = { 'root' : '', 'im' : '', 'has_dot' : 0, 'frontends' : [] }
@@ -3597,7 +3597,9 @@ function! s:vimim_popupmenu_list(lines)
     endif
     let keyboards = split(s:keyboard)  " mmmm => ['m',"m'm'm"]
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
-    let &pumheight = empty(s:onekey) ? 5 : 10
+    if empty(&pumheight) || s:onekey
+        let &pumheight = 10
+    endif
     let s:pumheights.current = copy(&pumheight)
     if s:touch_me_not
         let &pumheight = 0
