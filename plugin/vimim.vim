@@ -1685,23 +1685,18 @@ function! s:vimim_get_cjk_head(keyboard)
     if keyboard =~# '^i' " 4corner_shortcut: iuuqwuqew => 77127132
         let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
     endif
-    let head = 0
+    let head = keyboard
     if s:touch_me_not || len(keyboard) == 1
-        let head = keyboard
     elseif keyboard =~ '\d'
         if keyboard =~ '^\d' && keyboard !~ '\D'
-            let head = keyboard
-            if len(keyboard) > 4  " output is 6021 for input 60212722
+            if len(keyboard) > 4  " output is 7712 for input 77124002
                 let head = s:vimim_get_head(keyboard, 4)
             endif
         elseif keyboard =~# '^\l\+\d\+\>'
-            let head = keyboard         " ma7 ma77 ma771 ma7712
-            let digit = match(keyboard,'\d')
-            let alpha = keyboard[0 : digit-1]
-            let digit = keyboard[digit :]
-            let keyboards = s:vimim_get_pinyin_from_pinyin(alpha)
-            if len(keyboards)
-                let s:hjkl_n = digit    " 74 in mali74
+            let index = match(keyboard,'\d')      " ma7 ma77 ma771 ma7712
+            let alpha = keyboard[0 : index-1]
+            if len(s:vimim_get_pinyin_from_pinyin(alpha))
+                let s:hjkl_n = keyboard[index :]  " 74 in mali74
                 return alpha
             endif
         elseif keyboard =~# '^\l\+\d\+' " wo23 for input wo23you40yigemeng
@@ -1716,16 +1711,15 @@ function! s:vimim_get_cjk_head(keyboard)
         endif
     elseif empty(s:english.line) " muuqwxeyqpjeqqq => m7712x3610j3111
         if keyboard =~# '^\l' && len(keyboard)%5 < 1
-            let llll = keyboard[1:4]  " awwwr arrow color
+            let llll = keyboard[1:4]  " awwwr/a2224 arrow color
             let dddd = s:vimim_qwertyuiop_1234567890(llll)
             if !empty(dddd)
-                let ldddd = keyboard[0:0] . dddd
-                let keyboard = ldddd . keyboard[5:-1]
+                let keyboard = keyboard[0:0] . dddd . keyboard[5:-1]
                 let head = s:vimim_get_head(keyboard, 5)
             endif
-        else  " get single character from cjk
-            let head = keyboard
         endif
+    else
+        let head = ""
     endif
     return head
 endfunction
