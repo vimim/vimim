@@ -44,14 +44,14 @@ if exists("b:vimim") || v:version < 700
     finish
 elseif &compatible
     call s:vimim_bare_bones_vimrc()
-    " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
-    " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
 endif
 scriptencoding utf-8
 let b:vimim = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
+    " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
+    " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
@@ -410,7 +410,6 @@ function! s:vimim_dictionary_statusline()
     let s:title.windowless = "无菜单窗,無菜單窗"
     let s:title.onekey     = "点石成金,點石成金"
     let s:title.cjk        = "标准字库,標準字庫"
-    let s:title.abc        = "智能双打,智能雙打"
     let s:title.mycloud    = "自己的云,自己的雲"
     let s:title.boshiamy   = "呒虾米,嘸蝦米"
     let s:title.wubi2000   = "新世纪,新世紀"
@@ -428,9 +427,9 @@ function! s:vimim_dictionary_statusline()
     call extend(s:title, s:vimim_key_value_hash(one, two))
     let one  = " pinyin fullwidth halfwidth english chinese purple"
     let one .= " plusplus quick wubihf wubi98 phonetic array30"
-    let one .= " revision mass date google baidu sogou qq "
+    let one .= " abc revision mass date google baidu sogou qq "
     let two  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 98"
-    let two .= " 注音 行列 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
+    let two .= " 注音 行列 智能 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
     call extend(s:title, s:vimim_key_value_hash(one, two))
 endfunction
 
@@ -504,18 +503,16 @@ function! s:vimim_get_title()
             let shuangpin = get(split(vimim_cloud,"[.]"),-1)
             if match(split(s:rc["g:vimim_shuangpin"]),shuangpin) > -1
                 let statusline .= s:space . s:chinese(shuangpin)
-            endif
-            if vimim_cloud !~ 'abc'
                 let statusline .= s:space . s:chinese('shuangpin')
             endif
         endif
     endif
     if len(s:vimim_shuangpin)
-        let shuangpin = s:chinese(s:vimim_shuangpin)
-        if s:vimim_shuangpin !~ 'abc'
-            let shuangpin .= s:chinese('shuangpin')
-        endif
-        let statusline = s:space . shuangpin
+        let shuangpin  = s:chinese(s:vimim_shuangpin)
+        let statusline = s:space . shuangpin . s:chinese('shuangpin')
+    endif
+    if s:vimim_shuangpin =~ 'abc' || s:vimim_cloud =~ 'abc'
+        let statusline = substitute(statusline,'拼','打','')
     endif
     return statusline . s:space
 endfunction
@@ -928,9 +925,10 @@ function! <SID>vimim_space()
     " (3) <Space> after popup menu           => insert Chinese
     " (4) <Space> after pattern not found    => Space
     let space = " "
+    let s:has_pumvisible = 0
     if pumvisible()
-        let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
+        let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
         if s:onekey && empty(s:cjk.filename)
             sil!call s:vimim_stop()
         endif
@@ -2091,11 +2089,10 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
 endfunction
 
 function! s:vimim_more_pinyin_candidates(keyboard)
-    if empty(s:vimim_shuangpin) && empty(s:english.line)
-        " [purpose] make standard layout for popup menu
-        " input  =>  mamahuhu
-        " output =>  mamahu, mama
-    else
+    " [purpose] make standard layout for popup menu
+    " input  =>  mamahuhu
+    " output =>  mamahu, mama
+    if len(s:vimim_shuangpin) || len(s:english.line)
         return []
     endif
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
