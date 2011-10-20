@@ -765,12 +765,12 @@ function! s:vimim_get_hjkl_game(keyboard)
     let keyboard = a:keyboard
     let results = []
     let poem = s:vimim_filereadable(keyboard)
-    if s:vimim_get_unicode_ddddd(keyboard)
-        return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
+    if keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
+        return s:vimim_imode_number(keyboard)
     elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
         return [s:vimim_imode_today_now(keyboard)]
-    elseif keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
-        return s:vimim_imode_number(keyboard)
+    elseif s:vimim_get_unicode_ddddd(keyboard)
+        return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
     elseif keyboard == "'''''"
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
     elseif keyboard == "''"
@@ -793,8 +793,7 @@ function! s:vimim_get_hjkl_game(keyboard)
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
     elseif len(getreg('"')) > 3  " vimim_visual_ctrl6
-        if keyboard ==# "''''"   " unname_register
-            " [hjkl] display buffer inside the omni window
+        if keyboard ==# "''''"   " display buffer inside omni window
             let results = split(getreg('"'), '\n')
         elseif keyboard =~# 'u\d\d\d\d\d'
             " [cjk]  display highlighted multiple cjk
@@ -826,7 +825,7 @@ function! s:vimim_hjkl_rotation(lines)
     let results = []
     for line in a:lines
         let spaces = ''   " rotation makes more sense for cjk
-        if (max-len(line))/multibyte
+        if (max-len(line)) / multibyte
             for i in range((max-len(line))/multibyte)
                 let spaces .= s:space
             endfor
@@ -1901,8 +1900,7 @@ function! <SID>vimim_visual_ctrl6()
         let line = substitute(line, '[.]0\+', '', 'g')
         let line = string(len(lines)) . '*' . line
         let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
-    else
-        " highlighted block => display the block in omni window
+    else  " highlighted block => display the block in omni window
         let key = "O^\<C-D>" . space . "''''" . onekey
     endif
     sil!call feedkeys(key)
@@ -3509,7 +3507,7 @@ else
         return s:vimim_popupmenu_list(results)
     endif
     let keyboard = a:keyboard
-    if !empty(str2nr(keyboard)) " for digit input: 23554022100080204420
+    if !empty(str2nr(keyboard))  " for digit input: 23554022100080204420
         let keyboard = get(split(s:keyboard),0)
     endif
     if empty(keyboard) || keyboard !~ s:valid_keyboard
@@ -3517,7 +3515,7 @@ else
     else   " [english] first check if it is english or not
         let s:english.line = s:vimim_get_english(keyboard)
     endif
-    if s:onekey        " [game] made life less boring
+    if s:onekey  " [game] made life less boring
         let results = s:vimim_get_hjkl_game(keyboard)
         if empty(results) && len(s:cjk.filename)
             let head = s:vimim_get_head_without_quote(keyboard)
@@ -3606,7 +3604,7 @@ function! s:vimim_popupmenu_list(lines)
             let s:match_list = results
         endif
     endif
-    let keyboards = split(s:keyboard)   " mmmm => ['m',"m'm'm"]
+    let keyboards = split(s:keyboard)  " mmmm => ['m',"m'm'm"]
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
     let &pumheight = empty(s:onekey) ? 5 : 10
     let s:pumheights.current = copy(&pumheight)
