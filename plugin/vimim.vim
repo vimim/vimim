@@ -231,9 +231,9 @@ function! g:vimim_wubi()
 endfunction
 
 function! s:vimim_set_plugin_conflict()
-    if !exists('s:acp_sid')
-        let s:acp_sid = s:vimim_getsid('autoload/acp.vim')
-        if !empty(s:acp_sid)
+    if !exists('s:acp')
+        let s:acp = s:vimim_getsid('autoload/acp.vim')
+        if !empty(s:acp)
             AcpDisable
         endif
     endif
@@ -249,17 +249,14 @@ function! s:vimim_set_plugin_conflict()
 endfunction
 
 function! s:vimim_restore_plugin_conflict()
-    if !empty(s:acp_sid)
-        let ACPMappingDrivenkeys = [
-            \ '-','_','~','^','.',',',':','!','#','=','%','$','@',
-            \ '<','>','/','\','<Space>','<BS>','<CR>',]
+    if !empty(s:acp)
+        let keys1 = split('- _ ~ ^ . , : ! # = % $ @ < > / \')
+        let keys2 = range(10) + ['<Space>', '<BS>', '<CR>']
         let AZ_list = map(range(65,90), "nr2char(".'v:val'.")")
-        call extend(ACPMappingDrivenkeys, range(10))
-        call extend(ACPMappingDrivenkeys, s:az_list + AZ_list)
+        let ACPMappingDrivenkeys = s:az_list + AZ_list + keys1 + keys2
         for key in ACPMappingDrivenkeys
-            exe printf('iu <silent> %s', key)
-            exe printf('im <silent> %s %s<C-r>=<SNR>%s_feedPopup()<CR>',
-            \ key, key, s:acp_sid)
+            exe printf('iu %s', key)
+            exe printf('im %s %s<C-r>=<SNR>%s_feedPopup()<CR>',key,key,s:acp)
         endfor
         AcpEnable
     endif
