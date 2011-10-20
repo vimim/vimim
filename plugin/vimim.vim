@@ -254,9 +254,9 @@ function! s:vimim_restore_plugin_conflict()
         let keys2 = range(10) + ['<Space>', '<BS>', '<CR>']
         let AZ_list = map(range(65,90), "nr2char(".'v:val'.")")
         let ACPMappingDrivenkeys = s:az_list + AZ_list + keys1 + keys2
-        for key in ACPMappingDrivenkeys
-            exe printf('iu %s', key)
-            exe printf('im %s %s<C-r>=<SNR>%s_feedPopup()<CR>',key,key,s:acp)
+        for k in ACPMappingDrivenkeys
+            exe printf('iu %s', k)
+            exe printf('im %s %s<C-r>=<SNR>%s_feedPopup()<CR>',k,k,s:acp)
         endfor
         AcpEnable
     endif
