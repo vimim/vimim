@@ -1623,8 +1623,8 @@ function! s:vimim_cjk()
 endfunction
 
 function! s:vimim_digit_for_cjk(chinese, info)
-    let digit_head = ""   " gi ma   马   =>   7712  <=>  mali 7 4
-    let digit_tail = ""   " gi mali 马力 => 7 4002  <=>  mali74
+    let digit_head = ""  " gi ma   马   =>   7712  <=>  mali 7 4
+    let digit_tail = ""  " gi mali 马力 => 7 4002  <=>  mali74
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
     for cjk in split(chinese, '\zs')
         let grep = "^" . cjk
@@ -1654,10 +1654,10 @@ function! s:vimim_cjk_extra_text(chinese)
         let line = match(s:cjk.lines, "^" . a:chinese)
         if line > -1
             let values  = split(get(s:cjk.lines, line))
-            let digit   = get(values, 1)
+            let digit   = get(values, 1) . s:space
             let frequency = get(values, -1) !~ '\D' ? 1 : 0
             let pinyin  = join(frequency ? values[2:-2] : values[2:])
-            let unicode = digit . s:space . xxxx . s:space . pinyin
+            let unicode = digit . xxxx . s:space . pinyin
         endif
     endif
     return unicode
