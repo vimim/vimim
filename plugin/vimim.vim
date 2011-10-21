@@ -85,10 +85,10 @@ function! s:vimim_initialize_global()
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
     let s:ui = { 'root' : '', 'im' : '', 'has_dot' : 0, 'frontends' : [] }
-    let s:rc = { "g:vimim_chinese_input_mode" : 'dynamic' }
+    let s:rc = { "g:vimim_mode" : 'dynamic' }
     let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
     let s:rc["g:vimim_punctuation"] = 1
-    let s:rc["g:vimim_toggle_list"] = 0
+    let s:rc["g:vimim_toggle"] = 0
     let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
     let s:rc["g:vimim_plugin"] = s:plugin
     let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
@@ -318,7 +318,7 @@ endfunction
 
 function! s:vimim_egg_vimimrc()
     let vimimrc = copy(s:vimimdefaults)
-    let index = match(vimimrc, 'g:vimim_toggle_list')
+    let index = match(vimimrc, 'g:vimim_toggle')
     let custom_im_toggle_list = s:vimim_get_custom_im_list()
     if index && !empty(custom_im_toggle_list)
         let toggle = join(custom_im_toggle_list,",")
@@ -518,7 +518,7 @@ function! s:vimim_get_title()
 endfunction
 
 function! s:vimim_statusline()
-    let input_mode  = get(split(s:vimim_chinese_input_mode,','),0)
+    let input_mode  = get(split(s:vimim_mode,','),0)
     let punctuation = s:toggle_punctuation ? 'fullwidth' : 'halfwidth'
     let punctuation = s:chinese(punctuation) . s:space
     let statusline  = s:chinese('chinese') . s:chinese(input_mode)
@@ -768,7 +768,7 @@ function! s:vimim_get_hjkl_game(keyboard)
         return [s:vimim_imode_today_now(keyboard)]
     elseif s:vimim_get_unicode_ddddd(keyboard)
         return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
-    elseif keyboard == "'''''"
+    elseif keyboard == "''''''"
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
     elseif keyboard == "''"
         let char_before = s:vimim_char_before()
@@ -789,11 +789,10 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif len(getreg('"')) > 3  " vimim_visual_ctrl6
-        if keyboard ==# "''''"   " display buffer inside omni window
+    elseif len(getreg('"')) > 3     "  vimim_visual_ctrl6
+        if keyboard == "''''"       "" display buffer inside omni window
             let results = split(getreg('"'), '\n')
-        elseif keyboard =~# 'u\d\d\d\d\d'
-            " [cjk]  display highlighted multiple cjk
+        elseif keyboard =~ "'''''"  "" display cjk within one line
             let line = substitute(getreg('"'),'[\x00-\xff]','','g')
             if len(line)
                 for chinese in split(line, '\zs')
@@ -1083,7 +1082,7 @@ function! s:vimim_onekey_evils()
         " [game] dot dot => quotes => popup menu
         let three_before  = getline(".")[col(".")-4]
         if col(".") < 5 || empty(three_before) || three_before =~ '\s'
-            let onekey = "'''''"    "  <=    .. plays mahjong
+            let onekey = "''''''"   "  <=    .. plays mahjong
         elseif three_before =~ "[0-9a-z]"
             let onekey = "'''"      "  <=  xx.. plays hjkl_m
         else
@@ -1260,10 +1259,7 @@ function! s:vimim_chinese_mode(switch)
 endfunction
 
 function! s:vimim_chinesemode_start()
-    let s:chinese_mode = 'dynamic'
-    if s:vimim_chinese_input_mode =~ 'static'
-        let s:chinese_mode = 'static'
-    endif
+    let s:chinese_mode = s:vimim_mode == 'static' ? 'static' : 'dynamic'
     sil!call s:vimim_set_statusline()
     sil!call s:vimim_set_plugin_conflict()
     sil!call s:vimim_super_reset()
@@ -1314,8 +1310,8 @@ endfunction
 
 function! s:vimim_get_custom_im_list()
     let custom_im_toggle_list = []
-    if s:vimim_toggle_list =~ ","
-        let custom_im_toggle_list = split(s:vimim_toggle_list, ",")
+    if s:vimim_toggle =~ ","
+        let custom_im_toggle_list = split(s:vimim_toggle, ",")
     elseif len(s:ui.frontends)
         for frontends in s:ui.frontends
             call add(custom_im_toggle_list, get(frontends,1))
@@ -1879,7 +1875,7 @@ function! <SID>vimim_visual_ctrl6()
         let chinese = get(split(line,'\zs'),0)
         let s:seamless_positions = getpos("'<'")
         let ddddd = char2nr(chinese)
-        let key = ddddd =~ '\d\d\d\d\d' ? 'u'.ddddd : line
+        let key = ddddd =~ '\d\d\d\d\d' ? "'''''" : line
         let key = "gvc" . key . onekey
     elseif match(lines,'\d') > -1 && join(lines) !~ '[^0-9[:blank:].]'
         " highlight digit block => count*average=summary
