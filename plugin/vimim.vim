@@ -59,6 +59,26 @@ function! s:vimim_initialize_debug()
     endif
 endfunction
 
+function! s:vimim_debug(...)
+    " [.vimrc] :redir @+>>
+    " [client] :sil!call s:vimim_debug(s:vimim_egg_vimim())
+    sil!echo "\n::::::::::::::::::::::::"
+    if len(a:000) > 1
+        sil!echo join(a:000, " :: ")
+    elseif type(a:1) == type({})
+        for key in keys(a:1)
+            sil!echo key . '::' . a:1[key]
+        endfor
+    elseif type(a:1) == type([])
+        for line in a:1
+            sil!echo line
+        endfor
+    else
+        sil!echo string(a:1)
+    endif
+    sil!echo "::::::::::::::::::::::::\n"
+endfunction
+
 function! s:vimim_initialize_global()
     let s:space = '　'
     let s:colon = '：'
@@ -104,26 +124,6 @@ function! s:vimim_initialize_global()
     let s:english.filename = s:vimim_filereadable("vimim.txt")
     let s:cjk = { 'lines' : [] }
     let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
-endfunction
-
-function! s:vimim_debug(...)
-    " [.vimrc] :redir @+>>
-    " [client] :sil!call s:vimim_debug(s:vimim_egg_vimim())
-    sil!echo "\n::::::::::::::::::::::::"
-    if len(a:000) > 1
-        sil!echo join(a:000, " :: ")
-    elseif type(a:1) == type({})
-        for key in keys(a:1)
-            sil!echo key . '::' . a:1[key]
-        endfor
-    elseif type(a:1) == type([])
-        for line in a:1
-            sil!echo line
-        endfor
-    else
-        sil!echo string(a:1)
-    endif
-    sil!echo "::::::::::::::::::::::::\n"
 endfunction
 
 function! s:vimim_dictionary_keycodes()
@@ -331,24 +331,24 @@ endfunction
 
 function! s:vimim_egg_vimim()
     let eggs = []
-    call add(eggs, s:chinese('date') . s:colon . s:today)
+    call add(eggs, s:chinese('date', s:colon) . s:today)
     let os = "win32unix win32 win64 macunix unix x11"
     for computer in split(os)
         if has(computer)
             let os = computer | break
         endif
     endfor
-    call add(eggs, s:chinese('computer') .s:colon. os .s:space. &term)
+    call add(eggs, s:chinese('computer', s:colon) . os .s:space. &term)
     let revision = get(split(s:egg),1)
     let revision = empty(revision) ?  ""  : "vimim.vim=" . revision
     let revision = v:progname ."=". v:version  . s:space . revision
-    call add(eggs, s:chinese('revision') . s:colon . revision)
-    let encoding = s:chinese('encoding') . s:colon . &encoding
+    call add(eggs, s:chinese('revision', s:colon) . revision)
+    let encoding = s:chinese('encoding', s:colon) . &encoding
     call add(eggs, encoding . s:space . &fileencodings)
-    call add(eggs, s:chinese('env') . s:colon . v:lc_time)
-    let database = s:chinese('database') . s:colon
+    call add(eggs, s:chinese('env', s:colon) . v:lc_time)
+    let database = s:chinese('database', s:colon)
     if len(s:cjk.filename)
-        let ciku = database . s:chinese('cjk') . s:colon
+        let ciku = database . s:chinese('cjk', s:colon)
         call add(eggs, ciku . s:cjk.filename)
     endif
     if len(s:english.filename)
@@ -358,30 +358,29 @@ function! s:vimim_egg_vimim()
     if len(s:ui.frontends)
         let cloud = ""
         for [root, im] in s:ui.frontends
-            let name = s:backend[root][im].name
-            let mass = name =~ "bsddb" ? 'mass' : root
+            let client = s:backend[root][im].name
+            let mass = client =~ "bsddb" ? 'mass' : root
             let ciku = database . s:chinese(mass) . database
             if root == "cloud"
-                let cloud .= s:space . name . s:chinese('cloud')
+                let cloud .= s:space . client . s:chinese('cloud')
             else
-                call add(eggs, ciku . name)
+                call add(eggs, ciku . client)
             endif
         endfor
         if len(cloud)
             call add(eggs, ciku . cloud)
         endif
-        let input = s:chinese('input') . s:colon
+        let input = s:chinese('input', s:colon)
         if s:vimim_map =~ 'ctrl_bslash'
             let input .=  s:vimim_statusline() . s:space
         elseif s:vimim_map =~ 'gi'
-            let input .= s:chinese('onekey')     . s:space
-            let input .= s:chinese('windowless') . s:space
+            let input .= s:chinese('onekey', s:space, 'windowless')
         endif
         call add(eggs, input)
     endif
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
-    call add(eggs, s:chinese('network') . s:colon . exe . s:http_exe)
-    call add(eggs, s:chinese('option')  . s:colon . "vimimhelp")
+    call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
+    call add(eggs, s:chinese('option',  s:colon) . "vimimhelp")
     if !empty(s:vimimrc)
         for rc in sort(s:vimimrc)
             call add(eggs, s:space . s:space . s:colon . rc[2:])
@@ -433,15 +432,19 @@ function! s:vimim_dictionary_statusline()
     call extend(s:title, s:vimim_key_value_hash(one, two))
 endfunction
 
-function! s:chinese(key)
-    let chinese = a:key
-    if has_key(s:title, chinese)
-        let twins = split(s:title[chinese], ",")
-        let chinese = get(twins, 0)
-        if len(twins) > 1 && s:vimim_map =~ 'ctrl_bslash'
-            let chinese = get(twins,1)
+function! s:chinese(...)
+    let chinese = ""
+    for english in a:000
+        let cjk = english
+        if has_key(s:title, english)
+            let twins = split(s:title[english], ",")
+            let cjk = get(twins, 0)
+            if len(twins) > 1 && s:vimim_map =~ 'ctrl_bslash'
+                let cjk = get(twins,1)
+            endif
         endif
-    endif
+        let chinese .= cjk
+    endfor
     return chinese
 endfunction
 
@@ -474,7 +477,7 @@ function! s:vimim_get_title()
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
     endif
-    let statusline = s:space
+    let title = s:space
     let backend = s:backend[s:ui.root][s:ui.im]
     if has_key(s:im_keycode, s:ui.im)
         let im = backend.chinese
@@ -482,47 +485,43 @@ function! s:vimim_get_title()
             let im = len(s:english.line) ? '*'      : ''
             let im = len(s:hjkl_n)       ? s:hjkl_n : im
         endif
-        let statusline .= im
+        let title .= im
     endif
     if s:ui.im =~ 'wubi'
         for wubi in split('wubi98 wubi2000 wubijd wubihf')
             if get(split(backend.name, '/'),-1) =~ wubi
-                let statusline .= s:chinese(wubi)
+                let title .= s:chinese(wubi)
             endif
         endfor
     elseif s:ui.im == 'mycloud'
-        let statusline .= s:space . s:backend.cloud.mycloud.directory
+        let title .= s:space . s:backend.cloud.mycloud.directory
     elseif s:ui.root == 'cloud'
-        let cloud  = s:chinese(s:cloud_default) . s:chinese('cloud')
-        let statusline = s:space . cloud
+        let title = s:chinese(s:space, s:cloud_default, 'cloud')
         let clouds = split(s:vimim_cloud,',')
         let vimim_cloud = get(clouds, match(clouds, s:cloud_default))
         if vimim_cloud =~ 'wubi'          " g:vimim_cloud='qq.wubi'
-            let statusline .= s:space . s:chinese('wubi')
+            let title .= s:chinese(s:space, 'wubi')
         elseif vimim_cloud =~ 'shuangpin' " qq.shuangpin.ms => ms
             let shuangpin = get(split(vimim_cloud,"[.]"),-1)
             if match(split(s:rc["g:vimim_shuangpin"]),shuangpin) > -1
-                let statusline .= s:space . s:chinese(shuangpin)
-                let statusline .= s:space . s:chinese('shuangpin')
+                let title .= s:chinese(s:space, shuangpin, 'shuangpin')
             endif
         endif
     endif
     if len(s:vimim_shuangpin)
-        let shuangpin  = s:chinese(s:vimim_shuangpin)
-        let statusline = s:space . shuangpin . s:chinese('shuangpin')
+        let title = s:chinese(s:space, s:vimim_shuangpin, 'shuangpin')
     endif
     if s:vimim_shuangpin =~ 'abc' || s:vimim_cloud =~ 'abc'
-        let statusline = substitute(statusline,'拼','打','')
+        let title = substitute(title, '拼', '打', '')
     endif
-    return statusline . s:space
+    return title . s:space
 endfunction
 
 function! s:vimim_statusline()
     let input_mode  = get(split(s:vimim_mode,','),0)
     let punctuation = s:toggle_punctuation ? 'fullwidth' : 'halfwidth'
-    let punctuation = s:chinese(punctuation) . s:space
-    let statusline  = s:chinese('chinese') . s:chinese(input_mode)
-    let statusline .= s:vimim_get_title() . punctuation . "VimIM"
+    let statusline  = s:chinese('chinese', input_mode) . s:vimim_get_title()
+    let statusline .= s:chinese(punctuation, s:space, "VimIM")
     return statusline
 endfunction
 
@@ -1089,8 +1088,8 @@ function! s:vimim_onekey_evils()
             let onekey = "''"       "  <=  香.. plays same cjk
         endif
         let onekey = "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
-    elseif one_before == "'" && two_before =~ '\l'  " ma' forced cloud
-    elseif one_before =~ "[0-9a-z]"                 " nothing
+    elseif one_before == "'" && two_before =~ "[a-z']"  " forced cloud
+    elseif one_before =~ "[0-9a-z]"                     " nothing
     elseif two_before =~ "[0-9a-z]"
         let onekey = " "  " ma,space => ma, space
     elseif has_key(s:all_evils, one_before)
@@ -2961,13 +2960,11 @@ function! s:vimim_get_cloud_all(keyboard)
         if len(results) > 1
             call add(results, s:space)
         endif
-        let title  = a:keyboard . s:space . s:chinese(cloud)
-        let title .= s:chinese('cloud') . s:chinese('input')
-        let duration = localtime() - start
-        if duration
-            let title .= s:space . string(duration)
+        let title  = s:chinese(cloud, 'cloud', 'input')
+        if localtime() - start
+            let title .= s:space . string(localtime()-start)
         endif
-        call add(results, title)
+        call add(results, a:keyboard . s:space . title)
         if len(outputs) > 1+1+1+1
             let outputs = &number ? outputs : outputs[0:9]
             let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
