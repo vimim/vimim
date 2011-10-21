@@ -142,11 +142,10 @@ function! s:vimim_dictionary_keycodes()
     let s:im_keycode.yong     = "[.'a-z;/]"
     let s:im_keycode.erbi     = "[.'a-z,;/]"
     let s:im_keycode.boshiamy = "[][a-z'.,]"
-    let keys  = copy(keys(s:im_keycode))
-    let keys += split('pinyin_sogou pinyin_quote_sogou pinyin_huge')
-    let keys += split('pinyin_fcitx pinyin_canton pinyin_hongkong')
-    let keys += split('wubi98 wubi2000 wubijd wubihf')
-    let s:all_vimim_input_methods = copy(keys)
+    let others  = ' pinyin_sogou pinyin_quote_sogou pinyin_huge'
+    let others .= ' pinyin_fcitx pinyin_canton pinyin_hongkong'
+    let others .= ' wubi98 wubi2000 wubijd wubihf'
+    let s:all_vimim_input_methods = keys(s:im_keycode) + split(others)
 endfunction
 
 function! s:vimim_set_keycode()
@@ -159,18 +158,13 @@ function! s:vimim_set_keycode()
         endif
     endfor
     let keycode = "[0-9a-z']"
-    if !empty(s:ui.root)
-        let backend = s:backend[s:ui.root][s:ui.im]
-        let keycode = backend.keycode
-        if backend.name =~ "quote"
+    if !empty(s:ui.root) && empty(s:vimim_shuangpin)
+        let keycode = s:backend[s:ui.root][s:ui.im].keycode
+        if s:backend[s:ui.root][s:ui.im].name =~ "quote"
             let s:ui.has_dot = 2  " has apostrophe in datafile
         endif
-    endif
-    if len(s:vimim_shuangpin)
-        let keycode = "[0-9a-z']"
-        if s:vimim_shuangpin == 'ms' || s:vimim_shuangpin == 'purple'
-            let keycode = "[0-9a-z';]"
-        endif
+    elseif s:vimim_shuangpin == 'ms' || s:vimim_shuangpin == 'purple'
+        let keycode = "[0-9a-z';]"
     endif
     let i = 0
     let keycode_string = ""
