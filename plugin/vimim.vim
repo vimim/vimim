@@ -128,9 +128,9 @@ endfunction
 
 function! s:vimim_dictionary_keycodes()
     let s:im_keycode = {}
-    let key26  = ' google sogou baidu qq '
-    let key26 .= ' wu nature zhengma taijima wubi cangjie '
-    for key in split(key26)
+    let ime  = ' google sogou baidu qq '
+    let ime .= ' wu nature zhengma taijima wubi cangjie '
+    for key in split(ime)
         let s:im_keycode[key] = "[a-z']"
     endfor
     for key in split('pinyin hangul xinhua quick mycloud')
@@ -140,17 +140,17 @@ function! s:vimim_dictionary_keycodes()
         let s:im_keycode[key] = "[.,a-z0-9;/]"
     endfor
     let s:im_keycode.yong     = "[.'a-z;/]"
-    let s:im_keycode.erbi     = "[.'a-z,;/]"
+    let s:im_keycode.erbi     = "[.'a-z,/;]"
     let s:im_keycode.boshiamy = "[][a-z'.,]"
-    let others  = ' pinyin_sogou pinyin_quote_sogou pinyin_huge'
-    let others .= ' pinyin_fcitx pinyin_canton pinyin_hongkong'
-    let others .= ' wubi98 wubi2000 wubijd wubihf'
-    let s:all_vimim_input_methods = keys(s:im_keycode) + split(others)
+    let ime  = ' pinyin_sogou pinyin_quote_sogou pinyin_huge'
+    let ime .= ' pinyin_fcitx pinyin_canton pinyin_hongkong'
+    let ime .= ' wubi98 wubi2000 wubijd wubihf'
+    let s:all_vimim_input_methods = keys(s:im_keycode) + split(ime)
 endfunction
 
 function! s:vimim_set_keycode()
-    let dot_im = 'wu erbi yong nature boshiamy phonetic array30'
-    for im in split(dot_im)
+    let ime = 'wu erbi yong nature boshiamy phonetic array30'
+    for im in split(ime)
         if s:ui.im == im
             let s:ui.has_dot = 1  " has english dot in datafile
             let s:vimim_punctuation = 0
@@ -319,8 +319,7 @@ function! s:vimim_egg_vimimrc()
         let value = vimimrc[index][:-3]
         let vimimrc[index] = value . "'" . toggle . "'"
     endif
-    let vimimrc += s:vimimrc
-    return sort(vimimrc)
+    return sort(vimimrc + s:vimimrc)
 endfunction
 
 function! s:vimim_egg_vimim()
