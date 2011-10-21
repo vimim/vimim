@@ -1849,43 +1849,30 @@ function! s:vimim_1to1(char)
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
-    let column = virtcol("'<'") - 2
-    let space = "\<C-R>=repeat(' '," . column . ")\<CR>"
     let lines = split(getreg('"'), '\n')
     let line = get(lines,0)
-    let key = ""
-    if len(lines) == 1 && len(line) == s:multibyte
-        " highlight one chinese => get antonym or number loop
-        let results = s:vimim_imode_chinese(line)
-        if !empty(results)
-            let key = "gvr" . get(results,0) . "ga"
-        endif
-        if s:vimim_cjk()
-            let line = match(s:cjk.lines, "^".line)
-            let &titlestring = s:space . get(s:cjk.lines,line)
-        endif
-        return feedkeys(key)
+    if len(lines) == 1 && len(line) == s:multibyte && s:vimim_cjk()
+        let line = match(s:cjk.lines, "^".line)
+        let &titlestring = s:space . get(s:cjk.lines,line)
+        return
     endif
+    let key = ""
     let s:onekey = 1
-    let onekey = "\<C-R>=g:vimim()\<CR>"
     sil!call s:vimim_start()
     sil!call s:vimim_onekey_hjkl_maps()
-    if len(lines) < 2
-        " highlight multiple chinese => show property of each
+    let onekey = "\<C-R>=g:vimim()\<CR>"
+    let space = "\<C-R>=repeat(' '," . virtcol("'<'")-2 . ")\<CR>"
+    if len(lines) < 2  " highlight multiple cjk => show each property
         let chinese = get(split(line,'\zs'),0)
         let s:seamless_positions = getpos("'<'")
-        let ddddd = char2nr(chinese)
-        let key = ddddd =~ '\d\d\d\d\d' ? "'''''" : line
+        let key = char2nr(chinese) =~ '\d\d\d\d\d' ? "'''''" : line
         let key = "gvc" . key . onekey
     elseif match(lines,'\d') > -1 && join(lines) !~ '[^0-9[:blank:].]'
         " highlight digit block => count*average=summary
-        let new_positions = getpos(".")
-        let new_positions[1] = line("'>'")
-        call setpos(".", new_positions)
+        call setpos(".", getpos("'>'"))
         let sum = eval(join(lines,'+'))
         let ave = printf("%.2f", 1.0*sum/len(lines))
-        let line = ave . "=" . string(sum)
-        let line = substitute(line, '[.]0\+', '', 'g')
+        let line = substitute(ave."=".string(sum), '[.]0\+', '', 'g')
         let line = string(len(lines)) . '*' . line
         let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else  " highlighted block => display the block in omni window
