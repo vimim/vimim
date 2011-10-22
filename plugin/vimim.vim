@@ -641,29 +641,24 @@ let s:VimIM += [" ====  punctuations     ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_punctuations()
-    let s:evils = {}            " exception if passed around
-    let s:all_evils = {}        " onekey uses all punctuations
-    let s:punctuations = {}     " chinese mode uses minimum by default
-    if s:vimim_punctuation < 1  " close all evil punctuations
-        return
-    endif
     let one = "  , .  +  -  ~  ^    _    "
     let two = " ， 。 ＋ － ～ …… —— "
     let mini_punctuations = s:vimim_key_value_hash(one, two)
     let one = "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
     let two = "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
     let most_punctuations = s:vimim_key_value_hash(one, two)
-    call extend(s:punctuations, mini_punctuations)
-    if s:vimim_punctuation > 1    " :let g:vimim_punctuation = 2
-        call extend(s:punctuations, most_punctuations)
-    endif
     let evils = { '\' : "、", "'" : "‘’", '"' : "“”" }
-    if s:vimim_punctuation > 2    " :let g:vimim_punctuation = 3
-        let s:evils = copy(evils)
-    endif
+    let s:all_evils = copy(evils)  " onekey uses all punctuations
     call extend(s:all_evils, mini_punctuations)
     call extend(s:all_evils, most_punctuations)
-    call extend(s:all_evils, evils)
+    let s:punctuations = {}        " chinese mode uses minimum by default
+    if s:vimim_punctuation         " :let g:vimim_punctuation = 1
+        call extend(s:punctuations, mini_punctuations)
+    endif
+    if s:vimim_punctuation > 1     " :let g:vimim_punctuation = 2
+        call extend(s:punctuations, most_punctuations)
+    endif
+    let s:evils = s:vimim_punctuation == 3 ? copy(evils) : {}
 endfunction
 
 function! s:vimim_punctuations_maps()
