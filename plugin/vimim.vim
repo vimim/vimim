@@ -143,7 +143,17 @@ function! s:vimim_dictionary_keycodes()
     let ime  = ' pinyin_sogou pinyin_quote_sogou pinyin_huge'
     let ime .= ' pinyin_fcitx pinyin_canton pinyin_hongkong'
     let ime .= ' wubi98 wubi2000 wubijd wubihf'
-    let s:all_vimim_input_methods = keys(s:im_keycode) + split(ime)
+    let all_vimim_input_methods = keys(s:im_keycode) + split(ime)
+    if s:vimim_toggle =~ ","
+        for im in split(s:vimim_toggle, ",")
+            let index = match(all_vimim_input_methods, im)
+            if index > -1
+                let first = remove(all_vimim_input_methods, index)
+                call insert(all_vimim_input_methods, first)
+            endif
+        endfor
+    endif
+    let s:all_vimim_input_methods = copy(all_vimim_input_methods)
 endfunction
 
 function! s:vimim_set_keycode()
@@ -1179,8 +1189,8 @@ function! <SID>vimim_im_switch()
             endif
         endfor
     endfor
-    if s:windowless
-        let custom_frontends = custom_frontends[0:1]
+    if len(custom_frontends) > 5 && get(get(s:ui.frontends,-1),0) == 'cloud'
+        let custom_frontends = custom_frontends[:-5]  " removing clouds
     endif
     let s:toggle_im += 1
     let switch = s:toggle_im % len(custom_frontends)
@@ -1214,7 +1224,7 @@ function! <SID>ChineseMode()
     if empty(s:ui.frontends)
         return ""
     else
-        let s:toggle_im = 1
+        let s:toggle_im = 0
         let frontends = get(s:ui.frontends, 0)
         let s:ui.root = get(frontends, 0)
         let s:ui.im   = get(frontends, 1)
@@ -3345,9 +3355,9 @@ function! s:vimim_set_backend_embedded()
             return s:vimim_set_datafile(im, datafile)
         endif
     endif
-    " (3/3) scan all supported data files
+    " (3/3) scan all supported data files, in order
     for im in s:all_vimim_input_methods
-        let datafile = s:vimim_filereadable("vimim." .im. ".txt")
+        let datafile = s:vimim_filereadable("vimim." . im . ".txt")
         if empty(datafile)
             let filename = "vimim." . im . "." . &encoding . ".txt"
             let datafile = s:vimim_filereadable(filename)
