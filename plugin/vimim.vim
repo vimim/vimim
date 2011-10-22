@@ -1868,29 +1868,28 @@ let s:VimIM += [" ====  input: english   ==== {{{"]
 " =================================================
 
 function! s:vimim_get_english(keyboard)
-    let keyboard = a:keyboard
     if empty(s:english.filename)
         return ""  " english: obama/now/version/ice/o2
     elseif empty(s:english.lines)
         let s:english.lines = s:vimim_readfile(s:english.filename)
     endif
     " [sql] select english from vimim.txt
-    let grep = '^' . keyboard . '\s\+'
+    let grep = '^' . a:keyboard . '\s\+'
     let cursor = match(s:english.lines, grep)
     " [pinyin]  cong  => cong
     " [english] congr => congratulation  haag => haagendazs
-    let keyboards = s:vimim_get_pinyin_from_pinyin(keyboard)
-    if cursor < 0 && len(keyboard) > 3 && len(keyboards)
-        let grep = '^' . get(split(keyboard,'\d'),0) " mxj7 => mxj
+    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
+    if cursor < 0 && len(a:keyboard) > 3 && len(keyboards)
+        let grep = '^' . get(split(a:keyboard,'\d'),0) " mxj7 => mxj
         let cursor = match(s:english.lines, grep)
     endif
     let oneline = ""
     if cursor > -1
         let oneline = get(s:english.lines, cursor)
-        if keyboard != get(split(oneline),0) " no surprise if windowless
+        if a:keyboard != get(split(oneline),0) " no surprise if windowless
             let pairs = split(oneline)       " haag haagendazs
             let oneline = join(pairs[1:] + pairs[:0])
-            let oneline = keyboard . " " . oneline
+            let oneline = a:keyboard . " " . oneline
         endif
     endif
     return oneline
@@ -2103,20 +2102,19 @@ function! s:vimim_set_shuangpin()
 endfunction
 
 function! s:vimim_shuangpin_transform(keyboard)
-    let keyboard = a:keyboard
-    let size = strlen(keyboard)
+    let size = strlen(a:keyboard)
     let ptr = 0
     let output = ""
     let bchar = ""    " workaround for sogou
     while ptr < size
-        if keyboard[ptr] !~ "[a-z;]"
+        if a:keyboard[ptr] !~ "[a-z;]"
             " bypass all non-characters, i.e. 0-9 and A-Z are bypassed
-            let output .= keyboard[ptr]
+            let output .= a:keyboard[ptr]
             let ptr += 1
         else
-            let sp1 = keyboard[ptr]
-            if keyboard[ptr+1] =~ "[a-z;]"
-                let sp1 .= keyboard[ptr+1]
+            let sp1 = a:keyboard[ptr]
+            if a:keyboard[ptr+1] =~ "[a-z;]"
+                let sp1 .= a:keyboard[ptr+1]
             endif
             if has_key(s:shuangpin_table, sp1)
                 " the last odd shuangpin code are output as only shengmu
@@ -2474,29 +2472,28 @@ function! s:vimim_set_datafile(im, datafile)
 endfunction
 
 function! s:vimim_sentence_datafile(keyboard)
-    let keyboard = a:keyboard
     let backend = s:backend[s:ui.root][s:ui.im]
     let fuzzy = s:ui.im =~ 'pinyin' ? '\s' : ""
-    let pattern = '^' . keyboard . fuzzy
+    let pattern = '^' . a:keyboard . fuzzy
     let cursor = match(backend.lines, pattern)
     if cursor > -1
-        return keyboard
+        return a:keyboard
     endif
-    let candidates = s:vimim_more_pinyin_datafile(keyboard,1)
+    let candidates = s:vimim_more_pinyin_datafile(a:keyboard,1)
     if !empty(candidates)
         return get(candidates,0)
     endif
-    let max = len(keyboard)
+    let max = len(a:keyboard)
     while max > 1
         let max -= 1
-        let head = strpart(keyboard, 0, max)
+        let head = strpart(a:keyboard, 0, max)
         let pattern = '^' . head . '\s'
         let cursor = match(backend.lines, pattern)
         if cursor > -1
             break
         endif
     endwhile
-    return cursor < 0 ? "" : keyboard[: max-1]
+    return cursor < 0 ? "" : a:keyboard[: max-1]
 endfunction
 
 function! s:vimim_get_from_datafile(keyboard)
