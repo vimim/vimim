@@ -86,7 +86,6 @@ function! s:vimim_initialize_global()
     let s:today = s:vimim_imode_today_now('itoday')
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
-    let s:chinese_mode = 'onekey'
     let s:toggle_im = 0
     let s:toggle_punctuation = 1
     let s:cursor_at_menuless = 0
@@ -1002,7 +1001,9 @@ function! <SID>vimim_onekey(tab)
     " (2) <OneKey> in windowless mode => start MidasTouch popup
     " (3) <OneKey> in omni window     => start print
     let onekey = ""
-    let s:chinese_mode = 'onekey'
+    if s:chinese_mode !~ 'onekey'
+        sil!call s:vimim_stop()
+    endif
     let one_cursor = getline(".")[col(".")-1]
     if s:onekey
         if pumvisible()
@@ -1243,10 +1244,10 @@ function! s:vimim_chinese_mode(switch)
 endfunction
 
 function! s:vimim_chinesemode_start()
-    let s:chinese_mode = s:vimim_mode == 'static' ? 'static' : 'dynamic'
-    sil!call s:vimim_set_statusline()
     sil!call s:vimim_set_plugin_conflict()
     sil!call s:vimim_super_reset()
+    let s:chinese_mode = s:vimim_mode == 'static' ? 'static' : 'dynamic'
+    sil!call s:vimim_set_statusline()
     if s:vimim_punctuation
         inoremap<expr><C-^> <SID>vimim_punctuation_toggle()
     endif
@@ -3306,12 +3307,13 @@ function! s:vimim_super_reset()
 endfunction
 
 function! s:vimim_reset_before_anything()
-    let s:keyboard = ""
     let s:onekey = 0
     let s:windowless = 0
     let s:smart_enter = 0
     let s:has_pumvisible = 0
     let s:show_extra_menu = 0
+    let s:chinese_mode = 'onekey'
+    let s:keyboard = ""
     let s:popup_list = []
 endfunction
 
@@ -3607,7 +3609,7 @@ function! s:vimim_popupmenu_list(lines)
         if s:windowless && empty(s:touch_me_not)
             set completeopt=menu  " for direct insert
             let s:cursor_at_menuless = 0
-            let vimim = "VimIM" .s:space.'  '.join(keyboards,"").'  '
+            let vimim = "VimIM" . s:space .'  '. join(keyboards,"").'  '
             let &titlestring = vimim . join(one_list)
             let &pumheight = 1
             call s:vimim_set_titlestring(1)
