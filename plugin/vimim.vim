@@ -292,8 +292,7 @@ function! s:vimim_easter_chicken(keyboard)
 endfunction
 
 function! s:vimim_egg_vim()
-    let logo = "Vim　　文本編輯器"
-    return [logo, s:logo]
+    return ["Vim　　文本編輯器", s:logo]
 endfunction
 
 function! s:vimim_egg_vimimgame()
@@ -523,8 +522,8 @@ function! g:vimim_slash()
     let chinese = strpart(getline("."), s:starts.column, range)
     let word = substitute(chinese,'\w','','g')
     let @/ = empty(word) ? @_ : word
-    let repeat_times = len(word) / s:multibyte
     let delete_chars = ""
+    let repeat_times = len(word) / s:multibyte
     if repeat_times && line(".") == s:starts.row
         let delete_chars = repeat("\<Left>\<Delete>", repeat_times)
     endif
