@@ -514,8 +514,7 @@ function! s:vimim_statusline()
     let punctuation = s:toggle_punctuation ? 'fullwidth' : 'halfwidth'
     let punctuation = s:vimim_punctuation ? punctuation : 'halfwidth'
     let statusline  = s:chinese('chinese', input_mode) . s:vimim_get_title()
-    let statusline .= s:chinese(punctuation, s:space, "VimIM")
-    return statusline
+    return statusline . s:chinese(punctuation, s:space, "VimIM")
 endfunction
 
 function! g:vimim_slash()
@@ -1181,7 +1180,8 @@ function! <SID>vimim_im_switch()
     let custom_frontends = []
     for im in s:vimim_get_custom_im_list()
         if im =~ 'english'
-            call add(custom_frontends, []) | continue
+            call add(custom_frontends, [])
+            continue
         endif
         for frontends in s:ui.frontends
             if match(frontends, im) > -1
@@ -1210,9 +1210,8 @@ function! <SID>vimim_im_switch()
     endif
     if s:onekey || s:windowless
         return g:vimim_title()
-    else
-        return s:vimim_chinese_mode(1)
     endif
+    return s:vimim_chinese_mode(1)
 endfunction
 
 function! <SID>ChineseMode()
@@ -1392,9 +1391,7 @@ function! s:vimim_dictionary_numbers()
 endfunction
 
 function! s:vimim_imode_loop()
-    if !empty(s:loops)
-        return
-    endif
+    let antonym = "，。 “” ‘’ （） 【】 〖〗 《》 胜败 真假 石金"
     let items = []
     for i in range(len(s:numbers))
         call add(items, split(s:numbers[i],'\zs'))
@@ -1407,10 +1404,8 @@ function! s:vimim_imode_loop()
         endfor
         call add(numbers, number)
     endfor
-    let antonym = "，。 “” ‘’ （） 【】 〖〗 《》 胜败 真假 石金"
-    let imode_list = numbers + split(antonym)
-    for loop in imode_list
-        let loops = split(loop,'\zs')
+    for loop in numbers + split(antonym)
+        let loops = split(loop, '\zs')
         for i in range(len(loops))
             let j = i==len(loops)-1 ? 0 : i+1
             let s:loops[loops[i]] = loops[j]
@@ -1419,7 +1414,9 @@ function! s:vimim_imode_loop()
 endfunction
 
 function! s:vimim_imode_chinese(char_before)
-    call s:vimim_imode_loop()
+    if empty(s:loops)
+        call s:vimim_imode_loop()
+    endif
     let results = []
     let char_before = a:char_before
     if has_key(s:loops, char_before)
@@ -1620,11 +1617,8 @@ function! s:vimim_digit_for_cjk(chinese, info)
     let digit_tail = ""  " gi mali 马力 => 7 4002  <=>  mali74
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
     for cjk in split(chinese, '\zs')
-        let grep = "^" . cjk
-        let line = match(s:cjk.lines, grep)
-        if line < 0
-            continue
-        else
+        let line = match(s:cjk.lines, "^" . cjk)
+        if line > -1
             let values = split(get(s:cjk.lines, line))
             let digit_head .= get(values,1)[:0]
             let digit_tail  = get(values,1)[1:]
@@ -1726,7 +1720,7 @@ function! s:vimim_qwertyuiop_1234567890(keyboard)
     for char in split(a:keyboard, '\zs')
         let digit = match(s:qwer, char)
         if digit < 0
-            return 0
+            return ""
         else
             let dddd .= digit
         endif
@@ -1834,14 +1828,21 @@ function! s:vimim_1to1(char)
 endfunction
 
 function! <SID>vimim_visual_ctrl6()
+    let key = ""
     let lines = split(getreg('"'), '\n')
     let line = get(lines,0)
-    if len(lines) == 1 && len(line) == s:multibyte && s:vimim_cjk()
-        let line = match(s:cjk.lines, "^".line)
-        let &titlestring = s:space . get(s:cjk.lines,line)
-        return
+    if len(lines) == 1 && len(line) == s:multibyte
+        " highlight one chinese => get antonym or number loop
+        let results = s:vimim_imode_chinese(line)
+        if !empty(results)
+            let key = "gvr" . get(results,0) . "ga"
+        endif
+        if s:vimim_cjk()
+            let line = match(s:cjk.lines, "^".line)
+            let &titlestring = s:space . get(s:cjk.lines,line)
+        endif
+        return feedkeys(key)
     endif
-    let key = ""
     let s:onekey = 1
     sil!call s:vimim_start()
     sil!call s:vimim_onekey_hjkl_maps()
@@ -1862,7 +1863,7 @@ function! <SID>vimim_visual_ctrl6()
     else  " highlighted block => display the block in omni window
         let key = "O^\<C-D>" . space . "''''" . onekey
     endif
-    sil!call feedkeys(key)
+    return feedkeys(key)
 endfunction
 
 " ============================================= }}}
@@ -1907,16 +1908,15 @@ function! s:vimim_filereadable(file)
 endfunction
 
 function! s:vimim_readfile(datafile)
-    if !filereadable(a:datafile)
-        return []
-    endif
     let lines = []
-    if s:localization
-        for line in readfile(a:datafile)
-            call add(lines, s:vimim_i18n_read(line))
-        endfor
-    else
-        return readfile(a:datafile)
+    if filereadable(a:datafile)
+        if s:localization
+            for line in readfile(a:datafile)
+                call add(lines, s:vimim_i18n_read(line))
+            endfor
+        else
+            return readfile(a:datafile)
+        endif
     endif
     return lines
 endfunction
@@ -2003,10 +2003,7 @@ function! s:vimim_quanpin_transform(pinyin)
             endif
         endfor
     endwhile
-    if pinyinstr[0] == "'"
-        return pinyinstr[1:]
-    endif
-    return pinyinstr
+    return pinyinstr[0] == "'" ? pinyinstr[1:] : pinyinstr
 endfunction
 
 function! s:vimim_create_quanpin_table()
@@ -2133,10 +2130,7 @@ function! s:vimim_shuangpin_transform(keyboard)
             let ptr += strlen(sp1)
         endif
     endwhile
-    if output[0] == "'"
-        return output[1:]
-    endif
-    return output
+    return output[0] == "'" ? output[1:] : output
 endfunction
 
 function! s:vimim_create_shuangpin_table(rule)
@@ -2211,8 +2205,7 @@ function! s:vimim_shuangpin_generic()
     for yunmu in split("a o e i u v")
         let yunmu_list[yunmu] = yunmu
     endfor
-    let shuangpin_rule = [shengmu_list, yunmu_list]
-    return shuangpin_rule
+    return [shengmu_list, yunmu_list]
 endfunction
 
 function! s:vimim_get_shuangpin_rules(shuangpin, rules)
@@ -2502,16 +2495,11 @@ function! s:vimim_sentence_datafile(keyboard)
         let head = strpart(keyboard, 0, max)
         let pattern = '^' . head . '\s'
         let cursor = match(backend.lines, pattern)
-        if cursor < 0
-            continue
-        else
+        if cursor > -1
             break
         endif
     endwhile
-    if cursor < 0
-        return ""
-    endif
-    return keyboard[0 : max-1]
+    return cursor < 0 ? "" : keyboard[: max-1]
 endfunction
 
 function! s:vimim_get_from_datafile(keyboard)
@@ -2547,9 +2535,6 @@ function! s:vimim_get_from_datafile(keyboard)
 endfunction
 
 function! s:vimim_get_from_database(keyboard)
-    if empty(a:keyboard)
-        return []
-    endif
     let oneline = s:vimim_get_gold_from_bsddb(a:keyboard)
     if empty(oneline) " || get(split(oneline),1) =~ '\w'
         return []
@@ -2567,7 +2552,7 @@ function! s:vimim_get_from_database(keyboard)
                 if !empty(match_list)
                     call extend(results, match_list)
                 endif
-                if len(results) > 20*2
+                if len(results) > 20 * 2
                     break
                 endif
             endfor
@@ -2620,18 +2605,11 @@ function! s:vimim_sentence_directory(keyboard, directory)
         let head = strpart(a:keyboard, 0, max)
         let filename = a:directory . head
         " workaround: filereadable("/filename.") returns true
-        if filereadable(filename)
-            if head[-1:-1] != "."
-                break
-            endif
-        else
-            continue
+        if filereadable(filename) && head[-1:-1] != "."
+            break
         endif
     endwhile
-    if filereadable(filename)
-        return a:keyboard[0 : max-1]
-    endif
-    return ""
+    return filereadable(filename) ? a:keyboard[: max-1] : ""
 endfunction
 
 function! s:vimim_more_pinyin_directory(keyboard, dir)
@@ -2926,12 +2904,11 @@ function! s:vimim_get_cloud_baidu(keyboard)
     let match_list = []
     for item_list in output_list
         let chinese = get(item_list,0)
-        if chinese =~# '\w'
-            continue
+        if chinese !~ '\w'
+            let english = strpart(a:keyboard, get(item_list,1))
+            let yin_yang = chinese . english
+            call add(match_list, yin_yang)
         endif
-        let english = strpart(a:keyboard, get(item_list,1))
-        let yin_yang = chinese . english
-        call add(match_list, yin_yang)
     endfor
     return match_list
 endfunction
@@ -3051,7 +3028,6 @@ function! s:vimim_check_mycloud_plugin_libcall()
             return cloud
         endif
     endif
-    " libcall check failed, we now check system()
     if has("gui_win32")
         return 0
     endif
@@ -3065,10 +3041,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
     endif
     " in POSIX system, we can use system() for mycloud
     let s:mycloud_mode = "system"
-    if s:vimim_access_mycloud_isvalid(cloud)
-        return cloud
-    endif
-    return 0
+    return s:vimim_access_mycloud_isvalid(cloud) ? cloud : 0
 endfunction
 
 function! s:vimim_check_mycloud_plugin_url()
@@ -3098,7 +3071,6 @@ function! s:vimim_check_mycloud_plugin_url()
         endif
     elseif part[0] ==# 'py'
         if has("python")
-            " python 2 support code here
             if lenpart > 2
                 let s:mycloud_host = part[1]
                 let s:mycloud_port = part[2]
@@ -3676,7 +3648,9 @@ function! s:vimim_embedded_backend_engine(keyboard)
                 sil!call s:vimim_initialize_bsddb(datafile)
             endif
             let head = s:vimim_get_stone_from_bsddb(keyboard)
-            let results = s:vimim_get_from_database(head)
+            if !empty(head)
+                let results = s:vimim_get_from_database(head)
+            endif
         else
             if empty(backend.lines)
                 let backend.lines = s:vimim_readfile(datafile)
