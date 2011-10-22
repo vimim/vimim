@@ -91,8 +91,8 @@ function! s:vimim_initialize_global()
     let s:cursor_at_menuless = 0
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
-    let s:shuangpin_table = {}
     let s:quanpin_table = {}
+    let s:shuangpin_table = {}
     let s:abcd = split("'abcdvfgxz", '\zs')
     let s:qwer = split("pqwertyuio", '\zs')
     let s:az_list = map(range(97,122),"nr2char(".'v:val'.")")
@@ -1950,7 +1950,16 @@ endfunction
 
 function! s:vimim_quanpin_transform(pinyin)
     if empty(s:quanpin_table)
-        let s:quanpin_table = s:vimim_create_quanpin_table()
+        for key in s:vimim_get_all_valid_pinyin_list()
+            if key[0] == "'"
+                let s:quanpin_table[key[1:]] = key[1:]
+            else
+                let s:quanpin_table[key] = key
+            endif
+        endfor
+        for shengmu in s:shengmu_list + split("zh ch sh")
+            let s:quanpin_table[shengmu] = shengmu
+        endfor
     endif
     let item = a:pinyin
     let pinyinstr = ""
@@ -1999,22 +2008,6 @@ function! s:vimim_quanpin_transform(pinyin)
         endfor
     endwhile
     return pinyinstr[0] == "'" ? pinyinstr[1:] : pinyinstr
-endfunction
-
-function! s:vimim_create_quanpin_table()
-    let pinyin_list = s:vimim_get_all_valid_pinyin_list()
-    let table = {}
-    for key in pinyin_list
-        if key[0] == "'"
-            let table[key[1:]] = key[1:]
-        else
-            let table[key] = key
-        endif
-    endfor
-    for shengmu in s:shengmu_list + split("zh ch sh")
-        let table[shengmu] = shengmu
-    endfor
-    return table
 endfunction
 
 function! s:vimim_more_pinyin_datafile(keyboard, sentence)
@@ -2090,46 +2083,51 @@ endfunction
 let s:VimIM += [" ====  input: shuangpin ==== {{{"]
 " =================================================
 
-function! s:vimim_set_shuangpin()
-    if s:vimim_cloud =~ 'shuangpin' || s:ui.im == 'mycloud'
-    \|| empty(s:vimim_shuangpin) || !empty(s:shuangpin_table)
-        return
+function! s:vimim_shuangpin_generic()
+    " generate the default value of shuangpin table
+    let shengmu_list = {}
+    for shengmu in s:shengmu_list
+        let shengmu_list[shengmu] = shengmu
+    endfor
+    let shengmu_list["'"] = "o"
+    let yunmu_list = {}
+    for yunmu in split("a o e i u v")
+        let yunmu_list[yunmu] = yunmu
+    endfor
+    return [shengmu_list, yunmu_list]
+endfunction
+
+function! s:vimim_shuangpin_rules(shuangpin, rules)
+    let rules = a:rules
+    let key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue '
+    let key .= ' uan iu uai ong eng iang ui ai an ao iao ian uang '
+    let v = ''  " various value to almost the same key set
+    if a:shuangpin == 'ms'         " test: viui => zhishi
+        let v = 'b z h f s w r g w x ; p o n t r q y s g d v l j k c m d y'
+        call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
+        let key .= 'v'  " microsoft shuangpin has one additional key
+    elseif a:shuangpin == 'abc'    " test: vtpc => shuang pin
+        let v = 'b q h f s d r g d x y n o c m p r c s g t m l j k z w t'
+        call extend(rules[0], { "zh" : "a", "ch" : "e", "sh" : "v" })
+    elseif a:shuangpin == 'nature' " test: woui => wo shi => i am
+        let v = 'b z h f s w r g w x y p o n t r q y s g d v l j k c m d'
+        call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
+    elseif a:shuangpin == 'plusplus'
+        let v = 'p w g r y b q t b m q z o l x c n x y t h v s f d k j h'
+        call extend(rules[0], { "zh" : "v", "ch" : "u", "sh" : "i" })
+    elseif a:shuangpin == 'purple'
+        let v = 'z k s w h x j t x d ; m o y n l j y h t g n p r q b f g'
+        call extend(rules[0], { "zh" : "u", "ch" : "a", "sh" : "i" })
+    elseif a:shuangpin == 'flypy'
+        let v = 'z w h f s x r g x p k y o b t r q k s g l v d j c n m l'
+        call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
     endif
-    let rules = s:vimim_shuangpin_generic()
-    let rules = s:vimim_get_shuangpin_rules(s:vimim_shuangpin, rules)
-    let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
+    call extend(rules[1], s:vimim_key_value_hash(key, v))
+    return rules
 endfunction
 
-function! s:vimim_shuangpin_transform(keyboard)
-    let size = strlen(a:keyboard)
-    let ptr = 0
-    let output = ""
-    let bchar = ""    " workaround for sogou
-    while ptr < size
-        if a:keyboard[ptr] !~ "[a-z;]"
-            " bypass all non-characters, i.e. 0-9 and A-Z are bypassed
-            let output .= a:keyboard[ptr]
-            let ptr += 1
-        else
-            let sp1 = a:keyboard[ptr]
-            if a:keyboard[ptr+1] =~ "[a-z;]"
-                let sp1 .= a:keyboard[ptr+1]
-            endif
-            if has_key(s:shuangpin_table, sp1)
-                " the last odd shuangpin code are output as only shengmu
-                let output .= bchar . s:shuangpin_table[sp1]
-            else
-                let output .= sp1 " invalid shuangpin code are preserved
-            endif
-            let ptr += strlen(sp1)
-        endif
-    endwhile
-    return output[0] == "'" ? output[1:] : output
-endfunction
-
-function! s:vimim_create_shuangpin_table(rule)
+function! s:vimim_create_shuangpin_table(rules)
     let pinyin_list = s:vimim_get_all_valid_pinyin_list()
-    let rules = a:rule
     let sptable = {}
     " generate table for shengmu-yunmu pairs match
     for key in pinyin_list
@@ -2142,13 +2140,13 @@ function! s:vimim_create_shuangpin_table(rule)
             let shengmu = key[:1]
             let yunmu = key[2:]
         endif
-        if has_key(rules[0], shengmu)
-            let shuangpin_shengmu = rules[0][shengmu]
+        if has_key(a:rules[0], shengmu)
+            let shuangpin_shengmu = a:rules[0][shengmu]
         else
             continue
         endif
-        if has_key(rules[1], yunmu)
-            let shuangpin_yunmu = rules[1][yunmu]
+        if has_key(a:rules[1], yunmu)
+            let shuangpin_yunmu = a:rules[1][yunmu]
         else
             continue
         endif
@@ -2179,7 +2177,7 @@ function! s:vimim_create_shuangpin_table(rule)
         call extend(sptable, nature)
     endif
     " generate table for shengmu-only match
-    for [key, value] in items(rules[0])
+    for [key, value] in items(a:rules[0])
         let sptable[value] = key
         if key[0] == "'"
             let sptable[value] = ""
@@ -2188,47 +2186,31 @@ function! s:vimim_create_shuangpin_table(rule)
     return sptable
 endfunction
 
-function! s:vimim_shuangpin_generic()
-    " generate the default value of shuangpin table
-    let shengmu_list = {}
-    for shengmu in s:shengmu_list
-        let shengmu_list[shengmu] = shengmu
-    endfor
-    let shengmu_list["'"] = "o"
-    let yunmu_list = {}
-    for yunmu in split("a o e i u v")
-        let yunmu_list[yunmu] = yunmu
-    endfor
-    return [shengmu_list, yunmu_list]
-endfunction
-
-function! s:vimim_get_shuangpin_rules(shuangpin, rules)
-    let rules = a:rules
-    let key  = ' ou ei ang en iong ua er ng ia ie ing un uo in ue '
-    let key .= ' uan iu uai ong eng iang ui ai an ao iao ian uang '
-    let v = ''  " various value to almost the same key set
-    if a:shuangpin == 'ms'         " test: viui => zhishi
-        let v = 'b z h f s w r g w x ; p o n t r q y s g d v l j k c m d y'
-        call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
-        let key .= 'v'  " microsoft shuangpin has one additional key
-    elseif a:shuangpin == 'abc'    " test: vtpc => shuang pin
-        let v = 'b q h f s d r g d x y n o c m p r c s g t m l j k z w t'
-        call extend(rules[0], { "zh" : "a", "ch" : "e", "sh" : "v" })
-    elseif a:shuangpin == 'nature' " test: woui => wo shi => i am
-        let v = 'b z h f s w r g w x y p o n t r q y s g d v l j k c m d'
-        call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
-    elseif a:shuangpin == 'plusplus'
-        let v = 'p w g r y b q t b m q z o l x c n x y t h v s f d k j h'
-        call extend(rules[0], { "zh" : "v", "ch" : "u", "sh" : "i" })
-    elseif a:shuangpin == 'purple'
-        let v = 'z k s w h x j t x d ; m o y n l j y h t g n p r q b f g'
-        call extend(rules[0], { "zh" : "u", "ch" : "a", "sh" : "i" })
-    elseif a:shuangpin == 'flypy'
-        let v = 'z w h f s x r g x p k y o b t r q k s g l v d j c n m l'
-        call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
-    endif
-    call extend(rules[1], s:vimim_key_value_hash(key, v))
-    return rules
+function! s:vimim_shuangpin_transform(keyboard)
+    let size = strlen(a:keyboard)
+    let ptr = 0
+    let output = ""
+    let bchar = ""    " workaround for sogou
+    while ptr < size
+        if a:keyboard[ptr] !~ "[a-z;]"
+            " bypass all non-characters, i.e. 0-9 and A-Z are bypassed
+            let output .= a:keyboard[ptr]
+            let ptr += 1
+        else
+            let sp1 = a:keyboard[ptr]
+            if a:keyboard[ptr+1] =~ "[a-z;]"
+                let sp1 .= a:keyboard[ptr+1]
+            endif
+            if has_key(s:shuangpin_table, sp1)
+                " the last odd shuangpin code are output as only shengmu
+                let output .= bchar . s:shuangpin_table[sp1]
+            else
+                let output .= sp1 " invalid shuangpin code are preserved
+            endif
+            let ptr += strlen(sp1)
+        endif
+    endwhile
+    return output[0] == "'" ? output[1:] : output
 endfunction
 
 " ============================================= }}}
@@ -3276,7 +3258,6 @@ endfunction
 function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_color()
-    sil!call s:vimim_set_shuangpin()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_common_maps()
     inoremap <silent> <expr> <Esc>   <SID>vimim_esc()
@@ -3461,7 +3442,14 @@ else
         endif
     endif
     " [shuangpin] support 6 major shuangpin rules
-    if len(s:vimim_shuangpin) && empty(s:has_pumvisible)
+    if len(s:vimim_shuangpin)
+    \&& empty(s:has_pumvisible)
+    \&& s:vimim_cloud !~ 'shuangpin'
+        if empty(s:shuangpin_table)
+            let rules = s:vimim_shuangpin_generic()
+            let rules = s:vimim_shuangpin_rules(s:vimim_shuangpin, rules)
+            let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
+        endif
         let keyboard = s:vimim_shuangpin_transform(keyboard)
         let s:keyboard = keyboard
     endif
