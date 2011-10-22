@@ -670,7 +670,7 @@ function! <SID>vimim_punctuation_map(key)
     endif
     if pumvisible()
         let key = '\<C-Y>' . key
-        if a:key =~ "[;']"
+        if a:key =~ "[;']"  " the 2nd and the 3rd choice
             let down = a:key == ";" ? "" : '\<Down>'
             let key = down . '\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
         endif
@@ -3318,9 +3318,8 @@ endfunction
 function! s:vimim_imap_off()
     let keys  = range(10)
     let keys += split('<Esc> <Space> <BS> <CR> <C-H>')
-    let keys += keys(s:evils)
-    let keys += keys(s:punctuations)
-    let keys += s:valid_keys
+    let keys += keys(s:evils) + keys(s:punctuations)
+    let keys += s:valid_keys + [";", "'"]
     for _ in keys
         if len(maparg(_, 'i'))
             sil!exe 'iunmap '. _
