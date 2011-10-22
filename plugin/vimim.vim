@@ -821,9 +821,7 @@ function! s:vimim_hjkl_rotation(lines)
         let column = ''
         for line in reverse(copy(results))
             let line = get(split(line,'\zs'), i)
-            if empty(line)
-                continue
-            else
+            if !empty(line)
                 let column .= line
             endif
         endfor
@@ -1848,20 +1846,19 @@ function! <SID>vimim_visual_ctrl6()
     sil!call s:vimim_start()
     sil!call s:vimim_onekey_hjkl_maps()
     let onekey = "\<C-R>=g:vimim()\<CR>"
-    let space = "\<C-R>=repeat(' '," . virtcol("'<'")-2 . ")\<CR>"
+    let space = "\<C-R>=repeat(' '," . string(virtcol("'<'")-2) . ")\<CR>"
     if len(lines) < 2  " highlight multiple cjk => show each property
         let chinese = get(split(line,'\zs'),0)
         let s:seamless_positions = getpos("'<'")
         let key = char2nr(chinese) =~ '\d\d\d\d\d' ? "'''''" : line
         let key = "gvc" . key . onekey
     elseif match(lines,'\d') > -1 && join(lines) !~ '[^0-9[:blank:].]'
-        " highlight digit block => count*average=summary
-        call setpos(".", getpos("'>'"))
-        let sum = eval(join(lines,'+'))
+        call setpos(".", getpos("'>'"))  " vertical digit block =>
+        let sum = eval(join(lines,'+'))  " count*average=summary
         let ave = printf("%.2f", 1.0*sum/len(lines))
         let line = substitute(ave."=".string(sum), '[.]0\+', '', 'g')
         let line = string(len(lines)) . '*' . line
-        let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
+        let key  = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else  " highlighted block => display the block in omni window
         let key = "O^\<C-D>" . space . "''''" . onekey
     endif
