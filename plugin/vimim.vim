@@ -127,9 +127,8 @@ endfunction
 
 function! s:vimim_dictionary_keycodes()
     let s:im_keycode = {}
-    let ime  = ' google sogou baidu qq '
-    let ime .= ' wu nature zhengma taijima wubi cangjie '
-    for key in split(ime)
+    let ime = ' wu nature zhengma taijima wubi cangjie'
+    for key in split(ime . ' google sogou baidu qq ')
         let s:im_keycode[key] = "[a-z']"
     endfor
     for key in split('pinyin hangul xinhua quick mycloud')
@@ -200,16 +199,6 @@ function! s:vimim_set_global_default()
             endif
         endif
     endfor
-endfunction
-
-function! s:vimim_get_valid_im_name(im)
-    let im = a:im
-        if im =~ '^wubi'   | let im = 'wubi'
-    elseif im =~ '^pinyin' | let im = 'pinyin'
-    elseif match(s:all_vimim_input_methods, im) < 0
-        let im = 0
-    endif
-    return im
 endfunction
 
 function! g:vimim_wubi()
@@ -2454,9 +2443,12 @@ let s:VimIM += [" ====  backend: file    ==== {{{"]
 " =================================================
 
 function! s:vimim_set_datafile(im, datafile)
-    let datafile = a:datafile
-    let im = s:vimim_get_valid_im_name(a:im)
-    if empty(im) || isdirectory(datafile)
+    let im = a:im
+    if isdirectory(a:datafile)
+        return
+    elseif im =~ '^wubi'   | let im = 'wubi'
+    elseif im =~ '^pinyin' | let im = 'pinyin'
+    elseif match(s:all_vimim_input_methods, im) < 0
         return
     endif
     let s:ui.root = "datafile"
@@ -2464,8 +2456,8 @@ function! s:vimim_set_datafile(im, datafile)
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
     let s:backend.datafile[im] = {}
     let s:backend.datafile[im].root = s:ui.root
-    let s:backend.datafile[im].im = im
-    let s:backend.datafile[im].name = datafile
+    let s:backend.datafile[im].im = s:ui.im
+    let s:backend.datafile[im].name = a:datafile
     let s:backend.datafile[im].keycode = s:im_keycode[im]
     let s:backend.datafile[im].chinese = s:chinese(im)
     let s:backend.datafile[im].lines = []
@@ -2572,11 +2564,8 @@ endfunction
 let s:VimIM += [" ====  backend: dir     ==== {{{"]
 " =================================================
 
-function! s:vimim_set_directory(im, dir)
-    let im = s:vimim_get_valid_im_name(a:im)
-    if empty(im) || empty(a:dir) || !isdirectory(a:dir)
-        return
-    endif
+function! s:vimim_set_directory(dir)
+    let im = "pinyin"
     let s:ui.root = "directory"
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
@@ -3342,12 +3331,12 @@ endfunction
 
 function! s:vimim_set_backend_embedded()
     let im = "pinyin"
-    " (1/3) scan directory database
+    " (1/3) scan directory database, only for pinyin
     let dir = s:plugin . im
     if isdirectory(dir)
         let dir .= "/"
         if filereadable(dir . im)
-            return s:vimim_set_directory(im, dir)
+            return s:vimim_set_directory(dir)
         endif
     endif
     " (2/3) scan bsddb database as edw: enterprise data warehouse
