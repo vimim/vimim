@@ -1355,7 +1355,6 @@ let s:VimIM += [" ====  imode            ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_numbers()
-    let s:loops = {}
     let s:numbers = {}
     let s:numbers.1 = "一壹⑴①甲"
     let s:numbers.2 = "二贰⑵②乙"
@@ -1389,34 +1388,31 @@ function! s:vimim_dictionary_numbers()
     let s:quantifiers.x = "席些项"
     let s:quantifiers.y = "月叶亿"
     let s:quantifiers.z = "种只张株支总枝盏座阵桩尊则站幢宗兆"
-endfunction
-
-function! s:vimim_imode_loop()
-    let antonym = "，。 “” ‘’ （） 【】 〖〗 《》 胜败 真假 石金"
-    let items = []
-    for i in range(len(s:numbers))
-        call add(items, split(s:numbers[i],'\zs'))
-    endfor
-    let numbers = []
-    for j in range(len(get(items,0)))
-        let number = ""
-        for line in items
-            let number .= get(line,j)
-        endfor
-        call add(numbers, number)
-    endfor
-    for loop in numbers + split(antonym)
-        let loops = split(loop, '\zs')
-        for i in range(len(loops))
-            let j = i==len(loops)-1 ? 0 : i+1
-            let s:loops[loops[i]] = loops[j]
-        endfor
-    endfor
+    let s:loops = {}
 endfunction
 
 function! s:vimim_imode_chinese(char_before)
+    let antonym = "，。 “” ‘’ （） 【】 〖〗 《》 胜败 真假 石金"
     if empty(s:loops)
-        call s:vimim_imode_loop()
+        let items = []
+        for i in range(len(s:numbers))
+            call add(items, split(s:numbers[i],'\zs'))
+        endfor
+        let numbers = []
+        for j in range(len(get(items,0)))
+            let number = ""
+            for line in items
+                let number .= get(line,j)
+            endfor
+            call add(numbers, number)
+        endfor
+        for loop in numbers + split(antonym)
+            let loops = split(loop, '\zs')
+            for i in range(len(loops))
+                let j = i==len(loops)-1 ? 0 : i+1
+                let s:loops[loops[i]] = loops[j]
+            endfor
+        endfor
     endif
     let results = []
     let char_before = a:char_before
