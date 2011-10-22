@@ -512,6 +512,7 @@ endfunction
 function! s:vimim_statusline()
     let input_mode  = get(split(s:vimim_mode,','),0)
     let punctuation = s:toggle_punctuation ? 'fullwidth' : 'halfwidth'
+    let punctuation = s:vimim_punctuation ? punctuation : 'halfwidth'
     let statusline  = s:chinese('chinese', input_mode) . s:vimim_get_title()
     let statusline .= s:chinese(punctuation, s:space, "VimIM")
     return statusline
@@ -1256,8 +1257,8 @@ function! s:vimim_chinesemode_start()
     sil!call s:vimim_super_reset()
     if s:vimim_punctuation
         inoremap<expr><C-^> <SID>vimim_punctuation_toggle()
-        call s:vimim_punctuations_maps()
     endif
+    sil!call s:vimim_punctuations_maps()
     sil!call s:vimim_start()
     let &titlestring = s:logo . s:vimim_get_title()
     if s:chinese_mode =~ 'dynamic'
