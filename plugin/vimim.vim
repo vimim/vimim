@@ -1186,7 +1186,7 @@ function! <SID>ChineseMode()
     else
         let s:toggle_im = 0
     endif
-    let switch = &omnifunc ==# 'VimIM' ? 0 : 1
+    let switch = s:chinese_mode =~ 'onekey' ? 1 : 0
     return s:vimim_chinese_mode(switch)
 endfunction
 
@@ -3176,7 +3176,6 @@ endfunction
 
 function! s:vimim_save_vimrc()
     let s:cpo         = &cpo
-    let s:omnifunc    = &omnifunc
     let s:complete    = &complete
     let s:completeopt = &completeopt
     let s:whichwrap   = &whichwrap
@@ -3189,7 +3188,6 @@ endfunction
 
 function! s:vimim_restore_vimrc()
     let &cpo         = s:cpo
-    let &omnifunc    = s:omnifunc
     let &complete    = s:complete
     let &completeopt = s:completeopt
     let &whichwrap   = s:whichwrap
