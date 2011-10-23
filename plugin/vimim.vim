@@ -1169,11 +1169,7 @@ function! <SID>vimim_im_switch()
     let s:ui.root = get(get(s:ui.frontends, switch), 0)
     let s:ui.im   = get(get(s:ui.frontends, switch), 1)
     if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
-        if s:windowless
-            let s:ui.im = s:cloud_default
-        else
-            let s:cloud_default = s:ui.im
-        endif
+        let s:cloud_default = s:ui.im
     endif
     if s:onekey || s:windowless
         return g:vimim_title()
