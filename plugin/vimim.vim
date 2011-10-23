@@ -703,9 +703,8 @@ function! s:vimim_cache()
     let results = []
     if !empty(s:pageup_pagedown)
         let length = len(s:match_list)
-        let one_page = &pumheight < 6 ? 5 : 10
-        if length > one_page
-            let page = s:pageup_pagedown * one_page
+        if length > &pumheight
+            let page = s:pageup_pagedown * &pumheight
             let partition = page ? page : length+page
             let B = s:match_list[partition :]
             let A = s:match_list[: partition-1]
