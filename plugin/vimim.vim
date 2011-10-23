@@ -3134,11 +3134,12 @@ function! s:vimim_search_chinese_by_english(keyboard)
     endif
     " 2/3 search unicode or cjk /search unicode /u808f
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
-    if empty(ddddd) && s:vimim_cjk()
-        " /muuqwxeyqpjeqqq /m7712x3610j3111 /ma77xia36ji31
-        while len(keyboard) > 1
+    if !empty(ddddd)
+        let results = [nr2char(ddddd)]
+    elseif s:vimim_cjk()             " /muuqwxeyqpjeqqq /ma77xia36ji31
+        while len(keyboard) > 1      " /m7712x3610j3111
             let head = s:vimim_get_cjk_head(keyboard)
-            if empty(head)
+            if empty(head) || head == keyboard
                 break
             else
                 let chars = s:vimim_cjk_match(head)
@@ -3147,11 +3148,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
                 let keyboard = strpart(keyboard,len(head))
             endif
         endwhile
-        if len(results) > 1
-            let results = [join(results,'')]
-        endif
-    else
-        let results = [nr2char(ddddd)]
+        let results = len(results) > 1 ? [join(results,'')] : results
     endif
     if len(results)
         return results
