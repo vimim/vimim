@@ -1360,7 +1360,7 @@ function! s:vimim_dictionary_numbers()
 endfunction
 
 function! s:vimim_imode_chinese(char_before)
-    let antonym = "，。 “” ‘’ （） 【】 〖〗 《》 胜败 真假 石金"
+    let antonym = "，。 “” ‘’ （） 【】 〖〗 《》 金石 胜败 真假"
     if empty(s:loops)
         let items = []
         for i in range(len(s:numbers))
