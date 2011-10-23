@@ -3026,10 +3026,7 @@ function! s:vimim_check_mycloud_plugin_url()
             endtry
         endif
     elseif part[0] ==# "dll"
-        let base = 0
-        if len(part[1]) == 1
-            let base = 1
-        endif
+        let base = len(part[1]) == 1 ? 1 : 0
         let s:mycloud_func = 'do_getlocal' " provide function name
         if lenpart >= base+4
             let s:mycloud_func = part[base+3]
@@ -3038,10 +3035,7 @@ function! s:vimim_check_mycloud_plugin_url()
         if lenpart >= base+3
             let s:mycloud_arg = part[base+2]
         endif
-        let cloud = part[1]  " provide the dll
-        if base == 1
-            let cloud .= ':' . part[2]
-        endif
+        let cloud = base == 1 ? part[1] . ':' . part[2] : part[1]
         if filereadable(cloud)
             let s:mycloud_mode = "libcall"
             if has("win32") && cloud[-4:] ==? ".dll"
