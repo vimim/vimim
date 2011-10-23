@@ -2003,14 +2003,11 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
 endfunction
 
 function! s:vimim_more_pinyin_candidates(keyboard)
-    " [purpose] make standard layout for popup menu
+    " [purpose] make standard layout for omni popup menu
     " input  =>  mamahuhu
     " output =>  mamahu, mama
-    if len(s:vimim_shuangpin) || len(s:english.line)
-        return []
-    endif
     let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
-    if empty(keyboards)
+    if len(s:vimim_shuangpin) || len(s:english.line) || empty(keyboards)
         return []
     endif
     let candidates = []
@@ -2032,11 +2029,8 @@ function! s:vimim_cloud_pinyin(keyboard, match_list)
     for chinese in a:match_list
         let len_chinese = len(split(chinese,'\zs'))
         let english = join(keyboards[len_chinese :], "")
-        let yin_yang = chinese
-        if !empty(english)
-            let yin_yang .= english
-        endif
-        call add(match_list, yin_yang)
+        let pair = empty(english) ? chinese : chinese.english
+        call add(match_list, pair)
     endfor
     return match_list
 endfunction
@@ -2046,8 +2040,7 @@ let s:VimIM += [" ====  input: shuangpin ==== {{{"]
 " =================================================
 
 function! s:vimim_shuangpin_generic()
-    " generate the default value of shuangpin table
-    let shengmu_list = {}
+    let shengmu_list = {}   " generate shuangpin table default value
     for shengmu in s:shengmu_list
         let shengmu_list[shengmu] = shengmu
     endfor
@@ -2090,8 +2083,7 @@ endfunction
 
 function! s:vimim_create_shuangpin_table(rules)
     let pinyin_list = s:vimim_get_all_valid_pinyin_list()
-    let sptable = {}
-    " generate table for shengmu-yunmu pairs match
+    let sptable = {}  " generate table for shengmu-yunmu pairs match
     for key in pinyin_list
         if key !~ "['a-z]*"
             continue
@@ -2841,8 +2833,7 @@ function! s:vimim_get_cloud_baidu(keyboard)
         let chinese = get(item_list,0)
         if chinese !~ '\w'
             let english = strpart(a:keyboard, get(item_list,1))
-            let yin_yang = chinese . english
-            call add(match_list, yin_yang)
+            call add(match_list, chinese . english)
         endif
     endfor
     return match_list
@@ -3335,8 +3326,7 @@ else
     if s:smart_enter =~ "menuless_correction"
         return [s:space]
     endif
-    " [hjkl] less is more
-    let results = s:vimim_cache()
+    let results = s:vimim_cache()  " [hjkl] less is more
     if empty(results)
         sil!call s:vimim_reset_before_omni()
     else
@@ -3376,16 +3366,16 @@ else
         endif
     endif
     " [shuangpin] support 6 major shuangpin rules
-    if len(s:vimim_shuangpin)
-    \&& empty(s:has_pumvisible)
-    \&& s:vimim_cloud !~ 'shuangpin'
+    if len(s:vimim_shuangpin) && s:vimim_cloud !~ 'shuangpin'
         if empty(s:shuangpin_table)
             let rules = s:vimim_shuangpin_generic()
             let rules = s:vimim_shuangpin_rules(s:vimim_shuangpin, rules)
             let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
         endif
-        let keyboard = s:vimim_shuangpin_transform(keyboard)
-        let s:keyboard = keyboard
+        if empty(s:has_pumvisible)
+            let keyboard = s:vimim_shuangpin_transform(keyboard)
+            let s:keyboard = keyboard
+        endif
     endif
     " [cloud] to make dream come true for multiple clouds
     if s:ui.root == 'cloud' || keyboard[-1:] == "'"
