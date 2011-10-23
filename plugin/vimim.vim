@@ -3165,8 +3165,7 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
 function! s:vimim_set_vimrc()
-    set title imdisable noshowmatch
-    set shellslash
+    set title imdisable noshowmatch shellslash
     set nolazyredraw
     set whichwrap=<,>
     set complete=.
@@ -3182,7 +3181,6 @@ function! s:vimim_save_vimrc()
     let s:laststatus  = &laststatus
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
-    let s:shellslash  = &shellslash
     let s:lazyredraw  = &lazyredraw
 endfunction
 
@@ -3194,7 +3192,6 @@ function! s:vimim_restore_vimrc()
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
     let &titlestring = s:titlestring
-    let &shellslash  = s:shellslash
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheights.saved
 endfunction
