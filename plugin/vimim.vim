@@ -1166,9 +1166,8 @@ function! <SID>vimim_im_switch()
     endif
     let s:toggle_im += 1
     let switch = s:toggle_im % len(s:ui.frontends)
-    let frontends = get(s:ui.frontends, switch)
-    let s:ui.root = get(frontends,0)
-    let s:ui.im   = get(frontends,1)
+    let s:ui.root = get(get(s:ui.frontends, switch), 0)
+    let s:ui.im   = get(get(s:ui.frontends, switch), 1)
     if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
         if s:windowless
             let s:ui.im = s:cloud_default
@@ -1260,7 +1259,7 @@ endfunction
 function! s:vimim_set_custom_im_list()
     let toggle_list = []
     if s:vimim_toggle =~ ","
-        for toggle in split(s:vimim_toggle, ",")  " pinyin
+        for toggle in split(s:vimim_toggle, ",")
             for [root, im] in s:ui.frontends
                 if toggle =~ im
                     call add(toggle_list, [root, im])
@@ -1270,17 +1269,12 @@ function! s:vimim_set_custom_im_list()
     else
         let toggle_list = s:ui.frontends
     endif
-    if len(split(s:vimim_toggle,",")) < 3
-        if len(toggle_list) > 5
-            let toggle_list = toggle_list[:-5]  " removing clouds
-        elseif len(toggle_list) == 5
-            let toggle_list = toggle_list[:1]   " one local one cloud
-        endif
+    if s:backend[s:ui.root][s:ui.im].name =~ "bsddb"
+        let toggle_list = toggle_list[:1]  " one local one cloud
     endif
-    let  s:ui.frontends = toggle_list
-    let frontends = get(s:ui.frontends, 0)
-    let s:ui.root = get(frontends,0)
-    let s:ui.im   = get(frontends,1)
+    let s:ui.frontends = copy(toggle_list)
+    let s:ui.root = get(get(s:ui.frontends,0), 0)
+    let s:ui.im   = get(get(s:ui.frontends,0), 1)
 endfunction
 
 function! <SID>vimim_punctuation_toggle()
@@ -2983,16 +2977,14 @@ function! s:vimim_check_mycloud_plugin_libcall()
     if has("gui_win32")
         return 0
     endif
-    " on linux, we do plug-n-play
-    let cloud = s:plugin . 'mycloud/mycloud'
+    let cloud = s:plugin . 'mycloud/mycloud' " plug-n-play on linux
     if !executable(cloud)
         if !executable("python")
             return 0
         endif
         let cloud = "python " . cloud
     endif
-    " in POSIX system, we can use system() for mycloud
-    let s:mycloud_mode = "system"
+    let s:mycloud_mode = "system"  " in POSIX system, use system()
     return s:vimim_access_mycloud_isvalid(cloud) ? cloud : 0
 endfunction
 
@@ -3004,7 +2996,6 @@ function! s:vimim_check_mycloud_plugin_url()
         sil!call s:vimim_debug('info', "invalid_cloud_plugin_url")
     elseif part[0] ==# 'app'
         if !has("gui_win32")
-            " strip the first root if contains ":"
             if lenpart == 3
                 let cloud = part[1] . ':' . part[2]
                 if part[1][0] == '/'
@@ -3013,7 +3004,6 @@ function! s:vimim_check_mycloud_plugin_url()
             elseif lenpart == 2
                 let cloud = part[1]
             endif
-            " in POSIX system, we can use system() for mycloud
             if executable(split(cloud, " ")[0])
                 let s:mycloud_mode = "system"
                 if s:vimim_access_mycloud_isvalid(cloud)
@@ -3044,8 +3034,7 @@ function! s:vimim_check_mycloud_plugin_url()
         if len(part[1]) == 1
             let base = 1
         endif
-        " provide function name
-        let s:mycloud_func = 'do_getlocal'
+        let s:mycloud_func = 'do_getlocal' " provide function name
         if lenpart >= base+4
             let s:mycloud_func = part[base+3]
         endif
@@ -3053,16 +3042,14 @@ function! s:vimim_check_mycloud_plugin_url()
         if lenpart >= base+3
             let s:mycloud_arg = part[base+2]
         endif
-        " provide the dll
-        let cloud = part[1]
+        let cloud = part[1]  " provide the dll
         if base == 1
             let cloud .= ':' . part[2]
         endif
         if filereadable(cloud)
             let s:mycloud_mode = "libcall"
-            " strip off the .dll suffix, only required for win32
             if has("win32") && cloud[-4:] ==? ".dll"
-                let cloud = cloud[:-5]
+                let cloud = cloud[:-5]  " strip off the .dll suffix
             endif
             if s:vimim_access_mycloud_isvalid(cloud)
                 return cloud
