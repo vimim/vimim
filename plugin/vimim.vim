@@ -1228,14 +1228,6 @@ function! s:vimim_chinesemode_start()
                 endif
             endfor
         endif
-    elseif s:chinese_mode =~ 'static'
-        for char in s:az_list  " avoid mapping caps
-            sil!exe 'inoremap <silent> ' . char .
-            \ ' <C-R>=pumvisible() ? "<C-Y>" : ""<CR>' . char
-        endfor
-        if !pumvisible()
-            return g:vimim()
-        endif
     endif
     return ""
 endfunction
@@ -3589,7 +3581,7 @@ function! g:vimim()
 endfunction
 
 function! g:vimim_omni()
-    let key = pumvisible() ? '\<C-P>\<Down>' : ""
+    let key = pumvisible() ? '\<C-N>\<C-P>' : ""
     let s:smart_enter = 0  " s:windowless: gi ma enter li space 3
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -3619,6 +3611,11 @@ function! s:vimim_plug_and_play()
            inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
            imap<silent><C-Bslash> <Plug>VimIM
         noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
+    else
+        lnoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
+        lmap<silent><C-Bslash> <Plug>VimIM
+             sil!exe 'lnoremap ' .char.' '.char. '<C-R>=g:vimim()<CR>'
+         endfor
     endif
     if s:vimim_map =~ 'search'
         noremap<silent> n :call g:vimim_search_next()<CR>n
