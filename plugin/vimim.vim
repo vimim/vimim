@@ -498,8 +498,8 @@ function! s:vimim_statusline()
     let input_mode  = get(split(s:vimim_mode,','),0)
     let punctuation = s:toggle_punctuation ? 'fullwidth' : 'halfwidth'
     let punctuation = s:vimim_punctuation ? punctuation : 'halfwidth'
-    let statusline  = s:chinese('chinese', input_mode) . s:vimim_get_title()
-    return statusline . s:chinese(punctuation, s:space, "VimIM")
+    let line = s:chinese('chinese', input_mode) . s:vimim_get_title()
+    return line . s:chinese(punctuation, s:space, "VimIM")
 endfunction
 
 function! g:vimim_slash()
@@ -635,11 +635,11 @@ function! s:vimim_dictionary_punctuations()
     let s:all_evils = copy(evils)  " onekey uses all punctuations
     call extend(s:all_evils, mini_punctuations)
     call extend(s:all_evils, most_punctuations)
-    let s:punctuations = {}        " chinese mode uses minimum by default
-    if s:vimim_punctuation         " :let g:vimim_punctuation = 1
+    let s:punctuations = {}      " chinese mode uses minimum by default
+    if s:vimim_punctuation       " :let g:vimim_punctuation = 1
         call extend(s:punctuations, mini_punctuations)
     endif
-    if s:vimim_punctuation > 1     " :let g:vimim_punctuation = 2
+    if s:vimim_punctuation > 1   " :let g:vimim_punctuation = 2
         call extend(s:punctuations, most_punctuations)
     endif
     let s:evils = s:vimim_punctuation == 3 ? copy(evils) : {}
@@ -688,10 +688,7 @@ function! <SID>vimim_get_single_quote()
 endfunction
 
 function! <SID>vimim_get_double_quote()
-    let key = ""
-    if pumvisible()
-        let key = '\<C-Y>'
-    endif
+    let key = pumvisible() ? '\<C-Y>' : ""
     let pairs = split(s:all_evils['"'], '\zs')
     let s:smart_quotes.double += 1
     let key .= get(pairs, s:smart_quotes.double % 2)
@@ -761,9 +758,9 @@ function! s:vimim_get_hjkl_game(keyboard)
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
     elseif len(getreg('"')) > 3     "  vimim_visual_ctrl6
-        if keyboard == "''''"       "" display buffer inside omni window
+        if keyboard == "''''"       ": display buffer inside omni
             let results = split(getreg('"'), '\n')
-        elseif keyboard =~ "'''''"  "" display cjk within one line
+        elseif keyboard =~ "'''''"  ": display cjk within one line
             let line = substitute(getreg('"'),'[\x00-\xff]','','g')
             if len(line)
                 for chinese in split(line, '\zs')
@@ -788,7 +785,7 @@ endfunction
 
 function! s:vimim_hjkl_rotation(lines)
     let max = max(map(copy(a:lines), 'strlen(v:val)')) + 1
-    let multibyte = match(a:lines,'\w') < 0 ? s:multibyte : 1
+    let multibyte = match(a:lines, '\w') < 0 ? s:multibyte : 1
     let results = []
     for line in a:lines
         let spaces = ''   " rotation makes more sense for cjk
@@ -835,10 +832,11 @@ function! g:vimim_title()
     if s:windowless && empty(s:touch_me_not)
         let titlestring .= s:today
     endif
-    if &term == 'screen'     " best efforts for gun screen
+    if &term == 'screen'
         echo titlestring
-    else                     " if terminal can set window titles
-        let &titlestring = titlestring        " all GUI versions
+    else
+        " if terminal can set window titles: all GUI versions
+        let &titlestring = titlestring
         :redraw
     endif
     return ""
@@ -858,7 +856,7 @@ function! s:vimim_menuless_map(key)
         if len(s:cjk.filename)
             let s:hjkl_n .= digit   " 1234567890 for windowless filter
         else
-            if a:key =~ '[02-9]'    "  234567890 for windowless selection
+            if a:key =~ '[02-9]'    "  234567890 for windowless choice
                 let key = repeat('\<C-N>', cursor)
             endif
         endif
@@ -888,10 +886,10 @@ function! s:vimim_set_titlestring(cursor)
 endfunction
 
 function! <SID>vimim_space()
-    " (1) <Space> after English (valid keys) => trigger keycode menu
-    " (2) <Space> after English punctuation  => get Chinese punctuation
-    " (3) <Space> after popup menu           => insert Chinese
-    " (4) <Space> after pattern not found    => Space
+    " (1) Space after English (valid keys) => trigger keycode menu
+    " (2) Space after English punctuation  => get Chinese punctuation
+    " (3) Space after popup menu           => insert Chinese
+    " (4) Space after pattern not found    => Space
     let space = " "
     let s:has_pumvisible = 0
     if pumvisible()
@@ -983,9 +981,9 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
 function! <SID>vimim_onekey(tab)
-    " (1) <OneKey> in insert mode     => start MidasTouch popup
-    " (2) <OneKey> in windowless mode => start MidasTouch popup
-    " (3) <OneKey> in omni window     => start print
+    " (1) OneKey in insert mode     => start MidasTouch popup
+    " (2) OneKey in windowless mode => start MidasTouch popup
+    " (3) OneKey in omni window     => start print
     let onekey = ""
     if s:chinese_mode !~ 'onekey'
         sil!call s:vimim_stop()
@@ -1631,13 +1629,13 @@ function! s:vimim_get_cjk_head(keyboard)
                 let head = s:vimim_get_head(keyboard, 4)
             endif
         elseif keyboard =~# '^\l\+\d\+\>'
-            let index = match(keyboard,'\d')      " ma7 ma77 ma771 ma7712
+            let index = match(keyboard,'\d')      " ma7 ma77 ma771
             let alpha = keyboard[0 : index-1]
             if len(s:vimim_get_pinyin_from_pinyin(alpha))
                 let s:hjkl_n = keyboard[index :]  " 74 in mali74
                 return alpha
             endif
-        elseif keyboard =~# '^\l\+\d\+' " wo23 for input wo23you40yigemeng
+        elseif keyboard =~# '^\l\+\d\+' " wo23 for input wo23you40
             let partition = match(keyboard, '\d')
             while partition > -1
                 let partition += 1
@@ -1812,7 +1810,7 @@ function! <SID>vimim_visual_ctrl6()
     sil!call s:vimim_start()
     sil!call s:vimim_onekey_hjkl_maps()
     let onekey = "\<C-R>=g:vimim()\<CR>"
-    let space = "\<C-R>=repeat(' '," . string(virtcol("'<'")-2) . ")\<CR>"
+    let space = "\<C-R>=repeat(' '," .string(virtcol("'<'")-2). ")\<CR>"
     if len(lines) < 2  " highlight multiple cjk => show each property
         let chinese = get(split(line,'\zs'),0)
         let s:seamless_positions = getpos("'<'")
@@ -1854,8 +1852,8 @@ function! s:vimim_get_english(keyboard)
     let oneline = ""
     if cursor > -1
         let oneline = get(s:english.lines, cursor)
-        if a:keyboard != get(split(oneline),0) " no surprise if windowless
-            let pairs = split(oneline)       " haag haagendazs
+        if a:keyboard != get(split(oneline),0)
+            let pairs = split(oneline)   " haag haagendazs
             let oneline = join(pairs[1:] + pairs[:0])
             let oneline = a:keyboard . " " . oneline
         endif
@@ -2737,7 +2735,7 @@ function! s:vimim_get_cloud_qq(keyboard)
         let s:backend.cloud.qq.im = key_qq
     endif
     let input  = url
-    let clouds = split(s:vimim_cloud,',')    "  qq.shuangpin.abc,google
+    let clouds = split(s:vimim_cloud,',')      " qq.shuangpin.abc,google
     let vimim_cloud = get(clouds, match(clouds,'qq')) " qq.shuangpin.abc
     if vimim_cloud =~ 'wubi'
         let input .= 'gwb'
