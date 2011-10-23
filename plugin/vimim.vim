@@ -143,17 +143,7 @@ function! s:vimim_dictionary_keycodes()
     let ime  = ' pinyin_sogou pinyin_quote_sogou pinyin_huge'
     let ime .= ' pinyin_fcitx pinyin_canton pinyin_hongkong'
     let ime .= ' wubi98 wubi2000 wubijd wubihf'
-    let all_vimim_input_methods = keys(s:im_keycode) + split(ime)
-    if s:vimim_toggle =~ ","
-        for im in split(s:vimim_toggle, ",")
-            let index = match(all_vimim_input_methods, im)
-            if index > -1
-                let first = remove(all_vimim_input_methods, index)
-                call insert(all_vimim_input_methods, first)
-            endif
-        endfor
-    endif
-    let s:all_vimim_input_methods = copy(all_vimim_input_methods)
+    let s:all_vimim_input_methods = keys(s:im_keycode) + split(ime)
 endfunction
 
 function! s:vimim_set_keycode()
@@ -309,13 +299,10 @@ endfunction
 
 function! s:vimim_egg_vimimrc()
     let vimimrc = copy(s:vimimdefaults)
+    let filter = "get(" . 'v:val' . ",1)"
+    let toggle = join(map(copy(s:ui.frontends), filter),",")
     let index = match(vimimrc, 'g:vimim_toggle')
-    let custom_im_toggle_list = s:vimim_get_custom_im_list()
-    if index && !empty(custom_im_toggle_list)
-        let toggle = join(custom_im_toggle_list,",")
-        let value = vimimrc[index][:-3]
-        let vimimrc[index] = value . "'" . toggle . "'"
-    endif
+    let vimimrc[index] = vimimrc[index][:-3] . "'" . toggle . "'"
     return sort(vimimrc + s:vimimrc)
 endfunction
 
@@ -1177,30 +1164,11 @@ function! <SID>vimim_im_switch()
     if len(s:ui.frontends) < 2 && empty(s:onekey)
         return <SID>ChineseMode()
     endif
-    let custom_frontends = []
-    for im in s:vimim_get_custom_im_list()
-        if im =~ 'english'
-            call add(custom_frontends, [])
-            continue
-        endif
-        for frontends in s:ui.frontends
-            if match(frontends, im) > -1
-                call add(custom_frontends, frontends)
-            endif
-        endfor
-    endfor
-    if len(custom_frontends) > 5 && get(get(s:ui.frontends,-1),0) == 'cloud'
-        let custom_frontends = custom_frontends[:-5]  " removing clouds
-    endif
     let s:toggle_im += 1
-    let switch = s:toggle_im % len(custom_frontends)
-    let frontends = get(custom_frontends, switch)
-    if empty(frontends)
-        return s:vimim_chinese_mode(0)
-    else
-        let s:ui.root = get(frontends,0)
-        let s:ui.im   = get(frontends,1)
-    endif
+    let switch = s:toggle_im % len(s:ui.frontends)
+    let frontends = get(s:ui.frontends, switch)
+    let s:ui.root = get(frontends,0)
+    let s:ui.im   = get(frontends,1)
     if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
         if s:windowless
             let s:ui.im = s:cloud_default
@@ -1225,9 +1193,6 @@ function! <SID>ChineseMode()
         return ""
     else
         let s:toggle_im = 0
-        let frontends = get(s:ui.frontends, 0)
-        let s:ui.root = get(frontends, 0)
-        let s:ui.im   = get(frontends, 1)
     endif
     let switch = &omnifunc ==# 'VimIM' ? 0 : 1
     return s:vimim_chinese_mode(switch)
@@ -1292,16 +1257,30 @@ function! s:vimim_chinesemode_stop()
     endif
 endfunction
 
-function! s:vimim_get_custom_im_list()
-    let custom_im_toggle_list = []
+function! s:vimim_set_custom_im_list()
+    let toggle_list = []
     if s:vimim_toggle =~ ","
-        let custom_im_toggle_list = split(s:vimim_toggle, ",")
-    elseif len(s:ui.frontends)
-        for frontends in s:ui.frontends
-            call add(custom_im_toggle_list, get(frontends,1))
+        for toggle in split(s:vimim_toggle, ",")  " pinyin
+            for [root, im] in s:ui.frontends
+                if toggle =~ im
+                    call add(toggle_list, [root, im])
+                endif
+            endfor
         endfor
+    else
+        let toggle_list = s:ui.frontends
     endif
-    return custom_im_toggle_list
+    if len(split(s:vimim_toggle,",")) < 3
+        if len(toggle_list) > 5
+            let toggle_list = toggle_list[:-5]  " removing clouds
+        elseif len(toggle_list) == 5
+            let toggle_list = toggle_list[:1]   " one local one cloud
+        endif
+    endif
+    let  s:ui.frontends = toggle_list
+    let frontends = get(s:ui.frontends, 0)
+    let s:ui.root = get(frontends,0)
+    let s:ui.im   = get(frontends,1)
 endfunction
 
 function! <SID>vimim_punctuation_toggle()
@@ -2440,8 +2419,6 @@ function! s:vimim_set_datafile(im, datafile)
         return
     elseif im =~ '^wubi'   | let im = 'wubi'
     elseif im =~ '^pinyin' | let im = 'pinyin'
-    elseif match(s:all_vimim_input_methods, im) < 0
-        return
     endif
     let s:ui.root = "datafile"
     let s:ui.im = im
@@ -3724,6 +3701,7 @@ sil!call s:vimim_super_reset()
 sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_backend_mycloud()
+sil!call s:vimim_set_custom_im_list()
 sil!call s:vimim_plug_and_play()
 " ============================================= }}}
 :redir @p
