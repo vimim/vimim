@@ -3224,10 +3224,12 @@ function! s:vimim_reset_after_insert()
 endfunction
 
 function! s:vimim_imap_off()
-    let keys  = range(10)
+    let keys  = range(10) + [";", "'"]
     let keys += split('<Esc> <Space> <BS> <CR> <C-H>')
     let keys += keys(s:evils) + keys(s:punctuations)
-    let keys += s:valid_keys + [";", "'"]
+    if s:chinese_mode =~ 'dynamic'
+        let keys += s:valid_keys
+    endif
     for _ in keys
         if len(maparg(_, 'i'))
             sil!exe 'iunmap '. _
