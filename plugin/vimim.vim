@@ -1143,7 +1143,7 @@ function! s:vimim_get_head_without_quote(keyboard)
         let keyboard = join(split(keyboard,'\zs'), "'")
     endif
     if keyboard =~ "'" && keyboard[-1:] != "'"
-        " [quote] quote_by_quote: wo'you'yi'ge'meng
+        " [quote_by_quote] wo'you'yi'ge'meng
         let keyboards = split(keyboard,"'")
         let keyboard = get(keyboards,0)
         let tail = join(keyboards[1:],"'")
@@ -1286,14 +1286,9 @@ endfunction
 
 function! s:vimim_get_seamless(current_positions)
     if empty(s:seamless_positions)
-        return -1
-    endif
-    let seamless_bufnum = s:seamless_positions[0]
-    let seamless_lnum = s:seamless_positions[1]
-    let seamless_off = s:seamless_positions[3]
-    if seamless_bufnum != a:current_positions[0]
-    \|| seamless_lnum != a:current_positions[1]
-    \|| seamless_off != a:current_positions[3]
+    \|| s:seamless_positions[0] != a:current_positions[0]
+    \|| s:seamless_positions[1] != a:current_positions[1]
+    \|| s:seamless_positions[3] != a:current_positions[3]
         let s:seamless_positions = []
         return -1
     endif
@@ -1311,7 +1306,7 @@ function! s:vimim_get_seamless(current_positions)
             return -1
         endif
     endfor
-    let s:starts.row = seamless_lnum
+    let s:starts.row = s:seamless_positions[1]
     return seamless_column
 endfunction
 
@@ -1495,9 +1490,8 @@ function! s:vimim_get_unicode_ddddd(keyboard)
 endfunction
 
 function! s:vimim_unicode_to_utf8(xxxx)
-    " u808f => 32911 => e8828f
+    let utf8 = ''       " u808f => 32911 => e8828f
     let ddddd = str2nr(a:xxxx, 16)
-    let utf8 = ''
     if ddddd < 128
         let utf8 .= nr2char(ddddd)
     elseif ddddd < 2048
@@ -1512,8 +1506,7 @@ function! s:vimim_unicode_to_utf8(xxxx)
 endfunction
 
 function! s:vimim_url_xx_to_chinese(xx)
-    " %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
-    let output = a:xx
+    let output = a:xx   " %E9%A6%AC => \xE9\xA6\xAC => 馬 u99AC
     if s:http_exe =~ 'libvimim'
         let output = libcall(s:http_exe, "do_unquote", output)
     else
