@@ -87,7 +87,6 @@ function! s:vimim_initialize_global()
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
     let s:toggle_im = 0
-    let s:toggle_punctuation = 1
     let s:cursor_at_menuless = 0
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
@@ -206,64 +205,10 @@ function! g:vimim_wubi()
     if pumvisible()
         let key = '\<C-E>'
         if empty(len(get(split(s:keyboard),0))%4)
-            let key = '\<C-Y>'
+            let key = '\<C-N>\<C-Y>'
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! s:vimim_set_plugin_conflict()
-    if !exists('s:acp')
-        let s:acp = s:vimim_getsid('autoload/acp.vim')
-        if !empty(s:acp)
-            AcpDisable
-        endif
-    endif
-    if !exists('s:supertab_sid')
-        let s:supertab_sid = s:vimim_getsid('plugin/supertab.vim')
-    endif
-    if !exists('s:word_complete')
-        let s:word_complete = s:vimim_getsid('plugin/word_complete.vim')
-        if !empty(s:word_complete)
-            call EndWordComplete()
-        endif
-    endif
-endfunction
-
-function! s:vimim_restore_plugin_conflict()
-    if !empty(s:acp)
-        let keys1 = split('- _ ~ ^ . , : ! # = % $ @ < > / \')
-        let keys2 = range(10) + ['<Space>', '<BS>', '<CR>']
-        let AZ_list = map(range(65,90), "nr2char(".'v:val'.")")
-        let ACPMappingDrivenkeys = s:az_list + AZ_list + keys1 + keys2
-        for k in ACPMappingDrivenkeys
-            exe printf('iu %s', k)
-            exe printf('im %s %s<C-r>=<SNR>%s_feedPopup()<CR>',k,k,s:acp)
-        endfor
-        AcpEnable
-    endif
-    if !empty(s:supertab_sid)
-        let tab = s:supertab_sid
-        if g:SuperTabMappingForward =~ '^<tab>$'
-            exe printf("im <tab> <C-R>=<SNR>%s_SuperTab('p')<CR>",tab)
-        endif
-        if g:SuperTabMappingBackward =~ '^<s-tab>$'
-            exe printf("im <s-tab> <C-R>=<SNR>%s_SuperTab('n')<CR>",tab)
-        endif
-    endif
-endfunction
-
-function! s:vimim_getsid(scriptname)
-    " use s:getsid to get script sid, translate <SID> to <SNR>N_
-    redir => scriptnames_output
-    silent scriptnames
-    redir END
-    for line in split(scriptnames_output, "\n")
-        if line =~ a:scriptname
-            return matchstr(line, '\d\+')
-        endif
-    endfor
-    return 0
 endfunction
 
 " ============================================= }}}
@@ -371,8 +316,6 @@ let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
 function! s:vimim_set_color()
-    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
-    highlight! link Cursor CursorIM
     if has("win32") || has("win32unix")
         highlight! PmenuSbar  NONE
         highlight! PmenuThumb NONE
@@ -407,6 +350,17 @@ function! s:vimim_dictionary_statusline()
     let two  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 98"
     let two .= " 注音 行列 智能 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
     call extend(s:title, s:vimim_key_value_hash(one, two))
+endfunction
+
+function! s:vimim_dictionary_punctuations()
+    let one  = "  , .  +  -  ~  ^    _    "
+    let two  = " ， 。 ＋ － ～ …… —— "
+    let one .= "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
+    let two .= "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
+    let punctuations = s:vimim_key_value_hash(one, two)
+    let s:all_evils = { '\' : "、", "'" : "‘’", '"' : "“”" }
+    call extend(s:all_evils, punctuations)   " onekey uses all punctuations
+    let s:punctuations = s:vimim_punctuation ? copy(s:all_evils) : {}
 endfunction
 
 function! s:chinese(...)
@@ -496,8 +450,7 @@ endfunction
 
 function! s:vimim_statusline()
     let input_mode  = get(split(s:vimim_mode,','),0)
-    let punctuation = s:toggle_punctuation ? 'fullwidth' : 'halfwidth'
-    let punctuation = s:vimim_punctuation ? punctuation : 'halfwidth'
+    let punctuation = s:vimim_punctuation ? 'fullwidth' : 'halfwidth'
     let line = s:chinese('chinese', input_mode) . s:vimim_get_title()
     return line . s:chinese(punctuation, s:space, "VimIM")
 endfunction
@@ -539,160 +492,6 @@ function! s:vimim_get_labeling(label)
         endif
     endif
     return labeling
-endfunction
-
-function! s:vimim_common_maps()
-    let labels = range(10)
-    let punctuation = " ] [ = - "
-    if s:onekey
-        let punctuation .= " . , "
-        let labels += s:abcd
-        call remove(labels, match(labels,"'"))
-    endif
-    for _ in labels
-        exe 'inoremap<expr> '._.' <SID>vimim_label_map("'._.'")'
-    endfor
-    for _ in split(punctuation)
-        exe 'inoremap<expr> '._.' <SID>vimim_page_map("'._.'")'
-    endfor
-endfunction
-
-function! <SID>vimim_label_map(key)
-    let key = a:key
-    if pumvisible()
-        let n = match(s:abcd, key)
-        if key =~ '\d'
-            let n = key < 1 ? 9 : key - 1
-        endif
-        let yes = repeat("\<Down>", n). '\<C-Y>'
-        let key = '\<C-R>=g:vimim()\<CR>'
-        let s:has_pumvisible = 1
-        if s:onekey
-            if len(s:cjk.filename)   "  abcdvfgxz as continuous
-                if a:key =~ '\d'     " 1234567890 as filter
-                    let s:hjkl_n .= a:key
-                else
-                    let key = yes
-                endif
-            else
-                let key = yes
-                sil!call s:vimim_stop()
-            endif
-        else
-            let key = yes . key
-            sil!call s:vimim_reset_after_insert()
-        endif
-    elseif s:windowless && key =~ '\d'
-        if s:pattern_not_found
-            let s:pattern_not_found = 0
-        else
-            let key = s:vimim_menuless_map(key)
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_page_map(key)
-    let key = a:key
-    if pumvisible()
-        if key =~ "[][]"
-            let left  = key == "]" ? "\<Left>"  : ""
-            let right = key == "]" ? "\<Right>" : ""
-            let _ = key == "]" ? 0 : -1
-            let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
-            let key = '\<C-Y>' . left . bs . right
-        elseif key =~ "[=.]"
-            let key = '\<PageDown>'
-            if &pumheight
-                let s:pageup_pagedown = 1
-                let key = g:vimim()
-            endif
-        elseif key =~ "[-,]"
-            let key = '\<PageUp>'
-            if &pumheight
-                let s:pageup_pagedown = -1
-                let key = g:vimim()
-            endif
-        endif
-    elseif empty(s:onekey) && s:toggle_punctuation && key =~ "[][=-]"
-        let key = <SID>vimim_punctuation_map(key)
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  punctuations     ==== {{{"]
-" =================================================
-
-function! s:vimim_dictionary_punctuations()
-    let one = "  , .  +  -  ~  ^    _    "
-    let two = " ， 。 ＋ － ～ …… —— "
-    let mini_punctuations = s:vimim_key_value_hash(one, two)
-    let one = "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
-    let two = "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
-    let most_punctuations = s:vimim_key_value_hash(one, two)
-    let evils = { '\' : "、", "'" : "‘’", '"' : "“”" }
-    let s:all_evils = copy(evils)  " onekey uses all punctuations
-    call extend(s:all_evils, mini_punctuations)
-    call extend(s:all_evils, most_punctuations)
-    let s:punctuations = {}      " chinese mode uses minimum by default
-    if s:vimim_punctuation       " :let g:vimim_punctuation = 1
-        call extend(s:punctuations, mini_punctuations)
-    endif
-    if s:vimim_punctuation > 1   " :let g:vimim_punctuation = 2
-        call extend(s:punctuations, most_punctuations)
-    endif
-    let s:evils = s:vimim_punctuation == 3 ? copy(evils) : {}
-endfunction
-
-function! s:vimim_punctuations_maps()
-    for _ in keys(s:punctuations) + [";", "'"]
-        exe 'inoremap <expr> '._.' <SID>vimim_punctuation_map("'._.'")'
-    endfor
-    if !empty(s:evils)
-        inoremap    '     <C-R>=<SID>vimim_get_single_quote()<CR>
-        inoremap    "     <C-R>=<SID>vimim_get_double_quote()<CR>
-        inoremap <Bslash> <C-R>=pumvisible() ? "\<lt>C-Y>、" : "、"<CR>
-    endif
-endfunction
-
-function! <SID>vimim_punctuation_map(key)
-    let key = a:key
-    if s:toggle_punctuation
-        if pumvisible() || s:vimim_byte_before() !~ '\w'
-            if has_key(s:punctuations, a:key)
-                let key = s:punctuations[a:key]
-            endif
-        endif
-    endif
-    if pumvisible()
-        let key = '\<C-Y>' . key
-        if a:key =~ "[;']"  " the 2nd and the 3rd choice
-            let down = a:key == ";" ? "" : '\<Down>'
-            let key = down . '\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_get_single_quote()
-    let key = ""
-    if pumvisible()  " the 3rd choice plus
-        let key = '\<Down>\<Down>\<C-Y>\<C-R>=g:vimim()\<CR>'
-    else
-        let pairs = split(s:all_evils["'"], '\zs')
-        let s:smart_quotes.single += 1
-        let key .= get(pairs, s:smart_quotes.single % 2)
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! <SID>vimim_get_double_quote()
-    let key = pumvisible() ? '\<C-Y>' : ""
-    let pairs = split(s:all_evils['"'], '\zs')
-    let s:smart_quotes.double += 1
-    let key .= get(pairs, s:smart_quotes.double % 2)
-    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ============================================= }}}
@@ -756,7 +555,7 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
         " [clouds] all clouds for any input: fuck''''
         let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif len(getreg('"')) > 3     "  vimim_visual_ctrl6
+    elseif len(getreg('"')) > 3     "  vimim_visual_onekey
         if keyboard == "''''"       ": display buffer inside omni
             let results = split(getreg('"'), '\n')
         elseif keyboard =~ "'''''"  ": display cjk within one line
@@ -893,7 +692,8 @@ function! <SID>vimim_space()
     let s:has_pumvisible = 0
     if pumvisible()
         let s:has_pumvisible = 1
-        let space = '\<C-Y>\<C-R>=g:vimim()\<CR>'
+        let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+        let space = yes . '\<C-Y>\<C-R>=g:vimim()\<CR>'
         if s:onekey && empty(s:cjk.filename)
             sil!call s:vimim_stop()
         endif
@@ -903,7 +703,7 @@ function! <SID>vimim_space()
         if s:vimim_byte_before() =~# s:valid_keyboard
             let space = g:vimim()
         endif
-    elseif s:onekey
+    else
         let space = s:vimim_onekey_action(1)
     endif
     call s:vimim_reset_after_insert()
@@ -976,6 +776,210 @@ function! <SID>vimim_esc()
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  vimim maps       ==== {{{"]
+" =================================================
+
+function! s:vimim_common_maps()
+    let labels = range(10)
+    let punctuation = " ] [ = - "
+    if s:onekey
+        let punctuation .= " . , "
+        let labels += s:abcd
+        call remove(labels, match(labels,"'"))
+    endif
+    let map = s:onekey ? 'inoremap' : 'lnoremap'
+    for _ in labels
+        exe map ' <expr> '._.' <SID>vimim_label_map("'._.'")'
+    endfor
+    for _ in split(punctuation)
+        exe map ' <expr> '._.' <SID>vimim_page_map("'._.'")'
+    endfor
+    exe map ' <silent> <expr> <BS>    <SID>vimim_backspace() '
+    exe map ' <silent> <expr> <C-H>   <SID>vimim_im_switch() '
+    exe map ' <silent> <expr> <Esc>   <SID>vimim_esc()       '
+    exe map ' <silent> <expr> <CR>    <SID>vimim_enter()     '
+    exe map ' <silent> <expr> <Space> <SID>vimim_space()     '
+endfunction
+
+function! <SID>vimim_label_map(key)
+    let key = a:key
+    if pumvisible()
+        let n = match(s:abcd, key)
+        if key =~ '\d'
+            let n = key < 1 ? 9 : key - 1
+        endif
+        if s:chinese_mode =~ 'dynamic'
+            let n += 1
+        endif
+        let yes = repeat("\<Down>", n). '\<C-Y>'
+        let key = '\<C-R>=g:vimim()\<CR>'
+        let s:has_pumvisible = 1
+        if s:onekey
+            if len(s:cjk.filename)   "  abcdvfgxz as continuous
+                if a:key =~ '\d'     " 1234567890 as filter
+                    let s:hjkl_n .= a:key
+                else
+                    let key = yes
+                endif
+            else
+                let key = yes
+                sil!call s:vimim_stop()
+            endif
+        else
+            let key = yes . key
+            sil!call s:vimim_reset_after_insert()
+        endif
+    elseif s:windowless && key =~ '\d'
+        if s:pattern_not_found
+            let s:pattern_not_found = 0
+        else
+            let key = s:vimim_menuless_map(key)
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_page_map(key)
+    let key = a:key
+    if pumvisible()
+        if key =~ "[][]"
+            let left  = key == "]" ? "\<Left>"  : ""
+            let right = key == "]" ? "\<Right>" : ""
+            let _ = key == "]" ? 0 : -1
+            let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
+            let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+            let key = yes . '\<C-Y>' . left . bs . right
+        elseif key =~ "[=.]"
+            let key = '\<PageDown>'
+            if &pumheight
+                let s:pageup_pagedown = 1
+                let key = g:vimim()
+            endif
+        elseif key =~ "[-,]"
+            let key = '\<PageUp>'
+            if &pumheight
+                let s:pageup_pagedown = -1
+                let key = g:vimim()
+            endif
+        endif
+    elseif empty(s:onekey) && key =~ "[][=-]"
+        let key = <SID>vimim_punctuation_map(key)
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! s:vimim_dynamic_maps()
+    let vimim_cloud = get(split(s:vimim_cloud,','), 0)
+    if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
+        for char in s:az_list
+            sil!exe 'lnoremap ' . char . ' <C-R>=g:vimim_wubi()<CR>'
+            \ . char . '<C-R>=g:vimim()<CR>'
+        endfor
+    else    " dynamic alphabet trigger for all but wubi
+        let not_used_keys = s:ui.has_dot == 1 ? "[0-9]" : "[0-9']"
+        for char in s:valid_keys
+            if char !~# not_used_keys
+                sil!exe 'lnoremap <silent> ' . char .
+                \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
+                \ . char . '<C-R>=g:vimim()<CR>'
+            endif
+        endfor
+    endif
+endfunction
+
+function! s:vimim_onekey_maps()
+    let onekey_list = split("h j k l m n / ? ;")
+    if len(s:cjk.filename)
+        let onekey_list += s:qwer + ['s']
+    endif
+    for _ in onekey_list
+        exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
+    endfor
+endfunction
+
+function! <SID>vimim_onekey_hjkl_map(key)
+    let key = a:key
+    if pumvisible()
+            if key ==# 'n' | call s:vimim_reset_after_insert()
+        elseif key ==# 'm' | let s:hjkl_m += 1
+        elseif key ==# 'h' | let s:hjkl_h += 1   " h
+        elseif key ==# 'j' | let key = '\<Down>' " j
+        elseif key ==# 'k' | let key = '\<Up>'   " k
+        elseif key ==# 'l' | let s:hjkl_l += 1   " l
+        elseif key ==# 's' | let s:hjkl__ += 1   " s/t transfer
+        elseif key ==# ';'                       " dump omni popup
+            let s:popup_list = s:popup_list[:&pumheight-1]
+            let key = '\<C-R>=g:vimim_screenshot()\<CR>'
+        elseif key =~ "[/?]"
+            let key = '\<C-Y>\<C-R>=g:vimim_slash()\<CR>' . key . '\<CR>'
+        elseif match(s:qwer, key) > -1
+            let s:hjkl_n .= match(s:qwer, key)
+        endif
+        if key == a:key
+            let key = '\<C-R>=g:vimim()\<CR>'
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! s:vimim_punctuations_maps()
+    for _ in keys(s:punctuations)
+        exe 'lnoremap <expr> '._.' <SID>vimim_punctuation_map("'._.'")'
+    endfor
+    lnoremap    '     <C-R>=<SID>vimim_get_single_quote()<CR>
+    lnoremap    "     <C-R>=<SID>vimim_get_double_quote()<CR>
+    lnoremap <Bslash> <C-R>=<SID>vimim_get_backslash()<CR>
+endfunction
+
+function! <SID>vimim_punctuation_map(key)
+    let key = a:key
+    if pumvisible() || s:vimim_byte_before() !~ '\w'
+        if has_key(s:punctuations, a:key)
+            let key = s:punctuations[a:key]
+        endif
+    endif
+    if pumvisible()
+        let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+        let key = yes . '\<C-Y>' . key
+        if a:key == ";"   " the 2nd choice
+            let key = yes . '\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
+        endif
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_get_single_quote()
+    let key = ""
+    if pumvisible()       " the 3rd choice
+        let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+        let key = yes . '\<C-N>\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
+    else
+        let pairs = split(s:all_evils["'"], '\zs')
+        let s:smart_quotes.single += 1
+        let key .= get(pairs, s:smart_quotes.single % 2)
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_get_double_quote()
+    let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+    let key = pumvisible() ? yes . '\<C-Y>' : ""
+    let pairs = split(s:all_evils['"'], '\zs')
+    let s:smart_quotes.double += 1
+    let key .= get(pairs, s:smart_quotes.double % 2)
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! <SID>vimim_get_backslash()
+    let key = "、"
+    if pumvisible()
+        let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+        let key = yes . '\<C-Y>' . key
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
@@ -983,11 +987,10 @@ function! <SID>vimim_onekey(tab)
     " (1) OneKey in insert mode     => start MidasTouch popup
     " (2) OneKey in windowless mode => start MidasTouch popup
     " (3) OneKey in omni window     => start print
-    let onekey = ""
     if s:chinese_mode !~ 'onekey'
         sil!call s:vimim_stop()
     endif
-    let one_cursor = getline(".")[col(".")-1]
+    let onekey = ""
     if s:onekey
         if pumvisible()
             let onekey = '\<C-R>=g:vimim_screenshot()\<CR>'
@@ -1005,9 +1008,10 @@ function! <SID>vimim_onekey(tab)
         let onekey = '\t'
     else
         call s:vimim_super_reset()
-        let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
         let s:onekey = 1
         let s:windowless = a:tab
+        let one_cursor = getline(".")[col(".")-1]
+        let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
         sil!call s:vimim_start()
         if s:windowless < 2
             let onekey = s:vimim_onekey_action(0)
@@ -1015,7 +1019,7 @@ function! <SID>vimim_onekey(tab)
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
-    sil!call s:vimim_onekey_hjkl_maps()
+    sil!call s:vimim_onekey_maps()
     if empty(onekey) || onekey =~ 'Right'
         let onekey .= '\<C-R>=g:vimim_title()\<CR>'
     endif
@@ -1097,41 +1101,6 @@ function! g:vimim_screenshot()
     sil!exe "sil!return '\<Esc>'"
 endfunction
 
-function! s:vimim_onekey_hjkl_maps()
-    let onekey_list = split("h j k l m n / ? ;")
-    if len(s:cjk.filename)
-        let onekey_list += s:qwer + ['s']
-    endif
-    for _ in onekey_list
-        exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
-    endfor
-endfunction
-
-function! <SID>vimim_onekey_hjkl_map(key)
-    let key = a:key
-    if pumvisible()
-            if key ==# 'n' | call s:vimim_reset_after_insert()
-        elseif key ==# 'm' | let s:hjkl_m += 1
-        elseif key ==# 'h' | let s:hjkl_h += 1   " h
-        elseif key ==# 'j' | let key = '\<Down>' " j
-        elseif key ==# 'k' | let key = '\<Up>'   " k
-        elseif key ==# 'l' | let s:hjkl_l += 1   " l
-        elseif key ==# 's' | let s:hjkl__ += 1   " s/t transfer
-        elseif key ==# ';'                       " dump omni popup
-            let s:popup_list = s:popup_list[:&pumheight-1]
-            let key = '\<C-R>=g:vimim_screenshot()\<CR>'
-        elseif key =~ "[/?]"
-            let key = '\<C-Y>\<C-R>=g:vimim_slash()\<CR>' . key . '\<CR>'
-        elseif match(s:qwer, key) > -1
-            let s:hjkl_n .= match(s:qwer, key)
-        endif
-        if key == a:key
-            let key = '\<C-R>=g:vimim()\<CR>'
-        endif
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 function! s:vimim_get_head_without_quote(keyboard)
     let keyboard = a:keyboard
     if s:ui.has_dot || keyboard =~ '\d' || s:ui.root == 'cloud'
@@ -1194,50 +1163,21 @@ function! s:vimim_chinese_mode(switch)
     if a:switch
         sil!call s:vimim_chinesemode_start()
     else
-        sil!call s:vimim_chinesemode_stop()
+        sil!call s:vimim_stop()
     endif
     return ""
 endfunction
 
 function! s:vimim_chinesemode_start()
-    sil!call s:vimim_set_plugin_conflict()
     sil!call s:vimim_super_reset()
     let s:chinese_mode = s:vimim_mode == 'static' ? 'static' : 'dynamic'
     sil!call s:vimim_set_statusline()
-    if s:vimim_punctuation
-        inoremap<expr><C-^> <SID>vimim_punctuation_toggle()
-    endif
     sil!call s:vimim_punctuations_maps()
     sil!call s:vimim_start()
     let &titlestring = s:logo . s:vimim_get_title()
     if s:chinese_mode =~ 'dynamic'
+        sil!call s:vimim_dynamic_maps()
         let s:seamless_positions = getpos(".")
-        let vimim_cloud = get(split(s:vimim_cloud,','), 0)
-        if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
-            for char in s:az_list
-                sil!exe 'inoremap ' . char . ' <C-R>=g:vimim_wubi()<CR>'
-                \ . char . '<C-R>=g:vimim()<CR>'
-            endfor
-        else    " dynamic alphabet trigger for all but wubi
-            let not_used_keys = s:ui.has_dot == 1 ? "[0-9]" : "[0-9']"
-            for char in s:valid_keys
-                if char !~# not_used_keys
-                    sil!exe 'inoremap <silent> ' . char .
-                    \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
-                    \ . char . '<C-R>=g:vimim()<CR>'
-                endif
-            endfor
-        endif
-    endif
-    return ""
-endfunction
-
-function! s:vimim_chinesemode_stop()
-    sil!call s:vimim_stop()
-    sil!call s:vimim_restore_plugin_conflict()
-    imap<silent><C-^> <Plug>VimimOneKey
-    if mode() == 'n'
-        :redraw!
     endif
 endfunction
 
@@ -1260,13 +1200,6 @@ function! s:vimim_set_custom_im_list()
     let s:ui.frontends = copy(toggle_list)
     let s:ui.root = get(get(s:ui.frontends,0), 0)
     let s:ui.im   = get(get(s:ui.frontends,0), 1)
-endfunction
-
-function! <SID>vimim_punctuation_toggle()
-    let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
-    call s:vimim_set_statusline()
-    call s:vimim_punctuations_maps()
-    return ""
 endfunction
 
 function! s:vimim_set_keyboard_list(column_start, keyboard)
@@ -1777,7 +1710,7 @@ function! s:vimim_1to1(char)
     return empty(traditional_chinese) ? a:char : traditional_chinese
 endfunction
 
-function! <SID>vimim_visual_ctrl6()
+function! <SID>vimim_visual_onekey()
     let key = ""
     let lines = split(getreg('"'), '\n')
     let line = get(lines,0)
@@ -1795,7 +1728,7 @@ function! <SID>vimim_visual_ctrl6()
     endif
     let s:onekey = 1
     sil!call s:vimim_start()
-    sil!call s:vimim_onekey_hjkl_maps()
+    sil!call s:vimim_onekey_maps()
     let onekey = "\<C-R>=g:vimim()\<CR>"
     let space = "\<C-R>=repeat(' '," .string(virtcol("'<'")-2). ")\<CR>"
     if len(lines) < 2  " highlight multiple cjk => show each property
@@ -3140,15 +3073,6 @@ endfunction
 let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
-function! s:vimim_set_vimrc()
-    set title imdisable noshowmatch shellslash
-    set nolazyredraw
-    set whichwrap=<,>
-    set complete=.
-    set completeopt=menuone
-    set omnifunc=VimIM
-endfunction
-
 function! s:vimim_save_vimrc()
     let s:cpo         = &cpo
     let s:complete    = &complete
@@ -3170,6 +3094,37 @@ function! s:vimim_restore_vimrc()
     let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheights.saved
+    set iminsert=0
+endfunction
+
+function! s:vimim_set_vimrc()
+    set title noshowmatch shellslash
+    set nolazyredraw
+    set whichwrap=<,>
+    set complete=.
+    set completeopt=menuone
+    set omnifunc=VimIM
+    set imdisable iminsert=1
+    highlight  default CursorIM guifg=NONE guibg=green gui=NONE
+    highlight! link  Cursor CursorIM
+    highlight! link lCursor CursorIM
+endfunction
+
+function! s:vimim_imap_off()
+    highlight! link  Cursor NONE
+    highlight! link lCursor NONE
+    if s:chinese_mode =~ 'onekey'
+        let keys  = range(10) + s:az_list
+        let keys += split('] [ = - . , / ? ;')
+        let keys += split('<Esc> <Space> <BS> <CR> <C-H>')
+        for _ in keys
+            if len(maparg(_, 'i'))
+                sil!exe 'iunmap '. _
+            endif
+        endfor
+    else
+        lmapclear
+    endif
 endfunction
 
 function! s:vimim_start()
@@ -3177,11 +3132,6 @@ function! s:vimim_start()
     sil!call s:vimim_set_color()
     sil!call s:vimim_set_keycode()
     sil!call s:vimim_common_maps()
-    inoremap <silent> <expr> <Esc>   <SID>vimim_esc()
-    inoremap <silent> <expr> <Space> <SID>vimim_space()
-    inoremap <silent> <expr> <BS>    <SID>vimim_backspace()
-    inoremap <silent> <expr> <CR>    <SID>vimim_enter()
-    inoremap <silent> <expr> <C-H>   <SID>vimim_im_switch()
 endfunction
 
 function! s:vimim_stop()
@@ -3221,21 +3171,6 @@ function! s:vimim_reset_after_insert()
     let s:match_list = []
     let s:pageup_pagedown = 0
     let s:pattern_not_found = 0
-endfunction
-
-function! s:vimim_imap_off()
-    let keys  = range(10) + [";", "'"]
-    let keys += split('<Esc> <Space> <BS> <CR> <C-H>')
-    let keys += keys(s:evils) + keys(s:punctuations)
-    if s:chinese_mode =~ 'dynamic'
-        let keys += s:valid_keys
-    endif
-    for _ in keys
-        if len(maparg(_, 'i'))
-            sil!exe 'iunmap '. _
-        endif
-    endfor
-    highlight! link Cursor NONE
 endfunction
 
 function! s:vimim_set_backend_embedded()
@@ -3583,7 +3518,13 @@ function! g:vimim()
 endfunction
 
 function! g:vimim_omni()
-    let key = pumvisible() ? '\<C-N>\<C-P>' : ""
+    let cursor = '\<C-P>\<Down>'
+    if s:chinese_mode =~ 'static'
+        let cursor = '\<C-N>\<C-P>'
+    elseif s:chinese_mode =~ 'dynamic'
+        let cursor = '\<C-N>\<C-P>\<C-P>'
+    endif
+    let key = pumvisible() ? cursor : ""
     let s:smart_enter = 0  " s:windowless: gi ma enter li space 3
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -3604,32 +3545,23 @@ function! s:vimim_egg_vimimhelp()
 endfunction
 
 function! s:vimim_plug_and_play()
-    if s:vimim_map =~ 'ctrl_6'
-            inoremap<unique><expr><Plug>VimimOneKey <SID>vimim_onekey(0)
-            imap<silent><C-^>     <Plug>VimimOneKey
-        xnoremap<silent><C-^> y:call <SID>vimim_visual_ctrl6()<CR>
-    endif
     if s:vimim_map =~ 'ctrl_bslash'
-           inoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
-           imap<silent><C-Bslash> <Plug>VimIM
-        noremap<silent><C-Bslash> :call  <SID>ChineseMode()<CR>
-    else
-        lnoremap<unique><expr> <Plug>VimIM <SID>ChineseMode()
-        lmap<silent><C-Bslash> <Plug>VimIM
-             sil!exe 'lnoremap ' .char.' '.char. '<C-R>=g:vimim()<CR>'
-         endfor
-    endif
-    if s:vimim_map =~ 'search'
-        noremap<silent> n :call g:vimim_search_next()<CR>n
+        nnoremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
+        inoremap<unique><C-Bslash> <C-R>=<SID>ChineseMode()<CR><C-^>
     endif
     if s:vimim_map =~ 'gi'
-        inoremap<unique><expr><Plug>VimimOneAct <SID>vimim_onekey(2)
-        nmap  gi             i<Plug>VimimOneAct
+        nnoremap<silent> gi i<C-R>=<SID>vimim_onekey(2)<CR>
     endif
     if s:vimim_map =~ 'tab'
-            inoremap<unique><expr><Plug>VimimOneTab <SID>vimim_onekey(1)
-            imap<silent><Tab>     <Plug>VimimOneTab
-        xnoremap<silent><Tab> y:call <SID>vimim_visual_ctrl6()<CR>
+        inoremap<silent><Tab> <C-R>=<SID>vimim_onekey(1)<CR>
+        xnoremap<silent><Tab> y:call <SID>vimim_visual_onekey()<CR>
+    endif
+    if s:vimim_map =~ 'ctrl_6'
+        inoremap<silent><C-^> <C-R>=<SID>vimim_onekey(0)<CR>
+        xnoremap<silent><C-^> y:call <SID>vimim_visual_onekey()<CR>
+    endif
+    if s:vimim_map =~ 'search'
+        nnoremap<silent> n :call g:vimim_search_next()<CR>n
     endif
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
