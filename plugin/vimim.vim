@@ -56,7 +56,7 @@ function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
-        let g:vimim_map = 'tab,search,gi'
+  "     let g:vimim_map = 'tab,search,gi'
     endif
 endfunction
 
@@ -636,7 +636,7 @@ function! s:vimim_common_maps()
         let labels += s:abcd
         call remove(labels, match(labels,"'"))
     endif
-    let map = s:onekey ? 'inoremap' : 'lnoremap'
+    let map = s:onekey ? 'lnoremap' : 'lnoremap'
     for _ in labels
         exe map ' <expr> '._.' <SID>vimim_label_map("'._.'")'
     endfor
@@ -742,7 +742,7 @@ function! s:vimim_onekey_maps()
         let onekey_list += s:qwer + ['s']
     endif
     for _ in onekey_list
-        exe 'inoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
+        exe 'lnoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
     endfor
 endfunction
 
@@ -3131,6 +3131,7 @@ function! s:vimim_imap_off()
 endfunction
 
 function! s:vimim_start()
+    call feedkeys("\<C-^>","n")
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_color()
     sil!call s:vimim_set_keycode()
@@ -3138,7 +3139,9 @@ function! s:vimim_start()
 endfunction
 
 function! s:vimim_stop()
-    sil!call s:vimim_imap_off()
+    call feedkeys("\<C-^>","n")
+"   sil!call s:vimim_imap_off()
+" todo
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
 endfunction
@@ -3549,10 +3552,12 @@ endfunction
 function! s:vimim_plug_and_play()
     if s:vimim_map =~ 'ctrl_bslash'
         nnoremap<silent><C-Bslash> :call g:VimIM()<CR>
-        inoremap<unique><C-Bslash> <C-R>=g:VimIM()<CR><C-^>
+    "   inoremap<unique><C-Bslash> <C-R>=g:VimIM()<CR><C-^>
+    " todo
+        inoremap<unique><C-Bslash> <C-R>=g:VimIM()<CR>
     endif
     if s:vimim_map =~ 'gi'
-        nnoremap<silent> gi i<C-R>=<SID>vimim_onekey(2)<CR>
+        nnoremap<silent> gi i<C-^><C-R>=<SID>vimim_onekey(2)<CR>
     endif
     if s:vimim_map =~ 'tab'
         inoremap<silent><Tab> <C-R>=<SID>vimim_onekey(1)<CR>
