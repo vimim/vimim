@@ -989,12 +989,12 @@ function! g:vimim_onekey(tab)
     " (1) OneKey in insert mode     => start MidasTouch popup
     " (2) OneKey in windowless mode => start MidasTouch popup
     " (3) OneKey in omni window     => start print
-    if s:chinese_mode !~ 'onekey'
+    if s:chinese_mode =~ 'static' || s:chinese_mode =~ 'dynamic'
         sil!call s:vimim_stop()
+    else
+        sil!call s:vimim_onekey_maps()
     endif
-    sil!call s:vimim_onekey_maps()
-    let onekey = ""
-    " todo  oo tab space
+    let onekey = ""     " todo  oo tab space || oo tab tab
     if s:onekey
         if pumvisible()
             let onekey = '\<C-R>=g:vimim_screenshot()\<CR>'
@@ -1006,20 +1006,17 @@ function! g:vimim_onekey(tab)
         else
             let s:windowless = empty(a:tab) ? 1 : a:tab
         endif
-        call g:vimim_title()
-    elseif a:tab == 1 && ( empty(s:vimim_byte_before())
-                             \|| s:vimim_byte_before() =~ '\s' )
+    elseif a:tab == 1 && empty(s:vimim_byte_before())
         let onekey = '\t'
     else
         call s:vimim_super_reset()
         let s:onekey = 1
         let s:windowless = a:tab
-        let one_cursor = getline(".")[col(".")-1]
-        let one_cursor = one_cursor =~ '\w' ? 1 : s:multibyte
+        let cursor = getline(".")[col(".")-1] =~ '\w' ? 1 : s:multibyte
         sil!call s:vimim_start()
         if s:windowless < 2
             let onekey = s:vimim_onekey_action(0)
-        elseif col("$")-col(".") && col("$")-col(".") < one_cursor + 1
+        elseif col("$")-col(".") && col("$")-col(".") < cursor + 1
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
@@ -1030,21 +1027,19 @@ function! g:vimim_onekey(tab)
 endfunction
 
 function! s:vimim_onekey_action(space)
-    let space = a:space ? " " : ""
+    let onekey = a:space ? " " : ""
     if s:seamless_positions == getpos(".")
         let s:smart_enter = 0
-        return space  "  space is space after enter
+        return onekey  "  space is space after enter
     elseif empty(s:ui.has_dot)
         let onekey = s:vimim_onekey_evils()
-        if !empty(onekey)
-            sil!exe 'sil!return "' . onekey . '"'
-        endif
     endif
-    let onekey = space
-    if s:vimim_byte_before() =~# s:valid_keyboard
+    if !empty(onekey)
+        " return evils
+    elseif s:vimim_byte_before() =~# s:valid_keyboard
         let onekey = g:vimim()
     elseif s:windowless
-        let onekey = s:vimim_menuless_map(space)
+        let onekey = s:vimim_menuless_map(onekey)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -1448,7 +1443,7 @@ endfunction
 
 function! s:vimim_char_before()
     let char_before = ""
-    if s:vimim_byte_before() !~ '\s'
+    if !empty(s:vimim_byte_before())
         let start = col(".") - 1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
         if char_before !~ '[^\x00-\xff]'
@@ -1461,7 +1456,11 @@ function! s:vimim_char_before()
 endfunction
 
 function! s:vimim_byte_before()
-    return getline(".")[col(".")-2]
+    let one_before = getline(".")[col(".")-2]
+    if one_before =~ '\s'
+        let one_before = ""
+    endif
+    return one_before
 endfunction
 
 function! s:vimim_key_value_hash(single, double)
@@ -1744,9 +1743,8 @@ function! <SID>vimim_visual_onekey()
         let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else  " highlighted block => display the block in omni window
         let insert = "O^\<C-D>"
-        let key = space . "''''\<C-X>\<C-O>"
+        let key = space . "''''\<C-X>\<C-O>"   " todo
         let key = insert . "\<C-R>=g:vimim_onekey(0)\<CR>" . key
-        " todo
     endif
     return feedkeys(key,"n")
 endfunction
@@ -3114,11 +3112,11 @@ function! s:vimim_set_vimrc()
 endfunction
 
 function! s:vimim_start()
+    sil!call s:vimim_common_maps()
     sil!call feedkeys("\<C-^>","n")
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_color()
     sil!call s:vimim_set_keycode()
-    sil!call s:vimim_common_maps()
 endfunction
 
 function! s:vimim_stop()
@@ -3434,7 +3432,7 @@ function! s:vimim_popupmenu_list(lines)
             call s:vimim_set_titlestring(1)
             Debug s:match_list[:4]
         elseif s:touch_me_not
-            let &titlestring = s:logo . s:today
+            let &titlestring = s:logo . s:space . s:today
         endif
     endif
     return popup_list
@@ -3536,7 +3534,7 @@ function! s:vimim_plug_and_play()
         inoremap<unique><C-Bslash> <C-R>=g:VimIM()<CR>
     endif
     if s:vimim_map =~ 'gi'
-        nnoremap<silent> gi i<C-^><C-R>=g:vimim_onekey(2)<CR>
+        nnoremap<silent> gi  i<C-R>=g:vimim_onekey(2)<CR>
     endif
     if s:vimim_map =~ 'tab'
         inoremap<silent><Tab> <C-R>=g:vimim_onekey(1)<CR>
