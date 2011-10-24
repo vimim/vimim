@@ -104,9 +104,8 @@ function! s:vimim_initialize_global()
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
     let s:ui = { 'root' : '', 'im' : '', 'has_dot' : 0, 'frontends' : [] }
-    let s:rc = { "g:vimim_mode" : 'dynamic' }
+    let s:rc = { "g:vimim_mode" : 'dynamic,punctuation' }
     let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
-    let s:rc["g:vimim_punctuation"] = 1
     let s:rc["g:vimim_toggle"] = 0
     let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
     let s:rc["g:vimim_plugin"] = s:plugin
@@ -151,7 +150,7 @@ function! s:vimim_set_keycode()
     for im in split(ime)
         if s:ui.im == im
             let s:ui.has_dot = 1  " has english dot in datafile
-            let s:vimim_punctuation = 0
+            let s:vimim_mode .= 'nopunctuation'
             break
         endif
     endfor
@@ -481,14 +480,17 @@ function! s:vimim_dictionary_statusline()
 endfunction
 
 function! s:vimim_dictionary_punctuations()
-    let one  = "  , .  +  -  ~  ^    _    "
-    let two  = " ， 。 ＋ － ～ …… —— "
-    let one .= "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
-    let two .= "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
+    let one = "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
+    let two = "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
+    let one .= "  , .  +  -  ~  ^    _    "
+    let two .= " ， 。 ＋ － ～ …… —— "
     let punctuations = s:vimim_key_value_hash(one, two)
     let s:all_evils = { '\' : "、", "'" : "‘’", '"' : "“”" }
-    call extend(s:all_evils, punctuations)   " onekey uses all punctuations
-    let s:punctuations = s:vimim_punctuation ? copy(s:all_evils) : {}
+    call extend(s:all_evils, punctuations)
+    let s:punctuations = {}
+    if s:vimim_mode !~ 'nopunctuation'
+        let s:punctuations = copy(s:all_evils)
+    endif
 endfunction
 
 function! s:chinese(...)
@@ -578,9 +580,9 @@ endfunction
 
 function! s:vimim_statusline()
     let input_mode  = get(split(s:vimim_mode,','),0)
-    let punctuation = s:vimim_punctuation ? 'fullwidth' : 'halfwidth'
+    let p = s:vimim_mode =~ 'nopunctuation' ? 'halfwidth' : 'fullwidth'
     let line = s:chinese('chinese', input_mode) . s:vimim_get_title()
-    return line . s:chinese(punctuation, s:space, "VimIM")
+    return line . s:chinese(p, s:space, "VimIM")
 endfunction
 
 function! g:vimim_slash()
