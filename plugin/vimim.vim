@@ -1,12 +1,12 @@
 " ===========================================================
 "                   VimIM —— Vim 中文輸入法
 " ===========================================================
-let s:egg  = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
-let s:egg  = ' $Date$'
-let s:egg  = ' $Revision$'
-let s:url  = ' http://vim.sf.net/scripts/script.php?script_id=2506'
-let s:url .= ' http://code.google.com/p/vimim/source/list'
-let s:url .= ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
+let s:egg = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
+let s:egg = ' $Date$'
+let s:egg = ' $Revision$'
+let s:url = ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
+let s:url = ' http://code.google.com/p/vimim/source/list'
+let s:url = ' http://vim.sf.net/scripts/script.php?script_id=2506'
 
 let s:VimIM  = [" ====  introduction     ==== {{{"]
 " =================================================
@@ -2094,7 +2094,7 @@ function! s:vimim_shuangpin_transform(keyboard)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  python           ==== {{{"]
+let s:VimIM += [" ====  python2 python3  ==== {{{"]
 " =================================================
 
 function! g:vimim_gmail() range abort
@@ -3536,7 +3536,7 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 
 function! s:vimim_egg_vimimhelp()
     let eggs = s:vimim_egg_vim() + ['']
-    call add(eggs, "官址： "   . get(split(s:url),0))
+    call add(eggs, "官址： " . s:url)
     call add(eggs, '热键：　gi　 (vim normal mode) 无菜单窗输入')
     call add(eggs, '热键：　n 　 (vim normal mode) 无菜单窗搜索')
     call add(eggs, '热键：ctrl+6 (vim insert mode) 点石成金')
