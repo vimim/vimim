@@ -496,7 +496,7 @@ function! s:vimim_get_labeling(label)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  vimim maps       ==== {{{"]
+let s:VimIM += [" ====  imap nmap lmap   ==== {{{"]
 " =================================================
 
 function! s:vimim_common_maps()
@@ -700,7 +700,7 @@ function! <SID>vimim_get_backslash()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  onekey hjkl      ==== {{{"]
+let s:VimIM += [" ====  hjkl             ==== {{{"]
 " =================================================
 
 function! s:vimim_cache()
@@ -1237,7 +1237,7 @@ function! s:vimim_get_seamless(current_positions)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  chinese imode    ==== {{{"]
+let s:VimIM += [" ====  input: number    ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_numbers()
