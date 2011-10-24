@@ -741,11 +741,11 @@ function! s:vimim_onekey_maps()
         let onekey_list += s:qwer + ['s']
     endif
     for _ in onekey_list
-        exe 'lnoremap<expr> '._.' <SID>vimim_onekey_map("'._.'")'
+        exe 'lnoremap<expr> '._.' g:vimim_onekey_map("'._.'")'
     endfor
 endfunction
 
-function! <SID>vimim_onekey_map(key)
+function! g:vimim_onekey_map(key)
     let key = a:key
     if pumvisible()
             if key ==# 'n' | call s:vimim_reset_after_insert()
@@ -985,14 +985,16 @@ endfunction
 let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
-function! <SID>vimim_onekey(tab)
+function! g:vimim_onekey(tab)
     " (1) OneKey in insert mode     => start MidasTouch popup
     " (2) OneKey in windowless mode => start MidasTouch popup
     " (3) OneKey in omni window     => start print
     if s:chinese_mode !~ 'onekey'
         sil!call s:vimim_stop()
     endif
+    sil!call s:vimim_onekey_maps()
     let onekey = ""
+    " todo  oo tab space
     if s:onekey
         if pumvisible()
             let onekey = '\<C-R>=g:vimim_screenshot()\<CR>'
@@ -1021,7 +1023,6 @@ function! <SID>vimim_onekey(tab)
             let onekey = '\<Right>' " gi at the end of the cursor line
         endif
     endif
-    sil!call s:vimim_onekey_maps()
     if empty(onekey) || onekey =~ 'Right'
         let onekey .= '\<C-R>=g:vimim_title()\<CR>'
     endif
@@ -1100,7 +1101,8 @@ function! g:vimim_screenshot()
     endfor
     call setpos(".", saved_position)
     sil!call s:vimim_stop()
-    sil!exe "sil!return '\<Esc>'"
+    sil!call feedkeys("\<Esc>","n")
+    return ""
 endfunction
 
 function! s:vimim_get_head_without_quote(keyboard)
@@ -1716,6 +1718,7 @@ function! <SID>vimim_visual_onekey()
     let key = ""
     let lines = split(getreg('"'), '\n')
     let line = get(lines,0)
+    let space = "\<C-R>=repeat(' '," .string(virtcol("'<'")-2). ")\<CR>"
     if len(lines) == 1 && len(line) == s:multibyte
         " highlight one chinese => get antonym or number loop
         let results = s:vimim_imode_chinese(line)
@@ -1726,29 +1729,26 @@ function! <SID>vimim_visual_onekey()
             let line = match(s:cjk.lines, "^".line)
             let &titlestring = s:space . get(s:cjk.lines,line)
         endif
-        return feedkeys(key)
-    endif
-    let s:onekey = 1
-    sil!call s:vimim_start()
-    sil!call s:vimim_onekey_maps()
-    let onekey = "\<C-R>=g:vimim()\<CR>"
-    let space = "\<C-R>=repeat(' '," .string(virtcol("'<'")-2). ")\<CR>"
-    if len(lines) < 2  " highlight multiple cjk => show each property
+    elseif len(lines) < 2  " highlight multiple cjk => show each property
+        let insert = "gvc"
         let chinese = get(split(line,'\zs'),0)
         let s:seamless_positions = getpos("'<'")
         let key = char2nr(chinese) =~ '\d\d\d\d\d' ? "'''''" : line
-        let key = "gvc" . key . onekey
+        let key = insert . "\<C-R>=g:vimim_onekey(0)\<CR>" . key
     elseif match(lines,'\d') > -1 && join(lines) !~ '[^0-9[:blank:].]'
         call setpos(".", getpos("'>'"))  " vertical digit block =>
         let sum = eval(join(lines,'+'))  " count*average=summary
         let ave = printf("%.2f", 1.0*sum/len(lines))
         let line = substitute(ave."=".string(sum), '[.]0\+', '', 'g')
         let line = string(len(lines)) . '*' . line
-        let key  = "o^\<C-D>" . space . " " . line . "\<Esc>"
+        let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else  " highlighted block => display the block in omni window
-        let key = "O^\<C-D>" . space . "''''" . onekey
+        let insert = "O^\<C-D>"
+        let key = space . "''''\<C-X>\<C-O>"
+        let key = insert . "\<C-R>=g:vimim_onekey(0)\<CR>" . key
+        " todo
     endif
-    return feedkeys(key)
+    return feedkeys(key,"n")
 endfunction
 
 " ============================================= }}}
@@ -3536,14 +3536,14 @@ function! s:vimim_plug_and_play()
         inoremap<unique><C-Bslash> <C-R>=g:VimIM()<CR>
     endif
     if s:vimim_map =~ 'gi'
-        nnoremap<silent> gi i<C-^><C-R>=<SID>vimim_onekey(2)<CR>
+        nnoremap<silent> gi i<C-^><C-R>=g:vimim_onekey(2)<CR>
     endif
     if s:vimim_map =~ 'tab'
-        inoremap<silent><Tab> <C-R>=<SID>vimim_onekey(1)<CR>
+        inoremap<silent><Tab> <C-R>=g:vimim_onekey(1)<CR>
         xnoremap<silent><Tab> y:call <SID>vimim_visual_onekey()<CR>
     endif
     if s:vimim_map =~ 'ctrl_6'
-        inoremap<silent><C-^> <C-R>=<SID>vimim_onekey(0)<CR>
+        inoremap<silent><C-^> <C-R>=g:vimim_onekey(0)<CR>
         xnoremap<silent><C-^> y:call <SID>vimim_visual_onekey()<CR>
     endif
     if s:vimim_map =~ 'search'
