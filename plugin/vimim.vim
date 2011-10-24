@@ -728,7 +728,7 @@ function! s:vimim_dynamic_maps()
         let not_used_keys = s:ui.has_dot == 1 ? "[0-9]" : "[0-9']"
         for char in s:valid_keys
             if char !~# not_used_keys
-                sil!exe 'lnoremap <silent> ' . char .
+                sil!exe 'lnoremap <silent> ' . char . ' '
                 \ " <C-R>=pumvisible() ? '<C-E>' : ''<CR>"
                 \ . char . '<C-R>=g:vimim()<CR>'
             endif
@@ -775,9 +775,9 @@ function! s:vimim_punctuations_maps()
     for _ in keys(s:punctuations)
         exe 'lnoremap <expr> '._.' <SID>vimim_punctuation_map("'._.'")'
     endfor
-    lnoremap    '     <C-R>=<SID>vimim_get_single_quote()<CR>
-    lnoremap    "     <C-R>=<SID>vimim_get_double_quote()<CR>
-    lnoremap <Bslash> <C-R>=<SID>vimim_get_backslash()<CR>
+    lnoremap '  <C-R>=<SID>vimim_single_quote()<CR>
+    lnoremap "  <C-R>=<SID>vimim_double_quote()<CR>
+    lnoremap \\ <C-R>=<SID>vimim_backslash()<CR>
 endfunction
 
 function! <SID>vimim_punctuation_map(key)
@@ -797,7 +797,7 @@ function! <SID>vimim_punctuation_map(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! <SID>vimim_get_single_quote()
+function! <SID>vimim_single_quote()
     let key = ""
     if pumvisible()       " the 3rd choice
         let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
@@ -810,7 +810,7 @@ function! <SID>vimim_get_single_quote()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! <SID>vimim_get_double_quote()
+function! <SID>vimim_double_quote()
     let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
     let key = pumvisible() ? yes . '\<C-Y>' : ""
     let pairs = split(s:all_evils['"'], '\zs')
@@ -819,7 +819,7 @@ function! <SID>vimim_get_double_quote()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! <SID>vimim_get_backslash()
+function! <SID>vimim_backslash()
     let key = "、"
     if pumvisible()
         let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
@@ -1075,8 +1075,8 @@ function! s:vimim_onekey_evils()
             endif
         endfor
         let bs = s:all_evils[one_before] " turn into Chinese punctuation
-        let bs = one_before == "'" ? <SID>vimim_get_single_quote() : bs
-        let bs = one_before == '"' ? <SID>vimim_get_double_quote() : bs
+        let bs = one_before == "'" ? <SID>vimim_single_quote() : bs
+        let bs = one_before == '"' ? <SID>vimim_double_quote() : bs
         let onekey = "\<Left>\<Delete>" . bs
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -3098,24 +3098,24 @@ function! s:vimim_restore_vimrc()
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheights.saved
     set iminsert=0
+    highlight! link  Cursor NONE
+    highlight! link lCursor NONE
 endfunction
 
 function! s:vimim_set_vimrc()
-    set title noshowmatch shellslash
+    set title noshowmatch shellslash imdisable
     set nolazyredraw
     set whichwrap=<,>
     set complete=.
     set completeopt=menuone
     set omnifunc=VimIM
-    set imdisable iminsert=1
+    set iminsert=1
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link  Cursor CursorIM
     highlight! link lCursor CursorIM
 endfunction
 
 function! s:vimim_imap_off()
-    highlight! link  Cursor NONE
-    highlight! link lCursor NONE
     if s:chinese_mode =~ 'onekey'
         let keys  = range(10) + s:az_list
         let keys += split('] [ = - . , / ? ;')
@@ -3138,9 +3138,9 @@ function! s:vimim_start()
 endfunction
 
 function! s:vimim_stop()
+    sil!call s:vimim_imap_off()
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
-    sil!call s:vimim_imap_off()
 endfunction
 
 function! s:vimim_super_reset()
