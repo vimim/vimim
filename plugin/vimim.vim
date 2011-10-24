@@ -1131,7 +1131,7 @@ let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 
 function! <SID>vimim_im_switch()
     if len(s:ui.frontends) < 2 && empty(s:onekey)
-        return <SID>ChineseMode()
+        return g:VimIM()
     endif
     let s:toggle_im += 1
     let switch = s:toggle_im % len(s:ui.frontends)
@@ -1146,7 +1146,7 @@ function! <SID>vimim_im_switch()
     return s:vimim_chinese_mode(1)
 endfunction
 
-function! <SID>ChineseMode()
+function! g:VimIM()
     if s:onekey
         sil!call s:vimim_stop()
         if pumvisible()
@@ -3548,8 +3548,8 @@ endfunction
 
 function! s:vimim_plug_and_play()
     if s:vimim_map =~ 'ctrl_bslash'
-        nnoremap<silent><C-Bslash> :call <SID>ChineseMode()<CR>
-        inoremap<unique><C-Bslash> <C-R>=<SID>ChineseMode()<CR><C-^>
+        nnoremap<silent><C-Bslash> :call g:VimIM()<CR>
+        inoremap<unique><C-Bslash> <C-R>=g:VimIM()<CR><C-^>
     endif
     if s:vimim_map =~ 'gi'
         nnoremap<silent> gi i<C-R>=<SID>vimim_onekey(2)<CR>
