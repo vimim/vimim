@@ -729,7 +729,7 @@ function! s:vimim_dynamic_maps()
         for char in s:valid_keys
             if char !~# not_used_keys
                 sil!exe 'lnoremap <silent> ' . char .
-                \ ' <C-R>=pumvisible() ? "<C-E>" : ""<CR>'
+                \ " <C-R>=pumvisible() ? '<C-E>' : ''<CR>"
                 \ . char . '<C-R>=g:vimim()<CR>'
             endif
         endfor
@@ -3525,7 +3525,7 @@ function! g:vimim_omni()
     if s:chinese_mode =~ 'static'
         let cursor = '\<C-N>\<C-P>'
     elseif s:chinese_mode =~ 'dynamic'
-        let cursor = '\<C-N>\<C-P>\<C-P>'
+        let cursor = '\<C-P>'
     endif
     let key = pumvisible() ? cursor : ""
     let s:smart_enter = 0  " s:windowless: gi ma enter li space 3
