@@ -56,7 +56,7 @@ function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
-  "     let g:vimim_map = 'tab,search,gi'
+        let g:vimim_map = 'tab,search,gi'
     endif
 endfunction
 
@@ -636,18 +636,17 @@ function! s:vimim_common_maps()
         let labels += s:abcd
         call remove(labels, match(labels,"'"))
     endif
-    let map = s:onekey ? 'lnoremap' : 'lnoremap'
     for _ in labels
-        exe map ' <expr> '._.' <SID>vimim_label_map("'._.'")'
+        lnoremap <expr> '._.' <SID>vimim_label_map("'._.'")
     endfor
     for _ in split(punctuation)
-        exe map ' <expr> '._.' <SID>vimim_page_map("'._.'")'
+        lnoremap <expr> '._.' <SID>vimim_page_map("'._.'")
     endfor
-    exe map ' <silent> <expr> <BS>    <SID>vimim_backspace() '
-    exe map ' <silent> <expr> <C-H>   <SID>vimim_im_switch() '
-    exe map ' <silent> <expr> <Esc>   <SID>vimim_esc()       '
-    exe map ' <silent> <expr> <CR>    <SID>vimim_enter()     '
-    exe map ' <silent> <expr> <Space> <SID>vimim_space()     '
+    lnoremap <silent> <expr> <BS>    <SID>vimim_backspace()
+    lnoremap <silent> <expr> <C-H>   <SID>vimim_switch()
+    lnoremap <silent> <expr> <Esc>   <SID>vimim_esc()
+    lnoremap <silent> <expr> <CR>    <SID>vimim_enter()
+    lnoremap <silent> <expr> <Space> <SID>vimim_space()
 endfunction
 
 function! <SID>vimim_label_map(key)
@@ -742,11 +741,11 @@ function! s:vimim_onekey_maps()
         let onekey_list += s:qwer + ['s']
     endif
     for _ in onekey_list
-        exe 'lnoremap<expr> '._.' <SID>vimim_onekey_hjkl_map("'._.'")'
+        exe 'lnoremap<expr> '._.' <SID>vimim_onekey_map("'._.'")'
     endfor
 endfunction
 
-function! <SID>vimim_onekey_hjkl_map(key)
+function! <SID>vimim_onekey_map(key)
     let key = a:key
     if pumvisible()
             if key ==# 'n' | call s:vimim_reset_after_insert()
@@ -1129,7 +1128,7 @@ endfunction
 let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
-function! <SID>vimim_im_switch()
+function! <SID>vimim_switch()
     if len(s:ui.frontends) < 2 && empty(s:onekey)
         return g:VimIM()
     endif
@@ -3097,9 +3096,9 @@ function! s:vimim_restore_vimrc()
     let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheights.saved
-    set iminsert=0
     highlight! link  Cursor NONE
     highlight! link lCursor NONE
+    lmapclear
 endfunction
 
 function! s:vimim_set_vimrc()
@@ -3109,29 +3108,13 @@ function! s:vimim_set_vimrc()
     set complete=.
     set completeopt=menuone
     set omnifunc=VimIM
-    set iminsert=1
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
     highlight! link  Cursor CursorIM
     highlight! link lCursor CursorIM
 endfunction
 
-function! s:vimim_imap_off()
-    if s:chinese_mode =~ 'onekey'
-        let keys  = range(10) + s:az_list
-        let keys += split('] [ = - . , / ? ;')
-        let keys += split('<Esc> <Space> <BS> <CR> <C-H>')
-        for _ in keys
-            if len(maparg(_, 'i'))
-                sil!exe 'iunmap '. _
-            endif
-        endfor
-    else
-        lmapclear
-    endif
-endfunction
-
 function! s:vimim_start()
-    call feedkeys("\<C-^>","n")
+    sil!call feedkeys("\<C-^>","n")
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_color()
     sil!call s:vimim_set_keycode()
@@ -3139,9 +3122,7 @@ function! s:vimim_start()
 endfunction
 
 function! s:vimim_stop()
-    call feedkeys("\<C-^>","n")
-"   sil!call s:vimim_imap_off()
-" todo
+    sil!call feedkeys("\<C-^>","n")
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
 endfunction
@@ -3552,8 +3533,6 @@ endfunction
 function! s:vimim_plug_and_play()
     if s:vimim_map =~ 'ctrl_bslash'
         nnoremap<silent><C-Bslash> :call g:VimIM()<CR>
-    "   inoremap<unique><C-Bslash> <C-R>=g:VimIM()<CR><C-^>
-    " todo
         inoremap<unique><C-Bslash> <C-R>=g:VimIM()<CR>
     endif
     if s:vimim_map =~ 'gi'
