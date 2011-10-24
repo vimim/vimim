@@ -313,6 +313,133 @@ function! s:vimim_egg_vimim()
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  hjkl mahjong     ==== {{{"]
+" =================================================
+
+function! s:vimim_cache()
+    let results = []
+    if !empty(s:pageup_pagedown)
+        let length = len(s:match_list)
+        if length > &pumheight
+            let page = s:pageup_pagedown * &pumheight
+            let partition = page ? page : length+page
+            let B = s:match_list[partition :]
+            let A = s:match_list[: partition-1]
+            let results = B + A
+        endif
+    elseif s:onekey && s:touch_me_not
+        if s:hjkl_h
+            let s:hjkl_h = 0
+            for line in s:match_list
+                let oneline = join(reverse(split(line,'\zs')),'')
+                call add(results, oneline)
+            endfor
+        elseif s:hjkl_l
+            let s:hjkl_l = 0
+            let results = reverse(copy(s:match_list))
+        endif
+    endif
+    return results
+endfunction
+
+function! s:vimim_get_hjkl_game(keyboard)
+    let keyboard = a:keyboard
+    let results = []
+    let poem = s:vimim_filereadable(keyboard)
+    if keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
+        return s:vimim_imode_number(keyboard)
+    elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
+        return [s:vimim_imode_today_now(keyboard)]
+    elseif s:vimim_get_unicode_ddddd(keyboard)
+        return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
+    elseif keyboard == "''''''"
+        return split(join(s:vimim_egg_vimimgame(),""),'\zs')
+    elseif keyboard == "''"
+        let char_before = s:vimim_char_before()
+        if empty(char_before)
+            if s:vimim_cjk()    " 214 standard unicode index
+                return s:vimim_cjk_match('u')
+            else
+                let char_before = '一'
+            endif
+        endif
+        return s:vimim_unicode_list(char2nr(char_before))
+    elseif !empty(poem)
+        " [hjkl] flirt any non-dot file in the hjkl directory
+        let results = s:vimim_readfile(poem)
+    elseif keyboard ==# "vim" || keyboard =~# "^vimim"
+        " [hidden] hunt classic easter egg ... vim<C-6>
+        let results = s:vimim_easter_chicken(keyboard)
+    elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
+        " [clouds] all clouds for any input: fuck''''
+        let results = s:vimim_get_cloud_all(keyboard[:-5])
+    elseif len(getreg('"')) > 3     "  vimim_visual_onekey
+        if keyboard == "''''"       ": display buffer inside omni
+            let results = split(getreg('"'), '\n')
+        elseif keyboard =~ "'''''"  ": display cjk within one line
+            let line = substitute(getreg('"'),'[\x00-\xff]','','g')
+            if len(line)
+                for chinese in split(line, '\zs')
+                    let menu  = s:vimim_cjk_extra_text(chinese)
+                    let menu .= repeat(" ", 38-len(menu))
+                    call add(results, chinese . " " . menu)
+                endfor
+            endif
+        endif
+    endif
+    if !empty(results)
+        let s:touch_me_not = 1
+        if s:hjkl_m % 4
+            for i in range(s:hjkl_m % 4)
+                let results = s:vimim_hjkl_rotation(results)
+            endfor
+        endif
+        let results = [s:space] + results + [s:space]
+    endif
+    return results
+endfunction
+
+function! s:vimim_hjkl_rotation(lines)
+    let max = max(map(copy(a:lines), 'strlen(v:val)')) + 1
+    let multibyte = match(a:lines, '\w') < 0 ? s:multibyte : 1
+    let results = []
+    for line in a:lines
+        let spaces = ''   " rotation makes more sense for cjk
+        if (max-len(line)) / multibyte
+            for i in range((max-len(line))/multibyte)
+                let spaces .= s:space
+            endfor
+        endif
+        let line .= spaces
+        call add(results, line)
+    endfor
+    let rotations = []
+    for i in range(max/multibyte)
+        let column = ''
+        for line in reverse(copy(results))
+            let line = get(split(line,'\zs'), i)
+            if !empty(line)
+                let column .= line
+            endif
+        endfor
+        call add(rotations, column)
+    endfor
+    return rotations
+endfunction
+
+function! s:vimim_chinese_rotation() range abort
+    :%s#\s*\r\=$##
+    let lines = getline(a:firstline, a:lastline)
+    if !empty(lines)
+        :let lines = s:vimim_hjkl_rotation(lines)
+        :%d
+        for line in lines
+            put=line
+        endfor
+    endif
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
@@ -697,133 +824,6 @@ function! <SID>vimim_get_backslash()
         let key = yes . '\<C-Y>' . key
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-" ============================================= }}}
-let s:VimIM += [" ====  hjkl             ==== {{{"]
-" =================================================
-
-function! s:vimim_cache()
-    let results = []
-    if !empty(s:pageup_pagedown)
-        let length = len(s:match_list)
-        if length > &pumheight
-            let page = s:pageup_pagedown * &pumheight
-            let partition = page ? page : length+page
-            let B = s:match_list[partition :]
-            let A = s:match_list[: partition-1]
-            let results = B + A
-        endif
-    elseif s:onekey && s:touch_me_not
-        if s:hjkl_h
-            let s:hjkl_h = 0
-            for line in s:match_list
-                let oneline = join(reverse(split(line,'\zs')),'')
-                call add(results, oneline)
-            endfor
-        elseif s:hjkl_l
-            let s:hjkl_l = 0
-            let results = reverse(copy(s:match_list))
-        endif
-    endif
-    return results
-endfunction
-
-function! s:vimim_get_hjkl_game(keyboard)
-    let keyboard = a:keyboard
-    let results = []
-    let poem = s:vimim_filereadable(keyboard)
-    if keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
-        return s:vimim_imode_number(keyboard)
-    elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
-        return [s:vimim_imode_today_now(keyboard)]
-    elseif s:vimim_get_unicode_ddddd(keyboard)
-        return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
-    elseif keyboard == "''''''"
-        return split(join(s:vimim_egg_vimimgame(),""),'\zs')
-    elseif keyboard == "''"
-        let char_before = s:vimim_char_before()
-        if empty(char_before)
-            if s:vimim_cjk()    " 214 standard unicode index
-                return s:vimim_cjk_match('u')
-            else
-                let char_before = '一'
-            endif
-        endif
-        return s:vimim_unicode_list(char2nr(char_before))
-    elseif !empty(poem)
-        " [hjkl] flirt any non-dot file in the hjkl directory
-        let results = s:vimim_readfile(poem)
-    elseif keyboard ==# "vim" || keyboard =~# "^vimim"
-        " [hidden] hunt classic easter egg ... vim<C-6>
-        let results = s:vimim_easter_chicken(keyboard)
-    elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
-        " [clouds] all clouds for any input: fuck''''
-        let results = s:vimim_get_cloud_all(keyboard[:-5])
-    elseif len(getreg('"')) > 3     "  vimim_visual_onekey
-        if keyboard == "''''"       ": display buffer inside omni
-            let results = split(getreg('"'), '\n')
-        elseif keyboard =~ "'''''"  ": display cjk within one line
-            let line = substitute(getreg('"'),'[\x00-\xff]','','g')
-            if len(line)
-                for chinese in split(line, '\zs')
-                    let menu  = s:vimim_cjk_extra_text(chinese)
-                    let menu .= repeat(" ", 38-len(menu))
-                    call add(results, chinese . " " . menu)
-                endfor
-            endif
-        endif
-    endif
-    if !empty(results)
-        let s:touch_me_not = 1
-        if s:hjkl_m % 4
-            for i in range(s:hjkl_m % 4)
-                let results = s:vimim_hjkl_rotation(results)
-            endfor
-        endif
-        let results = [s:space] + results + [s:space]
-    endif
-    return results
-endfunction
-
-function! s:vimim_hjkl_rotation(lines)
-    let max = max(map(copy(a:lines), 'strlen(v:val)')) + 1
-    let multibyte = match(a:lines, '\w') < 0 ? s:multibyte : 1
-    let results = []
-    for line in a:lines
-        let spaces = ''   " rotation makes more sense for cjk
-        if (max-len(line)) / multibyte
-            for i in range((max-len(line))/multibyte)
-                let spaces .= s:space
-            endfor
-        endif
-        let line .= spaces
-        call add(results, line)
-    endfor
-    let rotations = []
-    for i in range(max/multibyte)
-        let column = ''
-        for line in reverse(copy(results))
-            let line = get(split(line,'\zs'), i)
-            if !empty(line)
-                let column .= line
-            endif
-        endfor
-        call add(rotations, column)
-    endfor
-    return rotations
-endfunction
-
-function! s:vimim_chinese_rotation() range abort
-    :%s#\s*\r\=$##
-    let lines = getline(a:firstline, a:lastline)
-    if !empty(lines)
-        :let lines = s:vimim_hjkl_rotation(lines)
-        :%d
-        for line in lines
-            put=line
-        endfor
-    endif
 endfunction
 
 " ============================================= }}}
@@ -3536,12 +3536,11 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 
 function! s:vimim_egg_vimimhelp()
     let eggs = s:vimim_egg_vim() + ['']
-    call add(eggs, "官址："    . get(split(s:url),0))
+    call add(eggs, "官址： "   . get(split(s:url),0))
     call add(eggs, '热键：　gi　 (vim normal mode) 无菜单窗输入')
     call add(eggs, '热键：　n 　 (vim normal mode) 无菜单窗搜索')
     call add(eggs, '热键：ctrl+6 (vim insert mode) 点石成金')
     call add(eggs, '热键：ctrl+\ (vim insert mode) 中文动态')
-    call add(eggs, "程式："    . get(split(s:url),1))
     return map(eggs + [''] + s:vimim_egg_vimimrc(), 'v:val .  " "')
 endfunction
 
