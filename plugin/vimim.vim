@@ -908,8 +908,8 @@ function! g:vimim_space()
        let cursor = '\<C-N>' . cursor . '\<C-Y>'
        let space = cursor . '\<C-R>=g:vimim()\<CR>'
        if s:onekey && empty(s:cjk.filename)
-           sil!call s:vimim_stop()
            let space = cursor . '\<C-^>'
+           sil!call s:vimim_stop()
        endif
     elseif s:pattern_not_found
     elseif s:chinese_mode =~ 'dynamic'
@@ -3114,14 +3114,6 @@ endfunction
 let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
-function! s:vimim_stop()
-    sil!call s:vimim_restore_vimrc()
-    sil!call s:vimim_reset_before_anything()
-    sil!call s:vimim_reset_before_omni()
-    sil!call s:vimim_reset_after_insert()
-    lmapclear
-endfunction
-
 function! s:vimim_start(ctrl6)
     if empty(s:ctrl6)
         let s:ctrl6 = 32911
@@ -3136,6 +3128,12 @@ function! s:vimim_start(ctrl6)
     endif
 endfunction
 
+function! s:vimim_stop()
+    sil!call s:vimim_restore_vimrc()
+    sil!call s:vimim_super_reset()
+    lmapclear
+endfunction
+
 function! s:vimim_save_vimrc()
     let s:cpo         = &cpo
     let s:complete    = &complete
@@ -3145,6 +3143,15 @@ function! s:vimim_save_vimrc()
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
     let s:lazyredraw  = &lazyredraw
+endfunction
+
+function! s:vimim_set_vimrc()
+    set title noshowmatch shellslash imdisable
+    set nolazyredraw
+    set whichwrap=<,>
+    set complete=.
+    set completeopt=menuone
+    set omnifunc=VimIM
 endfunction
 
 function! s:vimim_restore_vimrc()
@@ -3159,13 +3166,10 @@ function! s:vimim_restore_vimrc()
     let &pumheight   = s:pumheights.saved
 endfunction
 
-function! s:vimim_set_vimrc()
-    set title noshowmatch shellslash imdisable
-    set nolazyredraw
-    set whichwrap=<,>
-    set complete=.
-    set completeopt=menuone
-    set omnifunc=VimIM
+function! s:vimim_super_reset()
+    sil!call s:vimim_reset_before_anything()
+    sil!call s:vimim_reset_before_omni()
+    sil!call s:vimim_reset_after_insert()
 endfunction
 
 function! s:vimim_reset_before_anything()
@@ -3561,13 +3565,13 @@ sil!call s:vimim_dictionary_statusline()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
+sil!call s:vimim_save_vimrc()
+sil!call s:vimim_super_reset()
 sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_custom_im_list()
 sil!call s:vimim_plug_and_play()
-sil!call s:vimim_save_vimrc()
-sil!call s:vimim_stop()
 " ============================================= }}}
 :redir @p
 Debug s:vimim_egg_vimim()
