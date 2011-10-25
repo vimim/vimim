@@ -985,15 +985,27 @@ endfunction
 let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
-function! g:vimim_onekey(tab)
+function! g:onekey()
+    if s:chinese_mode =~ 'static' || s:chinese_mode =~ 'dynamic'
+        sil!call s:vimim_stop()
+    elseif !exists("s:onekey_super_initialization")
+        let s:onekey_super_initialization = 39340
+        sil!call s:vimim_onekey_maps()
+        sil!call s:vimim_super_reset()
+        sil!call s:vimim_start()
+    endif
+    return ""
+endfunction
+
+function! g:OneKey(tab)
     " (1) OneKey in insert mode     => start MidasTouch popup
     " (2) OneKey in windowless mode => start MidasTouch popup
     " (3) OneKey in omni window     => start print
-    if s:chinese_mode =~ 'static' || s:chinese_mode =~ 'dynamic'
-        sil!call s:vimim_stop()
-    else
-        sil!call s:vimim_onekey_maps()
-    endif
+ "  if s:chinese_mode =~ 'static' || s:chinese_mode =~ 'dynamic'
+ "      sil!call s:vimim_stop()
+ "  else
+ "      sil!call s:vimim_onekey_maps()
+ "  endif
     let onekey = ""     " todo  oo tab space || oo tab tab
     if s:onekey
         if pumvisible()
@@ -1009,11 +1021,11 @@ function! g:vimim_onekey(tab)
     elseif a:tab == 1 && empty(s:vimim_byte_before())
         let onekey = '\t'
     else
-        call s:vimim_super_reset()
+    "   call s:vimim_super_reset()
         let s:onekey = 1
         let s:windowless = a:tab
         let cursor = getline(".")[col(".")-1] =~ '\w' ? 1 : s:multibyte
-        sil!call s:vimim_start()
+    "   sil!call s:vimim_start()
         if s:windowless < 2
             let onekey = s:vimim_onekey_action(0)
         elseif col("$")-col(".") && col("$")-col(".") < cursor + 1
@@ -1733,7 +1745,7 @@ function! <SID>vimim_visual_onekey()
         let chinese = get(split(line,'\zs'),0)
         let s:seamless_positions = getpos("'<'")
         let key = char2nr(chinese) =~ '\d\d\d\d\d' ? "'''''" : line
-        let key = insert . "\<C-R>=g:vimim_onekey(0)\<CR>" . key
+        let key = insert . "\<C-R>=g:OneKey(0)\<CR>" . key
     elseif match(lines,'\d') > -1 && join(lines) !~ '[^0-9[:blank:].]'
         call setpos(".", getpos("'>'"))  " vertical digit block =>
         let sum = eval(join(lines,'+'))  " count*average=summary
@@ -1744,7 +1756,7 @@ function! <SID>vimim_visual_onekey()
     else  " highlighted block => display the block in omni window
         let insert = "O^\<C-D>"
         let key = space . "''''\<C-X>\<C-O>"   " todo
-        let key = insert . "\<C-R>=g:vimim_onekey(0)\<CR>" . key
+        let key = insert . "\<C-R>=g:OneKey(0)\<CR>" . key
     endif
     return feedkeys(key,"n")
 endfunction
@@ -3534,14 +3546,14 @@ function! s:vimim_plug_and_play()
         inoremap<unique><C-Bslash> <C-R>=g:VimIM()<CR>
     endif
     if s:vimim_map =~ 'gi'
-        nnoremap<silent> gi  i<C-R>=g:vimim_onekey(2)<CR>
+        nnoremap<silent> gi  i<C-R>=g:onekey()<CR><C-R>=g:OneKey(2)<CR>
     endif
     if s:vimim_map =~ 'tab'
-        inoremap<silent><Tab> <C-R>=g:vimim_onekey(1)<CR>
+        inoremap<silent><Tab> <C-R>=g:onekey()<CR><C-R>=g:OneKey(1)<CR>
         xnoremap<silent><Tab> y:call <SID>vimim_visual_onekey()<CR>
     endif
     if s:vimim_map =~ 'ctrl_6'
-        inoremap<silent><C-^> <C-R>=g:vimim_onekey(0)<CR>
+        inoremap<silent><C-^> <C-R>=g:onekey()<CR><C-R>=g:OneKey(0)<CR>
         xnoremap<silent><C-^> y:call <SID>vimim_visual_onekey()<CR>
     endif
     if s:vimim_map =~ 'search'
