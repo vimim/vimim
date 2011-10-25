@@ -665,7 +665,7 @@ function! g:vimim_label(key)
         let key = '\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
         if s:onekey
-            if len(s:cjk.filename)
+            if s:vimim_cjk()
                 if a:key =~ '\d'
                     let s:hjkl_n .= a:key       " 1234567890 as filter
                 else
@@ -740,7 +740,7 @@ endfunction
 
 function! s:vimim_onekey_maps()
     let onekey_list = split("h j k l m n / ? ;")
-    if len(s:cjk.filename)
+    if s:vimim_cjk()
         let onekey_list += s:qwer + ['s']
     endif
     if s:onekey
@@ -862,7 +862,7 @@ function! s:vimim_menuless_map(key)
     elseif !empty(s:vimim_char_before()) || s:keyboard =~ " "
         let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
         let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
-        if len(s:cjk.filename)
+        if s:vimim_cjk()
             let s:hjkl_n .= digit   " 1234567890 for windowless filter
         else
             if a:key =~ '[02-9]'    "  234567890 for windowless choice
@@ -3254,7 +3254,7 @@ else
     endif
     if s:onekey  " [game] made life less boring
         let results = s:vimim_get_hjkl_game(keyboard)
-        if empty(results) && len(s:cjk.filename)
+        if empty(results) && s:vimim_cjk()
             let head = s:vimim_get_head_without_quote(keyboard)
             let head = s:vimim_get_cjk_head(head)
             if !empty(head) && empty(s:hjkl_n)
