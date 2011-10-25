@@ -1,7 +1,7 @@
 " ===========================================================
 "                   VimIM —— Vim 中文輸入法
 " ===========================================================
-let s:egg = ' vimim easter egg:' " vim i ctrl+6 vimim Space Space
+let s:egg = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
 let s:egg = ' $Date$'
 let s:egg = ' $Revision$'
 let s:url = ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
@@ -21,11 +21,11 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  Installation: plug and play
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
-"  Usage: vim i ctrl+6 vimimhelp Space Space
-"    (1) (vim insert mode)  ctrl+6  :help i_CTRL-^  (same in vim)
-"    (2) (vim insert mode)  ctrl+\  (for dynamic/static chinese mode)
-"    (3) (vim normal mode)  gi      (for windowless chinese input)
-"    (4) (vim normal mode)  n       (for windowless slash search)
+"  Usage: vim i vimimhelp ctrl+6 ctrl+6
+"    (1) (vim normal mode)  gi      (for windowless chinese input)
+"    (2) (vim normal mode)  n       (for windowless slash search)
+"    (3) (vim insert mode)  ctrl+6  (for onekey omni popup)
+"    (4) (vim insert mode)  ctrl+\  (for dynamic chinese mode)
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -108,7 +108,7 @@ function! s:vimim_initialize_global()
     let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
     let s:ui = { 'root' : '', 'im' : '', 'has_dot' : 0, 'frontends' : [] }
     let s:rc = { "g:vimim_mode" : 'dynamic,punctuation' }
-    let s:rc["g:vimim_map"] = 'ctrl_bslash,search,gi'
+    let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
     let s:rc["g:vimim_toggle"] = 0
     let s:rc["g:vimim_shuangpin"] = 0
     let s:rc["g:vimim_plugin"] = s:plugin
@@ -645,11 +645,11 @@ function! s:vimim_common_maps()
     for _ in split(punctuation)
         exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
     endfor
-    lnoremap <silent> <expr> <BS>  g:vimim_backspace()
-    lnoremap <silent> <expr> <CR>  g:vimim_enter()
-    lnoremap <silent> <expr> <C-H> g:vimim_switch()
-    lnoremap <silent> <expr> <Esc> g:vimim_esc(1)
-    lnoremap <silent> <expr> <C-^> g:vimim_esc(0)
+    lnoremap <silent> <expr> <BS>    g:vimim_backspace()
+    lnoremap <silent> <expr> <CR>    g:vimim_enter()
+    lnoremap <silent> <expr> <C-H>   g:vimim_switch()
+    lnoremap <silent> <expr> <Esc>   g:vimim_esc()
+    lnoremap <silent> <expr> <Space> g:vimim_space()
 endfunction
 
 function! g:vimim_label(key)
@@ -903,17 +903,13 @@ function! g:vimim_space()
     let space = " "
     let s:has_pumvisible = 0
     if pumvisible()
-       if s:touch_me_not
-           let space = '\<C-R>=g:vimim_screenshot()\<CR>'
-       else
-           let s:has_pumvisible = 1
-           let cursor = s:chinese_mode =~ 'static' ? '\<C-P>' : ''
-           let cursor = '\<C-N>' . cursor . '\<C-Y>'
-           let space = cursor . '\<C-R>=g:vimim()\<CR>'
-           if s:onekey && empty(s:cjk.filename)
-               sil!call s:vimim_stop()
-               let space = cursor . '\<C-^>'
-           endif
+       let s:has_pumvisible = 1
+       let cursor = s:chinese_mode =~ 'static' ? '\<C-P>' : ''
+       let cursor = '\<C-N>' . cursor . '\<C-Y>'
+       let space = cursor . '\<C-R>=g:vimim()\<CR>'
+       if s:onekey && empty(s:cjk.filename)
+           sil!call s:vimim_stop()
+           let space = cursor . '\<C-^>'
        endif
     elseif s:pattern_not_found
     elseif s:chinese_mode =~ 'dynamic'
@@ -925,7 +921,6 @@ function! g:vimim_space()
         let space = s:vimim_onekey_action(1)
     endif
     call s:vimim_reset_after_insert()
-    sil!call s:vimim_start(1)
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
@@ -971,14 +966,14 @@ function! g:vimim_backspace()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! g:vimim_esc(yes)
-    let key = a:yes ? '\<C-^>\<Esc>' : '\<C-^>'
+function! g:vimim_esc()
+    let key = '\<C-^>\<Esc>'
     if s:onekey
         :y
         if has("gui_running") && has("win32")
             sil!let @+ = @0[:-2] " copy to clipboard and display
         endif
-        if a:yes && &columns > 60
+        if &columns > 60
             let echo = join(split(@0[:-2],'\zs')[:&columns/2/2],"")
             let key .= ":echo " . string(echo) . "\<CR>"
         endif
@@ -997,6 +992,22 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
+
+function! g:vimim_onekey()
+    let onekey = ""
+    if pumvisible()
+        let onekey = '\<C-R>=g:vimim_screenshot()\<CR>'
+    else
+        if s:vimim_byte_before() =~# s:valid_keyboard
+            let onekey = s:vimim_onekey_action(0)
+        endif
+        if empty(s:ctrl6)
+            let onekey = '\<C-^>' . onekey
+            sil!call s:vimim_start(0)
+        endif
+    endif
+    sil!exe 'sil!return "' . onekey . '"'
+endfunction
 
 function! g:vimim_gi()
     let s:windowless = 1
@@ -1135,7 +1146,7 @@ let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 
 function! g:vimim_switch()
     if len(s:ui.frontends) < 2 && empty(s:onekey)
-        return g:VimIM()
+        return g:vimim_chinese()
     endif
     let s:toggle_im += 1
     let switch = s:toggle_im % len(s:ui.frontends)
@@ -1150,7 +1161,7 @@ function! g:vimim_switch()
     return s:vimim_chinese_mode(1)
 endfunction
 
-function! g:VimIM()
+function! g:vimim_chinese()
     if empty(s:ui.frontends) || (s:onekey && pumvisible())
         return ""
     endif
@@ -3109,7 +3120,6 @@ function! s:vimim_stop()
     sil!call s:vimim_reset_before_omni()
     sil!call s:vimim_reset_after_insert()
     lmapclear
-    lnoremap <silent> <expr> <Space> g:vimim_space()
 endfunction
 
 function! s:vimim_start(ctrl6)
@@ -3514,26 +3524,28 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 function! s:vimim_egg_vimimhelp()
     let eggs = s:vimim_egg_vim() + ['']
     call add(eggs, "官址： " . s:url)
-    call add(eggs, '热键：ctrl+6 (vim insert mode) :help i_CTRL-^')
-    call add(eggs, '热键：ctrl+\ (vim insert mode) 中文动态')
     call add(eggs, '热键：　gi　 (vim normal mode) 无菜单窗输入')
     call add(eggs, '热键：　n 　 (vim normal mode) 无菜单窗搜索')
+    call add(eggs, '热键：ctrl+6 (vim insert mode) 点石成金')
+    call add(eggs, '热键：ctrl+\ (vim insert mode) 中文动态')
     return map(eggs + [''] + s:vimim_egg_vimimrc(), 'v:val .  " "')
 endfunction
 
 function! s:vimim_plug_and_play()
     if s:vimim_map =~ 'ctrl_bslash'
-        nnoremap<silent><C-Bslash> :call g:VimIM()<CR>
-        inoremap<unique><C-Bslash> <C-R>=g:VimIM()<CR>
+        nnoremap<silent><C-Bslash> :call g:vimim_chinese()<CR>
+        inoremap<unique><C-Bslash> <C-R>=g:vimim_chinese()<CR>
     endif
-    if s:vimim_map =~ 'gi'
-        nnoremap<silent> gi i<C-R>=g:vimim_gi()<CR>
+    if s:vimim_map =~ 'ctrl_6'
+        inoremap<silent><C-^> <C-R>=g:vimim_onekey()<CR>
+        xnoremap<silent><C-^> y:call g:vimim_visual()<CR>
     endif
     if s:vimim_map =~ 'tab'
         inoremap<silent><Tab> <C-R>=g:vimim_tab()<CR>
         xnoremap<silent><Tab> y:call g:vimim_visual()<CR>
-    else
-        xnoremap<silent><C-^> y:call g:vimim_visual()<CR>
+    endif
+    if s:vimim_map =~ 'gi'
+        nnoremap<silent> gi i<C-R>=g:vimim_gi()<CR>
     endif
     if s:vimim_map =~ 'search'
         nnoremap<silent> n :call g:vimim_search()<CR>n
