@@ -502,7 +502,7 @@ function! s:chinese(...)
         if has_key(s:title, english)
             let twins = split(s:title[english], ",")
             let cjk = get(twins, 0)
-            if len(twins) > 1 && empty(s:cjk.filename)
+            if len(twins) > 1 && empty(s:english.filename)
                 let cjk = get(twins,1)
             endif
         endif
