@@ -3165,7 +3165,6 @@ function! s:vimim_reset_before_anything()
     let s:chinese_mode = 'onekey'
     let s:smart_enter = 0
     let s:has_pumvisible = 0
-    let s:show_extra_menu = 0
     let s:keyboard = ""
     let s:popup_list = []
 endfunction
@@ -3173,6 +3172,7 @@ endfunction
 function! s:vimim_reset_before_omni()
     let s:english.line = ""
     let s:touch_me_not = 0
+    let s:show_extra_menu = 0
 endfunction
 
 function! s:vimim_reset_after_insert()
