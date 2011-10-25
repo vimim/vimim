@@ -95,6 +95,7 @@ function! s:vimim_initialize_global()
     let s:current_positions = [0,0,1,0]
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
+    let s:shuangpin = 'abc ms plusplus purple flypy nature'
     let s:abcd = split("'abcdvfgxz", '\zs')
     let s:qwer = split("pqwertyuio", '\zs')
     let s:az_list = map(range(97,122),"nr2char(".'v:val'.")")
@@ -109,7 +110,7 @@ function! s:vimim_initialize_global()
     let s:rc = { "g:vimim_mode" : 'dynamic,punctuation' }
     let s:rc["g:vimim_map"] = 'ctrl_bslash,search,gi'
     let s:rc["g:vimim_toggle"] = 0
-    let s:rc["g:vimim_shuangpin"] = 'abc ms plusplus purple flypy nature'
+    let s:rc["g:vimim_shuangpin"] = 0
     let s:rc["g:vimim_plugin"] = s:plugin
     let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
     let s:rc["g:vimim_mycloud"] = 0
@@ -566,7 +567,7 @@ function! s:vimim_get_title()
             let title .= s:chinese(s:space, 'wubi')
         elseif vimim_cloud =~ 'shuangpin' " qq.shuangpin.ms => ms
             let shuangpin = get(split(vimim_cloud,"[.]"),-1)
-            if match(split(s:rc["g:vimim_shuangpin"]),shuangpin) > -1
+            if match(split(s:shuangpin),shuangpin) > -1
                 let title .= s:chinese(s:space, shuangpin, 'shuangpin')
             endif
         endif
@@ -2693,8 +2694,8 @@ function! s:vimim_get_cloud_qq(keyboard)
     let md = vimim_cloud =~ 'mixture' ? 3 : 0
     if vimim_cloud =~ 'shuangpin'
         let md = 2  " qq.shuangpin.ms => ms
-        let shuangpin = get(split(vimim_cloud,"[.]"),-1)
-        let st = match(split(s:rc["g:vimim_shuangpin"]),shuangpin)+1
+        let shuangpin = get(split(vimim_cloud,"[.]"), -1)
+        let st = match(split(s:shuangpin),shuangpin) + 1
         if st
             let input .= '&st=' . st
         endif
