@@ -992,7 +992,7 @@ function! g:onekey()
         " todo reset
         let s:onekey_super_initialization = 39340
     "   sil!call s:vimim_onekey_maps()
-        sil!call s:vimim_super_reset()
+    "   sil!call s:vimim_super_reset()
     "   sil!call s:vimim_common_maps()
     "   sil!call feedkeys("\<C-^>","n")
         sil!call s:vimim_set_vimrc()
@@ -3112,8 +3112,8 @@ function! s:vimim_restore_vimrc()
     let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheights.saved
-    highlight! link  Cursor NONE
-    highlight! link lCursor NONE
+ "  highlight! link  Cursor NONE
+ "  highlight! link lCursor NONE
     lmapclear
 endfunction
 
@@ -3125,8 +3125,8 @@ function! s:vimim_set_vimrc()
     set completeopt=menuone
     set omnifunc=VimIM
     highlight  default CursorIM guifg=NONE guibg=green gui=NONE
-    highlight! link  Cursor CursorIM
     highlight! link lCursor CursorIM
+ "  highlight! link  Cursor CursorIM
 endfunction
 
 function! s:vimim_start()
@@ -3583,16 +3583,12 @@ sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_custom_im_list()
 sil!call s:vimim_plug_and_play()
-" todo
-" sil!call g:onekey()
-"       sil!call s:vimim_onekey_maps()
-"   "   sil!call s:vimim_super_reset()
-"       sil!call s:vimim_common_maps()
-"   "   sil!call s:vimim_set_vimrc()
-"       sil!call feedkeys("\<C-^>","n")
-" useless as it is not insert mode
-"   "   sil!call s:vimim_set_color()
-"   "   sil!call s:vimim_set_keycode()
+" todo " sil!call g:onekey()
+sil!call s:vimim_onekey_maps()
+sil!call s:vimim_common_maps()
+sil!call s:vimim_set_vimrc()
+sil!call s:vimim_set_color()
+sil!call s:vimim_set_keycode()
 " ============================================= }}}
 :redir @p
 Debug s:vimim_egg_vimim()
