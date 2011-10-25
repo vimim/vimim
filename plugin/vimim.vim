@@ -659,7 +659,7 @@ function! g:vimim_label(key)
         if key =~ '\d'
             let n = key < 1 ? 9 : key - 1
         endif
-        if s:chinese_mode =~ 'dynamic'
+        if s:onekey || s:chinese_mode =~ 'dynamic'
             let n += 1
         endif
         let yes = repeat("\<Down>", n). '\<C-Y>'
