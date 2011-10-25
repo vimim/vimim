@@ -308,7 +308,7 @@ function! s:vimim_egg_vimim()
     call add(eggs, s:chinese('option',  s:colon) . "vimimhelp")
     if !empty(s:vimimrc)
         for rc in sort(s:vimimrc)
-            call add(eggs, s:space . s:space . s:colon . rc[2:])
+            call add(eggs, repeat(" ",6) . rc[2:])
         endfor
     endif
     return map(eggs, 'v:val . " " ')
