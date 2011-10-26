@@ -776,7 +776,7 @@ function! s:vimim_punctuations_maps()
     endfor
     lnoremap     '    <C-R>=g:vimim_single_quote()<CR>
     lnoremap     "    <C-R>=g:vimim_double_quote()<CR>
-    lnoremap <Bslash> <C-R>=g:vimim_bslash()<CR>
+    lnoremap <Bslash> <C-R>=pumvisible() ? "\<lt>C-Y>、" : "、"<CR>
 endfunction
 
 function! g:vimim_punctuation(key)
@@ -787,10 +787,9 @@ function! g:vimim_punctuation(key)
         endif
     endif
     if pumvisible()
-        let yes = s:mode =~ 'dynamic' ? '\<C-N>' : ''
-        let key = yes . '\<C-Y>' . key
+        let key = '\<C-Y>' . key
         if a:key == ";"   " the 2nd choice
-            let key = yes . '\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
+            let key = '\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -799,8 +798,7 @@ endfunction
 function! g:vimim_single_quote()
     let key = ""
     if pumvisible()       " the 3rd choice
-        let yes = s:mode =~ 'dynamic' ? '\<C-N>' : ''
-        let key = yes . '\<C-N>\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
+        let key = '\<C-N>\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
     else
         let pairs = split(s:all_evils["'"], '\zs')
         let s:smart_quotes.single += 1
@@ -810,20 +808,10 @@ function! g:vimim_single_quote()
 endfunction
 
 function! g:vimim_double_quote()
-    let yes = s:mode =~ 'dynamic' ? '\<C-N>' : ''
-    let key = pumvisible() ? yes . '\<C-Y>' : ""
     let pairs = split(s:all_evils['"'], '\zs')
     let s:smart_quotes.double += 1
+    let key  = pumvisible() ? '\<C-Y>' : ""
     let key .= get(pairs, s:smart_quotes.double % 2)
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! g:vimim_bslash()
-    let key = s:all_evils['\']
-    if pumvisible()
-        let yes = s:mode =~ 'dynamic' ? '\<C-N>' : ''
-        let key = yes . '\<C-Y>' . key
-    endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
