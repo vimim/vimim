@@ -671,8 +671,7 @@ function! g:vimim_label(key)
                     sil!call s:vimim_reset_after_insert()
                 endif
             else
-                let key = yes . '\<C-^>'
-                sil!call s:vimim_stop()
+                let key = yes . s:vimim_stop()
             endif
         else
             let key = yes . key
@@ -889,8 +888,7 @@ function! g:vimim_space()
        let cursor = s:mode =~ 'static' ? '\<C-P>\<C-N>\<C-Y>' : '\<C-Y>'
        let space = cursor . '\<C-R>=g:vimim()\<CR>'
        if s:onekey && empty(s:cjk.filename)
-           let space = cursor . '\<C-^>'
-           sil!call s:vimim_stop()
+           let space = cursor . s:vimim_stop()
        endif
     elseif s:pattern_not_found
     elseif s:mode =~ 'dynamic'
@@ -948,23 +946,22 @@ function! g:vimim_backspace()
 endfunction
 
 function! g:vimim_esc()
-    let key = '\<C-E>'    " use <Esc> as one key correction
+    let esc = '\<C-E>'    " use <Esc> as one key correction
     if s:onekey
         :y
-        sil!call s:vimim_stop()
         if has("gui_running") && has("win32")
             sil!let @+ = @0[:-2]  " copy to clipboard and display
         endif
         let &titlestring = @0[:-2]
-        let key = '\<C-^>\<Esc>'
+        let esc = s:vimim_stop() . '\<Esc>'
     elseif pumvisible()
         let range = col(".") - 1 - s:starts.column
         if range
-            let key .= repeat("\<Left>\<Delete>", range)
+            let esc .= repeat("\<Left>\<Delete>", range)
             sil!call s:vimim_reset_after_insert()
         endif
     endif
-    sil!exe 'sil!return "' . key . '"'
+    sil!exe 'sil!return "' . esc . '"'
 endfunction
 
 " ============================================= }}}
@@ -978,7 +975,7 @@ function! g:vimim_onekey()
     elseif empty(s:ctrl6)
         let onekey = s:vimim_onekey_action(0)
     else
-        sil!call s:vimim_stop()
+        let onekey = s:vimim_stop()
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -1136,15 +1133,15 @@ function! g:vimim_chinese()
 endfunction
 
 function! s:vimim_chinese_mode(switch)
-    let ctrl6 = "\<C-^>"
+    let ctrl6 = ""
     if a:switch
         let s:onekey = 0
         let s:mode = s:vimim_mode =~ 'static' ? 'static' : 'dynamic'
-        sil!call s:vimim_set_statusline()
         let ctrl6 = g:vimim_start()
         let &titlestring = s:logo . s:vimim_get_title()
+        sil!call s:vimim_set_statusline()
     else
-        sil!call s:vimim_stop()
+        let ctrl6 = s:vimim_stop()
     endif
     sil!exe 'sil!return "' . ctrl6 . '"'
 endfunction
@@ -3090,9 +3087,10 @@ function! g:vimim_start()
 endfunction
 
 function! s:vimim_stop()
+    lmapclear
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
-    lmapclear
+    sil!exe 'sil!return "' . "\<C-^>" . '"'
 endfunction
 
 function! s:vimim_set_vimrc()
