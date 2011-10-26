@@ -987,16 +987,16 @@ function! g:vimim_tab()
     " (1) Tab in insert mode     => start windowless mode
     " (2) Tab in windowless mode => start MidasTouch popup
     " (3) Tab in omni window     => start print
-    let onekey = "\t"
+    let tab = "\t"
     if empty(s:vimim_byte_before())
     elseif pumvisible()
-        let onekey = g:vimim_screenshot()
+        let tab = g:vimim_screenshot()
     else
         let s:windowless = s:windowless ? 0 : 1
-        let onekey  = s:vimim_onekey_action(0)
-        let onekey .= g:vimim_title()
+        let tab  = s:vimim_onekey_action(0)
+        let tab .= g:vimim_title()
     endif
-    sil!exe 'sil!return "' . onekey . '"'
+    sil!exe 'sil!return "' . tab . '"'
 endfunction
 
 function! g:vimim_gi()
@@ -1067,8 +1067,8 @@ endfunction
 function! g:vimim_screenshot()
     let keyboard = get(split(s:keyboard),0)
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-    if s:vimim_byte_before() =~ "'" || s:keyboard =~ '^vimim'
-        let space = ""  " no need to format if cloud
+    if s:keyboard =~ '^vim'
+        let space = ""  " no need to format if egg
     endif
     let saved_position = getpos(".")
     for items in s:popup_list
