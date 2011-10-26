@@ -56,6 +56,7 @@ function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
+        let g:vimim_map = 'tab,ctrl_6,ctrl_bslash,search,gi'
         let g:vimim_map = 'tab,search,gi'
     endif
 endfunction
@@ -990,8 +991,9 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
 function! g:vimim_onekey()
+    let onekey = ''
     if pumvisible()
-        let onekey = '\<C-R>=g:vimim_screenshot()\<CR>'
+        let onekey = g:vimim_screenshot()
     elseif empty(s:ctrl6)
         let onekey = s:vimim_onekey_action(0)
     else
@@ -1004,18 +1006,16 @@ function! g:vimim_tab()
     " (1) Tab in insert mode     => start windowless mode
     " (2) Tab in windowless mode => start MidasTouch popup
     " (3) Tab in omni window     => start print
+    let onekey = "\t"
     if empty(s:vimim_byte_before())
-        return "\t"
-    endif
-    let onekey = ""
-    if pumvisible()
-        let onekey = '\<C-R>=g:vimim_screenshot()\<CR>'
+    elseif pumvisible()
+        let onekey = g:vimim_screenshot()
     else
         let s:windowless = s:windowless ? 0 : 1
         if s:vimim_byte_before() =~# s:valid_keyboard
             let onekey = s:vimim_onekey_action(0)
         else
-            let onekey = '\<C-R>=g:vimim_title()\<CR>'
+            let onekey = g:vimim_title()
         endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -1023,7 +1023,7 @@ endfunction
 
 function! g:vimim_gi()
     let s:windowless = 1
-    let onekey = '\<C-R>=g:vimim_title()\<CR>'
+    let onekey = g:vimim_title()
     let cursor = getline(".")[col(".")-1] =~ '\w' ? 1 : s:multibyte
     if col("$")-col(".") && col("$")-col(".") < cursor + 1
         let onekey = '\<Right>' . onekey  " gi at the end of cursor line
@@ -1048,7 +1048,7 @@ function! s:vimim_onekey_action(space)
         sil!call s:vimim_start(0)
     endif
     if s:vimim_byte_before() =~# s:valid_keyboard
-        let onekey .= '\<C-R>=g:vimim()\<CR>'
+        let onekey .= g:vimim()
     elseif s:windowless
         let onekey = s:vimim_menuless_map(space)
     endif
