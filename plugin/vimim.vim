@@ -56,7 +56,6 @@ function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
-        let g:vimim_map = 'tab,ctrl_6,ctrl_bslash,search,gi'
         let g:vimim_map = 'tab,search,gi'
     endif
 endfunction
@@ -1045,7 +1044,7 @@ function! s:vimim_onekey_action(space)
     endif
     if !empty(onekey)
         return onekey
-    elseif empty(s:ctrl6)
+    elseif empty(s:ctrl6) && empty(a:space)
         let onekey = '\<C-^>'
         sil!call s:vimim_start(0)
     endif
@@ -1731,7 +1730,7 @@ function! g:vimim_visual()
         let line = string(len(lines)) . '*' . line
         let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else
-        sil!call s:vimim_start(1)
+        sil!call s:vimim_start(0)
         let onekey = "\<C-^>\<C-R>=g:vimim()\<CR>"
         if len(lines) < 2  " highlight multiple cjk => show property
             let s:seamless_positions = getpos("'<'")
@@ -3109,11 +3108,9 @@ function! s:vimim_start(ctrl6)
             sil!call s:vimim_dynamic_maps()
         endif
     endif
-    if empty(s:ctrl6)
+    if empty(s:ctrl6) && mode() == 'i' && a:ctrl6
         let s:ctrl6 = 32911
-        if mode() == 'i' && a:ctrl6
-            call feedkeys("\<C-^>","n")
-        endif
+        call feedkeys("\<C-^>","n")
     endif
 endfunction
 
