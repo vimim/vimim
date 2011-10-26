@@ -3129,12 +3129,13 @@ function! s:vimim_save_vimrc()
     let s:laststatus  = &laststatus
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
+    let s:highlight   = &highlight
     let s:lazyredraw  = &lazyredraw
 endfunction
 
 function! s:vimim_set_vimrc()
     set title noshowmatch shellslash imdisable
-    set nolazyredraw
+    set nolazyredraw highlight+=w-
     set whichwrap=<,>
     set complete=.
     set completeopt=menuone
@@ -3149,6 +3150,7 @@ function! s:vimim_restore_vimrc()
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
     let &titlestring = s:titlestring
+    let &highlight   = s:highlight
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheights.saved
 endfunction
