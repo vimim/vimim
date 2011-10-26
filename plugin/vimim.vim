@@ -648,8 +648,8 @@ function! s:vimim_common_maps()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <CR>    g:vimim_enter()
     lnoremap <silent> <expr> <C-H>   g:vimim_switch()
-    lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <Space> g:vimim_space()
+    lnoremap          <expr> <Esc>   g:vimim_esc()
 endfunction
 
 function! g:vimim_label(key)
@@ -682,7 +682,7 @@ function! g:vimim_label(key)
         if s:pattern_not_found
             let s:pattern_not_found = 0
         else
-            let key = s:vimim_menuless_map(key)
+            let key = s:vimim_menuless(key)
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -834,7 +834,7 @@ function! g:vimim_title()
     return ""
 endfunction
 
-function! s:vimim_menuless_map(key)
+function! s:vimim_menuless(key)
     let key = a:key    " workaround to detect if completion is active
     let digit = key == " " ? '' : key
     if s:pattern_not_found  " gi \backslash space space
@@ -948,19 +948,16 @@ function! g:vimim_backspace()
 endfunction
 
 function! g:vimim_esc()
-    let key = '\<C-^>\<Esc>'
+    let key = '\<C-E>'    " use <Esc> as one key correction
     if s:onekey
         :y
-        if has("gui_running") && has("win32")
-            sil!let @+ = @0[:-2] " copy to clipboard and display
-        endif
-        if &columns > 60
-            let echo = join(split(@0[:-2],'\zs')[:&columns/2/2],"")
-            let key .= ":echo " . string(echo) . "\<CR>"
-        endif
         sil!call s:vimim_stop()
+        if has("gui_running") && has("win32")
+            sil!let @+ = @0[:-2]  " copy to clipboard and display
+        endif
+        let &titlestring = @0[:-2]
+        let key = '\<C-^>\<Esc>'
     elseif pumvisible()
-        let key = '\<C-E>'   " use <Esc> as one key correction
         let range = col(".") - 1 - s:starts.column
         if range
             let key .= repeat("\<Left>\<Delete>", range)
@@ -1004,13 +1001,12 @@ endfunction
 
 function! g:vimim_gi()
     let s:windowless = 1
-    let onekey = g:vimim_title()
+    let gi = g:vimim_title() . g:vimim_start()
     let cursor = getline(".")[col(".")-1] =~ '\w' ? 1 : s:multibyte
     if col("$")-col(".") && col("$")-col(".") < cursor + 1
-        let onekey = '\<Right>' . onekey  " gi at the end of cursor line
+        let gi = '\<Right>' . gi  " gi at the end of cursor line
     endif
-    sil!call s:vimim_start(1)
-    sil!exe 'sil!return "' . onekey . '"'
+    sil!exe 'sil!return "' . gi . '"'
 endfunction
 
 function! s:vimim_onekey_action(space)
@@ -1025,13 +1021,12 @@ function! s:vimim_onekey_action(space)
     if !empty(onekey)
         return onekey
     elseif empty(s:ctrl6) && empty(a:space)
-        let onekey = '\<C-^>'
-        sil!call s:vimim_start(0)
+        let onekey = g:vimim_start()
     endif
     if s:vimim_byte_before() =~# s:valid_keyboard
         let onekey .= g:vimim()
     elseif s:windowless
-        let onekey = s:vimim_menuless_map(space)
+        let onekey = s:vimim_menuless(space)
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -1141,17 +1136,17 @@ function! g:vimim_chinese()
 endfunction
 
 function! s:vimim_chinese_mode(switch)
-    let s:mode = s:vimim_mode =~ 'static' ? 'static' : 'dynamic'
+    let ctrl6 = "\<C-^>"
     if a:switch
         let s:onekey = 0
-        sil!call s:vimim_start(1)
+        let s:mode = s:vimim_mode =~ 'static' ? 'static' : 'dynamic'
         sil!call s:vimim_set_statusline()
+        let ctrl6 = g:vimim_start()
         let &titlestring = s:logo . s:vimim_get_title()
     else
         sil!call s:vimim_stop()
-        sil!call feedkeys("\<C-^>","n")
     endif
-    return ""
+    sil!exe 'sil!return "' . ctrl6 . '"'
 endfunction
 
 function! s:vimim_set_custom_im_list()
@@ -1706,15 +1701,14 @@ function! g:vimim_visual()
         let line = string(len(lines)) . '*' . line
         let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else
-        sil!call s:vimim_start(0)
-        let onekey = "\<C-^>\<C-R>=g:vimim()\<CR>"
+        let visual = "\<C-R>=g:vimim_start()\<CR>\<C-R>=g:vimim()\<CR>"
         if len(lines) < 2  " highlight multiple cjk => show property
             let s:seamless_positions = getpos("'<'")
             let chinese = get(split(line,'\zs'),0)
             let ddddd = char2nr(chinese) =~ '\d\d\d\d\d' ? "'''''" : line
-            let key = "gvc" . ddddd . onekey
+            let key = "gvc" . ddddd . visual
         else               " highlighted block => play block with hjkl
-            let key = "O^\<C-D>" . space . "''''" . onekey
+            let key = "O^\<C-D>" . space . "''''" . visual
         endif
     endif
     return feedkeys(key,"n")
@@ -3074,7 +3068,7 @@ endfunction
 let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
-function! s:vimim_start(ctrl6)
+function! g:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_color()
     sil!call s:vimim_set_keycode()
@@ -3087,10 +3081,12 @@ function! s:vimim_start(ctrl6)
             sil!call s:vimim_dynamic_maps()
         endif
     endif
-    if empty(s:ctrl6) && mode() == 'i' && a:ctrl6
+    let ctrl6 = ""
+    if empty(s:ctrl6) && mode() == 'i'
         let s:ctrl6 = 32911
-        call feedkeys("\<C-^>","n")
+        let ctrl6 = "\<C-^>"
     endif
+    sil!exe 'sil!return "' . ctrl6 . '"'
 endfunction
 
 function! s:vimim_stop()
