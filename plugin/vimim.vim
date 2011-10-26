@@ -56,8 +56,8 @@ function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
-        let g:vimim_map = 'tab,ctrl_6,ctrl_bslash,search,gi'
         let g:vimim_map = 'tab,search,gi'
+        let g:vimim_map = 'tab,ctrl_6,ctrl_bslash,search,gi'
     endif
 endfunction
 
@@ -528,7 +528,7 @@ endfunction
 
 function! IMName()
     " This function is for user-defined 'stl' 'statusline'
-    if s:chinese_mode =~ 'onekey'
+    if s:mode =~ 'onekey'
         if pumvisible()
             return s:vimim_statusline()
         endif
@@ -659,9 +659,6 @@ function! g:vimim_label(key)
         if key =~ '\d'
             let n = key < 1 ? 9 : key - 1
         endif
-        if s:onekey || s:chinese_mode =~ 'dynamic'
-            let n += 1
-        endif
         let yes = repeat("\<Down>", n). '\<C-Y>'
         let key = '\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
@@ -699,7 +696,7 @@ function! g:vimim_page(key)
             let right = key == "]" ? "\<Right>" : ""
             let _ = key == "]" ? 0 : -1
             let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
-            let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+            let yes = s:mode =~ 'dynamic' ? '\<C-N>' : ''
             let key = yes . '\<C-Y>' . left . bs . right
         elseif key =~ "[=.]"
             let key = '\<PageDown>'
@@ -790,7 +787,7 @@ function! g:vimim_punctuation(key)
         endif
     endif
     if pumvisible()
-        let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+        let yes = s:mode =~ 'dynamic' ? '\<C-N>' : ''
         let key = yes . '\<C-Y>' . key
         if a:key == ";"   " the 2nd choice
             let key = yes . '\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
@@ -802,7 +799,7 @@ endfunction
 function! g:vimim_single_quote()
     let key = ""
     if pumvisible()       " the 3rd choice
-        let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+        let yes = s:mode =~ 'dynamic' ? '\<C-N>' : ''
         let key = yes . '\<C-N>\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
     else
         let pairs = split(s:all_evils["'"], '\zs')
@@ -813,7 +810,7 @@ function! g:vimim_single_quote()
 endfunction
 
 function! g:vimim_double_quote()
-    let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+    let yes = s:mode =~ 'dynamic' ? '\<C-N>' : ''
     let key = pumvisible() ? yes . '\<C-Y>' : ""
     let pairs = split(s:all_evils['"'], '\zs')
     let s:smart_quotes.double += 1
@@ -824,7 +821,7 @@ endfunction
 function! g:vimim_bslash()
     let key = s:all_evils['\']
     if pumvisible()
-        let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
+        let yes = s:mode =~ 'dynamic' ? '\<C-N>' : ''
         let key = yes . '\<C-Y>' . key
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -901,16 +898,15 @@ function! g:vimim_space()
     let s:has_pumvisible = 0
     if pumvisible()
        let s:has_pumvisible = 1
-       let cursor = s:chinese_mode =~ 'static' ? '\<C-P>' : ''
-       let cursor = '\<C-N>' . cursor . '\<C-Y>'
+       let cursor = s:mode =~ 'static' ? '\<C-P>\<C-N>\<C-Y>' : '\<C-Y>'
        let space = cursor . '\<C-R>=g:vimim()\<CR>'
        if s:onekey && empty(s:cjk.filename)
            let space = cursor . '\<C-^>'
            sil!call s:vimim_stop()
        endif
     elseif s:pattern_not_found
-    elseif s:chinese_mode =~ 'dynamic'
-    elseif s:chinese_mode =~ 'static'
+    elseif s:mode =~ 'dynamic'
+    elseif s:mode =~ 'static'
         if s:vimim_byte_before() =~# s:valid_keyboard
             let space = g:vimim()
         endif
@@ -1160,7 +1156,7 @@ function! g:vimim_chinese()
 endfunction
 
 function! s:vimim_chinese_mode(switch)
-    let s:chinese_mode = s:vimim_mode =~ 'static' ? 'static' : 'dynamic'
+    let s:mode = s:vimim_mode =~ 'static' ? 'static' : 'dynamic'
     if a:switch
         let s:onekey = 0
         sil!call s:vimim_start(1)
@@ -2190,12 +2186,13 @@ endfunction
 
 function! s:vimim_get_from_python2(input, cloud)
 :sil!python << EOF
-import vim, urllib2
+import vim, urllib2, socket
 cloud = vim.eval('a:cloud')
 input = vim.eval('a:input')
 encoding = vim.eval("&encoding")
 try:
-    urlopen = urllib2.urlopen(input, None, 20)
+    socket.setdefaulttimeout(20)
+    urlopen = urllib2.urlopen(input, None)
     response = urlopen.read()
     res = "'" + str(response) + "'"
     if cloud == 'qq':
@@ -3105,7 +3102,7 @@ function! s:vimim_start(ctrl6)
         sil!call s:vimim_onekey_maps()
     else
         sil!call s:vimim_punctuations_maps()
-        if s:chinese_mode =~ 'dynamic'
+        if s:mode =~ 'dynamic'
             sil!call s:vimim_dynamic_maps()
         endif
     endif
@@ -3129,13 +3126,12 @@ function! s:vimim_save_vimrc()
     let s:laststatus  = &laststatus
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
-    let s:highlight   = &highlight
     let s:lazyredraw  = &lazyredraw
 endfunction
 
 function! s:vimim_set_vimrc()
     set title noshowmatch shellslash imdisable
-    set nolazyredraw highlight+=w-
+    set nolazyredraw
     set whichwrap=<,>
     set complete=.
     set completeopt=menuone
@@ -3150,7 +3146,6 @@ function! s:vimim_restore_vimrc()
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
     let &titlestring = s:titlestring
-    let &highlight   = s:highlight
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheights.saved
 endfunction
@@ -3165,7 +3160,7 @@ function! s:vimim_reset_before_anything()
     let s:ctrl6 = 0
     let s:onekey = 1
     let s:windowless = 0
-    let s:chinese_mode = 'onekey'
+    let s:mode = 'onekey'
     let s:smart_enter = 0
     let s:has_pumvisible = 0
     let s:keyboard = ""
@@ -3298,7 +3293,7 @@ else
     endif
     if empty(results)
         if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
-            if s:chinese_mode =~ 'dynamic' && len(keyboard) > 4
+            if s:mode =~ 'dynamic' && len(keyboard) > 4
                 let start = 4*((len(keyboard)-1)/4)
                 let keyboard = strpart(keyboard, start)
                 let s:keyboard = keyboard  " wubi auto insert on the 4th
@@ -3326,7 +3321,7 @@ else
             let i = keyboard == 'i' ? "我" : s:space
             let results = split(repeat(i,5),'\zs')
         endif
-    elseif empty(results) && s:chinese_mode =~ 'static'
+    elseif empty(results) && s:mode =~ 'static'
         let s:pattern_not_found = 1
     endif
     return s:vimim_popupmenu_list(results)
@@ -3504,7 +3499,7 @@ function! g:vimim()
 endfunction
 
 function! g:vimim_omni()
-    let cursor = s:chinese_mode =~ 'static' ? '\<C-N>\<C-P>' : '\<C-P>'
+    let cursor = s:mode =~ 'static' ? '\<C-N>\<C-P>' : '\<C-P>\<Down>'
     let key = pumvisible() ? cursor : ""
     let s:smart_enter = 0  " s:windowless: gi ma enter li space 3
     sil!exe 'sil!return "' . key . '"'
