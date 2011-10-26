@@ -1008,11 +1008,8 @@ function! g:vimim_tab()
         let onekey = g:vimim_screenshot()
     else
         let s:windowless = s:windowless ? 0 : 1
-        if s:vimim_byte_before() =~# s:valid_keyboard
-            let onekey = s:vimim_onekey_action(0)
-        else
-            let onekey = g:vimim_title()
-        endif
+        let onekey  = s:vimim_onekey_action(0)
+        let onekey .= g:vimim_title()
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -1033,7 +1030,7 @@ function! s:vimim_onekey_action(space)
     let onekey = space
     if s:seamless_positions == getpos(".")
         let s:smart_enter = 0
-        return onekey  "  space is space after enter
+        return space  "  space is space after enter
     elseif empty(s:ui.has_dot)
         let onekey = s:vimim_onekey_evils()
     endif
@@ -3127,11 +3124,12 @@ function! s:vimim_save_vimrc()
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
     let s:lazyredraw  = &lazyredraw
+    let s:highlight   = &highlight
 endfunction
 
 function! s:vimim_set_vimrc()
     set title noshowmatch shellslash imdisable
-    set nolazyredraw
+    set nolazyredraw highlight+=w-
     set whichwrap=<,>
     set complete=.
     set completeopt=menuone
@@ -3147,6 +3145,7 @@ function! s:vimim_restore_vimrc()
     let &statusline  = s:statusline
     let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
+    let &highlight   = s:highlight
     let &pumheight   = s:pumheights.saved
 endfunction
 
