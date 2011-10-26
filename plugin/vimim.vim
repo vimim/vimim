@@ -724,16 +724,15 @@ function! s:vimim_dynamic_maps()
     let vimim_cloud = get(split(s:vimim_cloud,','), 0)
     if s:ui.im =~ 'wubi\|erbi' || vimim_cloud =~ 'wubi'
         for char in s:az_list
-            sil!exe 'lnoremap ' . char . ' <C-R>=g:vimim_wubi()<CR>'
-            \ . char . '<C-R>=g:vimim()<CR>'
+            sil!exe 'lnoremap <silent> ' . char . ' ' .
+            \ '<C-R>=g:vimim_wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
         endfor
     else    " dynamic alphabet trigger for all but wubi
         let not_used_keys = s:ui.has_dot == 1 ? "[0-9]" : "[0-9']"
         for char in s:valid_keys
             if char !~# not_used_keys
-                sil!exe 'lnoremap <silent> ' . char . ' '
-                \ " <C-R>=pumvisible() ? '<C-E>' : ''<CR>"
-                \ . char . '<C-R>=g:vimim()<CR>'
+                sil!exe 'lnoremap <silent> ' . char . ' ' .
+                \  char . '<C-R>=g:vimim()<CR>'
             endif
         endfor
     endif
@@ -782,7 +781,7 @@ function! s:vimim_punctuations_maps()
     endfor
     lnoremap     '    <C-R>=g:vimim_single_quote()<CR>
     lnoremap     "    <C-R>=g:vimim_double_quote()<CR>
-    lnoremap <Bslash> <C-R>=g:vimim_backslash()<CR>
+    lnoremap <Bslash> <C-R>=g:vimim_bslash()<CR>
 endfunction
 
 function! g:vimim_punctuation(key)
@@ -824,8 +823,8 @@ function! g:vimim_double_quote()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! g:vimim_backslash()
-    let key = "、"
+function! g:vimim_bslash()
+    let key = s:all_evils['\']
     if pumvisible()
         let yes = s:chinese_mode =~ 'dynamic' ? '\<C-N>' : ''
         let key = yes . '\<C-Y>' . key
