@@ -1416,25 +1416,21 @@ function! s:vimim_url_xx_to_chinese(xx)
 endfunction
 
 function! s:vimim_char_before()
-    let char_before = ""
     if !empty(s:vimim_byte_before())
         let start = col(".") - 1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
         if char_before !~ '[^\x00-\xff]'
-            let char_before = ""
         elseif match(values(s:all_evils),char_before) > -1
-            let char_before = ""
+        else
+            return char_before
         endif
     endif
-    return char_before
+    return ""
 endfunction
 
 function! s:vimim_byte_before()
     let one_before = getline(".")[col(".")-2]
-    if one_before =~ '\s'
-        let one_before = ""
-    endif
-    return one_before
+    return  one_before =~ '\s' ? "" : one_before
 endfunction
 
 function! s:vimim_key_value_hash(single, double)
