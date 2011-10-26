@@ -3103,37 +3103,40 @@ function! s:vimim_stop()
     lmapclear
 endfunction
 
+function! s:vimim_set_vimrc()
+    set title noshowmatch shellslash imdisable
+    set completeopt=menuone
+    set complete=.
+    set whichwrap=<,>
+    set nolazyredraw
+    set highlight=e-,w-
+    set omnifunc=VimIM
+endfunction
+
 function! s:vimim_save_vimrc()
     let s:cpo         = &cpo
-    let s:complete    = &complete
-    let s:completeopt = &completeopt
-    let s:whichwrap   = &whichwrap
     let s:laststatus  = &laststatus
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
+    let s:completeopt = &completeopt
+    let s:complete    = &complete
+    let s:whichwrap   = &whichwrap
     let s:lazyredraw  = &lazyredraw
     let s:highlight   = &highlight
-endfunction
-
-function! s:vimim_set_vimrc()
-    set title noshowmatch shellslash imdisable
-    set nolazyredraw highlight+=w-
-    set whichwrap=<,>
-    set complete=.
-    set completeopt=menuone
-    set omnifunc=VimIM
+    let s:omnifunc    = &omnifunc
 endfunction
 
 function! s:vimim_restore_vimrc()
     let &cpo         = s:cpo
-    let &complete    = s:complete
-    let &completeopt = s:completeopt
-    let &whichwrap   = s:whichwrap
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
     let &titlestring = s:titlestring
+    let &completeopt = s:completeopt
+    let &complete    = s:complete
+    let &whichwrap   = s:whichwrap
     let &lazyredraw  = s:lazyredraw
     let &highlight   = s:highlight
+    let &omnifunc    = s:omnifunc
     let &pumheight   = s:pumheights.saved
 endfunction
 
