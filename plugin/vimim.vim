@@ -990,7 +990,6 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
 function! g:vimim_onekey()
-    let onekey = '\<C-^>'
     if pumvisible()
         let onekey = '\<C-R>=g:vimim_screenshot()\<CR>'
     elseif empty(s:ctrl6)
@@ -3073,8 +3072,10 @@ function! s:vimim_search_chinese_by_english(keyboard)
             if empty(head)
                 break
             else
-                let chinese = join(s:vimim_cjk_match(head),'')
-                call add(results, "[" . chinese . "]")
+                let chinese = join(s:vimim_cjk_match(head), '')
+                if !empty(chinese)
+                    call add(results, "[" . chinese . "]")
+                endif
                 let keyboard = strpart(keyboard, len(head))
             endif
         endwhile
