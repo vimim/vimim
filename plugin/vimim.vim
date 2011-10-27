@@ -648,7 +648,8 @@ function! s:vimim_common_maps()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <Space> g:vimim_space()
     lnoremap <silent> <expr> <C-H>   g:vimim_switch()
-    lnoremap <silent> <expr> <C-L>   g:vimim_print()
+    lnoremap <silent> <expr> <C-U>   g:vimim_correction()
+    lnoremap <silent> <C-L>  <C-R>=g:vimim_screenshot()<CR>
 endfunction
 
 function! g:vimim_label(key)
@@ -810,6 +811,27 @@ function! g:vimim_double_quote()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+function! g:vimim_screenshot()
+    let keyboard = get(split(s:keyboard),0)
+    let space = repeat(" ", virtcol(".")-len(keyboard)-1)
+    if s:keyboard =~ '^vim'
+        let space = ""  " no need to format if egg
+    endif
+    let saved_position = getpos(".")
+    for items in s:popup_list
+        let line = printf('%s', items.word)
+        if has_key(items, "abbr")
+            let line = printf('%s', items.abbr)
+            if has_key(items, "menu")
+                let line = printf('%s  %s', items.abbr, items.menu)
+            endif
+        endif
+        put=space.line
+    endfor
+    call setpos(".", saved_position)
+    sil!exe 'sil!return "' . g:vimim_esc() . '"'
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  mode: windowless ==== {{{"]
 " =================================================
@@ -878,7 +900,7 @@ function! g:vimim_space()
     let s:has_pumvisible = 0
     if pumvisible()
         let s:has_pumvisible = 1
-        let space = s:mode != 'dynamic' ? g:vimim() : ''
+        let space = '\<C-R>=g:vimim()\<CR>'
         if s:mode == 'onekey' && empty(s:cjk.filename)
              let space = s:vimim_stop()
         endif
@@ -922,40 +944,45 @@ function! g:vimim_enter()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+function! g:vimim_esc()
+    let esc = '\<Esc>'
+    if s:mode == 'onekey'
+        :y
+        if has("gui_running") && has("win32")
+            sil!let @+ = @0[:-2]  " copy to clipboard and window titles
+        endif
+        let esc = s:vimim_stop() . esc
+        let &titlestring = s:space . @0[:-2]
+    elseif pumvisible()   " use <Esc> as one key correction
+        let esc = g:vimim_correction()
+    endif
+    sil!exe 'sil!return "' . esc . '"'
+endfunction
+
+function! g:vimim_correction()
+    " :help i_CTRL-U   Delete all entered characters
+    let key = '\<C-U>'
+    if pumvisible()
+        let range = col(".") - 1 - s:starts.column
+        if range
+            let key = '\<C-E>' . repeat("\<Left>\<Delete>", range)
+        endif
+    elseif s:windowless
+        let s:smart_enter = "windowless_correction"
+        let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
+        call s:vimim_title()
+    endif
+    sil!call s:vimim_reset_after_insert()
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
 function! g:vimim_backspace()
     " <BS> has special meaning in all 3 states of popupmenu-completion
     let key = '\<Left>\<Delete>'
     if pumvisible()
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
-    if s:windowless
-        if s:smart_enter
-            let s:smart_enter = "windowless_correction"
-            let key  = '\<C-E>\<C-R>=g:vimim()\<CR>' . key
-        else
-            call s:vimim_title()
-        endif
-    endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! g:vimim_esc()
-    let esc = '\<C-E>'    " use <Esc> as one key correction
-    if s:mode == 'onekey'
-        :y
-        if has("gui_running") && has("win32")
-            sil!let @+ = @0[:-2]  " copy to clipboard and window titles
-        endif
-        let esc = s:vimim_stop() . '\<Esc>'
-        let &titlestring = s:space . @0[:-2]
-    elseif pumvisible()
-        let range = col(".") - 1 - s:starts.column
-        if range
-            let esc .= repeat("\<Left>\<Delete>", range)
-            sil!call s:vimim_reset_after_insert()
-        endif
-    endif
-    sil!exe 'sil!return "' . esc . '"'
 endfunction
 
 " ============================================= }}}
@@ -981,6 +1008,7 @@ function! g:vimim_tab()
     let tab = "\t"
     if empty(s:vimim_byte_before())
     elseif pumvisible()
+        let s:popup_list = s:popup_list[:&pumheight-1] " WYSIWYG
         let tab = g:vimim_screenshot()
     else
         let tab = g:vimim_gi() . s:vimim_onekey_action(0)
@@ -1042,36 +1070,6 @@ function! s:vimim_onekey_evils()
         let onekey = "\<Left>\<Delete>" . bs
     endif
     sil!exe 'sil!return "' . onekey . '"'
-endfunction
-
-function! g:vimim_print()
-    let key = ''
-    if pumvisible()
-        let s:popup_list = s:popup_list[:&pumheight-1]
-        let key = '\<C-R>=g:vimim_screenshot()\<CR>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! g:vimim_screenshot()
-    let keyboard = get(split(s:keyboard),0)
-    let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-    if s:keyboard =~ '^vim'
-        let space = ""  " no need to format if egg
-    endif
-    let saved_position = getpos(".")
-    for items in s:popup_list
-        let line = printf('%s', items.word)
-        if has_key(items, "abbr")
-            let line = printf('%s', items.abbr)
-            if has_key(items, "menu")
-                let line = printf('%s  %s', items.abbr, items.menu)
-            endif
-        endif
-        put=space.line
-    endfor
-    call setpos(".", saved_position)
-    sil!exe 'sil!return "' . g:vimim_esc() . '"'
 endfunction
 
 function! s:vimim_get_head_without_quote(keyboard)
@@ -3191,7 +3189,7 @@ if a:start
     call s:vimim_set_keyboard_list(start_column, keyboard)
     return start_column
 else
-    " [windowless] gi mamahuhuhu space enter basckspace
+    " [windowless] gi mamahuhuhu space ctrl+u
     if s:smart_enter =~ "windowless_correction"
         return [s:space]
     endif
