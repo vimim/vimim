@@ -115,8 +115,8 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
     let s:rc["g:vimim_mycloud"] = 0
     call s:vimim_set_global_default()
-    if isdirectory(s:vimim_plugin)
-        let s:plugin = s:vimim_plugin
+    if isdirectory(g:vimim_plugin)
+        let s:plugin = g:vimim_plugin
     endif
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
@@ -153,17 +153,17 @@ function! s:vimim_set_keycode()
     for im in split(ime)
         if s:ui.im == im
             let s:ui.has_dot = 1  " has english dot in datafile
-            let s:vimim_mode .= ',nopunctuation'
+            let g:vimim_mode .= ',nopunctuation'
             break
         endif
     endfor
     let keycode = "[0-9a-z']"
-    if !empty(s:ui.root) && empty(s:vimim_shuangpin)
+    if !empty(s:ui.root) && empty(g:vimim_shuangpin)
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
         if s:backend[s:ui.root][s:ui.im].name =~ "quote"
             let s:ui.has_dot = 2  " has apostrophe in datafile
         endif
-    elseif s:vimim_shuangpin == 'ms' || s:vimim_shuangpin == 'purple'
+    elseif g:vimim_shuangpin == 'ms' || g:vimim_shuangpin == 'purple'
         let keycode = "[0-9a-z';]"
     endif
     let i = 0
@@ -183,23 +183,16 @@ function! s:vimim_set_global_default()
     let s:vimimrc = []
     let s:vimimdefaults = []
     for variable in keys(s:rc)
-        let s_variable = substitute(copy(variable), "g:", "s:", '')
         if exists(variable)
             let value = string(eval(variable))
             let vimimrc = ':let ' . variable .' = '. value .' '
             call add(s:vimimrc, '  ' . vimimrc)
-            exe   'let  ' . s_variable .'='. value
-            exe 'unlet! ' .   variable
         else
-            let default = string(s:rc[variable])
-            let vimimrc = ':let ' . variable .' = '. default .' '
+            let value = string(s:rc[variable])
+            let vimimrc = ':let ' . variable .' = '. value .' '
             call add(s:vimimdefaults, '" ' . vimimrc)
-            if variable == "g:vimim_shuangpin"
-                exe 'let '. s_variable . " = '' "
-            else
-                exe 'let '. s_variable .'='. default
-            endif
         endif
+        exe 'let '. variable .'='. value
     endfor
 endfunction
 
@@ -296,9 +289,9 @@ function! s:vimim_egg_vimim()
             call add(eggs, ciku . cloud)
         endif
         let input = s:chinese('input', s:colon)
-        if s:vimim_map =~ 'ctrl_bslash'
+        if g:vimim_map =~ 'ctrl_bslash'
             let input .=  s:vimim_statusline() . s:space
-        elseif s:vimim_map =~ 'gi'
+        elseif g:vimim_map =~ 'gi'
             let input .= s:chinese('onekey', s:space, 'windowless')
         endif
         call add(eggs, input)
@@ -348,7 +341,7 @@ function! s:vimim_get_hjkl_game(keyboard)
     let keyboard = a:keyboard
     let results = []
     let poem = s:vimim_filereadable(keyboard)
-    if keyboard =~# '^i' && keyboard =~ '\d' && empty(s:vimim_shuangpin)
+    if keyboard =~# '^i' && keyboard =~ '\d' && empty(g:vimim_shuangpin)
         return s:vimim_imode_number(keyboard)
     elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
         return [s:vimim_imode_today_now(keyboard)]
@@ -491,7 +484,7 @@ function! s:vimim_dictionary_punctuations()
     let s:all_evils = { '\' : "、", "'" : "‘’", '"' : "“”" }
     call extend(s:all_evils, punctuations)
     let s:punctuations = {}
-    if s:vimim_mode !~ 'nopunctuation'
+    if g:vimim_mode !~ 'nopunctuation'
         let s:punctuations = copy(punctuations)
     endif
 endfunction
@@ -545,7 +538,7 @@ function! s:vimim_get_title()
     let backend = s:backend[s:ui.root][s:ui.im]
     if has_key(s:im_keycode, s:ui.im)
         let im = backend.chinese
-        if s:windowless && len(s:cjk.filename)
+        if s:windowless && s:mode == 'onekey' && len(s:cjk.filename)
             let im = len(s:english.line) ? '*'      : ''
             let im = len(s:hjkl_n)       ? s:hjkl_n : im
         endif
@@ -561,7 +554,7 @@ function! s:vimim_get_title()
         let title .= s:space . s:backend.cloud.mycloud.directory
     elseif s:ui.root == 'cloud'
         let title = s:chinese(s:space, s:cloud_default, 'cloud')
-        let clouds = split(s:vimim_cloud,',')
+        let clouds = split(g:vimim_cloud,',')
         let vimim_cloud = get(clouds, match(clouds, s:cloud_default))
         if vimim_cloud =~ 'wubi'          " g:vimim_cloud='qq.wubi'
             let title .= s:chinese(s:space, 'wubi')
@@ -572,18 +565,18 @@ function! s:vimim_get_title()
             endif
         endif
     endif
-    if len(s:vimim_shuangpin)
-        let title = s:chinese(s:space, s:vimim_shuangpin, 'shuangpin')
+    if !empty(g:vimim_shuangpin)
+        let title = s:chinese(s:space, g:vimim_shuangpin, 'shuangpin')
     endif
-    if s:vimim_shuangpin =~ 'abc' || s:vimim_cloud =~ 'abc'
+    if g:vimim_shuangpin =~ 'abc' || g:vimim_cloud =~ 'abc'
         let title = substitute(title, '拼', '打', '')
     endif
     return title . s:space
 endfunction
 
 function! s:vimim_statusline()
-    let input_mode  = get(split(s:vimim_mode,','),0)
-    let p = s:vimim_mode =~ 'nopunctuation' ? 'halfwidth' : 'fullwidth'
+    let input_mode  = get(split(g:vimim_mode,','),0)
+    let p = g:vimim_mode =~ 'nopunctuation' ? 'halfwidth' : 'fullwidth'
     let line = s:chinese('chinese', input_mode) . s:vimim_get_title()
     return line . s:chinese(p, s:space, "VimIM")
 endfunction
@@ -649,7 +642,8 @@ function! s:vimim_common_maps()
     lnoremap <silent> <expr> <Space> g:vimim_space()
     lnoremap <silent> <expr> <C-H>   g:vimim_switch()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
-    lnoremap <silent> <C-L>  <C-R>=g:vimim_screenshot()<CR>
+    lnoremap <silent> <expr> <C-L>   g:vimim_popup()
+    lnoremap <silent>        <C-V>   <C-R>=g:vimim_screenshot()<CR>
 endfunction
 
 function! g:vimim_label(key)
@@ -677,7 +671,7 @@ function! g:vimim_label(key)
             let key = yes . key
             sil!call s:vimim_reset_after_insert()
         endif
-    elseif s:windowless && key =~ '\d'
+    elseif s:windowless && s:mode == 'onekey' && key =~ '\d'
         if s:pattern_not_found
             let s:pattern_not_found = 0
         else
@@ -717,7 +711,7 @@ function! g:vimim_page(key)
 endfunction
 
 function! s:vimim_dynamic_maps()
-    let vimim_cloud = get(split(s:vimim_cloud,','), 0)
+    let vimim_cloud = get(split(g:vimim_cloud,','), 0)
     if vimim_cloud =~ 'wubi' || s:ui.im =~ 'wubi\|erbi'
         for char in s:az_list
             sil!exe 'lnoremap <silent> ' . char . ' ' .
@@ -836,6 +830,35 @@ endfunction
 let s:VimIM += [" ====  mode: windowless ==== {{{"]
 " =================================================
 
+function! g:vimim_gi()
+    let s:windowless = 1
+    call s:vimim_title()
+    sil!exe 'sil!return "' . s:vimim_start() . '"'
+endfunction
+
+function! g:vimim_tab()
+    " (1) Tab in insert mode => tab is tab if nature
+    " (2) Tab in insert mode => start windowless
+    " (3) Tab in omni window => start print out fine menu
+    let tab = "\t"
+    if empty(s:vimim_byte_before())
+    elseif pumvisible()
+        let s:popup_list = s:popup_list[:&pumheight-1] " WYSIWYG
+        let tab = g:vimim_screenshot()
+    else
+        let tab = g:vimim_gi() . s:vimim_onekey_action()
+    endif
+    sil!exe 'sil!return "' . tab . '"'
+endfunction
+
+function! g:vimim_popup()
+    " windowless mode <=> popup window mode
+    let s:windowless = s:windowless ? 0 : 1
+    call s:vimim_title()
+    let popup = '\<C-E>\<C-R>=g:vimim()\<CR>'
+    sil!exe 'sil!return "' . popup . '"'
+endfunction
+
 function! s:vimim_windowless(key)
     let key = a:key         " workaround to detect if active completion
     if s:pattern_not_found  " gi \backslash space space
@@ -862,7 +885,7 @@ endfunction
 
 function! s:vimim_title()
     let titlestring = s:logo . s:vimim_get_title()
-    if s:windowless && empty(s:touch_me_not)
+    if s:windowless && s:mode == 'onekey' && empty(s:touch_me_not)
         let titlestring .= s:today
     endif
     if &term == 'screen'
@@ -912,8 +935,10 @@ function! g:vimim_space()
         if s:vimim_byte_before() =~# s:valid_keyboard
             let space = g:vimim()
         endif
+    elseif s:seamless_positions == getpos(".") || s:ui.has_dot
+        let s:smart_enter = 0  " space is space after enter
     else
-        let space = s:vimim_onekey_action(1)
+        let space = s:vimim_onekey_action()
     endif
     call s:vimim_reset_after_insert()
     sil!exe 'sil!return "' . space . '"'
@@ -926,7 +951,8 @@ function! g:vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
-    elseif s:windowless || s:vimim_byte_before() =~# s:valid_keyboard
+    elseif s:windowless && s:mode == 'onekey'
+    \|| s:vimim_byte_before() =~# s:valid_keyboard
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -953,7 +979,7 @@ function! g:vimim_esc()
         endif
         let esc = s:vimim_stop() . esc
         let &titlestring = s:space . @0[:-2]
-    elseif pumvisible() && s:vimim_mode =~ 'esc' 
+    elseif pumvisible() && g:vimim_mode =~ 'esc'
         let esc = g:vimim_correction() " use <Esc> as one key correction
     endif
     sil!exe 'sil!return "' . esc . '"'
@@ -967,7 +993,7 @@ function! g:vimim_correction()
         if range
             let key = '\<C-E>' . repeat("\<Left>\<Delete>", range)
         endif
-    elseif s:windowless
+    elseif s:windowless && s:mode == 'onekey'
         let s:smart_enter = "windowless_correction"
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
         call s:vimim_title()
@@ -990,49 +1016,25 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
 function! g:vimim_onekey()
+    " (1) OneKey in insert mode => start omni popup mode
+    " (2) OneKey in omni window => start print out menu
     let onekey = ''
     if pumvisible()
         let onekey = g:vimim_screenshot()
     elseif empty(s:ctrl6)
-        let onekey = s:vimim_start() . s:vimim_onekey_action(0)
+        let onekey = s:vimim_start() . s:vimim_onekey_action()
     else
         let onekey = s:vimim_stop()
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! g:vimim_tab()
-    " (1) Tab in insert mode     => start windowless mode
-    " (2) Tab in windowless mode => start MidasTouch popup
-    " (3) Tab in omni window     => start print out menu
-    let tab = "\t"
-    if empty(s:vimim_byte_before())
-    elseif pumvisible()
-        let s:popup_list = s:popup_list[:&pumheight-1] " WYSIWYG
-        let tab = g:vimim_screenshot()
-    else
-        let tab = g:vimim_gi() . s:vimim_onekey_action(0)
-    endif
-    sil!exe 'sil!return "' . tab . '"'
-endfunction
-
-function! g:vimim_gi()
-    let s:windowless = s:windowless ? 0 : 1
-    call s:vimim_title()
-    sil!exe 'sil!return "' . s:vimim_start() . '"'
-endfunction
-
-function! s:vimim_onekey_action(space)
-    let onekey = a:space ? " " : ""
-    if s:seamless_positions == getpos(".") || s:ui.has_dot
-        let s:smart_enter = 0  " space is space after enter
-        return onekey
-    endif
+function! s:vimim_onekey_action()
     let onekey = s:vimim_onekey_evils()
     if empty(onekey)
         if s:vimim_byte_before() =~# s:valid_keyboard
             let onekey = g:vimim()
-        elseif s:windowless
+        elseif s:windowless && s:mode == 'onekey'
             let onekey = s:vimim_windowless("")
         endif
     endif
@@ -1099,10 +1101,8 @@ let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 
 function! g:vimim_chinese()
     let switch = ""
-    if empty(s:ui.frontends)
-    elseif s:mode == 'onekey' && pumvisible()
-    else
-        let s:mode = s:vimim_mode =~ 'static' ? 'static' : 'dynamic'
+    if len(s:ui.frontends)
+        let s:mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
         let s:toggle_im = s:toggle_im ? 0 : 1
         let switch = s:vimim_start_stop(s:toggle_im)
     endif
@@ -1137,8 +1137,8 @@ endfunction
 
 function! s:vimim_set_custom_im_list()
     let toggle_list = []
-    if s:vimim_toggle =~ ","
-        for toggle in split(s:vimim_toggle, ",")
+    if g:vimim_toggle =~ ","
+        for toggle in split(g:vimim_toggle, ",")
             for [root, im] in s:ui.frontends
                 if toggle =~ im
                     call add(toggle_list, [root, im])
@@ -1883,19 +1883,21 @@ function! s:vimim_more_pinyin_candidates(keyboard)
     " [purpose] make standard layout for omni popup menu
     " input  =>  mamahuhu
     " output =>  mamahu, mama
-    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
-    if len(s:vimim_shuangpin) || len(s:english.line) || empty(keyboards)
+    if !empty(g:vimim_shuangpin) || len(s:english.line)
         return []
     endif
     let candidates = []
-    for i in reverse(range(len(keyboards)-1))
-        let candidate = join(keyboards[0 : i], "")
-        if !empty(candidate)
-            call add(candidates, candidate)
+    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
+    if len(keyboards)
+        for i in reverse(range(len(keyboards)-1))
+            let candidate = join(keyboards[0 : i], "")
+            if !empty(candidate)
+                call add(candidates, candidate)
+            endif
+        endfor
+        if len(candidates) > 2
+            let candidates = candidates[0 : len(candidates)-2]
         endif
-    endfor
-    if len(candidates) > 2
-        let candidates = candidates[0 : len(candidates)-2]
     endif
     return candidates
 endfunction
@@ -1990,20 +1992,20 @@ function! s:vimim_create_shuangpin_table(rules)
         endif
     endfor
     " the jxqy+v special case handling
-    if match(split("abc purple nature flypy"), s:vimim_shuangpin) > -1
+    if match(split("abc purple nature flypy"), g:vimim_shuangpin) > -1
         let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
         call extend(sptable, jxqy)
-    elseif s:vimim_shuangpin == 'ms'
+    elseif g:vimim_shuangpin == 'ms'
         let jxqy = {"jv" : "jue", "qv" : "que", "xv" : "xue", "yv" : "yue"}
         call extend(sptable, jxqy)
     endif
-    if s:vimim_shuangpin == 'flypy'  " flypy special case handling
+    if g:vimim_shuangpin == 'flypy'  " flypy special case handling
         let key   = 'ou eg  er an ao ai aa en oo os  ah  ee ei'
         let value = 'ou eng er an ao ai a  en o  ong ang e  ei'
         call extend(sptable, s:vimim_key_value_hash(key, value))
     endif
     " the nature shuangpin special case handling
-    if s:vimim_shuangpin == 'nature'
+    if g:vimim_shuangpin == 'nature'
         let nature = {"aa" : "a", "oo" : "o", "ee" : "e" }
         call extend(sptable, nature)
     endif
@@ -2472,20 +2474,20 @@ function! s:vimim_set_background_clouds()
     let s:http_exe = ""
     let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
     let s:cloud_default = get(cloud_defaults,0)
-    let clouds = split(s:vimim_cloud,',')
+    let clouds = split(g:vimim_cloud,',')
     for cloud in clouds
         let cloud = get(split(cloud,'[.]'),0)
         call remove(cloud_defaults, match(cloud_defaults,cloud))
     endfor
     let clouds += cloud_defaults
-    let s:vimim_cloud = join(clouds,',')
+    let g:vimim_cloud = join(clouds,',')
     let default = get(split(get(clouds,0),'[.]'),0)
     if match(s:rc["g:vimim_cloud"], default) > -1
         let s:cloud_default = default
     endif
     if !empty(s:vimim_check_http_executable())
         let s:ui.root = 'cloud'
-        for cloud in reverse(split(s:vimim_cloud,','))
+        for cloud in reverse(split(g:vimim_cloud,','))
             let im = get(split(cloud,'[.]'),0)
             let s:ui.im = im
             call insert(s:ui.frontends, [s:ui.root, s:ui.im])
@@ -2500,7 +2502,7 @@ function! s:vimim_set_background_clouds()
 endfunction
 
 function! s:vimim_check_http_executable()
-    if s:vimim_cloud < 0 && len(s:vimim_mycloud) < 3
+    if g:vimim_cloud < 0 && len(s:vimim_mycloud) < 3
         return 0
     elseif len(s:http_exe) > 3
         return s:http_exe
@@ -2630,7 +2632,7 @@ function! s:vimim_get_cloud_qq(keyboard)
         let s:backend.cloud.qq.im = key_qq
     endif
     let input  = url
-    let clouds = split(s:vimim_cloud,',')      " qq.shuangpin.abc,google
+    let clouds = split(g:vimim_cloud,',')      " qq.shuangpin.abc,google
     let vimim_cloud = get(clouds, match(clouds,'qq')) " qq.shuangpin.abc
     if vimim_cloud =~ 'wubi'
         let input .= 'gwb'
@@ -3108,6 +3110,22 @@ function! s:vimim_restore_vimrc()
     let &pumheight   = s:pumheights.saved
 endfunction
 
+function! s:vimim_set_pumheight()
+    let &pumheight = s:pumheights.saved
+    if empty(&pumheight) || s:mode == 'onekey'
+        let &pumheight = 10
+    endif
+    if s:mode == 'onekey' && s:windowless
+        let &pumheight = 1
+    endif
+    let s:pumheights.current = copy(&pumheight)
+    if s:touch_me_not
+        let &pumheight = 0
+    elseif s:hjkl_l
+        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
+    endif
+endfunction
+
 function! s:vimim_super_reset()
     sil!call s:vimim_reset_before_anything()
     sil!call s:vimim_reset_before_omni()
@@ -3233,10 +3251,10 @@ else
         endif
     endif
     " [shuangpin] support 6 major shuangpin rules
-    if len(s:vimim_shuangpin) && s:vimim_cloud !~ 'shuangpin'
+    if !empty(g:vimim_shuangpin) && g:vimim_cloud !~ 'shuangpin'
         if empty(s:shuangpin_table)
             let rules = s:vimim_shuangpin_generic()
-            let rules = s:vimim_shuangpin_rules(s:vimim_shuangpin, rules)
+            let rules = s:vimim_shuangpin_rules(g:vimim_shuangpin, rules)
             let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
         endif
         if empty(s:has_pumvisible)
@@ -3249,7 +3267,7 @@ else
         let results = s:vimim_get_cloud(keyboard)
     endif
     if empty(results)
-        if s:ui.im =~ 'wubi\|erbi' || s:vimim_cloud =~ 'wubi'
+        if s:ui.im =~ 'wubi\|erbi' || g:vimim_cloud =~ 'wubi'
             if s:mode == 'dynamic' && len(keyboard) > 4
                 let start = 4*((len(keyboard)-1)/4)
                 let keyboard = strpart(keyboard, start)
@@ -3304,17 +3322,9 @@ function! s:vimim_popupmenu_list(lines)
             let s:match_list = results
         endif
     endif
+    call s:vimim_set_pumheight()
     let keyboards = split(s:keyboard)  " mmmm => ['m',"m'm'm"]
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
-    if empty(&pumheight) || s:mode == 'onekey'
-        let &pumheight = 10
-    endif
-    let s:pumheights.current = copy(&pumheight)
-    if s:touch_me_not
-        let &pumheight = 0
-    elseif s:hjkl_l
-        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
-    endif
     let label = 1
     let one_list = []
     let popup_list = []
@@ -3356,7 +3366,7 @@ function! s:vimim_popupmenu_list(lines)
             let complete_items["menu"] = menu
         endif
         let titleline = label . "."
-        if s:windowless
+        if s:windowless && s:mode == 'onekey'
             let titleline = label2
             if s:vimim_cjk()     " display english flag plus 4corner
                 let star = substitute(titleline,'[0-9a-z_ ]','','g')
@@ -3381,7 +3391,6 @@ function! s:vimim_popupmenu_list(lines)
             let s:cursor_at_windowless = 0
             let vimim = "VimIM" . s:space .'  '. join(keyboards,"").'  '
             let &titlestring = vimim . join(one_list)
-            let &pumheight = 1
             call s:vimim_set_titlestring(1)
             Debug s:match_list[:4]
         elseif s:touch_me_not
@@ -3458,7 +3467,7 @@ endfunction
 function! g:vimim_omni()
     let cursor = s:mode == 'static' ? '\<C-N>\<C-P>' : '\<C-P>\<Down>'
     let key = pumvisible() ? cursor : ""
-    let s:smart_enter = 0  " s:windowless: gi ma enter li space 3
+    let s:smart_enter = 0  " windowless: gi ma enter li space 4
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -3477,22 +3486,22 @@ function! s:vimim_egg_vimimhelp()
 endfunction
 
 function! s:vimim_plug_and_play()
-    if s:vimim_map =~ 'ctrl_bslash'
+    if g:vimim_map =~ 'ctrl_bslash'
         nnoremap<silent><C-Bslash> :call g:vimim_chinese()<CR>
         inoremap<unique><C-Bslash> <C-R>=g:vimim_chinese()<CR>
     endif
-    if s:vimim_map =~ 'ctrl_6'
+    if g:vimim_map =~ 'ctrl_6'
         inoremap<silent><C-^> <C-R>=g:vimim_onekey()<CR>
         xnoremap<silent><C-^> y:call g:vimim_visual()<CR>
     endif
-    if s:vimim_map =~ 'tab'
+    if g:vimim_map =~ 'tab'
         inoremap<silent><Tab> <C-R>=g:vimim_tab()<CR>
         xnoremap<silent><Tab> y:call g:vimim_visual()<CR>
     endif
-    if s:vimim_map =~ 'gi'
+    if g:vimim_map =~ 'gi'
         nnoremap<silent> gi a<C-R>=g:vimim_gi()<CR>
     endif
-    if s:vimim_map =~ 'search'
+    if g:vimim_map =~ 'search'
         nnoremap<silent> n :call g:vimim_search()<CR>n
     endif
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
