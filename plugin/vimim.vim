@@ -949,12 +949,12 @@ function! g:vimim_esc()
     if s:mode == 'onekey'
         :y
         if has("gui_running") && has("win32")
-            sil!let @+ = @0[:-2]  " copy to clipboard and window titles
+            sil!let @+ = @0[:-2]  " copy to clipboard and window title
         endif
         let esc = s:vimim_stop() . esc
         let &titlestring = s:space . @0[:-2]
-    elseif pumvisible()   " use <Esc> as one key correction
-        let esc = g:vimim_correction()
+    elseif pumvisible() && s:vimim_mode =~ 'esc' 
+        let esc = g:vimim_correction() " use <Esc> as one key correction
     endif
     sil!exe 'sil!return "' . esc . '"'
 endfunction
