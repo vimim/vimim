@@ -3093,7 +3093,6 @@ function! s:vimim_set_vimrc()
     set completeopt=menuone
     set complete=.
     set nolazyredraw
-    set highlight=e-,w-
     set omnifunc=VimIM
 endfunction
 
@@ -3105,7 +3104,6 @@ function! s:vimim_save_vimrc()
     let s:completeopt = &completeopt
     let s:complete    = &complete
     let s:lazyredraw  = &lazyredraw
-    let s:highlight   = &highlight
     let s:omnifunc    = &omnifunc
 endfunction
 
@@ -3117,7 +3115,6 @@ function! s:vimim_restore_vimrc()
     let &completeopt = s:completeopt
     let &complete    = s:complete
     let &lazyredraw  = s:lazyredraw
-    let &highlight   = s:highlight
     let &omnifunc    = s:omnifunc
     let &pumheight   = s:pumheights.saved
 endfunction
