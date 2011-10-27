@@ -53,7 +53,8 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+:let g:vimim_shuangpin='abc'
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab,search,gi'
@@ -833,18 +834,17 @@ function! s:vimim_title()
 endfunction
 
 function! s:vimim_menuless(key)
-    let key = a:key    " workaround to detect if completion is active
-    let digit = key == " " ? '' : key
+    let key = a:key         " workaround to detect if active completion
     if s:pattern_not_found  " gi \backslash space space
         " make space smart  " gi ma space enter space
     elseif s:smart_enter    " gi ma space enter 77 ma space
         let s:smart_enter = 0
         let s:seamless_positions = []       " gi wubihua space 8
     elseif !empty(s:vimim_char_before()) || s:keyboard =~ " "
-        let key = empty(len(digit)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
-        let cursor = empty(len(digit)) ? 1 : digit < 1 ? 9 : digit-1
+        let key = empty(len(a:key)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
+        let cursor = empty(len(a:key)) ? 1 : a:key < 1 ? 9 : a:key-1
         if s:vimim_cjk()
-            let s:hjkl_n .= digit   " 1234567890 for windowless filter
+            let s:hjkl_n .= a:key   " 1234567890 for windowless filter
         else
             if a:key =~ '[02-9]'    "  234567890 for windowless choice
                 let key = repeat('\<C-N>', cursor)
@@ -883,12 +883,12 @@ function! g:vimim_space()
     let space = " "
     let s:has_pumvisible = 0
     if pumvisible()
-       let s:has_pumvisible = 1
-       let cursor = s:mode =~ 'static' ? '\<C-P>\<C-N>\<C-Y>' : '\<C-Y>'
-       let space = cursor . '\<C-R>=g:vimim()\<CR>'
-       if s:onekey && empty(s:cjk.filename)
-           let space = cursor . s:vimim_stop()
-       endif
+        let s:has_pumvisible = 1
+        let cursor = s:mode =~ 'static' ? '\<C-P>\<C-N>\<C-Y>' : '\<C-Y>'
+        let space = cursor . g:vimim()
+        if s:onekey && empty(s:cjk.filename)
+             let space = cursor . s:vimim_stop()
+        endif
     elseif s:pattern_not_found
     elseif s:mode =~ 'dynamic'
     elseif s:mode =~ 'static'
@@ -972,7 +972,7 @@ function! g:vimim_onekey()
     if pumvisible()
         let onekey = g:vimim_screenshot()
     elseif empty(s:ctrl6)
-        let onekey = s:vimim_onekey_action(0)
+        let onekey = s:vimim_start() . s:vimim_onekey_action(0)
     else
         let onekey = s:vimim_stop()
     endif
@@ -982,48 +982,36 @@ endfunction
 function! g:vimim_tab()
     " (1) Tab in insert mode     => start windowless mode
     " (2) Tab in windowless mode => start MidasTouch popup
-    " (3) Tab in omni window     => start print
+    " (3) Tab in omni window     => start print out menu
     let tab = "\t"
     if empty(s:vimim_byte_before())
     elseif pumvisible()
         let tab = g:vimim_screenshot()
     else
-        let s:windowless = s:windowless ? 0 : 1
-        let tab  = s:vimim_onekey_action(0)
-        call s:vimim_title()
+        let tab = g:vimim_gi() . s:vimim_onekey_action(0)
     endif
     sil!exe 'sil!return "' . tab . '"'
 endfunction
 
 function! g:vimim_gi()
-    let s:windowless = 1
+    let s:windowless = s:windowless ? 0 : 1
     call s:vimim_title()
-    let gi = s:vimim_start()
-    let cursor = getline(".")[col(".")-1] =~ '\w' ? 1 : s:multibyte
-    if col("$")-col(".") && col("$")-col(".") < cursor + 1
-        let gi = '\<Right>' . gi  " gi at the end of cursor line
-    endif
-    sil!exe 'sil!return "' . gi . '"'
+    sil!exe 'sil!return "' . s:vimim_start() . '"'
 endfunction
 
 function! s:vimim_onekey_action(space)
-    let space = a:space ? " " : ""
-    let onekey = space
-    if s:seamless_positions == getpos(".")
-        let s:smart_enter = 0
-        return space  "  space is space after enter
-    elseif empty(s:ui.has_dot)
-        let onekey = s:vimim_onekey_evils()
-    endif
-    if !empty(onekey)
+    let onekey = a:space ? " " : ""
+    if s:seamless_positions == getpos(".") || s:ui.has_dot
+        let s:smart_enter = 0  " space is space after enter
         return onekey
-    elseif empty(s:ctrl6) && empty(a:space)
-        let onekey = s:vimim_start()
     endif
-    if s:vimim_byte_before() =~# s:valid_keyboard
-        let onekey .= g:vimim()
-    elseif s:windowless
-        let onekey = s:vimim_menuless(space)
+    let onekey = s:vimim_onekey_evils()
+    if empty(onekey)
+        if s:vimim_byte_before() =~# s:valid_keyboard
+            let onekey = g:vimim()
+        elseif s:windowless
+            let onekey = s:vimim_menuless("")
+        endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
@@ -3502,7 +3490,7 @@ function! s:vimim_plug_and_play()
         xnoremap<silent><Tab> y:call g:vimim_visual()<CR>
     endif
     if s:vimim_map =~ 'gi'
-        nnoremap<silent> gi i<C-R>=g:vimim_gi()<CR>
+        nnoremap<silent> gi a<C-R>=g:vimim_gi()<CR>
     endif
     if s:vimim_map =~ 'search'
         nnoremap<silent> n :call g:vimim_search()<CR>n
