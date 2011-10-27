@@ -818,7 +818,7 @@ endfunction
 let s:VimIM += [" ====  mode: windowless ==== {{{"]
 " =================================================
 
-function! g:vimim_title()
+function! s:vimim_title()
     let titlestring = s:logo . s:vimim_get_title()
     if s:windowless && empty(s:touch_me_not)
         let titlestring .= s:today
@@ -924,7 +924,7 @@ function! g:vimim_enter()
         let key = "\<CR>"
         let s:smart_enter = 0
     endif
-    let key .= '\<C-R>=g:vimim_title()\<CR>'
+    call s:vimim_title()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -939,7 +939,7 @@ function! g:vimim_backspace()
             let s:smart_enter = "menuless_correction"
             let key  = '\<C-E>\<C-R>=g:vimim()\<CR>' . key
         else
-            let key .= '\<C-R>=g:vimim_title()\<CR>'
+            call s:vimim_title()
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -991,14 +991,15 @@ function! g:vimim_tab()
     else
         let s:windowless = s:windowless ? 0 : 1
         let tab  = s:vimim_onekey_action(0)
-        let tab .= g:vimim_title()
+        call s:vimim_title()
     endif
     sil!exe 'sil!return "' . tab . '"'
 endfunction
 
 function! g:vimim_gi()
     let s:windowless = 1
-    let gi = g:vimim_title() . g:vimim_start()
+    call s:vimim_title()
+    let gi = s:vimim_start()
     let cursor = getline(".")[col(".")-1] =~ '\w' ? 1 : s:multibyte
     if col("$")-col(".") && col("$")-col(".") < cursor + 1
         let gi = '\<Right>' . gi  " gi at the end of cursor line
@@ -1018,7 +1019,7 @@ function! s:vimim_onekey_action(space)
     if !empty(onekey)
         return onekey
     elseif empty(s:ctrl6) && empty(a:space)
-        let onekey = g:vimim_start()
+        let onekey = s:vimim_start()
     endif
     if s:vimim_byte_before() =~# s:valid_keyboard
         let onekey .= g:vimim()
@@ -1119,7 +1120,7 @@ function! g:vimim_switch()
         let s:cloud_default = s:ui.im
     endif
     if s:onekey || s:windowless
-        return g:vimim_title()
+        return s:vimim_title()
     endif
     return s:vimim_chinese_mode(1)
 endfunction
@@ -1137,7 +1138,7 @@ function! s:vimim_chinese_mode(switch)
     if a:switch
         let s:onekey = 0
         let s:mode = s:vimim_mode =~ 'static' ? 'static' : 'dynamic'
-        let ctrl6 = g:vimim_start()
+        let ctrl6 = s:vimim_start()
         let &titlestring = s:logo . s:vimim_get_title()
         sil!call s:vimim_set_statusline()
     else
@@ -1698,7 +1699,8 @@ function! g:vimim_visual()
         let line = string(len(lines)) . '*' . line
         let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
     else
-        let visual = "\<C-R>=g:vimim_start()\<CR>\<C-R>=g:vimim()\<CR>"
+        sil!call s:vimim_start()
+        let visual = "\<C-^>" . "\<C-R>=g:vimim()\<CR>"
         if len(lines) < 2  " highlight multiple cjk => show property
             let s:seamless_positions = getpos("'<'")
             let chinese = get(split(line,'\zs'),0)
@@ -3065,7 +3067,7 @@ endfunction
 let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
-function! g:vimim_start()
+function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_color()
     sil!call s:vimim_set_keycode()
@@ -3396,7 +3398,7 @@ function! s:vimim_popupmenu_list(lines)
         call add(popup_list, complete_items)
     endfor
     if s:onekey
-        call g:vimim_title()
+        call s:vimim_title()
         set completeopt=menuone   " for hjkl_n refresh
         let s:popup_list = popup_list
         if s:windowless && empty(s:touch_me_not)
