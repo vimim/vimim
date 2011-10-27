@@ -627,7 +627,7 @@ function! s:vimim_get_labeling(label)
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  imap nmap lmap   ==== {{{"]
+let s:VimIM += [" ====  lmap imap nmap   ==== {{{"]
 " =================================================
 
 function! s:vimim_common_maps()
@@ -2786,9 +2786,9 @@ let s:VimIM += [" ====  backend: mycloud ==== {{{"]
 " =================================================
 
 function! s:vimim_set_backend_mycloud()
-    let s:mycloud_arg  = 0
-    let s:mycloud_func = 0
-    let s:mycloud_mode = 0
+    let s:mycloud_arg  = ""
+    let s:mycloud_mode = ""
+    let s:mycloud_func = "do_getlocal"
     let s:mycloud_host = "localhost"
     let s:mycloud_port = 10007
     let mycloud = 0
@@ -2866,9 +2866,7 @@ function! s:vimim_check_mycloud_plugin_libcall()
     " we do plug-n-play for libcall(), not for system()
     let cloud = s:vimim_get_libvimim()
     if !empty(cloud)
-        let s:mycloud_arg = ""
         let s:mycloud_mode = "libcall"
-        let s:mycloud_func = 'do_getlocal'
         if s:vimim_access_mycloud_isvalid(cloud)
             return cloud
         endif
@@ -2930,14 +2928,10 @@ function! s:vimim_check_mycloud_plugin_url()
         endif
     elseif part[0] ==# "dll"
         let base = len(part[1]) == 1 ? 1 : 0
-        let s:mycloud_func = 'do_getlocal' " provide function name
         if lenpart >= base+4
             let s:mycloud_func = part[base+3]
         endif
-        let s:mycloud_arg = ""  " provide argument
-        if lenpart >= base+3
-            let s:mycloud_arg = part[base+2]
-        endif
+        let s:mycloud_arg = lenpart >= base+3 ? part[base+2] : ""
         let cloud = base == 1 ? part[1] . ':' . part[2] : part[1]
         if filereadable(cloud)
             let s:mycloud_mode = "libcall"
