@@ -56,8 +56,7 @@ function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
-        let g:vimim_map = 'tab,search,gi'
-        let g:vimim_map = 'tab,ctrl_6,ctrl_bslash,search,gi'
+        let g:vimim_map = 'tab,search,gi,ctrl_6,ctrl_bslash'
     endif
 endfunction
 
@@ -91,7 +90,7 @@ function! s:vimim_initialize_global()
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
     let s:toggle_im = 0
-    let s:cursor_at_menuless = 0
+    let s:cursor_at_windowless = 0
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
     let s:quanpin_table = {}
@@ -514,7 +513,7 @@ function! s:chinese(...)
 endfunction
 
 function! s:vimim_set_statusline()
-    set laststatus=2
+    let &laststatus = s:mode == 'onekey' ? s:laststatus : 2
     if empty(&statusline)
         set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
     elseif &statusline =~ 'IMName'
@@ -646,9 +645,10 @@ function! s:vimim_common_maps()
     endfor
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <CR>    g:vimim_enter()
-    lnoremap <silent> <expr> <C-H>   g:vimim_switch()
+    lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <Space> g:vimim_space()
-    lnoremap          <expr> <Esc>   g:vimim_esc()
+    lnoremap <silent> <expr> <C-H>   g:vimim_switch()
+    lnoremap <silent> <expr> <C-L>   g:vimim_print()
 endfunction
 
 function! g:vimim_label(key)
@@ -680,7 +680,7 @@ function! g:vimim_label(key)
         if s:pattern_not_found
             let s:pattern_not_found = 0
         else
-            let key = s:vimim_menuless(key)
+            let key = s:vimim_windowless(key)
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -734,7 +734,7 @@ function! s:vimim_dynamic_maps()
 endfunction
 
 function! s:vimim_onekey_maps()
-    let onekey_list = split("h j k l m n / ? ;")
+    let onekey_list = split("h j k l m n / ?")
     if s:vimim_cjk()
         let onekey_list += s:qwer + ['s']
     endif
@@ -753,9 +753,6 @@ function! g:vimim_hjkl(key)
         elseif key ==# 'k' | let key = '\<Up>'   " k
         elseif key ==# 'l' | let s:hjkl_l += 1   " l
         elseif key ==# 's' | let s:hjkl__ += 1   " s/t transfer
-        elseif key ==# ';'                       " dump omni popup
-            let s:popup_list = s:popup_list[:&pumheight-1]
-            let key = '\<C-R>=g:vimim_screenshot()\<CR>'
         elseif key =~ "[/?]"
             let key = '\<C-Y>\<C-R>=g:vimim_slash()\<CR>' . key . '\<CR>'
         elseif match(s:qwer, key) > -1
@@ -817,22 +814,7 @@ endfunction
 let s:VimIM += [" ====  mode: windowless ==== {{{"]
 " =================================================
 
-function! s:vimim_title()
-    let titlestring = s:logo . s:vimim_get_title()
-    if s:windowless && empty(s:touch_me_not)
-        let titlestring .= s:today
-    endif
-    if &term == 'screen'
-        echo titlestring
-    else
-        " if terminal can set window titles: all GUI versions
-        let &titlestring = titlestring
-        :redraw
-    endif
-    return ""
-endfunction
-
-function! s:vimim_menuless(key)
+function! s:vimim_windowless(key)
     let key = a:key         " workaround to detect if active completion
     if s:pattern_not_found  " gi \backslash space space
         " make space smart  " gi ma space enter space
@@ -856,18 +838,31 @@ function! s:vimim_menuless(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+function! s:vimim_title()
+    let titlestring = s:logo . s:vimim_get_title()
+    if s:windowless && empty(s:touch_me_not)
+        let titlestring .= s:today
+    endif
+    if &term == 'screen'
+        echo titlestring
+    else  " if terminal can set window titles: all GUI versions
+        let &titlestring = titlestring
+        :redraw
+    endif
+endfunction
+
 function! s:vimim_set_titlestring(cursor)
     let titlestring = substitute(&titlestring, s:colon, ' ', 'g')
     if titlestring !~ '\s\+' . "'" . '\+\s\+'
         let titlestring = substitute(titlestring,"'",'','g')
     endif
     let words = split(titlestring)[1:]
-    let cursor = s:cursor_at_menuless + a:cursor
+    let cursor = s:cursor_at_windowless + a:cursor
     let hightlight = get(words, cursor)
     if !empty(hightlight) && len(words) > 1
         let left = join(words[1 : cursor-1]) . s:colon
         let right = s:colon . join(words[cursor+1 :])
-        let s:cursor_at_menuless = cursor
+        let s:cursor_at_windowless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
         let title = keyboard .'  '. left . hightlight . right
         let &titlestring = "VimIM" . s:vimim_get_title() .' '. title
@@ -935,7 +930,7 @@ function! g:vimim_backspace()
     endif
     if s:windowless
         if s:smart_enter
-            let s:smart_enter = "menuless_correction"
+            let s:smart_enter = "windowless_correction"
             let key  = '\<C-E>\<C-R>=g:vimim()\<CR>' . key
         else
             call s:vimim_title()
@@ -949,10 +944,10 @@ function! g:vimim_esc()
     if s:mode == 'onekey'
         :y
         if has("gui_running") && has("win32")
-            sil!let @+ = @0[:-2]  " copy to clipboard and display
+            sil!let @+ = @0[:-2]  " copy to clipboard and window titles
         endif
-        let &titlestring = @0[:-2]
         let esc = s:vimim_stop() . '\<Esc>'
+        let &titlestring = s:space . @0[:-2]
     elseif pumvisible()
         let range = col(".") - 1 - s:starts.column
         if range
@@ -1010,7 +1005,7 @@ function! s:vimim_onekey_action(space)
         if s:vimim_byte_before() =~# s:valid_keyboard
             let onekey = g:vimim()
         elseif s:windowless
-            let onekey = s:vimim_menuless("")
+            let onekey = s:vimim_windowless("")
         endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -1047,6 +1042,15 @@ function! s:vimim_onekey_evils()
         let onekey = "\<Left>\<Delete>" . bs
     endif
     sil!exe 'sil!return "' . onekey . '"'
+endfunction
+
+function! g:vimim_print()
+    let key = ''
+    if pumvisible()
+        let s:popup_list = s:popup_list[:&pumheight-1]
+        let key = '\<C-R>=g:vimim_screenshot()\<CR>'
+    endif
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_screenshot()
@@ -1095,46 +1099,42 @@ endfunction
 let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
-function! g:vimim_switch()
-    if len(s:ui.frontends) < 2 && s:mode != 'onekey'
-        return g:vimim_chinese()
-    endif
-    let s:toggle_im += 1
-    let switch = s:toggle_im % len(s:ui.frontends)
-    let s:ui.root = get(get(s:ui.frontends, switch), 0)
-    let s:ui.im   = get(get(s:ui.frontends, switch), 1)
-    if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
-        let s:cloud_default = s:ui.im
-    endif
-    if s:mode == 'onekey' || s:windowless
-        return s:vimim_title()
-    endif
-    return s:vimim_chinese_mode(1)
-endfunction
-
 function! g:vimim_chinese()
     let switch = ""
     if empty(s:ui.frontends)
     elseif s:mode == 'onekey' && pumvisible()
     else
-        let s:toggle_im = 0
-        let onekey = s:mode == 'onekey' ? 1 : 0
-        let switch = s:vimim_chinese_mode(onekey)
+        let s:mode = s:vimim_mode =~ 'static' ? 'static' : 'dynamic'
+        let s:toggle_im = s:toggle_im ? 0 : 1
+        let switch = s:vimim_start_stop(s:toggle_im)
     endif
     return switch
 endfunction
 
-function! s:vimim_chinese_mode(switch)
+function! s:vimim_start_stop(switch)
     let ctrl6 = ""
     if a:switch
-        let s:mode = s:vimim_mode =~ 'static' ? 'static' : 'dynamic'
         let ctrl6 = s:vimim_start()
-        let &titlestring = s:logo . s:vimim_get_title()
-        sil!call s:vimim_set_statusline()
+        call s:vimim_title()
+        call s:vimim_set_statusline()
     else
         let ctrl6 = s:vimim_stop()
     endif
     sil!exe 'sil!return "' . ctrl6 . '"'
+endfunction
+
+function! g:vimim_switch()
+    if len(s:ui.frontends) < 2
+        return ""
+    endif
+    let switch = s:toggle_im % len(s:ui.frontends)
+    let s:toggle_im += 1
+    let s:ui.root = get(get(s:ui.frontends, switch), 0)
+    let s:ui.im   = get(get(s:ui.frontends, switch), 1)
+    if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
+        let s:cloud_default = s:ui.im
+    endif
+    return s:vimim_start_stop(1)
 endfunction
 
 function! s:vimim_set_custom_im_list()
@@ -3192,7 +3192,7 @@ if a:start
     return start_column
 else
     " [windowless] gi mamahuhuhu space enter basckspace
-    if s:smart_enter =~ "menuless_correction"
+    if s:smart_enter =~ "windowless_correction"
         return [s:space]
     endif
     let results = s:vimim_cache()  " [hjkl] less is more
@@ -3361,7 +3361,7 @@ function! s:vimim_popupmenu_list(lines)
         if s:windowless
             let titleline = label2
             if s:vimim_cjk()     " display english flag plus 4corner
-                let star = substitute(titleline,'\w','','g')
+                let star = substitute(titleline,'[0-9a-z_ ]','','g')
                 let digit = s:vimim_digit_for_cjk(chinese,1)
                 let titleline = star . digit[:3]
             elseif label < 11    " 234567890 for windowless selection
@@ -3380,7 +3380,7 @@ function! s:vimim_popupmenu_list(lines)
         let s:popup_list = popup_list
         if s:windowless && empty(s:touch_me_not)
             set completeopt=menu  " for direct insert
-            let s:cursor_at_menuless = 0
+            let s:cursor_at_windowless = 0
             let vimim = "VimIM" . s:space .'  '. join(keyboards,"").'  '
             let &titlestring = vimim . join(one_list)
             let &pumheight = 1
