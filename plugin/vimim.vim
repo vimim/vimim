@@ -53,8 +53,7 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
-:let g:vimim_shuangpin='abc'
-    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab,search,gi'
