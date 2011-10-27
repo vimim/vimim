@@ -599,8 +599,7 @@ function! g:vimim_slash()
     if repeat_times && line(".") == s:starts.row
         let slash = repeat("\<Left>\<Delete>", repeat_times)
     endif
-    let slash .= '\<C-R>=g:vimim_esc()\<CR>'
-    sil!exe 'sil!return "' . slash . '"'
+    sil!exe 'sil!return "' . slash . g:vimim_esc() . '"'
 endfunction
 
 function! g:vimim_bracket(offset)
@@ -3099,7 +3098,6 @@ function! s:vimim_set_vimrc()
     set title noshowmatch shellslash imdisable
     set completeopt=menuone
     set complete=.
-    set whichwrap=<,>
     set nolazyredraw
     set highlight=e-,w-
     set omnifunc=VimIM
@@ -3112,7 +3110,6 @@ function! s:vimim_save_vimrc()
     let s:titlestring = &titlestring
     let s:completeopt = &completeopt
     let s:complete    = &complete
-    let s:whichwrap   = &whichwrap
     let s:lazyredraw  = &lazyredraw
     let s:highlight   = &highlight
     let s:omnifunc    = &omnifunc
@@ -3125,7 +3122,6 @@ function! s:vimim_restore_vimrc()
     let &titlestring = s:titlestring
     let &completeopt = s:completeopt
     let &complete    = s:complete
-    let &whichwrap   = s:whichwrap
     let &lazyredraw  = s:lazyredraw
     let &highlight   = s:highlight
     let &omnifunc    = s:omnifunc
