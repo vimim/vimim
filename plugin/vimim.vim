@@ -236,10 +236,6 @@ function! s:vimim_egg_vimimgame()
     return split(mahjong)
 endfunction
 
-function! s:vimim_egg_vimimclouds()
-    return s:vimim_get_all_clouds('woyouyigemeng')
-endfunction
-
 function! s:vimim_egg_vimimvim()
     let filter = "strpart(" . 'v:val' . ", 0, 29)"
     return map(copy(s:VimIM), filter)
