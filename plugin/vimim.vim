@@ -53,7 +53,7 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab,search,gi,ctrl_6,ctrl_bslash'
@@ -2502,7 +2502,7 @@ function! s:vimim_set_background_clouds()
 endfunction
 
 function! s:vimim_check_http_executable()
-    if g:vimim_cloud < 0 && len(s:vimim_mycloud) < 3
+    if g:vimim_cloud < 0 && len(g:vimim_mycloud) < 3
         return 0
     elseif len(s:http_exe) > 3
         return s:http_exe
@@ -2783,7 +2783,7 @@ function! s:vimim_set_backend_mycloud()
     let s:mycloud_host = "localhost"
     let s:mycloud_port = 10007
     let mycloud = 0
-    if empty(s:vimim_mycloud)
+    if empty(g:vimim_mycloud)
         let mycloud = s:vimim_check_mycloud_plugin_libcall()
     else
         let mycloud = s:vimim_check_mycloud_plugin_url()
@@ -2878,7 +2878,7 @@ endfunction
 
 function! s:vimim_check_mycloud_plugin_url()
     " we do set-and-play on all systems
-    let part = split(s:vimim_mycloud, ':')
+    let part = split(g:vimim_mycloud, ':')
     let lenpart = len(part)
     if lenpart <= 1
         sil!call s:vimim_debug('info', "invalid_cloud_plugin_url")
@@ -2936,8 +2936,8 @@ function! s:vimim_check_mycloud_plugin_url()
     elseif part[0] ==# "http" || part[0] ==# "https"
         if !empty(s:vimim_check_http_executable()) && !empty(s:http_exe)
             let s:mycloud_mode = "www"
-            if s:vimim_access_mycloud_isvalid(s:vimim_mycloud)
-                return s:vimim_mycloud
+            if s:vimim_access_mycloud_isvalid(g:vimim_mycloud)
+                return g:vimim_mycloud
             endif
         endif
     else
