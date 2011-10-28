@@ -41,13 +41,13 @@ function! s:vimim_bare_bones_vimrc()
     let $PATH = has("unix") ? unix : windows
 endfunction
 
-if exists("b:vimim") || v:version < 700
+if exists("g:vim_im") || v:version < 700
     finish
 elseif &compatible
     call s:vimim_bare_bones_vimrc()
 endif
 scriptencoding utf-8
-let b:vimim = 39340
+let g:vim_im = 39340
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
@@ -228,7 +228,7 @@ function! s:vimim_egg_vimimgame()
 endfunction
 
 function! s:vimim_egg_vimimclouds()
-    return s:vimim_get_cloud_all('woyouyigemeng')
+    return s:vimim_get_all_clouds('woyouyigemeng')
 endfunction
 
 function! s:vimim_egg_vimimvim()
@@ -364,7 +364,7 @@ function! s:vimim_get_hjkl_game(keyboard)
         let results = s:vimim_easter_chicken(keyboard)
     elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
         " [clouds] all clouds for any input: fuck''''
-        let results = s:vimim_get_cloud_all(keyboard[:-5])
+        let results = s:vimim_get_all_clouds(keyboard[:-5])
     elseif len(getreg('"')) > 3     "  vimim_visual
         if keyboard == "''''"       ": display buffer inside omni
             let results = split(getreg('"'), '\n')
@@ -2743,20 +2743,17 @@ function! s:vimim_get_cloud_baidu(keyboard)
     return match_list
 endfunction
 
-function! s:vimim_get_cloud_all(keyboard)
+function! s:vimim_get_all_clouds(keyboard)
     let results = []
     for cloud in split(s:rc["g:vimim_cloud"], ',')
-        let start = localtime()
+        let start = reltime()
         let s:cloud = cloud
         let outputs = s:vimim_get_cloud(a:keyboard)
         if len(results) > 1
             call add(results, s:space)
         endif
-        let title  = s:chinese(cloud, 'cloud', 'input')
-        if localtime() - start
-            let title .= s:space . string(localtime()-start)
-        endif
-        call add(results, a:keyboard . s:space . title)
+        let x = s:space . s:chinese(cloud, 'cloud', 'input') . s:space
+        call add(results, a:keyboard . x . reltimestr(reltime(start)))
         if len(outputs) > 1+1+1+1
             let outputs = &number ? outputs : outputs[0:9]
             let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
