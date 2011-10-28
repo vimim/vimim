@@ -119,10 +119,11 @@ function! s:vimim_initialize_global()
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
     endif
-    let s:cjk = { 'lines' : [] }
     let s:english = { 'lines' : [], 'line' : "" }
-    let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
     let s:english.filename = s:vimim_filereadable("vimim.txt")
+    let s:cjk = { 'lines' : [] }
+    let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
+    let s:onekey_hit_and_run = empty(s:cjk.filename) ? 1 : 0
 endfunction
 
 function! s:vimim_dictionary_keycodes()
@@ -637,7 +638,7 @@ function! s:vimim_common_maps()
     lnoremap <silent> <expr> <CR>    g:vimim_enter()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
-    lnoremap <silent> <expr> <C-L>   g:vimim_onekey_flip()
+    lnoremap <silent> <expr> <C-L>   g:vimim_onekey_popup()
     lnoremap <silent> <expr> <C-H>   g:vimim_im_switch()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
     lnoremap <silent>        <C-V>   <C-R>=g:vimim_screenshot()<CR>
@@ -654,15 +655,14 @@ function! g:vimim_label(key)
         let key = '\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
         if s:mode == 'onekey'
-            if s:vimim_cjk()
-                if a:key =~ '\d'
-                    let s:hjkl_n .= a:key  " 1234567890 as filter
-                else
-                    let key = yes . key    "  abcdvfgxz as label
-                    sil!call s:vimim_reset_after_insert()
-                endif
-            else
+            if empty(s:cjk.filename) && a:key =~ '\d'
+            \|| s:onekey_hit_and_run
                 let key = yes . s:vimim_stop()
+            elseif s:vimim_cjk() && a:key =~ '\d'
+                let s:hjkl_n .= a:key  " 1234567890 as filter
+            else
+                let key = yes . key    "  abcdvfgxz as label
+                sil!call s:vimim_reset_after_insert()
             endif
         else
             let key = yes . key
@@ -842,10 +842,11 @@ function! g:vimim_tab()
     sil!exe 'sil!return "' . tab . '"'
 endfunction
 
-function! g:vimim_onekey_flip()
+function! g:vimim_onekey_popup()
     let popup = '\<C-E>'   "  windowless mode <=> popup window mode
     if s:mode == 'onekey'
         let s:windowless = s:windowless ? 0 : 1
+        let s:onekey_hit_and_run = 0
         call s:vimim_title()
         let popup .= '\<C-R>=g:vimim()\<CR>'
     endif
@@ -919,7 +920,7 @@ function! g:vimim_space()
     if pumvisible()
         let s:has_pumvisible = 1
         let space = '\<C-R>=g:vimim()\<CR>'
-        if s:mode == 'onekey' && empty(s:cjk.filename)
+        if s:mode == 'onekey' && s:onekey_hit_and_run
              let space = s:vimim_stop()
         endif
         let cursor = s:mode == 'static' ? '\<C-P>\<C-N>' : ''
@@ -1098,8 +1099,8 @@ function! g:vimim_chinese()
         return ""
     endif
     let s:mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
-    let s:open_close = s:open_close ? 0 : 1
-    let key = s:vimim_start_stop(s:open_close)
+    let s:chinese_mode_switch = s:chinese_mode_switch ? 0 : 1
+    let key = s:vimim_start_stop(s:chinese_mode_switch)
     return key
 endfunction
 
@@ -3126,7 +3127,7 @@ endfunction
 function! s:vimim_reset_before_anything()
     let s:ctrl6 = 0
     let s:toggle_im = 0
-    let s:open_close = 0
+    let s:chinese_mode_switch = 0
     let s:windowless = 0
     let s:mode = 'onekey'
     let s:smart_enter = 0
