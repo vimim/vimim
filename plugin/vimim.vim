@@ -3030,6 +3030,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     endif
     if len(results) | return results | endif
     " 3/3 search datafile and english: /ma and /horse
+    let keyboard = tolower(a:keyboard)
     let s:english.line = s:vimim_get_english(keyboard)
     if empty(s:english.line)
         let results = s:vimim_embedded_backend_engine(keyboard)
