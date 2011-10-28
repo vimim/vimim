@@ -1185,6 +1185,84 @@ function! s:vimim_get_seamless(current_positions)
 endfunction
 
 " ============================================= }}}
+let s:VimIM += [" ====  input: visual    ==== {{{"]
+" =================================================
+
+function! g:vimim_visual()
+    let key = ""
+    let lines = split(getreg('"'), '\n')
+    let line = get(lines,0)
+    let space = "\<C-R>=repeat(' '," .string(virtcol("'<'")-2). ")\<CR>"
+    if len(lines) == 1 && len(line) == s:multibyte
+        " highlight one chinese => get antonym or number loop
+        let results = s:vimim_imode_visual(line)
+        if !empty(results)
+            let key = "gvr" . get(results,0) . "ga"
+        endif
+        if s:vimim_cjk()
+            let line = match(s:cjk.lines, "^".line)
+            let &titlestring = s:space . get(s:cjk.lines,line)
+        endif
+    elseif match(lines,'\d') > -1 && join(lines) !~ '[^0-9[:blank:].]'
+        call setpos(".", getpos("'>'"))  " vertical digit block =>
+        let sum = eval(join(lines,'+'))  " count*average=summary
+        let ave = printf("%.2f", 1.0*sum/len(lines))
+        let line = substitute(ave."=".string(sum), '[.]0\+', '', 'g')
+        let line = string(len(lines)) . '*' . line
+        let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
+    else
+        sil!call s:vimim_start()
+        let visual = "\<C-^>" . "\<C-R>=g:vimim()\<CR>"
+        if len(lines) < 2  " highlight multiple cjk => show property
+            let s:seamless_positions = getpos("'<'")
+            let chinese = get(split(line,'\zs'),0)
+            let ddddd = char2nr(chinese) =~ '\d\d\d\d\d' ? "'''''" : line
+            let key = "gvc" . ddddd . visual
+        else               " highlighted block => play block with hjkl
+            let key = "O^\<C-D>" . space . "''''" . visual
+        endif
+    endif
+    return feedkeys(key,"n")
+endfunction
+
+function! s:vimim_imode_visual(char_before)
+    let antonym = "，。 “” ‘’ （） 【】 〖〗 《》 金石 胜败 真假"
+    if empty(s:loops)
+        let items = []
+        for i in range(len(s:numbers))
+            call add(items, split(s:numbers[i],'\zs'))
+        endfor
+        let numbers = []
+        for j in range(len(get(items,0)))
+            let number = ""
+            for line in items
+                let number .= get(line,j)
+            endfor
+            call add(numbers, number)
+        endfor
+        for loop in numbers + split(antonym)
+            let loops = split(loop, '\zs')
+            for i in range(len(loops))
+                let j = i==len(loops)-1 ? 0 : i+1
+                let s:loops[loops[i]] = loops[j]
+            endfor
+        endfor
+    endif
+    let results = []
+    let char_before = a:char_before
+    if has_key(s:loops, char_before)
+        let start = char_before
+        let next = ""
+        while start != next
+            let next = s:loops[char_before]
+            call add(results, next)
+            let char_before = next
+        endwhile
+    endif
+    return results
+endfunction
+
+" ============================================= }}}
 let s:VimIM += [" ====  input: number    ==== {{{"]
 " =================================================
 
@@ -1223,43 +1301,6 @@ function! s:vimim_dictionary_numbers()
     let s:quantifiers.y = "月叶亿"
     let s:quantifiers.z = "种只张株支总枝盏座阵桩尊则站幢宗兆"
     let s:loops = {}
-endfunction
-
-function! s:vimim_imode_chinese(char_before)
-    let antonym = "，。 “” ‘’ （） 【】 〖〗 《》 金石 胜败 真假"
-    if empty(s:loops)
-        let items = []
-        for i in range(len(s:numbers))
-            call add(items, split(s:numbers[i],'\zs'))
-        endfor
-        let numbers = []
-        for j in range(len(get(items,0)))
-            let number = ""
-            for line in items
-                let number .= get(line,j)
-            endfor
-            call add(numbers, number)
-        endfor
-        for loop in numbers + split(antonym)
-            let loops = split(loop, '\zs')
-            for i in range(len(loops))
-                let j = i==len(loops)-1 ? 0 : i+1
-                let s:loops[loops[i]] = loops[j]
-            endfor
-        endfor
-    endif
-    let results = []
-    let char_before = a:char_before
-    if has_key(s:loops, char_before)
-        let start = char_before
-        let next = ""
-        while start != next
-            let next = s:loops[char_before]
-            call add(results, next)
-            let char_before = next
-        endwhile
-    endif
-    return results
 endfunction
 
 let s:translators = {}
@@ -1657,43 +1698,6 @@ function! s:vimim_1to1(char)
     let values = split(get(s:cjk.lines, line))
     let traditional_chinese = get(split(get(values,0),'\zs'),1)
     return empty(traditional_chinese) ? a:char : traditional_chinese
-endfunction
-
-function! g:vimim_visual()
-    let key = ""
-    let lines = split(getreg('"'), '\n')
-    let line = get(lines,0)
-    let space = "\<C-R>=repeat(' '," .string(virtcol("'<'")-2). ")\<CR>"
-    if len(lines) == 1 && len(line) == s:multibyte
-        " highlight one chinese => get antonym or number loop
-        let results = s:vimim_imode_chinese(line)
-        if !empty(results)
-            let key = "gvr" . get(results,0) . "ga"
-        endif
-        if s:vimim_cjk()
-            let line = match(s:cjk.lines, "^".line)
-            let &titlestring = s:space . get(s:cjk.lines,line)
-        endif
-    elseif match(lines,'\d') > -1 && join(lines) !~ '[^0-9[:blank:].]'
-        call setpos(".", getpos("'>'"))  " vertical digit block =>
-        let sum = eval(join(lines,'+'))  " count*average=summary
-        let ave = printf("%.2f", 1.0*sum/len(lines))
-        let line = substitute(ave."=".string(sum), '[.]0\+', '', 'g')
-        let line = string(len(lines)) . '*' . line
-        let key = "o^\<C-D>" . space . " " . line . "\<Esc>"
-    else
-        sil!call s:vimim_start()
-        let visual = "\<C-^>" . "\<C-R>=g:vimim()\<CR>"
-        if len(lines) < 2  " highlight multiple cjk => show property
-            let s:seamless_positions = getpos("'<'")
-            let chinese = get(split(line,'\zs'),0)
-            let ddddd = char2nr(chinese) =~ '\d\d\d\d\d' ? "'''''" : line
-            let key = "gvc" . ddddd . visual
-        else               " highlighted block => play block with hjkl
-            let key = "O^\<C-D>" . space . "''''" . visual
-        endif
-    endif
-    return feedkeys(key,"n")
 endfunction
 
 " ============================================= }}}
