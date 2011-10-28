@@ -345,17 +345,16 @@ function! s:vimim_get_hjkl_game(keyboard)
         return s:vimim_imode_number(keyboard)
     elseif keyboard ==# 'itoday' || keyboard ==# 'inow'
         return [s:vimim_imode_today_now(keyboard)]
-    elseif s:vimim_get_unicode_ddddd(keyboard)
-        return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
     elseif keyboard == "''''''"
         return split(join(s:vimim_egg_vimimgame(),""),'\zs')
+    elseif s:vimim_get_unicode_ddddd(keyboard)
+        return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
     elseif keyboard == "''"
         let char_before = s:vimim_char_before()
         if empty(char_before)
+            let char_before = '一'
             if s:vimim_cjk()    " 214 standard unicode index
                 return s:vimim_cjk_match('u')
-            else
-                let char_before = '一'
             endif
         endif
         return s:vimim_unicode_list(char2nr(char_before))
@@ -524,7 +523,7 @@ function! IMName()
         if pumvisible()
             return s:vimim_statusline()
         endif
-    elseif &omnifunc ==# 'VimIM'
+    elseif &omnifunc == 'VimIM'
         return s:space . s:vimim_statusline()
     endif
     return ""
@@ -1102,13 +1101,12 @@ let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
 function! g:vimim_chinese()
-    let switch = ""
-    if len(s:ui.frontends)
-        let s:mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
-        let s:toggle_im = s:toggle_im ? 0 : 1
-        let switch = s:vimim_start_stop(s:toggle_im)
+    if empty(s:ui.frontends)
+        return ""
     endif
-    return switch
+    let s:mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
+    let s:toggle_im = s:toggle_im ? 0 : 1
+    return s:vimim_start_stop(s:toggle_im)
 endfunction
 
 function! s:vimim_start_stop(switch)
