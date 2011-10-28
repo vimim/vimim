@@ -41,13 +41,13 @@ function! s:vimim_bare_bones_vimrc()
     let $PATH = has("unix") ? unix : windows
 endfunction
 
-if exists("g:vim_im") || v:version < 700
+if exists("g:vimim_profile") || v:version < 700
     finish
 elseif &compatible
     call s:vimim_bare_bones_vimrc()
 endif
 scriptencoding utf-8
-let g:vim_im = 39340
+let g:vimim_profile = reltime()
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
@@ -185,11 +185,11 @@ function! s:vimim_set_global_default()
         if exists(variable)
             let value = string(eval(variable))
             let vimimrc = ':let ' . variable .' = '. value .' '
-            call add(s:vimimrc, '  ' . vimimrc)
+            call add(s:vimimrc, '    ' . vimimrc)
         else
             let value = string(s:rc[variable])
             let vimimrc = ':let ' . variable .' = '. value .' '
-            call add(s:vimimdefaults, '" ' . vimimrc)
+            call add(s:vimimdefaults, '  " ' . vimimrc)
         endif
         exe 'let '. variable .'='. value
     endfor
@@ -217,6 +217,14 @@ function! s:vimim_easter_chicken(keyboard)
         sil!call s:vimim_debug('egg', a:keyboard, v:exception)
     endtry
     return []
+endfunction
+
+function! s:vimim_egg_vimimhelp()
+    let eggs  = split(s:url)
+    let eggs += [''] + s:vimim_egg_vim()
+    let eggs += [''] + s:vimim_egg_vimim()
+    let eggs += [''] + s:vimim_egg_vimimvim()
+    return map(eggs, 'v:val . " "')
 endfunction
 
 function! s:vimim_egg_vim()
@@ -297,13 +305,9 @@ function! s:vimim_egg_vimim()
     endif
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
     call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
-    call add(eggs, s:chinese('option',  s:colon) . "vimimhelp")
-    if !empty(s:vimimrc)
-        for rc in sort(s:vimimrc)
-            call add(eggs, repeat(" ",6) . rc[2:])
-        endfor
-    endif
-    return map(eggs, 'v:val . " " ')
+    let vimimrc = "vimimrc" . s:space . reltimestr(g:vimim_profile)
+    call add(eggs, s:chinese('option',  s:colon) . vimimrc)
+    return map(eggs + s:vimim_egg_vimimrc(), 'v:val . " " ')
 endfunction
 
 " ============================================= }}}
@@ -3468,16 +3472,6 @@ endfunction
 let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
-function! s:vimim_egg_vimimhelp()
-    let eggs = s:vimim_egg_vim() + ['']
-    call add(eggs, "官址： " . s:url)
-    call add(eggs, '热键：　gi　 (vim normal mode) 无菜单窗输入')
-    call add(eggs, '热键：　n 　 (vim normal mode) 无菜单窗搜索')
-    call add(eggs, '热键：ctrl+6 (vim insert mode) 点石成金')
-    call add(eggs, '热键：ctrl+\ (vim insert mode) 中文动态')
-    return map(eggs + [''] + s:vimim_egg_vimimrc(), 'v:val .  " "')
-endfunction
-
 function! s:vimim_plug_and_play()
     if g:vimim_map =~ 'ctrl_bslash'
         nnoremap<silent><C-Bslash> :call g:vimim_chinese()<CR>
@@ -3515,6 +3509,7 @@ sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_custom_im_list()
 sil!call s:vimim_plug_and_play()
+let g:vimim_profile = reltime(g:vimim_profile)
 " ============================================= }}}
 :redir @p
 Debug s:vimim_egg_vimim()
