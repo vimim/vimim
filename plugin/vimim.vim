@@ -89,7 +89,6 @@ function! s:vimim_initialize_global()
     let s:today = s:vimim_imode_today_now('itoday')
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
-    let s:cursor_at_windowless = 0
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
     let s:quanpin_table = {}
@@ -120,10 +119,10 @@ function! s:vimim_initialize_global()
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
     endif
-    let s:english = { 'lines' : [], 'line' : "" }
-    let s:english.filename = s:vimim_filereadable("vimim.txt")
     let s:cjk = { 'lines' : [] }
+    let s:english = { 'lines' : [], 'line' : "" }
     let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
+    let s:english.filename = s:vimim_filereadable("vimim.txt")
 endfunction
 
 function! s:vimim_dictionary_keycodes()
@@ -634,10 +633,10 @@ function! s:vimim_common_maps()
     for _ in split(punctuation)
         exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
     endfor
-    lnoremap <silent> <expr> <BS>    g:vimim_backspace()
-    lnoremap <silent> <expr> <CR>    g:vimim_enter()
-    lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <Space> g:vimim_space()
+    lnoremap <silent> <expr> <CR>    g:vimim_enter()
+    lnoremap <silent> <expr> <BS>    g:vimim_backspace()
+    lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <C-L>   g:vimim_onekey_flip()
     lnoremap <silent> <expr> <C-H>   g:vimim_im_switch()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
@@ -682,25 +681,19 @@ endfunction
 function! g:vimim_page(key)
     let key = a:key
     if pumvisible()
-        if key =~ "[][]"
+        if key =~ '[][]'
             let left  = key == "]" ? "\<Left>"  : ""
             let right = key == "]" ? "\<Right>" : ""
             let _ = key == "]" ? 0 : -1
             let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
             let yes = s:mode == 'dynamic' ? '\<C-N>' : ''
             let key = yes . '\<C-Y>' . left . bs . right
-        elseif key =~ "[=.]"
-            let key = '\<PageDown>'
-            if &pumheight
-                let s:pageup_pagedown = 1
-                let key = g:vimim()
-            endif
-        elseif key =~ "[-,]"
-            let key = '\<PageUp>'
-            if &pumheight
-                let s:pageup_pagedown = -1
-                let key = g:vimim()
-            endif
+        elseif key =~ '[=.]'
+            let s:pageup_pagedown = &pumheight ? 1 : 0
+            let key = &pumheight ? g:vimim() : '\<PageDown>'
+        elseif key =~ '[-,]'
+            let key = &pumheight ? g:vimim() : '\<PageUp>'
+            let s:pageup_pagedown = &pumheight ? -1 : 0
         endif
     elseif s:mode != 'onekey' && key =~ "[][=-]"
         let key = g:vimim_punctuation(key)
@@ -897,7 +890,9 @@ function! s:vimim_title()
 endfunction
 
 function! s:vimim_set_titlestring(cursor)
-    let titlestring = substitute(&titlestring, s:colon, ' ', 'g')
+    let left  = s:all_evils['[']
+    let right = s:all_evils[']']
+    let titlestring = substitute(&titlestring,left.'\|'.right,' ','g')
     if titlestring !~ '\s\+' . "'" . '\+\s\+'
         let titlestring = substitute(titlestring,"'",'','g')
     endif
@@ -905,11 +900,11 @@ function! s:vimim_set_titlestring(cursor)
     let cursor = s:cursor_at_windowless + a:cursor
     let hightlight = get(words, cursor)
     if !empty(hightlight) && len(words) > 1
-        let left = join(words[1 : cursor-1]) . s:colon
-        let right = s:colon . join(words[cursor+1 :])
+        let west = join(words[1 : cursor-1]) . left
+        let east = right . join(words[cursor+1 :])
         let s:cursor_at_windowless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
-        let title = keyboard .'  '. left . hightlight . right
+        let title = keyboard .'  '. west . hightlight . east
         let &titlestring = "VimIM" . s:vimim_get_title() .' '. title
     endif
 endfunction
@@ -3054,7 +3049,6 @@ function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_color()
     sil!call s:vimim_set_keycode()
-    sil!call s:vimim_common_maps()
     if s:mode == 'onekey'
         sil!call s:vimim_onekey_maps()
     else
@@ -3063,6 +3057,7 @@ function! s:vimim_start()
             sil!call s:vimim_dynamic_maps()
         endif
     endif
+    sil!call s:vimim_common_maps()
     let ctrl6 = ""
     if empty(s:ctrl6) && mode() == 'i'
         let s:ctrl6 = 32911
@@ -3140,13 +3135,14 @@ function! s:vimim_reset_before_anything()
     let s:smart_enter = 0
     let s:has_pumvisible = 0
     let s:keyboard = ""
+    let s:popup_list = []
 endfunction
 
 function! s:vimim_reset_before_omni()
     let s:english.line = ""
-    let s:popup_list = []
     let s:touch_me_not = 0
     let s:show_extra_menu = 0
+    let s:cursor_at_windowless = 0
 endfunction
 
 function! s:vimim_reset_after_insert()
@@ -3328,6 +3324,7 @@ function! s:vimim_popupmenu_list(lines)
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
     let label = 1
     let one_list = []
+    let s:popup_list = []
     for chinese in s:match_list
         let complete_items = {}
         if s:vimim_cjk() && s:hjkl__ && s:hjkl__%2
@@ -3387,7 +3384,6 @@ function! s:vimim_popupmenu_list(lines)
         set completeopt=menuone   " for hjkl_n refresh
         if s:windowless && empty(s:touch_me_not)
             set completeopt=menu  " for direct insert
-            let s:cursor_at_windowless = 0
             let vimim = "VimIM" . s:space .'  '. join(keyboards,"").'  '
             let &titlestring = vimim . join(one_list)
             call s:vimim_set_titlestring(1)
