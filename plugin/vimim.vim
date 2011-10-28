@@ -53,7 +53,7 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
-    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab,search,gi,ctrl_6,ctrl_bslash'
@@ -89,7 +89,6 @@ function! s:vimim_initialize_global()
     let s:today = s:vimim_imode_today_now('itoday')
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
-    let s:toggle_im = 0
     let s:cursor_at_windowless = 0
     let s:seamless_positions = []
     let s:current_positions = [0,0,1,0]
@@ -108,12 +107,12 @@ function! s:vimim_initialize_global()
     let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
     let s:ui = { 'root' : '', 'im' : '', 'has_dot' : 0, 'frontends' : [] }
     let s:rc = { "g:vimim_mode" : 'dynamic,punctuation' }
+    let s:rc["g:vimim_shuangpin"] = 0
     let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
     let s:rc["g:vimim_toggle"] = 0
-    let s:rc["g:vimim_shuangpin"] = 0
-    let s:rc["g:vimim_plugin"] = s:plugin
     let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
     let s:rc["g:vimim_mycloud"] = 0
+    let s:rc["g:vimim_plugin"] = s:plugin
     call s:vimim_set_global_default()
     if isdirectory(g:vimim_plugin)
         let s:plugin = g:vimim_plugin
@@ -289,10 +288,10 @@ function! s:vimim_egg_vimim()
             call add(eggs, ciku . cloud)
         endif
         let input = s:chinese('input', s:colon)
-        if g:vimim_map =~ 'ctrl_bslash'
-            let input .=  s:vimim_statusline() . s:space
-        elseif g:vimim_map =~ 'gi'
+        if g:vimim_map =~ 'gi' && g:vimim_map =~ 'tab'
             let input .= s:chinese('onekey', s:space, 'windowless')
+        elseif g:vimim_map =~ 'ctrl_bslash'
+            let input .=  s:vimim_statusline() . s:space
         endif
         call add(eggs, input)
     endif
@@ -552,9 +551,9 @@ function! s:vimim_get_title()
     elseif s:ui.im == 'mycloud'
         let title .= s:space . s:backend.cloud.mycloud.directory
     elseif s:ui.root == 'cloud'
-        let title = s:chinese(s:space, s:cloud_default, 'cloud')
+        let title = s:chinese(s:space, s:cloud, 'cloud')
         let clouds = split(g:vimim_cloud,',')
-        let vimim_cloud = get(clouds, match(clouds, s:cloud_default))
+        let vimim_cloud = get(clouds, match(clouds, s:cloud))
         if vimim_cloud =~ 'wubi'          " g:vimim_cloud='qq.wubi'
             let title .= s:chinese(s:space, 'wubi')
         elseif vimim_cloud =~ 'shuangpin' " qq.shuangpin.ms => ms
@@ -952,8 +951,7 @@ function! g:vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1
-    elseif s:windowless && s:mode == 'onekey'
-    \|| s:vimim_byte_before() =~# s:valid_keyboard
+    elseif s:windowless || s:vimim_byte_before() =~# s:valid_keyboard
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -1105,8 +1103,9 @@ function! g:vimim_chinese()
         return ""
     endif
     let s:mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
-    let s:toggle_im = s:toggle_im ? 0 : 1
-    return s:vimim_start_stop(s:toggle_im)
+    let s:open_close = s:open_close ? 0 : 1
+    let key = s:vimim_start_stop(s:open_close)
+    return key
 endfunction
 
 function! s:vimim_start_stop(switch)
@@ -1125,12 +1124,12 @@ function! g:vimim_im_switch()
     if len(s:ui.frontends) < 2
         return ""
     endif
-    let switch = s:toggle_im % len(s:ui.frontends)
     let s:toggle_im += 1
+    let switch = s:toggle_im % len(s:ui.frontends)
     let s:ui.root = get(get(s:ui.frontends, switch), 0)
     let s:ui.im   = get(get(s:ui.frontends, switch), 1)
     if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
-        let s:cloud_default = s:ui.im
+        let s:cloud = s:ui.im
     endif
     return s:vimim_start_stop(1)
 endfunction
@@ -1149,7 +1148,7 @@ function! s:vimim_set_custom_im_list()
         let toggle_list = s:ui.frontends
     endif
     if s:backend[s:ui.root][s:ui.im].name =~ "bsddb"
-        let toggle_list = toggle_list[:1]  " one local one cloud
+        let toggle_list = toggle_list[:2]  " one local two clouds
     endif
     let s:ui.frontends = copy(toggle_list)
     let s:ui.root = get(get(s:ui.frontends,0), 0)
@@ -2275,7 +2274,7 @@ function! s:vimim_set_datafile(im, datafile)
     elseif im =~ '^wubi'   | let im = 'wubi'
     elseif im =~ '^pinyin' | let im = 'pinyin'
     endif
-    let s:ui.root = "datafile"
+    let s:ui.root = 'datafile'
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
     let s:backend.datafile[im] = {}
@@ -2390,7 +2389,7 @@ let s:VimIM += [" ====  backend: dir     ==== {{{"]
 
 function! s:vimim_set_directory(dir)
     let im = "pinyin"
-    let s:ui.root = "directory"
+    let s:ui.root = 'directory'
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
     let s:backend.directory[im] = {}
@@ -2473,7 +2472,7 @@ let s:VimIM += [" ====  backend: clouds  ==== {{{"]
 function! s:vimim_set_background_clouds()
     let s:http_exe = ""
     let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
-    let s:cloud_default = get(cloud_defaults,0)
+    let s:cloud = get(cloud_defaults,0)
     let clouds = split(g:vimim_cloud,',')
     for cloud in clouds
         let cloud = get(split(cloud,'[.]'),0)
@@ -2483,7 +2482,7 @@ function! s:vimim_set_background_clouds()
     let g:vimim_cloud = join(clouds,',')
     let default = get(split(get(clouds,0),'[.]'),0)
     if match(s:rc["g:vimim_cloud"], default) > -1
-        let s:cloud_default = default
+        let s:cloud = default
     endif
     if !empty(s:vimim_check_http_executable())
         let s:ui.root = 'cloud'
@@ -2544,15 +2543,15 @@ function! s:vimim_get_cloud(keyboard)
     let keyboard = a:keyboard  " remove evil leading/trailing quote
     let keyboard = keyboard[:0]  == "'" ? keyboard[1:]  : keyboard
     let keyboard = keyboard[-1:] == "'" ? keyboard[:-2] : keyboard
-    if keyboard !~ s:valid_keyboard || empty(s:cloud_default)
+    if keyboard !~ s:valid_keyboard || empty(s:cloud)
         return []
     endif
-    let cloud = "s:vimim_get_cloud_" . s:cloud_default . "(keyboard)"
+    let cloud = "s:vimim_get_cloud_" . s:cloud . "(keyboard)"
     let results = []
     try
         let results = eval(cloud)
     catch
-        sil!call s:vimim_debug(s:cloud_default, v:exception)
+        sil!call s:vimim_debug(s:cloud, v:exception)
     endtry
     if !empty(results) && s:keyboard !~ '\S\s\S'
         let s:keyboard = keyboard
@@ -2753,7 +2752,7 @@ function! s:vimim_get_cloud_all(keyboard)
     let results = []
     for cloud in split(s:rc["g:vimim_cloud"], ',')
         let start = localtime()
-        let s:cloud_default = cloud
+        let s:cloud = cloud
         let outputs = s:vimim_get_cloud(a:keyboard)
         if len(results) > 1
             call add(results, s:space)
@@ -2783,7 +2782,7 @@ function! s:vimim_set_backend_mycloud()
     let s:mycloud_host = "localhost"
     let s:mycloud_port = 10007
     let mycloud = 0
-    if empty(g:vimim_mycloud)
+    if len(g:vimim_mycloud) < 3
         let mycloud = s:vimim_check_mycloud_plugin_libcall()
     else
         let mycloud = s:vimim_check_mycloud_plugin_url()
@@ -3134,6 +3133,8 @@ endfunction
 
 function! s:vimim_reset_before_anything()
     let s:ctrl6 = 0
+    let s:toggle_im = 0
+    let s:open_close = 0
     let s:windowless = 0
     let s:mode = 'onekey'
     let s:smart_enter = 0
