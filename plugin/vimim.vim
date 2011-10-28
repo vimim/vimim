@@ -640,9 +640,9 @@ function! s:vimim_common_maps()
     lnoremap <silent> <expr> <CR>    g:vimim_enter()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <Space> g:vimim_space()
-    lnoremap <silent> <expr> <C-H>   g:vimim_switch()
+    lnoremap <silent> <expr> <C-L>   g:vimim_onekey_flip()
+    lnoremap <silent> <expr> <C-H>   g:vimim_im_switch()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
-    lnoremap <silent> <expr> <C-L>   g:vimim_popup()
     lnoremap <silent>        <C-V>   <C-R>=g:vimim_screenshot()<CR>
 endfunction
 
@@ -851,11 +851,13 @@ function! g:vimim_tab()
     sil!exe 'sil!return "' . tab . '"'
 endfunction
 
-function! g:vimim_popup()
-    " windowless mode <=> popup window mode
-    let s:windowless = s:windowless ? 0 : 1
-    call s:vimim_title()
-    let popup = '\<C-E>\<C-R>=g:vimim()\<CR>'
+function! g:vimim_onekey_flip()
+    let popup = '\<C-E>'   "  windowless mode <=> popup window mode
+    if s:mode == 'onekey'
+        let s:windowless = s:windowless ? 0 : 1
+        call s:vimim_title()
+        let popup .= '\<C-R>=g:vimim()\<CR>'
+    endif
     sil!exe 'sil!return "' . popup . '"'
 endfunction
 
@@ -1121,7 +1123,7 @@ function! s:vimim_start_stop(switch)
     sil!exe 'sil!return "' . ctrl6 . '"'
 endfunction
 
-function! g:vimim_switch()
+function! g:vimim_im_switch()
     if len(s:ui.frontends) < 2
         return ""
     endif
@@ -3139,11 +3141,11 @@ function! s:vimim_reset_before_anything()
     let s:smart_enter = 0
     let s:has_pumvisible = 0
     let s:keyboard = ""
-    let s:popup_list = []
 endfunction
 
 function! s:vimim_reset_before_omni()
     let s:english.line = ""
+    let s:popup_list = []
     let s:touch_me_not = 0
     let s:show_extra_menu = 0
 endfunction
@@ -3327,7 +3329,6 @@ function! s:vimim_popupmenu_list(lines)
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
     let label = 1
     let one_list = []
-    let popup_list = []
     for chinese in s:match_list
         let complete_items = {}
         if s:vimim_cjk() && s:hjkl__ && s:hjkl__%2
@@ -3380,12 +3381,11 @@ function! s:vimim_popupmenu_list(lines)
         let label += 1
         let complete_items["dup"] = 1
         let complete_items["word"] = empty(chinese) ? s:space : chinese
-        call add(popup_list, complete_items)
+        call add(s:popup_list, complete_items)
     endfor
     if s:mode == 'onekey'
         call s:vimim_title()
         set completeopt=menuone   " for hjkl_n refresh
-        let s:popup_list = popup_list
         if s:windowless && empty(s:touch_me_not)
             set completeopt=menu  " for direct insert
             let s:cursor_at_windowless = 0
@@ -3397,7 +3397,7 @@ function! s:vimim_popupmenu_list(lines)
             let &titlestring = s:logo . s:space . s:today
         endif
     endif
-    return popup_list
+    return s:popup_list
 endfunction
 
 function! s:vimim_embedded_backend_engine(keyboard)
