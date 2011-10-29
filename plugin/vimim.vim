@@ -259,7 +259,8 @@ function! s:vimim_egg_vimim()
             let os = computer | break
         endif
     endfor
-    call add(eggs, s:chinese('computer', s:colon) . os .s:space. &term)
+    let time = reltimestr(g:vimim_profile) . ' seconds'
+    call add(eggs, s:chinese('computer', s:colon) . os . time)
     let revision = get(split(s:egg),1)
     let revision = empty(revision) ?  ""  : "vimim.vim=" . revision
     let revision = v:progname ."=". v:version  . s:space . revision
@@ -301,8 +302,7 @@ function! s:vimim_egg_vimim()
     endif
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
     call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
-    let vimimrc = "vimimrc" . s:space . reltimestr(g:vimim_profile)
-    call add(eggs, s:chinese('option',  s:colon) . vimimrc)
+    call add(eggs, s:chinese('option',  s:colon) . "vimimrc")
     return map(eggs + s:vimim_egg_vimimrc(), 'v:val . " " ')
 endfunction
 
