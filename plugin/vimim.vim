@@ -2858,6 +2858,9 @@ function! s:vimim_check_mycloud_libcall()
             return cloud
         endif
     endif
+    if has("gui_win32")
+        return 0
+    endif
     let cloud = s:plugin . 'mycloud/mycloud' " plug-n-play on linux
     if !executable(cloud)
         if executable("python")
