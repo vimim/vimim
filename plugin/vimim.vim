@@ -1571,21 +1571,6 @@ function! s:vimim_get_cjk_head(keyboard)
     return head
 endfunction
 
-function! s:vimim_get_head(keyboard, partition)
-    if a:partition < 0
-        return a:keyboard
-    endif
-    let head = a:keyboard[0 : a:partition-1]
-    if s:keyboard !~ '\S\s\S'
-        let s:keyboard = head
-        let tail = a:keyboard[a:partition : -1]
-        if !empty(tail)
-            let s:keyboard = head . " " . tail
-        endif
-    endif
-    return head
-endfunction
-
 function! s:vimim_qwertyuiop_1234567890(keyboard)
     if a:keyboard =~ '\d'
         return ""
@@ -1600,6 +1585,21 @@ function! s:vimim_qwertyuiop_1234567890(keyboard)
         endif
     endfor
     return dddd
+endfunction
+
+function! s:vimim_get_head(keyboard, partition)
+    if a:partition < 0
+        return a:keyboard
+    endif
+    let head = a:keyboard[0 : a:partition-1]
+    if s:keyboard !~ '\S\s\S'
+        let s:keyboard = head
+        let tail = a:keyboard[a:partition : -1]
+        if !empty(tail)
+            let s:keyboard = head . " " . tail
+        endif
+    endif
+    return head
 endfunction
 
 function! s:vimim_cjk_match(keyboard)
@@ -1801,9 +1801,9 @@ function! s:vimim_quanpin_transform(pinyin)
         endfor
     endif
     let item = a:pinyin
-    let pinyinstr = ""
-    let index = 0
     let lenitem = len(item)
+    let pinyinstr = ""
+    let index = 0   " follow ibus rule, plus special case for fan'guo
     while index < lenitem
         if item[index] !~ "[a-z]"
             let index += 1
@@ -1817,8 +1817,7 @@ function! s:vimim_quanpin_transform(pinyin)
             let end = index+i
             let matchstr = item[index : end-1]
             if has_key(s:quanpin_table, matchstr)
-                let tempstr = item[end-1 : end]
-                " follow ibus' rule, plus special case for fan'guo
+                let tempstr  = item[end-1 : end]
                 let tempstr2 = item[end-2 : end+1]
                 let tempstr3 = item[end-1 : end+1]
                 let tempstr4 = item[end-1 : end+2]
@@ -1880,9 +1879,7 @@ function! s:vimim_get_pinyin_from_pinyin(keyboard)
 endfunction
 
 function! s:vimim_more_pinyin_candidates(keyboard)
-    " [purpose] make standard layout for omni popup menu
-    " input  =>  mamahuhu
-    " output =>  mamahu, mama
+    " make standard layout:  mamahuhu => mamahu, mama
     if !empty(g:vimim_shuangpin) || len(s:english.line)
         return []
     endif
