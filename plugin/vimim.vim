@@ -18,10 +18,10 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (2) do Chinese search without typing Chinese: slash search
 "    (3) support Google/Baidu/Sogou/QQ cloud input
 "    (4) support bsd database with python interface to Vim
-"  Installation: plug and play
+"  Plug and Play:
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
-"  Usage: vim i vimim ctrl+6 ctrl+6
+"  Usage:
 "    (1) (vim normal mode)  gi      (for windowless chinese input)
 "    (2) (vim normal mode)  n       (for windowless slash search)
 "    (3) (vim insert mode)  ctrl+6  (for onekey omni popup)
