@@ -53,7 +53,7 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab,search,gi,ctrl_6,ctrl_bslash'
@@ -93,6 +93,7 @@ function! s:vimim_initialize_global()
     let s:current_positions = [0,0,1,0]
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
+    let s:http_exe = ""
     let s:mycloud_initialization = 0
     let s:shuangpin = 'abc ms plusplus purple flypy nature'
     let s:abcd = split("'abcdvfgxz", '\zs')
@@ -2468,7 +2469,6 @@ let s:VimIM += [" ====  backend: clouds  ==== {{{"]
 " =================================================
 
 function! s:vimim_set_background_clouds()
-    let s:http_exe = ""
     let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
     let s:cloud = get(cloud_defaults,0)
     let clouds = split(g:vimim_cloud,',')
@@ -2505,26 +2505,28 @@ function! s:vimim_check_http_executable()
         return s:http_exe
     endif
     " step 1 of 4: try to find libvimim for mycloud
-    let libvimim = s:vimim_get_libvimim()
-    if libcall(libvimim, "do_geturl", "__isvalid") ==# "True"
-        let s:http_exe = libvimim
+    let lib = has("win32") || has("win32unix") ? "dll" : "so"
+    let libvimim = s:plugin . "libvimim." . lib
+    if filereadable(libvimim)
+        if has("win32") && libvimim[-4:] ==? ".dll"
+            let libvimim = libvimim[:-5]
+        endif
+        if libcall(libvimim, "do_geturl", "__isvalid") ==# "True"
+            let s:http_exe = libvimim
+        endif
     endif
     " step 2 of 4: try to use dynamic python:
     if empty(s:http_exe)
-        if has('python')                     " +python/dyn
-            let s:http_exe = 'Python2 Interface to Vim'
-        endif
-        if has('python3') && &relativenumber " +python3/dyn
+        if has('python3') && &relativenumber  " +python3/dyn
             let s:http_exe = 'Python3 Interface to Vim'
+        elseif has('python')                  " +python/dyn
+            let s:http_exe = 'Python2 Interface to Vim'
         endif
     endif
     " step 3 of 4: try to find wget
     if empty(s:http_exe) || has("macunix")
-        let wget = 'wget'
         let wget_exe = s:plugin . 'wget.exe'
-        if filereadable(wget_exe) && executable(wget_exe)
-            let wget = wget_exe
-        endif
+        let wget = filereadable(wget_exe) ? wget_exe : 'wget'
         if executable(wget)
             let wget_option = " -qO - --timeout 20 -t 10 "
             let s:http_exe = wget . wget_option
@@ -2866,23 +2868,6 @@ function! s:vimim_access_mycloud_isvalid(cloud)
         return 1
     endif
     return 0
-endfunction
-
-function! s:vimim_get_libvimim()
-    let libvimim = ""
-    if has("win32") || has("win32unix")
-        let libvimim = "libvimim.dll"
-    elseif has("unix")
-        let libvimim = "libvimim.so"
-    endif
-    let libvimim = s:plugin . libvimim
-    if filereadable(libvimim)
-        if has("win32") && libvimim[-4:] ==? ".dll"
-            let libvimim = libvimim[:-5]
-        endif
-        return libvimim
-    endif
-    return ""
 endfunction
 
 function! s:vimim_mycloud_set_and_play()
