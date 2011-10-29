@@ -130,7 +130,7 @@ function! s:vimim_initialize_global()
     let s:english.filename = s:vimim_filereadable("vimim.txt")
     let s:cjk = { 'lines' : [] }
     let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
-    let s:onekey_hit_and_run = empty(s:cjk.filename) ? 1 : 0
+    let s:hit_and_run = empty(s:cjk.filename) ? 1 : 0
 endfunction
 
 function! s:vimim_dictionary_keycodes()
@@ -611,7 +611,7 @@ function! g:vimim_bracket(offset)
     return cursor
 endfunction
 
-function! s:vimim_get_labeling(label)
+function! s:vimim_get_label(label)
     let labeling = a:label == 10 ? "0" : a:label
     if s:mode == 'onekey' && a:label < 11
         let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
@@ -661,12 +661,11 @@ function! g:vimim_label(key)
         let key = '\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
         if s:mode == 'onekey'
-            if empty(s:cjk.filename) && a:key =~ '\d'
-            \|| s:onekey_hit_and_run
+            if empty(s:cjk.filename) && a:key =~ '\d' || s:hit_and_run
                 let key = yes . s:vimim_stop()
             elseif s:vimim_cjk() && a:key =~ '\d'
                 let s:hjkl_n .= a:key  " 1234567890 as filter
-            else
+            elseif a:key =~ '\l'
                 let key = yes . key    "  abcdvfgxz as label
                 sil!call s:vimim_reset_after_insert()
             endif
@@ -866,7 +865,7 @@ function! g:vimim_windowless_popup()
     let popup = '\<C-E>'   "  windowless mode <=> popup window mode
     if s:mode == 'onekey'
         let s:windowless = s:windowless ? 0 : 1
-        let s:onekey_hit_and_run = 0
+        let s:hit_and_run = 0
         call s:vimim_title()
         let popup .= '\<C-R>=g:vimim()\<CR>'
     endif
@@ -940,7 +939,7 @@ function! g:vimim_space()
     if pumvisible()
         let s:has_pumvisible = 1
         let space = '\<C-R>=g:vimim()\<CR>'
-        if s:mode == 'onekey' && s:onekey_hit_and_run
+        if s:mode == 'onekey' && s:hit_and_run
              let space = s:vimim_stop()
         endif
         let cursor = s:mode == 'static' ? '\<C-P>\<C-N>' : ''
@@ -1558,21 +1557,15 @@ function! s:vimim_get_cjk_head(keyboard)
                 let head = s:vimim_get_head(keyboard, 4)
             endif
         elseif keyboard =~# '^\l\+\d\+\>'
-            let head = keyboard
-            let partition = match(keyboard,'\d')      " ma7 ma77 ma771
-            let alpha = keyboard[0 : partition-1]
-            if len(s:vimim_get_pinyin_from_pinyin(alpha))
-                let s:hjkl_n = keyboard[partition :]  " 74 in mali74
-                return alpha
+            let partition = match(keyboard,'\d')  " ma7 ma77 ma771
+            let head = keyboard[0 : partition-1]  " mali in mali74
+            let tail = keyboard[partition :]      "   74 in mali74
+            if empty(s:vimim_get_pinyin(head)) && tail =~ '[1-4]'
+                return keyboard  " pinyin with tone: ma1/ma2/ma3/ma4
             endif
-        elseif keyboard =~# '^\l\+\d\+' " wo23 for input wo23you40
-            let partition = match(keyboard,'\d')
-            while partition > -1
-                let partition += 1
-                if keyboard[partition : partition] =~# '\D'
-                    break
-                endif
-            endwhile
+            let s:hjkl_n = empty(len(s:hjkl_n)) ? tail : s:hjkl_n
+        elseif keyboard =~# '^\l\+\d\+'  " wo23 for input wo23you40
+            let partition = match(keyboard, '\(\l\+\d\+\)\@<=\D')
             let head = s:vimim_get_head(keyboard, partition)
         endif
     elseif empty(s:english.line) " muuqwxeyqpjeqqq => m7712x3610j3111
@@ -1735,7 +1728,7 @@ function! s:vimim_get_english(keyboard)
     let cursor = match(s:english.lines, grep)
     " [pinyin]  cong  => cong
     " [english] congr => congratulation  haag => haagendazs
-    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
+    let keyboards = s:vimim_get_pinyin(a:keyboard)
     if cursor < 0 && len(a:keyboard) > 3 && len(keyboards)
         let grep = '^' . get(split(a:keyboard,'\d'),0) " mxj7 => mxj
         let cursor = match(s:english.lines, grep)
@@ -1888,7 +1881,7 @@ function! s:vimim_more_pinyin_datafile(keyboard, sentence)
     return results
 endfunction
 
-function! s:vimim_get_pinyin_from_pinyin(keyboard)
+function! s:vimim_get_pinyin(keyboard)
     let keyboard = s:vimim_quanpin_transform(a:keyboard)
     let results = split(keyboard, "'")
     if len(results) > 1
@@ -1903,7 +1896,7 @@ function! s:vimim_more_pinyin_candidates(keyboard)
         return []
     endif
     let candidates = []
-    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
+    let keyboards = s:vimim_get_pinyin(a:keyboard)
     if len(keyboards)
         for i in reverse(range(len(keyboards)-1))
             let candidate = join(keyboards[0 : i], "")
@@ -1920,7 +1913,7 @@ endfunction
 
 function! s:vimim_cloud_pinyin(keyboard, match_list)
     let match_list = []
-    let keyboards = s:vimim_get_pinyin_from_pinyin(a:keyboard)
+    let keyboards = s:vimim_get_pinyin(a:keyboard)
     for chinese in a:match_list
         let len_chinese = len(split(chinese,'\zs'))
         let english = join(keyboards[len_chinese :], "")
@@ -3326,7 +3319,7 @@ function! s:vimim_popupmenu_list(lines)
             endfor
             let chinese = simplified_traditional
         endif
-        let label2 = s:windowless ? label : s:vimim_get_labeling(label)
+        let label2 = s:windowless ? label : s:vimim_get_label(label)
         if empty(s:touch_me_not)
             let menu = ""
             let pairs = split(chinese)
@@ -3354,11 +3347,11 @@ function! s:vimim_popupmenu_list(lines)
         let titleline = label . "."
         if s:windowless
             let titleline = label2
-            if s:vimim_cjk()     " display english flag plus 4corner
+            if s:vimim_cjk() " display english flag and dynamic 4corner
                 let star = substitute(titleline,'[0-9a-z_ ]','','g')
                 let digit = s:vimim_digit_for_cjk(chinese,1)
-                let titleline = star . digit[:3]
-            elseif label < 11    " 234567890 for windowless selection
+                let titleline = star . digit[len(s:hjkl_n) :] " ma7 712
+            elseif label < 11      " 234567890 for windowless selection
                 let titleline = label2[:-2]
             endif
         endif
