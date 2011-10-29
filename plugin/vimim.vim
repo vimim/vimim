@@ -93,6 +93,7 @@ function! s:vimim_initialize_global()
     let s:current_positions = [0,0,1,0]
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
+    let s:mycloud_initialization = 0
     let s:shuangpin = 'abc ms plusplus purple flypy nature'
     let s:abcd = split("'abcdvfgxz", '\zs')
     let s:qwer = split("pqwertyuio", '\zs')
@@ -450,7 +451,6 @@ function! s:vimim_dictionary_statusline()
     let s:title.windowless = "无菜单窗,無菜單窗"
     let s:title.onekey     = "点石成金,點石成金"
     let s:title.cjk        = "标准字库,標準字庫"
-    let s:title.mycloud    = "自己的云,自己的雲"
     let s:title.boshiamy   = "呒虾米,嘸蝦米"
     let s:title.wubi2000   = "新世纪,新世紀"
     let s:title.taijima    = "太极码,太極碼"
@@ -466,9 +466,9 @@ function! s:vimim_dictionary_statusline()
     let two .= " 云,雲     小鹤,小鶴 联网,聯網 微软,微軟 "
     call extend(s:title, s:vimim_key_value_hash(one, two))
     let one  = " pinyin fullwidth halfwidth english chinese purple"
-    let one .= " plusplus quick wubihf wubi98 phonetic array30"
+    let one .= " plusplus quick wubihf mycloud wubi98 phonetic array30"
     let one .= " abc revision mass date google baidu sogou qq "
-    let two  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 98"
+    let two  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 自己的 98"
     let two .= " 注音 行列 智能 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
     call extend(s:title, s:vimim_key_value_hash(one, two))
 endfunction
@@ -549,7 +549,8 @@ function! s:vimim_get_title()
             endif
         endfor
     elseif s:ui.im == 'mycloud'
-        let title .= s:space . s:backend.cloud.mycloud.directory
+        let title .= s:chinese('cloud', s:space)
+        let title .= s:backend.cloud.mycloud.directory
     elseif s:ui.root == 'cloud'
         let title = s:chinese(s:space, s:cloud, 'cloud')
         let clouds = split(g:vimim_cloud,',')
@@ -2778,39 +2779,78 @@ function! s:vimim_set_backend_mycloud()
     let s:mycloud_func = "do_getlocal"
     let s:mycloud_host = "localhost"
     let s:mycloud_port = 10007
-    let mycloud = 0
-    if len(g:vimim_mycloud) < 3
-        let mycloud = s:vimim_check_mycloud_libcall()
-    else
-        let mycloud = s:vimim_check_mycloud_url()
-    endif
-    if !empty(mycloud)
+    if !empty(g:vimim_mycloud)
         let s:ui.root = 'cloud'
         let s:ui.im = 'mycloud'
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
         let s:backend.cloud.mycloud = {}
         let s:backend.cloud.mycloud.root = s:ui.root
-        let s:backend.cloud.mycloud.im = mycloud
         let s:backend.cloud.mycloud.name    = s:chinese(s:ui.im)
         let s:backend.cloud.mycloud.chinese = s:chinese(s:ui.im)
-        let ret = s:vimim_access_mycloud(mycloud, "__getkeychars")
-        let s:backend.cloud.mycloud.keycode = split(ret,"\t")[0]
-        let ret = s:vimim_access_mycloud(mycloud, "__getname")
-        let s:backend.cloud.mycloud.directory = split(ret,"\t")[0]
+        let s:backend.cloud.mycloud.keycode = s:valid_keyboard
+        let s:backend.cloud.mycloud.directory = s:ui.im
+        let s:backend.cloud.mycloud.im = s:ui.im
     endif
 endfunction
 
-function! s:vimim_access_mycloud(cloud, cmd)
-    let ret = ""   " access mycloud by either libcall() or system()
+function! s:vimim_get_mycloud(keyboard)
+    if s:mycloud_initialization < 0
+        return []
+    elseif s:mycloud_initialization < 1
+        let s:mycloud_initialization = 1
+        let mycloud = s:vimim_mycloud_set_and_play()
+        if empty(mycloud)
+            let s:mycloud_initialization = -1
+            sil!call s:vimim_debug('error', "mycloud not initialized")
+            return []
+        endif
+        " set mycloud client with real data from mycloud server
+        let s:backend.cloud.mycloud.im = mycloud
+        let ret = s:vimim_access_mycloud("__getkeychars")
+        let s:backend.cloud.mycloud.keycode = split(ret,"\t")[0]
+        let ret = s:vimim_access_mycloud("__getname")
+        let s:backend.cloud.mycloud.directory = split(ret,"\t")[0]
+        call s:vimim_set_keycode()
+    endif
+    let output = 0
+    try
+        let output = s:vimim_access_mycloud(a:keyboard)
+    catch
+        sil!call s:vimim_debug('alert', 'mycloud', v:exception)
+    endtry
+    if empty(output)
+        return []
+    endif
+    let results = []
+    for item in split(output, '\n')
+        let item_list = split(item, '\t')
+        let chinese = get(item_list,0)
+        if s:localization
+            let chinese = s:vimim_i18n_read(chinese)
+        endif
+        if empty(chinese) || get(item_list,1,-1) < 0
+            continue  " bypass the breakpoint line which have -1
+        endif
+        let extra_text = get(item_list,2)
+        let english = a:keyboard[get(item_list,1):]
+        let new_item = extra_text . " " . chinese . english
+        call add(results, new_item)
+    endfor
+    return results
+endfunction
+
+function! s:vimim_access_mycloud(cmd)
+    let ret = ""
+    let mycloud = s:backend.cloud.mycloud.im
     if s:mycloud_mode == "libcall"
         let cmd = empty(s:mycloud_arg) ? a:cmd : s:mycloud_arg." ".a:cmd
-        let ret = libcall(a:cloud, s:mycloud_func, cmd)
+        let ret = libcall(mycloud, s:mycloud_func, cmd)
     elseif s:mycloud_mode == "python"
         let ret = s:vimim_mycloud_python_client(a:cmd)
     elseif s:mycloud_mode == "system"
-        let ret = system(a:cloud." ".shellescape(a:cmd))
+        let ret = system(mycloud . " " . shellescape(a:cmd))
     elseif s:mycloud_mode == "www"
-        let input = a:cloud . s:vimim_rot13(a:cmd)
+        let input = g:vimim_mycloud . s:vimim_rot13(a:cmd)
         if s:http_exe =~ 'libvimim'
             let ret = libcall(s:http_exe, "do_geturl", input)
         elseif len(s:http_exe)
@@ -2825,7 +2865,7 @@ function! s:vimim_access_mycloud(cloud, cmd)
 endfunction
 
 function! s:vimim_access_mycloud_isvalid(cloud)
-    let ret = s:vimim_access_mycloud(a:cloud, "__isvalid")
+    let ret = s:vimim_access_mycloud("__isvalid")
     if split(ret, "\t")[0] == "True"
         return 1
     endif
@@ -2849,70 +2889,41 @@ function! s:vimim_get_libvimim()
     return ""
 endfunction
 
-function! s:vimim_check_mycloud_libcall()
-    if has("win32") || has("win32unix")
-        return 0
-    endif
-    " we do plug-n-play for libcall(), not for system()
-    let cloud = s:vimim_get_libvimim()
-    if !empty(cloud)
-        let s:mycloud_mode = "libcall"
-        if s:vimim_access_mycloud_isvalid(cloud)
-            return cloud
-        endif
-    endif
-    let cloud = s:plugin . 'mycloud/mycloud' " plug-n-play on linux
-    if !executable(cloud)
-        if executable("python")
-            let cloud = "python " . cloud
-        else
-            return 0
-        endif
-    endif
-    let s:mycloud_mode = "system"  " in POSIX system, use system()
-    return s:vimim_access_mycloud_isvalid(cloud) ? cloud : 0
-endfunction
-
-function! s:vimim_check_mycloud_url()
-    " we do set-and-play on all systems
+function! s:vimim_mycloud_set_and_play()
     let part = split(g:vimim_mycloud, ':')
     let lenpart = len(part)
     if lenpart <= 1
         sil!call s:vimim_debug('info', "invalid_cloud_plugin_url")
-    elseif part[0] ==# 'app'
-        if !has("gui_win32")
-            if lenpart == 3
-                let cloud = part[1] . ':' . part[2]
-                if part[1][0] == '/'
-                    let cloud = part[1][1:] . ':' . part[2]
-                endif
-            elseif lenpart == 2
-                let cloud = part[1]
-            endif
-            if executable(split(cloud, " ")[0])
-                let s:mycloud_mode = "system"
-                if s:vimim_access_mycloud_isvalid(cloud)
-                    return cloud
-                endif
-            endif
+    elseif part[0] ==# 'py' && has("python")
+        if lenpart > 2
+            let s:mycloud_host = part[1]
+            let s:mycloud_port = part[2]
+        elseif lenpart > 1
+            let s:mycloud_host = part[1]
         endif
-    elseif part[0] ==# 'py'
-        if has("python")
-            if lenpart > 2
-                let s:mycloud_host = part[1]
-                let s:mycloud_port = part[2]
-            elseif lenpart > 1
-                let s:mycloud_host = part[1]
+        try
+            call s:vimim_mycloud_python_init()
+            let s:mycloud_mode = "python"
+            if s:vimim_access_mycloud_isvalid(part[1])
+                return "python"
             endif
-            try
-                call s:vimim_mycloud_python_init()
-                let s:mycloud_mode = "python"
-                if s:vimim_access_mycloud_isvalid(part[1])
-                    return "python"
-                endif
-            catch
-                sil!call s:vimim_debug('python_mycloud=', v:exception)
-            endtry
+        catch
+            sil!call s:vimim_debug('python_mycloud=', v:exception)
+        endtry
+    elseif part[0] ==# 'app' && !has("gui_win32")
+        if lenpart == 3
+            let cloud = part[1] . ':' . part[2]
+            if part[1][0] == '/'
+                let cloud = part[1][1:] . ':' . part[2]
+            endif
+        elseif lenpart == 2
+            let cloud = part[1]
+        endif
+        if executable(split(cloud, " ")[0])
+            let s:mycloud_mode = "system"
+            if s:vimim_access_mycloud_isvalid(cloud)
+                return cloud
+            endif
         endif
     elseif part[0] ==# "dll"
         let base = len(part[1]) == 1 ? 1 : 0
@@ -2931,7 +2942,7 @@ function! s:vimim_check_mycloud_url()
             endif
         endif
     elseif part[0] ==# "http" || part[0] ==# "https"
-        if !empty(s:vimim_check_http_executable()) && !empty(s:http_exe)
+        if !empty(s:vimim_check_http_executable())
             let s:mycloud_mode = "www"
             if s:vimim_access_mycloud_isvalid(g:vimim_mycloud)
                 return g:vimim_mycloud
@@ -2941,35 +2952,6 @@ function! s:vimim_check_mycloud_url()
         sil!call s:vimim_debug('alert', "invalid_cloud_plugin_url")
     endif
     return 0
-endfunction
-
-function! s:vimim_get_mycloud(keyboard)
-    let output = 0
-    let mycloud = s:backend.cloud.mycloud.im
-    try
-        let output = s:vimim_access_mycloud(mycloud, a:keyboard)
-    catch
-        sil!call s:vimim_debug('alert', 'mycloud', v:exception)
-    endtry
-    if empty(output)
-        return []
-    endif
-    let results = []
-    for item in split(output, '\n')
-        let item_list = split(item, '\t')
-        let chinese = get(item_list,0)
-        if s:localization
-            let chinese = s:vimim_i18n_read(chinese)
-        endif
-        if empty(chinese) || get(item_list,1,-1) < 0
-            continue  " bypass the breakpoint line which have -1
-        endif
-        let extra_text = get(item_list,2)
-        let english = a:keyboard[get(item_list,1):]
-        let new_item = extra_text . " " . chinese . english
-        call add(results, new_item)
-    endfor
-    return results
 endfunction
 
 " ============================================= }}}
@@ -3244,7 +3226,8 @@ else
             let keyboard = s:vimim_get_head_without_quote(keyboard)
         endif
     endif
-    if s:ui.im == 'mycloud'  " [mycloud] get chunmeng from local or www
+    " [mycloud] get chunmeng from local or www
+    if s:ui.im == 'mycloud'
         let results = s:vimim_get_mycloud(keyboard)
         if len(results)
             let s:show_extra_menu = 1
