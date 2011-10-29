@@ -2850,6 +2850,9 @@ function! s:vimim_get_libvimim()
 endfunction
 
 function! s:vimim_check_mycloud_libcall()
+    if has("win32") || has("win32unix")
+        return 0
+    endif
     " we do plug-n-play for libcall(), not for system()
     let cloud = s:vimim_get_libvimim()
     if !empty(cloud)
@@ -2857,9 +2860,6 @@ function! s:vimim_check_mycloud_libcall()
         if s:vimim_access_mycloud_isvalid(cloud)
             return cloud
         endif
-    endif
-    if has("gui_win32")
-        return 0
     endif
     let cloud = s:plugin . 'mycloud/mycloud' " plug-n-play on linux
     if !executable(cloud)
