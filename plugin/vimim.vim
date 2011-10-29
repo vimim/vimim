@@ -2537,19 +2537,19 @@ function! s:vimim_check_http_executable()
     return s:http_exe
 endfunction
 
-function! s:vimim_get_cloud(keyboard)
+function! s:vimim_get_cloud(keyboard, cloud)
     let keyboard = a:keyboard  " remove evil leading/trailing quote
     let keyboard = keyboard[:0]  == "'" ? keyboard[1:]  : keyboard
     let keyboard = keyboard[-1:] == "'" ? keyboard[:-2] : keyboard
-    if keyboard !~ s:valid_keyboard || empty(s:cloud)
+    if keyboard !~ s:valid_keyboard || empty(a:cloud)
         return []
     endif
-    let cloud = "s:vimim_get_cloud_" . s:cloud . "(keyboard)"
+    let cloud = "s:vimim_get_cloud_" . a:cloud . "(keyboard)"
     let results = []
     try
         let results = eval(cloud)
     catch
-        sil!call s:vimim_debug(s:cloud, v:exception)
+        sil!call s:vimim_debug(a:cloud, v:exception)
     endtry
     if !empty(results) && s:keyboard !~ '\S\s\S'
         let s:keyboard = keyboard
@@ -2750,8 +2750,7 @@ function! s:vimim_get_all_clouds(keyboard)
     let results = []
     for cloud in split(s:rc["g:vimim_cloud"], ',')
         let start = reltime()
-        let s:cloud = cloud
-        let outputs = s:vimim_get_cloud(a:keyboard)
+        let outputs = s:vimim_get_cloud(a:keyboard, cloud)
         if len(results) > 1
             call add(results, s:space)
         endif
@@ -2990,7 +2989,7 @@ function! s:vimim_search_chinese_by_english(keyboard)
     if s:ui.im == 'mycloud'
         let results = s:vimim_get_mycloud(keyboard)
     elseif s:ui.root == 'cloud' || keyboard[-1:] == "'"
-        let results = s:vimim_get_cloud(keyboard)
+        let results = s:vimim_get_cloud(keyboard, s:cloud)
     endif
     if len(results) | return results | endif
     " 2/3 search unicode or cjk /search unicode /u808f
@@ -3245,7 +3244,7 @@ else
     endif
     " [cloud] to make dream come true for multiple clouds
     if s:ui.root == 'cloud' || keyboard[-1:] == "'"
-        let results = s:vimim_get_cloud(keyboard)
+        let results = s:vimim_get_cloud(keyboard, s:cloud)
     endif
     if empty(results)
         if s:ui.im =~ 'wubi\|erbi' || g:vimim_cloud =~ 'wubi'
@@ -3271,7 +3270,7 @@ else
             let shoupin = s:vimim_get_head_without_quote(keyboard."'''")
             let results = s:vimim_cjk_match(shoupin)
             if empty(results)
-                let results = s:vimim_get_cloud(keyboard)
+                let results = s:vimim_get_cloud(keyboard, s:cloud)
             endif
         else    " for onekey continuity: abcdefghijklmnopqrstuvwxyz..
             let i = keyboard == 'i' ? "我" : s:space
