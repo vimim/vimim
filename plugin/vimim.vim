@@ -821,6 +821,7 @@ function! g:vimim_screenshot()
     if s:keyboard =~ '^vim'
         let space = ""  " no need to format if egg
     endif
+    call setline(".", keyboard)
     let saved_position = getpos(".")
     for items in s:popup_list
         let line = printf('%s', items.word)
@@ -1120,7 +1121,7 @@ function! g:vimim_chinese()
     let s:mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
     let s:chinese_mode_switch = s:chinese_mode_switch ? 0 : 1
     let key = s:vimim_start_stop(s:chinese_mode_switch)
-    return key
+    sil!return key
 endfunction
 
 function! s:vimim_start_stop(switch)
@@ -1146,7 +1147,7 @@ function! g:vimim_im_switch()
     if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
         let s:cloud = s:ui.im
     endif
-    return s:vimim_start_stop(1)
+    sil!return s:vimim_start_stop(1)
 endfunction
 
 function! s:vimim_set_custom_im_list()
@@ -2815,8 +2816,7 @@ function! s:vimim_get_mycloud(keyboard)
         let s:mycloud_initialization = 1
         let mycloud = s:vimim_mycloud_set_and_play()
         if empty(mycloud)
-            let s:mycloud_initialization = -1
-            sil!call s:vimim_debug('error', "mycloud not initialized")
+            let s:mycloud_initialization = -1 " fail to start mycloud
             return []
         endif
         " set mycloud client with real data from mycloud server
@@ -2858,8 +2858,8 @@ function! s:vimim_access_mycloud(cmd)
     let ret = ""
     let mycloud = s:backend.cloud.mycloud.im
     if s:mycloud_mode == "libcall"
-        let cmd = empty(s:mycloud_arg) ? a:cmd : s:mycloud_arg." ".a:cmd
-        let ret = libcall(mycloud, s:mycloud_func, cmd)
+        let cmd = empty(s:mycloud_arg) ? "" : s:mycloud_arg . " "
+        let ret = libcall(mycloud, s:mycloud_func, cmd . a:cmd )
     elseif s:mycloud_mode == "python"
         let ret = s:vimim_mycloud_python_client(a:cmd)
     elseif s:mycloud_mode == "system"
@@ -3234,6 +3234,9 @@ else
         if len(results)
             let s:show_extra_menu = 1
             return s:vimim_popupmenu_list(results)
+        else  " auto switch to the next s:ui.im after mycloud failure
+            sil!call remove(s:ui.frontends,match(s:ui.frontends,s:ui.im))
+            sil!call g:vimim_im_switch()
         endif
     endif
     " [shuangpin] support 6 major shuangpin rules
@@ -3323,7 +3326,7 @@ function! s:vimim_popupmenu_list(lines)
             endfor
             let chinese = simplified_traditional
         endif
-        let label2 = s:vimim_get_labeling(label)
+        let label2 = s:windowless ? label : s:vimim_get_labeling(label)
         if empty(s:touch_me_not)
             let menu = ""
             let pairs = split(chinese)
@@ -3341,12 +3344,9 @@ function! s:vimim_popupmenu_list(lines)
                     let menu = s:vimim_cjk_extra_text(char)
                 endif
             endif
-            let english = '*'  " sexy english flag
-            if match(split(s:english.line), chinese) < 0
-                let english = ' '
-            endif
+            let english = s:english.line =~ chinese ? '*' : ' '
             let label2 = english . label2
-            let labeling = printf('%2s ', label2)
+            let labeling = printf('%3s ', label2)
             let chinese .= empty(tail) ? '' : tail
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
@@ -3370,9 +3370,9 @@ function! s:vimim_popupmenu_list(lines)
     endfor
     if s:mode == 'onekey'
         call s:vimim_title()
-        set completeopt=menuone   " for hjkl_n refresh
+        set completeopt=menuone   " for hjkl_n refresh: ma ctrl+6 7712
         if s:windowless && empty(s:touch_me_not)
-            set completeopt=menu  " for direct insert
+            set completeopt=menu  " for direct insert: gi m7712
             let vimim = "VimIM" . s:space .'  '. join(keyboards,"").'  '
             let &titlestring = vimim . join(one_list)
             call s:vimim_set_titlestring(1)
