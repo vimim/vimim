@@ -2780,9 +2780,9 @@ function! s:vimim_set_backend_mycloud()
     let s:mycloud_port = 10007
     let mycloud = 0
     if len(g:vimim_mycloud) < 3
-        let mycloud = s:vimim_check_mycloud_plugin_libcall()
+        let mycloud = s:vimim_check_mycloud_libcall()
     else
-        let mycloud = s:vimim_check_mycloud_plugin_url()
+        let mycloud = s:vimim_check_mycloud_url()
     endif
     if !empty(mycloud)
         let s:ui.root = 'cloud'
@@ -2849,7 +2849,7 @@ function! s:vimim_get_libvimim()
     return ""
 endfunction
 
-function! s:vimim_check_mycloud_plugin_libcall()
+function! s:vimim_check_mycloud_libcall()
     " we do plug-n-play for libcall(), not for system()
     let cloud = s:vimim_get_libvimim()
     if !empty(cloud)
@@ -2858,21 +2858,19 @@ function! s:vimim_check_mycloud_plugin_libcall()
             return cloud
         endif
     endif
-    if has("gui_win32")
-        return 0
-    endif
     let cloud = s:plugin . 'mycloud/mycloud' " plug-n-play on linux
     if !executable(cloud)
-        if !executable("python")
+        if executable("python")
+            let cloud = "python " . cloud
+        else
             return 0
         endif
-        let cloud = "python " . cloud
     endif
     let s:mycloud_mode = "system"  " in POSIX system, use system()
     return s:vimim_access_mycloud_isvalid(cloud) ? cloud : 0
 endfunction
 
-function! s:vimim_check_mycloud_plugin_url()
+function! s:vimim_check_mycloud_url()
     " we do set-and-play on all systems
     let part = split(g:vimim_mycloud, ':')
     let lenpart = len(part)
