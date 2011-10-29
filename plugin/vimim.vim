@@ -121,6 +121,11 @@ function! s:vimim_initialize_global()
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
     endif
+    let s:toggle_punctuation = 1
+    let s:vimim_punctuation = 1
+    if g:vimim_mode =~ 'nopunctuation'
+        let s:vimim_punctuation = 0
+    endif
     let s:english = { 'lines' : [], 'line' : "" }
     let s:english.filename = s:vimim_filereadable("vimim.txt")
     let s:cjk = { 'lines' : [] }
@@ -153,8 +158,8 @@ function! s:vimim_set_keycode()
     let ime = 'wu erbi yong nature boshiamy phonetic array30'
     for im in split(ime)
         if s:ui.im == im
-            let s:ui.has_dot = 1  " has english dot in datafile
-            let g:vimim_mode .= ',nopunctuation'
+            let s:ui.has_dot = 1  " has dot in the datafile
+            let s:vimim_punctuation = 0
             break
         endif
     endfor
@@ -200,10 +205,7 @@ endfunction
 function! g:vimim_wubi()
     let key = ""
     if pumvisible()
-        let key = '\<C-E>'
-        if empty(len(get(split(s:keyboard),0))%4)
-            let key = '\<C-N>\<C-Y>'
-        endif
+        let key = len(get(split(s:keyboard),0))%4 ? '\<C-E>' : '\<C-Y>'
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -483,7 +485,7 @@ function! s:vimim_dictionary_punctuations()
     let s:all_evils = { '\' : "、", "'" : "‘’", '"' : "“”" }
     call extend(s:all_evils, punctuations)
     let s:punctuations = {}
-    if g:vimim_mode !~ 'nopunctuation'
+    if s:vimim_punctuation
         let s:punctuations = copy(punctuations)
     endif
 endfunction
@@ -537,7 +539,7 @@ function! s:vimim_get_title()
     let backend = s:backend[s:ui.root][s:ui.im]
     if has_key(s:im_keycode, s:ui.im)
         let im = backend.chinese
-        if s:windowless && s:mode == 'onekey' && len(s:cjk.filename)
+        if s:windowless && len(s:cjk.filename)
             let im = len(s:english.line) ? '*'      : ''
             let im = len(s:hjkl_n)       ? s:hjkl_n : im
         endif
@@ -575,10 +577,13 @@ function! s:vimim_get_title()
 endfunction
 
 function! s:vimim_statusline()
+    let punctuation = 'halfwidth'
+    if s:vimim_punctuation && s:toggle_punctuation
+        let punctuation = 'fullwidth'
+    endif
     let input_mode  = get(split(g:vimim_mode,','),0)
-    let p = g:vimim_mode =~ 'nopunctuation' ? 'halfwidth' : 'fullwidth'
     let line = s:chinese('chinese', input_mode) . s:vimim_get_title()
-    return line . s:chinese(p, s:space, "VimIM")
+    return line . s:chinese(punctuation, s:space, "VimIM")
 endfunction
 
 function! g:vimim_slash()
@@ -640,7 +645,6 @@ function! s:vimim_common_maps()
     lnoremap <silent> <expr> <CR>    g:vimim_enter()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
-    lnoremap <silent> <expr> <C-L>   g:vimim_onekey_popup()
     lnoremap <silent> <expr> <C-H>   g:vimim_im_switch()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
     lnoremap <silent>        <C-V>   <C-R>=g:vimim_screenshot()<CR>
@@ -670,7 +674,7 @@ function! g:vimim_label(key)
             let key = yes . key
             sil!call s:vimim_reset_after_insert()
         endif
-    elseif s:windowless && s:mode == 'onekey' && key =~ '\d'
+    elseif s:windowless && key =~ '\d'
         if s:pattern_not_found
             let s:pattern_not_found = 0
         else
@@ -753,20 +757,33 @@ function! g:vimim_hjkl(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
+function! g:vimim_fullwidth_halfwidth()
+    if s:vimim_punctuation
+        let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
+        call s:vimim_set_statusline()
+        call s:vimim_punctuations_maps()
+    endif
+    return ""
+endfunction
+
 function! s:vimim_punctuations_maps()
-    for _ in keys(s:punctuations)
-        exe 'lnoremap <expr> '._.' g:vimim_punctuation("'._.'")'
-    endfor
-    lnoremap     '    <C-R>=g:vimim_single_quote()<CR>
-    lnoremap     "    <C-R>=g:vimim_double_quote()<CR>
-    lnoremap <Bslash> <C-R>=pumvisible() ? "\<lt>C-Y>、" : "、"<CR>
+    if s:vimim_punctuation
+        for _ in keys(s:punctuations)
+            exe 'lnoremap <expr> '._.' g:vimim_punctuation("'._.'")'
+        endfor
+        lnoremap     '    <C-R>=g:vimim_single_quote()<CR>
+        lnoremap     "    <C-R>=g:vimim_double_quote()<CR>
+        lnoremap <Bslash> <C-R>=pumvisible() ? "\<lt>C-Y>、" : "、"<CR>
+    endif
 endfunction
 
 function! g:vimim_punctuation(key)
     let key = a:key
-    if pumvisible() || s:vimim_byte_before() !~ '\w'
-        if has_key(s:punctuations, a:key)
-            let key = s:punctuations[a:key]
+    if s:toggle_punctuation
+        if pumvisible() || s:vimim_byte_before() !~ '\w'
+            if has_key(s:punctuations, a:key)
+                let key = s:punctuations[a:key]
+            endif
         endif
     endif
     if pumvisible()
@@ -844,7 +861,7 @@ function! g:vimim_tab()
     sil!exe 'sil!return "' . tab . '"'
 endfunction
 
-function! g:vimim_onekey_popup()
+function! g:vimim_windowless_popup()
     let popup = '\<C-E>'   "  windowless mode <=> popup window mode
     if s:mode == 'onekey'
         let s:windowless = s:windowless ? 0 : 1
@@ -881,7 +898,7 @@ endfunction
 
 function! s:vimim_title()
     let titlestring = s:logo . s:vimim_get_title()
-    if s:windowless && s:mode == 'onekey' && empty(s:touch_me_not)
+    if s:windowless && empty(s:touch_me_not)
         let titlestring .= s:today
     endif
     if &term == 'screen'
@@ -990,7 +1007,7 @@ function! g:vimim_correction()
         if range
             let key = '\<C-E>' . repeat("\<Left>\<Delete>", range)
         endif
-    elseif s:windowless && s:mode == 'onekey'
+    elseif s:windowless
         let s:smart_enter = "windowless_correction"
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
         call s:vimim_title()
@@ -1031,7 +1048,7 @@ function! s:vimim_onekey_action()
     if empty(onekey)
         if s:vimim_byte_before() =~# s:valid_keyboard
             let onekey = g:vimim()
-        elseif s:windowless && s:mode == 'onekey'
+        elseif s:windowless
             let onekey = s:vimim_windowless("")
         endif
     endif
@@ -3017,9 +3034,13 @@ function! s:vimim_start()
     sil!call s:vimim_set_color()
     sil!call s:vimim_set_keycode()
     if s:mode == 'onekey'
+        lnoremap <silent> <expr> <C-L> g:vimim_windowless_popup()
         sil!call s:vimim_onekey_maps()
     else
-        sil!call s:vimim_punctuations_maps()
+        lnoremap <silent> <expr> <C-L> g:vimim_fullwidth_halfwidth()
+        if s:vimim_punctuation
+            sil!call s:vimim_punctuations_maps()
+        endif
         if s:mode == 'dynamic'
             sil!call s:vimim_dynamic_maps()
         endif
@@ -3076,7 +3097,7 @@ function! s:vimim_set_pumheight()
     if empty(&pumheight) || s:mode == 'onekey'
         let &pumheight = 10
     endif
-    if s:mode == 'onekey' && s:windowless
+    if s:windowless
         let &pumheight = 1
     endif
     let s:pumheights.current = copy(&pumheight)
@@ -3313,8 +3334,8 @@ function! s:vimim_popupmenu_list(lines)
                     let menu = pair_left
                 endif
             endif
-            if s:hjkl_h && s:hjkl_h%2
-                let chars = split(chinese,'\zs')
+            if s:hjkl_h && s:hjkl_h % 2
+                let chars = split(chinese, '\zs')
                 if empty(tail) || len(chars) == 1
                     let char = get(chars,0)
                     let menu = s:vimim_cjk_extra_text(char)
@@ -3325,13 +3346,13 @@ function! s:vimim_popupmenu_list(lines)
                 let english = ' '
             endif
             let label2 = english . label2
-            let labeling = printf('%2s ',label2)
+            let labeling = printf('%2s ', label2)
             let chinese .= empty(tail) ? '' : tail
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
         endif
         let titleline = label . "."
-        if s:windowless && s:mode == 'onekey'
+        if s:windowless
             let titleline = label2
             if s:vimim_cjk()     " display english flag plus 4corner
                 let star = substitute(titleline,'[0-9a-z_ ]','','g')
