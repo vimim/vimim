@@ -106,7 +106,7 @@ function! s:vimim_initialize_global()
     let s:pumheights = { 'current' : &pumheight, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
-    let s:ui = { 'root' : '', 'im' : '', 'has_dot' : 0, 'frontends' : [] }
+    let s:ui = { 'root' : '', 'im' : '', 'frontends' : [] }
     let s:rc = { "g:vimim_mode" : 'dynamic,punctuation' }
     let s:rc["g:vimim_shuangpin"] = 0
     let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
@@ -154,20 +154,9 @@ function! s:vimim_dictionary_keycodes()
 endfunction
 
 function! s:vimim_set_keycode()
-    let ime = 'wu erbi yong nature boshiamy phonetic array30'
-    for im in split(ime)
-        if s:ui.im == im
-            let s:ui.has_dot = 1  " has dot in the datafile
-            let s:vimim_punctuation = 0
-            break
-        endif
-    endfor
     let keycode = "[0-9a-z']"
     if !empty(s:ui.root) && empty(g:vimim_shuangpin)
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
-        if s:backend[s:ui.root][s:ui.im].name =~ "quote"
-            let s:ui.has_dot = 2  " has apostrophe in datafile
-        endif
     elseif g:vimim_shuangpin == 'ms' || g:vimim_shuangpin == 'purple'
         let keycode = "[0-9a-z';]"
     endif
@@ -638,7 +627,9 @@ function! s:vimim_common_maps()
         exe 'lnoremap <expr> '._.' g:vimim_label("'._.'")'
     endfor
     for _ in split(punctuation)
-        exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
+        if _ !~ s:valid_keyboard
+            exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
+        endif
     endfor
     lnoremap <silent> <expr> <Space> g:vimim_space()
     lnoremap <silent> <expr> <CR>    g:vimim_enter()
@@ -713,9 +704,8 @@ function! s:vimim_dynamic_maps()
             \ '<C-R>=g:vimim_wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
         endfor
     else    " dynamic alphabet trigger for all but wubi
-        let not_used_keys = s:ui.has_dot == 1 ? "[0-9]" : "[0-9']"
         for char in s:valid_keys
-            if char !~# not_used_keys
+            if char !~ "[0-9']"
                 sil!exe 'lnoremap <silent> ' . char . ' ' .
                 \  char . '<C-R>=g:vimim()<CR>'
             endif
@@ -767,7 +757,9 @@ endfunction
 function! s:vimim_punctuations_maps()
     if s:vimim_punctuation
         for _ in keys(s:punctuations)
-            exe 'lnoremap <expr> '._.' g:vimim_punctuation("'._.'")'
+            if _ !~ s:valid_keyboard
+                exe 'lnoremap <expr> '._.' g:vimim_punctuation("'._.'")'
+            endif
         endfor
         lnoremap     '    <C-R>=g:vimim_single_quote()<CR>
         lnoremap     "    <C-R>=g:vimim_double_quote()<CR>
@@ -967,7 +959,7 @@ function! g:vimim_space()
         if s:vimim_byte_before() =~# s:valid_keyboard
             let space = g:vimim()
         endif
-    elseif s:seamless_positions == getpos(".") || s:ui.has_dot
+    elseif s:seamless_positions == getpos(".")
         let s:smart_enter = 0  " space is space after enter
     else
         let space = s:vimim_onekey_action()
@@ -1107,7 +1099,7 @@ endfunction
 
 function! s:vimim_get_head_without_quote(keyboard)
     let keyboard = a:keyboard
-    if s:ui.has_dot || keyboard =~ '\d' || s:ui.root == 'cloud'
+    if keyboard =~ '\d' || s:ui.root == 'cloud'
         return keyboard
     endif
     if s:hjkl_m && s:hjkl_m % 2 || keyboard =~ '^\l\l\+'."'''".'$'
@@ -3175,7 +3167,7 @@ if a:start
     while start_column
         if one_before =~# s:valid_keyboard
             let start_column -= 1
-            if one_before !~# "[0-9']" && empty(s:ui.has_dot)
+            if one_before !~# "[0-9']"
                 let last_seen_nonsense_column = start_column
                 if all_digit
                     let all_digit = 0
@@ -3396,12 +3388,13 @@ function! s:vimim_embedded_backend_engine(keyboard)
     let keyboard = a:keyboard
     if empty(s:ui.im) || empty(s:ui.root)
         return []
-    elseif s:ui.has_dot == 2 && keyboard !~ "[']"
+    endif
+    let head = 0
+    let results = []
+    let backend = s:backend[s:ui.root][s:ui.im]
+    if backend.name =~ "quote" && keyboard !~ "[']"  " has apostrophe
         let keyboard = s:vimim_quanpin_transform(keyboard)
     endif
-    let results = []
-    let head = 0
-    let backend = s:backend[s:ui.root][s:ui.im]
     if s:ui.root =~# "directory"
         let dir = backend.name
         let head = s:vimim_sentence_directory(keyboard, dir)
