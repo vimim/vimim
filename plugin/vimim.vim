@@ -131,12 +131,12 @@ endfunction
 
 function! s:vimim_dictionary_keycodes()
     let s:im_keycode = {}
-    let ime = ' wu nature zhengma taijima wubi cangjie'
-    for key in split(ime . ' google sogou baidu qq mycloud ')
-        let s:im_keycode[key] = "[a-z']"
-    endfor
-    for key in split('pinyin hangul xinhua quick')
+    let cloud = ' google sogou baidu qq ' 
+    for key in split( cloud . ' pinyin hangul xinhua quick ')
         let s:im_keycode[key] = "[0-9a-z']"
+    endfor
+    for key in split('wu nature zhengma taijima wubi cangjie mycloud')
+        let s:im_keycode[key] = "[a-z']"
     endfor
     for key in split('array30 phonetic')
         let s:im_keycode[key] = "[.,a-z0-9;/]"
