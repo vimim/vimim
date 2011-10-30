@@ -114,16 +114,13 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
     let s:rc["g:vimim_mycloud"] = 0
     let s:rc["g:vimim_plugin"] = s:plugin
+    let s:rc["g:vimim_punctuation"] = 1
     call s:vimim_set_global_default()
     if isdirectory(g:vimim_plugin)
         let s:plugin = g:vimim_plugin
     endif
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
-    endif
-    let s:vimim_punctuation = 1
-    if g:vimim_mode =~ 'nopunctuation'
-        let s:vimim_punctuation = 0
     endif
     let s:english = { 'lines' : [], 'line' : "" }
     let s:english.filename = s:vimim_filereadable("vimim.txt")
@@ -455,16 +452,22 @@ function! s:vimim_dictionary_statusline()
 endfunction
 
 function! s:vimim_dictionary_punctuations()
+    let one = "  , .  +  -  ~  ^    _    "
+    let two = " ， 。 ＋ － ～ …… —— "
+    let mini_punctuations = s:vimim_key_value_hash(one, two)
     let one = "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
     let two = "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
-    let one .= "  , .  +  -  ~  ^    _    "
-    let two .= " ， 。 ＋ － ～ …… —— "
-    let punctuations = s:vimim_key_value_hash(one, two)
-    let s:all_evils = { '\' : "、", "'" : "‘’", '"' : "“”" }
-    call extend(s:all_evils, punctuations)
+    let most_punctuations = s:vimim_key_value_hash(one, two)
+    let s:key_evils = { '\' : "、", "'" : "‘’", '"' : "“”" }
+    let s:all_evils = {}   " all punctuations for onekey_evils
+    call extend(s:all_evils, mini_punctuations)
+    call extend(s:all_evils, most_punctuations)
     let s:punctuations = {}
-    if s:vimim_punctuation
-        let s:punctuations = copy(punctuations)
+    if g:vimim_punctuation > 0   " :let g:vimim_punctuation = 1
+        call extend(s:punctuations, mini_punctuations)
+    endif
+    if g:vimim_punctuation > 1   " :let g:vimim_punctuation = 2
+        call extend(s:punctuations, most_punctuations)
     endif
 endfunction
 
@@ -556,7 +559,7 @@ endfunction
 
 function! s:vimim_statusline()
     let punctuation = 'halfwidth'
-    if s:vimim_punctuation && s:toggle_punctuation
+    if g:vimim_punctuation > 0 && s:toggle_punctuation
         let punctuation = 'fullwidth'
     endif
     let input_mode  = get(split(g:vimim_mode,','),0)
@@ -681,7 +684,7 @@ function! g:vimim_page(key)
             let s:pageup_pagedown = &pumheight ? -1 : 0
         endif
     elseif s:mode != 'onekey' && key =~ "[][=-]"
-        let key = g:vimim_punctuation(key)
+        let key = g:vimim_punctuations(key)
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -744,7 +747,7 @@ function! g:vimim_hjkl(key)
 endfunction
 
 function! g:vimim_fullwidth_halfwidth()
-    if s:vimim_punctuation
+    if g:vimim_punctuation > -1
         let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
         call s:vimim_set_statusline()
         call s:vimim_punctuations_maps()
@@ -753,19 +756,22 @@ function! g:vimim_fullwidth_halfwidth()
 endfunction
 
 function! s:vimim_punctuations_maps()
-    if s:vimim_punctuation
-        for _ in keys(s:punctuations)
-            if _ !~ s:valid_keyboard
-                exe 'lnoremap <expr> '._.' g:vimim_punctuation("'._.'")'
-            endif
-        endfor
+    if g:vimim_punctuation < 0
+        return
+    endif
+    for _ in keys(s:all_evils)
+        if _ !~ s:valid_keyboard
+            exe 'lnoremap <expr> '._.' g:vimim_punctuations("'._.'")'
+        endif
+    endfor
+    if g:vimim_punctuation == 3
         lnoremap     '    <C-R>=g:vimim_single_quote()<CR>
         lnoremap     "    <C-R>=g:vimim_double_quote()<CR>
         lnoremap <Bslash> <C-R>=g:vimim_bslash()<CR>
     endif
 endfunction
 
-function! g:vimim_punctuation(key)
+function! g:vimim_punctuations(key)
     let key = a:key
     if s:toggle_punctuation
         if pumvisible() || s:vimim_byte_before() !~ '\w'
@@ -788,7 +794,7 @@ function! g:vimim_single_quote()
     if pumvisible()       " the 3rd choice
         let key = '\<C-N>\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
     elseif s:toggle_punctuation
-        let pairs = split(s:all_evils[key], '\zs')
+        let pairs = split(s:key_evils[key], '\zs')
         let s:smart_quotes.single += 1
         let key = get(pairs, s:smart_quotes.single % 2)
     else
@@ -800,7 +806,7 @@ endfunction
 function! g:vimim_double_quote()
     let key = '"'
     if s:toggle_punctuation
-        let pairs = split(s:all_evils[key], '\zs')
+        let pairs = split(s:key_evils[key], '\zs')
         let s:smart_quotes.double += 1
         let yes = pumvisible() ? '\<C-Y>' : ""
         let key = yes . get(pairs, s:smart_quotes.double % 2)
@@ -814,7 +820,7 @@ function! g:vimim_bslash()
     let key = '\'
     if s:toggle_punctuation
         let yes = pumvisible() ? '\<C-Y>' : ""
-        let key = yes . s:all_evils[key]
+        let key = yes . s:key_evils[key]
     else
         return key
     endif
@@ -1066,6 +1072,8 @@ function! s:vimim_onekey_evils()
     let onekey = ""  " punctuations can be made not so evil ..
     let one_before = s:vimim_byte_before()
     let two_before = getline(".")[col(".")-3]
+    let onekey_evils = copy(s:all_evils)
+    call extend(onekey_evils, s:key_evils)
     if getline(".")[col(".")-3 : col(".")-2] == ".."  " before_before
         " [game] dot dot => quotes => popup menu
         let three_before  = getline(".")[col(".")-4]
@@ -1081,13 +1089,13 @@ function! s:vimim_onekey_evils()
     elseif one_before =~ "[0-9a-z]"                     " nothing
     elseif two_before =~ "[0-9a-z]"
         let onekey = " "  " ma,space => ma, space
-    elseif has_key(s:all_evils, one_before)
-        for char in keys(s:all_evils)
+    elseif has_key(onekey_evils, one_before)
+        for char in keys(onekey_evils)
             if two_before ==# char || two_before =~# '\u'
                 return " " " no transfer if punctuation punctuation
             endif
         endfor
-        let bs = s:all_evils[one_before] " turn into Chinese punctuation
+        let bs = onekey_evils[one_before] " turn into Chinese punctuation
         let bs = one_before == "'" ? g:vimim_single_quote() : bs
         let bs = one_before == '"' ? g:vimim_double_quote() : bs
         let onekey = "\<Left>\<Delete>" . bs
@@ -1553,7 +1561,7 @@ function! s:vimim_get_cjk_head(keyboard)
         return ""
     elseif keyboard =~# '^i' && empty (s:english.line)
         let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
-    endif 
+    endif
     if s:touch_me_not || len(keyboard) == 1
         let head = keyboard
     elseif keyboard =~ '\d'
@@ -3033,7 +3041,7 @@ function! s:vimim_start()
         sil!call s:vimim_onekey_maps()
     else
         lnoremap <silent> <expr> <C-L> g:vimim_fullwidth_halfwidth()
-        if s:vimim_punctuation
+        if g:vimim_punctuation > -1
             sil!call s:vimim_punctuations_maps()
         endif
         if s:mode == 'dynamic'
