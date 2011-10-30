@@ -737,9 +737,7 @@ function! g:vimim_hjkl(key)
         elseif match(s:qwer, key) > -1
             let s:hjkl_n .= match(s:qwer, key)
         endif
-        if key == a:key
-            let key = '\<C-R>=g:vimim()\<CR>'
-        endif
+        let key = key == a:key ? '\<C-R>=g:vimim()\<CR>' : key
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -834,9 +832,9 @@ function! g:vimim_gi()
 endfunction
 
 function! g:vimim_tab()
-    " (1) Tab in insert mode => tab is tab if nature
+    " (1) Tab in insert mode => Tab is Tab if Tab
     " (2) Tab in insert mode => start windowless
-    " (3) Tab in omni window => start print out fine menu
+    " (3) Tab in lmap   mode => start print out fine menu
     let tab = "\t"
     if empty(s:vimim_byte_before())
     elseif pumvisible() || s:lmap
@@ -1000,7 +998,7 @@ function! g:vimim_correction()
 endfunction
 
 function! g:vimim_backspace()
-    let key = '\<Left>\<Delete>'  " avoid special meaning of <BS> in omni
+    let key = '\<Left>\<Delete>' " avoid special meaning of <BS> in omni
     if pumvisible()
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
@@ -1036,7 +1034,8 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 
 function! g:vimim_onekey()
     " (1) OneKey in insert mode => start omni popup mode
-    " (2) OneKey in omni window => start print out menu
+    " (2) OneKey in lmap   mode => close omni popup mode
+    " (3) OneKey in omni window => start print out menu
     let onekey = ''
     if pumvisible()
         let onekey = s:vimim_screenshot()
@@ -1077,8 +1076,8 @@ function! s:vimim_onekey_evils()
             let onekey = "''"       "  <=  香.. plays same cjk
         endif
         let onekey = "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
-    elseif one_before == "'" && two_before =~ "[a-z']"  " forced cloud
-    elseif one_before =~ "[0-9a-z]"                     " nothing
+    elseif one_before == "'" && two_before =~ "[a-z']" " forced cloud
+    elseif one_before =~ "[0-9a-z]"                    " nothing
     elseif two_before =~ "[0-9a-z]"
         let onekey = " "  " ma,space => ma, space
     elseif has_key(onekey_evils, one_before)
@@ -1087,7 +1086,7 @@ function! s:vimim_onekey_evils()
                 return " " " no transfer if punctuation punctuation
             endif
         endfor
-        let bs = onekey_evils[one_before] " turn into Chinese punctuation
+        let bs = onekey_evils[one_before] " make Chinese punctuation
         let bs = one_before == "'" ? g:vimim_single_quote() : bs
         let bs = one_before == '"' ? g:vimim_double_quote() : bs
         let onekey = "\<Left>\<Delete>" . bs
@@ -1633,7 +1632,7 @@ function! s:vimim_cjk_match(keyboard)
         else
             let digit = ""
             if keyboard =~ '^\d\+' && keyboard !~ '[^0-9]'
-                let digit = keyboard   " free style digit: 7 77 771 7712
+                let digit = keyboard  " free style digit: 7 77 771 7712
             elseif keyboard =~# '^\l\+\d\+'
                 " cjk free style input/search: ma7 ma77 ma771 ma7712
                 let digit = substitute(keyboard,'\a','','g')
@@ -1693,9 +1692,7 @@ function! s:vimim_sort_on_last(line1, line2)
 endfunction
 
 function! s:vimim_chinese_transfer() range abort
-    " (1) quick and dirty way to transfer Chinese to Chinese
-    " (2) 20% of the effort to solve 80% of the problem using one2one
-    if s:vimim_cjk()
+    if s:vimim_cjk() " quick and dirty way to transfer between Chinese
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
 endfunction
@@ -1720,22 +1717,19 @@ let s:VimIM += [" ====  input: english   ==== {{{"]
 
 function! s:vimim_get_english(keyboard)
     if empty(s:english.filename)
-        return ""  " english: obama/now/version/ice/o2
+        return ""     " english: obama/now/version/ice/o2
     elseif empty(s:english.lines)
         let s:english.lines = s:vimim_readfile(s:english.filename)
-    endif
-    " [sql] select english from vimim.txt
+    endif             " [sql] select english from vimim.txt
     let grep = '^' . a:keyboard . '\s\+'
     let cursor = match(s:english.lines, grep)
-    " [pinyin]  cong  => cong
-    " [english] congr => congratulation  haag => haagendazs
     let keyboards = s:vimim_get_pinyin(a:keyboard)
     if cursor < 0 && len(a:keyboard) > 3 && len(keyboards)
         let grep = '^' . get(split(a:keyboard,'\d'),0) " mxj7 => mxj
         let cursor = match(s:english.lines, grep)
     endif
-    let oneline = ""
-    if cursor > -1
+    let oneline = ""  " [pinyin]  cong  => cong
+    if cursor > -1    " [english] congr => congratulation
         let oneline = get(s:english.lines, cursor)
         if a:keyboard != get(split(oneline),0)
             let pairs = split(oneline)   " haag haagendazs
@@ -2000,11 +1994,10 @@ function! s:vimim_create_shuangpin_table(rules)
             let sptable[sp1] = key
         endif
     endfor
-    " the jxqy+v special case handling
     if match(split("abc purple nature flypy"), g:vimim_shuangpin) > -1
         let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
         call extend(sptable, jxqy)
-    elseif g:vimim_shuangpin == 'ms'
+    elseif g:vimim_shuangpin == 'ms' " jxqy+v special case handling
         let jxqy = {"jv" : "jue", "qv" : "que", "xv" : "xue", "yv" : "yue"}
         call extend(sptable, jxqy)
     endif
@@ -2032,8 +2025,7 @@ function! s:vimim_shuangpin_transform(keyboard)
     let output = ""
     let bchar = ""    " workaround for sogou
     while ptr < size
-        if a:keyboard[ptr] !~ "[a-z;]"
-            " bypass all non-characters, i.e. 0-9 and A-Z are bypassed
+        if a:keyboard[ptr] !~ "[a-z;]"   "  bypass all non-characters
             let output .= a:keyboard[ptr]
             let ptr += 1
         else
@@ -2042,9 +2034,8 @@ function! s:vimim_shuangpin_transform(keyboard)
                 let sp1 .= a:keyboard[ptr+1]
             endif
             if has_key(s:shuangpin_table, sp1)
-                " the last odd shuangpin code are output as only shengmu
                 let output .= bchar . s:shuangpin_table[sp1]
-            else
+            else    " the last odd shuangpin code as only shengmu
                 let output .= sp1 " invalid shuangpin code are preserved
             endif
             let ptr += strlen(sp1)
@@ -2593,7 +2584,7 @@ endfunction
 
 function! s:vimim_get_cloud_sogou(keyboard)
     " http://web.pinyin.sogou.com/api/py?key=32&query=mxj
-    if empty(s:backend.cloud.sogou.im)  " cloud key
+    if empty(s:backend.cloud.sogou.im)  " as cloud key
         let key_sogou = "http://web.pinyin.sogou.com/web_ime/patch.php"
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
         if empty(output) || output =~ '502 bad gateway'
@@ -2633,7 +2624,7 @@ endfunction
 function! s:vimim_get_cloud_qq(keyboard)
     " http://ime.qq.com/fcgi-bin/getword?key=32&q=mxj
     let url = 'http://ime.qq.com/fcgi-bin/'
-    if empty(s:backend.cloud.qq.im)  " cloud key
+    if empty(s:backend.cloud.qq.im)  " as cloud key
         let key_qq = url . 'getkey'
         let output = s:vimim_get_from_http(key_qq, 'qq')
         let key_qq = get(split(output,'"'),3)
@@ -2674,8 +2665,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     if empty(output) || output =~ '502 bad gateway'
         return []
     endif
-    if s:localization
-        " qq => {"q":"fuck","rs":["\xe5\xa6\x87"],
+    if s:localization  " qq => {'q':'fuck','rs':['\xe5\xa6\x87'],
         let output = s:vimim_i18n_read(output)
     endif
     let key = 'rs'
@@ -2701,8 +2691,7 @@ function! s:vimim_get_cloud_google(keyboard)
     let input .= '&text=' . a:keyboard
     let output = join(split(s:vimim_get_from_http(input,'google')))
     let match_list = []
-    if s:localization
-        " google => '[{"ew":"fuck","hws":["\u5987\u4EA7\u79D1",]},]'
+    if s:localization  " [{'ew':'fuck','hws':['\u5987\u4EA7\u79D1',]},]
         if s:http_exe =~ 'Python2'
             let output = s:vimim_i18n_read(output)
         else
@@ -2718,10 +2707,9 @@ function! s:vimim_get_cloud_google(keyboard)
             return match_list
         endif
     endif
-    let key = 'hws'
     let output_hash = get(eval(output),0)
-    if type(output_hash) == type({}) && has_key(output_hash, key)
-        let match_list = output_hash[key]
+    if type(output_hash) == type({}) && has_key(output_hash, 'hws')
+        let match_list = output_hash['hws']  " as key
     endif
     return s:vimim_cloud_pinyin(a:keyboard, match_list)
 endfunction
@@ -2740,8 +2728,7 @@ function! s:vimim_get_cloud_baidu(keyboard)
     if empty(output_list)
         if empty(output) || output =~ '502 bad gateway'
             return []
-        elseif empty(s:localization)
-            " ['[[["\xc3\xb0\xcf\xd5\xbc\xd2",3]
+        elseif empty(s:localization)   " ['[[['\xc3\xb0\xcf\xd5',3]
             let output = iconv(output, "gbk", "utf-8")
         endif
         let output_list = get(eval(output),0)
@@ -2812,8 +2799,7 @@ function! s:vimim_get_mycloud(keyboard)
         if empty(mycloud)
             let s:mycloud_initialization = -1 " fail to start mycloud
             return []
-        endif
-        " set mycloud client with real data from mycloud server
+        endif " set mycloud client with real data from mycloud server
         let s:backend.cloud.mycloud.im = mycloud
         let ret = s:vimim_access_mycloud("__getkeychars")
         let s:backend.cloud.mycloud.keycode = split(ret,"\t")[0]
@@ -2992,12 +2978,12 @@ function! s:vimim_search_chinese_by_english(keyboard)
     let ddddd = s:vimim_get_unicode_ddddd(keyboard)
     if !empty(ddddd)
         let results = [nr2char(ddddd)]
-    elseif s:vimim_cjk()                              " /muuqwxeyqpjeqqq
-        while len(keyboard) > 1                       " /m7712x3610j3111
-            let head = s:vimim_get_cjk_head(keyboard) " /ma77xia36ji31
-            if empty(head)
-                break
-            else
+    elseif s:vimim_cjk()
+        while len(keyboard) > 1
+            let head = s:vimim_get_cjk_head(keyboard)
+            if empty(head)  " /muuqwxeyqpjeqqq
+                break       " /m7712x3610j3111
+            else            " /ma77xia36ji31
                 let chinese = join(s:vimim_cjk_match(head), '')
                 if !empty(chinese)
                     call add(results, "[" . chinese . "]")
@@ -3194,14 +3180,14 @@ else
     if s:smart_enter =~ "windowless_correction"
         return [s:space]
     endif
-    let results = s:vimim_cache()  " [hjkl] less is more
+    let results = s:vimim_cache() " [hjkl] less is more
     if empty(results)
         sil!call s:vimim_reset_before_omni()
     else
         return s:vimim_popupmenu_list(results)
     endif
     let keyboard = a:keyboard
-    if !empty(str2nr(keyboard))  " for digit input: 23554022100080204420
+    if !empty(str2nr(keyboard)) " for digit input: 23554022100080204420
         let keyboard = get(split(s:keyboard),0)
     endif
     if empty(keyboard) || keyboard !~ s:valid_keyboard
@@ -3264,8 +3250,7 @@ else
         " [backend] plug-n-play embedded file/directory engine
         let results = s:vimim_embedded_backend_engine(keyboard)
     endif
-    " [english] English cannot be ignored!
-    if len(s:english.line)
+    if len(s:english.line) " [english] English cannot be ignored
         if s:keyboard !~ "'"
             let s:keyboard = keyboard  " english color is color
         endif
@@ -3298,9 +3283,7 @@ function! s:vimim_popupmenu_list(lines)
     if empty(a:lines) || type(a:lines) != type([])
         return []
     elseif s:vimim_cjk() && len(s:hjkl_n)
-        " only use 1234567890 as filter for windowless
-        " also use qwertyuiop as filter for omni popup
-        let results = []
+        let results = []  " use 1234567890 as filter for windowless
         for chinese in a:lines
             if s:vimim_cjk_in_4corner(chinese,0)
                 call add(results, chinese)
