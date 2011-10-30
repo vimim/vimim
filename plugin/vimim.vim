@@ -1556,6 +1556,7 @@ function! s:vimim_get_cjk_head(keyboard)
             if len(keyboard) > 4  " output is 7712 for input 77124002
                 let head = s:vimim_get_head(keyboard, 4)
             endif
+            let s:hjkl_n = empty(len(s:hjkl_n)) ? head : s:hjkl_n
         elseif keyboard =~# '^\l\+\d\+\>'
             let partition = match(keyboard,'\d')  " ma7 ma77 ma771
             let head = keyboard[0 : partition-1]  " mali in mali74
@@ -1645,8 +1646,7 @@ function! s:vimim_cjk_match(keyboard)
             endif
         endif
     elseif s:ui.im != 'mycloud'
-        if len(keyboard) == 1
-            " cjk single-char-list by frequency y72/yue72 l72/le72
+        if len(keyboard) == 1   " one cjk by frequency y72/yue72 l72/le72
             let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
             if keyboard == 'u'  "  214 standard unicode index
                 let grep = ' u\( \|$\)'
@@ -1660,13 +1660,9 @@ function! s:vimim_cjk_match(keyboard)
     if !empty(grep)
         let line = match(s:cjk.lines, grep)
         while line > -1
-            let values = split(get(s:cjk.lines, line))
-            let frequency = get(values, -1)
-            if frequency =~ '\l'
-                let frequency = 9999
-            endif
-            let chinese_frequency = get(values,0) . ' ' . frequency
-            call add(results, chinese_frequency)
+            let fields = split(get(s:cjk.lines, line))
+            let frequency = get(fields,-1)=~'\l' ? 9999 : get(fields,-1)
+            call add(results, get(fields,0) . ' ' . frequency)
             let line = match(s:cjk.lines, grep, line+1)
         endwhile
     endif
@@ -3209,7 +3205,7 @@ else
         if empty(results) && s:vimim_cjk()
             let head = s:vimim_get_head_without_quote(keyboard)
             let head = s:vimim_get_cjk_head(head)
-            if !empty(head) && empty(s:hjkl_n)
+            if !empty(head)
                 let results = s:vimim_cjk_match(head)
             endif
         endif
@@ -3287,6 +3283,9 @@ endfunction
 
 function! s:vimim_popupmenu_list(lines)
     let s:match_list = a:lines
+    let keyboards = split(s:keyboard)  " mmmm => ['m',"m'm'm"]
+    let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
+    let keyboard = get(keyboards,0)
     if empty(a:lines) || type(a:lines) != type([])
         return []
     elseif s:vimim_cjk() && len(s:hjkl_n)
@@ -3305,8 +3304,6 @@ function! s:vimim_popupmenu_list(lines)
         endif
     endif
     call s:vimim_set_pumheight()
-    let keyboards = split(s:keyboard)  " mmmm => ['m',"m'm'm"]
-    let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
     let label = 1
     let one_list = []
     let s:popup_list = []
