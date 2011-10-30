@@ -893,9 +893,9 @@ function! s:vimim_title()
 endfunction
 
 function! s:vimim_set_titlestring(cursor)
-    let left  = s:all_evils['[']
-    let right = s:all_evils[']']
-    let titlestring = substitute(&titlestring,left.'\|'.right,' ','g')
+    let west = s:all_evils['[']
+    let east = s:all_evils[']']
+    let titlestring = substitute(&titlestring,west.'\|'.east,' ','g')
     if titlestring !~ '\s\+' . "'" . '\+\s\+'
         let titlestring = substitute(titlestring,"'",'','g')
     endif
@@ -903,8 +903,8 @@ function! s:vimim_set_titlestring(cursor)
     let cursor = s:cursor_at_windowless + a:cursor
     let hightlight = get(words, cursor)
     if !empty(hightlight) && len(words) > 1
-        let west = join(words[1 : cursor-1]) . left
-        let east = right . join(words[cursor+1 :])
+        let west  = join(words[1 : cursor-1]) . west
+        let east .= join(words[cursor+1 :])
         let s:cursor_at_windowless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
         let title = keyboard .'  '. west . hightlight . east
