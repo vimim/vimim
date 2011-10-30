@@ -190,14 +190,6 @@ function! s:vimim_set_global_default()
     endfor
 endfunction
 
-function! g:vimim_wubi()
-    let key = ""
-    if pumvisible()
-        let key = len(get(split(s:keyboard),0))%4 ? '\<C-E>' : '\<C-Y>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
 " ============================================= }}}
 let s:VimIM += [" ====  easter eggs      ==== {{{"]
 " =================================================
@@ -247,9 +239,7 @@ function! s:vimim_egg_vimim()
     call add(eggs, s:chinese('date', s:colon) . s:today)
     let os = "win32unix win32 win64 macunix unix x11"
     for computer in split(os)
-        if has(computer)
-            let os = computer | break
-        endif
+        if has(computer) | let os = computer | break | endif
     endfor
     let time = reltimestr(g:vimim_profile) . ' seconds'
     call add(eggs, s:chinese('computer', s:colon) . os . time)
@@ -293,9 +283,9 @@ function! s:vimim_egg_vimim()
         call add(eggs, input)
     endif
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
-    call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
-    call add(eggs, s:chinese('option',  s:colon) . "vimimrc")
-    return map(eggs + s:vimim_egg_vimimrc(), 'v:val . " " ')
+    sil!call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
+    sil!call add(eggs, s:chinese('option',  s:colon) . "vimimrc")
+    sil!return map(eggs + s:vimim_egg_vimimrc(), 'v:val . " " ')
 endfunction
 
 " ============================================= }}}
@@ -386,7 +376,7 @@ endfunction
 
 function! s:vimim_hjkl_rotation(lines)
     let max = max(map(copy(a:lines), 'strlen(v:val)')) + 1
-    let multibyte = match(a:lines, '\w') < 0 ? s:multibyte : 1
+    let multibyte = match(a:lines,'\w') < 0 ? s:multibyte : 1
     let results = []
     for line in a:lines
         let spaces = ''   " rotation makes more sense for cjk
@@ -713,6 +703,14 @@ function! s:vimim_dynamic_maps()
     endif
 endfunction
 
+function! g:vimim_wubi()
+    let key = ""
+    if pumvisible()
+        let key = len(get(split(s:keyboard),0))%4 ? '\<C-E>' : '\<C-Y>'
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
 function! s:vimim_onekey_maps()
     let onekey_list = split("h j k l m n / ?")
     if s:vimim_cjk()
@@ -883,7 +881,7 @@ endfunction
 
 function! s:vimim_windowless(key)
     let key = a:key         " workaround to detect if active completion
-    if s:pattern_not_found  " gi \backslash space space
+    if s:pattern_not_found  " gi \bslash space space
         " make space smart  " gi ma space enter space
     elseif s:smart_enter    " gi ma space enter 77 ma space
         let s:smart_enter = 0
@@ -1550,13 +1548,12 @@ endfunction
 
 function! s:vimim_get_cjk_head(keyboard)
     let keyboard = a:keyboard
+    let head = ""
     if empty(s:cjk.filename) || keyboard =~ "'"
         return ""
-    endif
-    if keyboard =~# '^i' " 4corner_shortcut: iuuqwuqew => 77127132
+    elseif keyboard =~# '^i' && empty (s:english.line)
         let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
-    endif
-    let head = ""
+    endif 
     if s:touch_me_not || len(keyboard) == 1
         let head = keyboard
     elseif keyboard =~ '\d'
@@ -1595,7 +1592,7 @@ endfunction
 
 function! s:vimim_qwertyuiop_1234567890(keyboard)
     if a:keyboard =~ '\d'
-        return ""
+        return ""   " 4corner shortcut: iuuqwuqew => 77127132
     endif
     let dddd = ""   " output is 7712 for input uuqw
     for char in split(a:keyboard, '\zs')
@@ -2433,7 +2430,7 @@ function! s:vimim_sentence_directory(keyboard, directory)
     return filereadable(filename) ? a:keyboard[: max-1] : ""
 endfunction
 
-function! s:vimim_more_pinyin_directory(keyboard, dir)
+function! s:vimim_more_directory(keyboard, dir)
     let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
     if empty(candidates) || len(s:english.line)
         return []
@@ -2461,7 +2458,7 @@ function! s:vimim_set_backend_embedded()
         endif
     endif
     " (2/3) scan bsddb database as edw: enterprise data warehouse
-    if has("python") " bsddb is from Python 2 only in 46,694,400 Bytes
+    if has("python") " bsddb is from Python 2 only with 46,694,400 Bytes
         let datafile = s:vimim_filereadable("vimim.gbk.bsddb")
         if !empty(datafile)
             return s:vimim_set_datafile(im, datafile)
@@ -3161,8 +3158,8 @@ if a:start
         call s:vimim_set_keyboard_list(seamless_column, keyboard)
         return seamless_column
     endif
-    let last_seen_nonsense_column  = copy(start_column)
-    let last_seen_backslash_column = copy(start_column)
+    let last_seen_bslash_column = copy(start_column)
+    let last_seen_nonsense_column = copy(start_column)
     let all_digit = 1
     while start_column
         if one_before =~# s:valid_keyboard
@@ -3173,9 +3170,9 @@ if a:start
                     let all_digit = 0
                 endif
             endif
-        elseif one_before == '\' " do nothing if leading backslash found
+        elseif one_before == '\' " do nothing if leading bslash found
             let s:pattern_not_found = 1
-            return last_seen_backslash_column
+            return last_seen_bslash_column
         else
             break
         endif
@@ -3257,7 +3254,7 @@ else
     if empty(results)
         if s:ui.im =~ 'wubi\|erbi' || g:vimim_cloud =~ 'wubi'
             if s:mode == 'dynamic' && len(keyboard) > 4
-                let start = 4*((len(keyboard)-1)/4)
+                let start = 4 * ((len(keyboard)-1)/4)
                 let keyboard = strpart(keyboard, start)
                 let s:keyboard = keyboard  " wubi auto insert on the 4th
             endif
@@ -3295,7 +3292,7 @@ function! s:vimim_popupmenu_list(lines)
     let s:match_list = a:lines
     let keyboards = split(s:keyboard)  " mmmm => ['m',"m'm'm"]
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
-    let keyboard = get(keyboards,0)
+    let keyboard = get(keyboards, 0)
     if empty(a:lines) || type(a:lines) != type([])
         return []
     elseif s:vimim_cjk() && len(s:hjkl_n)
@@ -3392,26 +3389,24 @@ function! s:vimim_embedded_backend_engine(keyboard)
     let head = 0
     let results = []
     let backend = s:backend[s:ui.root][s:ui.im]
-    if backend.name =~ "quote" && keyboard !~ "[']"  " has apostrophe
+    if backend.name =~ "quote" && keyboard !~ "[']" " has apostrophe
         let keyboard = s:vimim_quanpin_transform(keyboard)
     endif
     if s:ui.root =~# "directory"
-        let dir = backend.name
-        let head = s:vimim_sentence_directory(keyboard, dir)
-        let results = s:vimim_readfile(dir . head)
+        let head = s:vimim_sentence_directory(keyboard, backend.name)
+        let results = s:vimim_readfile(backend.name . head)
         if keyboard ==# head && len(results) && len(results) < 20
-            let extras = s:vimim_more_pinyin_directory(keyboard, dir)
+            let extras = s:vimim_more_directory(keyboard, backend.name)
             if len(extras) && len(results)
                 call map(results, 'keyboard ." ". v:val')
                 call extend(results, extras)
             endif
         endif
     elseif s:ui.root =~# "datafile"
-        let datafile = backend.name
-        if datafile =~ "bsddb"
-            if !exists("s:bsddb_4MB_in_memory_50MB_on_disk")
-                let s:bsddb_4MB_in_memory_50MB_on_disk = 1
-                sil!call s:vimim_initialize_bsddb(datafile)
+        if backend.name =~ "bsddb"
+            if empty(backend.lines)
+                let backend.lines = ["4MB_in_memory_46MB_on_disk"]
+                sil!call s:vimim_initialize_bsddb(backend.name)
             endif
             let head = s:vimim_get_stone_from_bsddb(keyboard)
             if !empty(head)
@@ -3419,7 +3414,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
             endif
         else
             if empty(backend.lines)
-                let backend.lines = s:vimim_readfile(datafile)
+                let backend.lines = s:vimim_readfile(backend.name)
             endif
             let head = s:vimim_sentence_datafile(keyboard)
             let results = s:vimim_get_from_datafile(head)
