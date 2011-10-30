@@ -839,7 +839,7 @@ function! g:vimim_tab()
     " (3) Tab in omni window => start print out fine menu
     let tab = "\t"
     if empty(s:vimim_byte_before())
-    elseif pumvisible() || s:ctrl6
+    elseif pumvisible() || s:lmap
         let tab = s:vimim_screenshot()
     else
         let tab = g:vimim_gi() . s:vimim_onekey_action()
@@ -1040,7 +1040,7 @@ function! g:vimim_onekey()
     let onekey = ''
     if pumvisible()
         let onekey = s:vimim_screenshot()
-    elseif empty(s:ctrl6)
+    elseif empty(s:lmap)
         let onekey = s:vimim_start() . s:vimim_onekey_action()
     else
         let onekey = s:vimim_stop()
@@ -3041,8 +3041,8 @@ function! s:vimim_start()
     endif
     sil!call s:vimim_common_maps()
     let ctrl6 = ""
-    if empty(s:ctrl6) && mode() == 'i'
-        let s:ctrl6 = 32911
+    if empty(s:lmap) && mode() == 'i'
+        let s:lmap = 32911
         let ctrl6 = "\<C-^>"
     endif
     sil!exe 'sil!return "' . ctrl6 . '"'
@@ -3112,7 +3112,7 @@ function! s:vimim_super_reset()
 endfunction
 
 function! s:vimim_reset_before_anything()
-    let s:ctrl6 = 0
+    let s:lmap = 0
     let s:toggle_im = 0
     let s:chinese_mode_switch = 0
     let s:toggle_punctuation = 1
