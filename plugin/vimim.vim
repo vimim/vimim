@@ -671,9 +671,8 @@ function! g:vimim_page(key)
             let left  = key == "]" ? "\<Left>"  : ""
             let right = key == "]" ? "\<Right>" : ""
             let _ = key == "]" ? 0 : -1
-            let bs  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
-            let yes = s:mode == 'dynamic' ? '\<C-N>' : ''
-            let key = yes . '\<C-Y>' . left . bs . right
+            let backspace  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
+            let key = '\<C-Y>' . left . backspace . right
         elseif key =~ '[=.]'
             let s:pageup_pagedown = &pumheight ? 1 : 0
             let key = &pumheight ? g:vimim() : '\<PageDown>'
