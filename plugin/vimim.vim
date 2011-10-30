@@ -121,7 +121,6 @@ function! s:vimim_initialize_global()
     if s:plugin[-1:] != "/"
         let s:plugin .= "/"
     endif
-    let s:toggle_punctuation = 1
     let s:vimim_punctuation = 1
     if g:vimim_mode =~ 'nopunctuation'
         let s:vimim_punctuation = 0
@@ -772,7 +771,7 @@ function! s:vimim_punctuations_maps()
         endfor
         lnoremap     '    <C-R>=g:vimim_single_quote()<CR>
         lnoremap     "    <C-R>=g:vimim_double_quote()<CR>
-        lnoremap <Bslash> <C-R>=pumvisible() ? "\<lt>C-Y>、" : "、"<CR>
+        lnoremap <Bslash> <C-R>=g:vimim_bslash()<CR>
     endif
 endfunction
 
@@ -795,22 +794,40 @@ function! g:vimim_punctuation(key)
 endfunction
 
 function! g:vimim_single_quote()
-    let key = ""
+    let key = "'"
     if pumvisible()       " the 3rd choice
         let key = '\<C-N>\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
-    else
-        let pairs = split(s:all_evils["'"], '\zs')
+    elseif s:toggle_punctuation
+        let pairs = split(s:all_evils[key], '\zs')
         let s:smart_quotes.single += 1
-        let key .= get(pairs, s:smart_quotes.single % 2)
+        let key = get(pairs, s:smart_quotes.single % 2)
+    else
+        return key
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_double_quote()
-    let pairs = split(s:all_evils['"'], '\zs')
-    let s:smart_quotes.double += 1
-    let key  = pumvisible() ? '\<C-Y>' : ""
-    let key .= get(pairs, s:smart_quotes.double % 2)
+    let key = '"'
+    if s:toggle_punctuation
+        let pairs = split(s:all_evils[key], '\zs')
+        let s:smart_quotes.double += 1
+        let yes = pumvisible() ? '\<C-Y>' : ""
+        let key = yes . get(pairs, s:smart_quotes.double % 2)
+    else
+        return key
+    endif
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! g:vimim_bslash()
+    let key = '\'
+    if s:toggle_punctuation
+        let yes = pumvisible() ? '\<C-Y>' : ""
+        let key = yes . s:all_evils[key]
+    else
+        return key
+    endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -3107,6 +3124,7 @@ function! s:vimim_reset_before_anything()
     let s:ctrl6 = 0
     let s:toggle_im = 0
     let s:chinese_mode_switch = 0
+    let s:toggle_punctuation = 1
     let s:windowless = 0
     let s:mode = 'onekey'
     let s:smart_enter = 0
