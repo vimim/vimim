@@ -2492,6 +2492,9 @@ let s:VimIM += [" ====  backend: clouds  ==== {{{"]
 function! s:vimim_set_background_clouds()
     let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
     let s:cloud = get(cloud_defaults,0)
+    if g:vimim_cloud < 0
+        return
+    endif
     let clouds = split(g:vimim_cloud,',')
     for cloud in clouds
         let cloud = get(split(cloud,'[.]'),0)
@@ -2798,7 +2801,7 @@ function! s:vimim_set_backend_mycloud()
     let s:mycloud_func = "do_getlocal"
     let s:mycloud_host = "localhost"
     let s:mycloud_port = 10007
-    if !empty(g:vimim_mycloud)
+    if !empty(g:vimim_mycloud) && g:vimim_mycloud != -1
         let s:ui.root = 'cloud'
         let s:ui.im = 'mycloud'
         call insert(s:ui.frontends, [s:ui.root, s:ui.im])
