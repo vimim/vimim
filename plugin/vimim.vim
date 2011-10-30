@@ -628,9 +628,11 @@ function! s:vimim_common_maps()
     lnoremap <silent> <expr> <CR>    g:vimim_enter()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
-    lnoremap <silent> <expr> <C-H>   g:vimim_im_switch()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
     lnoremap <silent>        <C-V>   <C-R>=g:vimim_screenshot()<CR>
+    if len(s:ui.frontends) > 1
+        lnoremap <silent> <expr> <C-H> g:vimim_im_switch()
+    endif
 endfunction
 
 function! g:vimim_label(key)
@@ -1151,9 +1153,6 @@ function! s:vimim_start_stop(switch)
 endfunction
 
 function! g:vimim_im_switch()
-    if len(s:ui.frontends) < 2
-        return ""
-    endif
     let s:toggle_im += 1
     let switch = s:toggle_im % len(s:ui.frontends)
     let s:ui.root = get(get(s:ui.frontends, switch), 0)
