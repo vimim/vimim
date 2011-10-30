@@ -114,7 +114,7 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
     let s:rc["g:vimim_mycloud"] = 0
     let s:rc["g:vimim_plugin"] = s:plugin
-    let s:rc["g:vimim_punctuation"] = 1
+    let s:rc["g:vimim_punctuation"] = 2
     call s:vimim_set_global_default()
     if isdirectory(g:vimim_plugin)
         let s:plugin = g:vimim_plugin
@@ -223,14 +223,11 @@ function! s:vimim_egg_vimimvim()
 endfunction
 
 function! s:vimim_egg_vimimrc()
-    let vimimrc = copy(s:vimimdefaults)
-    if len(s:ui.frontends) > 1
-        let filter = "get(" . 'v:val' . ",1)"
-        let toggle = join(map(copy(s:ui.frontends), filter),",")
-        let index = match(vimimrc, 'g:vimim_toggle')
-        let vimimrc[index] = vimimrc[index][:-3] . "'" . toggle . "'"
-    endif
-    return sort(vimimrc + s:vimimrc)
+    let vimim = s:vimimdefaults + s:vimimrc
+    let toggle = match(vimim, 'g:vimim_toggle')  " update g:vimim_toggle
+    let left = vimim[toggle][0 : 1 + match(vimim[toggle], '=')]
+    let vimim[toggle] = left . string(g:vimim_toggle)
+    return sort(vimim)
 endfunction
 
 function! s:vimim_egg_vimim()
@@ -258,29 +255,27 @@ function! s:vimim_egg_vimim()
         let ciku = database . s:chinese('english') . database
         call add(eggs, ciku . s:english.filename)
     endif
-    if len(s:ui.frontends)
-        let cloud = ""
-        for [root, im] in s:ui.frontends
-            let client = s:backend[root][im].name
-            let mass = client =~ "bsddb" ? 'mass' : root
-            let ciku = database . s:chinese(mass) . database
-            if root == "cloud"
-                let cloud .= s:space . client . s:chinese('cloud')
-            else
-                call add(eggs, ciku . client)
-            endif
-        endfor
-        if len(cloud)
-            call add(eggs, ciku . cloud)
+    let cloud = ""
+    for [root, im] in s:ui.frontends
+        let client = s:backend[root][im].name
+        let mass = client =~ "bsddb" ? 'mass' : root
+        let ciku = database . s:chinese(mass) . database
+        if root == "cloud"
+            let cloud .= s:space . client . s:chinese('cloud')
+        else
+            call add(eggs, ciku . client)
         endif
-        let input = s:chinese('input', s:colon)
-        if g:vimim_map =~ 'gi' && g:vimim_map =~ 'tab'
-            let input .= s:chinese('onekey', s:space, 'windowless')
-        elseif g:vimim_map =~ 'ctrl_bslash'
-            let input .=  s:vimim_statusline() . s:space
-        endif
-        call add(eggs, input)
+    endfor
+    if len(cloud)
+        call add(eggs, ciku . cloud)
     endif
+    let input = s:chinese('input', s:colon)
+    if g:vimim_map =~ 'gi' && g:vimim_map =~ 'tab'
+        let input .= s:chinese('onekey', s:space, 'windowless')
+    elseif g:vimim_map =~ 'ctrl_bslash'
+        let input .=  s:vimim_statusline() . s:space
+    endif
+    call add(eggs, input)
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
     sil!call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
     sil!call add(eggs, s:chinese('option',  s:colon) . "vimimrc")
@@ -418,8 +413,7 @@ let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
 function! s:vimim_set_color()
-    if g:vimim_mode =~ 'nocolor'
-    elseif has("win32") || has("win32unix")
+    if g:vimim_mode !~ 'nocolor'
         highlight! PmenuSbar  NONE
         highlight! PmenuThumb NONE
         highlight! Pmenu      NONE
@@ -439,12 +433,12 @@ function! s:vimim_dictionary_statusline()
     let one  = " computer directory datafile database option  env "
     let one .= " encoding input     static   dynamic  erbi    wubi"
     let one .= " hangul   xinhua    zhengma  cangjie  yong    wu  "
-    let one .= " wubijd   shuangpin cloud    flypy    network ms  "
+    let one .= " wubijd   shuangpin flypy    network  ms      cloud"
     let two  = " 电脑,電腦 目录,目錄 文件,文本 词库,詞庫 选项,選項"
     let two .= " 环境,環境 编码,編碼 输入,輸入 静态,靜態 动态,動態"
     let two .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
     let two .= " 仓颉,倉頡 永码,永碼 吴语,吳語 极点,極點 双拼,雙拼"
-    let two .= " 云,雲     小鹤,小鶴 联网,聯網 微软,微軟 "
+    let two .= " 小鹤,小鶴 联网,聯網 微软,微軟 云,雲 "
     call extend(s:title, s:vimim_key_value_hash(one, two))
     let one  = " pinyin fullwidth halfwidth english chinese purple"
     let one .= " plusplus quick wubihf mycloud wubi98 phonetic array30"
@@ -565,8 +559,8 @@ function! s:vimim_statusline()
     if g:vimim_punctuation > 0 && s:toggle_punctuation
         let punctuation = 'fullwidth'
     endif
-    let input_mode  = get(split(g:vimim_mode,','),0)
-    let line = s:chinese('chinese', input_mode) . s:vimim_get_title()
+    let mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
+    let line = s:chinese('chinese', mode) . s:vimim_get_title()
     return line . s:chinese(punctuation, s:space, "VimIM")
 endfunction
 
@@ -633,7 +627,7 @@ function! s:vimim_common_maps()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
     if len(s:ui.frontends) > 1
-        lnoremap <silent> <expr> <C-J> g:vimim_im_switch()
+        lnoremap <silent> <expr> <C-H> g:vimim_im_switch()
     endif
 endfunction
 
@@ -768,11 +762,9 @@ function! s:vimim_punctuations_maps()
             exe 'lnoremap <expr> '._.' g:vimim_punctuations("'._.'")'
         endif
     endfor
-    if g:vimim_punctuation == 3
-        lnoremap     '    <C-R>=g:vimim_single_quote()<CR>
-        lnoremap     "    <C-R>=g:vimim_double_quote()<CR>
-        lnoremap <Bslash> <C-R>=g:vimim_bslash()<CR>
-    endif
+    lnoremap     '    <C-R>=g:vimim_single_quote()<CR>
+    lnoremap     "    <C-R>=g:vimim_double_quote()<CR>
+    lnoremap <Bslash> <C-R>=g:vimim_bslash()<CR>
 endfunction
 
 function! g:vimim_punctuations(key)
@@ -797,36 +789,36 @@ function! g:vimim_single_quote()
     let key = "'"
     if pumvisible()       " the 3rd choice
         let key = '\<C-N>\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
+    elseif g:vimim_punctuation < 3 && s:mode != 'onekey'
+        return key
     elseif s:toggle_punctuation
         let pairs = split(s:key_evils[key], '\zs')
         let s:smart_quotes.single += 1
         let key = get(pairs, s:smart_quotes.single % 2)
-    else
-        return key
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_double_quote()
     let key = '"'
-    if s:toggle_punctuation
+    if g:vimim_punctuation < 3 && s:mode != 'onekey'
+        return key
+    elseif s:toggle_punctuation
         let pairs = split(s:key_evils[key], '\zs')
         let s:smart_quotes.double += 1
         let yes = pumvisible() ? '\<C-Y>' : ""
         let key = yes . get(pairs, s:smart_quotes.double % 2)
-    else
-        return key
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_bslash()
     let key = '\'
-    if s:toggle_punctuation
+    if g:vimim_punctuation < 3 && s:mode != 'onekey'
+        return key
+    elseif s:toggle_punctuation
         let yes = pumvisible() ? '\<C-Y>' : ""
         let key = yes . s:key_evils[key]
-    else
-        return key
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1166,22 +1158,24 @@ function! g:vimim_im_switch()
     sil!return s:vimim_open_close(1)
 endfunction
 
-function! s:vimim_set_custom_im_list()
+function! s:vimim_set_im_toggle_list()
     let toggle_list = []
-    if g:vimim_toggle =~ ","
+    if empty(g:vimim_toggle)
+        let toggle_list = s:ui.frontends
+    else
         for toggle in split(g:vimim_toggle, ",")
             for [root, im] in s:ui.frontends
-                if toggle =~ im
+                if toggle == im
                     call add(toggle_list, [root, im])
                 endif
             endfor
         endfor
-    else
-        let toggle_list = s:ui.frontends
     endif
     if s:backend[s:ui.root][s:ui.im].name =~ "bsddb"
-        let toggle_list = toggle_list[:2]  " one local two clouds
+        let toggle_list = toggle_list[:2]  " one bsddb two clouds
     endif
+    let filter = "get(" . 'v:val' . ",1)"  " update g:vimim_toggle
+    let g:vimim_toggle = join(map(copy(toggle_list),filter),",")
     let s:ui.frontends = copy(toggle_list)
     let s:ui.root = get(get(s:ui.frontends,0), 0)
     let s:ui.im   = get(get(s:ui.frontends,0), 1)
@@ -1903,11 +1897,10 @@ function! s:vimim_get_pinyin(keyboard)
 endfunction
 
 function! s:vimim_more_pinyin_candidates(keyboard)
-    " make standard layout:  mamahuhu => mamahu, mama
     if !empty(g:vimim_shuangpin) || len(s:english.line)
         return []
     endif
-    let candidates = []
+    let candidates = []  " make layout:  mamahuhu => mamahu, mama
     let keyboards = s:vimim_get_pinyin(a:keyboard)
     if len(keyboards)
         for i in reverse(range(len(keyboards)-1))
@@ -2025,14 +2018,12 @@ function! s:vimim_create_shuangpin_table(rules)
         let value = 'ou eng er an ao ai a  en o  ong ang e  ei'
         call extend(sptable, s:vimim_key_value_hash(key, value))
     endif
-    " the nature shuangpin special case handling
-    if g:vimim_shuangpin == 'nature'
+    if g:vimim_shuangpin == 'nature' " nature special case handling
         let nature = {"aa" : "a", "oo" : "o", "ee" : "e" }
         call extend(sptable, nature)
     endif
-    " generate table for shengmu-only match
     for [key, value] in items(a:rules[0])
-        let sptable[value] = key
+        let sptable[value] = key  " table for shengmu-only match
         if key[0] == "'"
             let sptable[value] = ""
         endif
@@ -3362,10 +3353,10 @@ function! s:vimim_popupmenu_list(lines)
         let titleline = label . "."
         if s:windowless
             let titleline = label2
-            if s:vimim_cjk() " display english flag and dynamic 4corner
+            if s:vimim_cjk() " display sexy english and dynamic 4corner
                 let star = substitute(titleline,'[0-9a-z_ ]','','g')
                 let digit = s:vimim_cjk_in_4corner(chinese,1)
-                let titleline = star . digit[len(s:hjkl_n) :] " ma7 712
+                let titleline = star . digit[len(s:hjkl_n) : 3] " ma7 712
             elseif label < 11      " 234567890 for windowless selection
                 let titleline = label2[:-2]
             endif
@@ -3501,7 +3492,7 @@ sil!call s:vimim_super_reset()
 sil!call s:vimim_set_background_clouds()
 sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_backend_mycloud()
-sil!call s:vimim_set_custom_im_list()
+sil!call s:vimim_set_im_toggle_list()
 sil!call s:vimim_plug_and_play()
 let g:vimim_profile = reltime(g:vimim_profile)
 " ============================================= }}}
