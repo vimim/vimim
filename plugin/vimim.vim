@@ -131,7 +131,7 @@ endfunction
 
 function! s:vimim_dictionary_keycodes()
     let s:im_keycode = {}
-    let cloud = ' google sogou baidu qq ' 
+    let cloud = ' google sogou baidu qq '
     for key in split( cloud . ' pinyin hangul xinhua quick ')
         let s:im_keycode[key] = "[0-9a-z']"
     endfor
@@ -823,29 +823,6 @@ function! g:vimim_bslash()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! g:vimim_screenshot()
-    let keyboard = get(split(s:keyboard),0)
-    let space = repeat(" ", virtcol(".")-len(keyboard)-1)
-    if s:keyboard =~ '^vim'
-        let space = ""  " no need to format if egg
-    elseif !empty(s:keyboard)
-        call setline(".", keyboard)
-    endif
-    let saved_position = getpos(".")
-    for items in s:popup_list
-        let line = printf('%s', items.word)
-        if has_key(items, "abbr")
-            let line = printf('%s', items.abbr)
-            if has_key(items, "menu")
-                let line = printf('%s  %s', items.abbr, items.menu)
-            endif
-        endif
-        put=space.line
-    endfor
-    call setpos(".", saved_position)
-    sil!exe 'sil!return "' . g:vimim_esc() . '"'
-endfunction
-
 " ============================================= }}}
 let s:VimIM += [" ====  mode: windowless ==== {{{"]
 " =================================================
@@ -862,9 +839,8 @@ function! g:vimim_tab()
     " (3) Tab in omni window => start print out fine menu
     let tab = "\t"
     if empty(s:vimim_byte_before())
-    elseif pumvisible()
-        let s:popup_list = s:popup_list[:&pumheight-1] " WYSIWYG
-        let tab = g:vimim_screenshot()
+    elseif pumvisible() || s:ctrl6
+        let tab = s:vimim_screenshot()
     else
         let tab = g:vimim_gi() . s:vimim_onekey_action()
     endif
@@ -961,7 +937,7 @@ function! g:vimim_space()
             let space = g:vimim()
         endif
     elseif s:seamless_positions == getpos(".")
-        let s:smart_enter = 0  " space is space after enter
+        let s:smart_enter = 0  " Space is Space after Enter
     else
         let space = s:vimim_onekey_action()
     endif
@@ -970,12 +946,10 @@ function! g:vimim_space()
 endfunction
 
 function! g:vimim_enter()
-    " (1) single <Enter> after English => seamless
-    " (2) otherwise, or double <Enter> => <Enter>
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
-        let s:smart_enter = 1
+        let s:smart_enter = 1 " single Enter after English => seamless
     elseif s:windowless || s:vimim_byte_before() =~# s:valid_keyboard
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
@@ -987,7 +961,7 @@ function! g:vimim_enter()
     if s:smart_enter == 1
         let s:seamless_positions = getpos(".")
     else
-        let key = "\<CR>"
+        let key = "\<CR>"     " Enter is Enter after Enter
         let s:smart_enter = 0
     endif
     call s:vimim_title()
@@ -1010,8 +984,7 @@ function! g:vimim_esc()
 endfunction
 
 function! g:vimim_correction()
-    " :help i_CTRL-U   Delete all entered characters
-    let key = '\<C-U>'
+    let key = '\<C-U>'  " :help i_CTRL-U  Delete all entered characters
     if pumvisible()
         let range = col(".") - 1 - s:starts.column
         if range
@@ -1027,12 +1000,34 @@ function! g:vimim_correction()
 endfunction
 
 function! g:vimim_backspace()
-    " <BS> has special meaning in all 3 states of popupmenu-completion
-    let key = '\<Left>\<Delete>'
+    let key = '\<Left>\<Delete>'  " avoid special meaning of <BS> in omni
     if pumvisible()
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! s:vimim_screenshot()
+    let keyboard = get(split(s:keyboard),0)
+    let space = repeat(" ", virtcol(".")-len(keyboard)-1)
+    if s:keyboard =~ '^vim'
+        let space = ""  " no need to format if it is egg
+    elseif !empty(s:keyboard)
+        call setline(".", keyboard)
+    endif
+    let saved_position = getpos(".")
+    for items in s:popup_list
+        let line = printf('%s', items.word)
+        if has_key(items, "abbr")
+            let line = printf('%s', items.abbr)
+            if has_key(items, "menu")
+                let line = printf('%s  %s', items.abbr, items.menu)
+            endif
+        endif
+        put=space.line
+    endfor
+    call setpos(".", saved_position)
+    sil!exe 'sil!return "' . g:vimim_esc() . '"'
 endfunction
 
 " ============================================= }}}
@@ -1044,7 +1039,7 @@ function! g:vimim_onekey()
     " (2) OneKey in omni window => start print out menu
     let onekey = ''
     if pumvisible()
-        let onekey = g:vimim_screenshot()
+        let onekey = s:vimim_screenshot()
     elseif empty(s:ctrl6)
         let onekey = s:vimim_start() . s:vimim_onekey_action()
     else
@@ -3034,7 +3029,6 @@ function! s:vimim_start()
     sil!call s:vimim_set_keycode()
     if s:mode == 'onekey'
         lnoremap <silent> <expr> <C-L> g:vimim_windowless_popup()
-        lnoremap <silent>        <C-A> <C-R>=g:vimim_screenshot()<CR>
         sil!call s:vimim_onekey_maps()
     else
         lnoremap <silent> <expr> <C-L> g:vimim_fullwidth_halfwidth()
