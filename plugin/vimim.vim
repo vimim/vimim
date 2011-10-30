@@ -107,7 +107,7 @@ function! s:vimim_initialize_global()
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
     let s:ui = { 'root' : '', 'im' : '', 'frontends' : [] }
-    let s:rc = { "g:vimim_mode" : 'dynamic,punctuation' }
+    let s:rc = { "g:vimim_mode" : 'dynamic' }
     let s:rc["g:vimim_shuangpin"] = 0
     let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
     let s:rc["g:vimim_toggle"] = 0
@@ -224,10 +224,12 @@ endfunction
 
 function! s:vimim_egg_vimimrc()
     let vimimrc = copy(s:vimimdefaults)
-    let filter = "get(" . 'v:val' . ",1)"
-    let toggle = join(map(copy(s:ui.frontends), filter),",")
-    let index = match(vimimrc, 'g:vimim_toggle')
-    let vimimrc[index] = vimimrc[index][:-3] . "'" . toggle . "'"
+    if len(s:ui.frontends) > 1
+        let filter = "get(" . 'v:val' . ",1)"
+        let toggle = join(map(copy(s:ui.frontends), filter),",")
+        let index = match(vimimrc, 'g:vimim_toggle')
+        let vimimrc[index] = vimimrc[index][:-3] . "'" . toggle . "'"
+    endif
     return sort(vimimrc + s:vimimrc)
 endfunction
 
@@ -348,11 +350,11 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif len(getreg('"')) > 3     "  vimim_visual
         if keyboard == "''''"       ": display buffer inside omni
             let results = split(getreg('"'), '\n')
-        elseif keyboard =~ "'''''"  ": display cjk within one line
+        elseif keyboard =~ "'''''"  ": display one-line-cjk property
             let line = substitute(getreg('"'),'[\x00-\xff]','','g')
             if len(line)
                 for chinese in split(line, '\zs')
-                    let menu  = s:vimim_cjk_extra_text(chinese)
+                    let menu  = s:vimim_cjk_property(chinese)
                     let menu .= repeat(" ", 38-len(menu))
                     call add(results, chinese . " " . menu)
                 endfor
@@ -629,9 +631,8 @@ function! s:vimim_common_maps()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
-    lnoremap <silent>        <C-V>   <C-R>=g:vimim_screenshot()<CR>
     if len(s:ui.frontends) > 1
-        lnoremap <silent> <expr> <C-H> g:vimim_im_switch()
+        lnoremap <silent> <expr> <C-J> g:vimim_im_switch()
     endif
 endfunction
 
@@ -834,8 +835,9 @@ function! g:vimim_screenshot()
     let space = repeat(" ", virtcol(".")-len(keyboard)-1)
     if s:keyboard =~ '^vim'
         let space = ""  " no need to format if egg
+    elseif !empty(s:keyboard)
+        call setline(".", keyboard)
     endif
-    call setline(".", keyboard)
     let saved_position = getpos(".")
     for items in s:popup_list
         let line = printf('%s', items.word)
@@ -1136,20 +1138,20 @@ function! g:vimim_chinese()
     endif
     let s:mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
     let s:chinese_mode_switch = s:chinese_mode_switch ? 0 : 1
-    let key = s:vimim_start_stop(s:chinese_mode_switch)
+    let key = s:vimim_open_close(s:chinese_mode_switch)
     sil!return key
 endfunction
 
-function! s:vimim_start_stop(switch)
-    let ctrl6 = ""
+function! s:vimim_open_close(switch)
+    let lmap = ""
     if a:switch
-        let ctrl6 = s:vimim_start()
+        let lmap = s:vimim_start()
         call s:vimim_title()
         call s:vimim_set_statusline()
     else
-        let ctrl6 = s:vimim_stop()
+        let lmap = s:vimim_stop()
     endif
-    sil!exe 'sil!return "' . ctrl6 . '"'
+    sil!exe 'sil!return "' . lmap . '"'
 endfunction
 
 function! g:vimim_im_switch()
@@ -1160,7 +1162,7 @@ function! g:vimim_im_switch()
     if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
         let s:cloud = s:ui.im
     endif
-    sil!return s:vimim_start_stop(1)
+    sil!return s:vimim_open_close(1)
 endfunction
 
 function! s:vimim_set_custom_im_list()
@@ -1515,7 +1517,7 @@ function! s:vimim_cjk()
     return 1
 endfunction
 
-function! s:vimim_digit_for_cjk(chinese, info)
+function! s:vimim_cjk_in_4corner(chinese, info)
     let digit_head = ""  " gi ma   马   =>   7712  <=>  mali 7 4
     let digit_tail = ""  " gi mali 马力 => 7 4002  <=>  mali74
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
@@ -1535,7 +1537,7 @@ function! s:vimim_digit_for_cjk(chinese, info)
     return digit
 endfunction
 
-function! s:vimim_cjk_extra_text(chinese)
+function! s:vimim_cjk_property(chinese)
     let ddddd = char2nr(a:chinese)
     let xxxx  = printf('u%04x', ddddd)
     let unicode = ddddd . s:space . xxxx
@@ -3040,6 +3042,7 @@ function! s:vimim_start()
     sil!call s:vimim_set_keycode()
     if s:mode == 'onekey'
         lnoremap <silent> <expr> <C-L> g:vimim_windowless_popup()
+        lnoremap <silent>        <C-A> <C-R>=g:vimim_screenshot()<CR>
         sil!call s:vimim_onekey_maps()
     else
         lnoremap <silent> <expr> <C-L> g:vimim_fullwidth_halfwidth()
@@ -3140,8 +3143,8 @@ function! s:vimim_reset_before_omni()
 endfunction
 
 function! s:vimim_reset_after_insert()
-    let s:hjkl_n = ""   "   reset for nothing
-    let s:hjkl_h = 0    "  ctrl-h for jsjsxx
+    let s:hjkl_n = ""   "  reset for nothing
+    let s:hjkl_h = 0    "  toggle cjk property
     let s:hjkl_l = 0    "  toggle label length
     let s:hjkl_m = 0    "  toggle cjjp/c'j'j'p
     let s:hjkl__ = 0    "  toggle simplified/traditional
@@ -3310,7 +3313,7 @@ function! s:vimim_popupmenu_list(lines)
         " also use qwertyuiop as filter for omni popup
         let results = []
         for chinese in a:lines
-            if s:vimim_digit_for_cjk(chinese,0)
+            if s:vimim_cjk_in_4corner(chinese,0)
                 call add(results, chinese)
             endif
         endfor
@@ -3345,11 +3348,8 @@ function! s:vimim_popupmenu_list(lines)
                 endif
             endif
             if s:hjkl_h && s:hjkl_h % 2
-                let chars = split(chinese, '\zs')
-                if empty(tail) || len(chars) == 1
-                    let char = get(chars,0)
-                    let menu = s:vimim_cjk_extra_text(char)
-                endif
+                let char = get(split(chinese,'\zs'),0)
+                let menu = s:vimim_cjk_property(char)
             endif
             let english = s:english.line =~ chinese ? '*' : ' '
             let label2 = english . label2
@@ -3363,7 +3363,7 @@ function! s:vimim_popupmenu_list(lines)
             let titleline = label2
             if s:vimim_cjk() " display english flag and dynamic 4corner
                 let star = substitute(titleline,'[0-9a-z_ ]','','g')
-                let digit = s:vimim_digit_for_cjk(chinese,1)
+                let digit = s:vimim_cjk_in_4corner(chinese,1)
                 let titleline = star . digit[len(s:hjkl_n) :] " ma7 712
             elseif label < 11      " 234567890 for windowless selection
                 let titleline = label2[:-2]
