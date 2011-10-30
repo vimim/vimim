@@ -132,10 +132,10 @@ endfunction
 function! s:vimim_dictionary_keycodes()
     let s:im_keycode = {}
     let ime = ' wu nature zhengma taijima wubi cangjie'
-    for key in split(ime . ' google sogou baidu qq ')
+    for key in split(ime . ' google sogou baidu qq mycloud ')
         let s:im_keycode[key] = "[a-z']"
     endfor
-    for key in split('pinyin hangul xinhua quick mycloud')
+    for key in split('pinyin hangul xinhua quick')
         let s:im_keycode[key] = "[0-9a-z']"
     endfor
     for key in split('array30 phonetic')
@@ -3094,8 +3094,11 @@ endfunction
 
 function! s:vimim_set_pumheight()
     let &pumheight = s:pumheights.saved
-    if empty(&pumheight) || s:mode == 'onekey'
-        let &pumheight = 10
+    if empty(&pumheight)
+        let &pumheight = 5
+        if s:valid_keyboard =~ '\d' || s:mode == 'onekey'
+            let &pumheight = 10
+        endif
     endif
     if s:windowless
         let &pumheight = 1
