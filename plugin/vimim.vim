@@ -418,7 +418,8 @@ let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
 function! s:vimim_set_color()
-    if has("win32") || has("win32unix")
+    if g:vimim_mode =~ 'nocolor'
+    elseif has("win32") || has("win32unix")
         highlight! PmenuSbar  NONE
         highlight! PmenuThumb NONE
         highlight! Pmenu      NONE
