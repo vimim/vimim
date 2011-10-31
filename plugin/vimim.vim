@@ -2972,15 +2972,13 @@ function! s:vimim_start()
     sil!call s:vimim_set_keycode()
     if s:mode == 'onekey'
         lnoremap <silent> <expr> <C-L> g:vimim_windowless_popup()
-        if empty(s:windowless)
-            let onekey_list = split("h j k l m n / ?")
-            if s:vimim_cjk() && empty(s:windowless)
-                let onekey_list += s:qwer + ['s']
-            endif
-            for _ in onekey_list
-                exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
-            endfor
+        let onekey_list = split("h j k l m n / ?")
+        if s:vimim_cjk() && empty(s:windowless)
+            let onekey_list += s:qwer + ['s']
         endif
+        for _ in onekey_list
+            exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
+        endfor
     else
         lnoremap <silent> <expr> <C-L> g:vimim_fullwidth_halfwidth()
         if g:vimim_punctuation > -1
