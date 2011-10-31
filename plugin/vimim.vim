@@ -284,15 +284,6 @@ function! s:vimim_egg_vimim()
     if len(cloud)
         call add(eggs, ciku . cloud)
     endif
-    let input = s:chinese('input', s:colon)
-    if g:vimim_map =~ 'gi' && g:vimim_map =~ 'tab'
-        let input .= s:chinese('onekey', s:space, 'windowless')
-    elseif g:vimim_map =~ 'ctrl_bslash'
-        let input .=  s:vimim_statusline() . s:space
-    endif
-    if len(s:ui.frontends)
-        call add(eggs, input)
-    endif
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
     sil!call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
     sil!call add(eggs, s:chinese('option',  s:colon) . "vimimrc")
@@ -441,22 +432,20 @@ endfunction
 
 function! s:vimim_dictionary_statusline()
     let s:title = {}
-    let s:title.windowless = "无菜单窗,無菜單窗"
-    let s:title.onekey     = "点石成金,點石成金"
     let s:title.cjk        = "标准字库,標準字庫"
     let s:title.boshiamy   = "呒虾米,嘸蝦米"
     let s:title.wubi2000   = "新世纪,新世紀"
     let s:title.taijima    = "太极码,太極碼"
     let s:title.nature     = "自然码,自然碼"
     let one  = " computer directory datafile database option  env "
-    let one .= " encoding input     static   dynamic  erbi    wubi"
+    let one .= " encoding ms        static   dynamic  erbi    wubi"
     let one .= " hangul   xinhua    zhengma  cangjie  yong    wu  "
-    let one .= " wubijd   shuangpin flypy    network  ms      cloud"
+    let one .= " wubijd   shuangpin flypy    network  cloud"
     let two  = " 电脑,電腦 目录,目錄 文件,文本 词库,詞庫 选项,選項"
-    let two .= " 环境,環境 编码,編碼 输入,輸入 静态,靜態 动态,動態"
+    let two .= " 环境,環境 编码,編碼 微软,微軟 静态,靜態 动态,動態"
     let two .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
     let two .= " 仓颉,倉頡 永码,永碼 吴语,吳語 极点,極點 双拼,雙拼"
-    let two .= " 小鹤,小鶴 联网,聯網 微软,微軟 云,雲 "
+    let two .= " 小鹤,小鶴 联网,聯網 云,雲 "
     call extend(s:title, s:vimim_key_value_hash(one, two))
     let one  = " pinyin fullwidth halfwidth english chinese purple"
     let one .= " plusplus quick wubihf mycloud wubi98 phonetic array30"
@@ -2720,8 +2709,8 @@ function! s:vimim_get_all_clouds(keyboard)
         if len(results) > 1
             call add(results, s:space)
         endif
-        let x = s:space . s:chinese(cloud, 'cloud', 'input') . s:space
-        call add(results, a:keyboard . x . reltimestr(reltime(start)))
+        let title = s:chinese(s:space, cloud, 'cloud', s:space)
+        call add(results, a:keyboard . title . reltimestr(reltime(start)))
         if len(outputs) > 1+1+1+1
             let outputs = &number ? outputs : outputs[0:9]
             let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
