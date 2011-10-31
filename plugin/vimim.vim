@@ -261,29 +261,24 @@ function! s:vimim_egg_vimim()
     let encoding = s:chinese('encoding', s:colon) . &encoding
     call add(eggs, encoding . s:space . &fileencodings)
     call add(eggs, s:chinese('env', s:colon) . v:lc_time)
-    let database = s:chinese('database', s:colon)
+    let db = s:chinese('database', s:colon)
     if len(s:cjk.filename)
-        let ciku = database . s:chinese('cjk', s:colon)
-        call add(eggs, ciku . s:cjk.filename)
+        call add(eggs, db.s:chinese('cjk',s:colon).s:cjk.filename)
     endif
     if len(s:english.filename)
-        let ciku = database . s:chinese('english') . database
-        call add(eggs, ciku . s:english.filename)
+        call add(eggs, db.s:chinese('english').db.s:english.filename)
     endif
-    let cloud = ""
+    let cloud = db . s:chinese(s:space, 'cloud') . db
     for [root, im] in s:ui.frontends
         let client = s:backend[root][im].name
-        let mass = client =~ "bsddb" ? 'mass' : root
-        let ciku = database . s:chinese(mass) . database
         if root == "cloud"
-            let cloud .= s:space . client . s:chinese('cloud')
+            let cloud .= client . s:chinese('cloud') . s:space
         else
-            call add(eggs, ciku . client)
+            let ciku = s:chinese(client =~ "bsddb" ? 'mass' : root)
+            call add(eggs, db . ciku. db . client)
         endif
     endfor
-    if len(cloud)
-        call add(eggs, ciku . cloud)
-    endif
+    call add(eggs, cloud)
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
     sil!call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
     sil!call add(eggs, s:chinese('option',  s:colon) . "vimimrc")
