@@ -1309,7 +1309,7 @@ function! s:vimim_dictionary_numbers()
     let s:quantifiers.t = "天吨条头通堂趟台套桶筒贴"
     let s:quantifiers.w = "万位味碗窝晚微"
     let s:quantifiers.x = "席些项"
-    let s:quantifiers.y = "月叶亿"
+    let s:quantifiers.y = "月元叶亿"
     let s:quantifiers.z = "种只张株支总枝盏座阵桩尊则站幢宗兆"
     let s:loops = {}
 endfunction
@@ -3021,8 +3021,8 @@ function! s:vimim_start()
         lnoremap <silent> <expr> <CR>    g:vimim_space()
         lnoremap <silent> <expr> <Space> g:vimim_pagedown()
     else
-        lnoremap <silent> <expr> <Space> g:vimim_space()
         lnoremap <silent> <expr> <CR>    g:vimim_enter()
+        lnoremap <silent> <expr> <Space> g:vimim_space()
     endif
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
