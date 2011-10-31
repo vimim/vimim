@@ -2972,11 +2972,8 @@ function! s:vimim_start()
     sil!call s:vimim_set_keycode()
     if s:mode == 'onekey'
         lnoremap <silent> <expr> <C-L> g:vimim_windowless_popup()
-        let onekey_list = split("h j k l m n / ?")
-        if s:vimim_cjk() && empty(s:windowless)
-            let onekey_list += s:qwer + ['s']
-        endif
-        for _ in onekey_list
+        let hjkl = split("h j k l m n / ? s")
+        for _ in s:vimim_cjk() ?  hjkl + s:qwer : hjkl
             exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
         endfor
     else
