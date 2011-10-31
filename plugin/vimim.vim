@@ -213,6 +213,7 @@ endfunction
 function! s:vimim_egg_vimimhelp()
     let eggs  = split(s:url)
     let eggs += [''] + s:vimim_egg_vim()
+    let eggs += [''] + s:vimim_egg_vimimgame()
     let eggs += [''] + s:vimim_egg_vimim()
     let eggs += [''] + s:vimim_egg_vimimvim()
     return map(eggs, 'v:val . " "')
@@ -289,7 +290,9 @@ function! s:vimim_egg_vimim()
     elseif g:vimim_map =~ 'ctrl_bslash'
         let input .=  s:vimim_statusline() . s:space
     endif
-    call add(eggs, input)
+    if len(s:ui.frontends)
+        call add(eggs, input)
+    endif
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
     sil!call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
     sil!call add(eggs, s:chinese('option',  s:colon) . "vimimrc")
