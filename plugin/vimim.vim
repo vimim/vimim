@@ -650,7 +650,7 @@ function! g:vimim_label(key)
                 let key = yes . s:vimim_stop()
             elseif s:vimim_cjk() && a:key =~ '\d'
                 let s:hjkl_n .= a:key  " 1234567890 as filter
-            elseif a:key =~ '\l'
+            elseif a:key =~ '\l' && empty(s:windowless)
                 let key = yes . key    "  abcdvfgxz as label
                 sil!call s:vimim_reset_after_insert()
             endif
@@ -690,19 +690,12 @@ function! g:vimim_page(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! g:vimim_wubi()
-    let key = ""
-    if pumvisible()
-        let key = '\<C-E>'
-        if s:wubi && empty(len(get(split(s:keyboard),0))%4)
-            let key = '\<C-Y>'
-        endif
-    elseif s:windowless
-        let key = '\<C-E>'
-        if s:wubi && empty(len(get(split(s:keyboard),0))%4)
-            let key  = ''
-        endif
+function! g:wubi()
+    let key = pumvisible() || s:windowless ? '\<C-E>' : ""
+    if s:wubi && empty(len(get(split(s:keyboard),0))%4)
+        let key = pumvisible() ? '\<C-Y>' : s:windowless ? "" : key
     endif
+    let key = s:smart_enter ? '' : key
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -845,7 +838,7 @@ function! s:vimim_windowless(key)
         " make space smart  " gi ma space enter space
     elseif s:smart_enter    " gi ma space enter 77 ma space
         let s:smart_enter = 0
-        let s:seamless_positions = []       " gi wubihua space 8
+        let s:seamless_positions = []       " gi 5stroke space 8
     elseif !empty(s:vimim_char_before()) || s:keyboard =~ " "
         let key = empty(len(a:key)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
         let cursor = empty(len(a:key)) ? 1 : a:key < 1 ? 9 : a:key-1
@@ -915,7 +908,7 @@ function! g:vimim_space()
     if pumvisible()
         let s:has_pumvisible = 1
         let space = '\<C-R>=g:vimim()\<CR>'
-        if s:mode == 'onekey' && s:hit_and_run
+        if s:mode == 'onekey' && empty(s:windowless) && s:hit_and_run
              let space = s:vimim_stop()
         endif
         let cursor = s:mode == 'static' ? '\<C-P>\<C-N>' : ''
@@ -939,6 +932,7 @@ function! g:vimim_enter()
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
+     "  let key = s:mode.onekey.dynamic ? "" : "\<C-E>"   " todo
         let s:smart_enter = 1 " single Enter after English => seamless
     elseif s:windowless || s:vimim_byte_before() =~# s:valid_keyboard
         let s:smart_enter = 1
@@ -2978,25 +2972,27 @@ function! s:vimim_start()
     sil!call s:vimim_set_keycode()
     if s:mode == 'onekey'
         lnoremap <silent> <expr> <C-L> g:vimim_windowless_popup()
-        let onekey_list = split("h j k l m n / ?")
-        if s:vimim_cjk()
-            let onekey_list += s:qwer + ['s']
+        if empty(s:windowless)
+            let onekey_list = split("h j k l m n / ?")
+            if s:vimim_cjk() && empty(s:windowless)
+                let onekey_list += s:qwer + ['s']
+            endif
+            for _ in onekey_list
+                exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
+            endfor
         endif
-        for _ in onekey_list
-            exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
-        endfor
     else
         lnoremap <silent> <expr> <C-L> g:vimim_fullwidth_halfwidth()
         if g:vimim_punctuation > -1
             sil!call s:vimim_punctuations_maps()
         endif
     endif
-    if s:mode == 'dynamic' || s:ui.im =~ 'wubi'
+    if s:mode == 'dynamic' || s:wubi  "  || s:windowless  " todo
         let nonsense = s:ui.quote ? "[0-9]" : "[0-9']"
         for char in s:valid_keys
             if char !~ nonsense || s:ui.im =~ 'phonetic'
                 sil!exe 'lnoremap <silent> ' . char . ' <C-R>=' .
-                \ 'g:vimim_wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
+                \ 'g:wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
             endif
         endfor
     endif
@@ -3224,12 +3220,10 @@ else
         let results = s:vimim_get_cloud(keyboard, s:cloud)
     endif
     if empty(results)
-        if s:ui.im =~ 'wubi\|erbi' || g:vimim_cloud =~ 'wubi'
-            if len(keyboard) > 4
-                let start = 4 * ((len(keyboard)-1)/4)
-                let keyboard = strpart(keyboard, start)
-                let s:keyboard = keyboard  " wubi auto insert on the 4th
-            endif
+        if s:wubi && len(keyboard) > 4  " wubi auto insert on the 4th
+            let start = 4 * ((len(keyboard)-1)/4)
+            let keyboard = strpart(keyboard, start)
+            let s:keyboard = keyboard
         endif
         " [backend] plug-n-play embedded file/directory engine
         let results = s:vimim_embedded_backend_engine(keyboard)
