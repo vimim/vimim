@@ -134,7 +134,7 @@ function! s:vimim_dictionary_keycodes()
     let s:keycodes = {}
     let cloud = ' google sogou baidu qq mycloud '
     for key in split( cloud . ' pinyin ')
-        let s:keycodes[key] = "['0-9a-z]"
+        let s:keycodes[key] = "['a-z0-9]"
     endfor
     for key in split('array30 phonetic')
         let s:keycodes[key] = "[.,a-z0-9;/]"
@@ -430,7 +430,8 @@ let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
 function! s:vimim_set_color()
-    if g:vimim_mode !~ 'nocolor'
+    if g:vimim_mode =~ 'nocolor'
+    elseif has("win32") || has("win32unix")
         highlight! PmenuSbar  NONE
         highlight! PmenuThumb NONE
         highlight! Pmenu      NONE
@@ -888,6 +889,15 @@ function! s:vimim_set_titlestring(cursor)
         let title = keyboard .'  '. west . hightlight . east
         let &titlestring = "VimIM" . s:vimim_get_title() .' '. title
     endif
+endfunction
+
+function! g:vimim_pagedown()
+    let key = ' '
+    if pumvisible()
+        let s:pageup_pagedown = &pumheight ? 1 : 0
+        let key = &pumheight ? g:vimim() : '\<PageDown>'
+    endif
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_space()
@@ -2264,8 +2274,9 @@ endfunction
 
 function! s:vimim_sentence_datafile(keyboard)
     let backend = s:backend[s:ui.root][s:ui.im]
-    let fuzzy = s:ui.im =~ 'pinyin' ? '\s' : ""
-    let pattern = '^' . a:keyboard . fuzzy
+    let fuzzy = s:ui.im =~ 'pinyin' ? ' ' : ""
+    let pattern = '^\V' . a:keyboard . fuzzy
+" todo
     let cursor = match(backend.lines, pattern)
     if cursor > -1
         return a:keyboard
@@ -2278,7 +2289,7 @@ function! s:vimim_sentence_datafile(keyboard)
     while max > 1
         let max -= 1
         let head = strpart(a:keyboard, 0, max)
-        let pattern = '^' . head . '\s'
+        let pattern = '^\V' . head . ' '
         let cursor = match(backend.lines, pattern)
         if cursor > -1
             break
@@ -2288,8 +2299,8 @@ function! s:vimim_sentence_datafile(keyboard)
 endfunction
 
 function! s:vimim_get_from_datafile(keyboard)
-    let fuzzy = s:ui.im =~ 'pinyin' ? '\s' : ""
-    let pattern = '^' . a:keyboard . fuzzy
+    let fuzzy = s:ui.im =~ 'pinyin' ? ' ' : ""
+    let pattern = '^\V' . a:keyboard . fuzzy
     let backend = s:backend[s:ui.root][s:ui.im]
     let cursor = match(backend.lines, pattern)
     if cursor < 0
@@ -3006,8 +3017,13 @@ function! s:vimim_start()
         endif
     endif
     sil!call s:vimim_common_maps()
-    lnoremap <silent> <expr> <Space> g:vimim_space()
-    lnoremap <silent> <expr> <CR>    g:vimim_enter()
+    if s:ui.im =~ 'array'
+        lnoremap <silent> <expr> <CR>    g:vimim_space()
+        lnoremap <silent> <expr> <Space> g:vimim_pagedown()
+    else
+        lnoremap <silent> <expr> <Space> g:vimim_space()
+        lnoremap <silent> <expr> <CR>    g:vimim_enter()
+    endif
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
@@ -3064,7 +3080,7 @@ function! s:vimim_set_pumheight()
     let &pumheight = s:pumheights.saved
     if empty(&pumheight)
         let &pumheight = 5
-        if s:valid_keyboard =~ '\d' || s:mode == 'onekey'
+        if s:mode == 'onekey' || len(s:valid_keys) > 28
             let &pumheight = 10
         endif
     endif
