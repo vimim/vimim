@@ -620,7 +620,7 @@ let s:VimIM += [" ====  lmap imap nmap   ==== {{{"]
 function! s:vimim_common_maps()
     let labels = s:ui.im =~ 'phonetic' ? [] : range(10)
     let punctuation = " ] [ = - "
-    if s:mode == 'onekey'
+    if s:mode == 'onekey' && empty(s:windowless)
         let punctuation .= " . , "
         let labels += s:abcd
         call remove(labels, match(labels,"'"))
@@ -696,6 +696,11 @@ function! g:vimim_wubi()
         let key = '\<C-E>'
         if s:wubi && empty(len(get(split(s:keyboard),0))%4)
             let key = '\<C-Y>'
+        endif
+    elseif s:windowless
+        let key = '\<C-E>'
+        if s:wubi && empty(len(get(split(s:keyboard),0))%4)
+            let key  = ''
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -2985,15 +2990,15 @@ function! s:vimim_start()
         if g:vimim_punctuation > -1
             sil!call s:vimim_punctuations_maps()
         endif
-        if s:mode == 'dynamic'
-            let nonsense = s:ui.quote ? "[0-9]" : "[0-9']"
-            for char in s:valid_keys
-                if char !~ nonsense || s:ui.im =~ 'phonetic'
-                    sil!exe 'lnoremap <silent> ' . char . ' <C-R>=' .
-                    \ 'g:vimim_wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
-                endif
-            endfor
-        endif
+    endif
+    if s:mode == 'dynamic' || s:ui.im =~ 'wubi'
+        let nonsense = s:ui.quote ? "[0-9]" : "[0-9']"
+        for char in s:valid_keys
+            if char !~ nonsense || s:ui.im =~ 'phonetic'
+                sil!exe 'lnoremap <silent> ' . char . ' <C-R>=' .
+                \ 'g:vimim_wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
+            endif
+        endfor
     endif
     sil!call s:vimim_common_maps()
     if s:ui.im =~ 'array'
@@ -3220,7 +3225,7 @@ else
     endif
     if empty(results)
         if s:ui.im =~ 'wubi\|erbi' || g:vimim_cloud =~ 'wubi'
-            if s:mode == 'dynamic' && len(keyboard) > 4
+            if len(keyboard) > 4
                 let start = 4 * ((len(keyboard)-1)/4)
                 let keyboard = strpart(keyboard, start)
                 let s:keyboard = keyboard  " wubi auto insert on the 4th
