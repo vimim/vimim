@@ -56,7 +56,7 @@ function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
-        let g:vimim_map = 'tab,search,gi,ctrl_6,ctrl_bslash'
+        let g:vimim_map = 'tab,ctrl6,ctrl_bslash,search,gi'
     endif
 endfunction
 
@@ -109,7 +109,7 @@ function! s:vimim_initialize_global()
     let s:ui = { 'root' : '', 'im' : '', 'frontends' : [] }
     let s:rc = { "g:vimim_mode" : 'dynamic' }
     let s:rc["g:vimim_shuangpin"] = 0
-    let s:rc["g:vimim_map"] = 'ctrl_6,ctrl_bslash,search,gi'
+    let s:rc["g:vimim_map"] = 'ctrl6,ctrl_bslash,search,gi'
     let s:rc["g:vimim_toggle"] = 0
     let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
     let s:rc["g:vimim_mycloud"] = 0
@@ -168,6 +168,8 @@ function! s:vimim_set_keycode()
     endwhile
     let s:valid_keyboard  = copy(keycode)
     let s:valid_keys = split(keycode_string, '\zs')
+    let vimim_cloud = get(split(g:vimim_cloud,','), 0)
+    let s:wubi = vimim_cloud =~ 'wubi' || s:ui.im =~ 'wubi\|erbi' ? 1 : 0
 endfunction
 
 function! s:vimim_set_global_default()
@@ -224,9 +226,13 @@ endfunction
 
 function! s:vimim_egg_vimimrc()
     let vimim = s:vimimdefaults + s:vimimrc
-    let toggle = match(vimim, 'g:vimim_toggle')  " update g:vimim_toggle
-    let left = vimim[toggle][0 : 1 + match(vimim[toggle], '=')]
-    let vimim[toggle] = left . string(g:vimim_toggle)
+    if g:vimim_toggle > -1    " update g:vimim_toggle if not closed
+        let filter = "get(" . 'v:val' . ",1)"
+        let g:vimim_toggle = join(map(copy(s:ui.frontends),filter),",")
+        let toggle = match(vimim, 'g:vimim_toggle')
+        let left = vimim[toggle][0 : 1 + match(vimim[toggle], '=')]
+        let vimim[toggle] = left . string(g:vimim_toggle)
+    endif
     return sort(vimim)
 endfunction
 
@@ -488,8 +494,7 @@ function! s:vimim_set_statusline()
     let &laststatus = s:mode == 'onekey' ? s:laststatus : 2
     if empty(&statusline)
         set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
-    elseif &statusline =~ 'IMName'
-        " nothing, because it is already in the statusline
+    elseif &statusline =~ 'IMName'   " nothing, as it is already there
     elseif &statusline =~ '\V\^%!'
         let &statusline .= '.IMName()'
     else
@@ -498,14 +503,9 @@ function! s:vimim_set_statusline()
 endfunction
 
 function! IMName()
-    " This function is for user-defined 'stl' 'statusline'
-    if s:mode == 'onekey'
-        if pumvisible()
-            return s:vimim_statusline()
-        endif
-    elseif &omnifunc == 'VimIM'
+    if s:mode == 'onekey' && pumvisible() || &omnifunc == 'VimIM'
         return s:space . s:vimim_statusline()
-    endif
+    endif  " This function is for user-defined 'stl' 'statusline'
     return ""
 endfunction
 
@@ -621,14 +621,6 @@ function! s:vimim_common_maps()
             exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
         endif
     endfor
-    lnoremap <silent> <expr> <Space> g:vimim_space()
-    lnoremap <silent> <expr> <CR>    g:vimim_enter()
-    lnoremap <silent> <expr> <BS>    g:vimim_backspace()
-    lnoremap <silent> <expr> <Esc>   g:vimim_esc()
-    lnoremap <silent> <expr> <C-U>   g:vimim_correction()
-    if len(s:ui.frontends) > 1
-        lnoremap <silent> <expr> <C-H> g:vimim_im_switch()
-    endif
 endfunction
 
 function! g:vimim_label(key)
@@ -686,39 +678,15 @@ function! g:vimim_page(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_dynamic_maps()
-    let vimim_cloud = get(split(g:vimim_cloud,','), 0)
-    if vimim_cloud =~ 'wubi' || s:ui.im =~ 'wubi\|erbi'
-        for char in s:az_list
-            sil!exe 'lnoremap <silent> ' . char . ' ' .
-            \ '<C-R>=g:vimim_wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
-        endfor
-    else    " dynamic alphabet trigger for all but wubi
-        for char in s:valid_keys
-            if char !~ "[0-9']"
-                sil!exe 'lnoremap <silent> ' . char . ' ' .
-                \  char . '<C-R>=g:vimim()<CR>'
-            endif
-        endfor
-    endif
-endfunction
-
 function! g:vimim_wubi()
     let key = ""
     if pumvisible()
-        let key = len(get(split(s:keyboard),0))%4 ? '\<C-E>' : '\<C-Y>'
+        let key = '\<C-E>' 
+        if s:wubi && empty(len(get(split(s:keyboard),0))%4)
+            let key = '\<C-Y>' 
+        endif
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! s:vimim_onekey_maps()
-    let onekey_list = split("h j k l m n / ?")
-    if s:vimim_cjk()
-        let onekey_list += s:qwer + ['s']
-    endif
-    for _ in onekey_list
-        exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
-    endfor
 endfunction
 
 function! g:vimim_hjkl(key)
@@ -1119,12 +1087,12 @@ let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 " =================================================
 
 function! g:vimim_chinese()
-    if empty(s:ui.frontends)
-        return ""
+    let key = ""
+    if len(s:ui.frontends)
+        let s:mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
+        let s:chinese_mode_switch = s:chinese_mode_switch ? 0 : 1
+        let key = s:vimim_open_close(s:chinese_mode_switch)
     endif
-    let s:mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
-    let s:chinese_mode_switch = s:chinese_mode_switch ? 0 : 1
-    let key = s:vimim_open_close(s:chinese_mode_switch)
     sil!return key
 endfunction
 
@@ -1153,7 +1121,9 @@ endfunction
 
 function! s:vimim_set_im_toggle_list()
     let toggle_list = []
-    if empty(g:vimim_toggle)
+    if g:vimim_toggle < 0
+        let toggle_list = [get(s:ui.frontends,0)]
+    elseif empty(g:vimim_toggle)
         let toggle_list = s:ui.frontends
     else
         for toggle in split(g:vimim_toggle, ",")
@@ -1167,8 +1137,6 @@ function! s:vimim_set_im_toggle_list()
     if s:backend[s:ui.root][s:ui.im].name =~ "bsddb"
         let toggle_list = toggle_list[:2]  " one bsddb two clouds
     endif
-    let filter = "get(" . 'v:val' . ",1)"  " update g:vimim_toggle
-    let g:vimim_toggle = join(map(copy(toggle_list),filter),",")
     let s:ui.frontends = copy(toggle_list)
     let s:ui.root = get(get(s:ui.frontends,0), 0)
     let s:ui.im   = get(get(s:ui.frontends,0), 1)
@@ -2667,11 +2635,10 @@ function! s:vimim_get_cloud_qq(keyboard)
     if s:localization  " qq => {'q':'fuck','rs':['\xe5\xa6\x87'],
         let output = s:vimim_i18n_read(output)
     endif
-    let key = 'rs'
     let match_list = []
     let output_hash = eval(output)
-    if type(output_hash) == type({}) && has_key(output_hash, key)
-        let match_list = output_hash[key]
+    if type(output_hash) == type({}) && has_key(output_hash, 'rs')
+        let match_list = output_hash['rs']  " as key
     endif
     if vimim_cloud !~ 'wubi' && vimim_cloud !~ 'shuangpin'
         let match_list = s:vimim_cloud_pinyin(a:keyboard, match_list)
@@ -2806,12 +2773,7 @@ function! s:vimim_get_mycloud(keyboard)
         let s:backend.cloud.mycloud.directory = split(ret,"\t")[0]
         call s:vimim_set_keycode()
     endif
-    let output = 0
-    try
-        let output = s:vimim_access_mycloud(a:keyboard)
-    catch
-        sil!call s:vimim_debug('alert', 'mycloud', v:exception)
-    endtry
+    let output = s:vimim_access_mycloud(a:keyboard)
     if empty(output)
         return []
     endif
@@ -2950,10 +2912,7 @@ function! g:vimim_search()
         let results = split(substitute(join(results),'\w','','g'))
         call sort(results, "s:vimim_sort_on_length")
         let slash = join(results[0:9], '\|')
-        let @/ = slash
-        if empty(search(slash,'nw'))
-            let @/ = english
-        endif
+        let @/ = empty(search(slash,'nw')) ? english : slash
     endif
     echon "/" . english
     let v:errmsg = ""
@@ -3014,23 +2973,42 @@ function! s:vimim_start()
     sil!call s:vimim_set_keycode()
     if s:mode == 'onekey'
         lnoremap <silent> <expr> <C-L> g:vimim_windowless_popup()
-        sil!call s:vimim_onekey_maps()
+        let onekey_list = split("h j k l m n / ?")
+        if s:vimim_cjk()
+            let onekey_list += s:qwer + ['s']
+        endif
+        for _ in onekey_list
+            exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
+        endfor
     else
         lnoremap <silent> <expr> <C-L> g:vimim_fullwidth_halfwidth()
         if g:vimim_punctuation > -1
             sil!call s:vimim_punctuations_maps()
         endif
         if s:mode == 'dynamic'
-            sil!call s:vimim_dynamic_maps()
+            for char in s:valid_keys
+                if char !~ "[0-9']"
+                    sil!exe 'lnoremap <silent> ' . char . ' ' .
+                    \ '<C-R>=g:vimim_wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
+                endif
+            endfor
         endif
     endif
     sil!call s:vimim_common_maps()
-    let ctrl6 = ""
+    lnoremap <silent> <expr> <Space> g:vimim_space()
+    lnoremap <silent> <expr> <CR>    g:vimim_enter()
+    lnoremap <silent> <expr> <BS>    g:vimim_backspace()
+    lnoremap <silent> <expr> <Esc>   g:vimim_esc()
+    lnoremap <silent> <expr> <C-U>   g:vimim_correction()
+    if len(s:ui.frontends) > 1 && g:vimim_toggle > -1
+        lnoremap <silent> <expr> <C-H> g:vimim_im_switch()
+    endif
+    let lmap = ""
     if empty(s:lmap) && mode() == 'i'
         let s:lmap = 32911
-        let ctrl6 = "\<C-^>"
+        let lmap = "\<C-^>"
     endif
-    sil!exe 'sil!return "' . ctrl6 . '"'
+    sil!exe 'sil!return "' . lmap . '"'
 endfunction
 
 function! s:vimim_stop()
@@ -3079,9 +3057,7 @@ function! s:vimim_set_pumheight()
             let &pumheight = 10
         endif
     endif
-    if s:windowless
-        let &pumheight = 1
-    endif
+    let &pumheight = s:windowless ? 1 : &pumheight
     let s:pumheights.current = copy(&pumheight)
     if s:touch_me_not
         let &pumheight = 0
@@ -3153,9 +3129,7 @@ if a:start
             let start_column -= 1
             if one_before !~# "[0-9']"
                 let last_seen_nonsense_column = start_column
-                if all_digit
-                    let all_digit = 0
-                endif
+                let all_digit = all_digit ? 0 : all_digit
             endif
         elseif one_before == '\' " do nothing if leading bslash found
             let s:pattern_not_found = 1
@@ -3314,9 +3288,7 @@ function! s:vimim_popupmenu_list(lines)
             let pair_left = get(pairs,0)
             if len(pairs) > 1 && pair_left !~ '[^\x00-\xff]'
                 let chinese = get(pairs,1)
-                if s:show_extra_menu
-                    let menu = pair_left
-                endif
+                let menu = s:show_extra_menu ? pair_left : menu
             endif
             if s:hjkl_h && s:hjkl_h % 2
                 let char = get(split(chinese,'\zs'),0)
@@ -3441,7 +3413,7 @@ function! s:vimim_plug_and_play()
         nnoremap<silent><C-Bslash> :call g:vimim_chinese()<CR>
         inoremap<unique><C-Bslash> <C-R>=g:vimim_chinese()<CR>
     endif
-    if g:vimim_map =~ 'ctrl_6'
+    if g:vimim_map =~ 'ctrl6'
         inoremap<silent><C-^> <C-R>=g:vimim_onekey()<CR>
         xnoremap<silent><C-^> y:call g:vimim_visual()<CR>
     endif
@@ -3473,7 +3445,7 @@ sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_im_toggle_list()
 sil!call s:vimim_plug_and_play()
-let g:vimim_profile = reltime(g:vimim_profile)
+:let g:vimim_profile = reltime(g:vimim_profile)
 " ============================================= }}}
 :redir @p
 Debug s:vimim_egg_vimim()
