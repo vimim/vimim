@@ -618,7 +618,7 @@ let s:VimIM += [" ====  lmap imap nmap   ==== {{{"]
 " =================================================
 
 function! s:vimim_common_maps()
-    let labels = range(10)
+    let labels = s:ui.im =~ 'phonetic' ? [] : range(10)
     let punctuation = " ] [ = - "
     if s:mode == 'onekey'
         let punctuation .= " . , "
@@ -2276,7 +2276,6 @@ function! s:vimim_sentence_datafile(keyboard)
     let backend = s:backend[s:ui.root][s:ui.im]
     let fuzzy = s:ui.im =~ 'pinyin' ? ' ' : ""
     let pattern = '^\V' . a:keyboard . fuzzy
-" todo
     let cursor = match(backend.lines, pattern)
     if cursor > -1
         return a:keyboard
@@ -3009,9 +3008,9 @@ function! s:vimim_start()
         if s:mode == 'dynamic'
             let nonsense = s:ui.quote ? "[0-9]" : "[0-9']"
             for char in s:valid_keys
-                if char !~ nonsense
-                    sil!exe 'lnoremap <silent> ' . char . ' ' .
-                    \ '<C-R>=g:vimim_wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
+                if char !~ nonsense || s:ui.im =~ 'phonetic'
+                    sil!exe 'lnoremap <silent> ' . char . ' <C-R>=' .
+                    \ 'g:vimim_wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
                 endif
             endfor
         endif
@@ -3154,7 +3153,7 @@ if a:start
     while start_column
         if one_before =~# s:valid_keyboard
             let start_column -= 1
-            if one_before !~# "[0-9']"
+            if one_before !~# "[0-9']" || s:ui.im =~ 'phonetic'
                 let last_seen_nonsense_column = start_column
                 let all_digit = all_digit ? 0 : all_digit
             endif
@@ -3321,9 +3320,12 @@ function! s:vimim_popupmenu_list(lines)
                 let char = get(split(chinese,'\zs'),0)
                 let menu = s:vimim_cjk_property(char)
             endif
-            let english = s:english.line =~ chinese ? '*' : ' '
-            let label2 = english . label2
-            let labeling = printf('%3s ', label2)
+            let labeling = printf('%02s ', label2)
+            if s:ui.im !~ 'phonetic'
+                let english = s:english.line =~ chinese ? '*' : ' '
+                let label2 = english . label2
+                let labeling = printf('%3s ', label2)
+            endif
             let chinese .= empty(tail) ? '' : tail
             let complete_items["abbr"] = labeling . chinese
             let complete_items["menu"] = menu
