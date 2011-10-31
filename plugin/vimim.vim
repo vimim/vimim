@@ -1975,10 +1975,7 @@ function! s:vimim_create_shuangpin_table(rules)
         endif
         let sp1 = shuangpin_shengmu.shuangpin_yunmu
         if !has_key(sptable, sp1)
-            if key[0] == "'"
-                let key = key[1:]
-            endif
-            let sptable[sp1] = key
+            let sptable[sp1] = key[0] == "'" ? key[1:] : key
         endif
     endfor
     if match(split("abc purple nature flypy"), g:vimim_shuangpin) > -1
@@ -2258,8 +2255,7 @@ function! s:vimim_set_datafile(im, datafile)
     if isdirectory(a:datafile)
         return
     elseif im =~ '^wubi'   | let im = 'wubi'
-    elseif im =~ '^pinyin' | let im = 'pinyin'
-    endif
+    elseif im =~ '^pinyin' | let im = 'pinyin' | endif
     let s:ui.root = 'datafile'
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
@@ -2287,8 +2283,7 @@ function! s:vimim_sentence_datafile(keyboard)
     let max = len(a:keyboard)
     while max > 1
         let max -= 1
-        let head = strpart(a:keyboard, 0, max)
-        let pattern = '^\V' . head . ' '
+        let pattern = '^\V' . strpart(a:keyboard,0,max) . ' '
         let cursor = match(backend.lines, pattern)
         if cursor > -1
             break
@@ -2337,21 +2332,22 @@ function! s:vimim_get_from_database(keyboard)
     let results = s:vimim_make_pairs(oneline)
     if empty(s:english.line) && len(results) && len(results) < 20
         let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
-        if len(candidates) > 1
-            for candidate in candidates
-                let oneline = s:vimim_get_gold_from_bsddb(candidate)
-                if empty(oneline) || match(oneline,' ') < 0
-                    continue
-                endif
-                let match_list = s:vimim_make_pairs(oneline)
-                if !empty(match_list)
-                    call extend(results, match_list)
-                endif
-                if len(results) > 20 * 2
-                    break
-                endif
-            endfor
+        if len(candidates) < 2
+            return results
         endif
+        for candidate in candidates
+            let oneline = s:vimim_get_gold_from_bsddb(candidate)
+            if empty(oneline) || match(oneline,' ') < 0
+                continue
+            endif
+            let match_list = s:vimim_make_pairs(oneline)
+            if !empty(match_list)
+                call extend(results, match_list)
+            endif
+            if len(results) > 20 * 2
+                break
+            endif
+        endfor
     endif
     return results
 endfunction
@@ -2411,8 +2407,7 @@ function! s:vimim_more_directory(keyboard, dir)
     endif
     let results = []
     for candidate in candidates
-        let filename = a:dir . candidate
-        let lines = s:vimim_readfile(filename)
+        let lines = s:vimim_readfile(a:dir . candidate)
         if !empty(lines)
             call map(lines, 'candidate ." ". v:val')
             call extend(results, lines)
@@ -2574,10 +2569,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
     if empty(s:backend.cloud.sogou.im)  " as cloud key
         let key_sogou = "http://web.pinyin.sogou.com/web_ime/patch.php"
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
-        if empty(output) || output =~ '502 bad gateway'
-            return []
-        endif
-        let s:backend.cloud.sogou.im = get(split(output,'"'),1)
+        let s:backend.cloud.sogou.im = get(split(output, '"'), 1)
     endif
     let input  = 'http://web.pinyin.sogou.com/api/py'
     let input .= '?key=' . s:backend.cloud.sogou.im
@@ -2599,10 +2591,9 @@ function! s:vimim_get_cloud_sogou(keyboard)
     for item in split(output, '\t+')
         let item_list = split(item, s:colon)
         if len(item_list) > 1
-            let chinese = get(item_list,0)
             let english = strpart(a:keyboard, 0, get(item_list,1))
-            let new_item = english . " " . chinese
-            call add(match_list, new_item)
+            let english_chinese = english . " " . get(item_list,0)
+            call add(match_list, english_chinese)
         endif
     endfor
     return match_list
@@ -2610,17 +2601,11 @@ endfunction
 
 function! s:vimim_get_cloud_qq(keyboard)
     " http://ime.qq.com/fcgi-bin/getword?key=32&q=mxj
-    let url = 'http://ime.qq.com/fcgi-bin/'
+    let input = 'http://ime.qq.com/fcgi-bin/'
     if empty(s:backend.cloud.qq.im)  " as cloud key
-        let key_qq = url . 'getkey'
-        let output = s:vimim_get_from_http(key_qq, 'qq')
-        let key_qq = get(split(output,'"'),3)
-        if len(key_qq) != 32
-            return []
-        endif
-        let s:backend.cloud.qq.im = key_qq
+        let output = s:vimim_get_from_http(input . 'getkey', 'qq')
+        let s:backend.cloud.qq.im = get(split(output, '"'), 3)
     endif
-    let input  = url
     let clouds = split(g:vimim_cloud,',')      " qq.shuangpin.abc,google
     let vimim_cloud = get(clouds, match(clouds,'qq')) " qq.shuangpin.abc
     if vimim_cloud =~ 'wubi'
@@ -2670,11 +2655,8 @@ function! s:vimim_get_cloud_google(keyboard)
     " http://google.com/transliterate?tl_app=3&tlqt=1&num=20&text=mxj
     " http://translate.google.com/?sl=en&tl=zh-CN#en|zh-CN|fuck'
     let input  = 'http://www.google.com/transliterate/chinese'
-    let input .= '?langpair=en|zh'
-    let input .= '&num=20'
-    let input .= '&tl_app=3'
-    let input .= '&tlqt=1'
-    let input .= '&text=' . a:keyboard
+    let input .= '?langpair=en|zh' . '&num=20' . '&tl_app=3'
+    let input .= '&tlqt=1' . '&text=' . a:keyboard
     let output = join(split(s:vimim_get_from_http(input,'google')))
     let match_list = []
     if s:localization  " [{'ew':'fuck','hws':['\u5987\u4EA7\u79D1',]},]
@@ -2702,11 +2684,9 @@ endfunction
 
 function! s:vimim_get_cloud_baidu(keyboard)
     " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
-    let input  = 'http://olime.baidu.com/py'
-    let input .= '?rn=0'
-    let input .= '&pn=20'
-    let input .= '&py=' . a:keyboard
-    let output = s:vimim_get_from_http(input, 'baidu')
+    let url = 'http://olime.baidu.com/py'
+    let input = '?rn=0' . '&pn=20' . '&py=' . a:keyboard
+    let output = s:vimim_get_from_http(url . input, 'baidu')
     let output_list = []
     if exists("g:baidu") && type(g:baidu) == type([])
         let output_list = get(g:baidu,0)
