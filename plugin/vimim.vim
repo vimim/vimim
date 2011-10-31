@@ -107,6 +107,7 @@ function! s:vimim_initialize_global()
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
     let s:ui = { 'root' : '', 'im' : '', 'frontends' : [] }
+    let s:ui = { 'root' : '', 'im' : '', 'quote' : 0, 'frontends' : [] }
     let s:rc = { "g:vimim_mode" : 'dynamic' }
     let s:rc["g:vimim_shuangpin"] = 0
     let s:rc["g:vimim_map"] = 'ctrl6,ctrl_bslash,search,gi'
@@ -130,27 +131,34 @@ function! s:vimim_initialize_global()
 endfunction
 
 function! s:vimim_dictionary_keycodes()
-    let s:im_keycode = {}
-    let cloud = ' google sogou baidu qq '
-    for key in split( cloud . ' pinyin hangul xinhua quick ')
-        let s:im_keycode[key] = "[0-9a-z']"
-    endfor
-    for key in split('wu nature zhengma taijima wubi cangjie mycloud')
-        let s:im_keycode[key] = "[a-z']"
+    let s:keycodes = {}
+    let cloud = ' google sogou baidu qq mycloud '
+    for key in split( cloud . ' pinyin ')
+        let s:keycodes[key] = "['0-9a-z]"
     endfor
     for key in split('array30 phonetic')
-        let s:im_keycode[key] = "[.,a-z0-9;/]"
+        let s:keycodes[key] = "[.,a-z0-9;/]"
     endfor
-    let s:im_keycode.yong     = "[.'a-z;/]"
-    let s:im_keycode.erbi     = "[.'a-z,/;]"
-    let s:im_keycode.boshiamy = "[][a-z'.,]"
+    for key in split('zhengma taijima wubi cangjie hangul xinhua quick')
+        let s:keycodes[key] = "['a-z]"
+    endfor
+    let s:keycodes.wu       = "['a-z]"      " s:ui.quote=1
+    let s:keycodes.nature   = "['a-z]"      " s:ui.quote=1
+    let s:keycodes.yong     = "['a-z.;/]"   " s:ui.quote=1
+    let s:keycodes.erbi     = "['a-z.;/,]"  " s:ui.quote=1
+    let s:keycodes.boshiamy = "['a-z.],[]"  " s:ui.quote=1
     let ime  = ' pinyin_sogou pinyin_quote_sogou pinyin_huge'
     let ime .= ' pinyin_fcitx pinyin_canton pinyin_hongkong'
     let ime .= ' wubi98 wubi2000 wubijd wubihf'
-    let s:all_vimim_input_methods = keys(s:im_keycode) + split(ime)
+    let s:all_vimim_input_methods = keys(s:keycodes) + split(ime)
 endfunction
 
 function! s:vimim_set_keycode()
+    let datafile_has_quote = 'erbi wu nature yong boshiamy'
+    let s:ui.quote = 1
+    if match(split(datafile_has_quote), s:ui.im) < 0
+        let s:ui.quote = 0
+    endif
     let keycode = "[0-9a-z']"
     if !empty(s:ui.root) && empty(g:vimim_shuangpin)
         let keycode = s:backend[s:ui.root][s:ui.im].keycode
@@ -515,11 +523,11 @@ function! s:vimim_get_title()
     endif
     let title = s:space
     let backend = s:backend[s:ui.root][s:ui.im]
-    if has_key(s:im_keycode, s:ui.im)
+    if has_key(s:keycodes, s:ui.im)
         let im = backend.chinese
         if s:windowless && len(s:cjk.filename)
-            let im = len(s:english.line) ? '*'      : ''
-            let im = len(s:hjkl_n)       ? s:hjkl_n : im
+            let im = len(s:english.line) ? '*' : ''
+            let im = len(s:hjkl_n) ? s:hjkl_n : im
         endif
         let title .= im
     endif
@@ -681,9 +689,9 @@ endfunction
 function! g:vimim_wubi()
     let key = ""
     if pumvisible()
-        let key = '\<C-E>' 
+        let key = '\<C-E>'
         if s:wubi && empty(len(get(split(s:keyboard),0))%4)
-            let key = '\<C-Y>' 
+            let key = '\<C-Y>'
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -727,8 +735,10 @@ function! s:vimim_punctuations_maps()
             exe 'lnoremap <expr> '._.' g:vimim_punctuations("'._.'")'
         endif
     endfor
-    lnoremap     '    <C-R>=g:vimim_single_quote()<CR>
-    lnoremap     "    <C-R>=g:vimim_double_quote()<CR>
+    if empty(s:ui.quote)
+        lnoremap ' <C-R>=g:vimim_single_quote()<CR>
+    endif
+    lnoremap " <C-R>=g:vimim_double_quote()<CR>
     lnoremap <Bslash> <C-R>=g:vimim_bslash()<CR>
 endfunction
 
@@ -741,11 +751,8 @@ function! g:vimim_punctuations(key)
             endif
         endif
     endif
-    if pumvisible()
-        let key = '\<C-Y>' . key
-        if a:key == ";"   " the 2nd choice
-            let key = '\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
-        endif
+    if pumvisible()        " the 2nd choice
+        let key = a:key == ";" ? '\<C-N>\<C-Y>' : '\<C-Y>' . key
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -753,7 +760,7 @@ endfunction
 function! g:vimim_single_quote()
     let key = "'"
     if pumvisible()       " the 3rd choice
-        let key = '\<C-N>\<C-N>\<C-Y>\<C-R>=g:vimim()\<CR>'
+        let key = '\<C-N>\<C-N>\<C-Y>'
     elseif g:vimim_punctuation < 3 && s:mode != 'onekey'
         return key
     elseif s:toggle_punctuation
@@ -2247,7 +2254,7 @@ function! s:vimim_set_datafile(im, datafile)
     let s:backend.datafile[im].root = s:ui.root
     let s:backend.datafile[im].im = s:ui.im
     let s:backend.datafile[im].name = a:datafile
-    let s:backend.datafile[im].keycode = s:im_keycode[im]
+    let s:backend.datafile[im].keycode = s:keycodes[im]
     let s:backend.datafile[im].chinese = s:chinese(im)
     let s:backend.datafile[im].lines = []
 endfunction
@@ -2362,7 +2369,7 @@ function! s:vimim_set_directory(dir)
     let s:backend.directory[im].root = s:ui.root
     let s:backend.directory[im].im = im
     let s:backend.directory[im].name = a:dir
-    let s:backend.directory[im].keycode = s:im_keycode[im]
+    let s:backend.directory[im].keycode = s:keycodes[im]
     let s:backend.directory[im].chinese = s:chinese(im)
 endfunction
 
@@ -2461,7 +2468,7 @@ function! s:vimim_set_background_clouds()
             let s:backend.cloud[im] = {}
             let s:backend.cloud[im].root = s:ui.root
             let s:backend.cloud[im].im = 0  " used for cloud key
-            let s:backend.cloud[im].keycode = s:im_keycode[im]
+            let s:backend.cloud[im].keycode = s:keycodes[im]
             let s:backend.cloud[im].name    = s:chinese(im)
             let s:backend.cloud[im].chinese = s:chinese(im)
         endfor
@@ -2986,8 +2993,9 @@ function! s:vimim_start()
             sil!call s:vimim_punctuations_maps()
         endif
         if s:mode == 'dynamic'
+            let nonsense = s:ui.quote ? "[0-9]" : "[0-9']"
             for char in s:valid_keys
-                if char !~ "[0-9']"
+                if char !~ nonsense
                     sil!exe 'lnoremap <silent> ' . char . ' ' .
                     \ '<C-R>=g:vimim_wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
                 endif
@@ -3209,7 +3217,7 @@ else
         endif
     endif
     " [cloud] to make dream come true for multiple clouds
-    if s:ui.root == 'cloud' || keyboard[-1:] == "'"
+    if s:ui.root == 'cloud' || keyboard[-1:] == "'" && empty(s:ui.quote)
         let results = s:vimim_get_cloud(keyboard, s:cloud)
     endif
     if empty(results)
