@@ -621,13 +621,12 @@ function! s:vimim_all_maps()
         endfor
     endif
     let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
-    let punctuation = " ] [ = - "
+    let punctuations = split("] [ = -")
     if s:mode.onekey
-        let punctuation .= " . , "
-        let common_labels += s:abcd
-        call remove(common_labels, match(common_labels,"'"))
+        let punctuations += split(". ,")
+        let common_labels += s:abcd[1:]
     endif
-    for _ in split(punctuation)
+    for _ in punctuations
         if _ !~ s:valid_keyboard && empty(s:mode.windowless)
             sil!exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
         endif
@@ -647,15 +646,10 @@ function! g:vimim_label(key)
         let yes = repeat("\<Down>", n). '\<C-Y>'
         let key = '\<C-R>=g:vimim()\<CR>'
         let s:has_pumvisible = 1
-        if s:mode.onekey
-            if empty(s:cjk.filename) && a:key =~ '\d' || s:hit_and_run
-                let key = yes . s:vimim_stop()
-            elseif s:vimim_cjk() && a:key =~ '\d'
-                let s:hjkl_n .= a:key  " 1234567890 as filter
-            elseif a:key =~ '\l'
-                let key = yes . key    "  abcdvfgxz as label
-                sil!call s:vimim_reset_after_insert()
-            endif
+        if s:mode.onekey && s:hit_and_run
+            let key = yes . s:vimim_stop()
+        elseif s:mode.onekey && s:vimim_cjk() && a:key =~ '\d'
+            let s:hjkl_n .= a:key  " 1234567890 as filter
         else
             let key = yes . key
             sil!call s:vimim_reset_after_insert()
