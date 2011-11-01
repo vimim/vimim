@@ -94,7 +94,6 @@ function! s:vimim_initialize_global()
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     let s:http_exe = ""
-    let s:mycloud_initialization = 0
     let s:shuangpin = 'abc ms plusplus purple flypy nature'
     let s:abcd = split("'abcdvfgxz", '\zs')
     let s:qwer = split("pqwertyuio", '\zs')
@@ -106,9 +105,9 @@ function! s:vimim_initialize_global()
     let s:pumheights = { 'current' : &pumheight, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
-    let s:ui = { 'root' : '', 'im' : '', 'frontends' : [] }
     let s:ui = { 'root' : '', 'im' : '', 'quote' : 0, 'frontends' : [] }
-    let s:rc = { "g:vimim_mode" : 'dynamic' }
+    let s:rc = {}
+    let s:rc["g:vimim_mode"] = 'dynamic'
     let s:rc["g:vimim_shuangpin"] = 0
     let s:rc["g:vimim_map"] = 'ctrl6,ctrl_bslash,search,gi'
     let s:rc["g:vimim_toggle"] = 0
@@ -117,12 +116,8 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_plugin"] = s:plugin
     let s:rc["g:vimim_punctuation"] = 2
     call s:vimim_set_global_default()
-    if isdirectory(g:vimim_plugin)
-        let s:plugin = g:vimim_plugin
-    endif
-    if s:plugin[-1:] != "/"
-        let s:plugin .= "/"
-    endif
+    let s:plugin = isdirectory(g:vimim_plugin) ? g:vimim_plugin : s:plugin
+    let s:plugin = s:plugin[-1:] != "/" ? s:plugin."/" : s:plugin
     let s:english = { 'lines' : [], 'line' : "" }
     let s:english.filename = s:vimim_filereadable("vimim.txt")
     let s:cjk = { 'lines' : [] }
@@ -153,27 +148,22 @@ function! s:vimim_dictionary_keycodes()
 endfunction
 
 function! s:vimim_set_keycode()
-    let datafile_has_quote = 'erbi wu nature yong boshiamy'
-    let s:ui.quote = 1
-    if match(split(datafile_has_quote), s:ui.im) < 0
-        let s:ui.quote = 0
-    endif
-    let keycode = "[0-9a-z']"
+    let quote = 'erbi wu nature yong boshiamy'  " quote in datafile 
+    let s:ui.quote = match(split(quote),s:ui.im) < 0 ? 0 : 1
+    let s:valid_keyboard = "[0-9a-z']"
     if !empty(s:ui.root) && empty(g:vimim_shuangpin)
-        let keycode = s:backend[s:ui.root][s:ui.im].keycode
+        let s:valid_keyboard = s:backend[s:ui.root][s:ui.im].keycode
     elseif g:vimim_shuangpin == 'ms' || g:vimim_shuangpin == 'purple'
-        let keycode = "[0-9a-z';]"
+        let s:valid_keyboard = "[0-9a-z';]"
     endif
     let i = 0
     let keycode_string = ""
     while i < 16*16
-        let char = nr2char(i)
-        if char =~# keycode
-            let keycode_string .= char
+        if nr2char(i) =~# s:valid_keyboard
+            let keycode_string .= nr2char(i)
         endif
         let i += 1
     endwhile
-    let s:valid_keyboard  = copy(keycode)
     let s:valid_keys = split(keycode_string, '\zs')
     let vimim_cloud = get(split(g:vimim_cloud,','), 0)
     let s:wubi = vimim_cloud =~ 'wubi' || s:ui.im =~ 'wubi\|erbi' ? 1 : 0
@@ -734,7 +724,7 @@ endfunction
 function! g:vimim_punctuations(key)
     let key = a:key
     if s:toggle_punctuation > 0
-        if pumvisible() || s:vimim_byte_before() !~ '\w'
+        if pumvisible() || getline(".")[col(".")-2] !~ '\w'
             if has_key(s:punctuations, a:key)
                 let key = s:punctuations[a:key]
             endif
@@ -892,9 +882,7 @@ function! g:vimim_space()
     elseif s:pattern_not_found
     elseif s:mode.dynamic
     elseif s:mode.static
-        if s:vimim_byte_before() =~# s:valid_keyboard
-            let space = g:vimim()
-        endif
+        let space = s:vimim_byte_before() ? g:vimim() : space
     elseif s:seamless_positions == getpos(".")
         let s:smart_enter = 0  " Space is Space after Enter
     else
@@ -909,7 +897,7 @@ function! g:vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1 " single Enter after English => seamless
-    elseif s:mode.windowless || s:vimim_byte_before() =~ s:valid_keyboard
+    elseif s:mode.windowless || s:vimim_byte_before()
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -1032,7 +1020,7 @@ endfunction
 function! s:vimim_onekey_action()
     let onekey = s:vimim_onekey_evils()
     if empty(onekey)
-        if s:vimim_byte_before() =~# s:valid_keyboard
+        if s:vimim_byte_before()
             let onekey = g:vimim()
         elseif s:mode.windowless
             let onekey = s:vimim_windowless("")
@@ -1043,7 +1031,7 @@ endfunction
 
 function! s:vimim_onekey_evils()
     let onekey = ""  " punctuations can be made not so evil ..
-    let one_before = s:vimim_byte_before()
+    let one_before = getline(".")[col(".")-2]
     let two_before = getline(".")[col(".")-3]
     let onekey_evils = copy(s:all_evils)
     call extend(onekey_evils, s:key_evils)
@@ -1443,7 +1431,7 @@ function! s:vimim_url_xx_to_chinese(xx)
 endfunction
 
 function! s:vimim_char_before()
-    if !empty(s:vimim_byte_before())
+    if !empty(len(s:vimim_byte_before()))
         let start = col(".") - 1 - s:multibyte
         let char_before = getline(".")[start : start+s:multibyte-1]
         if char_before !~ '[^\x00-\xff]'
@@ -1456,8 +1444,8 @@ function! s:vimim_char_before()
 endfunction
 
 function! s:vimim_byte_before()
-    let one_before = getline(".")[col(".")-2]
-    return  one_before =~ '\s' ? "" : one_before
+    let before = getline(".")[col(".")-2]
+    return before =~ '\s' ? "" : before =~# s:valid_keyboard ? 1 : 0
 endfunction
 
 function! s:vimim_key_value_hash(single, double)
@@ -2741,6 +2729,7 @@ function! s:vimim_set_backend_mycloud()
     let s:mycloud_func = "do_getlocal"
     let s:mycloud_host = "localhost"
     let s:mycloud_port = 10007
+    let s:mycloud_initialization = 0
     if !empty(g:vimim_mycloud) && g:vimim_mycloud != -1
         let s:ui.root = 'cloud'
         let s:ui.im = 'mycloud'
@@ -3362,7 +3351,7 @@ endfunction
 function! g:vimim()
     let key = ""
     let s:keyboard = empty(s:pageup_pagedown) ? "" : s:keyboard
-    if s:vimim_byte_before() =~# s:valid_keyboard
+    if s:vimim_byte_before()
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>'
     else
         let s:has_pumvisible = 0
