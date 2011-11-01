@@ -781,7 +781,7 @@ function! s:vimim_windowless(key)
         let s:smart_enter = 0
         let s:seamless_positions = []       " gi 5stroke space 8
     elseif !empty(s:vimim_char_before()) || s:keyboard =~ " "
-        let key = empty(len(a:key)) ? '\<C-N>' : '\<C-E>\<C-X>\<C-O>'
+        let key = len(a:key) ? '\<C-E>\<C-R>=g:vimim()\<CR>' : '\<C-N>'
         let cursor = empty(len(a:key)) ? 1 : a:key < 1 ? 9 : a:key-1
         if s:vimim_cjk()
             let s:hjkl_n .= a:key   " 1234567890 for windowless filter
@@ -892,6 +892,8 @@ endfunction
 
 function! g:vimim_esc()
     let esc = '\<Esc>'
+    let &titlestring = s:titlestring
+    let &pumheight = s:pumheights.saved
     if s:mode.onekey || s:mode.windowless
         :y
         if has("gui_running") && has("win32")
@@ -3004,32 +3006,14 @@ endfunction
 
 function! s:vimim_restore_vimrc()
     let &cpo         = s:cpo
+    let &omnifunc    = s:omnifunc
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
-    let &titlestring = s:titlestring
-    let &completeopt = s:completeopt
     let &complete    = s:complete
+    let &completeopt = s:completeopt
     let &lazyredraw  = s:lazyredraw
-    let &omnifunc    = s:omnifunc
+    let &titlestring = s:titlestring
     let &pumheight   = s:pumheights.saved
-endfunction
-
-function! s:vimim_set_pumheight()
-    let &completeopt = s:mode.windowless ? 'menu' : 'menuone'
-    let &pumheight = s:pumheights.saved
-    if empty(&pumheight)
-        let &pumheight = 5
-        if s:mode.onekey || len(s:valid_keys) > 28
-            let &pumheight = 10
-        endif
-    endif
-    let &pumheight = s:mode.windowless ? 1 : &pumheight
-    let s:pumheights.current = copy(&pumheight)
-    if s:touch_me_not
-        let &pumheight = 0
-    elseif s:hjkl_l
-        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
-    endif
 endfunction
 
 function! s:vimim_super_reset()
@@ -3067,6 +3051,24 @@ function! s:vimim_reset_after_insert()
     let s:match_list = []
     let s:pageup_pagedown = 0
     let s:pattern_not_found = 0
+endfunction
+
+function! s:vimim_set_pumheight()
+    let &completeopt = s:mode.windowless ? 'menu' : 'menuone'
+    let &pumheight = s:pumheights.saved
+    if empty(&pumheight)
+        let &pumheight = 5
+        if s:mode.onekey || len(s:valid_keys) > 28
+            let &pumheight = 10
+        endif
+    endif
+    let &pumheight = s:mode.windowless ? 1 : &pumheight
+    let s:pumheights.current = copy(&pumheight)
+    if s:touch_me_not
+        let &pumheight = 0
+    elseif s:hjkl_l
+        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
+    endif
 endfunction
 
 " ============================================= }}}
@@ -3223,7 +3225,6 @@ function! s:vimim_popupmenu_list(lines)
             let s:match_list = results
         endif
     endif
-    call s:vimim_set_pumheight()
     let label = 1
     let one_list = []
     let s:popup_list = []
@@ -3346,6 +3347,7 @@ function! g:vimim()
     else
         let s:has_pumvisible = 0
     endif
+    sil!call s:vimim_set_pumheight()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
