@@ -267,14 +267,13 @@ function! s:vimim_egg_vimim()
     if len(s:english.filename)
         call add(eggs, db.s:chinese('english').db.s:english.filename)
     endif
-    let cloud = db . s:chinese('cloud','cloud') . db
+    let cloud = db . s:chinese('cloud', 'cloud') . db
     for [root, im] in s:ui.frontends
-        let client = s:backend[root][im].name
+        let backend = s:backend[root][im]
         if root == "cloud"
-            let cloud .= client . s:chinese('cloud') . s:space
+            let cloud .= backend.name . s:chinese('cloud') . s:space
         else
-            let ciku = s:chinese(client =~ "bsddb" ? 'mass' : root)
-            call add(eggs, db . ciku. db . client)
+            call add(eggs, db . backend.chinese . db . backend.name)
         endif
     endfor
     call add(eggs, cloud)
@@ -431,21 +430,19 @@ function! s:vimim_dictionary_statusline()
     let s:title.wubi2000   = "新世纪,新世紀"
     let s:title.taijima    = "太极码,太極碼"
     let s:title.nature     = "自然码,自然碼"
-    let one  = " computer directory datafile database option  env "
-    let one .= " encoding ms        static   dynamic  erbi    wubi"
-    let one .= " hangul   xinhua    zhengma  cangjie  yong    wu  "
-    let one .= " wubijd   shuangpin flypy    network  cloud"
-    let two  = " 电脑,電腦 目录,目錄 文件,文本 词库,詞庫 选项,選項"
+    let one  = " computer database option flypy network cloud env "
+    let one .= " encoding ms static dynamic erbi wubi hangul xinhua"
+    let one .= " zhengma cangjie yong wu wubijd shuangpin"
+    let two  = " 电脑,電腦 词库,詞庫 选项,選項 小鹤,小鶴 联网,聯網 云,雲 "
     let two .= " 环境,環境 编码,編碼 微软,微軟 静态,靜態 动态,動態"
     let two .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
     let two .= " 仓颉,倉頡 永码,永碼 吴语,吳語 极点,極點 双拼,雙拼"
-    let two .= " 小鹤,小鶴 联网,聯網 云,雲 "
     call extend(s:title, s:vimim_key_value_hash(one, two))
-    let one  = " pinyin fullwidth halfwidth english chinese purple"
-    let one .= " plusplus quick wubihf mycloud wubi98 phonetic array30"
-    let one .= " abc revision mass date google baidu sogou qq "
-    let two  = " 拼音 全角 半角 英文 中文 紫光 加加 速成 海峰 自己的 98"
-    let two .= " 注音 行列 智能 版本 海量 日期 谷歌 百度 搜狗 ＱＱ"
+    let one  = " fullwidth halfwidth english chinese purple plusplus"
+    let one .= " quick wubihf mycloud wubi98 pinyin phonetic array30"
+    let one .= " abc revision date google baidu sogou qq "
+    let two  = " 全角 半角 英文 中文 紫光 加加 速成 海峰 自己的 98"
+    let two .= " 拼音 注音 行列 智能 版本 日期 谷歌 百度 搜狗 ＱＱ"
     call extend(s:title, s:vimim_key_value_hash(one, two))
 endfunction
 
