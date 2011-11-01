@@ -620,23 +620,21 @@ function! s:vimim_all_maps()
             endif
         endfor
     endif
-    if empty(s:mode.windowless)  " maps common for onekey/static/dynamic
-        let labels = s:ui.im =~ 'phonetic' ? [] : range(10)
-        let punctuation = " ] [ = - "
-        if s:mode.onekey
-            let punctuation .= " . , "
-            let labels += s:abcd
-            call remove(labels, match(labels,"'"))
-        endif
-        for _ in labels
-            sil!exe 'lnoremap <expr> '._.' g:vimim_label("'._.'")'
-        endfor
-        for _ in split(punctuation)
-            if _ !~ s:valid_keyboard
-                sil!exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
-            endif
-        endfor
+    let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
+    let punctuation = " ] [ = - "
+    if s:mode.onekey
+        let punctuation .= " . , "
+        let common_labels += s:abcd
+        call remove(common_labels, match(common_labels, "'"))
     endif
+    for _ in split(punctuation) && empty(s:mode.windowless)
+        if _ !~ s:valid_keyboard
+            sil!exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
+        endif
+    endfor
+    for _ in common_labels
+        sil!exe 'lnoremap <expr> '._.' g:vimim_label("'._.'")'
+    endfor
 endfunction
 
 function! g:vimim_label(key)
