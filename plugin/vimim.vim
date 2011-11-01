@@ -122,6 +122,10 @@ function! s:vimim_initialize_global()
     let s:english.filename = s:vimim_filereadable("vimim.txt")
     let s:cjk = { 'lines' : [] }
     let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
+    let s:dynamic    = {'onekey':0,'windowless':0,'dynamic':1,'static':0}
+    let s:static     = {'onekey':0,'windowless':0,'dynamic':0,'static':1}
+    let s:onekey     = {'onekey':1,'windowless':0,'dynamic':0,'static':0}
+    let s:windowless = {'onekey':0,'windowless':1,'dynamic':0,'static':0}
 endfunction
 
 function! s:vimim_dictionary_keycodes()
@@ -453,7 +457,6 @@ function! s:vimim_dictionary_punctuations()
 endfunction
 
 function! s:vimim_set_statusline()
-    let &laststatus = s:mode.onekey ? s:laststatus : 2
     if empty(&statusline)
         set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
     elseif &statusline =~ 'IMName'   " nothing, as it is already there
@@ -465,10 +468,11 @@ function! s:vimim_set_statusline()
 endfunction
 
 function! IMName()
-    if s:mode.onekey && pumvisible() || &omnifunc == 'VimIM'
-        return s:space . s:vimim_statusline()
-    endif  " This function is for user-defined 'stl' 'statusline'
-    return ""
+    let stl = ""    " for user-defined 'stl' 'statusline'
+    if &omnifunc == 'VimIM' || s:mode.onekey && pumvisible()
+        let stl = s:space . s:vimim_statusline()
+    endif
+    return stl
 endfunction
 
 function! s:vimim_get_title()
@@ -568,17 +572,16 @@ let s:VimIM += [" ====  lmap imap nmap   ==== {{{"]
 " =================================================
 
 function! s:vimim_all_maps()
+    let common_punctuations = split("] [ = -")
+    let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
     if s:mode.dynamic || s:mode.static
         sil!call s:vimim_punctuations_maps()
     elseif s:mode.onekey
-        let hjkl = split("h j k l m n / ? s")
-        let onekey_list = s:vimim_cjk() ?  hjkl + s:qwer : hjkl
-        for _ in onekey_list
-            if s:mode.onekey
-                 sil!exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
-            elseif s:mode.windowless
-                 sil!exe 'lnoremap<expr> '._.' '._.'
-            endif
+        let common_punctuations += split(". ,")
+        let common_labels += s:abcd[1:]
+        let pqwertyuio = s:vimim_cjk() ?  s:qwer : []
+        for _ in pqwertyuio + split("h j k l m n / ? s")
+             sil!exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
         endfor
     endif
     if s:mode.dynamic || s:mode.windowless && s:ui.im !~ 'pinyin'
@@ -590,14 +593,8 @@ function! s:vimim_all_maps()
             endif
         endfor
     endif
-    let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
-    let punctuations = split("] [ = -")
-    if s:mode.onekey
-        let punctuations += split(". ,")
-        let common_labels += s:abcd[1:]
-    endif
-    for _ in punctuations
-        if _ !~ s:valid_keyboard && empty(s:mode.windowless)
+    for _ in s:mode.windowless ? [] : common_punctuations
+        if _ !~ s:valid_keyboard
             sil!exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
         endif
     endfor
@@ -650,7 +647,7 @@ function! g:vimim_page(key)
             let key = &pumheight ? g:vimim() : '\<PageUp>'
             let s:pageup_pagedown = &pumheight ? -1 : 0
         endif
-    elseif empty(s:mode.onekey) && key =~ "[][=-]"
+    elseif key =~ "[][=-]" && empty(s:mode.onekey)
         let key = g:vimim_punctuations(key)
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -697,8 +694,10 @@ function! s:vimim_punctuations_maps()
     if empty(s:ui.quote)
         lnoremap ' <C-R>=g:vimim_single_quote()<CR>
     endif
-    lnoremap " <C-R>=g:vimim_double_quote()<CR>
-    lnoremap <Bslash> <C-R>=g:vimim_bslash()<CR>
+    if g:vimim_punctuation == 3
+        lnoremap    "     <C-R>=g:vimim_double_quote()<CR>
+        lnoremap <Bslash> <C-R>=g:vimim_bslash()<CR>
+    endif
 endfunction
 
 function! g:vimim_punctuations(key)
@@ -720,7 +719,7 @@ function! g:vimim_single_quote()
     let key = "'"
     if pumvisible()       " the 3rd choice
         let key = '\<C-N>\<C-N>\<C-Y>'
-    elseif g:vimim_punctuation < 3 && (s:mode.dynamic||s:mode.static)
+    elseif g:vimim_punctuation < 3
         return key
     elseif s:toggle_punctuation > 0
         let pairs = split(s:key_evils[key], '\zs')
@@ -732,9 +731,7 @@ endfunction
 
 function! g:vimim_double_quote()
     let key = '"'
-    if g:vimim_punctuation < 3 && (s:mode.dynamic||s:mode.static)
-        return key
-    elseif s:toggle_punctuation > 0
+    if s:toggle_punctuation > 0
         let pairs = split(s:key_evils[key], '\zs')
         let s:smart_quotes.double += 1
         let yes = pumvisible() ? '\<C-Y>' : ""
@@ -745,9 +742,7 @@ endfunction
 
 function! g:vimim_bslash()
     let key = '\'
-    if g:vimim_punctuation < 3 && (s:mode.dynamic||s:mode.static)
-        return key
-    elseif s:toggle_punctuation > 0
+    if s:toggle_punctuation > 0
         let yes = pumvisible() ? '\<C-Y>' : ""
         let key = yes . s:key_evils[key]
     endif
@@ -759,7 +754,7 @@ let s:VimIM += [" ====  mode: windowless ==== {{{"]
 " =================================================
 
 function! g:vimim_gi()
-    let s:mode = {'onekey':0,'windowless':1,'dynamic':0,'static':0}
+    let s:mode = s:windowless
     call s:vimim_title()
     sil!exe 'sil!return "' . s:vimim_start() . '"'
 endfunction
@@ -938,15 +933,15 @@ function! g:vimim_windowless_or_halfwidth()
     let key = ""
     if s:mode.dynamic || s:mode.static
         let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
-        sil!call s:vimim_set_statusline()
         sil!call s:vimim_punctuations_maps()
-    elseif s:mode.windowless || s:mode.onekey
+        sil!call s:vimim_set_statusline()
+    else
         let s:hit_and_run = 0
         let key = '\<C-E>'
         if s:mode.windowless
-            let s:mode = {'onekey':1,'windowless':0,'dynamic':0,'static':0}
+            let s:mode = s:onekey
         elseif s:mode.onekey
-            let s:mode = {'onekey':0,'windowless':1,'dynamic':0,'static':0}
+            let s:mode = s:windowless
             let key .= '\<C-R>=g:vimim()\<CR>'
         endif
     endif
@@ -1044,7 +1039,7 @@ function! s:vimim_onekey_evils()
     sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
-function! s:vimim_get_head_without_quote(keyboard)
+function! s:vimim_get_no_quote_head(keyboard)
     let keyboard = a:keyboard
     if keyboard =~ '\d' || s:ui.root == 'cloud'
         return keyboard
@@ -1071,16 +1066,13 @@ let s:VimIM += [" ====  mode: chinese    ==== {{{"]
 
 function! g:vimim_chinese()
     let key = ""
-    if empty(s:ui.frontends)
-        return ""
+    if len(s:ui.frontends)
+        let &laststatus = 2
+        let s:mode = g:vimim_mode =~ 'static' ? s:static : s:dynamic
+        let s:chinese_mode_switch = s:chinese_mode_switch ? 0 : 1
+        let key = s:vimim_open_close(s:chinese_mode_switch)
     endif
-    if g:vimim_mode =~ 'static'
-        let s:mode = {'onekey':0,'windowless':0,'dynamic':0,'static':1}
-    else
-        let s:mode = {'onekey':0,'windowless':0,'dynamic':1,'static':0}
-    endif
-    let s:chinese_mode_switch = s:chinese_mode_switch ? 0 : 1
-    return s:vimim_open_close(s:chinese_mode_switch)
+    return key
 endfunction
 
 function! s:vimim_open_close(switch)
@@ -1433,9 +1425,9 @@ function! s:vimim_byte_before()
     let one_before = getline(".")[col(".")-2]
     let key = 0
     if one_before =~ '\s' || empty(one_before)
-        let key = "" 
-    elseif one_before =~# s:valid_keyboard 
-        let key = 1 
+        let key = ""
+    elseif one_before =~# s:valid_keyboard
+        let key = 1
     endif
     return key
 endfunction
@@ -3047,9 +3039,9 @@ function! s:vimim_super_reset()
 endfunction
 
 function! s:vimim_reset_before_anything()
-    let s:lmap = 0
-    let s:mode = {'onekey':1,'windowless':0,'dynamic':0,'static':0}
+    let s:mode = s:onekey
     let s:hit_and_run = empty(s:cjk.filename) ? 1 : 0
+    let s:lmap = 0
     let s:toggle_im = 0
     let s:smart_enter = 0
     let s:has_pumvisible = 0
@@ -3144,7 +3136,7 @@ else
     if s:mode.onekey || s:mode.windowless
         let results = s:vimim_get_hjkl_game(keyboard)
         if empty(results) && s:vimim_cjk()
-            let head = s:vimim_get_head_without_quote(keyboard)
+            let head = s:vimim_get_no_quote_head(keyboard)
             let head = s:vimim_get_cjk_head(head)
             let results = !empty(head) ? s:vimim_cjk_match(head) : []
         endif
@@ -3153,7 +3145,7 @@ else
         elseif len(s:hjkl_n) && s:keyboard !~ "'"
             let keyboard = get(split(keyboard,'\d'),0)  " mali74
         elseif get(split(s:keyboard),1) =~ "'"  " ssss.. for cloud
-            let keyboard = s:vimim_get_head_without_quote(keyboard)
+            let keyboard = s:vimim_get_no_quote_head(keyboard)
         endif
     endif
     if s:ui.im == "mycloud"
@@ -3194,7 +3186,7 @@ else
     if empty(results)  " [the_last_resort] force shoupin or force cloud
         if s:mode.onekey || s:mode.windowless
             if len(keyboard) > 1
-                let shoupin = s:vimim_get_head_without_quote(keyboard."'''")
+                let shoupin = s:vimim_get_no_quote_head(keyboard."'''")
                 let results = s:vimim_cjk_match(shoupin)
                 if empty(results)
                     let results = s:vimim_get_cloud(keyboard, s:cloud)
