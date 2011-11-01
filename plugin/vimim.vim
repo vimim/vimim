@@ -603,6 +603,22 @@ function! s:vimim_all_maps()
     endfor
 endfunction
 
+function! g:vimim_popup_or_halfwidth()
+    if s:mode.onekey || s:mode.windowless
+        let s:hit_and_run = 0
+        if s:mode.windowless
+            let s:mode = s:onekey
+        else
+            let s:mode = s:windowless
+        endif
+    else
+        let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
+    endif
+    sil!call s:vimim_all_maps()
+    sil!call s:vimim_set_titlestring()
+    return ""
+endfunction
+
 function! g:vimim_label(key)
     let key = a:key
     if pumvisible()
@@ -915,22 +931,6 @@ function! g:vimim_backspace()
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! g:vimim_popup_or_halfwidth()
-    if s:mode.onekey || s:mode.windowless
-        let s:hit_and_run = 0
-        if s:mode.windowless
-            let s:mode = s:onekey
-        else
-            let s:mode = s:windowless
-        endif
-    else
-        let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
-    endif
-    sil!call s:vimim_all_maps()
-    sil!call s:vimim_set_titlestring()
-    return ""
 endfunction
 
 function! s:vimim_screenshot()
