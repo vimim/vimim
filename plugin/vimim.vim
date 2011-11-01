@@ -3057,13 +3057,13 @@ endfunction
 
 function! s:vimim_reset_before_anything()
     let s:lmap = 0
-    let s:toggle_im = 0
-    let s:chinese_mode_switch = 0
-    let s:toggle_punctuation = 1
     let s:mode = {'onekey':1,'windowless':0,'dynamic':0,'static':0}
     let s:hit_and_run = empty(s:cjk.filename) ? 1 : 0
+    let s:toggle_im = 0
     let s:smart_enter = 0
     let s:has_pumvisible = 0
+    let s:toggle_punctuation = 1
+    let s:chinese_mode_switch = 0
     let s:keyboard = ""
     let s:popup_list = []
 endfunction
@@ -3156,9 +3156,7 @@ else
         if empty(results) && s:vimim_cjk()
             let head = s:vimim_get_head_without_quote(keyboard)
             let head = s:vimim_get_cjk_head(head)
-            if !empty(head)
-                let results = s:vimim_cjk_match(head)
-            endif
+            let results = !empty(head) ? s:vimim_cjk_match(head) : []
         endif
         if len(results)
             return s:vimim_popupmenu_list(results)
@@ -3196,18 +3194,15 @@ else
         let results = s:vimim_get_cloud(keyboard, s:cloud)
     endif
     if empty(results)
-        if s:wubi && len(keyboard) > 4  " wubi auto insert on the 4th
-            let start = 4 * ((len(keyboard)-1)/4)
-            let keyboard = strpart(keyboard, start)
-            let s:keyboard = keyboard
+        if s:wubi && len(keyboard) > 4
+            let keyboard = strpart(keyboard, 4*((len(keyboard)-1)/4))
+            let s:keyboard = keyboard  " wubi auto insert on the 4th
         endif
         " [backend] plug-n-play embedded file/directory engine
         let results = s:vimim_embedded_backend_engine(keyboard)
     endif
-    if len(s:english.line) " [english] English cannot be ignored
-        if s:keyboard !~ "'"
-            let s:keyboard = keyboard  " english color is color
-        endif
+    if len(s:english.line)
+        let s:keyboard = s:keyboard !~ "'" ? keyboard : s:keyboard
         let results = s:vimim_make_pairs(s:english.line) + results
     endif
     " [the_last_resort] either force shoupin or force cloud
@@ -3218,8 +3213,8 @@ else
             if empty(results)
                 let results = s:vimim_get_cloud(keyboard, s:cloud)
             endif
-        else    " for onekey continuity: abcdefghijklmnopqrstuvwxyz..
-            let i = keyboard == 'i' ? "我" : s:space
+        else
+            let i = keyboard == 'i' ? "我" : s:space " for onekey continuity
             let results = split(repeat(i,5),'\zs')
         endif
     elseif empty(results) && s:mode.static
@@ -3366,9 +3361,7 @@ endfunction
 
 function! g:vimim()
     let key = ""
-    if empty(s:pageup_pagedown)
-        let s:keyboard = ""
-    endif
+    let s:keyboard = empty(s:pageup_pagedown) ? "" : s:keyboard
     if s:vimim_byte_before() =~# s:valid_keyboard
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>'
     else
