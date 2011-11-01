@@ -769,7 +769,7 @@ function! g:vimim_tab()
     " (2) Tab in insert mode => start windowless
     " (3) Tab in lmap   mode => start print out fine menu
     let tab = "\t"
-    if empty(s:vimim_byte_before())
+    if empty(len(s:vimim_byte_before()))
     elseif pumvisible() || s:lmap
         let tab = s:vimim_screenshot()
     else
@@ -1430,8 +1430,14 @@ function! s:vimim_char_before()
 endfunction
 
 function! s:vimim_byte_before()
-    let before = getline(".")[col(".")-2]
-    return before =~ '\s' ? "" : before =~# s:valid_keyboard ? 1 : 0
+    let one_before = getline(".")[col(".")-2]
+    let key = 0
+    if one_before =~ '\s' || empty(one_before)
+        let key = "" 
+    elseif one_before =~# s:valid_keyboard 
+        let key = 1 
+    endif
+    return key
 endfunction
 
 function! s:vimim_key_value_hash(single, double)
