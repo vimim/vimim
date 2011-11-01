@@ -456,26 +456,7 @@ function! s:vimim_dictionary_punctuations()
     endif
 endfunction
 
-function! s:vimim_set_statusline()
-    if empty(&statusline)
-        set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
-    elseif &statusline =~ 'IMName'   " nothing, as it is already there
-    elseif &statusline =~ '\V\^%!'
-        let &statusline .= '.IMName()'
-    else
-        let &statusline .= '%{IMName()}'
-    endif
-endfunction
-
-function! IMName()
-    let stl = ""    " for user-defined 'stl' 'statusline'
-    if &omnifunc == 'VimIM' || s:mode.onekey && pumvisible()
-        let stl = s:space . s:vimim_statusline()
-    endif
-    return stl
-endfunction
-
-function! s:vimim_get_title()
+function! s:vimim_input_method_in_chinese()
     if empty(s:ui.root) || empty(s:ui.im)
         return ""
     endif
@@ -517,17 +498,7 @@ function! s:vimim_get_title()
     if g:vimim_shuangpin =~ 'abc' || g:vimim_cloud =~ 'abc'
         let title = substitute(title,s:chinese('pin'),s:chinese('hit'),'')
     endif
-    return title . s:space
-endfunction
-
-function! s:vimim_statusline()
-    let punctuation = 'halfwidth'
-    if g:vimim_punctuation > 0 && s:toggle_punctuation > 0
-        let punctuation = 'fullwidth'
-    endif
-    let mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
-    let line = s:chinese('chinese', mode) . s:vimim_get_title()
-    return line . s:chinese(punctuation, s:space, "VimIM")
+    return title
 endfunction
 
 function! g:vimim_slash()
@@ -565,6 +536,35 @@ function! s:vimim_get_label(label)
         endif
     endif
     return labeling
+endfunction
+
+function! s:vimim_set_titlestring()
+    let titlestring = s:logo . s:vimim_input_method_in_chinese()
+    if s:mode.windowless && empty(s:touch_me_not)
+        let titlestring .= s:space . s:today
+    endif
+    if &term == 'screen'  " only if terminal can set window titles
+        echo titlestring
+    else
+        let &titlestring = titlestring
+    endif
+    :set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
+    :redraw
+endfunction
+
+function! IMName()
+    let stl = ""    " for user-defined 'stl' 'statusline'
+    if &omnifunc == 'VimIM' || s:mode.onekey && pumvisible()
+        let punctuation = 'halfwidth'
+        if g:vimim_punctuation > 0 && s:toggle_punctuation > 0
+            let punctuation = 'fullwidth'
+        endif
+        let mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
+        let stl  = s:chinese(s:space, 'chinese', mode)
+        let stl .= s:vimim_input_method_in_chinese()
+        let stl .= s:chinese(s:space, punctuation, s:space, "VimIM")
+    endif
+    return stl
 endfunction
 
 " ============================================= }}}
@@ -755,7 +755,6 @@ let s:VimIM += [" ====  mode: windowless ==== {{{"]
 
 function! g:vimim_gi()
     let s:mode = s:windowless
-    call s:vimim_title()
     sil!exe 'sil!return "' . s:vimim_start() . '"'
 endfunction
 
@@ -790,27 +789,14 @@ function! s:vimim_windowless(key)
                 let key = repeat('\<C-N>', cursor)
             endif
         endif
-        call s:vimim_set_titlestring(cursor)
+        call s:vimim_windowless_titlestring(cursor)
     else
         let s:hjkl_n = ""
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_title()
-    let titlestring = s:logo . s:vimim_get_title()
-    if s:mode.windowless && empty(s:touch_me_not)
-        let titlestring .= s:today
-    endif
-    if &term == 'screen'
-        echo titlestring
-    else  " if terminal can set window titles: all GUI versions
-        let &titlestring = titlestring
-        :redraw
-    endif
-endfunction
-
-function! s:vimim_set_titlestring(cursor)
+function! s:vimim_windowless_titlestring(cursor)
     let west = s:all_evils['[']
     let east = s:all_evils[']']
     let titlestring = substitute(&titlestring,west.'\|'.east,' ','g')
@@ -825,8 +811,9 @@ function! s:vimim_set_titlestring(cursor)
         let east .= join(words[cursor+1 :])
         let s:cursor_at_windowless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
-        let title = keyboard .'  '. west . hightlight . east
-        let &titlestring = "VimIM" . s:vimim_get_title() .' '. title
+        let tail = keyboard .'  '. west . hightlight . east
+        let head = "VimIM" . s:vimim_input_method_in_chinese()
+        let &titlestring = head .' '. tail
     endif
 endfunction
 
@@ -886,7 +873,7 @@ function! g:vimim_enter()
         let key = "\<CR>"     " Enter is Enter after Enter
         let s:smart_enter = 0
     endif
-    call s:vimim_title()
+    sil!call s:vimim_set_titlestring()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -917,7 +904,6 @@ function! g:vimim_correction()
     elseif s:mode.windowless
         let s:smart_enter = "windowless_correction"
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
-        call s:vimim_title()
     endif
     sil!call s:vimim_reset_after_insert()
     sil!exe 'sil!return "' . key . '"'
@@ -931,25 +917,20 @@ function! g:vimim_backspace()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! g:vimim_windowless_or_halfwidth()
-    let key = ""
-    if s:mode.dynamic || s:mode.static
-        let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
-        sil!call s:vimim_punctuations_maps()
-        sil!call s:vimim_set_statusline()
-    else
+function! g:vimim_popup_or_halfwidth()
+    if s:mode.onekey || s:mode.windowless
         let s:hit_and_run = 0
-        let key = '\<C-E>'
         if s:mode.windowless
             let s:mode = s:onekey
-        elseif s:mode.onekey
+        else
             let s:mode = s:windowless
-            let key .= '\<C-R>=g:vimim()\<CR>'
         endif
+    else
+        let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
     endif
     sil!call s:vimim_all_maps()
-    sil!call s:vimim_title()
-    sil!exe 'sil!return "' . key . '"'
+    sil!call s:vimim_set_titlestring()
+    return ""
 endfunction
 
 function! s:vimim_screenshot()
@@ -1081,15 +1062,13 @@ function! s:vimim_open_close(switch)
     let lmap = ""
     if a:switch
         let lmap = s:vimim_start()
-        call s:vimim_title()
-        call s:vimim_set_statusline()
     else
         let lmap = s:vimim_stop()
     endif
     sil!exe 'sil!return "' . lmap . '"'
 endfunction
 
-function! g:vimim_im_switch()
+function! g:vimim_next_im()
     let s:toggle_im += 1
     let switch = s:toggle_im % len(s:ui.frontends)
     let s:ui.root = get(get(s:ui.frontends, switch), 0)
@@ -2955,6 +2934,7 @@ function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_color()
     sil!call s:vimim_set_keycode()
+    sil!call s:vimim_set_titlestring()
     sil!call s:vimim_all_maps()
     if s:ui.im =~ 'array'
         lnoremap <silent> <expr> <CR>    g:vimim_space()
@@ -2966,9 +2946,9 @@ function! s:vimim_start()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
-    lnoremap <silent> <expr> <C-L>   g:vimim_windowless_or_halfwidth()
+    lnoremap <silent> <expr> <C-L>   g:vimim_popup_or_halfwidth()
     if len(s:ui.frontends) > 1 && g:vimim_toggle > -1
-        lnoremap <silent> <expr> <C-H> g:vimim_im_switch()
+        lnoremap <silent> <expr> <C-H> g:vimim_next_im()
     endif
     let lmap = ""
     if empty(s:lmap) && mode() == 'i'
@@ -3157,7 +3137,7 @@ else
             return s:vimim_popupmenu_list(results)
         else  " auto switch to the next s:ui.im after mycloud failure
             sil!call remove(s:ui.frontends,match(s:ui.frontends,s:ui.im))
-            sil!call g:vimim_im_switch()
+            sil!call g:vimim_next_im()
         endif
     endif
     if !empty(g:vimim_shuangpin) && g:vimim_cloud !~ 'shuangpin'
@@ -3277,11 +3257,10 @@ function! s:vimim_popupmenu_list(lines)
         let complete_items["word"] = empty(chinese) ? s:space : chinese
         call add(s:popup_list, complete_items)
     endfor
-    call s:vimim_title()
     if s:mode.windowless && empty(s:touch_me_not)
         let vimim = "VimIM" . s:space .'  '. join(keyboards,"").'  '
         let &titlestring = vimim . join(one_list)
-        call s:vimim_set_titlestring(1)
+        call s:vimim_windowless_titlestring(1)
         Debug s:match_list[:3]
     elseif s:touch_me_not
         let &titlestring = s:logo . s:space . s:today
@@ -3364,7 +3343,6 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 
 function! s:vimim_plug_and_play()
     if g:vimim_map =~ 'ctrl_bslash'
-        nnoremap<silent><C-Bslash> :call g:vimim_chinese()<CR>
         inoremap<unique><C-Bslash> <C-R>=g:vimim_chinese()<CR>
     endif
     if g:vimim_map =~ 'ctrl6'
