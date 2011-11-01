@@ -148,7 +148,7 @@ function! s:vimim_dictionary_keycodes()
 endfunction
 
 function! s:vimim_set_keycode()
-    let quote = 'erbi wu nature yong boshiamy'  " quote in datafile 
+    let quote = 'erbi wu nature yong boshiamy'  " quote in datafile
     let s:ui.quote = match(split(quote),s:ui.im) < 0 ? 0 : 1
     let s:valid_keyboard = "[0-9a-z']"
     if !empty(s:ui.root) && empty(g:vimim_shuangpin)
@@ -414,26 +414,22 @@ function! s:vimim_set_color()
 endfunction
 
 function! s:vimim_dictionary_statusline()
-    let s:title = {}
-    let s:title.cjk        = "标准字库,標準字庫"
-    let s:title.boshiamy   = "呒虾米,嘸蝦米"
-    let s:title.wubi2000   = "新世纪,新世紀"
-    let s:title.taijima    = "太极码,太極碼"
-    let s:title.nature     = "自然码,自然碼"
-    let one  = " computer database option flypy network cloud env "
+    let one  = " cjk  boshiamy  wubi2000  taijima  nature"
+    let two  = " 标准字库,標準字庫  呒虾米,嘸蝦米  新世纪,新世紀"
+    let two .= " 太极码,太極碼  自然码,自然碼"
+    let one .= " computer database option flypy network cloud env "
     let one .= " encoding ms static dynamic erbi wubi hangul xinhua"
     let one .= " zhengma cangjie yong wu wubijd shuangpin"
-    let two  = " 电脑,電腦 词库,詞庫 选项,選項 小鹤,小鶴 联网,聯網 云,雲 "
+    let two .= " 电脑,電腦 词库,詞庫 选项,選項 小鹤,小鶴 联网,聯網 云,雲 "
     let two .= " 环境,環境 编码,編碼 微软,微軟 静态,靜態 动态,動態"
     let two .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
     let two .= " 仓颉,倉頡 永码,永碼 吴语,吳語 极点,極點 双拼,雙拼"
-    call extend(s:title, s:vimim_key_value_hash(one, two))
-    let one  = " pin fullwidth halfwidth english chinese purple plusplus"
-    let one .= " quick wubihf mycloud wubi98 hit pinyin phonetic array30"
+    let one .= " hit fullwidth halfwidth english chinese purple plusplus"
+    let one .= " quick wubihf mycloud wubi98 pin pinyin phonetic array30"
     let one .= " abc revision date google baidu sogou qq "
-    let two  = " 拼 全角 半角 英文 中文 紫光 加加 速成 海峰 自己的 98"
-    let two .= " 打 拼音 注音 行列 智能 版本 日期 谷歌 百度 搜狗 ＱＱ"
-    call extend(s:title, s:vimim_key_value_hash(one, two))
+    let two .= " 打 全角 半角 英文 中文 紫光 加加 速成 海峰 自己的 98"
+    let two .= " 拼 拼音 注音 行列 智能 版本 日期 谷歌 百度 搜狗 ＱＱ"
+    let s:title = s:vimim_key_value_hash(one, two)
 endfunction
 
 function! s:vimim_dictionary_punctuations()
@@ -454,22 +450,6 @@ function! s:vimim_dictionary_punctuations()
     if g:vimim_punctuation > 1   " :let g:vimim_punctuation = 2
         call extend(s:punctuations, most_punctuations)
     endif
-endfunction
-
-function! s:chinese(...)
-    let chinese = ""
-    for english in a:000
-        let cjk = english
-        if has_key(s:title, english)
-            let twins = split(s:title[english], ",")
-            let cjk = get(twins, 0)
-            if len(twins) > 1 && empty(s:english.filename)
-                let cjk = get(twins,1)
-            endif
-        endif
-        let chinese .= cjk
-    endfor
-    return chinese
 endfunction
 
 function! s:vimim_set_statusline()
@@ -1430,6 +1410,12 @@ function! s:vimim_url_xx_to_chinese(xx)
     return output
 endfunction
 
+function! s:vimim_rot13(keyboard)
+    let a = "12345abcdefghijklmABCDEFGHIJKLM"
+    let z = "98760nopqrstuvwxyzNOPQRSTUVWXYZ"
+    return tr(a:keyboard, a.z, z.a)
+endfunction
+
 function! s:vimim_char_before()
     if !empty(len(s:vimim_byte_before()))
         let start = col(".") - 1 - s:multibyte
@@ -1458,10 +1444,20 @@ function! s:vimim_key_value_hash(single, double)
     return hash
 endfunction
 
-function! s:vimim_rot13(keyboard)
-    let a = "12345abcdefghijklmABCDEFGHIJKLM"
-    let z = "98760nopqrstuvwxyzNOPQRSTUVWXYZ"
-    return tr(a:keyboard, a.z, z.a)
+function! s:chinese(...)
+    let chinese = ""
+    for english in a:000
+        let cjk = english
+        if has_key(s:title, english)
+            let twins = split(s:title[english], ",")
+            let cjk = get(twins, 0)
+            if len(twins) > 1 && empty(s:english.filename)
+                let cjk = get(twins,1)
+            endif
+        endif
+        let chinese .= cjk
+    endfor
+    return chinese
 endfunction
 
 " ============================================= }}}
