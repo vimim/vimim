@@ -438,11 +438,11 @@ function! s:vimim_dictionary_statusline()
     let two .= " 二笔,二筆 五笔,五筆 韩文,韓文 新华,新華 郑码,鄭碼"
     let two .= " 仓颉,倉頡 永码,永碼 吴语,吳語 极点,極點 双拼,雙拼"
     call extend(s:title, s:vimim_key_value_hash(one, two))
-    let one  = " fullwidth halfwidth english chinese purple plusplus"
-    let one .= " quick wubihf mycloud wubi98 pinyin phonetic array30"
+    let one  = " pin fullwidth halfwidth english chinese purple plusplus"
+    let one .= " quick wubihf mycloud wubi98 hit pinyin phonetic array30"
     let one .= " abc revision date google baidu sogou qq "
-    let two  = " 全角 半角 英文 中文 紫光 加加 速成 海峰 自己的 98"
-    let two .= " 拼音 注音 行列 智能 版本 日期 谷歌 百度 搜狗 ＱＱ"
+    let two  = " 拼 全角 半角 英文 中文 紫光 加加 速成 海峰 自己的 98"
+    let two .= " 打 拼音 注音 行列 智能 版本 日期 谷歌 百度 搜狗 ＱＱ"
     call extend(s:title, s:vimim_key_value_hash(one, two))
 endfunction
 
@@ -541,7 +541,7 @@ function! s:vimim_get_title()
         let title = s:chinese(s:space, g:vimim_shuangpin, 'shuangpin')
     endif
     if g:vimim_shuangpin =~ 'abc' || g:vimim_cloud =~ 'abc'
-        let title = substitute(title, '拼', '打', '')
+        let title = substitute(title,s:chinese('pin'),s:chinese('hit'),'')
     endif
     return title . s:space
 endfunction
@@ -625,10 +625,10 @@ function! s:vimim_all_maps()
     if s:mode.onekey
         let punctuation .= " . , "
         let common_labels += s:abcd
-        call remove(common_labels, match(common_labels, "'"))
+        call remove(common_labels, match(common_labels,"'"))
     endif
-    for _ in split(punctuation) && empty(s:mode.windowless)
-        if _ !~ s:valid_keyboard
+    for _ in split(punctuation)
+        if _ !~ s:valid_keyboard && empty(s:mode.windowless)
             sil!exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
         endif
     endfor
