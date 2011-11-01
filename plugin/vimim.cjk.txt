@@ -15528,9 +15528,9 @@
 誧   0362 pu3bu1
 誨诲 0865 hui4
 誩   0066 jing4
-說说 0861 shuo1shui4yue4
+說说 0861 shuo1shui4
 誫   0163 zhen4
-説说 0861 shuo1shui4yue4
+説说 0861 shuo1shui4
 読   0461 du2
 誮   0461 hua1
 誯   0666 chang4
@@ -15858,7 +15858,7 @@
 诱誘 3272 you4 1708
 诲誨 3875 hui4 3491
 诳誑 3171 kuang2kuang4
-说說 3871 shuo1shui4yue4 say 39
+说說 3871 shuo1 say 39
 诵誦 3772 song4 2443
 诶誒 3378 ei1ei2ei3ei4
 请請 3572 qing3 please 320
