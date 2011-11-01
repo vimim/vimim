@@ -3123,9 +3123,8 @@ if a:start
     call s:vimim_set_keyboard_list(start_column, keyboard)
     return start_column
 else
-    " [windowless] gi mamahuhuhu space ctrl+u
     if s:smart_enter =~ "windowless_correction"
-        return [s:space]
+        return [s:space]   " i_CTRL_U  gi mamahuhuhu space
     endif
     let results = s:vimim_cache() " [hjkl] less is more
     if empty(results)
@@ -3157,8 +3156,7 @@ else
             let keyboard = s:vimim_get_head_without_quote(keyboard)
         endif
     endif
-    " [mycloud] get chunmeng from local or www
-    if s:ui.im == 'mycloud'
+    if s:ui.im == "mycloud"
         let results = s:vimim_get_mycloud(keyboard)
         if len(results)
             let s:show_extra_menu = 1
@@ -3168,7 +3166,6 @@ else
             sil!call g:vimim_im_switch()
         endif
     endif
-    " [shuangpin] support 6 major shuangpin rules
     if !empty(g:vimim_shuangpin) && g:vimim_cloud !~ 'shuangpin'
         if empty(s:shuangpin_table)
             let rules = s:vimim_shuangpin_generic()
@@ -3180,7 +3177,6 @@ else
             let s:keyboard = keyboard
         endif
     endif
-    " [cloud] to make dream come true for multiple clouds
     if s:ui.root == 'cloud' || keyboard[-1:] == "'" && empty(s:ui.quote)
         let results = s:vimim_get_cloud(keyboard, s:cloud)
     endif
@@ -3188,28 +3184,28 @@ else
         if s:wubi && len(keyboard) > 4
             let keyboard = strpart(keyboard, 4*((len(keyboard)-1)/4))
             let s:keyboard = keyboard  " wubi auto insert on the 4th
-        endif
-        " [backend] plug-n-play embedded file/directory engine
+        endif  " [backend] plug-n-play embedded file/directory engine
         let results = s:vimim_embedded_backend_engine(keyboard)
     endif
     if len(s:english.line)
         let s:keyboard = s:keyboard !~ "'" ? keyboard : s:keyboard
         let results = s:vimim_make_pairs(s:english.line) + results
     endif
-    " [the_last_resort] either force shoupin or force cloud
-    if empty(results) && s:mode.onekey
-        if len(keyboard) > 1
-            let shoupin = s:vimim_get_head_without_quote(keyboard."'''")
-            let results = s:vimim_cjk_match(shoupin)
-            if empty(results)
-                let results = s:vimim_get_cloud(keyboard, s:cloud)
+    if empty(results)  " [the_last_resort] force shoupin or force cloud
+        if s:mode.onekey || s:mode.windowless
+            if len(keyboard) > 1
+                let shoupin = s:vimim_get_head_without_quote(keyboard."'''")
+                let results = s:vimim_cjk_match(shoupin)
+                if empty(results)
+                    let results = s:vimim_get_cloud(keyboard, s:cloud)
+                endif
+            else
+                let i = keyboard == 'i' ? "我" : s:space
+                let results = split(repeat(i,5),'\zs')
             endif
-        else
-            let i = keyboard == 'i' ? "我" : s:space " for onekey continuity
-            let results = split(repeat(i,5),'\zs')
+        elseif s:mode.static
+            let s:pattern_not_found = 1
         endif
-    elseif empty(results) && s:mode.static
-        let s:pattern_not_found = 1
     endif
     return s:vimim_popupmenu_list(results)
 endif
