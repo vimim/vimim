@@ -1524,45 +1524,108 @@ function! s:vimim_cjk_property(chinese)
     return unicode
 endfunction
 
-function! s:vimim_get_cjk_head(keyboard)
-    let keyboard = a:keyboard
-    let head = ""
-    if empty(s:cjk.filename) || keyboard =~ "'"
-        return ""
-    elseif keyboard =~# '^i' && empty (s:english.line)
-        let keyboard = s:vimim_qwertyuiop_1234567890(keyboard[1:])
+function! s:vimim_cjk_match(key)
+    let key = a:key
+    if empty(key) || empty(s:vimim_cjk())
+        return []
     endif
-    if s:touch_me_not || len(keyboard) == 1
-        let head = keyboard
-    elseif keyboard =~ '\d'
-        if keyboard =~ '^\d' && keyboard !~ '\D'
-            let head = keyboard
-            if len(keyboard) > 4  " output is 7712 for input 77124002
-                let head = s:vimim_get_head(keyboard, 4)
+    let grep_frequency = '.*' . '\s\d\+$'
+    let grep = ""
+    if key =~ '\d'
+        if key =~# '^\l\l\+[1-4]\>' && empty(len(s:hjkl_n))
+            let grep = key . '[a-z ]'  " cjk pinyin: huan2hai2 yi1
+        else
+            let digit = ""
+            if key =~ '^\d\+' && key !~ '[^0-9]'
+                let digit = key   " free style digit: 7 77 771 7712
+            elseif key =~# '^\l\+\d\+'  " free style: ma7 ma77 ma771 ma7712
+                let digit = substitute(key,'\a','','g')
             endif
+            if !empty(digit)
+                let space = '\d\{' . string(4-len(digit)) . '}'
+                let space = len(digit)==4 ? "" : space
+                let grep = '\s\+' . digit . space . '\s'
+                let alpha = substitute(key,'\d','','g')
+                if len(alpha)
+                    let grep .= '\(\l\+\d\)\=' . alpha " le|yue: le4yue4
+                elseif len(key) == 1
+                    let grep .= grep_frequency   " grep l|y: happy music
+                endif
+            endif
+        endif
+    elseif s:ui.im != 'mycloud'
+        if len(key) == 1   " one cjk by frequency y72/yue72 l72/le72
+            let grep = '[ 0-9]' . key . '\l*\d' . grep_frequency
+            let grep = key == 'u' ? ' u\( \|$\)' : grep  " 214 unicode
+        elseif key =~# '^\l\+'  " cjk list: /huan /hai /yet /huan2 /hai2
+            let grep = '[ 0-9]' . key . '[0-9]'
+        endif
+    endif
+    let results = []
+    if !empty(grep)
+        let line = match(s:cjk.lines, grep)
+        while line > -1
+            let fields = split(get(s:cjk.lines, line))
+            let frequency = get(fields,-1)=~'\l' ? 9999 : get(fields,-1)
+            call add(results, get(fields,0) . ' ' . frequency)
+            let line = match(s:cjk.lines, grep, line+1)
+        endwhile
+    endif
+    let results = sort(results, "s:vimim_sort_on_last")
+    let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
+    return map(results, filter)
+endfunction
+
+function! s:vimim_get_cjk_head(key)
+    let key = a:key
+    let head = ""
+    if empty(s:cjk.filename) || key =~ "'"
+        return ""
+    elseif key =~# '^i' && empty (s:english.line)
+        let key = s:vimim_qwertyuiop_1234567890(key[1:])
+    endif
+    if s:touch_me_not || len(key) == 1
+        let head = key
+    elseif key =~ '\d'
+        if key =~ '^\d' && key !~ '\D'
+            let head = len(key) > 4 ? s:vimim_get_head(key, 4) : key
             let s:hjkl_n = empty(len(s:hjkl_n)) ? head : s:hjkl_n
-        elseif keyboard =~# '^\l\+\d\+\>'
-            let partition = match(keyboard,'\d')  " ma7 ma77 ma771
-            let head = keyboard[0 : partition-1]  " mali in mali74
-            let tail = keyboard[partition :]      "   74 in mali74
+        elseif key =~# '^\l\+\d\+\>'         " 7712 in 77124002
+            let partition = match(key,'\d')  " ma7 ma77 ma771
+            let head = key[0 : partition-1]  " mali in mali74
+            let tail = key[partition :]      "   74 in mali74
             if empty(s:vimim_get_pinyin(head)) && tail =~ '[1-4]'
-                return keyboard  " pinyin with tone: ma1/ma2/ma3/ma4
+                return key  " pinyin with tone: ma1/ma2/ma3/ma4
             endif
             let s:hjkl_n = empty(len(s:hjkl_n)) ? tail : s:hjkl_n
-        elseif keyboard =~# '^\l\+\d\+'  " wo23 for input wo23you40
-            let partition = match(keyboard, '\(\l\+\d\+\)\@<=\D')
-            let head = s:vimim_get_head(keyboard, partition)
+        elseif key =~# '^\l\+\d\+'  " wo23 for input wo23you40
+            let partition = match(key, '\(\l\+\d\+\)\@<=\D')
+            let head = s:vimim_get_head(key, partition)
         endif
     elseif empty(s:english.line) " muuqwxeyqpjeqqq => m7712x3610j3111
-        if keyboard =~# '^\l' && len(keyboard)%5 < 1
-            let llll = keyboard[1:4]        " awwwr/a2224 arrow color
-            let dddd = s:vimim_qwertyuiop_1234567890(llll)
+        if key =~# '^\l' && len(key)%5 < 1  " awwwr/a2224 arrow color
+            let dddd = s:vimim_qwertyuiop_1234567890(key[1:4])
             if !empty(dddd)
-                let keyboard = keyboard[0:0] . dddd . keyboard[5:-1]
-                let head = s:vimim_get_head(keyboard, 5)
+                let key = key[0:0] . dddd . key[5:-1]
+                let head = s:vimim_get_head(key, 5)
             endif
-        else    " get single character from cjk
-            let head = keyboard
+        else  
+            let head = key  " get single character from cjk
+        endif
+    endif
+    return head
+endfunction
+
+function! s:vimim_get_head(keyboard, partition)
+    if a:partition < 0
+        return a:keyboard
+    endif
+    let head = a:keyboard[0 : a:partition-1]
+    if s:keyboard !~ '\S\s\S'
+        let s:keyboard = head
+        let tail = a:keyboard[a:partition : -1]
+        if !empty(tail)
+            let s:keyboard = head . " " . tail
         endif
     endif
     return head
@@ -1582,82 +1645,6 @@ function! s:vimim_qwertyuiop_1234567890(keyboard)
         endif
     endfor
     return dddd
-endfunction
-
-function! s:vimim_get_head(keyboard, partition)
-    if a:partition < 0
-        return a:keyboard
-    endif
-    let head = a:keyboard[0 : a:partition-1]
-    if s:keyboard !~ '\S\s\S'
-        let s:keyboard = head
-        let tail = a:keyboard[a:partition : -1]
-        if !empty(tail)
-            let s:keyboard = head . " " . tail
-        endif
-    endif
-    return head
-endfunction
-
-function! s:vimim_cjk_match(keyboard)
-    let keyboard = a:keyboard
-    if empty(keyboard) || empty(s:vimim_cjk())
-        return []
-    endif
-    let grep_frequency = '.*' . '\s\d\+$'
-    let grep = ""
-    if keyboard =~ '\d'
-        if keyboard =~# '^\l\l\+[1-4]\>' && empty(len(s:hjkl_n))
-            let grep = keyboard . '[a-z ]'  " cjk pinyin: huan2hai2 yi1
-        else
-            let digit = ""
-            if keyboard =~ '^\d\+' && keyboard !~ '[^0-9]'
-                let digit = keyboard  " free style digit: 7 77 771 7712
-            elseif keyboard =~# '^\l\+\d\+'
-                " cjk free style input/search: ma7 ma77 ma771 ma7712
-                let digit = substitute(keyboard,'\a','','g')
-            endif
-            if !empty(digit)
-                let space = '\d\{' . string(4-len(digit)) . '}'
-                let space = len(digit)==4 ? "" : space
-                let grep = '\s\+' . digit . space . '\s'
-                let alpha = substitute(keyboard,'\d','','g')
-                if len(alpha)
-                    let grep .= '\(\l\+\d\)\=' . alpha " le|yue: le4yue4
-                elseif len(keyboard) == 1
-                    let grep .= grep_frequency   " grep l|y: happy music
-                endif
-            endif
-        endif
-    elseif s:ui.im != 'mycloud'
-        if len(keyboard) == 1   " one cjk by frequency y72/yue72 l72/le72
-            let grep = '[ 0-9]' . keyboard . '\l*\d' . grep_frequency
-            if keyboard == 'u'  "  214 standard unicode index
-                let grep = ' u\( \|$\)'
-            endif
-        elseif keyboard =~# '^\l\+'
-            " cjk multiple-char-list: /huan /hai /yet /huan2 /hai2
-            let grep = '[ 0-9]' . keyboard . '[0-9]'
-        endif
-    endif
-    let results = []
-    if !empty(grep)
-        let line = match(s:cjk.lines, grep)
-        while line > -1
-            let fields = split(get(s:cjk.lines, line))
-            let frequency = get(fields,-1)=~'\l' ? 9999 : get(fields,-1)
-            call add(results, get(fields,0) . ' ' . frequency)
-            let line = match(s:cjk.lines, grep, line+1)
-        endwhile
-    endif
-    if len(results)
-        if keyboard != 'u'
-            let results = sort(results, "s:vimim_sort_on_last")
-        endif
-        let filter = "strpart(" . 'v:val' . ", 0, s:multibyte)"
-        call map(results, filter)
-    endif
-    return results
 endfunction
 
 function! s:vimim_sort_on_last(line1, line2)
