@@ -41,7 +41,7 @@ function! s:vimim_bare_bones_vimrc()
     let $PATH = has("unix") ? unix : windows
 endfunction
 
-if exists("g:vimim_profile") || v:version < 700
+if exists("g:vimim_profile") || &iminsert == 1 || v:version < 700
     finish
 elseif &compatible
     call s:vimim_bare_bones_vimrc()
@@ -171,6 +171,7 @@ function! s:vimim_set_keycode()
     let s:valid_keys = split(keycode_string, '\zs')
     let vimim_cloud = get(split(g:vimim_cloud,','), 0)
     let s:wubi = vimim_cloud =~ 'wubi' || s:ui.im =~ 'wubi\|erbi' ? 1 : 0
+    let s:gi_dynamic = s:ui.im =~ 'pinyin' || has("win32unix") ? 0 : 1
 endfunction
 
 function! s:vimim_set_global_default()
@@ -320,14 +321,17 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif s:vimim_get_unicode_ddddd(keyboard)
         return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
     elseif keyboard == "''"
-        let char_before = s:vimim_char_before()
-        if empty(char_before)
-            let char_before = '一'
-            if s:vimim_cjk()    " 214 standard unicode index
+        let before = ''  " get one chinese char before
+        if !empty(len(s:vimim_byte_before()))
+            let before = getline(".")[col(".")-1-s:multibyte : col(".")-2]
+        endif
+        if empty(before) || before !~ '[^\x00-\xff]'
+            let before = '一'   " 214 standard unicode index
+            if s:vimim_cjk()
                 return s:vimim_cjk_match('u')
             endif
         endif
-        return s:vimim_unicode_list(char2nr(char_before))
+        return s:vimim_unicode_list(char2nr(before))
     elseif !empty(poem)
         " [hjkl] flirt any non-dot file in the hjkl directory
         let results = s:vimim_readfile(poem)
@@ -593,7 +597,7 @@ function! s:vimim_all_maps()
     let common_punctuations = split("] [ = -")
     let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
     let all_dynamic = 0
-    if s:mode.dynamic || s:mode.windowless && s:ui.im !~ 'pinyin'
+    if s:mode.dynamic || s:mode.windowless && s:gi_dynamic
         let all_dynamic = 1
     endif
     if all_dynamic || s:mode.static
@@ -628,11 +632,7 @@ endfunction
 function! g:vimim_popup_or_halfwidth()
     if s:mode.onekey || s:mode.windowless
         let s:hit_and_run = 0
-        if s:mode.windowless
-            let s:mode = s:onekey
-        else
-            let s:mode = s:windowless
-        endif
+        let s:mode = s:mode.windowless ? s:onekey : s:windowless
     else
         let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
     endif
@@ -650,7 +650,6 @@ function! g:vimim_label(key)
         endif
         let yes = repeat("\<Down>", n). '\<C-Y>'
         let key = '\<C-R>=g:vimim()\<CR>'
-        let s:has_pumvisible = 1
         if s:mode.onekey && s:hit_and_run
             let key = yes . s:vimim_stop()
         elseif s:mode.onekey && s:vimim_cjk() && a:key =~ '\d'
@@ -666,6 +665,7 @@ function! g:vimim_label(key)
             let key = s:vimim_windowless(key)
         endif
     endif
+    let s:has_pumvisible = pumvisible() ? 1 : 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -696,7 +696,7 @@ function! g:wubi()
         let s:pattern_not_found = 0
         return ""
     endif
-    let key = pumvisible() || s:mode.windowless ? '\<C-E>' : ""
+    let key = pumvisible() || s:mode.windowless && s:omni ? '\<C-E>' : ""
     if s:wubi && empty(len(get(split(s:keyboard),0))%4)
         let key = pumvisible() ? '\<C-Y>' : s:mode.windowless ? "" : key
     endif
@@ -805,7 +805,7 @@ function! g:vimim_tab()
     " (3) Tab in lmap   mode => start print out fine menu
     let tab = "\t"
     if empty(len(s:vimim_byte_before()))
-    elseif pumvisible() || s:lmap
+    elseif pumvisible() || s:ctrl6
         let tab = s:vimim_screenshot()
     else
         let tab = g:vimim_gi() . s:vimim_onekey_action()
@@ -819,8 +819,8 @@ function! s:vimim_windowless(key)
         " make space smart  " gi ma space enter space
     elseif s:smart_enter    " gi ma space enter 77 ma space
         let s:smart_enter = 0
-        let s:seamless_positions = []       " gi 5stroke space 8
-    elseif !empty(s:vimim_char_before()) || s:keyboard =~ " "
+        let s:seamless_positions = []
+    elseif s:omni || s:keyboard =~ " "   " assume completion active
         let key = len(a:key) ? '\<C-E>\<C-R>=g:vimim()\<CR>' : '\<C-N>'
         let cursor = empty(len(a:key)) ? 1 : a:key < 1 ? 9 : a:key-1
         if s:vimim_cjk()
@@ -831,8 +831,6 @@ function! s:vimim_windowless(key)
             endif
         endif
         call s:vimim_windowless_titlestring(cursor)
-    else
-        let s:hjkl_n = ""
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -875,9 +873,7 @@ function! g:vimim_space()
     " (5) Space after chinese windowless      => <C-N> for next match
     " (6) Space after chinese windowless wubi => deactive completion
     let space = " "
-    let s:has_pumvisible = 0
     if pumvisible()
-        let s:has_pumvisible = 1
         let space = '\<C-R>=g:vimim()\<CR>'
         if s:mode.onekey && s:hit_and_run
              let space = s:vimim_stop()
@@ -894,10 +890,12 @@ function! g:vimim_space()
         return s:vimim_onekey_action()
     endif
     call s:vimim_reset_after_insert()
+    let s:has_pumvisible = pumvisible() ? 1 : 0
     sil!exe 'sil!return "' . space . '"'
 endfunction
 
 function! g:vimim_enter()
+    let s:omni = 0
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
@@ -920,23 +918,8 @@ function! g:vimim_enter()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! g:vimim_esc()
-    let esc = '\<Esc>'
-    let &titlestring = s:titlestring
-    if s:mode.onekey || s:mode.windowless
-        :y
-        if has("gui_running") && has("win32")
-            sil!let @+ = @0[:-2]  " copy to clipboard and window title
-        endif
-        let esc = s:vimim_stop() . esc
-        let &titlestring = s:space . @0[:-2]
-    elseif pumvisible() && g:vimim_mode =~ 'esc'
-        let esc = g:vimim_correction() " use <Esc> as one key correction
-    endif
-    sil!exe 'sil!return "' . esc . '"'
-endfunction
-
 function! g:vimim_correction()
+    let s:omni = 0
     let key = '\<C-U>'  " :help i_CTRL-U  Delete all entered characters
     if pumvisible()
         let range = col(".") - 1 - s:starts.column
@@ -952,11 +935,28 @@ function! g:vimim_correction()
 endfunction
 
 function! g:vimim_backspace()
+    let s:omni = 0
     let key = '\<Left>\<Delete>' " avoid special meaning of <BS> in omni
     if pumvisible()
         let key .= '\<C-R>=g:vimim()\<CR>'
     endif
     sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! g:vimim_esc()
+    let esc = '\<Esc>'
+    let &titlestring = s:titlestring
+    if s:mode.onekey || s:mode.windowless
+        :y
+        if has("gui_running") && has("win32")
+            sil!let @+ = @0[:-2]  " copy to clipboard and window title
+        endif
+        let esc = s:vimim_stop() . esc
+        let &titlestring = s:space . @0[:-2]
+    elseif pumvisible() && g:vimim_mode =~ 'esc'
+        let esc = g:vimim_correction() " use <Esc> as one key correction
+    endif
+    sil!exe 'sil!return "' . esc . '"'
 endfunction
 
 function! s:vimim_screenshot()
@@ -993,7 +993,7 @@ function! g:vimim_onekey()
     let onekey = ''
     if pumvisible()
         let onekey = s:vimim_screenshot()
-    elseif empty(s:lmap)
+    elseif empty(s:ctrl6)
         let onekey = s:vimim_start() . s:vimim_onekey_action()
     else
         let onekey = s:vimim_stop()
@@ -1002,12 +1002,13 @@ function! g:vimim_onekey()
 endfunction
 
 function! s:vimim_onekey_action()
+    let s:hjkl_n = ""
     let onekey = s:vimim_onekey_evils()
     if empty(onekey)
         if s:vimim_byte_before()
             let onekey = g:vimim()
         elseif s:mode.windowless
-            if s:ui.im !~ 'pinyin'
+            if s:gi_dynamic
                 let s:pattern_not_found = 1
                 call s:vimim_set_titlestring()
             else
@@ -1418,19 +1419,6 @@ function! s:vimim_rot13(keyboard)
     return tr(a:keyboard, a.z, z.a)
 endfunction
 
-function! s:vimim_char_before()
-    if !empty(len(s:vimim_byte_before()))
-        let start = col(".") - 1 - s:multibyte
-        let char_before = getline(".")[start : start+s:multibyte-1]
-        if char_before !~ '[^\x00-\xff]'
-        elseif match(values(s:all_evils),char_before) > -1
-        else
-            return char_before
-        endif
-    endif
-    return ""
-endfunction
-
 function! s:vimim_byte_before()
     let one_before = getline(".")[col(".")-2]
     let key = 0
@@ -1773,10 +1761,9 @@ function! s:vimim_quanpin_transform(pinyin)
         endfor
     endif
     let item = a:pinyin
-    let lenitem = len(item)
-    let pinyinstr = ""
     let index = 0   " follow ibus rule, plus special case for fan'guo
-    while index < lenitem
+    let pinyinstr = ""
+    while index < len(item)
         if item[index] !~ "[a-z]"
             let index += 1
             continue
@@ -1848,9 +1835,8 @@ endfunction
 
 function! s:vimim_more_pinyin_candidates(keyboard)
     " make standard menu layout:  mamahuhu => mamahu, mama
-    if len(s:english.line)
-    \|| !empty(g:vimim_shuangpin)
-    \|| s:ui.im !~ 'pinyin'
+    if len(s:english.line) || s:ui.im !~ 'pinyin'
+    \|| !empty(g:vimim_shuangpin) || g:vimim_cloud =~ 'shuangpin'
         return []
     endif
     let candidates = []
@@ -2933,10 +2919,10 @@ function! s:vimim_start()
     if len(s:ui.frontends) > 1 && g:vimim_toggle > -1
         lnoremap <silent> <expr> <C-H> g:vimim_next_im()
     endif
-    let lmap = ""
-    if empty(s:lmap) && mode() == 'i'
-        let s:lmap = 32911
-        let lmap = "\<C-^>"
+    let lmap = ''
+    if empty(s:ctrl6) && mode() == 'i'
+        let s:ctrl6 = 32911
+        let lmap = '\<C-^>'
     endif
     sil!exe 'sil!return "' . lmap . '"'
 endfunction
@@ -2966,8 +2952,6 @@ function! s:vimim_save_vimrc()
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
     let s:lazyredraw  = &lazyredraw
-    let s:iminsert    = &iminsert
-    let &iminsert = 0
 endfunction
 
 function! s:vimim_restore_vimrc()
@@ -2979,7 +2963,6 @@ function! s:vimim_restore_vimrc()
     let &statusline  = s:statusline
     let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
-    let &iminsert    = s:iminsert
     let &pumheight   = s:pumheights.saved
 endfunction
 
@@ -2992,7 +2975,7 @@ endfunction
 function! s:vimim_reset_before_anything()
     let s:mode = s:onekey
     let s:hit_and_run = empty(s:cjk.filename) ? 1 : 0
-    let s:lmap = 0
+    let s:ctrl6 = 0
     let s:toggle_im = 0
     let s:smart_enter = 0
     let s:has_pumvisible = 0
@@ -3010,14 +2993,15 @@ function! s:vimim_reset_before_omni()
 endfunction
 
 function! s:vimim_reset_after_insert()
+    let s:omni = 0
+    let s:match_list = []
+    let s:pageup_pagedown = 0
+    let s:pattern_not_found = 0
     let s:hjkl_n = ""   "  reset for nothing
     let s:hjkl_h = 0    "  toggle cjk property
     let s:hjkl_l = 0    "  toggle label length
     let s:hjkl_m = 0    "  toggle cjjp/c'j'j'p
     let s:hjkl__ = 0    "  toggle simplified/traditional
-    let s:match_list = []
-    let s:pageup_pagedown = 0
-    let s:pattern_not_found = 0
 endfunction
 
 " ============================================= }}}
@@ -3169,7 +3153,7 @@ function! s:vimim_popupmenu_list(lines)
         endfor
         if empty(results)
             let s:hjkl_n = ""  " make digits recyclable
-        else
+        else                   " gi ma space 7777777777
             let s:match_list = results
         endif
     endif
@@ -3281,21 +3265,20 @@ function! s:vimim_embedded_backend_engine(keyboard)
 endfunction
 
 function! g:vimim()
-    let key = ""
+    let s:omni = 0
     let s:keyboard = empty(s:pageup_pagedown) ? "" : s:keyboard
+    let key = ""
     if s:vimim_byte_before()
         let key = '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>'
-    else
-        let s:has_pumvisible = 0
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_omni()
+    let s:omni = 1         " omni completion pattern found
     let cursor = s:mode.static ? '\<C-N>\<C-P>' : '\<C-P>\<Down>'
-    let key = pumvisible() ? cursor : ""
-    let s:smart_enter = 0  " windowless: gi ma enter li space 4
-    sil!exe 'sil!return "' . key . '"'
+    let cursor = pumvisible() ? cursor : ""
+    sil!exe 'sil!return "' . cursor . '"'
 endfunction
 
 " ============================================= }}}
