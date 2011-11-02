@@ -2969,9 +2969,10 @@ endfunction
 
 function! s:vimim_stop()
     lmapclear
+    let lmap = "\<C-^>"
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
-    sil!exe 'sil!return "' . "\<C-^>" . '"'
+    sil!exe 'sil!return "' . lmap . '"'
 endfunction
 
 function! s:vimim_set_vimrc()
@@ -3330,8 +3331,8 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 
 function! s:vimim_plug_and_play()
     if g:vimim_map =~ 'ctrl_bslash'
-        inoremap<unique><C-Bslash> <C-R>=g:vimim_chinese()<CR>
-        nnoremap<silent><C-Bslash> :call g:vimim_chinese()<CR> 
+        inoremap<unique><C-Bslash>  <C-R>=g:vimim_chinese()<CR>
+        nnoremap<silent><C-Bslash> i<C-R>=g:vimim_chinese()<CR><Esc>
     endif
     if g:vimim_map =~ 'ctrl6'
         inoremap<silent><C-^> <C-R>=g:vimim_onekey()<CR>
