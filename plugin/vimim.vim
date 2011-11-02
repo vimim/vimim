@@ -25,7 +25,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (1) (vim normal mode)  gi      (for windowless chinese input)
 "    (2) (vim normal mode)  n       (for windowless slash search)
 "    (3) (vim insert mode)  ctrl+6  (for onekey omni popup)
-"    (4) (vim insert mode)  ctrl+\  (for dynamic chinese mode)
+"    (4) (vim insert mode)  ctrl+\  (for dynamic chinese input)
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -90,7 +90,7 @@ function! s:vimim_initialize_global()
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
     let s:seamless_positions = []
-    let s:current_positions = [0,0,1,0]
+    let s:cursor_positions = [0,0,1,0]
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     let s:http_exe = ""
@@ -261,7 +261,7 @@ function! s:vimim_egg_vimim()
     if len(s:english.filename)
         call add(eggs, db.s:chinese('english').db.s:english.filename)
     endif
-    let cloud = db . s:chinese('cloud', 'cloud') . db
+    let cloud = db . s:chinese('cloud') . db
     for [root, im] in s:ui.frontends
         let backend = s:backend[root][im]
         if root == "cloud"
@@ -1140,19 +1140,17 @@ function! s:vimim_set_keyboard_list(column_start, keyboard)
     endif
 endfunction
 
-function! s:vimim_get_seamless(current_positions)
+function! s:vimim_get_seamless(cursor_positions)
     if empty(s:seamless_positions)
-    \|| s:seamless_positions[0] != a:current_positions[0]
-    \|| s:seamless_positions[1] != a:current_positions[1]
-    \|| s:seamless_positions[3] != a:current_positions[3]
+    \|| s:seamless_positions[0] != a:cursor_positions[0]
+    \|| s:seamless_positions[1] != a:cursor_positions[1]
+    \|| s:seamless_positions[3] != a:cursor_positions[3]
         let s:seamless_positions = []
         return -1
     endif
+    let current_line = getline(a:cursor_positions[1])
     let seamless_column = s:seamless_positions[2]-1
-    let start_column = a:current_positions[2]-1
-    let len = start_column - seamless_column
-    let start_row = a:current_positions[1]
-    let current_line = getline(start_row)
+    let len = a:cursor_positions[2]-1 - seamless_column
     let snip = strpart(current_line, seamless_column, len)
     if empty(len(snip))
         return -1
@@ -1609,7 +1607,7 @@ function! s:vimim_get_cjk_head(key)
                 let key = key[0:0] . dddd . key[5:-1]
                 let head = s:vimim_get_head(key, 5)
             endif
-        else  
+        else
             let head = key  " get single character from cjk
         endif
     endif
@@ -2448,9 +2446,7 @@ function! s:vimim_check_http_executable()
     let lib = has("win32") || has("win32unix") ? "dll" : "so"
     let libvimim = s:plugin . "libvimim." . lib
     if filereadable(libvimim)
-        if has("win32") && libvimim[-4:] ==? ".dll"
-            let libvimim = libvimim[:-5]
-        endif
+        let libvimim = has("win32") ? libvimim[:-5] : libvimim
         if libcall(libvimim, "do_geturl", "__isvalid") ==# "True"
             let s:http_exe = libvimim
         endif
@@ -2693,7 +2689,7 @@ let s:VimIM += [" ====  backend: mycloud ==== {{{"]
 
 function! s:vimim_set_backend_mycloud()
     let s:mycloud_arg  = ""
-    let s:mycloud_mode = ""
+    let s:mycloud_mode = "libcall"
     let s:mycloud_func = "do_getlocal"
     let s:mycloud_host = "localhost"
     let s:mycloud_port = 10007
@@ -2721,7 +2717,8 @@ function! s:vimim_get_mycloud(keyboard)
         if empty(mycloud)
             let s:mycloud_initialization = -1 " fail to start mycloud
             return []
-        endif " set mycloud client with real data from mycloud server
+        endif
+        " mycloud late binding: set real data from mycloud server
         let s:backend.cloud.mycloud.im = mycloud
         let ret = s:vimim_mycloud(mycloud, "__getkeychars")
         let s:backend.cloud.mycloud.keycode = split(ret,"\t")[0]
@@ -2729,11 +2726,8 @@ function! s:vimim_get_mycloud(keyboard)
         let s:backend.cloud.mycloud.directory = split(ret,"\t")[0]
         call s:vimim_set_keycode()
     endif
-    let output = s:vimim_mycloud(s:backend.cloud.mycloud.im, a:keyboard)
-    if empty(output)
-        return []
-    endif
     let results = []
+    let output = s:vimim_mycloud(s:backend.cloud.mycloud.im, a:keyboard)
     for item in split(output, '\n')
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
@@ -2745,31 +2739,89 @@ function! s:vimim_get_mycloud(keyboard)
         endif
         let extra_text = get(item_list,2)
         let english = a:keyboard[get(item_list,1):]
-        let new_item = extra_text . " " . chinese . english
-        call add(results, new_item)
+        call add(results, extra_text . " " . chinese . english)
     endfor
     return results
+endfunction
+
+function! s:vimim_mycloud_set_and_play()
+    let part = split(g:vimim_mycloud, ':')
+    if len(part) <= 1
+        sil!call s:vimim_debug('alert', "mycloud_url_too_short")
+    elseif part[0] ==# 'py' && has("python")
+        " :let g:vimim_mycloud = "py:127.0.0.1"
+        if len(part) > 2
+            let s:mycloud_host = part[1]
+            let s:mycloud_port = part[2]
+        elseif len(part) > 1
+            let s:mycloud_host = part[1]
+        endif
+        try
+            call s:vimim_mycloud_python_init()
+            let s:mycloud_mode = "python"
+            if s:vimim_mycloud_isvalid(part[1])
+                return "python"
+            endif
+        catch
+            sil!call s:vimim_debug('python_mycloud=', v:exception)
+        endtry
+    elseif part[0] ==# 'app' && !has("gui_win32")
+        " :let g:vimim_mycloud = "app:python d:/mycloud/mycloud.py"
+        let cloud = part[1]
+        if len(part) == 3
+            let part1 = part[1][0] == '/' ? part[1][1:] : part[1]
+            let cloud = part1 . ':' . part[2]
+        endif
+        if executable(split(cloud)[0])
+            let s:mycloud_mode = "system"
+            if s:vimim_mycloud_isvalid(cloud)
+                return cloud
+            endif
+        endif
+    elseif part[0] ==# "dll"
+        " :let g:vimim_mycloud = "dll:/data/libvimim.so:192.168.0.1"
+        let base = len(part[1]) == 1 ? 1 : 0
+        if len(part) >= base+4
+            let s:mycloud_func = part[base+3]
+        endif
+        let s:mycloud_arg = len(part) >= base+3 ? part[base+2] : ""
+        let libvimim = base == 1 ? part[1] . ':' . part[2] : part[1]
+        if filereadable(libvimim)
+            let s:mycloud_mode = "libcall"
+            let libvimim = has("win32") ? libvimim[:-5] : libvimim
+            if s:vimim_mycloud_isvalid(libvimim)
+                return libvimim
+            endif
+        endif
+    elseif part[0] ==# "http" || part[0] ==# "https"
+        " :let g:vimim_mycloud = "http://pim-cloud.appspot.com/qp/"
+        if !empty(s:vimim_check_http_executable())
+            let s:mycloud_mode = "www"
+            if s:vimim_mycloud_isvalid(g:vimim_mycloud)
+                return g:vimim_mycloud
+            endif
+        endif
+    else
+        sil!call s:vimim_debug('alert', "invalid_mycloud_url")
+    endif
+    return 0
 endfunction
 
 function! s:vimim_mycloud(cloud, cmd)
     let ret = ""
     if s:mycloud_mode == "libcall"
-        let arg = s:mycloud_arg
-        if empty(arg)
-            let ret = libcall(a:cloud, s:mycloud_func, a:cmd)
-        else
-            let ret = libcall(a:cloud, s:mycloud_func, arg." ".a:cmd)
-        endif
+        let arg = empty(s:mycloud_arg) ? '' : s:mycloud_arg . " "
+        let ret = libcall(a:cloud, s:mycloud_func, arg . a:cmd)
     elseif s:mycloud_mode == "python"
         let ret = s:vimim_mycloud_python_client(a:cmd)
     elseif s:mycloud_mode == "system"
-        let ret = system(a:cloud." ".shellescape(a:cmd))
+        let ret = system(a:cloud . " " . shellescape(a:cmd))
     elseif s:mycloud_mode == "www"
-        let input = s:vimim_rot13(a:cmd)
+        let input = a:cloud . s:vimim_rot13(a:cmd)
         if s:http_exe =~ 'libvimim'
-            let ret = libcall(s:http_exe, "do_geturl", a:cloud.input)
+            let ret = libcall(s:http_exe, "do_geturl", input)
         elseif len(s:http_exe)
-            let ret = system(s:http_exe . shellescape(a:cloud.input))
+            let ret = system(s:http_exe . shellescape(input))
         endif
         if len(ret)
             let output = s:vimim_rot13(ret)
@@ -2779,75 +2831,10 @@ function! s:vimim_mycloud(cloud, cmd)
     return ret
 endfunction
 
-function! s:vimim_access_mycloud_isvalid(cloud)
+function! s:vimim_mycloud_isvalid(cloud)
     let ret = s:vimim_mycloud(a:cloud, "__isvalid")
     if split(ret, "\t")[0] == "True"
         return 1
-    endif
-    return 0
-endfunction
-
-function! s:vimim_mycloud_set_and_play()
-    let part = split(g:vimim_mycloud, ':')
-    let lenpart = len(part)
-    if lenpart <= 1
-        sil!call s:vimim_debug('info', "invalid_cloud_plugin_url")
-    elseif part[0] ==# 'py' && has("python")
-        if lenpart > 2
-            let s:mycloud_host = part[1]
-            let s:mycloud_port = part[2]
-        elseif lenpart > 1
-            let s:mycloud_host = part[1]
-        endif
-        try
-            call s:vimim_mycloud_python_init()
-            let s:mycloud_mode = "python"
-            if s:vimim_access_mycloud_isvalid(part[1])
-                return "python"
-            endif
-        catch
-            sil!call s:vimim_debug('python_mycloud=', v:exception)
-        endtry
-    elseif part[0] ==# 'app' && !has("gui_win32")
-        if lenpart == 3
-            let cloud = part[1] . ':' . part[2]
-            if part[1][0] == '/'
-                let cloud = part[1][1:] . ':' . part[2]
-            endif
-        elseif lenpart == 2
-            let cloud = part[1]
-        endif
-        if executable(split(cloud, " ")[0])
-            let s:mycloud_mode = "system"
-            if s:vimim_access_mycloud_isvalid(cloud)
-                return cloud
-            endif
-        endif
-    elseif part[0] ==# "dll"
-        let base = len(part[1]) == 1 ? 1 : 0
-        if lenpart >= base+4
-            let s:mycloud_func = part[base+3]
-        endif
-        let s:mycloud_arg = lenpart >= base+3 ? part[base+2] : ""
-        let cloud = base == 1 ? part[1] . ':' . part[2] : part[1]
-        if filereadable(cloud)
-            let s:mycloud_mode = "libcall"
-            if has("win32") && cloud[-4:] ==? ".dll"
-                let cloud = cloud[:-5]
-            endif
-            if s:vimim_access_mycloud_isvalid(cloud)
-                return cloud
-            endif
-        endif
-    elseif part[0] ==# "http" || part[0] ==# "https"
-        if !empty(s:vimim_check_http_executable())
-            let s:mycloud_mode = "www"
-            if s:vimim_access_mycloud_isvalid(g:vimim_mycloud)
-                return g:vimim_mycloud
-            endif
-        endif
-    else
-        sil!call s:vimim_debug('alert', "invalid_cloud_plugin_url")
     endif
     return 0
 endfunction
@@ -2956,7 +2943,7 @@ endfunction
 
 function! s:vimim_stop()
     lmapclear
-    let lmap = "\<C-^>"
+    let lmap = '\<C-^>'
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
     sil!exe 'sil!return "' . lmap . '"'
@@ -3039,14 +3026,14 @@ let s:VimIM += [" ====  core engine      ==== {{{"]
 
 function! VimIM(start, keyboard)
 if a:start
-    let current_positions = getpos(".")
-    let start_row = current_positions[1]
-    let start_column = current_positions[2]-1
+    let cursor_positions = getpos(".")
+    let start_row = cursor_positions[1]
+    let start_column = cursor_positions[2]-1
     let current_line = getline(start_row)
     let one_before = current_line[start_column-1]
-    let seamless_column = s:vimim_get_seamless(current_positions)
+    let seamless_column = s:vimim_get_seamless(cursor_positions)
     if seamless_column >= 0
-        let len = current_positions[2]-1 - seamless_column
+        let len = cursor_positions[2]-1 - seamless_column
         let keyboard = strpart(current_line, seamless_column, len)
         call s:vimim_set_keyboard_list(seamless_column, keyboard)
         return seamless_column
@@ -3073,8 +3060,8 @@ if a:start
         let start_column = last_seen_nonsense_column
     endif
     let s:starts.row = start_row
-    let s:current_positions = current_positions
-    let len = current_positions[2]-1 - start_column
+    let s:cursor_positions = cursor_positions
+    let len = cursor_positions[2]-1 - start_column
     let keyboard = strpart(current_line, start_column, len)
     call s:vimim_set_keyboard_list(start_column, keyboard)
     return start_column
@@ -3119,7 +3106,6 @@ else
             return s:vimim_popupmenu_list(results)
         else  " flat failure from mycloud
             sil!call s:vimim_debug('mycloud fatal', keyboard, v:exception)
-            sil!call s:vimim_stop()
             return []
         endif
     endif
