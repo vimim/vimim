@@ -2982,6 +2982,19 @@ function! s:vimim_stop()
     sil!exe 'sil!return "' . "\<C-^>" . '"'
 endfunction
 
+function! s:vimim_save_vimrc()
+    let s:cpo         = &cpo
+    let s:iminsert    = &iminsert
+    let s:laststatus  = &laststatus
+    let s:statusline  = &statusline
+    let s:titlestring = &titlestring
+    let s:completeopt = &completeopt
+    let s:complete    = &complete
+    let s:lazyredraw  = &lazyredraw
+    let s:omnifunc    = &omnifunc
+    set iminsert=0
+endfunction
+
 function! s:vimim_set_vimrc()
     set title noshowmatch shellslash imdisable
     set completeopt=menuone
@@ -2990,19 +3003,9 @@ function! s:vimim_set_vimrc()
     set omnifunc=VimIM
 endfunction
 
-function! s:vimim_save_vimrc()
-    let s:cpo         = &cpo
-    let s:laststatus  = &laststatus
-    let s:statusline  = &statusline
-    let s:titlestring = &titlestring
-    let s:completeopt = &completeopt
-    let s:complete    = &complete
-    let s:lazyredraw  = &lazyredraw
-    let s:omnifunc    = &omnifunc
-endfunction
-
 function! s:vimim_restore_vimrc()
     let &cpo         = s:cpo
+    let &iminsert    = s:iminsert
     let &omnifunc    = s:omnifunc
     let &laststatus  = s:laststatus
     let &statusline  = s:statusline
@@ -3392,3 +3395,4 @@ sil!call s:vimim_plug_and_play()
 " ============================================= }}}
 :redir @p
 Debug s:vimim_egg_vimim()
+
