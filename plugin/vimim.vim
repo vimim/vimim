@@ -574,7 +574,11 @@ let s:VimIM += [" ====  lmap imap nmap   ==== {{{"]
 function! s:vimim_all_maps()
     let common_punctuations = split("] [ = -")
     let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
-    if s:mode.dynamic || s:mode.static
+    let all_dynamic = 0
+    if s:mode.dynamic || s:mode.windowless && s:ui.im !~ 'pinyin'
+        let all_dynamic = 1
+    endif
+    if all_dynamic || s:mode.static
         sil!call s:vimim_punctuations_maps()
     elseif s:mode.onekey
         let common_punctuations += split(". ,")
@@ -584,7 +588,7 @@ function! s:vimim_all_maps()
              sil!exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
         endfor
     endif
-    if s:mode.dynamic || s:mode.windowless && s:ui.im !~ 'pinyin'
+    if all_dynamic
         let nonsense = s:ui.quote ? "[0-9]" : "[0-9']"
         for char in s:valid_keys
             if char !~ nonsense || s:ui.im =~ 'phonetic'
@@ -670,11 +674,14 @@ function! g:vimim_page(key)
 endfunction
 
 function! g:wubi()
+    if s:pattern_not_found
+        let s:pattern_not_found = 0
+        return ""
+    endif
     let key = pumvisible() || s:mode.windowless ? '\<C-E>' : ""
     if s:wubi && empty(len(get(split(s:keyboard),0))%4)
         let key = pumvisible() ? '\<C-Y>' : s:mode.windowless ? "" : key
     endif
-    let key = s:smart_enter ? '' : key
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -843,10 +850,12 @@ function! g:vimim_pagedown()
 endfunction
 
 function! g:vimim_space()
-    " (1) Space after English (valid keys) => trigger keycode menu
-    " (2) Space after English punctuation  => get Chinese punctuation
-    " (3) Space after popup menu           => insert Chinese
-    " (4) Space after pattern not found    => Space
+    " (1) Space after English (valid keys)    => trigger keycode menu
+    " (2) Space after English punctuation     => Chinese punctuation
+    " (3) Space after popup menu              => insert Chinese
+    " (4) Space after pattern not found       => Space
+    " (5) Space after chinese windowless      => <C-N> for next match
+    " (6) Space after chinese windowless wubi => deactive completion
     let space = " "
     let s:has_pumvisible = 0
     if pumvisible()
@@ -864,7 +873,7 @@ function! g:vimim_space()
     elseif s:seamless_positions == getpos(".")
         let s:smart_enter = 0  " Space is Space after Enter
     else
-        let space = s:vimim_onekey_action()
+        return s:vimim_onekey_action()
     endif
     call s:vimim_reset_after_insert()
     sil!exe 'sil!return "' . space . '"'
@@ -875,7 +884,7 @@ function! g:vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1 " single Enter after English => seamless
-    elseif s:mode.windowless || s:vimim_byte_before()
+    elseif s:vimim_byte_before()
         let s:smart_enter = 1
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -981,7 +990,12 @@ function! s:vimim_onekey_action()
         if s:vimim_byte_before()
             let onekey = g:vimim()
         elseif s:mode.windowless
-            let onekey = s:vimim_windowless("")
+            if s:ui.im !~ 'pinyin'
+                let s:pattern_not_found = 1
+                call s:vimim_set_titlestring()
+            else
+                let onekey = s:vimim_windowless("")
+            endif
         endif
     endif
     sil!exe 'sil!return "' . onekey . '"'
@@ -1806,7 +1820,7 @@ endfunction
 
 function! s:vimim_more_pinyin_datafile(keyboard, sentence)
     let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
-    if empty(candidates) || s:ui.im !~ 'pinyin'
+    if empty(candidates)
         return []
     endif
     let results = []
@@ -1835,10 +1849,13 @@ function! s:vimim_get_pinyin(keyboard)
 endfunction
 
 function! s:vimim_more_pinyin_candidates(keyboard)
-    if !empty(g:vimim_shuangpin) || len(s:english.line)
+    " make standard menu layout:  mamahuhu => mamahu, mama
+    if len(s:english.line)
+    \|| !empty(g:vimim_shuangpin)
+    \|| s:ui.im !~ 'pinyin'
         return []
     endif
-    let candidates = []  " make layout:  mamahuhu => mamahu, mama
+    let candidates = []
     let keyboards = s:vimim_get_pinyin(a:keyboard)
     if len(keyboards)
         for i in reverse(range(len(keyboards)-1))
@@ -2364,7 +2381,7 @@ endfunction
 
 function! s:vimim_more_directory(keyboard, dir)
     let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
-    if empty(candidates) || len(s:english.line)
+    if empty(candidates)
         return []
     endif
     let results = []
@@ -3135,7 +3152,7 @@ else
         if len(results)
             let s:show_extra_menu = 1
             return s:vimim_popupmenu_list(results)
-        else  " auto switch to the next s:ui.im after mycloud failure
+        else  " failure over to the next available s:ui.im
             sil!call remove(s:ui.frontends,match(s:ui.frontends,s:ui.im))
             sil!call g:vimim_next_im()
         endif
@@ -3217,7 +3234,7 @@ function! s:vimim_popupmenu_list(lines)
             endfor
             let chinese = simplified_traditional
         endif
-        let label2 = s:mode.windowless ? label : s:vimim_get_label(label)
+        let titleline = s:vimim_get_label(label)
         if empty(s:touch_me_not)
             let menu = ""
             let pairs = split(chinese)
@@ -3230,28 +3247,22 @@ function! s:vimim_popupmenu_list(lines)
                 let char = get(split(chinese,'\zs'),0)
                 let menu = s:vimim_cjk_property(char)
             endif
-            let labeling = printf('%02s ', label2)
-            if s:ui.im !~ 'phonetic'
-                let english = s:english.line =~ chinese ? '*' : ' '
-                let label2 = english . label2
-                let labeling = printf('%3s ', label2)
-            endif
+            let label2 = s:english.line =~ chinese ? '*' : ' '
+            let titleline = printf('%3s ', label2 . titleline)
             let chinese .= empty(tail) ? '' : tail
-            let complete_items["abbr"] = labeling . chinese
+            let complete_items["abbr"] = titleline . chinese
             let complete_items["menu"] = menu
         endif
-        let titleline = label . "."
         if s:mode.windowless
-            let titleline = label2
             if s:vimim_cjk() " display sexy english and dynamic 4corner
                 let star = substitute(titleline,'[0-9a-z_ ]','','g')
                 let digit = s:vimim_cjk_in_4corner(chinese,1)
                 let titleline = star . digit[len(s:hjkl_n) : 3] " ma7 712
             elseif label < 11      " 234567890 for windowless selection
-                let titleline = label2[:-2]
+                let titleline = label == 10 ? "0" : label
             endif
+            call add(one_list, titleline . chinese)
         endif
-        call add(one_list, titleline . chinese)
         let label += 1
         let complete_items["dup"] = 1
         let complete_items["word"] = empty(chinese) ? s:space : chinese
