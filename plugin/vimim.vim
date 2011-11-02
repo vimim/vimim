@@ -2999,19 +2999,6 @@ function! s:vimim_stop()
     sil!exe 'sil!return "' . "\<C-^>" . '"'
 endfunction
 
-function! s:vimim_save_vimrc()
-    let s:cpo         = &cpo
-    let s:iminsert    = &iminsert
-    let s:laststatus  = &laststatus
-    let s:statusline  = &statusline
-    let s:titlestring = &titlestring
-    let s:completeopt = &completeopt
-    let s:complete    = &complete
-    let s:lazyredraw  = &lazyredraw
-    let s:omnifunc    = &omnifunc
-    set iminsert=0
-endfunction
-
 function! s:vimim_set_vimrc()
     set title noshowmatch shellslash imdisable
     set completeopt=menuone
@@ -3020,16 +3007,29 @@ function! s:vimim_set_vimrc()
     set omnifunc=VimIM
 endfunction
 
+function! s:vimim_save_vimrc()
+    let s:cpo         = &cpo
+    let s:omnifunc    = &omnifunc
+    let s:complete    = &complete
+    let s:completeopt = &completeopt
+    let s:laststatus  = &laststatus
+    let s:statusline  = &statusline
+    let s:titlestring = &titlestring
+    let s:lazyredraw  = &lazyredraw
+    let s:iminsert    = &iminsert
+    let &iminsert = 0
+endfunction
+
 function! s:vimim_restore_vimrc()
     let &cpo         = s:cpo
-    let &iminsert    = s:iminsert
     let &omnifunc    = s:omnifunc
-    let &laststatus  = s:laststatus
-    let &statusline  = s:statusline
     let &complete    = s:complete
     let &completeopt = s:completeopt
-    let &lazyredraw  = s:lazyredraw
+    let &laststatus  = s:laststatus
+    let &statusline  = s:statusline
     let &titlestring = s:titlestring
+    let &lazyredraw  = s:lazyredraw
+    let &iminsert    = s:iminsert
     let &pumheight   = s:pumheights.saved
 endfunction
 
@@ -3193,8 +3193,7 @@ else
                     let results = s:vimim_get_cloud(keyboard, s:cloud)
                 endif
             else
-                let i = keyboard == 'i' ? "我" : s:space
-                let results = split(repeat(i,5),'\zs')
+                let results = [keyboard == 'i' ? "我" : s:space]
             endif
         elseif s:mode.static
             let s:pattern_not_found = 1
@@ -3394,4 +3393,3 @@ sil!call s:vimim_plug_and_play()
 " ============================================= }}}
 :redir @p
 Debug s:vimim_egg_vimim()
-
