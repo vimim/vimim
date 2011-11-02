@@ -2650,21 +2650,17 @@ function! s:vimim_get_cloud_baidu(keyboard)
     return match_list
 endfunction
 
-function! s:vimim_get_all_clouds(keyboard)
+function! s:vimim_get_all_clouds(key)
     let results = []
     for cloud in split(s:rc["g:vimim_cloud"], ',')
         let start = reltime()
-        let outputs = s:vimim_get_cloud(a:keyboard, cloud)
-        if len(results) > 1
-            call add(results, s:space)
-        endif
         let title = s:chinese(s:space, cloud, 'cloud', s:space)
-        call add(results, a:keyboard . title . reltimestr(reltime(start)))
-        if len(outputs) > 1+1+1+1
-            let outputs = &number ? outputs : outputs[0:9]
-            let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
-            call add(results, join(map(outputs,filter)))
-        endif
+        let outputs = s:vimim_get_cloud(a:key, cloud)
+        let outputs = &number ? outputs : outputs[0:9]
+        let filter = "substitute(" . 'v:val' . ",'[a-z ]','','g')"
+        call add(results, a:key . title . reltimestr(reltime(start)))
+        call add(results, join(map(outputs,filter)))
+        call add(results, s:space)
     endfor
     return results
 endfunction
