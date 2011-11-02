@@ -901,9 +901,9 @@ function! g:vimim_enter()
     let key = ""
     if pumvisible()
         let key = "\<C-E>"
-        let s:smart_enter = 1 " single Enter after English => seamless
-    elseif s:vimim_byte_before()
-        let s:smart_enter = 1
+        let s:smart_enter = 1  " single Enter after English => seamless
+    elseif s:vimim_byte_before() || s:mode.windowless
+        let s:smart_enter = 1  " gi ma space enter space space
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
         endif
@@ -1020,34 +1020,34 @@ endfunction
 
 function! s:vimim_onekey_evils()
     let onekey = ""  " punctuations can be made not so evil ..
-    let one_before = getline(".")[col(".")-2]
-    let two_before = getline(".")[col(".")-3]
+    let one = getline(".")[col(".")-2]    " one byte before
+    let two = getline(".")[col(".")-3]    " two byte before
     let onekey_evils = copy(s:all_evils)
     call extend(onekey_evils, s:key_evils)
-    if getline(".")[col(".")-3 : col(".")-2] == ".."  " before_before
+    if getline(".")[col(".")-3 : col(".")-2] == ".." " before_before
         " [game] dot dot => quotes => popup menu
-        let three_before  = getline(".")[col(".")-4]
-        if col(".") < 5 || empty(three_before) || three_before =~ '\s'
+        let three  = getline(".")[col(".")-4]
+        if col(".") < 5 || empty(three) || three =~ '\s'
             let onekey = "''''''"   "  <=    .. plays mahjong
-        elseif three_before =~ "[0-9a-z]"
+        elseif three =~# "[0-9a-z]"
             let onekey = "'''"      "  <=  xx.. plays hjkl_m
         else
             let onekey = "''"       "  <=  香.. plays same cjk
         endif
         let onekey = "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
-    elseif one_before == "'" && two_before =~ "[a-z']" " forced cloud
-    elseif one_before =~ "[0-9a-z]"                    " nothing
-    elseif two_before =~ "[0-9a-z]"
+    elseif one == "'" && two =~ "[a-z']" " forced cloud
+    elseif one =~# "[0-9a-z]"            " nothing
+    elseif two =~# "[0-9a-z]" || empty(one) || one =~# '\u\|\s'
         let onekey = " "  " ma,space => ma, space
-    elseif has_key(onekey_evils, one_before)
+    elseif has_key(onekey_evils, one)
         for char in keys(onekey_evils)
-            if two_before ==# char || two_before =~# '\u'
+            if two ==# char || two =~# '\u'
                 return " " " no transfer if punctuation punctuation
             endif
         endfor
-        let bs = onekey_evils[one_before] " make Chinese punctuation
-        let bs = one_before == "'" ? g:vimim_single_quote() : bs
-        let bs = one_before == '"' ? g:vimim_double_quote() : bs
+        let bs = onekey_evils[one] " make Chinese punctuation
+        let bs = one == "'" ? g:vimim_single_quote() : bs
+        let bs = one == '"' ? g:vimim_double_quote() : bs
         let onekey = "\<Left>\<Delete>" . bs
     endif
     sil!exe 'sil!return "' . onekey . '"'
