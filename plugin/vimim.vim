@@ -3331,6 +3331,7 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 function! s:vimim_plug_and_play()
     if g:vimim_map =~ 'ctrl_bslash'
         inoremap<unique><C-Bslash> <C-R>=g:vimim_chinese()<CR>
+        nnoremap<silent><C-Bslash> :call g:vimim_chinese()<CR> 
     endif
     if g:vimim_map =~ 'ctrl6'
         inoremap<silent><C-^> <C-R>=g:vimim_onekey()<CR>
