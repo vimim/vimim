@@ -1836,13 +1836,9 @@ function! s:vimim_quanpin_transform(pinyin)
 endfunction
 
 function! s:vimim_more_pinyin_datafile(keyboard, sentence)
-    let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
-    if empty(candidates)
-        return []
-    endif
     let results = []
     let backend = s:backend[s:ui.root][s:ui.im]
-    for candidate in candidates
+    for candidate in s:vimim_more_pinyin_candidates(a:keyboard)
         let pattern = '^' . candidate . '\>'
         let cursor = match(backend.lines, pattern, 0)
         if cursor < 0
@@ -2303,43 +2299,35 @@ function! s:vimim_get_from_datafile(keyboard)
     endif
     if s:ui.im =~ 'pinyin'
         let extras = s:vimim_more_pinyin_datafile(a:keyboard,0)
-        if len(extras)
-            let results = s:vimim_make_pairs(oneline)
-            call extend(results, extras)
-        endif
+        let results = s:vimim_make_pairs(oneline) + extras
     else  " http://code.google.com/p/vimim/issues/detail?id=121
         let results = []
         let s:show_extra_menu = 1
         for i in range(10)
-            let cursor += i     " get more if less
+            let cursor += i      " get more if less
             let oneline = get(backend.lines, cursor)
-            let extras = s:vimim_make_pairs(oneline)
-            call extend(results, extras)
+            let results += s:vimim_make_pairs(oneline)
         endfor
     endif
     return results
 endfunction
 
 function! s:vimim_get_from_database(keyboard)
+    if empty(a:keyboard)
+        return []
+    endif
     let oneline = s:vimim_get_gold_from_bsddb(a:keyboard)
     if empty(oneline) " || get(split(oneline),1) =~ '\w'
         return []
     endif
     let results = s:vimim_make_pairs(oneline)
     if empty(s:english.line) && len(results) && len(results) < 20
-        let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
-        if len(candidates) < 2
-            return results
-        endif
-        for candidate in candidates
+        for candidate in s:vimim_more_pinyin_candidates(a:keyboard)
             let oneline = s:vimim_get_gold_from_bsddb(candidate)
             if empty(oneline) || match(oneline,' ') < 0
                 continue
             endif
-            let match_list = s:vimim_make_pairs(oneline)
-            if !empty(match_list)
-                call extend(results, match_list)
-            endif
+            let results += s:vimim_make_pairs(oneline)
             if len(results) > 20 * 2
                 break
             endif
@@ -2394,22 +2382,6 @@ function! s:vimim_sentence_directory(keyboard, directory)
         endif
     endwhile
     return filereadable(filename) ? a:keyboard[: max-1] : ""
-endfunction
-
-function! s:vimim_more_directory(keyboard, dir)
-    let candidates = s:vimim_more_pinyin_candidates(a:keyboard)
-    if empty(candidates)
-        return []
-    endif
-    let results = []
-    for candidate in candidates
-        let lines = s:vimim_readfile(a:dir . candidate)
-        if !empty(lines)
-            call map(lines, 'candidate ." ". v:val')
-            call extend(results, lines)
-        endif
-    endfor
-    return results
 endfunction
 
 function! s:vimim_set_backend_embedded()
@@ -3296,11 +3268,12 @@ function! s:vimim_embedded_backend_engine(keyboard)
         let head = s:vimim_sentence_directory(keyboard, backend.name)
         let results = s:vimim_readfile(backend.name . head)
         if keyboard ==# head && len(results) && len(results) < 20
-            let extras = s:vimim_more_directory(keyboard, backend.name)
-            if len(extras) && len(results)
-                call map(results, 'keyboard ." ". v:val')
-                call extend(results, extras)
-            endif
+            let extras = []
+            for candidate in s:vimim_more_pinyin_candidates(keyboard)
+                let lines = s:vimim_readfile(backend.name . candidate)
+                let extras += map(lines, 'candidate." ".v:val')
+            endfor
+            let results = extras + map(results, 'keyboard." ".v:val')
         endif
     elseif s:ui.root =~# "datafile"
         if backend.name =~ "bsddb"
@@ -3309,9 +3282,7 @@ function! s:vimim_embedded_backend_engine(keyboard)
                 sil!call s:vimim_initialize_bsddb(backend.name)
             endif
             let head = s:vimim_get_stone_from_bsddb(keyboard)
-            if !empty(head)
-                let results = s:vimim_get_from_database(head)
-            endif
+            let results = s:vimim_get_from_database(head)
         else
             if empty(backend.lines)
                 let backend.lines = s:vimim_readfile(backend.name)
