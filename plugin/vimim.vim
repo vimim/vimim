@@ -567,6 +567,24 @@ function! IMName()
     return stl
 endfunction
 
+function! s:vimim_set_pumheight()
+    let &completeopt = s:mode.windowless ? 'menu' : 'menuone'
+    let &pumheight = s:pumheights.saved
+    if empty(&pumheight)
+        let &pumheight = 5
+        if s:mode.onekey || len(s:valid_keys) > 28
+            let &pumheight = 10
+        endif
+    endif
+    let &pumheight = s:mode.windowless ? 1 : &pumheight
+    let s:pumheights.current = copy(&pumheight)
+    if s:touch_me_not
+        let &pumheight = 0
+    elseif s:hjkl_l
+        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
+    endif
+endfunction
+
 " ============================================= }}}
 let s:VimIM += [" ====  lmap imap nmap   ==== {{{"]
 " =================================================
@@ -905,7 +923,6 @@ endfunction
 function! g:vimim_esc()
     let esc = '\<Esc>'
     let &titlestring = s:titlestring
-    let &pumheight = s:pumheights.saved
     if s:mode.onekey || s:mode.windowless
         :y
         if has("gui_running") && has("win32")
@@ -3053,24 +3070,6 @@ function! s:vimim_reset_after_insert()
     let s:pattern_not_found = 0
 endfunction
 
-function! s:vimim_set_pumheight()
-    let &completeopt = s:mode.windowless ? 'menu' : 'menuone'
-    let &pumheight = s:pumheights.saved
-    if empty(&pumheight)
-        let &pumheight = 5
-        if s:mode.onekey || len(s:valid_keys) > 28
-            let &pumheight = 10
-        endif
-    endif
-    let &pumheight = s:mode.windowless ? 1 : &pumheight
-    let s:pumheights.current = copy(&pumheight)
-    if s:touch_me_not
-        let &pumheight = 0
-    elseif s:hjkl_l
-        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
-    endif
-endfunction
-
 " ============================================= }}}
 let s:VimIM += [" ====  core engine      ==== {{{"]
 " =================================================
@@ -3279,6 +3278,7 @@ function! s:vimim_popupmenu_list(lines)
     elseif s:touch_me_not
         let &titlestring = s:logo . s:space . s:today
     endif
+    call s:vimim_set_pumheight()
     return s:popup_list
 endfunction
 
@@ -3340,7 +3340,6 @@ function! g:vimim()
     else
         let s:has_pumvisible = 0
     endif
-    sil!call s:vimim_set_pumheight()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
