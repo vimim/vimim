@@ -1084,12 +1084,12 @@ function! g:vimim_chinese()
         let &laststatus = 2
         let s:mode = g:vimim_mode =~ 'static' ? s:static : s:dynamic
         let s:chinese_mode_switch = s:chinese_mode_switch ? 0 : 1
-        let key = s:vimim_open_close(s:chinese_mode_switch)
+        let key = s:vimim_lmap_open_close(s:chinese_mode_switch)
     endif
     return key
 endfunction
 
-function! s:vimim_open_close(switch)
+function! s:vimim_lmap_open_close(switch)
     let lmap = ""
     if a:switch
         let lmap = s:vimim_start()
@@ -1107,7 +1107,7 @@ function! g:vimim_next_im()
     if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
         let s:cloud = s:ui.im
     endif
-    sil!return s:vimim_open_close(1)
+    sil!return s:vimim_lmap_open_close(1)
 endfunction
 
 function! s:vimim_set_im_toggle_list()
@@ -2736,13 +2736,13 @@ function! s:vimim_get_mycloud(keyboard)
             return []
         endif " set mycloud client with real data from mycloud server
         let s:backend.cloud.mycloud.im = mycloud
-        let ret = s:vimim_access_mycloud("__getkeychars")
+        let ret = s:vimim_mycloud(mycloud, "__getkeychars")
         let s:backend.cloud.mycloud.keycode = split(ret,"\t")[0]
-        let ret = s:vimim_access_mycloud("__getname")
+        let ret = s:vimim_mycloud(mycloud, "__getname")
         let s:backend.cloud.mycloud.directory = split(ret,"\t")[0]
         call s:vimim_set_keycode()
     endif
-    let output = s:vimim_access_mycloud(a:keyboard)
+    let output = s:vimim_mycloud(s:backend.cloud.mycloud.im, a:keyboard)
     if empty(output)
         return []
     endif
@@ -2764,22 +2764,25 @@ function! s:vimim_get_mycloud(keyboard)
     return results
 endfunction
 
-function! s:vimim_access_mycloud(cmd)
+function! s:vimim_mycloud(cloud, cmd)
     let ret = ""
-    let mycloud = s:backend.cloud.mycloud.im
     if s:mycloud_mode == "libcall"
-        let cmd = empty(s:mycloud_arg) ? "" : s:mycloud_arg . " "
-        let ret = libcall(mycloud, s:mycloud_func, cmd . a:cmd )
+        let arg = s:mycloud_arg
+        if empty(arg)
+            let ret = libcall(a:cloud, s:mycloud_func, a:cmd)
+        else
+            let ret = libcall(a:cloud, s:mycloud_func, arg." ".a:cmd)
+        endif
     elseif s:mycloud_mode == "python"
         let ret = s:vimim_mycloud_python_client(a:cmd)
     elseif s:mycloud_mode == "system"
-        let ret = system(mycloud . " " . shellescape(a:cmd))
+        let ret = system(a:cloud." ".shellescape(a:cmd))
     elseif s:mycloud_mode == "www"
-        let input = g:vimim_mycloud . s:vimim_rot13(a:cmd)
+        let input = s:vimim_rot13(a:cmd)
         if s:http_exe =~ 'libvimim'
-            let ret = libcall(s:http_exe, "do_geturl", input)
+            let ret = libcall(s:http_exe, "do_geturl", a:cloud.input)
         elseif len(s:http_exe)
-            let ret = system(s:http_exe . shellescape(input))
+            let ret = system(s:http_exe . shellescape(a:cloud.input))
         endif
         if len(ret)
             let output = s:vimim_rot13(ret)
@@ -2790,7 +2793,7 @@ function! s:vimim_access_mycloud(cmd)
 endfunction
 
 function! s:vimim_access_mycloud_isvalid(cloud)
-    let ret = s:vimim_access_mycloud("__isvalid")
+    let ret = s:vimim_mycloud(a:cloud, "__isvalid")
     if split(ret, "\t")[0] == "True"
         return 1
     endif
@@ -2843,7 +2846,7 @@ function! s:vimim_mycloud_set_and_play()
         if filereadable(cloud)
             let s:mycloud_mode = "libcall"
             if has("win32") && cloud[-4:] ==? ".dll"
-                let cloud = cloud[:-5]  " strip off the .dll suffix
+                let cloud = cloud[:-5]
             endif
             if s:vimim_access_mycloud_isvalid(cloud)
                 return cloud
@@ -3126,9 +3129,10 @@ else
         if len(results)
             let s:show_extra_menu = 1
             return s:vimim_popupmenu_list(results)
-        else  " failure over to the next available s:ui.im
-            sil!call remove(s:ui.frontends,match(s:ui.frontends,s:ui.im))
-            sil!call g:vimim_next_im()
+        else  " flat failure from mycloud
+            sil!call s:vimim_debug('mycloud fatal', keyboard, v:exception)
+            sil!call s:vimim_stop()
+            return []
         endif
     endif
     if !empty(g:vimim_shuangpin) && g:vimim_cloud !~ 'shuangpin'
