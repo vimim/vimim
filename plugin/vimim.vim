@@ -2283,39 +2283,32 @@ endfunction
 
 function! s:vimim_sentence_directory(keyboard, directory)
     let filename = a:directory . a:keyboard
-    if filereadable(filename)
-        return a:keyboard
-    endif
+    if filereadable(filename) | return a:keyboard | endif
     let max = len(a:keyboard)
     while max > 1
-        let max -= 1
+        let max -= 1 " workaround: filereadable("/filename.") return true
         let head = strpart(a:keyboard, 0, max)
         let filename = a:directory . head
-        " workaround: filereadable("/filename.") returns true
-        if filereadable(filename) && head[-1:-1] != "."
-            break
-        endif
+        if filereadable(filename) && head[-1:-1] != "." | break | endif
     endwhile
     return filereadable(filename) ? a:keyboard[: max-1] : ""
 endfunction
 
 function! s:vimim_set_backend_embedded()
-    let im = "pinyin"
-    " (1/3) scan directory database, only for pinyin
-    let dir = s:plugin . im
+    " (1/3) scan pinyin directory database
+    let dir = s:plugin . "pinyin"  " always test ../plugin/pinyin/pinyin
     if isdirectory(dir)
-        let dir .= "/"
-        if filereadable(dir . im)
-            return s:vimim_set_directory(dir)
+        if filereadable(dir . "/pinyin")
+            return s:vimim_set_directory(dir . "/")
         endif
-    endif
+    endif  
     " (2/3) scan bsddb database as edw: enterprise data warehouse
     if has("python") " bsddb is from Python 2 only with 46,694,400 Bytes
         let datafile = s:vimim_filereadable("vimim.gbk.bsddb")
         if !empty(datafile)
-            return s:vimim_set_datafile(im, datafile)
+            return s:vimim_set_datafile("pinyin", datafile)
         endif
-    endif
+    endif  
     " (3/3) scan all supported data files, in order
     for im in s:all_vimim_input_methods
         let datafile = s:vimim_filereadable("vimim." . im . ".txt")
