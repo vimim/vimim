@@ -779,21 +779,22 @@ let s:VimIM += [" ====  mode: windowless ==== {{{"]
 
 function! g:vimim_gi()
     let s:mode = s:windowless
-    sil!exe 'sil!return "' . s:vimim_start() . '"'
+    let onekey = s:vimim_start()
+    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 function! g:vimim_tab()
-    " (1) Tab in insert mode => Tab is Tab if Tab
-    " (2) Tab in insert mode => start windowless
-    " (3) Tab in lmap   mode => start print out fine menu
-    let tab = "\t"
+    " (1) Tab in insert mode => start windowless or Tab
+    " (2) Tab in lmap   mode => start print out fine menu
+    let onekey = "\t"
     if empty(len(s:vimim_left()))
     elseif pumvisible() || s:ctrl6
-        let tab = s:vimim_screenshot()
+        let onekey = s:vimim_screenshot()
     else
-        let tab = g:vimim_gi() . s:vimim_onekey_action()
+        let s:mode = s:windowless
+        let onekey = s:vimim_start() . s:vimim_onekey_action()
     endif
-    sil!exe 'sil!return "' . tab . '"'
+    sil!exe 'sil!return "' . onekey . '"'
 endfunction
 
 function! s:vimim_windowless(key)
@@ -808,10 +809,8 @@ function! s:vimim_windowless(key)
         let cursor = empty(len(a:key)) ? 1 : a:key < 1 ? 9 : a:key-1
         if s:vimim_cjk()
             let s:hjkl_n .= a:key   " 1234567890 for windowless filter
-        else
-            if a:key =~ '[02-9]'    "  234567890 for windowless choice
-                let key = repeat('\<C-N>', cursor)
-            endif
+        else                        "  234567890 for windowless choice
+            let key = a:key =~ '[02-9]' ? repeat('\<C-N>', cursor) : key
         endif
         call s:vimim_windowless_titlestring(cursor)
     else
@@ -852,11 +851,10 @@ endfunction
 
 function! g:vimim_space()
     " (1) Space after English (valid keys)    => trigger keycode menu
-    " (2) Space after English punctuation     => Chinese punctuation
-    " (3) Space after popup menu              => insert Chinese
-    " (4) Space after pattern not found       => Space
-    " (5) Space after chinese windowless      => <C-N> for next match
-    " (6) Space after chinese windowless wubi => deactive completion
+    " (2) Space after omni popup menu         => insert Chinese
+    " (3) Space after pattern not found       => Space
+    " (4) Space after chinese windowless      => <C-N> for next match
+    " (5) Space after chinese windowless wubi => deactive completion
     let space = " "
     if pumvisible()
         let space = '\<C-R>=g:vimim()\<CR>'
@@ -974,6 +972,7 @@ function! g:vimim_onekey()
     if pumvisible()
         let onekey = s:vimim_screenshot()
     elseif empty(s:ctrl6)
+        let s:mode = s:onekey
         let onekey = s:vimim_start() . s:vimim_onekey_action()
     else
         let onekey = s:vimim_stop()
@@ -1159,12 +1158,12 @@ function! g:vimim_visual()
     else
         sil!call s:vimim_start()
         let visual = nr2char(30) . "\<C-R>=g:vimim()\<CR>"
-        if len(lines) < 2  " highlight multiple cjk => show property
+        if len(lines) < 2 " highlight multiple cjk => show property
             let s:seamless_positions = getpos("'<'")
             let chinese = get(split(line,'\zs'),0)
             let ddddd = char2nr(chinese) =~ '\d\d\d\d\d' ? "'''''" : line
             let key = "gvc" . ddddd . visual
-        else               " highlighted block => play block with hjkl
+        else              " highlighted block => play block with hjkl
             let key = "O^\<C-D>" . space . "''''" . visual
         endif
     endif
@@ -3146,7 +3145,7 @@ function! s:vimim_popupmenu_list(lines)
         let vimim = "VimIM" . s:space .'  '. join(keyboards,"").'  '
         let &titlestring = vimim . join(one_list)
         call s:vimim_windowless_titlestring(1)
-        Debug s:match_list[:3]
+        Debug s:match_list[:2]
     elseif s:touch_me_not
         let &titlestring = s:logo . s:space . s:today
     endif
