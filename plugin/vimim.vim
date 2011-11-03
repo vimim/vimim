@@ -321,7 +321,7 @@ function! s:vimim_get_hjkl_game(keyboard)
         return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
     elseif keyboard == "''"
         let before = ''   " get one chinese char before
-        if !empty(len(s:s:vimim_left()))
+        if !empty(len(s:vimim_left()))
             let before = getline(".")[col(".")-1-s:multibyte : col(".")-2]
         endif
         if empty(before) || before !~ '[^\x00-\xff]'
@@ -787,7 +787,7 @@ function! g:vimim_tab()
     " (2) Tab in insert mode => start windowless
     " (3) Tab in lmap   mode => start print out fine menu
     let tab = "\t"
-    if empty(len(s:s:vimim_left()))
+    if empty(len(s:vimim_left()))
     elseif pumvisible() || s:ctrl6
         let tab = s:vimim_screenshot()
     else
@@ -866,7 +866,7 @@ function! g:vimim_space()
     elseif s:pattern_not_found
     elseif s:mode.dynamic
     elseif s:mode.static
-        let space = s:s:vimim_left() ? g:vimim() : space
+        let space = s:vimim_left() ? g:vimim() : space
     elseif s:seamless_positions == getpos(".")
         let s:smart_enter = 0  " Space is Space after Enter
     else
@@ -883,7 +883,7 @@ function! g:vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1  " single Enter after English => seamless
-    elseif s:s:vimim_left() || s:mode.windowless
+    elseif s:vimim_left() || s:mode.windowless
         let s:smart_enter = 1  " gi ma space enter space space
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -987,7 +987,7 @@ function! s:vimim_onekey_action()
     let s:hjkl_n = ""
     let onekey = s:vimim_onekey_evils()
     if empty(onekey)
-        if s:s:vimim_left()
+        if s:vimim_left()
             let onekey = g:vimim()
         elseif s:mode.windowless
             if s:gi_dynamic
@@ -1386,7 +1386,7 @@ function! s:vimim_rot13(keyboard)
     return tr(a:keyboard, a.z, z.a)
 endfunction
 
-function! s:s:vimim_left()
+function! s:vimim_left()
     let key = 0   " validate the character on the left of the cursor
     let one_byte_before = getline(".")[col(".")-2]
     if one_byte_before =~ '\s' || empty(one_byte_before)
