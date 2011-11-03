@@ -462,9 +462,6 @@ function! s:vimim_dictionary_punctuations()
 endfunction
 
 function! s:vimim_input_method_in_chinese()
-    if empty(s:ui.root) || empty(s:ui.im)
-        return ""
-    endif
     let title = s:space
     let backend = s:backend[s:ui.root][s:ui.im]
     if has_key(s:keycodes, s:ui.im)
@@ -548,9 +545,9 @@ function! s:vimim_set_titlestring()
     if s:mode.windowless && empty(s:touch_me_not)
         let titlestring .= s:space . s:today
     endif
-    if &term == 'screen'  " only if terminal can set window titles
+    if &term == 'screen'
         echo titlestring
-    else
+    else    " only if terminal can set window titles
         let &titlestring = titlestring
     endif
     :set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
@@ -2222,21 +2219,15 @@ function! s:vimim_sentence_datafile(keyboard)
     let fuzzy = s:ui.im =~ 'pinyin' ? ' ' : ""
     let pattern = '^\V' . a:keyboard . fuzzy
     let cursor = match(backend.lines, pattern)
-    if cursor > -1
-        return a:keyboard
-    endif
+    if cursor > -1 | return a:keyboard | endif
     let candidates = s:vimim_more_pinyin_datafile(a:keyboard,1)
-    if !empty(candidates)
-        return get(candidates,0)
-    endif
+    if !empty(candidates) | return get(candidates,0) | endif
     let max = len(a:keyboard)
     while max > 1
         let max -= 1
         let pattern = '^\V' . strpart(a:keyboard,0,max) . ' '
         let cursor = match(backend.lines, pattern)
-        if cursor > -1
-            break
-        endif
+        if cursor > -1 | break | endif
     endwhile
     return cursor < 0 ? "" : a:keyboard[: max-1]
 endfunction
@@ -2246,9 +2237,7 @@ function! s:vimim_get_from_datafile(keyboard)
     let pattern = '^\V' . a:keyboard . fuzzy
     let backend = s:backend[s:ui.root][s:ui.im]
     let cursor = match(backend.lines, pattern)
-    if cursor < 0
-        return []
-    endif
+    if cursor < 0 | return [] | endif
     let oneline = get(backend.lines, cursor)
     let results = split(oneline)[1:]
     if len(s:english.line) || len(results) > 10
