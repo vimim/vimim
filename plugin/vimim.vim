@@ -495,12 +495,9 @@ function! g:vimim_slash()
     let chinese = strpart(getline("."), s:starts.column, range)
     let word = substitute(chinese,'\w','','g')
     let @/ = empty(word) ? @_ : word
-    let slash = ""
     let repeat_times = len(word) / s:multibyte
-    if repeat_times && line(".") == s:starts.row
-        let slash = repeat("\<Left>\<Delete>", repeat_times)
-    endif
-    sil!exe 'sil!return "' . slash . g:vimim_esc() . '"'
+    let key = repeat("\<Left>\<Delete>",repeat_times) . g:vimim_esc()
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_bracket(offset)
@@ -779,22 +776,22 @@ let s:VimIM += [" ====  mode: windowless ==== {{{"]
 
 function! g:vimim_gi()
     let s:mode = s:windowless
-    let onekey = s:vimim_start()
-    sil!exe 'sil!return "' . onekey . '"'
+    let key = s:vimim_start()
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_tab()
     " (1) Tab in insert mode => start windowless or Tab
     " (2) Tab in lmap   mode => start print out fine menu
-    let onekey = "\t"
+    let key = "\t"
     if empty(len(s:vimim_left()))
     elseif pumvisible() || s:ctrl6
-        let onekey = s:vimim_screenshot()
+        let key = s:vimim_screenshot()
     else
         let s:mode = s:windowless
-        let onekey = s:vimim_start() . s:vimim_onekey_action()
+        let key = s:vimim_start() . s:vimim_onekey_action()
     endif
-    sil!exe 'sil!return "' . onekey . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_windowless(key)
@@ -855,18 +852,18 @@ function! g:vimim_space()
     " (3) Space after pattern not found       => Space
     " (4) Space after chinese windowless      => <C-N> for next match
     " (5) Space after chinese windowless wubi => deactive completion
-    let space = " "
+    let key = " "
     if pumvisible()
-        let space = '\<C-R>=g:vimim()\<CR>'
+        let key = '\<C-R>=g:vimim()\<CR>'
         if s:mode.onekey && s:hit_and_run
-             let space = s:vimim_stop()
+             let key = s:vimim_stop()
         endif
         let cursor = s:mode.static ? '\<C-P>\<C-N>' : ''
-        let space = cursor . '\<C-Y>' . space
+        let key = cursor . '\<C-Y>' . key
     elseif s:pattern_not_found
     elseif s:mode.dynamic
     elseif s:mode.static
-        let space = s:vimim_left() ? g:vimim() : space
+        let key = s:vimim_left() ? g:vimim() : key
     elseif s:seamless_positions == getpos(".")
         let s:smart_enter = 0  " Space is Space after Enter
     else
@@ -874,7 +871,7 @@ function! g:vimim_space()
     endif
     call s:vimim_reset_after_insert()
     let s:has_pumvisible = pumvisible() ? 1 : 0
-    sil!exe 'sil!return "' . space . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_enter()
@@ -917,21 +914,22 @@ endfunction
 function! g:vimim_backspace()
     let s:omni = 0  " <BS> special meaning in popupmenu-completion states
     let key = pumvisible() ? '\<C-R>=g:vimim()\<CR>' : ''
-    sil!exe 'sil!return "' . '\<Left>\<Delete>' . key . '"'
+    let key = '\<Left>\<Delete>' . key
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_esc()
-    let esc = nr2char(27)
+    let key = nr2char(27) " <Esc>
     let &titlestring = s:titlestring
     if s:mode.windowless || s:mode.onekey
         sil!let @+ = getline(".")                     " <Esc> to clipboard
-        sil!let esc = s:vimim_stop() . esc            " <Esc> escape
-        sil!let &titlestring = s:space . getline(".") " <Esc> set window title
-        nnoremap<silent> <Esc> <Esc>:set titlestring=<CR>     " <Esc> <Esc>
+        sil!let key = s:vimim_stop() . key            " <Esc> escape
+        sil!let &titlestring = s:space . getline(".") " <Esc> window title
+        nnoremap<silent> <Esc> <Esc>:set titlestring=<CR>
     elseif pumvisible()
-        let esc = g:vimim_correction()  " <Esc> as one key correction
+        let key = g:vimim_correction()  " <Esc> as one key correction
     endif
-    sil!exe 'sil!return "' . esc . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_screenshot()
@@ -954,7 +952,8 @@ function! s:vimim_screenshot()
         put=space.line
     endfor
     call setpos(".", saved_position)
-    sil!exe 'sil!return "' . g:vimim_esc() . '"'
+    let key = g:vimim_esc()
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ============================================= }}}
@@ -964,39 +963,38 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 function! g:vimim_onekey()
     " (1) OneKey in insert mode => start omni popup mode
     " (2) OneKey in lmap   mode => close omni popup mode
-    " (3) OneKey in omni window => start print out menu
-    let onekey = ''
+    let key = ''
     if pumvisible()
-        let onekey = s:vimim_screenshot()
+        let key = s:vimim_screenshot()
     elseif empty(s:ctrl6)
         let s:mode = s:onekey
-        let onekey = s:vimim_start() . s:vimim_onekey_action()
+        let key = s:vimim_start() . s:vimim_onekey_action()
     else
-        let onekey = s:vimim_stop()
+        let key = s:vimim_stop()
     endif
-    sil!exe 'sil!return "' . onekey . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_onekey_action()
     let s:hjkl_n = ""
-    let onekey = s:vimim_onekey_evils()
-    if empty(onekey)
+    let key = s:vimim_onekey_evils()
+    if empty(key)
         if s:vimim_left()
-            let onekey = g:vimim()
+            let key = g:vimim()
         elseif s:mode.windowless
             if s:gi_dynamic
                 let s:pattern_not_found = 1
                 call s:vimim_set_titlestring()
             else
-                let onekey = s:vimim_windowless("")
+                let key = s:vimim_windowless("")
             endif
         endif
     endif
-    sil!exe 'sil!return "' . onekey . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_onekey_evils()
-    let onekey = ""  " punctuations can be made not so evil ..
+    let key = ""  " punctuations can be made not so evil ..
     let one = getline(".")[col(".")-2]    " one byte before
     let two = getline(".")[col(".")-3]    " two byte before
     let onekey_evils = copy(s:all_evils)
@@ -1005,17 +1003,17 @@ function! s:vimim_onekey_evils()
         " [game] dot dot => quotes => popup menu
         let three = getline(".")[col(".")-4]
         if col(".") < 5 || empty(three) || three =~ '\s'
-            let onekey = "''''''"   "  <=    .. plays mahjong
+            let key = "''''''"   "  <=    .. plays mahjong
         elseif three =~# "[0-9a-z]"
-            let onekey = "'''"      "  <=  xx.. plays hjkl_m
+            let key = "'''"      "  <=  xx.. plays hjkl_m
         else
-            let onekey = "''"       "  <=  香.. plays same cjk
+            let key = "''"       "  <=  香.. plays same cjk
         endif
-        let onekey = "\<BS>\<BS>" . onekey . '\<C-R>=g:vimim()\<CR>'
-    elseif one == "'" && two =~ "[a-z']" " forced cloud
-    elseif one =~# "[0-9a-z]"            " nothing
+        let key = "\<BS>\<BS>" . key . '\<C-R>=g:vimim()\<CR>'
+    elseif one == "'" && two =~ "[a-z']" " force cloud
+    elseif one =~# "[0-9a-z]"            " do nothing
     elseif two =~# "[0-9a-z]" || empty(one) || one =~# '\u\|\s'
-        let onekey = " "  " ma,space => ma, space
+        let key = " "  " ma,space => ma, space
     elseif has_key(onekey_evils, one)
         for char in keys(onekey_evils)
             if two ==# char || two =~# '\u'
@@ -1025,9 +1023,9 @@ function! s:vimim_onekey_evils()
         let bs = onekey_evils[one] " make Chinese punctuation
         let bs = one == "'" ? g:vimim_single_quote() : bs
         let bs = one == '"' ? g:vimim_double_quote() : bs
-        let onekey = "\<Left>\<Delete>" . bs
+        let key = "\<Left>\<Delete>" . bs
     endif
-    sil!exe 'sil!return "' . onekey . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_get_no_quote_head(keyboard)
@@ -2844,21 +2842,22 @@ function! s:vimim_start()
     if len(s:ui.frontends) > 1 && g:vimim_toggle > -1
         lnoremap <silent> <expr> <C-H> g:vimim_next_im()
     endif
-    let ctrl6 = ''
+    let key = ''
     if empty(s:ctrl6)
         let s:ctrl6 = 32911
-        let ctrl6 = nr2char(30)
+        let key = nr2char(30)
     endif
-    sil!exe 'sil!return "' . ctrl6 . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_stop()
     if has("gui_running")
         lmapclear
     endif
+    let key = nr2char(30) " i_CTRL-^
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
-    sil!exe 'sil!return "' . nr2char(30) . '"'
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! s:vimim_set_vimrc()
@@ -3195,15 +3194,15 @@ endfunction
 function! g:vimim()
     let s:omni = s:omni < 0 ? -1 : 0  " one_key_correction
     let s:keyboard = empty(s:pageup_pagedown) ? "" : s:keyboard
-    let x = s:vimim_left() ? '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>' : ""
-    sil!exe 'sil!return "' . x . '"'
+    let key = s:vimim_left() ? '\<C-X>\<C-O>\<C-R>=g:omni()\<CR>' : ""
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! g:vimim_omni()
+function! g:omni()
     let s:omni = s:omni < 0 ? 0 : 1  " as if omni completion pattern found
-    let cursor = s:mode.static ? '\<C-N>\<C-P>' : '\<C-P>\<Down>'
-    let cursor = pumvisible() ? cursor : ""
-    sil!exe 'sil!return "' . cursor . '"'
+    let key = s:mode.static ? '\<C-N>\<C-P>' : '\<C-P>\<Down>'
+    let key = pumvisible() ? key : ""
+    sil!exe 'sil!return "' . key . '"'
 endfunction
 
 " ============================================= }}}
