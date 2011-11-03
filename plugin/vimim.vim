@@ -58,6 +58,9 @@ function! s:vimim_initialize_debug()
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab,ctrl6,ctrl_bslash,search,gi'
     endif
+endfunction
+
+function! s:vimim_initialize_backdoor()
     let s:cjk = { 'lines' : [] }
     let s:english = { 'lines' : [], 'line' : "" }
     let s:cjk.filename     = s:vimim_filereadable("vimim.cjk.txt")
@@ -577,7 +580,7 @@ endfunction
 let s:VimIM += [" ====  lmap imap nmap   ==== {{{"]
 " =================================================
 
-function! s:vimim_all_maps()
+function! s:vimim_set_all_maps()
     let common_punctuations = split("] [ = -")
     let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
     let all_dynamic = 0
@@ -619,7 +622,7 @@ function! g:vimim_popup_or_halfwidth()
     else
         let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
     endif
-    sil!call s:vimim_all_maps()
+    sil!call s:vimim_set_all_maps()
     sil!call s:vimim_set_titlestring()
     return ""
 endfunction
@@ -1441,12 +1444,9 @@ function! s:vimim_cjk_in_4corner(chinese, info)
             let digit_tail  = get(values,1)[1:]
         endif
     endfor
-    let digit = digit_head . digit_tail
-    let pattern = "^" . s:hjkl
-    if empty(a:info) && match(digit, pattern) < 0
-        return 0
-    endif
-    return digit
+    let key = digit_head . digit_tail
+    let key = empty(a:info) && match(key, "^".s:hjkl) < 0 ? 0 : key
+    return key
 endfunction
 
 function! s:vimim_cjk_property(chinese)
@@ -1521,12 +1521,11 @@ endfunction
 
 function! s:vimim_get_cjk_head(key)
     let key = a:key
-    let head = ""
-    if empty(s:cjk.filename) || key =~ "'"
-        return ""
-    elseif key =~# '^i' && empty (s:english.line)
+    if empty(s:cjk.filename) || key =~ "'" | return "" | endif
+    if key =~# '^i' && empty (s:english.line) " iuuqwuqew => 77127132
         let key = s:vimim_qwertyuiop_1234567890(key[1:])
     endif
+    let head = ""
     if s:touch_me_not || len(key) == 1
         let head = key
     elseif key =~ '\d'
@@ -1560,9 +1559,7 @@ function! s:vimim_get_cjk_head(key)
 endfunction
 
 function! s:vimim_get_head(keyboard, partition)
-    if a:partition < 0
-        return a:keyboard
-    endif
+    if a:partition < 0 | return a:keyboard | endif
     let head = a:keyboard[0 : a:partition-1]
     if s:keyboard !~ '\S\s\S'
         let s:keyboard = head
@@ -1575,9 +1572,7 @@ function! s:vimim_get_head(keyboard, partition)
 endfunction
 
 function! s:vimim_qwertyuiop_1234567890(keyboard)
-    if a:keyboard =~ '\d'
-        return ""   " 4corner shortcut: iuuqwuqew => 77127132
-    endif
+    if a:keyboard =~ '\d' | return "" | endif
     let dddd = ""   " output is 7712 for input uuqw
     for char in split(a:keyboard, '\zs')
         let digit = match(s:qwer, char)
@@ -1608,14 +1603,10 @@ function! s:vimim_chinese_transfer() range abort
 endfunction
 
 function! s:vimim_1to1(char)
-    if a:char =~ '[\x00-\xff]'
-        return a:char
-    endif
+    if a:char =~ '[\x00-\xff]' | return a:char | endif
     let grep = '^' . a:char
     let line = match(s:cjk.lines, grep, 0)
-    if line < 0
-        return a:char
-    endif
+    if line < 0 | return a:char | endif
     let values = split(get(s:cjk.lines, line))
     let traditional_chinese = get(split(get(values,0),'\zs'),1)
     return empty(traditional_chinese) ? a:char : traditional_chinese
@@ -2172,10 +2163,9 @@ let s:VimIM += [" ====  backend: file    ==== {{{"]
 
 function! s:vimim_set_datafile(im, datafile)
     let im = a:im
-    if isdirectory(a:datafile)
-        return
-    elseif im =~ '^wubi'   | let im = 'wubi'
-    elseif im =~ '^pinyin' | let im = 'pinyin' | endif
+    if isdirectory(a:datafile) | return
+    elseif im =~ '^wubi'       | let im = 'wubi'
+    elseif im =~ '^pinyin'     | let im = 'pinyin' | endif
     let s:ui.root = 'datafile'
     let s:ui.im = im
     call insert(s:ui.frontends, [s:ui.root, s:ui.im])
@@ -2322,12 +2312,10 @@ endfunction
 let s:VimIM += [" ====  backend: clouds  ==== {{{"]
 " =================================================
 
-function! s:vimim_set_background_clouds()
+function! s:vimim_set_backend_clouds()
     let cloud_defaults = split(s:rc["g:vimim_cloud"],',')
     let s:cloud = get(cloud_defaults,0)
-    if g:vimim_cloud < 0
-        return
-    endif
+    if g:vimim_cloud < 0 | return | endif
     let clouds = split(g:vimim_cloud,',')
     for cloud in clouds
         let cloud = get(split(cloud,'[.]'),0)
@@ -2814,8 +2802,12 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_frontend()
+    sil!call s:vimim_set_all_maps()
     sil!call s:vimim_set_titlestring()
-    sil!call s:vimim_all_maps()
+    lnoremap <silent> <expr> <BS>    g:vimim_backspace()
+    lnoremap <silent> <expr> <Esc>   g:vimim_esc()
+    lnoremap <silent> <expr> <C-U>   g:vimim_correction()
+    lnoremap <silent> <expr> <C-L>   g:vimim_popup_or_halfwidth()
     if s:ui.im =~ 'array'
         lnoremap <silent> <expr> <CR>    g:vimim_space()
         lnoremap <silent> <expr> <Space> g:vimim_pagedown()
@@ -2823,10 +2815,6 @@ function! s:vimim_start()
         lnoremap <silent> <expr> <CR>    g:vimim_enter()
         lnoremap <silent> <expr> <Space> g:vimim_space()
     endif
-    lnoremap <silent> <expr> <BS>    g:vimim_backspace()
-    lnoremap <silent> <expr> <Esc>   g:vimim_esc()
-    lnoremap <silent> <expr> <C-U>   g:vimim_correction()
-    lnoremap <silent> <expr> <C-L>   g:vimim_popup_or_halfwidth()
     if len(s:ui.frontends) > 1 && g:vimim_toggle > -1
         lnoremap <silent> <expr> <C-H> g:vimim_next_im()
     endif
@@ -3065,7 +3053,7 @@ function! s:vimim_popupmenu_list(lines)
         endfor
         if empty(results)
             let s:hjkl = ""  " make digits recyclable
-        else                   " gi ma space 7777777777
+        else                 " gi ma space 7777777777
             let s:match_list = results
         endif
     endif
@@ -3222,13 +3210,14 @@ endfunction
 
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
+sil!call s:vimim_initialize_backdoor()
 sil!call s:vimim_dictionary_statusline()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
 sil!call s:vimim_save_vimrc()
 sil!call s:vimim_super_reset()
-sil!call s:vimim_set_background_clouds()
+sil!call s:vimim_set_backend_clouds()
 sil!call s:vimim_set_backend_embedded()
 sil!call s:vimim_set_backend_mycloud()
 sil!call s:vimim_set_im_toggle_list()
