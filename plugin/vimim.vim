@@ -903,12 +903,12 @@ endfunction
 
 function! g:vimim_correction()
     let key = nr2char(21) " :help i_CTRL-U  Delete all entered characters
-    if pumvisible()
-        let range = col(".") - 1 - s:starts.column
-        let key = '\<C-E>' . repeat("\<Left>\<Delete>", range)
-    elseif s:mode.windowless
+    if s:mode.windowless || s:mode.static && pumvisible()
         let s:omni = -1  " one_key_correction  gi mamahuhu space ctrl+u
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
+    elseif pumvisible()
+        let range = col(".") - 1 - s:starts.column
+        let key = '\<C-E>' . repeat("\<Left>\<Delete>", range)
     endif
     sil!call s:vimim_reset_after_insert()
     sil!exe 'sil!return "' . key . '"'
@@ -923,13 +923,13 @@ endfunction
 function! g:vimim_esc()
     let esc = nr2char(27)
     let &titlestring = s:titlestring
-    if pumvisible()
-        let esc = g:vimim_correction()  " <Esc> always as one key correction
-    elseif s:mode.windowless
+    if s:mode.windowless || s:mode.onekey
         sil!let @+ = getline(".")                     " <Esc> to clipboard
         sil!let esc = s:vimim_stop() . esc            " <Esc> escape
         sil!let &titlestring = s:space . getline(".") " <Esc> set window title
         nnoremap<silent> <Esc> <Esc>:set titlestring=<CR>     " <Esc> <Esc>
+    elseif pumvisible()
+        let esc = g:vimim_correction()  " <Esc> as one key correction
     endif
     sil!exe 'sil!return "' . esc . '"'
 endfunction
