@@ -657,18 +657,19 @@ endfunction
 function! g:vimim_page(key)
     let key = a:key
     if pumvisible()
+        let page = '\<C-E>\<C-R>=g:vimim()\<CR>'
         if key =~ '[][]'
             let left  = key == "]" ? "\<Left>"  : ""
             let right = key == "]" ? "\<Right>" : ""
             let _ = key == "]" ? 0 : -1
-            let backspace  = '\<C-R>=g:vimim_bracket('._.')\<CR>'
+            let backspace = '\<C-R>=g:vimim_bracket('._.')\<CR>'
             let key = '\<C-Y>' . left . backspace . right
         elseif key =~ '[=.]'
             let s:pageup_pagedown = &pumheight ? 1 : 0
-            let key = &pumheight ? g:vimim() : '\<PageDown>'
+            let key = &pumheight ? page : '\<PageDown>'
         elseif key =~ '[-,]'
-            let key = &pumheight ? g:vimim() : '\<PageUp>'
             let s:pageup_pagedown = &pumheight ? -1 : 0
+            let key = &pumheight ? page : '\<PageUp>'
         endif
     elseif key =~ "[][=-]" && empty(s:mode.onekey)
         let key = g:vimim_punctuation(key)
@@ -678,8 +679,7 @@ endfunction
 
 function! g:wubi()
     if s:pattern_not_found
-        let s:pattern_not_found = 0
-        return ""
+        let s:pattern_not_found = 0 | return ""
     endif
     let key = pumvisible() || s:mode.windowless && s:omni ? '\<C-E>' : ""
     if s:wubi && empty(len(get(split(s:keyboard),0))%4)
@@ -923,16 +923,13 @@ endfunction
 function! g:vimim_esc()
     let esc = nr2char(27)
     let &titlestring = s:titlestring
-    if s:mode.onekey || s:mode.windowless
-        :y
-        if has("gui_running") && has("win32")
-            sil!let @+ = @0[:-2]   " <Esc> clipboard and set window title
-        endif
-        let esc = s:vimim_stop() . esc   " <Esc> <Esc> reset window title
-        let &titlestring = s:space . @0[:-2]
-        nnoremap<silent> <Esc> <Esc>:set titlestring=<CR>
-    elseif pumvisible() && g:vimim_mode =~ 'esc'
-        let esc = g:vimim_correction()   " <Esc> as one key correction
+    if pumvisible()
+        let esc = g:vimim_correction()  " <Esc> always as one key correction
+    elseif s:mode.windowless
+        sil!let @+ = getline(".")                     " <Esc> to clipboard
+        sil!let esc = s:vimim_stop() . esc            " <Esc> escape
+        sil!let &titlestring = s:space . getline(".") " <Esc> set window title
+        nnoremap<silent> <Esc> <Esc>:set titlestring=<CR>     " <Esc> <Esc>
     endif
     sil!exe 'sil!return "' . esc . '"'
 endfunction
@@ -1006,7 +1003,7 @@ function! s:vimim_onekey_evils()
     call extend(onekey_evils, s:key_evils)
     if getline(".")[col(".")-3 : col(".")-2] == ".." " before_before
         " [game] dot dot => quotes => popup menu
-        let three  = getline(".")[col(".")-4]
+        let three = getline(".")[col(".")-4]
         if col(".") < 5 || empty(three) || three =~ '\s'
             let onekey = "''''''"   "  <=    .. plays mahjong
         elseif three =~# "[0-9a-z]"
