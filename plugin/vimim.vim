@@ -429,12 +429,17 @@ function! s:vimim_dictionary_statusline()
 endfunction
 
 function! s:vimim_dictionary_punctuations()
-    let one = "  , .  +  -  ~  ^    _    "
+    let s:antonym = " 〖〗 （） 《》 【】 ‘’ “”"
+    let one =       " {  }  (  )  < > [ ] "
+    let two = join(split(join(split(s:antonym)[:3],''),'\zs'))
+    let antonyms = s:vimim_key_value_hash(one, two)
+    let one = " ,  .  +  -  ~  ^    _    "
     let two = " ， 。 ＋ － ～ …… —— "
     let mini_punctuations = s:vimim_key_value_hash(one, two)
-    let one = "# & % $ ! = ; ? * { } ( ) < > [ ] : @"
-    let two = "＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡ 〖 〗 （ ） 《 》 【 】 ： 　"
+    let one = " @  :  #  &  %  $  !  =  ;  ?  * "
+    let two = " 　 ： ＃ ＆ ％ ￥ ！ ＝ ； ？ ﹡"
     let most_punctuations = s:vimim_key_value_hash(one, two)
+    call extend(most_punctuations, antonyms)
     let s:key_evils = { '\' : "、", "'" : "‘’", '"' : "“”" }
     let s:all_evils = {}   " all punctuations for onekey_evils
     call extend(s:all_evils, mini_punctuations)
@@ -1166,13 +1171,13 @@ function! g:vimim_visual()
 endfunction
 
 function! s:vimim_imode_visual(char_before)
-    let antonym = "，。 “” ‘’ （） 【】 〖〗 《》 金石 胜败 真假"
+    let items = []
+    let numbers = []
+    let results = []
     if empty(s:loops)
-        let items = []
         for i in range(len(s:numbers))
             call add(items, split(s:numbers[i],'\zs'))
         endfor
-        let numbers = []
         for j in range(len(get(items,0)))
             let number = ""
             for line in items
@@ -1180,7 +1185,7 @@ function! s:vimim_imode_visual(char_before)
             endfor
             call add(numbers, number)
         endfor
-        for loop in numbers + split(antonym)
+        for loop in numbers + split(s:antonym) + split("金石 真假 胜败")
             let loops = split(loop, '\zs')
             for i in range(len(loops))
                 let j = i==len(loops)-1 ? 0 : i+1
@@ -1188,7 +1193,6 @@ function! s:vimim_imode_visual(char_before)
             endfor
         endfor
     endif
-    let results = []
     let char_before = a:char_before
     if has_key(s:loops, char_before)
         let start = char_before
