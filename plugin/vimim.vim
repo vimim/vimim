@@ -295,14 +295,12 @@ function! s:vimim_cache()
             let results = B + A
         endif
     elseif s:mode.onekey && s:touch_me_not
-        if s:hjkl_h
-            let s:hjkl_h = 0
+        if s:hjkl_h | let s:hjkl_h = 0
             for line in s:match_list
                 let oneline = join(reverse(split(line,'\zs')),'')
                 call add(results, oneline)
             endfor
-        elseif s:hjkl_l
-            let s:hjkl_l = 0
+        elseif s:hjkl_l | let s:hjkl_l = 0
             let results = reverse(copy(s:match_list))
         endif
     endif
@@ -327,21 +325,16 @@ function! s:vimim_get_hjkl_game(keyboard)
             let before = getline(".")[col(".")-1-s:multibyte : col(".")-2]
         endif
         if empty(before) || before !~ '[^\x00-\xff]'
-            let before = '一'   " 214 standard unicode index
-            if s:vimim_cjk()
-                return s:vimim_cjk_match('u')
-            endif
+            let before = '一'   " the 214 standard unicode index
+            if s:vimim_cjk() | return s:vimim_cjk_match('u') | endif
         endif
         return s:vimim_unicode_list(char2nr(before))
     elseif !empty(poem)
-        " [hjkl] flirt any non-dot file in the hjkl directory
-        let results = s:vimim_readfile(poem)
+        let results = s:vimim_readfile(poem) " [hjkl] file in hjkl folder
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
-        " [hidden] hunt classic easter egg ... vim<C-6>
-        let results = s:vimim_easter_chicken(keyboard)
+        let results = s:vimim_easter_chicken(keyboard) " [hidden] egg
     elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
-        " [clouds] all clouds for any input: fuck''''
-        let results = s:vimim_get_all_clouds(keyboard[:-5])
+        let results = s:vimim_get_all_clouds(keyboard[:-5])  " fuck''''
     elseif len(getreg('"')) > 3     "  vimim_visual
         if keyboard == "''''"       ": display buffer inside omni
             let results = split(getreg('"'), '\n')
@@ -387,9 +380,7 @@ function! s:vimim_hjkl_rotation(lines)
         let column = ''
         for line in reverse(copy(results))
             let line = get(split(line,'\zs'), i)
-            if !empty(line)
-                let column .= line
-            endif
+            if !empty(line) | let column .= line | endif
         endfor
         call add(rotations, column)
     endfor
@@ -398,14 +389,10 @@ endfunction
 
 function! s:vimim_chinese_rotation() range abort
     :%s#\s*\r\=$##
-    let lines = getline(a:firstline, a:lastline)
-    if !empty(lines)
-        :let lines = s:vimim_hjkl_rotation(lines)
-        :%d
-        for line in lines
-            put=line
-        endfor
-    endif
+    :let lines = getline(a:firstline, a:lastline)
+    :let lines = s:vimim_hjkl_rotation(lines)
+    :%d
+    :for line in lines | put=line | endfor
 endfunction
 
 " ============================================= }}}
@@ -722,9 +709,7 @@ function! g:vimim_hjkl(key)
 endfunction
 
 function! s:vimim_punctuation_maps()
-    if g:vimim_punctuation < 0
-        return
-    endif
+    if g:vimim_punctuation < 0 | return | endif
     for _ in keys(s:all_evils)
         if _ !~ s:valid_keyboard
             exe 'lnoremap <expr> '._.' g:vimim_punctuation("'._.'")'
@@ -918,7 +903,7 @@ endfunction
 
 function! g:vimim_correction()
     let s:omni = 0
-    let key = '\<C-U>'  " :help i_CTRL-U  Delete all entered characters
+    let key = nr2char(21) " :help i_CTRL-U  Delete all entered characters
     if pumvisible()
         let range = col(".") - 1 - s:starts.column
         if range
@@ -3235,6 +3220,7 @@ endfunction
 
 function! g:vimim_omni()
     let s:omni = 1         " omni completion pattern found
+    let s:smart_enter = 0  " windowless_correction
     let cursor = s:mode.static ? '\<C-N>\<C-P>' : '\<C-P>\<Down>'
     let cursor = pumvisible() ? cursor : ""
     sil!exe 'sil!return "' . cursor . '"'
