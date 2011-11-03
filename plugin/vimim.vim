@@ -1337,7 +1337,7 @@ endfunction
 let s:VimIM += [" ====  input: unicode   ==== {{{"]
 " =================================================
 
-function! s:vimim_i18n_read(line)
+function! s:vimim_i18n(line)
     let line = a:line
     if s:localization == 1
         return iconv(line, "chinese", "utf-8")
@@ -1692,7 +1692,7 @@ function! s:vimim_readfile(datafile)
     if filereadable(a:datafile)
         if s:localization
             for line in readfile(a:datafile)
-                call add(lines, s:vimim_i18n_read(line))
+                call add(lines, s:vimim_i18n(line))
             endfor
         else
             return readfile(a:datafile)
@@ -2507,9 +2507,7 @@ function! s:vimim_get_cloud_sogou(keyboard)
         let output = strpart(output, first+1, second-first-1)
         let output = s:vimim_url_xx_to_chinese(output)
     endif
-    if s:localization  " support gb and big5 in addition to utf8
-        let output = s:vimim_i18n_read(output)
-    endif
+    let output = s:localization ? s:vimim_i18n(output) : output
     let match_list = []
     for item in split(output, '\t+')
         let item_list = split(item, s:colon)
@@ -2559,10 +2557,8 @@ function! s:vimim_get_cloud_qq(keyboard)
     let output = s:vimim_get_from_http(input, 'qq')
     if empty(output) || output =~ '502 bad gateway'
         return []
-    endif
-    if s:localization  " qq => {'q':'fuck','rs':['\xe5\xa6\x87'],
-        let output = s:vimim_i18n_read(output)
-    endif
+    endif             " qq => {'q':'fuck','rs':['\xe5\xa6\x87'],
+    let output = s:localization ? s:vimim_i18n(output) : output
     let match_list = []
     let output_hash = eval(output)
     if type(output_hash) == type({}) && has_key(output_hash, 'rs')
@@ -2584,15 +2580,14 @@ function! s:vimim_get_cloud_google(keyboard)
     let match_list = []
     if s:localization  " [{'ew':'fuck','hws':['\u5987\u4EA7\u79D1',]},]
         if s:http_exe =~ 'Python2'
-            let output = s:vimim_i18n_read(output)
+            let output = s:vimim_i18n(output)
         else
-            let unicodes = split(get(split(output),8),",")
-            for item in unicodes
-                let utf8 = ""
+            for item in split(get(split(output),8),",")
+                let utf8 = ""  " play with unicode
                 for xxxx in split(item, "\u")
                     let utf8 .= s:vimim_unicode_to_utf8(xxxx)
                 endfor
-                let output = s:vimim_i18n_read(utf8)
+                let output = s:vimim_i18n(utf8)
                 call add(match_list, output)
             endfor
             return match_list
@@ -2693,9 +2688,7 @@ function! s:vimim_get_mycloud(keyboard)
     for item in split(output, '\n')
         let item_list = split(item, '\t')
         let chinese = get(item_list,0)
-        if s:localization
-            let chinese = s:vimim_i18n_read(chinese)
-        endif
+        let chinese = s:localization ? s:vimim_i18n(chinese) : chinese
         if empty(chinese) || get(item_list,1,-1) < 0
             continue  " bypass the breakpoint line which have -1
         endif
