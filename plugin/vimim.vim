@@ -118,10 +118,6 @@ function! s:vimim_initialize_global()
     call s:vimim_set_global_default()
     let s:plugin = isdirectory(g:vimim_plugin) ? g:vimim_plugin : s:plugin
     let s:plugin = s:plugin[-1:] != "/" ? s:plugin."/" : s:plugin
-    let s:english = { 'lines' : [], 'line' : "" }
-    let s:english.filename = s:vimim_filereadable("vimim.txt")
-    let s:cjk = { 'lines' : [] }
-    let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
     let s:dynamic    = {'onekey':0,'windowless':0,'dynamic':1,'static':0}
     let s:static     = {'onekey':0,'windowless':0,'dynamic':0,'static':1}
     let s:onekey     = {'onekey':1,'windowless':0,'dynamic':0,'static':0}
@@ -399,16 +395,6 @@ endfunction
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
-function! s:vimim_set_color()
-    if g:vimim_mode =~ 'nocolor'
-    elseif has("win32") || has("win32unix")
-        highlight! PmenuSbar  NONE
-        highlight! PmenuThumb NONE
-        highlight! Pmenu      NONE
-        highlight! link PmenuSel NonText
-    endif
-endfunction
-
 function! s:vimim_dictionary_statusline()
     let one  = " cjk  boshiamy  wubi2000  taijima  nature"
     let two  = " 标准字库,標準字庫  呒虾米,嘸蝦米  新世纪,新世紀"
@@ -458,9 +444,8 @@ function! s:vimim_input_method_in_chinese()
     let backend = s:backend[s:ui.root][s:ui.im]
     if has_key(s:keycodes, s:ui.im)
         let im = backend.chinese
-        if s:mode.windowless && len(s:cjk.filename)
-            let im = len(s:english.line) ? '*' : ''
-            let im = len(s:hjkl_n) ? s:hjkl_n : im
+        if s:mode.windowless
+            let im = len(s:hjkl) ? s:hjkl : len(s:english.line) ? '*' : ''
         endif
         let title .= im
     endif
@@ -618,7 +603,6 @@ endfunction
 
 function! g:vimim_popup_or_halfwidth()
     if s:mode.onekey || s:mode.windowless
-        let s:hit_and_run = 0
         let s:mode = s:mode.windowless ? s:onekey : s:windowless
     else
         let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
@@ -640,7 +624,7 @@ function! g:vimim_label(key)
         if s:mode.onekey && s:hit_and_run
             let key = yes . s:vimim_stop()
         elseif s:mode.onekey && s:vimim_cjk() && a:key =~ '\d'
-            let s:hjkl_n .= a:key  " 1234567890 as filter
+            let s:hjkl .= a:key  " 1234567890 as filter
         else
             let key = yes . key
             sil!call s:vimim_reset_after_insert()
@@ -703,7 +687,7 @@ function! g:vimim_hjkl(key)
         elseif key =~ "[/?]"
             let key = '\<C-Y>\<C-R>=g:vimim_slash()\<CR>' . key . '\<CR>'
         elseif match(s:qwer, key) > -1
-            let s:hjkl_n .= match(s:qwer, key)
+            let s:hjkl .= match(s:qwer, key)
         endif
         let key = key == a:key ? '\<C-R>=g:vimim()\<CR>' : key
     endif
@@ -810,8 +794,8 @@ function! s:vimim_windowless(key)
         let key = len(a:key) ? '\<C-E>\<C-R>=g:vimim()\<CR>' : '\<C-N>'
         let cursor = empty(len(a:key)) ? 1 : a:key < 1 ? 9 : a:key-1
         if s:vimim_cjk()
-            let s:hjkl_n .= a:key   " 1234567890 for windowless filter
-        else                        "  234567890 for windowless choice
+            let s:hjkl .= a:key       " 1234567890 for windowless filter
+        else                          "  234567890 for windowless choice
             let key = a:key =~ '[02-9]' ? repeat('\<C-N>', cursor) : key
         endif
         call s:vimim_windowless_titlestring(cursor)
@@ -981,7 +965,7 @@ function! g:vimim_onekey()
 endfunction
 
 function! s:vimim_onekey_action()
-    let s:hjkl_n = ""
+    let s:hjkl = ""
     let key = s:vimim_onekey_evils()
     if empty(key)
         if s:vimim_left()
@@ -1421,6 +1405,21 @@ endfunction
 let s:VimIM += [" ====  input: cjk       ==== {{{"]
 " =================================================
 
+function! s:vimim_initialize_backdoor()
+    let s:english = { 'lines' : [], 'line' : "" }
+    let s:english.filename = s:vimim_filereadable("vimim.txt")
+    let s:cjk = { 'lines' : [] }
+    let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
+    let s:hit_and_run = 1      " no onekey after onekey
+    if len(s:cjk.filename)
+        let s:hit_and_run = 0  " for onekey continuity
+        highlight! PmenuSbar  NONE
+        highlight! PmenuThumb NONE
+        highlight! Pmenu      NONE
+        highlight! link PmenuSel NonText
+    endif
+endfunction
+
 function! s:vimim_cjk()
     if empty(s:cjk.filename)
         return 0
@@ -1446,7 +1445,7 @@ function! s:vimim_cjk_in_4corner(chinese, info)
         endif
     endfor
     let digit = digit_head . digit_tail
-    let pattern = "^" . s:hjkl_n
+    let pattern = "^" . s:hjkl
     if empty(a:info) && match(digit, pattern) < 0
         return 0
     endif
@@ -1479,7 +1478,7 @@ function! s:vimim_cjk_match(key)
     let grep_frequency = '.*' . '\s\d\+$'
     let grep = ""
     if key =~ '\d'
-        if key =~# '^\l\l\+[1-4]\>' && empty(len(s:hjkl_n))
+        if key =~# '^\l\l\+[1-4]\>' && empty(len(s:hjkl))
             let grep = key . '[a-z ]'  " cjk pinyin: huan2hai2 yi1
         else
             let digit = ""
@@ -1536,7 +1535,7 @@ function! s:vimim_get_cjk_head(key)
     elseif key =~ '\d'
         if key =~ '^\d' && key !~ '\D'
             let head = len(key) > 4 ? s:vimim_get_head(key, 4) : key
-            let s:hjkl_n = empty(len(s:hjkl_n)) ? head : s:hjkl_n
+            let s:hjkl = empty(len(s:hjkl)) ? head : s:hjkl
         elseif key =~# '^\l\+\d\+\>'         " 7712 in 77124002
             let partition = match(key,'\d')  " ma7 ma77 ma771
             let head = key[0 : partition-1]  " mali in mali74
@@ -1544,7 +1543,7 @@ function! s:vimim_get_cjk_head(key)
             if empty(s:vimim_get_pinyin(head)) && tail =~ '[1-4]'
                 return key  " pinyin with tone: ma1/ma2/ma3/ma4
             endif
-            let s:hjkl_n = empty(len(s:hjkl_n)) ? tail : s:hjkl_n
+            let s:hjkl = empty(len(s:hjkl)) ? tail : s:hjkl
         elseif key =~# '^\l\+\d\+'  " wo23 for input wo23you40
             let partition = match(key, '\(\l\+\d\+\)\@<=\D')
             let head = s:vimim_get_head(key, partition)
@@ -2817,7 +2816,6 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 
 function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
-    sil!call s:vimim_set_color()
     sil!call s:vimim_set_frontend()
     sil!call s:vimim_set_titlestring()
     sil!call s:vimim_all_maps()
@@ -2892,7 +2890,6 @@ endfunction
 
 function! s:vimim_reset_before_anything()
     let s:mode = s:onekey
-    let s:hit_and_run = empty(s:cjk.filename) ? 1 : 0
     let s:omni = 0
     let s:ctrl6 = 0
     let s:switch = 0
@@ -2915,7 +2912,7 @@ function! s:vimim_reset_after_insert()
     let s:match_list = []
     let s:pageup_pagedown = 0
     let s:pattern_not_found = 0
-    let s:hjkl_n = ""   "  reset for nothing
+    let s:hjkl = ""   "  reset for nothing
     let s:hjkl_h = 0    "  toggle cjk property
     let s:hjkl_l = 0    "  toggle label length
     let s:hjkl_m = 0    "  toggle cjjp/c'j'j'p
@@ -2995,7 +2992,7 @@ else
         endif
         if len(results)
             return s:vimim_popupmenu_list(results)
-        elseif len(s:hjkl_n) && s:keyboard !~ "'"
+        elseif len(s:hjkl) && s:keyboard !~ "'"
             let keyboard = get(split(keyboard,'\d'),0)  " mali74
         elseif get(split(s:keyboard),1) =~ "'"  " ssss.. for cloud
             let keyboard = s:vimim_get_no_quote_head(keyboard)
@@ -3062,7 +3059,7 @@ function! s:vimim_popupmenu_list(lines)
     let keyboard = get(keyboards, 0)
     if empty(a:lines) || type(a:lines) != type([])
         return []
-    elseif s:vimim_cjk() && len(s:hjkl_n)
+    elseif s:vimim_cjk() && len(s:hjkl)
         let results = []  " use 1234567890 as filter for windowless
         for chinese in a:lines
             if s:vimim_cjk_in_4corner(chinese,0)
@@ -3070,7 +3067,7 @@ function! s:vimim_popupmenu_list(lines)
             endif
         endfor
         if empty(results)
-            let s:hjkl_n = ""  " make digits recyclable
+            let s:hjkl = ""  " make digits recyclable
         else                   " gi ma space 7777777777
             let s:match_list = results
         endif
@@ -3110,7 +3107,7 @@ function! s:vimim_popupmenu_list(lines)
             if s:vimim_cjk() " display sexy english and dynamic 4corner
                 let star = substitute(titleline,'[0-9a-z_ ]','','g')
                 let digit = s:vimim_cjk_in_4corner(chinese,1)
-                let titleline = star . digit[len(s:hjkl_n) : 3] " ma7 712
+                let titleline = star . digit[len(s:hjkl) : 3] " ma7 712
             elseif label < 11      " 234567890 for windowless selection
                 let titleline = label == 10 ? "0" : label
             endif
@@ -3228,6 +3225,7 @@ endfunction
 
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
+sil!call s:vimim_initialize_backdoor()
 sil!call s:vimim_dictionary_statusline()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
