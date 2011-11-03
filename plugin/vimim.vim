@@ -1392,7 +1392,7 @@ function! s:chinese(...)
         if has_key(s:title, english)
             let twins = split(s:title[english], ",")
             let cjk = get(twins, 0)
-            if len(twins) > 1 && empty(s:english.filename)
+            if len(twins) > 1 && s:mandarin
                 let cjk = get(twins,1)
             endif
         endif
@@ -1410,14 +1410,14 @@ function! s:vimim_initialize_backdoor()
     let s:english.filename = s:vimim_filereadable("vimim.txt")
     let s:cjk = { 'lines' : [] }
     let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
-    let s:hit_and_run = 1      " no onekey after onekey
     if len(s:cjk.filename)
-        let s:hit_and_run = 0  " for onekey continuity
         highlight! PmenuSbar  NONE
         highlight! PmenuThumb NONE
         highlight! Pmenu      NONE
         highlight! link PmenuSel NonText
     endif
+    let s:hit_and_run =  len(s:cjk.filename) ? 0 : 1  " onekey continuity
+    let s:mandarin = len(s:english.filename) ? 0 : 1  " s/t chinese style
 endfunction
 
 function! s:vimim_cjk()
