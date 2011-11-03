@@ -2442,7 +2442,7 @@ function! s:vimim_get_from_http(input, cloud)
 endfunction
 
 function! s:vimim_get_cloud_sogou(keyboard)
-    " http://web.pinyin.sogou.com/api/py?key=32&query=mxj
+    let results = [] " http://web.pinyin.sogou.com/api/py?key=32&query=mxj
     if empty(s:backend.cloud.sogou.im)  " as cloud key
         let key_sogou = "http://web.pinyin.sogou.com/web_ime/patch.php"
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
@@ -2462,20 +2462,19 @@ function! s:vimim_get_cloud_sogou(keyboard)
         let output = s:vimim_url_xx_to_chinese(output)
     endif
     let output = s:localization ? s:vimim_i18n(output) : output
-    let match_list = []
     for item in split(output, '\t+')
         let item_list = split(item, s:colon)
         if len(item_list) > 1
             let english = strpart(a:keyboard, 0, get(item_list,1))
             let english_chinese = english . " " . get(item_list,0)
-            call add(match_list, english_chinese)
+            call add(results, english_chinese)
         endif
     endfor
-    return match_list
+    return results
 endfunction
 
 function! s:vimim_get_cloud_qq(keyboard)
-    " http://ime.qq.com/fcgi-bin/getword?key=32&q=mxj
+    let results = [] " http://ime.qq.com/fcgi-bin/getword?key=32&q=mxj
     let input = 'http://ime.qq.com/fcgi-bin/'
     if empty(s:backend.cloud.qq.im)  " as cloud key
         let output = s:vimim_get_from_http(input . 'getkey', 'qq')
@@ -2513,15 +2512,14 @@ function! s:vimim_get_cloud_qq(keyboard)
         return []
     endif             " qq => {'q':'fuck','rs':['\xe5\xa6\x87'],
     let output = s:localization ? s:vimim_i18n(output) : output
-    let match_list = []
     let output_hash = eval(output)
     if type(output_hash) == type({}) && has_key(output_hash, 'rs')
-        let match_list = output_hash['rs']  " as key
+        let results = output_hash['rs']  " as key
     endif
     if vimim_cloud !~ 'wubi' && vimim_cloud !~ 'shuangpin'
-        let match_list = s:vimim_cloud_pinyin(a:keyboard, match_list)
+        let results = s:vimim_cloud_pinyin(a:keyboard, results)
     endif
-    return match_list
+    return results
 endfunction
 
 function! s:vimim_get_cloud_google(keyboard)
@@ -2530,8 +2528,8 @@ function! s:vimim_get_cloud_google(keyboard)
     let input .= '?langpair=en|zh' . '&num=20' . '&tl_app=3'
     let input .= '&tlqt=1' . '&text=' . a:keyboard
     let output = join(split(s:vimim_get_from_http(input,'google')))
-    let match_list = []
-    if s:localization  " [{'ew':'fuck','hws':['\u5987\u4EA7\u79D1',]},]
+    let results = [] " [{'ew':'fuck','hws':['\u5987\u4EA7\u79D1',]},]
+    if s:localization
         if s:http_exe =~ 'Python2'
             let output = s:vimim_i18n(output)
         else
@@ -2541,42 +2539,41 @@ function! s:vimim_get_cloud_google(keyboard)
                     let utf8 .= s:vimim_unicode_to_utf8(xxxx)
                 endfor
                 let output = s:vimim_i18n(utf8)
-                call add(match_list, output)
+                call add(results, output)
             endfor
-            return match_list
+            return results
         endif
     endif
     let output_hash = get(eval(output),0)
     if type(output_hash) == type({}) && has_key(output_hash, 'hws')
-        let match_list = output_hash['hws']  " as key
+        let results = output_hash['hws']  " as key
     endif
-    let match_list = s:vimim_cloud_pinyin(a:keyboard, match_list)
-    return match_list
+    let results = s:vimim_cloud_pinyin(a:keyboard, results)
+    return results
 endfunction
 
 function! s:vimim_get_cloud_baidu(keyboard)
-    " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
+    let results = [] " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
     let url = 'http://olime.baidu.com/py'
     let input = '?rn=0' . '&pn=20' . '&py=' . a:keyboard
     let output = s:vimim_get_from_http(url . input, 'baidu')
-    let output_list = []
+    let output_list = []    " ['[[['\xc3\xb0\xcf\xd5',3]
     if exists("g:baidu") && type(g:baidu) == type([])
         let output_list = get(g:baidu,0)
     endif
     if empty(output_list)
         if empty(output) || output =~ '502 bad gateway'
             return []
-        elseif empty(s:localization)   " ['[[['\xc3\xb0\xcf\xd5',3]
+        elseif empty(s:localization)
             let output = iconv(output, "gbk", "utf-8")
         endif
         let output_list = get(eval(output),0)
     endif
-    let match_list = []
     for item_list in output_list
         let english = strpart(a:keyboard, get(item_list,1))
-        call add(match_list, get(item_list,0) . english)
+        call add(results, get(item_list,0) . english)
     endfor
-    return match_list
+    return results
 endfunction
 
 function! s:vimim_get_all_clouds(key)
@@ -2628,8 +2625,7 @@ function! s:vimim_get_mycloud(keyboard)
         if empty(mycloud)
             let s:mycloud_initialization = -1 " fail to start mycloud
             return []
-        endif
-        " mycloud late binding: set real data from mycloud server
+        endif   " mycloud late binding: get/set real data from server
         let s:backend.cloud.mycloud.im = mycloud
         let ret = s:vimim_mycloud(mycloud, "__getkeychars")
         let s:backend.cloud.mycloud.keycode = split(ret,"\t")[0]
@@ -2644,7 +2640,7 @@ function! s:vimim_get_mycloud(keyboard)
         let chinese = get(item_list,0)
         let chinese = s:localization ? s:vimim_i18n(chinese) : chinese
         if empty(chinese) || get(item_list,1,-1) < 0
-            continue  " bypass the breakpoint line which have -1
+            continue
         endif
         let extra_text = get(item_list,2)
         let english = a:keyboard[get(item_list,1):]
@@ -3199,7 +3195,7 @@ function! g:vimim()
 endfunction
 
 function! g:omni()
-    let s:omni = s:omni < 0 ? 0 : 1  " as if omni completion pattern found
+    let s:omni = s:omni < 0 ? 0 : 1 " as if omni completion pattern found
     let key = s:mode.static ? '\<C-N>\<C-P>' : '\<C-P>\<Down>'
     let key = pumvisible() ? key : ""
     sil!exe 'sil!return "' . key . '"'
