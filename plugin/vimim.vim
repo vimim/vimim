@@ -797,13 +797,13 @@ function! g:vimim_tab()
 endfunction
 
 function! s:vimim_windowless(key)
-    let key = a:key         " workaround to detect if active completion
-    if s:pattern_not_found  " gi \bslash space space
-        " make space smart  " gi ma space enter space
-    elseif s:smart_enter    " gi ma space enter 77 ma space
-        let s:smart_enter = 0
-        let s:seamless_positions = []
-    elseif s:omni || s:keyboard =~ " "   " assume completion active
+    let key = a:key            " workaround to test if active completion
+    if s:pattern_not_found     " gi \bslash space space
+        " make space smart     " gi ma space enter space
+    elseif s:smart_enter       " gi ma space enter 77 ma space
+        let s:smart_enter = 0  " gi ma space xj space ctrl+u space space
+        let s:seamless_positions = []   " one_key_correction
+    elseif s:omni || s:keyboard =~ " "  " assume completion active
         let key = len(a:key) ? '\<C-E>\<C-R>=g:vimim()\<CR>' : '\<C-N>'
         let cursor = empty(len(a:key)) ? 1 : a:key < 1 ? 9 : a:key-1
         if s:vimim_cjk()
@@ -814,6 +814,8 @@ function! s:vimim_windowless(key)
             endif
         endif
         call s:vimim_windowless_titlestring(cursor)
+    else
+        call s:vimim_set_titlestring()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -909,7 +911,7 @@ function! g:vimim_correction()
             let key = '\<C-E>' . repeat("\<Left>\<Delete>", range)
         endif
     elseif s:mode.windowless
-        let s:omni = -1   " one_key_correction  gi mamahuhuhu Space CTRL-U
+        let s:omni = -1  " one_key_correction  gi mamahuhu space ctrl+u
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
     endif
     sil!call s:vimim_reset_after_insert()
@@ -2993,8 +2995,7 @@ if a:start
     call s:vimim_set_keyboard_list(start_column, keyboard)
     return start_column
 else
-    if s:omni < 0
-        let s:omni = 0  "  one_key_correction
+    if s:omni < 0  "  one_key_correction
         return [s:space]
     endif
     let results = s:vimim_cache() " [hjkl] less is more
@@ -3216,7 +3217,7 @@ function! g:vimim()
 endfunction
 
 function! g:vimim_omni()
-    let s:omni = 1  " omni completion pattern found
+    let s:omni = s:omni < 0 ? 0 : 1  " omni completion pattern found
     let cursor = s:mode.static ? '\<C-N>\<C-P>' : '\<C-P>\<Down>'
     let cursor = pumvisible() ? cursor : ""
     sil!exe 'sil!return "' . cursor . '"'
