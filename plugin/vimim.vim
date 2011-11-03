@@ -325,20 +325,20 @@ function! s:vimim_get_hjkl_game(keyboard)
             let before = getline(".")[col(".")-1-s:multibyte : col(".")-2]
         endif
         if empty(before) || before !~ '[^\x00-\xff]'
-            let before = '一'   " the 214 standard unicode index
             if s:vimim_cjk() | return s:vimim_cjk_match('u') | endif
-        endif
+            let before = nr2char(19968)  " the 214 standard unicode index
+        endif                            " gi ,.. space ,.. space
         return s:vimim_unicode_list(char2nr(before))
     elseif !empty(poem)
         let results = s:vimim_readfile(poem) " [hjkl] file in hjkl folder
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
-        let results = s:vimim_easter_chicken(keyboard) " [hidden] egg
+        let results = s:vimim_easter_chicken(keyboard)      " [hidden] egg
     elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
-        let results = s:vimim_get_all_clouds(keyboard[:-5])  " fuck''''
-    elseif len(getreg('"')) > 3     "  vimim_visual
-        if keyboard == "''''"       ": display buffer inside omni
+        let results = s:vimim_get_all_clouds(keyboard[:-5]) " fuck''''
+    elseif len(getreg('"')) > 3
+        if keyboard == "''''"      " visual: display buffer inside omni
             let results = split(getreg('"'), '\n')
-        elseif keyboard =~ "'''''"  ": display one-line-cjk property
+        elseif keyboard =~ "'''''" " visual: display one-line-cjk property
             let line = substitute(getreg('"'),'[\x00-\xff]','','g')
             if len(line)
                 for chinese in split(line, '\zs')
@@ -1332,11 +1332,9 @@ endfunction
 
 function! s:vimim_unicode_list(ddddd)
     let results = []
-    if a:ddddd
-        for i in range(99)
-            call add(results, nr2char(a:ddddd+i))
-        endfor
-    endif
+    for i in range(99)
+        call add(results, nr2char(a:ddddd+i))
+    endfor
     return results
 endfunction
 
