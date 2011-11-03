@@ -2235,24 +2235,15 @@ function! s:vimim_get_from_datafile(keyboard)
 endfunction
 
 function! s:vimim_get_from_database(keyboard)
-    if empty(a:keyboard)
-        return []
-    endif
     let oneline = s:vimim_get_gold_from_bsddb(a:keyboard)
-    if empty(oneline) " || get(split(oneline),1) =~ '\w'
-        return []
-    endif
+    if empty(oneline) | return [] | endif
     let results = s:vimim_make_pairs(oneline)
     if empty(s:english.line) && len(results) && len(results) < 20
         for candidate in s:vimim_more_pinyin_candidates(a:keyboard)
             let oneline = s:vimim_get_gold_from_bsddb(candidate)
-            if empty(oneline) || match(oneline,' ') < 0
-                continue
-            endif
+            if empty(oneline) || match(oneline,' ')<0 | continue | endif
             let results += s:vimim_make_pairs(oneline)
-            if len(results) > 20 * 2
-                break
-            endif
+            if len(results) > 20*2 | break | endif
         endfor
     endif
     return results
@@ -2537,7 +2528,6 @@ endfunction
 
 function! s:vimim_get_cloud_google(keyboard)
     " http://google.com/transliterate?tl_app=3&tlqt=1&num=20&text=mxj
-    " http://translate.google.com/?sl=en&tl=zh-CN#en|zh-CN|fuck'
     let input  = 'http://www.google.com/transliterate/chinese'
     let input .= '?langpair=en|zh' . '&num=20' . '&tl_app=3'
     let input .= '&tlqt=1' . '&text=' . a:keyboard
@@ -2562,7 +2552,8 @@ function! s:vimim_get_cloud_google(keyboard)
     if type(output_hash) == type({}) && has_key(output_hash, 'hws')
         let match_list = output_hash['hws']  " as key
     endif
-    return s:vimim_cloud_pinyin(a:keyboard, match_list)
+    let match_list = s:vimim_cloud_pinyin(a:keyboard, match_list)
+    return match_list
 endfunction
 
 function! s:vimim_get_cloud_baidu(keyboard)
@@ -3179,7 +3170,9 @@ function! s:vimim_embedded_backend_engine(keyboard)
                 sil!call s:vimim_initialize_bsddb(backend.name)
             endif
             let head = s:vimim_get_stone_from_bsddb(keyboard)
-            let results = s:vimim_get_from_database(head)
+            if !empty(head)
+                let results = s:vimim_get_from_database(head)
+            endif
         else
             if empty(backend.lines)
                 let backend.lines = s:vimim_readfile(backend.name)
