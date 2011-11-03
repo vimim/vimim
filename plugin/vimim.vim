@@ -320,8 +320,8 @@ function! s:vimim_get_hjkl_game(keyboard)
     elseif s:vimim_get_unicode_ddddd(keyboard)
         return s:vimim_unicode_list(s:vimim_get_unicode_ddddd(keyboard))
     elseif keyboard == "''"
-        let before = ''  " get one chinese char before
-        if !empty(len(s:vimim_byte_before()))
+        let before = ''   " get one chinese char before
+        if !empty(len(s:s:vimim_left()))
             let before = getline(".")[col(".")-1-s:multibyte : col(".")-2]
         endif
         if empty(before) || before !~ '[^\x00-\xff]'
@@ -787,7 +787,7 @@ function! g:vimim_tab()
     " (2) Tab in insert mode => start windowless
     " (3) Tab in lmap   mode => start print out fine menu
     let tab = "\t"
-    if empty(len(s:vimim_byte_before()))
+    if empty(len(s:s:vimim_left()))
     elseif pumvisible() || s:ctrl6
         let tab = s:vimim_screenshot()
     else
@@ -866,7 +866,7 @@ function! g:vimim_space()
     elseif s:pattern_not_found
     elseif s:mode.dynamic
     elseif s:mode.static
-        let space = s:vimim_byte_before() ? g:vimim() : space
+        let space = s:s:vimim_left() ? g:vimim() : space
     elseif s:seamless_positions == getpos(".")
         let s:smart_enter = 0  " Space is Space after Enter
     else
@@ -883,7 +883,7 @@ function! g:vimim_enter()
     if pumvisible()
         let key = "\<C-E>"
         let s:smart_enter = 1  " single Enter after English => seamless
-    elseif s:vimim_byte_before() || s:mode.windowless
+    elseif s:s:vimim_left() || s:mode.windowless
         let s:smart_enter = 1  " gi ma space enter space space
         if s:seamless_positions == getpos(".")
             let s:smart_enter += 1
@@ -902,7 +902,6 @@ function! g:vimim_enter()
 endfunction
 
 function! g:vimim_correction()
-    let s:omni = 0
     let key = nr2char(21) " :help i_CTRL-U  Delete all entered characters
     if pumvisible()
         let range = col(".") - 1 - s:starts.column
@@ -910,7 +909,7 @@ function! g:vimim_correction()
             let key = '\<C-E>' . repeat("\<Left>\<Delete>", range)
         endif
     elseif s:mode.windowless
-        let s:smart_enter = "windowless_correction"
+        let s:omni = -1   " one_key_correction  gi mamahuhuhu Space CTRL-U
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
     endif
     sil!call s:vimim_reset_after_insert()
@@ -988,7 +987,7 @@ function! s:vimim_onekey_action()
     let s:hjkl_n = ""
     let onekey = s:vimim_onekey_evils()
     if empty(onekey)
-        if s:vimim_byte_before()
+        if s:s:vimim_left()
             let onekey = g:vimim()
         elseif s:mode.windowless
             if s:gi_dynamic
@@ -1387,12 +1386,12 @@ function! s:vimim_rot13(keyboard)
     return tr(a:keyboard, a.z, z.a)
 endfunction
 
-function! s:vimim_byte_before()
-    let one_before = getline(".")[col(".")-2]
-    let key = 0
-    if one_before =~ '\s' || empty(one_before)
+function! s:s:vimim_left()
+    let key = 0   " validate the character on the left of the cursor
+    let one_byte_before = getline(".")[col(".")-2]
+    if one_byte_before =~ '\s' || empty(one_byte_before)
         let key = ""
-    elseif one_before =~# s:valid_keyboard
+    elseif one_byte_before =~# s:valid_keyboard
         let key = 1
     endif
     return key
@@ -2871,7 +2870,7 @@ function! s:vimim_start()
 endfunction
 
 function! s:vimim_stop()
-    if has("win32")
+    if has("gui_running")
         lmapclear
     endif
     sil!call s:vimim_restore_vimrc()
@@ -2919,6 +2918,7 @@ endfunction
 function! s:vimim_reset_before_anything()
     let s:mode = s:onekey
     let s:hit_and_run = empty(s:cjk.filename) ? 1 : 0
+    let s:omni = 0
     let s:ctrl6 = 0
     let s:switch = 0
     let s:toggle_im = 0
@@ -2937,7 +2937,6 @@ function! s:vimim_reset_before_omni()
 endfunction
 
 function! s:vimim_reset_after_insert()
-    let s:omni = 0
     let s:match_list = []
     let s:pageup_pagedown = 0
     let s:pattern_not_found = 0
@@ -2994,8 +2993,9 @@ if a:start
     call s:vimim_set_keyboard_list(start_column, keyboard)
     return start_column
 else
-    if s:smart_enter =~ "windowless_correction"
-        return [s:space]   " i_CTRL_U  gi mamahuhuhu space
+    if s:omni < 0
+        let s:omni = 0  "  one_key_correction
+        return [s:space]
     endif
     let results = s:vimim_cache() " [hjkl] less is more
     if empty(results)
@@ -3209,18 +3209,14 @@ function! s:vimim_embedded_backend_engine(keyboard)
 endfunction
 
 function! g:vimim()
-    let s:omni = 0
+    let s:omni = s:omni < 0 ? -1 : 0  "  one_key_correction
     let s:keyboard = empty(s:pageup_pagedown) ? "" : s:keyboard
-    let key = ""
-    if s:vimim_byte_before()
-        let key = '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
+    let x = s:vimim_left() ? '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>' : ""
+    sil!exe 'sil!return "' . x . '"'
 endfunction
 
 function! g:vimim_omni()
-    let s:omni = 1         " omni completion pattern found
-    let s:smart_enter = 0  " windowless_correction
+    let s:omni = 1  " omni completion pattern found
     let cursor = s:mode.static ? '\<C-N>\<C-P>' : '\<C-P>\<Down>'
     let cursor = pumvisible() ? cursor : ""
     sil!exe 'sil!return "' . cursor . '"'
