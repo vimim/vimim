@@ -534,7 +534,7 @@ function! s:vimim_set_titlestring()
     endif
     if &term == 'screen'
         echo titlestring
-    else    " only if terminal can set window titles
+    else    " only if terminal can set window title
         let &titlestring = titlestring
     endif
     :set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
@@ -907,9 +907,7 @@ function! g:vimim_correction()
     let key = nr2char(21) " :help i_CTRL-U  Delete all entered characters
     if pumvisible()
         let range = col(".") - 1 - s:starts.column
-        if range
-            let key = '\<C-E>' . repeat("\<Left>\<Delete>", range)
-        endif
+        let key = '\<C-E>' . repeat("\<Left>\<Delete>", range)
     elseif s:mode.windowless
         let s:omni = -1  " one_key_correction  gi mamahuhu space ctrl+u
         let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
@@ -919,12 +917,9 @@ function! g:vimim_correction()
 endfunction
 
 function! g:vimim_backspace()
-    let s:omni = 0
-    let key = '\<Left>\<Delete>' " avoid special meaning of <BS> in omni
-    if pumvisible()
-        let key .= '\<C-R>=g:vimim()\<CR>'
-    endif
-    sil!exe 'sil!return "' . key . '"'
+    let s:omni = 0  " <BS> special meaning in popupmenu-completion states
+    let key = pumvisible() ? '\<C-R>=g:vimim()\<CR>' : ''
+    sil!exe 'sil!return "' . '\<Left>\<Delete>' . key . '"'
 endfunction
 
 function! g:vimim_esc()
@@ -933,12 +928,13 @@ function! g:vimim_esc()
     if s:mode.onekey || s:mode.windowless
         :y
         if has("gui_running") && has("win32")
-            sil!let @+ = @0[:-2]  " copy to clipboard and window title
+            sil!let @+ = @0[:-2]   " <Esc> clipboard and set window title
         endif
-        let esc = s:vimim_stop() . esc
+        let esc = s:vimim_stop() . esc   " <Esc> <Esc> reset window title
         let &titlestring = s:space . @0[:-2]
+        nnoremap<silent> <Esc> <Esc>:set titlestring=<CR>
     elseif pumvisible() && g:vimim_mode =~ 'esc'
-        let esc = g:vimim_correction() " use <Esc> as one key correction
+        let esc = g:vimim_correction()   " <Esc> as one key correction
     endif
     sil!exe 'sil!return "' . esc . '"'
 endfunction
@@ -3208,14 +3204,14 @@ function! s:vimim_embedded_backend_engine(keyboard)
 endfunction
 
 function! g:vimim()
-    let s:omni = s:omni < 0 ? -1 : 0  "  one_key_correction
+    let s:omni = s:omni < 0 ? -1 : 0  " one_key_correction
     let s:keyboard = empty(s:pageup_pagedown) ? "" : s:keyboard
     let x = s:vimim_left() ? '\<C-X>\<C-O>\<C-R>=g:vimim_omni()\<CR>' : ""
     sil!exe 'sil!return "' . x . '"'
 endfunction
 
 function! g:vimim_omni()
-    let s:omni = s:omni < 0 ? 0 : 1  " omni completion pattern found
+    let s:omni = s:omni < 0 ? 0 : 1  " as if omni completion pattern found
     let cursor = s:mode.static ? '\<C-N>\<C-P>' : '\<C-P>\<Down>'
     let cursor = pumvisible() ? cursor : ""
     sil!exe 'sil!return "' . cursor . '"'
