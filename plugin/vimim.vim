@@ -58,6 +58,18 @@ function! s:vimim_initialize_debug()
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab,ctrl6,ctrl_bslash,search,gi'
     endif
+    let s:cjk = { 'lines' : [] }
+    let s:english = { 'lines' : [], 'line' : "" }
+    let s:cjk.filename     = s:vimim_filereadable("vimim.cjk.txt")
+    let s:english.filename = s:vimim_filereadable("vimim.txt")
+    let s:mandarin = len(s:english.filename) ? 0 : 1 " s/t chinese style
+    let s:hit_and_run =  len(s:cjk.filename) ? 0 : 1 " onekey continuity
+    if len(s:cjk.filename)
+        highlight! PmenuSbar  NONE
+        highlight! PmenuThumb NONE
+        highlight! Pmenu      NONE
+        highlight! link PmenuSel NonText
+    endif
 endfunction
 
 function! s:vimim_debug(...)
@@ -1405,21 +1417,6 @@ endfunction
 let s:VimIM += [" ====  input: cjk       ==== {{{"]
 " =================================================
 
-function! s:vimim_initialize_backdoor()
-    let s:english = { 'lines' : [], 'line' : "" }
-    let s:english.filename = s:vimim_filereadable("vimim.txt")
-    let s:cjk = { 'lines' : [] }
-    let s:cjk.filename = s:vimim_filereadable("vimim.cjk.txt")
-    if len(s:cjk.filename)
-        highlight! PmenuSbar  NONE
-        highlight! PmenuThumb NONE
-        highlight! Pmenu      NONE
-        highlight! link PmenuSel NonText
-    endif
-    let s:hit_and_run =  len(s:cjk.filename) ? 0 : 1  " onekey continuity
-    let s:mandarin = len(s:english.filename) ? 0 : 1  " s/t chinese style
-endfunction
-
 function! s:vimim_cjk()
     if empty(s:cjk.filename)
         return 0
@@ -2300,14 +2297,14 @@ function! s:vimim_set_backend_embedded()
         if filereadable(dir . "/pinyin")
             return s:vimim_set_directory(dir . "/")
         endif
-    endif  
+    endif
     " (2/3) scan bsddb database as edw: enterprise data warehouse
     if has("python") " bsddb is from Python 2 only with 46,694,400 Bytes
         let datafile = s:vimim_filereadable("vimim.gbk.bsddb")
         if !empty(datafile)
             return s:vimim_set_datafile("pinyin", datafile)
         endif
-    endif  
+    endif
     " (3/3) scan all supported data files, in order
     for im in s:all_vimim_input_methods
         let datafile = s:vimim_filereadable("vimim." . im . ".txt")
@@ -3225,7 +3222,6 @@ endfunction
 
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
-sil!call s:vimim_initialize_backdoor()
 sil!call s:vimim_dictionary_statusline()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
