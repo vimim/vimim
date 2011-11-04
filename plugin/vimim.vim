@@ -583,14 +583,6 @@ let s:VimIM += [" ====  lmap imap nmap   ==== {{{"]
 function! s:vimim_set_all_maps()
     let common_punctuations = split("] [ = -")
     let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
-    if s:mode.windowless || s:mode.onekey
-        let common_punctuations += split(". ,")
-        let common_labels += s:abcd[1:]
-        let pqwertyuio = s:vimim_cjk() ?  s:qwer : []
-        for _ in pqwertyuio + split("h j k l m n / ? s")
-             sil!exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
-        endfor
-    endif
     let s:gi_dynamic = s:mode.windowless ? s:gi_dynamic : 0
     let all_dynamic = s:mode.dynamic || s:gi_dynamic ? 1 : 0
     if all_dynamic || s:mode.static
@@ -603,6 +595,13 @@ function! s:vimim_set_all_maps()
                 sil!exe 'lnoremap <silent> ' . char . ' <C-R>=' .
                 \ 'g:wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
             endif
+        endfor
+    elseif empty(s:mode.static)
+        let common_punctuations += split(". ,")
+        let common_labels += s:abcd[1:]
+        let pqwertyuio = s:vimim_cjk() ?  s:qwer : []
+        for _ in pqwertyuio + split("h j k l m n / ? s")
+             sil!exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
         endfor
     endif
     for _ in s:mode.windowless ? [] : common_punctuations
