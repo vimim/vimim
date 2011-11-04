@@ -183,6 +183,7 @@ function! s:vimim_set_frontend()
     let s:ui.quote = match(split(quote),s:ui.im) < 0 ? 0 : 1
     let s:gi_dynamic = s:ui.im =~ 'pinyin' || has("win32unix") ? 0 : 1
     let &laststatus = s:mode.dynamic || s:mode.static ? 2 : &laststatus
+    call s:vimim_set_titlestring()
 endfunction
 
 function! s:vimim_set_global_default()
@@ -620,8 +621,8 @@ function! g:vimim_popup_or_halfwidth()
     else
         let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
     endif
+    sil!call s:vimim_set_frontend()
     sil!call s:vimim_set_all_maps()
-    sil!call s:vimim_set_titlestring()
     return ""
 endfunction
 
@@ -2793,7 +2794,6 @@ function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_frontend()
     sil!call s:vimim_set_all_maps()
-    sil!call s:vimim_set_titlestring()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <C-U>   g:vimim_correction()
