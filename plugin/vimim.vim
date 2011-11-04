@@ -305,7 +305,7 @@ function! s:vimim_cache()
             let A = s:match_list[: partition-1]
             let results = B + A
         endif
-    elseif s:mode.onekey && s:touch_me_not
+    elseif s:touch_me_not
         if s:hjkl_h | let s:hjkl_h = 0
             for line in s:match_list
                 let oneline = join(reverse(split(line,'\zs')),'')
@@ -360,7 +360,7 @@ function! s:vimim_get_hjkl_game(keyboard)
             endif
         endif
     endif
-    if !empty(results)
+    if len(results)
         let s:touch_me_not = 1
         if s:hjkl_m % 4
             for i in range(s:hjkl_m % 4)
@@ -583,19 +583,18 @@ let s:VimIM += [" ====  lmap imap nmap   ==== {{{"]
 function! s:vimim_set_all_maps()
     let common_punctuations = split("] [ = -")
     let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
-    let all_dynamic = 0
-    if s:mode.dynamic || s:mode.windowless && s:gi_dynamic
-        let all_dynamic = 1
-    endif
-    if all_dynamic || s:mode.static
-        sil!call s:vimim_punctuation_maps()
-    elseif s:mode.onekey
+    if s:mode.windowless || s:mode.onekey
         let common_punctuations += split(". ,")
         let common_labels += s:abcd[1:]
         let pqwertyuio = s:vimim_cjk() ?  s:qwer : []
         for _ in pqwertyuio + split("h j k l m n / ? s")
              sil!exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
         endfor
+    endif
+    let s:gi_dynamic = s:mode.windowless ? s:gi_dynamic : 0
+    let all_dynamic = s:mode.dynamic || s:gi_dynamic ? 1 : 0
+    if all_dynamic || s:mode.static
+        sil!call s:vimim_punctuation_maps()
     endif
     if all_dynamic
         let nonsense = s:ui.quote ? "[0-9]" : "[0-9']"
@@ -799,11 +798,11 @@ function! g:vimim_tab()
 endfunction
 
 function! s:vimim_windowless(key)
-    let key = a:key           " workaround to test if active completion
-    if s:pattern_not_found    " gi \bslash space space
-        " make space smart    " gi ma space enter space
-    elseif s:smart_enter      " gi ma space enter 77 ma space
-        let s:smart_enter = 0 " gi ma space xj space ctrl+u space space
+    let key = a:key            " workaround to test if active completion
+    if s:pattern_not_found     " gi \bslash space space
+        " make space smart     " gi ma space enter space
+    elseif s:smart_enter       " gi ma space enter 77 ma space
+        let s:smart_enter = 0  " gi ma space xj space ctrl+u space space
         let s:seamless_positions = []   " one_key_correction
     elseif s:omni || s:keyboard =~ " "  " assume completion active
         let key = len(a:key) ? '\<C-E>\<C-R>=g:vimim()\<CR>' : '\<C-N>'
