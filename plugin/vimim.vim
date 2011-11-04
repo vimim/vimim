@@ -581,15 +581,15 @@ endfunction
 let s:VimIM += [" ====  lmap imap nmap   ==== {{{"]
 " =================================================
 
-function! s:vimim_set_all_maps()
+function! s:vimim_set_keyboard_maps()
     let common_punctuations = split("] [ = -")
     let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
     let s:gi_dynamic = s:mode.windowless ? s:gi_dynamic : 0
-    let all_dynamic = s:mode.dynamic || s:gi_dynamic ? 1 : 0
-    if all_dynamic || s:mode.static
+    let both_dynamic = s:mode.dynamic || s:gi_dynamic ? 1 : 0
+    if both_dynamic || s:mode.static
         sil!call s:vimim_punctuation_maps()
     endif
-    if all_dynamic
+    if both_dynamic
         let nonsense = s:ui.quote ? "[0-9]" : "[0-9']"
         for char in s:valid_keys
             if char !~ nonsense || s:ui.im =~ 'phonetic'
@@ -622,7 +622,7 @@ function! g:vimim_popup_or_halfwidth()
         let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
     endif
     sil!call s:vimim_set_frontend()
-    sil!call s:vimim_set_all_maps()
+    sil!call s:vimim_set_keyboard_maps()
     return ""
 endfunction
 
@@ -637,18 +637,14 @@ function! g:vimim_label(key)
         let key = '\<C-R>=g:vimim()\<CR>'
         if s:mode.onekey && s:hit_and_run
             let key = yes . s:vimim_stop()
-        elseif s:mode.onekey && s:vimim_cjk() && a:key =~ '\d'
+        elseif s:mode.onekey && a:key =~ '\d'
             let s:hjkl .= a:key  " 1234567890 as filter
         else
             let key = yes . key
             sil!call s:vimim_reset_after_insert()
         endif
     elseif s:mode.windowless && key =~ '\d'
-        if s:pattern_not_found
-            let s:pattern_not_found = 0
-        else
-            let key = s:vimim_windowless(key)
-        endif
+        let key = s:vimim_windowless(key)
     endif
     let s:has_pumvisible = pumvisible() ? 1 : 0
     sil!exe 'sil!return "' . key . '"'
@@ -800,11 +796,8 @@ endfunction
 function! s:vimim_windowless(key)
     let key = a:key            " workaround to test if active completion
     if s:pattern_not_found     " gi \bslash space space
-        " make space smart     " gi ma space enter space
-    elseif s:smart_enter       " gi ma space enter 77 ma space
-        let s:smart_enter = 0  " gi ma space xj space ctrl+u space space
-        let s:seamless_positions = []   " one_key_correction
-    elseif s:omni || s:keyboard =~ " "  " assume completion active
+        " make space smart     " gi ma space xj space ctrl+u space
+    elseif s:omni || s:keyboard =~ " "       "  assume completion active
         let key = len(a:key) ? '\<C-E>\<C-R>=g:vimim()\<CR>' : '\<C-N>'
         let cursor = empty(len(a:key)) ? 1 : a:key < 1 ? 9 : a:key-1
         if s:vimim_cjk()
@@ -868,8 +861,8 @@ function! g:vimim_space()
     elseif s:mode.static
         let key = s:vimim_left() ? g:vimim() : key
     elseif s:seamless_positions == getpos(".")
-        let s:smart_enter = 0  " Space is Space after Enter
-    else
+        let s:smart_enter = 0    " Space is Space after Enter
+    else                         " gi ma space enter space
         return s:vimim_onekey_action()
     endif
     call s:vimim_reset_after_insert()
@@ -901,12 +894,13 @@ function! g:vimim_enter()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! g:vimim_correction()
+function! g:vimim_one_key_correction()
     let key = nr2char(21) " :help i_CTRL-U  Delete all entered characters
     if s:mode.windowless || s:mode.static && pumvisible()
-        if s:omni           " one_key_correction
-            let s:omni = -1 " gi mamahuhu space ctrl+u ctrl+u
-            let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
+        if s:omni " one_key_correction " gi m space a space ctrl+u space
+            let s:omni = -1            " gi mamahuhu space ctrl+u ctrl+u
+            let key  = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
+            let key .= '\<C-R>=g:vimim_enter()\<CR>'
         endif
     elseif pumvisible()
         let range = col(".") - 1 - s:starts.column
@@ -933,7 +927,7 @@ function! g:vimim_esc()
         sil!let &titlestring = s:space . getline(".") " <Esc> window title
         nnoremap<silent> <Esc> <Esc>:set titlestring=<CR>
     elseif pumvisible()
-        let key = g:vimim_correction()  " <Esc> as one_key_correction
+        let key = g:vimim_one_key_correction()  " <Esc> is supported
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -2793,10 +2787,10 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_frontend()
-    sil!call s:vimim_set_all_maps()
+    sil!call s:vimim_set_keyboard_maps()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
-    lnoremap <silent> <expr> <C-U>   g:vimim_correction()
+    lnoremap <silent> <expr> <C-U>   g:vimim_one_key_correction()
     lnoremap <silent> <expr> <C-L>   g:vimim_popup_or_halfwidth()
     if s:ui.im =~ 'array'
         lnoremap <silent> <expr> <CR>    g:vimim_space()
