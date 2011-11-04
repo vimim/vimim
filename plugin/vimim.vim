@@ -234,8 +234,8 @@ function! s:vimim_egg_vimimgame()
 endfunction
 
 function! s:vimim_egg_vimimvim()
-    let filter = "strpart(" . 'v:val' . ", 0, 29)"
-    return map(copy(s:VimIM), filter)
+    let vimim_pprint_filter = "strpart(" . 'v:val' . ", 0, 29)"
+    return map(copy(s:VimIM), vimim_pprint_filter)
 endfunction
 
 function! s:vimim_egg_vimimrc()
@@ -282,11 +282,12 @@ function! s:vimim_egg_vimim()
             call add(eggs, db . backend.chinese . db . backend.name)
         endif
     endfor
-    call add(eggs, cloud)
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
-    sil!call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
-    sil!call add(eggs, s:chinese('option',  s:colon) . "vimimrc")
-    sil!return map(eggs + s:vimim_egg_vimimrc(), 'v:val . " " ')
+    call add(eggs, cloud)
+    call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
+    call add(eggs, s:chinese('option',  s:colon) . "vimimrc")
+    let results = map(eggs + s:vimim_egg_vimimrc(), 'v:val . " " ')
+    return results
 endfunction
 
 " ============================================= }}}
@@ -375,6 +376,7 @@ function! s:vimim_hjkl_rotation(lines)
     let max = max(map(copy(a:lines), 'strlen(v:val)')) + 1
     let multibyte = match(a:lines,'\w') < 0 ? s:multibyte : 1
     let results = []
+    let rotations = []
     for line in a:lines
         let spaces = ''   " rotation makes more sense for cjk
         if (max-len(line)) / multibyte
@@ -383,18 +385,17 @@ function! s:vimim_hjkl_rotation(lines)
             endfor
         endif
         let line .= spaces
-        call add(results, line)
+        call add(rotations, line)
     endfor
-    let rotations = []
     for i in range(max/multibyte)
         let column = ''
-        for line in reverse(copy(results))
+        for line in reverse(copy(rotations))
             let line = get(split(line,'\zs'), i)
             if !empty(line) | let column .= line | endif
         endfor
-        call add(rotations, column)
+        call add(results, column)
     endfor
-    return rotations
+    return results
 endfunction
 
 function! s:vimim_chinese_rotation() range abort
@@ -798,11 +799,11 @@ function! g:vimim_tab()
 endfunction
 
 function! s:vimim_windowless(key)
-    let key = a:key            " workaround to test if active completion
-    if s:pattern_not_found     " gi \bslash space space
-        " make space smart     " gi ma space enter space
-    elseif s:smart_enter       " gi ma space enter 77 ma space
-        let s:smart_enter = 0  " gi ma space xj space ctrl+u space space
+    let key = a:key           " workaround to test if active completion
+    if s:pattern_not_found    " gi \bslash space space
+        " make space smart    " gi ma space enter space
+    elseif s:smart_enter      " gi ma space enter 77 ma space
+        let s:smart_enter = 0 " gi ma space xj space ctrl+u space space
         let s:seamless_positions = []   " one_key_correction
     elseif s:omni || s:keyboard =~ " "  " assume completion active
         let key = len(a:key) ? '\<C-E>\<C-R>=g:vimim()\<CR>' : '\<C-N>'
@@ -894,7 +895,7 @@ function! g:vimim_enter()
     if s:smart_enter == 1
         let s:seamless_positions = getpos(".")
     else
-        let key = "\<CR>"     " Enter is Enter after Enter
+        let key = "\<CR>"      " Enter is Enter after Enter
         let s:smart_enter = 0
     endif
     sil!call s:vimim_set_titlestring()
@@ -1203,6 +1204,7 @@ let s:VimIM += [" ====  input: number    ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_numbers()
+    let s:loops = {}
     let s:numbers = {}
     let s:numbers.1 = "一壹⑴①甲"
     let s:numbers.2 = "二贰⑵②乙"
@@ -1236,7 +1238,6 @@ function! s:vimim_dictionary_numbers()
     let s:quantifiers.x = "席些项"
     let s:quantifiers.y = "月元叶亿"
     let s:quantifiers.z = "种只张株支总枝盏座阵桩尊则站幢宗兆"
-    let s:loops = {}
 endfunction
 
 let s:translators = {}
@@ -1268,7 +1269,7 @@ endfunction
 
 function! s:vimim_imode_number(keyboard)
     let keyboard = a:keyboard
-    let ii = keyboard[0:1] " sample: i88 ii88 isw8ql iisw8ql
+    let ii = keyboard[0:1]   " sample: i88 ii88 isw8ql iisw8ql
     let keyboard = ii==#'ii' ? keyboard[2:] : keyboard[1:]
     let dddl = keyboard=~#'^\d*\l\{1}$' ? keyboard[:-2] : keyboard
     let number = ""
@@ -1283,10 +1284,8 @@ function! s:vimim_imode_number(keyboard)
             let number .= chinese
         endif
     endfor
-    if empty(number)
-        return []
-    endif
-    let numbers = [number]
+    if empty(number) | return [] | endif
+    let results = [number]
     let last_char = keyboard[-1:]
     if !empty(last_char) && has_key(s:quantifiers, last_char)
         let quantifier_list = split(s:quantifiers[last_char], '\zs')
@@ -1294,12 +1293,12 @@ function! s:vimim_imode_number(keyboard)
             if keyboard =~# '^[ds]'
                 let number = strpart(number,0,len(number)-s:multibyte)
             endif
-            let numbers = map(copy(quantifier_list), 'number . v:val')
+            let results = map(copy(quantifier_list), 'number . v:val')
         elseif keyboard =~# '^\d*$' && len(keyboards)<2 && ii != 'ii'
-            let numbers = quantifier_list
+            let results = quantifier_list
         endif
     endif
-    return numbers
+    return results
 endfunction
 
 " ============================================= }}}
@@ -1590,7 +1589,7 @@ function! s:vimim_sort_on_last(line1, line2)
 endfunction
 
 function! s:vimim_chinese_transfer() range abort
-    if s:vimim_cjk() " quick and dirty way to transfer between Chinese
+    if s:vimim_cjk()  " quick and dirty way to transfer between Chinese
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
 endfunction
