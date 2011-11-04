@@ -105,7 +105,7 @@ function! s:vimim_initialize_global()
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
     let s:seamless_positions = []
-    let s:cursor_positions = [0,0,1,0]
+    let s:starts = { 'row' : 0, 'column' : 1 }
     let s:quanpin_table = {}
     let s:shuangpin_table = {}
     let s:http_exe = ""
@@ -116,7 +116,6 @@ function! s:vimim_initialize_global()
     let s:valid_keys = s:az_list
     let s:valid_keyboard = "[0-9a-z']"
     let s:shengmu_list = split('b p m f d t l n g k h j q x r z c s y w')
-    let s:starts = { 'row' : 0, 'column' : 1 }
     let s:pumheights = { 'current' : &pumheight, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
     let s:backend = { 'cloud' : {}, 'datafile' : {}, 'directory' : {} }
@@ -509,7 +508,7 @@ function! g:vimim_bracket(offset)
     let cursor = ""
     let range = col(".") - 1 - s:starts.column
     let repeat_times = range / s:multibyte + a:offset
-    if repeat_times && line(".") == s:starts.row
+    if repeat_times
         let cursor = repeat("\<Left>\<Delete>", repeat_times)
     elseif repeat_times < 1
         let cursor = strpart(getline("."), s:starts.column, s:multibyte)
@@ -905,8 +904,10 @@ endfunction
 function! g:vimim_correction()
     let key = nr2char(21) " :help i_CTRL-U  Delete all entered characters
     if s:mode.windowless || s:mode.static && pumvisible()
-        let s:omni = -1  " one_key_correction  gi mamahuhu space ctrl+u
-        let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
+        if s:omni           " one_key_correction
+            let s:omni = -1 " gi mamahuhu space ctrl+u ctrl+u
+            let key = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
+        endif
     elseif pumvisible()
         let range = col(".") - 1 - s:starts.column
         let key = '\<C-E>' . repeat("\<Left>\<Delete>", range)
@@ -916,14 +917,15 @@ function! g:vimim_correction()
 endfunction
 
 function! g:vimim_backspace()
-    let s:omni = 0  " <BS> special meaning in popupmenu-completion states
+    " <BS> has special meaning in all 3 states of popupmenu-completion
+    let s:omni = 0  " disable active omni completion state
     let key = pumvisible() ? '\<C-R>=g:vimim()\<CR>' : ''
     let key = '\<Left>\<Delete>' . key
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
 function! g:vimim_esc()
-    let key = nr2char(27) " <Esc>
+    let key = nr2char(27) " <Esc> is <Esc> if onekey or windowless
     let &titlestring = s:titlestring
     if s:mode.windowless || s:mode.onekey
         sil!let @+ = getline(".")                     " <Esc> to clipboard
@@ -931,7 +933,7 @@ function! g:vimim_esc()
         sil!let &titlestring = s:space . getline(".") " <Esc> window title
         nnoremap<silent> <Esc> <Esc>:set titlestring=<CR>
     elseif pumvisible()
-        let key = g:vimim_correction()  " <Esc> as one key correction
+        let key = g:vimim_correction()  " <Esc> as one_key_correction
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1097,19 +1099,11 @@ function! s:vimim_set_im_toggle_list()
     let s:ui.im   = get(get(s:ui.frontends,0), 1)
 endfunction
 
-function! s:vimim_set_keyboard_list(column_start, keyboard)
-    let s:starts.column = a:column_start
-    if s:keyboard !~ '\S\s\S'
-        let s:keyboard = a:keyboard
-    endif
-endfunction
-
 function! s:vimim_get_seamless(cursor_positions)
     if empty(s:seamless_positions)
     \|| s:seamless_positions[0] != a:cursor_positions[0]
     \|| s:seamless_positions[1] != a:cursor_positions[1]
     \|| s:seamless_positions[3] != a:cursor_positions[3]
-        let s:seamless_positions = []
         return -1
     endif
     let current_line = getline(a:cursor_positions[1])
@@ -1124,7 +1118,6 @@ function! s:vimim_get_seamless(cursor_positions)
             return -1
         endif
     endfor
-    let s:starts.row = s:seamless_positions[1]
     return seamless_column
 endfunction
 
@@ -2897,11 +2890,11 @@ function! s:vimim_reset_after_insert()
     let s:match_list = []
     let s:pageup_pagedown = 0
     let s:pattern_not_found = 0
-    let s:hjkl = ""   "  reset for nothing
+    let s:hjkl   = ""   "  reset for nothing
+    let s:hjkl__ = 0    "  toggle simplified/traditional
     let s:hjkl_h = 0    "  toggle cjk property
     let s:hjkl_l = 0    "  toggle label length
     let s:hjkl_m = 0    "  toggle cjjp/c'j'j'p
-    let s:hjkl__ = 0    "  toggle simplified/traditional
 endfunction
 
 " ============================================= }}}
@@ -2914,46 +2907,46 @@ if a:start
     let start_row = cursor_positions[1]
     let start_column = cursor_positions[2]-1
     let current_line = getline(start_row)
-    let one_before = current_line[start_column-1]
+    let before = current_line[start_column-1]
     let seamless_column = s:vimim_get_seamless(cursor_positions)
-    if seamless_column >= 0
-        let len = cursor_positions[2]-1 - seamless_column
-        let keyboard = strpart(current_line, seamless_column, len)
-        call s:vimim_set_keyboard_list(seamless_column, keyboard)
-        return seamless_column
-    endif
-    let last_seen_bslash_column = copy(start_column)
-    let last_seen_nonsense_column = copy(start_column)
-    let all_digit = 1
-    while start_column
-        if one_before =~# s:valid_keyboard
-            let start_column -= 1
-            if one_before !~# "[0-9']" || s:ui.im =~ 'phonetic'
-                let last_seen_nonsense_column = start_column
-                let all_digit = all_digit ? 0 : all_digit
+    if seamless_column < 0
+        let s:seamless_positions = []
+        let last_seen_bslash_column = copy(start_column)
+        let last_seen_nonsense_column = copy(start_column)
+        let all_digit = 1
+        while start_column
+            if before =~# s:valid_keyboard
+                let start_column -= 1
+                if before !~# "[0-9']" || s:ui.im =~ 'phonetic'
+                    let last_seen_nonsense_column = start_column
+                    let all_digit = all_digit ? 0 : all_digit
+                endif
+            elseif before == '\' " do nothing if leading bslash found
+                let s:pattern_not_found = 1
+                return last_seen_bslash_column
+            else
+                break
             endif
-        elseif one_before == '\' " do nothing if leading bslash found
-            let s:pattern_not_found = 1
-            return last_seen_bslash_column
-        else
-            break
+            let before = current_line[start_column-1]
+        endwhile
+        if all_digit < 1 && current_line[start_column] =~ '\d'
+            let start_column = last_seen_nonsense_column
         endif
-        let one_before = current_line[start_column-1]
-    endwhile
-    if all_digit < 1 && current_line[start_column] =~ '\d'
-        let start_column = last_seen_nonsense_column
+    else
+        let start_column = seamless_column
     endif
-    let s:starts.row = start_row
-    let s:cursor_positions = cursor_positions
     let len = cursor_positions[2]-1 - start_column
     let keyboard = strpart(current_line, start_column, len)
-    call s:vimim_set_keyboard_list(start_column, keyboard)
+    if s:keyboard !~ '\S\s\S'
+        let s:keyboard = keyboard
+    endif
+    let s:starts.column = start_column
     return start_column
 else
     if s:omni < 0  "  one_key_correction
         return [s:space]
     endif
-    let results = s:vimim_cache() " [hjkl] less is more
+    let results = s:vimim_cache()
     if empty(results)
         sil!call s:vimim_reset_before_omni()
     else
