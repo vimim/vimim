@@ -1410,15 +1410,13 @@ function! s:vimim_cjk()
         return 0
     elseif empty(s:cjk.lines)
         let s:cjk.lines = s:vimim_readfile(s:cjk.filename)
-        if len(s:cjk.lines) != 20902
-            return 0
-        endif
+        if len(s:cjk.lines) != 20902 | return 0 | endif
     endif
     return 1
 endfunction
 
 function! s:vimim_cjk_in_4corner(chinese, info)
-    let digit_head = ""  " gi ma   马   =>   7712  <=>  mali 7 4
+    let digit_head = ""  " gi ma   马　 =>   7712  <=>  mali 7 4
     let digit_tail = ""  " gi mali 马力 => 7 4002  <=>  mali74
     let chinese = substitute(a:chinese,'[\x00-\xff]','','g')
     for cjk in split(chinese, '\zs')
@@ -1454,11 +1452,9 @@ endfunction
 
 function! s:vimim_cjk_match(key)
     let key = a:key
-    if empty(key) || empty(s:vimim_cjk())
-        return []
-    endif
-    let grep_frequency = '.*' . '\s\d\+$'
+    if empty(key) || empty(s:vimim_cjk()) | return [] | endif
     let grep = ""
+    let grep_frequency = '.*' . '\s\d\+$'
     if key =~ '\d'
         if key =~# '^\l\l\+[1-4]\>' && empty(len(s:hjkl))
             let grep = key . '[a-z ]'  " cjk pinyin: huan2hai2 yi1
