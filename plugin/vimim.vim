@@ -508,7 +508,7 @@ function! s:vimim_set_pumheight()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  statusline       ==== {{{"]
+let s:VimIM += [" ====  titlestring      ==== {{{"]
 " =================================================
 
 function! s:vimim_set_titlestring()
@@ -518,15 +518,13 @@ function! s:vimim_set_titlestring()
 endfunction
 
 function! s:vimim_set_title(title)
-    if s:mode.dynamic || s:mode.static || &term == 'screen'
-        let &laststatus = 2
-    endif
-    if &laststatus < 1
-        let &titlestring = a:title
-    elseif s:mode.windowless || s:mode.onekey
-        let &l:statusline = '%{"'. a:title .'"}%<'
-    else
-        let &l:statusline = '%<%f %h%m%r%=%-14.(%l,%c%V%) %P%{IMName()}'
+    let &titlestring = &laststatus ? &titlestring : a:title
+    if &term == 'screen'
+        if s:mode.dynamic || s:mode.static
+            let &l:statusline = '%<%f %h%m%r%=%-14.(%l,%c%V%) %P%{IMName()}'
+        else
+            let &l:statusline = '%{"'. a:title .'"}%<'
+        endif
     endif
     redraw
 endfunction
@@ -605,21 +603,14 @@ function! s:vimim_windowless_titlestring(cursor)
     sil!call s:vimim_set_title(s:display)
 endfunction
 
-function! g:vimim_get_title()
-    let &titlestring = s:titlestring
-    let &statusline  = s:statusline
-endfunction
-
 function! g:vimim_esc()
     let key = nr2char(27)  "  <Esc> is <Esc> if onekey or windowless
-    call g:vimim_get_title()
     if s:mode.windowless || s:mode.onekey
         if has("gui_running")
             sil!let @+ = getline(".")          " <Esc> to clipboard
         endif
         sil!let key = s:vimim_stop() . key     " <Esc> to escape
         sil!call s:vimim_set_title(s:space . getline("."))
-        nnoremap<silent> <Esc> <Esc>:sil!call g:vimim_get_title()<CR>
     elseif pumvisible()
         let key = g:vimim_one_key_correction() " <Esc> as correction
     endif
@@ -2836,7 +2827,6 @@ function! s:vimim_save_vimrc()
     let s:omnifunc    = &omnifunc
     let s:complete    = &complete
     let s:completeopt = &completeopt
-    let s:laststatus  = &laststatus
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
     let s:lazyredraw  = &lazyredraw
@@ -2855,10 +2845,10 @@ function! s:vimim_restore_vimrc()
     let &omnifunc    = s:omnifunc
     let &complete    = s:complete
     let &completeopt = s:completeopt
-    let &laststatus  = s:laststatus
+    let &statusline  = s:statusline
+    let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheights.saved
-    call g:vimim_get_title()
 endfunction
 
 function! s:vimim_super_reset()
