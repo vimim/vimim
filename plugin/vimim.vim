@@ -181,8 +181,7 @@ function! s:vimim_set_frontend()
     let s:valid_keys = split(keycode_string, '\zs')
     let s:wubi = cloud =~ 'wubi' || s:ui.im =~ 'wubi\|erbi' ? 1 : 0
     let s:ui.quote = match(split(quote),s:ui.im) < 0 ? 0 : 1
-    let s:gi_dynamic = s:ui.im =~ 'pinyin' || has("win32unix") ? 0 : 1
-    let &laststatus = s:mode.dynamic || s:mode.static ? 2 : &laststatus
+    let s:gi_dynamic = s:ui.im =~ 'pinyin' || s:ui.root =~ 'cloud' ? 0 : 1
     call s:vimim_set_titlestring()
 endfunction
 
@@ -455,12 +454,12 @@ function! s:vimim_dictionary_punctuations()
     endif
 endfunction
 
-function! s:vimim_input_method_in_chinese()
+function! s:vimim_im_chinese()
     let title = s:space
     let backend = s:backend[s:ui.root][s:ui.im]
     if has_key(s:keycodes, s:ui.im)
         let im = backend.chinese
-        if s:mode.windowless
+        if s:mode.windowless && len(s:cjk.filename)
             let im = len(s:hjkl) ? s:hjkl : len(s:english.line) ? '*' : ''
         endif
         let title .= im
@@ -531,29 +530,28 @@ function! s:vimim_get_label(label)
 endfunction
 
 function! s:vimim_set_titlestring()
-    let titlestring = s:logo . s:vimim_input_method_in_chinese()
-    if s:mode.windowless && empty(s:touch_me_not)
-        let titlestring .= s:space . s:today
-    endif
+    let title  = s:logo . s:vimim_im_chinese() . s:space
+    let title .= s:mode.windowless ?  s:today : ''
+    let &titlestring = title " only if terminal can set window title
     if &term == 'screen'
-        echo titlestring
-    else    " only if terminal can set window title
-        let &titlestring = titlestring
+        let &laststatus = 2
+        let &statusline = '%{&titlestring}%<'
+    else
+        let &laststatus = s:mode.dynamic || s:mode.static ? 2 : &ls
+        let &statusline = '%<%f %h%m%r%=%-14.(%l,%c%V%) %P%{IMName()}'
     endif
-    :set statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P%{IMName()}
     :redraw
 endfunction
 
 function! IMName()
-    let stl = ""    " for user-defined 'stl' 'statusline'
+    let stl = ""  " for user-defined 'stl' 'statusline'
     if &omnifunc == 'VimIM' || s:mode.onekey && pumvisible()
         let punctuation = 'halfwidth'
         if g:vimim_punctuation > 0 && s:toggle_punctuation > 0
             let punctuation = 'fullwidth'
         endif
         let mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
-        let stl  = s:chinese(s:space, 'chinese', mode)
-        let stl .= s:vimim_input_method_in_chinese()
+        let stl  = s:chinese('chinese', mode) . s:vimim_im_chinese()
         let stl .= s:chinese(s:space, punctuation, s:space, "VimIM")
     endif
     return stl
@@ -827,9 +825,9 @@ function! s:vimim_windowless_titlestring(cursor)
         let east .= join(words[cursor+1 :])
         let s:cursor_at_windowless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
-        let tail = keyboard .'  '. west . hightlight . east
-        let head = "VimIM" . s:vimim_input_method_in_chinese()
-        let &titlestring = head .' '. tail
+        let head = "VimIM" . s:vimim_im_chinese() . '  '
+        let tail = keyboard . '  ' . west . hightlight . east
+        let &titlestring = head . tail
     endif
 endfunction
 
@@ -2341,10 +2339,10 @@ function! s:vimim_check_http_executable()
     endif
     " step 2 of 4: try to use dynamic python:
     if empty(s:http_exe)
-        if has('python3') && &relativenumber  " +python3/dyn
-            let s:http_exe = 'Python3 Interface to Vim'
-        elseif has('python')                  " +python/dyn
-            let s:http_exe = 'Python2 Interface to Vim'
+        if has('python')
+            let s:http_exe = 'Python2 Interface to Vim' " +python/dyn
+        elseif has('python3') && &relativenumber
+            let s:http_exe = 'Python3 Interface to Vim' " +python3/dyn
         endif
     endif
     " step 3 of 4: try to find wget
@@ -3020,8 +3018,8 @@ endfunction
 function! s:vimim_popupmenu_list(lines)
     let s:match_list = a:lines
     let keyboards = split(s:keyboard)  " mmmm => ['m',"m'm'm"]
+    let keyboard = join(keyboards,"")
     let tail = len(keyboards) < 2 ? "" : get(keyboards,1)
-    let keyboard = get(keyboards, 0)
     if empty(a:lines) || type(a:lines) != type([])
         return []
     elseif s:vimim_cjk() && len(s:hjkl)
@@ -3071,9 +3069,9 @@ function! s:vimim_popupmenu_list(lines)
         if s:mode.windowless
             if s:vimim_cjk() " display sexy english and dynamic 4corner
                 let star = substitute(titleline,'[0-9a-z_ ]','','g')
-                let digit = s:vimim_cjk_in_4corner(chinese,1)
-                let titleline = star . digit[len(s:hjkl) : 3] " ma7 712
-            elseif label < 11      " 234567890 for windowless selection
+                let digit = s:vimim_cjk_in_4corner(chinese,1) " ma7 712
+                let titleline = star . digit[len(s:hjkl) : 3]
+            elseif label < 11   " 234567890 for windowless selection
                 let titleline = label == 10 ? "0" : label
             endif
             call add(one_list, titleline . chinese)
@@ -3083,15 +3081,12 @@ function! s:vimim_popupmenu_list(lines)
         let complete_items["word"] = empty(chinese) ? s:space : chinese
         call add(s:popup_list, complete_items)
     endfor
-    if s:mode.windowless && empty(s:touch_me_not)
-        let vimim = "VimIM" . s:space .'  '. join(keyboards,"").'  '
-        let &titlestring = vimim . join(one_list)
+    if s:mode.windowless
+        let &titlestring = 'VimIM ' . keyboard . ' ' . join(one_list)
         call s:vimim_windowless_titlestring(1)
-        Debug s:match_list[:2]
-    elseif s:touch_me_not
-        let &titlestring = s:logo . s:space . s:today
     endif
     call s:vimim_set_pumheight()
+    Debug s:match_list[:2]
     return s:popup_list
 endfunction
 
