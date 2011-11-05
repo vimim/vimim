@@ -32,8 +32,8 @@ let s:VimIM += [" ====  initialization   ==== {{{"]
 " =================================================
 
 function! s:vimim_bare_bones_vimrc()
-    set cpoptions=Bce$ go=cirMehf shm=aoOstTAI noloadplugins hlsearch
-    set gcr=a:blinkon0 mouse=nicr shellslash noswapfile viminfo=
+    set cpoptions=Bce$ go=cirMehf shm=aoOstTAI noloadplugins
+    set gcr=a:blinkon0 shellslash noswapfile viminfo= hlsearch
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
     let unix = '/usr/local/bin:/usr/bin:/bin:.'
@@ -101,6 +101,7 @@ function! s:vimim_initialize_global()
     let s:space = '　'
     let s:colon = '：'
     let s:logo = "VimIM　中文輸入法"
+    let s:display = s:logo
     let s:today = s:vimim_imode_today_now('itoday')
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
@@ -410,7 +411,7 @@ endfunction
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
-function! s:vimim_dictionary_title()
+function! s:vimim_dictionary_titleline()
     let one  = " cjk  boshiamy  wubi2000  taijima  nature"
     let two  = " 标准字库,標準字庫  呒虾米,嘸蝦米  新世纪,新世紀"
     let two .= " 太极码,太極碼  自然码,自然碼"
@@ -426,7 +427,7 @@ function! s:vimim_dictionary_title()
     let one .= " abc revision date google baidu sogou qq "
     let two .= " 打 全角 半角 英文 中文 紫光 加加 速成 海峰 自己的 98"
     let two .= " 拼 拼音 注音 行列 智能 版本 日期 谷歌 百度 搜狗 ＱＱ"
-    let s:title = s:vimim_key_value_hash(one, two)
+    let s:titleline = s:vimim_key_value_hash(one, two)
 endfunction
 
 function! s:vimim_dictionary_punctuations()
@@ -452,6 +453,93 @@ function! s:vimim_dictionary_punctuations()
     if g:vimim_punctuation > 1   " :let g:vimim_punctuation = 2
         call extend(s:punctuations, most_punctuations)
     endif
+endfunction
+
+function! g:vimim_slash()
+    let range = col(".") - 1 - s:starts.column
+    let chinese = strpart(getline("."), s:starts.column, range)
+    let word = substitute(chinese,'\w','','g')
+    let @/ = empty(word) ? @_ : word
+    let repeat_times = len(word) / s:multibyte
+    let key = repeat("\<Left>\<Delete>",repeat_times) . g:vimim_esc()
+    sil!exe 'sil!return "' . key . '"'
+endfunction
+
+function! g:vimim_bracket(offset)
+    let cursor = ""
+    let range = col(".") - 1 - s:starts.column
+    let repeat_times = range / s:multibyte + a:offset
+    if repeat_times
+        let cursor = repeat("\<Left>\<Delete>", repeat_times)
+    elseif repeat_times < 1
+        let cursor = strpart(getline("."), s:starts.column, s:multibyte)
+    endif
+    return cursor
+endfunction
+
+function! s:vimim_get_label(label)
+    let labeling = a:label == 10 ? "0" : a:label
+    if s:mode.onekey && a:label < 11
+        let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
+        let labeling = empty(labeling) ? '10' : labeling . label2
+        if len(s:cjk.filename) && empty(s:hjkl_l%2)
+            let labeling = " " . label2
+        endif
+    endif
+    return labeling
+endfunction
+
+function! s:vimim_set_pumheight()
+    let &completeopt = s:mode.windowless ? 'menu' : 'menuone'
+    let &pumheight = s:pumheights.saved
+    if empty(&pumheight)
+        let &pumheight = 5
+        if s:mode.onekey || len(s:valid_keys) > 28
+            let &pumheight = 10
+        endif
+    endif
+    let &pumheight = s:mode.windowless ? 1 : &pumheight
+    let s:pumheights.current = copy(&pumheight)
+    if s:touch_me_not
+        let &pumheight = 0
+    elseif s:hjkl_l
+        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
+    endif
+endfunction
+
+" ============================================= }}}
+let s:VimIM += [" ====  statusline       ==== {{{"]
+" =================================================
+
+function! s:vimim_set_titlestring()
+    let today = s:mode.windowless ? s:today : ''
+    let title  = s:logo . s:vimim_im_chinese() . today
+    call s:vimim_set_title(title)
+endfunction
+
+function! s:vimim_set_title(title)
+    if s:mode.dynamic || s:mode.static || &term == 'screen'
+        let &laststatus = 2
+    endif
+    if &laststatus < 1
+        let &titlestring = a:title
+    elseif s:mode.windowless || s:mode.onekey
+        let &l:statusline = '%{"'. a:title .'"}%<'
+    else
+        let &l:statusline = '%<%f %h%m%r%=%-14.(%l,%c%V%) %P%{IMName()}'
+    endif
+    redraw
+endfunction
+
+function! IMName()
+    let punctuation = 'halfwidth'
+    if g:vimim_punctuation > 0 && s:toggle_punctuation > 0
+        let punctuation = 'fullwidth'
+    endif
+    let mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
+    let stl  = s:chinese('chinese', mode) . s:vimim_im_chinese()
+    let stl .= s:chinese(punctuation, s:space, "VimIM")
+    return stl
 endfunction
 
 function! s:vimim_im_chinese()
@@ -492,87 +580,50 @@ function! s:vimim_im_chinese()
     if g:vimim_shuangpin =~ 'abc' || g:vimim_cloud =~ 'abc'
         let title = substitute(title,s:chinese('pin'),s:chinese('hit'),'')
     endif
-    return title
+    return title . s:space
 endfunction
 
-function! g:vimim_slash()
-    let range = col(".") - 1 - s:starts.column
-    let chinese = strpart(getline("."), s:starts.column, range)
-    let word = substitute(chinese,'\w','','g')
-    let @/ = empty(word) ? @_ : word
-    let repeat_times = len(word) / s:multibyte
-    let key = repeat("\<Left>\<Delete>",repeat_times) . g:vimim_esc()
+function! s:vimim_windowless_titlestring(cursor)
+    let west = s:all_evils['[']
+    let east = s:all_evils[']']
+    let titlestring = substitute(s:display, west.'\|'.east, ' ', 'g')
+    if titlestring !~ '\s\+' . "'" . '\+\s\+'
+        let titlestring = substitute(titlestring,"'",'','g')
+    endif
+    let words = split(titlestring)[1:]
+    let cursor = s:cursor_at_windowless + a:cursor
+    let hightlight = get(words, cursor)
+    if !empty(hightlight) && len(words) > 1
+        let west  = join(words[1 : cursor-1]) . west
+        let east .= join(words[cursor+1 :])
+        let s:cursor_at_windowless = cursor
+        let keyboard = get(words,0)=='0' ? "" : get(words,0)
+        let head = "VimIM" . s:vimim_im_chinese() . '  '
+        let tail = keyboard . '  ' . west . hightlight . east
+        let s:display = head . tail
+    endif
+    sil!call s:vimim_set_title(s:display)
+endfunction
+
+function! g:vimim_get_title()
+    let &titlestring = s:titlestring
+    let &statusline  = s:statusline
+endfunction
+
+function! g:vimim_esc()
+    let key = nr2char(27)  "  <Esc> is <Esc> if onekey or windowless
+    call g:vimim_get_title()
+    if s:mode.windowless || s:mode.onekey
+        if has("gui_running")
+            sil!let @+ = getline(".")          " <Esc> to clipboard
+        endif
+        sil!let key = s:vimim_stop() . key     " <Esc> to escape
+        sil!call s:vimim_set_title(s:space . getline("."))
+        nnoremap<silent> <Esc> <Esc>:sil!call g:vimim_get_title()<CR>
+    elseif pumvisible()
+        let key = g:vimim_one_key_correction() " <Esc> as correction
+    endif
     sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! g:vimim_bracket(offset)
-    let cursor = ""
-    let range = col(".") - 1 - s:starts.column
-    let repeat_times = range / s:multibyte + a:offset
-    if repeat_times
-        let cursor = repeat("\<Left>\<Delete>", repeat_times)
-    elseif repeat_times < 1
-        let cursor = strpart(getline("."), s:starts.column, s:multibyte)
-    endif
-    return cursor
-endfunction
-
-function! s:vimim_get_label(label)
-    let labeling = a:label == 10 ? "0" : a:label
-    if s:mode.onekey && a:label < 11
-        let label2 = a:label < 2 ? "_" : get(s:abcd,a:label-1)
-        let labeling = empty(labeling) ? '10' : labeling . label2
-        if len(s:cjk.filename) && empty(s:hjkl_l%2)
-            let labeling = " " . label2
-        endif
-    endif
-    return labeling
-endfunction
-
-function! s:vimim_set_titlestring()
-    let title  = s:logo . s:vimim_im_chinese() . s:space
-    let title .= s:mode.windowless ?  s:today : ''
-    let &titlestring = title " only if terminal can set window title
-    if &term == 'screen'
-        let &laststatus = 2
-        let &statusline = '%{&titlestring}%<'
-    else
-        let &laststatus = s:mode.dynamic || s:mode.static ? 2 : &ls
-        let &statusline = '%<%f %h%m%r%=%-14.(%l,%c%V%) %P%{IMName()}'
-    endif
-    :redraw
-endfunction
-
-function! IMName()
-    let stl = ""  " for user-defined 'stl'
-    if &omnifunc == 'VimIM' || s:mode.onekey && pumvisible()
-        let punctuation = 'halfwidth'
-        if g:vimim_punctuation > 0 && s:toggle_punctuation > 0
-            let punctuation = 'fullwidth'
-        endif
-        let mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
-        let stl  = s:chinese('chinese', mode) . s:vimim_im_chinese()
-        let stl .= s:chinese(s:space, punctuation, s:space, "VimIM")
-    endif
-    return stl
-endfunction
-
-function! s:vimim_set_pumheight()
-    let &completeopt = s:mode.windowless ? 'menu' : 'menuone'
-    let &pumheight = s:pumheights.saved
-    if empty(&pumheight)
-        let &pumheight = 5
-        if s:mode.onekey || len(s:valid_keys) > 28
-            let &pumheight = 10
-        endif
-    endif
-    let &pumheight = s:mode.windowless ? 1 : &pumheight
-    let s:pumheights.current = copy(&pumheight)
-    if s:touch_me_not
-        let &pumheight = 0
-    elseif s:hjkl_l
-        let &pumheight = s:hjkl_l % 2 ? 0 : s:pumheights.current
-    endif
 endfunction
 
 " ============================================= }}}
@@ -810,27 +861,6 @@ function! s:vimim_windowless(key)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_windowless_titlestring(cursor)
-    let west = s:all_evils['[']
-    let east = s:all_evils[']']
-    let titlestring = substitute(&titlestring,west.'\|'.east,' ','g')
-    if titlestring !~ '\s\+' . "'" . '\+\s\+'
-        let titlestring = substitute(titlestring,"'",'','g')
-    endif
-    let words = split(titlestring)[1:]
-    let cursor = s:cursor_at_windowless + a:cursor
-    let hightlight = get(words, cursor)
-    if !empty(hightlight) && len(words) > 1
-        let west  = join(words[1 : cursor-1]) . west
-        let east .= join(words[cursor+1 :])
-        let s:cursor_at_windowless = cursor
-        let keyboard = get(words,0)=='0' ? "" : get(words,0)
-        let head = "VimIM" . s:vimim_im_chinese() . '  '
-        let tail = keyboard . '  ' . west . hightlight . east
-        let &titlestring = head . tail
-    endif
-endfunction
-
 function! g:vimim_pagedown()
     let key = ' '
     if pumvisible()
@@ -913,20 +943,6 @@ function! g:vimim_backspace()
     let s:omni = 0  " disable active omni completion state
     let key = pumvisible() ? '\<C-R>=g:vimim()\<CR>' : ''
     let key = '\<Left>\<Delete>' . key
-    sil!exe 'sil!return "' . key . '"'
-endfunction
-
-function! g:vimim_esc()
-    let key = nr2char(27) " <Esc> is <Esc> if onekey or windowless
-    let &titlestring = s:titlestring
-    if s:mode.windowless || s:mode.onekey
-        sil!let @+ = getline(".")                     " <Esc> to clipboard
-        sil!let key = s:vimim_stop() . key            " <Esc> escape
-        sil!let &titlestring = s:space . getline(".") " <Esc> window title
-        nnoremap<silent> <Esc> <Esc>:set titlestring=<CR>
-    elseif pumvisible()
-        let key = g:vimim_one_key_correction()  " <Esc> is supported
-    endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -1130,7 +1146,7 @@ function! g:vimim_visual()
         endif
         if s:vimim_cjk()
             let line = match(s:cjk.lines, "^".line)
-            let &titlestring = s:space . get(s:cjk.lines,line)
+            call s:vimim_set_title(s:space.get(s:cjk.lines,line))
         endif
     elseif match(lines,'\d') > -1 && join(lines) !~ '[^0-9[:blank:].]'
         call setpos(".", getpos("'>'"))  " vertical digit block =>
@@ -1387,8 +1403,8 @@ function! s:chinese(...)
     let chinese = ""
     for english in a:000
         let cjk = english
-        if has_key(s:title, english)
-            let twins = split(s:title[english], ",")
+        if has_key(s:titleline, english)
+            let twins = split(s:titleline[english], ",")
             let cjk = get(twins, 0)
             if len(twins) > 1 && s:mandarin
                 let cjk = get(twins,1)
@@ -2733,41 +2749,41 @@ function! s:vimim_sort_on_length(i1, i2)
     return len(a:i2) - len(a:i1)
 endfunc
 
-function! s:vimim_search_chinese_by_english(keyboard)
-    let keyboard = tolower(a:keyboard)
+function! s:vimim_search_chinese_by_english(key)
+    let key = tolower(a:key)
     let results = []
     " 1/3 first try search from mycloud or cloud if available
     if s:ui.im == 'mycloud'
-        let results = s:vimim_get_mycloud(keyboard)
-    elseif s:ui.root == 'cloud' || keyboard[-1:] == "'"
-        let results = s:vimim_get_cloud(keyboard, s:cloud)
+        let results = s:vimim_get_mycloud(key)
+    elseif s:ui.root == 'cloud' || key[-1:] == "'"
+        let results = s:vimim_get_cloud(key, s:cloud)
     endif
     if len(results) | return results | endif
     " 2/3 search unicode or cjk /search unicode /u808f
-    let ddddd = s:vimim_get_unicode_ddddd(keyboard)
+    let ddddd = s:vimim_get_unicode_ddddd(key)
     if !empty(ddddd)
         let results = [nr2char(ddddd)]
     elseif s:vimim_cjk()
-        while len(keyboard) > 1
-            let head = s:vimim_get_cjk_head(keyboard)
+        while len(key) > 1
+            let head = s:vimim_get_cjk_head(key)
             if empty(head)  " /muuqwxeyqpjeqqq
                 break       " /m7712x3610j3111
             else            " /ma77xia36ji31
-                let chinese = join(s:vimim_cjk_match(head), '')
-                if !empty(chinese)
+                let matches = s:vimim_cjk_match(head)
+                if len(matches)
+                    let chinese = join(matches[:9], '')
                     call add(results, "[" . chinese . "]")
                 endif
-                let keyboard = strpart(keyboard, len(head))
+                let key = strpart(key, len(head))
             endif
         endwhile
         let results = len(results) > 1 ? [join(results,'')] : results
     endif
     if len(results) | return results | endif
     " 3/3 search datafile and english: /ma and /horse
-    let keyboard = tolower(a:keyboard)
-    let s:english.line = s:vimim_get_english(keyboard)
+    let s:english.line = s:vimim_get_english(key)
     if empty(s:english.line)
-        let results = s:vimim_embedded_backend_engine(keyboard)
+        let results = s:vimim_embedded_backend_engine(key)
     else
         let results = split(s:english.line)
     endif
@@ -2840,10 +2856,9 @@ function! s:vimim_restore_vimrc()
     let &complete    = s:complete
     let &completeopt = s:completeopt
     let &laststatus  = s:laststatus
-    let &statusline  = s:statusline
-    let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
     let &pumheight   = s:pumheights.saved
+    call g:vimim_get_title()
 endfunction
 
 function! s:vimim_super_reset()
@@ -3083,7 +3098,7 @@ function! s:vimim_popupmenu_list(lines)
         call add(s:popup_list, complete_items)
     endfor
     if s:mode.windowless
-        let &titlestring = 'VimIM ' . keyboard . ' ' . join(one_list)
+        let s:display = 'VimIM ' . keyboard . ' ' . join(one_list)
         call s:vimim_windowless_titlestring(1)
     endif
     call s:vimim_set_pumheight()
@@ -3187,7 +3202,7 @@ endfunction
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_backdoor()
-sil!call s:vimim_dictionary_title()
+sil!call s:vimim_dictionary_titleline()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
