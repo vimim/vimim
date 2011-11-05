@@ -2779,6 +2779,7 @@ let s:VimIM += [" ====  core workflow    ==== {{{"]
 " =================================================
 
 function! s:vimim_start()
+    sil!call s:vimim_save_vimrc()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_frontend()
     sil!call s:vimim_set_keyboard_maps()
@@ -2814,14 +2815,6 @@ function! s:vimim_stop()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! s:vimim_set_vimrc()
-    set title noshowmatch shellslash imdisable
-    set completeopt=menuone
-    set complete=.
-    set nolazyredraw
-    set omnifunc=VimIM
-endfunction
-
 function! s:vimim_save_vimrc()
     let s:cpo         = &cpo
     let s:omnifunc    = &omnifunc
@@ -2831,6 +2824,14 @@ function! s:vimim_save_vimrc()
     let s:statusline  = &statusline
     let s:titlestring = &titlestring
     let s:lazyredraw  = &lazyredraw
+endfunction
+
+function! s:vimim_set_vimrc()
+    set title noshowmatch shellslash imdisable
+    set completeopt=menuone
+    set complete=.
+    set nolazyredraw
+    set omnifunc=VimIM
 endfunction
 
 function! s:vimim_restore_vimrc()
@@ -3190,7 +3191,6 @@ sil!call s:vimim_dictionary_title()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
-sil!call s:vimim_save_vimrc()
 sil!call s:vimim_super_reset()
 sil!call s:vimim_set_backend_clouds()
 sil!call s:vimim_set_backend_embedded()
