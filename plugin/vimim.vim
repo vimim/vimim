@@ -2793,16 +2793,16 @@ function! s:vimim_start()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <C-U>   g:vimim_one_key_correction()
-    lnoremap <silent> <expr> <C-L>   g:vimim_popup_or_halfwidth()
+    lnoremap <silent> <expr> <C-B>   g:vimim_popup_or_halfwidth()
+    if len(s:ui.frontends) > 1 && g:vimim_toggle > -1
+        lnoremap <silent> <expr> <C-_> g:vimim_next_im()
+    endif
     if s:ui.im =~ 'array'
         lnoremap <silent> <expr> <CR>    g:vimim_space()
         lnoremap <silent> <expr> <Space> g:vimim_pagedown()
     else
         lnoremap <silent> <expr> <CR>    g:vimim_enter()
         lnoremap <silent> <expr> <Space> g:vimim_space()
-    endif
-    if len(s:ui.frontends) > 1 && g:vimim_toggle > -1
-        lnoremap <silent> <expr> <C-H> g:vimim_next_im()
     endif
     let key = ''
     if empty(s:ctrl6)
