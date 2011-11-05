@@ -286,7 +286,8 @@ function! s:vimim_egg_vimim()
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
     call add(eggs, cloud)
     call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
-    call add(eggs, s:chinese('option',  s:colon) . "vimimrc")
+    let option = "vimimrc" . s:colon . s:vimim_im_chinese()
+    call add(eggs, s:chinese('option',  s:colon) . option)
     let results = map(eggs + s:vimim_egg_vimimrc(), 'v:val . " " ')
     return results
 endfunction
