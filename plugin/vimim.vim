@@ -410,7 +410,7 @@ endfunction
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
-function! s:vimim_dictionary_statusline()
+function! s:vimim_dictionary_title()
     let one  = " cjk  boshiamy  wubi2000  taijima  nature"
     let two  = " 标准字库,標準字庫  呒虾米,嘸蝦米  新世纪,新世紀"
     let two .= " 太极码,太極碼  自然码,自然碼"
@@ -544,7 +544,7 @@ function! s:vimim_set_titlestring()
 endfunction
 
 function! IMName()
-    let stl = ""  " for user-defined 'stl' 'statusline'
+    let stl = ""  " for user-defined 'stl'
     if &omnifunc == 'VimIM' || s:mode.onekey && pumvisible()
         let punctuation = 'halfwidth'
         if g:vimim_punctuation > 0 && s:toggle_punctuation > 0
@@ -3186,7 +3186,7 @@ endfunction
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_backdoor()
-sil!call s:vimim_dictionary_statusline()
+sil!call s:vimim_dictionary_title()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
