@@ -1031,7 +1031,7 @@ function! s:vimim_onekey_evils()
         endif
         let key = "\<BS>\<BS>" . key . '\<C-R>=g:vimim()\<CR>'
     elseif one == "'" && two =~ "[a-z']" " force cloud
-    elseif one =~# "[0-9a-z]" || one =~# '\s' || empty(one)   " todo
+    elseif one =~# "[0-9a-z]" || one =~# '\s' || empty(one)   
     elseif two =~# "[0-9a-z]" || one =~# '\u'
         let key = " "  " ma,space => ma, space
     elseif has_key(onekey_evils, one)
@@ -1471,8 +1471,8 @@ function! s:vimim_cjk_match(key)
         else
             let digit = ""
             if key =~ '^\d\+' && key !~ '[^0-9]'
-                let digit = key   " free style digit: 7 77 771 7712
-            elseif key =~# '^\l\+\d\+'  " free style: ma7 ma77 ma771 ma7712
+                let digit = key        " free style digit: 7 77 771 7712
+            elseif key =~# '^\l\+\d\+' " free style: ma7 ma77 ma771 ma7712
                 let digit = substitute(key,'\a','','g')
             endif
             if !empty(digit)
@@ -1829,7 +1829,7 @@ function! s:vimim_shuangpin_rules(shuangpin, rules)
     let key .= ' uan iu uai ong eng iang ui ai an ao iao ian uang '
     let v = ''  " various value to almost the same key set
     if a:shuangpin == 'ms'         " test: viui => zhishi
-        let v = 'b z h f s w r g w x ; p o n t r q y s g d v l j k c m d y'
+        let v = join(split('bzhfswrgwx;pontrqysgdvljkcmdy','\zs'))
         call extend(rules[0], { "zh" : "v", "ch" : "i", "sh" : "u" })
         let key .= 'v'  " microsoft shuangpin has one additional key
     elseif a:shuangpin == 'abc'    " test: vtpc => shuang pin
@@ -1881,10 +1881,10 @@ function! s:vimim_create_shuangpin_table(rules)
         endif
     endfor
     if match(split("abc purple nature flypy"), g:vimim_shuangpin) > -1
-        let jxqy = {"jv" : "ju", "qv" : "qu", "xv" : "xu", "yv" : "yu"}
+        let jxqy = {"jv":"ju", "qv":"qu", "xv":"xu", "yv":"yu"}
         call extend(sptable, jxqy)
     elseif g:vimim_shuangpin == 'ms' " jxqy+v special case handling
-        let jxqy = {"jv" : "jue", "qv" : "que", "xv" : "xue", "yv" : "yue"}
+        let jxqy = {"jv":"jue", "qv":"que", "xv":"xue", "yv":"yue"}
         call extend(sptable, jxqy)
     endif
     if g:vimim_shuangpin == 'flypy'  " flypy special case handling
@@ -1893,7 +1893,7 @@ function! s:vimim_create_shuangpin_table(rules)
         call extend(sptable, s:vimim_key_value_hash(key, value))
     endif
     if g:vimim_shuangpin == 'nature' " nature special case handling
-        let nature = {"aa" : "a", "oo" : "o", "ee" : "e" }
+        let nature = {"aa":"a", "oo":"o", "ee":"e" }
         call extend(sptable, nature)
     endif
     for [key, value] in items(a:rules[0])
@@ -2414,7 +2414,7 @@ function! s:vimim_get_from_http(input, cloud)
 endfunction
 
 function! s:vimim_get_cloud_sogou(keyboard)
-    let results = [] " http://web.pinyin.sogou.com/api/py?key=32&query=mxj
+    let results = [] " http://web.pinyin.sogou.com/api/py?key=32&query=xj
     if empty(s:backend.cloud.sogou.im)  " as cloud key
         let key_sogou = "http://web.pinyin.sogou.com/web_ime/patch.php"
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
@@ -2482,7 +2482,7 @@ function! s:vimim_get_cloud_qq(keyboard)
     let output = s:vimim_get_from_http(input, 'qq')
     if empty(output) || output =~ '502 bad gateway'
         return []
-    endif             " qq => {'q':'fuck','rs':['\xe5\xa6\x87'],
+    endif             " qq => {'q':'fuck','rs':['\xe5\xa6\x87']
     let output = s:localization ? s:vimim_i18n(output) : output
     let output_hash = eval(output)
     if type(output_hash) == type({}) && has_key(output_hash, 'rs')
@@ -2818,7 +2818,7 @@ function! s:vimim_stop()
         lmapclear
     endif
     let key = nr2char(30) " i_CTRL-^
-    let s:ui.frontends = copy(s:frontends)  " todo
+    let s:ui.frontends = copy(s:frontends)  
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
@@ -3093,7 +3093,7 @@ function! s:vimim_popupmenu_list(lines)
         call s:vimim_windowless_titlestring(1)
     endif
     call s:vimim_set_pumheight()
-    Debug s:match_list[:2]
+    Debug s:match_list[:1]
     return s:popup_list
 endfunction
 
@@ -3177,10 +3177,10 @@ function! s:vimim_plug_and_play()
     if g:vimim_map !~ 'no-search'
         nnoremap<silent> n :call g:vimim_search()<CR>n
     endif
-    if g:vimim_map =~ 'c-bslash'
+    if g:vimim_map =~ 'c-bslash'      " use Ctrl-\
         imap <C-Bslash> <C-_>
         nmap <C-Bslash> <C-_>
-    elseif g:vimim_map =~ 'c-space'
+    elseif g:vimim_map =~ 'c-space'   " use Ctrl-Space
         if has("win32unix")
             nmap <C-@> <C-_>
             imap <C-@> <C-_>
@@ -3188,7 +3188,7 @@ function! s:vimim_plug_and_play()
             imap <C-Space> <C-_>
             nmap <C-Space> <C-_>
         endif
-    elseif g:vimim_map =~ 'm-space'
+    elseif g:vimim_map =~ 'm-space'   " use Alt-Space
         imap <M-Space> <C-_>
         nmap <M-Space> <C-_>
     endif
