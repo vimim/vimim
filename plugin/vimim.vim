@@ -3180,15 +3180,17 @@ function! s:vimim_plug_and_play()
     if g:vimim_map =~ 'c-bslash'
         imap <C-Bslash> <C-_>
         nmap <C-Bslash> <C-_>
-    endif
-    if g:vimim_map =~ 'c-space'
-        if has("gui_running")
-            imap <C-Space> <C-_>
-            nmap <C-Space> <C-_>
-        elseif has("win32unix")
+    elseif g:vimim_map =~ 'c-space'
+        if has("win32unix")
             nmap <C-@> <C-_>
             imap <C-@> <C-_>
+        else
+            imap <C-Space> <C-_>
+            nmap <C-Space> <C-_>
         endif
+    elseif g:vimim_map =~ 'm-space'
+        imap <M-Space> <C-_>
+        nmap <M-Space> <C-_>
     endif
     if g:vimim_map =~ 'tab'
         inoremap<silent><Tab> <C-R>=g:vimim_tab()<CR>
