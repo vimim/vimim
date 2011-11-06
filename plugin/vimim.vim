@@ -126,7 +126,7 @@ function! s:vimim_initialize_global()
     let s:rc = {}
     let s:rc["g:vimim_mode"] = 'dynamic'
     let s:rc["g:vimim_shuangpin"] = 0
-    let s:rc["g:vimim_map"] = 'c-bslash'
+    let s:rc["g:vimim_map"] = ''
     let s:rc["g:vimim_toggle"] = 0
     let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
     let s:rc["g:vimim_mycloud"] = 0
@@ -3181,9 +3181,18 @@ function! s:vimim_plug_and_play()
         imap <C-Bslash> <C-_>
         nmap <C-Bslash> <C-_>
     endif
+    if g:vimim_map =~ 'c-space'
+        if has("gui_running")
+            imap <C-Space> <C-_>
+            nmap <C-Space> <C-_>
+        elseif has("win32unix")
+            nmap <C-@> <C-_>
+            imap <C-@> <C-_>
+        endif
+    endif
     if g:vimim_map =~ 'tab'
         inoremap<silent><Tab> <C-R>=g:vimim_tab()<CR>
-        xmap<silent><Tab> <C-^>
+            xmap<silent><Tab> <C-^>
     endif
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
