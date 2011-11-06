@@ -2797,7 +2797,7 @@ function! s:vimim_start()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <C-U>   g:vimim_one_key_correction()
-    lnoremap <silent> <expr> <C-B>   g:vimim_popup_or_halfwidth()
+    lnoremap <silent> <expr> <C-L>   g:vimim_popup_or_halfwidth()
     if s:ui.im =~ 'array'
         lnoremap <silent> <expr> <CR>    g:vimim_space()
         lnoremap <silent> <expr> <Space> g:vimim_pagedown()
