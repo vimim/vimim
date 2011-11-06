@@ -22,10 +22,11 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
 "  Usage:
-"    (1) (vim normal mode)  gi      (for windowless chinese input)
-"    (2) (vim normal mode)  n       (for windowless slash search)
-"    (3) (vim insert mode)  ctrl+6  (for onekey omni popup)
-"    (4) (vim insert mode)  ctrl+\  (for dynamic chinese input)
+"    (1) :help gi         Insert text ...
+"    (2) :help n          Repeat the latest "/" or "?" ...
+"    (3) :help i_CTRL-^   Toggle the use of language ...
+"    (4) :help i_CTRL-_   Switch between languages ...
+"    (5) :help i_CTRL-U   Delete all entered characters ...
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -56,11 +57,12 @@ function! s:vimim_initialize_debug()
     let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
-        let g:vimim_map = 'tab,ctrl6,ctrl_bslash,search,gi'
+        let g:vimim_map = 'tab'
     endif
 endfunction
 
 function! s:vimim_initialize_backdoor()
+    let s:titlestring = &titlestring
     let s:cjk = { 'lines' : [] }
     let s:english = { 'lines' : [], 'line' : "" }
     let s:cjk.filename     = s:vimim_filereadable("vimim.cjk.txt")
@@ -124,7 +126,7 @@ function! s:vimim_initialize_global()
     let s:rc = {}
     let s:rc["g:vimim_mode"] = 'dynamic'
     let s:rc["g:vimim_shuangpin"] = 0
-    let s:rc["g:vimim_map"] = 'ctrl6,ctrl_bslash,search,gi'
+    let s:rc["g:vimim_map"] = 'c-bslash'
     let s:rc["g:vimim_toggle"] = 0
     let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
     let s:rc["g:vimim_mycloud"] = 0
@@ -509,7 +511,7 @@ function! s:vimim_set_pumheight()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  titlestring      ==== {{{"]
+let s:VimIM += [" ====  statusline       ==== {{{"]
 " =================================================
 
 function! s:vimim_set_titlestring()
@@ -519,7 +521,9 @@ function! s:vimim_set_titlestring()
 endfunction
 
 function! s:vimim_set_title(title)
-    let &titlestring = &laststatus ? &titlestring : a:title
+    if &laststatus < 2
+        let &titlestring = a:title
+    endif
     if &term == 'screen'
         if s:mode.dynamic || s:mode.static
             let &l:statusline = '%<%f %h%m%r%=%-14.(%l,%c%V%) %P%{IMName()}'
@@ -967,16 +971,26 @@ let s:VimIM += [" ====  mode: onekey     ==== {{{"]
 " =================================================
 
 function! g:vimim_onekey()
-    " (1) OneKey in insert mode => start omni popup mode
-    " (2) OneKey in lmap   mode => close omni popup mode
+    " (1) OneKey in insert  mode => start omni popup mode
+    " (2) OneKey in onekey  mode => close omni popup mode
+    " (3) OneKey in chinese mode => switch to the next im
     let key = ''
     if pumvisible()
         let key = s:vimim_screenshot()
     elseif empty(s:ctrl6)
         let s:mode = s:onekey
         let key = s:vimim_start() . s:vimim_onekey_action()
-    else
+    elseif s:mode.onekey
         let key = s:vimim_stop()
+    else
+        let s:toggle_im += 1
+        let switch = s:toggle_im % len(s:ui.frontends)
+        let s:ui.root = get(get(s:ui.frontends, switch), 0)
+        let s:ui.im   = get(get(s:ui.frontends, switch), 1)
+        if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
+            let s:cloud = s:ui.im
+        endif
+        let key = s:vimim_start()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -1017,8 +1031,8 @@ function! s:vimim_onekey_evils()
         endif
         let key = "\<BS>\<BS>" . key . '\<C-R>=g:vimim()\<CR>'
     elseif one == "'" && two =~ "[a-z']" " force cloud
-    elseif one =~# "[0-9a-z]"            " do nothing
-    elseif two =~# "[0-9a-z]" || empty(one) || one =~# '\u\|\s'
+    elseif one =~# "[0-9a-z]" || one =~# '\s' || empty(one)   " todo
+    elseif two =~# "[0-9a-z]" || one =~# '\u'
         let key = " "  " ma,space => ma, space
     elseif has_key(onekey_evils, one)
         for char in keys(onekey_evils)
@@ -1065,17 +1079,6 @@ function! g:vimim_chinese()
     return s:switch<0 ? "" : s:switch ? s:vimim_start() : s:vimim_stop()
 endfunction
 
-function! g:vimim_next_im()
-    let s:toggle_im += 1
-    let switch = s:toggle_im % len(s:ui.frontends)
-    let s:ui.root = get(get(s:ui.frontends, switch), 0)
-    let s:ui.im   = get(get(s:ui.frontends, switch), 1)
-    if s:ui.root == 'cloud' && s:ui.im != 'mycloud'
-        let s:cloud = s:ui.im
-    endif
-    sil!return s:vimim_start()
-endfunction
-
 function! s:vimim_set_im_toggle_list()
     let toggle_list = []
     if g:vimim_toggle < 0
@@ -1094,6 +1097,7 @@ function! s:vimim_set_im_toggle_list()
     if s:backend[s:ui.root][s:ui.im].name =~ "bsddb"
         let toggle_list = toggle_list[:2]  " one bsddb two clouds
     endif
+    let s:frontends = copy(toggle_list)
     let s:ui.frontends = copy(toggle_list)
     let s:ui.root = get(get(s:ui.frontends,0), 0)
     let s:ui.im   = get(get(s:ui.frontends,0), 1)
@@ -2794,9 +2798,6 @@ function! s:vimim_start()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <C-U>   g:vimim_one_key_correction()
     lnoremap <silent> <expr> <C-B>   g:vimim_popup_or_halfwidth()
-    if len(s:ui.frontends) > 1 && g:vimim_toggle > -1
-        lnoremap <silent> <expr> <C-_> g:vimim_next_im()
-    endif
     if s:ui.im =~ 'array'
         lnoremap <silent> <expr> <CR>    g:vimim_space()
         lnoremap <silent> <expr> <Space> g:vimim_pagedown()
@@ -2817,6 +2818,7 @@ function! s:vimim_stop()
         lmapclear
     endif
     let key = nr2char(30) " i_CTRL-^
+    let s:ui.frontends = copy(s:frontends)  " todo
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
@@ -2828,7 +2830,6 @@ function! s:vimim_save_vimrc()
     let s:complete    = &complete
     let s:completeopt = &completeopt
     let s:statusline  = &statusline
-    let s:titlestring = &titlestring
     let s:lazyredraw  = &lazyredraw
 endfunction
 
@@ -2846,8 +2847,8 @@ function! s:vimim_restore_vimrc()
     let &complete    = s:complete
     let &completeopt = s:completeopt
     let &statusline  = s:statusline
-    let &titlestring = s:titlestring
     let &lazyredraw  = s:lazyredraw
+    let &titlestring = s:titlestring
     let &pumheight   = s:pumheights.saved
 endfunction
 
@@ -3166,23 +3167,23 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
 function! s:vimim_plug_and_play()
-    if g:vimim_map =~ 'ctrl_bslash'
-        inoremap<unique><C-Bslash>  <C-R>=g:vimim_chinese()<CR>
-        nnoremap<silent><C-Bslash> i<C-R>=g:vimim_chinese()<CR><Esc>
+    nnoremap<silent><C-_> i<C-R>=g:vimim_chinese()<CR><Esc>
+    inoremap<unique><C-_>  <C-R>=g:vimim_chinese()<CR>
+    inoremap<silent><C-^>  <C-R>=g:vimim_onekey()<CR>
+    xnoremap<silent><C-^> y:call g:vimim_visual()<CR>
+    if g:vimim_map !~ 'no-gi'
+        nnoremap<silent> gi a<C-R>=g:vimim_gi()<CR>
     endif
-    if g:vimim_map =~ 'ctrl6'
-        inoremap<silent><C-^> <C-R>=g:vimim_onekey()<CR>
-        xnoremap<silent><C-^> y:call g:vimim_visual()<CR>
+    if g:vimim_map !~ 'no-search'
+        nnoremap<silent> n :call g:vimim_search()<CR>n
+    endif
+    if g:vimim_map =~ 'c-bslash'
+        imap <C-Bslash> <C-_>
+        nmap <C-Bslash> <C-_>
     endif
     if g:vimim_map =~ 'tab'
         inoremap<silent><Tab> <C-R>=g:vimim_tab()<CR>
-        xnoremap<silent><Tab> y:call g:vimim_visual()<CR>
-    endif
-    if g:vimim_map =~ 'gi'
-        nnoremap<silent> gi a<C-R>=g:vimim_gi()<CR>
-    endif
-    if g:vimim_map =~ 'search'
-        nnoremap<silent> n :call g:vimim_search()<CR>n
+        xmap<silent><Tab> <C-^>
     endif
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
