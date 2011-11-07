@@ -54,7 +54,7 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab'
@@ -722,8 +722,8 @@ function! g:vimim_page(key)
 endfunction
 
 function! g:wubi()
-    if s:pattern_not_found
-        let s:pattern_not_found = 0 | return ""
+    if s:gi_dynamic_on
+        let s:gi_dynamic_on = 0 | return ""
     endif
     let key = pumvisible() || s:mode.windowless && s:omni ? '\<C-E>' : ""
     if s:wubi && empty(len(get(split(s:keyboard),0))%4)
@@ -779,6 +779,9 @@ function! g:vimim_punctuation(key)
     endif
     if pumvisible()        " the 2nd choice
         let key = a:key == ";" ? '\<C-N>\<C-Y>' : '\<C-Y>' . key
+    elseif s:mode.windowless && s:gi_dynamic
+        let key = a:key == ";" ? '\<C-N>' : key
+        call g:vimim_space()
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -787,6 +790,9 @@ function! g:vimim_single_quote()
     let key = "'"
     if pumvisible()       " the 3rd choice
         let key = '\<C-N>\<C-N>\<C-Y>'
+    elseif s:mode.windowless && s:gi_dynamic
+        let key = '\<C-N>\<C-N>'
+        call g:vimim_space()
     elseif g:vimim_punctuation < 3
         return key
     elseif s:toggle_punctuation > 0
@@ -845,6 +851,7 @@ function! s:vimim_windowless(key)
     let key = a:key            " workaround to test if active completion
     if s:pattern_not_found     " gi \bslash space space
         " make space smart     " gi ma space xj space ctrl+u space
+    elseif s:vimim_left()      " gi ma space isw8ql
     elseif s:omni || s:keyboard =~ " "       "  assume completion active
         let key = len(a:key) ? '\<C-E>\<C-R>=g:vimim()\<CR>' : '\<C-N>'
         let cursor = empty(len(a:key)) ? 1 : a:key < 1 ? 9 : a:key-1
@@ -887,10 +894,14 @@ function! g:vimim_space()
     elseif s:mode.dynamic
     elseif s:mode.static
         let key = s:vimim_left() ? g:vimim() : key
-    elseif s:seamless_positions == getpos(".")
-        let s:smart_enter = 0    " Space is Space after Enter
-    else                         " gi ma space enter space
-        return s:vimim_onekey_action()
+    elseif s:seamless_positions == getpos(".") " gi ma space enter space
+        let s:smart_enter = 0              " Space is Space after Enter
+    elseif s:mode.windowless && s:gi_dynamic
+        let key = ''                       " gi m space (the 1st choice)
+        let s:gi_dynamic_on = 1            " gi m ;     (the 2nd choice)
+        call s:vimim_set_titlestring()     " gi m '     (the 3rd choice)
+    else
+        let key = s:vimim_onekey_action()
     endif
     call s:vimim_reset_after_insert()
     let s:has_pumvisible = pumvisible() ? 1 : 0
@@ -1005,12 +1016,7 @@ function! s:vimim_onekey_action()
         if s:vimim_left()
             let key = g:vimim()
         elseif s:mode.windowless
-            if s:gi_dynamic
-                let s:pattern_not_found = 1
-                call s:vimim_set_titlestring()
-            else
-                let key = s:vimim_windowless("")
-            endif
+            let key = s:vimim_windowless("")
         endif
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -1034,7 +1040,7 @@ function! s:vimim_onekey_evils()
         endif
         let key = "\<BS>\<BS>" . key . '\<C-R>=g:vimim()\<CR>'
     elseif one == "'" && two =~ "[a-z']" " force cloud
-    elseif one =~# "[0-9a-z]" || one =~# '\s' || empty(one)   
+    elseif one =~# "[0-9a-z]" || one =~# '\s' || empty(one)
     elseif two =~# "[0-9a-z]" || one =~# '\u'
         let key = " "  " ma,space => ma, space
     elseif has_key(onekey_evils, one)
@@ -1591,7 +1597,8 @@ function! s:vimim_sort_on_last(line1, line2)
 endfunction
 
 function! s:vimim_chinese_transfer() range abort
-    if s:vimim_cjk()  " quick and dirty way to transfer between Chinese
+    " the quick and dirty way to transfer between Chinese
+    if s:vimim_cjk()  
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
 endfunction
@@ -2821,7 +2828,7 @@ function! s:vimim_stop()
         lmapclear
     endif
     let key = nr2char(30) " i_CTRL-^
-    let s:ui.frontends = copy(s:frontends)  
+    let s:ui.frontends = copy(s:frontends)
     sil!call s:vimim_restore_vimrc()
     sil!call s:vimim_super_reset()
     sil!exe 'sil!return "' . key . '"'
@@ -2863,6 +2870,7 @@ endfunction
 
 function! s:vimim_reset_before_anything()
     let s:mode = s:onekey
+    let s:gi_dynamic_on = 0
     let s:omni = 0
     let s:ctrl6 = 0
     let s:switch = 0
