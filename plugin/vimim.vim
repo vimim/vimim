@@ -1,7 +1,7 @@
 " ===========================================================
 "                   VimIM —— Vim 中文輸入法
 " ===========================================================
-let s:egg = ' vimim easter egg:' " vim i vimim ctrl+6 ctrl+6
+let s:egg = ' vimim easter egg:' " vim i vimim CTRL-^ CTRL-^
 let s:egg = ' $Date$'
 let s:egg = ' $Revision$'
 let s:url = ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
@@ -21,7 +21,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  Plug and Play:
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
-"  Usage:
+"  Usage: vim gi
 "    (1) :help gi         Insert text ...
 "    (2) :help n          Repeat the latest "/" or "?" ...
 "    (3) :help i_CTRL-^   Toggle the use of language ...
