@@ -54,10 +54,11 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
-    let hhjkl = simplify(s:plugin . '/../../../hjkl/')
+    let hjkl = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
-        let g:vimim_map = 'tab'
+        let g:vimim_map = 'tab_as_gi'
+        let g:vimim_map = 'tab_as_onekey'
     endif
 endfunction
 
@@ -833,15 +834,15 @@ function! g:vimim_gi()
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
-function! g:vimim_tab()
-    " (1) Tab in insert mode => start windowless or Tab
+function! g:vimim_tab(gi)
+    " (1) Tab in insert mode => start Tab or windowless/onekey
     " (2) Tab in lmap   mode => start print out fine menu
     let key = "\t"
     if empty(len(s:vimim_left()))
     elseif pumvisible() || s:ctrl6
         let key = s:vimim_screenshot()
     else
-        let s:mode = s:windowless
+        let s:mode = a:gi? s:windowless : s:onekey
         let key = s:vimim_start() . s:vimim_onekey_action()
     endif
     sil!exe 'sil!return "' . key . '"'
@@ -3204,8 +3205,12 @@ function! s:vimim_plug_and_play()
         nmap <M-Space> <C-_>
     endif
     if g:vimim_map =~ 'tab'
-        inoremap<silent><Tab> <C-R>=g:vimim_tab()<CR>
-            xmap<silent><Tab> <C-^>
+        xmap<silent><Tab> <C-^>
+        if g:vimim_map =~ 'tab_as_gi'
+            inoremap<silent><Tab> <C-R>=g:vimim_tab(1)<CR>
+        elseif g:vimim_map =~ 'tab_as_onekey'
+            inoremap<silent><Tab> <C-R>=g:vimim_tab(0)<CR>
+        endif
     endif
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
     :com! -range=% VimIM <line1>,<line2>call s:vimim_chinese_transfer()
