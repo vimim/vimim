@@ -270,10 +270,13 @@ function! s:vimim_egg_vimim()
     call add(eggs, encoding . s:space . &fileencodings)
     call add(eggs, s:chinese('env', s:colon) . v:lc_time)
     let db = s:chinese('database', s:colon)
+    let input = s:logo . s:vimim_im_chinese()
     if len(s:cjk.filename)
+        let input .= s:chinese('cjk') . s:space
         call add(eggs, db.s:chinese('cjk',s:colon).s:cjk.filename)
     endif
     if len(s:english.filename)
+        let input .= s:chinese('english') . s:space
         call add(eggs, db.s:chinese('english').db.s:english.filename)
     endif
     let cloud = db . s:chinese('cloud') . db
@@ -288,8 +291,8 @@ function! s:vimim_egg_vimim()
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
     call add(eggs, cloud)
     call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
-    let option = s:logo . s:vimim_im_chinese()
-    call add(eggs, s:chinese('option',  s:colon) . option)
+    call add(eggs, s:chinese('input',  s:colon) . input)
+    call add(eggs, s:chinese('option',  s:colon) . 'vimimrc')
     let results = map(eggs + s:vimim_egg_vimimrc(), 'v:val . " " ')
     return results
 endfunction
@@ -414,10 +417,10 @@ endfunction
 let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
-function! s:vimim_dictionary_titleline()
-    let one  = " cjk  boshiamy  wubi2000  taijima  nature"
-    let two  = " 标准字库,標準字庫  呒虾米,嘸蝦米  新世纪,新世紀"
-    let two .= " 太极码,太極碼  自然码,自然碼"
+function! s:vimim_dictionary_statusline()
+    let one  = " cjk 4corner boshiamy wubi2000 taijima nature input"
+    let two  = " 四角号码,四角號碼  标准字库,標準字庫  呒虾米,嘸蝦米"
+    let two .= " 新世纪,新世紀  太极码,太極碼  自然码,自然碼 输入,輸入"
     let one .= " computer database option flypy network cloud env "
     let one .= " encoding ms static dynamic erbi wubi hangul xinhua"
     let one .= " zhengma cangjie yong wu wubijd shuangpin"
@@ -3204,7 +3207,7 @@ endfunction
 sil!call s:vimim_initialize_debug()
 sil!call s:vimim_initialize_global()
 sil!call s:vimim_initialize_backdoor()
-sil!call s:vimim_dictionary_titleline()
+sil!call s:vimim_dictionary_statusline()
 sil!call s:vimim_dictionary_punctuations()
 sil!call s:vimim_dictionary_numbers()
 sil!call s:vimim_dictionary_keycodes()
