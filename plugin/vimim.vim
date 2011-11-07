@@ -58,7 +58,6 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab_as_gi'
-        let g:vimim_map = 'tab_as_onekey'
     endif
 endfunction
 
@@ -836,7 +835,7 @@ endfunction
 
 function! g:vimim_tab(gi)
     " (1) Tab in insert mode => start Tab or windowless/onekey
-    " (2) Tab in lmap   mode => start print out fine menu
+    " (2) Tab in pumvisible  => print out menu
     let key = "\t"
     if empty(len(s:vimim_left()))
     elseif pumvisible() || s:ctrl6
@@ -934,7 +933,8 @@ function! g:vimim_enter()
 endfunction
 
 function! g:vimim_one_key_correction()
-    let key = nr2char(21) " :help i_CTRL-U  Delete all entered characters
+    " :help i_CTRL-U  Delete all entered characters ...
+    let key = nr2char(21) 
     if s:mode.windowless || s:mode.static && pumvisible()
         if s:omni " one_key_correction " gi m space a space ctrl+u space
             let s:omni = -1            " gi mamahuhu space ctrl+u ctrl+u
@@ -989,6 +989,7 @@ function! g:vimim_onekey()
     " (1) OneKey in insert  mode => start omni popup mode
     " (2) OneKey in onekey  mode => close omni popup mode
     " (3) OneKey in chinese mode => switch to the next im
+    " (4) OneKey in pumvisible   => print out menu
     let key = ''
     if pumvisible()
         let key = s:vimim_screenshot()
@@ -1599,7 +1600,7 @@ endfunction
 
 function! s:vimim_chinese_transfer() range abort
     " the quick and dirty way to transfer between Chinese
-    if s:vimim_cjk()  
+    if s:vimim_cjk()
         exe a:firstline.",".a:lastline.'s/./\=s:vimim_1to1(submatch(0))'
     endif
 endfunction
@@ -1822,7 +1823,7 @@ let s:VimIM += [" ====  input: shuangpin ==== {{{"]
 " =================================================
 
 function! s:vimim_shuangpin_generic()
-    let shengmu_list = {}   " generate shuangpin table default value
+    let shengmu_list = {}  " generate shuangpin table default value
     for shengmu in s:shengmu_list
         let shengmu_list[shengmu] = shengmu
     endfor
@@ -2425,7 +2426,8 @@ function! s:vimim_get_from_http(input, cloud)
 endfunction
 
 function! s:vimim_get_cloud_sogou(keyboard)
-    let results = [] " http://web.pinyin.sogou.com/api/py?key=32&query=xj
+    " http://web.pinyin.sogou.com/api/py?key=32&query=xj
+    let results = []
     if empty(s:backend.cloud.sogou.im)  " as cloud key
         let key_sogou = "http://web.pinyin.sogou.com/web_ime/patch.php"
         let output = s:vimim_get_from_http(key_sogou, 'sogou')
@@ -2457,7 +2459,8 @@ function! s:vimim_get_cloud_sogou(keyboard)
 endfunction
 
 function! s:vimim_get_cloud_qq(keyboard)
-    let results = [] " http://ime.qq.com/fcgi-bin/getword?key=32&q=mxj
+    " http://ime.qq.com/fcgi-bin/getword?key=32&q=mxj
+    let results = []
     let input = 'http://ime.qq.com/fcgi-bin/'
     if empty(s:backend.cloud.qq.im)  " as cloud key
         let output = s:vimim_get_from_http(input . 'getkey', 'qq')
@@ -2536,7 +2539,8 @@ function! s:vimim_get_cloud_google(keyboard)
 endfunction
 
 function! s:vimim_get_cloud_baidu(keyboard)
-    let results = [] " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
+    " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
+    let results = [] 
     let url = 'http://olime.baidu.com/py'
     let input = '?rn=0' . '&pn=20' . '&py=' . a:keyboard
     let output = s:vimim_get_from_http(url . input, 'baidu')
@@ -3204,7 +3208,7 @@ function! s:vimim_plug_and_play()
         imap <M-Space> <C-_>
         nmap <M-Space> <C-_>
     endif
-    if g:vimim_map =~ 'tab'
+    if g:vimim_map =~ 'tab'           " use Tab
         xmap<silent><Tab> <C-^>
         if g:vimim_map =~ 'tab_as_gi'
             inoremap<silent><Tab> <C-R>=g:vimim_tab(1)<CR>
