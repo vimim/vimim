@@ -304,7 +304,7 @@ function! s:vimim_egg_vimim()
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  hjkl mahjong     ==== {{{"]
+let s:VimIM += [" ====  hjkl  vimimgame  ==== {{{"]
 " =================================================
 
 function! s:vimim_cache()
