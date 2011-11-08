@@ -651,7 +651,11 @@ function! s:vimim_set_keyboard_maps()
                 \ 'g:wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
             endif
         endfor
-    elseif empty(s:mode.static)
+    elseif s:mode.static
+        for char in s:valid_keys
+            sil!exe 'lnoremap <silent> ' . char . ' ' .  char
+        endfor
+    else
         let common_punctuations += split(". ,")
         let common_labels += s:abcd[1:]
         let pqwertyuio = s:vimim_cjk() ?  s:qwer : []
