@@ -640,16 +640,10 @@ function! s:vimim_set_keyboard_maps()
     let common_labels = s:ui.im =~ 'phonetic' ? [] : range(10)
     let s:gi_dynamic = s:mode.windowless ? s:gi_dynamic : 0
     let both_dynamic = s:mode.dynamic || s:gi_dynamic ? 1 : 0
-    if both_dynamic || s:mode.static
-        sil!call s:vimim_punctuation_maps()
-    endif
     if both_dynamic
-        let nonsense = s:ui.quote ? "[0-9]" : "[0-9']"
         for char in s:valid_keys
-            if char !~ nonsense || s:ui.im =~ 'phonetic'
-                sil!exe 'lnoremap <silent> ' . char . ' <C-R>=' .
-                \ 'g:wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
-            endif
+            sil!exe 'lnoremap <silent> ' . char . ' ' .
+            \ '<C-R>=g:wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
         endfor
     elseif s:mode.static
         for char in s:valid_keys
@@ -662,6 +656,10 @@ function! s:vimim_set_keyboard_maps()
         for _ in pqwertyuio + split("h j k l m n / ? s")
              sil!exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
         endfor
+    endif
+    if g:vimim_punctuation < 0
+    elseif both_dynamic || s:mode.static
+        sil!call s:vimim_punctuation_maps()
     endif
     for _ in s:mode.windowless ? [] : common_punctuations
         if _ !~ s:valid_keyboard
@@ -767,7 +765,6 @@ function! g:vimim_hjkl(key)
 endfunction
 
 function! s:vimim_punctuation_maps()
-    if g:vimim_punctuation < 0 | return | endif
     for _ in keys(s:all_evils)
         if _ !~ s:valid_keyboard
             exe 'lnoremap <expr> '._.' g:vimim_punctuation("'._.'")'
