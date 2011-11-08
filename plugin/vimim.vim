@@ -22,12 +22,12 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
 "  Usage: VimIM takes advantage of the definition from Vim
-"    (1) :help gi         Insert text                     ...
-"    (2) :help n          Repeat the latest '/' or '?'    ...
-"    (3) :help i_CTRL-^   Toggle the use of language      ...
-"    (4) :help i_CTRL-_   Switch between languages        ...
-"    (5) :help i_CTRL-U   Delete all entered characters   ... (internal)
-"    (6) :help i_CTRL-L   when ... is set: go to ... mode ... (internal)
+"    (1) :help gi        Insert text                     ...
+"    (2) :help n         Repeat the latest '/' or '?'    ...
+"    (3) :help i_CTRL-^  Toggle the use of language      ...
+"    (4) :help i_CTRL-_  Switch between languages        ...
+"    (5) :help i_CTRL-U  Delete all entered characters   ... (internal)
+"    (6) :help i_CTRL-L  when ... is set: go to ... mode ... (internal)
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -3193,17 +3193,17 @@ let s:VimIM += [" ====  core driver      ==== {{{"]
 " =================================================
 
 function! s:vimim_plug_and_play()
-    nnoremap<silent><C-_> i<C-R>=g:vimim_chinese()<CR><Esc>
-    inoremap<unique><C-_>  <C-R>=g:vimim_chinese()<CR>
-    inoremap<silent><C-^>  <C-R>=g:vimim_onekey()<CR>
-    xnoremap<silent><C-^> y:call g:vimim_visual()<CR>
+    nnoremap <silent> <C-_> i<C-R>=g:vimim_chinese()<CR><Esc>
+    inoremap <unique> <C-_>  <C-R>=g:vimim_chinese()<CR>
+    inoremap <silent> <C-^>  <C-R>=g:vimim_onekey()<CR>
+    xnoremap <silent> <C-^> y:call g:vimim_visual()<CR>
     if g:vimim_map !~ 'no-gi'
-        nnoremap<silent> gi a<C-R>=g:vimim_gi()<CR>
+        nnoremap <silent> gi a<C-R>=g:vimim_gi()<CR>
     endif
     if g:vimim_map !~ 'no-search'
-        nnoremap<silent> n :call g:vimim_search()<CR>n
+        nnoremap <silent> n :call g:vimim_search()<CR>n
     endif
-    if g:vimim_map =~ 'c-bslash'      " use Ctrl-\
+    if g:vimim_map =~ 'c-bslash'      " use Ctrl-\  ''
         imap <C-Bslash> <C-_>
         nmap <C-Bslash> <C-_>
     elseif g:vimim_map =~ 'c-space'   " use Ctrl-Space
@@ -3219,11 +3219,11 @@ function! s:vimim_plug_and_play()
         nmap <M-Space> <C-_>
     endif
     if g:vimim_map =~ 'tab'           " use Tab
-        xmap<silent><Tab> <C-^>
+        xmap <silent> <Tab> <C-^>
         if g:vimim_map =~ 'tab_as_gi'
-            inoremap<silent><Tab> <C-R>=g:vimim_tab(1)<CR>
+            inoremap <silent> <Tab> <C-R>=g:vimim_tab(1)<CR>
         elseif g:vimim_map =~ 'tab_as_onekey'
-            inoremap<silent><Tab> <C-R>=g:vimim_tab(0)<CR>
+            inoremap <silent> <Tab> <C-R>=g:vimim_tab(0)<CR>
         endif
     endif
     :com! -range=% ViMiM <line1>,<line2>call s:vimim_chinese_rotation()
