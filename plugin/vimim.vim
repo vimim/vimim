@@ -668,10 +668,14 @@ function! s:vimim_set_keyboard_maps()
     endfor
 endfunction
 
-function! g:vimim_popup_or_halfwidth()
-    if s:mode.onekey || s:mode.windowless
+function! g:vimim_cycle_vimim()
+    if len(s:cjk.filename)  " backdoor to cycle all 4 vimim modes
+        let s:mode = s:mode.windowless ? s:onekey  :
+                   \ s:mode.onekey     ? s:dynamic :
+                   \ s:mode.dynamic    ? s:static  : s:windowless
+    elseif s:mode.onekey || s:mode.windowless
         let s:mode = s:mode.onekey ? s:windowless : s:onekey
-    else
+    elseif s:mode.static || s:mode.dynamic
         let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
     endif
     sil!call s:vimim_set_frontend()
@@ -2816,7 +2820,7 @@ function! s:vimim_start()
     lnoremap <silent> <expr> <BS>    g:vimim_backspace()
     lnoremap <silent> <expr> <Esc>   g:vimim_esc()
     lnoremap <silent> <expr> <C-U>   g:vimim_one_key_correction()
-    lnoremap <silent> <expr> <C-L>   g:vimim_popup_or_halfwidth()
+    lnoremap <silent> <expr> <C-L>   g:vimim_cycle_vimim()
     if s:ui.im =~ 'array'
         lnoremap <silent> <expr> <CR>    g:vimim_space()
         lnoremap <silent> <expr> <Space> g:vimim_pagedown()
