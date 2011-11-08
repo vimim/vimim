@@ -21,12 +21,13 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "  Plug and Play:
 "    (1) drop the vimim.vim to the plugin folder: plugin/vimim.vim
 "    (2) [option] drop supported datafiles, like: plugin/vimim.txt
-"  Usage: vim gi
+"  Usage: VimIM takes advantage of the definition from Vim
 "    (1) :help gi         Insert text ...
 "    (2) :help n          Repeat the latest "/" or "?" ...
 "    (3) :help i_CTRL-^   Toggle the use of language ...
 "    (4) :help i_CTRL-_   Switch between languages ...
 "    (5) :help i_CTRL-U   Delete all entered characters ...
+"    (6) :help i_CTRL-L   when ... is set: go to ... mode ...
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
@@ -277,7 +278,7 @@ function! s:vimim_egg_vimim()
     let db = s:chinese('database', s:colon)
     let input = s:logo . s:vimim_im_chinese()
     if len(s:cjk.filename)
-        let input .= s:chinese('cjk') . s:space
+        let input .= s:chinese('4corner') . s:space
         call add(eggs, db.s:chinese('cjk',s:colon).s:cjk.filename)
     endif
     if len(s:english.filename)
