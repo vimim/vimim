@@ -103,7 +103,7 @@ function! s:vimim_initialize_global()
     let s:space = '　'
     let s:colon = '：'
     let s:logo = "VimIM　中文輸入法"
-    let s:display = s:logo
+    let s:windowless_title = "VimIM"
     let s:today = s:vimim_imode_today_now('itoday')
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
     let s:localization = &encoding =~ "utf-8" ? 0 : 2
@@ -185,6 +185,11 @@ function! s:vimim_set_frontend()
     let s:wubi = cloud =~ 'wubi' || s:ui.im =~ 'wubi\|erbi' ? 1 : 0
     let s:ui.quote = match(split(quote),s:ui.im) < 0 ? 0 : 1
     let s:gi_dynamic = s:ui.im =~ 'pinyin' || s:ui.root =~ 'cloud' ? 0 : 1
+    let s:logo = s:chinese('dscj')
+    if s:mode.dynamic || s:mode.static
+        let chinese_input_mode = s:mode.static ? 'static' : 'dynamic'
+        let s:logo = s:chinese('chinese', chinese_input_mode)
+    endif
     call s:vimim_set_titlestring()
 endfunction
 
@@ -418,9 +423,10 @@ let s:VimIM += [" ====  user interface   ==== {{{"]
 " =================================================
 
 function! s:vimim_dictionary_statusline()
-    let one  = " cjk 4corner boshiamy wubi2000 taijima nature input"
-    let two  = " 四角号码,四角號碼  标准字库,標準字庫  呒虾米,嘸蝦米"
-    let two .= " 新世纪,新世紀  太极码,太極碼  自然码,自然碼 输入,輸入"
+    let one  = " dscj wubi2000 taijima 4corner boshiamy input cjk nature"
+    let two  = " 点石成金,點石成金 新世纪,新世紀 太极码,太極碼"
+    let two .= " 四角号码,四角號碼 呒虾米,嘸蝦米 输入,輸入"
+    let two .= " 标准字库,標準字庫 自然码,自然碼"
     let one .= " computer database option flypy network cloud env "
     let one .= " encoding ms static dynamic erbi wubi hangul xinhua"
     let one .= " zhengma cangjie yong wu wubijd shuangpin"
@@ -433,7 +439,7 @@ function! s:vimim_dictionary_statusline()
     let one .= " abc revision date google baidu sogou qq "
     let two .= " 打 全角 半角 英文 中文 紫光 加加 速成 海峰 自己的 98"
     let two .= " 拼 拼音 注音 行列 智能 版本 日期 谷歌 百度 搜狗 ＱＱ"
-    let s:titleline = s:vimim_key_value_hash(one, two)
+    let s:chinese_statusline = s:vimim_key_value_hash(one, two)
 endfunction
 
 function! s:vimim_dictionary_punctuations()
@@ -519,7 +525,7 @@ let s:VimIM += [" ====  statusline       ==== {{{"]
 
 function! s:vimim_set_titlestring()
     let today = s:mode.windowless ? s:today : ''
-    let title  = s:logo . s:vimim_im_chinese() . today
+    let title = "VimIM  " . s:logo . s:vimim_im_chinese() . today
     call s:vimim_set_title(title)
 endfunction
 
@@ -529,9 +535,9 @@ function! s:vimim_set_title(title)
     endif
     if &term == 'screen'
         if s:mode.dynamic || s:mode.static
-            let &l:statusline = '%<%f %h%m%r%=%-14.(%l,%c%V%) %P%{IMName()}'
+            let &l:stl = '%<%f %h%m%r%=%-14.(%l,%c%V%) %P%{IMName()}'
         else
-            let &l:statusline = '%{"'. a:title .'"}%<'
+            let &l:stl = '%{"'. a:title .'"}%<'
         endif
     endif
     redraw
@@ -542,10 +548,9 @@ function! IMName()
     if g:vimim_punctuation > 0 && s:toggle_punctuation > 0
         let punctuation = 'fullwidth'
     endif
-    let mode = g:vimim_mode =~ 'static' ? 'static' : 'dynamic'
-    let stl  = s:chinese('chinese', mode) . s:vimim_im_chinese()
-    let stl .= s:chinese(punctuation, s:space, "VimIM")
-    return stl
+    let statusline  = s:logo . s:vimim_im_chinese()
+    let statusline .= s:chinese(punctuation, s:space, "VimIM")
+    return statusline
 endfunction
 
 function! s:vimim_im_chinese()
@@ -592,11 +597,11 @@ endfunction
 function! s:vimim_windowless_titlestring(cursor)
     let west = s:all_evils['[']
     let east = s:all_evils[']']
-    let titlestring = substitute(s:display, west.'\|'.east, ' ', 'g')
-    if titlestring !~ '\s\+' . "'" . '\+\s\+'
-        let titlestring = substitute(titlestring,"'",'','g')
+    let title = substitute(s:windowless_title, west.'\|'.east, ' ', 'g')
+    if title !~ '\s\+' . "'" . '\+\s\+'
+        let title = substitute(title,"'",'','g')
     endif
-    let words = split(titlestring)[1:]
+    let words = split(title)[1:]
     let cursor = s:cursor_at_windowless + a:cursor
     let hightlight = get(words, cursor)
     if !empty(hightlight) && len(words) > 1
@@ -606,9 +611,9 @@ function! s:vimim_windowless_titlestring(cursor)
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
         let head = "VimIM" . s:vimim_im_chinese() . '  '
         let tail = keyboard . '  ' . west . hightlight . east
-        let s:display = head . tail
+        let s:windowless_title = head . tail
     endif
-    sil!call s:vimim_set_title(s:display)
+    sil!call s:vimim_set_title(s:windowless_title)
 endfunction
 
 function! g:vimim_esc()
@@ -665,7 +670,7 @@ endfunction
 
 function! g:vimim_popup_or_halfwidth()
     if s:mode.onekey || s:mode.windowless
-        let s:mode = s:mode.windowless ? s:onekey : s:windowless
+        let s:mode = s:mode.onekey ? s:windowless : s:onekey
     else
         let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
     endif
@@ -934,7 +939,7 @@ endfunction
 
 function! g:vimim_one_key_correction()
     " :help i_CTRL-U  Delete all entered characters ...
-    let key = nr2char(21) 
+    let key = nr2char(21)
     if s:mode.windowless || s:mode.static && pumvisible()
         if s:omni " one_key_correction " gi m space a space ctrl+u space
             let s:omni = -1            " gi mamahuhu space ctrl+u ctrl+u
@@ -994,7 +999,6 @@ function! g:vimim_onekey()
     if pumvisible()
         let key = s:vimim_screenshot()
     elseif empty(s:ctrl6)
-        let s:mode = s:onekey
         let key = s:vimim_start() . s:vimim_onekey_action()
     elseif s:mode.onekey
         let key = s:vimim_stop()
@@ -1410,8 +1414,8 @@ function! s:chinese(...)
     let chinese = ""
     for english in a:000
         let cjk = english
-        if has_key(s:titleline, english)
-            let twins = split(s:titleline[english], ",")
+        if has_key(s:chinese_statusline, english)
+            let twins = split(s:chinese_statusline[english], ",")
             let cjk = get(twins, 0)
             if len(twins) > 1 && s:mandarin
                 let cjk = get(twins,1)
@@ -2540,7 +2544,7 @@ endfunction
 
 function! s:vimim_get_cloud_baidu(keyboard)
     " http://olime.baidu.com/py?rn=0&pn=20&py=mxj
-    let results = [] 
+    let results = []
     let url = 'http://olime.baidu.com/py'
     let input = '?rn=0' . '&pn=20' . '&py=' . a:keyboard
     let output = s:vimim_get_from_http(url . input, 'baidu')
@@ -3105,7 +3109,7 @@ function! s:vimim_popupmenu_list(lines)
         call add(s:popup_list, complete_items)
     endfor
     if s:mode.windowless
-        let s:display = 'VimIM ' . keyboard . ' ' . join(one_list)
+        let s:windowless_title = 'VimIM ' . keyboard .' '. join(one_list)
         call s:vimim_windowless_titlestring(1)
     endif
     call s:vimim_set_pumheight()
