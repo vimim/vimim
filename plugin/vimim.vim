@@ -13,7 +13,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    File: vimim.vim
 "  Author: vimim <vimim@googlegroups.com>
 " License: GNU Lesser General Public License
-"  Readme: VimIM is a Vim plugin as an Input Method for Vim i_CTRL-^
+"  Readme: VimIM is a Vim plugin as an Input Method for i_CTRL-^ in Vim
 "    (1) do Chinese input without mode change: Midas touch
 "    (2) do Chinese search without typing Chinese: slash search
 "    (3) support Google/Baidu/Sogou/QQ cloud input
