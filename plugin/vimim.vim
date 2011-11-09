@@ -809,14 +809,14 @@ function! g:vimim_tab(gi)
 endfunction
 
 function! s:vimim_windowless(key)
-    let key = a:key            " workaround to test if active completion
-    if s:pattern_not_found     " gi \bslash space space
-        " make space smart     " gi ma space xj space ctrl+u space
-    elseif s:vimim_left()      " gi ma space isw8ql
-    elseif s:omni || s:keyboard =~ " "       "  assume completion active
+    " workaround to test if active completion
+    let key = a:key          " gi \bslash space space
+    if s:pattern_not_found   " gi ma space xj space ctrl+u space
+    elseif s:vimim_left() && s:keyboard !~ ' ' " gi mmm.. space 7 space
+    elseif s:omni " assume completion active
         let key = len(a:key) ? '\<C-E>\<C-R>=g:vimim()\<CR>' : '\<C-N>'
         let cursor = empty(len(a:key)) ? 1 : a:key < 1 ? 9 : a:key-1
-        if s:vimim_cjk()
+        if s:vimim_cjk()              " gi ma space isw8ql
             let s:hjkl .= a:key       " 1234567890 for windowless filter
         else                          "  234567890 for windowless choice
             let key = a:key =~ '[02-9]' ? repeat('\<C-N>', cursor) : key
