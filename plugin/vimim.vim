@@ -654,8 +654,10 @@ function! g:vimim_label(key)
                 let omni = s:vimim_stop()
             endif
         endif
+        if len(yes)
+            sil!call s:vimim_reset_after_insert()
+        endif
         let key = yes . omni
-        sil!call s:vimim_reset_after_insert()
     elseif s:mode.windowless && key =~ '\d'
         let key = s:vimim_windowless(key)
     endif
