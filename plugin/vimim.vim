@@ -69,7 +69,7 @@ function! s:vimim_initialize_backdoor()
     let s:cjk.filename     = s:vimim_filereadable("vimim.cjk.txt")
     let s:english.filename = s:vimim_filereadable("vimim.txt")
     let s:mandarin = len(s:english.filename) ? 0 : 1 " s/t chinese style
-    let s:hit_and_run =  len(s:cjk.filename) ? 0 : 1 " onekey continuity
+    let s:hit_and_run = len(s:cjk.filename) ? 0 : 1 " onekey continuity
     if len(s:cjk.filename)
         highlight! PmenuSbar  NONE
         highlight! PmenuThumb NONE
@@ -450,7 +450,7 @@ endfunction
 
 function! s:vimim_dictionary_punctuations()
     let s:antonym = " 〖〗 （） 《》 【】 ‘’ “”"
-    let one =       " {  }  (  )  < > [ ] "
+    let one =       " { }  ( )  < >  [  ] "
     let two = join(split(join(split(s:antonym)[:3],''),'\zs'))
     let antonyms = s:vimim_key_value_hash(one, two)
     let one = " ,  .  +  -  ~  ^    _    "
@@ -631,6 +631,7 @@ function! g:vimim_cycle_vimim()
     elseif s:mode.static || s:mode.dynamic
         let s:toggle_punctuation = (s:toggle_punctuation + 1) % 2
     endif
+    let s:hit_and_run = 0
     sil!call s:vimim_set_frontend()
     sil!call s:vimim_set_keyboard_maps()
     return ""
