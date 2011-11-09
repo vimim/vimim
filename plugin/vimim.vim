@@ -103,7 +103,7 @@ function! s:vimim_initialize_global()
     highlight! link lCursor lCursorIM
     let s:space = '　'
     let s:colon = '：'
-    let s:logo = "VimIM　中文輸入法"
+    let g:vimim = "VimIM　中文輸入法"
     let s:windowless_title = "VimIM"
     let s:today = s:vimim_imode_today_now('itoday')
     let s:multibyte    = &encoding =~ "utf-8" ? 3 : 2
@@ -186,12 +186,17 @@ function! s:vimim_set_frontend()
     let s:wubi = cloud =~ 'wubi' || s:ui.im =~ 'wubi\|erbi' ? 1 : 0
     let s:ui.quote = match(split(quote),s:ui.im) < 0 ? 0 : 1
     let s:gi_dynamic = s:ui.im =~ 'pinyin' || s:ui.root =~ 'cloud' ? 0 : 1
-    let s:logo = s:chinese('dscj')
+    let logo = s:chinese('dscj')
+    let tail = s:mode.windowless ? s:today : ''
     if s:mode.dynamic || s:mode.static
-        let chinese_input_mode = s:mode.static ? 'static' : 'dynamic'
-        let s:logo = s:chinese('chinese', chinese_input_mode)
+        let logo = s:chinese('chinese', s:mode.static ? 'static' : 'dynamic')
+        let tail = s:chinese('halfwidth')
+        if g:vimim_punctuation > 0 && s:toggle_punctuation > 0
+            let tail = s:chinese('fullwidth')
+        endif
     endif
-    call s:vimim_set_titlestring()
+    let g:vimim = "VimIM" . s:space . logo .' '. s:vimim_im_chinese() .' '. tail
+    call s:vimim_set_title(g:vimim)
 endfunction
 
 function! s:vimim_set_global_default()
@@ -234,7 +239,7 @@ function! s:vimim_egg_vimimhelp()
 endfunction
 
 function! s:vimim_egg_vim()
-    return ["Vim　　文本編輯器", s:logo]
+    return ["Vim　　文本編輯器", g:vimim]
 endfunction
 
 function! s:vimim_egg_vimimgame()
@@ -276,7 +281,7 @@ function! s:vimim_egg_vimim()
     call add(eggs, encoding . s:space . &fileencodings)
     call add(eggs, s:chinese('env', s:colon) . v:lc_time)
     let db = s:chinese('database', s:colon)
-    let input = s:logo . s:vimim_im_chinese()
+    let input = g:vimim . s:space
     if len(s:cjk.filename)
         let input .= s:chinese('4corner') . s:space
         call add(eggs, db.s:chinese('cjk',s:colon).s:cjk.filename)
@@ -524,46 +529,23 @@ endfunction
 let s:VimIM += [" ====  statusline       ==== {{{"]
 " =================================================
 
-function! s:vimim_set_titlestring()
-    let today = s:mode.windowless ? s:today : ''
-    let title = "VimIM  " . s:logo . s:vimim_im_chinese() . today
-    call s:vimim_set_title(title)
-endfunction
-
 function! s:vimim_set_title(title)
     if &laststatus < 2
         let &titlestring = a:title
+        redraw
     endif
     if &term == 'screen'
-        if s:mode.dynamic || s:mode.static
-            let &l:stl = '%<%f %h%m%r%=%-14.(%l,%c%V%) %P%{IMName()}'
+        if s:mode.windowless
+           let &l:statusline = '%{"'. a:title .'"}%<'
         else
-            let &l:stl = '%{"'. a:title .'"}%<'
+           let &l:statusline = g:vimim . ' %h%m%r%=%-14.(%l,%c%V%) %P %<%f'
         endif
     endif
-    redraw
-endfunction
-
-function! IMName()
-    let punctuation = 'halfwidth'
-    if g:vimim_punctuation > 0 && s:toggle_punctuation > 0
-        let punctuation = 'fullwidth'
-    endif
-    let statusline  = s:logo . s:vimim_im_chinese()
-    let statusline .= s:chinese(punctuation, s:space, "VimIM")
-    return statusline
 endfunction
 
 function! s:vimim_im_chinese()
-    let title = s:space
     let backend = s:backend[s:ui.root][s:ui.im]
-    if has_key(s:keycodes, s:ui.im)
-        let im = backend.chinese
-        if s:mode.windowless && len(s:cjk.filename)
-            let im = len(s:hjkl) ? s:hjkl : len(s:english.line) ? '*' : ''
-        endif
-        let title .= im
-    endif
+    let title = has_key(s:keycodes, s:ui.im) ? backend.chinese : ''
     if s:ui.im =~ 'wubi'
         for wubi in split('wubi98 wubi2000 wubijd wubihf')
             if get(split(backend.name, '/'),-1) =~ wubi
@@ -592,16 +574,18 @@ function! s:vimim_im_chinese()
     if g:vimim_shuangpin =~ 'abc' || g:vimim_cloud =~ 'abc'
         let title = substitute(title,s:chinese('pin'),s:chinese('hit'),'')
     endif
-    return title . s:space
+    return title
 endfunction
 
 function! s:vimim_windowless_titlestring(cursor)
+    let logo = "VimIM"
     let west = s:all_evils['[']
     let east = s:all_evils[']']
     let title = substitute(s:windowless_title, west.'\|'.east, ' ', 'g')
     if title !~ '\s\+' . "'" . '\+\s\+'
         let title = substitute(title,"'",'','g')
     endif
+    let title = substitute(title, '\s\*\=\d\=\s', ' ', '')
     let words = split(title)[1:]
     let cursor = s:cursor_at_windowless + a:cursor
     let hightlight = get(words, cursor)
@@ -610,11 +594,13 @@ function! s:vimim_windowless_titlestring(cursor)
         let east .= join(words[cursor+1 :])
         let s:cursor_at_windowless = cursor
         let keyboard = get(words,0)=='0' ? "" : get(words,0)
-        let head = "VimIM" . s:vimim_im_chinese() . '  '
-        let tail = keyboard . '  ' . west . hightlight . east
-        let s:windowless_title = head . tail
+        let star = len(s:hjkl) ? s:hjkl : len(s:english.line) ? '*' : ''
+        if empty(s:mode.windowless) || empty(s:cjk.filename)
+            let logo .= s:space . s:vimim_im_chinese()
+        endif
+        let logo .= ' '. keyboard .' '. star . west . hightlight . east
     endif
-    sil!call s:vimim_set_title(s:windowless_title)
+    sil!call s:vimim_set_title(logo)
 endfunction
 
 function! g:vimim_esc()
@@ -837,7 +823,7 @@ function! s:vimim_windowless(key)
         endif
         call s:vimim_windowless_titlestring(cursor)
     else
-        call s:vimim_set_titlestring()
+        call s:vimim_set_title(g:vimim)
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -874,7 +860,7 @@ function! g:vimim_space()
     elseif s:mode.windowless && s:gi_dynamic
         let key = ''                       " gi m space (the 1st choice)
         let s:gi_dynamic_on = 1            " gi m ;     (the 2nd choice)
-        call s:vimim_set_titlestring()     " gi m '     (the 3rd choice)
+        call s:vimim_set_title(g:vimim)     " gi m '     (the 3rd choice)
     else
         let key = s:vimim_onekey_action()
     endif
@@ -903,7 +889,7 @@ function! g:vimim_enter()
         let key = "\<CR>"      " Enter is Enter after Enter
         let s:smart_enter = 0
     endif
-    sil!call s:vimim_set_titlestring()
+    sil!call s:vimim_set_title(g:vimim)
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
