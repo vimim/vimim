@@ -645,15 +645,17 @@ function! g:vimim_label(key)
             let n = key < 1 ? 9 : key - 1
         endif
         let yes = repeat("\<Down>", n). '\<C-Y>'
-        let key = '\<C-R>=g:vimim()\<CR>'
-        if s:mode.onekey && s:hit_and_run
-            let key = yes . s:vimim_stop()
-        elseif s:mode.onekey && a:key =~ '\d'
-            let s:hjkl .= a:key  " 1234567890 as filter
-        else
-            let key = yes . key
-            sil!call s:vimim_reset_after_insert()
+        let omni = '\<C-R>=g:vimim()\<CR>'
+        if s:mode.onekey 
+            if s:vimim_cjk() && a:key =~ '\d'
+                let s:hjkl .= a:key  " 1234567890 as filter
+                let yes = ''
+            elseif s:hit_and_run || a:key =~ '\d'
+                let omni = s:vimim_stop()
+            endif
         endif
+        let key = yes . omni
+        sil!call s:vimim_reset_after_insert()
     elseif s:mode.windowless && key =~ '\d'
         let key = s:vimim_windowless(key)
     endif
