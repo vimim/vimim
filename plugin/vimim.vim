@@ -646,7 +646,7 @@ function! g:vimim_label(key)
         endif
         let yes = repeat("\<Down>", n). '\<C-Y>'
         let omni = '\<C-R>=g:vimim()\<CR>'
-        if s:mode.onekey 
+        if s:mode.onekey
             if s:vimim_cjk() && a:key =~ '\d'
                 let s:hjkl .= a:key  " 1234567890 as filter
                 let yes = ''
@@ -3190,6 +3190,7 @@ function! s:vimim_plug_and_play()
     xnoremap <silent> <C-^> y:call g:vimim_visual()<CR>
     if g:vimim_map !~ 'no-gi'
         nnoremap <silent> gi a<C-R>=g:vimim_gi()<CR>
+            xmap <silent> gi  <C-^>
     endif
     if g:vimim_map !~ 'no-search'
         nnoremap <silent> n :call g:vimim_search()<CR>n
