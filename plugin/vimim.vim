@@ -683,7 +683,7 @@ function! g:vimim_page(key)
             let key = &pumheight ? page : '\<PageUp>'
         endif
     elseif key =~ "[][=-]" && empty(s:mode.onekey)
-        let key = g:vimim_punctuation(key)
+        let key = g:punctuation(key)
     endif
     sil!exe 'sil!return "' . key . '"'
 endfunction
@@ -722,19 +722,19 @@ endfunction
 function! s:vimim_punctuation_maps()
     for _ in keys(s:all_evils)
         if _ !~ s:valid_keyboard
-            exe 'lnoremap <expr> '._.' g:vimim_punctuation("'._.'")'
+            exe 'lnoremap<buffer><expr> '._.' g:punctuation("'._.'")'
         endif
     endfor
     if empty(s:ui.quote)
-        lnoremap ' <C-R>=g:vimim_single_quote()<CR>
+        lnoremap<buffer> ' <C-R>=g:vimim_single_quote()<CR>
     endif
     if g:vimim_punctuation == 3
-        lnoremap    "     <C-R>=g:vimim_double_quote()<CR>
-        lnoremap <Bslash> <C-R>=g:vimim_bslash()<CR>
+        lnoremap<buffer>    "     <C-R>=g:vimim_double_quote()<CR>
+        lnoremap<buffer> <Bslash> <C-R>=g:vimim_bslash()<CR>
     endif
 endfunction
 
-function! g:vimim_punctuation(key)
+function! g:punctuation(key)
     let key = a:key
     if s:toggle_punctuation > 0
         if pumvisible() || getline(".")[col(".")-2] !~ '\w'
@@ -1062,19 +1062,19 @@ function! s:vimim_set_keyboard_maps()
     let both_dynamic = s:mode.dynamic || s:gi_dynamic ? 1 : 0
     if both_dynamic
         for char in s:valid_keys
-            sil!exe 'lnoremap <silent> ' . char . ' ' .
+            sil!exe 'lnoremap<silent><buffer> ' . char . ' ' .
             \ '<C-R>=g:wubi()<CR>' . char . '<C-R>=g:vimim()<CR>'
         endfor
     elseif s:mode.static
         for char in s:valid_keys
-            sil!exe 'lnoremap <silent> ' . char . ' ' .  char
+            sil!exe 'lnoremap<silent><buffer> ' . char . ' ' .  char
         endfor
     else
         let common_punctuations += split(". ,")
         let common_labels += s:abcd[1:]
         let pqwertyuio = s:vimim_cjk() ?  s:qwer : []
         for _ in pqwertyuio + split("h j k l m n / ? s")
-             sil!exe 'lnoremap<expr> '._.' g:vimim_hjkl("'._.'")'
+             sil!exe 'lnoremap<buffer><expr> '._.' g:vimim_hjkl("'._.'")'
         endfor
     endif
     if g:vimim_punctuation < 0
@@ -1083,11 +1083,11 @@ function! s:vimim_set_keyboard_maps()
     endif
     for _ in s:mode.windowless ? [] : common_punctuations
         if _ !~ s:valid_keyboard
-            sil!exe 'lnoremap <expr> '._.' g:vimim_page("'._.'")'
+            sil!exe 'lnoremap<buffer><expr> '._.' g:vimim_page("'._.'")'
         endif
     endfor
     for _ in common_labels
-        sil!exe 'lnoremap <expr> '._.' g:vimim_label("'._.'")'
+        sil!exe 'lnoremap<buffer><expr> '._.' g:vimim_label("'._.'")'
     endfor
 endfunction
 
@@ -2810,16 +2810,16 @@ function! s:vimim_start()
     sil!call s:vimim_set_vimrc()
     sil!call s:vimim_set_frontend()
     sil!call s:vimim_set_keyboard_maps()
-    lnoremap <silent> <expr> <BS>    g:vimim_backspace()
-    lnoremap <silent> <expr> <Esc>   g:vimim_esc()
-    lnoremap <silent> <expr> <C-U>   g:vimim_one_key_correction()
-    lnoremap <silent> <expr> <C-L>   g:vimim_cycle_vimim()
+    lnoremap <silent><buffer> <expr> <BS>    g:vimim_backspace()
+    lnoremap <silent><buffer> <expr> <Esc>   g:vimim_esc()
+    lnoremap <silent><buffer> <expr> <C-U>   g:vimim_one_key_correction()
+    lnoremap <silent><buffer> <expr> <C-L>   g:vimim_cycle_vimim()
     if s:ui.im =~ 'array'
-        lnoremap <silent> <expr> <CR>    g:vimim_space()
-        lnoremap <silent> <expr> <Space> g:vimim_pagedown()
+        lnoremap <silent><buffer> <expr> <CR>    g:vimim_space()
+        lnoremap <silent><buffer> <expr> <Space> g:vimim_pagedown()
     else
-        lnoremap <silent> <expr> <CR>    g:vimim_enter()
-        lnoremap <silent> <expr> <Space> g:vimim_space()
+        lnoremap <silent><buffer> <expr> <CR>    g:vimim_enter()
+        lnoremap <silent><buffer> <expr> <Space> g:vimim_space()
     endif
     let key = ''
     if empty(s:ctrl6)
