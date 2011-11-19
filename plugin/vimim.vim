@@ -59,7 +59,7 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab_as_gi'
-        let g:vimim_cloud = 'sogou,baidu,qq,google'
+        let g:vimim_cloud = 'baidu,sogou,qq,google'
     endif
 endfunction
 
@@ -130,7 +130,7 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_shuangpin"] = 0
     let s:rc["g:vimim_map"] = ''
     let s:rc["g:vimim_toggle"] = 0
-    let s:rc["g:vimim_cloud"] = 'sogou,baidu,qq,google'
+    let s:rc["g:vimim_cloud"] = 'baidu,sogou,qq,google'
     let s:rc["g:vimim_mycloud"] = 0
     let s:rc["g:vimim_plugin"] = s:plugin
     let s:rc["g:vimim_punctuation"] = 2
@@ -2559,7 +2559,8 @@ function! s:vimim_get_cloud_baidu(keyboard)
         let output_list = get(eval(output),0)
     endif
     for item_list in output_list
-        let english = strpart(a:keyboard, get(item_list,1))
+        let keyboard = substitute(a:keyboard,'\W','','g')
+        let english = strpart(keyboard, get(item_list,1))
         call add(results, get(item_list,0) . english)
     endfor
     return results
@@ -3087,7 +3088,7 @@ function! s:vimim_popupmenu_list(lines)
             endif
             let label2 = s:english.line =~ chinese ? '*' : ' '
             let titleline = printf('%3s ', label2 . titleline)
-            let chinese .= empty(tail) ? '' : tail
+            let chinese .= empty(tail) || tail == "'" ? '' : tail
             let complete_items["abbr"] = titleline . chinese
             let complete_items["menu"] = menu
         endif
