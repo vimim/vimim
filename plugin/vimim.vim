@@ -59,6 +59,7 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab_as_gi'
+        let g:vimim_cloud = 'sogou,baidu,qq,google'
     endif
 endfunction
 
@@ -129,7 +130,7 @@ function! s:vimim_initialize_global()
     let s:rc["g:vimim_shuangpin"] = 0
     let s:rc["g:vimim_map"] = ''
     let s:rc["g:vimim_toggle"] = 0
-    let s:rc["g:vimim_cloud"] = 'google,sogou,baidu,qq'
+    let s:rc["g:vimim_cloud"] = 'sogou,baidu,qq,google'
     let s:rc["g:vimim_mycloud"] = 0
     let s:rc["g:vimim_plugin"] = s:plugin
     let s:rc["g:vimim_punctuation"] = 2
@@ -362,7 +363,7 @@ function! s:vimim_get_hjkl_game(keyboard)
         let results = s:vimim_readfile(poem) " [hjkl] file in hjkl folder
     elseif keyboard ==# "vim" || keyboard =~# "^vimim"
         let results = s:vimim_easter_chicken(keyboard)      " [hidden] egg
-    elseif keyboard =~# '^\l\+' . "'" . '\{4}$'
+    elseif keyboard =~# '\l\+' . "'" . '\{4}$'
         let results = s:vimim_get_all_clouds(keyboard[:-5]) " fuck''''
     elseif len(getreg('"')) > 3
         if keyboard == "''''"      " visual: display buffer inside omni
