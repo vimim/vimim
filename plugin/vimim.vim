@@ -662,7 +662,6 @@ function! g:vimim_label(key)
     elseif s:mode.windowless && key =~ '\d'
         let key = s:vimim_windowless(key)
     endif
-    let s:has_pumvisible = pumvisible() ? 1 : 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -871,7 +870,6 @@ function! g:vimim_space()
         let key = s:vimim_onekey_action()
     endif
     call s:vimim_reset_after_insert()
-    let s:has_pumvisible = pumvisible() ? 1 : 0
     sil!exe 'sil!return "' . key . '"'
 endfunction
 
@@ -2877,16 +2875,16 @@ function! s:vimim_super_reset()
 endfunction
 
 function! s:vimim_reset_before_anything()
+    let s:has_shuangpin_transform = 0   " todo
     let s:mode = s:onekey
-    let s:gi_dynamic_on = 0
+    let s:keyboard = ""
     let s:omni = 0
     let s:ctrl6 = 0
     let s:switch = 0
     let s:toggle_im = 0
     let s:smart_enter = 0
-    let s:has_pumvisible = 0
+    let s:gi_dynamic_on = 0
     let s:toggle_punctuation = 1
-    let s:keyboard = ""
     let s:popup_list = []
 endfunction
 
@@ -3003,7 +3001,7 @@ else
             let rules = s:vimim_shuangpin_rules(g:vimim_shuangpin, rules)
             let s:shuangpin_table = s:vimim_create_shuangpin_table(rules)
         endif
-        if empty(s:has_pumvisible)
+        if empty(s:has_shuangpin_transform)
             let keyboard = s:vimim_shuangpin_transform(keyboard)
             let s:keyboard = keyboard
         endif
