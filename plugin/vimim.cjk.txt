@@ -3508,7 +3508,7 @@
 害   3060 hai4he2 550
 宴   3040 yan4 1767
 宵   3022 xiao1 2738
-家   3023 jia1 house home family 47
+家   3023 jia1 home family 47
 宷   3090 shen3
 宸   3023 chen2
 容   3060 rong2 321
@@ -6407,7 +6407,7 @@
 朆   8762 fen1
 朇   8664 pi2
 月   7722 yue4 u moon month 159
-有   4022 you3you4 have has 2
+有   4022 you3 have has 2
 朊   7121 ruan3
 朋   7722 peng2 799
 朌   7822 ban1fen2
@@ -10554,18 +10554,18 @@
 眹   6808 zhen4
 眺   6201 tiao4 3096
 眻   6805 yang2
-眼   6703 yan3wen3 315
+眼   6703 yan3 315
 眽   6203 mo4
 眾众 6088 zhong4
 眿   6309 mai4
-着著 8060 zhuo2zhao2zhao1zhe5 64
+着著 8060 zhuo2 64
 睁睜 6705 zheng1 1900
 睂   8226 mei2
-睃   6304 jun4suo1
-睄   6902 shao4qiao2
+睃   6304 jun4
+睄   6902 shao4
 睅   6604 han4
 睆   6301 huan3
-睇   6802 di4ti1ti2
+睇   6802 di4ti1
 睈   6601 cheng3
 睉   6801 cuo1
 睊   6602 juan4
@@ -16647,7 +16647,7 @@
 輆   5008 kai3
 輇辁 5801 quan2chun1
 輈辀 5704 zhou1
-載载 4355 zai4zai3
+載载 4355 zai4zai
 輊轾 5101 zhi4
 輋   2250 she1
 輌   5102 liang4
@@ -16763,13 +16763,13 @@
 轺軺 4756 yao2
 轻輕 4751 qing1 light 363
 轼軾 4354 shi4
-载載 4355 zai4zai3 1081
+载載 4355 zai4 1081
 轾輊 4151 zhi4
 轿轎 4252 jiao4 1847
 辀輈 4754 zhou1
 辁輇 4851 quan2
 辂輅 4756 lu4ya4
-较較 4054 jiao4jue2 571
+较較 4054 jiao4 571
 辄輒 4151 zhe2 3278
 辅輔 4352 fu3 2033
 辆輛 4152 liang4 1335
@@ -16797,7 +16797,7 @@
 辜   4040 gu1 2352
 辝   2064 ci2
 辞辭 2064 ci2 1156
-辟   7064 pi4pi1bi4mi3 2048
+辟   7064 pi4pi1bi4 2048
 辠   2640 zui4
 辡   0044 bian4
 辢   5094 la4
