@@ -1268,7 +1268,8 @@ function! s:vimim_imode_today_now(keyboard)
     let two .= " 月 日 时 分 秒"
     let chinese = copy(s:translators)
     let chinese.dict = s:vimim_key_value_hash(one, two)
-    let time  = strftime("%Y") . ' year  '
+    let time  = '公元'
+    let time .= strftime("%Y") . ' year  '
     let time .= strftime("%m") . ' month '
     let time .= strftime("%d") . ' day   '
     if a:keyboard ==# 'itoday'
