@@ -35,7 +35,7 @@ let s:VimIM += [" ====  initialization   ==== {{{"]
 
 function! s:vimim_bare_bones_vimrc()
     set cpoptions=Bce$ go=cirMehf shm=aoOstTAI noloadplugins
-    set gcr=a:blinkon0 shellslash noswapfile viminfo= hlsearch
+    set gcr=a:blinkon0 shellslash noswapfile hlsearch viminfo=
     set fencs=ucs-bom,utf8,chinese,gb18030 gfn=Courier_New:h12:w7
     set enc=utf8 gfw=YaHei_Consolas_Hybrid,NSimSun-18030
     let unix = '/usr/local/bin:/usr/bin:/bin:.'
@@ -59,7 +59,7 @@ function! s:vimim_initialize_debug()
     if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
         let g:vimim_plugin = hjkl
         let g:vimim_map = 'tab_as_gi'
-        let g:vimim_cloud = 'baidu,sogou,qq,google'
+        let g:vimim_cloud = 'google,sogou,baidu,qq'
     endif
 endfunction
 
@@ -1015,9 +1015,10 @@ function! s:vimim_onekey_evils()
                 return " " " no transfer if punctuation punctuation
             endif
         endfor
-        let bs = onekey_evils[one] " make Chinese punctuation
-        let bs = one == "'" ? g:vimim_single_quote() : bs
-        let bs = one == '"' ? g:vimim_double_quote() : bs
+        let bs = onekey_evils[one]  " make Chinese punctuation
+        if one == '"' || one == '"'
+            let bs .= '\<Left>'
+        endif
         let key = "\<Left>\<Delete>" . bs
     endif
     sil!exe 'sil!return "' . key . '"'
