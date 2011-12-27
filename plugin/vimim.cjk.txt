@@ -1469,7 +1469,7 @@
 厼   2390 keum
 厽   2373 lei3
 厾   1771 du1
-县縣 7773 xian4xuan2 1071
+县縣 7773 xian4 1071
 叀   5073 zhuan1hui4
 叁叄 2310 san1 three 3791
 参參 2320 can1san1shen1 557
@@ -8108,7 +8108,7 @@
 涫   3017 guan4
 涬   3414 xing4
 涭   3214 shou4
-涮   3210 shuan4shua1
+涮   3210 shuan4 rinse
 涯   3111 ya2 2415
 涰   3714 chuo4
 涱   3113 zhang4
@@ -12872,7 +12872,7 @@
 聇   1141 zheng1
 聈   1442 you3
 聉   1242 wa1
-聊   1742 liao2liu2 1624
+聊   1742 liao2 1624
 聋聾 4340 long2 deaf 2835
 职職 1648 zhi2 744
 聍聹 1342 ning2ning3
@@ -12919,7 +12919,7 @@
 聶聂 1044 nie4
 職职 1345 zhi2
 聸   1746 dan1
-聹聍 1342 ning2ning3
+聹聍 1342 ning2
 聺   1349 qie2
 聻   3240 jian4
 聼   1443 ting1
@@ -12935,7 +12935,7 @@
 肆   7570 si4ti4 four 2363
 肇   3850 zhao4 2974
 肈   3350 zhao4
-肉   4022 rou4ru4 u meat 967
+肉   4022 rou4 u meat 967
 肊   7721 yi4
 肋   7422 lei4le4 3235
 肌   7721 ji1 2172
@@ -12952,7 +12952,7 @@
 肗   7424 ru3
 肘   7420 zhou3 2892
 肙   6022 yuan1
-肚   7421 du4du3 1563
+肚   7421 du4 1563
 肛   7121 gang1
 肜   7222 rong2chen1
 肝   7124 gan1 2305
@@ -15017,7 +15017,7 @@
 袨   3023 xian4xuan4
 袩   3126 chan1
 袪   3423 qu1
-被   3424 bei4pi1bi4pi4 154
+被   3424 bei4 154
 袬   0073 gun3
 袭襲 4373 xi2 1555
 袮   3829 mi2
@@ -15842,9 +15842,9 @@
 诡詭 3771 gui3 2708
 询詢 3772 xun2 1406
 诣詣 3276 yi4 3172
-诤諍 3775 zheng1zheng4
+诤諍 3775 zheng1
 该該 3078 gai1 250
-详詳 3875 xiang2yang2 1377
+详詳 3875 xiang2 1377
 诧詫 3371 cha4 2730
 诨諢 3775 hun4
 诩詡 3772 xu3
