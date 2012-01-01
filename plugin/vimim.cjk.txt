@@ -1374,7 +1374,7 @@
 卝   1122 guan4kuang4
 卞   0023 bian4 3578
 卟   6300 bu3
-占   2160 zhan1zhan4 887
+占   2160 zhan4 887
 卡   2123 qia3ka3 1248
 卢盧 2120 lu2 1505
 卣   2160 you3
@@ -8445,7 +8445,7 @@
 滼   3411 fan4
 滽   3012 yong2rong2
 滾滚 3013 gun3
-滿满 3412 man3men4
+滿满 3412 man3
 漀   4790 qing4
 漁渔 3713 yu2
 漂   3119 piao1piao3piao4 1634
@@ -11479,19 +11479,19 @@
 竖竪 2710 shu4 verticle 2192
 竗   0912 miao4miao3
 竘   0712 ju3qu3
-站   0116 zhan4zhan1 stand 389
+站   0116 zhan4 stand 389
 竚   0312 zhu4
 竛   0813 ling2
 竜   0071 long2
 竝   0011 bing4bang4
 竞競 0021 jing4 1384
 竟   0021 jing4 583
-章   0040 zhang1zhang4 chapter 610
+章   0040 zhang1 chapter 610
 竡   0116 bai3
 竢   0318 si4
 竣   0314 jun4 3665
 竤   0313 hong2
-童   0010 tong2zhong1 1046
+童   0010 tong2 1046
 竦   0519 song3
 竧   0714 jing4
 竨   0114 diao4
@@ -11517,7 +11517,7 @@
 竼   8821 peng2
 竽   8840 yu2
 竾   8871 chi2
-竿   8840 gan1gan4gan3 pole rod 2917
+竿   8840 gan3 pole rod 2917
 笀   8871 mang2
 笁   8810 zhu2
 笂   8851 wan2
@@ -12446,9 +12446,9 @@
 纝   2699 lei2
 纞   2293 lian4
 纟糹 2010 si1
-纠糾 2210 jiu1jiu3jiao3 1600
+纠糾 2210 jiu1 1600
 纡紆 2114 yu1yu3
-红紅 2111 hong2hong1 red 381
+红紅 2111 hong2 red 381
 纣紂 2410 zhou4 3837
 纤纖 2214 xian1jian1 1625
 纥紇 2811 he2ge1
@@ -12456,7 +12456,7 @@
 级級 2714 ji2 761
 纨紈 2511 wan2
 纩纊 2010 kuang4
-纪紀 2711 ji4ji3 596
+纪紀 2711 ji4 596
 纫紉 2712 ren4
 纬緯 2512 wei3 2895
 纭紜 2113 yun2
