@@ -190,13 +190,13 @@ function! s:vimim_set_frontend()
     let logo = s:chinese('dscj')
     let tail = s:mode.windowless ? s:today : ''
     if s:mode.dynamic || s:mode.static
-        let logo = s:chinese('chinese', s:mode.static ? 'static' : 'dynamic')
+        let logo = s:chinese('chinese',s:mode.static?'static':'dynamic')
         let tail = s:chinese('halfwidth')
         if g:vimim_punctuation > 0 && s:toggle_punctuation > 0
             let tail = s:chinese('fullwidth')
         endif
     endif
-    let g:vimim = "VimIM" . s:space . logo .' '. s:vimim_im_chinese() .' '. tail
+    let g:vimim = "VimIM".s:space.logo.' '.s:vimim_im_chinese().' '.tail
     call s:vimim_set_title(g:vimim)
 endfunction
 
@@ -539,7 +539,7 @@ function! s:vimim_set_title(title)
         if s:mode.windowless
            let &l:statusline = '%{"'. a:title .'"}%<'
         else
-           let &l:statusline = g:vimim . ' %h%m%r%=%-14.(%l,%c%V%) %P %<%f'
+           let &l:statusline = g:vimim .' %h%m%r%=%-14.(%l,%c%V%) %P %<%f'
         endif
     endif
 endfunction
