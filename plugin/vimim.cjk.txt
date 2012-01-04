@@ -70,7 +70,7 @@
 久   2780 jiu3 486
 乆   2800 jiu3
 乇   2071 zhe2
-么幺 2073 me5mo3 140
+么   2073 me5mo3 140
 义義 4000 yi4 282
 乊   2032 ho1
 之   3030 zhi1 of 43
@@ -1076,7 +1076,7 @@
 刳   4220 ku1
 刴   1290 duo4
 刵   1240 er4
-制製 2220 zhi4 manufacture 274
+制   2220 zhi4 manufacture 274
 刷   7220 shua1shua4 1756
 券   9022 quan4 2290
 刹剎 4290 cha4sha1 2155
@@ -1512,13 +1512,13 @@
 叧   6022 gua3
 叨   6702 tao1dao1 2823
 叩   6702 kou4 2620
-只衹 6080 zhi3 103
+只   6080 zhi3 103
 叫   6400 jiao4 call 368
 召   1760 zhao4shao4 1367
 叭   6800 ba1 2771
 叮   6102 ding1 sting 2470
 可   1062 ke3ke4 26
-台檯 2360 tai2 341
+台   2360 tai2 341
 叱   6401 chi4 2984
 史   5000 shi3 570
 右   4060 you4 right 653
@@ -1551,7 +1551,7 @@
 后后 7226 hou4 late 49
 吏   5000 li4 2698
 吐   6401 tu3tu4 1371
-向曏 2722 xiang4 119
+向   2722 xiang4 119
 吒咤 6201 zha4zha1
 吓嚇 6103 xia4he4 1506
 吔   6401 ye3
@@ -1622,7 +1622,7 @@
 呕嘔 6101 ou1ou3ou4 vomit 2872
 呖嚦 6102 li4
 呗唄 6708 bai4bei5
-员員 6080 yuan2yun4 361
+员員 6080 yuan2 361
 呙咼 6022 kuai1guo1wai1
 呚   6804 qi4
 呛嗆 6801 qiang1qiang4 3510
@@ -3608,7 +3608,7 @@
 尗   2190 shu2
 尘塵 9010 chen2 dust dirt 1422
 尙   9022 shang4chang2
-尚   9022 shang4chang2 693
+尚   9022 shang4 693
 尛   9099 mo2
 尜   9090 ga2
 尝嘗 9073 chang2 taste 1237
@@ -4481,7 +4481,7 @@
 往   2021 wang3wang4 296
 征徵 2121 zheng1 894
 徂   2721 cu2
-徃   2521 wang3wang4
+徃   2521 wang3
 径徑 2721 jing4 path 1153
 待   2424 dai4dai1 438
 徆   2126 xi1
@@ -4501,14 +4501,14 @@
 徔   2423 cong2
 徕徠 2529 lai2lai4
 徖   2329 cong2
-得   2624 de2de5dei3 25
+得   2624 de2dei3 25
 徘   2121 pai2pei2 2921
 徙   2128 xi3 3843
 徚   2529 dong1
 徛   2422 qi4
 徜   2922 chang2
 徝   2421 zhi4
-從从 2828 cong2zong4
+從从 2828 cong2
 徟   2722 zhou1
 徠徕 2429 lai2lai4
 御禦 2722 yu4ya4 1653
@@ -4519,7 +4519,7 @@
 徦   2724 jia3
 徧   2322 bian4
 徨   2621 huang2 3962
-復复 2824 fu4fou4
+復复 2824 fu4
 循   2226 xun2 1694
 徫   2425 wei3
 徬   2022 pang2
@@ -6349,7 +6349,7 @@
 曌   6710 zhao4
 曍   6604 hao4
 曎   6604 yi4
-曏向 6022 xiang4shang3
+曏向 6022 xiang4
 曐   6010 xing1
 曑   6020 sen1
 曒   6804 jiao3
@@ -11465,7 +11465,7 @@
 竈灶 3071 zao4
 竉   3021 long3
 竊窃 3092 qie4
-立   0010 li4wei4 u 161
+立   0010 li4 u 161
 竌   0711 chu4
 竍   0410 shi2
 竎   0044 fou4
@@ -13298,7 +13298,7 @@
 臱   2622 mian2
 臲   2791 nie4
 至   1010 zhi4 u 214
-致緻 1814 zhi4 521
+致   1814 zhi4 521
 臵   1716 ge2
 臶   1414 jian4zun4
 臷   4315 die2
@@ -16358,7 +16358,7 @@
 跥   6719 duo4
 跦   6519 zhu1
 跧   6811 quan2zun1zhuan1
-跨   6412 kua4ku4kua1kua3 1499
+跨   6412 kua4 1499
 跩   6510 zhuai3shi4
 跪   6711 gui4 kneel 1890
 跫   1780 qiong2qiong1qiang1
@@ -16844,7 +16844,7 @@
 迋   3130 wang4kuang1
 迌   3730 tu4
 迍   3530 zhun1tun2
-迎   3730 ying2ying4 805
+迎   3730 ying2 805
 迏   3430 ti4
 运運 3130 yun4 416
 近   3230 jin4ji4 293
@@ -16855,10 +16855,10 @@
 迖   3330 da2ti4ta4
 迗   3230 e2
 还還 3130 huan2hai2 yet 73
-这這 3030 zhe4zhei4 the 10
+这這 3030 zhe4 the 10
 迚   3530 da2
 进進 3530 jin4 63
-远遠 3130 yuan3yuan4 317
+远遠 3130 yuan3 317
 违違 3530 wei2 1376
 连連 3430 lian2 246
 迟遲 3730 chi2 late 1056
@@ -17354,7 +17354,7 @@
 釉   2596 you4
 释釋 2795 shi4yi4 959
 釋释 2694 shi4yi4
-里裏 6010 li3 in 83
+里   6010 li3 in 83
 重   2010 zhong4chong2 heavy 116
 野   6712 ye3 919
 量   6010 liang4liang2 quantity 298
@@ -18494,7 +18494,7 @@
 阽   7126 dian4yan2
 阾   7823 ling3
 阿   7122 a1e1 547
-陀   7321 tuo2duo4 2638
+陀   7321 tuo2 2638
 陁   7821 tuo2yi3
 陂   7424 bei1
 陃   7122 bing3
@@ -18502,7 +18502,7 @@
 际際 7129 ji4 562
 陆陸 7527 lu4 six 1008
 陇隴 7321 long3 3201
-陈陳 7429 chen2zhen4 618
+陈陳 7429 chen2 618
 陉陘 7721 xing2jing4
 陊   7722 duo4
 陋   7121 lou4 2612
@@ -18510,7 +18510,7 @@
 降   7725 jiang4xiang2 963
 陎   7529 shu1
 陏   7422 duo4
-限   7723 xian4wen3 814
+限   7723 xian4 814
 陑   7122 er2
 陒   7721 gui3
 陓   7422 yu1wu1
@@ -18784,7 +18784,7 @@
 靟   1171 fei1
 靠   2411 kao4 lean 746
 靡   0021 mi2 3028
-面麵 1060 mian4 u flour noodles 53
+面   1060 mian4 u flour noodles 53
 靣   1060 mian4
 靤   1761 pao4
 靥靨 7126 ye4
@@ -19030,7 +19030,7 @@
 顕   6118 xian3
 顖   2138 xin4
 顗   2118 yi3
-願   7128 yuan4
+願愿 7128 yuan4
 顙颡 1198 sang3
 顚   2188 dian1
 顛颠 2188 dian1
@@ -20666,7 +20666,7 @@
 麹   4742 qu2
 麺   4146 mian4
 麻   0029 ma2ma1 u 1042
-麼么 0023 me5mo5mo3ma5
+麼么 0023 mo5ma5
 麽么 0023 mo5mo3ma5me5 3381
 麾   0021 hui1
 麿   0026 mi2
