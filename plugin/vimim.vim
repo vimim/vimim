@@ -27,7 +27,7 @@ let s:VimIM  = [" ====  introduction     ==== {{{"]
 "    (3) :help i_CTRL-^  Toggle the use of language      ...
 "    (4) :help i_CTRL-_  Switch between languages        ...
 "    (5) :help i_CTRL-U  Delete all entered characters   ... (internal)
-"    (6) :help i_CTRL-L  when ... is set: go to ... mode ... (internal)
+"    (6) :help i_CTRL-L  When ... is set: Go to ... mode ... (internal)
 
 " ============================================= }}}
 let s:VimIM += [" ====  initialization   ==== {{{"]
