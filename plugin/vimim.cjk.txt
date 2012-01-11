@@ -1524,7 +1524,7 @@
 右   4060 you4 right 653
 叴   4060 qiu2
 叵   7171 po3
-叶葉 6400 ye4xie2 leaf 812
+叶葉 6400 ye4 leaf 812
 号號 6002 hao4hao2 507
 司   1762 si1 346
 叹嘆 6704 tan4 1129
@@ -2929,7 +2929,7 @@
 奰   6080 bi4
 奱   2280 lian2
 奲   4665 duo3
-女   4040 nv3ru3 u female 256
+女   4040 nv3 u female 256
 奴   4744 nu2 1848
 奵   4142 ding1
 奶   4742 nai3 breast milk 1115
@@ -7931,7 +7931,7 @@
 泺濼 3219 luo4po1
 泻瀉 3712 xie4 2955
 泼潑 3314 po1bo1 2088
-泽澤 3715 ze2shi4 1226
+泽澤 3715 ze2 1226
 泾涇 3711 jing1
 泿   3713 yin2
 洀   3714 zhou1pan2
@@ -8195,7 +8195,7 @@
 渂   3614 wen4
 渃   3416 re4ruo4
 渄   3111 fei1
-清   3512 qing1qing4 266
+清   3512 qing1 266
 渆   1210 yuan1
 渇   3612 ke3
 済   3012 ji4
@@ -9060,7 +9060,7 @@
 煣   9789 rou3
 煤   9489 mei2 coal 2177
 煥焕 9788 huan4
-煦   6733 xu3xu4xiu1 3678
+煦   6733 xu4 3678
 照   6733 zhao4 399
 煨   9683 wei1yu4
 煩烦 9188 fan2
@@ -17277,7 +17277,7 @@
 酼   1061 hai3
 酽釅 1160 yan4
 酾釃 1162 shi1
-酿釀 1363 niang4niang2 ferment brew 2733
+酿釀 1363 niang4 ferment brew 2733
 醀   1061 wei2
 醁   1769 lu4
 醂   1469 lan3
@@ -17355,7 +17355,7 @@
 释釋 2795 shi4yi4 959
 釋释 2694 shi4yi4
 里   6010 li3 in 83
-重   2010 zhong4chong2 heavy 116
+重   2010 zhong4 heavy 116
 野   6712 ye3 919
 量   6010 liang4liang2 quantity 298
 釐厘 5821 li2xi1
