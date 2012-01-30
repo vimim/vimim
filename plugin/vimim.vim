@@ -55,9 +55,8 @@ let s:plugin = expand("<sfile>:p:h")
 function! s:vimim_initialize_debug()
     " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
-    let hjkl = simplify(s:plugin . '/../../../hjkl/')
-    if empty(&cp) && exists('hjkl') && isdirectory(hjkl)
-        let g:vimim_plugin = hjkl
+    let s:plugon = simplify(s:plugin . '/../../../Dropbox/hjkl/')
+    if empty(&cp) && exists('s:plugon') && isdirectory(s:plugon)
         let g:vimim_map = 'tab_as_gi'
         let g:vimim_cloud = 'google,sogou,baidu,qq'
     endif
@@ -282,7 +281,7 @@ function! s:vimim_egg_vimim()
     call add(eggs, encoding . s:space . &fileencodings)
     call add(eggs, s:chinese('env', s:colon) . v:lc_time)
     let db = s:chinese('database', s:colon)
-    let input = g:vimim . s:space
+    let input = "VimIM" . s:space . s:vimim_im_chinese() . s:space
     if len(s:cjk.filename)
         let input .= s:chinese('4corner') . s:space
         call add(eggs, db.s:chinese('cjk',s:colon).s:cjk.filename)
@@ -303,14 +302,14 @@ function! s:vimim_egg_vimim()
     let exe = s:http_exe =~ 'Python' ? '' : "HTTP executable: "
     call add(eggs, cloud)
     call add(eggs, s:chinese('network', s:colon) . exe . s:http_exe)
-    call add(eggs, s:chinese('input',  s:colon) . input)
-    call add(eggs, s:chinese('option',  s:colon) . 'vimimrc')
+    call add(eggs, s:chinese('input', s:colon) . input)
+    call add(eggs, s:chinese('option', s:colon) . 'vimimrc')
     let results = map(eggs + s:vimim_egg_vimimrc(), 'v:val . " " ')
     return results
 endfunction
 
 " ============================================= }}}
-let s:VimIM += [" ====  hjkl  vimimgame  ==== {{{"]
+let s:VimIM += [" ====  hjkl vimimgame   ==== {{{"]
 " =================================================
 
 function! s:vimim_cache()
@@ -805,6 +804,7 @@ function! g:vimim_tab(gi)
     let key = "\t"
     if empty(len(s:vimim_left()))
     elseif pumvisible() || s:ctrl6
+        let @0 = getline(".")  " undo if dump out by accident
         let key = s:vimim_screenshot()
     else
         let s:mode = a:gi? s:windowless : s:onekey
@@ -1646,10 +1646,13 @@ function! s:vimim_get_english(keyboard)
     return oneline
 endfunction
 
-function! s:vimim_filereadable(file)
-    let full_path_datafile = s:plugin . a:file
-    if filereadable(full_path_datafile)
-        return full_path_datafile
+function! s:vimim_filereadable(filename)
+    let datafile_1 = s:plugin . a:filename
+    let datafile_2 = s:plugon . a:filename
+    if filereadable(datafile_1)
+        return datafile_1
+    elseif filereadable(datafile_2)
+        return datafile_2
     endif
     return ""
 endfunction
