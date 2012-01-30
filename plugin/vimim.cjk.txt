@@ -5230,7 +5230,7 @@
 扭   5701 niu3 1582
 扮   5802 ban4 1749
 扯   5101 che3 1802
-扰擾 5301 rao3rou2 1475
+扰擾 5301 rao3 1475
 扱   5704 xi1cha1
 扲   5802 qian2
 扳   5204 ban1pan1 2826
@@ -5245,7 +5245,7 @@
 扼   5101 e4 3119
 扽   5501 dun4den4
 找   5305 zhao3 find search 391
-承   1723 cheng2zheng3 645
+承   1723 cheng2 645
 技   5404 ji4 833
 抁   5301 yan3
 抂   5101 kuang2
@@ -5347,7 +5347,7 @@
 拢攏 5301 long3 2485
 拣揀 5509 jian3 pick 2794
 拤   5103 qia3
-拥擁 5702 yong3yong1 1022
+拥擁 5702 yong1 1022
 拦攔 5801 lan2 1827
 拧擰 5302 ning2ning3ning4 3034
 拨撥 5304 bo1fa2 1522
