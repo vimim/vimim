@@ -901,10 +901,9 @@ function! g:vimim_one_key_correction()
     " :help i_CTRL-U  Delete all entered characters ...
     let key = nr2char(21)
     if s:mode.windowless || s:mode.static && pumvisible()
-        if s:omni " one_key_correction " gi m space a space ctrl+u space
+        if s:omni " one_key_correction " gi m space a space ctrl+u
             let s:omni = -1            " gi mamahuhu space ctrl+u ctrl+u
             let key  = '\<C-E>\<C-R>=g:vimim()\<CR>\<Left>\<Delete>'
-            let key .= '\<C-R>=g:vimim_enter()\<CR>'
         endif
     elseif pumvisible()
         let range = col(".") - 1 - s:starts.column
