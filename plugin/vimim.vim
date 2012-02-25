@@ -53,7 +53,7 @@ let g:vimim_profile = reltime()
 let s:plugin = expand("<sfile>:p:h")
 
 function! s:vimim_initialize_debug()
-    " gvim -u /home/xma/vim/vimfiles/plugin/vimim.vim
+    " gvim -u /var/mobile/vim/vimfiles/plugin/vimim.vim
     " gvim -u /home/vimim/svn/vimim/trunk/plugin/vimim.vim
     let s:plugon = simplify(s:plugin . '/../../../hjkl/')
     if empty(&cp) && exists('s:plugon') && isdirectory(s:plugon)
