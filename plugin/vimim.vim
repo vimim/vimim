@@ -2,8 +2,6 @@
 "                   VimIM —— Vim 中文輸入法
 " ===========================================================
 let s:egg = ' vimim easter egg:' " vim i vimim CTRL-^ CTRL-^
-let s:egg = ' $Date: 2012-03-24 11:30:06 -0700 (Sat, 24 Mar 2012) $'
-let s:egg = ' $Revision: 11497 $'
 let s:url = ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
 let s:url = ' http://code.google.com/p/vimim/source/list'
 let s:url = ' http://vim.sf.net/scripts/script.php?script_id=2506'
@@ -274,9 +272,7 @@ function! s:vimim_egg_vimim()
     endfor
     let time = reltimestr(g:vimim_profile) . ' seconds'
     call add(eggs, s:chinese('computer', s:colon) . os . time)
-    let revision = get(split(s:egg),1)
-    let revision = empty(revision) ?  ""  : "vimim.vim=" . revision
-    let revision = v:progname ."=". v:version  . s:space . revision
+    let revision = v:progname ."=". v:version
     call add(eggs, s:chinese('revision', s:colon) . revision)
     let encoding = s:chinese('encoding', s:colon) . &encoding
     call add(eggs, encoding . s:space . &fileencodings)
@@ -1950,54 +1946,6 @@ endfunction
 " ============================================= }}}
 let s:VimIM += [" ====  python2 python3  ==== {{{"]
 " =================================================
-
-function! g:vimim_gmail() range abort
-" [dream] one click to send email from within the current vim buffer
-" [usage] :call g:vimim_gmail()
-" [vimrc] :let  g:gmails={'login':'x','passwd':'x','to':'x','bcc':'x'}
-if empty(has('python')) && empty(has('python3'))
-    echo 'No magic Python Interface to Vim' | return ""
-endif
-let firstline = a:firstline
-let  lastline = a:lastline
-if lastline - firstline < 1
-    let firstline = 1
-    let lastline = "$"
-endif
-let g:gmails.msg = getline(firstline, lastline)
-let python = has('python3') && &relativenumber ? 'python3' : 'python'
-exe python . ' << EOF'
-import vim
-from smtplib import SMTP
-from datetime import datetime
-from email.mime.text import MIMEText
-def vimim_gmail():
-    gmails = vim.eval('g:gmails')
-    vim.command('sil!unlet g:gmails.bcc')
-    now = datetime.now().strftime("%A %m/%d/%Y")
-    gmail_login  = gmails.get("login","")
-    if len(gmail_login) < 8: return None
-    gmail_passwd = gmails.get("passwd")
-    gmail_to     = gmails.get("to")
-    gmail_bcc    = gmails.get("bcc","")
-    gmail_msg    = gmails.get("msg")
-    gamil_all = [gmail_to] + gmail_bcc.split()
-    msg = str("\n".join(gmail_msg))
-    rfc2822 = MIMEText(msg, 'plain', 'utf-8')
-    rfc2822['From'] = gmail_login
-    rfc2822['To'] = gmail_to
-    rfc2822['Subject'] = now
-    rfc2822.set_charset('utf-8')
-    try:
-        gmail = SMTP('smtp.gmail.com', 587, 120)
-        gmail.starttls()
-        gmail.login(gmail_login, gmail_passwd[::-1])
-        gmail.sendmail(gmail_login, gamil_all, rfc2822.as_string())
-    finally:
-        gmail.close()
-vimim_gmail()
-EOF
-endfunction
 
 function! s:vimim_initialize_bsddb(datafile)
 :sil!python << EOF
