@@ -2,8 +2,8 @@
 "                   VimIM —— Vim 中文輸入法
 " ===========================================================
 let s:egg = ' vimim easter egg:' " vim i vimim CTRL-^ CTRL-^
-let s:egg = ' $Date$'
-let s:egg = ' $Revision$'
+let s:egg = ' $Date: 2012-03-24 11:30:06 -0700 (Sat, 24 Mar 2012) $'
+let s:egg = ' $Revision: 11497 $'
 let s:url = ' http://vimim.googlecode.com/svn/vimim/vimim.vim.html'
 let s:url = ' http://code.google.com/p/vimim/source/list'
 let s:url = ' http://vim.sf.net/scripts/script.php?script_id=2506'
@@ -119,6 +119,7 @@ function! s:vimim_initialize_global()
     let s:az_list = map(range(97,122),"nr2char(".'v:val'.")")
     let s:valid_keys = s:az_list
     let s:valid_keyboard = "[0-9a-z']"
+    let s:valid_wubi_keyboard = "[0-9a-z]"
     let s:shengmu_list = split('b p m f d t l n g k h j q x r z c s y w')
     let s:pumheights = { 'current' : &pumheight, 'saved' : &pumheight }
     let s:smart_quotes = { 'single' : 1, 'double' : 1 }
@@ -2915,6 +2916,7 @@ let s:VimIM += [" ====  core engine      ==== {{{"]
 " =================================================
 
 function! VimIM(start, keyboard)
+let valid_keyboard = s:wubi ? s:valid_wubi_keyboard : s:valid_keyboard
 if a:start
     let cursor_positions = getpos(".")
     let start_row = cursor_positions[1]
@@ -2928,7 +2930,7 @@ if a:start
         let last_seen_nonsense_column = copy(start_column)
         let all_digit = 1
         while start_column
-            if before =~# s:valid_keyboard
+            if before =~# valid_keyboard
                 let start_column -= 1
                 if before !~# "[0-9']" || s:ui.im =~ 'phonetic'
                     let last_seen_nonsense_column = start_column
@@ -2969,7 +2971,7 @@ else
     if !empty(str2nr(keyboard)) " for digit input: 23554022100080204420
         let keyboard = get(split(s:keyboard),0)
     endif
-    if empty(keyboard) || keyboard !~ s:valid_keyboard
+    if empty(keyboard) || keyboard !~ valid_keyboard
         return []
     else   " [english] first check if it is english or not
         let s:english.line = s:vimim_get_english(keyboard)
