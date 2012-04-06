@@ -541,6 +541,9 @@ function! s:vimim_set_title(title)
 endfunction
 
 function! s:vimim_im_chinese()
+    if empty(s:ui.im)
+        return "==broken python interface to vim==" 
+    endif
     let backend = s:backend[s:ui.root][s:ui.im]
     let title = has_key(s:keycodes, s:ui.im) ? backend.chinese : ''
     if s:ui.im =~ 'wubi'
