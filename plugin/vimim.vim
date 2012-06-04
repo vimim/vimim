@@ -2806,7 +2806,7 @@ function! s:vimim_save_vimrc()
 endfunction
 
 function! s:vimim_set_vimrc()
-    set title noshowmatch shellslash imdisable
+    set title noshowmatch shellslash
     set completeopt=menuone
     set complete=.
     set nolazyredraw
