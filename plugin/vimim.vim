@@ -506,7 +506,11 @@ endfunction
 
 function! s:vimim_set_pumheight()
     let &completeopt = s:mode.windowless ? 'menu' : 'menuone'
-    let &pumheight = s:pumheights.saved
+    if exists('g:vimim_pumheight')
+        let &pumheight = g:vimim_pumheight
+    else
+        let &pumheight = s:pumheights.saved
+    endif
     if empty(&pumheight)
         let &pumheight = 5
         if s:mode.onekey || len(s:valid_keys) > 28
